@@ -36,9 +36,9 @@ Phase 2の基盤として、chronological rolling-origin runnerへmodel registry
 
 2026-09-04に、LastValueとの小規模なTimesFM 3 rolling-origin実測と、統計baselineを含むtarget別比較を追加しました。`synthetic-motor-small`、seed 42、2 equipment、各2 validation／test origin、context 12、horizon 3の限定条件です。target別比較の詳細は[`docs/results/timesfm3-baselines-comparison-2026-09-04.md`](results/timesfm3-baselines-comparison-2026-09-04.md)、旧composite結果の経緯は[`docs/results/timesfm3-rolling-benchmark-2026-09-04.md`](results/timesfm3-rolling-benchmark-2026-09-04.md)に記録しています。past-onlyではTimesFM 3が温度MAEで最良でしたが、電流ではmoving-average等に劣りました。known-loadは計画値をorigin時点で取得できるsynthetic oracle-styleの別scenarioであり、実績先読みや本番効果を示しません。
 
-この時点でTimesFM 3の採否は判断していません。実測は単一generator、単一seed、少数origin、短いcontext／horizonに限定され、coverage／WISの校正母数も小さいままです。複数origin／horizon／context／seed、欠損・fault・regime別、公開データ、他候補との同一契約比較、モデル単独resource測定、実設備でのplanned-load契約検証が残っています。重みのlicenseはresearch-only／non-commercialのままであり、製品・顧客PoC・PLC／Banto Hub write経路へ昇格させません。
+次の評価範囲拡大に向け、seedをgeneratorへ反映してdatasetを再生成し、horizon／context lengthとのmatrixを安全に反復する基盤を追加しました。datasetはseedごとに一度生成・品質確認し、観測file hashでseed差の実体を確認します。base config raw bytesと開始code revisionを固定し、cell／publish時の不変性も検証します。主集計は単位別のseed間cell-macro summaryです。
 
-次の評価範囲拡大に向け、seedをgeneratorへ反映してdatasetを再生成し、horizon／context lengthとのmatrixを安全に反復する基盤を追加しました。datasetはseedごとに一度生成・品質確認し、観測file hashでseed差の実体を確認します。base config raw bytesと開始code revisionを固定し、cell／publish時の不変性も検証します。主集計は単位別のseed間cell-macro summaryです。これは実験基盤の実装であり、TimesFM実matrixの完走、他候補比較、Phase 2完了を意味しません。
+この基盤で2 seeds×2 horizons×2 context lengthsの実TimesFM matrixを完走し、8 cells success／0 failureを[`docs/results/timesfm3-matrix-2026-09-04.md`](results/timesfm3-matrix-2026-09-04.md)へ記録しました。TimesFM 3は温度の4条件でMAE最良、電流では4条件とも6モデル中4位でした。ただし2 seeds、少数origin、単一generatorの結果で、coverage／WISも暫定です。seedを最低5以上、origin／条件追加、欠損・fault・regime別、モデル単独resource測定、他候補との同一契約比較、実設備でのplanned-load契約検証が残っています。重みはresearch-only／non-commercialであり、製品・顧客PoC・PLC／Banto Hub write経路へ昇格させず、Phase 2も未完了です。
 
 ## 実験の必須記録
 

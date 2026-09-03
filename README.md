@@ -92,6 +92,8 @@ rolling-origin benchmarkの実測値は [`docs/results/timesfm3-rolling-benchmar
 
 複数seed／horizon／contextを反復するmatrix runnerを追加しました。seedはrun metadataだけでなくgenerator configへ反映し、seedごとにdatasetを一度生成・品質確認して各cellで再利用します。dataset fingerprintに加えて`observations.jsonl`自体のSHA-256を記録し、異seedで観測内容が同一なら停止します。出力の主集計は単位を分離した`by_model_target`のseed間cell-macro summaryであり、raw predictionのpooled metricではありません。base configのraw bytes hashと開始code revisionを固定し、cell終了時・matrix publish直前まで不変であることを検証します。これは評価範囲拡大の基盤で、Phase 2完了を意味しません。
 
+2 seeds×2 horizons×2 context lengthsの実TimesFM matrixは8 cellsすべて成功し、結果を [`docs/results/timesfm3-matrix-2026-09-04.md`](docs/results/timesfm3-matrix-2026-09-04.md) に記録しました。TimesFM 3.0は温度の4条件でMAE最良でしたが、電流では4条件ともmoving-average等に劣りました。2 seeds・少数originのcell-macroであり、Phase 2完了や製品採用の根拠にはしません。次はseed／origin／条件の拡大、cold／warmとモデル単独resourceの分離、欠損・regime・fault slice、ライセンス適合候補との同一契約比較です。
+
 Phase 0の実行確認は、外部依存を導入せず `python tools/smoke.py` と `python tools/safety_check.py` で行えます。Phase 1の最小generatorは次で実行できます。
 
 TimesFM 3の実評価は、リポジトリ外のcacheを明示して次の順に実行します。checkpoint準備だけがdownloadを行い、smokeは`local_files_only=True`でcache miss時に停止します。
@@ -135,6 +137,6 @@ Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUT
 
 ## ステータス
 
-Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0は専用環境でCPU smokeと、統計baselineを含むpast-only／known-loadの小規模rolling-origin benchmarkを実行済みです。複数seed／horizon／contextを安全に展開するmatrix基盤も実装済みですが、実matrix評価、origin拡大、モデル単独resource測定、ライセンス適合候補との同一条件比較は未実施であり、Phase 2は完了していません。本番デプロイ経路も未実装です。
+Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0は専用環境でCPU smoke、統計baselineを含むpast-only／known-loadの小規模rolling-origin benchmark、2 seeds×2 horizons×2 context lengthsの8-cell matrixを実行済みです。origin拡大、モデル単独resource測定、欠損・regime・fault slice、ライセンス適合候補との同一条件比較は未実施であり、Phase 2は完了していません。本番デプロイ経路も未実装です。
 
 合成データは研究用の制御されたfixtureであり、実設備の挙動を代表すると主張しません。顧客データ、raw設備データ、秘密情報は生成物・設定・Git履歴へ入れません。大量生成データはGit無視領域へ置き、commit対象は小さいconfig／fixtureだけにします。

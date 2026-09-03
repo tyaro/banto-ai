@@ -44,9 +44,11 @@ result schema `0.2`では、composite値だけに依存しないよう、target�
 
 統計baselineを含む正式なtarget別比較は [`timesfm3-baselines-comparison-2026-09-04.md`](results/timesfm3-baselines-comparison-2026-09-04.md) に記録しています。past-onlyを標準scenario、known-loadを計画値がorigin時点で確実に取得できるsynthetic oracle-styleの別scenarioとして扱います。known-loadは実績先読みや本番効果を意味しません。各model-targetはtest 12点、各equipmentは2 origins×horizon 3、validationも各equipment 2 originsであり、coverage／WISは暫定値です。
 
+2 seeds×2 horizons×2 context lengthsの実TimesFM matrixは8 cellsすべて成功し、[`timesfm3-matrix-2026-09-04.md`](results/timesfm3-matrix-2026-09-04.md)へ記録しました。seed 17／42は観測file SHA-256も異なります。seed間cell-macroではTimesFM 3.0が温度の4条件でMAE最良、電流では4条件とも6モデル中4位でした。macroはpooled metricではなく、validation／test originも各equipment 2つだけなので一般化しません。
+
 実行時はTimesFM package `3.0.0`、checkpoint revision `43046b85ec22d584a13f8098c2ed39c889e129c2`、CPU、offline、research-only／non-commercialでした。weightsの利用制限はMITのrepository licenseによって緩和されません。
 
-このため、TimesFM 3.0は`banto-ai`の研究benchmarkには含めますが、顧客PoC、本番shadow、製品artifactの候補には含めません。実験結果と生成artifactには `research-only` を明記します。利用条件が将来変わった場合も、固定したcheckpointのlicenseをrunごとに再確認します。今回の比較では採用判断を行わず、Phase 2も完了扱いにしません。次工程は複数seed／horizon／context／origin、モデル単独memory／latency、ライセンス適合候補との同一契約比較です。
+このため、TimesFM 3.0は`banto-ai`の研究benchmarkには含めますが、顧客PoC、本番shadow、製品artifactの候補には含めません。実験結果と生成artifactには `research-only` を明記します。利用条件が将来変わった場合も、固定したcheckpointのlicenseをrunごとに再確認します。今回の比較では採用判断を行わず、Phase 2も完了扱いにしません。次工程はseedを最低5以上、originとhorizon／context候補の追加、欠損・regime・fault slice、cold／warmとモデル単独memory／latencyの分離、Chronos-2等ライセンス適合候補との同一契約比較です。
 
 [TimesFM 2.5](https://huggingface.co/google/timesfm-2.5-200m-pytorch)は200M parameterで、codeとweightsがApache-2.0です。最大16k context、optional quantile headによる最大1k horizon、XReg covariate対応が公式に案内されています。TimesFM系の商用利用可能fallbackとして別runで比較しますが、3.0のnative multivariateと同一機能とはみなしません。
 
