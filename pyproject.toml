@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "banto-ai"
+version = "0.1.0"
+description = "Industrial AI research foundations for the Banto ecosystem"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { file = "LICENSE" }
+authors = [{ name = "tyaro" }]
+dependencies = []
+
+[project.scripts]
+banto-ai = "banto_ai.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

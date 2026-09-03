@@ -6,6 +6,9 @@ __pycache__/
 .ruff_cache/
 .mypy_cache/
 *.py[cod]
+*.egg-info/
+build/
+dist/
 
 # Experiment outputs
 artifacts/
@@ -15,6 +18,8 @@ reports/generated/
 *.pt
 *.safetensors
 *.onnx
+*.h5
+*.safetensors.index.json
 
 # Data: never commit local or customer datasets
 data/
@@ -33,6 +38,12 @@ datasets/local/
 !.env.example
 *.pem
 *.key
+*.pfx
+*.p12
+*.tfstate
+id_rsa
+credentials.json
+secrets.json
 
 # OS and editor files
 .DS_Store

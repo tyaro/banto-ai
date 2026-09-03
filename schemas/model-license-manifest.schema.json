@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tyaro/banto-ai/schemas/model-license-manifest.schema.json",
+  "title": "banto-ai model license manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "manifest_type", "model_id", "code_license", "weights_license", "allowed_use", "source_url"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "manifest_type": {"type": "string", "const": "model-license"},
+    "model_id": {"type": "string", "minLength": 1},
+    "code_license": {"type": "string", "minLength": 1},
+    "weights_license": {"type": "string", "minLength": 1},
+    "allowed_use": {"type": "string", "enum": ["research-only", "commercial-evaluation", "product-candidate"]},
+    "source_url": {"type": "string", "minLength": 1},
+    "notes": {"type": "string"}
+  }
+}

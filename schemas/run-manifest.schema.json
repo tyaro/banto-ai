@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tyaro/banto-ai/schemas/run-manifest.schema.json",
+  "title": "banto-ai run manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "manifest_type", "run_id", "code_revision", "dataset_id", "task", "model", "model_license_manifest", "seed"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "manifest_type": {"type": "string", "const": "run"},
+    "run_id": {"type": "string", "minLength": 1},
+    "code_revision": {"type": "string", "minLength": 1},
+    "dataset_id": {"type": "string", "minLength": 1},
+    "task": {"type": "string", "enum": ["forecast", "anomaly", "commissioning"]},
+    "model": {"type": "string", "minLength": 1},
+    "model_license_manifest": {"type": "string", "minLength": 1},
+    "seed": {"type": "integer", "minimum": 0},
+    "parameters": {"type": "object"}
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "fixture_version": "0.1",
+  "provenance": "synthetic",
+  "generator_seed": 42,
+  "series": [
+    {
+      "signal_id": "motor-01.current",
+      "name": "motor current",
+      "unit": "A",
+      "sampling_interval_ms": 1000,
+      "points": [
+        {"timestamp": "2026-01-01T00:00:00Z", "value": 10.0},
+        {"timestamp": "2026-01-01T00:00:01Z", "value": 10.5},
+        {"timestamp": "2026-01-01T00:00:02Z", "value": 11.0},
+        {"timestamp": "2026-01-01T00:00:03Z", "value": 11.5},
+        {"timestamp": "2026-01-01T00:00:04Z", "value": 12.0},
+        {"timestamp": "2026-01-01T00:00:05Z", "value": 12.5},
+        {"timestamp": "2026-01-01T00:00:06Z", "value": 13.0},
+        {"timestamp": "2026-01-01T00:00:07Z", "value": 13.5}
+      ]
+    }
+  ],
+  "evaluation": {"context_length": 6, "horizon": 2}
+}

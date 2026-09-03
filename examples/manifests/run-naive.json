@@ -1,0 +1,12 @@
+{
+  "schema_version": "0.1",
+  "manifest_type": "run",
+  "run_id": "phase0-naive-001",
+  "code_revision": "working-tree",
+  "dataset_id": "synthetic-motor-v0.1",
+  "task": "forecast",
+  "model": "last-value",
+  "model_license_manifest": "examples/manifests/model-license-last-value.json",
+  "seed": 42,
+  "parameters": {"context_length": 6, "horizon": 2}
+}

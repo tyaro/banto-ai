@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tyaro/banto-ai/schemas/result-manifest.schema.json",
+  "title": "banto-ai result manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "manifest_type", "result_id", "run_id", "status", "model_version", "profile_version", "metrics"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "manifest_type": {"type": "string", "const": "result"},
+    "result_id": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "status": {"type": "string", "enum": ["complete", "inconclusive", "failed"]},
+    "model_version": {"type": "string", "minLength": 1},
+    "profile_version": {"type": "string", "minLength": 1},
+    "metrics": {"type": "object", "additionalProperties": {"type": "number"}}
+  }
+}

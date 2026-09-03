@@ -1,0 +1,28 @@
+name: Phase 0 CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12", "3.14"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Compile Python sources
+        run: python -m compileall -q src tests tools
+      - name: Run unittest
+        run: python -m unittest discover -s tests -t . -v
+      - name: Validate manifests and naive smoke
+        run: python tools/smoke.py
+      - name: Repository safety guard
+        run: python tools/safety_check.py

@@ -1,0 +1,11 @@
+{
+  "schema_version": "0.1",
+  "manifest_type": "dataset",
+  "dataset_id": "synthetic-motor-v0.1",
+  "provenance": "synthetic",
+  "data_path": "examples/fixtures/synthetic-motor.json",
+  "license": "MIT",
+  "signals": [
+    {"signal_id": "motor-01.current", "name": "motor current", "unit": "A", "role": "target", "sampling_interval_ms": 1000}
+  ]
+}

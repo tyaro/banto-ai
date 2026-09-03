@@ -1,6 +1,6 @@
 # 最初のIssue案
 
-公開repository `tyaro/banto-ai`で最初に作成する5件のIssue案です。Issue本文へ転記する前に、target hardwareとrepository licenseの判断を反映します。
+公開repository `tyaro/banto-ai`で最初に作成する5件のIssue案です。repository licenseはMITに決定済みです。Issue本文へ転記する際はtarget hardwareと各modelのlicense manifestを確認します。
 
 ## 1. 研究環境、manifest、license gate、共通interfaceを確立する
 
@@ -8,8 +8,8 @@
 
 **完了条件:**
 
-- Python version、dependency manager、`pyproject.toml`、lock fileを追加する。
-- format、lint、unit testをlocalとCIで実行できる。
+- Python 3.12+、`pyproject.toml`、外部依存なしの実行手順を追加する。
+- compileall、unit test、manifest smoke、safety guardをlocalとCIで実行できる。
 - dataset、run、result、model license manifestのschemaとsampleがある。
 - `Forecaster`と`AnomalyDetector`の共通interfaceを定義する。
 - code licenseとweight licenseを別々に記録し、`research-only` modelをpromotion対象外にできる。

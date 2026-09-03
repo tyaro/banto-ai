@@ -25,6 +25,12 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 - 本番中の適応処理はデフォルトで無効にします。試運転モードと shadow モードは明示的な状態として扱います。
 - すべての結果に、データの出所、設定、コードリビジョン、評価指標、既知の制約を記録します。
 
+## ライセンス
+
+このリポジトリのソースコードと文書は [MIT License](LICENSE) です。
+
+研究対象モデルのコードライセンスと学習済み重みのライセンスは別物として管理します。TimesFM 3.0の重みは `research-only` として扱い、MITのリポジトリライセンスによって利用条件が緩和されることはありません。
+
 ## リポジトリ構成
 
 ```text
@@ -36,6 +42,10 @@ docs/
   timesfm-notes.md                TimesFM 3.0評価プロトコル
   commissioning-learning.md       試運転・校正・昇格の設計
   initial-issues.md                最初に作成するIssue 5件の案
+schemas/                       manifestを検証するJSON Schema
+examples/                     安全な合成fixtureとsample manifest
+src/banto_ai/                  外部依存なしのPhase 0共通runtime
+tests/                         Python標準unittest
 experiments/
   timesfm3/                    foundation model のベンチマーク
   synthetic-data/              産業設備に近いデータの再現可能な生成
@@ -45,6 +55,8 @@ models/
   industrial-tsfm/             産業向けモデルの研究
 datasets/                      データポリシーとローカル配置
 tools/
+  smoke.py                    clean checkout用のmanifest／naive smoke
+  safety_check.py             repository safety guard
   data-generator/              データ生成ユーティリティ
   evaluator/                   共通の評価指標とレポート
 ```
@@ -63,8 +75,10 @@ tools/
 
 現時点では TimesFM 3.0 の学習済み重みは非商用・非本番用途に限定されるため、研究比較専用とします。商用利用可能候補として Chronos-2、Toto 2.0、Granite TTM／TSPulseなどを同時に評価します。
 
+Phase 0の実行確認は、外部依存を導入せず `python tools/smoke.py` と `python tools/safety_check.py` で行えます。Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUTING.md`](CONTRIBUTING.md) に記載しています。
+
 調査結果は [`docs/time-series-model-survey.md`](docs/time-series-model-survey.md)、具体的な作業計画は [`docs/research-implementation-plan.md`](docs/research-implementation-plan.md)、Issue案は [`docs/initial-issues.md`](docs/initial-issues.md) を参照してください。
 
 ## ステータス
 
-研究用 scaffold。現時点では本番デプロイ経路を含みません。
+Phase 0 research foundation implemented。model adaptersは未実装です。現時点では本番デプロイ経路を含みません。

@@ -20,6 +20,9 @@ Banto ecosystem向けの時系列AIについて、次の価値を再現可能な
 ### 2.1 決定事項
 
 - 研究コードは `banto-industrial` から分離し、`banto-ai`で管理する。
+- `banto-ai`のソースコードと文書はMIT Licenseで公開する。ただし、外部modelのcode／weights licenseは個別に管理する。
+- core runtimeの外部依存はゼロとし、現時点ではdependency lockを作成しない。最初の外部依存導入時に、model environmentごとのversion pin／lockを必須にする。
+- formatter／linterはPhase 0では導入せず、標準ライブラリの`compileall`を使う。最初のdevelopment dependency導入時にformatter／linterをversion pinし、lockへ固定する。
 - ドキュメントは日本語を基本とし、API名、model名、schema fieldは英語を使う。
 - Gitで管理するデータは合成データ、再配布可能な公開データ、安全な小型fixtureだけとする。
 - 最初のruntimeはPython sidecarとし、Banto Hubとはoffline exportから接続する。
@@ -41,9 +44,9 @@ Banto ecosystem向けの時系列AIについて、次の価値を再現可能な
 
 最初の研究cycleで次を作成します。
 
-1. version固定可能なPython環境と最小CI
-2. dataset manifest、run manifest、model license manifestのschema
-3. seed再現可能なmotor／conveyor合成データgenerator
+1. version固定可能なPython project metadataと最小CI
+2. dataset manifest、run manifest、result manifest、model license manifestのschema
+3. seed再現可能なmotor／conveyor合成データfixture／generator
 4. 共通 `Forecaster`／`AnomalyDetector` interface
 5. naive／統計／学習型baselineを含むbenchmark runner
 6. Chronos-2、TimesFM 3.0、Toto 2.0、Granite TTMのadapter
@@ -74,28 +77,28 @@ Phase 0～5の初回cycleは、並行作業を含めて約6～10週を想定し�
 
 #### 実装
 
-- Python versionとdependency managerを固定する。
-- `pyproject.toml`、lock file、format／lint／unit testを追加する。
-- model dependencyはoptional groupに分け、すべてを同時installしない。
-- dataset、run、model license、result summaryのschemaを定義する。
-- 共通interfaceを定義する。
+- Python 3.12+を対象に`pyproject.toml`を追加する。Phase 0のcore runtimeは標準ライブラリのみとする。
+- `src/banto_ai`のpackage、Python標準`unittest`、compileall、安全検査を追加する。
+- model dependencyはPhase 0では定義せず、CIとsmoke testではinstallしない。adapter実装時にmodel environmentごとへ分離する。
+- dataset、run、result、model license manifestのJSON Schemaと標準ライブラリ検証器を定義する。
+- 共通interfaceと、timestamp、signal metadata、quantile、quality status、model／profile versionの型を定義する。
+- `tools/smoke.py`でsample manifest検証とlast-value MAE評価を1 commandにまとめる。
+- `tools/safety_check.py`で顧客data、credential、大型checkpoint等のpath／extensionを検査する。
 
 ```python
 class Forecaster:
-    def fit(self, data, config): ...
-    def predict(self, context, horizon, known_future=None): ...
+    def forecast(self, request: ForecastRequest) -> ForecastResult: ...
 
 class AnomalyDetector:
-    def fit_normal(self, data, config): ...
-    def score(self, observations, forecast=None): ...
+    def score(self, request: AnomalyRequest) -> AnomalyResult: ...
 ```
 
-実装では、上記にtimestamp、signal metadata、quantile level、quality status、model version、profile versionを含む型を追加します。
+`ForecastRequest`は複数の過去context、target signal ID、任意のknown-future covariateを持ち、結果はtargetごとのforecastを返します。`AnomalyRequest`／`AnomalyResult`も複数seriesを扱います。各型にはtimestamp、signal metadata、quantile level、quality status、model version、profile versionを含めます。
 
 #### Gate 0
 
-- clean environmentでinstallとtestが完了する。
-- 1つのsynthetic fixtureに対するnaive forecastを1 commandで再現できる。
+- clean checkoutで外部dependency installなしにcompileall、unittest、smoke、safetyを実行できる。
+- 1つのsynthetic fixtureに対するnaive forecastを`python tools/smoke.py`で再現できる。
 - modelごとにcode license、weight license、許可用途をmachine-readableに記録できる。
 - customer dataらしい拡張子やlocal pathがGitへ追加されないtestを用意する。
 
@@ -320,7 +323,7 @@ Issue 5は実装開始時に「異常検知」「commissioning profile」「Bant
 
 | リスク | 早期検知 | 対応 |
 | --- | --- | --- |
-| model download／GPU準備で開始が遅れる | CPU smoke testが動かない | naive、TTM、Toto 4mから開始しoptional dependencyを分離 |
+| model download／GPU準備で開始が遅れる | CPU smoke testが動かない | naive、TTM、Toto 4mから開始しmodel environmentを分離 |
 | Python dependencyが衝突する | lock解決不能、CUDA version不一致 | model adapterごとにoptional environmentまたはcontainerを分離 |
 | 合成データで差が出ない | 全modelが同程度 | startup、mode switch、非線形load、欠損を段階追加しgeneratorを検証 |
 | 高精度だが重すぎる | p95／memory不合格 | resampling、batch、smaller checkpoint、offline用途への降格 |
@@ -332,7 +335,7 @@ Issue 5は実装開始時に「異常検知」「commissioning profile」「Bant
 
 実装前またはPhase 0中に、次を決めます。
 
-1. `banto-ai`自体のrepository license。Banto系との整合性からMITまたはApache-2.0を候補とする。
+1. `banto-ai`自体のrepository license。MITを採用する（`LICENSE`に反映済み）。
 2. 最初のtarget hardware。最低でも開発PC CPU、利用可能ならNVIDIA GPU、将来のBanto Hub想定PCを記録する。
 3. 最初の主要sampling cadence。初期案はraw 100 ms、forecast 1秒／5秒／10秒比較とする。
 4. 最初の設備scenario。motor + conveyorを標準scenarioとする。

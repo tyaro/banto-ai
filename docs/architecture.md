@@ -68,6 +68,8 @@ adapter は直近の観測値を要求し、予測、残差、異常スコア、
 
 model固有のAPIはBanto Hubへ露出せず、`Forecaster`／`AnomalyDetector`の共通契約内に閉じ込めます。採用modelとtarget hardwareが決まるまでは、PythonからRust／ONNX等への変換を必須にしません。
 
+Phase 0のforecast契約は、複数の過去`TimeSeries`を`contexts`として受け取り、`target_signal_ids`で予測対象を選びます。既知の将来共変量は`known_future_covariates`として任意に渡せます。結果はtargetごとの点予測・分位点予測と、model／profile version、quality statusを返します。異常検知も複数seriesのrequest／resultを前提にし、いずれも制御書き込みを契約に含めません。
+
 ### Stage 3: reviewed handoff
 
 レビュー済みの model artifact または commissioning profile は、Banto Hub の既存の承認・デプロイ手順を通して昇格できます。昇格時には次を含めます。

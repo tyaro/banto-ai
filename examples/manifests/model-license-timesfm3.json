@@ -1,0 +1,10 @@
+{
+  "schema_version": "0.1",
+  "manifest_type": "model-license",
+  "model_id": "timesfm-3.0",
+  "code_license": "Apache-2.0",
+  "weights_license": "timesfm-non-commercial-license-v1.0",
+  "allowed_use": "research-only",
+  "source_url": "https://huggingface.co/google/timesfm-3.0-pytorch",
+  "notes": "Phase 0では研究比較専用。product-candidateへの昇格を禁止する。"
+}

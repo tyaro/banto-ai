@@ -1,0 +1,10 @@
+{
+  "schema_version": "0.1",
+  "manifest_type": "result",
+  "result_id": "phase0-naive-result-001",
+  "run_id": "phase0-naive-001",
+  "status": "complete",
+  "model_version": "last-value-0.1.0",
+  "profile_version": "baseline",
+  "metrics": {"mae": 0.75}
+}

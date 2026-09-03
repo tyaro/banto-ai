@@ -1,0 +1,10 @@
+{
+  "schema_version": "0.1",
+  "manifest_type": "model-license",
+  "model_id": "last-value",
+  "code_license": "MIT",
+  "weights_license": "MIT",
+  "allowed_use": "product-candidate",
+  "source_url": "https://github.com/tyaro/banto-ai",
+  "notes": "重みを持たない標準ライブラリbaseline。"
+}
