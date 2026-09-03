@@ -1,73 +1,73 @@
-# Initial issue proposals
+# 最初の Issue 案
 
-These are the first five issues to create when a remote GitHub repository is available. They are documented locally because this scaffold has no configured remote and should not create external issues implicitly.
+GitHub の remote が利用できるようになったら、まず次の5件を Issue として作成します。現時点では scaffold に remote を設定しただけで、外部への Issue 作成は暗黙に行わないため、案をローカルに記録しています。
 
-## 1. Establish a reproducible TimesFM-3 benchmark runner
+## 1. 再現可能な TimesFM-3 benchmark runner を確立する
 
-**Goal:** Run TimesFM-3 and simple baselines over a versioned dataset manifest and emit comparable metrics.
+**目的:** versioned dataset manifest 上で TimesFM-3 と単純な baseline を実行し、比較可能な metric を出力する。
 
-**Acceptance criteria:**
+**完了条件:**
 
-- A single command accepts a run manifest and produces a machine-readable result.
-- The exact model release/checkpoint and preprocessing are recorded.
-- Results are reported by signal, horizon, and operating regime.
-- The runner includes last-value and seasonal-naive baselines.
-- A smoke test runs on a tiny synthetic fixture without customer data.
+- 1つの command が run manifest を受け取り、machine-readable な結果を生成する。
+- 正確な model release／checkpoint と preprocessing を記録する。
+- signal、horizon、運転 mode 別に結果を出力する。
+- last-value と seasonal-naive baseline を含む。
+- 顧客データを使わない小さな synthetic fixture で smoke test が動く。
 
-**Non-goals:** Production serving, PLC connectivity, or model promotion.
+**対象外:** production serving、PLC 接続、model promotion。
 
-## 2. Build a seed-reproducible synthetic industrial data generator
+## 2. seed 再現可能な synthetic industrial data generator を作る
 
-**Goal:** Generate multivariate motor/conveyor-like signals with regimes, faults, missingness, and known event labels.
+**目的:** regime、fault、欠損、既知の event label を持つ、motor／conveyor に近い多変量データを生成する。
 
-**Acceptance criteria:**
+**完了条件:**
 
-- A seed fully determines the generated dataset.
-- Units, sampling rate, and generator parameters are recorded.
-- Startup, steady state, load changes, and at least three fault-like patterns exist.
-- Ground-truth event intervals are exported separately from observations.
-- The dataset can be regenerated without committing generated data.
+- seed によって生成データが完全に決まる。
+- 単位、sampling rate、generator parameter を記録する。
+- startup、steady state、load change、少なくとも3種類の fault-like pattern を含む。
+- ground-truth event interval を観測値とは別に出力する。
+- 生成データ本体を commit せずに再生成できる。
 
-**Non-goals:** Claiming synthetic signals represent any customer's equipment.
+**対象外:** 合成信号が顧客設備を代表すると主張すること。
 
-## 3. Implement a mini multivariate quantile Transformer baseline
+## 3. mini 多変量 quantile Transformer baseline を実装する
 
-**Goal:** Create an inspectable baseline for point and interval forecasting.
+**目的:** point forecast と interval forecast を検証できる、内部を理解しやすい baseline を作る。
 
-**Acceptance criteria:**
+**完了条件:**
 
-- Inputs support multiple aligned signals and explicit mode/context features.
-- Outputs include p10, p50, and p90 or an equivalent documented interval representation.
-- Training uses chronological splits and reports calibration metrics.
-- An ablation compares univariate, multivariate, and mode-aware inputs.
-- Model size, runtime, and failure behavior are recorded.
+- 複数の aligned signal と明示的な mode／context feature を入力できる。
+- p10、p50、p90 または同等の interval 表現を出力する。
+- chronological split で学習し、calibration metric を報告する。
+- univariate、multivariate、mode-aware input の ablation を比較する。
+- model size、runtime、failure behavior を記録する。
 
-**Non-goals:** Beating a foundation model before the evaluation harness is stable.
+**対象外:** evaluation harness が安定する前に foundation model を上回ろうとすること。
 
-## 4. Design commissioning profile calibration and shadow evaluation
+## 4. commissioning profile の calibration と shadow evaluation を設計する
 
-**Goal:** Convert a commissioning recipe into a versioned profile candidate without changing control behavior.
+**目的:** 制御動作を変更せずに、commissioning recipe を versioned profile candidate に変換する。
 
-**Acceptance criteria:**
+**完了条件:**
 
-- Recipe steps have explicit entry, exit, data-quality, and abort conditions.
-- Baselines/envelopes are learned only from eligible windows.
-- A held-out or shadow replay evaluates false alarms and coverage.
-- Candidate profiles include provenance, uncertainty, expiry, and rollback metadata.
-- Production mode locks learning and does not write PLC settings.
+- recipe step に entry、exit、data-quality、abort condition がある。
+- 適格な window だけから baseline／envelope を学習する。
+- held-out または shadow replay で誤警報と coverage を評価する。
+- candidate profile に provenance、uncertainty、expiry、rollback metadata がある。
+- Production mode では学習を lock し、PLC 設定を書き込まない。
 
-**Non-goals:** Autonomous threshold or PID writes.
+**対象外:** threshold または PID の自律書き込み。
 
-## 5. Define the Banto Hub read-only adapter contract
+## 5. Banto Hub read-only adapter contract を定義する
 
-**Goal:** Specify the smallest versioned interface for observations, forecasts, quality, and shadow results.
+**目的:** observation、forecast、quality、shadow result を扱う、最小限の versioned interface を定める。
 
-**Acceptance criteria:**
+**完了条件:**
 
-- Request/response examples cover model version, profile version, status, and quality.
-- Missing, stale, and out-of-distribution behavior is explicit.
-- The contract states identity, authorization, retention, and audit expectations.
-- No endpoint writes PLC values, recipes, interlocks, or safety limits.
-- A local contract test can run without a live Banto Hub.
+- model version、profile version、status、quality を含む request／response 例がある。
+- missing、stale、out-of-distribution の挙動が明示されている。
+- identity、authorization、retention、audit の要件を記載する。
+- PLC 値、recipe、interlock、安全上限を書き込む endpoint がない。
+- live Banto Hub なしで動く local contract test がある。
 
-**Non-goals:** Deploying a production service or selecting a final transport protocol.
+**対象外:** production service の deploy または最終 transport protocol の選定。

@@ -1,31 +1,31 @@
 ---
 name: Research task
-about: Define a reproducible industrial AI research task
+about: 再現可能な Industrial AI 研究タスクを定義する
 title: ""
 labels: "research"
 assignees: ""
 ---
 
-## Objective
+## 目的
 
-<!-- What question or hypothesis are we testing? -->
+<!-- どの問い、または仮説を検証するか。 -->
 
-## Dataset and provenance
+## データと出所
 
-<!-- Identify a synthetic/public dataset or an approved external dataset ID. Never paste customer data. -->
+<!-- synthetic/public dataset または承認済みの外部 dataset ID を記載する。顧客データは貼り付けない。 -->
 
-## Method
+## 方法
 
-<!-- Describe baselines, model, split, and metrics. -->
+<!-- baseline、model、split、metric を記載する。 -->
 
-## Acceptance criteria
+## 完了条件
 
 - [ ]
 
-## Safety and scope
+## 安全性と対象範囲
 
-<!-- State whether this is offline, shadow, or reviewed handoff. Confirm that no PLC/control writes are involved. -->
+<!-- offline、shadow、reviewed handoff のどれかを記載する。PLC／control write がないことを確認する。 -->
 
-## Results and decision
+## 結果と判断
 
-<!-- Link the report and record the next decision. -->
+<!-- レポートへのリンクと、次の判断を記録する。 -->

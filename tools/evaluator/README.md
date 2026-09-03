@@ -1,5 +1,5 @@
 # Evaluation tools
 
-Planned shared utilities for chronological splits, point and interval metrics, residual anomaly metrics, calibration checks, and report generation.
+chronological split、point／interval metric、residual anomaly metric、calibration check、report generation の共通 utility 用です。
 
-All metrics should preserve slices by signal, horizon, operating mode, and event type so a single aggregate score cannot hide operational failure modes.
+単一の aggregate score が運用上の失敗を隠さないよう、metric は signal、horizon、operating mode、event type 別の slice を保持します。

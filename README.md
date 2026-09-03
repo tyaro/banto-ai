@@ -1,64 +1,64 @@
 # banto-ai
 
-Industrial AI research for forecasting, anomaly detection, adaptive commissioning, and predictive analytics within the Banto ecosystem.
+Banto ecosystem における、予測・異常検知・適応型試運転・予知分析のための Industrial AI 研究リポジトリです。
 
-This repository is intentionally separate from `banto-industrial`. It is a research workspace for experiments, evaluation protocols, model prototypes, and integration contracts. Production control behavior remains owned by Banto Hub and the PLC/control system.
+このリポジトリは `banto-industrial` から意図的に分離しています。実験、評価プロトコル、モデル試作、連携契約を扱う研究用ワークスペースです。生産設備の制御動作は、Banto Hub と PLC／制御システムが引き続き担当します。
 
-## Research tracks
+## 研究テーマ
 
-| Track | First question |
+| テーマ | 最初に検証する問い |
 | --- | --- |
-| TimesFM-3 evaluation | How does a foundation time-series model perform on industrial-like signals under a reproducible benchmark? |
-| Mini time-series Transformer | What is the smallest useful multivariate forecasting baseline we can own and inspect? |
-| Multivariate and quantile forecasting | Can the model produce calibrated ranges, not only point forecasts? |
-| Anomaly detection | Can forecast residuals and learned normal envelopes detect drift early with acceptable false alarms? |
-| Continual learning | How can a model adapt without allowing bad data to redefine normal operation? |
-| Commissioning auto-tuning | Can a structured commissioning recipe produce a safe, reviewable equipment profile? |
-| Synthetic industrial data | Can we create realistic, labeled signals before customer data is available? |
-| Banto Hub integration | What read-only, shadow, and approved handoff boundaries are required for deployment? |
+| TimesFM-3 評価 | 産業設備に近い信号に対して、再現可能なベンチマークでどの程度有効か？ |
+| 自前の時系列 Transformer | 内部を理解・検証できる最小限の多変量予測モデルは何か？ |
+| 多変量・分位点予測 | 点予測だけでなく、校正された予測範囲を出せるか？ |
+| 異常検知 | 予測残差や正常エンベロープで、誤警報を抑えつつドリフトを早期検知できるか？ |
+| Continual learning | 異常データが「正常」を汚染することなくモデルを適応させられるか？ |
+| Commissioning auto-tuning | 構造化された試運転レシピから、安全でレビュー可能な設備プロファイルを作れるか？ |
+| 合成産業データ | 顧客データがない段階でも、現実的でラベル付きの信号を生成できるか？ |
+| Banto Hub 連携 | 本番導入に必要な read-only、shadow、承認済み引き渡しの境界は何か？ |
 
-## Initial principles
+## 基本方針
 
-- Customer data is never committed to this repository. Use synthetic or explicitly redistributable public data only.
-- Research outputs are advisory until reviewed and explicitly promoted.
-- PLC safety logic, interlocks, emergency stops, and hard protection limits remain authoritative outside the AI layer.
-- Production adaptation is disabled by default. Commissioning and shadow modes are explicit states.
-- Every result should record data provenance, configuration, code revision, metrics, and known limitations.
+- 顧客データはこのリポジトリにコミットしません。合成データまたは再配布が明確に許可された公開データだけを使います。
+- 研究成果はレビューと明示的な昇格が完了するまで、助言情報として扱います。
+- PLC の安全ロジック、インターロック、非常停止、ハード保護上限は、AI レイヤーの外側で常に優先されます。
+- 本番中の適応処理はデフォルトで無効にします。試運転モードと shadow モードは明示的な状態として扱います。
+- すべての結果に、データの出所、設定、コードリビジョン、評価指標、既知の制約を記録します。
 
-## Repository map
+## リポジトリ構成
 
 ```text
 docs/
-  architecture.md              Banto Hub boundary and artifact flow
-  research-roadmap.md          staged research plan and exit criteria
-  timesfm-notes.md             TimesFM-3 evaluation protocol
-  commissioning-learning.md   commissioning, calibration, and promotion design
-  initial-issues.md             first five proposed GitHub issues
+  architecture.md              Banto Hub との責務境界と成果物フロー
+  research-roadmap.md          段階的な研究計画と完了条件
+  timesfm-notes.md             TimesFM-3 評価プロトコル
+  commissioning-learning.md    試運転・校正・昇格の設計
+  initial-issues.md             最初に作成する Issue 5件の案
 experiments/
-  timesfm3/                    foundation-model benchmark work
-  synthetic-data/              reproducible industrial-like data generation
-  online-learning/             adaptation and drift experiments
+  timesfm3/                    foundation model のベンチマーク
+  synthetic-data/              産業設備に近いデータの再現可能な生成
+  online-learning/             適応とドリフトの実験
 models/
-  mini-transformer/            small inspectable forecasting baseline
-  industrial-tsfm/             industrial-specific model experiments
-datasets/                      data policy and local dataset layout
+  mini-transformer/            小さく検証しやすい予測ベースライン
+  industrial-tsfm/             産業向けモデルの研究
+datasets/                      データポリシーとローカル配置
 tools/
-  data-generator/              dataset generation utilities
-  evaluator/                   common metrics and experiment reports
+  data-generator/              データ生成ユーティリティ
+  evaluator/                   共通の評価指標とレポート
 ```
 
-## Working agreement
+## 進め方
 
-1. Keep private or customer data outside the repository and reference it by a local dataset identifier.
-2. Add a small experiment manifest before adding a new benchmark result.
-3. Compare against a simple baseline before claiming an improvement.
-4. Save model artifacts with their configuration and evaluation report.
-5. Do not connect an experiment directly to a PLC or write control parameters automatically.
+1. 非公開データや顧客データはリポジトリ外に置き、ローカルのデータ識別子だけを参照します。
+2. 新しいベンチマーク結果を追加する前に、小さな experiment manifest を作成します。
+3. 改善を主張する前に、単純なベースラインと比較します。
+4. モデル成果物には、設定と評価レポートを必ず添付します。
+5. 実験を PLC に直接接続したり、制御パラメータを自動書き込みしたりしません。
 
-## What comes next
+## 次の一歩
 
-The first implementation milestone is a reproducible TimesFM-3 benchmark on synthetic industrial data, with naive and classical baselines. The roadmap and proposed issues are in [`docs/research-roadmap.md`](docs/research-roadmap.md) and [`docs/initial-issues.md`](docs/initial-issues.md).
+最初の実装マイルストーンは、合成産業データ上で TimesFM-3 と naive／古典的ベースラインを比較する、再現可能なベンチマークです。詳細は [`docs/research-roadmap.md`](docs/research-roadmap.md) と [`docs/initial-issues.md`](docs/initial-issues.md) を参照してください。
 
-## Status
+## ステータス
 
-Research scaffold; no production deployment path is included yet.
+研究用 scaffold。現時点では本番デプロイ経路を含みません。

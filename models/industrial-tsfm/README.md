@@ -1,5 +1,5 @@
 # Industrial TSFM
 
-Reserved for industrial-specific time-series foundation-model research, including adapters, normalization, regime conditioning, and transfer between equipment instances.
+adapter、normalization、regime conditioning、設備個体間 transfer など、産業向けの時系列 foundation model 研究用です。
 
-Document each architectural change with a hypothesis and an ablation. Do not introduce customer data into shared training artifacts.
+architecture を変更する場合は、hypothesis と ablation を記録します。顧客データを共有 training artifact に入れてはいけません。

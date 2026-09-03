@@ -1,10 +1,10 @@
-# Commissioning learning design
+# Commissioning learning の設計
 
-## Objective
+## 目的
 
-Turn a structured equipment trial into a reviewable commissioning profile: a description of learned normal behavior, calibration quality, and operating coverage. The profile is an advisory artifact, not a PLC program or a replacement for safety logic.
+構造化された設備試運転を、レビュー可能な commissioning profile に変換します。profile には、学習した正常挙動、校正品質、カバーした運転範囲を記録します。profile は助言用 artifact であり、PLC program や安全ロジックの代替ではありません。
 
-## Explicit operating modes
+## 明示的な運転モード
 
 ```text
 Production
@@ -15,59 +15,59 @@ Test
 Shadow
 ```
 
-Learning and tuning are permitted only in `Commissioning` or an explicitly authorized offline replay. In `Production`, model parameters and learned profiles are locked. `Shadow` can score and report without changing control behavior.
+学習・tuning を許可するのは `Commissioning` または明示的に認可された offline replay だけです。`Production` では model parameter と学習済み profile を lock します。`Shadow` では制御動作を変更せず、score と report だけを行えます。
 
-## Recipe-driven flow
+## レシピ駆動の流れ
 
 ```text
 Draft recipe
   -> operator review
-  -> run step with data-quality checks
-  -> identify valid normal windows
-  -> estimate baseline/envelope/calibration
+  -> data-quality check 付きで step 実行
+  -> 有効な normal window を抽出
+  -> baseline / envelope / calibration を推定
   -> shadow replay
-  -> review candidate profile
-  -> approve, reject, or rerun
-  -> version and lock profile
+  -> candidate profile をレビュー
+  -> approve、reject、または rerun
+  -> profile を versioning して lock
 ```
 
-An initial recipe may include:
+初期レシピには、次の step を含められます。
 
-1. stopped state for a defined duration
-2. low speed / low load
-3. nominal speed / nominal load
-4. high speed or high load within safe limits
-5. repeated normal production cycles
-6. controlled restart or cooldown, if relevant
+1. 一定時間の停止状態
+2. low speed／low load
+3. nominal speed／nominal load
+4. 安全範囲内での high speed または high load
+5. 通常生産 cycle の繰り返し
+6. 必要に応じた controlled restart または cooldown
 
-Each step needs entry conditions, duration or cycle count, expected mode, required tags, data-quality thresholds, and an operator abort path.
+各 step に、開始条件、時間または cycle 数、期待する mode、必要な tag、data-quality threshold、operator abort path を定義します。
 
-## Learnable values
+## 学習してよい値
 
-Candidate values include:
+候補となる値は次のとおりです。
 
-- mean, variance, quantiles, and robust spread by mode
-- forecast bias and calibration coefficients
-- residual thresholds and persistence windows
-- normal envelopes conditioned on speed, load, temperature, recipe, or runtime
-- equipment-specific adapter parameters
-- tag correlation and lag features
+- mode ごとの mean、variance、quantile、robust spread
+- forecast bias と calibration coefficient
+- residual threshold と persistence window
+- speed、load、temperature、recipe、runtime を条件とする normal envelope
+- 設備固有の adapter parameter
+- tag 間の相関と lag feature
 
-The candidate must retain the evidence behind each value: sample count, duration, covered regimes, rejected windows, and uncertainty.
+candidate には各値の根拠として、sample 数、時間、カバーした regime、除外 window、不確実性を残します。
 
-## Protected values
+## 保護する値
 
-The AI layer must never autonomously change:
+AI レイヤーは次を自律的に変更してはいけません。
 
-- emergency stops and safety interlocks
-- hard over-current, over-temperature, pressure, or motion limits
-- machine guarding or permissive logic
+- emergency stop と safety interlock
+- hard な over-current、over-temperature、pressure、motion limit
+- machine guarding と permissive logic
 - PLC program logic
-- actuator commands or operating recipes
+- actuator command と operating recipe
 
-If a learned warning candidate is useful, it is exported for explicit review and policy-controlled promotion.
+学習した warning candidate が有用な場合も、明示的なレビューと policy 管理された昇格を経て export します。
 
-## Profile candidate schema
+## Profile candidate の schema
 
 ```yaml
 profile_id: <immutable-id>
@@ -92,22 +92,22 @@ promotion:
   approved_by: <identity-or-null>
 ```
 
-## Safety and rollback gates
+## Safety と rollback の gate
 
-A profile candidate is not eligible for approval unless:
+次を満たさない profile candidate は承認対象にしません。
 
-- every required recipe step has sufficient valid data;
-- no maintenance or known fault window was learned as normal;
-- the candidate is replayed against held-out data or shadow data;
-- false alarms and missed events are reviewed by operating mode;
-- the previous approved profile remains available as rollback;
-- expiry and revalidation conditions are defined.
+- すべての必須 recipe step に十分な有効データがある。
+- maintenance または既知の fault window を normal として学習していない。
+- held-out data または shadow data に対して candidate を replay している。
+- 誤警報と見逃しを運転 mode ごとにレビューしている。
+- 直前の approved profile を rollback 用に保持している。
+- expiry と再検証条件を定義している。
 
-## Contamination defenses
+## 汚染対策
 
-- Require operator-confirmed step labels where possible.
-- Exclude maintenance, alarm, and sensor-quality windows from baseline learning.
-- Keep a holdout segment that cannot influence tuning.
-- Use robust estimators and cap the influence of outliers.
-- Require a minimum sample count and regime coverage.
-- Never learn from a profile while it is being evaluated for promotion.
+- 可能な限り operator が step label を確認する。
+- maintenance、alarm、sensor-quality window を baseline 学習から除外する。
+- tuning に影響しない holdout segment を確保する。
+- robust estimator を使い、outlier の影響を制限する。
+- 最低 sample 数と regime coverage を要求する。
+- promotion 評価中の profile から学習しない。

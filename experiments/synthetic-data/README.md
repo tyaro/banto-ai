@@ -1,5 +1,5 @@
-# Synthetic industrial data experiments
+# Synthetic industrial data 実験
 
-Use this area for seed-reproducible motor, conveyor, and process-like signal generation. A generator should expose regimes, correlated signals, drift, missingness, and labeled fault-like events while keeping the physical assumptions explicit.
+seed 再現可能な motor、conveyor、process-like signal の生成を扱います。generator には、regime、相関した signal、drift、欠損、label 付き fault-like event を持たせ、物理的な仮定を明示します。
 
-Generated datasets belong outside Git by default. Commit generator parameters and manifests, not large outputs.
+生成した dataset 本体は、原則として Git の外に置きます。commit するのは generator parameter と manifest です。

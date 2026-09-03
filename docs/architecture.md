@@ -1,15 +1,15 @@
-# banto-ai architecture and Banto Hub boundary
+# banto-ai アーキテクチャと Banto Hub との境界
 
-## Purpose
+## 目的
 
-`banto-ai` owns research code, evaluation, model artifacts, and proposed contracts. `banto-industrial` and Banto Hub own operational data access, permissions, device identity, control integration, and production observability.
+`banto-ai` は、研究コード、評価、モデル成果物、提案段階の連携契約を担当します。`banto-industrial` と Banto Hub は、運用データへのアクセス、権限、デバイス ID、制御連携、本番監視を担当します。
 
-The initial architecture is deliberately one-way and reviewable:
+初期アーキテクチャは、意図的に一方向でレビュー可能な構成にします。
 
 ```text
 Banto Hub / historian
         |
-        | approved export or read-only adapter
+        | 承認済み export または read-only adapter
         v
 banto-ai dataset adapter
         |
@@ -19,63 +19,63 @@ banto-ai dataset adapter
         |          +--> evaluation report
         |          +--> commissioning profile candidate
         v
-shadow inference or reviewed handoff
+shadow inference またはレビュー済み handoff
         |
         v
-Banto Hub operational consumers
+Banto Hub の運用コンシューマー
         |
         v
-PLC / control system (safety authority remains here)
+PLC / 制御システム（安全の権威はここに残す）
 ```
 
-## Responsibility split
+## 責務分担
 
-| Concern | banto-ai | Banto Hub / control system |
+| 関心事 | banto-ai | Banto Hub / 制御システム |
 | --- | --- | --- |
-| Forecasting and anomaly research | Owns | Consumes approved outputs |
-| Model training and evaluation | Owns | Does not train implicitly in production |
-| Data export and access policy | Requests a contract | Owns identity, permissions, and retention |
-| Equipment mode and recipe execution | Observes proposed metadata | Owns command execution and interlocks |
-| Warning candidates | Proposes | Reviews, applies, or rejects |
-| Emergency stop and hard limits | Never owns | Always owns |
-| Promotion to production | Provides evidence | Owns approval and rollout |
+| 予測・異常検知の研究 | 担当 | 承認済み出力を利用 |
+| モデル学習・評価 | 担当 | 本番環境で暗黙に学習しない |
+| データ export とアクセス方針 | 契約を要求 | ID、権限、保持期間を管理 |
+| 設備モードとレシピ実行 | 提案されたメタデータを観測 | コマンド実行とインターロックを管理 |
+| 警告候補 | 提案 | レビュー、適用、または却下 |
+| 非常停止とハード上限 | 担当しない | 常に担当 |
+| 本番昇格 | 根拠を提供 | 承認と rollout を管理 |
 
-## Integration stages
+## 連携段階
 
 ### Stage 1: offline export
 
-An operator or scheduled process exports a bounded time window with a dataset manifest. The research code reads the export without needing a live connection.
+オペレーターまたはスケジュール処理が、データセット manifest とともに期間を限定したデータを export します。研究コードは live 接続なしでこの export を読み取ります。
 
-Minimum metadata:
+最低限必要なメタデータ:
 
-- `dataset_id` and provenance
-- tag names and engineering units
-- sampling interval and timezone
-- equipment or line identifier, pseudonymized where required
-- operating mode and recipe identifiers, if available
-- quality flags, missing-value policy, and maintenance periods
-- train/validation/test split definition
+- `dataset_id` とデータの出所
+- tag 名と工学単位
+- サンプリング間隔とタイムゾーン
+- 必要に応じて匿名化した設備・ライン ID
+- 取得できる場合は運転モードとレシピ ID
+- quality flag、欠損値方針、保全期間
+- train／validation／test の分割定義
 
-### Stage 2: read-only or shadow adapter
+### Stage 2: read-only または shadow adapter
 
-An adapter may request recent observations and return forecasts, residuals, anomaly scores, and confidence intervals. It must not write PLC values, thresholds, recipes, or interlock settings.
+adapter は直近の観測値を要求し、予測、残差、異常スコア、信頼区間を返せます。ただし PLC 値、閾値、レシピ、インターロック設定を書き込んではいけません。
 
-The adapter should expose an explicit model version and profile version on every response. If the model is unavailable, stale, out of distribution, or missing required tags, the consumer receives a clear degraded-state result rather than a silent fallback.
+すべての応答に、明示的な model version と profile version を含めます。モデルが利用不能、古い、out of distribution、または必要な tag が不足している場合は、暗黙の fallback ではなく明確な degraded state を返します。
 
 ### Stage 3: reviewed handoff
 
-A reviewed model artifact or commissioning profile can be promoted through Banto Hub's existing approval and deployment process. Promotion must include:
+レビュー済みの model artifact または commissioning profile は、Banto Hub の既存の承認・デプロイ手順を通して昇格できます。昇格時には次を含めます。
 
-- evaluation report and baseline comparison
-- training data provenance
-- model and configuration hashes
-- operating modes covered by the evidence
-- known failure modes and rollback target
-- reviewer and approval timestamp
+- 評価レポートとベースライン比較
+- 学習データの出所
+- model と設定の hash
+- 根拠がある運転モード
+- 既知の失敗モードと rollback 先
+- レビュー担当者と承認日時
 
-## Proposed logical contracts
+## 提案する論理契約
 
-These are research contracts, not a finalized public API.
+以下は研究用の契約であり、確定した公開 API ではありません。
 
 ### Forecast request
 
@@ -112,19 +112,19 @@ These are research contracts, not a finalized public API.
 
 ### Commissioning profile candidate
 
-A candidate profile contains learned normal envelopes, calibration coefficients, covered recipe steps, data-quality evidence, and a validity period. It must identify which values are advisory and which values are protected from automatic promotion. The profile is not a control recipe and must not be written directly to a PLC.
+candidate profile には、学習した正常エンベロープ、校正係数、カバーしたレシピ step、データ品質の根拠、有効期間を含めます。助言値と自動昇格から保護する値を明確に区別します。この profile は制御レシピではなく、PLC に直接書き込んではいけません。
 
-## Data and artifact rules
+## データと成果物のルール
 
-- Raw customer data stays in the customer's approved storage boundary.
-- Repository datasets are synthetic or public and include a license/provenance note.
-- Exported data is immutable for an experiment run; transformations are recorded in the manifest.
-- Artifacts are content-addressed or otherwise immutable after promotion.
-- A model cannot be evaluated only on the data used to tune it.
+- 顧客の raw data は、顧客が承認した storage boundary 内に留めます。
+- リポジトリ内のデータは合成または公開データとし、license と出所を記録します。
+- export データは experiment run 内で不変とし、変換処理を manifest に記録します。
+- 成果物は content-addressed、または昇格後に不変となる方式にします。
+- 学習に使ったデータだけでモデルを評価してはいけません。
 
-## Open decisions
+## 今後決めること
 
-1. Which Banto Hub export format is stable enough for the first adapter: CSV bundle, Parquet, or a versioned API?
-2. Which identity and authorization mechanism will the shadow adapter use?
-3. Where will approved artifacts and commissioning profiles be stored and signed?
-4. What latency, retention, and backfill guarantees are required for each use case?
+1. 最初の adapter に適した安定形式は何か: CSV bundle、Parquet、または versioned API。
+2. shadow adapter が使う ID と認可方式は何か。
+3. 承認済み artifact と commissioning profile をどこに保存・署名するか。
+4. ユースケースごとに必要な latency、保持期間、backfill 保証は何か。

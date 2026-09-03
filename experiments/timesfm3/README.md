@@ -1,13 +1,13 @@
-# TimesFM-3 experiments
+# TimesFM-3 実験
 
-This directory is reserved for the reproducible TimesFM-3 benchmark described in [`docs/timesfm-notes.md`](../../docs/timesfm-notes.md).
+このディレクトリは、[`docs/timesfm-notes.md`](../../docs/timesfm-notes.md) に記載した再現可能な TimesFM-3 benchmark 用です。
 
-Planned contents:
+予定している内容:
 
-- run manifests
+- run manifest
 - model adapter code
-- baseline runners
-- smoke-test fixtures
-- generated reports outside version control
+- baseline runner
+- smoke-test fixture
+- version 管理対象外の生成レポート
 
-Pin the exact model release and runtime before recording any result. Keep checkpoints and predictions out of Git unless they are tiny, synthetic test artifacts.
+結果を記録する前に、正確な model release と runtime を固定します。checkpoint と prediction は、リポジトリに安全な小さな synthetic test artifact を除き、Git の外に置きます。
