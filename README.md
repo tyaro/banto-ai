@@ -86,7 +86,7 @@ TimesFM 3.0の共通`Forecaster` adapter、official APIの遅延import境界、l
 
 正式CPU smoke 2回の測定値は [`docs/results/timesfm3-cpu-smoke-2026-09-04.md`](docs/results/timesfm3-cpu-smoke-2026-09-04.md) に記録しています。単一synthetic windowの結果であり、実設備性能や製品採否を示しません。
 
-rolling-origin benchmarkの実測値は [`docs/results/timesfm3-rolling-benchmark-2026-09-04.md`](docs/results/timesfm3-rolling-benchmark-2026-09-04.md) に記録しています。TimesFM 3.0はこの限定条件でpoint forecastとWISがLastValueを上回りましたが、native intervalのcoverageはnominal 80%未達で、結果はPhase 2完了や製品採用の根拠ではありません。
+rolling-origin benchmarkの実測値は [`docs/results/timesfm3-rolling-benchmark-2026-09-04.md`](docs/results/timesfm3-rolling-benchmark-2026-09-04.md) に記録しています。clean savepointから実行したrun3をprimary reproducibility runとし、run1/run2はdirty pre-savepointの再現性確認として残しています。TimesFM 3.0はこの限定条件のcomposite値でpoint forecastとWISがLastValueを上回りましたが、native intervalのcoverageはnominal 80%未達です。AとdegCの異なる単位を混合した値のため、物理量としての直接解釈やtarget構成の異なるrunとの比較は行いません。結果はPhase 2完了や製品採用の根拠ではありません。
 
 Phase 0の実行確認は、外部依存を導入せず `python tools/smoke.py` と `python tools/safety_check.py` で行えます。Phase 1の最小generatorは次で実行できます。
 

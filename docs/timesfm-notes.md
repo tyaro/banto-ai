@@ -38,7 +38,9 @@ PyPI `timesfm` 3.0.0は2026-08-28公開で、確認したwheel SHA-256は`0ad3e6
 | p10-p90 coverage | 16.666667% | 70.833333% |
 | p10-p90 interval width | 0.389116 | 1.758446 |
 
-この限定条件ではTimesFM 3.0がpoint forecastとWISでLastValueを上回りましたが、native intervalのcoverageはnominal 80%未達で、interval widthはbaselineの4.519074倍でした。2回のrunでpredictions SHA-256、metrics、originsは一致しました。ただし、24 points、各2 origins、単一generator、LastValueのみの比較であり、一般性能・実設備性能・製品採否を示しません。
+この限定条件のcomposite値ではTimesFM 3.0がpoint forecastとWISでLastValueを上回りましたが、native intervalのcoverageはnominal 80%未達で、interval widthはbaselineの4.519074倍でした。MAE、RMSE、WIS、interval widthは、AとdegCの異なる単位を持つ2 targetを同数point-weightで混合した固定構成の値です。物理量として直接解釈したり、target構成が異なるrun同士で比較したりしてはいけません。MASEはunitlessですが、同数point平均です。3回のrunでpredictions SHA-256、metrics、originsは一致しました。clean savepointから実行したrun3をprimary reproducibility runとし、run1/run2はdirty pre-savepointの確認として残しています。ただし、24 points、各2 origins、単一generator、LastValueのみの比較であり、一般性能・実設備性能・製品採否を示しません。
+
+次段階では、composite値だけに依存しないよう、target別およびequipment-target別のmetrics集計をresult schemaへ追加します。
 
 実行時はTimesFM package `3.0.0`、checkpoint revision `43046b85ec22d584a13f8098c2ed39c889e129c2`、CPU、offline、research-only／non-commercialでした。weightsの利用制限はMITのrepository licenseによって緩和されません。
 

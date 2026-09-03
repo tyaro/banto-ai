@@ -143,7 +143,7 @@ savepoint 1では、外部依存なしのseed再現可能generatorと最小quali
 
 ### Phase 2: Forecast候補比較
 
-現在、TimesFM 3.0の共通`Forecaster` adapter、official API境界、license／provenance検証、fake backend tests、専用Windows CPU環境での2回の実モデルsmokeを実施済みです。さらに、LastValueとの小規模rolling-origin benchmarkを実施し、限定条件でのmodel別metrics、再現性、CPU latency／peak memoryを[`docs/results/timesfm3-rolling-benchmark-2026-09-04.md`](results/timesfm3-rolling-benchmark-2026-09-04.md)へ記録しました。TimesFM 3はこの条件でpoint forecastとWISが良好でしたが、native intervalはnominal coverage未達です。他候補との同一条件比較、統計baseline全種、広範な精度・calibration評価、実設備評価は未実施であり、Phase 2は完了していません。
+現在、TimesFM 3.0の共通`Forecaster` adapter、official API境界、license／provenance検証、fake backend tests、専用Windows CPU環境での2回の実モデルsmokeを実施済みです。さらに、LastValueとの小規模rolling-origin benchmarkを実施し、限定条件でのmodel別metrics、再現性、CPU latency／peak memoryを[`docs/results/timesfm3-rolling-benchmark-2026-09-04.md`](results/timesfm3-rolling-benchmark-2026-09-04.md)へ記録しました。TimesFM 3はこの条件のcomposite値でpoint forecastとWISが良好でしたが、native intervalはnominal coverage未達です。MAE、RMSE、WIS、interval widthはAとdegCの異なる単位を持つ2 targetの同数point-weight平均であり、次段階でtarget別およびequipment-target別集計をresult schemaへ追加します。他候補との同一条件比較、統計baseline全種、広範な精度・calibration評価、実設備評価は未実施であり、Phase 2は完了していません。
 
 #### 優先順位
 
@@ -171,7 +171,7 @@ savepoint 1では、外部依存なしのseed再現可能generatorと最小quali
 #### Gate 2
 
 - 同一のevaluation windowとmetricでmodel間比較ができる。
-- aggregateだけでなくsignal、mode、horizon、equipment別結果がある。
+- aggregateだけでなくtarget、equipment-target、signal、mode、horizon別結果がある（target／equipment-target別集計は次段階でresult schemaへ追加）。
 - accuracy、calibration、latency、peak memory、artifact sizeを同時に報告する。
 - TimesFM 3.0の結果に `research-only` が明示され、promotion対象から除外される。
 - 少なくとも1つの商用利用可能候補について、継続／保留／中止の判断ができる。

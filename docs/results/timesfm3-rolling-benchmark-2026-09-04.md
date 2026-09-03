@@ -2,7 +2,7 @@
 
 ## 要約
 
-`synthetic-motor-small` に対する小規模な chronological rolling-origin benchmark を、LastValue baseline と TimesFM 3.0で実施しました。この限定条件では、TimesFM 3.0は LastValue より point forecast の MAE、RMSE、MASE、および WIS が良好でした。一方、TimesFM 3.0の p10-p90 interval は baseline より広く、nominal 80% coverage に対して 70.833% でした。
+`synthetic-motor-small` に対する小規模な chronological rolling-origin benchmark を、LastValue baseline と TimesFM 3.0で実施しました。この固定構成のcomposite値では、TimesFM 3.0は LastValue より point forecast の MAE、RMSE、MASE、および WIS が良好でした。一方、TimesFM 3.0の p10-p90 interval は baseline より広く、nominal 80% coverage に対して 70.833% でした。
 
 この結果は、24 prediction points、2 equipment、各 equipment 2 validation origins／2 test origins、単一の合成データgenerator、context 12、horizon 3という小さな比較です。したがって、一般性能、実設備性能、製品採否、商用利用可否、または Phase 2 完了を示すものではありません。
 
@@ -30,7 +30,7 @@
 
 ## model別結果
 
-下表の「表示値」は比較しやすいように小数点以下6桁へ丸めています。正確なraw値は後の表に併記します。
+下表の「表示値」は比較しやすいように小数点以下6桁へ丸めています。正確なraw値は後の表に併記します。model別 MAE、RMSE、WIS、interval widthは、`motor_current`（A）と`motor_temperature`（degC）という異なる単位の2 targetを、同数point weightで混合した固定構成のcomposite値です。物理量として直接解釈したり、target構成が異なるrun同士で比較したりしてはいけません。MASEはunitlessですが、同じく全targetの同数point平均です。
 
 | 指標 | LastValue | TimesFM 3.0 |
 | --- | ---: | ---: |
@@ -66,7 +66,7 @@ TimesFM 3.0
 
 ### LastValueに対する相対改善
 
-TimesFM 3.0の相対改善率は、`(LastValue - TimesFM 3.0) / LastValue` で計算しました。
+TimesFM 3.0の相対改善率は、`(LastValue - TimesFM 3.0) / LastValue` で計算しました。以下の改善率も、この固定構成のcomposite値に対するものです。
 
 | 指標 | 相対改善率（表示値） | raw値（%） |
 | --- | ---: | ---: |
@@ -75,29 +75,46 @@ TimesFM 3.0の相対改善率は、`(LastValue - TimesFM 3.0) / LastValue` で�
 | MASE | 45.9440% | 45.9439761979482% |
 | WIS | 51.7992% | 51.7992206533913% |
 
-TimesFM 3.0の interval width は baseline の `4.51907417825414`倍（表示値 `4.519074`倍）でした。TimesFM 3.0の p10-p90 coverage は `70.833333%`で、nominal target `80%`を満たしていません。point forecast の改善と interval calibration は別の評価軸として扱う必要があります。
+TimesFM 3.0の interval width は baseline の `4.51907417825414`倍（表示値 `4.519074`倍）でした。これは同じ固定構成のcomposite widthの比較です。TimesFM 3.0の p10-p90 coverage は `70.833333%`で、nominal target `80%`を満たしていません。point forecast の改善と interval calibration は別の評価軸として扱う必要があります。
 
 ## 再現性と実行時情報
 
-2回のrunで、次が完全一致しました。
+run3をprimary reproducibility runとします。run3は確定したclean savepointから実行し、run1/run2はsavepoint前のdirty working treeから実行しました。3回のrunで、次が完全一致しました。
 
-- predictions SHA-256: run1、run2ともに `15d233ebccae8e180262dac9b2bb606c4597f58427bd827157e7917aba2244b3`
+- predictions SHA-256: run1、run2、run3ともに `15d233ebccae8e180262dac9b2bb606c4597f58427bd827157e7917aba2244b3`
 - metrics: exact equal
 - origins: exact equal
 
-| 項目 | run1 | run2 |
-| --- | ---: | ---: |
-| total runtime | 16.759137400018517秒 | 18.367833299998892秒 |
-| peak memory | 2966384640 bytes | 2966917120 bytes |
-| TimesFM p50 latency | 321.71039999229833 ms | 379.159449992585 ms |
-| TimesFM p95 latency | 327.93352001172025 ms | 437.6459800012526 ms |
+### primary run3の来歴とruntime
 
-peak memory のsourceは、両runとも Windows OS process `PeakWorkingSetSize` です。latencyは各test forecast callの測定値で、model loadは含みません。total runtimeはmodel load、validation、test、output生成を含みます。
+| 項目 | run3（primary） |
+| --- | ---: |
+| Git HEAD | `dea300c27e24ad966d66c574b86d1acbb937bfdf` |
+| dirty | `false` |
+| diff SHA-256 | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| validation runtime | 10.90976030001184秒 |
+| test runtime | 1.1399824999971315秒 |
+| total runtime | 12.0856943000108秒 |
+| peak memory | 2966470656 bytes |
+| peak memory source | Windows OS process `PeakWorkingSetSize` |
+| LastValue p50 / p95 | 0.6228499987628311 ms / 0.6472699853475206 ms |
+| TimesFM 3.0 p50 / p95 | 274.10054999927524 ms / 287.90440997690894 ms |
 
-実行時の来歴は次のとおりです。
+### 3-run再現性表
 
-- Git HEAD: `f0a06d225b0cef1f5959cf7196ac8ad2c28c3173`
-- dirty diff SHA-256: `0075ff72e3dcf352a46874b63a9ac7035affd86c21adadf512eef1ccbd2042e6`
+| 項目 | run1（dirty pre-savepoint） | run2（dirty pre-savepoint） | run3（clean savepoint、primary） |
+| --- | ---: | ---: | ---: |
+| total runtime | 16.759137400018517秒 | 18.367833299998892秒 | 12.0856943000108秒 |
+| peak memory | 2966384640 bytes | 2966917120 bytes | 2966470656 bytes |
+| TimesFM p50 latency | 321.71039999229833 ms | 379.159449992585 ms | 274.10054999927524 ms |
+| TimesFM p95 latency | 327.93352001172025 ms | 437.6459800012526 ms | 287.90440997690894 ms |
+
+run1/run2のpeak memory sourceもWindows OS process `PeakWorkingSetSize`です。latencyは各test forecast callの測定値で、model loadは含みません。total runtimeはmodel load、validation、test、output生成を含みます。run3のprimary来歴を正式な参照値とし、run1/run2はdirty状態でも同じ予測・metrics・originsが得られた再現性確認として残します。
+
+run1/run2の来歴は次のとおりです。
+
+- run1/run2 Git HEAD: `f0a06d225b0cef1f5959cf7196ac8ad2c28c3173`
+- run1/run2 dirty diff SHA-256: `0075ff72e3dcf352a46874b63a9ac7035affd86c21adadf512eef1ccbd2042e6`
 - TimesFM package: `3.0.0`
 - checkpoint revision: `43046b85ec22d584a13f8098c2ed39c889e129c2`
 - device: CPU
@@ -127,6 +144,7 @@ Phase 2は未完了のままです。次は、同じorigin選択規則と結果s
 3. startup、nominal、high-load、regime change、欠損、stale、fault-like eventごとにslice結果を出す。
 4. TimesFM 3.0のnative quantileについて、coverage不足と過大なinterval widthをcalibration実験で検証する。
 5. Chronos-2、Toto 2.0、Granite TTMなど、利用条件の異なる候補を同じdataset／window／metric／hardware記録で比較する。
-6. 公開データで再現可能性を補強し、合成データでの結果と分けて報告する。
+6. result schemaへtarget別およびequipment-target別のmetrics集計を追加し、異なる単位のcomposite値に依存しない比較を可能にする。
+7. 公開データで再現可能性を補強し、合成データでの結果と分けて報告する。
 
 次の比較結果が揃うまで、実設備評価、製品採否、Banto Hub／PLC write経路、commissioning profileへの自動昇格は行いません。
