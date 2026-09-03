@@ -212,7 +212,7 @@ def build_baseline(name: str, parameters: dict[str, object] | None = None) -> Fo
     if name == "ewma":
         exact({"alpha"})
         return EWMAForecaster(unit_float("alpha", 0.3))
-    if name in {"holt-linear", "autoets"}:
+    if name == "holt-linear":
         exact({"alpha", "beta"})
         return HoltLinearForecaster(unit_float("alpha", 0.8), unit_float("beta", 0.2))
     if name == "linear-regression-covariates":

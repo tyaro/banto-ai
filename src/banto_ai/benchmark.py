@@ -39,7 +39,7 @@ class ModelRegistry:
 
     _BASELINE_NAMES = frozenset({
         "last-value", "seasonal-naive", "moving-average", "ewma",
-        "holt-linear", "autoets", "linear-regression-covariates",
+        "holt-linear", "linear-regression-covariates",
     })
 
     def __init__(self, factories: Mapping[str, ModelFactory] | None = None) -> None:
@@ -86,6 +86,14 @@ def _quantile(values: list[float], q: float) -> float:
 
 
 def _validate_config(config: dict[str, Any], root: Path, registry: ModelRegistry | None = None) -> None:
+    configured_models = config.get("models")
+    if isinstance(configured_models, list) and any(
+        isinstance(model, dict) and model.get("name") == "autoets"
+        for model in configured_models
+    ):
+        raise BenchmarkError(
+            "autoets is not implemented and is intentionally rejected; use holt-linear"
+        )
     schema = load_json(root / "schemas" / "benchmark-run-config.schema.json")
     try:
         validate(config, schema)
@@ -109,6 +117,15 @@ def _validate_config(config: dict[str, Any], root: Path, registry: ModelRegistry
     names = [model["name"] for model in config["models"]]
     if len(names) != len(set(names)):
         raise BenchmarkError("duplicate model name is forbidden")
+    for key in ("target_signal_ids", "equipment_ids"):
+        values = config.get(key)
+        if values is not None and len(values) != len(set(values)):
+            raise BenchmarkError(f"{key} must contain unique IDs")
+    target_ids = config.get("target_signal_ids")
+    if target_ids is not None:
+        target_keys = [str(value).rsplit(".", 1)[-1] for value in target_ids]
+        if len(target_keys) != len(set(target_keys)):
+            raise BenchmarkError("target_signal_ids must contain unique logical target keys")
     registry = registry or ModelRegistry()
     for model in config["models"]:
         if not registry.has(model["name"]):
@@ -253,6 +270,70 @@ def _aggregate_predictions(
     return result
 
 
+def _dimension_metrics(
+    predictions: list[dict[str, Any]],
+    quantiles: tuple[float, ...],
+    train_scales: dict[tuple[str, str], tuple[float, ...]],
+    model_names: tuple[str, ...],
+    equipment_ids: tuple[str, ...],
+    target_pairs_by_equipment: dict[str, tuple[tuple[str, str], ...]],
+    target_units: dict[tuple[str, str], str],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    """Build deterministic target and equipment-target metrics from test rows only."""
+    target_order = tuple(
+        dict.fromkeys(
+            target_key
+            for equipment_id in equipment_ids
+            for _, target_key in target_pairs_by_equipment[equipment_id]
+        )
+    )
+    by_model_target: list[dict[str, Any]] = []
+    by_model_equipment_target: list[dict[str, Any]] = []
+
+    for model_name in model_names:
+        for target_key in target_order:
+            matching = [
+                item for item in predictions
+                if item["model"] == model_name
+                and item["target_signal_id"].rsplit(".", 1)[-1] == target_key
+            ]
+            if not matching:
+                continue
+            units = {
+                target_units[(item["equipment_id"], item["target_signal_id"])]
+                for item in matching
+            }
+            if len(units) != 1:
+                raise BenchmarkError(
+                    f"cannot aggregate mixed units for {model_name}/{target_key}"
+                )
+            by_model_target.append({
+                "model": model_name,
+                "target_signal_key": target_key,
+                "unit": next(iter(units)),
+                "metrics": _aggregate_predictions(matching, quantiles, train_scales),
+            })
+
+        for equipment_id in equipment_ids:
+            for target_id, _ in target_pairs_by_equipment[equipment_id]:
+                matching = [
+                    item for item in predictions
+                    if item["model"] == model_name
+                    and item["equipment_id"] == equipment_id
+                    and item["target_signal_id"] == target_id
+                ]
+                if not matching:
+                    continue
+                by_model_equipment_target.append({
+                    "model": model_name,
+                    "equipment_id": equipment_id,
+                    "target_signal_id": target_id,
+                    "unit": target_units[(equipment_id, target_id)],
+                    "metrics": _aggregate_predictions(matching, quantiles, train_scales),
+                })
+    return by_model_target, by_model_equipment_target
+
+
 def _select_origins(start: int, end: int, context_length: int, horizon: int, split_name: str, config: dict[str, Any]) -> tuple[int, ...]:
     stride = int(config.get(f"{split_name}_origin_stride", 1 if split_name == "validation" else horizon))
     maximum = config.get(f"max_{split_name}_origins")
@@ -306,10 +387,14 @@ def _make_request(
             points,
         )
 
-    begin = max(0, origin - context_length)
+    if origin < context_length:
+        raise BenchmarkError("origin must have the complete configured context")
+    if origin + horizon > len(rows):
+        raise BenchmarkError("forecast horizon exceeds available observation rows")
+    begin = origin - context_length
     context_ids = tuple(dict.fromkeys((*target_ids, *past_only_ids, *known_future_ids)))
     contexts = tuple(series(signal_id, begin, origin) for signal_id in context_ids)
-    future = tuple(series(signal_id, begin, min(len(rows), origin + horizon)) for signal_id in known_future_ids)
+    future = tuple(series(signal_id, begin, origin + horizon) for signal_id in known_future_ids)
     return ForecastRequest(contexts, target_ids, horizon, quantiles=quantiles, known_future_covariates=future)
 
 
@@ -405,8 +490,8 @@ def run_benchmark(config_path: Path, root: Path, model_registry: ModelRegistry |
         raise BenchmarkError("split manifest must provide chronological train/validation/test")
     split_indices: dict[str, dict[str, tuple[int, int]]] = {equipment_id: _split_indices_for_rows(rows, chronological, equipment_id) for equipment_id, rows in by_equipment.items()}
     signals = {item["signal_id"]: item for item in manifest["signals"]}
-    configured_targets = tuple(config.get("target_signal_ids") or [item["signal_id"] for item in manifest["signals"] if item["role"] == "target"])
     equipment_ids = tuple(config.get("equipment_ids") or by_equipment.keys())
+    configured_targets = config.get("target_signal_ids")
     horizon = config["horizon"]
     context_length = config["context_length"]
     q_values = tuple(float(q) for q in config["quantiles"])
@@ -427,17 +512,63 @@ def run_benchmark(config_path: Path, root: Path, model_registry: ModelRegistry |
 
     def resolve_signal(equipment_id: str, requested: str) -> tuple[str, str]:
         key = requested.rsplit(".", 1)[-1]
-        full = requested if requested in signals else f"{equipment_id}.{key}"
+        is_full_id = requested in signals or "." in requested
+        if is_full_id:
+            if len(equipment_ids) > 1:
+                raise BenchmarkError(
+                    f"full signal ID '{requested}' is not allowed for multiple equipment; "
+                    f"use short ID '{key}'"
+                )
+            if not requested.startswith(f"{equipment_id}."):
+                owner = next(
+                    (
+                        candidate
+                        for candidate in equipment_ids
+                        if requested.startswith(f"{candidate}.")
+                    ),
+                    "unknown",
+                )
+                raise BenchmarkError(
+                    f"signal ID '{requested}' belongs to equipment '{owner}', "
+                    f"not target equipment '{equipment_id}'"
+                )
+            full = requested
+        else:
+            full = f"{equipment_id}.{key}"
         if full not in signals:
-            raise BenchmarkError(f"unknown signal for equipment: {requested}")
+            raise BenchmarkError(f"unknown signal for equipment '{equipment_id}': {requested}")
         return full, key
 
     targets_by_equipment: dict[str, tuple[tuple[str, str], ...]] = {}
     covariates_by_equipment: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {}
+    target_units: dict[tuple[str, str], str] = {}
+    units_by_target_key: dict[str, set[str]] = {}
     for equipment_id in equipment_ids:
         if equipment_id not in by_equipment:
             raise BenchmarkError(f"unknown equipment: {equipment_id}")
-        targets_by_equipment[equipment_id] = tuple(resolve_signal(equipment_id, str(item)) for item in configured_targets)
+        if configured_targets is None:
+            target_requests = tuple(
+                item["signal_id"].rsplit(".", 1)[-1]
+                for item in manifest["signals"]
+                if item["role"] == "target"
+                and item["signal_id"].startswith(f"{equipment_id}.")
+            )
+        else:
+            target_requests = tuple(str(item) for item in configured_targets)
+        targets_by_equipment[equipment_id] = tuple(
+            resolve_signal(equipment_id, item) for item in target_requests
+        )
+        target_keys = [target_key for _, target_key in targets_by_equipment[equipment_id]]
+        if not target_keys:
+            raise BenchmarkError(f"no target signals configured for equipment '{equipment_id}'")
+        if len(target_keys) != len(set(target_keys)):
+            raise BenchmarkError(
+                f"duplicate logical target key resolved for equipment '{equipment_id}'"
+            )
+        for target_id, target_key in targets_by_equipment[equipment_id]:
+            unit = signals[target_id]["unit"]
+            target_units[(equipment_id, target_id)] = unit
+            units_by_target_key.setdefault(target_key, set()).add(unit)
         past = tuple(resolve_signal(equipment_id, str(item))[0] for item in config.get("past_only_covariate_ids", ()))
         known = tuple(resolve_signal(equipment_id, str(item))[0] for item in config.get("known_future_covariate_ids", ()))
         if not config.get("past_only_covariate_ids") and not config.get("known_future_covariate_ids"):
@@ -447,6 +578,9 @@ def run_benchmark(config_path: Path, root: Path, model_registry: ModelRegistry |
         train_start, train_end = split_indices[equipment_id]["train"]
         for target, target_key in targets_by_equipment[equipment_id]:
             train_scales[(equipment_id, target)] = tuple(float(row["signals"][target_key]["value"]) for row in by_equipment[equipment_id][train_start:train_end] if row["signals"][target_key]["value"] is not None)
+    mixed_units = {key: sorted(units) for key, units in units_by_target_key.items() if len(units) > 1}
+    if mixed_units:
+        raise BenchmarkError(f"target units must match before aggregation: {mixed_units}")
 
     def record_failure(model_name: str, equipment_id: str, target: str, status: str, reason: str, split_name: str) -> None:
         failure_key = (equipment_id, target, model_name)
@@ -475,6 +609,10 @@ def run_benchmark(config_path: Path, root: Path, model_registry: ModelRegistry |
         for equipment_id in equipment_ids:
             start, end = split_indices[equipment_id][split_name]
             origins = _select_origins(start, end, context_length, horizon, split_name, config)
+            if any(origin < start or origin < context_length or origin + horizon > end for origin in origins):
+                raise BenchmarkError(
+                    f"{split_name} origin must keep context+horizon inside its split: {equipment_id}"
+                )
             origin_selection[split_name][equipment_id] = {"count": len(origins), "indices": list(origins), "stride": config.get(f"{split_name}_origin_stride", 1 if split_name == "validation" else horizon), "max_origins": config.get(f"max_{split_name}_origins"), "rule": "chronological range with configured stride; endpoint-inclusive uniform cap when max_origins is set"}
 
     for equipment_id in equipment_ids:
@@ -639,6 +777,16 @@ def run_benchmark(config_path: Path, root: Path, model_registry: ModelRegistry |
         for model_name in model_policies
         if any(item["model"] == model_name for item in predictions)
     }
+    model_names = tuple(model["name"] for model in config["models"])
+    by_model_target, by_model_equipment_target = _dimension_metrics(
+        predictions,
+        q_values,
+        train_scales,
+        model_names,
+        equipment_ids,
+        targets_by_equipment,
+        target_units,
+    )
     overall = _aggregate_predictions(predictions, q_values, train_scales)
     elapsed = time.perf_counter() - start_time
     _, tracemalloc_peak = tracemalloc.get_traced_memory()
@@ -667,7 +815,7 @@ def run_benchmark(config_path: Path, root: Path, model_registry: ModelRegistry |
             for model_name, latencies in test_latencies_by_model.items()
         }
         result = _finite_json({
-            "schema_version": "0.1",
+            "schema_version": "0.2",
             "result_type": "benchmark",
             "run_id": config["run_id"],
             "status": "partial" if failures else "success",
@@ -681,7 +829,13 @@ def run_benchmark(config_path: Path, root: Path, model_registry: ModelRegistry |
             },
             "prediction_count": len(predictions),
             "failures": failures,
-            "metrics": {"aggregate": overall, "by_model": by_model, "slices": summary},
+            "metrics": {
+                "aggregate": overall,
+                "by_model": by_model,
+                "slices": summary,
+                "by_model_target": by_model_target,
+                "by_model_equipment_target": by_model_equipment_target,
+            },
             "runtime": {
                 "validation_seconds": validation_seconds,
                 "test_seconds": test_seconds,
@@ -710,7 +864,22 @@ def run_benchmark(config_path: Path, root: Path, model_registry: ModelRegistry |
         model_lines = "\n".join(
             f"- `{model_name}`: {value}" for model_name, value in by_model.items()
         )
-        markdown = "# Benchmark結果\n\n合成データの結果であり、実設備の性能を示しません。\n\n## 概要\n\n- データ品質gate: 合格\n- 予測件数: %d\n- quantile policy: model別（nativeまたはvalidation residual by lead）\n- 失敗・評価不能: %d\n- aggregate（全model混在・互換表示）: %s\n\n## model別metrics\n\n%s\n\n## slice別\n\n%s\n" % (len(predictions), len(failures), overall, model_lines, "\n".join(f"- `{key}`: {value}" for key, value in summary.items()))
+        def table(headers: tuple[str, ...], rows: list[dict[str, Any]]) -> str:
+            lines = ["| " + " | ".join(headers) + " |", "| " + " | ".join("---" for _ in headers) + " |"]
+            for row in rows:
+                values = [
+                    str(row[key]) if key != "metrics" else json.dumps(row[key], ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+                    for key in headers
+                ]
+                lines.append("| " + " | ".join(values) + " |")
+            return "\n".join(lines)
+
+        markdown = "# Benchmark結果\n\n合成データの結果であり、実設備の性能を示しません。\n\n## 概要\n\n- 結果schema: `0.2`（`aggregate`は互換表示、判定はdimension別metricsを使用）\n- データ品質gate: 合格\n- 予測件数: %d\n- quantile policy: model別（nativeまたはvalidation residual by lead）\n- 失敗・評価不能: %d\n- aggregate（全model混在・互換表示）: %s\n\n## model別metrics\n\n%s\n\n## model-target別metrics\n\n%s\n\n## model-equipment-target別metrics\n\n%s\n\n## slice別\n\n%s\n" % (
+            len(predictions), len(failures), overall, model_lines,
+            table(("model", "target_signal_key", "unit", "metrics"), by_model_target),
+            table(("model", "equipment_id", "target_signal_id", "unit", "metrics"), by_model_equipment_target),
+            "\n".join(f"- `{key}`: {value}" for key, value in summary.items()),
+        )
         (temporary / "summary.md").write_text(markdown, encoding="utf-8")
         state_size = sum(path.stat().st_size for path in temporary.iterdir() if path.is_file())
         result["runtime"]["output_size_bytes_excluding_result"] = state_size

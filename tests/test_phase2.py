@@ -173,6 +173,16 @@ class Phase2Tests(unittest.TestCase):
                 invalid["quantiles"] = quantiles
                 _validate_config(invalid, root)
 
+    def test_autoets_is_rejected_by_schema_and_runner(self) -> None:
+        root = __import__("pathlib").Path(__file__).resolve().parents[1]
+        config = load_json(root / "examples/configs/benchmark-small.json")
+        config["models"] = [{"name": "autoets"}]
+        schema = load_json(root / "schemas/benchmark-run-config.schema.json")
+        with self.assertRaises(ManifestValidationError):
+            validate(config, schema)
+        with self.assertRaisesRegex(BenchmarkError, "autoets is not implemented"):
+            _validate_config(config, root)
+
 
 if __name__ == "__main__":
     unittest.main()

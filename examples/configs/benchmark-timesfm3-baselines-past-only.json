@@ -1,0 +1,25 @@
+{
+  "schema_version": "0.1",
+  "run_id": "benchmark-timesfm3-baselines-past-only",
+  "dataset_path": "artifacts/generated/synthetic-motor-small",
+  "output_dir": "artifacts/benchmark/benchmark-timesfm3-baselines-past-only",
+  "horizon": 3,
+  "context_length": 12,
+  "seed": 42,
+  "target_signal_ids": ["motor_current", "motor_temperature"],
+  "past_only_covariate_ids": ["load_proxy"],
+  "known_future_covariate_ids": [],
+  "validation_origin_stride": 3,
+  "test_origin_stride": 3,
+  "max_validation_origins": 2,
+  "max_test_origins": 2,
+  "quantiles": [0.1, 0.5, 0.9],
+  "models": [
+    {"name": "last-value"},
+    {"name": "seasonal-naive", "parameters": {"season_length": 3}},
+    {"name": "moving-average", "parameters": {"window": 3}},
+    {"name": "ewma", "parameters": {"alpha": 0.3}},
+    {"name": "holt-linear", "parameters": {"alpha": 0.8, "beta": 0.2}},
+    {"name": "timesfm3", "quantile_policy": "native", "parameters": {}}
+  ]
+}

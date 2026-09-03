@@ -139,12 +139,12 @@ run1/run2の来歴は次のとおりです。
 
 Phase 2は未完了のままです。次は、同じorigin選択規則と結果schemaを維持して、次を追加します。
 
-1. seasonal-naive、EWMA、moving-average、Holt、ETS、linear-regression-covariatesを同一originで比較する。
+1. seasonal-naive、EWMA、moving-average、Holt、linear-regression-covariatesを同一originで比較する。
 2. validation／test origin数を増やし、複数seed、複数horizon、複数contextを評価する。
 3. startup、nominal、high-load、regime change、欠損、stale、fault-like eventごとにslice結果を出す。
 4. TimesFM 3.0のnative quantileについて、coverage不足と過大なinterval widthをcalibration実験で検証する。
 5. Chronos-2、Toto 2.0、Granite TTMなど、利用条件の異なる候補を同じdataset／window／metric／hardware記録で比較する。
-6. result schemaへtarget別およびequipment-target別のmetrics集計を追加し、異なる単位のcomposite値に依存しない比較を可能にする。
+6. result schemaへtarget別およびequipment-target別のmetrics集計を追加し、異なる単位のcomposite値に依存しない比較を可能にする。（schema `0.2`で実装済み）
 7. 公開データで再現可能性を補強し、合成データでの結果と分けて報告する。
 
 次の比較結果が揃うまで、実設備評価、製品採否、Banto Hub／PLC write経路、commissioning profileへの自動昇格は行いません。

@@ -131,7 +131,7 @@ savepoint 1では、外部依存なしのseed再現可能generatorと最小quali
 - seasonal-naive
 - moving average／EWMA
 - linear regression with covariates
-- AutoETSまたは同等の古典model
+- Holt linear trend baseline
 
 #### Gate 1
 
@@ -143,13 +143,15 @@ savepoint 1では、外部依存なしのseed再現可能generatorと最小quali
 
 ### Phase 2: Forecast候補比較
 
-現在、TimesFM 3.0の共通`Forecaster` adapter、official API境界、license／provenance検証、fake backend tests、専用Windows CPU環境での2回の実モデルsmokeを実施済みです。さらに、LastValueとの小規模rolling-origin benchmarkを実施し、限定条件でのmodel別metrics、再現性、CPU latency／peak memoryを[`docs/results/timesfm3-rolling-benchmark-2026-09-04.md`](results/timesfm3-rolling-benchmark-2026-09-04.md)へ記録しました。TimesFM 3はこの条件のcomposite値でpoint forecastとWISが良好でしたが、native intervalはnominal coverage未達です。MAE、RMSE、WIS、interval widthはAとdegCの異なる単位を持つ2 targetの同数point-weight平均であり、次段階でtarget別およびequipment-target別集計をresult schemaへ追加します。他候補との同一条件比較、統計baseline全種、広範な精度・calibration評価、実設備評価は未実施であり、Phase 2は完了していません。
+AutoETSは未実装であり、現行benchmarkのmodel registry／schemaには含めません。将来の候補評価ではstatsforecast等を隔離環境へ置き、optional依存を通常CIへ持ち込まない方針です。Holt linear trendは別のbaselineであり、ETSとは称しません。
+
+現在、TimesFM 3.0の共通`Forecaster` adapter、official API境界、license／provenance検証、fake backend tests、専用Windows CPU環境での2回の実モデルsmokeを実施済みです。さらに、LastValueとの小規模rolling-origin benchmarkを実施し、限定条件でのmodel別metrics、再現性、CPU latency／peak memoryを[`docs/results/timesfm3-rolling-benchmark-2026-09-04.md`](results/timesfm3-rolling-benchmark-2026-09-04.md)へ記録しました。TimesFM 3はこの条件のcomposite値でpoint forecastとWISが良好でしたが、native intervalはnominal coverage未達です。MAE、RMSE、WIS、interval widthはAとdegCの異なる単位を持つ2 targetの同数point-weight平均であるため、result schema `0.2`ではtarget別およびequipment-target別集計を追加済みです。他候補との同一条件比較、統計baseline全種、広範な精度・calibration評価、実設備評価は未実施であり、Phase 2は完了していません。
 
 #### 優先順位
 
 | 優先度 | 候補 | 目的 |
 | --- | --- | --- |
-| P0 | seasonal-naive、EWMA、linear／ETS | 複雑modelを採用する最低条件 |
+| P0 | seasonal-naive、EWMA、moving-average、Holt linear | 複雑modelを採用する最低条件 |
 | P0 | Chronos-2 | 商用利用可能な汎用multivariate／covariate候補 |
 | P0 | TimesFM 3.0 | 最新research reference。非商用・非本番に限定 |
 | P0 | Toto 2.0 4m／22m | 軽量multivariate／telemetry候補 |
@@ -171,7 +173,7 @@ savepoint 1では、外部依存なしのseed再現可能generatorと最小quali
 #### Gate 2
 
 - 同一のevaluation windowとmetricでmodel間比較ができる。
-- aggregateだけでなくtarget、equipment-target、signal、mode、horizon別結果がある（target／equipment-target別集計は次段階でresult schemaへ追加）。
+- aggregateだけでなくtarget、equipment-target、signal、mode、horizon別結果がある（target／equipment-target別集計はresult schema `0.2`で提供）。
 - accuracy、calibration、latency、peak memory、artifact sizeを同時に報告する。
 - TimesFM 3.0の結果に `research-only` が明示され、promotion対象から除外される。
 - 少なくとも1つの商用利用可能候補について、継続／保留／中止の判断ができる。

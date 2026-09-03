@@ -40,7 +40,7 @@
 **完了条件:**
 
 - 1 commandがrun manifestを受け取り、machine-readable resultとsummaryを生成する。
-- last-value、seasonal-naive、EWMA、linear／ETS系baselineを含む。
+- last-value、seasonal-naive、EWMA、linear／Holt系baselineを含む。
 - signal、equipment、operating mode、horizon別にmetricを出力する。
 - MAE、RMSE、MASEを実装し、quantile inputにはWISとcoverageを計算する。
 - p50／p95 latency、peak memory、artifact size、hardwareを記録する。

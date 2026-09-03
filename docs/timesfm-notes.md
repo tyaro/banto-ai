@@ -27,7 +27,7 @@ PyPI `timesfm` 3.0.0は2026-08-28公開で、確認したwheel SHA-256は`0ad3e6
 
 ## 2026-09-04 rolling-origin benchmark
 
-[`rolling benchmark実測結果`](results/timesfm3-rolling-benchmark-2026-09-04.md)では、`synthetic-motor-small`、seed `42`、fingerprint `6427bd2da97958f04b8c34e3a09a101d8bc3fc85eced003aaf022e81567312b6`を使い、2 equipment、`motor_current`／`motor_temperature`、context 12、horizon 3を評価しました。`load_proxy`はpast-only、known-future covariateはなしです。各 equipmentのvalidation originは `[36, 45]`、test originは `[48, 57]`で、modelごと24 prediction points、test forecast callは4回です。
+[`rolling benchmark実測結果`](results/timesfm3-rolling-benchmark-2026-09-04.md)では、`synthetic-motor-small`、seed `42`、fingerprint `6427bd2da97958f04b8c34e3a09a101d8bc3fc85eced003aaf022e81567312b6`を使い、2 equipment、`motor_current`／`motor_temperature`、context 12、horizon 3を評価しました。`load_proxy`はpast-only、known-future covariateはなしです。各 equipmentのvalidation originは `[36, 45]`、test originは `[48, 57]`で、modelごと24 prediction points、test forecast callは4回です。追加configの`benchmark-timesfm3-known-load.json`は、load_proxyの計画値をorigin時点で確実に取得できる実設備を模したsynthetic known-future／oracle-styleの別scenarioです。known-futureはcontext+horizonちょうどで、split外へは渡しません。
 
 | 指標 | LastValue | TimesFM 3.0 |
 | --- | ---: | ---: |
@@ -40,7 +40,7 @@ PyPI `timesfm` 3.0.0は2026-08-28公開で、確認したwheel SHA-256は`0ad3e6
 
 この限定条件のcomposite値ではTimesFM 3.0がpoint forecastとWISでLastValueを上回りましたが、native intervalのcoverageはnominal 80%未達で、interval widthはbaselineの4.519074倍でした。MAE、RMSE、WIS、interval widthは、AとdegCの異なる単位を持つ2 targetを同数point-weightで混合した固定構成の値です。物理量として直接解釈したり、target構成が異なるrun同士で比較したりしてはいけません。MASEはunitlessですが、同数point平均です。3回のrunでpredictions SHA-256、metrics、originsは一致しました。clean savepointから実行したrun3をprimary reproducibility runとし、run1/run2はdirty pre-savepointの確認として残しています。ただし、24 points、各2 origins、単一generator、LastValueのみの比較であり、一般性能・実設備性能・製品採否を示しません。
 
-次段階では、composite値だけに依存しないよう、target別およびequipment-target別のmetrics集計をresult schemaへ追加します。
+result schema `0.2`では、composite値だけに依存しないよう、target別およびequipment-target別のmetrics集計を追加済みです。
 
 実行時はTimesFM package `3.0.0`、checkpoint revision `43046b85ec22d584a13f8098c2ed39c889e129c2`、CPU、offline、research-only／non-commercialでした。weightsの利用制限はMITのrepository licenseによって緩和されません。
 

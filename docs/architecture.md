@@ -76,9 +76,11 @@ rolling-origin runnerは、モデル名から`Forecaster`を生成する`ModelRe
 
 benchmark configの`past_only_covariate_ids`はorigin直前までのcontextだけに入り、`known_future_covariate_ids`はcontext prefixとoriginからhorizon末尾までの計画値を`known_future_covariates`へ入れます。両方への重複指定、targetとの重複、時刻・長さの不一致は失敗させます。既存の`linear-regression-covariates.parameters.covariate_ids`は互換性のため残し、top-levelの明示指定がない場合だけknown-futureとして解釈します。これは従来runnerの意味を維持するための暫定互換であり、実データでは計画値として将来既知であることをデータ契約で確認します。
 
+ID解決は、短いsignal keyなら評価対象equipmentのsignalへ解決します。`target_signal_ids`を省略した場合はmanifest順のtargetから、各equipment自身に所属するものだけを選びます。full signal IDは複数equipment評価では拒否し、単一equipment評価でもID prefixが対象equipmentと一致する場合だけ許可します。targetの空集合や同一logical keyの重複、target／past-only／known-future／legacy linear-regression covariateの所属不一致はBenchmarkErrorで失敗させます。
+
 quantile policyは結果のruntime／provenanceへmodel別に記録します。baseline等は`validation-residual-by-lead`、TimesFM 3はadapterが返したrequested native quantileをそのまま使います。native経路は設定されたquantile level、pointとp50の整合、horizon timestamp、quantile crossingを検証してから評価します。
 
-比較用の`result.json`では、全modelを混ぜた従来の`metrics.aggregate`を互換表示として残しつつ、判定には`metrics.by_model`を使います。modelごとのtest predictionについてMAE、RMSE、MASE、WIS、coverage、interval widthを集計し、推論時間も`runtime.latency_by_model`へmodel別に記録します。`runtime.peak_memory_bytes`は可能な限りOSプロセスpeakを使い、実行環境で取得できない場合だけtracemallocへfallbackします。採用した測定源は`runtime.memory_source`に残します。
+比較用の`result.json`では、全modelを混ぜた従来の`metrics.aggregate`、`by_model`、`slices`を互換表示として残します。新しいresult schema `0.2`では、判定に`by_model_target`（論理target keyとunit）と`by_model_equipment_target`（manifest full signal IDとunit）を使います。targetを設備横断で集約する前にunit一致を検証し、不一致なら混合metricを出力しません。旧`0.1` resultはlegacyとして読み取り専用に表示し、新runnerは`0.2`を出力します。modelごとのtest predictionについてMAE、RMSE、MASE、WIS、coverage、interval widthを集計し、推論時間も`runtime.latency_by_model`へmodel別に記録します。`runtime.peak_memory_bytes`は可能な限りOSプロセスpeakを使い、実行環境で取得できない場合だけtracemallocへfallbackします。採用した測定源は`runtime.memory_source`に残します。
 
 ### Stage 3: reviewed handoff
 
