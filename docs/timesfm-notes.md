@@ -6,6 +6,23 @@
 
 最初に答える問いは実務的なものです。複数の horizon と運転状態において、TimesFM-3 は単純なベースラインと比べて産業設備に近い信号を有用に予測できるでしょうか。
 
+## 2026-09-03時点の位置づけ
+
+公式の[TimesFM repository](https://github.com/google-research/timesfm)と[TimesFM 3.0 model card](https://huggingface.co/google/timesfm-3.0-pytorch)で、次を確認しています。
+
+- 0.3B parameter、F32のpretrained model。
+- univariateとnative multivariate forecastingに対応。
+- past-onlyとpast-and-future covariateに対応。
+- point forecastと0.1～0.9の9 quantileを出力可能。
+- source codeはApache-2.0。
+- TimesFM 3.0 pretrained weightsは別の `timesfm-non-commercial-license-v1.0` で、非商用・非本番用途に限定。
+
+このため、TimesFM 3.0は`banto-ai`の研究benchmarkには含めますが、顧客PoC、本番shadow、製品artifactの候補には含めません。実験結果と生成artifactには `research-only` を明記します。利用条件が将来変わった場合も、固定したcheckpointのlicenseをrunごとに再確認します。
+
+[TimesFM 2.5](https://huggingface.co/google/timesfm-2.5-200m-pytorch)は200M parameterで、codeとweightsがApache-2.0です。最大16k context、optional quantile headによる最大1k horizon、XReg covariate対応が公式に案内されています。TimesFM系の商用利用可能fallbackとして別runで比較しますが、3.0のnative multivariateと同一機能とはみなしません。
+
+他候補との比較方針は [`time-series-model-survey.md`](time-series-model-survey.md) を参照してください。
+
 ## 評価マトリクス
 
 | 観点 | 初期値 |
@@ -61,6 +78,9 @@ model:
   name: timesfm3
   release: <pinned-release>
   checkpoint: <immutable-reference>
+  code_license: Apache-2.0
+  weights_license: timesfm-non-commercial-license-v1.0
+  allowed_use: research-only
 data:
   dataset_id: <synthetic-or-public-id>
   split: <manifest-reference>
@@ -79,6 +99,7 @@ runtime:
 ## 現時点での非対象
 
 - benchmark 前に production checkpoint を選ぶこと。
+- TimesFM 3.0のpretrained weightsまたは派生成果物をproduct candidateへ昇格すること。
 - zero-shot の結果を commissioning profile とみなすこと。
 - model output から threshold、recipe、control parameter を書き込むこと。
 - 公開実験で顧客データを使うこと。

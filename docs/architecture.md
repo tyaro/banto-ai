@@ -6,6 +6,8 @@
 
 初期アーキテクチャは、意図的に一方向でレビュー可能な構成にします。
 
+2026-09-03時点の[`banto-industrial`](https://github.com/tyaro/banto-industrial)には、時系列の保存・期間queryと、REST／WebSocket／MQTT／gRPCでtag空間を公開するBanto Hubがあります。また、PLCのread経路とwrite経路が分離されています。この既存境界を利用できるため、Banto HubをAI repositoryへ複製せず、offline exportとread-only sidecarから開始できます。最終transportは実測と運用要件が揃ってから決めます。
+
 ```text
 Banto Hub / historian
         |
@@ -62,6 +64,10 @@ adapter は直近の観測値を要求し、予測、残差、異常スコア、
 
 すべての応答に、明示的な model version と profile version を含めます。モデルが利用不能、古い、out of distribution、または必要な tag が不足している場合は、暗黙の fallback ではなく明確な degraded state を返します。
 
+研究初期はPython sidecarとして実装し、Banto Hubの収集loopと推論処理を分離します。100 msで収集するtagがあっても、forecast／anomaly inferenceはwindowを作って1～10秒周期で非同期実行します。model timeoutや停止が、収集、表示、PLC通信、制御判断をblockしてはいけません。
+
+model固有のAPIはBanto Hubへ露出せず、`Forecaster`／`AnomalyDetector`の共通契約内に閉じ込めます。採用modelとtarget hardwareが決まるまでは、PythonからRust／ONNX等への変換を必須にしません。
+
 ### Stage 3: reviewed handoff
 
 レビュー済みの model artifact または commissioning profile は、Banto Hub の既存の承認・デプロイ手順を通して昇格できます。昇格時には次を含めます。
@@ -81,7 +87,7 @@ adapter は直近の観測値を要求し、予測、残差、異常スコア、
 
 ```json
 {
-  "model_id": "timesfm3-baseline",
+  "model_id": "candidate-forecaster",
   "model_version": "<immutable-version>",
   "equipment_id": "<pseudonymous-id>",
   "as_of": "2026-01-01T00:00:00Z",
@@ -99,7 +105,7 @@ adapter は直近の観測値を要求し、予測、残差、異常スコア、
 
 ```json
 {
-  "model_id": "timesfm3-baseline",
+  "model_id": "candidate-forecaster",
   "model_version": "<immutable-version>",
   "profile_version": "<optional-profile-version>",
   "status": "ok",

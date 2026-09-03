@@ -4,28 +4,31 @@
 
 産業 AI が、予測・異常検知・試運転支援に有効であることを、再現可能な根拠として示します。同時に、可観測で、元に戻せて、安全重要な制御から分離されていることを満たします。
 
+本書は研究テーマの長期的な順序を示します。候補モデルの比較は [`time-series-model-survey.md`](time-series-model-survey.md)、直近の作業、期間目安、暫定合格基準は [`research-implementation-plan.md`](research-implementation-plan.md) を参照してください。
+
 ## フェーズ
 
 | Phase | 焦点 | 完了時の根拠 |
 | --- | --- | --- |
-| 0 | 研究の衛生管理と契約 | リポジトリ scaffold、データ方針、experiment manifest、artifact 命名、連携境界 |
-| 1 | TimesFM-3 benchmark | 再現可能な runner、naive／古典的ベースライン、信号・運転モード別の指標 |
-| 2 | 合成産業データ | 運転状態、fault、欠損、label を持つパラメータ化 generator と seed 再現性 |
-| 3 | 自前ベースライン | 点予測・分位点予測を備えた小型の多変量 Transformer と ablation レポート |
-| 4 | 異常とドリフト | 残差・エンベロープ検知、誤警報分析、データ品質・out-of-distribution 対応 |
-| 5 | Continual learning | 本番モード固定、rollback、汚染テストを含む安全な適応実験 |
-| 6 | Commissioning auto-tuning | レシピ駆動の profile candidate、shadow 評価、人手承認ゲート |
-| 7 | Banto Hub pilot 境界 | read-only export／adapter の試作と、制御を変更しない end-to-end デモ |
+| 0 | 研究基盤と契約 | Python環境、データ方針、experiment／license manifest、共通interface、連携境界 |
+| 1 | 合成データとbaseline | 運転状態、fault、欠損、labelを持つgeneratorと、naive／古典baselineの再現性 |
+| 2 | Forecast model benchmark | Chronos-2、TimesFM 3.0、Toto、Granite TTM、自前／学習型baselineの同条件比較 |
+| 3 | 異常とドリフト | 統計方式、forecast residual、TSPulse、Riverのevent単位比較 |
+| 4 | 自前モデル研究 | 点予測・分位点予測を備えた小型multivariate Transformerとablation |
+| 5 | Commissioning auto-tuning | レシピ駆動のprofile candidate、shadow評価、人手承認gate |
+| 6 | Continual adaptation | 本番mode固定、rollback、汚染testを含むfrozen model + profile適応 |
+| 7 | Banto Hub pilot境界 | read-only export／sidecarの試作と、制御を変更しないend-to-end demo |
 
 ## 推奨する優先順
 
-1. benchmark と data manifest を確立する。
-2. モーター・コンベアに近い合成信号を生成する。
-3. TimesFM-3、seasonal-naive、単純な統計ベースラインを測定する。
-4. benchmark が安定してから mini-Transformer を実装する。
-5. 残差スコアと運転モード別の正常エンベロープを追加する。
-6. 試運転校正を offline と shadow mode で検証する。
-7. 承認済み結果を利用できる、最小限の Banto Hub adapter を定義する。
+1. package、dataset／run／license manifest、共通interfaceを確立する。
+2. motor・conveyorに近い合成信号とnaive／統計baselineを作る。
+3. Chronos-2、TimesFM 3.0、Toto 2.0 4m／22m、Granite TTMを同じrunnerで測定する。
+4. 統計anomaly、forecast residual、TSPulseをevent単位で比較する。
+5. benchmarkが安定してからmini-Transformerと対象データ学習型modelを実装する。
+6. commissioning校正をofflineとshadow modeで検証する。
+7. frozen base modelとversioned profileによる安全な適応を検証する。
+8. 承認済み結果を利用できる最小限のBanto Hub read-only adapterを定義する。
 
 ## 実験の必須記録
 

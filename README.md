@@ -8,7 +8,7 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 | テーマ | 最初に検証する問い |
 | --- | --- |
-| TimesFM-3 評価 | 産業設備に近い信号に対して、再現可能なベンチマークでどの程度有効か？ |
+| 時系列 foundation model 評価 | TimesFM-3、Chronos-2、Toto、Granite TTMなどは、産業設備に近い信号で単純なbaselineを上回るか？ |
 | 自前の時系列 Transformer | 内部を理解・検証できる最小限の多変量予測モデルは何か？ |
 | 多変量・分位点予測 | 点予測だけでなく、校正された予測範囲を出せるか？ |
 | 異常検知 | 予測残差や正常エンベロープで、誤警報を抑えつつドリフトを早期検知できるか？ |
@@ -29,11 +29,13 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 ```text
 docs/
-  architecture.md              Banto Hub との責務境界と成果物フロー
-  research-roadmap.md          段階的な研究計画と完了条件
-  timesfm-notes.md             TimesFM-3 評価プロトコル
-  commissioning-learning.md    試運転・校正・昇格の設計
-  initial-issues.md             最初に作成する Issue 5件の案
+  architecture.md                 Banto Hubとの責務境界と成果物フロー
+  time-series-model-survey.md     時系列モデル候補、ライセンス、実現可能性の調査
+  research-implementation-plan.md 段階的な研究・実装計画と判断gate
+  research-roadmap.md             長期的な研究フェーズと完了条件
+  timesfm-notes.md                TimesFM 3.0評価プロトコル
+  commissioning-learning.md       試運転・校正・昇格の設計
+  initial-issues.md                最初に作成するIssue 5件の案
 experiments/
   timesfm3/                    foundation model のベンチマーク
   synthetic-data/              産業設備に近いデータの再現可能な生成
@@ -57,7 +59,11 @@ tools/
 
 ## 次の一歩
 
-最初の実装マイルストーンは、合成産業データ上で TimesFM-3 と naive／古典的ベースラインを比較する、再現可能なベンチマークです。詳細は [`docs/research-roadmap.md`](docs/research-roadmap.md) と [`docs/initial-issues.md`](docs/initial-issues.md) を参照してください。
+最初の実装マイルストーンは、合成産業データ上で naive／古典的 baseline と複数の時系列モデルを同条件で比較できる、再現可能なベンチマークです。
+
+現時点では TimesFM 3.0 の学習済み重みは非商用・非本番用途に限定されるため、研究比較専用とします。商用利用可能候補として Chronos-2、Toto 2.0、Granite TTM／TSPulseなどを同時に評価します。
+
+調査結果は [`docs/time-series-model-survey.md`](docs/time-series-model-survey.md)、具体的な作業計画は [`docs/research-implementation-plan.md`](docs/research-implementation-plan.md)、Issue案は [`docs/initial-issues.md`](docs/initial-issues.md) を参照してください。
 
 ## ステータス
 

@@ -1,73 +1,99 @@
-# 最初の Issue 案
+# 最初のIssue案
 
-GitHub の remote が利用できるようになったら、まず次の5件を Issue として作成します。現時点では scaffold に remote を設定しただけで、外部への Issue 作成は暗黙に行わないため、案をローカルに記録しています。
+公開repository `tyaro/banto-ai`で最初に作成する5件のIssue案です。Issue本文へ転記する前に、target hardwareとrepository licenseの判断を反映します。
 
-## 1. 再現可能な TimesFM-3 benchmark runner を確立する
+## 1. 研究環境、manifest、license gate、共通interfaceを確立する
 
-**目的:** versioned dataset manifest 上で TimesFM-3 と単純な baseline を実行し、比較可能な metric を出力する。
-
-**完了条件:**
-
-- 1つの command が run manifest を受け取り、machine-readable な結果を生成する。
-- 正確な model release／checkpoint と preprocessing を記録する。
-- signal、horizon、運転 mode 別に結果を出力する。
-- last-value と seasonal-naive baseline を含む。
-- 顧客データを使わない小さな synthetic fixture で smoke test が動く。
-
-**対象外:** production serving、PLC 接続、model promotion。
-
-## 2. seed 再現可能な synthetic industrial data generator を作る
-
-**目的:** regime、fault、欠損、既知の event label を持つ、motor／conveyor に近い多変量データを生成する。
+**目的:** model固有のnotebookを増やす前に、再現可能な実行環境と、forecast／anomaly modelを交換できる最小契約を作る。
 
 **完了条件:**
 
-- seed によって生成データが完全に決まる。
-- 単位、sampling rate、generator parameter を記録する。
-- startup、steady state、load change、少なくとも3種類の fault-like pattern を含む。
-- ground-truth event interval を観測値とは別に出力する。
-- 生成データ本体を commit せずに再生成できる。
+- Python version、dependency manager、`pyproject.toml`、lock fileを追加する。
+- format、lint、unit testをlocalとCIで実行できる。
+- dataset、run、result、model license manifestのschemaとsampleがある。
+- `Forecaster`と`AnomalyDetector`の共通interfaceを定義する。
+- code licenseとweight licenseを別々に記録し、`research-only` modelをpromotion対象外にできる。
+- 顧客データ、大型checkpoint、credentialをGitへ追加しないguardがある。
+
+**対象外:** model性能比較、production serving、PLC接続。
+
+## 2. seed再現可能なsynthetic industrial data generatorを作る
+
+**目的:** regime、fault、欠損、既知のevent labelを持つ、motor／conveyorに近いmultivariate dataを生成する。
+
+**完了条件:**
+
+- seedとconfigによって生成データが完全に決まる。
+- 単位、sampling rate、generator parameterをmanifestへ記録する。
+- stopped、startup、nominal、high load、cooldownを含む。
+- drift、spike、stuck value、dropout、overheating trend、slip／jam proxyのうち最低3種類を含む。
+- ground-truth event intervalを観測値とは別に出力する。
+- chronological splitとcross-equipment splitを生成する。
+- data本体をcommitせず再生成でき、小さな安全なfixtureだけをtest用に置く。
 
 **対象外:** 合成信号が顧客設備を代表すると主張すること。
 
-## 3. mini 多変量 quantile Transformer baseline を実装する
+## 3. 共通benchmark runnerとnaive／統計baselineを実装する
 
-**目的:** point forecast と interval forecast を検証できる、内部を理解しやすい baseline を作る。
-
-**完了条件:**
-
-- 複数の aligned signal と明示的な mode／context feature を入力できる。
-- p10、p50、p90 または同等の interval 表現を出力する。
-- chronological split で学習し、calibration metric を報告する。
-- univariate、multivariate、mode-aware input の ablation を比較する。
-- model size、runtime、failure behavior を記録する。
-
-**対象外:** evaluation harness が安定する前に foundation model を上回ろうとすること。
-
-## 4. commissioning profile の calibration と shadow evaluation を設計する
-
-**目的:** 制御動作を変更せずに、commissioning recipe を versioned profile candidate に変換する。
+**目的:** すべてのmodelを同一window、horizon、metric、hardware記録で比較できる評価基盤を作る。
 
 **完了条件:**
 
-- recipe step に entry、exit、data-quality、abort condition がある。
-- 適格な window だけから baseline／envelope を学習する。
-- held-out または shadow replay で誤警報と coverage を評価する。
-- candidate profile に provenance、uncertainty、expiry、rollback metadata がある。
-- Production mode では学習を lock し、PLC 設定を書き込まない。
+- 1 commandがrun manifestを受け取り、machine-readable resultとsummaryを生成する。
+- last-value、seasonal-naive、EWMA、linear／ETS系baselineを含む。
+- signal、equipment、operating mode、horizon別にmetricを出力する。
+- MAE、RMSE、MASEを実装し、quantile inputにはWISとcoverageを計算する。
+- p50／p95 latency、peak memory、artifact size、hardwareを記録する。
+- timestamp overlap、future leakage、duplicate、unit mismatch、unexpected gapのtestがある。
+- `fev`を採用するか、自前runnerとの役割分担をADRとして記録する。
 
-**対象外:** threshold または PID の自律書き込み。
+**対象外:** 特定foundation modelの優遇、leaderboard順位だけによる採用決定。
 
-## 5. Banto Hub read-only adapter contract を定義する
+## 4. Forecast model adapterを実装し、候補を同条件で比較する
 
-**目的:** observation、forecast、quality、shadow result を扱う、最小限の versioned interface を定める。
+**目的:** TimesFM 3.0だけに固定せず、商用利用可能候補を含む最初のforecast comparisonを完成させる。
+
+**対象model:**
+
+- Chronos-2
+- TimesFM 3.0（research-only）
+- Toto 2.0 4m／22m
+- Granite TTM R2
+- 実行余力があればTimesFM 2.5、N-HiTS／PatchTST
 
 **完了条件:**
 
-- model version、profile version、status、quality を含む request／response 例がある。
-- missing、stale、out-of-distribution の挙動が明示されている。
-- identity、authorization、retention、audit の要件を記載する。
-- PLC 値、recipe、interlock、安全上限を書き込む endpoint がない。
-- live Banto Hub なしで動く local contract test がある。
+- 各modelが共通`Forecaster` interfaceのadapter経由で実行される。
+- exact package version、checkpoint、code／weight license、preprocessingを記録する。
+- univariate／multivariate、共変量有無、sampling、missing条件のablationがある。
+- accuracy、quantile calibration、latency、memoryを同じreportで比較する。
+- TimesFM 3.0 resultとartifactに`research-only`を付け、製品候補へexportできないtestがある。
+- 少なくとも1つの商用利用可能modelについて、継続／保留／中止の判断と理由を残す。
 
-**対象外:** production service の deploy または最終 transport protocol の選定。
+**対象外:** production deployment、顧客PoC、model outputからの制御書き込み。
+
+## 5. Anomaly、commissioning profile、Banto read-only contractの縦断PoCを作る
+
+**目的:** offline replay上で、観測値からanomaly scoreとcommissioning profile candidateを生成し、Banto Hub向けshadow responseまで一方向に流す。
+
+**完了条件:**
+
+- robust統計、forecast residual、TSPulseの最低2方式をevent単位で比較する。
+- recipe stepにentry、exit、data-quality、abort conditionがある。
+- 適格windowだけからnormalization、envelope、bias、threshold候補を作る。
+- held-out replayでfalse alarm、incident recall、coverageを評価する。
+- profile candidateにprovenance、uncertainty、expiry、approval、rollback metadataがある。
+- read-only request／responseにmodel version、profile version、quality、degraded stateを含める。
+- Production modeでは学習をlockし、PLC値、recipe、interlock、安全上限を書き込むpathがない。
+
+**対象外:** PID tuning、thresholdの自律昇格、production service deployment。
+
+## 分割方針
+
+Issue 5は縦断契約を確認するためのumbrella Issueです。Issue 1～4のinterfaceが固まった時点で、次の3件へ分割します。
+
+1. anomaly detector benchmark
+2. commissioning calibration／profile workflow
+3. Banto Hub offline export／shadow adapter
+
+詳細な順序と判断gateは [`research-implementation-plan.md`](research-implementation-plan.md) を参照してください。
