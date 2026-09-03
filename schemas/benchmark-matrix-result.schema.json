@@ -1,0 +1,308 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "banto-ai benchmark matrix result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "result_type",
+    "matrix_id",
+    "status",
+    "matrix_config",
+    "code_revision",
+    "base_configs",
+    "axes",
+    "outputs",
+    "counts",
+    "datasets",
+    "cells",
+    "macro_summary",
+    "research_only_notice",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "result_type": {"type": "string", "const": "benchmark-matrix"},
+    "matrix_id": {"type": "string", "minLength": 1, "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+    "status": {"type": "string", "enum": ["success", "partial", "failed"]},
+    "matrix_config": {"$ref": "#/$defs/matrixConfig"},
+    "code_revision": {"$ref": "#/$defs/codeRevision"},
+    "base_configs": {"$ref": "#/$defs/baseConfigs"},
+    "axes": {"$ref": "#/$defs/resultAxes"},
+    "outputs": {"$ref": "#/$defs/outputs"},
+    "counts": {"$ref": "#/$defs/counts"},
+    "datasets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/dataset"}
+    },
+    "cells": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/cell"}
+    },
+    "macro_summary": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/macro"}
+    },
+    "research_only_notice": {
+      "anyOf": [
+        {"type": "string", "minLength": 1},
+        {"type": "null"}
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "repositoryPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*\\\\)(?!.*(^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    },
+    "matrixConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "matrix_id",
+        "generator_config_path",
+        "benchmark_config_path",
+        "dataset_output_root",
+        "benchmark_output_root",
+        "matrix_output_dir",
+        "axes"
+      ],
+      "properties": {
+        "schema_version": {"type": "string", "const": "0.1"},
+        "matrix_id": {"type": "string", "minLength": 1, "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+        "generator_config_path": {"$ref": "#/$defs/repositoryPath"},
+        "benchmark_config_path": {"$ref": "#/$defs/repositoryPath"},
+        "dataset_output_root": {"$ref": "#/$defs/repositoryPath"},
+        "benchmark_output_root": {"$ref": "#/$defs/repositoryPath"},
+        "matrix_output_dir": {"$ref": "#/$defs/repositoryPath"},
+        "axes": {"$ref": "#/$defs/configAxes"}
+      }
+    },
+    "configAxes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seeds", "horizons", "context_lengths"],
+      "properties": {
+        "seeds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 0}},
+        "horizons": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
+        "context_lengths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 2}}
+      }
+    },
+    "resultAxes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seeds", "horizons", "context_lengths", "expansion_order"],
+      "properties": {
+        "seeds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 0}},
+        "horizons": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
+        "context_lengths": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 2}},
+        "expansion_order": {"const": ["seed", "horizon", "context_length"]}
+      }
+    },
+    "codeRevision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "head", "dirty", "diff_sha256"],
+      "properties": {
+        "status": {"type": "string", "enum": ["git", "git-unavailable"]},
+        "head": {"type": ["string", "null"]},
+        "dirty": {"type": ["boolean", "null"]},
+        "diff_sha256": {"type": ["string", "null"]}
+      }
+    },
+    "baseConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/repositoryPath"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "baseConfigs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generator", "benchmark"],
+      "properties": {
+        "generator": {"$ref": "#/$defs/baseConfig"},
+        "benchmark": {"$ref": "#/$defs/baseConfig"}
+      }
+    },
+    "outputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_output_root", "benchmark_output_root", "matrix_output_dir"],
+      "properties": {
+        "dataset_output_root": {"$ref": "#/$defs/repositoryPath"},
+        "benchmark_output_root": {"$ref": "#/$defs/repositoryPath"},
+        "matrix_output_dir": {"$ref": "#/$defs/repositoryPath"}
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total_cells", "successful_cells", "partial_cells", "failed_cells", "completed_cells"],
+      "properties": {
+        "total_cells": {"type": "integer", "minimum": 1},
+        "successful_cells": {"type": "integer", "minimum": 0},
+        "partial_cells": {"type": "integer", "minimum": 0},
+        "failed_cells": {"type": "integer", "minimum": 0},
+        "completed_cells": {"type": "integer", "minimum": 0}
+      }
+    },
+    "qualityGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "observation_record_count", "equipment_count"],
+      "properties": {
+        "status": {"const": "pass"},
+        "observation_record_count": {"type": "integer", "minimum": 1},
+        "equipment_count": {"type": "integer", "minimum": 1}
+      }
+    },
+    "dataset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "seed",
+        "dataset_id",
+        "dataset_path",
+        "generator_config_path",
+        "generator_config_sha256",
+        "dataset_fingerprint",
+        "observations_sha256",
+        "quality_gate"
+      ],
+      "properties": {
+        "seed": {"type": "integer", "minimum": 0},
+        "dataset_id": {"type": "string", "minLength": 1, "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+        "dataset_path": {"$ref": "#/$defs/repositoryPath"},
+        "generator_config_path": {"$ref": "#/$defs/repositoryPath"},
+        "generator_config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "dataset_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "observations_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "quality_gate": {"$ref": "#/$defs/qualityGate"}
+      }
+    },
+    "failure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["error_type", "reason"],
+      "properties": {
+        "error_type": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cell_id",
+        "run_id",
+        "seed",
+        "horizon",
+        "context_length",
+        "dataset_id",
+        "dataset_path",
+        "dataset_fingerprint",
+        "benchmark_config_path",
+        "benchmark_config_sha256",
+        "output_dir",
+        "result_path",
+        "status",
+        "benchmark_failure_count",
+        "failure"
+      ],
+      "properties": {
+        "cell_id": {"type": "string", "minLength": 1, "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+        "run_id": {"type": "string", "minLength": 1, "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+        "seed": {"type": "integer", "minimum": 0},
+        "horizon": {"type": "integer", "minimum": 1},
+        "context_length": {"type": "integer", "minimum": 2},
+        "dataset_id": {"type": "string", "minLength": 1, "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+        "dataset_path": {"$ref": "#/$defs/repositoryPath"},
+        "dataset_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "benchmark_config_path": {"$ref": "#/$defs/repositoryPath"},
+        "benchmark_config_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "output_dir": {"$ref": "#/$defs/repositoryPath"},
+        "result_path": {
+          "anyOf": [
+            {"$ref": "#/$defs/repositoryPath"},
+            {"type": "null"}
+          ]
+        },
+        "status": {"type": "string", "enum": ["success", "partial", "failed"]},
+        "benchmark_failure_count": {"type": "integer", "minimum": 0},
+        "failure": {"type": ["object", "null"], "anyOf": [{"$ref": "#/$defs/failure"}, {"type": "null"}]}
+      }
+    },
+    "summaryStatistic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mean", "min", "max", "sample_stddev"],
+      "properties": {
+        "mean": {"type": "number", "minimum": 0},
+        "min": {"type": "number", "minimum": 0},
+        "max": {"type": "number", "minimum": 0},
+        "sample_stddev": {"type": ["number", "null"], "minimum": 0}
+      }
+    },
+    "macroMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mae", "rmse", "mase", "wis", "nominal_interval_coverage", "interval_width"],
+      "properties": {
+        "mae": {"$ref": "#/$defs/summaryStatistic"},
+        "rmse": {"$ref": "#/$defs/summaryStatistic"},
+        "mase": {"$ref": "#/$defs/summaryStatistic"},
+        "wis": {"$ref": "#/$defs/summaryStatistic"},
+        "nominal_interval_coverage": {"$ref": "#/$defs/coverageSummaryStatistic"},
+        "interval_width": {"$ref": "#/$defs/summaryStatistic"}
+      }
+    },
+    "macro": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model",
+        "target_signal_key",
+        "unit",
+        "horizon",
+        "context_length",
+        "cell_count",
+        "total_point_count",
+        "metrics"
+      ],
+      "properties": {
+        "model": {"type": "string", "minLength": 1},
+        "target_signal_key": {"type": "string", "minLength": 1},
+        "unit": {"type": "string", "minLength": 1},
+        "horizon": {"type": "integer", "minimum": 1},
+        "context_length": {"type": "integer", "minimum": 2},
+        "cell_count": {"type": "integer", "minimum": 1},
+        "total_point_count": {"type": "integer", "minimum": 1},
+        "metrics": {"$ref": "#/$defs/macroMetrics"}
+      }
+    },
+    "coverageSummaryStatistic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mean", "min", "max", "sample_stddev"],
+      "properties": {
+        "mean": {"type": "number", "minimum": 0, "maximum": 1},
+        "min": {"type": "number", "minimum": 0, "maximum": 1},
+        "max": {"type": "number", "minimum": 0, "maximum": 1},
+        "sample_stddev": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
+      }
+    }
+  }
+}

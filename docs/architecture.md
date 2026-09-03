@@ -82,6 +82,8 @@ quantile policyは結果のruntime／provenanceへmodel別に記録します。b
 
 比較用の`result.json`では、全modelを混ぜた従来の`metrics.aggregate`、`by_model`、`slices`を互換表示として残します。新しいresult schema `0.2`では、判定に`by_model_target`（論理target keyとunit）と`by_model_equipment_target`（manifest full signal IDとunit）を使います。targetを設備横断で集約する前にunit一致を検証し、不一致なら混合metricを出力しません。旧`0.1` resultはlegacyとして読み取り専用に表示し、新runnerは`0.2`を出力します。modelごとのtest predictionについてMAE、RMSE、MASE、WIS、coverage、interval widthを集計し、推論時間も`runtime.latency_by_model`へmodel別に記録します。`runtime.peak_memory_bytes`は可能な限りOSプロセスpeakを使い、実行環境で取得できない場合だけtracemallocへfallbackします。採用した測定源は`runtime.memory_source`に残します。
 
+matrix runnerは単一run契約を変更せず、seed、horizon、context lengthを`seed → horizon → context_length`の宣言順で展開します。seedはgenerator configとdataset IDへmaterializeし、seedごとに一度生成・品質確認したdatasetを同seedのcellで再利用します。実行前に全dataset／cell／matrix出力を解決し、repository内の`artifacts/`配下、相互に分離された未作成pathであることを確認します。base configは読込時のraw bytes SHA-256、codeはmatrix開始時revisionを固定し、各completed cellとpublish直前に一致を再検証します。manifestの`data_path`はdataset直下へ限定して観測fileのSHA-256を記録し、異seedで同一観測内容なら停止します。matrix schema `0.1`の主集計は`by_model_target`のcell-macro summaryで、異単位を混ぜず、raw predictionのpooled metricとは称しません。model/cell失敗は隔離して残りを継続しますが、設定・path・unit・provenanceのmatrix契約違反はfail closedです。失敗時も生成済みdataset／runは監査用に残し、自身のtemporary matrix directoryだけを削除します。
+
 ### Stage 3: reviewed handoff
 
 レビュー済みの model artifact または commissioning profile は、Banto Hub の既存の承認・デプロイ手順を通して昇格できます。昇格時には次を含めます。

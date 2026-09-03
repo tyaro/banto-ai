@@ -1,0 +1,14 @@
+{
+  "schema_version": "0.1",
+  "matrix_id": "benchmark-matrix-timesfm3-small",
+  "generator_config_path": "examples/configs/synthetic-motor-small.json",
+  "benchmark_config_path": "examples/configs/benchmark-timesfm3-baselines-past-only.json",
+  "dataset_output_root": "artifacts/matrix-datasets",
+  "benchmark_output_root": "artifacts/matrix-benchmarks",
+  "matrix_output_dir": "artifacts/matrix/benchmark-matrix-timesfm3-small",
+  "axes": {
+    "seeds": [17, 42],
+    "horizons": [1, 3],
+    "context_lengths": [6, 12]
+  }
+}

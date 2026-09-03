@@ -38,6 +38,8 @@ Phase 2の基盤として、chronological rolling-origin runnerへmodel registry
 
 この時点でTimesFM 3の採否は判断していません。実測は単一generator、単一seed、少数origin、短いcontext／horizonに限定され、coverage／WISの校正母数も小さいままです。複数origin／horizon／context／seed、欠損・fault・regime別、公開データ、他候補との同一契約比較、モデル単独resource測定、実設備でのplanned-load契約検証が残っています。重みのlicenseはresearch-only／non-commercialのままであり、製品・顧客PoC・PLC／Banto Hub write経路へ昇格させません。
 
+次の評価範囲拡大に向け、seedをgeneratorへ反映してdatasetを再生成し、horizon／context lengthとのmatrixを安全に反復する基盤を追加しました。datasetはseedごとに一度生成・品質確認し、観測file hashでseed差の実体を確認します。base config raw bytesと開始code revisionを固定し、cell／publish時の不変性も検証します。主集計は単位別のseed間cell-macro summaryです。これは実験基盤の実装であり、TimesFM実matrixの完走、他候補比較、Phase 2完了を意味しません。
+
 ## 実験の必須記録
 
 すべての実験に、次を記録します。

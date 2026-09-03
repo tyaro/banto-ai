@@ -90,6 +90,8 @@ rolling-origin benchmarkの実測値は [`docs/results/timesfm3-rolling-benchmar
 
 統計baselineを含むpast-only／known-loadのtarget別比較は [`docs/results/timesfm3-baselines-comparison-2026-09-04.md`](docs/results/timesfm3-baselines-comparison-2026-09-04.md) に記録しています。known-loadは計画値をorigin時点で取得できるsynthetic oracle-styleの別scenarioであり、実績先読みや本番効果を意味しません。この小標本ではTimesFM 3.0は温度で有力でしたが、電流ではmoving-average等を上回らず、Phase 2完了・採用判断には進みません。次は複数seed／horizon／context／origin、モデル単独resource測定、ライセンス適合候補との同一契約比較です。
 
+複数seed／horizon／contextを反復するmatrix runnerを追加しました。seedはrun metadataだけでなくgenerator configへ反映し、seedごとにdatasetを一度生成・品質確認して各cellで再利用します。dataset fingerprintに加えて`observations.jsonl`自体のSHA-256を記録し、異seedで観測内容が同一なら停止します。出力の主集計は単位を分離した`by_model_target`のseed間cell-macro summaryであり、raw predictionのpooled metricではありません。base configのraw bytes hashと開始code revisionを固定し、cell終了時・matrix publish直前まで不変であることを検証します。これは評価範囲拡大の基盤で、Phase 2完了を意味しません。
+
 Phase 0の実行確認は、外部依存を導入せず `python tools/smoke.py` と `python tools/safety_check.py` で行えます。Phase 1の最小generatorは次で実行できます。
 
 TimesFM 3の実評価は、リポジトリ外のcacheを明示して次の順に実行します。checkpoint準備だけがdownloadを行い、smokeは`local_files_only=True`でcache miss時に停止します。
@@ -107,6 +109,12 @@ TimesFM 3をrolling-origin benchmarkへ接続する場合は、専用venvで次�
 ```powershell
 python tools/data-generator/generate.py --config examples/configs/synthetic-motor-small.json --output artifacts/generated/synthetic-motor-small
 python tools/timesfm3/run_benchmark.py --config examples/configs/benchmark-timesfm3-small.json --cache-dir C:\banto-cache\timesfm3 --accept-research-only-license
+```
+
+小規模matrixは同じ専用venvとcacheで次のように実行します。sampleはpast-onlyを標準とし、2 seeds×2 horizons×2 context lengthsの8 cellsです。既存のdataset／cell／matrix出力は上書きしません。
+
+```powershell
+python tools/timesfm3/run_matrix.py --config examples/configs/benchmark-matrix-timesfm3-small.json --cache-dir C:\banto-cache\timesfm3 --accept-research-only-license
 ```
 
 `benchmark-timesfm3-small.json`はLastValueとTimesFM 3を同じequipment／origin／targetで比較します。validation／test originは高コスト実モデル向けに決定的なstrideと最大数を設定し、その選択結果は`result.json`のprovenanceへ保存します。TimesFM 3はnative quantile、baselineはvalidation residual by leadを使います。今回のsampleでは将来の`load_proxy`を本番で計画値として確実に知れる前提を置かず、全covariateをpast-onlyにしています。このため既知将来値を使う実験は、計画値であることを別途データ契約に明記したconfigで行います。
@@ -127,6 +135,6 @@ Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUT
 
 ## ステータス
 
-Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0は専用環境でCPU smokeと、統計baselineを含むpast-only／known-loadの小規模rolling-origin benchmarkを実行済みです。seed、horizon、context、originを広げた評価、モデル単独resource測定、ライセンス適合候補との同一条件比較は未実施であり、Phase 2は完了していません。本番デプロイ経路も未実装です。
+Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0は専用環境でCPU smokeと、統計baselineを含むpast-only／known-loadの小規模rolling-origin benchmarkを実行済みです。複数seed／horizon／contextを安全に展開するmatrix基盤も実装済みですが、実matrix評価、origin拡大、モデル単独resource測定、ライセンス適合候補との同一条件比較は未実施であり、Phase 2は完了していません。本番デプロイ経路も未実装です。
 
 合成データは研究用の制御されたfixtureであり、実設備の挙動を代表すると主張しません。顧客データ、raw設備データ、秘密情報は生成物・設定・Git履歴へ入れません。大量生成データはGit無視領域へ置き、commit対象は小さいconfig／fixtureだけにします。

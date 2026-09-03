@@ -32,6 +32,7 @@ class ModelInvocationError(BenchmarkError):
 
 
 ModelFactory = Callable[[str, dict[str, Any]], Forecaster]
+QualityChecker = Callable[[Path, Path], dict[str, Any]]
 
 
 class ModelRegistry:
@@ -85,7 +86,10 @@ def _quantile(values: list[float], q: float) -> float:
     return ordered[low] + (ordered[high] - ordered[low]) * (index - low)
 
 
-def _validate_config(config: dict[str, Any], root: Path, registry: ModelRegistry | None = None) -> None:
+def _validate_config_contract(
+    config: dict[str, Any], root: Path, registry: ModelRegistry | None = None,
+) -> None:
+    """datasetの存在確認を除く、単一run設定の静的契約を検証する。"""
     configured_models = config.get("models")
     if isinstance(configured_models, list) and any(
         isinstance(model, dict) and model.get("name") == "autoets"
@@ -135,6 +139,10 @@ def _validate_config(config: dict[str, Any], root: Path, registry: ModelRegistry
                 build_baseline(model["name"], dict(model.get("parameters", {})))
             except BaselineError as exc:
                 raise BenchmarkError(str(exc)) from exc
+
+
+def _validate_config(config: dict[str, Any], root: Path, registry: ModelRegistry | None = None) -> None:
+    _validate_config_contract(config, root, registry)
     if not (root / config["dataset_path"]).is_dir():
         raise BenchmarkError("dataset_path does not exist")
 
@@ -456,7 +464,12 @@ def _policy(model_cfg: dict[str, Any]) -> str:
     return "native" if model_cfg["name"] == "timesfm3" else "validation-residual-by-lead"
 
 
-def run_benchmark(config_path: Path, root: Path, model_registry: ModelRegistry | None = None) -> Path:
+def run_benchmark(
+    config_path: Path,
+    root: Path,
+    model_registry: ModelRegistry | None = None,
+    quality_checker: QualityChecker | None = None,
+) -> Path:
     config = load_json(config_path)
     if not isinstance(config, dict):
         raise BenchmarkError("benchmark config must be an object")
@@ -469,7 +482,7 @@ def run_benchmark(config_path: Path, root: Path, model_registry: ModelRegistry |
         raise BenchmarkError("output_dir must be separate from dataset_dir and neither an ancestor nor descendant")
     if output_dir.exists():
         raise BenchmarkError(f"refusing to overwrite existing output: {output_dir}")
-    quality = check_dataset(dataset_dir, root)
+    quality = (quality_checker or check_dataset)(dataset_dir, root)
     manifest = load_json(dataset_dir / "dataset-manifest.json")
     fingerprint_path = (dataset_dir / manifest["fingerprint_path"]).resolve()
     if fingerprint_path.parent != dataset_dir.resolve():

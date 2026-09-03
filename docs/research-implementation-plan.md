@@ -147,6 +147,8 @@ AutoETSは未実装であり、現行benchmarkのmodel registry／schemaには�
 
 現在、TimesFM 3.0の共通`Forecaster` adapter、official API境界、license／provenance検証、fake backend tests、専用Windows CPU環境での2回の実モデルsmokeを実施済みです。さらに、LastValueとの初期benchmarkと統計baselineを含むpast-only／known-loadの小規模rolling-origin比較を実施しました。target別metrics、再現性、CPU latency／process peakを[`docs/results/timesfm3-baselines-comparison-2026-09-04.md`](results/timesfm3-baselines-comparison-2026-09-04.md)へ記録しています。MAE、RMSE、WIS、interval widthはAとdegCを混合するaggregateだけで優劣を決めず、result schema `0.2`のtarget別およびequipment-target別集計を主に使用します。known-loadは計画値をorigin時点で取得できるsynthetic oracle-styleの別scenarioであり、実績先読みや本番効果を示しません。複数seed／horizon／context／origin、広範なcalibration、モデル単独resource測定、ライセンス適合候補との同一条件比較、実設備評価は未実施であり、Phase 2は完了していません。
 
+複数seed／horizon／context lengthを反復するmatrix runnerを実装し、seedごとのdataset再生成・一回のquality gate、観測file SHA-256によるseed差確認、既存単一runの再利用、cell失敗隔離、単位別`by_model_target` cell-macro summaryを固定しました。base configは読込raw bytes hash、codeは開始revisionを記録し、cellとpublish直前の不変性をfail-closedで検証します。TimesFM専用入口は既存のlicense／cache／offline preflightを再利用し、adapterをmatrix全体で共有します。これは評価範囲拡大の基盤であり、実TimesFM matrix、origin数の拡大、pooled prediction分析、他候補比較は未実施なのでPhase 2完了条件を満たしません。
+
 #### 優先順位
 
 | 優先度 | 候補 | 目的 |
