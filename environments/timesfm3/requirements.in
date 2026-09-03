@@ -1,0 +1,2 @@
+# top-levelのexact pinのみ。完全なtransitive lockではない。
+timesfm[torch]==3.0.0

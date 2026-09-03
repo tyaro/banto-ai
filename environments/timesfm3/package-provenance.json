@@ -1,0 +1,14 @@
+{
+  "schema_version": "0.1",
+  "package_name": "timesfm",
+  "package_version": "3.0.0",
+  "package_extra": "torch",
+  "requirement": "timesfm[torch]==3.0.0",
+  "published_at": "2026-08-28",
+  "artifact_type": "wheel",
+  "package_sha256": "0ad3e6b2226a85d665ebca3b5711b875cdef816a6f8ae0d3acbd5361f3e4b63d",
+  "checkpoint": "google/timesfm-3.0-pytorch",
+  "checkpoint_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+  "verified_at": "2026-09-03",
+  "lock_scope": "top-level-only"
+}

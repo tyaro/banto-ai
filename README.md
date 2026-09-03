@@ -4,7 +4,7 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 このリポジトリは `banto-industrial` から意図的に分離しています。実験、評価プロトコル、モデル試作、連携契約を扱う研究用ワークスペースです。生産設備の制御動作は、Banto Hub と PLC／制御システムが引き続き担当します。
 
-Savepoint 2では、外部依存ゼロの共通benchmark runnerと統計baselineを実装しています。合成データの結果は実設備性能を示しません。
+Savepoint 2では、外部依存ゼロの共通benchmark runnerと統計baselineを実装しています。TimesFM 3.0はadapter境界とfake backend testsまで実装済みですが、依存・weightsは未導入で実モデルは未実行です。合成データの結果は実設備性能を示しません。
 
 ## 研究テーマ
 
@@ -42,6 +42,7 @@ docs/
   research-implementation-plan.md 段階的な研究・実装計画と判断gate
   research-roadmap.md             長期的な研究フェーズと完了条件
   timesfm-notes.md                TimesFM 3.0評価プロトコル
+  adr-0003-timesfm3-isolation.md  TimesFM 3.0の依存・実行隔離
   commissioning-learning.md       試運転・校正・昇格の設計
   initial-issues.md                最初に作成するIssue 5件の案
 schemas/                       manifestを検証するJSON Schema
@@ -52,6 +53,8 @@ experiments/
   timesfm3/                    foundation model のベンチマーク
   synthetic-data/              産業設備に近いデータの再現可能な生成
   online-learning/             適応とドリフトの実験
+environments/
+  timesfm3/                    専用venv向け入力とpackage／checkpoint来歴
 models/
   mini-transformer/            小さく検証しやすい予測ベースライン
   industrial-tsfm/             産業向けモデルの研究
@@ -77,6 +80,8 @@ tools/
 
 現時点では TimesFM 3.0 の学習済み重みは非商用・非本番用途に限定されるため、研究比較専用とします。商用利用可能候補として Chronos-2、Toto 2.0、Granite TTM／TSPulseなどを同時に評価します。
 
+TimesFM 3.0の共通`Forecaster` adapter、official APIの遅延import境界、license／provenance検証、fake backend testsは実装済みです。`environments/timesfm3/requirements.in`は`timesfm[torch]==3.0.0`のtop-level exact pinであり、完全なtransitive lockではありません。依存とcheckpointは導入・downloadしておらず、実モデルの精度、速度、メモリは未測定です。
+
 Phase 0の実行確認は、外部依存を導入せず `python tools/smoke.py` と `python tools/safety_check.py` で行えます。Phase 1の最小generatorは次で実行できます。
 
 ```text
@@ -95,6 +100,6 @@ Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUT
 
 ## ステータス
 
-Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。外部ML model adapterと本番デプロイ経路は未実装です。
+Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0はadapter境界とfake backend testsのみ実装済みです。実モデル評価と他候補との同条件比較は未実施であり、Phase 2は完了していません。本番デプロイ経路も未実装です。
 
 合成データは研究用の制御されたfixtureであり、実設備の挙動を代表すると主張しません。顧客データ、raw設備データ、秘密情報は生成物・設定・Git履歴へ入れません。大量生成データはGit無視領域へ置き、commit対象は小さいconfig／fixtureだけにします。

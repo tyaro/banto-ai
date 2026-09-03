@@ -11,6 +11,8 @@ Savepoint 0/1は研究を再現可能にする基盤、Savepoint 2は標準ラ�
 - AIからPLC／Banto Hubへのwrite path
 - 本番SLAや自動promotion
 
+TimesFM 3.0については、coreから独立したadapter境界、fake backend tests、package／checkpoint来歴、専用環境の入力だけを追加しています。依存・weightsの導入と実モデル実行はまだ対象外です。
+
 ## Windowsでの実行
 
 PowerShellでrepository rootに移動して実行します。Phase 0のsmoke testは外部packageをinstallせずに動作します。
@@ -57,14 +59,16 @@ core runtimeの依存は標準ライブラリのみです。Phase 0ではinstall
 | 環境 | planned package | 方針 |
 | --- | --- | --- |
 | Chronos-2 | chronos-forecasting | 商用候補。固定version／checkpoint／license manifestを必須にする |
-| TimesFM 3.0 | timesfm | `research-only`。product-candidateへ昇格しない |
+| TimesFM 3.0 | `timesfm[torch]==3.0.0` | 専用venv。`research-only`／non-production。product-candidateへ昇格しない |
 | Toto 2.0 | toto-models | 小型版からhardware実測する |
 | Granite TTM／TSPulse | granite-tsfm | edge／異常検知候補として別環境で評価する |
 | 評価補助 | fev | 採用判断後に追加する |
 
-外部packageのdownload／installは、明示的な研究作業として個別に行い、Phase 0 CIでは実行しません。最初のadapter実装時にpackage／checkpointのversion pinとmodel environmentごとのlockを必須にします。モデルを追加するときは、まずadapter、manifest、license gate、再現手順を更新してください。
+外部packageのdownload／installは、明示的な研究作業として個別に行い、core CIでは実行しません。TimesFM 3.0の`requirements.in`はtop-level exact pinであり、完全なtransitive lockではありません。実行時は専用venvを使い、checkpointはGit外に置き、`local_files_only=True`を既定にします。Torch／CUDAを含むCPU用・CUDA用の完全lockは対象hardware確定後に生成・検証します。モデルを追加するときは、まずadapter、manifest、license gate、再現手順を更新してください。
 
-core外部依存がゼロのため、現時点ではdependency lockを作成しません。外部依存を導入する時点で、coreへ混ぜずmodel environmentごとにlockを管理します。
+core外部依存がゼロのため、coreのdependency lockは作成しません。model依存はcoreへ混ぜず環境ごとに管理します。TimesFM 3.0の完全lockは未作成であり、`requirements.in`を完全lockとは扱いません。
+
+TimesFM 3.0 adapterとfake backend testsは実装済みですが、実モデル／weightsは未導入・未実行です。精度、速度、peak memory、artifact sizeの値はまだありません。実測なしにPhase 2完了や性能改善を記載しないでください。
 
 formatter／linterもPhase 0では導入しません。core外部依存ゼロを優先し、標準ライブラリの`compileall`、`unittest`、安全検査をCIで実行します。最初のdevelopment dependencyを導入するPhaseでformatter／linterをversion pinし、model environmentと同様にlockへ固定します。
 

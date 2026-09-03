@@ -28,6 +28,7 @@ Banto ecosystem向けの時系列AIについて、次の価値を再現可能な
 - 最初のruntimeはPython sidecarとし、Banto Hubとはoffline exportから接続する。
 - forecastとanomaly detectionは共通interfaceの背後でmodelを交換できるようにする。
 - TimesFM 3.0は現行weight licenseにより研究比較専用とし、製品artifactへ昇格しない。
+- TimesFM 3.0のoptional backendは専用venvへ隔離し、coreの標準ライブラリのみという境界を維持する。package／checkpoint来歴を固定し、weightsはGit外、`local_files_only=True`を既定とする。
 - commissioningではbase modelを無制限に書き換えず、正規化、bias、interval、threshold、adapter等をversioned profileとして調整する。
 - AIはPLC値、interlock、emergency stop、hard limit、PIDを直接変更しない。
 
@@ -141,6 +142,8 @@ savepoint 1では、外部依存なしのseed再現可能generatorと最小quali
 - baseline resultにdataset fingerprint、runtime、hardwareが残る。
 
 ### Phase 2: Forecast候補比較
+
+現在、TimesFM 3.0の共通`Forecaster` adapter、official API境界、license／provenance検証、fake backend testsまでは実装済みです。依存・weightsは未導入で実モデルは未実行のため、精度、速度、メモリは未測定です。他候補との同条件比較も未実施であり、Phase 2は完了していません。
 
 #### 優先順位
 

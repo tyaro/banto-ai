@@ -2,7 +2,7 @@
 
 ## 対象範囲
 
-この文書は評価プロトコルを定義します。実験 manifest で評価対象の実装を固定するまでは、特定の package 構成、checkpoint URL、hardware target、feature 対応を前提にしません。
+この文書は評価プロトコルを定義します。adapter用の入力はPyPI `timesfm` 3.0.0、checkpointは`google/timesfm-3.0-pytorch`のimmutable revision `43046b85ec22d584a13f8098c2ed39c889e129c2`へ固定しています。hardware targetとTorch／CUDAの完全lockは未確定です。
 
 最初に答える問いは実務的なものです。複数の horizon と運転状態において、TimesFM-3 は単純なベースラインと比べて産業設備に近い信号を有用に予測できるでしょうか。
 
@@ -16,6 +16,10 @@
 - point forecastと0.1～0.9の9 quantileを出力可能。
 - source codeはApache-2.0。
 - TimesFM 3.0 pretrained weightsは別の `timesfm-non-commercial-license-v1.0` で、非商用・非本番用途に限定。
+
+PyPI `timesfm` 3.0.0は2026-08-28公開で、確認したwheel SHA-256は`0ad3e6b2226a85d665ebca3b5711b875cdef816a6f8ae0d3acbd5361f3e4b63d`です。`requirements.in`は`timesfm[torch]==3.0.0`をtop-levelで固定しますが、完全なtransitive lockではありません。詳細は[`environments/timesfm3/README.md`](../environments/timesfm3/README.md)と[`ADR-0003`](adr-0003-timesfm3-isolation.md)を参照してください。
+
+共通`Forecaster` adapter、official backendの遅延import、known-future整列、9 quantile検証、license／provenance gate、fake backend testsは実装済みです。一方、依存とweightsは未導入で、実モデルは未実行です。したがって精度、calibration、速度、メモリは未測定であり、この状態をPhase 2完了とは扱いません。
 
 このため、TimesFM 3.0は`banto-ai`の研究benchmarkには含めますが、顧客PoC、本番shadow、製品artifactの候補には含めません。実験結果と生成artifactには `research-only` を明記します。利用条件が将来変わった場合も、固定したcheckpointのlicenseをrunごとに再確認します。
 
