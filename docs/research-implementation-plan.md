@@ -102,9 +102,13 @@ class AnomalyDetector:
 - modelごとにcode license、weight license、許可用途をmachine-readableに記録できる。
 - customer dataらしい拡張子やlocal pathがGitへ追加されないtestを用意する。
 
-### Phase 1: 合成データとbaseline
+### Phase 1: 合成データとbaseline（savepoint 1 実装済み）
 
 #### 対象信号
+
+savepoint 1では、外部依存なしのseed再現可能generatorと最小quality checkerを実装済みです。生成物はGit無視領域へ出力し、既存出力の上書きを拒否します。観測値、ground-truth event、generator config、dataset／split manifest、fingerprint、summaryを分離して出力し、chronological splitとcross-equipment splitを同時に作成します。quality checkerはcatalog sampling intervalを正として全deltaを検査し、観測・split・event構造、split完全被覆・record_count、unit／quality、generator configとのtimestamp／regime／event／summaryのsemantic consistency、SHA-256 fingerprint（manifest／summaryとの一致を含む）を検査します。
+
+これは合成データ生成の最小Gateであり、物理モデルの妥当性・実設備代表性を保証しません。合成データは実設備を代表すると主張せず、顧客データは入力・commitしません。
 
 - motor current
 - motor temperature

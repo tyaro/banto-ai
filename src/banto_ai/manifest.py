@@ -57,9 +57,13 @@ def validate(instance: Any, schema: dict[str, Any], path: str = "$", root: dict[
     if isinstance(instance, (int, float)) and not isinstance(instance, bool):
         if "minimum" in schema and instance < schema["minimum"]:
             raise ManifestValidationError(f"{path}: number is below minimum")
+        if "maximum" in schema and instance > schema["maximum"]:
+            raise ManifestValidationError(f"{path}: number is above maximum")
     if isinstance(instance, list):
         if "minItems" in schema and len(instance) < schema["minItems"]:
             raise ManifestValidationError(f"{path}: too few items")
+        if "maxItems" in schema and len(instance) > schema["maxItems"]:
+            raise ManifestValidationError(f"{path}: too many items")
         if "items" in schema:
             for index, item in enumerate(instance):
                 validate(item, schema["items"], f"{path}[{index}]", root)

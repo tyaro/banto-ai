@@ -1,4 +1,4 @@
-name: Phase 0 CI
+name: Phase 1 CI
 
 on:
   push:
@@ -24,5 +24,9 @@ jobs:
         run: python -m unittest discover -s tests -t . -v
       - name: Validate manifests and naive smoke
         run: python tools/smoke.py
+      - name: Generate and quality-check synthetic dataset from clean checkout entrypoints
+        run: |
+          python tools/data-generator/generate.py --config examples/configs/synthetic-motor-small.json --output artifacts/generated/ci-synthetic
+          python tools/data-generator/check_quality.py --dataset artifacts/generated/ci-synthetic
       - name: Repository safety guard
         run: python tools/safety_check.py

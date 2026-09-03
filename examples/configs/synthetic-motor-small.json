@@ -1,0 +1,31 @@
+{
+  "config_type": "synthetic-generator",
+  "dataset_id": "synthetic-motor-small",
+  "equipment": [
+    {"equipment_id": "motor-01", "equipment_type": "motor"},
+    {"equipment_id": "conveyor-01", "equipment_type": "conveyor"}
+  ],
+  "events": [
+    {"event_id": "motor-01-drift", "event_type": "sensor_drift", "equipment_id": "motor-01", "signal_id": "motor_current", "start_sample": 16, "end_sample": 26, "magnitude": 1.2, "enabled": true},
+    {"event_id": "conveyor-01-dropout", "event_type": "dropout", "equipment_id": "conveyor-01", "signal_id": "motor_temperature", "start_sample": 20, "end_sample": 23, "enabled": true},
+    {"event_id": "motor-01-overheat", "event_type": "overheating_trend", "equipment_id": "motor-01", "signal_id": "motor_temperature", "start_sample": 30, "end_sample": 40, "magnitude": 8.0, "enabled": true},
+    {"event_id": "conveyor-01-slip", "event_type": "jam_or_slip", "equipment_id": "conveyor-01", "signal_id": "conveyor_speed", "start_sample": 38, "end_sample": 45, "magnitude": 0.4, "enabled": true},
+    {"event_id": "motor-01-spike", "event_type": "spike", "equipment_id": "motor-01", "signal_id": "vibration_feature", "start_sample": 46, "end_sample": 48, "magnitude": 3.0, "enabled": true},
+    {"event_id": "conveyor-01-stuck", "event_type": "stuck_value", "equipment_id": "conveyor-01", "signal_id": "load_proxy", "start_sample": 49, "end_sample": 55, "enabled": true},
+    {"event_id": "disabled-event", "event_type": "spike", "equipment_id": "motor-01", "signal_id": "motor_current", "start_sample": 10, "end_sample": 12, "magnitude": 99.0, "enabled": false}
+  ],
+  "generator_version": "0.1.0",
+  "regimes": [
+    {"regime": "stopped", "recipe_step": "stop", "start_sample": 0, "end_sample": 8},
+    {"regime": "startup", "recipe_step": "start", "start_sample": 8, "end_sample": 16},
+    {"regime": "low_speed", "recipe_step": "low", "start_sample": 16, "end_sample": 24},
+    {"regime": "nominal", "recipe_step": "run", "start_sample": 24, "end_sample": 40},
+    {"regime": "high_load", "recipe_step": "load", "start_sample": 40, "end_sample": 52},
+    {"regime": "cooldown", "recipe_step": "cooldown", "start_sample": 52, "end_sample": 60}
+  ],
+  "sample_count": 60,
+  "sampling_interval_ms": 1000,
+  "schema_version": "0.1",
+  "seed": 42,
+  "start_timestamp": "2026-01-01T00:00:00Z"
+}

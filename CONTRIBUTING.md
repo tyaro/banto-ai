@@ -23,6 +23,21 @@ python -m compileall -q src tests tools
 python -m unittest discover -s tests -t . -v
 ```
 
+Phase 1のsynthetic datasetを確認する場合は、次を実行します。
+
+```powershell
+python tools/data-generator/generate.py --config examples/configs/synthetic-motor-small.json --output artifacts/generated/synthetic-motor-small
+python tools/data-generator/check_quality.py --dataset artifacts/generated/synthetic-motor-small
+```
+
+これはsrc layoutのclean checkoutから実行する標準手順です。`python -m banto_ai ...` を使う場合だけ、先に `python -m pip install -e . --no-deps` を実行してください。
+
+generatorはseedとconfigからcanonicalなJSON／JSONLを生成します。JSONはUTF-8、sorted keys、compact separators、非有限値なし、JSONLはequipment設定順・timestamp順です。同じseed／configの出力はbyte-for-byte同一になります。event intervalの境界は `[start,end)` で、timestampはUTCかつequipmentごとにstrictly increasingです。
+
+`check-quality` はduplicate／out-of-order timestamp、catalog値に対するsampling interval不一致、unit mismatch、quality key/status不正、non-finite value、eventの範囲・重複・参照不正、chronological splitのtrain／validation／test完全被覆・連続性・record_count、cross-equipment splitの重複・漏れ・record_count、generator configとのtimestamp／regime／event／summaryのsemantic consistency、fingerprint改変・欠落・未知entry、future leakageの最小条件を検査します。検査順序は観測・split・event構造、generator config照合の後にfingerprintとし、原因が分かるエラーで停止します。
+
+生成物は既定でGit無視領域に置かれ、既存出力の上書きは拒否されます。観測値とground-truth eventは別ファイルです。合成データは実設備を代表するものではなく、顧客データを入力・commitしてはいけません。
+
 Python 3.12以上が対象です。ローカルのPython 3.14でも同じコマンドを実行してください。
 
 packageとして使う場合だけ、外部依存なしのeditable installを行えます。

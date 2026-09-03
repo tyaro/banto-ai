@@ -1,4 +1,4 @@
-"""Phase 0の検証・評価CLI。"""
+"""Phase 0/1の検証・評価CLI。"""
 
 from __future__ import annotations
 
@@ -10,8 +10,10 @@ from math import isclose, isfinite
 from pathlib import Path
 
 from .license_gate import evaluate_promotion
+from .generator import GeneratorError, generate_synthetic
 from .manifest import ManifestValidationError, load_json, validate_manifest
 from .naive import LastValueForecaster, mean_absolute_error
+from .quality import DatasetQualityError, check_dataset
 from .safety import RepositorySafetyError, scan_repository
 from .types import ForecastRequest, SignalMetadata, SignalPoint, TimeSeries
 
@@ -110,17 +112,38 @@ def command_license(root: Path) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="banto-ai")
-    parser.add_argument("command", choices=("smoke", "validate-manifests", "safety", "license"))
+    parser.add_argument("command", choices=("smoke", "validate-manifests", "safety", "license", "generate-synthetic", "check-quality"))
     parser.add_argument("--root", help="repository root; defaults to the current checkout")
+    parser.add_argument("--config", help="synthetic generator config JSON")
+    parser.add_argument("--output", help="synthetic output directory; defaults below artifacts/generated")
+    parser.add_argument("--dataset", help="generated dataset directory for quality check")
     args = parser.parse_args(argv)
     root = _repo_root(args.root)
     try:
+        if args.command == "generate-synthetic":
+            if not args.config:
+                parser.error("generate-synthetic requires --config")
+            config_path = Path(args.config)
+            if not config_path.is_absolute():
+                config_path = (root / config_path).resolve()
+            output = generate_synthetic(config_path, args.output, root)
+            print(f"synthetic generation: PASS ({output})")
+            return 0
+        if args.command == "check-quality":
+            if not args.dataset:
+                parser.error("check-quality requires --dataset")
+            dataset_path = Path(args.dataset)
+            if not dataset_path.is_absolute():
+                dataset_path = (root / dataset_path).resolve()
+            result = check_dataset(dataset_path, root)
+            print(f"dataset quality: PASS ({result['observation_record_count']} rows, {result['equipment_count']} equipment)")
+            return 0
         return {
             "smoke": command_smoke,
             "validate-manifests": command_validate,
             "safety": command_safety,
             "license": command_license,
         }[args.command](root)
-    except (ManifestValidationError, RepositorySafetyError, KeyError, ValueError, OSError) as exc:
+    except (ManifestValidationError, RepositorySafetyError, GeneratorError, DatasetQualityError, KeyError, ValueError, OSError) as exc:
         print(f"FAIL: {exc}", file=sys.stderr)
         return 1

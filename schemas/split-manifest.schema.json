@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tyaro/banto-ai/schemas/split-manifest.schema.json",
+  "title": "banto-ai split manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "manifest_type", "dataset_id", "generator_version", "seed", "sampling_interval_ms", "sample_count", "boundary_semantics", "strategies"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "manifest_type": {"type": "string", "const": "split"},
+    "dataset_id": {"type": "string", "minLength": 1},
+    "generator_version": {"type": "string", "minLength": 1},
+    "seed": {"type": "integer", "minimum": 0},
+    "sampling_interval_ms": {"type": "integer", "minimum": 1},
+    "sample_count": {"type": "integer", "minimum": 1},
+    "boundary_semantics": {"type": "string", "const": "[start,end)"},
+    "strategies": {
+      "type": "array", "minItems": 2,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["strategy", "splits"],
+        "properties": {
+          "strategy": {"type": "string", "enum": ["chronological", "cross_equipment"]},
+          "splits": {
+            "type": "array", "minItems": 2,
+            "items": {
+              "type": "object", "additionalProperties": false,
+              "required": ["split_id", "equipment_ids", "start_timestamp", "end_timestamp", "record_count"],
+              "properties": {
+                "split_id": {"type": "string", "minLength": 1},
+                "equipment_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+                "start_timestamp": {"type": "string", "minLength": 1},
+                "end_timestamp": {"type": "string", "minLength": 1},
+                "record_count": {"type": "integer", "minimum": 1}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -12,6 +12,16 @@
     "provenance": {"type": "string", "enum": ["synthetic", "public"]},
     "data_path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"},
     "license": {"type": "string", "minLength": 1},
+    "events_path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"},
+    "split_manifest_path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"},
+    "fingerprint_path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"},
+    "generator_config_path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"},
+    "summary_path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"},
+    "generator_version": {"type": "string", "minLength": 1},
+    "seed": {"type": "integer", "minimum": 0},
+    "sampling_interval_ms": {"type": "integer", "minimum": 1},
+    "sample_count": {"type": "integer", "minimum": 1},
+    "equipment": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["equipment_id", "equipment_type"], "properties": {"equipment_id": {"type": "string", "minLength": 1}, "equipment_type": {"type": "string", "enum": ["motor", "conveyor"]}}}},
     "signals": {
       "type": "array", "minItems": 1,
       "items": {

@@ -75,10 +75,23 @@ tools/
 
 現時点では TimesFM 3.0 の学習済み重みは非商用・非本番用途に限定されるため、研究比較専用とします。商用利用可能候補として Chronos-2、Toto 2.0、Granite TTM／TSPulseなどを同時に評価します。
 
-Phase 0の実行確認は、外部依存を導入せず `python tools/smoke.py` と `python tools/safety_check.py` で行えます。Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUTING.md`](CONTRIBUTING.md) に記載しています。
+Phase 0の実行確認は、外部依存を導入せず `python tools/smoke.py` と `python tools/safety_check.py` で行えます。Phase 1の最小generatorは次で実行できます。
+
+```text
+python tools/data-generator/generate.py --config examples/configs/synthetic-motor-small.json --output artifacts/generated/synthetic-motor-small
+python tools/data-generator/check_quality.py --dataset artifacts/generated/synthetic-motor-small
+```
+
+上記はsrc layoutのclean checkoutから実行する標準手順です。`python -m banto_ai ...` を使う場合は、先に `python -m pip install -e . --no-deps` を実行してください。
+
+出力先の既定値は `artifacts/generated/<dataset_id>` です。既存ディレクトリは上書きせず、観測値、ground-truth event、generator config、dataset／split manifest、fingerprint、summaryを分離して出力します。`[start,end)` のinterval境界、UTC timestamp、equipmentごとのstrictly increasing timestamp、canonical JSON／JSONLの順序とSHA-256計算方法を記録します。quality checkerはcatalogのsampling interval、unit、quality keys、event構造、splitの完全被覆・record_count、generator configとのsemantic consistency、fingerprint整合性、future leakageを検査します。
+
+Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUTING.md`](CONTRIBUTING.md) に記載しています。
 
 調査結果は [`docs/time-series-model-survey.md`](docs/time-series-model-survey.md)、具体的な作業計画は [`docs/research-implementation-plan.md`](docs/research-implementation-plan.md)、Issue案は [`docs/initial-issues.md`](docs/initial-issues.md) を参照してください。
 
 ## ステータス
 
-Phase 0 research foundation implemented。model adaptersは未実装です。現時点では本番デプロイ経路を含みません。
+Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）を実装済みです。model adaptersと本番デプロイ経路は未実装です。
+
+合成データは研究用の制御されたfixtureであり、実設備の挙動を代表すると主張しません。顧客データ、raw設備データ、秘密情報は生成物・設定・Git履歴へ入れません。大量生成データはGit無視領域へ置き、commit対象は小さいconfig／fixtureだけにします。

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tyaro/banto-ai/schemas/synthetic-generator-config.schema.json",
+  "title": "banto-ai synthetic generator config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "config_type", "generator_version", "dataset_id", "seed", "start_timestamp", "sampling_interval_ms", "sample_count", "equipment", "regimes", "events"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "config_type": {"type": "string", "const": "synthetic-generator"},
+    "generator_version": {"type": "string", "minLength": 1},
+    "dataset_id": {"type": "string", "minLength": 1, "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+    "seed": {"type": "integer", "minimum": 0},
+    "start_timestamp": {"type": "string", "minLength": 1},
+    "sampling_interval_ms": {"type": "integer", "minimum": 1},
+    "sample_count": {"type": "integer", "minimum": 3},
+    "equipment": {
+      "type": "array", "minItems": 2,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["equipment_id", "equipment_type"],
+        "properties": {
+          "equipment_id": {"type": "string", "minLength": 1, "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"},
+          "equipment_type": {"type": "string", "enum": ["motor", "conveyor"]}
+        }
+      }
+    },
+    "regimes": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["regime", "start_sample", "end_sample"],
+        "properties": {
+          "regime": {"type": "string", "enum": ["stopped", "startup", "low_speed", "nominal", "high_load", "cooldown"]},
+          "recipe_step": {"type": "string", "minLength": 1},
+          "start_sample": {"type": "integer", "minimum": 0},
+          "end_sample": {"type": "integer", "minimum": 1}
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["event_id", "event_type", "equipment_id", "start_sample", "end_sample", "enabled"],
+        "properties": {
+          "event_id": {"type": "string", "minLength": 1},
+          "event_type": {"type": "string", "enum": ["sensor_drift", "spike", "dropout", "overheating_trend", "jam_or_slip", "stuck_value"]},
+          "equipment_id": {"type": "string", "minLength": 1},
+          "signal_id": {"type": "string", "minLength": 1},
+          "start_sample": {"type": "integer", "minimum": 0},
+          "end_sample": {"type": "integer", "minimum": 1},
+          "magnitude": {"type": "number"},
+          "enabled": {"type": "boolean"},
+          "description": {"type": "string"}
+        }
+      }
+    }
+  }
+}
