@@ -88,6 +88,8 @@ TimesFM 3.0の共通`Forecaster` adapter、official APIの遅延import境界、l
 
 rolling-origin benchmarkの実測値は [`docs/results/timesfm3-rolling-benchmark-2026-09-04.md`](docs/results/timesfm3-rolling-benchmark-2026-09-04.md) に記録しています。clean savepointから実行したrun3をprimary reproducibility runとし、run1/run2はdirty pre-savepointの再現性確認として残しています。TimesFM 3.0はこの限定条件のcomposite値でpoint forecastとWISがLastValueを上回りましたが、native intervalのcoverageはnominal 80%未達です。AとdegCの異なる単位を混合した値のため、物理量としての直接解釈やtarget構成の異なるrunとの比較は行いません。結果はPhase 2完了や製品採用の根拠ではありません。
 
+統計baselineを含むpast-only／known-loadのtarget別比較は [`docs/results/timesfm3-baselines-comparison-2026-09-04.md`](docs/results/timesfm3-baselines-comparison-2026-09-04.md) に記録しています。known-loadは計画値をorigin時点で取得できるsynthetic oracle-styleの別scenarioであり、実績先読みや本番効果を意味しません。この小標本ではTimesFM 3.0は温度で有力でしたが、電流ではmoving-average等を上回らず、Phase 2完了・採用判断には進みません。次は複数seed／horizon／context／origin、モデル単独resource測定、ライセンス適合候補との同一契約比較です。
+
 Phase 0の実行確認は、外部依存を導入せず `python tools/smoke.py` と `python tools/safety_check.py` で行えます。Phase 1の最小generatorは次で実行できます。
 
 TimesFM 3の実評価は、リポジトリ外のcacheを明示して次の順に実行します。checkpoint準備だけがdownloadを行い、smokeは`local_files_only=True`でcache miss時に停止します。
@@ -125,6 +127,6 @@ Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUT
 
 ## ステータス
 
-Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0は専用環境でCPU smokeと小規模rolling-origin benchmarkを実行済みです。実モデルの広範な評価、強いbaseline・他候補との同条件比較、coverage calibrationは未実施であり、Phase 2は完了していません。本番デプロイ経路も未実装です。
+Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0は専用環境でCPU smokeと、統計baselineを含むpast-only／known-loadの小規模rolling-origin benchmarkを実行済みです。seed、horizon、context、originを広げた評価、モデル単独resource測定、ライセンス適合候補との同一条件比較は未実施であり、Phase 2は完了していません。本番デプロイ経路も未実装です。
 
 合成データは研究用の制御されたfixtureであり、実設備の挙動を代表すると主張しません。顧客データ、raw設備データ、秘密情報は生成物・設定・Git履歴へ入れません。大量生成データはGit無視領域へ置き、commit対象は小さいconfig／fixtureだけにします。

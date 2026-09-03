@@ -145,7 +145,7 @@ savepoint 1では、外部依存なしのseed再現可能generatorと最小quali
 
 AutoETSは未実装であり、現行benchmarkのmodel registry／schemaには含めません。将来の候補評価ではstatsforecast等を隔離環境へ置き、optional依存を通常CIへ持ち込まない方針です。Holt linear trendは別のbaselineであり、ETSとは称しません。
 
-現在、TimesFM 3.0の共通`Forecaster` adapter、official API境界、license／provenance検証、fake backend tests、専用Windows CPU環境での2回の実モデルsmokeを実施済みです。さらに、LastValueとの小規模rolling-origin benchmarkを実施し、限定条件でのmodel別metrics、再現性、CPU latency／peak memoryを[`docs/results/timesfm3-rolling-benchmark-2026-09-04.md`](results/timesfm3-rolling-benchmark-2026-09-04.md)へ記録しました。TimesFM 3はこの条件のcomposite値でpoint forecastとWISが良好でしたが、native intervalはnominal coverage未達です。MAE、RMSE、WIS、interval widthはAとdegCの異なる単位を持つ2 targetの同数point-weight平均であるため、result schema `0.2`ではtarget別およびequipment-target別集計を追加済みです。他候補との同一条件比較、統計baseline全種、広範な精度・calibration評価、実設備評価は未実施であり、Phase 2は完了していません。
+現在、TimesFM 3.0の共通`Forecaster` adapter、official API境界、license／provenance検証、fake backend tests、専用Windows CPU環境での2回の実モデルsmokeを実施済みです。さらに、LastValueとの初期benchmarkと統計baselineを含むpast-only／known-loadの小規模rolling-origin比較を実施しました。target別metrics、再現性、CPU latency／process peakを[`docs/results/timesfm3-baselines-comparison-2026-09-04.md`](results/timesfm3-baselines-comparison-2026-09-04.md)へ記録しています。MAE、RMSE、WIS、interval widthはAとdegCを混合するaggregateだけで優劣を決めず、result schema `0.2`のtarget別およびequipment-target別集計を主に使用します。known-loadは計画値をorigin時点で取得できるsynthetic oracle-styleの別scenarioであり、実績先読みや本番効果を示しません。複数seed／horizon／context／origin、広範なcalibration、モデル単独resource測定、ライセンス適合候補との同一条件比較、実設備評価は未実施であり、Phase 2は完了していません。
 
 #### 優先順位
 

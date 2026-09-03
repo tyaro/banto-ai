@@ -34,9 +34,9 @@
 
 Phase 2の基盤として、chronological rolling-origin runnerへmodel registry注入境界、equipment／model単位のinstance再利用、origin単位のmulti-target request、past-only／known-future covariate境界、model別quantile policy、共通origin選択とprovenance記録を追加しました。result schema `0.2`にはmodel-target別およびmodel-equipment-target別metricsを追加し、unit一致を検証してから設備横断集約します。結果にはmodel別metrics、model別latency、OS process peakの測定源も記録します。TimesFM 3専用entrypointは、既存のlicense manifest、固定checkpoint revision、artifact hash、専用外部cache、offline環境を検証してから実行します。実行用sampleは[`examples/configs/benchmark-timesfm3-small.json`](../examples/configs/benchmark-timesfm3-small.json)です。
 
-2026-09-04に、LastValueとの小規模なTimesFM 3 rolling-origin実測を追加しました。`synthetic-motor-small`、seed 42、2 equipment、各2 validation／test origin、context 12、horizon 3の限定条件では、TimesFM 3がMAE、RMSE、MASE、WISでLastValueを上回りました。これはAとdegCの異なる単位を持つ2 targetを同数point-weightで混合した固定構成のcomposite値による結果です。一方、native p10-p90 coverageは70.833%でnominal 80%未達、interval widthはbaselineの4.519074倍でした。詳細は[`docs/results/timesfm3-rolling-benchmark-2026-09-04.md`](results/timesfm3-rolling-benchmark-2026-09-04.md)に記録しています。
+2026-09-04に、LastValueとの小規模なTimesFM 3 rolling-origin実測と、統計baselineを含むtarget別比較を追加しました。`synthetic-motor-small`、seed 42、2 equipment、各2 validation／test origin、context 12、horizon 3の限定条件です。target別比較の詳細は[`docs/results/timesfm3-baselines-comparison-2026-09-04.md`](results/timesfm3-baselines-comparison-2026-09-04.md)、旧composite結果の経緯は[`docs/results/timesfm3-rolling-benchmark-2026-09-04.md`](results/timesfm3-rolling-benchmark-2026-09-04.md)に記録しています。past-onlyではTimesFM 3が温度MAEで最良でしたが、電流ではmoving-average等に劣りました。known-loadは計画値をorigin時点で取得できるsynthetic oracle-styleの別scenarioであり、実績先読みや本番効果を示しません。
 
-この時点でTimesFM 3の広範な精度比較や採否は判断していません。実測は単一generator、少数origin、短いcontext／horizon、LastValueのみの比較です。統計baseline全種、複数origin／horizon／context／seed、欠損・fault・regime別、公開データ、native quantile calibration、他候補との同条件比較が残っています。重みのlicenseはresearch-only／non-commercialのままであり、製品・顧客PoC・PLC／Banto Hub write経路へ昇格させません。
+この時点でTimesFM 3の採否は判断していません。実測は単一generator、単一seed、少数origin、短いcontext／horizonに限定され、coverage／WISの校正母数も小さいままです。複数origin／horizon／context／seed、欠損・fault・regime別、公開データ、他候補との同一契約比較、モデル単独resource測定、実設備でのplanned-load契約検証が残っています。重みのlicenseはresearch-only／non-commercialのままであり、製品・顧客PoC・PLC／Banto Hub write経路へ昇格させません。
 
 ## 実験の必須記録
 
