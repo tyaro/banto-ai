@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "banto-ai benchmark run config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "dataset_path", "output_dir", "horizon", "context_length", "models", "quantiles"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "run_id": {"type": "string", "minLength": 1, "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+    "dataset_path": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*\\\\)(?!.*(^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"},
+    "output_dir": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*\\\\)(?!.*(^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"},
+    "horizon": {"type": "integer", "minimum": 1},
+    "context_length": {"type": "integer", "minimum": 2},
+    "seed": {"type": "integer", "minimum": 0},
+    "target_signal_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "equipment_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "quantiles": {"type": "array", "minItems": 3, "items": {"type": "number", "exclusiveMinimum": 0, "exclusiveMaximum": 1}},
+    "models": {
+      "type": "array", "minItems": 1,
+      "items": {"anyOf": [
+        {"type": "object", "additionalProperties": false, "required": ["name"], "properties": {"name": {"const": "last-value"}, "parameters": {"type": "object", "additionalProperties": false}}},
+        {"type": "object", "additionalProperties": false, "required": ["name"], "properties": {"name": {"const": "seasonal-naive"}, "parameters": {"type": "object", "additionalProperties": false, "properties": {"season_length": {"type": "integer", "minimum": 1}}}}},
+        {"type": "object", "additionalProperties": false, "required": ["name"], "properties": {"name": {"const": "moving-average"}, "parameters": {"type": "object", "additionalProperties": false, "properties": {"window": {"type": "integer", "minimum": 1}}}}},
+        {"type": "object", "additionalProperties": false, "required": ["name"], "properties": {"name": {"const": "ewma"}, "parameters": {"type": "object", "additionalProperties": false, "properties": {"alpha": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}}}}},
+        {"type": "object", "additionalProperties": false, "required": ["name"], "properties": {"name": {"const": "holt-linear"}, "parameters": {"type": "object", "additionalProperties": false, "properties": {"alpha": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}, "beta": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}}}}},
+        {"type": "object", "additionalProperties": false, "required": ["name"], "properties": {"name": {"const": "autoets"}, "parameters": {"type": "object", "additionalProperties": false, "properties": {"alpha": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}, "beta": {"type": "number", "exclusiveMinimum": 0, "maximum": 1}}}}},
+        {"type": "object", "additionalProperties": false, "required": ["name"], "properties": {"name": {"const": "linear-regression-covariates"}, "parameters": {"type": "object", "additionalProperties": false, "required": ["covariate_ids"], "properties": {"covariate_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}}}}}
+      ]}
+    }
+  }
+}

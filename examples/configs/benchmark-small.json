@@ -1,0 +1,19 @@
+{
+  "schema_version": "0.1",
+  "run_id": "benchmark-small",
+  "dataset_path": "artifacts/generated/synthetic-motor-small",
+  "output_dir": "artifacts/benchmark/benchmark-small",
+  "horizon": 3,
+  "context_length": 12,
+  "seed": 42,
+  "target_signal_ids": ["motor_current", "motor_temperature"],
+  "quantiles": [0.1, 0.5, 0.9],
+  "models": [
+    {"name": "last-value"},
+    {"name": "seasonal-naive", "parameters": {"season_length": 3}},
+    {"name": "moving-average", "parameters": {"window": 3}},
+    {"name": "ewma", "parameters": {"alpha": 0.3}},
+    {"name": "holt-linear", "parameters": {"alpha": 0.8, "beta": 0.2}},
+    {"name": "linear-regression-covariates", "parameters": {"covariate_ids": ["load_proxy"]}}
+  ]
+}

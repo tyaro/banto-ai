@@ -59,6 +59,10 @@ def validate(instance: Any, schema: dict[str, Any], path: str = "$", root: dict[
             raise ManifestValidationError(f"{path}: number is below minimum")
         if "maximum" in schema and instance > schema["maximum"]:
             raise ManifestValidationError(f"{path}: number is above maximum")
+        if "exclusiveMinimum" in schema and instance <= schema["exclusiveMinimum"]:
+            raise ManifestValidationError(f"{path}: number is not above exclusive minimum")
+        if "exclusiveMaximum" in schema and instance >= schema["exclusiveMaximum"]:
+            raise ManifestValidationError(f"{path}: number is not below exclusive maximum")
     if isinstance(instance, list):
         if "minItems" in schema and len(instance) < schema["minItems"]:
             raise ManifestValidationError(f"{path}: too few items")
@@ -68,6 +72,10 @@ def validate(instance: Any, schema: dict[str, Any], path: str = "$", root: dict[
             for index, item in enumerate(instance):
                 validate(item, schema["items"], f"{path}[{index}]", root)
     if isinstance(instance, dict):
+        if "minProperties" in schema and len(instance) < schema["minProperties"]:
+            raise ManifestValidationError(f"{path}: too few properties")
+        if "maxProperties" in schema and len(instance) > schema["maxProperties"]:
+            raise ManifestValidationError(f"{path}: too many properties")
         for required in schema.get("required", []):
             if required not in instance:
                 raise ManifestValidationError(f"{path}: missing required property {required}")

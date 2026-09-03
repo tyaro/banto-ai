@@ -26,7 +26,9 @@ jobs:
         run: python tools/smoke.py
       - name: Generate and quality-check synthetic dataset from clean checkout entrypoints
         run: |
-          python tools/data-generator/generate.py --config examples/configs/synthetic-motor-small.json --output artifacts/generated/ci-synthetic
-          python tools/data-generator/check_quality.py --dataset artifacts/generated/ci-synthetic
+          python tools/data-generator/generate.py --config examples/configs/synthetic-motor-small.json --output artifacts/generated/synthetic-motor-small
+          python tools/data-generator/check_quality.py --dataset artifacts/generated/synthetic-motor-small
+      - name: Run benchmark from clean checkout entrypoint
+        run: python tools/evaluator/run_benchmark.py --config examples/configs/benchmark-small.json
       - name: Repository safety guard
         run: python tools/safety_check.py

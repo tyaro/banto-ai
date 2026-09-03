@@ -128,6 +128,9 @@ class ForecastSeriesResult:
             raise ValueError("quantile forecasts must be sorted and unique")
         if any(len(forecast.values) != len(self.timestamps) for forecast in self.quantile_forecasts):
             raise ValueError("quantile forecast lengths must match timestamps")
+        for left, right in zip(self.quantile_forecasts, self.quantile_forecasts[1:]):
+            if any(a > b for a, b in zip(left.values, right.values)):
+                raise ValueError("quantile crossing detected")
 
 
 @dataclass(frozen=True, slots=True)

@@ -4,6 +4,8 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 このリポジトリは `banto-industrial` から意図的に分離しています。実験、評価プロトコル、モデル試作、連携契約を扱う研究用ワークスペースです。生産設備の制御動作は、Banto Hub と PLC／制御システムが引き続き担当します。
 
+Savepoint 2では、外部依存ゼロの共通benchmark runnerと統計baselineを実装しています。合成データの結果は実設備性能を示しません。
+
 ## 研究テーマ
 
 | テーマ | 最初に検証する問い |
@@ -80,6 +82,7 @@ Phase 0の実行確認は、外部依存を導入せず `python tools/smoke.py` 
 ```text
 python tools/data-generator/generate.py --config examples/configs/synthetic-motor-small.json --output artifacts/generated/synthetic-motor-small
 python tools/data-generator/check_quality.py --dataset artifacts/generated/synthetic-motor-small
+python tools/evaluator/run_benchmark.py --config examples/configs/benchmark-small.json
 ```
 
 上記はsrc layoutのclean checkoutから実行する標準手順です。`python -m banto_ai ...` を使う場合は、先に `python -m pip install -e . --no-deps` を実行してください。
@@ -92,6 +95,6 @@ Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUT
 
 ## ステータス
 
-Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）を実装済みです。model adaptersと本番デプロイ経路は未実装です。
+Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。外部ML model adapterと本番デプロイ経路は未実装です。
 
 合成データは研究用の制御されたfixtureであり、実設備の挙動を代表すると主張しません。顧客データ、raw設備データ、秘密情報は生成物・設定・Git履歴へ入れません。大量生成データはGit無視領域へ置き、commit対象は小さいconfig／fixtureだけにします。

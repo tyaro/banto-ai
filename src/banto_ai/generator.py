@@ -10,7 +10,7 @@ import random
 import shutil
 import tempfile
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any
 
 from .manifest import ManifestValidationError, load_json, validate
@@ -199,7 +199,13 @@ def _build_splits(config: dict[str, Any], timestamps: list[datetime], equipment_
 def _resolve_output(root: Path, output: str | Path | None, dataset_id: str) -> Path:
     if output is None:
         return (root / "artifacts" / "generated" / dataset_id).resolve()
+    raw = str(output)
+    normalized_parts = raw.replace("\\", "/").split("/")
     candidate = Path(output)
+    if PureWindowsPath(raw).drive and not candidate.is_absolute():
+        raise GeneratorError("drive-qualified output path is not allowed")
+    if not candidate.is_absolute() and any(part == ".." for part in normalized_parts):
+        raise GeneratorError("relative output path must not contain traversal")
     if not candidate.is_absolute():
         candidate = (root / candidate).resolve()
         if candidate != root and root not in candidate.parents:

@@ -1,8 +1,8 @@
 # 開発手順
 
-## Phase 0の範囲
+## Savepoint 0〜2の範囲
 
-Phase 0は研究を再現可能にする基盤の実装です。標準ライブラリ中心の共通型、JSON Schema manifest、license gate、合成fixture、last-value baseline、repository safety guardを対象にします。
+Savepoint 0/1は研究を再現可能にする基盤、Savepoint 2は標準ライブラリだけの共通benchmark runnerと統計baselineの実装です。共通型、JSON Schema manifest、license gate、合成fixture、rolling-origin、validation-only分位点校正、repository safety guardを対象にします。
 
 次は対象外です。
 
@@ -28,6 +28,7 @@ Phase 1のsynthetic datasetを確認する場合は、次を実行します。
 ```powershell
 python tools/data-generator/generate.py --config examples/configs/synthetic-motor-small.json --output artifacts/generated/synthetic-motor-small
 python tools/data-generator/check_quality.py --dataset artifacts/generated/synthetic-motor-small
+python tools/evaluator/run_benchmark.py --config examples/configs/benchmark-small.json
 ```
 
 これはsrc layoutのclean checkoutから実行する標準手順です。`python -m banto_ai ...` を使う場合だけ、先に `python -m pip install -e . --no-deps` を実行してください。
@@ -35,6 +36,8 @@ python tools/data-generator/check_quality.py --dataset artifacts/generated/synth
 generatorはseedとconfigからcanonicalなJSON／JSONLを生成します。JSONはUTF-8、sorted keys、compact separators、非有限値なし、JSONLはequipment設定順・timestamp順です。同じseed／configの出力はbyte-for-byte同一になります。event intervalの境界は `[start,end)` で、timestampはUTCかつequipmentごとにstrictly increasingです。
 
 `check-quality` はduplicate／out-of-order timestamp、catalog値に対するsampling interval不一致、unit mismatch、quality key/status不正、non-finite value、eventの範囲・重複・参照不正、chronological splitのtrain／validation／test完全被覆・連続性・record_count、cross-equipment splitの重複・漏れ・record_count、generator configとのtimestamp／regime／event／summaryのsemantic consistency、fingerprint改変・欠落・未知entry、future leakageの最小条件を検査します。検査順序は観測・split・event構造、generator config照合の後にfingerprintとし、原因が分かるエラーで停止します。
+
+benchmark runnerはdatasetを最初に`check_dataset`へ通し、split境界を越えないrolling-originでbaselineを比較します。出力の`result.json`、`predictions.jsonl`、`summary.md`は新規ディレクトリへatomic作成し、既存出力を上書きしません。合成データの結果は実設備性能を示しません。
 
 生成物は既定でGit無視領域に置かれ、既存出力の上書きは拒否されます。観測値とground-truth eventは別ファイルです。合成データは実設備を代表するものではなく、顧客データを入力・commitしてはいけません。
 

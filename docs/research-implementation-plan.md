@@ -358,3 +358,7 @@ Issue 5は実装開始時に「異常検知」「commissioning profile」「Bant
 - 次phaseへ進める商用利用可能候補を少なくとも1つ選ぶか、選べない理由を記録する。
 
 技術候補の根拠と詳細は [`time-series-model-survey.md`](time-series-model-survey.md)、Banto Hubとの責務境界は [`architecture.md`](architecture.md) を参照してください。
+
+## Savepoint 2 実装状況
+
+共通runner、last-value／seasonal-naive／moving-average／EWMA／Holt linear trend／covariate付き線形回帰、MAE／RMSE／MASE／標準WIS／coverage／width、rolling-origin、lead別validation-only分位点校正を外部依存ゼロで実装する。split-manifestの`[start,end)`、train-only MASE、raw pointでのRMSE集計、actual timestamp mode、partial／failed／inconclusiveの状態定義を固定する。stateless baselineの決定的なcanonical設定・空state byte数と出力file sizeは別項目で記録し、fevはPhase 2で再評価する。合成データの結果は実設備性能を示さない。

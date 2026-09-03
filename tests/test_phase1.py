@@ -130,6 +130,10 @@ class Phase1GeneratorTests(unittest.TestCase):
             with self.assertRaises(GeneratorError):
                 generate_synthetic(CONFIG, output, ROOT)
             with self.assertRaises(GeneratorError):
+                _resolve_output(ROOT, Path("..") / "outside", "synthetic-motor-small")
+            with self.assertRaises(GeneratorError):
+                _resolve_output(ROOT, "../outside", "synthetic-motor-small")
+            with self.assertRaises(GeneratorError):
                 _resolve_output(ROOT, "..\\outside", "synthetic-motor-small")
 
     def test_quality_checker_detects_duplicate_gap_unit_and_leakage(self) -> None:
