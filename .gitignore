@@ -1,0 +1,41 @@
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.py[cod]
+
+# Experiment outputs
+artifacts/
+checkpoints/
+reports/generated/
+*.ckpt
+*.pt
+*.safetensors
+*.onnx
+
+# Data: never commit local or customer datasets
+data/
+datasets/local/
+*.csv
+*.csv.gz
+*.parquet
+*.feather
+*.arrow
+*.db
+*.sqlite
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
