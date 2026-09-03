@@ -30,6 +30,7 @@ from banto_ai.adapters.timesfm3 import (  # noqa: E402
 )
 from banto_ai.manifest import load_json, validate  # noqa: E402
 from banto_ai.naive import LastValueForecaster  # noqa: E402
+from banto_ai.runtime import process_peak_memory_bytes, windows_peak_working_set_bytes  # noqa: E402
 from banto_ai.types import (  # noqa: E402
     ForecastRequest,
     QualityStatus,
@@ -45,57 +46,11 @@ MANIFEST_PATH = ROOT / "examples" / "manifests" / "model-license-timesfm3.json"
 
 
 def _peak_rss_bytes() -> int | None:
-    try:
-        import resource
-
-        value = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
-        return value * (1024 if sys.platform == "darwin" else 1)
-    except (ImportError, AttributeError, OSError):
-        pass
-    if os.name == "nt":
-        return _windows_peak_working_set_bytes()
-    return None
+    return process_peak_memory_bytes()[0]
 
 
 def _windows_peak_working_set_bytes(*, psapi: Any | None = None, kernel32: Any | None = None) -> int | None:
-    """Read PeakWorkingSetSize using the complete Win32 PROCESS_MEMORY_COUNTERS layout."""
-    try:
-        import ctypes
-        from ctypes import wintypes
-
-        class ProcessMemoryCounters(ctypes.Structure):
-            _fields_ = [
-                ("cb", wintypes.DWORD),
-                ("PageFaultCount", wintypes.DWORD),
-                ("PeakWorkingSetSize", ctypes.c_size_t),
-                ("WorkingSetSize", ctypes.c_size_t),
-                ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
-                ("QuotaPagedPoolUsage", ctypes.c_size_t),
-                ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
-                ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
-                ("PagefileUsage", ctypes.c_size_t),
-                ("PeakPagefileUsage", ctypes.c_size_t),
-            ]
-
-        psapi = psapi or ctypes.windll.psapi
-        kernel32 = kernel32 or ctypes.windll.kernel32
-        get_current_process = kernel32.GetCurrentProcess
-        get_current_process.restype = wintypes.HANDLE
-        get_memory_info = psapi.GetProcessMemoryInfo
-        get_memory_info.argtypes = [
-            wintypes.HANDLE,
-            ctypes.POINTER(ProcessMemoryCounters),
-            wintypes.DWORD,
-        ]
-        get_memory_info.restype = wintypes.BOOL
-        counters = ProcessMemoryCounters()
-        counters.cb = ctypes.sizeof(ProcessMemoryCounters)
-        process = get_current_process()
-        if get_memory_info(process, ctypes.byref(counters), counters.cb):
-            return int(counters.PeakWorkingSetSize)
-    except (AttributeError, OSError, TypeError, ValueError):
-        pass
-    return None
+    return windows_peak_working_set_bytes(psapi=psapi, kernel32=kernel32)
 
 
 def _assert_external_cache(cache_dir: Path) -> Path:

@@ -70,6 +70,16 @@ model固有のAPIはBanto Hubへ露出せず、`Forecaster`／`AnomalyDetector`�
 
 Phase 0のforecast契約は、複数の過去`TimeSeries`を`contexts`として受け取り、`target_signal_ids`で予測対象を選びます。既知の将来共変量は`known_future_covariates`として任意に渡せます。結果はtargetごとの点予測・分位点予測と、model／profile version、quality statusを返します。異常検知も複数seriesのrequest／resultを前提にし、いずれも制御書き込みを契約に含めません。
 
+## benchmarkのモデル境界と情報境界
+
+rolling-origin runnerは、モデル名から`Forecaster`を生成する`ModelRegistry`を注入できます。baseline registryは標準ライブラリだけで構築され、TimesFM 3のようなoptional modelは専用entrypointがfactoryとして登録します。したがって、通常のbaseline CLI／CIはTimesFM、Torch、NumPyをimportしません。factoryはequipment／modelごとに一度だけ呼ばれ、同じinstanceをvalidationとtest、全targetのforecastで再利用します。ひとつのoriginでは設定された全targetを一つの`ForecastRequest`にまとめ、結果は応答順ではなくtarget signal IDで対応付けます。
+
+benchmark configの`past_only_covariate_ids`はorigin直前までのcontextだけに入り、`known_future_covariate_ids`はcontext prefixとoriginからhorizon末尾までの計画値を`known_future_covariates`へ入れます。両方への重複指定、targetとの重複、時刻・長さの不一致は失敗させます。既存の`linear-regression-covariates.parameters.covariate_ids`は互換性のため残し、top-levelの明示指定がない場合だけknown-futureとして解釈します。これは従来runnerの意味を維持するための暫定互換であり、実データでは計画値として将来既知であることをデータ契約で確認します。
+
+quantile policyは結果のruntime／provenanceへmodel別に記録します。baseline等は`validation-residual-by-lead`、TimesFM 3はadapterが返したrequested native quantileをそのまま使います。native経路は設定されたquantile level、pointとp50の整合、horizon timestamp、quantile crossingを検証してから評価します。
+
+比較用の`result.json`では、全modelを混ぜた従来の`metrics.aggregate`を互換表示として残しつつ、判定には`metrics.by_model`を使います。modelごとのtest predictionについてMAE、RMSE、MASE、WIS、coverage、interval widthを集計し、推論時間も`runtime.latency_by_model`へmodel別に記録します。`runtime.peak_memory_bytes`は可能な限りOSプロセスpeakを使い、実行環境で取得できない場合だけtracemallocへfallbackします。採用した測定源は`runtime.memory_source`に残します。
+
 ### Stage 3: reviewed handoff
 
 レビュー済みの model artifact または commissioning profile は、Banto Hub の既存の承認・デプロイ手順を通して昇格できます。昇格時には次を含めます。

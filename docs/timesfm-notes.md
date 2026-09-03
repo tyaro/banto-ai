@@ -23,9 +23,24 @@ PyPI `timesfm` 3.0.0は2026-08-28公開で、確認したwheel SHA-256は`0ad3e6
 
 実評価の入口は、`tools/timesfm3/preflight.py`、`prepare_checkpoint.py`、`run_smoke.py`です。preflightはCLIで指定したcache pathだけを確認します。checkpoint準備には`--accept-research-only-license`が必須で、取得対象は公式siblingsで確認した4ファイルに固定し、`model.safetensors`のサイズとSHA-256を検証します。smoke実行は`local_files_only=True`と明示cache_dirを維持します。smokeは2 target、past-only covariate、known-future covariateを含む決定的な合成入力から、point予測とp10/p50/p90を新規artifactへ記録します。正式2回の実測値は結果文書に記録済みですが、単一synthetic windowのためPhase 2完了や一般性能の結論には使えません。
 
-直線入力のpreliminary smokeは推論経路の成立確認として扱い、正式な採用数値からは除外しました。正式な非線形case 2回測定値は [`results/timesfm3-cpu-smoke-2026-09-04.md`](results/timesfm3-cpu-smoke-2026-09-04.md) に記録しています。
+直線入力のpreliminary smokeは推論経路の成立確認として扱い、正式な採用数値からは除外しました。正式な非線形case 2回測定値は [`results/timesfm3-cpu-smoke-2026-09-04.md`](results/timesfm3-cpu-smoke-2026-09-04.md) に記録しています。いずれも単一synthetic window／cold processの結果であり、性能採否やPhase 2完了を示すものではありません。
 
-正式な非線形case 2回測定値は [`results/timesfm3-cpu-smoke-2026-09-04.md`](results/timesfm3-cpu-smoke-2026-09-04.md) に記録しています。単一synthetic window／cold processの結果であり、入力fingerprint・predictions・metricsは2回で一致しました。性能採否やPhase 2完了を示すものではありません。
+## 2026-09-04 rolling-origin benchmark
+
+[`rolling benchmark実測結果`](results/timesfm3-rolling-benchmark-2026-09-04.md)では、`synthetic-motor-small`、seed `42`、fingerprint `6427bd2da97958f04b8c34e3a09a101d8bc3fc85eced003aaf022e81567312b6`を使い、2 equipment、`motor_current`／`motor_temperature`、context 12、horizon 3を評価しました。`load_proxy`はpast-only、known-future covariateはなしです。各 equipmentのvalidation originは `[36, 45]`、test originは `[48, 57]`で、modelごと24 prediction points、test forecast callは4回です。
+
+| 指標 | LastValue | TimesFM 3.0 |
+| --- | ---: | ---: |
+| MAE | 0.219726 | 0.124178 |
+| RMSE | 0.298245 | 0.162091 |
+| MASE | 1.159370 | 0.626709 |
+| WIS | 0.359569 | 0.173315 |
+| p10-p90 coverage | 16.666667% | 70.833333% |
+| p10-p90 interval width | 0.389116 | 1.758446 |
+
+この限定条件ではTimesFM 3.0がpoint forecastとWISでLastValueを上回りましたが、native intervalのcoverageはnominal 80%未達で、interval widthはbaselineの4.519074倍でした。2回のrunでpredictions SHA-256、metrics、originsは一致しました。ただし、24 points、各2 origins、単一generator、LastValueのみの比較であり、一般性能・実設備性能・製品採否を示しません。
+
+実行時はTimesFM package `3.0.0`、checkpoint revision `43046b85ec22d584a13f8098c2ed39c889e129c2`、CPU、offline、research-only／non-commercialでした。weightsの利用制限はMITのrepository licenseによって緩和されません。
 
 このため、TimesFM 3.0は`banto-ai`の研究benchmarkには含めますが、顧客PoC、本番shadow、製品artifactの候補には含めません。実験結果と生成artifactには `research-only` を明記します。利用条件が将来変わった場合も、固定したcheckpointのlicenseをrunごとに再確認します。
 

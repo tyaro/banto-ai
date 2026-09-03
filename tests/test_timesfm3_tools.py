@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 from banto_ai.adapters.timesfm3 import BackendForecast, TimesFM3Adapter, TimesFM3Config
 from banto_ai.types import ForecastSeriesResult, ForecastResult, QuantileForecast, QualityStatus
-from tools.timesfm3 import preflight, prepare_checkpoint, run_smoke
+from tools.timesfm3 import preflight, prepare_checkpoint, run_benchmark, run_smoke
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -20,6 +20,21 @@ MANIFEST = ROOT / "examples" / "manifests" / "model-license-timesfm3.json"
 
 
 class TimesFM3ToolTests(unittest.TestCase):
+    def test_benchmark_factory_shares_one_adapter_across_equipment(self):
+        adapter_instances = []
+
+        class FakeAdapter:
+            def __init__(self, manifest, config):
+                adapter_instances.append((manifest, config))
+
+        with patch.object(run_benchmark, "TimesFM3Adapter", FakeAdapter):
+            manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+            factory = run_benchmark.make_shared_timesfm_factory(manifest, Path("C:/external/timesfm-cache"))
+            first = factory("motor-01", {})
+            second = factory("conveyor-01", {})
+        self.assertIs(first, second)
+        self.assertEqual(len(adapter_instances), 1)
+
     def test_preflight_is_machine_readable_and_fails_closed(self):
         report = preflight.collect_preflight(
             Path("C:/external/timesfm-cache"),

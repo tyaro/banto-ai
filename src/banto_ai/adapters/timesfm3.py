@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from math import isfinite
 import re
+import threading
 from types import MappingProxyType
 from typing import Any, Mapping, Protocol, Sequence
 
@@ -231,6 +232,7 @@ class TimesFM3Adapter(Forecaster):
         )
         self.license_manifest = MappingProxyType(dict(license_manifest))
         self._backend = backend
+        self._backend_lock = threading.Lock()
 
     @property
     def model_version(self) -> str:
@@ -239,7 +241,7 @@ class TimesFM3Adapter(Forecaster):
     def forecast(self, request: ForecastRequest) -> ForecastResult:
         quantiles = self._validate_request(request)
         prepared = self._prepare(request)
-        backend = self._backend or self._load_official_backend()
+        backend = self._get_backend()
         try:
             output = backend.forecast(
                 prepared.targets,
@@ -253,6 +255,18 @@ class TimesFM3Adapter(Forecaster):
         except (ImportError, ModuleNotFoundError) as exc:
             raise AdapterUnavailableError("TimesFM 3 dependencies are unavailable") from exc
         return self._build_result(request, output, quantiles, prepared)
+
+    def _get_backend(self) -> TimesFM3Backend:
+        """公式backendは初回forecast時だけ遅延ロードし、同一adapterで共有する。"""
+        backend = self._backend
+        if backend is not None:
+            return backend
+        with self._backend_lock:
+            backend = self._backend
+            if backend is None:
+                backend = self._load_official_backend()
+                self._backend = backend
+        return backend
 
     @staticmethod
     def _validate_request(request: ForecastRequest) -> tuple[float, ...]:

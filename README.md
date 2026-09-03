@@ -4,7 +4,7 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 このリポジトリは `banto-industrial` から意図的に分離しています。実験、評価プロトコル、モデル試作、連携契約を扱う研究用ワークスペースです。生産設備の制御動作は、Banto Hub と PLC／制御システムが引き続き担当します。
 
-Savepoint 2では、外部依存ゼロの共通benchmark runnerと統計baselineを実装しています。TimesFM 3.0は専用環境でCPU smokeを実行済みですが、core runtimeへML依存を混入させていません。今回の合成データ結果は実設備性能を示しません。
+Savepoint 2では、外部依存ゼロの共通benchmark runnerと統計baselineを実装しています。TimesFM 3.0は専用環境でCPU smokeと小規模rolling-origin benchmarkを実行済みですが、core runtimeへML依存を混入させていません。今回の合成データ結果は実設備性能を示しません。
 
 ## 研究テーマ
 
@@ -42,6 +42,7 @@ docs/
   research-implementation-plan.md 段階的な研究・実装計画と判断gate
   research-roadmap.md             長期的な研究フェーズと完了条件
   timesfm-notes.md                TimesFM 3.0評価プロトコル
+  results/                        実測結果（合成／研究専用）
   adr-0003-timesfm3-isolation.md  TimesFM 3.0の依存・実行隔離
   commissioning-learning.md       試運転・校正・昇格の設計
   initial-issues.md                最初に作成するIssue 5件の案
@@ -81,9 +82,11 @@ tools/
 
 現時点では TimesFM 3.0 の学習済み重みは非商用・非本番用途に限定されるため、研究比較専用とします。商用利用可能候補として Chronos-2、Toto 2.0、Granite TTM／TSPulseなどを同時に評価します。
 
-TimesFM 3.0の共通`Forecaster` adapter、official APIの遅延import境界、license／provenance検証、fake backend testsは実装済みです。`environments/timesfm3/requirements.in`は`timesfm[torch]==3.0.0`のtop-level exact pinであり、完全なtransitive lockではありません。専用環境でのCPU smoke結果は記録済みですが、単一synthetic windowのため一般性能と実設備性能は未評価です。
+TimesFM 3.0の共通`Forecaster` adapter、official APIの遅延import境界、license／provenance検証、fake backend testsは実装済みです。公式backendはadapterごとに初回forecast時だけロードし、以後は安全に再利用します。benchmark coreにはoptional modelを注入するregistry境界があり、通常のbaseline CLI／CIから`timesfm`、`torch`、`numpy`はimportされません。`environments/timesfm3/requirements.in`は`timesfm[torch]==3.0.0`のtop-level exact pinであり、完全なtransitive lockではありません。専用環境でのCPU smokeと、LastValueとの小規模rolling-origin benchmark結果は記録済みです。ただし、単一generator、少数origin、短いcontext／horizon、弱いbaselineによる限定評価であり、一般性能と実設備性能は未評価です。
 
 正式CPU smoke 2回の測定値は [`docs/results/timesfm3-cpu-smoke-2026-09-04.md`](docs/results/timesfm3-cpu-smoke-2026-09-04.md) に記録しています。単一synthetic windowの結果であり、実設備性能や製品採否を示しません。
+
+rolling-origin benchmarkの実測値は [`docs/results/timesfm3-rolling-benchmark-2026-09-04.md`](docs/results/timesfm3-rolling-benchmark-2026-09-04.md) に記録しています。TimesFM 3.0はこの限定条件でpoint forecastとWISがLastValueを上回りましたが、native intervalのcoverageはnominal 80%未達で、結果はPhase 2完了や製品採用の根拠ではありません。
 
 Phase 0の実行確認は、外部依存を導入せず `python tools/smoke.py` と `python tools/safety_check.py` で行えます。Phase 1の最小generatorは次で実行できます。
 
@@ -96,6 +99,15 @@ python tools/timesfm3/run_smoke.py --cache-dir C:\banto-cache\timesfm3 --output 
 ```
 
 このrunはresearch-only／non-productionであり、Banto Hub／PLCへのwrite pathを持ちません。実測値はartifactと結果文書へ記録し、単一windowの結果を一般性能として扱いません。
+
+TimesFM 3をrolling-origin benchmarkへ接続する場合は、専用venvで次を実行します。`prepare_checkpoint.py`で取得・検証済みの、リポジトリ外cacheだけを指定してください。実行時はlicense acceptance、固定revision、checkpointのサイズ／SHA-256、インストール済み`timesfm==3.0.0`を確認し、ネットワークを禁止します。
+
+```powershell
+python tools/data-generator/generate.py --config examples/configs/synthetic-motor-small.json --output artifacts/generated/synthetic-motor-small
+python tools/timesfm3/run_benchmark.py --config examples/configs/benchmark-timesfm3-small.json --cache-dir C:\banto-cache\timesfm3 --accept-research-only-license
+```
+
+`benchmark-timesfm3-small.json`はLastValueとTimesFM 3を同じequipment／origin／targetで比較します。validation／test originは高コスト実モデル向けに決定的なstrideと最大数を設定し、その選択結果は`result.json`のprovenanceへ保存します。TimesFM 3はnative quantile、baselineはvalidation residual by leadを使います。今回のsampleでは将来の`load_proxy`を本番で計画値として確実に知れる前提を置かず、全covariateをpast-onlyにしています。このため既知将来値を使う実験は、計画値であることを別途データ契約に明記したconfigで行います。
 
 ```text
 python tools/data-generator/generate.py --config examples/configs/synthetic-motor-small.json --output artifacts/generated/synthetic-motor-small
@@ -113,6 +125,6 @@ Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUT
 
 ## ステータス
 
-Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0は専用環境でCPU smokeを実行済みです。実モデルの広範な評価と他候補との同条件比較は未実施であり、Phase 2は完了していません。本番デプロイ経路も未実装です。
+Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0は専用環境でCPU smokeと小規模rolling-origin benchmarkを実行済みです。実モデルの広範な評価、強いbaseline・他候補との同条件比較、coverage calibrationは未実施であり、Phase 2は完了していません。本番デプロイ経路も未実装です。
 
 合成データは研究用の制御されたfixtureであり、実設備の挙動を代表すると主張しません。顧客データ、raw設備データ、秘密情報は生成物・設定・Git履歴へ入れません。大量生成データはGit無視領域へ置き、commit対象は小さいconfig／fixtureだけにします。

@@ -167,6 +167,17 @@ class TimesFM3AdapterTests(unittest.TestCase):
                     with self.assertRaises(timesfm3_module.AdapterUnavailableError):
                         TimesFM3Adapter(self.manifest).forecast(request)
 
+    def test_official_backend_is_loaded_once_and_reused(self):
+        request = self.request([self.series("a", (1, 2, 3))], quantiles=())
+        adapter = TimesFM3Adapter(self.manifest)
+        backend = FakeBackend(BackendForecast(((4, 5),), None))
+        with patch.object(adapter, "_load_official_backend", return_value=backend) as loader:
+            first = adapter.forecast(request)
+            second = adapter.forecast(request)
+        self.assertEqual(first.forecasts[0].point_forecast, second.forecasts[0].point_forecast)
+        loader.assert_called_once_with()
+        self.assertEqual(len(backend.calls), 2)
+
     def test_adapter_implements_forecaster_and_provenance_is_exact(self):
         adapter = self.adapter(BackendForecast(((4, 5),), None))
         self.assertIsInstance(adapter, Forecaster)

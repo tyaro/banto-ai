@@ -1,7 +1,8 @@
-"""外部依存ゼロのchronological rolling-origin benchmark runner。"""
+"""外部依存ゼロの chronological rolling-origin benchmark runner。"""
 
 from __future__ import annotations
 
+import hashlib
 import json
 import platform
 import subprocess
@@ -9,19 +10,58 @@ import sys
 import tempfile
 import time
 import tracemalloc
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path, PureWindowsPath
-from typing import Any
+from typing import Any, Callable, Mapping
 
 from .baselines import BaselineError, build_baseline
+from .contracts import Forecaster
 from .manifest import ManifestValidationError, load_json, validate
 from .metrics import MetricError, interval_coverage, interval_width, mae, mase, rmse, weighted_interval_score
 from .quality import check_dataset
-from .types import ForecastRequest, QualityStatus, SignalMetadata, SignalPoint, TimeSeries
+from .runtime import process_peak_memory_bytes
+from .types import ForecastRequest, ForecastResult, ForecastSeriesResult, QualityStatus, SignalMetadata, SignalPoint, TimeSeries
 
 
 class BenchmarkError(ValueError):
     """benchmark設定、データ、または評価に失敗した。"""
+
+
+class ModelInvocationError(BenchmarkError):
+    """注入されたmodelのforecast呼び出しだけを隔離する。"""
+
+
+ModelFactory = Callable[[str, dict[str, Any]], Forecaster]
+
+
+class ModelRegistry:
+    """モデル名からForecaster生成処理への明示的な注入境界。"""
+
+    _BASELINE_NAMES = frozenset({
+        "last-value", "seasonal-naive", "moving-average", "ewma",
+        "holt-linear", "autoets", "linear-regression-covariates",
+    })
+
+    def __init__(self, factories: Mapping[str, ModelFactory] | None = None) -> None:
+        self._factories: dict[str, ModelFactory] = {
+            name: (lambda _equipment_id, parameters, model_name=name: build_baseline(model_name, parameters))
+            for name in self._BASELINE_NAMES
+        }
+        if factories:
+            for name, factory in factories.items():
+                if not isinstance(name, str) or not name or not callable(factory):
+                    raise BenchmarkError("model registry entries must be named callables")
+                self._factories[name] = factory
+
+    def has(self, name: str) -> bool:
+        return name in self._factories
+
+    def build(self, name: str, equipment_id: str, parameters: dict[str, Any]) -> Forecaster:
+        try:
+            factory = self._factories[name]
+        except KeyError as exc:
+            raise BenchmarkError(f"no model factory is registered for {name}") from exc
+        return factory(equipment_id, dict(parameters))
 
 
 def _finite_json(value: Any) -> Any:
@@ -45,7 +85,7 @@ def _quantile(values: list[float], q: float) -> float:
     return ordered[low] + (ordered[high] - ordered[low]) * (index - low)
 
 
-def _validate_config(config: dict[str, Any], root: Path) -> None:
+def _validate_config(config: dict[str, Any], root: Path, registry: ModelRegistry | None = None) -> None:
     schema = load_json(root / "schemas" / "benchmark-run-config.schema.json")
     try:
         validate(config, schema)
@@ -60,14 +100,24 @@ def _validate_config(config: dict[str, Any], root: Path) -> None:
         raise BenchmarkError("quantiles must be sorted and unique")
     if 0.5 not in quantiles or any(quantile != 0.5 and not any(abs(candidate - (1.0 - quantile)) <= 1e-12 for candidate in quantiles) for quantile in quantiles):
         raise BenchmarkError("quantiles must contain 0.5 and symmetric central-interval pairs")
+    for key in ("past_only_covariate_ids", "known_future_covariate_ids"):
+        values = config.get(key, [])
+        if len(values) != len(set(values)):
+            raise BenchmarkError(f"{key} must contain unique IDs")
+    if set(config.get("past_only_covariate_ids", [])) & set(config.get("known_future_covariate_ids", [])):
+        raise BenchmarkError("a covariate cannot be both past-only and known-future")
     names = [model["name"] for model in config["models"]]
     if len(names) != len(set(names)):
         raise BenchmarkError("duplicate model name is forbidden")
+    registry = registry or ModelRegistry()
     for model in config["models"]:
-        try:
-            build_baseline(model["name"], model.get("parameters", {}))
-        except BaselineError as exc:
-            raise BenchmarkError(str(exc)) from exc
+        if not registry.has(model["name"]):
+            raise BenchmarkError(f"no model factory is registered for {model['name']}")
+        if model["name"] in ModelRegistry._BASELINE_NAMES:
+            try:
+                build_baseline(model["name"], dict(model.get("parameters", {})))
+            except BaselineError as exc:
+                raise BenchmarkError(str(exc)) from exc
     if not (root / config["dataset_path"]).is_dir():
         raise BenchmarkError("dataset_path does not exist")
 
@@ -86,7 +136,6 @@ def _revision(root: Path) -> dict[str, Any]:
         head = subprocess.check_output(["git", "-C", str(root), "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL).strip()
         diff = subprocess.check_output(["git", "-C", str(root), "diff", "--binary", "HEAD"], stderr=subprocess.DEVNULL)
         status = subprocess.check_output(["git", "-C", str(root), "status", "--porcelain"], text=True, stderr=subprocess.DEVNULL)
-        import hashlib
         return {"status": "git", "head": head, "dirty": bool(status), "diff_sha256": hashlib.sha256(diff + status.encode("utf-8")).hexdigest()}
     except (OSError, subprocess.SubprocessError):
         return {"status": "git-unavailable", "head": None, "dirty": None, "diff_sha256": None}
@@ -105,11 +154,14 @@ PREDICTION_KEYS = frozenset({"model", "equipment_id", "target_signal_id", "opera
 
 
 def _model_state_bytes(models: list[dict[str, Any]]) -> dict[str, int]:
-    """baselineのimmutable設定と空の学習stateをcanonical JSON化したbyte数。"""
     sizes: dict[str, int] = {}
     for model in models:
         serialized = json.dumps(
-            {"model_name": model["name"], "parameters": model.get("parameters", {}), "learned_state": {}},
+            {
+                "model_name": model["name"],
+                "parameters": model.get("parameters", {}),
+                "learned_state": {},
+            },
             ensure_ascii=False,
             sort_keys=True,
             separators=(",", ":"),
@@ -119,8 +171,11 @@ def _model_state_bytes(models: list[dict[str, Any]]) -> dict[str, int]:
     return sizes
 
 
-def _split_indices_for_rows(rows: list[dict[str, Any]], chronological: dict[str, Any], equipment_id: str) -> dict[str, tuple[int, int]]:
-    """manifestの[start,end) timestamp境界を、この設備の行indexへ解決する。"""
+def _split_indices_for_rows(
+    rows: list[dict[str, Any]],
+    chronological: dict[str, Any],
+    equipment_id: str,
+) -> dict[str, tuple[int, int]]:
     row_times = [datetime.fromisoformat(row["timestamp"].replace("Z", "+00:00")) for row in rows]
     boundaries: dict[str, tuple[int, int]] = {}
     for item in chronological["splits"]:
@@ -137,12 +192,22 @@ def _split_indices_for_rows(rows: list[dict[str, Any]], chronological: dict[str,
 
 
 def _validate_prediction(row: dict[str, Any], quantiles: tuple[float, ...]) -> None:
-    if set(row) != PREDICTION_KEYS or row["split"] != "test" or not isinstance(row["lead_time"], int) or row["lead_time"] <= 0:
+    if (
+        set(row) != PREDICTION_KEYS
+        or row["split"] != "test"
+        or not isinstance(row["lead_time"], int)
+        or row["lead_time"] <= 0
+    ):
         raise BenchmarkError("prediction row keys or split metadata are invalid")
     if not isinstance(row["quantiles"], dict) or list(row["quantiles"]) != [str(q) for q in quantiles]:
         raise BenchmarkError("prediction quantile keys are not ordered as configured")
     values = [row["actual"], row["point_forecast"], *row["quantiles"].values()]
-    if any(not isinstance(value, (int, float)) or isinstance(value, bool) or not (value == value and abs(value) != float("inf")) for value in values):
+    if any(
+        not isinstance(value, (int, float))
+        or isinstance(value, bool)
+        or not (value == value and abs(value) != float("inf"))
+        for value in values
+    ):
         raise BenchmarkError("prediction values must be finite numbers")
     ordered = [row["quantiles"][str(q)] for q in quantiles]
     if any(left > right for left, right in zip(ordered, ordered[1:])):
@@ -154,43 +219,164 @@ def _aggregate_predictions(
     quantiles: tuple[float, ...],
     train_scales: dict[tuple[str, str], tuple[float, ...]],
 ) -> dict[str, float | int | str]:
-    """raw prediction pointを同一重みで集計し、MASEだけ設備・target別train scaleを使う。"""
     if not items:
         raise BenchmarkError("cannot aggregate zero prediction points")
     for item in items:
         _validate_prediction(item, quantiles)
     actual = tuple(float(item["actual"]) for item in items)
     predicted = tuple(float(item["point_forecast"]) for item in items)
-    quantile_forecasts = {quantile: tuple(float(item["quantiles"][str(quantile)]) for item in items) for quantile in quantiles}
+    quantile_forecasts = {
+        quantile: tuple(float(item["quantiles"][str(quantile)]) for item in items)
+        for quantile in quantiles
+    }
     lower_q, upper_q = min(quantiles), max(quantiles)
     result: dict[str, float | int | str] = {
         "count": len(items),
         "mae": mae(actual, predicted),
         "rmse": rmse(actual, predicted),
         "wis": weighted_interval_score(actual, quantile_forecasts),
-        "nominal_interval_coverage": interval_coverage(actual, quantile_forecasts[lower_q], quantile_forecasts[upper_q]),
-        "interval_width": interval_width(quantile_forecasts[lower_q], quantile_forecasts[upper_q]),
+        "nominal_interval_coverage": interval_coverage(
+            actual,
+            quantile_forecasts[lower_q],
+            quantile_forecasts[upper_q],
+        ),
+        "interval_width": interval_width(
+            quantile_forecasts[lower_q],
+            quantile_forecasts[upper_q],
+        ),
     }
     try:
-        normalized_errors = [
-            mase(
-                (float(item["actual"]),),
-                (float(item["point_forecast"]),),
-                train_scales[(item["equipment_id"], item["target_signal_id"])],
-            )
-            for item in items
-        ]
+        normalized_errors = [mase((float(item["actual"]),), (float(item["point_forecast"]),), train_scales[(item["equipment_id"], item["target_signal_id"])]) for item in items]
         result["mase"] = sum(normalized_errors) / len(normalized_errors)
     except (KeyError, MetricError) as exc:
         result["mase_status"] = "inconclusive: " + str(exc)
     return result
 
 
-def run_benchmark(config_path: Path, root: Path) -> Path:
+def _select_origins(start: int, end: int, context_length: int, horizon: int, split_name: str, config: dict[str, Any]) -> tuple[int, ...]:
+    stride = int(config.get(f"{split_name}_origin_stride", 1 if split_name == "validation" else horizon))
+    maximum = config.get(f"max_{split_name}_origins")
+    candidates = tuple(range(max(context_length, start), end - horizon + 1, stride))
+    if maximum is None or len(candidates) <= maximum:
+        return candidates
+    if maximum <= 0:
+        raise BenchmarkError(f"max_{split_name}_origins must be positive")
+    if maximum == 1:
+        return (candidates[0],)
+    selected = tuple(candidates[round(index * (len(candidates) - 1) / (maximum - 1))] for index in range(maximum))
+    return tuple(dict.fromkeys(selected))
+
+
+def _make_request(
+    rows: list[dict[str, Any]],
+    signals: dict[str, dict[str, Any]],
+    target_ids: tuple[str, ...],
+    origin: int,
+    context_length: int,
+    horizon: int,
+    quantiles: tuple[float, ...] = (),
+    past_only_ids: tuple[str, ...] = (),
+    known_future_ids: tuple[str, ...] = (),
+) -> ForecastRequest:
+    """origin直前のpast-onlyとorigin+horizonまでのknown-futureを分離して組み立てる。"""
+    if set(target_ids) & (set(past_only_ids) | set(known_future_ids)):
+        raise BenchmarkError("target cannot also be a covariate")
+    if set(past_only_ids) & set(known_future_ids):
+        raise BenchmarkError("covariate cannot be both past-only and known-future")
+
+    def series(signal_id: str, begin: int, upto: int) -> TimeSeries:
+        metadata = signals[signal_id]
+        key = signal_id.rsplit(".", 1)[-1]
+        points = tuple(
+            SignalPoint(
+                datetime.fromisoformat(row["timestamp"].replace("Z", "+00:00")),
+                row["signals"][key]["value"],
+                QualityStatus(row["quality"][key]),
+            )
+            for row in rows[begin:upto]
+        )
+        return TimeSeries(
+            SignalMetadata(
+                signal_id,
+                metadata["name"],
+                metadata["unit"],
+                metadata["sampling_interval_ms"],
+                metadata["role"],
+            ),
+            points,
+        )
+
+    begin = max(0, origin - context_length)
+    context_ids = tuple(dict.fromkeys((*target_ids, *past_only_ids, *known_future_ids)))
+    contexts = tuple(series(signal_id, begin, origin) for signal_id in context_ids)
+    future = tuple(series(signal_id, begin, min(len(rows), origin + horizon)) for signal_id in known_future_ids)
+    return ForecastRequest(contexts, target_ids, horizon, quantiles=quantiles, known_future_covariates=future)
+
+
+def _forecast_map(
+    result: ForecastResult,
+    target_ids: tuple[str, ...],
+    rows: list[dict[str, Any]],
+    origin: int,
+    horizon: int,
+    quantiles: tuple[float, ...],
+    policy: str,
+) -> dict[str, ForecastSeriesResult]:
+    if not isinstance(result, ForecastResult):
+        raise BenchmarkError("model must return ForecastResult")
+    expected_timestamps = tuple(
+        datetime.fromisoformat(
+            rows[origin + lead]["timestamp"].replace("Z", "+00:00")
+        )
+        for lead in range(horizon)
+    )
+    actual_ids = tuple(item.signal_id for item in result.forecasts)
+    if set(actual_ids) != set(target_ids) or len(actual_ids) != len(target_ids):
+        raise BenchmarkError("forecast target IDs do not match request")
+    by_id = {item.signal_id: item for item in result.forecasts}
+    mapped: dict[str, ForecastSeriesResult] = {}
+    for target_id in target_ids:
+        forecast = by_id[target_id]
+        if (
+            len(forecast.point_forecast) != horizon
+            or len(forecast.timestamps) != horizon
+            or tuple(forecast.timestamps) != expected_timestamps
+        ):
+            raise BenchmarkError("forecast horizon or timestamps do not match requested window")
+        levels = tuple(item.quantile for item in forecast.quantile_forecasts)
+        if policy == "native":
+            if levels != quantiles:
+                raise BenchmarkError("native forecast quantile levels do not match configured quantiles")
+            median = next(item for item in forecast.quantile_forecasts if item.quantile == 0.5)
+            for point, median_value in zip(forecast.point_forecast, median.values):
+                tolerance = 1e-5 * max(1.0, abs(float(point)), abs(float(median_value)))
+                if abs(float(point) - float(median_value)) > tolerance:
+                    raise BenchmarkError("native point forecast is inconsistent with p50")
+        mapped[target_id] = forecast
+    return mapped
+
+
+def _invoke_forecast(model: Forecaster, request: ForecastRequest) -> ForecastResult:
+    """外部model実装の例外を、呼び出し境界でだけrunner failureへ変換する。"""
+    try:
+        return model.forecast(request)
+    except Exception as exc:
+        raise ModelInvocationError(str(exc)) from exc
+
+
+def _policy(model_cfg: dict[str, Any]) -> str:
+    explicit = model_cfg.get("quantile_policy")
+    if explicit:
+        return str(explicit)
+    return "native" if model_cfg["name"] == "timesfm3" else "validation-residual-by-lead"
+
+
+def run_benchmark(config_path: Path, root: Path, model_registry: ModelRegistry | None = None) -> Path:
     config = load_json(config_path)
     if not isinstance(config, dict):
         raise BenchmarkError("benchmark config must be an object")
-    _validate_config(config, root)
+    registry = model_registry or ModelRegistry()
+    _validate_config(config, root, registry)
     root = root.resolve()
     dataset_dir = _repo_path(root, config["dataset_path"], "dataset_path")
     output_dir = _repo_path(root, config["output_dir"], "output_dir")
@@ -198,7 +384,6 @@ def run_benchmark(config_path: Path, root: Path) -> Path:
         raise BenchmarkError("output_dir must be separate from dataset_dir and neither an ancestor nor descendant")
     if output_dir.exists():
         raise BenchmarkError(f"refusing to overwrite existing output: {output_dir}")
-    # これは全データ読込より前に必ず実行するgate。
     quality = check_dataset(dataset_dir, root)
     manifest = load_json(dataset_dir / "dataset-manifest.json")
     fingerprint_path = (dataset_dir / manifest["fingerprint_path"]).resolve()
@@ -218,9 +403,7 @@ def run_benchmark(config_path: Path, root: Path) -> Path:
     chronological = next((item for item in split_manifest["strategies"] if item["strategy"] == "chronological"), None)
     if chronological is None or [item["split_id"] for item in chronological["splits"]] != ["train", "validation", "test"]:
         raise BenchmarkError("split manifest must provide chronological train/validation/test")
-    split_indices: dict[str, dict[str, tuple[int, int]]] = {}
-    for equipment_id, rows in by_equipment.items():
-        split_indices[equipment_id] = _split_indices_for_rows(rows, chronological, equipment_id)
+    split_indices: dict[str, dict[str, tuple[int, int]]] = {equipment_id: _split_indices_for_rows(rows, chronological, equipment_id) for equipment_id, rows in by_equipment.items()}
     signals = {item["signal_id"]: item for item in manifest["signals"]}
     configured_targets = tuple(config.get("target_signal_ids") or [item["signal_id"] for item in manifest["signals"] if item["role"] == "target"])
     equipment_ids = tuple(config.get("equipment_ids") or by_equipment.keys())
@@ -236,6 +419,9 @@ def run_benchmark(config_path: Path, root: Path) -> Path:
     failed_keys: set[tuple[str, str, str]] = set()
     validation_start_time = time.perf_counter()
     test_latencies: list[float] = []
+    test_latencies_by_model: dict[str, list[float]] = {
+        model["name"]: [] for model in config["models"]
+    }
     tracemalloc.start()
     start_time = time.perf_counter()
 
@@ -246,11 +432,21 @@ def run_benchmark(config_path: Path, root: Path) -> Path:
             raise BenchmarkError(f"unknown signal for equipment: {requested}")
         return full, key
 
-    def build_model(equipment_id: str, model_cfg: dict[str, Any]):
-        parameters = dict(model_cfg.get("parameters", {}))
-        if model_cfg["name"] == "linear-regression-covariates":
-            parameters["covariate_ids"] = [resolve_signal(equipment_id, str(item))[0] for item in parameters["covariate_ids"]]
-        return build_baseline(model_cfg["name"], parameters)
+    targets_by_equipment: dict[str, tuple[tuple[str, str], ...]] = {}
+    covariates_by_equipment: dict[str, tuple[tuple[str, ...], tuple[str, ...]]] = {}
+    for equipment_id in equipment_ids:
+        if equipment_id not in by_equipment:
+            raise BenchmarkError(f"unknown equipment: {equipment_id}")
+        targets_by_equipment[equipment_id] = tuple(resolve_signal(equipment_id, str(item)) for item in configured_targets)
+        past = tuple(resolve_signal(equipment_id, str(item))[0] for item in config.get("past_only_covariate_ids", ()))
+        known = tuple(resolve_signal(equipment_id, str(item))[0] for item in config.get("known_future_covariate_ids", ()))
+        if not config.get("past_only_covariate_ids") and not config.get("known_future_covariate_ids"):
+            legacy = tuple(resolve_signal(equipment_id, str(item))[0] for model in config["models"] if model["name"] == "linear-regression-covariates" for item in model.get("parameters", {}).get("covariate_ids", ()))
+            known = tuple(dict.fromkeys(legacy))
+        covariates_by_equipment[equipment_id] = (past, known)
+        train_start, train_end = split_indices[equipment_id]["train"]
+        for target, target_key in targets_by_equipment[equipment_id]:
+            train_scales[(equipment_id, target)] = tuple(float(row["signals"][target_key]["value"]) for row in by_equipment[equipment_id][train_start:train_end] if row["signals"][target_key]["value"] is not None)
 
     def record_failure(model_name: str, equipment_id: str, target: str, status: str, reason: str, split_name: str) -> None:
         failure_key = (equipment_id, target, model_name)
@@ -259,109 +455,200 @@ def run_benchmark(config_path: Path, root: Path) -> Path:
         failure_keys.add(failure_key)
         failures.append({"model": model_name, "equipment_id": equipment_id, "target_signal_id": target, "status": status, "reason": reason, "split": split_name})
 
-    def make_request(rows: list[dict[str, Any]], equipment_id: str, target: str, origin: int, known_ids: tuple[str, ...] = ()) -> ForecastRequest:
-        def series(signal_id: str, begin: int, upto: int) -> TimeSeries:
-            metadata = signals[signal_id]
-            key = signal_id.rsplit(".", 1)[-1]
-            points = tuple(SignalPoint(datetime.fromisoformat(row["timestamp"].replace("Z", "+00:00")), row["signals"][key]["value"], QualityStatus(row["quality"][key])) for row in rows[begin:upto])
-            return TimeSeries(SignalMetadata(signal_id, metadata["name"], metadata["unit"], metadata["sampling_interval_ms"], metadata["role"]), points)
-        context_ids = [target] + [cid for cid in known_ids if cid != target]
-        begin = max(0, origin - context_length)
-        contexts = tuple(series(signal_id, begin, origin) for signal_id in context_ids)
-        future = tuple(series(signal_id, begin, min(len(rows), origin + horizon)) for signal_id in known_ids)
-        return ForecastRequest(contexts, (target,), horizon, q_values, known_future_covariates=future)
-
-    def validate_forecast(forecast: Any, rows: list[dict[str, Any]], origin: int) -> tuple[float, ...]:
-        expected_timestamps = tuple(datetime.fromisoformat(rows[origin + lead]["timestamp"].replace("Z", "+00:00")) for lead in range(horizon))
-        if len(forecast.point_forecast) != horizon or len(forecast.timestamps) != horizon or tuple(forecast.timestamps) != expected_timestamps:
-            raise BenchmarkError("forecast horizon or timestamps do not match the requested test window")
-        return tuple(float(value) for value in forecast.point_forecast)
-
-    # validation residualsはvalidation区間内のoriginだけから収集する。
+    model_instances: dict[tuple[str, str], Forecaster] = {}
+    model_policies = {model["name"]: _policy(model) for model in config["models"]}
     for equipment_id in equipment_ids:
-        if equipment_id not in by_equipment:
-            raise BenchmarkError(f"unknown equipment: {equipment_id}")
-        rows = by_equipment[equipment_id]
-        train_start, train_end = split_indices[equipment_id]["train"]
-        validation_start, validation_end = split_indices[equipment_id]["validation"]
-        for requested_target in configured_targets:
-            target, target_key = resolve_signal(equipment_id, requested_target)
-            train_scales[(equipment_id, target)] = tuple(float(row["signals"][target_key]["value"]) for row in rows[train_start:train_end] if row["signals"][target_key]["value"] is not None)
-            for model_cfg in config["models"]:
-                model_name = model_cfg["name"]
-                key = (equipment_id, target, model_name)
-                residuals[key] = {lead: [] for lead in range(horizon)}
-                try:
-                    model = build_model(equipment_id, model_cfg)
-                    covariates = tuple(resolve_signal(equipment_id, str(x))[0] for x in model_cfg.get("parameters", {}).get("covariate_ids", ()))
-                    for origin in range(max(context_length, validation_start), validation_end - horizon + 1):
-                        request = make_request(rows, equipment_id, target, origin, covariates)
-                        forecast_series = model.forecast(request).forecasts[0]
-                        forecast = validate_forecast(forecast_series, rows, origin)
-                        actual = tuple(rows[origin + i]["signals"][target_key]["value"] for i in range(horizon))
-                        if any(value is None for value in actual):
-                            continue
-                        for lead, (actual_value, predicted_value) in enumerate(zip(actual, forecast)):
-                            residuals[key][lead].append(float(actual_value) - float(predicted_value))
-                except (BaselineError, ValueError, KeyError) as exc:
+        for model_cfg in config["models"]:
+            model_name = model_cfg["name"]
+            try:
+                parameters = dict(model_cfg.get("parameters", {}))
+                if model_name == "linear-regression-covariates":
+                    parameters["covariate_ids"] = list(covariates_by_equipment[equipment_id][1])
+                model_instances[(equipment_id, model_name)] = registry.build(model_name, equipment_id, parameters)
+            except Exception as exc:
+                for target, _ in targets_by_equipment[equipment_id]:
                     record_failure(model_name, equipment_id, target, "failed", str(exc), "validation")
-                    failed_keys.add(key)
-                if any(not residuals[key].get(lead) for lead in range(horizon)) and key not in failed_keys:
-                    record_failure(model_name, equipment_id, target, "inconclusive", "validation residuals are empty for at least one lead", "validation")
-                    failed_keys.add(key)
+                    failed_keys.add((equipment_id, target, model_name))
+
+    origin_selection: dict[str, dict[str, Any]] = {"validation": {}, "test": {}}
+    for split_name in ("validation", "test"):
+        for equipment_id in equipment_ids:
+            start, end = split_indices[equipment_id][split_name]
+            origins = _select_origins(start, end, context_length, horizon, split_name, config)
+            origin_selection[split_name][equipment_id] = {"count": len(origins), "indices": list(origins), "stride": config.get(f"{split_name}_origin_stride", 1 if split_name == "validation" else horizon), "max_origins": config.get(f"max_{split_name}_origins"), "rule": "chronological range with configured stride; endpoint-inclusive uniform cap when max_origins is set"}
+
+    for equipment_id in equipment_ids:
+        rows = by_equipment[equipment_id]
+        target_pairs = targets_by_equipment[equipment_id]
+        past_ids, known_ids = covariates_by_equipment[equipment_id]
+        origins = tuple(origin_selection["validation"][equipment_id]["indices"])
+        for model_cfg in config["models"]:
+            model_name = model_cfg["name"]
+            model = model_instances.get((equipment_id, model_name))
+            if model is None:
+                continue
+            policy = model_policies[model_name]
+            for target, _ in target_pairs:
+                residuals[(equipment_id, target, model_name)] = {lead: [] for lead in range(horizon)}
+            for origin in origins:
+                active_targets = tuple(
+                    target for target, _ in target_pairs
+                    if (equipment_id, target, model_name) not in failed_keys
+                )
+                if not active_targets:
+                    break
+                request = _make_request(
+                    rows, signals, active_targets, origin, context_length, horizon,
+                    q_values, past_ids, known_ids,
+                )
+                try:
+                    model_result = _invoke_forecast(model, request)
+                except ModelInvocationError as exc:
+                    for target, _ in target_pairs:
+                        if (equipment_id, target, model_name) not in failed_keys:
+                            record_failure(model_name, equipment_id, target, "failed", str(exc), "validation")
+                            failed_keys.add((equipment_id, target, model_name))
+                    break
+                forecast_map = _forecast_map(
+                    model_result, active_targets, rows, origin, horizon, q_values, policy,
+                )
+                for target, target_key in target_pairs:
+                    if target not in forecast_map or (equipment_id, target, model_name) in failed_keys:
+                        continue
+                    actual = tuple(
+                        rows[origin + i]["signals"][target_key]["value"]
+                        for i in range(horizon)
+                    )
+                    if any(value is None for value in actual):
+                        continue
+                    if policy == "validation-residual-by-lead":
+                        forecast = forecast_map[target].point_forecast
+                        for lead, (actual_value, predicted_value) in enumerate(zip(actual, forecast)):
+                            residuals[(equipment_id, target, model_name)][lead].append(
+                                float(actual_value) - float(predicted_value)
+                            )
+            if policy == "validation-residual-by-lead":
+                for target, _ in target_pairs:
+                    key = (equipment_id, target, model_name)
+                    if key not in failed_keys and any(not residuals[key].get(lead) for lead in range(horizon)):
+                        record_failure(model_name, equipment_id, target, "inconclusive", "validation residuals are empty for at least one lead", "validation")
+                        failed_keys.add(key)
 
     validation_seconds = time.perf_counter() - validation_start_time
     test_start_time = time.perf_counter()
-
     for equipment_id in equipment_ids:
         rows = by_equipment[equipment_id]
-        train_start, train_end = split_indices[equipment_id]["train"]
-        validation_start, validation_end = split_indices[equipment_id]["validation"]
-        test_start, test_end = split_indices[equipment_id]["test"]
-        for requested_target in configured_targets:
-            target, target_key = resolve_signal(equipment_id, requested_target)
-            for model_cfg in config["models"]:
-                model_name = model_cfg["name"]
-                key = (equipment_id, target, model_name)
-                if key in failed_keys:
-                    continue
+        target_pairs = targets_by_equipment[equipment_id]
+        past_ids, known_ids = covariates_by_equipment[equipment_id]
+        origins = tuple(origin_selection["test"][equipment_id]["indices"])
+        for model_cfg in config["models"]:
+            model_name = model_cfg["name"]
+            model = model_instances.get((equipment_id, model_name))
+            if model is None:
+                continue
+            policy = model_policies[model_name]
+            for origin in origins:
+                active_targets = tuple(
+                    target for target, _ in target_pairs
+                    if (equipment_id, target, model_name) not in failed_keys
+                )
+                if not active_targets:
+                    break
+                request = _make_request(
+                    rows, signals, active_targets, origin, context_length, horizon,
+                    q_values, past_ids, known_ids,
+                )
+                call_start = time.perf_counter()
                 try:
-                    model = build_model(equipment_id, model_cfg)
-                    covariates = tuple(resolve_signal(equipment_id, str(x))[0] for x in model_cfg.get("parameters", {}).get("covariate_ids", ()))
-                    residual = residuals.get(key, {})
-                    if not residual or any(not residual.get(lead) for lead in range(horizon)):
-                        raise BenchmarkError("validation residuals are empty; model is inconclusive")
-                    for origin in range(max(context_length, test_start), test_end - horizon + 1, horizon):
-                        request = make_request(rows, equipment_id, target, origin, covariates)
-                        call_start = time.perf_counter()
-                        forecast = model.forecast(request).forecasts[0]
-                        point_forecast = validate_forecast(forecast, rows, origin)
-                        test_latencies.append(time.perf_counter() - call_start)
-                        actual = tuple(rows[origin + i]["signals"][target_key]["value"] for i in range(horizon))
-                        if any(value is None for value in actual):
-                            record_failure(model_name, equipment_id, target, "inconclusive", "test actual contains missing value", "test")
-                            continue
-                        calibrated = {q: tuple(point_forecast[lead] + _quantile(residual[lead], q) for lead in range(horizon)) for q in q_values}
-                        actual_f = tuple(float(v) for v in actual)
-                        for lead in range(horizon):
-                            mode = rows[origin + lead]["operating_mode"]
-                            slice_key = f"{model_name}|{target}|{equipment_id}|{mode}|{lead + 1}"
-                            prediction = {"model": model_name, "equipment_id": equipment_id, "target_signal_id": target, "operating_mode": mode, "split": "test", "origin_timestamp": rows[origin]["timestamp"], "timestamp": forecast.timestamps[lead].isoformat().replace("+00:00", "Z"), "lead_time": lead + 1, "actual": actual_f[lead], "point_forecast": point_forecast[lead], "quantiles": {str(q): calibrated[q][lead] for q in q_values}}
-                            _validate_prediction(prediction, q_values)
-                            records.setdefault(slice_key, []).append(prediction)
-                            predictions.append(prediction)
-                except (BaselineError, MetricError, BenchmarkError, ValueError, KeyError) as exc:
-                    record_failure(model_name, equipment_id, target, "failed" if isinstance(exc, BaselineError) else "inconclusive", str(exc), "test")
+                    model_result = _invoke_forecast(model, request)
+                except ModelInvocationError as exc:
+                    for target, _ in target_pairs:
+                        if (equipment_id, target, model_name) not in failed_keys:
+                            record_failure(model_name, equipment_id, target, "failed", str(exc), "test")
+                            failed_keys.add((equipment_id, target, model_name))
+                    break
+                forecast_map = _forecast_map(
+                    model_result, active_targets, rows, origin, horizon, q_values, policy,
+                )
+                latency = time.perf_counter() - call_start
+                test_latencies.append(latency)
+                test_latencies_by_model[model_name].append(latency)
+                for target, target_key in target_pairs:
+                    key = (equipment_id, target, model_name)
+                    if target not in forecast_map or key in failed_keys:
+                        continue
+                    actual = tuple(
+                        rows[origin + i]["signals"][target_key]["value"]
+                        for i in range(horizon)
+                    )
+                    if any(value is None for value in actual):
+                        record_failure(model_name, equipment_id, target, "inconclusive", "test actual contains missing value", "test")
+                        continue
+                    forecast = forecast_map[target]
+                    point_forecast = tuple(float(value) for value in forecast.point_forecast)
+                    if policy == "native":
+                        native = {item.quantile: item.values for item in forecast.quantile_forecasts}
+                        calibrated = {
+                            q: tuple(float(native[q][lead]) for lead in range(horizon))
+                            for q in q_values
+                        }
+                    else:
+                        residual = residuals[key]
+                        calibrated = {
+                            q: tuple(
+                                point_forecast[lead] + _quantile(residual[lead], q)
+                                for lead in range(horizon)
+                            )
+                            for q in q_values
+                        }
+                    actual_f = tuple(float(v) for v in actual)
+                    for lead in range(horizon):
+                        mode = rows[origin + lead]["operating_mode"]
+                        slice_key = f"{model_name}|{target}|{equipment_id}|{mode}|{lead + 1}"
+                        prediction = {
+                            "model": model_name,
+                            "equipment_id": equipment_id,
+                            "target_signal_id": target,
+                            "operating_mode": mode,
+                            "split": "test",
+                            "origin_timestamp": rows[origin]["timestamp"],
+                            "timestamp": forecast.timestamps[lead].isoformat().replace("+00:00", "Z"),
+                            "lead_time": lead + 1,
+                            "actual": actual_f[lead],
+                            "point_forecast": point_forecast[lead],
+                            "quantiles": {str(q): calibrated[q][lead] for q in q_values},
+                        }
+                        _validate_prediction(prediction, q_values)
+                        records.setdefault(slice_key, []).append(prediction)
+                        predictions.append(prediction)
 
     test_seconds = time.perf_counter() - test_start_time
     if not predictions:
+        tracemalloc.stop()
         raise BenchmarkError("all models failed or produced zero predictions")
-
-    summary = {key: _aggregate_predictions(value, q_values, train_scales) for key, value in records.items()}
+    summary = {
+        key: _aggregate_predictions(value, q_values, train_scales)
+        for key, value in records.items()
+    }
+    by_model = {
+        model_name: _aggregate_predictions(
+            [item for item in predictions if item["model"] == model_name],
+            q_values,
+            train_scales,
+        )
+        for model_name in model_policies
+        if any(item["model"] == model_name for item in predictions)
+    }
     overall = _aggregate_predictions(predictions, q_values, train_scales)
     elapsed = time.perf_counter() - start_time
-    _, peak_memory = tracemalloc.get_traced_memory()
+    _, tracemalloc_peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
+    process_peak, memory_source = process_peak_memory_bytes()
+    if process_peak is None:
+        peak_memory = tracemalloc_peak
+        memory_source = "tracemalloc.fallback"
+    else:
+        peak_memory = process_peak
     temp_parent = output_dir.parent
     temp_parent.mkdir(parents=True, exist_ok=True)
     temporary = Path(tempfile.mkdtemp(prefix=f".{config['run_id']}.", dir=temp_parent))
@@ -371,8 +658,59 @@ def run_benchmark(config_path: Path, root: Path) -> Path:
                 _validate_prediction(row, q_values)
                 handle.write(json.dumps(_finite_json(row), ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n")
         split_provenance = {equipment_id: {split_name: {"start_index": bounds[0], "end_index": bounds[1]} for split_name, bounds in split_indices[equipment_id].items()} for equipment_id in equipment_ids}
-        result = _finite_json({"schema_version": "0.1", "result_type": "benchmark", "run_id": config["run_id"], "status": "partial" if failures else "success", "dataset_fingerprint": dataset_fingerprint, "generator_version": manifest.get("generator_version"), "run_config": config, "code_revision": _revision(root), "seed": config.get("seed"), "model_parameters": {item["name"]: item.get("parameters", {}) for item in config["models"]}, "prediction_count": len(predictions), "failures": failures, "metrics": {"aggregate": overall, "slices": summary}, "runtime": {"validation_seconds": validation_seconds, "test_seconds": test_seconds, "total_seconds": elapsed, "p50_latency_ms": _percentile([value * 1000 for value in test_latencies], 0.50), "p95_latency_ms": _percentile([value * 1000 for value in test_latencies], 0.95), "peak_memory_bytes": peak_memory, "model_state_bytes": _model_state_bytes(config["models"]), "output_size_bytes_excluding_result": 0, "os": platform.platform(), "python": sys.version, "cpu": platform.processor(), "calibration_source": "validation residuals by lead only"}, "provenance": {"quality_gate": quality, "split": split_provenance, "quantile_calibration": "validation residual only, lead-time specific"}})
-        markdown = "# Benchmark結果\n\n合成データの結果であり、実設備の性能を示しません。\n\n## 概要\n\n- データ品質gate: 合格\n- 予測件数: %d\n- 分位点校正: validation residualのみ\n- 失敗・評価不能: %d\n- aggregate: %s\n\n## slice別\n\n%s\n" % (len(predictions), len(failures), overall, "\n".join(f"- `{key}`: {value}" for key, value in summary.items()))
+        latency_by_model = {
+            model_name: {
+                "call_count": len(latencies),
+                "p50_ms": _percentile([value * 1000 for value in latencies], 0.50),
+                "p95_ms": _percentile([value * 1000 for value in latencies], 0.95),
+            }
+            for model_name, latencies in test_latencies_by_model.items()
+        }
+        result = _finite_json({
+            "schema_version": "0.1",
+            "result_type": "benchmark",
+            "run_id": config["run_id"],
+            "status": "partial" if failures else "success",
+            "dataset_fingerprint": dataset_fingerprint,
+            "generator_version": manifest.get("generator_version"),
+            "run_config": config,
+            "code_revision": _revision(root),
+            "seed": config.get("seed"),
+            "model_parameters": {
+                item["name"]: item.get("parameters", {}) for item in config["models"]
+            },
+            "prediction_count": len(predictions),
+            "failures": failures,
+            "metrics": {"aggregate": overall, "by_model": by_model, "slices": summary},
+            "runtime": {
+                "validation_seconds": validation_seconds,
+                "test_seconds": test_seconds,
+                "total_seconds": elapsed,
+                "p50_latency_ms": _percentile([value * 1000 for value in test_latencies], 0.50),
+                "p95_latency_ms": _percentile([value * 1000 for value in test_latencies], 0.95),
+                "latency_by_model": latency_by_model,
+                "peak_memory_bytes": peak_memory,
+                "memory_source": memory_source,
+                "model_state_bytes": _model_state_bytes(config["models"]),
+                "output_size_bytes_excluding_result": 0,
+                "os": platform.platform(),
+                "python": sys.version,
+                "cpu": platform.processor(),
+                "calibration_source": "model別policy",
+                "quantile_policy_by_model": model_policies,
+            },
+            "provenance": {
+                "quality_gate": quality,
+                "split": split_provenance,
+                "origin_selection": origin_selection,
+                "quantile_calibration": "model別policy: nativeまたはvalidation residual by lead",
+                "quantile_policy_by_model": model_policies,
+            },
+        })
+        model_lines = "\n".join(
+            f"- `{model_name}`: {value}" for model_name, value in by_model.items()
+        )
+        markdown = "# Benchmark結果\n\n合成データの結果であり、実設備の性能を示しません。\n\n## 概要\n\n- データ品質gate: 合格\n- 予測件数: %d\n- quantile policy: model別（nativeまたはvalidation residual by lead）\n- 失敗・評価不能: %d\n- aggregate（全model混在・互換表示）: %s\n\n## model別metrics\n\n%s\n\n## slice別\n\n%s\n" % (len(predictions), len(failures), overall, model_lines, "\n".join(f"- `{key}`: {value}" for key, value in summary.items()))
         (temporary / "summary.md").write_text(markdown, encoding="utf-8")
         state_size = sum(path.stat().st_size for path in temporary.iterdir() if path.is_file())
         result["runtime"]["output_size_bytes_excluding_result"] = state_size
