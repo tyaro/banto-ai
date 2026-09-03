@@ -4,7 +4,7 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 このリポジトリは `banto-industrial` から意図的に分離しています。実験、評価プロトコル、モデル試作、連携契約を扱う研究用ワークスペースです。生産設備の制御動作は、Banto Hub と PLC／制御システムが引き続き担当します。
 
-Savepoint 2では、外部依存ゼロの共通benchmark runnerと統計baselineを実装しています。TimesFM 3.0はadapter境界とfake backend testsまで実装済みですが、依存・weightsは未導入で実モデルは未実行です。合成データの結果は実設備性能を示しません。
+Savepoint 2では、外部依存ゼロの共通benchmark runnerと統計baselineを実装しています。TimesFM 3.0は専用環境でCPU smokeを実行済みですが、core runtimeへML依存を混入させていません。今回の合成データ結果は実設備性能を示しません。
 
 ## 研究テーマ
 
@@ -62,6 +62,7 @@ datasets/                      データポリシーとローカル配置
 tools/
   smoke.py                    clean checkout用のmanifest／naive smoke
   safety_check.py             repository safety guard
+  timesfm3/                   TimesFM 3のpreflight／準備／offline CPU smoke
   data-generator/              データ生成ユーティリティ
   evaluator/                   共通の評価指標とレポート
 ```
@@ -80,9 +81,21 @@ tools/
 
 現時点では TimesFM 3.0 の学習済み重みは非商用・非本番用途に限定されるため、研究比較専用とします。商用利用可能候補として Chronos-2、Toto 2.0、Granite TTM／TSPulseなどを同時に評価します。
 
-TimesFM 3.0の共通`Forecaster` adapter、official APIの遅延import境界、license／provenance検証、fake backend testsは実装済みです。`environments/timesfm3/requirements.in`は`timesfm[torch]==3.0.0`のtop-level exact pinであり、完全なtransitive lockではありません。依存とcheckpointは導入・downloadしておらず、実モデルの精度、速度、メモリは未測定です。
+TimesFM 3.0の共通`Forecaster` adapter、official APIの遅延import境界、license／provenance検証、fake backend testsは実装済みです。`environments/timesfm3/requirements.in`は`timesfm[torch]==3.0.0`のtop-level exact pinであり、完全なtransitive lockではありません。専用環境でのCPU smoke結果は記録済みですが、単一synthetic windowのため一般性能と実設備性能は未評価です。
+
+正式CPU smoke 2回の測定値は [`docs/results/timesfm3-cpu-smoke-2026-09-04.md`](docs/results/timesfm3-cpu-smoke-2026-09-04.md) に記録しています。単一synthetic windowの結果であり、実設備性能や製品採否を示しません。
 
 Phase 0の実行確認は、外部依存を導入せず `python tools/smoke.py` と `python tools/safety_check.py` で行えます。Phase 1の最小generatorは次で実行できます。
+
+TimesFM 3の実評価は、リポジトリ外のcacheを明示して次の順に実行します。checkpoint準備だけがdownloadを行い、smokeは`local_files_only=True`でcache miss時に停止します。
+
+```powershell
+python tools/timesfm3/preflight.py --cache-dir C:\banto-cache\timesfm3 --format both
+python tools/timesfm3/prepare_checkpoint.py --cache-dir C:\banto-cache\timesfm3 --accept-research-only-license
+python tools/timesfm3/run_smoke.py --cache-dir C:\banto-cache\timesfm3 --output artifacts\timesfm3\cpu-smoke.json
+```
+
+このrunはresearch-only／non-productionであり、Banto Hub／PLCへのwrite pathを持ちません。実測値はartifactと結果文書へ記録し、単一windowの結果を一般性能として扱いません。
 
 ```text
 python tools/data-generator/generate.py --config examples/configs/synthetic-motor-small.json --output artifacts/generated/synthetic-motor-small
@@ -100,6 +113,6 @@ Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUT
 
 ## ステータス
 
-Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0はadapter境界とfake backend testsのみ実装済みです。実モデル評価と他候補との同条件比較は未実施であり、Phase 2は完了していません。本番デプロイ経路も未実装です。
+Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0は専用環境でCPU smokeを実行済みです。実モデルの広範な評価と他候補との同条件比較は未実施であり、Phase 2は完了していません。本番デプロイ経路も未実装です。
 
 合成データは研究用の制御されたfixtureであり、実設備の挙動を代表すると主張しません。顧客データ、raw設備データ、秘密情報は生成物・設定・Git履歴へ入れません。大量生成データはGit無視領域へ置き、commit対象は小さいconfig／fixtureだけにします。

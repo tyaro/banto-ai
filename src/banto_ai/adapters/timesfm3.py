@@ -91,6 +91,7 @@ class TimesFM3Config:
     package_version: str = OFFICIAL_PACKAGE_VERSION
     checkpoint_path: str = OFFICIAL_CHECKPOINT
     checkpoint_revision: str = DEFAULT_REVISION
+    cache_dir: str | None = None
     requested_use: str = "research-only"
     per_core_batch_size: int = 1
     device: str = "cpu"
@@ -103,6 +104,8 @@ class TimesFM3Config:
             raise ValueError("checkpoint_path must identify the official TimesFM 3 checkpoint")
         if not isinstance(self.checkpoint_revision, str) or not _SHA.fullmatch(self.checkpoint_revision):
             raise ValueError("checkpoint_revision must be a lowercase 40-character SHA")
+        if self.cache_dir is not None and (not isinstance(self.cache_dir, str) or not self.cache_dir):
+            raise ValueError("cache_dir must be None or a non-empty string")
         if self.requested_use != "research-only":
             raise ValueError("requested_use must be research-only")
         if isinstance(self.per_core_batch_size, bool) or not isinstance(self.per_core_batch_size, int):
@@ -164,6 +167,9 @@ class OfficialTimesFM3Backend:
                 use_symmetric_averaging=False,
                 sort_quantiles=True,
                 padding_mode="none",
+                make_positive=False,
+                use_znorm=False,
+                univariate=False,
             ))
         except TypeError as exc:
             raise ValueError("TimesFM 3 predict_batch must return an iterator") from exc
@@ -360,6 +366,7 @@ class TimesFM3Adapter(Forecaster):
             model_config = ModelConfig(
                 checkpoint_path=self.config.checkpoint_path,
                 revision=self.config.checkpoint_revision,
+                cache_dir=self.config.cache_dir,
                 device=self.config.device,
                 local_files_only=self.config.local_files_only,
                 per_core_batch_size=self.config.per_core_batch_size,

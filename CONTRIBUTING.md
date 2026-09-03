@@ -11,7 +11,7 @@ Savepoint 0/1は研究を再現可能にする基盤、Savepoint 2は標準ラ�
 - AIからPLC／Banto Hubへのwrite path
 - 本番SLAや自動promotion
 
-TimesFM 3.0については、coreから独立したadapter境界、fake backend tests、package／checkpoint来歴、専用環境の入力だけを追加しています。依存・weightsの導入と実モデル実行はまだ対象外です。
+TimesFM 3.0については、coreから独立したadapter境界、fake backend tests、package／checkpoint来歴、専用環境を管理しています。専用Windows CPU環境でのsmoke実行は完了していますが、core runtimeへの依存混入と本番利用は対象外です。
 
 ## Windowsでの実行
 
@@ -64,11 +64,11 @@ core runtimeの依存は標準ライブラリのみです。Phase 0ではinstall
 | Granite TTM／TSPulse | granite-tsfm | edge／異常検知候補として別環境で評価する |
 | 評価補助 | fev | 採用判断後に追加する |
 
-外部packageのdownload／installは、明示的な研究作業として個別に行い、core CIでは実行しません。TimesFM 3.0の`requirements.in`はtop-level exact pinであり、完全なtransitive lockではありません。実行時は専用venvを使い、checkpointはGit外に置き、`local_files_only=True`を既定にします。Torch／CUDAを含むCPU用・CUDA用の完全lockは対象hardware確定後に生成・検証します。モデルを追加するときは、まずadapter、manifest、license gate、再現手順を更新してください。
+外部packageのdownload／installは、明示的な研究作業として個別に行い、core CIでは実行しません。TimesFM 3.0の`requirements.in`はtop-level exact pinであり、完全なtransitive lockではありません。Windows CPU向けのexact-version lockは作成済みですが、hash-pinnedなsupply-chain lockは未作成です。実行時は専用venvを使い、checkpointはGit外に置き、`local_files_only=True`を既定にします。モデルを追加するときは、まずadapter、manifest、license gate、再現手順を更新してください。
 
-core外部依存がゼロのため、coreのdependency lockは作成しません。model依存はcoreへ混ぜず環境ごとに管理します。TimesFM 3.0の完全lockは未作成であり、`requirements.in`を完全lockとは扱いません。
+core外部依存がゼロのため、coreのdependency lockは作成しません。model依存はcoreへ混ぜず環境ごとに管理します。TimesFM 3.0はWindows CPU向けexact-version lockを作成済みですが、package hashを含むsupply-chain完全lockは未作成です。`requirements.in`を完全lockとは扱いません。
 
-TimesFM 3.0 adapterとfake backend testsは実装済みですが、実モデル／weightsは未導入・未実行です。精度、速度、peak memory、artifact sizeの値はまだありません。実測なしにPhase 2完了や性能改善を記載しないでください。
+TimesFM 3.0 adapterとfake backend testsに加え、専用環境でのCPU smoke実行も完了しています。結果は単一synthetic windowに限定されるため、実設備性能、一般性能、Phase 2完了を主張しないでください。
 
 formatter／linterもPhase 0では導入しません。core外部依存ゼロを優先し、標準ライブラリの`compileall`、`unittest`、安全検査をCIで実行します。最初のdevelopment dependencyを導入するPhaseでformatter／linterをversion pinし、model environmentと同様にlockへ固定します。
 

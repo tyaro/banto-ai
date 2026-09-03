@@ -143,7 +143,7 @@ savepoint 1では、外部依存なしのseed再現可能generatorと最小quali
 
 ### Phase 2: Forecast候補比較
 
-現在、TimesFM 3.0の共通`Forecaster` adapter、official API境界、license／provenance検証、fake backend testsまでは実装済みです。依存・weightsは未導入で実モデルは未実行のため、精度、速度、メモリは未測定です。他候補との同条件比較も未実施であり、Phase 2は完了していません。
+現在、TimesFM 3.0の共通`Forecaster` adapter、official API境界、license／provenance検証、fake backend tests、専用Windows CPU環境での2回の実モデルsmokeを実施済みです。単一synthetic windowの結果は記録済みですが、他候補との同条件比較、広範な精度評価、実設備評価は未実施であり、Phase 2は完了していません。
 
 #### 優先順位
 

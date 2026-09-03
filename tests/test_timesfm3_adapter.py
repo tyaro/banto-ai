@@ -263,7 +263,8 @@ class TimesFM3AdapterTests(unittest.TestCase):
         module.ModelConfig = FakeModelConfig
         module.TimesFM3Evaluator = FakeEvaluator
         with patch.dict(sys.modules, {"numpy": fake_numpy, "timesfm3": module}):
-            backend = TimesFM3Adapter(self.manifest)._load_official_backend()
+            config = TimesFM3Config(cache_dir="C:/external/timesfm3-cache")
+            backend = TimesFM3Adapter(self.manifest, config=config)._load_official_backend()
             output = backend.forecast(
                 ((1.0, 2.0, 3.0),),
                 ((7.0, 8.0, 9.0),),
@@ -275,6 +276,7 @@ class TimesFM3AdapterTests(unittest.TestCase):
         self.assertEqual(config_calls, [{
             "checkpoint_path": "google/timesfm-3.0-pytorch",
             "revision": DEFAULT_REVISION,
+            "cache_dir": "C:/external/timesfm3-cache",
             "device": "cpu",
             "local_files_only": True,
             "per_core_batch_size": 1,
@@ -284,6 +286,7 @@ class TimesFM3AdapterTests(unittest.TestCase):
             "contexts", "horizon", "past_only_covariates",
             "past_future_covariates", "return_quantiles",
             "use_symmetric_averaging", "sort_quantiles", "padding_mode",
+            "make_positive", "use_znorm", "univariate",
         })
         self.assertEqual(call["contexts"][0].values, ((1.0, 2.0, 3.0),))
         self.assertEqual(call["past_only_covariates"][0].values, ((7.0, 8.0, 9.0),))
@@ -296,6 +299,9 @@ class TimesFM3AdapterTests(unittest.TestCase):
         self.assertIs(call["use_symmetric_averaging"], False)
         self.assertIs(call["sort_quantiles"], True)
         self.assertEqual(call["padding_mode"], "none")
+        self.assertIs(call["make_positive"], False)
+        self.assertIs(call["use_znorm"], False)
+        self.assertIs(call["univariate"], False)
         self.assertEqual(len(fake_numpy.calls), 3)
         self.assertTrue(all(dtype is fake_numpy.float32 for _, dtype in fake_numpy.calls))
         self.assertEqual(output.point_forecast, [[4.0, 5.0]])
@@ -404,6 +410,8 @@ class TimesFM3AdapterTests(unittest.TestCase):
             {"checkpoint_revision": "ABC"},
             {"checkpoint_revision": DEFAULT_REVISION.upper()},
             {"checkpoint_revision": 123},
+            {"cache_dir": ""},
+            {"cache_dir": 123},
             {"requested_use": "product"},
             {"per_core_batch_size": True},
             {"per_core_batch_size": 1.5},

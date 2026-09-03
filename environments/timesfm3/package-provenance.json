@@ -9,6 +9,9 @@
   "package_sha256": "0ad3e6b2226a85d665ebca3b5711b875cdef816a6f8ae0d3acbd5361f3e4b63d",
   "checkpoint": "google/timesfm-3.0-pytorch",
   "checkpoint_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+  "checkpoint_allow_patterns": ["config.json", "model.safetensors", "LICENSE", "README.md"],
+  "checkpoint_model_size_bytes": 1322898824,
+  "checkpoint_model_sha256": "a7592b0a8432baee54483254e5647856911ce69e09d09a9bb65904b2d98f17da",
   "verified_at": "2026-09-03",
   "lock_scope": "top-level-only"
 }

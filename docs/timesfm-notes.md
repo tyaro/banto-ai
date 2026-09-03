@@ -2,7 +2,7 @@
 
 ## 対象範囲
 
-この文書は評価プロトコルを定義します。adapter用の入力はPyPI `timesfm` 3.0.0、checkpointは`google/timesfm-3.0-pytorch`のimmutable revision `43046b85ec22d584a13f8098c2ed39c889e129c2`へ固定しています。hardware targetとTorch／CUDAの完全lockは未確定です。
+この文書は評価プロトコルを定義します。adapter用の入力はPyPI `timesfm` 3.0.0、checkpointは`google/timesfm-3.0-pytorch`のimmutable revision `43046b85ec22d584a13f8098c2ed39c889e129c2`へ固定しています。今回のhardware targetはWindows amd64／CPython 3.14.0／CPUで、exact-version lockを作成済みです。hash-pinnedなsupply-chain lockは未作成です。
 
 最初に答える問いは実務的なものです。複数の horizon と運転状態において、TimesFM-3 は単純なベースラインと比べて産業設備に近い信号を有用に予測できるでしょうか。
 
@@ -19,7 +19,13 @@
 
 PyPI `timesfm` 3.0.0は2026-08-28公開で、確認したwheel SHA-256は`0ad3e6b2226a85d665ebca3b5711b875cdef816a6f8ae0d3acbd5361f3e4b63d`です。`requirements.in`は`timesfm[torch]==3.0.0`をtop-levelで固定しますが、完全なtransitive lockではありません。詳細は[`environments/timesfm3/README.md`](../environments/timesfm3/README.md)と[`ADR-0003`](adr-0003-timesfm3-isolation.md)を参照してください。
 
-共通`Forecaster` adapter、official backendの遅延import、known-future整列、9 quantile検証、license／provenance gate、fake backend testsは実装済みです。一方、依存とweightsは未導入で、実モデルは未実行です。したがって精度、calibration、速度、メモリは未測定であり、この状態をPhase 2完了とは扱いません。
+共通`Forecaster` adapter、official backendの遅延import、known-future整列、9 quantile検証、license／provenance gate、fake backend testsは実装済みです。専用環境で実モデルCPU smokeを2回実行し、速度・Peak RSS・単一synthetic window上の指標を記録しました。実設備性能、広範な精度、calibration、他候補との比較は未評価であり、この状態をPhase 2完了とは扱いません。
+
+実評価の入口は、`tools/timesfm3/preflight.py`、`prepare_checkpoint.py`、`run_smoke.py`です。preflightはCLIで指定したcache pathだけを確認します。checkpoint準備には`--accept-research-only-license`が必須で、取得対象は公式siblingsで確認した4ファイルに固定し、`model.safetensors`のサイズとSHA-256を検証します。smoke実行は`local_files_only=True`と明示cache_dirを維持します。smokeは2 target、past-only covariate、known-future covariateを含む決定的な合成入力から、point予測とp10/p50/p90を新規artifactへ記録します。正式2回の実測値は結果文書に記録済みですが、単一synthetic windowのためPhase 2完了や一般性能の結論には使えません。
+
+直線入力のpreliminary smokeは推論経路の成立確認として扱い、正式な採用数値からは除外しました。正式な非線形case 2回測定値は [`results/timesfm3-cpu-smoke-2026-09-04.md`](results/timesfm3-cpu-smoke-2026-09-04.md) に記録しています。
+
+正式な非線形case 2回測定値は [`results/timesfm3-cpu-smoke-2026-09-04.md`](results/timesfm3-cpu-smoke-2026-09-04.md) に記録しています。単一synthetic window／cold processの結果であり、入力fingerprint・predictions・metricsは2回で一致しました。性能採否やPhase 2完了を示すものではありません。
 
 このため、TimesFM 3.0は`banto-ai`の研究benchmarkには含めますが、顧客PoC、本番shadow、製品artifactの候補には含めません。実験結果と生成artifactには `research-only` を明記します。利用条件が将来変わった場合も、固定したcheckpointのlicenseをrunごとに再確認します。
 
