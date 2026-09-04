@@ -11,6 +11,9 @@ from pathlib import Path
 import sys
 from typing import Any
 
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "src"))
 from tools.toto2 import CHECKPOINT_ALLOW_PATTERNS, DEFAULT_REVISION, EXPECTED_MODEL_SHA256, EXPECTED_MODEL_SIZE_BYTES, MANIFEST_PATH, OFFICIAL_CHECKPOINT, external_cache, load_manifest, load_provenance
 
 
@@ -66,7 +69,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="prepare_checkpoint.py")
     parser.add_argument("--cache-dir", required=True)
     parser.add_argument("--manifest", default=str(MANIFEST_PATH))
-    parser.add_argument("--accept-apache-2.0", action="store_true", required=True)
+    parser.add_argument("--accept-apache-2.0", dest="accept_apache_2_0", action="store_true", required=True)
     args = parser.parse_args(argv)
     try:
         result = prepare_checkpoint(Path(args.cache_dir), Path(args.manifest), accepted=args.accept_apache_2_0)

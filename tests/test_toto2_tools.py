@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -59,6 +61,41 @@ class Toto2ToolTests(unittest.TestCase):
                 with self.subTest(parameters=parameters):
                     with self.assertRaises(ValueError):
                         factory("metropt3-apu-01", parameters)
+
+    def test_all_toto_entrypoints_import_from_repository_and_external_cwd(self):
+        scripts = tuple(ROOT / "tools" / "toto2" / name for name in ("preflight.py", "prepare_checkpoint.py", "run_smoke.py", "run_benchmark.py"))
+        environment = dict(os.environ)
+        environment.pop("PYTHONPATH", None)
+        with tempfile.TemporaryDirectory() as external_cwd:
+            for script in scripts:
+                with self.subTest(cwd="repository", script=script.name):
+                    completed = subprocess.run([sys.executable, script.relative_to(ROOT).as_posix(), "--help"], cwd=ROOT, env=environment, capture_output=True, text=True)
+                    self.assertEqual(completed.returncode, 0, completed.stderr)
+                    self.assertNotIn("ModuleNotFoundError", completed.stderr)
+                with self.subTest(cwd="external", script=script.name):
+                    completed = subprocess.run([sys.executable, str(script), "--help"], cwd=external_cwd, env=environment, capture_output=True, text=True)
+                    self.assertEqual(completed.returncode, 0, completed.stderr)
+                    self.assertNotIn("ModuleNotFoundError", completed.stderr)
+
+    def test_prepare_cli_acceptance_gate_reaches_mock_without_download(self):
+        with tempfile.TemporaryDirectory() as cache_dir, tempfile.TemporaryDirectory() as external_cwd:
+            code = (
+                "import json, sys\n"
+                "from unittest.mock import patch\n"
+                "import tools.toto2.prepare_checkpoint as target\n"
+                "def fake(cache, manifest, *, accepted):\n"
+                "    print(json.dumps({'cache': str(cache), 'accepted': accepted}))\n"
+                "    return {'status': 'mocked-no-download'}\n"
+                "with patch.object(target, 'prepare_checkpoint', fake):\n"
+                "    raise SystemExit(target.main(sys.argv[1:]))\n"
+            )
+            environment = dict(os.environ)
+            environment["PYTHONPATH"] = os.pathsep.join((str(ROOT), str(ROOT / "src")))
+            completed = subprocess.run([sys.executable, "-c", code, "--cache-dir", cache_dir, "--accept-apache-2.0"], cwd=external_cwd, env=environment, capture_output=True, text=True)
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn('"accepted": true', completed.stdout)
+        self.assertIn("mocked-no-download", completed.stdout)
+        self.assertNotIn("AttributeError", completed.stderr)
 
     def test_smoke_publishes_with_deterministic_fake_backend(self):
         class FakeBackend:
