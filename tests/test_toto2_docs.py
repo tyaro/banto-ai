@@ -26,6 +26,19 @@ class Toto2DocumentationTests(unittest.TestCase):
         validate(config, result_schema["$defs"]["runConfig"], root=result_schema)
         validate({"toto2": toto["parameters"]}, result_schema["properties"]["model_parameters"], root=result_schema)
 
+    def test_small_matrix_documentation_matches_unmeasured_scope(self):
+        readme = (ROOT / "tools/toto2/README.md").read_text(encoding="utf-8")
+        for required in (
+            "run_matrix.py",
+            "8条件",
+            "context=64はpaddingなし",
+            "context=120はpatch_size=32に合わせて128点入力",
+            "matrixの実測値・結果artifactはまだ作成していません",
+            "同じ共有Toto adapterを8セルで再利用",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, readme)
+
     def test_invalid_or_unknown_toto_parameters_fail_closed_in_schema(self):
         config_path = ROOT / "examples/configs/benchmark-metropt3-toto2-4m.json"
         schema = load_json(ROOT / "schemas/benchmark-run-config.schema.json")

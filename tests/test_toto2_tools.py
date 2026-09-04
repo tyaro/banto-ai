@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -7,10 +8,15 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import patch
+from uuid import uuid4
 
 from tools import toto2
-from tools.toto2 import preflight, run_benchmark, run_smoke
+from tools.toto2 import preflight, run_benchmark, run_matrix, run_smoke
 from banto_ai.adapters.toto2 import BackendForecast, OFFICIAL_QUANTILES, Toto2Adapter
+from banto_ai.benchmark import _select_origins
+from banto_ai.generator import generate_synthetic
+from banto_ai.manifest import load_json, validate
+from banto_ai.matrix import MatrixError, expand_cells
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -63,7 +69,7 @@ class Toto2ToolTests(unittest.TestCase):
                         factory("metropt3-apu-01", parameters)
 
     def test_all_toto_entrypoints_import_from_repository_and_external_cwd(self):
-        scripts = tuple(ROOT / "tools" / "toto2" / name for name in ("preflight.py", "prepare_checkpoint.py", "run_smoke.py", "run_benchmark.py"))
+        scripts = tuple(ROOT / "tools" / "toto2" / name for name in ("preflight.py", "prepare_checkpoint.py", "run_smoke.py", "run_benchmark.py", "run_matrix.py"))
         environment = dict(os.environ)
         environment.pop("PYTHONPATH", None)
         with tempfile.TemporaryDirectory() as external_cwd:
@@ -114,6 +120,185 @@ class Toto2ToolTests(unittest.TestCase):
                 self.assertEqual(payload["status"], "pass")
                 self.assertEqual(payload["input"]["effective_model_input_length"], 128)
                 self.assertEqual(payload["model"]["provenance"]["verification_status"], "skipped-test-only")
+
+    def test_small_matrix_configs_cover_eight_cells_and_synthetic_data(self):
+        matrix = load_json(ROOT / "examples/configs/benchmark-matrix-toto2-small.json")
+        validate(matrix, load_json(ROOT / "schemas/benchmark-matrix-config.schema.json"))
+        self.assertEqual(
+            expand_cells(matrix),
+            (
+                (17, 15, 64), (17, 15, 120), (17, 30, 64), (17, 30, 120),
+                (42, 15, 64), (42, 15, 120), (42, 30, 64), (42, 30, 120),
+            ),
+        )
+        generator_config = load_json(ROOT / matrix["generator_config_path"])
+        validate(
+            generator_config,
+            load_json(ROOT / "schemas/synthetic-generator-config.schema.json"),
+        )
+        regimes = generator_config["regimes"]
+        self.assertEqual((regimes[0]["start_sample"], regimes[-1]["end_sample"]), (0, 480))
+        self.assertTrue(all(left["end_sample"] == right["start_sample"] for left, right in zip(regimes, regimes[1:])))
+        benchmark_config = load_json(ROOT / matrix["benchmark_config_path"])
+        validate(
+            benchmark_config,
+            load_json(ROOT / "schemas/benchmark-run-config.schema.json"),
+        )
+        self.assertEqual(benchmark_config["known_future_covariate_ids"], [])
+        self.assertEqual([model["name"] for model in benchmark_config["models"]].count("toto2"), 1)
+
+        artifacts = ROOT / "artifacts"
+        artifacts.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=artifacts) as directory:
+            output = generate_synthetic(
+                ROOT / matrix["generator_config_path"], Path(directory) / "dataset", ROOT
+            )
+            summary = load_json(output / "summary.json")
+            rows_by_equipment = {}
+            with (output / "observations.jsonl").open(encoding="utf-8") as handle:
+                for line in handle:
+                    row = json.loads(line)
+                    rows_by_equipment.setdefault(row["equipment_id"], []).append(row)
+        self.assertEqual(summary["sample_count_per_equipment"], 480)
+        self.assertEqual(summary["equipment_count"], 2)
+        self.assertEqual(summary["observation_record_count"], 960)
+        self.assertEqual(summary["configured_event_count"], 12)
+        self.assertEqual(summary["disabled_event_count"], 1)
+        self.assertEqual(summary["event_count"], 11)
+        self.assertEqual(set(summary["regime_coverage"].values()), {80})
+        self.assertEqual(summary["event_coverage"]["stuck_value"], 1)
+        self.assertEqual(
+            {event_type: count for event_type, count in summary["event_coverage"].items() if event_type != "stuck_value"},
+            {"sensor_drift": 2, "spike": 2, "dropout": 2, "overheating_trend": 2, "jam_or_slip": 2},
+        )
+        expected_origins = {
+            ("validation", 15): (288, 363),
+            ("validation", 30): (288, 348),
+            ("test", 15): (384, 459),
+            ("test", 30): (384, 444),
+        }
+        for horizon in (15, 30):
+            for context_length in (64, 120):
+                for split_name, (start, end) in (("validation", (288, 384)), ("test", (384, 480))):
+                    origins = _select_origins(
+                        start, end, context_length, horizon, split_name, benchmark_config
+                    )
+                    self.assertEqual(origins, expected_origins[(split_name, horizon)])
+                    for rows in rows_by_equipment.values():
+                        for origin in origins:
+                            selected = rows[origin - context_length:origin + horizon]
+                            for row in selected:
+                                for signal_id in ("motor_current", "motor_temperature", "load_proxy"):
+                                    self.assertIsNotNone(row["signals"][signal_id]["value"])
+
+    def test_matrix_wrapper_reuses_single_run_guards_and_shared_factory(self):
+        matrix_config = "examples/configs/benchmark-matrix-toto2-small.json"
+        with tempfile.TemporaryDirectory() as cache_dir:
+            captured = {}
+            shared_factory = lambda _equipment_id, _parameters: object()
+
+            def fake_runner(config_path, root, registry):
+                captured["config_path"] = config_path
+                captured["root"] = root
+                captured["registry"] = registry
+                captured["cells"] = expand_cells(load_json(config_path))
+                return ROOT / "artifacts" / "toto2" / "matrix" / "fake-result"
+
+            tracked_names = (
+                "HF_HUB_OFFLINE", "HF_HUB_DISABLE_TELEMETRY", "TRANSFORMERS_OFFLINE",
+                "DO_NOT_TRACK", "HF_HOME", "HF_HUB_CACHE", "TRANSFORMERS_CACHE",
+            )
+            original = {name: os.environ.get(name) for name in tracked_names}
+            try:
+                os.environ["HF_HUB_OFFLINE"] = "caller-offline"
+                os.environ["HF_HOME"] = "caller-home"
+                with patch.object(run_matrix.single_run, "_external_cache", return_value=Path(cache_dir)) as external_cache, \
+                    patch.object(run_matrix.single_run, "_load_and_validate_license", return_value={"allowed_use": "commercial-evaluation"}) as load_license, \
+                    patch.object(run_matrix.single_run, "_verify_cached_checkpoint") as verify_checkpoint, \
+                    patch.object(run_matrix.single_run, "_verify_installed_package") as verify_package, \
+                    patch.object(run_matrix.single_run, "make_shared_toto_factory", return_value=shared_factory) as make_factory:
+                    output = run_matrix.run_toto2_matrix(
+                        matrix_config, ROOT, Path(cache_dir),
+                        matrix_runner=fake_runner,
+                    )
+            finally:
+                for name, value in original.items():
+                    if value is None:
+                        os.environ.pop(name, None)
+                    else:
+                        os.environ[name] = value
+
+            self.assertEqual(output, ROOT / "artifacts" / "toto2" / "matrix" / "fake-result")
+            self.assertEqual(captured["config_path"], ROOT / matrix_config)
+            self.assertEqual(captured["root"], ROOT.resolve())
+            self.assertEqual(len(captured["cells"]), 8)
+            self.assertIs(captured["registry"]._factories["toto2"], shared_factory)
+            external_cache.assert_called_once_with(Path(cache_dir), must_exist=True)
+            load_license.assert_called_once_with(run_matrix.MANIFEST_PATH)
+            verify_checkpoint.assert_called_once_with(Path(cache_dir))
+            verify_package.assert_called_once_with()
+            make_factory.assert_called_once()
+            self.assertEqual(os.environ.get("HF_HUB_OFFLINE"), original["HF_HUB_OFFLINE"])
+            self.assertEqual(os.environ.get("HF_HOME"), original["HF_HOME"])
+
+    def test_matrix_wrapper_rejects_toto_contract_before_external_cache(self):
+        matrix = load_json(ROOT / "examples/configs/benchmark-matrix-toto2-small.json")
+        benchmark = load_json(ROOT / matrix["benchmark_config_path"])
+        artifacts = ROOT / "artifacts"
+        artifacts.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=artifacts) as directory:
+            control = Path(directory)
+            benchmark_path = control / "benchmark.json"
+            matrix_path = control / "matrix.json"
+            benchmark["known_future_covariate_ids"] = ["future_signal"]
+            benchmark_path.write_text(json.dumps(benchmark), encoding="utf-8")
+            matrix["benchmark_config_path"] = benchmark_path.relative_to(ROOT).as_posix()
+            matrix["dataset_output_root"] = f"artifacts/toto2/test-{uuid4().hex}/datasets"
+            matrix["benchmark_output_root"] = f"artifacts/toto2/test-{uuid4().hex}/benchmarks"
+            matrix["matrix_output_dir"] = f"artifacts/toto2/test-{uuid4().hex}/matrix"
+            matrix_path.write_text(json.dumps(matrix), encoding="utf-8")
+            with patch.object(run_matrix.single_run, "_external_cache") as external_cache:
+                with self.assertRaises(MatrixError):
+                    run_matrix.run_toto2_matrix(matrix_path.relative_to(ROOT), ROOT, Path("C:/outside/cache"))
+            external_cache.assert_not_called()
+
+    def test_matrix_wrapper_rejects_invalid_generator_before_external_cache(self):
+        matrix = load_json(ROOT / "examples/configs/benchmark-matrix-toto2-small.json")
+        generator = load_json(ROOT / matrix["generator_config_path"])
+        artifacts = ROOT / "artifacts"
+        artifacts.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=artifacts) as directory:
+            control = Path(directory)
+            generator["sample_count"] = 0
+            generator_path = control / "generator.json"
+            matrix_path = control / "matrix.json"
+            generator_path.write_text(json.dumps(generator), encoding="utf-8")
+            matrix["generator_config_path"] = generator_path.relative_to(ROOT).as_posix()
+            matrix["dataset_output_root"] = f"artifacts/toto2/test-{uuid4().hex}/datasets"
+            matrix["benchmark_output_root"] = f"artifacts/toto2/test-{uuid4().hex}/benchmarks"
+            matrix["matrix_output_dir"] = f"artifacts/toto2/test-{uuid4().hex}/matrix"
+            matrix_path.write_text(json.dumps(matrix), encoding="utf-8")
+            with patch.object(run_matrix.single_run, "_external_cache") as external_cache:
+                with self.assertRaises(MatrixError):
+                    run_matrix.run_toto2_matrix(matrix_path.relative_to(ROOT), ROOT, Path("C:/outside/cache"))
+            external_cache.assert_not_called()
+
+    def test_matrix_module_import_does_not_load_heavy_backend(self):
+        code = (
+            "import sys; import tools.toto2.run_matrix; "
+            "print(sorted(set(sys.modules) & {'torch', 'numpy', 'toto2', 'huggingface_hub'}))"
+        )
+        environment = dict(os.environ)
+        environment["PYTHONPATH"] = os.pathsep.join((str(ROOT), str(ROOT / "src")))
+        completed = subprocess.run(
+            [sys.executable, "-c", code],
+            cwd=ROOT,
+            env=environment,
+            capture_output=True,
+            text=True,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(completed.stdout.strip(), "[]")
 
 
 if __name__ == "__main__":

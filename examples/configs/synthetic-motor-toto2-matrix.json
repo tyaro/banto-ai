@@ -1,0 +1,42 @@
+{
+  "config_type": "synthetic-generator",
+  "dataset_id": "synthetic-motor-toto2-matrix",
+  "equipment": [
+    {"equipment_id": "motor-01", "equipment_type": "motor"},
+    {"equipment_id": "conveyor-01", "equipment_type": "conveyor"}
+  ],
+  "events": [
+    {"event_id": "motor-01-drift-train", "event_type": "sensor_drift", "equipment_id": "motor-01", "signal_id": "motor_current", "start_sample": 56, "end_sample": 72, "magnitude": 1.2, "enabled": true},
+    {"event_id": "conveyor-01-dropout-train", "event_type": "dropout", "equipment_id": "conveyor-01", "signal_id": "motor_temperature", "start_sample": 88, "end_sample": 96, "enabled": true},
+    {"event_id": "motor-01-overheat-train", "event_type": "overheating_trend", "equipment_id": "motor-01", "signal_id": "motor_temperature", "start_sample": 168, "end_sample": 188, "magnitude": 8.0, "enabled": true},
+    {"event_id": "conveyor-01-slip-train", "event_type": "jam_or_slip", "equipment_id": "conveyor-01", "signal_id": "conveyor_speed", "start_sample": 248, "end_sample": 264, "magnitude": 0.4, "enabled": true},
+    {"event_id": "motor-01-spike-validation", "event_type": "spike", "equipment_id": "motor-01", "signal_id": "vibration_feature", "start_sample": 312, "end_sample": 320, "magnitude": 3.0, "enabled": true},
+    {"event_id": "conveyor-01-stuck-validation", "event_type": "stuck_value", "equipment_id": "conveyor-01", "signal_id": "load_proxy", "start_sample": 344, "end_sample": 360, "enabled": true},
+    {"event_id": "motor-01-dropout-test", "event_type": "dropout", "equipment_id": "motor-01", "signal_id": "vibration_feature", "start_sample": 392, "end_sample": 400, "enabled": true},
+    {"event_id": "conveyor-01-drift-test", "event_type": "sensor_drift", "equipment_id": "conveyor-01", "signal_id": "conveyor_speed", "start_sample": 408, "end_sample": 424, "magnitude": 0.8, "enabled": true},
+    {"event_id": "motor-01-slip-test", "event_type": "jam_or_slip", "equipment_id": "motor-01", "signal_id": "motor_current", "start_sample": 432, "end_sample": 444, "magnitude": 0.35, "enabled": true},
+    {"event_id": "conveyor-01-overheat-test", "event_type": "overheating_trend", "equipment_id": "conveyor-01", "signal_id": "motor_temperature", "start_sample": 448, "end_sample": 464, "magnitude": 7.0, "enabled": true},
+    {"event_id": "motor-01-spike-test", "event_type": "spike", "equipment_id": "motor-01", "signal_id": "vibration_feature", "start_sample": 468, "end_sample": 476, "magnitude": 2.5, "enabled": true},
+    {"event_id": "disabled-control-event", "event_type": "spike", "equipment_id": "motor-01", "signal_id": "motor_current", "start_sample": 24, "end_sample": 32, "magnitude": 99.0, "enabled": false}
+  ],
+  "generator_version": "0.1.0",
+  "regimes": [
+    {"regime": "stopped", "recipe_step": "stop-1", "start_sample": 0, "end_sample": 40},
+    {"regime": "startup", "recipe_step": "start-1", "start_sample": 40, "end_sample": 80},
+    {"regime": "low_speed", "recipe_step": "low-1", "start_sample": 80, "end_sample": 120},
+    {"regime": "nominal", "recipe_step": "run-1", "start_sample": 120, "end_sample": 160},
+    {"regime": "high_load", "recipe_step": "load-1", "start_sample": 160, "end_sample": 200},
+    {"regime": "cooldown", "recipe_step": "cooldown-1", "start_sample": 200, "end_sample": 240},
+    {"regime": "stopped", "recipe_step": "stop-2", "start_sample": 240, "end_sample": 280},
+    {"regime": "startup", "recipe_step": "start-2", "start_sample": 280, "end_sample": 320},
+    {"regime": "low_speed", "recipe_step": "low-2", "start_sample": 320, "end_sample": 360},
+    {"regime": "nominal", "recipe_step": "run-2", "start_sample": 360, "end_sample": 400},
+    {"regime": "high_load", "recipe_step": "load-2", "start_sample": 400, "end_sample": 440},
+    {"regime": "cooldown", "recipe_step": "cooldown-2", "start_sample": 440, "end_sample": 480}
+  ],
+  "sample_count": 480,
+  "sampling_interval_ms": 1000,
+  "schema_version": "0.1",
+  "seed": 42,
+  "start_timestamp": "2026-01-01T00:00:00Z"
+}
