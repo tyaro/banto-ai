@@ -31,9 +31,13 @@ EXPECTED_GRACE_POINTS = 3
 EXPECTED_BOOTSTRAP = {"seed": 20260905, "resamples": 10000, "confidence_level": 0.95}
 EXPECTED_OUTPUT_ROOT = "artifacts/anomaly-multiseed-v01"
 EXPECTED_BASE_CONFIG = "examples/configs/synthetic-anomaly-evaluation-v0.1.json"
+EXPECTED_BASE_SCHEMA_PATH = "schemas/synthetic-generator-config.schema.json"
 EXPECTED_SCHEMA_PATH = "schemas/anomaly-multiseed-matrix-config.schema.json"
-EXPECTED_BASE_SHA256 = "ab13ce9cc64c6d8892dde2d64c79097266b0e68e64cc659e3fdd7bd06afa9bff"
-EXPECTED_SCHEMA_SHA256 = "50dd3a5704192bc303fdab9d0334de8d0f0835d9b960ea499d9f78cb995a6b4f"
+CANONICALIZATION_ID = "utf-8-json-sort-keys-compact-no-trailing-newline-v1"
+EXPECTED_CONFIG_CANONICAL_SHA256 = "1c014476f9e9a3112b60323453b7e00359b1e45a831a43ab52d1c4e11d3341db"
+EXPECTED_BASE_CONFIG_CANONICAL_SHA256 = "16165735d4fdb71213fec301f26d9c04a593ee36afbb51d255be535dd98f8b93"
+EXPECTED_BASE_SCHEMA_CANONICAL_SHA256 = "e6e743ef4cb28902b3869cf20a0227df0340fe6b6ce0227d63eb2d2b0b55fd89"
+EXPECTED_SCHEMA_CANONICAL_SHA256 = "3bcc8d170dd59d64eb566dc21e51900ed84f253f2f0ad6e86d2778932fb29829"
 
 
 class AnomalyMatrixError(ValueError):
@@ -49,7 +53,14 @@ def _reject_duplicate_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
-def _load_object_snapshot(path: Path, label: str) -> tuple[dict[str, Any], bytes, str]:
+def _canonical_json(value: Mapping[str, Any]) -> bytes:
+    try:
+        return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+    except (TypeError, ValueError) as exc:
+        raise AnomalyMatrixError(f"value cannot be canonically serialized: {exc}") from exc
+
+
+def _load_object_snapshot(path: Path, label: str) -> tuple[dict[str, Any], bytes, str, str]:
     try:
         if _is_link(path) or not path.is_file():
             raise OSError(f"not a regular file: {path}")
@@ -76,7 +87,7 @@ def _load_object_snapshot(path: Path, label: str) -> tuple[dict[str, Any], bytes
         raise AnomalyMatrixError(f"{label} is not strict UTF-8 JSON: {exc}") from exc
     if not isinstance(value, dict):
         raise AnomalyMatrixError(f"{label} must be a JSON object")
-    return value, raw, hashlib.sha256(raw).hexdigest()
+    return value, raw, hashlib.sha256(raw).hexdigest(), hashlib.sha256(_canonical_json(value)).hexdigest()
 
 
 def _is_link(path: Path) -> bool:
@@ -134,9 +145,7 @@ def _require_exact(value: Any, expected: Any, label: str) -> None:
         raise AnomalyMatrixError(f"{label} is not fixed to {expected!r}")
 
 
-def _validate_base_generator(base: Mapping[str, Any], root: Path) -> list[dict[str, Any]]:
-    schema_path = _safe_repo_path(root, "schemas/synthetic-generator-config.schema.json", "base generator schema", must_exist=True)
-    schema, _raw, _sha = _load_object_snapshot(schema_path, "base generator schema")
+def _validate_base_generator(base: Mapping[str, Any], schema: Mapping[str, Any]) -> list[dict[str, Any]]:
     try:
         validate(dict(base), schema)
     except ManifestValidationError as exc:
@@ -191,9 +200,11 @@ def _validate_semantics(config: Mapping[str, Any], base: Mapping[str, Any], test
     _require_exact(config.get("config_type"), MATRIX_CONFIG_TYPE, "config_type")
     _require_exact(config.get("matrix_id"), MATRIX_ID, "matrix_id")
     _require_exact(config.get("base_generator_config_path"), EXPECTED_BASE_CONFIG, "base_generator_config_path")
+    _require_exact(config.get("base_generator_config_canonical_sha256"), EXPECTED_BASE_CONFIG_CANONICAL_SHA256, "base_generator_config_canonical_sha256")
+    _require_exact(config.get("base_generator_schema_path"), EXPECTED_BASE_SCHEMA_PATH, "base_generator_schema_path")
+    _require_exact(config.get("base_generator_schema_canonical_sha256"), EXPECTED_BASE_SCHEMA_CANONICAL_SHA256, "base_generator_schema_canonical_sha256")
     _require_exact(config.get("schema_path"), EXPECTED_SCHEMA_PATH, "schema_path")
-    _require_exact(config.get("base_generator_config_sha256"), EXPECTED_BASE_SHA256, "base_generator_config_sha256")
-    _require_exact(config.get("schema_sha256"), EXPECTED_SCHEMA_SHA256, "schema_sha256")
+    _require_exact(config.get("schema_canonical_sha256"), EXPECTED_SCHEMA_CANONICAL_SHA256, "schema_canonical_sha256")
     _require_exact(config.get("seeds"), list(EXPECTED_SEEDS), "seeds")
     _require_exact(config.get("test_split"), {"start_sample": 720, "end_sample": 900}, "test_split")
     _require_exact(config.get("mode_window_samples"), EXPECTED_MODE_WINDOW, "mode_window_samples")
@@ -235,13 +246,13 @@ def _validate_semantics(config: Mapping[str, Any], base: Mapping[str, Any], test
             raise AnomalyMatrixError(f"{expected_layout_id} must contain exactly four events")
         classes_seen: set[str] = set()
         expanded: list[tuple[int, int, str]] = []
-        for class_index, event in enumerate(events):
+        for event in events:
             event_class = event.get("event_class")
             if event_class in classes_seen or event_class not in EXPECTED_CLASSES:
                 raise AnomalyMatrixError(f"{expected_layout_id} event classes must be an exact partition")
             classes_seen.add(event_class)
-            expected_slot = EXPECTED_SLOT_OFFSETS[(class_index + expected_index) % 4]
-            event_id = f"{expected_layout_id}-{event_class.replace('_', '-') }"
+            expected_slot = EXPECTED_SLOT_OFFSETS[(EXPECTED_CLASSES.index(event_class) + expected_index) % 4]
+            event_id = f"{expected_layout_id}-{event_class.replace('_', '-')}"
             _require_exact(event.get("event_id"), event_id, f"{expected_layout_id}.{event_class}.event_id")
             if event_id in event_ids or event_id in base_event_ids:
                 raise AnomalyMatrixError(f"event ID is duplicated or reuses the base event ID: {event_id}")
@@ -292,36 +303,45 @@ def validate_anomaly_matrix_config(config_path: str | Path, root: Path | None = 
     """Purely validate a preregistered matrix config and return an audit summary."""
     repository = (root or Path(__file__).resolve().parents[2]).absolute()
     path = _resolve_config_path(config_path, repository)
-    config, config_raw, config_sha256 = _load_object_snapshot(path, "matrix config")
+    config, config_raw, config_raw_sha256, config_canonical_sha256 = _load_object_snapshot(path, "matrix config")
     try:
         schema_path = _safe_repo_path(repository, config.get("schema_path"), "schema_path", must_exist=True)
     except (AttributeError, TypeError) as exc:
         raise AnomalyMatrixError("schema_path must be present before path validation") from exc
-    schema, schema_raw, schema_sha256 = _load_object_snapshot(schema_path, "matrix config schema")
+    schema, schema_raw, schema_raw_sha256, schema_canonical_sha256 = _load_object_snapshot(schema_path, "matrix config schema")
     try:
         validate(config, schema)
     except ManifestValidationError as exc:
         raise AnomalyMatrixError(f"matrix config does not satisfy its schema: {exc}") from exc
-    if schema_sha256 != EXPECTED_SCHEMA_SHA256 or config.get("schema_sha256") != schema_sha256:
-        raise AnomalyMatrixError("matrix config schema SHA-256 pin is invalid")
+    if schema_canonical_sha256 != EXPECTED_SCHEMA_CANONICAL_SHA256 or config.get("schema_canonical_sha256") != schema_canonical_sha256:
+        raise AnomalyMatrixError("matrix config schema canonical SHA-256 pin is invalid")
+    if config_canonical_sha256 != EXPECTED_CONFIG_CANONICAL_SHA256:
+        raise AnomalyMatrixError("matrix config canonical SHA-256 is not the preregistered identity")
     base_path = _safe_repo_path(repository, config["base_generator_config_path"], "base_generator_config_path", must_exist=True)
-    base, base_raw, base_sha256 = _load_object_snapshot(base_path, "base generator config")
-    if base_sha256 != EXPECTED_BASE_SHA256 or config.get("base_generator_config_sha256") != base_sha256:
-        raise AnomalyMatrixError("base generator config SHA-256 pin is invalid")
+    base, base_raw, base_raw_sha256, base_canonical_sha256 = _load_object_snapshot(base_path, "base generator config")
+    if base_canonical_sha256 != EXPECTED_BASE_CONFIG_CANONICAL_SHA256 or config.get("base_generator_config_canonical_sha256") != base_canonical_sha256:
+        raise AnomalyMatrixError("base generator config canonical SHA-256 pin is invalid")
+    base_schema_path = _safe_repo_path(repository, config["base_generator_schema_path"], "base_generator_schema_path", must_exist=True)
+    base_schema, base_schema_raw, base_schema_raw_sha256, base_schema_canonical_sha256 = _load_object_snapshot(base_schema_path, "base generator schema")
+    if base_schema_canonical_sha256 != EXPECTED_BASE_SCHEMA_CANONICAL_SHA256 or config.get("base_generator_schema_canonical_sha256") != base_schema_canonical_sha256:
+        raise AnomalyMatrixError("base generator schema canonical SHA-256 pin is invalid")
     output_path = _safe_repo_path(repository, config["output_root"], "output_root", must_exist=False)
     if output_path.exists() and not output_path.is_dir():
         raise AnomalyMatrixError("output_root must be a directory when it already exists")
-    test_regimes = _validate_base_generator(base, repository)
+    test_regimes = _validate_base_generator(base, base_schema)
     details = _validate_semantics(config, base, test_regimes)
 
-    # Re-read the three input snapshots before returning so a mutation during validation fails closed.
-    current_config, current_config_raw, _ = _load_object_snapshot(path, "matrix config completion snapshot")
-    current_schema, current_schema_raw, _ = _load_object_snapshot(schema_path, "matrix config schema completion snapshot")
-    current_base, current_base_raw, _ = _load_object_snapshot(base_path, "base generator config completion snapshot")
-    if current_config_raw != config_raw or current_schema_raw != schema_raw or current_base_raw != base_raw:
+    # Re-read the four input snapshots before returning so a mutation during validation fails closed.
+    current_config, current_config_raw, _current_config_raw_sha256, current_config_canonical_sha256 = _load_object_snapshot(path, "matrix config completion snapshot")
+    current_schema, current_schema_raw, _current_schema_raw_sha256, current_schema_canonical_sha256 = _load_object_snapshot(schema_path, "matrix config schema completion snapshot")
+    current_base, current_base_raw, _current_base_raw_sha256, current_base_canonical_sha256 = _load_object_snapshot(base_path, "base generator config completion snapshot")
+    current_base_schema, current_base_schema_raw, _current_base_schema_raw_sha256, current_base_schema_canonical_sha256 = _load_object_snapshot(base_schema_path, "base generator schema completion snapshot")
+    if current_config_raw != config_raw or current_schema_raw != schema_raw or current_base_raw != base_raw or current_base_schema_raw != base_schema_raw:
         raise AnomalyMatrixError("matrix inputs changed during validation")
-    if current_config != config or current_schema != schema or current_base != base:
+    if current_config != config or current_schema != schema or current_base != base or current_base_schema != base_schema:
         raise AnomalyMatrixError("matrix input objects changed during validation")
+    if current_config_canonical_sha256 != config_canonical_sha256 or current_schema_canonical_sha256 != schema_canonical_sha256 or current_base_canonical_sha256 != base_canonical_sha256 or current_base_schema_canonical_sha256 != base_schema_canonical_sha256:
+        raise AnomalyMatrixError("matrix input canonical identities changed during validation")
 
     return {
         "schema_version": MATRIX_SCHEMA_VERSION,
@@ -332,9 +352,12 @@ def validate_anomaly_matrix_config(config_path: str | Path, root: Path | None = 
         "config_type": MATRIX_CONFIG_TYPE,
         "matrix_id": MATRIX_ID,
         "config_path": path.relative_to(repository).as_posix(),
-        "config_sha256": config_sha256,
-        "schema": {"path": schema_path.relative_to(repository).as_posix(), "sha256": schema_sha256},
-        "base_generator": {"path": base_path.relative_to(repository).as_posix(), "sha256": base_sha256},
+        "canonicalization": CANONICALIZATION_ID,
+        "config_canonical_sha256": config_canonical_sha256,
+        "config_raw_sha256": config_raw_sha256,
+        "schema": {"path": schema_path.relative_to(repository).as_posix(), "canonical_sha256": schema_canonical_sha256, "raw_sha256": schema_raw_sha256},
+        "base_generator": {"path": base_path.relative_to(repository).as_posix(), "canonical_sha256": base_canonical_sha256, "raw_sha256": base_raw_sha256},
+        "base_generator_schema": {"path": base_schema_path.relative_to(repository).as_posix(), "canonical_sha256": base_schema_canonical_sha256, "raw_sha256": base_schema_raw_sha256},
         "seeds": list(EXPECTED_SEEDS),
         "layout_ids": details["layout_ids"],
         "target_signal_ids": details["target_signal_ids"],
@@ -375,7 +398,7 @@ def _text_summary(summary: Mapping[str, Any]) -> str:
         f"cells/layouts: {counts['cell_count']} / {counts['layout_count']}",
         f"events per seed: {counts['event_count_per_seed']} (positive={counts['positive_event_count_per_seed']}, suppression={counts['suppression_event_count_per_seed']})",
         f"events total: positive={counts['positive_event_count_total']}, suppression={counts['suppression_event_count_total']}",
-        f"config sha256: {summary['config_sha256']}",
+        f"config canonical sha256: {summary['config_canonical_sha256']}",
     ))
 
 

@@ -66,7 +66,7 @@ Toto 2.0 controlled 4-track acceptance analyzerのsource、固定config/schema�
 
 ### Phase 3 次工程: multi-seed anomaly replay preregistration
 
-10 seed × 12 event-layout、120 cellsのstdlib-only offline replayを、実装前に固定したschema/configとengineering／performanceの二段gateで実施する計画です。expanded accounting windowのmode/test内収容、seed-cluster block bootstrap、8個の完全修飾target signal availability、stopped／cooldown faultのsynthetic stress testとしての位置付けを含むseed、layout、detector parameter、指標、promotion閾値、安全境界は [`anomaly-multiseed-evaluation-plan.md`](anomaly-multiseed-evaluation-plan.md) に記録します。Savepoint Aのpure validatorとfixed configは実装済みですが、run結果やmodel昇格を示すものではなく、dataset／result生成はまだ行っていません。
+10 seed × 12 event-layout、120 cellsのstdlib-only offline replayを、実装前に固定したschema/configとengineering／performanceの二段gateで実施する計画です。canonical JSON identity（UTF-8、sort keys、compact separators、末尾改行なし）によるschema/config pinとraw-byte監査値、expanded accounting windowのmode/test内収容、seed-cluster block bootstrap、8個の完全修飾target signal availability、stopped／cooldown faultのsynthetic stress testとしての位置付けを含むseed、layout、detector parameter、指標、promotion閾値、安全境界は [`anomaly-multiseed-evaluation-plan.md`](anomaly-multiseed-evaluation-plan.md) に記録します。Savepoint Aのpure validatorとfixed configは実装済みですが、run結果やmodel昇格を示すものではなく、dataset／result生成はまだ行っていません。
 
 ## 実験の必須記録
 

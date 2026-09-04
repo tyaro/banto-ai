@@ -3,9 +3,11 @@
   "config_type": "event-aware-anomaly-matrix",
   "matrix_id": "anomaly-multiseed-v01",
   "base_generator_config_path": "examples/configs/synthetic-anomaly-evaluation-v0.1.json",
-  "base_generator_config_sha256": "ab13ce9cc64c6d8892dde2d64c79097266b0e68e64cc659e3fdd7bd06afa9bff",
+  "base_generator_config_canonical_sha256": "16165735d4fdb71213fec301f26d9c04a593ee36afbb51d255be535dd98f8b93",
+  "base_generator_schema_path": "schemas/synthetic-generator-config.schema.json",
+  "base_generator_schema_canonical_sha256": "e6e743ef4cb28902b3869cf20a0227df0340fe6b6ce0227d63eb2d2b0b55fd89",
   "schema_path": "schemas/anomaly-multiseed-matrix-config.schema.json",
-  "schema_sha256": "50dd3a5704192bc303fdab9d0334de8d0f0835d9b960ea499d9f78cb995a6b4f",
+  "schema_canonical_sha256": "3bcc8d170dd59d64eb566dc21e51900ed84f253f2f0ad6e86d2778932fb29829",
   "seeds": [
     11,
     17,

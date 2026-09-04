@@ -408,4 +408,4 @@ Savepoint 3直後の正式な次工程は、実験開始前に固定する [`ano
 
 この段階ではrunner実装、120-cell run、結果artifact生成、性能達成を完了したとは扱わない。Savepoint Aのschema/config/layout validator、Bのdeterministic matrix runner、Cのfake/unit tests、Dのclean run、Eの独立監査・結果docを順に実施する。再実行または計画変更は新version・新preregistrationとし、TimesFM／Chronos／Toto／TSPulseのmodel比較、customer data、control／Banto Hub writeは別工程・別計画とする。
 
-Savepoint Aのpure validator、strict schema、固定matrix config、CLI、回帰testは実装済みである。validatorの成功はconfiguration validのみを示し、run完了、performance gate通過、dataset／result artifact生成を示さない。Savepoint B以降のrunner、120-cell実行、bootstrap集計は未実装である。
+Savepoint Aのpure validator、strict schema、固定matrix config、CLI、回帰testは実装済みである。validatorはcanonical JSON identity（`utf-8-json-sort-keys-compact-no-trailing-newline-v1`）でmatrix config、matrix schema、base generator config、base generator schemaをpinし、開始時と完了直前の再読込差分をfail closedにする。raw-byte SHA-256は監査用provenanceとして別記録する。validatorの成功はconfiguration validのみを示し、summaryも`run_status=not_run`、`performance_status=not_evaluated`であり、run完了、performance gate通過、dataset／result artifact生成を示さない。Savepoint B以降のrunner、120-cell実行、bootstrap集計は未実装である。

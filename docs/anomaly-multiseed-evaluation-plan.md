@@ -54,7 +54,7 @@ seedごとにdatasetを独立生成し、観測値のhashとdataset fingerprint�
 
 「非重複」はraw event intervalだけでなく、各eventのexpanded accounting window `[event.start, event.end + detection_grace_points * sampling_interval)` に対して必須とする。同一layoutの4 expanded windowは互いに重ならず、各window全体が同一のmode区間かつtest区間の内側に収まらなければSavepoint Aでfail closedにする。各layoutでは30秒のmode区間内に4 windowを配置できるevent durationとmode内offsetを、Savepoint Aのschema/configで固定する。graceは固定値`3`であり、windowの半開境界も変更しない。
 
-正確なevent signal、event duration、mode内offset、test splitに対する位置、graceとの関係は、runner実装前にschema/configへ明記して固定する。schema/configのcanonical bytesとhashをpreregistrationの一部として保存し、run開始後にoffsetまたはlayout表を変更しない。実装時に30秒mode長、mode内収容、半開区間の制約と両立しない値が判明した場合は、最小限の実現可能なoffset変更を新versionのpreregistrationとして明示し、同じversionのまま黙って修正しない。
+正確なevent signal、event duration、mode内offset、test splitに対する位置、graceとの関係は、runner実装前にschema/configへ明記して固定する。schema/configのcanonical bytesとhashをpreregistrationの一部として保存し、run開始後にoffsetまたはlayout表を変更しない。canonical digestは `utf-8-json-sort-keys-compact-no-trailing-newline-v1` の識別子に従い、JSONをUTF-8、`ensure_ascii=false`、sort keys、compact separators、NaN禁止で直列化した末尾改行なしのbytesに対するSHA-256とする。canonical SHA-256は意思決定に使うsemantic identityであり、raw-byte SHA-256は改行差を含む監査用の補助値である。実装時に30秒mode長、mode内収容、半開区間の制約と両立しない値が判明した場合は、最小限の実現可能なoffset変更を新versionのpreregistrationとして明示し、同じversionのまま黙って修正しない。
 
 stoppedとcooldownにmachine／sensor faultを置くのは、mode境界とevent accountingのsynthetic stress testである。実設備における故障頻度、故障の物理的妥当性、modeごとの発生確率を表すものではなく、現実性の評価は別scenario／別preregistrationで行う。
 
@@ -159,4 +159,4 @@ Gitで管理するのはsource、schema、config、tests、docs、hashや結果�
 
 ## Savepoint Aの実装状況
 
-Savepoint Aのpure validator、strict matrix schema、固定config、CLI、fake/unit regression testは実装済みである。現在はconfigのschema／hash／semantic validationが可能なだけで、dataset生成、result生成、120-cell replay、bootstrap、performance evaluationは実行していない。Savepoint B以降のrunner実装前に、layoutのexact offsetとそのexpanded accounting windowをこのconfigのcanonical bytes／hashで固定する。
+Savepoint Aのpure validator、strict matrix schema、固定config、CLI、fake/unit regression testは実装済みである。validatorはmatrix config、matrix schema、base generator config、base generator schemaのcanonical digestをdecision inputとしてpinし、開始時と完了直前に再読込して変更をfail closedにする。canonical digestは `utf-8-json-sort-keys-compact-no-trailing-newline-v1` による意味同一性で、raw SHA-256は改行を含む監査用値である。現在はconfigのschema／hash／semantic validationが可能なだけで、dataset生成、result生成、120-cell replay、bootstrap、performance evaluationは実行していない。Savepoint B以降のrunner実装前に、layoutのexact offsetとそのexpanded accounting windowをこのconfigのcanonical bytes／hashで固定する。
