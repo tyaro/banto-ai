@@ -8,7 +8,6 @@ import json
 import math
 import shutil
 import statistics
-import subprocess
 import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path, PureWindowsPath
@@ -17,7 +16,7 @@ from typing import Any, Iterable, Mapping
 from .benchmark import PREDICTION_KEYS, _revision
 from .generator import FINGERPRINT_ALGORITHM, FINGERPRINT_CANONICALIZATION, FINGERPRINT_FILE_NAMES, FINGERPRINT_KEYS
 from .manifest import ManifestValidationError, load_json, validate
-from .metrics import all_metrics
+from .metrics import MetricError, all_metrics, mase
 from .quality import check_dataset
 
 
@@ -55,6 +54,11 @@ def _repo_path(root: Path, raw: Any, label: str) -> Path:
     parts = raw.split("/")
     if any(part in ("", ".", "..") for part in parts):
         raise EventSliceError(f"{label} must be a normalized repository-relative POSIX path")
+    cursor = root
+    for part in parts:
+        cursor = cursor / part
+        if cursor.is_symlink():
+            raise EventSliceError(f"{label} cannot traverse a repository symlink")
     resolved = (root / raw).resolve()
     if resolved == root or root not in resolved.parents:
         raise EventSliceError(f"{label} must remain inside repository")
@@ -115,6 +119,19 @@ def _strict_jsonl(path: Path, label: str) -> list[dict[str, Any]]:
     if not rows:
         raise EventSliceError(f"{label} must not be empty")
     return rows
+
+
+def _load_json_snapshot(path: Path, label: str) -> tuple[Any, bytes]:
+    try:
+        raw = path.read_bytes()
+        value = json.loads(
+            raw.decode("utf-8"),
+            parse_constant=lambda constant: (_ for _ in ()).throw(ValueError(constant)),
+            parse_float=lambda number: float(number) if math.isfinite(float(number)) else (_ for _ in ()).throw(ValueError(number)),
+        )
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        raise EventSliceError(f"{label} is not strict UTF-8 JSON") from exc
+    return value, raw
 
 
 def _sha256(path: Path) -> str:
@@ -206,6 +223,8 @@ def _normalize_ids(values: Iterable[str] | None, equipment_id: str, signals: Map
     for value in values or ():
         key = str(value).rsplit(".", 1)[-1]
         full = str(value) if str(value) in signals else f"{equipment_id}.{key}"
+        if full in signals and not full.startswith(f"{equipment_id}."):
+            raise EventSliceError(f"configured {role or 'signal'} belongs to another equipment: {value}")
         item = signals.get(full)
         if item is None or (role is not None and item.get("role") != role):
             raise EventSliceError(f"configured {role or 'signal'} is invalid for {equipment_id}: {value}")
@@ -218,16 +237,19 @@ def _event_overlap(event: Mapping[str, Any], start: datetime, end: datetime) -> 
 
 
 def _classify_forecast(events: list[dict[str, Any]], equipment_id: str, target: str, stamp: datetime) -> tuple[str, list[dict[str, Any]]]:
-    overlapping = [event for event in events if event["equipment_id"] == equipment_id and _event_overlap(event, stamp, stamp + timedelta(microseconds=1))]
+    overlapping = _forecast_overlapping(events, equipment_id, stamp)
     target_events = [event for event in overlapping if event["signal_id"] == target]
     if target_events:
         return "target_event", target_events
     return ("other_signal_event", overlapping) if overlapping else ("clean", [])
 
 
+def _forecast_overlapping(events: list[dict[str, Any]], equipment_id: str, stamp: datetime) -> list[dict[str, Any]]:
+    return [event for event in events if event["equipment_id"] == equipment_id and _event_overlap(event, stamp, stamp + timedelta(microseconds=1))]
+
+
 def _classify_context(events: list[dict[str, Any]], equipment_id: str, target: str, past_covariates: set[str], future_covariates: set[str], origin: datetime, context_length: int, interval: timedelta) -> tuple[str, list[dict[str, Any]]]:
-    start = origin - context_length * interval
-    overlapping = [event for event in events if event["equipment_id"] == equipment_id and _event_overlap(event, start, origin)]
+    overlapping = _context_overlapping(events, equipment_id, origin, context_length, interval)
     target_events = [event for event in overlapping if event["signal_id"] == target]
     covariate_events = [event for event in overlapping if event["signal_id"] in past_covariates or event["signal_id"] in future_covariates]
     if target_events:
@@ -237,28 +259,44 @@ def _classify_context(events: list[dict[str, Any]], equipment_id: str, target: s
     return ("context_other_signal_event", overlapping) if overlapping else ("context_clean", [])
 
 
-def _metric(points: list[dict[str, Any]], scale_history: list[float]) -> dict[str, Any]:
+def _context_overlapping(events: list[dict[str, Any]], equipment_id: str, origin: datetime, context_length: int, interval: timedelta) -> list[dict[str, Any]]:
+    start = origin - context_length * interval
+    return [event for event in events if event["equipment_id"] == equipment_id and _event_overlap(event, start, origin)]
+
+
+def _metric(points: list[dict[str, Any]], scale_by_equipment: Mapping[str, list[float]]) -> dict[str, Any]:
     actual = [point["actual"] for point in points]
     predicted = [point["point_forecast"] for point in points]
     quantile_values = {float(q): [point["quantiles"][q] for point in points] for q in points[0]["quantiles"]}
-    result = all_metrics(actual, predicted, scale_history, quantile_values)
+    result = all_metrics(actual, predicted, [], quantile_values)
+    result.pop("mase_status", None)
+    try:
+        point_mase = [
+            mase((point["actual"],), (point["point_forecast"],), scale_by_equipment[point["equipment_id"]])
+            for point in points
+        ]
+        result["mase"] = statistics.fmean(point_mase)
+    except (KeyError, MetricError) as exc:
+        result["mase_status"] = "inconclusive: " + str(exc)
     return {"count": len(points), **result}
 
 
 def _cell_metric_rows(points: list[dict[str, Any]], dataset: Mapping[str, Any], horizon: int, context_length: int) -> list[dict[str, Any]]:
-    grouped: dict[tuple[str, str, str, str], list[dict[str, Any]]] = {}
+    grouped: dict[tuple[str, str, str, str, str, str], list[dict[str, Any]]] = {}
     for point in points:
         grouped.setdefault((point["dimension"], point["exposure"], point.get("operating_mode", ""), point["model"], point["target_signal_key"], point["unit"]), []).append(point)
     rows: list[dict[str, Any]] = []
     for (dimension, exposure, mode, model, target_key, unit), items in sorted(grouped.items()):
-        scale = [
-            float(row["signals"][target_key]["value"])
-            for equipment_rows in dataset["observations"].values()
-            for row in equipment_rows
-            if _parse_time(row["timestamp"], "observation timestamp") < dataset["split_times"]["validation"][0]
-            and row["signals"][target_key]["value"] is not None
-        ]
-        row: dict[str, Any] = {"dimension": dimension, "exposure": exposure, "operating_mode": mode or None, "model": model, "target_signal_key": target_key, "unit": unit, "horizon": horizon, "context_length": context_length, "metrics": _metric(items, scale)}
+        scale_by_equipment = {
+            equipment_id: [
+                float(row["signals"][target_key]["value"])
+                for row in equipment_rows
+                if _parse_time(row["timestamp"], "observation timestamp") < dataset["split_times"]["validation"][0]
+                and row["signals"][target_key]["value"] is not None
+            ]
+            for equipment_id, equipment_rows in dataset["observations"].items()
+        }
+        row: dict[str, Any] = {"dimension": dimension, "exposure": exposure, "operating_mode": mode or None, "model": model, "target_signal_key": target_key, "unit": unit, "horizon": horizon, "context_length": context_length, "metrics": _metric(items, scale_by_equipment)}
         rows.append(row)
     return rows
 
@@ -358,10 +396,62 @@ def _load_predictions(path: Path, result: Mapping[str, Any], dataset: Mapping[st
     return normalized
 
 
+def _prediction_completeness(result: Mapping[str, Any], dataset: Mapping[str, Any], predictions: list[dict[str, Any]]) -> dict[str, Any]:
+    config = result["run_config"]
+    equipment_ids = tuple(config.get("equipment_ids") or dataset["observations"])
+    targets_by_equipment: dict[str, set[str]] = {}
+    for equipment_id in equipment_ids:
+        configured = config.get("target_signal_ids")
+        if configured is None:
+            configured = [signal_id for signal_id, item in dataset["signals"].items() if item["role"] == "target" and signal_id.startswith(f"{equipment_id}.")]
+        targets_by_equipment[equipment_id] = _normalize_ids(configured, equipment_id, dataset["signals"], "target")
+    selected = result["provenance"]["origin_selection"]["test"]
+    expected_groups: set[tuple[str, str, str, datetime]] = set()
+    for equipment_id in equipment_ids:
+        selection = selected.get(equipment_id)
+        if not isinstance(selection, dict) or not isinstance(selection.get("indices"), list):
+            raise EventSliceError(f"test origin selection is missing for {equipment_id}")
+        seen_indices: set[int] = set()
+        test_start, test_end = dataset["split_times"]["test"]
+        rows = dataset["observations"][equipment_id]
+        for origin_index in selection["indices"]:
+            if not isinstance(origin_index, int) or isinstance(origin_index, bool) or origin_index in seen_indices or not 0 <= origin_index < len(rows):
+                raise EventSliceError(f"test origin selection is invalid for {equipment_id}")
+            seen_indices.add(origin_index)
+            origin = _parse_time(rows[origin_index]["timestamp"], "selected test origin")
+            if origin < test_start or origin + config["horizon"] * timedelta(milliseconds=dataset["manifest"]["sampling_interval_ms"]) > test_end:
+                raise EventSliceError(f"selected test origin is outside a complete test horizon: {equipment_id}/{origin_index}")
+            for target in targets_by_equipment[equipment_id]:
+                for model in config["models"]:
+                    expected_groups.add((model["name"], equipment_id, target, origin))
+    expected_leads = set(range(1, config["horizon"] + 1))
+    observed: dict[tuple[str, str, str, datetime], set[int]] = {}
+    for prediction in predictions:
+        key = (prediction["model"], prediction["equipment_id"], prediction["target_signal_id"], prediction["origin"])
+        observed.setdefault(key, set()).add(prediction["lead_time"])
+    unexpected = set(observed) - expected_groups
+    if unexpected:
+        sample = next(iter(unexpected))
+        raise EventSliceError(f"prediction completeness contains an unselected origin or group: {sample}")
+    failure_keys = {(failure["model"], failure["equipment_id"], failure["target_signal_id"]) for failure in result["failures"]}
+    missing: list[dict[str, Any]] = []
+    for group in sorted(expected_groups, key=lambda item: (item[0], item[1], item[2], item[3].isoformat())):
+        leads = observed.get(group, set())
+        if leads != expected_leads:
+            model, equipment_id, target, origin = group
+            missing.append({"model": model, "equipment_id": equipment_id, "target_signal_id": target, "origin_timestamp": origin.isoformat(), "expected_leads": sorted(expected_leads), "observed_leads": sorted(leads), "failure_recorded": (model, equipment_id, target) in failure_keys})
+    unaccounted = [item for item in missing if not item["failure_recorded"]]
+    if unaccounted:
+        raise EventSliceError(f"prediction completeness has unaccounted missing groups: {unaccounted[0]}")
+    if result["status"] == "success" and missing:
+        raise EventSliceError("success cell has incomplete prediction groups")
+    return {"expected_prediction_count": len(expected_groups) * config["horizon"], "observed_prediction_count": len(predictions), "expected_group_count": len(expected_groups), "observed_group_count": sum(leads == expected_leads for leads in observed.values()), "missing_groups": missing}
+
+
 def _validate_cell(cell: Mapping[str, Any], matrix: Mapping[str, Any], result: Mapping[str, Any], result_path: Path, root: Path) -> None:
     if result["run_id"] != cell["run_id"] or result["seed"] != cell["seed"] or result["dataset_fingerprint"] != cell["dataset_fingerprint"] or result["status"] != cell["status"]:
         raise EventSliceError(f"cell/result identity mismatch: {cell['cell_id']}")
-    if result["run_config"]["run_id"] != cell["run_id"] or result["run_config"]["horizon"] != cell["horizon"] or result["run_config"]["context_length"] != cell["context_length"] or result["run_config"]["dataset_path"] != cell["dataset_path"] or result["run_config"]["output_dir"] != cell["output_dir"]:
+    if result["run_config"]["run_id"] != cell["run_id"] or result["run_config"].get("seed") != cell["seed"] or result["run_config"]["horizon"] != cell["horizon"] or result["run_config"]["context_length"] != cell["context_length"] or result["run_config"]["dataset_path"] != cell["dataset_path"] or result["run_config"]["output_dir"] != cell["output_dir"]:
         raise EventSliceError(f"cell axes or paths do not match result: {cell['cell_id']}")
     if len(result["failures"]) != cell["benchmark_failure_count"]:
         raise EventSliceError(f"cell failure count does not match result: {cell['cell_id']}")
@@ -370,6 +460,47 @@ def _validate_cell(cell: Mapping[str, Any], matrix: Mapping[str, Any], result: M
     expected_result_path = _direct_child((root / cell["output_dir"]).resolve(), "result.json", "cell result path")
     if result_path != expected_result_path:
         raise EventSliceError(f"cell result_path must be output_dir/result.json: {cell['cell_id']}")
+
+
+def _validate_matrix_semantics(matrix: Mapping[str, Any]) -> None:
+    axes = matrix["axes"]
+    seeds, horizons, contexts = axes["seeds"], axes["horizons"], axes["context_lengths"]
+    if any(len(values) != len(set(values)) for values in (seeds, horizons, contexts)):
+        raise EventSliceError("matrix axes must be unique")
+    cells = matrix["cells"]
+    if len({cell["cell_id"] for cell in cells}) != len(cells):
+        raise EventSliceError("matrix cell_id values must be unique")
+    tuples = [(cell["seed"], cell["horizon"], cell["context_length"]) for cell in cells]
+    if len(set(tuples)) != len(tuples):
+        raise EventSliceError("matrix axis tuples must be unique")
+    expected_tuples = {(seed, horizon, context) for seed in seeds for horizon in horizons for context in contexts}
+    if set(tuples) != expected_tuples:
+        raise EventSliceError("matrix cells must equal the declared axis Cartesian product")
+    if any(seed not in seeds or horizon not in horizons or context not in contexts for seed, horizon, context in tuples):
+        raise EventSliceError("matrix cell axes are outside matrix axes")
+    counts = matrix["counts"]
+    actual_counts = {
+        "total_cells": len(cells),
+        "successful_cells": sum(cell["status"] == "success" for cell in cells),
+        "partial_cells": sum(cell["status"] == "partial" for cell in cells),
+        "failed_cells": sum(cell["status"] == "failed" for cell in cells),
+        "completed_cells": sum(cell["status"] != "failed" for cell in cells),
+    }
+    if any(counts[key] != value for key, value in actual_counts.items()):
+        raise EventSliceError("matrix counts do not match cell statuses")
+    expected_status = "failed" if actual_counts["completed_cells"] == 0 else "success" if actual_counts["successful_cells"] == actual_counts["total_cells"] else "partial"
+    if matrix["status"] != expected_status:
+        raise EventSliceError("matrix status does not match cell statuses")
+    datasets = matrix["datasets"]
+    for field in ("dataset_id", "dataset_path", "seed"):
+        values = [dataset[field] for dataset in datasets]
+        if len(values) != len(set(values)):
+            raise EventSliceError(f"matrix dataset {field} values must be unique")
+    dataset_ids = {dataset["dataset_id"] for dataset in datasets}
+    if {dataset["seed"] for dataset in datasets} != set(seeds):
+        raise EventSliceError("matrix dataset seed set must equal matrix axes seeds")
+    if any(cell["dataset_id"] not in dataset_ids for cell in cells):
+        raise EventSliceError("matrix cell references an unknown dataset")
 
 
 def analyze_event_slices(matrix_result: str | Path, output: str | Path, root: str | Path) -> Path:
@@ -384,8 +515,9 @@ def analyze_event_slices(matrix_result: str | Path, output: str | Path, root: st
     matrix_source_dir = matrix_path.parent
     if output_path == matrix_source_dir or output_path in matrix_source_dir.parents or matrix_source_dir in output_path.parents:
         raise EventSliceError("source matrix result and output must be disjoint")
-    matrix = load_json(matrix_path)
+    matrix, matrix_bytes = _load_json_snapshot(matrix_path, "matrix result")
     _validate_schema(matrix, _load_schema(root_path, "benchmark-matrix-result.schema.json"), "matrix result")
+    _validate_matrix_semantics(matrix)
     matrix_code_revision = matrix["code_revision"]
     dataset_by_id = {dataset["dataset_id"]: dataset for dataset in matrix["datasets"]}
     if len(dataset_by_id) != len(matrix["datasets"]):
@@ -399,7 +531,7 @@ def analyze_event_slices(matrix_result: str | Path, output: str | Path, root: st
     all_forecast_counts = {key: 0 for key in FORECAST_EXPOSURES}
     all_context_counts = {key: 0 for key in CONTEXT_EXPOSURES}
     for cell in matrix["cells"]:
-        base_cell = {"cell_id": cell["cell_id"], "run_id": cell["run_id"], "seed": cell["seed"], "horizon": cell["horizon"], "context_length": cell["context_length"], "dataset_id": cell["dataset_id"], "status": cell["status"], "analyzed": False, "prediction_count": 0, "analyzed_prediction_count": 0, "excluded_prediction_count": 0, "forecast_exposure_counts": {key: 0 for key in FORECAST_EXPOSURES}, "context_exposure_counts": {key: 0 for key in CONTEXT_EXPOSURES}, "operating_mode_counts": {}, "event_coverage": [], "event_provenance": {"forecast": {}, "context": {}}, "metric_rows": []}
+        base_cell = {"cell_id": cell["cell_id"], "run_id": cell["run_id"], "seed": cell["seed"], "horizon": cell["horizon"], "context_length": cell["context_length"], "dataset_id": cell["dataset_id"], "status": cell["status"], "analyzed": False, "prediction_count": 0, "analyzed_prediction_count": 0, "excluded_prediction_count": 0, "completeness": {"expected_prediction_count": 0, "observed_prediction_count": 0, "expected_group_count": 0, "observed_group_count": 0, "missing_groups": []}, "source_failures": [], "failure": cell.get("failure"), "forecast_exposure_counts": {key: 0 for key in FORECAST_EXPOSURES}, "context_exposure_counts": {key: 0 for key in CONTEXT_EXPOSURES}, "operating_mode_counts": {}, "event_coverage": [], "event_provenance": {"forecast": {}, "context": {}}, "metric_rows": []}
         cell_dataset_dir = _repo_path(root_path, cell["dataset_path"], "cell dataset_path")
         cell_output_dir = _repo_path(root_path, cell["output_dir"], "cell output_dir")
         if output_path == cell_dataset_dir or output_path in cell_dataset_dir.parents or cell_dataset_dir in output_path.parents or output_path == cell_output_dir or output_path in cell_output_dir.parents or cell_output_dir in output_path.parents:
@@ -423,10 +555,17 @@ def analyze_event_slices(matrix_result: str | Path, output: str | Path, root: st
         _validate_schema(result, _load_schema(root_path, "benchmark-result.schema.json"), f"cell result {cell['cell_id']}")
         _validate_cell(cell, matrix, result, result_path, root_path)
         prediction_path = _direct_child(result_path.parent, "predictions.jsonl", "predictions path")
+        prediction_hash_before = _sha256(prediction_path)
         predictions = _load_predictions(prediction_path, result, dataset)
+        if _sha256(prediction_path) != prediction_hash_before:
+            raise EventSliceError(f"predictions.jsonl changed during analysis: {cell['cell_id']}")
+        completeness = _prediction_completeness(result, dataset, predictions)
         base_cell["analyzed"] = True
         base_cell["prediction_count"] = len(predictions)
         base_cell["analyzed_prediction_count"] = len(predictions)
+        base_cell["excluded_prediction_count"] = completeness["expected_prediction_count"] - completeness["observed_prediction_count"]
+        base_cell["completeness"] = completeness
+        base_cell["source_failures"] = result["failures"]
         analyzed_predictions += len(predictions)
         total_predictions += len(predictions)
         target_ids_by_equipment: dict[str, set[str]] = {}
@@ -452,23 +591,26 @@ def analyze_event_slices(matrix_result: str | Path, output: str | Path, root: st
                         roles.append("covariate")
                     else:
                         roles.append("other")
-            event_coverage[event["event_id"]] = {"event_id": event["event_id"], "event_type": event["event_type"], "equipment_id": event["equipment_id"], "signal_id": event["signal_id"], "roles": sorted(set(roles)), "forecast_point_count": 0, "context_point_count": 0, "covered_by_forecast_timestamp": False, "covered_by_context_window": False}
+            test_start, test_end = dataset["split_times"]["test"]
+            event_coverage[event["event_id"]] = {"event_id": event["event_id"], "event_type": event["event_type"], "equipment_id": event["equipment_id"], "signal_id": event["signal_id"], "roles": sorted(set(roles)), "overlaps_test_split": _event_overlap(event, test_start, test_end), "forecast_point_count": 0, "context_point_count": 0, "covered_by_forecast_timestamp": False, "covered_by_context_window": False}
         for prediction in predictions:
             equipment_id = prediction["equipment_id"]
             target = prediction["target_signal_id"]
             forecast_exposure, forecast_events = _classify_forecast(dataset["events"], equipment_id, target, prediction["stamp"])
             context_exposure, context_events = _classify_context(dataset["events"], equipment_id, target, past_by_equipment[equipment_id], future_by_equipment[equipment_id], prediction["origin"], result["run_config"]["context_length"], interval)
-            for event in forecast_events:
+            all_forecast_events = _forecast_overlapping(dataset["events"], equipment_id, prediction["stamp"])
+            all_context_events = _context_overlapping(dataset["events"], equipment_id, prediction["origin"], result["run_config"]["context_length"], interval)
+            for event in all_forecast_events:
                 event_coverage[event["event_id"]]["forecast_point_count"] += 1
                 event_coverage[event["event_id"]]["covered_by_forecast_timestamp"] = True
-            for event in context_events:
+            for event in all_context_events:
                 event_coverage[event["event_id"]]["context_point_count"] += 1
                 event_coverage[event["event_id"]]["covered_by_context_window"] = True
             operating_mode = prediction["operating_mode"]
             base_cell["forecast_exposure_counts"][forecast_exposure] += 1
             base_cell["context_exposure_counts"][context_exposure] += 1
             base_cell["operating_mode_counts"][operating_mode] = base_cell["operating_mode_counts"].get(operating_mode, 0) + 1
-            for dimension, exposure, events in (("forecast_exposure", forecast_exposure, forecast_events), ("context_exposure", context_exposure, context_events)):
+            for dimension, exposure, events in (("forecast_exposure", forecast_exposure, all_forecast_events), ("context_exposure", context_exposure, all_context_events)):
                 base_cell["event_provenance"]["forecast" if dimension == "forecast_exposure" else "context"].setdefault(exposure, set()).update(event["event_id"] for event in events)
             common = {"model": prediction["model"], "equipment_id": equipment_id, "target_signal_key": prediction["target_signal_key"], "unit": prediction["unit"], "actual": prediction["actual"], "point_forecast": prediction["point_forecast"], "quantiles": prediction["quantiles"]}
             points.append({**common, "dimension": "forecast_exposure", "exposure": forecast_exposure, "operating_mode": None})
@@ -484,23 +626,26 @@ def analyze_event_slices(matrix_result: str | Path, output: str | Path, root: st
             all_context_counts[key] += value
         analyzed_cells.append(base_cell)
     macro = _macro(all_cell_metric_rows)
-    source_revision = matrix_code_revision
     limitations = ["この出力は既存の成功・部分成功予測にイベントラベルを事後付与した探索的集計であり、再推論を行わない。", "イベントスライス分類は予測timestampとcontext windowの重なりに基づくため、未選択・未観測・stale予測の頑健性や異常検知性能を測定しない。", "seedはpoolせず、cell metricのmacro mean/min/max/sample stddevとして要約する。", "イベントのcovered_by_forecast_timestamp=falseは、そのイベントが予測timestampで一度も評価されていないことを示し、評価済みとは解釈しない。"]
-    if any(not event["covered_by_forecast_timestamp"] for cell in analyzed_cells for event in cell["event_coverage"]):
-        limitations.append("予測timestampで未coverのイベントが存在するため、イベント全体の性能評価ではない。")
+    if any(event["overlaps_test_split"] and not event["covered_by_forecast_timestamp"] for cell in analyzed_cells for event in cell["event_coverage"]):
+        limitations.append("test splitと重なるが選択originの予測timestampで未coverのイベントが存在するため、イベント全体の性能評価ではない。")
+    if any(cell["completeness"]["missing_groups"] for cell in analyzed_cells):
+        limitations.append("partial cellにsource failureと対応する欠落prediction groupがあるため、macro summaryは完全なsuccess matrixと同等に解釈しない。")
     if any(not cell["analyzed"] for cell in analyzed_cells):
         limitations.append(f"{sum(not cell['analyzed'] for cell in analyzed_cells)} cell(s) were excluded because no analyzable success/partial result_path was available.")
-    result = {"schema_version": "0.1", "result_type": "benchmark-event-slices", "matrix_result_path": str(Path(matrix_result).as_posix()), "matrix_id": matrix["matrix_id"], "status": "partial" if any(not cell["analyzed"] for cell in analyzed_cells) else "success", "matrix_code_revision": matrix_code_revision, "analyzer_code_revision": _revision(root_path), "source_matrix_sha256": _sha256(matrix_path), "counts": {"total_cells": len(matrix["cells"]), "analyzed_cells": sum(cell["analyzed"] for cell in analyzed_cells), "excluded_cells": sum(not cell["analyzed"] for cell in analyzed_cells), "excluded_by_status": excluded_by_status, "total_prediction_count": total_predictions, "analyzed_prediction_count": analyzed_predictions, "forecast_exposure_counts": all_forecast_counts, "context_exposure_counts": all_context_counts}, "cells": analyzed_cells, "macro_summary": macro, "research_only_notice": "研究・探索専用。既存予測へのpost-hocイベントsliceラベル付与であり、モデルの再推論、missing/stale robustness、異常検知性能の評価ではない。", "limitations": limitations}
+    result = {"schema_version": "0.1", "result_type": "benchmark-event-slices", "matrix_result_path": str(Path(matrix_result).as_posix()), "matrix_id": matrix["matrix_id"], "status": "partial" if any(cell["status"] != "success" or not cell["analyzed"] for cell in analyzed_cells) else "success", "matrix_code_revision": matrix_code_revision, "analyzer_code_revision": _revision(root_path), "source_matrix_sha256": hashlib.sha256(matrix_bytes).hexdigest(), "counts": {"total_cells": len(matrix["cells"]), "analyzed_cells": sum(cell["analyzed"] for cell in analyzed_cells), "excluded_cells": sum(not cell["analyzed"] for cell in analyzed_cells), "excluded_by_status": excluded_by_status, "total_prediction_count": total_predictions, "analyzed_prediction_count": analyzed_predictions, "forecast_exposure_counts": all_forecast_counts, "context_exposure_counts": all_context_counts}, "cells": analyzed_cells, "macro_summary": macro, "research_only_notice": "研究・探索専用。既存予測へのpost-hocイベントsliceラベル付与であり、モデルの再推論、missing/stale robustness、異常検知性能の評価ではない。", "limitations": limitations}
     _validate_schema(result, _load_schema(root_path, "benchmark-event-slice-result.schema.json"), "event slice result")
     output_path.parent.mkdir(parents=True, exist_ok=True)
     temporary = Path(tempfile.mkdtemp(prefix=f".{output_path.name}.", dir=output_path.parent))
     try:
         (temporary / "result.json").write_bytes(_json_bytes(result))
         (temporary / "summary.md").write_text(_summary_markdown(result), encoding="utf-8", newline="\n")
+        if hashlib.sha256(matrix_path.read_bytes()).hexdigest() != result["source_matrix_sha256"]:
+            raise EventSliceError("source matrix result changed during analysis")
         if output_path.exists():
             raise EventSliceError(f"refusing to overwrite existing output: {output_path}")
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        temporary.replace(output_path)
+        temporary.rename(output_path)
     except Exception:
         shutil.rmtree(temporary, ignore_errors=True)
         raise
@@ -513,13 +658,13 @@ def _summary_markdown(result: Mapping[str, Any]) -> str:
         metrics = row["metrics"]
         lines.append(f"| {row['dimension']} | {row['exposure']} | {row['operating_mode'] or '-'} | {row['model']} | {row['target_signal_key']} | {row['unit']} | {row['horizon']} | {row['context_length']} | {row['cell_count']} | {row['total_point_count']} | {metrics.get('mae', {}).get('mean', '-') if isinstance(metrics.get('mae'), dict) else '-'} | {metrics.get('rmse', {}).get('mean', '-') if isinstance(metrics.get('rmse'), dict) else '-'} |")
     lines.extend(["", "## 未coverイベント", "", "予測timestampで `covered_by_forecast_timestamp=false` のイベントは評価済みではありません。"])
-    uncovered = [(cell["cell_id"], event["event_id"]) for cell in result["cells"] for event in cell["event_coverage"] if not event["covered_by_forecast_timestamp"]]
+    uncovered = [(cell["cell_id"], event["event_id"], event["roles"], event["overlaps_test_split"]) for cell in result["cells"] for event in cell["event_coverage"] if event["overlaps_test_split"] and not event["covered_by_forecast_timestamp"]]
     if uncovered:
-        lines.extend(["", "| cell | event ID |", "| --- | --- |"])
-        lines.extend(f"| `{cell_id}` | `{event_id}` |" for cell_id, event_id in uncovered)
+        lines.extend(["", "| cell | event ID | role | test overlap |", "| --- | --- | --- | --- |"])
+        lines.extend(f"| `{cell_id}` | `{event_id}` | {', '.join(roles) or '-'} | {overlap} |" for cell_id, event_id, roles, overlap in uncovered)
     else:
         lines.append("\nなし")
-    lines.extend(["", "## Limitations", ""])
+    lines.extend(["", "`forecast_point_count`は予測row数であり、model／targetごとに同じイベントが重複カウントされ得ます。", "", "## Limitations", ""])
     lines.extend(f"- {item}" for item in result["limitations"])
     return "\n".join(lines) + "\n"
 
