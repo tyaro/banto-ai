@@ -1,0 +1,32 @@
+{
+  "config_type": "synthetic-generator",
+  "dataset_id": "synthetic-toto2-controlled-covariate-quality",
+  "equipment": [
+    {"equipment_id": "motor-01", "equipment_type": "motor"},
+    {"equipment_id": "conveyor-01", "equipment_type": "conveyor"}
+  ],
+  "events": [
+    {"event_id": "motor-01-load-dropout-context", "event_type": "dropout", "equipment_id": "motor-01", "signal_id": "load_proxy", "start_sample": 368, "end_sample": 372, "enabled": true, "description": "controlled covariate quality dropout in context"},
+    {"event_id": "motor-01-load-stale-context", "event_type": "stale_value", "equipment_id": "motor-01", "signal_id": "load_proxy", "start_sample": 372, "end_sample": 376, "enabled": true, "description": "controlled covariate quality hold in context"}
+  ],
+  "generator_version": "0.1.0",
+  "regimes": [
+    {"regime": "stopped", "recipe_step": "stop-1", "start_sample": 0, "end_sample": 40},
+    {"regime": "startup", "recipe_step": "start-1", "start_sample": 40, "end_sample": 80},
+    {"regime": "low_speed", "recipe_step": "low-1", "start_sample": 80, "end_sample": 120},
+    {"regime": "nominal", "recipe_step": "run-1", "start_sample": 120, "end_sample": 160},
+    {"regime": "high_load", "recipe_step": "load-1", "start_sample": 160, "end_sample": 200},
+    {"regime": "cooldown", "recipe_step": "cooldown-1", "start_sample": 200, "end_sample": 240},
+    {"regime": "stopped", "recipe_step": "stop-2", "start_sample": 240, "end_sample": 280},
+    {"regime": "startup", "recipe_step": "start-2", "start_sample": 280, "end_sample": 320},
+    {"regime": "low_speed", "recipe_step": "low-2", "start_sample": 320, "end_sample": 360},
+    {"regime": "nominal", "recipe_step": "run-2", "start_sample": 360, "end_sample": 400},
+    {"regime": "high_load", "recipe_step": "load-2", "start_sample": 400, "end_sample": 440},
+    {"regime": "cooldown", "recipe_step": "cooldown-2", "start_sample": 440, "end_sample": 480}
+  ],
+  "sample_count": 480,
+  "sampling_interval_ms": 1000,
+  "schema_version": "0.1",
+  "seed": 42,
+  "start_timestamp": "2026-01-01T00:00:00Z"
+}

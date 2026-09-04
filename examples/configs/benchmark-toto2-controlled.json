@@ -1,0 +1,36 @@
+{
+  "schema_version": "0.1",
+  "run_id": "benchmark-toto2-controlled",
+  "dataset_path": "artifacts/toto2/controlled/base-dataset",
+  "output_dir": "artifacts/toto2/controlled/base-benchmark",
+  "horizon": 15,
+  "context_length": 64,
+  "seed": 42,
+  "target_signal_ids": ["motor_current", "motor_temperature"],
+  "equipment_ids": ["motor-01", "conveyor-01"],
+  "past_only_covariate_ids": ["load_proxy"],
+  "known_future_covariate_ids": [],
+  "validation_origin_stride": 15,
+  "test_origin_stride": 15,
+  "max_validation_origins": 1,
+  "max_test_origins": 1,
+  "quantiles": [0.1, 0.5, 0.9],
+  "models": [
+    {"name": "last-value"},
+    {"name": "seasonal-naive", "parameters": {"season_length": 15}},
+    {"name": "moving-average", "parameters": {"window": 15}},
+    {"name": "ewma", "parameters": {"alpha": 0.3}},
+    {"name": "holt-linear", "parameters": {"alpha": 0.8, "beta": 0.2}},
+    {
+      "name": "toto2",
+      "quantile_policy": "native",
+      "parameters": {
+        "checkpoint_revision": "8306a9801cf98c0f5ffe4b2dcc8f496e616d84d9",
+        "batch_size": 1,
+        "device": "cpu",
+        "local_files_only": true,
+        "patch_size": 32
+      }
+    }
+  ]
+}

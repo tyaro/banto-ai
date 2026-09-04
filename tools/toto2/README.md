@@ -29,4 +29,15 @@ Toto 2.0 4M向けに、合成motor／conveyorデータを使う小規模matrix�
 
 各seedで合成データを一度だけ生成し、同じ共有Toto adapterを8セルで再利用します。context=64はpaddingなし、context=120はpatch_size=32に合わせて128点入力（先頭8点は未観測padding）です。known-future covariateは空、device=cpu、batch=1、local_files_only=true、固定revision、native quantileを維持します。外部cache、offline実行、license／checkpoint／package検証、既存出力の上書き拒否も単一benchmark入口と同じです。
 
+## controlled scenario 定義
+
+generator → quality gate → benchmark → Toto adapter の受入契約を固定する4 track（control、target fault、target quality、covariate quality）を [`docs/toto2-controlled-scenarios.md`](../../docs/toto2-controlled-scenarios.md) に定義しています。これは実行済み結果ではなく、real model／result artifact を作成しない savepoint です。各 matrix は seed 17／29／42／73／101、horizon 15／30、context 64／120、test origin 384、5 baselines＋Toto native を共有します。
+
+```powershell
+& $totoPython tools\toto2\run_matrix.py --config examples\configs\benchmark-matrix-toto2-controlled-control.json --cache-dir C:\banto-cache\toto2
+& $totoPython tools\toto2\run_matrix.py --config examples\configs\benchmark-matrix-toto2-controlled-target-fault.json --cache-dir C:\banto-cache\toto2
+& $totoPython tools\toto2\run_matrix.py --config examples\configs\benchmark-matrix-toto2-controlled-target-quality.json --cache-dir C:\banto-cache\toto2
+& $totoPython tools\toto2\run_matrix.py --config examples\configs\benchmark-matrix-toto2-controlled-covariate-quality.json --cache-dir C:\banto-cache\toto2
+```
+
 このmatrixは2026-09-04に実行済みで、8/8 cell success、partial 0、failed 0でした。正本と数値は[`docs/results/toto2-matrix-2026-09-04.md`](../../docs/results/toto2-matrix-2026-09-04.md)に記録しています。合成データの結果は実設備性能や製品採用を示さず、22M、fine-tuning、seed拡大、fault slice、実設備一般化は次のgateです。

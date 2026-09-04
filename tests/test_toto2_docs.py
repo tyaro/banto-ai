@@ -46,6 +46,23 @@ class Toto2DocumentationTests(unittest.TestCase):
             "--config examples\\configs\\benchmark-matrix-toto2-small.json", readme
         )
 
+    def test_controlled_scenario_definition_is_referenced_without_results(self):
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        notes = (ROOT / "docs/toto2-notes.md").read_text(encoding="utf-8")
+        tool_readme = (ROOT / "tools/toto2/README.md").read_text(encoding="utf-8")
+        for text in (readme, notes, tool_readme):
+            self.assertIn("toto2-controlled-scenarios.md", text)
+        for matrix_name in (
+            "benchmark-matrix-toto2-controlled-control.json",
+            "benchmark-matrix-toto2-controlled-target-fault.json",
+            "benchmark-matrix-toto2-controlled-target-quality.json",
+            "benchmark-matrix-toto2-controlled-covariate-quality.json",
+        ):
+            self.assertIn(matrix_name, tool_readme)
+        controlled = (ROOT / "docs/toto2-controlled-scenarios.md").read_text(encoding="utf-8")
+        for required in ("test origin は `384`", "truth が unavailable", "model ranking", "anomaly detection", "Phase 2 の完了"):
+            self.assertIn(required, controlled)
+
     def test_event_slice_report_pins_artifact_hashes_scope_and_limits(self):
         report = (ROOT / "docs/results/toto2-event-slices-2026-09-04.md").read_text(encoding="utf-8")
         required = (
