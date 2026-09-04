@@ -62,7 +62,11 @@ Toto 2.0 4Mの既存matrix予測に対するevent slice post-hoc解析を完了�
 
 Toto 2.0 controlled 4-track acceptance analyzerのsource、固定config/schema、fake artifact unittestを追加し、2026-09-05にformal controlled runを完了しました。4 matrix各20/20 success、acceptance `pass`、80/80 cells、1,920/1,920 groups、1,440/1,440 paired deltas、availability delta 0を確認しています。詳細は[`docs/results/toto2-controlled-evaluation-2026-09-05.md`](results/toto2-controlled-evaluation-2026-09-05.md)に記録しています。analyzerはcontrolから各degradedへの同一model/group paired deltaだけを出し、cross-model rankingを禁止します。synthetic／4M／CPUの契約受入であり、実設備性能やmodel採用判断は追加していません。
 
-次のsavepointとして、forecast benchmarkから分離したevent-aware anomaly evaluation v0.1を追加しました。validation-only robust residual profile、quality／gap／mode reset、persistence、machine／sensor faultのincident matching、data-quality／ignored除外、clean equipment-hour false-alert集計、strict provenanceとatomic publishを専用synthetic scenarioで固定しています。single-seed契約検証であり、Toto性能、lead time、実設備性能、制御writeは示しません。multi-seed、event位置・mode拡大、実設備一般化はPhase 3の次工程です。
+次のsavepointとして、forecast benchmarkから分離したevent-aware anomaly evaluation v0.1を追加しました。validation-only robust residual profile、quality／gap／mode reset、persistence、machine／sensor faultのincident matching、data-quality／ignored除外、clean equipment-hour false-alert集計、strict provenanceとatomic publishを専用synthetic scenarioで固定しています。single-seed契約検証であり、Toto性能、lead time、実設備性能、制御writeは示しません。正式なmulti-seed replayは、実行前の固定計画 [`anomaly-multiseed-evaluation-plan.md`](anomaly-multiseed-evaluation-plan.md) に従う次工程であり、まだ実行・性能達成していません。
+
+### Phase 3 次工程: multi-seed anomaly replay preregistration
+
+10 seed × 12 event-layout、120 cellsのstdlib-only offline replayを、実装前に固定したschema/configとengineering／performanceの二段gateで実施する計画です。seed、layout、detector parameter、指標、block bootstrap、promotion閾値、安全境界は [`anomaly-multiseed-evaluation-plan.md`](anomaly-multiseed-evaluation-plan.md) に記録します。これは事前登録であり、run結果やmodel昇格を示すものではありません。
 
 ## 実験の必須記録
 

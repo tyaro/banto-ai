@@ -401,3 +401,9 @@ Issue 5は実装開始時に「異常検知」「commissioning profile」「Bant
 ## Savepoint 3 event-aware anomaly evaluation
 
 forecast benchmarkとは分離したstdlib-only anomaly evaluator v0.1を追加する。validation-onlyの`equipment + full signal + operating mode`別robust residual profile、quality／gap／mode reset、persistence alert、event class別incident matching、clean equipment-hour false-alert rateを固定した。single-seed専用scenarioとconfig／result schema、quality gate／fingerprint／code revision／atomic publishのprovenanceを備える。これはsynthetic研究artifactの契約検証であり、Toto性能、早期警報lead time、実設備性能、control writeまたは製品昇格を示さない。正式なmulti-seed評価と実設備一般化は次工程とする。
+
+## 次工程: multi-seed anomaly replay preregistration
+
+Savepoint 3直後の正式な次工程は、実験開始前に固定する [`anomaly-multiseed-evaluation-plan.md`](anomaly-multiseed-evaluation-plan.md) である。10 seed `[11,17,23,29,37,42,53,67,79,97]`、6 mode × 2 equipmentの12 layout、120 cells、固定detector parameter、event／signalとequipmentの別集計、seed-cluster／layout-block bootstrap、engineering gate、performance promotion gateを同文書へ登録する。
+
+この段階ではrunner実装、120-cell run、結果artifact生成、性能達成を完了したとは扱わない。Savepoint Aのschema/config/layout validator、Bのdeterministic matrix runner、Cのfake/unit tests、Dのclean run、Eの独立監査・結果docを順に実施する。再実行または計画変更は新version・新preregistrationとし、TimesFM／Chronos／Toto／TSPulseのmodel比較、customer data、control／Banto Hub writeは別工程・別計画とする。
