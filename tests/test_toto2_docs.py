@@ -30,6 +30,7 @@ class Toto2DocumentationTests(unittest.TestCase):
         readme = (ROOT / "tools/toto2/README.md").read_text(encoding="utf-8")
         for required in (
             "run_matrix.py",
+            "--config examples/configs/benchmark-matrix-toto2-small.json",
             "8条件",
             "context=64はpaddingなし",
             "context=120はpatch_size=32に合わせて128点入力",
@@ -38,6 +39,9 @@ class Toto2DocumentationTests(unittest.TestCase):
         ):
             with self.subTest(required=required):
                 self.assertIn(required, readme)
+        self.assertNotIn(
+            "--config examples\\configs\\benchmark-matrix-toto2-small.json", readme
+        )
 
     def test_invalid_or_unknown_toto_parameters_fail_closed_in_schema(self):
         config_path = ROOT / "examples/configs/benchmark-metropt3-toto2-4m.json"

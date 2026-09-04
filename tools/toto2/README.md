@@ -24,7 +24,7 @@ $totoPython = '..\.venv-banto-ai-toto2\Scripts\python.exe'
 Toto 2.0 4M向けに、合成motor／conveyorデータを使う小規模matrixの実行基盤を追加しました。設定は [`examples/configs/benchmark-matrix-toto2-small.json`](../../examples/configs/benchmark-matrix-toto2-small.json) で、seed 17／42、horizon 15／30、context 64／120の8条件をseed→horizon→contextの順に展開します。
 
 ```powershell
-& $totoPython tools\toto2\run_matrix.py --config examples\configs\benchmark-matrix-toto2-small.json --cache-dir C:\banto-cache\toto2
+& $totoPython tools\toto2\run_matrix.py --config examples/configs/benchmark-matrix-toto2-small.json --cache-dir C:\banto-cache\toto2
 ```
 
 各seedで合成データを一度だけ生成し、同じ共有Toto adapterを8セルで再利用します。context=64はpaddingなし、context=120はpatch_size=32に合わせて128点入力（先頭8点は未観測padding）です。known-future covariateは空、device=cpu、batch=1、local_files_only=true、固定revision、native quantileを維持します。外部cache、offline実行、license／checkpoint／package検証、既存出力の上書き拒否も単一benchmark入口と同じです。
