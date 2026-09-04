@@ -166,7 +166,7 @@ class AnomalyEvaluationTests(unittest.TestCase):
         self.assertEqual(len(result["profiles"]), 2 * 4 * 6)
         self.assertTrue(all(profile["status"] == "calibrated" for profile in result["profiles"]))
         self.assertEqual(result["row_counts"]["score_rows"], 2 * 4 * 180)
-        self.assertEqual(result["metrics"]["overall"]["evaluated_alert_episode_count"], result["metrics"]["overall"]["matched_eligible_alert_episodes"] + result["metrics"]["overall"]["unmatched_eligible_alert_episodes"] + result["metrics"]["positive_nonmatching_signal_false_alert_episode_count"] + result["metrics"]["clean_false_alert_signal_episode_count"])
+        self.assertEqual(result["metrics"]["overall"]["evaluated_alert_episode_count"], result["metrics"]["overall"]["matched_eligible_alert_episodes"] + result["metrics"]["overall"]["unmatched_eligible_alert_episodes"] + result["metrics"]["positive_event_window_false_alert_episode_count"] + result["metrics"]["clean_false_alert_signal_episode_count"])
         partition = result["metrics"]["alert_episode_partition"]
         self.assertEqual(partition["total_alert_episodes"], len(result["alert_episodes"]))
         self.assertEqual(partition["total_alert_episodes"], len(result["alert_episode_accounting"]))
@@ -174,11 +174,11 @@ class AnomalyEvaluationTests(unittest.TestCase):
             partition["total_alert_episodes"],
             partition["matched_eligible_alert_episodes"]
             + partition["unmatched_eligible_same_signal_alert_episodes"]
-            + partition["positive_nonmatching_signal_false_alert_episodes"]
+            + partition["positive_event_window_false_alert_episodes"]
             + partition["clean_false_alert_signal_episodes"]
             + partition["suppressed_event_window_alert_episodes"],
         )
-        self.assertGreaterEqual(partition["positive_nonmatching_signal_false_alert_episodes"], 0)
+        self.assertGreaterEqual(partition["positive_event_window_false_alert_episodes"], 0)
         self.assertEqual(partition["suppressed_event_window_by_reason"], {"data_quality": 0, "ignored": 0})
         self.assertEqual(partition["suppressed_event_window_alert_episodes"], 0)
         self.assertTrue(partition["precision_denominator_excludes_suppressed"])
@@ -263,6 +263,20 @@ class AnomalyEvaluationTests(unittest.TestCase):
         self.assertEqual(metrics["overall"]["eligible_incidents"], 1)
         self.assertEqual(exclusions["ineligible_by_reason"], {"left_censored": 1, "right_censored_detection_window": 1})
 
+        left_only = {"manifest": {"sampling_interval_ms": 1000}, "observations": {}, "events": [events[0]], "split_times": {"validation": (start, test_start), "test": (test_start, test_end)}}
+        _incidents, _clean, left_metrics, _ = _event_records_and_metrics(
+            left_only,
+            ["motor-01"],
+            ["motor-01.motor_current"],
+            {"left": "machine_fault"},
+            [_episode("left-alert", "motor-01.motor_current", start + timedelta(seconds=3), start + timedelta(seconds=3), start + timedelta(seconds=4))],
+            {"detection_grace_points": 0},
+        )
+        left_accounting = left_metrics["_alert_episode_accounting"][0]
+        self.assertEqual(left_accounting["partition"], "positive_event_window_false_alert")
+        self.assertEqual(left_accounting["reason"], "positive_ineligible_same_signal")
+        self.assertTrue(left_accounting["included_in_precision_denominator"])
+
     def test_current_event_is_visible_but_previous_event_resets_residual(self) -> None:
         start = datetime(2026, 1, 1, tzinfo=UTC)
         rows = [_row(start + timedelta(seconds=index), float(index)) for index in range(6)]
@@ -279,6 +293,62 @@ class AnomalyEvaluationTests(unittest.TestCase):
         self.assertFalse(by_time[_canonical_time(start + timedelta(seconds=5))]["available"])
         self.assertEqual(by_time[_canonical_time(start + timedelta(seconds=5))]["exclusion_reason"], "previous_event_overlap")
         self.assertEqual(len(episodes), 1)
+
+    def test_continuous_multi_point_event_supports_persistent_detection(self) -> None:
+        start = datetime(2026, 1, 1, tzinfo=UTC)
+        rows = [_row(start + timedelta(seconds=index), 0.0 if index < 3 else (10.0 * (index - 2))) for index in range(7)]
+        event = _event("multi-point", "motor-01.motor_current", start + timedelta(seconds=3), start + timedelta(seconds=5))
+        dataset = _tiny_dataset(rows, test_start=start + timedelta(seconds=2), test_end=start + timedelta(seconds=7), events=[event])
+        profiles = {("motor-01", "motor-01.motor_current", "nominal"): {"status": "calibrated", "center": 0.0, "scale": 1.0}}
+        scores, episodes, _ = _score_and_alert(dataset, ["motor-01"], ["motor-01.motor_current"], profiles, {"robust_z_threshold": 4.0, "persistence_points": 2})
+        by_time = {row["timestamp"]: row for row in scores}
+        self.assertTrue(by_time[_canonical_time(start + timedelta(seconds=3))]["available"])
+        self.assertTrue(by_time[_canonical_time(start + timedelta(seconds=4))]["available"])
+        self.assertEqual(by_time[_canonical_time(start + timedelta(seconds=4))]["persistence_streak"], 2)
+        self.assertFalse(by_time[_canonical_time(start + timedelta(seconds=5))]["available"])
+        self.assertEqual(by_time[_canonical_time(start + timedelta(seconds=5))]["exclusion_reason"], "previous_event_overlap")
+        self.assertEqual([episode["onset_timestamp"] for episode in episodes], [_canonical_time(start + timedelta(seconds=4))])
+
+    def test_clean_monitored_exposure_uses_only_available_intervals_and_subtracts_event_windows(self) -> None:
+        start = datetime(2026, 1, 1, tzinfo=UTC)
+        test_end = start + timedelta(seconds=6)
+        current = "motor-01.motor_current"
+        temperature = "motor-01.motor_temperature"
+        event = _event("exposure-event", current, start + timedelta(seconds=2), start + timedelta(seconds=3))
+        dataset = {"manifest": {"sampling_interval_ms": 1000}, "observations": {}, "events": [event], "split_times": {"validation": (start, start + timedelta(seconds=0)), "test": (start, test_end)}}
+        scores = [
+            {"equipment_id": "motor-01", "signal_id": current, "timestamp": _canonical_time(start + timedelta(seconds=index)), "available": index in {0, 1, 4, 5}}
+            for index in range(6)
+        ] + [
+            {"equipment_id": "motor-01", "signal_id": temperature, "timestamp": _canonical_time(start + timedelta(seconds=index)), "available": index in {1, 2, 3, 4}}
+            for index in range(6)
+        ]
+        _incidents, _clean, metrics, _ = _event_records_and_metrics(
+            dataset, ["motor-01"], [current, temperature], {"exposure-event": "machine_fault"}, [], {"detection_grace_points": 0}, scores
+        )
+        self.assertAlmostEqual(metrics["clean_monitored_equipment_hours"], 5.0 / 3600.0)
+        self.assertAlmostEqual(metrics["clean_monitored_target_signal_hours"][current], 4.0 / 3600.0)
+        self.assertAlmostEqual(metrics["clean_monitored_target_signal_hours"][temperature], 3.0 / 3600.0)
+        self.assertEqual(metrics["score_availability_by_signal"][current], {"available_points": 4, "total_points": 6, "availability_ratio": 4.0 / 6.0})
+        self.assertEqual(metrics["score_availability_by_signal"][temperature], {"available_points": 4, "total_points": 6, "availability_ratio": 4.0 / 6.0})
+        zero_scores = [dict(row, available=False) for row in scores if row["signal_id"] == current]
+        _incidents, _clean, zero_metrics, _ = _event_records_and_metrics(
+            dataset, ["motor-01"], [current], {"exposure-event": "machine_fault"}, [], {"detection_grace_points": 0}, zero_scores
+        )
+        self.assertEqual(zero_metrics["clean_monitored_equipment_hours"], 0.0)
+        self.assertIsNone(zero_metrics["false_alerts_per_8_equipment_hours"])
+
+    def test_zero_available_target_signal_makes_end_to_end_result_inconclusive(self) -> None:
+        config_path, _output, _config = self._config("zero-availability")
+        with patch.object(
+            anomaly_module,
+            "_score_and_alert",
+            return_value=([], [], {"total_points": 0, "available_points": 0, "unavailable_by_reason": {"forced": 1}}),
+        ):
+            _path, result = _evaluate_core(config_path, ROOT)
+        self.assertEqual(result["status"], "inconclusive")
+        for summary in result["metrics"]["score_availability_by_signal"].values():
+            self.assertEqual(summary, {"available_points": 0, "total_points": 0, "availability_ratio": None})
 
     def test_incomplete_output_recovery_quarantines_evidence_and_preserves_complete_outputs(self) -> None:
         config_path, output, _config = self._config("recovery")
@@ -385,7 +455,7 @@ class AnomalyEvaluationTests(unittest.TestCase):
         self.assertEqual(partition["total_alert_episodes"], 4)
         self.assertEqual(partition["matched_eligible_alert_episodes"], 2)
         self.assertEqual(partition["unmatched_eligible_same_signal_alert_episodes"], 1)
-        self.assertEqual(partition["positive_nonmatching_signal_false_alert_episodes"], 0)
+        self.assertEqual(partition["positive_event_window_false_alert_episodes"], 0)
         self.assertEqual(partition["clean_false_alert_signal_episodes"], 0)
         self.assertEqual(partition["suppressed_event_window_alert_episodes"], 1)
         self.assertEqual(partition["suppressed_event_window_by_reason"], {"data_quality": 1, "ignored": 0})
@@ -401,6 +471,46 @@ class AnomalyEvaluationTests(unittest.TestCase):
         overlap_dataset = dict(metric_dataset, events=overlap_events)
         with self.assertRaises(AnomalyEvaluationError):
             _event_records_and_metrics(overlap_dataset, ["motor-01"], ["motor-01.motor_current"], {"a": "machine_fault", "b": "sensor_fault"}, [], event_config)
+
+        ambiguous_events = [
+            _event("positive", "motor-01.motor_current", start + timedelta(seconds=4), start + timedelta(seconds=6), event_type="jam_or_slip"),
+            _event("quality-overlap", "motor-01.motor_current", start + timedelta(seconds=5), start + timedelta(seconds=7), event_type="dropout"),
+        ]
+        with self.assertRaisesRegex(AnomalyEvaluationError, "positive and suppression event windows overlap"):
+            _event_records_and_metrics(
+                dict(metric_dataset, events=ambiguous_events),
+                ["motor-01"],
+                ["motor-01.motor_current"],
+                {"positive": "machine_fault", "quality-overlap": "data_quality"},
+                [],
+                event_config,
+            )
+        nested_ambiguous_events = [
+            _event("positive-long", "motor-01.motor_current", start + timedelta(seconds=4), start + timedelta(seconds=10), event_type="jam_or_slip"),
+            _event("positive-inner", "motor-01.motor_current", start + timedelta(seconds=5), start + timedelta(seconds=6), event_type="jam_or_slip"),
+            _event("quality-nested", "motor-01.motor_current", start + timedelta(seconds=7), start + timedelta(seconds=8), event_type="dropout"),
+        ]
+        with self.assertRaisesRegex(AnomalyEvaluationError, "positive and suppression event windows overlap"):
+            _event_records_and_metrics(
+                dict(metric_dataset, events=nested_ambiguous_events),
+                ["motor-01"],
+                ["motor-01.motor_current"],
+                {"positive-long": "machine_fault", "positive-inner": "machine_fault", "quality-nested": "data_quality"},
+                [],
+                event_config,
+            )
+        allowed_cross_signal = [
+            _event("positive", "motor-01.motor_current", start + timedelta(seconds=4), start + timedelta(seconds=6), event_type="jam_or_slip"),
+            _event("quality-other-signal", "motor-01.motor_temperature", start + timedelta(seconds=5), start + timedelta(seconds=7), event_type="dropout"),
+        ]
+        _event_records_and_metrics(
+            dict(metric_dataset, events=allowed_cross_signal),
+            ["motor-01"],
+            ["motor-01.motor_current", "motor-01.motor_temperature"],
+            {"positive": "machine_fault", "quality-other-signal": "data_quality"},
+            [],
+            event_config,
+        )
 
     def test_alert_episode_partition_records_each_suppression_reason(self) -> None:
         start = datetime(2026, 1, 1, tzinfo=UTC)
@@ -424,14 +534,15 @@ class AnomalyEvaluationTests(unittest.TestCase):
         self.assertEqual(partition["matched_eligible_alert_episodes"], 0)
         self.assertEqual(partition["unmatched_eligible_same_signal_alert_episodes"], 0)
         self.assertEqual(partition["clean_false_alert_signal_episodes"], 1)
-        self.assertEqual(partition["positive_nonmatching_signal_false_alert_episodes"], 1)
+        self.assertEqual(partition["positive_event_window_false_alert_episodes"], 1)
+        self.assertEqual(partition["positive_event_window_false_alert_by_reason"], {"positive_nonmatching_signal": 1, "positive_ineligible_same_signal": 0})
         self.assertEqual(partition["suppressed_event_window_alert_episodes"], 2)
         self.assertEqual(partition["suppressed_event_window_by_reason"], {"data_quality": 1, "ignored": 1})
         self.assertEqual(
             partition["total_alert_episodes"],
             partition["matched_eligible_alert_episodes"]
             + partition["unmatched_eligible_same_signal_alert_episodes"]
-            + partition["positive_nonmatching_signal_false_alert_episodes"]
+            + partition["positive_event_window_false_alert_episodes"]
             + partition["clean_false_alert_signal_episodes"]
             + partition["suppressed_event_window_alert_episodes"],
         )
@@ -530,6 +641,31 @@ class AnomalyEvaluationTests(unittest.TestCase):
                 evaluate_anomalies(config_path, ROOT)
         self.assertTrue(output.is_dir())
         self.assertFalse((output / ".complete").exists())
+
+    def test_outer_snapshot_is_enforced_by_core_before_evaluation(self) -> None:
+        config_path, output, config = self._config("snapshot-window")
+        original_bytes = config_path.read_bytes()
+        changed = copy.deepcopy(config)
+        changed["persistence_points"] = changed["persistence_points"] + 1
+        changed_bytes = json.dumps(changed, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        original_strict_object = anomaly_module._strict_object
+        config_reads = 0
+
+        def mutate_on_core_read(path: Path, label: str):
+            nonlocal config_reads
+            if path == config_path:
+                config_reads += 1
+            if path == config_path and config_reads == 2:
+                path.write_bytes(changed_bytes)
+            return original_strict_object(path, label)
+
+        try:
+            with patch.object(anomaly_module, "_strict_object", side_effect=mutate_on_core_read):
+                with self.assertRaisesRegex(AnomalyEvaluationError, "changed before core evaluation snapshot"):
+                    evaluate_anomalies(config_path, ROOT)
+        finally:
+            config_path.write_bytes(original_bytes)
+        self.assertFalse(output.exists())
 
 
 if __name__ == "__main__":

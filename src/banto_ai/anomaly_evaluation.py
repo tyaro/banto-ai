@@ -227,6 +227,14 @@ def _assert_input_unchanged(root: Path, inventory: tuple[tuple[str, str], ...], 
         raise AnomalyEvaluationError(f"dataset source changed during analysis: {root}")
 
 
+def _snapshot_dataset_fingerprint(dataset_path: Path) -> str:
+    fingerprint, _ = _strict_object(dataset_path / "fingerprint.json", "dataset fingerprint")
+    value = fingerprint.get("dataset_fingerprint")
+    if not isinstance(value, str) or not value:
+        raise AnomalyEvaluationError("dataset fingerprint snapshot is invalid")
+    return value
+
+
 def _write_fsync(path: Path, payload: bytes, label: str) -> None:
     try:
         with path.open("wb") as handle:
@@ -277,8 +285,16 @@ def _best_effort_fsync_directory(path: Path, label: str) -> None:
                 warnings.warn(f"{label} directory close failed for {path}: {exc}", RuntimeWarning, stacklevel=2)
 
 
+def _event_ids_at(events: Iterable[Mapping[str, Any]], equipment_id: str, stamp: datetime) -> frozenset[str]:
+    return frozenset(
+        str(event["event_id"])
+        for event in events
+        if event["equipment_id"] == equipment_id and event["start"] <= stamp < event["end"]
+    )
+
+
 def _event_timestamp_overlap(events: Iterable[Mapping[str, Any]], equipment_id: str, stamp: datetime) -> bool:
-    return any(event["equipment_id"] == equipment_id and event["start"] <= stamp < event["end"] for event in events)
+    return bool(_event_ids_at(events, equipment_id, stamp))
 
 
 def _signal_value(row: Mapping[str, Any], signal_id: str) -> tuple[str, float | None]:
@@ -310,7 +326,10 @@ def _residual_at(
         return None, "previous_quality_non_ok", current_value, previous_value
     if previous_value is None:
         return None, "previous_nonfinite_value", current_value, previous_value
-    if _event_timestamp_overlap(events, rows[index - 1].get("equipment_id", signal_id.rsplit(".", 1)[0]), previous_stamp):
+    equipment_id = rows[index - 1].get("equipment_id", signal_id.rsplit(".", 1)[0])
+    previous_event_ids = _event_ids_at(events, equipment_id, previous_stamp)
+    current_event_ids = _event_ids_at(events, equipment_id, current_stamp)
+    if previous_event_ids and not previous_event_ids.intersection(current_event_ids):
         return None, "previous_event_overlap", current_value, previous_value
     if str(rows[index].get("operating_mode")) != str(rows[index - 1].get("operating_mode")):
         return None, "mode_boundary", current_value, previous_value
@@ -714,6 +733,17 @@ def _event_records_and_metrics(
             "alert_onset_timestamp": None,
             "detection_delay_seconds": None,
         })
+    for index, previous in enumerate(all_event_windows):
+        for current in all_event_windows[index + 1:]:
+            if previous["equipment_id"] != current["equipment_id"] or previous["signal_id"] != current["signal_id"]:
+                continue
+            if previous["window_end"] <= current["window_start"] or current["window_end"] <= previous["window_start"]:
+                continue
+            classes = {previous["event_class"], current["event_class"]}
+            if classes & POSITIVE_CLASSES and classes & {"data_quality", "ignored"}:
+                raise AnomalyEvaluationError(
+                    f"positive and suppression event windows overlap for {current['equipment_id']}/{current['signal_id']}"
+                )
     ordered_windows = sorted(windows, key=lambda item: (item[0], item[1], item[2], item[3]))
     for previous, current in zip(ordered_windows, ordered_windows[1:]):
         if previous[:2] == current[:2] and previous[3] > current[2]:
@@ -810,6 +840,7 @@ def _event_records_and_metrics(
     suppression_reason_keys = ("data_quality", "ignored")
     suppression_reason_counts = {reason: 0 for reason in suppression_reason_keys}
     positive_nonmatching_count = 0
+    positive_ineligible_same_signal_count = 0
     alert_episode_accounting: list[dict[str, Any]] = []
     clean_signal_episodes: list[dict[str, Any]] = []
     for episode in episodes:
@@ -817,6 +848,7 @@ def _event_records_and_metrics(
         onset = _parse_dataset_time(episode["onset_timestamp"], "alert onset")
         onset_context = event_windows_containing(episode, onset)
         eligible_event_ids = sorted(set(eligible_episode_event_ids.get(episode_id, [])))
+        matched_event_id = None
         if episode_id in matched_episode_event_ids:
             partition = "matched_eligible"
             reason = "matched_eligible_event"
@@ -841,10 +873,17 @@ def _event_records_and_metrics(
                 reason = "ignored_event_window"
                 reason_key = "ignored"
             elif event_classes & POSITIVE_CLASSES:
-                partition = "positive_nonmatching_signal_false_alert"
-                reason = "positive_nonmatching_signal"
+                positive_same_signal = any(
+                    event_window["event_class"] in POSITIVE_CLASSES
+                    and event_window["signal_id"] == episode["signal_id"]
+                    for event_window in onset_context
+                )
+                partition = "positive_event_window_false_alert"
+                reason = "positive_ineligible_same_signal" if positive_same_signal else "positive_nonmatching_signal"
                 included_in_precision = True
                 positive_nonmatching_count += 1
+                if positive_same_signal:
+                    positive_ineligible_same_signal_count += 1
             else:
                 raise AnomalyEvaluationError(f"alert episode has an unsupported onset event context: {episode_id}")
             if event_classes & POSITIVE_CLASSES and "data_quality" not in event_classes and "ignored" not in event_classes:
@@ -894,7 +933,7 @@ def _event_records_and_metrics(
     partition_counts = {
         "matched_eligible_alert_episodes": matched_count,
         "unmatched_eligible_same_signal_alert_episodes": unmatched_count,
-        "positive_nonmatching_signal_false_alert_episodes": positive_nonmatching_count,
+        "positive_event_window_false_alert_episodes": positive_nonmatching_count,
         "clean_false_alert_signal_episodes": clean_false_signal_count,
         "suppressed_event_window_alert_episodes": suppressed_count,
     }
@@ -903,6 +942,10 @@ def _event_records_and_metrics(
     alert_episode_partition = {
         "total_alert_episodes": len(episodes),
         **partition_counts,
+        "positive_event_window_false_alert_by_reason": {
+            "positive_nonmatching_signal": positive_nonmatching_count - positive_ineligible_same_signal_count,
+            "positive_ineligible_same_signal": positive_ineligible_same_signal_count,
+        },
         "suppressed_event_window_by_reason": suppression_reason_counts,
         "precision_denominator_alert_episodes": evaluated_alert_episode_count,
         "precision_denominator_excludes_suppressed": True,
@@ -946,7 +989,9 @@ def _event_records_and_metrics(
         "suppressed_event_window_alert_episode_count": suppressed_count,
         "suppressed_data_quality_event_window_alert_episode_count": suppression_reason_counts["data_quality"],
         "suppressed_ignored_event_window_alert_episode_count": suppression_reason_counts["ignored"],
-        "positive_nonmatching_signal_false_alert_episode_count": positive_nonmatching_count,
+        "positive_event_window_false_alert_episode_count": positive_nonmatching_count,
+        "positive_nonmatching_signal_false_alert_episode_count": positive_nonmatching_count - positive_ineligible_same_signal_count,
+        "positive_ineligible_same_signal_false_alert_episode_count": positive_ineligible_same_signal_count,
         "false_alert_signal_episode_count": positive_nonmatching_count + clean_false_signal_count,
         "precision_denominator_excludes_suppressed_event_windows": True,
         "alert_episode_partition": alert_episode_partition,
@@ -976,13 +1021,14 @@ def _summary(result: Mapping[str, Any]) -> str:
         f"- eligible incidents: {overall['eligible_incidents']}",
         f"- detected / missed incidents: {overall['detected_incidents']} / {overall['missed_incidents']}",
         f"- incident precision / recall: {overall['incident_precision']} / {overall['incident_recall']}",
-        f"- signal alert episode partition (total = matched + unmatched same-signal + positive-nonmatching FP + clean FP + suppressed): {partition['total_alert_episodes']} = {partition['matched_eligible_alert_episodes']} + {partition['unmatched_eligible_same_signal_alert_episodes']} + {partition['positive_nonmatching_signal_false_alert_episodes']} + {partition['clean_false_alert_signal_episodes']} + {partition['suppressed_event_window_alert_episodes']}",
-        f"- evaluated signal alert episodes (precision denominator; matched / unmatched / positive-nonmatching FP / clean FP): {overall['evaluated_alert_episode_count']} ({overall['matched_eligible_alert_episodes']} / {overall['unmatched_eligible_alert_episodes']} / {metrics['positive_nonmatching_signal_false_alert_episode_count']} / {metrics['clean_false_alert_signal_episode_count']})",
+        f"- signal alert episode partition (total = matched + unmatched same-signal + positive-event-window FP + clean FP + suppressed): {partition['total_alert_episodes']} = {partition['matched_eligible_alert_episodes']} + {partition['unmatched_eligible_same_signal_alert_episodes']} + {partition['positive_event_window_false_alert_episodes']} + {partition['clean_false_alert_signal_episodes']} + {partition['suppressed_event_window_alert_episodes']}",
+        f"- evaluated signal alert episodes (precision denominator; matched / unmatched / positive-event-window FP / clean FP): {overall['evaluated_alert_episode_count']} ({overall['matched_eligible_alert_episodes']} / {overall['unmatched_eligible_alert_episodes']} / {metrics['positive_event_window_false_alert_episode_count']} / {metrics['clean_false_alert_signal_episode_count']})",
         f"- clean false-alert equipment episodes: {metrics['clean_false_alert_episode_count']}",
         f"- suppressed event-window alerts (data-quality / ignored): {partition['suppressed_event_window_alert_episodes']} ({reasons['data_quality']} / {reasons['ignored']})",
         "- suppressed event-window alerts are excluded from precision because they are neither a same-signal eligible incident alert nor a signal-level false alert; the reason ledger preserves them separately.",
         f"- clean monitored equipment hours: {metrics['clean_monitored_equipment_hours']}",
         f"- false alerts per 8 clean monitored equipment-hours: {metrics['false_alerts_per_8_equipment_hours']}",
+        f"- positive event-window FP by reason (nonmatching signal / ineligible same signal): {partition['positive_event_window_false_alert_by_reason']}",
         f"- score availability by target signal: {metrics['score_availability_by_signal']}",
         "",
         "## 契約",
@@ -1090,7 +1136,17 @@ def _quarantine_incomplete(output: Path) -> Path:
 
 
 def _evaluate_core(
-    config_path: str | Path, root: Path, *, output: Path | None = None, expected_code_revision: Mapping[str, Any] | None = None
+    config_path: str | Path,
+    root: Path,
+    *,
+    output: Path | None = None,
+    expected_code_revision: Mapping[str, Any] | None = None,
+    expected_config_hash: str | None = None,
+    expected_dataset_inventory: tuple[tuple[str, str], ...] | None = None,
+    expected_dataset_hashes: Mapping[str, str] | None = None,
+    expected_dataset_fingerprint: str | None = None,
+    expected_config_schema_hash: str | None = None,
+    expected_result_schema_hash: str | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     root = Path(root).expanduser().resolve()
     code_revision = dict(expected_code_revision) if expected_code_revision is not None else _revision(root)
@@ -1098,9 +1154,26 @@ def _evaluate_core(
         raise AnomalyEvaluationError("repository code revision changed before anomaly evaluation")
     config_file = _resolve_config_file(config_path, root)
     config, config_raw = _strict_object(config_file, "anomaly evaluation config")
+    if expected_config_hash is not None and _sha256_bytes(config_raw) != expected_config_hash:
+        raise AnomalyEvaluationError("anomaly config changed before core evaluation snapshot")
     dataset_path = _safe_repo_path(root, config.get("dataset_path"), "dataset_path", must_exist=True)
     dataset_inventory = _inventory_tree(dataset_path)
     dataset_hashes = _inventory_hashes(dataset_path, dataset_inventory)
+    if expected_dataset_inventory is not None and dataset_inventory != expected_dataset_inventory:
+        raise AnomalyEvaluationError("dataset inventory changed before core evaluation snapshot")
+    if expected_dataset_hashes is not None and dataset_hashes != dict(expected_dataset_hashes):
+        raise AnomalyEvaluationError("dataset source changed before core evaluation snapshot")
+    config_schema_path = _safe_repo_path(root, "schemas/anomaly-evaluation-config.schema.json", "anomaly config schema", must_exist=True)
+    result_schema_path = _safe_repo_path(root, "schemas/anomaly-evaluation-result.schema.json", "anomaly result schema", must_exist=True)
+    config_schema_hash = _sha256(config_schema_path)
+    result_schema_hash = _sha256(result_schema_path)
+    if expected_config_schema_hash is not None and config_schema_hash != expected_config_schema_hash:
+        raise AnomalyEvaluationError("anomaly config schema changed before core evaluation snapshot")
+    if expected_result_schema_hash is not None and result_schema_hash != expected_result_schema_hash:
+        raise AnomalyEvaluationError("anomaly result schema changed before core evaluation snapshot")
+    snapshot_fingerprint = _snapshot_dataset_fingerprint(dataset_path)
+    if expected_dataset_fingerprint is not None and snapshot_fingerprint != expected_dataset_fingerprint:
+        raise AnomalyEvaluationError("dataset fingerprint changed before core evaluation snapshot")
     try:
         dataset = _verify_dataset(dataset_path, root)
     except (EventSliceError, OSError, ValueError, KeyError, TypeError) as exc:
@@ -1109,10 +1182,6 @@ def _evaluate_core(
     output_path = _resolve_output(root, config["output_dir"])
     if output is not None and output_path != output:
         raise AnomalyEvaluationError("anomaly output changed after lock claim")
-    config_schema_path = _safe_repo_path(root, "schemas/anomaly-evaluation-config.schema.json", "anomaly config schema", must_exist=True)
-    result_schema_path = _safe_repo_path(root, "schemas/anomaly-evaluation-result.schema.json", "anomaly result schema", must_exist=True)
-    config_schema_hash = _sha256(config_schema_path)
-    result_schema_hash = _sha256(result_schema_path)
     profiles, calibration_exclusions = _calibrate_profiles(dataset, equipment_ids, target_signal_ids, config)
     scores, episodes, score_exclusions = _score_and_alert(dataset, equipment_ids, target_signal_ids, profiles, config)
     incidents, clean_alerts, metrics, event_exclusions = _event_records_and_metrics(dataset, equipment_ids, target_signal_ids, classifications, episodes, config, scores)
@@ -1172,6 +1241,14 @@ def _evaluate_core(
         ],
     }
     _validate_result(result, root)
+    if expected_config_hash is not None and result["provenance"]["config"]["sha256"] != expected_config_hash:
+        raise AnomalyEvaluationError("result provenance config hash does not match evaluation snapshot")
+    if expected_dataset_fingerprint is not None and result["provenance"]["dataset"]["dataset_fingerprint"] != expected_dataset_fingerprint:
+        raise AnomalyEvaluationError("result provenance dataset fingerprint does not match evaluation snapshot")
+    if expected_config_schema_hash is not None and result["provenance"]["config_schema"]["sha256"] != expected_config_schema_hash:
+        raise AnomalyEvaluationError("result provenance config schema hash does not match evaluation snapshot")
+    if expected_result_schema_hash is not None and result["provenance"]["schema"]["sha256"] != expected_result_schema_hash:
+        raise AnomalyEvaluationError("result provenance result schema hash does not match evaluation snapshot")
     if _revision(root) != code_revision:
         raise AnomalyEvaluationError("repository code revision changed during anomaly evaluation")
     _assert_input_unchanged(dataset_path, dataset_inventory, dataset_hashes)
@@ -1204,12 +1281,24 @@ def evaluate_anomalies(config_path: str | Path, root: Path, *, recover_incomplet
     dataset_path = _safe_repo_path(root, config.get("dataset_path"), "dataset_path", must_exist=True)
     dataset_inventory = _inventory_tree(dataset_path)
     dataset_hashes = _inventory_hashes(dataset_path, dataset_inventory)
+    dataset_fingerprint = _snapshot_dataset_fingerprint(dataset_path)
     config_schema_path = _safe_repo_path(root, "schemas/anomaly-evaluation-config.schema.json", "anomaly config schema", must_exist=True)
     result_schema_path = _safe_repo_path(root, "schemas/anomaly-evaluation-result.schema.json", "anomaly result schema", must_exist=True)
     config_hash = _sha256_bytes(config_raw)
     config_schema_hash = _sha256(config_schema_path)
     result_schema_hash = _sha256(result_schema_path)
-    output_path, result = _evaluate_core(config_file, root, output=output, expected_code_revision=entry_code_revision)
+    output_path, result = _evaluate_core(
+        config_file,
+        root,
+        output=output,
+        expected_code_revision=entry_code_revision,
+        expected_config_hash=config_hash,
+        expected_dataset_inventory=dataset_inventory,
+        expected_dataset_hashes=dataset_hashes,
+        expected_dataset_fingerprint=dataset_fingerprint,
+        expected_config_schema_hash=config_schema_hash,
+        expected_result_schema_hash=result_schema_hash,
+    )
 
     def verify_before_marker() -> None:
         if _revision(root) != entry_code_revision:

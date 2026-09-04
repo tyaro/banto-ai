@@ -31,7 +31,7 @@ evaluator configとresultは、それぞれ [`anomaly-evaluation-config.schema.j
 3. 現在点と直前点の両方が`quality=ok`、有限値、サンプリング間隔どおりでなければresidual／scoreはunavailableです。
 4. validationだけで、`equipment + full signal + operating mode`ごとにprofileを作ります。centerはresidualのmedian、`MAD = median(abs(residual - center))`、scaleは`1.4826 * MAD`です。currentまたはimmediate-previous timestampがenabled event intervalに入るresidualは校正から除外します。
 5. calibration pointが`min_calibration_points`未満、MADが0、またはcenter／MAD／scaleが非有限ならprofileは`inconclusive`です。global fallback、epsilon、別modeの流用、testによる再校正はありません。
-6. test scoreは`abs(residual - center) / scale`です。`robust_z_threshold`を超える点を連続`persistence_points`点確認した時刻をalert onsetとします。mode／profile group変更、sampling gap、quality不良、residual／score unavailable、threshold未満でpersistenceはresetします。mode boundaryのcurrent pointは`mode_boundary`、previous timestampがevent interval内なら`previous_event_overlap`としてunavailableです。current timestampのeventはcurrent residual自体を隠しません。
+6. test scoreは`abs(residual - center) / scale`です。`robust_z_threshold`を超える点を連続`persistence_points`点確認した時刻をalert onsetとします。mode／profile group変更、sampling gap、quality不良、residual／score unavailable、threshold未満でpersistenceはresetします。mode boundaryのcurrent pointは`mode_boundary`です。previous timestampがevent内でも、current timestampが同じevent ID内に続く場合はscoreを利用します。event初点はcurrent residualを隠さず、event終了直後または別eventへの切替境界は`previous_event_overlap`としてunavailableです。
 
 test-only modeもprofile台帳には現れますが、validationの校正点がなければinconclusiveとして明示されます。したがって、scenarioがtestで新しいmodeを突然出すことによって、結果を黙って除外することはありません。
 
@@ -49,24 +49,26 @@ eligible eventのdetection windowは次です。
 
 同じequipment／signalのeligible windowが重なる場合は、曖昧なone-to-one matchingを避けるため評価全体をfail closedにします。alert episodeは同じequipment／signalのeventへ最大一度だけ対応させます。alert onsetがevent開始前ならcreditしません。`detection_delay_seconds`は観測されたalert onsetからevent開始までの非負秒数だけであり、負のlead timeは出力しません。
 
+同じequipment／signalでpositive event windowと`data_quality`／`ignored` event windowが重なる場合も、matchingとsuppressionのtruthが曖昧になるためfail closedにします。異なるsignal間の重なりは許可し、onset contextのpartition規則で監査します。
+
 ## Metrics
 
 resultには、raw score row、alert episode、全eventのincident rowを保存します。
 
 - overallと`machine_fault`／`sensor_fault`別に、eligible、detected、missed、incident recall、detection delay summaryを出します。
 - `matched_eligible_alert_episodes`と`unmatched_eligible_alert_episodes`をone-to-one matchingの結果として出します。
-- 全signal-level alert episodeは`alert_episode_accounting`へ一度だけ記録し、`matched_eligible`、`unmatched_eligible_same_signal`、`positive_nonmatching_signal_false_alert`、`clean_false_alert`、`suppressed_event_window`の5 partitionの合計がtotalと一致します。precision denominatorは最初の4 partitionです。positive nonmatching signalはsignal-level precision FPであり、clean equipment false-alert countではありません。suppressedは`data_quality`または`ignored`だけで、理由別countも記録します。onset contextでpartitionを決め、episode全体が後からevent windowへ入ってもclean onsetはclean false alertのままです。同一signalのeligible overlapはmatched／unmatched precedenceを保ちます。
+- 全signal-level alert episodeは`alert_episode_accounting`へ一度だけ記録し、`matched_eligible`、`unmatched_eligible_same_signal`、`positive_event_window_false_alert`、`clean_false_alert`、`suppressed_event_window`の5 partitionの合計がtotalと一致します。precision denominatorは最初の4 partitionです。positive event-window FPはsignal-level precision FPであり、`positive_nonmatching_signal`（別signal）と`positive_ineligible_same_signal`（censored等の同一signal）を理由別に記録します。どちらもclean equipment false-alert countではありません。suppressedは`data_quality`または`ignored`だけで、理由別countも記録します。onset contextでpartitionを決め、episode全体が後からevent windowへ入ってもclean onsetはclean false alertのままです。同一signalのeligible overlapはmatched／unmatched precedenceを保ちます。
 - clean monitored exposureはscoreがavailableなinterval `[timestamp,timestamp+sampling_interval)`だけから作ります。equipment-levelはtarget signalのavailable interval union、signal-levelはtarget signalごとのintervalです。test内の全enabled event（data quality／ignoredを含む）とgraceを含むevent windowを差し引き、zero denominatorのrateはnullにします。clean false alertはequipment-level episodeへ集約します。
 - `clean_monitored_equipment_hours`、`false_alerts_per_8_equipment_hours`、target signalごとの`clean_monitored_target_signal_hours`、`score_availability_by_signal`を出します。
 - 同じequipmentで複数signalのclean alert intervalが重なる、またはtouchする場合は、一つのequipment episodeへdeduplicateします。source signal episode IDは結果に残します。
 
-resultの`clean_false_alert_signal_episode_count`はclean onsetのsignal-level FP、`positive_nonmatching_signal_false_alert_episode_count`はpositive eventの別signal onsetによるsignal-level FPです。`suppressed_event_window_alert_episode_count`はdata-quality／ignored window内のalert総数で、precision分母から除外します。旧`suppressed_ineligible_event_window_alert_episode_count` aliasは出力しません。`metrics.alert_episode_partition`と`alert_episode_accounting`で、suppressedを含む全alert episodeの厳密な総和を監査できます。
+resultの`clean_false_alert_signal_episode_count`はclean onsetのsignal-level FP、`positive_event_window_false_alert_episode_count`はpositive event window内のsignal-level FP総数で、`positive_nonmatching_signal_false_alert_episode_count`と`positive_ineligible_same_signal_false_alert_episode_count`へ分解します。`suppressed_event_window_alert_episode_count`はdata-quality／ignored window内のalert総数で、precision分母から除外します。旧`suppressed_ineligible_event_window_alert_episode_count` aliasは出力しません。`metrics.alert_episode_partition`と`alert_episode_accounting`で、suppressedを含む全alert episodeの厳密な総和を監査できます。
 
 ## Provenanceとpublish
 
 resultにはconfig／schemaのsha256、dataset path／ID／fingerprint、dataset-manifest hash、PASSしたquality gate、開始code revision、threshold／persistence／grace／target、profileのcenter／MAD／scaleと点数、calibration／scoring／event exclusion、raw row counts、制約を記録します。
 
-`output_dir`はrepository内の`artifacts`直下の新規directoryに限定します。config、dataset、manifest、schema経路のsymlink／junctionとpath traversalは拒否し、dataset file inventory／hash、config、両schema、code revisionを評価開始時とcompletion marker直前に再確認します。既存outputのoverwriteはしません。
+`output_dir`はrepository内の`artifacts`直下の新規directoryに限定します。config、dataset、manifest、schema経路のsymlink／junctionとpath traversalは拒否し、outer entry snapshotを固定してconfig hash、dataset inventory／hash／fingerprint、両schema hashをcore読込直後にも一致確認します。completion marker直前にも全入力とcode revisionを再確認します。既存outputのoverwriteはしません。
 
 resultとsummaryは一時directoryへfsyncしてから新規output directoryをclaimし、`result.json`、`summary.md`、最後に`.complete`をexclusiveに配置します。`.complete`がないdirectoryは完了artifactではありません。publish後も顧客データ、credentials、checkpoint、control writeは生成しません。
 
