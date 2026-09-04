@@ -13,6 +13,7 @@ import math
 import os
 import shutil
 import tempfile
+import warnings
 from contextlib import contextmanager
 from pathlib import Path, PureWindowsPath
 from typing import Any, Iterable, Mapping
@@ -110,7 +111,7 @@ def _write_fsync(path: Path, payload: bytes, label: str) -> None:
         raise AcceptanceError(f"{label} could not be durably written: {path}") from exc
 
 
-def _release_advisory_lock(handle: Any, path: Path) -> None:
+def _release_advisory_lock(handle: Any, path: Path) -> AcceptanceError | None:
     release_error: OSError | None = None
     try:
         handle.seek(0)
@@ -127,7 +128,8 @@ def _release_advisory_lock(handle: Any, path: Path) -> None:
     except OSError as exc:
         release_error = release_error or exc
     if release_error is not None:
-        raise AcceptanceError(f"advisory lock release failed: {path}") from release_error
+        return AcceptanceError(f"advisory lock release failed: {path}")
+    return None
 
 
 @contextmanager
@@ -135,6 +137,10 @@ def _advisory_lock(path: Path) -> Iterable[None]:
     """Hold a process-lifetime-released advisory lock; the lock file may remain."""
     if path.is_symlink():
         raise AcceptanceError(f"advisory lock path is a symlink: {path}")
+    if path.is_dir():
+        raise AcceptanceError(
+            f"legacy stale lock directory found at {path}; explicitly move it aside before retrying"
+        )
     handle = None
     try:
         handle = path.open("a+b")
@@ -160,14 +166,14 @@ def _advisory_lock(path: Path) -> Iterable[None]:
         try:
             yield
         except BaseException as body_error:
-            try:
-                _release_advisory_lock(handle, path)
-            except AcceptanceError as release_error:
-                release_error.add_note(f"original analyzer failure: {body_error!r}")
-                raise release_error
+            release_error = _release_advisory_lock(handle, path)
+            if release_error is not None:
+                body_error.add_note(f"advisory lock release diagnostic: {release_error}")
             raise
         else:
-            _release_advisory_lock(handle, path)
+            release_error = _release_advisory_lock(handle, path)
+            if release_error is not None:
+                warnings.warn(str(release_error), RuntimeWarning, stacklevel=2)
     except AcceptanceError:
         raise
 
@@ -243,10 +249,23 @@ def _place_no_replace(source: Path, target: Path) -> None:
             except OSError as cleanup_error:
                 exc.add_note(f"incomplete output cleanup failed: {cleanup_error!r}")
             raise AcceptanceError(f"could not place published file: {target}") from exc
+
+
+def _best_effort_fsync_directory(path: Path, label: str) -> None:
+    if os.name == "nt":
+        return
+    descriptor: int | None = None
     try:
-        source.unlink()
+        descriptor = os.open(path, os.O_RDONLY | getattr(os, "O_DIRECTORY", 0))
+        os.fsync(descriptor)
     except OSError as exc:
-        raise AcceptanceError(f"published file cleanup failed: {source}") from exc
+        warnings.warn(f"{label} directory fsync failed for {path}: {exc}", RuntimeWarning, stacklevel=2)
+    finally:
+        if descriptor is not None:
+            try:
+                os.close(descriptor)
+            except OSError as exc:
+                warnings.warn(f"{label} directory close failed for {path}: {exc}", RuntimeWarning, stacklevel=2)
 
 
 def _sha256_bytes(raw: bytes) -> str:
@@ -1113,6 +1132,8 @@ def _analyze_controlled_acceptance(config_path: str | Path, root: Path, *, expec
         _place_no_replace(temporary / "result.json", output / "result.json")
         _place_no_replace(temporary / "summary.md", output / "summary.md")
         _place_no_replace(temporary / COMPLETION_MARKER, output / COMPLETION_MARKER)
+        _best_effort_fsync_directory(output, "published output")
+        _best_effort_fsync_directory(output.parent, "published output parent")
     except AcceptanceError:
         if temporary.exists():
             shutil.rmtree(temporary, ignore_errors=True)

@@ -17,7 +17,7 @@ from banto_ai.generator import generate_synthetic
 from banto_ai.manifest import load_json, validate
 from banto_ai.quality import check_dataset
 from banto_ai.event_slices import _verify_dataset
-from banto_ai.toto2_acceptance import AcceptanceError, _advisory_lock, _assert_dataset_inventories_unchanged, _dataset_inventory, _output_state, _strict_dataset_artifacts, _validate_cross_track_truth, analyze_controlled_acceptance, validate_acceptance_config
+from banto_ai.toto2_acceptance import AcceptanceError, _advisory_lock, _assert_dataset_inventories_unchanged, _dataset_inventory, _output_state, _release_advisory_lock, _strict_dataset_artifacts, _validate_cross_track_truth, analyze_controlled_acceptance, validate_acceptance_config
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -302,6 +302,24 @@ class Toto2AcceptanceTests(unittest.TestCase):
         self.assertTrue(lock_path.is_file())
         with _advisory_lock(lock_path):
             pass
+
+    def test_advisory_lock_release_failure_warns_after_success(self) -> None:
+        lock_path = self.temp / "configs" / "release-warning.lock"
+        def release_with_diagnostic(handle: object, path: Path) -> object:
+            _release_advisory_lock(handle, path)
+            return AcceptanceError(f"synthetic release diagnostic: {path}")
+
+        with patch("banto_ai.toto2_acceptance._release_advisory_lock", side_effect=release_with_diagnostic):
+            with self.assertWarnsRegex(RuntimeWarning, "synthetic release diagnostic"):
+                with _advisory_lock(lock_path):
+                    pass
+
+    def test_legacy_lock_directory_is_not_treated_as_active_lock(self) -> None:
+        lock_path = self.temp / "configs" / "legacy.lock"
+        lock_path.mkdir()
+        with self.assertRaisesRegex(AcceptanceError, "legacy stale lock directory"):
+            with _advisory_lock(lock_path):
+                pass
 
     def test_incomplete_output_requires_recovery_and_complete_output_is_never_replaced(self) -> None:
         config = load_json(self.config_path)
