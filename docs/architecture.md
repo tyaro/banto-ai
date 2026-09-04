@@ -78,7 +78,7 @@ benchmark configの`past_only_covariate_ids`はorigin直前までのcontextだ�
 
 ID解決は、短いsignal keyなら評価対象equipmentのsignalへ解決します。`target_signal_ids`を省略した場合はmanifest順のtargetから、各equipment自身に所属するものだけを選びます。full signal IDは複数equipment評価では拒否し、単一equipment評価でもID prefixが対象equipmentと一致する場合だけ許可します。設備内で同じsuffixへ解決されるfull IDが複数ある場合、またpredictionが宣言済みのfull IDとequipmentへ対応しない場合はBenchmarkErrorでfail closedします。targetの空集合や同一logical keyの重複、target／past-only／known-future／legacy linear-regression covariateの所属不一致も同様です。
 
-quantile policyは結果のruntime／provenanceへmodel別に記録します。baseline等は`validation-residual-by-lead`、TimesFM 3とChronos-2はadapterが返したrequested native quantileをそのまま使います。Chronos-2公式`predict_quantiles`の戻り値で`mean`と呼ばれるpointは算術平均ではなくmedian／p50として扱います。native経路は設定されたquantile level、pointとp50の整合、horizon timestamp、quantile crossingを検証してから評価します。
+quantile policyは結果のruntime／provenanceへmodel別に記録します。baseline等は`validation-residual-by-lead`、TimesFM 3とChronos-2はnativeを既定／一次契約とします。Chronos-2のsingle-runでは明示的に`validation-residual-by-lead`も許可し、公式point-only予測へvalidation residual by leadを加算する別scenarioとして扱います。Chronos-2公式`predict_quantiles`の戻り値で`mean`と呼ばれるpointは算術平均ではなくmedian／p50として扱います。native経路は設定されたquantile level、pointとp50の整合、horizon timestamp、quantile crossingを検証し、交差時は値を並べ替え・clipせずfail closedでpartialにします。matrix runnerはnative限定を維持します。
 
 ### Chronos-2のoptional backend境界
 

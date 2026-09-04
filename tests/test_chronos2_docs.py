@@ -107,6 +107,42 @@ class Chronos2DocumentationTests(unittest.TestCase):
                 self.assertIn(required, readme)
         self.assertNotIn("quantile policyは`native`だけを受け付け", readme)
 
+    def test_metropt3_chronos_result_documents_two_scenarios_and_current_boundary(self) -> None:
+        report = (ROOT / "docs" / "results" / "chronos2-metropt3-evaluation-2026-09-04.md").read_text(encoding="utf-8")
+        for required in (
+            "Scenario 1: native",
+            "Scenario 2: point-calibrated",
+            "artifacts/benchmark/benchmark-metropt3-chronos2",
+            "artifacts/benchmark/benchmark-metropt3-chronos2-point-calibrated",
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "partial",
+            "success",
+            "commercial-evaluation",
+            "product-candidate",
+            "forecast-only",
+            "Banto Hub／PLCへのwrite",
+            "Git管理対象外",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, report)
+
+        docs = "\n".join(
+            (ROOT / path).read_text(encoding="utf-8")
+            for path in (
+                "README.md",
+                "docs/chronos2-notes.md",
+                "docs/research-roadmap.md",
+                "docs/research-implementation-plan.md",
+                "docs/architecture.md",
+            )
+        )
+        for obsolete in (
+            "rolling benchmark・モデル評価は未実施",
+            "Chronos-2／TimesFM 3.0の公開実データ評価は未実施",
+        ):
+            with self.subTest(obsolete=obsolete):
+                self.assertNotIn(obsolete, docs)
+
     def test_known_load_example_is_not_documented_as_observed_future_data(self) -> None:
         config = load_json(ROOT / "examples" / "configs" / "benchmark-chronos2-known-load.json")
         self.assertEqual(config["past_only_covariate_ids"], [])
@@ -249,11 +285,11 @@ class Chronos2DocumentationTests(unittest.TestCase):
             with self.subTest(path=path.name):
                 self.assertIn("chronos2-initial-evaluation-2026-09-04.md", text)
                 self.assertIn("chronos2-matrix-2026-09-04.md", text)
+                self.assertIn("chronos2-metropt3-evaluation-2026-09-04.md", text)
                 self.assertIn(KNOWN_MAE, text)
                 self.assertIn("実model matrix", text)
                 self.assertIn("commercial-evaluation", text)
                 self.assertIn("product-candidate", text)
-                self.assertIn("拡張した評価条件をclean savepointから再実行", text)
 
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn("tools\\chronos2\\run_smoke.py", readme)

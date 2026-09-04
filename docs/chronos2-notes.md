@@ -16,7 +16,7 @@ Chronos-2は、Amazon ScienceのChronos系列における120M parameterのencode
 | checkpoint | `amazon/chronos-2@29ec3766d36d6f73f0696f85560a422f50e8498c` |
 | 規模 | 120M encoder-only |
 | 上限 | context 8192、prediction 1024 |
-| quantile | native。Bantoのpointはmedian／p50 |
+| quantile | nativeが既定／一次契約。single-runではpoint-only＋`validation-residual-by-lead`の別scenarioも許可。Bantoのpointはmedian／p50 |
 | 初期環境 | 専用venv、repository外cache、CPU、batch 1、local files only |
 | 利用段階 | `commercial-evaluation` |
 | Banto core | Chronos／Torch／Transformers／NumPyをimportしない |
@@ -41,7 +41,7 @@ Chronos-2 input
         v
 ForecastResult
   point_forecast: Chronos-2 median / p50
-  quantiles: requested native levels
+  quantiles: native levels、またはpoint-only（校正scenario）
 ```
 
 `predict_quantiles`の戻り値にある`mean`という名前はBantoの算術平均を意味しません。Bantoではmedian／p50として検証し、requested quantileの0.5と整合させます。quantile crossing、timestamp、horizon長、target ID順が一致しない場合は結果を採用しません。
@@ -67,9 +67,9 @@ forward fill、線形補間、暗黙のzero埋め、将来実績からの埋め�
 
 ### Phase 0: 契約・隔離
 
-- run／result schemaがChronos-2のnative quantileと指定6 parameterだけを受け付ける。
-- 不正revision、context範囲外、batch 0、空device_map、unknown parameter、quantile policy変更を拒否する。
-- 3つの設定例がJSONとして読み込め、past-only／known-futureの意図が文書と一致する。
+- run／result schemaがChronos-2のnativeまたは`validation-residual-by-lead` quantile policyと指定6 parameterだけを受け付ける。nativeは既定／一次契約とする。
+- 不正revision、context範囲外、batch 0、空device_map、unknown parameter、許可外quantile policyを拒否する。`native`と`validation-residual-by-lead`は許可する。
+- 5つの設定例がJSONとして読み込め、past-only／known-futureの意図が文書と一致する。
 - package／checkpointの固定値、license判断、cache外部化、TimesFM research-onlyが文書化される。
 
 ### Phase 1: 小規模実行（初期実測完了）
@@ -80,9 +80,10 @@ forward fill、線形補間、暗黙のzero埋め、将来実績からの埋め�
 - 確認済み: 60 samples×2 equipment、context 12、horizon 3、各equipmentのvalidation／test各2 originsで、past-only 6 modelsとknown-future 7 modelsの初期rolling benchmarkが完走した。
 - 確認済み: known-future条件のChronos-2はaggregate MAE `0.1691488806622826`、WIS `0.15937026919725228`で7 models中1位となり、past-onlyのMAE `0.20672198138554906`、WIS `0.1952207659517925`から改善した。
 - 確認済み: seed `[17, 42]`×horizon `[1, 3]`×context `[6, 12]`のChronos-2実model matrix 8 cellsが、固定clean HEADから8/8成功した。currentは4条件すべてmoving-averageがMAE首位、temperatureはWIS 4条件すべてChronos-2が首位だった。詳細は[`results/chronos2-matrix-2026-09-04.md`](results/chronos2-matrix-2026-09-04.md)を参照する。
-- 未実施: origin拡大、公開実データ、missing／stale／regime／fault slice、known-future対past-onlyの同一契約比較、校正拡張、拡張した評価条件をclean savepointから再実行すること。
+- 完了: 固定24時間・1設備・3 targetのMetroPT-3公開実データで、5 baselineとChronos-2のnative／point-calibrated両scenarioを評価した。nativeは1つのmulti-target validation invocationのnative quantile crossingによりpartialとなり、point-calibratedはsuccessとなった。詳細は[`results/chronos2-metropt3-evaluation-2026-09-04.md`](results/chronos2-metropt3-evaluation-2026-09-04.md)を参照する。
+- 未実施: origin／日／設備拡大、missing／stale／regime／fault slice、Chronos再実行の再現性、coverage calibration改善、cold／warmとmodel-only resourceの分離、同じMetroPT条件でのTimesFM 3.0比較。Phase 2は未完了とする。
 
-公式API smokeはpackage／checkpoint／API shape、Banto tool smokeは共通adapter経路の契約確認です。rolling benchmarkとmatrixも小標本・合成データ上の初期結果であり、実設備性能の証拠ではありません。matrixはpast-only条件で、known-futureは別の初期rolling benchmarkでorigin時点に確定済みの計画値を模した条件です。詳細は[`results/chronos2-initial-evaluation-2026-09-04.md`](results/chronos2-initial-evaluation-2026-09-04.md)と[`results/chronos2-matrix-2026-09-04.md`](results/chronos2-matrix-2026-09-04.md)を参照してください。Chronos-2は`commercial-evaluation`を継続し、追加gateが完了するまで`product-candidate`へ昇格しません。
+公式API smokeはpackage／checkpoint／API shape、Banto tool smokeは共通adapter経路の契約確認です。rolling benchmarkとmatrixは小標本・合成データ上の初期結果であり、今回のMetroPT-3評価は24時間・1設備・16 test originsの限定的なforecast-only実測です。nativeは公式分位点をそのまま検証し、交差時は補正せずpartialとします。point-calibratedは公式point-only予測へvalidation residual by leadを加える別scenarioで、nativeのfallbackではありません。詳細は[`results/chronos2-initial-evaluation-2026-09-04.md`](results/chronos2-initial-evaluation-2026-09-04.md)、[`results/chronos2-matrix-2026-09-04.md`](results/chronos2-matrix-2026-09-04.md)、[`results/chronos2-metropt3-evaluation-2026-09-04.md`](results/chronos2-metropt3-evaluation-2026-09-04.md)を参照してください。Chronos-2は`commercial-evaluation`を継続し、追加gateが完了するまで`product-candidate`へ昇格しません。
 
 ## 7. 撤退条件
 
