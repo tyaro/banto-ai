@@ -19,7 +19,7 @@ $totoPython = '..\.venv-banto-ai-toto2\Scripts\python.exe'
 
 この初回追加では4MのCPU smokeとMetroPT-3 benchmarkを実行済みです。結果は[`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](../../docs/results/toto2-metropt3-evaluation-2026-09-04.md)を参照してください。22M、fine-tuning、seed拡大、fault slice、実設備一般化は対象外です。
 
-## 小規模benchmark matrix
+## 小規模 benchmark matrix（既存 small matrix）
 
 Toto 2.0 4M向けに、合成motor／conveyorデータを使う小規模matrixの実行基盤を追加しました。設定は [`examples/configs/benchmark-matrix-toto2-small.json`](../../examples/configs/benchmark-matrix-toto2-small.json) で、seed 17／42、horizon 15／30、context 64／120の8条件をseed→horizon→contextの順に展開します。
 
@@ -31,6 +31,8 @@ Toto 2.0 4M向けに、合成motor／conveyorデータを使う小規模matrix�
 
 ## controlled scenario 定義
 
+以下の controlled commands は、この README 冒頭で setup した `$totoPython` を使います。
+
 generator → quality gate → benchmark → Toto adapter の受入契約を固定する4 track（control、target fault、target quality、covariate quality）を [`docs/toto2-controlled-scenarios.md`](../../docs/toto2-controlled-scenarios.md) に定義しています。これは実行済み結果ではなく、real model／result artifact を作成しない savepoint です。各 matrix は seed 17／29／42／73／101、horizon 15／30、context 64／120、test origin 384、5 baselines＋Toto native を共有します。
 
 ```powershell
@@ -40,4 +42,4 @@ generator → quality gate → benchmark → Toto adapter の受入契約を固�
 & $totoPython tools\toto2\run_matrix.py --config examples\configs\benchmark-matrix-toto2-controlled-covariate-quality.json --cache-dir C:\banto-cache\toto2
 ```
 
-このmatrixは2026-09-04に実行済みで、8/8 cell success、partial 0、failed 0でした。正本と数値は[`docs/results/toto2-matrix-2026-09-04.md`](../../docs/results/toto2-matrix-2026-09-04.md)に記録しています。合成データの結果は実設備性能や製品採用を示さず、22M、fine-tuning、seed拡大、fault slice、実設備一般化は次のgateです。
+既存の small matrix は2026-09-04に実行済みで、8/8 cell success、partial 0、failed 0でした。正本と数値は[`docs/results/toto2-matrix-2026-09-04.md`](../../docs/results/toto2-matrix-2026-09-04.md)に記録しています。この実測値は既存 small matrix のもので、下記 controlled scenario の結果ではありません。合成データの結果は実設備性能や製品採用を示さず、22M、fine-tuning、seed拡大、fault slice、実設備一般化は次のgateです。

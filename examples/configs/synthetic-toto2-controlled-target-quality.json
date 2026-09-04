@@ -1,6 +1,6 @@
 {
   "config_type": "synthetic-generator",
-  "dataset_id": "synthetic-toto2-controlled-target-quality",
+  "dataset_id": "toto2-ctl-c",
   "equipment": [
     {"equipment_id": "motor-01", "equipment_type": "motor"},
     {"equipment_id": "conveyor-01", "equipment_type": "conveyor"}

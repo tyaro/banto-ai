@@ -25,7 +25,7 @@
 - `examples/configs/benchmark-matrix-toto2-controlled-target-quality.json`
 - `examples/configs/benchmark-matrix-toto2-controlled-covariate-quality.json`
 
-頑健性の比較は、各 model の control → degraded の同一 seed／horizon／context paired comparison です。model 間の順位付けをこの設計から導きません。availability／valid denominator（呼び出し可能、予測完備、実測値が評価可能）と accuracy metric は別に集計します。baseline は同じ request を受けますが、non-OK context を扱えず除外する実装差があり得るため、差分は denominator として明示し、model ranking には使いません。
+頑健性の比較は、各 model の control → degraded の同一 seed／horizon／context paired comparison です。model 間の順位付けをこの設計から導きません。availability／valid denominator（呼び出し可能、予測完備、実測値が評価可能）と accuracy metric は別に集計します。baseline は同じ request を受けますが、non-OK target history を除外して短縮し、past-only covariate は使わないため、Toto の mask 入力とは実装差があります。この差分は denominator として明示し、model ranking には使いません。
 
 ## 固定された時刻と half-open window
 
@@ -44,7 +44,7 @@ B の fault `[388,396)` は h15／h30 の forecast に含まれ、context には
 
 各 matrix は次の直積を持ちます。seed は5個以上、horizon は15／30、context は64／120です。benchmark は targets `motor_current`／`motor_temperature`、past-only `load_proxy`、known-future 空、validation／test は stride 15・max origin 1、5 baselines と pinned Toto native quantiles を固定します。出力先は track ごとに分離し、既存 output を上書きしません。
 
-実行する場合のコマンドは以下です。ここでは定義だけを追加しており、この savepoint では real model、matrix、result document、実 artifact は作成していません。
+実行する場合のコマンドは以下です。4 config を定義しただけでは paired 比較の受入完了ではありません。real run 前に cross-matrix acceptance analyzer を追加し、pair key、base config hash、event 差分、全 equipment の future actual 同一性、model／equipment／target／origin 別 availability、expected／valid denominator、non-OK input count、no-ranking／truth-unavailable を machine-enforceする必要があります。analyzer がない結果は比較採用不可です。ここでは定義だけを追加しており、この savepoint では real model、matrix、result document、実 artifact は作成していません。
 
 ```powershell
 & $totoPython tools\toto2\run_matrix.py --config examples\configs\benchmark-matrix-toto2-controlled-control.json --cache-dir C:\banto-cache\toto2
@@ -58,4 +58,5 @@ B の fault `[388,396)` は h15／h30 の forecast に含まれ、context には
 - B は fault forecast の評価であり、anomaly detection 性能の評価ではありません。
 - truth が unavailable なセルは、別の inconclusive／no-rank track として扱う予定であり、この4本には混ぜません。
 - stale／dropout の availability 差を accuracy 改善と呼びません。
+- cross-matrix acceptance analyzer がない結果は比較採用不可です。
 - この仕様は commercial evaluation の受入境界を固定するもので、Phase 2 の production candidate、22M、fine-tuning、実設備データ、製品採用の根拠ではありません。

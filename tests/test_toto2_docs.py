@@ -32,6 +32,7 @@ class Toto2DocumentationTests(unittest.TestCase):
         readme = (ROOT / "tools/toto2/README.md").read_text(encoding="utf-8")
         for required in (
             "run_matrix.py",
+            "小規模 benchmark matrix（既存 small matrix）",
             "--config examples/configs/benchmark-matrix-toto2-small.json",
             "8条件",
             "context=64はpaddingなし",
@@ -39,6 +40,8 @@ class Toto2DocumentationTests(unittest.TestCase):
             "8/8 cell success、partial 0、failed 0",
             "docs/results/toto2-matrix-2026-09-04.md",
             "同じ共有Toto adapterを8セルで再利用",
+            "下記 controlled scenario の結果ではありません",
+            "controlled commands は、この README 冒頭で setup した `$totoPython` を使います",
         ):
             with self.subTest(required=required):
                 self.assertIn(required, readme)
@@ -60,7 +63,18 @@ class Toto2DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(matrix_name, tool_readme)
         controlled = (ROOT / "docs/toto2-controlled-scenarios.md").read_text(encoding="utf-8")
-        for required in ("test origin は `384`", "truth が unavailable", "model ranking", "anomaly detection", "Phase 2 の完了"):
+        for required in (
+            "test origin は `384`",
+            "truth が unavailable",
+            "model ranking",
+            "anomaly detection",
+            "Phase 2 の完了",
+            "4 config を定義しただけでは paired 比較の受入完了ではありません",
+            "cross-matrix acceptance analyzer",
+            "比較採用不可",
+            "non-OK target history を除外して短縮",
+            "past-only covariate は使わない",
+        ):
             self.assertIn(required, controlled)
 
     def test_event_slice_report_pins_artifact_hashes_scope_and_limits(self):

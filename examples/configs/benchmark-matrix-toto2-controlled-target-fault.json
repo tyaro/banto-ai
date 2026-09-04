@@ -1,11 +1,11 @@
 {
   "schema_version": "0.1",
-  "matrix_id": "benchmark-matrix-toto2-controlled-target-fault",
+  "matrix_id": "toto2-ctl-b",
   "generator_config_path": "examples/configs/synthetic-toto2-controlled-target-fault.json",
   "benchmark_config_path": "examples/configs/benchmark-toto2-controlled.json",
-  "dataset_output_root": "artifacts/toto2/controlled/datasets",
-  "benchmark_output_root": "artifacts/toto2/controlled/benchmarks",
-  "matrix_output_dir": "artifacts/toto2/controlled/matrices/benchmark-matrix-toto2-controlled-target-fault",
+  "dataset_output_root": "artifacts/toto2/ctl/ds",
+  "benchmark_output_root": "artifacts/toto2/ctl/bench",
+  "matrix_output_dir": "artifacts/toto2/ctl/m-b",
   "axes": {
     "seeds": [17, 29, 42, 73, 101],
     "horizons": [15, 30],
