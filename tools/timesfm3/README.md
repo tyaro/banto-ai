@@ -29,3 +29,22 @@ python tools/timesfm3/run_matrix.py `
 ```
 
 sampleはpast-onlyの2 seeds×2 horizons×2 context lengthsです。TimesFM adapterのfactoryはmatrix全体で共有され、可能な限りmodelのcold-start重複を避けます。そのため最初のcell以外のcell別latencyは同一process内のwarmな共有instanceを含み、cold-start latencyやmodel単独memoryを表しません。結果は単位別のseed間cell-macro summaryで、Phase 2完了や製品採用の根拠にはなりません。
+
+## MetroPT-3限定比較（実行例）
+
+MetroPT-3の24時間・1設備・3 targetをChronos-2と同一条件で比較する固定configです。TimesFM専用venv、固定lock、リポジトリ外の絶対cacheを使い、必要な場合だけcheckpointを準備します。
+
+```powershell
+$timesfmPython = 'environments\timesfm3\.venv\Scripts\python.exe'
+& $timesfmPython -m pip install --requirement environments\timesfm3\requirements-windows-cpu-py314.lock
+& $timesfmPython tools\timesfm3\preflight.py --cache-dir C:\banto-cache\timesfm3 --format both
+# cacheが未準備の場合だけ、次の1行を実行します。
+& $timesfmPython tools\timesfm3\prepare_checkpoint.py --cache-dir C:\banto-cache\timesfm3 --accept-research-only-license
+& $timesfmPython tools\timesfm3\run_benchmark.py `
+  --config examples\configs\benchmark-metropt3-timesfm3.json `
+  --cache-dir C:\banto-cache\timesfm3 `
+  --manifest examples\manifests\model-license-timesfm3.json `
+  --accept-research-only-license
+```
+
+`prepare_checkpoint.py`は未準備時だけ実行します。用途は`research-only`かつnon-productionで、公開データ、weights、prediction／実行artifactはGitへ追加しません。Banto Hub／PLCへのwriteは行いません。native quantileに交差があってもsort、clip、fallbackはせず、fail-closedで`partial`として記録します。

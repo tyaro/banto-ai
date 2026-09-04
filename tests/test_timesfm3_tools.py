@@ -35,6 +35,42 @@ class TimesFM3ToolTests(unittest.TestCase):
         self.assertIs(first, second)
         self.assertEqual(len(adapter_instances), 1)
 
+    def test_benchmark_requires_exactly_one_timesfm3_and_native_policy(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "config.json"
+            common_patches = (
+                patch.object(run_benchmark, "_external_cache", return_value=Path(directory)),
+                patch.object(run_benchmark, "_load_and_validate_license", return_value={"allowed_use": "research-only"}),
+                patch.object(run_benchmark, "_verify_cached_checkpoint"),
+                patch.object(run_benchmark, "_verify_installed_package"),
+            )
+            for models in ([], [{"name": "timesfm3"}, {"name": "timesfm3"}]):
+                config.write_text(json.dumps({"models": models}), encoding="utf-8")
+                with self.subTest(models=models), common_patches[0], common_patches[1], common_patches[2], common_patches[3], patch.object(run_benchmark, "run_benchmark") as runner:
+                    with self.assertRaisesRegex(ValueError, "exactly one"):
+                        run_benchmark.run_timesfm_benchmark(
+                            config, ROOT, Path(directory), MANIFEST, accepted=True,
+                        )
+                    runner.assert_not_called()
+
+            for model in ({"name": "timesfm3"}, {"name": "timesfm3", "quantile_policy": "native"}):
+                config.write_text(json.dumps({"models": [model]}), encoding="utf-8")
+                with self.subTest(model=model), common_patches[0], common_patches[1], common_patches[2], common_patches[3], patch.object(run_benchmark, "run_benchmark", return_value=Path(directory) / "result"):
+                    result = run_benchmark.run_timesfm_benchmark(
+                        config, ROOT, Path(directory), MANIFEST, accepted=True,
+                    )
+                self.assertEqual(result, Path(directory) / "result")
+
+            config.write_text(
+                json.dumps({"models": [{"name": "timesfm3", "quantile_policy": "validation-residual-by-lead"}]}),
+                encoding="utf-8",
+            )
+            with common_patches[0], common_patches[1], common_patches[2], common_patches[3]:
+                with self.assertRaisesRegex(ValueError, "native"):
+                    run_benchmark.run_timesfm_benchmark(
+                        config, ROOT, Path(directory), MANIFEST, accepted=True,
+                    )
+
     def test_preflight_is_machine_readable_and_fails_closed(self):
         report = preflight.collect_preflight(
             Path("C:/external/timesfm-cache"),

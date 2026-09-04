@@ -125,8 +125,14 @@ def run_timesfm_benchmark(config_path: Path, root: Path, cache_dir: Path, manife
     config = load_json(config_path)
     if not isinstance(config, dict):
         raise BenchmarkError("benchmark config must be an object")
-    for model in config.get("models", []):
-        if model.get("name") == "timesfm3" and model.get("quantile_policy", "native") != "native":
+    timesfm_models = [
+        model for model in config.get("models", [])
+        if isinstance(model, dict) and model.get("name") == "timesfm3"
+    ]
+    if len(timesfm_models) != 1:
+        raise ValueError("benchmark config must contain exactly one timesfm3 model")
+    for model in timesfm_models:
+        if model.get("quantile_policy", "native") != "native":
             raise ValueError("TimesFM 3 must use native quantile policy")
 
     registry = ModelRegistry({"timesfm3": make_shared_timesfm_factory(manifest, cache_dir)})

@@ -157,6 +157,53 @@ class PublicBenchmarkTests(unittest.TestCase):
             },
         )
 
+    def test_metropt3_timesfm3_config_matches_baselines_and_is_fixed(self):
+        baseline = json.loads(
+            (ROOT / "examples/configs/benchmark-metropt3-baselines.json").read_text(encoding="utf-8")
+        )
+        config = json.loads(
+            (ROOT / "examples/configs/benchmark-metropt3-timesfm3.json").read_text(encoding="utf-8")
+        )
+        run_schema = json.loads(
+            (ROOT / "schemas/benchmark-run-config.schema.json").read_text(encoding="utf-8")
+        )
+        result_schema = json.loads(
+            (ROOT / "schemas/benchmark-result.schema.json").read_text(encoding="utf-8")
+        )
+        validate(config, run_schema)
+        validate(config, result_schema["$defs"]["runConfig"], root=result_schema)
+
+        baseline_common = copy.deepcopy(baseline)
+        config_common = copy.deepcopy(config)
+        for value in (baseline_common, config_common):
+            value.pop("run_id")
+            value.pop("output_dir")
+        config_common["models"] = config_common["models"][:5]
+        self.assertEqual(config_common, baseline_common)
+        self.assertEqual(config["run_id"], "benchmark-metropt3-timesfm3")
+        self.assertEqual(config["output_dir"], "artifacts/benchmark/benchmark-metropt3-timesfm3")
+        self.assertNotIn("seed", config)
+        self.assertEqual(len(config["models"]), 6)
+        self.assertEqual(
+            [model["name"] for model in config["models"]],
+            [model["name"] for model in baseline["models"]] + ["timesfm3"],
+        )
+        self.assertEqual(config["models"][:5], baseline["models"])
+        self.assertEqual(
+            config["models"][5],
+            {
+                "name": "timesfm3",
+                "quantile_policy": "native",
+                "parameters": {
+                    "checkpoint_revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+                    "per_core_batch_size": 1,
+                    "device": "cpu",
+                    "local_files_only": True,
+                },
+            },
+        )
+        self.assertNotIn("production", json.dumps(config).lower())
+
     def test_metropt3_point_calibrated_config_differs_only_by_run_identity_and_policy(self):
         native = json.loads(
             (ROOT / "examples/configs/benchmark-metropt3-chronos2.json").read_text(encoding="utf-8")
