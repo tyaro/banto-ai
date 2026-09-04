@@ -6,7 +6,7 @@ import unittest
 from banto_ai.manifest import ManifestValidationError, load_json, validate
 
 ROOT = Path(__file__).resolve().parents[1]
-CONTROLLED_ARTIFACT_ROOT = Path(r"D:\develop\banto-ai\artifacts\toto2\ctl")
+CONTROLLED_ARTIFACT_ROOT = ROOT / "artifacts" / "toto2" / "ctl"
 
 
 class Toto2DocumentationTests(unittest.TestCase):
@@ -114,6 +114,11 @@ class Toto2DocumentationTests(unittest.TestCase):
             "commissioning baseline calibration",
             "shadow／read-only Banto Hub境界",
             "316660d5afb47943e531f39242e0b02ca0b8bb73be5709dfe07ca80dfce9805e",
+            "2 equipment、2 target",
+            "1 past-only covariate",
+            "Toto 2.0同一モデル内",
+            "conveyor集約",
+            "2 targets × 20 cells",
         ):
             with self.subTest(required=required):
                 self.assertIn(required, report)
@@ -154,7 +159,11 @@ class Toto2DocumentationTests(unittest.TestCase):
         self.assertEqual(acceptance["counts"], {"tracks": 4, "expected_cells": 80, "cells": 80, "expected_groups": 1920, "groups": 1920})
         self.assertEqual(len(acceptance["paired_deltas"]), 1440)
         self.assertFalse(acceptance["cross_model_ranking_allowed"])
+        self.assertTrue(all(item["status"] == "paired" for item in acceptance["paired_deltas"]))
         self.assertTrue(all(item["ranking"] == "no-rank" and item["availability_delta"] == 0 for item in acceptance["paired_deltas"]))
+        self.assertTrue(all(track["status"] == "pass" for track in acceptance["tracks"]))
+        self.assertTrue(all(cell["status"] == "pass" for track in acceptance["tracks"] for cell in track["cells"]))
+        self.assertTrue(all(group["status"] == "complete" for track in acceptance["tracks"] for cell in track["cells"] for group in cell["groups"]))
 
         marker = json.loads((CONTROLLED_ARTIFACT_ROOT / "acceptance/.complete").read_text(encoding="utf-8"))
         self.assertEqual(set(marker), {"marker_type", "result_sha256", "schema_version", "summary_sha256"})

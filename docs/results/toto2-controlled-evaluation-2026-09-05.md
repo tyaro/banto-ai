@@ -1,8 +1,8 @@
 # Toto 2.0 4M controlled evaluation 実測報告
 
-実施日: 2026-09-05  
+実施日: 2026-09-05
 対象: Toto 2.0 4M、synthetic controlled acceptance 4-track
-正本artifact（Git外）: `D:\develop\banto-ai\artifacts\toto2\ctl`
+正本artifact（Git外、repo-relative）: `artifacts/toto2/ctl`
 
 ## 結論
 
@@ -16,7 +16,7 @@
 - formal repository state: `git clean`
 - CI: [GitHub Actions run 33888043470](https://github.com/tyaro/banto-ai/actions/runs/33888043470)（Python 3.12／3.14 success）
 - 実行条件: synthetic、5 seeds（17／29／42／73／101）、horizon 15／30、context 64／120、origin 384をequipmentごとに1点／cell
-- matrix構成: 4 track × 20 cells、2 equipment、3 target、5 baselines＋Toto native
+- matrix構成: 4 track × 20 cells、2 equipment、2 target（`motor_current`／`motor_temperature`）＋1 past-only covariate（`load_proxy`）、5 baselines＋Toto native
 - 環境: Python 3.14、CPUのみ、`local_files_only=true`、Toto 4M
 
 初回のold revision `5795ed4`では、同一instantであるdatasetの`2026-01-01T00:06:24.000Z`とpredictionの`2026-01-01T00:06:24Z`を文字列比較したため、最初のpredictionでtimestamp mismatchとなり、結果は公開されませんでした。timestampをtimezone-aware UTC instant比較へ修正した`336afae`後に4 matrixを再実行し、formal acceptance passとなりました。旧artifactはlocal quarantineに残し、正式sourceには含めていません。
@@ -50,21 +50,21 @@
 | target-quality | 131.71 s | 707.89 MiB |
 | covariate-quality | 118.12 s | 707.16 MiB |
 
-## 同一モデル内のpaired MAE delta
+## Toto 2.0同一モデル内のpaired MAE delta
 
-deltaは`degraded MAE - control MAE`です。単位が混在するため、target間を性能rankingしません。cross-model順位と採用判定も禁止です。
+以下はToto 2.0の同一モデル内で計算したdelta（`degraded MAE - control MAE`）です。motor current／motor temperatureは各20 cells、conveyor集約は2 targets × 20 cellsのためn=40です。単位が混在するため、target間を性能rankingしません。cross-model順位と採用判定も禁止です。
 
 | track / target | n | mean | range | 内訳 |
 | --- | ---: | ---: | ---: | --- |
 | target-fault / motor current | 20 | +1.400180354 | +0.897004071 ～ +1.896781267 | 20 worsened |
 | target-fault / motor temp | 20 | 0 | 0 ～ 0 | unchanged |
-| target-fault / conveyor | 20 | 0 | 0 ～ 0 | unchanged |
+| target-fault / conveyor集約 | 40 | 0 | 0 ～ 0 | unchanged |
 | target-quality / motor current | 20 | +0.077163356 | -0.097491551 ～ +0.335682768 | 6 improve / 14 worsen |
 | target-quality / motor temp | 20 | +0.041568463 | -0.317049414 ～ +0.152684666 | 3 improve / 17 worsen |
-| target-quality / conveyor | 20 | 0 | 0 ～ 0 | unchanged |
+| target-quality / conveyor集約 | 40 | 0 | 0 ～ 0 | unchanged |
 | covariate-quality / motor current | 20 | +0.025224948 | -0.193942627 ～ +0.300238456 | 4 improve / 16 worsen |
 | covariate-quality / motor temp | 20 | -0.012913400 | -0.077124907 ～ +0.066887581 | 11 improve / 9 worsen |
-| covariate-quality / conveyor | 20 | 0 | 0 ～ 0 | unchanged |
+| covariate-quality / conveyor集約 | 40 | 0 | 0 ～ 0 | unchanged |
 
 target-faultのmotor current差は、fault eventがforecast内でknown futureではないことを確認するためのcontrolled sensitivityであり、異常検知性能の証拠ではありません。5 baselinesはpast-only covariateを消費しないため、covariate-qualityのdeltaは全件0です。これはrobustnessの証明ではなく、入力契約の確認です。
 
