@@ -93,13 +93,20 @@ class Toto2AdapterTests(unittest.TestCase):
         target = self.series("a", tuple(float(i) for i in range(120)))
         adapter = Toto2Adapter(MANIFEST)
         backend = FakeBackend(); calls = []
+        errors = []
         def load():
             calls.append(1); return backend
+        def worker():
+            try:
+                adapter.forecast(self.request((target,), quantiles=()))
+            except BaseException as exc:
+                errors.append(exc)
         with patch.object(adapter, "_load_official_backend", load):
-            threads = [threading.Thread(target=lambda: adapter.forecast(self.request((target,), quantiles=()))) for _ in range(4)]
+            threads = [threading.Thread(target=worker) for _ in range(4)]
             for thread in threads: thread.start()
             for thread in threads: thread.join()
         self.assertEqual(len(calls), 1)
+        self.assertEqual(errors, [])
 
 
 class OfficialToto2BackendTests(unittest.TestCase):

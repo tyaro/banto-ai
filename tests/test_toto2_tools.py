@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import patch
 
 from tools import toto2
-from tools.toto2 import preflight, run_smoke
+from tools.toto2 import preflight, run_benchmark, run_smoke
 from banto_ai.adapters.toto2 import BackendForecast, OFFICIAL_QUANTILES, Toto2Adapter
 
 
@@ -43,6 +43,22 @@ class Toto2ToolTests(unittest.TestCase):
         self.assertEqual(request.horizon, 15)
         self.assertEqual(request.target_signal_ids, ("motor_current", "oil_temperature"))
         self.assertEqual([s.metadata.signal_id for s in request.known_future_covariates], [])
+
+    def test_shared_factory_rejects_unknown_or_invalid_toto_parameters(self):
+        with tempfile.TemporaryDirectory() as directory:
+            factory = run_benchmark.make_shared_toto_factory(toto2.load_manifest(), Path(directory))
+            invalid_parameters = (
+                {"unknown": True},
+                {"device": "cuda"},
+                {"batch_size": 2},
+                {"local_files_only": False},
+                {"patch_size": 16},
+                {"checkpoint_revision": "0" * 40},
+            )
+            for parameters in invalid_parameters:
+                with self.subTest(parameters=parameters):
+                    with self.assertRaises(ValueError):
+                        factory("metropt3-apu-01", parameters)
 
     def test_smoke_publishes_with_deterministic_fake_backend(self):
         class FakeBackend:
