@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from uuid import uuid4
@@ -299,7 +300,7 @@ class EventSliceTests(unittest.TestCase):
 
     def test_cli_help_works_from_external_cwd(self):
         with tempfile.TemporaryDirectory() as external:
-            completed = subprocess.run(["py", "-3.14", str(ROOT / "tools" / "evaluator" / "analyze_event_slices.py"), "--help"], cwd=external, capture_output=True, text=True)
+            completed = subprocess.run([sys.executable, str(ROOT / "tools" / "evaluator" / "analyze_event_slices.py"), "--help"], cwd=external, capture_output=True, text=True)
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertIn("--matrix-result", completed.stdout)
 
