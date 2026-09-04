@@ -1,0 +1,49 @@
+{
+  "schema_version": "0.1",
+  "manifest_type": "public-dataset-source",
+  "dataset_id": "metropt3",
+  "source": {
+    "repository": "UCI Machine Learning Repository",
+    "dataset_id": 791,
+    "title": "MetroPT-3 Dataset",
+    "page_url": "https://archive.ics.uci.edu/dataset/791/metropt%2B3%2Bdataset",
+    "doi": "https://doi.org/10.24432/C5VW3R",
+    "download_url": "https://archive.ics.uci.edu/static/public/791/metropt+3+dataset.zip",
+    "last_updated": "2024-09-19",
+    "revision": "2024-09-19"
+  },
+  "archive": {
+    "filename": "metropt+3+dataset.zip",
+    "size_bytes": 218381995,
+    "sha256": "aab991a970e58210de853bb8078ce0e63abb4d9412fdc5c79792dae3d8e1721a",
+    "members": [
+      {"name": "Data Description_Metro.pdf", "size_bytes": 81208, "sha256": "b00fac0e8899854078309bef4adaa480d82ecf14dc81c5097c3646973e824127"},
+      {"name": "MetroPT3(AirCompressor).csv", "size_bytes": 218300507, "sha256": "db30ccb4ea402e3c8bf2c99db06e288d4f2a772f6928f9dbe26a920d69793e24"}
+    ]
+  },
+  "license": {
+    "spdx_id": "CC-BY-4.0",
+    "url": "https://creativecommons.org/licenses/by/4.0/",
+    "redistribution_allowed": true,
+    "commercial_use_allowed": true,
+    "attribution_required": true,
+    "attribution": "Davari, N., Veloso, B., Ribeiro, R., & Gama, J. (2021). MetroPT-3 Dataset. UCI Machine Learning Repository. https://doi.org/10.24432/C5VW3R",
+    "verified_at": "2026-09-04"
+  },
+  "dataset_facts": {
+    "instances": 1516948,
+    "features": 15,
+    "data_type": "real field data",
+    "sensitive_data": "no"
+  },
+  "metadata_conflicts": [
+    {
+      "field": "sampling_frequency",
+      "sources": ["UCI instances description: logged at 1 Hz", "UCI variable information: 0.1 Hz"],
+      "status": "unresolved",
+      "resolution": "empirical cadence validation is required before conversion"
+    }
+  ],
+  "timezone": {"status": "unspecified", "assumption_required": true},
+  "verified_at": "2026-09-04"
+}

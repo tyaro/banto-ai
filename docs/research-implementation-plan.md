@@ -25,6 +25,8 @@ Banto ecosystem向けの時系列AIについて、次の価値を再現可能な
 - formatter／linterはPhase 0では導入せず、標準ライブラリの`compileall`を使う。最初のdevelopment dependency導入時にformatter／linterをversion pinし、lockへ固定する。
 - ドキュメントは日本語を基本とし、API名、model名、schema fieldは英語を使う。
 - Gitで管理するデータは合成データ、再配布可能な公開データ、安全な小型fixtureだけとする。
+- 公開データは、公式URL／DOI／licenseの確認、利用条件の受入れ、取得サイズ／SHA-256／archive member hashの固定を通ったものだけを研究入力候補とする。第一候補はUCI MetroPT-3、次候補はUCI hydraulic systemsとし、詳細な境界は[`docs/public-dataset-survey.md`](public-dataset-survey.md)と[`docs/adr-0005-public-dataset-boundary.md`](adr-0005-public-dataset-boundary.md)へ記録する。
+- 公開データのraw archiveと大きなderived dataはGitへ入れず、repository外のexternal cache／artifactへ置く。source pin保存点は取得・検証までで、変換・benchmark・model評価の完了とは扱わない。
 - 最初のruntimeはPython sidecarとし、Banto Hubとはoffline exportから接続する。
 - forecastとanomaly detectionは共通interfaceの背後でmodelを交換できるようにする。
 - TimesFM 3.0は現行weight licenseにより研究比較専用とし、製品artifactへ昇格しない。
@@ -156,6 +158,12 @@ Chronos-2は依存環境を分離し、外部cacheの固定revision、`model.saf
 初期rolling benchmarkも、60 samples×2 equipment、context 12、horizon 3、各equipment validation／test各2 originsで完走しました。past-only 6 modelsのChronos-2はaggregate MAE `0.20672198138554906`、WIS `0.1952207659517925`、known-future 7 modelsではMAE `0.1691488806622826`、WIS `0.15937026919725228`で1位でした。known-futureはorigin時点で本当に確定していた計画値を模したsynthetic scenarioであり、評価対象の実績値をoracleとして渡していません。target別には電流MAEでmoving-average、温度MAEでHolt linearが優位です。詳細は[`docs/results/chronos2-initial-evaluation-2026-09-04.md`](results/chronos2-initial-evaluation-2026-09-04.md)に記録します。
 
 Chronos-2のseed `[17, 42]`×horizon `[1, 3]`×context `[6, 12]`の実model matrixは、固定clean HEADから8/8 cells success／0 failureで完了しました。currentは4条件すべてmoving-averageがMAE首位、temperatureはWIS 4条件すべてChronos-2が首位でした。coverage／width、各cellの相対順位、warm latency、peak memoryは[`docs/results/chronos2-matrix-2026-09-04.md`](results/chronos2-matrix-2026-09-04.md)に記録しています。
+
+#### 公開データ source pin と次保存点
+
+公開実データの第一候補をUCI MetroPT-3に固定します。source pin tool実装と実archive検証は完了し、正本manifestは[`datasets/manifests/metropt3-source.json`](../datasets/manifests/metropt3-source.json)、手順は[`tools/public-data/README.md`](../tools/public-data/README.md)です。アーカイブは218,381,995 bytes、SHA-256と2つのmember hashを固定しています。公式ページ内のsampling記載は1 Hz／0.1 Hzで競合し、source timezoneも未指定なので、UTCや固定周期を仮定せずraw timestampのdelta／gapを保存します。NASA C-MAPSSは公式licenseが`License not specified`のため採用しません。
+
+次の保存点では、標準ライブラリのstreaming importerで`2020-02-21`の連続24時間候補を再検証し、1分bin（analog mean／digital last）へ変換します。空bin、異常gap、timestamp逆行は補間せず停止します。train／validation／testは時系列順に分離し、未来actual、failure report、RULをknown-futureへ渡しません。source pinとquality gateが完了するまで、Chronos-2／TimesFM 3.0の公開実データ評価完了とは表現しません。
 
 未実施はorigin拡大、公開実データ、missing／stale／regime／fault slice、known-future計画値対past-onlyの追加比較、校正拡張です。拡張した評価条件をclean savepointから再実行することも未実施です。今回のmatrixは2 seed・合成データ・CPUのみ・少数originの結果なので、Phase 2完了または`product-candidate`昇格の根拠にはせず、`commercial-evaluation`を継続します。
 

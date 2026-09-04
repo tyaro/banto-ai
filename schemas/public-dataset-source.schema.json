@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tyaro/banto-ai/schemas/public-dataset-source.schema.json",
+  "title": "banto-ai public dataset source pin",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "manifest_type", "dataset_id", "source", "archive", "license", "dataset_facts", "metadata_conflicts", "timezone", "verified_at"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "manifest_type": {"type": "string", "const": "public-dataset-source"},
+    "dataset_id": {"type": "string", "const": "metropt3"},
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository", "dataset_id", "title", "page_url", "doi", "download_url", "last_updated", "revision"],
+      "properties": {
+        "repository": {"type": "string", "const": "UCI Machine Learning Repository"},
+        "dataset_id": {"type": "integer", "const": 791},
+        "title": {"type": "string", "const": "MetroPT-3 Dataset"},
+        "page_url": {"type": "string", "const": "https://archive.ics.uci.edu/dataset/791/metropt%2B3%2Bdataset"},
+        "doi": {"type": "string", "const": "https://doi.org/10.24432/C5VW3R"},
+        "download_url": {"type": "string", "const": "https://archive.ics.uci.edu/static/public/791/metropt+3+dataset.zip"},
+        "last_updated": {"type": "string", "const": "2024-09-19"},
+        "revision": {"type": "string", "const": "2024-09-19"}
+      }
+    },
+    "archive": {
+      "type": "object", "additionalProperties": false,
+      "required": ["filename", "size_bytes", "sha256", "members"],
+      "properties": {
+        "filename": {"type": "string", "const": "metropt+3+dataset.zip"},
+        "size_bytes": {"type": "integer", "const": 218381995},
+        "sha256": {"type": "string", "const": "aab991a970e58210de853bb8078ce0e63abb4d9412fdc5c79792dae3d8e1721a", "pattern": "^[0-9a-f]{64}$"},
+        "members": {
+          "type": "array", "minItems": 2, "maxItems": 2,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["name", "size_bytes", "sha256"],
+            "properties": {
+              "name": {"type": "string", "enum": ["Data Description_Metro.pdf", "MetroPT3(AirCompressor).csv"]},
+              "size_bytes": {"type": "integer", "minimum": 1},
+              "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            }
+          }
+        }
+      }
+    },
+    "license": {
+      "type": "object", "additionalProperties": false,
+      "required": ["spdx_id", "url", "redistribution_allowed", "commercial_use_allowed", "attribution_required", "attribution", "verified_at"],
+      "properties": {
+        "spdx_id": {"type": "string", "const": "CC-BY-4.0"},
+        "url": {"type": "string", "const": "https://creativecommons.org/licenses/by/4.0/"},
+        "redistribution_allowed": {"type": "boolean", "const": true},
+        "commercial_use_allowed": {"type": "boolean", "const": true},
+        "attribution_required": {"type": "boolean", "const": true},
+        "attribution": {"type": "string", "const": "Davari, N., Veloso, B., Ribeiro, R., & Gama, J. (2021). MetroPT-3 Dataset. UCI Machine Learning Repository. https://doi.org/10.24432/C5VW3R"},
+        "verified_at": {"type": "string", "const": "2026-09-04"}
+      }
+    },
+    "dataset_facts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["instances", "features", "data_type", "sensitive_data"],
+      "properties": {
+        "instances": {"type": "integer", "const": 1516948},
+        "features": {"type": "integer", "const": 15},
+        "data_type": {"type": "string", "const": "real field data"},
+        "sensitive_data": {"type": "string", "const": "no"}
+      }
+    },
+    "metadata_conflicts": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["field", "sources", "status", "resolution"],
+        "properties": {
+          "field": {"type": "string", "const": "sampling_frequency"},
+          "sources": {"type": "array", "minItems": 2, "items": {"type": "string", "minLength": 1}},
+          "status": {"type": "string", "const": "unresolved"},
+          "resolution": {"type": "string", "const": "empirical cadence validation is required before conversion"}
+        }
+      }
+    },
+    "timezone": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "assumption_required"],
+      "properties": {
+        "status": {"type": "string", "const": "unspecified"},
+        "assumption_required": {"type": "boolean", "const": true}
+      }
+    },
+    "verified_at": {"type": "string", "const": "2026-09-04"}
+  }
+}

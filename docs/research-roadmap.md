@@ -6,6 +6,8 @@
 
 本書は研究テーマの長期的な順序を示します。候補モデルの比較は [`time-series-model-survey.md`](time-series-model-survey.md)、直近の作業、期間目安、暫定合格基準は [`research-implementation-plan.md`](research-implementation-plan.md) を参照してください。
 
+公開産業データの選定と repository 外の取得境界は [`public-dataset-survey.md`](public-dataset-survey.md) と [`adr-0005-public-dataset-boundary.md`](adr-0005-public-dataset-boundary.md) を参照してください。第一候補は UCI MetroPT-3、次候補は UCI hydraulic systems、NASA C-MAPSS は公式 license 未指定のため採用見送りです。
+
 ## フェーズ
 
 | Phase | 焦点 | 完了時の根拠 |
@@ -46,7 +48,7 @@ past-only 6 modelsではChronos-2のaggregate MAEは`0.20672198138554906`、WIS�
 
 Chronos-2のseed `[17, 42]`×horizon `[1, 3]`×context `[6, 12]`の実model matrixは、固定clean HEAD `3f57c8500f2a746dd0fce1d02bb9eba566d47748`から8/8 cells success／0 failureとなりました。currentは4条件すべてmoving-averageがMAE首位で、Chronos-2はMAE 3位または4位でした。temperatureはWIS 4条件すべてChronos-2が1位で、MAEはcontext 6の2条件で1位でした。context 12が常に改善しないことも確認しました。詳細は[`docs/results/chronos2-matrix-2026-09-04.md`](results/chronos2-matrix-2026-09-04.md)に記録しています。
 
-このmatrixは2 seed、単一の合成generator、2 equipment、各equipment validation／test各2 origins、CPUのみの小標本であり、一般性能や実設備性能を示しません。次はorigin拡大、公開実データ、missing／stale／regime／fault slice、known-future計画値対past-only、校正評価、context探索です。拡張した評価条件をclean savepointから再実行することも次のゲートです。package・code・weightsはApache-2.0ですが、追加gateが完了するまで`commercial-evaluation`に留め、`product-candidate`へ昇格しません。TimesFM 3.0は重み条件によりresearch-onlyの比較基準として残します。
+このmatrixは2 seed、単一の合成generator、2 equipment、各equipment validation／test各2 origins、CPUのみの小標本であり、一般性能や実設備性能を示しません。次はorigin拡大、公開実データ、missing／stale／regime／fault slice、known-future計画値対past-only、校正評価、context探索です。公開データについてはMetroPT-3のsource pin tool実装と実archive検証が完了し、正本manifestと手順はsurvey／ADRから参照できます。変換・quality check・rolling benchmark・モデル評価は未実施です。拡張した評価条件をclean savepointから再実行することも次のゲートです。package・code・weightsはApache-2.0ですが、追加gateが完了するまで`commercial-evaluation`に留め、`product-candidate`へ昇格しません。TimesFM 3.0は重み条件によりresearch-onlyの比較基準として残します。
 
 ## 実験の必須記録
 
