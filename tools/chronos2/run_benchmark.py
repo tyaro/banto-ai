@@ -107,8 +107,8 @@ def run_chronos_benchmark(config_path: Path, root: Path, cache_dir: Path, manife
     if len(chronos_models) != 1:
         raise ValueError("benchmark config must contain exactly one chronos2 model")
     for model in chronos_models:
-        if model.get("quantile_policy", "native") != "native":
-            raise ValueError("Chronos-2 must use native quantile policy")
+        if model.get("quantile_policy", "native") not in {"native", "validation-residual-by-lead"}:
+            raise ValueError("Chronos-2 must use native or validation-residual-by-lead quantile policy")
     registry = ModelRegistry({"chronos2": make_shared_chronos_factory(manifest, cache)})
     with _cache_environment(cache), _offline_environment():
         return run_benchmark(Path(config_path).expanduser().resolve(), root, registry)

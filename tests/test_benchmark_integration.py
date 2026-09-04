@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import patch
 from uuid import uuid4
 
-from banto_ai.benchmark import BenchmarkError, ModelRegistry, _dimension_metrics, _make_request, run_benchmark
+from banto_ai.benchmark import BenchmarkError, ModelRegistry, _dimension_metrics, _make_request, _policy, run_benchmark
 from banto_ai.contracts import Forecaster
 from banto_ai.generator import generate_synthetic
 from banto_ai.manifest import ManifestValidationError, load_json, validate
@@ -92,6 +92,38 @@ class BenchmarkIntegrationTests(unittest.TestCase):
         self.assertNotIn("\\", config["dataset_path"])
         self.assertNotIn("\\", config["output_dir"])
         return run_benchmark(config_path, ROOT, registry)
+
+    def test_quantile_request_follows_native_or_residual_policy_in_both_splits(self):
+        self._generate()
+        residual_requests = []
+        native_requests = []
+
+        config = self._config([
+            {"name": "last-value", "quantile_policy": "validation-residual-by-lead"},
+            {"name": "chronos2", "quantile_policy": "native"},
+        ])
+        output = self._run(
+            config,
+            ModelRegistry({
+                "last-value": lambda _equipment_id, _parameters: FakeNativeForecaster(residual_requests),
+                "chronos2": lambda _equipment_id, _parameters: FakeNativeForecaster(native_requests),
+            }),
+        )
+
+        self.assertGreaterEqual(len(residual_requests), 2)
+        self.assertGreaterEqual(len(native_requests), 2)
+        self.assertTrue(all(request.quantiles == () for request in residual_requests))
+        self.assertTrue(all(request.quantiles == (0.1, 0.5, 0.9) for request in native_requests))
+        result = load_json(output / "result.json")
+        self.assertEqual(
+            result["provenance"]["quantile_policy_by_model"],
+            {"last-value": "validation-residual-by-lead", "chronos2": "native"},
+        )
+
+    def test_quantile_policy_defaults_keep_timesfm3_and_chronos2_native(self):
+        self.assertEqual(_policy({"name": "timesfm3"}), "native")
+        self.assertEqual(_policy({"name": "chronos2"}), "native")
+        self.assertEqual(_policy({"name": "last-value"}), "validation-residual-by-lead")
 
     def test_factory_reuse_multi_target_id_mapping_native_and_result_schema(self):
         self._generate()

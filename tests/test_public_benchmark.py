@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 from pathlib import Path
 import unittest
@@ -155,6 +156,40 @@ class PublicBenchmarkTests(unittest.TestCase):
                 },
             },
         )
+
+    def test_metropt3_point_calibrated_config_differs_only_by_run_identity_and_policy(self):
+        native = json.loads(
+            (ROOT / "examples/configs/benchmark-metropt3-chronos2.json").read_text(encoding="utf-8")
+        )
+        calibrated = json.loads(
+            (ROOT / "examples/configs/benchmark-metropt3-chronos2-point-calibrated.json").read_text(encoding="utf-8")
+        )
+        run_schema = json.loads(
+            (ROOT / "schemas/benchmark-run-config.schema.json").read_text(encoding="utf-8")
+        )
+        result_schema = json.loads(
+            (ROOT / "schemas/benchmark-result.schema.json").read_text(encoding="utf-8")
+        )
+        for config in (native, calibrated):
+            validate(config, run_schema)
+            validate(config, result_schema["$defs"]["runConfig"], root=result_schema)
+
+        native_comparison = copy.deepcopy(native)
+        calibrated_comparison = copy.deepcopy(calibrated)
+        for config in (native_comparison, calibrated_comparison):
+            config.pop("run_id")
+            config.pop("output_dir")
+            chronos = next(model for model in config["models"] if model["name"] == "chronos2")
+            chronos.pop("quantile_policy")
+        self.assertEqual(native_comparison, calibrated_comparison)
+        self.assertEqual(calibrated["run_id"], "benchmark-metropt3-chronos2-point-calibrated")
+        self.assertEqual(
+            calibrated["output_dir"],
+            "artifacts/benchmark/benchmark-metropt3-chronos2-point-calibrated",
+        )
+        chronos = next(model for model in calibrated["models"] if model["name"] == "chronos2")
+        self.assertEqual(chronos["quantile_policy"], "validation-residual-by-lead")
+        self.assertEqual(len(calibrated["models"]), 6)
 
 
 if __name__ == "__main__":

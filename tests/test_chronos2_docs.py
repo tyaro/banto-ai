@@ -29,6 +29,7 @@ CHRONOS_CONFIGS = (
     "benchmark-chronos2-baselines-past-only.json",
     "benchmark-chronos2-known-load.json",
     "benchmark-metropt3-chronos2.json",
+    "benchmark-metropt3-chronos2-point-calibrated.json",
 )
 
 
@@ -44,7 +45,7 @@ class Chronos2DocumentationTests(unittest.TestCase):
                 config = load_json(ROOT / "examples" / "configs" / filename)
                 validate(config, self.run_schema)
                 chronos = next(model for model in config["models"] if model["name"] == "chronos2")
-                self.assertEqual(chronos["quantile_policy"], "native")
+                self.assertIn(chronos["quantile_policy"], {"native", "validation-residual-by-lead"})
                 self.assertEqual(chronos["parameters"]["checkpoint_revision"], REVISION)
                 self.assertEqual(chronos["parameters"]["batch_size"], 1)
                 self.assertEqual(chronos["parameters"]["context_length"], config["context_length"])
@@ -53,10 +54,12 @@ class Chronos2DocumentationTests(unittest.TestCase):
                 self.assertTrue(chronos["parameters"]["local_files_only"])
 
     def test_chronos2_result_run_config_and_model_parameters_are_valid(self) -> None:
-        config = load_json(ROOT / "examples" / "configs" / CHRONOS_CONFIGS[0])
-        validate(config, self.result_schema["$defs"]["runConfig"], root=self.result_schema)
-        chronos = next(model for model in config["models"] if model["name"] == "chronos2")
-        validate(chronos["parameters"], self.result_schema["$defs"]["modelParameters"], root=self.result_schema)
+        for filename in CHRONOS_CONFIGS:
+            with self.subTest(filename=filename):
+                config = load_json(ROOT / "examples" / "configs" / filename)
+                validate(config, self.result_schema["$defs"]["runConfig"], root=self.result_schema)
+                chronos = next(model for model in config["models"] if model["name"] == "chronos2")
+                validate(chronos["parameters"], self.result_schema["$defs"]["modelParameters"], root=self.result_schema)
 
     def test_unknown_chronos_parameter_is_rejected_by_both_schemas(self) -> None:
         config = load_json(ROOT / "examples" / "configs" / CHRONOS_CONFIGS[0])
@@ -71,9 +74,11 @@ class Chronos2DocumentationTests(unittest.TestCase):
     def test_chronos2_quantile_policy_and_parameter_bounds_are_strict(self) -> None:
         config = load_json(ROOT / "examples" / "configs" / CHRONOS_CONFIGS[0])
         invalid_policy = copy.deepcopy(config)
-        invalid_policy["models"][1]["quantile_policy"] = "validation-residual-by-lead"
+        invalid_policy["models"][1]["quantile_policy"] = "p50-calibration"
         with self.assertRaises(ManifestValidationError):
             validate(invalid_policy, self.run_schema)
+        with self.assertRaises(ManifestValidationError):
+            validate(invalid_policy, self.result_schema["$defs"]["runConfig"], root=self.result_schema)
 
         for key, value in (
             ("checkpoint_revision", "not-a-revision"),

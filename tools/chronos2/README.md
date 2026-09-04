@@ -36,3 +36,5 @@ $chronosPython = '..\.venv-banto-ai-chronos2\Scripts\python.exe'
 ```
 
 用途は`commercial-evaluation`に限り、製品採用の根拠にはしません。Banto Hub／PLCへのwriteは行いません。公開データ本体、model weight、実行artifactはGitへ追加しないでください。
+
+native分位点に交差があっても値の並べ替え・clipは行わず、該当model／targetをfail-closedで`partial`として記録します。`benchmark-metropt3-chronos2-point-calibrated.json`は、point予測にvalidation residual by leadの校正を適用する別scenarioです。

@@ -520,7 +520,7 @@ def _policy(model_cfg: dict[str, Any]) -> str:
     explicit = model_cfg.get("quantile_policy")
     if explicit:
         return str(explicit)
-    return "native" if model_cfg["name"] == "timesfm3" else "validation-residual-by-lead"
+    return "native" if model_cfg["name"] in {"timesfm3", "chronos2"} else "validation-residual-by-lead"
 
 
 def run_benchmark(
@@ -724,7 +724,7 @@ def run_benchmark(
                     break
                 request = _make_request(
                     rows, signals, active_targets, origin, context_length, horizon,
-                    q_values, past_ids, known_ids,
+                    q_values if policy == "native" else (), past_ids, known_ids,
                 )
                 try:
                     model_result = _invoke_forecast(model, request)
@@ -781,7 +781,7 @@ def run_benchmark(
                     break
                 request = _make_request(
                     rows, signals, active_targets, origin, context_length, horizon,
-                    q_values, past_ids, known_ids,
+                    q_values if policy == "native" else (), past_ids, known_ids,
                 )
                 call_start = time.perf_counter()
                 try:

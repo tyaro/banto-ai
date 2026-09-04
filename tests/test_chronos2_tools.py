@@ -254,7 +254,7 @@ class Chronos2ToolTests(unittest.TestCase):
                         with self.assertRaises(ValueError):
                             factory("motor-01", parameters)
 
-    def test_benchmark_requires_exactly_one_chronos_model_and_allows_omitted_native_policy(self):
+    def test_benchmark_requires_exactly_one_chronos_model_and_allows_both_policies(self):
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory) / "config.json"
             config.write_text(json.dumps({"models": [{"name": "chronos2"}, {"name": "chronos2"}]}), encoding="utf-8")
@@ -263,15 +263,19 @@ class Chronos2ToolTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "exactly one"):
                     run_benchmark.run_chronos_benchmark(config, ROOT, Path(directory))
 
-            config.write_text(json.dumps({"models": [{"name": "chronos2", "quantile_policy": "validation-residual-by-lead"}]}), encoding="utf-8")
-            with patch.object(run_benchmark, "_external_cache", return_value=Path(directory)), patch.object(run_benchmark, "_load_and_validate_license", return_value=load_manifest(MANIFEST)), patch.object(run_benchmark, "_verify_cached_checkpoint"), patch.object(run_benchmark, "_verify_installed_package"):
-                with self.assertRaisesRegex(ValueError, "native"):
-                    run_benchmark.run_chronos_benchmark(config, ROOT, Path(directory))
+            for policy in ("native", "validation-residual-by-lead", None):
+                model = {"name": "chronos2"}
+                if policy is not None:
+                    model["quantile_policy"] = policy
+                config.write_text(json.dumps({"models": [model]}), encoding="utf-8")
+                with patch.object(run_benchmark, "_external_cache", return_value=Path(directory)), patch.object(run_benchmark, "_load_and_validate_license", return_value=load_manifest(MANIFEST)), patch.object(run_benchmark, "_verify_cached_checkpoint"), patch.object(run_benchmark, "_verify_installed_package"), patch.object(run_benchmark, "run_benchmark", return_value=Path(directory) / "result"):
+                    result = run_benchmark.run_chronos_benchmark(config, ROOT, Path(directory))
+                self.assertEqual(result, Path(directory) / "result")
 
-            config.write_text(json.dumps({"models": [{"name": "chronos2"}]}), encoding="utf-8")
-            with patch.object(run_benchmark, "_external_cache", return_value=Path(directory)), patch.object(run_benchmark, "_load_and_validate_license", return_value=load_manifest(MANIFEST)), patch.object(run_benchmark, "_verify_cached_checkpoint"), patch.object(run_benchmark, "_verify_installed_package"), patch.object(run_benchmark, "run_benchmark", return_value=Path(directory) / "result"):
-                result = run_benchmark.run_chronos_benchmark(config, ROOT, Path(directory))
-            self.assertEqual(result, Path(directory) / "result")
+            config.write_text(json.dumps({"models": [{"name": "chronos2", "quantile_policy": "p50-calibration"}]}), encoding="utf-8")
+            with patch.object(run_benchmark, "_external_cache", return_value=Path(directory)), patch.object(run_benchmark, "_load_and_validate_license", return_value=load_manifest(MANIFEST)), patch.object(run_benchmark, "_verify_cached_checkpoint"), patch.object(run_benchmark, "_verify_installed_package"):
+                with self.assertRaisesRegex(ValueError, "native or validation"):
+                    run_benchmark.run_chronos_benchmark(config, ROOT, Path(directory))
 
     def test_installed_package_version_is_checked(self):
         with patch("tools.chronos2.importlib.metadata.version", return_value="2.3.0"):
