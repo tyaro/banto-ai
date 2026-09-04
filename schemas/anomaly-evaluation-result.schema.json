@@ -220,16 +220,17 @@
     "alertEpisodeAccounting": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["episode_id", "equipment_id", "signal_id", "partition", "reason", "matched_event_id", "overlapping_event_ids", "overlapping_event_classes", "included_in_precision_denominator"],
+      "required": ["episode_id", "equipment_id", "signal_id", "partition", "reason", "matched_event_id", "eligible_event_ids", "onset_event_ids", "onset_event_classes", "included_in_precision_denominator"],
       "properties": {
         "episode_id": {"type": "string", "minLength": 1},
         "equipment_id": {"type": "string", "minLength": 1},
         "signal_id": {"type": "string", "minLength": 1},
-        "partition": {"enum": ["matched_eligible", "unmatched_eligible_same_signal", "clean_false_alert", "suppressed_event_window"]},
-        "reason": {"enum": ["matched_eligible_event", "eligible_window_without_post_event_onset", "outside_enabled_event_windows", "positive_nonmatching_signal", "data_quality_event_window", "ignored_event_window"]},
+        "partition": {"enum": ["matched_eligible", "unmatched_eligible_same_signal", "positive_nonmatching_signal_false_alert", "clean_false_alert", "suppressed_event_window"]},
+        "reason": {"enum": ["matched_eligible_event", "eligible_window_without_post_event_onset", "outside_event_window_at_onset", "positive_nonmatching_signal", "data_quality_event_window", "ignored_event_window"]},
         "matched_event_id": {"type": ["string", "null"]},
-        "overlapping_event_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
-        "overlapping_event_classes": {"type": "array", "items": {"enum": ["machine_fault", "sensor_fault", "data_quality", "ignored"]}},
+        "eligible_event_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "onset_event_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "onset_event_classes": {"type": "array", "items": {"enum": ["machine_fault", "sensor_fault", "data_quality", "ignored"]}},
         "included_in_precision_denominator": {"type": "boolean"}
       }
     },
@@ -326,19 +327,19 @@
     "alertEpisodePartition": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["total_alert_episodes", "matched_eligible_alert_episodes", "unmatched_eligible_same_signal_alert_episodes", "clean_false_alert_signal_episodes", "suppressed_event_window_alert_episodes", "suppressed_event_window_by_reason", "precision_denominator_alert_episodes", "precision_denominator_excludes_suppressed"],
+      "required": ["total_alert_episodes", "matched_eligible_alert_episodes", "unmatched_eligible_same_signal_alert_episodes", "positive_nonmatching_signal_false_alert_episodes", "clean_false_alert_signal_episodes", "suppressed_event_window_alert_episodes", "suppressed_event_window_by_reason", "precision_denominator_alert_episodes", "precision_denominator_excludes_suppressed"],
       "properties": {
         "total_alert_episodes": {"type": "integer", "minimum": 0},
         "matched_eligible_alert_episodes": {"type": "integer", "minimum": 0},
         "unmatched_eligible_same_signal_alert_episodes": {"type": "integer", "minimum": 0},
+        "positive_nonmatching_signal_false_alert_episodes": {"type": "integer", "minimum": 0},
         "clean_false_alert_signal_episodes": {"type": "integer", "minimum": 0},
         "suppressed_event_window_alert_episodes": {"type": "integer", "minimum": 0},
         "suppressed_event_window_by_reason": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["positive_nonmatching_signal", "data_quality", "ignored"],
+          "required": ["data_quality", "ignored"],
           "properties": {
-            "positive_nonmatching_signal": {"type": "integer", "minimum": 0},
             "data_quality": {"type": "integer", "minimum": 0},
             "ignored": {"type": "integer", "minimum": 0}
           }
@@ -350,7 +351,7 @@
     "metrics": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["overall", "by_class", "clean_false_alert_episode_count", "clean_false_alert_equipment_episode_count", "clean_false_alert_signal_episode_count", "evaluated_alert_episode_count", "suppressed_event_window_alert_episode_count", "suppressed_ineligible_event_window_alert_episode_count", "suppressed_nonmatching_event_window_alert_episode_count", "suppressed_data_quality_event_window_alert_episode_count", "suppressed_ignored_event_window_alert_episode_count", "precision_denominator_excludes_suppressed_event_windows", "alert_episode_partition", "clean_equipment_hours", "false_alerts_per_8_equipment_hours", "clean_target_signal_hours"],
+      "required": ["overall", "by_class", "clean_false_alert_episode_count", "clean_false_alert_equipment_episode_count", "clean_false_alert_signal_episode_count", "positive_nonmatching_signal_false_alert_episode_count", "false_alert_signal_episode_count", "evaluated_alert_episode_count", "suppressed_event_window_alert_episode_count", "suppressed_data_quality_event_window_alert_episode_count", "suppressed_ignored_event_window_alert_episode_count", "precision_denominator_excludes_suppressed_event_windows", "alert_episode_partition", "clean_monitored_equipment_hours", "false_alerts_per_8_equipment_hours", "clean_monitored_target_signal_hours", "score_availability_by_signal"],
       "properties": {
         "overall": {"$ref": "#/$defs/overallMetrics"},
         "by_class": {
@@ -365,17 +366,28 @@
         "clean_false_alert_episode_count": {"type": "integer", "minimum": 0},
         "clean_false_alert_equipment_episode_count": {"type": "integer", "minimum": 0},
         "clean_false_alert_signal_episode_count": {"type": "integer", "minimum": 0},
+        "positive_nonmatching_signal_false_alert_episode_count": {"type": "integer", "minimum": 0},
+        "false_alert_signal_episode_count": {"type": "integer", "minimum": 0},
         "evaluated_alert_episode_count": {"type": "integer", "minimum": 0},
         "suppressed_event_window_alert_episode_count": {"type": "integer", "minimum": 0},
-        "suppressed_ineligible_event_window_alert_episode_count": {"type": "integer", "minimum": 0},
-        "suppressed_nonmatching_event_window_alert_episode_count": {"type": "integer", "minimum": 0},
         "suppressed_data_quality_event_window_alert_episode_count": {"type": "integer", "minimum": 0},
         "suppressed_ignored_event_window_alert_episode_count": {"type": "integer", "minimum": 0},
         "precision_denominator_excludes_suppressed_event_windows": {"const": true},
         "alert_episode_partition": {"$ref": "#/$defs/alertEpisodePartition"},
-        "clean_equipment_hours": {"type": "number", "minimum": 0},
+        "clean_monitored_equipment_hours": {"type": "number", "minimum": 0},
         "false_alerts_per_8_equipment_hours": {"type": ["number", "null"], "minimum": 0},
-        "clean_target_signal_hours": {"type": "object", "additionalProperties": {"type": "number", "minimum": 0}}
+        "clean_monitored_target_signal_hours": {"type": "object", "additionalProperties": {"type": "number", "minimum": 0}},
+        "score_availability_by_signal": {"type": "object", "minProperties": 1, "additionalProperties": {"$ref": "#/$defs/scoreAvailability"}}
+      }
+    },
+    "scoreAvailability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["available_points", "total_points", "availability_ratio"],
+      "properties": {
+        "available_points": {"type": "integer", "minimum": 0},
+        "total_points": {"type": "integer", "minimum": 0},
+        "availability_ratio": {"type": ["number", "null"], "minimum": 0, "maximum": 1}
       }
     },
     "calibrationExclusions": {

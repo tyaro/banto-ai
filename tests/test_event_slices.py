@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import json
 import os
 from datetime import datetime, timedelta, timezone
@@ -8,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from uuid import uuid4
 
 from banto_ai.event_slices import (
@@ -17,6 +19,7 @@ from banto_ai.event_slices import (
     _macro,
     _metric,
     analyze_event_slices,
+    _verify_dataset,
 )
 from banto_ai.manifest import load_json, validate
 from banto_ai.matrix import run_matrix
@@ -99,6 +102,24 @@ class EventSliceTests(unittest.TestCase):
 
         simultaneous_context = [target, covariate]
         self.assertEqual(_classify_context(simultaneous_context, "motor-01", target["signal_id"], set(), {covariate["signal_id"]}, datetime(2026, 1, 1, 0, 0, 20, tzinfo=utc), 15, interval)[0], "context_target_event")
+
+    def test_dataset_verifier_rejects_cross_equipment_fully_qualified_event_signal(self):
+        matrix_result_dir = self._run_matrix()
+        matrix = load_json(matrix_result_dir / "result.json")
+        dataset_path = ROOT / matrix["cells"][0]["dataset_path"]
+        events_path = dataset_path / "events.jsonl"
+        rows = [json.loads(line) for line in events_path.read_text(encoding="utf-8").splitlines()]
+        rows[0]["signal_id"] = "conveyor-01.motor_current"
+        events_path.write_text("".join(json.dumps(row, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n" for row in rows), encoding="utf-8")
+        fingerprint_path = dataset_path / "fingerprint.json"
+        fingerprint = load_json(fingerprint_path)
+        fingerprint["files"]["events.jsonl"] = hashlib.sha256(events_path.read_bytes()).hexdigest()
+        canonical = "".join(f"{name}\n{digest}\n" for name, digest in sorted(fingerprint["files"].items())).encode("utf-8")
+        fingerprint["dataset_fingerprint"] = hashlib.sha256(canonical).hexdigest()
+        self._write_json(fingerprint_path, fingerprint)
+        with patch("banto_ai.event_slices.check_dataset", return_value={"status": "pass"}):
+            with self.assertRaisesRegex(EventSliceError, "fully-qualified signal does not match equipment"):
+                _verify_dataset(dataset_path, ROOT)
 
     def test_existing_predictions_are_analyzed_with_coverage_audit(self):
         matrix_result_dir = self._run_matrix()

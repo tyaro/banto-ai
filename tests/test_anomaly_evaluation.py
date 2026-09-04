@@ -148,6 +148,7 @@ class AnomalyEvaluationTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0)
         self.assertIn("Event-aware anomaly evaluation v0.1", completed.stdout)
+        self.assertIn("--recover-incomplete", completed.stdout)
 
     def test_publish_result_has_complete_provenance_and_all_test_modes_profiled(self) -> None:
         config_path, output, _config = self._config("publish")
@@ -165,7 +166,7 @@ class AnomalyEvaluationTests(unittest.TestCase):
         self.assertEqual(len(result["profiles"]), 2 * 4 * 6)
         self.assertTrue(all(profile["status"] == "calibrated" for profile in result["profiles"]))
         self.assertEqual(result["row_counts"]["score_rows"], 2 * 4 * 180)
-        self.assertEqual(result["metrics"]["overall"]["evaluated_alert_episode_count"], result["metrics"]["overall"]["matched_eligible_alert_episodes"] + result["metrics"]["overall"]["unmatched_eligible_alert_episodes"] + result["metrics"]["clean_false_alert_signal_episode_count"])
+        self.assertEqual(result["metrics"]["overall"]["evaluated_alert_episode_count"], result["metrics"]["overall"]["matched_eligible_alert_episodes"] + result["metrics"]["overall"]["unmatched_eligible_alert_episodes"] + result["metrics"]["positive_nonmatching_signal_false_alert_episode_count"] + result["metrics"]["clean_false_alert_signal_episode_count"])
         partition = result["metrics"]["alert_episode_partition"]
         self.assertEqual(partition["total_alert_episodes"], len(result["alert_episodes"]))
         self.assertEqual(partition["total_alert_episodes"], len(result["alert_episode_accounting"]))
@@ -173,16 +174,18 @@ class AnomalyEvaluationTests(unittest.TestCase):
             partition["total_alert_episodes"],
             partition["matched_eligible_alert_episodes"]
             + partition["unmatched_eligible_same_signal_alert_episodes"]
+            + partition["positive_nonmatching_signal_false_alert_episodes"]
             + partition["clean_false_alert_signal_episodes"]
             + partition["suppressed_event_window_alert_episodes"],
         )
-        self.assertEqual(partition["suppressed_event_window_by_reason"]["positive_nonmatching_signal"], 1)
-        self.assertEqual(partition["suppressed_event_window_alert_episodes"], 1)
+        self.assertGreaterEqual(partition["positive_nonmatching_signal_false_alert_episodes"], 0)
+        self.assertEqual(partition["suppressed_event_window_by_reason"], {"data_quality": 0, "ignored": 0})
+        self.assertEqual(partition["suppressed_event_window_alert_episodes"], 0)
         self.assertTrue(partition["precision_denominator_excludes_suppressed"])
-        accounting = {row["episode_id"]: row for row in result["alert_episode_accounting"]}
-        self.assertEqual(accounting["alert-000002"]["partition"], "suppressed_event_window")
-        self.assertEqual(accounting["alert-000002"]["reason"], "positive_nonmatching_signal")
-        self.assertFalse(accounting["alert-000002"]["included_in_precision_denominator"])
+        for summary in result["metrics"]["score_availability_by_signal"].values():
+            self.assertGreater(summary["total_points"], 0)
+            self.assertGreater(summary["available_points"], 0)
+            self.assertGreaterEqual(summary["availability_ratio"], 0.0)
 
     def test_calibration_is_invariant_to_test_observations_and_event_labels(self) -> None:
         config_path, _output, config = self._config("invariance")
@@ -234,6 +237,68 @@ class AnomalyEvaluationTests(unittest.TestCase):
         self.assertEqual(profile["excluded_counts"]["event_overlap"], 2)
         self.assertEqual(profile["calibration_point_count"], 3)
 
+    def test_event_eligibility_excludes_left_and_right_censored_incidents(self) -> None:
+        start = datetime(2026, 1, 1, tzinfo=UTC)
+        test_start = start + timedelta(seconds=3)
+        test_end = start + timedelta(seconds=10)
+        events = [
+            _event("left", "motor-01.motor_current", start + timedelta(seconds=2), start + timedelta(seconds=3, milliseconds=500)),
+            _event("right", "motor-01.motor_current", start + timedelta(seconds=8), start + timedelta(seconds=9, milliseconds=500)),
+            _event("boundary", "motor-01.motor_current", test_start, start + timedelta(seconds=8)),
+        ]
+        dataset = {"manifest": {"sampling_interval_ms": 1000}, "observations": {}, "events": events, "split_times": {"validation": (start, test_start), "test": (test_start, test_end)}}
+        episodes = [_episode("boundary-alert", "motor-01.motor_current", start + timedelta(seconds=3), start + timedelta(seconds=3), start + timedelta(seconds=4))]
+        incidents, _clean, metrics, exclusions = _event_records_and_metrics(
+            dataset,
+            ["motor-01"],
+            ["motor-01.motor_current"],
+            {"left": "machine_fault", "right": "machine_fault", "boundary": "machine_fault"},
+            episodes,
+            {"detection_grace_points": 1},
+        )
+        by_id = {row["event_id"]: row for row in incidents}
+        self.assertEqual(by_id["left"]["eligibility_reason"], "left_censored")
+        self.assertEqual(by_id["right"]["eligibility_reason"], "right_censored_detection_window")
+        self.assertTrue(by_id["boundary"]["eligible"])
+        self.assertEqual(metrics["overall"]["eligible_incidents"], 1)
+        self.assertEqual(exclusions["ineligible_by_reason"], {"left_censored": 1, "right_censored_detection_window": 1})
+
+    def test_current_event_is_visible_but_previous_event_resets_residual(self) -> None:
+        start = datetime(2026, 1, 1, tzinfo=UTC)
+        rows = [_row(start + timedelta(seconds=index), float(index)) for index in range(6)]
+        events = [
+            _event("previous-event", "motor-01.motor_current", start + timedelta(seconds=2), start + timedelta(seconds=3)),
+            _event("current-event", "motor-01.motor_current", start + timedelta(seconds=4), start + timedelta(seconds=5)),
+        ]
+        dataset = _tiny_dataset(rows, test_start=start + timedelta(seconds=3), test_end=start + timedelta(seconds=6), events=events)
+        profiles = {("motor-01", "motor-01.motor_current", "nominal"): {"status": "calibrated", "center": 0.0, "scale": 1.0}}
+        scores, episodes, _ = _score_and_alert(dataset, ["motor-01"], ["motor-01.motor_current"], profiles, {"robust_z_threshold": 0.5, "persistence_points": 1})
+        by_time = {row["timestamp"]: row for row in scores}
+        self.assertTrue(by_time[_canonical_time(start + timedelta(seconds=4))]["available"])
+        self.assertEqual(by_time[_canonical_time(start + timedelta(seconds=4))]["persistence_streak"], 1)
+        self.assertFalse(by_time[_canonical_time(start + timedelta(seconds=5))]["available"])
+        self.assertEqual(by_time[_canonical_time(start + timedelta(seconds=5))]["exclusion_reason"], "previous_event_overlap")
+        self.assertEqual(len(episodes), 1)
+
+    def test_incomplete_output_recovery_quarantines_evidence_and_preserves_complete_outputs(self) -> None:
+        config_path, output, _config = self._config("recovery")
+        output.mkdir()
+        evidence = output / "partial.txt"
+        evidence.write_text("preserve me", encoding="utf-8")
+        with self.assertRaises(AnomalyEvaluationError):
+            evaluate_anomalies(config_path, ROOT)
+        published = evaluate_anomalies(config_path, ROOT, recover_incomplete=True)
+        self.assertEqual(published, output)
+        self.assertTrue((output / ".complete").is_file())
+        quarantined = [path for path in output.parent.iterdir() if path.name.startswith(f".{output.name}.incomplete-")]
+        self.assertEqual(len(quarantined), 1)
+        self.assertEqual((quarantined[0] / "partial.txt").read_text(encoding="utf-8"), "preserve me")
+        with self.assertRaises(AnomalyEvaluationError):
+            evaluate_anomalies(config_path, ROOT, recover_incomplete=True)
+        for path in quarantined:
+            if path.is_dir():
+                self.outputs.append(path)
+
     def test_quality_gap_mode_and_persistence_reset(self) -> None:
         start = datetime(2026, 1, 1, tzinfo=UTC)
         values = [0.0, 0.0, 0.0, 5.0, 10.0, None, 10.0, 15.0, 20.0, 25.0]
@@ -249,14 +314,16 @@ class AnomalyEvaluationTests(unittest.TestCase):
         }
         config = {"robust_z_threshold": 4.0, "persistence_points": 2}
         scores, episodes, _ = _score_and_alert(dataset, ["motor-01"], ["motor-01.motor_current"], profiles, config)
-        self.assertEqual([episode["onset_timestamp"] for episode in episodes], [_canonical_time(start + timedelta(seconds=4)), _canonical_time(start + timedelta(seconds=9))])
+        self.assertEqual([episode["onset_timestamp"] for episode in episodes], [_canonical_time(start + timedelta(seconds=4))])
         by_time = {score["timestamp"]: score for score in scores}
         self.assertFalse(by_time[_canonical_time(start + timedelta(seconds=5))]["available"])
         self.assertEqual(by_time[_canonical_time(start + timedelta(seconds=5))]["exclusion_reason"], "quality_non_ok")
         self.assertFalse(by_time[_canonical_time(start + timedelta(seconds=6))]["available"])
         self.assertEqual(by_time[_canonical_time(start + timedelta(seconds=6))]["exclusion_reason"], "previous_quality_non_ok")
+        self.assertFalse(by_time[_canonical_time(start + timedelta(seconds=8))]["available"])
+        self.assertEqual(by_time[_canonical_time(start + timedelta(seconds=8))]["exclusion_reason"], "mode_boundary")
         self.assertEqual(by_time[_canonical_time(start + timedelta(seconds=7))]["persistence_streak"], 1)
-        self.assertEqual(by_time[_canonical_time(start + timedelta(seconds=8))]["persistence_streak"], 1)
+        self.assertEqual(by_time[_canonical_time(start + timedelta(seconds=9))]["persistence_streak"], 1)
 
         gap_rows = rows[:4] + [_row(start + timedelta(seconds=5), 20.0), rows[6]]
         gap_dataset = _tiny_dataset(gap_rows, test_start=start + timedelta(seconds=3), test_end=start + timedelta(seconds=7))
@@ -313,14 +380,15 @@ class AnomalyEvaluationTests(unittest.TestCase):
         self.assertEqual(metrics["overall"]["detected_incidents"], 2)
         self.assertEqual(metrics["overall"]["matched_eligible_alert_episodes"], 2)
         self.assertEqual(metrics["overall"]["unmatched_eligible_alert_episodes"], 1)
-        self.assertEqual(metrics["suppressed_ineligible_event_window_alert_episode_count"], 1)
+        self.assertEqual(metrics["suppressed_event_window_alert_episode_count"], 1)
         partition = metrics["alert_episode_partition"]
         self.assertEqual(partition["total_alert_episodes"], 4)
         self.assertEqual(partition["matched_eligible_alert_episodes"], 2)
         self.assertEqual(partition["unmatched_eligible_same_signal_alert_episodes"], 1)
+        self.assertEqual(partition["positive_nonmatching_signal_false_alert_episodes"], 0)
         self.assertEqual(partition["clean_false_alert_signal_episodes"], 0)
         self.assertEqual(partition["suppressed_event_window_alert_episodes"], 1)
-        self.assertEqual(partition["suppressed_event_window_by_reason"], {"positive_nonmatching_signal": 0, "data_quality": 1, "ignored": 0})
+        self.assertEqual(partition["suppressed_event_window_by_reason"], {"data_quality": 1, "ignored": 0})
         accounting = {row["episode_id"]: row for row in metrics["_alert_episode_accounting"]}
         self.assertEqual(accounting["quality-window-alert"]["reason"], "data_quality_event_window")
         self.assertFalse(accounting["quality-window-alert"]["included_in_precision_denominator"])
@@ -340,24 +408,37 @@ class AnomalyEvaluationTests(unittest.TestCase):
             _event("positive-other", "motor-01.motor_temperature", start + timedelta(seconds=5), start + timedelta(seconds=6), event_type="jam_or_slip"),
             _event("quality", "motor-01.motor_current", start + timedelta(seconds=8), start + timedelta(seconds=9), event_type="dropout"),
             _event("ignored", "motor-01.motor_temperature", start + timedelta(seconds=11), start + timedelta(seconds=12), event_type="stuck_value"),
+            _event("ignored-later", "motor-01.motor_temperature", start + timedelta(seconds=16), start + timedelta(seconds=17), event_type="stuck_value"),
         ]
         dataset = {"manifest": {"sampling_interval_ms": 1000}, "observations": {}, "events": events, "split_times": {"validation": (start, start + timedelta(seconds=3)), "test": (start + timedelta(seconds=3), start + timedelta(seconds=20))}}
         episodes = [
             _episode("positive-other-alert", "motor-01.motor_current", start + timedelta(seconds=5), start + timedelta(seconds=5), start + timedelta(seconds=5, milliseconds=500)),
             _episode("quality-alert", "motor-01.motor_current", start + timedelta(seconds=8), start + timedelta(seconds=8), start + timedelta(seconds=8, milliseconds=500)),
             _episode("ignored-alert", "motor-01.motor_current", start + timedelta(seconds=11), start + timedelta(seconds=11), start + timedelta(seconds=11, milliseconds=500)),
-            _episode("clean-alert", "motor-01.motor_current", start + timedelta(seconds=15), start + timedelta(seconds=15), start + timedelta(seconds=15, milliseconds=500)),
+            _episode("clean-crossing-alert", "motor-01.motor_current", start + timedelta(seconds=15), start + timedelta(seconds=15), start + timedelta(seconds=17)),
         ]
-        classifications = {"positive-other": "machine_fault", "quality": "data_quality", "ignored": "ignored"}
+        classifications = {"positive-other": "machine_fault", "quality": "data_quality", "ignored": "ignored", "ignored-later": "ignored"}
         _incidents, _clean, metrics, _exclusions = _event_records_and_metrics(dataset, ["motor-01"], ["motor-01.motor_current", "motor-01.motor_temperature"], classifications, episodes, {"detection_grace_points": 0})
         partition = metrics["alert_episode_partition"]
         self.assertEqual(partition["total_alert_episodes"], 4)
         self.assertEqual(partition["matched_eligible_alert_episodes"], 0)
         self.assertEqual(partition["unmatched_eligible_same_signal_alert_episodes"], 0)
         self.assertEqual(partition["clean_false_alert_signal_episodes"], 1)
-        self.assertEqual(partition["suppressed_event_window_alert_episodes"], 3)
-        self.assertEqual(partition["suppressed_event_window_by_reason"], {"positive_nonmatching_signal": 1, "data_quality": 1, "ignored": 1})
+        self.assertEqual(partition["positive_nonmatching_signal_false_alert_episodes"], 1)
+        self.assertEqual(partition["suppressed_event_window_alert_episodes"], 2)
+        self.assertEqual(partition["suppressed_event_window_by_reason"], {"data_quality": 1, "ignored": 1})
+        self.assertEqual(
+            partition["total_alert_episodes"],
+            partition["matched_eligible_alert_episodes"]
+            + partition["unmatched_eligible_same_signal_alert_episodes"]
+            + partition["positive_nonmatching_signal_false_alert_episodes"]
+            + partition["clean_false_alert_signal_episodes"]
+            + partition["suppressed_event_window_alert_episodes"],
+        )
         self.assertEqual(sum(partition["suppressed_event_window_by_reason"].values()), partition["suppressed_event_window_alert_episodes"])
+        accounting = {row["episode_id"]: row for row in metrics["_alert_episode_accounting"]}
+        self.assertEqual(accounting["clean-crossing-alert"]["partition"], "clean_false_alert")
+        self.assertEqual(accounting["clean-crossing-alert"]["onset_event_ids"], [])
 
     def test_simultaneous_multisignal_clean_alerts_are_equipment_deduplicated(self) -> None:
         start = datetime(2026, 1, 1, tzinfo=UTC)
@@ -366,14 +447,16 @@ class AnomalyEvaluationTests(unittest.TestCase):
             _episode("current-alert", "motor-01.motor_current", start + timedelta(seconds=5), start + timedelta(seconds=5), start + timedelta(seconds=7)),
             _episode("temperature-alert", "motor-01.motor_temperature", start + timedelta(seconds=5), start + timedelta(seconds=5), start + timedelta(seconds=8)),
             _episode("later-alert", "motor-01.motor_current", start + timedelta(seconds=12), start + timedelta(seconds=12), start + timedelta(seconds=13)),
+            _episode("adjacent-alert", "motor-01.motor_temperature", start + timedelta(seconds=13), start + timedelta(seconds=13), start + timedelta(seconds=14)),
         ]
         _incidents, clean, metrics, _ = _event_records_and_metrics(dataset, ["motor-01"], ["motor-01.motor_current", "motor-01.motor_temperature"], {}, episodes, {"detection_grace_points": 0})
         self.assertEqual(len(clean), 2)
         self.assertEqual(clean[0]["source_alert_episode_ids"], ["current-alert", "temperature-alert"])
+        self.assertEqual(clean[1]["source_alert_episode_ids"], ["later-alert", "adjacent-alert"])
         self.assertEqual(metrics["clean_false_alert_episode_count"], 2)
         self.assertEqual(metrics["clean_false_alert_equipment_episode_count"], 2)
-        self.assertEqual(metrics["clean_false_alert_signal_episode_count"], 3)
-        self.assertEqual(metrics["overall"]["evaluated_alert_episode_count"], 3)
+        self.assertEqual(metrics["clean_false_alert_signal_episode_count"], 4)
+        self.assertEqual(metrics["overall"]["evaluated_alert_episode_count"], 4)
         self.assertEqual(metrics["overall"]["incident_precision"], 0.0)
 
     def test_deterministic_output_strict_nan_and_no_overwrite(self) -> None:
@@ -437,6 +520,16 @@ class AnomalyEvaluationTests(unittest.TestCase):
             with self.assertRaises(AnomalyEvaluationError):
                 evaluate_anomalies(config_path, ROOT)
         self.assertFalse(output.exists())
+
+        with patch.object(
+            anomaly_module,
+            "_assert_input_unchanged",
+            side_effect=[None, AnomalyEvaluationError("input changed before completion marker")],
+        ):
+            with self.assertRaises(AnomalyEvaluationError):
+                evaluate_anomalies(config_path, ROOT)
+        self.assertTrue(output.is_dir())
+        self.assertFalse((output / ".complete").exists())
 
 
 if __name__ == "__main__":

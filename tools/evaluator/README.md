@@ -57,11 +57,13 @@ py -3.14 tools/evaluator/analyze_event_slices.py `
 
 ## event-aware anomaly evaluation
 
-forecast benchmarkとは別に、専用synthetic eventを対象としたcausal one-step residual評価を実行できます。validation-onlyのrobust profile、quality／gap／mode reset、persistence、event単位matching、clean equipment-hour false-alertを記録します。
+forecast benchmarkとは別に、専用synthetic eventを対象としたcausal one-step residual評価を実行できます。validation-onlyのrobust profile、quality／gap／mode／previous-event reset、persistence、event単位matching、5-way alert partition、available score exposure、clean equipment-hour false-alertを記録します。
 
 ```text
 python tools/data-generator/generate.py --root . --config examples/configs/synthetic-anomaly-evaluation-v0.1.json
 python tools/evaluator/evaluate_anomalies.py --root . --config examples/configs/anomaly-evaluation-v0.1.json
+# markerless／invalidなincomplete outputを退避して再実行する場合だけ追加
+python tools/evaluator/evaluate_anomalies.py --root . --config examples/configs/anomaly-evaluation-v0.1.json --recover-incomplete
 ```
 
 詳細なboundary、precisionのsignal-level／equipment-level区別、strict provenance、atomic publish、解釈上の制約は [`docs/anomaly-evaluation-contract.md`](../../docs/anomaly-evaluation-contract.md) を参照してください。

@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import shutil
 import statistics
 import tempfile
@@ -57,12 +58,17 @@ def _repo_path(root: Path, raw: Any, label: str) -> Path:
     cursor = root
     for part in parts:
         cursor = cursor / part
-        if cursor.is_symlink():
+        if _is_link(cursor):
             raise EventSliceError(f"{label} cannot traverse a repository symlink")
     resolved = (root / raw).resolve()
     if resolved == root or root not in resolved.parents:
         raise EventSliceError(f"{label} must remain inside repository")
     return resolved
+
+
+def _is_link(path: Path) -> bool:
+    junction_check = getattr(os, "isjunction", None)
+    return path.is_symlink() or bool(junction_check(path) if junction_check is not None else False)
 
 
 def _artifact_output(root: Path, raw: Any) -> Path:
@@ -83,7 +89,10 @@ def _direct_child(directory: Path, name: Any, label: str) -> Path:
 
 
 def _load_schema(root: Path, name: str) -> dict[str, Any]:
-    schema = load_json(root / "schemas" / name)
+    schema_path = _repo_path(root, f"schemas/{name}", f"schema {name}")
+    if _is_link(schema_path) or not schema_path.is_file():
+        raise EventSliceError(f"schema is not a regular file: {name}")
+    schema = load_json(schema_path)
     if not isinstance(schema, dict):
         raise EventSliceError(f"schema is not an object: {name}")
     return schema
@@ -199,6 +208,8 @@ def _verify_dataset(dataset_dir: Path, root: Path) -> dict[str, Any]:
         event_ids.add(event_id)
         equipment_id = event.get("equipment_id")
         short_signal = event.get("signal_id")
+        if isinstance(equipment_id, str) and isinstance(short_signal, str) and "." in short_signal and not short_signal.startswith(f"{equipment_id}."):
+            raise EventSliceError(f"event fully-qualified signal does not match equipment: {event_id}")
         full_signal = f"{equipment_id}.{short_signal}" if isinstance(equipment_id, str) and isinstance(short_signal, str) and f"{equipment_id}.{short_signal}" in signals else short_signal
         if equipment_id not in equipment or full_signal not in signals or signals[full_signal]["signal_id"] != full_signal:
             raise EventSliceError(f"event references unknown equipment or signal: {event_id}")
