@@ -14,6 +14,9 @@ from uuid import uuid4
 
 from banto_ai.event_slices import (
     EventSliceError,
+    _load_json_snapshot,
+    _strict_jsonl,
+    _is_link,
     _classify_context,
     _classify_forecast,
     _macro,
@@ -21,7 +24,8 @@ from banto_ai.event_slices import (
     analyze_event_slices,
     _verify_dataset,
 )
-from banto_ai.manifest import load_json, validate
+from banto_ai.manifest import ManifestValidationError, load_json, validate
+from banto_ai.quality import DatasetQualityError, _load_jsonl
 from banto_ai.matrix import run_matrix
 
 
@@ -102,6 +106,25 @@ class EventSliceTests(unittest.TestCase):
 
         simultaneous_context = [target, covariate]
         self.assertEqual(_classify_context(simultaneous_context, "motor-01", target["signal_id"], set(), {covariate["signal_id"]}, datetime(2026, 1, 1, 0, 0, 20, tzinfo=utc), 15, interval)[0], "context_target_event")
+
+    def test_duplicate_keys_are_rejected_by_dataset_json_and_jsonl_loaders(self):
+        duplicate_json = self.control / "duplicate.json"
+        duplicate_json.write_text('{"key": 1, "key": 2}\n', encoding="utf-8")
+        with self.assertRaises(ManifestValidationError):
+            load_json(duplicate_json)
+        with self.assertRaises(EventSliceError):
+            _load_json_snapshot(duplicate_json, "duplicate snapshot")
+
+        duplicate_jsonl = self.control / "duplicate.jsonl"
+        duplicate_jsonl.write_text('{"key": 1, "key": 2}\n', encoding="utf-8")
+        with self.assertRaises(EventSliceError):
+            _strict_jsonl(duplicate_jsonl, "duplicate JSONL")
+        with self.assertRaises(DatasetQualityError):
+            _load_jsonl(duplicate_jsonl)
+
+    def test_junction_detection_uses_os_path_api(self):
+        with patch("banto_ai.event_slices.os.path.isjunction", create=True, return_value=True):
+            self.assertTrue(_is_link(self.control / "junction-like"))
 
     def test_dataset_verifier_rejects_cross_equipment_fully_qualified_event_signal(self):
         matrix_result_dir = self._run_matrix()

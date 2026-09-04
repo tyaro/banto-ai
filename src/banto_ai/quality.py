@@ -26,7 +26,7 @@ from .generator import (
     event_signal,
     expected_catalog,
 )
-from .manifest import load_json, validate_manifest
+from .manifest import _reject_duplicate_pairs, load_json, validate_manifest
 
 QUALITY_STATUSES = frozenset({"ok", "missing", "stale"})
 OBSERVATION_KEYS = frozenset({"timestamp", "equipment_id", "equipment_type", "operating_mode", "recipe_step", "signals", "quality"})
@@ -60,7 +60,7 @@ def _load_jsonl(path: Path, *, allow_empty: bool = False) -> list[dict[str, Any]
     with handle:
         for line_number, line in enumerate(handle, 1):
             try:
-                row = json.loads(line, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
+                row = json.loads(line, object_pairs_hook=_reject_duplicate_pairs, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
             except (json.JSONDecodeError, ValueError) as exc:
                 raise DatasetQualityError(f"{path}:{line_number}: invalid JSONL") from exc
             if not isinstance(row, dict):

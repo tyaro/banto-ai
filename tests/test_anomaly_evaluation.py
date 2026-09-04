@@ -167,7 +167,8 @@ class AnomalyEvaluationTests(unittest.TestCase):
         self.assertEqual(len(result["profiles"]), 2 * 4 * 6)
         self.assertTrue(all(profile["status"] == "calibrated" for profile in result["profiles"]))
         self.assertEqual(result["row_counts"]["score_rows"], 2 * 4 * 180)
-        self.assertEqual(result["metrics"]["overall"]["evaluated_alert_episode_count"], result["metrics"]["overall"]["matched_eligible_alert_episodes"] + result["metrics"]["overall"]["unmatched_eligible_alert_episodes"] + result["metrics"]["positive_event_window_false_alert_episode_count"] + result["metrics"]["clean_false_alert_signal_episode_count"])
+        self.assertEqual(result["metrics"]["overall"]["evaluated_alert_episode_count"], result["metrics"]["overall"]["matched_eligible_alert_episodes"] + result["metrics"]["false_alert_signal_episode_count"])
+        self.assertEqual(result["metrics"]["false_alert_signal_episode_count"], result["metrics"]["overall"]["unmatched_eligible_alert_episodes"] + result["metrics"]["positive_event_window_false_alert_episode_count"] + result["metrics"]["clean_false_alert_signal_episode_count"])
         partition = result["metrics"]["alert_episode_partition"]
         self.assertEqual(partition["total_alert_episodes"], len(result["alert_episodes"]))
         self.assertEqual(partition["total_alert_episodes"], len(result["alert_episode_accounting"]))
@@ -277,6 +278,50 @@ class AnomalyEvaluationTests(unittest.TestCase):
         self.assertEqual(left_accounting["partition"], "positive_event_window_false_alert")
         self.assertEqual(left_accounting["reason"], "positive_ineligible_same_signal")
         self.assertTrue(left_accounting["included_in_precision_denominator"])
+
+    def test_grace_only_windows_are_exposed_but_raw_incidents_remain_ineligible(self) -> None:
+        start = datetime(2026, 1, 1, tzinfo=UTC)
+        test_start = start + timedelta(seconds=3)
+        test_end = start + timedelta(seconds=8)
+        events = [
+            _event("grace-positive", "motor-01.motor_current", start + timedelta(seconds=1), test_start),
+            _event("grace-quality", "motor-01.motor_temperature", start + timedelta(seconds=2), test_start, event_type="dropout"),
+        ]
+        dataset = {"manifest": {"sampling_interval_ms": 1000}, "observations": {}, "events": events, "split_times": {"validation": (start, test_start), "test": (test_start, test_end)}}
+        episodes = [
+            _episode("grace-positive-alert", "motor-01.motor_current", test_start, test_start + timedelta(milliseconds=500), test_start + timedelta(seconds=1)),
+            _episode("grace-quality-alert", "motor-01.motor_temperature", test_start, test_start + timedelta(milliseconds=500), test_start + timedelta(seconds=1)),
+        ]
+        incidents, _clean, metrics, exclusions = _event_records_and_metrics(
+            dataset,
+            ["motor-01"],
+            ["motor-01.motor_current", "motor-01.motor_temperature"],
+            {"grace-positive": "machine_fault", "grace-quality": "data_quality"},
+            episodes,
+            {"detection_grace_points": 1},
+        )
+        by_id = {row["event_id"]: row for row in incidents}
+        self.assertEqual(by_id["grace-positive"]["eligibility_reason"], "outside_test_split")
+        self.assertEqual(by_id["grace-positive"]["detection_window_start"], _canonical_time(test_start))
+        self.assertEqual(by_id["grace-positive"]["detection_window_end"], _canonical_time(test_start + timedelta(seconds=1)))
+        self.assertEqual(by_id["grace-quality"]["detection_window_start"], _canonical_time(test_start))
+        self.assertEqual(by_id["grace-quality"]["detection_window_end"], _canonical_time(test_start + timedelta(seconds=1)))
+        accounting = {row["episode_id"]: row for row in metrics["_alert_episode_accounting"]}
+        self.assertEqual(accounting["grace-positive-alert"]["reason"], "positive_ineligible_same_signal")
+        self.assertEqual(accounting["grace-quality-alert"]["partition"], "suppressed_event_window")
+        self.assertEqual(exclusions["ineligible_by_reason"], {"outside_test_split": 1, "event_class_data_quality": 1})
+
+        no_grace = dict(dataset, events=[events[0]])
+        no_grace_incidents, _clean, _metrics, _ = _event_records_and_metrics(
+            no_grace,
+            ["motor-01"],
+            ["motor-01.motor_current"],
+            {"grace-positive": "machine_fault"},
+            [],
+            {"detection_grace_points": 0},
+        )
+        self.assertIsNone(no_grace_incidents[0]["detection_window_start"])
+        self.assertIsNone(no_grace_incidents[0]["detection_window_end"])
 
     def test_current_event_is_visible_but_previous_event_resets_residual(self) -> None:
         start = datetime(2026, 1, 1, tzinfo=UTC)
@@ -463,6 +508,8 @@ class AnomalyEvaluationTests(unittest.TestCase):
         self.assertEqual(metrics["overall"]["detected_incidents"], 2)
         self.assertEqual(metrics["overall"]["matched_eligible_alert_episodes"], 2)
         self.assertEqual(metrics["overall"]["unmatched_eligible_alert_episodes"], 1)
+        self.assertEqual(metrics["false_alert_signal_episode_count"], 1)
+        self.assertEqual(metrics["alert_episode_partition"]["precision_denominator_alert_episodes"], metrics["overall"]["matched_eligible_alert_episodes"] + metrics["false_alert_signal_episode_count"])
         self.assertEqual(metrics["suppressed_event_window_alert_episode_count"], 1)
         partition = metrics["alert_episode_partition"]
         self.assertEqual(partition["total_alert_episodes"], 4)

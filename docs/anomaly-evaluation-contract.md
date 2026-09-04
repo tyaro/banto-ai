@@ -16,7 +16,7 @@ python tools/data-generator/generate.py --root . --config examples/configs/synth
 python tools/evaluator/evaluate_anomalies.py --root . --config examples/configs/anomaly-evaluation-v0.1.json
 ```
 
-既存の [`_verify_dataset`](../src/banto_ai/event_slices.py) をquality gateとして再利用します。gateがPASSでないdataset、fingerprintが一致しないdataset、UTCでないtimestamp、欠損したmanifest、規則外のJSONLは評価しません。
+既存の [`_verify_dataset`](../src/banto_ai/event_slices.py) をquality gateとして再利用します。gateがPASSでないdataset、fingerprintが一致しないdataset、UTCでないtimestamp、欠損したmanifest、duplicate keyを含むJSON／JSONL、規則外のJSONLは評価しません。
 
 evaluator configとresultは、それぞれ [`anomaly-evaluation-config.schema.json`](../schemas/anomaly-evaluation-config.schema.json) と [`anomaly-evaluation-result.schema.json`](../schemas/anomaly-evaluation-result.schema.json) で検証します。configのevent classificationは、datasetでenabledになっているevent IDを、`machine_fault`、`sensor_fault`、`data_quality`、`ignored`のいずれかへ一度ずつ割り当てる完全partitionです。unknown、duplicate、missingはfail closedです。
 
@@ -47,9 +47,11 @@ eligible eventのdetection windowは次です。
 [max(event.start, test.start), event.end + detection_grace_points * sampling_interval)
 ```
 
+raw event intervalがtestと重ならなくても、graceを加えたwindowがtestへ入る場合は、test内へclippedしたwindowをonset accountingとclean monitored exposureへ含めます。このevent自体のincident eligibilityは変えず、raw intervalがtest外なら`outside_test_split`のままです。`grace=0`では半開区間の境界どおりwindowは生成しません。
+
 同じequipment／signalのeligible windowが重なる場合は、曖昧なone-to-one matchingを避けるため評価全体をfail closedにします。alert episodeは同じequipment／signalのeventへ最大一度だけ対応させます。alert onsetがevent開始前ならcreditしません。`detection_delay_seconds`は観測されたalert onsetからevent開始までの非負秒数だけであり、負のlead timeは出力しません。
 
-同じequipment／signalでpositive event windowと`data_quality`／`ignored` event windowが重なる場合も、matchingとsuppressionのtruthが曖昧になるためfail closedにします。異なるsignal間の重なりは許可し、onset contextのpartition規則で監査します。
+同じequipment／signalでpositive event windowと`data_quality`／`ignored` event windowが重なる場合も、matchingとsuppressionのtruthが曖昧になるためfail closedにします。異なるsignal間の重なりは許可し、positive contextを抑制せずFPとして記録します。positive contextがない場合だけ`data_quality`／`ignored` suppressionを適用します。
 
 ## Metrics
 
@@ -57,7 +59,7 @@ resultには、raw score row、alert episode、全eventのincident rowを保存�
 
 - overallと`machine_fault`／`sensor_fault`別に、eligible、detected、missed、incident recall、detection delay summaryを出します。
 - `matched_eligible_alert_episodes`と`unmatched_eligible_alert_episodes`をone-to-one matchingの結果として出します。
-- 全signal-level alert episodeは`alert_episode_accounting`へ一度だけ記録し、`matched_eligible`、`unmatched_eligible_same_signal`、`positive_event_window_false_alert`、`clean_false_alert`、`suppressed_event_window`の5 partitionの合計がtotalと一致します。precision denominatorは最初の4 partitionです。positive event-window FPはsignal-level precision FPであり、`positive_nonmatching_signal`（別signal）と`positive_ineligible_same_signal`（censored等の同一signal）を理由別に記録します。どちらもclean equipment false-alert countではありません。suppressedは`data_quality`または`ignored`だけで、理由別countも記録します。onset contextでpartitionを決め、episode全体が後からevent windowへ入ってもclean onsetはclean false alertのままです。同一signalのeligible overlapはmatched／unmatched precedenceを保ちます。
+- 全signal-level alert episodeは`alert_episode_accounting`へ一度だけ記録し、`matched_eligible`、`unmatched_eligible_same_signal`、`positive_event_window_false_alert`、`clean_false_alert`、`suppressed_event_window`の5 partitionの合計がtotalと一致します。precision denominatorは`matched_eligible + false_alert_signal_episode_count`で、`false_alert_signal_episode_count`は`unmatched_eligible_same_signal`＋positive event-window FP総数＋clean false-alert signal episodeの合計です。positive event-window FPはsignal-level precision FPであり、`positive_nonmatching_signal`（別signal）と`positive_ineligible_same_signal`（censored等の同一signal）を理由別に記録します。どちらもclean equipment false-alert countではありません。suppressedは`data_quality`または`ignored`だけで、理由別countも記録します。onset contextでpartitionを決め、episode全体が後からevent windowへ入ってもclean onsetはclean false alertのままです。同一signalのeligible overlapはmatched／unmatched precedenceを保ちます。
 - clean monitored exposureはscoreがavailableなinterval `[timestamp,timestamp+sampling_interval)`だけから作ります。equipment-levelはtarget signalのavailable interval union、signal-levelはtarget signalごとのintervalです。test内の全enabled event（data quality／ignoredを含む）とgraceを含むevent windowを差し引き、zero denominatorのrateはnullにします。clean false alertはequipment-level episodeへ集約します。
 - `clean_monitored_equipment_hours`、`false_alerts_per_8_equipment_hours`、target signalごとの`clean_monitored_target_signal_hours`、`score_availability_by_signal`を出します。
 - 同じequipmentで複数signalのclean alert intervalが重なる、またはtouchする場合は、一つのequipment episodeへdeduplicateします。source signal episode IDは結果に残します。
@@ -76,4 +78,4 @@ resultとsummaryは一時directoryへfsyncしてから新規output directoryをc
 
 ## 解釈上の制約
 
-これはsingle-seed synthetic scenarioの契約検証です。event injectionがscoreへ寄与すること、特定のfaultが検知できること、実設備での誤警報率やlead timeを保証するものではありません。複数seed、event位置・mode・設備の拡大、正式な不確実性評価、実設備データへの一般化は別の研究工程です。
+これはsingle-seed synthetic scenarioの契約検証です。現在はpersistence確認時刻をalert onsetとしてmatchingするため、event前に始まったthreshold超過streakの一部がevent内の確認点へ寄与し得ます。これはv0.1の設計選択であり、lead-time解釈には使いません。event injectionがscoreへ寄与すること、特定のfaultが検知できること、実設備での誤警報率やlead timeを保証するものではありません。複数seed、event位置・mode・設備の拡大、正式な不確実性評価、実設備データへの一般化は別の研究工程です。

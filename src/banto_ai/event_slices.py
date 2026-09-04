@@ -16,7 +16,7 @@ from typing import Any, Iterable, Mapping
 
 from .benchmark import PREDICTION_KEYS, _revision
 from .generator import FINGERPRINT_ALGORITHM, FINGERPRINT_CANONICALIZATION, FINGERPRINT_FILE_NAMES, FINGERPRINT_KEYS
-from .manifest import ManifestValidationError, load_json, validate
+from .manifest import ManifestValidationError, _reject_duplicate_pairs, load_json, validate
 from .metrics import MetricError, all_metrics, mase
 from .quality import check_dataset
 
@@ -67,7 +67,7 @@ def _repo_path(root: Path, raw: Any, label: str) -> Path:
 
 
 def _is_link(path: Path) -> bool:
-    junction_check = getattr(os, "isjunction", None)
+    junction_check = getattr(os.path, "isjunction", None)
     return path.is_symlink() or bool(junction_check(path) if junction_check is not None else False)
 
 
@@ -119,7 +119,7 @@ def _strict_jsonl(path: Path, label: str) -> list[dict[str, Any]]:
         if not line.strip():
             raise EventSliceError(f"{label}:{line_number} is blank")
         try:
-            row = json.loads(line, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
+            row = json.loads(line, object_pairs_hook=_reject_duplicate_pairs, parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
         except (json.JSONDecodeError, ValueError) as exc:
             raise EventSliceError(f"{label}:{line_number} is not strict JSON") from exc
         if not isinstance(row, dict):
@@ -135,6 +135,7 @@ def _load_json_snapshot(path: Path, label: str) -> tuple[Any, bytes]:
         raw = path.read_bytes()
         value = json.loads(
             raw.decode("utf-8"),
+            object_pairs_hook=_reject_duplicate_pairs,
             parse_constant=lambda constant: (_ for _ in ()).throw(ValueError(constant)),
             parse_float=lambda number: float(number) if math.isfinite(float(number)) else (_ for _ in ()).throw(ValueError(number)),
         )

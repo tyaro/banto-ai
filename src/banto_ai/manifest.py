@@ -13,6 +13,15 @@ class ManifestValidationError(ValueError):
     """manifestがschemaに適合しない場合に発生する。"""
 
 
+def _reject_duplicate_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ManifestValidationError(f"duplicate JSON property: {key}")
+        result[key] = value
+    return result
+
+
 def load_json(path: Path) -> Any:
     def reject_constant(value: str) -> None:
         raise ManifestValidationError(f"{path}: non-finite JSON constant is not allowed: {value}")
@@ -25,7 +34,7 @@ def load_json(path: Path) -> Any:
 
     try:
         with path.open(encoding="utf-8") as handle:
-            return json.load(handle, parse_constant=reject_constant, parse_float=parse_float)
+            return json.load(handle, object_pairs_hook=_reject_duplicate_pairs, parse_constant=reject_constant, parse_float=parse_float)
     except (OSError, json.JSONDecodeError) as exc:
         raise ManifestValidationError(f"{path}: invalid JSON: {exc}") from exc
 

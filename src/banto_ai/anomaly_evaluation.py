@@ -680,9 +680,11 @@ def _event_records_and_metrics(
         event_class = classifications.get(event_id)
         if event_class not in EVENT_CLASSES:
             raise AnomalyEvaluationError(f"event classification is missing or invalid: {event_id}")
-        overlaps_test = event["start"] < test_end and event["end"] > test_start
-        window_start = max(event["start"], test_start) if overlaps_test else None
-        window_end = event["end"] + grace * interval if overlaps_test else None
+        raw_overlaps_test = event["start"] < test_end and event["end"] > test_start
+        detection_end = event["end"] + grace * interval
+        window_overlaps_test = event["start"] < test_end and detection_end > test_start
+        window_start = max(event["start"], test_start) if window_overlaps_test else None
+        window_end = detection_end if window_overlaps_test else None
         full_signal = event["signal_id"]
         if window_start is not None and window_end is not None:
             exposure_end = min(window_end, test_end)
@@ -700,7 +702,7 @@ def _event_records_and_metrics(
         if event_class not in POSITIVE_CLASSES:
             eligible = False
             reason = f"event_class_{event_class}"
-        elif not overlaps_test:
+        elif not raw_overlaps_test:
             eligible = False
             reason = "outside_test_split"
         elif event["equipment_id"] not in equipment_ids or full_signal not in target_set:
@@ -866,13 +868,12 @@ def _event_records_and_metrics(
             matched_event_id = None
         else:
             event_classes = {event_window["event_class"] for event_window in onset_context}
-            if "data_quality" in event_classes:
-                reason = "data_quality_event_window"
-                reason_key = "data_quality"
-            elif "ignored" in event_classes:
-                reason = "ignored_event_window"
-                reason_key = "ignored"
-            elif event_classes & POSITIVE_CLASSES:
+            same_signal_suppression = any(
+                event_window["event_class"] in {"data_quality", "ignored"}
+                and event_window["signal_id"] == episode["signal_id"]
+                for event_window in onset_context
+            )
+            if event_classes & POSITIVE_CLASSES and not same_signal_suppression:
                 positive_same_signal = any(
                     event_window["event_class"] in POSITIVE_CLASSES
                     and event_window["signal_id"] == episode["signal_id"]
@@ -884,9 +885,15 @@ def _event_records_and_metrics(
                 positive_nonmatching_count += 1
                 if positive_same_signal:
                     positive_ineligible_same_signal_count += 1
+            elif "data_quality" in event_classes:
+                reason = "data_quality_event_window"
+                reason_key = "data_quality"
+            elif "ignored" in event_classes:
+                reason = "ignored_event_window"
+                reason_key = "ignored"
             else:
                 raise AnomalyEvaluationError(f"alert episode has an unsupported onset event context: {episode_id}")
-            if event_classes & POSITIVE_CLASSES and "data_quality" not in event_classes and "ignored" not in event_classes:
+            if event_classes & POSITIVE_CLASSES and not same_signal_suppression:
                 matched_event_id = None
             else:
                 suppression_reason_counts[reason_key] += 1
@@ -992,7 +999,7 @@ def _event_records_and_metrics(
         "positive_event_window_false_alert_episode_count": positive_nonmatching_count,
         "positive_nonmatching_signal_false_alert_episode_count": positive_nonmatching_count - positive_ineligible_same_signal_count,
         "positive_ineligible_same_signal_false_alert_episode_count": positive_ineligible_same_signal_count,
-        "false_alert_signal_episode_count": positive_nonmatching_count + clean_false_signal_count,
+        "false_alert_signal_episode_count": unmatched_count + positive_nonmatching_count + clean_false_signal_count,
         "precision_denominator_excludes_suppressed_event_windows": True,
         "alert_episode_partition": alert_episode_partition,
         "clean_monitored_equipment_hours": clean_equipment_hours,
@@ -1023,6 +1030,7 @@ def _summary(result: Mapping[str, Any]) -> str:
         f"- incident precision / recall: {overall['incident_precision']} / {overall['incident_recall']}",
         f"- signal alert episode partition (total = matched + unmatched same-signal + positive-event-window FP + clean FP + suppressed): {partition['total_alert_episodes']} = {partition['matched_eligible_alert_episodes']} + {partition['unmatched_eligible_same_signal_alert_episodes']} + {partition['positive_event_window_false_alert_episodes']} + {partition['clean_false_alert_signal_episodes']} + {partition['suppressed_event_window_alert_episodes']}",
         f"- evaluated signal alert episodes (precision denominator; matched / unmatched / positive-event-window FP / clean FP): {overall['evaluated_alert_episode_count']} ({overall['matched_eligible_alert_episodes']} / {overall['unmatched_eligible_alert_episodes']} / {metrics['positive_event_window_false_alert_episode_count']} / {metrics['clean_false_alert_signal_episode_count']})",
+        f"- signal-level false-alert episodes (unmatched eligible / positive-event-window / clean): {metrics['false_alert_signal_episode_count']} ({metrics['overall']['unmatched_eligible_alert_episodes']} / {metrics['positive_event_window_false_alert_episode_count']} / {metrics['clean_false_alert_signal_episode_count']})",
         f"- clean false-alert equipment episodes: {metrics['clean_false_alert_episode_count']}",
         f"- suppressed event-window alerts (data-quality / ignored): {partition['suppressed_event_window_alert_episodes']} ({reasons['data_quality']} / {reasons['ignored']})",
         "- suppressed event-window alerts are excluded from precision because they are neither a same-signal eligible incident alert nor a signal-level false alert; the reason ledger preserves them separately.",
