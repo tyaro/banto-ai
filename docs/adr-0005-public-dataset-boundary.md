@@ -24,13 +24,15 @@ source pin は次の順序で行い、どれか一つでも不明なら fail clo
 3. ZIP等の member name、member size、member hash を検証し、source manifestへ記録する。
 4. raw archive と大きな derived data は repository 外の external cache／artifact boundary に置く。Gitには metadata-only manifest、設定、品質結果、文書だけを置く。
 
-MetroPT-3の source pin は実装済みで、実archiveを外部cacheからCLI検証済みである。検証結果は `status=cached_verified`、`verification_status=verified` とする。正本は [`datasets/manifests/metropt3-source.json`](../datasets/manifests/metropt3-source.json)、手順は [`tools/public-data/README.md`](../tools/public-data/README.md) と [`tools/public-data/prepare_metropt3.py`](../tools/public-data/prepare_metropt3.py) とする。この保存点は download／verify の完了であり、変換、quality check、benchmark、モデル評価の完了ではない。
+MetroPT-3の source pin は実装済みで、実archiveを外部cacheからCLI検証済みである。検証結果は `status=cached_verified`、`verification_status=verified` とする。正本は [`datasets/manifests/metropt3-source.json`](../datasets/manifests/metropt3-source.json)、手順は [`tools/public-data/README.md`](../tools/public-data/README.md) と [`tools/public-data/prepare_metropt3.py`](../tools/public-data/prepare_metropt3.py) とする。この download／verify に続く標準化取込とPublic-only quality gateも実データで完了したが、benchmark、モデル評価は未実施である。結果は [`docs/results/metropt3-import-2026-09-04.md`](results/metropt3-import-2026-09-04.md) に記録する。
 
 ## Data contract
 
-MetroPT-3の公式説明には1 Hzと0.1 Hzのsampling記載があり一致しない。raw timestamp を正本として実測deltaを記録し、sampling intervalを設定へ決め打ちしない。source timezoneも未指定のため UTC と仮定せず、`source_timezone` と `timezone_assumption` を provenance に必須化する。
+MetroPT-3の公式説明には1 Hzと0.1 Hzのsampling記載があり一致しない。raw timestamp を正本として実測deltaを記録し、sampling intervalを設定へ決め打ちしない。source timezoneも未指定で実timezoneは主張しないが、研究上は `2020-02-21` の連続24時間をUTCと解釈し、`timezone_assumption` をprovenanceに必須化する。
 
-初期変換は、標準ライブラリの streaming importer、1分 bin、analog mean、digital last、空bin／異常gapの補間なし fail closed とする。最初の候補は `2020-02-21` の連続24時間で、再検証を通るまで benchmark の入力としない。未来のactual、failure report、RULはorigin時点で利用可能な known-future ではない。
+初期変換は、標準ライブラリの streaming importer、60秒の半開区間 `[start, end)`、output timestamp=bin end、analog mean、digital last、補間なし fail closed とする。14 signalsを対象とし、`Caudal_impulses`は除外、one compressor、`mode=unknown`とする。`2020-02-21` の連続24時間を研究上UTCとして扱い、chronological splitを864 / 288 / 288 samplesで作成済みである。欠損、空bin、時刻逆行、nonfinite値は停止し、未来のactual、failure report、RULはorigin時点で利用可能な known-future ではない。標準化済み本体は `artifacts/public-datasets/<dataset-id>/` に生成しGit管理しない。
+
+出力は source-manifest、transform-config、observations、split-manifest、dataset-manifest、quality-report、fingerprint の7つのdeterministic filesとする。Public-only quality gateはschema、UTC、interval、split、path、hash、license、timezone assumption、実測cadence、no-label leakageを検査し、既存synthetic gateとは分離する。実データの取込結果は [`docs/results/metropt3-import-2026-09-04.md`](results/metropt3-import-2026-09-04.md) に記録する。
 
 ## Consequences
 

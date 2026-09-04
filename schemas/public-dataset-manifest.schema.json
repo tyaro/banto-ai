@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tyaro/banto-ai/schemas/public-dataset-manifest.schema.json",
+  "title": "banto-ai public dataset manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "manifest_type", "dataset_id", "provenance", "data_path", "split_manifest_path", "fingerprint_path", "source_manifest_path", "transform_config_path", "quality_report_path", "generator_version", "importer_version", "sample_count", "sampling_interval_ms", "raw_window_start", "raw_window_end", "timezone_status", "timezone_assumption", "source", "license", "equipment", "signals", "known_future_covariate_ids"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "manifest_type": {"type": "string", "const": "dataset"},
+    "dataset_id": {"type": "string", "const": "metropt3-public-2020-02-21"},
+    "provenance": {"type": "string", "const": "public"},
+    "data_path": {"type": "string", "const": "observations.jsonl"},
+    "split_manifest_path": {"type": "string", "const": "split-manifest.json"},
+    "fingerprint_path": {"type": "string", "const": "fingerprint.json"},
+    "source_manifest_path": {"type": "string", "const": "source-manifest.json"},
+    "transform_config_path": {"type": "string", "const": "transform-config.json"},
+    "quality_report_path": {"type": "string", "const": "quality-report.json"},
+    "generator_version": {"type": "string", "const": "public-import/0.1.0"},
+    "importer_version": {"type": "string", "const": "0.1.0"},
+    "sample_count": {"type": "integer", "const": 1440},
+    "sampling_interval_ms": {"type": "integer", "const": 60000},
+    "raw_window_start": {"type": "string", "const": "2020-02-21T00:00:00Z"},
+    "raw_window_end": {"type": "string", "const": "2020-02-22T00:00:00Z"},
+    "timezone_status": {"type": "string", "const": "unspecified"},
+    "timezone_assumption": {"type": "string", "const": "source-naive timestamps are interpreted as UTC for ordering and output formatting only; actual timezone is unspecified and not claimed"},
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository", "dataset_id", "doi", "revision", "archive_sha256", "archive_size_bytes"],
+      "properties": {
+        "repository": {"type": "string", "const": "UCI Machine Learning Repository"},
+        "dataset_id": {"type": "integer", "const": 791},
+        "doi": {"type": "string", "const": "https://doi.org/10.24432/C5VW3R"},
+        "revision": {"type": "string", "const": "2024-09-19"},
+        "archive_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "archive_size_bytes": {"type": "integer", "const": 218381995}
+      }
+    },
+    "license": {
+      "type": "object", "additionalProperties": false,
+      "required": ["spdx_id", "url", "attribution", "redistribution_allowed", "commercial_use_allowed"],
+      "properties": {
+        "spdx_id": {"type": "string", "const": "CC-BY-4.0"},
+        "url": {"type": "string", "const": "https://creativecommons.org/licenses/by/4.0/"},
+        "attribution": {"type": "string", "minLength": 1},
+        "redistribution_allowed": {"type": "boolean", "const": true},
+        "commercial_use_allowed": {"type": "boolean", "const": true}
+      }
+    },
+    "equipment": {
+      "type": "array", "minItems": 1, "maxItems": 1,
+      "items": {"type": "object", "additionalProperties": false, "required": ["equipment_id", "equipment_type"], "properties": {"equipment_id": {"type": "string", "const": "metropt3-apu-01"}, "equipment_type": {"type": "string", "const": "compressor"}}}
+    },
+    "signals": {
+      "type": "array", "minItems": 14, "maxItems": 14,
+      "items": {"type": "object", "additionalProperties": false, "required": ["signal_id", "logical_signal_id", "name", "unit", "role", "aggregation", "sampling_interval_ms"], "properties": {"signal_id": {"type": "string", "pattern": "^metropt3-apu-01\\.[a-z][a-z0-9_]*$"}, "logical_signal_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"}, "name": {"type": "string", "minLength": 1}, "unit": {"type": "string", "minLength": 1}, "role": {"type": "string", "enum": ["target", "covariate"]}, "aggregation": {"type": "string", "enum": ["mean", "last"]}, "sampling_interval_ms": {"type": "integer", "const": 60000}}}
+    },
+    "known_future_covariate_ids": {"type": "array", "maxItems": 0, "items": {"type": "string"}}
+  }
+}

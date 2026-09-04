@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tyaro/banto-ai/schemas/public-transform-config.schema.json",
+  "title": "banto-ai public dataset transform config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "config_type", "config_version", "dataset_id", "source_manifest_path", "source_archive_member", "expected_source_header", "excluded_source_columns", "raw_window", "timezone_assumption", "binning", "equipment", "signals", "known_future_covariate_ids", "output"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "config_type": {"type": "string", "const": "metropt3-public-transform"},
+    "config_version": {"type": "string", "const": "0.1.0"},
+    "dataset_id": {"type": "string", "const": "metropt3-public-2020-02-21"},
+    "source_manifest_path": {"type": "string", "const": "datasets/manifests/metropt3-source.json"},
+    "source_archive_member": {"type": "string", "const": "MetroPT3(AirCompressor).csv"},
+    "expected_source_header": {"type": "array", "minItems": 17, "items": {"type": "string"}},
+    "excluded_source_columns": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "raw_window": {
+      "type": "object", "additionalProperties": false,
+      "required": ["start", "end", "boundary_semantics"],
+      "properties": {
+        "start": {"type": "string", "const": "2020-02-21 00:00:00"},
+        "end": {"type": "string", "const": "2020-02-22 00:00:00"},
+        "boundary_semantics": {"type": "string", "const": "[start,end)"}
+      }
+    },
+    "timezone_assumption": {"type": "string", "const": "source-naive timestamps are interpreted as UTC for ordering and output formatting only; actual timezone is unspecified and not claimed"},
+    "binning": {
+      "type": "object", "additionalProperties": false,
+      "required": ["interval_ms", "boundary_semantics", "output_timestamp", "max_gap_ms", "interpolation"],
+      "properties": {
+        "interval_ms": {"type": "integer", "const": 60000},
+        "boundary_semantics": {"type": "string", "const": "[start,end)"},
+        "output_timestamp": {"type": "string", "const": "bin-end"},
+        "max_gap_ms": {"type": "integer", "const": 60000},
+        "interpolation": {"type": "string", "const": "forbidden"}
+      }
+    },
+    "equipment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["equipment_id", "equipment_type", "operating_mode", "recipe_step"],
+      "properties": {
+        "equipment_id": {"type": "string", "const": "metropt3-apu-01"},
+        "equipment_type": {"type": "string", "const": "compressor"},
+        "operating_mode": {"type": "string", "const": "unknown"},
+        "recipe_step": {"type": "string", "const": "not-applicable"}
+      }
+    },
+    "signals": {
+      "type": "array", "minItems": 14, "maxItems": 14,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["source_name", "logical_signal_id", "name", "unit", "role", "aggregation"],
+        "properties": {
+          "source_name": {"type": "string", "minLength": 1},
+          "logical_signal_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*$"},
+          "name": {"type": "string", "minLength": 1},
+          "unit": {"type": "string", "minLength": 1},
+          "role": {"type": "string", "enum": ["target", "covariate"]},
+          "aggregation": {"type": "string", "enum": ["mean", "last"]}
+        }
+      }
+    },
+    "known_future_covariate_ids": {"type": "array", "maxItems": 0, "items": {"type": "string"}},
+    "output": {
+      "type": "object", "additionalProperties": false,
+      "required": ["output_dir", "sample_count", "sampling_interval_ms", "expected_split_counts"],
+      "properties": {
+        "output_dir": {"type": "string", "pattern": "^(?!/)(?![A-Za-z]:)(?!.*\\\\)(?!.*(^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"},
+        "sample_count": {"type": "integer", "const": 1440},
+        "sampling_interval_ms": {"type": "integer", "const": 60000},
+        "expected_split_counts": {"type": "object", "additionalProperties": false, "required": ["train", "validation", "test"], "properties": {"train": {"type": "integer", "const": 864}, "validation": {"type": "integer", "const": 288}, "test": {"type": "integer", "const": 288}}}
+      }
+    }
+  }
+}

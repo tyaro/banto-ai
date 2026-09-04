@@ -333,7 +333,7 @@ def _check_fingerprint(dataset_dir: Path, dataset: dict[str, Any], summary: dict
         raise DatasetQualityError("summary dataset_fingerprint does not match fingerprint")
 
 
-def check_dataset(dataset_dir: Path, root: Path) -> dict[str, Any]:
+def _check_synthetic_dataset(dataset_dir: Path, root: Path) -> dict[str, Any]:
     dataset_manifest_path = dataset_dir / "dataset-manifest.json"
     split_manifest_path = dataset_dir / "split-manifest.json"
     validate_manifest(dataset_manifest_path, root / "schemas" / "synthetic-dataset-manifest.schema.json")
@@ -353,3 +353,16 @@ def check_dataset(dataset_dir: Path, root: Path) -> dict[str, Any]:
     _check_config_semantics(config, dataset, split, summary, rows, events, per_equipment, intervals)
     _check_fingerprint(dataset_dir, dataset, summary)
     return {"status": "pass", "observation_record_count": len(rows), "equipment_count": len(per_equipment), "checks": ["strictly_increasing_utc", "catalog_sampling_interval", "unit_consistency", "quality_keys", "finite_or_null_values", "event_structure", "split_non_overlap_and_coverage", "record_counts", "fingerprint", "future_leakage"]}
+
+
+def check_dataset(dataset_dir: Path, root: Path) -> dict[str, Any]:
+    """provenanceに応じてpublic専用またはsynthetic専用gateへdispatchする。"""
+    manifest_path = Path(dataset_dir) / "dataset-manifest.json"
+    try:
+        manifest = load_json(manifest_path)
+    except (ManifestValidationError, OSError):
+        manifest = None
+    if isinstance(manifest, dict) and manifest.get("provenance") == "public":
+        from .public_quality import check_public_dataset
+        return check_public_dataset(dataset_dir, root)
+    return _check_synthetic_dataset(dataset_dir, root)

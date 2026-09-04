@@ -1,0 +1,32 @@
+{
+  "schema_version": "0.1",
+  "config_type": "metropt3-public-transform",
+  "config_version": "0.1.0",
+  "dataset_id": "metropt3-public-2020-02-21",
+  "source_manifest_path": "datasets/manifests/metropt3-source.json",
+  "source_archive_member": "MetroPT3(AirCompressor).csv",
+  "expected_source_header": ["", "timestamp", "TP2", "TP3", "H1", "DV_pressure", "Reservoirs", "Oil_temperature", "Motor_current", "COMP", "DV_eletric", "Towers", "MPG", "LPS", "Pressure_switch", "Oil_level", "Caudal_impulses"],
+  "excluded_source_columns": ["Caudal_impulses"],
+  "raw_window": {"start": "2020-02-21 00:00:00", "end": "2020-02-22 00:00:00", "boundary_semantics": "[start,end)"},
+  "timezone_assumption": "source-naive timestamps are interpreted as UTC for ordering and output formatting only; actual timezone is unspecified and not claimed",
+  "binning": {"interval_ms": 60000, "boundary_semantics": "[start,end)", "output_timestamp": "bin-end", "max_gap_ms": 60000, "interpolation": "forbidden"},
+  "equipment": {"equipment_id": "metropt3-apu-01", "equipment_type": "compressor", "operating_mode": "unknown", "recipe_step": "not-applicable"},
+  "signals": [
+    {"source_name": "TP2", "logical_signal_id": "tp2", "name": "TP2", "unit": "bar", "role": "covariate", "aggregation": "mean"},
+    {"source_name": "TP3", "logical_signal_id": "tp3", "name": "TP3", "unit": "bar", "role": "target", "aggregation": "mean"},
+    {"source_name": "H1", "logical_signal_id": "h1", "name": "H1", "unit": "bar", "role": "covariate", "aggregation": "mean"},
+    {"source_name": "DV_pressure", "logical_signal_id": "dv_pressure", "name": "DV_pressure", "unit": "bar", "role": "covariate", "aggregation": "mean"},
+    {"source_name": "Reservoirs", "logical_signal_id": "reservoirs", "name": "Reservoirs", "unit": "bar", "role": "covariate", "aggregation": "mean"},
+    {"source_name": "Oil_temperature", "logical_signal_id": "oil_temperature", "name": "Oil_temperature", "unit": "ºC", "role": "target", "aggregation": "mean"},
+    {"source_name": "Motor_current", "logical_signal_id": "motor_current", "name": "Motor_current", "unit": "A", "role": "target", "aggregation": "mean"},
+    {"source_name": "COMP", "logical_signal_id": "comp", "name": "COMP", "unit": "binary", "role": "covariate", "aggregation": "last"},
+    {"source_name": "DV_eletric", "logical_signal_id": "dv_electric", "name": "DV_eletric", "unit": "binary", "role": "covariate", "aggregation": "last"},
+    {"source_name": "Towers", "logical_signal_id": "towers", "name": "Towers", "unit": "binary", "role": "covariate", "aggregation": "last"},
+    {"source_name": "MPG", "logical_signal_id": "mpg", "name": "MPG", "unit": "binary", "role": "covariate", "aggregation": "last"},
+    {"source_name": "LPS", "logical_signal_id": "lps", "name": "LPS", "unit": "binary", "role": "covariate", "aggregation": "last"},
+    {"source_name": "Pressure_switch", "logical_signal_id": "pressure_switch", "name": "Pressure_switch", "unit": "binary", "role": "covariate", "aggregation": "last"},
+    {"source_name": "Oil_level", "logical_signal_id": "oil_level", "name": "Oil_level", "unit": "binary", "role": "covariate", "aggregation": "last"}
+  ],
+  "known_future_covariate_ids": [],
+  "output": {"output_dir": "artifacts/public-datasets/metropt3-public-2020-02-21", "sample_count": 1440, "sampling_interval_ms": 60000, "expected_split_counts": {"train": 864, "validation": 288, "test": 288}}
+}

@@ -6,7 +6,7 @@
 
 最初の公開実データ候補は、実運用の鉄道車両用空気圧縮機を記録した UCI **MetroPT-3** とする。予測、異常検知、設備別適応の三つを同じデータ境界で検討でき、CC BY 4.0 の再利用条件も確認できるためである。次候補は実油圧試験装置の UCI **Condition monitoring of hydraulic systems** とする。NASA **C-MAPSS** はシミュレーションデータで、公式掲載のライセンスが `License not specified` であるため、Banto の fail-closed 方針では現時点で採用しない。
 
-この選定はモデル採用や実データ評価の完了を意味しない。MetroPT-3の **source pin は実装済み・実archive検証済み** で、検証結果は `status=cached_verified`、`verification_status=verified` である。正本manifestは [`datasets/manifests/metropt3-source.json`](../datasets/manifests/metropt3-source.json)、取得・検証CLIは [`tools/public-data/README.md`](../tools/public-data/README.md) と [`tools/public-data/prepare_metropt3.py`](../tools/public-data/prepare_metropt3.py) に記録する。変換、quality check、rolling benchmark、fault slice、モデル比較は未実施であり、次の保存点で別途実施する。
+この選定はモデル採用や実データでのモデル性能評価の完了を意味しない。MetroPT-3の **source pin、標準化取込、Public-only quality gateは実装済み・実archiveで検証済み** で、検証結果は `status=cached_verified`、`verification_status=verified`、quality `PASS` である。正本manifestは [`datasets/manifests/metropt3-source.json`](../datasets/manifests/metropt3-source.json)、取得・変換・検証CLIは [`tools/public-data/README.md`](../tools/public-data/README.md) と [`tools/public-data/prepare_metropt3.py`](../tools/public-data/prepare_metropt3.py) に記録する。実測結果は [`docs/results/metropt3-import-2026-09-04.md`](results/metropt3-import-2026-09-04.md) を参照し、rolling benchmark・fault slice・モデル比較は未実施である。
 
 ## 比較
 
@@ -37,19 +37,20 @@
 
 公式ページは sampling を一方で 1 Hz、variable information で 0.1 Hz と説明している。この不一致を理由に、1 Hzへ決め打ちしたり、欠損区間を暗黙に補間したりしない。source の timestamp を正本とし、delta、gap、欠損を quality report に残す。
 
-source が timezone を指定していないため、UTC と断定しない。Banto の設定では `source_timezone: unspecified` と `timezone_assumption` を明示し、UTCへ変換する場合は変換者、変換規則、実行時刻、入力 hash を provenance に保存する。
+source が timezone を指定していないため、実際の設備 timezone は主張しない。UTC と断定しないうえで、研究上は対象区間 `2020-02-21` の連続24時間を UTC と解釈し、`timezone_assumption` として provenance に明示する。
 
 ### 初期変換の設計
 
-次の保存点で、標準ライブラリの streaming importer を使って小さい連続区間を検証する。
+標準ライブラリの streaming importerで連続24時間候補を検証済みである。標準化済みdatasetの出力先はGit管理外の `artifacts/public-datasets/<dataset-id>/` とする。
 
-1. `2020-02-21` の連続 24 時間候補を raw timestamp から再検証する。
-2. 1 分 bin の終端 timestampへ集約する。analog は mean、digital は last とし、bin幅と境界を設定へ固定する。
-3. 観測のない bin、異常な gap、timestamp の逆行は補間せず fail closed とする。
-4. 時系列順の train／validation／test を作り、origin より未来の actual、failure report、RUL を known-future covariate にしない。
-5. source manifest、quality report、変換設定、入力／出力 hash のみを追跡し、raw archive と大きな derived data は外部 cache／artifact 領域に置く。
+1. `2020-02-21` の連続 24 時間候補を raw timestamp から再検証し、8,716 raw rowsを確認する。
+2. 60秒の半開区間 `[start, end)` に集約し、output timestampはbin endとする。analogはmean、digitalはlastとし、bin境界を設定へ固定する。
+3. 14 signalsを対象とし、集約意味論が未確定の `Caudal_impulses` は除外する。one compressor、`mode=unknown` とする。
+4. 観測のないbin、欠損、異常なgap、timestampの逆行、nonfinite値は補間せず fail closed とする。
+5. `2020-02-21` の24時間は研究上UTCとして扱い、chronological splitを864 / 288 / 288 samples（train / validation / test）で作る。originより未来のactual、failure report、RULをknown-future covariateにしない。
+6. 7つのdeterministic output（source-manifest、transform-config、observations、split-manifest、dataset-manifest、quality-report、fingerprint）とし、raw archiveは外部cache、標準化済み本体はgitignored artifactへ置く。
 
-この保存点では importer と quality check の受入れまでを対象とし、Chronos-2、TimesFM 3.0その他のモデル評価完了とは扱わない。モデルを比較するときは、同じ window、origin、horizon、target、hardware、metric の結果だけを比較する。今回の合成データ結果と MetroPT-3 の数値を直接比較しない。
+この保存点では importer と Public-only quality gate の受入れまでを完了し、Chronos-2、TimesFM 3.0その他のモデル評価完了とは扱わない。quality gateはschema、UTC、interval、split、path、hash、license、timezone assumption、実測cadence、no-label leakageを検査し、既存synthetic gateとは分離する。モデルを比較するときは、同じ window、origin、horizon、target、hardware、metric の結果だけを比較する。今回の合成データ結果と MetroPT-3 の数値を直接比較しない。
 
 ## 研究・運用境界
 

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tyaro/banto-ai/schemas/public-split-manifest.schema.json",
+  "title": "banto-ai public chronological split manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "manifest_type", "dataset_id", "boundary_semantics", "sampling_interval_ms", "sample_count", "strategies"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "manifest_type": {"type": "string", "const": "public-split"},
+    "dataset_id": {"type": "string", "const": "metropt3-public-2020-02-21"},
+    "boundary_semantics": {"type": "string", "const": "[start,end)"},
+    "sampling_interval_ms": {"type": "integer", "const": 60000},
+    "sample_count": {"type": "integer", "const": 1440},
+    "strategies": {
+      "type": "array", "minItems": 1, "maxItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["strategy", "splits"],
+        "properties": {
+          "strategy": {"type": "string", "const": "chronological"},
+          "splits": {
+            "type": "array", "minItems": 3, "maxItems": 3,
+            "items": {"type": "object", "additionalProperties": false, "required": ["split_id", "start_timestamp", "end_timestamp", "record_count", "equipment_ids"], "properties": {"split_id": {"type": "string", "enum": ["train", "validation", "test"]}, "start_timestamp": {"type": "string", "minLength": 1}, "end_timestamp": {"type": "string", "minLength": 1}, "record_count": {"type": "integer", "minimum": 1}, "equipment_ids": {"type": "array", "minItems": 1, "maxItems": 1, "items": {"const": "metropt3-apu-01"}}}}
+          }
+        }
+      }
+    }
+  }
+}
