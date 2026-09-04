@@ -24,10 +24,8 @@ Banto ecosystem向けの時系列AIについて、次の価値を再現可能な
 - core runtimeの外部依存はゼロとし、現時点ではdependency lockを作成しない。最初の外部依存導入時に、model environmentごとのversion pin／lockを必須にする。
 - formatter／linterはPhase 0では導入せず、標準ライブラリの`compileall`を使う。最初のdevelopment dependency導入時にformatter／linterをversion pinし、lockへ固定する。
 - ドキュメントは日本語を基本とし、API名、model名、schema fieldは英語を使う。
-- Gitで管理するデータは合成データ、再配布可能な公開データ、安全な小型fixtureだけとする。
-- 公開データは、公式URL／DOI／licenseの確認、利用条件の受入れ、取得サイズ／SHA-256／archive member hashの固定を通ったものだけを研究入力候補とする。第一候補はUCI MetroPT-3、次候補はUCI hydraulic systemsとし、詳細な境界は[`docs/public-dataset-survey.md`](public-dataset-survey.md)と[`docs/adr-0005-public-dataset-boundary.md`](adr-0005-public-dataset-boundary.md)へ記録する。
-- 公開データのraw archiveとderived data本体はGitへ入れず、rawはrepository外のexternal cache、標準化datasetはgitignoredな`artifacts/public-datasets/<dataset-id>/`へ置く。MetroPT-3はsource pin、変換、Public-only quality gateまで完了したが、benchmark・model評価は未実施である。
-- 公開MetroPT-3の標準化dataset本体は `artifacts/public-datasets/<dataset-id>/` に生成しGit管理しない。source manifest、transform config、split／quality／fingerprint等のmetadataだけを追跡する。source timezoneは不明だが、`2020-02-21`の連続24時間を研究上UTCと解釈し、実timezoneを主張しない。
+- Gitで管理するのは、source manifest、transform config、schema、code、tests、docs、結果要約などの再現情報とし、生成されたobservations、split／dataset manifest、quality report、fingerprintはGit管理外とする。
+- 公開データは、公式URL／DOI／licenseの確認、利用条件の受入れ、取得サイズ／SHA-256／archive member hashの固定を通ったものだけを研究入力候補とする。第一候補はUCI MetroPT-3、次候補はUCI hydraulic systemsとし、raw archiveはrepository外のexternal cache、標準化dataset本体はgitignoredな`artifacts/public-datasets/<dataset-id>/`へ置く。MetroPT-3はsource pin、変換、Public-only quality gateまで完了したが、benchmark・model評価は未実施である。詳細な境界は[`docs/public-dataset-survey.md`](public-dataset-survey.md)と[`docs/adr-0005-public-dataset-boundary.md`](adr-0005-public-dataset-boundary.md)へ記録する。
 - MetroPT-3取込はone compressor、14 signals（`Caudal_impulses`除外）、60秒 `[start,end)`、output timestamp=bin end、analog mean／digital last、補間なしfail closed、`mode=unknown`、864/288/288 chronological splitを契約とする。Public-only quality gateは既存synthetic gateと分離する。
 - 最初のruntimeはPython sidecarとし、Banto Hubとはoffline exportから接続する。
 - forecastとanomaly detectionは共通interfaceの背後でmodelを交換できるようにする。
@@ -167,7 +165,7 @@ Chronos-2のseed `[17, 42]`×horizon `[1, 3]`×context `[6, 12]`の実model matr
 
 次の公開データ工程では、今回検証済みの標準化datasetに対してrolling benchmarkを実行します。取込は標準ライブラリのstreaming importerで`2020-02-21`の連続24時間候補を研究上UTCとして解釈し、60秒 `[start,end)` bin（analog mean／digital last、output timestamp=bin end）、one compressorの14 signals、`Caudal_impulses`除外、`mode=unknown`、864/288/288 chronological split、7つのdeterministic filesを固定済みです。未来actual、failure report、RULをknown-futureへ渡しません。取込とquality gateは完了済みですが、Chronos-2／TimesFM 3.0の公開実データ評価は未実施です。結果は[`docs/results/metropt3-import-2026-09-04.md`](results/metropt3-import-2026-09-04.md)に記録します。
 
-未実施はorigin拡大、公開実データ、missing／stale／regime／fault slice、known-future計画値対past-onlyの追加比較、校正拡張です。拡張した評価条件をclean savepointから再実行することも未実施です。今回のmatrixは2 seed・合成データ・CPUのみ・少数originの結果なので、Phase 2完了または`product-candidate`昇格の根拠にはせず、`commercial-evaluation`を継続します。
+未実施はorigin拡大、公開実データでのモデルbenchmark、missing／stale／regime／fault slice、known-future計画値対past-onlyの追加比較、校正拡張です。拡張した評価条件をclean savepointから再実行することも未実施です。今回のmatrixは2 seed・合成データ・CPUのみ・少数originの結果なので、Phase 2完了または`product-candidate`昇格の根拠にはせず、`commercial-evaluation`を継続します。
 
 #### 優先順位
 

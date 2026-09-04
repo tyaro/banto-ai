@@ -22,7 +22,7 @@ source pin は次の順序で行い、どれか一つでも不明なら fail clo
 1. 公式URL、DOI、ライセンス、帰属表示、変更表示、商用利用の可否を記録し、利用条件を明示的に受け入れる。
 2. 取得URL、source revision、verified_at、観測 byte size、SHA-256 を固定する。MetroPT-3は実取得アーカイブ **218,381,995 bytes**、SHA-256 **`aab991a970e58210de853bb8078ce0e63abb4d9412fdc5c79792dae3d8e1721a`** を確認済みとする。
 3. ZIP等の member name、member size、member hash を検証し、source manifestへ記録する。
-4. raw archive と大きな derived data は repository 外の external cache／artifact boundary に置く。Gitには metadata-only manifest、設定、品質結果、文書だけを置く。
+4. raw archive は repository 外の external cache に置き、標準化済み derived data は repository 内の Git 管理外 `artifacts/public-datasets/` に置く。Gitには source manifest、transform config、schema、code、tests、結果要約文書など再現情報だけを置く。
 
 MetroPT-3の source pin は実装済みで、実archiveを外部cacheからCLI検証済みである。検証結果は `status=cached_verified`、`verification_status=verified` とする。正本は [`datasets/manifests/metropt3-source.json`](../datasets/manifests/metropt3-source.json)、手順は [`tools/public-data/README.md`](../tools/public-data/README.md) と [`tools/public-data/prepare_metropt3.py`](../tools/public-data/prepare_metropt3.py) とする。この download／verify に続く標準化取込とPublic-only quality gateも実データで完了したが、benchmark、モデル評価は未実施である。結果は [`docs/results/metropt3-import-2026-09-04.md`](results/metropt3-import-2026-09-04.md) に記録する。
 

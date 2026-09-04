@@ -9,7 +9,7 @@
 - テストに必要な、顧客情報を含まない小さな fixture。
 - 観測値を埋め込まず、データを識別する metadata-only manifest。
 
-公開データを採用する場合も、Gitに置くのは source URL、DOI、license、source revision、verified_at、観測サイズ、SHA-256、アーカイブ member 情報、品質結果などの metadata に限る。raw archive はリポジトリ外の external cache、標準化済みdataset本体はGit管理外の `artifacts/public-datasets/<dataset-id>/` に置く。
+公開データを採用する場合も、Gitに置くのは source URL、DOI、license、source revision、verified_at、観測サイズ、SHA-256、アーカイブ member 情報、結果要約文書などの再現情報に限る。生成された quality report／fingerprint と raw archive、標準化済みdataset本体はGit管理外とし、raw archive はリポジトリ外の external cache、derived本体は `artifacts/public-datasets/<dataset-id>/` に置く。
 
 ## commit してはいけないもの
 
