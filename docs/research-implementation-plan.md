@@ -68,7 +68,7 @@ Banto ecosystem向けの時系列AIについて、次の価値を再現可能な
 | --- | ---: | --- | --- |
 | 0. 研究基盤 | 2～4日 | package、CI、manifest、license inventory、共通型 | synthetic fixtureで検証commandが再現し、非商用modelを識別できる |
 | 1. データとbaseline | 4～7日 | generator、split、quality check、naive／統計baseline | 同じseedで同じdataset／metricを再生成でき、leakage testが通る |
-| 2. Forecast候補比較 | 1～2週 | Chronos-2、TimesFM 3.0、Toto 4m／22m、TTM | 全modelを同じwindow、horizon、metric、hardware記録で比較できる |
+| 2. Forecast候補比較 | 1～2週 | Chronos-2、TimesFM 3.0、Toto 4m／22m、TTM sensitivity | 同一契約比較と、TTMのcontext=512／target-only別集計を混同せず記録できる |
 | 3. 異常検知 | 1～2週 | residual、robust rule、TSPulse、drift | event単位のprecision／recall、誤警報、lead timeを比較できる |
 | 4. Commissioning | 1～2週 | recipe、window選別、calibration、profile、rollback | held-out／shadow replayでcandidateをapprove／reject／inconclusive判定できる |
 | 5. Banto連携PoC | 1週 | offline export、read-only sidecar、degraded state | live制御なしでend-to-end replayし、入力欠落／timeoutを安全に処理できる |
@@ -158,6 +158,8 @@ Chronos-2は依存環境を分離し、外部cacheの固定revision、`model.saf
 初期rolling benchmarkも、60 samples×2 equipment、context 12、horizon 3、各equipment validation／test各2 originsで完走しました。past-only 6 modelsのChronos-2はaggregate MAE `0.20672198138554906`、WIS `0.1952207659517925`、known-future 7 modelsではMAE `0.1691488806622826`、WIS `0.15937026919725228`で1位でした。known-futureはorigin時点で本当に確定していた計画値を模したsynthetic scenarioであり、評価対象の実績値をoracleとして渡していません。target別には電流MAEでmoving-average、温度MAEでHolt linearが優位です。詳細は[`docs/results/chronos2-initial-evaluation-2026-09-04.md`](results/chronos2-initial-evaluation-2026-09-04.md)に記録します。
 
 Chronos-2のseed `[17, 42]`×horizon `[1, 3]`×context `[6, 12]`の実model matrixは、固定clean HEADから8/8 cells success／0 failureで完了しました。currentは4条件すべてmoving-averageがMAE首位、temperatureはWIS 4条件すべてChronos-2が首位でした。coverage／width、各cellの相対順位、warm latency、peak memoryは[`docs/results/chronos2-matrix-2026-09-04.md`](results/chronos2-matrix-2026-09-04.md)に記録しています。
+
+Toto 2.0 4Mは、`toto-2==2.0.0`／`toto-models==1.0.0`、固定HF revision、外部cache、offline／CPU／batch=1／`decode_block_size=None`の専用境界へ追加しました。MetroPT-3の既存context=120を変えず、patch_size=32のためadapter内で8点の未観測paddingを追加しeffective input length=128とします。全11 past-only covariatesをtargetと同時入力し、known-future／exogenousを拒否します。fake backend／tool／docs testsまでを実装範囲とし、実model download／数値benchmarkは未実施です。
 
 #### 公開データ source pin と次保存点
 
@@ -378,7 +380,7 @@ Issue 5は実装開始時に「異常検知」「commissioning profile」「Bant
 
 - clean checkoutから環境構築、データ生成、baseline評価を実行できる。
 - datasetとrun manifestがschema validationを通る。
-- seasonal-naive、Chronos-2、TimesFM 3.0、Toto 4mまたは22m、TTMのうち、利用可能な最低3系統を同じdatasetで比較できる。
+- seasonal-naive、Chronos-2、TimesFM 3.0、Toto 4mまたは22mのうち、利用可能な最低3系統を同じdatasetで比較できる。TTMはcontext／covariate契約が異なるため別sensitivity集計とする。
 - signal／mode／horizon別のaccuracy、calibration、latency、memory reportが生成される。
 - code licenseとweight licenseがreportに残り、TimesFM 3.0はresearch-onlyとして隔離される。
 - 顧客データ、credential、大型checkpointがGit履歴に含まれない。

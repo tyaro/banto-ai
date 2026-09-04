@@ -16,6 +16,15 @@ from .chronos2 import (
     OfficialChronos2Backend,
     validate_chronos2_license_manifest,
 )
+from .toto2 import (
+    BackendForecast as Toto2BackendForecast,
+    OfficialToto2Backend,
+    Toto2Adapter,
+    Toto2Backend,
+    Toto2Config,
+    Toto2UnavailableError,
+    validate_toto2_license_manifest,
+)
 
 __all__ = [
     "AdapterUnavailableError",
@@ -30,4 +39,11 @@ __all__ = [
     "Chronos2UnavailableError",
     "OfficialChronos2Backend",
     "validate_chronos2_license_manifest",
+    "Toto2BackendForecast",
+    "OfficialToto2Backend",
+    "Toto2Adapter",
+    "Toto2Backend",
+    "Toto2Config",
+    "Toto2UnavailableError",
+    "validate_toto2_license_manifest",
 ]

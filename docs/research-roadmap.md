@@ -14,7 +14,7 @@
 | --- | --- | --- |
 | 0 | 研究基盤と契約 | Python環境、データ方針、experiment／license manifest、共通interface、連携境界 |
 | 1 | 合成データとbaseline | 運転状態、fault、欠損、labelを持つgeneratorと、naive／古典baselineの再現性 |
-| 2 | Forecast model benchmark | TimesFM 3.0の評価済み結果を基準に、Chronos-2を商用候補として追加し、Toto、Granite TTM、自前／学習型baselineを同条件比較 |
+| 2 | Forecast model benchmark | TimesFM 3.0の評価済み結果を基準に、Chronos-2とTotoを同一契約へ追加し、Granite TTMは別sensitivity条件、自前／学習型baselineは別評価 |
 | 3 | 異常とドリフト | 統計方式、forecast residual、TSPulse、Riverのevent単位比較 |
 | 4 | 自前モデル研究 | 点予測・分位点予測を備えた小型multivariate Transformerとablation |
 | 5 | Commissioning auto-tuning | レシピ駆動のprofile candidate、shadow評価、人手承認gate |
@@ -25,7 +25,7 @@
 
 1. package、dataset／run／license manifest、共通interfaceを確立する。
 2. motor・conveyorに近い合成信号とnaive／統計baselineを作る。
-3. Chronos-2、TimesFM 3.0、Toto 2.0 4m／22m、Granite TTMを同じrunnerで測定する。
+3. Chronos-2、TimesFM 3.0、Toto 2.0 4m／22mを同じrunnerで測定し、Granite TTMはcontext=512／target-onlyの別sensitivity runnerで測定する。
 4. 統計anomaly、forecast residual、TSPulseをevent単位で比較する。
 5. benchmarkが安定してからmini-Transformerと対象データ学習型modelを実装する。
 6. commissioning校正をofflineとshadow modeで検証する。
@@ -33,6 +33,8 @@
 8. 承認済み結果を利用できる最小限のBanto Hub read-only adapterを定義する。
 
 ## 2026-09-04時点の進捗
+
+Toto 2.0 4Mは同じForecaster／MetroPT runnerへ実装接続しました。`toto-2==2.0.0`／`toto-models==1.0.0`、固定HF revision、外部cache、offline／CPU／batch=1／`decode_block_size=None`を使い、context=120はpatch_size=32に合わせて先頭8点の未観測paddingを内部追加します。fake backend／tool／docs testsまでを今回の範囲とし、実model benchmarkは未実施です。
 
 Phase 2の基盤として、chronological rolling-origin runnerへmodel registry注入境界、equipment／model単位のinstance再利用、origin単位のmulti-target request、past-only／known-future covariate境界、model別quantile policy、共通origin選択とprovenance記録を追加しました。result schema `0.2`にはmodel-target別およびmodel-equipment-target別metricsを追加し、unit一致を検証してから設備横断集約します。結果にはmodel別metrics、model別latency、OS process peakの測定源も記録します。TimesFM 3専用entrypointは、既存のlicense manifest、固定checkpoint revision、artifact hash、専用外部cache、offline環境を検証してから実行します。実行用sampleは[`examples/configs/benchmark-timesfm3-small.json`](../examples/configs/benchmark-timesfm3-small.json)です。
 

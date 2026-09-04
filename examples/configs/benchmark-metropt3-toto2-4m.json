@@ -1,0 +1,25 @@
+{
+  "schema_version": "0.1",
+  "run_id": "benchmark-metropt3-toto2-4m",
+  "dataset_path": "artifacts/public-datasets/metropt3-public-2020-02-21",
+  "output_dir": "artifacts/benchmark/benchmark-metropt3-toto2-4m",
+  "horizon": 15,
+  "context_length": 120,
+  "target_signal_ids": ["tp3", "oil_temperature", "motor_current"],
+  "equipment_ids": ["metropt3-apu-01"],
+  "past_only_covariate_ids": ["tp2", "h1", "dv_pressure", "reservoirs", "comp", "dv_electric", "towers", "mpg", "lps", "pressure_switch", "oil_level"],
+  "known_future_covariate_ids": [],
+  "validation_origin_stride": 15,
+  "test_origin_stride": 15,
+  "max_validation_origins": 16,
+  "max_test_origins": 16,
+  "quantiles": [0.1, 0.5, 0.9],
+  "models": [
+    {"name": "last-value"},
+    {"name": "seasonal-naive", "parameters": {"season_length": 60}},
+    {"name": "moving-average", "parameters": {"window": 15}},
+    {"name": "ewma", "parameters": {"alpha": 0.3}},
+    {"name": "holt-linear", "parameters": {"alpha": 0.8, "beta": 0.2}},
+    {"name": "toto2", "quantile_policy": "native", "parameters": {"checkpoint_revision": "8306a9801cf98c0f5ffe4b2dcc8f496e616d84d9", "batch_size": 1, "device": "cpu", "local_files_only": true, "patch_size": 32}}
+  ]
+}

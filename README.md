@@ -4,7 +4,7 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 このリポジトリは `banto-industrial` から意図的に分離しています。実験、評価プロトコル、モデル試作、連携契約を扱う研究用ワークスペースです。生産設備の制御動作は、Banto Hub と PLC／制御システムが引き続き担当します。
 
-現在の研究基盤には、外部依存ゼロの共通benchmark runner、統計baseline、モデル別の隔離実行環境があります。TimesFM 3.0は研究比較専用、Chronos-2は`commercial-evaluation`として、専用環境でCPU smoke、合成データ、MetroPT-3限定rolling-origin benchmarkを実行済みです。core runtimeへML依存は混入させていません。今回の結果は実設備一般の性能を示しません。
+現在の研究基盤には、外部依存ゼロの共通benchmark runner、統計baseline、モデル別の隔離実行環境があります。TimesFM 3.0は研究比較専用、Chronos-2は`commercial-evaluation`として、専用環境でCPU smoke、合成データ、MetroPT-3限定rolling-origin benchmarkを実行済みです。Toto 2.0 4Mも同じForecaster／MetroPT契約へ接続し、実model benchmark前のfake-backend／CPU smoke境界を追加しました。core runtimeへML依存は混入させていません。今回の結果は実設備一般の性能を示しません。
 
 ## 研究テーマ
 
@@ -43,6 +43,7 @@ docs/
   research-roadmap.md             長期的な研究フェーズと完了条件
   timesfm-notes.md                TimesFM 3.0評価プロトコル
   chronos2-notes.md               Chronos-2の隔離・評価契約
+  toto2-notes.md                  Toto 2.0 4Mの隔離・評価契約
   public-dataset-survey.md        公開産業時系列データの選定と取得境界
   results/                        実測結果（合成／研究専用）
   adr-0003-timesfm3-isolation.md  TimesFM 3.0の依存・実行隔離
@@ -61,6 +62,7 @@ experiments/
 environments/
   timesfm3/                    専用venv向け入力とpackage／checkpoint来歴
   chronos2/                    Python 3.14 CPU専用lockと固定証跡
+  toto2/                      Toto 2.0 4Mの専用lockと固定証跡
 models/
   mini-transformer/            小さく検証しやすい予測ベースライン
   industrial-tsfm/             産業向けモデルの研究
@@ -70,6 +72,7 @@ tools/
   safety_check.py             repository safety guard
   timesfm3/                   TimesFM 3のpreflight／準備／offline CPU smoke
   chronos2/                   Chronos-2のpreflight／準備／smoke／benchmark
+  toto2/                      Toto 2.0 4Mのpreflight／準備／offline CPU smoke／benchmark
   data-generator/              データ生成ユーティリティ
   evaluator/                   共通の評価指標とレポート
 ```
@@ -124,6 +127,8 @@ rolling-origin benchmarkの実測値は [`docs/results/timesfm3-rolling-benchmar
 複数seed／horizon／contextを反復するmatrix runnerを追加しました。seedはrun metadataだけでなくgenerator configへ反映し、seedごとにdatasetを一度生成・品質確認して各cellで再利用します。dataset fingerprintに加えて`observations.jsonl`自体のSHA-256を記録し、異seedで観測内容が同一なら停止します。出力の主集計は単位を分離した`by_model_target`のseed間cell-macro summaryであり、raw predictionのpooled metricではありません。base configのraw bytes hashと開始code revisionを固定し、cell終了時・matrix publish直前まで不変であることを検証します。これは評価範囲拡大の基盤で、Phase 2完了を意味しません。
 
 2 seeds×2 horizons×2 context lengthsの実TimesFM matrixは8 cellsすべて成功し、結果を [`docs/results/timesfm3-matrix-2026-09-04.md`](docs/results/timesfm3-matrix-2026-09-04.md) に記録しました。TimesFM 3.0は温度の4条件でMAE最良でしたが、電流では4条件ともmoving-average等に劣りました。2 seeds・少数originのcell-macroであり、Phase 2完了や製品採用の根拠にはしません。MetroPT-3同一契約比較は完了済みで、次はseed／origin／条件の拡大、cold／warmとモデル単独resourceの分離、欠損・regime・fault slice、ライセンス適合候補との同一契約比較です。
+
+Toto 2.0 4M は [`tools/toto2/README.md`](tools/toto2/README.md) の専用環境・外部cacheから実行します。MetroPT-3のcontext=120、horizon=15、target 3、past-only covariate 11は変更せず、adapter内の先頭8点paddingだけでpatch_size=32のeffective input length=128へ揃えます。Totoのknown-future／exogenous requestは拒否し、実model downloadと数値benchmarkは未実施です。
 
 Phase 0の実行確認は、外部依存を導入せず `python tools/smoke.py` と `python tools/safety_check.py` で行えます。Phase 1の最小generatorは次で実行できます。
 

@@ -22,7 +22,7 @@
 | 学習型baseline | NeuralForecast | N-HiTS、PatchTST、TFT、iTransformerなどを同じ評価系で比較 |
 | online適応 | River | drift検知、逐次統計、閾値・profile更新を担当。大型TSFMの逐次再学習には使わない |
 
-最初の比較対象は `seasonal-naive + Chronos-2 + TimesFM 3.0 + Toto 2.0 4m／22m + Granite TTM R2` とします。異常検知では `予測残差 + robust統計 + TSPulse` を比較します。
+最初の同一契約比較対象は `seasonal-naive + Chronos-2 + TimesFM 3.0 + Toto 2.0 4m` とします。Granite TTM R2はcontext／covariate契約が異なるため、別のsensitivity runとして扱います。異常検知では `予測残差 + robust統計 + TSPulse` を比較します。
 
 ## 3. Banto側の要求
 
@@ -59,7 +59,7 @@ Banto Hubが100 ms間隔で収集できても、すべてのraw tagを100 msご�
 | TimesFM 2.5 | zero-shot予測 | 200M + optional head | 基本は系列単位 | XReg | optional quantile head | Apache-2.0 | TimesFM系の商用可能fallback候補 |
 | Chronos-2 | zero-shot汎用予測 | 120M encoder-only | native | 過去／既知未来 | native quantile | package／code／weights Apache-2.0 | TimesFM 3.0評価後のcommercial-evaluation候補 |
 | Toto 2.0 | observability予測 | 4M～2.5B | native | 2.0では未対応 | quantile head | Apache-2.0 | 4M／22Mをedge候補として評価 |
-| Granite TTM R2 | 小型予測・fine-tuning | 約0.8～1M級 | zero-shot／fine-tuning | 対応 | 主に点予測 | Apache-2.0 | 設備別校正・CPU推論候補 |
+| Granite TTM R2 | 小型予測・fine-tuning | 約0.8～1M級 | zero-shot／fine-tuning | zero-shotのpast-only活用は別契約 | native quantileなし・主に点予測 | Apache-2.0 | context=512／target-only sensitivity候補 |
 | Granite TSPulse R1 | 異常・補完・分類 | 約1M | 対応 | タスク依存 | forecast modelではない | Apache-2.0 | 異常検知の第一候補 |
 | MOMENT-1 | 汎用表現 | model variant依存 | 対応 | 限定的 | task依存 | MIT | 研究用の汎用比較候補 |
 | Moirai 2.0 small | zero-shot予測 | 11.4M | common adapterで要確認 | common adapterで要確認 | quantile loss | CC-BY-NC-4.0 | 非商用比較のみ |
@@ -104,15 +104,15 @@ Bantoでは、TimesFM 3.0に近い機能を商用利用可能な条件で比較�
 
 ### 5.4 Toto 2.0
 
-Toto 2.0はobservability metricsを主対象とし、time attentionとvariate attentionを交互に使うmultivariate modelです。4M、22M、313M、1B、2.5Bがあり、quantile headと高次元series対応を持ちます。
+Toto 2.0はobservability metricsを主対象とし、time attentionとvariate attentionを交互に使うmultivariate modelです。4M、22M、313M、1B、2.5Bがあり、quantile headと高次元series対応を持ちます。今回の初回実装対象はCPU向け4Mだけです。
 
-Bantoの多数tagを扱う用途と相性が期待できます。最初は4Mと22Mだけを比較し、大型版は小型版に明確な価値が確認できた場合に限定します。現行2.0はfine-tuningとexogenous variableに未対応であり、それらが必要な実験ではToto 1.0または別候補を使います。公式要件はPython 3.12+、PyTorch 2.5+で、最適性能にはCUDA-capable deviceが推奨されています。
+Bantoの多数tagを扱う用途と相性が期待できます。現行2.0はfine-tuningとexogenous variableに未対応であり、それらが必要な実験ではToto 1.0または別候補を使います。公式要件はPython 3.12+、PyTorch 2.5+で、最適性能にはCUDA-capable deviceが推奨されています。初回adapterは`toto-2==2.0.0`／`toto-models==1.0.0`、HF 4M固定revision、native p10／p50／p90、commercial-evaluationに固定します。
 
 ### 5.5 Granite TTM R2
 
-Tiny Time Mixersは約1M parameterからの小型pretrained forecasting modelで、zero-shot、few-shot／fine-tuning、multivariate channel mixing、exogenous／control variableを扱えます。CPU-only machineやlaptopでの実行を想定できる点が強みです。
+Tiny Time Mixersは約1M parameterからの小型pretrained forecasting modelで、zero-shot、few-shot／fine-tuning、multivariate channel mixing、exogenous／control variableを扱えます。現行 package は `granite-tsfm==0.3.9`（Python >=3.11,<3.14、Apache-2.0）です。R2.1には context 52／90／180／360／512 系があり、context=120／horizon=15の標準get_modelは `90-30-ft-r2.1`（revision `6e5cb8ee51e0634a45637490f5db43148b2fa6be`）を選び実効context=90となるため、現行MetroPT-3の120点同一契約ではありません。zero-shotではpast-only covariatesをTimesFM／Chronosと同じ意味で利用できず、native quantileもありません。
 
-ただし、R2の主対象は分～時間粒度、R2.1で日～週粒度です。Bantoの1秒以下の信号にそのまま適合する保証はありません。1秒、5秒、10秒、1分へresampleした比較と、設備別fine-tuningの効果を確認します。主にpoint forecast用途のため、必要ならconformal calibration等を別レイヤーで評価します。
+短い系列へのzero prependは公式cardが非推奨であり、180モデルへ左zero paddingして120点契約を合わせる方式は採用しません。次候補はcontext=512／horizon=15、`512-48-ft-r2.1`（revision `b972f0c22190b7502764526004d16e2b4ed39e8c`）のtarget-only／covariate-ablated sensitivity runです。これは標準同一契約benchmarkとは別集計にします。Bantoの1秒以下の信号にそのまま適合する保証もないため、resampleと設備別fine-tuningの効果は別途検証します。
 
 ### 5.6 Granite TSPulse R1
 

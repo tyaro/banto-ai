@@ -1,0 +1,3 @@
+toto-2==2.0.0
+toto-models==1.0.0
+# PyTorch CPU wheel selection is platform-specific; the lock records the resolved Windows CPU environment.
