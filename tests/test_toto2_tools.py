@@ -168,9 +168,10 @@ class Toto2ToolTests(unittest.TestCase):
         self.assertEqual(set(summary["regime_coverage"].values()), {80})
         self.assertEqual(summary["event_coverage"]["stuck_value"], 1)
         self.assertEqual(
-            {event_type: count for event_type, count in summary["event_coverage"].items() if event_type != "stuck_value"},
+            {event_type: count for event_type, count in summary["event_coverage"].items() if event_type not in ("stuck_value", "stale_value")},
             {"sensor_drift": 2, "spike": 2, "dropout": 2, "overheating_trend": 2, "jam_or_slip": 2},
         )
+        self.assertEqual(summary["event_coverage"]["stale_value"], 0)
         expected_origins = {
             ("validation", 15): (288, 363),
             ("validation", 30): (288, 348),

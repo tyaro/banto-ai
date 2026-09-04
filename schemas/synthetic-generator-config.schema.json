@@ -45,7 +45,7 @@
         "required": ["event_id", "event_type", "equipment_id", "start_sample", "end_sample", "enabled"],
         "properties": {
           "event_id": {"type": "string", "minLength": 1},
-          "event_type": {"type": "string", "enum": ["sensor_drift", "spike", "dropout", "overheating_trend", "jam_or_slip", "stuck_value"]},
+          "event_type": {"type": "string", "enum": ["sensor_drift", "spike", "dropout", "overheating_trend", "jam_or_slip", "stuck_value", "stale_value"]},
           "equipment_id": {"type": "string", "minLength": 1},
           "signal_id": {"type": "string", "minLength": 1},
           "start_sample": {"type": "integer", "minimum": 0},

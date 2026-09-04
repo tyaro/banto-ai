@@ -216,6 +216,7 @@ class OfficialToto2Backend:
 class _PreparedInput:
     variates: tuple[tuple[float, ...], ...]
     observed_mask: tuple[tuple[bool, ...], ...]
+    has_missing_values: bool
     target_count: int
     last_timestamp: datetime
     interval_ms: int
@@ -252,7 +253,7 @@ class Toto2Adapter(Forecaster):
                 prepared.observed_mask,
                 request.horizon,
                 decode_block_size=None,
-                has_missing_values=bool(prepared.padding_left),
+                has_missing_values=prepared.has_missing_values,
             )
         except Toto2UnavailableError:
             raise
@@ -291,11 +292,25 @@ class Toto2Adapter(Forecaster):
 
     @staticmethod
     def _validate_points(series: TimeSeries, label: str) -> None:
-        if any(point.quality_status != QualityStatus.OK or point.value is None or not _is_finite_real(point.value) for point in series.points):
-            raise ValueError(f"all {label} values must be finite int/float values with OK quality")
+        for point in series.points:
+            try:
+                status = QualityStatus(point.quality_status)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"{label} values have an unsupported quality status") from exc
+            if status == QualityStatus.MISSING:
+                if point.value is not None:
+                    raise ValueError(f"{label} missing values must be null")
+            elif status in (QualityStatus.OK, QualityStatus.STALE):
+                if point.value is None or not _is_finite_real(point.value):
+                    raise ValueError(f"{label} {status.value} values must be finite int/float values")
+            else:
+                raise ValueError(f"{label} values have an unsupported quality status")
         interval = timedelta(milliseconds=series.metadata.sampling_interval_ms)
-        if any(current.timestamp - previous.timestamp != interval for previous, current in zip(series.points, series.points[1:])):
-            raise ValueError(f"all {label} timestamps must match sampling_interval_ms")
+        for previous, current in zip(series.points, series.points[1:]):
+            if current.timestamp <= previous.timestamp:
+                raise ValueError(f"all {label} timestamps must be strictly increasing")
+            if current.timestamp - previous.timestamp != interval:
+                raise ValueError(f"all {label} timestamps must match sampling_interval_ms")
 
     def _prepare(self, request: ForecastRequest) -> _PreparedInput:
         contexts = {series.metadata.signal_id: series for series in request.contexts}
@@ -321,11 +336,16 @@ class Toto2Adapter(Forecaster):
         ordered_ids = (*request.target_signal_ids, *(series.metadata.signal_id for series in request.contexts if series.metadata.signal_id not in request.target_signal_ids))
         variates = []
         masks = []
+        has_missing_values = bool(padding_left)
         for signal_id in ordered_ids:
-            values = tuple(float(point.value) for point in contexts[signal_id].points)
+            points = contexts[signal_id].points
+            statuses = tuple(QualityStatus(point.quality_status) for point in points)
+            values = tuple(0.0 if status in (QualityStatus.MISSING, QualityStatus.STALE) else float(point.value) for point, status in zip(points, statuses))
+            observed = tuple(status == QualityStatus.OK for status in statuses)
+            has_missing_values = has_missing_values or any(not item for item in observed)
             variates.append((0.0,) * padding_left + values)
-            masks.append((False,) * padding_left + (True,) * context_length)
-        return _PreparedInput(tuple(variates), tuple(masks), len(request.target_signal_ids), timestamps[-1], interval_ms, padding_left)
+            masks.append((False,) * padding_left + observed)
+        return _PreparedInput(tuple(variates), tuple(masks), has_missing_values, len(request.target_signal_ids), timestamps[-1], interval_ms, padding_left)
 
     def _load_official_backend(self) -> Toto2Backend:
         try:

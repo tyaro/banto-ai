@@ -27,7 +27,7 @@ from .generator import (
 )
 from .manifest import load_json, validate_manifest
 
-QUALITY_STATUSES = frozenset({"ok", "missing"})
+QUALITY_STATUSES = frozenset({"ok", "missing", "stale"})
 OBSERVATION_KEYS = frozenset({"timestamp", "equipment_id", "equipment_type", "operating_mode", "recipe_step", "signals", "quality"})
 SIGNAL_KEYS = frozenset({"unit", "value"})
 EVENT_KEYS = frozenset({"event_id", "event_type", "equipment_id", "signal_id", "start_timestamp", "end_timestamp", "boundary_semantics", "magnitude", "description"})
@@ -162,12 +162,14 @@ def _check_observations(rows: list[dict[str, Any]], dataset: dict[str, Any]) -> 
             if catalog_item is None or not isinstance(payload, dict) or set(payload) != SIGNAL_KEYS or payload["unit"] != catalog_item["unit"]:
                 raise DatasetQualityError(f"unit or signal payload mismatch for {equipment_id}.{signal_id}")
             status = quality[signal_id]
-            if status not in QUALITY_STATUSES:
+            if not isinstance(status, str) or status not in QUALITY_STATUSES:
                 raise DatasetQualityError(f"unknown quality status: {status!r}")
             value = payload["value"]
             if value is not None and (not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value)):
                 raise DatasetQualityError(f"non-finite value for {equipment_id}.{signal_id}")
-            if (value is None) != (status == "missing"):
+            if status == "missing" and value is not None:
+                raise DatasetQualityError(f"missing quality requires null value for {equipment_id}.{signal_id}")
+            if status in ("ok", "stale") and value is None:
                 raise DatasetQualityError(f"value/quality mismatch for {equipment_id}.{signal_id}")
     if not rows or any(not timestamps for timestamps in per_equipment.values()):
         raise DatasetQualityError("observations must contain every manifest equipment")

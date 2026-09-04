@@ -23,11 +23,11 @@ FINGERPRINT_KEYS = frozenset({"algorithm", "canonicalization", "dataset_fingerpr
 SUMMARY_SCHEMA_VERSION = "0.1"
 SUMMARY_TYPE = "synthetic-generation"
 SUMMARY_KEYS = frozenset({"schema_version", "summary_type", "dataset_id", "generator_version", "seed", "sample_count_per_equipment", "equipment_count", "observation_record_count", "configured_event_count", "disabled_event_count", "event_count", "regime_coverage", "event_coverage", "dataset_fingerprint"})
-EVENT_TYPES = ("sensor_drift", "spike", "dropout", "overheating_trend", "jam_or_slip", "stuck_value")
+EVENT_TYPES = ("sensor_drift", "spike", "dropout", "overheating_trend", "jam_or_slip", "stuck_value", "stale_value")
 REGIMES = ("stopped", "startup", "low_speed", "nominal", "high_load", "cooldown")
 LABELS = ("operating_mode", "recipe_step")
-DEFAULT_EVENT_MAGNITUDES = {"sensor_drift": 1.0, "spike": 4.0, "dropout": 0.0, "overheating_trend": 12.0, "jam_or_slip": 0.45, "stuck_value": 0.0}
-DEFAULT_EVENT_SIGNALS = {"sensor_drift": "motor_current", "spike": "vibration_feature", "dropout": "motor_temperature", "overheating_trend": "motor_temperature", "jam_or_slip": "conveyor_speed", "stuck_value": "load_proxy"}
+DEFAULT_EVENT_MAGNITUDES = {"sensor_drift": 1.0, "spike": 4.0, "dropout": 0.0, "overheating_trend": 12.0, "jam_or_slip": 0.45, "stuck_value": 0.0, "stale_value": 0.0}
+DEFAULT_EVENT_SIGNALS = {"sensor_drift": "motor_current", "spike": "vibration_feature", "dropout": "motor_temperature", "overheating_trend": "motor_temperature", "jam_or_slip": "conveyor_speed", "stuck_value": "load_proxy", "stale_value": "load_proxy"}
 SIGNALS = {
     "motor_current": ("motor current", "A", "target"),
     "motor_temperature": ("motor temperature", "degC", "target"),
@@ -179,7 +179,7 @@ def _apply_event(values: dict[str, float | None], event: dict[str, Any], index: 
             changed[signal_id] = max(0.0, float(changed[signal_id]) * max(0.0, 1.0 - magnitude))
         changed["load_proxy"] = min(100.0, float(changed["load_proxy"] or 0.0) + abs(magnitude) * 35.0)
         changed["vibration_feature"] = float(changed["vibration_feature"] or 0.0) + abs(magnitude) * 2.0
-    elif event_type == "stuck_value":
+    elif event_type in ("stuck_value", "stale_value"):
         key = f"{event['event_id']}:{signal_id}"
         stuck.setdefault(key, float(changed[signal_id] or 0.0))
         changed[signal_id] = stuck[key]
@@ -248,8 +248,12 @@ def generate_synthetic(config_path: Path, output: str | Path | None, root: Path)
                     if event["equipment_id"] != item["equipment_id"]:
                         continue
                     output_values, event_id = _apply_event(output_values, event, index, stuck)
-                    if event_id and event["event_type"] == "dropout":
-                        qualities[event.get("signal_id") or "motor_temperature"] = "missing"
+                    if event_id:
+                        signal_id = event_signal(event)
+                        if event["event_type"] == "dropout":
+                            qualities[signal_id] = "missing"
+                        elif event["event_type"] == "stale_value":
+                            qualities[signal_id] = "stale"
                 signals = {signal_id: {"unit": _unit(item["equipment_type"], signal_id), "value": None if value is None else _finite(float(value))} for signal_id, value in output_values.items()}
                 observations.append({"timestamp": _iso(timestamp), "equipment_id": item["equipment_id"], "equipment_type": item["equipment_type"], "operating_mode": regime["regime"], "recipe_step": regime.get("recipe_step", regime["regime"]), "signals": signals, "quality": qualities})
         for event in active_events:

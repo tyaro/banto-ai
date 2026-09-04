@@ -77,8 +77,59 @@ class Toto2AdapterTests(unittest.TestCase):
             Toto2Adapter(MANIFEST, backend=FakeBackend()).forecast(self.request((target,), future=(future,)))
         with self.assertRaises(ValueError):
             Toto2Adapter(MANIFEST, backend=FakeBackend()).forecast(self.request((self.series("a", tuple(range(31))),)))
+
+    def test_missing_and_stale_contexts_use_zero_values_and_target_mask(self):
+        backend = FakeBackend()
+        target_values = [float(i) for i in range(64)]
+        target = self.series("a", target_values)
+        target_points = list(target.points)
+        target_points[7] = SignalPoint(target_points[7].timestamp, 999.0, QualityStatus.STALE)
+        target_points[8] = SignalPoint(target_points[8].timestamp, None, QualityStatus.MISSING)
+        target = TimeSeries(target.metadata, tuple(target_points))
+        covariate_values = [float(i + 1) for i in range(64)]
+        covariate = self.series("b", covariate_values, role="covariate")
+        covariate_points = list(covariate.points)
+        covariate_points[9] = SignalPoint(covariate_points[9].timestamp, 777.0, QualityStatus.STALE)
+        covariate = TimeSeries(covariate.metadata, tuple(covariate_points))
+        Toto2Adapter(MANIFEST, backend=backend).forecast(self.request((covariate, target)))
+        variates, masks, _, kwargs = backend.calls[0]
+        self.assertEqual(variates[0][7:10], (0.0, 0.0, 9.0))
+        self.assertEqual(masks[0][7:10], (False, False, True))
+        self.assertEqual(variates[1][7:10], (8.0, 9.0, 0.0))
+        self.assertEqual(masks[1][7:10], (True, True, False))
+        self.assertEqual(kwargs, {"decode_block_size": None, "has_missing_values": True})
+
+    def test_clean_divisible_context_keeps_observed_values_and_disables_missing_flag(self):
+        backend = FakeBackend()
+        target = self.series("a", tuple(float(i) for i in range(64)))
+        Toto2Adapter(MANIFEST, backend=backend).forecast(self.request((target,)))
+        variates, masks, _, kwargs = backend.calls[0]
+        self.assertEqual(variates[0], tuple(float(i) for i in range(64)))
+        self.assertEqual(masks[0], (True,) * 64)
+        self.assertEqual(kwargs, {"decode_block_size": None, "has_missing_values": False})
+
+    def test_invalid_quality_and_value_combinations_fail_closed(self):
+        cases = (
+            (QualityStatus.MISSING, 1.0),
+            (QualityStatus.STALE, None),
+            (QualityStatus.INVALID, 1.0),
+        )
+        for quality, value in cases:
+            with self.subTest(quality=quality, value=value):
+                target = self.series("a", tuple(float(i) for i in range(64)))
+                points = list(target.points)
+                points[3] = SignalPoint(points[3].timestamp, value, quality)
+                invalid = TimeSeries(target.metadata, tuple(points))
+                with self.assertRaises(ValueError):
+                    Toto2Adapter(MANIFEST, backend=FakeBackend()).forecast(self.request((invalid,)))
+
+    def test_out_of_order_context_is_rejected(self):
+        metadata = SignalMetadata("a", "a", "unit", 1000, "target")
         with self.assertRaises(ValueError):
-            Toto2Adapter(MANIFEST, backend=FakeBackend()).forecast(self.request((self.series("a", tuple(range(120)), quality=QualityStatus.MISSING),)))
+            TimeSeries(metadata, (
+                SignalPoint(self.start + timedelta(seconds=1), 1.0),
+                SignalPoint(self.start, 2.0),
+            ))
 
     def test_crossing_and_config_are_rejected(self):
         target = self.series("a", tuple(float(i) for i in range(120)))
@@ -131,10 +182,12 @@ class OfficialToto2BackendTests(unittest.TestCase):
                 self.call = (inputs, kwargs)
                 return Tensor([[[[float(q + v + h) for h in range(2)] for v in range(2)]] for q in range(9)])
         model = Model(); backend = OfficialToto2Backend(model, Torch())
-        output = backend.forecast(((1.0, 2.0), (3.0, 4.0)), ((True, True), (True, True)), 2, decode_block_size=None, has_missing_values=False)
+        output = backend.forecast(((1.0, 2.0), (3.0, 4.0)), ((True, True), (True, False)), 2, decode_block_size=None, has_missing_values=True)
         self.assertEqual(len(output.quantile_forecast), 9)
         self.assertEqual(output.quantile_forecast[4], [[4.0, 5.0], [5.0, 6.0]])
-        self.assertEqual(model.call[1], {"horizon": 2, "decode_block_size": None, "has_missing_values": False})
+        self.assertEqual(model.call[0]["target"].value, [((1.0, 2.0), (3.0, 4.0))])
+        self.assertEqual(model.call[0]["target_mask"].value, [((True, True), (True, False))])
+        self.assertEqual(model.call[1], {"horizon": 2, "decode_block_size": None, "has_missing_values": True})
 
 
 if __name__ == "__main__":

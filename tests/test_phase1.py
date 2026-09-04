@@ -55,7 +55,8 @@ class Phase1GeneratorTests(unittest.TestCase):
             summary = load_json(output / "summary.json")
             self.assertEqual(summary["equipment_count"], 2)
             self.assertEqual(summary["event_count"], 6)
-            self.assertEqual(set(summary["event_coverage"]), {"sensor_drift", "spike", "dropout", "overheating_trend", "jam_or_slip", "stuck_value"})
+            self.assertEqual(set(summary["event_coverage"]), {"sensor_drift", "spike", "dropout", "overheating_trend", "jam_or_slip", "stuck_value", "stale_value"})
+            self.assertEqual(summary["event_coverage"]["stale_value"], 0)
             self.assertNotIn("event_type", json.loads((output / "observations.jsonl").read_text(encoding="utf-8").splitlines()[0]))
             self.assertTrue(json.loads((output / "events.jsonl").read_text(encoding="utf-8").splitlines()[0])["event_id"])
 
@@ -81,6 +82,82 @@ class Phase1GeneratorTests(unittest.TestCase):
             for index in (46, 47):
                 self.assertAlmostEqual(with_rows[index]["signals"]["vibration_feature"]["value"] - without_rows[index]["signals"]["vibration_feature"]["value"], 4.0)
             self.assertEqual(with_rows[48]["signals"]["vibration_feature"], without_rows[48]["signals"]["vibration_feature"])
+
+    def test_stale_value_event_is_fixed_stale_and_fingerprinted(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            value = load_json(CONFIG)
+            value["dataset_id"] = "synthetic-stale-value"
+            value["events"].append({
+                "event_id": "motor-01-load-stale",
+                "event_type": "stale_value",
+                "equipment_id": "motor-01",
+                "signal_id": "load_proxy",
+                "start_sample": 50,
+                "end_sample": 54,
+                "enabled": True,
+            })
+            config = root / "stale-value.json"
+            config.write_text(json.dumps(value), encoding="utf-8")
+            validate_manifest(config, ROOT / "schemas" / "synthetic-generator-config.schema.json")
+            output = generate_synthetic(config, root / "dataset", ROOT)
+            self.assertEqual(check_dataset(output, ROOT)["status"], "pass")
+            rows = [json.loads(line) for line in (output / "observations.jsonl").read_text(encoding="utf-8").splitlines()]
+            motor_rows = [row for row in rows if row["equipment_id"] == "motor-01"]
+            stale_rows = motor_rows[50:54]
+            stale_values = [row["signals"]["load_proxy"]["value"] for row in stale_rows]
+            self.assertEqual(len(set(stale_values)), 1)
+            self.assertTrue(all(row["quality"]["load_proxy"] == "stale" for row in stale_rows))
+            self.assertTrue(all(value is not None for value in stale_values))
+            events = [json.loads(line) for line in (output / "events.jsonl").read_text(encoding="utf-8").splitlines()]
+            stale_event = next(event for event in events if event["event_id"] == "motor-01-load-stale")
+            self.assertEqual(stale_event["event_type"], "stale_value")
+            summary = load_json(output / "summary.json")
+            self.assertEqual(summary["event_coverage"]["stale_value"], 1)
+            fingerprint = load_json(output / "fingerprint.json")
+            self.assertEqual(fingerprint["files"]["events.jsonl"], hashlib.sha256((output / "events.jsonl").read_bytes()).hexdigest())
+            conveyor_rows = [row for row in rows if row["equipment_id"] == "conveyor-01"]
+            stuck_rows = conveyor_rows[49:55]
+            self.assertEqual(len({row["signals"]["load_proxy"]["value"] for row in stuck_rows}), 1)
+            self.assertTrue(all(row["quality"]["load_proxy"] == "ok" for row in stuck_rows))
+            dropout_row = next(row for row in rows if row["equipment_id"] == "conveyor-01" and row["signals"]["motor_temperature"]["value"] is None)
+            self.assertEqual(dropout_row["quality"]["motor_temperature"], "missing")
+
+    def test_quality_gate_rejects_stale_null_and_ok_null_but_accepts_finite_stale(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            value = load_json(CONFIG)
+            value["dataset_id"] = "synthetic-stale-quality"
+            value["events"].append({
+                "event_id": "motor-01-load-stale",
+                "event_type": "stale_value",
+                "equipment_id": "motor-01",
+                "signal_id": "load_proxy",
+                "start_sample": 50,
+                "end_sample": 54,
+                "enabled": True,
+            })
+            config = root = Path(directory) / "stale-quality.json"
+            config.write_text(json.dumps(value), encoding="utf-8")
+            output = generate_synthetic(config, root.parent / "dataset", ROOT)
+            self.assertEqual(check_dataset(output, ROOT)["status"], "pass")
+            observation_path = output / "observations.jsonl"
+            rows = [json.loads(line) for line in observation_path.read_text(encoding="utf-8").splitlines()]
+            stale = next(row for row in rows if row["equipment_id"] == "motor-01" and row["quality"]["load_proxy"] == "stale")
+            stale["signals"]["load_proxy"]["value"] = None
+            observation_path.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+            with self.assertRaises(DatasetQualityError):
+                check_dataset(output, ROOT)
+            clean_config = Path(directory) / "ok-null.json"
+            clean_value = load_json(CONFIG)
+            clean_value["dataset_id"] = "synthetic-ok-null"
+            clean_config.write_text(json.dumps(clean_value), encoding="utf-8")
+            clean_output = generate_synthetic(clean_config, Path(directory) / "ok-null-dataset", ROOT)
+            clean_observation_path = clean_output / "observations.jsonl"
+            clean_rows = [json.loads(line) for line in clean_observation_path.read_text(encoding="utf-8").splitlines()]
+            clean_rows[0]["signals"]["load_proxy"]["value"] = None
+            clean_observation_path.write_text("\n".join(json.dumps(row) for row in clean_rows) + "\n", encoding="utf-8")
+            with self.assertRaises(DatasetQualityError):
+                check_dataset(clean_output, ROOT)
 
     def test_disabled_event_with_unknown_signal_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
