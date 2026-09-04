@@ -192,7 +192,7 @@ class Toto2ToolTests(unittest.TestCase):
                                     self.assertIsNotNone(row["signals"][signal_id]["value"])
 
     def test_matrix_wrapper_reuses_single_run_guards_and_shared_factory(self):
-        matrix_config = "examples/configs/benchmark-matrix-toto2-small.json"
+        matrix_config = Path("examples/configs/benchmark-matrix-toto2-small.json")
         with tempfile.TemporaryDirectory() as cache_dir:
             captured = {}
             shared_factory = lambda _equipment_id, _parameters: object()
@@ -237,7 +237,9 @@ class Toto2ToolTests(unittest.TestCase):
             load_license.assert_called_once_with(run_matrix.MANIFEST_PATH)
             verify_checkpoint.assert_called_once_with(Path(cache_dir))
             verify_package.assert_called_once_with()
-            make_factory.assert_called_once()
+            make_factory.assert_called_once_with(
+                {"allowed_use": "commercial-evaluation"}, Path(cache_dir)
+            )
             self.assertEqual(os.environ.get("HF_HUB_OFFLINE"), original["HF_HUB_OFFLINE"])
             self.assertEqual(os.environ.get("HF_HOME"), original["HF_HOME"])
 
@@ -282,6 +284,111 @@ class Toto2ToolTests(unittest.TestCase):
                 with self.assertRaises(MatrixError):
                     run_matrix.run_toto2_matrix(matrix_path.relative_to(ROOT), ROOT, Path("C:/outside/cache"))
             external_cache.assert_not_called()
+
+    def test_matrix_wrapper_rejects_invalid_inputs_before_external_cache_table(self):
+        base_matrix = load_json(ROOT / "examples/configs/benchmark-matrix-toto2-small.json")
+        base_benchmark = load_json(ROOT / base_matrix["benchmark_config_path"])
+        artifacts = ROOT / "artifacts"
+        artifacts.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=artifacts) as directory:
+            control = Path(directory)
+            cases = []
+
+            cases.append(
+                (
+                    "absolute config path",
+                    ROOT / "examples/configs/benchmark-matrix-toto2-small.json",
+                )
+            )
+            for label, field, value in (
+                ("generator traversal", "generator_config_path", "../outside.json"),
+                ("generator backslash", "generator_config_path", "examples\\configs\\synthetic-motor-toto2-matrix.json"),
+                ("benchmark drive path", "benchmark_config_path", "C:/outside.json"),
+                ("matrix output traversal", "matrix_output_dir", "../outside"),
+            ):
+                invalid_matrix = dict(base_matrix)
+                invalid_matrix[field] = value
+                path = control / f"{label.replace(' ', '-')}.json"
+                path.write_text(json.dumps(invalid_matrix), encoding="utf-8")
+                cases.append((label, path))
+
+            model_cases = (
+                ("model missing", lambda benchmark: benchmark.update(models=[])),
+                (
+                    "model duplicate",
+                    lambda benchmark: benchmark["models"].append(
+                        dict(next(model for model in benchmark["models"] if model["name"] == "toto2"))
+                    ),
+                ),
+                (
+                    "non-native policy",
+                    lambda benchmark: next(model for model in benchmark["models"] if model["name"] == "toto2").update(
+                        quantile_policy="validation-residual-by-lead"
+                    ),
+                ),
+                (
+                    "revision mismatch",
+                    lambda benchmark: next(model for model in benchmark["models"] if model["name"] == "toto2")["parameters"].update(
+                        checkpoint_revision="0" * 40
+                    ),
+                ),
+                (
+                    "device mismatch",
+                    lambda benchmark: next(model for model in benchmark["models"] if model["name"] == "toto2")["parameters"].update(
+                        device="cuda"
+                    ),
+                ),
+                (
+                    "batch mismatch",
+                    lambda benchmark: next(model for model in benchmark["models"] if model["name"] == "toto2")["parameters"].update(
+                        batch_size=2
+                    ),
+                ),
+                (
+                    "batch bool",
+                    lambda benchmark: next(model for model in benchmark["models"] if model["name"] == "toto2")["parameters"].update(
+                        batch_size=True
+                    ),
+                ),
+                (
+                    "local files disabled",
+                    lambda benchmark: next(model for model in benchmark["models"] if model["name"] == "toto2")["parameters"].update(
+                        local_files_only=False
+                    ),
+                ),
+                (
+                    "patch mismatch",
+                    lambda benchmark: next(model for model in benchmark["models"] if model["name"] == "toto2")["parameters"].update(
+                        patch_size=16
+                    ),
+                ),
+            )
+            for label, mutate in model_cases:
+                benchmark = json.loads(json.dumps(base_benchmark))
+                mutate(benchmark)
+                benchmark_path = control / f"{label.replace(' ', '-')}-benchmark.json"
+                matrix_path = control / f"{label.replace(' ', '-')}-matrix.json"
+                benchmark_path.write_text(json.dumps(benchmark), encoding="utf-8")
+                matrix = dict(base_matrix)
+                matrix["benchmark_config_path"] = benchmark_path.relative_to(ROOT).as_posix()
+                matrix_path.write_text(json.dumps(matrix), encoding="utf-8")
+                cases.append((label, matrix_path))
+
+            context_matrix = dict(base_matrix)
+            context_matrix["axes"] = dict(base_matrix["axes"])
+            context_matrix["axes"]["context_lengths"] = [31]
+            context_path = control / "context-length-below-toto-minimum.json"
+            context_path.write_text(json.dumps(context_matrix), encoding="utf-8")
+            cases.append(("context length below Toto minimum", context_path))
+
+            for label, config_path in cases:
+                with self.subTest(case=label):
+                    with patch.object(run_matrix.single_run, "_external_cache") as external_cache:
+                        with self.assertRaises(MatrixError):
+                            run_matrix.run_toto2_matrix(
+                                config_path, ROOT, Path("C:/outside/cache")
+                            )
+                    external_cache.assert_not_called()
 
     def test_matrix_module_import_does_not_load_heavy_backend(self):
         code = (
