@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import hashlib
 import importlib
 import json
+import os
 from pathlib import Path
 import sys
 from typing import Any, Mapping
@@ -24,6 +26,21 @@ PROVENANCE_PATH = ROOT / "environments" / "timesfm3" / "package-provenance.json"
 CHECKPOINT_ALLOW_PATTERNS = ("config.json", "model.safetensors", "LICENSE", "README.md")
 EXPECTED_MODEL_SIZE_BYTES = 1_322_898_824
 EXPECTED_MODEL_SHA256 = "a7592b0a8432baee54483254e5647856911ce69e09d09a9bb65904b2d98f17da"
+
+
+@contextmanager
+def _xet_fallback_environment():
+    """明示download中のWindows Xet並列socket failureを避ける。"""
+    name = "HF_HUB_DISABLE_XET"
+    previous = os.environ.get(name)
+    os.environ[name] = "1"
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop(name, None)
+        else:
+            os.environ[name] = previous
 
 
 def _outside_repository(path: Path) -> bool:
@@ -108,12 +125,15 @@ def prepare_checkpoint(cache_dir: Path, manifest_path: Path, *, accepted: bool) 
     snapshot_download = getattr(hub, "snapshot_download", None)
     if not callable(snapshot_download):
         raise RuntimeError("huggingface_hub.snapshot_download is unavailable")
-    snapshot_path = snapshot_download(
-        repo_id=OFFICIAL_CHECKPOINT,
-        revision=revision,
-        cache_dir=str(cache_dir),
-        allow_patterns=list(CHECKPOINT_ALLOW_PATTERNS),
-    )
+    with _xet_fallback_environment():
+        snapshot_path = snapshot_download(
+            repo_id=OFFICIAL_CHECKPOINT,
+            revision=revision,
+            cache_dir=str(cache_dir),
+            allow_patterns=list(CHECKPOINT_ALLOW_PATTERNS),
+            local_files_only=False,
+            max_workers=1,
+        )
     snapshot_path = Path(snapshot_path).expanduser().resolve()
     try:
         snapshot_path.relative_to(cache_dir)

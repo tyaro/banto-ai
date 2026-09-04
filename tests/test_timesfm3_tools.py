@@ -118,6 +118,7 @@ class TimesFM3ToolTests(unittest.TestCase):
             @staticmethod
             def snapshot_download(**kwargs):
                 calls.append(kwargs)
+                calls.append({"xet_disabled": os.environ.get("HF_HUB_DISABLE_XET")})
                 snapshot = Path(kwargs["cache_dir"]) / "snapshots" / "fixed"
                 snapshot.mkdir(parents=True, exist_ok=True)
                 (snapshot / "model.safetensors").write_bytes(content)
@@ -126,20 +127,41 @@ class TimesFM3ToolTests(unittest.TestCase):
                 (snapshot / "README.md").write_text("readme", encoding="utf-8")
                 return str(snapshot)
 
-        with tempfile.TemporaryDirectory() as cache:
-            with patch.dict(sys.modules, {"huggingface_hub": FakeHub}):
-                with patch.object(prepare_checkpoint, "EXPECTED_MODEL_SIZE_BYTES", len(content)):
-                    with patch.object(prepare_checkpoint, "EXPECTED_MODEL_SHA256", hashlib.sha256(content).hexdigest()):
-                        with patch.object(prepare_checkpoint, "load_checkpoint_provenance", return_value={}):
-                            result = prepare_checkpoint.prepare_checkpoint(Path(cache), MANIFEST, accepted=True)
-        self.assertEqual(calls, [{
+        with patch.dict(os.environ, {"HF_HUB_DISABLE_XET": "caller-value"}, clear=False):
+            with tempfile.TemporaryDirectory() as cache:
+                with patch.dict(sys.modules, {"huggingface_hub": FakeHub}):
+                    with patch.object(prepare_checkpoint, "EXPECTED_MODEL_SIZE_BYTES", len(content)):
+                        with patch.object(prepare_checkpoint, "EXPECTED_MODEL_SHA256", hashlib.sha256(content).hexdigest()):
+                            with patch.object(prepare_checkpoint, "load_checkpoint_provenance", return_value={}):
+                                result = prepare_checkpoint.prepare_checkpoint(Path(cache), MANIFEST, accepted=True)
+            self.assertEqual(os.environ["HF_HUB_DISABLE_XET"], "caller-value")
+        self.assertEqual(calls[0], {
             "repo_id": "google/timesfm-3.0-pytorch",
             "revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
             "cache_dir": str(Path(cache).resolve()),
             "allow_patterns": ["config.json", "model.safetensors", "LICENSE", "README.md"],
-        }])
+            "local_files_only": False,
+            "max_workers": 1,
+        })
+        self.assertEqual(calls[1], {"xet_disabled": "1"})
         self.assertEqual(result["allowed_use"], "research-only")
         self.assertEqual(result["model_artifact"]["size_bytes"], len(content))
+
+    def test_prepare_restores_xet_environment_when_download_raises(self):
+        class FailingHub:
+            @staticmethod
+            def snapshot_download(**kwargs):
+                self.assertEqual(os.environ.get("HF_HUB_DISABLE_XET"), "1")
+                raise RuntimeError("socket error")
+
+        with patch.dict(os.environ, {}, clear=False):
+            os.environ.pop("HF_HUB_DISABLE_XET", None)
+            with tempfile.TemporaryDirectory() as cache:
+                with patch.dict(sys.modules, {"huggingface_hub": FailingHub}):
+                    with patch.object(prepare_checkpoint, "load_checkpoint_provenance", return_value={}):
+                        with self.assertRaisesRegex(RuntimeError, "socket error"):
+                            prepare_checkpoint.prepare_checkpoint(Path(cache), MANIFEST, accepted=True)
+            self.assertNotIn("HF_HUB_DISABLE_XET", os.environ)
 
     def test_prepare_rejects_model_digest_mismatch(self):
         content = b"fake-model-safetensors"

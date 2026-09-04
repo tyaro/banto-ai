@@ -47,4 +47,4 @@ $timesfmPython = 'environments\timesfm3\.venv\Scripts\python.exe'
   --accept-research-only-license
 ```
 
-`prepare_checkpoint.py`は未準備時だけ実行します。用途は`research-only`かつnon-productionで、公開データ、weights、prediction／実行artifactはGitへ追加しません。Banto Hub／PLCへのwriteは行いません。native quantileに交差があってもsort、clip、fallbackはせず、fail-closedで`partial`として記録します。
+`prepare_checkpoint.py`は未準備時だけ実行します。Windows Xet並列取得のsocket error対策として、明示download中は`HF_HUB_DISABLE_XET=1`、`max_workers=1`、`local_files_only=False`を固定します。用途は`research-only`かつnon-productionで、公開データ、weights、prediction／実行artifactはGitへ追加しません。Banto Hub／PLCへのwriteは行いません。native quantileに交差があってもsort、clip、fallbackはせず、fail-closedで`partial`として記録します。
