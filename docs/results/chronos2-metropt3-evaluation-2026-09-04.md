@@ -103,4 +103,4 @@ package、repository code、weightsはApache-2.0として記録しているが�
 
 ## 限界と次の工程
 
-今回の範囲は24時間、1設備、16 test origins、単一CPU、一回のpoint residual校正である。coverage不足、missing／stale／regime／fault slice、複数日・複数設備、再現実行は未評価である。Phase 2は未完了とし、次はTimesFM 3.0を同じMetroPT条件でresearch-only比較し、Chronos再実行の再現性、origin／日／設備拡大、coverage calibration改善、missing／stale／regime／fault評価、cold／warmとmodel-only resourceの分離を行う。
+今回の範囲は24時間、1設備、16 test origins、単一CPU、一回のpoint residual校正である。coverage不足、missing／stale／regime／fault slice、複数日・複数設備、再現実行は未評価である。TimesFM 3.0との同じMetroPT条件のresearch-only比較は完了し、結果を[`timesfm3-metropt3-evaluation-2026-09-04.md`](timesfm3-metropt3-evaluation-2026-09-04.md)に記録した。Phase 2は未完了とし、次はChronos再実行の再現性、origin／日／設備拡大、coverage calibration改善、missing／stale／regime／fault評価、cold／warmとmodel-only resourceの分離を行う。

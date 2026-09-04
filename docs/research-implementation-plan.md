@@ -13,7 +13,7 @@ Banto ecosystem向けの時系列AIについて、次の価値を再現可能な
 - driftを検知し、rollback可能なprofile候補を作る適応処理
 - read-only／shadow境界を守るBanto Hub連携
 
-本計画はモデル採用を先に決めるものではありません。TimesFM 3.0の初期評価を完了したため、次はChronos-2を商用候補として、共通のデータ、評価、interfaceで検証します。TimesFM 3.0を含む研究比較対象は同じ条件で残します。
+本計画はモデル採用を先に決めるものではありません。TimesFM 3.0とChronos-2のMetroPT-3同一契約評価を完了し、共通のデータ、評価、interfaceによる比較記録を残しました。Chronos-2は商用候補として、TimesFM 3.0はresearch-onlyの基準として同じ条件で継続比較します。
 
 ## 2. 前提と決定事項
 
@@ -25,7 +25,7 @@ Banto ecosystem向けの時系列AIについて、次の価値を再現可能な
 - formatter／linterはPhase 0では導入せず、標準ライブラリの`compileall`を使う。最初のdevelopment dependency導入時にformatter／linterをversion pinし、lockへ固定する。
 - ドキュメントは日本語を基本とし、API名、model名、schema fieldは英語を使う。
 - Gitで管理するのは、source manifest、transform config、schema、code、tests、docs、結果要約などの再現情報とし、生成されたobservations、split／dataset manifest、quality report、fingerprintはGit管理外とする。
-- 公開データは、公式URL／DOI／licenseの確認、利用条件の受入れ、取得サイズ／SHA-256／archive member hashの固定を通ったものだけを研究入力候補とする。第一候補はUCI MetroPT-3、次候補はUCI hydraulic systemsとし、raw archiveはrepository外のexternal cache、標準化dataset本体はgitignoredな`artifacts/public-datasets/<dataset-id>/`へ置く。MetroPT-3はsource pin、変換、Public-only quality gate、5 baselineとChronos-2の公開実データ評価まで完了した。詳細な境界は[`docs/public-dataset-survey.md`](public-dataset-survey.md)と[`docs/adr-0005-public-dataset-boundary.md`](adr-0005-public-dataset-boundary.md)へ記録する。
+- 公開データは、公式URL／DOI／licenseの確認、利用条件の受入れ、取得サイズ／SHA-256／archive member hashの固定を通ったものだけを研究入力候補とする。第一候補はUCI MetroPT-3、次候補はUCI hydraulic systemsとし、raw archiveはrepository外のexternal cache、標準化dataset本体はgitignoredな`artifacts/public-datasets/<dataset-id>/`へ置く。MetroPT-3はsource pin、変換、Public-only quality gate、5 baseline、Chronos-2、TimesFM 3.0の公開実データ評価まで完了した。詳細な境界は[`docs/public-dataset-survey.md`](public-dataset-survey.md)と[`docs/adr-0005-public-dataset-boundary.md`](adr-0005-public-dataset-boundary.md)へ記録する。
 - MetroPT-3取込はone compressor、14 signals（`Caudal_impulses`除外）、60秒 `[start,end)`、output timestamp=bin end、analog mean／digital last、補間なしfail closed、`mode=unknown`、864/288/288 chronological splitを契約とする。Public-only quality gateは既存synthetic gateと分離する。
 - 最初のruntimeはPython sidecarとし、Banto Hubとはoffline exportから接続する。
 - forecastとanomaly detectionは共通interfaceの背後でmodelを交換できるようにする。
@@ -145,7 +145,7 @@ savepoint 1では、外部依存なしのseed再現可能generatorと最小quali
 - future leakage、unit mismatch、duplicate timestamp、unexpected gapをtestで検出する。
 - baseline resultにdataset fingerprint、runtime、hardwareが残る。
 
-### Phase 2: Forecast候補比較（TimesFM 3.0評価済み、Chronos-2へ移行）
+### Phase 2: Forecast候補比較（TimesFM 3.0／Chronos-2 MetroPT評価済み）
 
 AutoETSは未実装であり、現行benchmarkのmodel registry／schemaには含めません。将来の候補評価ではstatsforecast等を隔離環境へ置き、optional依存を通常CIへ持ち込まない方針です。Holt linear trendは別のbaselineであり、ETSとは称しません。
 
@@ -163,9 +163,9 @@ Chronos-2のseed `[17, 42]`×horizon `[1, 3]`×context `[6, 12]`の実model matr
 
 公開実データの第一候補をUCI MetroPT-3に固定します。source pin tool実装と実archive検証は完了し、正本manifestは[`datasets/manifests/metropt3-source.json`](../datasets/manifests/metropt3-source.json)、手順は[`tools/public-data/README.md`](../tools/public-data/README.md)です。アーカイブは218,381,995 bytes、SHA-256と2つのmember hashを固定しています。公式ページ内のsampling記載は1 Hz／0.1 Hzで競合し、source timezoneも未指定なので、UTCや固定周期を仮定せずraw timestampのdelta／gapを保存します。NASA C-MAPSSは公式licenseが`License not specified`のため採用しません。
 
-検証済みの標準化datasetに対するrolling benchmarkも実施しました。取込は標準ライブラリのstreaming importerで`2020-02-21`の連続24時間候補を研究上UTCとして解釈し、60秒 `[start,end)` bin（analog mean／digital last、output timestamp=bin end）、one compressorの14 signals、`Caudal_impulses`除外、`mode=unknown`、864/288/288 chronological split、7つのdeterministic filesを固定済みです。未来actual、failure report、RULをknown-futureへ渡していません。統計baseline、Chronos-2 native、point-calibratedの結果は[`docs/results/metropt3-baseline-evaluation-2026-09-04.md`](results/metropt3-baseline-evaluation-2026-09-04.md)と[`docs/results/chronos2-metropt3-evaluation-2026-09-04.md`](results/chronos2-metropt3-evaluation-2026-09-04.md)に記録します。
+検証済みの標準化datasetに対するrolling benchmarkも実施しました。取込は標準ライブラリのstreaming importerで`2020-02-21`の連続24時間候補を研究上UTCとして解釈し、60秒 `[start,end)` bin（analog mean／digital last、output timestamp=bin end）、one compressorの14 signals、`Caudal_impulses`除外、`mode=unknown`、864/288/288 chronological split、7つのdeterministic filesを固定済みです。未来actual、failure report、RULをknown-futureへ渡していません。統計baseline、Chronos-2 native、point-calibrated、TimesFM 3.0 nativeの結果は[`docs/results/metropt3-baseline-evaluation-2026-09-04.md`](results/metropt3-baseline-evaluation-2026-09-04.md)、[`docs/results/chronos2-metropt3-evaluation-2026-09-04.md`](results/chronos2-metropt3-evaluation-2026-09-04.md)、[`docs/results/timesfm3-metropt3-evaluation-2026-09-04.md`](results/timesfm3-metropt3-evaluation-2026-09-04.md)に記録します。
 
-残る課題はorigin／日／設備拡大、Chronos再実行の再現性、missing／stale／regime／fault slice、known-future計画値対past-onlyの追加比較、coverage calibration改善、cold／warmとmodel-only resourceの分離です。今回のMetroPT-3評価は24時間・1設備・16 test origins・単一CPU・一回のpoint residual校正に限られ、Phase 2完了または`product-candidate`昇格の根拠にはしません。`commercial-evaluation`を継続します。
+残る課題はorigin／日／設備拡大、Chronos再実行の再現性、missing／stale／regime／fault slice、known-future計画値対past-onlyの追加比較、coverage calibration改善、cold／warmとmodel-only resourceの分離、Toto／Granite TTMなど商用候補との比較です。今回のMetroPT-3評価は24時間・1設備・16 test origins・単一CPU・1 runに限られ、Phase 2完了または`product-candidate`昇格の根拠にはしません。Chronos-2は`commercial-evaluation`、TimesFM 3.0は`research-only`を継続します。
 
 #### 優先順位
 
