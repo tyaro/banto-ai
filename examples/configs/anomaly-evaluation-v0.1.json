@@ -1,0 +1,18 @@
+{
+  "schema_version": "0.1",
+  "config_type": "event-aware-anomaly-evaluation",
+  "analyzer_id": "event-aware-anomaly-v0.1",
+  "dataset_path": "artifacts/generated/synthetic-anomaly-evaluation-v01",
+  "output_dir": "artifacts/anomaly-evaluation-v01",
+  "target_signal_ids": ["motor_current", "motor_temperature", "conveyor_speed", "vibration_feature"],
+  "min_calibration_points": 10,
+  "robust_z_threshold": 4.0,
+  "persistence_points": 2,
+  "detection_grace_points": 3,
+  "event_classifications": [
+    {"event_id": "motor-01-machine-fault", "event_class": "machine_fault"},
+    {"event_id": "motor-01-sensor-fault", "event_class": "sensor_fault"},
+    {"event_id": "conveyor-01-data-quality", "event_class": "data_quality"},
+    {"event_id": "conveyor-01-ignored", "event_class": "ignored"}
+  ]
+}

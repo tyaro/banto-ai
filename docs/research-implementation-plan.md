@@ -397,3 +397,7 @@ Issue 5は実装開始時に「異常検知」「commissioning profile」「Bant
 ## Savepoint 2 実装状況
 
 共通runner、last-value／seasonal-naive／moving-average／EWMA／Holt linear trend／covariate付き線形回帰、MAE／RMSE／MASE／標準WIS／coverage／width、rolling-origin、lead別validation-only分位点校正を外部依存ゼロで実装する。split-manifestの`[start,end)`、train-only MASE、raw pointでのRMSE集計、actual timestamp mode、partial／failed／inconclusiveの状態定義を固定する。stateless baselineの決定的なcanonical設定・空state byte数と出力file sizeは別項目で記録し、fevはPhase 2で再評価する。合成データの結果は実設備性能を示さない。
+
+## Savepoint 3 event-aware anomaly evaluation
+
+forecast benchmarkとは分離したstdlib-only anomaly evaluator v0.1を追加する。validation-onlyの`equipment + full signal + operating mode`別robust residual profile、quality／gap／mode reset、persistence alert、event class別incident matching、clean equipment-hour false-alert rateを固定した。single-seed専用scenarioとconfig／result schema、quality gate／fingerprint／code revision／atomic publishのprovenanceを備える。これはsynthetic研究artifactの契約検証であり、Toto性能、早期警報lead time、実設備性能、control writeまたは製品昇格を示さない。正式なmulti-seed評価と実設備一般化は次工程とする。

@@ -1,0 +1,92 @@
+{
+  "config_type": "synthetic-generator",
+  "dataset_id": "synthetic-anomaly-evaluation-v01",
+  "equipment": [
+    {"equipment_id": "motor-01", "equipment_type": "motor"},
+    {"equipment_id": "conveyor-01", "equipment_type": "conveyor"}
+  ],
+  "events": [
+    {
+      "event_id": "motor-01-machine-fault",
+      "event_type": "jam_or_slip",
+      "equipment_id": "motor-01",
+      "signal_id": "motor_current",
+      "start_sample": 740,
+      "end_sample": 750,
+      "magnitude": 0.55,
+      "enabled": true,
+      "description": "machine fault: controlled load slip"
+    },
+    {
+      "event_id": "motor-01-sensor-fault",
+      "event_type": "spike",
+      "equipment_id": "motor-01",
+      "signal_id": "motor_temperature",
+      "start_sample": 780,
+      "end_sample": 790,
+      "magnitude": 8.0,
+      "enabled": true,
+      "description": "sensor fault: controlled temperature spike"
+    },
+    {
+      "event_id": "conveyor-01-data-quality",
+      "event_type": "dropout",
+      "equipment_id": "conveyor-01",
+      "signal_id": "motor_temperature",
+      "start_sample": 820,
+      "end_sample": 824,
+      "magnitude": 0.0,
+      "enabled": true,
+      "description": "data quality: controlled missing interval"
+    },
+    {
+      "event_id": "conveyor-01-ignored",
+      "event_type": "stuck_value",
+      "equipment_id": "conveyor-01",
+      "signal_id": "load_proxy",
+      "start_sample": 850,
+      "end_sample": 855,
+      "magnitude": 0.0,
+      "enabled": true,
+      "description": "ignored covariate event outside the target set"
+    }
+  ],
+  "generator_version": "0.1.0",
+  "regimes": [
+    {"regime": "stopped", "recipe_step": "stop-1", "start_sample": 0, "end_sample": 30},
+    {"regime": "startup", "recipe_step": "start-1", "start_sample": 30, "end_sample": 60},
+    {"regime": "low_speed", "recipe_step": "low-1", "start_sample": 60, "end_sample": 90},
+    {"regime": "nominal", "recipe_step": "run-1", "start_sample": 90, "end_sample": 120},
+    {"regime": "high_load", "recipe_step": "load-1", "start_sample": 120, "end_sample": 150},
+    {"regime": "cooldown", "recipe_step": "cooldown-1", "start_sample": 150, "end_sample": 180},
+    {"regime": "stopped", "recipe_step": "stop-2", "start_sample": 180, "end_sample": 210},
+    {"regime": "startup", "recipe_step": "start-2", "start_sample": 210, "end_sample": 240},
+    {"regime": "low_speed", "recipe_step": "low-2", "start_sample": 240, "end_sample": 270},
+    {"regime": "nominal", "recipe_step": "run-2", "start_sample": 270, "end_sample": 300},
+    {"regime": "high_load", "recipe_step": "load-2", "start_sample": 300, "end_sample": 330},
+    {"regime": "cooldown", "recipe_step": "cooldown-2", "start_sample": 330, "end_sample": 360},
+    {"regime": "stopped", "recipe_step": "stop-3", "start_sample": 360, "end_sample": 390},
+    {"regime": "startup", "recipe_step": "start-3", "start_sample": 390, "end_sample": 420},
+    {"regime": "low_speed", "recipe_step": "low-3", "start_sample": 420, "end_sample": 450},
+    {"regime": "nominal", "recipe_step": "run-3", "start_sample": 450, "end_sample": 480},
+    {"regime": "high_load", "recipe_step": "load-3", "start_sample": 480, "end_sample": 510},
+    {"regime": "cooldown", "recipe_step": "cooldown-3", "start_sample": 510, "end_sample": 540},
+    {"regime": "stopped", "recipe_step": "stop-4", "start_sample": 540, "end_sample": 570},
+    {"regime": "startup", "recipe_step": "start-4", "start_sample": 570, "end_sample": 600},
+    {"regime": "low_speed", "recipe_step": "low-4", "start_sample": 600, "end_sample": 630},
+    {"regime": "nominal", "recipe_step": "run-4", "start_sample": 630, "end_sample": 660},
+    {"regime": "high_load", "recipe_step": "load-4", "start_sample": 660, "end_sample": 690},
+    {"regime": "cooldown", "recipe_step": "cooldown-4", "start_sample": 690, "end_sample": 720},
+    {"regime": "stopped", "recipe_step": "stop-5", "start_sample": 720, "end_sample": 750},
+    {"regime": "startup", "recipe_step": "start-5", "start_sample": 750, "end_sample": 780},
+    {"regime": "low_speed", "recipe_step": "low-5", "start_sample": 780, "end_sample": 810},
+    {"regime": "nominal", "recipe_step": "run-5", "start_sample": 810, "end_sample": 840},
+    {"regime": "high_load", "recipe_step": "load-5", "start_sample": 840, "end_sample": 870},
+    {"regime": "cooldown", "recipe_step": "cooldown-5", "start_sample": 870, "end_sample": 900}
+  ],
+  "sample_count": 900,
+  "sampling_interval_ms": 1000,
+  "schema_version": "0.1",
+  "seed": 42,
+  "start_timestamp": "2026-01-01T00:00:00Z"
+}

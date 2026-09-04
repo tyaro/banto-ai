@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tyaro/banto-ai/schemas/anomaly-evaluation-config.schema.json",
+  "title": "banto-ai event-aware anomaly evaluation config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "config_type",
+    "analyzer_id",
+    "dataset_path",
+    "output_dir",
+    "target_signal_ids",
+    "min_calibration_points",
+    "robust_z_threshold",
+    "persistence_points",
+    "detection_grace_points",
+    "event_classifications"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "config_type": {"type": "string", "const": "event-aware-anomaly-evaluation"},
+    "analyzer_id": {"type": "string", "const": "event-aware-anomaly-v0.1"},
+    "dataset_path": {"$ref": "#/$defs/repositoryPath"},
+    "output_dir": {"$ref": "#/$defs/repositoryPath"},
+    "target_signal_ids": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/signalId"}
+    },
+    "min_calibration_points": {"type": "integer", "minimum": 2},
+    "robust_z_threshold": {"type": "number", "exclusiveMinimum": 0},
+    "persistence_points": {"type": "integer", "minimum": 1},
+    "detection_grace_points": {"type": "integer", "minimum": 0},
+    "event_classifications": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/eventClassification"}
+    }
+  },
+  "$defs": {
+    "repositoryPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    },
+    "signalId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    },
+    "eventClassification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_id", "event_class"],
+      "properties": {
+        "event_id": {"type": "string", "minLength": 1},
+        "event_class": {
+          "type": "string",
+          "enum": ["machine_fault", "sensor_fault", "data_quality", "ignored"]
+        }
+      }
+    }
+  }
+}

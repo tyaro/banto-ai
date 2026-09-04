@@ -1,0 +1,438 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tyaro/banto-ai/schemas/anomaly-evaluation-result.schema.json",
+  "title": "banto-ai event-aware anomaly evaluation result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "result_type",
+    "analyzer_id",
+    "status",
+    "provenance",
+    "parameters",
+    "profiles",
+    "scores",
+    "alert_episodes",
+    "alert_episode_accounting",
+    "incidents",
+    "clean_false_alert_episodes",
+    "metrics",
+    "exclusions",
+    "row_counts",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "result_type": {"type": "string", "const": "event-aware-anomaly-evaluation"},
+    "analyzer_id": {"type": "string", "const": "event-aware-anomaly-v0.1"},
+    "status": {"type": "string", "enum": ["pass", "partial", "inconclusive"]},
+    "provenance": {"$ref": "#/$defs/provenance"},
+    "parameters": {"$ref": "#/$defs/parameters"},
+    "profiles": {"type": "array", "items": {"$ref": "#/$defs/profile"}},
+    "scores": {"type": "array", "items": {"$ref": "#/$defs/score"}},
+    "alert_episodes": {"type": "array", "items": {"$ref": "#/$defs/alertEpisode"}},
+    "alert_episode_accounting": {"type": "array", "items": {"$ref": "#/$defs/alertEpisodeAccounting"}},
+    "incidents": {"type": "array", "items": {"$ref": "#/$defs/incident"}},
+    "clean_false_alert_episodes": {"type": "array", "items": {"$ref": "#/$defs/cleanEpisode"}},
+    "metrics": {"$ref": "#/$defs/metrics"},
+    "exclusions": {"$ref": "#/$defs/exclusions"},
+    "row_counts": {"$ref": "#/$defs/rowCounts"},
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "timestamp": {"type": "string", "minLength": 1},
+    "path": {"type": "string", "minLength": 1},
+    "codeRevision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "head", "dirty", "diff_sha256"],
+      "properties": {
+        "status": {"type": "string", "enum": ["git", "git-unavailable"]},
+        "head": {"type": ["string", "null"]},
+        "dirty": {"type": ["boolean", "null"]},
+        "diff_sha256": {"type": ["string", "null"]}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "sha256"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "path": {"$ref": "#/$defs/path"},
+        "sha256": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "datasetSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "dataset_id", "dataset_fingerprint", "manifest_sha256"],
+      "properties": {
+        "kind": {"const": "synthetic-dataset"},
+        "path": {"$ref": "#/$defs/path"},
+        "dataset_id": {"type": "string", "minLength": 1},
+        "dataset_fingerprint": {"$ref": "#/$defs/digest"},
+        "manifest_sha256": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "qualityGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "observation_record_count", "equipment_count", "checks"],
+      "properties": {
+        "status": {"const": "pass"},
+        "observation_record_count": {"type": "integer", "minimum": 1},
+        "equipment_count": {"type": "integer", "minimum": 1},
+        "checks": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["config", "schema", "config_schema", "dataset", "quality_gate", "code_revision"],
+      "properties": {
+        "config": {"$ref": "#/$defs/source"},
+        "schema": {"$ref": "#/$defs/source"},
+        "config_schema": {"$ref": "#/$defs/source"},
+        "dataset": {"$ref": "#/$defs/datasetSource"},
+        "quality_gate": {"$ref": "#/$defs/qualityGate"},
+        "code_revision": {"$ref": "#/$defs/codeRevision"}
+      }
+    },
+    "parameters": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_signal_ids",
+        "min_calibration_points",
+        "robust_z_threshold",
+        "persistence_points",
+        "detection_grace_points",
+        "sampling_interval_ms",
+        "calibration_split",
+        "scoring_split",
+        "boundary_semantics"
+      ],
+      "properties": {
+        "target_signal_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "min_calibration_points": {"type": "integer", "minimum": 2},
+        "robust_z_threshold": {"type": "number", "exclusiveMinimum": 0},
+        "persistence_points": {"type": "integer", "minimum": 1},
+        "detection_grace_points": {"type": "integer", "minimum": 0},
+        "sampling_interval_ms": {"type": "integer", "minimum": 1},
+        "calibration_split": {"const": "validation"},
+        "scoring_split": {"const": "test"},
+        "boundary_semantics": {"const": "[start,end)"}
+      }
+    },
+    "profileKey": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["equipment_id", "signal_id", "operating_mode"],
+      "properties": {
+        "equipment_id": {"type": "string", "minLength": 1},
+        "signal_id": {"type": "string", "minLength": 1},
+        "operating_mode": {"type": "string", "minLength": 1}
+      }
+    },
+    "exclusionCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["event_overlap", "quality_non_ok", "residual_unavailable", "nonfinite"],
+      "properties": {
+        "event_overlap": {"type": "integer", "minimum": 0},
+        "quality_non_ok": {"type": "integer", "minimum": 0},
+        "residual_unavailable": {"type": "integer", "minimum": 0},
+        "nonfinite": {"type": "integer", "minimum": 0}
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_key", "status", "calibration_point_count", "excluded_counts", "center", "mad", "scale", "reason"],
+      "properties": {
+        "profile_key": {"$ref": "#/$defs/profileKey"},
+        "status": {"enum": ["calibrated", "inconclusive"]},
+        "calibration_point_count": {"type": "integer", "minimum": 0},
+        "excluded_counts": {"$ref": "#/$defs/exclusionCounts"},
+        "center": {"type": ["number", "null"]},
+        "mad": {"type": ["number", "null"], "minimum": 0},
+        "scale": {"type": ["number", "null"], "minimum": 0},
+        "reason": {"type": ["string", "null"]}
+      }
+    },
+    "score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "timestamp",
+        "equipment_id",
+        "signal_id",
+        "operating_mode",
+        "quality_status",
+        "actual",
+        "previous_actual",
+        "residual",
+        "profile_key",
+        "score",
+        "available",
+        "exclusion_reason",
+        "exceeds_threshold",
+        "persistence_streak",
+        "alert_episode_id"
+      ],
+      "properties": {
+        "timestamp": {"$ref": "#/$defs/timestamp"},
+        "equipment_id": {"type": "string", "minLength": 1},
+        "signal_id": {"type": "string", "minLength": 1},
+        "operating_mode": {"type": "string", "minLength": 1},
+        "quality_status": {"type": "string", "enum": ["ok", "missing", "stale"]},
+        "actual": {"type": ["number", "null"]},
+        "previous_actual": {"type": ["number", "null"]},
+        "residual": {"type": ["number", "null"]},
+        "profile_key": {"$ref": "#/$defs/profileKey"},
+        "score": {"type": ["number", "null"], "minimum": 0},
+        "available": {"type": "boolean"},
+        "exclusion_reason": {"type": ["string", "null"]},
+        "exceeds_threshold": {"type": "boolean"},
+        "persistence_streak": {"type": "integer", "minimum": 0},
+        "alert_episode_id": {"type": ["string", "null"]}
+      }
+    },
+    "alertEpisode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["episode_id", "equipment_id", "signal_id", "start_timestamp", "onset_timestamp", "end_timestamp", "point_count", "max_score", "profile_key"],
+      "properties": {
+        "episode_id": {"type": "string", "minLength": 1},
+        "equipment_id": {"type": "string", "minLength": 1},
+        "signal_id": {"type": "string", "minLength": 1},
+        "start_timestamp": {"$ref": "#/$defs/timestamp"},
+        "onset_timestamp": {"$ref": "#/$defs/timestamp"},
+        "end_timestamp": {"$ref": "#/$defs/timestamp"},
+        "point_count": {"type": "integer", "minimum": 1},
+        "max_score": {"type": "number", "minimum": 0},
+        "profile_key": {"$ref": "#/$defs/profileKey"}
+      }
+    },
+    "alertEpisodeAccounting": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["episode_id", "equipment_id", "signal_id", "partition", "reason", "matched_event_id", "overlapping_event_ids", "overlapping_event_classes", "included_in_precision_denominator"],
+      "properties": {
+        "episode_id": {"type": "string", "minLength": 1},
+        "equipment_id": {"type": "string", "minLength": 1},
+        "signal_id": {"type": "string", "minLength": 1},
+        "partition": {"enum": ["matched_eligible", "unmatched_eligible_same_signal", "clean_false_alert", "suppressed_event_window"]},
+        "reason": {"enum": ["matched_eligible_event", "eligible_window_without_post_event_onset", "outside_enabled_event_windows", "positive_nonmatching_signal", "data_quality_event_window", "ignored_event_window"]},
+        "matched_event_id": {"type": ["string", "null"]},
+        "overlapping_event_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "overlapping_event_classes": {"type": "array", "items": {"enum": ["machine_fault", "sensor_fault", "data_quality", "ignored"]}},
+        "included_in_precision_denominator": {"type": "boolean"}
+      }
+    },
+    "incident": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "event_id",
+        "event_class",
+        "event_type",
+        "equipment_id",
+        "signal_id",
+        "event_start_timestamp",
+        "event_end_timestamp",
+        "detection_window_start",
+        "detection_window_end",
+        "eligible",
+        "eligibility_reason",
+        "detected",
+        "matched_alert_episode_id",
+        "alert_onset_timestamp",
+        "detection_delay_seconds"
+      ],
+      "properties": {
+        "event_id": {"type": "string", "minLength": 1},
+        "event_class": {"type": "string", "enum": ["machine_fault", "sensor_fault", "data_quality", "ignored"]},
+        "event_type": {"type": "string", "minLength": 1},
+        "equipment_id": {"type": "string", "minLength": 1},
+        "signal_id": {"type": "string", "minLength": 1},
+        "event_start_timestamp": {"$ref": "#/$defs/timestamp"},
+        "event_end_timestamp": {"$ref": "#/$defs/timestamp"},
+        "detection_window_start": {"type": ["string", "null"]},
+        "detection_window_end": {"type": ["string", "null"]},
+        "eligible": {"type": "boolean"},
+        "eligibility_reason": {"type": ["string", "null"]},
+        "detected": {"type": "boolean"},
+        "matched_alert_episode_id": {"type": ["string", "null"]},
+        "alert_onset_timestamp": {"type": ["string", "null"]},
+        "detection_delay_seconds": {"type": ["number", "null"], "minimum": 0}
+      }
+    },
+    "cleanEpisode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["equipment_episode_id", "equipment_id", "start_timestamp", "end_timestamp", "source_alert_episode_ids"],
+      "properties": {
+        "equipment_episode_id": {"type": "string", "minLength": 1},
+        "equipment_id": {"type": "string", "minLength": 1},
+        "start_timestamp": {"$ref": "#/$defs/timestamp"},
+        "end_timestamp": {"$ref": "#/$defs/timestamp"},
+        "source_alert_episode_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "delaySummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "mean", "median", "min", "max"],
+      "properties": {
+        "count": {"type": "integer", "minimum": 1},
+        "mean": {"type": "number", "minimum": 0},
+        "median": {"type": "number", "minimum": 0},
+        "min": {"type": "number", "minimum": 0},
+        "max": {"type": "number", "minimum": 0}
+      }
+    },
+    "classMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eligible_incidents", "detected_incidents", "missed_incidents", "incident_recall", "detection_delay_seconds"],
+      "properties": {
+        "eligible_incidents": {"type": "integer", "minimum": 0},
+        "detected_incidents": {"type": "integer", "minimum": 0},
+        "missed_incidents": {"type": "integer", "minimum": 0},
+        "incident_recall": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "detection_delay_seconds": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/delaySummary"}]}
+      }
+    },
+    "overallMetrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eligible_incidents", "detected_incidents", "missed_incidents", "matched_eligible_alert_episodes", "unmatched_eligible_alert_episodes", "evaluated_alert_episode_count", "incident_precision", "incident_recall", "detection_delay_seconds"],
+      "properties": {
+        "eligible_incidents": {"type": "integer", "minimum": 0},
+        "detected_incidents": {"type": "integer", "minimum": 0},
+        "missed_incidents": {"type": "integer", "minimum": 0},
+        "matched_eligible_alert_episodes": {"type": "integer", "minimum": 0},
+        "unmatched_eligible_alert_episodes": {"type": "integer", "minimum": 0},
+        "evaluated_alert_episode_count": {"type": "integer", "minimum": 0},
+        "incident_precision": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "incident_recall": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "detection_delay_seconds": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/delaySummary"}]}
+      }
+    },
+    "alertEpisodePartition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total_alert_episodes", "matched_eligible_alert_episodes", "unmatched_eligible_same_signal_alert_episodes", "clean_false_alert_signal_episodes", "suppressed_event_window_alert_episodes", "suppressed_event_window_by_reason", "precision_denominator_alert_episodes", "precision_denominator_excludes_suppressed"],
+      "properties": {
+        "total_alert_episodes": {"type": "integer", "minimum": 0},
+        "matched_eligible_alert_episodes": {"type": "integer", "minimum": 0},
+        "unmatched_eligible_same_signal_alert_episodes": {"type": "integer", "minimum": 0},
+        "clean_false_alert_signal_episodes": {"type": "integer", "minimum": 0},
+        "suppressed_event_window_alert_episodes": {"type": "integer", "minimum": 0},
+        "suppressed_event_window_by_reason": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["positive_nonmatching_signal", "data_quality", "ignored"],
+          "properties": {
+            "positive_nonmatching_signal": {"type": "integer", "minimum": 0},
+            "data_quality": {"type": "integer", "minimum": 0},
+            "ignored": {"type": "integer", "minimum": 0}
+          }
+        },
+        "precision_denominator_alert_episodes": {"type": "integer", "minimum": 0},
+        "precision_denominator_excludes_suppressed": {"const": true}
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["overall", "by_class", "clean_false_alert_episode_count", "clean_false_alert_equipment_episode_count", "clean_false_alert_signal_episode_count", "evaluated_alert_episode_count", "suppressed_event_window_alert_episode_count", "suppressed_ineligible_event_window_alert_episode_count", "suppressed_nonmatching_event_window_alert_episode_count", "suppressed_data_quality_event_window_alert_episode_count", "suppressed_ignored_event_window_alert_episode_count", "precision_denominator_excludes_suppressed_event_windows", "alert_episode_partition", "clean_equipment_hours", "false_alerts_per_8_equipment_hours", "clean_target_signal_hours"],
+      "properties": {
+        "overall": {"$ref": "#/$defs/overallMetrics"},
+        "by_class": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["machine_fault", "sensor_fault"],
+          "properties": {
+            "machine_fault": {"$ref": "#/$defs/classMetrics"},
+            "sensor_fault": {"$ref": "#/$defs/classMetrics"}
+          }
+        },
+        "clean_false_alert_episode_count": {"type": "integer", "minimum": 0},
+        "clean_false_alert_equipment_episode_count": {"type": "integer", "minimum": 0},
+        "clean_false_alert_signal_episode_count": {"type": "integer", "minimum": 0},
+        "evaluated_alert_episode_count": {"type": "integer", "minimum": 0},
+        "suppressed_event_window_alert_episode_count": {"type": "integer", "minimum": 0},
+        "suppressed_ineligible_event_window_alert_episode_count": {"type": "integer", "minimum": 0},
+        "suppressed_nonmatching_event_window_alert_episode_count": {"type": "integer", "minimum": 0},
+        "suppressed_data_quality_event_window_alert_episode_count": {"type": "integer", "minimum": 0},
+        "suppressed_ignored_event_window_alert_episode_count": {"type": "integer", "minimum": 0},
+        "precision_denominator_excludes_suppressed_event_windows": {"const": true},
+        "alert_episode_partition": {"$ref": "#/$defs/alertEpisodePartition"},
+        "clean_equipment_hours": {"type": "number", "minimum": 0},
+        "false_alerts_per_8_equipment_hours": {"type": ["number", "null"], "minimum": 0},
+        "clean_target_signal_hours": {"type": "object", "additionalProperties": {"type": "number", "minimum": 0}}
+      }
+    },
+    "calibrationExclusions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total_candidate_points", "event_overlap", "quality_non_ok", "residual_unavailable", "nonfinite", "profiles_inconclusive"],
+      "properties": {
+        "total_candidate_points": {"type": "integer", "minimum": 0},
+        "event_overlap": {"type": "integer", "minimum": 0},
+        "quality_non_ok": {"type": "integer", "minimum": 0},
+        "residual_unavailable": {"type": "integer", "minimum": 0},
+        "nonfinite": {"type": "integer", "minimum": 0},
+        "profiles_inconclusive": {"type": "integer", "minimum": 0}
+      }
+    },
+    "scoringExclusions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total_points", "available_points", "unavailable_by_reason"],
+      "properties": {
+        "total_points": {"type": "integer", "minimum": 0},
+        "available_points": {"type": "integer", "minimum": 0},
+        "unavailable_by_reason": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+      }
+    },
+    "eventExclusions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total_events", "ineligible_by_reason"],
+      "properties": {
+        "total_events": {"type": "integer", "minimum": 0},
+        "ineligible_by_reason": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+      }
+    },
+    "exclusions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["calibration", "scoring", "events"],
+      "properties": {
+        "calibration": {"$ref": "#/$defs/calibrationExclusions"},
+        "scoring": {"$ref": "#/$defs/scoringExclusions"},
+        "events": {"$ref": "#/$defs/eventExclusions"}
+      }
+    },
+    "rowCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["dataset_observations", "score_rows", "alert_episodes", "alert_episode_accounting", "incidents", "clean_false_alert_episodes", "clean_false_alert_signal_episodes"],
+      "properties": {
+        "dataset_observations": {"type": "integer", "minimum": 0},
+        "score_rows": {"type": "integer", "minimum": 0},
+        "alert_episodes": {"type": "integer", "minimum": 0},
+        "alert_episode_accounting": {"type": "integer", "minimum": 0},
+        "incidents": {"type": "integer", "minimum": 0},
+        "clean_false_alert_episodes": {"type": "integer", "minimum": 0},
+        "clean_false_alert_signal_episodes": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}
