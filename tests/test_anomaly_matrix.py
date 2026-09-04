@@ -193,6 +193,28 @@ class AnomalyMatrixTests(unittest.TestCase):
             with self.assertRaisesRegex(AnomalyMatrixError, "changed during validation"):
                 validate_anomaly_matrix_config(CONFIG_PATH, ROOT)
 
+    def test_completion_revalidates_input_paths_and_output_root(self) -> None:
+        original = anomaly_matrix._safe_repo_path
+
+        def input_path_drift(root: Path, value: object, label: str, *, must_exist: bool) -> Path:
+            resolved = original(root, value, label, must_exist=must_exist)
+            if label == "schema_path completion snapshot":
+                return resolved.parent / "replaced-schema.json"
+            return resolved
+
+        with patch.object(anomaly_matrix, "_safe_repo_path", side_effect=input_path_drift):
+            with self.assertRaisesRegex(AnomalyMatrixError, "matrix schema path changed"):
+                validate_anomaly_matrix_config(CONFIG_PATH, ROOT)
+
+        def output_junction(root: Path, value: object, label: str, *, must_exist: bool) -> Path:
+            if label == "output_root completion snapshot":
+                raise AnomalyMatrixError("output_root cannot traverse a symlink or junction")
+            return original(root, value, label, must_exist=must_exist)
+
+        with patch.object(anomaly_matrix, "_safe_repo_path", side_effect=output_junction):
+            with self.assertRaisesRegex(AnomalyMatrixError, "output_root cannot traverse"):
+                validate_anomaly_matrix_config(CONFIG_PATH, ROOT)
+
     def test_cli_help_and_external_cwd_are_side_effect_free(self) -> None:
         with tempfile.TemporaryDirectory(prefix="anomaly-matrix-cwd-") as raw_dir:
             help_result = subprocess.run(

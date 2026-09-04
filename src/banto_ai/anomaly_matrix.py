@@ -122,7 +122,7 @@ def _safe_repo_path(root: Path, value: Any, label: str, *, must_exist: bool) -> 
     return resolved
 
 
-def _resolve_config_path(config_path: str | Path, root: Path) -> Path:
+def _config_relative_path(config_path: str | Path, root: Path) -> str:
     candidate = Path(config_path)
     if candidate.is_absolute():
         try:
@@ -131,6 +131,11 @@ def _resolve_config_path(config_path: str | Path, root: Path) -> Path:
             raise AnomalyMatrixError("config must be a repository-local regular file") from exc
     else:
         relative = candidate.as_posix()
+    return relative
+
+
+def _resolve_config_path(config_path: str | Path, root: Path) -> Path:
+    relative = _config_relative_path(config_path, root)
     path = _safe_repo_path(root, relative, "config_path", must_exist=True)
     if _is_link(path) or not path.is_file():
         raise AnomalyMatrixError("config must be a repository-local regular file")
@@ -302,10 +307,12 @@ def _validate_semantics(config: Mapping[str, Any], base: Mapping[str, Any], test
 def validate_anomaly_matrix_config(config_path: str | Path, root: Path | None = None) -> dict[str, Any]:
     """Purely validate a preregistered matrix config and return an audit summary."""
     repository = (root or Path(__file__).resolve().parents[2]).absolute()
+    config_relative_path = _config_relative_path(config_path, repository)
     path = _resolve_config_path(config_path, repository)
     config, config_raw, config_raw_sha256, config_canonical_sha256 = _load_object_snapshot(path, "matrix config")
     try:
-        schema_path = _safe_repo_path(repository, config.get("schema_path"), "schema_path", must_exist=True)
+        schema_relative_path = config.get("schema_path")
+        schema_path = _safe_repo_path(repository, schema_relative_path, "schema_path", must_exist=True)
     except (AttributeError, TypeError) as exc:
         raise AnomalyMatrixError("schema_path must be present before path validation") from exc
     schema, schema_raw, schema_raw_sha256, schema_canonical_sha256 = _load_object_snapshot(schema_path, "matrix config schema")
@@ -317,19 +324,41 @@ def validate_anomaly_matrix_config(config_path: str | Path, root: Path | None = 
         raise AnomalyMatrixError("matrix config schema canonical SHA-256 pin is invalid")
     if config_canonical_sha256 != EXPECTED_CONFIG_CANONICAL_SHA256:
         raise AnomalyMatrixError("matrix config canonical SHA-256 is not the preregistered identity")
-    base_path = _safe_repo_path(repository, config["base_generator_config_path"], "base_generator_config_path", must_exist=True)
+    base_relative_path = config["base_generator_config_path"]
+    base_path = _safe_repo_path(repository, base_relative_path, "base_generator_config_path", must_exist=True)
     base, base_raw, base_raw_sha256, base_canonical_sha256 = _load_object_snapshot(base_path, "base generator config")
     if base_canonical_sha256 != EXPECTED_BASE_CONFIG_CANONICAL_SHA256 or config.get("base_generator_config_canonical_sha256") != base_canonical_sha256:
         raise AnomalyMatrixError("base generator config canonical SHA-256 pin is invalid")
-    base_schema_path = _safe_repo_path(repository, config["base_generator_schema_path"], "base_generator_schema_path", must_exist=True)
+    base_schema_relative_path = config["base_generator_schema_path"]
+    base_schema_path = _safe_repo_path(repository, base_schema_relative_path, "base_generator_schema_path", must_exist=True)
     base_schema, base_schema_raw, base_schema_raw_sha256, base_schema_canonical_sha256 = _load_object_snapshot(base_schema_path, "base generator schema")
     if base_schema_canonical_sha256 != EXPECTED_BASE_SCHEMA_CANONICAL_SHA256 or config.get("base_generator_schema_canonical_sha256") != base_schema_canonical_sha256:
         raise AnomalyMatrixError("base generator schema canonical SHA-256 pin is invalid")
-    output_path = _safe_repo_path(repository, config["output_root"], "output_root", must_exist=False)
+    output_relative_path = config["output_root"]
+    output_path = _safe_repo_path(repository, output_relative_path, "output_root", must_exist=False)
     if output_path.exists() and not output_path.is_dir():
         raise AnomalyMatrixError("output_root must be a directory when it already exists")
     test_regimes = _validate_base_generator(base, base_schema)
     details = _validate_semantics(config, base, test_regimes)
+
+    # Revalidate the held lexical paths before re-reading snapshots so a new link or path replacement fails closed.
+    current_path = _safe_repo_path(repository, config_relative_path, "config_path completion snapshot", must_exist=True)
+    if current_path != path:
+        raise AnomalyMatrixError("matrix config path changed during validation")
+    current_schema_path = _safe_repo_path(repository, schema_relative_path, "schema_path completion snapshot", must_exist=True)
+    if current_schema_path != schema_path:
+        raise AnomalyMatrixError("matrix schema path changed during validation")
+    current_base_path = _safe_repo_path(repository, base_relative_path, "base_generator_config_path completion snapshot", must_exist=True)
+    if current_base_path != base_path:
+        raise AnomalyMatrixError("base generator config path changed during validation")
+    current_base_schema_path = _safe_repo_path(repository, base_schema_relative_path, "base_generator_schema_path completion snapshot", must_exist=True)
+    if current_base_schema_path != base_schema_path:
+        raise AnomalyMatrixError("base generator schema path changed during validation")
+    current_output_path = _safe_repo_path(repository, output_relative_path, "output_root completion snapshot", must_exist=False)
+    if current_output_path != output_path:
+        raise AnomalyMatrixError("output_root path changed during validation")
+    if current_output_path.exists() and not current_output_path.is_dir():
+        raise AnomalyMatrixError("output_root must be a directory when it already exists")
 
     # Re-read the four input snapshots before returning so a mutation during validation fails closed.
     current_config, current_config_raw, _current_config_raw_sha256, current_config_canonical_sha256 = _load_object_snapshot(path, "matrix config completion snapshot")
