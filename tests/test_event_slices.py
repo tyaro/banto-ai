@@ -11,7 +11,6 @@ from uuid import uuid4
 
 from banto_ai.event_slices import (
     EventSliceError,
-    _event_overlap,
     _classify_context,
     _classify_forecast,
     _macro,
@@ -224,6 +223,42 @@ class EventSliceTests(unittest.TestCase):
         self.assertEqual(result["cells"][0]["excluded_prediction_count"], 3)
         self.assertTrue(result["cells"][0]["completeness"]["missing_groups"])
         self.assertEqual(result["cells"][0]["source_failures"][-1]["reason"], "test fixture failure")
+
+    def test_origin_metadata_config_duplicates_and_failure_domain_fail_closed(self):
+        matrix_result_dir = self._run_matrix(label="o")
+        matrix_result_path = matrix_result_dir / "result.json"
+        matrix = load_json(matrix_result_path)
+        cell = matrix["cells"][0]
+        cell_result_path = ROOT / cell["result_path"]
+        cell_result = load_json(cell_result_path)
+        selection = cell_result["provenance"]["origin_selection"]["test"]["motor-01"]
+        selection["count"] += 1
+        self._write_json(cell_result_path, cell_result)
+        with self.assertRaises(EventSliceError):
+            analyze_event_slices(self._relative(matrix_result_path), self._relative(self.artifact_root / "analysis-origin-metadata"), ROOT)
+
+        matrix_result_dir = self._run_matrix(label="d")
+        matrix_result_path = matrix_result_dir / "result.json"
+        matrix = load_json(matrix_result_path)
+        cell_result_path = ROOT / matrix["cells"][0]["result_path"]
+        cell_result = load_json(cell_result_path)
+        cell_result["run_config"]["models"].append({"name": "last-value"})
+        self._write_json(cell_result_path, cell_result)
+        with self.assertRaises(EventSliceError):
+            analyze_event_slices(self._relative(matrix_result_path), self._relative(self.artifact_root / "analysis-config-duplicates"), ROOT)
+
+        matrix_result_dir = self._run_matrix(label="f")
+        matrix_result_path = matrix_result_dir / "result.json"
+        matrix = load_json(matrix_result_path)
+        cell = matrix["cells"][0]
+        cell_result_path = ROOT / cell["result_path"]
+        cell_result = load_json(cell_result_path)
+        cell_result["failures"].append({"model": "not-a-model", "equipment_id": "motor-01", "target_signal_id": "motor-01.motor_current", "status": "failed", "reason": "unrelated", "split": "test"})
+        self._write_json(cell_result_path, cell_result)
+        cell["benchmark_failure_count"] = 1
+        self._write_json(matrix_result_path, matrix)
+        with self.assertRaises(EventSliceError):
+            analyze_event_slices(self._relative(matrix_result_path), self._relative(self.artifact_root / "analysis-failure-domain"), ROOT)
 
     def test_duplicate_prediction_and_symlink_escape_fail_without_source_mutation(self):
         matrix_result_dir = self._run_matrix()

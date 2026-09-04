@@ -398,6 +398,17 @@ def _load_predictions(path: Path, result: Mapping[str, Any], dataset: Mapping[st
 
 def _prediction_completeness(result: Mapping[str, Any], dataset: Mapping[str, Any], predictions: list[dict[str, Any]]) -> dict[str, Any]:
     config = result["run_config"]
+    model_names = [model["name"] for model in config["models"]]
+    if len(model_names) != len(set(model_names)):
+        raise EventSliceError("run_config model names must be unique")
+    configured_equipment = config.get("equipment_ids")
+    if configured_equipment is not None and len(configured_equipment) != len(set(configured_equipment)):
+        raise EventSliceError("run_config equipment_ids must be unique")
+    configured_targets = config.get("target_signal_ids")
+    if configured_targets is not None:
+        logical_targets = [str(value).rsplit(".", 1)[-1] for value in configured_targets]
+        if len(logical_targets) != len(set(logical_targets)):
+            raise EventSliceError("run_config target_signal_ids must be unique by logical target key")
     equipment_ids = tuple(config.get("equipment_ids") or dataset["observations"])
     targets_by_equipment: dict[str, set[str]] = {}
     for equipment_id in equipment_ids:
@@ -406,11 +417,17 @@ def _prediction_completeness(result: Mapping[str, Any], dataset: Mapping[str, An
             configured = [signal_id for signal_id, item in dataset["signals"].items() if item["role"] == "target" and signal_id.startswith(f"{equipment_id}.")]
         targets_by_equipment[equipment_id] = _normalize_ids(configured, equipment_id, dataset["signals"], "target")
     selected = result["provenance"]["origin_selection"]["test"]
+    if set(selected) != set(equipment_ids):
+        raise EventSliceError("test origin selection equipment keys must match run_config equipment_ids")
     expected_groups: set[tuple[str, str, str, datetime]] = set()
     for equipment_id in equipment_ids:
         selection = selected.get(equipment_id)
         if not isinstance(selection, dict) or not isinstance(selection.get("indices"), list):
             raise EventSliceError(f"test origin selection is missing for {equipment_id}")
+        expected_stride = config.get("test_origin_stride", config["horizon"])
+        expected_max_origins = config.get("max_test_origins")
+        if selection.get("count") != len(selection["indices"]) or selection.get("stride") != expected_stride or selection.get("max_origins") != expected_max_origins or selection.get("rule") != "chronological range with configured stride; endpoint-inclusive uniform cap when max_origins is set":
+            raise EventSliceError(f"test origin selection metadata does not match run_config: {equipment_id}")
         seen_indices: set[int] = set()
         test_start, test_end = dataset["split_times"]["test"]
         rows = dataset["observations"][equipment_id]
@@ -433,7 +450,16 @@ def _prediction_completeness(result: Mapping[str, Any], dataset: Mapping[str, An
     if unexpected:
         sample = next(iter(unexpected))
         raise EventSliceError(f"prediction completeness contains an unselected origin or group: {sample}")
+    expected_domain = {(model, equipment_id, target) for model, equipment_id, target, _origin in expected_groups}
     failure_keys = {(failure["model"], failure["equipment_id"], failure["target_signal_id"]) for failure in result["failures"]}
+    if len(failure_keys) != len(result["failures"]):
+        raise EventSliceError("result failures must not repeat a model/equipment/target key")
+    if not failure_keys <= expected_domain:
+        raise EventSliceError("result failure is outside the expected prediction group domain")
+    if result["status"] == "success" and result["failures"]:
+        raise EventSliceError("success result must not contain failure records")
+    if result["status"] == "partial" and not result["failures"]:
+        raise EventSliceError("partial result must contain at least one failure record")
     missing: list[dict[str, Any]] = []
     for group in sorted(expected_groups, key=lambda item: (item[0], item[1], item[2], item[3].isoformat())):
         leads = observed.get(group, set())
@@ -536,7 +562,6 @@ def analyze_event_slices(matrix_result: str | Path, output: str | Path, root: st
         cell_output_dir = _repo_path(root_path, cell["output_dir"], "cell output_dir")
         if output_path == cell_dataset_dir or output_path in cell_dataset_dir.parents or cell_dataset_dir in output_path.parents or output_path == cell_output_dir or output_path in cell_output_dir.parents or cell_output_dir in output_path.parents:
             raise EventSliceError(f"analysis output overlaps source dataset or cell output: {cell['cell_id']}")
-        total_predictions += 0 if cell["status"] == "failed" else 0
         if cell["status"] not in MATRIX_CELL_STATUSES or not cell.get("result_path"):
             excluded_by_status[cell["status"]] = excluded_by_status.get(cell["status"], 0) + 1
             analyzed_cells.append(base_cell)
