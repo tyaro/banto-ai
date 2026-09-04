@@ -46,6 +46,10 @@ controlled acceptance の `expected_consumed_signal_set` は benchmark contract 
 
 各 matrix は次の直積を持ちます。seed は5個以上、horizon は15／30、context は64／120です。benchmark は targets `motor_current`／`motor_temperature`、past-only `load_proxy`、known-future 空、validation／test は stride 15・max origin 1、5 baselines と pinned Toto native quantiles を固定します。出力先は track ごとに分離し、既存 output を上書きしません。
 
+publish は output 親下の専用 lock directory を `mkdir` で原子的に claim します。final directory も `mkdir` で claim してから `result.json` と `summary.md` を配置し、最後に `.complete` marker を作成します。したがって既存 output は置換されず、marker のない残存 directory は不完全出力として扱います。この構成は Windows／Linux の rename 差をまたぐ no-replace 境界です。
+
+analyzer は各 dataset の全 JSON／JSONL artifact（manifest、fingerprint、split、generator config、summary、observations、events）を重複キー禁止の strict parser に通してから quality verifier を実行し、全ファイルを snapshot/source record に含めます。
+
 実行する場合のコマンドは以下です。4 config を定義しただけでは paired 比較の受入完了ではありません。cross-matrix acceptance analyzer source と config/schema/test は追加済みで、pair key、base config hash、event 差分、全 equipment の future actual 同一性、model／equipment／target／origin 別 availability、expected／valid denominator、non-OK input count、no-ranking／truth-unavailable を machine-enforceします。analyzer がない結果は比較採用不可です。この savepoint では real model、matrix、result document、実 controlled artifact は作成していません。
 
 ```powershell

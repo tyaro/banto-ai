@@ -59,6 +59,7 @@ EXPECTED_BENCHMARK_MODELS = [
     {"name": "holt-linear", "parameters": {"alpha": 0.8, "beta": 0.2}},
     {"name": "toto2", "quantile_policy": "native", "parameters": {"checkpoint_revision": "8306a9801cf98c0f5ffe4b2dcc8f496e616d84d9", "batch_size": 1, "device": "cpu", "local_files_only": True, "patch_size": 32}},
 ]
+COMPLETION_MARKER = ".complete"
 
 
 class _DuplicateJSON(ValueError):
@@ -252,7 +253,7 @@ def _event_roles(generator: Mapping[str, Any]) -> dict[tuple[Any, ...], str]:
     }
 
 
-def _parse_jsonl(path: Path, label: str) -> list[dict[str, Any]]:
+def _parse_jsonl(path: Path, label: str, *, allow_empty: bool = False) -> list[dict[str, Any]]:
     try:
         raw = path.read_bytes()
         text = raw.decode("utf-8")
@@ -274,9 +275,37 @@ def _parse_jsonl(path: Path, label: str) -> list[dict[str, Any]]:
         if not isinstance(value, dict):
             raise AcceptanceError(f"{label}:{number} must be an object")
         rows.append(value)
-    if not rows:
+    if not rows and not allow_empty:
         raise AcceptanceError(f"{label} must not be empty")
     return rows
+
+
+def _strict_dataset_artifacts(root: Path, dataset_path: Path, label: str) -> list[Path]:
+    """Parse every JSON/JSONL artifact before the legacy dataset verifier reads it."""
+    manifest_path = _safe_file(root, (dataset_path / "dataset-manifest.json").relative_to(root).as_posix(), f"{label} dataset-manifest.json")
+    _strict_object(manifest_path, f"{label} dataset-manifest.json")
+    artifacts: list[Path] = []
+    pending = [dataset_path]
+    try:
+        while pending:
+            directory = pending.pop()
+            for child in sorted(directory.iterdir(), key=lambda item: item.name):
+                if child.is_dir() and not child.is_symlink():
+                    pending.append(child)
+                    continue
+                if not child.name.lower().endswith((".json", ".jsonl")):
+                    continue
+                path = _safe_file(root, child.relative_to(root).as_posix(), f"{label} {child.name}")
+                if child.name.lower().endswith(".jsonl"):
+                    _parse_jsonl(path, f"{label} {child.name}", allow_empty=child.name == "events.jsonl")
+                else:
+                    _strict_object(path, f"{label} {child.name}")
+                artifacts.append(path)
+    except OSError as exc:
+        raise AcceptanceError(f"{label} directory is unreadable: {dataset_path}") from exc
+    if manifest_path not in artifacts:
+        raise AcceptanceError(f"{label} dataset-manifest.json was not enumerated")
+    return artifacts
 
 
 def _snapshot(snapshots: dict[Path, str], path: Path) -> None:
@@ -508,6 +537,9 @@ def _cell_result_audit(
         expected_timestamp = rows_by_equipment[equipment][ORIGIN_INDEX + row["lead_time"] - 1]["timestamp"]
         if row["timestamp"] != expected_timestamp:
             raise AcceptanceError(f"prediction timestamp/lead mismatch: {cell_id}/{key}")
+        expected_operating_mode = rows_by_equipment[equipment][ORIGIN_INDEX + row["lead_time"] - 1].get("operating_mode")
+        if row["operating_mode"] != expected_operating_mode:
+            raise AcceptanceError(f"prediction operating_mode/truth mismatch: {cell_id}/{key}")
         if row["model"] == "toto2":
             median = float(row["quantiles"]["0.5"])
             tolerance = 1e-5 * max(1.0, abs(float(row["point_forecast"])), abs(median))
@@ -667,8 +699,6 @@ def analyze_controlled_acceptance(config_path: str | Path, root: Path) -> Path:
     config, config_raw = _strict_object(config_file, "analyzer config")
     validate_acceptance_config(config, root)
     output = _artifact_output(root, config["output_dir"])
-    if output.exists():
-        raise AcceptanceError(f"refusing to overwrite existing output: {output}")
     snapshots: dict[Path, str] = {config_file: _sha256_bytes(config_raw)}
     tracks_cfg = {track["track_id"]: track for track in config["tracks"]}
     matrix_infos: dict[str, dict[str, Any]] = {}
@@ -785,10 +815,7 @@ def analyze_controlled_acceptance(config_path: str | Path, root: Path) -> Path:
         for seed in common_axes["seeds"]:
             entry = datasets[seed]
             dataset_path = _safe_path(root, entry["dataset_path"], "dataset_path")
-            dataset_files = [
-                _safe_file(root, (dataset_path / name).relative_to(root).as_posix(), f"dataset {name}")
-                for name in ("dataset-manifest.json", "fingerprint.json", "observations.jsonl", "events.jsonl", "split-manifest.json")
-            ]
+            dataset_files = _strict_dataset_artifacts(root, dataset_path, f"{track_id}/{seed}")
             for artifact in dataset_files:
                 _snapshot(snapshots, artifact)
             try:
@@ -820,8 +847,9 @@ def analyze_controlled_acceptance(config_path: str | Path, root: Path) -> Path:
             if not isinstance(quality_gate, dict) or not isinstance(quality, dict) or quality_gate.get("status") != "pass" or quality_gate.get("observation_record_count") != quality.get("observation_record_count") or quality_gate.get("equipment_count") != quality.get("equipment_count"):
                 raise AcceptanceError(f"dataset quality gate evidence mismatch: {track_id}/{seed}")
             _snapshot(snapshots, gen_materialized_path)
-            for name, artifact in zip(("dataset-manifest.json", "fingerprint.json", "observations.jsonl", "events.jsonl", "split-manifest.json"), dataset_files):
-                dataset_sources.append(_source_record(artifact, root, snapshots, f"dataset-{name}"))
+            for artifact in dataset_files:
+                dataset_sources.append(_source_record(artifact, root, snapshots, f"dataset-{artifact.name}"))
+            dataset_sources.append(_source_record(gen_materialized_path, root, snapshots, "dataset-materialized-generator-config"))
             dataset_data[seed] = verified
         all_dataset_data[track_id] = dataset_data
         if track_id == "covariate-quality":
@@ -867,20 +895,42 @@ def analyze_controlled_acceptance(config_path: str | Path, root: Path) -> Path:
     }
     _schema_validate(result, _schema(root, "toto2-controlled-acceptance-result.schema.json"), "acceptance result")
     output.parent.mkdir(parents=True, exist_ok=True)
-    temporary = Path(tempfile.mkdtemp(prefix=".toto2-acceptance.", dir=output.parent))
+    lock = output.parent / f".{output.name}.lock"
     try:
-        (temporary / "result.json").write_text(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n", encoding="utf-8", newline="\n")
-        (temporary / "summary.md").write_text(_summary(result), encoding="utf-8", newline="\n")
-        if _revision(root) != analyzer_code_revision:
-            raise AcceptanceError("repository code revision changed before publish")
-        _assert_unchanged(snapshots)
+        # mkdir is an atomic cross-platform claim.  This serializes analyzers
+        # targeting the same output and, unlike rename, never replaces an
+        # existing directory.  The completion marker is written last so a
+        # claimed directory without it is visibly incomplete after a crash.
+        lock.mkdir()
+    except FileExistsError as exc:
+        raise AcceptanceError(f"another analyzer is publishing this output: {output}") from exc
+    try:
         if output.exists():
             raise AcceptanceError(f"refusing to overwrite existing output: {output}")
-        temporary.rename(output)
-    except Exception:
-        if temporary.exists():
-            shutil.rmtree(temporary, ignore_errors=True)
-        raise
+        temporary = Path(tempfile.mkdtemp(prefix=".toto2-acceptance.", dir=output.parent))
+        try:
+            (temporary / "result.json").write_text(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n", encoding="utf-8", newline="\n")
+            (temporary / "summary.md").write_text(_summary(result), encoding="utf-8", newline="\n")
+            if _revision(root) != analyzer_code_revision:
+                raise AcceptanceError("repository code revision changed before publish")
+            _assert_unchanged(snapshots)
+            # Claim the final directory before moving files.  A crash can
+            # leave an incomplete directory, but it cannot replace a prior
+            # result; only the last exclusive marker makes it complete.
+            output.mkdir()
+            for name in ("result.json", "summary.md"):
+                (temporary / name).rename(output / name)
+            with (output / COMPLETION_MARKER).open("x", encoding="utf-8", newline="\n") as marker:
+                marker.write("toto2-controlled-acceptance complete\n")
+        except Exception:
+            if temporary.exists():
+                shutil.rmtree(temporary, ignore_errors=True)
+            raise
+    finally:
+        try:
+            lock.rmdir()
+        except FileNotFoundError:
+            pass
     return output
 
 

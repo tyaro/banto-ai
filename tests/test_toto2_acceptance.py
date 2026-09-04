@@ -9,6 +9,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from unittest.mock import patch
 
@@ -16,7 +17,7 @@ from banto_ai.generator import generate_synthetic
 from banto_ai.manifest import load_json, validate
 from banto_ai.quality import check_dataset
 from banto_ai.event_slices import _verify_dataset
-from banto_ai.toto2_acceptance import AcceptanceError, _validate_cross_track_truth, analyze_controlled_acceptance, validate_acceptance_config
+from banto_ai.toto2_acceptance import AcceptanceError, _strict_dataset_artifacts, _validate_cross_track_truth, analyze_controlled_acceptance, validate_acceptance_config
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -129,7 +130,7 @@ class Toto2AcceptanceTests(unittest.TestCase):
                                     for lead in range(1, horizon + 1):
                                         point = by_equipment[equipment][384 + lead - 1]["signals"][target]["value"]
                                         timestamp = by_equipment[equipment][384 + lead - 1]["timestamp"]
-                                        predictions.append({"model": model["name"], "equipment_id": equipment, "target_signal_id": full_target, "operating_mode": "nominal", "split": "test", "origin_timestamp": by_equipment[equipment][384]["timestamp"], "timestamp": timestamp, "lead_time": lead, "actual": point, "point_forecast": point, "quantiles": {"0.1": point, "0.5": point, "0.9": point}})
+                                        predictions.append({"model": model["name"], "equipment_id": equipment, "target_signal_id": full_target, "operating_mode": by_equipment[equipment][384 + lead - 1]["operating_mode"], "split": "test", "origin_timestamp": by_equipment[equipment][384]["timestamp"], "timestamp": timestamp, "lead_time": lead, "actual": point, "point_forecast": point, "quantiles": {"0.1": point, "0.5": point, "0.9": point}})
                         quality = check_dataset(ROOT / dataset_relative, ROOT)
                         policies = {model["name"]: ("native" if model["name"] == "toto2" else "validation-residual-by-lead") for model in base_benchmark["models"]}
                         result = {
@@ -237,6 +238,38 @@ class Toto2AcceptanceTests(unittest.TestCase):
         self.assertEqual(len(result["paired_deltas"]), 1440)
         self.assertTrue(all(delta["ranking"] == "no-rank" for delta in result["paired_deltas"]))
         validate(result, load_json(ROOT / "schemas/toto2-controlled-acceptance-result.schema.json"))
+        self.assertTrue((output / ".complete").is_file())
+        dataset_paths = {item["path"] for track in result["tracks"] for item in track["dataset_sources"]}
+        self.assertTrue(any(path.endswith("/generator-config.json") for path in dataset_paths))
+        self.assertTrue(any(path.endswith("/summary.json") for path in dataset_paths))
+
+    def test_dataset_json_and_jsonl_duplicate_keys_fail_closed(self) -> None:
+        dataset_path = self.temp / "ds" / "control" / MATRIX_IDS["control"] / "seed-17"
+        artifact_names = ("dataset-manifest.json", "fingerprint.json", "split-manifest.json", "generator-config.json", "summary.json", "observations.jsonl", "events.jsonl")
+        for name in artifact_names:
+            path = dataset_path / name
+            original = path.read_bytes()
+            try:
+                path.write_text('{"duplicate": 1, "duplicate": 2}\n', encoding="utf-8", newline="\n")
+                with self.assertRaises(AcceptanceError, msg=name):
+                    _strict_dataset_artifacts(ROOT, dataset_path, name)
+            finally:
+                path.write_bytes(original)
+
+    def test_prediction_operating_mode_must_match_future_truth(self) -> None:
+        matrix = load_json(self.temp / "matrix" / "control" / "result.json")
+        cell = matrix["cells"][0]
+        prediction_path = ROOT / cell["output_dir"] / "predictions.jsonl"
+        original = prediction_path.read_text(encoding="utf-8")
+        try:
+            rows = original.splitlines()
+            first = json.loads(rows[0]); first["operating_mode"] = "tampered-mode"; rows[0] = json.dumps(first, sort_keys=True)
+            prediction_path.write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
+            config = load_json(self.config_path); config["output_dir"] = f"artifacts/{self.temp.name}/operating-mode-output"; mode_config = self.temp / "configs" / "operating-mode.json"; _write(mode_config, config)
+            with self.assertRaises(AcceptanceError):
+                analyze_controlled_acceptance(mode_config, ROOT)
+        finally:
+            prediction_path.write_text(original, encoding="utf-8", newline="\n")
 
     def test_duplicate_extra_and_missing_predictions_fail_safely(self) -> None:
         matrix = load_json(self.temp / "matrix" / "control" / "result.json")
@@ -266,8 +299,12 @@ class Toto2AcceptanceTests(unittest.TestCase):
         unsafe = self.temp / "configs" / "unsafe.json"; _write(unsafe, config)
         with self.assertRaises(AcceptanceError): analyze_controlled_acceptance(unsafe, ROOT)
         config = load_json(self.config_path); config["output_dir"] = f"artifacts/{self.temp.name}/overwrite"; overwrite = self.temp / "configs" / "overwrite.json"; _write(overwrite, config)
-        (ROOT / config["output_dir"]).mkdir(parents=True, exist_ok=True)
+        existing = ROOT / config["output_dir"]
+        existing.mkdir(parents=True, exist_ok=True)
+        sentinel = existing / "sentinel"
+        sentinel.write_text("preserve", encoding="utf-8")
         with self.assertRaises(AcceptanceError): analyze_controlled_acceptance(overwrite, ROOT)
+        self.assertEqual(sentinel.read_text(encoding="utf-8"), "preserve")
 
     def test_partial_cell_is_blocked_and_context_semantics_are_separated(self) -> None:
         matrix = load_json(self.temp / "matrix" / "target-quality" / "result.json")
@@ -349,7 +386,7 @@ class Toto2AcceptanceTests(unittest.TestCase):
         mutation_config = self.temp / "configs" / "mutation.json"; _write(mutation_config, config)
         import banto_ai.toto2_acceptance as analyzer
         original_check = analyzer._assert_unchanged
-        mutation_source = ROOT / config["tracks"][0]["matrix_config_path"]
+        mutation_source = ROOT / config["tracks"][0]["dataset_output_root"] / MATRIX_IDS["control"] / "seed-17" / "summary.json"
         original_source = mutation_source.read_bytes()
         calls = {"count": 0}
         def mutate_on_second(snapshots):
@@ -364,6 +401,27 @@ class Toto2AcceptanceTests(unittest.TestCase):
             self.assertFalse((ROOT / config["output_dir"]).exists())
         finally:
             mutation_source.write_bytes(original_source)
+
+    def test_simultaneous_analyzers_have_one_non_replacing_publisher(self) -> None:
+        config = load_json(self.config_path)
+        config["output_dir"] = f"artifacts/{self.temp.name}/race-output"
+        race_config = self.temp / "configs" / "race.json"; _write(race_config, config)
+
+        def run() -> object:
+            try:
+                return analyze_controlled_acceptance(race_config, ROOT)
+            except AcceptanceError as exc:
+                return exc
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            results = list(executor.map(lambda _: run(), range(2)))
+        successes = [item for item in results if isinstance(item, Path)]
+        failures = [item for item in results if isinstance(item, AcceptanceError)]
+        self.assertEqual(len(successes), 1)
+        self.assertEqual(len(failures), 1)
+        output = ROOT / config["output_dir"]
+        self.assertTrue((output / "result.json").is_file())
+        self.assertTrue((output / ".complete").is_file())
 
 
 if __name__ == "__main__":
