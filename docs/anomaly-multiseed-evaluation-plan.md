@@ -156,3 +156,7 @@ Gitで管理するのはsource、schema、config、tests、docs、hashや結果�
 ## 9. 次の判断
 
 本計画はmulti-seed replayの開始許可そのものではない。まずSavepoint A〜Cで計画の構造、validator、fake/unit testを確定し、その後にclean 120-cell runを別途承認する。D完了後も、promotion gateの未達、CI不能、coverage欠落、engineering failureを研究上の事実として保持する。Banto Hubや実設備のshadow／control境界へ進む判断は、このrunの成功だけでは行わない。
+
+## Savepoint Aの実装状況
+
+Savepoint Aのpure validator、strict matrix schema、固定config、CLI、fake/unit regression testは実装済みである。現在はconfigのschema／hash／semantic validationが可能なだけで、dataset生成、result生成、120-cell replay、bootstrap、performance evaluationは実行していない。Savepoint B以降のrunner実装前に、layoutのexact offsetとそのexpanded accounting windowをこのconfigのcanonical bytes／hashで固定する。

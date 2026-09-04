@@ -1,0 +1,137 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tyaro/banto-ai/schemas/anomaly-multiseed-matrix-config.schema.json",
+  "title": "banto-ai event-aware anomaly multi-seed matrix config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "config_type",
+    "matrix_id",
+    "base_generator_config_path",
+    "base_generator_config_sha256",
+    "schema_path",
+    "schema_sha256",
+    "seeds",
+    "test_split",
+    "mode_window_samples",
+    "slot_offsets_samples",
+    "event_duration_samples",
+    "expanded_window_grace_points",
+    "targets",
+    "detector",
+    "bootstrap",
+    "output_root",
+    "layouts"
+  ],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "config_type": {"type": "string", "const": "event-aware-anomaly-matrix"},
+    "matrix_id": {"type": "string", "const": "anomaly-multiseed-v01"},
+    "base_generator_config_path": {"$ref": "#/$defs/repositoryPath"},
+    "base_generator_config_sha256": {"$ref": "#/$defs/sha256"},
+    "schema_path": {"$ref": "#/$defs/repositoryPath"},
+    "schema_sha256": {"$ref": "#/$defs/sha256"},
+    "seeds": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": {"type": "integer", "minimum": 0}
+    },
+    "test_split": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["start_sample", "end_sample"],
+      "properties": {
+        "start_sample": {"type": "integer", "minimum": 0},
+        "end_sample": {"type": "integer", "minimum": 1}
+      }
+    },
+    "mode_window_samples": {"type": "integer", "const": 30},
+    "slot_offsets_samples": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {"type": "integer", "minimum": 0}
+    },
+    "event_duration_samples": {"type": "integer", "const": 3},
+    "expanded_window_grace_points": {"type": "integer", "const": 3},
+    "targets": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {"type": "string", "enum": ["motor_current", "motor_temperature", "conveyor_speed", "vibration_feature"]}
+    },
+    "detector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min_calibration_points", "robust_z_threshold", "persistence_points", "detection_grace_points"],
+      "properties": {
+        "min_calibration_points": {"type": "integer", "const": 10},
+        "robust_z_threshold": {"type": "number", "const": 4.0},
+        "persistence_points": {"type": "integer", "const": 2},
+        "detection_grace_points": {"type": "integer", "const": 3}
+      }
+    },
+    "bootstrap": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seed", "resamples", "confidence_level"],
+      "properties": {
+        "seed": {"type": "integer", "const": 20260905},
+        "resamples": {"type": "integer", "const": 10000},
+        "confidence_level": {"type": "number", "const": 0.95}
+      }
+    },
+    "output_root": {"$ref": "#/$defs/repositoryPath"},
+    "layouts": {
+      "type": "array",
+      "minItems": 12,
+      "maxItems": 12,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["layout_id", "layout_index", "equipment_id", "operating_mode", "mode_start_sample", "mode_end_sample", "events"],
+        "properties": {
+          "layout_id": {"type": "string", "minLength": 1, "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+          "layout_index": {"type": "integer", "minimum": 0, "maximum": 11},
+          "equipment_id": {"type": "string", "minLength": 1, "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]*$"},
+          "operating_mode": {"type": "string", "enum": ["stopped", "startup", "low_speed", "nominal", "high_load", "cooldown"]},
+          "mode_start_sample": {"type": "integer", "minimum": 0},
+          "mode_end_sample": {"type": "integer", "minimum": 1},
+          "events": {
+            "type": "array",
+            "minItems": 4,
+            "maxItems": 4,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["event_id", "event_class", "event_type", "signal_id", "magnitude", "enabled", "start_offset_samples", "duration_samples"],
+              "properties": {
+                "event_id": {"type": "string", "minLength": 1, "pattern": "^[a-z0-9][a-z0-9._-]*$"},
+                "event_class": {"type": "string", "enum": ["machine_fault", "sensor_fault", "data_quality", "ignored"]},
+                "event_type": {"type": "string", "enum": ["jam_or_slip", "spike", "dropout", "stuck_value"]},
+                "signal_id": {"type": "string", "enum": ["motor_current", "motor_temperature", "conveyor_speed", "load_proxy"]},
+                "magnitude": {"type": "number"},
+                "enabled": {"type": "boolean", "const": true},
+                "start_offset_samples": {"type": "integer", "minimum": 0},
+                "duration_samples": {"type": "integer", "minimum": 1}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "repositoryPath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*\\\\)(?!.*(^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}
