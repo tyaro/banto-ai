@@ -52,7 +52,11 @@ seedごとにdatasetを独立生成し、観測値のhashとdataset fingerprint�
 
 各layoutには、`machine_fault`、`sensor_fault`、`data_quality`、`ignored`を各1件ずつ置く。4件は互いに非重複とし、mode境界から十分内側へ配置し、validationを汚染しない。positive eventはtest内のraw intervalに入り、`machine_fault`と`sensor_fault`のpositive eligible incidentとして扱える配置にする。`data_quality`と`ignored`はevent window・suppression検証用であり、positive incidentには数えない。
 
-正確なevent signal、event duration、mode内offset、test splitに対する位置、graceとの関係は、runner実装前にschema/configへ明記して固定する。schema/configのcanonical bytesとhashをpreregistrationの一部として保存し、run開始後にoffsetまたはlayout表を変更しない。実装時にmode長や半開区間の制約と両立しない値が判明した場合は、最小限の実現可能なoffset変更を新versionのpreregistrationとして明示し、同じversionのまま黙って修正しない。
+「非重複」はraw event intervalだけでなく、各eventのexpanded accounting window `[event.start, event.end + detection_grace_points * sampling_interval)` に対して必須とする。同一layoutの4 expanded windowは互いに重ならず、各window全体が同一のmode区間かつtest区間の内側に収まらなければSavepoint Aでfail closedにする。各layoutでは30秒のmode区間内に4 windowを配置できるevent durationとmode内offsetを、Savepoint Aのschema/configで固定する。graceは固定値`3`であり、windowの半開境界も変更しない。
+
+正確なevent signal、event duration、mode内offset、test splitに対する位置、graceとの関係は、runner実装前にschema/configへ明記して固定する。schema/configのcanonical bytesとhashをpreregistrationの一部として保存し、run開始後にoffsetまたはlayout表を変更しない。実装時に30秒mode長、mode内収容、半開区間の制約と両立しない値が判明した場合は、最小限の実現可能なoffset変更を新versionのpreregistrationとして明示し、同じversionのまま黙って修正しない。
+
+stoppedとcooldownにmachine／sensor faultを置くのは、mode境界とevent accountingのsynthetic stress testである。実設備における故障頻度、故障の物理的妥当性、modeごとの発生確率を表すものではなく、現実性の評価は別scenario／別preregistrationで行う。
 
 coverage invariantはseedごとに検査する。
 
@@ -83,13 +87,13 @@ calibrationはvalidation-only、`equipment + full signal + operating mode`単位
 - clean false alerts per 8 equipment-hours
 - target signalごとのscore availability
 
-各指標はoverallに加え、class、equipment、modeのsliceで記録する。signal-level false positiveとequipment-level false-alert episodeを混同せず、signal-level precisionの分母・分子とequipment episode集約を別フィールドで保存する。lead timeは評価・集計・promotion判定に使わない。
+各指標はoverallに加え、class、equipment、modeのsliceで記録する。signal-level false positiveとequipment-level false-alert episodeを混同せず、signal-level precisionの分母・分子とequipment episode集約を別フィールドで保存する。score availability gateは2 equipment × 4 targetの8個の完全修飾signal IDそれぞれへ適用し、各signalが`>= 0.95`を満たすことを要求する。equipment／overallへの集約で低availabilityのsignalを隠さず、8 signalすべての値と判定を保存する。lead timeは評価・集計・promotion判定に使わない。
 
 incident precision／recallはmachine faultとsensor faultのevent単位matchingから計算する。`data_quality`と`ignored`はsuppressed event-window alertとして別記録し、positive incidentまたはclean false alertへ再分類しない。clean exposureはtest内のavailable intervalからevent windowを差し引き、zero denominatorやzero availabilityはundefined／inconclusiveとして保持する。
 
 ## 4. 不確実性
 
-seedをclusterとして扱い、各seedの12 layoutをblockとして再標本化するhierarchical bootstrapを固定する。event row単位の独立resamplingはしない。各resampleではlayout block内の4 event classの関係を保ち、seed clusterのまとまりも保つ。
+名称は`seed-cluster block bootstrap`とする。10個のseed IDをclusterとしてreplacementありで10個再標本化し、選ばれた各seedは12 layout／48 eventを丸ごと含める。seedを選んだ後にlayoutまたはeventを独立に第2段resampleしない。これにより、seed clusterとseed内の12 layout／4 event classのまとまりを保つ。
 
 - bootstrap seed: `20260905`
 - resamples: `10,000`
@@ -123,9 +127,9 @@ promotion gateはrun completionの後にのみ評価し、engineering gateと同
 | machine-fault recall | `>= 0.80` | lower `>= 0.60` |
 | sensor-fault recall | `>= 0.90` | lower `>= 0.75` |
 | clean false alerts per 8 equipment-hours | `<= 1.0` | upper `<= 2.0` |
-| each target score availability | `>= 0.95` | — |
+| each of 8 fully qualified target signal score availability | `>= 0.95` | — |
 
-各 `class × equipment × mode` sliceは`n=10`（10 seed）を満たすことを確認し、point recallを報告する。ただしslice単独でpromotion判定を行わず、sliceのundefinedやCI不能を隠さない。
+各 `class × equipment × mode` sliceは`n=10`（10 seed）を満たすことを確認し、point recallを報告する。availability gateも`motor-01`／`conveyor-01`の各4 target、計8個の完全修飾signal IDで個別に判定する。ただしslice単独でpromotion判定を行わず、sliceのundefinedやCI不能を隠さない。
 
 promotion gate未達は研究結果として完了できるが、昇格不可とする。現行single-seed sampleのprecision／recallは0であり、今回のgate未達が予想され得る。この事前情報を理由にthreshold、layout、seed、CI方法、promotion基準を結果後に変更しない。
 
@@ -135,7 +139,7 @@ promotion gate未達は研究結果として完了できるが、昇格不可と
 
 | savepoint | 内容 | 完了条件 |
 | --- | --- | --- |
-| A | schema/config/layout validator | 12 layout、offset、class partition、coverage invariant、fixed parametersを実行前に検証できる |
+| A | schema/config/layout validator | 12 layout、30秒mode内のexpanded window duration／offset、class partition、coverage invariant、fixed parametersを実行前に検証できる |
 | B | deterministic matrix runner + atomic aggregate | 10 seed × 12 layoutのcell identity、seed hash、provenance、atomic non-overwriteを固定できる |
 | C | fake/unit tests | matching、suppression、grace、availability、bootstrap、fail-closed境界をartifactなしで検証できる |
 | D | clean 120-cell run | clean revision上で全cellを実行し、engineering gateの証跡を生成する |
