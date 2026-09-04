@@ -47,6 +47,48 @@ class Toto2DocumentationTests(unittest.TestCase):
         with self.assertRaises(ManifestValidationError):
             validate(invalid_policy, schema)
 
+    def test_evaluation_report_records_result_provenance_metrics_and_boundaries(self):
+        report = (ROOT / "docs/results/toto2-metropt3-evaluation-2026-09-04.md").read_text(encoding="utf-8")
+        required = (
+            "結果は`success`",
+            "prediction 4,320",
+            "failure 0",
+            "artifacts/toto2/cpu-smoke.json",
+            "status=`pass`",
+            "c696daf5ba58055d92607ccdbd5d47b775e24024",
+            "e6210e4e48e05c025fc8895ddeddf0c53a49dc53fd1c2f49e8c3272a3c7b37b0",
+            "context / horizon | 120分 / 15分",
+            "128点、先頭8点の未観測padding",
+            "past-only 11、known-future 0",
+            "validation 16、test 16",
+            "native `p10` / `p50` / `p90`",
+            "5eb922f8162a800d6d31cffb10e3f4c079276b12c41e272129e5b4a930943f71",
+            "0.2838531311307635",
+            "0.976644075030372",
+            "0.8562984656547269",
+            "116.79421359999105",
+            "584.8305000108667",
+            "2391.030899991165",
+            "752,611,328 bytes",
+            "production=false",
+            "control_write=false",
+            "直接実行経路",
+            "22M、matrix、fine-tuning",
+        )
+        for required_value in required:
+            with self.subTest(required_value=required_value):
+                self.assertIn(required_value, report)
+
+        for path in (
+            ROOT / "README.md",
+            ROOT / "docs/toto2-notes.md",
+            ROOT / "docs/research-roadmap.md",
+            ROOT / "docs/research-implementation-plan.md",
+            ROOT / "tools/toto2/README.md",
+        ):
+            with self.subTest(path=path):
+                self.assertNotIn("実model benchmarkは未実施", path.read_text(encoding="utf-8"))
+
 
 if __name__ == "__main__":
     unittest.main()

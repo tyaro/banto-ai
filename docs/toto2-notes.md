@@ -12,6 +12,6 @@ MetroPT-3 の既存契約は context=120、horizon=15、targets=`tp3`／`oil_tem
 
 core import 時には torch、numpy、toto2、huggingface_hub を import しません。外部 cache の固定 snapshot と license／package provenance を benchmark 前に検証し、benchmark 開始後は `local_files_only=True`、CPU、batch=1、`decode_block_size=None`、offline／telemetry-disabled を強制します。quantile crossing、nonfinite、output shape の異常は補正せず失敗にします。重み、データ、生成 artifact は Git 管理対象外です。
 
-## 評価範囲
+## 評価範囲と実測結果
 
-初回は Toto 4M のみを既存 runner に接続します。22M、matrix、fine-tuning、実 model download／MetroPT-3 数値 benchmark はこの実装コミットの必須範囲外です。CPU fake-backend smoke と tool／docs の契約テストで実装を検証し、実測値を性能結論として文書化しません。
+初回対象の Toto 4M は既存runnerへ接続し、固定snapshotを使ったCPU smokeとMetroPT-3数値benchmarkを実行済みです。statusは`success`、predictionは4,320、failureは0で、target別metricsとruntimeは[`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](results/toto2-metropt3-evaluation-2026-09-04.md)に記録しています。実direct invocationのCLI経路もdownload mock／acceptance gateで確認済みです。22M、matrix、fine-tuning、seed拡大、fault slice、実設備一般化は未実施で、今回の限定評価から製品採用を判断しません。

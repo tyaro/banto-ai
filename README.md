@@ -4,7 +4,7 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 このリポジトリは `banto-industrial` から意図的に分離しています。実験、評価プロトコル、モデル試作、連携契約を扱う研究用ワークスペースです。生産設備の制御動作は、Banto Hub と PLC／制御システムが引き続き担当します。
 
-現在の研究基盤には、外部依存ゼロの共通benchmark runner、統計baseline、モデル別の隔離実行環境があります。TimesFM 3.0は研究比較専用、Chronos-2は`commercial-evaluation`として、専用環境でCPU smoke、合成データ、MetroPT-3限定rolling-origin benchmarkを実行済みです。Toto 2.0 4Mも同じForecaster／MetroPT契約へ接続し、実model benchmark前のfake-backend／CPU smoke境界を追加しました。core runtimeへML依存は混入させていません。今回の結果は実設備一般の性能を示しません。
+現在の研究基盤には、外部依存ゼロの共通benchmark runner、統計baseline、モデル別の隔離実行環境があります。TimesFM 3.0は研究比較専用、Chronos-2は`commercial-evaluation`として、専用環境でCPU smoke、合成データ、MetroPT-3限定rolling-origin benchmarkを実行済みです。Toto 2.0 4Mも同じForecaster／MetroPT契約でCPU smokeとMetroPT-3 rolling-origin benchmarkを実行済みです。core runtimeへML依存は混入させていません。今回の結果は実設備一般の性能を示しません。
 
 ## 研究テーマ
 
@@ -128,7 +128,7 @@ rolling-origin benchmarkの実測値は [`docs/results/timesfm3-rolling-benchmar
 
 2 seeds×2 horizons×2 context lengthsの実TimesFM matrixは8 cellsすべて成功し、結果を [`docs/results/timesfm3-matrix-2026-09-04.md`](docs/results/timesfm3-matrix-2026-09-04.md) に記録しました。TimesFM 3.0は温度の4条件でMAE最良でしたが、電流では4条件ともmoving-average等に劣りました。2 seeds・少数originのcell-macroであり、Phase 2完了や製品採用の根拠にはしません。MetroPT-3同一契約比較は完了済みで、次はseed／origin／条件の拡大、cold／warmとモデル単独resourceの分離、欠損・regime・fault slice、ライセンス適合候補との同一契約比較です。
 
-Toto 2.0 4M は [`tools/toto2/README.md`](tools/toto2/README.md) の専用環境・外部cacheから実行します。MetroPT-3のcontext=120、horizon=15、target 3、past-only covariate 11は変更せず、adapter内の先頭8点paddingだけでpatch_size=32のeffective input length=128へ揃えます。Totoのknown-future／exogenous requestは拒否し、実model downloadと数値benchmarkは未実施です。
+Toto 2.0 4M は [`tools/toto2/README.md`](tools/toto2/README.md) の専用環境・外部cacheから実行します。MetroPT-3のcontext=120、horizon=15、target 3、past-only covariate 11は変更せず、adapter内の先頭8点paddingだけでpatch_size=32のeffective input length=128へ揃えます。実smokeと数値benchmarkは完了し、結果を [`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](docs/results/toto2-metropt3-evaluation-2026-09-04.md) に記録しました。Totoのknown-future／exogenous requestは拒否します。
 
 Phase 0の実行確認は、外部依存を導入せず `python tools/smoke.py` と `python tools/safety_check.py` で行えます。Phase 1の最小generatorは次で実行できます。
 
@@ -173,6 +173,6 @@ Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUT
 
 ## ステータス
 
-Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0はCPU smoke、小規模rolling-origin benchmark、8-cell matrix、MetroPT-3同一契約比較を実行済みです。Chronos-2は固定snapshot検証、公式API／Banto tool CPU smoke、past-only 6 models／known-future 7 modelsの初期rolling benchmark、実model 8-cell matrix、MetroPT-3公開実データのnative／point-calibrated評価を実行済みです。MetroPT-3評価は24時間・1設備・16 test origins・単一CPU・forecast-onlyの限定条件で、Chronos nativeはpartial、Chronos point-calibratedとTimesFM 3.0はsuccessでした。TimesFM 3.0の詳細は[`docs/results/timesfm3-metropt3-evaluation-2026-09-04.md`](docs/results/timesfm3-metropt3-evaluation-2026-09-04.md)、Chronos-2の詳細は[`docs/results/chronos2-metropt3-evaluation-2026-09-04.md`](docs/results/chronos2-metropt3-evaluation-2026-09-04.md)を参照してください。origin／日／設備拡大、model単独resourceの分離評価、欠損・regime・fault slice、known-future対past-onlyの追加比較、Chronos再実行の再現性は未実施です。Phase 2は完了していません。本番デプロイ経路も未実装です。
+Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0はCPU smoke、小規模rolling-origin benchmark、8-cell matrix、MetroPT-3同一契約比較を実行済みです。Chronos-2は固定snapshot検証、公式API／Banto tool CPU smoke、past-only 6 models／known-future 7 modelsの初期rolling benchmark、実model 8-cell matrix、MetroPT-3公開実データのnative／point-calibrated評価を実行済みです。Toto 2.0 4Mは固定snapshot検証、CPU smoke、MetroPT-3公開実データの6 model／3 target評価を実行済みです。MetroPT-3評価は24時間・1設備・16 test origins・単一CPU・forecast-onlyの限定条件で、Chronos nativeはpartial、Chronos point-calibrated、TimesFM 3.0、Toto 2.0 4Mはsuccessでした。詳細は[`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](docs/results/toto2-metropt3-evaluation-2026-09-04.md)、[`docs/results/timesfm3-metropt3-evaluation-2026-09-04.md`](docs/results/timesfm3-metropt3-evaluation-2026-09-04.md)、[`docs/results/chronos2-metropt3-evaluation-2026-09-04.md`](docs/results/chronos2-metropt3-evaluation-2026-09-04.md)を参照してください。origin／日／設備拡大、model単独resourceの分離評価、欠損・regime・fault slice、known-future対past-onlyの追加比較、Chronos再実行の再現性は未実施です。Phase 2は完了していません。本番デプロイ経路も未実装です。
 
 合成データは研究用の制御されたfixtureであり、実設備の挙動を代表すると主張しません。顧客データ、raw設備データ、秘密情報は生成物・設定・Git履歴へ入れません。大量生成データはGit無視領域へ置き、commit対象は小さいconfig／fixtureだけにします。

@@ -159,7 +159,7 @@ Chronos-2は依存環境を分離し、外部cacheの固定revision、`model.saf
 
 Chronos-2のseed `[17, 42]`×horizon `[1, 3]`×context `[6, 12]`の実model matrixは、固定clean HEADから8/8 cells success／0 failureで完了しました。currentは4条件すべてmoving-averageがMAE首位、temperatureはWIS 4条件すべてChronos-2が首位でした。coverage／width、各cellの相対順位、warm latency、peak memoryは[`docs/results/chronos2-matrix-2026-09-04.md`](results/chronos2-matrix-2026-09-04.md)に記録しています。
 
-Toto 2.0 4Mは、`toto-2==2.0.0`／`toto-models==1.0.0`、固定HF revision、外部cache、offline／CPU／batch=1／`decode_block_size=None`の専用境界へ追加しました。MetroPT-3の既存context=120を変えず、patch_size=32のためadapter内で8点の未観測paddingを追加しeffective input length=128とします。全11 past-only covariatesをtargetと同時入力し、known-future／exogenousを拒否します。fake backend／tool／docs testsまでを実装範囲とし、実model download／数値benchmarkは未実施です。
+Toto 2.0 4Mは、`toto-2==2.0.0`／`toto-models==1.0.0`、固定HF revision、外部cache、offline／CPU／batch=1／`decode_block_size=None`の専用境界へ追加し、CPU smokeとMetroPT-3数値benchmarkを実行済みです。MetroPT-3の既存context=120を変えず、patch_size=32のためadapter内で8点の未観測paddingを追加しeffective input length=128とします。全11 past-only covariatesをtargetと同時入力し、known-future／exogenousを拒否します。status=`success`、4,320 predictions、failure 0のtarget別metrics、provenance、runtimeは[`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](results/toto2-metropt3-evaluation-2026-09-04.md)に記録しました。22M、matrix、seed拡大、fault slice、実設備一般化は未実施です。
 
 #### 公開データ source pin と次保存点
 

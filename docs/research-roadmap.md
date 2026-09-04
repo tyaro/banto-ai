@@ -34,7 +34,7 @@
 
 ## 2026-09-04時点の進捗
 
-Toto 2.0 4Mは同じForecaster／MetroPT runnerへ実装接続しました。`toto-2==2.0.0`／`toto-models==1.0.0`、固定HF revision、外部cache、offline／CPU／batch=1／`decode_block_size=None`を使い、context=120はpatch_size=32に合わせて先頭8点の未観測paddingを内部追加します。fake backend／tool／docs testsまでを今回の範囲とし、実model benchmarkは未実施です。
+Toto 2.0 4Mは同じForecaster／MetroPT runnerへ実装接続し、固定HF revision、外部cache、offline／CPU／batch=1／`decode_block_size=None`でCPU smokeと実benchmarkを実行済みです。context=120はpatch_size=32に合わせて先頭8点の未観測paddingを内部追加します。6 models、3 targets、16 validation／16 test origins、4,320 predictionsの結果を[`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](results/toto2-metropt3-evaluation-2026-09-04.md)に記録しました。22M、matrix、seed拡大、fault slice、実設備一般化は未実施です。
 
 Phase 2の基盤として、chronological rolling-origin runnerへmodel registry注入境界、equipment／model単位のinstance再利用、origin単位のmulti-target request、past-only／known-future covariate境界、model別quantile policy、共通origin選択とprovenance記録を追加しました。result schema `0.2`にはmodel-target別およびmodel-equipment-target別metricsを追加し、unit一致を検証してから設備横断集約します。結果にはmodel別metrics、model別latency、OS process peakの測定源も記録します。TimesFM 3専用entrypointは、既存のlicense manifest、固定checkpoint revision、artifact hash、専用外部cache、offline環境を検証してから実行します。実行用sampleは[`examples/configs/benchmark-timesfm3-small.json`](../examples/configs/benchmark-timesfm3-small.json)です。
 

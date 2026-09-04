@@ -17,4 +17,4 @@ $totoPython = '..\.venv-banto-ai-toto2\Scripts\python.exe'
 
 実行開始後は network を禁止し、cache snapshot の sibling set、revision、`model.safetensors` の exact size/SHA-256、package version、license を検証します。短い horizon の公式推奨どおり `decode_block_size=None`、CPU、batch=1 を固定します。Toto 2.0 は current 2.0 で fine-tuning／exogenous variable をサポートしないため、known-future covariate request は fail closed です。MetroPT-3 の context=120 は変えず、patch_size=32 に合わせて adapter 内で先頭8点を未観測 padding し、effective model input length=128 とします。実測値を padding に使わず、実入力の missing／stale／irregular／nonfinite は拒否します。
 
-この初回追加では 4M のみを benchmark 対象とし、22M、matrix、fine-tuning、実 model benchmark の数値評価は対象外です。
+この初回追加では4MのCPU smokeとMetroPT-3 benchmarkを実行済みです。結果は[`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](../../docs/results/toto2-metropt3-evaluation-2026-09-04.md)を参照してください。22M、matrix、fine-tuning、seed拡大、fault slice、実設備一般化は対象外です。
