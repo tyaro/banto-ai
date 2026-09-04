@@ -155,7 +155,9 @@ Chronos-2は依存環境を分離し、外部cacheの固定revision、`model.saf
 
 初期rolling benchmarkも、60 samples×2 equipment、context 12、horizon 3、各equipment validation／test各2 originsで完走しました。past-only 6 modelsのChronos-2はaggregate MAE `0.20672198138554906`、WIS `0.1952207659517925`、known-future 7 modelsではMAE `0.1691488806622826`、WIS `0.15937026919725228`で1位でした。known-futureはorigin時点で本当に確定していた計画値を模したsynthetic scenarioであり、評価対象の実績値をoracleとして渡していません。target別には電流MAEでmoving-average、温度MAEでHolt linearが優位です。詳細は[`docs/results/chronos2-initial-evaluation-2026-09-04.md`](results/chronos2-initial-evaluation-2026-09-04.md)に記録します。
 
-未実施はChronos-2のseed×horizon×context matrix、origin拡大、missing／stale／regime／fault slice、clean savepoint再実行、model単独resource測定です。今回のrunはdirty worktreeを記録した小標本・合成データ結果なので、Phase 2完了または`product-candidate`昇格の根拠にはせず、`commercial-evaluation`を継続します。
+Chronos-2のseed `[17, 42]`×horizon `[1, 3]`×context `[6, 12]`の実model matrixは、固定clean HEADから8/8 cells success／0 failureで完了しました。currentは4条件すべてmoving-averageがMAE首位、temperatureはWIS 4条件すべてChronos-2が首位でした。coverage／width、各cellの相対順位、warm latency、peak memoryは[`docs/results/chronos2-matrix-2026-09-04.md`](results/chronos2-matrix-2026-09-04.md)に記録しています。
+
+未実施はorigin拡大、公開実データ、missing／stale／regime／fault slice、known-future計画値対past-onlyの追加比較、校正拡張です。拡張した評価条件をclean savepointから再実行することも未実施です。今回のmatrixは2 seed・合成データ・CPUのみ・少数originの結果なので、Phase 2完了または`product-candidate`昇格の根拠にはせず、`commercial-evaluation`を継続します。
 
 #### 優先順位
 

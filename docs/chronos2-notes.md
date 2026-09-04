@@ -76,12 +76,13 @@ forward fill、線形補間、暗黙のzero埋め、将来実績からの埋め�
 
 - 確認済み: Python 3.14専用venvでpackage install／importに成功した。
 - 確認済み: 固定checkpointを使う公式API real CPU smokeが、2 targets×prediction horizon 3×3 quantilesで完走した。推論時間は1.335秒だった。
-- 確認済み: Banto adapter／tool経由のCPU smokeが、2 targets×horizon 4、past-only `speed`、known-future `planned_load`、p10／p50／p90で完走した。`snapshot_verified=true`、cold elapsedは14.783398秒だった。
+- 確認済み: Banto adapter／tool経由のCPU smokeが、2 targets×horizon 4、past-only `speed`、known-future `planned_load`、p10／p50／p90で完走した。`snapshot_verified=true`、cold elapsedは12.057009100011783秒だった。
 - 確認済み: 60 samples×2 equipment、context 12、horizon 3、各equipmentのvalidation／test各2 originsで、past-only 6 modelsとknown-future 7 modelsの初期rolling benchmarkが完走した。
 - 確認済み: known-future条件のChronos-2はaggregate MAE `0.1691488806622826`、WIS `0.15937026919725228`で7 models中1位となり、past-onlyのMAE `0.20672198138554906`、WIS `0.1952207659517925`から改善した。
-- 未実施: seed×horizon×context matrix、origin拡大、missing／stale／regime／fault slice、clean savepoint再実行、model単独resource測定。
+- 確認済み: seed `[17, 42]`×horizon `[1, 3]`×context `[6, 12]`のChronos-2実model matrix 8 cellsが、固定clean HEADから8/8成功した。currentは4条件すべてmoving-averageがMAE首位、temperatureはWIS 4条件すべてChronos-2が首位だった。詳細は[`results/chronos2-matrix-2026-09-04.md`](results/chronos2-matrix-2026-09-04.md)を参照する。
+- 未実施: origin拡大、公開実データ、missing／stale／regime／fault slice、known-future対past-onlyの同一契約比較、校正拡張、拡張した評価条件をclean savepointから再実行すること。
 
-公式API smokeはpackage／checkpoint／API shape、Banto tool smokeは共通adapter経路の契約確認です。rolling benchmarkも小標本・合成データ上の初期結果であり、実設備性能の証拠ではありません。known-futureはorigin時点で確定済みの計画値を模した条件に限ります。詳細は[`results/chronos2-initial-evaluation-2026-09-04.md`](results/chronos2-initial-evaluation-2026-09-04.md)を参照してください。Chronos-2は`commercial-evaluation`を継続し、matrix等の追加gateが完了するまで`product-candidate`へ昇格しません。
+公式API smokeはpackage／checkpoint／API shape、Banto tool smokeは共通adapter経路の契約確認です。rolling benchmarkとmatrixも小標本・合成データ上の初期結果であり、実設備性能の証拠ではありません。matrixはpast-only条件で、known-futureは別の初期rolling benchmarkでorigin時点に確定済みの計画値を模した条件です。詳細は[`results/chronos2-initial-evaluation-2026-09-04.md`](results/chronos2-initial-evaluation-2026-09-04.md)と[`results/chronos2-matrix-2026-09-04.md`](results/chronos2-matrix-2026-09-04.md)を参照してください。Chronos-2は`commercial-evaluation`を継続し、追加gateが完了するまで`product-candidate`へ昇格しません。
 
 ## 7. 撤退条件
 

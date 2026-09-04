@@ -138,7 +138,7 @@ class Chronos2DocumentationTests(unittest.TestCase):
                 self.assertIn("1.335", text)
         self.assertIn("Banto adapter／tool経由のCPU smoke", notes)
         self.assertIn("初期rolling benchmark", notes)
-        self.assertIn("seed×horizon×context matrix", notes)
+        self.assertIn("実model matrix", notes)
         self.assertIn("未実施", notes)
 
     def test_initial_evaluation_report_records_artifact_exact_values_and_limits(self) -> None:
@@ -177,7 +177,49 @@ class Chronos2DocumentationTests(unittest.TestCase):
         self.assertNotIn("正本: `artifacts/chronos2/cpu-smoke-2026-09-04.json`", report)
         self.assertNotIn("0.165581", report)
 
-    def test_readme_and_plans_record_completed_initial_run_and_pending_matrix(self) -> None:
+    def test_matrix_report_records_all_cells_exact_metrics_and_runtime_boundary(self) -> None:
+        report = (ROOT / "docs" / "results" / "chronos2-matrix-2026-09-04.md").read_text(encoding="utf-8")
+        for required in (
+            "artifacts/chronos2/matrix/benchmark-matrix-chronos2-small/result.json",
+            "3f57c8500f2a746dd0fce1d02bb9eba566d47748",
+            "b0ce7e603eb44deb8ec11fb63bbc88869ab7c91eef0403009d2c8092e08e6c29",
+            "f5601fe7038a936ea5a8e4aa0c69c137e3a7e7552fd7be7410accf7350c16d29",
+            "8/8 success",
+            "0.09357873712348952",
+            "0.1389435288047789",
+            "0.08927573903020222",
+            "0.12088567491340627",
+            "0.047065349975586646",
+            "0.18173534655761747",
+            "0.14721594184366876",
+            "0.3063958502044678",
+            "coverage",
+            "1.1584290564060211",
+            "0.9669468402862549",
+            "3/6",
+            "1/6",
+            "moving-average",
+            "Holt linear",
+            "213.79575624632707",
+            "330.96445437840885",
+            "1,064,873,984 bytes",
+            "78.77301149998675",
+            "1.3655998000176623",
+            "2.886316399992211",
+            "commercial-evaluation",
+            "product-candidate",
+            "past-only",
+            "known-future",
+            "high-water mark",
+            "拡張した評価条件をclean savepointから再実行",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, report)
+        self.assertIn("初回loadを含むcold実行時間とは別", report)
+        self.assertIn("単純合算を代表値として扱わない", report)
+        self.assertNotIn("[Chronos-2 matrix result", report)
+
+    def test_readme_and_plans_record_completed_initial_run_and_completed_matrix(self) -> None:
         paths = (
             ROOT / "README.md",
             ROOT / "docs" / "chronos2-notes.md",
@@ -188,10 +230,12 @@ class Chronos2DocumentationTests(unittest.TestCase):
             text = path.read_text(encoding="utf-8")
             with self.subTest(path=path.name):
                 self.assertIn("chronos2-initial-evaluation-2026-09-04.md", text)
+                self.assertIn("chronos2-matrix-2026-09-04.md", text)
                 self.assertIn(KNOWN_MAE, text)
-                self.assertIn("seed×horizon×context matrix", text)
+                self.assertIn("実model matrix", text)
                 self.assertIn("commercial-evaluation", text)
                 self.assertIn("product-candidate", text)
+                self.assertIn("拡張した評価条件をclean savepointから再実行", text)
 
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn("tools\\chronos2\\run_smoke.py", readme)

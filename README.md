@@ -105,9 +105,9 @@ $chronosPython = '..\.venv-banto-ai-chronos2\Scripts\python.exe'
 & $chronosPython tools\chronos2\run_matrix.py --config examples/configs/benchmark-matrix-chronos2-small.json --cache-dir C:\banto-cache\chronos2
 ```
 
-Chronos-2 matrix設定はseeds `[17, 42]`×horizons `[1, 3]`×context lengths `[6, 12]`の8 cellsです。base benchmarkのmodel parameter `context_length=12`はChronos backendに渡す入力上限で、matrix axisのcontext lengthは各cellの実入力長です。6と12はいずれも上限内です。Chronos専用のdataset／benchmark／matrix出力を使い、既存出力は上書きしません。
+Chronos-2 matrix設定はseeds `[17, 42]`×horizons `[1, 3]`×context lengths `[6, 12]`の8 cellsです。base benchmarkのmodel parameter `context_length=12`はChronos backendに渡す入力上限で、matrix axisのcontext lengthは各cellの実入力長です。6と12はいずれも上限内です。Chronos専用のdataset／benchmark／matrix出力を使い、既存出力は上書きしません。実model matrixは8/8 cells success／0 failureで、結果は[`docs/results/chronos2-matrix-2026-09-04.md`](docs/results/chronos2-matrix-2026-09-04.md)に記録しています。
 
-Chronos-2はApache-2.0ですが、実modelによるseed×horizon×context matrix（8 cells）、欠損・regime・fault評価、clean savepoint再実行、実設備の計画値契約は未実施です。`commercial-evaluation`を継続し、まだ`product-candidate`へ昇格しません。
+Chronos-2はApache-2.0ですが、今回のmatrixは2 seed・合成データ・CPUのみの小標本です。欠損・regime・fault評価、origin拡大、known-future計画値契約は未実施です。拡張した評価条件をclean savepointから再実行することも未実施です。`commercial-evaluation`を継続し、まだ`product-candidate`へ昇格しません。
 
 TimesFM 3.0の共通`Forecaster` adapter、official APIの遅延import境界、license／provenance検証、fake backend testsは実装済みです。公式backendはadapterごとに初回forecast時だけロードし、以後は安全に再利用します。benchmark coreにはoptional modelを注入するregistry境界があり、通常のbaseline CLI／CIから`timesfm`、`torch`、`numpy`はimportされません。`environments/timesfm3/requirements.in`は`timesfm[torch]==3.0.0`のtop-level exact pinであり、完全なtransitive lockではありません。専用環境でのCPU smokeと、LastValueとの小規模rolling-origin benchmark結果は記録済みです。ただし、単一generator、少数origin、短いcontext／horizon、弱いbaselineによる限定評価であり、一般性能と実設備性能は未評価です。
 
@@ -164,6 +164,6 @@ Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUT
 
 ## ステータス
 
-Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0はCPU smoke、小規模rolling-origin benchmark、8-cell matrixを実行済みです。Chronos-2は固定snapshot検証、公式API／Banto tool CPU smoke、past-only 6 models／known-future 7 modelsの初期rolling benchmark、および8-cell matrix設定・専用wrapperを実装済みです。Chronos-2の実model seed×horizon×context matrix実行、origin拡大、model単独resource測定、欠損・regime・fault slice、clean savepoint再実行は未実施であり、Phase 2は完了していません。本番デプロイ経路も未実装です。
+Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0はCPU smoke、小規模rolling-origin benchmark、8-cell matrixを実行済みです。Chronos-2は固定snapshot検証、公式API／Banto tool CPU smoke、past-only 6 models／known-future 7 modelsの初期rolling benchmark、実model 8-cell matrixを実行済みです。Chronos-2のorigin拡大、公開実データ、model単独resourceの分離評価、欠損・regime・fault slice、known-future対past-onlyの追加比較は未実施であり、拡張した評価条件をclean savepointから再実行することも未実施です。Phase 2は完了していません。本番デプロイ経路も未実装です。
 
 合成データは研究用の制御されたfixtureであり、実設備の挙動を代表すると主張しません。顧客データ、raw設備データ、秘密情報は生成物・設定・Git履歴へ入れません。大量生成データはGit無視領域へ置き、commit対象は小さいconfig／fixtureだけにします。

@@ -44,7 +44,9 @@ TimesFM 3.0の限定matrix評価後、Chronos-2へ比較軸を移しました。
 
 past-only 6 modelsではChronos-2のaggregate MAEは`0.20672198138554906`、WISは`0.1952207659517925`でした。origin時点で確定済みの計画値を模したknown-future 7 modelsでは、MAE `0.1691488806622826`、WIS `0.15937026919725228`で1位となり、past-onlyから改善しました。ただし電流MAEはmoving-average、温度MAEはHolt linearが優位で、aggregateはAとdegCを混合する比較値です。小標本・単一seed・合成データで、runはdirty worktreeを記録しているため、製品性能や一般性能を示しません。詳細は[`docs/results/chronos2-initial-evaluation-2026-09-04.md`](results/chronos2-initial-evaluation-2026-09-04.md)に記録しています。
 
-次はChronos-2のseed×horizon×context matrix、origin拡大、missing／stale／regime／fault slice、clean savepoint再実行、model単独resource測定です。package・code・weightsはApache-2.0ですが、追加gateが完了するまで`commercial-evaluation`に留め、`product-candidate`へ昇格しません。TimesFM 3.0は重み条件によりresearch-onlyの比較基準として残します。
+Chronos-2のseed `[17, 42]`×horizon `[1, 3]`×context `[6, 12]`の実model matrixは、固定clean HEAD `3f57c8500f2a746dd0fce1d02bb9eba566d47748`から8/8 cells success／0 failureとなりました。currentは4条件すべてmoving-averageがMAE首位で、Chronos-2はMAE 3位または4位でした。temperatureはWIS 4条件すべてChronos-2が1位で、MAEはcontext 6の2条件で1位でした。context 12が常に改善しないことも確認しました。詳細は[`docs/results/chronos2-matrix-2026-09-04.md`](results/chronos2-matrix-2026-09-04.md)に記録しています。
+
+このmatrixは2 seed、単一の合成generator、2 equipment、各equipment validation／test各2 origins、CPUのみの小標本であり、一般性能や実設備性能を示しません。次はorigin拡大、公開実データ、missing／stale／regime／fault slice、known-future計画値対past-only、校正評価、context探索です。拡張した評価条件をclean savepointから再実行することも次のゲートです。package・code・weightsはApache-2.0ですが、追加gateが完了するまで`commercial-evaluation`に留め、`product-candidate`へ昇格しません。TimesFM 3.0は重み条件によりresearch-onlyの比較基準として残します。
 
 ## 実験の必須記録
 
