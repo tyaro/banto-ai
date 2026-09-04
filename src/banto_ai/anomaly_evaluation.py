@@ -685,6 +685,11 @@ def _event_records_and_metrics(
         window_overlaps_test = event["start"] < test_end and detection_end > test_start
         window_start = max(event["start"], test_start) if window_overlaps_test else None
         window_end = detection_end if window_overlaps_test else None
+        row_window_end = (
+            min(window_end, test_end)
+            if not raw_overlaps_test and window_end is not None
+            else window_end
+        )
         full_signal = event["signal_id"]
         if window_start is not None and window_end is not None:
             exposure_end = min(window_end, test_end)
@@ -727,7 +732,7 @@ def _event_records_and_metrics(
             "event_start_timestamp": _canonical_time(event["start"]),
             "event_end_timestamp": _canonical_time(event["end"]),
             "detection_window_start": _canonical_time(window_start) if window_start is not None else None,
-            "detection_window_end": _canonical_time(window_end) if window_end is not None else None,
+            "detection_window_end": _canonical_time(row_window_end) if row_window_end is not None else None,
             "eligible": eligible,
             "eligibility_reason": reason,
             "detected": False,

@@ -311,6 +311,35 @@ class AnomalyEvaluationTests(unittest.TestCase):
         self.assertEqual(accounting["grace-quality-alert"]["partition"], "suppressed_event_window")
         self.assertEqual(exclusions["ineligible_by_reason"], {"outside_test_split": 1, "event_class_data_quality": 1})
 
+        long_test_end = test_start + timedelta(milliseconds=500)
+        long_event = _event("grace-long", "motor-01.motor_vibration", start + timedelta(seconds=1), test_start)
+        long_dataset = dict(dataset, events=[long_event], split_times={"validation": (start, test_start), "test": (test_start, long_test_end)})
+        long_episode = _episode("grace-long-alert", "motor-01.motor_vibration", long_test_end, long_test_end, long_test_end + timedelta(seconds=1))
+        long_scores = [{
+            "equipment_id": "motor-01",
+            "signal_id": "motor-01.motor_vibration",
+            "timestamp": _canonical_time(test_start),
+            "available": True,
+        }]
+        long_incidents, _clean, long_metrics, long_exclusions = _event_records_and_metrics(
+            long_dataset,
+            ["motor-01"],
+            ["motor-01.motor_vibration"],
+            {"grace-long": "machine_fault"},
+            [long_episode],
+            {"detection_grace_points": 1},
+            long_scores,
+        )
+        long_row = long_incidents[0]
+        self.assertEqual(long_row["eligibility_reason"], "outside_test_split")
+        self.assertEqual(long_row["detection_window_start"], _canonical_time(test_start))
+        self.assertEqual(long_row["detection_window_end"], _canonical_time(long_test_end))
+        long_accounting = long_metrics["_alert_episode_accounting"][0]
+        self.assertEqual(long_accounting["partition"], "clean_false_alert")
+        self.assertEqual(long_accounting["onset_event_ids"], [])
+        self.assertEqual(long_metrics["clean_monitored_target_signal_hours"]["motor-01.motor_vibration"], 0.0)
+        self.assertEqual(long_exclusions["ineligible_by_reason"], {"outside_test_split": 1})
+
         no_grace = dict(dataset, events=[events[0]])
         no_grace_incidents, _clean, _metrics, _ = _event_records_and_metrics(
             no_grace,
