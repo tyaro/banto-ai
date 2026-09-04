@@ -10,10 +10,13 @@ from __future__ import annotations
 import hashlib
 import json
 import math
+import os
 import shutil
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path, PureWindowsPath
 from typing import Any, Iterable, Mapping
+from uuid import uuid4
 
 from .benchmark import PREDICTION_KEYS, _policy, _revision
 from .event_slices import _verify_dataset
@@ -60,6 +63,7 @@ EXPECTED_BENCHMARK_MODELS = [
     {"name": "toto2", "quantile_policy": "native", "parameters": {"checkpoint_revision": "8306a9801cf98c0f5ffe4b2dcc8f496e616d84d9", "batch_size": 1, "device": "cpu", "local_files_only": True, "patch_size": 32}},
 ]
 COMPLETION_MARKER = ".complete"
+COMPLETION_MARKER_TYPE = "toto2-controlled-acceptance-complete"
 
 
 class _DuplicateJSON(ValueError):
@@ -94,6 +98,155 @@ def _strict_object(path: Path, label: str) -> tuple[dict[str, Any], bytes]:
     if not isinstance(value, dict):
         raise AcceptanceError(f"{label} must be a JSON object")
     return value, raw
+
+
+def _write_fsync(path: Path, payload: bytes, label: str) -> None:
+    try:
+        with path.open("wb") as handle:
+            handle.write(payload)
+            handle.flush()
+            os.fsync(handle.fileno())
+    except OSError as exc:
+        raise AcceptanceError(f"{label} could not be durably written: {path}") from exc
+
+
+def _release_advisory_lock(handle: Any, path: Path) -> None:
+    release_error: OSError | None = None
+    try:
+        handle.seek(0)
+        if os.name == "nt":
+            import msvcrt
+            msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+    except OSError as exc:
+        release_error = exc
+    try:
+        handle.close()
+    except OSError as exc:
+        release_error = release_error or exc
+    if release_error is not None:
+        raise AcceptanceError(f"advisory lock release failed: {path}") from release_error
+
+
+@contextmanager
+def _advisory_lock(path: Path) -> Iterable[None]:
+    """Hold a process-lifetime-released advisory lock; the lock file may remain."""
+    if path.is_symlink():
+        raise AcceptanceError(f"advisory lock path is a symlink: {path}")
+    handle = None
+    try:
+        handle = path.open("a+b")
+        if os.name == "nt":
+            import msvcrt
+            handle.seek(0, 2)
+            if handle.tell() == 0:
+                handle.write(b"\0")
+                handle.flush()
+            handle.seek(0)
+            msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError as exc:
+        if handle is not None:
+            try:
+                handle.close()
+            except OSError:
+                pass
+        raise AcceptanceError(f"another analyzer holds the output lock: {path}") from exc
+    try:
+        try:
+            yield
+        except BaseException as body_error:
+            try:
+                _release_advisory_lock(handle, path)
+            except AcceptanceError as release_error:
+                release_error.add_note(f"original analyzer failure: {body_error!r}")
+                raise release_error
+            raise
+        else:
+            _release_advisory_lock(handle, path)
+    except AcceptanceError:
+        raise
+
+
+def _output_state(output: Path) -> tuple[str, str]:
+    if output.is_symlink():
+        raise AcceptanceError(f"existing output must not be a symlink: {output}")
+    if not output.exists():
+        return "absent", ""
+    if not output.is_dir():
+        raise AcceptanceError(f"existing output must be a directory: {output}")
+    marker = output / COMPLETION_MARKER
+    if marker.is_symlink():
+        raise AcceptanceError(f"existing completion marker must not be a symlink: {marker}")
+    if not marker.is_file():
+        return "incomplete", "completion marker is missing"
+    try:
+        value, _ = _strict_object(marker, "completion marker")
+    except AcceptanceError as exc:
+        return "incomplete", f"completion marker is invalid: {exc}"
+    if set(value) != {"marker_type", "schema_version", "result_sha256", "summary_sha256"}:
+        return "incomplete", "completion marker keys are invalid"
+    if value.get("marker_type") != COMPLETION_MARKER_TYPE or value.get("schema_version") != "0.1":
+        return "incomplete", "completion marker identity is invalid"
+    result = output / "result.json"
+    summary = output / "summary.md"
+    if result.is_symlink() or summary.is_symlink():
+        raise AcceptanceError(f"existing completion payload must not contain a symlink: {output}")
+    if not result.is_file() or not summary.is_file():
+        return "incomplete", "completion payload is incomplete"
+    for name in ("result_sha256", "summary_sha256"):
+        digest = value.get(name)
+        if not isinstance(digest, str) or len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+            return "incomplete", f"completion marker {name} is invalid"
+    if _sha256(result) != value["result_sha256"] or _sha256(summary) != value["summary_sha256"]:
+        return "incomplete", "completion marker hashes do not match payload"
+    return "complete", ""
+
+
+def _quarantine_incomplete(output: Path) -> Path:
+    for _ in range(16):
+        quarantine = output.parent / f".{output.name}.incomplete-{uuid4().hex}"
+        if quarantine.exists() or quarantine.is_symlink():
+            continue
+        try:
+            output.rename(quarantine)
+            return quarantine
+        except FileExistsError:
+            continue
+        except OSError as exc:
+            raise AcceptanceError(f"could not quarantine incomplete output: {output}") from exc
+    raise AcceptanceError(f"could not allocate a unique quarantine name: {output}")
+
+
+def _place_no_replace(source: Path, target: Path) -> None:
+    try:
+        os.link(source, target)
+    except FileExistsError as exc:
+        raise AcceptanceError(f"refusing to replace published file: {target}") from exc
+    except OSError:
+        try:
+            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0)
+            descriptor = os.open(target, flags, 0o644)
+            with os.fdopen(descriptor, "wb") as handle, source.open("rb") as source_handle:
+                shutil.copyfileobj(source_handle, handle)
+                handle.flush()
+                os.fsync(handle.fileno())
+        except FileExistsError as exc:
+            raise AcceptanceError(f"refusing to replace published file: {target}") from exc
+        except OSError as exc:
+            try:
+                target.unlink(missing_ok=True)
+            except OSError as cleanup_error:
+                exc.add_note(f"incomplete output cleanup failed: {cleanup_error!r}")
+            raise AcceptanceError(f"could not place published file: {target}") from exc
+    try:
+        source.unlink()
+    except OSError as exc:
+        raise AcceptanceError(f"published file cleanup failed: {source}") from exc
 
 
 def _sha256_bytes(raw: bytes) -> str:
@@ -282,30 +435,50 @@ def _parse_jsonl(path: Path, label: str, *, allow_empty: bool = False) -> list[d
 
 def _strict_dataset_artifacts(root: Path, dataset_path: Path, label: str) -> list[Path]:
     """Parse every JSON/JSONL artifact before the legacy dataset verifier reads it."""
+    inventory = _dataset_inventory(root, dataset_path, label)
     manifest_path = _safe_file(root, (dataset_path / "dataset-manifest.json").relative_to(root).as_posix(), f"{label} dataset-manifest.json")
     _strict_object(manifest_path, f"{label} dataset-manifest.json")
     artifacts: list[Path] = []
+    for relative, kind in inventory:
+        if kind != "file" or not relative.lower().endswith((".json", ".jsonl")):
+            continue
+        path = _safe_file(root, relative, f"{label} {Path(relative).name}")
+        if relative.lower().endswith(".jsonl"):
+            _parse_jsonl(path, f"{label} {Path(relative).name}", allow_empty=Path(relative).name.lower() == "events.jsonl")
+        else:
+            _strict_object(path, f"{label} {Path(relative).name}")
+        artifacts.append(path)
+    if manifest_path not in artifacts:
+        raise AcceptanceError(f"{label} dataset-manifest.json was not enumerated")
+    return artifacts
+
+
+def _dataset_inventory(root: Path, dataset_path: Path, label: str) -> tuple[tuple[str, str], ...]:
+    entries: list[tuple[str, str]] = []
     pending = [dataset_path]
     try:
         while pending:
             directory = pending.pop()
             for child in sorted(directory.iterdir(), key=lambda item: item.name):
-                if child.is_dir() and not child.is_symlink():
+                if child.is_symlink():
+                    kind = "directory" if child.is_dir() else "file"
+                    raise AcceptanceError(f"{label} inventory contains a symlink {kind}: {child.name}")
+                relative = child.relative_to(root).as_posix()
+                if child.is_dir():
+                    entries.append((relative, "directory"))
                     pending.append(child)
-                    continue
-                if not child.name.lower().endswith((".json", ".jsonl")):
-                    continue
-                path = _safe_file(root, child.relative_to(root).as_posix(), f"{label} {child.name}")
-                if child.name.lower().endswith(".jsonl"):
-                    _parse_jsonl(path, f"{label} {child.name}", allow_empty=child.name == "events.jsonl")
                 else:
-                    _strict_object(path, f"{label} {child.name}")
-                artifacts.append(path)
+                    entries.append((relative, "file"))
     except OSError as exc:
         raise AcceptanceError(f"{label} directory is unreadable: {dataset_path}") from exc
-    if manifest_path not in artifacts:
-        raise AcceptanceError(f"{label} dataset-manifest.json was not enumerated")
-    return artifacts
+    return tuple(sorted(entries))
+
+
+def _assert_dataset_inventories_unchanged(root: Path, inventories: Mapping[Path, tuple[tuple[str, str], ...]]) -> None:
+    for dataset_path, expected in inventories.items():
+        actual = _dataset_inventory(root, dataset_path, "dataset")
+        if actual != expected:
+            raise AcceptanceError(f"dataset inventory changed during analysis: {dataset_path}")
 
 
 def _snapshot(snapshots: dict[Path, str], path: Path) -> None:
@@ -678,11 +851,7 @@ def _summary(result: Mapping[str, Any]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def analyze_controlled_acceptance(config_path: str | Path, root: Path) -> Path:
-    """Analyze four declared matrices and atomically publish a result directory."""
-    root = Path(root).expanduser().resolve()
-    analyzer_code_revision = _revision(root)
-    _revision_consistent(analyzer_code_revision)
+def _resolve_config_file(config_path: str | Path, root: Path) -> Path:
     config_input = Path(config_path).expanduser()
     if config_input.is_absolute():
         try:
@@ -696,9 +865,20 @@ def analyze_controlled_acceptance(config_path: str | Path, root: Path) -> Path:
         config_file = _safe_path(root, config_input.as_posix(), "config_path")
     if config_file.is_symlink() or not config_file.is_file():
         raise AcceptanceError("config must be a repository-local regular file")
+    return config_file
+
+
+def _analyze_controlled_acceptance(config_path: str | Path, root: Path, *, expected_output: Path | None = None) -> Path:
+    """Analyze four declared matrices while the caller holds the output lock."""
+    root = Path(root).expanduser().resolve()
+    analyzer_code_revision = _revision(root)
+    _revision_consistent(analyzer_code_revision)
+    config_file = _resolve_config_file(config_path, root)
     config, config_raw = _strict_object(config_file, "analyzer config")
     validate_acceptance_config(config, root)
     output = _artifact_output(root, config["output_dir"])
+    if expected_output is not None and output != expected_output:
+        raise AcceptanceError("analyzer config output changed after publish lock claim")
     snapshots: dict[Path, str] = {config_file: _sha256_bytes(config_raw)}
     tracks_cfg = {track["track_id"]: track for track in config["tracks"]}
     matrix_infos: dict[str, dict[str, Any]] = {}
@@ -799,6 +979,7 @@ def analyze_controlled_acceptance(config_path: str | Path, root: Path) -> Path:
     all_cell_audits: dict[str, dict[str, Any]] = {}
     expected_groups = len(common_benchmark["models"]) * len(common_benchmark["equipment_ids"]) * len(common_benchmark["target_signal_ids"]) * 80
     all_dataset_data: dict[str, dict[int, dict[str, Any]]] = {}
+    dataset_inventory_snapshots: dict[Path, tuple[tuple[str, str], ...]] = {}
     for track_id in TRACK_IDS:
         track = tracks_cfg[track_id]
         info = matrix_infos[track_id]
@@ -815,7 +996,10 @@ def analyze_controlled_acceptance(config_path: str | Path, root: Path) -> Path:
         for seed in common_axes["seeds"]:
             entry = datasets[seed]
             dataset_path = _safe_path(root, entry["dataset_path"], "dataset_path")
+            inventory_before = _dataset_inventory(root, dataset_path, f"{track_id}/{seed}")
             dataset_files = _strict_dataset_artifacts(root, dataset_path, f"{track_id}/{seed}")
+            if _dataset_inventory(root, dataset_path, f"{track_id}/{seed}") != inventory_before:
+                raise AcceptanceError(f"dataset inventory changed during strict parsing: {track_id}/{seed}")
             for artifact in dataset_files:
                 _snapshot(snapshots, artifact)
             try:
@@ -850,6 +1034,9 @@ def analyze_controlled_acceptance(config_path: str | Path, root: Path) -> Path:
             for artifact in dataset_files:
                 dataset_sources.append(_source_record(artifact, root, snapshots, f"dataset-{artifact.name}"))
             dataset_sources.append(_source_record(gen_materialized_path, root, snapshots, "dataset-materialized-generator-config"))
+            if _dataset_inventory(root, dataset_path, f"{track_id}/{seed}") != inventory_before:
+                raise AcceptanceError(f"dataset inventory changed during verification: {track_id}/{seed}")
+            dataset_inventory_snapshots[dataset_path] = inventory_before
             dataset_data[seed] = verified
         all_dataset_data[track_id] = dataset_data
         if track_id == "covariate-quality":
@@ -894,44 +1081,73 @@ def analyze_controlled_acceptance(config_path: str | Path, root: Path) -> Path:
         "limitations": ["指定されたmatrix/cell/dataset artifactをsource hashとclean code revision付きで解析した", "合成データは実設備性能や顧客データを示さない", "cross-model rankingは禁止し、controlから各degradedへの同一group paired deltaだけを出力する"],
     }
     _schema_validate(result, _schema(root, "toto2-controlled-acceptance-result.schema.json"), "acceptance result")
-    output.parent.mkdir(parents=True, exist_ok=True)
-    lock = output.parent / f".{output.name}.lock"
+    if output.exists():
+        raise AcceptanceError(f"refusing to overwrite existing output: {output}")
     try:
-        # mkdir is an atomic cross-platform claim.  This serializes analyzers
-        # targeting the same output and, unlike rename, never replaces an
-        # existing directory.  The completion marker is written last so a
-        # claimed directory without it is visibly incomplete after a crash.
-        lock.mkdir()
-    except FileExistsError as exc:
-        raise AcceptanceError(f"another analyzer is publishing this output: {output}") from exc
-    try:
-        if output.exists():
-            raise AcceptanceError(f"refusing to overwrite existing output: {output}")
         temporary = Path(tempfile.mkdtemp(prefix=".toto2-acceptance.", dir=output.parent))
+    except OSError as exc:
+        raise AcceptanceError(f"could not create temporary publish directory: {output.parent}") from exc
+    try:
+        result_bytes = (json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n").encode("utf-8")
+        summary_bytes = _summary(result).encode("utf-8")
+        marker_bytes = (json.dumps({
+            "marker_type": COMPLETION_MARKER_TYPE,
+            "result_sha256": _sha256_bytes(result_bytes),
+            "schema_version": "0.1",
+            "summary_sha256": _sha256_bytes(summary_bytes),
+        }, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
+        _write_fsync(temporary / "result.json", result_bytes, "result")
+        _write_fsync(temporary / "summary.md", summary_bytes, "summary")
+        _write_fsync(temporary / COMPLETION_MARKER, marker_bytes, "completion marker")
+        if _revision(root) != analyzer_code_revision:
+            raise AcceptanceError("repository code revision changed before publish")
+        _assert_dataset_inventories_unchanged(root, dataset_inventory_snapshots)
+        _assert_unchanged(snapshots)
+        # mkdir is an atomic final-directory claim.  The files are then
+        # hard-linked without replacement and the marker is linked last; a
+        # marker-free directory is an incomplete, never-published output.
         try:
-            (temporary / "result.json").write_text(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n", encoding="utf-8", newline="\n")
-            (temporary / "summary.md").write_text(_summary(result), encoding="utf-8", newline="\n")
-            if _revision(root) != analyzer_code_revision:
-                raise AcceptanceError("repository code revision changed before publish")
-            _assert_unchanged(snapshots)
-            # Claim the final directory before moving files.  A crash can
-            # leave an incomplete directory, but it cannot replace a prior
-            # result; only the last exclusive marker makes it complete.
             output.mkdir()
-            for name in ("result.json", "summary.md"):
-                (temporary / name).rename(output / name)
-            with (output / COMPLETION_MARKER).open("x", encoding="utf-8", newline="\n") as marker:
-                marker.write("toto2-controlled-acceptance complete\n")
-        except Exception:
-            if temporary.exists():
-                shutil.rmtree(temporary, ignore_errors=True)
-            raise
+        except OSError as exc:
+            raise AcceptanceError(f"could not claim output directory: {output}") from exc
+        _place_no_replace(temporary / "result.json", output / "result.json")
+        _place_no_replace(temporary / "summary.md", output / "summary.md")
+        _place_no_replace(temporary / COMPLETION_MARKER, output / COMPLETION_MARKER)
+    except AcceptanceError:
+        if temporary.exists():
+            shutil.rmtree(temporary, ignore_errors=True)
+        raise
+    except OSError as exc:
+        if temporary.exists():
+            shutil.rmtree(temporary, ignore_errors=True)
+        raise AcceptanceError(f"publish failed: {output}") from exc
     finally:
-        try:
-            lock.rmdir()
-        except FileNotFoundError:
-            pass
+        if temporary.exists():
+            shutil.rmtree(temporary, ignore_errors=True)
     return output
+
+
+def analyze_controlled_acceptance(config_path: str | Path, root: Path, *, recover_incomplete: bool = False) -> Path:
+    """Acquire the output advisory lock, then analyze and publish fail-closed."""
+    root = Path(root).expanduser().resolve()
+    config_file = _resolve_config_file(config_path, root)
+    config, _ = _strict_object(config_file, "analyzer config")
+    validate_acceptance_config(config, root)
+    output = _artifact_output(root, config["output_dir"])
+    try:
+        output.parent.mkdir(parents=True, exist_ok=True)
+    except OSError as exc:
+        raise AcceptanceError(f"could not prepare output parent: {output.parent}") from exc
+    lock_path = output.parent / f".{output.name}.lock"
+    with _advisory_lock(lock_path):
+        state, reason = _output_state(output)
+        if state == "complete":
+            raise AcceptanceError(f"refusing to overwrite complete output: {output}")
+        if state == "incomplete":
+            if not recover_incomplete:
+                raise AcceptanceError(f"existing output is incomplete: {output} ({reason}); pass recover_incomplete=True to quarantine it")
+            _quarantine_incomplete(output)
+        return _analyze_controlled_acceptance(config_file, root, expected_output=output)
 
 
 __all__ = ["AcceptanceError", "analyze_controlled_acceptance", "validate_acceptance_config"]

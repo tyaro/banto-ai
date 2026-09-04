@@ -46,7 +46,7 @@ controlled acceptance の `expected_consumed_signal_set` は benchmark contract 
 
 各 matrix は次の直積を持ちます。seed は5個以上、horizon は15／30、context は64／120です。benchmark は targets `motor_current`／`motor_temperature`、past-only `load_proxy`、known-future 空、validation／test は stride 15・max origin 1、5 baselines と pinned Toto native quantiles を固定します。出力先は track ごとに分離し、既存 output を上書きしません。
 
-publish は output 親下の専用 lock directory を `mkdir` で原子的に claim します。final directory も `mkdir` で claim してから `result.json` と `summary.md` を配置し、最後に `.complete` marker を作成します。したがって既存 output は置換されず、marker のない残存 directory は不完全出力として扱います。この構成は Windows／Linux の rename 差をまたぐ no-replace 境界です。
+publish は output 親下の lock file を Windows／POSIX のOS advisory lockで排他します。lock file自体は残ってもプロセス終了時に解放されます。final directory は `mkdir` で原子的に claimし、fsync済みの `result.json`、`summary.md`、hash付きstrict JSON `.complete` marker をno-replaceで配置します。既存 output は置換されず、markerのない／hash不一致の残存 directory は不完全出力として通常拒否します。`--recover-incomplete` を明示した場合だけ、同一親の一意な quarantine directory へ原子的に退避して再実行します。
 
 analyzer は各 dataset の全 JSON／JSONL artifact（manifest、fingerprint、split、generator config、summary、observations、events）を重複キー禁止の strict parser に通してから quality verifier を実行し、全ファイルを snapshot/source record に含めます。
 

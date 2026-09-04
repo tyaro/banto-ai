@@ -69,7 +69,7 @@ class Toto2ToolTests(unittest.TestCase):
                         factory("metropt3-apu-01", parameters)
 
     def test_all_toto_entrypoints_import_from_repository_and_external_cwd(self):
-        scripts = tuple(ROOT / "tools" / "toto2" / name for name in ("preflight.py", "prepare_checkpoint.py", "run_smoke.py", "run_benchmark.py", "run_matrix.py"))
+        scripts = tuple(ROOT / "tools" / "toto2" / name for name in ("preflight.py", "prepare_checkpoint.py", "run_smoke.py", "run_benchmark.py", "run_matrix.py", "analyze_controlled_acceptance.py"))
         environment = dict(os.environ)
         environment.pop("PYTHONPATH", None)
         with tempfile.TemporaryDirectory() as external_cwd:
@@ -78,6 +78,8 @@ class Toto2ToolTests(unittest.TestCase):
                     completed = subprocess.run([sys.executable, script.relative_to(ROOT).as_posix(), "--help"], cwd=ROOT, env=environment, capture_output=True, text=True)
                     self.assertEqual(completed.returncode, 0, completed.stderr)
                     self.assertNotIn("ModuleNotFoundError", completed.stderr)
+                    if script.name == "analyze_controlled_acceptance.py":
+                        self.assertIn("--recover-incomplete", completed.stdout)
                 with self.subTest(cwd="external", script=script.name):
                     completed = subprocess.run([sys.executable, str(script), "--help"], cwd=external_cwd, env=environment, capture_output=True, text=True)
                     self.assertEqual(completed.returncode, 0, completed.stderr)

@@ -17,7 +17,7 @@ from banto_ai.generator import generate_synthetic
 from banto_ai.manifest import load_json, validate
 from banto_ai.quality import check_dataset
 from banto_ai.event_slices import _verify_dataset
-from banto_ai.toto2_acceptance import AcceptanceError, _strict_dataset_artifacts, _validate_cross_track_truth, analyze_controlled_acceptance, validate_acceptance_config
+from banto_ai.toto2_acceptance import AcceptanceError, _advisory_lock, _assert_dataset_inventories_unchanged, _dataset_inventory, _output_state, _strict_dataset_artifacts, _validate_cross_track_truth, analyze_controlled_acceptance, validate_acceptance_config
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -256,6 +256,27 @@ class Toto2AcceptanceTests(unittest.TestCase):
             finally:
                 path.write_bytes(original)
 
+    def test_dataset_symlink_directory_and_inventory_mutation_fail_closed(self) -> None:
+        dataset_path = self.temp / "ds" / "control" / MATRIX_IDS["control"] / "seed-17"
+        link = dataset_path / "linked-dir"
+        try:
+            os.symlink(dataset_path.parent, link, target_is_directory=True)
+        except (OSError, NotImplementedError) as exc:
+            self.skipTest(f"symlink directory test unavailable: {exc}")
+        try:
+            with self.assertRaises(AcceptanceError):
+                _strict_dataset_artifacts(ROOT, dataset_path, "symlink-dir")
+        finally:
+            link.unlink(missing_ok=True)
+        inventory = _dataset_inventory(ROOT, dataset_path, "inventory")
+        late = dataset_path / "late.json"
+        _write(late, {"late": True})
+        try:
+            with self.assertRaises(AcceptanceError):
+                _assert_dataset_inventories_unchanged(ROOT, {dataset_path: inventory})
+        finally:
+            late.unlink(missing_ok=True)
+
     def test_prediction_operating_mode_must_match_future_truth(self) -> None:
         matrix = load_json(self.temp / "matrix" / "control" / "result.json")
         cell = matrix["cells"][0]
@@ -270,6 +291,52 @@ class Toto2AcceptanceTests(unittest.TestCase):
                 analyze_controlled_acceptance(mode_config, ROOT)
         finally:
             prediction_path.write_text(original, encoding="utf-8", newline="\n")
+
+    def test_advisory_lock_releases_for_reacquisition_and_leaves_file(self) -> None:
+        lock_path = self.temp / "configs" / "reacquire.lock"
+        with _advisory_lock(lock_path):
+            self.assertTrue(lock_path.is_file())
+            with self.assertRaises(AcceptanceError):
+                with _advisory_lock(lock_path):
+                    pass
+        self.assertTrue(lock_path.is_file())
+        with _advisory_lock(lock_path):
+            pass
+
+    def test_incomplete_output_requires_recovery_and_complete_output_is_never_replaced(self) -> None:
+        config = load_json(self.config_path)
+        config["output_dir"] = f"artifacts/{self.temp.name}/recovery-output"
+        recovery_config = self.temp / "configs" / "recovery.json"; _write(recovery_config, config)
+        output = ROOT / config["output_dir"]
+        output.mkdir(parents=True, exist_ok=True)
+        (output / "sentinel").write_text("keep", encoding="utf-8")
+        with self.assertRaises(AcceptanceError) as rejected:
+            analyze_controlled_acceptance(recovery_config, ROOT)
+        self.assertIn("incomplete", str(rejected.exception))
+        published = analyze_controlled_acceptance(recovery_config, ROOT, recover_incomplete=True)
+        quarantines = list(output.parent.glob(f".{output.name}.incomplete-*"))
+        self.assertEqual(len(quarantines), 1)
+        self.assertEqual((quarantines[0] / "sentinel").read_text(encoding="utf-8"), "keep")
+        self.assertEqual(_output_state(published)[0], "complete")
+        with self.assertRaises(AcceptanceError):
+            analyze_controlled_acceptance(recovery_config, ROOT, recover_incomplete=True)
+        marker_path = published / ".complete"
+        marker = load_json(marker_path)
+        marker["result_sha256"] = "0" * 64
+        _write(marker_path, marker)
+        self.assertEqual(_output_state(published)[0], "incomplete")
+        with self.assertRaises(AcceptanceError):
+            analyze_controlled_acceptance(recovery_config, ROOT)
+
+    def test_output_file_is_rejected_even_with_recovery_flag(self) -> None:
+        config = load_json(self.config_path)
+        config["output_dir"] = f"artifacts/{self.temp.name}/output-file"
+        output_config = self.temp / "configs" / "output-file.json"; _write(output_config, config)
+        output = ROOT / config["output_dir"]
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text("not a directory", encoding="utf-8")
+        with self.assertRaises(AcceptanceError):
+            analyze_controlled_acceptance(output_config, ROOT, recover_incomplete=True)
 
     def test_duplicate_extra_and_missing_predictions_fail_safely(self) -> None:
         matrix = load_json(self.temp / "matrix" / "control" / "result.json")
