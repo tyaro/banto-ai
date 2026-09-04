@@ -19,6 +19,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
 from banto_ai.adapters.chronos2 import BackendForecast, Chronos2Adapter  # noqa: E402
+from banto_ai.manifest import load_json as load_json_file, validate  # noqa: E402
 from tools.chronos2 import (  # noqa: E402
     CHECKPOINT_ALLOW_PATTERNS,
     DEFAULT_REVISION,
@@ -28,7 +29,7 @@ from tools.chronos2 import (  # noqa: E402
     offline_environment,
     verify_snapshot,
 )
-from tools.chronos2 import prepare_checkpoint, run_benchmark, run_smoke  # noqa: E402
+from tools.chronos2 import prepare_checkpoint, run_benchmark, run_matrix, run_smoke  # noqa: E402
 import tools.chronos2 as chronos_tools  # noqa: E402
 from tools.chronos2 import preflight  # noqa: E402
 
@@ -301,6 +302,128 @@ class Chronos2ToolTests(unittest.TestCase):
         code = "import sys; import tools.chronos2.run_benchmark; print(sorted({'torch','numpy','transformers','chronos'} & set(sys.modules)))"
         result = subprocess.run([sys.executable, "-c", code], cwd=ROOT, check=True, capture_output=True, text=True)
         self.assertEqual(result.stdout.strip(), "[]")
+
+    def test_chronos_matrix_config_has_eight_schema_valid_cells_and_dedicated_outputs(self):
+        path = ROOT / "examples" / "configs" / "benchmark-matrix-chronos2-small.json"
+        config = load_json_file(path)
+        validate(config, load_json_file(ROOT / "schemas" / "benchmark-matrix-config.schema.json"))
+        self.assertEqual(config["generator_config_path"], "examples/configs/synthetic-motor-small.json")
+        self.assertEqual(config["benchmark_config_path"], "examples/configs/benchmark-chronos2-baselines-past-only.json")
+        self.assertEqual(config["axes"], {"seeds": [17, 42], "horizons": [1, 3], "context_lengths": [6, 12]})
+        self.assertEqual(
+            len(config["axes"]["seeds"]) * len(config["axes"]["horizons"]) * len(config["axes"]["context_lengths"]),
+            8,
+        )
+        outputs = (config["dataset_output_root"], config["benchmark_output_root"], config["matrix_output_dir"])
+        self.assertTrue(all("chronos2" in output for output in outputs))
+        self.assertEqual(len(set(outputs)), 3)
+
+    def test_chronos_matrix_wrapper_validates_environment_and_shares_factory(self):
+        with tempfile.TemporaryDirectory(dir=ROOT / "artifacts") as control_directory, tempfile.TemporaryDirectory() as cache_directory:
+            control = Path(control_directory)
+            benchmark = load_json_file(ROOT / "examples" / "configs" / "benchmark-chronos2-baselines-past-only.json")
+            benchmark_path = control / "benchmark.json"
+            benchmark_path.write_text(json.dumps(benchmark), encoding="utf-8")
+            matrix = load_json_file(ROOT / "examples" / "configs" / "benchmark-matrix-chronos2-small.json")
+            matrix["benchmark_config_path"] = benchmark_path.relative_to(ROOT).as_posix()
+            matrix["dataset_output_root"] = f"artifacts/chronos2-test-data-{control.name}"
+            matrix["benchmark_output_root"] = f"artifacts/chronos2-test-runs-{control.name}"
+            matrix["matrix_output_dir"] = f"artifacts/chronos2-test-result-{control.name}"
+            matrix_path = control / "matrix.json"
+            matrix_path.write_text(json.dumps(matrix), encoding="utf-8")
+            relative_matrix = matrix_path.relative_to(ROOT).as_posix()
+            cache = Path(cache_directory)
+            shared_factory = lambda _equipment_id, _parameters: object()
+            calls = []
+
+            def fake_runner(path, root, registry):
+                calls.append({
+                    "path": path,
+                    "root": root,
+                    "registry": registry,
+                    "offline": (os.environ.get("HF_HUB_OFFLINE"), os.environ.get("HF_HUB_DISABLE_TELEMETRY")),
+                    "cache": (os.environ.get("HF_HOME"), os.environ.get("HF_HUB_CACHE")),
+                })
+                self.assertIs(registry._factories["chronos2"], shared_factory)
+                return control / "fake-output"
+
+            manifest = {"allowed_use": "commercial-evaluation"}
+            with patch.object(run_matrix.single_run, "_external_cache", return_value=cache) as external, patch.object(run_matrix.single_run, "_load_and_validate_license", return_value=manifest) as license_check, patch.object(run_matrix.single_run, "_verify_cached_checkpoint") as checkpoint, patch.object(run_matrix.single_run, "_verify_installed_package") as package, patch.object(run_matrix.single_run, "make_shared_chronos_factory", return_value=shared_factory) as factory, patch.dict(os.environ, {"HF_HUB_OFFLINE": "caller", "HF_HUB_DISABLE_TELEMETRY": "caller", "HF_HOME": "caller-home", "HF_HUB_CACHE": "caller-cache"}, clear=False):
+                output = run_matrix.run_chronos_matrix(
+                    relative_matrix,
+                    ROOT,
+                    cache,
+                    MANIFEST,
+                    matrix_runner=fake_runner,
+                )
+                self.assertEqual(os.environ["HF_HUB_OFFLINE"], "caller")
+                self.assertEqual(os.environ["HF_HUB_DISABLE_TELEMETRY"], "caller")
+                self.assertEqual(os.environ["HF_HOME"], "caller-home")
+                self.assertEqual(os.environ["HF_HUB_CACHE"], "caller-cache")
+            self.assertEqual(output, control / "fake-output")
+            self.assertEqual(calls[0]["path"], matrix_path.resolve())
+            self.assertEqual(calls[0]["root"], ROOT.resolve())
+            self.assertEqual(calls[0]["offline"], ("1", "1"))
+            self.assertEqual(calls[0]["cache"], (str(cache.resolve()), str(cache.resolve())))
+            external.assert_called_once_with(cache, must_exist=True)
+            license_check.assert_called_once_with(MANIFEST)
+            checkpoint.assert_called_once_with(cache)
+            package.assert_called_once_with()
+            factory.assert_called_once_with(manifest, cache)
+
+    def test_chronos_matrix_rejects_invalid_paths_before_environment_checks(self):
+        with patch.object(run_matrix.single_run, "_external_cache") as external:
+            with self.assertRaisesRegex(ValueError, "repository-relative POSIX"):
+                run_matrix.run_chronos_matrix(
+                    str((ROOT / "examples" / "configs" / "benchmark-matrix-chronos2-small.json").resolve()),
+                    ROOT,
+                    Path("unused"),
+                )
+        external.assert_not_called()
+        invalid_paths = (
+            ("generator_config_path", "../outside.json"),
+            ("benchmark_config_path", "examples\\configs\\benchmark.json"),
+            ("matrix_output_dir", "C:\\absolute\\matrix"),
+        )
+        with tempfile.TemporaryDirectory(dir=ROOT / "artifacts") as directory:
+            for field, value in invalid_paths:
+                with self.subTest(field=field):
+                    matrix = load_json_file(ROOT / "examples" / "configs" / "benchmark-matrix-chronos2-small.json")
+                    matrix[field] = value
+                    path = Path(directory) / f"invalid-{field}.json"
+                    path.write_text(json.dumps(matrix), encoding="utf-8")
+                    with patch.object(run_matrix.single_run, "_external_cache") as external:
+                        with self.assertRaises(ValueError):
+                            run_matrix.run_chronos_matrix(path.relative_to(ROOT).as_posix(), ROOT, Path("unused"))
+                    external.assert_not_called()
+
+    def test_chronos_matrix_rejects_invalid_model_policy_and_runtime_boundaries(self):
+        base = load_json_file(ROOT / "examples" / "configs" / "benchmark-chronos2-baselines-past-only.json")
+        chronos = next(model for model in base["models"] if model["name"] == "chronos2")
+        cases = {
+            "missing-model": [model for model in base["models"] if model["name"] != "chronos2"],
+            "duplicate-model": [*base["models"], dict(chronos)],
+            "invalid-policy": [*base["models"][:-1], {**chronos, "quantile_policy": "validation-residual-by-lead"}],
+            "invalid-revision": [*base["models"][:-1], {**chronos, "parameters": {**chronos["parameters"], "checkpoint_revision": "0" * 40}}],
+            "invalid-device": [*base["models"][:-1], {**chronos, "parameters": {**chronos["parameters"], "device_map": "cuda"}}],
+            "network-enabled": [*base["models"][:-1], {**chronos, "parameters": {**chronos["parameters"], "local_files_only": False}}],
+        }
+        with tempfile.TemporaryDirectory(dir=ROOT / "artifacts") as directory:
+            control = Path(directory)
+            for label, models in cases.items():
+                with self.subTest(label=label):
+                    benchmark = dict(base)
+                    benchmark["models"] = models
+                    benchmark_path = control / f"benchmark-{label}.json"
+                    benchmark_path.write_text(json.dumps(benchmark), encoding="utf-8")
+                    matrix = load_json_file(ROOT / "examples" / "configs" / "benchmark-matrix-chronos2-small.json")
+                    matrix["benchmark_config_path"] = benchmark_path.relative_to(ROOT).as_posix()
+                    matrix_path = control / f"matrix-{label}.json"
+                    matrix_path.write_text(json.dumps(matrix), encoding="utf-8")
+                    with patch.object(run_matrix.single_run, "_external_cache") as external:
+                        with self.assertRaises(ValueError):
+                            run_matrix.run_chronos_matrix(matrix_path.relative_to(ROOT).as_posix(), ROOT, Path("unused"))
+                    external.assert_not_called()
 
 
 if __name__ == "__main__":

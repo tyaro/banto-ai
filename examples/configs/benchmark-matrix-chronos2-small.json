@@ -1,0 +1,14 @@
+{
+  "schema_version": "0.1",
+  "matrix_id": "benchmark-matrix-chronos2-small",
+  "generator_config_path": "examples/configs/synthetic-motor-small.json",
+  "benchmark_config_path": "examples/configs/benchmark-chronos2-baselines-past-only.json",
+  "dataset_output_root": "artifacts/chronos2/matrix-datasets",
+  "benchmark_output_root": "artifacts/chronos2/matrix-benchmarks",
+  "matrix_output_dir": "artifacts/chronos2/matrix/benchmark-matrix-chronos2-small",
+  "axes": {
+    "seeds": [17, 42],
+    "horizons": [1, 3],
+    "context_lengths": [6, 12]
+  }
+}
