@@ -31,7 +31,7 @@ evaluator configとresultは、それぞれ [`anomaly-evaluation-config.schema.j
 3. 現在点と直前点の両方が`quality=ok`、有限値、サンプリング間隔どおりでなければresidual／scoreはunavailableです。
 4. validationだけで、`equipment + full signal + operating mode`ごとにprofileを作ります。centerはresidualのmedian、`MAD = median(abs(residual - center))`、scaleは`1.4826 * MAD`です。currentまたはimmediate-previous timestampがenabled event intervalに入るresidualは校正から除外します。
 5. calibration pointが`min_calibration_points`未満、MADが0、またはcenter／MAD／scaleが非有限ならprofileは`inconclusive`です。global fallback、epsilon、別modeの流用、testによる再校正はありません。
-6. test scoreは`abs(residual - center) / scale`です。`robust_z_threshold`を超える点を連続`persistence_points`点確認した時刻をalert onsetとします。mode／profile group変更、sampling gap、quality不良、residual／score unavailable、threshold未満でpersistenceはresetします。mode boundaryのcurrent pointは`mode_boundary`です。previous timestampがevent内でも、current timestampが同じevent ID内に続く場合はscoreを利用します。event初点はcurrent residualを隠さず、event終了直後または別eventへの切替境界は`previous_event_overlap`としてunavailableです。
+6. test scoreは`abs(residual - center) / scale`です。`robust_z_threshold`を超える点を連続`persistence_points`点確認した時刻をalert onsetとします。mode／profile group変更、sampling gap、quality不良、residual／score unavailable、threshold未満でpersistenceはresetします。mode boundaryのcurrent pointは`mode_boundary`です。previous側event IDのいずれかがcurrentで継続していない境界なら`previous_event_overlap`としてunavailableです。previous側の全event IDがcurrentでも継続する同一event内はavailableで、previousにない新eventのonsetはcurrent residualを隠しません。
 
 test-only modeもprofile台帳には現れますが、validationの校正点がなければinconclusiveとして明示されます。したがって、scenarioがtestで新しいmodeを突然出すことによって、結果を黙って除外することはありません。
 

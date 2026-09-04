@@ -21,6 +21,7 @@ from banto_ai.anomaly_evaluation import (
     _calibrate_profiles,
     _event_records_and_metrics,
     _evaluate_core,
+    _residual_at,
     _score_and_alert,
     _strict_json,
     _validate_config,
@@ -308,6 +309,18 @@ class AnomalyEvaluationTests(unittest.TestCase):
         self.assertFalse(by_time[_canonical_time(start + timedelta(seconds=5))]["available"])
         self.assertEqual(by_time[_canonical_time(start + timedelta(seconds=5))]["exclusion_reason"], "previous_event_overlap")
         self.assertEqual([episode["onset_timestamp"] for episode in episodes], [_canonical_time(start + timedelta(seconds=4))])
+
+    def test_previous_event_set_shrink_is_a_boundary_but_new_event_onset_is_allowed(self) -> None:
+        start = datetime(2026, 1, 1, tzinfo=UTC)
+        rows = [_row(start + timedelta(seconds=index), float(index)) for index in range(3)]
+        event_a = _event("A", "motor-01.motor_current", start, start + timedelta(seconds=2))
+        event_b = _event("B", "motor-01.motor_current", start, start + timedelta(seconds=1))
+        residual, reason, _current, _previous = _residual_at(rows, 1, "motor-01.motor_current", timedelta(seconds=1), [event_a, event_b])
+        self.assertIsNone(residual)
+        self.assertEqual(reason, "previous_event_overlap")
+        residual, reason, _current, _previous = _residual_at(rows, 1, "motor-01.motor_current", timedelta(seconds=1), [event_a])
+        self.assertEqual(residual, 1.0)
+        self.assertIsNone(reason)
 
     def test_clean_monitored_exposure_uses_only_available_intervals_and_subtracts_event_windows(self) -> None:
         start = datetime(2026, 1, 1, tzinfo=UTC)

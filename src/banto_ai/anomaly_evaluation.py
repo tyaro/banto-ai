@@ -329,7 +329,7 @@ def _residual_at(
     equipment_id = rows[index - 1].get("equipment_id", signal_id.rsplit(".", 1)[0])
     previous_event_ids = _event_ids_at(events, equipment_id, previous_stamp)
     current_event_ids = _event_ids_at(events, equipment_id, current_stamp)
-    if previous_event_ids and not previous_event_ids.intersection(current_event_ids):
+    if previous_event_ids and not previous_event_ids.issubset(current_event_ids):
         return None, "previous_event_overlap", current_value, previous_value
     if str(rows[index].get("operating_mode")) != str(rows[index - 1].get("operating_mode")):
         return None, "mode_boundary", current_value, previous_value
