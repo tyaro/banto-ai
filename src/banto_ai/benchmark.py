@@ -176,6 +176,39 @@ def _percentile(values: list[float], q: float) -> float:
 
 
 PREDICTION_KEYS = frozenset({"model", "equipment_id", "target_signal_id", "operating_mode", "split", "origin_timestamp", "timestamp", "lead_time", "actual", "point_forecast", "quantiles"})
+QUALITY_GATE_KEYS = ("status", "observation_record_count", "equipment_count", "checks")
+
+
+def _normalize_quality_gate(quality: object) -> dict[str, Any]:
+    """Keep only the benchmark result quality contract and reject invalid gates."""
+    if not isinstance(quality, dict):
+        raise BenchmarkError("quality gate must be an object")
+    missing = [key for key in QUALITY_GATE_KEYS if key not in quality]
+    if missing:
+        raise BenchmarkError(f"quality gate is missing required fields: {', '.join(missing)}")
+    if quality["status"] != "pass":
+        raise BenchmarkError("quality gate must have status=pass")
+    for key in ("observation_record_count", "equipment_count"):
+        value = quality[key]
+        if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+            raise BenchmarkError(f"quality gate {key} must be a positive integer")
+    checks = quality["checks"]
+    if (
+        not isinstance(checks, list)
+        or not checks
+        or any(not isinstance(check, str) or not check for check in checks)
+    ):
+        raise BenchmarkError("quality gate checks must be a non-empty list of strings")
+    return {key: quality[key] for key in QUALITY_GATE_KEYS}
+
+
+def _summary_disclaimer(provenance: object) -> str:
+    """Return a provenance-specific disclaimer for the human-readable report."""
+    if provenance == "synthetic":
+        return "合成データの結果であり、実設備の性能を示しません。"
+    if provenance == "public":
+        return "公開実データの限定区間による研究評価であり、実設備一般の性能や製品適合性を示しません。"
+    return "出所を限定した研究評価の結果であり、実設備一般の性能や製品適合性を示しません。"
 
 
 def _model_state_bytes(models: list[dict[str, Any]]) -> dict[str, int]:
@@ -508,7 +541,7 @@ def run_benchmark(
         raise BenchmarkError("output_dir must be separate from dataset_dir and neither an ancestor nor descendant")
     if output_dir.exists():
         raise BenchmarkError(f"refusing to overwrite existing output: {output_dir}")
-    quality = (quality_checker or check_dataset)(dataset_dir, root)
+    quality = _normalize_quality_gate((quality_checker or check_dataset)(dataset_dir, root))
     manifest = load_json(dataset_dir / "dataset-manifest.json")
     fingerprint_path = (dataset_dir / manifest["fingerprint_path"]).resolve()
     if fingerprint_path.parent != dataset_dir.resolve():
@@ -928,7 +961,8 @@ def run_benchmark(
                 lines.append("| " + " | ".join(values) + " |")
             return "\n".join(lines)
 
-        markdown = "# Benchmark結果\n\n合成データの結果であり、実設備の性能を示しません。\n\n## 概要\n\n- 結果schema: `0.2`（`aggregate`は互換表示、判定はdimension別metricsを使用）\n- データ品質gate: 合格\n- 予測件数: %d\n- quantile policy: model別（nativeまたはvalidation residual by lead）\n- 失敗・評価不能: %d\n- aggregate（全model混在・互換表示）: %s\n\n## model別metrics\n\n%s\n\n## model-target別metrics\n\n%s\n\n## model-equipment-target別metrics\n\n%s\n\n## slice別\n\n%s\n" % (
+        markdown = "# Benchmark結果\n\n%s\n\n## 概要\n\n- 結果schema: `0.2`（`aggregate`は互換表示、判定はdimension別metricsを使用）\n- データ品質gate: 合格\n- 予測件数: %d\n- quantile policy: model別（nativeまたはvalidation residual by lead）\n- 失敗・評価不能: %d\n- aggregate（全model混在・互換表示）: %s\n\n## model別metrics\n\n%s\n\n## model-target別metrics\n\n%s\n\n## model-equipment-target別metrics\n\n%s\n\n## slice別\n\n%s\n" % (
+            _summary_disclaimer(manifest.get("provenance")),
             len(predictions), len(failures), overall, model_lines,
             table(("model", "target_signal_key", "unit", "metrics"), by_model_target),
             table(("model", "equipment_id", "target_signal_id", "unit", "metrics"), by_model_equipment_target),

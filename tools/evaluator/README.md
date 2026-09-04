@@ -10,6 +10,14 @@ python tools/evaluator/run_benchmark.py --config examples/configs/benchmark-smal
 
 出力は新規ディレクトリへatomic作成され、`result.json`、`predictions.jsonl`、`summary.md`を含みます。既存出力は上書きしません。合成データの結果は実設備性能を示しません。fevは現段階では導入せず、自前runnerを安全性・再現性の基準にします。
 
+公開実データのbaselineは、外部cacheから生成したMetroPT-3標準化artifactに対して実行できます。実データ本体はGit管理せず、先に公開データ専用importerとquality gateを完了してください。
+
+```text
+python tools/evaluator/run_benchmark.py --config examples/configs/benchmark-metropt3-baselines.json
+```
+
+この設定は2020-02-21の固定24時間窓、3 target、過去120分から15分先、known-future共変量なしで、5つの統計baselineを比較します。結果は公開実データの限定区間による研究評価であり、実設備一般の性能や製品適合性を示しません。
+
 `runtime.model_state_bytes`は各baselineのmodel名・immutable parameters・空のlearned stateをcanonical JSONへUTF-8直列化したbyte数です。stateless baselineの決定的な保存量を表し、Python objectの実メモリ量や出力file sizeではありません。`output_size_bytes_excluding_result`は`predictions.jsonl`と`summary.md`の合計で、model stateとは別です。
 
 AutoETSは未実装で、設定に指定できません。将来評価する場合はstatsforecast等を通常runtime／CIから分離した隔離環境で候補評価します。Holt linear trendはETSとは称しません。

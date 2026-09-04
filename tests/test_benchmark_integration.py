@@ -10,6 +10,7 @@ from banto_ai.benchmark import BenchmarkError, ModelRegistry, _dimension_metrics
 from banto_ai.contracts import Forecaster
 from banto_ai.generator import generate_synthetic
 from banto_ai.manifest import ManifestValidationError, load_json, validate
+from banto_ai.quality import check_dataset
 from banto_ai.types import ForecastResult, ForecastSeriesResult, QuantileForecast
 
 
@@ -142,6 +143,38 @@ class BenchmarkIntegrationTests(unittest.TestCase):
         self.assertIn(result["runtime"]["memory_source"], {"os.process_peak_working_set", "os.resource.ru_maxrss", "tracemalloc.fallback"})
         predictions = [json.loads(line) for line in (output / "predictions.jsonl").read_text(encoding="utf-8").splitlines()]
         self.assertEqual({item["target_signal_id"] for item in predictions}, {"motor-01.motor_current", "motor-01.motor_temperature", "conveyor-01.motor_current", "conveyor-01.motor_temperature"})
+
+    def test_summary_disclaimer_uses_manifest_provenance(self):
+        self._generate()
+        config = self._config([{"name": "last-value"}])
+        synthetic_output = self._run(config)
+        synthetic_summary = (synthetic_output / "summary.md").read_text(encoding="utf-8")
+        self.assertIn("合成データの結果であり、実設備の性能を示しません。", synthetic_summary)
+
+        manifest_path = self.dataset / "dataset-manifest.json"
+        manifest = load_json(manifest_path)
+        quality = check_dataset(self.dataset, ROOT)
+        quality.update({"dataset_id": "synthetic-motor-small", "dataset_fingerprint": "external-detail"})
+        manifest["provenance"] = "public"
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        config["output_dir"] = self._repo_relative(self.artifact_root / "public-output")
+        config_path = self._write_config(config)
+        public_output = run_benchmark(
+            config_path,
+            ROOT,
+            quality_checker=lambda _dataset_dir, _root: quality,
+        )
+        public_summary = (public_output / "summary.md").read_text(encoding="utf-8")
+        self.assertIn(
+            "公開実データの限定区間による研究評価であり、実設備一般の性能や製品適合性を示しません。",
+            public_summary,
+        )
+        result = load_json(public_output / "result.json")
+        self.assertEqual(
+            set(result["provenance"]["quality_gate"]),
+            {"status", "observation_record_count", "equipment_count", "checks"},
+        )
+        self.assertEqual(result["provenance"]["quality_gate"]["observation_record_count"], 120)
 
     def test_omitted_targets_use_each_equipments_manifest_targets(self):
         self._generate()
@@ -322,7 +355,15 @@ class BenchmarkIntegrationTests(unittest.TestCase):
         })
         manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
         config = self._config([{"name": "last-value"}])
-        with patch("banto_ai.benchmark.check_dataset", return_value={"status": "pass"}), self.assertRaisesRegex(BenchmarkError, "signal key collision"):
+        with patch(
+            "banto_ai.benchmark.check_dataset",
+            return_value={
+                "status": "pass",
+                "observation_record_count": 120,
+                "equipment_count": 2,
+                "checks": ["fixture"],
+            },
+        ), self.assertRaisesRegex(BenchmarkError, "signal key collision"):
             self._run(config)
 
     def test_memory_source_is_recorded_from_shared_process_helper(self):
