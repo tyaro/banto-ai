@@ -288,6 +288,31 @@ def _dimension_metrics(
     target_units: dict[tuple[str, str], str],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Build deterministic target and equipment-target metrics from test rows only."""
+    target_key_by_signal: dict[str, str] = {}
+    equipment_by_signal: dict[str, str] = {}
+    for pairs in target_pairs_by_equipment.values():
+        for target_id, target_key in pairs:
+            previous = target_key_by_signal.setdefault(target_id, target_key)
+            if previous != target_key:
+                raise BenchmarkError(
+                    f"target signal mapping is inconsistent for {target_id}"
+                )
+    for equipment_id, pairs in target_pairs_by_equipment.items():
+        for target_id, _ in pairs:
+            previous = equipment_by_signal.setdefault(target_id, equipment_id)
+            if previous != equipment_id:
+                raise BenchmarkError(
+                    f"target signal belongs to multiple equipment: {target_id}"
+                )
+    for item in predictions:
+        target_id = item.get("target_signal_id")
+        equipment_id = item.get("equipment_id")
+        if target_id not in target_key_by_signal:
+            raise BenchmarkError(f"prediction target is not configured: {target_id}")
+        if equipment_by_signal[target_id] != equipment_id:
+            raise BenchmarkError(
+                f"prediction target/equipment mapping is invalid: {equipment_id}/{target_id}"
+            )
     target_order = tuple(
         dict.fromkeys(
             target_key
@@ -303,7 +328,8 @@ def _dimension_metrics(
             matching = [
                 item for item in predictions
                 if item["model"] == model_name
-                and item["target_signal_id"].rsplit(".", 1)[-1] == target_key
+                and item["target_signal_id"] in target_key_by_signal
+                and target_key_by_signal[item["target_signal_id"]] == target_key
             ]
             if not matching:
                 continue
@@ -568,6 +594,21 @@ def run_benchmark(
             )
         else:
             target_requests = tuple(str(item) for item in configured_targets)
+
+        signal_ids_by_key: dict[str, list[str]] = {}
+        for signal_id in signals:
+            if signal_id.startswith(f"{equipment_id}."):
+                signal_ids_by_key.setdefault(signal_id.rsplit(".", 1)[-1], []).append(signal_id)
+        collisions = {
+            key: sorted(signal_ids)
+            for key, signal_ids in signal_ids_by_key.items()
+            if len(signal_ids) > 1
+        }
+        if collisions:
+            raise BenchmarkError(
+                f"signal key collision for equipment '{equipment_id}': {collisions}"
+            )
+
         targets_by_equipment[equipment_id] = tuple(
             resolve_signal(equipment_id, item) for item in target_requests
         )

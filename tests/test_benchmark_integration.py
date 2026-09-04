@@ -271,6 +271,60 @@ class BenchmarkIntegrationTests(unittest.TestCase):
                 },
             )
 
+    def test_dimension_aggregation_uses_declared_full_id_mapping(self):
+        predictions = [{
+            "model": "last-value",
+            "equipment_id": "motor-01",
+            "target_signal_id": "motor-01.motor_current",
+            "operating_mode": "nominal",
+            "split": "test",
+            "origin_timestamp": "2026-01-01T00:00:00Z",
+            "timestamp": "2026-01-01T00:00:01Z",
+            "lead_time": 1,
+            "actual": 1.0,
+            "point_forecast": 1.0,
+            "quantiles": {"0.1": 1.0, "0.5": 1.0, "0.9": 1.0},
+        }]
+        by_target, by_equipment_target = _dimension_metrics(
+            predictions,
+            (0.1, 0.5, 0.9),
+            {("motor-01", "motor-01.motor_current"): (0.0, 1.0)},
+            ("last-value",),
+            ("motor-01",),
+            {"motor-01": (("motor-01.motor_current", "motor_current"),)},
+            {("motor-01", "motor-01.motor_current"): "A"},
+        )
+        self.assertEqual(by_target[0]["target_signal_key"], "motor_current")
+        self.assertEqual(by_equipment_target[0]["target_signal_id"], "motor-01.motor_current")
+        invalid_prediction = json.loads(json.dumps(predictions[0]))
+        invalid_prediction["target_signal_id"] = "motor-01.unconfigured"
+        with self.assertRaisesRegex(BenchmarkError, "not configured"):
+            _dimension_metrics(
+                [invalid_prediction],
+                (0.1, 0.5, 0.9),
+                {("motor-01", "motor-01.motor_current"): (0.0, 1.0)},
+                ("last-value",),
+                ("motor-01",),
+                {"motor-01": (("motor-01.motor_current", "motor_current"),)},
+                {("motor-01", "motor-01.motor_current"): "A"},
+            )
+
+    def test_signal_key_collision_is_rejected_before_forecasting(self):
+        self._generate()
+        manifest_path = self.dataset / "dataset-manifest.json"
+        manifest = load_json(manifest_path)
+        manifest["signals"].append({
+            "signal_id": "motor-01.duplicate.motor_current",
+            "name": "duplicate",
+            "unit": "A",
+            "role": "target",
+            "sampling_interval_ms": 1000,
+        })
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        config = self._config([{"name": "last-value"}])
+        with patch("banto_ai.benchmark.check_dataset", return_value={"status": "pass"}), self.assertRaisesRegex(BenchmarkError, "signal key collision"):
+            self._run(config)
+
     def test_memory_source_is_recorded_from_shared_process_helper(self):
         self._generate()
         config = self._config([{"name": "last-value"}])
