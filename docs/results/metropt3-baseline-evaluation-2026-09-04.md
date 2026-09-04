@@ -69,16 +69,25 @@ splitはtrain `(0, 864)`、validation `(864, 1152)`、test `(1152, 1440)`であ�
 
 benchmark artifactは`artifacts/benchmark/benchmark-metropt3-baselines/`に生成され、raw／derived public dataと同じくGit管理外のartifact boundaryに置く。
 
+## 再現性・実行証跡
+
+primary runは、detached clean worktreeのcommit `b9b0a678f1ef9ef685dc450824a4705ff9881cf0`から実行した。`result.json`の`code_revision.status`は`git`、`code_revision.dirty`は`false`、`code_revision.diff_sha256`は`e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`である。`predictions.jsonl`のSHA-256は`6894ecd0a24c057f13afcf505baa30a96b04a3d4203c6e24a964691d2c4520d0`で、以前の実行とprediction、metrics、provenanceが一致した。
+
 ## Runtime
 
-`result.json`のruntimeは次の通りである。
+clean commitからの`result.json`のruntimeは次の通りである。秒数、latency、memoryはPython／OS／実行環境に依存する測定値であり、モデルの性能保証や実設備の性能保証ではない。
 
 | 項目 | 値 |
 | --- | ---: |
-| validation_seconds | 1.1296678000071552 |
-| test_seconds | 3.870436700002756 |
-| total_seconds | 25.072172300016973 |
+| validation_seconds | 0.8732296999951359 |
+| test_seconds | 2.04535770000075 |
+| total_seconds | 16.17603400000371 |
+| p50_latency_ms | 0.8707499946467578 |
+| p95_latency_ms | 2.8196649916935708 |
+| peak_memory_bytes | 47255552 |
 | memory_source | `os.process_peak_working_set` |
+| Python | 3.14.0 |
+| OS | Windows 11 |
 
 ## 次の工程
 

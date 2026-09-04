@@ -39,6 +39,20 @@ class PublicDataDocumentationTests(unittest.TestCase):
             "異常検知性能を示さない",
             "known-future contractそのものは今回テストしていない",
             "Chronos-2とTimesFM 3.0",
+            "b9b0a678f1ef9ef685dc450824a4705ff9881cf0",
+            "detached clean worktree",
+            "`code_revision.status`は`git`",
+            "`code_revision.dirty`は`false`",
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "6894ecd0a24c057f13afcf505baa30a96b04a3d4203c6e24a964691d2c4520d0",
+            "0.8732296999951359",
+            "2.04535770000075",
+            "16.17603400000371",
+            "0.8707499946467578",
+            "2.8196649916935708",
+            "47255552",
+            "Windows 11",
+            "性能保証ではない",
         ):
             self.assertIn(fact, self.baseline_result)
         for model in ("last-value", "seasonal-naive", "moving-average", "ewma", "holt-linear"):
