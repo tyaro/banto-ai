@@ -50,6 +50,8 @@ Chronos-2のseed `[17, 42]`×horizon `[1, 3]`×context `[6, 12]`の実model matr
 
 このmatrixは2 seed、単一の合成generator、2 equipment、各equipment validation／test各2 origins、CPUのみの小標本であり、一般性能や実設備性能を示しません。次はorigin拡大、公開実データでのrolling benchmark、missing／stale／regime／fault slice、known-future計画値対past-only、校正評価、context探索です。公開データについてはMetroPT-3のsource pin、標準化取込、Public-only quality gateが完了し、結果はsurvey／ADRと取込結果文書から参照できます。拡張した評価条件をclean savepointから再実行することも次のゲートです。package・code・weightsはApache-2.0ですが、追加gateが完了するまで`commercial-evaluation`に留め、`product-candidate`へ昇格しません。TimesFM 3.0は重み条件によりresearch-onlyの比較基準として残します。
 
+2026-09-04に、固定24時間・1設備・3 targetのMetroPT-3公開実データで、統計baseline 5モデルのrolling-origin benchmarkを完走しました。context 120分、horizon 15分、validation／test各16 origins、past-only covariate 11、known-future 0、validation residual by leadの契約です。test prediction 3,600件、quality gate PASS、dataset fingerprint `e6210e4e48e05c025fc8895ddeddf0c53a49dc53fd1c2f49e8c3272a3c7b37b0`で、詳細は[`docs/results/metropt3-baseline-evaluation-2026-09-04.md`](results/metropt3-baseline-evaluation-2026-09-04.md)に記録しました。これは限定区間のforecast研究評価で、実設備一般の性能、製品適合性、異常検知性能を示しません。Phase 2全体は未完了で、次は同じ契約でChronos-2／TimesFM 3.0を追加し、依存・license・cache・CPU負荷を別評価します。
+
 ## 実験の必須記録
 
 すべての実験に、次を記録します。

@@ -14,14 +14,35 @@ class PublicDataDocumentationTests(unittest.TestCase):
         cls.adr = (ROOT / "docs" / "adr-0005-public-dataset-boundary.md").read_text(encoding="utf-8")
         cls.roadmap = (ROOT / "docs" / "research-roadmap.md").read_text(encoding="utf-8")
         cls.plan = (ROOT / "docs" / "research-implementation-plan.md").read_text(encoding="utf-8")
+        cls.baseline_result = (ROOT / "docs" / "results" / "metropt3-baseline-evaluation-2026-09-04.md").read_text(encoding="utf-8")
 
     def test_required_documents_exist(self):
         for relative in (
             "docs/public-dataset-survey.md",
             "docs/adr-0005-public-dataset-boundary.md",
             "datasets/README.md",
+            "docs/results/metropt3-baseline-evaluation-2026-09-04.md",
         ):
             self.assertTrue((ROOT / relative).is_file(), relative)
+
+    def test_metropt3_baseline_result_records_fixed_contract_and_scope(self):
+        for fact in (
+            "e6210e4e48e05c025fc8895ddeddf0c53a49dc53fd1c2f49e8c3272a3c7b37b0",
+            "test prediction countは3,600",
+            "validation / test = 15 / 15",
+            "validation / test = 16 / 16",
+            "past-only 11、known-future 0",
+            "`validation-residual-by-lead`",
+            "5 × 3 × 16 × 15 = 3,600",
+            "Public-only quality gateはPASS",
+            "CC BY 4.0",
+            "異常検知性能を示さない",
+            "known-future contractそのものは今回テストしていない",
+            "Chronos-2とTimesFM 3.0",
+        ):
+            self.assertIn(fact, self.baseline_result)
+        for model in ("last-value", "seasonal-naive", "moving-average", "ewma", "holt-linear"):
+            self.assertIn(f"| {model} |", self.baseline_result)
 
     def test_official_sources_and_licenses_are_linked(self):
         for text in (self.survey, self.adr):
