@@ -15,7 +15,7 @@ $totoPython = '..\.venv-banto-ai-toto2\Scripts\python.exe'
 & $totoPython tools\toto2\run_benchmark.py --config examples\configs\benchmark-metropt3-toto2-4m.json --cache-dir C:\banto-cache\toto2
 ```
 
-実行開始後は network を禁止し、cache snapshot の sibling set、revision、`model.safetensors` の exact size/SHA-256、package version、license を検証します。短い horizon の公式推奨どおり `decode_block_size=None`、CPU、batch=1 を固定します。Toto 2.0 は current 2.0 で fine-tuning／exogenous variable をサポートしないため、known-future covariate request は fail closed です。MetroPT-3 の context=120 は変えず、patch_size=32 に合わせて adapter 内で先頭8点を未観測 padding し、effective model input length=128 とします。実測値を padding に使わず、実入力の missing／stale／irregular／nonfinite は拒否します。
+実行開始後は network を禁止し、cache snapshot の sibling set、revision、`model.safetensors` の exact size/SHA-256、package version、license を検証します。短い horizon の公式推奨どおり `decode_block_size=None`、CPU、batch=1 を固定します。Toto 2.0 は current 2.0 で fine-tuning／exogenous variable をサポートしないため、known-future covariate request は fail closed です。MetroPT-3 の context=120 は変えず、patch_size=32 に合わせて adapter 内で先頭8点を未観測 padding し、effective model input length=128 とします。target／past-only contextでは、missingは`value=null`、staleは有限値＋quality flagとして受け付け、両方を0-fillして`target_mask=false`とし、paddingまたは内部missing／staleがあれば`has_missing_values=true`を渡します。invalid／out_of_order、value／quality不整合はfail closedです。syntheticの`stale_value`はsource ageやtransport freshnessの証拠ではありません。
 
 この初回追加では4MのCPU smokeとMetroPT-3 benchmarkを実行済みです。結果は[`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](../../docs/results/toto2-metropt3-evaluation-2026-09-04.md)を参照してください。22M、fine-tuning、seed拡大、fault slice、実設備一般化は対象外です。
 

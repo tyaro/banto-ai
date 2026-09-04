@@ -35,6 +35,9 @@ class Phase1GeneratorTests(unittest.TestCase):
         fingerprint["files"] = hashes
         fingerprint["dataset_fingerprint"] = hashlib.sha256(canonical).hexdigest()
         (output / "fingerprint.json").write_text(json.dumps(fingerprint), encoding="utf-8")
+        summary = load_json(output / "summary.json")
+        summary["dataset_fingerprint"] = fingerprint["dataset_fingerprint"]
+        (output / "summary.json").write_text(json.dumps(summary), encoding="utf-8")
 
     def test_same_seed_is_byte_for_byte_and_seed_changes_fingerprint(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -158,6 +161,95 @@ class Phase1GeneratorTests(unittest.TestCase):
             clean_observation_path.write_text("\n".join(json.dumps(row) for row in clean_rows) + "\n", encoding="utf-8")
             with self.assertRaises(DatasetQualityError):
                 check_dataset(clean_output, ROOT)
+
+    def test_quality_changing_overlap_is_rejected_disabled_is_ignored_and_touching_is_allowed(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            base = load_json(CONFIG)
+            base["dataset_id"] = "synthetic-quality-event-boundaries"
+            dropout = {
+                "event_id": "motor-01-current-dropout",
+                "event_type": "dropout",
+                "equipment_id": "motor-01",
+                "signal_id": "motor_current",
+                "start_sample": 10,
+                "end_sample": 14,
+                "enabled": True,
+            }
+            stale = {
+                "event_id": "motor-01-current-stale",
+                "event_type": "stale_value",
+                "equipment_id": "motor-01",
+                "signal_id": "motor_current",
+                "start_sample": 13,
+                "end_sample": 16,
+                "enabled": True,
+            }
+            overlap = json.loads(json.dumps(base))
+            overlap["events"].extend((dropout, stale))
+            overlap_path = Path(directory) / "overlap.json"
+            overlap_path.write_text(json.dumps(overlap), encoding="utf-8")
+            with self.assertRaisesRegex(GeneratorError, "quality-changing event intervals overlap"):
+                generate_synthetic(overlap_path, Path(directory) / "overlap-dataset", ROOT)
+
+            disabled = json.loads(json.dumps(overlap))
+            disabled["dataset_id"] = "synthetic-quality-event-disabled"
+            disabled["events"][-1]["enabled"] = False
+            disabled_path = Path(directory) / "disabled-overlap.json"
+            disabled_path.write_text(json.dumps(disabled), encoding="utf-8")
+            disabled_output = generate_synthetic(disabled_path, Path(directory) / "disabled-dataset", ROOT)
+            self.assertEqual(check_dataset(disabled_output, ROOT)["status"], "pass")
+
+            touching = json.loads(json.dumps(base))
+            touching["dataset_id"] = "synthetic-quality-event-touching"
+            touching_stale = dict(stale, start_sample=14, end_sample=16)
+            touching["events"].extend((dropout, touching_stale))
+            touching_path = Path(directory) / "touching.json"
+            touching_path.write_text(json.dumps(touching), encoding="utf-8")
+            output = generate_synthetic(touching_path, Path(directory) / "touching-dataset", ROOT)
+            self.assertEqual(check_dataset(output, ROOT)["status"], "pass")
+            rows = [json.loads(line) for line in (output / "observations.jsonl").read_text(encoding="utf-8").splitlines()]
+            motor_rows = [row for row in rows if row["equipment_id"] == "motor-01"]
+            self.assertTrue(all(row["quality"]["motor_current"] == "ok" for row in (motor_rows[9:10] + motor_rows[16:17])))
+            self.assertTrue(all(row["quality"]["motor_current"] == "missing" and row["signals"]["motor_current"]["value"] is None for row in motor_rows[10:14]))
+            stale_rows = motor_rows[14:16]
+            self.assertTrue(all(row["quality"]["motor_current"] == "stale" for row in stale_rows))
+            self.assertEqual(len({row["signals"]["motor_current"]["value"] for row in stale_rows}), 1)
+
+    def test_quality_gate_rejects_quality_status_outside_event_and_rehashed_stale_mutation(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            value = load_json(CONFIG)
+            value["dataset_id"] = "synthetic-quality-tamper"
+            value["events"].append({
+                "event_id": "motor-01-load-stale",
+                "event_type": "stale_value",
+                "equipment_id": "motor-01",
+                "signal_id": "load_proxy",
+                "start_sample": 50,
+                "end_sample": 54,
+                "enabled": True,
+            })
+            config = Path(directory) / "tamper.json"
+            config.write_text(json.dumps(value), encoding="utf-8")
+            output = generate_synthetic(config, Path(directory) / "dataset", ROOT)
+            rows = [json.loads(line) for line in (output / "observations.jsonl").read_text(encoding="utf-8").splitlines()]
+            motor_rows = [row for row in rows if row["equipment_id"] == "motor-01"]
+            motor_rows[49]["quality"]["load_proxy"] = "stale"
+            motor_rows[49]["signals"]["load_proxy"]["value"] = 123.0
+            (output / "observations.jsonl").write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+            self._refresh_fingerprint(output)
+            with self.assertRaises(DatasetQualityError):
+                check_dataset(output, ROOT)
+
+            value["dataset_id"] = "synthetic-quality-stale-tamper"
+            config.write_text(json.dumps(value), encoding="utf-8")
+            output = generate_synthetic(config, Path(directory) / "stale-dataset", ROOT)
+            rows = [json.loads(line) for line in (output / "observations.jsonl").read_text(encoding="utf-8").splitlines()]
+            motor_rows = [row for row in rows if row["equipment_id"] == "motor-01"]
+            motor_rows[51]["signals"]["load_proxy"]["value"] += 1.0
+            (output / "observations.jsonl").write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
+            self._refresh_fingerprint(output)
+            with self.assertRaisesRegex(DatasetQualityError, "stale_value must remain fixed"):
+                check_dataset(output, ROOT)
 
     def test_disabled_event_with_unknown_signal_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

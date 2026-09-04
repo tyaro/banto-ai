@@ -24,6 +24,7 @@ SUMMARY_SCHEMA_VERSION = "0.1"
 SUMMARY_TYPE = "synthetic-generation"
 SUMMARY_KEYS = frozenset({"schema_version", "summary_type", "dataset_id", "generator_version", "seed", "sample_count_per_equipment", "equipment_count", "observation_record_count", "configured_event_count", "disabled_event_count", "event_count", "regime_coverage", "event_coverage", "dataset_fingerprint"})
 EVENT_TYPES = ("sensor_drift", "spike", "dropout", "overheating_trend", "jam_or_slip", "stuck_value", "stale_value")
+QUALITY_CHANGING_EVENT_TYPES = frozenset({"dropout", "stale_value"})
 REGIMES = ("stopped", "startup", "low_speed", "nominal", "high_load", "cooldown")
 LABELS = ("operating_mode", "recipe_step")
 DEFAULT_EVENT_MAGNITUDES = {"sensor_drift": 1.0, "spike": 4.0, "dropout": 0.0, "overheating_trend": 12.0, "jam_or_slip": 0.45, "stuck_value": 0.0, "stale_value": 0.0}
@@ -93,6 +94,7 @@ def _validate_config(config: dict[str, Any], schema_path: Path) -> None:
     if any(a["end_sample"] != b["start_sample"] for a, b in zip(regimes, regimes[1:])):
         raise GeneratorError("regime intervals must be contiguous and non-overlapping")
     event_ids: set[str] = set()
+    quality_events: list[tuple[str, str, int, int, str]] = []
     for event in config["events"]:
         if event["event_id"] in event_ids:
             raise GeneratorError("event_id must be unique")
@@ -105,6 +107,12 @@ def _validate_config(config: dict[str, Any], schema_path: Path) -> None:
             raise GeneratorError("unsupported event_type")
         if event.get("signal_id") is not None and event["signal_id"] not in SIGNALS:
             raise GeneratorError(f"event signal_id is unknown, including disabled events: {event['signal_id']}")
+        if event["enabled"] and event["event_type"] in QUALITY_CHANGING_EVENT_TYPES:
+            quality_events.append((event["equipment_id"], event_signal(event), event["start_sample"], event["end_sample"], event["event_id"]))
+    ordered_quality_events = sorted(quality_events, key=lambda item: (item[0], item[1], item[2], item[3], item[4]))
+    for previous, current in zip(ordered_quality_events, ordered_quality_events[1:]):
+        if previous[:2] == current[:2] and previous[3] > current[2]:
+            raise GeneratorError(f"quality-changing event intervals overlap: {previous[4]} and {current[4]}")
 
 
 def _regime_at(regimes: list[dict[str, Any]], index: int) -> dict[str, Any]:

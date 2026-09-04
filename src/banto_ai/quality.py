@@ -17,6 +17,7 @@ from .generator import (
     FINGERPRINT_FILE_NAMES,
     FINGERPRINT_KEYS,
     REGIMES,
+    QUALITY_CHANGING_EVENT_TYPES,
     SIGNALS,
     SUMMARY_KEYS,
     SUMMARY_SCHEMA_VERSION,
@@ -269,6 +270,7 @@ def _check_config_semantics(config: dict[str, Any], dataset: dict[str, Any], spl
     config_start = _parse_utc(config["start_timestamp"])
     expected_delta = timedelta(milliseconds=config["sampling_interval_ms"])
     rows_by_equipment: dict[str, list[dict[str, Any]]] = {item["equipment_id"]: [] for item in config_equipment}
+    ordered_rows_by_equipment: dict[str, list[dict[str, Any]]] = {}
     for row in rows:
         rows_by_equipment[row["equipment_id"]].append(row)
     for item in config_equipment:
@@ -280,6 +282,7 @@ def _check_config_semantics(config: dict[str, Any], dataset: dict[str, Any], spl
         if timestamps != expected_timestamps:
             raise DatasetQualityError(f"timestamp column does not match config start_timestamp for {equipment_id}")
         ordered_rows = sorted(rows_by_equipment[equipment_id], key=lambda row: _parse_utc(row["timestamp"]))
+        ordered_rows_by_equipment[equipment_id] = ordered_rows
         for index, row in enumerate(ordered_rows):
             regime = _config_regime_at(config, index)
             expected_recipe = regime.get("recipe_step", regime["regime"])
@@ -290,11 +293,58 @@ def _check_config_semantics(config: dict[str, Any], dataset: dict[str, Any], spl
     if set(actual_by_id) != {event["event_id"] for event in expected_active}:
         raise DatasetQualityError("events.jsonl IDs do not match enabled generator config events")
     for event in expected_active:
+        if not 0 <= event["start_sample"] < event["end_sample"] <= config["sample_count"]:
+            raise DatasetQualityError(f"event config interval is outside sample range: {event['event_id']}")
         start = config_start + event["start_sample"] * expected_delta
         end = config_start + event["end_sample"] * expected_delta
         expected = {"event_id": event["event_id"], "event_type": event["event_type"], "equipment_id": event["equipment_id"], "signal_id": event_signal(event), "start_timestamp": _iso(start), "end_timestamp": _iso(end), "boundary_semantics": "[start,end)", "magnitude": effective_event_magnitude(event), "description": event.get("description", "")}
         if actual_by_id[event["event_id"]] != expected:
             raise DatasetQualityError(f"event ground truth does not match generator config: {event['event_id']}")
+    quality_events = sorted(
+        (
+            event["equipment_id"],
+            event_signal(event),
+            event["start_sample"],
+            event["end_sample"],
+            event["event_id"],
+            event["event_type"],
+        )
+        for event in expected_active
+        if event["event_type"] in QUALITY_CHANGING_EVENT_TYPES
+    )
+    for previous, current in zip(quality_events, quality_events[1:]):
+        if previous[:2] == current[:2] and previous[3] > current[2]:
+            raise DatasetQualityError(f"quality-changing event intervals overlap: {previous[4]} and {current[4]}")
+    quality_events_by_key: dict[tuple[str, str], list[dict[str, Any]]] = {}
+    for event in expected_active:
+        if event["event_type"] in QUALITY_CHANGING_EVENT_TYPES:
+            quality_events_by_key.setdefault((event["equipment_id"], event_signal(event)), []).append(event)
+    for (equipment_id, signal_id), signal_events in quality_events_by_key.items():
+        ordered_rows = ordered_rows_by_equipment[equipment_id]
+        for event in signal_events:
+            values = []
+            for index in range(event["start_sample"], event["end_sample"]):
+                row = ordered_rows[index]
+                payload = row["signals"][signal_id]
+                status = row["quality"][signal_id]
+                value = payload["value"]
+                if event["event_type"] == "dropout":
+                    if status != "missing" or value is not None:
+                        raise DatasetQualityError(f"dropout quality semantics do not match event interval: {event['event_id']}")
+                else:
+                    if status != "stale" or value is None or not isinstance(value, (int, float)) or isinstance(value, bool) or not math.isfinite(value):
+                        raise DatasetQualityError(f"stale_value quality semantics do not match event interval: {event['event_id']}")
+                    values.append(value)
+            if event["event_type"] == "stale_value" and len(set(values)) != 1:
+                raise DatasetQualityError(f"stale_value must remain fixed during event interval: {event['event_id']}")
+    for equipment_id, ordered_rows in ordered_rows_by_equipment.items():
+        for index, row in enumerate(ordered_rows):
+            for signal_id in SIGNALS:
+                signal_events = quality_events_by_key.get((equipment_id, signal_id), ())
+                active = any(event["start_sample"] <= index < event["end_sample"] for event in signal_events)
+                status = row["quality"][signal_id]
+                if not active and status in ("missing", "stale"):
+                    raise DatasetQualityError(f"quality-changing status is outside configured event interval: {equipment_id}.{signal_id}")
     expected_regime_coverage = {regime: sum(item["end_sample"] - item["start_sample"] for item in config["regimes"] if item["regime"] == regime) for regime in REGIMES}
     expected_event_coverage = {event_type: sum(1 for event in expected_active if event["event_type"] == event_type) for event_type in EVENT_TYPES}
     expected_summary = {"dataset_id": config["dataset_id"], "generator_version": config["generator_version"], "seed": config["seed"], "sample_count_per_equipment": config["sample_count"], "equipment_count": len(config_equipment), "observation_record_count": config["sample_count"] * len(config_equipment), "configured_event_count": len(config["events"]), "disabled_event_count": sum(1 for event in config["events"] if not event["enabled"]), "event_count": len(expected_active), "regime_coverage": expected_regime_coverage, "event_coverage": expected_event_coverage}
