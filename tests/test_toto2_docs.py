@@ -1,3 +1,5 @@
+import hashlib
+import json
 from pathlib import Path
 import unittest
 
@@ -63,6 +65,10 @@ class Toto2DocumentationTests(unittest.TestCase):
             "context_target_event` | 1,440",
             "context_covariate_event` | 3,060",
             "context_other_signal_event` | 3,060",
+            "| 15 | 64 | 10 | 0.41415010607910185 | 0.4861204730542228 | 0.23458896053059908 | 1.0 | 1.4480838775634766 |",
+            "| 15 | 120 | 10 | 0.6752031117675781 | 0.8066231182605325 | 0.32857936105550145 | 0.8 | 1.4139863967895507 |",
+            "| 30 | 64 | 32 | 2.615565466388703 | 3.203644755407434 | 1.9790756186141971 | 0.3125 | 3.828602373600006 |",
+            "| 30 | 120 | 32 | 3.4872136562347413 | 4.080344173064958 | 2.5833244569740295 | 0.25 | 5.113024294376373 |",
             "conveyor-01.motor_temperature",
             "motor-01-slip-test",
             "forecast timestampのcoverは0",
@@ -73,6 +79,10 @@ class Toto2DocumentationTests(unittest.TestCase):
             "missing／stale robustness",
             "commercial-evaluation",
             "Phase 2未完了",
+            "evidence-completeness受入条件",
+            "全cellでforecast-covered",
+            "paired event-level bootstrap 95% CI",
+            "昇格閾値はこのrunでは未定義",
             "toto2-matrix-2026-09-04.md",
         )
         for required_value in required:
@@ -84,6 +94,79 @@ class Toto2DocumentationTests(unittest.TestCase):
         ):
             with self.subTest(linked=linked):
                 self.assertIn(linked, report)
+        evaluator_readme = (ROOT / "tools/evaluator/README.md").read_text(encoding="utf-8")
+        schema = (ROOT / "schemas/benchmark-event-slice-result.schema.json").read_text(encoding="utf-8")
+        self.assertIn("priority分類bucketに属したprediction rowと重なった全event ID", evaluator_readme)
+        self.assertIn("Overlap provenance of all event IDs that overlap prediction rows in a priority classification bucket", schema)
+
+    def test_event_slice_local_artifacts_are_checked_when_present(self):
+        paths = {
+            "source_matrix": ROOT / "artifacts/toto2/matrix/benchmark-matrix-toto2-small/result.json",
+            "event_result": ROOT / "artifacts/toto2/event-slices/benchmark-matrix-toto2-small/result.json",
+            "generated_summary": ROOT / "artifacts/toto2/event-slices/benchmark-matrix-toto2-small/summary.md",
+        }
+        missing = [name for name, path in paths.items() if not path.is_file()]
+        if missing:
+            self.skipTest("local Toto event-slice artifacts unavailable: " + ", ".join(missing))
+
+        self.assertEqual(
+            hashlib.sha256(paths["source_matrix"].read_bytes()).hexdigest(),
+            "3de9b683df25a871bcc1000f6a75ba21a301f55dad316cc15bc3675441959784",
+        )
+        self.assertEqual(
+            hashlib.sha256(paths["event_result"].read_bytes()).hexdigest(),
+            "832b9e088fccf5711eb31205b4848473111d38310953901842331023dcfd8e70",
+        )
+        self.assertEqual(
+            hashlib.sha256(paths["generated_summary"].read_bytes()).hexdigest(),
+            "973154dee1ca1b37a53cadf035d4e752b4ddbe09be125c7f06a1a4fe3027d826",
+        )
+
+        event_result = json.loads(paths["event_result"].read_text(encoding="utf-8"))
+        validate(event_result, load_json(ROOT / "schemas/benchmark-event-slice-result.schema.json"))
+        self.assertEqual(event_result["status"], "success")
+        self.assertEqual(event_result["matrix_result_path"], "artifacts/toto2/matrix/benchmark-matrix-toto2-small/result.json")
+        self.assertEqual(event_result["source_matrix_sha256"], "3de9b683df25a871bcc1000f6a75ba21a301f55dad316cc15bc3675441959784")
+        self.assertEqual(event_result["counts"], {
+            "total_cells": 8,
+            "analyzed_cells": 8,
+            "excluded_cells": 0,
+            "excluded_by_status": {"failed": 0},
+            "total_prediction_count": 8640,
+            "analyzed_prediction_count": 8640,
+            "forecast_exposure_counts": {"clean": 6048, "other_signal_event": 2088, "target_event": 504},
+            "context_exposure_counts": {"context_clean": 1080, "context_target_event": 1440, "context_covariate_event": 3060, "context_other_signal_event": 3060},
+        })
+
+        expected_metrics = {
+            (15, 64): (10, 0.41415010607910185, 0.4861204730542228, 0.23458896053059908, 1.0, 1.4480838775634766),
+            (15, 120): (10, 0.6752031117675781, 0.8066231182605325, 0.32857936105550145, 0.8, 1.4139863967895507),
+            (30, 64): (32, 2.615565466388703, 3.203644755407434, 1.9790756186141971, 0.3125, 3.828602373600006),
+            (30, 120): (32, 3.4872136562347413, 4.080344173064958, 2.5833244569740295, 0.25, 5.113024294376373),
+        }
+        target_rows = {
+            (row["horizon"], row["context_length"]): row
+            for row in event_result["macro_summary"]
+            if row["dimension"] == "forecast_exposure"
+            and row["exposure"] == "target_event"
+            and row["model"] == "toto2"
+            and row["target_signal_key"] == "motor_temperature"
+        }
+        self.assertEqual(set(target_rows), set(expected_metrics))
+        for key, expected in expected_metrics.items():
+            row = target_rows[key]
+            self.assertEqual(row["total_point_count"], expected[0])
+            for metric_name, expected_value in zip(("mae", "rmse", "wis", "nominal_interval_coverage", "interval_width"), expected[1:]):
+                self.assertAlmostEqual(row["metrics"][metric_name]["mean"], expected_value, places=15)
+
+        slip_coverage = []
+        for cell in event_result["cells"]:
+            matches = [item for item in cell["event_coverage"] if item["event_id"] == "motor-01-slip-test"]
+            self.assertEqual(len(matches), 1)
+            slip_coverage.append(matches[0])
+        self.assertEqual(len(slip_coverage), 8)
+        self.assertTrue(all(item["forecast_point_count"] == 0 for item in slip_coverage))
+        self.assertTrue(all(item["covered_by_forecast_timestamp"] is False for item in slip_coverage))
 
     def test_matrix_report_records_artifact_provenance_metrics_and_next_gates(self):
         report = (ROOT / "docs/results/toto2-matrix-2026-09-04.md").read_text(encoding="utf-8")

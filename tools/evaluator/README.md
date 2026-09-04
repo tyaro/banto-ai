@@ -51,6 +51,6 @@ py -3.14 tools/evaluator/analyze_event_slices.py `
   --root .
 ```
 
-出力は新規ディレクトリの `result.json`（schema 0.1）と `summary.md` です。`macro_summary` はseedをpoolせず、cell metricのmean/min/max/sample stddevを持ち、target logical keyとunitを分離します。各cellの `event_coverage` に、予測timestampで1点以上覆われたevent IDと未cover event IDを記録します。`overlaps_test_split` は半開区間 `[start,end)` で判定し、`forecast_point_count` は予測row数なのでmodel／targetごとに同じイベントが重複カウントされ得ます。未coverイベントは評価済みとは解釈しません。
+出力は新規ディレクトリの `result.json`（schema 0.1）と `summary.md` です。`macro_summary` はseedをpoolせず、cell metricのmean/min/max/sample stddevを持ち、target logical keyとunitを分離します。各cellの `event_coverage` に、予測timestampで1点以上覆われたevent IDと未cover event IDを記録します。`event_provenance` はpriority分類bucketに属したprediction rowと重なった全event IDのoverlap provenanceであり、priorityで選ばれたeventだけの一覧ではありません。`overlaps_test_split` は半開区間 `[start,end)` で判定し、`forecast_point_count` は予測row数なのでmodel／targetごとに同じイベントが重複カウントされ得ます。未coverイベントは評価済みとは解釈しません。
 
 この機能は研究・探索専用で、既存成功予測へのpost-hocラベル付与です。missing/stale予測の頑健性や異常検知性能は測定しません。

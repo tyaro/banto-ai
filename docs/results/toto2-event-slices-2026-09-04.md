@@ -45,7 +45,7 @@
 
 ## Toto target-eventのcell-macro
 
-以下はtarget-event forecast sliceの2-seed cell-macroです。`points`はcell内のprediction row数であり、raw predictionをpoolした値ではありません。
+以下はtarget-event forecast sliceの2-seed cell-macroです。`points`は2 seedのcell-macro rowに対する合計`total_point_count`で、各seedではhorizon 15が5、horizon 30が16です。metric自体は各seed cell metricの等重みmacroであり、raw predictionをpoolした値ではありません。
 
 | horizon | context | points | MAE | RMSE | WIS | coverage | interval width |
 | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -72,6 +72,17 @@
 3. missing／staleはtarget／covariate入力を欠損させ、mask／skip／fail-closedを別評価する。
 4. event単位bootstrap／confidence intervalなど、不確実性を記録する。
 5. その後に22Mや他モデル比較を行う。製品昇格は行わない。
+
+### evidence-completeness受入条件
+
+次の実験を完了扱いにするには、性能比較の前に次をすべて満たす必要があります。
+
+- intended target fault eventがseed × horizon × contextの全cellでforecast-coveredであること。
+- target／covariateのmissing／stale caseを実入力としてexerciseし、mask／skip／fail-closedなどの挙動を構造化記録すること。
+- paired event-level bootstrap 95% CIを報告してから、モデル間の優劣を主張すること。
+- performance／product昇格閾値はこのrunでは未定義であり、次の実験開始前に事前登録すること。
+
+これらを満たすまでは、Toto 2.0 4Mの利用区分を`commercial-evaluation`から変更しません。
 
 本artifactから、anomaly detection性能、missing／stale robustness、実設備一般化、統計的有意性、product-candidate昇格、Banto Hub／PLC writeを推論してはいけません。Toto 2.0 4Mは`commercial-evaluation`を維持し、Phase 2未完了です。
 
