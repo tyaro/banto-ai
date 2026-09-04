@@ -39,3 +39,18 @@ python tools/evaluator/run_matrix.py --config <baseline-matrix-config.json>
 base generator／benchmark configは読み込んだ同じraw bytesからSHA-256を取得し、matrix開始時のcode revisionとともに固定します。各completed cellのrevision一致と、publish直前のbase config／worktree不変性を検証し、差があれば正常なmatrix resultを確定しません。生成済みdataset／runは監査用に残し、runnerが削除するのは自身のtemporary matrix directoryだけです。dataset recordにはmanifestでdataset直下に解決した観測fileのSHA-256も残し、異seedで同一観測内容ならfail closedします。
 
 `result.json`と日本語`summary.md`の主集計は、単位を分離した`by_model_target`をmodel×target×unit×horizon×contextごとにseed間要約したcell-macro summaryです。mean／min／max／sample stddevとcell／point countを記録します。raw predictionをまとめ直すpooled metricではなく、`aggregate`／`by_model`も優劣判定には使いません。matrix runnerは評価範囲拡大の基盤であり、Phase 2完了を示しません。
+
+## event slices（post-hoc、Toto/TimesFM/Chronos共通）
+
+matrix実行後の既存 `predictions.jsonl` と dataset `events.jsonl` を再推論なしで、予測timestamp・context window別に分類して再集計できます。成功／部分成功cellだけを対象にし、失敗cellは除外数と制約へ残します。分類は `[start,end)`、同時イベントは `target > covariate > other` の優先順位です。
+
+```powershell
+py -3.14 tools/evaluator/analyze_event_slices.py `
+  --matrix-result artifacts/benchmarks/example-matrix/result.json `
+  --output artifacts/evaluator/example-event-slices `
+  --root .
+```
+
+出力は新規ディレクトリの `result.json`（schema 0.1）と `summary.md` です。`macro_summary` はseedをpoolせず、cell metricのmean/min/max/sample stddevを持ち、target logical keyとunitを分離します。各cellの `event_coverage` に、予測timestampで1点以上覆われたevent IDと未cover event IDを記録します。未coverイベントは評価済みとは解釈しません。
+
+この機能は研究・探索専用で、既存成功予測へのpost-hocラベル付与です。missing/stale予測の頑健性や異常検知性能は測定しません。
