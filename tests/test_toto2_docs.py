@@ -6,6 +6,7 @@ import unittest
 from banto_ai.manifest import ManifestValidationError, load_json, validate
 
 ROOT = Path(__file__).resolve().parents[1]
+CONTROLLED_ARTIFACT_ROOT = Path(r"D:\develop\banto-ai\artifacts\toto2\ctl")
 
 
 class Toto2DocumentationTests(unittest.TestCase):
@@ -49,12 +50,13 @@ class Toto2DocumentationTests(unittest.TestCase):
             "--config examples\\configs\\benchmark-matrix-toto2-small.json", readme
         )
 
-    def test_controlled_scenario_definition_is_referenced_without_results(self):
+    def test_controlled_scenario_definition_and_results_are_referenced(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         notes = (ROOT / "docs/toto2-notes.md").read_text(encoding="utf-8")
         tool_readme = (ROOT / "tools/toto2/README.md").read_text(encoding="utf-8")
         for text in (readme, notes, tool_readme):
             self.assertIn("toto2-controlled-scenarios.md", text)
+            self.assertIn("toto2-controlled-evaluation-2026-09-05.md", text)
         for matrix_name in (
             "benchmark-matrix-toto2-controlled-control.json",
             "benchmark-matrix-toto2-controlled-target-fault.json",
@@ -76,6 +78,106 @@ class Toto2DocumentationTests(unittest.TestCase):
             "past-only covariate は使わない",
         ):
             self.assertIn(required, controlled)
+
+    def test_controlled_report_records_fixed_evidence_and_boundaries(self):
+        report = (ROOT / "docs/results/toto2-controlled-evaluation-2026-09-05.md").read_text(encoding="utf-8")
+        for required in (
+            "336afae6e2e7edf80d8e0c3b0f4834e76a5ff257",
+            "git clean",
+            "https://github.com/tyaro/banto-ai/actions/runs/33888043470",
+            "80/80 cells",
+            "1,920/1,920 groups",
+            "1,440/1,440 paired deltas",
+            "availability deltaは全件0",
+            "cross_model_ranking_allowed=false",
+            "10,800",
+            "43,200",
+            "137.54 s",
+            "120.97 s",
+            "131.71 s",
+            "118.12 s",
+            "707.64 MiB",
+            "707.49 MiB",
+            "707.89 MiB",
+            "707.16 MiB",
+            "5795ed4",
+            "2026-01-01T00:06:24.000Z",
+            "2026-01-01T00:06:24Z",
+            "旧artifactはlocal quarantine",
+            "実設備への一般化",
+            "異常検知accuracy",
+            "commissioning自動調整",
+            "Banto Hub write",
+            "22M",
+            "cross-model順位や製品昇格を主張しません",
+            "event-aware anomaly scoring",
+            "commissioning baseline calibration",
+            "shadow／read-only Banto Hub境界",
+            "316660d5afb47943e531f39242e0b02ca0b8bb73be5709dfe07ca80dfce9805e",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, report)
+        for digest in (
+            "88cd3afdd25178808ddecb4b01c58e00e520bd67ab82dcf4ec6ba5b9856a16ae",
+            "46d07a04f5b3455a6baf8f0ff95fb835b155aad3056af90013f31aeb300ee573",
+            "552bd6b58c478f3ff17d59d4b5505d1941df0a9a3c28b4e8a788f25ccdeabe92",
+            "349f8c2187a29339995ae0dddb392f874bd16ce4752238de2ba0fd2bf6f54144",
+            "dafd58b804d3c7d907a063669cf62a941e87c21e5dc7b80e66e877a8768bc992",
+            "040e3d9c39885328b9c833d68fbc772f70b7535889f629000cba653e52372e7f",
+            "22b88556aa8ef7403828ea57c44179f6e2bba2912569207073908b827ddf5608",
+        ):
+            with self.subTest(digest=digest):
+                self.assertIn(digest, report)
+
+    def test_controlled_artifacts_are_verified_when_available(self):
+        if not CONTROLLED_ARTIFACT_ROOT.is_dir():
+            self.skipTest(f"controlled Toto artifact unavailable: {CONTROLLED_ARTIFACT_ROOT}")
+
+        expected_hashes = {
+            "m-a/result.json": "88cd3afdd25178808ddecb4b01c58e00e520bd67ab82dcf4ec6ba5b9856a16ae",
+            "m-b/result.json": "46d07a04f5b3455a6baf8f0ff95fb835b155aad3056af90013f31aeb300ee573",
+            "m-c/result.json": "552bd6b58c478f3ff17d59d4b5505d1941df0a9a3c28b4e8a788f25ccdeabe92",
+            "m-d/result.json": "349f8c2187a29339995ae0dddb392f874bd16ce4752238de2ba0fd2bf6f54144",
+            "acceptance/result.json": "dafd58b804d3c7d907a063669cf62a941e87c21e5dc7b80e66e877a8768bc992",
+            "acceptance/summary.md": "040e3d9c39885328b9c833d68fbc772f70b7535889f629000cba653e52372e7f",
+            "acceptance/.complete": "22b88556aa8ef7403828ea57c44179f6e2bba2912569207073908b827ddf5608",
+        }
+        for relative, expected in expected_hashes.items():
+            path = CONTROLLED_ARTIFACT_ROOT / relative
+            self.assertTrue(path.is_file(), path)
+            self.assertEqual(hashlib.sha256(path.read_bytes()).hexdigest(), expected, relative)
+
+        acceptance = load_json(CONTROLLED_ARTIFACT_ROOT / "acceptance/result.json")
+        self.assertEqual(acceptance["controlled_acceptance_status"], "pass")
+        self.assertEqual(acceptance["analyzer_code_revision"]["head"], "336afae6e2e7edf80d8e0c3b0f4834e76a5ff257")
+        self.assertFalse(acceptance["analyzer_code_revision"]["dirty"])
+        self.assertEqual(acceptance["counts"], {"tracks": 4, "expected_cells": 80, "cells": 80, "expected_groups": 1920, "groups": 1920})
+        self.assertEqual(len(acceptance["paired_deltas"]), 1440)
+        self.assertFalse(acceptance["cross_model_ranking_allowed"])
+        self.assertTrue(all(item["ranking"] == "no-rank" and item["availability_delta"] == 0 for item in acceptance["paired_deltas"]))
+
+        marker = json.loads((CONTROLLED_ARTIFACT_ROOT / "acceptance/.complete").read_text(encoding="utf-8"))
+        self.assertEqual(set(marker), {"marker_type", "result_sha256", "schema_version", "summary_sha256"})
+        self.assertEqual(marker["marker_type"], "toto2-controlled-acceptance-complete")
+        self.assertEqual(marker["result_sha256"], expected_hashes["acceptance/result.json"])
+        self.assertEqual(marker["summary_sha256"], expected_hashes["acceptance/summary.md"])
+
+        expected_matrix_ids = {"m-a": "toto2-ctl-a", "m-b": "toto2-ctl-b", "m-c": "toto2-ctl-c", "m-d": "toto2-ctl-d"}
+        expected_runtime = {"m-a": 137.54, "m-b": 120.97, "m-c": 131.71, "m-d": 118.12}
+        expected_peak_mib = {"m-a": 707.64, "m-b": 707.49, "m-c": 707.89, "m-d": 707.16}
+        for matrix_name, matrix_id in expected_matrix_ids.items():
+            matrix = load_json(CONTROLLED_ARTIFACT_ROOT / matrix_name / "result.json")
+            self.assertEqual(matrix["matrix_id"], matrix_id)
+            self.assertEqual(matrix["status"], "success")
+            self.assertEqual(matrix["counts"], {"total_cells": 20, "successful_cells": 20, "partial_cells": 0, "failed_cells": 0, "completed_cells": 20})
+            self.assertEqual(matrix["code_revision"]["head"], "336afae6e2e7edf80d8e0c3b0f4834e76a5ff257")
+            results = list((CONTROLLED_ARTIFACT_ROOT / "bench" / matrix_id).rglob("result.json"))
+            self.assertEqual(len(results), 20)
+            values = [load_json(path) for path in results]
+            self.assertEqual(sum(value["prediction_count"] for value in values), 10800)
+            self.assertTrue(all(value["status"] == "success" and not value["failures"] for value in values))
+            self.assertAlmostEqual(sum(value["runtime"]["total_seconds"] for value in values), expected_runtime[matrix_name], places=2)
+            self.assertAlmostEqual(max(value["runtime"]["peak_memory_bytes"] for value in values) / (1024 ** 2), expected_peak_mib[matrix_name], places=2)
 
     def test_event_slice_report_pins_artifact_hashes_scope_and_limits(self):
         report = (ROOT / "docs/results/toto2-event-slices-2026-09-04.md").read_text(encoding="utf-8")

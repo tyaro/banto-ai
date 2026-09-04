@@ -165,7 +165,7 @@ Toto 2.0 4Mの小規模matrixは、seed `[17, 42]` × horizon `[15, 30]` × cont
 
 Toto 2.0 4M matrixの既存predictionに対するevent slice post-hoc解析を完了しました。8/8 cells analyzed、excluded 0、8,640 predictionsを再推論なしで`[start,end)`分類し、target-event forecastは`conveyor-01.motor_temperature`のoverheatのみ、`motor-01-slip-test`の`motor_current` faultはforecast未coverでした。詳細、正本hash、2-seed cell-macro値、未評価event、次gateは[`docs/results/toto2-event-slices-2026-09-04.md`](results/toto2-event-slices-2026-09-04.md)に記録しています。これはanomaly detection、missing／stale robustness、実設備一般化、製品昇格を示さず、Totoの`commercial-evaluation`とPhase 2未完了を維持します。evidence-completenessの受入条件は、intended target fault eventの全seed × horizon × context forecast coverage、target／covariate missing／stale実入力のexerciseと構造化記録、paired event-level bootstrap 95% CIの報告後に限る優劣主張、性能／製品昇格閾値の次実験前事前登録です。今回のrunでは昇格閾値を定義せず、条件を満たすまで`commercial-evaluation`を維持します。
 
-controlled 4-track acceptance analyzerのsource/config/schema/testを追加しました。real controlled resultsは未実行で、実行順は4 matrix → analyzerです。結果が生成された場合も、analyzerはcross-model rankingを許可せず、control→degradedの同一group paired deltaだけを比較します。
+controlled 4-track acceptance analyzerのsource/config/schema/testを追加し、2026-09-05にformal controlled runを完了しました。formal revision `336afae6e2e7edf80d8e0c3b0f4834e76a5ff257`、git clean、4 matrix各20/20 success、acceptance `pass`（80/80 cells、1,920/1,920 groups、1,440/1,440 paired deltas、availability delta 0）を確認しました。各matrix 10,800 predictions、計43,200、failure 0です。実測報告は[`docs/results/toto2-controlled-evaluation-2026-09-05.md`](results/toto2-controlled-evaluation-2026-09-05.md)に記録しています。analyzerはcross-model rankingを許可せず、control→degradedの同一group paired deltaだけを比較します。
 
 #### 公開データ source pin と次保存点
 

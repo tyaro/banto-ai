@@ -50,7 +50,7 @@ publish は output 親下の lock file を Windows／POSIX のOS advisory lock�
 
 analyzer は各 dataset の全 JSON／JSONL artifact（manifest、fingerprint、split、generator config、summary、observations、events）を重複キー禁止の strict parser に通してから quality verifier を実行し、全ファイルを snapshot/source record に含めます。
 
-実行する場合のコマンドは以下です。4 config を定義しただけでは paired 比較の受入完了ではありません。cross-matrix acceptance analyzer source と config/schema/test は追加済みで、pair key、base config hash、event 差分、全 equipment の future actual 同一性、model／equipment／target／origin 別 availability、expected／valid denominator、non-OK input count、no-ranking／truth-unavailable を machine-enforceします。analyzer がない結果は比較採用不可です。この savepoint では real model、matrix、result document、実 controlled artifact は作成していません。
+実行する場合のコマンドは以下です。4 config を定義しただけでは paired 比較の受入完了ではありません。cross-matrix acceptance analyzer source と config/schema/test は追加済みで、pair key、base config hash、event 差分、全 equipment の future actual 同一性、model／equipment／target／origin 別 availability、expected／valid denominator、non-OK input count、no-ranking／truth-unavailable を machine-enforceします。analyzer がない結果は比較採用不可です。formal controlled runは2026-09-05に完了し、結果と制約は[`docs/results/toto2-controlled-evaluation-2026-09-05.md`](results/toto2-controlled-evaluation-2026-09-05.md)に記録しています。
 
 ```powershell
 & $totoPython tools\toto2\run_matrix.py --config examples\configs\benchmark-matrix-toto2-controlled-control.json --cache-dir C:\banto-cache\toto2

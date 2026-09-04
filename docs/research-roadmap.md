@@ -60,7 +60,7 @@ Chronos-2のseed `[17, 42]`×horizon `[1, 3]`×context `[6, 12]`の実model matr
 
 Toto 2.0 4Mの既存matrix予測に対するevent slice post-hoc解析を完了しました。8/8 cells analyzed、excluded 0、8,640 predictionsで、forecast target eventとして実際に評価されたのは`conveyor-01.motor_temperature`のoverheatだけです。`motor-01-slip-test`の`motor_current` faultは全cellでforecast未coverのため、anomaly detectionやmissing／stale robustnessの結果ではありません。正本hashとToto target-eventの限定metricは[`docs/results/toto2-event-slices-2026-09-04.md`](results/toto2-event-slices-2026-09-04.md)に記録し、Totoは`commercial-evaluation`、Phase 2未完了を維持します。次gateはseed最低5、origin／event位置／設備／mode拡大、専用fault／missing／stale scenario、event単位不確実性です。
 
-Toto 2.0 controlled 4-track acceptance analyzerのsource、固定config/schema、fake artifact unittestを追加しました。実行順は4 matrix → analyzerです。real controlled matrix/result artifactは未実行であり、数値やmodel採用判断は追加していません。analyzerはcontrolから各degradedへの同一model/group paired deltaだけを出し、cross-model rankingを禁止します。
+Toto 2.0 controlled 4-track acceptance analyzerのsource、固定config/schema、fake artifact unittestを追加し、2026-09-05にformal controlled runを完了しました。4 matrix各20/20 success、acceptance `pass`、80/80 cells、1,920/1,920 groups、1,440/1,440 paired deltas、availability delta 0を確認しています。詳細は[`docs/results/toto2-controlled-evaluation-2026-09-05.md`](results/toto2-controlled-evaluation-2026-09-05.md)に記録しています。analyzerはcontrolから各degradedへの同一model/group paired deltaだけを出し、cross-model rankingを禁止します。synthetic／4M／CPUの契約受入であり、実設備性能やmodel採用判断は追加していません。
 
 ## 実験の必須記録
 
