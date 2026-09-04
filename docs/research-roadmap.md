@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | 0 | 研究基盤と契約 | Python環境、データ方針、experiment／license manifest、共通interface、連携境界 |
 | 1 | 合成データとbaseline | 運転状態、fault、欠損、labelを持つgeneratorと、naive／古典baselineの再現性 |
-| 2 | Forecast model benchmark | Chronos-2、TimesFM 3.0、Toto、Granite TTM、自前／学習型baselineの同条件比較 |
+| 2 | Forecast model benchmark | TimesFM 3.0の評価済み結果を基準に、Chronos-2を商用候補として追加し、Toto、Granite TTM、自前／学習型baselineを同条件比較 |
 | 3 | 異常とドリフト | 統計方式、forecast residual、TSPulse、Riverのevent単位比較 |
 | 4 | 自前モデル研究 | 点予測・分位点予測を備えた小型multivariate Transformerとablation |
 | 5 | Commissioning auto-tuning | レシピ駆動のprofile candidate、shadow評価、人手承認gate |
@@ -39,6 +39,12 @@ Phase 2の基盤として、chronological rolling-origin runnerへmodel registry
 次の評価範囲拡大に向け、seedをgeneratorへ反映してdatasetを再生成し、horizon／context lengthとのmatrixを安全に反復する基盤を追加しました。datasetはseedごとに一度生成・品質確認し、観測file hashでseed差の実体を確認します。base config raw bytesと開始code revisionを固定し、cell／publish時の不変性も検証します。主集計は単位別のseed間cell-macro summaryです。
 
 この基盤で2 seeds×2 horizons×2 context lengthsの実TimesFM matrixを完走し、8 cells success／0 failureを[`docs/results/timesfm3-matrix-2026-09-04.md`](results/timesfm3-matrix-2026-09-04.md)へ記録しました。TimesFM 3は温度の4条件でMAE最良、電流では4条件とも6モデル中4位でした。ただし2 seeds、少数origin、単一generatorの結果で、coverage／WISも暫定です。seedを最低5以上、origin／条件追加、欠損・fault・regime別、モデル単独resource測定、他候補との同一契約比較、実設備でのplanned-load契約検証が残っています。重みはresearch-only／non-commercialであり、製品・顧客PoC・PLC／Banto Hub write経路へ昇格させず、Phase 2も未完了です。
+
+TimesFM 3.0の限定matrix評価後、Chronos-2へ比較軸を移しました。`chronos-forecasting==2.3.1`、固定checkpoint revision／実計算SHA-256、repository外cache、offline読み込み、native quantile（pointはp50）を契約として、公式API direct CPU smokeとBanto adapter／tool smokeを完了しました。さらに、60 samples×2 equipment、context 12、horizon 3、各equipment validation／test各2 originsの初期rolling benchmarkを完走しました。
+
+past-only 6 modelsではChronos-2のaggregate MAEは`0.20672198138554906`、WISは`0.1952207659517925`でした。origin時点で確定済みの計画値を模したknown-future 7 modelsでは、MAE `0.1691488806622826`、WIS `0.15937026919725228`で1位となり、past-onlyから改善しました。ただし電流MAEはmoving-average、温度MAEはHolt linearが優位で、aggregateはAとdegCを混合する比較値です。小標本・単一seed・合成データで、runはdirty worktreeを記録しているため、製品性能や一般性能を示しません。詳細は[`docs/results/chronos2-initial-evaluation-2026-09-04.md`](results/chronos2-initial-evaluation-2026-09-04.md)に記録しています。
+
+次はChronos-2のseed×horizon×context matrix、origin拡大、missing／stale／regime／fault slice、clean savepoint再実行、model単独resource測定です。package・code・weightsはApache-2.0ですが、追加gateが完了するまで`commercial-evaluation`に留め、`product-candidate`へ昇格しません。TimesFM 3.0は重み条件によりresearch-onlyの比較基準として残します。
 
 ## 実験の必須記録
 

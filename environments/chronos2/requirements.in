@@ -1,0 +1,2 @@
+# Chronos-2専用venvのtop-level exact pin。
+chronos-forecasting==2.3.1

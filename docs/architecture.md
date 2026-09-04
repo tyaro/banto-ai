@@ -72,13 +72,23 @@ Phase 0のforecast契約は、複数の過去`TimeSeries`を`contexts`として�
 
 ## benchmarkのモデル境界と情報境界
 
-rolling-origin runnerは、モデル名から`Forecaster`を生成する`ModelRegistry`を注入できます。baseline registryは標準ライブラリだけで構築され、TimesFM 3のようなoptional modelは専用entrypointがfactoryとして登録します。したがって、通常のbaseline CLI／CIはTimesFM、Torch、NumPyをimportしません。factoryはequipment／modelごとに一度だけ呼ばれ、同じinstanceをvalidationとtest、全targetのforecastで再利用します。ひとつのoriginでは設定された全targetを一つの`ForecastRequest`にまとめ、結果は応答順ではなくtarget signal IDで対応付けます。
+rolling-origin runnerは、モデル名から`Forecaster`を生成する`ModelRegistry`を注入できます。baseline registryは標準ライブラリだけで構築され、TimesFM 3やChronos-2のようなoptional modelは専用entrypointがfactoryとして登録します。したがって、通常のbaseline CLI／CIはTimesFM、Chronos、Torch、NumPyをimportしません。factoryはequipment／modelごとに一度だけ呼ばれ、同じinstanceをvalidationとtest、全targetのforecastで再利用します。ひとつのoriginでは設定された全targetを一つの`ForecastRequest`にまとめ、結果は応答順ではなくtarget signal IDで対応付けます。
 
 benchmark configの`past_only_covariate_ids`はorigin直前までのcontextだけに入り、`known_future_covariate_ids`はcontext prefixとoriginからhorizon末尾までの計画値を`known_future_covariates`へ入れます。両方への重複指定、targetとの重複、時刻・長さの不一致は失敗させます。既存の`linear-regression-covariates.parameters.covariate_ids`は互換性のため残し、top-levelの明示指定がない場合だけknown-futureとして解釈します。これは従来runnerの意味を維持するための暫定互換であり、実データでは計画値として将来既知であることをデータ契約で確認します。
 
 ID解決は、短いsignal keyなら評価対象equipmentのsignalへ解決します。`target_signal_ids`を省略した場合はmanifest順のtargetから、各equipment自身に所属するものだけを選びます。full signal IDは複数equipment評価では拒否し、単一equipment評価でもID prefixが対象equipmentと一致する場合だけ許可します。設備内で同じsuffixへ解決されるfull IDが複数ある場合、またpredictionが宣言済みのfull IDとequipmentへ対応しない場合はBenchmarkErrorでfail closedします。targetの空集合や同一logical keyの重複、target／past-only／known-future／legacy linear-regression covariateの所属不一致も同様です。
 
-quantile policyは結果のruntime／provenanceへmodel別に記録します。baseline等は`validation-residual-by-lead`、TimesFM 3はadapterが返したrequested native quantileをそのまま使います。native経路は設定されたquantile level、pointとp50の整合、horizon timestamp、quantile crossingを検証してから評価します。
+quantile policyは結果のruntime／provenanceへmodel別に記録します。baseline等は`validation-residual-by-lead`、TimesFM 3とChronos-2はadapterが返したrequested native quantileをそのまま使います。Chronos-2公式`predict_quantiles`の戻り値で`mean`と呼ばれるpointは算術平均ではなくmedian／p50として扱います。native経路は設定されたquantile level、pointとp50の整合、horizon timestamp、quantile crossingを検証してから評価します。
+
+### Chronos-2のoptional backend境界
+
+Chronos-2は、現在の候補評価では商用利用可能性を検証するための`commercial-evaluation`対象です。repository、`chronos-forecasting` package、`amazon/chronos-2` checkpointのライセンスを別々に記録し、実性能・運用検証が完了するまで`product-candidate`へ昇格させません。BantoのMIT文書・core codeと、外部modelのコード／重みの利用条件を混同しません。
+
+Chronos-2の依存環境は専用の外部cache／venvへ隔離します。core runtime、schema validator、baseline CIはChronos-2、PyTorch、Transformers、NumPyをimportしません。実行時は`chronos-forecasting==2.3.1`、checkpoint `amazon/chronos-2@29ec3766d36d6f73f0696f85560a422f50e8498c`、依存packageのlock、取得元、hashをrun provenanceへ記録し、既定では`local_files_only=true`で外部通信を禁止します。cacheはrepository外で管理し、大型checkpointをGitへ追加しません。
+
+Chronos-2 adapterは共通`Forecaster`の内側で、univariate／multivariate、past-only covariate、known-future covariateの入力形式を変換します。known-futureへ渡す値はorigin時点で計画・確定していたものに限り、評価対象期間の実績値を後から埋めることは禁止します。missing、stale、timestamp不規則、長さ不一致は初期実装では補間・暗黙の埋め込みをせず、quality status付きの失敗（fail closed）とします。
+
+Chronos-2の公式出力名が`mean`でも、Bantoの`point_forecast`はp50契約です。prediction lengthはrunのhorizon、context lengthは2～8192、予測長は公式上限1024を超えないよう事前検査します。`cross_learning`、`batch_size`、`device_map`、`local_files_only`はrun configに明示された値だけを受け取り、adapter内で勝手に変更しません。
 
 比較用の`result.json`では、全modelを混ぜた従来の`metrics.aggregate`、`by_model`、`slices`を互換表示として残します。新しいresult schema `0.2`では、判定に`by_model_target`（論理target keyとunit）と`by_model_equipment_target`（manifest full signal IDとunit）を使います。targetを設備横断で集約する前にunit一致を検証し、不一致なら混合metricを出力しません。旧`0.1` resultはlegacyとして読み取り専用に表示し、新runnerは`0.2`を出力します。modelごとのtest predictionについてMAE、RMSE、MASE、WIS、coverage、interval widthを集計し、推論時間も`runtime.latency_by_model`へmodel別に記録します。`runtime.peak_memory_bytes`は可能な限りOSプロセスpeakを使い、実行環境で取得できない場合だけtracemallocへfallbackします。採用した測定源は`runtime.memory_source`に残します。
 

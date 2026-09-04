@@ -1,6 +1,6 @@
 # Banto向け時系列モデル技術調査
 
-調査日: 2026-09-03
+調査日: 2026-09-04
 
 ## 1. 目的
 
@@ -57,7 +57,7 @@ Banto Hubが100 ms間隔で収集できても、すべてのraw tagを100 msご�
 | --- | --- | ---: | --- | --- | --- | --- | --- |
 | TimesFM 3.0 | zero-shot予測 | 0.3B | native | 過去のみ／既知未来 | 9分位点 | コードApache-2.0、重みはTimesFM Non-Commercial License v1.0 | 研究比較のみ |
 | TimesFM 2.5 | zero-shot予測 | 200M + optional head | 基本は系列単位 | XReg | optional quantile head | Apache-2.0 | TimesFM系の商用可能fallback候補 |
-| Chronos-2 | zero-shot汎用予測 | 120M | native | 過去／既知未来 | 分位点 | Apache-2.0 | 汎用の第一候補 |
+| Chronos-2 | zero-shot汎用予測 | 120M encoder-only | native | 過去／既知未来 | native quantile | package／code／weights Apache-2.0 | TimesFM 3.0評価後のcommercial-evaluation候補 |
 | Toto 2.0 | observability予測 | 4M～2.5B | native | 2.0では未対応 | quantile head | Apache-2.0 | 4M／22Mをedge候補として評価 |
 | Granite TTM R2 | 小型予測・fine-tuning | 約0.8～1M級 | zero-shot／fine-tuning | 対応 | 主に点予測 | Apache-2.0 | 設備別校正・CPU推論候補 |
 | Granite TSPulse R1 | 異常・補完・分類 | 約1M | 対応 | タスク依存 | forecast modelではない | Apache-2.0 | 異常検知の第一候補 |
@@ -88,9 +88,19 @@ TimesFM方式を商用利用可能な条件で残すfallbackとして価値が�
 
 ### 5.3 Chronos-2
 
-Chronos-2は120M parameterで、zero-shotのunivariate、multivariate、covariate-informed forecastingとquantile outputを1つのAPIで扱えます。Apache-2.0で、CPU／GPUのdeployment経路も公式に案内されています。
+Chronos-2は120M parameterのencoder-only modelで、zero-shotのunivariate、multivariate、past-only／known-future covariate forecastingとnative quantile outputを1つのAPIで扱えます。max contextは8192、max predictionは1024で、CPU／GPUのdeployment経路があります。package、repository code、`amazon/chronos-2` weightsは、今回固定した公式情報上でApache-2.0です。
 
-Bantoでは、TimesFM 3.0に最も近い機能を商用利用可能な条件で比較できる候補です。最初の汎用forecast adapterをChronos-2で実装し、CPU p95 latency、memory、欠損耐性、共変量の効果を測定します。
+Bantoでは、TimesFM 3.0に近い機能を商用利用可能な条件で比較できる候補です。最初の汎用forecast adapterをChronos-2で実装し、CPU p95 latency、memory、共変量の効果、p50整合、欠損挙動を測定します。ただしライセンス確認だけで製品採用とはせず、実性能・運用検証前は`commercial-evaluation`に固定します。
+
+#### Chronos-2固定契約（2026-09-04確認）
+
+- package: `chronos-forecasting==2.3.1`。依存環境は専用venv／cacheへ隔離し、core runtimeへ持ち込まない。
+- checkpoint: `amazon/chronos-2@29ec3766d36d6f73f0696f85560a422f50e8498c`。revisionを省略したlatest取得は禁止する。
+- 実行: CPU／GPUを`device_map`で明示し、初期設定は`batch_size=1`、`context_length=12`、`local_files_only=true`とする。
+- point契約: 公式`predict_quantiles`の戻り値の変数名`mean`は算術平均ではなくmedian／p50として、Bantoの`point_forecast`へ対応付ける。
+- 共変量: past-onlyはorigin直前まで、known-futureはorigin時点で実際に確定していた計画値だけを渡す。評価期間の実績値を埋め戻すoracle leakageは認めない。
+- 欠損: 初期adapterは補間、forward fill、暗黙のmask処理を行わず、missing／stale／不規則timestamp／長さ不一致をfail closedとする。耐性を主張するには別実験と証跡が必要。
+- 利用判断: 現段階は`commercial-evaluation`。product-candidateへの昇格には精度、calibration、resource、再現性、degraded state、データ／ライセンス証跡のGateを通す。
 
 ### 5.4 Toto 2.0
 
@@ -215,7 +225,10 @@ Rust／ONNX等への移行は、採用modelとtarget hardwareが決まってか�
 - [TimesFM 3.0 model card](https://huggingface.co/google/timesfm-3.0-pytorch)
 - [TimesFM 2.5 model card](https://huggingface.co/google/timesfm-2.5-200m-pytorch)
 - [Amazon Science: Chronos](https://github.com/amazon-science/chronos-forecasting)
+- [Chronos 2.3.1 package metadata](https://github.com/amazon-science/chronos-forecasting/blob/v2.3.1/pyproject.toml)
+- [Chronos-2 v2.3.1 pipeline](https://github.com/amazon-science/chronos-forecasting/blob/v2.3.1/src/chronos/chronos2/pipeline.py)
 - [Chronos-2 model card](https://huggingface.co/amazon/chronos-2)
+- [Chronos-2 pinned config](https://huggingface.co/amazon/chronos-2/blob/29ec3766d36d6f73f0696f85560a422f50e8498c/config.json)
 - [Datadog: Toto](https://github.com/DataDog/toto)
 - [Toto 2.0 4m model card](https://huggingface.co/Datadog/Toto-2.0-4m)
 - [Toto 2.0 22m model card](https://huggingface.co/Datadog/Toto-2.0-22m)

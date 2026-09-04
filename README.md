@@ -4,7 +4,7 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 このリポジトリは `banto-industrial` から意図的に分離しています。実験、評価プロトコル、モデル試作、連携契約を扱う研究用ワークスペースです。生産設備の制御動作は、Banto Hub と PLC／制御システムが引き続き担当します。
 
-Savepoint 2では、外部依存ゼロの共通benchmark runnerと統計baselineを実装しています。TimesFM 3.0は専用環境でCPU smokeと小規模rolling-origin benchmarkを実行済みですが、core runtimeへML依存を混入させていません。今回の合成データ結果は実設備性能を示しません。
+現在の研究基盤には、外部依存ゼロの共通benchmark runner、統計baseline、モデル別の隔離実行環境があります。TimesFM 3.0は研究比較専用、Chronos-2は`commercial-evaluation`として、専用環境でCPU smokeと小規模rolling-origin benchmarkを実行済みです。core runtimeへML依存は混入させていません。今回の合成データ結果は実設備性能を示しません。
 
 ## 研究テーマ
 
@@ -42,8 +42,10 @@ docs/
   research-implementation-plan.md 段階的な研究・実装計画と判断gate
   research-roadmap.md             長期的な研究フェーズと完了条件
   timesfm-notes.md                TimesFM 3.0評価プロトコル
+  chronos2-notes.md               Chronos-2の隔離・評価契約
   results/                        実測結果（合成／研究専用）
   adr-0003-timesfm3-isolation.md  TimesFM 3.0の依存・実行隔離
+  adr-0004-chronos2-isolation.md  Chronos-2の依存・実行隔離
   commissioning-learning.md       試運転・校正・昇格の設計
   initial-issues.md                最初に作成するIssue 5件の案
 schemas/                       manifestを検証するJSON Schema
@@ -56,6 +58,7 @@ experiments/
   online-learning/             適応とドリフトの実験
 environments/
   timesfm3/                    専用venv向け入力とpackage／checkpoint来歴
+  chronos2/                    Python 3.14 CPU専用lockと固定証跡
 models/
   mini-transformer/            小さく検証しやすい予測ベースライン
   industrial-tsfm/             産業向けモデルの研究
@@ -64,6 +67,7 @@ tools/
   smoke.py                    clean checkout用のmanifest／naive smoke
   safety_check.py             repository safety guard
   timesfm3/                   TimesFM 3のpreflight／準備／offline CPU smoke
+  chronos2/                   Chronos-2のpreflight／準備／smoke／benchmark
   data-generator/              データ生成ユーティリティ
   evaluator/                   共通の評価指標とレポート
 ```
@@ -81,6 +85,26 @@ tools/
 最初の実装マイルストーンは、合成産業データ上で naive／古典的 baseline と複数の時系列モデルを同条件で比較できる、再現可能なベンチマークです。
 
 現時点では TimesFM 3.0 の学習済み重みは非商用・非本番用途に限定されるため、研究比較専用とします。商用利用可能候補として Chronos-2、Toto 2.0、Granite TTM／TSPulseなどを同時に評価します。
+
+### Chronos-2初期評価
+
+Chronos-2は固定checkpointのsize／SHA-256検証、公式API direct CPU smoke、Banto tool smoke、past-only／known-futureの初期rolling benchmarkまで完了しました。provenance拡張後のBanto tool smoke正本は`artifacts/chronos2/cpu-smoke-provenance-2026-09-04.json`で、`verification_status=verified`、cold elapsed `12.057009100011783`秒です。known-future 7 modelsではaggregate MAE `0.1691488806622826`、WIS `0.15937026919725228`で1位でしたが、単一seed・少数origin・合成データの結果です。known-futureはorigin時点で確定済みの計画値を模した条件に限り、実績値の先読みを認めません。詳細は[`docs/results/chronos2-initial-evaluation-2026-09-04.md`](docs/results/chronos2-initial-evaluation-2026-09-04.md)を参照してください。
+
+Python 3.14専用venvとrepository外cacheで再現します。各runは既存出力を上書きしないため、cleanなartifact pathで実行してください。
+
+```powershell
+py -3.14 -m venv ..\.venv-banto-ai-chronos2
+$chronosPython = '..\.venv-banto-ai-chronos2\Scripts\python.exe'
+& $chronosPython -m pip install -r environments\chronos2\requirements-windows-cpu-py314.lock
+& $chronosPython tools\chronos2\preflight.py --cache-dir C:\banto-cache\chronos2 --format both
+& $chronosPython tools\chronos2\prepare_checkpoint.py --cache-dir C:\banto-cache\chronos2 --accept-apache-2.0
+& $chronosPython tools\chronos2\run_smoke.py --cache-dir C:\banto-cache\chronos2 --output artifacts\chronos2\cpu-smoke-provenance-2026-09-04.json
+& $chronosPython tools\data-generator\generate.py --config examples\configs\synthetic-motor-small.json --output artifacts\generated\synthetic-motor-small
+& $chronosPython tools\chronos2\run_benchmark.py --config examples\configs\benchmark-chronos2-baselines-past-only.json --cache-dir C:\banto-cache\chronos2
+& $chronosPython tools\chronos2\run_benchmark.py --config examples\configs\benchmark-chronos2-known-load.json --cache-dir C:\banto-cache\chronos2
+```
+
+Chronos-2はApache-2.0ですが、seed×horizon×context matrix、欠損・regime・fault評価、clean savepoint再実行、実設備の計画値契約が未実施です。`commercial-evaluation`を継続し、まだ`product-candidate`へ昇格しません。
 
 TimesFM 3.0の共通`Forecaster` adapter、official APIの遅延import境界、license／provenance検証、fake backend testsは実装済みです。公式backendはadapterごとに初回forecast時だけロードし、以後は安全に再利用します。benchmark coreにはoptional modelを注入するregistry境界があり、通常のbaseline CLI／CIから`timesfm`、`torch`、`numpy`はimportされません。`environments/timesfm3/requirements.in`は`timesfm[torch]==3.0.0`のtop-level exact pinであり、完全なtransitive lockではありません。専用環境でのCPU smokeと、LastValueとの小規模rolling-origin benchmark結果は記録済みです。ただし、単一generator、少数origin、短いcontext／horizon、弱いbaselineによる限定評価であり、一般性能と実設備性能は未評価です。
 
@@ -137,6 +161,6 @@ Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUT
 
 ## ステータス
 
-Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0は専用環境でCPU smoke、統計baselineを含むpast-only／known-loadの小規模rolling-origin benchmark、2 seeds×2 horizons×2 context lengthsの8-cell matrixを実行済みです。origin拡大、モデル単独resource測定、欠損・regime・fault slice、ライセンス適合候補との同一条件比較は未実施であり、Phase 2は完了していません。本番デプロイ経路も未実装です。
+Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0はCPU smoke、小規模rolling-origin benchmark、8-cell matrixを実行済みです。Chronos-2は固定snapshot検証、公式API／Banto tool CPU smoke、past-only 6 models／known-future 7 modelsの初期rolling benchmarkを実行済みです。Chronos-2のseed×horizon×context matrix、origin拡大、model単独resource測定、欠損・regime・fault slice、clean savepoint再実行は未実施であり、Phase 2は完了していません。本番デプロイ経路も未実装です。
 
 合成データは研究用の制御されたfixtureであり、実設備の挙動を代表すると主張しません。顧客データ、raw設備データ、秘密情報は生成物・設定・Git履歴へ入れません。大量生成データはGit無視領域へ置き、commit対象は小さいconfig／fixtureだけにします。

@@ -1,6 +1,6 @@
 # banto-ai 研究・実装計画書
 
-策定日: 2026-09-03
+策定日: 2026-09-04
 
 ## 1. 計画の目的
 
@@ -13,7 +13,7 @@ Banto ecosystem向けの時系列AIについて、次の価値を再現可能な
 - driftを検知し、rollback可能なprofile候補を作る適応処理
 - read-only／shadow境界を守るBanto Hub連携
 
-本計画はモデル採用を先に決めるものではありません。共通のデータ、評価、interfaceを先に作り、TimesFM 3.0を含む複数候補を同じ条件で比較します。
+本計画はモデル採用を先に決めるものではありません。TimesFM 3.0の初期評価を完了したため、次はChronos-2を商用候補として、共通のデータ、評価、interfaceで検証します。TimesFM 3.0を含む研究比較対象は同じ条件で残します。
 
 ## 2. 前提と決定事項
 
@@ -29,6 +29,8 @@ Banto ecosystem向けの時系列AIについて、次の価値を再現可能な
 - forecastとanomaly detectionは共通interfaceの背後でmodelを交換できるようにする。
 - TimesFM 3.0は現行weight licenseにより研究比較専用とし、製品artifactへ昇格しない。
 - TimesFM 3.0のoptional backendは専用venvへ隔離し、coreの標準ライブラリのみという境界を維持する。package／checkpoint来歴を固定し、weightsはGit外、`local_files_only=True`を既定とする。
+- Chronos-2は`chronos-forecasting==2.3.1`とcheckpoint `amazon/chronos-2@29ec3766d36d6f73f0696f85560a422f50e8498c`を専用venv／外部cacheへ隔離する。package、code、weightsはApache-2.0として記録するが、現段階の用途は`commercial-evaluation`に限定し、実性能・運用検証前の`product-candidate`昇格は禁止する。
+- Chronos-2のnative pointは公式APIの名称にかかわらずp50／median契約とする。missing、stale、不規則timestamp、長さ不一致は初期adapterで補間せずfail closedとする。
 - commissioningではbase modelを無制限に書き換えず、正規化、bias、interval、threshold、adapter等をversioned profileとして調整する。
 - AIはPLC値、interlock、emergency stop、hard limit、PIDを直接変更しない。
 
@@ -141,7 +143,7 @@ savepoint 1では、外部依存なしのseed再現可能generatorと最小quali
 - future leakage、unit mismatch、duplicate timestamp、unexpected gapをtestで検出する。
 - baseline resultにdataset fingerprint、runtime、hardwareが残る。
 
-### Phase 2: Forecast候補比較
+### Phase 2: Forecast候補比較（TimesFM 3.0評価済み、Chronos-2へ移行）
 
 AutoETSは未実装であり、現行benchmarkのmodel registry／schemaには含めません。将来の候補評価ではstatsforecast等を隔離環境へ置き、optional依存を通常CIへ持ち込まない方針です。Holt linear trendは別のbaselineであり、ETSとは称しません。
 
@@ -149,12 +151,18 @@ AutoETSは未実装であり、現行benchmarkのmodel registry／schemaには�
 
 複数seed／horizon／context lengthを反復するmatrix runnerを実装し、seedごとのdataset再生成・一回のquality gate、観測file SHA-256によるseed差確認、既存単一runの再利用、cell失敗隔離、単位別`by_model_target` cell-macro summaryを固定しました。base configは読込raw bytes hash、codeは開始revisionを記録し、cellとpublish直前の不変性をfail-closedで検証します。TimesFM専用入口は既存のlicense／cache／offline preflightを再利用し、adapterをmatrix全体で共有します。2 seeds×2 horizons×2 context lengthsの実TimesFM matrixは8 cellsすべて成功し、結果を[`docs/results/timesfm3-matrix-2026-09-04.md`](results/timesfm3-matrix-2026-09-04.md)へ記録しました。TimesFM 3は温度で4条件すべてMAE最良、電流では4条件とも6モデル中4位です。2 seeds・少数originのcell-macroであり、seedを最低5以上、origin／条件追加、欠損・regime・fault slice、cold／warmとモデル単独resourceの分離、ライセンス適合候補比較、実設備評価が未実施なのでPhase 2完了条件を満たしません。
 
+Chronos-2は依存環境を分離し、外部cacheの固定revision、`model.safetensors` 477,930,472 bytes／SHA-256 `ddcda3c7508bf2528087723e98a20707cc04b7f370ae275a9fd88078ddba4f42`を検証しました。公式API direct CPU smokeと、multivariate target、past-only／known-future covariate、native p10／p50／p90を通すBanto adapter／tool smokeは完了しています。
+
+初期rolling benchmarkも、60 samples×2 equipment、context 12、horizon 3、各equipment validation／test各2 originsで完走しました。past-only 6 modelsのChronos-2はaggregate MAE `0.20672198138554906`、WIS `0.1952207659517925`、known-future 7 modelsではMAE `0.1691488806622826`、WIS `0.15937026919725228`で1位でした。known-futureはorigin時点で本当に確定していた計画値を模したsynthetic scenarioであり、評価対象の実績値をoracleとして渡していません。target別には電流MAEでmoving-average、温度MAEでHolt linearが優位です。詳細は[`docs/results/chronos2-initial-evaluation-2026-09-04.md`](results/chronos2-initial-evaluation-2026-09-04.md)に記録します。
+
+未実施はChronos-2のseed×horizon×context matrix、origin拡大、missing／stale／regime／fault slice、clean savepoint再実行、model単独resource測定です。今回のrunはdirty worktreeを記録した小標本・合成データ結果なので、Phase 2完了または`product-candidate`昇格の根拠にはせず、`commercial-evaluation`を継続します。
+
 #### 優先順位
 
 | 優先度 | 候補 | 目的 |
 | --- | --- | --- |
 | P0 | seasonal-naive、EWMA、moving-average、Holt linear | 複雑modelを採用する最低条件 |
-| P0 | Chronos-2 | 商用利用可能な汎用multivariate／covariate候補 |
+| P0 | Chronos-2 | TimesFM 3.0評価後のcommercial-evaluation候補 |
 | P0 | TimesFM 3.0 | 最新research reference。非商用・非本番に限定 |
 | P0 | Toto 2.0 4m／22m | 軽量multivariate／telemetry候補 |
 | P0 | Granite TTM R2 | CPU／fine-tuning／設備別候補 |
@@ -179,6 +187,8 @@ AutoETSは未実装であり、現行benchmarkのmodel registry／schemaには�
 - accuracy、calibration、latency、peak memory、artifact sizeを同時に報告する。
 - TimesFM 3.0の結果に `research-only` が明示され、promotion対象から除外される。
 - 少なくとも1つの商用利用可能候補について、継続／保留／中止の判断ができる。
+- Chronos-2について、固定package／checkpoint revision／hash、license、cache境界、native p50、missing fail-closedの証跡がある。
+- Chronos-2を`product-candidate`へ昇格する場合、精度だけでなくtarget slice、coverage／WIS、CPU p95／memory、再現性、運用失敗時のdegraded stateを満たす。未達ならcommercial-evaluationで停止または撤退する。
 
 ### Phase 3: 異常検知
 

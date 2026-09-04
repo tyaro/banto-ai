@@ -1,0 +1,16 @@
+{
+  "schema_version": "0.1",
+  "manifest_type": "model-license",
+  "model_id": "chronos-2",
+  "code_license": "Apache-2.0",
+  "weights_license": "Apache-2.0",
+  "allowed_use": "commercial-evaluation",
+  "source_url": "https://huggingface.co/amazon/chronos-2",
+  "package_name": "chronos-forecasting",
+  "package_version": "2.3.1",
+  "package_sha256": "d9d00ec9b1621235bfb26685638bf054885f4c000863678f1c775dfab2697496",
+  "checkpoint": "amazon/chronos-2",
+  "checkpoint_revision": "29ec3766d36d6f73f0696f85560a422f50e8498c",
+  "verified_at": "2026-09-04",
+  "notes": "商用評価専用。製品採用には別途、実設備検証・安全審査・運用承認が必要。"
+}
