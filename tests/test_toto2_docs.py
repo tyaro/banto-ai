@@ -72,7 +72,13 @@ class Toto2DocumentationTests(unittest.TestCase):
             "752,611,328 bytes",
             "production=false",
             "control_write=false",
-            "直接実行経路",
+            "repo-root direct invocation",
+            "既存cacheを用いて実成功",
+            "automated subprocessでは全4 scriptについて",
+            "`--help`でimport／CLI起動確認した",
+            "accept flagからmainを経て`prepare_checkpoint`へ到達する経路",
+            "`python -c`＋mockでdownloadなしに確認した",
+            "CPU smoke artifactの`production=false`",
             "22M、matrix、fine-tuning",
         )
         for required_value in required:

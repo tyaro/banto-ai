@@ -14,4 +14,4 @@ core import 時には torch、numpy、toto2、huggingface_hub を import しま�
 
 ## 評価範囲と実測結果
 
-初回対象の Toto 4M は既存runnerへ接続し、固定snapshotを使ったCPU smokeとMetroPT-3数値benchmarkを実行済みです。statusは`success`、predictionは4,320、failureは0で、target別metricsとruntimeは[`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](results/toto2-metropt3-evaluation-2026-09-04.md)に記録しています。実direct invocationのCLI経路もdownload mock／acceptance gateで確認済みです。22M、matrix、fine-tuning、seed拡大、fault slice、実設備一般化は未実施で、今回の限定評価から製品採用を判断しません。
+初回対象の Toto 4M は既存runnerへ接続し、固定snapshotを使ったCPU smokeとMetroPT-3数値benchmarkを実行済みです。statusは`success`、predictionは4,320、failureは0で、target別metricsとruntimeは[`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](results/toto2-metropt3-evaluation-2026-09-04.md)に記録しています。main環境のREADME記載direct invocationは既存cacheで実成功し、size／SHA-256を再検証済みです。automated subprocessは4 scriptの相対／absolute pathを`--help`で確認し、accept flagからprepare_checkpointへの到達は`python -c`＋mockでdownloadなしに確認済みです。22M、matrix、fine-tuning、seed拡大、fault slice、実設備一般化は未実施で、今回の限定評価から製品採用を判断しません。

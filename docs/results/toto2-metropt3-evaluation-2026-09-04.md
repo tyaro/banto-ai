@@ -28,7 +28,7 @@ Totoのpackageは`toto-2==2.0.0`（wheel SHA-256 `5eb922f8162a800d6d31cffb10e3f4
 
 MetroPT-3のcontext=120は変えていない。adapterはTotoのpatch境界に合わせて先頭8点をzero valueで埋めるが、maskはfalseであり、観測値として学習・評価に使っていない。公式呼出しはCPU、batch=1、`decode_block_size=None`、`local_files_only=True`、`has_missing_values=True`である。
 
-client CLI修正後の`python tools\\toto2\\prepare_checkpoint.py`直接実行経路と、repo外cwdからのabsolute script経路は、download mock／acceptance gateによる副作用なしのsubprocess検証を通過した。
+client CLI修正後、main環境ではREADME記載のrepo-root direct invocation `python tools\\toto2\\prepare_checkpoint.py ... --accept-apache-2.0` が既存cacheを用いて実成功し、checkpointのsize／SHA-256を再検証した。automated subprocessでは全4 scriptについてrepo-root相対pathとrepo外cwdからのabsolute pathを`--help`でimport／CLI起動確認した。accept flagからmainを経て`prepare_checkpoint`へ到達する経路は、`python -c`＋mockでdownloadなしに確認した。
 
 ## Toto 2.0 4M target別test metrics
 
@@ -70,7 +70,7 @@ Chronos-2はnative quantileでcrossingが発生したため、比較にはvalida
 | process peak | 752,611,328 bytes |
 | measurement | process-level peak、end-to-end timing |
 
-process peakは共有benchmark process全体であり、Toto model-only memoryではない。cold／warm、model load、CPU thread数、model-only resourceは分離していない。Banto Hub／PLCへのwriteはなく、artifactの`production=false`、`control_write=false`、`network_fallback=false`である。実行中はoffline、telemetry disabled、external cache、固定snapshotを使い、cache miss時のnetwork fallbackはしない。nonfinite、missing／stale／irregular input、quantile crossing、output shape異常は補正せずfail closedにする。
+process peakは共有benchmark process全体であり、Toto model-only memoryではない。cold／warm、model load、CPU thread数、model-only resourceは分離していない。Banto Hub／PLCへのwriteはなく、CPU smoke artifactの`production=false`、`control_write=false`、`network_fallback=false`である。benchmark実行中はoffline、telemetry disabled、external cache、固定snapshotを使い、cache miss時のnetwork fallbackはしない。nonfinite、missing／stale／irregular input、quantile crossing、output shape異常は補正せずfail closedにする。
 
 ## 限界と次工程
 
