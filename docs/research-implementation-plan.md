@@ -163,6 +163,8 @@ Toto 2.0 4Mは、`toto-2==2.0.0`／`toto-models==1.0.0`、固定HF revision、�
 
 Toto 2.0 4Mの小規模matrixは、seed `[17, 42]` × horizon `[15, 30]` × context `[64, 120]`の8 cellsを実行し、8/8 success、partial 0、failed 0となりました。2 equipment、各seed 480 samples／equipment、past-only `load_proxy`、known-futureなし、native p10／p50／p90の契約です。正本のhash、exact origin、target別cell-macro metrics、padding、runtime、memoryは[`docs/results/toto2-matrix-2026-09-04.md`](results/toto2-matrix-2026-09-04.md)に記録しました。2 seed・少数origin・単一synthetic generatorのため、seed／origin拡大、missing／stale／fault／regime slice、model-only resource、22M、公開／実設備一般化を次gateとします。
 
+Toto 2.0 4M matrixの既存predictionに対するevent slice post-hoc解析を完了しました。8/8 cells analyzed、excluded 0、8,640 predictionsを再推論なしで`[start,end)`分類し、target-event forecastは`conveyor-01.motor_temperature`のoverheatのみ、`motor-01-slip-test`の`motor_current` faultはforecast未coverでした。詳細、正本hash、2-seed cell-macro値、未評価event、次gateは[`docs/results/toto2-event-slices-2026-09-04.md`](results/toto2-event-slices-2026-09-04.md)に記録しています。これはanomaly detection、missing／stale robustness、実設備一般化、製品昇格を示さず、Totoの`commercial-evaluation`とPhase 2未完了を維持します。
+
 #### 公開データ source pin と次保存点
 
 公開実データの第一候補をUCI MetroPT-3に固定します。source pin tool実装と実archive検証は完了し、正本manifestは[`datasets/manifests/metropt3-source.json`](../datasets/manifests/metropt3-source.json)、手順は[`tools/public-data/README.md`](../tools/public-data/README.md)です。アーカイブは218,381,995 bytes、SHA-256と2つのmember hashを固定しています。公式ページ内のsampling記載は1 Hz／0.1 Hzで競合し、source timezoneも未指定なので、UTCや固定周期を仮定せずraw timestampのdelta／gapを保存します。NASA C-MAPSSは公式licenseが`License not specified`のため採用しません。

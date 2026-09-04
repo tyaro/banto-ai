@@ -44,6 +44,47 @@ class Toto2DocumentationTests(unittest.TestCase):
             "--config examples\\configs\\benchmark-matrix-toto2-small.json", readme
         )
 
+    def test_event_slice_report_pins_artifact_hashes_scope_and_limits(self):
+        report = (ROOT / "docs/results/toto2-event-slices-2026-09-04.md").read_text(encoding="utf-8")
+        required = (
+            "statusは`success`",
+            "8/8 cells analyzed",
+            "excluded 0",
+            "8,640",
+            "3de9b683df25a871bcc1000f6a75ba21a301f55dad316cc15bc3675441959784",
+            "832b9e088fccf5711eb31205b4848473111d38310953901842331023dcfd8e70",
+            "973154dee1ca1b37a53cadf035d4e752b4ddbe09be125c7f06a1a4fe3027d826",
+            "1c42926903bf3235ef8b86badf0491a5575b4060",
+            "221e3bd7d5385f0446f7c32bb406baf876a87066",
+            "clean` | 6,048",
+            "other_signal_event` | 2,088",
+            "target_event` | 504",
+            "context_clean` | 1,080",
+            "context_target_event` | 1,440",
+            "context_covariate_event` | 3,060",
+            "context_other_signal_event` | 3,060",
+            "conveyor-01.motor_temperature",
+            "motor-01-slip-test",
+            "forecast timestampのcoverは0",
+            "再推論なし",
+            "[start,end)",
+            "seed cell-macro",
+            "anomaly detection性能",
+            "missing／stale robustness",
+            "commercial-evaluation",
+            "Phase 2未完了",
+            "toto2-matrix-2026-09-04.md",
+        )
+        for required_value in required:
+            with self.subTest(required_value=required_value):
+                self.assertIn(required_value, report)
+        for linked in (
+            "artifacts/toto2/matrix/benchmark-matrix-toto2-small/result.json",
+            "artifacts/toto2/event-slices/benchmark-matrix-toto2-small/result.json",
+        ):
+            with self.subTest(linked=linked):
+                self.assertIn(linked, report)
+
     def test_matrix_report_records_artifact_provenance_metrics_and_next_gates(self):
         report = (ROOT / "docs/results/toto2-matrix-2026-09-04.md").read_text(encoding="utf-8")
         required = (

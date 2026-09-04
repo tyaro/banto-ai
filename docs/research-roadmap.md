@@ -58,6 +58,8 @@ Chronos-2のseed `[17, 42]`×horizon `[1, 3]`×context `[6, 12]`の実model matr
 
 同じ契約でChronos-2 nativeとpoint-calibratedの2 scenario、TimesFM 3.0のnative scenarioも実施しました。Chronos nativeは公式分位点の交差を補正せずpartialとして失敗証跡を維持し、point-calibratedは公式point-only予測＋validation residual by leadでsuccess、TimesFM 3.0はcrossingなしのsuccessとなりました。Chronos-2のtarget別metrics、hash、runtime、限界は[`docs/results/chronos2-metropt3-evaluation-2026-09-04.md`](results/chronos2-metropt3-evaluation-2026-09-04.md)、TimesFM 3.0は[`docs/results/timesfm3-metropt3-evaluation-2026-09-04.md`](results/timesfm3-metropt3-evaluation-2026-09-04.md)に記録しています。これは限定区間のforecast研究評価で、実設備一般の性能、製品適合性、異常検知性能を示しません。Phase 2全体は未完了です。
 
+Toto 2.0 4Mの既存matrix予測に対するevent slice post-hoc解析を完了しました。8/8 cells analyzed、excluded 0、8,640 predictionsで、forecast target eventとして実際に評価されたのは`conveyor-01.motor_temperature`のoverheatだけです。`motor-01-slip-test`の`motor_current` faultは全cellでforecast未coverのため、anomaly detectionやmissing／stale robustnessの結果ではありません。正本hashとToto target-eventの限定metricは[`docs/results/toto2-event-slices-2026-09-04.md`](results/toto2-event-slices-2026-09-04.md)に記録し、Totoは`commercial-evaluation`、Phase 2未完了を維持します。次gateはseed最低5、origin／event位置／設備／mode拡大、専用fault／missing／stale scenario、event単位不確実性です。
+
 ## 実験の必須記録
 
 すべての実験に、次を記録します。

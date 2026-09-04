@@ -171,6 +171,10 @@ Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUT
 
 調査結果は [`docs/time-series-model-survey.md`](docs/time-series-model-survey.md)、具体的な作業計画は [`docs/research-implementation-plan.md`](docs/research-implementation-plan.md)、Issue案は [`docs/initial-issues.md`](docs/initial-issues.md) を参照してください。
 
+### Toto event slice post-hoc解析
+
+既存Toto 2.0 4M matrix予測のevent slice post-hoc解析も完了しました。8/8 cells analyzed、excluded 0、8,640 predictionsで、motor_current faultのforecast未coverを含む解釈上の限界を [`docs/results/toto2-event-slices-2026-09-04.md`](docs/results/toto2-event-slices-2026-09-04.md) に記録しています。再推論なしの研究用集計であり、anomaly detection性能、missing／stale robustness、実設備一般化、製品昇格を示しません。次はfault target専用scenario、missing／stale専用評価、seed／origin／event位置拡大です。Phase 2は未完了です。
+
 ## ステータス
 
 Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0はCPU smoke、小規模rolling-origin benchmark、8-cell matrix、MetroPT-3同一契約比較を実行済みです。Chronos-2は固定snapshot検証、公式API／Banto tool CPU smoke、past-only 6 models／known-future 7 modelsの初期rolling benchmark、実model 8-cell matrix、MetroPT-3公開実データのnative／point-calibrated評価を実行済みです。Toto 2.0 4Mは固定snapshot検証、CPU smoke、MetroPT-3公開実データの6 model／3 target評価、2 seeds×2 horizons×2 context lengthsの8-cell matrixを実行済みです。MetroPT-3評価は24時間・1設備・16 test origins・単一CPU・forecast-onlyの限定条件で、Chronos nativeはpartial、Chronos point-calibrated、TimesFM 3.0、Toto 2.0 4Mはsuccessでした。Toto matrixは8/8 success、partial 0、failed 0ですが、2 seed・少数origin・単一synthetic generatorの限定結果です。詳細は[`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](docs/results/toto2-metropt3-evaluation-2026-09-04.md)、[`docs/results/toto2-matrix-2026-09-04.md`](docs/results/toto2-matrix-2026-09-04.md)、[`docs/results/timesfm3-metropt3-evaluation-2026-09-04.md`](docs/results/timesfm3-metropt3-evaluation-2026-09-04.md)、[`docs/results/chronos2-metropt3-evaluation-2026-09-04.md`](docs/results/chronos2-metropt3-evaluation-2026-09-04.md)を参照してください。origin／日／設備拡大、model単独resourceの分離評価、欠損・regime・fault slice、known-future対past-onlyの追加比較、Chronos再実行の再現性は次工程です。Phase 2は完了していません。本番デプロイ経路も未実装です。
