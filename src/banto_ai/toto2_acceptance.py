@@ -10,13 +10,12 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-import os
 import shutil
 import tempfile
 from pathlib import Path, PureWindowsPath
 from typing import Any, Iterable, Mapping
 
-from .benchmark import PREDICTION_KEYS
+from .benchmark import PREDICTION_KEYS, _policy, _revision
 from .event_slices import _verify_dataset
 from .manifest import ManifestValidationError, load_json, validate
 
@@ -298,7 +297,7 @@ def _quality_counts(dataset: Mapping[str, Any], equipment: str, signals: list[st
     for signal in signals:
         role = metadata[signal]["role"]
         logical = signal.rsplit(".", 1)[-1]
-        counts = {"ok": 0, "missing": 0, "stale": 0, "non_ok": 0, "other": 0}
+        counts = {"ok": 0, "missing": 0, "stale": 0, "non_ok": 0, "other": 0, "finite_value_count": 0, "model_observed_value_count": 0}
         for row in selected:
             status = row["quality"].get(logical)
             if status not in ("ok", "missing", "stale"):
@@ -308,8 +307,33 @@ def _quality_counts(dataset: Mapping[str, Any], equipment: str, signals: list[st
             counts[status_key] += 1
             if status_key != "ok":
                 counts["non_ok"] += 1
+            if _finite(row["signals"][logical]["value"]):
+                counts["finite_value_count"] += 1
+            if status_key == "ok" and _finite(row["signals"][logical]["value"]):
+                counts["model_observed_value_count"] += 1
         by_role.setdefault(role, {})[logical] = counts
-    return {"signals": by_role, "context_length": context, "observed_context_count": len(selected)}
+    return {
+        "signals": by_role,
+        "context_row_count": len(selected),
+        "expected_value_count": len(signals) * context,
+        "source_finite_value_count": sum(counts["finite_value_count"] for values in by_role.values() for counts in values.values()),
+        "model_observed_value_count": sum(counts["model_observed_value_count"] for values in by_role.values() for counts in values.values()),
+    }
+
+
+def _validate_context_audit(audit: Mapping[str, Any], signal_count: int, context: int) -> None:
+    if audit.get("context_row_count") != context or audit.get("expected_value_count") != signal_count * context:
+        raise AcceptanceError("context audit row/value denominator is inconsistent")
+    finite = 0
+    observed = 0
+    for role_values in audit.get("signals", {}).values():
+        for counts in role_values.values():
+            if sum(counts[key] for key in ("ok", "missing", "stale", "other")) != context or counts["non_ok"] != counts["missing"] + counts["stale"] + counts["other"] or counts["model_observed_value_count"] > counts["finite_value_count"]:
+                raise AcceptanceError("context signal quality counts are inconsistent")
+            finite += counts["finite_value_count"]
+            observed += counts["model_observed_value_count"]
+    if audit.get("source_finite_value_count") != finite or audit.get("model_observed_value_count") != observed:
+        raise AcceptanceError("context finite/observed counts are inconsistent")
 
 
 def _truth(dataset: Mapping[str, Any], equipment: str, target: str, origin: int, horizon: int) -> tuple[str, list[float | None], list[str]]:
@@ -358,8 +382,8 @@ def _validate_cross_track_truth(track_datasets: Mapping[str, Mapping[int, Mappin
                     in_event = 4 <= offset < 12
                     if not (is_fault_target and in_event) and pair != control_future[offset]:
                         raise AcceptanceError(f"fault track changed truth outside its event: {seed}/{equipment}/{target}/{384 + offset}")
-                if is_fault_target and all(pair == control_future[offset] for offset, pair in enumerate(fault_future) if 4 <= offset < 12):
-                    raise AcceptanceError(f"fault track did not change motor_current in [388,396): {seed}")
+                if is_fault_target and any(fault_future[offset] == control_future[offset] for offset in range(4, 12)):
+                    raise AcceptanceError(f"fault track did not change every motor_current point in [388,396): {seed}")
 
 
 def _source_record(path: Path, root: Path, snapshots: dict[Path, str], kind: str) -> dict[str, Any]:
@@ -380,7 +404,7 @@ def _matrix_config_consistent(actual: Mapping[str, Any], track: Mapping[str, Any
 
 
 def _revision_consistent(revision: Mapping[str, Any]) -> None:
-    if revision.get("status") != "git" or revision.get("dirty") is not False or not isinstance(revision.get("head"), str):
+    if revision.get("status") != "git" or revision.get("dirty") is not False or not isinstance(revision.get("head"), str) or len(revision["head"]) != 40 or any(char not in "0123456789abcdef" for char in revision["head"]) or not isinstance(revision.get("diff_sha256"), str) or len(revision["diff_sha256"]) != 64 or any(char not in "0123456789abcdef" for char in revision["diff_sha256"]):
         raise AcceptanceError("matrix/code revision must be git and clean")
 
 
@@ -429,6 +453,14 @@ def _cell_result_audit(
         raise AcceptanceError(f"materialized benchmark config hash mismatch: {cell_id}")
     if result.get("code_revision") != matrix_revision:
         raise AcceptanceError(f"cell code_revision mismatch: {cell_id}")
+    expected_policies = {model["name"]: _policy(model) for model in benchmark["models"]}
+    if result.get("runtime", {}).get("quantile_policy_by_model") != expected_policies or result.get("provenance", {}).get("quantile_policy_by_model") != expected_policies:
+        raise AcceptanceError(f"cell quantile policy provenance mismatch: {cell_id}")
+    expected_parameters = {model["name"]: model.get("parameters", {}) for model in benchmark["models"]}
+    if result.get("model_parameters") != expected_parameters:
+        raise AcceptanceError(f"cell model parameters provenance mismatch: {cell_id}")
+    if result.get("generator_version") != dataset["manifest"].get("generator_version") or result.get("provenance", {}).get("quality_gate") != dataset["quality"]:
+        raise AcceptanceError(f"cell dataset provenance mismatch: {cell_id}")
     if result.get("seed") != seed or result.get("dataset_fingerprint") != dataset_entry["dataset_fingerprint"]:
         raise AcceptanceError(f"cell provenance mismatch: {cell_id}")
     if result.get("run_id") != cell.get("run_id") or result.get("status") != cell.get("status"):
@@ -476,6 +508,11 @@ def _cell_result_audit(
         expected_timestamp = rows_by_equipment[equipment][ORIGIN_INDEX + row["lead_time"] - 1]["timestamp"]
         if row["timestamp"] != expected_timestamp:
             raise AcceptanceError(f"prediction timestamp/lead mismatch: {cell_id}/{key}")
+        if row["model"] == "toto2":
+            median = float(row["quantiles"]["0.5"])
+            tolerance = 1e-5 * max(1.0, abs(float(row["point_forecast"])), abs(median))
+            if abs(float(row["point_forecast"]) - median) > tolerance:
+                raise AcceptanceError(f"Toto native p50/point mismatch: {cell_id}/{key}")
         if key in observed:
             raise AcceptanceError(f"duplicate prediction key: {cell_id}/{key}")
         observed[key] = row
@@ -485,7 +522,7 @@ def _cell_result_audit(
     configured_equipment = set(benchmark["equipment_ids"])
     configured_targets = {f"{equipment}.{target.rsplit('.', 1)[-1]}" for equipment in benchmark["equipment_ids"] for target in benchmark["target_signal_ids"]}
     for item in result.get("failures", []):
-        if not isinstance(item, dict) or item.get("split") != "test" or item.get("status") not in ("failed", "inconclusive"):
+        if not isinstance(item, dict) or item.get("split") not in ("validation", "test") or item.get("status") not in ("failed", "inconclusive"):
             raise AcceptanceError(f"failure provenance is invalid: {cell_id}")
         failure_key = (item.get("model"), item.get("equipment_id"), item.get("target_signal_id"))
         if failure_key in failures or failure_key[0] not in configured_models or failure_key[1] not in configured_equipment or failure_key[2] not in configured_targets:
@@ -528,6 +565,7 @@ def _cell_result_audit(
                     group_status = failure.get("status", "failed")
                 consumed = context_signals if model == "toto2" else [target_id]
                 context_audit = _quality_counts(dataset, equipment, consumed, ORIGIN_INDEX, context)
+                _validate_context_audit(context_audit, len(consumed), context)
                 non_ok_excluded = sum(
                     counts["non_ok"]
                     for role_values in context_audit["signals"].values()
@@ -541,10 +579,11 @@ def _cell_result_audit(
                     "valid_prediction_count": valid_rows,
                     "availability": len(group_rows) / horizon,
                     "status": group_status,
-                    "failure": (failure.get("reason") if failure else None),
+                    "failure": ({"status": failure.get("status"), "reason": failure.get("reason"), "split": failure.get("split")} if failure else None),
                     "truth": {"status": truth_status, "quality": {status: truth_quality.count(status) for status in sorted(set(truth_quality))}},
                     "context": context_audit,
-                    "consumed_signal_set": consumed,
+                    "expected_consumed_signal_set": consumed,
+                    "consumption_evidence": "static-contract",
                     "non_ok_history_excluded_count": non_ok_excluded,
                     "padding_count": ((-context) % 32) if model == "toto2" else 0,
                     "input_semantics": semantics,
@@ -597,24 +636,33 @@ def _summary(result: Mapping[str, Any]) -> str:
         f"- controlled acceptance status: `{result['controlled_acceptance_status']}`",
         f"- tracks: {counts['tracks']} / 4", f"- cells: {counts['cells']} / {counts['expected_cells']}",
         f"- groups: {counts['groups']} / {counts['expected_groups']}",
+        f"- analyzer code revision: `{result['analyzer_code_revision']['head']}`（git cleanを再検証）",
         "- cross-model ranking: `禁止（cross_model_ranking_allowed=false）`", "",
         "## track", "", "| track | role | matrix | status |", "| --- | --- | --- | --- |",
     ]
     for track in result["tracks"]:
         lines.append(f"| `{track['track_id']}` | `{track['role']}` | `{track['matrix_id']}` | `{track['status']}` |")
-    lines.extend(["", "## input semantics", "", "baseline は non-OK target history を除外して短縮し、past-only covariate を使いません。Toto は mask を使います。padding count は source quality count と分離しています。", "", "## paired delta", "", "同一 model・equipment・target・origin・cell の control → degraded のみを比較します。truth が valid でない場合は accuracy delta を出さず `inconclusive/no-rank` とします。", "", "## source", "", "指定されたmatrix/cell/dataset artifactを、source hashとclean code revisionの再検証後に解析した結果です。"])
+    lines.extend(["", "## input semantics", "", "baseline は non-OK target history を除外して短縮し、past-only covariate を使いません。Toto は mask を使います。padding count は source quality count と分離しています。", "", "## paired delta", "", "同一 model・equipment・target・origin・cell の control → degraded のみを比較します。truth が valid でない場合は accuracy delta を出さず `inconclusive/no-rank` とします。", "", "## source", "", "指定されたmatrix/cell/dataset artifactを、source hashとanalyzer／matrix／cellのclean code revisionの再検証後に解析した結果です。expected consumed signal setはruntime traceではなくstatic contract evidenceです。"])
     return "\n".join(lines) + "\n"
 
 
 def analyze_controlled_acceptance(config_path: str | Path, root: Path) -> Path:
     """Analyze four declared matrices and atomically publish a result directory."""
     root = Path(root).expanduser().resolve()
-    config_file = Path(config_path).expanduser()
-    if not config_file.is_absolute():
-        config_file = (root / config_file).resolve()
+    analyzer_code_revision = _revision(root)
+    _revision_consistent(analyzer_code_revision)
+    config_input = Path(config_path).expanduser()
+    if config_input.is_absolute():
+        try:
+            config_relative = config_input.relative_to(root)
+        except ValueError as exc:
+            raise AcceptanceError("config must be a repository-local regular file") from exc
+        if config_relative.as_posix() in ("", "."):
+            raise AcceptanceError("config must be a repository-local regular file")
+        config_file = _safe_path(root, config_relative.as_posix(), "config_path")
     else:
-        config_file = config_file.resolve()
-    if config_file.is_symlink() or root not in config_file.parents:
+        config_file = _safe_path(root, config_input.as_posix(), "config_path")
+    if config_file.is_symlink() or not config_file.is_file():
         raise AcceptanceError("config must be a repository-local regular file")
     config, config_raw = _strict_object(config_file, "analyzer config")
     validate_acceptance_config(config, root)
@@ -649,11 +697,16 @@ def analyze_controlled_acceptance(config_path: str | Path, root: Path) -> Path:
         if matrix["matrix_id"] != track["matrix_id"] or matrix["matrix_id"] != EXPECTED_MATRIX_IDS[track_id]:
             raise AcceptanceError(f"configured matrix ID mismatch: {track_id}")
         _revision_consistent(matrix["code_revision"])
+        if matrix["code_revision"] != analyzer_code_revision:
+            raise AcceptanceError(f"matrix code revision does not match analyzer execution revision: {track_id}")
         if common_revision is None:
             common_revision = matrix["code_revision"]
         elif matrix["code_revision"] != common_revision:
             raise AcceptanceError("four matrix code revisions are not identical")
         axes = matrix["axes"]
+        result_axes_without_expansion = {key: value for key, value in axes.items() if key != "expansion_order"}
+        if result_axes_without_expansion != matrix["matrix_config"]["axes"]:
+            raise AcceptanceError(f"matrix result axes differ from matrix config axes: {track_id}")
         if axes != EXPECTED_AXES:
             raise AcceptanceError(f"controlled axes are not the fixed axes: {track_id}")
         if common_axes is None:
@@ -796,13 +849,15 @@ def analyze_controlled_acceptance(config_path: str | Path, root: Path) -> Path:
             deltas.extend(_paired_deltas(all_cell_audits[f"control:{expected[0]}"], all_cell_audits[f"{degraded}:{expected[0]}"], degraded))
     if any(_overlap(output, source) for source in snapshots):
         raise AcceptanceError("output_dir overlaps a source artifact")
+    if _revision(root) != analyzer_code_revision:
+        raise AcceptanceError("repository code revision changed during analysis")
     _assert_unchanged(snapshots)
     actual_cell_count = sum(len(track["cells"]) for track in tracks_out)
     actual_group_count = sum(len(cell["groups"]) for track in tracks_out for cell in track["cells"])
     expected_delta_count = len(TRACK_IDS[1:]) * 20 * len(common_benchmark["models"]) * len(common_benchmark["equipment_ids"]) * len(common_benchmark["target_signal_ids"])
     blocked = any(track["status"] != "pass" for track in tracks_out) or any(item["status"] != "paired" for item in deltas) or actual_cell_count != 80 or actual_group_count != expected_groups or len(deltas) != expected_delta_count
     result = {
-        "schema_version": "0.1", "result_type": "toto2-controlled-acceptance", "analyzer_id": config["analyzer_id"],
+        "schema_version": "0.1", "result_type": "toto2-controlled-acceptance", "analyzer_id": config["analyzer_id"], "analyzer_code_revision": analyzer_code_revision,
         "analyzer_config": {"kind": "analyzer-config", "path": config_file.resolve().relative_to(root).as_posix(), "sha256": snapshots[config_file.resolve()]},
         "controlled_acceptance_status": "blocked" if blocked else "pass", "cross_model_ranking_allowed": False,
         "pairing": {"key": ["seed", "horizon", "context_length", "model", "equipment_id", "target_signal_id", "origin_sample"], "comparison": "control_to_each_degraded_same_model_group", "truth_unavailable": "inconclusive/no-rank"},
@@ -816,6 +871,8 @@ def analyze_controlled_acceptance(config_path: str | Path, root: Path) -> Path:
     try:
         (temporary / "result.json").write_text(json.dumps(result, ensure_ascii=False, sort_keys=True, indent=2, allow_nan=False) + "\n", encoding="utf-8", newline="\n")
         (temporary / "summary.md").write_text(_summary(result), encoding="utf-8", newline="\n")
+        if _revision(root) != analyzer_code_revision:
+            raise AcceptanceError("repository code revision changed before publish")
         _assert_unchanged(snapshots)
         if output.exists():
             raise AcceptanceError(f"refusing to overwrite existing output: {output}")

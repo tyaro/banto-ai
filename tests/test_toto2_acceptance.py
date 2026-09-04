@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import json
 import math
+import os
 import shutil
 import tempfile
 import unittest
@@ -13,6 +14,7 @@ from unittest.mock import patch
 
 from banto_ai.generator import generate_synthetic
 from banto_ai.manifest import load_json, validate
+from banto_ai.quality import check_dataset
 from banto_ai.event_slices import _verify_dataset
 from banto_ai.toto2_acceptance import AcceptanceError, _validate_cross_track_truth, analyze_controlled_acceptance, validate_acceptance_config
 
@@ -43,6 +45,11 @@ class Toto2AcceptanceTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls) -> None:
         shutil.rmtree(cls.temp, ignore_errors=True)
+
+    def setUp(self) -> None:
+        self._revision_patch = patch("banto_ai.toto2_acceptance._revision", return_value={"status": "git", "head": "a" * 40, "dirty": False, "diff_sha256": "b" * 64})
+        self._revision_patch.start()
+        self.addCleanup(self._revision_patch.stop)
 
     @classmethod
     def _make_fixture(cls) -> Path:
@@ -123,11 +130,13 @@ class Toto2AcceptanceTests(unittest.TestCase):
                                         point = by_equipment[equipment][384 + lead - 1]["signals"][target]["value"]
                                         timestamp = by_equipment[equipment][384 + lead - 1]["timestamp"]
                                         predictions.append({"model": model["name"], "equipment_id": equipment, "target_signal_id": full_target, "operating_mode": "nominal", "split": "test", "origin_timestamp": by_equipment[equipment][384]["timestamp"], "timestamp": timestamp, "lead_time": lead, "actual": point, "point_forecast": point, "quantiles": {"0.1": point, "0.5": point, "0.9": point}})
+                        quality = check_dataset(ROOT / dataset_relative, ROOT)
+                        policies = {model["name"]: ("native" if model["name"] == "toto2" else "validation-residual-by-lead") for model in base_benchmark["models"]}
                         result = {
-                            "schema_version": "0.2", "result_type": "benchmark", "run_id": cell_config["run_id"], "status": "success", "dataset_fingerprint": dataset["dataset_id"] and load_json(ROOT / dataset_relative / "fingerprint.json")["dataset_fingerprint"], "generator_version": "0.1.0", "run_config": cell_config, "code_revision": revision, "seed": seed, "model_parameters": {model["name"]: {} for model in base_benchmark["models"]}, "prediction_count": len(predictions), "failures": [],
+                            "schema_version": "0.2", "result_type": "benchmark", "run_id": cell_config["run_id"], "status": "success", "dataset_fingerprint": dataset["dataset_id"] and load_json(ROOT / dataset_relative / "fingerprint.json")["dataset_fingerprint"], "generator_version": "0.1.0", "run_config": cell_config, "code_revision": revision, "seed": seed, "model_parameters": {model["name"]: model.get("parameters", {}) for model in base_benchmark["models"]}, "prediction_count": len(predictions), "failures": [],
                             "metrics": {"aggregate": _metric(len(predictions)), "by_model": {model["name"]: _metric(1) for model in base_benchmark["models"]}, "slices": {}, "by_model_target": [{"model": model["name"], "target_signal_key": target, "unit": "A", "metrics": _metric(1)} for model in base_benchmark["models"] for target in base_benchmark["target_signal_ids"]], "by_model_equipment_target": [{"model": model["name"], "equipment_id": equipment, "target_signal_id": f"{equipment}.{target}", "unit": "A", "metrics": _metric(1)} for model in base_benchmark["models"] for equipment in base_benchmark["equipment_ids"] for target in base_benchmark["target_signal_ids"]]},
-                            "runtime": {"validation_seconds": 0.0, "test_seconds": 0.0, "total_seconds": 0.0, "p50_latency_ms": 0.0, "p95_latency_ms": 0.0, "latency_by_model": {model["name"]: {"call_count": 1, "p50_ms": 0.0, "p95_ms": 0.0} for model in base_benchmark["models"]}, "peak_memory_bytes": 0, "memory_source": "unavailable", "model_state_bytes": {model["name"]: 0 for model in base_benchmark["models"]}, "output_size_bytes_excluding_result": 0, "os": "fake", "python": "fake", "cpu": "fake", "calibration_source": "fake", "quantile_policy_by_model": {model["name"]: "native" for model in base_benchmark["models"]}},
-                            "provenance": {"quality_gate": {"status": "pass", "observation_record_count": 960, "equipment_count": 2, "checks": ["fake"]}, "split": {equipment: {"train": {"start_index": 0, "end_index": 240}, "validation": {"start_index": 240, "end_index": 360}, "test": {"start_index": 360, "end_index": 480}} for equipment in base_benchmark["equipment_ids"]}, "origin_selection": {"validation": {equipment: {"count": 1, "indices": [240], "stride": 15, "max_origins": 1, "rule": "fake"} for equipment in base_benchmark["equipment_ids"]}, "test": {equipment: {"count": 1, "indices": [384], "stride": 15, "max_origins": 1, "rule": "fake"} for equipment in base_benchmark["equipment_ids"]}}, "quantile_calibration": "fake", "quantile_policy_by_model": {model["name"]: "native" for model in base_benchmark["models"]}},
+                            "runtime": {"validation_seconds": 0.0, "test_seconds": 0.0, "total_seconds": 0.0, "p50_latency_ms": 0.0, "p95_latency_ms": 0.0, "latency_by_model": {model["name"]: {"call_count": 1, "p50_ms": 0.0, "p95_ms": 0.0} for model in base_benchmark["models"]}, "peak_memory_bytes": 0, "memory_source": "unavailable", "model_state_bytes": {model["name"]: 0 for model in base_benchmark["models"]}, "output_size_bytes_excluding_result": 0, "os": "fake", "python": "fake", "cpu": "fake", "calibration_source": "fake", "quantile_policy_by_model": policies},
+                            "provenance": {"quality_gate": quality, "split": {equipment: {"train": {"start_index": 0, "end_index": 240}, "validation": {"start_index": 240, "end_index": 360}, "test": {"start_index": 360, "end_index": 480}} for equipment in base_benchmark["equipment_ids"]}, "origin_selection": {"validation": {equipment: {"count": 1, "indices": [240], "stride": 15, "max_origins": 1, "rule": "fake"} for equipment in base_benchmark["equipment_ids"]}, "test": {equipment: {"count": 1, "indices": [384], "stride": 15, "max_origins": 1, "rule": "fake"} for equipment in base_benchmark["equipment_ids"]}}, "quantile_calibration": "fake", "quantile_policy_by_model": policies},
                         }
                         result_path = ROOT / output_relative / "result.json"
                         prediction_path = result_path.parent / "predictions.jsonl"
@@ -151,6 +160,28 @@ class Toto2AcceptanceTests(unittest.TestCase):
         config["tracks"][0]["unexpected"] = True
         with self.assertRaises(AcceptanceError):
             validate_acceptance_config(config, ROOT)
+        link = self.temp / "configs" / "matrix-result-link.json"
+        try:
+            os.symlink(ROOT / "examples/configs/toto2-controlled-acceptance.json", link)
+        except (OSError, NotImplementedError) as exc:
+            self.skipTest(f"symlink test unavailable: {exc}")
+        try:
+            symlink_config = load_json(ROOT / "examples/configs/toto2-controlled-acceptance.json")
+            symlink_config["tracks"][0]["matrix_result_path"] = link.relative_to(ROOT).as_posix()
+            with self.assertRaises(AcceptanceError):
+                validate_acceptance_config(symlink_config, ROOT)
+        finally:
+            link.unlink(missing_ok=True)
+        config_link = self.temp / "configs" / "analyzer-config-link.json"
+        try:
+            os.symlink(self.config_path, config_link)
+        except (OSError, NotImplementedError) as exc:
+            self.skipTest(f"config symlink test unavailable: {exc}")
+        try:
+            with self.assertRaises(AcceptanceError):
+                analyze_controlled_acceptance(config_link, ROOT)
+        finally:
+            config_link.unlink(missing_ok=True)
 
     def test_matrix_revision_origin_hash_actual_and_quantile_contracts_fail_closed(self) -> None:
         def rejected(label: str, path: Path, mutate) -> None:
@@ -185,6 +216,15 @@ class Toto2AcceptanceTests(unittest.TestCase):
             prediction_path.write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
             config = load_json(self.config_path); config["output_dir"] = f"artifacts/{self.temp.name}/quantile-output"; quantile_config = self.temp / "configs" / "quantile.json"; _write(quantile_config, config)
             with self.assertRaises(AcceptanceError): analyze_controlled_acceptance(quantile_config, ROOT)
+        finally:
+            prediction_path.write_text(original_predictions, encoding="utf-8", newline="\n")
+        try:
+            rows = original_predictions.splitlines()
+            toto_row_index = next(index for index, line in enumerate(rows) if json.loads(line)["model"] == "toto2")
+            toto_row = json.loads(rows[toto_row_index]); toto_row["point_forecast"] = float(toto_row["point_forecast"]) + 1.0; rows[toto_row_index] = json.dumps(toto_row, sort_keys=True)
+            prediction_path.write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
+            config = load_json(self.config_path); config["output_dir"] = f"artifacts/{self.temp.name}/p50-output"; p50_config = self.temp / "configs" / "p50.json"; _write(p50_config, config)
+            with self.assertRaises(AcceptanceError): analyze_controlled_acceptance(p50_config, ROOT)
         finally:
             prediction_path.write_text(original_predictions, encoding="utf-8", newline="\n")
 
@@ -245,7 +285,7 @@ class Toto2AcceptanceTests(unittest.TestCase):
             result = load_json(result_path)
             result["status"] = "partial"
             result["prediction_count"] = len(rows)
-            result["failures"] = [{"model": removed["model"], "equipment_id": removed["equipment_id"], "target_signal_id": removed["target_signal_id"], "status": "failed", "reason": "fake model failure", "split": "test"}]
+            result["failures"] = [{"model": removed["model"], "equipment_id": removed["equipment_id"], "target_signal_id": removed["target_signal_id"], "status": "failed", "reason": "fake validation failure", "split": "validation"}]
             _write(result_path, result)
             matrix["cells"][0]["status"] = "partial"
             matrix["cells"][0]["benchmark_failure_count"] = 1
@@ -259,8 +299,11 @@ class Toto2AcceptanceTests(unittest.TestCase):
             groups = result["tracks"][2]["cells"][0]["groups"]
             baseline = next(item for item in groups if item["group"]["model"] == "last-value")
             toto = next(item for item in groups if item["group"]["model"] == "toto2")
-            self.assertEqual(baseline["consumed_signal_set"], [baseline["group"]["equipment_id"] + "." + baseline["group"]["target_signal_id"].split(".")[-1]])
+            self.assertEqual(baseline["expected_consumed_signal_set"], [baseline["group"]["equipment_id"] + "." + baseline["group"]["target_signal_id"].split(".")[-1]])
             self.assertGreaterEqual(toto["padding_count"], 0)
+            failed = next(item for item in groups if item["group"]["model"] == removed["model"] and item["group"]["equipment_id"] == removed["equipment_id"] and item["group"]["target_signal_id"] == removed["target_signal_id"])
+            self.assertEqual(failed["status"], "failed")
+            self.assertEqual(failed["failure"]["split"], "validation")
         finally:
             predictions.write_text(original_predictions, encoding="utf-8", newline="\n")
             result_path.write_bytes(original_result)

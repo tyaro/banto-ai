@@ -38,6 +38,8 @@ test origin は `384` の1点だけです。開始時刻が `2026-01-01T00:00:00
 
 B の fault `[388,396)` は h15／h30 の forecast に含まれ、context には含まれません。C／D の quality intervals `[368,372)` と `[372,376)` は両方の context に含まれ、どちらの forecast にも含まれません。したがって C／D の forecast actual は control と同一 seed で byte-equivalent、finite、quality `ok` であることを静的・実行テストで確認します。
 
+controlled acceptance の `expected_consumed_signal_set` は benchmark contract から解決した期待入力集合であり、実行時の model input trace ではありません。出力の `consumption_evidence` は常に `static-contract` として記録します。
+
 `dropout` は `value=null` かつ `quality=missing`、`stale_value` は有限値を保持した `quality=stale` です。stale は値を hold した品質フラグであり、source age や transport freshness の証拠ではありません。Toto adapter は両方を0-fillし、`target_mask=false` と `has_missing_values=true` を渡します。padding も未観測として扱います。
 
 ## 実行面の受入契約
