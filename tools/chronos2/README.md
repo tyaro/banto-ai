@@ -19,3 +19,20 @@ python tools\chronos2\run_matrix.py --config examples/configs/benchmark-matrix-c
 小規模matrixは、seeds `[17, 42]`×horizons `[1, 3]`×context lengths `[6, 12]`の8 cellsです。base benchmarkのmodel parameter `context_length=12`はChronos backendへ渡す入力上限であり、matrix axisの`context_lengths`は各cellで実際に切り出す入力長です。6と12はいずれもこの上限内です。matrix全体でChronos2Adapterを一つだけ共有し、固定revision、CPU、local-only、検証済み外部cache、固定package versionを要求します。dataset、benchmark、matrixの各出力はChronos専用pathへ分離され、既存出力が一つでもある場合は上書きせず停止します。
 
 このディレクトリはcore CIから直接importされず、`chronos-forecasting`、PyTorch、Transformersなどを通常の`banto-ai`依存に追加しません。checkpointと実行artifactはリポジトリ外cacheまたはGit管理対象外のartifactへ置いてください。
+
+## MetroPT-3限定評価
+
+MetroPT-3公開実データの24時間限定・forecastのみの比較には、専用venv、リポジトリ外cache、固定configを使います。
+
+```powershell
+py -3.14 -m venv ..\.venv-banto-ai-chronos2
+$chronosPython = '..\.venv-banto-ai-chronos2\Scripts\python.exe'
+& $chronosPython -m pip install -r environments\chronos2\requirements-windows-cpu-py314.lock
+& $chronosPython tools\chronos2\preflight.py --cache-dir C:\banto-cache\chronos2 --format both
+& $chronosPython tools\chronos2\run_benchmark.py `
+  --config examples\configs\benchmark-metropt3-chronos2.json `
+  --cache-dir C:\banto-cache\chronos2 `
+  --manifest examples\manifests\model-license-chronos2.json
+```
+
+用途は`commercial-evaluation`に限り、製品採用の根拠にはしません。Banto Hub／PLCへのwriteは行いません。公開データ本体、model weight、実行artifactはGitへ追加しないでください。

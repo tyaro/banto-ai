@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 
-from banto_ai.adapters.chronos2 import BackendForecast, Chronos2Adapter  # noqa: E402
+from banto_ai.adapters.chronos2 import BackendForecast, Chronos2Adapter, Chronos2Config  # noqa: E402
 from banto_ai.manifest import load_json as load_json_file, validate  # noqa: E402
 from tools.chronos2 import (  # noqa: E402
     CHECKPOINT_ALLOW_PATTERNS,
@@ -204,6 +204,30 @@ class Chronos2ToolTests(unittest.TestCase):
             with tempfile.TemporaryDirectory() as directory:
                 factory = run_benchmark.make_shared_chronos_factory(load_manifest(MANIFEST), Path(directory))
                 factory("motor-01", {"device_map": "cpu", "local_files_only": True, "quantile_policy": "p50-calibration"})
+
+    def test_metropt3_config_reaches_validated_chronos_wrapper_settings(self):
+        config = load_json_file(ROOT / "examples" / "configs" / "benchmark-metropt3-chronos2.json")
+        chronos = next(model for model in config["models"] if model["name"] == "chronos2")
+
+        class FakeAdapter:
+            def __init__(self, manifest, config):
+                self.manifest = manifest
+                self.config = config
+
+        with patch.object(run_benchmark, "Chronos2Adapter", FakeAdapter):
+            with tempfile.TemporaryDirectory() as directory:
+                adapter = run_benchmark.make_shared_chronos_factory(
+                    load_manifest(MANIFEST), Path(directory)
+                )("metropt3-apu-01", chronos["parameters"])
+
+        self.assertIsInstance(adapter.config, Chronos2Config)
+        self.assertEqual(adapter.config.checkpoint_revision, DEFAULT_REVISION)
+        self.assertEqual(adapter.config.cache_dir, str(Path(directory).resolve()))
+        self.assertEqual(adapter.config.context_length, config["context_length"])
+        self.assertEqual(adapter.config.batch_size, 1)
+        self.assertFalse(adapter.config.cross_learning)
+        self.assertEqual(adapter.config.device_map, "cpu")
+        self.assertTrue(adapter.config.local_files_only)
 
     def test_shared_factory_rejects_implicit_type_coercions(self):
         class FakeConfig:

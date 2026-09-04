@@ -101,6 +101,61 @@ class PublicBenchmarkTests(unittest.TestCase):
             {"validation-residual-by-lead"},
         )
 
+    def test_metropt3_chronos2_config_matches_baselines_and_is_fixed(self):
+        baseline = json.loads(
+            (ROOT / "examples/configs/benchmark-metropt3-baselines.json").read_text(encoding="utf-8")
+        )
+        config = json.loads(
+            (ROOT / "examples/configs/benchmark-metropt3-chronos2.json").read_text(encoding="utf-8")
+        )
+        schema = json.loads(
+            (ROOT / "schemas/benchmark-run-config.schema.json").read_text(encoding="utf-8")
+        )
+        validate(config, schema)
+
+        for field in (
+            "dataset_path",
+            "equipment_ids",
+            "target_signal_ids",
+            "past_only_covariate_ids",
+            "known_future_covariate_ids",
+            "horizon",
+            "context_length",
+            "validation_origin_stride",
+            "test_origin_stride",
+            "max_validation_origins",
+            "max_test_origins",
+            "quantiles",
+        ):
+            with self.subTest(field=field):
+                self.assertEqual(config[field], baseline[field])
+
+        self.assertEqual(config["run_id"], "benchmark-metropt3-chronos2")
+        self.assertEqual(config["output_dir"], "artifacts/benchmark/benchmark-metropt3-chronos2")
+        self.assertNotIn("seed", config)
+        self.assertEqual(len(config["models"]), 6)
+        self.assertEqual(
+            [model["name"] for model in config["models"]],
+            [model["name"] for model in baseline["models"]] + ["chronos2"],
+        )
+        self.assertEqual(config["models"][:5], baseline["models"])
+        self.assertNotIn("linear-regression-covariates", [model["name"] for model in config["models"]])
+        self.assertEqual(
+            config["models"][5],
+            {
+                "name": "chronos2",
+                "quantile_policy": "native",
+                "parameters": {
+                    "checkpoint_revision": "29ec3766d36d6f73f0696f85560a422f50e8498c",
+                    "batch_size": 1,
+                    "context_length": 120,
+                    "cross_learning": False,
+                    "device_map": "cpu",
+                    "local_files_only": True,
+                },
+            },
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

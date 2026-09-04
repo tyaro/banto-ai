@@ -28,6 +28,7 @@ CHRONOS_CONFIGS = (
     "benchmark-chronos2-small.json",
     "benchmark-chronos2-baselines-past-only.json",
     "benchmark-chronos2-known-load.json",
+    "benchmark-metropt3-chronos2.json",
 )
 
 
