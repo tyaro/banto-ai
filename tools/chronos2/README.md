@@ -14,7 +14,7 @@ python tools\chronos2\run_matrix.py --config examples/configs/benchmark-matrix-c
 
 `prepare_checkpoint.py`以外はnetworkを使いません。prepareも`--accept-apache-2.0`がない限りdownloadを呼ばず、固定revision、`README.md`／`config.json`／`model.safetensors`だけのallow patterns、実ファイルのサイズとSHA-256を検証します。Windows Xet並列取得でsocket errorが出る場合に備え、prepareは`HF_HUB_DISABLE_XET=1`と`max_workers=1`を固定します。既存artifactを上書きしません。
 
-`run_benchmark.py`のfactoryは全equipmentに対してChronos2Adapterを一つだけ共有します。quantile policyは`native`だけを受け付け、coreの擬似分位点推定へfallbackしません。`run_smoke.py`はmultivariate target、past-only covariate、known-future covariateを一つの決定的requestに含め、予測とbaselineをJSONに保存します。
+`run_benchmark.py`のfactoryは全equipmentに対してChronos2Adapterを一つだけ共有します。single-runのquantile policyは`native`と`validation-residual-by-lead`を受け付けます。`native`は公式分位点をそのまま検証し、交差時は補正せず`partial`とします。`validation-residual-by-lead`は公式point-only予測とvalidation residual by lead校正を使う別scenarioです。`run_matrix.py`は`native`限定を維持し、coreの擬似分位点推定へfallbackしません。`run_smoke.py`はmultivariate target、past-only covariate、known-future covariateを一つの決定的requestに含め、予測とbaselineをJSONに保存します。
 
 小規模matrixは、seeds `[17, 42]`×horizons `[1, 3]`×context lengths `[6, 12]`の8 cellsです。base benchmarkのmodel parameter `context_length=12`はChronos backendへ渡す入力上限であり、matrix axisの`context_lengths`は各cellで実際に切り出す入力長です。6と12はいずれもこの上限内です。matrix全体でChronos2Adapterを一つだけ共有し、固定revision、CPU、local-only、検証済み外部cache、固定package versionを要求します。dataset、benchmark、matrixの各出力はChronos専用pathへ分離され、既存出力が一つでもある場合は上書きせず停止します。
 

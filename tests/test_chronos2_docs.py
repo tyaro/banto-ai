@@ -95,6 +95,18 @@ class Chronos2DocumentationTests(unittest.TestCase):
                 with self.assertRaises(ManifestValidationError):
                     validate(invalid, self.run_schema)
 
+    def test_chronos2_tool_readme_keeps_single_run_and_matrix_policy_boundaries(self) -> None:
+        readme = (ROOT / "tools" / "chronos2" / "README.md").read_text(encoding="utf-8")
+        for required in (
+            "single-runのquantile policyは`native`と`validation-residual-by-lead`を受け付けます",
+            "`native`は公式分位点をそのまま検証し、交差時は補正せず`partial`とします",
+            "`validation-residual-by-lead`は公式point-only予測とvalidation residual by lead校正を使う別scenarioです",
+            "`run_matrix.py`は`native`限定を維持",
+        ):
+            with self.subTest(required=required):
+                self.assertIn(required, readme)
+        self.assertNotIn("quantile policyは`native`だけを受け付け", readme)
+
     def test_known_load_example_is_not_documented_as_observed_future_data(self) -> None:
         config = load_json(ROOT / "examples" / "configs" / "benchmark-chronos2-known-load.json")
         self.assertEqual(config["past_only_covariate_ids"], [])
