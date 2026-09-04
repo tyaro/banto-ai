@@ -39,8 +39,7 @@ packageは`toto-2==2.0.0`、`toto-models==1.0.0`、checkpointは`Datadog/Toto-2.
 | equipment | `motor-01`、`conveyor-01`の2設備 |
 | dataset | 各seed 480 samples／equipment、960 records |
 | split | train 288、validation 96、test 96 samples／equipment |
-| validation origin | h15: `[288, 363]`、h30: `[288, 348]` |
-| test origin | h15: `[384, 459]`、h30: `[384, 444]` |
+| origin selection | validation h15: `[288, 363]`、validation h30: `[288, 348]`、test h15: `[384, 459]`、test h30: `[384, 444]` |
 | targets | `motor_current`（A）、`motor_temperature`（degC） |
 | covariate | `load_proxy`はpast-only、known-futureなし |
 | models | 5 baselines + Toto 2.0 = 6 models |
