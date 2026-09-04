@@ -29,4 +29,4 @@ Toto 2.0 4M向けに、合成motor／conveyorデータを使う小規模matrix�
 
 各seedで合成データを一度だけ生成し、同じ共有Toto adapterを8セルで再利用します。context=64はpaddingなし、context=120はpatch_size=32に合わせて128点入力（先頭8点は未観測padding）です。known-future covariateは空、device=cpu、batch=1、local_files_only=true、固定revision、native quantileを維持します。外部cache、offline実行、license／checkpoint／package検証、既存出力の上書き拒否も単一benchmark入口と同じです。
 
-このmatrixは実行基盤と設定のみを追加したもので、matrixの実測値・結果artifactはまだ作成していません。合成データの結果は実設備性能や製品採用を示さず、22M、fine-tuning、seed拡大、fault slice、実設備一般化も対象外です。
+このmatrixは2026-09-04に実行済みで、8/8 cell success、partial 0、failed 0でした。正本と数値は[`docs/results/toto2-matrix-2026-09-04.md`](../../docs/results/toto2-matrix-2026-09-04.md)に記録しています。合成データの結果は実設備性能や製品採用を示さず、22M、fine-tuning、seed拡大、fault slice、実設備一般化は次のgateです。

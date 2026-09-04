@@ -26,7 +26,7 @@ class Toto2DocumentationTests(unittest.TestCase):
         validate(config, result_schema["$defs"]["runConfig"], root=result_schema)
         validate({"toto2": toto["parameters"]}, result_schema["properties"]["model_parameters"], root=result_schema)
 
-    def test_small_matrix_documentation_matches_unmeasured_scope(self):
+    def test_small_matrix_documentation_matches_measured_scope(self):
         readme = (ROOT / "tools/toto2/README.md").read_text(encoding="utf-8")
         for required in (
             "run_matrix.py",
@@ -34,7 +34,8 @@ class Toto2DocumentationTests(unittest.TestCase):
             "8条件",
             "context=64はpaddingなし",
             "context=120はpatch_size=32に合わせて128点入力",
-            "matrixの実測値・結果artifactはまだ作成していません",
+            "8/8 cell success、partial 0、failed 0",
+            "docs/results/toto2-matrix-2026-09-04.md",
             "同じ共有Toto adapterを8セルで再利用",
         ):
             with self.subTest(required=required):
@@ -42,6 +43,60 @@ class Toto2DocumentationTests(unittest.TestCase):
         self.assertNotIn(
             "--config examples\\configs\\benchmark-matrix-toto2-small.json", readme
         )
+
+    def test_matrix_report_records_artifact_provenance_metrics_and_next_gates(self):
+        report = (ROOT / "docs/results/toto2-matrix-2026-09-04.md").read_text(encoding="utf-8")
+        required = (
+            "8/8 cell success",
+            "partial 0",
+            "failed 0",
+            "1c42926903bf3235ef8b86badf0491a5575b4060",
+            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "3de9b683df25a871bcc1000f6a75ba21a301f55dad316cc15bc3675441959784",
+            "78,629 bytes",
+            "d683ff6ccc6d760ac7d1f5b09b0c7b648368cc15e5c8bb60cad1e7d0c5c62d21",
+            "0bcdbf65e99f4b5ef62f309ebf517f0f59267ac0174ffa39e6d931a4eb896740",
+            "ce464d618f923c10d9ed543e2f5ee54738b1f235088e9551733087532993eb16",
+            "5ed5ca824e3fe21522c2f91e41ca1c037d1166de102dd887d5b8ff33f443a439",
+            "h15: `[288, 363]`",
+            "h30: `[288, 348]`",
+            "test origin",
+            "8,640件",
+            "1,440件",
+            "32回",
+            "0.06990157314809163",
+            "0.6487267033140818",
+            "1.278612267920939",
+            "0.7135191171000164",
+            "0.18535192643958195",
+            "0.6237563177244398",
+            "172.4390500166919",
+            "1071.7355999950087",
+            "1901.820460008457",
+            "108.64316670005792 s",
+            "741,568,512 bytes",
+            "vibration_feature",
+            "product-candidate",
+            "seedを5以上",
+            "22M",
+            "Granite TTM",
+        )
+        for required_value in required:
+            with self.subTest(required_value=required_value):
+                self.assertIn(required_value, report)
+
+        for path in (
+            ROOT / "README.md",
+            ROOT / "docs/toto2-notes.md",
+            ROOT / "docs/research-roadmap.md",
+            ROOT / "docs/research-implementation-plan.md",
+            ROOT / "tools/toto2/README.md",
+        ):
+            text = path.read_text(encoding="utf-8")
+            with self.subTest(path=path):
+                self.assertIn("toto2-matrix-2026-09-04.md", text)
+                self.assertNotIn("matrix未実施", text)
+                self.assertNotIn("matrixの実測値・結果artifactはまだ作成していません", text)
 
     def test_invalid_or_unknown_toto_parameters_fail_closed_in_schema(self):
         config_path = ROOT / "examples/configs/benchmark-metropt3-toto2-4m.json"

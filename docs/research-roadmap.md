@@ -34,7 +34,9 @@
 
 ## 2026-09-04時点の進捗
 
-Toto 2.0 4Mは同じForecaster／MetroPT runnerへ実装接続し、固定HF revision、外部cache、offline／CPU／batch=1／`decode_block_size=None`でCPU smokeと実benchmarkを実行済みです。context=120はpatch_size=32に合わせて先頭8点の未観測paddingを内部追加します。6 models、3 targets、16 validation／16 test origins、4,320 predictionsの結果を[`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](results/toto2-metropt3-evaluation-2026-09-04.md)に記録しました。22M、matrix、seed拡大、fault slice、実設備一般化は未実施です。
+Toto 2.0 4Mは同じForecaster／MetroPT runnerへ実装接続し、固定HF revision、外部cache、offline／CPU／batch=1／`decode_block_size=None`でCPU smokeと実benchmarkを実行済みです。context=120はpatch_size=32に合わせて先頭8点の未観測paddingを内部追加します。6 models、3 targets、16 validation／16 test origins、4,320 predictionsの結果を[`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](results/toto2-metropt3-evaluation-2026-09-04.md)に記録しました。22M、seed拡大、fault slice、実設備一般化は次工程です。
+
+Toto 2.0 4Mの小規模matrixも、seed `[17, 42]` × horizon `[15, 30]` × context `[64, 120]`、2 equipment、各seed 480 samples／equipment、8/8 cells success／0 partial／0 failedで完走しました。正本とtarget別cell-macro metrics、exact origin、runtime、memory、padding境界は[`docs/results/toto2-matrix-2026-09-04.md`](results/toto2-matrix-2026-09-04.md)に記録しています。2 seed・少数origin・単一synthetic generatorの限定結果であり、次はseedを5以上、origin拡大、missing／stale／fault／regime slice、model-only resource、22M、公開／実設備一般化です。
 
 Phase 2の基盤として、chronological rolling-origin runnerへmodel registry注入境界、equipment／model単位のinstance再利用、origin単位のmulti-target request、past-only／known-future covariate境界、model別quantile policy、共通origin選択とprovenance記録を追加しました。result schema `0.2`にはmodel-target別およびmodel-equipment-target別metricsを追加し、unit一致を検証してから設備横断集約します。結果にはmodel別metrics、model別latency、OS process peakの測定源も記録します。TimesFM 3専用entrypointは、既存のlicense manifest、固定checkpoint revision、artifact hash、専用外部cache、offline環境を検証してから実行します。実行用sampleは[`examples/configs/benchmark-timesfm3-small.json`](../examples/configs/benchmark-timesfm3-small.json)です。
 
