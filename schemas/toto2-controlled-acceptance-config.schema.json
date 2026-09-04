@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "banto-ai Toto 2.0 controlled acceptance analyzer config",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "analyzer_id", "output_dir", "track_order", "tracks"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "analyzer_id": {"type": "string", "const": "toto2-controlled-acceptance"},
+    "output_dir": {"$ref": "#/$defs/repositoryPath"},
+    "track_order": {"type": "array", "const": ["control", "target-fault", "target-quality", "covariate-quality"]},
+    "tracks": {
+      "type": "array", "minItems": 4, "maxItems": 4,
+      "items": {"$ref": "#/$defs/track"}
+    }
+  },
+  "$defs": {
+    "repositoryPath": {
+      "type": "string", "minLength": 1,
+      "pattern": "^(?!/)(?!.*\\\\)(?!.*(^|/)\\.\\.(?:/|$))[A-Za-z0-9][A-Za-z0-9._/-]*$"
+    },
+    "event": {
+      "type": "object", "additionalProperties": false,
+      "required": ["event_id", "equipment_id", "signal_id", "event_type", "start_sample", "end_sample", "magnitude", "enabled", "role"],
+      "properties": {
+        "event_id": {"type": "string", "minLength": 1},
+        "equipment_id": {"type": "string", "minLength": 1},
+        "signal_id": {"type": "string", "minLength": 1},
+        "event_type": {"type": "string", "minLength": 1},
+        "start_sample": {"type": "integer", "minimum": 0},
+        "end_sample": {"type": "integer", "minimum": 1},
+        "magnitude": {"type": "number"},
+        "enabled": {"const": true},
+        "role": {"type": "string", "enum": ["target", "covariate"]}
+      }
+    },
+    "track": {
+      "type": "object", "additionalProperties": false,
+      "required": ["track_id", "role", "matrix_id", "matrix_result_path", "matrix_config_path", "generator_config_path", "benchmark_config_path", "dataset_output_root", "benchmark_output_root", "matrix_output_dir", "expected_events"],
+      "properties": {
+        "track_id": {"type": "string", "enum": ["control", "target-fault", "target-quality", "covariate-quality"]},
+        "role": {"type": "string", "enum": ["control", "target-fault", "target-quality", "covariate-quality"]},
+        "matrix_id": {"type": "string", "minLength": 1},
+        "matrix_result_path": {"$ref": "#/$defs/repositoryPath"},
+        "matrix_config_path": {"$ref": "#/$defs/repositoryPath"},
+        "generator_config_path": {"$ref": "#/$defs/repositoryPath"},
+        "benchmark_config_path": {"$ref": "#/$defs/repositoryPath"},
+        "dataset_output_root": {"$ref": "#/$defs/repositoryPath"},
+        "benchmark_output_root": {"$ref": "#/$defs/repositoryPath"},
+        "matrix_output_dir": {"$ref": "#/$defs/repositoryPath"},
+        "expected_events": {"type": "array", "items": {"$ref": "#/$defs/event"}}
+      }
+    }
+  }
+}

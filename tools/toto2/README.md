@@ -42,4 +42,10 @@ generator → quality gate → benchmark → Toto adapter の受入契約を固�
 & $totoPython tools\toto2\run_matrix.py --config examples\configs\benchmark-matrix-toto2-controlled-covariate-quality.json --cache-dir C:\banto-cache\toto2
 ```
 
+4本のreal matrixを実行した後、同じrepository rootからcross-matrix acceptance analyzerを実行します。実行順は **4 matrix → analyzer** です。analyzerはcell／prediction／truth／quality／provenanceを再検証し、既存outputを上書きせずに結果をpublishします。real controlled resultsはこのsavepointでは未実行です。
+
+```powershell
+& $totoPython tools\toto2\analyze_controlled_acceptance.py --config examples\configs\toto2-controlled-acceptance.json
+```
+
 既存の small matrix は2026-09-04に実行済みで、8/8 cell success、partial 0、failed 0でした。正本と数値は[`docs/results/toto2-matrix-2026-09-04.md`](../../docs/results/toto2-matrix-2026-09-04.md)に記録しています。この実測値は既存 small matrix のもので、下記 controlled scenario の結果ではありません。合成データの結果は実設備性能や製品採用を示さず、22M、fine-tuning、seed拡大、fault slice、実設備一般化は次のgateです。

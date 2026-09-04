@@ -1,0 +1,66 @@
+{
+  "schema_version": "0.1",
+  "analyzer_id": "toto2-controlled-acceptance",
+  "output_dir": "artifacts/toto2/ctl/acceptance",
+  "track_order": ["control", "target-fault", "target-quality", "covariate-quality"],
+  "tracks": [
+    {
+      "track_id": "control",
+      "role": "control",
+      "matrix_id": "toto2-ctl-a",
+      "matrix_result_path": "artifacts/toto2/ctl/m-a/result.json",
+      "matrix_config_path": "examples/configs/benchmark-matrix-toto2-controlled-control.json",
+      "generator_config_path": "examples/configs/synthetic-toto2-controlled-control.json",
+      "benchmark_config_path": "examples/configs/benchmark-toto2-controlled.json",
+      "dataset_output_root": "artifacts/toto2/ctl/ds",
+      "benchmark_output_root": "artifacts/toto2/ctl/bench",
+      "matrix_output_dir": "artifacts/toto2/ctl/m-a",
+      "expected_events": []
+    },
+    {
+      "track_id": "target-fault",
+      "role": "target-fault",
+      "matrix_id": "toto2-ctl-b",
+      "matrix_result_path": "artifacts/toto2/ctl/m-b/result.json",
+      "matrix_config_path": "examples/configs/benchmark-matrix-toto2-controlled-target-fault.json",
+      "generator_config_path": "examples/configs/synthetic-toto2-controlled-target-fault.json",
+      "benchmark_config_path": "examples/configs/benchmark-toto2-controlled.json",
+      "dataset_output_root": "artifacts/toto2/ctl/ds",
+      "benchmark_output_root": "artifacts/toto2/ctl/bench",
+      "matrix_output_dir": "artifacts/toto2/ctl/m-b",
+      "expected_events": [{"event_id": "motor-01-current-jam-or-slip-test", "equipment_id": "motor-01", "signal_id": "motor_current", "event_type": "jam_or_slip", "start_sample": 388, "end_sample": 396, "magnitude": 0.35, "enabled": true, "role": "target"}]
+    },
+    {
+      "track_id": "target-quality",
+      "role": "target-quality",
+      "matrix_id": "toto2-ctl-c",
+      "matrix_result_path": "artifacts/toto2/ctl/m-c/result.json",
+      "matrix_config_path": "examples/configs/benchmark-matrix-toto2-controlled-target-quality.json",
+      "generator_config_path": "examples/configs/synthetic-toto2-controlled-target-quality.json",
+      "benchmark_config_path": "examples/configs/benchmark-toto2-controlled.json",
+      "dataset_output_root": "artifacts/toto2/ctl/ds",
+      "benchmark_output_root": "artifacts/toto2/ctl/bench",
+      "matrix_output_dir": "artifacts/toto2/ctl/m-c",
+      "expected_events": [
+        {"event_id": "motor-01-current-dropout-context", "equipment_id": "motor-01", "signal_id": "motor_current", "event_type": "dropout", "start_sample": 368, "end_sample": 372, "magnitude": 0.0, "enabled": true, "role": "target"},
+        {"event_id": "motor-01-temperature-stale-context", "equipment_id": "motor-01", "signal_id": "motor_temperature", "event_type": "stale_value", "start_sample": 372, "end_sample": 376, "magnitude": 0.0, "enabled": true, "role": "target"}
+      ]
+    },
+    {
+      "track_id": "covariate-quality",
+      "role": "covariate-quality",
+      "matrix_id": "toto2-ctl-d",
+      "matrix_result_path": "artifacts/toto2/ctl/m-d/result.json",
+      "matrix_config_path": "examples/configs/benchmark-matrix-toto2-controlled-covariate-quality.json",
+      "generator_config_path": "examples/configs/synthetic-toto2-controlled-covariate-quality.json",
+      "benchmark_config_path": "examples/configs/benchmark-toto2-controlled.json",
+      "dataset_output_root": "artifacts/toto2/ctl/ds",
+      "benchmark_output_root": "artifacts/toto2/ctl/bench",
+      "matrix_output_dir": "artifacts/toto2/ctl/m-d",
+      "expected_events": [
+        {"event_id": "motor-01-load-dropout-context", "equipment_id": "motor-01", "signal_id": "load_proxy", "event_type": "dropout", "start_sample": 368, "end_sample": 372, "magnitude": 0.0, "enabled": true, "role": "covariate"},
+        {"event_id": "motor-01-load-stale-context", "equipment_id": "motor-01", "signal_id": "load_proxy", "event_type": "stale_value", "start_sample": 372, "end_sample": 376, "magnitude": 0.0, "enabled": true, "role": "covariate"}
+      ]
+    }
+  ]
+}
