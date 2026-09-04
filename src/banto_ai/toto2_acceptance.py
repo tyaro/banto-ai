@@ -15,12 +15,13 @@ import shutil
 import tempfile
 import warnings
 from contextlib import contextmanager
+from datetime import datetime, timedelta
 from pathlib import Path, PureWindowsPath
 from typing import Any, Iterable, Mapping
 from uuid import uuid4
 
 from .benchmark import PREDICTION_KEYS, _policy, _revision
-from .event_slices import _verify_dataset
+from .event_slices import EventSliceError, _parse_time, _verify_dataset
 from .manifest import ManifestValidationError, load_json, validate
 
 
@@ -99,6 +100,22 @@ def _strict_object(path: Path, label: str) -> tuple[dict[str, Any], bytes]:
     if not isinstance(value, dict):
         raise AcceptanceError(f"{label} must be a JSON object")
     return value, raw
+
+
+def _parse_utc_timestamp(value: Any, label: str) -> datetime:
+    """Parse a prediction timestamp and retain only an explicit UTC contract."""
+    try:
+        parsed = _parse_time(value, label)
+    except EventSliceError as exc:
+        raise AcceptanceError(str(exc)) from exc
+    normalized = value[:-1] + "+00:00" if isinstance(value, str) and value.endswith("Z") else value
+    try:
+        original = datetime.fromisoformat(normalized)
+    except (TypeError, ValueError) as exc:
+        raise AcceptanceError(f"{label} is not a valid ISO-8601 timestamp") from exc
+    if original.tzinfo is None or original.utcoffset() != timedelta(0):
+        raise AcceptanceError(f"{label} must use an explicit UTC timezone")
+    return parsed
 
 
 def _write_fsync(path: Path, payload: bytes, label: str) -> None:
@@ -726,8 +743,12 @@ def _cell_result_audit(
         if key not in expected_keys:
             raise AcceptanceError(f"extra prediction key: {cell_id}/{key}")
         equipment = row["equipment_id"]
-        expected_timestamp = rows_by_equipment[equipment][ORIGIN_INDEX + row["lead_time"] - 1]["timestamp"]
-        if row["timestamp"] != expected_timestamp:
+        expected_timestamp = _parse_utc_timestamp(
+            rows_by_equipment[equipment][ORIGIN_INDEX + row["lead_time"] - 1]["timestamp"],
+            "expected forecast timestamp",
+        )
+        actual_timestamp = _parse_utc_timestamp(row["timestamp"], "prediction timestamp")
+        if actual_timestamp != expected_timestamp:
             raise AcceptanceError(f"prediction timestamp/lead mismatch: {cell_id}/{key}")
         expected_operating_mode = rows_by_equipment[equipment][ORIGIN_INDEX + row["lead_time"] - 1].get("operating_mode")
         if row["operating_mode"] != expected_operating_mode:

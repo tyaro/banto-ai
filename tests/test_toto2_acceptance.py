@@ -17,7 +17,7 @@ from banto_ai.generator import generate_synthetic
 from banto_ai.manifest import load_json, validate
 from banto_ai.quality import check_dataset
 from banto_ai.event_slices import _verify_dataset
-from banto_ai.toto2_acceptance import AcceptanceError, _advisory_lock, _assert_dataset_inventories_unchanged, _dataset_inventory, _output_state, _release_advisory_lock, _strict_dataset_artifacts, _validate_cross_track_truth, analyze_controlled_acceptance, validate_acceptance_config
+from banto_ai.toto2_acceptance import AcceptanceError, _advisory_lock, _assert_dataset_inventories_unchanged, _dataset_inventory, _output_state, _parse_utc_timestamp, _release_advisory_lock, _strict_dataset_artifacts, _validate_cross_track_truth, analyze_controlled_acceptance, validate_acceptance_config
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -129,7 +129,7 @@ class Toto2AcceptanceTests(unittest.TestCase):
                                     full_target = f"{equipment}.{target}"
                                     for lead in range(1, horizon + 1):
                                         point = by_equipment[equipment][384 + lead - 1]["signals"][target]["value"]
-                                        timestamp = by_equipment[equipment][384 + lead - 1]["timestamp"]
+                                        timestamp = by_equipment[equipment][384 + lead - 1]["timestamp"].replace(".000Z", "Z")
                                         predictions.append({"model": model["name"], "equipment_id": equipment, "target_signal_id": full_target, "operating_mode": by_equipment[equipment][384 + lead - 1]["operating_mode"], "split": "test", "origin_timestamp": by_equipment[equipment][384]["timestamp"], "timestamp": timestamp, "lead_time": lead, "actual": point, "point_forecast": point, "quantiles": {"0.1": point, "0.5": point, "0.9": point}})
                         quality = check_dataset(ROOT / dataset_relative, ROOT)
                         policies = {model["name"]: ("native" if model["name"] == "toto2" else "validation-residual-by-lead") for model in base_benchmark["models"]}
@@ -289,6 +289,40 @@ class Toto2AcceptanceTests(unittest.TestCase):
             config = load_json(self.config_path); config["output_dir"] = f"artifacts/{self.temp.name}/operating-mode-output"; mode_config = self.temp / "configs" / "operating-mode.json"; _write(mode_config, config)
             with self.assertRaises(AcceptanceError):
                 analyze_controlled_acceptance(mode_config, ROOT)
+        finally:
+            prediction_path.write_text(original, encoding="utf-8", newline="\n")
+
+    def test_prediction_timestamp_accepts_equivalent_utc_forms(self) -> None:
+        self.assertEqual(
+            _parse_utc_timestamp("2026-01-01T00:06:24.000Z", "expected"),
+            _parse_utc_timestamp("2026-01-01T00:06:24Z", "actual"),
+        )
+        self.assertEqual(
+            _parse_utc_timestamp("2026-01-01T00:06:24+00:00", "actual"),
+            _parse_utc_timestamp("2026-01-01T00:06:24Z", "expected"),
+        )
+        with self.assertRaises(AcceptanceError):
+            _parse_utc_timestamp("2026-01-01T00:06:24+09:00", "non-UTC")
+        with self.assertRaises(AcceptanceError):
+            _parse_utc_timestamp("2026-01-01T00:06:24", "naive")
+
+    def test_prediction_timestamp_one_second_drift_is_rejected(self) -> None:
+        matrix = load_json(self.temp / "matrix" / "control" / "result.json")
+        cell = matrix["cells"][0]
+        prediction_path = ROOT / cell["output_dir"] / "predictions.jsonl"
+        original = prediction_path.read_text(encoding="utf-8")
+        try:
+            rows = original.splitlines()
+            first = json.loads(rows[0])
+            first["timestamp"] = "2026-01-01T00:06:25Z"
+            rows[0] = json.dumps(first, sort_keys=True)
+            prediction_path.write_text("\n".join(rows) + "\n", encoding="utf-8", newline="\n")
+            config = load_json(self.config_path)
+            config["output_dir"] = f"artifacts/{self.temp.name}/timestamp-drift-output"
+            drift_config = self.temp / "configs" / "timestamp-drift.json"
+            _write(drift_config, config)
+            with self.assertRaises(AcceptanceError):
+                analyze_controlled_acceptance(drift_config, ROOT)
         finally:
             prediction_path.write_text(original, encoding="utf-8", newline="\n")
 
