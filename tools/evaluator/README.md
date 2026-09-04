@@ -36,7 +36,7 @@ python tools/evaluator/run_matrix.py --config <baseline-matrix-config.json>
 
 展開順は`seed → horizon → context_length`です。seedはgenerator configへmaterializeされ、datasetはseedごとに一度だけ生成・品質確認して、そのseedの全cellで再利用します。matrix configと全出力pathはrepository-relativeのforward slash表記かつ`artifacts/`配下に限定され、既存のdataset／benchmark／matrix出力は上書きしません。
 
-base generator／benchmark configは、`utf-8-json-sort-keys-compact-no-trailing-newline-v1` のcanonical JSON bytesに対するSHA-256をdecision identityとして固定し、matrix開始時のcode revisionとともに記録します。canonical bytesはUTF-8、`ensure_ascii=false`、sort keys、compact separators、NaN禁止、末尾改行なしです。raw-byte SHA-256は改行差を含む監査用の別フィールドです。anomaly Savepoint Aではmatrix schemaとbase generator schemaもcanonical hashをpinし、開始時と完了直前に再読込します。各completed cellのrevision一致と、publish直前のbase config／worktree不変性を検証し、差があれば正常なmatrix resultを確定しません。生成済みdataset／runは監査用に残し、runnerが削除するのは自身のtemporary matrix directoryだけです。dataset recordにはmanifestでdataset直下に解決した観測fileのSHA-256も残し、異seedで同一観測内容ならfail closedします。
+base generator／benchmark configは読み込んだ同じraw bytesからSHA-256を取得し、matrix開始時のcode revisionとともに固定します。各completed cellのrevision一致と、publish直前のbase config／worktree不変性を検証し、差があれば正常なmatrix resultを確定しません。生成済みdataset／runは監査用に残し、runnerが削除するのは自身のtemporary matrix directoryだけです。dataset recordにはmanifestでdataset直下に解決した観測fileのSHA-256も残し、異seedで同一観測内容ならfail closedします。
 
 `result.json`と日本語`summary.md`の主集計は、単位を分離した`by_model_target`をmodel×target×unit×horizon×contextごとにseed間要約したcell-macro summaryです。mean／min／max／sample stddevとcell／point countを記録します。raw predictionをまとめ直すpooled metricではなく、`aggregate`／`by_model`も優劣判定には使いません。matrix runnerは評価範囲拡大の基盤であり、Phase 2完了を示しません。
 
