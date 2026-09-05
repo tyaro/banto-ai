@@ -42,6 +42,10 @@ class GeneratorError(ValueError):
     """設定または出力先が不安全・不正な場合に発生する。"""
 
 
+class GeneratorConfigSemanticError(ValueError):
+    """schema通過後のgenerator config semantic違反。"""
+
+
 def _canonical_bytes(value: Any) -> bytes:
     return (json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n").encode("utf-8")
 
@@ -73,46 +77,75 @@ def _finite(value: float) -> float:
     return round(value, 6)
 
 
+def validate_generator_config_semantics(config: dict[str, Any]) -> None:
+    """Validate schema-approved generator semantics without filesystem access."""
+    if config.get("generator_version") != GENERATOR_VERSION:
+        raise GeneratorConfigSemanticError(f"unsupported generator_version: {config.get('generator_version')}")
+    count = config.get("sample_count")
+    equipment = config.get("equipment")
+    if not isinstance(count, int) or isinstance(count, bool) or not isinstance(equipment, list):
+        raise GeneratorConfigSemanticError("generator config semantic fields have invalid types")
+    equipment_ids = [item.get("equipment_id") for item in equipment if isinstance(item, dict)]
+    if len(equipment) < 2:
+        raise GeneratorConfigSemanticError("at least two equipment are required for cross_equipment split")
+    if len(equipment_ids) != len(equipment) or len(set(equipment_ids)) != len(equipment_ids):
+        raise GeneratorConfigSemanticError("equipment_id must be unique")
+    regimes = config.get("regimes")
+    if not isinstance(regimes, list) or not regimes:
+        raise GeneratorConfigSemanticError("regimes must be a non-empty list")
+    ordered_regimes = sorted(regimes, key=lambda item: item.get("start_sample") if isinstance(item, dict) else -1)
+    if regimes != ordered_regimes:
+        raise GeneratorConfigSemanticError("regimes must be sorted by start_sample")
+    if any(not isinstance(item, dict) for item in regimes):
+        raise GeneratorConfigSemanticError("regime must be an object")
+    if ordered_regimes[0]["start_sample"] != 0 or ordered_regimes[-1]["end_sample"] != count:
+        raise GeneratorConfigSemanticError("regimes must cover all samples")
+    if any(not 0 <= item["start_sample"] < item["end_sample"] <= count for item in ordered_regimes):
+        raise GeneratorConfigSemanticError("regime interval must satisfy 0 <= start < end <= sample_count")
+    if any(a["end_sample"] != b["start_sample"] for a, b in zip(ordered_regimes, ordered_regimes[1:])):
+        raise GeneratorConfigSemanticError("regime intervals must be contiguous and non-overlapping")
+    events = config.get("events")
+    if not isinstance(events, list):
+        raise GeneratorConfigSemanticError("events must be a list")
+    event_ids: set[str] = set()
+    quality_events: list[tuple[str, str, int, int, str]] = []
+    for event in events:
+        if not isinstance(event, dict):
+            raise GeneratorConfigSemanticError("event must be an object")
+        event_id = event.get("event_id")
+        if event_id in event_ids:
+            raise GeneratorConfigSemanticError("event_id must be unique")
+        event_ids.add(event_id)
+        equipment_id = event.get("equipment_id")
+        if equipment_id not in equipment_ids:
+            raise GeneratorConfigSemanticError(f"event references unknown equipment: {equipment_id}")
+        start_sample = event.get("start_sample")
+        end_sample = event.get("end_sample")
+        if not isinstance(start_sample, int) or isinstance(start_sample, bool) or not isinstance(end_sample, int) or isinstance(end_sample, bool) or not 0 <= start_sample < end_sample <= count:
+            raise GeneratorConfigSemanticError("event interval must satisfy 0 <= start < end <= sample_count")
+        event_type = event.get("event_type")
+        if event_type not in EVENT_TYPES:
+            raise GeneratorConfigSemanticError("unsupported event_type")
+        signal_id = event.get("signal_id")
+        if signal_id is not None and signal_id not in SIGNALS:
+            raise GeneratorConfigSemanticError(f"event signal_id is unknown, including disabled events: {signal_id}")
+        if event.get("enabled") and event_type in QUALITY_CHANGING_EVENT_TYPES:
+            quality_events.append((equipment_id, event_signal(event), start_sample, end_sample, event_id))
+    ordered_quality_events = sorted(quality_events, key=lambda item: (item[0], item[1], item[2], item[3], item[4]))
+    for previous, current in zip(ordered_quality_events, ordered_quality_events[1:]):
+        if previous[:2] == current[:2] and previous[3] > current[2]:
+            raise GeneratorConfigSemanticError(f"quality-changing event intervals overlap: {previous[4]} and {current[4]}")
+
+
 def _validate_config(config: dict[str, Any], schema_path: Path) -> None:
     try:
         validate(config, load_json(schema_path))
     except ManifestValidationError as exc:
         raise GeneratorError(str(exc)) from exc
-    if config["generator_version"] != GENERATOR_VERSION:
-        raise GeneratorError(f"unsupported generator_version: {config['generator_version']}")
-    count = config["sample_count"]
-    equipment_ids = [item["equipment_id"] for item in config["equipment"]]
-    if len(equipment_ids) < 2:
-        raise GeneratorError("at least two equipment are required for cross_equipment split")
-    if len(set(equipment_ids)) != len(equipment_ids):
-        raise GeneratorError("equipment_id must be unique")
-    regimes = sorted(config["regimes"], key=lambda item: item["start_sample"])
-    if regimes[0]["start_sample"] != 0 or regimes[-1]["end_sample"] != count:
-        raise GeneratorError("regimes must cover all samples")
-    if any(not 0 <= item["start_sample"] < item["end_sample"] <= count for item in regimes):
-        raise GeneratorError("regime interval must satisfy 0 <= start < end <= sample_count")
-    if any(a["end_sample"] != b["start_sample"] for a, b in zip(regimes, regimes[1:])):
-        raise GeneratorError("regime intervals must be contiguous and non-overlapping")
-    event_ids: set[str] = set()
-    quality_events: list[tuple[str, str, int, int, str]] = []
-    for event in config["events"]:
-        if event["event_id"] in event_ids:
-            raise GeneratorError("event_id must be unique")
-        event_ids.add(event["event_id"])
-        if event["equipment_id"] not in equipment_ids:
-            raise GeneratorError(f"event references unknown equipment: {event['equipment_id']}")
-        if not 0 <= event["start_sample"] < event["end_sample"] <= count:
-            raise GeneratorError("event interval must satisfy 0 <= start < end <= sample_count")
-        if event["event_type"] not in EVENT_TYPES:
-            raise GeneratorError("unsupported event_type")
-        if event.get("signal_id") is not None and event["signal_id"] not in SIGNALS:
-            raise GeneratorError(f"event signal_id is unknown, including disabled events: {event['signal_id']}")
-        if event["enabled"] and event["event_type"] in QUALITY_CHANGING_EVENT_TYPES:
-            quality_events.append((event["equipment_id"], event_signal(event), event["start_sample"], event["end_sample"], event["event_id"]))
-    ordered_quality_events = sorted(quality_events, key=lambda item: (item[0], item[1], item[2], item[3], item[4]))
-    for previous, current in zip(ordered_quality_events, ordered_quality_events[1:]):
-        if previous[:2] == current[:2] and previous[3] > current[2]:
-            raise GeneratorError(f"quality-changing event intervals overlap: {previous[4]} and {current[4]}")
+    try:
+        validate_generator_config_semantics(config)
+    except GeneratorConfigSemanticError as exc:
+        raise GeneratorError(str(exc)) from exc
 
 
 def _regime_at(regimes: list[dict[str, Any]], index: int) -> dict[str, Any]:

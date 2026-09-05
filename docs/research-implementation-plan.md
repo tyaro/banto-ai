@@ -404,6 +404,8 @@ forecast benchmarkとは分離したstdlib-only anomaly evaluator v0.1を追加�
 
 ## 次工程: multi-seed anomaly replay preregistration
 
+generator configのschema後semantic（version、equipment、regime、event、disabled event、quality-changing overlap）はgeneratorとqualityが共有するI/Oなしvalidatorで検査する。
+
 Savepoint 3直後の正式な次工程は、実験開始前に固定する [`anomaly-multiseed-evaluation-plan.md`](anomaly-multiseed-evaluation-plan.md) である。10 seed `[11,17,23,29,37,42,53,67,79,97]`、6 mode × 2 equipmentの12 layout、120 cells、30秒mode内へ収めるexpanded accounting window、固定detector parameter、event／signalとequipmentの別集計、seed-cluster block bootstrap、8個の完全修飾target signal availability、engineering gate、performance promotion gateを同文書へ登録する。stopped／cooldown faultはsynthetic stress testとして扱い、実設備の故障頻度や物理妥当性は主張しない。
 
 この段階では120-cell run、結果artifact生成、性能達成を完了したとは扱わない。Savepoint Aのschema/config/layout validator、Bのdeterministic matrix runner、Cのfake/unit tests、Dのclean run、Eの独立監査・結果docを順に実施する。Savepoint Bのrunnerとfake/unit testsは実装済みであり、各cellの初期captured observations／events／splitと固定configからのevaluator semantics純粋再計算、canonical exact比較、cell完了時のreplay context破棄も実装済みだが、実120-cell runと結果artifact生成は未実施である。検証の追加計算量・時間は概ね評価1回分相当である。再実行または計画変更は新version・新preregistrationとし、TimesFM／Chronos／Toto／TSPulseのmodel比較、customer data、control／Banto Hub writeは別工程・別計画とする。

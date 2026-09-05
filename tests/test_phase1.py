@@ -11,7 +11,7 @@ from pathlib import Path
 
 from banto_ai.generator import GeneratorError, _resolve_output, generate_synthetic
 from banto_ai.manifest import ManifestValidationError, load_json, validate_manifest
-from banto_ai.quality import DatasetQualityError, check_dataset
+from banto_ai.quality import DatasetQualityError, check_dataset, check_synthetic_dataset_semantics
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -260,6 +260,28 @@ class Phase1GeneratorTests(unittest.TestCase):
             with self.assertRaises(GeneratorError):
                 generate_synthetic(path, Path(directory) / "out", ROOT)
 
+    def test_generator_semantic_validator_rejects_schema_valid_config_mutations(self) -> None:
+        mutations = {
+            "unsupported_version": lambda value: value.update(generator_version="0.1.1"),
+            "duplicate_equipment": lambda value: value["equipment"][1].update(equipment_id=value["equipment"][0]["equipment_id"]),
+            "unsorted_regimes": lambda value: value.update(regimes=list(reversed(value["regimes"]))),
+            "overlap_regimes": lambda value: value["regimes"][1].update(start_sample=0),
+            "duplicate_event_id": lambda value: value["events"][1].update(event_id=value["events"][0]["event_id"]),
+            "disabled_unknown_equipment": lambda value: value["events"][-1].update(enabled=False, equipment_id="unknown-equipment"),
+            "disabled_unknown_signal": lambda value: value["events"][-1].update(enabled=False, signal_id="unknown-signal"),
+            "disabled_out_of_range": lambda value: value["events"][-1].update(enabled=False, start_sample=value["sample_count"], end_sample=value["sample_count"] + 1),
+            "quality_event_overlap": lambda value: value["events"].append({**value["events"][1], "event_id": "overlap-quality", "start_sample": 22, "end_sample": 25, "enabled": True}),
+        }
+        for name, mutate in mutations.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
+                value = load_json(CONFIG)
+                value["dataset_id"] = f"semantic-{name.replace('_', '-')}"
+                mutate(value)
+                path = Path(directory) / f"{name}.json"
+                path.write_text(json.dumps(value), encoding="utf-8")
+                with self.assertRaises(GeneratorError):
+                    generate_synthetic(path, Path(directory) / "dataset", ROOT)
+
     def test_manifests_quality_and_splits(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             output = generate_synthetic(CONFIG, Path(directory) / "dataset", ROOT)
@@ -321,6 +343,20 @@ class Phase1GeneratorTests(unittest.TestCase):
             observation_path.write_text("\n".join([json.dumps(row)] + lines[1:]) + "\n", encoding="utf-8")
             with self.assertRaises(DatasetQualityError):
                 check_dataset(output, ROOT)
+
+    def test_check_dataset_matches_captured_pure_quality_result(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = generate_synthetic(CONFIG, Path(directory) / "dataset", ROOT)
+            manifest = load_json(output / "dataset-manifest.json")
+            split = load_json(output / "split-manifest.json")
+            config = load_json(output / "generator-config.json")
+            observations = [json.loads(line) for line in (output / "observations.jsonl").read_text(encoding="utf-8").splitlines()]
+            events = [json.loads(line) for line in (output / "events.jsonl").read_text(encoding="utf-8").splitlines()]
+            summary = load_json(output / "summary.json")
+            fingerprint = load_json(output / "fingerprint.json")
+            names = ("generator-config.json", "observations.jsonl", "events.jsonl", "split-manifest.json", "dataset-manifest.json")
+            hashes = {name: hashlib.sha256((output / name).read_bytes()).hexdigest() for name in names}
+            self.assertEqual(check_dataset(output, ROOT), check_synthetic_dataset_semantics(manifest, split, config, observations, events, summary, fingerprint, hashes))
 
     def test_quality_checker_detects_unexpected_gap(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
@@ -535,6 +571,46 @@ class Phase1GeneratorTests(unittest.TestCase):
                 config_path.write_text(json.dumps(config), encoding="utf-8")
                 summary_path.write_text(json.dumps(summary), encoding="utf-8")
                 self._refresh_fingerprint(output)
+                with self.assertRaises(DatasetQualityError):
+                    check_dataset(output, ROOT)
+
+    def test_quality_shared_semantics_reject_rehashed_schema_valid_attacks(self) -> None:
+        def follow_config_summary(config: dict, summary: dict) -> None:
+            summary["regime_coverage"] = {
+                regime: sum(item["end_sample"] - item["start_sample"] for item in config["regimes"] if item["regime"] == regime)
+                for regime in ("stopped", "startup", "low_speed", "nominal", "high_load", "cooldown")
+            }
+            active = [event for event in config["events"] if event["enabled"]]
+            summary.update(
+                configured_event_count=len(config["events"]),
+                disabled_event_count=sum(not event["enabled"] for event in config["events"]),
+                event_count=len(active),
+                event_coverage={event_type: sum(event["event_type"] == event_type for event in active) for event_type in ("sensor_drift", "spike", "dropout", "overheating_trend", "jam_or_slip", "stuck_value", "stale_value")},
+            )
+
+        attacks = {
+            "duplicate_chronological_strategy": lambda config, split, summary: split["strategies"].append(json.loads(json.dumps(next(item for item in split["strategies"] if item["strategy"] == "chronological")))),
+            "duplicate_cross_equipment_strategy": lambda config, split, summary: split["strategies"].append(json.loads(json.dumps(next(item for item in split["strategies"] if item["strategy"] == "cross_equipment")))),
+            "duplicate_event_id": lambda config, split, summary: (config["events"][1].update(event_id=config["events"][0]["event_id"]), follow_config_summary(config, summary)),
+            "duplicate_regime": lambda config, split, summary: (config["regimes"].insert(1, json.loads(json.dumps(config["regimes"][0]))), follow_config_summary(config, summary)),
+            "overlap_regime": lambda config, split, summary: (config["regimes"][1].update(start_sample=7), follow_config_summary(config, summary)),
+        }
+        for name, mutate in attacks.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as directory:
+                output = generate_synthetic(CONFIG, Path(directory) / "dataset", ROOT)
+                config_path = output / "generator-config.json"
+                split_path = output / "split-manifest.json"
+                summary_path = output / "summary.json"
+                config = load_json(config_path)
+                split = load_json(split_path)
+                summary = load_json(summary_path)
+                mutate(config, split, summary)
+                config_path.write_text(json.dumps(config), encoding="utf-8")
+                split_path.write_text(json.dumps(split), encoding="utf-8")
+                summary_path.write_text(json.dumps(summary), encoding="utf-8")
+                self._refresh_fingerprint(output)
+                fingerprint = load_json(output / "fingerprint.json")
+                self.assertEqual(set(fingerprint["files"]), set(("generator-config.json", "observations.jsonl", "events.jsonl", "split-manifest.json", "dataset-manifest.json")))
                 with self.assertRaises(DatasetQualityError):
                     check_dataset(output, ROOT)
 

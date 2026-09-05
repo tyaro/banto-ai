@@ -16,6 +16,7 @@ from .generator import (
     FINGERPRINT_CANONICALIZATION,
     FINGERPRINT_FILE_NAMES,
     FINGERPRINT_KEYS,
+    GeneratorConfigSemanticError,
     REGIMES,
     QUALITY_CHANGING_EVENT_TYPES,
     SIGNALS,
@@ -25,6 +26,7 @@ from .generator import (
     effective_event_magnitude,
     event_signal,
     expected_catalog,
+    validate_generator_config_semantics,
 )
 from .manifest import _reject_duplicate_pairs, load_json, validate_manifest
 
@@ -212,8 +214,9 @@ def _check_observations(rows: list[dict[str, Any]], dataset: dict[str, Any]) -> 
 
 def _check_splits(split: dict[str, Any], rows: list[dict[str, Any]], expected_equipment: set[str], dataset_start: datetime, dataset_end: datetime) -> None:
     strategies = split["strategies"]
-    if len({item["strategy"] for item in strategies}) != 2:
-        raise DatasetQualityError("split strategies must be unique and include both required strategies")
+    strategy_names = [item["strategy"] for item in strategies]
+    if len(strategies) != len(set(strategy_names)) or len(strategies) != 2 or set(strategy_names) != {"chronological", "cross_equipment"}:
+        raise DatasetQualityError("split strategies must contain chronological and cross_equipment exactly once")
     for strategy in strategies:
         kind = strategy["strategy"]
         splits = strategy["splits"]
@@ -287,6 +290,10 @@ def _config_regime_at(config: dict[str, Any], index: int) -> dict[str, Any]:
 
 
 def _check_config_semantics(config: dict[str, Any], dataset: dict[str, Any], split: dict[str, Any], summary: dict[str, Any], rows: list[dict[str, Any]], events: list[dict[str, Any]], per_equipment: dict[str, list[datetime]], intervals: dict[str, int]) -> None:
+    try:
+        validate_generator_config_semantics(config)
+    except GeneratorConfigSemanticError as exc:
+        raise DatasetQualityError(str(exc)) from exc
     _check_summary_structure(summary)
     config_equipment = config["equipment"]
     dataset_identity = (dataset["dataset_id"], dataset["generator_version"], dataset["seed"], dataset["sampling_interval_ms"], dataset["sample_count"])
@@ -323,6 +330,8 @@ def _check_config_semantics(config: dict[str, Any], dataset: dict[str, Any], spl
                 raise DatasetQualityError(f"mode or recipe_step does not match config at {equipment_id}/{index}")
     expected_active = [event for event in config["events"] if event["enabled"]]
     actual_by_id = {event["event_id"]: event for event in events}
+    if len(events) != len(expected_active) or len(actual_by_id) != len(events):
+        raise DatasetQualityError("events.jsonl count does not match enabled generator config events")
     if set(actual_by_id) != {event["event_id"] for event in expected_active}:
         raise DatasetQualityError("events.jsonl IDs do not match enabled generator config events")
     for event in expected_active:
@@ -384,6 +393,8 @@ def _check_config_semantics(config: dict[str, Any], dataset: dict[str, Any], spl
     for key, expected in expected_summary.items():
         if summary.get(key) != expected:
             raise DatasetQualityError(f"summary field does not match generator config: {key}")
+    if summary["event_count"] != len(events):
+        raise DatasetQualityError("summary event_count does not match events.jsonl")
 
 
 def _check_fingerprint(dataset: dict[str, Any], summary: dict[str, Any], fingerprint: dict[str, Any], hash_inventory: Mapping[str, str]) -> None:
