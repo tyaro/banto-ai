@@ -9,7 +9,7 @@
   "matrix_result_schema_path": "schemas/anomaly-multiseed-matrix-result-v0.2.schema.json",
   "matrix_result_schema_canonical_sha256": "79acd31482bae6702dcb6bf6145a58342730a0b61c053592a720fa9e01e53326",
   "schema_path": "schemas/anomaly-multiseed-failure-diagnostics-config-v0.1.schema.json",
-  "schema_canonical_sha256": "b3353de2abf637ad564cc1db6d3eec816bc7fe750ed97982bb8dd4c829b57136",
+  "schema_canonical_sha256": "1543b43feb48cb60988852852662bc19225719bff31145d7d3e3c202e8ef301a",
   "result_schema_path": "schemas/anomaly-multiseed-failure-diagnostics-result-v0.1.schema.json",
   "result_schema_canonical_sha256": "218a69829815c766d5edd888ea01567d113ad2745bf5b4c9ab7ba029fe53c17d",
   "input_root": "artifacts/anomaly-multiseed-v02",
@@ -22,7 +22,7 @@
     "result_sha256": "7bc546936c1a99100204d7fe2852b9dd8c500ac0dd2e3c3d7ccbc139c918de31",
     "summary_sha256": "e132b3ea14e06be94b4df0cd4b052b1f270797744ca532fb333f1d0e94e289f9",
     "completion_marker_sha256": "cc58b420901c9d31a415a89808d882c5b9a7d2936d0923e4102cee1acce85995",
-    "inventory_sha256": "2a4a62332c1c15c48b077aa59dbbccae01559558df162d5d1484aa1ae345af0"
+    "inventory_sha256": "2a4a62332c1c15c48b077aa59dbbccae01559558df162d5d1484aa1ae345af0e"
   },
   "expected_counts": {
     "cells": 120,

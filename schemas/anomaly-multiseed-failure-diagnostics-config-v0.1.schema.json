@@ -40,7 +40,7 @@
         "result_sha256": {"const": "7bc546936c1a99100204d7fe2852b9dd8c500ac0dd2e3c3d7ccbc139c918de31"},
         "summary_sha256": {"const": "e132b3ea14e06be94b4df0cd4b052b1f270797744ca532fb333f1d0e94e289f9"},
         "completion_marker_sha256": {"const": "cc58b420901c9d31a415a89808d882c5b9a7d2936d0923e4102cee1acce85995"},
-        "inventory_sha256": {"const": "2a4a62332c1c15c48b077aa59dbbccae01559558df162d5d1484aa1ae345af0"}
+        "inventory_sha256": {"const": "2a4a62332c1c15c48b077aa59dbbccae01559558df162d5d1484aa1ae345af0e"}
       }
     },
     "expected_counts": {

@@ -2,9 +2,11 @@
 
 これは、正式な v0.2 event-aware anomaly matrix の失敗要因を、後続 v0.3 preregistration の仮説材料として整理するための post-hoc exploratory contract である。promotion evidence、model／threshold の winner 選択、正式結果の再評価には使わない。
 
-## D1 の範囲
+## D1 / D2-A の範囲
 
 D1 は contract、固定 config、schema、config-only validator、`--validate-only` CLI とテストだけを提供する。120-cell artifact の診断実行、result／summary／marker の publish、既存 formal analyzer の変更は行わない。validate-only は filesystem に書き込まず、`run_status=not_run`、`performance_status=not_evaluated` と安全境界だけを返す。
+
+D2-A は API-only の read-only 実装である。artifact revision の regular-file tree／raw bytes／mode、clean replay HEAD、入力成果物の marker／summary／inventory、formal analysis の既存 strict replay helper、台帳から独立再計算するprivate semantic checker、private draft builder、決定的 UTF-8/LF summary renderer を実装する。完成結果の公開入口は `replay_and_build_diagnostics_result` のみで、最終再検査後に発行する `VerifiedDiagnosticsResult` だけをrendererへ渡せる。D2-A は CLI 実行、formal run、publish、marker 作成、control／customer／Banto Hub write を行わない。D2-B でのみ実行・publish境界を別途設計する。
 
 固定 config は [`examples/configs/anomaly-multiseed-failure-diagnostics-v0.1.json`](../examples/configs/anomaly-multiseed-failure-diagnostics-v0.1.json)、config schema は [`schemas/anomaly-multiseed-failure-diagnostics-config-v0.1.schema.json`](../schemas/anomaly-multiseed-failure-diagnostics-config-v0.1.schema.json)、将来 result shape は [`schemas/anomaly-multiseed-failure-diagnostics-result-v0.1.schema.json`](../schemas/anomaly-multiseed-failure-diagnostics-result-v0.1.schema.json) で固定する。diagnostics id は `anomaly-multiseed-v02-diagnostics-v01`、config identity と result identity はそれぞれ `event-aware-anomaly-failure-diagnostics-config` と `event-aware-anomaly-failure-diagnostics` とする。
 
@@ -15,10 +17,12 @@ D1 は contract、固定 config、schema、config-only validator、`--validate-o
 - input／output の同一、祖先子孫、traversal、absolute path、symlink／junction／reparse point は拒否する。
 - expected matrix id: `anomaly-multiseed-v02`
 - expected artifact code revision: `15a0f60433703c32a1bfa989f7f779c6828a1096`
-- expected matrix aggregate: result `7bc546936c1a99100204d7fe2852b9dd8c500ac0dd2e3c3d7ccbc139c918de31`、summary `e132b3ea14e06be94b4df0cd4b052b1f270797744ca532fb333f1d0e94e289f9`、marker `cc58b420901c9d31a415a89808d882c5b9a7d2936d0923e4102cee1acce85995`、inventory `2a4a62332c1c15c48b077aa59dbbccae01559558df162d5d1484aa1ae345af0`
+- expected matrix aggregate: result `7bc546936c1a99100204d7fe2852b9dd8c500ac0dd2e3c3d7ccbc139c918de31`、summary `e132b3ea14e06be94b4df0cd4b052b1f270797744ca532fb333f1d0e94e289f9`、marker `cc58b420901c9d31a415a89808d882c5b9a7d2936d0923e4102cee1acce85995`、inventory `2a4a62332c1c15c48b077aa59dbbccae01559558df162d5d1484aa1ae345af0e`
 - expected cardinality: 120 cells、10 seed clusters、seed あたり 12 layouts／48 events、event rows 480、eligible incident windows 240、pre-event support rows 240、detection-window point rows 1440、combined incident point rows 1680、score-availability source points 172800、availability cell×signal×mode group rows 5760（各 group 30 points）、calibration profile rows 5760、aggregate signal×mode groups 48、clean aggregate rows 94、incident window aggregate rows 16、incident offset aggregate rows 112、clean reconciliation rows 240、availability aggregate rows 48、calibration aggregate rows 48。固定式は `10*48=480`、`10*(48/2)=240`、`240*1=240`、`240*6=1440`、`240*7=1680`、`120*1440=172800`、`120*48=5760`、`120*48=5760`、`8*6=48`、`8+6+48+2+30=94`、`2+2+4+2+6=16`、`16*7=112`、`120*2=240`、`8*6=48`、`8*6=48` とし、各 aggregate signal×mode は `120*30=3600` points。これらは固定 structural cardinality であって診断結果の成否や性能 outcome を表さない。
 
 正式 artifact は read-only で扱い、後続実装では before／after の input snapshot と source hash を一致確認する。出力は formal matrix／analysis root と共有せず、non-overwrite、strict schema、deterministic summary、marker last を必須にする。
+
+D1 erratum: inventory SHA-256 の63桁の転記漏れを、実在庫のread-only再計算に基づき末尾 `e` を含む64桁へ訂正した。正式artifact bytesは不変。config/schemaの依存canonical/raw hashも再固定し、`.gitattributes` の `* text=auto eol=lf` でcheckoutのLFを固定する。既存checkoutを強制変換せず、正式確認は訂正commitのcleanなLF checkoutで行う。
 
 `exploratory_only=true`、`promotion_eligible=false`、`performance_status=not_evaluated` を固定する。schema の `additionalProperties=false` により、promotion gates、代替 threshold 探索、winner 選択のフィールドは持たせない。
 
@@ -34,6 +38,8 @@ D1 は contract、固定 config、schema、config-only validator、`--validate-o
 
 D2 の verifier は schema shape の検証に加え、composite key uniqueness、固定 structural counts、incident offset `-1=240`／`0..5=各240`、incident aggregate marginal coverage、clean aggregate 94 rowsの固定 domain exact-once、clean cell×equipment 240 rowsの source ID／merge／interval replay、availability 48 groupsの各30 pointsと aggregate/reconciliation各3600 points、`available+exclusions=total` の exact reconciliation、calibration 48 groups×10 seeds×12 layouts、availability/calibration の8×6 exact-cartesian coverage（unknown／missing／duplicate reject）、equipment prefix、seed values／layout inventory、canonical detection／causal support の整合を検証する。検証対象の source／artifact revision は D1 の safety boundary 内で read-only に扱い、D2 は formal exploratory run 前に freeze する。
 
+incidentの各cellは、固定layoutごとにmachine_fault/jam_or_slipとsensor_fault/spikeを1件ずつ持つ。machine signalはmotorのmotor_current／conveyorのconveyor_speed、sensor signalは各equipmentのmotor_temperature。event IDは固定layout_idに `-machine-fault`／`-sensor-fault` を付けた値（low-speed/high-load表記を保持）へexact照合する。global category countとmarginal denominatorもclass/type=120、signal=60、equipment=120、mode=40を固定し、観測した件数で分母を再定義しない。canonical matchingはoffset -1の継続episodeを除外し、0..5にある最初の新規onsetからdetected/matched/onset/delayを独立再生する。後発episodeへの置換、検知の隠蔽、途切れたepisode IDの再出現を拒否する。
+
 ## 既存結果との扱い
 
 現 v0.2 の 9 sensor detections は全件 pre-event exceed support である。diagnostics は正本の `detected` を変更せず、event-causal-support-qualified を別記する。この観測は read-only の exploratory observation であり、promotion evidence ではない。
@@ -44,4 +50,12 @@ availability gate では、mandatory dropout と mode boundary が同じ denomin
 
 ## Revision safety
 
-既存の `anomaly_matrix_analysis.py`、`anomaly_matrix_runner.py`、`anomaly_evaluation.py`、generator、formal config／schema は D1 では変更しない。revision compatibility は artifact revision `15a0f60433703c32a1bfa989f7f779c6828a1096` の `src/banto_ai`、`schemas`、`examples/configs` 配下にある全 regular file の同一 path bytes／git blob が current workspace と一致することを要求し、missing／modified／link／reparse は fail-closed とする。D1 はこの policy を固定・semantic validate するだけで artifact／git tree の検証は行わない。D2 は artifact revision と clean replay HEAD を分離し、`semantic_source_path` ごとの artifact blob SHA／current raw SHA と、current-only の `module_raw_sha256`／`cli_raw_sha256`／`renderer_raw_sha256`／`schema_raw_sha256`／`config_raw_sha256` を記録する。D2 policy は code audit 後、formal exploratory run 前に freeze する。formal analyzer の current-HEAD 一致規則は緩めない。
+既存の `anomaly_matrix_analysis.py`、`anomaly_matrix_runner.py`、`anomaly_evaluation.py`、generator、formal config／schema は変更しない。revision compatibility は artifact revision `15a0f60433703c32a1bfa989f7f779c6828a1096` の `src/banto_ai`、`schemas`、`examples/configs` 配下にある全 regular file の同一 path bytes／git blob が current workspace と一致することを要求し、missing／modified／link／reparse は fail-closed とする。D2-A は artifact tree を capture してから読み取り、after snapshot と source／replay revision を再検査する。artifact revision と clean replay HEAD は分離し、`semantic_source_path` ごとの artifact blob SHA／current raw SHA と、current-only の5つの D2 digest を記録する。artifact revision tree は88 regular files、current workspace は fixed current-only 4 filesを加えた92 filesのexact setとする。D2 policy は code audit 後、formal exploratory run 前に freeze する。formal analyzer の current-HEAD 一致規則は緩めない。
+
+## D2-A 検証範囲
+
+単一API `replay_and_build_diagnostics_result(root, replay_head=...)` は固定schemaを内部でcaptureし、正式helperの結果とcapture済みbytesを一致確認してからprivate draftを組み立てる。draftは `status=draft`／`run_status=not_run`／`engineering_status=not_evaluated` であり、private semantic checkの成功はlive replayの証明ではない。凍結result schemaの検査用に内部で作る一時的なcomplete-shape projectionも公開・発行しない。構築・検証後にartifact全体、matrix sources、diagnostics/analysis configとschema、source treeとclean HEADを再確認し、成功後だけcomplete/passを付与してモジュール内sentinel付きで `VerifiedDiagnosticsResult` を発行する。呼出側によるschemaやcollectorの差し替え引数は設けない。
+
+`VerifiedDiagnosticsResult` はread-only Mappingで、ネストした値も防御的コピーを返す。通常のconstructor呼出し・subclass・deserializeによる発行は認めない。`render_summary(result)` はこの型だけを受理し、任意Mapping、private draft、書き換えたcomplete Mapping、外部schemaを拒否する。将来D2-Bのpublisherもこの型だけを受け入れ、保存したMappingからは再replayなしに信頼済み型を復元しない。これは通常の公開APIの境界であり、同一process内の悪意あるreflection／monkeypatchingに対するsecurity sandboxとは主張しない。
+
+専用テストは合成fixtureによる改変拒否、正式v0.2と同じfield shapeでの抽出、formal helperを明示的に代替した120-cell adapter、構築後の変更検知、write/network trapを検証する。これは実artifactの正式replay成功の証拠ではない。正式matrix/analysis suite、実artifactの診断実行・生成・publishは本変更では行わず、親側の固定commit確認に委ねる。

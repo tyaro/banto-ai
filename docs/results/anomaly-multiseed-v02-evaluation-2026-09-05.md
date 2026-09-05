@@ -47,7 +47,9 @@ v0.2 の正式 multi-seed replay と standalone analysis は完了した。engin
 - summary SHA-256: `e132b3ea14e06be94b4df0cd4b052b1f270797744ca532fb333f1d0e94e289f9`
 - completion marker SHA-256: `cc58b420901c9d31a415a89808d882c5b9a7d2936d0923e4102cee1acce85995`
 - inventory: 1,443 files / 245 directories / reparse point なし
-- inventory SHA-256: `2a4a62332c1c15c48b077aa59dbbccae01559558df162d5d1484aa1ae345af0`
+- inventory SHA-256: `2a4a62332c1c15c48b077aa59dbbccae01559558df162d5d1484aa1ae345af0e`
+
+D1 erratum: 63桁の転記漏れを、実在庫のread-only再計算に基づき64桁へ訂正した。正式artifact bytesは不変。
 
 v0.2 の summary SHA-256 が v0.1 と同じなのは、aggregate の human-readable summary bytes が同一だったためである。result／completion marker／inventory は別である。
 
