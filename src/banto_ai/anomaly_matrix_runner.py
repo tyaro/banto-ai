@@ -842,7 +842,15 @@ def _validate_evaluation(
         raise _GlobalFailure("cell evaluator dataset provenance drifted")
     if provenance.get("code_revision") != dict(revision):
         raise _GlobalFailure("cell evaluator code revision provenance drifted")
-    _verify_evaluator_cross_fields(result, cell, dataset, dataset_ledger)
+    # Recompute the semantic payload from the initial dataset snapshot before
+    # accepting any human-readable evidence.  The captured result is never
+    # used to generate the expected summary, since that would let an attacker
+    # replace result and summary together while preserving only the marker
+    # hashes.
+    expected_semantic = _verify_evaluator_cross_fields(result, cell, dataset, dataset_ledger)
+    expected_summary_raw = anomaly_evaluation._summary(expected_semantic).encode("utf-8")
+    if summary_raw != expected_summary_raw:
+        raise _CellSemanticFailure("cell evaluator summary drifted from pure replay")
     snapshot_after = _tree_snapshot(
         returned_path,
         "evaluator output after validation",
@@ -1004,7 +1012,9 @@ def _verify_evaluator_cross_fields(
     cell: Mapping[str, Any],
     dataset: Mapping[str, Any],
     dataset_ledger: Mapping[str, Any],
-) -> None:
+    *,
+    expected_semantic: Mapping[str, Any] | None = None,
+) -> Mapping[str, Any]:
     provenance = result.get("provenance")
     if not isinstance(provenance, Mapping):
         raise _GlobalFailure("cell evaluator provenance is missing")
@@ -1127,7 +1137,8 @@ def _verify_evaluator_cross_fields(
         raise _CellSemanticFailure("cell evaluator scoring counts cross-fields drifted")
     if row_counts.get("clean_false_alert_signal_episodes") != metrics.get("clean_false_alert_signal_episode_count"):
         raise _CellSemanticFailure("cell evaluator clean false-alert row count cross-field drifted")
-    expected_semantic = _replay_evaluator_semantics(cell, dataset_ledger)
+    if expected_semantic is None:
+        expected_semantic = _replay_evaluator_semantics(cell, dataset_ledger)
     actual_semantic = {key: result.get(key) for key in _EVALUATOR_SEMANTIC_FIELDS}
     try:
         expected_semantic_raw = _canonical_json(expected_semantic)
@@ -1136,6 +1147,7 @@ def _verify_evaluator_cross_fields(
         raise _CellSemanticFailure("cell evaluator semantic payload is not canonicalizable") from exc
     if actual_semantic_raw != expected_semantic_raw:
         raise _CellSemanticFailure("cell evaluator semantic payload drifted from pure replay")
+    return expected_semantic
 
 
 def _safe_error(exc: BaseException, root: Path) -> str:

@@ -1227,6 +1227,21 @@ def _event_records_and_metrics(
 
 
 def _summary(result: Mapping[str, Any]) -> str:
+    def stable(value: Any) -> str:
+        """Render structured summary values independently of mapping insertion order."""
+        if isinstance(value, (Mapping, list, tuple)):
+            try:
+                return json.dumps(
+                    value,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                )
+            except (TypeError, ValueError) as exc:
+                raise AnomalyEvaluationError(f"summary value is not strictly serializable: {exc}") from exc
+        return str(value)
+
     metrics = result["metrics"]
     overall = metrics["overall"]
     partition = metrics["alert_episode_partition"]
@@ -1251,8 +1266,8 @@ def _summary(result: Mapping[str, Any]) -> str:
         "- suppressed event-window alerts are excluded from precision because they are neither a same-signal eligible incident alert nor a signal-level false alert; the reason ledger preserves them separately.",
         f"- clean monitored equipment hours: {metrics['clean_monitored_equipment_hours']}",
         f"- false alerts per 8 clean monitored equipment-hours: {metrics['false_alerts_per_8_equipment_hours']}",
-        f"- positive event-window FP by reason (nonmatching signal / ineligible same signal): {partition['positive_event_window_false_alert_by_reason']}",
-        f"- score availability by target signal: {metrics['score_availability_by_signal']}",
+        f"- positive event-window FP by reason (nonmatching signal / ineligible same signal): {stable(partition['positive_event_window_false_alert_by_reason'])}",
+        f"- score availability by target signal: {stable(metrics['score_availability_by_signal'])}",
         "",
         "## 契約",
         "",

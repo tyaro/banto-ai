@@ -352,7 +352,7 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         self._refresh_fake_accounting(result, config, root, dataset_path)
         result["provenance"]["code_revision"] = copy.deepcopy(REVISION)
         result_raw = _write_json(output / "result.json", result)
-        summary_raw = b"fake evaluator summary\n"
+        summary_raw = anomaly_evaluation._summary(result).encode("utf-8")
         (output / "summary.md").write_bytes(summary_raw)
         marker = {"marker_type": "event-aware-anomaly-complete", "schema_version": "0.1", "result_sha256": hashlib.sha256(result_raw).hexdigest(), "summary_sha256": hashlib.sha256(summary_raw).hexdigest()}
         _write_json(output / ".complete", marker)
@@ -398,6 +398,30 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         self.assertTrue(result["invariants"]["distinct_observations_by_layout"])
         self.assertEqual(result["cells"][0]["layout_index"], 0)
         self.assertTrue((output / ".complete").is_file())
+
+    def test_arbitrary_summary_with_refreshed_marker_fails_one_cell_and_continues(self) -> None:
+        target_cell = "seed-042-layout-05-motor-01-cooldown"
+
+        def tampering_evaluator(config_path: Path, root: Path, **kwargs: object) -> Path:
+            output = self._fake_evaluator(config_path, root, **kwargs)
+            config = load_json(config_path)
+            if config["dataset_path"].endswith(target_cell):
+                summary_raw = b"attacker-controlled summary\n"
+                (output / "summary.md").write_bytes(summary_raw)
+                marker = load_json(output / ".complete")
+                marker["summary_sha256"] = hashlib.sha256(summary_raw).hexdigest()
+                _write_json(output / ".complete", marker)
+            return output
+
+        output = self._run(evaluator=tampering_evaluator)
+        result = load_json(output / "result.json")
+        self.assertEqual(result["counts"], {"total": 120, "success": 119, "partial": 0, "inconclusive": 0, "failed": 1})
+        self.assertEqual(result["engineering_status"], "fail")
+        failed = next(cell for cell in result["cells"] if cell["cell_id"] == target_cell)
+        self.assertEqual(failed["status"], "failed")
+        self.assertEqual(failed["failure_stage"], "validate_evaluation")
+        self.assertEqual(failed["reason"], "validate_evaluation_failed")
+        self.assertEqual(failed["error_type"], "_CellSemanticFailure")
 
     def test_one_cell_failure_continues_and_publishes_failure_inventory(self) -> None:
         def malformed_evaluator(config_path: Path, root: Path, **kwargs: object) -> Path:

@@ -189,6 +189,29 @@ class AnomalyEvaluationTests(unittest.TestCase):
             self.assertGreater(summary["available_points"], 0)
             self.assertGreaterEqual(summary["availability_ratio"], 0.0)
 
+    def test_summary_is_golden_and_mapping_order_independent(self) -> None:
+        config_path, _output, _config = self._config("summary-order")
+        _unused_output, result = _evaluate_core(config_path, ROOT)
+        summary = anomaly_module._summary(result)
+
+        def reverse_mappings(value):
+            if isinstance(value, dict):
+                return {key: reverse_mappings(value[key]) for key in reversed(list(value))}
+            if isinstance(value, list):
+                return [reverse_mappings(item) for item in value]
+            return value
+
+        reordered = reverse_mappings(result)
+        self.assertEqual(summary, anomaly_module._summary(reordered))
+        self.assertNotIn("{'", summary)
+        self.assertIn('"availability_ratio":', summary)
+        self.assertIn('"positive_ineligible_same_signal":', summary)
+
+        nonfinite = copy.deepcopy(result)
+        nonfinite["metrics"]["score_availability_by_signal"]["motor-01.motor_current"]["availability_ratio"] = math.nan
+        with self.assertRaises(AnomalyEvaluationError):
+            anomaly_module._summary(nonfinite)
+
     def test_calibration_is_invariant_to_test_observations_and_event_labels(self) -> None:
         config_path, _output, config = self._config("invariance")
         equipment_ids, target_ids, labels = _validate_config(config, ROOT, self.dataset)
