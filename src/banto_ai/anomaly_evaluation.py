@@ -141,18 +141,40 @@ def _safe_relative(raw: Any, label: str) -> str:
 
 def _is_link(path: Path) -> bool:
     junction_check = getattr(os.path, "isjunction", None)
-    return path.is_symlink() or bool(junction_check(path) if junction_check is not None else False)
+    try:
+        attributes = int(getattr(path.lstat(), "st_file_attributes", 0))
+    except FileNotFoundError:
+        attributes = 0
+    except OSError:
+        return True
+    try:
+        is_junction = bool(junction_check(path)) if junction_check is not None else False
+    except FileNotFoundError:
+        is_junction = False
+    except OSError:
+        return True
+    try:
+        is_symlink = path.is_symlink()
+    except OSError:
+        return True
+    return is_symlink or is_junction or bool(attributes & 0x0400)
 
 
 def _safe_repo_path(root: Path, raw: Any, label: str, *, must_exist: bool) -> Path:
     relative = _safe_relative(raw, label)
-    root = root.resolve()
+    try:
+        root = root.resolve()
+    except (OSError, RuntimeError) as exc:
+        raise AnomalyEvaluationError(f"{label} repository root could not be resolved safely") from exc
     cursor = root
     for part in relative.split("/"):
         cursor = cursor / part
         if _is_link(cursor):
             raise AnomalyEvaluationError(f"{label} cannot traverse a symlink")
-    resolved = (root / relative).resolve()
+    try:
+        resolved = (root / relative).resolve()
+    except (OSError, RuntimeError) as exc:
+        raise AnomalyEvaluationError(f"{label} could not be resolved safely") from exc
     if resolved == root or root not in resolved.parents:
         raise AnomalyEvaluationError(f"{label} must remain inside repository")
     if must_exist and not resolved.exists():

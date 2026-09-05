@@ -709,6 +709,23 @@ class AnomalyEvaluationTests(unittest.TestCase):
         import shutil
         shutil.rmtree(allowed_parent, ignore_errors=True)
 
+        with tempfile.TemporaryDirectory() as external:
+            ancestor_link = ROOT / "artifacts" / f"anomaly-test-ancestor-link-{self.token}"
+            try:
+                os.symlink(external, ancestor_link, target_is_directory=True)
+            except (OSError, NotImplementedError) as exc:
+                ancestor_link = None
+            if ancestor_link is not None:
+                try:
+                    linked_parent_config = copy.deepcopy(config)
+                    linked_parent_config["output_dir"] = (ancestor_link / "cell-001").relative_to(ROOT).as_posix()
+                    linked_parent_path = self.temp_root / "ancestor-link-output.json"
+                    linked_parent_path.write_text(json.dumps(linked_parent_config, sort_keys=True), encoding="utf-8")
+                    with self.assertRaises(AnomalyEvaluationError):
+                        evaluate_anomalies(linked_parent_path, ROOT)
+                finally:
+                    ancestor_link.unlink(missing_ok=True)
+
         link_path = self.temp_root / "config-link.json"
         try:
             os.symlink(config_path, link_path)

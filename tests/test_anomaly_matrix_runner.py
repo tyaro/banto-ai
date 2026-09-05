@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 import shutil
 import tempfile
 import unittest
@@ -13,7 +14,7 @@ from uuid import uuid4
 import banto_ai.anomaly_matrix_runner as runner_module
 from banto_ai.anomaly_evaluation import AnomalyEvaluationError, _canonical_json, _evaluate_core
 from banto_ai.anomaly_matrix_runner import AnomalyMatrixRunnerError, run_anomaly_matrix
-from banto_ai.generator import FINGERPRINT_ALGORITHM, FINGERPRINT_CANONICALIZATION, FINGERPRINT_FILE_NAMES, generate_synthetic
+from banto_ai.generator import FINGERPRINT_ALGORITHM, FINGERPRINT_CANONICALIZATION, FINGERPRINT_FILE_NAMES, expected_catalog, generate_synthetic
 from banto_ai.manifest import ManifestValidationError, load_json, validate
 
 
@@ -117,7 +118,11 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
             "generator_version": config["generator_version"], "seed": config["seed"], "sampling_interval_ms": config["sampling_interval_ms"],
             "sample_count": config["sample_count"], "license": "MIT",
             "equipment": [{"equipment_id": item["equipment_id"], "equipment_type": item["equipment_type"]} for item in config["equipment"]],
-            "signals": [{"signal_id": "motor-01.motor_current", "name": "motor current", "unit": "A", "role": "target", "sampling_interval_ms": config["sampling_interval_ms"]}],
+            "signals": [
+                signal
+                for equipment in config["equipment"]
+                for signal in expected_catalog(equipment["equipment_id"], equipment["equipment_type"], config["sampling_interval_ms"])
+            ],
         }
         _write_json(output / "dataset-manifest.json", manifest)
         hashes = {name: hashlib.sha256((output / name).read_bytes()).hexdigest() for name in FINGERPRINT_FILE_NAMES}
@@ -127,6 +132,31 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         _write_json(output / "summary.json", {"dataset_fingerprint": fingerprint["dataset_fingerprint"], "event_count": 4})
         return output
 
+    def _refresh_fake_fingerprint(self, output: Path) -> None:
+        hashes = {name: hashlib.sha256((output / name).read_bytes()).hexdigest() for name in FINGERPRINT_FILE_NAMES}
+        fingerprint_input = "".join(f"{name}\n{digest}\n" for name, digest in sorted(hashes.items())).encode("utf-8")
+        fingerprint = {
+            "algorithm": FINGERPRINT_ALGORITHM,
+            "canonicalization": FINGERPRINT_CANONICALIZATION,
+            "dataset_fingerprint": hashlib.sha256(fingerprint_input).hexdigest(),
+            "files": hashes,
+        }
+        _write_json(output / "fingerprint.json", fingerprint)
+        summary = load_json(output / "summary.json")
+        summary["dataset_fingerprint"] = fingerprint["dataset_fingerprint"]
+        _write_json(output / "summary.json", summary)
+
+    def _materialized_fake_dataset(self) -> tuple[dict, dict, bytes, Path]:
+        matrix_config = load_json(CONFIG_PATH)
+        base = load_json(ROOT / "examples/configs/synthetic-anomaly-evaluation-v0.1.json")
+        output = self.temp_root / f"manifest-validation-{uuid4().hex}"
+        output.mkdir()
+        cell = runner_module._materialize_cell(matrix_config, base, 11, matrix_config["layouts"][0], ROOT, output)
+        cell["paths"]["generator_config"].parent.mkdir(parents=True)
+        generator_raw = _write_json(cell["paths"]["generator_config"], cell["generator_config"])
+        self._fake_generator(cell["paths"]["generator_config"], cell["paths"]["dataset"], ROOT)
+        return cell, base, generator_raw, cell["paths"]["dataset"]
+
     def _fake_evaluator(self, config_path: Path, root: Path, *, recover_incomplete: bool = False, allowed_output_parent: Path | None = None) -> Path:
         config = load_json(config_path)
         output = root / config["output_dir"]
@@ -135,6 +165,7 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         result = copy.deepcopy(self.template_result)
         dataset_path = root / config["dataset_path"]
         manifest = load_json(dataset_path / "dataset-manifest.json")
+        events, _events_raw = runner_module._jsonl_objects(dataset_path / "events.jsonl", "fake evaluator events")
         result["provenance"]["config"].update(path=config_path.relative_to(root).as_posix(), sha256=hashlib.sha256(config_path.read_bytes()).hexdigest())
         result["provenance"]["schema"].update(path="schemas/anomaly-evaluation-result.schema.json", sha256=hashlib.sha256((root / "schemas/anomaly-evaluation-result.schema.json").read_bytes()).hexdigest())
         result["provenance"]["config_schema"].update(path="schemas/anomaly-evaluation-config.schema.json", sha256=hashlib.sha256((root / "schemas/anomaly-evaluation-config.schema.json").read_bytes()).hexdigest())
@@ -153,14 +184,52 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
             scoring_split="test",
             boundary_semantics="[start,end)",
         )
+        target_signal_ids = result["parameters"]["target_signal_ids"]
+        score_rows = []
+        for signal_id in target_signal_ids:
+            score = next(row for row in self.full_template_result["scores"] if row["signal_id"] == signal_id and row["available"] is True)
+            score = copy.deepcopy(score)
+            score.update(alert_episode_id=None, exceeds_threshold=False, persistence_streak=0)
+            score_rows.append(score)
+        result["scores"] = score_rows
+        score_profile_keys = {
+            tuple(score["profile_key"][key] for key in ("equipment_id", "signal_id", "operating_mode"))
+            for score in score_rows
+        }
+        result["profiles"] = [
+            copy.deepcopy(profile)
+            for profile in self.full_template_result["profiles"]
+            if tuple(profile["profile_key"][key] for key in ("equipment_id", "signal_id", "operating_mode")) in score_profile_keys
+        ]
+        incident = copy.deepcopy(next(item for item in self.full_template_result["incidents"] if item["event_class"] == "machine_fault" and item["eligible"] is True))
+        machine_event_id = next(item["event_id"] for item in config["event_classifications"] if item["event_class"] == "machine_fault")
+        machine_event = next(item for item in events if item["event_id"] == machine_event_id)
+        incident.update(
+            event_id=machine_event["event_id"],
+            event_type=machine_event["event_type"],
+            equipment_id=machine_event["equipment_id"],
+            signal_id=machine_event["signal_id"],
+            event_start_timestamp=machine_event["start_timestamp"],
+            event_end_timestamp=machine_event["end_timestamp"],
+            detection_window_start=machine_event["start_timestamp"],
+            detection_window_end=machine_event["end_timestamp"],
+        )
+        incident.update(detected=False, matched_alert_episode_id=None, alert_onset_timestamp=None, detection_delay_seconds=None)
+        result["incidents"] = [incident]
+        result["alert_episodes"] = []
+        result["alert_episode_accounting"] = []
+        result["clean_false_alert_episodes"] = []
         result["exclusions"]["calibration"]["profiles_inconclusive"] = 0
-        result["metrics"]["overall"]["eligible_incidents"] = 1
+        result["exclusions"]["scoring"].update(total_points=len(score_rows), available_points=len(score_rows), unavailable_by_reason={})
+        result["metrics"]["overall"].update(eligible_incidents=1, detected_incidents=0, missed_incidents=1, matched_eligible_alert_episodes=0, unmatched_eligible_alert_episodes=0, evaluated_alert_episode_count=0, incident_precision=None, incident_recall=0.0, detection_delay_seconds=None)
+        result["metrics"]["by_class"]["machine_fault"].update(eligible_incidents=1, detected_incidents=0, missed_incidents=1, incident_recall=0.0, detection_delay_seconds=None)
+        result["metrics"]["by_class"]["sensor_fault"].update(eligible_incidents=0, detected_incidents=0, missed_incidents=0, incident_recall=None, detection_delay_seconds=None)
         result["metrics"]["score_availability_by_signal"] = {
             signal_id: {"available_points": 1, "total_points": 1, "availability_ratio": 1.0}
-            for signal_id in result["parameters"]["target_signal_ids"]
+            for signal_id in target_signal_ids
         }
         result["metrics"]["clean_false_alert_signal_episode_count"] = 0
-        result["row_counts"].update(dataset_observations=1, score_rows=0, alert_episodes=0, alert_episode_accounting=0, incidents=0, clean_false_alert_episodes=0, clean_false_alert_signal_episodes=0)
+        result["row_counts"].update(dataset_observations=1, score_rows=len(score_rows), alert_episodes=0, alert_episode_accounting=0, incidents=1, clean_false_alert_episodes=0, clean_false_alert_signal_episodes=0)
         result["provenance"]["code_revision"] = copy.deepcopy(REVISION)
         result_raw = _write_json(output / "result.json", result)
         summary_raw = b"fake evaluator summary\n"
@@ -213,6 +282,17 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         self.assertIsNone(failed[0]["artifacts"]["evaluation"])
         self.assertEqual(len(self.generator_calls), 120)
         self.assertEqual(len(self.evaluator_calls), 120)
+        runner_module._verify_aggregate_result(result, load_json(CONFIG_PATH))
+        failed_index = next(index for index, cell in enumerate(result["cells"]) if cell["status"] == "failed")
+        for mutate in (
+            lambda payload: payload["cells"][failed_index].update(evaluator_status="partial"),
+            lambda payload: payload["cells"][failed_index].update(failure_stage="validate_dataset"),
+            lambda payload: payload["cells"][failed_index]["artifacts"].update(evaluation={"status": "success", "evaluator_status": "pass"}),
+        ):
+            tampered = copy.deepcopy(result)
+            mutate(tampered)
+            with self.assertRaises(runner_module._GlobalFailure):
+                runner_module._verify_aggregate_result(tampered, load_json(CONFIG_PATH))
 
     def test_success_output_is_byte_deterministic(self) -> None:
         first = self._run()
@@ -227,13 +307,28 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         def partial_evaluator(config_path: Path, root: Path, **kwargs: object) -> Path:
             output = self._fake_evaluator(config_path, root, **kwargs)
             if len(self.evaluator_calls) <= 2:
+                config = load_json(config_path)
+                manifest = load_json((root / config["dataset_path"]) / "dataset-manifest.json")
                 result = load_json(output / "result.json")
                 if len(self.evaluator_calls) == 1:
                     result["status"] = "partial"
-                    result["metrics"]["overall"]["eligible_incidents"] = 0
+                    result["incidents"][0].update(eligible=False, eligibility_reason="partial-test")
+                    result["metrics"]["overall"].update(eligible_incidents=0, detected_incidents=0, missed_incidents=0, incident_precision=None, incident_recall=None)
+                    result["metrics"]["by_class"]["machine_fault"].update(eligible_incidents=0, detected_incidents=0, missed_incidents=0, incident_recall=None)
                 else:
                     result["status"] = "inconclusive"
+                    inconclusive_profile = result["profiles"][0]
+                    inconclusive_profile["status"] = "inconclusive"
+                    inconclusive_key = inconclusive_profile["profile_key"]
+                    inconclusive_signal = None
+                    for score in result["scores"]:
+                        if score["profile_key"] == inconclusive_key:
+                            score.update(available=False, score=None, exclusion_reason="profile_inconclusive", exceeds_threshold=False, persistence_streak=0, alert_episode_id=None)
+                            inconclusive_signal = score["signal_id"]
+                            break
                     result["exclusions"]["calibration"]["profiles_inconclusive"] = 1
+                    result["exclusions"]["scoring"].update(available_points=len(result["scores"]) - 1, unavailable_by_reason={"profile_inconclusive": 1})
+                    result["metrics"]["score_availability_by_signal"][inconclusive_signal] = {"available_points": 0, "total_points": 1, "availability_ratio": 0.0}
                 result_raw = _write_json(output / "result.json", result)
                 summary_raw = (output / "summary.md").read_bytes()
                 _write_json(output / ".complete", {
@@ -281,6 +376,74 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
             r"^(?!.*//)(?!.*(?:^|/)[.]{1,2}(?:/|$))(?!.*/$)[A-Za-z0-9][A-Za-z0-9._/-]*$",
         )
 
+    def test_initial_cell_artifact_failures_are_ordinary_and_tree_context_is_scoped(self) -> None:
+        with tempfile.TemporaryDirectory(dir=self.temp_root) as temporary:
+            directory = Path(temporary)
+            tree = directory / "tree"
+            tree.mkdir()
+            regular_file = tree / "regular"
+            regular_file.write_bytes(b"value")
+            with self.assertRaises(AnomalyMatrixRunnerError):
+                runner_module._tree_snapshot(regular_file, "cell artifact", failure_scope="cell")
+            with self.assertRaises(runner_module._GlobalFailure):
+                runner_module._tree_snapshot(regular_file, "global artifact")
+            with patch.object(runner_module.os, "scandir", side_effect=OSError("unreadable")):
+                with self.assertRaises(AnomalyMatrixRunnerError):
+                    runner_module._tree_snapshot(tree, "cell tree", failure_scope="cell")
+                with self.assertRaises(runner_module._GlobalFailure):
+                    runner_module._tree_snapshot(tree, "global tree")
+            missing = directory / "missing.json"
+            for raw in (b"{", b'{"value":NaN}', b'{"value":1,"value":2}', b"[]"):
+                missing.write_bytes(raw)
+                with self.assertRaises(AnomalyMatrixRunnerError):
+                    runner_module._cell_json_object(missing, "cell JSON")
+            missing.unlink()
+            with self.assertRaises(AnomalyMatrixRunnerError):
+                runner_module._cell_json_object(missing, "missing cell JSON")
+
+    def test_manifest_fields_catalog_and_fixed_paths_match_generator_config(self) -> None:
+        mutations = (
+            ("generator_version", lambda manifest: manifest.update(generator_version="0.1.1")),
+            ("sampling_interval_ms", lambda manifest: manifest.update(sampling_interval_ms=manifest["sampling_interval_ms"] + 1)),
+            ("sample_count", lambda manifest: manifest.update(sample_count=manifest["sample_count"] + 1)),
+            ("equipment", lambda manifest: manifest.update(equipment=list(reversed(manifest["equipment"])))),
+            ("signals", lambda manifest: manifest["signals"][0].update(unit="wrong-unit")),
+            ("fixed_path", lambda manifest: manifest.update(summary_path="events.jsonl")),
+        )
+        for label, mutate in mutations:
+            with self.subTest(field=label):
+                cell, base, generator_raw, dataset_path = self._materialized_fake_dataset()
+                manifest_path = dataset_path / "dataset-manifest.json"
+                manifest = load_json(manifest_path)
+                mutate(manifest)
+                _write_json(manifest_path, manifest)
+                self._refresh_fake_fingerprint(dataset_path)
+                with self.assertRaises(AnomalyMatrixRunnerError):
+                    runner_module._validate_dataset(cell, base, ROOT, load_json(ROOT / "schemas/synthetic-dataset-manifest.schema.json"), generator_raw)
+
+    def test_repository_containment_rejects_ancestor_symlink(self) -> None:
+        with tempfile.TemporaryDirectory() as external:
+            link_parent = ROOT / "artifacts" / f"ancestor-link-{uuid4().hex}"
+            try:
+                os.symlink(external, link_parent, target_is_directory=True)
+            except (OSError, NotImplementedError) as exc:
+                self.skipTest(f"directory symlink unavailable: {exc}")
+            try:
+                with self.assertRaises(runner_module._GlobalFailure):
+                    runner_module._assert_contained_path(link_parent / "child", ROOT, "planned artifact", must_exist=False)
+            finally:
+                link_parent.unlink(missing_ok=True)
+
+    def test_repository_containment_rejects_ancestor_junction(self) -> None:
+        junction_parent = ROOT / "artifacts" / f"junction-like-{uuid4().hex}"
+        junction_parent.mkdir()
+        try:
+            with patch.object(runner_module.os.path, "isjunction", side_effect=lambda value: Path(value) == junction_parent):
+                with self.assertRaises(runner_module._GlobalFailure):
+                    runner_module._assert_contained_path(junction_parent / "child", ROOT, "planned artifact", must_exist=False)
+        finally:
+            junction_parent.rmdir()
+
     def test_injected_internal_typeerror_is_called_once(self) -> None:
         calls = 0
 
@@ -326,17 +489,31 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         mutations = (
             ("provenance.dataset.dataset_id", lambda payload: payload["provenance"]["dataset"].update(dataset_id="wrong")),
             ("provenance.dataset.manifest_sha256", lambda payload: payload["provenance"]["dataset"].update(manifest_sha256="0" * 64)),
-            ("provenance.quality_gate.observation_record_count", lambda payload: payload["provenance"]["quality_gate"].update(observation_record_count=1)),
+            ("provenance.quality_gate.observation_record_count", lambda payload: payload["provenance"]["quality_gate"].update(observation_record_count=2)),
             ("parameters.target_signal_ids", lambda payload: payload["parameters"].update(target_signal_ids=list(reversed(payload["parameters"]["target_signal_ids"]))),),
             ("parameters.robust_z_threshold", lambda payload: payload["parameters"].update(robust_z_threshold=99.0)),
             ("row_counts.score_rows", lambda payload: payload["row_counts"].update(score_rows=payload["row_counts"]["score_rows"] + 1)),
+            ("metrics.score_availability_by_signal", lambda payload: payload["metrics"]["score_availability_by_signal"].pop(next(iter(payload["metrics"]["score_availability_by_signal"]))),),
+            ("incidents", lambda payload: (payload.update(incidents=[]), payload["metrics"]["overall"].update(eligible_incidents=1, detected_incidents=0, missed_incidents=1))),
+            ("profiles", lambda payload: payload.update(profiles=[])),
+            ("scores", lambda payload: payload.update(scores=[])),
+            ("metrics.overall.eligible_incidents", lambda payload: payload["metrics"]["overall"].update(eligible_incidents=99)),
             ("status", lambda payload: payload.update(status="partial")),
         )
-        for _label, mutate in mutations:
-            tampered = copy.deepcopy(result)
-            mutate(tampered)
-            with self.assertRaises(runner_module._GlobalFailure):
-                runner_module._verify_evaluator_cross_fields(tampered, cell, dataset)
+        for _label, mutate in mutations[:2]:
+            with self.subTest(field=_label):
+                tampered = copy.deepcopy(result)
+                mutate(tampered)
+                validate(tampered, load_json(ROOT / "schemas/anomaly-evaluation-result.schema.json"))
+                with self.assertRaises(runner_module._GlobalFailure):
+                    runner_module._verify_evaluator_cross_fields(tampered, cell, dataset)
+        for _label, mutate in mutations[2:]:
+            with self.subTest(field=_label):
+                tampered = copy.deepcopy(result)
+                mutate(tampered)
+                validate(tampered, load_json(ROOT / "schemas/anomaly-evaluation-result.schema.json"))
+                with self.assertRaises(runner_module._CellSemanticFailure):
+                    runner_module._verify_evaluator_cross_fields(tampered, cell, dataset)
 
     def test_aggregate_verifier_rejects_tampered_counts(self) -> None:
         matrix_config = load_json(CONFIG_PATH)
@@ -346,7 +523,12 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
                 cell_id = f"seed-{seed:03d}-layout-{layout['layout_index']:02d}-{layout['layout_id']}"
                 cells.append({
                     "cell_id": cell_id,
+                    "seed": seed,
+                    "seed_sha256": hashlib.sha256(runner_module._canonical_json(seed)).hexdigest(),
                     "layout_id": layout["layout_id"],
+                    "layout_index": layout["layout_index"],
+                    "layout_canonical_sha256": hashlib.sha256(runner_module._canonical_json(layout)).hexdigest(),
+                    "all_layouts_canonical_sha256": hashlib.sha256(runner_module._canonical_json(matrix_config["layouts"])).hexdigest(),
                     "status": "success",
                     "evaluator_status": "pass",
                     "error_type": None,
@@ -373,6 +555,12 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         tampered["counts"]["success"] = 119
         with self.assertRaises(runner_module._GlobalFailure):
             runner_module._verify_aggregate_result(tampered, matrix_config)
+        for field in ("seed", "seed_sha256", "layout_index", "layout_canonical_sha256", "all_layouts_canonical_sha256"):
+            with self.subTest(field=field):
+                tampered = copy.deepcopy(result)
+                tampered["cells"][0][field] = 0 if field == "seed" else (99 if field == "layout_index" else "0" * 64)
+                with self.assertRaises(runner_module._GlobalFailure):
+                    runner_module._verify_aggregate_result(tampered, matrix_config)
 
     def test_post_validation_dataset_mutation_is_global_failure_at_first_cell(self) -> None:
         def mutating_evaluator(config_path: Path, root: Path, **kwargs: object) -> Path:

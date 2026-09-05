@@ -18,7 +18,7 @@ from uuid import uuid4
 from . import anomaly_matrix
 from .anomaly_evaluation import evaluate_anomalies
 from .benchmark import _revision
-from .generator import FINGERPRINT_ALGORITHM, FINGERPRINT_FILE_NAMES, FINGERPRINT_CANONICALIZATION, SIGNALS, generate_synthetic
+from .generator import FINGERPRINT_ALGORITHM, FINGERPRINT_FILE_NAMES, FINGERPRINT_CANONICALIZATION, SIGNALS, expected_catalog, generate_synthetic
 from .manifest import ManifestValidationError, validate
 
 
@@ -40,6 +40,10 @@ class _GlobalFailure(AnomalyMatrixRunnerError):
     """A provenance, input, path, or schema failure that invalidates the run."""
 
 
+class _CellSemanticFailure(AnomalyMatrixRunnerError):
+    """A semantically invalid result belonging to one cell."""
+
+
 def _canonical_json(value: Any) -> bytes:
     try:
         return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
@@ -57,7 +61,23 @@ def _sha256_bytes(raw: bytes) -> str:
 
 def _is_link(path: Path) -> bool:
     junction_check = getattr(os.path, "isjunction", None)
-    return path.is_symlink() or bool(junction_check(path) if junction_check is not None else False)
+    try:
+        attributes = int(getattr(path.lstat(), "st_file_attributes", 0))
+    except FileNotFoundError:
+        attributes = 0
+    except OSError:
+        return True
+    try:
+        is_junction = bool(junction_check(path)) if junction_check is not None else False
+    except FileNotFoundError:
+        is_junction = False
+    except OSError:
+        return True
+    try:
+        is_symlink = path.is_symlink()
+    except OSError:
+        return True
+    return is_symlink or is_junction or bool(attributes & 0x0400)
 
 
 def _strict_json_object(path: Path, label: str) -> tuple[dict[str, Any], bytes]:
@@ -153,9 +173,41 @@ def _jsonl_objects(path: Path, label: str) -> tuple[list[dict[str, Any]], bytes]
     return rows, raw
 
 
-def _tree_snapshot(path: Path, label: str) -> dict[str, Any]:
+def _assert_contained_path(path: Path, root: Path, label: str, *, must_exist: bool) -> Path:
+    root = Path(root).absolute()
+    candidate = Path(path).absolute()
+    try:
+        relative = candidate.relative_to(root).as_posix()
+    except ValueError as exc:
+        raise _GlobalFailure(f"{label} escaped the repository") from exc
+    if _is_link(root) or not root.is_dir():
+        raise _GlobalFailure(f"repository root is not a regular directory: {root}")
+    cursor = root
+    for part in relative.split("/"):
+        cursor = cursor / part
+        if _is_link(cursor):
+            raise _GlobalFailure(f"{label} traversed a symlink, reparse point, or junction")
+    try:
+        resolved = candidate.resolve()
+    except (OSError, RuntimeError) as exc:
+        raise _GlobalFailure(f"{label} could not be resolved safely") from exc
+    if resolved == root or root not in resolved.parents:
+        raise _GlobalFailure(f"{label} escaped the repository")
+    if must_exist and not candidate.exists():
+        raise _GlobalFailure(f"{label} does not exist")
+    if candidate.exists() and resolved != candidate:
+        raise _GlobalFailure(f"{label} is not the planned resolved path")
+    return resolved
+
+
+def _tree_snapshot(path: Path, label: str, *, containment_root: Path | None = None, failure_scope: str = "global") -> dict[str, Any]:
+    if containment_root is not None:
+        _assert_contained_path(path, containment_root, label, must_exist=True)
+    if failure_scope not in ("global", "cell"):
+        raise ValueError(f"unsupported tree snapshot failure scope: {failure_scope}")
+    failure = _GlobalFailure if failure_scope == "global" else AnomalyMatrixRunnerError
     if _is_link(path) or not path.is_dir():
-        raise _GlobalFailure(f"{label} must be a regular directory")
+        raise failure(f"{label} must be a regular directory")
     inventory: list[tuple[str, str]] = []
     hashes: dict[str, str] = {}
     pending = [path]
@@ -175,19 +227,20 @@ def _tree_snapshot(path: Path, label: str) -> dict[str, Any]:
                     hashes[relative] = _sha256_bytes(candidate.read_bytes())
                 else:
                     raise OSError(f"non-regular entry: {relative}")
-    except OSError as exc:
-        raise _GlobalFailure(f"{label} tree is not a stable regular tree") from exc
+    except (OSError, ValueError) as exc:
+        raise failure(f"{label} tree is not a stable regular tree") from exc
     return {"inventory": tuple(sorted(inventory)), "hashes": dict(sorted(hashes.items()))}
 
 
-def _assert_tree_unchanged(path: Path, snapshot: Mapping[str, Any], label: str) -> None:
-    current = _tree_snapshot(path, label)
+def _assert_tree_unchanged(path: Path, snapshot: Mapping[str, Any], label: str, root: Path) -> None:
+    current = _tree_snapshot(path, label, containment_root=root, failure_scope="global")
     if current != dict(snapshot):
         raise _GlobalFailure(f"{label} changed after validation")
 
 
-def _assert_materialized_config(path: Path, raw: bytes, label: str) -> None:
+def _assert_materialized_config(path: Path, raw: bytes, label: str, root: Path) -> None:
     try:
+        _assert_contained_path(path, root, label, must_exist=True)
         if _is_link(path) or not path.is_file() or path.read_bytes() != raw:
             raise OSError("config bytes changed")
     except OSError as exc:
@@ -270,6 +323,7 @@ def _source_entry(root: Path, path: Path, relative: str, label: str) -> tuple[di
 
 def _snapshot_inputs(root: Path, config_path: str | Path) -> tuple[dict[str, Any], dict[str, Any]]:
     config_relative = anomaly_matrix._config_relative_path(config_path, root)
+    _assert_contained_path(root / config_relative, root, "matrix config", must_exist=True)
     config_resolved = anomaly_matrix._resolve_config_path(config_path, root)
     config, config_source = _source_entry(root, config_resolved, config_relative, "matrix config")
     raw_paths = {
@@ -284,6 +338,7 @@ def _snapshot_inputs(root: Path, config_path: str | Path) -> tuple[dict[str, Any
     sources: dict[str, Any] = {"matrix_config": config_source}
     values: dict[str, Any] = {"matrix_config": config}
     for key, (relative, label) in raw_paths.items():
+        _assert_contained_path(root / relative, root, label, must_exist=True)
         path = anomaly_matrix._safe_repo_path(root, relative, label, must_exist=True)
         value, source = _source_entry(root, path, relative, label)
         sources[key] = source
@@ -300,6 +355,7 @@ def _assert_inputs_unchanged(root: Path, sources: Mapping[str, Any], values: Map
     for key, source in sources.items():
         if key.startswith("_"):
             continue
+        _assert_contained_path(root / source["path"], root, f"{key} {boundary}", must_exist=True)
         current_path = anomaly_matrix._safe_repo_path(root, source["path"], f"{key} {boundary}", must_exist=True)
         if current_path != source["_resolved"]:
             raise _GlobalFailure(f"{key} path changed at {boundary}")
@@ -377,6 +433,28 @@ def _materialize_cell(config: Mapping[str, Any], base: Mapping[str, Any], seed: 
     }
 
 
+def _assert_cell_paths_contained(cell: Mapping[str, Any], root: Path) -> None:
+    for key, label in (
+        ("generator_config", "generator config planned"),
+        ("evaluator_config", "evaluator config planned"),
+        ("dataset", "dataset planned"),
+        ("evaluation", "evaluation planned"),
+    ):
+        path = cell["paths"][key]
+        _assert_contained_path(path, root, label, must_exist=False)
+        _assert_contained_path(path.parent, root, f"{label} parent", must_exist=True)
+
+
+def _assert_cell_parents_contained(cell: Mapping[str, Any], root: Path) -> None:
+    for key, label in (
+        ("generator_config", "generator config planned"),
+        ("evaluator_config", "evaluator config planned"),
+        ("dataset", "dataset planned"),
+        ("evaluation", "evaluation planned"),
+    ):
+        _assert_contained_path(cell["paths"][key].parent, root, f"{label} parent", must_exist=True)
+
+
 def _iso_at(start_timestamp: str, sample: int, interval_ms: int) -> str:
     try:
         start = datetime.fromisoformat(start_timestamp.replace("Z", "+00:00"))
@@ -398,6 +476,7 @@ def _validate_dataset(
     dataset_path = cell["paths"]["dataset"]
     if _is_link(dataset_path) or not dataset_path.is_dir():
         raise AnomalyMatrixRunnerError(f"generated dataset is not a regular directory: {dataset_path}")
+    snapshot_before = _tree_snapshot(dataset_path, "dataset before validation", containment_root=root, failure_scope="cell")
     manifest_path = dataset_path / "dataset-manifest.json"
     manifest, manifest_raw = _cell_json_object(manifest_path, "dataset manifest")
     try:
@@ -406,6 +485,34 @@ def _validate_dataset(
         raise AnomalyMatrixRunnerError(f"generated dataset manifest does not satisfy its schema: {exc}") from exc
     if manifest.get("dataset_id") != cell["generator_config"]["dataset_id"] or manifest.get("seed") != cell["seed"]:
         raise AnomalyMatrixRunnerError("generated dataset manifest identity drifted")
+    generator_config = cell["generator_config"]
+    expected_manifest_fields = {
+        "generator_version": generator_config["generator_version"],
+        "seed": generator_config["seed"],
+        "sampling_interval_ms": generator_config["sampling_interval_ms"],
+        "sample_count": generator_config["sample_count"],
+        "data_path": "observations.jsonl",
+        "events_path": "events.jsonl",
+        "split_manifest_path": "split-manifest.json",
+        "fingerprint_path": "fingerprint.json",
+        "generator_config_path": "generator-config.json",
+        "summary_path": "summary.json",
+    }
+    if any(manifest.get(key) != value for key, value in expected_manifest_fields.items()):
+        raise AnomalyMatrixRunnerError("generated dataset manifest generator fields drifted")
+    expected_equipment = [
+        {"equipment_id": item["equipment_id"], "equipment_type": item["equipment_type"]}
+        for item in generator_config["equipment"]
+    ]
+    if manifest.get("equipment") != expected_equipment:
+        raise AnomalyMatrixRunnerError("generated dataset manifest equipment catalog drifted")
+    expected_signals = [
+        signal
+        for equipment in expected_equipment
+        for signal in expected_catalog(equipment["equipment_id"], equipment["equipment_type"], generator_config["sampling_interval_ms"])
+    ]
+    if manifest.get("signals") != expected_signals:
+        raise AnomalyMatrixRunnerError("generated dataset manifest signal catalog drifted")
     generated_config_path = dataset_path / manifest["generator_config_path"]
     try:
         if _is_link(generated_config_path) or not generated_config_path.is_file() or generated_config_path.read_bytes() != generator_config_raw:
@@ -460,6 +567,15 @@ def _validate_dataset(
     summary, _summary_raw = _cell_json_object(dataset_path / "summary.json", "dataset summary")
     if summary.get("dataset_fingerprint") != fingerprint.get("dataset_fingerprint") or summary.get("event_count") != 4:
         raise AnomalyMatrixRunnerError("generated dataset summary drifted")
+    expected_snapshot_hashes = {
+        "dataset-manifest.json": _sha256_bytes(manifest_raw),
+        "observations.jsonl": _sha256_bytes(observations_raw),
+    }
+    if any(snapshot_before["hashes"].get(name) != digest for name, digest in expected_snapshot_hashes.items()) or any(snapshot_before["hashes"].get(name) != digest for name, digest in file_hashes.items()):
+        raise _GlobalFailure("validated dataset evidence did not come from the initial snapshot")
+    snapshot_after = _tree_snapshot(dataset_path, "dataset after validation", containment_root=root, failure_scope="global")
+    if snapshot_after != snapshot_before:
+        raise _GlobalFailure("dataset changed during validation")
     evidence = {
         "path": _safe_relative(dataset_path, root, "dataset path"),
         "dataset_id": manifest["dataset_id"],
@@ -471,7 +587,7 @@ def _validate_dataset(
         "equipment_count": len(manifest["equipment"]),
         "event_count": len(events),
     }
-    return evidence, _tree_snapshot(dataset_path, "validated dataset")
+    return evidence, snapshot_before
 
 
 def _call_injected(function: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
@@ -502,6 +618,7 @@ def _validate_evaluation(
         raise _GlobalFailure("evaluator returned a path outside the planned evaluation output")
     if _is_link(returned_path) or not returned_path.is_dir():
         raise AnomalyMatrixRunnerError("evaluator output is not a regular directory")
+    snapshot_before = _tree_snapshot(returned_path, "evaluator output before validation", containment_root=root, failure_scope="cell")
     result_path = returned_path / "result.json"
     summary_path = returned_path / "summary.md"
     marker_path = returned_path / COMPLETION_MARKER
@@ -537,18 +654,23 @@ def _validate_evaluation(
     if provenance.get("code_revision") != dict(revision):
         raise _GlobalFailure("cell evaluator code revision provenance drifted")
     _verify_evaluator_cross_fields(result, cell, dataset)
+    snapshot_after = _tree_snapshot(returned_path, "evaluator output after validation", containment_root=root, failure_scope="global")
+    if snapshot_after != snapshot_before:
+        raise _GlobalFailure("evaluator output changed during validation")
+    if snapshot_before["hashes"].get("result.json") != _sha256_bytes(result_raw) or snapshot_before["hashes"].get("summary.md") != _sha256_bytes(summary_raw) or snapshot_before["hashes"].get(COMPLETION_MARKER) != _sha256_bytes(marker_path.read_bytes()):
+        raise _GlobalFailure("evaluator evidence did not come from the initial snapshot")
     evidence = {
         "path": _safe_relative(returned_path, root, "evaluation path"),
         "result_path": _safe_relative(result_path, root, "cell result path"),
-        "result_sha256": _sha256_bytes(result_raw),
+        "result_sha256": snapshot_before["hashes"]["result.json"],
         "summary_path": _safe_relative(summary_path, root, "cell summary path"),
-        "summary_sha256": _sha256_bytes(summary_raw),
+        "summary_sha256": snapshot_before["hashes"]["summary.md"],
         "completion_marker_path": _safe_relative(marker_path, root, "cell completion marker path"),
-        "completion_marker_sha256": _sha256_bytes(marker_path.read_bytes()),
+        "completion_marker_sha256": snapshot_before["hashes"][COMPLETION_MARKER],
         "status": {"pass": "success", "partial": "partial", "inconclusive": "inconclusive"}[result["status"]],
         "evaluator_status": result["status"],
     }
-    return evidence, _tree_snapshot(returned_path, "validated evaluator output")
+    return evidence, snapshot_before
 
 
 def _expected_target_signal_ids(cell: Mapping[str, Any]) -> list[str]:
@@ -584,7 +706,7 @@ def _verify_evaluator_cross_fields(result: Mapping[str, Any], cell: Mapping[str,
         "equipment_count": len(cell["generator_config"]["equipment"]),
     }
     if not isinstance(quality, Mapping) or any(quality.get(key) != value for key, value in expected_quality.items()):
-        raise _GlobalFailure("cell evaluator quality gate cross-fields drifted")
+        raise _CellSemanticFailure("cell evaluator quality gate cross-fields drifted")
     parameters = result.get("parameters")
     expected_parameters = {
         "target_signal_ids": _expected_target_signal_ids(cell),
@@ -598,7 +720,7 @@ def _verify_evaluator_cross_fields(result: Mapping[str, Any], cell: Mapping[str,
         "boundary_semantics": "[start,end)",
     }
     if not isinstance(parameters, Mapping) or any(parameters.get(key) != value for key, value in expected_parameters.items()):
-        raise _GlobalFailure("cell evaluator parameters cross-fields drifted")
+        raise _CellSemanticFailure("cell evaluator parameters cross-fields drifted")
     arrays = {
         "scores": result.get("scores"),
         "alert_episodes": result.get("alert_episodes"),
@@ -606,9 +728,67 @@ def _verify_evaluator_cross_fields(result: Mapping[str, Any], cell: Mapping[str,
         "incidents": result.get("incidents"),
         "clean_false_alert_episodes": result.get("clean_false_alert_episodes"),
     }
+    metrics = result.get("metrics")
+    if not isinstance(metrics, Mapping):
+        raise _CellSemanticFailure("cell evaluator metrics are missing")
+    target_signal_ids = expected_parameters["target_signal_ids"]
+    target_set = set(target_signal_ids)
+    equipment_ids = {item["equipment_id"] for item in cell["generator_config"]["equipment"]}
+    operating_modes = {item["regime"] for item in cell["generator_config"]["regimes"]}
+    profiles = result.get("profiles")
+    if not isinstance(profiles, list):
+        raise _CellSemanticFailure("cell evaluator profiles are missing")
+
+    def profile_key(value: Any) -> tuple[str, str, str]:
+        if not isinstance(value, Mapping) or not all(isinstance(value.get(key), str) and value.get(key) for key in ("equipment_id", "signal_id", "operating_mode")):
+            raise _CellSemanticFailure("cell evaluator profile key is invalid")
+        return value["equipment_id"], value["signal_id"], value["operating_mode"]
+
+    profile_by_key: dict[tuple[str, str, str], Mapping[str, Any]] = {}
+    for profile in profiles:
+        if not isinstance(profile, Mapping):
+            raise _CellSemanticFailure("cell evaluator profile is invalid")
+        key = profile_key(profile.get("profile_key"))
+        if key in profile_by_key or key[0] not in equipment_ids or key[1] not in target_set or key[2] not in operating_modes:
+            raise _CellSemanticFailure("cell evaluator profile coverage is invalid")
+        if profile.get("status") not in ("calibrated", "inconclusive"):
+            raise _CellSemanticFailure("cell evaluator profile status is invalid")
+        profile_by_key[key] = profile
+    scores = arrays["scores"]
+    score_profile_keys: set[tuple[str, str, str]] = set()
+    availability_expected: dict[str, dict[str, Any]] = {
+        signal_id: {"available_points": 0, "total_points": 0, "availability_ratio": None}
+        for signal_id in target_signal_ids
+    }
+    for score in scores if isinstance(scores, list) else ():
+        if not isinstance(score, Mapping) or score.get("signal_id") not in target_set or not isinstance(score.get("available"), bool):
+            raise _CellSemanticFailure("cell evaluator score coverage is invalid")
+        key = profile_key(score.get("profile_key"))
+        if score.get("equipment_id") not in equipment_ids or score.get("operating_mode") not in operating_modes or key not in profile_by_key or key != (score.get("equipment_id"), score.get("signal_id"), score.get("operating_mode")):
+            raise _CellSemanticFailure("cell evaluator score references an uncovered profile")
+        score_profile_keys.add(key)
+        signal_id = score["signal_id"]
+        availability_expected[signal_id]["total_points"] += 1
+        if score["available"]:
+            availability_expected[signal_id]["available_points"] += 1
+            if profile_by_key[key]["status"] != "calibrated":
+                raise _CellSemanticFailure("inconclusive profile produced an available score")
+    if set(availability_expected) != target_set or set(profile_by_key) != score_profile_keys:
+        raise _CellSemanticFailure("cell evaluator profile or target coverage is incomplete")
+    for summary in availability_expected.values():
+        if summary["total_points"]:
+            summary["availability_ratio"] = summary["available_points"] / summary["total_points"]
+    availability = metrics.get("score_availability_by_signal")
+    if not isinstance(availability, Mapping) or set(availability) != target_set or any(availability.get(key) != value for key, value in availability_expected.items()):
+        raise _CellSemanticFailure("cell evaluator score availability cross-fields drifted")
+    profile_inconclusive_count = sum(profile.get("status") == "inconclusive" for profile in profile_by_key.values())
+    exclusions = result.get("exclusions")
+    calibration = exclusions.get("calibration") if isinstance(exclusions, Mapping) else None
+    if not isinstance(calibration, Mapping) or calibration.get("profiles_inconclusive") != profile_inconclusive_count:
+        raise _CellSemanticFailure("cell evaluator profile status count drifted")
     row_counts = result.get("row_counts")
     if not isinstance(row_counts, Mapping) or row_counts.get("dataset_observations") != dataset["observation_record_count"]:
-        raise _GlobalFailure("cell evaluator dataset row count cross-field drifted")
+        raise _CellSemanticFailure("cell evaluator dataset row count cross-field drifted")
     row_count_keys = {
         "scores": "score_rows",
         "alert_episodes": "alert_episodes",
@@ -618,19 +798,55 @@ def _verify_evaluator_cross_fields(result: Mapping[str, Any], cell: Mapping[str,
     }
     for key, rows in arrays.items():
         if not isinstance(rows, list) or row_counts.get(row_count_keys[key]) != len(rows):
-            raise _GlobalFailure(f"cell evaluator {key} row count cross-field drifted")
-    metrics = result.get("metrics")
-    if not isinstance(metrics, Mapping) or row_counts.get("clean_false_alert_signal_episodes") != metrics.get("clean_false_alert_signal_episode_count"):
-        raise _GlobalFailure("cell evaluator clean false-alert row count cross-field drifted")
-    exclusions = result.get("exclusions")
-    calibration = exclusions.get("calibration") if isinstance(exclusions, Mapping) else None
-    availability = metrics.get("score_availability_by_signal") if isinstance(metrics, Mapping) else None
-    overall = metrics.get("overall") if isinstance(metrics, Mapping) else None
-    if not isinstance(calibration, Mapping) or not isinstance(availability, Mapping) or not isinstance(overall, Mapping):
-        raise _GlobalFailure("cell evaluator status inputs are missing")
+            raise _CellSemanticFailure(f"cell evaluator {key} row count cross-field drifted")
+    scoring = exclusions.get("scoring") if isinstance(exclusions, Mapping) else None
+    if not isinstance(scoring, Mapping) or scoring.get("total_points") != len(scores) or scoring.get("available_points") != sum(summary["available_points"] for summary in availability_expected.values()) or not isinstance(scoring.get("unavailable_by_reason"), Mapping) or sum(scoring["unavailable_by_reason"].values()) != len(scores) - scoring.get("available_points"):
+        raise _CellSemanticFailure("cell evaluator scoring counts cross-fields drifted")
+    if row_counts.get("clean_false_alert_signal_episodes") != metrics.get("clean_false_alert_signal_episode_count"):
+        raise _CellSemanticFailure("cell evaluator clean false-alert row count cross-field drifted")
+    overall = metrics.get("overall")
+    if not isinstance(overall, Mapping):
+        raise _CellSemanticFailure("cell evaluator status inputs are missing")
+    incidents = arrays["incidents"]
+    expected_classifications = {
+        item["event_id"]: item["event_class"]
+        for item in cell["evaluator_config"]["event_classifications"]
+    }
+
+    def incident_counts(event_class: str | None = None) -> dict[str, int]:
+        selected = [
+            incident
+            for incident in incidents
+            if isinstance(incident, Mapping)
+            and (event_class is None or incident.get("event_class") == event_class)
+            and incident.get("eligible") is True
+        ]
+        detected = sum(incident.get("detected") is True for incident in selected)
+        return {"eligible_incidents": len(selected), "detected_incidents": detected, "missed_incidents": len(selected) - detected}
+
+    if any(
+        not isinstance(incident, Mapping)
+        or incident.get("event_id") not in expected_classifications
+        or incident.get("event_class") != expected_classifications.get(incident.get("event_id"))
+        or (incident.get("event_class") in ("data_quality", "ignored") and incident.get("eligible") is True)
+        or (incident.get("eligible") is not True and incident.get("detected") is True)
+        for incident in incidents
+    ):
+        raise _CellSemanticFailure("cell evaluator incident inventory is invalid")
+    expected_overall_incidents = incident_counts()
+    if not all(overall.get(key) == value for key, value in expected_overall_incidents.items()):
+        raise _CellSemanticFailure("cell evaluator overall incident counts drifted")
+    by_class = metrics.get("by_class")
+    if not isinstance(by_class, Mapping):
+        raise _CellSemanticFailure("cell evaluator class metrics are missing")
+    for event_class in ("machine_fault", "sensor_fault"):
+        class_metrics = by_class.get(event_class)
+        expected_class_incidents = incident_counts(event_class)
+        if not isinstance(class_metrics, Mapping) or not all(class_metrics.get(key) == value for key, value in expected_class_incidents.items()):
+            raise _CellSemanticFailure(f"cell evaluator {event_class} incident counts drifted")
     profiles_inconclusive = calibration.get("profiles_inconclusive")
     if not isinstance(profiles_inconclusive, int) or isinstance(profiles_inconclusive, bool):
-        raise _GlobalFailure("cell evaluator calibration status input is invalid")
+        raise _CellSemanticFailure("cell evaluator calibration status input is invalid")
     zero_availability = any(isinstance(summary, Mapping) and summary.get("available_points") == 0 for summary in availability.values())
     if profiles_inconclusive > 0 or zero_availability:
         expected_status = "inconclusive"
@@ -639,7 +855,7 @@ def _verify_evaluator_cross_fields(result: Mapping[str, Any], cell: Mapping[str,
     else:
         expected_status = "pass"
     if not isinstance(overall.get("eligible_incidents"), int) or isinstance(overall.get("eligible_incidents"), bool) or result.get("status") != expected_status:
-        raise _GlobalFailure("cell evaluator status cross-fields drifted")
+        raise _CellSemanticFailure("cell evaluator status cross-fields drifted")
 
 
 def _safe_error(exc: BaseException, root: Path) -> str:
@@ -716,15 +932,15 @@ def _cell_success(cell: Mapping[str, Any], root: Path, generator_config_raw: byt
 
 def _assert_runtime_snapshot(snapshot: Mapping[str, Any], boundary: str) -> None:
     if snapshot.get("generator_config_raw") is not None:
-        _assert_materialized_config(snapshot["generator_config_path"], snapshot["generator_config_raw"], f"generator config at {boundary}")
+        _assert_materialized_config(snapshot["generator_config_path"], snapshot["generator_config_raw"], f"generator config at {boundary}", snapshot["repository_root"])
     if snapshot.get("evaluator_config_raw") is not None:
-        _assert_materialized_config(snapshot["evaluator_config_path"], snapshot["evaluator_config_raw"], f"evaluator config at {boundary}")
+        _assert_materialized_config(snapshot["evaluator_config_path"], snapshot["evaluator_config_raw"], f"evaluator config at {boundary}", snapshot["repository_root"])
     if snapshot.get("dataset") is not None:
         dataset_path, dataset_tree = snapshot["dataset"]
-        _assert_tree_unchanged(dataset_path, dataset_tree, f"dataset at {boundary}")
+        _assert_tree_unchanged(dataset_path, dataset_tree, f"dataset at {boundary}", snapshot["repository_root"])
     if snapshot.get("evaluation") is not None:
         evaluation_path, evaluation_tree = snapshot["evaluation"]
-        _assert_tree_unchanged(evaluation_path, evaluation_tree, f"evaluation output at {boundary}")
+        _assert_tree_unchanged(evaluation_path, evaluation_tree, f"evaluation output at {boundary}", snapshot["repository_root"])
 
 
 def _assert_runtime_snapshots(snapshots: Mapping[str, Mapping[str, Any]], boundary: str) -> None:
@@ -736,14 +952,31 @@ def _verify_aggregate_result(result: Mapping[str, Any], config: Mapping[str, Any
     cells = result.get("cells")
     if not isinstance(cells, list) or len(cells) != 120:
         raise _GlobalFailure("aggregate cell inventory is not exactly 120 cells")
+    ordered_layouts = sorted(config["layouts"], key=lambda item: item["layout_index"])
     expected_ids = [
         f"seed-{seed:03d}-layout-{int(layout['layout_index']):02d}-{layout['layout_id']}"
         for seed in config["seeds"]
-        for layout in sorted(config["layouts"], key=lambda item: item["layout_index"])
+        for layout in ordered_layouts
     ]
     actual_ids = [cell.get("cell_id") if isinstance(cell, Mapping) else None for cell in cells]
     if actual_ids != expected_ids:
         raise _GlobalFailure("aggregate cell order or identity drifted")
+    all_layouts_hash = _sha256_bytes(_canonical_json(config["layouts"]))
+    expected_metadata = [
+        {
+            "seed": seed,
+            "seed_sha256": _sha256_bytes(_canonical_json(seed)),
+            "layout_id": layout["layout_id"],
+            "layout_index": int(layout["layout_index"]),
+            "layout_canonical_sha256": _sha256_bytes(_canonical_json(layout)),
+            "all_layouts_canonical_sha256": all_layouts_hash,
+        }
+        for seed in config["seeds"]
+        for layout in ordered_layouts
+    ]
+    for cell, expected in zip(cells, expected_metadata):
+        if not isinstance(cell, Mapping) or any(cell.get(key) != value for key, value in expected.items()):
+            raise _GlobalFailure("aggregate cell materialized metadata drifted")
     counts = {status: 0 for status in ("success", "partial", "inconclusive", "failed")}
     fingerprint_by_layout: dict[str, set[str]] = {layout["layout_id"]: set() for layout in config["layouts"]}
     observations_by_layout: dict[str, set[str]] = {layout["layout_id"]: set() for layout in config["layouts"]}
@@ -759,13 +992,22 @@ def _verify_aggregate_result(result: Mapping[str, Any], config: Mapping[str, Any
         if status == "failed":
             if evaluator_status is not None or not isinstance(cell.get("failure_stage"), str) or not cell["failure_stage"] or not isinstance(cell.get("error_type"), str) or not cell["error_type"] or not isinstance(cell.get("reason"), str) or not cell["reason"] or artifacts.get("evaluation") is not None:
                 raise _GlobalFailure("failed cell status fields are inconsistent")
+            failure_stage = cell["failure_stage"]
+            if failure_stage not in {"write_configs", "generate_dataset", "validate_dataset", "run_evaluator", "validate_evaluation"}:
+                raise _GlobalFailure("failed cell failure stage is invalid")
+            if failure_stage != "write_configs" and any(artifacts.get(key) is None for key in ("generator_config", "evaluator_config")):
+                raise _GlobalFailure("failed cell is missing materialized config evidence required by its failure stage")
+            if failure_stage in ("write_configs", "generate_dataset", "validate_dataset") and artifacts.get("dataset") is not None:
+                raise _GlobalFailure("failed cell has dataset evidence beyond its failure stage")
+            if failure_stage in ("run_evaluator", "validate_evaluation") and artifacts.get("dataset") is None:
+                raise _GlobalFailure("failed cell is missing dataset evidence required by its failure stage")
         else:
             if evaluator_status not in ("pass", "partial", "inconclusive") or cell.get("error_type") is not None or cell.get("reason") is not None or cell.get("failure_stage") is not None:
                 raise _GlobalFailure("successful cell status fields are inconsistent")
             evaluation = artifacts.get("evaluation")
             if not isinstance(evaluation, Mapping) or evaluation.get("status") != status or evaluation.get("evaluator_status") != evaluator_status:
                 raise _GlobalFailure("cell evaluator status is inconsistent with matrix status")
-            if any(artifacts.get(key) is None for key in ("generator_config", "evaluator_config", "dataset")):
+            if any(artifacts.get(key) is None for key in ("generator_config", "evaluator_config", "dataset", "evaluation")):
                 raise _GlobalFailure("completed cell is missing required artifact evidence")
         dataset = artifacts.get("dataset")
         if isinstance(dataset, Mapping):
@@ -912,11 +1154,21 @@ def run_anomaly_matrix(
         sources, values = _snapshot_inputs(repository, config_path)
         config = values["matrix_config"]
         base = values["base_generator_config"]
-        if validation.get("config_canonical_sha256") != sources["matrix_config"]["canonical_sha256"] or validation.get("canonicalization") != anomaly_matrix.CANONICALIZATION_ID:
+        if validation.get("config_canonical_sha256") != sources["matrix_config"]["canonical_sha256"] or validation.get("config_raw_sha256") != sources["matrix_config"]["raw_sha256"] or validation.get("canonicalization") != anomaly_matrix.CANONICALIZATION_ID:
             raise _GlobalFailure("Savepoint A validation provenance does not match input snapshot")
-        if validation.get("schema", {}).get("canonical_sha256") != sources["matrix_schema"]["canonical_sha256"] or validation.get("base_generator_schema", {}).get("canonical_sha256") != sources["base_generator_schema"]["canonical_sha256"]:
-            raise _GlobalFailure("Savepoint A schema provenance does not match input snapshot")
+        if validation.get("config_path") != sources["matrix_config"]["path"]:
+            raise _GlobalFailure("Savepoint A config path provenance does not match input snapshot")
+        for validation_key, source_key in {
+            "schema": "matrix_schema",
+            "base_generator": "base_generator_config",
+            "base_generator_schema": "base_generator_schema",
+        }.items():
+            validation_source = validation.get(validation_key)
+            source = sources[source_key]
+            if not isinstance(validation_source, Mapping) or any(validation_source.get(field) != source[field] for field in ("path", "canonical_sha256", "raw_sha256")):
+                raise _GlobalFailure(f"Savepoint A {source_key} provenance does not match input snapshot")
         revision = _require_revision(repository, boundary="preflight")
+        _assert_contained_path(repository / config["output_root"], repository, "output_root", must_exist=False)
         output = anomaly_matrix._safe_repo_path(repository, config["output_root"], "output_root", must_exist=False)
         _assert_inputs_unchanged(repository, sources, values, "pre-claim")
         _require_revision(repository, revision, "pre-claim")
@@ -946,16 +1198,18 @@ def run_anomaly_matrix(
                 generator_config_written = False
                 evaluator_config_written = False
                 try:
+                    _assert_cell_paths_contained(cell, repository)
                     _write_exclusive(cell["paths"]["generator_config"], generator_config_raw, "generator config")
                     generator_config_written = True
                     _write_exclusive(cell["paths"]["evaluator_config"], evaluator_config_raw, "evaluator config")
                     evaluator_config_written = True
-                    _assert_materialized_config(cell["paths"]["generator_config"], generator_config_raw, "generator config after write")
-                    _assert_materialized_config(cell["paths"]["evaluator_config"], evaluator_config_raw, "evaluator config after write")
+                    _assert_materialized_config(cell["paths"]["generator_config"], generator_config_raw, "generator config after write", repository)
+                    _assert_materialized_config(cell["paths"]["evaluator_config"], evaluator_config_raw, "evaluator config after write", repository)
                     failure_stage = "generate_dataset"
                     generated_path = _call_injected(generator, cell["paths"]["generator_config"], cell["paths"]["dataset"], repository)
-                    _assert_materialized_config(cell["paths"]["generator_config"], generator_config_raw, "generator config after generator")
-                    _assert_materialized_config(cell["paths"]["evaluator_config"], evaluator_config_raw, "evaluator config after generator")
+                    _assert_materialized_config(cell["paths"]["generator_config"], generator_config_raw, "generator config after generator", repository)
+                    _assert_materialized_config(cell["paths"]["evaluator_config"], evaluator_config_raw, "evaluator config after generator", repository)
+                    _assert_cell_parents_contained(cell, repository)
                     returned_dataset_path = Path(generated_path)
                     if not returned_dataset_path.is_absolute():
                         returned_dataset_path = (repository / returned_dataset_path).absolute()
@@ -968,13 +1222,15 @@ def run_anomaly_matrix(
                     evaluation_kwargs = {"recover_incomplete": False, "allowed_output_parent": output / "evaluations"}
                     failure_stage = "run_evaluator"
                     evaluation_return = _call_injected(evaluator, cell["paths"]["evaluator_config"], repository, **evaluation_kwargs)
-                    _assert_materialized_config(cell["paths"]["generator_config"], generator_config_raw, "generator config after evaluator")
-                    _assert_materialized_config(cell["paths"]["evaluator_config"], evaluator_config_raw, "evaluator config after evaluator")
-                    _assert_tree_unchanged(cell["paths"]["dataset"], dataset_snapshot, "dataset after evaluator")
+                    _assert_materialized_config(cell["paths"]["generator_config"], generator_config_raw, "generator config after evaluator", repository)
+                    _assert_materialized_config(cell["paths"]["evaluator_config"], evaluator_config_raw, "evaluator config after evaluator", repository)
+                    _assert_cell_parents_contained(cell, repository)
+                    _assert_tree_unchanged(cell["paths"]["dataset"], dataset_snapshot, "dataset after evaluator", repository)
                     failure_stage = "validate_evaluation"
                     evaluation, evaluation_snapshot = _validate_evaluation(cell, evaluation_return, repository, values["anomaly_result_schema"], sources, revision, dataset, _sha256_bytes(evaluator_config_raw))
                     cells.append(_cell_success(cell, repository, generator_config_raw, evaluator_config_raw, dataset, evaluation))
                     runtime_snapshots[cell["cell_id"]] = {
+                        "repository_root": repository,
                         "generator_config_path": cell["paths"]["generator_config"],
                         "generator_config_raw": generator_config_raw if generator_config_written else None,
                         "evaluator_config_path": cell["paths"]["evaluator_config"],
@@ -985,8 +1241,14 @@ def run_anomaly_matrix(
                 except _GlobalFailure:
                     raise
                 except Exception as exc:
+                    _assert_cell_parents_contained(cell, repository)
+                    if generator_config_written:
+                        _assert_materialized_config(cell["paths"]["generator_config"], generator_config_raw, "generator config after cell failure", repository)
+                    if evaluator_config_written:
+                        _assert_materialized_config(cell["paths"]["evaluator_config"], evaluator_config_raw, "evaluator config after cell failure", repository)
                     cells.append(_cell_failure(cell, exc, repository, failure_stage, generator_config_raw, evaluator_config_raw, dataset))
                     runtime_snapshots[cell["cell_id"]] = {
+                        "repository_root": repository,
                         "generator_config_path": cell["paths"]["generator_config"],
                         "generator_config_raw": generator_config_raw if generator_config_written else None,
                         "evaluator_config_path": cell["paths"]["evaluator_config"],
