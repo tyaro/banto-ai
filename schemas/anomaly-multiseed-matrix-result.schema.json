@@ -21,7 +21,7 @@
   },
   "$defs": {
     "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-    "path": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"},
+    "path": {"type": "string", "pattern": "^(?!.*//)(?!.*(?:^|/)[.]{1,2}(?:/|$))(?!.*/$)[A-Za-z0-9][A-Za-z0-9._/-]*$"},
     "source": {
       "type": "object",
       "additionalProperties": false,
@@ -48,7 +48,7 @@
         "inputs": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["matrix_config", "matrix_schema", "base_generator_config", "base_generator_schema", "anomaly_config_schema", "anomaly_result_schema", "matrix_result_schema"],
+          "required": ["matrix_config", "matrix_schema", "base_generator_config", "base_generator_schema", "anomaly_config_schema", "anomaly_result_schema", "dataset_manifest_schema", "matrix_result_schema"],
           "properties": {
             "matrix_config": {"$ref": "#/$defs/source"},
             "matrix_schema": {"$ref": "#/$defs/source"},
@@ -56,6 +56,7 @@
             "base_generator_schema": {"$ref": "#/$defs/source"},
             "anomaly_config_schema": {"$ref": "#/$defs/source"},
             "anomaly_result_schema": {"$ref": "#/$defs/source"},
+            "dataset_manifest_schema": {"$ref": "#/$defs/source"},
             "matrix_result_schema": {"$ref": "#/$defs/source"}
           }
         },
@@ -115,7 +116,7 @@
     "evaluationArtifact": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "result_path", "result_sha256", "summary_path", "summary_sha256", "completion_marker_path", "completion_marker_sha256", "status"],
+      "required": ["path", "result_path", "result_sha256", "summary_path", "summary_sha256", "completion_marker_path", "completion_marker_sha256", "status", "evaluator_status"],
       "properties": {
         "path": {"$ref": "#/$defs/path"},
         "result_path": {"$ref": "#/$defs/path"},
@@ -124,7 +125,8 @@
         "summary_sha256": {"$ref": "#/$defs/digest"},
         "completion_marker_path": {"$ref": "#/$defs/path"},
         "completion_marker_sha256": {"$ref": "#/$defs/digest"},
-        "status": {"enum": ["pass", "partial", "inconclusive"]}
+        "status": {"enum": ["success", "partial", "inconclusive"]},
+        "evaluator_status": {"enum": ["pass", "partial", "inconclusive"]}
       }
     },
     "artifacts": {
@@ -150,7 +152,7 @@
         "layout_index": {"type": "integer", "minimum": 0, "maximum": 11},
         "layout_canonical_sha256": {"$ref": "#/$defs/digest"},
         "all_layouts_canonical_sha256": {"$ref": "#/$defs/digest"},
-        "status": {"enum": ["pass", "partial", "inconclusive", "failed"]},
+        "status": {"enum": ["success", "partial", "inconclusive", "failed"]},
         "evaluator_status": {"anyOf": [{"enum": ["pass", "partial", "inconclusive"]}, {"type": "null"}]},
         "error_type": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
         "reason": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},

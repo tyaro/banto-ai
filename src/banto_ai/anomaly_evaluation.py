@@ -186,10 +186,17 @@ def _resolve_output(root: Path, raw: Any, *, allowed_parent: Path | None = None)
     if output.parent == artifacts:
         return output
     if allowed_parent is None:
-        raise AnomalyEvaluationError("output_dir must be a new directory directly below artifacts")
-    allowed_parent = allowed_parent.resolve()
-    if _is_link(allowed_parent) or not allowed_parent.is_dir() or allowed_parent == artifacts or artifacts not in allowed_parent.parents or output.parent != allowed_parent:
-        raise AnomalyEvaluationError("output_dir must be a new directory directly below artifacts")
+        raise AnomalyEvaluationError("output_dir must be a new directory below artifacts or the explicitly allowed evaluator parent")
+    allowed_parent = Path(allowed_parent).absolute()
+    if _is_link(allowed_parent) or not allowed_parent.is_dir():
+        raise AnomalyEvaluationError("allowed evaluator parent must be an existing regular directory without symlinks or junctions")
+    try:
+        allowed_relative = allowed_parent.relative_to(root.absolute()).as_posix()
+    except ValueError as exc:
+        raise AnomalyEvaluationError("allowed evaluator parent must remain inside the repository artifacts tree") from exc
+    allowed_parent = _safe_repo_path(root, allowed_relative, "allowed evaluator parent", must_exist=True)
+    if allowed_parent == artifacts or artifacts not in allowed_parent.parents or output.parent != allowed_parent:
+        raise AnomalyEvaluationError("output_dir must be a new directory below artifacts or the explicitly allowed evaluator parent")
     return output
 
 

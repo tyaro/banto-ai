@@ -11,6 +11,7 @@ import shutil
 import tempfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from pathlib import PureWindowsPath
 from typing import Any, Callable, Mapping
 from uuid import uuid4
 
@@ -28,6 +29,7 @@ COMPLETION_MARKER_TYPE = "event-aware-anomaly-matrix-complete"
 RESULT_SCHEMA_PATH = "schemas/anomaly-multiseed-matrix-result.schema.json"
 ANOMALY_CONFIG_SCHEMA_PATH = "schemas/anomaly-evaluation-config.schema.json"
 ANOMALY_RESULT_SCHEMA_PATH = "schemas/anomaly-evaluation-result.schema.json"
+DATASET_MANIFEST_SCHEMA_PATH = "schemas/synthetic-dataset-manifest.schema.json"
 
 
 class AnomalyMatrixRunnerError(ValueError):
@@ -98,10 +100,17 @@ def _jsonl_objects(path: Path, label: str) -> tuple[list[dict[str, Any]], bytes]
         raw = path.read_bytes()
         rows: list[dict[str, Any]] = []
         for line_number, line in enumerate(raw.splitlines(), start=1):
+            def parse_float(value: str) -> float:
+                parsed = float(value)
+                if not math.isfinite(parsed):
+                    raise ValueError(f"non-finite JSON number: {value}")
+                return parsed
+
             value = json.loads(
                 line.decode("utf-8"),
                 object_pairs_hook=lambda pairs: _reject_duplicate_pairs(pairs, label, line_number),
                 parse_constant=lambda value: (_ for _ in ()).throw(ValueError(f"non-finite JSON constant: {value}")),
+                parse_float=parse_float,
             )
             if not isinstance(value, dict):
                 raise ValueError(f"line {line_number} is not an object")
@@ -122,9 +131,23 @@ def _reject_duplicate_pairs(pairs: list[tuple[str, Any]], label: str, line_numbe
 
 def _safe_relative(path: Path, root: Path, label: str) -> str:
     try:
-        return path.relative_to(root).as_posix()
+        relative = path.relative_to(root).as_posix()
     except ValueError as exc:
         raise _GlobalFailure(f"{label} escaped the repository") from exc
+    return _strict_repo_relative(relative, label)
+
+
+def _strict_repo_relative(value: Any, label: str) -> str:
+    if not isinstance(value, str) or not value or value.startswith("/") or "\\" in value or PureWindowsPath(value).drive:
+        raise _GlobalFailure(f"{label} must be a normalized repository-relative POSIX path")
+    parts = value.split("/")
+    if any(part in ("", ".", "..") for part in parts):
+        raise _GlobalFailure(f"{label} must not contain empty, dot, or traversal segments")
+    if not (value[0].isascii() and value[0].isalnum()):
+        raise _GlobalFailure(f"{label} must start with an ASCII alphanumeric character")
+    if any(not (char.isascii() and (char.isalnum() or char in "._/-")) for char in value):
+        raise _GlobalFailure(f"{label} contains characters outside the normalized POSIX path contract")
+    return value
 
 
 def _write_exclusive(path: Path, payload: bytes, label: str) -> None:
@@ -204,6 +227,7 @@ def _snapshot_inputs(root: Path, config_path: str | Path) -> tuple[dict[str, Any
         "base_generator_schema": (config.get("base_generator_schema_path"), "base generator schema"),
         "anomaly_config_schema": (ANOMALY_CONFIG_SCHEMA_PATH, "anomaly evaluation config schema"),
         "anomaly_result_schema": (ANOMALY_RESULT_SCHEMA_PATH, "anomaly evaluation result schema"),
+        "dataset_manifest_schema": (DATASET_MANIFEST_SCHEMA_PATH, "synthetic dataset manifest schema"),
         "matrix_result_schema": (RESULT_SCHEMA_PATH, "anomaly matrix result schema"),
     }
     sources: dict[str, Any] = {"matrix_config": config_source}
@@ -313,14 +337,12 @@ def _iso_at(start_timestamp: str, sample: int, interval_ms: int) -> str:
         raise AnomalyMatrixRunnerError(f"base start_timestamp is invalid: {exc}") from exc
 
 
-def _validate_dataset(cell: Mapping[str, Any], base: Mapping[str, Any], root: Path) -> dict[str, Any]:
+def _validate_dataset(cell: Mapping[str, Any], base: Mapping[str, Any], root: Path, schema: Mapping[str, Any]) -> dict[str, Any]:
     dataset_path = cell["paths"]["dataset"]
     if _is_link(dataset_path) or not dataset_path.is_dir():
         raise AnomalyMatrixRunnerError(f"generated dataset is not a regular directory: {dataset_path}")
     manifest_path = dataset_path / "dataset-manifest.json"
     manifest, manifest_raw = _strict_json_object(manifest_path, "dataset manifest")
-    schema_path = anomaly_matrix._safe_repo_path(root, "schemas/synthetic-dataset-manifest.schema.json", "synthetic dataset manifest schema", must_exist=True)
-    schema, _schema_raw, _schema_raw_sha256, _schema_canonical_sha256 = anomaly_matrix._load_object_snapshot(schema_path, "synthetic dataset manifest schema")
     try:
         validate(manifest, schema)
     except ManifestValidationError as exc:
@@ -389,11 +411,11 @@ def _validate_dataset(cell: Mapping[str, Any], base: Mapping[str, Any], root: Pa
 def _call_injected(function: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
     try:
         signature = inspect.signature(function)
-        accepts_kwargs = any(parameter.kind == inspect.Parameter.VAR_KEYWORD for parameter in signature.parameters.values())
-        filtered = kwargs if accepts_kwargs else {key: value for key, value in kwargs.items() if key in signature.parameters}
-        return function(*args, **filtered)
     except (TypeError, ValueError):
         return function(*args, **kwargs)
+    accepts_kwargs = any(parameter.kind == inspect.Parameter.VAR_KEYWORD for parameter in signature.parameters.values())
+    filtered = kwargs if accepts_kwargs else {key: value for key, value in kwargs.items() if key in signature.parameters}
+    return function(*args, **filtered)
 
 
 def _validate_evaluation(cell: Mapping[str, Any], evaluation_return: Any, root: Path, result_schema: Mapping[str, Any], sources: Mapping[str, Any], revision: Mapping[str, Any], dataset: Mapping[str, Any], evaluator_config_raw_sha256: str) -> dict[str, Any]:
@@ -447,7 +469,8 @@ def _validate_evaluation(cell: Mapping[str, Any], evaluation_return: Any, root: 
         "summary_sha256": _sha256_bytes(summary_raw),
         "completion_marker_path": _safe_relative(marker_path, root, "cell completion marker path"),
         "completion_marker_sha256": _sha256_bytes(marker_path.read_bytes()),
-        "status": result["status"],
+        "status": {"pass": "success", "partial": "partial", "inconclusive": "inconclusive"}[result["status"]],
+        "evaluator_status": result["status"],
     }
 
 
@@ -456,7 +479,27 @@ def _safe_error(exc: BaseException, root: Path) -> str:
     return value.replace(str(root).replace("\\", "/"), "<repository>")
 
 
-def _cell_failure(cell: Mapping[str, Any], exc: BaseException, root: Path) -> dict[str, Any]:
+def _config_artifact(path: Path, raw: bytes, value: Mapping[str, Any], root: Path, label: str) -> dict[str, str] | None:
+    try:
+        if _is_link(path) or not path.is_file() or path.read_bytes() != raw:
+            return None
+        return {
+            "path": _safe_relative(path, root, label),
+            "raw_sha256": _sha256_bytes(raw),
+            "canonical_sha256": _sha256_bytes(_canonical_json(value)),
+        }
+    except Exception:
+        return None
+
+
+def _cell_failure(
+    cell: Mapping[str, Any],
+    exc: BaseException,
+    root: Path,
+    generator_config_raw: bytes,
+    evaluator_config_raw: bytes,
+    dataset: Mapping[str, Any] | None,
+) -> dict[str, Any]:
     return {
         "cell_id": cell["cell_id"],
         "seed": cell["seed"],
@@ -469,7 +512,12 @@ def _cell_failure(cell: Mapping[str, Any], exc: BaseException, root: Path) -> di
         "evaluator_status": None,
         "error_type": type(exc).__name__,
         "reason": _safe_error(exc, root),
-        "artifacts": {"generator_config": None, "evaluator_config": None, "dataset": None, "evaluation": None},
+        "artifacts": {
+            "generator_config": _config_artifact(cell["paths"]["generator_config"], generator_config_raw, cell["generator_config"], root, "generator config path"),
+            "evaluator_config": _config_artifact(cell["paths"]["evaluator_config"], evaluator_config_raw, cell["evaluator_config"], root, "evaluator config path"),
+            "dataset": dataset,
+            "evaluation": None,
+        },
     }
 
 
@@ -483,7 +531,7 @@ def _cell_success(cell: Mapping[str, Any], root: Path, generator_config_raw: byt
         "layout_canonical_sha256": cell["layout_canonical_sha256"],
         "all_layouts_canonical_sha256": cell["all_layouts_canonical_sha256"],
         "status": evaluation["status"],
-        "evaluator_status": evaluation["status"],
+        "evaluator_status": evaluation["evaluator_status"],
         "error_type": None,
         "reason": None,
         "artifacts": {
@@ -640,6 +688,7 @@ def run_anomaly_matrix(
                 cell = _materialize_cell(config, base, seed, layout, repository, output)
                 generator_config_raw = _json_bytes(cell["generator_config"])
                 evaluator_config_raw = _json_bytes(cell["evaluator_config"])
+                dataset: Mapping[str, Any] | None = None
                 try:
                     _write_exclusive(cell["paths"]["generator_config"], generator_config_raw, "generator config")
                     _write_exclusive(cell["paths"]["evaluator_config"], evaluator_config_raw, "evaluator config")
@@ -649,7 +698,7 @@ def run_anomaly_matrix(
                         returned_dataset_path = (repository / returned_dataset_path).absolute()
                     if returned_dataset_path != cell["paths"]["dataset"].absolute():
                         raise _GlobalFailure("generator returned a path outside the planned dataset output")
-                    dataset = _validate_dataset(cell, base, repository)
+                    dataset = _validate_dataset(cell, base, repository, values["dataset_manifest_schema"])
                     layout_fingerprints[cell["layout_id"]].add(dataset["dataset_fingerprint"])
                     layout_observation_hashes[cell["layout_id"]].add(dataset["observations_sha256"])
                     evaluation_kwargs = {"recover_incomplete": False, "allowed_output_parent": output / "evaluations"}
@@ -659,7 +708,7 @@ def run_anomaly_matrix(
                 except _GlobalFailure:
                     raise
                 except Exception as exc:
-                    cells.append(_cell_failure(cell, exc, repository))
+                    cells.append(_cell_failure(cell, exc, repository, generator_config_raw, evaluator_config_raw, dataset))
                 _assert_inputs_unchanged(repository, sources, values, "cell-completion")
                 _require_revision(repository, revision, "cell-completion")
         if len(cells) != expected_cell_count:
@@ -671,7 +720,7 @@ def run_anomaly_matrix(
             for seed in config["seeds"]
             for layout in sorted(config["layouts"], key=lambda item: item["layout_index"])
         ]
-        success_count = sum(cell["status"] == "pass" for cell in cells)
+        success_count = sum(cell["status"] == "success" for cell in cells)
         partial_count = sum(cell["status"] == "partial" for cell in cells)
         inconclusive_count = sum(cell["status"] == "inconclusive" for cell in cells)
         failed_count = sum(cell["status"] == "failed" for cell in cells)
@@ -685,7 +734,7 @@ def run_anomaly_matrix(
         if not all(invariants.values()):
             engineering_status = "fail" if failed_count or not distinct_fingerprints or not distinct_observations else "not_complete"
         else:
-            engineering_status = "pass" if success_count == 120 else ("fail" if failed_count else "not_complete")
+            engineering_status = "pass" if success_count == 120 else "fail"
         result = {
             "schema_version": SCHEMA_VERSION,
             "result_type": RESULT_TYPE,

@@ -107,7 +107,7 @@ sample不足、分母0、undefined metric、必要なclusterが欠けるsliceは
 engineering gateは性能promotion gateと独立に判定する。次をすべて満たす場合だけ、runのengineering statusを`complete`とする。
 
 - 120/120 cellsが`success`
-- `partial`、`failed`、`inconclusive`が0件
+- cell `success`（evaluatorの`pass`を正規化）、`partial`、`failed`、`inconclusive`が0件
 - 10 seedすべてでcoverage invariantが一致
 - seedごとのdataset fingerprintとobservation hashがseed間でdistinct
 - config、schema、result、provenance、code revision、seed、layout hashが記録される
@@ -163,7 +163,7 @@ Savepoint Aのpure validator、strict matrix schema、固定config、CLI、fake/
 
 ## Savepoint Bの実装状況
 
-Savepoint Bのdeterministic matrix runner、strict result schema、fake-based regression test、CLIを実装済みである。runnerはSavepoint Aを先に通し、seed-major × layout_index昇順の固定120 cellを展開する。各cellは`configs/generator`、`configs/evaluator`、`datasets`、`evaluations`へ分離して保存し、dataset fingerprint／observations hash、evaluator result／summary／`.complete` hash、event inventory、code revision、入力canonical／raw digestをaggregateへ記録する。通常のcell例外は`failed`として残りのcellを継続し、provenance／schema／path／revisionの不変性違反はglobal fail-closedとする。
+Savepoint Bのdeterministic matrix runner、strict result schema、fake-based regression test、CLIを実装済みである。runnerはSavepoint Aを先に通し、seed-major × layout_index昇順の固定120 cellを展開する。各cellは`configs/generator`、`configs/evaluator`、`datasets`、`evaluations`へ分離して保存し、dataset fingerprint／observations hash、evaluator result／summary／`.complete` hash、event inventory、code revision、入力canonical／raw digestをaggregateへ記録する。evaluatorの`pass`はmatrix cellの`success`へ正規化し、`partial`／`inconclusive`／通常例外はそれぞれの状態または`failed`として残りのcellを継続する。120 cellを処理したpublished runでは、これらのnon-successが1件でもあればengineering gateを`fail`とし、provenance／schema／path／revisionの不変性違反はglobal fail-closedとする。
 
 aggregateは`result.json`、`summary.md`、`.complete`をこの順でatomicに配置し、complete outputの上書きを拒否する。markerなしまたは不整合のrootは既定で拒否し、`--recover-incomplete`を明示した場合だけrandom siblingへquarantineしてから再開する。既定のanomaly evaluatorの`artifacts`直下制約は維持し、runnerが明示的に許可したevaluation親ディレクトリだけを利用する。
 

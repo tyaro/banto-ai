@@ -14,7 +14,7 @@ import banto_ai.anomaly_matrix_runner as runner_module
 from banto_ai.anomaly_evaluation import _canonical_json, _evaluate_core
 from banto_ai.anomaly_matrix_runner import AnomalyMatrixRunnerError, run_anomaly_matrix
 from banto_ai.generator import FINGERPRINT_ALGORITHM, FINGERPRINT_CANONICALIZATION, FINGERPRINT_FILE_NAMES, generate_synthetic
-from banto_ai.manifest import load_json
+from banto_ai.manifest import ManifestValidationError, load_json, validate
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -169,10 +169,14 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         self.assertTrue((output / ".complete").is_file())
 
     def test_one_cell_failure_continues_and_publishes_failure_inventory(self) -> None:
+        injected_calls = 0
+
         def failing_generator(config_path: Path, output: Path, root: Path) -> Path:
+            nonlocal injected_calls
             config = load_json(config_path)
             if config["seed"] == 42 and config["dataset_id"].endswith("layout-11-conveyor-01-cooldown"):
-                raise RuntimeError("fake cell failure")
+                injected_calls += 1
+                raise TypeError("fake internal cell failure")
             return self._fake_generator(config_path, output, root)
 
         output = self._run(generator=failing_generator)
@@ -182,7 +186,12 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         self.assertEqual(result["engineering_status"], "fail")
         failed = [cell for cell in result["cells"] if cell["status"] == "failed"]
         self.assertEqual(len(failed), 1)
-        self.assertEqual(failed[0]["error_type"], "RuntimeError")
+        self.assertEqual(failed[0]["error_type"], "TypeError")
+        self.assertIsNotNone(failed[0]["artifacts"]["generator_config"])
+        self.assertIsNotNone(failed[0]["artifacts"]["evaluator_config"])
+        self.assertIsNone(failed[0]["artifacts"]["dataset"])
+        self.assertIsNone(failed[0]["artifacts"]["evaluation"])
+        self.assertEqual(injected_calls, 1)
         self.assertEqual(len(self.generator_calls), 119)
 
     def test_success_output_is_byte_deterministic(self) -> None:
@@ -197,9 +206,9 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
     def test_status_mapping_and_marker_is_published_last(self) -> None:
         def partial_evaluator(config_path: Path, root: Path, **kwargs: object) -> Path:
             output = self._fake_evaluator(config_path, root, **kwargs)
-            if len(self.evaluator_calls) == 1:
+            if len(self.evaluator_calls) <= 2:
                 result = load_json(output / "result.json")
-                result["status"] = "partial"
+                result["status"] = "partial" if len(self.evaluator_calls) == 1 else "inconclusive"
                 result_raw = _write_json(output / "result.json", result)
                 summary_raw = (output / "summary.md").read_bytes()
                 _write_json(output / ".complete", {
@@ -214,9 +223,38 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
             output = self._run(evaluator=partial_evaluator)
         result = load_json(output / "result.json")
         self.assertEqual(result["counts"]["partial"], 1)
+        self.assertEqual(result["counts"]["inconclusive"], 1)
+        self.assertEqual(result["counts"]["success"], 118)
+        self.assertEqual(result["engineering_status"], "fail")
         self.assertEqual(result["cells"][0]["status"], "partial")
+        self.assertEqual(result["cells"][0]["evaluator_status"], "partial")
+        self.assertEqual(result["cells"][2]["status"], "success")
+        self.assertEqual(result["cells"][2]["evaluator_status"], "pass")
         aggregate_targets = [call.args[1].name for call in place.call_args_list]
         self.assertEqual(aggregate_targets[-1], ".complete")
+
+    def test_strict_jsonl_and_repository_relative_path_helpers(self) -> None:
+        with tempfile.TemporaryDirectory(dir=self.temp_root) as temporary:
+            path = Path(temporary) / "rows.jsonl"
+            path.write_bytes(b'{"value":1e999}\n')
+            with self.assertRaises(AnomalyMatrixRunnerError):
+                runner_module._jsonl_objects(path, "test rows")
+            path.write_bytes(b'{"value":NaN}\n')
+            with self.assertRaises(AnomalyMatrixRunnerError):
+                runner_module._jsonl_objects(path, "test rows")
+            path.write_bytes(b'{"value":1,"value":2}\n')
+            with self.assertRaises(AnomalyMatrixRunnerError):
+                runner_module._jsonl_objects(path, "test rows")
+        path_schema = load_json(ROOT / "schemas/anomaly-multiseed-matrix-result.schema.json")["$defs"]["path"]
+        for value in ("../x", "a/../x", "a/./x", "a//x", "a/"):
+            with self.assertRaises(AnomalyMatrixRunnerError):
+                runner_module._strict_repo_relative(value, "test path")
+            with self.assertRaises(ManifestValidationError):
+                validate(value, path_schema)
+        self.assertEqual(
+            load_json(ROOT / "schemas/anomaly-multiseed-matrix-result.schema.json")["$defs"]["path"]["pattern"],
+            r"^(?!.*//)(?!.*(?:^|/)[.]{1,2}(?:/|$))(?!.*/$)[A-Za-z0-9][A-Za-z0-9._/-]*$",
+        )
 
     def test_global_provenance_failure_leaves_incomplete_evidence(self) -> None:
         calls = 0
