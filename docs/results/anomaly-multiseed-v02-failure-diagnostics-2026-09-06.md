@@ -108,7 +108,7 @@ v0.3では新しいpreregistrationを作り、次を比較候補として事前�
 
 ## 公開物の保護とconsumer要件
 
-公開時にはprotected DACLと、通常のwrite／deleteを拒否する状態をread-only `AccessCheck`で確認した。ただし、この確認はsecurity sandboxや永続的なimmutabilityを保証しない。ownerによるACL変更、特権操作、公開後の変更防止、directory metadataの電源断耐性は保証範囲外である。
+公開処理ではprotected DACLを設定し、公開後の独立read-only監査では、そのDACLと監査process tokenに対する通常のwrite／delete拒否を`AccessCheck`で確認した。ただし、この確認はsecurity sandboxや永続的なimmutabilityを保証しない。ownerによるACL変更、特権操作、公開後の変更防止、directory metadataの電源断耐性は保証範囲外である。
 
 consumerは利用のたびに、固定公開先にexact 3 regular non-reparse filesだけがあること、`.complete` markerのtype／version／exact fields、およびmarkerが示す`result.json`／`summary.md`のraw SHA-256を検証しなければならない。
 
