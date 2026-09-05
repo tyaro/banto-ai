@@ -18,7 +18,7 @@ from uuid import uuid4
 from . import anomaly_matrix
 from .anomaly_evaluation import evaluate_anomalies
 from .benchmark import _revision
-from .generator import FINGERPRINT_ALGORITHM, FINGERPRINT_FILE_NAMES, FINGERPRINT_CANONICALIZATION, generate_synthetic
+from .generator import FINGERPRINT_ALGORITHM, FINGERPRINT_FILE_NAMES, FINGERPRINT_CANONICALIZATION, SIGNALS, generate_synthetic
 from .manifest import ManifestValidationError, validate
 
 
@@ -93,6 +93,39 @@ def _strict_json_object(path: Path, label: str) -> tuple[dict[str, Any], bytes]:
     return value, raw
 
 
+def _cell_json_object(path: Path, label: str) -> tuple[dict[str, Any], bytes]:
+    try:
+        if _is_link(path) or not path.is_file():
+            raise OSError(f"not a regular file: {path}")
+        raw = path.read_bytes()
+
+        def pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
+            result: dict[str, Any] = {}
+            for key, value in items:
+                if key in result:
+                    raise ValueError(f"duplicate JSON property: {key}")
+                result[key] = value
+            return result
+
+        def parse_float(value: str) -> float:
+            parsed = float(value)
+            if not math.isfinite(parsed):
+                raise ValueError(f"non-finite JSON number: {value}")
+            return parsed
+
+        value = json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=pairs,
+            parse_constant=lambda value: (_ for _ in ()).throw(ValueError(f"non-finite JSON constant: {value}")),
+            parse_float=parse_float,
+        )
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        raise AnomalyMatrixRunnerError(f"{label} is not strict UTF-8 JSON") from exc
+    if not isinstance(value, dict):
+        raise AnomalyMatrixRunnerError(f"{label} must be a JSON object")
+    return value, raw
+
+
 def _jsonl_objects(path: Path, label: str) -> tuple[list[dict[str, Any]], bytes]:
     try:
         if _is_link(path) or not path.is_file():
@@ -118,6 +151,47 @@ def _jsonl_objects(path: Path, label: str) -> tuple[list[dict[str, Any]], bytes]
     except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
         raise AnomalyMatrixRunnerError(f"{label} is not strict JSONL: {exc}") from exc
     return rows, raw
+
+
+def _tree_snapshot(path: Path, label: str) -> dict[str, Any]:
+    if _is_link(path) or not path.is_dir():
+        raise _GlobalFailure(f"{label} must be a regular directory")
+    inventory: list[tuple[str, str]] = []
+    hashes: dict[str, str] = {}
+    pending = [path]
+    try:
+        while pending:
+            directory = pending.pop()
+            for entry in os.scandir(directory):
+                candidate = Path(entry.path)
+                relative = candidate.relative_to(path).as_posix()
+                if _is_link(candidate):
+                    raise OSError(f"symlink or junction: {relative}")
+                if entry.is_dir(follow_symlinks=False):
+                    inventory.append((relative, "directory"))
+                    pending.append(candidate)
+                elif entry.is_file(follow_symlinks=False):
+                    inventory.append((relative, "file"))
+                    hashes[relative] = _sha256_bytes(candidate.read_bytes())
+                else:
+                    raise OSError(f"non-regular entry: {relative}")
+    except OSError as exc:
+        raise _GlobalFailure(f"{label} tree is not a stable regular tree") from exc
+    return {"inventory": tuple(sorted(inventory)), "hashes": dict(sorted(hashes.items()))}
+
+
+def _assert_tree_unchanged(path: Path, snapshot: Mapping[str, Any], label: str) -> None:
+    current = _tree_snapshot(path, label)
+    if current != dict(snapshot):
+        raise _GlobalFailure(f"{label} changed after validation")
+
+
+def _assert_materialized_config(path: Path, raw: bytes, label: str) -> None:
+    try:
+        if _is_link(path) or not path.is_file() or path.read_bytes() != raw:
+            raise OSError("config bytes changed")
+    except OSError as exc:
+        raise _GlobalFailure(f"{label} changed after materialization") from exc
 
 
 def _reject_duplicate_pairs(pairs: list[tuple[str, Any]], label: str, line_number: int) -> dict[str, Any]:
@@ -178,31 +252,8 @@ def _place_no_replace(source: Path, target: Path, label: str) -> None:
         return
     except FileExistsError as exc:
         raise AnomalyMatrixRunnerError(f"refusing to replace published {label}: {target}") from exc
-    except OSError:
-        pass
-    descriptor: int | None = None
-    try:
-        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0)
-        descriptor = os.open(target, flags, 0o644)
-        with os.fdopen(descriptor, "wb") as handle, source.open("rb") as source_handle:
-            descriptor = None
-            shutil.copyfileobj(source_handle, handle)
-            handle.flush()
-            os.fsync(handle.fileno())
-    except FileExistsError as exc:
-        raise AnomalyMatrixRunnerError(f"refusing to replace published {label}: {target}") from exc
     except OSError as exc:
-        try:
-            target.unlink(missing_ok=True)
-        except OSError:
-            pass
-        raise AnomalyMatrixRunnerError(f"could not place published {label}: {target}") from exc
-    finally:
-        if descriptor is not None:
-            try:
-                os.close(descriptor)
-            except OSError:
-                pass
+        raise AnomalyMatrixRunnerError(f"atomic placement unavailable for {label}") from exc
 
 
 def _source_entry(root: Path, path: Path, relative: str, label: str) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -337,18 +388,30 @@ def _iso_at(start_timestamp: str, sample: int, interval_ms: int) -> str:
         raise AnomalyMatrixRunnerError(f"base start_timestamp is invalid: {exc}") from exc
 
 
-def _validate_dataset(cell: Mapping[str, Any], base: Mapping[str, Any], root: Path, schema: Mapping[str, Any]) -> dict[str, Any]:
+def _validate_dataset(
+    cell: Mapping[str, Any],
+    base: Mapping[str, Any],
+    root: Path,
+    schema: Mapping[str, Any],
+    generator_config_raw: bytes,
+) -> tuple[dict[str, Any], dict[str, Any]]:
     dataset_path = cell["paths"]["dataset"]
     if _is_link(dataset_path) or not dataset_path.is_dir():
         raise AnomalyMatrixRunnerError(f"generated dataset is not a regular directory: {dataset_path}")
     manifest_path = dataset_path / "dataset-manifest.json"
-    manifest, manifest_raw = _strict_json_object(manifest_path, "dataset manifest")
+    manifest, manifest_raw = _cell_json_object(manifest_path, "dataset manifest")
     try:
         validate(manifest, schema)
     except ManifestValidationError as exc:
         raise AnomalyMatrixRunnerError(f"generated dataset manifest does not satisfy its schema: {exc}") from exc
     if manifest.get("dataset_id") != cell["generator_config"]["dataset_id"] or manifest.get("seed") != cell["seed"]:
         raise AnomalyMatrixRunnerError("generated dataset manifest identity drifted")
+    generated_config_path = dataset_path / manifest["generator_config_path"]
+    try:
+        if _is_link(generated_config_path) or not generated_config_path.is_file() or generated_config_path.read_bytes() != generator_config_raw:
+            raise OSError("generated generator config bytes drifted")
+    except OSError as exc:
+        raise AnomalyMatrixRunnerError("generated dataset generator config does not match materialized config") from exc
     observations_path = dataset_path / "observations.jsonl"
     events_path = dataset_path / "events.jsonl"
     observations, observations_raw = _jsonl_objects(observations_path, "observations")
@@ -377,7 +440,7 @@ def _validate_dataset(cell: Mapping[str, Any], base: Mapping[str, Any], root: Pa
         if any(actual.get(key) != value for key, value in expected_values.items()):
             raise AnomalyMatrixRunnerError(f"generated dataset event inventory drifted: {event_id}")
     fingerprint_path = dataset_path / "fingerprint.json"
-    fingerprint, _fingerprint_raw = _strict_json_object(fingerprint_path, "dataset fingerprint")
+    fingerprint, _fingerprint_raw = _cell_json_object(fingerprint_path, "dataset fingerprint")
     if fingerprint.get("algorithm") != FINGERPRINT_ALGORITHM or fingerprint.get("canonicalization") != FINGERPRINT_CANONICALIZATION:
         raise AnomalyMatrixRunnerError("generated dataset fingerprint contract drifted")
     files = fingerprint.get("files")
@@ -394,18 +457,21 @@ def _validate_dataset(cell: Mapping[str, Any], base: Mapping[str, Any], root: Pa
     fingerprint_input = "".join(f"{name}\n{digest}\n" for name, digest in sorted(file_hashes.items())).encode("utf-8")
     if fingerprint.get("dataset_fingerprint") != _sha256_bytes(fingerprint_input):
         raise AnomalyMatrixRunnerError("generated dataset fingerprint value drifted")
-    summary, _summary_raw = _strict_json_object(dataset_path / "summary.json", "dataset summary")
+    summary, _summary_raw = _cell_json_object(dataset_path / "summary.json", "dataset summary")
     if summary.get("dataset_fingerprint") != fingerprint.get("dataset_fingerprint") or summary.get("event_count") != 4:
         raise AnomalyMatrixRunnerError("generated dataset summary drifted")
-    return {
+    evidence = {
         "path": _safe_relative(dataset_path, root, "dataset path"),
+        "dataset_id": manifest["dataset_id"],
         "dataset_fingerprint": fingerprint["dataset_fingerprint"],
         "manifest_sha256": _sha256_bytes(manifest_raw),
         "observations_path": _safe_relative(observations_path, root, "observations path"),
         "observations_sha256": _sha256_bytes(observations_raw),
         "observation_record_count": len(observations),
+        "equipment_count": len(manifest["equipment"]),
         "event_count": len(events),
     }
+    return evidence, _tree_snapshot(dataset_path, "validated dataset")
 
 
 def _call_injected(function: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
@@ -418,7 +484,16 @@ def _call_injected(function: Callable[..., Any], *args: Any, **kwargs: Any) -> A
     return function(*args, **filtered)
 
 
-def _validate_evaluation(cell: Mapping[str, Any], evaluation_return: Any, root: Path, result_schema: Mapping[str, Any], sources: Mapping[str, Any], revision: Mapping[str, Any], dataset: Mapping[str, Any], evaluator_config_raw_sha256: str) -> dict[str, Any]:
+def _validate_evaluation(
+    cell: Mapping[str, Any],
+    evaluation_return: Any,
+    root: Path,
+    result_schema: Mapping[str, Any],
+    sources: Mapping[str, Any],
+    revision: Mapping[str, Any],
+    dataset: Mapping[str, Any],
+    evaluator_config_raw_sha256: str,
+) -> tuple[dict[str, Any], dict[str, Any]]:
     expected_path = cell["paths"]["evaluation"]
     returned_path = Path(evaluation_return)
     if not returned_path.is_absolute():
@@ -430,7 +505,7 @@ def _validate_evaluation(cell: Mapping[str, Any], evaluation_return: Any, root: 
     result_path = returned_path / "result.json"
     summary_path = returned_path / "summary.md"
     marker_path = returned_path / COMPLETION_MARKER
-    result, result_raw = _strict_json_object(result_path, "cell evaluator result")
+    result, result_raw = _cell_json_object(result_path, "cell evaluator result")
     try:
         validate(result, result_schema)
     except ManifestValidationError as exc:
@@ -440,7 +515,7 @@ def _validate_evaluation(cell: Mapping[str, Any], evaluation_return: Any, root: 
     if _is_link(summary_path) or not summary_path.is_file() or _is_link(marker_path) or not marker_path.is_file():
         raise AnomalyMatrixRunnerError("cell evaluator completion payload is incomplete")
     summary_raw = summary_path.read_bytes()
-    marker, _marker_raw = _strict_json_object(marker_path, "cell evaluator completion marker")
+    marker, _marker_raw = _cell_json_object(marker_path, "cell evaluator completion marker")
     if set(marker) != {"marker_type", "schema_version", "result_sha256", "summary_sha256"} or marker.get("marker_type") != "event-aware-anomaly-complete" or marker.get("schema_version") != "0.1" or marker.get("result_sha256") != _sha256_bytes(result_raw) or marker.get("summary_sha256") != _sha256_bytes(summary_raw):
         raise AnomalyMatrixRunnerError("cell evaluator completion marker is invalid")
     provenance = result.get("provenance")
@@ -461,7 +536,8 @@ def _validate_evaluation(cell: Mapping[str, Any], evaluation_return: Any, root: 
         raise _GlobalFailure("cell evaluator dataset provenance drifted")
     if provenance.get("code_revision") != dict(revision):
         raise _GlobalFailure("cell evaluator code revision provenance drifted")
-    return {
+    _verify_evaluator_cross_fields(result, cell, dataset)
+    evidence = {
         "path": _safe_relative(returned_path, root, "evaluation path"),
         "result_path": _safe_relative(result_path, root, "cell result path"),
         "result_sha256": _sha256_bytes(result_raw),
@@ -472,6 +548,98 @@ def _validate_evaluation(cell: Mapping[str, Any], evaluation_return: Any, root: 
         "status": {"pass": "success", "partial": "partial", "inconclusive": "inconclusive"}[result["status"]],
         "evaluator_status": result["status"],
     }
+    return evidence, _tree_snapshot(returned_path, "validated evaluator output")
+
+
+def _expected_target_signal_ids(cell: Mapping[str, Any]) -> list[str]:
+    equipment_ids = [item["equipment_id"] for item in cell["generator_config"]["equipment"]]
+    available = {f"{equipment_id}.{signal_id}" for equipment_id in equipment_ids for signal_id in SIGNALS}
+    resolved: list[str] = []
+    for raw in cell["evaluator_config"]["target_signal_ids"]:
+        candidates = [raw] if raw in available else [f"{equipment_id}.{raw}" for equipment_id in equipment_ids]
+        for candidate in candidates:
+            if candidate in available and candidate not in resolved:
+                resolved.append(candidate)
+    return resolved
+
+
+def _verify_evaluator_cross_fields(result: Mapping[str, Any], cell: Mapping[str, Any], dataset: Mapping[str, Any]) -> None:
+    provenance = result.get("provenance")
+    if not isinstance(provenance, Mapping):
+        raise _GlobalFailure("cell evaluator provenance is missing")
+    dataset_provenance = provenance.get("dataset")
+    expected_dataset = {
+        "kind": "synthetic-dataset",
+        "path": dataset["path"],
+        "dataset_id": cell["generator_config"]["dataset_id"],
+        "dataset_fingerprint": dataset["dataset_fingerprint"],
+        "manifest_sha256": dataset["manifest_sha256"],
+    }
+    if dataset_provenance != expected_dataset:
+        raise _GlobalFailure("cell evaluator dataset cross-field provenance drifted")
+    quality = provenance.get("quality_gate")
+    expected_quality = {
+        "status": "pass",
+        "observation_record_count": dataset["observation_record_count"],
+        "equipment_count": len(cell["generator_config"]["equipment"]),
+    }
+    if not isinstance(quality, Mapping) or any(quality.get(key) != value for key, value in expected_quality.items()):
+        raise _GlobalFailure("cell evaluator quality gate cross-fields drifted")
+    parameters = result.get("parameters")
+    expected_parameters = {
+        "target_signal_ids": _expected_target_signal_ids(cell),
+        "min_calibration_points": cell["evaluator_config"]["min_calibration_points"],
+        "robust_z_threshold": cell["evaluator_config"]["robust_z_threshold"],
+        "persistence_points": cell["evaluator_config"]["persistence_points"],
+        "detection_grace_points": cell["evaluator_config"]["detection_grace_points"],
+        "sampling_interval_ms": cell["generator_config"]["sampling_interval_ms"],
+        "calibration_split": "validation",
+        "scoring_split": "test",
+        "boundary_semantics": "[start,end)",
+    }
+    if not isinstance(parameters, Mapping) or any(parameters.get(key) != value for key, value in expected_parameters.items()):
+        raise _GlobalFailure("cell evaluator parameters cross-fields drifted")
+    arrays = {
+        "scores": result.get("scores"),
+        "alert_episodes": result.get("alert_episodes"),
+        "alert_episode_accounting": result.get("alert_episode_accounting"),
+        "incidents": result.get("incidents"),
+        "clean_false_alert_episodes": result.get("clean_false_alert_episodes"),
+    }
+    row_counts = result.get("row_counts")
+    if not isinstance(row_counts, Mapping) or row_counts.get("dataset_observations") != dataset["observation_record_count"]:
+        raise _GlobalFailure("cell evaluator dataset row count cross-field drifted")
+    row_count_keys = {
+        "scores": "score_rows",
+        "alert_episodes": "alert_episodes",
+        "alert_episode_accounting": "alert_episode_accounting",
+        "incidents": "incidents",
+        "clean_false_alert_episodes": "clean_false_alert_episodes",
+    }
+    for key, rows in arrays.items():
+        if not isinstance(rows, list) or row_counts.get(row_count_keys[key]) != len(rows):
+            raise _GlobalFailure(f"cell evaluator {key} row count cross-field drifted")
+    metrics = result.get("metrics")
+    if not isinstance(metrics, Mapping) or row_counts.get("clean_false_alert_signal_episodes") != metrics.get("clean_false_alert_signal_episode_count"):
+        raise _GlobalFailure("cell evaluator clean false-alert row count cross-field drifted")
+    exclusions = result.get("exclusions")
+    calibration = exclusions.get("calibration") if isinstance(exclusions, Mapping) else None
+    availability = metrics.get("score_availability_by_signal") if isinstance(metrics, Mapping) else None
+    overall = metrics.get("overall") if isinstance(metrics, Mapping) else None
+    if not isinstance(calibration, Mapping) or not isinstance(availability, Mapping) or not isinstance(overall, Mapping):
+        raise _GlobalFailure("cell evaluator status inputs are missing")
+    profiles_inconclusive = calibration.get("profiles_inconclusive")
+    if not isinstance(profiles_inconclusive, int) or isinstance(profiles_inconclusive, bool):
+        raise _GlobalFailure("cell evaluator calibration status input is invalid")
+    zero_availability = any(isinstance(summary, Mapping) and summary.get("available_points") == 0 for summary in availability.values())
+    if profiles_inconclusive > 0 or zero_availability:
+        expected_status = "inconclusive"
+    elif overall.get("eligible_incidents") == 0:
+        expected_status = "partial"
+    else:
+        expected_status = "pass"
+    if not isinstance(overall.get("eligible_incidents"), int) or isinstance(overall.get("eligible_incidents"), bool) or result.get("status") != expected_status:
+        raise _GlobalFailure("cell evaluator status cross-fields drifted")
 
 
 def _safe_error(exc: BaseException, root: Path) -> str:
@@ -496,6 +664,7 @@ def _cell_failure(
     cell: Mapping[str, Any],
     exc: BaseException,
     root: Path,
+    failure_stage: str,
     generator_config_raw: bytes,
     evaluator_config_raw: bytes,
     dataset: Mapping[str, Any] | None,
@@ -511,7 +680,8 @@ def _cell_failure(
         "status": "failed",
         "evaluator_status": None,
         "error_type": type(exc).__name__,
-        "reason": _safe_error(exc, root),
+        "reason": f"{failure_stage}_failed",
+        "failure_stage": failure_stage,
         "artifacts": {
             "generator_config": _config_artifact(cell["paths"]["generator_config"], generator_config_raw, cell["generator_config"], root, "generator config path"),
             "evaluator_config": _config_artifact(cell["paths"]["evaluator_config"], evaluator_config_raw, cell["evaluator_config"], root, "evaluator config path"),
@@ -534,6 +704,7 @@ def _cell_success(cell: Mapping[str, Any], root: Path, generator_config_raw: byt
         "evaluator_status": evaluation["evaluator_status"],
         "error_type": None,
         "reason": None,
+        "failure_stage": None,
         "artifacts": {
             "generator_config": {"path": _safe_relative(cell["paths"]["generator_config"], root, "generator config path"), "raw_sha256": _sha256_bytes(generator_config_raw), "canonical_sha256": _sha256_bytes(_canonical_json(cell["generator_config"]))},
             "evaluator_config": {"path": _safe_relative(cell["paths"]["evaluator_config"], root, "evaluator config path"), "raw_sha256": _sha256_bytes(evaluator_config_raw), "canonical_sha256": _sha256_bytes(_canonical_json(cell["evaluator_config"]))},
@@ -541,6 +712,85 @@ def _cell_success(cell: Mapping[str, Any], root: Path, generator_config_raw: byt
             "evaluation": evaluation,
         },
     }
+
+
+def _assert_runtime_snapshot(snapshot: Mapping[str, Any], boundary: str) -> None:
+    if snapshot.get("generator_config_raw") is not None:
+        _assert_materialized_config(snapshot["generator_config_path"], snapshot["generator_config_raw"], f"generator config at {boundary}")
+    if snapshot.get("evaluator_config_raw") is not None:
+        _assert_materialized_config(snapshot["evaluator_config_path"], snapshot["evaluator_config_raw"], f"evaluator config at {boundary}")
+    if snapshot.get("dataset") is not None:
+        dataset_path, dataset_tree = snapshot["dataset"]
+        _assert_tree_unchanged(dataset_path, dataset_tree, f"dataset at {boundary}")
+    if snapshot.get("evaluation") is not None:
+        evaluation_path, evaluation_tree = snapshot["evaluation"]
+        _assert_tree_unchanged(evaluation_path, evaluation_tree, f"evaluation output at {boundary}")
+
+
+def _assert_runtime_snapshots(snapshots: Mapping[str, Mapping[str, Any]], boundary: str) -> None:
+    for snapshot in snapshots.values():
+        _assert_runtime_snapshot(snapshot, boundary)
+
+
+def _verify_aggregate_result(result: Mapping[str, Any], config: Mapping[str, Any]) -> None:
+    cells = result.get("cells")
+    if not isinstance(cells, list) or len(cells) != 120:
+        raise _GlobalFailure("aggregate cell inventory is not exactly 120 cells")
+    expected_ids = [
+        f"seed-{seed:03d}-layout-{int(layout['layout_index']):02d}-{layout['layout_id']}"
+        for seed in config["seeds"]
+        for layout in sorted(config["layouts"], key=lambda item: item["layout_index"])
+    ]
+    actual_ids = [cell.get("cell_id") if isinstance(cell, Mapping) else None for cell in cells]
+    if actual_ids != expected_ids:
+        raise _GlobalFailure("aggregate cell order or identity drifted")
+    counts = {status: 0 for status in ("success", "partial", "inconclusive", "failed")}
+    fingerprint_by_layout: dict[str, set[str]] = {layout["layout_id"]: set() for layout in config["layouts"]}
+    observations_by_layout: dict[str, set[str]] = {layout["layout_id"]: set() for layout in config["layouts"]}
+    for cell in cells:
+        if not isinstance(cell, Mapping) or cell.get("status") not in counts:
+            raise _GlobalFailure("aggregate cell status is invalid")
+        status = cell["status"]
+        counts[status] += 1
+        evaluator_status = cell.get("evaluator_status")
+        artifacts = cell.get("artifacts")
+        if not isinstance(artifacts, Mapping):
+            raise _GlobalFailure("aggregate cell artifacts are missing")
+        if status == "failed":
+            if evaluator_status is not None or not isinstance(cell.get("failure_stage"), str) or not cell["failure_stage"] or not isinstance(cell.get("error_type"), str) or not cell["error_type"] or not isinstance(cell.get("reason"), str) or not cell["reason"] or artifacts.get("evaluation") is not None:
+                raise _GlobalFailure("failed cell status fields are inconsistent")
+        else:
+            if evaluator_status not in ("pass", "partial", "inconclusive") or cell.get("error_type") is not None or cell.get("reason") is not None or cell.get("failure_stage") is not None:
+                raise _GlobalFailure("successful cell status fields are inconsistent")
+            evaluation = artifacts.get("evaluation")
+            if not isinstance(evaluation, Mapping) or evaluation.get("status") != status or evaluation.get("evaluator_status") != evaluator_status:
+                raise _GlobalFailure("cell evaluator status is inconsistent with matrix status")
+            if any(artifacts.get(key) is None for key in ("generator_config", "evaluator_config", "dataset")):
+                raise _GlobalFailure("completed cell is missing required artifact evidence")
+        dataset = artifacts.get("dataset")
+        if isinstance(dataset, Mapping):
+            layout_id = cell.get("layout_id")
+            if layout_id not in fingerprint_by_layout or not isinstance(dataset.get("dataset_fingerprint"), str) or not isinstance(dataset.get("observations_sha256"), str):
+                raise _GlobalFailure("cell dataset evidence is inconsistent")
+            fingerprint_by_layout[layout_id].add(dataset["dataset_fingerprint"])
+            observations_by_layout[layout_id].add(dataset["observations_sha256"])
+    expected_counts = {"total": 120, **counts}
+    if result.get("counts") != expected_counts:
+        raise _GlobalFailure("aggregate counts do not match cell inventory")
+    invariants = {
+        "all_cells_processed": len(cells) == 120,
+        "cell_order": actual_ids == expected_ids,
+        "event_inventory": all(isinstance(cell.get("artifacts"), Mapping) and cell["artifacts"].get("dataset") is not None for cell in cells),
+        "distinct_dataset_fingerprints_by_layout": all(len(values) == len(config["seeds"]) for values in fingerprint_by_layout.values()),
+        "distinct_observations_by_layout": all(len(values) == len(config["seeds"]) for values in observations_by_layout.values()),
+    }
+    if result.get("invariants") != invariants:
+        raise _GlobalFailure("aggregate invariants do not match cell inventory")
+    expected_engineering = "pass" if all(invariants.values()) and counts["success"] == 120 else "fail"
+    if result.get("engineering_status") != expected_engineering or result.get("status") != ("pass" if expected_engineering == "pass" else "not_complete"):
+        raise _GlobalFailure("aggregate status is inconsistent with cell inventory")
+    if result.get("run_status") != "complete" or result.get("performance_status") != "not_evaluated":
+        raise _GlobalFailure("aggregate run status is inconsistent")
 
 
 def _output_state(output: Path) -> tuple[str, str]:
@@ -678,6 +928,7 @@ def run_anomaly_matrix(
             _assert_inputs_unchanged(repository, sources, values, "post-recovery")
             _require_revision(repository, revision, "post-recovery")
         cells: list[dict[str, Any]] = []
+        runtime_snapshots: dict[str, dict[str, Any]] = {}
         layout_fingerprints: dict[str, set[str]] = {layout["layout_id"]: set() for layout in config["layouts"]}
         layout_observation_hashes: dict[str, set[str]] = {layout["layout_id"]: set() for layout in config["layouts"]}
         expected_cell_count = len(config["seeds"]) * len(config["layouts"])
@@ -689,26 +940,61 @@ def run_anomaly_matrix(
                 generator_config_raw = _json_bytes(cell["generator_config"])
                 evaluator_config_raw = _json_bytes(cell["evaluator_config"])
                 dataset: Mapping[str, Any] | None = None
+                dataset_snapshot: Mapping[str, Any] | None = None
+                evaluation_snapshot: Mapping[str, Any] | None = None
+                failure_stage = "write_configs"
+                generator_config_written = False
+                evaluator_config_written = False
                 try:
                     _write_exclusive(cell["paths"]["generator_config"], generator_config_raw, "generator config")
+                    generator_config_written = True
                     _write_exclusive(cell["paths"]["evaluator_config"], evaluator_config_raw, "evaluator config")
+                    evaluator_config_written = True
+                    _assert_materialized_config(cell["paths"]["generator_config"], generator_config_raw, "generator config after write")
+                    _assert_materialized_config(cell["paths"]["evaluator_config"], evaluator_config_raw, "evaluator config after write")
+                    failure_stage = "generate_dataset"
                     generated_path = _call_injected(generator, cell["paths"]["generator_config"], cell["paths"]["dataset"], repository)
+                    _assert_materialized_config(cell["paths"]["generator_config"], generator_config_raw, "generator config after generator")
+                    _assert_materialized_config(cell["paths"]["evaluator_config"], evaluator_config_raw, "evaluator config after generator")
                     returned_dataset_path = Path(generated_path)
                     if not returned_dataset_path.is_absolute():
                         returned_dataset_path = (repository / returned_dataset_path).absolute()
                     if returned_dataset_path != cell["paths"]["dataset"].absolute():
                         raise _GlobalFailure("generator returned a path outside the planned dataset output")
-                    dataset = _validate_dataset(cell, base, repository, values["dataset_manifest_schema"])
+                    failure_stage = "validate_dataset"
+                    dataset, dataset_snapshot = _validate_dataset(cell, base, repository, values["dataset_manifest_schema"], generator_config_raw)
                     layout_fingerprints[cell["layout_id"]].add(dataset["dataset_fingerprint"])
                     layout_observation_hashes[cell["layout_id"]].add(dataset["observations_sha256"])
                     evaluation_kwargs = {"recover_incomplete": False, "allowed_output_parent": output / "evaluations"}
+                    failure_stage = "run_evaluator"
                     evaluation_return = _call_injected(evaluator, cell["paths"]["evaluator_config"], repository, **evaluation_kwargs)
-                    evaluation = _validate_evaluation(cell, evaluation_return, repository, values["anomaly_result_schema"], sources, revision, dataset, _sha256_bytes(evaluator_config_raw))
+                    _assert_materialized_config(cell["paths"]["generator_config"], generator_config_raw, "generator config after evaluator")
+                    _assert_materialized_config(cell["paths"]["evaluator_config"], evaluator_config_raw, "evaluator config after evaluator")
+                    _assert_tree_unchanged(cell["paths"]["dataset"], dataset_snapshot, "dataset after evaluator")
+                    failure_stage = "validate_evaluation"
+                    evaluation, evaluation_snapshot = _validate_evaluation(cell, evaluation_return, repository, values["anomaly_result_schema"], sources, revision, dataset, _sha256_bytes(evaluator_config_raw))
                     cells.append(_cell_success(cell, repository, generator_config_raw, evaluator_config_raw, dataset, evaluation))
+                    runtime_snapshots[cell["cell_id"]] = {
+                        "generator_config_path": cell["paths"]["generator_config"],
+                        "generator_config_raw": generator_config_raw if generator_config_written else None,
+                        "evaluator_config_path": cell["paths"]["evaluator_config"],
+                        "evaluator_config_raw": evaluator_config_raw if evaluator_config_written else None,
+                        "dataset": (cell["paths"]["dataset"], dataset_snapshot),
+                        "evaluation": (cell["paths"]["evaluation"], evaluation_snapshot),
+                    }
                 except _GlobalFailure:
                     raise
                 except Exception as exc:
-                    cells.append(_cell_failure(cell, exc, repository, generator_config_raw, evaluator_config_raw, dataset))
+                    cells.append(_cell_failure(cell, exc, repository, failure_stage, generator_config_raw, evaluator_config_raw, dataset))
+                    runtime_snapshots[cell["cell_id"]] = {
+                        "generator_config_path": cell["paths"]["generator_config"],
+                        "generator_config_raw": generator_config_raw if generator_config_written else None,
+                        "evaluator_config_path": cell["paths"]["evaluator_config"],
+                        "evaluator_config_raw": evaluator_config_raw if evaluator_config_written else None,
+                        "dataset": (cell["paths"]["dataset"], dataset_snapshot) if dataset_snapshot is not None else None,
+                        "evaluation": (cell["paths"]["evaluation"], evaluation_snapshot) if evaluation_snapshot is not None else None,
+                    }
+                _assert_runtime_snapshot(runtime_snapshots[cell["cell_id"]], "cell-completion")
                 _assert_inputs_unchanged(repository, sources, values, "cell-completion")
                 _require_revision(repository, revision, "cell-completion")
         if len(cells) != expected_cell_count:
@@ -762,9 +1048,11 @@ def run_anomaly_matrix(
             validate(result, values["matrix_result_schema"])
         except ManifestValidationError as exc:
             raise _GlobalFailure(f"matrix result does not satisfy its schema: {exc}") from exc
+        _verify_aggregate_result(result, config)
+        _assert_runtime_snapshots(runtime_snapshots, "aggregate")
         _assert_inputs_unchanged(repository, sources, values, "aggregate-marker")
         _require_revision(repository, revision, "aggregate-marker")
-        return _publish(repository, output, result, lambda: (_assert_inputs_unchanged(repository, sources, values, "before-marker"), _require_revision(repository, revision, "before-marker")))
+        return _publish(repository, output, result, lambda: (_verify_aggregate_result(result, config), _assert_runtime_snapshots(runtime_snapshots, "before-marker"), _assert_inputs_unchanged(repository, sources, values, "before-marker"), _require_revision(repository, revision, "before-marker")))
     except BaseException as exc:
         if claimed and output is not None:
             _failure_evidence(output, repository, exc)

@@ -264,22 +264,8 @@ def _place_no_replace(source: Path, target: Path) -> None:
         os.link(source, target)
     except FileExistsError as exc:
         raise AnomalyEvaluationError(f"refusing to replace published file: {target}") from exc
-    except OSError:
-        try:
-            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0)
-            descriptor = os.open(target, flags, 0o644)
-            with os.fdopen(descriptor, "wb") as handle, source.open("rb") as source_handle:
-                shutil.copyfileobj(source_handle, handle)
-                handle.flush()
-                os.fsync(handle.fileno())
-        except FileExistsError as exc:
-            raise AnomalyEvaluationError(f"refusing to replace published file: {target}") from exc
-        except OSError as exc:
-            try:
-                target.unlink(missing_ok=True)
-            except OSError as cleanup_error:
-                exc.add_note(f"incomplete output cleanup failed: {cleanup_error!r}")
-            raise AnomalyEvaluationError(f"could not place published file: {target}") from exc
+    except OSError as exc:
+        raise AnomalyEvaluationError("atomic placement unavailable for published file") from exc
 
 
 def _best_effort_fsync_directory(path: Path, label: str) -> None:
