@@ -1227,6 +1227,11 @@ def _event_records_and_metrics(
 
 
 def _summary(result: Mapping[str, Any]) -> str:
+    # Validate the complete payload before rendering scalar values below;
+    # otherwise a direct renderer call could stringify NaN/Inf as ``nan`` or
+    # ``inf`` even though the publication schema rejects those values.
+    _canonical_json(result)
+
     def stable(value: Any) -> str:
         """Render structured summary values independently of mapping insertion order."""
         if isinstance(value, (Mapping, list, tuple)):

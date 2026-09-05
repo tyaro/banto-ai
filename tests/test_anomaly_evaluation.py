@@ -212,6 +212,13 @@ class AnomalyEvaluationTests(unittest.TestCase):
         with self.assertRaises(AnomalyEvaluationError):
             anomaly_module._summary(nonfinite)
 
+        for value in (math.nan, math.inf, -math.inf, object()):
+            scalar_invalid = copy.deepcopy(result)
+            scalar_invalid["metrics"]["overall"]["incident_precision"] = value
+            with self.subTest(value=repr(value)):
+                with self.assertRaises(AnomalyEvaluationError):
+                    anomaly_module._summary(scalar_invalid)
+
     def test_calibration_is_invariant_to_test_observations_and_event_labels(self) -> None:
         config_path, _output, config = self._config("invariance")
         equipment_ids, target_ids, labels = _validate_config(config, ROOT, self.dataset)
