@@ -103,6 +103,55 @@ class AnomalyMatrixAnalysisPureTests(unittest.TestCase):
         with self.assertRaises(analysis.ManifestValidationError):
             analysis.validate({"status": "pass", "minimum": 0.95, "signals": missing_signal}, availability_gate, root=schema)
 
+        pass_below = copy.deepcopy(valid)
+        pass_below["point"] = 0.7
+        with self.assertRaises(analysis.ManifestValidationError):
+            analysis.validate(pass_below, metric_gate, root=schema)
+        pass_null_ci = copy.deepcopy(valid)
+        pass_null_ci["ci_lower"] = None
+        with self.assertRaises(analysis.ManifestValidationError):
+            analysis.validate(pass_null_ci, metric_gate, root=schema)
+        over_one = copy.deepcopy(valid)
+        over_one["point"] = 1.1
+        with self.assertRaises(analysis.ManifestValidationError):
+            analysis.validate(over_one, metric_gate, root=schema)
+        fail_above = {"status": "fail", "point": 0.9, "ci_lower": 0.7, "ci_upper": 1.0, "threshold": {"point_min": 0.8, "ci_lower_min": 0.6}}
+        with self.assertRaises(analysis.ManifestValidationError):
+            analysis.validate(fail_above, metric_gate, root=schema)
+        inconclusive = {"status": "inconclusive", "point": None, "ci_lower": None, "ci_upper": None, "threshold": {"point_min": 0.8, "ci_lower_min": 0.6}}
+        analysis.validate(inconclusive, metric_gate, root=schema)
+        availability_below = copy.deepcopy(availability)
+        availability_below[keys[0]]["availability_ratio"] = 0.9
+        with self.assertRaises(analysis.ManifestValidationError):
+            analysis.validate({"status": "pass", "minimum": 0.95, "signals": availability_below}, availability_gate, root=schema)
+        availability_inconclusive = copy.deepcopy(availability)
+        availability_inconclusive[keys[0]] = {"available_points": 0, "total_points": 0, "availability_ratio": None}
+        analysis.validate({"status": "inconclusive", "minimum": 0.95, "signals": availability_inconclusive}, availability_gate, root=schema)
+
+    def test_analysis_semantics_reject_gate_or_metric_drift(self) -> None:
+        primary = {
+            "overall_incident_precision": {"numerator": 9, "denominator": 10, "value": 0.9, "ci": {"status": "pass", "lower": 0.8, "upper": 1.0, "undefined_replicates": 0}},
+            "machine_fault_recall": {"numerator": 8, "denominator": 10, "value": 0.8, "ci": {"status": "pass", "lower": 0.7, "upper": 0.9, "undefined_replicates": 0}},
+            "sensor_fault_recall": {"numerator": 9, "denominator": 10, "value": 0.9, "ci": {"status": "pass", "lower": 0.8, "upper": 1.0, "undefined_replicates": 0}},
+            "clean_false_alerts_per_8_equipment_hours": {"numerator": 1, "denominator": 8, "value": 1.0, "ci": {"status": "pass", "lower": 0.5, "upper": 1.5, "undefined_replicates": 0}},
+        }
+        signals = {key: {"available_points": 10, "total_points": 10, "availability_ratio": 1.0} for key in analysis.EXPECTED_ANALYSIS_SIGNALS}
+        gates, status = analysis._promotion_gates(primary, signals)
+        result = {"status": status, "performance_status": status, "estimates": {"primary": primary, "availability_by_signal": signals}, "promotion_gates": gates}
+        analysis._verify_analysis_result_semantics(result)
+        drifted = copy.deepcopy(result)
+        drifted["estimates"]["primary"]["machine_fault_recall"]["value"] = 0.7
+        with self.assertRaises(analysis.AnalysisGlobalFailure):
+            analysis._verify_analysis_result_semantics(drifted)
+        gate_drift = copy.deepcopy(result)
+        gate_drift["promotion_gates"]["overall_incident_precision"]["status"] = "fail"
+        with self.assertRaises(analysis.AnalysisGlobalFailure):
+            analysis._verify_analysis_result_semantics(gate_drift)
+        availability_drift = copy.deepcopy(result)
+        availability_drift["estimates"]["availability_by_signal"][next(iter(signals))]["availability_ratio"] = 0.9
+        with self.assertRaises(analysis.AnalysisGlobalFailure):
+            analysis._verify_analysis_result_semantics(availability_drift)
+
     def test_cell_aggregate_preserves_fully_qualified_signal_ids(self) -> None:
         config = {
             "layouts": [{"layout_id": "layout-0", "operating_mode": "nominal"}],
@@ -150,6 +199,11 @@ class AnomalyMatrixAnalysisPureTests(unittest.TestCase):
         }
         with tempfile.TemporaryDirectory(prefix="analysis-publish-") as raw:
             root = Path(raw)
+            occupied = root / "occupied"
+            occupied.mkdir()
+            with self.assertRaises(analysis.AnalysisGlobalFailure):
+                analysis._publish_analysis(root, occupied, result, lambda: None)
+            self.assertTrue(occupied.is_dir())
             output = root / "analysis"
             published = analysis._publish_analysis(root, output, result, lambda: None)
             self.assertEqual(published, output)

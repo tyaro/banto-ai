@@ -377,19 +377,22 @@
           "type": [
             "number",
             "null"
-          ]
+          ],
+          "minimum": 0
         },
         "denominator": {
           "type": [
             "number",
             "null"
-          ]
+          ],
+          "minimum": 0
         },
         "value": {
           "type": [
             "number",
             "null"
-          ]
+          ],
+          "minimum": 0
         },
         "ci": {
           "$ref": "#/$defs/ci"
@@ -911,7 +914,80 @@
             }
           }
         }
-      }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "status": {
+              "const": "pass"
+            },
+            "point": {
+              "type": "number",
+              "minimum": 0.8
+            },
+            "ci_lower": {
+              "type": "number",
+              "minimum": 0.6
+            },
+            "ci_upper": {
+              "type": "number"
+            }
+          }
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "fail"
+            },
+            "point": {
+              "type": "number"
+            },
+            "ci_lower": {
+              "type": "number"
+            },
+            "ci_upper": {
+              "type": "number"
+            }
+          },
+          "anyOf": [
+            {
+              "properties": {
+                "point": {
+                  "type": "number",
+                  "exclusiveMaximum": 0.8
+                }
+              }
+            },
+            {
+              "properties": {
+                "ci_lower": {
+                  "type": "number",
+                  "exclusiveMaximum": 0.6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "inconclusive"
+            },
+            "point": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "ci_lower": {
+              "type": "null"
+            },
+            "ci_upper": {
+              "type": "null"
+            }
+          }
+        }
+      ]
     },
     "machineFaultRecallGate": {
       "type": "object",
@@ -971,7 +1047,80 @@
             }
           }
         }
-      }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "status": {
+              "const": "pass"
+            },
+            "point": {
+              "type": "number",
+              "minimum": 0.8
+            },
+            "ci_lower": {
+              "type": "number",
+              "minimum": 0.6
+            },
+            "ci_upper": {
+              "type": "number"
+            }
+          }
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "fail"
+            },
+            "point": {
+              "type": "number"
+            },
+            "ci_lower": {
+              "type": "number"
+            },
+            "ci_upper": {
+              "type": "number"
+            }
+          },
+          "anyOf": [
+            {
+              "properties": {
+                "point": {
+                  "type": "number",
+                  "exclusiveMaximum": 0.8
+                }
+              }
+            },
+            {
+              "properties": {
+                "ci_lower": {
+                  "type": "number",
+                  "exclusiveMaximum": 0.6
+                }
+              }
+            }
+          ]
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "inconclusive"
+            },
+            "point": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "ci_lower": {
+              "type": "null"
+            },
+            "ci_upper": {
+              "type": "null"
+            }
+          }
+        }
+      ]
     },
     "sensorFaultRecallGate": {
       "type": "object",
@@ -1031,7 +1180,80 @@
             }
           }
         }
-      }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "status": {
+              "const": "pass"
+            },
+            "point": {
+              "type": "number",
+              "minimum": 0.9
+            },
+            "ci_lower": {
+              "type": "number",
+              "minimum": 0.75
+            },
+            "ci_upper": {
+              "type": "number"
+            }
+          }
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "fail"
+            },
+            "point": {
+              "type": "number"
+            },
+            "ci_lower": {
+              "type": "number"
+            },
+            "ci_upper": {
+              "type": "number"
+            }
+          },
+          "anyOf": [
+            {
+              "properties": {
+                "point": {
+                  "type": "number",
+                  "exclusiveMaximum": 0.9
+                }
+              }
+            },
+            {
+              "properties": {
+                "ci_lower": {
+                  "type": "number",
+                  "exclusiveMaximum": 0.75
+                }
+              }
+            }
+          ]
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "inconclusive"
+            },
+            "point": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "ci_lower": {
+              "type": "null"
+            },
+            "ci_upper": {
+              "type": "null"
+            }
+          }
+        }
+      ]
     },
     "cleanFalseAlertGate": {
       "type": "object",
@@ -1088,7 +1310,80 @@
             }
           }
         }
-      }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "status": {
+              "const": "pass"
+            },
+            "point": {
+              "type": "number",
+              "maximum": 1.0
+            },
+            "ci_lower": {
+              "type": "number"
+            },
+            "ci_upper": {
+              "type": "number",
+              "maximum": 2.0
+            }
+          }
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "fail"
+            },
+            "point": {
+              "type": "number"
+            },
+            "ci_lower": {
+              "type": "number"
+            },
+            "ci_upper": {
+              "type": "number"
+            }
+          },
+          "anyOf": [
+            {
+              "properties": {
+                "point": {
+                  "type": "number",
+                  "exclusiveMinimum": 1.0
+                }
+              }
+            },
+            {
+              "properties": {
+                "ci_upper": {
+                  "type": "number",
+                  "exclusiveMinimum": 2.0
+                }
+              }
+            }
+          ]
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "inconclusive"
+            },
+            "point": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "ci_lower": {
+              "type": "null"
+            },
+            "ci_upper": {
+              "type": "null"
+            }
+          }
+        }
+      ]
     },
     "signalAvailabilityGate": {
       "type": "object",
@@ -1114,6 +1409,16 @@
           "minProperties": 8,
           "maxProperties": 8,
           "additionalProperties": false,
+          "required": [
+            "motor-01.motor_current",
+            "motor-01.motor_temperature",
+            "motor-01.conveyor_speed",
+            "motor-01.vibration_feature",
+            "conveyor-01.motor_current",
+            "conveyor-01.motor_temperature",
+            "conveyor-01.conveyor_speed",
+            "conveyor-01.vibration_feature"
+          ],
           "propertyNames": {
             "pattern": "^(motor-01|conveyor-01)\\.(motor_current|motor_temperature|conveyor_speed|vibration_feature)$"
           },
@@ -1142,17 +1447,413 @@
             "conveyor-01.vibration_feature": {
               "$ref": "#/$defs/availability"
             }
+          }
+        }
+      },
+      "oneOf": [
+        {
+          "properties": {
+            "status": {
+              "const": "pass"
+            },
+            "signals": {
+              "type": "object",
+              "minProperties": 8,
+              "maxProperties": 8,
+              "additionalProperties": false,
+              "required": [
+                "motor-01.motor_current",
+                "motor-01.motor_temperature",
+                "motor-01.conveyor_speed",
+                "motor-01.vibration_feature",
+                "conveyor-01.motor_current",
+                "conveyor-01.motor_temperature",
+                "conveyor-01.conveyor_speed",
+                "conveyor-01.vibration_feature"
+              ],
+              "propertyNames": {
+                "pattern": "^(motor-01|conveyor-01)\\.(motor_current|motor_temperature|conveyor_speed|vibration_feature)$"
+              },
+              "properties": {
+                "motor-01.motor_current": {
+                  "$ref": "#/$defs/availabilityPass"
+                },
+                "motor-01.motor_temperature": {
+                  "$ref": "#/$defs/availabilityPass"
+                },
+                "motor-01.conveyor_speed": {
+                  "$ref": "#/$defs/availabilityPass"
+                },
+                "motor-01.vibration_feature": {
+                  "$ref": "#/$defs/availabilityPass"
+                },
+                "conveyor-01.motor_current": {
+                  "$ref": "#/$defs/availabilityPass"
+                },
+                "conveyor-01.motor_temperature": {
+                  "$ref": "#/$defs/availabilityPass"
+                },
+                "conveyor-01.conveyor_speed": {
+                  "$ref": "#/$defs/availabilityPass"
+                },
+                "conveyor-01.vibration_feature": {
+                  "$ref": "#/$defs/availabilityPass"
+                }
+              }
+            }
+          }
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "fail"
+            },
+            "signals": {
+              "type": "object",
+              "minProperties": 8,
+              "maxProperties": 8,
+              "additionalProperties": false,
+              "required": [
+                "motor-01.motor_current",
+                "motor-01.motor_temperature",
+                "motor-01.conveyor_speed",
+                "motor-01.vibration_feature",
+                "conveyor-01.motor_current",
+                "conveyor-01.motor_temperature",
+                "conveyor-01.conveyor_speed",
+                "conveyor-01.vibration_feature"
+              ],
+              "propertyNames": {
+                "pattern": "^(motor-01|conveyor-01)\\.(motor_current|motor_temperature|conveyor_speed|vibration_feature)$"
+              },
+              "properties": {
+                "motor-01.motor_current": {
+                  "$ref": "#/$defs/availability"
+                },
+                "motor-01.motor_temperature": {
+                  "$ref": "#/$defs/availability"
+                },
+                "motor-01.conveyor_speed": {
+                  "$ref": "#/$defs/availability"
+                },
+                "motor-01.vibration_feature": {
+                  "$ref": "#/$defs/availability"
+                },
+                "conveyor-01.motor_current": {
+                  "$ref": "#/$defs/availability"
+                },
+                "conveyor-01.motor_temperature": {
+                  "$ref": "#/$defs/availability"
+                },
+                "conveyor-01.conveyor_speed": {
+                  "$ref": "#/$defs/availability"
+                },
+                "conveyor-01.vibration_feature": {
+                  "$ref": "#/$defs/availability"
+                }
+              }
+            }
           },
-          "required": [
-            "motor-01.motor_current",
-            "motor-01.motor_temperature",
-            "motor-01.conveyor_speed",
-            "motor-01.vibration_feature",
-            "conveyor-01.motor_current",
-            "conveyor-01.motor_temperature",
-            "conveyor-01.conveyor_speed",
-            "conveyor-01.vibration_feature"
+          "anyOf": [
+            {
+              "properties": {
+                "signals": {
+                  "properties": {
+                    "motor-01.motor_current": {
+                      "$ref": "#/$defs/availabilityFail"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "signals": {
+                  "properties": {
+                    "motor-01.motor_temperature": {
+                      "$ref": "#/$defs/availabilityFail"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "signals": {
+                  "properties": {
+                    "motor-01.conveyor_speed": {
+                      "$ref": "#/$defs/availabilityFail"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "signals": {
+                  "properties": {
+                    "motor-01.vibration_feature": {
+                      "$ref": "#/$defs/availabilityFail"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "signals": {
+                  "properties": {
+                    "conveyor-01.motor_current": {
+                      "$ref": "#/$defs/availabilityFail"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "signals": {
+                  "properties": {
+                    "conveyor-01.motor_temperature": {
+                      "$ref": "#/$defs/availabilityFail"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "signals": {
+                  "properties": {
+                    "conveyor-01.conveyor_speed": {
+                      "$ref": "#/$defs/availabilityFail"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "signals": {
+                  "properties": {
+                    "conveyor-01.vibration_feature": {
+                      "$ref": "#/$defs/availabilityFail"
+                    }
+                  }
+                }
+              }
+            }
           ]
+        },
+        {
+          "properties": {
+            "status": {
+              "const": "inconclusive"
+            },
+            "signals": {
+              "type": "object",
+              "minProperties": 8,
+              "maxProperties": 8,
+              "additionalProperties": false,
+              "required": [
+                "motor-01.motor_current",
+                "motor-01.motor_temperature",
+                "motor-01.conveyor_speed",
+                "motor-01.vibration_feature",
+                "conveyor-01.motor_current",
+                "conveyor-01.motor_temperature",
+                "conveyor-01.conveyor_speed",
+                "conveyor-01.vibration_feature"
+              ],
+              "propertyNames": {
+                "pattern": "^(motor-01|conveyor-01)\\.(motor_current|motor_temperature|conveyor_speed|vibration_feature)$"
+              },
+              "properties": {
+                "motor-01.motor_current": {
+                  "$ref": "#/$defs/availability"
+                },
+                "motor-01.motor_temperature": {
+                  "$ref": "#/$defs/availability"
+                },
+                "motor-01.conveyor_speed": {
+                  "$ref": "#/$defs/availability"
+                },
+                "motor-01.vibration_feature": {
+                  "$ref": "#/$defs/availability"
+                },
+                "conveyor-01.motor_current": {
+                  "$ref": "#/$defs/availability"
+                },
+                "conveyor-01.motor_temperature": {
+                  "$ref": "#/$defs/availability"
+                },
+                "conveyor-01.conveyor_speed": {
+                  "$ref": "#/$defs/availability"
+                },
+                "conveyor-01.vibration_feature": {
+                  "$ref": "#/$defs/availability"
+                }
+              }
+            }
+          },
+          "anyOf": [
+            {
+              "properties": {
+                "signals": {
+                  "properties": {
+                    "motor-01.motor_current": {
+                      "$ref": "#/$defs/availabilityInconclusive"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "signals": {
+                  "properties": {
+                    "motor-01.motor_temperature": {
+                      "$ref": "#/$defs/availabilityInconclusive"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "signals": {
+                  "properties": {
+                    "motor-01.conveyor_speed": {
+                      "$ref": "#/$defs/availabilityInconclusive"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "signals": {
+                  "properties": {
+                    "motor-01.vibration_feature": {
+                      "$ref": "#/$defs/availabilityInconclusive"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "signals": {
+                  "properties": {
+                    "conveyor-01.motor_current": {
+                      "$ref": "#/$defs/availabilityInconclusive"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "signals": {
+                  "properties": {
+                    "conveyor-01.motor_temperature": {
+                      "$ref": "#/$defs/availabilityInconclusive"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "signals": {
+                  "properties": {
+                    "conveyor-01.conveyor_speed": {
+                      "$ref": "#/$defs/availabilityInconclusive"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "signals": {
+                  "properties": {
+                    "conveyor-01.vibration_feature": {
+                      "$ref": "#/$defs/availabilityInconclusive"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "availabilityPass": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "available_points",
+        "total_points",
+        "availability_ratio"
+      ],
+      "properties": {
+        "available_points": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_points": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "availability_ratio": {
+          "type": "number",
+          "minimum": 0.95
+        }
+      }
+    },
+    "availabilityFail": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "available_points",
+        "total_points",
+        "availability_ratio"
+      ],
+      "properties": {
+        "available_points": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_points": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "availability_ratio": {
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMaximum": 0.95
+        }
+      }
+    },
+    "availabilityInconclusive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "available_points",
+        "total_points",
+        "availability_ratio"
+      ],
+      "properties": {
+        "available_points": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_points": {
+          "const": 0
+        },
+        "availability_ratio": {
+          "type": "null"
         }
       }
     }

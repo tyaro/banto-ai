@@ -49,11 +49,15 @@ PROMOTION_THRESHOLDS = {
 }
 
 # Filled after the two new JSON contracts are added.
-EXPECTED_ANALYSIS_SCHEMA_CANONICAL_SHA256 = "341d17dda8f05d445804d8cdf634f503e842d00c55b13426f69b2c8cb475d72e"
-EXPECTED_ANALYSIS_CONFIG_CANONICAL_SHA256 = "ece142d3f28611fc793987b1138bf462c2559204539fc1ae9a42e6fc885b4c7c"
-EXPECTED_ANALYSIS_RESULT_SCHEMA_CANONICAL_SHA256 = "d3796f455c728beefb359ba73f27ab402a9231c122c04c16a602034dece11cfc"
+EXPECTED_ANALYSIS_SCHEMA_CANONICAL_SHA256 = "550fdde93e7bf25470872bc91f8516226cb843efcd3f42806d65a37f070cef03"
+EXPECTED_ANALYSIS_CONFIG_CANONICAL_SHA256 = "33237908ea60cdfa55a311a2f46157884b9b3564c91e9d6d38218df9ebcc37ce"
+EXPECTED_ANALYSIS_RESULT_SCHEMA_CANONICAL_SHA256 = "00541b2770c8e682ef1b14d2e3dd354f404b6b3c796c2bbc3995a68913d841b8"
 EXPECTED_MATRIX_CONFIG_CANONICAL_SHA256 = anomaly_matrix.EXPECTED_V02_CONFIG_CANONICAL_SHA256
 EXPECTED_MATRIX_RESULT_SCHEMA_CANONICAL_SHA256 = anomaly_matrix.EXPECTED_V02_RESULT_SCHEMA_CANONICAL_SHA256
+EXPECTED_ANALYSIS_SIGNALS = frozenset((
+    "motor-01.motor_current", "motor-01.motor_temperature", "motor-01.conveyor_speed", "motor-01.vibration_feature",
+    "conveyor-01.motor_current", "conveyor-01.motor_temperature", "conveyor-01.conveyor_speed", "conveyor-01.vibration_feature",
+))
 DATASET_FILE_NAMES = frozenset(("dataset-manifest.json", "generator-config.json", "observations.jsonl", "events.jsonl", "split-manifest.json", "summary.json", "fingerprint.json"))
 EVALUATION_FILE_NAMES = frozenset(("result.json", "summary.md", ".complete"))
 _ANALYSIS_VALIDATION_FINAL_READ_HOOK: Any = None
@@ -338,6 +342,69 @@ def _gate_status(point: float | None, ci: Mapping[str, Any], threshold: Mapping[
     if "point_max" in threshold:
         return "pass" if point <= threshold["point_max"] and float(ci["upper"]) <= threshold["ci_upper_max"] else "fail"
     return "inconclusive"
+
+
+def _promotion_gates(primary: Mapping[str, Any], availability: Mapping[str, Any]) -> tuple[dict[str, Any], str]:
+    gates: dict[str, Any] = {}
+    for metric in ("overall_incident_precision", "machine_fault_recall", "sensor_fault_recall", "clean_false_alerts_per_8_equipment_hours"):
+        item = primary[metric]
+        gates[metric] = {
+            "status": _gate_status(item["value"], item["ci"], PROMOTION_THRESHOLDS[metric]),
+            "point": item["value"],
+            "ci_lower": item["ci"]["lower"],
+            "ci_upper": item["ci"]["upper"],
+            "threshold": PROMOTION_THRESHOLDS[metric],
+        }
+    if set(availability) != EXPECTED_ANALYSIS_SIGNALS or any(item["total_points"] == 0 or item["availability_ratio"] is None for item in availability.values()):
+        availability_status = "inconclusive"
+    else:
+        availability_status = "pass" if all(item["availability_ratio"] >= PROMOTION_THRESHOLDS["signal_availability"]["minimum"] for item in availability.values()) else "fail"
+    gates["signal_availability"] = {
+        "status": availability_status,
+        "minimum": PROMOTION_THRESHOLDS["signal_availability"]["minimum"],
+        "signals": availability,
+    }
+    statuses = [item["status"] for item in gates.values()]
+    performance_status = "fail" if "fail" in statuses else ("inconclusive" if "inconclusive" in statuses else "pass")
+    return gates, performance_status
+
+
+def _verify_analysis_result_semantics(result: Mapping[str, Any]) -> None:
+    estimates = result.get("estimates")
+    if not isinstance(estimates, Mapping):
+        raise AnalysisGlobalFailure("analysis estimates are missing")
+    primary = estimates.get("primary")
+    availability = estimates.get("availability_by_signal")
+    gates = result.get("promotion_gates")
+    if not isinstance(primary, Mapping) or not isinstance(availability, Mapping) or not isinstance(gates, Mapping):
+        raise AnalysisGlobalFailure("analysis promotion inputs are missing")
+    if set(primary) != set(PROMOTION_THRESHOLDS) - {"signal_availability"}:
+        raise AnalysisGlobalFailure("analysis primary metric key set is invalid")
+    if set(availability) != EXPECTED_ANALYSIS_SIGNALS:
+        raise AnalysisGlobalFailure("analysis availability signal key set is invalid")
+    for metric, item in primary.items():
+        if not isinstance(item, Mapping) or not isinstance(item.get("ci"), Mapping):
+            raise AnalysisGlobalFailure(f"analysis primary metric is invalid: {metric}")
+        numerator = item.get("numerator")
+        denominator = item.get("denominator")
+        expected_value = None if numerator is None or denominator is None else _ratio(numerator, denominator)
+        if metric == "clean_false_alerts_per_8_equipment_hours" and numerator is not None and denominator is not None:
+            expected_value = _ratio(float(numerator) * 8.0, denominator)
+        if item.get("value") != expected_value:
+            raise AnalysisGlobalFailure(f"analysis primary value is inconsistent: {metric}")
+    for signal, item in availability.items():
+        if not isinstance(item, Mapping):
+            raise AnalysisGlobalFailure(f"analysis availability row is invalid: {signal}")
+        available_points = item.get("available_points")
+        total_points = item.get("total_points")
+        expected_ratio = None if available_points is None or total_points is None else _ratio(available_points, total_points)
+        if item.get("availability_ratio") != expected_ratio:
+            raise AnalysisGlobalFailure(f"analysis availability ratio is inconsistent: {signal}")
+    expected_gates, expected_status = _promotion_gates(primary, availability)
+    if dict(gates) != expected_gates:
+        raise AnalysisGlobalFailure("analysis promotion gates are inconsistent with estimates")
+    if result.get("status") != expected_status or result.get("performance_status") != expected_status:
+        raise AnalysisGlobalFailure("analysis status is inconsistent with promotion gates")
 
 
 def _verify_source_provenance(result: Mapping[str, Any], sources: Mapping[str, Mapping[str, str]], revision: Mapping[str, Any]) -> None:
@@ -1019,16 +1086,7 @@ def analyze_anomaly_matrix(config_path: str | Path = ANALYSIS_CONFIG_PATH, root:
         point, ci = _bootstrap_slice(seed_precision_slices, draws, key, "precision")
         scope = "equipment×mode" if not key.startswith("*") and not key.endswith("|*") else ("by_equipment" if key.endswith("|*") else "by_mode")
         precision_slices[key] = {"scope": scope, "numerator": row[0], "denominator": row[1], "value": point, "ci": ci, "not_for_promotion": "descriptive attribution only; class precision is not applicable"}
-    gates: dict[str, Any] = {}
-    for metric in ("overall_incident_precision", "machine_fault_recall", "sensor_fault_recall", "clean_false_alerts_per_8_equipment_hours"):
-        gates[metric] = {"status": _gate_status(primary[metric]["value"], primary[metric]["ci"], PROMOTION_THRESHOLDS[metric]), "point": primary[metric]["value"], "ci_lower": primary[metric]["ci"]["lower"], "ci_upper": primary[metric]["ci"]["upper"], "threshold": PROMOTION_THRESHOLDS[metric]}
-    if set(availability) != expected_signals or any(item["total_points"] == 0 or item["availability_ratio"] is None for item in availability.values()):
-        availability_gate_status = "inconclusive"
-    else:
-        availability_gate_status = "pass" if all(item["availability_ratio"] >= 0.95 for item in availability.values()) else "fail"
-    gates["signal_availability"] = {"status": availability_gate_status, "minimum": PROMOTION_THRESHOLDS["signal_availability"]["minimum"], "signals": availability}
-    gate_statuses = [item["status"] for item in gates.values()]
-    performance_status = "fail" if "fail" in gate_statuses else ("inconclusive" if "inconclusive" in gate_statuses else "pass")
+    gates, performance_status = _promotion_gates(primary, availability)
     result_out: dict[str, Any] = {
         "schema_version": ANALYSIS_SCHEMA_VERSION,
         "result_type": ANALYSIS_RESULT_TYPE,
@@ -1055,6 +1113,7 @@ def analyze_anomaly_matrix(config_path: str | Path = ANALYSIS_CONFIG_PATH, root:
         validate(result_out, analysis_result_schema)
     except ManifestValidationError as exc:
         raise AnalysisGlobalFailure(f"analysis result does not satisfy its schema: {exc}") from exc
+    _verify_analysis_result_semantics(result_out)
     output_root = anomaly_matrix._safe_repo_path(repository, analysis_config["output_root"], "analysis output root", must_exist=False)
     def verify_before_marker() -> None:
         current_config, current_config_source, current_schema_source = _load_analysis_inputs(config_path, repository)
@@ -1064,6 +1123,7 @@ def analyze_anomaly_matrix(config_path: str | Path = ANALYSIS_CONFIG_PATH, root:
         if current_result_schema_raw != analysis_result_schema_raw or current_result_schema != analysis_result_schema or current_result_schema_canonical != analysis_result_schema_canonical_sha:
             raise AnalysisGlobalFailure("analysis result schema changed before marker")
         validate(result_out, current_result_schema)
+        _verify_analysis_result_semantics(result_out)
         runner._assert_inputs_unchanged(repository, sources, values, "analysis-before-marker")
         current_input_snapshot = runner._tree_snapshot(input_root, "matrix artifact before analysis marker", containment_root=repository, failure_scope="global")
         if current_input_snapshot != input_snapshot:

@@ -17,7 +17,7 @@
     "schema_path": {"type": "string", "const": "schemas/anomaly-multiseed-analysis-config-v0.2.schema.json"},
     "schema_canonical_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
     "result_schema_path": {"type": "string", "const": "schemas/anomaly-multiseed-analysis-result-v0.2.schema.json"},
-    "result_schema_canonical_sha256": {"type": "string", "const": "d3796f455c728beefb359ba73f27ab402a9231c122c04c16a602034dece11cfc"},
+    "result_schema_canonical_sha256": {"type": "string", "const": "00541b2770c8e682ef1b14d2e3dd354f404b6b3c796c2bbc3995a68913d841b8"},
     "input_root": {"type": "string", "const": "artifacts/anomaly-multiseed-v02"},
     "output_root": {"type": "string", "const": "artifacts/anomaly-multiseed-v02-analysis"},
     "bootstrap": {
