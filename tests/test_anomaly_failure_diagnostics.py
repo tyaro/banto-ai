@@ -26,8 +26,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 # Independent formal provenance fixture; never copied from the adapter's map or
-# from formal artifacts. All other fixture bytes come from the historical git
-# blobs, even when this older Windows checkout still has CRLF working files.
+# from formal artifacts. Use committed LF blobs from the checkout's current
+# tree, which also keeps this fixture runnable in shallow CI clones where the
+# older artifact revision is unavailable. Production revision compatibility
+# separately proves the current semantic tree equals that artifact revision.
 FORMAL_RAW_PINS = {
     "matrix_config": "2a74036b0860a420b7d9cc2ae03056f04e5f8c92026aa532e07cb917726cfc87",
     "matrix_schema": "944ef163ad6b8eb0d1dfc5cbdebaf71bac2e75c43dfa07666ae424f8a165ed8e",
@@ -40,18 +42,24 @@ FORMAL_RAW_PINS = {
 
 
 def _formal_source_fixture():
-    tree = diagnostics._git_tree(ROOT, diagnostics.EXPECTED_ARTIFACT_CODE_REVISION,
-                                 tuple(diagnostics.EXPECTED_REVISION_COMPATIBILITY["artifact_source_prefixes"]))
+    prefixes = tuple(diagnostics.EXPECTED_REVISION_COMPATIBILITY["artifact_source_prefixes"])
+    tree = diagnostics._git_tree(ROOT, "HEAD", prefixes)
+    current_only = set(diagnostics.EXPECTED_REVISION_COMPATIBILITY["current_only_paths"])
+    if len(tree) != 92 or set(tree) - current_only == set() or set(tree) & current_only != current_only:
+        raise AssertionError("fixture requires the current 88 semantic paths plus fixed current-only paths")
+    semantic_tree = {path: item for path, item in tree.items() if path not in current_only}
+    if len(semantic_tree) != 88:
+        raise AssertionError("fixture requires exactly 88 committed semantic source blobs")
     sources, values = runner._snapshot_inputs(ROOT, ROOT / diagnostics.EXPECTED_MATRIX_CONFIG_PATH)
     for key, source in sources.items():
         if key.startswith("_"):
             continue
-        raw = tree[source["path"]][1]
+        raw = semantic_tree[source["path"]][1]
         value, raw_sha, canonical_sha = diagnostics._strict_bytes(raw, "historical LF fixture")
         source.update(_raw=raw, _value=value, raw_sha256=raw_sha, canonical_sha256=canonical_sha)
         values[key] = value
     proof = [{"path": path, "artifact_blob_sha256": item[0], "current_raw_sha256": item[0]}
-             for path, item in sorted(tree.items())]
+             for path, item in sorted(semantic_tree.items())]
     return sources, values, proof
 
 
