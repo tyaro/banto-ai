@@ -25,6 +25,41 @@ from banto_ai import anomaly_matrix_analysis as analysis, anomaly_matrix_runner 
 ROOT = Path(__file__).resolve().parents[1]
 
 
+# Independent formal provenance fixture; never copied from the adapter's map or
+# from formal artifacts. All other fixture bytes come from the historical git
+# blobs, even when this older Windows checkout still has CRLF working files.
+FORMAL_RAW_PINS = {
+    "matrix_config": "2a74036b0860a420b7d9cc2ae03056f04e5f8c92026aa532e07cb917726cfc87",
+    "matrix_schema": "944ef163ad6b8eb0d1dfc5cbdebaf71bac2e75c43dfa07666ae424f8a165ed8e",
+    "base_generator_config": "81bd67e68980b712934ab95ff83ddc72c9a4ce6e0fe900ad9160d18aecddb6df",
+    "base_generator_schema": "56bfd16e62d6d1e30cca8936ff805bac642fe8e4f973b3f4d664fb324d9491a7",
+    "anomaly_config_schema": "eb1f97e4d2f0b730559b0235bf7ac78f359b9bb41769ef2e05d3179ba4ea83a7",
+    "anomaly_result_schema": "58f7496171fb65e89fb14e72f977a7845548f5981ca0b566e194a61934612ada",
+    "matrix_result_schema": "856ede0ee55309955150258685bdaba8d93dbdf005ac54b67c09e513b3d894a1",
+}
+
+
+def _formal_source_fixture():
+    tree = diagnostics._git_tree(ROOT, diagnostics.EXPECTED_ARTIFACT_CODE_REVISION,
+                                 tuple(diagnostics.EXPECTED_REVISION_COMPATIBILITY["artifact_source_prefixes"]))
+    sources, values = runner._snapshot_inputs(ROOT, ROOT / diagnostics.EXPECTED_MATRIX_CONFIG_PATH)
+    for key, source in sources.items():
+        if key.startswith("_"):
+            continue
+        raw = tree[source["path"]][1]
+        value, raw_sha, canonical_sha = diagnostics._strict_bytes(raw, "historical LF fixture")
+        source.update(_raw=raw, _value=value, raw_sha256=raw_sha, canonical_sha256=canonical_sha)
+        values[key] = value
+    proof = [{"path": path, "artifact_blob_sha256": item[0], "current_raw_sha256": item[0]}
+             for path, item in sorted(tree.items())]
+    return sources, values, proof
+
+
+def _formal_public_sources(sources):
+    return {key: {**runner._public_source(source), "raw_sha256": FORMAL_RAW_PINS.get(key, source["raw_sha256"])}
+            for key, source in sources.items() if not key.startswith("_")}
+
+
 @contextmanager
 def _write_traps():
     """Exercise runtime APIs after fixture setup; reject every ordinary write route."""
@@ -1178,9 +1213,10 @@ class D2AIntegrityTests(unittest.TestCase):
         """
         loaded = diagnostics._load_config(diagnostics.CONFIG_PATH, ROOT)
         analysis_loaded = analysis._load_analysis_inputs(analysis.ANALYSIS_CONFIG_PATH, ROOT)
-        sources, values = runner._snapshot_inputs(ROOT, ROOT / diagnostics.EXPECTED_MATRIX_CONFIG_PATH)
+        sources, values, historical_proof = _formal_source_fixture()
         values["matrix_result_schema"] = {}  # Formal schema/evaluation delegate is deliberately stubbed.
         compatibility = deepcopy(self.result["provenance"]["revision_compatibility"])
+        compatibility["semantic_sources"] = historical_proof
         compatibility["replay_revision"] = deepcopy(self.result["provenance"]["replay_code_revision"])
         input_root = ROOT / diagnostics.EXPECTED_INPUT_ROOT
         cells, payloads, cell_outputs = [], {}, {}
@@ -1201,7 +1237,10 @@ class D2AIntegrityTests(unittest.TestCase):
                 payloads[evaluation_dir + "/result.json"] = analysis._json_bytes(evaluation)
                 directories.add(evaluation_dir)
                 cell_outputs[cell["cell_id"]] = (evaluation, expected, files, {evaluation_dir})
-        result = {"cells": cells}
+        formal_sources = _formal_public_sources(sources)
+        result = {"cells": cells, "provenance": {"inputs": formal_sources,
+                  "code_revision": compatibility["artifact_revision"], "canonicalization": analysis.CANONICALIZATION_ID,
+                  "recovery": {"recovered_incomplete": False}}}
         summary = b"synthetic adapter summary\n"
         payloads["result.json"] = analysis._json_bytes(result)
         payloads["summary.md"] = summary
@@ -1238,6 +1277,7 @@ class D2AIntegrityTests(unittest.TestCase):
 
             def formal_cell(cell, matrix, base, root, artifact_root, cell_sources, cell_values, revision):
                 self.assertEqual(revision, compatibility["artifact_revision"])
+                self.assertEqual(cell_sources, formal_sources)
                 evaluation, expected, files, dirs = deepcopy(cell_outputs[cell["cell_id"]])
                 if change == "evaluation": evaluation["changed-on-disk"] = True
                 return evaluation, expected, files, dirs
@@ -1254,13 +1294,14 @@ class D2AIntegrityTests(unittest.TestCase):
                 stack.enter_context(patch.object(runner, "_snapshot_inputs", return_value=(sources, values)))
                 stack.enter_context(patch.object(runner, "_matrix_summary", return_value=summary))
                 aggregate_check = stack.enter_context(patch.object(runner, "_verify_aggregate_result"))
-                provenance_check = stack.enter_context(patch.object(analysis, "_verify_source_provenance"))
+                provenance_check = stack.enter_context(patch.object(analysis, "_verify_source_provenance", wraps=analysis._verify_source_provenance))
                 cell_check = stack.enter_context(patch.object(analysis, "_verify_cell_and_collect", side_effect=formal_cell))
                 stack.enter_context(patch.object(runner, "_tree_snapshot", return_value=after))
-                # Sources remain real: restore the formal schema value for their unchanged check.
-                source_values = {**values, "matrix_result_schema": json.loads(sources["matrix_result_schema"]["_raw"])}
-                original_unchanged = runner._assert_inputs_unchanged
-                stack.enter_context(patch.object(runner, "_assert_inputs_unchanged", side_effect=lambda root, entries, _, boundary: original_unchanged(root, entries, source_values, boundary)))
+                # The provenance-only CRLF view must never reach current-byte
+                # rechecks or the returned context. This fixture uses Git LF
+                # snapshots without rewriting this Windows checkout's sources.
+                unchanged = stack.enter_context(patch.object(runner, "_assert_inputs_unchanged",
+                    side_effect=lambda root, entries, _, boundary: self.assertIs(entries, sources)))
                 stack.enter_context(patch.object(diagnostics.anomaly_matrix, "_safe_repo_path", side_effect=lambda root, path, label, **kwargs: root / path if path == diagnostics.EXPECTED_INPUT_ROOT else original_safe(root, path, label, **kwargs)))
                 stack.enter_context(_write_traps())
                 if change is None:
@@ -1269,11 +1310,269 @@ class D2AIntegrityTests(unittest.TestCase):
                     self.assertEqual(cell_check.call_count, 120)
                     aggregate_check.assert_called_once()
                     self.assertEqual(provenance_check.call_args.args[-1], compatibility["artifact_revision"])
+                    self.assertIs(verified["sources"], sources)
+                    unchanged.assert_called_once()
                     self.assertEqual(verified["input_capture"], capture)
                     self.assertIsNot(verified["evaluations"][0]["evaluation"], first[0])
                 else:
                     with self.assertRaises(diagnostics.AnomalyFailureDiagnosticsError):
                         diagnostics._verify_input_replay(ROOT, replay_head=compatibility["replay_revision"]["head"])
+
+
+class FormalLegacyProvenanceTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.sources, cls.values, proof = _formal_source_fixture()
+        cls.revision = {"status": "git", "head": diagnostics.EXPECTED_ARTIFACT_CODE_REVISION,
+                        "dirty": False, "diff_sha256": hashlib.sha256(b"").hexdigest()}
+        cls.compatibility = {"artifact_revision": cls.revision, "semantic_sources": proof,
+                             "replay_revision": {**cls.revision, "head": "0" * 40}}
+
+    def test_exact_seven_fixed_pins_and_unchanged_eighth_source_read_only(self):
+        before = deepcopy(self.sources)
+        with _write_traps():
+            view = diagnostics._formal_replay_provenance_sources(self.sources, self.compatibility)
+        self.assertEqual(view, _formal_public_sources(self.sources))
+        self.assertEqual(set(diagnostics._FORMAL_LEGACY_SOURCE_PINS), set(FORMAL_RAW_PINS))
+        self.assertEqual(self.sources, before)
+        for key, legacy_sha in FORMAL_RAW_PINS.items():
+            self.assertEqual(diagnostics._FORMAL_LEGACY_SOURCE_PINS[key],
+                             (self.sources[key]["path"], self.sources[key]["canonical_sha256"], legacy_sha))
+            self.assertNotEqual(view[key]["raw_sha256"], self.sources[key]["raw_sha256"])
+            self.assertEqual(set(view[key]), {"path", "raw_sha256", "canonical_sha256"})
+        self.assertEqual(view["dataset_manifest_schema"], runner._public_source(self.sources["dataset_manifest_schema"]))
+        self.assertEqual(view["dataset_manifest_schema"]["raw_sha256"],
+                         "03bdbc9f95522dce0bbac160fc84f79b434dded03d32a3cc202190fa2586876d")
+
+    def test_byte_canonical_and_all_eol_mutations_fail_even_with_refreshed_metadata(self):
+        mutations = {
+            "extra-newline": lambda raw: raw + b"\n",
+            "missing-newline": lambda raw: raw[:-1],
+            "same-canonical-whitespace": lambda raw: b" " + raw,
+            "crlf": lambda raw: raw.replace(b"\n", b"\r\n"),
+            "mixed-eol": lambda raw: raw.replace(b"\n", b"\r\n", 1),
+            "lone-cr": lambda raw: raw.replace(b"\n", b"\r", 1),
+            "no-eol": lambda raw: diagnostics._canonical_json(json.loads(raw)),
+            "canonical-change": lambda raw: analysis._json_bytes({**json.loads(raw), "tampered": True}),
+        }
+        for key in FORMAL_RAW_PINS:
+            for name, mutate in mutations.items():
+                for refresh_proof in (False, True):
+                    sources, proof = deepcopy(self.sources), deepcopy(self.compatibility)
+                    source = sources[key]
+                    raw = mutate(source["_raw"])
+                    value, raw_sha, canonical_sha = diagnostics._strict_bytes(raw, "mutation")
+                    source.update(_raw=raw, _value=value, raw_sha256=raw_sha, canonical_sha256=canonical_sha)
+                    if refresh_proof:
+                        row = next(row for row in proof["semantic_sources"] if row["path"] == source["path"])
+                        row.update(artifact_blob_sha256=raw_sha, current_raw_sha256=raw_sha)
+                    with self.subTest(key=key, mutation=name, refresh_proof=refresh_proof), _write_traps():
+                        with self.assertRaises(diagnostics.AnomalyFailureDiagnosticsError):
+                            diagnostics._formal_replay_provenance_sources(sources, proof)
+
+    def test_wrong_source_path_key_value_and_digest_map_rejected(self):
+        for key in (*FORMAL_RAW_PINS, "dataset_manifest_schema"):
+            for field in ("path", "raw_sha256", "canonical_sha256", "_value", "missing-key"):
+                sources = deepcopy(self.sources)
+                if field == "missing-key":
+                    sources.pop(key)
+                else:
+                    sources[key][field] = {} if field == "_value" else "wrong"
+                with self.subTest(key=key, field=field), _write_traps():
+                    with self.assertRaises(diagnostics.AnomalyFailureDiagnosticsError):
+                        diagnostics._formal_replay_provenance_sources(sources, self.compatibility)
+        for key in ("unlisted", "_unlisted"):
+            with self.subTest(extra=key), _write_traps(), self.assertRaises(diagnostics.AnomalyFailureDiagnosticsError):
+                diagnostics._formal_replay_provenance_sources({**self.sources, key: {}}, self.compatibility)
+        with _write_traps(), self.assertRaises(diagnostics.AnomalyFailureDiagnosticsError):
+            diagnostics._formal_replay_provenance_sources({**self.sources, "_config_relative": "wrong"}, self.compatibility)
+
+    def test_wrong_independent_legacy_pin_path_or_canonical_map_rejected(self):
+        for key in FORMAL_RAW_PINS:
+            for index in range(3):
+                pins = dict(diagnostics._FORMAL_LEGACY_SOURCE_PINS)
+                item = list(pins[key])
+                item[index] = "wrong" if index == 0 else "0" * 64
+                pins[key] = tuple(item)
+                with self.subTest(key=key, index=index), patch.object(diagnostics, "_FORMAL_LEGACY_SOURCE_PINS", pins), _write_traps():
+                    with self.assertRaises(diagnostics.AnomalyFailureDiagnosticsError):
+                        diagnostics._formal_replay_provenance_sources(self.sources, self.compatibility)
+
+    def test_historical_proof_revision_missing_duplicate_and_digest_drift_rejected(self):
+        for change in ("revision", "missing", "duplicate", "artifact_blob_sha256", "current_raw_sha256"):
+            proof = deepcopy(self.compatibility)
+            if change == "revision": proof["artifact_revision"]["head"] = "0" * 40
+            elif change == "missing": proof["semantic_sources"].pop()
+            elif change == "duplicate": proof["semantic_sources"][-1] = deepcopy(proof["semantic_sources"][0])
+            else:
+                row = next(row for row in proof["semantic_sources"] if row["path"] == self.sources["matrix_config"]["path"])
+                row[change] = "0" * 64
+            with self.subTest(change=change), _write_traps(), self.assertRaises(diagnostics.AnomalyFailureDiagnosticsError):
+                diagnostics._formal_replay_provenance_sources(self.sources, proof)
+
+    def test_generic_aggregate_verifier_remains_raw_strict_for_every_source(self):
+        public = {key: runner._public_source(source) for key, source in self.sources.items() if not key.startswith("_")}
+        result = {"provenance": {"canonicalization": analysis.CANONICALIZATION_ID,
+                                "code_revision": self.revision, "inputs": public,
+                                "recovery": {"recovered_incomplete": False}}}
+        with _write_traps():
+            analysis._verify_source_provenance(result, public, self.revision)
+            view = diagnostics._formal_replay_provenance_sources(self.sources, self.compatibility)
+            formal = deepcopy(result)
+            formal["provenance"]["inputs"] = _formal_public_sources(self.sources)
+            schema = self.values["matrix_result_schema"]
+            diagnostics.validate(formal["provenance"], {"$defs": schema["$defs"], "$ref": "#/$defs/provenance"})
+            analysis._verify_source_provenance(formal, view, self.revision)
+            for key in FORMAL_RAW_PINS:
+                changed = deepcopy(result)
+                changed["provenance"]["inputs"][key]["raw_sha256"] = FORMAL_RAW_PINS[key]
+                with self.subTest(key=key), self.assertRaisesRegex(analysis.AnalysisGlobalFailure, key):
+                    analysis._verify_source_provenance(changed, public, self.revision)
+            for key in public:
+                for field in ("path", "raw_sha256", "canonical_sha256"):
+                    changed = deepcopy(formal)
+                    changed["provenance"]["inputs"][key][field] = "wrong"
+                    with self.subTest(key=key, field=field), self.assertRaises(analysis.AnalysisGlobalFailure):
+                        analysis._verify_source_provenance(changed, view, self.revision)
+
+    @contextmanager
+    def cell_replay(self, *, legacy=True, mutation=None):
+        """Real analysis -> runner provenance route, synthetic in-memory I/O.
+
+        Dataset/semantic replay are isolated delegates here (covered by the
+        existing long regressions); provenance checks and marker hashes are real.
+        No formal artifact is read and no file is created.
+        """
+        values = deepcopy(self.values)
+        schema = values["anomaly_result_schema"]
+        values["anomaly_result_schema"] = {"$defs": schema["$defs"], "type": "object",
+            "required": ["provenance", "status"], "properties": {key: schema["properties"][key] for key in ("provenance", "status")}}
+        matrix, base = values["matrix_config"], values["base_generator_config"]
+        input_root = ROOT / "fixture-formal-provenance"
+        expected = runner._materialize_cell(matrix, base, 11, matrix["layouts"][0], ROOT, input_root)
+        cell = {key: expected[key] for key in ("cell_id", "seed", "layout_id", "layout_index")}
+        cell["artifacts"] = {}
+        objects = {}
+        for key in ("generator_config", "evaluator_config"):
+            path, value = expected["paths"][key], expected[key]
+            raw = analysis._json_bytes(value)
+            _, raw_sha, canonical_sha = diagnostics._strict_bytes(raw, "materialized fixture")
+            objects[path] = (value, raw, raw_sha, canonical_sha)
+            cell["artifacts"][key] = {"path": path.relative_to(ROOT).as_posix(), "raw_sha256": raw_sha, "canonical_sha256": canonical_sha}
+        dataset = {"path": expected["paths"]["dataset"].relative_to(ROOT).as_posix(), "dataset_fingerprint": "1" * 64}
+        cell["artifacts"]["dataset"] = dataset
+        provenance = {
+            "config": {"kind": "anomaly-evaluation-config", "path": cell["artifacts"]["evaluator_config"]["path"],
+                       "sha256": cell["artifacts"]["evaluator_config"]["raw_sha256"]},
+            "dataset": {"kind": "synthetic-dataset", **dataset, "dataset_id": "fixture", "manifest_sha256": "2" * 64},
+            "quality_gate": {"status": "pass", "observation_record_count": 1, "equipment_count": 1, "checks": ["fixture"]},
+            "code_revision": deepcopy(self.revision),
+        }
+        for field, key, kind in (("schema", "anomaly_result_schema", "anomaly-evaluation-result-schema"),
+                                  ("config_schema", "anomaly_config_schema", "anomaly-evaluation-config-schema")):
+            provenance[field] = {"kind": kind, "path": self.sources[key]["path"],
+                                 "sha256": FORMAL_RAW_PINS[key] if legacy else self.sources[key]["raw_sha256"]}
+        if mutation is not None:
+            field, member = mutation
+            provenance[field][member] = "0" * (40 if member == "head" else 64) if member in {"sha256", "head"} else "wrong"
+        evaluation = {"status": "pass", "provenance": provenance}
+        raw = analysis._json_bytes(evaluation)
+        summary = b"synthetic evaluator summary\n"
+        marker = {"marker_type": "event-aware-anomaly-complete", "schema_version": "0.1",
+                  "result_sha256": hashlib.sha256(raw).hexdigest(), "summary_sha256": hashlib.sha256(summary).hexdigest()}
+        payloads = {"result.json": raw, "summary.md": summary, ".complete": analysis._json_bytes(marker)}
+        snapshot = {"inventory": tuple((key, "file") for key in sorted(payloads)),
+                    "hashes": {key: hashlib.sha256(raw).hexdigest() for key, raw in payloads.items()}, "_captured_bytes": payloads}
+        evaluation_path = expected["paths"]["evaluation"]
+        objects[evaluation_path / "result.json"] = (evaluation, raw, hashlib.sha256(raw).hexdigest(), hashlib.sha256(diagnostics._canonical_json(evaluation)).hexdigest())
+        evidence = {"path": evaluation_path.relative_to(ROOT).as_posix(), "status": "success", "evaluator_status": "pass"}
+        for name, label in (("result.json", "result"), ("summary.md", "summary"), (".complete", "completion_marker")):
+            evidence[label + "_path"] = (evaluation_path / name).relative_to(ROOT).as_posix()
+            evidence[label + "_sha256"] = snapshot["hashes"][name]
+        cell["artifacts"]["evaluation"] = evidence
+        dataset_snapshot = {"inventory": tuple((name, "file") for name in analysis.DATASET_FILE_NAMES)}
+        with patch.object(analysis, "_strict_object", side_effect=lambda path, label: objects[path]), \
+             patch.object(runner, "_validate_dataset", return_value=(dataset, dataset_snapshot, {})), \
+             patch.object(runner, "_is_link", return_value=False), patch.object(Path, "is_dir", return_value=True), \
+             patch.object(runner, "_tree_snapshot", return_value=snapshot), \
+             patch.object(runner, "_verify_evaluator_cross_fields", return_value={}), \
+             patch.object(runner.anomaly_evaluation, "_summary", return_value=summary.decode()), _write_traps():
+            yield lambda sources: analysis._verify_cell_and_collect(cell, matrix, base, ROOT, input_root, sources, values, self.revision)
+
+    def test_formal_cell_provenance_accepts_fixed_view_through_real_downstream_helpers(self):
+        view = diagnostics._formal_replay_provenance_sources(self.sources, self.compatibility)
+        with self.cell_replay() as replay:
+            evaluation, expected, files, dirs = replay(view)
+            self.assertEqual(evaluation["provenance"]["schema"]["sha256"], FORMAL_RAW_PINS["anomaly_result_schema"])
+            self.assertEqual(len(files), 12)
+            self.assertEqual(len(dirs), 2)
+
+    def test_generic_cell_verifier_stays_strict_and_lf_still_passes(self):
+        with self.cell_replay(legacy=False) as replay:
+            replay(self.sources)
+        with self.cell_replay() as replay, self.assertRaisesRegex(runner.AnomalyMatrixRunnerError, "schema provenance drifted"):
+            replay(self.sources)
+
+    def test_cell_raw_path_kind_config_and_revision_drift_is_not_hidden(self):
+        view = diagnostics._formal_replay_provenance_sources(self.sources, self.compatibility)
+        mutations = [(field, member) for field in ("schema", "config_schema", "config") for member in ("path", "sha256", "kind")]
+        mutations.append(("code_revision", "head"))
+        for mutation in mutations:
+            with self.subTest(mutation=mutation), self.cell_replay(mutation=mutation) as replay:
+                with self.assertRaises(runner.AnomalyMatrixRunnerError):
+                    replay(view)
+
+    def test_provenance_failure_precedes_claim_in_publisher_and_read_only_api(self):
+        loaded = diagnostics._load_config(diagnostics.CONFIG_PATH, ROOT)
+        analysis_loaded = analysis._load_analysis_inputs(analysis.ANALYSIS_CONFIG_PATH, ROOT)
+        with tempfile.TemporaryDirectory(prefix="d2c-preclaim-test-") as temporary:
+            root = Path(temporary)
+            (root / "artifacts").mkdir()
+            entrypoints = [diagnostics.replay_and_build_diagnostics_result]
+            if os.name == "nt":
+                entrypoints.append(diagnostics.run_and_publish_diagnostics)
+            for entrypoint in entrypoints:
+                for change in ("source-bytes", "aggregate-raw", "extra-key", "missing-key", "input-pin"):
+                    sources, values = deepcopy(self.sources), deepcopy(self.values)
+                    values["matrix_result_schema"] = {}
+                    result = {"cells": [], "provenance": {"canonicalization": analysis.CANONICALIZATION_ID,
+                        "code_revision": self.revision, "inputs": _formal_public_sources(sources)}}
+                    if change == "source-bytes": sources["matrix_config"]["_raw"] += b"\n"
+                    elif change == "aggregate-raw": result["provenance"]["inputs"]["matrix_config"]["raw_sha256"] = "0" * 64
+                    elif change == "extra-key": result["provenance"]["inputs"]["unlisted"] = {}
+                    elif change == "missing-key": result["provenance"]["inputs"].pop("matrix_config")
+                    payloads = {"result.json": analysis._json_bytes(result), "summary.md": b"synthetic aggregate\n"}
+                    marker = {"schema_version": runner.SCHEMA_VERSION, "marker_type": runner.COMPLETION_MARKER_TYPE,
+                        "result_sha256": hashlib.sha256(payloads["result.json"]).hexdigest(),
+                        "summary_sha256": hashlib.sha256(payloads["summary.md"]).hexdigest()}
+                    payloads[".complete"] = analysis._json_bytes(marker)
+                    snapshot = {"inventory": tuple((name, "file") for name in sorted(payloads)),
+                                "hashes": {name: hashlib.sha256(raw).hexdigest() for name, raw in payloads.items()}}
+                    pins = {**diagnostics.EXPECTED_INPUT_ARTIFACT, **{field: marker[field] for field in ("result_sha256", "summary_sha256")},
+                            "completion_marker_sha256": snapshot["hashes"][".complete"],
+                            "inventory_sha256": hashlib.sha256(diagnostics._canonical_json(snapshot)).hexdigest()}
+                    if change == "input-pin": pins["result_sha256"] = "0" * 64
+                    with self.subTest(entrypoint=entrypoint.__name__, change=change), ExitStack() as stack:
+                        stack.enter_context(patch.object(diagnostics, "EXPECTED_INPUT_ARTIFACT", pins))
+                        stack.enter_context(patch.object(diagnostics, "_load_config", return_value=loaded))
+                        stack.enter_context(patch.object(diagnostics, "_validate_semantics"))
+                        stack.enter_context(patch.object(diagnostics, "_validate_revision_compatibility", return_value=self.compatibility))
+                        stack.enter_context(patch.object(analysis, "_load_analysis_inputs", return_value=analysis_loaded))
+                        stack.enter_context(patch.object(diagnostics.anomaly_matrix, "_safe_repo_path", side_effect=lambda root, path, *args, **kwargs: root / path))
+                        stack.enter_context(patch.object(runner, "_snapshot_inputs", return_value=(sources, values)))
+                        stack.enter_context(patch.object(diagnostics, "_capture_tree_bytes", return_value={**snapshot, "bytes": payloads}))
+                        stack.enter_context(patch.object(runner, "_matrix_summary", return_value=payloads["summary.md"]))
+                        view = stack.enter_context(patch.object(diagnostics, "_formal_replay_provenance_sources", wraps=diagnostics._formal_replay_provenance_sources))
+                        aggregate = stack.enter_context(patch.object(analysis, "_verify_source_provenance", wraps=analysis._verify_source_provenance))
+                        claim = stack.enter_context(patch.object(diagnostics._DiagnosticsOutputClaim, "claim"))
+                        stack.enter_context(patch.object(diagnostics, "_prepare_publication_rename"))
+                        stack.enter_context(_write_traps())
+                        with self.assertRaises((diagnostics.AnomalyFailureDiagnosticsError, analysis.AnalysisGlobalFailure)):
+                            entrypoint(root, replay_head="0" * 40)
+                        claim.assert_not_called()
+                        self.assertEqual(view.call_count, int(change != "input-pin"))
+                        self.assertEqual(aggregate.call_count, int(change == "aggregate-raw"))
+                    self.assertEqual(list((root / "artifacts").iterdir()), [])
 
 
 if __name__ == "__main__":

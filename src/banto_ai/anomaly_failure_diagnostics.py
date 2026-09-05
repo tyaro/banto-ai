@@ -46,6 +46,30 @@ EXPECTED_RESULT_SCHEMA_CANONICAL_SHA256 = "218a69829815c766d5edd888ea01567d113ad
 EXPECTED_CONFIG_RAW_SHA256 = "bafa6a4d24ec7899c0c015a79a23d91dd65368c2a5078a18662c1a40de182a8e"
 EXPECTED_CONFIG_SCHEMA_RAW_SHA256 = "5840f1097ea3f1e68e530288430d4afb4b21a0c2dea3344094c42a716f7d4fe3"
 EXPECTED_RESULT_SCHEMA_RAW_SHA256 = "ee71348890b77d0c3b49007784e618e69fa3b40b48c5d2ee01a04e52800e8877"
+# Only the byte-pinned formal artifact used these seven CRLF working-tree
+# sources. These expectations are independent of any artifact being verified.
+# Tuples are (exact repository path, canonical JSON SHA-256, legacy raw SHA-256).
+_FORMAL_LEGACY_SOURCE_PINS = MappingProxyType({
+    "matrix_config": (EXPECTED_MATRIX_CONFIG_PATH, EXPECTED_MATRIX_CONFIG_CANONICAL_SHA256,
+                      "2a74036b0860a420b7d9cc2ae03056f04e5f8c92026aa532e07cb917726cfc87"),
+    "matrix_schema": ("schemas/anomaly-multiseed-matrix-config-v0.2.schema.json",
+                      "fbd081961bfd8a56f3ac24514310f0a17f89c02174db44bfeb3fb6b3911f1c4d",
+                      "944ef163ad6b8eb0d1dfc5cbdebaf71bac2e75c43dfa07666ae424f8a165ed8e"),
+    "base_generator_config": ("examples/configs/synthetic-anomaly-evaluation-v0.1.json",
+                              "16165735d4fdb71213fec301f26d9c04a593ee36afbb51d255be535dd98f8b93",
+                              "81bd67e68980b712934ab95ff83ddc72c9a4ce6e0fe900ad9160d18aecddb6df"),
+    "base_generator_schema": ("schemas/synthetic-generator-config.schema.json",
+                              "e6e743ef4cb28902b3869cf20a0227df0340fe6b6ce0227d63eb2d2b0b55fd89",
+                              "56bfd16e62d6d1e30cca8936ff805bac642fe8e4f973b3f4d664fb324d9491a7"),
+    "anomaly_config_schema": ("schemas/anomaly-evaluation-config.schema.json",
+                              "858eac01139e880b3c114423fb4ac67ab5e8739da67349875babe160a609dd34",
+                              "eb1f97e4d2f0b730559b0235bf7ac78f359b9bb41769ef2e05d3179ba4ea83a7"),
+    "anomaly_result_schema": ("schemas/anomaly-evaluation-result.schema.json",
+                              "61d4a269eeb07a7edbc38e3d5750cfcb2f478218bab5a8ef1a6062afa0c46a74",
+                              "58f7496171fb65e89fb14e72f977a7845548f5981ca0b566e194a61934612ada"),
+    "matrix_result_schema": (EXPECTED_MATRIX_RESULT_SCHEMA_PATH, EXPECTED_MATRIX_RESULT_SCHEMA_CANONICAL_SHA256,
+                             "856ede0ee55309955150258685bdaba8d93dbdf005ac54b67c09e513b3d894a1"),
+})
 CANONICALIZATION_ID = "utf-8-json-sort-keys-compact-no-trailing-newline-v1"
 MATRIX_SAMPLING_INTERVAL_MS = 1000
 MATRIX_PERSISTENCE_POINTS = 2
@@ -1681,6 +1705,52 @@ def run_and_publish_diagnostics(root: Path, *, replay_head: str) -> dict[str, st
         claim.close()
 
 
+def _formal_replay_provenance_sources(sources: Mapping[str, Any], compatibility: Mapping[str, Any]) -> dict[str, Any]:
+    """Build a provenance-only view after the unchanged 88+4 byte proof.
+
+    Never normalize workspace bytes or learn expectations from the artifact.
+    The snapshot hash must still equal both sides of the already completed
+    historical-byte comparison. The only admissible transform is LF -> CRLF,
+    with no preexisting CR, and its output must match an independent fixed pin.
+    This public-only view is NOT a snapshot for _assert_inputs_unchanged.
+    """
+    expected_revision = {"status": "git", "head": EXPECTED_ARTIFACT_CODE_REVISION,
+                         "dirty": False, "diff_sha256": _sha256_bytes(b"")}
+    if compatibility.get("artifact_revision") != expected_revision:
+        _fail("formal provenance requires the fixed artifact revision")
+    rows = compatibility.get("semantic_sources", [])
+    historical = {row["path"]: row for row in rows}
+    if len(rows) != 88 or len(historical) != 88:
+        _fail("formal provenance requires the exact historical source proof")
+    expected_keys = set(_FORMAL_LEGACY_SOURCE_PINS) | {"dataset_manifest_schema", "_config_relative"}
+    if set(sources) != expected_keys or sources["_config_relative"] != EXPECTED_MATRIX_CONFIG_PATH:
+        _fail("formal provenance source key map is not fixed")
+    view = {}
+    for key, source in sources.items():
+        if key.startswith("_"):
+            continue
+        raw = source["_raw"]
+        value, raw_sha, canonical_sha = _strict_bytes(raw, f"formal provenance source {key}")
+        proof = historical.get(source["path"])
+        if (proof != {"path": source["path"], "artifact_blob_sha256": raw_sha, "current_raw_sha256": raw_sha}
+                or source["raw_sha256"] != raw_sha or source["canonical_sha256"] != canonical_sha
+                or source["_value"] != value):
+            _fail(f"formal provenance source differs from historical byte proof: {key}")
+        if key in _FORMAL_LEGACY_SOURCE_PINS:
+            path, canonical_pin, legacy_pin = _FORMAL_LEGACY_SOURCE_PINS[key]
+            if source["path"] != path or canonical_sha != canonical_pin:
+                _fail(f"formal provenance source path or canonical digest is not fixed: {key}")
+            if b"\r" in raw or b"\n" not in raw:
+                _fail(f"formal provenance source is not unambiguous historical LF: {key}")
+            if _sha256_bytes(raw.replace(b"\n", b"\r\n")) != legacy_pin:
+                _fail(f"formal provenance LF-to-CRLF transform differs from fixed raw pin: {key}")
+            raw_sha = legacy_pin
+        elif source["path"] != "schemas/synthetic-dataset-manifest.schema.json":
+            _fail("formal provenance dataset manifest schema path is not fixed")
+        view[key] = {"path": source["path"], "raw_sha256": raw_sha, "canonical_sha256": canonical_sha}
+    return view
+
+
 def _verify_input_replay(root: Path | None = None, *, replay_head: str) -> dict[str, Any]:
     """Run the existing strict, read-only matrix replay route and return verified in-memory inputs.
 
@@ -1729,7 +1799,12 @@ def _verify_input_replay(root: Path | None = None, *, replay_head: str) -> dict[
         validate(result, values["matrix_result_schema"])
     except ManifestValidationError as exc:
         raise AnomalyFailureDiagnosticsError(f"matrix result does not satisfy its schema: {exc}") from exc
-    analysis._verify_source_provenance(result, {key: value for key, value in sources.items() if not key.startswith("_")}, artifact_revision)
+    # The fixed inventory/result pins above must pass before any legacy view is
+    # used. Keep the real LF sources for every current-byte boundary recheck.
+    provenance_sources = _formal_replay_provenance_sources(sources, compatibility)
+    if set(result.get("provenance", {}).get("inputs", {})) != set(provenance_sources):
+        _fail("formal matrix provenance input key map is not fixed")
+    analysis._verify_source_provenance(result, provenance_sources, artifact_revision)
     runner._verify_aggregate_result(result, values["matrix_config"])
     base = values["base_generator_config"]
     evaluations: list[dict[str, Any]] = []
@@ -1738,7 +1813,7 @@ def _verify_input_replay(root: Path | None = None, *, replay_head: str) -> dict[
     for cell in result.get("cells", []):
         if cell.get("status") != "success":
             _fail("diagnostics replay requires every matrix cell to be successful")
-        evaluation, expected, cell_files, cell_dirs = analysis._verify_cell_and_collect(cell, values["matrix_config"], base, repository, input_root, sources, values, artifact_revision)
+        evaluation, expected, cell_files, cell_dirs = analysis._verify_cell_and_collect(cell, values["matrix_config"], base, repository, input_root, provenance_sources, values, artifact_revision)
         generator_relative = expected["paths"]["generator_config"].relative_to(input_root).as_posix()
         evaluator_relative = expected["paths"]["evaluator_config"].relative_to(input_root).as_posix()
         evaluation_relative = f"{expected['paths']['evaluation'].relative_to(input_root).as_posix()}/result.json"
