@@ -15,7 +15,7 @@ from pathlib import PureWindowsPath
 from typing import Any, Callable, Mapping
 from uuid import uuid4
 
-from . import anomaly_matrix
+from . import anomaly_evaluation, anomaly_matrix
 from .anomaly_evaluation import evaluate_anomalies
 from .benchmark import _revision
 from .generator import FINGERPRINT_ALGORITHM, FINGERPRINT_FILE_NAMES, FINGERPRINT_CANONICALIZATION, SIGNALS, expected_catalog, generate_synthetic
@@ -213,22 +213,23 @@ def _tree_snapshot(
     try:
         while pending:
             directory = pending.pop()
-            for entry in os.scandir(directory):
-                candidate = Path(entry.path)
-                relative = candidate.relative_to(path).as_posix()
-                if _is_link(candidate):
-                    raise OSError(f"symlink or junction: {relative}")
-                if entry.is_dir(follow_symlinks=False):
-                    inventory.append((relative, "directory"))
-                    pending.append(candidate)
-                elif entry.is_file(follow_symlinks=False):
-                    inventory.append((relative, "file"))
-                    raw = candidate.read_bytes()
-                    hashes[relative] = _sha256_bytes(raw)
-                    if relative in capture_names:
-                        captured_bytes[relative] = raw
-                else:
-                    raise OSError(f"non-regular entry: {relative}")
+            with os.scandir(directory) as entries:
+                for entry in entries:
+                    candidate = Path(entry.path)
+                    relative = candidate.relative_to(path).as_posix()
+                    if _is_link(candidate):
+                        raise OSError(f"symlink or junction: {relative}")
+                    if entry.is_dir(follow_symlinks=False):
+                        inventory.append((relative, "directory"))
+                        pending.append(candidate)
+                    elif entry.is_file(follow_symlinks=False):
+                        inventory.append((relative, "file"))
+                        raw = candidate.read_bytes()
+                        hashes[relative] = _sha256_bytes(raw)
+                        if relative in capture_names:
+                            captured_bytes[relative] = raw
+                    else:
+                        raise OSError(f"non-regular entry: {relative}")
         if set(captured_bytes) != capture_names:
             missing = sorted(capture_names - set(captured_bytes))
             raise OSError(f"captured files are missing: {missing}")
@@ -489,10 +490,15 @@ def _canonical_timestamp(value: Any, label: str) -> tuple[str, datetime]:
 
 
 def _build_dataset_semantic_ledger(
-    cell: Mapping[str, Any], observations: list[dict[str, Any]], split_manifest: Mapping[str, Any]
-) -> dict[str, tuple[Any, ...]]:
+    cell: Mapping[str, Any],
+    observations: list[dict[str, Any]],
+    split_manifest: Mapping[str, Any],
+    events: list[dict[str, Any]],
+) -> dict[str, Any]:
     generator_config = cell["generator_config"]
     expected_split_fields = {
+        "schema_version": "0.1",
+        "manifest_type": "split",
         "dataset_id": generator_config["dataset_id"],
         "generator_version": generator_config["generator_version"],
         "seed": generator_config["seed"],
@@ -503,36 +509,64 @@ def _build_dataset_semantic_ledger(
     if any(split_manifest.get(key) != value for key, value in expected_split_fields.items()):
         raise AnomalyMatrixRunnerError("generated split manifest fields drifted")
     strategies = split_manifest.get("strategies")
-    chronological = next(
-        (strategy for strategy in strategies if isinstance(strategy, Mapping) and strategy.get("strategy") == "chronological"),
-        None,
-    ) if isinstance(strategies, list) else None
-    split_rows = chronological.get("splits") if isinstance(chronological, Mapping) else None
-    if not isinstance(split_rows, list):
-        raise AnomalyMatrixRunnerError("generated split manifest lacks chronological splits")
-    split_times: dict[str, tuple[datetime, datetime]] = {}
-    for split in split_rows:
-        if not isinstance(split, Mapping) or not isinstance(split.get("split_id"), str) or split["split_id"] in split_times:
-            raise AnomalyMatrixRunnerError("generated split manifest has duplicate or invalid split IDs")
-        start_value, start = _canonical_timestamp(split.get("start_timestamp"), "split start timestamp")
-        end_value, end = _canonical_timestamp(split.get("end_timestamp"), "split end timestamp")
-        if start >= end or split.get("start_timestamp") != start_value or split.get("end_timestamp") != end_value:
-            raise AnomalyMatrixRunnerError("generated split manifest timestamps are not canonical half-open UTC intervals")
-        split_times[split["split_id"]] = (start, end)
-    if any(split_id not in split_times for split_id in ("validation", "test")):
-        raise AnomalyMatrixRunnerError("generated split manifest lacks validation or test split")
-    validation_start, validation_end = split_times["validation"]
-    test_start, test_end = split_times["test"]
-    if validation_end > test_start:
-        raise AnomalyMatrixRunnerError("generated validation and test splits overlap")
-
     equipment_ids = [item["equipment_id"] for item in generator_config["equipment"]]
     if len(equipment_ids) != len(set(equipment_ids)):
         raise AnomalyMatrixRunnerError("generated equipment inventory is duplicated")
+    sample_count = int(generator_config["sample_count"])
+    interval_ms = int(generator_config["sampling_interval_ms"])
+    split_start = _iso_at(generator_config["start_timestamp"], 0, interval_ms)
+    split_end = _iso_at(generator_config["start_timestamp"], sample_count, interval_ms)
+    validation_start_sample = max(1, sample_count * 6 // 10)
+    test_start_sample = max(2, sample_count * 8 // 10)
+    expected_chronological = [
+        {
+            "split_id": split_id,
+            "equipment_ids": equipment_ids,
+            "start_timestamp": _iso_at(generator_config["start_timestamp"], start_sample, interval_ms),
+            "end_timestamp": _iso_at(generator_config["start_timestamp"], end_sample, interval_ms),
+            "record_count": (end_sample - start_sample) * len(equipment_ids),
+        }
+        for split_id, start_sample, end_sample in (
+            ("train", 0, validation_start_sample),
+            ("validation", validation_start_sample, test_start_sample),
+            ("test", test_start_sample, sample_count),
+        )
+    ]
+    cross_equipment_cut = max(1, len(equipment_ids) * 7 // 10)
+    expected_cross_equipment = [
+        {
+            "split_id": "train",
+            "equipment_ids": equipment_ids[:cross_equipment_cut],
+            "start_timestamp": split_start,
+            "end_timestamp": split_end,
+            "record_count": sample_count * cross_equipment_cut,
+        },
+        {
+            "split_id": "test",
+            "equipment_ids": equipment_ids[cross_equipment_cut:],
+            "start_timestamp": split_start,
+            "end_timestamp": split_end,
+            "record_count": sample_count * (len(equipment_ids) - cross_equipment_cut),
+        },
+    ]
+    expected_strategies = [
+        {"strategy": "chronological", "splits": expected_chronological},
+        {"strategy": "cross_equipment", "splits": expected_cross_equipment},
+    ]
+    if strategies != expected_strategies:
+        raise AnomalyMatrixRunnerError("generated split manifest boundaries or record counts drifted")
+    split_times: dict[str, tuple[datetime, datetime]] = {}
+    for split in expected_chronological:
+        _start_value, start = _canonical_timestamp(split["start_timestamp"], "split start timestamp")
+        _end_value, end = _canonical_timestamp(split["end_timestamp"], "split end timestamp")
+        split_times[split["split_id"]] = (start, end)
+    validation_start, validation_end = split_times["validation"]
+    test_start, test_end = split_times["test"]
     equipment_set = set(equipment_ids)
     target_signal_ids = _expected_target_signal_ids(cell)
     if len(target_signal_ids) != len(set(target_signal_ids)):
         raise AnomalyMatrixRunnerError("evaluator target signal inventory is duplicated")
+    configured_modes = {item["regime"] for item in generator_config["regimes"]}
     profile_keys: set[tuple[str, str, str]] = set()
     score_identities: list[tuple[Any, ...]] = []
     observation_keys: set[tuple[str, str]] = set()
@@ -540,7 +574,12 @@ def _build_dataset_semantic_ledger(
         equipment_id = row.get("equipment_id")
         operating_mode = row.get("operating_mode")
         timestamp, stamp = _canonical_timestamp(row.get("timestamp"), "observation timestamp")
-        if not isinstance(equipment_id, str) or equipment_id not in equipment_set or not isinstance(operating_mode, str) or not operating_mode:
+        if (
+            not isinstance(equipment_id, str)
+            or equipment_id not in equipment_set
+            or not isinstance(operating_mode, str)
+            or operating_mode not in configured_modes
+        ):
             raise AnomalyMatrixRunnerError("generated observation identity is invalid")
         observation_key = (equipment_id, timestamp)
         if observation_key in observation_keys:
@@ -559,9 +598,50 @@ def _build_dataset_semantic_ledger(
                     score_identities.append((timestamp, equipment_id, signal_id, operating_mode, profile_key))
     if len(score_identities) != len(set(score_identities)):
         raise AnomalyMatrixRunnerError("generated score identity ledger is duplicated")
+    expected_events = cell["generator_config"]["events"]
+    expected_by_id = {event["event_id"]: event for event in expected_events}
+    actual_by_id: dict[str, dict[str, Any]] = {}
+    for event in events:
+        event_id = event.get("event_id")
+        if not isinstance(event_id, str) or event_id in actual_by_id:
+            raise AnomalyMatrixRunnerError("generated dataset event inventory is duplicated or invalid")
+        actual_by_id[event_id] = event
+    if set(actual_by_id) != set(expected_by_id):
+        raise AnomalyMatrixRunnerError("generated dataset event inventory IDs drifted")
+    normalized_events: list[dict[str, Any]] = []
+    for event_id, expected in expected_by_id.items():
+        actual = actual_by_id[event_id]
+        expected_values = {
+            "event_type": expected["event_type"],
+            "equipment_id": expected["equipment_id"],
+            "signal_id": expected["signal_id"],
+            "start_timestamp": _iso_at(generator_config["start_timestamp"], expected["start_sample"], interval_ms),
+            "end_timestamp": _iso_at(generator_config["start_timestamp"], expected["end_sample"], interval_ms),
+            "magnitude": expected["magnitude"],
+        }
+        if any(actual.get(key) != value for key, value in expected_values.items()):
+            raise AnomalyMatrixRunnerError(f"generated dataset event inventory drifted: {event_id}")
+        _start_value, start = _canonical_timestamp(actual["start_timestamp"], "event start timestamp")
+        _end_value, end = _canonical_timestamp(actual["end_timestamp"], "event end timestamp")
+        normalized_signal_id = actual["signal_id"]
+        if not normalized_signal_id.startswith(f"{actual['equipment_id']}."):
+            normalized_signal_id = f"{actual['equipment_id']}.{normalized_signal_id}"
+        normalized_events.append(
+            {
+                "event_id": event_id,
+                "event_type": actual["event_type"],
+                "equipment_id": actual["equipment_id"],
+                "signal_id": normalized_signal_id,
+                "start": start,
+                "end": end,
+            }
+        )
     return {
         "profile_keys": tuple(sorted(profile_keys)),
         "score_identities": tuple(sorted(score_identities)),
+        "sampling_interval_ms": interval_ms,
+        "split_times": split_times,
+        "events": tuple(normalized_events),
     }
 
 
@@ -571,7 +651,7 @@ def _validate_dataset(
     root: Path,
     schema: Mapping[str, Any],
     generator_config_raw: bytes,
-) -> tuple[dict[str, Any], dict[str, Any], dict[str, tuple[Any, ...]]]:
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
     dataset_path = cell["paths"]["dataset"]
     if _is_link(dataset_path) or not dataset_path.is_dir():
         raise AnomalyMatrixRunnerError(f"generated dataset is not a regular directory: {dataset_path}")
@@ -580,7 +660,7 @@ def _validate_dataset(
         "dataset before validation",
         containment_root=root,
         failure_scope="cell",
-        capture_files=("observations.jsonl", "split-manifest.json"),
+        capture_files=("observations.jsonl", "events.jsonl", "split-manifest.json"),
     )
     captured_bytes = snapshot_before["_captured_bytes"]
     manifest_path = dataset_path / "dataset-manifest.json"
@@ -629,33 +709,11 @@ def _validate_dataset(
     events_path = dataset_path / "events.jsonl"
     observations_raw = captured_bytes["observations.jsonl"]
     observations = _jsonl_objects_from_raw(observations_raw, "observations")
+    events_raw = captured_bytes["events.jsonl"]
+    events = _jsonl_objects_from_raw(events_raw, "events")
     split_raw = captured_bytes["split-manifest.json"]
     split_manifest = _parse_json_object_bytes(split_raw, "split manifest", AnomalyMatrixRunnerError)
-    dataset_ledger = _build_dataset_semantic_ledger(cell, observations, split_manifest)
-    events, _events_raw = _jsonl_objects(events_path, "events")
-    expected_events = cell["generator_config"]["events"]
-    expected_by_id = {event["event_id"]: event for event in expected_events}
-    interval_ms = int(base["sampling_interval_ms"])
-    actual_by_id: dict[str, dict[str, Any]] = {}
-    for event in events:
-        event_id = event.get("event_id")
-        if event_id in actual_by_id:
-            raise AnomalyMatrixRunnerError(f"generated dataset event is duplicated: {event_id}")
-        actual_by_id[event_id] = event
-    if set(actual_by_id) != set(expected_by_id):
-        raise AnomalyMatrixRunnerError("generated dataset event inventory IDs drifted")
-    for event_id, expected in expected_by_id.items():
-        actual = actual_by_id[event_id]
-        expected_values = {
-            "event_type": expected["event_type"],
-            "equipment_id": expected["equipment_id"],
-            "signal_id": expected["signal_id"],
-            "start_timestamp": _iso_at(base["start_timestamp"], expected["start_sample"], interval_ms),
-            "end_timestamp": _iso_at(base["start_timestamp"], expected["end_sample"], interval_ms),
-            "magnitude": expected["magnitude"],
-        }
-        if any(actual.get(key) != value for key, value in expected_values.items()):
-            raise AnomalyMatrixRunnerError(f"generated dataset event inventory drifted: {event_id}")
+    dataset_ledger = _build_dataset_semantic_ledger(cell, observations, split_manifest, events)
     fingerprint_path = dataset_path / "fingerprint.json"
     fingerprint, _fingerprint_raw = _cell_json_object(fingerprint_path, "dataset fingerprint")
     if fingerprint.get("algorithm") != FINGERPRINT_ALGORITHM or fingerprint.get("canonicalization") != FINGERPRINT_CANONICALIZATION:
@@ -680,6 +738,7 @@ def _validate_dataset(
     expected_snapshot_hashes = {
         "dataset-manifest.json": _sha256_bytes(manifest_raw),
         "observations.jsonl": _sha256_bytes(observations_raw),
+        "events.jsonl": _sha256_bytes(events_raw),
         "split-manifest.json": _sha256_bytes(split_raw),
     }
     if any(snapshot_before["hashes"].get(name) != digest for name, digest in expected_snapshot_hashes.items()) or any(snapshot_before["hashes"].get(name) != digest for name, digest in file_hashes.items()):
@@ -693,6 +752,7 @@ def _validate_dataset(
     )
     if snapshot_after != snapshot_before:
         raise _GlobalFailure("dataset changed during validation")
+    sanitized_snapshot = {"inventory": snapshot_after["inventory"], "hashes": snapshot_after["hashes"]}
     evidence = {
         "path": _safe_relative(dataset_path, root, "dataset path"),
         "dataset_id": manifest["dataset_id"],
@@ -704,7 +764,7 @@ def _validate_dataset(
         "equipment_count": len(manifest["equipment"]),
         "event_count": len(events),
     }
-    return evidence, snapshot_before, dataset_ledger
+    return evidence, sanitized_snapshot, dataset_ledger
 
 
 def _call_injected(function: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
@@ -736,21 +796,28 @@ def _validate_evaluation(
         raise _GlobalFailure("evaluator returned a path outside the planned evaluation output")
     if _is_link(returned_path) or not returned_path.is_dir():
         raise AnomalyMatrixRunnerError("evaluator output is not a regular directory")
-    snapshot_before = _tree_snapshot(returned_path, "evaluator output before validation", containment_root=root, failure_scope="cell")
+    snapshot_before = _tree_snapshot(
+        returned_path,
+        "evaluator output before validation",
+        containment_root=root,
+        failure_scope="cell",
+        capture_files=("result.json", "summary.md", COMPLETION_MARKER),
+    )
     result_path = returned_path / "result.json"
     summary_path = returned_path / "summary.md"
     marker_path = returned_path / COMPLETION_MARKER
-    result, result_raw = _cell_json_object(result_path, "cell evaluator result")
+    captured_bytes = snapshot_before["_captured_bytes"]
+    result_raw = captured_bytes["result.json"]
+    result = _parse_json_object_bytes(result_raw, "cell evaluator result", AnomalyMatrixRunnerError)
     try:
         validate(result, result_schema)
     except ManifestValidationError as exc:
         raise AnomalyMatrixRunnerError(f"cell evaluator result does not satisfy its schema: {exc}") from exc
     if result.get("status") not in ("pass", "partial", "inconclusive"):
         raise AnomalyMatrixRunnerError("cell evaluator status is invalid")
-    if _is_link(summary_path) or not summary_path.is_file() or _is_link(marker_path) or not marker_path.is_file():
-        raise AnomalyMatrixRunnerError("cell evaluator completion payload is incomplete")
-    summary_raw = summary_path.read_bytes()
-    marker, _marker_raw = _cell_json_object(marker_path, "cell evaluator completion marker")
+    summary_raw = captured_bytes["summary.md"]
+    marker_raw = captured_bytes[COMPLETION_MARKER]
+    marker = _parse_json_object_bytes(marker_raw, "cell evaluator completion marker", AnomalyMatrixRunnerError)
     if set(marker) != {"marker_type", "schema_version", "result_sha256", "summary_sha256"} or marker.get("marker_type") != "event-aware-anomaly-complete" or marker.get("schema_version") != "0.1" or marker.get("result_sha256") != _sha256_bytes(result_raw) or marker.get("summary_sha256") != _sha256_bytes(summary_raw):
         raise AnomalyMatrixRunnerError("cell evaluator completion marker is invalid")
     provenance = result.get("provenance")
@@ -772,11 +839,18 @@ def _validate_evaluation(
     if provenance.get("code_revision") != dict(revision):
         raise _GlobalFailure("cell evaluator code revision provenance drifted")
     _verify_evaluator_cross_fields(result, cell, dataset, dataset_ledger)
-    snapshot_after = _tree_snapshot(returned_path, "evaluator output after validation", containment_root=root, failure_scope="global")
+    snapshot_after = _tree_snapshot(
+        returned_path,
+        "evaluator output after validation",
+        containment_root=root,
+        failure_scope="global",
+        capture_files=tuple(captured_bytes),
+    )
     if snapshot_after != snapshot_before:
         raise _GlobalFailure("evaluator output changed during validation")
-    if snapshot_before["hashes"].get("result.json") != _sha256_bytes(result_raw) or snapshot_before["hashes"].get("summary.md") != _sha256_bytes(summary_raw) or snapshot_before["hashes"].get(COMPLETION_MARKER) != _sha256_bytes(marker_path.read_bytes()):
+    if snapshot_before["hashes"].get("result.json") != _sha256_bytes(result_raw) or snapshot_before["hashes"].get("summary.md") != _sha256_bytes(summary_raw) or snapshot_before["hashes"].get(COMPLETION_MARKER) != _sha256_bytes(marker_raw):
         raise _GlobalFailure("evaluator evidence did not come from the initial snapshot")
+    sanitized_snapshot = {"inventory": snapshot_after["inventory"], "hashes": snapshot_after["hashes"]}
     evidence = {
         "path": _safe_relative(returned_path, root, "evaluation path"),
         "result_path": _safe_relative(result_path, root, "cell result path"),
@@ -788,7 +862,7 @@ def _validate_evaluation(
         "status": {"pass": "success", "partial": "partial", "inconclusive": "inconclusive"}[result["status"]],
         "evaluator_status": result["status"],
     }
-    return evidence, snapshot_before
+    return evidence, sanitized_snapshot
 
 
 def _expected_target_signal_ids(cell: Mapping[str, Any]) -> list[str]:
@@ -803,11 +877,45 @@ def _expected_target_signal_ids(cell: Mapping[str, Any]) -> list[str]:
     return resolved
 
 
+def _recompute_event_accounting(
+    cell: Mapping[str, Any],
+    dataset_ledger: Mapping[str, Any],
+    target_signal_ids: list[str],
+    classifications: Mapping[str, str],
+    episodes: list[Mapping[str, Any]],
+    scores: list[Mapping[str, Any]],
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any], dict[str, int]]:
+    accounting_dataset = {
+        "manifest": {"sampling_interval_ms": dataset_ledger["sampling_interval_ms"]},
+        "split_times": dataset_ledger["split_times"],
+        "events": dataset_ledger["events"],
+    }
+    accounting_config = {
+        "detection_grace_points": cell["evaluator_config"]["detection_grace_points"],
+    }
+    try:
+        incidents, clean_false_alerts, metrics, event_exclusions = anomaly_evaluation._event_records_and_metrics(
+            accounting_dataset,
+            [item["equipment_id"] for item in cell["generator_config"]["equipment"]],
+            target_signal_ids,
+            classifications,
+            episodes,
+            accounting_config,
+            scores,
+        )
+    except (anomaly_evaluation.AnomalyEvaluationError, KeyError, TypeError, ValueError) as exc:
+        raise _CellSemanticFailure("cell evaluator event accounting could not be recomputed") from exc
+    alert_episode_accounting = metrics.pop("_alert_episode_accounting", None)
+    if not isinstance(alert_episode_accounting, list):
+        raise _CellSemanticFailure("cell evaluator alert accounting is missing")
+    return incidents, alert_episode_accounting, clean_false_alerts, metrics, event_exclusions
+
+
 def _verify_evaluator_cross_fields(
     result: Mapping[str, Any],
     cell: Mapping[str, Any],
     dataset: Mapping[str, Any],
-    dataset_ledger: Mapping[str, Any] | None = None,
+    dataset_ledger: Mapping[str, Any],
 ) -> None:
     provenance = result.get("provenance")
     if not isinstance(provenance, Mapping):
@@ -900,16 +1008,12 @@ def _verify_evaluator_cross_fields(
                 raise _CellSemanticFailure("inconclusive profile produced an available score")
     if set(availability_expected) != target_set:
         raise _CellSemanticFailure("cell evaluator profile or target coverage is incomplete")
-    if dataset_ledger is None:
-        if set(profile_by_key) != score_profile_keys:
-            raise _CellSemanticFailure("cell evaluator profile or target coverage is incomplete")
-    else:
-        expected_profile_keys = set(dataset_ledger["profile_keys"])
-        expected_score_identities = tuple(dataset_ledger["score_identities"])
-        if set(profile_by_key) != expected_profile_keys or not score_profile_keys.issubset(expected_profile_keys):
-            raise _CellSemanticFailure("cell evaluator profile ledger does not match dataset observations")
-        if len(score_identities) != len(set(score_identities)) or len(expected_score_identities) != len(set(expected_score_identities)) or set(score_identities) != set(expected_score_identities):
-            raise _CellSemanticFailure("cell evaluator score ledger does not match test observations")
+    expected_profile_keys = set(dataset_ledger["profile_keys"])
+    expected_score_identities = tuple(dataset_ledger["score_identities"])
+    if set(profile_by_key) != expected_profile_keys or not score_profile_keys.issubset(expected_profile_keys):
+        raise _CellSemanticFailure("cell evaluator profile ledger does not match dataset observations")
+    if len(score_identities) != len(set(score_identities)) or len(expected_score_identities) != len(set(expected_score_identities)) or set(score_identities) != set(expected_score_identities):
+        raise _CellSemanticFailure("cell evaluator score ledger does not match test observations")
     for summary in availability_expected.values():
         if summary["total_points"]:
             summary["availability_ratio"] = summary["available_points"] / summary["total_points"]
@@ -939,9 +1043,6 @@ def _verify_evaluator_cross_fields(
         raise _CellSemanticFailure("cell evaluator scoring counts cross-fields drifted")
     if row_counts.get("clean_false_alert_signal_episodes") != metrics.get("clean_false_alert_signal_episode_count"):
         raise _CellSemanticFailure("cell evaluator clean false-alert row count cross-field drifted")
-    overall = metrics.get("overall")
-    if not isinstance(overall, Mapping):
-        raise _CellSemanticFailure("cell evaluator status inputs are missing")
     incidents = arrays["incidents"]
     expected_classifications: dict[str, str] = {}
     for item in cell["evaluator_config"]["event_classifications"]:
@@ -957,59 +1058,27 @@ def _verify_evaluator_cross_fields(
         expected_events[event_id] = event
     if set(expected_classifications) != set(expected_events):
         raise _CellSemanticFailure("cell evaluator event classification inventory does not match generator events")
-
-    if any(not isinstance(incident, Mapping) for incident in incidents):
-        raise _CellSemanticFailure("cell evaluator incident inventory is invalid")
-    actual_incident_ids = [incident["event_id"] for incident in incidents]
-    if len(actual_incident_ids) != len(set(actual_incident_ids)) or set(actual_incident_ids) != set(expected_events):
-        raise _CellSemanticFailure("cell evaluator incident inventory is incomplete or duplicated")
-
-    expected_incidents: dict[str, dict[str, Any]] = {}
-    for event_id, event in expected_events.items():
-        equipment_id = event["equipment_id"]
-        signal_id = event["signal_id"]
-        if not signal_id.startswith(f"{equipment_id}."):
-            signal_id = f"{equipment_id}.{signal_id}"
-        expected_incidents[event_id] = {
-            "event_class": expected_classifications[event_id],
-            "event_type": event["event_type"],
-            "equipment_id": equipment_id,
-            "signal_id": signal_id,
-            "event_start_timestamp": _iso_at(cell["generator_config"]["start_timestamp"], int(event["start_sample"]), int(cell["generator_config"]["sampling_interval_ms"])),
-            "event_end_timestamp": _iso_at(cell["generator_config"]["start_timestamp"], int(event["end_sample"]), int(cell["generator_config"]["sampling_interval_ms"])),
-        }
-
-    def incident_counts(event_class: str | None = None) -> dict[str, int]:
-        selected = [
-            incident
-            for incident in incidents
-            if isinstance(incident, Mapping)
-            and (event_class is None or incident.get("event_class") == event_class)
-            and incident.get("eligible") is True
-        ]
-        detected = sum(incident.get("detected") is True for incident in selected)
-        return {"eligible_incidents": len(selected), "detected_incidents": detected, "missed_incidents": len(selected) - detected}
-
-    if any(
-        not isinstance(incident, Mapping)
-        or incident.get("event_id") not in expected_classifications
-        or any(incident.get(key) != value for key, value in expected_incidents.get(incident.get("event_id"), {}).items())
-        or (incident.get("event_class") in ("data_quality", "ignored") and incident.get("eligible") is True)
-        or (incident.get("eligible") is not True and incident.get("detected") is True)
-        for incident in incidents
-    ):
-        raise _CellSemanticFailure("cell evaluator incident inventory is invalid")
-    expected_overall_incidents = incident_counts()
-    if not all(overall.get(key) == value for key, value in expected_overall_incidents.items()):
-        raise _CellSemanticFailure("cell evaluator overall incident counts drifted")
-    by_class = metrics.get("by_class")
-    if not isinstance(by_class, Mapping):
-        raise _CellSemanticFailure("cell evaluator class metrics are missing")
-    for event_class in ("machine_fault", "sensor_fault"):
-        class_metrics = by_class.get(event_class)
-        expected_class_incidents = incident_counts(event_class)
-        if not isinstance(class_metrics, Mapping) or not all(class_metrics.get(key) == value for key, value in expected_class_incidents.items()):
-            raise _CellSemanticFailure(f"cell evaluator {event_class} incident counts drifted")
+    expected_incidents, expected_accounting, expected_clean_alerts, expected_metrics, expected_event_exclusions = _recompute_event_accounting(
+        cell,
+        dataset_ledger,
+        target_signal_ids,
+        expected_classifications,
+        arrays["alert_episodes"],
+        arrays["scores"],
+    )
+    if incidents != expected_incidents:
+        raise _CellSemanticFailure("cell evaluator incident outcomes or windows drifted")
+    if arrays["alert_episode_accounting"] != expected_accounting:
+        raise _CellSemanticFailure("cell evaluator alert episode accounting drifted")
+    if arrays["clean_false_alert_episodes"] != expected_clean_alerts:
+        raise _CellSemanticFailure("cell evaluator clean false-alert accounting drifted")
+    if not isinstance(exclusions, Mapping) or exclusions.get("events") != expected_event_exclusions:
+        raise _CellSemanticFailure("cell evaluator event exclusions drifted")
+    if dict(metrics) != expected_metrics:
+        raise _CellSemanticFailure("cell evaluator metrics accounting drifted")
+    overall = metrics.get("overall")
+    if not isinstance(overall, Mapping):
+        raise _CellSemanticFailure("cell evaluator status inputs are missing")
     profiles_inconclusive = calibration.get("profiles_inconclusive")
     if not isinstance(profiles_inconclusive, int) or isinstance(profiles_inconclusive, bool):
         raise _CellSemanticFailure("cell evaluator calibration status input is invalid")

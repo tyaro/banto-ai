@@ -684,16 +684,61 @@ def _delay_summary(delays: list[float]) -> dict[str, Any] | None:
     return {"count": len(delays), "mean": sum(delays) / len(delays), "median": _median(delays), "min": min(delays), "max": max(delays)}
 
 
+def _validate_score_alert_episode_links(scores: Iterable[Mapping[str, Any]], episodes: list[Mapping[str, Any]]) -> None:
+    """Check that score rows and alert episodes form an exact interval linkage."""
+    episode_by_id: dict[str, Mapping[str, Any]] = {}
+    episode_intervals: dict[tuple[str, str], list[tuple[str, datetime, datetime]]] = {}
+    for episode in episodes:
+        episode_id = episode["episode_id"]
+        if episode_id in episode_by_id:
+            raise AnomalyEvaluationError("alert episode IDs must be unique")
+        start = _parse_dataset_time(episode["start_timestamp"], "alert episode start")
+        onset = _parse_dataset_time(episode["onset_timestamp"], "alert onset")
+        end = _parse_dataset_time(episode["end_timestamp"], "alert episode end")
+        if start >= end or not start <= onset < end:
+            raise AnomalyEvaluationError(f"alert episode interval is invalid: {episode_id}")
+        episode_by_id[episode_id] = episode
+        episode_intervals.setdefault((episode["equipment_id"], episode["signal_id"]), []).append((episode_id, start, end))
+
+    for score in scores:
+        intervals = episode_intervals.get((score.get("equipment_id"), score.get("signal_id")), ())
+        alert_episode_id = score.get("alert_episode_id")
+        if not intervals and alert_episode_id is None:
+            continue
+        timestamp = _parse_dataset_time(score.get("timestamp"), "score timestamp")
+        matching = [
+            episode_id
+            for episode_id, start, end in intervals
+            if start <= timestamp < end
+        ]
+        if len(matching) > 1:
+            raise AnomalyEvaluationError("score row falls in overlapping alert episode intervals")
+        if alert_episode_id is None:
+            if matching:
+                raise AnomalyEvaluationError("score row inside an alert episode is missing its episode link")
+            continue
+        if alert_episode_id not in episode_by_id:
+            raise AnomalyEvaluationError("score row references a nonexistent alert episode")
+        if matching != [alert_episode_id]:
+            raise AnomalyEvaluationError("score row alert episode linkage does not match its interval")
+        if score.get("available") is not True or score.get("exceeds_threshold") is not True:
+            raise AnomalyEvaluationError("score row linked to an alert episode is not an available threshold exceedance")
+
+
 def _event_records_and_metrics(
-    dataset: Mapping[str, Any], equipment_ids: list[str], target_signal_ids: list[str], classifications: Mapping[str, str], episodes: list[dict[str, Any]], config: Mapping[str, Any], scores: Iterable[Mapping[str, Any]] = ()
+    dataset: Mapping[str, Any], equipment_ids: list[str], target_signal_ids: list[str], classifications: Mapping[str, str], episodes: list[dict[str, Any]], config: Mapping[str, Any], scores: Iterable[Mapping[str, Any]] | None = None
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any], dict[str, int]]:
     test_start, test_end = dataset["split_times"]["test"]
     interval = timedelta(milliseconds=dataset["manifest"]["sampling_interval_ms"])
     grace = int(config["detection_grace_points"])
     target_set = set(target_signal_ids)
+    scores_provided = scores is not None
+    scores = list(scores) if scores_provided else []
     episode_ids = [episode["episode_id"] for episode in episodes]
     if len(episode_ids) != len(set(episode_ids)):
         raise AnomalyEvaluationError("alert episode IDs must be unique")
+    if scores_provided:
+        _validate_score_alert_episode_links(scores, episodes)
     event_rows: list[dict[str, Any]] = []
     windows: list[tuple[str, str, datetime, datetime]] = []
     all_event_windows: list[dict[str, Any]] = []
