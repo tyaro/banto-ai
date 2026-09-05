@@ -89,6 +89,10 @@ def validate(instance: Any, schema: dict[str, Any], path: str = "$", root: dict[
             if required not in instance:
                 raise ManifestValidationError(f"{path}: missing required property {required}")
         properties = schema.get("properties", {})
+        property_names = schema.get("propertyNames")
+        if isinstance(property_names, dict):
+            for key in instance:
+                validate(key, property_names, f"{path}.<propertyName>", root)
         for key, value in instance.items():
             if key in properties:
                 validate(value, properties[key], f"{path}.{key}", root)
@@ -105,6 +109,17 @@ def validate(instance: Any, schema: dict[str, Any], path: str = "$", root: dict[
     else:
         if schema.get("anyOf"):
             raise ManifestValidationError(f"{path}: no anyOf alternative matched")
+    alternatives = schema.get("oneOf", [])
+    if alternatives:
+        matched = 0
+        for alternative in alternatives:
+            try:
+                validate(instance, alternative, path, root)
+            except ManifestValidationError:
+                continue
+            matched += 1
+        if matched != 1:
+            raise ManifestValidationError(f"{path}: expected exactly one oneOf alternative, matched {matched}")
 
 
 def _matches_type(value: Any, expected: str | list[str]) -> bool:

@@ -8,7 +8,6 @@ import json
 import math
 import os
 import shutil
-import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -50,9 +49,9 @@ PROMOTION_THRESHOLDS = {
 }
 
 # Filled after the two new JSON contracts are added.
-EXPECTED_ANALYSIS_SCHEMA_CANONICAL_SHA256 = "65a6542a3d1781491dc20b9b63946ec7dffba433389fa1510f22a36acace0b39"
-EXPECTED_ANALYSIS_CONFIG_CANONICAL_SHA256 = "11d84dc4f35222cab0a032b35482e31eec6ef33f6c9351db400d77a835c40b8b"
-EXPECTED_ANALYSIS_RESULT_SCHEMA_CANONICAL_SHA256 = "49c1c562d1f5e2a2458a8e0c491012fe4e9f2cc3f857c8f005eaa5f9e4cc21f2"
+EXPECTED_ANALYSIS_SCHEMA_CANONICAL_SHA256 = "cdb854d1a4cc2efabde81208875cf7091aa7e780ab550748cd227a72bde17c8a"
+EXPECTED_ANALYSIS_CONFIG_CANONICAL_SHA256 = "c34dfbc074fd6185a69ce0bb5d3cc0df184efb53bd9e76aa53641e91823e23b4"
+EXPECTED_ANALYSIS_RESULT_SCHEMA_CANONICAL_SHA256 = "5a4250bb99ef8900825bb1547d318ec986129822517fecb7b3be5ec85de8acef"
 EXPECTED_MATRIX_CONFIG_CANONICAL_SHA256 = anomaly_matrix.EXPECTED_V02_CONFIG_CANONICAL_SHA256
 EXPECTED_MATRIX_RESULT_SCHEMA_CANONICAL_SHA256 = anomaly_matrix.EXPECTED_V02_RESULT_SCHEMA_CANONICAL_SHA256
 DATASET_FILE_NAMES = frozenset(("dataset-manifest.json", "generator-config.json", "observations.jsonl", "events.jsonl", "split-manifest.json", "summary.json", "fingerprint.json"))
@@ -778,19 +777,23 @@ def _publish_analysis(root: Path, output: Path, result: Mapping[str, Any], verif
     if output.exists() or runner._is_link(output):
         raise AnalysisGlobalFailure(f"refusing to overwrite existing analysis output: {output}")
     output.parent.mkdir(parents=True, exist_ok=True)
-    temporary = Path(tempfile.mkdtemp(prefix=".analysis-publish-", dir=output.parent))
+    claimed = False
     try:
+        try:
+            output.mkdir()
+        except FileExistsError as exc:
+            raise AnalysisGlobalFailure(f"analysis output claim raced with an existing target: {output}") from exc
+        claimed = True
         result_raw = _json_bytes(result)
         summary_raw = _analysis_summary(result)
-        _write_exclusive(temporary / "result.json", result_raw)
-        _write_exclusive(temporary / "summary.md", summary_raw)
+        _write_exclusive(output / "result.json", result_raw)
+        _write_exclusive(output / "summary.md", summary_raw)
         verify_before_marker()
         marker = {"marker_type": "event-aware-anomaly-matrix-analysis-complete", "schema_version": ANALYSIS_SCHEMA_VERSION, "result_sha256": _sha256(result_raw), "summary_sha256": _sha256(summary_raw)}
-        _write_exclusive(temporary / ".complete", _json_bytes(marker))
-        temporary.rename(output)
+        _write_exclusive(output / ".complete", _json_bytes(marker))
     except BaseException:
-        if temporary.exists():
-            shutil.rmtree(temporary, ignore_errors=True)
+        if claimed and output.exists() and not runner._is_link(output):
+            shutil.rmtree(output, ignore_errors=True)
         raise
     return output
 

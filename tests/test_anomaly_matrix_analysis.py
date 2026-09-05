@@ -57,6 +57,28 @@ class AnomalyMatrixAnalysisPureTests(unittest.TestCase):
         with self.assertRaises(analysis.AnalysisGlobalFailure):
             analysis._bootstrap_slice(slices, [[0] * 10], "motor-01|nominal", "unexpected")
 
+    def test_slice_maps_reject_non_object_values_at_schema_level(self) -> None:
+        schema = json.loads((ROOT / "schemas/anomaly-multiseed-analysis-result-v0.2.schema.json").read_text(encoding="utf-8"))
+        estimates = schema["$defs"]["estimates"]["properties"]
+        for field in ("availability_by_mode", "incident_slices", "precision_slices", "clean_alert_slices"):
+            self.assertEqual(estimates[field]["type"], "object")
+            for bad_value in ([], "not-an-object"):
+                with self.assertRaises(analysis.ManifestValidationError):
+                    analysis.validate(bad_value, estimates[field])
+
+    def test_manifest_validator_enforces_one_of_and_property_names(self) -> None:
+        one_of = {"oneOf": [{"const": "pass"}, {"const": "inconclusive"}]}
+        analysis.validate("pass", one_of)
+        with self.assertRaises(analysis.ManifestValidationError):
+            analysis.validate("other", one_of)
+        with self.assertRaises(analysis.ManifestValidationError):
+            analysis.validate("both", {"oneOf": [{"type": "string"}, {"minLength": 1}]})
+
+        property_names = {"type": "object", "propertyNames": {"pattern": "^allowed$"}, "additionalProperties": {}}
+        analysis.validate({"allowed": 1}, property_names)
+        with self.assertRaises(analysis.ManifestValidationError):
+            analysis.validate({"blocked": 1}, property_names)
+
     def test_cell_aggregate_preserves_fully_qualified_signal_ids(self) -> None:
         config = {
             "layouts": [{"layout_id": "layout-0", "operating_mode": "nominal"}],
@@ -112,7 +134,6 @@ class AnomalyMatrixAnalysisPureTests(unittest.TestCase):
             with self.assertRaises(RuntimeError):
                 analysis._publish_analysis(root, failed_output, result, lambda: (_ for _ in ()).throw(RuntimeError("verify")))
             self.assertFalse(failed_output.exists())
-            self.assertEqual(list(root.glob(".analysis-publish-*")), [])
 
     def test_gate_status_preserves_fail_and_inconclusive(self) -> None:
         threshold = {"point_min": 0.8, "ci_lower_min": 0.6}

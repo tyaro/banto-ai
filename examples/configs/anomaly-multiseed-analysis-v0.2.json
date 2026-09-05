@@ -8,9 +8,9 @@
   "matrix_result_schema_path": "schemas/anomaly-multiseed-matrix-result-v0.2.schema.json",
   "matrix_result_schema_canonical_sha256": "79acd31482bae6702dcb6bf6145a58342730a0b61c053592a720fa9e01e53326",
   "schema_path": "schemas/anomaly-multiseed-analysis-config-v0.2.schema.json",
-  "schema_canonical_sha256": "65a6542a3d1781491dc20b9b63946ec7dffba433389fa1510f22a36acace0b39",
+  "schema_canonical_sha256": "cdb854d1a4cc2efabde81208875cf7091aa7e780ab550748cd227a72bde17c8a",
   "result_schema_path": "schemas/anomaly-multiseed-analysis-result-v0.2.schema.json",
-  "result_schema_canonical_sha256": "49c1c562d1f5e2a2458a8e0c491012fe4e9f2cc3f857c8f005eaa5f9e4cc21f2",
+  "result_schema_canonical_sha256": "5a4250bb99ef8900825bb1547d318ec986129822517fecb7b3be5ec85de8acef",
   "input_root": "artifacts/anomaly-multiseed-v02",
   "output_root": "artifacts/anomaly-multiseed-v02-analysis",
   "bootstrap": {
