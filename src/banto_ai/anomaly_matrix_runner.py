@@ -80,12 +80,8 @@ def _is_link(path: Path) -> bool:
     return is_symlink or is_junction or bool(attributes & 0x0400)
 
 
-def _strict_json_object(path: Path, label: str) -> tuple[dict[str, Any], bytes]:
+def _parse_json_object_bytes(raw: bytes, label: str, failure_type: type[AnomalyMatrixRunnerError]) -> dict[str, Any]:
     try:
-        if _is_link(path) or not path.is_file():
-            raise OSError(f"not a regular file: {path}")
-        raw = path.read_bytes()
-
         def pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
             result: dict[str, Any] = {}
             for key, value in items:
@@ -106,11 +102,21 @@ def _strict_json_object(path: Path, label: str) -> tuple[dict[str, Any], bytes]:
             parse_constant=lambda value: (_ for _ in ()).throw(ValueError(f"non-finite JSON constant: {value}")),
             parse_float=parse_float,
         )
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
-        raise _GlobalFailure(f"{label} is not strict UTF-8 JSON: {exc}") from exc
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        raise failure_type(f"{label} is not strict UTF-8 JSON") from exc
     if not isinstance(value, dict):
-        raise _GlobalFailure(f"{label} must be a JSON object")
-    return value, raw
+        raise failure_type(f"{label} must be a JSON object")
+    return value
+
+
+def _strict_json_object(path: Path, label: str) -> tuple[dict[str, Any], bytes]:
+    try:
+        if _is_link(path) or not path.is_file():
+            raise OSError(f"not a regular file: {path}")
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise _GlobalFailure(f"{label} is not strict UTF-8 JSON: {exc}") from exc
+    return _parse_json_object_bytes(raw, label, _GlobalFailure), raw
 
 
 def _cell_json_object(path: Path, label: str) -> tuple[dict[str, Any], bytes]:
@@ -118,39 +124,13 @@ def _cell_json_object(path: Path, label: str) -> tuple[dict[str, Any], bytes]:
         if _is_link(path) or not path.is_file():
             raise OSError(f"not a regular file: {path}")
         raw = path.read_bytes()
-
-        def pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
-            result: dict[str, Any] = {}
-            for key, value in items:
-                if key in result:
-                    raise ValueError(f"duplicate JSON property: {key}")
-                result[key] = value
-            return result
-
-        def parse_float(value: str) -> float:
-            parsed = float(value)
-            if not math.isfinite(parsed):
-                raise ValueError(f"non-finite JSON number: {value}")
-            return parsed
-
-        value = json.loads(
-            raw.decode("utf-8"),
-            object_pairs_hook=pairs,
-            parse_constant=lambda value: (_ for _ in ()).throw(ValueError(f"non-finite JSON constant: {value}")),
-            parse_float=parse_float,
-        )
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+    except OSError as exc:
         raise AnomalyMatrixRunnerError(f"{label} is not strict UTF-8 JSON") from exc
-    if not isinstance(value, dict):
-        raise AnomalyMatrixRunnerError(f"{label} must be a JSON object")
-    return value, raw
+    return _parse_json_object_bytes(raw, label, AnomalyMatrixRunnerError), raw
 
 
-def _jsonl_objects(path: Path, label: str) -> tuple[list[dict[str, Any]], bytes]:
+def _jsonl_objects_from_raw(raw: bytes, label: str) -> list[dict[str, Any]]:
     try:
-        if _is_link(path) or not path.is_file():
-            raise OSError(f"not a regular file: {path}")
-        raw = path.read_bytes()
         rows: list[dict[str, Any]] = []
         for line_number, line in enumerate(raw.splitlines(), start=1):
             def parse_float(value: str) -> float:
@@ -168,9 +148,19 @@ def _jsonl_objects(path: Path, label: str) -> tuple[list[dict[str, Any]], bytes]
             if not isinstance(value, dict):
                 raise ValueError(f"line {line_number} is not an object")
             rows.append(value)
-    except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
         raise AnomalyMatrixRunnerError(f"{label} is not strict JSONL: {exc}") from exc
-    return rows, raw
+    return rows
+
+
+def _jsonl_objects(path: Path, label: str) -> tuple[list[dict[str, Any]], bytes]:
+    try:
+        if _is_link(path) or not path.is_file():
+            raise OSError(f"not a regular file: {path}")
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise AnomalyMatrixRunnerError(f"{label} is not strict JSONL: {exc}") from exc
+    return _jsonl_objects_from_raw(raw, label), raw
 
 
 def _assert_contained_path(path: Path, root: Path, label: str, *, must_exist: bool) -> Path:
@@ -200,16 +190,25 @@ def _assert_contained_path(path: Path, root: Path, label: str, *, must_exist: bo
     return resolved
 
 
-def _tree_snapshot(path: Path, label: str, *, containment_root: Path | None = None, failure_scope: str = "global") -> dict[str, Any]:
+def _tree_snapshot(
+    path: Path,
+    label: str,
+    *,
+    containment_root: Path | None = None,
+    failure_scope: str = "global",
+    capture_files: tuple[str, ...] = (),
+) -> dict[str, Any]:
     if containment_root is not None:
         _assert_contained_path(path, containment_root, label, must_exist=True)
     if failure_scope not in ("global", "cell"):
         raise ValueError(f"unsupported tree snapshot failure scope: {failure_scope}")
     failure = _GlobalFailure if failure_scope == "global" else AnomalyMatrixRunnerError
+    capture_names = set(capture_files)
     if _is_link(path) or not path.is_dir():
         raise failure(f"{label} must be a regular directory")
     inventory: list[tuple[str, str]] = []
     hashes: dict[str, str] = {}
+    captured_bytes: dict[str, bytes] = {}
     pending = [path]
     try:
         while pending:
@@ -224,16 +223,26 @@ def _tree_snapshot(path: Path, label: str, *, containment_root: Path | None = No
                     pending.append(candidate)
                 elif entry.is_file(follow_symlinks=False):
                     inventory.append((relative, "file"))
-                    hashes[relative] = _sha256_bytes(candidate.read_bytes())
+                    raw = candidate.read_bytes()
+                    hashes[relative] = _sha256_bytes(raw)
+                    if relative in capture_names:
+                        captured_bytes[relative] = raw
                 else:
                     raise OSError(f"non-regular entry: {relative}")
+        if set(captured_bytes) != capture_names:
+            missing = sorted(capture_names - set(captured_bytes))
+            raise OSError(f"captured files are missing: {missing}")
     except (OSError, ValueError) as exc:
         raise failure(f"{label} tree is not a stable regular tree") from exc
-    return {"inventory": tuple(sorted(inventory)), "hashes": dict(sorted(hashes.items()))}
+    snapshot: dict[str, Any] = {"inventory": tuple(sorted(inventory)), "hashes": dict(sorted(hashes.items()))}
+    if capture_names:
+        snapshot["_captured_bytes"] = {name: captured_bytes[name] for name in sorted(capture_names)}
+    return snapshot
 
 
 def _assert_tree_unchanged(path: Path, snapshot: Mapping[str, Any], label: str, root: Path) -> None:
-    current = _tree_snapshot(path, label, containment_root=root, failure_scope="global")
+    capture_files = tuple(snapshot.get("_captured_bytes", {}))
+    current = _tree_snapshot(path, label, containment_root=root, failure_scope="global", capture_files=capture_files)
     if current != dict(snapshot):
         raise _GlobalFailure(f"{label} changed after validation")
 
@@ -466,17 +475,114 @@ def _iso_at(start_timestamp: str, sample: int, interval_ms: int) -> str:
         raise AnomalyMatrixRunnerError(f"base start_timestamp is invalid: {exc}") from exc
 
 
+def _canonical_timestamp(value: Any, label: str) -> tuple[str, datetime]:
+    try:
+        if not isinstance(value, str) or not value:
+            raise ValueError("timestamp must be a non-empty string")
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        if parsed.tzinfo is None or parsed.utcoffset() != timedelta(0):
+            raise ValueError("timestamp must be explicit UTC")
+        parsed = parsed.astimezone(timezone.utc)
+        return parsed.isoformat(timespec="milliseconds").replace("+00:00", "Z"), parsed
+    except (TypeError, ValueError) as exc:
+        raise AnomalyMatrixRunnerError(f"{label} is invalid") from exc
+
+
+def _build_dataset_semantic_ledger(
+    cell: Mapping[str, Any], observations: list[dict[str, Any]], split_manifest: Mapping[str, Any]
+) -> dict[str, tuple[Any, ...]]:
+    generator_config = cell["generator_config"]
+    expected_split_fields = {
+        "dataset_id": generator_config["dataset_id"],
+        "generator_version": generator_config["generator_version"],
+        "seed": generator_config["seed"],
+        "sampling_interval_ms": generator_config["sampling_interval_ms"],
+        "sample_count": generator_config["sample_count"],
+        "boundary_semantics": "[start,end)",
+    }
+    if any(split_manifest.get(key) != value for key, value in expected_split_fields.items()):
+        raise AnomalyMatrixRunnerError("generated split manifest fields drifted")
+    strategies = split_manifest.get("strategies")
+    chronological = next(
+        (strategy for strategy in strategies if isinstance(strategy, Mapping) and strategy.get("strategy") == "chronological"),
+        None,
+    ) if isinstance(strategies, list) else None
+    split_rows = chronological.get("splits") if isinstance(chronological, Mapping) else None
+    if not isinstance(split_rows, list):
+        raise AnomalyMatrixRunnerError("generated split manifest lacks chronological splits")
+    split_times: dict[str, tuple[datetime, datetime]] = {}
+    for split in split_rows:
+        if not isinstance(split, Mapping) or not isinstance(split.get("split_id"), str) or split["split_id"] in split_times:
+            raise AnomalyMatrixRunnerError("generated split manifest has duplicate or invalid split IDs")
+        start_value, start = _canonical_timestamp(split.get("start_timestamp"), "split start timestamp")
+        end_value, end = _canonical_timestamp(split.get("end_timestamp"), "split end timestamp")
+        if start >= end or split.get("start_timestamp") != start_value or split.get("end_timestamp") != end_value:
+            raise AnomalyMatrixRunnerError("generated split manifest timestamps are not canonical half-open UTC intervals")
+        split_times[split["split_id"]] = (start, end)
+    if any(split_id not in split_times for split_id in ("validation", "test")):
+        raise AnomalyMatrixRunnerError("generated split manifest lacks validation or test split")
+    validation_start, validation_end = split_times["validation"]
+    test_start, test_end = split_times["test"]
+    if validation_end > test_start:
+        raise AnomalyMatrixRunnerError("generated validation and test splits overlap")
+
+    equipment_ids = [item["equipment_id"] for item in generator_config["equipment"]]
+    if len(equipment_ids) != len(set(equipment_ids)):
+        raise AnomalyMatrixRunnerError("generated equipment inventory is duplicated")
+    equipment_set = set(equipment_ids)
+    target_signal_ids = _expected_target_signal_ids(cell)
+    if len(target_signal_ids) != len(set(target_signal_ids)):
+        raise AnomalyMatrixRunnerError("evaluator target signal inventory is duplicated")
+    profile_keys: set[tuple[str, str, str]] = set()
+    score_identities: list[tuple[Any, ...]] = []
+    observation_keys: set[tuple[str, str]] = set()
+    for row in observations:
+        equipment_id = row.get("equipment_id")
+        operating_mode = row.get("operating_mode")
+        timestamp, stamp = _canonical_timestamp(row.get("timestamp"), "observation timestamp")
+        if not isinstance(equipment_id, str) or equipment_id not in equipment_set or not isinstance(operating_mode, str) or not operating_mode:
+            raise AnomalyMatrixRunnerError("generated observation identity is invalid")
+        observation_key = (equipment_id, timestamp)
+        if observation_key in observation_keys:
+            raise AnomalyMatrixRunnerError("generated observations contain duplicate equipment timestamps")
+        observation_keys.add(observation_key)
+        in_validation = validation_start <= stamp < validation_end
+        in_test = test_start <= stamp < test_end
+        if in_validation or in_test:
+            for signal_id in target_signal_ids:
+                if signal_id.rsplit(".", 1)[0] == equipment_id:
+                    profile_keys.add((equipment_id, signal_id, operating_mode))
+        if in_test:
+            for signal_id in target_signal_ids:
+                if signal_id.rsplit(".", 1)[0] == equipment_id:
+                    profile_key = (equipment_id, signal_id, operating_mode)
+                    score_identities.append((timestamp, equipment_id, signal_id, operating_mode, profile_key))
+    if len(score_identities) != len(set(score_identities)):
+        raise AnomalyMatrixRunnerError("generated score identity ledger is duplicated")
+    return {
+        "profile_keys": tuple(sorted(profile_keys)),
+        "score_identities": tuple(sorted(score_identities)),
+    }
+
+
 def _validate_dataset(
     cell: Mapping[str, Any],
     base: Mapping[str, Any],
     root: Path,
     schema: Mapping[str, Any],
     generator_config_raw: bytes,
-) -> tuple[dict[str, Any], dict[str, Any]]:
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, tuple[Any, ...]]]:
     dataset_path = cell["paths"]["dataset"]
     if _is_link(dataset_path) or not dataset_path.is_dir():
         raise AnomalyMatrixRunnerError(f"generated dataset is not a regular directory: {dataset_path}")
-    snapshot_before = _tree_snapshot(dataset_path, "dataset before validation", containment_root=root, failure_scope="cell")
+    snapshot_before = _tree_snapshot(
+        dataset_path,
+        "dataset before validation",
+        containment_root=root,
+        failure_scope="cell",
+        capture_files=("observations.jsonl", "split-manifest.json"),
+    )
+    captured_bytes = snapshot_before["_captured_bytes"]
     manifest_path = dataset_path / "dataset-manifest.json"
     manifest, manifest_raw = _cell_json_object(manifest_path, "dataset manifest")
     try:
@@ -521,7 +627,11 @@ def _validate_dataset(
         raise AnomalyMatrixRunnerError("generated dataset generator config does not match materialized config") from exc
     observations_path = dataset_path / "observations.jsonl"
     events_path = dataset_path / "events.jsonl"
-    observations, observations_raw = _jsonl_objects(observations_path, "observations")
+    observations_raw = captured_bytes["observations.jsonl"]
+    observations = _jsonl_objects_from_raw(observations_raw, "observations")
+    split_raw = captured_bytes["split-manifest.json"]
+    split_manifest = _parse_json_object_bytes(split_raw, "split manifest", AnomalyMatrixRunnerError)
+    dataset_ledger = _build_dataset_semantic_ledger(cell, observations, split_manifest)
     events, _events_raw = _jsonl_objects(events_path, "events")
     expected_events = cell["generator_config"]["events"]
     expected_by_id = {event["event_id"]: event for event in expected_events}
@@ -570,10 +680,17 @@ def _validate_dataset(
     expected_snapshot_hashes = {
         "dataset-manifest.json": _sha256_bytes(manifest_raw),
         "observations.jsonl": _sha256_bytes(observations_raw),
+        "split-manifest.json": _sha256_bytes(split_raw),
     }
     if any(snapshot_before["hashes"].get(name) != digest for name, digest in expected_snapshot_hashes.items()) or any(snapshot_before["hashes"].get(name) != digest for name, digest in file_hashes.items()):
         raise _GlobalFailure("validated dataset evidence did not come from the initial snapshot")
-    snapshot_after = _tree_snapshot(dataset_path, "dataset after validation", containment_root=root, failure_scope="global")
+    snapshot_after = _tree_snapshot(
+        dataset_path,
+        "dataset after validation",
+        containment_root=root,
+        failure_scope="global",
+        capture_files=tuple(captured_bytes),
+    )
     if snapshot_after != snapshot_before:
         raise _GlobalFailure("dataset changed during validation")
     evidence = {
@@ -587,7 +704,7 @@ def _validate_dataset(
         "equipment_count": len(manifest["equipment"]),
         "event_count": len(events),
     }
-    return evidence, snapshot_before
+    return evidence, snapshot_before, dataset_ledger
 
 
 def _call_injected(function: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
@@ -608,6 +725,7 @@ def _validate_evaluation(
     sources: Mapping[str, Any],
     revision: Mapping[str, Any],
     dataset: Mapping[str, Any],
+    dataset_ledger: Mapping[str, Any],
     evaluator_config_raw_sha256: str,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     expected_path = cell["paths"]["evaluation"]
@@ -653,7 +771,7 @@ def _validate_evaluation(
         raise _GlobalFailure("cell evaluator dataset provenance drifted")
     if provenance.get("code_revision") != dict(revision):
         raise _GlobalFailure("cell evaluator code revision provenance drifted")
-    _verify_evaluator_cross_fields(result, cell, dataset)
+    _verify_evaluator_cross_fields(result, cell, dataset, dataset_ledger)
     snapshot_after = _tree_snapshot(returned_path, "evaluator output after validation", containment_root=root, failure_scope="global")
     if snapshot_after != snapshot_before:
         raise _GlobalFailure("evaluator output changed during validation")
@@ -685,7 +803,12 @@ def _expected_target_signal_ids(cell: Mapping[str, Any]) -> list[str]:
     return resolved
 
 
-def _verify_evaluator_cross_fields(result: Mapping[str, Any], cell: Mapping[str, Any], dataset: Mapping[str, Any]) -> None:
+def _verify_evaluator_cross_fields(
+    result: Mapping[str, Any],
+    cell: Mapping[str, Any],
+    dataset: Mapping[str, Any],
+    dataset_ledger: Mapping[str, Any] | None = None,
+) -> None:
     provenance = result.get("provenance")
     if not isinstance(provenance, Mapping):
         raise _GlobalFailure("cell evaluator provenance is missing")
@@ -756,25 +879,37 @@ def _verify_evaluator_cross_fields(result: Mapping[str, Any], cell: Mapping[str,
         profile_by_key[key] = profile
     scores = arrays["scores"]
     score_profile_keys: set[tuple[str, str, str]] = set()
+    score_identities: list[tuple[Any, ...]] = []
     availability_expected: dict[str, dict[str, Any]] = {
         signal_id: {"available_points": 0, "total_points": 0, "availability_ratio": None}
         for signal_id in target_signal_ids
     }
     for score in scores if isinstance(scores, list) else ():
-        if not isinstance(score, Mapping) or score.get("signal_id") not in target_set or not isinstance(score.get("available"), bool):
+        if not isinstance(score, Mapping) or score.get("signal_id") not in target_set or not isinstance(score.get("available"), bool) or not isinstance(score.get("timestamp"), str):
             raise _CellSemanticFailure("cell evaluator score coverage is invalid")
         key = profile_key(score.get("profile_key"))
         if score.get("equipment_id") not in equipment_ids or score.get("operating_mode") not in operating_modes or key not in profile_by_key or key != (score.get("equipment_id"), score.get("signal_id"), score.get("operating_mode")):
             raise _CellSemanticFailure("cell evaluator score references an uncovered profile")
         score_profile_keys.add(key)
+        score_identities.append((score["timestamp"], score["equipment_id"], score["signal_id"], score["operating_mode"], key))
         signal_id = score["signal_id"]
         availability_expected[signal_id]["total_points"] += 1
         if score["available"]:
             availability_expected[signal_id]["available_points"] += 1
             if profile_by_key[key]["status"] != "calibrated":
                 raise _CellSemanticFailure("inconclusive profile produced an available score")
-    if set(availability_expected) != target_set or set(profile_by_key) != score_profile_keys:
+    if set(availability_expected) != target_set:
         raise _CellSemanticFailure("cell evaluator profile or target coverage is incomplete")
+    if dataset_ledger is None:
+        if set(profile_by_key) != score_profile_keys:
+            raise _CellSemanticFailure("cell evaluator profile or target coverage is incomplete")
+    else:
+        expected_profile_keys = set(dataset_ledger["profile_keys"])
+        expected_score_identities = tuple(dataset_ledger["score_identities"])
+        if set(profile_by_key) != expected_profile_keys or not score_profile_keys.issubset(expected_profile_keys):
+            raise _CellSemanticFailure("cell evaluator profile ledger does not match dataset observations")
+        if len(score_identities) != len(set(score_identities)) or len(expected_score_identities) != len(set(expected_score_identities)) or set(score_identities) != set(expected_score_identities):
+            raise _CellSemanticFailure("cell evaluator score ledger does not match test observations")
     for summary in availability_expected.values():
         if summary["total_points"]:
             summary["availability_ratio"] = summary["available_points"] / summary["total_points"]
@@ -1232,6 +1367,7 @@ def run_anomaly_matrix(
                 evaluator_config_raw = _json_bytes(cell["evaluator_config"])
                 dataset: Mapping[str, Any] | None = None
                 dataset_snapshot: Mapping[str, Any] | None = None
+                dataset_ledger: Mapping[str, Any] | None = None
                 evaluation_snapshot: Mapping[str, Any] | None = None
                 failure_stage = "write_configs"
                 generator_config_written = False
@@ -1255,7 +1391,7 @@ def run_anomaly_matrix(
                     if returned_dataset_path != cell["paths"]["dataset"].absolute():
                         raise _GlobalFailure("generator returned a path outside the planned dataset output")
                     failure_stage = "validate_dataset"
-                    dataset, dataset_snapshot = _validate_dataset(cell, base, repository, values["dataset_manifest_schema"], generator_config_raw)
+                    dataset, dataset_snapshot, dataset_ledger = _validate_dataset(cell, base, repository, values["dataset_manifest_schema"], generator_config_raw)
                     layout_fingerprints[cell["layout_id"]].add(dataset["dataset_fingerprint"])
                     layout_observation_hashes[cell["layout_id"]].add(dataset["observations_sha256"])
                     evaluation_kwargs = {"recover_incomplete": False, "allowed_output_parent": output / "evaluations"}
@@ -1266,7 +1402,7 @@ def run_anomaly_matrix(
                     _assert_cell_parents_contained(cell, repository)
                     _assert_tree_unchanged(cell["paths"]["dataset"], dataset_snapshot, "dataset after evaluator", repository)
                     failure_stage = "validate_evaluation"
-                    evaluation, evaluation_snapshot = _validate_evaluation(cell, evaluation_return, repository, values["anomaly_result_schema"], sources, revision, dataset, _sha256_bytes(evaluator_config_raw))
+                    evaluation, evaluation_snapshot = _validate_evaluation(cell, evaluation_return, repository, values["anomaly_result_schema"], sources, revision, dataset, dataset_ledger, _sha256_bytes(evaluator_config_raw))
                     cells.append(_cell_success(cell, repository, generator_config_raw, evaluator_config_raw, dataset, evaluation))
                     runtime_snapshots[cell["cell_id"]] = {
                         "repository_root": repository,

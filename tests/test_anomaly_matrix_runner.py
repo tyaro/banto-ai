@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
@@ -107,10 +108,27 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
                 "magnitude": event["magnitude"],
                 "description": event["description"],
             })
-        observations = [{"cell": config["dataset_id"], "seed": config["seed"]}]
+        test_timestamp = runner_module._iso_at(config["start_timestamp"], 721, config["sampling_interval_ms"])
+        observations = [
+            {"cell": config["dataset_id"], "equipment_id": item["equipment_id"], "operating_mode": "stopped", "seed": config["seed"], "timestamp": test_timestamp}
+            for item in config["equipment"]
+        ]
         _write_jsonl(output / "observations.jsonl", observations)
         _write_jsonl(output / "events.jsonl", events)
-        _write_json(output / "split-manifest.json", {"dataset_id": config["dataset_id"], "seed": config["seed"]})
+        split_start = runner_module._iso_at(config["start_timestamp"], 0, config["sampling_interval_ms"])
+        validation_start = runner_module._iso_at(config["start_timestamp"], 540, config["sampling_interval_ms"])
+        test_start = runner_module._iso_at(config["start_timestamp"], 720, config["sampling_interval_ms"])
+        test_end = runner_module._iso_at(config["start_timestamp"], 900, config["sampling_interval_ms"])
+        equipment_ids = [item["equipment_id"] for item in config["equipment"]]
+        split_template = lambda split_id, start, end, record_count: {"split_id": split_id, "equipment_ids": equipment_ids, "start_timestamp": start, "end_timestamp": end, "record_count": record_count}
+        _write_json(output / "split-manifest.json", {
+            "schema_version": "0.1", "manifest_type": "split", "dataset_id": config["dataset_id"], "generator_version": config["generator_version"],
+            "seed": config["seed"], "sampling_interval_ms": config["sampling_interval_ms"], "sample_count": config["sample_count"], "boundary_semantics": "[start,end)",
+            "strategies": [
+                {"strategy": "chronological", "splits": [split_template("train", split_start, validation_start, 1), split_template("validation", validation_start, test_start, 1), split_template("test", test_start, test_end, len(observations))]},
+                {"strategy": "cross_equipment", "splits": [split_template("all", split_start, test_end, len(observations))]},
+            ],
+        })
         manifest = {
             "schema_version": "0.1", "manifest_type": "dataset", "dataset_id": config["dataset_id"], "provenance": "synthetic",
             "data_path": "observations.jsonl", "events_path": "events.jsonl", "split_manifest_path": "split-manifest.json",
@@ -171,7 +189,7 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         result["provenance"]["config_schema"].update(path="schemas/anomaly-evaluation-config.schema.json", sha256=hashlib.sha256((root / "schemas/anomaly-evaluation-config.schema.json").read_bytes()).hexdigest())
         dataset_fingerprint = load_json(dataset_path / "fingerprint.json")["dataset_fingerprint"]
         result["provenance"]["dataset"].update(kind="synthetic-dataset", path=config["dataset_path"], dataset_id=manifest["dataset_id"], dataset_fingerprint=dataset_fingerprint, manifest_sha256=hashlib.sha256((dataset_path / "dataset-manifest.json").read_bytes()).hexdigest())
-        result["provenance"]["quality_gate"].update(status="pass", observation_record_count=1, equipment_count=len(manifest["equipment"]))
+        result["provenance"]["quality_gate"].update(status="pass", observation_record_count=2, equipment_count=len(manifest["equipment"]))
         base = load_json(root / "examples/configs/synthetic-anomaly-evaluation-v0.1.json")
         result["parameters"].update(
             target_signal_ids=runner_module._expected_target_signal_ids({"generator_config": base, "evaluator_config": config}),
@@ -242,7 +260,7 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
             for signal_id in target_signal_ids
         }
         result["metrics"]["clean_false_alert_signal_episode_count"] = 0
-        result["row_counts"].update(dataset_observations=1, score_rows=len(score_rows), alert_episodes=0, alert_episode_accounting=0, incidents=len(incidents), clean_false_alert_episodes=0, clean_false_alert_signal_episodes=0)
+        result["row_counts"].update(dataset_observations=2, score_rows=len(score_rows), alert_episodes=0, alert_episode_accounting=0, incidents=len(incidents), clean_false_alert_episodes=0, clean_false_alert_signal_episodes=0)
         result["provenance"]["code_revision"] = copy.deepcopy(REVISION)
         result_raw = _write_json(output / "result.json", result)
         summary_raw = b"fake evaluator summary\n"
@@ -306,6 +324,46 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
             mutate(tampered)
             with self.assertRaises(runner_module._GlobalFailure):
                 runner_module._verify_aggregate_result(tampered, load_json(CONFIG_PATH))
+
+    def test_self_consistent_profile_score_removal_fails_one_cell_and_continues(self) -> None:
+        def semantic_attack(config_path: Path, root: Path, **kwargs: object) -> Path:
+            output = self._fake_evaluator(config_path, root, **kwargs)
+            config = load_json(config_path)
+            if not config["dataset_path"].endswith("seed-042-layout-11-conveyor-01-cooldown"):
+                return output
+            result = load_json(output / "result.json")
+            profile = result["profiles"][0]
+            profile_key = tuple(profile["profile_key"][key] for key in ("equipment_id", "signal_id", "operating_mode"))
+            result["profiles"] = [item for item in result["profiles"] if tuple(item["profile_key"][key] for key in ("equipment_id", "signal_id", "operating_mode")) != profile_key]
+            result["scores"] = [item for item in result["scores"] if tuple(item["profile_key"][key] for key in ("equipment_id", "signal_id", "operating_mode")) != profile_key]
+            availability = {}
+            unavailable_by_reason = {}
+            for signal_id in result["parameters"]["target_signal_ids"]:
+                rows = [item for item in result["scores"] if item["signal_id"] == signal_id]
+                available_points = sum(item["available"] is True for item in rows)
+                availability[signal_id] = {"available_points": available_points, "total_points": len(rows), "availability_ratio": available_points / len(rows) if rows else None}
+                for item in rows:
+                    if item["available"] is not True:
+                        reason = item["exclusion_reason"] or "score_unavailable"
+                        unavailable_by_reason[reason] = unavailable_by_reason.get(reason, 0) + 1
+            result["status"] = "inconclusive"
+            result["metrics"]["score_availability_by_signal"] = availability
+            result["exclusions"]["scoring"].update(total_points=len(result["scores"]), available_points=sum(item["available_points"] for item in availability.values()), unavailable_by_reason=unavailable_by_reason)
+            result["row_counts"]["score_rows"] = len(result["scores"])
+            result_raw = _write_json(output / "result.json", result)
+            summary_raw = (output / "summary.md").read_bytes()
+            _write_json(output / ".complete", {"marker_type": "event-aware-anomaly-complete", "schema_version": "0.1", "result_sha256": hashlib.sha256(result_raw).hexdigest(), "summary_sha256": hashlib.sha256(summary_raw).hexdigest()})
+            return output
+
+        output = self._run(evaluator=semantic_attack)
+        result = load_json(output / "result.json")
+        self.assertEqual(result["counts"], {"total": 120, "success": 119, "partial": 0, "inconclusive": 0, "failed": 1})
+        failed = [cell for cell in result["cells"] if cell["status"] == "failed"]
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(failed[0]["cell_id"], "seed-042-layout-11-conveyor-01-cooldown")
+        self.assertEqual(failed[0]["failure_stage"], "validate_evaluation")
+        self.assertEqual(len(self.generator_calls), 120)
+        self.assertEqual(len(self.evaluator_calls), 120)
 
     def test_success_output_is_byte_deterministic(self) -> None:
         first = self._run()
@@ -457,6 +515,32 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         finally:
             junction_parent.rmdir()
 
+    def test_repository_containment_rejects_real_ntfs_junction(self) -> None:
+        if os.name != "nt":
+            self.skipTest("NTFS junction test requires Windows")
+        with tempfile.TemporaryDirectory() as external:
+            junction_parent = ROOT / "artifacts" / f"ntfs-junction-{uuid4().hex}"
+
+            def remove_junction_leaf() -> None:
+                if junction_parent.exists() or junction_parent.is_symlink():
+                    subprocess.run(["cmd.exe", "/c", "rmdir", "/q", str(junction_parent)], check=False, capture_output=True)
+
+            created = subprocess.run(
+                ["cmd.exe", "/c", "mklink", "/J", str(junction_parent), external],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            if created.returncode != 0:
+                remove_junction_leaf()
+                detail = (created.stderr or created.stdout or "mklink /J failed").strip()
+                self.skipTest(f"NTFS junction unavailable: {detail}")
+            try:
+                with self.assertRaises(runner_module._GlobalFailure):
+                    runner_module._assert_contained_path(junction_parent / "child", ROOT, "real junction artifact", must_exist=False)
+            finally:
+                remove_junction_leaf()
+
     def test_injected_internal_typeerror_is_called_once(self) -> None:
         calls = 0
 
@@ -498,7 +582,54 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         }
         base["dataset_id"] = dataset["dataset_id"]
         cell = {"generator_config": base, "evaluator_config": evaluation_config}
-        runner_module._verify_evaluator_cross_fields(result, cell, dataset)
+        template_snapshot = runner_module._tree_snapshot(
+            self.template_dataset,
+            "template dataset semantic ledger",
+            containment_root=ROOT,
+            failure_scope="global",
+            capture_files=("observations.jsonl", "split-manifest.json"),
+        )
+        template_captured = template_snapshot["_captured_bytes"]
+        dataset_ledger = runner_module._build_dataset_semantic_ledger(
+            cell,
+            runner_module._jsonl_objects_from_raw(template_captured["observations.jsonl"], "template observations"),
+            runner_module._parse_json_object_bytes(template_captured["split-manifest.json"], "template split manifest", AnomalyMatrixRunnerError),
+        )
+        runner_module._verify_evaluator_cross_fields(result, cell, dataset, dataset_ledger)
+
+        def refresh_score_counts(payload: dict) -> None:
+            availability = {}
+            unavailable_by_reason = {}
+            for signal_id in payload["parameters"]["target_signal_ids"]:
+                rows = [item for item in payload["scores"] if item["signal_id"] == signal_id]
+                available_points = sum(item["available"] is True for item in rows)
+                availability[signal_id] = {
+                    "available_points": available_points,
+                    "total_points": len(rows),
+                    "availability_ratio": available_points / len(rows) if rows else None,
+                }
+                for item in rows:
+                    if item["available"] is not True:
+                        reason = item["exclusion_reason"] or "score_unavailable"
+                        unavailable_by_reason[reason] = unavailable_by_reason.get(reason, 0) + 1
+            available_points = sum(item["available_points"] for item in availability.values())
+            payload["metrics"]["score_availability_by_signal"] = availability
+            payload["exclusions"]["scoring"].update(total_points=len(payload["scores"]), available_points=available_points, unavailable_by_reason=unavailable_by_reason)
+            payload["row_counts"]["score_rows"] = len(payload["scores"])
+
+        def remove_profile_and_scores(payload: dict) -> None:
+            profile = next(item for item in payload["profiles"] if item["status"] == "calibrated")
+            profile_key = tuple(profile["profile_key"][key] for key in ("equipment_id", "signal_id", "operating_mode"))
+            profile_scores = [item for item in payload["scores"] if tuple(item["profile_key"][key] for key in ("equipment_id", "signal_id", "operating_mode")) == profile_key]
+            self.assertEqual(len(profile_scores), 30)
+            payload["profiles"] = [item for item in payload["profiles"] if tuple(item["profile_key"][key] for key in ("equipment_id", "signal_id", "operating_mode")) != profile_key]
+            payload["scores"] = [item for item in payload["scores"] if tuple(item["profile_key"][key] for key in ("equipment_id", "signal_id", "operating_mode")) != profile_key]
+            refresh_score_counts(payload)
+
+        def remove_score_identity(payload: dict) -> None:
+            payload["scores"].pop()
+            refresh_score_counts(payload)
+
         mutations = (
             ("provenance.dataset.dataset_id", lambda payload: payload["provenance"]["dataset"].update(dataset_id="wrong")),
             ("provenance.dataset.manifest_sha256", lambda payload: payload["provenance"]["dataset"].update(manifest_sha256="0" * 64)),
@@ -512,6 +643,9 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
             ("incidents_duplicate_event", lambda payload: payload["incidents"].__setitem__(-1, copy.deepcopy(payload["incidents"][0]))),
             ("profiles", lambda payload: payload.update(profiles=[])),
             ("scores", lambda payload: payload.update(scores=[])),
+            ("profile_and_scores_self_consistent", remove_profile_and_scores),
+            ("score_missing_identity", remove_score_identity),
+            ("scores_duplicate_identity", lambda payload: payload["scores"].__setitem__(1, copy.deepcopy(payload["scores"][0]))),
             ("metrics.overall.eligible_incidents", lambda payload: payload["metrics"]["overall"].update(eligible_incidents=99)),
             ("status", lambda payload: payload.update(status="partial")),
         )
@@ -521,14 +655,14 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
                 mutate(tampered)
                 validate(tampered, load_json(ROOT / "schemas/anomaly-evaluation-result.schema.json"))
                 with self.assertRaises(runner_module._GlobalFailure):
-                    runner_module._verify_evaluator_cross_fields(tampered, cell, dataset)
+                    runner_module._verify_evaluator_cross_fields(tampered, cell, dataset, dataset_ledger)
         for _label, mutate in mutations[2:]:
             with self.subTest(field=_label):
                 tampered = copy.deepcopy(result)
                 mutate(tampered)
                 validate(tampered, load_json(ROOT / "schemas/anomaly-evaluation-result.schema.json"))
                 with self.assertRaises(runner_module._CellSemanticFailure):
-                    runner_module._verify_evaluator_cross_fields(tampered, cell, dataset)
+                    runner_module._verify_evaluator_cross_fields(tampered, cell, dataset, dataset_ledger)
 
     def test_aggregate_verifier_rejects_tampered_counts(self) -> None:
         matrix_config = load_json(CONFIG_PATH)
