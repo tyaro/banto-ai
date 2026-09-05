@@ -31,6 +31,8 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 正式な 10 seed × 12 layout replay と read-only analysis を完了しました。engineering gate は pass でしたが、5つの performance promotion gate はすべて fail のため、この baseline は昇格せず比較用として扱います。詳細は [`docs/results/anomaly-multiseed-v02-evaluation-2026-09-05.md`](docs/results/anomaly-multiseed-v02-evaluation-2026-09-05.md) を参照してください。これは TimesFM3 の性能結果ではありません。
 
+2026-09-06に同じ正式artifactのfailure diagnosticsを完了しました。engineering整合性はpass、performanceは未評価で、canonical detectionを保持した因果的supportは0/240でした。結果と制約は[`docs/results/anomaly-multiseed-v02-failure-diagnostics-2026-09-06.md`](docs/results/anomaly-multiseed-v02-failure-diagnostics-2026-09-06.md)に記録しています。これはexploratoryな異常検知診断であり、TimesFM3の性能結果やmodel／thresholdの採用判断ではありません。
+
 ## ライセンス
 
 このリポジトリのソースコードと文書は [MIT License](LICENSE) です。

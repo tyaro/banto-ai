@@ -2,6 +2,10 @@
 
 これは、正式な v0.2 event-aware anomaly matrix の失敗要因を、後続 v0.3 preregistration の仮説材料として整理するための post-hoc exploratory contract である。promotion evidence、model／threshold の winner 選択、正式結果の再評価には使わない。
 
+## 実施後記録（2026-09-06）
+
+この事前計画をfreezeした後、cleanなreplay commit `cecc2a0fc057c7d5f43be07a53c88ce97595c1ab`でD2-Bの正式diagnosticsを実施・公開した。結果は[`results/anomaly-multiseed-v02-failure-diagnostics-2026-09-06.md`](results/anomaly-multiseed-v02-failure-diagnostics-2026-09-06.md)に記録する。以下の本文はfreeze時点の事前契約を改変していないため、「未実施」「D2-Aでは公開しない」などの表記はその時点の設計・状態を示す。D2-Aのread-only境界と、後続D2-Bで完了した正式公開は区別して読むこと。
+
 ## D1 / D2-A の範囲
 
 D1 は contract、固定 config、schema、config-only validator、`--validate-only` CLI とテストだけを提供する。120-cell artifact の診断実行、result／summary／marker の publish、既存 formal analyzer の変更は行わない。validate-only は filesystem に書き込まず、`run_status=not_run`、`performance_status=not_evaluated` と安全境界だけを返す。
