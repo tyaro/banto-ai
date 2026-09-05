@@ -808,10 +808,41 @@ def _verify_evaluator_cross_fields(result: Mapping[str, Any], cell: Mapping[str,
     if not isinstance(overall, Mapping):
         raise _CellSemanticFailure("cell evaluator status inputs are missing")
     incidents = arrays["incidents"]
-    expected_classifications = {
-        item["event_id"]: item["event_class"]
-        for item in cell["evaluator_config"]["event_classifications"]
-    }
+    expected_classifications: dict[str, str] = {}
+    for item in cell["evaluator_config"]["event_classifications"]:
+        event_id = item["event_id"]
+        if event_id in expected_classifications:
+            raise _CellSemanticFailure("cell evaluator event classifications are duplicated")
+        expected_classifications[event_id] = item["event_class"]
+    expected_events: dict[str, Mapping[str, Any]] = {}
+    for event in cell["generator_config"]["events"]:
+        event_id = event["event_id"]
+        if event_id in expected_events:
+            raise _CellSemanticFailure("cell evaluator generator event inventory is duplicated")
+        expected_events[event_id] = event
+    if set(expected_classifications) != set(expected_events):
+        raise _CellSemanticFailure("cell evaluator event classification inventory does not match generator events")
+
+    if any(not isinstance(incident, Mapping) for incident in incidents):
+        raise _CellSemanticFailure("cell evaluator incident inventory is invalid")
+    actual_incident_ids = [incident["event_id"] for incident in incidents]
+    if len(actual_incident_ids) != len(set(actual_incident_ids)) or set(actual_incident_ids) != set(expected_events):
+        raise _CellSemanticFailure("cell evaluator incident inventory is incomplete or duplicated")
+
+    expected_incidents: dict[str, dict[str, Any]] = {}
+    for event_id, event in expected_events.items():
+        equipment_id = event["equipment_id"]
+        signal_id = event["signal_id"]
+        if not signal_id.startswith(f"{equipment_id}."):
+            signal_id = f"{equipment_id}.{signal_id}"
+        expected_incidents[event_id] = {
+            "event_class": expected_classifications[event_id],
+            "event_type": event["event_type"],
+            "equipment_id": equipment_id,
+            "signal_id": signal_id,
+            "event_start_timestamp": _iso_at(cell["generator_config"]["start_timestamp"], int(event["start_sample"]), int(cell["generator_config"]["sampling_interval_ms"])),
+            "event_end_timestamp": _iso_at(cell["generator_config"]["start_timestamp"], int(event["end_sample"]), int(cell["generator_config"]["sampling_interval_ms"])),
+        }
 
     def incident_counts(event_class: str | None = None) -> dict[str, int]:
         selected = [
@@ -827,7 +858,7 @@ def _verify_evaluator_cross_fields(result: Mapping[str, Any], cell: Mapping[str,
     if any(
         not isinstance(incident, Mapping)
         or incident.get("event_id") not in expected_classifications
-        or incident.get("event_class") != expected_classifications.get(incident.get("event_id"))
+        or any(incident.get(key) != value for key, value in expected_incidents.get(incident.get("event_id"), {}).items())
         or (incident.get("event_class") in ("data_quality", "ignored") and incident.get("eligible") is True)
         or (incident.get("eligible") is not True and incident.get("detected") is True)
         for incident in incidents
@@ -1002,11 +1033,19 @@ def _verify_aggregate_result(result: Mapping[str, Any], config: Mapping[str, Any
             if failure_stage in ("run_evaluator", "validate_evaluation") and artifacts.get("dataset") is None:
                 raise _GlobalFailure("failed cell is missing dataset evidence required by its failure stage")
         else:
-            if evaluator_status not in ("pass", "partial", "inconclusive") or cell.get("error_type") is not None or cell.get("reason") is not None or cell.get("failure_stage") is not None:
-                raise _GlobalFailure("successful cell status fields are inconsistent")
             evaluation = artifacts.get("evaluation")
-            if not isinstance(evaluation, Mapping) or evaluation.get("status") != status or evaluation.get("evaluator_status") != evaluator_status:
-                raise _GlobalFailure("cell evaluator status is inconsistent with matrix status")
+            expected_status_tuple = {
+                "success": ("pass", "success", "pass"),
+                "partial": ("partial", "partial", "partial"),
+                "inconclusive": ("inconclusive", "inconclusive", "inconclusive"),
+            }[status]
+            actual_status_tuple = (
+                evaluator_status,
+                evaluation.get("status") if isinstance(evaluation, Mapping) else None,
+                evaluation.get("evaluator_status") if isinstance(evaluation, Mapping) else None,
+            )
+            if actual_status_tuple != expected_status_tuple or cell.get("error_type") is not None or cell.get("reason") is not None or cell.get("failure_stage") is not None:
+                raise _GlobalFailure("successful cell status fields are inconsistent")
             if any(artifacts.get(key) is None for key in ("generator_config", "evaluator_config", "dataset", "evaluation")):
                 raise _GlobalFailure("completed cell is missing required artifact evidence")
         dataset = artifacts.get("dataset")

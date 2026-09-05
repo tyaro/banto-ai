@@ -201,21 +201,34 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
             for profile in self.full_template_result["profiles"]
             if tuple(profile["profile_key"][key] for key in ("equipment_id", "signal_id", "operating_mode")) in score_profile_keys
         ]
-        incident = copy.deepcopy(next(item for item in self.full_template_result["incidents"] if item["event_class"] == "machine_fault" and item["eligible"] is True))
-        machine_event_id = next(item["event_id"] for item in config["event_classifications"] if item["event_class"] == "machine_fault")
-        machine_event = next(item for item in events if item["event_id"] == machine_event_id)
-        incident.update(
-            event_id=machine_event["event_id"],
-            event_type=machine_event["event_type"],
-            equipment_id=machine_event["equipment_id"],
-            signal_id=machine_event["signal_id"],
-            event_start_timestamp=machine_event["start_timestamp"],
-            event_end_timestamp=machine_event["end_timestamp"],
-            detection_window_start=machine_event["start_timestamp"],
-            detection_window_end=machine_event["end_timestamp"],
-        )
-        incident.update(detected=False, matched_alert_episode_id=None, alert_onset_timestamp=None, detection_delay_seconds=None)
-        result["incidents"] = [incident]
+        incident_templates = {item["event_class"]: item for item in self.full_template_result["incidents"]}
+        incidents = []
+        for event_classification in config["event_classifications"]:
+            event = next(item for item in events if item["event_id"] == event_classification["event_id"])
+            incident = copy.deepcopy(incident_templates[event_classification["event_class"]])
+            signal_id = event["signal_id"]
+            if not signal_id.startswith(f"{event['equipment_id']}."):
+                signal_id = f"{event['equipment_id']}.{signal_id}"
+            eligible = event_classification["event_class"] == "machine_fault"
+            incident.update(
+                event_id=event["event_id"],
+                event_class=event_classification["event_class"],
+                event_type=event["event_type"],
+                equipment_id=event["equipment_id"],
+                signal_id=signal_id,
+                event_start_timestamp=event["start_timestamp"],
+                event_end_timestamp=event["end_timestamp"],
+                detection_window_start=event["start_timestamp"],
+                detection_window_end=event["end_timestamp"],
+                eligible=eligible,
+                eligibility_reason=None if eligible else f"event_class_{event_classification['event_class']}",
+                detected=False,
+                matched_alert_episode_id=None,
+                alert_onset_timestamp=None,
+                detection_delay_seconds=None,
+            )
+            incidents.append(incident)
+        result["incidents"] = incidents
         result["alert_episodes"] = []
         result["alert_episode_accounting"] = []
         result["clean_false_alert_episodes"] = []
@@ -229,7 +242,7 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
             for signal_id in target_signal_ids
         }
         result["metrics"]["clean_false_alert_signal_episode_count"] = 0
-        result["row_counts"].update(dataset_observations=1, score_rows=len(score_rows), alert_episodes=0, alert_episode_accounting=0, incidents=1, clean_false_alert_episodes=0, clean_false_alert_signal_episodes=0)
+        result["row_counts"].update(dataset_observations=1, score_rows=len(score_rows), alert_episodes=0, alert_episode_accounting=0, incidents=len(incidents), clean_false_alert_episodes=0, clean_false_alert_signal_episodes=0)
         result["provenance"]["code_revision"] = copy.deepcopy(REVISION)
         result_raw = _write_json(output / "result.json", result)
         summary_raw = b"fake evaluator summary\n"
@@ -495,6 +508,8 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
             ("row_counts.score_rows", lambda payload: payload["row_counts"].update(score_rows=payload["row_counts"]["score_rows"] + 1)),
             ("metrics.score_availability_by_signal", lambda payload: payload["metrics"]["score_availability_by_signal"].pop(next(iter(payload["metrics"]["score_availability_by_signal"]))),),
             ("incidents", lambda payload: (payload.update(incidents=[]), payload["metrics"]["overall"].update(eligible_incidents=1, detected_incidents=0, missed_incidents=1))),
+            ("incidents_missing_event", lambda payload: (payload["incidents"].pop(), payload["row_counts"].update(incidents=len(payload["incidents"]))),),
+            ("incidents_duplicate_event", lambda payload: payload["incidents"].__setitem__(-1, copy.deepcopy(payload["incidents"][0]))),
             ("profiles", lambda payload: payload.update(profiles=[])),
             ("scores", lambda payload: payload.update(scores=[])),
             ("metrics.overall.eligible_incidents", lambda payload: payload["metrics"]["overall"].update(eligible_incidents=99)),
@@ -561,6 +576,24 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
                 tampered["cells"][0][field] = 0 if field == "seed" else (99 if field == "layout_index" else "0" * 64)
                 with self.assertRaises(runner_module._GlobalFailure):
                     runner_module._verify_aggregate_result(tampered, matrix_config)
+        wrong_status_tuples = {
+            "success": (("partial", "success", "pass"), ("pass", "partial", "pass"), ("pass", "success", "partial")),
+            "partial": (("pass", "partial", "partial"), ("partial", "success", "partial"), ("partial", "partial", "pass")),
+            "inconclusive": (("pass", "inconclusive", "inconclusive"), ("inconclusive", "pass", "inconclusive"), ("inconclusive", "inconclusive", "pass")),
+        }
+        for status, wrong_tuples in wrong_status_tuples.items():
+            for index, (cell_evaluator_status, evaluation_status, evaluation_evaluator_status) in enumerate(wrong_tuples):
+                with self.subTest(status=status, tuple_index=index):
+                    tampered = copy.deepcopy(result)
+                    tampered_cell = tampered["cells"][0]
+                    tampered_cell["status"] = status
+                    tampered_cell["evaluator_status"] = cell_evaluator_status
+                    tampered_cell["artifacts"]["evaluation"] = {"status": evaluation_status, "evaluator_status": evaluation_evaluator_status}
+                    tampered["counts"] = {"total": 120, "success": 119, "partial": int(status == "partial"), "inconclusive": int(status == "inconclusive"), "failed": 0}
+                    tampered["engineering_status"] = "fail" if status != "success" else "pass"
+                    tampered["status"] = "not_complete" if status != "success" else "pass"
+                    with self.assertRaises(runner_module._GlobalFailure):
+                        runner_module._verify_aggregate_result(tampered, matrix_config)
 
     def test_post_validation_dataset_mutation_is_global_failure_at_first_cell(self) -> None:
         def mutating_evaluator(config_path: Path, root: Path, **kwargs: object) -> Path:
