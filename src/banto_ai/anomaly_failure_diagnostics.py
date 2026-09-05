@@ -358,13 +358,15 @@ FILE_ATTRIBUTE_REPARSE_POINT = 0x400
 def _is_reparse_point(path: Path) -> bool:
     """Reject symlinks, junctions, and generic Windows reparse points."""
     try:
+        attributes = getattr(os.lstat(path), "st_file_attributes", 0)
+        if attributes & FILE_ATTRIBUTE_REPARSE_POINT:
+            return True
         if path.is_symlink():
             return True
         junction_check = getattr(os.path, "isjunction", None) or getattr(os, "isjunction", None)
         if junction_check is not None and junction_check(path):
             return True
-        attributes = getattr(os.lstat(path), "st_file_attributes", 0)
-        return bool(attributes & FILE_ATTRIBUTE_REPARSE_POINT)
+        return False
     except FileNotFoundError:
         return False
     except OSError as exc:
