@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
 from uuid import uuid4
@@ -109,11 +110,36 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
                 "magnitude": event["magnitude"],
                 "description": event["description"],
             })
-        test_timestamp = runner_module._iso_at(config["start_timestamp"], 721, config["sampling_interval_ms"])
-        observations = [
-            {"cell": config["dataset_id"], "equipment_id": item["equipment_id"], "operating_mode": "stopped", "seed": config["seed"], "timestamp": test_timestamp}
-            for item in config["equipment"]
-        ]
+        observation_indices = [*range(540, 552), *range(720, 750)]
+        observations = []
+        for item in config["equipment"]:
+            catalog = {
+                entry["signal_id"].rsplit(".", 1)[1]: entry
+                for entry in expected_catalog(item["equipment_id"], item["equipment_type"], config["sampling_interval_ms"])
+                if entry["signal_id"].rsplit(".", 1)[1] in runner_module.SIGNALS
+            }
+            for index in observation_indices:
+                regime = next(regime for regime in config["regimes"] if regime["start_sample"] <= index < regime["end_sample"])
+                values = {}
+                for signal_offset, signal_id in enumerate(runner_module.SIGNALS):
+                    value = 10.0 + signal_offset * 10.0 + index * 0.01 + ((index + signal_offset) % 2) * 0.2
+                    if item["equipment_id"] == "motor-01" and signal_id == "motor_current" and index == 734:
+                        value += 5.0
+                    values[signal_id] = value
+                observations.append({
+                    "cell": config["dataset_id"],
+                    "equipment_id": item["equipment_id"],
+                    "equipment_type": item["equipment_type"],
+                    "operating_mode": regime["regime"],
+                    "recipe_step": regime.get("recipe_step", regime["regime"]),
+                    "seed": config["seed"],
+                    "timestamp": runner_module._iso_at(config["start_timestamp"], index, config["sampling_interval_ms"]),
+                    "signals": {
+                        signal_id: {"unit": catalog[signal_id]["unit"], "value": value}
+                        for signal_id, value in values.items()
+                    },
+                    "quality": {signal_id: "ok" for signal_id in values},
+                })
         _write_jsonl(output / "observations.jsonl", observations)
         _write_jsonl(output / "events.jsonl", events)
         split_start = runner_module._iso_at(config["start_timestamp"], 0, config["sampling_interval_ms"])
@@ -247,84 +273,21 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         result = copy.deepcopy(self.template_result)
         dataset_path = root / config["dataset_path"]
         manifest = load_json(dataset_path / "dataset-manifest.json")
+        observations, _observations_raw = runner_module._jsonl_objects(dataset_path / "observations.jsonl", "fake evaluator observations")
         events, _events_raw = runner_module._jsonl_objects(dataset_path / "events.jsonl", "fake evaluator events")
+        generator_config = load_json(dataset_path / "generator-config.json")
+        split_manifest = load_json(dataset_path / "split-manifest.json")
+        replay_cell = {"generator_config": generator_config, "evaluator_config": config}
+        replay_ledger = runner_module._build_dataset_semantic_ledger(replay_cell, observations, split_manifest, events)
+        semantic = runner_module._replay_evaluator_semantics(replay_cell, replay_ledger)
         result["provenance"]["config"].update(path=config_path.relative_to(root).as_posix(), sha256=hashlib.sha256(config_path.read_bytes()).hexdigest())
         result["provenance"]["schema"].update(path="schemas/anomaly-evaluation-result.schema.json", sha256=hashlib.sha256((root / "schemas/anomaly-evaluation-result.schema.json").read_bytes()).hexdigest())
         result["provenance"]["config_schema"].update(path="schemas/anomaly-evaluation-config.schema.json", sha256=hashlib.sha256((root / "schemas/anomaly-evaluation-config.schema.json").read_bytes()).hexdigest())
         dataset_fingerprint = load_json(dataset_path / "fingerprint.json")["dataset_fingerprint"]
         result["provenance"]["dataset"].update(kind="synthetic-dataset", path=config["dataset_path"], dataset_id=manifest["dataset_id"], dataset_fingerprint=dataset_fingerprint, manifest_sha256=hashlib.sha256((dataset_path / "dataset-manifest.json").read_bytes()).hexdigest())
-        result["provenance"]["quality_gate"].update(status="pass", observation_record_count=2, equipment_count=len(manifest["equipment"]))
-        base = load_json(root / "examples/configs/synthetic-anomaly-evaluation-v0.1.json")
-        result["parameters"].update(
-            target_signal_ids=runner_module._expected_target_signal_ids({"generator_config": base, "evaluator_config": config}),
-            min_calibration_points=config["min_calibration_points"],
-            robust_z_threshold=config["robust_z_threshold"],
-            persistence_points=config["persistence_points"],
-            detection_grace_points=config["detection_grace_points"],
-            sampling_interval_ms=manifest["sampling_interval_ms"],
-            calibration_split="validation",
-            scoring_split="test",
-            boundary_semantics="[start,end)",
-        )
-        target_signal_ids = result["parameters"]["target_signal_ids"]
-        score_rows = []
-        for signal_id in target_signal_ids:
-            score = next(row for row in self.full_template_result["scores"] if row["signal_id"] == signal_id and row["available"] is True)
-            score = copy.deepcopy(score)
-            score.update(alert_episode_id=None, exceeds_threshold=False, persistence_streak=0)
-            score_rows.append(score)
-        result["scores"] = score_rows
-        score_profile_keys = {
-            tuple(score["profile_key"][key] for key in ("equipment_id", "signal_id", "operating_mode"))
-            for score in score_rows
-        }
-        result["profiles"] = [
-            copy.deepcopy(profile)
-            for profile in self.full_template_result["profiles"]
-            if tuple(profile["profile_key"][key] for key in ("equipment_id", "signal_id", "operating_mode")) in score_profile_keys
-        ]
-        incident_templates = {item["event_class"]: item for item in self.full_template_result["incidents"]}
-        incidents = []
-        for event_classification in config["event_classifications"]:
-            event = next(item for item in events if item["event_id"] == event_classification["event_id"])
-            incident = copy.deepcopy(incident_templates[event_classification["event_class"]])
-            signal_id = event["signal_id"]
-            if not signal_id.startswith(f"{event['equipment_id']}."):
-                signal_id = f"{event['equipment_id']}.{signal_id}"
-            eligible = event_classification["event_class"] == "machine_fault"
-            incident.update(
-                event_id=event["event_id"],
-                event_class=event_classification["event_class"],
-                event_type=event["event_type"],
-                equipment_id=event["equipment_id"],
-                signal_id=signal_id,
-                event_start_timestamp=event["start_timestamp"],
-                event_end_timestamp=event["end_timestamp"],
-                detection_window_start=event["start_timestamp"],
-                detection_window_end=event["end_timestamp"],
-                eligible=eligible,
-                eligibility_reason=None if eligible else f"event_class_{event_classification['event_class']}",
-                detected=False,
-                matched_alert_episode_id=None,
-                alert_onset_timestamp=None,
-                detection_delay_seconds=None,
-            )
-            incidents.append(incident)
-        result["incidents"] = incidents
-        result["alert_episodes"] = []
-        result["alert_episode_accounting"] = []
-        result["clean_false_alert_episodes"] = []
-        result["exclusions"]["calibration"]["profiles_inconclusive"] = 0
-        result["exclusions"]["scoring"].update(total_points=len(score_rows), available_points=len(score_rows), unavailable_by_reason={})
-        result["metrics"]["overall"].update(eligible_incidents=1, detected_incidents=0, missed_incidents=1, matched_eligible_alert_episodes=0, unmatched_eligible_alert_episodes=0, evaluated_alert_episode_count=0, incident_precision=None, incident_recall=0.0, detection_delay_seconds=None)
-        result["metrics"]["by_class"]["machine_fault"].update(eligible_incidents=1, detected_incidents=0, missed_incidents=1, incident_recall=0.0, detection_delay_seconds=None)
-        result["metrics"]["by_class"]["sensor_fault"].update(eligible_incidents=0, detected_incidents=0, missed_incidents=0, incident_recall=None, detection_delay_seconds=None)
-        result["metrics"]["score_availability_by_signal"] = {
-            signal_id: {"available_points": 1, "total_points": 1, "availability_ratio": 1.0}
-            for signal_id in target_signal_ids
-        }
-        result["metrics"]["clean_false_alert_signal_episode_count"] = 0
-        result["row_counts"].update(dataset_observations=2, score_rows=len(score_rows), alert_episodes=0, alert_episode_accounting=0, incidents=len(incidents), clean_false_alert_episodes=0, clean_false_alert_signal_episodes=0)
+        result["provenance"]["quality_gate"].update(status="pass", observation_record_count=len(observations), equipment_count=len(manifest["equipment"]))
+        for key in runner_module._EVALUATOR_SEMANTIC_FIELDS:
+            result[key] = copy.deepcopy(semantic[key])
         self._refresh_fake_accounting(result, config, root, dataset_path)
         result["provenance"]["code_revision"] = copy.deepcopy(REVISION)
         result_raw = _write_json(output / "result.json", result)
@@ -469,6 +432,45 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         self.assertEqual(len(self.generator_calls), 120)
         self.assertEqual(len(self.evaluator_calls), 120)
 
+    def test_self_consistent_score_replay_tamper_fails_one_cell_and_continues(self) -> None:
+        def score_attack(config_path: Path, root: Path, **kwargs: object) -> Path:
+            output = self._fake_evaluator(config_path, root, **kwargs)
+            config = load_json(config_path)
+            if not config["dataset_path"].endswith("seed-042-layout-00-motor-01-stopped"):
+                return output
+            result = load_json(output / "result.json")
+            score = next(item for item in result["scores"] if item["available"] is True)
+            start = runner_module._canonical_timestamp(score["timestamp"], "tamper episode start")[1]
+            end = start + timedelta(seconds=1)
+            episode = {
+                "episode_id": "alert-999999",
+                "equipment_id": score["equipment_id"],
+                "signal_id": score["signal_id"],
+                "start_timestamp": anomaly_evaluation._canonical_time(start),
+                "onset_timestamp": anomaly_evaluation._canonical_time(start),
+                "end_timestamp": anomaly_evaluation._canonical_time(end),
+                "point_count": 1,
+                "max_score": 0.581799,
+                "profile_key": copy.deepcopy(score["profile_key"]),
+            }
+            score.update(score=0.581799, exceeds_threshold=True, persistence_streak=2, alert_episode_id=episode["episode_id"])
+            result["alert_episodes"].append(episode)
+            self._refresh_fake_accounting(result, config, root, root / config["dataset_path"])
+            result_raw = _write_json(output / "result.json", result)
+            summary_raw = (output / "summary.md").read_bytes()
+            _write_json(output / ".complete", {"marker_type": "event-aware-anomaly-complete", "schema_version": "0.1", "result_sha256": hashlib.sha256(result_raw).hexdigest(), "summary_sha256": hashlib.sha256(summary_raw).hexdigest()})
+            return output
+
+        output = self._run(evaluator=score_attack)
+        result = load_json(output / "result.json")
+        self.assertEqual(result["counts"], {"total": 120, "success": 119, "partial": 0, "inconclusive": 0, "failed": 1})
+        failed = [cell for cell in result["cells"] if cell["status"] == "failed"]
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(failed[0]["cell_id"], "seed-042-layout-00-motor-01-stopped")
+        self.assertEqual(failed[0]["failure_stage"], "validate_evaluation")
+        self.assertEqual(len(self.generator_calls), 120)
+        self.assertEqual(len(self.evaluator_calls), 120)
+
     def test_success_output_is_byte_deterministic(self) -> None:
         first = self._run()
         first_result = (first / "result.json").read_bytes()
@@ -479,32 +481,18 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         self.assertEqual(first_summary, (second / "summary.md").read_bytes())
 
     def test_inconclusive_status_and_marker_is_published_last(self) -> None:
-        def status_evaluator(config_path: Path, root: Path, **kwargs: object) -> Path:
-            output = self._fake_evaluator(config_path, root, **kwargs)
-            if len(self.evaluator_calls) == 2:
-                config = load_json(config_path)
-                result = load_json(output / "result.json")
-                result["status"] = "inconclusive"
-                inconclusive_profile = result["profiles"][0]
-                inconclusive_profile["status"] = "inconclusive"
-                inconclusive_key = inconclusive_profile["profile_key"]
-                for score in result["scores"]:
-                    if score["profile_key"] == inconclusive_key:
-                        score.update(available=False, score=None, exclusion_reason="profile_inconclusive", exceeds_threshold=False, persistence_streak=0, alert_episode_id=None)
-                        break
-                self._refresh_fake_accounting(result, config, root, root / config["dataset_path"])
-                result_raw = _write_json(output / "result.json", result)
-                summary_raw = (output / "summary.md").read_bytes()
-                _write_json(output / ".complete", {
-                    "marker_type": "event-aware-anomaly-complete",
-                    "schema_version": "0.1",
-                    "result_sha256": hashlib.sha256(result_raw).hexdigest(),
-                    "summary_sha256": hashlib.sha256(summary_raw).hexdigest(),
-                })
-            return output
+        def status_generator(config_path: Path, output: Path, root: Path) -> Path:
+            dataset_path = self._fake_generator(config_path, output, root)
+            config = load_json(config_path)
+            if config["dataset_id"].endswith("seed-011-layout-01-motor-01-startup"):
+                observations, _observations_raw = runner_module._jsonl_objects(dataset_path / "observations.jsonl", "status-test observations")
+                test_start = runner_module._iso_at(config["start_timestamp"], 720, config["sampling_interval_ms"])
+                _write_jsonl(dataset_path / "observations.jsonl", [row for row in observations if row["timestamp"] >= test_start])
+                self._refresh_fake_fingerprint(dataset_path)
+            return dataset_path
 
         with patch.object(runner_module, "_place_no_replace", wraps=runner_module._place_no_replace) as place:
-            output = self._run(evaluator=status_evaluator)
+            output = self._run(generator=status_generator)
         result = load_json(output / "result.json")
         self.assertEqual(result["counts"]["partial"], 0)
         self.assertEqual(result["counts"]["inconclusive"], 1)
@@ -822,6 +810,101 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
                     detection_delay_seconds=anomaly_evaluation._delay_summary(delays),
                 )
 
+        def refresh_full_accounting(payload: dict) -> None:
+            self._refresh_fake_accounting(payload, cell["evaluator_config"], ROOT, ROOT / dataset["path"])
+
+        def shifted_timestamp(value: str, milliseconds: int) -> str:
+            stamp = runner_module._canonical_timestamp(value, "tamper timestamp")[1] + timedelta(milliseconds=milliseconds)
+            return stamp.isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+        def episode_from_score(score: dict, episode_id: str, start_offset_ms: int = 0, end_offset_ms: int = 1000) -> dict:
+            start = shifted_timestamp(score["timestamp"], start_offset_ms)
+            return {
+                "episode_id": episode_id,
+                "equipment_id": score["equipment_id"],
+                "signal_id": score["signal_id"],
+                "start_timestamp": start,
+                "onset_timestamp": start,
+                "end_timestamp": shifted_timestamp(score["timestamp"], end_offset_ms),
+                "point_count": 1,
+                "max_score": 0.581799,
+                "profile_key": copy.deepcopy(score["profile_key"]),
+            }
+
+        def orphan_subsample_episode(payload: dict) -> None:
+            score = next(item for item in payload["scores"] if item["available"] is True and item["alert_episode_id"] is None)
+            payload["alert_episodes"].append(episode_from_score(score, "alert-999999", 100, 900))
+            refresh_full_accounting(payload)
+
+        def below_threshold_linked_episode(payload: dict) -> None:
+            score = next(item for item in payload["scores"] if item["available"] is True and item["alert_episode_id"] is None)
+            episode = episode_from_score(score, "alert-999999")
+            score.update(score=0.581799, exceeds_threshold=True, persistence_streak=2, alert_episode_id=episode["episode_id"])
+            payload["alert_episodes"].append(episode)
+            refresh_full_accounting(payload)
+
+        def episode_point_count_drift(payload: dict) -> None:
+            payload["alert_episodes"][0]["point_count"] += 1
+            refresh_full_accounting(payload)
+
+        def episode_max_score_drift(payload: dict) -> None:
+            payload["alert_episodes"][0]["max_score"] += 1.0
+            refresh_full_accounting(payload)
+
+        def episode_onset_drift(payload: dict) -> None:
+            episode = payload["alert_episodes"][0]
+            episode["onset_timestamp"] = shifted_timestamp(episode["end_timestamp"], -1)
+            refresh_full_accounting(payload)
+
+        def episode_profile_key_drift(payload: dict) -> None:
+            episode = payload["alert_episodes"][0]
+            profile = next(item for item in payload["profiles"] if item["profile_key"] != episode["profile_key"])
+            episode["profile_key"] = copy.deepcopy(profile["profile_key"])
+            refresh_full_accounting(payload)
+
+        def score_numeric_drift(payload: dict) -> None:
+            score = next(item for item in payload["scores"] if item["alert_episode_id"] is not None)
+            score["score"] += 1.0
+            episode = next(item for item in payload["alert_episodes"] if item["episode_id"] == score["alert_episode_id"])
+            episode["max_score"] = score["score"]
+            refresh_full_accounting(payload)
+
+        def profile_center_drift(payload: dict) -> None:
+            payload["profiles"][0]["center"] += 0.25
+            refresh_full_accounting(payload)
+
+        def profile_scale_drift(payload: dict) -> None:
+            payload["profiles"][0]["scale"] *= 2.0
+            refresh_full_accounting(payload)
+
+        def profile_status_drift(payload: dict) -> None:
+            profile = payload["profiles"][0]
+            profile["status"] = "inconclusive"
+            for score in payload["scores"]:
+                if score["profile_key"] == profile["profile_key"]:
+                    score.update(available=False, score=None, exclusion_reason="profile_inconclusive", exceeds_threshold=False, persistence_streak=0, alert_episode_id=None)
+            refresh_full_accounting(payload)
+
+        def score_actual_drift(payload: dict) -> None:
+            score = next(item for item in payload["scores"] if item["alert_episode_id"] is None)
+            score["actual"] = float(score["actual"]) + 1.0
+            refresh_full_accounting(payload)
+
+        def score_residual_drift(payload: dict) -> None:
+            score = next(item for item in payload["scores"] if item["alert_episode_id"] is None and item["residual"] is not None)
+            score["residual"] = float(score["residual"]) + 1.0
+            refresh_full_accounting(payload)
+
+        def score_availability_drift(payload: dict) -> None:
+            score = next(item for item in payload["scores"] if item["available"] is True and item["alert_episode_id"] is None)
+            score.update(available=False, score=None, exclusion_reason="profile_inconclusive", exceeds_threshold=False, persistence_streak=0, alert_episode_id=None)
+            refresh_full_accounting(payload)
+
+        def score_streak_drift(payload: dict) -> None:
+            score = next(item for item in payload["scores"] if item["alert_episode_id"] is not None)
+            score["persistence_streak"] += 1
+            refresh_full_accounting(payload)
+
         def incident_eligibility_drift(payload: dict) -> None:
             incident = next(item for item in payload["incidents"] if item["event_id"] == "motor-01-machine-fault")
             incident.update(
@@ -869,6 +952,20 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
             ("scores_duplicate_identity", lambda payload: payload["scores"].__setitem__(1, copy.deepcopy(payload["scores"][0]))),
             ("score_alert_episode_unknown", lambda payload: next(item for item in payload["scores"] if item["alert_episode_id"] is not None).update(alert_episode_id="alert-999999")),
             ("score_alert_episode_missing", lambda payload: next(item for item in payload["scores"] if item["alert_episode_id"] is not None).update(alert_episode_id=None)),
+            ("orphan_subsample_episode", orphan_subsample_episode),
+            ("below_threshold_linked_episode", below_threshold_linked_episode),
+            ("episode_point_count", episode_point_count_drift),
+            ("episode_max_score", episode_max_score_drift),
+            ("episode_onset", episode_onset_drift),
+            ("episode_profile_key", episode_profile_key_drift),
+            ("score_numeric", score_numeric_drift),
+            ("profile_center", profile_center_drift),
+            ("profile_scale", profile_scale_drift),
+            ("profile_status", profile_status_drift),
+            ("score_actual", score_actual_drift),
+            ("score_residual", score_residual_drift),
+            ("score_availability", score_availability_drift),
+            ("score_persistence_streak", score_streak_drift),
             ("incident_eligibility_self_consistent", incident_eligibility_drift),
             ("incident_linkage_self_consistent", incident_linkage_drift),
             ("metrics.overall.eligible_incidents", lambda payload: payload["metrics"]["overall"].update(eligible_incidents=99)),

@@ -684,8 +684,54 @@ def _delay_summary(delays: list[float]) -> dict[str, Any] | None:
     return {"count": len(delays), "mean": sum(delays) / len(delays), "median": _median(delays), "min": min(delays), "max": max(delays)}
 
 
-def _validate_score_alert_episode_links(scores: Iterable[Mapping[str, Any]], episodes: list[Mapping[str, Any]]) -> None:
+def _validate_score_contract(scores: Iterable[Mapping[str, Any]], config: Mapping[str, Any]) -> None:
+    threshold = float(config["robust_z_threshold"])
+    persistence = int(config["persistence_points"])
+    for score in scores:
+        available = score.get("available")
+        score_value = score.get("score")
+        alert_episode_id = score.get("alert_episode_id")
+        streak = score.get("persistence_streak")
+        exclusion_reason = score.get("exclusion_reason")
+        if not isinstance(available, bool):
+            raise AnomalyEvaluationError("score availability flag is invalid")
+        if available is True:
+            if not isinstance(score_value, (int, float)) or isinstance(score_value, bool) or not math.isfinite(float(score_value)) or score_value < 0:
+                raise AnomalyEvaluationError("available score row must contain a finite non-negative score")
+            expected_exceeds = float(score_value) > threshold
+            if score.get("exceeds_threshold") is not expected_exceeds:
+                raise AnomalyEvaluationError("score exceeds_threshold does not match the configured threshold")
+            if not isinstance(streak, int) or isinstance(streak, bool) or streak < 0:
+                raise AnomalyEvaluationError("score persistence_streak is invalid")
+            if expected_exceeds and streak < 1:
+                raise AnomalyEvaluationError("threshold-exceeding score has no persistence streak")
+            if not expected_exceeds and streak != 0:
+                raise AnomalyEvaluationError("non-exceeding score has a persistence streak")
+            if exclusion_reason is not None:
+                raise AnomalyEvaluationError("available score row cannot have an exclusion reason")
+            if alert_episode_id is not None and streak < persistence:
+                raise AnomalyEvaluationError("alert-linked score does not satisfy persistence")
+            if expected_exceeds and streak >= persistence and alert_episode_id is None:
+                raise AnomalyEvaluationError("persistent threshold exceedance is missing its alert episode link")
+        else:
+            if score_value is not None or score.get("exceeds_threshold") is not False or streak != 0 or alert_episode_id is not None:
+                raise AnomalyEvaluationError("unavailable score row has inconsistent score accounting fields")
+            if not isinstance(exclusion_reason, str) or not exclusion_reason:
+                raise AnomalyEvaluationError("unavailable score row must have an exclusion reason")
+
+
+def _validate_score_alert_episode_links(
+    scores: Iterable[Mapping[str, Any]],
+    episodes: list[Mapping[str, Any]],
+    config: Mapping[str, Any],
+    test_start: datetime,
+    test_end: datetime,
+    interval: timedelta,
+) -> None:
     """Check that score rows and alert episodes form an exact interval linkage."""
+    strict = "robust_z_threshold" in config and "persistence_points" in config
+    if strict:
+        _validate_score_contract(scores, config)
     episode_by_id: dict[str, Mapping[str, Any]] = {}
     episode_intervals: dict[tuple[str, str], list[tuple[str, datetime, datetime]]] = {}
     for episode in episodes:
@@ -700,12 +746,22 @@ def _validate_score_alert_episode_links(scores: Iterable[Mapping[str, Any]], epi
         episode_by_id[episode_id] = episode
         episode_intervals.setdefault((episode["equipment_id"], episode["signal_id"]), []).append((episode_id, start, end))
 
+    score_groups: dict[str, list[tuple[datetime, Mapping[str, Any]]]] = {}
+    scores_by_key: dict[tuple[str, str], list[tuple[datetime, Mapping[str, Any]]]] = {}
     for score in scores:
         intervals = episode_intervals.get((score.get("equipment_id"), score.get("signal_id")), ())
         alert_episode_id = score.get("alert_episode_id")
-        if not intervals and alert_episode_id is None:
+        if strict:
+            timestamp = _parse_dataset_time(score.get("timestamp"), "score timestamp")
+            if score.get("timestamp") != _canonical_time(timestamp) or not test_start <= timestamp < test_end:
+                raise AnomalyEvaluationError("score timestamp is not a canonical test timestamp")
+            scores_by_key.setdefault((score.get("equipment_id"), score.get("signal_id")), []).append((timestamp, score))
+            if alert_episode_id is not None:
+                score_groups.setdefault(alert_episode_id, []).append((timestamp, score))
+        elif not intervals and alert_episode_id is None:
             continue
-        timestamp = _parse_dataset_time(score.get("timestamp"), "score timestamp")
+        else:
+            timestamp = _parse_dataset_time(score.get("timestamp"), "score timestamp")
         matching = [
             episode_id
             for episode_id, start, end in intervals
@@ -724,6 +780,81 @@ def _validate_score_alert_episode_links(scores: Iterable[Mapping[str, Any]], epi
         if score.get("available") is not True or score.get("exceeds_threshold") is not True:
             raise AnomalyEvaluationError("score row linked to an alert episode is not an available threshold exceedance")
 
+    if not strict:
+        return
+    for key, keyed_rows in scores_by_key.items():
+        keyed_rows.sort(key=lambda item: item[0])
+        previous_stamp: datetime | None = None
+        previous_score: Mapping[str, Any] | None = None
+        seen_stamps: set[datetime] = set()
+        for stamp, score in keyed_rows:
+            if stamp in seen_stamps:
+                raise AnomalyEvaluationError("score rows contain duplicate equipment timestamps")
+            seen_stamps.add(stamp)
+            expected_profile_key = {
+                "equipment_id": score.get("equipment_id"),
+                "signal_id": score.get("signal_id"),
+                "operating_mode": score.get("operating_mode"),
+            }
+            if score.get("profile_key") != expected_profile_key:
+                raise AnomalyEvaluationError("score profile key is inconsistent with its score identity")
+            if previous_stamp is not None and previous_score is not None:
+                continuation = (
+                    score.get("available") is True
+                    and score.get("exceeds_threshold") is True
+                    and previous_score.get("available") is True
+                    and previous_score.get("exceeds_threshold") is True
+                    and stamp - previous_stamp == interval
+                    and score.get("operating_mode") == previous_score.get("operating_mode")
+                    and score.get("profile_key") == previous_score.get("profile_key")
+                )
+                expected_streak = int(previous_score["persistence_streak"]) + 1 if continuation else (1 if score.get("exceeds_threshold") is True else 0)
+            else:
+                expected_streak = 1 if score.get("exceeds_threshold") is True else 0
+            if score.get("persistence_streak") != expected_streak:
+                raise AnomalyEvaluationError(f"score persistence streak is inconsistent for {key[0]}/{key[1]}")
+            previous_stamp = stamp
+            previous_score = score
+    if set(score_groups) != set(episode_by_id):
+        raise AnomalyEvaluationError("alert episode IDs do not exactly match non-null score links")
+    persistence = int(config["persistence_points"])
+    for episode_id, linked_rows in score_groups.items():
+        linked_rows.sort(key=lambda item: item[0])
+        first_stamp, first_score = linked_rows[0]
+        equipment_id = first_score["equipment_id"]
+        signal_id = first_score["signal_id"]
+        mode = first_score["operating_mode"]
+        profile_key = first_score["profile_key"]
+        expected_profile_key = {"equipment_id": equipment_id, "signal_id": signal_id, "operating_mode": mode}
+        if profile_key != expected_profile_key:
+            raise AnomalyEvaluationError("alert-linked score profile key is inconsistent")
+        if first_score["persistence_streak"] < persistence:
+            raise AnomalyEvaluationError("alert episode begins before persistence is satisfied")
+        for (previous_stamp, previous_score), (current_stamp, current_score) in zip(linked_rows, linked_rows[1:]):
+            if current_stamp - previous_stamp != interval:
+                raise AnomalyEvaluationError("alert-linked scores are not sampling-contiguous")
+            if current_score["equipment_id"] != equipment_id or current_score["signal_id"] != signal_id or current_score["operating_mode"] != mode or current_score["profile_key"] != profile_key:
+                raise AnomalyEvaluationError("alert-linked score group crosses a mode or profile boundary")
+            if current_score["persistence_streak"] != previous_score["persistence_streak"] + 1:
+                raise AnomalyEvaluationError("alert-linked score persistence streak is not contiguous")
+        last_stamp = linked_rows[-1][0]
+        expected_episode = {
+            "episode_id": episode_id,
+            "equipment_id": equipment_id,
+            "signal_id": signal_id,
+            "start_timestamp": _canonical_time(first_stamp),
+            "onset_timestamp": _canonical_time(first_stamp),
+            "end_timestamp": _canonical_time(last_stamp + interval),
+            "point_count": len(linked_rows),
+            "max_score": max(float(score["score"]) for _stamp, score in linked_rows),
+            "profile_key": profile_key,
+        }
+        if dict(episode_by_id[episode_id]) != expected_episode:
+            raise AnomalyEvaluationError("alert episode does not exactly reconstruct from linked scores")
+        for stamp, score in scores_by_key.get((equipment_id, signal_id), ()):
+            if first_stamp <= stamp < last_stamp + interval and score.get("alert_episode_id") != episode_id:
+                raise AnomalyEvaluationError("score rows inside an alert episode are not exactly linked")
+
 
 def _event_records_and_metrics(
     dataset: Mapping[str, Any], equipment_ids: list[str], target_signal_ids: list[str], classifications: Mapping[str, str], episodes: list[dict[str, Any]], config: Mapping[str, Any], scores: Iterable[Mapping[str, Any]] | None = None
@@ -738,7 +869,7 @@ def _event_records_and_metrics(
     if len(episode_ids) != len(set(episode_ids)):
         raise AnomalyEvaluationError("alert episode IDs must be unique")
     if scores_provided:
-        _validate_score_alert_episode_links(scores, episodes)
+        _validate_score_alert_episode_links(scores, episodes, config, test_start, test_end, interval)
     event_rows: list[dict[str, Any]] = []
     windows: list[tuple[str, str, datetime, datetime]] = []
     all_event_windows: list[dict[str, Any]] = []

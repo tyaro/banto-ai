@@ -570,6 +570,8 @@ def _build_dataset_semantic_ledger(
     profile_keys: set[tuple[str, str, str]] = set()
     score_identities: list[tuple[Any, ...]] = []
     observation_keys: set[tuple[str, str]] = set()
+    observations_by_equipment: dict[str, list[dict[str, Any]]] = {equipment_id: [] for equipment_id in equipment_ids}
+    last_stamp_by_equipment: dict[str, datetime] = {}
     for row in observations:
         equipment_id = row.get("equipment_id")
         operating_mode = row.get("operating_mode")
@@ -581,10 +583,16 @@ def _build_dataset_semantic_ledger(
             or operating_mode not in configured_modes
         ):
             raise AnomalyMatrixRunnerError("generated observation identity is invalid")
+        if row.get("timestamp") != timestamp:
+            raise AnomalyMatrixRunnerError("generated observation timestamp is not canonical")
         observation_key = (equipment_id, timestamp)
         if observation_key in observation_keys:
             raise AnomalyMatrixRunnerError("generated observations contain duplicate equipment timestamps")
+        if equipment_id in last_stamp_by_equipment and stamp <= last_stamp_by_equipment[equipment_id]:
+            raise AnomalyMatrixRunnerError("generated observations are not chronological per equipment")
         observation_keys.add(observation_key)
+        observations_by_equipment[equipment_id].append(row)
+        last_stamp_by_equipment[equipment_id] = stamp
         in_validation = validation_start <= stamp < validation_end
         in_test = test_start <= stamp < test_end
         if in_validation or in_test:
@@ -642,6 +650,12 @@ def _build_dataset_semantic_ledger(
         "sampling_interval_ms": interval_ms,
         "split_times": split_times,
         "events": tuple(normalized_events),
+        "replay_dataset": {
+            "manifest": {"sampling_interval_ms": interval_ms},
+            "observations": observations_by_equipment,
+            "events": tuple(normalized_events),
+            "split_times": split_times,
+        },
     }
 
 
@@ -877,38 +891,120 @@ def _expected_target_signal_ids(cell: Mapping[str, Any]) -> list[str]:
     return resolved
 
 
-def _recompute_event_accounting(
-    cell: Mapping[str, Any],
-    dataset_ledger: Mapping[str, Any],
-    target_signal_ids: list[str],
-    classifications: Mapping[str, str],
-    episodes: list[Mapping[str, Any]],
-    scores: list[Mapping[str, Any]],
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any], dict[str, int]]:
-    accounting_dataset = {
-        "manifest": {"sampling_interval_ms": dataset_ledger["sampling_interval_ms"]},
-        "split_times": dataset_ledger["split_times"],
-        "events": dataset_ledger["events"],
-    }
-    accounting_config = {
-        "detection_grace_points": cell["evaluator_config"]["detection_grace_points"],
+_EVALUATOR_SEMANTIC_FIELDS = (
+    "schema_version",
+    "result_type",
+    "analyzer_id",
+    "status",
+    "parameters",
+    "profiles",
+    "scores",
+    "alert_episodes",
+    "alert_episode_accounting",
+    "incidents",
+    "clean_false_alert_episodes",
+    "metrics",
+    "exclusions",
+    "row_counts",
+)
+
+
+def _replay_evaluator_semantics(cell: Mapping[str, Any], dataset_ledger: Mapping[str, Any]) -> dict[str, Any]:
+    """Replay the evaluator contract once per cell; validation cost is intentionally comparable to evaluation."""
+    replay_dataset = dataset_ledger.get("replay_dataset")
+    if not isinstance(replay_dataset, Mapping):
+        raise _CellSemanticFailure("captured dataset replay context is missing")
+    target_signal_ids = _expected_target_signal_ids(cell)
+    equipment_ids = [item["equipment_id"] for item in cell["generator_config"]["equipment"]]
+    classifications: dict[str, str] = {}
+    for item in cell["evaluator_config"]["event_classifications"]:
+        event_id = item["event_id"]
+        if event_id in classifications:
+            raise _CellSemanticFailure("cell evaluator event classifications are duplicated")
+        classifications[event_id] = item["event_class"]
+    expected_event_ids = [event["event_id"] for event in cell["generator_config"]["events"]]
+    if len(expected_event_ids) != len(set(expected_event_ids)) or set(classifications) != set(expected_event_ids):
+        raise _CellSemanticFailure("cell evaluator event classification inventory does not match generator events")
+    evaluator_config = cell["evaluator_config"]
+    config = {
+        "min_calibration_points": evaluator_config["min_calibration_points"],
+        "robust_z_threshold": evaluator_config["robust_z_threshold"],
+        "persistence_points": evaluator_config["persistence_points"],
+        "detection_grace_points": evaluator_config["detection_grace_points"],
     }
     try:
+        profiles, calibration_exclusions = anomaly_evaluation._calibrate_profiles(
+            replay_dataset,
+            equipment_ids,
+            target_signal_ids,
+            config,
+        )
+        scores, episodes, scoring_exclusions = anomaly_evaluation._score_and_alert(
+            replay_dataset,
+            equipment_ids,
+            target_signal_ids,
+            profiles,
+            config,
+        )
         incidents, clean_false_alerts, metrics, event_exclusions = anomaly_evaluation._event_records_and_metrics(
-            accounting_dataset,
-            [item["equipment_id"] for item in cell["generator_config"]["equipment"]],
+            replay_dataset,
+            equipment_ids,
             target_signal_ids,
             classifications,
             episodes,
-            accounting_config,
+            config,
             scores,
         )
     except (anomaly_evaluation.AnomalyEvaluationError, KeyError, TypeError, ValueError) as exc:
-        raise _CellSemanticFailure("cell evaluator event accounting could not be recomputed") from exc
+        raise _CellSemanticFailure("cell evaluator semantics could not be replayed") from exc
     alert_episode_accounting = metrics.pop("_alert_episode_accounting", None)
     if not isinstance(alert_episode_accounting, list):
-        raise _CellSemanticFailure("cell evaluator alert accounting is missing")
-    return incidents, alert_episode_accounting, clean_false_alerts, metrics, event_exclusions
+        raise _CellSemanticFailure("replayed alert accounting is missing")
+    availability = metrics["score_availability_by_signal"]
+    status = "inconclusive" if (
+        calibration_exclusions["profiles_inconclusive"]
+        or any(summary["available_points"] == 0 for summary in availability.values())
+    ) else ("partial" if not metrics["overall"]["eligible_incidents"] else "pass")
+    parameters = {
+        "target_signal_ids": target_signal_ids,
+        "min_calibration_points": evaluator_config["min_calibration_points"],
+        "robust_z_threshold": evaluator_config["robust_z_threshold"],
+        "persistence_points": evaluator_config["persistence_points"],
+        "detection_grace_points": evaluator_config["detection_grace_points"],
+        "sampling_interval_ms": cell["generator_config"]["sampling_interval_ms"],
+        "calibration_split": "validation",
+        "scoring_split": "test",
+        "boundary_semantics": "[start,end)",
+    }
+    semantic = {
+        "schema_version": anomaly_evaluation.SCHEMA_VERSION,
+        "result_type": anomaly_evaluation.RESULT_TYPE,
+        "analyzer_id": anomaly_evaluation.ANALYZER_ID,
+        "status": status,
+        "parameters": parameters,
+        "profiles": [profiles[key] for key in sorted(profiles)],
+        "scores": scores,
+        "alert_episodes": episodes,
+        "alert_episode_accounting": alert_episode_accounting,
+        "incidents": incidents,
+        "clean_false_alert_episodes": clean_false_alerts,
+        "metrics": metrics,
+        "exclusions": {
+            "calibration": calibration_exclusions,
+            "scoring": scoring_exclusions,
+            "events": event_exclusions,
+        },
+        "row_counts": {
+            "dataset_observations": sum(len(rows) for rows in replay_dataset["observations"].values()),
+            "score_rows": len(scores),
+            "alert_episodes": len(episodes),
+            "alert_episode_accounting": len(alert_episode_accounting),
+            "incidents": len(incidents),
+            "clean_false_alert_episodes": len(clean_false_alerts),
+            "clean_false_alert_signal_episodes": metrics["clean_false_alert_signal_episode_count"],
+        },
+    }
+    return semantic
 
 
 def _verify_evaluator_cross_fields(
@@ -1043,54 +1139,15 @@ def _verify_evaluator_cross_fields(
         raise _CellSemanticFailure("cell evaluator scoring counts cross-fields drifted")
     if row_counts.get("clean_false_alert_signal_episodes") != metrics.get("clean_false_alert_signal_episode_count"):
         raise _CellSemanticFailure("cell evaluator clean false-alert row count cross-field drifted")
-    incidents = arrays["incidents"]
-    expected_classifications: dict[str, str] = {}
-    for item in cell["evaluator_config"]["event_classifications"]:
-        event_id = item["event_id"]
-        if event_id in expected_classifications:
-            raise _CellSemanticFailure("cell evaluator event classifications are duplicated")
-        expected_classifications[event_id] = item["event_class"]
-    expected_events: dict[str, Mapping[str, Any]] = {}
-    for event in cell["generator_config"]["events"]:
-        event_id = event["event_id"]
-        if event_id in expected_events:
-            raise _CellSemanticFailure("cell evaluator generator event inventory is duplicated")
-        expected_events[event_id] = event
-    if set(expected_classifications) != set(expected_events):
-        raise _CellSemanticFailure("cell evaluator event classification inventory does not match generator events")
-    expected_incidents, expected_accounting, expected_clean_alerts, expected_metrics, expected_event_exclusions = _recompute_event_accounting(
-        cell,
-        dataset_ledger,
-        target_signal_ids,
-        expected_classifications,
-        arrays["alert_episodes"],
-        arrays["scores"],
-    )
-    if incidents != expected_incidents:
-        raise _CellSemanticFailure("cell evaluator incident outcomes or windows drifted")
-    if arrays["alert_episode_accounting"] != expected_accounting:
-        raise _CellSemanticFailure("cell evaluator alert episode accounting drifted")
-    if arrays["clean_false_alert_episodes"] != expected_clean_alerts:
-        raise _CellSemanticFailure("cell evaluator clean false-alert accounting drifted")
-    if not isinstance(exclusions, Mapping) or exclusions.get("events") != expected_event_exclusions:
-        raise _CellSemanticFailure("cell evaluator event exclusions drifted")
-    if dict(metrics) != expected_metrics:
-        raise _CellSemanticFailure("cell evaluator metrics accounting drifted")
-    overall = metrics.get("overall")
-    if not isinstance(overall, Mapping):
-        raise _CellSemanticFailure("cell evaluator status inputs are missing")
-    profiles_inconclusive = calibration.get("profiles_inconclusive")
-    if not isinstance(profiles_inconclusive, int) or isinstance(profiles_inconclusive, bool):
-        raise _CellSemanticFailure("cell evaluator calibration status input is invalid")
-    zero_availability = any(isinstance(summary, Mapping) and summary.get("available_points") == 0 for summary in availability.values())
-    if profiles_inconclusive > 0 or zero_availability:
-        expected_status = "inconclusive"
-    elif overall.get("eligible_incidents") == 0:
-        expected_status = "partial"
-    else:
-        expected_status = "pass"
-    if not isinstance(overall.get("eligible_incidents"), int) or isinstance(overall.get("eligible_incidents"), bool) or result.get("status") != expected_status:
-        raise _CellSemanticFailure("cell evaluator status cross-fields drifted")
+    expected_semantic = _replay_evaluator_semantics(cell, dataset_ledger)
+    actual_semantic = {key: result.get(key) for key in _EVALUATOR_SEMANTIC_FIELDS}
+    try:
+        expected_semantic_raw = _canonical_json(expected_semantic)
+        actual_semantic_raw = _canonical_json(actual_semantic)
+    except _GlobalFailure as exc:
+        raise _CellSemanticFailure("cell evaluator semantic payload is not canonicalizable") from exc
+    if actual_semantic_raw != expected_semantic_raw:
+        raise _CellSemanticFailure("cell evaluator semantic payload drifted from pure replay")
 
 
 def _safe_error(exc: BaseException, root: Path) -> str:
@@ -1503,6 +1560,9 @@ def run_anomaly_matrix(
                 _assert_runtime_snapshot(runtime_snapshots[cell["cell_id"]], "cell-completion")
                 _assert_inputs_unchanged(repository, sources, values, "cell-completion")
                 _require_revision(repository, revision, "cell-completion")
+                # Replay inputs are cell-local validation state; do not retain parsed observations or events in runtime snapshots.
+                if isinstance(dataset_ledger, dict):
+                    dataset_ledger.pop("replay_dataset", None)
         if len(cells) != expected_cell_count:
             raise _GlobalFailure("matrix did not process the fixed cell count")
         distinct_fingerprints = all(len(layout_fingerprints[layout_id]) == len(config["seeds"]) for layout_id in layout_fingerprints)
