@@ -15,6 +15,7 @@ from uuid import uuid4
 
 import banto_ai.anomaly_evaluation as anomaly_evaluation
 import banto_ai.anomaly_matrix_runner as runner_module
+import banto_ai.quality as quality_module
 from banto_ai.anomaly_evaluation import AnomalyEvaluationError, _canonical_json, _evaluate_core
 from banto_ai.anomaly_matrix_runner import AnomalyMatrixRunnerError, run_anomaly_matrix
 from banto_ai.generator import FINGERPRINT_ALGORITHM, FINGERPRINT_CANONICALIZATION, FINGERPRINT_FILE_NAMES, expected_catalog, generate_synthetic
@@ -191,6 +192,62 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         summary["dataset_fingerprint"] = fingerprint["dataset_fingerprint"]
         _write_json(output / "summary.json", summary)
 
+    def _compact_quality_semantics(
+        self,
+        manifest: dict,
+        split: dict,
+        config: dict,
+        observations: list[dict],
+        events: list[dict],
+        summary: dict,
+        fingerprint: dict,
+        hash_inventory: dict[str, str],
+    ) -> dict:
+        """Strict quality contract for the intentionally sparse test-only fixture."""
+        quality_module._check_synthetic_structure(manifest, split, config)
+        if len(observations) == 84:
+            expected_indices = [*range(540, 552), *range(720, 750)]
+        elif len(observations) == 60:
+            expected_indices = [*range(720, 750)]
+        else:
+            self.fail(f"unexpected compact fixture row count: {len(observations)}")
+        expected_catalog_by_equipment = {
+            item["equipment_id"]: {
+                signal["signal_id"].rsplit(".", 1)[1]: signal
+                for signal in expected_catalog(item["equipment_id"], item["equipment_type"], config["sampling_interval_ms"])
+            }
+            for item in config["equipment"]
+        }
+        rows_by_equipment = {item["equipment_id"]: [] for item in config["equipment"]}
+        for row in observations:
+            self.assertIn(row["equipment_id"], rows_by_equipment)
+            rows_by_equipment[row["equipment_id"]].append(row)
+            self.assertEqual(set(row), quality_module.OBSERVATION_KEYS | {"cell", "seed"})
+            self.assertEqual(row["equipment_type"], next(item["equipment_type"] for item in config["equipment"] if item["equipment_id"] == row["equipment_id"]))
+            self.assertEqual(set(row["signals"]), set(runner_module.SIGNALS))
+            self.assertEqual(set(row["quality"]), set(runner_module.SIGNALS))
+            for signal_id, payload in row["signals"].items():
+                self.assertEqual(set(payload), quality_module.SIGNAL_KEYS)
+                self.assertEqual(payload["unit"], expected_catalog_by_equipment[row["equipment_id"]][signal_id]["unit"])
+                self.assertIsInstance(payload["value"], (int, float))
+                self.assertTrue(payload["value"] == payload["value"] and abs(payload["value"]) != float("inf"))
+                self.assertEqual(row["quality"][signal_id], "ok")
+        for equipment_id, rows in rows_by_equipment.items():
+            self.assertEqual(len(rows), len(expected_indices))
+            self.assertEqual(
+                [runner_module._canonical_timestamp(row["timestamp"], "compact timestamp")[1] for row in rows],
+                [runner_module._canonical_timestamp(runner_module._iso_at(config["start_timestamp"], index, config["sampling_interval_ms"]), "expected compact timestamp")[1] for index in expected_indices],
+            )
+        replay_cell = {"generator_config": config, "evaluator_config": {"target_signal_ids": list(runner_module.SIGNALS)}}
+        runner_module._build_dataset_semantic_ledger(replay_cell, observations, split, events)
+        quality_module._check_fingerprint(manifest, summary, fingerprint, hash_inventory)
+        return {
+            "status": "pass",
+            "observation_record_count": len(observations),
+            "equipment_count": len(rows_by_equipment),
+            "checks": ["compact_fixture_exact_structure", "compact_fixture_fingerprint"],
+        }
+
     def _materialized_fake_dataset(self) -> tuple[dict, dict, bytes, Path]:
         matrix_config = load_json(CONFIG_PATH)
         base = load_json(ROOT / "examples/configs/synthetic-anomaly-evaluation-v0.1.json")
@@ -283,9 +340,13 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         result["provenance"]["config"].update(path=config_path.relative_to(root).as_posix(), sha256=hashlib.sha256(config_path.read_bytes()).hexdigest())
         result["provenance"]["schema"].update(path="schemas/anomaly-evaluation-result.schema.json", sha256=hashlib.sha256((root / "schemas/anomaly-evaluation-result.schema.json").read_bytes()).hexdigest())
         result["provenance"]["config_schema"].update(path="schemas/anomaly-evaluation-config.schema.json", sha256=hashlib.sha256((root / "schemas/anomaly-evaluation-config.schema.json").read_bytes()).hexdigest())
-        dataset_fingerprint = load_json(dataset_path / "fingerprint.json")["dataset_fingerprint"]
+        fingerprint = load_json(dataset_path / "fingerprint.json")
+        summary = load_json(dataset_path / "summary.json")
+        hash_inventory = {name: hashlib.sha256((dataset_path / name).read_bytes()).hexdigest() for name in FINGERPRINT_FILE_NAMES}
+        quality_gate = self._compact_quality_semantics(manifest, split_manifest, generator_config, observations, events, summary, fingerprint, hash_inventory)
+        dataset_fingerprint = fingerprint["dataset_fingerprint"]
         result["provenance"]["dataset"].update(kind="synthetic-dataset", path=config["dataset_path"], dataset_id=manifest["dataset_id"], dataset_fingerprint=dataset_fingerprint, manifest_sha256=hashlib.sha256((dataset_path / "dataset-manifest.json").read_bytes()).hexdigest())
-        result["provenance"]["quality_gate"].update(status="pass", observation_record_count=len(observations), equipment_count=len(manifest["equipment"]))
+        result["provenance"]["quality_gate"] = copy.deepcopy(quality_gate)
         for key in runner_module._EVALUATOR_SEMANTIC_FIELDS:
             result[key] = copy.deepcopy(semantic[key])
         self._refresh_fake_accounting(result, config, root, dataset_path)
@@ -300,19 +361,21 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
     def _run(self, *, generator=None, evaluator=None, recover_incomplete=False) -> Path:
         output = self._output()
         with patch.object(runner_module, "_revision", return_value=copy.deepcopy(REVISION)):
-            return run_anomaly_matrix(CONFIG_PATH, ROOT, generator=generator or self._fake_generator, evaluator=evaluator or self._fake_evaluator, recover_incomplete=recover_incomplete)
+            with patch.object(runner_module.quality, "check_synthetic_dataset_semantics", side_effect=self._compact_quality_semantics):
+                return run_anomaly_matrix(CONFIG_PATH, ROOT, generator=generator or self._fake_generator, evaluator=evaluator or self._fake_evaluator, recover_incomplete=recover_incomplete)
 
     def _prepare_fake_evaluation_validation(self) -> tuple[dict, dict, dict, dict, Path]:
         cell, base, generator_raw, dataset_path = self._materialized_fake_dataset()
         cell["paths"]["evaluator_config"].parent.mkdir(parents=True, exist_ok=True)
         evaluator_raw = _write_json(cell["paths"]["evaluator_config"], cell["evaluator_config"])
-        dataset, dataset_snapshot, dataset_ledger = runner_module._validate_dataset(
-            cell,
-            base,
-            ROOT,
-            load_json(ROOT / "schemas/synthetic-dataset-manifest.schema.json"),
-            generator_raw,
-        )
+        with patch.object(runner_module.quality, "check_synthetic_dataset_semantics", side_effect=self._compact_quality_semantics):
+            dataset, dataset_snapshot, dataset_ledger = runner_module._validate_dataset(
+                cell,
+                base,
+                ROOT,
+                load_json(ROOT / "schemas/synthetic-dataset-manifest.schema.json"),
+                generator_raw,
+            )
         evaluation_output = self._fake_evaluator(cell["paths"]["evaluator_config"], ROOT)
         sources, _values = runner_module._snapshot_inputs(ROOT, CONFIG_PATH)
         self.assertEqual(evaluator_raw, cell["paths"]["evaluator_config"].read_bytes())
@@ -470,6 +533,27 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         self.assertEqual(failed[0]["failure_stage"], "validate_evaluation")
         self.assertEqual(len(self.generator_calls), 120)
         self.assertEqual(len(self.evaluator_calls), 120)
+
+    def test_limitations_replay_tamper_fails_one_cell_and_continues(self) -> None:
+        def limitations_attack(config_path: Path, root: Path, **kwargs: object) -> Path:
+            output = self._fake_evaluator(config_path, root, **kwargs)
+            config = load_json(config_path)
+            if not config["dataset_path"].endswith("seed-042-layout-00-motor-01-stopped"):
+                return output
+            result = load_json(output / "result.json")
+            result["limitations"][0] = "schema-valid replacement"
+            result_raw = _write_json(output / "result.json", result)
+            summary_raw = (output / "summary.md").read_bytes()
+            _write_json(output / ".complete", {"marker_type": "event-aware-anomaly-complete", "schema_version": "0.1", "result_sha256": hashlib.sha256(result_raw).hexdigest(), "summary_sha256": hashlib.sha256(summary_raw).hexdigest()})
+            return output
+
+        output = self._run(evaluator=limitations_attack)
+        result = load_json(output / "result.json")
+        self.assertEqual(result["counts"], {"total": 120, "success": 119, "partial": 0, "inconclusive": 0, "failed": 1})
+        failed = [cell for cell in result["cells"] if cell["status"] == "failed"]
+        self.assertEqual(len(failed), 1)
+        self.assertEqual(failed[0]["cell_id"], "seed-042-layout-00-motor-01-stopped")
+        self.assertEqual(failed[0]["failure_stage"], "validate_evaluation")
 
     def test_success_output_is_byte_deterministic(self) -> None:
         first = self._run()
@@ -729,6 +813,64 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         self.assertNotIn("C:/tmp/one", encoded)
         self.assertNotIn("D:/tmp/two", encoded)
 
+    def test_production_quality_pure_rejects_sparse_and_structural_tampering(self) -> None:
+        _cell, _base, _generator_raw, sparse_path = self._materialized_fake_dataset()
+
+        def captured_inputs(dataset_path: Path) -> tuple[dict, dict, dict, list[dict], list[dict], dict, dict, dict[str, str]]:
+            snapshot = runner_module._tree_snapshot(
+                dataset_path,
+                "quality pure test dataset",
+                containment_root=ROOT,
+                failure_scope="global",
+                capture_files=("dataset-manifest.json", "generator-config.json", "observations.jsonl", "events.jsonl", "split-manifest.json", "summary.json", "fingerprint.json"),
+            )
+            captured = snapshot["_captured_bytes"]
+            parse = lambda name, label: runner_module._parse_json_object_bytes(captured[name], label, AnomalyMatrixRunnerError)
+            return (
+                parse("dataset-manifest.json", "quality manifest"),
+                parse("split-manifest.json", "quality split"),
+                parse("generator-config.json", "quality config"),
+                runner_module._jsonl_objects_from_raw(captured["observations.jsonl"], "quality observations"),
+                runner_module._jsonl_objects_from_raw(captured["events.jsonl"], "quality events"),
+                parse("summary.json", "quality summary"),
+                parse("fingerprint.json", "quality fingerprint"),
+                snapshot["hashes"],
+            )
+
+        sparse_inputs = captured_inputs(sparse_path)
+        with self.assertRaises(quality_module.DatasetQualityError):
+            quality_module.check_synthetic_dataset_semantics(*sparse_inputs)
+
+        full_inputs = captured_inputs(self.template_dataset)
+        expected = quality_module.check_synthetic_dataset_semantics(*full_inputs)
+        self.assertEqual(expected["status"], "pass")
+        self.assertEqual(expected["observation_record_count"], 1800)
+        self.assertEqual(expected["equipment_count"], 2)
+        self.assertEqual(expected["checks"], quality_module.SYNTHETIC_QUALITY_CHECKS)
+        for label, mutate in (
+            ("extra key", lambda value: value[0].update(extra="rejected")),
+            ("missing timestamp", lambda value: value[3][0].pop("timestamp")),
+            ("bad quality", lambda value: value[3][0]["quality"].update(motor_current="bad")),
+            ("bad unit", lambda value: value[3][0]["signals"]["motor_current"].update(unit="wrong")),
+        ):
+            with self.subTest(field=label):
+                tampered = copy.deepcopy(full_inputs)
+                mutate(tampered)
+                with self.assertRaises(quality_module.DatasetQualityError):
+                    quality_module.check_synthetic_dataset_semantics(*tampered)
+
+    def test_sparse_official_fake_without_quality_patch_fails_closed(self) -> None:
+        cell, base, generator_raw, _dataset_path = self._materialized_fake_dataset()
+        with self.assertRaises(AnomalyMatrixRunnerError) as context:
+            runner_module._validate_dataset(
+                cell,
+                base,
+                ROOT,
+                load_json(ROOT / "schemas/synthetic-dataset-manifest.schema.json"),
+                generator_raw,
+            )
+        self.assertIn("quality gate", str(context.exception))
+
     def test_evaluator_cross_field_helper_rejects_schema_valid_drift(self) -> None:
         base = load_json(ROOT / "examples/configs/synthetic-anomaly-evaluation-v0.1.json")
         evaluation_config = load_json(ROOT / "examples/configs/anomaly-evaluation-v0.1.json")
@@ -749,14 +891,29 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
             "template dataset semantic ledger",
             containment_root=ROOT,
             failure_scope="global",
-            capture_files=("observations.jsonl", "events.jsonl", "split-manifest.json"),
+            capture_files=("dataset-manifest.json", "generator-config.json", "observations.jsonl", "events.jsonl", "split-manifest.json", "summary.json", "fingerprint.json"),
         )
         template_captured = template_snapshot["_captured_bytes"]
+        template_manifest = runner_module._parse_json_object_bytes(template_captured["dataset-manifest.json"], "template dataset manifest", AnomalyMatrixRunnerError)
+        template_config = runner_module._parse_json_object_bytes(template_captured["generator-config.json"], "template generator config", AnomalyMatrixRunnerError)
+        template_split = runner_module._parse_json_object_bytes(template_captured["split-manifest.json"], "template split manifest", AnomalyMatrixRunnerError)
+        template_summary = runner_module._parse_json_object_bytes(template_captured["summary.json"], "template summary", AnomalyMatrixRunnerError)
+        template_fingerprint = runner_module._parse_json_object_bytes(template_captured["fingerprint.json"], "template fingerprint", AnomalyMatrixRunnerError)
         dataset_ledger = runner_module._build_dataset_semantic_ledger(
             cell,
             runner_module._jsonl_objects_from_raw(template_captured["observations.jsonl"], "template observations"),
-            runner_module._parse_json_object_bytes(template_captured["split-manifest.json"], "template split manifest", AnomalyMatrixRunnerError),
+            template_split,
             runner_module._jsonl_objects_from_raw(template_captured["events.jsonl"], "template events"),
+        )
+        dataset_ledger["quality_gate"] = quality_module.check_synthetic_dataset_semantics(
+            template_manifest,
+            template_split,
+            template_config,
+            runner_module._jsonl_objects_from_raw(template_captured["observations.jsonl"], "template observations"),
+            runner_module._jsonl_objects_from_raw(template_captured["events.jsonl"], "template events"),
+            template_summary,
+            template_fingerprint,
+            template_snapshot["hashes"],
         )
         runner_module._verify_evaluator_cross_fields(result, cell, dataset, dataset_ledger)
 
@@ -938,6 +1095,8 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
             ("provenance.dataset.dataset_id", lambda payload: payload["provenance"]["dataset"].update(dataset_id="wrong")),
             ("provenance.dataset.manifest_sha256", lambda payload: payload["provenance"]["dataset"].update(manifest_sha256="0" * 64)),
             ("provenance.quality_gate.observation_record_count", lambda payload: payload["provenance"]["quality_gate"].update(observation_record_count=2)),
+            ("provenance.quality_gate.checks_fabricated", lambda payload: payload["provenance"]["quality_gate"].update(checks=["fabricated"])),
+            ("provenance.quality_gate.checks_reordered", lambda payload: payload["provenance"]["quality_gate"].update(checks=list(reversed(payload["provenance"]["quality_gate"]["checks"]))),),
             ("parameters.target_signal_ids", lambda payload: payload["parameters"].update(target_signal_ids=list(reversed(payload["parameters"]["target_signal_ids"]))),),
             ("parameters.robust_z_threshold", lambda payload: payload["parameters"].update(robust_z_threshold=99.0)),
             ("row_counts.score_rows", lambda payload: payload["row_counts"].update(score_rows=payload["row_counts"]["score_rows"] + 1)),
@@ -969,6 +1128,7 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
             ("incident_eligibility_self_consistent", incident_eligibility_drift),
             ("incident_linkage_self_consistent", incident_linkage_drift),
             ("metrics.overall.eligible_incidents", lambda payload: payload["metrics"]["overall"].update(eligible_incidents=99)),
+            ("limitations", lambda payload: payload["limitations"].__setitem__(0, "schema-valid replacement")),
             ("status", lambda payload: payload.update(status="partial")),
         )
         for _label, mutate in mutations[:2]:

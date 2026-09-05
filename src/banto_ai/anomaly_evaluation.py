@@ -38,6 +38,18 @@ EVENT_CLASSES = ("machine_fault", "sensor_fault", "data_quality", "ignored")
 POSITIVE_CLASSES = frozenset(("machine_fault", "sensor_fault"))
 COMPLETION_MARKER = ".complete"
 COMPLETION_MARKER_TYPE = "event-aware-anomaly-complete"
+EVALUATOR_LIMITATIONS = (
+    "synthetic datasetとsingle-seed scenarioの契約検証であり、実設備性能やproduction alertingを評価しない。",
+    "status=passは校正可能なprofileとeligible incidentがあり評価契約を完了したことを示すだけで、precision／recall目標の合格ではない。",
+    "scoreは観測後のone-step residualであり、detection_delay_secondsをlead timeとして解釈しない。",
+    "test event intervalはcalibration除外とprevious-history residual availability判定にだけ使い、current timestampのresidualはeventだけでは隠さない。",
+    "Totoは未評価であり、control write、Banto Hub write、commissioning自動調整は行わない。",
+    "global fallback、epsilon scale、数値補間、testによるprofile校正は行わない。",
+)
+
+
+def evaluator_limitations() -> list[str]:
+    return list(EVALUATOR_LIMITATIONS)
 
 
 class _DuplicateJSON(ValueError):
@@ -1443,14 +1455,7 @@ def _evaluate_core(
             "clean_false_alert_episodes": len(clean_alerts),
             "clean_false_alert_signal_episodes": metrics["clean_false_alert_signal_episode_count"],
         },
-        "limitations": [
-            "synthetic datasetとsingle-seed scenarioの契約検証であり、実設備性能やproduction alertingを評価しない。",
-            "status=passは校正可能なprofileとeligible incidentがあり評価契約を完了したことを示すだけで、precision／recall目標の合格ではない。",
-            "scoreは観測後のone-step residualであり、detection_delay_secondsをlead timeとして解釈しない。",
-            "test event intervalはcalibration除外とprevious-history residual availability判定にだけ使い、current timestampのresidualはeventだけでは隠さない。",
-            "Totoは未評価であり、control write、Banto Hub write、commissioning自動調整は行わない。",
-            "global fallback、epsilon scale、数値補間、testによるprofile校正は行わない。",
-        ],
+        "limitations": evaluator_limitations(),
     }
     _validate_result(result, root)
     if expected_config_hash is not None and result["provenance"]["config"]["sha256"] != expected_config_hash:

@@ -15,10 +15,10 @@ from pathlib import PureWindowsPath
 from typing import Any, Callable, Mapping
 from uuid import uuid4
 
-from . import anomaly_evaluation, anomaly_matrix
+from . import anomaly_evaluation, anomaly_matrix, quality
 from .anomaly_evaluation import evaluate_anomalies
 from .benchmark import _revision
-from .generator import FINGERPRINT_ALGORITHM, FINGERPRINT_FILE_NAMES, FINGERPRINT_CANONICALIZATION, SIGNALS, expected_catalog, generate_synthetic
+from .generator import SIGNALS, expected_catalog, generate_synthetic
 from .manifest import ManifestValidationError, validate
 
 
@@ -674,11 +674,11 @@ def _validate_dataset(
         "dataset before validation",
         containment_root=root,
         failure_scope="cell",
-        capture_files=("observations.jsonl", "events.jsonl", "split-manifest.json"),
+        capture_files=("dataset-manifest.json", "generator-config.json", "observations.jsonl", "events.jsonl", "split-manifest.json", "summary.json", "fingerprint.json"),
     )
     captured_bytes = snapshot_before["_captured_bytes"]
-    manifest_path = dataset_path / "dataset-manifest.json"
-    manifest, manifest_raw = _cell_json_object(manifest_path, "dataset manifest")
+    manifest_raw = captured_bytes["dataset-manifest.json"]
+    manifest = _parse_json_object_bytes(manifest_raw, "dataset manifest", AnomalyMatrixRunnerError)
     try:
         validate(manifest, schema)
     except ManifestValidationError as exc:
@@ -713,12 +713,10 @@ def _validate_dataset(
     ]
     if manifest.get("signals") != expected_signals:
         raise AnomalyMatrixRunnerError("generated dataset manifest signal catalog drifted")
-    generated_config_path = dataset_path / manifest["generator_config_path"]
-    try:
-        if _is_link(generated_config_path) or not generated_config_path.is_file() or generated_config_path.read_bytes() != generator_config_raw:
-            raise OSError("generated generator config bytes drifted")
-    except OSError as exc:
-        raise AnomalyMatrixRunnerError("generated dataset generator config does not match materialized config") from exc
+    generated_config_raw = captured_bytes["generator-config.json"]
+    generated_config = _parse_json_object_bytes(generated_config_raw, "generated generator config", AnomalyMatrixRunnerError)
+    if generated_config_raw != generator_config_raw:
+        raise AnomalyMatrixRunnerError("generated dataset generator config does not match materialized config")
     observations_path = dataset_path / "observations.jsonl"
     events_path = dataset_path / "events.jsonl"
     observations_raw = captured_bytes["observations.jsonl"]
@@ -727,35 +725,27 @@ def _validate_dataset(
     events = _jsonl_objects_from_raw(events_raw, "events")
     split_raw = captured_bytes["split-manifest.json"]
     split_manifest = _parse_json_object_bytes(split_raw, "split manifest", AnomalyMatrixRunnerError)
+    summary_raw = captured_bytes["summary.json"]
+    summary = _parse_json_object_bytes(summary_raw, "dataset summary", AnomalyMatrixRunnerError)
+    fingerprint_raw = captured_bytes["fingerprint.json"]
+    fingerprint = _parse_json_object_bytes(fingerprint_raw, "dataset fingerprint", AnomalyMatrixRunnerError)
+    try:
+        quality_gate = quality.check_synthetic_dataset_semantics(
+            manifest,
+            split_manifest,
+            generated_config,
+            observations,
+            events,
+            summary,
+            fingerprint,
+            snapshot_before["hashes"],
+        )
+    except quality.DatasetQualityError as exc:
+        raise AnomalyMatrixRunnerError(f"generated dataset quality gate failed: {exc}") from exc
     dataset_ledger = _build_dataset_semantic_ledger(cell, observations, split_manifest, events)
-    fingerprint_path = dataset_path / "fingerprint.json"
-    fingerprint, _fingerprint_raw = _cell_json_object(fingerprint_path, "dataset fingerprint")
-    if fingerprint.get("algorithm") != FINGERPRINT_ALGORITHM or fingerprint.get("canonicalization") != FINGERPRINT_CANONICALIZATION:
-        raise AnomalyMatrixRunnerError("generated dataset fingerprint contract drifted")
-    files = fingerprint.get("files")
-    if not isinstance(files, dict) or set(files) != set(FINGERPRINT_FILE_NAMES):
-        raise AnomalyMatrixRunnerError("generated dataset fingerprint file inventory drifted")
-    file_hashes: dict[str, str] = {}
-    for name in FINGERPRINT_FILE_NAMES:
-        target = dataset_path / name
-        if _is_link(target) or not target.is_file():
-            raise AnomalyMatrixRunnerError(f"generated dataset fingerprint input is missing: {name}")
-        file_hashes[name] = _sha256_bytes(target.read_bytes())
-    if file_hashes != files:
-        raise AnomalyMatrixRunnerError("generated dataset fingerprint file hash drifted")
-    fingerprint_input = "".join(f"{name}\n{digest}\n" for name, digest in sorted(file_hashes.items())).encode("utf-8")
-    if fingerprint.get("dataset_fingerprint") != _sha256_bytes(fingerprint_input):
-        raise AnomalyMatrixRunnerError("generated dataset fingerprint value drifted")
-    summary, _summary_raw = _cell_json_object(dataset_path / "summary.json", "dataset summary")
-    if summary.get("dataset_fingerprint") != fingerprint.get("dataset_fingerprint") or summary.get("event_count") != 4:
-        raise AnomalyMatrixRunnerError("generated dataset summary drifted")
-    expected_snapshot_hashes = {
-        "dataset-manifest.json": _sha256_bytes(manifest_raw),
-        "observations.jsonl": _sha256_bytes(observations_raw),
-        "events.jsonl": _sha256_bytes(events_raw),
-        "split-manifest.json": _sha256_bytes(split_raw),
-    }
-    if any(snapshot_before["hashes"].get(name) != digest for name, digest in expected_snapshot_hashes.items()) or any(snapshot_before["hashes"].get(name) != digest for name, digest in file_hashes.items()):
+    dataset_ledger["quality_gate"] = quality_gate
+    expected_snapshot_hashes = {name: _sha256_bytes(raw) for name, raw in captured_bytes.items()}
+    if any(snapshot_before["hashes"].get(name) != digest for name, digest in expected_snapshot_hashes.items()):
         raise _GlobalFailure("validated dataset evidence did not come from the initial snapshot")
     snapshot_after = _tree_snapshot(
         dataset_path,
@@ -906,6 +896,7 @@ _EVALUATOR_SEMANTIC_FIELDS = (
     "metrics",
     "exclusions",
     "row_counts",
+    "limitations",
 )
 
 
@@ -1003,6 +994,7 @@ def _replay_evaluator_semantics(cell: Mapping[str, Any], dataset_ledger: Mapping
             "clean_false_alert_episodes": len(clean_false_alerts),
             "clean_false_alert_signal_episodes": metrics["clean_false_alert_signal_episode_count"],
         },
+        "limitations": anomaly_evaluation.evaluator_limitations(),
     }
     return semantic
 
@@ -1027,12 +1019,8 @@ def _verify_evaluator_cross_fields(
     if dataset_provenance != expected_dataset:
         raise _GlobalFailure("cell evaluator dataset cross-field provenance drifted")
     quality = provenance.get("quality_gate")
-    expected_quality = {
-        "status": "pass",
-        "observation_record_count": dataset["observation_record_count"],
-        "equipment_count": len(cell["generator_config"]["equipment"]),
-    }
-    if not isinstance(quality, Mapping) or any(quality.get(key) != value for key, value in expected_quality.items()):
+    expected_quality = dataset_ledger.get("quality_gate")
+    if not isinstance(expected_quality, Mapping) or quality != expected_quality:
         raise _CellSemanticFailure("cell evaluator quality gate cross-fields drifted")
     parameters = result.get("parameters")
     expected_parameters = {

@@ -8,7 +8,7 @@ import math
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from .generator import (
     EVENT_TYPES,
@@ -33,11 +33,42 @@ OBSERVATION_KEYS = frozenset({"timestamp", "equipment_id", "equipment_type", "op
 SIGNAL_KEYS = frozenset({"unit", "value"})
 EVENT_KEYS = frozenset({"event_id", "event_type", "equipment_id", "signal_id", "start_timestamp", "end_timestamp", "boundary_semantics", "magnitude", "description"})
 DIGEST_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+SYNTHETIC_QUALITY_CHECKS = ["strictly_increasing_utc", "catalog_sampling_interval", "unit_consistency", "quality_keys", "finite_or_null_values", "event_structure", "split_non_overlap_and_coverage", "record_counts", "fingerprint", "future_leakage"]
 
 
 class DatasetQualityError(ValueError):
     """datasetがPhase 1 Gateの品質条件を満たさない。"""
 
+
+def _require_exact_keys(value: Any, expected: set[str], label: str) -> None:
+    if not isinstance(value, dict) or set(value) != expected:
+        raise DatasetQualityError(f"{label} keys are not exact")
+
+
+def _check_synthetic_structure(dataset: dict[str, Any], split: dict[str, Any], config: dict[str, Any]) -> None:
+    _require_exact_keys(dataset, {"schema_version", "manifest_type", "dataset_id", "provenance", "data_path", "events_path", "split_manifest_path", "fingerprint_path", "generator_config_path", "summary_path", "generator_version", "seed", "sampling_interval_ms", "sample_count", "license", "equipment", "signals"}, "dataset manifest")
+    _require_exact_keys(split, {"schema_version", "manifest_type", "dataset_id", "generator_version", "seed", "sampling_interval_ms", "sample_count", "boundary_semantics", "strategies"}, "split manifest")
+    _require_exact_keys(config, {"schema_version", "config_type", "generator_version", "dataset_id", "seed", "start_timestamp", "sampling_interval_ms", "sample_count", "equipment", "regimes", "events"}, "generator config")
+    for item in dataset["equipment"]:
+        _require_exact_keys(item, {"equipment_id", "equipment_type"}, "dataset equipment")
+    for item in dataset["signals"]:
+        _require_exact_keys(item, {"signal_id", "name", "unit", "role", "sampling_interval_ms"}, "dataset signal")
+    for strategy in split["strategies"]:
+        _require_exact_keys(strategy, {"strategy", "splits"}, "split strategy")
+        for item in strategy["splits"]:
+            _require_exact_keys(item, {"split_id", "equipment_ids", "start_timestamp", "end_timestamp", "record_count"}, "split entry")
+    for item in config["equipment"]:
+        _require_exact_keys(item, {"equipment_id", "equipment_type"}, "generator equipment")
+    for item in config["regimes"]:
+        if not isinstance(item, dict):
+            raise DatasetQualityError("generator regime must be an object")
+        if set(item) not in ({"regime", "start_sample", "end_sample"}, {"regime", "recipe_step", "start_sample", "end_sample"}):
+            raise DatasetQualityError("generator regime keys are not exact")
+    for item in config["events"]:
+        if not isinstance(item, dict):
+            raise DatasetQualityError("generator event must be an object")
+        if not set(item) <= {"event_id", "event_type", "equipment_id", "signal_id", "start_sample", "end_sample", "magnitude", "enabled", "description"} or not {"event_id", "event_type", "equipment_id", "start_sample", "end_sample", "enabled"} <= set(item):
+            raise DatasetQualityError("generator event keys are not exact")
 
 def _parse_utc(value: Any) -> datetime:
     if not isinstance(value, str):
@@ -186,6 +217,8 @@ def _check_splits(split: dict[str, Any], rows: list[dict[str, Any]], expected_eq
     for strategy in strategies:
         kind = strategy["strategy"]
         splits = strategy["splits"]
+        if kind not in ("chronological", "cross_equipment"):
+            raise DatasetQualityError(f"unknown split strategy: {kind}")
         split_ids = [item["split_id"] for item in splits]
         if len(split_ids) != len(set(split_ids)):
             raise DatasetQualityError(f"duplicate split_id in {kind}")
@@ -353,8 +386,7 @@ def _check_config_semantics(config: dict[str, Any], dataset: dict[str, Any], spl
             raise DatasetQualityError(f"summary field does not match generator config: {key}")
 
 
-def _check_fingerprint(dataset_dir: Path, dataset: dict[str, Any], summary: dict[str, Any]) -> None:
-    fingerprint = load_json(_child_path(dataset_dir, dataset["fingerprint_path"]))
+def _check_fingerprint(dataset: dict[str, Any], summary: dict[str, Any], fingerprint: dict[str, Any], hash_inventory: Mapping[str, str]) -> None:
     if not isinstance(fingerprint, dict) or set(fingerprint) != FINGERPRINT_KEYS:
         raise DatasetQualityError("fingerprint keys must exactly match the generated fingerprint schema")
     if fingerprint["algorithm"] != FINGERPRINT_ALGORITHM or fingerprint["canonicalization"] != FINGERPRINT_CANONICALIZATION:
@@ -371,11 +403,11 @@ def _check_fingerprint(dataset_dir: Path, dataset: dict[str, Any], summary: dict
         raise DatasetQualityError("fingerprint file digests must be lowercase SHA-256 values")
     actual: dict[str, str] = {}
     for name in FINGERPRINT_FILE_NAMES:
-        path = dataset_dir / name
-        if not path.is_file():
-            raise DatasetQualityError(f"fingerprint required file is missing: {name}")
-        actual[name] = hashlib.sha256(path.read_bytes()).hexdigest()
-        if declared[name] != actual[name]:
+        digest = hash_inventory.get(name)
+        if not isinstance(digest, str) or not _is_digest(digest):
+            raise DatasetQualityError(f"captured fingerprint input hash is missing or invalid: {name}")
+        actual[name] = digest
+        if declared[name] != digest:
             raise DatasetQualityError(f"fingerprint hash mismatch: {name}")
     canonical_input = "".join(f"{name}\n{digest}\n" for name, digest in sorted(actual.items())).encode("utf-8")
     expected_dataset_fingerprint = hashlib.sha256(canonical_input).hexdigest()
@@ -383,6 +415,27 @@ def _check_fingerprint(dataset_dir: Path, dataset: dict[str, Any], summary: dict
         raise DatasetQualityError("fingerprint dataset_fingerprint mismatch")
     if summary.get("dataset_fingerprint") != expected_dataset_fingerprint:
         raise DatasetQualityError("summary dataset_fingerprint does not match fingerprint")
+
+
+def check_synthetic_dataset_semantics(
+    manifest: dict[str, Any],
+    split: dict[str, Any],
+    config: dict[str, Any],
+    observations: list[dict[str, Any]],
+    events: list[dict[str, Any]],
+    summary: dict[str, Any],
+    fingerprint: dict[str, Any],
+    hash_inventory: Mapping[str, str],
+) -> dict[str, Any]:
+    """Evaluate synthetic dataset quality from parsed inputs and captured file hashes only."""
+    _check_synthetic_structure(manifest, split, config)
+    per_equipment, dataset_start, dataset_end, intervals = _check_observations(observations, manifest)
+    expected_equipment = {item["equipment_id"] for item in manifest["equipment"]}
+    _check_splits(split, observations, expected_equipment, dataset_start, dataset_end)
+    _check_events(events, manifest, dataset_start, dataset_end)
+    _check_config_semantics(config, manifest, split, summary, observations, events, per_equipment, intervals)
+    _check_fingerprint(manifest, summary, fingerprint, hash_inventory)
+    return {"status": "pass", "observation_record_count": len(observations), "equipment_count": len(per_equipment), "checks": list(SYNTHETIC_QUALITY_CHECKS)}
 
 
 def _check_synthetic_dataset(dataset_dir: Path, root: Path) -> dict[str, Any]:
@@ -398,13 +451,14 @@ def _check_synthetic_dataset(dataset_dir: Path, root: Path) -> dict[str, Any]:
     rows = _load_jsonl(_child_path(dataset_dir, dataset["data_path"]))
     events = _load_jsonl(_child_path(dataset_dir, dataset["events_path"]), allow_empty=True)
     summary = load_json(_child_path(dataset_dir, dataset["summary_path"]))
-    per_equipment, dataset_start, dataset_end, intervals = _check_observations(rows, dataset)
-    expected_equipment = {item["equipment_id"] for item in dataset["equipment"]}
-    _check_splits(split, rows, expected_equipment, dataset_start, dataset_end)
-    _check_events(events, dataset, dataset_start, dataset_end)
-    _check_config_semantics(config, dataset, split, summary, rows, events, per_equipment, intervals)
-    _check_fingerprint(dataset_dir, dataset, summary)
-    return {"status": "pass", "observation_record_count": len(rows), "equipment_count": len(per_equipment), "checks": ["strictly_increasing_utc", "catalog_sampling_interval", "unit_consistency", "quality_keys", "finite_or_null_values", "event_structure", "split_non_overlap_and_coverage", "record_counts", "fingerprint", "future_leakage"]}
+    fingerprint = load_json(_child_path(dataset_dir, dataset["fingerprint_path"]))
+    hash_inventory: dict[str, str] = {}
+    for name in FINGERPRINT_FILE_NAMES:
+        path = dataset_dir / name
+        if not path.is_file():
+            raise DatasetQualityError(f"fingerprint required file is missing: {name}")
+        hash_inventory[name] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return check_synthetic_dataset_semantics(dataset, split, config, rows, events, summary, fingerprint, hash_inventory)
 
 
 def check_dataset(dataset_dir: Path, root: Path) -> dict[str, Any]:
