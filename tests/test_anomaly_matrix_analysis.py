@@ -6,6 +6,7 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import banto_ai.anomaly_matrix_analysis as analysis
 
@@ -79,6 +80,29 @@ class AnomalyMatrixAnalysisPureTests(unittest.TestCase):
         with self.assertRaises(analysis.ManifestValidationError):
             analysis.validate({"blocked": 1}, property_names)
 
+    def test_promotion_gate_schemas_are_metric_specific_and_strict(self) -> None:
+        schema = json.loads((ROOT / "schemas/anomaly-multiseed-analysis-result-v0.2.schema.json").read_text(encoding="utf-8"))
+        metric_gate = schema["$defs"]["overallIncidentPrecisionGate"]
+        valid = {"status": "pass", "point": 0.9, "ci_lower": 0.8, "ci_upper": 1.0, "threshold": {"point_min": 0.8, "ci_lower_min": 0.6}}
+        analysis.validate(valid, metric_gate, root=schema)
+        with self.assertRaises(analysis.ManifestValidationError):
+            analysis.validate({key: value for key, value in valid.items() if key != "threshold"}, metric_gate, root=schema)
+        bad_threshold = copy.deepcopy(valid)
+        bad_threshold["threshold"]["point_min"] = 0.7
+        with self.assertRaises(analysis.ManifestValidationError):
+            analysis.validate(bad_threshold, metric_gate, root=schema)
+
+        availability_gate = schema["$defs"]["signalAvailabilityGate"]
+        keys = ["motor-01.motor_current", "motor-01.motor_temperature", "motor-01.conveyor_speed", "motor-01.vibration_feature", "conveyor-01.motor_current", "conveyor-01.motor_temperature", "conveyor-01.conveyor_speed", "conveyor-01.vibration_feature"]
+        availability = {key: {"available_points": 1, "total_points": 1, "availability_ratio": 1.0} for key in keys}
+        analysis.validate({"status": "pass", "minimum": 0.95, "signals": availability}, availability_gate, root=schema)
+        with self.assertRaises(analysis.ManifestValidationError):
+            analysis.validate({"status": "pass", "minimum": 0.95, "signals": {**availability, "other.signal": availability[keys[0]]}}, availability_gate, root=schema)
+        missing_signal = dict(availability)
+        del missing_signal[keys[-1]]
+        with self.assertRaises(analysis.ManifestValidationError):
+            analysis.validate({"status": "pass", "minimum": 0.95, "signals": missing_signal}, availability_gate, root=schema)
+
     def test_cell_aggregate_preserves_fully_qualified_signal_ids(self) -> None:
         config = {
             "layouts": [{"layout_id": "layout-0", "operating_mode": "nominal"}],
@@ -109,6 +133,9 @@ class AnomalyMatrixAnalysisPureTests(unittest.TestCase):
         aggregate, slices = analysis._cell_aggregate(evaluation, cell, config)
         self.assertEqual(aggregate.availability, {"motor-01.motor_current": [1, 1]})
         self.assertEqual(slices["availability_modes"], {"motor-01.motor_current|nominal": [1, 1]})
+        self.assertEqual(len(slices["clean_slices"]), 20)
+        self.assertEqual(slices["clean_slices"]["motor-01|*"], [0.0, 1000.0])
+        self.assertEqual(slices["clean_slices"]["conveyor-01|*"], [0.0, 0.0])
 
         malformed = copy.deepcopy(evaluation)
         malformed["scores"][0]["signal_id"] = "conveyor-01.motor_current"
@@ -163,3 +190,27 @@ class AnomalyMatrixAnalysisPureTests(unittest.TestCase):
             config_path.write_text(json.dumps(config), encoding="utf-8")
             with self.assertRaises(analysis.AnomalyMatrixAnalysisError):
                 analysis.validate_analysis_config(root=repository)
+
+    def test_config_validation_rechecks_all_inputs_for_toctou_drift(self) -> None:
+        files = (
+            "examples/configs/anomaly-multiseed-analysis-v0.2.json",
+            "schemas/anomaly-multiseed-analysis-config-v0.2.schema.json",
+            "schemas/anomaly-multiseed-analysis-result-v0.2.schema.json",
+            "examples/configs/anomaly-multiseed-v0.2.json",
+            "schemas/anomaly-multiseed-matrix-result-v0.2.schema.json",
+        )
+        for mutated in files[:3]:
+            with self.subTest(mutated=mutated), tempfile.TemporaryDirectory(prefix="analysis-toctou-") as raw:
+                repository = Path(raw)
+                for relative in files:
+                    target = repository / relative
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(ROOT / relative, target)
+
+                def mutate(repo: Path, _config_path: str | Path) -> None:
+                    target = repo / mutated
+                    target.write_bytes(target.read_bytes() + b" ")
+
+                with patch.object(analysis, "_ANALYSIS_VALIDATION_FINAL_READ_HOOK", mutate):
+                    with self.assertRaises(analysis.AnomalyMatrixAnalysisError):
+                        analysis.validate_analysis_config(root=repository)

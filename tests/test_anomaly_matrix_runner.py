@@ -14,6 +14,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 import banto_ai.anomaly_evaluation as anomaly_evaluation
+import banto_ai.anomaly_matrix_analysis as analysis_module
 import banto_ai.anomaly_matrix_runner as runner_module
 import banto_ai.quality as quality_module
 from banto_ai.anomaly_evaluation import AnomalyEvaluationError, _canonical_json, _evaluate_core
@@ -78,7 +79,7 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         shutil.rmtree(cls.repo_root, ignore_errors=True)
 
     def tearDown(self) -> None:
-        for output_name in ("anomaly-multiseed-v01", "anomaly-multiseed-v02"):
+        for output_name in ("anomaly-multiseed-v01", "anomaly-multiseed-v02", "anomaly-multiseed-v02-analysis"):
             output = self.repo_root / "artifacts" / output_name
             if output.exists() and not output.is_symlink():
                 shutil.rmtree(output, ignore_errors=True)
@@ -89,6 +90,7 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
     def setUp(self) -> None:
         self.generator_calls: list[tuple[int, str]] = []
         self.evaluator_calls: list[str] = []
+        self.analysis_all_modes = False
 
     def _output(self, config_path: Path | None = None) -> Path:
         if config_path is None:
@@ -116,7 +118,7 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
                 "magnitude": event["magnitude"],
                 "description": event["description"],
             })
-        observation_indices = [*range(540, 552), *range(720, 750)]
+        observation_indices = list(range(540, 900)) if self.analysis_all_modes else [*range(540, 552), *range(720, 750)]
         observations = []
         for item in config["equipment"]:
             catalog = {
@@ -210,7 +212,9 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
     ) -> dict:
         """Strict quality contract for the intentionally sparse test-only fixture."""
         quality_module._check_synthetic_structure(manifest, split, config)
-        if len(observations) == 84:
+        if len(observations) == 720:
+            expected_indices = list(range(540, 900))
+        elif len(observations) == 84:
             expected_indices = [*range(540, 552), *range(720, 750)]
         elif len(observations) == 60:
             expected_indices = [*range(720, 750)]
@@ -426,6 +430,46 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         self.assertEqual(result["counts"], {"total": 120, "success": 120, "partial": 0, "inconclusive": 0, "failed": 0})
         self.assertEqual(result["provenance"]["inputs"]["matrix_config"]["path"], "examples/configs/anomaly-multiseed-v0.2.json")
         self.assertEqual(result["provenance"]["inputs"]["matrix_schema"]["path"], "schemas/anomaly-multiseed-matrix-config-v0.2.schema.json")
+
+    def test_v02_fake_analysis_e2e_is_read_only_and_schema_valid(self) -> None:
+        self.analysis_all_modes = True
+        matrix_output = self._run(config_path=CONFIG_V02_PATH)
+        matrix_result = load_json(matrix_output / "result.json")
+        self.assertEqual(matrix_result["counts"]["success"], 120, [cell for cell in matrix_result["cells"] if cell["status"] != "success"])
+        before = runner_module._tree_snapshot(matrix_output, "fake matrix before analysis", containment_root=ROOT, failure_scope="global")
+        with patch.object(runner_module, "_require_revision", return_value=copy.deepcopy(REVISION)):
+            with patch.object(runner_module.quality, "check_synthetic_dataset_semantics", side_effect=self._compact_quality_semantics):
+                analysis_output = analysis_module.analyze_anomaly_matrix(root=ROOT)
+        result = load_json(analysis_output / "result.json")
+        validate(result, load_json(ROOT / "schemas/anomaly-multiseed-analysis-result-v0.2.schema.json"))
+        self.assertEqual(result["counts"]["cells_verified"], 120)
+        self.assertEqual(len(result["estimates"]["incident_slices"]), 34)
+        self.assertEqual(len(result["estimates"]["precision_slices"]), 20)
+        self.assertEqual(len(result["estimates"]["clean_alert_slices"]), 20)
+        self.assertEqual(len(result["estimates"]["availability_by_mode"]), 48)
+        marker = load_json(analysis_output / ".complete")
+        result_raw = (analysis_output / "result.json").read_bytes()
+        summary_raw = (analysis_output / "summary.md").read_bytes()
+        self.assertEqual(marker["result_sha256"], hashlib.sha256(result_raw).hexdigest())
+        self.assertEqual(marker["summary_sha256"], hashlib.sha256(summary_raw).hexdigest())
+        after = runner_module._tree_snapshot(matrix_output, "fake matrix after analysis", containment_root=ROOT, failure_scope="global")
+        self.assertEqual(before, after)
+
+    def test_v02_analysis_rejects_matrix_mutation_before_marker(self) -> None:
+        self.analysis_all_modes = True
+        matrix_output = self._run(config_path=CONFIG_V02_PATH)
+        original_publish = analysis_module._publish_analysis
+
+        def mutate_then_publish(root: Path, output: Path, result: dict, callback):
+            summary = matrix_output / "summary.md"
+            summary.write_bytes(summary.read_bytes() + b" ")
+            return original_publish(root, output, result, callback)
+
+        with patch.object(runner_module, "_require_revision", return_value=copy.deepcopy(REVISION)):
+            with patch.object(runner_module.quality, "check_synthetic_dataset_semantics", side_effect=self._compact_quality_semantics):
+                with patch.object(analysis_module, "_publish_analysis", side_effect=mutate_then_publish):
+                    with self.assertRaises(analysis_module.AnalysisGlobalFailure):
+                        analysis_module.analyze_anomaly_matrix(root=ROOT)
 
     @staticmethod
     def _expected_cell_ids(config_path: Path) -> list[str]:

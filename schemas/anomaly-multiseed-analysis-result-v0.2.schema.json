@@ -214,13 +214,25 @@
               "additionalProperties": false,
               "required": [
                 "path",
-                "inventory_sha256"
+                "inventory_sha256",
+                "result_sha256",
+                "summary_sha256",
+                "completion_marker_sha256"
               ],
               "properties": {
                 "path": {
                   "$ref": "#/$defs/path"
                 },
                 "inventory_sha256": {
+                  "$ref": "#/$defs/digest"
+                },
+                "result_sha256": {
+                  "$ref": "#/$defs/digest"
+                },
+                "summary_sha256": {
+                  "$ref": "#/$defs/digest"
+                },
+                "completion_marker_sha256": {
                   "$ref": "#/$defs/digest"
                 }
               }
@@ -813,11 +825,43 @@
         }
       }
     },
-    "gate": {
+    "gates": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "status"
+        "overall_incident_precision",
+        "machine_fault_recall",
+        "sensor_fault_recall",
+        "clean_false_alerts_per_8_equipment_hours",
+        "signal_availability"
+      ],
+      "properties": {
+        "overall_incident_precision": {
+          "$ref": "#/$defs/overallIncidentPrecisionGate"
+        },
+        "machine_fault_recall": {
+          "$ref": "#/$defs/machineFaultRecallGate"
+        },
+        "sensor_fault_recall": {
+          "$ref": "#/$defs/sensorFaultRecallGate"
+        },
+        "clean_false_alerts_per_8_equipment_hours": {
+          "$ref": "#/$defs/cleanFalseAlertGate"
+        },
+        "signal_availability": {
+          "$ref": "#/$defs/signalAvailabilityGate"
+        }
+      }
+    },
+    "overallIncidentPrecisionGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "point",
+        "ci_lower",
+        "ci_upper",
+        "threshold"
       ],
       "properties": {
         "status": {
@@ -831,56 +875,284 @@
           "type": [
             "number",
             "null"
-          ]
+          ],
+          "minimum": 0,
+          "maximum": 1
         },
         "ci_lower": {
           "type": [
             "number",
             "null"
-          ]
+          ],
+          "minimum": 0,
+          "maximum": 1
         },
         "ci_upper": {
           "type": [
             "number",
             "null"
-          ]
+          ],
+          "minimum": 0,
+          "maximum": 1
         },
         "threshold": {
-          "type": "object"
-        },
-        "minimum": {
-          "type": "number"
-        },
-        "signals": {
-          "type": "object"
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "point_min",
+            "ci_lower_min"
+          ],
+          "properties": {
+            "point_min": {
+              "const": 0.8
+            },
+            "ci_lower_min": {
+              "const": 0.6
+            }
+          }
         }
       }
     },
-    "gates": {
+    "machineFaultRecallGate": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "overall_incident_precision",
-        "machine_fault_recall",
-        "sensor_fault_recall",
-        "clean_false_alerts_per_8_equipment_hours",
-        "signal_availability"
+        "status",
+        "point",
+        "ci_lower",
+        "ci_upper",
+        "threshold"
       ],
       "properties": {
-        "overall_incident_precision": {
-          "$ref": "#/$defs/gate"
+        "status": {
+          "enum": [
+            "pass",
+            "fail",
+            "inconclusive"
+          ]
         },
-        "machine_fault_recall": {
-          "$ref": "#/$defs/gate"
+        "point": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
         },
-        "sensor_fault_recall": {
-          "$ref": "#/$defs/gate"
+        "ci_lower": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
         },
-        "clean_false_alerts_per_8_equipment_hours": {
-          "$ref": "#/$defs/gate"
+        "ci_upper": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
         },
-        "signal_availability": {
-          "$ref": "#/$defs/gate"
+        "threshold": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "point_min",
+            "ci_lower_min"
+          ],
+          "properties": {
+            "point_min": {
+              "const": 0.8
+            },
+            "ci_lower_min": {
+              "const": 0.6
+            }
+          }
+        }
+      }
+    },
+    "sensorFaultRecallGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "point",
+        "ci_lower",
+        "ci_upper",
+        "threshold"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "pass",
+            "fail",
+            "inconclusive"
+          ]
+        },
+        "point": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "ci_lower": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "ci_upper": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "threshold": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "point_min",
+            "ci_lower_min"
+          ],
+          "properties": {
+            "point_min": {
+              "const": 0.9
+            },
+            "ci_lower_min": {
+              "const": 0.75
+            }
+          }
+        }
+      }
+    },
+    "cleanFalseAlertGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "point",
+        "ci_lower",
+        "ci_upper",
+        "threshold"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "pass",
+            "fail",
+            "inconclusive"
+          ]
+        },
+        "point": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "ci_lower": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "ci_upper": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "threshold": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "point_max",
+            "ci_upper_max"
+          ],
+          "properties": {
+            "point_max": {
+              "const": 1.0
+            },
+            "ci_upper_max": {
+              "const": 2.0
+            }
+          }
+        }
+      }
+    },
+    "signalAvailabilityGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "minimum",
+        "signals"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "pass",
+            "fail",
+            "inconclusive"
+          ]
+        },
+        "minimum": {
+          "const": 0.95
+        },
+        "signals": {
+          "type": "object",
+          "minProperties": 8,
+          "maxProperties": 8,
+          "additionalProperties": false,
+          "propertyNames": {
+            "pattern": "^(motor-01|conveyor-01)\\.(motor_current|motor_temperature|conveyor_speed|vibration_feature)$"
+          },
+          "properties": {
+            "motor-01.motor_current": {
+              "$ref": "#/$defs/availability"
+            },
+            "motor-01.motor_temperature": {
+              "$ref": "#/$defs/availability"
+            },
+            "motor-01.conveyor_speed": {
+              "$ref": "#/$defs/availability"
+            },
+            "motor-01.vibration_feature": {
+              "$ref": "#/$defs/availability"
+            },
+            "conveyor-01.motor_current": {
+              "$ref": "#/$defs/availability"
+            },
+            "conveyor-01.motor_temperature": {
+              "$ref": "#/$defs/availability"
+            },
+            "conveyor-01.conveyor_speed": {
+              "$ref": "#/$defs/availability"
+            },
+            "conveyor-01.vibration_feature": {
+              "$ref": "#/$defs/availability"
+            }
+          },
+          "required": [
+            "motor-01.motor_current",
+            "motor-01.motor_temperature",
+            "motor-01.conveyor_speed",
+            "motor-01.vibration_feature",
+            "conveyor-01.motor_current",
+            "conveyor-01.motor_temperature",
+            "conveyor-01.conveyor_speed",
+            "conveyor-01.vibration_feature"
+          ]
         }
       }
     }

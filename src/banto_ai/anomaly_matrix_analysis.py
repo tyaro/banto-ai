@@ -49,13 +49,14 @@ PROMOTION_THRESHOLDS = {
 }
 
 # Filled after the two new JSON contracts are added.
-EXPECTED_ANALYSIS_SCHEMA_CANONICAL_SHA256 = "cdb854d1a4cc2efabde81208875cf7091aa7e780ab550748cd227a72bde17c8a"
-EXPECTED_ANALYSIS_CONFIG_CANONICAL_SHA256 = "c34dfbc074fd6185a69ce0bb5d3cc0df184efb53bd9e76aa53641e91823e23b4"
-EXPECTED_ANALYSIS_RESULT_SCHEMA_CANONICAL_SHA256 = "5a4250bb99ef8900825bb1547d318ec986129822517fecb7b3be5ec85de8acef"
+EXPECTED_ANALYSIS_SCHEMA_CANONICAL_SHA256 = "341d17dda8f05d445804d8cdf634f503e842d00c55b13426f69b2c8cb475d72e"
+EXPECTED_ANALYSIS_CONFIG_CANONICAL_SHA256 = "ece142d3f28611fc793987b1138bf462c2559204539fc1ae9a42e6fc885b4c7c"
+EXPECTED_ANALYSIS_RESULT_SCHEMA_CANONICAL_SHA256 = "d3796f455c728beefb359ba73f27ab402a9231c122c04c16a602034dece11cfc"
 EXPECTED_MATRIX_CONFIG_CANONICAL_SHA256 = anomaly_matrix.EXPECTED_V02_CONFIG_CANONICAL_SHA256
 EXPECTED_MATRIX_RESULT_SCHEMA_CANONICAL_SHA256 = anomaly_matrix.EXPECTED_V02_RESULT_SCHEMA_CANONICAL_SHA256
 DATASET_FILE_NAMES = frozenset(("dataset-manifest.json", "generator-config.json", "observations.jsonl", "events.jsonl", "split-manifest.json", "summary.json", "fingerprint.json"))
 EVALUATION_FILE_NAMES = frozenset(("result.json", "summary.md", ".complete"))
+_ANALYSIS_VALIDATION_FINAL_READ_HOOK: Any = None
 
 
 class AnomalyMatrixAnalysisError(ValueError):
@@ -166,7 +167,7 @@ def validate_analysis_config(config_path: str | Path = ANALYSIS_CONFIG_PATH, roo
     _require_exact(config.get("result_schema_path"), ANALYSIS_RESULT_SCHEMA_PATH, "result_schema_path")
     _require_exact(config.get("result_schema_canonical_sha256"), EXPECTED_ANALYSIS_RESULT_SCHEMA_CANONICAL_SHA256, "result_schema_canonical_sha256")
     result_schema_path = anomaly_matrix._safe_repo_path(repository, config["result_schema_path"], "result_schema_path", must_exist=True)
-    _result_schema, _result_raw, _result_raw_sha, result_canonical_sha = _strict_object(result_schema_path, "analysis result schema")
+    result_schema, result_raw, result_raw_sha, result_canonical_sha = _strict_object(result_schema_path, "analysis result schema")
     if result_canonical_sha != EXPECTED_ANALYSIS_RESULT_SCHEMA_CANONICAL_SHA256 or result_canonical_sha != config["result_schema_canonical_sha256"]:
         raise AnomalyMatrixAnalysisError("analysis result schema canonical SHA-256 pin is invalid")
     _profile_config_path(repository, config["matrix_config_path"], "matrix_config_path")
@@ -185,6 +186,15 @@ def validate_analysis_config(config_path: str | Path = ANALYSIS_CONFIG_PATH, roo
         "percentile_method": "linear_interpolation_n_minus_1",
     }, "bootstrap")
     _require_exact(config.get("promotion_thresholds"), PROMOTION_THRESHOLDS, "promotion_thresholds")
+    if _ANALYSIS_VALIDATION_FINAL_READ_HOOK is not None:
+        _ANALYSIS_VALIDATION_FINAL_READ_HOOK(repository, config_path)
+    final_config, final_config_source, final_schema_source = _load_analysis_inputs(config_path, repository)
+    final_result_path = anomaly_matrix._safe_repo_path(repository, final_config["result_schema_path"], "result_schema_path final read", must_exist=True)
+    final_result_schema, final_result_raw, final_result_raw_sha, final_result_canonical_sha = _strict_object(final_result_path, "analysis result schema final read")
+    if (final_config != config or final_config_source != config_source or final_schema_source != schema_source
+            or final_result_schema != result_schema or final_result_raw != result_raw
+            or final_result_raw_sha != result_raw_sha or final_result_canonical_sha != result_canonical_sha):
+        raise AnomalyMatrixAnalysisError("analysis config or schema inputs changed during validation")
     return {
         "schema_version": ANALYSIS_SCHEMA_VERSION,
         "summary_type": "event-aware-anomaly-matrix-analysis-validation",
@@ -621,7 +631,7 @@ def _cell_aggregate(evaluation: Mapping[str, Any], cell: Mapping[str, Any], conf
         row = clean_slices.setdefault(key, [0.0, 0.0])
         row[0] = float(len(merged))
     mode_rows = {key: list(row) for key, row in clean_slices.items() if "|" in key and not key.endswith("|*") and not key.startswith("*|")}
-    overall_counts: dict[str, int] = {}
+    overall_counts: dict[str, int] = {"motor-01": 0, "conveyor-01": 0}
     for equipment_id, intervals in overall_clean_intervals.items():
         merged: list[tuple[int, int]] = []
         for start, end in sorted(intervals):
@@ -860,12 +870,13 @@ def analyze_anomaly_matrix(config_path: str | Path = ANALYSIS_CONFIG_PATH, root:
         if cell["status"] != "success":
             raise AnalysisGlobalFailure("analysis requires every matrix cell to be successful")
         evaluation, expected, cell_files, cell_dirs = _verify_cell_and_collect(cell, matrix_config, base, repository, input_root, sources, values, revision)
-        expected["_generator_config"] = expected["generator_config"]
         expected_files.update(f"configs/generator/{cell['cell_id']}.json" for _ in [0])
         expected_files.update(f"configs/evaluator/{cell['cell_id']}.json" for _ in [0])
         expected_files.update(cell_files)
         expected_dirs.update(cell_dirs)
-        aggregate, slices = _cell_aggregate(evaluation, cell, matrix_config)
+        aggregate_cell = dict(cell)
+        aggregate_cell["_generator_config"] = expected["generator_config"]
+        aggregate, slices = _cell_aggregate(evaluation, aggregate_cell, matrix_config)
         seed_index = matrix_config["seeds"].index(cell["seed"])
         seed_aggregates[seed_index].add(aggregate)
         for key, row in slices["incident_slices"].items():
@@ -908,9 +919,16 @@ def analyze_anomaly_matrix(config_path: str | Path = ANALYSIS_CONFIG_PATH, root:
             equipment_exposure = sum(seed[f"{equipment}|{mode}"][1] for equipment in ("motor-01", "conveyor-01"))
             if seed[f"*|{mode}"][1] != equipment_exposure:
                 raise AnalysisGlobalFailure("clean mode exposure is not an exact equipment sum")
-    for seed in seed_availability_modes:
+    for seed_index, seed in enumerate(seed_availability_modes):
         if set(seed) != expected_mode_keys or any(row[1] == 0 for row in seed.values()):
             raise AnalysisGlobalFailure("a seed cluster is missing one or more signal×mode availability slices")
+        reconciled = {signal: [0, 0] for signal in expected_signals}
+        for key, row in seed.items():
+            signal, _mode = key.rsplit("|", 1)
+            reconciled[signal][0] += row[0]
+            reconciled[signal][1] += row[1]
+        if seed_aggregates[seed_index].availability != reconciled:
+            raise AnalysisGlobalFailure("per-seed signal×mode availability does not reconcile to signal availability")
     expected_precision_keys = {f"{equipment}|*" for equipment in ("motor-01", "conveyor-01")}
     expected_precision_keys |= {f"*|{mode}" for mode in expected_modes}
     expected_precision_keys |= {f"{equipment}|{mode}" for equipment in ("motor-01", "conveyor-01") for mode in expected_modes}
@@ -978,6 +996,13 @@ def analyze_anomaly_matrix(config_path: str | Path = ANALYSIS_CONFIG_PATH, root:
         mode_availability[key] = {"available_points": row[0], "total_points": row[1], "availability_ratio": point, "ci": ci}
     if set(mode_availability) != expected_mode_keys:
         raise AnalysisGlobalFailure("signal×mode availability key set is incomplete or mixed")
+    for signal in expected_signals:
+        reconciled = [
+            sum(mode_availability_rows[f"{signal}|{mode}"][0] for mode in expected_modes),
+            sum(mode_availability_rows[f"{signal}|{mode}"][1] for mode in expected_modes),
+        ]
+        if combined.availability.get(signal) != reconciled:
+            raise AnalysisGlobalFailure("combined signal×mode availability does not reconcile to signal availability")
     expected_clean_keys = {f"{equipment}|{mode}" for equipment in ("motor-01", "conveyor-01") for mode in expected_modes}
     expected_clean_keys |= {f"{equipment}|*" for equipment in ("motor-01", "conveyor-01")}
     expected_clean_keys |= {f"*|{mode}" for mode in expected_modes}
@@ -1015,7 +1040,7 @@ def analyze_anomaly_matrix(config_path: str | Path = ANALYSIS_CONFIG_PATH, root:
         "performance_status": performance_status,
         "provenance": {
             "canonicalization": CANONICALIZATION_ID,
-            "inputs": {"analysis_config": {"path": analysis_source["path"], "raw_sha256": analysis_source["raw_sha256"], "canonical_sha256": analysis_source["canonical_sha256"]}, "analysis_schema": {"path": analysis_schema_source["path"], "raw_sha256": analysis_schema_source["raw_sha256"], "canonical_sha256": analysis_schema_source["canonical_sha256"]}, "analysis_result_schema": {"path": ANALYSIS_RESULT_SCHEMA_PATH, "raw_sha256": analysis_result_schema_raw_sha, "canonical_sha256": analysis_result_schema_canonical_sha}, "matrix_artifact": {"path": analysis_config["input_root"], "inventory_sha256": _sha256(_canonical_json(input_snapshot))}, "matrix_sources": {key: {"path": value["path"], "raw_sha256": value["raw_sha256"], "canonical_sha256": value["canonical_sha256"]} for key, value in sources.items() if not key.startswith("_")}},
+            "inputs": {"analysis_config": {"path": analysis_source["path"], "raw_sha256": analysis_source["raw_sha256"], "canonical_sha256": analysis_source["canonical_sha256"]}, "analysis_schema": {"path": analysis_schema_source["path"], "raw_sha256": analysis_schema_source["raw_sha256"], "canonical_sha256": analysis_schema_source["canonical_sha256"]}, "analysis_result_schema": {"path": ANALYSIS_RESULT_SCHEMA_PATH, "raw_sha256": analysis_result_schema_raw_sha, "canonical_sha256": analysis_result_schema_canonical_sha}, "matrix_artifact": {"path": analysis_config["input_root"], "inventory_sha256": _sha256(_canonical_json(input_snapshot)), "result_sha256": result_sha, "summary_sha256": _sha256(summary_raw), "completion_marker_sha256": _marker_sha}, "matrix_sources": {key: {"path": value["path"], "raw_sha256": value["raw_sha256"], "canonical_sha256": value["canonical_sha256"]} for key, value in sources.items() if not key.startswith("_")}},
             "code_revision": revision,
             "bootstrap_algorithm_id": BOOTSTRAP_ALGORITHM_ID,
             "bootstrap_draw_digest": draw_digest,
@@ -1040,6 +1065,9 @@ def analyze_anomaly_matrix(config_path: str | Path = ANALYSIS_CONFIG_PATH, root:
             raise AnalysisGlobalFailure("analysis result schema changed before marker")
         validate(result_out, current_result_schema)
         runner._assert_inputs_unchanged(repository, sources, values, "analysis-before-marker")
+        current_input_snapshot = runner._tree_snapshot(input_root, "matrix artifact before analysis marker", containment_root=repository, failure_scope="global")
+        if current_input_snapshot != input_snapshot:
+            raise AnalysisGlobalFailure("matrix artifact changed before analysis marker")
         runner._require_revision(repository, revision, "analysis-before-marker")
     return _publish_analysis(repository, output_root, result_out, verify_before_marker)
 
