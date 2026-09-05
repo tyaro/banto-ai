@@ -27,6 +27,10 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 - 本番中の適応処理はデフォルトで無効にします。試運転モードと shadow モードは明示的な状態として扱います。
 - すべての結果に、データの出所、設定、コードリビジョン、評価指標、既知の制約を記録します。
 
+## event-aware anomaly evaluation v0.2
+
+正式な 10 seed × 12 layout replay と read-only analysis を完了しました。engineering gate は pass でしたが、5つの performance promotion gate はすべて fail のため、この baseline は昇格せず比較用として扱います。詳細は [`docs/results/anomaly-multiseed-v02-evaluation-2026-09-05.md`](docs/results/anomaly-multiseed-v02-evaluation-2026-09-05.md) を参照してください。これは TimesFM3 の性能結果ではありません。
+
 ## ライセンス
 
 このリポジトリのソースコードと文書は [MIT License](LICENSE) です。

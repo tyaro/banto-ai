@@ -66,7 +66,7 @@ python tools/evaluator/validate_anomaly_matrix.py --root . --config examples/con
 
 正本schemaは [`schemas/anomaly-multiseed-matrix-config.schema.json`](../../schemas/anomaly-multiseed-matrix-config.schema.json)、固定configは [`examples/configs/anomaly-multiseed-v0.1.json`](../../examples/configs/anomaly-multiseed-v0.1.json)、preregistration本文は [`docs/anomaly-multiseed-evaluation-plan.md`](../../docs/anomaly-multiseed-evaluation-plan.md) です。Savepoint B runnerのresult schemaは [`schemas/anomaly-multiseed-matrix-result.schema.json`](../../schemas/anomaly-multiseed-matrix-result.schema.json) です。
 
-summary integrity fix後の次versionは [`v0.2 preregistration`](../../docs/anomaly-multiseed-evaluation-plan-v0.2.md) に固定する。v0.2 validatorは [`schemas/anomaly-multiseed-matrix-config-v0.2.schema.json`](../../schemas/anomaly-multiseed-matrix-config-v0.2.schema.json) と [`examples/configs/anomaly-multiseed-v0.2.json`](../../examples/configs/anomaly-multiseed-v0.2.json) を使い、matrix id `anomaly-multiseed-v02`、output root `artifacts/anomaly-multiseed-v02`、v0.2 result schema [`schemas/anomaly-multiseed-matrix-result-v0.2.schema.json`](../../schemas/anomaly-multiseed-matrix-result-v0.2.schema.json) を選択する。v0.1のREJECT artifactは変更せず、v0.2 formal runは未実施である。
+summary integrity fix後の次versionとして固定した [`v0.2 preregistration`](../../docs/anomaly-multiseed-evaluation-plan-v0.2.md) に基づく formal replay を完了した。v0.2 validatorは [`schemas/anomaly-multiseed-matrix-config-v0.2.schema.json`](../../schemas/anomaly-multiseed-matrix-config-v0.2.schema.json) と [`examples/configs/anomaly-multiseed-v0.2.json`](../../examples/configs/anomaly-multiseed-v0.2.json) を使い、matrix id `anomaly-multiseed-v02`、output root `artifacts/anomaly-multiseed-v02`、v0.2 result schema [`schemas/anomaly-multiseed-matrix-result-v0.2.schema.json`](../../schemas/anomaly-multiseed-matrix-result-v0.2.schema.json) を選択する。120/120 cells success、engineering gate `pass`、analysis performance gate `fail` で、baselineは昇格しない。v0.1のREJECT artifactは変更していない。結果は[`v0.2 evaluation`](../../docs/results/anomaly-multiseed-v02-evaluation-2026-09-05.md)に記録する。
 
 standalone analysisの固定configは [`examples/configs/anomaly-multiseed-analysis-v0.2.json`](../../examples/configs/anomaly-multiseed-analysis-v0.2.json)、strict result schemaは [`schemas/anomaly-multiseed-analysis-result-v0.2.schema.json`](../../schemas/anomaly-multiseed-analysis-result-v0.2.schema.json) である。analysisはmatrix artifactへwriteせず、seed-cluster ratio-of-sums、stable SHA-256 bootstrap、95% percentile CI、promotion gateを実行する。configだけを検査する場合は `--validate-only` を使う。
 
@@ -88,7 +88,7 @@ python tools/evaluator/run_anomaly_matrix.py --root . --config examples/configs/
 python tools/evaluator/run_anomaly_matrix.py --root . --config examples/configs/anomaly-multiseed-v0.1.json --recover-incomplete
 ```
 
-Savepoint B実装の確認時点では実120-cell run、bootstrap、performance判定を実行していないため、`run_status=not_run`、`performance_status=not_evaluated`です。customer data、checkpoint／weights、control write、Banto Hub writeはありません。
+Savepoint B実装に基づくv0.2の実120-cell runとstandalone analysis、bootstrap、performance判定は完了した。matrixは`run_status=complete`、status `pass`、engineering `pass`、`performance_status=not_evaluated`、analysisはengineering `pass`、performance／overall `fail` である。5つのpromotion gateはすべてfailしたため、baselineを昇格しない。customer data、checkpoint／weights、control write、Banto Hub writeはない。詳細は[`v0.2 evaluation`](../../docs/results/anomaly-multiseed-v02-evaluation-2026-09-05.md)を参照。
 
 ## event-aware anomaly evaluation
 
