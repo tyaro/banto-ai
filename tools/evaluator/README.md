@@ -70,6 +70,14 @@ summary integrity fix後の次versionとして固定した [`v0.2 preregistratio
 
 standalone analysisの固定configは [`examples/configs/anomaly-multiseed-analysis-v0.2.json`](../../examples/configs/anomaly-multiseed-analysis-v0.2.json)、strict result schemaは [`schemas/anomaly-multiseed-analysis-result-v0.2.schema.json`](../../schemas/anomaly-multiseed-analysis-result-v0.2.schema.json) である。analysisはmatrix artifactへwriteせず、seed-cluster ratio-of-sums、stable SHA-256 bootstrap、95% percentile CI、promotion gateを実行する。configだけを検査する場合は `--validate-only` を使う。
 
+### exploratory failure diagnostics D1
+
+正式 v0.2 artifact の post-hoc exploratory failure diagnostics は [`docs/anomaly-multiseed-failure-diagnostics-plan-v0.1.md`](../../docs/anomaly-multiseed-failure-diagnostics-plan-v0.1.md)、[`examples/configs/anomaly-multiseed-failure-diagnostics-v0.1.json`](../../examples/configs/anomaly-multiseed-failure-diagnostics-v0.1.json)、[`schemas/anomaly-multiseed-failure-diagnostics-config-v0.1.schema.json`](../../schemas/anomaly-multiseed-failure-diagnostics-config-v0.1.schema.json)、[`schemas/anomaly-multiseed-failure-diagnostics-result-v0.1.schema.json`](../../schemas/anomaly-multiseed-failure-diagnostics-result-v0.1.schema.json) に固定する。D1 は config-only validation であり、diagnostics は未実施、result／summary／marker は未publishである。input artifact、formal result、customer data、network、control／Banto Hub writeには触れない。result shape は exploratory_only=true、promotion_eligible=false、performance_status=not_evaluated を固定し、promotion gates／alternative thresholds／winner を含めない。structural cardinality と incident／clean-alert／availability／calibration ledger contract は outcome ではなく D2 implementation の固定境界である。
+
+```text
+python tools/evaluator/diagnose_anomaly_matrix.py --root . --config examples/configs/anomaly-multiseed-failure-diagnostics-v0.1.json --validate-only
+```
+
 ```text
 python tools/evaluator/validate_anomaly_matrix.py --root . --config examples/configs/anomaly-multiseed-v0.2.json
 python tools/evaluator/run_anomaly_matrix.py --root . --config examples/configs/anomaly-multiseed-v0.2.json

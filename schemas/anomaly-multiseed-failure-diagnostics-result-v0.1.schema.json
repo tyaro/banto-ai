@@ -1,0 +1,302 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tyaro/banto-ai/schemas/anomaly-multiseed-failure-diagnostics-result-v0.1.schema.json",
+  "title": "banto-ai exploratory v0.2 anomaly failure diagnostics result v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "result_type", "diagnostics_id", "matrix_id", "status", "run_status", "engineering_status", "performance_status", "exploratory_only", "promotion_eligible", "provenance", "counts", "ledger", "aggregates", "reconciliation", "limitations"],
+  "properties": {
+    "schema_version": {"const": "0.1"},
+    "result_type": {"const": "event-aware-anomaly-failure-diagnostics"},
+    "diagnostics_id": {"const": "anomaly-multiseed-v02-diagnostics-v01"},
+    "matrix_id": {"const": "anomaly-multiseed-v02"},
+    "status": {"const": "complete"},
+    "run_status": {"const": "complete"},
+    "engineering_status": {"enum": ["pass", "fail", "inconclusive"]},
+    "performance_status": {"const": "not_evaluated"},
+    "exploratory_only": {"const": true},
+    "promotion_eligible": {"const": false},
+    "provenance": {"$ref": "#/$defs/provenance"},
+    "counts": {"$ref": "#/$defs/counts"},
+    "ledger": {"$ref": "#/$defs/ledger"},
+    "aggregates": {"$ref": "#/$defs/aggregates"},
+    "reconciliation": {"$ref": "#/$defs/reconciliation"},
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "path": {"type": "string", "pattern": "^(?!.*//)(?!.*(?:^|/)[.]{1,2}(?:/|$))(?!.*/$)[A-Za-z0-9][A-Za-z0-9._/-]*$"},
+    "revision": {
+      "type": "object", "additionalProperties": false,
+      "required": ["status", "head", "dirty", "diff_sha256"],
+      "properties": {
+        "status": {"const": "git"},
+        "head": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "dirty": {"const": false},
+        "diff_sha256": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {"path": {"$ref": "#/$defs/path"}, "sha256": {"$ref": "#/$defs/digest"}}
+    },
+    "artifact": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "result_sha256", "summary_sha256", "completion_marker_sha256", "inventory_sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "result_sha256": {"$ref": "#/$defs/digest"},
+        "summary_sha256": {"$ref": "#/$defs/digest"},
+        "completion_marker_sha256": {"$ref": "#/$defs/digest"},
+        "inventory_sha256": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "snapshot": {
+      "type": "object", "additionalProperties": false,
+      "required": ["before_inventory_sha256", "after_inventory_sha256", "equal"],
+      "properties": {
+        "before_inventory_sha256": {"$ref": "#/$defs/digest"},
+        "after_inventory_sha256": {"$ref": "#/$defs/digest"},
+        "equal": {"const": true}
+      }
+    },
+    "sourceComparison": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "artifact_blob_sha256", "current_raw_sha256"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "artifact_blob_sha256": {"$ref": "#/$defs/digest"},
+        "current_raw_sha256": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "revisionCompatibility": {
+      "type": "object", "additionalProperties": false,
+      "required": ["policy", "artifact_revision", "semantic_sources", "current_only_paths", "current_d2_diagnostics"],
+      "properties": {
+        "policy": {"type": "string", "minLength": 1},
+        "artifact_revision": {"$ref": "#/$defs/revision"},
+        "semantic_sources": {"type": "array", "items": {"$ref": "#/$defs/sourceComparison"}},
+        "current_only_paths": {"type": "array", "items": {"$ref": "#/$defs/path"}},
+        "current_d2_diagnostics": {"$ref": "#/$defs/d2Diagnostics"}
+      }
+    },
+    "d2Diagnostics": {
+      "type": "object", "additionalProperties": false,
+      "required": ["module_raw_sha256", "cli_raw_sha256", "renderer_raw_sha256", "schema_raw_sha256", "config_raw_sha256"],
+      "properties": {
+        "module_raw_sha256": {"$ref": "#/$defs/digest"},
+        "cli_raw_sha256": {"$ref": "#/$defs/digest"},
+        "renderer_raw_sha256": {"$ref": "#/$defs/digest"},
+        "schema_raw_sha256": {"$ref": "#/$defs/digest"},
+        "config_raw_sha256": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "provenance": {
+      "type": "object", "additionalProperties": false,
+      "required": ["canonicalization", "artifact_code_revision", "replay_code_revision", "input_artifact", "input_snapshot", "revision_compatibility", "config", "config_schema", "result_schema"],
+      "properties": {
+        "canonicalization": {"const": "utf-8-json-sort-keys-compact-no-trailing-newline-v1"},
+        "artifact_code_revision": {"$ref": "#/$defs/revision"},
+        "replay_code_revision": {"$ref": "#/$defs/revision"},
+        "input_artifact": {"$ref": "#/$defs/artifact"},
+        "input_snapshot": {"$ref": "#/$defs/snapshot"},
+        "revision_compatibility": {"$ref": "#/$defs/revisionCompatibility"},
+        "config": {"$ref": "#/$defs/source"},
+        "config_schema": {"$ref": "#/$defs/source"},
+        "result_schema": {"$ref": "#/$defs/source"}
+      }
+    },
+    "counts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["cells", "seed_clusters", "layouts_per_seed", "events_per_seed", "seed_values", "event_rows", "eligible_incident_windows", "pre_event_support_rows", "detection_window_point_rows", "combined_incident_point_rows", "score_availability_source_points", "availability_group_rows", "calibration_profile_rows", "aggregate_signal_mode_groups", "clean_aggregate_rows", "incident_window_aggregate_rows", "incident_offset_aggregate_rows", "clean_reconciliation_rows", "availability_aggregate_rows", "calibration_aggregate_rows", "cardinality_formulas"],
+      "properties": {
+        "cells": {"const": 120}, "seed_clusters": {"const": 10}, "layouts_per_seed": {"const": 12}, "events_per_seed": {"const": 48},
+        "seed_values": {"const": [11, 17, 23, 29, 37, 42, 53, 67, 79, 97]},
+        "event_rows": {"const": 480}, "eligible_incident_windows": {"const": 240}, "pre_event_support_rows": {"const": 240},
+        "detection_window_point_rows": {"const": 1440}, "combined_incident_point_rows": {"const": 1680},
+        "score_availability_source_points": {"const": 172800}, "availability_group_rows": {"const": 5760},
+        "calibration_profile_rows": {"const": 5760}, "aggregate_signal_mode_groups": {"const": 48}, "clean_aggregate_rows": {"const": 94}, "incident_window_aggregate_rows": {"const": 16}, "incident_offset_aggregate_rows": {"const": 112}, "clean_reconciliation_rows": {"const": 240}, "availability_aggregate_rows": {"const": 48}, "calibration_aggregate_rows": {"const": 48},
+        "cardinality_formulas": {
+          "type": "object", "additionalProperties": false,
+          "required": ["event_rows", "eligible_incident_windows", "pre_event_support_rows", "detection_window_point_rows", "combined_incident_point_rows", "score_availability_source_points", "availability_group_rows", "calibration_profile_rows", "aggregate_signal_mode_groups", "clean_aggregate_rows", "incident_window_aggregate_rows", "incident_offset_aggregate_rows", "clean_reconciliation_rows", "availability_aggregate_rows", "calibration_aggregate_rows"],
+          "properties": {
+            "event_rows": {"const": "seed_clusters*events_per_seed=10*48=480"},
+            "eligible_incident_windows": {"const": "seed_clusters*(events_per_seed/2)=10*(48/2)=240"},
+            "pre_event_support_rows": {"const": "eligible_incident_windows*1=240*1=240"},
+            "detection_window_point_rows": {"const": "eligible_incident_windows*6=240*6=1440"},
+            "combined_incident_point_rows": {"const": "eligible_incident_windows*(1+6)=240*7=1680"},
+            "score_availability_source_points": {"const": "cells*1440=120*1440=172800"},
+            "availability_group_rows": {"const": "cells*aggregate_signal_mode_groups=120*48=5760"},
+            "calibration_profile_rows": {"const": "cells*aggregate_signal_mode_groups=120*48=5760"},
+            "aggregate_signal_mode_groups": {"const": "8_fully_qualified_signals*6_operating_modes=48"},
+            "clean_aggregate_rows": {"const": "8+6+48+2+30=94"},
+            "incident_window_aggregate_rows": {"const": "2+2+4+2+6=16"},
+            "incident_offset_aggregate_rows": {"const": "16*7=112"},
+            "clean_reconciliation_rows": {"const": "cells*equipment=120*2=240"},
+            "availability_aggregate_rows": {"const": "8*6=48"},
+            "calibration_aggregate_rows": {"const": "8*6=48"}
+          }
+        }
+      }
+    },
+    "profileKey": {
+      "type": "object", "additionalProperties": false,
+      "required": ["equipment_id", "signal_id", "operating_mode"],
+      "properties": {"equipment_id": {"$ref": "#/$defs/canonicalEquipmentId"}, "signal_id": {"$ref": "#/$defs/canonicalSignalId"}, "operating_mode": {"$ref": "#/$defs/canonicalOperatingMode"}}
+    },
+    "canonicalSignalId": {"enum": ["motor-01.motor_current", "motor-01.motor_temperature", "motor-01.conveyor_speed", "motor-01.vibration_feature", "conveyor-01.motor_current", "conveyor-01.motor_temperature", "conveyor-01.conveyor_speed", "conveyor-01.vibration_feature"]},
+    "canonicalOperatingMode": {"enum": ["stopped", "startup", "low_speed", "nominal", "high_load", "cooldown"]},
+    "canonicalEquipmentId": {"enum": ["motor-01", "conveyor-01"]},
+    "canonicalSignalModePair": {
+      "type": "object", "additionalProperties": false,
+      "required": ["signal_id", "operating_mode"],
+      "properties": {"signal_id": {"$ref": "#/$defs/canonicalSignalId"}, "operating_mode": {"$ref": "#/$defs/canonicalOperatingMode"}}
+    },
+    "incidentWindow": {
+      "type": "object", "additionalProperties": false,
+      "required": ["cell_id", "seed", "layout_id", "layout_index", "event_id", "event_class", "event_type", "equipment_id", "signal_id", "operating_mode", "event_start_timestamp", "event_end_timestamp", "detection_window_start", "detection_window_end", "detected", "matched_alert_episode_id", "alert_onset_timestamp", "detection_delay_seconds", "max_in_window_consecutive_exceedances", "pre_event_support", "event_causal_support_qualified"],
+      "properties": {
+        "cell_id": {"type": "string", "minLength": 1}, "seed": {"type": "integer"}, "layout_id": {"type": "string", "minLength": 1}, "layout_index": {"type": "integer", "minimum": 0},
+        "event_id": {"type": "string", "minLength": 1}, "event_class": {"enum": ["machine_fault", "sensor_fault"]}, "event_type": {"enum": ["jam_or_slip", "spike"]},
+        "equipment_id": {"enum": ["motor-01", "conveyor-01"]}, "signal_id": {"enum": ["motor-01.motor_current", "conveyor-01.conveyor_speed", "motor-01.motor_temperature", "conveyor-01.motor_temperature"]}, "operating_mode": {"enum": ["stopped", "startup", "low_speed", "nominal", "high_load", "cooldown"]},
+        "event_start_timestamp": {"type": "string", "minLength": 1}, "event_end_timestamp": {"type": "string", "minLength": 1}, "detection_window_start": {"type": "string", "minLength": 1}, "detection_window_end": {"type": "string", "minLength": 1},
+        "detected": {"type": "boolean"}, "matched_alert_episode_id": {"type": ["string", "null"]}, "alert_onset_timestamp": {"type": ["string", "null"]}, "detection_delay_seconds": {"type": ["number", "null"], "minimum": 0},
+        "max_in_window_consecutive_exceedances": {"type": "integer", "minimum": 0}, "pre_event_support": {"type": "boolean"}, "event_causal_support_qualified": {"type": "boolean"}
+      }
+    },
+    "incidentPoint": {
+      "type": "object", "additionalProperties": false,
+      "required": ["cell_id", "seed", "layout_id", "layout_index", "event_id", "event_class", "event_type", "equipment_id", "signal_id", "operating_mode", "offset", "timestamp", "quality_status", "actual", "previous_actual", "residual", "available", "exclusion_reason", "score", "exceeds_threshold", "persistence_streak", "alert_episode_id"],
+      "properties": {
+        "cell_id": {"type": "string", "minLength": 1}, "seed": {"type": "integer"}, "layout_id": {"type": "string", "minLength": 1}, "layout_index": {"type": "integer", "minimum": 0},
+        "event_id": {"type": "string", "minLength": 1}, "event_class": {"enum": ["machine_fault", "sensor_fault"]}, "event_type": {"enum": ["jam_or_slip", "spike"]},
+        "equipment_id": {"enum": ["motor-01", "conveyor-01"]}, "signal_id": {"enum": ["motor-01.motor_current", "conveyor-01.conveyor_speed", "motor-01.motor_temperature", "conveyor-01.motor_temperature"]}, "operating_mode": {"enum": ["stopped", "startup", "low_speed", "nominal", "high_load", "cooldown"]},
+        "offset": {"enum": [-1, 0, 1, 2, 3, 4, 5]}, "timestamp": {"type": "string", "minLength": 1}, "quality_status": {"enum": ["ok", "missing", "stale"]},
+        "actual": {"type": ["number", "null"]}, "previous_actual": {"type": ["number", "null"]}, "residual": {"type": ["number", "null"]}, "available": {"type": "boolean"}, "exclusion_reason": {"type": ["string", "null"]}, "score": {"type": ["number", "null"], "minimum": 0}, "exceeds_threshold": {"type": "boolean"}, "persistence_streak": {"type": "integer", "minimum": 0}, "alert_episode_id": {"type": ["string", "null"]}
+      }
+    },
+    "cleanSource": {
+      "type": "object", "additionalProperties": false,
+      "required": ["cell_id", "seed", "layout_id", "layout_index", "source_alert_episode_id", "equipment_id", "signal_id", "operating_mode", "onset_timestamp", "end_timestamp", "point_count", "max_score", "mode_entry_offset", "equipment_episode_id"],
+      "properties": {
+        "cell_id": {"type": "string", "minLength": 1}, "seed": {"type": "integer"}, "layout_id": {"type": "string", "minLength": 1}, "layout_index": {"type": "integer", "minimum": 0}, "source_alert_episode_id": {"type": "string", "minLength": 1}, "equipment_id": {"type": "string", "minLength": 1}, "signal_id": {"type": "string", "minLength": 1}, "operating_mode": {"type": "string", "minLength": 1}, "onset_timestamp": {"type": "string", "minLength": 1}, "end_timestamp": {"type": "string", "minLength": 1}, "point_count": {"type": "integer", "minimum": 1}, "max_score": {"type": "number", "minimum": 0}, "mode_entry_offset": {"type": "integer", "minimum": 0, "maximum": 29}, "equipment_episode_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "cleanEquipment": {
+      "type": "object", "additionalProperties": false,
+      "required": ["cell_id", "seed", "layout_id", "layout_index", "equipment_episode_id", "equipment_id", "start_timestamp", "end_timestamp", "source_alert_episode_ids", "merge_size"],
+      "properties": {
+        "cell_id": {"type": "string", "minLength": 1}, "seed": {"type": "integer"}, "layout_id": {"type": "string", "minLength": 1}, "layout_index": {"type": "integer", "minimum": 0}, "equipment_episode_id": {"type": "string", "minLength": 1}, "equipment_id": {"type": "string", "minLength": 1}, "start_timestamp": {"type": "string", "minLength": 1}, "end_timestamp": {"type": "string", "minLength": 1}, "source_alert_episode_ids": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}, "merge_size": {"type": "integer", "minimum": 1}
+      }
+    },
+    "exclusionCounts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["quality_non_ok", "previous_quality_non_ok", "mode_boundary", "gap", "previous_event_overlap", "profile_inconclusive", "no_previous_observation", "nonfinite_value", "previous_nonfinite_value", "nonfinite_residual", "nonfinite_score"],
+      "properties": {"quality_non_ok": {"type": "integer", "minimum": 0}, "previous_quality_non_ok": {"type": "integer", "minimum": 0}, "mode_boundary": {"type": "integer", "minimum": 0}, "gap": {"type": "integer", "minimum": 0}, "previous_event_overlap": {"type": "integer", "minimum": 0}, "profile_inconclusive": {"type": "integer", "minimum": 0}, "no_previous_observation": {"type": "integer", "minimum": 0}, "nonfinite_value": {"type": "integer", "minimum": 0}, "previous_nonfinite_value": {"type": "integer", "minimum": 0}, "nonfinite_residual": {"type": "integer", "minimum": 0}, "nonfinite_score": {"type": "integer", "minimum": 0}}
+    },
+    "calibrationExclusionCounts": {
+      "type": "object", "additionalProperties": false,
+      "required": ["event_overlap", "nonfinite", "quality_non_ok", "residual_unavailable"],
+      "properties": {"event_overlap": {"type": "integer", "minimum": 0}, "nonfinite": {"type": "integer", "minimum": 0}, "quality_non_ok": {"type": "integer", "minimum": 0}, "residual_unavailable": {"type": "integer", "minimum": 0}}
+    },
+    "availability": {
+      "type": "object", "additionalProperties": false,
+      "required": ["cell_id", "seed", "layout_id", "layout_index", "equipment_id", "signal_id", "operating_mode", "available_points", "total_points", "exclusion_counts"],
+      "properties": {"cell_id": {"type": "string", "minLength": 1}, "seed": {"type": "integer"}, "layout_id": {"type": "string", "minLength": 1}, "layout_index": {"type": "integer", "minimum": 0}, "equipment_id": {"$ref": "#/$defs/canonicalEquipmentId"}, "signal_id": {"$ref": "#/$defs/canonicalSignalId"}, "operating_mode": {"$ref": "#/$defs/canonicalOperatingMode"}, "available_points": {"type": "integer", "minimum": 0}, "total_points": {"const": 30}, "exclusion_counts": {"$ref": "#/$defs/exclusionCounts"}}
+    },
+    "calibrationProfile": {
+      "type": "object", "additionalProperties": false,
+      "required": ["cell_id", "seed", "layout_id", "layout_index", "equipment_id", "signal_id", "operating_mode", "calibration_point_count", "center", "mad", "scale", "status", "excluded_counts", "reason"],
+      "properties": {"cell_id": {"type": "string", "minLength": 1}, "seed": {"type": "integer"}, "layout_id": {"type": "string", "minLength": 1}, "layout_index": {"type": "integer", "minimum": 0}, "equipment_id": {"$ref": "#/$defs/canonicalEquipmentId"}, "signal_id": {"$ref": "#/$defs/canonicalSignalId"}, "operating_mode": {"$ref": "#/$defs/canonicalOperatingMode"}, "calibration_point_count": {"type": "integer", "minimum": 0}, "center": {"type": ["number", "null"]}, "mad": {"type": ["number", "null"], "minimum": 0}, "scale": {"type": ["number", "null"], "minimum": 0}, "status": {"enum": ["calibrated", "inconclusive"]}, "excluded_counts": {"$ref": "#/$defs/calibrationExclusionCounts"}, "reason": {"type": ["string", "null"]}}
+    },
+    "ledger": {
+      "type": "object", "additionalProperties": false,
+      "required": ["incident_windows", "incident_points", "clean_source_alerts", "clean_equipment_alerts", "availability", "calibration_profiles"],
+      "properties": {"incident_windows": {"type": "array", "minItems": 240, "maxItems": 240, "items": {"$ref": "#/$defs/incidentWindow"}}, "incident_points": {"type": "array", "minItems": 1680, "maxItems": 1680, "items": {"$ref": "#/$defs/incidentPoint"}}, "clean_source_alerts": {"type": "array", "items": {"$ref": "#/$defs/cleanSource"}}, "clean_equipment_alerts": {"type": "array", "items": {"$ref": "#/$defs/cleanEquipment"}}, "availability": {"type": "array", "minItems": 5760, "maxItems": 5760, "items": {"$ref": "#/$defs/availability"}}, "calibration_profiles": {"type": "array", "minItems": 5760, "maxItems": 5760, "items": {"$ref": "#/$defs/calibrationProfile"}}}
+    },
+    "incidentMarginalDimension": {
+      "oneOf": [{"$ref": "#/$defs/incidentEventClassDimension"}, {"$ref": "#/$defs/incidentEventTypeDimension"}, {"$ref": "#/$defs/incidentSignalDimension"}, {"$ref": "#/$defs/incidentEquipmentDimension"}, {"$ref": "#/$defs/incidentModeDimension"}]
+    },
+    "incidentEventClassDimension": {"type": "object", "additionalProperties": false, "required": ["dimension_name", "dimension_value"], "properties": {"dimension_name": {"const": "event_class"}, "dimension_value": {"enum": ["machine_fault", "sensor_fault"]}}},
+    "incidentEventTypeDimension": {"type": "object", "additionalProperties": false, "required": ["dimension_name", "dimension_value"], "properties": {"dimension_name": {"const": "event_type"}, "dimension_value": {"enum": ["jam_or_slip", "spike"]}}},
+    "incidentSignalDimension": {"type": "object", "additionalProperties": false, "required": ["dimension_name", "dimension_value"], "properties": {"dimension_name": {"const": "signal_id"}, "dimension_value": {"enum": ["motor-01.motor_current", "conveyor-01.conveyor_speed", "motor-01.motor_temperature", "conveyor-01.motor_temperature"]}}},
+    "incidentEquipmentDimension": {"type": "object", "additionalProperties": false, "required": ["dimension_name", "dimension_value"], "properties": {"dimension_name": {"const": "equipment_id"}, "dimension_value": {"enum": ["motor-01", "conveyor-01"]}}},
+    "incidentModeDimension": {"type": "object", "additionalProperties": false, "required": ["dimension_name", "dimension_value"], "properties": {"dimension_name": {"const": "operating_mode"}, "dimension_value": {"enum": ["stopped", "startup", "low_speed", "nominal", "high_load", "cooldown"]}}},
+    "cleanSourceMarginalDimension": {
+      "oneOf": [{"$ref": "#/$defs/cleanSignalDimension"}, {"$ref": "#/$defs/cleanModeDimension"}, {"$ref": "#/$defs/cleanSignalModeDimension"}, {"$ref": "#/$defs/cleanModeEntryDimension"}]
+    },
+    "cleanSignalDimension": {"type": "object", "additionalProperties": false, "required": ["dimension_name", "dimension_value"], "properties": {"dimension_name": {"const": "signal_id"}, "dimension_value": {"enum": ["motor-01.motor_current", "motor-01.motor_temperature", "motor-01.conveyor_speed", "motor-01.vibration_feature", "conveyor-01.motor_current", "conveyor-01.motor_temperature", "conveyor-01.conveyor_speed", "conveyor-01.vibration_feature"]}}},
+    "cleanModeDimension": {"type": "object", "additionalProperties": false, "required": ["dimension_name", "dimension_value"], "properties": {"dimension_name": {"const": "operating_mode"}, "dimension_value": {"enum": ["stopped", "startup", "low_speed", "nominal", "high_load", "cooldown"]}}},
+    "cleanSignalModeDimension": {"type": "object", "additionalProperties": false, "required": ["dimension_name", "dimension_value"], "properties": {"dimension_name": {"const": "signal_id×operating_mode"}, "dimension_value": {"type": "object", "additionalProperties": false, "required": ["signal_id", "operating_mode"], "properties": {"signal_id": {"enum": ["motor-01.motor_current", "motor-01.motor_temperature", "motor-01.conveyor_speed", "motor-01.vibration_feature", "conveyor-01.motor_current", "conveyor-01.motor_temperature", "conveyor-01.conveyor_speed", "conveyor-01.vibration_feature"]}, "operating_mode": {"enum": ["stopped", "startup", "low_speed", "nominal", "high_load", "cooldown"]}}}}},
+    "cleanEquipmentDimension": {"type": "object", "additionalProperties": false, "required": ["dimension_name", "dimension_value"], "properties": {"dimension_name": {"const": "equipment_id"}, "dimension_value": {"enum": ["motor-01", "conveyor-01"]}}},
+    "cleanModeEntryDimension": {"type": "object", "additionalProperties": false, "required": ["dimension_name", "dimension_value"], "properties": {"dimension_name": {"const": "mode_entry_offset"}, "dimension_value": {"type": "integer", "minimum": 0, "maximum": 29}}},
+    "runDistribution": {
+      "type": "object", "additionalProperties": false,
+      "required": ["run_length", "window_count"],
+      "properties": {"run_length": {"enum": [0, 1, 2, 3, 4, 5, 6]}, "window_count": {"type": "integer", "minimum": 0}}
+    },
+    "incidentWindowAggregate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["dimension", "count_unit", "scope", "denominator", "window_count", "detected_count", "event_causal_support_qualified_count", "pre_event_support_count", "max_consecutive_run_distribution"],
+      "properties": {"dimension": {"$ref": "#/$defs/incidentMarginalDimension"}, "count_unit": {"const": "eligible_incident_windows"}, "scope": {"const": "marginal_over_other_incident_dimensions"}, "denominator": {"type": "integer", "minimum": 1}, "window_count": {"type": "integer", "minimum": 0}, "detected_count": {"type": "integer", "minimum": 0}, "event_causal_support_qualified_count": {"type": "integer", "minimum": 0}, "pre_event_support_count": {"type": "integer", "minimum": 0}, "max_consecutive_run_distribution": {"type": "array", "minItems": 7, "maxItems": 7, "items": {"$ref": "#/$defs/runDistribution"}}}
+    },
+    "incidentOffsetAggregate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["dimension", "count_unit", "scope", "denominator", "offset", "total_count", "available_count", "exceed_count"],
+      "properties": {"dimension": {"$ref": "#/$defs/incidentMarginalDimension"}, "count_unit": {"const": "incident_points"}, "scope": {"const": "marginal_over_other_incident_dimensions"}, "denominator": {"type": "integer", "minimum": 1}, "offset": {"enum": [-1, 0, 1, 2, 3, 4, 5]}, "total_count": {"type": "integer", "minimum": 0}, "available_count": {"type": "integer", "minimum": 0}, "exceed_count": {"type": "integer", "minimum": 0}}
+    },
+    "cleanAggregate": {"oneOf": [{"$ref": "#/$defs/cleanSourceAggregate"}, {"$ref": "#/$defs/cleanEquipmentAggregate"}]},
+    "cleanSourceAggregate": {"type": "object", "additionalProperties": false, "required": ["dimension", "count_unit", "scope", "source_episode_count"], "properties": {"dimension": {"$ref": "#/$defs/cleanSourceMarginalDimension"}, "count_unit": {"const": "source_alert_episodes"}, "scope": {"const": "source_alert_episode_marginal"}, "source_episode_count": {"type": "integer", "minimum": 0}}},
+    "cleanEquipmentAggregate": {"type": "object", "additionalProperties": false, "required": ["dimension", "count_unit", "scope", "equipment_episode_count", "equipment_attribution_rule"], "properties": {"dimension": {"$ref": "#/$defs/cleanEquipmentDimension"}, "count_unit": {"const": "equipment_merged_episodes"}, "scope": {"const": "equipment_merged_episode_marginal"}, "equipment_episode_count": {"type": "integer", "minimum": 0}, "equipment_attribution_rule": {"const": "equipment_episode_count=count of cell-local merged equipment episodes whose equipment_id equals dimension_value, each episode counted exactly once"}}},
+    "availabilityAggregate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["dimension", "available_points", "total_points", "exclusion_counts"],
+      "properties": {"dimension": {"$ref": "#/$defs/canonicalSignalModePair"}, "available_points": {"type": "integer", "minimum": 0}, "total_points": {"const": 3600}, "exclusion_counts": {"$ref": "#/$defs/exclusionCounts"}}
+    },
+    "calibrationAggregate": {
+      "type": "object", "additionalProperties": false,
+      "required": ["grain", "dimension", "profile_count", "seed_summaries"],
+      "properties": {"grain": {"const": "signal_id×operating_mode"}, "dimension": {"$ref": "#/$defs/canonicalSignalModePair"}, "profile_count": {"const": 120}, "seed_summaries": {"type": "array", "minItems": 10, "maxItems": 10, "items": {"$ref": "#/$defs/calibrationSeedSummary"}}}
+    },
+    "numericDistribution": {
+      "type": "object", "additionalProperties": false,
+      "required": ["total_count", "non_null_count", "null_count", "min", "max", "mean"],
+      "properties": {"total_count": {"type": "integer", "minimum": 0}, "non_null_count": {"type": "integer", "minimum": 0}, "null_count": {"type": "integer", "minimum": 0}, "min": {"type": ["number", "null"]}, "max": {"type": ["number", "null"]}, "mean": {"type": ["number", "null"]}}
+    },
+    "reasonDistribution": {
+      "type": "array", "minItems": 1,
+      "items": {"type": "object", "additionalProperties": false, "required": ["reason", "count"], "properties": {"reason": {"type": ["string", "null"]}, "count": {"type": "integer", "minimum": 0}}}
+    },
+    "calibrationSeedSummary": {
+      "type": "object", "additionalProperties": false,
+      "required": ["seed", "layout_indexes", "profile_count", "calibration_point_count_distribution", "center_distribution", "mad_distribution", "scale_distribution", "status_counts", "reason_counts"],
+      "properties": {"seed": {"enum": [11, 17, 23, 29, 37, 42, 53, 67, 79, 97]}, "layout_indexes": {"const": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]}, "profile_count": {"const": 12}, "calibration_point_count_distribution": {"$ref": "#/$defs/numericDistribution"}, "center_distribution": {"$ref": "#/$defs/numericDistribution"}, "mad_distribution": {"$ref": "#/$defs/numericDistribution"}, "scale_distribution": {"$ref": "#/$defs/numericDistribution"}, "status_counts": {"type": "object", "additionalProperties": false, "required": ["calibrated", "inconclusive"], "properties": {"calibrated": {"type": "integer", "minimum": 0}, "inconclusive": {"type": "integer", "minimum": 0}}}, "reason_counts": {"$ref": "#/$defs/reasonDistribution"}}
+    },
+    "aggregates": {
+      "type": "object", "additionalProperties": false,
+      "required": ["incident_window_aggregates", "incident_offset_aggregates", "clean_alerts", "availability", "calibration"],
+      "properties": {"incident_window_aggregates": {"type": "array", "minItems": 16, "maxItems": 16, "items": {"$ref": "#/$defs/incidentWindowAggregate"}}, "incident_offset_aggregates": {"type": "array", "minItems": 112, "maxItems": 112, "items": {"$ref": "#/$defs/incidentOffsetAggregate"}}, "clean_alerts": {"type": "array", "minItems": 94, "maxItems": 94, "items": {"$ref": "#/$defs/cleanAggregate"}}, "availability": {"type": "array", "minItems": 48, "maxItems": 48, "items": {"$ref": "#/$defs/availabilityAggregate"}}, "calibration": {"type": "array", "minItems": 48, "maxItems": 48, "items": {"$ref": "#/$defs/calibrationAggregate"}}}
+    },
+    "cleanReconciliation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["cell_id", "equipment_id", "source_count", "equipment_count", "merge_size_sum", "interval_boundary", "source_ids_scope", "source_ids_exact", "merge_size_rule", "source_count_rule", "interval_merge_replay", "exact"],
+      "properties": {"cell_id": {"type": "string", "minLength": 1}, "equipment_id": {"type": "string", "minLength": 1}, "source_count": {"type": "integer", "minimum": 0}, "equipment_count": {"type": "integer", "minimum": 0}, "merge_size_sum": {"type": "integer", "minimum": 0}, "interval_boundary": {"const": "[start,end)"}, "source_ids_scope": {"const": "cell_id+equipment_id"}, "source_ids_exact": {"const": true}, "merge_size_rule": {"const": "merge_size=len(source_alert_episode_ids)"}, "source_count_rule": {"const": "source_count=sum(len(source_alert_episode_ids)) within each cell/equipment"}, "interval_merge_replay": {"const": "canonical_[start,end)_interval_merge"}, "exact": {"const": true}}
+    },
+    "availabilityReconciliation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["signal_id", "operating_mode", "available_points", "total_points", "excluded_points", "exclusion_reasons_exact", "exact"],
+      "properties": {"signal_id": {"$ref": "#/$defs/canonicalSignalId"}, "operating_mode": {"$ref": "#/$defs/canonicalOperatingMode"}, "available_points": {"type": "integer", "minimum": 0}, "total_points": {"const": 3600}, "excluded_points": {"type": "integer", "minimum": 0}, "exclusion_reasons_exact": {"const": true}, "exact": {"const": true}}
+    },
+    "calibrationReconciliation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["signal_id", "operating_mode", "profile_count", "grain", "exact"],
+      "properties": {"signal_id": {"$ref": "#/$defs/canonicalSignalId"}, "operating_mode": {"$ref": "#/$defs/canonicalOperatingMode"}, "profile_count": {"const": 120}, "grain": {"const": "signal_id×operating_mode"}, "exact": {"const": true}}
+    },
+    "reconciliation": {
+      "type": "object", "additionalProperties": false,
+      "required": ["clean_alerts", "availability", "calibration", "cardinality_exact"],
+      "properties": {"clean_alerts": {"type": "array", "minItems": 240, "maxItems": 240, "items": {"$ref": "#/$defs/cleanReconciliation"}}, "availability": {"type": "array", "minItems": 48, "maxItems": 48, "items": {"$ref": "#/$defs/availabilityReconciliation"}}, "calibration": {"type": "array", "minItems": 48, "maxItems": 48, "items": {"$ref": "#/$defs/calibrationReconciliation"}}, "cardinality_exact": {"const": true}}
+    }
+  }
+}
