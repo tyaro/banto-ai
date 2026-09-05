@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tyaro/banto-ai/schemas/anomaly-multiseed-analysis-config-v0.2.schema.json",
+  "title": "banto-ai event-aware anomaly matrix analysis config v0.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "config_type", "analysis_id", "matrix_id", "matrix_config_path", "matrix_config_canonical_sha256", "matrix_result_schema_path", "matrix_result_schema_canonical_sha256", "schema_path", "schema_canonical_sha256", "input_root", "output_root", "bootstrap", "promotion_thresholds"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.2"},
+    "config_type": {"type": "string", "const": "event-aware-anomaly-matrix-analysis"},
+    "analysis_id": {"type": "string", "const": "anomaly-multiseed-analysis-v02"},
+    "matrix_id": {"type": "string", "const": "anomaly-multiseed-v02"},
+    "matrix_config_path": {"type": "string", "const": "examples/configs/anomaly-multiseed-v0.2.json"},
+    "matrix_config_canonical_sha256": {"type": "string", "const": "3e206fc6c988850953d7ddd739a0504cb8cdd92f6726848b78ce4803461daa26"},
+    "matrix_result_schema_path": {"type": "string", "const": "schemas/anomaly-multiseed-matrix-result-v0.2.schema.json"},
+    "matrix_result_schema_canonical_sha256": {"type": "string", "const": "79acd31482bae6702dcb6bf6145a58342730a0b61c053592a720fa9e01e53326"},
+    "schema_path": {"type": "string", "const": "schemas/anomaly-multiseed-analysis-config-v0.2.schema.json"},
+    "schema_canonical_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "input_root": {"type": "string", "const": "artifacts/anomaly-multiseed-v02"},
+    "output_root": {"type": "string", "const": "artifacts/anomaly-multiseed-v02-analysis"},
+    "bootstrap": {
+      "type": "object", "additionalProperties": false,
+      "required": ["algorithm_id", "seed", "resamples", "confidence_level", "cluster_count", "layouts_per_cluster", "events_per_cluster", "sampling", "percentile_method"],
+      "properties": {
+        "algorithm_id": {"const": "sha256-counter-rejection-v1"}, "seed": {"const": 20260905}, "resamples": {"const": 10000}, "confidence_level": {"const": 0.95}, "cluster_count": {"const": 10}, "layouts_per_cluster": {"const": 12}, "events_per_cluster": {"const": 48}, "sampling": {"const": "seed_cluster_with_replacement"}, "percentile_method": {"const": "linear_interpolation_n_minus_1"}
+      }
+    },
+    "promotion_thresholds": {
+      "type": "object", "additionalProperties": false,
+      "required": ["overall_incident_precision", "machine_fault_recall", "sensor_fault_recall", "clean_false_alerts_per_8_equipment_hours", "signal_availability"],
+      "properties": {
+        "overall_incident_precision": {"type": "object", "additionalProperties": false, "required": ["point_min", "ci_lower_min"], "properties": {"point_min": {"const": 0.8}, "ci_lower_min": {"const": 0.6}}},
+        "machine_fault_recall": {"type": "object", "additionalProperties": false, "required": ["point_min", "ci_lower_min"], "properties": {"point_min": {"const": 0.8}, "ci_lower_min": {"const": 0.6}}},
+        "sensor_fault_recall": {"type": "object", "additionalProperties": false, "required": ["point_min", "ci_lower_min"], "properties": {"point_min": {"const": 0.9}, "ci_lower_min": {"const": 0.75}}},
+        "clean_false_alerts_per_8_equipment_hours": {"type": "object", "additionalProperties": false, "required": ["point_max", "ci_upper_max"], "properties": {"point_max": {"const": 1.0}, "ci_upper_max": {"const": 2.0}}},
+        "signal_availability": {"type": "object", "additionalProperties": false, "required": ["minimum"], "properties": {"minimum": {"const": 0.95}}}
+      }
+    }
+  }
+}

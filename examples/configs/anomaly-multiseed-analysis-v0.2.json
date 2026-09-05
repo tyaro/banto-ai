@@ -1,0 +1,32 @@
+{
+  "schema_version": "0.2",
+  "config_type": "event-aware-anomaly-matrix-analysis",
+  "analysis_id": "anomaly-multiseed-analysis-v02",
+  "matrix_id": "anomaly-multiseed-v02",
+  "matrix_config_path": "examples/configs/anomaly-multiseed-v0.2.json",
+  "matrix_config_canonical_sha256": "3e206fc6c988850953d7ddd739a0504cb8cdd92f6726848b78ce4803461daa26",
+  "matrix_result_schema_path": "schemas/anomaly-multiseed-matrix-result-v0.2.schema.json",
+  "matrix_result_schema_canonical_sha256": "79acd31482bae6702dcb6bf6145a58342730a0b61c053592a720fa9e01e53326",
+  "schema_path": "schemas/anomaly-multiseed-analysis-config-v0.2.schema.json",
+  "schema_canonical_sha256": "401ebf4ba348212437c2f2e3b9ee4de9c53b9c33803129cfa1384fbf2dc26de5",
+  "input_root": "artifacts/anomaly-multiseed-v02",
+  "output_root": "artifacts/anomaly-multiseed-v02-analysis",
+  "bootstrap": {
+    "algorithm_id": "sha256-counter-rejection-v1",
+    "seed": 20260905,
+    "resamples": 10000,
+    "confidence_level": 0.95,
+    "cluster_count": 10,
+    "layouts_per_cluster": 12,
+    "events_per_cluster": 48,
+    "sampling": "seed_cluster_with_replacement",
+    "percentile_method": "linear_interpolation_n_minus_1"
+  },
+  "promotion_thresholds": {
+    "overall_incident_precision": {"point_min": 0.8, "ci_lower_min": 0.6},
+    "machine_fault_recall": {"point_min": 0.8, "ci_lower_min": 0.6},
+    "sensor_fault_recall": {"point_min": 0.9, "ci_lower_min": 0.75},
+    "clean_false_alerts_per_8_equipment_hours": {"point_max": 1.0, "ci_upper_max": 2.0},
+    "signal_availability": {"minimum": 0.95}
+  }
+}
