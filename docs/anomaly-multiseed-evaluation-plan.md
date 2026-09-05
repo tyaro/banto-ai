@@ -159,7 +159,7 @@ Gitで管理するのはsource、schema、config、tests、docs、hashや結果�
 
 ## 10. v0.1 artifactのintegrity監査と再実行条件
 
-v0.1の正式artifact `D:\develop\banto-ai\artifacts\anomaly-multiseed-v01` は生成後の監査で、evaluator `summary.md` を任意文へ置換して`.complete`のsummary hashだけを更新しても旧runnerがcellを受理できるsummary integrity bypassが判明したため、内容を変更せず `REJECT` evidenceとして保全する。artifactの移動、上書き、削除、再実行は行わない。詳細は [`docs/results/anomaly-multiseed-v01-integrity-audit-2026-09-05.md`](results/anomaly-multiseed-v01-integrity-audit-2026-09-05.md) に記録する。
+v0.1の正式artifact `artifacts/anomaly-multiseed-v01` は生成後の監査で、evaluator `summary.md` を任意文へ置換して`.complete`のsummary hashだけを更新しても旧runnerがcellを受理できるsummary integrity bypassが判明したため、内容を変更せず `REJECT` evidenceとして保全する。artifactの移動、上書き、削除、再実行は行わない。詳細は [`docs/results/anomaly-multiseed-v01-integrity-audit-2026-09-05.md`](results/anomaly-multiseed-v01-integrity-audit-2026-09-05.md) に記録する。
 
 修正後の正式再実行は、同じv0.1 preregistrationやoutputを再利用せず、新しいv0.2 preregistrationで行う。v0.2ではseed、layout、detector parameter、bootstrap、promotion gateを維持し、変更理由をsummary integrity fixとし、別の`matrix_id`と`output_root`を割り当てる。修正後の正式run、独立analysis、promotion判定は未実施である。
 
