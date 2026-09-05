@@ -70,13 +70,21 @@ summary integrity fix後の次versionとして固定した [`v0.2 preregistratio
 
 standalone analysisの固定configは [`examples/configs/anomaly-multiseed-analysis-v0.2.json`](../../examples/configs/anomaly-multiseed-analysis-v0.2.json)、strict result schemaは [`schemas/anomaly-multiseed-analysis-result-v0.2.schema.json`](../../schemas/anomaly-multiseed-analysis-result-v0.2.schema.json) である。analysisはmatrix artifactへwriteせず、seed-cluster ratio-of-sums、stable SHA-256 bootstrap、95% percentile CI、promotion gateを実行する。configだけを検査する場合は `--validate-only` を使う。
 
-### exploratory failure diagnostics D2-A
+### exploratory failure diagnostics D2-A / D2-B
 
-正式 v0.2 artifact の post-hoc exploratory failure diagnostics は [`docs/anomaly-multiseed-failure-diagnostics-plan-v0.1.md`](../../docs/anomaly-multiseed-failure-diagnostics-plan-v0.1.md)、[`examples/configs/anomaly-multiseed-failure-diagnostics-v0.1.json`](../../examples/configs/anomaly-multiseed-failure-diagnostics-v0.1.json)、[`schemas/anomaly-multiseed-failure-diagnostics-config-v0.1.schema.json`](../../schemas/anomaly-multiseed-failure-diagnostics-config-v0.1.schema.json)、[`schemas/anomaly-multiseed-failure-diagnostics-result-v0.1.schema.json`](../../schemas/anomaly-multiseed-failure-diagnostics-result-v0.1.schema.json) に固定する。D2-A は API-only の read-only replay／private draft builder・semantic checker／決定的 summary renderer までを実装する。完成結果の公開入口は `replay_and_build_diagnostics_result` のみで、最終再検査後にread-only `VerifiedDiagnosticsResult` を発行する。`render_summary(result)` と将来publisherはこの型だけを受理し、任意Mappingやdraftのsemantic check成功をlive replayの証明として扱わない。CLI実行、formal run、publish、result／summary／marker の書込み、input artifact、customer data、network、control／Banto Hub writeには触れない。result shape は exploratory_only=true、promotion_eligible=false、performance_status=not_evaluated を固定し、promotion gates／alternative thresholds／winner を含めない。structural cardinality と incident／clean-alert／availability／calibration ledger contract は outcome ではなく固定境界である。実行・publish は D2-B の残作業である。
+正式 v0.2 artifact の post-hoc exploratory failure diagnostics は [`docs/anomaly-multiseed-failure-diagnostics-plan-v0.1.md`](../../docs/anomaly-multiseed-failure-diagnostics-plan-v0.1.md)、[`examples/configs/anomaly-multiseed-failure-diagnostics-v0.1.json`](../../examples/configs/anomaly-multiseed-failure-diagnostics-v0.1.json)、[`schemas/anomaly-multiseed-failure-diagnostics-config-v0.1.schema.json`](../../schemas/anomaly-multiseed-failure-diagnostics-config-v0.1.schema.json)、[`schemas/anomaly-multiseed-failure-diagnostics-result-v0.1.schema.json`](../../schemas/anomaly-multiseed-failure-diagnostics-result-v0.1.schema.json) に固定する。D2-Aの `replay_and_build_diagnostics_result` はread-onlyで、最終再検査後に `VerifiedDiagnosticsResult` を返す。D2-Bの `run_and_publish_diagnostics(root, replay_head=...)` は内部でfresh replayし、この型だけをprivate stagingから固定outputへatomic no-replace directory renameで公開する。古いsealed resultを渡すAPI、output／schema／renderer override、recoverはない。任意Mappingやdraftのsemantic check成功をlive replayの証明として扱わない。input/formal artifact、customer data、network、control／Banto Hub writeは行わない。result shapeはexploratory_only=true、promotion_eligible=false、performance_status=not_evaluatedのまま。D2-Bの正式artifact診断run/build/publishはまだ実施していない。
 
 ```text
-python tools/evaluator/diagnose_anomaly_matrix.py --root . --config examples/configs/anomaly-multiseed-failure-diagnostics-v0.1.json --validate-only
+python -B tools/evaluator/diagnose_anomaly_matrix.py --root . --config examples/configs/anomaly-multiseed-failure-diagnostics-v0.1.json --validate-only
 ```
+
+以下はWindows専用・未実行のrun例。非Windowsの `--run` はreplay／path検査／staging作成前にWindows-onlyエラーで拒否する。D2-A read-only replayと `--validate-only` はcross-platformのまま。`<reviewed-full-lowercase-head>`を、レビュー承認済みclean checkoutの40桁lowercase SHAに置き換える。`--validate-only`との同時指定は不可。既存outputはmarkerlessでも拒否し、自動cleanup/recoverの対象にはしない。
+
+```text
+python -B tools/evaluator/diagnose_anomaly_matrix.py --root . --run --replay-head <reviewed-full-lowercase-head>
+```
+
+Windows-onlyの公開先は `artifacts/anomaly-multiseed-v02-diagnostics-v01` のみ。準備中は固定公開先を作らず、同じ親の `.anomaly-multiseed-v02-diagnostics-v01.staging-<UUID4 lowerhex>` に3 filesをexclusive create＋flush/fsyncで準備する。private DACL付きでstagingを作り、全fileをpinした状態で通常のwrite／delete／add-childをDACLで拒否する。全再検証・receipt計算・子handle解放を済ませ、保持したdirectory handleから `SetFileInformationByHandle(FileRenameInfo, ReplaceIfExists=FALSE)` でdirectory全体をrenameする操作を最終commitとする。以降は検証・削除・権限復旧を行わない。staging内の `.complete` は準備済みを示すだけで公開成功ではない。consumerは固定公開先のexact 3-file setとstrict marker／raw hashesを検証する。失敗stagingも成功outputも自動cleanup／recoverせず、残置物は次回runで拒否する。read-onlyのため手動撤去にはownerによる権限復旧が必要。guardはrepository／artifacts／stagingに限定し、無関係なsibling作業を妨げない。意図的なpermission再変更や特権操作に対するsandbox保証はない。旧Linuxの名前ベースrename経路は削除済み。chmodだけでは親directory経由のsource-name swapを防げず、将来のLinux publisherには検証したsource identityにcommitを結び付ける別設計が必要である。詳細はplanのD2-B境界を参照。
 
 ```text
 python tools/evaluator/validate_anomaly_matrix.py --root . --config examples/configs/anomaly-multiseed-v0.2.json

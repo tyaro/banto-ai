@@ -667,7 +667,7 @@ class AnomalyFailureDiagnosticsTests(unittest.TestCase):
         with redirect_stdout(output):
             exit_code = diagnostics.main(["--root", str(ROOT)])
         self.assertEqual(exit_code, 2)
-        self.assertIn("--validate-only only", output.getvalue())
+        self.assertIn("choose explicitly --validate-only or --run", output.getvalue())
 
     def test_cli_validate_only_returns_safe_summary(self) -> None:
         output = io.StringIO()

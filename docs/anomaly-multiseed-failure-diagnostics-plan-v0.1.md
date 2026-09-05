@@ -56,6 +56,36 @@ availability gate では、mandatory dropout と mode boundary が同じ denomin
 
 単一API `replay_and_build_diagnostics_result(root, replay_head=...)` は固定schemaを内部でcaptureし、正式helperの結果とcapture済みbytesを一致確認してからprivate draftを組み立てる。draftは `status=draft`／`run_status=not_run`／`engineering_status=not_evaluated` であり、private semantic checkの成功はlive replayの証明ではない。凍結result schemaの検査用に内部で作る一時的なcomplete-shape projectionも公開・発行しない。構築・検証後にartifact全体、matrix sources、diagnostics/analysis configとschema、source treeとclean HEADを再確認し、成功後だけcomplete/passを付与してモジュール内sentinel付きで `VerifiedDiagnosticsResult` を発行する。呼出側によるschemaやcollectorの差し替え引数は設けない。
 
-`VerifiedDiagnosticsResult` はread-only Mappingで、ネストした値も防御的コピーを返す。通常のconstructor呼出し・subclass・deserializeによる発行は認めない。`render_summary(result)` はこの型だけを受理し、任意Mapping、private draft、書き換えたcomplete Mapping、外部schemaを拒否する。将来D2-Bのpublisherもこの型だけを受け入れ、保存したMappingからは再replayなしに信頼済み型を復元しない。これは通常の公開APIの境界であり、同一process内の悪意あるreflection／monkeypatchingに対するsecurity sandboxとは主張しない。
+`VerifiedDiagnosticsResult` はread-only Mappingで、ネストした値も防御的コピーを返す。通常のconstructor呼出し・subclass・deserializeによる発行は認めない。`render_summary(result)` はこの型だけを受理し、任意Mapping、private draft、書き換えたcomplete Mapping、外部schemaを拒否する。D2-Bも内部でこの型をexact確認し、保存したMappingからは再replayなしに信頼済み型を復元しない。これは通常の公開APIの境界であり、同一process内の悪意あるreflection／monkeypatchingに対するsecurity sandboxとは主張しない。
 
 専用テストは合成fixtureによる改変拒否、正式v0.2と同じfield shapeでの抽出、formal helperを明示的に代替した120-cell adapter、構築後の変更検知、write/network trapを検証する。これは実artifactの正式replay成功の証拠ではない。正式matrix/analysis suite、実artifactの診断実行・生成・publishは本変更では行わず、親側の固定commit確認に委ねる。
+
+## D2-B: 固定出力の公開境界（正式診断run未実施）
+
+D2-B publicationは当面Windows-onlyとする。Linuxを含む非Windowsでは、公開APIとCLI `--run` をfresh replay・path検査・staging／output claimより前に拒否する。エラーはWindows-onlyであることと、`--validate-only`／D2-A read-only replayは利用可能なことを示す。D2-Aの読み取り専用APIとvalidate-onlyにはこのplatform制限を適用しない。
+
+公開APIと責務を次のように分ける。
+
+- `validate_diagnostics_config(config_path=固定値, root=...)`: D1のread-only検査と従来のvalidate-only出力を維持し、replay／publishは呼ばない。
+- `replay_and_build_diagnostics_result(root, replay_head=...)`: D2-Aのread-only API。sealed結果だけを返し、出力を確保・作成しない。
+- `run_and_publish_diagnostics(root, replay_head=...)`: Windows-onlyのD2-B。明示した40桁lowercase clean HEADで新規replayし、公開後のpath／hash receiptだけを返す。result／schema／output／renderer／callback／recoverの引数は持たない。古いsealed objectを直接publishする公開APIはない。
+
+両replay入口はprivate `_replay_and_build_with_context` を共有する。publisherだけがfreshなverified contextと最初のdraftから作ったcanonical payload bytesを保持する。private semantic checkerの成功はlive replayの証明ではない。rendererは今回auditした固定source bytesのhashを照合してcacheを使わず読み込み、callerによる差替えや古いimport／pycへ依存しない。
+
+公開先は `artifacts/anomaly-multiseed-v02-diagnostics-v01` のみで、準備中はこの固定pathを作らない。親の `artifacts` は既存のregular directoryであることを要求する。既存targetはfile／directory／link／junction／reparse／markerlessを含めて全て拒否する。準備先は同じ親の `.anomaly-multiseed-v02-diagnostics-v01.staging-<UUID4の32桁lowerhex>`。このprefixの既存entryは残置物としてrun前に拒否する。新規stagingは一回のexclusive createで暫定予約し、guard取得後の非空directoryも拒否する。Windowsは `CreateDirectoryW` の作成時点で保護されたprivate DACLを指定し、Python 3.12／3.14のmode処理差に依存しない。各fileをexclusive createで書き、flush＋fsyncする。resultはsealed payloadのcanonical UTF-8 JSON（sorted keys、compact、末尾改行なし）、summaryはrendererのUTF-8/LF。
+
+完了markerは固定type `event-aware-anomaly-failure-diagnostics-complete`、schema_version=`0.1`、result_sha256、summary_sha256のexactな4 fieldsを持つstrict canonical JSONとする。staging内に `result.json`、`summary.md`、`.complete` を準備し、bytes・identity・exact inventoryを検査する。`.complete.pending` は使用しない。stagingにmarkerがあっても「準備済み」であり、公開成功ではない。ファイルとdirectory inventoryをread-onlyに固定し、その後、入力artifact、diagnostics/analysis configとschema、matrix sources、revisionを再検査する。sealed payloadと初回draft bytesの再比較、出力再照合、strict marker検査、receipt計算もcommit前に終える。
+
+唯一の最終commit点は、staging directory全体を固定公開先へ一回で移すatomic no-replace renameである。Windowsは保持したstaging directoryのDELETE-capable handleをsourceにし、[`SetFileInformationByHandle` / `FileRenameInfo`](https://learn.microsoft.com/en-us/windows/win32/api/winbase/ns-winbase-file_rename_info)（class=3、ReplaceIfExists=FALSE、RootDirectory=NULL、固定absolute destination）を使う。準備中に別actorが固定公開先を作れば、空directoryやforeign markerの場合もoverwriteせず失敗する。非Windows platformはreplay／claim前、filesystemの未対応や競合はcommit前にfail-closedとし、overwrite fallbackはない。
+
+Windowsのguardはrepository root／artifacts／自分のstagingだけで、上位のdrive root等はlockしない。repository rootとartifactsはwrite sharingを許可してdelete sharingを拒否し、無関係なsiblingのrename／writeを許す。stagingはwrite／delete sharingを拒否し、初めからDELETE／READ_CONTROL／WRITE_DAC権限を保持する。directory sharingだけではchildの追加や変更を防げないため、3 filesもidentity-bound handleでwrite／delete sharingを拒否してpinし、既に開かれたwriter／deleterがいれば失敗する。その状態で[`SetSecurityInfo`](https://learn.microsoft.com/en-us/windows/win32/api/aclapi/nf-aclapi-setsecurityinfo)により、3 filesは通常のwrite／deleteを、stagingはadd-child／delete-child／write／deleteを拒否するDACLへ固定する。変更対象はこの4つのheld objectsだけで、owner／groupやrepository／artifactsのACLは変更しない。初期staging DACLにもfreeze DACLにも継承ACEを設けず、既知3 filesはprotectedにする。直前に紛れ込んだ未知のsubtreeのアクセス権を剥がさないことも実機テストする。
+
+Windowsでは子fileのhandleが開いたままだとdirectory renameが拒否されるため、最終検証後、freezeを維持したまま子handleを解放してからdirectory handleでcommitする。解放errorもcommit前の失敗とする。別processがこの直前にstagingの実pathを知っていても、通常のfile overwrite／replacement／rename／unlink／pending名やextra childの追加は拒否される。外部readerがrenameを妨げる場合も成功receiptを返さず残置する。ただしWindows ownerはWRITE_DACで意図的にfreezeを解除できる。特権・permission再変更・敵対的な同一userのあらゆる操作を隔離するsecurity sandboxとは主張しない。
+
+旧Linux publisherの `renameat2(parent_fd, staging_name, parent_fd, fixed_name, RENAME_NOREPLACE)` 経路は削除した。source directory fdを保持しても、この呼出しはsourceを名前で再解決する。stagingを0500へchmodしても、名前のrename／置き換えは親artifactsのwrite／execute権限で可能なため、最終検証後に同一userがstagingを別名へ退避し、元の名前へ空directoryを作るだけで別objectが公開され得る。これは既存writerやpermission再変更を必要としない通常操作であり、chmodだけでは不十分である。将来のLinux publisherには、検証したsource identityそのものへcommitを結び付け、source-name swapを許さない設計と別process回帰テストが必要になる。その設計が成立するまでLinux公開は有効化しない。
+
+成功時には固定公開先に3つのregular filesだけが同時に現れ、staging名は消える。成功後にはreadback／入力再検査／hash計算／削除／permission復旧を行わず、計算済みreceiptを返す。残りのhandle解放だけをbest-effortで行い、そのOS errorでcommit済み公開を失敗扱いにしない。consumerは固定公開先にあること、非link／非reparse regular fileのexact set、strict canonical markerのexact fields／type／version、result／summaryのraw SHA-256を必ず検証する。staging内のmarkerやreceiptだけで公開成功と判断しない。directory metadataの電源断耐性や特権actorによる公開後の変更防止は保証しない。
+
+自動cleanup／recoverは全面的に行わない。claim前の失敗では自分の出力を作らず、claim後の失敗では空directoryやread-only状態も含めてstagingを残し、その名前とmanual inspectionが必要な旨を返す。競合相手の固定outputやmarkerも削除しない。公開先・staging prefixの残置物は次回も拒否する。作成成功とidentity／guard取得はatomicではなく、同一userによる空directory交換を確実には検出できないため、identityにかかわらずunlink／rmdirは行わない。出力は成功時もread-onlyであり、手動の撤去には内容と対象を確認したうえでownerによるDACL／modeの復旧が必要になる。ツールに復旧オプションはなく、テスト用一時ディレクトリの権限復旧・削除はfixture teardownだけで行う。
+
+CLIは `--validate-only` と `--run` を明示的に排他とし、runはfull `--replay-head` 必須。seed／layout／limit／output／recover／schema overrideは設けない。run成功時だけpublished pathとresult／summary／markerのSHA-256を表示し、失敗は非zeroで簡潔に返す。D2-Bの実装確認は合成fixture・一時ディレクトリ・mockのみであり、正式artifactの診断run/build/publishはまだ実施していない。network、customer、control、Banto Hub、既存formal処理／config／schemaは変更しない。

@@ -1,4 +1,4 @@
-"""D1 contract and read-only D2-A APIs for exploratory v0.2 failure diagnostics."""
+"""D1 validation, read-only D2-A replay, and atomic staged D2-B publication."""
 
 from __future__ import annotations
 
@@ -7,14 +7,16 @@ import hashlib
 import json
 import math
 import os
+import stat
 import subprocess
+import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 from pathlib import PureWindowsPath
 from collections import Counter, defaultdict
 from copy import deepcopy
 from types import MappingProxyType
-from typing import Any, Iterable, Mapping
+from typing import Any, Callable, Iterable, Mapping
 
 from . import anomaly_matrix
 from .manifest import ManifestValidationError, validate
@@ -34,6 +36,9 @@ EXPECTED_MATRIX_RESULT_SCHEMA_PATH = "schemas/anomaly-multiseed-matrix-result-v0
 EXPECTED_MATRIX_RESULT_SCHEMA_CANONICAL_SHA256 = "79acd31482bae6702dcb6bf6145a58342730a0b61c053592a720fa9e01e53326"
 EXPECTED_INPUT_ROOT = "artifacts/anomaly-multiseed-v02"
 EXPECTED_OUTPUT_ROOT = "artifacts/anomaly-multiseed-v02-diagnostics-v01"
+DIAGNOSTICS_COMPLETION_MARKER_TYPE = "event-aware-anomaly-failure-diagnostics-complete"
+_STAGED_MARKER = ".complete"
+_STAGING_PREFIX = ".anomaly-multiseed-v02-diagnostics-v01.staging-"
 EXPECTED_ARTIFACT_CODE_REVISION = "15a0f60433703c32a1bfa989f7f779c6828a1096"
 EXPECTED_CONFIG_CANONICAL_SHA256 = "933446fda04913ad23fb3168173152e0f21838427b04754872c3e913f43ba2e1"
 EXPECTED_SCHEMA_CANONICAL_SHA256 = "1543b43feb48cb60988852852662bc19225719bff31145d7d3e3c202e8ef301a"
@@ -1234,7 +1239,13 @@ def _build_diagnostics_draft(replay: Mapping[str, Any], provenance: Mapping[str,
 
 
 def replay_and_build_diagnostics_result(root: Path, *, replay_head: str) -> VerifiedDiagnosticsResult:
-    """The only completed-result entry point: issue a sealed result after the final audit."""
+    """Public read-only API: return a sealed result without claiming or writing output."""
+    result, _, _ = _replay_and_build_with_context(root, replay_head=replay_head)
+    return result
+
+
+def _replay_and_build_with_context(root: Path, *, replay_head: str) -> tuple[VerifiedDiagnosticsResult, dict[str, Any], bytes]:
+    """Retain fresh replay context privately for D2-B's marker-boundary rechecks."""
     verified = _verify_input_replay(root, replay_head=replay_head)
     ledgers = _build_ledgers_from_verified_replay(verified)
     provenance = _build_provenance_from_verified_replay(verified, root)
@@ -1244,8 +1255,430 @@ def replay_and_build_diagnostics_result(root: Path, *, replay_head: str) -> Veri
     result = _build_diagnostics_draft({"ledger": ledgers}, provenance, schema=schema)
     if result["provenance"] != _build_provenance_from_verified_replay(verified, root):
         _fail("built provenance differs from the verified replay")
+    original_payload = _canonical_json({**result, **_COMPLETE_FLAGS})
     _recheck_verified_replay_boundary(verified, _repository(root))
-    return VerifiedDiagnosticsResult({**result, **_COMPLETE_FLAGS}, _token=_VERIFIED_RESULT_TOKEN)
+    sealed = VerifiedDiagnosticsResult({**result, **_COMPLETE_FLAGS}, _token=_VERIFIED_RESULT_TOKEN)
+    return sealed, verified, original_payload
+
+
+def _filesystem_identity(metadata: os.stat_result) -> tuple[int, int]:
+    identity = (metadata.st_dev, metadata.st_ino)
+    if not identity[1]:
+        _fail("filesystem identity is unavailable; refusing diagnostics publication")
+    return identity
+
+
+def _directory_identity(path: Path) -> tuple[int, int]:
+    metadata = path.lstat()
+    if not stat.S_ISDIR(metadata.st_mode) or _is_reparse_point(path):
+        _fail("diagnostics output ancestry is not a regular directory")
+    return _filesystem_identity(metadata)
+
+
+def _require_windows_publication() -> None:
+    if os.name != "nt":
+        _fail("D2-B publication is Windows-only; --run is disabled on non-Windows; --validate-only and D2-A read-only replay remain available")
+
+
+def _prepare_publication_rename() -> Callable[[Any, Any, int | None], None]:
+    """Resolve a no-replace directory rename before staging; never emulate overwrite."""
+    _require_windows_publication()
+    if os.name == "nt":
+        import ctypes
+        from ctypes import wintypes
+        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel.SetFileInformationByHandle.argtypes = [wintypes.HANDLE, ctypes.c_int, wintypes.LPVOID, wintypes.DWORD]
+        kernel.SetFileInformationByHandle.restype = wintypes.BOOL
+
+        class FileRenameInfo(ctypes.Structure):
+            _fields_ = [("ReplaceIfExists", ctypes.c_ubyte), ("RootDirectory", wintypes.HANDLE),
+                        ("FileNameLength", wintypes.DWORD), ("FileName", wintypes.WCHAR * 1)]
+
+        def windows_rename(source: Any, target: Any, directory_fd: int | None) -> None:
+            if directory_fd is not None or type(source) is not int or source <= 0 or not Path(target).is_absolute() or Path(target).name != Path(EXPECTED_OUTPUT_ROOT).name:
+                _fail("Windows publication rename requires the held staging handle and fixed target")
+            # FileRenameInfo (3), ReplaceIfExists=FALSE. The SOURCE is the held
+            # DELETE-capable staging handle, never a mutable source path.
+            # RootDirectory=NULL plus the absolute target is the documented Win32
+            # form. The output/ancestry directory guards remain held throughout.
+            raw = str(target).encode("utf-16-le")
+            buffer = ctypes.create_string_buffer(max(ctypes.sizeof(FileRenameInfo), FileRenameInfo.FileName.offset + len(raw) + 2))
+            info = FileRenameInfo.from_buffer(buffer)
+            info.ReplaceIfExists, info.RootDirectory, info.FileNameLength = 0, None, len(raw)
+            ctypes.memmove(ctypes.addressof(buffer) + FileRenameInfo.FileName.offset, raw, len(raw))
+            if not kernel.SetFileInformationByHandle(source, 3, buffer, len(buffer)):
+                raise ctypes.WinError(ctypes.get_last_error())
+        return windows_rename
+
+
+def _create_private_staging_directory(path: Path, parent_fd: int | None) -> None:
+    _require_windows_publication()
+    if parent_fd is not None:
+        _fail("Windows staging cannot accept a directory descriptor")
+    import ctypes
+    from ctypes import wintypes
+    security = ctypes.WinDLL("advapi32", use_last_error=True)
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    security.ConvertStringSecurityDescriptorToSecurityDescriptorW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, ctypes.POINTER(wintypes.LPVOID), wintypes.LPVOID]
+    security.ConvertStringSecurityDescriptorToSecurityDescriptorW.restype = wintypes.BOOL
+    class SecurityAttributes(ctypes.Structure):
+        _fields_ = [("nLength", wintypes.DWORD), ("lpSecurityDescriptor", wintypes.LPVOID), ("bInheritHandle", wintypes.BOOL)]
+    kernel.CreateDirectoryW.argtypes = [wintypes.LPCWSTR, ctypes.POINTER(SecurityAttributes)]
+    kernel.CreateDirectoryW.restype = wintypes.BOOL
+    kernel.LocalFree.argtypes, kernel.LocalFree.restype = [wintypes.LPVOID], wintypes.LPVOID
+    descriptor = wintypes.LPVOID()
+    # Private and protected FROM CREATION, on both Python versions. No inheritable
+    # ACEs means future children get token-default, explicit DACLs; freezing this
+    # directory later cannot remove ACEs inherited from this parent on a racing
+    # extra child. Never apply a new initial ACL to a preexisting path.
+    if not security.ConvertStringSecurityDescriptorToSecurityDescriptorW("D:P(A;;FA;;;OW)(A;;FA;;;SY)(A;;FA;;;BA)", 1, ctypes.byref(descriptor), None):
+        raise ctypes.WinError(ctypes.get_last_error())
+    try:
+        attributes = SecurityAttributes(ctypes.sizeof(SecurityAttributes), descriptor, False)
+        if not kernel.CreateDirectoryW(str(path), ctypes.byref(attributes)):
+            raise ctypes.WinError(ctypes.get_last_error())
+    finally:
+        kernel.LocalFree(descriptor)
+
+
+def _set_windows_dacl(handle: int, sddl: str) -> None:
+    """Set only a held object's protected DACL, never owner/group or a named tree."""
+    import ctypes
+    from ctypes import wintypes
+    security = ctypes.WinDLL("advapi32", use_last_error=True)
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    security.ConvertStringSecurityDescriptorToSecurityDescriptorW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, ctypes.POINTER(wintypes.LPVOID), wintypes.LPVOID]
+    security.ConvertStringSecurityDescriptorToSecurityDescriptorW.restype = wintypes.BOOL
+    security.GetSecurityDescriptorDacl.argtypes = [wintypes.LPVOID, ctypes.POINTER(wintypes.BOOL), ctypes.POINTER(wintypes.LPVOID), ctypes.POINTER(wintypes.BOOL)]
+    security.GetSecurityDescriptorDacl.restype = wintypes.BOOL
+    security.SetSecurityInfo.argtypes = [wintypes.HANDLE, ctypes.c_int, wintypes.DWORD, wintypes.LPVOID, wintypes.LPVOID, wintypes.LPVOID, wintypes.LPVOID]
+    security.SetSecurityInfo.restype = wintypes.DWORD
+    kernel.LocalFree.argtypes, kernel.LocalFree.restype = [wintypes.LPVOID], wintypes.LPVOID
+    descriptor = wintypes.LPVOID()
+    if not security.ConvertStringSecurityDescriptorToSecurityDescriptorW(sddl, 1, ctypes.byref(descriptor), None):
+        raise ctypes.WinError(ctypes.get_last_error())
+    try:
+        present, defaulted, dacl = wintypes.BOOL(), wintypes.BOOL(), wintypes.LPVOID()
+        if not security.GetSecurityDescriptorDacl(descriptor, ctypes.byref(present), ctypes.byref(dacl), ctypes.byref(defaulted)):
+            raise ctypes.WinError(ctypes.get_last_error())
+        if not present.value or not dacl.value:
+            _fail("diagnostics staging DACL must not be absent or null")
+        error = security.SetSecurityInfo(handle, 1, 0x80000004, None, None, dacl, None)
+        if error:
+            raise ctypes.WinError(error)
+    finally:
+        kernel.LocalFree(descriptor)
+
+
+class _OutputDirectoryGuard:
+    """No-follow directory binding; Windows guards deny delete sharing.
+
+    Repository/artifacts guards allow write sharing so unrelated children remain
+    usable. Staging denies write/delete sharing and carries its own rename rights.
+    These publication guards are Windows-only.
+    """
+
+    def __init__(self, path: Path, *, allow_directory_writes: bool = False, staging: bool = False):
+        _require_windows_publication()
+        self.path, self.identity = path, _directory_identity(path)
+        self.fd, self.handle, self.kernel = None, None, None
+        try:
+            if os.name == "nt":
+                import ctypes
+                from ctypes import wintypes
+                self.kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+                self.kernel.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+                self.kernel.CreateFileW.restype = wintypes.HANDLE
+                self.kernel.CloseHandle.argtypes = [wintypes.HANDLE]
+                self.kernel.CloseHandle.restype = wintypes.BOOL
+                # FILE_LIST_DIRECTORY | FILE_READ_ATTRIBUTES, FILE_SHARE_READ, OPEN_EXISTING,
+                # FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT.
+                # Attribute-only handles do NOT enforce the rename sharing lock.
+                access = 0x81 | (0x70000 if staging else 0)  # DELETE | READ_CONTROL | WRITE_DAC for private staging only.
+                handle = self.kernel.CreateFileW(str(path), access, 0x3 if allow_directory_writes else 0x1, None, 3, 0x02200000, None)
+                if handle == ctypes.c_void_p(-1).value:
+                    raise ctypes.WinError(ctypes.get_last_error())
+                self.handle = handle
+            self.check()
+        except BaseException:
+            self.close()
+            raise
+
+    def check(self) -> None:
+        if _directory_identity(self.path) != self.identity:
+            _fail("diagnostics output directory identity changed")
+
+    def close(self) -> None:
+        if self.fd is not None:
+            os.close(self.fd)
+            self.fd = None
+        if self.handle is not None:
+            self.kernel.CloseHandle(self.handle)
+            self.handle = None
+
+
+class _DiagnosticsOutputClaim:
+    """Tentative private staging reservation, never authority to delete anything.
+
+    mkdir and acquiring an identity/handle are not atomic. A hostile same-user
+    empty-directory swap in between cannot be reliably detected by this API.
+    """
+
+    def __init__(self, repository: Path):
+        _require_windows_publication()
+        self.repository = repository
+        self.destination = repository / EXPECTED_OUTPUT_ROOT
+        self.path = self.destination.parent / (_STAGING_PREFIX + uuid.uuid4().hex)
+        self.guards: list[_OutputDirectoryGuard] = []
+        self.directory: _OutputDirectoryGuard | None = None
+        self.identity: tuple[int, int] | None = None
+        self.claimed = False
+        self.pinned_descriptors: dict[str, int] = {}
+        self.files: dict[str, tuple[int, int]] = {}
+
+    def claim(self) -> None:
+        _require_windows_publication()
+        parent = _safe_repo_path(self.repository, "artifacts", "diagnostics output parent", must_exist=True)
+        # Do not lock ancestors above the repository or block sibling writes.
+        for ancestor in (self.repository, parent):
+            self.guards.append(_OutputDirectoryGuard(ancestor, allow_directory_writes=True))
+        self.check_parents()
+        parent_fd = self.guards[-1].fd
+        _create_private_staging_directory(self.path, parent_fd)  # One attempt; no adoption/recovery.
+        self.claimed = True
+        self.identity = _directory_identity(self.path)
+        self.directory = _OutputDirectoryGuard(self.path, staging=True)
+        self.check()
+        with os.scandir(self.directory.fd if self.directory.fd is not None else self.path) as entries:
+            if next(entries, None) is not None:
+                _fail("new diagnostics output is not empty; possible competing writer")
+
+    def check_parents(self) -> None:
+        for guard in self.guards:
+            guard.check()
+        _safe_repo_path(self.repository, self.path.relative_to(self.repository).as_posix(), "diagnostics staging", must_exist=False)
+        _safe_repo_path(self.repository, EXPECTED_OUTPUT_ROOT, "diagnostics output", must_exist=False)
+
+    def check(self) -> None:
+        self.check_parents()
+        if not self.claimed or self.identity is None or _directory_identity(self.path) != self.identity:
+            _fail("diagnostics output claim no longer names its original directory")
+        if self.directory is not None:
+            self.directory.check()
+
+    def _leaf(self, name: str) -> tuple[Any, dict[str, Any]]:
+        if name not in {"result.json", "summary.md", _STAGED_MARKER}:
+            _fail("diagnostics file name is not fixed")
+        if self.directory is not None and self.directory.fd is not None:
+            return name, {"dir_fd": self.directory.fd}
+        return self.path / name, {}
+
+    def write_exclusive(self, name: str, payload: bytes) -> None:
+        self.check()
+        target, relative = self._leaf(name)
+        descriptor = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0), 0o600, **relative)
+        try:
+            metadata = os.fstat(descriptor)
+            if not stat.S_ISREG(metadata.st_mode):
+                _fail("diagnostics output file is not regular")
+            self.files[name] = _filesystem_identity(metadata)
+            with os.fdopen(descriptor, "wb") as handle:
+                descriptor = None
+                if handle.write(payload) != len(payload):
+                    _fail("diagnostics output write was incomplete")
+                handle.flush()
+                os.fsync(handle.fileno())
+        finally:
+            if descriptor is not None:
+                os.close(descriptor)
+        self.check()
+
+    def read_owned(self, name: str) -> bytes:
+        self.check()
+        target, relative = self._leaf(name)
+        metadata = os.stat(target, follow_symlinks=False, **relative)
+        if not stat.S_ISREG(metadata.st_mode) or getattr(metadata, "st_file_attributes", 0) & FILE_ATTRIBUTE_REPARSE_POINT or _filesystem_identity(metadata) != self.files.get(name):
+            _fail("diagnostics output file identity or regular-file status changed")
+        if name in self.pinned_descriptors:
+            # Verify the same identity-bound handle acquired before permissions
+            # were frozen, without closing any pin during final validation.
+            descriptor = self.pinned_descriptors[name]
+            if _filesystem_identity(os.fstat(descriptor)) != self.files[name]:
+                _fail("pinned diagnostics file identity changed")
+            os.lseek(descriptor, 0, os.SEEK_SET)
+            chunks = []
+            while chunk := os.read(descriptor, 65536):
+                chunks.append(chunk)
+            return b"".join(chunks)
+        descriptor = os.open(target, os.O_RDONLY | getattr(os, "O_BINARY", 0) | getattr(os, "O_NOFOLLOW", 0), **relative)
+        try:
+            if _filesystem_identity(os.fstat(descriptor)) != self.files[name]:
+                _fail("diagnostics output file changed during readback")
+            with os.fdopen(descriptor, "rb") as handle:
+                descriptor = None
+                return handle.read()
+        finally:
+            if descriptor is not None:
+                os.close(descriptor)
+
+    def verify_files(self, expected: Mapping[str, bytes]) -> None:
+        self.check()
+        with os.scandir(self.directory.fd if self.directory.fd is not None else self.path) as entries:
+            names = set()
+            for entry in entries:
+                metadata = entry.stat(follow_symlinks=False)
+                if not stat.S_ISREG(metadata.st_mode) or getattr(metadata, "st_file_attributes", 0) & FILE_ATTRIBUTE_REPARSE_POINT:
+                    _fail("diagnostics output must have no directories, links, or reparse points")
+                names.add(entry.name)
+        if names != set(expected):
+            _fail("diagnostics output file inventory is not exact")
+        for name, raw in expected.items():
+            if self.read_owned(name) != raw:
+                _fail("diagnostics output bytes/hash readback differs")
+
+    def prepare_publication_commit(self) -> None:
+        _require_windows_publication()
+        self._pin_and_freeze_windows_staging()
+
+    def install_output(self, rename: Callable[[Any, Any, int | None], None]) -> None:
+        _require_windows_publication()
+        self.check()
+        if self.pinned_descriptors:
+            _fail("publication requires all child handles released after final verification")
+        # FINAL commit: all three prepared files become visible at the fixed path
+        # together. No read, verification, mutation or cleanup may follow.
+        rename(self.directory.handle, self.destination, None)
+
+    def _pin_and_freeze_windows_staging(self) -> None:
+        """Reject existing writers, then freeze both bytes AND directory inventory."""
+        import ctypes
+        import msvcrt
+        kernel = self.directory.kernel
+        # READ_DATA | READ_ATTRIBUTES, SHARE_READ only: no concurrent writer,
+        # replacement, unlink or rename. An already-open incompatible writer or
+        # delete-capable handle makes this acquisition fail closed.
+        for name in ("result.json", "summary.md", _STAGED_MARKER):
+            access = 0x60081  # READ_DATA | READ_ATTRIBUTES | READ_CONTROL | WRITE_DAC.
+            handle = kernel.CreateFileW(str(self.path / name), access, 0x1, None, 3, 0x00200000, None)
+            if handle == ctypes.c_void_p(-1).value:
+                raise ctypes.WinError(ctypes.get_last_error())
+            try:
+                descriptor = msvcrt.open_osfhandle(handle, os.O_RDONLY | os.O_BINARY)
+            except BaseException:
+                kernel.CloseHandle(handle)
+                raise
+            self.pinned_descriptors[name] = descriptor
+            metadata = os.fstat(descriptor)
+            if not stat.S_ISREG(metadata.st_mode) or getattr(metadata, "st_file_attributes", 0) & FILE_ATTRIBUTE_REPARSE_POINT or _filesystem_identity(metadata) != self.files[name]:
+                _fail("pinned diagnostics handle differs from its exclusive file")
+        # Deny ordinary file mutation/deletion and directory add-child/delete-child.
+        # No inheritable ACEs: only these four held objects are changed. Owner keeps
+        # WRITE_DAC for explicit manual inspection/recovery; this is NOT a sandbox
+        # against an owner deliberately changing permissions or privileged access.
+        for descriptor in self.pinned_descriptors.values():
+            _set_windows_dacl(msvcrt.get_osfhandle(descriptor), "D:P(D;;0x10116;;;WD)(A;;FA;;;OW)(A;;FA;;;SY)(A;;FA;;;BA)")
+        _set_windows_dacl(self.directory.handle, "D:P(D;;0x10156;;;WD)(A;;FA;;;OW)(A;;FA;;;SY)(A;;FA;;;BA)")
+
+    def release_child_handles(self) -> None:
+        # Windows refuses directory rename while any child handle is open, even
+        # with delete sharing. Frozen permissions remain in place across release.
+        for name in list(self.pinned_descriptors):
+            descriptor = self.pinned_descriptors.pop(name)
+            os.close(descriptor)  # Any error is still BEFORE the commit point.
+
+    def close(self) -> None:
+        # Best-effort handle release only: an already committed publication must
+        # never be reported as failed because releasing a handle raises OSError.
+        for descriptor in self.pinned_descriptors.values():
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+        self.pinned_descriptors.clear()
+        for guard in ([self.directory] if self.directory is not None else []) + list(reversed(self.guards)):
+            try:
+                guard.close()
+            except OSError:
+                pass
+
+
+def _sealed_payload_bytes(result: VerifiedDiagnosticsResult, original: bytes) -> bytes:
+    if type(result) is not VerifiedDiagnosticsResult:
+        _fail("diagnostics publishing requires a freshly replayed VerifiedDiagnosticsResult")
+    payload = _canonical_json(dict(result))
+    if payload != original:
+        _fail("sealed diagnostics payload differs from the original draft")
+    return payload
+
+
+def _render_verified_summary(result: VerifiedDiagnosticsResult, context: Mapping[str, Any], repository: Path) -> bytes:
+    """Load only the freshly audited renderer source, without stale module/pyc caches."""
+    path = _safe_repo_path(repository, "tools/evaluator/render_anomaly_failure_diagnostics.py", "diagnostics renderer", must_exist=True)
+    raw = path.read_bytes()
+    if _sha256_bytes(raw) != context["revision_compatibility"]["current_d2_diagnostics"]["renderer_raw_sha256"]:
+        _fail("diagnostics renderer changed after replay")
+    namespace = {"__name__": "_fixed_diagnostics_renderer", "__file__": str(path)}
+    exec(compile(raw, str(path), "exec"), namespace)
+    return namespace["render_summary"](result)
+
+
+def run_and_publish_diagnostics(root: Path, *, replay_head: str) -> dict[str, str]:
+    """Windows-only D2-B API: fresh replay then atomic directory publication.
+
+    No result, schema, output, renderer, or callback can be supplied. A previously
+    issued result is never a publication input. The return value is a receipt,
+    not a replacement for VerifiedDiagnosticsResult or evidence for promotion.
+    """
+    _require_windows_publication()  # Before replay, path inspection or any claim.
+    if not _is_digest(replay_head, 40):
+        _fail("--run requires a full lowercase 40-character replay HEAD")
+    repository = _repository(root)
+    target = _safe_repo_path(repository, EXPECTED_OUTPUT_ROOT, "diagnostics output", must_exist=False)
+    if os.path.lexists(target):
+        _fail("diagnostics output already exists; overwrite/recovery is disabled")
+    parent = _safe_repo_path(repository, "artifacts", "diagnostics staging parent", must_exist=True)
+    with os.scandir(parent) as entries:
+        if any(entry.name.startswith(_STAGING_PREFIX) for entry in entries):
+            _fail("diagnostics staging residue already exists; manual inspection required; recovery is disabled")
+    claim = _DiagnosticsOutputClaim(repository)
+    try:
+        rename_output = _prepare_publication_rename()
+        result, context, original = _replay_and_build_with_context(repository, replay_head=replay_head)
+        payload = _sealed_payload_bytes(result, original)
+        summary = _render_verified_summary(result, context, repository)
+        if not isinstance(summary, bytes) or b"\r" in summary or not summary.endswith(b"\n"):
+            _fail("diagnostics renderer did not return deterministic UTF-8/LF bytes")
+        summary.decode("utf-8", errors="strict")
+        marker = {"schema_version": SCHEMA_VERSION, "marker_type": DIAGNOSTICS_COMPLETION_MARKER_TYPE,
+                  "result_sha256": _sha256_bytes(payload), "summary_sha256": _sha256_bytes(summary)}
+        marker_raw = _canonical_json(marker)
+        receipt = {"status": "published", "output_path": str(target), "result_sha256": marker["result_sha256"],
+                   "summary_sha256": marker["summary_sha256"], "completion_marker_sha256": _sha256_bytes(marker_raw)}
+        staged = {"result.json": payload, "summary.md": summary, _STAGED_MARKER: marker_raw}
+        claim.claim()
+        for name, raw in staged.items():
+            claim.write_exclusive(name, raw)
+        claim.verify_files(staged)
+        claim.prepare_publication_commit()
+        _recheck_verified_replay_boundary(context, repository)
+        _sealed_payload_bytes(result, original)
+        claim.verify_files(staged)
+        observed, _, _ = _strict_bytes(claim.read_owned(_STAGED_MARKER), "diagnostics completion marker")
+        if observed != marker:
+            _fail("diagnostics completion marker differs from the fixed contract")
+        claim.release_child_handles()
+        claim.install_output(rename_output)
+        return receipt
+    except BaseException as exc:
+        if isinstance(exc, (KeyboardInterrupt, SystemExit)):
+            raise
+        if claim.claimed:
+            raise AnomalyFailureDiagnosticsError(f"diagnostics publish failed; staging retained for inspection: {claim.path.name}; no automatic cleanup/recovery") from exc
+        if isinstance(exc, AnomalyFailureDiagnosticsError):
+            raise
+        raise AnomalyFailureDiagnosticsError("diagnostics publish failed before output claim; any competing output is untouched") from exc
+    finally:
+        claim.close()
 
 
 def _verify_input_replay(root: Path | None = None, *, replay_head: str) -> dict[str, Any]:
@@ -1813,17 +2246,37 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="diagnose_anomaly_matrix")
     parser.add_argument("--config", default=CONFIG_PATH)
     parser.add_argument("--root")
-    parser.add_argument("--validate-only", action="store_true")
-    args = parser.parse_args(argv)
-    if not args.validate_only:
-        print("FAIL: D1 supports --validate-only only; diagnostic execution is not implemented")
-        return 2
-    root = Path(args.root).absolute() if args.root else None
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument("--validate-only", action="store_true")
+    modes.add_argument("--run", action="store_true")
+    parser.add_argument("--replay-head")
     try:
-        summary = validate_diagnostics_config(args.config, root)
-        print(_text_summary(summary), end="")
+        args = parser.parse_args(argv)
+    except SystemExit as exc:
+        return int(exc.code)
+    if not args.validate_only and not args.run:
+        print("FAIL: choose explicitly --validate-only or --run")
+        return 2
+    if args.validate_only and args.replay_head is not None:
+        print("FAIL: --replay-head is only valid with --run")
+        return 2
+    if args.run and (not _is_digest(args.replay_head, 40) or args.config != CONFIG_PATH):
+        print("FAIL: --run requires the fixed config and a full lowercase 40-character --replay-head")
+        return 2
+    try:
+        if args.run:
+            _require_windows_publication()
+        root = Path(args.root).absolute() if args.root else None
+        if args.validate_only:
+            summary = validate_diagnostics_config(args.config, root)
+            print(_text_summary(summary), end="")
+        else:
+            receipt = run_and_publish_diagnostics(_repository(root), replay_head=args.replay_head)
+            print(f"published: {receipt['output_path']}")
+            for field in ("result_sha256", "summary_sha256", "completion_marker_sha256"):
+                print(f"{field}: {receipt[field]}")
     except (AnomalyFailureDiagnosticsError, ManifestValidationError, OSError, KeyError, ValueError) as exc:
-        print(f"FAIL: {exc}")
+        print(f"FAIL: {str(exc).splitlines()[0][:200] if str(exc) else 'diagnostics failed'}")
         return 1
     return 0
 
