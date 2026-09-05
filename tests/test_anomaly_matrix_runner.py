@@ -24,6 +24,7 @@ from banto_ai.manifest import ManifestValidationError, load_json, validate
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "examples/configs/anomaly-multiseed-v0.1.json"
+CONFIG_V02_PATH = ROOT / "examples/configs/anomaly-multiseed-v0.2.json"
 SOURCE_ROOT = ROOT
 REVISION = {"status": "git", "head": "a" * 40, "dirty": False, "diff_sha256": "b" * 64}
 
@@ -46,9 +47,10 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         cls.repo_root = Path(tempfile.mkdtemp(prefix="matrix-runner-repo-"))
         shutil.copytree(SOURCE_ROOT / "examples", cls.repo_root / "examples")
         shutil.copytree(SOURCE_ROOT / "schemas", cls.repo_root / "schemas")
-        global ROOT, CONFIG_PATH
+        global ROOT, CONFIG_PATH, CONFIG_V02_PATH
         ROOT = cls.repo_root
         CONFIG_PATH = ROOT / "examples/configs/anomaly-multiseed-v0.1.json"
+        CONFIG_V02_PATH = ROOT / "examples/configs/anomaly-multiseed-v0.2.json"
         cls.artifact_parent = cls.repo_root / "artifacts"
         cls.artifact_parent.mkdir(parents=True, exist_ok=True)
         cls.token = uuid4().hex[:10]
@@ -76,19 +78,22 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         shutil.rmtree(cls.repo_root, ignore_errors=True)
 
     def tearDown(self) -> None:
-        output = self.repo_root / "artifacts" / "anomaly-multiseed-v01"
-        if output.exists() and not output.is_symlink():
-            shutil.rmtree(output, ignore_errors=True)
-        for path in self.repo_root.glob("artifacts/.anomaly-multiseed-v01.incomplete-*"):
-            if path.is_dir() and not path.is_symlink():
-                shutil.rmtree(path, ignore_errors=True)
+        for output_name in ("anomaly-multiseed-v01", "anomaly-multiseed-v02"):
+            output = self.repo_root / "artifacts" / output_name
+            if output.exists() and not output.is_symlink():
+                shutil.rmtree(output, ignore_errors=True)
+            for path in self.repo_root.glob(f"artifacts/.{output_name}.incomplete-*"):
+                if path.is_dir() and not path.is_symlink():
+                    shutil.rmtree(path, ignore_errors=True)
 
     def setUp(self) -> None:
         self.generator_calls: list[tuple[int, str]] = []
         self.evaluator_calls: list[str] = []
 
-    def _output(self) -> Path:
-        output = ROOT / "artifacts" / "anomaly-multiseed-v01"
+    def _output(self, config_path: Path | None = None) -> Path:
+        if config_path is None:
+            config_path = CONFIG_PATH
+        output = ROOT / load_json(config_path)["output_root"]
         self.outputs.append(output)
         return output
 
@@ -358,11 +363,13 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         _write_json(output / ".complete", marker)
         return output
 
-    def _run(self, *, generator=None, evaluator=None, recover_incomplete=False) -> Path:
-        output = self._output()
+    def _run(self, *, generator=None, evaluator=None, recover_incomplete=False, config_path: Path | None = None) -> Path:
+        if config_path is None:
+            config_path = CONFIG_PATH
+        output = self._output(config_path)
         with patch.object(runner_module, "_revision", return_value=copy.deepcopy(REVISION)):
             with patch.object(runner_module.quality, "check_synthetic_dataset_semantics", side_effect=self._compact_quality_semantics):
-                return run_anomaly_matrix(CONFIG_PATH, ROOT, generator=generator or self._fake_generator, evaluator=evaluator or self._fake_evaluator, recover_incomplete=recover_incomplete)
+                return run_anomaly_matrix(config_path, ROOT, generator=generator or self._fake_generator, evaluator=evaluator or self._fake_evaluator, recover_incomplete=recover_incomplete)
 
     def _prepare_fake_evaluation_validation(self) -> tuple[dict, dict, dict, dict, Path]:
         cell, base, generator_raw, dataset_path = self._materialized_fake_dataset()
@@ -398,6 +405,37 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         self.assertTrue(result["invariants"]["distinct_observations_by_layout"])
         self.assertEqual(result["cells"][0]["layout_index"], 0)
         self.assertTrue((output / ".complete").is_file())
+
+    def test_v02_fake_run_preserves_order_provenance_and_output_isolation(self) -> None:
+        output = self._run(config_path=CONFIG_V02_PATH)
+        self.assertEqual(output, ROOT / "artifacts" / "anomaly-multiseed-v02")
+        self.assertFalse((ROOT / "artifacts" / "anomaly-multiseed-v01").exists())
+        self.assertEqual([seed for seed, _dataset_id in self.generator_calls[:12]], [11] * 12)
+        self.assertEqual(len(self.generator_calls), 120)
+        result = load_json(output / "result.json")
+        self.assertEqual(result["matrix_id"], "anomaly-multiseed-v02")
+        self.assertEqual(result["counts"], {"total": 120, "success": 120, "partial": 0, "inconclusive": 0, "failed": 0})
+        self.assertEqual(result["provenance"]["inputs"]["matrix_config"]["path"], "examples/configs/anomaly-multiseed-v0.2.json")
+        self.assertEqual(result["provenance"]["inputs"]["matrix_schema"]["path"], "schemas/anomaly-multiseed-matrix-config-v0.2.schema.json")
+
+    def test_result_schema_paths_and_canonical_hashes_are_profile_pinned(self) -> None:
+        v01_sources, _v01_values = runner_module._snapshot_inputs(ROOT, CONFIG_PATH)
+        self.assertEqual(v01_sources["matrix_result_schema"]["path"], "schemas/anomaly-multiseed-matrix-result.schema.json")
+        self.assertEqual(v01_sources["matrix_result_schema"]["canonical_sha256"], "9912286f5007e203f1637b182505b1ab9101733a41d89ba52dab9edf983da713")
+        v02_sources, _v02_values = runner_module._snapshot_inputs(ROOT, CONFIG_V02_PATH)
+        self.assertEqual(v02_sources["matrix_result_schema"]["path"], "schemas/anomaly-multiseed-matrix-result-v0.2.schema.json")
+        self.assertEqual(v02_sources["matrix_result_schema"]["canonical_sha256"], "79acd31482bae6702dcb6bf6145a58342730a0b61c053592a720fa9e01e53326")
+
+        schema_path = ROOT / v02_sources["matrix_result_schema"]["path"]
+        original = schema_path.read_bytes()
+        try:
+            tampered = load_json(schema_path)
+            tampered["title"] = "tampered result schema"
+            _write_json(schema_path, tampered)
+            with self.assertRaises(runner_module._GlobalFailure):
+                runner_module._snapshot_inputs(ROOT, CONFIG_V02_PATH)
+        finally:
+            schema_path.write_bytes(original)
 
     def test_arbitrary_summary_with_refreshed_marker_fails_one_cell_and_continues(self) -> None:
         target_cell = "seed-042-layout-05-motor-01-cooldown"

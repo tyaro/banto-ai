@@ -333,6 +333,7 @@ def _source_entry(root: Path, path: Path, relative: str, label: str) -> tuple[di
 
 def _snapshot_inputs(root: Path, config_path: str | Path) -> tuple[dict[str, Any], dict[str, Any]]:
     config_relative = anomaly_matrix._config_relative_path(config_path, root)
+    profile = anomaly_matrix._select_profile(config_relative)
     _assert_contained_path(root / config_relative, root, "matrix config", must_exist=True)
     config_resolved = anomaly_matrix._resolve_config_path(config_path, root)
     config, config_source = _source_entry(root, config_resolved, config_relative, "matrix config")
@@ -343,7 +344,7 @@ def _snapshot_inputs(root: Path, config_path: str | Path) -> tuple[dict[str, Any
         "anomaly_config_schema": (ANOMALY_CONFIG_SCHEMA_PATH, "anomaly evaluation config schema"),
         "anomaly_result_schema": (ANOMALY_RESULT_SCHEMA_PATH, "anomaly evaluation result schema"),
         "dataset_manifest_schema": (DATASET_MANIFEST_SCHEMA_PATH, "synthetic dataset manifest schema"),
-        "matrix_result_schema": (RESULT_SCHEMA_PATH, "anomaly matrix result schema"),
+        "matrix_result_schema": (profile.result_schema_path, "anomaly matrix result schema"),
     }
     sources: dict[str, Any] = {"matrix_config": config_source}
     values: dict[str, Any] = {"matrix_config": config}
@@ -353,6 +354,8 @@ def _snapshot_inputs(root: Path, config_path: str | Path) -> tuple[dict[str, Any
         value, source = _source_entry(root, path, relative, label)
         sources[key] = source
         values[key] = value
+    if sources["matrix_result_schema"]["canonical_sha256"] != profile.result_schema_canonical_sha256:
+        raise _GlobalFailure("matrix result schema canonical SHA-256 does not match the selected profile")
     sources["_config_relative"] = config_relative
     return sources, values
 

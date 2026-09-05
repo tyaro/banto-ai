@@ -66,6 +66,13 @@ python tools/evaluator/validate_anomaly_matrix.py --root . --config examples/con
 
 正本schemaは [`schemas/anomaly-multiseed-matrix-config.schema.json`](../../schemas/anomaly-multiseed-matrix-config.schema.json)、固定configは [`examples/configs/anomaly-multiseed-v0.1.json`](../../examples/configs/anomaly-multiseed-v0.1.json)、preregistration本文は [`docs/anomaly-multiseed-evaluation-plan.md`](../../docs/anomaly-multiseed-evaluation-plan.md) です。Savepoint B runnerのresult schemaは [`schemas/anomaly-multiseed-matrix-result.schema.json`](../../schemas/anomaly-multiseed-matrix-result.schema.json) です。
 
+summary integrity fix後の次versionは [`v0.2 preregistration`](../../docs/anomaly-multiseed-evaluation-plan-v0.2.md) に固定する。v0.2 validatorは [`schemas/anomaly-multiseed-matrix-config-v0.2.schema.json`](../../schemas/anomaly-multiseed-matrix-config-v0.2.schema.json) と [`examples/configs/anomaly-multiseed-v0.2.json`](../../examples/configs/anomaly-multiseed-v0.2.json) を使い、matrix id `anomaly-multiseed-v02`、output root `artifacts/anomaly-multiseed-v02`、v0.2 result schema [`schemas/anomaly-multiseed-matrix-result-v0.2.schema.json`](../../schemas/anomaly-multiseed-matrix-result-v0.2.schema.json) を選択する。v0.1のREJECT artifactは変更せず、v0.2 formal runは未実施である。
+
+```text
+python tools/evaluator/validate_anomaly_matrix.py --root . --config examples/configs/anomaly-multiseed-v0.2.json
+python tools/evaluator/run_anomaly_matrix.py --root . --config examples/configs/anomaly-multiseed-v0.2.json
+```
+
 ## event-aware anomaly multi-seed matrix runner
 
 generator configのschema後semantic（version、equipment、regime、event、disabled event、quality-changing overlap）はgeneratorとqualityが共有するI/Oなしvalidatorで検査します。

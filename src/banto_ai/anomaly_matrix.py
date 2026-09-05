@@ -8,8 +8,10 @@ import json
 import math
 import os
 import sys
+from dataclasses import dataclass
 from pathlib import Path, PureWindowsPath
 from typing import Any, Mapping
+from types import MappingProxyType
 
 from .manifest import ManifestValidationError, validate
 
@@ -30,6 +32,7 @@ EXPECTED_EVENT_DURATION = 3
 EXPECTED_GRACE_POINTS = 3
 EXPECTED_BOOTSTRAP = {"seed": 20260905, "resamples": 10000, "confidence_level": 0.95}
 EXPECTED_OUTPUT_ROOT = "artifacts/anomaly-multiseed-v01"
+EXPECTED_CONFIG_PATH = "examples/configs/anomaly-multiseed-v0.1.json"
 EXPECTED_BASE_CONFIG = "examples/configs/synthetic-anomaly-evaluation-v0.1.json"
 EXPECTED_BASE_SCHEMA_PATH = "schemas/synthetic-generator-config.schema.json"
 EXPECTED_SCHEMA_PATH = "schemas/anomaly-multiseed-matrix-config.schema.json"
@@ -38,6 +41,54 @@ EXPECTED_CONFIG_CANONICAL_SHA256 = "1c014476f9e9a3112b60323453b7e00359b1e45a831a
 EXPECTED_BASE_CONFIG_CANONICAL_SHA256 = "16165735d4fdb71213fec301f26d9c04a593ee36afbb51d255be535dd98f8b93"
 EXPECTED_BASE_SCHEMA_CANONICAL_SHA256 = "e6e743ef4cb28902b3869cf20a0227df0340fe6b6ce0227d63eb2d2b0b55fd89"
 EXPECTED_SCHEMA_CANONICAL_SHA256 = "3bcc8d170dd59d64eb566dc21e51900ed84f253f2f0ad6e86d2778932fb29829"
+EXPECTED_RESULT_SCHEMA_PATH = "schemas/anomaly-multiseed-matrix-result.schema.json"
+EXPECTED_RESULT_SCHEMA_CANONICAL_SHA256 = "9912286f5007e203f1637b182505b1ab9101733a41d89ba52dab9edf983da713"
+EXPECTED_V02_SCHEMA_PATH = "schemas/anomaly-multiseed-matrix-config-v0.2.schema.json"
+EXPECTED_V02_CONFIG_PATH = "examples/configs/anomaly-multiseed-v0.2.json"
+EXPECTED_V02_OUTPUT_ROOT = "artifacts/anomaly-multiseed-v02"
+EXPECTED_V02_RESULT_SCHEMA_PATH = "schemas/anomaly-multiseed-matrix-result-v0.2.schema.json"
+EXPECTED_V02_SCHEMA_CANONICAL_SHA256 = "fd0308a66a03b8d164dfa16584286b6f686080d830ab6edce36280c2949c2e97"
+EXPECTED_V02_CONFIG_CANONICAL_SHA256 = "16b6af203bcd885e9c6ce3e3e3fcca4ed37f7c6460d0ec14e1271de91ce85e05"
+EXPECTED_V02_RESULT_SCHEMA_CANONICAL_SHA256 = "79acd31482bae6702dcb6bf6145a58342730a0b61c053592a720fa9e01e53326"
+
+
+@dataclass(frozen=True)
+class MatrixProfile:
+    schema_version: str
+    matrix_id: str
+    config_path: str
+    schema_path: str
+    result_schema_path: str
+    result_schema_canonical_sha256: str
+    config_canonical_sha256: str
+    schema_canonical_sha256: str
+    output_root: str
+
+
+MATRIX_PROFILES: Mapping[str, MatrixProfile] = MappingProxyType({
+    EXPECTED_CONFIG_PATH: MatrixProfile(
+        schema_version=MATRIX_SCHEMA_VERSION,
+        matrix_id=MATRIX_ID,
+        config_path=EXPECTED_CONFIG_PATH,
+        schema_path=EXPECTED_SCHEMA_PATH,
+        result_schema_path=EXPECTED_RESULT_SCHEMA_PATH,
+        result_schema_canonical_sha256=EXPECTED_RESULT_SCHEMA_CANONICAL_SHA256,
+        config_canonical_sha256=EXPECTED_CONFIG_CANONICAL_SHA256,
+        schema_canonical_sha256=EXPECTED_SCHEMA_CANONICAL_SHA256,
+        output_root=EXPECTED_OUTPUT_ROOT,
+    ),
+    EXPECTED_V02_CONFIG_PATH: MatrixProfile(
+        schema_version="0.2",
+        matrix_id="anomaly-multiseed-v02",
+        config_path=EXPECTED_V02_CONFIG_PATH,
+        schema_path=EXPECTED_V02_SCHEMA_PATH,
+        result_schema_path=EXPECTED_V02_RESULT_SCHEMA_PATH,
+        result_schema_canonical_sha256=EXPECTED_V02_RESULT_SCHEMA_CANONICAL_SHA256,
+        config_canonical_sha256=EXPECTED_V02_CONFIG_CANONICAL_SHA256,
+        schema_canonical_sha256=EXPECTED_V02_SCHEMA_CANONICAL_SHA256,
+        output_root=EXPECTED_V02_OUTPUT_ROOT,
+    ),
+})
 
 
 class AnomalyMatrixError(ValueError):
@@ -200,16 +251,16 @@ def _expected_event(layout: Mapping[str, Any], event_class: str, equipment_type:
     raise AnomalyMatrixError(f"unsupported event class: {event_class}")
 
 
-def _validate_semantics(config: Mapping[str, Any], base: Mapping[str, Any], test_regimes: list[dict[str, Any]]) -> dict[str, Any]:
-    _require_exact(config.get("schema_version"), MATRIX_SCHEMA_VERSION, "schema_version")
+def _validate_semantics(config: Mapping[str, Any], base: Mapping[str, Any], test_regimes: list[dict[str, Any]], profile: MatrixProfile) -> dict[str, Any]:
+    _require_exact(config.get("schema_version"), profile.schema_version, "schema_version")
     _require_exact(config.get("config_type"), MATRIX_CONFIG_TYPE, "config_type")
-    _require_exact(config.get("matrix_id"), MATRIX_ID, "matrix_id")
+    _require_exact(config.get("matrix_id"), profile.matrix_id, "matrix_id")
     _require_exact(config.get("base_generator_config_path"), EXPECTED_BASE_CONFIG, "base_generator_config_path")
     _require_exact(config.get("base_generator_config_canonical_sha256"), EXPECTED_BASE_CONFIG_CANONICAL_SHA256, "base_generator_config_canonical_sha256")
     _require_exact(config.get("base_generator_schema_path"), EXPECTED_BASE_SCHEMA_PATH, "base_generator_schema_path")
     _require_exact(config.get("base_generator_schema_canonical_sha256"), EXPECTED_BASE_SCHEMA_CANONICAL_SHA256, "base_generator_schema_canonical_sha256")
-    _require_exact(config.get("schema_path"), EXPECTED_SCHEMA_PATH, "schema_path")
-    _require_exact(config.get("schema_canonical_sha256"), EXPECTED_SCHEMA_CANONICAL_SHA256, "schema_canonical_sha256")
+    _require_exact(config.get("schema_path"), profile.schema_path, "schema_path")
+    _require_exact(config.get("schema_canonical_sha256"), profile.schema_canonical_sha256, "schema_canonical_sha256")
     _require_exact(config.get("seeds"), list(EXPECTED_SEEDS), "seeds")
     _require_exact(config.get("test_split"), {"start_sample": 720, "end_sample": 900}, "test_split")
     _require_exact(config.get("mode_window_samples"), EXPECTED_MODE_WINDOW, "mode_window_samples")
@@ -224,7 +275,7 @@ def _validate_semantics(config: Mapping[str, Any], base: Mapping[str, Any], test
         "detection_grace_points": 3,
     }, "detector")
     _require_exact(config.get("bootstrap"), EXPECTED_BOOTSTRAP, "bootstrap")
-    _require_exact(config.get("output_root"), EXPECTED_OUTPUT_ROOT, "output_root")
+    _require_exact(config.get("output_root"), profile.output_root, "output_root")
 
     layouts = config.get("layouts")
     if not isinstance(layouts, list) or len(layouts) != 12:
@@ -304,14 +355,24 @@ def _validate_semantics(config: Mapping[str, Any], base: Mapping[str, Any], test
     }
 
 
+def _select_profile(config_relative_path: str) -> MatrixProfile:
+    profile = MATRIX_PROFILES.get(config_relative_path)
+    if profile is None:
+        raise AnomalyMatrixError(f"unknown matrix profile for config path: {config_relative_path}")
+    return profile
+
+
 def validate_anomaly_matrix_config(config_path: str | Path, root: Path | None = None) -> dict[str, Any]:
     """Purely validate a preregistered matrix config and return an audit summary."""
     repository = (root or Path(__file__).resolve().parents[2]).absolute()
     config_relative_path = _config_relative_path(config_path, repository)
+    profile = _select_profile(config_relative_path)
     path = _resolve_config_path(config_path, repository)
     config, config_raw, config_raw_sha256, config_canonical_sha256 = _load_object_snapshot(path, "matrix config")
     try:
         schema_relative_path = config.get("schema_path")
+        if schema_relative_path != profile.schema_path:
+            raise AnomalyMatrixError("matrix profile schema path does not match config path")
         schema_path = _safe_repo_path(repository, schema_relative_path, "schema_path", must_exist=True)
     except (AttributeError, TypeError) as exc:
         raise AnomalyMatrixError("schema_path must be present before path validation") from exc
@@ -320,9 +381,9 @@ def validate_anomaly_matrix_config(config_path: str | Path, root: Path | None = 
         validate(config, schema)
     except ManifestValidationError as exc:
         raise AnomalyMatrixError(f"matrix config does not satisfy its schema: {exc}") from exc
-    if schema_canonical_sha256 != EXPECTED_SCHEMA_CANONICAL_SHA256 or config.get("schema_canonical_sha256") != schema_canonical_sha256:
+    if schema_canonical_sha256 != profile.schema_canonical_sha256 or config.get("schema_canonical_sha256") != schema_canonical_sha256:
         raise AnomalyMatrixError("matrix config schema canonical SHA-256 pin is invalid")
-    if config_canonical_sha256 != EXPECTED_CONFIG_CANONICAL_SHA256:
+    if config_canonical_sha256 != profile.config_canonical_sha256:
         raise AnomalyMatrixError("matrix config canonical SHA-256 is not the preregistered identity")
     base_relative_path = config["base_generator_config_path"]
     base_path = _safe_repo_path(repository, base_relative_path, "base_generator_config_path", must_exist=True)
@@ -339,7 +400,7 @@ def validate_anomaly_matrix_config(config_path: str | Path, root: Path | None = 
     if output_path.exists() and not output_path.is_dir():
         raise AnomalyMatrixError("output_root must be a directory when it already exists")
     test_regimes = _validate_base_generator(base, base_schema)
-    details = _validate_semantics(config, base, test_regimes)
+    details = _validate_semantics(config, base, test_regimes, profile)
 
     # Revalidate the held lexical paths before re-reading snapshots so a new link or path replacement fails closed.
     current_path = _safe_repo_path(repository, config_relative_path, "config_path completion snapshot", must_exist=True)
@@ -373,13 +434,13 @@ def validate_anomaly_matrix_config(config_path: str | Path, root: Path | None = 
         raise AnomalyMatrixError("matrix input canonical identities changed during validation")
 
     return {
-        "schema_version": MATRIX_SCHEMA_VERSION,
+        "schema_version": profile.schema_version,
         "summary_type": "event-aware-anomaly-matrix-validation",
         "status": "configuration_valid",
         "run_status": "not_run",
         "performance_status": "not_evaluated",
         "config_type": MATRIX_CONFIG_TYPE,
-        "matrix_id": MATRIX_ID,
+        "matrix_id": profile.matrix_id,
         "config_path": path.relative_to(repository).as_posix(),
         "canonicalization": CANONICALIZATION_ID,
         "config_canonical_sha256": config_canonical_sha256,

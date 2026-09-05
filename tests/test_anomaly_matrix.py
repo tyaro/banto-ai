@@ -4,6 +4,7 @@ import copy
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -23,6 +24,8 @@ from banto_ai.manifest import load_json, validate
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "examples" / "configs" / "anomaly-multiseed-v0.1.json"
 SCHEMA_PATH = ROOT / "schemas" / "anomaly-multiseed-matrix-config.schema.json"
+CONFIG_V02_PATH = ROOT / "examples" / "configs" / "anomaly-multiseed-v0.2.json"
+SCHEMA_V02_PATH = ROOT / "schemas" / "anomaly-multiseed-matrix-config-v0.2.schema.json"
 
 
 class AnomalyMatrixTests(unittest.TestCase):
@@ -32,15 +35,33 @@ class AnomalyMatrixTests(unittest.TestCase):
         cls.schema = load_json(SCHEMA_PATH)
 
     def _candidate(self, value: object, directory: Path) -> Path:
-        path = directory / "candidate.json"
+        repository = directory / "repository"
+        self._copy_matrix_inputs(repository)
+        path = repository / "examples" / "configs" / "anomaly-multiseed-v0.1.json"
         path.write_bytes((json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
         return path
+
+    def _copy_matrix_inputs(self, repository: Path) -> None:
+        (repository / "examples" / "configs").mkdir(parents=True, exist_ok=True)
+        (repository / "schemas").mkdir(exist_ok=True)
+        for relative in (
+            "examples/configs/synthetic-anomaly-evaluation-v0.1.json",
+            "schemas/synthetic-generator-config.schema.json",
+            "schemas/anomaly-multiseed-matrix-config.schema.json",
+            "schemas/anomaly-multiseed-matrix-config-v0.2.schema.json",
+            "schemas/anomaly-multiseed-matrix-result.schema.json",
+            "schemas/anomaly-multiseed-matrix-result-v0.2.schema.json",
+        ):
+            target = repository / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(ROOT / relative, target)
 
     def _assert_invalid(self, mutate, directory: Path) -> None:
         candidate = copy.deepcopy(self.config)
         mutate(candidate)
         with self.assertRaises(AnomalyMatrixError):
-            validate_anomaly_matrix_config(self._candidate(candidate, directory), ROOT)
+            path = self._candidate(candidate, directory)
+            validate_anomaly_matrix_config(path, path.parents[2])
 
     def test_happy_path_is_exact_deterministic_and_does_not_write(self) -> None:
         with tempfile.TemporaryDirectory(prefix="anomaly-matrix-test-", dir=ROOT / "artifacts") as raw_dir:
@@ -68,6 +89,47 @@ class AnomalyMatrixTests(unittest.TestCase):
         })
         self.assertEqual(len(first["target_signal_ids"]), 8)
         validate(self.config, self.schema)
+
+    def test_v02_profile_is_valid_and_only_changes_registered_identity_fields(self) -> None:
+        v01_summary = validate_anomaly_matrix_config(CONFIG_PATH, ROOT)
+        v02_summary = validate_anomaly_matrix_config(CONFIG_V02_PATH, ROOT)
+        self.assertEqual(v01_summary["config_canonical_sha256"], anomaly_matrix.EXPECTED_CONFIG_CANONICAL_SHA256)
+        self.assertEqual(v02_summary["config_canonical_sha256"], anomaly_matrix.EXPECTED_V02_CONFIG_CANONICAL_SHA256)
+        self.assertEqual(v02_summary["schema"]["canonical_sha256"], anomaly_matrix.EXPECTED_V02_SCHEMA_CANONICAL_SHA256)
+        self.assertEqual(v02_summary["matrix_id"], "anomaly-multiseed-v02")
+        self.assertEqual(v02_summary["config_path"], "examples/configs/anomaly-multiseed-v0.2.json")
+        self.assertEqual(v02_summary["schema"]["path"], "schemas/anomaly-multiseed-matrix-config-v0.2.schema.json")
+        self.assertEqual(v02_summary["safety"]["output_root"], "artifacts/anomaly-multiseed-v02")
+        self.assertEqual(v01_summary["counts"], v02_summary["counts"])
+        self.assertEqual(v01_summary["fixed_parameters"], v02_summary["fixed_parameters"])
+        self.assertEqual(v01_summary["layout_ids"], v02_summary["layout_ids"])
+        validate(load_json(CONFIG_V02_PATH), load_json(SCHEMA_V02_PATH))
+
+        v01 = load_json(CONFIG_PATH)
+        v02 = load_json(CONFIG_V02_PATH)
+        allowed_config_identity_diff = {"schema_version", "matrix_id", "schema_path", "schema_canonical_sha256", "output_root"}
+        self.assertEqual(set(v01), set(v02))
+        for key in v01:
+            if key not in allowed_config_identity_diff:
+                self.assertEqual(v01[key], v02[key], key)
+
+        with tempfile.TemporaryDirectory(prefix="anomaly-matrix-profile-") as raw_repo:
+            repository = Path(raw_repo)
+            self._copy_matrix_inputs(repository)
+            unknown_path = repository / "examples" / "configs" / "unknown.json"
+            unknown_path.write_bytes(CONFIG_V02_PATH.read_bytes())
+            with self.assertRaisesRegex(AnomalyMatrixError, "unknown matrix profile"):
+                validate_anomaly_matrix_config(unknown_path, repository)
+
+            v01_substitution = repository / "examples" / "configs" / "anomaly-multiseed-v0.1.json"
+            v01_substitution.write_bytes(CONFIG_V02_PATH.read_bytes())
+            with self.assertRaises(AnomalyMatrixError):
+                validate_anomaly_matrix_config(v01_substitution, repository)
+
+            v02_substitution = repository / "examples" / "configs" / "anomaly-multiseed-v0.2.json"
+            v02_substitution.write_bytes(CONFIG_PATH.read_bytes())
+            with self.assertRaises(AnomalyMatrixError):
+                validate_anomaly_matrix_config(v02_substitution, repository)
 
     def test_seeds_layouts_classes_mapping_slots_and_fixed_parameters_fail_closed(self) -> None:
         with tempfile.TemporaryDirectory(prefix="anomaly-matrix-test-", dir=ROOT / "artifacts") as raw_dir:
@@ -134,14 +196,16 @@ class AnomalyMatrixTests(unittest.TestCase):
                     validate_anomaly_matrix_config(CONFIG_PATH, ROOT)
 
     def test_lf_and_crlf_have_same_canonical_identity(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="anomaly-matrix-test-", dir=ROOT / "artifacts") as raw_dir:
-            directory = Path(raw_dir)
-            lf_path = self._candidate(self.config, directory)
-            crlf_path = directory / "crlf.json"
+        with tempfile.TemporaryDirectory(prefix="anomaly-matrix-repo-") as raw_repo:
+            repository = Path(raw_repo)
+            self._copy_matrix_inputs(repository)
+            config_directory = repository / "examples" / "configs"
+            lf_path = config_directory / "anomaly-multiseed-v0.1.json"
+            lf_path.write_bytes((json.dumps(self.config, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
             crlf_raw = (json.dumps(self.config, ensure_ascii=False, indent=2) + "\n").replace("\n", "\r\n").encode("utf-8")
-            crlf_path.write_bytes(crlf_raw)
-            lf_summary = validate_anomaly_matrix_config(lf_path, ROOT)
-            crlf_summary = validate_anomaly_matrix_config(crlf_path, ROOT)
+            lf_summary = validate_anomaly_matrix_config(lf_path, repository)
+            lf_path.write_bytes(crlf_raw)
+            crlf_summary = validate_anomaly_matrix_config(lf_path, repository)
         self.assertNotEqual(lf_summary["config_raw_sha256"], crlf_summary["config_raw_sha256"])
         self.assertEqual(lf_summary["config_canonical_sha256"], crlf_summary["config_canonical_sha256"])
         self.assertEqual(lf_summary["config_canonical_sha256"], anomaly_matrix.EXPECTED_CONFIG_CANONICAL_SHA256)
