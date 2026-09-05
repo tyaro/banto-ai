@@ -28,7 +28,7 @@ class AnomalyMatrixAnalysisPureTests(unittest.TestCase):
         self.assertEqual(summary["config_canonical_sha256"], analysis.EXPECTED_ANALYSIS_CONFIG_CANONICAL_SHA256)
 
     def test_ratio_of_sums_and_percentile_definition(self) -> None:
-        aggregate = analysis._Aggregate(precision_num=9, precision_den=235, machine_num=0, machine_den=120, sensor_num=9, sensor_den=120, clean_alerts=222, clean_hours=10.8)
+        aggregate = analysis._Aggregate(precision_num=9, precision_den=235, machine_num=0, machine_den=120, sensor_num=9, sensor_den=120, clean_alerts=222, clean_hours=10.8, clean_milliseconds=38_880_000)
         values = analysis._primary_values(aggregate)
         self.assertAlmostEqual(values["overall_incident_precision"], 9 / 235)
         self.assertAlmostEqual(values["clean_false_alerts_per_8_equipment_hours"], 222 / 10.8 * 8)
@@ -44,9 +44,75 @@ class AnomalyMatrixAnalysisPureTests(unittest.TestCase):
 
     def test_undefined_replicate_is_inconclusive(self) -> None:
         empty = analysis._Aggregate()
-        _point, ci = analysis._bootstrap_metric([empty] * 10, [[0] * 10], "machine_fault_recall")
+        point, ci = analysis._bootstrap_metric([empty] * 10, [[0] * 10], "machine_fault_recall")
+        self.assertIsNone(point)
         self.assertEqual(ci["status"], "inconclusive")
         self.assertEqual(ci["undefined_replicates"], 1)
+
+    def test_precision_slice_bootstrap_uses_ratio_of_sums_and_unknown_kind_fails(self) -> None:
+        slices = [{"motor-01|nominal": [2, 4]} for _ in range(10)]
+        point, ci = analysis._bootstrap_slice(slices, [[0] * 10], "motor-01|nominal", "precision")
+        self.assertEqual(point, 0.5)
+        self.assertEqual(ci["status"], "pass")
+        with self.assertRaises(analysis.AnalysisGlobalFailure):
+            analysis._bootstrap_slice(slices, [[0] * 10], "motor-01|nominal", "unexpected")
+
+    def test_cell_aggregate_preserves_fully_qualified_signal_ids(self) -> None:
+        config = {
+            "layouts": [{"layout_id": "layout-0", "operating_mode": "nominal"}],
+            "expanded_window_grace_points": 3,
+            "test_split": {"start_sample": 0},
+        }
+        generator = {
+            "start_timestamp": "2026-01-01T00:00:00Z",
+            "sampling_interval_ms": 1000,
+            "events": [],
+            "regimes": [{"regime": "nominal", "start_sample": 0, "end_sample": 10}],
+        }
+        cell = {"layout_id": "layout-0", "_generator_config": generator}
+        evaluation = {
+            "metrics": {
+                "overall": {"matched_eligible_alert_episodes": 0, "evaluated_alert_episode_count": 0},
+                "clean_false_alert_equipment_episode_count": 0,
+                "clean_monitored_equipment_hours": 1 / 3600,
+                "score_availability_by_signal": {},
+            },
+            "incidents": [],
+            "scores": [{
+                "equipment_id": "motor-01", "signal_id": "motor-01.motor_current",
+                "operating_mode": "nominal", "timestamp": "2026-01-01T00:00:00Z", "available": True,
+            }],
+            "alert_episode_accounting": [], "alert_episodes": [], "clean_false_alert_episodes": [],
+        }
+        aggregate, slices = analysis._cell_aggregate(evaluation, cell, config)
+        self.assertEqual(aggregate.availability, {"motor-01.motor_current": [1, 1]})
+        self.assertEqual(slices["availability_modes"], {"motor-01.motor_current|nominal": [1, 1]})
+
+        malformed = copy.deepcopy(evaluation)
+        malformed["scores"][0]["signal_id"] = "conveyor-01.motor_current"
+        with self.assertRaises(analysis.AnalysisGlobalFailure):
+            analysis._cell_aggregate(malformed, cell, config)
+
+    def test_analysis_publish_is_non_overwriting_and_cleans_failed_staging(self) -> None:
+        result = {
+            "status": "pass", "run_status": "complete", "engineering_status": "pass", "performance_status": "pass",
+            "bootstrap": {"algorithm_id": "test", "resamples": 1, "draw_digest": "digest"},
+            "estimates": {"primary": {}}, "promotion_gates": {},
+        }
+        with tempfile.TemporaryDirectory(prefix="analysis-publish-") as raw:
+            root = Path(raw)
+            output = root / "analysis"
+            published = analysis._publish_analysis(root, output, result, lambda: None)
+            self.assertEqual(published, output)
+            self.assertTrue((output / ".complete").is_file())
+            with self.assertRaises(analysis.AnalysisGlobalFailure):
+                analysis._publish_analysis(root, output, result, lambda: None)
+
+            failed_output = root / "failed"
+            with self.assertRaises(RuntimeError):
+                analysis._publish_analysis(root, failed_output, result, lambda: (_ for _ in ()).throw(RuntimeError("verify")))
+            self.assertFalse(failed_output.exists())
+            self.assertEqual(list(root.glob(".analysis-publish-*")), [])
 
     def test_gate_status_preserves_fail_and_inconclusive(self) -> None:
         threshold = {"point_min": 0.8, "ci_lower_min": 0.6}

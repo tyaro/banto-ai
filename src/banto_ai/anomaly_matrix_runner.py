@@ -1407,8 +1407,7 @@ def _failure_evidence(output: Path, root: Path, exc: BaseException) -> None:
         pass
 
 
-def _publish(root: Path, output: Path, result: Mapping[str, Any], verify_before_marker: Callable[[], None]) -> Path:
-    result_bytes = _json_bytes(result)
+def _matrix_summary(result: Mapping[str, Any]) -> bytes:
     summary_lines = [
         "# Event-aware anomaly matrix",
         "",
@@ -1424,7 +1423,12 @@ def _publish(root: Path, output: Path, result: Mapping[str, Any], verify_before_
     ]
     for cell in result["cells"]:
         summary_lines.append(f"- `{cell['cell_id']}`: `{cell['status']}`")
-    summary_bytes = ("\n".join(summary_lines) + "\n").encode("utf-8")
+    return ("\n".join(summary_lines) + "\n").encode("utf-8")
+
+
+def _publish(root: Path, output: Path, result: Mapping[str, Any], verify_before_marker: Callable[[], None]) -> Path:
+    result_bytes = _json_bytes(result)
+    summary_bytes = _matrix_summary(result)
     marker_bytes = _json_bytes({"marker_type": COMPLETION_MARKER_TYPE, "schema_version": SCHEMA_VERSION, "result_sha256": _sha256_bytes(result_bytes), "summary_sha256": _sha256_bytes(summary_bytes)})
     temporary = Path(tempfile.mkdtemp(prefix=".matrix-publish.", dir=output))
     try:

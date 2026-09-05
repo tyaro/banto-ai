@@ -402,6 +402,7 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
             [f"anomaly-multiseed-v01-{cell_id}" for cell_id in self._expected_cell_ids(CONFIG_PATH)],
         )
         result = load_json(output / "result.json")
+        self.assertEqual((output / "summary.md").read_bytes(), runner_module._matrix_summary(result))
         self.assertEqual(result["counts"], {"total": 120, "success": 120, "partial": 0, "inconclusive": 0, "failed": 0})
         self.assertEqual(result["engineering_status"], "pass")
         self.assertEqual(result["performance_status"], "not_evaluated")

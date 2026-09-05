@@ -108,3 +108,4 @@ online または commissioning 実験へ進む前に、mode、rollback、stale d
 - Adaptation: regime 変更後の回復、汚染下の性能、rollback の正しさ、固定中の安定性。
 - Commissioning: profile coverage、校正誤差、却下・判定不能な step、オペレーターのレビュー時間、shadow 誤警報率。
 - System: p95 inference latency、リソース使用量、欠損耐性、実行間の再現性。
+v0.2のstandalone seed-cluster analysisは [`anomaly-multiseed-evaluation-plan-v0.2.md`](anomaly-multiseed-evaluation-plan-v0.2.md) の固定config、stable SHA-256 bootstrap、ratio-of-sums、slice別CI、strict read-only artifact verifierを使う。formal run、analysis、bootstrap、promotion判定は未実施である。

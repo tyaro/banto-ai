@@ -4,7 +4,7 @@
   "title": "banto-ai event-aware anomaly matrix analysis config v0.2",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema_version", "config_type", "analysis_id", "matrix_id", "matrix_config_path", "matrix_config_canonical_sha256", "matrix_result_schema_path", "matrix_result_schema_canonical_sha256", "schema_path", "schema_canonical_sha256", "input_root", "output_root", "bootstrap", "promotion_thresholds"],
+  "required": ["schema_version", "config_type", "analysis_id", "matrix_id", "matrix_config_path", "matrix_config_canonical_sha256", "matrix_result_schema_path", "matrix_result_schema_canonical_sha256", "schema_path", "schema_canonical_sha256", "result_schema_path", "result_schema_canonical_sha256", "input_root", "output_root", "bootstrap", "promotion_thresholds"],
   "properties": {
     "schema_version": {"type": "string", "const": "0.2"},
     "config_type": {"type": "string", "const": "event-aware-anomaly-matrix-analysis"},
@@ -16,6 +16,8 @@
     "matrix_result_schema_canonical_sha256": {"type": "string", "const": "79acd31482bae6702dcb6bf6145a58342730a0b61c053592a720fa9e01e53326"},
     "schema_path": {"type": "string", "const": "schemas/anomaly-multiseed-analysis-config-v0.2.schema.json"},
     "schema_canonical_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "result_schema_path": {"type": "string", "const": "schemas/anomaly-multiseed-analysis-result-v0.2.schema.json"},
+    "result_schema_canonical_sha256": {"type": "string", "const": "49c1c562d1f5e2a2458a8e0c491012fe4e9f2cc3f857c8f005eaa5f9e4cc21f2"},
     "input_root": {"type": "string", "const": "artifacts/anomaly-multiseed-v02"},
     "output_root": {"type": "string", "const": "artifacts/anomaly-multiseed-v02-analysis"},
     "bootstrap": {

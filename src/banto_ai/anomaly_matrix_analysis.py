@@ -50,11 +50,13 @@ PROMOTION_THRESHOLDS = {
 }
 
 # Filled after the two new JSON contracts are added.
-EXPECTED_ANALYSIS_SCHEMA_CANONICAL_SHA256 = "401ebf4ba348212437c2f2e3b9ee4de9c53b9c33803129cfa1384fbf2dc26de5"
-EXPECTED_ANALYSIS_CONFIG_CANONICAL_SHA256 = "9fc7b1a97b287050adb97d67cb6aa862d719b07d6b9f5e6e20243f72be4b8e2e"
-EXPECTED_ANALYSIS_RESULT_SCHEMA_CANONICAL_SHA256 = "de1254212fbaf4feb9e5be29fb00bc1020ee0c23008cc184477894ebb573e1e9"
+EXPECTED_ANALYSIS_SCHEMA_CANONICAL_SHA256 = "65a6542a3d1781491dc20b9b63946ec7dffba433389fa1510f22a36acace0b39"
+EXPECTED_ANALYSIS_CONFIG_CANONICAL_SHA256 = "11d84dc4f35222cab0a032b35482e31eec6ef33f6c9351db400d77a835c40b8b"
+EXPECTED_ANALYSIS_RESULT_SCHEMA_CANONICAL_SHA256 = "49c1c562d1f5e2a2458a8e0c491012fe4e9f2cc3f857c8f005eaa5f9e4cc21f2"
 EXPECTED_MATRIX_CONFIG_CANONICAL_SHA256 = anomaly_matrix.EXPECTED_V02_CONFIG_CANONICAL_SHA256
 EXPECTED_MATRIX_RESULT_SCHEMA_CANONICAL_SHA256 = anomaly_matrix.EXPECTED_V02_RESULT_SCHEMA_CANONICAL_SHA256
+DATASET_FILE_NAMES = frozenset(("dataset-manifest.json", "generator-config.json", "observations.jsonl", "events.jsonl", "split-manifest.json", "summary.json", "fingerprint.json"))
+EVALUATION_FILE_NAMES = frozenset(("result.json", "summary.md", ".complete"))
 
 
 class AnomalyMatrixAnalysisError(ValueError):
@@ -162,6 +164,12 @@ def validate_analysis_config(config_path: str | Path = ANALYSIS_CONFIG_PATH, roo
     _require_exact(config.get("matrix_result_schema_canonical_sha256"), EXPECTED_MATRIX_RESULT_SCHEMA_CANONICAL_SHA256, "matrix_result_schema_canonical_sha256")
     _require_exact(config.get("input_root"), EXPECTED_INPUT_ROOT, "input_root")
     _require_exact(config.get("output_root"), EXPECTED_OUTPUT_ROOT, "output_root")
+    _require_exact(config.get("result_schema_path"), ANALYSIS_RESULT_SCHEMA_PATH, "result_schema_path")
+    _require_exact(config.get("result_schema_canonical_sha256"), EXPECTED_ANALYSIS_RESULT_SCHEMA_CANONICAL_SHA256, "result_schema_canonical_sha256")
+    result_schema_path = anomaly_matrix._safe_repo_path(repository, config["result_schema_path"], "result_schema_path", must_exist=True)
+    _result_schema, _result_raw, _result_raw_sha, result_canonical_sha = _strict_object(result_schema_path, "analysis result schema")
+    if result_canonical_sha != EXPECTED_ANALYSIS_RESULT_SCHEMA_CANONICAL_SHA256 or result_canonical_sha != config["result_schema_canonical_sha256"]:
+        raise AnomalyMatrixAnalysisError("analysis result schema canonical SHA-256 pin is invalid")
     _profile_config_path(repository, config["matrix_config_path"], "matrix_config_path")
     _profile_config_path(repository, config["matrix_result_schema_path"], "matrix_result_schema_path")
     anomaly_matrix._safe_repo_path(repository, config["input_root"], "input_root", must_exist=False)
@@ -245,6 +253,7 @@ class _Aggregate:
     sensor_den: int = 0
     clean_alerts: int = 0
     clean_hours: float = 0.0
+    clean_milliseconds: int = 0
     availability: dict[str, list[int]] | None = None
 
     def __post_init__(self) -> None:
@@ -260,6 +269,7 @@ class _Aggregate:
         self.sensor_den += other.sensor_den
         self.clean_alerts += other.clean_alerts
         self.clean_hours += other.clean_hours
+        self.clean_milliseconds += other.clean_milliseconds
         assert self.availability is not None and other.availability is not None
         for key, pair in other.availability.items():
             current = self.availability.setdefault(key, [0, 0])
@@ -300,7 +310,7 @@ def _primary_values(aggregate: _Aggregate) -> dict[str, float | None]:
         "overall_incident_precision": _ratio(aggregate.precision_num, aggregate.precision_den),
         "machine_fault_recall": _ratio(aggregate.machine_num, aggregate.machine_den),
         "sensor_fault_recall": _ratio(aggregate.sensor_num, aggregate.sensor_den),
-        "clean_false_alerts_per_8_equipment_hours": _ratio(aggregate.clean_alerts * 8.0, aggregate.clean_hours),
+        "clean_false_alerts_per_8_equipment_hours": _ratio(aggregate.clean_alerts * 8.0, aggregate.clean_milliseconds / 3_600_000.0),
     }
 
 
@@ -364,7 +374,7 @@ def _verify_cell_and_collect(
     sources: Mapping[str, Mapping[str, str]],
     values: Mapping[str, Any],
     revision: Mapping[str, Any],
-) -> tuple[dict[str, Any], dict[str, Any], set[str]]:
+) -> tuple[dict[str, Any], dict[str, Any], set[str], set[str]]:
     expected = _expected_cell(config, base, cell, root, input_root)
     expected_paths = {
         "generator_config": expected["paths"]["generator_config"],
@@ -394,6 +404,10 @@ def _verify_cell_and_collect(
     dataset_evidence, dataset_snapshot, dataset_ledger = runner._validate_dataset(
         expected, base, root, values["dataset_manifest_schema"], expected_generator_raw
     )
+    dataset_files = {name for name, kind in dataset_snapshot["inventory"] if kind == "file"}
+    dataset_dirs = {name for name, kind in dataset_snapshot["inventory"] if kind == "directory"}
+    if dataset_files != DATASET_FILE_NAMES or dataset_dirs:
+        raise AnalysisGlobalFailure("dataset tree does not match the fixed seven-file contract")
     if cell["artifacts"]["dataset"] != dataset_evidence:
         raise AnalysisGlobalFailure("dataset artifact evidence drifted")
     evaluation_evidence, evaluation_snapshot = runner._validate_evaluation(
@@ -409,11 +423,16 @@ def _verify_cell_and_collect(
     )
     if cell["artifacts"]["evaluation"] != evaluation_evidence:
         raise AnalysisGlobalFailure("evaluation artifact evidence drifted")
+    evaluation_files = {name for name, kind in evaluation_snapshot["inventory"] if kind == "file"}
+    evaluation_dirs = {name for name, kind in evaluation_snapshot["inventory"] if kind == "directory"}
+    if evaluation_files != EVALUATION_FILE_NAMES or evaluation_dirs:
+        raise AnalysisGlobalFailure("evaluation tree does not match the fixed three-file contract")
     evaluation_value, evaluation_raw, _evaluation_raw_sha, _evaluation_canonical_sha = _strict_object(expected_paths["evaluation"] / "result.json", "cell evaluation result")
     expected_files = {generator_path.relative_to(input_root).as_posix(), evaluator_path.relative_to(input_root).as_posix()}
-    expected_files.update(f"{expected_paths['dataset'].relative_to(input_root).as_posix()}/{name}" for name, kind in dataset_snapshot["inventory"] if kind == "file")
-    expected_files.update(f"{expected_paths['evaluation'].relative_to(input_root).as_posix()}/{name}" for name, kind in evaluation_snapshot["inventory"] if kind == "file")
-    return evaluation_value, expected, expected_files
+    expected_files.update(f"{expected_paths['dataset'].relative_to(input_root).as_posix()}/{name}" for name in DATASET_FILE_NAMES)
+    expected_files.update(f"{expected_paths['evaluation'].relative_to(input_root).as_posix()}/{name}" for name in EVALUATION_FILE_NAMES)
+    expected_dirs = {f"datasets/{cell['cell_id']}", f"evaluations/{cell['cell_id']}"}
+    return evaluation_value, expected, expected_files, expected_dirs
 
 
 def _cell_aggregate(evaluation: Mapping[str, Any], cell: Mapping[str, Any], config: Mapping[str, Any]) -> tuple[_Aggregate, dict[str, Any]]:
@@ -432,16 +451,14 @@ def _cell_aggregate(evaluation: Mapping[str, Any], cell: Mapping[str, Any], conf
     availability = metrics.get("score_availability_by_signal")
     if not isinstance(availability, Mapping):
         raise AnalysisGlobalFailure("cell signal availability is missing")
-    for signal, value in availability.items():
-        if not isinstance(value, Mapping):
-            raise AnalysisGlobalFailure("cell availability row is invalid")
-        aggregate.availability[signal] = [int(value.get("available_points", 0)), int(value.get("total_points", 0))]
     incidents = evaluation.get("incidents")
     if not isinstance(incidents, list):
         raise AnalysisGlobalFailure("cell incidents are missing")
     mode = next((item["operating_mode"] for item in config["layouts"] if item["layout_id"] == cell["layout_id"]), None)
-    equipment = cell["artifacts"]["dataset"].get("path") if isinstance(cell.get("artifacts"), Mapping) else None
-    deltas: dict[str, list[float]] = {}
+    generator_config = cell.get("_generator_config")
+    if not isinstance(generator_config, Mapping):
+        raise AnalysisGlobalFailure("cell generator config is required for slice attribution")
+    deltas: dict[str, dict[str, Any]] = {}
     for incident in incidents:
         if not isinstance(incident, Mapping) or incident.get("eligible") is not True:
             continue
@@ -454,16 +471,180 @@ def _cell_aggregate(evaluation: Mapping[str, Any], cell: Mapping[str, Any], conf
             aggregate.sensor_den += 1
             aggregate.sensor_num += int(detected)
         if event_class in ("machine_fault", "sensor_fault") and mode:
-            key = f"{event_class}|{incident.get('equipment_id')}|{mode}"
-            row = deltas.setdefault(key, [0.0, 0.0, 0.0])
-            row[0] += 1
-            row[1] += int(detected)
-            if detected:
-                delay = incident.get("detection_delay_seconds")
-                if not isinstance(delay, (int, float)) or isinstance(delay, bool) or not math.isfinite(float(delay)) or float(delay) < 0:
-                    raise AnalysisGlobalFailure("incident detection delay is invalid")
-                row[2] += float(delay)
-    return aggregate, {"mode": mode, "equipment": equipment, "incident_slices": deltas}
+            keys = (
+                f"{event_class}|*|*",
+                f"*|{incident.get('equipment_id')}|*",
+                f"*|*|{mode}",
+                f"{event_class}|{incident.get('equipment_id')}|{mode}",
+            )
+            delay_value = incident.get("detection_delay_seconds") if detected else None
+            if detected and (not isinstance(delay_value, (int, float)) or isinstance(delay_value, bool) or not math.isfinite(float(delay_value)) or float(delay_value) < 0):
+                raise AnalysisGlobalFailure("incident detection delay is invalid")
+            for key in keys:
+                row = deltas.setdefault(key, {"eligible": 0, "detected": 0, "delays": []})
+                row["eligible"] += 1
+                row["detected"] += int(detected)
+                if detected:
+                    row["delays"].append(float(delay_value))
+    scores = evaluation.get("scores")
+    if not isinstance(scores, list):
+        raise AnalysisGlobalFailure("cell scores are missing")
+    mode_availability: dict[str, list[int]] = {}
+    available_timestamps: dict[str, set[str]] = {}
+    interval_seconds = float(generator_config.get("sampling_interval_ms", 1000)) / 1000.0
+    for score in scores:
+        if not isinstance(score, Mapping):
+            raise AnalysisGlobalFailure("cell score row is invalid")
+        equipment_id = score.get("equipment_id")
+        signal_id = score.get("signal_id")
+        operating_mode = score.get("operating_mode")
+        timestamp = score.get("timestamp")
+        if not all(isinstance(item, str) and item for item in (equipment_id, signal_id, operating_mode, timestamp)):
+            raise AnalysisGlobalFailure("cell score slice identity is invalid")
+        if "." in signal_id:
+            signal_equipment, signal_name = signal_id.split(".", 1)
+            if signal_equipment != equipment_id:
+                raise AnalysisGlobalFailure("score signal/equipment identity is inconsistent")
+            full_signal = signal_id
+        else:
+            signal_name = signal_id
+            full_signal = f"{equipment_id}.{signal_name}"
+        key = f"{full_signal}|{operating_mode}"
+        overall_pair = aggregate.availability.setdefault(full_signal, [0, 0])
+        overall_pair[1] += 1
+        pair = mode_availability.setdefault(key, [0, 0])
+        pair[1] += 1
+        if score.get("available") is True:
+            overall_pair[0] += 1
+            pair[0] += 1
+            available_timestamps.setdefault(f"{equipment_id}|{operating_mode}", set()).add(timestamp)
+    event_ranges: list[tuple[str, int, int]] = []
+    for event in generator_config.get("events", []):
+        if isinstance(event, Mapping):
+            grace = config.get("expanded_window_grace_points")
+            if isinstance(grace, bool) or not isinstance(grace, int) or grace < 0:
+                raise AnalysisGlobalFailure("expanded window grace is not an exact integer")
+            event_ranges.append((str(event.get("equipment_id")), int(event.get("start_sample", 0)), int(event.get("end_sample", 0)) + grace))
+    clean_slices: dict[str, list[float]] = {f"{equipment}|{operating_mode}": [0.0, 0.0] for equipment in ("motor-01", "conveyor-01") for operating_mode in ("stopped", "startup", "low_speed", "nominal", "high_load", "cooldown")}
+    for timestamp_key, timestamps in available_timestamps.items():
+        equipment_id, operating_mode = timestamp_key.split("|", 1)
+        clean_count = 0
+        for timestamp in timestamps:
+            base = _parse_time(str(generator_config["start_timestamp"]))
+            index = round((_parse_time(timestamp) - base).total_seconds() / interval_seconds)
+            if not any(equipment_id == event_equipment and start <= index < end for event_equipment, start, end in event_ranges):
+                clean_count += 1
+        row = clean_slices.setdefault(timestamp_key, [0.0, 0.0])
+        row[1] = float(clean_count * int(generator_config.get("sampling_interval_ms", 1000)))
+    accounting = evaluation.get("alert_episode_accounting")
+    alert_episodes = evaluation.get("alert_episodes")
+    clean_episodes = evaluation.get("clean_false_alert_episodes")
+    if not isinstance(accounting, list) or not isinstance(alert_episodes, list) or not isinstance(clean_episodes, list):
+        raise AnalysisGlobalFailure("cell alert partition evidence is missing")
+    clean_accounting = {row.get("episode_id") for row in accounting if isinstance(row, Mapping) and row.get("partition") == "clean_false_alert"}
+    alert_by_id = {episode.get("episode_id"): episode for episode in alert_episodes if isinstance(episode, Mapping)}
+    clean_source_ids = {source_id for episode in clean_episodes if isinstance(episode, Mapping) for source_id in episode.get("source_alert_episode_ids", [])}
+    listed_source_ids = [source_id for episode in clean_episodes if isinstance(episode, Mapping) for source_id in episode.get("source_alert_episode_ids", [])]
+    if len(listed_source_ids) != len(set(listed_source_ids)) or clean_accounting != clean_source_ids or any(source_id not in alert_by_id for source_id in clean_source_ids):
+        raise AnalysisGlobalFailure("clean partition does not exactly identify source signal episodes")
+    if len(clean_episodes) != aggregate.clean_alerts:
+        raise AnalysisGlobalFailure("clean equipment episode count disagrees with cell metrics")
+    precision_slices: dict[str, list[int]] = {f"{equipment}|*": [0, 0] for equipment in ("motor-01", "conveyor-01")}
+    precision_slices.update({f"*|{operating_mode}": [0, 0] for operating_mode in ("stopped", "startup", "low_speed", "nominal", "high_load", "cooldown")})
+    precision_slices.update({f"{equipment}|{operating_mode}": [0, 0] for equipment in ("motor-01", "conveyor-01") for operating_mode in ("stopped", "startup", "low_speed", "nominal", "high_load", "cooldown")})
+    for row in accounting:
+        if not isinstance(row, Mapping) or row.get("included_in_precision_denominator") is not True:
+            continue
+        episode = alert_by_id.get(row.get("episode_id"))
+        profile_key = episode.get("profile_key") if isinstance(episode, Mapping) else None
+        operating_mode = profile_key.get("operating_mode") if isinstance(profile_key, Mapping) else None
+        equipment_id = row.get("equipment_id")
+        if not isinstance(equipment_id, str) or not isinstance(operating_mode, str):
+            raise AnalysisGlobalFailure("precision slice episode attribution is missing")
+        keys = (f"{equipment_id}|*", f"*|{operating_mode}", f"{equipment_id}|{operating_mode}")
+        for key in keys:
+            if key not in precision_slices:
+                raise AnalysisGlobalFailure("precision slice episode attribution has an unexpected equipment or mode")
+            pair = precision_slices[key]
+            pair[1] += 1
+            pair[0] += int(row.get("partition") == "matched_eligible")
+    base = _parse_time(str(generator_config["start_timestamp"]))
+    regimes = [regime for regime in generator_config.get("regimes", []) if isinstance(regime, Mapping)]
+    clean_intervals: dict[str, list[tuple[int, int]]] = {}
+    overall_clean_intervals: dict[str, list[tuple[int, int]]] = {}
+    attributed_source_ids: set[str] = set()
+    for source_id in sorted(clean_source_ids):
+        episode = alert_by_id[source_id]
+        attributed_source_ids.add(source_id)
+        start = _parse_time(str(episode.get("start_timestamp")))
+        end = _parse_time(str(episode.get("end_timestamp")))
+        start_index = round((start - base).total_seconds() / interval_seconds)
+        end_index = round((end - base).total_seconds() / interval_seconds)
+        overall_clean_intervals.setdefault(str(episode.get("equipment_id")), []).append((start_index, end_index))
+        profile_key = episode.get("profile_key")
+        onset_mode = profile_key.get("operating_mode") if isinstance(profile_key, Mapping) else None
+        if not isinstance(onset_mode, str) or not onset_mode:
+            raise AnalysisGlobalFailure("clean source episode profile mode is missing")
+        if not any(item.get("regime") == onset_mode for item in regimes):
+            raise AnalysisGlobalFailure("clean source episode mode is unknown")
+        clipped = 0
+        for regime in regimes:
+            overlap_start = max(start_index, int(regime["start_sample"]))
+            overlap_end = min(end_index, int(regime["end_sample"]))
+            if overlap_start < overlap_end:
+                key = f"{episode.get('equipment_id')}|{regime['regime']}"
+                clean_intervals.setdefault(key, []).append((overlap_start, overlap_end))
+                clipped += overlap_end - overlap_start
+        if clipped <= 0:
+            raise AnalysisGlobalFailure("clean source episode has no nonempty interval after mode clipping")
+    if attributed_source_ids != clean_source_ids:
+        raise AnalysisGlobalFailure("clean source episode attribution is not exact-once")
+    overall_merged_count = 0
+    for intervals in overall_clean_intervals.values():
+        merged: list[tuple[int, int]] = []
+        for start, end in sorted(intervals):
+            if start >= end:
+                raise AnalysisGlobalFailure("clean source episode interval is empty")
+            if merged and start <= merged[-1][1]:
+                merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+            else:
+                merged.append((start, end))
+        overall_merged_count += len(merged)
+    if overall_merged_count != aggregate.clean_alerts:
+        raise AnalysisGlobalFailure("overall clean equipment episode merge disagrees with cell metrics")
+    for key, intervals in clean_intervals.items():
+        merged: list[tuple[int, int]] = []
+        for start, end in sorted(intervals):
+            if merged and start <= merged[-1][1]:
+                merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+            else:
+                merged.append((start, end))
+        row = clean_slices.setdefault(key, [0.0, 0.0])
+        row[0] = float(len(merged))
+    mode_rows = {key: list(row) for key, row in clean_slices.items() if "|" in key and not key.endswith("|*") and not key.startswith("*|")}
+    overall_counts: dict[str, int] = {}
+    for equipment_id, intervals in overall_clean_intervals.items():
+        merged: list[tuple[int, int]] = []
+        for start, end in sorted(intervals):
+            if merged and start <= merged[-1][1]:
+                merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+            else:
+                merged.append((start, end))
+        overall_counts[equipment_id] = len(merged)
+    for key, row in mode_rows.items():
+        equipment_id, operating_mode = key.split("|", 1)
+        for aggregate_key in (f"*|{operating_mode}",):
+            target = clean_slices.setdefault(aggregate_key, [0.0, 0.0])
+            target[0] += row[0]
+            target[1] += row[1]
+    for equipment_id, count in overall_counts.items():
+        row = clean_slices.setdefault(f"{equipment_id}|*", [0.0, 0.0])
+        row[0] = float(count)
+        row[1] = sum(clean_slices[f"{equipment_id}|{mode['regime']}"][1] for mode in regimes if isinstance(mode, Mapping) and int(mode["start_sample"]) >= int(config["test_split"]["start_sample"]))
+    aggregate.clean_milliseconds = int(sum(row[1] for key, row in mode_rows.items()))
+    if int(round(aggregate.clean_hours * 3_600_000.0)) != aggregate.clean_milliseconds:
+        raise AnalysisGlobalFailure("overall clean exposure disagrees with integer millisecond mode union")
+    return aggregate, {"mode": mode, "incident_slices": deltas, "clean_slices": clean_slices, "availability_modes": mode_availability, "precision_slices": precision_slices}
 
 
 def _combine_aggregates(aggregates: list[_Aggregate]) -> _Aggregate:
@@ -474,6 +655,7 @@ def _combine_aggregates(aggregates: list[_Aggregate]) -> _Aggregate:
 
 
 def _bootstrap_metric(seed_aggregates: list[_Aggregate], draws: list[list[int]], metric: str) -> tuple[float | None, dict[str, Any]]:
+    point = _primary_values(_combine_aggregates(seed_aggregates))[metric]
     values: list[float] = []
     undefined = 0
     for row in draws:
@@ -484,21 +666,71 @@ def _bootstrap_metric(seed_aggregates: list[_Aggregate], draws: list[list[int]],
         else:
             values.append(value)
     if undefined:
-        return None, _ci([], undefined_count=undefined)
-    return _primary_values(_combine_aggregates(seed_aggregates)), _ci(values)
+        return point, _ci([], undefined_count=undefined)
+    return point, _ci(values)
 
 
 def _mode_slice_records(slice_rows: Mapping[str, list[float]]) -> dict[str, Any]:
     output: dict[str, Any] = {}
     for key, row in sorted(slice_rows.items()):
-        denominator, numerator, delay_sum = row
+        denominator, numerator, delays = row
         output[key] = {
+            "scope": "class×equipment×mode" if "*" not in key else ("by_class" if key.startswith(("machine_fault|", "sensor_fault|")) else ("by_equipment" if key.startswith("*|") and key.endswith("|*") else "by_mode")),
             "eligible_incidents": int(denominator),
             "detected_incidents": int(numerator),
             "incident_recall": _ratio(numerator, denominator),
-            "detection_delay_seconds": {"count": int(numerator), "mean_seconds": _ratio(delay_sum, numerator), "median_seconds": None},
+            "detection_delay_seconds": _delay_summary(list(delays)),
         }
     return output
+
+
+def _bootstrap_slice(seed_slices: list[dict[str, list[Any]]], draws: list[list[int]], key: str, kind: str) -> tuple[float | None, dict[str, Any]]:
+    missing_seed = any(key not in seed for seed in seed_slices)
+    point_numerator = 0.0
+    point_denominator = 0.0
+    for seed in seed_slices:
+        item = seed.get(key)
+        if item is None:
+            continue
+        if kind == "incident":
+            point_denominator += float(item[0]); point_numerator += float(item[1])
+        elif kind == "clean":
+            point_numerator += float(item[0]) * 8.0; point_denominator += float(item[1]) / 3_600_000.0
+        elif kind in ("availability", "precision"):
+            point_numerator += float(item[0]); point_denominator += float(item[1])
+        else:
+            raise AnalysisGlobalFailure(f"unsupported bootstrap slice kind: {kind}")
+    point = _ratio(point_numerator, point_denominator)
+    if missing_seed:
+        return point, _ci([], undefined_count=len(draws))
+    values: list[float] = []
+    undefined = 0
+    for row in draws:
+        numerator = 0.0
+        denominator = 0.0
+        for index in row:
+            item = seed_slices[index].get(key)
+            if item is None:
+                raise AnalysisGlobalFailure("bootstrap slice is missing a required seed cluster")
+            if kind == "incident":
+                denominator += float(item[0])
+                numerator += float(item[1])
+            elif kind == "clean":
+                numerator += float(item[0]) * 8.0
+                denominator += float(item[1]) / 3_600_000.0
+            elif kind in ("availability", "precision"):
+                numerator += float(item[0])
+                denominator += float(item[1])
+            else:
+                raise AnalysisGlobalFailure(f"unsupported bootstrap slice kind: {kind}")
+        value = _ratio(numerator, denominator)
+        if value is None or not math.isfinite(value):
+            undefined += 1
+        else:
+            values.append(value)
+    if undefined:
+        return point, _ci([], undefined_count=undefined)
+    return point, _ci(values)
 
 
 def _analysis_summary(result: Mapping[str, Any]) -> bytes:
@@ -552,10 +784,10 @@ def _publish_analysis(root: Path, output: Path, result: Mapping[str, Any], verif
         summary_raw = _analysis_summary(result)
         _write_exclusive(temporary / "result.json", result_raw)
         _write_exclusive(temporary / "summary.md", summary_raw)
-        temporary.rename(output)
         verify_before_marker()
         marker = {"marker_type": "event-aware-anomaly-matrix-analysis-complete", "schema_version": ANALYSIS_SCHEMA_VERSION, "result_sha256": _sha256(result_raw), "summary_sha256": _sha256(summary_raw)}
-        _write_exclusive(output / ".complete", _json_bytes(marker))
+        _write_exclusive(temporary / ".complete", _json_bytes(marker))
+        temporary.rename(output)
     except BaseException:
         if temporary.exists():
             shutil.rmtree(temporary, ignore_errors=True)
@@ -578,6 +810,10 @@ def analyze_anomaly_matrix(config_path: str | Path = ANALYSIS_CONFIG_PATH, root:
     revision = runner._require_revision(repository, boundary="analysis-preflight")
     input_root = anomaly_matrix._safe_repo_path(repository, analysis_config["input_root"], "input_root", must_exist=True)
     output_root = anomaly_matrix._safe_repo_path(repository, analysis_config["output_root"], "output_root", must_exist=False)
+    analysis_result_schema_path = anomaly_matrix._safe_repo_path(repository, ANALYSIS_RESULT_SCHEMA_PATH, "analysis result schema", must_exist=True)
+    analysis_result_schema, analysis_result_schema_raw, analysis_result_schema_raw_sha, analysis_result_schema_canonical_sha = _strict_object(analysis_result_schema_path, "analysis result schema")
+    if EXPECTED_ANALYSIS_RESULT_SCHEMA_CANONICAL_SHA256 and analysis_result_schema_canonical_sha != EXPECTED_ANALYSIS_RESULT_SCHEMA_CANONICAL_SHA256:
+        raise AnalysisGlobalFailure("analysis result schema canonical SHA-256 pin is invalid")
     input_snapshot = runner._tree_snapshot(input_root, "matrix artifact", containment_root=repository, failure_scope="global")
     result_path = input_root / "result.json"
     summary_path = input_root / "summary.md"
@@ -589,6 +825,8 @@ def analyze_anomaly_matrix(config_path: str | Path = ANALYSIS_CONFIG_PATH, root:
     marker, marker_raw, _marker_sha, _marker_canonical = _strict_object(marker_path, "matrix completion marker")
     if set(marker) != {"marker_type", "schema_version", "result_sha256", "summary_sha256"} or marker.get("marker_type") != runner.COMPLETION_MARKER_TYPE or marker.get("schema_version") != runner.SCHEMA_VERSION or marker.get("result_sha256") != result_sha or marker.get("summary_sha256") != _sha256(summary_raw):
         raise AnalysisGlobalFailure("matrix completion marker is invalid")
+    if summary_raw != runner._matrix_summary(result):
+        raise AnalysisGlobalFailure("matrix aggregate summary is not a deterministic rendering of result.json")
     try:
         validate(result, values["matrix_result_schema"])
     except ManifestValidationError as exc:
@@ -597,27 +835,97 @@ def analyze_anomaly_matrix(config_path: str | Path = ANALYSIS_CONFIG_PATH, root:
     runner._verify_aggregate_result(result, matrix_config)
     base = values["base_generator_config"]
     expected_files = {"result.json", "summary.md", ".complete"}
+    expected_dirs = {"configs", "configs/generator", "configs/evaluator", "datasets", "evaluations"}
+    expected_modes = {item["regime"] for item in base["regimes"] if item["start_sample"] >= matrix_config["test_split"]["start_sample"]}
+    expected_signals = {f"{item['equipment_id']}.{target}" for item in base["equipment"] for target in matrix_config["targets"]}
+    expected_incident_keys = {f"{event_class}|*|*" for event_class in ("machine_fault", "sensor_fault")}
+    expected_incident_keys |= {f"*|{equipment}|*" for equipment in ("motor-01", "conveyor-01")}
+    expected_incident_keys |= {f"*|*|{mode}" for mode in sorted(expected_modes)}
+    expected_incident_keys |= {f"{event_class}|{equipment}|{mode}" for event_class in ("machine_fault", "sensor_fault") for equipment in ("motor-01", "conveyor-01") for mode in sorted(expected_modes)}
+    expected_clean_keys = {f"{equipment}|{mode}" for equipment in ("motor-01", "conveyor-01") for mode in expected_modes}
+    expected_clean_keys |= {f"{equipment}|*" for equipment in ("motor-01", "conveyor-01")}
+    expected_clean_keys |= {f"*|{mode}" for mode in expected_modes}
+    expected_mode_keys = {f"{signal}|{mode}" for signal in expected_signals for mode in expected_modes}
     seed_aggregates = [_Aggregate() for _ in matrix_config["seeds"]]
-    slice_rows: dict[str, list[float]] = {}
+    seed_incident_slices: list[dict[str, list[Any]]] = [{} for _ in matrix_config["seeds"]]
+    seed_clean_slices: list[dict[str, list[Any]]] = [{} for _ in matrix_config["seeds"]]
+    seed_availability_modes: list[dict[str, list[Any]]] = [{} for _ in matrix_config["seeds"]]
+    seed_precision_slices: list[dict[str, list[int]]] = [{} for _ in matrix_config["seeds"]]
+    overall_delays: list[float] = []
     verified_cells = 0
     for cell in result["cells"]:
         if cell["status"] != "success":
             raise AnalysisGlobalFailure("analysis requires every matrix cell to be successful")
-        evaluation, expected, cell_files = _verify_cell_and_collect(cell, matrix_config, base, repository, input_root, sources, values, revision)
+        evaluation, expected, cell_files, cell_dirs = _verify_cell_and_collect(cell, matrix_config, base, repository, input_root, sources, values, revision)
+        expected["_generator_config"] = expected["generator_config"]
         expected_files.update(f"configs/generator/{cell['cell_id']}.json" for _ in [0])
         expected_files.update(f"configs/evaluator/{cell['cell_id']}.json" for _ in [0])
         expected_files.update(cell_files)
+        expected_dirs.update(cell_dirs)
         aggregate, slices = _cell_aggregate(evaluation, cell, matrix_config)
         seed_index = matrix_config["seeds"].index(cell["seed"])
         seed_aggregates[seed_index].add(aggregate)
         for key, row in slices["incident_slices"].items():
-            target = slice_rows.setdefault(key, [0.0, 0.0, 0.0])
-            for index in range(3):
-                target[index] += row[index]
+            target = seed_incident_slices[seed_index].setdefault(key, [0.0, 0.0, []])
+            target[0] += row["eligible"]
+            target[1] += row["detected"]
+            target[2].extend(row["delays"])
+            if key in {"machine_fault|*|*", "sensor_fault|*|*"}:
+                overall_delays.extend(row["delays"])
+        for key, row in slices["clean_slices"].items():
+            target = seed_clean_slices[seed_index].setdefault(key, [0.0, 0.0])
+            target[0] += row[0]
+            target[1] += row[1]
+        for key, row in slices["availability_modes"].items():
+            target = seed_availability_modes[seed_index].setdefault(key, [0, 0])
+            target[0] += row[0]
+            target[1] += row[1]
+        for key, row in slices["precision_slices"].items():
+            target = seed_precision_slices[seed_index].setdefault(key, [0, 0])
+            target[0] += row[0]
+            target[1] += row[1]
         verified_cells += 1
+    expected_denominators = {"by_class": 12, "by_equipment": 12, "by_mode": 4, "class×equipment×mode": 1}
+    for seed_index, seed in enumerate(seed_incident_slices):
+        if set(seed) != expected_incident_keys:
+            raise AnalysisGlobalFailure("a seed cluster is missing one or more incident slices")
+        for key, row in seed.items():
+            parts = key.split("|")
+            scope = "class×equipment×mode" if "*" not in key else ("by_class" if parts[0] != "*" else ("by_equipment" if parts[2] == "*" else "by_mode"))
+            if row[0] != expected_denominators[scope]:
+                raise AnalysisGlobalFailure("incident slice seed denominator is not preregistered")
+    for seed in seed_clean_slices:
+        if set(seed) != expected_clean_keys:
+            raise AnalysisGlobalFailure("a seed cluster is missing one or more clean slices")
+        for equipment in ("motor-01", "conveyor-01"):
+            mode_exposure = sum(seed[f"{equipment}|{mode}"][1] for mode in expected_modes)
+            if seed[f"{equipment}|*"][1] != mode_exposure:
+                raise AnalysisGlobalFailure("clean equipment exposure is not an exact mode sum")
+        for mode in expected_modes:
+            equipment_exposure = sum(seed[f"{equipment}|{mode}"][1] for equipment in ("motor-01", "conveyor-01"))
+            if seed[f"*|{mode}"][1] != equipment_exposure:
+                raise AnalysisGlobalFailure("clean mode exposure is not an exact equipment sum")
+    for seed in seed_availability_modes:
+        if set(seed) != expected_mode_keys or any(row[1] == 0 for row in seed.values()):
+            raise AnalysisGlobalFailure("a seed cluster is missing one or more signal×mode availability slices")
+    expected_precision_keys = {f"{equipment}|*" for equipment in ("motor-01", "conveyor-01")}
+    expected_precision_keys |= {f"*|{mode}" for mode in expected_modes}
+    expected_precision_keys |= {f"{equipment}|{mode}" for equipment in ("motor-01", "conveyor-01") for mode in expected_modes}
+    for seed in seed_precision_slices:
+        if set(seed) != expected_precision_keys:
+            raise AnalysisGlobalFailure("a seed cluster is missing one or more precision slices")
+        for equipment in ("motor-01", "conveyor-01"):
+            if seed[f"{equipment}|*"] != [sum(seed[f"{equipment}|{mode}"][0] for mode in expected_modes), sum(seed[f"{equipment}|{mode}"][1] for mode in expected_modes)]:
+                raise AnalysisGlobalFailure("precision equipment slice is not the exact mode sum")
+        for mode in expected_modes:
+            if seed[f"*|{mode}"] != [sum(seed[f"{equipment}|{mode}"][0] for equipment in ("motor-01", "conveyor-01")), sum(seed[f"{equipment}|{mode}"][1] for equipment in ("motor-01", "conveyor-01"))]:
+                raise AnalysisGlobalFailure("precision mode slice is not the exact equipment sum")
     actual_files = {relative for relative, kind in input_snapshot["inventory"] if kind == "file"}
+    actual_dirs = {relative for relative, kind in input_snapshot["inventory"] if kind == "directory"}
     if actual_files != expected_files:
         raise AnalysisGlobalFailure(f"matrix artifact file inventory differs; missing={sorted(expected_files - actual_files)}, extra={sorted(actual_files - expected_files)}")
+    if actual_dirs != expected_dirs:
+        raise AnalysisGlobalFailure(f"matrix artifact directory inventory differs; missing={sorted(expected_dirs - actual_dirs)}, extra={sorted(actual_dirs - expected_dirs)}")
     runner._assert_inputs_unchanged(repository, sources, values, "analysis-inputs")
     after_snapshot = runner._tree_snapshot(input_root, "matrix artifact after analysis", containment_root=repository, failure_scope="global")
     if after_snapshot != input_snapshot:
@@ -628,15 +936,69 @@ def analyze_anomaly_matrix(config_path: str | Path = ANALYSIS_CONFIG_PATH, root:
     primary: dict[str, Any] = {}
     for metric in primary_values:
         point, ci = _bootstrap_metric(seed_aggregates, draws, metric)
-        primary[metric] = {"numerator": {"overall_incident_precision": combined.precision_num, "machine_fault_recall": combined.machine_num, "sensor_fault_recall": combined.sensor_num, "clean_false_alerts_per_8_equipment_hours": combined.clean_alerts}.get(metric), "denominator": {"overall_incident_precision": combined.precision_den, "machine_fault_recall": combined.machine_den, "sensor_fault_recall": combined.sensor_den, "clean_false_alerts_per_8_equipment_hours": combined.clean_hours}.get(metric), "value": point, "ci": ci}
+        primary[metric] = {"numerator": {"overall_incident_precision": combined.precision_num, "machine_fault_recall": combined.machine_num, "sensor_fault_recall": combined.sensor_num, "clean_false_alerts_per_8_equipment_hours": combined.clean_alerts}.get(metric), "denominator": {"overall_incident_precision": combined.precision_den, "machine_fault_recall": combined.machine_den, "sensor_fault_recall": combined.sensor_den, "clean_false_alerts_per_8_equipment_hours": combined.clean_milliseconds / 3_600_000.0}.get(metric), "value": point, "ci": ci}
     availability: dict[str, Any] = {}
     for signal, pair in sorted(combined.availability.items()):
         value = _ratio(pair[0], pair[1])
         availability[signal] = {"available_points": pair[0], "total_points": pair[1], "availability_ratio": value}
+    incident_slice_rows: dict[str, list[Any]] = {}
+    for seed in seed_incident_slices:
+        for key, row in seed.items():
+            target = incident_slice_rows.setdefault(key, [0.0, 0.0, []])
+            target[0] += row[0]; target[1] += row[1]; target[2].extend(row[2])
+    incident_slices = _mode_slice_records(incident_slice_rows)
+    if set(incident_slices) != expected_incident_keys:
+        raise AnalysisGlobalFailure("incident slice key set is incomplete or mixed")
+    for key, record in incident_slices.items():
+        point, ci = _bootstrap_slice(seed_incident_slices, draws, key, "incident")
+        record["incident_recall"] = point
+        record["ci"] = ci
+        record["not_for_promotion"] = "class×equipment×mode slice is descriptive; each slice has n=10 across seeds"
+    clean_slice_rows: dict[str, list[float]] = {}
+    for seed in seed_clean_slices:
+        for key, row in seed.items():
+            target = clean_slice_rows.setdefault(key, [0.0, 0.0]); target[0] += row[0]; target[1] += row[1]
+    clean_slices: dict[str, Any] = {}
+    for key, row in sorted(clean_slice_rows.items()):
+        point, ci = _bootstrap_slice(seed_clean_slices, draws, key, "clean")
+        scope = "equipment×mode" if not key.startswith("*") and not key.endswith("|*") else ("by_equipment" if key.endswith("|*") else "by_mode")
+        clean_slices[key] = {"scope": scope, "clean_false_alert_equipment_episodes": int(row[0]), "clean_exposure_milliseconds": int(row[1]), "clean_equipment_hours": row[1] / 3_600_000.0, "false_alerts_per_8_equipment_hours": point, "ci": ci}
+    mode_availability_rows: dict[str, list[int]] = {}
+    for seed in seed_availability_modes:
+        for key, row in seed.items():
+            target = mode_availability_rows.setdefault(key, [0, 0]); target[0] += row[0]; target[1] += row[1]
+    mode_availability: dict[str, Any] = {}
+    if set(combined.availability) != expected_signals:
+        raise AnalysisGlobalFailure("availability does not contain the exact eight fully-qualified target signals")
+    for key, row in sorted(mode_availability_rows.items()):
+        point, ci = _bootstrap_slice(seed_availability_modes, draws, key, "availability")
+        mode_availability[key] = {"available_points": row[0], "total_points": row[1], "availability_ratio": point, "ci": ci}
+    if set(mode_availability) != expected_mode_keys:
+        raise AnalysisGlobalFailure("signal×mode availability key set is incomplete or mixed")
+    expected_clean_keys = {f"{equipment}|{mode}" for equipment in ("motor-01", "conveyor-01") for mode in expected_modes}
+    expected_clean_keys |= {f"{equipment}|*" for equipment in ("motor-01", "conveyor-01")}
+    expected_clean_keys |= {f"*|{mode}" for mode in expected_modes}
+    if set(clean_slices) != expected_clean_keys:
+        raise AnalysisGlobalFailure("clean slice key set is incomplete or mixed")
+    precision_slice_rows: dict[str, list[int]] = {}
+    for seed in seed_precision_slices:
+        for key, row in seed.items():
+            target = precision_slice_rows.setdefault(key, [0, 0]); target[0] += row[0]; target[1] += row[1]
+    if sum(row[0] for row in precision_slice_rows.values()) != combined.precision_num * 3 or sum(row[1] for row in precision_slice_rows.values()) != combined.precision_den * 3:
+        raise AnalysisGlobalFailure("precision slice numerators do not match overall attribution multiplicity")
+    precision_slices: dict[str, Any] = {}
+    for key, row in sorted(precision_slice_rows.items()):
+        point, ci = _bootstrap_slice(seed_precision_slices, draws, key, "precision")
+        scope = "equipment×mode" if not key.startswith("*") and not key.endswith("|*") else ("by_equipment" if key.endswith("|*") else "by_mode")
+        precision_slices[key] = {"scope": scope, "numerator": row[0], "denominator": row[1], "value": point, "ci": ci, "not_for_promotion": "descriptive attribution only; class precision is not applicable"}
     gates: dict[str, Any] = {}
     for metric in ("overall_incident_precision", "machine_fault_recall", "sensor_fault_recall", "clean_false_alerts_per_8_equipment_hours"):
         gates[metric] = {"status": _gate_status(primary[metric]["value"], primary[metric]["ci"], PROMOTION_THRESHOLDS[metric]), "point": primary[metric]["value"], "ci_lower": primary[metric]["ci"]["lower"], "ci_upper": primary[metric]["ci"]["upper"], "threshold": PROMOTION_THRESHOLDS[metric]}
-    gates["signal_availability"] = {"status": "pass" if availability and all(item["availability_ratio"] is not None and item["availability_ratio"] >= 0.95 for item in availability.values()) else "fail", "minimum": PROMOTION_THRESHOLDS["signal_availability"]["minimum"], "signals": availability}
+    if set(availability) != expected_signals or any(item["total_points"] == 0 or item["availability_ratio"] is None for item in availability.values()):
+        availability_gate_status = "inconclusive"
+    else:
+        availability_gate_status = "pass" if all(item["availability_ratio"] >= 0.95 for item in availability.values()) else "fail"
+    gates["signal_availability"] = {"status": availability_gate_status, "minimum": PROMOTION_THRESHOLDS["signal_availability"]["minimum"], "signals": availability}
     gate_statuses = [item["status"] for item in gates.values()]
     performance_status = "fail" if "fail" in gate_statuses else ("inconclusive" if "inconclusive" in gate_statuses else "pass")
     result_out: dict[str, Any] = {
@@ -650,27 +1012,33 @@ def analyze_anomaly_matrix(config_path: str | Path = ANALYSIS_CONFIG_PATH, root:
         "performance_status": performance_status,
         "provenance": {
             "canonicalization": CANONICALIZATION_ID,
-            "inputs": {"analysis_config": {"path": analysis_source["path"], "raw_sha256": analysis_source["raw_sha256"], "canonical_sha256": analysis_source["canonical_sha256"]}, "analysis_schema": {"path": analysis_schema_source["path"], "raw_sha256": analysis_schema_source["raw_sha256"], "canonical_sha256": analysis_schema_source["canonical_sha256"]}, "matrix_artifact": {"path": analysis_config["input_root"], "inventory_sha256": _sha256(_canonical_json(input_snapshot))}, "matrix_sources": {key: {"path": value["path"], "raw_sha256": value["raw_sha256"], "canonical_sha256": value["canonical_sha256"]} for key, value in sources.items() if not key.startswith("_")}},
+            "inputs": {"analysis_config": {"path": analysis_source["path"], "raw_sha256": analysis_source["raw_sha256"], "canonical_sha256": analysis_source["canonical_sha256"]}, "analysis_schema": {"path": analysis_schema_source["path"], "raw_sha256": analysis_schema_source["raw_sha256"], "canonical_sha256": analysis_schema_source["canonical_sha256"]}, "analysis_result_schema": {"path": ANALYSIS_RESULT_SCHEMA_PATH, "raw_sha256": analysis_result_schema_raw_sha, "canonical_sha256": analysis_result_schema_canonical_sha}, "matrix_artifact": {"path": analysis_config["input_root"], "inventory_sha256": _sha256(_canonical_json(input_snapshot))}, "matrix_sources": {key: {"path": value["path"], "raw_sha256": value["raw_sha256"], "canonical_sha256": value["canonical_sha256"]} for key, value in sources.items() if not key.startswith("_")}},
             "code_revision": revision,
             "bootstrap_algorithm_id": BOOTSTRAP_ALGORITHM_ID,
             "bootstrap_draw_digest": draw_digest,
         },
         "counts": {"cells_verified": verified_cells, "seeds": len(seed_aggregates), "layouts_per_seed": BOOTSTRAP_LAYOUTS_PER_CLUSTER, "events_per_seed": BOOTSTRAP_EVENTS_PER_CLUSTER, "bootstrap_resamples": BOOTSTRAP_RESAMPLES, "bootstrap_clusters": BOOTSTRAP_CLUSTER_COUNT},
-        "estimates": {"primary": primary, "availability_by_signal": availability, "incident_slices": _mode_slice_records(slice_rows)},
+        "estimates": {"primary": primary, "detection_delay_overall": _delay_summary(overall_delays), "availability_by_signal": availability, "availability_by_mode": mode_availability, "incident_slices": incident_slices, "precision_slices": precision_slices, "clean_alert_slices": clean_slices, "not_applicable": {"class_precision": "not_applicable: clean false alerts have no unique event class attribution; class precision is not defined"}},
         "bootstrap": {"algorithm_id": BOOTSTRAP_ALGORITHM_ID, "seed": BOOTSTRAP_SEED, "resamples": BOOTSTRAP_RESAMPLES, "cluster_count": BOOTSTRAP_CLUSTER_COUNT, "layouts_per_cluster": BOOTSTRAP_LAYOUTS_PER_CLUSTER, "events_per_cluster": BOOTSTRAP_EVENTS_PER_CLUSTER, "confidence_level": BOOTSTRAP_CONFIDENCE_LEVEL, "percentile_method": "linear_interpolation_n_minus_1", "draw_digest": draw_digest, "undefined_replicates": {key: value["ci"]["undefined_replicates"] for key, value in primary.items()}},
         "promotion_gates": gates,
         "limitations": ["seed clusterをreplacementありで再標本化し、seed内layout/eventを再標本化しない。", "suppressed event-window alertsはpositiveまたはcleanへ再分類しない。", "detection delayのみを保存し、lead timeは算出しない。", "customer data、weights、checkpoint、network、control write、Banto Hub writeは使用しない。"],
     }
     try:
-        result_schema_path = anomaly_matrix._safe_repo_path(repository, ANALYSIS_RESULT_SCHEMA_PATH, "analysis result schema", must_exist=True)
-        result_schema, _raw, _raw_sha, result_schema_canonical_sha = _strict_object(result_schema_path, "analysis result schema")
-        if EXPECTED_ANALYSIS_RESULT_SCHEMA_CANONICAL_SHA256 and result_schema_canonical_sha != EXPECTED_ANALYSIS_RESULT_SCHEMA_CANONICAL_SHA256:
-            raise AnalysisGlobalFailure("analysis result schema canonical SHA-256 pin is invalid")
-        validate(result_out, result_schema)
+        validate(result_out, analysis_result_schema)
     except ManifestValidationError as exc:
         raise AnalysisGlobalFailure(f"analysis result does not satisfy its schema: {exc}") from exc
     output_root = anomaly_matrix._safe_repo_path(repository, analysis_config["output_root"], "analysis output root", must_exist=False)
-    return _publish_analysis(repository, output_root, result_out, lambda: (validate(result_out, result_schema), runner._assert_inputs_unchanged(repository, sources, values, "analysis-before-marker"), runner._require_revision(repository, revision, "analysis-before-marker")))
+    def verify_before_marker() -> None:
+        current_config, current_config_source, current_schema_source = _load_analysis_inputs(config_path, repository)
+        if current_config != analysis_config or current_config_source["raw"] != analysis_source["raw"] or current_schema_source["raw"] != analysis_schema_source["raw"]:
+            raise AnalysisGlobalFailure("analysis config or schema changed before marker")
+        current_result_schema, current_result_schema_raw, _raw_sha, current_result_schema_canonical = _strict_object(analysis_result_schema_path, "analysis result schema before marker")
+        if current_result_schema_raw != analysis_result_schema_raw or current_result_schema != analysis_result_schema or current_result_schema_canonical != analysis_result_schema_canonical_sha:
+            raise AnalysisGlobalFailure("analysis result schema changed before marker")
+        validate(result_out, current_result_schema)
+        runner._assert_inputs_unchanged(repository, sources, values, "analysis-before-marker")
+        runner._require_revision(repository, revision, "analysis-before-marker")
+    return _publish_analysis(repository, output_root, result_out, verify_before_marker)
 
 
 def _text_summary(summary: Mapping[str, Any]) -> str:
