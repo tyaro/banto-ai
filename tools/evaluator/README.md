@@ -64,7 +64,18 @@ python tools/evaluator/validate_anomaly_matrix.py --root . --config examples/con
 python tools/evaluator/validate_anomaly_matrix.py --root . --config examples/configs/anomaly-multiseed-v0.1.json --format text
 ```
 
-正本schemaは [`schemas/anomaly-multiseed-matrix-config.schema.json`](../../schemas/anomaly-multiseed-matrix-config.schema.json)、固定configは [`examples/configs/anomaly-multiseed-v0.1.json`](../../examples/configs/anomaly-multiseed-v0.1.json)、preregistration本文は [`docs/anomaly-multiseed-evaluation-plan.md`](../../docs/anomaly-multiseed-evaluation-plan.md) です。Savepoint B以降のrunner、120-cell実行、bootstrap集計は未実装です。
+正本schemaは [`schemas/anomaly-multiseed-matrix-config.schema.json`](../../schemas/anomaly-multiseed-matrix-config.schema.json)、固定configは [`examples/configs/anomaly-multiseed-v0.1.json`](../../examples/configs/anomaly-multiseed-v0.1.json)、preregistration本文は [`docs/anomaly-multiseed-evaluation-plan.md`](../../docs/anomaly-multiseed-evaluation-plan.md) です。Savepoint B runnerのresult schemaは [`schemas/anomaly-multiseed-matrix-result.schema.json`](../../schemas/anomaly-multiseed-matrix-result.schema.json) です。
+
+## event-aware anomaly multi-seed matrix runner
+
+Savepoint Bのrunnerは固定configをseed-major × layout_index昇順で120 cellへ展開します。production CLIにseed／layout／limit overrideはなく、Savepoint A validator、入力snapshot、clean git revision、event inventory、dataset／evaluation provenanceを必須境界として検証します。artifactは`artifacts/anomaly-multiseed-v01/{configs/generator,configs/evaluator,datasets,evaluations}`へ分離し、aggregateはroot直下の`result.json`、`summary.md`、`.complete`をatomic・non-overwriteで配置します。通常cell failureはinventoryへ残して継続し、global provenance／schema／path／revision failureはsuccess aggregateをpublishしません。未完了rootは既定で拒否し、明示的な`--recover-incomplete`時だけquarantineします。
+
+```text
+python tools/evaluator/run_anomaly_matrix.py --root . --config examples/configs/anomaly-multiseed-v0.1.json
+python tools/evaluator/run_anomaly_matrix.py --root . --config examples/configs/anomaly-multiseed-v0.1.json --recover-incomplete
+```
+
+Savepoint B実装の確認時点では実120-cell run、bootstrap、performance判定を実行していないため、`run_status=not_run`、`performance_status=not_evaluated`です。customer data、checkpoint／weights、control write、Banto Hub writeはありません。
 
 ## event-aware anomaly evaluation
 

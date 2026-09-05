@@ -178,10 +178,17 @@ def _resolve_config_file(config_path: str | Path, root: Path) -> Path:
     return path
 
 
-def _resolve_output(root: Path, raw: Any) -> Path:
+def _resolve_output(root: Path, raw: Any, *, allowed_parent: Path | None = None) -> Path:
     output = _safe_repo_path(root, raw, "output_dir", must_exist=False)
     artifacts = (root / "artifacts").resolve()
-    if output == artifacts or output.parent != artifacts:
+    if output == artifacts:
+        raise AnomalyEvaluationError("output_dir must be a new directory directly below artifacts")
+    if output.parent == artifacts:
+        return output
+    if allowed_parent is None:
+        raise AnomalyEvaluationError("output_dir must be a new directory directly below artifacts")
+    allowed_parent = allowed_parent.resolve()
+    if _is_link(allowed_parent) or not allowed_parent.is_dir() or allowed_parent == artifacts or artifacts not in allowed_parent.parents or output.parent != allowed_parent:
         raise AnomalyEvaluationError("output_dir must be a new directory directly below artifacts")
     return output
 
@@ -1160,6 +1167,7 @@ def _evaluate_core(
     expected_dataset_fingerprint: str | None = None,
     expected_config_schema_hash: str | None = None,
     expected_result_schema_hash: str | None = None,
+    allowed_output_parent: Path | None = None,
 ) -> tuple[Path, dict[str, Any]]:
     root = Path(root).expanduser().resolve()
     code_revision = dict(expected_code_revision) if expected_code_revision is not None else _revision(root)
@@ -1192,7 +1200,7 @@ def _evaluate_core(
     except (EventSliceError, OSError, ValueError, KeyError, TypeError) as exc:
         raise AnomalyEvaluationError(f"dataset quality gate failed: {exc}") from exc
     equipment_ids, target_signal_ids, classifications = _validate_config(config, root, dataset)
-    output_path = _resolve_output(root, config["output_dir"])
+    output_path = _resolve_output(root, config["output_dir"], allowed_parent=allowed_output_parent)
     if output is not None and output_path != output:
         raise AnomalyEvaluationError("anomaly output changed after lock claim")
     profiles, calibration_exclusions = _calibrate_profiles(dataset, equipment_ids, target_signal_ids, config)
@@ -1272,13 +1280,19 @@ def _evaluate_core(
     return output_path, result
 
 
-def evaluate_anomalies(config_path: str | Path, root: Path, *, recover_incomplete: bool = False) -> Path:
+def evaluate_anomalies(
+    config_path: str | Path,
+    root: Path,
+    *,
+    recover_incomplete: bool = False,
+    allowed_output_parent: Path | None = None,
+) -> Path:
     """Evaluate a synthetic dataset and atomically publish a new artifact."""
     root = Path(root).expanduser().resolve()
     entry_code_revision = _revision(root)
     config_file = _resolve_config_file(config_path, root)
     config, config_raw = _strict_object(config_file, "anomaly evaluation config")
-    output = _resolve_output(root, config.get("output_dir"))
+    output = _resolve_output(root, config.get("output_dir"), allowed_parent=allowed_output_parent)
     try:
         output.parent.mkdir(parents=True, exist_ok=True)
     except OSError as exc:
@@ -1311,6 +1325,7 @@ def evaluate_anomalies(config_path: str | Path, root: Path, *, recover_incomplet
         expected_dataset_fingerprint=dataset_fingerprint,
         expected_config_schema_hash=config_schema_hash,
         expected_result_schema_hash=result_schema_hash,
+        allowed_output_parent=allowed_output_parent,
     )
 
     def verify_before_marker() -> None:

@@ -1,0 +1,161 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/tyaro/banto-ai/schemas/anomaly-multiseed-matrix-result.schema.json",
+  "title": "banto-ai event-aware anomaly matrix result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "result_type", "matrix_id", "status", "run_status", "engineering_status", "performance_status", "provenance", "counts", "invariants", "cells", "limitations"],
+  "properties": {
+    "schema_version": {"type": "string", "const": "0.1"},
+    "result_type": {"type": "string", "const": "event-aware-anomaly-matrix"},
+    "matrix_id": {"type": "string", "const": "anomaly-multiseed-v01"},
+    "status": {"type": "string", "enum": ["pass", "not_complete"]},
+    "run_status": {"type": "string", "const": "complete"},
+    "engineering_status": {"type": "string", "enum": ["pass", "fail", "not_complete"]},
+    "performance_status": {"type": "string", "const": "not_evaluated"},
+    "provenance": {"$ref": "#/$defs/provenance"},
+    "counts": {"$ref": "#/$defs/counts"},
+    "invariants": {"$ref": "#/$defs/invariants"},
+    "cells": {"type": "array", "minItems": 120, "maxItems": 120, "items": {"$ref": "#/$defs/cell"}},
+    "limitations": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "path": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]*$"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "raw_sha256", "canonical_sha256"],
+      "properties": {"path": {"$ref": "#/$defs/path"}, "raw_sha256": {"$ref": "#/$defs/digest"}, "canonical_sha256": {"$ref": "#/$defs/digest"}}
+    },
+    "codeRevision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "head", "dirty", "diff_sha256"],
+      "properties": {
+        "status": {"const": "git"},
+        "head": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+        "dirty": {"const": false},
+        "diff_sha256": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canonicalization", "inputs", "code_revision", "recovery"],
+      "properties": {
+        "canonicalization": {"type": "string", "const": "utf-8-json-sort-keys-compact-no-trailing-newline-v1"},
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["matrix_config", "matrix_schema", "base_generator_config", "base_generator_schema", "anomaly_config_schema", "anomaly_result_schema", "matrix_result_schema"],
+          "properties": {
+            "matrix_config": {"$ref": "#/$defs/source"},
+            "matrix_schema": {"$ref": "#/$defs/source"},
+            "base_generator_config": {"$ref": "#/$defs/source"},
+            "base_generator_schema": {"$ref": "#/$defs/source"},
+            "anomaly_config_schema": {"$ref": "#/$defs/source"},
+            "anomaly_result_schema": {"$ref": "#/$defs/source"},
+            "matrix_result_schema": {"$ref": "#/$defs/source"}
+          }
+        },
+        "code_revision": {"$ref": "#/$defs/codeRevision"},
+        "recovery": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["recovered_incomplete"],
+          "properties": {"recovered_incomplete": {"type": "boolean"}}
+        }
+      }
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "success", "partial", "inconclusive", "failed"],
+      "properties": {
+        "total": {"const": 120},
+        "success": {"type": "integer", "minimum": 0, "maximum": 120},
+        "partial": {"type": "integer", "minimum": 0, "maximum": 120},
+        "inconclusive": {"type": "integer", "minimum": 0, "maximum": 120},
+        "failed": {"type": "integer", "minimum": 0, "maximum": 120}
+      }
+    },
+    "invariants": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["all_cells_processed", "cell_order", "event_inventory", "distinct_dataset_fingerprints_by_layout", "distinct_observations_by_layout"],
+      "properties": {
+        "all_cells_processed": {"const": true},
+        "cell_order": {"const": true},
+        "event_inventory": {"type": "boolean"},
+        "distinct_dataset_fingerprints_by_layout": {"type": "boolean"},
+        "distinct_observations_by_layout": {"type": "boolean"}
+      }
+    },
+    "configArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "raw_sha256", "canonical_sha256"],
+      "properties": {"path": {"$ref": "#/$defs/path"}, "raw_sha256": {"$ref": "#/$defs/digest"}, "canonical_sha256": {"$ref": "#/$defs/digest"}}
+    },
+    "datasetArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "dataset_fingerprint", "manifest_sha256", "observations_path", "observations_sha256", "observation_record_count", "event_count"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "dataset_fingerprint": {"$ref": "#/$defs/digest"},
+        "manifest_sha256": {"$ref": "#/$defs/digest"},
+        "observations_path": {"$ref": "#/$defs/path"},
+        "observations_sha256": {"$ref": "#/$defs/digest"},
+        "observation_record_count": {"type": "integer", "minimum": 1},
+        "event_count": {"const": 4}
+      }
+    },
+    "evaluationArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "result_path", "result_sha256", "summary_path", "summary_sha256", "completion_marker_path", "completion_marker_sha256", "status"],
+      "properties": {
+        "path": {"$ref": "#/$defs/path"},
+        "result_path": {"$ref": "#/$defs/path"},
+        "result_sha256": {"$ref": "#/$defs/digest"},
+        "summary_path": {"$ref": "#/$defs/path"},
+        "summary_sha256": {"$ref": "#/$defs/digest"},
+        "completion_marker_path": {"$ref": "#/$defs/path"},
+        "completion_marker_sha256": {"$ref": "#/$defs/digest"},
+        "status": {"enum": ["pass", "partial", "inconclusive"]}
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generator_config", "evaluator_config", "dataset", "evaluation"],
+      "properties": {
+        "generator_config": {"anyOf": [{"$ref": "#/$defs/configArtifact"}, {"type": "null"}]},
+        "evaluator_config": {"anyOf": [{"$ref": "#/$defs/configArtifact"}, {"type": "null"}]},
+        "dataset": {"anyOf": [{"$ref": "#/$defs/datasetArtifact"}, {"type": "null"}]},
+        "evaluation": {"anyOf": [{"$ref": "#/$defs/evaluationArtifact"}, {"type": "null"}]}
+      }
+    },
+    "cell": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cell_id", "seed", "seed_sha256", "layout_id", "layout_index", "layout_canonical_sha256", "all_layouts_canonical_sha256", "status", "evaluator_status", "error_type", "reason", "artifacts"],
+      "properties": {
+        "cell_id": {"type": "string", "pattern": "^seed-[0-9]{3}-layout-[0-9]{2}-[a-zA-Z0-9._-]+$"},
+        "seed": {"type": "integer", "minimum": 0},
+        "seed_sha256": {"$ref": "#/$defs/digest"},
+        "layout_id": {"type": "string", "minLength": 1},
+        "layout_index": {"type": "integer", "minimum": 0, "maximum": 11},
+        "layout_canonical_sha256": {"$ref": "#/$defs/digest"},
+        "all_layouts_canonical_sha256": {"$ref": "#/$defs/digest"},
+        "status": {"enum": ["pass", "partial", "inconclusive", "failed"]},
+        "evaluator_status": {"anyOf": [{"enum": ["pass", "partial", "inconclusive"]}, {"type": "null"}]},
+        "error_type": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
+        "reason": {"anyOf": [{"type": "string", "minLength": 1}, {"type": "null"}]},
+        "artifacts": {"$ref": "#/$defs/artifacts"}
+      }
+    }
+  }
+}

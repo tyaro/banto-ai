@@ -698,6 +698,16 @@ class AnomalyEvaluationTests(unittest.TestCase):
         nested_path.write_text(json.dumps(nested, sort_keys=True), encoding="utf-8")
         with self.assertRaises(AnomalyEvaluationError):
             evaluate_anomalies(nested_path, ROOT)
+        allowed_parent = ROOT / "artifacts" / f"anomaly-test-allowed-parent-{self.token}"
+        allowed_parent.mkdir(parents=True, exist_ok=False)
+        allowed_output = allowed_parent / "cell-000"
+        nested["output_dir"] = allowed_output.relative_to(ROOT).as_posix()
+        allowed_nested_path = self.temp_root / "allowed-nested.json"
+        allowed_nested_path.write_text(json.dumps(nested, sort_keys=True), encoding="utf-8")
+        self.assertEqual(evaluate_anomalies(allowed_nested_path, ROOT, allowed_output_parent=allowed_parent), allowed_output)
+        self.outputs.append(allowed_output)
+        import shutil
+        shutil.rmtree(allowed_parent, ignore_errors=True)
 
         link_path = self.temp_root / "config-link.json"
         try:

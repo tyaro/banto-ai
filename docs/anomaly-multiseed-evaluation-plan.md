@@ -159,4 +159,12 @@ Gitで管理するのはsource、schema、config、tests、docs、hashや結果�
 
 ## Savepoint Aの実装状況
 
-Savepoint Aのpure validator、strict matrix schema、固定config、CLI、fake/unit regression testは実装済みである。validatorはmatrix config、matrix schema、base generator config、base generator schemaのcanonical digestをdecision inputとしてpinし、開始時と完了直前に再読込して変更をfail closedにする。canonical digestは `utf-8-json-sort-keys-compact-no-trailing-newline-v1` による意味同一性で、raw SHA-256は改行を含む監査用値である。現在はconfigのschema／hash／semantic validationが可能なだけで、dataset生成、result生成、120-cell replay、bootstrap、performance evaluationは実行していない。Savepoint B以降のrunner実装前に、layoutのexact offsetとそのexpanded accounting windowをこのconfigのcanonical bytes／hashで固定する。
+Savepoint Aのpure validator、strict matrix schema、固定config、CLI、fake/unit regression testは実装済みである。validatorはmatrix config、matrix schema、base generator config、base generator schemaのcanonical digestをdecision inputとしてpinし、開始時と完了直前に再読込して変更をfail closedにする。canonical digestは `utf-8-json-sort-keys-compact-no-trailing-newline-v1` による意味同一性で、raw SHA-256は改行を含む監査用値である。Savepoint A単体はconfiguration validだけを示し、dataset生成、result生成、120-cell replay、bootstrap、performance evaluationは実行していない。
+
+## Savepoint Bの実装状況
+
+Savepoint Bのdeterministic matrix runner、strict result schema、fake-based regression test、CLIを実装済みである。runnerはSavepoint Aを先に通し、seed-major × layout_index昇順の固定120 cellを展開する。各cellは`configs/generator`、`configs/evaluator`、`datasets`、`evaluations`へ分離して保存し、dataset fingerprint／observations hash、evaluator result／summary／`.complete` hash、event inventory、code revision、入力canonical／raw digestをaggregateへ記録する。通常のcell例外は`failed`として残りのcellを継続し、provenance／schema／path／revisionの不変性違反はglobal fail-closedとする。
+
+aggregateは`result.json`、`summary.md`、`.complete`をこの順でatomicに配置し、complete outputの上書きを拒否する。markerなしまたは不整合のrootは既定で拒否し、`--recover-incomplete`を明示した場合だけrandom siblingへquarantineしてから再開する。既定のanomaly evaluatorの`artifacts`直下制約は維持し、runnerが明示的に許可したevaluation親ディレクトリだけを利用する。
+
+この実装作業では実120-cell runを実行していないため、現時点の実験状態は`run_status=not_run`、`performance_status=not_evaluated`である。runnerはperformance metric、bootstrap、CI、promotion gateを実行せず、customer data、checkpoint／weights、control write、Banto Hub writeも行わない。
