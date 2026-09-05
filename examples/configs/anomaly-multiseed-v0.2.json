@@ -7,7 +7,7 @@
   "base_generator_schema_path": "schemas/synthetic-generator-config.schema.json",
   "base_generator_schema_canonical_sha256": "e6e743ef4cb28902b3869cf20a0227df0340fe6b6ce0227d63eb2d2b0b55fd89",
   "schema_path": "schemas/anomaly-multiseed-matrix-config-v0.2.schema.json",
-  "schema_canonical_sha256": "fd0308a66a03b8d164dfa16584286b6f686080d830ab6edce36280c2949c2e97",
+  "schema_canonical_sha256": "fbd081961bfd8a56f3ac24514310f0a17f89c02174db44bfeb3fb6b3911f1c4d",
   "seeds": [
     11,
     17,

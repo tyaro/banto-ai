@@ -28,6 +28,28 @@ CONFIG_V02_PATH = ROOT / "examples" / "configs" / "anomaly-multiseed-v0.2.json"
 SCHEMA_V02_PATH = ROOT / "schemas" / "anomaly-multiseed-matrix-config-v0.2.schema.json"
 
 
+def _json_diff_paths(left: object, right: object, path: str = "") -> set[str]:
+    if type(left) is not type(right):
+        return {path}
+    if isinstance(left, dict) and isinstance(right, dict):
+        paths: set[str] = set()
+        for key in set(left) | set(right):
+            child = f"{path}.{key}" if path else key
+            if key not in left or key not in right:
+                paths.add(child)
+            else:
+                paths.update(_json_diff_paths(left[key], right[key], child))
+        return paths
+    if isinstance(left, list) and isinstance(right, list):
+        paths: set[str] = set()
+        if len(left) != len(right):
+            paths.add(path)
+        for index, (left_item, right_item) in enumerate(zip(left, right)):
+            paths.update(_json_diff_paths(left_item, right_item, f"{path}[{index}]"))
+        return paths
+    return set() if left == right else {path}
+
+
 class AnomalyMatrixTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -96,6 +118,8 @@ class AnomalyMatrixTests(unittest.TestCase):
         self.assertEqual(v01_summary["config_canonical_sha256"], anomaly_matrix.EXPECTED_CONFIG_CANONICAL_SHA256)
         self.assertEqual(v02_summary["config_canonical_sha256"], anomaly_matrix.EXPECTED_V02_CONFIG_CANONICAL_SHA256)
         self.assertEqual(v02_summary["schema"]["canonical_sha256"], anomaly_matrix.EXPECTED_V02_SCHEMA_CANONICAL_SHA256)
+        self.assertEqual(v02_summary["config_canonical_sha256"], "3e206fc6c988850953d7ddd739a0504cb8cdd92f6726848b78ce4803461daa26")
+        self.assertEqual(v02_summary["schema"]["canonical_sha256"], "fbd081961bfd8a56f3ac24514310f0a17f89c02174db44bfeb3fb6b3911f1c4d")
         self.assertEqual(v02_summary["matrix_id"], "anomaly-multiseed-v02")
         self.assertEqual(v02_summary["config_path"], "examples/configs/anomaly-multiseed-v0.2.json")
         self.assertEqual(v02_summary["schema"]["path"], "schemas/anomaly-multiseed-matrix-config-v0.2.schema.json")
@@ -130,6 +154,29 @@ class AnomalyMatrixTests(unittest.TestCase):
             v02_substitution.write_bytes(CONFIG_PATH.read_bytes())
             with self.assertRaises(AnomalyMatrixError):
                 validate_anomaly_matrix_config(v02_substitution, repository)
+
+    def test_v02_schema_lineage_changes_only_registered_identity_fields(self) -> None:
+        self.assertEqual(_json_diff_paths(4.0, 4, "detector.robust_z_threshold"), {"detector.robust_z_threshold"})
+        v01_config = load_json(CONFIG_PATH)
+        v02_config = load_json(CONFIG_V02_PATH)
+        self.assertEqual(
+            _json_diff_paths(v01_config, v02_config),
+            {"schema_version", "matrix_id", "schema_path", "schema_canonical_sha256", "output_root"},
+        )
+
+        v01_schema = load_json(SCHEMA_PATH)
+        v02_schema = load_json(SCHEMA_V02_PATH)
+        self.assertEqual(
+            _json_diff_paths(v01_schema, v02_schema),
+            {"$id", "title", "properties.schema_version.const", "properties.matrix_id.const"},
+        )
+
+        v01_result_schema = load_json(ROOT / "schemas" / "anomaly-multiseed-matrix-result.schema.json")
+        v02_result_schema = load_json(ROOT / "schemas" / "anomaly-multiseed-matrix-result-v0.2.schema.json")
+        self.assertEqual(
+            _json_diff_paths(v01_result_schema, v02_result_schema),
+            {"$id", "title", "properties.matrix_id.const"},
+        )
 
     def test_seeds_layouts_classes_mapping_slots_and_fixed_parameters_fail_closed(self) -> None:
         with tempfile.TemporaryDirectory(prefix="anomaly-matrix-test-", dir=ROOT / "artifacts") as raw_dir:

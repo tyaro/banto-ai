@@ -29,17 +29,19 @@ promotion thresholdsはoverall incident precision point `>=0.80`／CI lower `>=0
 | item | v0.1 | v0.2 |
 | --- | --- | --- |
 | matrix id | `anomaly-multiseed-v01` | `anomaly-multiseed-v02` |
+| per-cell dataset id | `anomaly-multiseed-v01-{cell_id}` | `anomaly-multiseed-v02-{cell_id}` |
+| matrix config schema_version | `0.1` | `0.2` |
 | config path | `examples/configs/anomaly-multiseed-v0.1.json` | `examples/configs/anomaly-multiseed-v0.2.json` |
 | output root | `artifacts/anomaly-multiseed-v01` | `artifacts/anomaly-multiseed-v02` |
 | config schema path | `schemas/anomaly-multiseed-matrix-config.schema.json` | `schemas/anomaly-multiseed-matrix-config-v0.2.schema.json` |
-| config canonical SHA-256 | `1c014476f9e9a3112b60323453b7e00359b1e45a831a43ab52d1c4e11d3341db` | `16b6af203bcd885e9c6ce3e3e3fcca4ed37f7c6460d0ec14e1271de91ce85e05` |
-| config schema canonical SHA-256 | `3bcc8d170dd59d64eb566dc21e51900ed84f253f2f0ad6e86d2778932fb29829` | `fd0308a66a03b8d164dfa16584286b6f686080d830ab6edce36280c2949c2e97` |
+| config canonical SHA-256 | `1c014476f9e9a3112b60323453b7e00359b1e45a831a43ab52d1c4e11d3341db` | `3e206fc6c988850953d7ddd739a0504cb8cdd92f6726848b78ce4803461daa26` |
+| config schema canonical SHA-256 | `3bcc8d170dd59d64eb566dc21e51900ed84f253f2f0ad6e86d2778932fb29829` | `fbd081961bfd8a56f3ac24514310f0a17f89c02174db44bfeb3fb6b3911f1c4d` |
 | result schema path | `schemas/anomaly-multiseed-matrix-result.schema.json` | `schemas/anomaly-multiseed-matrix-result-v0.2.schema.json` |
 | result schema canonical SHA-256 | `9912286f5007e203f1637b182505b1ab9101733a41d89ba52dab9edf983da713` | `79acd31482bae6702dcb6bf6145a58342730a0b61c053592a720fa9e01e53326` |
 
-base generator config canonical SHA-256 `16165735d4fdb71213fec301f26d9c04a593ee36afbb51d255be535dd98f8b93` とbase generator schema canonical SHA-256 `e6e743ef4cb28902b3869cf20a0227df0340fe6b6ce0227d63eb2d2b0b55fd89`は変更しない。matrix result schemaは既存v0.1を変更せず、v0.2用 `schemas/anomaly-multiseed-matrix-result-v0.2.schema.json` を使う。v0.2 result schema canonical SHA-256は `79acd31482bae6702dcb6bf6145a58342730a0b61c053592a720fa9e01e53326` である。
+base generator config canonical SHA-256 `16165735d4fdb71213fec301f26d9c04a593ee36afbb51d255be535dd98f8b93` とbase generator schema canonical SHA-256 `e6e743ef4cb28902b3869cf20a0227df0340fe6b6ce0227d63eb2d2b0b55fd89`は変更しない。matrix result schemaは既存v0.1を変更せず、v0.2用 `schemas/anomaly-multiseed-matrix-result-v0.2.schema.json` を使う。v0.2 result schema canonical SHA-256は `79acd31482bae6702dcb6bf6145a58342730a0b61c053592a720fa9e01e53326` である。result schemaはmatrix profile別identityを持つが、matrix aggregate payloadの構造 `schema_version` はv0.1の `0.1` 据え置きである。
 
-v0.1とv0.2のconfigは、上表のschema version、matrix id、schema path／digest、output root以外を完全一致させる。未知config path、v0.1／v0.2 identity混在、schema／config digest差し替え、duplicate／non-finite JSON、unsafe path、link／reparse pointはvalidatorでfail closedにする。
+v0.1とv0.2のconfigは、上表のschema version、matrix id、schema path／digest、output root以外を完全一致させる。runnerは各cellのdataset idにも選択済みmatrix idを使い、v0.1／v0.2のdataset identityを混在させない。未知config path、v0.1／v0.2 identity混在、schema／config digest差し替え、duplicate／non-finite JSON、unsafe path、link／reparse pointはvalidatorでfail closedにする。
 
 ## 実行順序と境界
 

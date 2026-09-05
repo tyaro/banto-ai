@@ -397,6 +397,10 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         self.assertEqual(len(self.evaluator_calls), 120)
         self.assertEqual([seed for seed, _dataset_id in self.generator_calls[:12]], [11] * 12)
         self.assertEqual([seed for seed, _dataset_id in self.generator_calls[12:24]], [17] * 12)
+        self.assertEqual(
+            [dataset_id for _seed, dataset_id in self.generator_calls],
+            [f"anomaly-multiseed-v01-{cell_id}" for cell_id in self._expected_cell_ids(CONFIG_PATH)],
+        )
         result = load_json(output / "result.json")
         self.assertEqual(result["counts"], {"total": 120, "success": 120, "partial": 0, "inconclusive": 0, "failed": 0})
         self.assertEqual(result["engineering_status"], "pass")
@@ -412,11 +416,24 @@ class AnomalyMatrixRunnerTests(unittest.TestCase):
         self.assertFalse((ROOT / "artifacts" / "anomaly-multiseed-v01").exists())
         self.assertEqual([seed for seed, _dataset_id in self.generator_calls[:12]], [11] * 12)
         self.assertEqual(len(self.generator_calls), 120)
+        self.assertEqual(
+            [dataset_id for _seed, dataset_id in self.generator_calls],
+            [f"anomaly-multiseed-v02-{cell_id}" for cell_id in self._expected_cell_ids(CONFIG_V02_PATH)],
+        )
         result = load_json(output / "result.json")
         self.assertEqual(result["matrix_id"], "anomaly-multiseed-v02")
         self.assertEqual(result["counts"], {"total": 120, "success": 120, "partial": 0, "inconclusive": 0, "failed": 0})
         self.assertEqual(result["provenance"]["inputs"]["matrix_config"]["path"], "examples/configs/anomaly-multiseed-v0.2.json")
         self.assertEqual(result["provenance"]["inputs"]["matrix_schema"]["path"], "schemas/anomaly-multiseed-matrix-config-v0.2.schema.json")
+
+    @staticmethod
+    def _expected_cell_ids(config_path: Path) -> list[str]:
+        config = load_json(config_path)
+        return [
+            f"seed-{seed:03d}-layout-{layout['layout_index']:02d}-{layout['layout_id']}"
+            for seed in config["seeds"]
+            for layout in config["layouts"]
+        ]
 
     def test_result_schema_paths_and_canonical_hashes_are_profile_pinned(self) -> None:
         v01_sources, _v01_values = runner_module._snapshot_inputs(ROOT, CONFIG_PATH)

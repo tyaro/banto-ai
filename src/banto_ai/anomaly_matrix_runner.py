@@ -407,7 +407,7 @@ def _materialize_cell(config: Mapping[str, Any], base: Mapping[str, Any], seed: 
     layout_index = int(layout["layout_index"])
     cell_id = f"seed-{seed:03d}-layout-{layout_index:02d}-{layout['layout_id']}"
     generator_config = json.loads(json.dumps(base, ensure_ascii=False))
-    generator_config["dataset_id"] = f"anomaly-multiseed-v01-{cell_id}"
+    generator_config["dataset_id"] = f"{config['matrix_id']}-{cell_id}"
     generator_config["seed"] = seed
     generator_config["events"] = [_layout_event(layout, event) for event in layout["events"]]
     dataset_path = output / "datasets" / cell_id

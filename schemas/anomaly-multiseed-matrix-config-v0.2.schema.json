@@ -135,7 +135,7 @@
         },
         "robust_z_threshold": {
           "type": "number",
-          "const": 4
+          "const": 4.0
         },
         "persistence_points": {
           "type": "integer",
