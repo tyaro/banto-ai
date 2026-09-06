@@ -37,7 +37,7 @@ Linux Python 3.12/3.14共通試験・Windows native publisher/DACL/AccessCheck�
 S0の監査判定は`SCIENCE_READY=yes`、`FREEZE_READY=yes`、`DOCS_READY=yes`、
 `IMPLEMENTATION_READY=yes`、`STACK_READY=yes`です。S1では5 config、9 schema、pure semantic validator、
 seed/bootstrap registryとadversarial testsを追加し、初回7指摘を修正後の独立監査に合格しました。
-S2以降のscorer／runner、formal run／artifact、性能評価、promotionは未着手です。これはLinux正式受入やWindows native／DACL／AccessCheck受入を意味しません。
+S0凍結時点では、S2以降のscorer／runner、formal run／artifact、性能評価、promotionは未着手と記録されています。現在はS3 deterministic runnerまで完了し、次はS4です。formal run／artifact、性能評価、promotionは現在も未実施であり、これはLinux正式受入やWindows native／DACL／AccessCheck受入を意味しません。最新状態は[S3監査結果](results/anomaly-multiseed-v0.3-s3-audit-2026-09-07.md)を参照してください。
 S0の根拠は[v0.3計画監査結果](results/anomaly-multiseed-v0.3-plan-audit-2026-09-06.md)、
 S1の初回指摘・修正・境界は[v0.3 S1監査結果](results/anomaly-multiseed-v0.3-s1-audit-2026-09-06.md)を参照してください。
 
@@ -101,7 +101,7 @@ status語は`current`（living正本）、`frozen`（事前固定）、`historic
 | [multi-seed plan v0.1](anomaly-multiseed-evaluation-plan.md) | frozen / historical / rejected lineage | 最初の正式計画。対応artifactは後のintegrity監査でREJECT。計画本文は時点記録として保持 |
 | [multi-seed plan v0.2](anomaly-multiseed-evaluation-plan-v0.2.md) | frozen / executed | integrity修正後の新ID・rootを固定し、formal replay/analysisを実行済み |
 | [failure diagnostics plan v0.1](anomaly-multiseed-failure-diagnostics-plan-v0.1.md) | frozen / executed / exploratory | v0.2 artifactを変更しないpost-hoc診断。D2-Bと独立監査まで完了 |
-| [multi-seed plan v0.3](anomaly-multiseed-evaluation-plan-v0.3.md) | frozen / adopted | 科学仕様は監査対象`4b02201...`を保持。S1/S2独立監査合格、次はS3。S4以降とformal runは未実施 |
+| [multi-seed plan v0.3](anomaly-multiseed-evaluation-plan-v0.3.md) | frozen / adopted | 科学仕様は監査対象`4b02201...`を保持。S1〜S3独立監査合格、次はS4。formal runは未実施 |
 
 v0.1の計画、artifact、監査は削除しません。v0.1監査がartifactを`REJECT`とし、
 修正後の正式証拠を別identityのv0.2計画・resultへ分離しました。v0.2 failure diagnosticsは
