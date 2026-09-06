@@ -1,6 +1,12 @@
 # event-aware anomaly multi-seed evaluation v0.3: 実装前 preregistration
 
-状態: **freeze-ready / plan only**。2026-09-06作成。計画の基準は `026aa77fe96afd954957acb2fc7d0df9ee3cc938`。本書を含む文書savepointのcommitを `plan_revision` として次工程でpinする。本書の採択前にv0.3の実装・開発評価・formal holdoutを開始しない。
+状態: **P2 3件の修正候補作成済み / 独立再監査待ち / plan only**。2026-09-06作成・改訂。
+`FREEZE_READY=no`、`DOCS_READY=no`、`IMPLEMENTATION_READY=no`を再監査まで維持する。
+計画の基準は `026aa77fe96afd954957acb2fc7d0df9ee3cc938`。初稿S0 commit
+`41decf9b6f8d6c876715729516354bf6da49422c`はAstra/max監査でP0/P1 0件・P2 3件となり、
+本改訂は文書同期commit `e92c83df03b2f798d60246e14411d249a0b76202`の上の修正候補である。
+candidate stackはmain未統合。独立再監査後に採択する計画commitを`plan_revision`としてpinし、
+採択前にS1以降の実装・開発評価・formal holdoutを開始しない。
 
 v0.3のconfig、schema、validator、scorer、runner、test、run、結果artifactは**まだ作成・実施していない**。候補の勝者、性能達成、製品昇格も未決定である。本書は、それらの実装を承認する前に、仮説・データ・算法・母数・判定・停止条件を固定する文書であり、run結果ではない。以下の新しい数値、seed数、候補、閾値、実験規模、gateは、既存の実測値と明記したものを除き、すべて**v0.3の設計上の決定**である。
 
@@ -59,6 +65,43 @@ equipment順を`motor-01`、`conveyor-01`、target順を`motor_current`、`motor
 これは現generatorのchronological 60/20/20 splitと整合する。trainの先頭10 cyclesをwarm-upとして明示的にfitから外す。normal fit/calibrationにenabled event、quality非ok、欠測を置かない。test開始後はprofileも閾値も更新しない。C0のfit段階はno-opだが、利用可能な過去の期間・testの長さは同一である。C0も較正期間を延長するため、過去のv0.2実測との直接的な優劣比較はしない。
 
 生成の物理式、noise分布、equipment順・signal演算順、単一`random.Random(seed)`の消費順は、基準commitの`generator.py`の`_base_values`に固定する。初期温度24.0、現行の温度state更新を保持し、event injectionは観測値へ適用してlatent温度stateや乱数消費を変えない。code/runtime hashをpinして再現性を検証する。v0.3 materializerは50-cycle regimeと下記のoverlay契約を新identityで実装する。旧validatorへoverlapを押し込む、旧schemaを緩める、異なるrandom streamでquality層を再生成することは禁止する。
+
+<a id="v03-quantization"></a>
+
+#### Materialized observationの丸め契約（P2-2）
+
+quantizationは基準commitの`generator.py`の`_finite`と保存直前の呼出しに合わせ、
+Python builtinの`round(float(value), 6)`を使う。小数点以下6桁への数値丸めであり、
+6桁の文字列書式やdecimal型での再計算ではない。各equipmentの各sampleで次の順を固定する。
+
+1. `_base_values`をbinary64で計算し、返された**未丸めの正常temperature**を次sampleの
+   latent stateへ保存する。noise生成、内部積和、latent stateは丸めない。
+2. 未丸めの正常signal値のcopyへ、§3.2のmachine → sensor → ignored → qualityの順で
+   当該sampleのenabled overlaysを適用する。clampとstuck stateの初回captureもこの段階で行う。
+   途中のoverlay間で丸めず、stuckが保持する値もcapture時には未丸めとする。
+3. 最終quality maskでnullになった値はnullのまま保存する。それ以外はfiniteを確認して、
+   **全5 numeric signals（非targetのload_proxyを含む）に1回だけ**`round(float(value), 6)`を適用する。
+   欠測や非finiteを0へ置換しない。Pythonのbinary64に対するties-to-evenの挙動と符号付きzeroを保持する。
+4. この値でobservations行を確定し、現行のUTF-8 JSONL（sorted keys、compact separators、
+   `ensure_ascii=False`、`allow_nan=False`、各行末LF、equipment順→timestamp順）へ保存する。
+   `0.45`を`"0.450000"`へ変換するなどの再書式化はしない。既存のfingerprint/raw hash契約を使う。
+
+fit、validation calibration、test scoring、独立analysis/auditの入力値は、hash検証済みの
+**保存済みobservations.jsonlをstrict decodeした6桁丸め後の値だけ**とする。
+generator内部の未丸め配列やlatent stateを直接渡さない。再生成は保存bytesの照合にのみ使い、
+推定入力を未丸め値へ差し替えない。warm-upも同じ保存規則を適用するが、§3.1どおりfitから外す。
+profile、残差、score、CIを追加で6桁丸めすることはなく、既定のbinary64計算を維持する。
+seed整数、eventのmagnitude、timestamp、schema/configの数値もこの観測丸めの対象ではない。
+
+次はS2/S3で固定する手計算例であり、この文書改訂でdatasetを生成した結果ではない。
+
+| fixture | 保存直前までの操作 | 期待する保存値・state |
+| --- | --- | --- |
+| Q1 overlay後の丸め | raw target `1.0000014`へjam magnitude `0.55`を適用 | `round(max(0,1.0000014*(1-0.55)),6)=0.450001`。先にraw値を丸める誤実装の`0.45`とは異なる |
+| Q2 temperature state | 正常temperature `24.123456789`へsensor spike `+8.0` | 観測`32.123457`、次sampleのlatent temperatureは未丸めの正常値`24.123456789` |
+| Q3 quality最後 | Q2の同じsampleにdropoutを重ねる | 観測null、quality `missing`。latent stateはQ2と同じ正常値 |
+| Q4 binary64 tie | binaryで正確な値`0.0078125`と`0.0234375`を保存 | それぞれ`0.007812`と`0.023438` |
+| Q5 signed zero | raw値`-0.0000004`を保存 | 数値`-0.0`、JSON tokenも`-0.0`。`0.0`へ正規化しない |
 
 `recipe_step`は各modeの固定名`stop/start/low/run/load/cooldown`とする。cycle番号、event ID、seed、絶対test位置をモデル特徴へ渡さない。phase `u`は直近の観測されたmode entryからの連続1秒sample数（0..29）であり、未来のmode予定表を読むことなく更新する。同mode内のrecipe familyは固定で、未知recipe/mode、gap後にentryを確定できないphaseはunavailableとして記録する。30秒の周期知識を使う合成研究であり、任意のduration・未学習recipeへの一般化は主張しない。
 
@@ -125,14 +168,66 @@ primary precision/clean false-alertの単位はこのequipment episodeである�
 
 ### 5.1 post-event causal support
 
-positive incidentは全machine/sensor events。availability、score、検知可能性によるeligible集合の削減はしない。評価窓は`W=[event_start,event_end+3秒)`。event開始順、同時ならevent ID順で、次を全て満たす未使用equipment episodeをonset順・ID順で1つ対応させる。
+<a id="v03-incident-selection"></a>
 
-1. 同equipmentで、固定されたequipment onset `t`が`W`内。
-2. そのequipment episodeに、eventの**同じfull target signal**のsource episodeがあり、そのsource onsetも**同じ`t`**。
-3. 当該sourceの実際のonset supportは`t-1秒,t`の2点。両点ともevent offset `>=0`、`W`内、available、strict threshold超過、連続で、同signal・mode・recipe・profile。別signalの超過を混ぜない。
-4. eventもequipment episodeも一対一。後のrun、後のsource onset、最後の2点へ差し替えて条件を満たしたことにしない。event前から始まったgroupは、後にfaultと重なってもtrue positiveへ付け替えない。
+positive incidentは全machine/sensor events。availability、score、検知可能性によるeligible集合の
+削減はしない。評価窓は`W=[event_start,event_end+3秒)`。選択方針を
+**`first-equipment-onset-no-retry-v1`**に固定する。最初の候補がsupport不適格なら当該eventはmissとし、
+同じeventについて後続equipment episodeや後続source onsetを探索しない。
 
-`causal_detected`とその2 support IDsをprimary ledgerに保存する。detection delayは`(t-event_start)`秒で、persistence 2により最短1秒、mode-entry開始なら最短2秒となる。unavailable eventはmissとして元のincident分母に残す。delayは検知例条件付きの補助値で、未検知を0秒にしない。
+次の段階をこの順序で実施し、support条件を候補filterへ繰り上げない。
+
+1. **構造検証**: event inventoryと§4.3のscore→signal episode→equipment mergeの整合性を先に検証する。
+   duplicate ID、存在しないsupport行、unavailable点から作ったepisode、不正mergeはengineering failure。
+   この場合はmatchingを実行せず、未処理eventをmissとして埋めない。
+2. **列挙**: eventを`(開始timestamp,event ID)`順で処理する。各eventについて、同dataset・同equipmentで、
+   固定equipment onsetが`W`内にあり、未claimのequipment episodesをすべて列挙する。
+   target sourceの有無、supportのevent offset、scoreの大小で先に候補を落とさない。
+   timestampはUTC整数milliseconds、同時刻のIDはASCII昇順で比較する。
+3. **選択**: 候補を`(equipment onset,equipment episode ID)`順に並べる。
+   空なら`causal_detected=false`、`reason=no_candidate_in_window`で終了する。
+   空でなければ先頭の1件を`selected_candidate_episode_id`へ固定してclaimする。
+   claimはsupport失敗後も解除せず、そのepisodeのonset/end/source集合を変更しない。
+4. **support検証**: 選択済みepisodeについてだけ、eventと同じfull target signalで、
+   source onsetが固定equipment onset `t`と等しいsourceを調べる。
+   該当sourceがなければ`reason=first_candidate_no_target_onset`でmiss。
+   同target・同onsetのsourceが複数なら§4.3の構造違反としてengineering failureとする。
+   1件なら実際の`support_score_ids`が示す`t-1秒,t`の2点を検査する。
+   両点がevent offset `>=0`かつ`W`内であることを要求し、不適格なら
+   `reason=first_candidate_noncausal_support`でmissとする。
+   両点のavailable、strict threshold超過、連続性、同signal/mode/recipe/profileも再照合する。
+   ここで構造不整合が判明した場合もengineering failureであり、性能上のmissへ変換しない。
+5. **確定**: 全条件を満たせば`causal_detected=true`とし、当該episodeをmatchedにする。
+   support不適格なら`causal_detected=false`、matched IDとdelayはnullのまま確定する。
+   **どのfailure branchからも段階2/3へ戻らない。**後続候補はこのeventのtrue positiveにしない。
+
+primary ledgerにはcandidate数と順序付きID列、selected ID、選択されたsource IDと実際のsupport IDs
+（存在する場合）、reason、matched ID、`causal_detected`を記録する。
+event/episodeの対応は一対一で、claim済みでもsupport失敗のepisodeはunmatchedのまま
+全precision分母に残る。後続の未選択episodeも既定のaccountingから除外しない。
+v0.3の同equipment positive窓は非重複なので、別eventへの再利用による救済も起きない。
+detection delayは`(t-event_start)`秒、最短1秒、mode-entry開始なら最短2秒。
+unavailable eventは元のincident分母に残し、検知例条件付きdelayでは未検知を0秒にしない。
+
+#### Matchingの手計算fixture
+
+以下は各々独立したS2/S3用の仕様例。eventはtarget `T`、raw `[0,3)`、`W=[0,6)`で、
+時刻はeventからの秒offsetとする。test境界は外にあり、同一equipment・mode・profileとする。
+`U`は別のfull target signal。記載した超過点のscoreは7、閾値は6、記載外は0、qualityはok。
+したがって、例えば`T:{-1,0}`はsignal episode `[0,1)`、support `{-1,0}`を作る。
+E1/E2は§4.3で確定するonset昇順のequipment episodeを指す。M7/M8/M9の明示条件だけを例外とする。
+
+| fixture | score列と確定episode | 候補→選択 | 期待結果 |
+| --- | --- | --- | --- |
+| M1 最初のsupportがevent前 | `T:{-1,0,3,4}`。E1 `[0,1)`、E2 `[4,5)` | `[E1,E2]`→E1 | miss、`first_candidate_noncausal_support`。E2の`{3,4}`で救済しない。matched 0 / all episodes 2 |
+| M2 最短のcausal検知 | `T:{0,1}`。E1 `[1,2)` | `[E1]`→E1 | detected、support `{0,1}`、delay 1秒 |
+| M3 終了したpre-event episode | `T:{-2,-1,2,3}`。E1 `[-1,0)`、E2 `[3,4)` | `[E2]`→E2 | detected、support `{2,3}`、delay 3秒。E1はonsetが窓外で候補に入らない |
+| M4 半開区間の右端 | `T:{5,6}`。E1 `[6,7)` | `[]`→null | miss、`no_candidate_in_window`。onset 6秒は窓外 |
+| M5 最初の警報が別signal | `U:{0,1}`、`T:{3,4}`。E1 `[1,2)`、E2 `[4,5)` | `[E1,E2]`→E1 | miss、`first_candidate_no_target_onset`。Tを持つE2へ進まない |
+| M6 merge後に遅いtarget source | `U:{0,1,2}`、`T:{1,2}`。merged E1 `[1,3)`、T source onset 2 | `[E1]`→E1 | miss、`first_candidate_no_target_onset`。group onset 1をT onset 2へ動かさない |
+| M7 mode entry | mode entry 0でscore 0はnull/unavailable、`T:{1,2}` | `[E1]`→onset 2のE1 | detected、support `{1,2}`、delay 2秒 |
+| M8 閾値と等しい点 | T scoreは0秒に7、1秒に6、他は0 | `[]`→null | miss。`>`条件なので1秒は超過に含めず、episodeを作らない |
+| M9 偽装されたsupport | 0秒score 7、1秒null/unavailableなのにsupport `{0,1}`のepisodeを記載 | 構造検証で停止 | engineering failure。candidate選択も正式miss集計も行わない |
 
 v0.2のcanonical detectedは歴史的結果としてのみ引用する。本campaignで互換的なonset-only検知数を監査用に計算する場合も、`secondary_canonical_detected`という別fieldに置き、primary gate、選択、bootstrap numeratorには一切使わない。primary onsetを変更するための後付け探索を禁止する。
 
@@ -258,6 +353,58 @@ Windowsでは新しいv0.3成果物だけに、公開後のprotected DACL・独�
 
 独立analysisはformal holdoutを**read-only**に検証・読取り、別analysis rootへ集計を公開する。独立auditはproducerとanalysisをread-onlyに取り、別audit rootへ証跡を出す。少なくともraw観測からの候補profile/score、support-to-onset、event/episode一対一、全母数、bootstrap draw/CI/gate/選択を、producerの出力を真と仮定せず再計算する。producerと同じ「誤った判定関数」を呼ぶだけの監査を独立と称しない。summary/markerだけ更新する改竄も検出し、result docは監査済みartifact外で作る。
 
+<a id="v03-runtime-acceptance"></a>
+
+### Runtime/platform acceptance（P2-3）
+
+CIの互換性試験と正式campaignのruntimeを次のとおり固定する。
+これはS1以降に実装・検証する受入条件であり、本改訂で各platformの試験を実行したとは扱わない。
+
+| 境界 | 必須platform/runtime | S4までに通す条件 |
+| --- | --- | --- |
+| 共通契約のLinux CI | Ubuntu 24.04 x86_64、CPython 3.12系と3.14系の2 jobs | 同じstrict/pure validator、Q1〜Q5、M1〜M9、profile/score/merge/母数、seed hash、bootstrap golden、fake runner・独立consumer試験を両minorでpass |
+| Windows native受入 | 下記Windows 11 AMD64/NTFS、CPython 3.12系と正式pinの3.14.0 | 共通試験に加えて実Win32 publisher、protected DACL、別process/tokenのAccessCheck、競合・非上書き・失敗時証跡保持を両minorでpass |
+| S4 smokeとS5/S6 formal | 下記の唯一のWindows/CPython組合せ | Windowsで生成する同じ保存観測を全候補へ渡し、producer/analysis/auditの厳密な再計算・hash照合を実施 |
+
+Linux jobsのPython 3.12/3.14とWindows互換性用3.12のpatch/build、CI image digest、
+OS/kernel、architecture、実行source SHA、各testのpass/fail/skipをS4の受入証跡へ保存する。
+各jobでは既存stdlib回帰suiteとrepository safetyも必須とし、v0.3専用fixtureだけのpassで代用しない。
+既存CIの`ubuntu-latest`やminor labelだけをformal runtime pinの代わりにしない。
+共有fixtureのID、件数、selection/reason、availability、閾値判定、quantized JSON bytes、
+seed/整数bootstrap goldenは全platformでexact一致を要求する。
+手計算の非整数profile/Cholesky/score値の近似照合だけは`rel_tol=1e-12, abs_tol=1e-12`を固定し、
+判定やhashの不一致にこの許容差を使わない。正式producer/consumer間のcanonical exact比較も緩めない。
+
+正式runは**Windows 11 Pro 25H2 / AMD64 / OS build `10.0.26200.9168` / local NTFS**と、
+**通常GIL buildのCPython `3.14.0`、64-bit AMD64、MSC v.1944、source tag
+`v3.14.0:ebf955d`**の1組だけを許可する。選定根拠は本修正時に確認したローカルruntimeであり、
+新seedや候補の性能を比較した選択ではない。OS照合にはmajor/minor、CurrentBuildNumber、UBRを使い、
+互換用の`ProductName`文字列だけには依存しない。
+
+- `python.exe` raw SHA-256: `467014615a5255aca450ae88100dd2caf887da87657f00e3c2171ec44a685aec`
+- `python314.dll` raw SHA-256: `f1722bd369d79fecbc85f3ed2790c30c330b9413fd74332f95b086e60dfacc2a`
+
+S1 registryはこの選定値を保存し、S4ではstdlib・ロードした拡張/DLL・CRT・CPU/OS情報を含む
+完全なruntime inventoryを追加でhash pinする。配置pathそのものは同一性の代用にしない。
+S4の承認対象revisionでLinux 2 jobsとWindows native 2 runtimesの受入を完了してから、
+正式pin上のdev/smokeを検証し、全inventoryをcommitして初めてS5へ進む。
+S2/S3時点でも同じ共通試験を継続し、Windows受入をS5実行後まで延期しない。
+
+Windowsのnative試験はmockによるWin32成功値の代用では完了しない。
+将来の試験時に新規の専用fixture領域だけを使い、公開物のfile write/delete、directory add-child/
+delete-child/write/deleteの通常権限が独立reader process/tokenで拒否されることをAccessCheckで確認する。
+Windows 3.12の受入はこのfixture用publisher部品に限定し、formal rootsへの公開入口は持たせない。
+既存のowner/privilege限界を保持し、repositoryや旧artifactのACLは変更しない。
+Linux CIでWindows専用項目を明示skipすることは許すが、Windows受入で必要項目がskip・未実行・失敗なら
+S4不合格とする。CIからformal holdoutの生成・採用判定は行わない。
+
+非Windows（WSLを含む）、非NTFS、Windowsのbuild/architecture差、Python patch/build/hash差では
+formal run/publishを`unsupported_runtime`として、生成・staging・output claim・ACL操作より前に拒否する。
+Linuxのvalidate-only、pure/独立read-only再計算、fake publisherの試験は互換性検証として利用できるが、
+Windows native受入や正式campaignに読み替えない。CPython 3.12をformalのfallbackにしない。
+正式pinが利用できない場合は停止し、変更理由を記した計画改訂・独立再監査・受入試験を先に行う。
+S5開始後のruntime/OS更新やsource変化はglobal integrity failureとして扱い、既定の再登録規則に従う。
+
 ## 9. 小さなsavepointと停止・再登録条件
 
 各savepointを別commitでレビューし、前段合格だけで次段の実行権限まで得たとみなさない。本savepointの完了範囲はS0だけである。
@@ -266,9 +413,9 @@ Windowsでは新しいv0.3成果物だけに、公開後のprotected DACL・独�
 | --- | --- | --- |
 | S0 plan freeze | 本書、最小限のREADME/roadmap link。式・件数・seed hash・scope・local links・diff/safetyを検査 | 科学的選択が未定、因果support/母数/閾値が曖昧ならdraftのまま停止。採択されたplan commitを次工程へ渡す |
 | S1 config/schema/pure validator | 新identity、全seed表、layout/overlap/件数、候補式、strict schemas、I/Oなしsemantic validator、bootstrap goldenをcommit。validationはnot_run/not_evaluated | 登録値と不一致ならrunしない。科学的仕様変更が必要なら新plan/versionへ。既存schemaを緩めて通さない |
-| S2 scoring + unit/adversarial | 3候補、観測allowlist、phase state、support/merge/matching。手計算fixtureで中央値/MAD/共分散、未来値差替え不変、GT event ledger差替えでscore不変を検証 | pre-event support、後続onsetへの差替え、profile跨ぎ、境界/dropout繋ぎ、未知phase fallback、event漏洩があれば停止。devでの性能に合わせる変更は再登録 |
-| S3 deterministic runner | 共通paired materialization、960 datasets/2,880 slots、失敗完全ledger、provenance、nonoverwrite/atomic publisher。fake generator/evaluatorで攻撃試験 | count欠落、partialをsuccess化、hashだけ偽装したledger、summary+marker改竄、root/ACL越境、candidate間で別入力なら停止 |
-| S4 dry/smoke + consumer freeze | 新8 dev/2 smoke seedsで全layout/層を検証。analysis/auditも人工ledger・known CI・paired draw・inconclusive caseで検証しcommit。formal前に全source/runtime/consumerをpin | 同じconfigの再現不一致、source dirty、golden不一致、容量不足なら停止。速度/性能を理由に候補・seed・期間・層を削減せず、必要なら新登録 |
+| S2 scoring + unit/adversarial | 3候補、観測allowlist、phase state、support/merge/matching。Q1〜Q5/M1〜M9、中央値/MAD/共分散、未来値不変、GT非依存をLinux 3.12/3.14等の共通試験で検証 | pre-event support、候補再探索、profile跨ぎ、丸め順序差、未知phase fallback、event漏洩があれば停止。dev性能に合わせる変更は再登録 |
+| S3 deterministic runner | 共通paired materialization、960 datasets/2,880 slots、失敗完全ledger、provenance、nonoverwrite/atomic publisher。fake攻撃試験とWindows native受入を準備 | count欠落、partialをsuccess化、hashだけ偽装したledger、summary+marker改竄、root/ACL越境、candidate間で別入力なら停止 |
+| S4 dry/smoke + consumer freeze | §8のLinux/Windows必須受入を完了。正式pin上の新8 dev/2 smoke seedsで全layout/層、独立consumerを検証し、全source/runtimeをcommit | 必須job/実機試験の未実施・失敗、正式pin不一致、再現/golden不一致、source dirty、容量不足で停止。条件削減は新登録 |
 | S5 formal holdout | clean frozen revisionから新40 clustersを一回実行。進捗は完了数/工程状態のみ、途中性能による停止・変更はしない | integrity failure、holdoutを見た設計変更、欠けたcellだけの都合よい再抽選で昇格不可。失敗証跡を保全し、repair/replayは別version/root/未使用seedsで再登録 |
 | S6 independent analysis / audit | 全inventory照合、read-only再計算、CI・全gate・固定選択。別rootsへ公開しconsumer hashを再検証 | producer/consumer不一致、未知分母、bootstrap null、未完了工程はfail/inconclusive。解析ロジックの科学的変更は同holdoutで正式再判定しない |
 | S7 result doc | 全候補・両層・overall、失敗/制約、producer/analysis/audit SHA・hash、全gate、no promotionを含む結果文書。READMEの状態だけ追記 | 数値と監査artifact不一致なら文書公開を止める。文章・リンク訂正以外の結果変更は来歴を分け、凍結artifactを上書きしない |
@@ -285,4 +432,19 @@ phase/recipe/time-since-mode-entryを含むversioned normal profileは、将来�
 
 本計画から発行できるのは研究候補のqualified / no promotion / inconclusiveだけ。Commissioning Profileの製品登録、閾値自動書込み、PLCのPID・interlock・安全上限・運転許可変更、Banto Hub連携の実行、production中のonline learningは行わない。
 
-本書は、未決の科学的選択を残さずS0としてfreeze可能な設計を提示する。次工程に残るのは、この仕様の採択と実装・検証であり、結果を見て選ぶ自由パラメータではない。**v0.3 config/schema/code/test/run/artifact、winner、性能達成は本savepointでは未実施・未確定**である。
+本改訂はS0候補へのP2 3件の修正を文書に実装した段階で、独立再監査待ちである。
+`FREEZE_READY=no`、`DOCS_READY=no`、`IMPLEMENTATION_READY=no`を維持し、監査合格を主張しない。
+**S1以降およびv0.3 config/schema/code/test/run/artifact、winner、性能達成は未実施・未確定**である。
+
+## 11. 科学監査P2への対応記録
+
+初稿`41decf9...`のP2 3件について、下表の修正文と仕様fixtureを本savepointで追加した。
+まだ採択されていないS0への修正として履歴を残し、独立再監査合格後の計画revisionをS1から使用する。
+採択後の変更は§9の再登録規則に従う。本改訂でseed、layout、母数、閾値、bootstrap、gate、
+候補間の優先順、既存のhash計算契約は変更していない。
+
+| 監査項目 | 修正文 | 反例・次工程の確認 | 現在状態 |
+| --- | --- | --- | --- |
+| P2-1 最初の候補のsupport失敗後の探索が曖昧 | [§5.1 列挙→選択→検証→確定](#v03-incident-selection) | M1/M5は後続に適格episodeがあってもmiss。M3は窓外episodeを候補から除外。M9はengineering failure | 修正候補作成済み、独立再監査待ち |
+| P2-2 旧6桁丸めと各split入力が未固定 | [§3.1 観測丸め](#v03-quantization) | Q1のoverlay順序、Q2/Q3のlatent state、Q4/Q5のbinary64/JSON値。全splitは保存観測のみ | 修正候補作成済み、独立再監査待ち |
+| P2-3 共通CI、Windows native受入、formal pinが未固定 | [§8 runtime/platform](#v03-runtime-acceptance) | Linux 3.12/3.14、Windows実API・DACL/AccessCheck、唯一の正式OS/Python、非対応環境での事前拒否 | 修正候補作成済み、独立再監査待ち |

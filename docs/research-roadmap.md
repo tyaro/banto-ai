@@ -80,10 +80,13 @@ v0.3の仮説材料にのみ使います。計画は
 
 v0.3は実装前S0計画候補をcommit
 `41decf9b6f8d6c876715729516354bf6da49422c`に作成しましたが、このcandidate stackは
-main未統合です。Astra/max監査はP0/P1 0件、P2 3件で完了し、incident matchingの
-候補探索規則、旧6桁丸めとfit/calibration/test入力、Linux/Windows試験とformal runtime pinの
-固定が必要です。したがって現在は`FREEZE_READY=no`、`DOCS_READY=no`、
-`IMPLEMENTATION_READY=no`で、S1以降、config/schema/code/test/run/artifactは未着手です。
+main未統合です。初稿へのAstra/max監査はP0/P1 0件・P2 3件で、その3件の修正候補を
+文書同期commit `e92c83df03b2f798d60246e14411d249a0b76202`の上の計画文書に実装しました。
+最初のequipment episodeを固定する再探索なしmatchingと境界fixture、event/quality適用後の
+6桁丸めと保存済みfit/calibration/test入力、Linux 3.12/3.14共通試験とWindows native受入を
+明記しました。正式runtimeはWindows 11 Pro 25H2 build `10.0.26200.9168`／CPython `3.14.0`です。
+現在は独立再監査待ちで、監査合格を主張しません。`FREEZE_READY=no`、`DOCS_READY=no`、
+`IMPLEMENTATION_READY=no`を再監査まで維持し、S1以降、config/schema/code/test/run/artifactは未着手です。
 候補本文は[`anomaly-multiseed-evaluation-plan-v0.3.md`](anomaly-multiseed-evaluation-plan-v0.3.md)、
 最新の文書状態と正本の読み方は[文書索引](README.md)を参照してください。
 

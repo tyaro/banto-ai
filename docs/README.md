@@ -2,10 +2,11 @@
 
 最終更新: 2026-09-06
 
-この索引は、文書の入口と現在状態を示すliving documentです。基準commitは
+この索引は、文書の入口と現在状態を示すliving documentです。初稿S0 commitは
 `41decf9b6f8d6c876715729516354bf6da49422c`、そのparentはmainの
-`026aa77fe96afd954957acb2fc7d0df9ee3cc938`です。基準commit上のv0.3 S0計画は
-現在の候補stackにあり、mainへ未統合です。
+`026aa77fe96afd954957acb2fc7d0df9ee3cc938`です。文書同期commit
+`e92c83df03b2f798d60246e14411d249a0b76202`の上に、v0.3計画のP2 3件の修正候補を作成しました。
+現在のcandidate stackはmain未統合で、独立再監査待ちです。
 
 ## 正本の読み方
 
@@ -22,13 +23,14 @@ freeze plan、result、ADRの過去時点の本文は、後工程の完了に合
 矛盾ではなく、計画凍結時点と実行完了時点の違いとして扱います。性能値、gate判定、
 artifact identityはresult文書を優先し、living文書はその結果への索引を更新します。
 
-v0.3 S0文書内の`freeze-ready`は候補作成時点の自己評価です。その後のAstra/max監査は
-P0/P1 0件、P2 3件で完了し、現在の判定は`review changes required`、
-`FREEZE_READY=no`、`DOCS_READY=no`、`IMPLEMENTATION_READY=no`です。
-修正待ちは、(1) incident matchingで最初の候補episodeのsupportが不合格だった後の探索規則、
-(2) materialized observationの旧6桁丸め順序とfit/calibration/test入力、
-(3) Linux Python 3.12/3.14共通試験、Windows native publisher/DACL/AccessCheck、
-formal唯一runtime pinの固定です。S1以降は未着手で、本文修正は別commit・再監査で行います。
+初稿v0.3 S0の`freeze-ready`という自己評価に対し、Astra/max監査はP0/P1 0件・P2 3件でした。
+現在はその**3件の修正候補を計画文書に実装済み、独立再監査待ち**です。
+最初のequipment episodeを固定してsupport失敗後に再探索しないmatchingとM1〜M9、
+event/quality適用後の6桁丸め・保存観測だけをfit/calibration/testで読む規則とQ1〜Q5、
+Linux Python 3.12/3.14共通試験・Windows native publisher/DACL/AccessCheck・正式唯一runtimeを
+計画内に明記しました。正式pinはWindows 11 Pro 25H2 build `10.0.26200.9168`／CPython `3.14.0`です。
+これは監査合格を示さず、`FREEZE_READY=no`、`DOCS_READY=no`、`IMPLEMENTATION_READY=no`を
+再監査まで維持します。S1以降のcode/config/schema/tests/run/artifactは未着手です。
 
 ## 全体の現在地
 
@@ -37,7 +39,7 @@ formal唯一runtime pinの固定です。S1以降は未着手で、本文修正�
 | Phase 0 研究基盤と契約 | complete | package、manifest、共通runtime、license／安全境界を実装済み |
 | Phase 1 合成データとbaseline | complete | 再現可能generator、quality、rolling-originと統計baselineを実装済み |
 | Phase 2 Forecast model benchmark | active / incomplete | TimesFM 3、Chronos-2、Toto 2.0 4Mの初期・matrix・MetroPT-3等は評価済み。条件拡大、resource分離、一般化は未完了 |
-| Phase 3 異常とドリフト | active | anomaly v0.1契約、v0.2 formal replay/analysis、failure diagnosticsまで完了。v0.3はP2 3件の修正待ち |
+| Phase 3 異常とドリフト | active | anomaly v0.1契約、v0.2 formal replay/analysis、failure diagnosticsまで完了。v0.3はP2 3件の修正候補作成済み・独立再監査待ち |
 | Phase 4 自前モデル研究 | not started | 専用の実装・ablationは未着手 |
 | Phase 5 Commissioning auto-tuning | not started | 設計文書のみ。profile昇格やshadow実行は未着手 |
 | Phase 6 Continual adaptation | not started | frozen model＋profile適応の実験は未着手 |
@@ -56,14 +58,14 @@ Phase 3の内訳は次のとおりです。
 - v0.2 formal replay＋standalone analysis: 完了、engineering `pass`、performance `fail`、昇格なし
 - v0.2 failure diagnostics D2-B: 正式公開・独立read-only監査・result文書まで完了、
   engineering `pass`、performance `not_evaluated`、exploratory、promotion不可
-- v0.3 S0 plan-only commit `41decf9...`: main未統合。監査完了、P2 3件修正待ち、
-  freeze不可。config/schema/code/test/run/artifactは未作成、S1〜S7未実施
+- v0.3 S0初稿commit `41decf9...`へのP2 3件: 計画文書に修正候補を実装済み、独立再監査待ち。
+  main未統合、freeze不可。config/schema/code/test/run/artifactは未作成、S1〜S7未実施
 
 ## 文書カテゴリ
 
 status語は`current`（living正本）、`frozen`（事前固定）、`historical`（過去時点）、
 `formal-result`（正式結果）、`rejected`（昇格証拠に不採用）、`reference`（設計資料）、
-`procedure`（実行手順）、`draft`（未採択案）、`review-changes-required`（監査修正待ち）を使います。
+`procedure`（実行手順）、`draft`（未採択案）、`pending-independent-review`（独立再監査待ち）を使います。
 
 ### 現行roadmap、方針、設計資料
 
@@ -85,7 +87,7 @@ status語は`current`（living正本）、`frozen`（事前固定）、`historic
 | [multi-seed plan v0.1](anomaly-multiseed-evaluation-plan.md) | frozen / historical / rejected lineage | 最初の正式計画。対応artifactは後のintegrity監査でREJECT。計画本文は時点記録として保持 |
 | [multi-seed plan v0.2](anomaly-multiseed-evaluation-plan-v0.2.md) | frozen / executed | integrity修正後の新ID・rootを固定し、formal replay/analysisを実行済み |
 | [failure diagnostics plan v0.1](anomaly-multiseed-failure-diagnostics-plan-v0.1.md) | frozen / executed / exploratory | v0.2 artifactを変更しないpost-hoc診断。D2-Bと独立監査まで完了 |
-| [multi-seed plan v0.3](anomaly-multiseed-evaluation-plan-v0.3.md) | review-changes-required / plan-only | S0候補。commit `41decf9...`の監査でP2 3件、freeze不可。S1〜S7未実施 |
+| [multi-seed plan v0.3](anomaly-multiseed-evaluation-plan-v0.3.md) | pending-independent-review / plan-only | 初稿のP2 3件の修正候補作成済み。再監査までfreeze不可、S1〜S7未実施 |
 
 v0.1の計画、artifact、監査は削除しません。v0.1監査がartifactを`REJECT`とし、
 修正後の正式証拠を別identityのv0.2計画・resultへ分離しました。v0.2 failure diagnosticsは
@@ -206,13 +208,15 @@ consumerは文書の数値だけでなく対象artifactのhashとschemaを再検
 棚卸し数・到達性link graphから除外しました。
 
 - `docs`直下は本索引を含め21件、`docs/results`は17件
-- tracked Markdownのlocal links: 259件
+- tracked Markdownのlocal file links: 259件（pathを持つtargetの存在を検査）
+- fragment-only links: 3件（v0.3計画のP2対応表から明示anchorへの参照）
 - missing local links: 0件
 - 到達性: root READMEを起点とし、本索引のcategory表を辺としてtracked Markdown 55件を対象にする
 - docs配下の到達性: 38/38件（100%）
 - orphan: 0件（tracked Markdown 55件すべてroot READMEから到達可能）
 - 競合していたliving status: roadmapのfailure diagnostics「実行・公開未実施」を正式D2-B完了へ同期
 - 意図的に保持した古い表記: frozen plan、historical savepoint、result監査時点の「未実施」
+- v0.3候補の現改訂: 未採択S0のP2修正文のみを追加・明確化し、独立再監査待ちへ同期
 
 ## 更新手順
 
