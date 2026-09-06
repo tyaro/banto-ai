@@ -166,11 +166,13 @@ def _retain_recovered(slot, backend):
         slot["input_hashes"] = recovered["input_hashes"]
 
 
-def _has_io_cause(exc):
-    """An OSError anywhere in an exception graph cannot become ordinary.
+def _has_global_cause(exc):
+    """A producer-boundary cause anywhere cannot become an ordinary cell error.
 
     ``raise ... from ...`` retains both an explicit cause and an implicit
-    context.  ExceptionGroup adds further branches.  Traverse every edge
+    context.  ExceptionGroup adds further branches.  A pure ``CellFailure``
+    remains ordinary only when its complete graph excludes I/O, contract and
+    integrity failures, and process-control interrupts.  Traverse every edge
     iteratively so cycles and deeply nested synthetic failures remain bounded.
     """
     seen, pending = set(), [exc]
@@ -179,7 +181,11 @@ def _has_io_cause(exc):
         if current is None or id(current) in seen:
             continue
         seen.add(id(current))
-        if isinstance(current, OSError):
+        # IntegrityError is a V03ValidationError subclass.  Keep both names in
+        # this boundary declaration to make the producer/contract semantics
+        # explicit if that inheritance is ever changed.
+        if isinstance(current, (OSError, runtime.IntegrityError,
+                                v.V03ValidationError, KeyboardInterrupt, SystemExit)):
             return True
         pending.extend((current.__cause__, current.__context__))
         if isinstance(current, BaseExceptionGroup):
@@ -225,7 +231,7 @@ def _drive(role: str, backend, boundary):
             slot.update(status="failed", failure_stage="integrity", safe_reason="input_changed")
             stopped = True
         except CellFailure as exc:
-            if _has_io_cause(exc):
+            if _has_global_cause(exc):
                 _retain_recovered(slot, backend)
                 slot.update(status="failed", failure_stage="integrity", safe_reason="exception")
                 stopped = True

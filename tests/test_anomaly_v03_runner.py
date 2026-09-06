@@ -303,6 +303,29 @@ class BoundaryIOAttackTests(unittest.TestCase):
                 self.assertEqual(slots[1]["status"], "failed")
                 self.assertEqual(len(backend.calls), 2)
 
+    def test_global_exception_graph_prevents_cellfailure_downgrade(self):
+        cases = (
+            ("integrity", lambda: rt.IntegrityError("unsafe root")),
+            ("contract", lambda: v.V03ValidationError("contract failed")),
+            ("interrupt", lambda: KeyboardInterrupt("unsafe interrupt")),
+            ("exit", lambda: SystemExit("unsafe exit")),
+            ("nested-interrupt-group", lambda: BaseExceptionGroup(
+                "outer", [BaseExceptionGroup("nested", [KeyboardInterrupt("unsafe interrupt")])])),
+        )
+        for name, make_cause in cases:
+            def candidate(*_, make_cause=make_cause):
+                try:
+                    raise make_cause()
+                except BaseException as cause:
+                    raise r.CellFailure("scoring") from cause
+            with self.subTest(cause=name):
+                try:
+                    candidate()
+                except r.CellFailure as failure:
+                    self.assertTrue(r._has_global_cause(failure))
+                slots, stopped = r._drive("smoke", FakeBackend(candidate), lambda: None)
+                self.assert_global_stop(slots, stopped, "smoke", 1)
+
     def test_io_graph_walks_cause_context_groups_cycles_and_deep_nesting(self):
         def cause_and_context(*_):
             try:
@@ -321,10 +344,10 @@ class BoundaryIOAttackTests(unittest.TestCase):
             wrapper = ValueError("wrapper")
             wrapper.__cause__ = deep
             deep = wrapper
-        self.assertTrue(r._has_io_cause(deep))
+        self.assertTrue(r._has_global_cause(deep))
         cycle = ValueError("cycle")
         cycle.__context__ = cycle
-        self.assertFalse(r._has_io_cause(cycle))
+        self.assertFalse(r._has_global_cause(cycle))
 
     def test_recovery_cannot_inject_foreign_paths_or_overwrite_known_hashes(self):
         for attack in ("foreign", "hash", "identity"):
