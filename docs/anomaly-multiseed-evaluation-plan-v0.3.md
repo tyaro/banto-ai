@@ -465,3 +465,25 @@ S3 deterministic runnerは、実装commit `bdd59c5`、`2a01146`、`bb42d37`、`d
 CI run [34044283016](https://github.com/tyaro/banto-ai/actions/runs/34044283016)はPython 3.12/3.14の全工程greenだった。ローカル全体探索は`Ran 686 / 3667.360s / FAILED (errors=1, skipped=2)`で、`SavedEvaluationTests.setUpClass`の`compute_evaluation`中`copy.deepcopy(scores)`にMemoryErrorが発生し、同classの5試験は未実行だった。単独再実行は5/5 PASSだが、ローカルの根本原因、peak memory、commit limitは未解決であり、S4前の容量確認・同一revision再確認事項として残す。詳細は[S3監査結果](results/anomaly-multiseed-v0.3-s3-audit-2026-09-07.md)を参照する。
 
 次段階はS4のplatform/runtime/native Windows acceptance、dry/smoke、独立consumer freezeである。S4受入が完了するまでformal dev/smoke/holdoutの実行権限は付与しない。
+
+## 13. S4-A engineering inspection status note（2026-09-07）
+
+本節は科学仕様本文を変更しない実装後status noteである。S4-Aはreceipt schema、pure semantic validator、
+read-onlyのsource/runtime inventory、resource guardを`8befc5bb6cf1c7c424b6024c90b94fb149a9e4f9`と
+監査修正`e61d14c4b31ed3c4711157e4a94446513e390422`の2commitで実装・mainへ統合した。初回独立監査の
+P2（実行Python imageのreceipt内部照合不足）とP3（argparse入力反射）は後者で修正し、再監査はP0〜P3 0件、
+`PREVIOUS_P2/P3_RESOLVED=yes`、`S4_A_READY=yes`、`INTEGRATION_READY=yes`となった。
+
+local検証はA `27/27 pass`（統合後独立再実行 `27/27`、1.441秒）、D2関連 `6/6 pass`（34.077秒）、
+S3 specialized `73/73 pass`（438.462秒）、in-memory compile 116 files、repository safety、diff-checkである。
+修正候補のfull local suiteは未実施であり、旧候補の714件結果を転用しない。CI [run 34057314195](https://github.com/tyaro/banto-ai/actions/runs/34057314195)
+はmain `e61d14c4`上でPython 3.12が15m10s、3.14が15m43s、compile/unittest/manifests+smoke/
+synthetic data/benchmark/safety全成功だった。
+
+acceptance statusは常に`not_completed`、`S4_ACCEPTED=no`、`FORMAL_PERMISSION=no`である。Windows exact
+runtime基本pinは一致するが、current checkoutのworkflow working bytesがGit blobと異なるため、実receipt
+収集はfail-closedした。これは受入証拠ではなく、byte-identical管理checkoutでS4前に再確認する残課題である。
+artifactは617 entries / 461 files / 36,352,494 bytesでbefore/after差0、formal v0.3の5 rootsは未作成、
+科学5 config・9 schema・historical 88・D2 current-only 31は保全した。MemoryErrorはglobal stopへ強化したが、
+実OOM根因やcommit limitの解明は主張しない。次はS4-Bのtemp-only native publisher/DACL/restricted-token/
+race harnessであり、S4全体、dev 8 / smoke 2、formal acceptance、S5 holdoutは未実施である。

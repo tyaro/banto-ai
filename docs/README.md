@@ -11,7 +11,7 @@
 S0監査記録commit `0b40e7295cfa20f32889005ceca2d29d29ca340c`の上でS1を実装し、
 S1初回監査（`0368769acf12a0279c84f30c6435e853208386e9`）はP2=6／P3=1件でした。
 修正commit `d6ca0f9ee85172caae3b658bdb105287f8e43141`への独立再監査はP0〜P3 0件で合格し、
-S1は完了し、candidate stackはmain統合済みです。S2も独立監査P0〜P3 0件で完了しました。S3 deterministic runnerも独立監査P0〜P3 0件で完了し、`S3_READY=yes`、`INTEGRATION_READY=yes`です。formal run・性能評価・promotionは未実施で、次はS4 platform/runtime/native Windows acceptanceとdry/smoke consumer freezeです。
+S1は完了し、candidate stackはmain統合済みです。S2も独立監査P0〜P3 0件で完了しました。S3 deterministic runnerも独立監査P0〜P3 0件で完了し、`S3_READY=yes`、`INTEGRATION_READY=yes`です。S4-A engineering inspection/resource guardも`8befc5bb`と`e61d14c4`でmainへ統合され、初回監査P2/P3を修正した再監査はP0〜P3 0件、`S4_A_READY=yes`、`INTEGRATION_READY=yes`です。受入statusは常に`not_completed`で、formal run・性能評価・promotionは未実施です。次はS4-Bのtemp-only native publisher/DACL/restricted-token/race harnessです。最新状態は[S4-A監査結果](results/anomaly-multiseed-v0.3-s4-a-audit-2026-09-07.md)を参照してください。
 
 ## 正本の読み方
 
@@ -37,7 +37,7 @@ Linux Python 3.12/3.14共通試験・Windows native publisher/DACL/AccessCheck�
 S0の監査判定は`SCIENCE_READY=yes`、`FREEZE_READY=yes`、`DOCS_READY=yes`、
 `IMPLEMENTATION_READY=yes`、`STACK_READY=yes`です。S1では5 config、9 schema、pure semantic validator、
 seed/bootstrap registryとadversarial testsを追加し、初回7指摘を修正後の独立監査に合格しました。
-S0凍結時点では、S2以降のscorer／runner、formal run／artifact、性能評価、promotionは未着手と記録されています。現在はS3 deterministic runnerまで完了し、次はS4です。formal run／artifact、性能評価、promotionは現在も未実施であり、これはLinux正式受入やWindows native／DACL／AccessCheck受入を意味しません。最新状態は[S3監査結果](results/anomaly-multiseed-v0.3-s3-audit-2026-09-07.md)を参照してください。
+S0凍結時点では、S2以降のscorer／runner、formal run／artifact、性能評価、promotionは未着手と記録されています。現在はS4-Aまで完了し、次はS4-Bです。formal run／artifact、性能評価、promotionは現在も未実施であり、これはLinux正式受入やWindows native／DACL／AccessCheck受入を意味しません。最新状態は[S4-A監査結果](results/anomaly-multiseed-v0.3-s4-a-audit-2026-09-07.md)を参照してください。
 S0の根拠は[v0.3計画監査結果](results/anomaly-multiseed-v0.3-plan-audit-2026-09-06.md)、
 S1の初回指摘・修正・境界は[v0.3 S1監査結果](results/anomaly-multiseed-v0.3-s1-audit-2026-09-06.md)を参照してください。
 
@@ -101,7 +101,7 @@ status語は`current`（living正本）、`frozen`（事前固定）、`historic
 | [multi-seed plan v0.1](anomaly-multiseed-evaluation-plan.md) | frozen / historical / rejected lineage | 最初の正式計画。対応artifactは後のintegrity監査でREJECT。計画本文は時点記録として保持 |
 | [multi-seed plan v0.2](anomaly-multiseed-evaluation-plan-v0.2.md) | frozen / executed | integrity修正後の新ID・rootを固定し、formal replay/analysisを実行済み |
 | [failure diagnostics plan v0.1](anomaly-multiseed-failure-diagnostics-plan-v0.1.md) | frozen / executed / exploratory | v0.2 artifactを変更しないpost-hoc診断。D2-Bと独立監査まで完了 |
-| [multi-seed plan v0.3](anomaly-multiseed-evaluation-plan-v0.3.md) | frozen / adopted | 科学仕様は監査対象`4b02201...`を保持。S1〜S3独立監査合格、次はS4。formal runは未実施 |
+| [multi-seed plan v0.3](anomaly-multiseed-evaluation-plan-v0.3.md) | frozen / adopted | 科学仕様は監査対象`4b02201...`を保持。S1〜S4-A独立監査合格、次はS4-B。formal runは未実施 |
 
 v0.1の計画、artifact、監査は削除しません。v0.1監査がartifactを`REJECT`とし、
 修正後の正式証拠を別identityのv0.2計画・resultへ分離しました。v0.2 failure diagnosticsは
@@ -123,7 +123,7 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 
 ## 結果文書
 
-`docs/results`には実測・監査で21件あります。すべて結果条件と制約を伴う索引であり、
+`docs/results`には実測・監査で22件あります（2026-09-07時点のMarkdown実測）。すべて結果条件と制約を伴う索引であり、
 顧客設備一般の性能保証ではありません。
 
 ### Anomaly（7件）
@@ -137,6 +137,7 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 | [v0.3 S1 audit](results/anomaly-multiseed-v0.3-s1-audit-2026-09-06.md) | audit-result / contract-only | 初回P2=6／P3=1を修正し再監査P0〜P3 0件。S1完了 |
 | [v0.3 S2 audit](results/anomaly-multiseed-v0.3-s2-audit-2026-09-06.md) | audit-result / pure-scoring | P0〜P3 0件、S2 67/67、CI success。S3 runnerとformal runは未実施 |
 | [v0.3 S3 audit](results/anomaly-multiseed-v0.3-s3-audit-2026-09-07.md) | audit-result / deterministic-runner | P0〜P3 0件、`S3_READY=yes`、`INTEGRATION_READY=yes`。CI 3.12/3.14 green、formal run・性能・promotionは未実施 |
+| [v0.3 S4-A audit](results/anomaly-multiseed-v0.3-s4-a-audit-2026-09-07.md) | audit-result / engineering inspection | 初回P2/P3を修正し再監査P0〜P3 0件。CI 3.12/3.14 green、受入`not_completed`、formal run・性能・promotionは未実施 |
 
 ### TimesFM 3（5件）
 
@@ -221,23 +222,24 @@ consumerは文書の数値だけでなく対象artifactのhashとschemaを再検
 
 棚卸しの対象は、指示どおり`rg --files -g '*.md'`で見えるMarkdownです。
 過去の棚卸しではtracked Markdownは56件でした。S1〜S3監査resultを含む現時点では、
-最終的なtracked Markdownは59件です。
+最終的なtracked Markdownは60件です。
 `artifacts/`以下に存在するignored summary 7件は正式artifact／残留物として変更せず、
 棚卸し数・到達性link graphから除外しました。
 
-- `docs`直下は本索引を含め21件、`docs/results`は21件
-- tracked Markdownのlocal file links: 317件（pathを持つtargetの存在を検査）
+- `docs`直下は本索引を含め21件、`docs/results`は22件（Markdown実測）
+- tracked Markdownのlocal file links: 318件（pathを持つtargetの存在を検査）
 - fragment-only links: 3件（v0.3計画のP2対応表から明示anchorへの参照）
 - missing local links: 0件
-- 到達性: root READMEを起点とし、本索引のcategory表を辺としてtracked Markdown 59件を対象にする
-- docs配下の到達性: 42/42件（100%）
-- orphan: 0件（tracked Markdown 59件すべてroot READMEから到達可能）
+- 到達性: root READMEを起点とし、本索引のcategory表を辺としてtracked Markdown 60件を対象にする
+- docs配下の到達性: 43/43件（100%）
+- orphan: 0件（tracked Markdown 60件すべてroot READMEから到達可能）
 - 競合していたliving status: roadmapのfailure diagnostics「実行・公開未実施」を正式D2-B完了へ同期
 - 意図的に保持した古い表記: frozen plan、historical savepoint、result監査時点の「未実施」
 - v0.3 S0: 監査対象`4b02201...`のP2 3件解消と独立監査合格を記録し、frozen・adoptedへ同期
 - v0.3 S1: 初回監査P2=6／P3=1を`d6ca0f9...`で修正し、独立再監査P0〜P3 0件で完了。candidate stack main統合済み
 - v0.3 S2: pure scoring、episode、causal matching、固定分母の独立監査P0〜P3 0件で完了
-- v0.3 S3: deterministic runnerの独立監査P0〜P3 0件、`S3_READY=yes`、`INTEGRATION_READY=yes`。次はS4 native Windows acceptance／dry-smoke／consumer freeze。ローカル全体のMemoryError、容量確認、同一revision再確認を保留事項として記録
+- v0.3 S3: deterministic runnerの独立監査P0〜P3 0件、`S3_READY=yes`、`INTEGRATION_READY=yes`。MemoryErrorはglobal stopへ強化したが、実OOM根因・commit limitは未解明
+- v0.3 S4-A: engineering inspection/resource guardの初回P2/P3を`e61d14c4`で修正し、再監査P0〜P3 0件、`S4_A_READY=yes`、`INTEGRATION_READY=yes`。CI 3.12/3.14 green、受入`not_completed`、次はS4-B native publisher/DACL/restricted-token/race harness。正式試験は未開始
 
 ## 更新手順
 
