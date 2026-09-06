@@ -74,6 +74,7 @@ Phase 3の内訳は次のとおりです。
 - v0.3 S2候補commit `5bc3129...`: pure scoring、episode、causal matching、固定分母を実装し、
   独立監査P0〜P3 0件、S2 67/67 pass。詳細はS2監査結果を参照
 - v0.3 S3実装commit群 `bdd59c5`、`2a01146`、`bb42d37`、`dc52266`: 固定inventory、paired materialization、完全ledger、安全停止、provenance、non-overwrite publisherを実装し、独立監査P0〜P3 0件。CI run `34044283016`はPython 3.12/3.14の全工程green。S3 73/73 pass。MemoryErrorはglobal stopへ強化したが、実OOM根因・commit limitは未解明。次はS4-Bのtemp-only native publisher/DACL/restricted-token/race harness。S4全体・性能評価・formal run・promotionは未実施
+- v0.3 S4-A: engineering inspection/resource guardを実装し、独立再監査P0〜P3 0件。acceptanceは`not_completed`、`FORMAL_PERMISSION=no`で、S4全体は未完了。次はS4-B
 
 ## 文書カテゴリ
 
