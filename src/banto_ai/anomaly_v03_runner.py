@@ -184,7 +184,7 @@ def _has_global_cause(exc):
         # IntegrityError is a V03ValidationError subclass.  Keep both names in
         # this boundary declaration to make the producer/contract semantics
         # explicit if that inheritance is ever changed.
-        if isinstance(current, (OSError, runtime.IntegrityError,
+        if isinstance(current, (OSError, MemoryError, runtime.IntegrityError,
                                 v.V03ValidationError, KeyboardInterrupt, SystemExit)):
             return True
         pending.extend((current.__cause__, current.__context__))

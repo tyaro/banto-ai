@@ -271,6 +271,43 @@ D2のcurrent-onlyにはS3の新規4 modulesをexact pathsで追加し、合計28
 旧88 Git blobs／modes、FORMAL_RAW_PINS、v0.3の科学config/schema/registry、seed/bootstrap、
 S1/S2 semantics、凍結planと過去resultは変更していません。
 
+### S4-A engineering inspection（受入未完了・実行許可なし）
+
+`inspect_anomaly_v03.py`は新規のengineering schemaとpure validatorを使うread-only collectorです。
+9つの科学schemaと5 configは変更しません。cleanなfull-SHA checkoutを指定します。
+
+```text
+python -B tools/evaluator/inspect_anomaly_v03.py --root . --expected-head <full-40-character-HEAD>
+```
+
+出力はstdoutのinspection envelopeのみで、output root、観測生成、ACL/token変更、campaignはありません。
+source/producerと`.github/workflows/ci.yml`のGit blob・実bytesを照合し、浅いcloneで歴史objectが
+欠ける場合はfetchせず拒否します。dirty、missing、extra source、link/reparse、途中の変化も拒否します。
+Windows基本pinまたは限定したWindows 3.12／Ubuntu 24.04 CPython 3.12/3.14互換環境を対象とし、
+OS/build/UBR/fs、Python version/compiler/GIL/tag/exe、CPU/features、stdlib tree、実loaded native
+modules（Windows module API／Linux executable mappings）、Python extension/DLL/CRTのraw hashとbyte数を
+収集・再読します。stdlibのsite-packagesは対象外です。`sys.modules`はextensionの照合だけに使い、
+完全なwarmup/runtime closureとは称しません。host/runtime互換の観測もnative受入の代用ではありません。
+native inventory専用helperだけは通常OS hardlinkを観測可能とし、handle/pathのidentity、link数、
+size/mtime/ctimeとbytesの変化を拒否します。sourceなどはsingle-link拒否を維持します。nativeの
+physical path・file identity・nlinkは観測部へ記録し、未知DLLやhardlink別名の安全性を保証しません。
+
+stable部だけをequivalence digestへ含め、PID/時刻/load order/free/peak/elapsed/token IDsは観測部へ
+分離します。取得していないpeak/system commitはnull、token IDsは空です。環境は固定allowlistの
+名前とpresence boolのみで値は出力しません。import searchは分類された観測で、enforcementや環境値の
+同一性を証明しません。自己計算digestは信頼された外部pinではなく、pure validatorへの外部pinも
+実行者認証にはなりません。追加のcaller-owned source snapshotsでfull-SHA・path・raw bytesを照合できます。
+
+すべて`acceptance_status=not_completed`です。analysis/audit/worker freeze、native publisher/DACL/
+独立token、Windows/Linux各版の受入、Linux image identity、runtime closure、dev/smoke容量確認は
+未完了として明記します。自己申告accepted receiptは拒否し、`require_campaign_acceptance()`の
+無条件拒否とformal entryの閉鎖は維持します。S4 B–Eの実装・正式受入・実campaignは含みません。
+wrapped candidate `MemoryError`はglobal stopへ分類し、全ledgerと未来slotのnot_startedを保持して
+stop後IOを禁止します。過去の実機MemoryErrorの根本原因解決を意味しません。
+
+D2 current-onlyはS4-Aの2 modulesとengineering schemaの3 pathsだけを追加して合計31です。
+旧88 blobs、FORMAL_RAW_PINS、科学pinは維持します。
+
 ### v0.1 / v0.2の既存validator
 
 Savepoint Aでは、実験前に固定した10 seed × 12 event-layoutのmatrix configだけを、matrix schema／base generator config／base generator schemaのcanonical SHA-256 pin、mode境界、expanded accounting window、event class partition、slot balance、detector／bootstrap parameter、安全なoutput pathについて検証します。summaryにはcanonicalization identifier、canonical／raw digestの意味、4つの入力schema/configのprovenance、`run_status=not_run`、`performance_status=not_evaluated`を残します。validatorはfilesystemへ書き込まず、dataset、result、bootstrap集計、性能達成を生成・主張しません。

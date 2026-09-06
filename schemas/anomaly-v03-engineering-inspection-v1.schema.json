@@ -1,0 +1,708 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banto-ai.local/schemas/anomaly-v03-engineering-inspection-v1.schema.json",
+  "description": "S4-A inspection only; all acceptance remains incomplete; no run authority.",
+  "type": "object",
+  "properties": {
+    "receipt_version": {
+      "const": "s4-a.1",
+      "type": "string"
+    },
+    "acceptance_status": {
+      "const": "not_completed",
+      "type": "string"
+    },
+    "requirements": {
+      "type": "object",
+      "properties": {
+        "native-publisher": {
+          "const": "not_completed",
+          "type": "string"
+        },
+        "protected-dacl": {
+          "const": "not_completed",
+          "type": "string"
+        },
+        "independent-token": {
+          "const": "not_completed",
+          "type": "string"
+        },
+        "windows-3.12": {
+          "const": "not_completed",
+          "type": "string"
+        },
+        "windows-3.14.0": {
+          "const": "not_completed",
+          "type": "string"
+        },
+        "linux-3.12": {
+          "const": "not_completed",
+          "type": "string"
+        },
+        "linux-3.14": {
+          "const": "not_completed",
+          "type": "string"
+        },
+        "linux-image-identity": {
+          "const": "not_completed",
+          "type": "string"
+        },
+        "consumer-freeze": {
+          "const": "not_completed",
+          "type": "string"
+        },
+        "runtime-closure": {
+          "const": "not_completed",
+          "type": "string"
+        },
+        "dev-smoke-capacity": {
+          "const": "not_completed",
+          "type": "string"
+        }
+      },
+      "required": [
+        "native-publisher",
+        "protected-dacl",
+        "independent-token",
+        "windows-3.12",
+        "windows-3.14.0",
+        "linux-3.12",
+        "linux-3.14",
+        "linux-image-identity",
+        "consumer-freeze",
+        "runtime-closure",
+        "dev-smoke-capacity"
+      ],
+      "additionalProperties": false
+    },
+    "stable": {
+      "type": "object",
+      "properties": {
+        "platform": {
+          "type": "object",
+          "properties": {
+            "system": {
+              "type": "string",
+              "enum": [
+                "Windows",
+                "Linux"
+              ]
+            },
+            "release": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "build": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "ubr": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "edition": {
+              "type": "string",
+              "minLength": 1
+            },
+            "architecture": {
+              "type": "string",
+              "minLength": 1
+            },
+            "filesystem": {
+              "type": "string",
+              "minLength": 1
+            },
+            "local_fixed": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "system",
+            "release",
+            "version",
+            "build",
+            "ubr",
+            "edition",
+            "architecture",
+            "filesystem",
+            "local_fixed"
+          ],
+          "additionalProperties": false
+        },
+        "python": {
+          "type": "object",
+          "properties": {
+            "implementation": {
+              "const": "CPython",
+              "type": "string"
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "compiler": {
+              "type": "string",
+              "minLength": 1
+            },
+            "gil_disabled": {
+              "type": "boolean"
+            },
+            "source_tag": {
+              "type": "string",
+              "minLength": 1
+            },
+            "pointer_bits": {
+              "const": 64,
+              "type": "integer"
+            },
+            "executable": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "raw_sha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "byte_count": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "path",
+                "raw_sha256",
+                "byte_count"
+              ],
+              "additionalProperties": false
+            },
+            "loaded_python_dll": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "basic_pin": {
+              "type": "string",
+              "enum": [
+                "matches-formal-basic-pin",
+                "compatibility-only"
+              ]
+            }
+          },
+          "required": [
+            "implementation",
+            "version",
+            "compiler",
+            "gil_disabled",
+            "source_tag",
+            "pointer_bits",
+            "executable",
+            "loaded_python_dll",
+            "basic_pin"
+          ],
+          "additionalProperties": false
+        },
+        "cpu": {
+          "type": "object",
+          "properties": {
+            "architecture": {
+              "type": "string",
+              "minLength": 1
+            },
+            "identity": {
+              "type": "string",
+              "minLength": 1
+            },
+            "features": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "minItems": 1
+            },
+            "feature_scope": {
+              "type": "string",
+              "enum": [
+                "win32-processor-feature-api",
+                "linux-all-processors-intersection"
+              ]
+            }
+          },
+          "required": [
+            "architecture",
+            "identity",
+            "features",
+            "feature_scope"
+          ],
+          "additionalProperties": false
+        },
+        "startup": {
+          "type": "object",
+          "properties": {
+            "flags": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "enum": [
+                      "debug",
+                      "dev_mode",
+                      "dont_write_bytecode",
+                      "ignore_environment",
+                      "inspect",
+                      "interactive",
+                      "isolated",
+                      "no_site",
+                      "no_user_site",
+                      "optimize",
+                      "safe_path",
+                      "utf8_mode",
+                      "verbose"
+                    ]
+                  },
+                  "value": {
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "name",
+                  "value"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 1
+            },
+            "environment": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "enum": [
+                      "PATH",
+                      "PYTHONHASHSEED",
+                      "PYTHONHOME",
+                      "PYTHONPATH",
+                      "PYTHONSAFEPATH",
+                      "PYTHONUSERBASE"
+                    ]
+                  },
+                  "present": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "name",
+                  "present"
+                ],
+                "additionalProperties": false
+              },
+              "minItems": 1
+            },
+            "import_locations": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "source",
+                  "stdlib",
+                  "python",
+                  "cwd",
+                  "external-redacted",
+                  "missing-runtime-path"
+                ]
+              },
+              "minItems": 0
+            },
+            "user_site_enabled": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "bytecode_writes_disabled": {
+              "const": true,
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "flags",
+            "environment",
+            "import_locations",
+            "user_site_enabled",
+            "bytecode_writes_disabled"
+          ],
+          "additionalProperties": false
+        },
+        "stdlib": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "raw_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "byte_count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "path",
+              "raw_sha256",
+              "byte_count"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "loaded_native": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "raw_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "byte_count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "path",
+              "raw_sha256",
+              "byte_count"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "loaded_extensions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "raw_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "byte_count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "path",
+              "raw_sha256",
+              "byte_count"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "enum": [
+                  "producer",
+                  "analysis",
+                  "audit",
+                  "worker",
+                  "workflow"
+                ]
+              },
+              "state": {
+                "type": "string",
+                "enum": [
+                  "collected",
+                  "not_collected"
+                ]
+              },
+              "revision": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{40}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "files": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "raw_sha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "byte_count": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "raw_sha256",
+                    "byte_count"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 0
+              }
+            },
+            "required": [
+              "role",
+              "state",
+              "revision",
+              "files"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 5
+        },
+        "scope": {
+          "type": "object",
+          "properties": {
+            "phase": {
+              "const": "post-probe-import-observation",
+              "type": "string"
+            },
+            "closure_verified": {
+              "const": false,
+              "type": "boolean"
+            },
+            "stdlib_policy": {
+              "const": "regular-tree-excluding-site-packages",
+              "type": "string"
+            },
+            "native_method": {
+              "type": "string",
+              "enum": [
+                "EnumProcessModulesEx",
+                "proc-self-maps"
+              ]
+            },
+            "limitations": {
+              "const": [
+                "observation-not-runtime-closure",
+                "environment-values-not-captured",
+                "search-policy-observed-not-enforced",
+                "no-image-attestation",
+                "no-native-acceptance",
+                "no-consumer-freeze",
+                "no-campaign-permission",
+                "no-memoryerror-root-cause-claim"
+              ],
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "phase",
+            "closure_verified",
+            "stdlib_policy",
+            "native_method",
+            "limitations"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "platform",
+        "python",
+        "cpu",
+        "startup",
+        "stdlib",
+        "loaded_native",
+        "loaded_extensions",
+        "sources",
+        "scope"
+      ],
+      "additionalProperties": false
+    },
+    "observation": {
+      "type": "object",
+      "properties": {
+        "pid": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "observed_utc": {
+          "type": "string",
+          "minLength": 1
+        },
+        "elapsed_seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "free_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "peak_process_bytes": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "system_commit_bytes": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "token_ids": {
+          "const": [],
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "native_files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "physical_path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "device": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "inode": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "nlink": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "trust_status": {
+                "const": "not_accepted",
+                "type": "string"
+              }
+            },
+            "required": [
+              "path",
+              "physical_path",
+              "device",
+              "inode",
+              "nlink",
+              "trust_status"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        },
+        "native_load_order": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "pid",
+        "observed_utc",
+        "elapsed_seconds",
+        "free_bytes",
+        "peak_process_bytes",
+        "system_commit_bytes",
+        "token_ids",
+        "native_files",
+        "native_load_order"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "receipt_version",
+    "acceptance_status",
+    "requirements",
+    "stable",
+    "observation"
+  ],
+  "additionalProperties": false
+}

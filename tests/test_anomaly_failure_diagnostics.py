@@ -64,6 +64,12 @@ S3_CURRENT_ONLY_PATHS = (
     "src/banto_ai/anomaly_v03_runner.py",
 )
 
+S4_A_CURRENT_ONLY_PATHS = (
+    "src/banto_ai/anomaly_v03_acceptance.py",
+    "src/banto_ai/_anomaly_v03_inventory.py",
+    "schemas/anomaly-v03-engineering-inspection-v1.schema.json",
+)
+
 FORMAL_RAW_PINS = {
     "matrix_config": "2a74036b0860a420b7d9cc2ae03056f04e5f8c92026aa532e07cb917726cfc87",
     "matrix_schema": "944ef163ad6b8eb0d1dfc5cbdebaf71bac2e75c43dfa07666ae424f8a165ed8e",
@@ -1139,7 +1145,8 @@ class D2AIntegrityTests(unittest.TestCase):
         for change in (None, "dirty", "diff", "head", "mode", "link", "missing", "extra", "raw", "current-only-raw",
                        "S1-missing-index", "S1-extra-index", "S1-link", "S1-raw", "S1-overlap", "S1-missing-workspace",
                        "S2-missing-index", "S2-extra-index", "S2-link", "S2-raw", "S2-overlap", "S2-missing-workspace",
-                       "S3-missing-index", "S3-extra-index", "S3-link", "S3-raw", "S3-overlap", "S3-missing-workspace"):
+                       "S3-missing-index", "S3-extra-index", "S3-link", "S3-raw", "S3-overlap", "S3-missing-workspace",
+                       "S4A-missing-index", "S4A-extra-index", "S4A-link", "S4A-raw", "S4A-overlap", "S4A-missing-workspace"):
             tree = deepcopy(current)
             workspace = {path: raw for path, (raw, _) in tree.items()}
             first = next(iter(historical))
@@ -1164,9 +1171,15 @@ class D2AIntegrityTests(unittest.TestCase):
             elif change == "S3-link": tree[S3_CURRENT_ONLY_PATHS[0]] = (b"diagnostics\n", "120000")
             elif change == "S3-raw": workspace[S3_CURRENT_ONLY_PATHS[0]] += b"changed"
             elif change == "S3-missing-workspace": workspace.pop(S3_CURRENT_ONLY_PATHS[0])
-            if change in ("S1-overlap", "S2-overlap", "S3-overlap"):
+            elif change == "S4A-missing-index": tree.pop(S4_A_CURRENT_ONLY_PATHS[0])
+            elif change == "S4A-extra-index": tree["src/banto_ai/unregistered-s4a.py"] = (b"extra", "100644")
+            elif change == "S4A-link": tree[S4_A_CURRENT_ONLY_PATHS[0]] = (b"diagnostics\n", "120000")
+            elif change == "S4A-raw": workspace[S4_A_CURRENT_ONLY_PATHS[0]] += b"changed"
+            elif change == "S4A-missing-workspace": workspace.pop(S4_A_CURRENT_ONLY_PATHS[0])
+            if change in ("S1-overlap", "S2-overlap", "S3-overlap", "S4A-overlap"):
                 historical_view = dict(historical)
-                group = {"S1-overlap": S1_CURRENT_ONLY_PATHS, "S2-overlap": S2_CURRENT_ONLY_PATHS, "S3-overlap": S3_CURRENT_ONLY_PATHS}[change]
+                group = {"S1-overlap": S1_CURRENT_ONLY_PATHS, "S2-overlap": S2_CURRENT_ONLY_PATHS,
+                         "S3-overlap": S3_CURRENT_ONLY_PATHS, "S4A-overlap": S4_A_CURRENT_ONLY_PATHS}[change]
                 historical_view[group[0]] = historical_view.pop(first)
             else:
                 historical_view = historical
@@ -1433,12 +1446,13 @@ class FormalLegacyProvenanceTests(unittest.TestCase):
         cls.compatibility = {"artifact_revision": cls.revision, "semantic_sources": proof,
                              "replay_revision": {**cls.revision, "head": "0" * 40}}
 
-    def test_S1_S2_S3_current_only_exact_inventory_keeps_historical_88(self):
+    def test_S1_S2_S3_S4A_current_only_exact_inventory_keeps_historical_88(self):
         original = ["src/banto_ai/anomaly_failure_diagnostics.py", "examples/configs/anomaly-multiseed-failure-diagnostics-v0.1.json",
                     "schemas/anomaly-multiseed-failure-diagnostics-config-v0.1.schema.json", "schemas/anomaly-multiseed-failure-diagnostics-result-v0.1.schema.json"]
         current_only = diagnostics.EXPECTED_REVISION_COMPATIBILITY["current_only_paths"]
-        self.assertEqual(current_only, original + list(S1_CURRENT_ONLY_PATHS) + list(S2_CURRENT_ONLY_PATHS) + list(S3_CURRENT_ONLY_PATHS))
-        self.assertEqual(len(set(current_only)), 28)
+        self.assertEqual(current_only, original + list(S1_CURRENT_ONLY_PATHS) + list(S2_CURRENT_ONLY_PATHS) + list(S3_CURRENT_ONLY_PATHS) + list(S4_A_CURRENT_ONLY_PATHS))
+        self.assertEqual(len(S4_A_CURRENT_ONLY_PATHS), 3)
+        self.assertEqual(len(set(current_only)), 31)
         proof = self.compatibility["semantic_sources"]
         self.assertEqual(len(proof), 88)
         self.assertFalse(set(current_only) & {row["path"] for row in proof})
