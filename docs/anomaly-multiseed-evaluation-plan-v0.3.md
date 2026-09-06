@@ -482,7 +482,7 @@ synthetic data/benchmark/safety全成功だった。
 
 acceptance statusは常に`not_completed`、`S4_ACCEPTED=no`、`FORMAL_PERMISSION=no`である。Windows exact
 runtime基本pinは一致するが、current checkoutのworkflow working bytesがGit blobと異なるため、実receipt
-収集はfail-closedした。これは受入証拠ではなく、byte-identical管理checkoutでS4前に再確認する残課題である。
+収集はfail-closedした。これは受入証拠ではなく、byte-identical管理checkoutでS4-Bで再確認する残課題である。
 artifactは617 entries / 461 files / 36,352,494 bytesでbefore/after差0、formal v0.3の5 rootsは未作成、
 科学5 config・9 schema・historical 88・D2 current-only 31は保全した。MemoryErrorはglobal stopへ強化したが、
 実OOM根因やcommit limitの解明は主張しない。次はS4-Bのtemp-only native publisher/DACL/restricted-token/

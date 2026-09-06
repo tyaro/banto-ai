@@ -48,7 +48,7 @@ S1の初回指摘・修正・境界は[v0.3 S1監査結果](results/anomaly-mult
 | Phase 0 研究基盤と契約 | complete | package、manifest、共通runtime、license／安全境界を実装済み |
 | Phase 1 合成データとbaseline | complete | 再現可能generator、quality、rolling-originと統計baselineを実装済み |
 | Phase 2 Forecast model benchmark | active / incomplete | TimesFM 3、Chronos-2、Toto 2.0 4Mの初期・matrix・MetroPT-3等は評価済み。条件拡大、resource分離、一般化は未完了 |
-| Phase 3 異常とドリフト | active | anomaly v0.1契約、v0.2 formal replay/analysis、failure diagnostics、v0.3 S0〜S3監査まで完了。S3は安全な再現実行の土台であり、formal run・性能・promotionではない。次はS4受入 |
+| Phase 3 異常とドリフト | active | anomaly v0.1契約、v0.2 formal replay/analysis、failure diagnostics、v0.3 S0〜S4-A監査まで完了。S4-Aは安全なinspection/resource guardであり、S4全体・formal run・性能・promotionは未完了。次はS4-B |
 | Phase 4 自前モデル研究 | not started | 専用の実装・ablationは未着手 |
 | Phase 5 Commissioning auto-tuning | not started | 設計文書のみ。profile昇格やshadow実行は未着手 |
 | Phase 6 Continual adaptation | not started | frozen model＋profile適応の実験は未着手 |
@@ -73,7 +73,7 @@ Phase 3の内訳は次のとおりです。
   独立再監査P0〜P3 0件でS1完了。candidate stackはmain統合済み。
 - v0.3 S2候補commit `5bc3129...`: pure scoring、episode、causal matching、固定分母を実装し、
   独立監査P0〜P3 0件、S2 67/67 pass。詳細はS2監査結果を参照
-- v0.3 S3実装commit群 `bdd59c5`、`2a01146`、`bb42d37`、`dc52266`: 固定inventory、paired materialization、完全ledger、安全停止、provenance、non-overwrite publisherを実装し、独立監査P0〜P3 0件。CI run `34044283016`はPython 3.12/3.14の全工程green。S3 73/73 pass。ローカル全体探索はMemoryError 1件を含むため、S4前の容量確認・同一revision再確認を残す。次はS4 platform/runtime/native Windows acceptanceとdry/smoke consumer freeze。性能評価・formal run・promotionは未実施
+- v0.3 S3実装commit群 `bdd59c5`、`2a01146`、`bb42d37`、`dc52266`: 固定inventory、paired materialization、完全ledger、安全停止、provenance、non-overwrite publisherを実装し、独立監査P0〜P3 0件。CI run `34044283016`はPython 3.12/3.14の全工程green。S3 73/73 pass。MemoryErrorはglobal stopへ強化したが、実OOM根因・commit limitは未解明。次はS4-Bのtemp-only native publisher/DACL/restricted-token/race harness。S4全体・性能評価・formal run・promotionは未実施
 
 ## 文書カテゴリ
 
@@ -221,7 +221,7 @@ consumerは文書の数値だけでなく対象artifactのhashとschemaを再検
 ## 同期時に確認したこと
 
 棚卸しの対象は、指示どおり`rg --files -g '*.md'`で見えるMarkdownです。
-過去の棚卸しではtracked Markdownは56件でした。S1〜S3監査resultを含む現時点では、
+過去の棚卸しではtracked Markdownは56件でした。S1〜S4-A監査resultを含む現時点では、
 最終的なtracked Markdownは60件です。
 `artifacts/`以下に存在するignored summary 7件は正式artifact／残留物として変更せず、
 棚卸し数・到達性link graphから除外しました。

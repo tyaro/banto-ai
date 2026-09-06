@@ -43,7 +43,7 @@ manifest/smoke、synthetic data、benchmark、repository safetyは全て成功�
 
 ## 境界と未完了事項
 
-- Windows exact runtime基本pinは一致する。ただし現checkoutの`.github/workflows/ci.yml`はworking treeがCRLF、Git blobがLFで、raw bytesが一致しない。collectorはこれを正しくfail-closedした。byte-identical管理checkoutでS4前に再確認する必要がある。
+- Windows exact runtime基本pinは一致する。ただし現checkoutの`.github/workflows/ci.yml`はworking treeがCRLF、Git blobがLFで、raw bytesが一致しない。collectorはこれを正しくfail-closedした。byte-identical管理checkoutでS4-Bで再確認する必要がある。
 - artifact棚卸しは617 entries / 461 files / 36,352,494 bytesで、before/after差は0だった。想定外residueはない。
 - formal v0.3の5 rootは前後とも未作成である。
 - 科学5 config、9 schema、historical 88、D2 current-only 31は保全した。
