@@ -63,7 +63,8 @@ py -3.14 tools/evaluator/analyze_event_slices.py `
 S1初回監査（`0368769acf12a0279c84f30c6435e853208386e9`）はP2=6／P3=1件でした。
 修正commit `d6ca0f9ee85172caae3b658bdb105287f8e43141`への
 [独立再監査](../../docs/results/anomaly-multiseed-v0.3-s1-audit-2026-09-06.md)はP0〜P3 0件で合格し、
-S1は完了しました。candidate stackはmain統合前で、S2以降は未着手です。
+S1は完了し、candidate stackはmain統合済みです。GitHub Actions [Phase 1 CI run 34013082980](https://github.com/tyaro/banto-ai/actions/runs/34013082980)はsuccess（Python 3.12: 7m56s、Python 3.14: 7m25s）でした。S2以降は未着手です。
+[両jobのCI範囲](https://github.com/tyaro/banto-ai/actions/runs/34013082980)はcompile、unittest、manifests＋naive smoke、synthetic generation＋quality、benchmark、safetyです。これはLinux正式受入、v0.3 formal run、性能評価、promotion、Windows native／DACL／AccessCheck受入を意味しません。
 [公開module](../../src/banto_ai/anomaly_v03.py)は標準ライブラリのみで、渡された値またはbytesを検査します。
 package rootへの副作用のある自動importは追加せず、`from banto_ai import anomaly_v03`で利用します。
 

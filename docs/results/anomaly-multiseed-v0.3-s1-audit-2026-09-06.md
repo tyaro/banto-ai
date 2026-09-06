@@ -141,3 +141,13 @@ S1完了後も次は未実施である。
 S1は研究契約を実装・固定したsavepointである。製品利用、PLC／control write、Banto Hub write、
 顧客データ利用、model採用、性能保証を許可しない。現在状態の入口は[文書索引](../README.md)、
 [研究roadmap](../research-roadmap.md)、再現手順は[evaluator README](../../tools/evaluator/README.md)を参照する。
+
+## 統合後のliving status
+
+本監査resultのS1実装・docs stackは、`3e7474ee7e9e25dc462e2e8daa3c4e7d6d77b09f`でmainへ統合済みである。
+GitHub Actions [Phase 1 CI run 34013082980](https://github.com/tyaro/banto-ai/actions/runs/34013082980)はsuccessで、
+Python 3.12 jobは7m56s、Python 3.14 jobは7m25sだった。両jobでcompile、unittest、manifests＋naive smoke、
+synthetic generation＋quality、benchmark、safetyがpassした。
+
+これはS1のCI／統合確認であり、v0.3 formal run、性能評価、promotion、Linux正式受入、Windows native／DACL／AccessCheck
+受入を実施したことを意味しない。S2以降は未着手である。凍結計画と過去formal result本文の歴史的状態は遡及修正していない。

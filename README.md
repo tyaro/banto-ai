@@ -33,7 +33,7 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 2026-09-06に同じ正式artifactのfailure diagnosticsを完了しました。engineering整合性はpass、performanceは未評価で、canonical detectionを保持した因果的supportは0/240でした。結果と制約は[`docs/results/anomaly-multiseed-v02-failure-diagnostics-2026-09-06.md`](docs/results/anomaly-multiseed-v02-failure-diagnostics-2026-09-06.md)に記録しています。これはexploratoryな異常検知診断であり、TimesFM3の性能結果やmodel／thresholdの採用判断ではありません。
 
-次のstdlib detector比較は[`v0.3実装前preregistration`](docs/anomaly-multiseed-evaluation-plan-v0.3.md)のS0監査に合格し、計画を凍結しました。S1初回監査（`0368769acf12a0279c84f30c6435e853208386e9`）のP2=6／P3=1件は修正commit `d6ca0f9ee85172caae3b658bdb105287f8e43141`で解消し、[独立再監査](docs/results/anomaly-multiseed-v0.3-s1-audit-2026-09-06.md)はP0〜P3 0件で合格しました。S1は完了しましたがcandidate stackはmain統合前で、S2以降、run、性能評価は未着手です。利用境界は[評価toolの説明](tools/evaluator/README.md)を参照してください。
+次のstdlib detector比較は[`v0.3実装前preregistration`](docs/anomaly-multiseed-evaluation-plan-v0.3.md)のS0監査に合格し、計画を凍結しました。S1初回監査（`0368769acf12a0279c84f30c6435e853208386e9`）のP2=6／P3=1件は修正commit `d6ca0f9ee85172caae3b658bdb105287f8e43141`で解消し、[独立再監査](docs/results/anomaly-multiseed-v0.3-s1-audit-2026-09-06.md)はP0〜P3 0件で合格しました。S1は完了し、candidate stackはmain統合済みです。GitHub Actions [Phase 1 CI run 34013082980](https://github.com/tyaro/banto-ai/actions/runs/34013082980)もsuccessでした。S2以降、formal run、性能評価、promotionは未着手です。これはLinux正式受入やWindows native／DACL／AccessCheck受入を意味しません。利用境界は[評価toolの説明](tools/evaluator/README.md)を参照してください。
 
 ## ライセンス
 

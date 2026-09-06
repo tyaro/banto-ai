@@ -92,8 +92,8 @@ S0監査記録commit `0b40e7295cfa20f32889005ceca2d29d29ca340c`の上で、5 con
 pure semantic validator、全seed・bootstrap goldenの固定とadversarial testsをS1として追加しました。
 S1初回監査（`0368769acf12a0279c84f30c6435e853208386e9`）はP2=6／P3=1件でした。
 修正commit `d6ca0f9ee85172caae3b658bdb105287f8e43141`への独立再監査はP0〜P3 0件で合格し、
-S1は完了しました。candidate stackはmain統合前です。S2以降、scorer／runner、Linux／Windows native acceptance、formal run、
-性能評価、promotionは未着手です。S0の監査根拠は
+S1は完了し、candidate stackはmain統合済みです。GitHub Actions [Phase 1 CI run 34013082980](https://github.com/tyaro/banto-ai/actions/runs/34013082980)はsuccess（Python 3.12: 7m56s、Python 3.14: 7m25s）でした。S2以降、scorer／runner、formal run、
+性能評価、promotionは未着手です。これはLinux正式受入やWindows native／DACL／AccessCheck受入を意味しません。S0の監査根拠は
 [`anomaly-multiseed-v0.3-plan-audit-2026-09-06.md`](results/anomaly-multiseed-v0.3-plan-audit-2026-09-06.md)、
 S1の初回指摘・修正・監査境界は
 [`anomaly-multiseed-v0.3-s1-audit-2026-09-06.md`](results/anomaly-multiseed-v0.3-s1-audit-2026-09-06.md)、
