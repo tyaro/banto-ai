@@ -11,7 +11,7 @@
 S0監査記録commit `0b40e7295cfa20f32889005ceca2d29d29ca340c`の上でS1を実装し、
 S1初回監査（`0368769acf12a0279c84f30c6435e853208386e9`）はP2=6／P3=1件でした。
 修正commit `d6ca0f9ee85172caae3b658bdb105287f8e43141`への独立再監査はP0〜P3 0件で合格し、
-S1は完了し、candidate stackはmain統合済みです。S2以降は未着手です。
+S1は完了し、candidate stackはmain統合済みです。S2も独立監査P0〜P3 0件で完了し、次はS3 deterministic runnerです。
 
 ## 正本の読み方
 
@@ -48,7 +48,7 @@ S1の初回指摘・修正・境界は[v0.3 S1監査結果](results/anomaly-mult
 | Phase 0 研究基盤と契約 | complete | package、manifest、共通runtime、license／安全境界を実装済み |
 | Phase 1 合成データとbaseline | complete | 再現可能generator、quality、rolling-originと統計baselineを実装済み |
 | Phase 2 Forecast model benchmark | active / incomplete | TimesFM 3、Chronos-2、Toto 2.0 4Mの初期・matrix・MetroPT-3等は評価済み。条件拡大、resource分離、一般化は未完了 |
-| Phase 3 異常とドリフト | active | anomaly v0.1契約、v0.2 formal replay/analysis、failure diagnosticsまで完了。v0.3 S0 frozen、S1独立監査合格・完了、candidate stack main統合済み、S2以降未着手 |
+| Phase 3 異常とドリフト | active | anomaly v0.1契約、v0.2 formal replay/analysis、failure diagnostics、v0.3 S0/S1、S2 pure scoring監査まで完了。次はS3 deterministic runner |
 | Phase 4 自前モデル研究 | not started | 専用の実装・ablationは未着手 |
 | Phase 5 Commissioning auto-tuning | not started | 設計文書のみ。profile昇格やshadow実行は未着手 |
 | Phase 6 Continual adaptation | not started | frozen model＋profile適応の実験は未着手 |
@@ -70,8 +70,10 @@ Phase 3の内訳は次のとおりです。
 - v0.3 S0初稿commit `41decf9...`へのP2 3件: 監査対象`4b02201...`で解消し、
   独立監査P0〜P3 0件でS0 frozen・adopted。
 - v0.3 S1初回commit `0368769...`へのP2 6件・P3 1件: 修正対象`d6ca0f9...`で解消し、
-  独立再監査P0〜P3 0件でS1完了。candidate stackはmain統合済み、S2以降は未着手。
-  Linux／Windows native acceptance、S2〜S7、formal run／artifactは未実施
+  独立再監査P0〜P3 0件でS1完了。candidate stackはmain統合済み。
+- v0.3 S2候補commit `5bc3129...`: pure scoring、episode、causal matching、固定分母を実装し、
+  独立監査P0〜P3 0件、S2 67/67 pass、CI run `34017895359` success。次はS3 deterministic runner。
+  Q1〜Q5の実materializer、S3〜S7、formal run／artifact、性能／promotion、native acceptanceは未実施
 
 ## 文書カテゴリ
 
@@ -99,7 +101,7 @@ status語は`current`（living正本）、`frozen`（事前固定）、`historic
 | [multi-seed plan v0.1](anomaly-multiseed-evaluation-plan.md) | frozen / historical / rejected lineage | 最初の正式計画。対応artifactは後のintegrity監査でREJECT。計画本文は時点記録として保持 |
 | [multi-seed plan v0.2](anomaly-multiseed-evaluation-plan-v0.2.md) | frozen / executed | integrity修正後の新ID・rootを固定し、formal replay/analysisを実行済み |
 | [failure diagnostics plan v0.1](anomaly-multiseed-failure-diagnostics-plan-v0.1.md) | frozen / executed / exploratory | v0.2 artifactを変更しないpost-hoc診断。D2-Bと独立監査まで完了 |
-| [multi-seed plan v0.3](anomaly-multiseed-evaluation-plan-v0.3.md) | frozen / adopted | 科学仕様は監査対象`4b02201...`を保持。S1独立監査合格・完了、candidate stack main統合済み、S2〜S7未実施 |
+| [multi-seed plan v0.3](anomaly-multiseed-evaluation-plan-v0.3.md) | frozen / adopted | 科学仕様は監査対象`4b02201...`を保持。S1/S2独立監査合格、次はS3。S4以降とformal runは未実施 |
 
 v0.1の計画、artifact、監査は削除しません。v0.1監査がartifactを`REJECT`とし、
 修正後の正式証拠を別identityのv0.2計画・resultへ分離しました。v0.2 failure diagnosticsは
@@ -121,10 +123,10 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 
 ## 結果文書
 
-`docs/results`には実測で19件あります。すべて結果条件と制約を伴う索引であり、
+`docs/results`には実測・監査で20件あります。すべて結果条件と制約を伴う索引であり、
 顧客設備一般の性能保証ではありません。
 
-### Anomaly（5件）
+### Anomaly（6件）
 
 | 文書 | status | 要点 |
 | --- | --- | --- |
@@ -132,7 +134,8 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 | [v0.2 formal evaluation](results/anomaly-multiseed-v02-evaluation-2026-09-05.md) | formal-result / no-promotion | replay/analysisのengineering pass、performance fail、全5 gates fail |
 | [v0.2 failure diagnostics](results/anomaly-multiseed-v02-failure-diagnostics-2026-09-06.md) | formal-result / exploratory | D2-B公開・独立監査完了、causal support 0/240、performance未評価、promotion不可 |
 | [v0.3 plan audit](results/anomaly-multiseed-v0.3-plan-audit-2026-09-06.md) | audit-result / plan-only | P0〜P3 0件、5 readiness yes。S0 frozen・adopted、S1〜S7とformal runは未実施 |
-| [v0.3 S1 audit](results/anomaly-multiseed-v0.3-s1-audit-2026-09-06.md) | audit-result / contract-only | 初回P2=6／P3=1を修正し再監査P0〜P3 0件。S1完了、S2・run・性能は未実施 |
+| [v0.3 S1 audit](results/anomaly-multiseed-v0.3-s1-audit-2026-09-06.md) | audit-result / contract-only | 初回P2=6／P3=1を修正し再監査P0〜P3 0件。S1完了 |
+| [v0.3 S2 audit](results/anomaly-multiseed-v0.3-s2-audit-2026-09-06.md) | audit-result / pure-scoring | P0〜P3 0件、S2 67/67、CI success。S3 runnerとformal runは未実施 |
 
 ### TimesFM 3（5件）
 

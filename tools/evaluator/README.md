@@ -170,11 +170,11 @@ FORMAL_RAW_PINS、artifact revision、D2 identity／出力root／ACLは変更せ
 それらは書き換えていません。実際のrevision compatibilityはworking bytesもbyte exactを要求するため、
 この作業copyをformal replay可能と宣言しません。test fixtureのGit LF照合と実機run受入は別です。
 
-### S2 pure scoring API（実装候補・独立監査前）
+### S2 pure scoring API（実装・独立監査合格）
 
 [scoring](../../src/banto_ai/anomaly_v03_scoring.py)、[固定数値計算](../../src/banto_ai/_anomaly_v03_numeric.py)、
 [episodes / matching / accounting](../../src/banto_ai/anomaly_v03_episodes.py)はstdlibのみで、file／network／environment I/Oなしです。
-S1のvalidatorと返却statusは変更せず、検証合格をrun実施・性能達成と扱いません。
+S1のvalidatorと返却statusは変更せず、S2監査はP0〜P3 0件。検証合格をrun実施・性能達成と扱いません。
 
 `fit_profiles(identity, raw, expected_sha256=...)`は保存済みJSONL bytesだけを入力し、独立した48 profilesを
 immutableな`ProfileSet`に保持します。`ledger_rows()`はS1 schemaに対応するコピーを返します。
@@ -207,7 +207,7 @@ paired materializationはS3の責務であり、本実装にはありません�
 固定の手作り値だけを使い、registered dev／smoke／holdoutデータを生成しません。
 実行例は`python -B -m unittest tests.test_anomaly_v03_scoring tests.test_anomaly_v03_episodes -v`です。
 今回のローカル対象はWindows CPython 3.14.0。Linux 3.12／3.14、Windows 3.12、native publisher受入は未実施です。
-S3 runner／publisher、S4以降のcampaign、正式artifact、TimesFM、Banto Hub／PLC writeは含みません。
+CI run `34017895359`はPython 3.12/3.14でsuccessしました。S3 runner／publisher、S4以降のcampaign、正式artifact、TimesFM、Banto Hub／PLC writeは含みません。S2監査結果は[`docs/results/anomaly-multiseed-v0.3-s2-audit-2026-09-06.md`](../../docs/results/anomaly-multiseed-v0.3-s2-audit-2026-09-06.md)です。
 
 ### v0.1 / v0.2の既存validator
 
