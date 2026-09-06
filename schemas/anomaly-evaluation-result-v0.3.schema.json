@@ -1,0 +1,1628 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banto-ai.local/schemas/anomaly-evaluation-result-v0.3.schema.json",
+  "title": "anomaly-evaluation-result-v0.3.schema.json",
+  "description": "v0.3 shape only; pure semantic validation is not run execution or performance acceptance.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.3"
+    },
+    "status": {
+      "$ref": "#/$defs/status"
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "science_revision": {
+          "type": "string",
+          "const": "4b02201f95e8ffa3a243be716872d95815a554bd"
+        },
+        "post_audit_revision": {
+          "type": "string",
+          "const": "0b40e7295cfa20f32889005ceca2d29d29ca340c"
+        },
+        "producer_revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "registry_raw_sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "inventory": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/payload"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "science_revision",
+        "post_audit_revision",
+        "producer_revision",
+        "registry_raw_sha256",
+        "inventory"
+      ],
+      "additionalProperties": false
+    },
+    "result_type": {
+      "type": "string",
+      "const": "event-aware-anomaly-v03"
+    },
+    "identity": {
+      "$ref": "#/$defs/identity"
+    },
+    "input_hashes": {
+      "$ref": "#/$defs/input_hashes"
+    },
+    "splits": {
+      "type": "object",
+      "properties": {
+        "warmup": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "const": 0
+              },
+              {
+                "type": "integer",
+                "const": 1800
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "fit": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "const": 1800
+              },
+              {
+                "type": "integer",
+                "const": 5400
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "calibration": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "const": 5400
+              },
+              {
+                "type": "integer",
+                "const": 7200
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "test": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "const": 7200
+              },
+              {
+                "type": "integer",
+                "const": 9000
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "required": [
+        "warmup",
+        "fit",
+        "calibration",
+        "test"
+      ],
+      "additionalProperties": false
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/event"
+      },
+      "minItems": 40,
+      "maxItems": 40
+    },
+    "profiles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/profile"
+      },
+      "minItems": 0,
+      "maxItems": 48
+    },
+    "scores": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/score"
+      },
+      "minItems": 0,
+      "maxItems": 14400
+    },
+    "source_episodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/source_episode"
+      },
+      "minItems": 0
+    },
+    "equipment_episodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/equipment_episode"
+      },
+      "minItems": 0
+    },
+    "incidents": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/incident"
+      },
+      "minItems": 20,
+      "maxItems": 20
+    },
+    "metrics": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/metrics"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "row_counts": {
+      "type": "object",
+      "properties": {
+        "events": {
+          "$ref": "#/$defs/integer"
+        },
+        "profiles": {
+          "$ref": "#/$defs/integer"
+        },
+        "scores": {
+          "$ref": "#/$defs/integer"
+        },
+        "source_episodes": {
+          "$ref": "#/$defs/integer"
+        },
+        "equipment_episodes": {
+          "$ref": "#/$defs/integer"
+        },
+        "incidents": {
+          "$ref": "#/$defs/integer"
+        }
+      },
+      "required": [
+        "events",
+        "profiles",
+        "scores",
+        "source_episodes",
+        "equipment_episodes",
+        "incidents"
+      ],
+      "additionalProperties": false
+    },
+    "slices": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/slice"
+      },
+      "minItems": 0
+    }
+  },
+  "required": [
+    "schema_version",
+    "status",
+    "provenance",
+    "result_type",
+    "identity",
+    "input_hashes",
+    "splits",
+    "events",
+    "profiles",
+    "scores",
+    "source_episodes",
+    "equipment_episodes",
+    "incidents",
+    "metrics",
+    "row_counts",
+    "slices"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "equipment_episode": {
+      "type": "object",
+      "properties": {
+        "episode_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "candidate_id": {
+          "type": "string",
+          "enum": [
+            "c0-diff-control",
+            "c1-phase-level",
+            "c2-phase-conditional"
+          ]
+        },
+        "equipment": {
+          "type": "string",
+          "enum": [
+            "motor-01",
+            "conveyor-01"
+          ]
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "stopped",
+            "startup",
+            "low_speed",
+            "nominal",
+            "high_load",
+            "cooldown"
+          ]
+        },
+        "recipe": {
+          "type": "string",
+          "enum": [
+            "stop",
+            "start",
+            "low",
+            "run",
+            "load",
+            "cooldown"
+          ]
+        },
+        "visit_start_sample": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "onset_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "source_episode_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "matched_event_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "context_tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "raw-event",
+              "grace",
+              "clean",
+              "quality",
+              "ignored",
+              "pre-event"
+            ]
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "episode_id",
+        "dataset_id",
+        "candidate_id",
+        "equipment",
+        "mode",
+        "recipe",
+        "visit_start_sample",
+        "onset_ms",
+        "end_ms",
+        "source_episode_ids",
+        "matched_event_id",
+        "context_tags"
+      ],
+      "additionalProperties": false
+    },
+    "event": {
+      "type": "object",
+      "properties": {
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "event_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "cycle": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9
+        },
+        "event_class": {
+          "type": "string",
+          "enum": [
+            "machine",
+            "sensor",
+            "data_quality",
+            "ignored"
+          ]
+        },
+        "equipment": {
+          "type": "string",
+          "enum": [
+            "motor-01",
+            "conveyor-01"
+          ]
+        },
+        "full_target": {
+          "type": "string",
+          "enum": [
+            "motor-01.motor_current",
+            "motor-01.motor_temperature",
+            "motor-01.conveyor_speed",
+            "motor-01.vibration_feature",
+            "conveyor-01.motor_current",
+            "conveyor-01.motor_temperature",
+            "conveyor-01.conveyor_speed",
+            "conveyor-01.vibration_feature",
+            "motor-01.load_proxy",
+            "conveyor-01.load_proxy"
+          ]
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "stopped",
+            "startup",
+            "low_speed",
+            "nominal",
+            "high_load",
+            "cooldown"
+          ]
+        },
+        "recipe": {
+          "type": "string",
+          "enum": [
+            "stop",
+            "start",
+            "low",
+            "run",
+            "load",
+            "cooldown"
+          ]
+        },
+        "event_type": {
+          "type": "string",
+          "enum": [
+            "jam_or_slip",
+            "spike",
+            "dropout",
+            "stuck_value"
+          ]
+        },
+        "start_sample": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_sample": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "window_end_sample": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "start_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "window_end_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "magnitude": {
+          "type": "number"
+        },
+        "enabled": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "dataset_id",
+        "event_id",
+        "cycle",
+        "event_class",
+        "equipment",
+        "full_target",
+        "mode",
+        "recipe",
+        "event_type",
+        "start_sample",
+        "end_sample",
+        "window_end_sample",
+        "start_ms",
+        "end_ms",
+        "window_end_ms",
+        "magnitude",
+        "enabled"
+      ],
+      "additionalProperties": false
+    },
+    "identity": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": [
+            "dev",
+            "smoke",
+            "holdout"
+          ]
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 1000000,
+          "maximum": 9223372036854775807
+        },
+        "layout": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 11
+        },
+        "stratum": {
+          "type": "string",
+          "enum": [
+            "core",
+            "quality-stress"
+          ]
+        },
+        "candidate_id": {
+          "type": "string",
+          "enum": [
+            "c0-diff-control",
+            "c1-phase-level",
+            "c2-phase-conditional"
+          ]
+        },
+        "pair_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "evaluation_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "role",
+        "seed",
+        "layout",
+        "stratum",
+        "candidate_id",
+        "pair_id",
+        "dataset_id",
+        "evaluation_id"
+      ],
+      "additionalProperties": false
+    },
+    "incident": {
+      "type": "object",
+      "properties": {
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "event_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_processed",
+            "processed",
+            "engineering_failure"
+          ]
+        },
+        "candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "candidate_episode_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+            "minLength": 1
+          },
+          "minItems": 0
+        },
+        "selected_candidate_episode_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "selected_source_episode_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "support_score_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+            "minLength": 1
+          },
+          "minItems": 0,
+          "maxItems": 2
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "not_processed",
+            "causal_detected",
+            "no_candidate_in_window",
+            "first_candidate_no_target_onset",
+            "first_candidate_noncausal_support"
+          ]
+        },
+        "matched_episode_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "causal_detected": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "delay_seconds": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "secondary_canonical_detected": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "dataset_id",
+        "event_id",
+        "status",
+        "candidate_count",
+        "candidate_episode_ids",
+        "selected_candidate_episode_id",
+        "selected_source_episode_id",
+        "support_score_ids",
+        "reason",
+        "matched_episode_id",
+        "causal_detected",
+        "delay_seconds",
+        "secondary_canonical_detected"
+      ],
+      "additionalProperties": false
+    },
+    "input_hashes": {
+      "type": "object",
+      "properties": {
+        "observations": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "events": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "quality_mask": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "split": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "origins": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "targets": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "observations",
+        "events",
+        "quality_mask",
+        "split",
+        "origins",
+        "targets"
+      ],
+      "additionalProperties": false
+    },
+    "integer": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "metric": {
+      "type": "object",
+      "properties": {
+        "numerator": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "denominator": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ci_status": {
+          "type": "string",
+          "enum": [
+            "not_evaluated",
+            "complete",
+            "inconclusive",
+            "not_applicable"
+          ]
+        },
+        "ci_lower": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ci_upper": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "null_replicates": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "numerator",
+        "denominator",
+        "value",
+        "ci_status",
+        "ci_lower",
+        "ci_upper",
+        "null_replicates"
+      ],
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "machine_recall": {
+          "$ref": "#/$defs/metric"
+        },
+        "sensor_recall": {
+          "$ref": "#/$defs/metric"
+        },
+        "precision": {
+          "$ref": "#/$defs/metric"
+        },
+        "clean_rate": {
+          "$ref": "#/$defs/metric"
+        },
+        "false_alert_burden": {
+          "$ref": "#/$defs/metric"
+        },
+        "availability": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "full_target": {
+                "type": "string",
+                "enum": [
+                  "motor-01.motor_current",
+                  "motor-01.motor_temperature",
+                  "motor-01.conveyor_speed",
+                  "motor-01.vibration_feature",
+                  "conveyor-01.motor_current",
+                  "conveyor-01.motor_temperature",
+                  "conveyor-01.conveyor_speed",
+                  "conveyor-01.vibration_feature"
+                ]
+              },
+              "metric": {
+                "$ref": "#/$defs/metric"
+              }
+            },
+            "required": [
+              "full_target",
+              "metric"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 8,
+          "maxItems": 8
+        },
+        "scheduled_clean_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "effective_clean_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "effective_clean_rate": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "machine_recall",
+        "sensor_recall",
+        "precision",
+        "clean_rate",
+        "false_alert_burden",
+        "availability",
+        "scheduled_clean_seconds",
+        "effective_clean_seconds",
+        "effective_clean_rate"
+      ],
+      "additionalProperties": false
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/relative_path"
+        },
+        "raw_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "canonical_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "row_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "path",
+        "raw_sha256",
+        "canonical_sha256",
+        "row_count"
+      ],
+      "additionalProperties": false
+    },
+    "profile": {
+      "type": "object",
+      "properties": {
+        "profile_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "identity": {
+          "$ref": "#/$defs/identity"
+        },
+        "profile_version": {
+          "const": "0.3",
+          "type": "string"
+        },
+        "equipment": {
+          "type": "string",
+          "enum": [
+            "motor-01",
+            "conveyor-01"
+          ]
+        },
+        "full_target": {
+          "type": "string",
+          "enum": [
+            "motor-01.motor_current",
+            "motor-01.motor_temperature",
+            "motor-01.conveyor_speed",
+            "motor-01.vibration_feature",
+            "conveyor-01.motor_current",
+            "conveyor-01.motor_temperature",
+            "conveyor-01.conveyor_speed",
+            "conveyor-01.vibration_feature"
+          ]
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "stopped",
+            "startup",
+            "low_speed",
+            "nominal",
+            "high_load",
+            "cooldown"
+          ]
+        },
+        "recipe": {
+          "type": "string",
+          "enum": [
+            "stop",
+            "start",
+            "low",
+            "run",
+            "load",
+            "cooldown"
+          ]
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_fitted",
+            "calibrated",
+            "inconclusive"
+          ]
+        },
+        "fit_samples": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 0
+        },
+        "calibration_samples": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 0,
+          "maxItems": 290
+        },
+        "planned_calibration_points": {
+          "type": "integer",
+          "const": 290
+        },
+        "minimum_calibration_points": {
+          "type": "integer",
+          "const": 250
+        },
+        "phase_medians": {
+          "anyOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "minItems": 30,
+              "maxItems": 30
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "center": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "scale": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "c2_state": {
+          "anyOf": [
+            {
+              "type": "object",
+              "properties": {
+                "centers": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 4,
+                  "maxItems": 4
+                },
+                "scales": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 4,
+                  "maxItems": 4
+                },
+                "mean": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "minItems": 4,
+                  "maxItems": 4
+                },
+                "covariance": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  "minItems": 4,
+                  "maxItems": 4
+                },
+                "precision": {
+                  "type": "array",
+                  "items": {
+                    "type": "array",
+                    "items": {
+                      "type": "number"
+                    },
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  "minItems": 4,
+                  "maxItems": 4
+                }
+              },
+              "required": [
+                "centers",
+                "scales",
+                "mean",
+                "covariance",
+                "precision"
+              ],
+              "additionalProperties": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "insufficient_points",
+                "zero_scale",
+                "nonfinite",
+                "cholesky_failure",
+                "not_fitted"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "profile_id",
+        "identity",
+        "profile_version",
+        "equipment",
+        "full_target",
+        "mode",
+        "recipe",
+        "status",
+        "fit_samples",
+        "calibration_samples",
+        "planned_calibration_points",
+        "minimum_calibration_points",
+        "phase_medians",
+        "center",
+        "scale",
+        "c2_state",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "relative_path": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_./-]*$",
+      "minLength": 1
+    },
+    "score": {
+      "type": "object",
+      "properties": {
+        "score_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "candidate_id": {
+          "type": "string",
+          "enum": [
+            "c0-diff-control",
+            "c1-phase-level",
+            "c2-phase-conditional"
+          ]
+        },
+        "sample": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "timestamp_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "phase": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 29
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "equipment": {
+          "type": "string",
+          "enum": [
+            "motor-01",
+            "conveyor-01"
+          ]
+        },
+        "full_target": {
+          "type": "string",
+          "enum": [
+            "motor-01.motor_current",
+            "motor-01.motor_temperature",
+            "motor-01.conveyor_speed",
+            "motor-01.vibration_feature",
+            "conveyor-01.motor_current",
+            "conveyor-01.motor_temperature",
+            "conveyor-01.conveyor_speed",
+            "conveyor-01.vibration_feature"
+          ]
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "stopped",
+            "startup",
+            "low_speed",
+            "nominal",
+            "high_load",
+            "cooldown"
+          ]
+        },
+        "recipe": {
+          "type": "string",
+          "enum": [
+            "stop",
+            "start",
+            "low",
+            "run",
+            "load",
+            "cooldown"
+          ]
+        },
+        "profile_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "full_target": {
+                "type": "string",
+                "enum": [
+                  "motor-01.motor_current",
+                  "motor-01.motor_temperature",
+                  "motor-01.conveyor_speed",
+                  "motor-01.vibration_feature",
+                  "conveyor-01.motor_current",
+                  "conveyor-01.motor_temperature",
+                  "conveyor-01.conveyor_speed",
+                  "conveyor-01.vibration_feature"
+                ]
+              },
+              "sample": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "timestamp_ms": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "quality": {
+                "type": "string",
+                "enum": [
+                  "ok",
+                  "missing",
+                  "stale",
+                  "invalid"
+                ]
+              },
+              "value": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "full_target",
+              "sample",
+              "timestamp_ms",
+              "quality",
+              "value"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 0,
+          "maxItems": 8
+        },
+        "residual": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "available": {
+          "type": "boolean"
+        },
+        "exclusion_reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "current_target_quality",
+                "current_nonfinite",
+                "no_previous_or_gap",
+                "previous_target_quality_or_nonfinite",
+                "mode_recipe_or_phase",
+                "peer_quality_or_nonfinite",
+                "profile_inconclusive",
+                "nonfinite_score"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "exclusion_tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "current_target_quality",
+              "current_nonfinite",
+              "no_previous_or_gap",
+              "previous_target_quality_or_nonfinite",
+              "mode_recipe_or_phase",
+              "peer_quality_or_nonfinite",
+              "profile_inconclusive",
+              "nonfinite_score"
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 8
+        },
+        "threshold_exceeded": {
+          "type": "boolean"
+        },
+        "streak": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "source_episode_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "score_id",
+        "dataset_id",
+        "candidate_id",
+        "sample",
+        "timestamp_ms",
+        "phase",
+        "equipment",
+        "full_target",
+        "mode",
+        "recipe",
+        "profile_id",
+        "dependencies",
+        "residual",
+        "score",
+        "available",
+        "exclusion_reason",
+        "exclusion_tags",
+        "threshold_exceeded",
+        "streak",
+        "source_episode_id"
+      ],
+      "additionalProperties": false
+    },
+    "slice": {
+      "type": "object",
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "enum": [
+            "c0-diff-control",
+            "c1-phase-level",
+            "c2-phase-conditional"
+          ]
+        },
+        "stratum": {
+          "type": "string",
+          "enum": [
+            "core",
+            "quality-stress",
+            "overall"
+          ]
+        },
+        "dimension": {
+          "type": "string",
+          "enum": [
+            "class",
+            "equipment",
+            "mode",
+            "class-equipment-mode",
+            "test-cycle",
+            "event-start-phase",
+            "phase",
+            "event-offset",
+            "context",
+            "full-target",
+            "signal-mode",
+            "quality-current",
+            "quality-previous",
+            "fault-quality-overlap",
+            "profile-status"
+          ]
+        },
+        "key": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "metric": {
+          "$ref": "#/$defs/metric"
+        },
+        "planned_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "actual_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "candidate_id",
+        "stratum",
+        "dimension",
+        "key",
+        "metric",
+        "planned_count",
+        "actual_count"
+      ],
+      "additionalProperties": false
+    },
+    "source_episode": {
+      "type": "object",
+      "properties": {
+        "episode_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "candidate_id": {
+          "type": "string",
+          "enum": [
+            "c0-diff-control",
+            "c1-phase-level",
+            "c2-phase-conditional"
+          ]
+        },
+        "equipment": {
+          "type": "string",
+          "enum": [
+            "motor-01",
+            "conveyor-01"
+          ]
+        },
+        "full_target": {
+          "type": "string",
+          "enum": [
+            "motor-01.motor_current",
+            "motor-01.motor_temperature",
+            "motor-01.conveyor_speed",
+            "motor-01.vibration_feature",
+            "conveyor-01.motor_current",
+            "conveyor-01.motor_temperature",
+            "conveyor-01.conveyor_speed",
+            "conveyor-01.vibration_feature"
+          ]
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "stopped",
+            "startup",
+            "low_speed",
+            "nominal",
+            "high_load",
+            "cooldown"
+          ]
+        },
+        "recipe": {
+          "type": "string",
+          "enum": [
+            "stop",
+            "start",
+            "low",
+            "run",
+            "load",
+            "cooldown"
+          ]
+        },
+        "visit_start_sample": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "profile_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "onset_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "end_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "support_score_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+            "minLength": 1
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "required": [
+        "episode_id",
+        "dataset_id",
+        "candidate_id",
+        "equipment",
+        "full_target",
+        "mode",
+        "recipe",
+        "visit_start_sample",
+        "profile_id",
+        "onset_ms",
+        "end_ms",
+        "support_score_ids"
+      ],
+      "additionalProperties": false
+    },
+    "status": {
+      "type": "object",
+      "properties": {
+        "run_status": {
+          "type": "string",
+          "enum": [
+            "not_run",
+            "in_progress",
+            "complete",
+            "failed"
+          ]
+        },
+        "engineering_status": {
+          "type": "string",
+          "enum": [
+            "not_evaluated",
+            "pass",
+            "fail",
+            "inconclusive"
+          ]
+        },
+        "performance_status": {
+          "type": "string",
+          "enum": [
+            "not_evaluated",
+            "pass",
+            "fail",
+            "inconclusive"
+          ]
+        }
+      },
+      "required": [
+        "run_status",
+        "engineering_status",
+        "performance_status"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banto-ai.local/schemas/anomaly-multiseed-audit-result-v0.3.schema.json",
+  "title": "anomaly-multiseed-audit-result-v0.3.schema.json",
+  "description": "v0.3 shape only; pure semantic validation is not run execution or performance acceptance.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.3"
+    },
+    "status": {
+      "$ref": "#/$defs/status"
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "science_revision": {
+          "type": "string",
+          "const": "4b02201f95e8ffa3a243be716872d95815a554bd"
+        },
+        "post_audit_revision": {
+          "type": "string",
+          "const": "0b40e7295cfa20f32889005ceca2d29d29ca340c"
+        },
+        "producer_revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "registry_raw_sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "inventory": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/payload"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "science_revision",
+        "post_audit_revision",
+        "producer_revision",
+        "registry_raw_sha256",
+        "inventory"
+      ],
+      "additionalProperties": false
+    },
+    "result_type": {
+      "type": "string",
+      "const": "anomaly-multiseed-audit-v03"
+    },
+    "consumer_revision": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "enum": [
+              "inventory",
+              "raw-observations",
+              "profiles",
+              "scores",
+              "support",
+              "matching",
+              "denominators",
+              "bootstrap",
+              "gates",
+              "selection",
+              "native-publication"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "not_evaluated",
+              "pass",
+              "fail",
+              "inconclusive"
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/payload"
+            },
+            "minItems": 0
+          }
+        },
+        "required": [
+          "name",
+          "status",
+          "evidence"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 11,
+      "maxItems": 11
+    },
+    "result_trusted": {
+      "type": "boolean"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "owner-can-change-acl",
+          "privileged-writer",
+          "no-power-loss-guarantee",
+          "synthetic-only"
+        ]
+      },
+      "minItems": 4,
+      "maxItems": 4
+    }
+  },
+  "required": [
+    "schema_version",
+    "status",
+    "provenance",
+    "result_type",
+    "consumer_revision",
+    "checks",
+    "result_trusted",
+    "limitations"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/relative_path"
+        },
+        "raw_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "canonical_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "row_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "path",
+        "raw_sha256",
+        "canonical_sha256",
+        "row_count"
+      ],
+      "additionalProperties": false
+    },
+    "relative_path": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_./-]*$",
+      "minLength": 1
+    },
+    "status": {
+      "type": "object",
+      "properties": {
+        "run_status": {
+          "type": "string",
+          "enum": [
+            "not_run",
+            "in_progress",
+            "complete",
+            "failed"
+          ]
+        },
+        "engineering_status": {
+          "type": "string",
+          "enum": [
+            "not_evaluated",
+            "pass",
+            "fail",
+            "inconclusive"
+          ]
+        },
+        "performance_status": {
+          "type": "string",
+          "enum": [
+            "not_evaluated",
+            "pass",
+            "fail",
+            "inconclusive"
+          ]
+        }
+      },
+      "required": [
+        "run_status",
+        "engineering_status",
+        "performance_status"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

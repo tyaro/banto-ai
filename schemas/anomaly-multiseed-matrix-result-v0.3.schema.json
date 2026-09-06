@@ -1,0 +1,444 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banto-ai.local/schemas/anomaly-multiseed-matrix-result-v0.3.schema.json",
+  "title": "anomaly-multiseed-matrix-result-v0.3.schema.json",
+  "description": "v0.3 shape only; pure semantic validation is not run execution or performance acceptance.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.3"
+    },
+    "status": {
+      "$ref": "#/$defs/status"
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "science_revision": {
+          "type": "string",
+          "const": "4b02201f95e8ffa3a243be716872d95815a554bd"
+        },
+        "post_audit_revision": {
+          "type": "string",
+          "const": "0b40e7295cfa20f32889005ceca2d29d29ca340c"
+        },
+        "producer_revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "registry_raw_sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "inventory": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/payload"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "science_revision",
+        "post_audit_revision",
+        "producer_revision",
+        "registry_raw_sha256",
+        "inventory"
+      ],
+      "additionalProperties": false
+    },
+    "result_type": {
+      "type": "string",
+      "const": "anomaly-multiseed-v03"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "dev",
+        "smoke",
+        "holdout"
+      ]
+    },
+    "planned_counts": {
+      "$ref": "#/$defs/counts"
+    },
+    "evaluations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/slot"
+      },
+      "minItems": 0
+    },
+    "coverage": {
+      "type": "object",
+      "properties": {
+        "success": {
+          "$ref": "#/$defs/integer"
+        },
+        "partial": {
+          "$ref": "#/$defs/integer"
+        },
+        "inconclusive": {
+          "$ref": "#/$defs/integer"
+        },
+        "failed": {
+          "$ref": "#/$defs/integer"
+        },
+        "not_started": {
+          "$ref": "#/$defs/integer"
+        }
+      },
+      "required": [
+        "success",
+        "partial",
+        "inconclusive",
+        "failed",
+        "not_started"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "status",
+    "provenance",
+    "result_type",
+    "role",
+    "planned_counts",
+    "evaluations",
+    "coverage"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "counts": {
+      "type": "object",
+      "properties": {
+        "seeds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "layouts": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "datasets": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "evaluations": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "observation_rows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "score_rows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "event_rows": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "enabled_events": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "positive_incidents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "profiles": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "clean_equipment_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "target_origins_per_stratum": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "seeds",
+        "layouts",
+        "datasets",
+        "evaluations",
+        "observation_rows",
+        "score_rows",
+        "event_rows",
+        "enabled_events",
+        "positive_incidents",
+        "profiles",
+        "clean_equipment_seconds",
+        "target_origins_per_stratum"
+      ],
+      "additionalProperties": false
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "identity": {
+      "type": "object",
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": [
+            "dev",
+            "smoke",
+            "holdout"
+          ]
+        },
+        "seed": {
+          "type": "integer",
+          "minimum": 1000000,
+          "maximum": 9223372036854775807
+        },
+        "layout": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 11
+        },
+        "stratum": {
+          "type": "string",
+          "enum": [
+            "core",
+            "quality-stress"
+          ]
+        },
+        "candidate_id": {
+          "type": "string",
+          "enum": [
+            "c0-diff-control",
+            "c1-phase-level",
+            "c2-phase-conditional"
+          ]
+        },
+        "pair_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "dataset_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "evaluation_id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "role",
+        "seed",
+        "layout",
+        "stratum",
+        "candidate_id",
+        "pair_id",
+        "dataset_id",
+        "evaluation_id"
+      ],
+      "additionalProperties": false
+    },
+    "input_hashes": {
+      "type": "object",
+      "properties": {
+        "observations": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "events": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "quality_mask": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "split": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "origins": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "targets": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "required": [
+        "observations",
+        "events",
+        "quality_mask",
+        "split",
+        "origins",
+        "targets"
+      ],
+      "additionalProperties": false
+    },
+    "integer": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/relative_path"
+        },
+        "raw_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "canonical_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "row_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "path",
+        "raw_sha256",
+        "canonical_sha256",
+        "row_count"
+      ],
+      "additionalProperties": false
+    },
+    "relative_path": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_./-]*$",
+      "minLength": 1
+    },
+    "slot": {
+      "type": "object",
+      "properties": {
+        "identity": {
+          "$ref": "#/$defs/identity"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "success",
+            "partial",
+            "inconclusive",
+            "failed",
+            "not_started"
+          ]
+        },
+        "failure_stage": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "validation",
+                "materialization",
+                "profile",
+                "scoring",
+                "ledger",
+                "publication",
+                "integrity",
+                "unsupported_runtime"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "safe_reason": {
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "contract_violation",
+                "input_changed",
+                "incomplete",
+                "profile_inconclusive",
+                "unsupported_runtime",
+                "exception"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "input_hashes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/input_hashes"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/payload"
+          },
+          "minItems": 0
+        }
+      },
+      "required": [
+        "identity",
+        "status",
+        "failure_stage",
+        "safe_reason",
+        "input_hashes",
+        "evidence"
+      ],
+      "additionalProperties": false
+    },
+    "status": {
+      "type": "object",
+      "properties": {
+        "run_status": {
+          "type": "string",
+          "enum": [
+            "not_run",
+            "in_progress",
+            "complete",
+            "failed"
+          ]
+        },
+        "engineering_status": {
+          "type": "string",
+          "enum": [
+            "not_evaluated",
+            "pass",
+            "fail",
+            "inconclusive"
+          ]
+        },
+        "performance_status": {
+          "type": "string",
+          "enum": [
+            "not_evaluated",
+            "pass",
+            "fail",
+            "inconclusive"
+          ]
+        }
+      },
+      "required": [
+        "run_status",
+        "engineering_status",
+        "performance_status"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

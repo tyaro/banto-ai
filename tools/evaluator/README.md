@@ -57,6 +57,66 @@ py -3.14 tools/evaluator/analyze_event_slices.py `
 
 ## event-aware anomaly multi-seed preregistration validator
 
+### v0.3 S1: config/schema/pure validator
+
+[v0.3凍結計画](../../docs/anomaly-multiseed-evaluation-plan-v0.3.md)のS0は監査合格済みです。
+現在のS1は実装候補・独立監査待ちで、S2以降は未着手です。
+[公開module](../../src/banto_ai/anomaly_v03.py)は標準ライブラリのみで、渡された値またはbytesを検査します。
+package rootへの副作用のある自動importは追加せず、`from banto_ai import anomaly_v03`で利用します。
+
+| 登録情報 | config | config schema |
+| --- | --- | --- |
+| 正常生成・overlay・split | [generator](../../examples/configs/synthetic-anomaly-v0.3.json) | [generator schema](../../schemas/synthetic-anomaly-config-v0.3.schema.json) |
+| 3候補・calibration・support | [candidates](../../examples/configs/anomaly-candidates-v0.3.json) | [candidates schema](../../schemas/anomaly-candidates-config-v0.3.schema.json) |
+| seed・件数・pairing | [matrix](../../examples/configs/anomaly-multiseed-v0.3.json) | [matrix schema](../../schemas/anomaly-multiseed-matrix-config-v0.3.schema.json) |
+| bootstrap・gate・選択 | [analysis](../../examples/configs/anomaly-multiseed-analysis-v0.3.json) | [analysis schema](../../schemas/anomaly-multiseed-analysis-config-v0.3.schema.json) |
+| provenance・相互hash | [freeze registry](../../examples/configs/anomaly-v03-freeze-registry.json) | [registry schema](../../schemas/anomaly-v03-freeze-registry.schema.json) |
+
+結果台帳は[evaluator](../../schemas/anomaly-evaluation-result-v0.3.schema.json)、
+[matrix](../../schemas/anomaly-multiseed-matrix-result-v0.3.schema.json)、
+[analysis](../../schemas/anomaly-multiseed-analysis-result-v0.3.schema.json)、
+[audit](../../schemas/anomaly-multiseed-audit-result-v0.3.schema.json)の4 schemaへ分けています。
+各objectは再帰的にclosedです。候補IDは計画の`c0-diff-control`／`c1-phase-level`／
+`c2-phase-conditional`を使用します。`overall`は集計tableにのみあり、dataset stratumは2値です。
+
+`validate_bundle(snapshots, science_plan_raw=..., status_plan_raw=...)`へ5 config＋9 schemaの
+path→raw bytesの完全なmappingを渡します。科学仕様snapshotはcommit
+`4b02201f95e8ffa3a243be716872d95815a554bd`、監査後snapshotは
+`0b40e7295cfa20f32889005ceca2d29d29ca340c`から取得したplan bytesです。
+registry内の13 pinを照合する前に、信頼済みS1 checkoutのmoduleに置いた外部raw/canonical hashで
+registry自体を検証します。registryは自分自身をpinしません。次savepointの呼出し側が、レビュー済みS1の
+full commitとmoduleの`REGISTRY_RAW_SHA256`を外部provenanceとしてpinし、trusted sourceを使ってください。
+未検証registryから読んだhashをそのまま信頼根拠にする使い方は禁止です。
+hashテストは、浅いCI checkoutでも過去commitに依存せず実行できるよう、検証用の圧縮plan snapshotを
+testsのfixtureに保存しています。復元したbytesは上記2 revisionのplan raw hashと照合します。
+
+`validate_decoded_configs`はI/Oなしで登録値とcross-config整合性を検査します。
+`evaluation_inventory`／`event_inventory`は設計台帳だけを返し、観測値を生成しません。
+`validate_result_contract`はshape、ID、件数、時刻、split、claimed support／参照、pairing、statusを検査します。
+返値は常に`run_status=not_run`、`engineering_status=not_evaluated`、
+`performance_status=not_evaluated`、`result_trusted=false`で、入力のrun状態は`reported_run_status`へ分離します。
+数値profile／score、episodeの完全列挙、matching候補列の完全性、CI／gateの再計算はS2〜S6の責務です。
+M1〜M9／Q1〜Q5は今回ID・shape・enumだけを登録し、scorer挙動は未実装です。
+
+seed registryはdev 8／smoke 2／holdout 40、bootstrapは40 clusters×50,000 replicatesです。
+`bootstrap_indices()`は全2,000,000 accepted indicesだけを純粋計算し、datasetや性能指標を作りません。
+1 byte連結SHA-256は`e375bf3feacb2f04bf5e1d40b141c1cfc5f69fa5437ea2704e323fd7523b22e5`。
+replicate 0／1／24,999／49,999の40 index goldenをanalysis configとregistryに保存しています。
+
+pathの検査は字句上のrelative pathだけです。symlink／junction／全reparse pointは禁止し、
+将来のI/O境界で全祖先の実体、root包含、OS/runtime、nonoverwriteを確認する必要があります。
+pure validatorはfilesystem/network/environmentに触れず、これらの実機確認を代行したとは報告しません。
+新5 output rootsの作成、ACL、materializer／runner実行、dev／smoke／formal campaignはS1にありません。
+
+```text
+python -B -m unittest tests.test_anomaly_v03 -v
+```
+
+このS1 savepointのローカル検査対象はWindowsのCPython 3.14.0です。Python 3.12はローカルに
+存在せず未実行であり、Linux／Windows両minorの正式な受入完了としては扱いません。
+
+### v0.1 / v0.2の既存validator
+
 Savepoint Aでは、実験前に固定した10 seed × 12 event-layoutのmatrix configだけを、matrix schema／base generator config／base generator schemaのcanonical SHA-256 pin、mode境界、expanded accounting window、event class partition、slot balance、detector／bootstrap parameter、安全なoutput pathについて検証します。summaryにはcanonicalization identifier、canonical／raw digestの意味、4つの入力schema/configのprovenance、`run_status=not_run`、`performance_status=not_evaluated`を残します。validatorはfilesystemへ書き込まず、dataset、result、bootstrap集計、性能達成を生成・主張しません。
 
 ```text

@@ -1,0 +1,1129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banto-ai.local/schemas/anomaly-multiseed-analysis-result-v0.3.schema.json",
+  "title": "anomaly-multiseed-analysis-result-v0.3.schema.json",
+  "description": "v0.3 shape only; pure semantic validation is not run execution or performance acceptance.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.3"
+    },
+    "status": {
+      "$ref": "#/$defs/status"
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "science_revision": {
+          "type": "string",
+          "const": "4b02201f95e8ffa3a243be716872d95815a554bd"
+        },
+        "post_audit_revision": {
+          "type": "string",
+          "const": "0b40e7295cfa20f32889005ceca2d29d29ca340c"
+        },
+        "producer_revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "registry_raw_sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "inventory": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/payload"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "science_revision",
+        "post_audit_revision",
+        "producer_revision",
+        "registry_raw_sha256",
+        "inventory"
+      ],
+      "additionalProperties": false
+    },
+    "result_type": {
+      "type": "string",
+      "const": "anomaly-multiseed-analysis-v03"
+    },
+    "bootstrap": {
+      "type": "object",
+      "properties": {
+        "algorithm_id": {
+          "type": "string",
+          "const": "sha256-counter-rejection-v1"
+        },
+        "seed": {
+          "type": "integer",
+          "const": 2026090603
+        },
+        "clusters": {
+          "type": "integer",
+          "const": 40
+        },
+        "replicates": {
+          "type": "integer",
+          "const": 50000
+        },
+        "accepted_indices": {
+          "type": "integer",
+          "const": 2000000
+        },
+        "indices_raw_sha256": {
+          "type": "string",
+          "const": "e375bf3feacb2f04bf5e1d40b141c1cfc5f69fa5437ea2704e323fd7523b22e5"
+        },
+        "golden_draws": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "replicate": {
+                    "type": "integer",
+                    "const": 0
+                  },
+                  "indices": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 28
+                        },
+                        {
+                          "type": "integer",
+                          "const": 5
+                        },
+                        {
+                          "type": "integer",
+                          "const": 25
+                        },
+                        {
+                          "type": "integer",
+                          "const": 0
+                        },
+                        {
+                          "type": "integer",
+                          "const": 34
+                        },
+                        {
+                          "type": "integer",
+                          "const": 30
+                        },
+                        {
+                          "type": "integer",
+                          "const": 1
+                        },
+                        {
+                          "type": "integer",
+                          "const": 38
+                        },
+                        {
+                          "type": "integer",
+                          "const": 29
+                        },
+                        {
+                          "type": "integer",
+                          "const": 36
+                        },
+                        {
+                          "type": "integer",
+                          "const": 18
+                        },
+                        {
+                          "type": "integer",
+                          "const": 16
+                        },
+                        {
+                          "type": "integer",
+                          "const": 4
+                        },
+                        {
+                          "type": "integer",
+                          "const": 13
+                        },
+                        {
+                          "type": "integer",
+                          "const": 10
+                        },
+                        {
+                          "type": "integer",
+                          "const": 12
+                        },
+                        {
+                          "type": "integer",
+                          "const": 21
+                        },
+                        {
+                          "type": "integer",
+                          "const": 20
+                        },
+                        {
+                          "type": "integer",
+                          "const": 31
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7
+                        },
+                        {
+                          "type": "integer",
+                          "const": 23
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6
+                        },
+                        {
+                          "type": "integer",
+                          "const": 14
+                        },
+                        {
+                          "type": "integer",
+                          "const": 35
+                        },
+                        {
+                          "type": "integer",
+                          "const": 9
+                        }
+                      ]
+                    },
+                    "minItems": 40,
+                    "maxItems": 40
+                  }
+                },
+                "required": [
+                  "replicate",
+                  "indices"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "replicate": {
+                    "type": "integer",
+                    "const": 1
+                  },
+                  "indices": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 26
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3
+                        },
+                        {
+                          "type": "integer",
+                          "const": 36
+                        },
+                        {
+                          "type": "integer",
+                          "const": 29
+                        },
+                        {
+                          "type": "integer",
+                          "const": 12
+                        },
+                        {
+                          "type": "integer",
+                          "const": 21
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7
+                        },
+                        {
+                          "type": "integer",
+                          "const": 37
+                        },
+                        {
+                          "type": "integer",
+                          "const": 11
+                        },
+                        {
+                          "type": "integer",
+                          "const": 8
+                        },
+                        {
+                          "type": "integer",
+                          "const": 30
+                        },
+                        {
+                          "type": "integer",
+                          "const": 31
+                        },
+                        {
+                          "type": "integer",
+                          "const": 23
+                        },
+                        {
+                          "type": "integer",
+                          "const": 20
+                        },
+                        {
+                          "type": "integer",
+                          "const": 28
+                        },
+                        {
+                          "type": "integer",
+                          "const": 33
+                        },
+                        {
+                          "type": "integer",
+                          "const": 9
+                        },
+                        {
+                          "type": "integer",
+                          "const": 27
+                        },
+                        {
+                          "type": "integer",
+                          "const": 24
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6
+                        },
+                        {
+                          "type": "integer",
+                          "const": 39
+                        },
+                        {
+                          "type": "integer",
+                          "const": 10
+                        },
+                        {
+                          "type": "integer",
+                          "const": 15
+                        },
+                        {
+                          "type": "integer",
+                          "const": 19
+                        },
+                        {
+                          "type": "integer",
+                          "const": 0
+                        },
+                        {
+                          "type": "integer",
+                          "const": 38
+                        },
+                        {
+                          "type": "integer",
+                          "const": 5
+                        },
+                        {
+                          "type": "integer",
+                          "const": 1
+                        },
+                        {
+                          "type": "integer",
+                          "const": 2
+                        }
+                      ]
+                    },
+                    "minItems": 40,
+                    "maxItems": 40
+                  }
+                },
+                "required": [
+                  "replicate",
+                  "indices"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "replicate": {
+                    "type": "integer",
+                    "const": 24999
+                  },
+                  "indices": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 34
+                        },
+                        {
+                          "type": "integer",
+                          "const": 16
+                        },
+                        {
+                          "type": "integer",
+                          "const": 4
+                        },
+                        {
+                          "type": "integer",
+                          "const": 17
+                        },
+                        {
+                          "type": "integer",
+                          "const": 28
+                        },
+                        {
+                          "type": "integer",
+                          "const": 18
+                        },
+                        {
+                          "type": "integer",
+                          "const": 5
+                        },
+                        {
+                          "type": "integer",
+                          "const": 11
+                        },
+                        {
+                          "type": "integer",
+                          "const": 32
+                        },
+                        {
+                          "type": "integer",
+                          "const": 0
+                        },
+                        {
+                          "type": "integer",
+                          "const": 1
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7
+                        },
+                        {
+                          "type": "integer",
+                          "const": 25
+                        },
+                        {
+                          "type": "integer",
+                          "const": 12
+                        },
+                        {
+                          "type": "integer",
+                          "const": 8
+                        },
+                        {
+                          "type": "integer",
+                          "const": 37
+                        },
+                        {
+                          "type": "integer",
+                          "const": 33
+                        },
+                        {
+                          "type": "integer",
+                          "const": 24
+                        },
+                        {
+                          "type": "integer",
+                          "const": 9
+                        },
+                        {
+                          "type": "integer",
+                          "const": 22
+                        },
+                        {
+                          "type": "integer",
+                          "const": 15
+                        },
+                        {
+                          "type": "integer",
+                          "const": 27
+                        },
+                        {
+                          "type": "integer",
+                          "const": 13
+                        },
+                        {
+                          "type": "integer",
+                          "const": 2
+                        },
+                        {
+                          "type": "integer",
+                          "const": 30
+                        },
+                        {
+                          "type": "integer",
+                          "const": 36
+                        },
+                        {
+                          "type": "integer",
+                          "const": 23
+                        }
+                      ]
+                    },
+                    "minItems": 40,
+                    "maxItems": 40
+                  }
+                },
+                "required": [
+                  "replicate",
+                  "indices"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "replicate": {
+                    "type": "integer",
+                    "const": 49999
+                  },
+                  "indices": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 29
+                        },
+                        {
+                          "type": "integer",
+                          "const": 24
+                        },
+                        {
+                          "type": "integer",
+                          "const": 39
+                        },
+                        {
+                          "type": "integer",
+                          "const": 17
+                        },
+                        {
+                          "type": "integer",
+                          "const": 23
+                        },
+                        {
+                          "type": "integer",
+                          "const": 20
+                        },
+                        {
+                          "type": "integer",
+                          "const": 38
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7
+                        },
+                        {
+                          "type": "integer",
+                          "const": 13
+                        },
+                        {
+                          "type": "integer",
+                          "const": 11
+                        },
+                        {
+                          "type": "integer",
+                          "const": 10
+                        },
+                        {
+                          "type": "integer",
+                          "const": 26
+                        },
+                        {
+                          "type": "integer",
+                          "const": 4
+                        },
+                        {
+                          "type": "integer",
+                          "const": 30
+                        },
+                        {
+                          "type": "integer",
+                          "const": 34
+                        },
+                        {
+                          "type": "integer",
+                          "const": 9
+                        },
+                        {
+                          "type": "integer",
+                          "const": 19
+                        },
+                        {
+                          "type": "integer",
+                          "const": 31
+                        },
+                        {
+                          "type": "integer",
+                          "const": 21
+                        },
+                        {
+                          "type": "integer",
+                          "const": 37
+                        },
+                        {
+                          "type": "integer",
+                          "const": 16
+                        },
+                        {
+                          "type": "integer",
+                          "const": 0
+                        },
+                        {
+                          "type": "integer",
+                          "const": 1
+                        },
+                        {
+                          "type": "integer",
+                          "const": 35
+                        }
+                      ]
+                    },
+                    "minItems": 40,
+                    "maxItems": 40
+                  }
+                },
+                "required": [
+                  "replicate",
+                  "indices"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "sampling": {
+          "type": "string",
+          "const": "paired-seed-clusters-with-replacement"
+        },
+        "aggregation": {
+          "type": "string",
+          "const": "ratio-of-sums"
+        },
+        "interval": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "number",
+                "const": 0.025
+              },
+              {
+                "type": "number",
+                "const": 0.975
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "quantile": {
+          "type": "string",
+          "const": "type-7"
+        },
+        "zero_denominator": {
+          "type": "string",
+          "const": "inconclusive-no-drop-no-redraw"
+        }
+      },
+      "required": [
+        "algorithm_id",
+        "seed",
+        "clusters",
+        "replicates",
+        "accepted_indices",
+        "indices_raw_sha256",
+        "golden_draws",
+        "sampling",
+        "aggregation",
+        "interval",
+        "quantile",
+        "zero_denominator"
+      ],
+      "additionalProperties": false
+    },
+    "candidate_tables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "candidate_id": {
+            "type": "string",
+            "enum": [
+              "c0-diff-control",
+              "c1-phase-level",
+              "c2-phase-conditional"
+            ]
+          },
+          "stratum": {
+            "type": "string",
+            "enum": [
+              "core",
+              "quality-stress",
+              "overall"
+            ]
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/metrics"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "gates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "enum": [
+                    "machine_recall",
+                    "sensor_recall",
+                    "precision",
+                    "clean_rate",
+                    "false_alert_burden",
+                    "availability"
+                  ]
+                },
+                "comparison": {
+                  "type": "string",
+                  "enum": [
+                    "absolute",
+                    "paired-control"
+                  ]
+                },
+                "full_target": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "enum": [
+                        "motor-01.motor_current",
+                        "motor-01.motor_temperature",
+                        "motor-01.conveyor_speed",
+                        "motor-01.vibration_feature",
+                        "conveyor-01.motor_current",
+                        "conveyor-01.motor_temperature",
+                        "conveyor-01.conveyor_speed",
+                        "conveyor-01.vibration_feature"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "point": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "lower": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "upper": {
+                  "anyOf": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "not_evaluated",
+                    "pass",
+                    "fail",
+                    "inconclusive",
+                    "not_applicable"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "comparison",
+                "full_target",
+                "point",
+                "lower",
+                "upper",
+                "status"
+              ],
+              "additionalProperties": false
+            },
+            "minItems": 0
+          },
+          "qualified": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "stratum",
+          "metrics",
+          "gates",
+          "qualified"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 9,
+      "maxItems": 9
+    },
+    "slices": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/slice"
+      },
+      "minItems": 0
+    },
+    "selected_candidate": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "c1-phase-level",
+            "c2-phase-conditional"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "decision": {
+      "type": "string",
+      "enum": [
+        "not_evaluated",
+        "qualified",
+        "no_promotion",
+        "inconclusive"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "status",
+    "provenance",
+    "result_type",
+    "bootstrap",
+    "candidate_tables",
+    "slices",
+    "selected_candidate",
+    "decision"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "metric": {
+      "type": "object",
+      "properties": {
+        "numerator": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "denominator": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ci_status": {
+          "type": "string",
+          "enum": [
+            "not_evaluated",
+            "complete",
+            "inconclusive",
+            "not_applicable"
+          ]
+        },
+        "ci_lower": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "ci_upper": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "null_replicates": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "numerator",
+        "denominator",
+        "value",
+        "ci_status",
+        "ci_lower",
+        "ci_upper",
+        "null_replicates"
+      ],
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "machine_recall": {
+          "$ref": "#/$defs/metric"
+        },
+        "sensor_recall": {
+          "$ref": "#/$defs/metric"
+        },
+        "precision": {
+          "$ref": "#/$defs/metric"
+        },
+        "clean_rate": {
+          "$ref": "#/$defs/metric"
+        },
+        "false_alert_burden": {
+          "$ref": "#/$defs/metric"
+        },
+        "availability": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "full_target": {
+                "type": "string",
+                "enum": [
+                  "motor-01.motor_current",
+                  "motor-01.motor_temperature",
+                  "motor-01.conveyor_speed",
+                  "motor-01.vibration_feature",
+                  "conveyor-01.motor_current",
+                  "conveyor-01.motor_temperature",
+                  "conveyor-01.conveyor_speed",
+                  "conveyor-01.vibration_feature"
+                ]
+              },
+              "metric": {
+                "$ref": "#/$defs/metric"
+              }
+            },
+            "required": [
+              "full_target",
+              "metric"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 8,
+          "maxItems": 8
+        },
+        "scheduled_clean_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "effective_clean_seconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "effective_clean_rate": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "machine_recall",
+        "sensor_recall",
+        "precision",
+        "clean_rate",
+        "false_alert_burden",
+        "availability",
+        "scheduled_clean_seconds",
+        "effective_clean_seconds",
+        "effective_clean_rate"
+      ],
+      "additionalProperties": false
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/relative_path"
+        },
+        "raw_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "canonical_sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "row_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "path",
+        "raw_sha256",
+        "canonical_sha256",
+        "row_count"
+      ],
+      "additionalProperties": false
+    },
+    "relative_path": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_-][A-Za-z0-9_./-]*$",
+      "minLength": 1
+    },
+    "slice": {
+      "type": "object",
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "enum": [
+            "c0-diff-control",
+            "c1-phase-level",
+            "c2-phase-conditional"
+          ]
+        },
+        "stratum": {
+          "type": "string",
+          "enum": [
+            "core",
+            "quality-stress",
+            "overall"
+          ]
+        },
+        "dimension": {
+          "type": "string",
+          "enum": [
+            "class",
+            "equipment",
+            "mode",
+            "class-equipment-mode",
+            "test-cycle",
+            "event-start-phase",
+            "phase",
+            "event-offset",
+            "context",
+            "full-target",
+            "signal-mode",
+            "quality-current",
+            "quality-previous",
+            "fault-quality-overlap",
+            "profile-status"
+          ]
+        },
+        "key": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]*$",
+          "minLength": 1
+        },
+        "metric": {
+          "$ref": "#/$defs/metric"
+        },
+        "planned_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "actual_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "candidate_id",
+        "stratum",
+        "dimension",
+        "key",
+        "metric",
+        "planned_count",
+        "actual_count"
+      ],
+      "additionalProperties": false
+    },
+    "status": {
+      "type": "object",
+      "properties": {
+        "run_status": {
+          "type": "string",
+          "enum": [
+            "not_run",
+            "in_progress",
+            "complete",
+            "failed"
+          ]
+        },
+        "engineering_status": {
+          "type": "string",
+          "enum": [
+            "not_evaluated",
+            "pass",
+            "fail",
+            "inconclusive"
+          ]
+        },
+        "performance_status": {
+          "type": "string",
+          "enum": [
+            "not_evaluated",
+            "pass",
+            "fail",
+            "inconclusive"
+          ]
+        }
+      },
+      "required": [
+        "run_status",
+        "engineering_status",
+        "performance_status"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

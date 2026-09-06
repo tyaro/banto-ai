@@ -1,0 +1,685 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banto-ai.local/schemas/synthetic-anomaly-config-v0.3.schema.json",
+  "title": "synthetic-anomaly-config-v0.3.schema.json",
+  "description": "v0.3 shape only; pure semantic validation is not run execution or performance acceptance.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.3"
+    },
+    "config_type": {
+      "type": "string",
+      "const": "synthetic-anomaly-v03"
+    },
+    "generator_id": {
+      "type": "string",
+      "const": "synthetic-anomaly-v03"
+    },
+    "generator_version": {
+      "type": "string",
+      "const": "0.3.0"
+    },
+    "base_revision": {
+      "type": "string",
+      "const": "026aa77fe96afd954957acb2fc7d0df9ee3cc938"
+    },
+    "base_source_path": {
+      "type": "string",
+      "const": "src/banto_ai/generator.py"
+    },
+    "base_function": {
+      "type": "string",
+      "const": "_base_values"
+    },
+    "equipment": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "motor-01"
+          },
+          {
+            "type": "string",
+            "const": "conveyor-01"
+          }
+        ]
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "targets": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "motor_current"
+          },
+          {
+            "type": "string",
+            "const": "motor_temperature"
+          },
+          {
+            "type": "string",
+            "const": "conveyor_speed"
+          },
+          {
+            "type": "string",
+            "const": "vibration_feature"
+          }
+        ]
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "numeric_signals": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "motor_current"
+          },
+          {
+            "type": "string",
+            "const": "motor_temperature"
+          },
+          {
+            "type": "string",
+            "const": "conveyor_speed"
+          },
+          {
+            "type": "string",
+            "const": "vibration_feature"
+          },
+          {
+            "type": "string",
+            "const": "load_proxy"
+          }
+        ]
+      },
+      "minItems": 5,
+      "maxItems": 5
+    },
+    "start_timestamp": {
+      "type": "string",
+      "const": "2026-01-01T00:00:00Z"
+    },
+    "start_timestamp_ms": {
+      "type": "integer",
+      "const": 1767225600000
+    },
+    "sampling_interval_ms": {
+      "type": "integer",
+      "const": 1000
+    },
+    "sample_count": {
+      "type": "integer",
+      "const": 9000
+    },
+    "cycles": {
+      "type": "integer",
+      "const": 50
+    },
+    "mode_samples": {
+      "type": "integer",
+      "const": 30
+    },
+    "modes": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "stopped"
+          },
+          {
+            "type": "string",
+            "const": "startup"
+          },
+          {
+            "type": "string",
+            "const": "low_speed"
+          },
+          {
+            "type": "string",
+            "const": "nominal"
+          },
+          {
+            "type": "string",
+            "const": "high_load"
+          },
+          {
+            "type": "string",
+            "const": "cooldown"
+          }
+        ]
+      },
+      "minItems": 6,
+      "maxItems": 6
+    },
+    "recipes": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "stop"
+          },
+          {
+            "type": "string",
+            "const": "start"
+          },
+          {
+            "type": "string",
+            "const": "low"
+          },
+          {
+            "type": "string",
+            "const": "run"
+          },
+          {
+            "type": "string",
+            "const": "load"
+          },
+          {
+            "type": "string",
+            "const": "cooldown"
+          }
+        ]
+      },
+      "minItems": 6,
+      "maxItems": 6
+    },
+    "splits": {
+      "type": "object",
+      "properties": {
+        "warmup": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "const": 0
+              },
+              {
+                "type": "integer",
+                "const": 1800
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "fit": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "const": 1800
+              },
+              {
+                "type": "integer",
+                "const": 5400
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "calibration": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "const": 5400
+              },
+              {
+                "type": "integer",
+                "const": 7200
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "test": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "const": 7200
+              },
+              {
+                "type": "integer",
+                "const": 9000
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "required": [
+        "warmup",
+        "fit",
+        "calibration",
+        "test"
+      ],
+      "additionalProperties": false
+    },
+    "initial_temperature": {
+      "type": "number",
+      "const": 24.0
+    },
+    "random_stream": {
+      "type": "string",
+      "const": "single-random.Random(seed)-equipment-signal-order"
+    },
+    "latent_state": {
+      "type": "string",
+      "const": "unrounded-normal-temperature"
+    },
+    "overlay_order": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "machine"
+          },
+          {
+            "type": "string",
+            "const": "sensor"
+          },
+          {
+            "type": "string",
+            "const": "ignored"
+          },
+          {
+            "type": "string",
+            "const": "data_quality"
+          }
+        ]
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "quantization": {
+      "type": "object",
+      "properties": {
+        "algorithm": {
+          "type": "string",
+          "const": "python-builtin-round-float"
+        },
+        "digits": {
+          "type": "integer",
+          "const": 6
+        },
+        "stage": {
+          "type": "string",
+          "const": "after-all-overlays"
+        },
+        "null": {
+          "type": "string",
+          "const": "preserve"
+        },
+        "signed_zero": {
+          "type": "string",
+          "const": "preserve"
+        },
+        "input": {
+          "type": "string",
+          "const": "verified-saved-observations-only"
+        },
+        "jsonl": {
+          "type": "string",
+          "const": "utf8-sorted-compact-ensure_ascii_false-allow_nan_false-LF"
+        }
+      },
+      "required": [
+        "algorithm",
+        "digits",
+        "stage",
+        "null",
+        "signed_zero",
+        "input",
+        "jsonl"
+      ],
+      "additionalProperties": false
+    },
+    "layout": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "const": 12
+        },
+        "order": {
+          "type": "string",
+          "const": "equipment-major-mode-minor"
+        },
+        "slots": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "const": 0
+              },
+              {
+                "type": "integer",
+                "const": 7
+              },
+              {
+                "type": "integer",
+                "const": 14
+              },
+              {
+                "type": "integer",
+                "const": 21
+              }
+            ]
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "test_cycles": {
+          "type": "integer",
+          "const": 10
+        },
+        "base_sample": {
+          "type": "integer",
+          "const": 7200
+        },
+        "cycle_samples": {
+          "type": "integer",
+          "const": 180
+        },
+        "event_duration": {
+          "type": "integer",
+          "const": 3
+        },
+        "grace": {
+          "type": "integer",
+          "const": 3
+        },
+        "window": {
+          "type": "string",
+          "const": "half-open"
+        },
+        "quality_overlap_cycle": {
+          "type": "integer",
+          "const": 9
+        },
+        "quality_overlap_sensor_offset": {
+          "type": "integer",
+          "const": 1
+        }
+      },
+      "required": [
+        "count",
+        "order",
+        "slots",
+        "test_cycles",
+        "base_sample",
+        "cycle_samples",
+        "event_duration",
+        "grace",
+        "window",
+        "quality_overlap_cycle",
+        "quality_overlap_sensor_offset"
+      ],
+      "additionalProperties": false
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "class": {
+                "type": "string",
+                "const": "machine"
+              },
+              "type": {
+                "type": "string",
+                "const": "jam_or_slip"
+              },
+              "magnitude": {
+                "type": "number",
+                "const": 0.55
+              },
+              "class_index": {
+                "type": "integer",
+                "const": 0
+              },
+              "target_by_equipment": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "const": "motor_current"
+                    },
+                    {
+                      "type": "string",
+                      "const": "conveyor_speed"
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              }
+            },
+            "required": [
+              "class",
+              "type",
+              "magnitude",
+              "class_index",
+              "target_by_equipment"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "class": {
+                "type": "string",
+                "const": "sensor"
+              },
+              "type": {
+                "type": "string",
+                "const": "spike"
+              },
+              "magnitude": {
+                "type": "number",
+                "const": 8.0
+              },
+              "class_index": {
+                "type": "integer",
+                "const": 1
+              },
+              "target_by_equipment": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "const": "motor_temperature"
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              }
+            },
+            "required": [
+              "class",
+              "type",
+              "magnitude",
+              "class_index",
+              "target_by_equipment"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "class": {
+                "type": "string",
+                "const": "data_quality"
+              },
+              "type": {
+                "type": "string",
+                "const": "dropout"
+              },
+              "magnitude": {
+                "type": "number",
+                "const": 0.0
+              },
+              "class_index": {
+                "type": "integer",
+                "const": 2
+              },
+              "target_by_equipment": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "const": "motor_temperature"
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              }
+            },
+            "required": [
+              "class",
+              "type",
+              "magnitude",
+              "class_index",
+              "target_by_equipment"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "class": {
+                "type": "string",
+                "const": "ignored"
+              },
+              "type": {
+                "type": "string",
+                "const": "stuck_value"
+              },
+              "magnitude": {
+                "type": "number",
+                "const": 0.0
+              },
+              "class_index": {
+                "type": "integer",
+                "const": 3
+              },
+              "target_by_equipment": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "const": "load_proxy"
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              }
+            },
+            "required": [
+              "class",
+              "type",
+              "magnitude",
+              "class_index",
+              "target_by_equipment"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "strata": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "core"
+          },
+          {
+            "type": "string",
+            "const": "quality-stress"
+          }
+        ]
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "core_quality_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "stress_quality_enabled": {
+      "type": "boolean",
+      "const": true
+    },
+    "pairing": {
+      "type": "string",
+      "const": "same-normal-stream-fault-ledger-except-quality-coordinates"
+    }
+  },
+  "required": [
+    "schema_version",
+    "config_type",
+    "generator_id",
+    "generator_version",
+    "base_revision",
+    "base_source_path",
+    "base_function",
+    "equipment",
+    "targets",
+    "numeric_signals",
+    "start_timestamp",
+    "start_timestamp_ms",
+    "sampling_interval_ms",
+    "sample_count",
+    "cycles",
+    "mode_samples",
+    "modes",
+    "recipes",
+    "splits",
+    "initial_temperature",
+    "random_stream",
+    "latent_state",
+    "overlay_order",
+    "quantization",
+    "layout",
+    "events",
+    "strata",
+    "core_quality_enabled",
+    "stress_quality_enabled",
+    "pairing"
+  ],
+  "additionalProperties": false
+}

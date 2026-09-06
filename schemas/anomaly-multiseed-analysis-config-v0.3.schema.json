@@ -1,0 +1,1342 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banto-ai.local/schemas/anomaly-multiseed-analysis-config-v0.3.schema.json",
+  "title": "anomaly-multiseed-analysis-config-v0.3.schema.json",
+  "description": "v0.3 shape only; pure semantic validation is not run execution or performance acceptance.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.3"
+    },
+    "config_type": {
+      "type": "string",
+      "const": "anomaly-multiseed-analysis-v03"
+    },
+    "analysis_id": {
+      "type": "string",
+      "const": "anomaly-multiseed-analysis-v03"
+    },
+    "audit_id": {
+      "type": "string",
+      "const": "anomaly-multiseed-audit-v03"
+    },
+    "matrix_id": {
+      "type": "string",
+      "const": "anomaly-multiseed-v03"
+    },
+    "matrix_config_path": {
+      "type": "string",
+      "const": "examples/configs/anomaly-multiseed-v0.3.json"
+    },
+    "input_root": {
+      "type": "string",
+      "const": "artifacts/anomaly-multiseed-v03-holdout"
+    },
+    "output_root": {
+      "type": "string",
+      "const": "artifacts/anomaly-multiseed-v03-analysis"
+    },
+    "audit_root": {
+      "type": "string",
+      "const": "artifacts/anomaly-multiseed-v03-audit"
+    },
+    "bootstrap": {
+      "type": "object",
+      "properties": {
+        "algorithm_id": {
+          "type": "string",
+          "const": "sha256-counter-rejection-v1"
+        },
+        "seed": {
+          "type": "integer",
+          "const": 2026090603
+        },
+        "clusters": {
+          "type": "integer",
+          "const": 40
+        },
+        "replicates": {
+          "type": "integer",
+          "const": 50000
+        },
+        "accepted_indices": {
+          "type": "integer",
+          "const": 2000000
+        },
+        "indices_raw_sha256": {
+          "type": "string",
+          "const": "e375bf3feacb2f04bf5e1d40b141c1cfc5f69fa5437ea2704e323fd7523b22e5"
+        },
+        "golden_draws": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "replicate": {
+                    "type": "integer",
+                    "const": 0
+                  },
+                  "indices": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 28
+                        },
+                        {
+                          "type": "integer",
+                          "const": 5
+                        },
+                        {
+                          "type": "integer",
+                          "const": 25
+                        },
+                        {
+                          "type": "integer",
+                          "const": 0
+                        },
+                        {
+                          "type": "integer",
+                          "const": 34
+                        },
+                        {
+                          "type": "integer",
+                          "const": 30
+                        },
+                        {
+                          "type": "integer",
+                          "const": 1
+                        },
+                        {
+                          "type": "integer",
+                          "const": 38
+                        },
+                        {
+                          "type": "integer",
+                          "const": 29
+                        },
+                        {
+                          "type": "integer",
+                          "const": 36
+                        },
+                        {
+                          "type": "integer",
+                          "const": 18
+                        },
+                        {
+                          "type": "integer",
+                          "const": 16
+                        },
+                        {
+                          "type": "integer",
+                          "const": 4
+                        },
+                        {
+                          "type": "integer",
+                          "const": 13
+                        },
+                        {
+                          "type": "integer",
+                          "const": 10
+                        },
+                        {
+                          "type": "integer",
+                          "const": 12
+                        },
+                        {
+                          "type": "integer",
+                          "const": 21
+                        },
+                        {
+                          "type": "integer",
+                          "const": 20
+                        },
+                        {
+                          "type": "integer",
+                          "const": 31
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7
+                        },
+                        {
+                          "type": "integer",
+                          "const": 23
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6
+                        },
+                        {
+                          "type": "integer",
+                          "const": 14
+                        },
+                        {
+                          "type": "integer",
+                          "const": 35
+                        },
+                        {
+                          "type": "integer",
+                          "const": 9
+                        }
+                      ]
+                    },
+                    "minItems": 40,
+                    "maxItems": 40
+                  }
+                },
+                "required": [
+                  "replicate",
+                  "indices"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "replicate": {
+                    "type": "integer",
+                    "const": 1
+                  },
+                  "indices": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 26
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3
+                        },
+                        {
+                          "type": "integer",
+                          "const": 36
+                        },
+                        {
+                          "type": "integer",
+                          "const": 29
+                        },
+                        {
+                          "type": "integer",
+                          "const": 12
+                        },
+                        {
+                          "type": "integer",
+                          "const": 21
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7
+                        },
+                        {
+                          "type": "integer",
+                          "const": 37
+                        },
+                        {
+                          "type": "integer",
+                          "const": 11
+                        },
+                        {
+                          "type": "integer",
+                          "const": 8
+                        },
+                        {
+                          "type": "integer",
+                          "const": 30
+                        },
+                        {
+                          "type": "integer",
+                          "const": 31
+                        },
+                        {
+                          "type": "integer",
+                          "const": 23
+                        },
+                        {
+                          "type": "integer",
+                          "const": 20
+                        },
+                        {
+                          "type": "integer",
+                          "const": 28
+                        },
+                        {
+                          "type": "integer",
+                          "const": 33
+                        },
+                        {
+                          "type": "integer",
+                          "const": 9
+                        },
+                        {
+                          "type": "integer",
+                          "const": 27
+                        },
+                        {
+                          "type": "integer",
+                          "const": 24
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6
+                        },
+                        {
+                          "type": "integer",
+                          "const": 39
+                        },
+                        {
+                          "type": "integer",
+                          "const": 10
+                        },
+                        {
+                          "type": "integer",
+                          "const": 15
+                        },
+                        {
+                          "type": "integer",
+                          "const": 19
+                        },
+                        {
+                          "type": "integer",
+                          "const": 0
+                        },
+                        {
+                          "type": "integer",
+                          "const": 38
+                        },
+                        {
+                          "type": "integer",
+                          "const": 5
+                        },
+                        {
+                          "type": "integer",
+                          "const": 1
+                        },
+                        {
+                          "type": "integer",
+                          "const": 2
+                        }
+                      ]
+                    },
+                    "minItems": 40,
+                    "maxItems": 40
+                  }
+                },
+                "required": [
+                  "replicate",
+                  "indices"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "replicate": {
+                    "type": "integer",
+                    "const": 24999
+                  },
+                  "indices": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 34
+                        },
+                        {
+                          "type": "integer",
+                          "const": 16
+                        },
+                        {
+                          "type": "integer",
+                          "const": 4
+                        },
+                        {
+                          "type": "integer",
+                          "const": 17
+                        },
+                        {
+                          "type": "integer",
+                          "const": 28
+                        },
+                        {
+                          "type": "integer",
+                          "const": 18
+                        },
+                        {
+                          "type": "integer",
+                          "const": 5
+                        },
+                        {
+                          "type": "integer",
+                          "const": 11
+                        },
+                        {
+                          "type": "integer",
+                          "const": 32
+                        },
+                        {
+                          "type": "integer",
+                          "const": 0
+                        },
+                        {
+                          "type": "integer",
+                          "const": 1
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7
+                        },
+                        {
+                          "type": "integer",
+                          "const": 25
+                        },
+                        {
+                          "type": "integer",
+                          "const": 12
+                        },
+                        {
+                          "type": "integer",
+                          "const": 8
+                        },
+                        {
+                          "type": "integer",
+                          "const": 37
+                        },
+                        {
+                          "type": "integer",
+                          "const": 33
+                        },
+                        {
+                          "type": "integer",
+                          "const": 24
+                        },
+                        {
+                          "type": "integer",
+                          "const": 9
+                        },
+                        {
+                          "type": "integer",
+                          "const": 22
+                        },
+                        {
+                          "type": "integer",
+                          "const": 15
+                        },
+                        {
+                          "type": "integer",
+                          "const": 27
+                        },
+                        {
+                          "type": "integer",
+                          "const": 13
+                        },
+                        {
+                          "type": "integer",
+                          "const": 2
+                        },
+                        {
+                          "type": "integer",
+                          "const": 30
+                        },
+                        {
+                          "type": "integer",
+                          "const": 36
+                        },
+                        {
+                          "type": "integer",
+                          "const": 23
+                        }
+                      ]
+                    },
+                    "minItems": 40,
+                    "maxItems": 40
+                  }
+                },
+                "required": [
+                  "replicate",
+                  "indices"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "replicate": {
+                    "type": "integer",
+                    "const": 49999
+                  },
+                  "indices": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 29
+                        },
+                        {
+                          "type": "integer",
+                          "const": 24
+                        },
+                        {
+                          "type": "integer",
+                          "const": 39
+                        },
+                        {
+                          "type": "integer",
+                          "const": 17
+                        },
+                        {
+                          "type": "integer",
+                          "const": 23
+                        },
+                        {
+                          "type": "integer",
+                          "const": 20
+                        },
+                        {
+                          "type": "integer",
+                          "const": 38
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7
+                        },
+                        {
+                          "type": "integer",
+                          "const": 13
+                        },
+                        {
+                          "type": "integer",
+                          "const": 11
+                        },
+                        {
+                          "type": "integer",
+                          "const": 10
+                        },
+                        {
+                          "type": "integer",
+                          "const": 26
+                        },
+                        {
+                          "type": "integer",
+                          "const": 4
+                        },
+                        {
+                          "type": "integer",
+                          "const": 30
+                        },
+                        {
+                          "type": "integer",
+                          "const": 34
+                        },
+                        {
+                          "type": "integer",
+                          "const": 9
+                        },
+                        {
+                          "type": "integer",
+                          "const": 19
+                        },
+                        {
+                          "type": "integer",
+                          "const": 31
+                        },
+                        {
+                          "type": "integer",
+                          "const": 21
+                        },
+                        {
+                          "type": "integer",
+                          "const": 37
+                        },
+                        {
+                          "type": "integer",
+                          "const": 16
+                        },
+                        {
+                          "type": "integer",
+                          "const": 0
+                        },
+                        {
+                          "type": "integer",
+                          "const": 1
+                        },
+                        {
+                          "type": "integer",
+                          "const": 35
+                        }
+                      ]
+                    },
+                    "minItems": 40,
+                    "maxItems": 40
+                  }
+                },
+                "required": [
+                  "replicate",
+                  "indices"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "sampling": {
+          "type": "string",
+          "const": "paired-seed-clusters-with-replacement"
+        },
+        "aggregation": {
+          "type": "string",
+          "const": "ratio-of-sums"
+        },
+        "interval": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "number",
+                "const": 0.025
+              },
+              {
+                "type": "number",
+                "const": 0.975
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "quantile": {
+          "type": "string",
+          "const": "type-7"
+        },
+        "zero_denominator": {
+          "type": "string",
+          "const": "inconclusive-no-drop-no-redraw"
+        }
+      },
+      "required": [
+        "algorithm_id",
+        "seed",
+        "clusters",
+        "replicates",
+        "accepted_indices",
+        "indices_raw_sha256",
+        "golden_draws",
+        "sampling",
+        "aggregation",
+        "interval",
+        "quantile",
+        "zero_denominator"
+      ],
+      "additionalProperties": false
+    },
+    "absolute_gates": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "stratum": {
+                "type": "string",
+                "const": "core"
+              },
+              "machine_recall": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 0.85
+                    },
+                    {
+                      "type": "number",
+                      "const": 0.8
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "sensor_recall": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 0.9
+                    },
+                    {
+                      "type": "number",
+                      "const": 0.85
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "precision": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 0.85
+                    },
+                    {
+                      "type": "number",
+                      "const": 0.8
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "clean_rate": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 1.0
+                    },
+                    {
+                      "type": "number",
+                      "const": 1.5
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "each_target_availability": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 0.96
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              }
+            },
+            "required": [
+              "stratum",
+              "machine_recall",
+              "sensor_recall",
+              "precision",
+              "clean_rate",
+              "each_target_availability"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "stratum": {
+                "type": "string",
+                "const": "quality-stress"
+              },
+              "machine_recall": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 0.85
+                    },
+                    {
+                      "type": "number",
+                      "const": 0.8
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "sensor_recall": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 0.85
+                    },
+                    {
+                      "type": "number",
+                      "const": 0.8
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "precision": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 0.85
+                    },
+                    {
+                      "type": "number",
+                      "const": 0.8
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "clean_rate": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 1.0
+                    },
+                    {
+                      "type": "number",
+                      "const": 1.5
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "each_target_availability": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 0.95
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              }
+            },
+            "required": [
+              "stratum",
+              "machine_recall",
+              "sensor_recall",
+              "precision",
+              "clean_rate",
+              "each_target_availability"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "stratum": {
+                "type": "string",
+                "const": "overall"
+              },
+              "machine_recall": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 0.85
+                    },
+                    {
+                      "type": "number",
+                      "const": 0.8
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "sensor_recall": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 0.875
+                    },
+                    {
+                      "type": "number",
+                      "const": 0.825
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "precision": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 0.85
+                    },
+                    {
+                      "type": "number",
+                      "const": 0.8
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "clean_rate": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 1.0
+                    },
+                    {
+                      "type": "number",
+                      "const": 1.5
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "each_target_availability": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "number",
+                      "const": 0.955
+                    }
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 2
+              }
+            },
+            "required": [
+              "stratum",
+              "machine_recall",
+              "sensor_recall",
+              "precision",
+              "clean_rate",
+              "each_target_availability"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "paired_noninferiority": {
+      "type": "object",
+      "properties": {
+        "machine_recall": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "number",
+                "const": 0.0
+              },
+              {
+                "type": "number",
+                "const": -0.02
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "sensor_recall": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "number",
+                "const": 0.0
+              },
+              {
+                "type": "number",
+                "const": -0.02
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "clean_rate": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "number",
+                "const": 0.0
+              },
+              {
+                "type": "number",
+                "const": 0.25
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "false_alert_burden": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "number",
+                "const": 0.0
+              },
+              {
+                "type": "number",
+                "const": 1.0
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "each_target_availability": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "number",
+                "const": -0.0125
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "required": [
+        "machine_recall",
+        "sensor_recall",
+        "clean_rate",
+        "false_alert_burden",
+        "each_target_availability"
+      ],
+      "additionalProperties": false
+    },
+    "multiple_testing": {
+      "type": "object",
+      "properties": {
+        "candidate_alpha": {
+          "type": "number",
+          "const": 0.025
+        },
+        "candidate_correction": {
+          "type": "string",
+          "const": "Bonferroni-two"
+        },
+        "within_candidate": {
+          "type": "string",
+          "const": "intersection-union-all-gates-strata-targets"
+        }
+      },
+      "required": [
+        "candidate_alpha",
+        "candidate_correction",
+        "within_candidate"
+      ],
+      "additionalProperties": false
+    },
+    "selection_order": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "c1-phase-level"
+          },
+          {
+            "type": "string",
+            "const": "c2-phase-conditional"
+          }
+        ]
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "fallback": {
+      "type": "string",
+      "const": "no-promotion"
+    },
+    "control_promotable": {
+      "type": "boolean",
+      "const": false
+    },
+    "units": {
+      "type": "object",
+      "properties": {
+        "clean_rate": {
+          "type": "string",
+          "const": "alerts-per-8-equipment-hours"
+        },
+        "false_alert_burden": {
+          "type": "string",
+          "const": "false-equipment-episodes-per-100-planned-positive-incidents"
+        }
+      },
+      "required": [
+        "clean_rate",
+        "false_alert_burden"
+      ],
+      "additionalProperties": false
+    },
+    "slices": {
+      "type": "object",
+      "properties": {
+        "incident": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "class"
+              },
+              {
+                "type": "string",
+                "const": "equipment"
+              },
+              {
+                "type": "string",
+                "const": "mode"
+              },
+              {
+                "type": "string",
+                "const": "class-equipment-mode"
+              },
+              {
+                "type": "string",
+                "const": "test-cycle"
+              },
+              {
+                "type": "string",
+                "const": "event-start-phase"
+              }
+            ]
+          },
+          "minItems": 6,
+          "maxItems": 6
+        },
+        "phase": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "0"
+              },
+              {
+                "type": "string",
+                "const": "1"
+              },
+              {
+                "type": "string",
+                "const": "2"
+              },
+              {
+                "type": "string",
+                "const": "3"
+              },
+              {
+                "type": "string",
+                "const": "4..6"
+              },
+              {
+                "type": "string",
+                "const": "7..13"
+              },
+              {
+                "type": "string",
+                "const": "14..20"
+              },
+              {
+                "type": "string",
+                "const": "21..29"
+              }
+            ]
+          },
+          "minItems": 8,
+          "maxItems": 8
+        },
+        "event_offsets": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "const": -2
+              },
+              {
+                "type": "integer",
+                "const": -1
+              },
+              {
+                "type": "integer",
+                "const": 0
+              },
+              {
+                "type": "integer",
+                "const": 1
+              },
+              {
+                "type": "integer",
+                "const": 2
+              },
+              {
+                "type": "integer",
+                "const": 3
+              },
+              {
+                "type": "integer",
+                "const": 4
+              },
+              {
+                "type": "integer",
+                "const": 5
+              }
+            ]
+          },
+          "minItems": 8,
+          "maxItems": 8
+        },
+        "context": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "raw-event"
+              },
+              {
+                "type": "string",
+                "const": "grace"
+              },
+              {
+                "type": "string",
+                "const": "clean"
+              }
+            ]
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "diagnostics": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "full-target"
+              },
+              {
+                "type": "string",
+                "const": "signal-mode"
+              },
+              {
+                "type": "string",
+                "const": "quality-current"
+              },
+              {
+                "type": "string",
+                "const": "quality-previous"
+              },
+              {
+                "type": "string",
+                "const": "fault-quality-overlap"
+              },
+              {
+                "type": "string",
+                "const": "profile-status"
+              }
+            ]
+          },
+          "minItems": 6,
+          "maxItems": 6
+        },
+        "class_precision": {
+          "type": "string",
+          "const": "not-applicable"
+        },
+        "delay": {
+          "type": "string",
+          "const": "detected-only"
+        },
+        "event_offset_partition": {
+          "type": "boolean",
+          "const": false
+        }
+      },
+      "required": [
+        "incident",
+        "phase",
+        "event_offsets",
+        "context",
+        "diagnostics",
+        "class_precision",
+        "delay",
+        "event_offset_partition"
+      ],
+      "additionalProperties": false
+    },
+    "validation_status": {
+      "type": "string",
+      "const": "not_run"
+    },
+    "run_status": {
+      "type": "string",
+      "const": "not_run"
+    },
+    "performance_status": {
+      "type": "string",
+      "const": "not_evaluated"
+    }
+  },
+  "required": [
+    "schema_version",
+    "config_type",
+    "analysis_id",
+    "audit_id",
+    "matrix_id",
+    "matrix_config_path",
+    "input_root",
+    "output_root",
+    "audit_root",
+    "bootstrap",
+    "absolute_gates",
+    "paired_noninferiority",
+    "multiple_testing",
+    "selection_order",
+    "fallback",
+    "control_promotable",
+    "units",
+    "slices",
+    "validation_status",
+    "run_status",
+    "performance_status"
+  ],
+  "additionalProperties": false
+}

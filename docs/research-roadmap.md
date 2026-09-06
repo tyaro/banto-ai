@@ -88,8 +88,10 @@ main未統合です。初稿へのAstra/max監査はP0/P1 0件・P2 3件で、�
 明記しました。正式runtimeはWindows 11 Pro 25H2 build `10.0.26200.9168`／CPython `3.14.0`です。
 独立再監査はP0〜P3 0件で合格し、`SCIENCE_READY=yes`、`FREEZE_READY=yes`、
 `DOCS_READY=yes`、`IMPLEMENTATION_READY=yes`、`STACK_READY=yes`としてS0をfrozen・adoptedにしました。
-S1以降、config/schema/code/test/CI/run/artifact、Linux／Windows native acceptance、formal run、
-性能評価、promotionは未着手です。監査根拠は
+S0監査記録commit `0b40e7295cfa20f32889005ceca2d29d29ca340c`の上で、5 config、9 schema、
+pure semantic validator、全seed・bootstrap goldenの固定とadversarial testsをS1実装候補として追加しました。
+S1は独立監査待ちです。S2以降、scorer／runner、Linux／Windows native acceptance、formal run、
+性能評価、promotionは未着手です。S0の監査根拠は
 [`anomaly-multiseed-v0.3-plan-audit-2026-09-06.md`](results/anomaly-multiseed-v0.3-plan-audit-2026-09-06.md)、
 候補本文は[`anomaly-multiseed-evaluation-plan-v0.3.md`](anomaly-multiseed-evaluation-plan-v0.3.md)、
 最新の文書状態と正本の読み方は[文書索引](README.md)を参照してください。

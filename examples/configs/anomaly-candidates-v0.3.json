@@ -1,0 +1,169 @@
+{
+  "schema_version": "0.3",
+  "config_type": "anomaly-candidates-v03",
+  "analyzer_id": "event-aware-anomaly-v03",
+  "candidates": [
+    {
+      "candidate_id": "c0-diff-control",
+      "fit": "no-op",
+      "residual": "x_i(t)-x_i(t-1)",
+      "threshold": 4.0
+    },
+    {
+      "candidate_id": "c1-phase-level",
+      "fit": "phase-median",
+      "residual": "x_i(t)-mu_i,m(u)",
+      "threshold": 6.0
+    },
+    {
+      "candidate_id": "c2-phase-conditional",
+      "fit": "phase-median-shrinkage-covariance",
+      "residual": "(Omega*(r(t)-v))_i/sqrt(Omega_ii)",
+      "threshold": 6.0
+    }
+  ],
+  "profile_version": "0.3",
+  "profile_identity": [
+    "candidate",
+    "role",
+    "seed",
+    "layout",
+    "stratum",
+    "equipment",
+    "full_target",
+    "mode",
+    "recipe_family",
+    "profile_version"
+  ],
+  "features": [
+    "same-equipment-current-and-past-target-values",
+    "quality",
+    "timestamp",
+    "observed-mode",
+    "recipe-family",
+    "locked-normal-profile"
+  ],
+  "forbidden_features": [
+    "GT",
+    "layout",
+    "seed",
+    "cycle",
+    "absolute-test-position",
+    "future",
+    "other-equipment",
+    "load_proxy"
+  ],
+  "targets": [
+    "motor-01.motor_current",
+    "motor-01.motor_temperature",
+    "motor-01.conveyor_speed",
+    "motor-01.vibration_feature",
+    "conveyor-01.motor_current",
+    "conveyor-01.motor_temperature",
+    "conveyor-01.conveyor_speed",
+    "conveyor-01.vibration_feature"
+  ],
+  "phase_range": [
+    0,
+    29
+  ],
+  "phase_zero_available": false,
+  "history_samples": 1,
+  "threshold_operator": ">",
+  "persistence": 2,
+  "resets": [
+    "mode",
+    "recipe",
+    "gap",
+    "quality",
+    "profile"
+  ],
+  "c2_requires_complete_current_and_previous": true,
+  "calibration": {
+    "center": "median",
+    "scale": "1.4826*MAD",
+    "mad_factor": 1.4826,
+    "planned_points": 290,
+    "minimum_points": 250,
+    "zero_or_nonfinite_scale": "inconclusive",
+    "fallback": "forbidden",
+    "test_update": false
+  },
+  "phase_fit": {
+    "phases": 30,
+    "points_each": 20,
+    "median": "middle-two-arithmetic-mean-even"
+  },
+  "c2": {
+    "fit_phases": [
+      1,
+      29
+    ],
+    "complete_vectors": 580,
+    "covariance_denominator": 579,
+    "standardization": "r_i=(e_i-median(e_i))/(1.4826*MAD(e_i))",
+    "mean": "arithmetic",
+    "shrinkage": 0.25,
+    "covariance": "0.75*S+0.25*diag(S)",
+    "precision": "inverse(Sigma)",
+    "sum": "math.fsum",
+    "solver": "Cholesky",
+    "target_order": [
+      "motor_current",
+      "motor_temperature",
+      "conveyor_speed",
+      "vibration_feature"
+    ],
+    "jitter": false
+  },
+  "episode": {
+    "onset": "second-exceedance",
+    "support_size": 2,
+    "interval": "onset-to-last-exceedance-plus-one-second",
+    "merge": "transitive-overlap-or-adjacency",
+    "merge_scope": [
+      "dataset",
+      "equipment",
+      "mode",
+      "visit"
+    ],
+    "source_sort": [
+      "onset",
+      "full_target",
+      "episode_id"
+    ],
+    "label_input": false
+  },
+  "matching_policy": "first-equipment-onset-no-retry-v1",
+  "failure_retry": false,
+  "exclusion_priority": [
+    "current_target_quality",
+    "current_nonfinite",
+    "no_previous_or_gap",
+    "previous_target_quality_or_nonfinite",
+    "mode_recipe_or_phase",
+    "peer_quality_or_nonfinite",
+    "profile_inconclusive",
+    "nonfinite_score"
+  ],
+  "fixtures": {
+    "matching": [
+      "M1",
+      "M2",
+      "M3",
+      "M4",
+      "M5",
+      "M6",
+      "M7",
+      "M8",
+      "M9"
+    ],
+    "quantization": [
+      "Q1",
+      "Q2",
+      "Q3",
+      "Q4",
+      "Q5"
+    ]
+  }
+}

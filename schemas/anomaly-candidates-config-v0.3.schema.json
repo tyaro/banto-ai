@@ -1,0 +1,762 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banto-ai.local/schemas/anomaly-candidates-config-v0.3.schema.json",
+  "title": "anomaly-candidates-config-v0.3.schema.json",
+  "description": "v0.3 shape only; pure semantic validation is not run execution or performance acceptance.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.3"
+    },
+    "config_type": {
+      "type": "string",
+      "const": "anomaly-candidates-v03"
+    },
+    "analyzer_id": {
+      "type": "string",
+      "const": "event-aware-anomaly-v03"
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "candidate_id": {
+                "type": "string",
+                "const": "c0-diff-control"
+              },
+              "fit": {
+                "type": "string",
+                "const": "no-op"
+              },
+              "residual": {
+                "type": "string",
+                "const": "x_i(t)-x_i(t-1)"
+              },
+              "threshold": {
+                "type": "number",
+                "const": 4.0
+              }
+            },
+            "required": [
+              "candidate_id",
+              "fit",
+              "residual",
+              "threshold"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "candidate_id": {
+                "type": "string",
+                "const": "c1-phase-level"
+              },
+              "fit": {
+                "type": "string",
+                "const": "phase-median"
+              },
+              "residual": {
+                "type": "string",
+                "const": "x_i(t)-mu_i,m(u)"
+              },
+              "threshold": {
+                "type": "number",
+                "const": 6.0
+              }
+            },
+            "required": [
+              "candidate_id",
+              "fit",
+              "residual",
+              "threshold"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "candidate_id": {
+                "type": "string",
+                "const": "c2-phase-conditional"
+              },
+              "fit": {
+                "type": "string",
+                "const": "phase-median-shrinkage-covariance"
+              },
+              "residual": {
+                "type": "string",
+                "const": "(Omega*(r(t)-v))_i/sqrt(Omega_ii)"
+              },
+              "threshold": {
+                "type": "number",
+                "const": 6.0
+              }
+            },
+            "required": [
+              "candidate_id",
+              "fit",
+              "residual",
+              "threshold"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "profile_version": {
+      "type": "string",
+      "const": "0.3"
+    },
+    "profile_identity": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "candidate"
+          },
+          {
+            "type": "string",
+            "const": "role"
+          },
+          {
+            "type": "string",
+            "const": "seed"
+          },
+          {
+            "type": "string",
+            "const": "layout"
+          },
+          {
+            "type": "string",
+            "const": "stratum"
+          },
+          {
+            "type": "string",
+            "const": "equipment"
+          },
+          {
+            "type": "string",
+            "const": "full_target"
+          },
+          {
+            "type": "string",
+            "const": "mode"
+          },
+          {
+            "type": "string",
+            "const": "recipe_family"
+          },
+          {
+            "type": "string",
+            "const": "profile_version"
+          }
+        ]
+      },
+      "minItems": 10,
+      "maxItems": 10
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "same-equipment-current-and-past-target-values"
+          },
+          {
+            "type": "string",
+            "const": "quality"
+          },
+          {
+            "type": "string",
+            "const": "timestamp"
+          },
+          {
+            "type": "string",
+            "const": "observed-mode"
+          },
+          {
+            "type": "string",
+            "const": "recipe-family"
+          },
+          {
+            "type": "string",
+            "const": "locked-normal-profile"
+          }
+        ]
+      },
+      "minItems": 6,
+      "maxItems": 6
+    },
+    "forbidden_features": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "GT"
+          },
+          {
+            "type": "string",
+            "const": "layout"
+          },
+          {
+            "type": "string",
+            "const": "seed"
+          },
+          {
+            "type": "string",
+            "const": "cycle"
+          },
+          {
+            "type": "string",
+            "const": "absolute-test-position"
+          },
+          {
+            "type": "string",
+            "const": "future"
+          },
+          {
+            "type": "string",
+            "const": "other-equipment"
+          },
+          {
+            "type": "string",
+            "const": "load_proxy"
+          }
+        ]
+      },
+      "minItems": 8,
+      "maxItems": 8
+    },
+    "targets": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "motor-01.motor_current"
+          },
+          {
+            "type": "string",
+            "const": "motor-01.motor_temperature"
+          },
+          {
+            "type": "string",
+            "const": "motor-01.conveyor_speed"
+          },
+          {
+            "type": "string",
+            "const": "motor-01.vibration_feature"
+          },
+          {
+            "type": "string",
+            "const": "conveyor-01.motor_current"
+          },
+          {
+            "type": "string",
+            "const": "conveyor-01.motor_temperature"
+          },
+          {
+            "type": "string",
+            "const": "conveyor-01.conveyor_speed"
+          },
+          {
+            "type": "string",
+            "const": "conveyor-01.vibration_feature"
+          }
+        ]
+      },
+      "minItems": 8,
+      "maxItems": 8
+    },
+    "phase_range": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "integer",
+            "const": 0
+          },
+          {
+            "type": "integer",
+            "const": 29
+          }
+        ]
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "phase_zero_available": {
+      "type": "boolean",
+      "const": false
+    },
+    "history_samples": {
+      "type": "integer",
+      "const": 1
+    },
+    "threshold_operator": {
+      "type": "string",
+      "const": ">"
+    },
+    "persistence": {
+      "type": "integer",
+      "const": 2
+    },
+    "resets": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "mode"
+          },
+          {
+            "type": "string",
+            "const": "recipe"
+          },
+          {
+            "type": "string",
+            "const": "gap"
+          },
+          {
+            "type": "string",
+            "const": "quality"
+          },
+          {
+            "type": "string",
+            "const": "profile"
+          }
+        ]
+      },
+      "minItems": 5,
+      "maxItems": 5
+    },
+    "c2_requires_complete_current_and_previous": {
+      "type": "boolean",
+      "const": true
+    },
+    "calibration": {
+      "type": "object",
+      "properties": {
+        "center": {
+          "type": "string",
+          "const": "median"
+        },
+        "scale": {
+          "type": "string",
+          "const": "1.4826*MAD"
+        },
+        "mad_factor": {
+          "type": "number",
+          "const": 1.4826
+        },
+        "planned_points": {
+          "type": "integer",
+          "const": 290
+        },
+        "minimum_points": {
+          "type": "integer",
+          "const": 250
+        },
+        "zero_or_nonfinite_scale": {
+          "type": "string",
+          "const": "inconclusive"
+        },
+        "fallback": {
+          "type": "string",
+          "const": "forbidden"
+        },
+        "test_update": {
+          "type": "boolean",
+          "const": false
+        }
+      },
+      "required": [
+        "center",
+        "scale",
+        "mad_factor",
+        "planned_points",
+        "minimum_points",
+        "zero_or_nonfinite_scale",
+        "fallback",
+        "test_update"
+      ],
+      "additionalProperties": false
+    },
+    "phase_fit": {
+      "type": "object",
+      "properties": {
+        "phases": {
+          "type": "integer",
+          "const": 30
+        },
+        "points_each": {
+          "type": "integer",
+          "const": 20
+        },
+        "median": {
+          "type": "string",
+          "const": "middle-two-arithmetic-mean-even"
+        }
+      },
+      "required": [
+        "phases",
+        "points_each",
+        "median"
+      ],
+      "additionalProperties": false
+    },
+    "c2": {
+      "type": "object",
+      "properties": {
+        "fit_phases": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "const": 1
+              },
+              {
+                "type": "integer",
+                "const": 29
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "complete_vectors": {
+          "type": "integer",
+          "const": 580
+        },
+        "covariance_denominator": {
+          "type": "integer",
+          "const": 579
+        },
+        "standardization": {
+          "type": "string",
+          "const": "r_i=(e_i-median(e_i))/(1.4826*MAD(e_i))"
+        },
+        "mean": {
+          "type": "string",
+          "const": "arithmetic"
+        },
+        "shrinkage": {
+          "type": "number",
+          "const": 0.25
+        },
+        "covariance": {
+          "type": "string",
+          "const": "0.75*S+0.25*diag(S)"
+        },
+        "precision": {
+          "type": "string",
+          "const": "inverse(Sigma)"
+        },
+        "sum": {
+          "type": "string",
+          "const": "math.fsum"
+        },
+        "solver": {
+          "type": "string",
+          "const": "Cholesky"
+        },
+        "target_order": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "motor_current"
+              },
+              {
+                "type": "string",
+                "const": "motor_temperature"
+              },
+              {
+                "type": "string",
+                "const": "conveyor_speed"
+              },
+              {
+                "type": "string",
+                "const": "vibration_feature"
+              }
+            ]
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "jitter": {
+          "type": "boolean",
+          "const": false
+        }
+      },
+      "required": [
+        "fit_phases",
+        "complete_vectors",
+        "covariance_denominator",
+        "standardization",
+        "mean",
+        "shrinkage",
+        "covariance",
+        "precision",
+        "sum",
+        "solver",
+        "target_order",
+        "jitter"
+      ],
+      "additionalProperties": false
+    },
+    "episode": {
+      "type": "object",
+      "properties": {
+        "onset": {
+          "type": "string",
+          "const": "second-exceedance"
+        },
+        "support_size": {
+          "type": "integer",
+          "const": 2
+        },
+        "interval": {
+          "type": "string",
+          "const": "onset-to-last-exceedance-plus-one-second"
+        },
+        "merge": {
+          "type": "string",
+          "const": "transitive-overlap-or-adjacency"
+        },
+        "merge_scope": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "dataset"
+              },
+              {
+                "type": "string",
+                "const": "equipment"
+              },
+              {
+                "type": "string",
+                "const": "mode"
+              },
+              {
+                "type": "string",
+                "const": "visit"
+              }
+            ]
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "source_sort": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "onset"
+              },
+              {
+                "type": "string",
+                "const": "full_target"
+              },
+              {
+                "type": "string",
+                "const": "episode_id"
+              }
+            ]
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "label_input": {
+          "type": "boolean",
+          "const": false
+        }
+      },
+      "required": [
+        "onset",
+        "support_size",
+        "interval",
+        "merge",
+        "merge_scope",
+        "source_sort",
+        "label_input"
+      ],
+      "additionalProperties": false
+    },
+    "matching_policy": {
+      "type": "string",
+      "const": "first-equipment-onset-no-retry-v1"
+    },
+    "failure_retry": {
+      "type": "boolean",
+      "const": false
+    },
+    "exclusion_priority": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "current_target_quality"
+          },
+          {
+            "type": "string",
+            "const": "current_nonfinite"
+          },
+          {
+            "type": "string",
+            "const": "no_previous_or_gap"
+          },
+          {
+            "type": "string",
+            "const": "previous_target_quality_or_nonfinite"
+          },
+          {
+            "type": "string",
+            "const": "mode_recipe_or_phase"
+          },
+          {
+            "type": "string",
+            "const": "peer_quality_or_nonfinite"
+          },
+          {
+            "type": "string",
+            "const": "profile_inconclusive"
+          },
+          {
+            "type": "string",
+            "const": "nonfinite_score"
+          }
+        ]
+      },
+      "minItems": 8,
+      "maxItems": 8
+    },
+    "fixtures": {
+      "type": "object",
+      "properties": {
+        "matching": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "M1"
+              },
+              {
+                "type": "string",
+                "const": "M2"
+              },
+              {
+                "type": "string",
+                "const": "M3"
+              },
+              {
+                "type": "string",
+                "const": "M4"
+              },
+              {
+                "type": "string",
+                "const": "M5"
+              },
+              {
+                "type": "string",
+                "const": "M6"
+              },
+              {
+                "type": "string",
+                "const": "M7"
+              },
+              {
+                "type": "string",
+                "const": "M8"
+              },
+              {
+                "type": "string",
+                "const": "M9"
+              }
+            ]
+          },
+          "minItems": 9,
+          "maxItems": 9
+        },
+        "quantization": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "Q1"
+              },
+              {
+                "type": "string",
+                "const": "Q2"
+              },
+              {
+                "type": "string",
+                "const": "Q3"
+              },
+              {
+                "type": "string",
+                "const": "Q4"
+              },
+              {
+                "type": "string",
+                "const": "Q5"
+              }
+            ]
+          },
+          "minItems": 5,
+          "maxItems": 5
+        }
+      },
+      "required": [
+        "matching",
+        "quantization"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "config_type",
+    "analyzer_id",
+    "candidates",
+    "profile_version",
+    "profile_identity",
+    "features",
+    "forbidden_features",
+    "targets",
+    "phase_range",
+    "phase_zero_available",
+    "history_samples",
+    "threshold_operator",
+    "persistence",
+    "resets",
+    "c2_requires_complete_current_and_previous",
+    "calibration",
+    "phase_fit",
+    "c2",
+    "episode",
+    "matching_policy",
+    "failure_retry",
+    "exclusion_priority",
+    "fixtures"
+  ],
+  "additionalProperties": false
+}

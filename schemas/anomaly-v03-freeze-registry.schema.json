@@ -1,0 +1,1226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banto-ai.local/schemas/anomaly-v03-freeze-registry.schema.json",
+  "title": "anomaly-v03-freeze-registry.schema.json",
+  "description": "v0.3 shape only; pure semantic validation is not run execution or performance acceptance.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.3"
+    },
+    "registry_id": {
+      "type": "string",
+      "const": "anomaly-v03-freeze-registry"
+    },
+    "science_revision": {
+      "type": "string",
+      "const": "4b02201f95e8ffa3a243be716872d95815a554bd"
+    },
+    "post_audit_revision": {
+      "type": "string",
+      "const": "0b40e7295cfa20f32889005ceca2d29d29ca340c"
+    },
+    "plan": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "string",
+          "const": "docs/anomaly-multiseed-evaluation-plan-v0.3.md"
+        },
+        "science_raw_sha256": {
+          "$ref": "#/$defs/digest"
+        },
+        "status_raw_sha256": {
+          "$ref": "#/$defs/digest"
+        }
+      },
+      "required": [
+        "path",
+        "science_raw_sha256",
+        "status_raw_sha256"
+      ],
+      "additionalProperties": false
+    },
+    "canonicalization": {
+      "type": "string",
+      "const": "utf-8-json-sort-keys-compact-no-trailing-newline-v1"
+    },
+    "seed_registry": {
+      "type": "object",
+      "properties": {
+        "algorithm_id": {
+          "type": "string",
+          "const": "anomaly-v03-seed-registry-sha256-v1"
+        },
+        "role_order": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "dev"
+              },
+              {
+                "type": "string",
+                "const": "smoke"
+              },
+              {
+                "type": "string",
+                "const": "holdout"
+              }
+            ]
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "excluded_seeds": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "const": 11
+              },
+              {
+                "type": "integer",
+                "const": 17
+              },
+              {
+                "type": "integer",
+                "const": 23
+              },
+              {
+                "type": "integer",
+                "const": 29
+              },
+              {
+                "type": "integer",
+                "const": 37
+              },
+              {
+                "type": "integer",
+                "const": 42
+              },
+              {
+                "type": "integer",
+                "const": 53
+              },
+              {
+                "type": "integer",
+                "const": 67
+              },
+              {
+                "type": "integer",
+                "const": 79
+              },
+              {
+                "type": "integer",
+                "const": 97
+              }
+            ]
+          },
+          "minItems": 10,
+          "maxItems": 10
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "const": "dev"
+                  },
+                  "seeds": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 2486912926863618161
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7466813550306735603
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7126204254162853479
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3279145917574316908
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3719571977234091747
+                        },
+                        {
+                          "type": "integer",
+                          "const": 8708405546889544747
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6621472672971326241
+                        },
+                        {
+                          "type": "integer",
+                          "const": 273561671901354104
+                        }
+                      ]
+                    },
+                    "minItems": 8,
+                    "maxItems": 8
+                  },
+                  "counters": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 0
+                        }
+                      ]
+                    },
+                    "minItems": 8,
+                    "maxItems": 8
+                  }
+                },
+                "required": [
+                  "role",
+                  "seeds",
+                  "counters"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "const": "smoke"
+                  },
+                  "seeds": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 60100173653660076
+                        },
+                        {
+                          "type": "integer",
+                          "const": 5917958850568857994
+                        }
+                      ]
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                  },
+                  "counters": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 0
+                        }
+                      ]
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                  }
+                },
+                "required": [
+                  "role",
+                  "seeds",
+                  "counters"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "const": "holdout"
+                  },
+                  "seeds": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 2792161106071485543
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7229579592087440107
+                        },
+                        {
+                          "type": "integer",
+                          "const": 45570935762625678
+                        },
+                        {
+                          "type": "integer",
+                          "const": 9188760754206536872
+                        },
+                        {
+                          "type": "integer",
+                          "const": 8084326643698561275
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3014083827173585590
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6740404758392360832
+                        },
+                        {
+                          "type": "integer",
+                          "const": 2905535428073734522
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7267256243460924178
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6435451526532760896
+                        },
+                        {
+                          "type": "integer",
+                          "const": 1745000181837415884
+                        },
+                        {
+                          "type": "integer",
+                          "const": 2343118141825711822
+                        },
+                        {
+                          "type": "integer",
+                          "const": 45368049007567931
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7900935959266222680
+                        },
+                        {
+                          "type": "integer",
+                          "const": 415623872209200560
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6765892178528963122
+                        },
+                        {
+                          "type": "integer",
+                          "const": 8340641848293321573
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3574078930444381696
+                        },
+                        {
+                          "type": "integer",
+                          "const": 483329636867679949
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3569704111721228537
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7064515967250691575
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6980823095610958708
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3797595740940071752
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7440185531509880860
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6637936812798467322
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3515212040948658174
+                        },
+                        {
+                          "type": "integer",
+                          "const": 4904245236889675003
+                        },
+                        {
+                          "type": "integer",
+                          "const": 4893903864818177219
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6512972051439186560
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3731883269616381173
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3873101104219604394
+                        },
+                        {
+                          "type": "integer",
+                          "const": 2639944505466530072
+                        },
+                        {
+                          "type": "integer",
+                          "const": 2209808609734801515
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7956266781124185967
+                        },
+                        {
+                          "type": "integer",
+                          "const": 9067387979261751290
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3810356571735893210
+                        },
+                        {
+                          "type": "integer",
+                          "const": 5898429634746170041
+                        },
+                        {
+                          "type": "integer",
+                          "const": 952478899614897383
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7380935340037060940
+                        },
+                        {
+                          "type": "integer",
+                          "const": 5551010198809690423
+                        }
+                      ]
+                    },
+                    "minItems": 40,
+                    "maxItems": 40
+                  },
+                  "counters": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 0
+                        }
+                      ]
+                    },
+                    "minItems": 40,
+                    "maxItems": 40
+                  }
+                },
+                "required": [
+                  "role",
+                  "seeds",
+                  "counters"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "seed_list_canonical_sha256": {
+          "type": "string",
+          "const": "fa072f5299132fc22cce471c94ca189ddfc0f3acd27c2c5201bc31a2a9287505"
+        }
+      },
+      "required": [
+        "algorithm_id",
+        "role_order",
+        "excluded_seeds",
+        "entries",
+        "seed_list_canonical_sha256"
+      ],
+      "additionalProperties": false
+    },
+    "bootstrap": {
+      "type": "object",
+      "properties": {
+        "algorithm_id": {
+          "type": "string",
+          "const": "sha256-counter-rejection-v1"
+        },
+        "seed": {
+          "type": "integer",
+          "const": 2026090603
+        },
+        "clusters": {
+          "type": "integer",
+          "const": 40
+        },
+        "replicates": {
+          "type": "integer",
+          "const": 50000
+        },
+        "accepted_indices": {
+          "type": "integer",
+          "const": 2000000
+        },
+        "indices_raw_sha256": {
+          "type": "string",
+          "const": "e375bf3feacb2f04bf5e1d40b141c1cfc5f69fa5437ea2704e323fd7523b22e5"
+        },
+        "golden_draws": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "replicate": {
+                    "type": "integer",
+                    "const": 0
+                  },
+                  "indices": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 28
+                        },
+                        {
+                          "type": "integer",
+                          "const": 5
+                        },
+                        {
+                          "type": "integer",
+                          "const": 25
+                        },
+                        {
+                          "type": "integer",
+                          "const": 0
+                        },
+                        {
+                          "type": "integer",
+                          "const": 34
+                        },
+                        {
+                          "type": "integer",
+                          "const": 30
+                        },
+                        {
+                          "type": "integer",
+                          "const": 1
+                        },
+                        {
+                          "type": "integer",
+                          "const": 38
+                        },
+                        {
+                          "type": "integer",
+                          "const": 29
+                        },
+                        {
+                          "type": "integer",
+                          "const": 36
+                        },
+                        {
+                          "type": "integer",
+                          "const": 18
+                        },
+                        {
+                          "type": "integer",
+                          "const": 16
+                        },
+                        {
+                          "type": "integer",
+                          "const": 4
+                        },
+                        {
+                          "type": "integer",
+                          "const": 13
+                        },
+                        {
+                          "type": "integer",
+                          "const": 10
+                        },
+                        {
+                          "type": "integer",
+                          "const": 12
+                        },
+                        {
+                          "type": "integer",
+                          "const": 21
+                        },
+                        {
+                          "type": "integer",
+                          "const": 20
+                        },
+                        {
+                          "type": "integer",
+                          "const": 31
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7
+                        },
+                        {
+                          "type": "integer",
+                          "const": 23
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6
+                        },
+                        {
+                          "type": "integer",
+                          "const": 14
+                        },
+                        {
+                          "type": "integer",
+                          "const": 35
+                        },
+                        {
+                          "type": "integer",
+                          "const": 9
+                        }
+                      ]
+                    },
+                    "minItems": 40,
+                    "maxItems": 40
+                  }
+                },
+                "required": [
+                  "replicate",
+                  "indices"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "replicate": {
+                    "type": "integer",
+                    "const": 1
+                  },
+                  "indices": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 26
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3
+                        },
+                        {
+                          "type": "integer",
+                          "const": 36
+                        },
+                        {
+                          "type": "integer",
+                          "const": 29
+                        },
+                        {
+                          "type": "integer",
+                          "const": 12
+                        },
+                        {
+                          "type": "integer",
+                          "const": 21
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7
+                        },
+                        {
+                          "type": "integer",
+                          "const": 37
+                        },
+                        {
+                          "type": "integer",
+                          "const": 11
+                        },
+                        {
+                          "type": "integer",
+                          "const": 8
+                        },
+                        {
+                          "type": "integer",
+                          "const": 30
+                        },
+                        {
+                          "type": "integer",
+                          "const": 31
+                        },
+                        {
+                          "type": "integer",
+                          "const": 23
+                        },
+                        {
+                          "type": "integer",
+                          "const": 20
+                        },
+                        {
+                          "type": "integer",
+                          "const": 28
+                        },
+                        {
+                          "type": "integer",
+                          "const": 33
+                        },
+                        {
+                          "type": "integer",
+                          "const": 9
+                        },
+                        {
+                          "type": "integer",
+                          "const": 27
+                        },
+                        {
+                          "type": "integer",
+                          "const": 24
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6
+                        },
+                        {
+                          "type": "integer",
+                          "const": 39
+                        },
+                        {
+                          "type": "integer",
+                          "const": 10
+                        },
+                        {
+                          "type": "integer",
+                          "const": 15
+                        },
+                        {
+                          "type": "integer",
+                          "const": 19
+                        },
+                        {
+                          "type": "integer",
+                          "const": 0
+                        },
+                        {
+                          "type": "integer",
+                          "const": 38
+                        },
+                        {
+                          "type": "integer",
+                          "const": 5
+                        },
+                        {
+                          "type": "integer",
+                          "const": 1
+                        },
+                        {
+                          "type": "integer",
+                          "const": 2
+                        }
+                      ]
+                    },
+                    "minItems": 40,
+                    "maxItems": 40
+                  }
+                },
+                "required": [
+                  "replicate",
+                  "indices"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "replicate": {
+                    "type": "integer",
+                    "const": 24999
+                  },
+                  "indices": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 34
+                        },
+                        {
+                          "type": "integer",
+                          "const": 16
+                        },
+                        {
+                          "type": "integer",
+                          "const": 4
+                        },
+                        {
+                          "type": "integer",
+                          "const": 17
+                        },
+                        {
+                          "type": "integer",
+                          "const": 28
+                        },
+                        {
+                          "type": "integer",
+                          "const": 18
+                        },
+                        {
+                          "type": "integer",
+                          "const": 5
+                        },
+                        {
+                          "type": "integer",
+                          "const": 11
+                        },
+                        {
+                          "type": "integer",
+                          "const": 32
+                        },
+                        {
+                          "type": "integer",
+                          "const": 0
+                        },
+                        {
+                          "type": "integer",
+                          "const": 1
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7
+                        },
+                        {
+                          "type": "integer",
+                          "const": 25
+                        },
+                        {
+                          "type": "integer",
+                          "const": 12
+                        },
+                        {
+                          "type": "integer",
+                          "const": 8
+                        },
+                        {
+                          "type": "integer",
+                          "const": 37
+                        },
+                        {
+                          "type": "integer",
+                          "const": 33
+                        },
+                        {
+                          "type": "integer",
+                          "const": 24
+                        },
+                        {
+                          "type": "integer",
+                          "const": 9
+                        },
+                        {
+                          "type": "integer",
+                          "const": 22
+                        },
+                        {
+                          "type": "integer",
+                          "const": 15
+                        },
+                        {
+                          "type": "integer",
+                          "const": 27
+                        },
+                        {
+                          "type": "integer",
+                          "const": 13
+                        },
+                        {
+                          "type": "integer",
+                          "const": 2
+                        },
+                        {
+                          "type": "integer",
+                          "const": 30
+                        },
+                        {
+                          "type": "integer",
+                          "const": 36
+                        },
+                        {
+                          "type": "integer",
+                          "const": 23
+                        }
+                      ]
+                    },
+                    "minItems": 40,
+                    "maxItems": 40
+                  }
+                },
+                "required": [
+                  "replicate",
+                  "indices"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "replicate": {
+                    "type": "integer",
+                    "const": 49999
+                  },
+                  "indices": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 29
+                        },
+                        {
+                          "type": "integer",
+                          "const": 24
+                        },
+                        {
+                          "type": "integer",
+                          "const": 39
+                        },
+                        {
+                          "type": "integer",
+                          "const": 17
+                        },
+                        {
+                          "type": "integer",
+                          "const": 23
+                        },
+                        {
+                          "type": "integer",
+                          "const": 20
+                        },
+                        {
+                          "type": "integer",
+                          "const": 38
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7
+                        },
+                        {
+                          "type": "integer",
+                          "const": 13
+                        },
+                        {
+                          "type": "integer",
+                          "const": 11
+                        },
+                        {
+                          "type": "integer",
+                          "const": 10
+                        },
+                        {
+                          "type": "integer",
+                          "const": 26
+                        },
+                        {
+                          "type": "integer",
+                          "const": 4
+                        },
+                        {
+                          "type": "integer",
+                          "const": 30
+                        },
+                        {
+                          "type": "integer",
+                          "const": 34
+                        },
+                        {
+                          "type": "integer",
+                          "const": 9
+                        },
+                        {
+                          "type": "integer",
+                          "const": 19
+                        },
+                        {
+                          "type": "integer",
+                          "const": 31
+                        },
+                        {
+                          "type": "integer",
+                          "const": 21
+                        },
+                        {
+                          "type": "integer",
+                          "const": 37
+                        },
+                        {
+                          "type": "integer",
+                          "const": 16
+                        },
+                        {
+                          "type": "integer",
+                          "const": 0
+                        },
+                        {
+                          "type": "integer",
+                          "const": 1
+                        },
+                        {
+                          "type": "integer",
+                          "const": 35
+                        }
+                      ]
+                    },
+                    "minItems": 40,
+                    "maxItems": 40
+                  }
+                },
+                "required": [
+                  "replicate",
+                  "indices"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "minItems": 4,
+          "maxItems": 4
+        },
+        "sampling": {
+          "type": "string",
+          "const": "paired-seed-clusters-with-replacement"
+        },
+        "aggregation": {
+          "type": "string",
+          "const": "ratio-of-sums"
+        },
+        "interval": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "number",
+                "const": 0.025
+              },
+              {
+                "type": "number",
+                "const": 0.975
+              }
+            ]
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "quantile": {
+          "type": "string",
+          "const": "type-7"
+        },
+        "zero_denominator": {
+          "type": "string",
+          "const": "inconclusive-no-drop-no-redraw"
+        }
+      },
+      "required": [
+        "algorithm_id",
+        "seed",
+        "clusters",
+        "replicates",
+        "accepted_indices",
+        "indices_raw_sha256",
+        "golden_draws",
+        "sampling",
+        "aggregation",
+        "interval",
+        "quantile",
+        "zero_denominator"
+      ],
+      "additionalProperties": false
+    },
+    "runtime": {
+      "type": "object",
+      "properties": {
+        "os": {
+          "type": "string",
+          "const": "Windows 11 Pro"
+        },
+        "release": {
+          "type": "string",
+          "const": "25H2"
+        },
+        "architecture": {
+          "type": "string",
+          "const": "AMD64"
+        },
+        "os_major": {
+          "type": "integer",
+          "const": 10
+        },
+        "os_minor": {
+          "type": "integer",
+          "const": 0
+        },
+        "os_build": {
+          "type": "integer",
+          "const": 26200
+        },
+        "os_ubr": {
+          "type": "integer",
+          "const": 9168
+        },
+        "filesystem": {
+          "type": "string",
+          "const": "local-NTFS"
+        },
+        "implementation": {
+          "type": "string",
+          "const": "CPython"
+        },
+        "python_version": {
+          "type": "string",
+          "const": "3.14.0"
+        },
+        "pointer_bits": {
+          "type": "integer",
+          "const": 64
+        },
+        "gil_disabled": {
+          "type": "boolean",
+          "const": false
+        },
+        "compiler": {
+          "type": "string",
+          "const": "MSC v.1944"
+        },
+        "source_tag": {
+          "type": "string",
+          "const": "v3.14.0:ebf955d"
+        },
+        "python_exe_raw_sha256": {
+          "type": "string",
+          "const": "467014615a5255aca450ae88100dd2caf887da87657f00e3c2171ec44a685aec"
+        },
+        "python_dll_raw_sha256": {
+          "type": "string",
+          "const": "f1722bd369d79fecbc85f3ed2790c30c330b9413fd74332f95b086e60dfacc2a"
+        }
+      },
+      "required": [
+        "os",
+        "release",
+        "architecture",
+        "os_major",
+        "os_minor",
+        "os_build",
+        "os_ubr",
+        "filesystem",
+        "implementation",
+        "python_version",
+        "pointer_bits",
+        "gil_disabled",
+        "compiler",
+        "source_tag",
+        "python_exe_raw_sha256",
+        "python_dll_raw_sha256"
+      ],
+      "additionalProperties": false
+    },
+    "pins": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "enum": [
+              "examples/configs/synthetic-anomaly-v0.3.json",
+              "examples/configs/anomaly-candidates-v0.3.json",
+              "examples/configs/anomaly-multiseed-v0.3.json",
+              "examples/configs/anomaly-multiseed-analysis-v0.3.json",
+              "schemas/synthetic-anomaly-config-v0.3.schema.json",
+              "schemas/anomaly-candidates-config-v0.3.schema.json",
+              "schemas/anomaly-multiseed-matrix-config-v0.3.schema.json",
+              "schemas/anomaly-multiseed-analysis-config-v0.3.schema.json",
+              "schemas/anomaly-v03-freeze-registry.schema.json",
+              "schemas/anomaly-evaluation-result-v0.3.schema.json",
+              "schemas/anomaly-multiseed-matrix-result-v0.3.schema.json",
+              "schemas/anomaly-multiseed-analysis-result-v0.3.schema.json",
+              "schemas/anomaly-multiseed-audit-result-v0.3.schema.json"
+            ]
+          },
+          "raw_sha256": {
+            "$ref": "#/$defs/digest"
+          },
+          "canonical_sha256": {
+            "$ref": "#/$defs/digest"
+          }
+        },
+        "required": [
+          "path",
+          "raw_sha256",
+          "canonical_sha256"
+        ],
+        "additionalProperties": false
+      },
+      "minItems": 13,
+      "maxItems": 13
+    },
+    "external_pin": {
+      "type": "string",
+      "const": "trusted-commit-and-registry-raw-sha256-outside-registry"
+    },
+    "validation_status": {
+      "type": "string",
+      "const": "not_run"
+    },
+    "run_status": {
+      "type": "string",
+      "const": "not_run"
+    },
+    "performance_status": {
+      "type": "string",
+      "const": "not_evaluated"
+    }
+  },
+  "required": [
+    "schema_version",
+    "registry_id",
+    "science_revision",
+    "post_audit_revision",
+    "plan",
+    "canonicalization",
+    "seed_registry",
+    "bootstrap",
+    "runtime",
+    "pins",
+    "external_pin",
+    "validation_status",
+    "run_status",
+    "performance_status"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
+  }
+}

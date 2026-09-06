@@ -1,0 +1,151 @@
+{
+  "schema_version": "0.3",
+  "config_type": "synthetic-anomaly-v03",
+  "generator_id": "synthetic-anomaly-v03",
+  "generator_version": "0.3.0",
+  "base_revision": "026aa77fe96afd954957acb2fc7d0df9ee3cc938",
+  "base_source_path": "src/banto_ai/generator.py",
+  "base_function": "_base_values",
+  "equipment": [
+    "motor-01",
+    "conveyor-01"
+  ],
+  "targets": [
+    "motor_current",
+    "motor_temperature",
+    "conveyor_speed",
+    "vibration_feature"
+  ],
+  "numeric_signals": [
+    "motor_current",
+    "motor_temperature",
+    "conveyor_speed",
+    "vibration_feature",
+    "load_proxy"
+  ],
+  "start_timestamp": "2026-01-01T00:00:00Z",
+  "start_timestamp_ms": 1767225600000,
+  "sampling_interval_ms": 1000,
+  "sample_count": 9000,
+  "cycles": 50,
+  "mode_samples": 30,
+  "modes": [
+    "stopped",
+    "startup",
+    "low_speed",
+    "nominal",
+    "high_load",
+    "cooldown"
+  ],
+  "recipes": [
+    "stop",
+    "start",
+    "low",
+    "run",
+    "load",
+    "cooldown"
+  ],
+  "splits": {
+    "warmup": [
+      0,
+      1800
+    ],
+    "fit": [
+      1800,
+      5400
+    ],
+    "calibration": [
+      5400,
+      7200
+    ],
+    "test": [
+      7200,
+      9000
+    ]
+  },
+  "initial_temperature": 24.0,
+  "random_stream": "single-random.Random(seed)-equipment-signal-order",
+  "latent_state": "unrounded-normal-temperature",
+  "overlay_order": [
+    "machine",
+    "sensor",
+    "ignored",
+    "data_quality"
+  ],
+  "quantization": {
+    "algorithm": "python-builtin-round-float",
+    "digits": 6,
+    "stage": "after-all-overlays",
+    "null": "preserve",
+    "signed_zero": "preserve",
+    "input": "verified-saved-observations-only",
+    "jsonl": "utf8-sorted-compact-ensure_ascii_false-allow_nan_false-LF"
+  },
+  "layout": {
+    "count": 12,
+    "order": "equipment-major-mode-minor",
+    "slots": [
+      0,
+      7,
+      14,
+      21
+    ],
+    "test_cycles": 10,
+    "base_sample": 7200,
+    "cycle_samples": 180,
+    "event_duration": 3,
+    "grace": 3,
+    "window": "half-open",
+    "quality_overlap_cycle": 9,
+    "quality_overlap_sensor_offset": 1
+  },
+  "events": [
+    {
+      "class": "machine",
+      "type": "jam_or_slip",
+      "magnitude": 0.55,
+      "class_index": 0,
+      "target_by_equipment": [
+        "motor_current",
+        "conveyor_speed"
+      ]
+    },
+    {
+      "class": "sensor",
+      "type": "spike",
+      "magnitude": 8.0,
+      "class_index": 1,
+      "target_by_equipment": [
+        "motor_temperature",
+        "motor_temperature"
+      ]
+    },
+    {
+      "class": "data_quality",
+      "type": "dropout",
+      "magnitude": 0.0,
+      "class_index": 2,
+      "target_by_equipment": [
+        "motor_temperature",
+        "motor_temperature"
+      ]
+    },
+    {
+      "class": "ignored",
+      "type": "stuck_value",
+      "magnitude": 0.0,
+      "class_index": 3,
+      "target_by_equipment": [
+        "load_proxy",
+        "load_proxy"
+      ]
+    }
+  ],
+  "strata": [
+    "core",
+    "quality-stress"
+  ],
+  "core_quality_enabled": false,
+  "stress_quality_enabled": true,
+  "pairing": "same-normal-stream-fault-ledger-except-quality-coordinates"
+}

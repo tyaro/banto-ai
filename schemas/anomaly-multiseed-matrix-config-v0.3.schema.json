@@ -1,0 +1,1012 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://banto-ai.local/schemas/anomaly-multiseed-matrix-config-v0.3.schema.json",
+  "title": "anomaly-multiseed-matrix-config-v0.3.schema.json",
+  "description": "v0.3 shape only; pure semantic validation is not run execution or performance acceptance.",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "0.3"
+    },
+    "config_type": {
+      "type": "string",
+      "const": "anomaly-multiseed-v03"
+    },
+    "matrix_id": {
+      "type": "string",
+      "const": "anomaly-multiseed-v03"
+    },
+    "plan_id": {
+      "type": "string",
+      "const": "anomaly-multiseed-plan-v03"
+    },
+    "generator_config_path": {
+      "type": "string",
+      "const": "examples/configs/synthetic-anomaly-v0.3.json"
+    },
+    "candidates_config_path": {
+      "type": "string",
+      "const": "examples/configs/anomaly-candidates-v0.3.json"
+    },
+    "seed_registry": {
+      "type": "object",
+      "properties": {
+        "algorithm_id": {
+          "type": "string",
+          "const": "anomaly-v03-seed-registry-sha256-v1"
+        },
+        "role_order": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "dev"
+              },
+              {
+                "type": "string",
+                "const": "smoke"
+              },
+              {
+                "type": "string",
+                "const": "holdout"
+              }
+            ]
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "excluded_seeds": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "const": 11
+              },
+              {
+                "type": "integer",
+                "const": 17
+              },
+              {
+                "type": "integer",
+                "const": 23
+              },
+              {
+                "type": "integer",
+                "const": 29
+              },
+              {
+                "type": "integer",
+                "const": 37
+              },
+              {
+                "type": "integer",
+                "const": 42
+              },
+              {
+                "type": "integer",
+                "const": 53
+              },
+              {
+                "type": "integer",
+                "const": 67
+              },
+              {
+                "type": "integer",
+                "const": 79
+              },
+              {
+                "type": "integer",
+                "const": 97
+              }
+            ]
+          },
+          "minItems": 10,
+          "maxItems": 10
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "const": "dev"
+                  },
+                  "seeds": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 2486912926863618161
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7466813550306735603
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7126204254162853479
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3279145917574316908
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3719571977234091747
+                        },
+                        {
+                          "type": "integer",
+                          "const": 8708405546889544747
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6621472672971326241
+                        },
+                        {
+                          "type": "integer",
+                          "const": 273561671901354104
+                        }
+                      ]
+                    },
+                    "minItems": 8,
+                    "maxItems": 8
+                  },
+                  "counters": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 0
+                        }
+                      ]
+                    },
+                    "minItems": 8,
+                    "maxItems": 8
+                  }
+                },
+                "required": [
+                  "role",
+                  "seeds",
+                  "counters"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "const": "smoke"
+                  },
+                  "seeds": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 60100173653660076
+                        },
+                        {
+                          "type": "integer",
+                          "const": 5917958850568857994
+                        }
+                      ]
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                  },
+                  "counters": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 0
+                        }
+                      ]
+                    },
+                    "minItems": 2,
+                    "maxItems": 2
+                  }
+                },
+                "required": [
+                  "role",
+                  "seeds",
+                  "counters"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "type": "string",
+                    "const": "holdout"
+                  },
+                  "seeds": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 2792161106071485543
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7229579592087440107
+                        },
+                        {
+                          "type": "integer",
+                          "const": 45570935762625678
+                        },
+                        {
+                          "type": "integer",
+                          "const": 9188760754206536872
+                        },
+                        {
+                          "type": "integer",
+                          "const": 8084326643698561275
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3014083827173585590
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6740404758392360832
+                        },
+                        {
+                          "type": "integer",
+                          "const": 2905535428073734522
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7267256243460924178
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6435451526532760896
+                        },
+                        {
+                          "type": "integer",
+                          "const": 1745000181837415884
+                        },
+                        {
+                          "type": "integer",
+                          "const": 2343118141825711822
+                        },
+                        {
+                          "type": "integer",
+                          "const": 45368049007567931
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7900935959266222680
+                        },
+                        {
+                          "type": "integer",
+                          "const": 415623872209200560
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6765892178528963122
+                        },
+                        {
+                          "type": "integer",
+                          "const": 8340641848293321573
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3574078930444381696
+                        },
+                        {
+                          "type": "integer",
+                          "const": 483329636867679949
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3569704111721228537
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7064515967250691575
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6980823095610958708
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3797595740940071752
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7440185531509880860
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6637936812798467322
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3515212040948658174
+                        },
+                        {
+                          "type": "integer",
+                          "const": 4904245236889675003
+                        },
+                        {
+                          "type": "integer",
+                          "const": 4893903864818177219
+                        },
+                        {
+                          "type": "integer",
+                          "const": 6512972051439186560
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3731883269616381173
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3873101104219604394
+                        },
+                        {
+                          "type": "integer",
+                          "const": 2639944505466530072
+                        },
+                        {
+                          "type": "integer",
+                          "const": 2209808609734801515
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7956266781124185967
+                        },
+                        {
+                          "type": "integer",
+                          "const": 9067387979261751290
+                        },
+                        {
+                          "type": "integer",
+                          "const": 3810356571735893210
+                        },
+                        {
+                          "type": "integer",
+                          "const": 5898429634746170041
+                        },
+                        {
+                          "type": "integer",
+                          "const": 952478899614897383
+                        },
+                        {
+                          "type": "integer",
+                          "const": 7380935340037060940
+                        },
+                        {
+                          "type": "integer",
+                          "const": 5551010198809690423
+                        }
+                      ]
+                    },
+                    "minItems": 40,
+                    "maxItems": 40
+                  },
+                  "counters": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "const": 0
+                        }
+                      ]
+                    },
+                    "minItems": 40,
+                    "maxItems": 40
+                  }
+                },
+                "required": [
+                  "role",
+                  "seeds",
+                  "counters"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "seed_list_canonical_sha256": {
+          "type": "string",
+          "const": "fa072f5299132fc22cce471c94ca189ddfc0f3acd27c2c5201bc31a2a9287505"
+        }
+      },
+      "required": [
+        "algorithm_id",
+        "role_order",
+        "excluded_seeds",
+        "entries",
+        "seed_list_canonical_sha256"
+      ],
+      "additionalProperties": false
+    },
+    "candidate_order": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "c0-diff-control"
+          },
+          {
+            "type": "string",
+            "const": "c1-phase-level"
+          },
+          {
+            "type": "string",
+            "const": "c2-phase-conditional"
+          }
+        ]
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "stratum_order": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "core"
+          },
+          {
+            "type": "string",
+            "const": "quality-stress"
+          }
+        ]
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "dev"
+          },
+          {
+            "type": "string",
+            "const": "smoke"
+          },
+          {
+            "type": "string",
+            "const": "holdout"
+          }
+        ]
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "counts": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "const": "dev"
+              },
+              "seeds": {
+                "type": "integer",
+                "const": 8
+              },
+              "layouts": {
+                "type": "integer",
+                "const": 12
+              },
+              "datasets": {
+                "type": "integer",
+                "const": 192
+              },
+              "evaluations": {
+                "type": "integer",
+                "const": 576
+              },
+              "observation_rows": {
+                "type": "integer",
+                "const": 3456000
+              },
+              "score_rows": {
+                "type": "integer",
+                "const": 8294400
+              },
+              "event_rows": {
+                "type": "integer",
+                "const": 7680
+              },
+              "enabled_events": {
+                "type": "integer",
+                "const": 6720
+              },
+              "positive_incidents": {
+                "type": "integer",
+                "const": 3840
+              },
+              "profiles": {
+                "type": "integer",
+                "const": 27648
+              },
+              "clean_equipment_seconds": {
+                "type": "integer",
+                "const": 646080
+              },
+              "target_origins_per_stratum": {
+                "type": "integer",
+                "const": 172800
+              }
+            },
+            "required": [
+              "role",
+              "seeds",
+              "layouts",
+              "datasets",
+              "evaluations",
+              "observation_rows",
+              "score_rows",
+              "event_rows",
+              "enabled_events",
+              "positive_incidents",
+              "profiles",
+              "clean_equipment_seconds",
+              "target_origins_per_stratum"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "const": "smoke"
+              },
+              "seeds": {
+                "type": "integer",
+                "const": 2
+              },
+              "layouts": {
+                "type": "integer",
+                "const": 12
+              },
+              "datasets": {
+                "type": "integer",
+                "const": 48
+              },
+              "evaluations": {
+                "type": "integer",
+                "const": 144
+              },
+              "observation_rows": {
+                "type": "integer",
+                "const": 864000
+              },
+              "score_rows": {
+                "type": "integer",
+                "const": 2073600
+              },
+              "event_rows": {
+                "type": "integer",
+                "const": 1920
+              },
+              "enabled_events": {
+                "type": "integer",
+                "const": 1680
+              },
+              "positive_incidents": {
+                "type": "integer",
+                "const": 960
+              },
+              "profiles": {
+                "type": "integer",
+                "const": 6912
+              },
+              "clean_equipment_seconds": {
+                "type": "integer",
+                "const": 161520
+              },
+              "target_origins_per_stratum": {
+                "type": "integer",
+                "const": 43200
+              }
+            },
+            "required": [
+              "role",
+              "seeds",
+              "layouts",
+              "datasets",
+              "evaluations",
+              "observation_rows",
+              "score_rows",
+              "event_rows",
+              "enabled_events",
+              "positive_incidents",
+              "profiles",
+              "clean_equipment_seconds",
+              "target_origins_per_stratum"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "const": "holdout"
+              },
+              "seeds": {
+                "type": "integer",
+                "const": 40
+              },
+              "layouts": {
+                "type": "integer",
+                "const": 12
+              },
+              "datasets": {
+                "type": "integer",
+                "const": 960
+              },
+              "evaluations": {
+                "type": "integer",
+                "const": 2880
+              },
+              "observation_rows": {
+                "type": "integer",
+                "const": 17280000
+              },
+              "score_rows": {
+                "type": "integer",
+                "const": 41472000
+              },
+              "event_rows": {
+                "type": "integer",
+                "const": 38400
+              },
+              "enabled_events": {
+                "type": "integer",
+                "const": 33600
+              },
+              "positive_incidents": {
+                "type": "integer",
+                "const": 19200
+              },
+              "profiles": {
+                "type": "integer",
+                "const": 138240
+              },
+              "clean_equipment_seconds": {
+                "type": "integer",
+                "const": 3230400
+              },
+              "target_origins_per_stratum": {
+                "type": "integer",
+                "const": 864000
+              }
+            },
+            "required": [
+              "role",
+              "seeds",
+              "layouts",
+              "datasets",
+              "evaluations",
+              "observation_rows",
+              "score_rows",
+              "event_rows",
+              "enabled_events",
+              "positive_incidents",
+              "profiles",
+              "clean_equipment_seconds",
+              "target_origins_per_stratum"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "output_roots": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "const": "dev"
+              },
+              "path": {
+                "type": "string",
+                "const": "artifacts/anomaly-multiseed-v03-dev"
+              }
+            },
+            "required": [
+              "role",
+              "path"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "const": "smoke"
+              },
+              "path": {
+                "type": "string",
+                "const": "artifacts/anomaly-multiseed-v03-smoke"
+              }
+            },
+            "required": [
+              "role",
+              "path"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "const": "holdout"
+              },
+              "path": {
+                "type": "string",
+                "const": "artifacts/anomaly-multiseed-v03-holdout"
+              }
+            },
+            "required": [
+              "role",
+              "path"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "minItems": 3,
+      "maxItems": 3
+    },
+    "inventory_order": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "registered-seed"
+          },
+          {
+            "type": "string",
+            "const": "layout-index"
+          },
+          {
+            "type": "string",
+            "const": "stratum"
+          },
+          {
+            "type": "string",
+            "const": "candidate"
+          }
+        ]
+      },
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "pair_id_format": {
+      "type": "string",
+      "const": "anomaly-v03-{role}-seed-{seed}-layout-{layout:02d}"
+    },
+    "cell_id_format": {
+      "type": "string",
+      "const": "{pair_id}-{stratum}"
+    },
+    "evaluation_id_format": {
+      "type": "string",
+      "const": "{cell_id}-{candidate_id}"
+    },
+    "event_id_format": {
+      "type": "string",
+      "const": "{pair_id}-cycle-{cycle:02d}-{event_class}"
+    },
+    "planned": {
+      "type": "object",
+      "properties": {
+        "events_per_dataset": {
+          "type": "integer",
+          "const": 40
+        },
+        "positives_per_dataset": {
+          "type": "integer",
+          "const": 20
+        },
+        "profiles_per_evaluation": {
+          "type": "integer",
+          "const": 48
+        },
+        "scores_per_evaluation": {
+          "type": "integer",
+          "const": 14400
+        },
+        "origins_per_target": {
+          "type": "integer",
+          "const": 1800
+        },
+        "clean_seconds_per_dataset": {
+          "type": "integer",
+          "const": 3365
+        },
+        "stress_structurally_unavailable_sensor_incidents": {
+          "type": "integer",
+          "const": 480
+        },
+        "stress_sensor_recall_ceiling": {
+          "type": "number",
+          "const": 0.9
+        },
+        "core_available_per_target_stratum": {
+          "type": "integer",
+          "const": 835200
+        },
+        "stress_motor_temperature_available": {
+          "type": "integer",
+          "const": 825960
+        },
+        "stress_conveyor_temperature_available": {
+          "type": "integer",
+          "const": 826320
+        }
+      },
+      "required": [
+        "events_per_dataset",
+        "positives_per_dataset",
+        "profiles_per_evaluation",
+        "scores_per_evaluation",
+        "origins_per_target",
+        "clean_seconds_per_dataset",
+        "stress_structurally_unavailable_sensor_incidents",
+        "stress_sensor_recall_ceiling",
+        "core_available_per_target_stratum",
+        "stress_motor_temperature_available",
+        "stress_conveyor_temperature_available"
+      ],
+      "additionalProperties": false
+    },
+    "paired_inputs": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "const": "observations"
+          },
+          {
+            "type": "string",
+            "const": "events"
+          },
+          {
+            "type": "string",
+            "const": "quality_mask"
+          },
+          {
+            "type": "string",
+            "const": "split"
+          },
+          {
+            "type": "string",
+            "const": "origins"
+          },
+          {
+            "type": "string",
+            "const": "targets"
+          }
+        ]
+      },
+      "minItems": 6,
+      "maxItems": 6
+    },
+    "validation_status": {
+      "type": "string",
+      "const": "not_run"
+    },
+    "run_status": {
+      "type": "string",
+      "const": "not_run"
+    },
+    "performance_status": {
+      "type": "string",
+      "const": "not_evaluated"
+    },
+    "safety": {
+      "type": "object",
+      "properties": {
+        "input": {
+          "type": "string",
+          "const": "synthetic-only"
+        },
+        "network": {
+          "type": "boolean",
+          "const": false
+        },
+        "customer_data": {
+          "type": "boolean",
+          "const": false
+        },
+        "control_write": {
+          "type": "boolean",
+          "const": false
+        },
+        "hub_write": {
+          "type": "boolean",
+          "const": false
+        },
+        "nonoverwrite": {
+          "type": "boolean",
+          "const": true
+        },
+        "reparse_traversal": {
+          "type": "string",
+          "const": "forbidden-runtime-io-check-required"
+        }
+      },
+      "required": [
+        "input",
+        "network",
+        "customer_data",
+        "control_write",
+        "hub_write",
+        "nonoverwrite",
+        "reparse_traversal"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "config_type",
+    "matrix_id",
+    "plan_id",
+    "generator_config_path",
+    "candidates_config_path",
+    "seed_registry",
+    "candidate_order",
+    "stratum_order",
+    "roles",
+    "counts",
+    "output_roots",
+    "inventory_order",
+    "pair_id_format",
+    "cell_id_format",
+    "evaluation_id_format",
+    "event_id_format",
+    "planned",
+    "paired_inputs",
+    "validation_status",
+    "run_status",
+    "performance_status",
+    "safety"
+  ],
+  "additionalProperties": false
+}

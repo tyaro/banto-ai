@@ -1,0 +1,270 @@
+{
+  "schema_version": "0.3",
+  "config_type": "anomaly-multiseed-v03",
+  "matrix_id": "anomaly-multiseed-v03",
+  "plan_id": "anomaly-multiseed-plan-v03",
+  "generator_config_path": "examples/configs/synthetic-anomaly-v0.3.json",
+  "candidates_config_path": "examples/configs/anomaly-candidates-v0.3.json",
+  "seed_registry": {
+    "algorithm_id": "anomaly-v03-seed-registry-sha256-v1",
+    "role_order": [
+      "dev",
+      "smoke",
+      "holdout"
+    ],
+    "excluded_seeds": [
+      11,
+      17,
+      23,
+      29,
+      37,
+      42,
+      53,
+      67,
+      79,
+      97
+    ],
+    "entries": [
+      {
+        "role": "dev",
+        "seeds": [
+          2486912926863618161,
+          7466813550306735603,
+          7126204254162853479,
+          3279145917574316908,
+          3719571977234091747,
+          8708405546889544747,
+          6621472672971326241,
+          273561671901354104
+        ],
+        "counters": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "role": "smoke",
+        "seeds": [
+          60100173653660076,
+          5917958850568857994
+        ],
+        "counters": [
+          0,
+          0
+        ]
+      },
+      {
+        "role": "holdout",
+        "seeds": [
+          2792161106071485543,
+          7229579592087440107,
+          45570935762625678,
+          9188760754206536872,
+          8084326643698561275,
+          3014083827173585590,
+          6740404758392360832,
+          2905535428073734522,
+          7267256243460924178,
+          6435451526532760896,
+          1745000181837415884,
+          2343118141825711822,
+          45368049007567931,
+          7900935959266222680,
+          415623872209200560,
+          6765892178528963122,
+          8340641848293321573,
+          3574078930444381696,
+          483329636867679949,
+          3569704111721228537,
+          7064515967250691575,
+          6980823095610958708,
+          3797595740940071752,
+          7440185531509880860,
+          6637936812798467322,
+          3515212040948658174,
+          4904245236889675003,
+          4893903864818177219,
+          6512972051439186560,
+          3731883269616381173,
+          3873101104219604394,
+          2639944505466530072,
+          2209808609734801515,
+          7956266781124185967,
+          9067387979261751290,
+          3810356571735893210,
+          5898429634746170041,
+          952478899614897383,
+          7380935340037060940,
+          5551010198809690423
+        ],
+        "counters": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "seed_list_canonical_sha256": "fa072f5299132fc22cce471c94ca189ddfc0f3acd27c2c5201bc31a2a9287505"
+  },
+  "candidate_order": [
+    "c0-diff-control",
+    "c1-phase-level",
+    "c2-phase-conditional"
+  ],
+  "stratum_order": [
+    "core",
+    "quality-stress"
+  ],
+  "roles": [
+    "dev",
+    "smoke",
+    "holdout"
+  ],
+  "counts": [
+    {
+      "role": "dev",
+      "seeds": 8,
+      "layouts": 12,
+      "datasets": 192,
+      "evaluations": 576,
+      "observation_rows": 3456000,
+      "score_rows": 8294400,
+      "event_rows": 7680,
+      "enabled_events": 6720,
+      "positive_incidents": 3840,
+      "profiles": 27648,
+      "clean_equipment_seconds": 646080,
+      "target_origins_per_stratum": 172800
+    },
+    {
+      "role": "smoke",
+      "seeds": 2,
+      "layouts": 12,
+      "datasets": 48,
+      "evaluations": 144,
+      "observation_rows": 864000,
+      "score_rows": 2073600,
+      "event_rows": 1920,
+      "enabled_events": 1680,
+      "positive_incidents": 960,
+      "profiles": 6912,
+      "clean_equipment_seconds": 161520,
+      "target_origins_per_stratum": 43200
+    },
+    {
+      "role": "holdout",
+      "seeds": 40,
+      "layouts": 12,
+      "datasets": 960,
+      "evaluations": 2880,
+      "observation_rows": 17280000,
+      "score_rows": 41472000,
+      "event_rows": 38400,
+      "enabled_events": 33600,
+      "positive_incidents": 19200,
+      "profiles": 138240,
+      "clean_equipment_seconds": 3230400,
+      "target_origins_per_stratum": 864000
+    }
+  ],
+  "output_roots": [
+    {
+      "role": "dev",
+      "path": "artifacts/anomaly-multiseed-v03-dev"
+    },
+    {
+      "role": "smoke",
+      "path": "artifacts/anomaly-multiseed-v03-smoke"
+    },
+    {
+      "role": "holdout",
+      "path": "artifacts/anomaly-multiseed-v03-holdout"
+    }
+  ],
+  "inventory_order": [
+    "registered-seed",
+    "layout-index",
+    "stratum",
+    "candidate"
+  ],
+  "pair_id_format": "anomaly-v03-{role}-seed-{seed}-layout-{layout:02d}",
+  "cell_id_format": "{pair_id}-{stratum}",
+  "evaluation_id_format": "{cell_id}-{candidate_id}",
+  "event_id_format": "{pair_id}-cycle-{cycle:02d}-{event_class}",
+  "planned": {
+    "events_per_dataset": 40,
+    "positives_per_dataset": 20,
+    "profiles_per_evaluation": 48,
+    "scores_per_evaluation": 14400,
+    "origins_per_target": 1800,
+    "clean_seconds_per_dataset": 3365,
+    "stress_structurally_unavailable_sensor_incidents": 480,
+    "stress_sensor_recall_ceiling": 0.9,
+    "core_available_per_target_stratum": 835200,
+    "stress_motor_temperature_available": 825960,
+    "stress_conveyor_temperature_available": 826320
+  },
+  "paired_inputs": [
+    "observations",
+    "events",
+    "quality_mask",
+    "split",
+    "origins",
+    "targets"
+  ],
+  "validation_status": "not_run",
+  "run_status": "not_run",
+  "performance_status": "not_evaluated",
+  "safety": {
+    "input": "synthetic-only",
+    "network": false,
+    "customer_data": false,
+    "control_write": false,
+    "hub_write": false,
+    "nonoverwrite": true,
+    "reparse_traversal": "forbidden-runtime-io-check-required"
+  }
+}
