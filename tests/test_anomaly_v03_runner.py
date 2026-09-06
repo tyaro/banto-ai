@@ -45,6 +45,32 @@ class MemoryStore:
         return raw
 
 
+class GuardedMemory(MemoryStore):
+    """Records any store access after an injected global-stop boundary."""
+    def __init__(self):
+        super().__init__()
+        self.unsafe, self.after_stop_IO_attempts = False, []
+
+    def _guard(self, operation, name):
+        if self.unsafe:
+            self.after_stop_IO_attempts.append(operation+":"+name)
+            raise AssertionError("unsafe post-stop store access")
+
+    def write(self, name, raw):
+        self._guard("write", name)
+        return super().write(name, raw)
+
+    def read(self, name):
+        self._guard("read", name)
+        return super().read(name)
+
+    def preserve_failure(self, _):
+        self._guard("preserve_failure", "failure.json")
+
+    def publish(self, *_):
+        self._guard("publish", "payload")
+
+
 class FakeBackend:
     """Metadata scheduler fixture. No generated observations or result publication."""
     def __init__(self, mutation=None):
@@ -277,6 +303,29 @@ class BoundaryIOAttackTests(unittest.TestCase):
                 self.assertEqual(slots[1]["status"], "failed")
                 self.assertEqual(len(backend.calls), 2)
 
+    def test_io_graph_walks_cause_context_groups_cycles_and_deep_nesting(self):
+        def cause_and_context(*_):
+            try:
+                raise PermissionError("implicit context must not be skipped")
+            except PermissionError:
+                raise r.CellFailure("scoring") from ValueError("explicit non-I/O cause")
+        def grouped(*_):
+            nested = ExceptionGroup("nested", [ValueError("other"), OSError("hidden I/O")])
+            raise r.CellFailure("scoring") from ExceptionGroup("outer", [nested])
+        for candidate in (cause_and_context, grouped):
+            with self.subTest(candidate=candidate.__name__):
+                slots, stopped = r._drive("smoke", FakeBackend(candidate), lambda: None)
+                self.assert_global_stop(slots, stopped, "smoke", 1)
+        deep = OSError("deep I/O")
+        for _ in range(4096):
+            wrapper = ValueError("wrapper")
+            wrapper.__cause__ = deep
+            deep = wrapper
+        self.assertTrue(r._has_io_cause(deep))
+        cycle = ValueError("cycle")
+        cycle.__context__ = cycle
+        self.assertFalse(r._has_io_cause(cycle))
+
     def test_recovery_cannot_inject_foreign_paths_or_overwrite_known_hashes(self):
         for attack in ("foreign", "hash", "identity"):
             with self.subTest(attack=attack):
@@ -297,6 +346,21 @@ class BoundaryIOAttackTests(unittest.TestCase):
                 self.assertEqual(slots[0]["identity"], v.evaluation_inventory("smoke")[0])
                 self.assertEqual(slots[0]["input_hashes"], dict.fromkeys(m.INPUT_FILES, "a"*64))
                 self.assertEqual([e["path"] for e in slots[0]["evidence"]], ["fixture/evaluation.json"])
+
+    def test_recovery_allows_only_exact_dataset_file_subset_without_duplicates(self):
+        identity = v.evaluation_inventory("smoke")[0]
+        prefix = "datasets/"+identity["dataset_id"]+"/"
+        valid = payload_entry(prefix+"observations.jsonl", b"{}\n")
+        for evidence in ([payload_entry(prefix+"unregistered.json", b"{}\n")], [valid, valid]):
+            backend = FakeBackend()
+            recovered = {"identity": identity, "evidence": evidence,
+                         "input_hashes": dict.fromkeys(m.INPUT_FILES, "a"*64)}
+            with self.subTest(paths=[entry["path"] for entry in evidence]), \
+                    patch.object(backend, "failure_evidence", return_value=recovered):
+                self.assertEqual(r._recovered_failure_evidence(backend, identity), {})
+        backend = FakeBackend()
+        with patch.object(backend, "failure_evidence", return_value={"identity": identity, "evidence": [valid]}):
+            self.assertEqual(r._recovered_failure_evidence(backend, identity), {"evidence": [valid]})
 
 
 class DiskBoundaryIOAttackTests(unittest.TestCase):
@@ -398,6 +462,27 @@ class DiskBoundaryIOAttackTests(unittest.TestCase):
                     self.assertEqual(slots[0]["evidence"], expected)
                     self.assertEqual(forbidden, [])
                     self.assertFalse((store.root/".complete").exists())
+
+    def test_run_prepared_never_touches_store_after_unsafe_interrupt(self):
+        store, boundaries = GuardedMemory(), []
+        def boundary():
+            boundaries.append(store.unsafe)
+            if store.unsafe:
+                raise AssertionError("boundary was rechecked after stop")
+        def interrupt(*_):
+            store.unsafe = True
+            raise KeyboardInterrupt("after saved evidence")
+        with patch.object(m, "materialize_pair", new=lambda *_: self.pair), \
+                patch.object(m, "normal_stream", side_effect=AssertionError("registered generation")), \
+                patch.object(r, "_execute_candidate", new=interrupt):
+            run = r._run_prepared("dev", store, fixture_checkout(), {"fixture": "guarded"}, boundary)
+        self.assertEqual(run["result"]["status"], r._status("failed", "fail"))
+        self.assertEqual(run["result"]["coverage"], dict(success=0, partial=1, inconclusive=0, failed=0, not_started=575))
+        self.assertEqual(run["result"]["evaluations"][0]["input_hashes"], self.hashes)
+        self.assertEqual(len(run["result"]["evaluations"][0]["evidence"]), 10)
+        self.assertIsNone(run["publication"])
+        self.assertEqual(store.after_stop_IO_attempts, [])
+        self.assertEqual(boundaries, [False])
 
 
 class SavedEvaluationTests(unittest.TestCase):

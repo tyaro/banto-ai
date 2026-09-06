@@ -115,7 +115,7 @@ class PreparedEngineTests(unittest.TestCase):
         self.assertEqual(run["result"]["coverage"], dict(success=0, partial=0, inconclusive=0, failed=1, not_started=143))
         self.assertEqual(run["result"]["status"], r._status("failed", "fail"))
         self.assertIsNone(run["publication"])
-        self.assertTrue((store.stage/"result.json").exists())
+        self.assertFalse((store.stage/"result.json").exists())
         self.assertFalse((store.root/".complete").exists())
 
     def test_global_integrity_failure_retains_all_planned_slots_no_marker(self):
@@ -125,7 +125,7 @@ class PreparedEngineTests(unittest.TestCase):
             self.assertIsNone(run["publication"])
             self.assertEqual(run["result"]["coverage"]["not_started"], 2879)
             self.assertEqual(len(run["result"]["evaluations"]), 2880)
-            self.assertTrue((store.stage/"result.json").exists())
+            self.assertFalse((store.stage/"result.json").exists())
             self.assertFalse((store.root/".complete").exists())
 
     def test_publication_failure_has_complete_ledger_in_exception_and_owned_evidence(self):

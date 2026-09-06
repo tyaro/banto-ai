@@ -144,7 +144,9 @@ def _recovered_failure_evidence(backend, identity):
             v._shape(recovered["evidence"], {"type": "array", "items": {"$ref": "#/$defs/payload"}, "$defs": defs})
             prefix = "datasets/"+identity["dataset_id"]+"/"
             evaluation = "evaluations/"+identity["evaluation_id"]+".json"
-            if any(not (item["path"].startswith(prefix) or item["path"] == evaluation) for item in recovered["evidence"]):
+            allowed = {prefix+name for name in m.DATASET_FILES} | {evaluation}
+            paths = [item["path"] for item in recovered["evidence"]]
+            if len(paths) != len(set(paths)) or any(path not in allowed for path in paths):
                 return {}
             result["evidence"] = copy.deepcopy(recovered["evidence"])
         if "input_hashes" in recovered:
@@ -165,13 +167,23 @@ def _retain_recovered(slot, backend):
 
 
 def _has_io_cause(exc):
-    """An OSError cannot be made ordinary by wrapping it as CellFailure."""
-    seen, current = set(), exc
-    while current is not None and id(current) not in seen:
+    """An OSError anywhere in an exception graph cannot become ordinary.
+
+    ``raise ... from ...`` retains both an explicit cause and an implicit
+    context.  ExceptionGroup adds further branches.  Traverse every edge
+    iteratively so cycles and deeply nested synthetic failures remain bounded.
+    """
+    seen, pending = set(), [exc]
+    while pending:
+        current = pending.pop()
+        if current is None or id(current) in seen:
+            continue
         seen.add(id(current))
         if isinstance(current, OSError):
             return True
-        current = current.__cause__ or current.__context__
+        pending.extend((current.__cause__, current.__context__))
+        if isinstance(current, BaseExceptionGroup):
+            pending.extend(current.exceptions)
     return False
 
 
@@ -425,14 +437,16 @@ def _run_prepared(role, store, checkout, runtime_snapshot, boundary):
         store.write("runtime.json", m.json_bytes(runtime_snapshot))
         backend = _DiskBackend(store, checkout)
         slots, stopped = _drive(role, backend, boundary)
-        result.update(evaluations=slots, coverage=_coverage(slots), status=_matrix_status(slots, stopped),
-                      provenance=_provenance(checkout, [store.expected[p] for p in sorted(store.expected)]))
-        v.validate_result_contract(result, source_snapshots=checkout.snapshots())
-        # Global failure retains the complete ledger; never install a marker.
-        store.write("result.json", m.json_bytes(result))
-        store.write("summary.md", summary_bytes(result))
+        result.update(evaluations=slots, coverage=_coverage(slots), status=_matrix_status(slots, stopped))
+        # A stopped run may have lost its root after an I/O/interrupt boundary.
+        # Return the complete in-memory ledger without reading, writing,
+        # preserving, publishing, or rechecking that unsafe boundary.
         if stopped:
             return {"result": result, "publication": None}
+        result["provenance"] = _provenance(checkout, [store.expected[p] for p in sorted(store.expected)])
+        v.validate_result_contract(result, source_snapshots=checkout.snapshots())
+        store.write("result.json", m.json_bytes(result))
+        store.write("summary.md", summary_bytes(result))
         receipt = store.publish(lambda files: _verify_producer_tree(files, checkout, runtime_snapshot), boundary)
         return {"result": result, "publication": receipt}
     except BaseException as exc:
