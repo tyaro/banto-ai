@@ -90,7 +90,8 @@ main未統合です。初稿へのAstra/max監査はP0/P1 0件・P2 3件で、�
 `DOCS_READY=yes`、`IMPLEMENTATION_READY=yes`、`STACK_READY=yes`としてS0をfrozen・adoptedにしました。
 S0監査記録commit `0b40e7295cfa20f32889005ceca2d29d29ca340c`の上で、5 config、9 schema、
 pure semantic validator、全seed・bootstrap goldenの固定とadversarial testsをS1実装候補として追加しました。
-S1は独立監査待ちです。S2以降、scorer／runner、Linux／Windows native acceptance、formal run、
+S1初回監査（`0368769acf12a0279c84f30c6435e853208386e9`）はP2=6／P3=1件でした。
+現在は修正候補・独立再監査待ちで、S1未承認です。S2以降、scorer／runner、Linux／Windows native acceptance、formal run、
 性能評価、promotionは未着手です。S0の監査根拠は
 [`anomaly-multiseed-v0.3-plan-audit-2026-09-06.md`](results/anomaly-multiseed-v0.3-plan-audit-2026-09-06.md)、
 候補本文は[`anomaly-multiseed-evaluation-plan-v0.3.md`](anomaly-multiseed-evaluation-plan-v0.3.md)、

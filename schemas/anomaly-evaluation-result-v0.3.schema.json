@@ -27,6 +27,9 @@
           "type": "string",
           "pattern": "^[a-f0-9]{40}$"
         },
+        "producer_source": {
+          "$ref": "#/$defs/source_descriptor"
+        },
         "registry_raw_sha256": {
           "$ref": "#/$defs/digest"
         },
@@ -42,6 +45,7 @@
         "science_revision",
         "post_audit_revision",
         "producer_revision",
+        "producer_source",
         "registry_raw_sha256",
         "inventory"
       ],
@@ -75,7 +79,11 @@
             ]
           },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "const": [
+            0,
+            1800
+          ]
         },
         "fit": {
           "type": "array",
@@ -92,7 +100,11 @@
             ]
           },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "const": [
+            1800,
+            5400
+          ]
         },
         "calibration": {
           "type": "array",
@@ -109,7 +121,11 @@
             ]
           },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "const": [
+            5400,
+            7200
+          ]
         },
         "test": {
           "type": "array",
@@ -126,7 +142,11 @@
             ]
           },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "const": [
+            7200,
+            9000
+          ]
         }
       },
       "required": [
@@ -253,6 +273,78 @@
   ],
   "additionalProperties": false,
   "$defs": {
+    "delay_summary": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "median": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mean": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "conditioned_on": {
+          "type": "string",
+          "const": "causal-detected-only"
+        },
+        "undetected_fill": {
+          "type": "string",
+          "const": "forbidden"
+        },
+        "unit": {
+          "type": "string",
+          "const": "seconds"
+        }
+      },
+      "required": [
+        "count",
+        "median",
+        "mean",
+        "min",
+        "max",
+        "conditioned_on",
+        "undetected_fill",
+        "unit"
+      ],
+      "additionalProperties": false
+    },
     "digest": {
       "type": "string",
       "pattern": "^[a-f0-9]{64}$"
@@ -880,6 +972,9 @@
               "type": "null"
             }
           ]
+        },
+        "delay_summary": {
+          "$ref": "#/$defs/delay_summary"
         }
       },
       "required": [
@@ -891,7 +986,8 @@
         "availability",
         "scheduled_clean_seconds",
         "effective_clean_seconds",
-        "effective_clean_rate"
+        "effective_clean_rate",
+        "delay_summary"
       ],
       "additionalProperties": false
     },
@@ -1466,6 +1562,16 @@
         "actual_count": {
           "type": "integer",
           "minimum": 0
+        },
+        "delay_summary": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/delay_summary"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -1475,7 +1581,48 @@
         "key",
         "metric",
         "planned_count",
-        "actual_count"
+        "actual_count",
+        "delay_summary"
+      ],
+      "additionalProperties": false
+    },
+    "source_descriptor": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "$ref": "#/$defs/relative_path"
+              },
+              "raw_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "byte_count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "path",
+              "raw_sha256",
+              "byte_count"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "revision",
+        "sources"
       ],
       "additionalProperties": false
     },

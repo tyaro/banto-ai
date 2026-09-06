@@ -108,7 +108,27 @@
         ]
       },
       "minItems": 3,
-      "maxItems": 3
+      "maxItems": 3,
+      "const": [
+        {
+          "candidate_id": "c0-diff-control",
+          "fit": "no-op",
+          "residual": "x_i(t)-x_i(t-1)",
+          "threshold": 4.0
+        },
+        {
+          "candidate_id": "c1-phase-level",
+          "fit": "phase-median",
+          "residual": "x_i(t)-mu_i,m(u)",
+          "threshold": 6.0
+        },
+        {
+          "candidate_id": "c2-phase-conditional",
+          "fit": "phase-median-shrinkage-covariance",
+          "residual": "(Omega*(r(t)-v))_i/sqrt(Omega_ii)",
+          "threshold": 6.0
+        }
+      ]
     },
     "profile_version": {
       "type": "string",
@@ -161,7 +181,19 @@
         ]
       },
       "minItems": 10,
-      "maxItems": 10
+      "maxItems": 10,
+      "const": [
+        "candidate",
+        "role",
+        "seed",
+        "layout",
+        "stratum",
+        "equipment",
+        "full_target",
+        "mode",
+        "recipe_family",
+        "profile_version"
+      ]
     },
     "features": {
       "type": "array",
@@ -194,7 +226,15 @@
         ]
       },
       "minItems": 6,
-      "maxItems": 6
+      "maxItems": 6,
+      "const": [
+        "same-equipment-current-and-past-target-values",
+        "quality",
+        "timestamp",
+        "observed-mode",
+        "recipe-family",
+        "locked-normal-profile"
+      ]
     },
     "forbidden_features": {
       "type": "array",
@@ -235,7 +275,17 @@
         ]
       },
       "minItems": 8,
-      "maxItems": 8
+      "maxItems": 8,
+      "const": [
+        "GT",
+        "layout",
+        "seed",
+        "cycle",
+        "absolute-test-position",
+        "future",
+        "other-equipment",
+        "load_proxy"
+      ]
     },
     "targets": {
       "type": "array",
@@ -276,7 +326,17 @@
         ]
       },
       "minItems": 8,
-      "maxItems": 8
+      "maxItems": 8,
+      "const": [
+        "motor-01.motor_current",
+        "motor-01.motor_temperature",
+        "motor-01.conveyor_speed",
+        "motor-01.vibration_feature",
+        "conveyor-01.motor_current",
+        "conveyor-01.motor_temperature",
+        "conveyor-01.conveyor_speed",
+        "conveyor-01.vibration_feature"
+      ]
     },
     "phase_range": {
       "type": "array",
@@ -293,7 +353,11 @@
         ]
       },
       "minItems": 2,
-      "maxItems": 2
+      "maxItems": 2,
+      "const": [
+        0,
+        29
+      ]
     },
     "phase_zero_available": {
       "type": "boolean",
@@ -338,7 +402,14 @@
         ]
       },
       "minItems": 5,
-      "maxItems": 5
+      "maxItems": 5,
+      "const": [
+        "mode",
+        "recipe",
+        "gap",
+        "quality",
+        "profile"
+      ]
     },
     "c2_requires_complete_current_and_previous": {
       "type": "boolean",
@@ -433,7 +504,11 @@
             ]
           },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "const": [
+            1,
+            29
+          ]
         },
         "complete_vectors": {
           "type": "integer",
@@ -494,7 +569,13 @@
             ]
           },
           "minItems": 4,
-          "maxItems": 4
+          "maxItems": 4,
+          "const": [
+            "motor_current",
+            "motor_temperature",
+            "conveyor_speed",
+            "vibration_feature"
+          ]
         },
         "jitter": {
           "type": "boolean",
@@ -559,7 +640,13 @@
             ]
           },
           "minItems": 4,
-          "maxItems": 4
+          "maxItems": 4,
+          "const": [
+            "dataset",
+            "equipment",
+            "mode",
+            "visit"
+          ]
         },
         "source_sort": {
           "type": "array",
@@ -580,7 +667,12 @@
             ]
           },
           "minItems": 3,
-          "maxItems": 3
+          "maxItems": 3,
+          "const": [
+            "onset",
+            "full_target",
+            "episode_id"
+          ]
         },
         "label_input": {
           "type": "boolean",
@@ -645,7 +737,17 @@
         ]
       },
       "minItems": 8,
-      "maxItems": 8
+      "maxItems": 8,
+      "const": [
+        "current_target_quality",
+        "current_nonfinite",
+        "no_previous_or_gap",
+        "previous_target_quality_or_nonfinite",
+        "mode_recipe_or_phase",
+        "peer_quality_or_nonfinite",
+        "profile_inconclusive",
+        "nonfinite_score"
+      ]
     },
     "fixtures": {
       "type": "object",
@@ -693,7 +795,18 @@
             ]
           },
           "minItems": 9,
-          "maxItems": 9
+          "maxItems": 9,
+          "const": [
+            "M1",
+            "M2",
+            "M3",
+            "M4",
+            "M5",
+            "M6",
+            "M7",
+            "M8",
+            "M9"
+          ]
         },
         "quantization": {
           "type": "array",
@@ -722,7 +835,14 @@
             ]
           },
           "minItems": 5,
-          "maxItems": 5
+          "maxItems": 5,
+          "const": [
+            "Q1",
+            "Q2",
+            "Q3",
+            "Q4",
+            "Q5"
+          ]
         }
       },
       "required": [

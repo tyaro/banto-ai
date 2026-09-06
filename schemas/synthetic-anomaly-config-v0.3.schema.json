@@ -48,7 +48,11 @@
         ]
       },
       "minItems": 2,
-      "maxItems": 2
+      "maxItems": 2,
+      "const": [
+        "motor-01",
+        "conveyor-01"
+      ]
     },
     "targets": {
       "type": "array",
@@ -73,7 +77,13 @@
         ]
       },
       "minItems": 4,
-      "maxItems": 4
+      "maxItems": 4,
+      "const": [
+        "motor_current",
+        "motor_temperature",
+        "conveyor_speed",
+        "vibration_feature"
+      ]
     },
     "numeric_signals": {
       "type": "array",
@@ -102,7 +112,14 @@
         ]
       },
       "minItems": 5,
-      "maxItems": 5
+      "maxItems": 5,
+      "const": [
+        "motor_current",
+        "motor_temperature",
+        "conveyor_speed",
+        "vibration_feature",
+        "load_proxy"
+      ]
     },
     "start_timestamp": {
       "type": "string",
@@ -159,7 +176,15 @@
         ]
       },
       "minItems": 6,
-      "maxItems": 6
+      "maxItems": 6,
+      "const": [
+        "stopped",
+        "startup",
+        "low_speed",
+        "nominal",
+        "high_load",
+        "cooldown"
+      ]
     },
     "recipes": {
       "type": "array",
@@ -192,7 +217,15 @@
         ]
       },
       "minItems": 6,
-      "maxItems": 6
+      "maxItems": 6,
+      "const": [
+        "stop",
+        "start",
+        "low",
+        "run",
+        "load",
+        "cooldown"
+      ]
     },
     "splits": {
       "type": "object",
@@ -212,7 +245,11 @@
             ]
           },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "const": [
+            0,
+            1800
+          ]
         },
         "fit": {
           "type": "array",
@@ -229,7 +266,11 @@
             ]
           },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "const": [
+            1800,
+            5400
+          ]
         },
         "calibration": {
           "type": "array",
@@ -246,7 +287,11 @@
             ]
           },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "const": [
+            5400,
+            7200
+          ]
         },
         "test": {
           "type": "array",
@@ -263,7 +308,11 @@
             ]
           },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "const": [
+            7200,
+            9000
+          ]
         }
       },
       "required": [
@@ -309,7 +358,13 @@
         ]
       },
       "minItems": 4,
-      "maxItems": 4
+      "maxItems": 4,
+      "const": [
+        "machine",
+        "sensor",
+        "ignored",
+        "data_quality"
+      ]
     },
     "quantization": {
       "type": "object",
@@ -388,7 +443,13 @@
             ]
           },
           "minItems": 4,
-          "maxItems": 4
+          "maxItems": 4,
+          "const": [
+            0,
+            7,
+            14,
+            21
+          ]
         },
         "test_cycles": {
           "type": "integer",
@@ -476,7 +537,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  "motor_current",
+                  "conveyor_speed"
+                ]
               }
             },
             "required": [
@@ -518,7 +583,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  "motor_temperature",
+                  "motor_temperature"
+                ]
               }
             },
             "required": [
@@ -560,7 +629,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  "motor_temperature",
+                  "motor_temperature"
+                ]
               }
             },
             "required": [
@@ -602,7 +675,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  "load_proxy",
+                  "load_proxy"
+                ]
               }
             },
             "required": [
@@ -617,7 +694,49 @@
         ]
       },
       "minItems": 4,
-      "maxItems": 4
+      "maxItems": 4,
+      "const": [
+        {
+          "class": "machine",
+          "type": "jam_or_slip",
+          "magnitude": 0.55,
+          "class_index": 0,
+          "target_by_equipment": [
+            "motor_current",
+            "conveyor_speed"
+          ]
+        },
+        {
+          "class": "sensor",
+          "type": "spike",
+          "magnitude": 8.0,
+          "class_index": 1,
+          "target_by_equipment": [
+            "motor_temperature",
+            "motor_temperature"
+          ]
+        },
+        {
+          "class": "data_quality",
+          "type": "dropout",
+          "magnitude": 0.0,
+          "class_index": 2,
+          "target_by_equipment": [
+            "motor_temperature",
+            "motor_temperature"
+          ]
+        },
+        {
+          "class": "ignored",
+          "type": "stuck_value",
+          "magnitude": 0.0,
+          "class_index": 3,
+          "target_by_equipment": [
+            "load_proxy",
+            "load_proxy"
+          ]
+        }
+      ]
     },
     "strata": {
       "type": "array",
@@ -634,7 +753,11 @@
         ]
       },
       "minItems": 2,
-      "maxItems": 2
+      "maxItems": 2,
+      "const": [
+        "core",
+        "quality-stress"
+      ]
     },
     "core_quality_enabled": {
       "type": "boolean",

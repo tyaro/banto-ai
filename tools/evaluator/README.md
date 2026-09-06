@@ -60,7 +60,8 @@ py -3.14 tools/evaluator/analyze_event_slices.py `
 ### v0.3 S1: config/schema/pure validator
 
 [v0.3凍結計画](../../docs/anomaly-multiseed-evaluation-plan-v0.3.md)のS0は監査合格済みです。
-現在のS1は実装候補・独立監査待ちで、S2以降は未着手です。
+S1初回監査（`0368769acf12a0279c84f30c6435e853208386e9`）はP2=6／P3=1件でした。
+現在は修正候補・独立再監査待ち、S1未承認で、S2以降は未着手です。
 [公開module](../../src/banto_ai/anomaly_v03.py)は標準ライブラリのみで、渡された値またはbytesを検査します。
 package rootへの副作用のある自動importは追加せず、`from banto_ai import anomaly_v03`で利用します。
 
@@ -92,11 +93,40 @@ testsのfixtureに保存しています。復元したbytesは上記2 revision�
 
 `validate_decoded_configs`はI/Oなしで登録値とcross-config整合性を検査します。
 `evaluation_inventory`／`event_inventory`は設計台帳だけを返し、観測値を生成しません。
-`validate_result_contract`はshape、ID、件数、時刻、split、claimed support／参照、pairing、statusを検査します。
+`validate_result_contract`はshape、ID、件数、時刻、ordered split／bootstrap、claimed support／双方向参照、
+報告されたmatching候補の同一設備・半開時間窓、pairing、statusを検査します。
+v0.3専用のtyped literal／`re.fullmatch`検査で末尾改行を拒否し、v0.1／v0.2の共通validatorは変更しません。
+analysisの9 primary tables、8 target availability、全180 absolute／paired gate、raw count／point／CI状態、
+overall加算、qualificationと固定C1優先選択の**報告内容の整合性**も検査します。
+gateの閾値比較は報告値を丸めず行いますが、bootstrap metric／CIを再計算するものではありません。
 返値は常に`run_status=not_run`、`engineering_status=not_evaluated`、
 `performance_status=not_evaluated`、`result_trusted=false`で、入力のrun状態は`reported_run_status`へ分離します。
 数値profile／score、episodeの完全列挙、matching候補列の完全性、CI／gateの再計算はS2〜S6の責務です。
 M1〜M9／Q1〜Q5は今回ID・shape・enumだけを登録し、scorer挙動は未実装です。
+
+`not_run`で許可するのは設計台帳、入力hash、source descriptorなどのmetadataだけです。
+computed metric／slice／gate／delay、fit済みprofile、処理済みincidentは許可しません。
+run開始後かつperformance `not_evaluated`では部分的なpoint diagnosticsは許可しますが、
+CI／gate計算済み・qualified・選択済みとは宣言できません。未処理の欠落をmissに補完しません。
+`complete` analysisには全primary metricsとprofile状態が必要で、合格宣言には全required CI／gate、
+自候補およびC0 profileがcalibratedであることが必要です。C0の0-alert precisionはnull／inconclusiveのまま、
+相対比較は固定分母のfalse-alert burdenを使います。合格候補がなく両候補に確定failがある場合は
+`fail / no_promotion`、判定不能が残る場合は`inconclusive / inconclusive`とし、いずれも選択しません。
+
+metricとincident sliceのclosed `delay_summary`はcount／median／mean／min／max、seconds、
+`conditioned_on=causal-detected-only`、`undetected_fill=forbidden`を保持します。
+検知0件なら統計値は全てnull、検知ありなら範囲は1秒以上6秒未満で、未検知0秒補完は禁止です。
+
+producerは`provenance.producer_source`、analysisは自身の`analysis_consumer`、auditは
+入力analysisの`input_analysis`と自身の`audit_consumer`を別々のclosed descriptorとして持ちます。
+各descriptorはfull 40 SHAの`revision`とsource各fileのpath／raw SHA-256／byte_countを持ち、
+producer／auditの既存revision fieldとも一致させます。自由なpayload inventoryでの代用はできません。
+`validate_result_contract(value, source_snapshots=...)`へ、信頼した呼出し側が指定commitから取得した
+`{full_revision: {relative_source_path: raw_bytes}}`を渡すと、revision／file inventory、byte数、hashを照合します。
+engineering pass／trustedの報告を検査する場合、このbytes入力は必須です。
+同一revisionの複数roleは許可しますが、独立性の証明とはしません。metadataだけなら未照合も許可し、
+`source_validation=not_checked`を返します。照合済みも実行・Git commit真正性・完全なsource inventoryを証明せず、
+指定commitとbytesの結び付けはtrusted I/O caller、実行内容と独立再計算はS2〜S6の責務です。
 
 seed registryはdev 8／smoke 2／holdout 40、bootstrapは40 clusters×50,000 replicatesです。
 `bootstrap_indices()`は全2,000,000 accepted indicesだけを純粋計算し、datasetや性能指標を作りません。
@@ -109,11 +139,31 @@ pure validatorはfilesystem/network/environmentに触れず、これらの実機
 新5 output rootsの作成、ACL、materializer／runner実行、dev／smoke／formal campaignはS1にありません。
 
 ```text
-python -B -m unittest tests.test_anomaly_v03 -v
+python -B -m unittest tests.test_anomaly_v03 tests.test_anomaly_v03_audit_repair -v
 ```
 
 このS1 savepointのローカル検査対象はWindowsのCPython 3.14.0です。Python 3.12はローカルに
 存在せず未実行であり、Linux／Windows両minorの正式な受入完了としては扱いません。
+
+保存した[初回監査反例と境界試験](../../tests/test_anomaly_v03_audit_repair.py)は架空の報告値だけを使います。
+修正前の`0368769...`で最初の14 testsを実行した結果は22 subtest failuresで、P2の抜けを再現しました。
+typed bool indexは修正前も拒否され、P3の2境界testsも修正前から通過していました。
+P3は算法変更ではなく、T−1／T／最大値のrejection、counter増加・次position reset、
+small／旧seed／新seed衝突retryの保存試験を補う修正です。seed／bootstrap hashと凍結plan bytesは不変です。
+
+全suite確認で、既存diagnostics fixtureがHEADの92 paths固定を前提としていたことも確認しました。
+S1 commit後は109 pathsとなるため、revision compatibilityのcurrent-onlyを既存4件＋S1の
+3 modules／9 schemas／5 configsの**exact 21 paths**へ保守しました。wildcard／prefix許可は追加していません。
+module・D2 config・D2 config schemaの同リストと対応する現行config／schema pinsを同期し、旧88 semantic blobsは
+[独立したpath／mode／raw hash inventory](../../tests/fixtures/anomaly-diagnostics-historical-88.json)でGit LF blobsとbyte exactに照合します。
+current treeのextra／missing、historicalとの重複、mode／link／raw改ざんの拒否を
+[既存diagnostics tests](../../tests/test_anomaly_failure_diagnostics.py)で確認します。
+変更に伴い現行diagnostics module／config／config schemaのraw hashは変わります。
+これは将来のcurrent revision compatibility保守であり、過去の正式artifact／result／doc、
+FORMAL_RAW_PINS、artifact revision、D2 identity／出力root／ACLは変更せず、正式runを再実行していません。
+このWindows作業copyの旧88 pathsには既存のCRLF差が68件あり、Git LF blobsとの差は全て改行のみです。
+それらは書き換えていません。実際のrevision compatibilityはworking bytesもbyte exactを要求するため、
+この作業copyをformal replay可能と宣言しません。test fixtureのGit LF照合と実機run受入は別です。
 
 ### v0.1 / v0.2の既存validator
 

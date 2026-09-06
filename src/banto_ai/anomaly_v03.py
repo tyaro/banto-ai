@@ -28,8 +28,8 @@ from ._anomaly_v03_schema import common_defs, schemas
 from .manifest import ManifestValidationError, validate
 
 # Trusted external pins for these persisted S1 JSON bytes; no self-reference.
-REGISTRY_RAW_SHA256 = "6b612def66bf577870489f5935c634c4d7cd1d4d49531ef0e674e226374bfec1"
-REGISTRY_CANONICAL_SHA256 = "48caf57b3e45ed115cb757ef35638648f53b3294271ac1300688dd6928c1166b"
+REGISTRY_RAW_SHA256 = "61af9100f8daa96d8200a0d2ab23aa7209cab52f0dd5543f9e35797de7332a70"
+REGISTRY_CANONICAL_SHA256 = "2d6fb5072c9e15e0efdbcc35488fb148a8b6911bbe84c616e071e2ecab9205a3"
 PLAN_SCIENCE_RAW_SHA256 = "8eef3a6dc094e9d48a321fe526e85c75e6876caf6023730c005381da4e762bc5"
 PLAN_STATUS_RAW_SHA256 = "15e97cfa798618d6822664fc13e53a05279633dde1b0514fc52f6367d073e0c1"
 
@@ -125,9 +125,41 @@ def _shape(value: Any, schema: dict) -> None:
     json_value(value)
     try:
         validate(value, schema)
-    except (ManifestValidationError, KeyError, TypeError, ValueError) as exc:
+    except (ManifestValidationError, KeyError, TypeError, ValueError, OverflowError) as exc:
         raise V03ValidationError(f"schema violation: {exc}") from exc
+    _strict_literals(value, schema, schema)
     _paths(value)
+
+
+def _strict_literals(value: Any, schema: dict, root: dict) -> None:
+    """v0.3 full-string patterns and typed ordered literals, independent of v0.1/2.
+
+    The shared manifest validator uses search/$ and Python equality. Do not
+    change its historical contract or rely on unsupported schema keywords here.
+    """
+    if "$ref" in schema:
+        _strict_literals(value, root["$defs"][schema["$ref"].split("/")[-1]], root)
+    if "const" in schema:
+        require(canonical_json(value) == canonical_json(schema["const"]), "typed ordered literal mismatch")
+    if "pattern" in schema:
+        require(type(value) is str and re.fullmatch(schema["pattern"], value) is not None, "full-string pattern mismatch")
+    if "anyOf" in schema:
+        for branch in schema["anyOf"]:
+            try:
+                validate(value, {**branch, "$defs": root.get("$defs", {})})
+                _strict_literals(value, branch, root)
+                break
+            except (ManifestValidationError, V03ValidationError):
+                continue
+        else:
+            raise V03ValidationError("no strictly typed schema alternative")
+    if type(value) is dict:
+        for key, sub in schema.get("properties", {}).items():
+            if key in value:
+                _strict_literals(value[key], sub, root)
+    if type(value) is list and "items" in schema:
+        for item in value:
+            _strict_literals(item, schema["items"], root)
 
 
 def seed_registry() -> dict:
@@ -367,7 +399,19 @@ def validate_ledger_rows(identity: dict, *, events: list, profiles: list, scores
         require(all(s["available"] and s["threshold_exceeded"] and all(s[k] == row[k] for k in ("full_target", "mode", "recipe", "profile_id")) for s in support), "invalid source support")
         require(support[-1]["sample"]//30*30 == row["visit_start_sample"], "source visit mismatch")
         require([s["streak"] for s in support] == [1, 2], "source onset is not second exceedance")
+        require(support[1]["source_episode_id"] == row["episode_id"], "source onset backlink missing")
         require(row["end_ms"] <= c.START_MS+(row["visit_start_sample"]+30)*1000, "source interval crosses visit")
+    # Inspect only reported scores/intervals; forming or fully enumerating
+    # episodes remains S2. The first support point precedes the interval.
+    coordinates = ("dataset_id", "candidate_id", "equipment", "full_target", "mode", "recipe", "profile_id")
+    by_coordinate = {}
+    for source in source_episodes:
+        by_coordinate.setdefault(tuple(source[k] for k in coordinates), []).append(source)
+    for score in scores:
+        members = [source["episode_id"] for source in by_coordinate.get(tuple(score[k] for k in coordinates), ())
+                   if source["onset_ms"] <= score["timestamp_ms"] < source["end_ms"]]
+        require(len(members) <= 1, "overlapping reported source intervals")
+        require(score["source_episode_id"] == (members[0] if members else None), "score/source membership backlink mismatch")
     used_sources = []
     for row in equipment_episodes:
         _coordinate(row, identity)
@@ -390,6 +434,11 @@ def validate_ledger_rows(identity: dict, *, events: list, profiles: list, scores
         require(event_map[row["event_id"]]["event_class"] in ("machine", "sensor"), "nonpositive incident")
         ids = row["candidate_episode_ids"]
         require(row["candidate_count"] == len(ids) and len(ids) == len(set(ids)) and all(i in episode_map for i in ids), "candidate inventory mismatch")
+        event = event_map[row["event_id"]]
+        require(all(episode_map[i]["dataset_id"] == event["dataset_id"]
+                    and episode_map[i]["equipment"] == event["equipment"]
+                    and event["start_ms"] <= episode_map[i]["onset_ms"] < event["window_end_ms"] for i in ids),
+                "reported candidate outside event equipment/window")
         require(ids == sorted(ids, key=lambda i: (episode_map[i]["onset_ms"], i)), "candidate order mismatch")
         selected = row["selected_candidate_episode_id"]
         require(selected == (ids[0] if ids else None), "selected candidate is not first (retry)")
@@ -421,14 +470,213 @@ def validate_ledger_rows(identity: dict, *, events: list, profiles: list, scores
     require(all(row["matched_event_id"] == matched.get(row["episode_id"]) for row in equipment_episodes), "event/episode match backlink mismatch")
 
 
-def validate_result_contract(value: dict) -> dict:
-    """Shape + declared-ledger consistency only; never return a run success."""
+def _source_descriptors(value: dict, snapshots: Mapping[str, Mapping[str, bytes]] | None) -> str:
+    """Check descriptors against caller-captured revision-scoped source bytes.
+
+    This has no Git access: the trusted I/O caller must capture each mapping
+    from that full commit, not from a result's inventory or a mutable checkout.
+    Byte agreement is NOT proof of execution, independence or Git authenticity.
+    """
+    provenance = value["provenance"]
+    descriptors = [provenance["producer_source"]]
+    require(provenance["producer_revision"] == descriptors[0]["revision"], "producer source revision mismatch")
+    if "analysis_consumer" in value:
+        descriptors.append(value["analysis_consumer"])
+    if "input_analysis" in value:
+        descriptors.extend((value["input_analysis"], value["audit_consumer"]))
+        require(value["consumer_revision"] == value["audit_consumer"]["revision"], "audit consumer revision mismatch")
+    expected = {}
+    for descriptor in descriptors:
+        _unique(descriptor["sources"], "path")
+        files = expected.setdefault(descriptor["revision"], {})
+        for item in descriptor["sources"]:
+            require(item["path"] not in files or files[item["path"]] == item, "conflicting source descriptor")
+            files[item["path"]] = item
+    if snapshots is None:
+        require(value["status"]["engineering_status"] != "pass" and not value.get("result_trusted", False),
+                "acceptance claim requires caller-supplied revision source bytes")
+        return "not_checked"
+    require(isinstance(snapshots, Mapping) and set(snapshots) == set(expected), "source revision inventory mismatch")
+    for revision, files in expected.items():
+        supplied = snapshots[revision]
+        require(isinstance(supplied, Mapping) and set(supplied) == set(files), "source file inventory mismatch")
+        for path, item in files.items():
+            raw = supplied[path]
+            require(type(raw) is bytes and len(raw) == item["byte_count"]
+                    and hashlib.sha256(raw).hexdigest() == item["raw_sha256"], "source bytes/hash mismatch")
+    return "supplied_bytes_verified-revision_binding_requires_trusted_caller"
+
+
+def _delay_summary(summary: dict, count: int | None = None) -> None:
+    if count is not None:
+        require(summary["count"] == count, "delay count is not causal detections")
+    values = [summary[k] for k in ("median", "mean", "min", "max")]
+    if summary["count"] == 0:
+        require(all(v is None for v in values), "zero detections require null delay statistics")
+    else:
+        require(all(v is not None for v in values), "detected delay statistics missing")
+        require(1 <= summary["min"] <= summary["median"] <= summary["max"] < 6
+                and summary["min"] <= summary["mean"] <= summary["max"], "invalid detected-only delay range")
+        if summary["count"] == 1:
+            require(len(set(values)) == 1, "single detected delay disagreement")
+
+
+def _reported_ci(point, lower, upper, state, nulls, *, domain=None, primary=True) -> None:
+    require(0 <= nulls <= c.BOOTSTRAP_REPLICATES, "null replicate count out of bounds")
+    if state == "complete":
+        require(point is not None and lower is not None and upper is not None and lower <= upper and nulls == 0,
+                "complete CI has null/reversed bounds or null replicates")
+        if domain is not None:
+            lo, hi = domain
+            require(lo <= lower and (hi is None or upper <= hi), "CI outside metric domain")
+    else:
+        require(lower is None and upper is None, "unfinished CI contains bounds")
+        if state in ("not_evaluated", "not_applicable"):
+            require(nulls == 0, "uncomputed CI contains replicate count")
+        require(not primary or state != "not_applicable", "required primary CI cannot be not applicable")
+
+
+def _reported_metric(metric: dict, name: str, denominator: int | None = None, *, primary=True) -> None:
+    n, d = metric["numerator"], metric["denominator"]
+    require(n <= 41472000 and d <= 41472000, "reported count exceeds entire planned score inventory")
+    if denominator is not None:
+        require(d == denominator, "reported planned denominator mismatch")
+    ratio = name not in ("clean_rate", "false_alert_burden")
+    require(not ratio or n <= d, "ratio numerator exceeds denominator")
+    expected = None if d == 0 else (8*n/(d/3600) if name == "clean_rate" else (100*n/d if name == "false_alert_burden" else n/d))
+    require(metric["value"] == expected, "reported count/point arithmetic mismatch")
+    _reported_ci(metric["value"], metric["ci_lower"], metric["ci_upper"], metric["ci_status"], metric["null_replicates"],
+                 domain=(0, 1 if ratio else None), primary=primary)
+
+
+def _metric_items(metrics: dict, *, absolute: bool) -> list:
+    names = ("machine_recall", "sensor_recall", "precision", "clean_rate") if absolute else ("machine_recall", "sensor_recall", "clean_rate", "false_alert_burden")
+    return [(name, None, metrics[name]) for name in names] + [("availability", row["full_target"], row["metric"]) for row in metrics["availability"]]
+
+
+def _reported_metrics(metrics: dict, *, datasets: int) -> None:
+    require([r["full_target"] for r in metrics["availability"]] == list(c.FULL_TARGETS), "availability full-target inventory mismatch")
+    denominators = {"machine_recall": datasets*10, "sensor_recall": datasets*10, "precision": None,
+                    "clean_rate": datasets*3365, "false_alert_burden": datasets*20}
+    for name, d in denominators.items():
+        _reported_metric(metrics[name], name, d)
+    for row in metrics["availability"]:
+        _reported_metric(row["metric"], "availability", datasets*1800)
+    detected = metrics["machine_recall"]["numerator"] + metrics["sensor_recall"]["numerator"]
+    precision, burden, clean = (metrics[k] for k in ("precision", "false_alert_burden", "clean_rate"))
+    require(precision["numerator"] == detected and precision["denominator"] <= datasets*14400,
+            "reported matched/all episode count mismatch")
+    require(burden["numerator"] == precision["denominator"]-detected and clean["numerator"] <= burden["numerator"],
+            "reported matched/unmatched/clean partition mismatch")
+    scheduled, effective = metrics["scheduled_clean_seconds"], metrics["effective_clean_seconds"]
+    require(scheduled == datasets*3365 and 0 <= effective <= scheduled, "clean exposure bounds mismatch")
+    require(metrics["effective_clean_rate"] == (8*clean["numerator"]/(effective/3600) if effective else None), "effective clean rate mismatch")
+    _delay_summary(metrics["delay_summary"], detected)
+
+
+def _reported_slices(rows: list, *, uncomputed_ci: bool) -> None:
+    keys = [(r["candidate_id"], r["stratum"], r["dimension"], r["key"]) for r in rows]
+    require(len(keys) == len(set(keys)), "duplicate reported slice")
+    for row in rows:
+        require(row["actual_count"] <= row["planned_count"], "slice count exceeds plan")
+        _reported_metric(row["metric"], "ratio", primary=False)
+        if uncomputed_ci:
+            require(row["metric"]["ci_status"] in ("not_evaluated", "not_applicable"), "uncomputed analysis has slice CI")
+        if row["delay_summary"] is not None:
+            _delay_summary(row["delay_summary"], row["metric"]["numerator"])
+        if row["dimension"] in ("class", "equipment", "mode", "class-equipment-mode", "test-cycle", "event-start-phase"):
+            require(row["delay_summary"] is not None, "incident slice missing detected-only delay summary")
+
+
+def _reported_analysis(value: dict) -> None:
+    """Validate reported claims only. Never draw, estimate a CI or run analysis."""
+    tables, state = value["candidate_tables"], value["status"]
+    require(canonical_json(value["bootstrap"]) == canonical_json(_expected_configs()[3]["bootstrap"]), "ordered bootstrap literal mismatch")
+    require([(t["candidate_id"], t["stratum"]) for t in tables] == [(a, b) for a in c.CANDIDATES for b in (*c.STRATA, "overall")], "candidate table inventory mismatch")
+    not_evaluated = state["performance_status"] == "not_evaluated"
+    if state["run_status"] == "not_run":
+        require(not value["slices"] and all(t["metrics"] is None and not t["gates"] and t["profile_status"] == "not_evaluated" for t in tables),
+                "not_run analysis contains computed results")
+    if state["run_status"] == "complete":
+        require(all(t["metrics"] is not None and t["profile_status"] != "not_evaluated" for t in tables), "complete analysis missing metrics/profile status")
+    _reported_slices(value["slices"], uncomputed_ci=not_evaluated)
+    for table in tables:
+        if table["metrics"] is not None:
+            _reported_metrics(table["metrics"], datasets=960 if table["stratum"] == "overall" else 480)
+            if not_evaluated:
+                metrics = table["metrics"]
+                require(all(m["ci_status"] == "not_evaluated" for _, _, m in _metric_items(metrics, absolute=True) + _metric_items(metrics, absolute=False)),
+                        "not_evaluated analysis contains computed CI")
+    if not_evaluated:
+        require(value["decision"] == "not_evaluated" and value["selected_candidate"] is None
+                and all(not t["qualified"] and not t["gates"] for t in tables), "uncomputed performance contains gates/selection")
+        return
+    require(all(t["metrics"] is not None for t in tables), "evaluated performance missing primary metrics")
+    indexed = {(t["candidate_id"], t["stratum"]): t for t in tables}
+    # Formal overall is the sum of reported raw counts, not mean(stratum ratios).
+    for candidate in c.CANDIDATES:
+        core, stress, overall = [indexed[candidate, layer]["metrics"] for layer in (*c.STRATA, "overall")]
+        for name, target, aggregate in _metric_items(overall, absolute=True) + [("false_alert_burden", None, overall["false_alert_burden"])]:
+            parts = [next(r["metric"] for r in m["availability"] if r["full_target"] == target) if target else m[name] for m in (core, stress)]
+            require(all(aggregate[k] == sum(p[k] for p in parts) for k in ("numerator", "denominator")), "overall reported raw counts are not stratum sums")
+        require(overall["effective_clean_seconds"] == core["effective_clean_seconds"] + stress["effective_clean_seconds"], "overall effective exposure mismatch")
+    config = _expected_configs()[3]
+    for table in tables:
+        candidate, layer, metrics = table["candidate_id"], table["stratum"], table["metrics"]
+        control = indexed[c.CANDIDATES[0], layer]
+        expected = [("absolute", name, target, metric) for name, target, metric in _metric_items(metrics, absolute=True)]
+        if candidate != c.CANDIDATES[0]:
+            expected += [("paired-control", name, target, metric) for name, target, metric in _metric_items(metrics, absolute=False)]
+        require([(g["comparison"], g["name"], g["full_target"]) for g in table["gates"]] == [(comparison, name, target) for comparison, name, target, _ in expected],
+                "required gate inventory/order mismatch")
+        for gate, (comparison, name, target, metric) in zip(table["gates"], expected):
+            rule_name = "each_target_availability" if target else name
+            _reported_ci(gate["point"], gate["lower"], gate["upper"], gate["ci_status"], gate["null_replicates"],
+                         domain=(-1, 1) if comparison == "paired-control" and name in ("machine_recall", "sensor_recall", "availability") else None)
+            ready = table["profile_status"] == "calibrated"
+            if comparison == "absolute":
+                require((gate["point"], gate["lower"], gate["upper"], gate["ci_status"], gate["null_replicates"]) ==
+                        (metric["value"], metric["ci_lower"], metric["ci_upper"], metric["ci_status"], metric["null_replicates"]), "absolute gate/metric CI mismatch")
+                rule = next(r for r in config["absolute_gates"] if r["stratum"] == layer)[rule_name]
+            else:
+                baseline = next(m for n, t, m in _metric_items(control["metrics"], absolute=False) if (n, t) == (name, target))
+                delta = None if metric["value"] is None or baseline["value"] is None else metric["value"]-baseline["value"]
+                require(gate["point"] == delta, "reported paired delta mismatch")
+                ready = ready and control["profile_status"] == "calibrated" and metric["ci_status"] == baseline["ci_status"] == "complete"
+                if not ready:
+                    require(gate["ci_status"] == "inconclusive", "unavailable control/comparison claims complete paired CI")
+                rule = config["paired_noninferiority"][rule_name]
+            require(gate["ci_status"] != "not_evaluated", "evaluated performance missing required CI")
+            if not ready or gate["ci_status"] != "complete":
+                expected_status = "inconclusive"
+            else:
+                passed = (gate["point"] <= rule[0] and gate["upper"] <= rule[1]) if name in ("clean_rate", "false_alert_burden") else (gate["point"] >= rule[0] and gate["lower"] >= rule[1])
+                expected_status = "pass" if passed else "fail"
+            require(gate["status"] == expected_status, "reported gate flag contradicts fixed thresholds/CI")
+    qualified = {}
+    for candidate in c.CANDIDATES:
+        own = [indexed[candidate, layer] for layer in (*c.STRATA, "overall")]
+        controls_ready = all(indexed[c.CANDIDATES[0], layer]["profile_status"] == "calibrated" for layer in (*c.STRATA, "overall"))
+        qualified[candidate] = candidate != c.CANDIDATES[0] and state["engineering_status"] == "pass" and controls_ready and all(t["profile_status"] == "calibrated" and all(g["status"] == "pass" for g in t["gates"]) for t in own)
+        require(all(t["qualified"] == qualified[candidate] for t in own), "reported qualification contradicts required gates/profiles")
+    selected = next((candidate for candidate in c.CANDIDATES[1:] if qualified[candidate]), None)
+    require(value["selected_candidate"] == selected, "fixed C1-first selection mismatch")
+    if selected:
+        require(state["performance_status"] == "pass" and value["decision"] == "qualified", "qualified decision/status mismatch")
+    else:
+        decisive = state["engineering_status"] == "pass" and all(any(g["status"] == "fail" for t in tables if t["candidate_id"] == candidate for g in t["gates"]) for candidate in c.CANDIDATES[1:])
+        require((state["performance_status"], value["decision"]) == (("fail", "no_promotion") if decisive else ("inconclusive", "inconclusive")), "unqualified decision/status mismatch")
+
+
+def validate_result_contract(value: dict, *, source_snapshots: Mapping[str, Mapping[str, bytes]] | None = None) -> dict:
+    """Declared-contract checks only; supplied source bytes are not run proof."""
     types = ("event-aware-anomaly-v03", "anomaly-multiseed-v03", "anomaly-multiseed-analysis-v03", "anomaly-multiseed-audit-v03")
     require(type(value) is dict and value.get("result_type") in types, "unknown result identity")
     schema = schemas(_expected_configs())[5+types.index(value["result_type"])]
     _shape(value, schema)
     require(value["provenance"]["registry_raw_sha256"] == REGISTRY_RAW_SHA256, "result registry pin mismatch")
     _unique(value["provenance"]["inventory"], "path")
+    source_status = _source_descriptors(value, source_snapshots)
     status = value["status"]
     if status["run_status"] != "complete":
         require(status["engineering_status"] != "pass" and status["performance_status"] == "not_evaluated", "unfinished run claims acceptance")
@@ -438,6 +686,7 @@ def validate_result_contract(value: dict) -> dict:
     if kind in types[:2]:
         require(status["performance_status"] == "not_evaluated", "producer must not decide performance")
     if kind == types[0]:
+        require(canonical_json(value["splits"]) == canonical_json(_expected_configs()[0]["splits"]), "ordered split literal mismatch")
         ledgers = ("events", "profiles", "scores", "source_episodes", "equipment_episodes", "incidents")
         validate_ledger_rows(value["identity"], **{k: value[k] for k in ledgers})
         require(value["row_counts"] == {k: len(value[k]) for k in ledgers}, "row counts mismatch")
@@ -446,7 +695,19 @@ def validate_result_contract(value: dict) -> dict:
             require(len(value["scores"]) == 14400 and len(value["profiles"]) == 48, "incomplete planned rows")
             require(all(i["status"] == "processed" for i in value["incidents"]), "unprocessed incident in complete result")
         if status["run_status"] == "not_run":
-            require(not value["scores"] and not value["profiles"] and value["metrics"] is None, "not_run contains computed data")
+            require(not value["scores"] and not value["profiles"] and not value["source_episodes"] and not value["equipment_episodes"]
+                    and not value["slices"] and value["metrics"] is None
+                    and all(i["status"] == "not_processed" for i in value["incidents"]), "not_run contains computed data")
+        if value["metrics"] is not None:
+            _reported_metrics(value["metrics"], datasets=1)
+            delays = sorted(i["delay_seconds"] for i in value["incidents"] if i["causal_detected"])
+            summary = value["metrics"]["delay_summary"]
+            _delay_summary(summary, len(delays))
+            if delays:
+                n = len(delays)
+                require((summary["median"], summary["mean"], summary["min"], summary["max"]) ==
+                        ((delays[(n-1)//2]+delays[n//2])/2, math.fsum(delays)/n, delays[0], delays[-1]), "reported delay/incident arithmetic mismatch")
+        _reported_slices(value["slices"], uncomputed_ci=True)
     elif kind == types[1]:
         require(value["planned_counts"] == c.counts(value["role"]), "planned count mismatch")
         expected = evaluation_inventory(value["role"])
@@ -474,17 +735,7 @@ def validate_result_contract(value: dict) -> dict:
         if status["run_status"] == "not_run":
             require(tally["not_started"] == len(expected), "not_run has started slots")
     elif kind == types[2]:
-        require([(t["candidate_id"], t["stratum"]) for t in value["candidate_tables"]] == [(a,b) for a in c.CANDIDATES for b in (*c.STRATA, "overall")], "candidate table inventory mismatch")
-        if status["run_status"] == "not_run":
-            require(value["decision"] == "not_evaluated" and all(t["metrics"] is None and not t["gates"] for t in value["candidate_tables"]), "not_run analysis contains computed results")
-        if status["run_status"] == "complete":
-            require(all(t["metrics"] is not None for t in value["candidate_tables"]), "complete analysis missing metrics")
-        if status["performance_status"] != "pass":
-            require(value["selected_candidate"] is None and not any(t["qualified"] for t in value["candidate_tables"]), "selection without acceptance")
-        if value["decision"] == "not_evaluated":
-            require(status["performance_status"] == "not_evaluated", "decision/status mismatch")
-        require((value["selected_candidate"] is not None) == (value["decision"] == "qualified"), "decision/selection mismatch")
-        require(not any(t["qualified"] for t in value["candidate_tables"] if t["candidate_id"] == c.CANDIDATES[0]), "control cannot qualify")
+        _reported_analysis(value)
     else:
         require(len({r["name"] for r in value["checks"]}) == 11, "audit check inventory mismatch")
         require(len(set(value["limitations"])) == 4, "audit limitation inventory mismatch")
@@ -493,4 +744,4 @@ def validate_result_contract(value: dict) -> dict:
         if value["result_trusted"]:
             require(status["engineering_status"] == "pass" and all(r["status"] == "pass" and r["evidence"] for r in value["checks"]), "audit acceptance lacks complete evidence")
     return {**_validation_report(), "validation_status": "result_contract_valid", "reported_run_status": status["run_status"],
-            "result_trusted": False, "independent_recomputation": "required-not-performed"}
+            "result_trusted": False, "source_validation": source_status, "independent_recomputation": "required-not-performed"}

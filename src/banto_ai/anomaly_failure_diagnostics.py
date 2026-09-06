@@ -40,11 +40,11 @@ DIAGNOSTICS_COMPLETION_MARKER_TYPE = "event-aware-anomaly-failure-diagnostics-co
 _STAGED_MARKER = ".complete"
 _STAGING_PREFIX = ".anomaly-multiseed-v02-diagnostics-v01.staging-"
 EXPECTED_ARTIFACT_CODE_REVISION = "15a0f60433703c32a1bfa989f7f779c6828a1096"
-EXPECTED_CONFIG_CANONICAL_SHA256 = "933446fda04913ad23fb3168173152e0f21838427b04754872c3e913f43ba2e1"
-EXPECTED_SCHEMA_CANONICAL_SHA256 = "1543b43feb48cb60988852852662bc19225719bff31145d7d3e3c202e8ef301a"
+EXPECTED_CONFIG_CANONICAL_SHA256 = "17d26a0bef8cddb33142a01e19a187732b7463e185b67539edca9735b1fa6c35"
+EXPECTED_SCHEMA_CANONICAL_SHA256 = "9abaa99eb639e82920284124882f867732eec6287f95676dc0cc54dcc55d97a3"
 EXPECTED_RESULT_SCHEMA_CANONICAL_SHA256 = "218a69829815c766d5edd888ea01567d113ad2745bf5b4c9ab7ba029fe53c17d"
-EXPECTED_CONFIG_RAW_SHA256 = "bafa6a4d24ec7899c0c015a79a23d91dd65368c2a5078a18662c1a40de182a8e"
-EXPECTED_CONFIG_SCHEMA_RAW_SHA256 = "5840f1097ea3f1e68e530288430d4afb4b21a0c2dea3344094c42a716f7d4fe3"
+EXPECTED_CONFIG_RAW_SHA256 = "fc266aef09c7ad9e3d85ef2ea34521f8cb752388dc1a2548f16122f80f02629a"
+EXPECTED_CONFIG_SCHEMA_RAW_SHA256 = "4a6c0107792fcfa0a57db487c398fd32a033de9ab60a2372eb691d7a8b03feb8"
 EXPECTED_RESULT_SCHEMA_RAW_SHA256 = "ee71348890b77d0c3b49007784e618e69fa3b40b48c5d2ee01a04e52800e8877"
 # Only the byte-pinned formal artifact used these seven CRLF working-tree
 # sources. These expectations are independent of any artifact being verified.
@@ -266,6 +266,24 @@ EXPECTED_REVISION_COMPATIBILITY = {
         "examples/configs/anomaly-multiseed-failure-diagnostics-v0.1.json",
         "schemas/anomaly-multiseed-failure-diagnostics-config-v0.1.schema.json",
         "schemas/anomaly-multiseed-failure-diagnostics-result-v0.1.schema.json",
+        # S1 additions are current-only, never part of the historical 88 blobs.
+        "src/banto_ai/_anomaly_v03_contract.py",
+        "src/banto_ai/_anomaly_v03_schema.py",
+        "src/banto_ai/anomaly_v03.py",
+        "schemas/synthetic-anomaly-config-v0.3.schema.json",
+        "schemas/anomaly-candidates-config-v0.3.schema.json",
+        "schemas/anomaly-multiseed-matrix-config-v0.3.schema.json",
+        "schemas/anomaly-multiseed-analysis-config-v0.3.schema.json",
+        "schemas/anomaly-v03-freeze-registry.schema.json",
+        "schemas/anomaly-evaluation-result-v0.3.schema.json",
+        "schemas/anomaly-multiseed-matrix-result-v0.3.schema.json",
+        "schemas/anomaly-multiseed-analysis-result-v0.3.schema.json",
+        "schemas/anomaly-multiseed-audit-result-v0.3.schema.json",
+        "examples/configs/synthetic-anomaly-v0.3.json",
+        "examples/configs/anomaly-candidates-v0.3.json",
+        "examples/configs/anomaly-multiseed-v0.3.json",
+        "examples/configs/anomaly-multiseed-analysis-v0.3.json",
+        "examples/configs/anomaly-v03-freeze-registry.json",
     ],
     "reject_conditions": ["missing", "modified", "link", "reparse"],
     "d2_record_fields": [

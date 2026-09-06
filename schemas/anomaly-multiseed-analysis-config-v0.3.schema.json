@@ -186,7 +186,49 @@
                       ]
                     },
                     "minItems": 40,
-                    "maxItems": 40
+                    "maxItems": 40,
+                    "const": [
+                      28,
+                      5,
+                      25,
+                      0,
+                      34,
+                      30,
+                      1,
+                      38,
+                      29,
+                      36,
+                      18,
+                      5,
+                      29,
+                      16,
+                      4,
+                      13,
+                      25,
+                      10,
+                      5,
+                      29,
+                      12,
+                      21,
+                      25,
+                      20,
+                      31,
+                      29,
+                      10,
+                      25,
+                      31,
+                      7,
+                      4,
+                      4,
+                      13,
+                      23,
+                      6,
+                      14,
+                      20,
+                      35,
+                      9,
+                      30
+                    ]
                   }
                 },
                 "required": [
@@ -325,7 +367,49 @@
                       ]
                     },
                     "minItems": 40,
-                    "maxItems": 40
+                    "maxItems": 40,
+                    "const": [
+                      26,
+                      3,
+                      36,
+                      29,
+                      12,
+                      21,
+                      36,
+                      7,
+                      37,
+                      11,
+                      8,
+                      30,
+                      31,
+                      23,
+                      20,
+                      28,
+                      36,
+                      30,
+                      33,
+                      9,
+                      27,
+                      36,
+                      24,
+                      6,
+                      39,
+                      27,
+                      10,
+                      15,
+                      19,
+                      20,
+                      0,
+                      7,
+                      27,
+                      38,
+                      3,
+                      5,
+                      10,
+                      5,
+                      1,
+                      2
+                    ]
                   }
                 },
                 "required": [
@@ -456,7 +540,49 @@
                       ]
                     },
                     "minItems": 40,
-                    "maxItems": 40
+                    "maxItems": 40,
+                    "const": [
+                      34,
+                      16,
+                      4,
+                      17,
+                      28,
+                      18,
+                      5,
+                      11,
+                      32,
+                      0,
+                      1,
+                      7,
+                      25,
+                      12,
+                      8,
+                      37,
+                      33,
+                      24,
+                      9,
+                      33,
+                      16,
+                      22,
+                      15,
+                      18,
+                      8,
+                      1,
+                      34,
+                      18,
+                      27,
+                      32,
+                      1,
+                      13,
+                      2,
+                      37,
+                      30,
+                      18,
+                      28,
+                      22,
+                      36,
+                      23
+                    ]
                   }
                 },
                 "required": [
@@ -575,7 +701,49 @@
                       ]
                     },
                     "minItems": 40,
-                    "maxItems": 40
+                    "maxItems": 40,
+                    "const": [
+                      29,
+                      24,
+                      39,
+                      17,
+                      23,
+                      20,
+                      38,
+                      7,
+                      20,
+                      13,
+                      11,
+                      10,
+                      26,
+                      4,
+                      30,
+                      34,
+                      34,
+                      9,
+                      19,
+                      31,
+                      39,
+                      21,
+                      37,
+                      9,
+                      29,
+                      10,
+                      16,
+                      26,
+                      0,
+                      1,
+                      13,
+                      20,
+                      35,
+                      4,
+                      39,
+                      4,
+                      35,
+                      7,
+                      31,
+                      34
+                    ]
                   }
                 },
                 "required": [
@@ -587,7 +755,189 @@
             ]
           },
           "minItems": 4,
-          "maxItems": 4
+          "maxItems": 4,
+          "const": [
+            {
+              "replicate": 0,
+              "indices": [
+                28,
+                5,
+                25,
+                0,
+                34,
+                30,
+                1,
+                38,
+                29,
+                36,
+                18,
+                5,
+                29,
+                16,
+                4,
+                13,
+                25,
+                10,
+                5,
+                29,
+                12,
+                21,
+                25,
+                20,
+                31,
+                29,
+                10,
+                25,
+                31,
+                7,
+                4,
+                4,
+                13,
+                23,
+                6,
+                14,
+                20,
+                35,
+                9,
+                30
+              ]
+            },
+            {
+              "replicate": 1,
+              "indices": [
+                26,
+                3,
+                36,
+                29,
+                12,
+                21,
+                36,
+                7,
+                37,
+                11,
+                8,
+                30,
+                31,
+                23,
+                20,
+                28,
+                36,
+                30,
+                33,
+                9,
+                27,
+                36,
+                24,
+                6,
+                39,
+                27,
+                10,
+                15,
+                19,
+                20,
+                0,
+                7,
+                27,
+                38,
+                3,
+                5,
+                10,
+                5,
+                1,
+                2
+              ]
+            },
+            {
+              "replicate": 24999,
+              "indices": [
+                34,
+                16,
+                4,
+                17,
+                28,
+                18,
+                5,
+                11,
+                32,
+                0,
+                1,
+                7,
+                25,
+                12,
+                8,
+                37,
+                33,
+                24,
+                9,
+                33,
+                16,
+                22,
+                15,
+                18,
+                8,
+                1,
+                34,
+                18,
+                27,
+                32,
+                1,
+                13,
+                2,
+                37,
+                30,
+                18,
+                28,
+                22,
+                36,
+                23
+              ]
+            },
+            {
+              "replicate": 49999,
+              "indices": [
+                29,
+                24,
+                39,
+                17,
+                23,
+                20,
+                38,
+                7,
+                20,
+                13,
+                11,
+                10,
+                26,
+                4,
+                30,
+                34,
+                34,
+                9,
+                19,
+                31,
+                39,
+                21,
+                37,
+                9,
+                29,
+                10,
+                16,
+                26,
+                0,
+                1,
+                13,
+                20,
+                35,
+                4,
+                39,
+                4,
+                35,
+                7,
+                31,
+                34
+              ]
+            }
+          ]
         },
         "sampling": {
           "type": "string",
@@ -612,7 +962,11 @@
             ]
           },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "const": [
+            0.025,
+            0.975
+          ]
         },
         "quantile": {
           "type": "string",
@@ -665,7 +1019,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  0.85,
+                  0.8
+                ]
               },
               "sensor_recall": {
                 "type": "array",
@@ -682,7 +1040,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  0.9,
+                  0.85
+                ]
               },
               "precision": {
                 "type": "array",
@@ -699,7 +1061,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  0.85,
+                  0.8
+                ]
               },
               "clean_rate": {
                 "type": "array",
@@ -716,7 +1082,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  1.0,
+                  1.5
+                ]
               },
               "each_target_availability": {
                 "type": "array",
@@ -729,7 +1099,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  0.96,
+                  0.96
+                ]
               }
             },
             "required": [
@@ -764,7 +1138,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  0.85,
+                  0.8
+                ]
               },
               "sensor_recall": {
                 "type": "array",
@@ -781,7 +1159,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  0.85,
+                  0.8
+                ]
               },
               "precision": {
                 "type": "array",
@@ -798,7 +1180,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  0.85,
+                  0.8
+                ]
               },
               "clean_rate": {
                 "type": "array",
@@ -815,7 +1201,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  1.0,
+                  1.5
+                ]
               },
               "each_target_availability": {
                 "type": "array",
@@ -828,7 +1218,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  0.95,
+                  0.95
+                ]
               }
             },
             "required": [
@@ -863,7 +1257,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  0.85,
+                  0.8
+                ]
               },
               "sensor_recall": {
                 "type": "array",
@@ -880,7 +1278,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  0.875,
+                  0.825
+                ]
               },
               "precision": {
                 "type": "array",
@@ -897,7 +1299,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  0.85,
+                  0.8
+                ]
               },
               "clean_rate": {
                 "type": "array",
@@ -914,7 +1320,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  1.0,
+                  1.5
+                ]
               },
               "each_target_availability": {
                 "type": "array",
@@ -927,7 +1337,11 @@
                   ]
                 },
                 "minItems": 2,
-                "maxItems": 2
+                "maxItems": 2,
+                "const": [
+                  0.955,
+                  0.955
+                ]
               }
             },
             "required": [
@@ -943,7 +1357,78 @@
         ]
       },
       "minItems": 3,
-      "maxItems": 3
+      "maxItems": 3,
+      "const": [
+        {
+          "stratum": "core",
+          "machine_recall": [
+            0.85,
+            0.8
+          ],
+          "sensor_recall": [
+            0.9,
+            0.85
+          ],
+          "precision": [
+            0.85,
+            0.8
+          ],
+          "clean_rate": [
+            1.0,
+            1.5
+          ],
+          "each_target_availability": [
+            0.96,
+            0.96
+          ]
+        },
+        {
+          "stratum": "quality-stress",
+          "machine_recall": [
+            0.85,
+            0.8
+          ],
+          "sensor_recall": [
+            0.85,
+            0.8
+          ],
+          "precision": [
+            0.85,
+            0.8
+          ],
+          "clean_rate": [
+            1.0,
+            1.5
+          ],
+          "each_target_availability": [
+            0.95,
+            0.95
+          ]
+        },
+        {
+          "stratum": "overall",
+          "machine_recall": [
+            0.85,
+            0.8
+          ],
+          "sensor_recall": [
+            0.875,
+            0.825
+          ],
+          "precision": [
+            0.85,
+            0.8
+          ],
+          "clean_rate": [
+            1.0,
+            1.5
+          ],
+          "each_target_availability": [
+            0.955,
+            0.955
+          ]
+        }
+      ]
     },
     "paired_noninferiority": {
       "type": "object",
@@ -963,7 +1448,11 @@
             ]
           },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "const": [
+            0.0,
+            -0.02
+          ]
         },
         "sensor_recall": {
           "type": "array",
@@ -980,7 +1469,11 @@
             ]
           },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "const": [
+            0.0,
+            -0.02
+          ]
         },
         "clean_rate": {
           "type": "array",
@@ -997,7 +1490,11 @@
             ]
           },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "const": [
+            0.0,
+            0.25
+          ]
         },
         "false_alert_burden": {
           "type": "array",
@@ -1014,7 +1511,11 @@
             ]
           },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "const": [
+            0.0,
+            1.0
+          ]
         },
         "each_target_availability": {
           "type": "array",
@@ -1027,7 +1528,11 @@
             ]
           },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "const": [
+            -0.0125,
+            -0.0125
+          ]
         }
       },
       "required": [
@@ -1077,7 +1582,11 @@
         ]
       },
       "minItems": 2,
-      "maxItems": 2
+      "maxItems": 2,
+      "const": [
+        "c1-phase-level",
+        "c2-phase-conditional"
+      ]
     },
     "fallback": {
       "type": "string",
@@ -1139,7 +1648,15 @@
             ]
           },
           "minItems": 6,
-          "maxItems": 6
+          "maxItems": 6,
+          "const": [
+            "class",
+            "equipment",
+            "mode",
+            "class-equipment-mode",
+            "test-cycle",
+            "event-start-phase"
+          ]
         },
         "phase": {
           "type": "array",
@@ -1180,7 +1697,17 @@
             ]
           },
           "minItems": 8,
-          "maxItems": 8
+          "maxItems": 8,
+          "const": [
+            "0",
+            "1",
+            "2",
+            "3",
+            "4..6",
+            "7..13",
+            "14..20",
+            "21..29"
+          ]
         },
         "event_offsets": {
           "type": "array",
@@ -1221,7 +1748,17 @@
             ]
           },
           "minItems": 8,
-          "maxItems": 8
+          "maxItems": 8,
+          "const": [
+            -2,
+            -1,
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
         },
         "context": {
           "type": "array",
@@ -1242,7 +1779,12 @@
             ]
           },
           "minItems": 3,
-          "maxItems": 3
+          "maxItems": 3,
+          "const": [
+            "raw-event",
+            "grace",
+            "clean"
+          ]
         },
         "diagnostics": {
           "type": "array",
@@ -1275,7 +1817,15 @@
             ]
           },
           "minItems": 6,
-          "maxItems": 6
+          "maxItems": 6,
+          "const": [
+            "full-target",
+            "signal-mode",
+            "quality-current",
+            "quality-previous",
+            "fault-quality-overlap",
+            "profile-status"
+          ]
         },
         "class_precision": {
           "type": "string",

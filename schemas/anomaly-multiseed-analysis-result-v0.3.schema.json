@@ -27,6 +27,9 @@
           "type": "string",
           "pattern": "^[a-f0-9]{40}$"
         },
+        "producer_source": {
+          "$ref": "#/$defs/source_descriptor"
+        },
         "registry_raw_sha256": {
           "$ref": "#/$defs/digest"
         },
@@ -42,6 +45,7 @@
         "science_revision",
         "post_audit_revision",
         "producer_revision",
+        "producer_source",
         "registry_raw_sha256",
         "inventory"
       ],
@@ -50,6 +54,9 @@
     "result_type": {
       "type": "string",
       "const": "anomaly-multiseed-analysis-v03"
+    },
+    "analysis_consumer": {
+      "$ref": "#/$defs/source_descriptor"
     },
     "bootstrap": {
       "type": "object",
@@ -196,7 +203,49 @@
                       ]
                     },
                     "minItems": 40,
-                    "maxItems": 40
+                    "maxItems": 40,
+                    "const": [
+                      28,
+                      5,
+                      25,
+                      0,
+                      34,
+                      30,
+                      1,
+                      38,
+                      29,
+                      36,
+                      18,
+                      5,
+                      29,
+                      16,
+                      4,
+                      13,
+                      25,
+                      10,
+                      5,
+                      29,
+                      12,
+                      21,
+                      25,
+                      20,
+                      31,
+                      29,
+                      10,
+                      25,
+                      31,
+                      7,
+                      4,
+                      4,
+                      13,
+                      23,
+                      6,
+                      14,
+                      20,
+                      35,
+                      9,
+                      30
+                    ]
                   }
                 },
                 "required": [
@@ -335,7 +384,49 @@
                       ]
                     },
                     "minItems": 40,
-                    "maxItems": 40
+                    "maxItems": 40,
+                    "const": [
+                      26,
+                      3,
+                      36,
+                      29,
+                      12,
+                      21,
+                      36,
+                      7,
+                      37,
+                      11,
+                      8,
+                      30,
+                      31,
+                      23,
+                      20,
+                      28,
+                      36,
+                      30,
+                      33,
+                      9,
+                      27,
+                      36,
+                      24,
+                      6,
+                      39,
+                      27,
+                      10,
+                      15,
+                      19,
+                      20,
+                      0,
+                      7,
+                      27,
+                      38,
+                      3,
+                      5,
+                      10,
+                      5,
+                      1,
+                      2
+                    ]
                   }
                 },
                 "required": [
@@ -466,7 +557,49 @@
                       ]
                     },
                     "minItems": 40,
-                    "maxItems": 40
+                    "maxItems": 40,
+                    "const": [
+                      34,
+                      16,
+                      4,
+                      17,
+                      28,
+                      18,
+                      5,
+                      11,
+                      32,
+                      0,
+                      1,
+                      7,
+                      25,
+                      12,
+                      8,
+                      37,
+                      33,
+                      24,
+                      9,
+                      33,
+                      16,
+                      22,
+                      15,
+                      18,
+                      8,
+                      1,
+                      34,
+                      18,
+                      27,
+                      32,
+                      1,
+                      13,
+                      2,
+                      37,
+                      30,
+                      18,
+                      28,
+                      22,
+                      36,
+                      23
+                    ]
                   }
                 },
                 "required": [
@@ -585,7 +718,49 @@
                       ]
                     },
                     "minItems": 40,
-                    "maxItems": 40
+                    "maxItems": 40,
+                    "const": [
+                      29,
+                      24,
+                      39,
+                      17,
+                      23,
+                      20,
+                      38,
+                      7,
+                      20,
+                      13,
+                      11,
+                      10,
+                      26,
+                      4,
+                      30,
+                      34,
+                      34,
+                      9,
+                      19,
+                      31,
+                      39,
+                      21,
+                      37,
+                      9,
+                      29,
+                      10,
+                      16,
+                      26,
+                      0,
+                      1,
+                      13,
+                      20,
+                      35,
+                      4,
+                      39,
+                      4,
+                      35,
+                      7,
+                      31,
+                      34
+                    ]
                   }
                 },
                 "required": [
@@ -597,7 +772,189 @@
             ]
           },
           "minItems": 4,
-          "maxItems": 4
+          "maxItems": 4,
+          "const": [
+            {
+              "replicate": 0,
+              "indices": [
+                28,
+                5,
+                25,
+                0,
+                34,
+                30,
+                1,
+                38,
+                29,
+                36,
+                18,
+                5,
+                29,
+                16,
+                4,
+                13,
+                25,
+                10,
+                5,
+                29,
+                12,
+                21,
+                25,
+                20,
+                31,
+                29,
+                10,
+                25,
+                31,
+                7,
+                4,
+                4,
+                13,
+                23,
+                6,
+                14,
+                20,
+                35,
+                9,
+                30
+              ]
+            },
+            {
+              "replicate": 1,
+              "indices": [
+                26,
+                3,
+                36,
+                29,
+                12,
+                21,
+                36,
+                7,
+                37,
+                11,
+                8,
+                30,
+                31,
+                23,
+                20,
+                28,
+                36,
+                30,
+                33,
+                9,
+                27,
+                36,
+                24,
+                6,
+                39,
+                27,
+                10,
+                15,
+                19,
+                20,
+                0,
+                7,
+                27,
+                38,
+                3,
+                5,
+                10,
+                5,
+                1,
+                2
+              ]
+            },
+            {
+              "replicate": 24999,
+              "indices": [
+                34,
+                16,
+                4,
+                17,
+                28,
+                18,
+                5,
+                11,
+                32,
+                0,
+                1,
+                7,
+                25,
+                12,
+                8,
+                37,
+                33,
+                24,
+                9,
+                33,
+                16,
+                22,
+                15,
+                18,
+                8,
+                1,
+                34,
+                18,
+                27,
+                32,
+                1,
+                13,
+                2,
+                37,
+                30,
+                18,
+                28,
+                22,
+                36,
+                23
+              ]
+            },
+            {
+              "replicate": 49999,
+              "indices": [
+                29,
+                24,
+                39,
+                17,
+                23,
+                20,
+                38,
+                7,
+                20,
+                13,
+                11,
+                10,
+                26,
+                4,
+                30,
+                34,
+                34,
+                9,
+                19,
+                31,
+                39,
+                21,
+                37,
+                9,
+                29,
+                10,
+                16,
+                26,
+                0,
+                1,
+                13,
+                20,
+                35,
+                4,
+                39,
+                4,
+                35,
+                7,
+                31,
+                34
+              ]
+            }
+          ]
         },
         "sampling": {
           "type": "string",
@@ -622,7 +979,11 @@
             ]
           },
           "minItems": 2,
-          "maxItems": 2
+          "maxItems": 2,
+          "const": [
+            0.025,
+            0.975
+          ]
         },
         "quantile": {
           "type": "string",
@@ -668,6 +1029,14 @@
               "core",
               "quality-stress",
               "overall"
+            ]
+          },
+          "profile_status": {
+            "type": "string",
+            "enum": [
+              "not_evaluated",
+              "calibrated",
+              "inconclusive"
             ]
           },
           "metrics": {
@@ -753,6 +1122,17 @@
                     }
                   ]
                 },
+                "ci_status": {
+                  "type": "string",
+                  "enum": [
+                    "not_evaluated",
+                    "complete",
+                    "inconclusive"
+                  ]
+                },
+                "null_replicates": {
+                  "$ref": "#/$defs/integer"
+                },
                 "status": {
                   "type": "string",
                   "enum": [
@@ -771,6 +1151,8 @@
                 "point",
                 "lower",
                 "upper",
+                "ci_status",
+                "null_replicates",
                 "status"
               ],
               "additionalProperties": false
@@ -784,6 +1166,7 @@
         "required": [
           "candidate_id",
           "stratum",
+          "profile_status",
           "metrics",
           "gates",
           "qualified"
@@ -829,6 +1212,7 @@
     "status",
     "provenance",
     "result_type",
+    "analysis_consumer",
     "bootstrap",
     "candidate_tables",
     "slices",
@@ -837,9 +1221,85 @@
   ],
   "additionalProperties": false,
   "$defs": {
+    "delay_summary": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "median": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mean": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "min": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "max": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "conditioned_on": {
+          "type": "string",
+          "const": "causal-detected-only"
+        },
+        "undetected_fill": {
+          "type": "string",
+          "const": "forbidden"
+        },
+        "unit": {
+          "type": "string",
+          "const": "seconds"
+        }
+      },
+      "required": [
+        "count",
+        "median",
+        "mean",
+        "min",
+        "max",
+        "conditioned_on",
+        "undetected_fill",
+        "unit"
+      ],
+      "additionalProperties": false
+    },
     "digest": {
       "type": "string",
       "pattern": "^[a-f0-9]{64}$"
+    },
+    "integer": {
+      "type": "integer",
+      "minimum": 0
     },
     "metric": {
       "type": "object",
@@ -973,6 +1433,9 @@
               "type": "null"
             }
           ]
+        },
+        "delay_summary": {
+          "$ref": "#/$defs/delay_summary"
         }
       },
       "required": [
@@ -984,7 +1447,8 @@
         "availability",
         "scheduled_clean_seconds",
         "effective_clean_seconds",
-        "effective_clean_rate"
+        "effective_clean_rate",
+        "delay_summary"
       ],
       "additionalProperties": false
     },
@@ -1074,6 +1538,16 @@
         "actual_count": {
           "type": "integer",
           "minimum": 0
+        },
+        "delay_summary": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/delay_summary"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       },
       "required": [
@@ -1083,7 +1557,48 @@
         "key",
         "metric",
         "planned_count",
-        "actual_count"
+        "actual_count",
+        "delay_summary"
+      ],
+      "additionalProperties": false
+    },
+    "source_descriptor": {
+      "type": "object",
+      "properties": {
+        "revision": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "path": {
+                "$ref": "#/$defs/relative_path"
+              },
+              "raw_sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "byte_count": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "path",
+              "raw_sha256",
+              "byte_count"
+            ],
+            "additionalProperties": false
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "revision",
+        "sources"
       ],
       "additionalProperties": false
     },

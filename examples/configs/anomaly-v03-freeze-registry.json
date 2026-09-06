@@ -392,48 +392,48 @@
     },
     {
       "path": "schemas/synthetic-anomaly-config-v0.3.schema.json",
-      "raw_sha256": "9fa8b837e86017693c274db79d7f637abe761e77b002de167bd586c81269c6f5",
-      "canonical_sha256": "be59d122a0340a3508e754da790a861864c7c6b0f4b308e2eca39fa33094065b"
+      "raw_sha256": "ebb5bdee6b1d29e74497e7cce4bf184aa476263af9eda9ac2331b379a9fb1a74",
+      "canonical_sha256": "d28c2e000ccf7beb07c445c9f2859e0e1659fd747ffc8b1fae29b8f2f6535ae0"
     },
     {
       "path": "schemas/anomaly-candidates-config-v0.3.schema.json",
-      "raw_sha256": "342b20dbc609b99564ef71fc35f083d69c51e3e0460cfa0687b75b6385336b69",
-      "canonical_sha256": "97c016d0a33d6d240c1b9e62d51224ea10d841a77d478a26d68cc7b852f9b8b8"
+      "raw_sha256": "23894ed31aa491f0ddab0ec8bfbff4c6b9991fd862243097ff99a49f763f3df2",
+      "canonical_sha256": "568d62e32b18674407e85efb6a22effd94d30279bb7f04b5599fdb87e82de3ea"
     },
     {
       "path": "schemas/anomaly-multiseed-matrix-config-v0.3.schema.json",
-      "raw_sha256": "90b5ec244b74f553fcbe07c55f7c46f5c47c62f68799fb1f033ea21cddcba489",
-      "canonical_sha256": "d4fddef9be11a80f27ca454618cdce8ffd8db5e8e9b02e9095ca0af84fcbdf1b"
+      "raw_sha256": "45ff40d48c3ea0fb2a08264203a651d44505f014034e47a91a59d54c3013d423",
+      "canonical_sha256": "275f8e0769c8ec8dc403855ca9b74c0cfb1411a528cd4c9a8b3fe633279f60eb"
     },
     {
       "path": "schemas/anomaly-multiseed-analysis-config-v0.3.schema.json",
-      "raw_sha256": "4be5a5b228a11373610a26a989ef4c027eefd6decc8be0255a4b18381b24b52d",
-      "canonical_sha256": "700bb441ea006496246760490ee774cdc8c531dc75a38f3c990febf42db96d13"
+      "raw_sha256": "3e1ea2897296f6e10626fd20b1cb2af46ea0d424110f4d8de4f613162c9965c9",
+      "canonical_sha256": "0b5f8a9445a157fc265dfe92682a69e0b5f09df51722044606129a59bb8037c9"
     },
     {
       "path": "schemas/anomaly-v03-freeze-registry.schema.json",
-      "raw_sha256": "fb2c78a6b8d67ac05f62f844c8aea5898dac76958626d51975e447d950d20f48",
-      "canonical_sha256": "41be660ae1d80d1cefc32314d095d0e997fe9ad2b27cba87b9d21408fc307eeb"
+      "raw_sha256": "0ff9398280841058dc168b3a2699bd1ac96b8f294e41980164e58ea91e87ca3a",
+      "canonical_sha256": "48c7e1fa24a61e457d01ee4a1f0b0f5f22603bc2682ef45bd48c856f1f873938"
     },
     {
       "path": "schemas/anomaly-evaluation-result-v0.3.schema.json",
-      "raw_sha256": "1651058e3fd999f889ffcefd8074abdecd8a783c7d0c7c28becd028ce6377bbc",
-      "canonical_sha256": "2b89def47e3a2195c2a1234e4203eb69161bc31c10786af647a6d5327a3edd14"
+      "raw_sha256": "39008618e4899f6dba30885f0dd6b4e80970bb6a84ba256db23676650b1a70f9",
+      "canonical_sha256": "10499ae84a5af0e90396ea547266a2be99ca1bb1903079946c25fd08dfa081a4"
     },
     {
       "path": "schemas/anomaly-multiseed-matrix-result-v0.3.schema.json",
-      "raw_sha256": "9be55f59c20a7e0f1db14934693306cfcb03417439fce893ee91d0bb1cd87dcf",
-      "canonical_sha256": "8aff64fdbcefe8ecece0dca56550f015c0bdb9e8af04c4dc162f159d4a9211d9"
+      "raw_sha256": "5e2b2e976bda61f350a49d7761962217aec70be7040eaa713b4d3cacd85aeb05",
+      "canonical_sha256": "82a4ed05d79a45160af183a4b008152c01ba3382351bac28828a2ea4e082462c"
     },
     {
       "path": "schemas/anomaly-multiseed-analysis-result-v0.3.schema.json",
-      "raw_sha256": "af0ce99cda40be5e7d98063470e73053d766ffcee3c191c591dbddc844f6c073",
-      "canonical_sha256": "1b2b9736716b1d85d34d39d7160fb4aa379cff34f27deaa5310dd8b42d7240c2"
+      "raw_sha256": "0efa7a217dabda904581b766adf8f14df934afc0b0244b9f3b652a25f3b8f926",
+      "canonical_sha256": "2bfaf6b0eb3cbf5f2fa3348392e8ec34dbf166ed7795aaf2963aa199917218c7"
     },
     {
       "path": "schemas/anomaly-multiseed-audit-result-v0.3.schema.json",
-      "raw_sha256": "188daf0ab2e28268d41fded241d36ac1f096bc45dd07fb4da79c77980ac9a88e",
-      "canonical_sha256": "03414ece3c53dbc221af06a204499f73022855d38a12c1568d82c7d8d83a4bfb"
+      "raw_sha256": "fbfaef33b94c0aed8681efa9c30e5a172b263c5f315eb7fedd1430cc1a630f8f",
+      "canonical_sha256": "55a5f44283f35d49c6edc3a65991a2b77e28a4d0bd1e7cc16381b611f3fb9873"
     }
   ],
   "external_pin": "trusted-commit-and-registry-raw-sha256-outside-registry",

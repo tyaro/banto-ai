@@ -30,6 +30,28 @@ ROOT = Path(__file__).resolve().parents[1]
 # tree, which also keeps this fixture runnable in shallow CI clones where the
 # older artifact revision is unavailable. Production revision compatibility
 # separately proves the current semantic tree equals that artifact revision.
+# Exact historical inventory is stored separately for shallow checkouts. New
+# sources must be explicitly current-only, not silently absorbed into history.
+S1_CURRENT_ONLY_PATHS = (
+    "src/banto_ai/_anomaly_v03_contract.py",
+    "src/banto_ai/_anomaly_v03_schema.py",
+    "src/banto_ai/anomaly_v03.py",
+    "schemas/synthetic-anomaly-config-v0.3.schema.json",
+    "schemas/anomaly-candidates-config-v0.3.schema.json",
+    "schemas/anomaly-multiseed-matrix-config-v0.3.schema.json",
+    "schemas/anomaly-multiseed-analysis-config-v0.3.schema.json",
+    "schemas/anomaly-v03-freeze-registry.schema.json",
+    "schemas/anomaly-evaluation-result-v0.3.schema.json",
+    "schemas/anomaly-multiseed-matrix-result-v0.3.schema.json",
+    "schemas/anomaly-multiseed-analysis-result-v0.3.schema.json",
+    "schemas/anomaly-multiseed-audit-result-v0.3.schema.json",
+    "examples/configs/synthetic-anomaly-v0.3.json",
+    "examples/configs/anomaly-candidates-v0.3.json",
+    "examples/configs/anomaly-multiseed-v0.3.json",
+    "examples/configs/anomaly-multiseed-analysis-v0.3.json",
+    "examples/configs/anomaly-v03-freeze-registry.json",
+)
+
 FORMAL_RAW_PINS = {
     "matrix_config": "2a74036b0860a420b7d9cc2ae03056f04e5f8c92026aa532e07cb917726cfc87",
     "matrix_schema": "944ef163ad6b8eb0d1dfc5cbdebaf71bac2e75c43dfa07666ae424f8a165ed8e",
@@ -41,15 +63,30 @@ FORMAL_RAW_PINS = {
 }
 
 
+def _formal_semantic_tree(tree, inventory):
+    rows = inventory["files"]
+    historical = {row["path"]: row for row in rows}
+    current_only_order = diagnostics.EXPECTED_REVISION_COMPATIBILITY["current_only_paths"]
+    current_only = set(current_only_order)
+    if (inventory["artifact_revision"] != diagnostics.EXPECTED_ARTIFACT_CODE_REVISION
+            or len(rows) != 88 or len(historical) != 88 or len(current_only) != len(current_only_order)
+            or set(historical) & current_only or set(tree) != set(historical) | current_only
+            or len(tree) != 88 + len(current_only)):
+        raise AssertionError("fixture requires exact historical 88 paths plus fixed current-only paths")
+    for path, row in historical.items():
+        digest, raw, mode = tree[path]
+        if mode != row["git_mode"] or digest != row["raw_sha256"] or hashlib.sha256(raw).hexdigest() != row["raw_sha256"]:
+            raise AssertionError("fixture historical mode/raw blob mismatch")
+    if any(tree[path][2] not in ("100644", "100755") for path in current_only):
+        raise AssertionError("fixture current-only source is not a regular file")
+    return {path: tree[path] for path in historical}
+
+
 def _formal_source_fixture():
     prefixes = tuple(diagnostics.EXPECTED_REVISION_COMPATIBILITY["artifact_source_prefixes"])
     tree = diagnostics._git_tree(ROOT, "HEAD", prefixes)
-    current_only = set(diagnostics.EXPECTED_REVISION_COMPATIBILITY["current_only_paths"])
-    if len(tree) != 92 or set(tree) - current_only == set() or set(tree) & current_only != current_only:
-        raise AssertionError("fixture requires the current 88 semantic paths plus fixed current-only paths")
-    semantic_tree = {path: item for path, item in tree.items() if path not in current_only}
-    if len(semantic_tree) != 88:
-        raise AssertionError("fixture requires exactly 88 committed semantic source blobs")
+    inventory = json.loads((ROOT / "tests/fixtures/anomaly-diagnostics-historical-88.json").read_bytes())
+    semantic_tree = _formal_semantic_tree(tree, inventory)
     sources, values = runner._snapshot_inputs(ROOT, ROOT / diagnostics.EXPECTED_MATRIX_CONFIG_PATH)
     for key, source in sources.items():
         if key.startswith("_"):
@@ -1065,7 +1102,8 @@ class D2AIntegrityTests(unittest.TestCase):
         head = "1" * 40
         historical = {f"src/banto_ai/historical-{index:03d}.py": (b"historical\n", "100644") for index in range(88)}
         current = {**historical, **{path: (b"diagnostics\n", "100644") for path in diagnostics.EXPECTED_REVISION_COMPATIBILITY["current_only_paths"]}}
-        for change in (None, "dirty", "diff", "head", "mode", "link", "missing", "extra", "raw", "current-only-raw"):
+        for change in (None, "dirty", "diff", "head", "mode", "link", "missing", "extra", "raw", "current-only-raw",
+                       "S1-missing-index", "S1-extra-index", "S1-link", "S1-raw", "S1-overlap", "S1-missing-workspace"):
             tree = deepcopy(current)
             workspace = {path: raw for path, (raw, _) in tree.items()}
             first = next(iter(historical))
@@ -1075,17 +1113,27 @@ class D2AIntegrityTests(unittest.TestCase):
             elif change == "extra": workspace["src/banto_ai/extra.py"] = b"extra"
             elif change == "raw": workspace[first] += b"changed"
             elif change == "current-only-raw": workspace[diagnostics.CONFIG_PATH] += b"changed"
+            elif change == "S1-missing-index": tree.pop(S1_CURRENT_ONLY_PATHS[0])
+            elif change == "S1-extra-index": tree["src/banto_ai/unregistered-v03.py"] = (b"extra", "100644")
+            elif change == "S1-link": tree[S1_CURRENT_ONLY_PATHS[0]] = (b"diagnostics\n", "120000")
+            elif change == "S1-raw": workspace[S1_CURRENT_ONLY_PATHS[0]] += b"changed"
+            elif change == "S1-missing-workspace": workspace.pop(S1_CURRENT_ONLY_PATHS[0])
+            if change == "S1-overlap":
+                historical_view = dict(historical)
+                historical_view[S1_CURRENT_ONLY_PATHS[0]] = historical_view.pop(first)
+            else:
+                historical_view = historical
 
             def git_read(root, *args):
                 if args[0] == "rev-parse": return (("2" * 40 if change == "head" else head) + "\n").encode()
                 if args[0] == "status": return b" M file\n" if change == "dirty" else b""
                 if args[0] == "diff": return b"diff" if change == "diff" else b""
                 if args[0] == "ls-tree":
-                    selected = historical if args[4] == diagnostics.EXPECTED_ARTIFACT_CODE_REVISION else tree
+                    selected = historical_view if args[4] == diagnostics.EXPECTED_ARTIFACT_CODE_REVISION else tree
                     return b"".join(f"{mode} blob {'0' * 40}\t{path}\0".encode() for path, (_, mode) in selected.items())
                 if args[0] == "cat-file":
                     revision, path = args[-1].split(":", 1)
-                    return (historical if revision == diagnostics.EXPECTED_ARTIFACT_CODE_REVISION else tree)[path][0]
+                    return (historical_view if revision == diagnostics.EXPECTED_ARTIFACT_CODE_REVISION else tree)[path][0]
                 raise AssertionError(f"unexpected git operation: {args}")
 
             with self.subTest(change=change), patch.object(diagnostics, "_git_run", side_effect=git_read), patch.object(diagnostics, "_workspace_regular_files", return_value=workspace), _write_traps():
@@ -1093,6 +1141,8 @@ class D2AIntegrityTests(unittest.TestCase):
                     result = diagnostics._validate_revision_compatibility(ROOT, replay_head=head)
                     self.assertEqual(len(result["semantic_sources"]), 88)
                     self.assertEqual(result["current_only_paths"], diagnostics.EXPECTED_REVISION_COMPATIBILITY["current_only_paths"])
+                    self.assertTrue(set(S1_CURRENT_ONLY_PATHS).issubset(result["current_only_paths"]))
+                    self.assertFalse(set(S1_CURRENT_ONLY_PATHS) & {row["path"] for row in result["semantic_sources"]})
                 else:
                     with self.assertRaises(diagnostics.AnomalyFailureDiagnosticsError):
                         diagnostics._validate_revision_compatibility(ROOT, replay_head=head)
@@ -1335,6 +1385,35 @@ class FormalLegacyProvenanceTests(unittest.TestCase):
                         "dirty": False, "diff_sha256": hashlib.sha256(b"").hexdigest()}
         cls.compatibility = {"artifact_revision": cls.revision, "semantic_sources": proof,
                              "replay_revision": {**cls.revision, "head": "0" * 40}}
+
+    def test_S1_current_only_exact_inventory_keeps_historical_88(self):
+        original = ["src/banto_ai/anomaly_failure_diagnostics.py", "examples/configs/anomaly-multiseed-failure-diagnostics-v0.1.json",
+                    "schemas/anomaly-multiseed-failure-diagnostics-config-v0.1.schema.json", "schemas/anomaly-multiseed-failure-diagnostics-result-v0.1.schema.json"]
+        current_only = diagnostics.EXPECTED_REVISION_COMPATIBILITY["current_only_paths"]
+        self.assertEqual(current_only, original + list(S1_CURRENT_ONLY_PATHS))
+        self.assertEqual(len(set(current_only)), 21)
+        proof = self.compatibility["semantic_sources"]
+        self.assertEqual(len(proof), 88)
+        self.assertFalse(set(current_only) & {row["path"] for row in proof})
+        self.assertTrue(all(row["artifact_blob_sha256"] == row["current_raw_sha256"] for row in proof))
+
+    def test_formal_fixture_rejects_extra_missing_overlap_mode_link_raw(self):
+        inventory = json.loads((ROOT / "tests/fixtures/anomaly-diagnostics-historical-88.json").read_bytes())
+        tree = diagnostics._git_tree(ROOT, "HEAD", diagnostics.EXPECTED_REVISION_COMPATIBILITY["artifact_source_prefixes"])
+        first = inventory["files"][0]["path"]
+        for change in ("extra", "missing", "S1-missing", "overlap", "mode", "link", "S1-link", "raw", "same-count-swap"):
+            altered = deepcopy(tree); registry = deepcopy(inventory)
+            if change == "extra": altered["src/banto_ai/unregistered.py"] = ("0"*64, b"extra", "100644")
+            elif change == "missing": altered.pop(first)
+            elif change == "S1-missing": altered.pop(S1_CURRENT_ONLY_PATHS[0])
+            elif change == "overlap": registry["files"][0]["path"] = S1_CURRENT_ONLY_PATHS[0]
+            elif change in ("mode", "link", "S1-link"):
+                path = S1_CURRENT_ONLY_PATHS[0] if change == "S1-link" else first
+                sha, raw, _ = altered[path]; altered[path] = (sha, raw, "100755" if change == "mode" else "120000")
+            elif change == "raw":
+                sha, raw, mode = altered[first]; raw += b"tamper"; altered[first] = (hashlib.sha256(raw).hexdigest(), raw, mode)
+            else: altered["src/banto_ai/replaced.py"] = altered.pop(first)
+            with self.subTest(change=change), self.assertRaises(AssertionError): _formal_semantic_tree(altered, registry)
 
     def test_exact_seven_fixed_pins_and_unchanged_eighth_source_read_only(self):
         before = deepcopy(self.sources)

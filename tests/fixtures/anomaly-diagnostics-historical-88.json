@@ -1,0 +1,445 @@
+{
+  "artifact_revision": "15a0f60433703c32a1bfa989f7f779c6828a1096",
+  "files": [
+    {
+      "path": "examples/configs/anomaly-evaluation-v0.1.json",
+      "git_mode": "100644",
+      "raw_sha256": "d815e62421f4755e2e58a4d45d3d265d64b5f6a431d7c86e6d15774cb54bb4be"
+    },
+    {
+      "path": "examples/configs/anomaly-multiseed-analysis-v0.2.json",
+      "git_mode": "100644",
+      "raw_sha256": "c8b04c217335b63500252131326dddfbc191082f08d8724f08446a7dd0a40244"
+    },
+    {
+      "path": "examples/configs/anomaly-multiseed-v0.1.json",
+      "git_mode": "100644",
+      "raw_sha256": "0e5dd5022c64e5f6a3e5e9e65d94dc0c8f11fdf20c4c0f6e0552a82fc44072e0"
+    },
+    {
+      "path": "examples/configs/anomaly-multiseed-v0.2.json",
+      "git_mode": "100644",
+      "raw_sha256": "87cf681f557c2e1c9edf78bbaf5fe1592ae53adc71bcfad82cfe732f6d59760c"
+    },
+    {
+      "path": "examples/configs/benchmark-chronos2-baselines-past-only.json",
+      "git_mode": "100644",
+      "raw_sha256": "41e470c3097a44d75a6d9021c19c61809c8841aae588271297dfbeb1850f8b13"
+    },
+    {
+      "path": "examples/configs/benchmark-chronos2-known-load.json",
+      "git_mode": "100644",
+      "raw_sha256": "566b37a631ff361e2a8c1943f29ff9d4cd5ca466c7db2841b621cd505608642e"
+    },
+    {
+      "path": "examples/configs/benchmark-chronos2-small.json",
+      "git_mode": "100644",
+      "raw_sha256": "f00a251683b5d1636b99d4694b9429cdab58f85a5fd71eda628e6b5d266548e1"
+    },
+    {
+      "path": "examples/configs/benchmark-matrix-chronos2-small.json",
+      "git_mode": "100644",
+      "raw_sha256": "6375749eb0df0d6e42d0f2c28550b259042a6020fc863f001ab0fddfbb245688"
+    },
+    {
+      "path": "examples/configs/benchmark-matrix-timesfm3-small.json",
+      "git_mode": "100644",
+      "raw_sha256": "44fa95083c878bd1134c3f777b5ac0eab7f14fb31aefffcbe5fddcef2ffe0ffb"
+    },
+    {
+      "path": "examples/configs/benchmark-matrix-toto2-controlled-control.json",
+      "git_mode": "100644",
+      "raw_sha256": "2c1e1925549782e8eafe645c1f1b48015c2ee4264a34d1bbbcf2cc87a5eb49cc"
+    },
+    {
+      "path": "examples/configs/benchmark-matrix-toto2-controlled-covariate-quality.json",
+      "git_mode": "100644",
+      "raw_sha256": "fc42c1fdd72c8ea09ff187348c6eee050e8a06b3b13ffcc53831818b5853931f"
+    },
+    {
+      "path": "examples/configs/benchmark-matrix-toto2-controlled-target-fault.json",
+      "git_mode": "100644",
+      "raw_sha256": "80d96330214becf546ceafe31522e19f67864099593a0072041237624ea269e5"
+    },
+    {
+      "path": "examples/configs/benchmark-matrix-toto2-controlled-target-quality.json",
+      "git_mode": "100644",
+      "raw_sha256": "54b498180a2e7a7df199e130e16679d3b9cbdf5e2fc0a752e0e9ef48ae04cf0f"
+    },
+    {
+      "path": "examples/configs/benchmark-matrix-toto2-small.json",
+      "git_mode": "100644",
+      "raw_sha256": "0f90730d83db965e440328b33117e4c2b8405cd461e149ae77e414359bbe849f"
+    },
+    {
+      "path": "examples/configs/benchmark-metropt3-baselines.json",
+      "git_mode": "100644",
+      "raw_sha256": "22fdf91ee4bda85a327246beec68b54c4099e0894968bbef29f106d6d2ca5d8f"
+    },
+    {
+      "path": "examples/configs/benchmark-metropt3-chronos2-point-calibrated.json",
+      "git_mode": "100644",
+      "raw_sha256": "0aa14ed06ce1fbc0b921f16b1b866b190a6a230fd1c0cb8b3dbc595b9765c2a7"
+    },
+    {
+      "path": "examples/configs/benchmark-metropt3-chronos2.json",
+      "git_mode": "100644",
+      "raw_sha256": "bd2170f31d8f974d2a6ceafab53d4277bedfe107ea587841944dcc4c53fd303f"
+    },
+    {
+      "path": "examples/configs/benchmark-metropt3-timesfm3.json",
+      "git_mode": "100644",
+      "raw_sha256": "a0d7b7a55d3e3e8ec12e7c7393d35a9d19d32dba12df898a2e900bea3f7e8b39"
+    },
+    {
+      "path": "examples/configs/benchmark-metropt3-toto2-4m.json",
+      "git_mode": "100644",
+      "raw_sha256": "650f7e5b04e700dbad37eec1ffe734a7ad2c1813c2c00fde78994dd4c8738d20"
+    },
+    {
+      "path": "examples/configs/benchmark-small.json",
+      "git_mode": "100644",
+      "raw_sha256": "dfca3a4c2da0d08e3966df1a3e3b40548c1ac1c5e79a84ba50b7c10ddc169691"
+    },
+    {
+      "path": "examples/configs/benchmark-timesfm3-baselines-past-only.json",
+      "git_mode": "100644",
+      "raw_sha256": "4d7717bcc24855bc5f877534228f7c00de6a2adfab2582111a5c34e7a6d51a47"
+    },
+    {
+      "path": "examples/configs/benchmark-timesfm3-known-load.json",
+      "git_mode": "100644",
+      "raw_sha256": "7355c53dea06da3b21fedcec331c5647a3486b9a35458f6db210d64fd659b381"
+    },
+    {
+      "path": "examples/configs/benchmark-timesfm3-small.json",
+      "git_mode": "100644",
+      "raw_sha256": "9201b7be497040a24563a095beaf8825049aca1bf3c85e1e23214f8a1950578d"
+    },
+    {
+      "path": "examples/configs/benchmark-toto2-baselines-past-only.json",
+      "git_mode": "100644",
+      "raw_sha256": "a3dd2ac244ca41aa00ff49576c223b3b712b5a26c81483376ddbf4840bf6650c"
+    },
+    {
+      "path": "examples/configs/benchmark-toto2-controlled.json",
+      "git_mode": "100644",
+      "raw_sha256": "4dec34caab9311a1336d1b4173a602f8b4034ef7c7ca9bd408ca4a230fa92a41"
+    },
+    {
+      "path": "examples/configs/metropt3-public-2020-02-21.json",
+      "git_mode": "100644",
+      "raw_sha256": "d1f39761f334fad00f2325ef12148a2c1612a230e9404e4cefac0fd2102281d9"
+    },
+    {
+      "path": "examples/configs/synthetic-anomaly-evaluation-v0.1.json",
+      "git_mode": "100644",
+      "raw_sha256": "ab13ce9cc64c6d8892dde2d64c79097266b0e68e64cc659e3fdd7bd06afa9bff"
+    },
+    {
+      "path": "examples/configs/synthetic-motor-small.json",
+      "git_mode": "100644",
+      "raw_sha256": "b39c8a8d93758491660325e8b913f1223c8628e63e88027459f08c4d05a21b94"
+    },
+    {
+      "path": "examples/configs/synthetic-motor-toto2-matrix.json",
+      "git_mode": "100644",
+      "raw_sha256": "f361f3495134b76a9cadfff35e0398d2b5b6a7f3ede75349fef7e7c62e974c01"
+    },
+    {
+      "path": "examples/configs/synthetic-toto2-controlled-control.json",
+      "git_mode": "100644",
+      "raw_sha256": "309071d478bf7ff34153184b2dc03b598ae0f6d3b523f2ca7eaed9f48e962e09"
+    },
+    {
+      "path": "examples/configs/synthetic-toto2-controlled-covariate-quality.json",
+      "git_mode": "100644",
+      "raw_sha256": "1ba63eb0e61d63b8f305c33fd9bc42d2b4ab9900fb88ff93c5f722216745dc19"
+    },
+    {
+      "path": "examples/configs/synthetic-toto2-controlled-target-fault.json",
+      "git_mode": "100644",
+      "raw_sha256": "69a55427b1e9014a25e1c43803b185ba855ca94c07443e020ee9ed789fde8ab8"
+    },
+    {
+      "path": "examples/configs/synthetic-toto2-controlled-target-quality.json",
+      "git_mode": "100644",
+      "raw_sha256": "6d70c7dc823fcfec935db1e55811fe9c5c982ae6053043f05bd99d1e8af41ded"
+    },
+    {
+      "path": "examples/configs/toto2-controlled-acceptance.json",
+      "git_mode": "100644",
+      "raw_sha256": "711f714e01c2b28f4026400692a3d8bac725e0e3d3190afab66a19388a457621"
+    },
+    {
+      "path": "schemas/anomaly-evaluation-config.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "9199a2054c1d9d8588026ecca0410037c7925b36852269483ccd2fb17ec69003"
+    },
+    {
+      "path": "schemas/anomaly-evaluation-result.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "26373b02e909053879fa889214062f01f00c869279829a4a69b25d9177a43a68"
+    },
+    {
+      "path": "schemas/anomaly-multiseed-analysis-config-v0.2.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "0bf57a72d2fc6b02b0d0765e44c4e136b7ac6282bb0db149a514c0475069c96d"
+    },
+    {
+      "path": "schemas/anomaly-multiseed-analysis-result-v0.2.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "9c43c684e80e8f1fd4b273a65c45bed3ce1e3d5dd653a91af7b420f30fc03c04"
+    },
+    {
+      "path": "schemas/anomaly-multiseed-matrix-config-v0.2.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "1140746cd9b48d3021ff2c5f7354dd2dc4a1b74b339c63449e84d5ed680a9c3b"
+    },
+    {
+      "path": "schemas/anomaly-multiseed-matrix-config.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "4c514d2e8f1cafffde34323f2c212999153d15242b80e4cd8717d1b564f223cd"
+    },
+    {
+      "path": "schemas/anomaly-multiseed-matrix-result-v0.2.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "a991311c366806a221e348ef1503ddbbe7da5c462228759dc4d9ba640b589590"
+    },
+    {
+      "path": "schemas/anomaly-multiseed-matrix-result.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "2c8d956323aaa18a8a08f460c9825e02198701eb80ee620064ee64da5a41a715"
+    },
+    {
+      "path": "schemas/benchmark-event-slice-result.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "c12df8bc95307db965b319ea609bd0d1847d2001d6515e762b6257b7d4badf23"
+    },
+    {
+      "path": "schemas/benchmark-matrix-config.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "2ad57026dacb00f472bfe8b74e3b2f9fc079cdde2b11b63b21340273e9f4986c"
+    },
+    {
+      "path": "schemas/benchmark-matrix-result.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "3fe3eac3883cc76c9b5eb28082f605b4d5d26e74cd99fbcffab72e803afa4b03"
+    },
+    {
+      "path": "schemas/benchmark-result.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "7ca044aa29eb170fff06f5dafe366eb36ee04d5d15948ee28c70221d95df9c7d"
+    },
+    {
+      "path": "schemas/benchmark-run-config.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "b2c320822fa011e5b8f6b13c021fad4c54e21b41039c636dce533776473a9af1"
+    },
+    {
+      "path": "schemas/dataset-manifest.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "faf9839ea459645e17f42d6e6e7cec93eac0c4fd58557b773ce933747e2e247f"
+    },
+    {
+      "path": "schemas/model-license-manifest.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "3e6fb136d1b4646cd5c3f2b8c861ccc81007f0e0dc59b1ed18bfa1374b486b24"
+    },
+    {
+      "path": "schemas/public-dataset-manifest.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "20e2a744a5e8d18fa3d54d193ba0f6884d5dec177abe43925ca722717d9f13ca"
+    },
+    {
+      "path": "schemas/public-dataset-source.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "f11832a37dc02c8d9df15658b3205a114013317b652477b946ec7a670af8ddb6"
+    },
+    {
+      "path": "schemas/public-split-manifest.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "a8847c3ece7cba7fc9f942b5f5de66efa98bee947fe165c95b014e7ac23018ee"
+    },
+    {
+      "path": "schemas/public-transform-config.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "9339671dd951f25395f0456bb3e35cdb2ab2cc4b816647f076e21c4f16c3bdff"
+    },
+    {
+      "path": "schemas/result-manifest.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "379674e7bbc6bc646cad2f7105f0aa7f081df6262a94307c49f696a86213df94"
+    },
+    {
+      "path": "schemas/run-manifest.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "96f6b6c9c703b7979859246c9f72a7229919be986cf443ffc0177a8f4346df50"
+    },
+    {
+      "path": "schemas/split-manifest.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "d0af7f332c00315079934ef0baa764b248eb2412197b5e9946f138df9dcd4dd9"
+    },
+    {
+      "path": "schemas/synthetic-dataset-manifest.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "03bdbc9f95522dce0bbac160fc84f79b434dded03d32a3cc202190fa2586876d"
+    },
+    {
+      "path": "schemas/synthetic-generator-config.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "4b66f9da87f0922b71a58efac8610ffb10282a932a37aadf082f3f9d43a4dac8"
+    },
+    {
+      "path": "schemas/toto2-controlled-acceptance-config.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "d9bccb00aa5bec903a33cb36097c324d38135dc4b7fc5ded540b3db71828fed6"
+    },
+    {
+      "path": "schemas/toto2-controlled-acceptance-result.schema.json",
+      "git_mode": "100644",
+      "raw_sha256": "354b61f412d3c0b105a76745399cf720e9550a37d875abe10ca72e3a6c5a2110"
+    },
+    {
+      "path": "src/banto_ai/__init__.py",
+      "git_mode": "100644",
+      "raw_sha256": "c2c30c5fd95a6e7ed74e7a268b7d1a5135bf8cb8be674fd72d050267595b2363"
+    },
+    {
+      "path": "src/banto_ai/__main__.py",
+      "git_mode": "100644",
+      "raw_sha256": "935a1c1166b0c1ea35a82256345000bf2c73ded718d77773bc27a71ecce28f7d"
+    },
+    {
+      "path": "src/banto_ai/adapters/__init__.py",
+      "git_mode": "100644",
+      "raw_sha256": "8b5e87b31187731327aaac2334fe386d1a216bc868e95b5096520360042296d1"
+    },
+    {
+      "path": "src/banto_ai/adapters/chronos2.py",
+      "git_mode": "100644",
+      "raw_sha256": "902e0ea67f8b76eb5bb7be36fa48e910e4a882d5761f7d9bef98cf08153fb7a7"
+    },
+    {
+      "path": "src/banto_ai/adapters/timesfm3.py",
+      "git_mode": "100644",
+      "raw_sha256": "396f164cd7bd74983a55b953864b6f96ade7c2fff575b3e281f576a9dc31c58a"
+    },
+    {
+      "path": "src/banto_ai/adapters/toto2.py",
+      "git_mode": "100644",
+      "raw_sha256": "afa047b45ceded051883bb1b4c25b4bf1de6b209678d5bda0a017f8821fd3143"
+    },
+    {
+      "path": "src/banto_ai/anomaly_evaluation.py",
+      "git_mode": "100644",
+      "raw_sha256": "fdabb958b21f2944b1590596ffd2346af6e3d372112c44c80a37b8b94b527f3c"
+    },
+    {
+      "path": "src/banto_ai/anomaly_matrix.py",
+      "git_mode": "100644",
+      "raw_sha256": "7821e545d2371b052eafac07c0e603831ff853acce1ebe36d8d093af55f7af75"
+    },
+    {
+      "path": "src/banto_ai/anomaly_matrix_analysis.py",
+      "git_mode": "100644",
+      "raw_sha256": "1385ae443d17f3f311b26e7853a0fa6d73a03b21eeb21a4f3f5bc6b84224bd70"
+    },
+    {
+      "path": "src/banto_ai/anomaly_matrix_runner.py",
+      "git_mode": "100644",
+      "raw_sha256": "f9b707affbeaa7673286b6a55b71582bda59fc07ff96c995f89cb8823a36914d"
+    },
+    {
+      "path": "src/banto_ai/baselines.py",
+      "git_mode": "100644",
+      "raw_sha256": "36be23c231e5121293ffc90d7105e05628151f8a9ce37791d488b4f9b7581879"
+    },
+    {
+      "path": "src/banto_ai/benchmark.py",
+      "git_mode": "100644",
+      "raw_sha256": "70bb0bddd733fc30264f99342609f06c2599af16b18cb78df73b66817b5fa735"
+    },
+    {
+      "path": "src/banto_ai/cli.py",
+      "git_mode": "100644",
+      "raw_sha256": "9f8177dd33506d65d6c4bcbc1a60c704b22a47a36bb891546633ec7657469ff8"
+    },
+    {
+      "path": "src/banto_ai/contracts.py",
+      "git_mode": "100644",
+      "raw_sha256": "6897ea7ae7b5eaa3f76b207265b690127a300adc199342a320d50ff88117189c"
+    },
+    {
+      "path": "src/banto_ai/event_slices.py",
+      "git_mode": "100644",
+      "raw_sha256": "49bb2a863ac5d937ea2b52b801a08dbe851e39169c9cb1f6b20cd66f3770e749"
+    },
+    {
+      "path": "src/banto_ai/generator.py",
+      "git_mode": "100644",
+      "raw_sha256": "5167ca670892d42ff987f4c719e3043227fa2a1399d2ca5fecf0757c94949b2e"
+    },
+    {
+      "path": "src/banto_ai/license_gate.py",
+      "git_mode": "100644",
+      "raw_sha256": "01b9af6b0304aa73e1478252ee52a739fc5d9efcfe538655d1014c8f82dcfc26"
+    },
+    {
+      "path": "src/banto_ai/manifest.py",
+      "git_mode": "100644",
+      "raw_sha256": "d3dc3070f8a5b65fe851eced13de59e2ed6e88d06189501f2d920197d25a23b8"
+    },
+    {
+      "path": "src/banto_ai/matrix.py",
+      "git_mode": "100644",
+      "raw_sha256": "b49176af7a230ed3ebd048805ecd3c3c852316f7ffddaec657d601af1fc069f5"
+    },
+    {
+      "path": "src/banto_ai/metrics.py",
+      "git_mode": "100644",
+      "raw_sha256": "5015ce9d9a88576423139e79b19881a4c05d4133b6b68d775984f46fd9c46ca8"
+    },
+    {
+      "path": "src/banto_ai/naive.py",
+      "git_mode": "100644",
+      "raw_sha256": "3f370a6dc8f3a172abca1eb72d9cbee8a414aed89a73cd45b2bd17a7b0061ee4"
+    },
+    {
+      "path": "src/banto_ai/public_quality.py",
+      "git_mode": "100644",
+      "raw_sha256": "a37dd1f63267b505dd022635294a4bfb6f6fb161b272c48e47b3d288c43c2c29"
+    },
+    {
+      "path": "src/banto_ai/public_source.py",
+      "git_mode": "100644",
+      "raw_sha256": "49467eefb8fed098688dfba9acb17a7dfc3b577c76bed46b453955baa623097d"
+    },
+    {
+      "path": "src/banto_ai/quality.py",
+      "git_mode": "100644",
+      "raw_sha256": "cc86631863867172cfb2d42716cfed14a77e8dfcf34f1171ed43ee8ce6c9b955"
+    },
+    {
+      "path": "src/banto_ai/runtime.py",
+      "git_mode": "100644",
+      "raw_sha256": "4fb7eb071003b050475868562cde42c011c329829ea57eccb1af29ed614356c5"
+    },
+    {
+      "path": "src/banto_ai/safety.py",
+      "git_mode": "100644",
+      "raw_sha256": "276e14b8dc6db7379b86dea10a519510c919d8506a5fa9804b512f80fb3198cc"
+    },
+    {
+      "path": "src/banto_ai/toto2_acceptance.py",
+      "git_mode": "100644",
+      "raw_sha256": "a7347217ede368f955cd461d482b450be7d3b6d7489f7a5e1396429e06d318af"
+    },
+    {
+      "path": "src/banto_ai/types.py",
+      "git_mode": "100644",
+      "raw_sha256": "46347a468111803a0e9a7f854eb247113bdfdd6f65ff3e83928817f1113db1bc"
+    }
+  ]
+}

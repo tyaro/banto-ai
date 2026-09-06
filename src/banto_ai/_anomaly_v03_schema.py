@@ -38,7 +38,7 @@ def fixed(value) -> dict:
             schema = fixed(v)
             if schema not in choices:
                 choices.append(schema)
-        return array({"anyOf": choices} if choices else {"type": "null"}, len(value), len(value))
+        return {**array({"anyOf": choices} if choices else {"type": "null"}, len(value), len(value)), "const": value}
     kind = {str: "string", int: "integer", float: "number", bool: "boolean", type(None): "null"}[type(value)]
     return {"type": kind, "const": value}
 
@@ -90,7 +90,7 @@ def common_defs() -> dict:
                  "available": {"type": "boolean"}, "exclusion_reason": nullable(enum(c.REASONS)),
                  "exclusion_tags": array(enum(c.REASONS), 0, 8), "threshold_exceeded": {"type": "boolean"}, "streak": integer,
                  "source_episode_id": nullable(identifier)})
-    source = obj({"episode_id": identifier, "dataset_id": identifier, "candidate_id": enum(c.CANDIDATES),
+    source_episode = obj({"episode_id": identifier, "dataset_id": identifier, "candidate_id": enum(c.CANDIDATES),
                   "equipment": enum(c.EQUIPMENT), "full_target": enum(c.FULL_TARGETS), "mode": enum(c.MODES), "recipe": enum(c.RECIPES),
                   "visit_start_sample": integer, "profile_id": identifier, "onset_ms": integer, "end_ms": integer,
                   "support_score_ids": array(identifier, 2, 2)})
@@ -107,15 +107,22 @@ def common_defs() -> dict:
     metric = obj({"numerator": integer, "denominator": integer, "value": nullable(number),
                   "ci_status": enum(("not_evaluated", "complete", "inconclusive", "not_applicable")),
                   "ci_lower": nullable(number), "ci_upper": nullable(number), "null_replicates": integer})
+    delay = obj({"count": integer, **{k: nullable(number) for k in ("median", "mean", "min", "max")},
+                 "conditioned_on": {"type": "string", "const": "causal-detected-only"},
+                 "undetected_fill": {"type": "string", "const": "forbidden"},
+                 "unit": {"type": "string", "const": "seconds"}})
+    source = obj({"revision": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+                  "sources": array(obj({"path": ref("relative_path"), "raw_sha256": digest, "byte_count": integer}), 1)})
     metrics = obj({"machine_recall": ref("metric"), "sensor_recall": ref("metric"), "precision": ref("metric"),
                    "clean_rate": ref("metric"), "false_alert_burden": ref("metric"),
                    "availability": array(obj({"full_target": enum(c.FULL_TARGETS), "metric": ref("metric")}), 8, 8),
                    "scheduled_clean_seconds": integer, "effective_clean_seconds": integer,
-                   "effective_clean_rate": nullable(number)})
+                   "effective_clean_rate": nullable(number), "delay_summary": ref("delay_summary")})
     slice_row = obj({"candidate_id": enum(c.CANDIDATES), "stratum": enum((*c.STRATA, "overall")),
                      "dimension": enum(("class", "equipment", "mode", "class-equipment-mode", "test-cycle", "event-start-phase",
                                         "phase", "event-offset", "context", "full-target", "signal-mode", "quality-current", "quality-previous", "fault-quality-overlap", "profile-status")),
-                     "key": identifier, "metric": ref("metric"), "planned_count": integer, "actual_count": integer})
+                     "key": identifier, "metric": ref("metric"), "planned_count": integer, "actual_count": integer,
+                     "delay_summary": nullable(ref("delay_summary"))})
     payload = obj({"path": ref("relative_path"), "raw_sha256": digest, "canonical_sha256": digest, "row_count": integer})
     slot = obj({"identity": ref("identity"), "status": enum(c.SLOT_STATUS),
                 "failure_stage": nullable(enum(("validation", "materialization", "profile", "scoring", "ledger", "publication", "integrity", "unsupported_runtime"))),
@@ -124,9 +131,10 @@ def common_defs() -> dict:
     return {"identifier": identifier, "digest": digest, "integer": integer,
             "relative_path": {"type": "string", "pattern": r"^[A-Za-z0-9_-][A-Za-z0-9_./-]*$", "minLength": 1},
             "status": status, "identity": identity, "counts": counts, "input_hashes": hashes,
-            "event": event, "profile": profile, "score": score, "source_episode": source,
+            "event": event, "profile": profile, "score": score, "source_episode": source_episode,
             "equipment_episode": equipment_episode, "incident": incident, "metric": metric,
-            "metrics": metrics, "slice": slice_row, "payload": payload, "slot": slot}
+            "metrics": metrics, "slice": slice_row, "payload": payload, "slot": slot,
+            "delay_summary": delay, "source_descriptor": source}
 
 
 def schemas(configs: list[dict]) -> list[dict]:
@@ -149,6 +157,7 @@ def schemas(configs: list[dict]) -> list[dict]:
               "provenance": obj({"science_revision": {"type": "string", "const": c.SCIENCE_REVISION},
                                  "post_audit_revision": {"type": "string", "const": c.STATUS_REVISION},
                                  "producer_revision": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+                                 "producer_source": ref("source_descriptor"),
                                  "registry_raw_sha256": digest, "inventory": array(ref("payload"), 1)})}
     evaluator = obj({**shared, "result_type": {"type": "string", "const": "event-aware-anomaly-v03"},
                      "identity": ref("identity"), "input_hashes": ref("input_hashes"),
@@ -164,15 +173,19 @@ def schemas(configs: list[dict]) -> list[dict]:
     gate = obj({"name": enum(("machine_recall", "sensor_recall", "precision", "clean_rate", "false_alert_burden", "availability")),
                 "comparison": enum(("absolute", "paired-control")), "full_target": nullable(enum(c.FULL_TARGETS)),
                 "point": nullable({"type": "number"}), "lower": nullable({"type": "number"}), "upper": nullable({"type": "number"}),
+                "ci_status": enum(("not_evaluated", "complete", "inconclusive")), "null_replicates": ref("integer"),
                 "status": enum(("not_evaluated", "pass", "fail", "inconclusive", "not_applicable"))})
     analysis = obj({**shared, "result_type": {"type": "string", "const": "anomaly-multiseed-analysis-v03"},
+                    "analysis_consumer": ref("source_descriptor"),
                     "bootstrap": fixed(configs[3]["bootstrap"]),
                     "candidate_tables": array(obj({"candidate_id": enum(c.CANDIDATES), "stratum": enum((*c.STRATA, "overall")),
+                                                   "profile_status": enum(("not_evaluated", "calibrated", "inconclusive")),
                                                    "metrics": nullable(ref("metrics")), "gates": array(gate), "qualified": {"type": "boolean"}}), 9, 9),
                     "slices": array(ref("slice")), "selected_candidate": nullable(enum(c.CANDIDATES[1:])),
                     "decision": enum(("not_evaluated", "qualified", "no_promotion", "inconclusive"))})
     audit = obj({**shared, "result_type": {"type": "string", "const": "anomaly-multiseed-audit-v03"},
                  "consumer_revision": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+                 "input_analysis": ref("source_descriptor"), "audit_consumer": ref("source_descriptor"),
                  "checks": array(obj({"name": enum(("inventory", "raw-observations", "profiles", "scores", "support", "matching", "denominators", "bootstrap", "gates", "selection", "native-publication")),
                                       "status": enum(("not_evaluated", "pass", "fail", "inconclusive")), "evidence": array(ref("payload"))}), 11, 11),
                  "result_trusted": {"type": "boolean"}, "limitations": array(enum(("owner-can-change-acl", "privileged-writer", "no-power-loss-guarantee", "synthetic-only")), 4, 4)})

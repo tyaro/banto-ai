@@ -9,7 +9,8 @@
 `4b02201f95e8ffa3a243be716872d95815a554bd`でv0.3計画のP2 3件を修正しました。
 独立監査はP0〜P3 0件で合格し、S0はfrozen・adoptedです。candidate stackはmain未統合です。
 S0監査記録commit `0b40e7295cfa20f32889005ceca2d29d29ca340c`の上でS1を実装し、
-現在はS1実装候補・独立監査待ちです。S2以降は未着手です。
+S1初回監査（`0368769acf12a0279c84f30c6435e853208386e9`）はP2=6／P3=1件でした。
+現在はS1修正候補・独立再監査待ち、S1未承認です。S2以降は未着手です。
 
 ## 正本の読み方
 
@@ -45,7 +46,7 @@ S2以降のscorer／runner、Linux／Windows native acceptance、run／artifact�
 | Phase 0 研究基盤と契約 | complete | package、manifest、共通runtime、license／安全境界を実装済み |
 | Phase 1 合成データとbaseline | complete | 再現可能generator、quality、rolling-originと統計baselineを実装済み |
 | Phase 2 Forecast model benchmark | active / incomplete | TimesFM 3、Chronos-2、Toto 2.0 4Mの初期・matrix・MetroPT-3等は評価済み。条件拡大、resource分離、一般化は未完了 |
-| Phase 3 異常とドリフト | active | anomaly v0.1契約、v0.2 formal replay/analysis、failure diagnosticsまで完了。v0.3 S0 frozen、S1実装候補・独立監査待ち、S2以降未着手 |
+| Phase 3 異常とドリフト | active | anomaly v0.1契約、v0.2 formal replay/analysis、failure diagnosticsまで完了。v0.3 S0 frozen、S1修正候補・再監査待ち・未承認、S2以降未着手 |
 | Phase 4 自前モデル研究 | not started | 専用の実装・ablationは未着手 |
 | Phase 5 Commissioning auto-tuning | not started | 設計文書のみ。profile昇格やshadow実行は未着手 |
 | Phase 6 Continual adaptation | not started | frozen model＋profile適応の実験は未着手 |
@@ -65,7 +66,7 @@ Phase 3の内訳は次のとおりです。
 - v0.2 failure diagnostics D2-B: 正式公開・独立read-only監査・result文書まで完了、
   engineering `pass`、performance `not_evaluated`、exploratory、promotion不可
 - v0.3 S0初稿commit `41decf9...`へのP2 3件: 監査対象`4b02201...`で解消し、
-  独立監査P0〜P3 0件でS0 frozen・adopted。main未統合、S1実装候補は独立監査待ち。
+  独立監査P0〜P3 0件でS0 frozen・adopted。main未統合、S1修正候補は独立再監査待ち・未承認。
   Linux／Windows native acceptance、S2〜S7、formal run／artifactは未実施
 
 ## 文書カテゴリ
@@ -94,7 +95,7 @@ status語は`current`（living正本）、`frozen`（事前固定）、`historic
 | [multi-seed plan v0.1](anomaly-multiseed-evaluation-plan.md) | frozen / historical / rejected lineage | 最初の正式計画。対応artifactは後のintegrity監査でREJECT。計画本文は時点記録として保持 |
 | [multi-seed plan v0.2](anomaly-multiseed-evaluation-plan-v0.2.md) | frozen / executed | integrity修正後の新ID・rootを固定し、formal replay/analysisを実行済み |
 | [failure diagnostics plan v0.1](anomaly-multiseed-failure-diagnostics-plan-v0.1.md) | frozen / executed / exploratory | v0.2 artifactを変更しないpost-hoc診断。D2-Bと独立監査まで完了 |
-| [multi-seed plan v0.3](anomaly-multiseed-evaluation-plan-v0.3.md) | frozen / adopted | 科学仕様は監査対象`4b02201...`を保持。S1実装候補は独立監査待ち、S2〜S7未実施 |
+| [multi-seed plan v0.3](anomaly-multiseed-evaluation-plan-v0.3.md) | frozen / adopted | 科学仕様は監査対象`4b02201...`を保持。S1修正候補は独立再監査待ち・未承認、S2〜S7未実施 |
 
 v0.1の計画、artifact、監査は削除しません。v0.1監査がartifactを`REJECT`とし、
 修正後の正式証拠を別identityのv0.2計画・resultへ分離しました。v0.2 failure diagnosticsは
@@ -226,7 +227,7 @@ Git管理対象にはhiddenな`.github/ISSUE_TEMPLATE/research-task.md`がもう
 - 競合していたliving status: roadmapのfailure diagnostics「実行・公開未実施」を正式D2-B完了へ同期
 - 意図的に保持した古い表記: frozen plan、historical savepoint、result監査時点の「未実施」
 - v0.3 S0: 監査対象`4b02201...`のP2 3件解消と独立監査合格を記録し、frozen・adoptedへ同期
-- v0.3 S1: config/schema/pure validatorの実装候補を追加、独立監査待ち。S2以降は未着手
+- v0.3 S1: 初回監査P2=6／P3=1への契約検査・出典・遅延集計・境界試験の修正候補。再監査待ち・未承認、S2以降は未着手
 
 ## 更新手順
 

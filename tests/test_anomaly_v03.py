@@ -27,9 +27,19 @@ def payload():
     return {"path": "fixture/result.json", "raw_sha256": "a"*64, "canonical_sha256": "b"*64, "row_count": 0}
 
 
+SOURCE_SNAPSHOTS = {letter*40: {f"src/{role}.py": f"# invented {role} source\n".encode()}
+                    for letter, role in (("a", "producer"), ("b", "audit"), ("c", "analysis"))}
+
+
+def source_descriptor(letter):
+    return {"revision": letter*40, "sources": [{"path": path, "raw_sha256": hashlib.sha256(raw).hexdigest(), "byte_count": len(raw)}
+                                              for path, raw in SOURCE_SNAPSHOTS[letter*40].items()]}
+
+
 def provenance():
     return {"science_revision": c.SCIENCE_REVISION, "post_audit_revision": c.STATUS_REVISION,
-            "producer_revision": "a"*40, "registry_raw_sha256": v.REGISTRY_RAW_SHA256, "inventory": [payload()]}
+            "producer_revision": "a"*40, "producer_source": source_descriptor("a"),
+            "registry_raw_sha256": v.REGISTRY_RAW_SHA256, "inventory": [payload()]}
 
 
 def matrix_result(role="smoke"):
@@ -92,8 +102,9 @@ def evaluator_result():
 
 def analysis_result():
     return {"schema_version":"0.3", "result_type":"anomaly-multiseed-analysis-v03", "status":status(),
+            "analysis_consumer":source_descriptor("c"),
             "provenance":provenance(), "bootstrap":copy.deepcopy(c.config_values(c.BOOTSTRAP_HASH,c.GOLDEN_DRAWS)[3]["bootstrap"]),
-            "candidate_tables":[{"candidate_id":a,"stratum":b,"metrics":None,"gates":[],"qualified":False}
+            "candidate_tables":[{"candidate_id":a,"stratum":b,"profile_status":"not_evaluated","metrics":None,"gates":[],"qualified":False}
                                 for a in c.CANDIDATES for b in (*c.STRATA,"overall")],
             "slices":[], "selected_candidate":None, "decision":"not_evaluated"}
 
@@ -102,6 +113,7 @@ def audit_result():
     names=("inventory","raw-observations","profiles","scores","support","matching","denominators","bootstrap","gates","selection","native-publication")
     return {"schema_version":"0.3", "result_type":"anomaly-multiseed-audit-v03", "status":status(),
             "provenance":provenance(), "consumer_revision":"b"*40,
+            "input_analysis":source_descriptor("c"), "audit_consumer":source_descriptor("b"),
             "checks":[{"name":name,"status":"not_evaluated","evidence":[]} for name in names], "result_trusted":False,
             "limitations":["owner-can-change-acl","privileged-writer","no-power-loss-guarantee","synthetic-only"]}
 
