@@ -226,7 +226,7 @@ consumerは文書の数値だけでなく対象artifactのhashとschemaを再検
 棚卸し数・到達性link graphから除外しました。
 
 - `docs`直下は本索引を含め21件、`docs/results`は21件
-- tracked Markdownのlocal file links: 316件（pathを持つtargetの存在を検査）
+- tracked Markdownのlocal file links: 317件（pathを持つtargetの存在を検査）
 - fragment-only links: 3件（v0.3計画のP2対応表から明示anchorへの参照）
 - missing local links: 0件
 - 到達性: root READMEを起点とし、本索引のcategory表を辺としてtracked Markdown 59件を対象にする
