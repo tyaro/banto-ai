@@ -10,16 +10,16 @@
 
 ## フェーズ
 
-| Phase | 焦点 | 完了時の根拠 |
-| --- | --- | --- |
-| 0 | 研究基盤と契約 | Python環境、データ方針、experiment／license manifest、共通interface、連携境界 |
-| 1 | 合成データとbaseline | 運転状態、fault、欠損、labelを持つgeneratorと、naive／古典baselineの再現性 |
-| 2 | Forecast model benchmark | TimesFM 3.0の評価済み結果を基準に、Chronos-2とTotoを同一契約へ追加し、Granite TTMは別sensitivity条件、自前／学習型baselineは別評価 |
-| 3 | 異常とドリフト | 統計方式、forecast residual、TSPulse、Riverのevent単位比較 |
-| 4 | 自前モデル研究 | 点予測・分位点予測を備えた小型multivariate Transformerとablation |
-| 5 | Commissioning auto-tuning | レシピ駆動のprofile candidate、shadow評価、人手承認gate |
-| 6 | Continual adaptation | 本番mode固定、rollback、汚染testを含むfrozen model + profile適応 |
-| 7 | Banto Hub pilot境界 | read-only export／sidecarの試作と、制御を変更しないend-to-end demo |
+| Phase | 焦点 | 2026-09-06の状態 | 完了時の根拠 |
+| --- | --- | --- | --- |
+| 0 | 研究基盤と契約 | complete | Python環境、データ方針、experiment／license manifest、共通interface、連携境界 |
+| 1 | 合成データとbaseline | complete | 運転状態、fault、欠損、labelを持つgeneratorと、naive／古典baselineの再現性 |
+| 2 | Forecast model benchmark | active / incomplete | TimesFM 3.0の評価済み結果を基準に、Chronos-2とTotoを同一契約へ追加し、Granite TTMは別sensitivity条件、自前／学習型baselineは別評価 |
+| 3 | 異常とドリフト | active | 統計方式、forecast residual、TSPulse、Riverのevent単位比較 |
+| 4 | 自前モデル研究 | not started | 点予測・分位点予測を備えた小型multivariate Transformerとablation |
+| 5 | Commissioning auto-tuning | not started | レシピ駆動のprofile candidate、shadow評価、人手承認gate |
+| 6 | Continual adaptation | not started | 本番mode固定、rollback、汚染testを含むfrozen model + profile適応 |
+| 7 | Banto Hub pilot境界 | not started | read-only export／sidecarの試作と、制御を変更しないend-to-end demo |
 
 ## 推奨する優先順
 
@@ -32,7 +32,7 @@
 7. frozen base modelとversioned profileによる安全な適応を検証する。
 8. 承認済み結果を利用できる最小限のBanto Hub read-only adapterを定義する。
 
-## 2026-09-04時点の進捗
+## 2026-09-06時点の進捗
 
 Toto 2.0 4Mは同じForecaster／MetroPT runnerへ実装接続し、固定HF revision、外部cache、offline／CPU／batch=1／`decode_block_size=None`でCPU smokeと実benchmarkを実行済みです。context=120はpatch_size=32に合わせて先頭8点の未観測paddingを内部追加します。6 models、3 targets、16 validation／16 test origins、4,320 predictionsの結果を[`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](results/toto2-metropt3-evaluation-2026-09-04.md)に記録しました。22M、seed拡大、fault slice、実設備一般化は次工程です。
 
@@ -68,7 +68,24 @@ Toto 2.0 controlled 4-track acceptance analyzerのsource、固定config/schema�
 
 10 seed × 12 event-layout、120 cellsのstdlib-only offline replayを、実装前に固定したschema/configとengineering／performanceの二段gateで実施しました。canonical JSON identity（UTF-8、sort keys、compact separators、末尾改行なし）によるschema/config pinとraw-byte監査値、expanded accounting windowのmode/test内収容、seed-cluster block bootstrap、8個の完全修飾target signal availability、stopped／cooldown faultのsynthetic stress testとしての位置付けを含むseed、layout、detector parameter、指標、promotion閾値、安全境界は v0.2固定計画 [`anomaly-multiseed-evaluation-plan-v0.2.md`](anomaly-multiseed-evaluation-plan-v0.2.md) に記録しています。matrix／analysis artifact とも engineering gate は `pass`、performance gate は matrix `not_evaluated`、analysis `fail` で、5つの promotion gate はすべて fail しました。v0.1の正式120-cell artifactは生成後監査でsummary integrity bypassが見つかったためREJECT evidenceとして保全し、詳細を[`anomaly-multiseed-v01-integrity-audit-2026-09-05.md`](results/anomaly-multiseed-v01-integrity-audit-2026-09-05.md)に記録しています。v0.2の結果と判断は[`anomaly-multiseed-v02-evaluation-2026-09-05.md`](results/anomaly-multiseed-v02-evaluation-2026-09-05.md)を参照してください。baselineは昇格せず、v0.3 preregistrationでphase／recipe-step／time-since-mode-entry／conditional-level／longer clean calibration／multivariate residual、machine fault sensitivity、false-alert reduction、data-quality dropoutとavailability gate handlingを別途検討します。TimesFM3 residual／scoringは別の後続候補です。
 
-v0.2 failure diagnostics D1 は post-hoc exploratory の固定 contract、config schema、fixed config、config-only validator、`--validate-only` CLI までを追加しました。120-cell artifactの診断実行とresult publishは未実施であり、正式なpromotion evidenceではありません。計画は[`anomaly-multiseed-failure-diagnostics-plan-v0.1.md`](anomaly-multiseed-failure-diagnostics-plan-v0.1.md)を参照してください。
+v0.2 failure diagnosticsは、固定計画に従うD2-Bを正式公開し、Astra/maxによる
+独立read-only監査とresult文書まで完了しました。`engineering_status=pass`、
+`performance_status=not_evaluated`、`exploratory_only=true`、
+`promotion_eligible=false`です。canonical detectionを保持した因果的supportは0/240で、
+v0.3の仮説材料にのみ使います。計画は
+[`anomaly-multiseed-failure-diagnostics-plan-v0.1.md`](anomaly-multiseed-failure-diagnostics-plan-v0.1.md)、
+正式な結果と監査境界は
+[`anomaly-multiseed-v02-failure-diagnostics-2026-09-06.md`](results/anomaly-multiseed-v02-failure-diagnostics-2026-09-06.md)
+を参照してください。計画内の古い「未実施」はfreeze時点の記録であり、遡及変更しません。
+
+v0.3は実装前S0計画候補をcommit
+`41decf9b6f8d6c876715729516354bf6da49422c`に作成しましたが、このcandidate stackは
+main未統合です。Astra/max監査はP0/P1 0件、P2 3件で完了し、incident matchingの
+候補探索規則、旧6桁丸めとfit/calibration/test入力、Linux/Windows試験とformal runtime pinの
+固定が必要です。したがって現在は`FREEZE_READY=no`、`DOCS_READY=no`、
+`IMPLEMENTATION_READY=no`で、S1以降、config/schema/code/test/run/artifactは未着手です。
+候補本文は[`anomaly-multiseed-evaluation-plan-v0.3.md`](anomaly-multiseed-evaluation-plan-v0.3.md)、
+最新の文書状態と正本の読み方は[文書索引](README.md)を参照してください。
 
 ## 実験の必須記録
 

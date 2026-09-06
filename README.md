@@ -43,6 +43,8 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 ## リポジトリ構成
 
+文書の現在状態、凍結計画、過去結果、実行手順の読み分けは [`docs/README.md`](docs/README.md) を入口にしてください。
+
 ```text
 docs/
   architecture.md                 Banto Hubとの責務境界と成果物フロー
