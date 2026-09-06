@@ -61,7 +61,9 @@ py -3.14 tools/evaluator/analyze_event_slices.py `
 
 [v0.3凍結計画](../../docs/anomaly-multiseed-evaluation-plan-v0.3.md)のS0は監査合格済みです。
 S1初回監査（`0368769acf12a0279c84f30c6435e853208386e9`）はP2=6／P3=1件でした。
-現在は修正候補・独立再監査待ち、S1未承認で、S2以降は未着手です。
+修正commit `d6ca0f9ee85172caae3b658bdb105287f8e43141`への
+[独立再監査](../../docs/results/anomaly-multiseed-v0.3-s1-audit-2026-09-06.md)はP0〜P3 0件で合格し、
+S1は完了しました。candidate stackはmain統合前で、S2以降は未着手です。
 [公開module](../../src/banto_ai/anomaly_v03.py)は標準ライブラリのみで、渡された値またはbytesを検査します。
 package rootへの副作用のある自動importは追加せず、`from banto_ai import anomaly_v03`で利用します。
 
