@@ -1,6 +1,6 @@
 # banto-ai 文書索引・状態台帳
 
-最終更新: 2026-09-06
+最終更新: 2026-09-07
 
 この索引は、文書の入口と現在状態を示すliving documentです。初稿S0 commitは
 `41decf9b6f8d6c876715729516354bf6da49422c`、そのparentはmainの
@@ -11,7 +11,7 @@
 S0監査記録commit `0b40e7295cfa20f32889005ceca2d29d29ca340c`の上でS1を実装し、
 S1初回監査（`0368769acf12a0279c84f30c6435e853208386e9`）はP2=6／P3=1件でした。
 修正commit `d6ca0f9ee85172caae3b658bdb105287f8e43141`への独立再監査はP0〜P3 0件で合格し、
-S1は完了し、candidate stackはmain統合済みです。S2も独立監査P0〜P3 0件で完了し、次はS3 deterministic runnerです。
+S1は完了し、candidate stackはmain統合済みです。S2も独立監査P0〜P3 0件で完了しました。S3 deterministic runnerも独立監査P0〜P3 0件で完了し、`S3_READY=yes`、`INTEGRATION_READY=yes`です。formal run・性能評価・promotionは未実施で、次はS4 platform/runtime/native Windows acceptanceとdry/smoke consumer freezeです。
 
 ## 正本の読み方
 
@@ -48,7 +48,7 @@ S1の初回指摘・修正・境界は[v0.3 S1監査結果](results/anomaly-mult
 | Phase 0 研究基盤と契約 | complete | package、manifest、共通runtime、license／安全境界を実装済み |
 | Phase 1 合成データとbaseline | complete | 再現可能generator、quality、rolling-originと統計baselineを実装済み |
 | Phase 2 Forecast model benchmark | active / incomplete | TimesFM 3、Chronos-2、Toto 2.0 4Mの初期・matrix・MetroPT-3等は評価済み。条件拡大、resource分離、一般化は未完了 |
-| Phase 3 異常とドリフト | active | anomaly v0.1契約、v0.2 formal replay/analysis、failure diagnostics、v0.3 S0/S1、S2 pure scoring監査まで完了。次はS3 deterministic runner |
+| Phase 3 異常とドリフト | active | anomaly v0.1契約、v0.2 formal replay/analysis、failure diagnostics、v0.3 S0〜S3監査まで完了。S3は安全な再現実行の土台であり、formal run・性能・promotionではない。次はS4受入 |
 | Phase 4 自前モデル研究 | not started | 専用の実装・ablationは未着手 |
 | Phase 5 Commissioning auto-tuning | not started | 設計文書のみ。profile昇格やshadow実行は未着手 |
 | Phase 6 Continual adaptation | not started | frozen model＋profile適応の実験は未着手 |
@@ -72,8 +72,8 @@ Phase 3の内訳は次のとおりです。
 - v0.3 S1初回commit `0368769...`へのP2 6件・P3 1件: 修正対象`d6ca0f9...`で解消し、
   独立再監査P0〜P3 0件でS1完了。candidate stackはmain統合済み。
 - v0.3 S2候補commit `5bc3129...`: pure scoring、episode、causal matching、固定分母を実装し、
-  独立監査P0〜P3 0件、S2 67/67 pass、CI run `34017895359` success。次はS3 deterministic runner。
-  Q1〜Q5の実materializer、S3〜S7、formal run／artifact、性能／promotion、native acceptanceは未実施
+  独立監査P0〜P3 0件、S2 67/67 pass。詳細はS2監査結果を参照
+- v0.3 S3実装commit群 `bdd59c5`、`2a01146`、`bb42d37`、`dc52266`: 固定inventory、paired materialization、完全ledger、安全停止、provenance、non-overwrite publisherを実装し、独立監査P0〜P3 0件。CI run `34044283016`はPython 3.12/3.14の全工程green。S3 73/73 pass。ローカル全体探索はMemoryError 1件を含むため、S4前の容量確認・同一revision再確認を残す。次はS4 platform/runtime/native Windows acceptanceとdry/smoke consumer freeze。性能評価・formal run・promotionは未実施
 
 ## 文書カテゴリ
 
@@ -123,10 +123,10 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 
 ## 結果文書
 
-`docs/results`には実測・監査で20件あります。すべて結果条件と制約を伴う索引であり、
+`docs/results`には実測・監査で21件あります。すべて結果条件と制約を伴う索引であり、
 顧客設備一般の性能保証ではありません。
 
-### Anomaly（6件）
+### Anomaly（7件）
 
 | 文書 | status | 要点 |
 | --- | --- | --- |
@@ -136,6 +136,7 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 | [v0.3 plan audit](results/anomaly-multiseed-v0.3-plan-audit-2026-09-06.md) | audit-result / plan-only | P0〜P3 0件、5 readiness yes。S0 frozen・adopted、S1〜S7とformal runは未実施 |
 | [v0.3 S1 audit](results/anomaly-multiseed-v0.3-s1-audit-2026-09-06.md) | audit-result / contract-only | 初回P2=6／P3=1を修正し再監査P0〜P3 0件。S1完了 |
 | [v0.3 S2 audit](results/anomaly-multiseed-v0.3-s2-audit-2026-09-06.md) | audit-result / pure-scoring | P0〜P3 0件、S2 67/67、CI success。S3 runnerとformal runは未実施 |
+| [v0.3 S3 audit](results/anomaly-multiseed-v0.3-s3-audit-2026-09-07.md) | audit-result / deterministic-runner | P0〜P3 0件、`S3_READY=yes`、`INTEGRATION_READY=yes`。CI 3.12/3.14 green、formal run・性能・promotionは未実施 |
 
 ### TimesFM 3（5件）
 
@@ -219,22 +220,24 @@ consumerは文書の数値だけでなく対象artifactのhashとschemaを再検
 ## 同期時に確認したこと
 
 棚卸しの対象は、指示どおり`rg --files -g '*.md'`で見えるMarkdownです。
-過去の棚卸しではtracked Markdownは56件でした。今回のS1監査resultを1件追加し、
-最終的なtracked Markdownは57件です。
+過去の棚卸しではtracked Markdownは56件でした。S1〜S3監査resultを含む現時点では、
+最終的なtracked Markdownは59件です。
 `artifacts/`以下に存在するignored summary 7件は正式artifact／残留物として変更せず、
 棚卸し数・到達性link graphから除外しました。
 
-- `docs`直下は本索引を含め21件、`docs/results`は19件
-- tracked Markdownのlocal file links: 296件（pathを持つtargetの存在を検査）
+- `docs`直下は本索引を含め21件、`docs/results`は21件
+- tracked Markdownのlocal file links: 316件（pathを持つtargetの存在を検査）
 - fragment-only links: 3件（v0.3計画のP2対応表から明示anchorへの参照）
 - missing local links: 0件
-- 到達性: root READMEを起点とし、本索引のcategory表を辺としてtracked Markdown 57件を対象にする
-- docs配下の到達性: 40/40件（100%）
-- orphan: 0件（tracked Markdown 57件すべてroot READMEから到達可能）
+- 到達性: root READMEを起点とし、本索引のcategory表を辺としてtracked Markdown 59件を対象にする
+- docs配下の到達性: 42/42件（100%）
+- orphan: 0件（tracked Markdown 59件すべてroot READMEから到達可能）
 - 競合していたliving status: roadmapのfailure diagnostics「実行・公開未実施」を正式D2-B完了へ同期
 - 意図的に保持した古い表記: frozen plan、historical savepoint、result監査時点の「未実施」
 - v0.3 S0: 監査対象`4b02201...`のP2 3件解消と独立監査合格を記録し、frozen・adoptedへ同期
-- v0.3 S1: 初回監査P2=6／P3=1を`d6ca0f9...`で修正し、独立再監査P0〜P3 0件で完了。candidate stack main統合済み、S2以降は未着手
+- v0.3 S1: 初回監査P2=6／P3=1を`d6ca0f9...`で修正し、独立再監査P0〜P3 0件で完了。candidate stack main統合済み
+- v0.3 S2: pure scoring、episode、causal matching、固定分母の独立監査P0〜P3 0件で完了
+- v0.3 S3: deterministic runnerの独立監査P0〜P3 0件、`S3_READY=yes`、`INTEGRATION_READY=yes`。次はS4 native Windows acceptance／dry-smoke／consumer freeze。ローカル全体のMemoryError、容量確認、同一revision再確認を保留事項として記録
 
 ## 更新手順
 

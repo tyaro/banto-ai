@@ -455,3 +455,13 @@ S0としてfrozen・adoptedとなった。監査結果は
 | P2-1 最初の候補のsupport失敗後の探索が曖昧 | [§5.1 列挙→選択→検証→確定](#v03-incident-selection) | M1/M5は後続に適格episodeがあってもmiss。M3は窓外episodeを候補から除外。M9はengineering failure | 解消、独立監査合格 |
 | P2-2 旧6桁丸めと各split入力が未固定 | [§3.1 観測丸め](#v03-quantization) | Q1のoverlay順序、Q2/Q3のlatent state、Q4/Q5のbinary64/JSON値。全splitは保存観測のみ | 解消、独立監査合格 |
 | P2-3 共通CI、Windows native受入、formal pinが未固定 | [§8 runtime/platform](#v03-runtime-acceptance) | Linux 3.12/3.14、Windows実API・DACL/AccessCheck、唯一の正式OS/Python、非対応環境での事前拒否 | 解消、独立監査合格 |
+
+## 12. 実装後のliving status（2026-09-07）
+
+本書は実装前に凍結したpreregistrationであり、上記の「未実施」は凍結時点の記録として保持する。実装後の進捗は、別の結果文書とliving文書で同期する。
+
+S3 deterministic runnerは、実装commit `bdd59c5`、`2a01146`、`bb42d37`、`dc52266`を経てmainへ統合され、独立監査P0〜P3 0件、`S3_READY=yes`、`INTEGRATION_READY=yes`となった。固定inventory、paired materialization、全枠ledger、安全停止、確認済み証拠保持、provenance、non-overwrite publicationの土台を確認したが、性能結果・winner・promotion・本番利用許可は示さない。顧客データは対象外で、formal output rootはS4受入まで閉鎖する。
+
+CI run [34044283016](https://github.com/tyaro/banto-ai/actions/runs/34044283016)はPython 3.12/3.14の全工程greenだった。ローカル全体探索は`Ran 686 / 3667.360s / FAILED (errors=1, skipped=2)`で、`SavedEvaluationTests.setUpClass`の`compute_evaluation`中`copy.deepcopy(scores)`にMemoryErrorが発生し、同classの5試験は未実行だった。単独再実行は5/5 PASSだが、ローカルの根本原因、peak memory、commit limitは未解決であり、S4前の容量確認・同一revision再確認事項として残す。詳細は[S3監査結果](results/anomaly-multiseed-v0.3-s3-audit-2026-09-07.md)を参照する。
+
+次段階はS4のplatform/runtime/native Windows acceptance、dry/smoke、独立consumer freezeである。S4受入が完了するまでformal dev/smoke/holdoutの実行権限は付与しない。
