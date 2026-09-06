@@ -359,6 +359,7 @@ def collect_receipt(root: Path, expected_head: str):
     stable = {"platform": host, "python": {"implementation": "CPython", "version": platform.python_version(),
         "compiler": platform.python_compiler(), "gil_disabled": bool(sysconfig.get_config_var("Py_GIL_DISABLED")),
         "source_tag": source_tag, "pointer_bits": struct.calcsize("P")*8, "executable": rows["python/"+executable.name],
+        "executable_native_path": native_by_path[executable],
         "loaded_python_dll": dll, "basic_pin": basic}, "cpu": cpu, "startup": _startup(root),
         "stdlib": [rows[name] for name, _ in stdlib], "loaded_native": native_rows,
         "loaded_extensions": sorted((rows[native_by_path[path]] for path in extensions), key=lambda row: row["path"]),

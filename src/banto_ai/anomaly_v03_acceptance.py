@@ -62,7 +62,7 @@ def receipt_schema():
             "filesystem": text, "local_fixed": boolean}),
         "python": obj({"implementation": {"const": "CPython", "type": "string"}, "version": text,
             "compiler": text, "gil_disabled": boolean, "source_tag": text, "pointer_bits": {"const": 64, "type": "integer"},
-            "executable": file, "loaded_python_dll": nullable(text),
+            "executable": file, "executable_native_path": text, "loaded_python_dll": nullable(text),
             "basic_pin": enum("matches-formal-basic-pin", "compatibility-only")}),
         "cpu": obj({"architecture": text, "identity": text, "features": arr(text, 1),
                     "feature_scope": enum("win32-processor-feature-api", "linux-all-processors-intersection")}),
@@ -132,6 +132,14 @@ def validate_receipt(receipt, *, expected_stable_sha256: str, source_snapshots: 
     native = {row["path"]: row for row in stable["loaded_native"]}
     v.require(all(native.get(row["path"]) == row for row in stable["loaded_extensions"]), "extension missing from native inventory")
     py, host = stable["python"], stable["platform"]
+    executable_native_path = py["executable_native_path"]
+    v.safe_relative_path(executable_native_path)
+    v.require(executable_native_path.startswith("native/") and executable_native_path in native,
+              "executing Python image reference missing/invalid")
+    # _files already rejects duplicate and case-ambiguous native identities.
+    loaded_exe, executable = native[executable_native_path], py["executable"]
+    v.require((loaded_exe["raw_sha256"], loaded_exe["byte_count"]) ==
+              (executable["raw_sha256"], executable["byte_count"]), "executing Python image bytes mismatch")
     v.require(re.fullmatch(r"3\.(12|14)\.[0-9]+", py["version"]), "unsupported runtime version")
     v.require(not py["gil_disabled"] and host["local_fixed"], "unsupported runtime mode/filesystem")
     v.require(stable["cpu"]["architecture"] == host["architecture"], "CPU architecture mismatch")

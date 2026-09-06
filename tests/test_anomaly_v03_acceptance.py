@@ -6,6 +6,8 @@ import copy
 import hashlib
 import io
 import os
+import subprocess
+import sys
 import tempfile
 import unittest
 from contextlib import ExitStack, redirect_stderr, redirect_stdout
@@ -40,19 +42,22 @@ def fixture():
         "stable": {"platform": {"system": "Linux", "release": "24.04", "version": "hand-kernel", "build": None,
             "ubr": None, "edition": "ubuntu", "architecture": "x86_64", "filesystem": "ext4", "local_fixed": True},
             "python": {"implementation": "CPython", "version": "3.12.8", "compiler": "hand-compiler", "gil_disabled": False,
-                "source_tag": "hand-tag", "pointer_bits": 64, "executable": entry("python/python"), "loaded_python_dll": None,
+                "source_tag": "hand-tag", "pointer_bits": 64, "executable": entry("python/python", b"hand executable"),
+                "executable_native_path": "native/python", "loaded_python_dll": None,
                 "basic_pin": "compatibility-only"},
             "cpu": {"architecture": "x86_64", "identity": "hand-cpu", "features": ["sse2"], "feature_scope": "linux-all-processors-intersection"},
             "startup": {"flags": [{"name": name, "value": 0} for name in a.FLAG_NAMES],
                 "environment": [{"name": name, "present": False} for name in a.ENV_NAMES],
                 "import_locations": ["source", "stdlib"], "user_site_enabled": False, "bytecode_writes_disabled": True},
-            "stdlib": [entry("stdlib/random.py")], "loaded_native": [entry("native/libc.so")], "loaded_extensions": [],
+            "stdlib": [entry("stdlib/random.py")],
+            "loaded_native": [entry("native/libc.so"), entry("native/python", b"hand executable")], "loaded_extensions": [],
             "sources": sources, "scope": {"phase": "post-probe-import-observation", "closure_verified": False,
                 "stdlib_policy": "regular-tree-excluding-site-packages", "native_method": "proc-self-maps", "limitations": list(a.LIMITATIONS)}},
         "observation": {"pid": 1, "observed_utc": "2026-09-07T00:00:00+00:00", "elapsed_seconds": 0.0, "free_bytes": 100,
             "peak_process_bytes": None, "system_commit_bytes": None, "token_ids": [],
-            "native_files": [{"path": "native/libc.so", "physical_path": "/hand/libc.so", "device": 1,
-                "inode": 1, "nlink": 1, "trust_status": "not_accepted"}], "native_load_order": ["native/libc.so"]}}
+            "native_files": [{"path": "native/"+name, "physical_path": "/hand/"+name, "device": 1,
+                "inode": index+1, "nlink": 1, "trust_status": "not_accepted"} for index, name in enumerate(("libc.so", "python"))],
+            "native_load_order": ["native/libc.so", "native/python"]}}
 
 
 def check(value):
@@ -168,7 +173,7 @@ class AcceptanceContractTests(unittest.TestCase):
         value = fixture(); value["observation"]["elapsed_seconds"] = float("nan")
         with self.assertRaises(v.V03ValidationError): check(value)
 
-    def test_windows_formal_basic_match_remains_unaccepted(self):
+    def _windows_fixture(self):
         from banto_ai import _anomaly_v03_contract as c
         value = fixture(); stable = value["stable"]; pin = c.formal_runtime()
         stable["platform"].update(system="Windows", release="25H2", version="10.0.26200.9168", build=26200,
@@ -176,15 +181,56 @@ class AcceptanceContractTests(unittest.TestCase):
         stable["cpu"].update(architecture="AMD64", feature_scope="win32-processor-feature-api")
         stable["scope"]["native_method"] = "EnumProcessModulesEx"
         stable["python"].update(version="3.14.0", compiler="MSC v.1944 64 bit (AMD64)", source_tag="v3.14.0:ebf955d",
-            loaded_python_dll="native/python314.dll", basic_pin="matches-formal-basic-pin")
+            executable_native_path="native/python.exe", loaded_python_dll="native/python314.dll", basic_pin="matches-formal-basic-pin")
+        stable["python"]["executable"]["path"] = "python/python.exe"
         stable["python"]["executable"]["raw_sha256"] = pin["python_exe_raw_sha256"]
-        stable["loaded_native"] = [{**entry("native/python314.dll"), "raw_sha256": pin["python_dll_raw_sha256"]}]
-        value["observation"]["native_load_order"] = ["native/python314.dll"]
-        value["observation"]["native_files"][0]["path"] = "native/python314.dll"
+        stable["loaded_native"] = [{**stable["python"]["executable"], "path": "native/python.exe"},
+            {**entry("native/python314.dll"), "raw_sha256": pin["python_dll_raw_sha256"]}]
+        value["observation"]["native_load_order"] = ["native/python.exe", "native/python314.dll"]
+        for row, name in zip(value["observation"]["native_files"], ("python.exe", "python314.dll"), strict=True):
+            row.update(path="native/"+name, physical_path="C:/hand/"+name)
+        return value
+
+    def test_windows_formal_basic_match_remains_unaccepted(self):
+        value = self._windows_fixture()
         self.assertFalse(check(value)["formal_permission"])
         for field, val in (("version", "3.14.1"), ("source_tag", "other"), ("gil_disabled", True)):
             bad = copy.deepcopy(value); bad["stable"]["python"][field] = val
             with self.assertRaises(v.V03ValidationError): check(bad)
+
+    def test_executable_native_reference_is_required_unique_and_byte_equal(self):
+        for system, make in (("Linux", fixture), ("Windows", self._windows_fixture)):
+            self.assertFalse(check(make())["formal_permission"])
+            for attack in ("missing-field", "missing-image", "unknown", "unsafe", "namespace", "hash", "size", "duplicate", "case-alias"):
+                value = make(); stable = value["stable"]; py = stable["python"]
+                ref = py["executable_native_path"]
+                row = next(row for row in stable["loaded_native"] if row["path"] == ref)
+                if attack == "missing-field": del py["executable_native_path"]
+                elif attack == "missing-image": stable["loaded_native"].remove(row)
+                elif attack == "unknown": py["executable_native_path"] = "native/absent"
+                elif attack == "unsafe": py["executable_native_path"] = "native/../python"
+                elif attack == "namespace": py["executable_native_path"] = "python/python"
+                elif attack == "hash": row["raw_sha256"] = "0"*64
+                elif attack == "size": row["byte_count"] += 1
+                else:
+                    duplicate = copy.deepcopy(row)
+                    if attack == "case-alias": duplicate["path"] = ref.upper()
+                    stable["loaded_native"].append(duplicate)
+                    stable["loaded_native"].sort(key=lambda item:item["path"])
+                with self.subTest(system=system, attack=attack), self.assertRaises(v.V03ValidationError): check(value)
+
+    def test_executable_reference_is_bound_by_external_equivalence_pin(self):
+        value = fixture()
+        value["stable"]["loaded_native"].append(entry("native/python-copy", b"hand executable"))
+        value["observation"]["native_load_order"].append("native/python-copy")
+        value["observation"]["native_files"].append({"path":"native/python-copy", "physical_path":"/hand/python-copy",
+            "device":1, "inode":3, "nlink":1, "trust_status":"not_accepted"})
+        digest = v.canonical_sha256(value["stable"])
+        a.validate_receipt(value, expected_stable_sha256=digest)
+        value["stable"]["python"]["executable_native_path"] = "native/python-copy"
+        self.assertFalse(check(value)["formal_permission"])
+        with self.assertRaisesRegex(v.V03ValidationError, "external stable pin"):
+            a.validate_receipt(value, expected_stable_sha256=digest)
 
 
 class ReadOnlyCollectorTests(unittest.TestCase):
@@ -307,6 +353,7 @@ class ReadOnlyCollectorTests(unittest.TestCase):
     def test_collector_double_readback_and_not_complete(self):
         result = self._capture()
         self.assertEqual(result["receipt"]["acceptance_status"], "not_completed")
+        self.assertEqual(result["receipt"]["stable"]["python"]["executable_native_path"], "native/runtime.py")
         self.assertEqual(result["pin_origin"], "self-observation-not-trusted-external-pin")
         self.assertEqual([p.name for p in self.root.iterdir()], ["runtime.py"])
         for attack in ("bytes", "native"):
@@ -316,11 +363,46 @@ class ReadOnlyCollectorTests(unittest.TestCase):
         with patch.object(cli, "collect_receipt", return_value={"hand":"inspection"}), redirect_stdout(io.StringIO()) as output:
             self.assertEqual(cli.main(["--expected-head", "a"*40]), 0)
         self.assertEqual(v.strict_json(output.getvalue()), {"hand":"inspection"})
-        with patch.object(cli, "collect_receipt", side_effect=RuntimeError("sensitive-value")), redirect_stderr(io.StringIO()) as output:
+        with patch.object(cli, "collect_receipt", side_effect=RuntimeError("dummy-sensitive-value")), \
+                redirect_stdout(io.StringIO()) as stdout, redirect_stderr(io.StringIO()) as output:
             self.assertEqual(cli.main(["--expected-head", "a"*40]), 1)
-        self.assertNotIn("sensitive-value", output.getvalue())
-        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
-            cli.main(["--expected-head", "a"*40, "--output", str(self.root/"bad.json")])
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertEqual(output.getvalue(), '{"acceptance_status":"not_completed","inspection_status":"failed","formal_permission":false}\n')
+
+    def test_cli_argument_failures_are_fixed_json_without_reflection(self):
+        dummy = "dummy-sensitive-value"
+        cases = ([], ["--root", dummy], ["--expected-head"], ["--expected-head", dummy],
+            ["--expected-head", "a"*40, "--root"], ["--expected-head", "a"*40, "--dummy-sensitive-option", dummy],
+            ["--expected-head", "a"*40, "--output="+dummy], ["--expected-h", "a"*40])
+        expected = '{"acceptance_status":"not_completed","inspection_status":"failed","formal_permission":false}\n'
+        for args in cases:
+            with self.subTest(args=args), patch.object(cli, "collect_receipt") as collect, \
+                    redirect_stdout(io.StringIO()) as stdout, redirect_stderr(io.StringIO()) as stderr:
+                self.assertEqual(cli.main(args), 1)
+            collect.assert_not_called()
+            self.assertEqual(stdout.getvalue(), "")
+            self.assertEqual(stderr.getvalue(), expected)
+        with patch.object(cli, "_full_revision", side_effect=RuntimeError(dummy)), \
+                redirect_stdout(io.StringIO()) as stdout, redirect_stderr(io.StringIO()) as stderr:
+            self.assertEqual(cli.main(["--expected-head", dummy]), 1)
+        self.assertEqual(stdout.getvalue(), "")
+        self.assertEqual(stderr.getvalue(), expected)
+        # Also verify the real entrypoint propagates the nonzero status, without
+        # calling collection, creating artifacts, or echoing the dummy value.
+        process = subprocess.run([sys.executable, "-B", str(ROOT/"tools/evaluator/inspect_anomaly_v03.py"),
+            "--expected-head", "a"*40, "--output", dummy], capture_output=True, text=True, check=False)
+        self.assertEqual(process.returncode, 1)
+        self.assertEqual(process.stdout, "")
+        self.assertEqual(process.stderr, expected)
+
+    def test_cli_help_remains_normal_and_does_not_collect(self):
+        with patch.object(cli, "collect_receipt") as collect, redirect_stdout(io.StringIO()) as stdout, \
+                redirect_stderr(io.StringIO()) as stderr, self.assertRaises(SystemExit) as exit_info:
+            cli.main(["--help"])
+        self.assertEqual(exit_info.exception.code, 0)
+        self.assertIn("--expected-head", stdout.getvalue())
+        self.assertEqual(stderr.getvalue(), "")
+        collect.assert_not_called()
 
 
 class SourceCollectorTests(unittest.TestCase):

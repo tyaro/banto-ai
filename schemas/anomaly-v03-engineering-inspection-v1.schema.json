@@ -196,6 +196,10 @@
               ],
               "additionalProperties": false
             },
+            "executable_native_path": {
+              "type": "string",
+              "minLength": 1
+            },
             "loaded_python_dll": {
               "anyOf": [
                 {
@@ -223,6 +227,7 @@
             "source_tag",
             "pointer_bits",
             "executable",
+            "executable_native_path",
             "loaded_python_dll",
             "basic_pin"
           ],
