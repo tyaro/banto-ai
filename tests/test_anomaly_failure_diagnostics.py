@@ -70,6 +70,8 @@ S4_A_CURRENT_ONLY_PATHS = (
     "schemas/anomaly-v03-engineering-inspection-v1.schema.json",
 )
 
+S4_B1_CURRENT_ONLY_PATHS = ("src/banto_ai/_anomaly_v03_windows.py",)
+
 FORMAL_RAW_PINS = {
     "matrix_config": "2a74036b0860a420b7d9cc2ae03056f04e5f8c92026aa532e07cb917726cfc87",
     "matrix_schema": "944ef163ad6b8eb0d1dfc5cbdebaf71bac2e75c43dfa07666ae424f8a165ed8e",
@@ -1450,9 +1452,9 @@ class FormalLegacyProvenanceTests(unittest.TestCase):
         original = ["src/banto_ai/anomaly_failure_diagnostics.py", "examples/configs/anomaly-multiseed-failure-diagnostics-v0.1.json",
                     "schemas/anomaly-multiseed-failure-diagnostics-config-v0.1.schema.json", "schemas/anomaly-multiseed-failure-diagnostics-result-v0.1.schema.json"]
         current_only = diagnostics.EXPECTED_REVISION_COMPATIBILITY["current_only_paths"]
-        self.assertEqual(current_only, original + list(S1_CURRENT_ONLY_PATHS) + list(S2_CURRENT_ONLY_PATHS) + list(S3_CURRENT_ONLY_PATHS) + list(S4_A_CURRENT_ONLY_PATHS))
+        self.assertEqual(current_only, original + list(S1_CURRENT_ONLY_PATHS) + list(S2_CURRENT_ONLY_PATHS) + list(S3_CURRENT_ONLY_PATHS) + list(S4_A_CURRENT_ONLY_PATHS) + list(S4_B1_CURRENT_ONLY_PATHS))
         self.assertEqual(len(S4_A_CURRENT_ONLY_PATHS), 3)
-        self.assertEqual(len(set(current_only)), 31)
+        self.assertEqual(len(set(current_only)), 32)
         proof = self.compatibility["semantic_sources"]
         self.assertEqual(len(proof), 88)
         self.assertFalse(set(current_only) & {row["path"] for row in proof})
