@@ -63,7 +63,7 @@ py -3.14 tools/evaluator/analyze_event_slices.py `
 S1初回監査（`0368769acf12a0279c84f30c6435e853208386e9`）はP2=6／P3=1件でした。
 修正commit `d6ca0f9ee85172caae3b658bdb105287f8e43141`への
 [独立再監査](../../docs/results/anomaly-multiseed-v0.3-s1-audit-2026-09-06.md)はP0〜P3 0件で合格し、
-S1は完了し、candidate stackはmain統合済みです。GitHub Actions [Phase 1 CI run 34013082980](https://github.com/tyaro/banto-ai/actions/runs/34013082980)はsuccess（Python 3.12: 7m56s、Python 3.14: 7m25s）でした。S2以降は未着手です。
+S1は完了し、candidate stackはmain統合済みです。GitHub Actions [Phase 1 CI run 34013082980](https://github.com/tyaro/banto-ai/actions/runs/34013082980)はsuccess（Python 3.12: 7m56s、Python 3.14: 7m25s）でした。S2の純粋計算実装候補は下のAPI節を参照してください。S3以降は未着手です。
 [両jobのCI範囲](https://github.com/tyaro/banto-ai/actions/runs/34013082980)はcompile、unittest、manifests＋naive smoke、synthetic generation＋quality、benchmark、safetyです。これはLinux正式受入、v0.3 formal run、性能評価、promotion、Windows native／DACL／AccessCheck受入を意味しません。
 [公開module](../../src/banto_ai/anomaly_v03.py)は標準ライブラリのみで、渡された値またはbytesを検査します。
 package rootへの副作用のある自動importは追加せず、`from banto_ai import anomaly_v03`で利用します。
@@ -105,7 +105,7 @@ gateの閾値比較は報告値を丸めず行いますが、bootstrap metric／
 返値は常に`run_status=not_run`、`engineering_status=not_evaluated`、
 `performance_status=not_evaluated`、`result_trusted=false`で、入力のrun状態は`reported_run_status`へ分離します。
 数値profile／score、episodeの完全列挙、matching候補列の完全性、CI／gateの再計算はS2〜S6の責務です。
-M1〜M9／Q1〜Q5は今回ID・shape・enumだけを登録し、scorer挙動は未実装です。
+S1はM1〜M9／Q1〜Q5のID・shape・enumだけを登録します。scorer挙動の実装・試験は下のS2 APIへ分離しています。
 
 `not_run`で許可するのは設計台帳、入力hash、source descriptorなどのmetadataだけです。
 computed metric／slice／gate／delay、fit済みprofile、処理済みincidentは許可しません。
@@ -154,19 +154,60 @@ typed bool indexは修正前も拒否され、P3の2境界testsも修正前か�
 P3は算法変更ではなく、T−1／T／最大値のrejection、counter増加・次position reset、
 small／旧seed／新seed衝突retryの保存試験を補う修正です。seed／bootstrap hashと凍結plan bytesは不変です。
 
-全suite確認で、既存diagnostics fixtureがHEADの92 paths固定を前提としていたことも確認しました。
-S1 commit後は109 pathsとなるため、revision compatibilityのcurrent-onlyを既存4件＋S1の
-3 modules／9 schemas／5 configsの**exact 21 paths**へ保守しました。wildcard／prefix許可は追加していません。
+S1で既存diagnostics fixtureの92 paths固定を見直し、current-onlyを既存4件＋S1の
+3 modules／9 schemas／5 configsのexact 21 pathsへ保守しました。S2は新3 modulesだけを追加し、
+current-onlyは**exact 24 paths**、全semantic treeは112 pathsです。wildcard／prefix許可は追加していません。
 module・D2 config・D2 config schemaの同リストと対応する現行config／schema pinsを同期し、旧88 semantic blobsは
 [独立したpath／mode／raw hash inventory](../../tests/fixtures/anomaly-diagnostics-historical-88.json)でGit LF blobsとbyte exactに照合します。
 current treeのextra／missing、historicalとの重複、mode／link／raw改ざんの拒否を
 [既存diagnostics tests](../../tests/test_anomaly_failure_diagnostics.py)で確認します。
+保存前の検証にも使うtest fixtureはread-onlyでstaged indexのblobを取得します。CIではindex＝HEADです。
+ローカル試験は対象変更をstageしてから実施します。productionのclean HEAD／working bytes検査は変更しません。
 変更に伴い現行diagnostics module／config／config schemaのraw hashは変わります。
 これは将来のcurrent revision compatibility保守であり、過去の正式artifact／result／doc、
 FORMAL_RAW_PINS、artifact revision、D2 identity／出力root／ACLは変更せず、正式runを再実行していません。
 このWindows作業copyの旧88 pathsには既存のCRLF差が68件あり、Git LF blobsとの差は全て改行のみです。
 それらは書き換えていません。実際のrevision compatibilityはworking bytesもbyte exactを要求するため、
 この作業copyをformal replay可能と宣言しません。test fixtureのGit LF照合と実機run受入は別です。
+
+### S2 pure scoring API（実装候補・独立監査前）
+
+[scoring](../../src/banto_ai/anomaly_v03_scoring.py)、[固定数値計算](../../src/banto_ai/_anomaly_v03_numeric.py)、
+[episodes / matching / accounting](../../src/banto_ai/anomaly_v03_episodes.py)はstdlibのみで、file／network／environment I/Oなしです。
+S1のvalidatorと返却statusは変更せず、検証合格をrun実施・性能達成と扱いません。
+
+`fit_profiles(identity, raw, expected_sha256=...)`は保存済みJSONL bytesだけを入力し、独立した48 profilesを
+immutableな`ProfileSet`に保持します。`ledger_rows()`はS1 schemaに対応するコピーを返します。
+`score_test(profiles, raw, expected_sha256=...)`は同じ保存形式のtest prefixをscore行へ変換し、
+`build_episodes(scores)`がstreak／backlinkを確定したscore、signal episode、equipment episodeを返します。
+`match_incidents(identity, events=..., profiles=..., scores=..., source_episodes=..., equipment_episodes=...)`は
+構造を再構築・exact照合してから全20 incidentsとmatch/context付きequipment episodesを返します。
+`account_metrics`はこれら6台帳とidentityから単一evaluationの固定分母のraw指標を計算します。
+48 profiles／14,400 score行／全20 incidentsがなければ停止し、欠落をmissや小さな分母に補完しません。
+CI／bootstrap集計／gate／promotion／独立consumerではありません。0-alert precisionはnull / inconclusiveです。
+
+保存形式は既存generatorの7 fields、5 numeric signalsの`{unit,value}`とquality、
+UTC `.000Z`、equipment→timestamp順、sorted compact UTF-8 JSONL、行末LFです。
+duplicate keys／NaN／Infinity／numeric bool／未知field／6桁未丸め値を拒否し、
+detectorへ渡す`Observation`は4 targets・quality・timestamp・mode・recipe・設備だけに投影します。
+seed／layoutはprofile identity専用で、GT／cycle／load_proxy／他設備／未来値を数値特徴へ渡しません。
+hashはcallerが信頼済みprovenanceから与える必要があります。hash一致だけで保存元の真正性を保証しません。
+`ProfileSet`も実行証跡のsealではなく、S3のsource/runtime/pairing検証とS6の独立再計算が別途必要です。
+
+`advance_phase`は観測された連続mode entryだけから更新し、最初の観測とgap後はentry不明です。
+warm-upで初期不明phaseを吸収します。30秒超の継続・recipe-only変更は次のmode entryまで不明とし、周期fallbackしません。
+`exclusion_tags`は未知mode／recipeをunavailableにします。ただし凍結score schemaは未知labelを表現できないため、
+`score_test`の台帳化入口は未知labelでinput-contract errorを返し、既知labelへ置換しません。
+正常prefixの欠損／mode・phase不整合／quality不備は`normal_prefix_issues`に別記します。
+数値上250点以上で較正できても、この問題付き入力を正常なcampaign入力と認定してはいけません。
+
+Q1〜Q5は`quantize_observation`の最終丸め境界を検査します。overlay実施・未丸めlatent stateの更新・
+paired materializationはS3の責務であり、本実装にはありません。
+[数値・観測試験](../../tests/test_anomaly_v03_scoring.py)と[M1〜M9・構造・分母試験](../../tests/test_anomaly_v03_episodes.py)は
+固定の手作り値だけを使い、registered dev／smoke／holdoutデータを生成しません。
+実行例は`python -B -m unittest tests.test_anomaly_v03_scoring tests.test_anomaly_v03_episodes -v`です。
+今回のローカル対象はWindows CPython 3.14.0。Linux 3.12／3.14、Windows 3.12、native publisher受入は未実施です。
+S3 runner／publisher、S4以降のcampaign、正式artifact、TimesFM、Banto Hub／PLC writeは含みません。
 
 ### v0.1 / v0.2の既存validator
 

@@ -51,6 +51,11 @@ S1_CURRENT_ONLY_PATHS = (
     "examples/configs/anomaly-multiseed-analysis-v0.3.json",
     "examples/configs/anomaly-v03-freeze-registry.json",
 )
+S2_CURRENT_ONLY_PATHS = (
+    "src/banto_ai/_anomaly_v03_numeric.py",
+    "src/banto_ai/anomaly_v03_scoring.py",
+    "src/banto_ai/anomaly_v03_episodes.py",
+)
 
 FORMAL_RAW_PINS = {
     "matrix_config": "2a74036b0860a420b7d9cc2ae03056f04e5f8c92026aa532e07cb917726cfc87",
@@ -82,9 +87,31 @@ def _formal_semantic_tree(tree, inventory):
     return {path: tree[path] for path in historical}
 
 
+def _fixture_index_tree():
+    """Read-only staged candidate tree, also usable before the S2 commit.
+
+    CI has index == HEAD. Local savepoint verification stages scoped edits
+    first. This fixture never relaxes production clean-HEAD runtime checks.
+    Every historical byte/mode is still checked against the independent 88.
+    """
+    prefixes = diagnostics.EXPECTED_REVISION_COMPATIBILITY["artifact_source_prefixes"]
+    entries = diagnostics._git_run(ROOT, "ls-files", "--stage", "-z", "--", *prefixes)
+    tree = {}
+    for entry in entries.split(b"\0"):
+        if not entry:
+            continue
+        header, path_raw = entry.split(b"\t", 1)
+        mode, blob, stage = header.decode("ascii").split()
+        path = path_raw.decode("utf-8")
+        if stage != "0" or path in tree:
+            raise AssertionError("fixture index has unmerged/duplicate entries")
+        raw = diagnostics._git_run(ROOT, "cat-file", "blob", blob)
+        tree[path] = (hashlib.sha256(raw).hexdigest(), raw, mode)
+    return tree
+
+
 def _formal_source_fixture():
-    prefixes = tuple(diagnostics.EXPECTED_REVISION_COMPATIBILITY["artifact_source_prefixes"])
-    tree = diagnostics._git_tree(ROOT, "HEAD", prefixes)
+    tree = _fixture_index_tree()
     inventory = json.loads((ROOT / "tests/fixtures/anomaly-diagnostics-historical-88.json").read_bytes())
     semantic_tree = _formal_semantic_tree(tree, inventory)
     sources, values = runner._snapshot_inputs(ROOT, ROOT / diagnostics.EXPECTED_MATRIX_CONFIG_PATH)
@@ -1103,7 +1130,8 @@ class D2AIntegrityTests(unittest.TestCase):
         historical = {f"src/banto_ai/historical-{index:03d}.py": (b"historical\n", "100644") for index in range(88)}
         current = {**historical, **{path: (b"diagnostics\n", "100644") for path in diagnostics.EXPECTED_REVISION_COMPATIBILITY["current_only_paths"]}}
         for change in (None, "dirty", "diff", "head", "mode", "link", "missing", "extra", "raw", "current-only-raw",
-                       "S1-missing-index", "S1-extra-index", "S1-link", "S1-raw", "S1-overlap", "S1-missing-workspace"):
+                       "S1-missing-index", "S1-extra-index", "S1-link", "S1-raw", "S1-overlap", "S1-missing-workspace",
+                       "S2-missing-index", "S2-extra-index", "S2-link", "S2-raw", "S2-overlap", "S2-missing-workspace"):
             tree = deepcopy(current)
             workspace = {path: raw for path, (raw, _) in tree.items()}
             first = next(iter(historical))
@@ -1118,9 +1146,14 @@ class D2AIntegrityTests(unittest.TestCase):
             elif change == "S1-link": tree[S1_CURRENT_ONLY_PATHS[0]] = (b"diagnostics\n", "120000")
             elif change == "S1-raw": workspace[S1_CURRENT_ONLY_PATHS[0]] += b"changed"
             elif change == "S1-missing-workspace": workspace.pop(S1_CURRENT_ONLY_PATHS[0])
-            if change == "S1-overlap":
+            elif change == "S2-missing-index": tree.pop(S2_CURRENT_ONLY_PATHS[0])
+            elif change == "S2-extra-index": tree["src/banto_ai/unregistered-s2.py"] = (b"extra", "100644")
+            elif change == "S2-link": tree[S2_CURRENT_ONLY_PATHS[0]] = (b"diagnostics\n", "120000")
+            elif change == "S2-raw": workspace[S2_CURRENT_ONLY_PATHS[0]] += b"changed"
+            elif change == "S2-missing-workspace": workspace.pop(S2_CURRENT_ONLY_PATHS[0])
+            if change in ("S1-overlap", "S2-overlap"):
                 historical_view = dict(historical)
-                historical_view[S1_CURRENT_ONLY_PATHS[0]] = historical_view.pop(first)
+                historical_view[(S1_CURRENT_ONLY_PATHS if change == "S1-overlap" else S2_CURRENT_ONLY_PATHS)[0]] = historical_view.pop(first)
             else:
                 historical_view = historical
 
@@ -1386,12 +1419,12 @@ class FormalLegacyProvenanceTests(unittest.TestCase):
         cls.compatibility = {"artifact_revision": cls.revision, "semantic_sources": proof,
                              "replay_revision": {**cls.revision, "head": "0" * 40}}
 
-    def test_S1_current_only_exact_inventory_keeps_historical_88(self):
+    def test_S1_S2_current_only_exact_inventory_keeps_historical_88(self):
         original = ["src/banto_ai/anomaly_failure_diagnostics.py", "examples/configs/anomaly-multiseed-failure-diagnostics-v0.1.json",
                     "schemas/anomaly-multiseed-failure-diagnostics-config-v0.1.schema.json", "schemas/anomaly-multiseed-failure-diagnostics-result-v0.1.schema.json"]
         current_only = diagnostics.EXPECTED_REVISION_COMPATIBILITY["current_only_paths"]
-        self.assertEqual(current_only, original + list(S1_CURRENT_ONLY_PATHS))
-        self.assertEqual(len(set(current_only)), 21)
+        self.assertEqual(current_only, original + list(S1_CURRENT_ONLY_PATHS) + list(S2_CURRENT_ONLY_PATHS))
+        self.assertEqual(len(set(current_only)), 24)
         proof = self.compatibility["semantic_sources"]
         self.assertEqual(len(proof), 88)
         self.assertFalse(set(current_only) & {row["path"] for row in proof})
@@ -1399,7 +1432,7 @@ class FormalLegacyProvenanceTests(unittest.TestCase):
 
     def test_formal_fixture_rejects_extra_missing_overlap_mode_link_raw(self):
         inventory = json.loads((ROOT / "tests/fixtures/anomaly-diagnostics-historical-88.json").read_bytes())
-        tree = diagnostics._git_tree(ROOT, "HEAD", diagnostics.EXPECTED_REVISION_COMPATIBILITY["artifact_source_prefixes"])
+        tree = _fixture_index_tree()
         first = inventory["files"][0]["path"]
         for change in ("extra", "missing", "S1-missing", "overlap", "mode", "link", "S1-link", "raw", "same-count-swap"):
             altered = deepcopy(tree); registry = deepcopy(inventory)
