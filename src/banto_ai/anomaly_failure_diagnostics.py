@@ -40,11 +40,11 @@ DIAGNOSTICS_COMPLETION_MARKER_TYPE = "event-aware-anomaly-failure-diagnostics-co
 _STAGED_MARKER = ".complete"
 _STAGING_PREFIX = ".anomaly-multiseed-v02-diagnostics-v01.staging-"
 EXPECTED_ARTIFACT_CODE_REVISION = "15a0f60433703c32a1bfa989f7f779c6828a1096"
-EXPECTED_CONFIG_CANONICAL_SHA256 = "e6d16314ca14f2b71801c6634020d0dd5f169d53f5e80e39c3d0ad556bcd6475"
-EXPECTED_SCHEMA_CANONICAL_SHA256 = "c11b87a6c045a169dea7b35bf737f69f06eb0535fb73c3ea76f760274319390f"
+EXPECTED_CONFIG_CANONICAL_SHA256 = "3ec8b2a35076402c266969071e9e045abb3af9111673f8ce621af2b54db2451f"
+EXPECTED_SCHEMA_CANONICAL_SHA256 = "e10c1b01183eece045a62507069b064a11471aef2bb2aec881f446b330a5fc9e"
 EXPECTED_RESULT_SCHEMA_CANONICAL_SHA256 = "218a69829815c766d5edd888ea01567d113ad2745bf5b4c9ab7ba029fe53c17d"
-EXPECTED_CONFIG_RAW_SHA256 = "9bd5bd1a2f25a764a3b9c8aac72bd854e8664fe31a12390323aab2bc3951b395"
-EXPECTED_CONFIG_SCHEMA_RAW_SHA256 = "89a246727c15e5921c4aaa2013acdd2d0d733b55c312b4340d9f5bbd4e90fc4c"
+EXPECTED_CONFIG_RAW_SHA256 = "4d231433591078250735e36efcb614b507dbcdafc9f1075af6d7e8cee943200a"
+EXPECTED_CONFIG_SCHEMA_RAW_SHA256 = "63dd423c1c0d96f3a4cc66f712b5675198614f39d1b3f55dbc1bb4a92c124fe6"
 EXPECTED_RESULT_SCHEMA_RAW_SHA256 = "ee71348890b77d0c3b49007784e618e69fa3b40b48c5d2ee01a04e52800e8877"
 # Only the byte-pinned formal artifact used these seven CRLF working-tree
 # sources. These expectations are independent of any artifact being verified.
@@ -288,6 +288,11 @@ EXPECTED_REVISION_COMPATIBILITY = {
         "src/banto_ai/_anomaly_v03_numeric.py",
         "src/banto_ai/anomaly_v03_scoring.py",
         "src/banto_ai/anomaly_v03_episodes.py",
+        # S3 exact additions; no historical blob, formal pin or ACL change.
+        "src/banto_ai/anomaly_v03_materializer.py",
+        "src/banto_ai/_anomaly_v03_runtime.py",
+        "src/banto_ai/_anomaly_v03_io.py",
+        "src/banto_ai/anomaly_v03_runner.py",
     ],
     "reject_conditions": ["missing", "modified", "link", "reparse"],
     "d2_record_fields": [

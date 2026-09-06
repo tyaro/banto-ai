@@ -63,7 +63,7 @@ py -3.14 tools/evaluator/analyze_event_slices.py `
 S1初回監査（`0368769acf12a0279c84f30c6435e853208386e9`）はP2=6／P3=1件でした。
 修正commit `d6ca0f9ee85172caae3b658bdb105287f8e43141`への
 [独立再監査](../../docs/results/anomaly-multiseed-v0.3-s1-audit-2026-09-06.md)はP0〜P3 0件で合格し、
-S1は完了し、candidate stackはmain統合済みです。GitHub Actions [Phase 1 CI run 34013082980](https://github.com/tyaro/banto-ai/actions/runs/34013082980)はsuccess（Python 3.12: 7m56s、Python 3.14: 7m25s）でした。S2の純粋計算実装候補は下のAPI節を参照してください。S3以降は未着手です。
+S1は完了し、candidate stackはmain統合済みです。GitHub Actions [Phase 1 CI run 34013082980](https://github.com/tyaro/banto-ai/actions/runs/34013082980)はsuccess（Python 3.12: 7m56s、Python 3.14: 7m25s）でした。S2の監査済み純粋計算とS3の実装候補は下のAPI節を参照してください。S3は独立監査前、S4以降は未着手です。
 [両jobのCI範囲](https://github.com/tyaro/banto-ai/actions/runs/34013082980)はcompile、unittest、manifests＋naive smoke、synthetic generation＋quality、benchmark、safetyです。これはLinux正式受入、v0.3 formal run、性能評価、promotion、Windows native／DACL／AccessCheck受入を意味しません。
 [公開module](../../src/banto_ai/anomaly_v03.py)は標準ライブラリのみで、渡された値またはbytesを検査します。
 package rootへの副作用のある自動importは追加せず、`from banto_ai import anomaly_v03`で利用します。
@@ -208,6 +208,68 @@ paired materializationはS3の責務であり、本実装にはありません�
 実行例は`python -B -m unittest tests.test_anomaly_v03_scoring tests.test_anomaly_v03_episodes -v`です。
 今回のローカル対象はWindows CPython 3.14.0。Linux 3.12／3.14、Windows 3.12、native publisher受入は未実施です。
 CI run `34017895359`はPython 3.12/3.14でsuccessしました。S3 runner／publisher、S4以降のcampaign、正式artifact、TimesFM、Banto Hub／PLC writeは含みません。S2監査結果は[`docs/results/anomaly-multiseed-v0.3-s2-audit-2026-09-06.md`](../../docs/results/anomaly-multiseed-v0.3-s2-audit-2026-09-06.md)です。
+
+### S3 deterministic runner（実装候補・独立監査前）
+
+[runner](../../src/banto_ai/anomaly_v03_runner.py)と
+[paired materializer](../../src/banto_ai/anomaly_v03_materializer.py)を追加しました。
+安全な確認入口は次のmetadata-only commandです。5 configs／9 schemas／plan snapshotのpinと
+全予定inventoryを検査し、観測生成やoutput claimを行いません。
+
+```text
+python -B tools/evaluator/run_anomaly_v03.py --validate-only --role holdout
+python -B -m unittest tests.test_anomaly_v03_materializer tests.test_anomaly_v03_runner tests.test_anomaly_v03_publication tests.test_anomaly_v03_provenance -v
+```
+
+`planned_metadata(role)`／`planned_slots(role)`はseed登録順×12 layouts×2 strata×3 candidatesを
+列挙します。holdoutは960 datasets／2,880 slots、17,280,000観測行／41,472,000 score行／
+138,240 profiles／38,400設計event行で固定です。dev 192 datasets／576 slots、smoke 48／144も
+別roleで固定し、CIのfake inventory試験を実seedのcampaignへ算入しません。
+
+`materialize_pair(identity)`は単一`random.Random(seed)`で両equipmentの正常系列を生成し、
+同じ未丸め値からcoreとquality-stressを同時に作ります。正常temperatureを次sampleのlatent stateへ
+保持し、machine→sensor→ignored→qualityの順でoverlay後、全5 numeric signalsへ一度だけ6桁丸めを
+適用します。実行すると登録seedの観測を生成するため、このAPIの実seed使用はS4/S5の範囲です。
+S3試験は手作り正常系列と非登録seedのPRNG配線fixtureだけを使います。
+大型fixtureはclass cleanupで明示解放し、3候補の完全な結果は専用tempへ保存して1件ずつ
+fresh読込します。件数・fixture内容・assertionを減らさず、GC呼出しや試験順固定に依存しません。
+
+保存単位は既存のfingerprint計算法に従う5ファイルに加え、40行の`event-ledger.jsonl`、
+18,000行の`quality-mask.jsonl`、固定origins／targets、fingerprintです。enabled eventsはcore 30行、
+stress 40行で、40行の設計台帳とは分けて保持します。全候補は同じ保存先を再読込し、観測・event・
+quality・split・origins・targetsのbytes/hashを照合します。`compute_evaluation`はS2を呼び出し、
+`verify_evaluation`は保存観測からprofile／score／episode／matching／固定母数を再計算してexact比較します。
+これはproducer側の整合性検査であり、S6独立consumer／bootstrap／gate判定ではありません。
+
+内部runnerは開始前の全slot台帳と各slotの開始／完了journalを保存します。通常の例外は取得済みhashと
+safe reasonを保持して後続へ進みます。入力・pairing・source／root違反は停止し、残りを`not_started`に
+保ちます。partialやprofile inconclusiveをsuccessへ変換せず、全失敗slotと予定母数を残します。
+公開失敗時は新規stagingと完全ledgerを保全し、安全に書けない場合も`RunAborted.result`へ残します。
+runnerの`performance_status`は常に`not_evaluated`です。単一evaluationのraw指標は診断であり、
+campaign性能、slice集計、CI、winnerやpromotionを決定しません。
+
+[保存境界](../../src/banto_ai/_anomaly_v03_io.py)の`FixturePublication`は専用system-temp配下だけを
+受け付けます。排他的staging、flush/fsync、strict再読込、完全inventoryと意味検証、no-replace確定、
+最後のatomic `.complete`を検査します。`marker-pending.json`はmarkerと同一inodeの保全証跡です。
+consumerは外部marker pin、全payload inventory、意味再計算、再読込を毎回確認します。
+大規模campaignを一括でbytes保持せず、payloadは1ファイルずつ、再計算はpair/evaluation単位で読みます。
+所有者・管理者・privileged writerの変更や電源断耐久性を保証するものではありません。
+
+[来歴・runtime境界](../../src/banto_ai/_anomaly_v03_runtime.py)はfull Git SHA／tracked clean／
+source inventory／Git blobとworking bytes／正常generator基準を照合します。CRLF差も黙認しません。
+Windows基本pinのread-only probe、独立reader token用AccessCheckのread-only部品、拒否すべきfile／
+directory権限集合を準備しました。protected DACLの実際の設置、別process/tokenの出所証明、
+Windows 3.12／3.14 native受入、Linux CI image受入、完全なstdlib／loaded DLL／CRT inventoryと
+consumer freezeはS4に残ります。これらの完了や正式受入をS3のfake試験で代用しません。
+
+`run_campaign`／CLI `--run`は非対応runtimeを`unsupported_runtime`として、対応する基本pinでも
+`s4_acceptance_not_frozen`として生成・staging・claim・ACL操作より前に拒否します。S4受入を経た
+formal publisherへの接続は未開放です。formal root、独立analysis/audit、実dev/smoke/holdout、
+性能・promotion、TimesFM、Hub／PLC writeは実施していません。
+
+D2のcurrent-onlyにはS3の新規4 modulesをexact pathsで追加し、合計28 pathsとしました。
+旧88 Git blobs／modes、FORMAL_RAW_PINS、v0.3の科学config/schema/registry、seed/bootstrap、
+S1/S2 semantics、凍結planと過去resultは変更していません。
 
 ### v0.1 / v0.2の既存validator
 
