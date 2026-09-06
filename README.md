@@ -33,6 +33,8 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 2026-09-06に同じ正式artifactのfailure diagnosticsを完了しました。engineering整合性はpass、performanceは未評価で、canonical detectionを保持した因果的supportは0/240でした。結果と制約は[`docs/results/anomaly-multiseed-v02-failure-diagnostics-2026-09-06.md`](docs/results/anomaly-multiseed-v02-failure-diagnostics-2026-09-06.md)に記録しています。これはexploratoryな異常検知診断であり、TimesFM3の性能結果やmodel／thresholdの採用判断ではありません。
 
+次のstdlib detector比較は[`v0.3実装前preregistration`](docs/anomaly-multiseed-evaluation-plan-v0.3.md)に整理しました。新seedの開発/holdout分離、post-event causal support、3候補、品質層を含む固定母数と判定を登録するplan-only段階で、v0.3の実装・run・性能達成は未実施です。v0.2の正式結果は変更しません。
+
 ## ライセンス
 
 このリポジトリのソースコードと文書は [MIT License](LICENSE) です。
