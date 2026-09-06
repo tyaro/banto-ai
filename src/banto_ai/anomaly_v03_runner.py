@@ -90,7 +90,14 @@ def verify_evaluation(result: dict, identity: dict, saved_files: dict, checkout)
 
 
 class CellFailure(Exception):
+    """A classified, pure candidate scoring/profile failure.
+
+    This deliberately is not a catch-all for storage, journal, source, root or
+    publication failures.  Those failures compromise the producer boundary and
+    must stop the remaining inventory.
+    """
     def __init__(self, stage, reason="exception", *, evidence=(), input_hashes=None):
+        runtime.require(stage in ("profile", "scoring"), "ordinary failure stage is not pure candidate computation")
         self.stage, self.reason = stage, reason
         self.evidence, self.input_hashes = list(evidence), input_hashes
         super().__init__(reason)
@@ -117,6 +124,55 @@ def _matrix_status(slots, stopped):
     else:
         engineering = "pass"
     return _status("failed" if stopped else "complete", engineering)
+
+
+def _recovered_failure_evidence(backend, identity):
+    """Return only cached, slot-local evidence; never recover by reading paths.
+
+    A recovery hook is best-effort because a path, journal or root may already
+    be unsafe.  Invalid hook output is ignored: the caller is already globally
+    stopped and retains its in-memory ledger without trusting a forged fragment.
+    """
+    try:
+        recovered = backend.failure_evidence(copy.deepcopy(identity))
+        if type(recovered) is not dict or set(recovered) - {"identity", "evidence", "input_hashes"}:
+            return {}
+        if v.canonical_json(recovered.get("identity")) != v.canonical_json(identity):
+            return {}
+        result, defs = {}, common_defs()
+        if "evidence" in recovered:
+            v._shape(recovered["evidence"], {"type": "array", "items": {"$ref": "#/$defs/payload"}, "$defs": defs})
+            prefix = "datasets/"+identity["dataset_id"]+"/"
+            evaluation = "evaluations/"+identity["evaluation_id"]+".json"
+            if any(not (item["path"].startswith(prefix) or item["path"] == evaluation) for item in recovered["evidence"]):
+                return {}
+            result["evidence"] = copy.deepcopy(recovered["evidence"])
+        if "input_hashes" in recovered:
+            v._shape(recovered["input_hashes"], {"$ref": "#/$defs/input_hashes", "$defs": defs})
+            result["input_hashes"] = copy.deepcopy(recovered["input_hashes"])
+        return result
+    except BaseException:
+        return {}
+
+
+def _retain_recovered(slot, backend):
+    """Fill only absent fields; a recovery hook can never replace known facts."""
+    recovered = _recovered_failure_evidence(backend, slot["identity"])
+    if not slot["evidence"] and "evidence" in recovered:
+        slot["evidence"] = recovered["evidence"]
+    if slot["input_hashes"] is None and "input_hashes" in recovered:
+        slot["input_hashes"] = recovered["input_hashes"]
+
+
+def _has_io_cause(exc):
+    """An OSError cannot be made ordinary by wrapping it as CellFailure."""
+    seen, current = set(), exc
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        if isinstance(current, OSError):
+            return True
+        current = current.__cause__ or current.__context__
+    return False
 
 
 def _drive(role: str, backend, boundary):
@@ -153,17 +209,29 @@ def _drive(role: str, backend, boundary):
             stage = "integrity"
             boundary()
         except runtime.IntegrityError:
-            slot.update(backend.failure_evidence(slot["identity"]))
+            _retain_recovered(slot, backend)
             slot.update(status="failed", failure_stage="integrity", safe_reason="input_changed")
             stopped = True
         except CellFailure as exc:
-            slot.update(status="partial" if exc.evidence else "failed", failure_stage=exc.stage,
-                        safe_reason=exc.reason, evidence=exc.evidence, input_hashes=exc.input_hashes)
+            if _has_io_cause(exc):
+                _retain_recovered(slot, backend)
+                slot.update(status="failed", failure_stage="integrity", safe_reason="exception")
+                stopped = True
+            else:
+                slot.update(status="partial" if exc.evidence else "failed", failure_stage=exc.stage,
+                            safe_reason=exc.reason, evidence=exc.evidence, input_hashes=exc.input_hashes)
         except (KeyboardInterrupt, SystemExit):
+            _retain_recovered(slot, backend)
             slot.update(status="partial" if slot["evidence"] else "failed", failure_stage=stage, safe_reason="incomplete")
             stopped = True
-        except Exception:
-            slot.update(status="partial" if slot["evidence"] else "failed", failure_stage=stage, safe_reason="exception")
+        except BaseException:
+            _retain_recovered(slot, backend)
+            slot.update(status="failed", failure_stage="integrity", safe_reason="exception")
+            stopped = True
+        if stopped:
+            # After a global source/root/I/O/interrupt failure do not attempt a
+            # further journal write against the potentially unsafe boundary.
+            break
         try:
             backend.finished(index, copy.deepcopy(slot))
         except BaseException:
@@ -179,7 +247,7 @@ def _drive(role: str, backend, boundary):
 class _DiskBackend:
     def __init__(self, store, checkout):
         self.store, self.checkout = store, checkout
-        self.pair_id, self.pair, self.pair_error = None, None, None
+        self.pair_id, self.pair, self._failure = None, None, {}
 
     def begin(self, planned):
         self.store.write("planned.json", m.json_bytes(planned))
@@ -191,13 +259,20 @@ class _DiskBackend:
         self.store.write(f"journal/{index:04d}-done.json", m.json_bytes(slot))
 
     def failure_evidence(self, identity):
-        prefix = "datasets/"+identity["dataset_id"]+"/"
-        name = "evaluations/"+identity["evaluation_id"]+".json"
-        return {"evidence": [self.store.expected[p] for p in sorted(self.store.expected) if p.startswith(prefix) or p == name]}
+        # This is an in-memory snapshot, updated only after exclusive write
+        # readback and dataset validation.  It must not perform recovery I/O.
+        return copy.deepcopy(self._failure.get(identity["evaluation_id"], {"identity": dict(identity)}))
+
+    def _remember(self, identity, evidence, hashes=None):
+        saved = {"identity": dict(identity), "evidence": copy.deepcopy(evidence)}
+        if hashes is not None:
+            saved["input_hashes"] = copy.deepcopy(hashes)
+        self._failure[identity["evaluation_id"]] = saved
 
     def evaluate(self, index, identity):
+        self._remember(identity, [])
         if identity["pair_id"] != self.pair_id:
-            self.pair_id, self.pair, self.pair_error = identity["pair_id"], None, None
+            self.pair_id, self.pair = identity["pair_id"], None
             try:
                 pair = m.materialize_pair(identity)
                 runtime.require(type(pair) is tuple and len(pair) == 2, "paired materializer returned incomplete pair")
@@ -207,18 +282,22 @@ class _DiskBackend:
                     own = v.strict_json(data.identity_json)
                     for name, raw in data.entries:
                         self.store.write("datasets/"+own["dataset_id"]+"/"+name, raw)
+                        prefix = "datasets/"+identity["dataset_id"]+"/"
+                        captured = [self.store.expected[p] for p in sorted(self.store.expected) if p.startswith(prefix)]
+                        self._remember(identity, captured)
                 self.pair = pair
             except runtime.IntegrityError:
                 raise
+            except OSError as exc:
+                raise runtime.IntegrityError("paired saved-input I/O failed") from exc
             except v.V03ValidationError as exc:
                 raise runtime.IntegrityError("paired materialization contract failed") from exc
-            except Exception:
-                self.pair_error = "exception"
+            except Exception as exc:
+                raise runtime.IntegrityError("paired materialization failed") from exc
         prefix = "datasets/"+identity["dataset_id"]+"/"
         evidence = [self.store.expected[p] for p in sorted(self.store.expected) if p.startswith(prefix)]
-        if self.pair_error:
-            raise CellFailure("materialization", self.pair_error, evidence=evidence)
-        stage, hashes = "validation", None
+        self._remember(identity, evidence)
+        hashes = None
         try:
             expected = self.pair[c.STRATA.index(identity["stratum"])].files()
             # All candidates read the one persisted observation file, not a
@@ -226,15 +305,32 @@ class _DiskBackend:
             files = {name: self.store.read(prefix+name) for name in m.DATASET_FILES}
             runtime.require(files == expected, "candidate input bytes differ from paired saved capture")
             hashes = m.validate_dataset(identity, files)
-            stage = "scoring"
+            self._remember(identity, evidence, hashes)
+        except runtime.IntegrityError:
+            raise
+        except OSError as exc:
+            raise runtime.IntegrityError("saved input read/validation I/O failed") from exc
+        except v.V03ValidationError as exc:
+            raise runtime.IntegrityError("saved input validation failed") from exc
+        except Exception as exc:
+            raise runtime.IntegrityError("saved input validation failed") from exc
+        try:
             claimed = _execute_candidate(copy.deepcopy(identity), dict(files), self.checkout)
-            stage = "ledger"
             result = verify_evaluation(claimed, identity, files, self.checkout)
+        except runtime.IntegrityError:
+            raise
+        except OSError as exc:
+            raise runtime.IntegrityError("candidate computation I/O failed") from exc
+        except v.V03ValidationError as exc:
+            raise runtime.IntegrityError("candidate computation contract failed") from exc
+        except Exception as exc:
+            raise CellFailure("scoring", evidence=evidence, input_hashes=hashes) from exc
+        try:
             runtime.require({name: self.store.read(prefix+name) for name in m.DATASET_FILES} == files, "input changed during evaluation")
-            stage = "publication"
             name = "evaluations/"+identity["evaluation_id"]+".json"
             self.store.write(name, m.json_bytes(result))
             evidence = [*evidence, self.store.expected[name]]
+            self._remember(identity, evidence, hashes)
             inconclusive = any(p["status"] != "calibrated" for p in result["profiles"])
             return {"identity": dict(identity), "status": "inconclusive" if inconclusive else "success",
                     "failure_stage": "profile" if inconclusive else None,
@@ -242,10 +338,12 @@ class _DiskBackend:
                     "input_hashes": hashes, "evidence": evidence}
         except runtime.IntegrityError:
             raise
+        except OSError as exc:
+            raise runtime.IntegrityError("saved input/evidence I/O failed") from exc
         except v.V03ValidationError as exc:
             raise runtime.IntegrityError("evaluation contract/replay failed") from exc
         except Exception as exc:
-            raise CellFailure(stage, evidence=evidence, input_hashes=hashes) from exc
+            raise runtime.IntegrityError("evaluation publication failed") from exc
 
 
 def summary_bytes(result):

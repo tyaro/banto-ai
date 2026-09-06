@@ -17,6 +17,7 @@ from banto_ai import _anomaly_v03_runtime as rt
 from banto_ai import anomaly_v03 as v
 from banto_ai import anomaly_v03_materializer as m
 from banto_ai import anomaly_v03_runner as r
+from banto_ai import _anomaly_v03_io as publication
 from banto_ai._anomaly_v03_io import payload_entry
 from tests.test_anomaly_v03_materializer import hand_pair, release_class_fields
 from tests.test_anomaly_v03_scoring import identity
@@ -98,12 +99,12 @@ class InventoryEngineTests(unittest.TestCase):
             if index == 2:
                 raise r.CellFailure("profile", evidence=row["evidence"], input_hashes=row["input_hashes"])
             if index == 5:
-                raise RuntimeError("secret exception text must not escape")
+                raise r.CellFailure("scoring", evidence=row["evidence"], input_hashes=row["input_hashes"])
         fake = FakeBackend(mutate)
         slots, stopped = r._drive("smoke", fake, lambda: None)
         self.assertFalse(stopped)
         self.assertEqual(len(slots), 144)
-        self.assertEqual((slots[2]["status"], slots[5]["status"], slots[6]["status"]), ("partial", "failed", "success"))
+        self.assertEqual((slots[2]["status"], slots[5]["status"], slots[6]["status"]), ("partial", "partial", "success"))
         self.assertNotIn("secret", v.canonical_json(slots).decode())
         self.assertEqual(r._matrix_status(slots, stopped), r._status("complete", "fail"))
 
@@ -193,6 +194,210 @@ class InventoryEngineTests(unittest.TestCase):
             self.assertEqual(r.main(["--validate-only", "--root", str(ROOT)]), 0)
         self.assertEqual(v.strict_json(output.getvalue())["planned_slots"], 2880)
         self.assertTrue(all(not (ROOT/path).exists() for path in c.OUTPUT_ROOTS))
+
+
+class BoundaryIOAttackTests(unittest.TestCase):
+    """Independent scheduler attacks: I/O is never an ordinary candidate miss."""
+    def assert_global_stop(self, slots, stopped, role, attempted):
+        self.assertTrue(stopped)
+        self.assertEqual(len(slots), c.counts(role)["evaluations"])
+        self.assertEqual(r._coverage(slots)["not_started"], len(slots)-attempted)
+        self.assertTrue(all(s["status"] == "not_started" and s["input_hashes"] is None
+                            and s["evidence"] == [] for s in slots[attempted:]))
+        self.assertEqual(r._matrix_status(slots, stopped), r._status("failed", "fail"))
+
+    def test_boundary_oserror_and_permissionerror_stop_full_inventory(self):
+        for error in (OSError, PermissionError):
+            for failing_call in (1, 2):
+                with self.subTest(error=error.__name__, failing_call=failing_call):
+                    role = "holdout" if error is OSError and failing_call == 1 else "smoke"
+                    calls, backend = [], FakeBackend()
+                    def boundary():
+                        calls.append(1)
+                        if len(calls) == failing_call:
+                            raise error("source/root is unavailable")
+                    slots, stopped = r._drive(role, backend, boundary)
+                    self.assert_global_stop(slots, stopped, role, 1)
+                    self.assertEqual(len(backend.calls), failing_call-1)
+                    self.assertEqual(slots[0]["status"], "failed")
+                    self.assertEqual(backend.dones, [])  # No normal journal I/O after an unsafe stop.
+
+    def test_started_journal_io_never_evaluates_or_advances(self):
+        for error in (OSError, PermissionError):
+            with self.subTest(error=error.__name__):
+                backend = FakeBackend()
+                def unavailable(*_):
+                    raise error("started journal unavailable")
+                with patch.object(backend, "started", new=unavailable):
+                    slots, stopped = r._drive("smoke", backend, lambda: None)
+                self.assert_global_stop(slots, stopped, "smoke", 1)
+                self.assertEqual(backend.calls, [])
+                self.assertEqual(backend.dones, [])
+
+    def test_finished_journal_io_keeps_known_completion_evidence(self):
+        for error in (OSError, PermissionError):
+            with self.subTest(error=error.__name__):
+                backend = FakeBackend()
+                def unavailable(*_):
+                    raise error("done journal unavailable")
+                with patch.object(backend, "finished", new=unavailable):
+                    slots, stopped = r._drive("smoke", backend, lambda: None)
+                self.assert_global_stop(slots, stopped, "smoke", 1)
+                self.assertEqual(len(backend.calls), 1)
+                self.assertEqual(slots[0]["status"], "partial")
+                self.assertEqual(slots[0]["failure_stage"], "publication")
+                self.assertEqual(slots[0]["input_hashes"], dict.fromkeys(m.INPUT_FILES, "a"*64))
+                self.assertEqual(len(slots[0]["evidence"]), 1)
+
+    def test_unclassified_and_recovery_failures_stop_without_erasing_ledger(self):
+        slots, stopped = r._drive("smoke", FakeBackend(lambda *_: (_ for _ in ()).throw(RuntimeError("unclassified"))), lambda: None)
+        self.assert_global_stop(slots, stopped, "smoke", 1)
+        def wrapped_io(*_):
+            try:
+                raise PermissionError("I/O cannot be reclassified as scoring")
+            except PermissionError as cause:
+                raise r.CellFailure("scoring") from cause
+        slots, stopped = r._drive("smoke", FakeBackend(wrapped_io), lambda: None)
+        self.assert_global_stop(slots, stopped, "smoke", 1)
+        for error in (OSError, PermissionError, KeyboardInterrupt, SystemExit):
+            with self.subTest(error=error.__name__):
+                def fail(index, _):
+                    if index == 1:
+                        raise rt.IntegrityError("unsafe root")
+                backend = FakeBackend(fail)
+                def unavailable(*_):
+                    raise error("cached evidence unavailable")
+                with patch.object(backend, "failure_evidence", new=unavailable):
+                    try:
+                        slots, stopped = r._drive("smoke", backend, lambda: None)
+                    except BaseException as escaped:
+                        self.fail("recovery escaped instead of retaining memory ledger: "+type(escaped).__name__)
+                self.assert_global_stop(slots, stopped, "smoke", 2)
+                self.assertEqual(slots[0]["status"], "success")
+                self.assertEqual(slots[1]["status"], "failed")
+                self.assertEqual(len(backend.calls), 2)
+
+    def test_recovery_cannot_inject_foreign_paths_or_overwrite_known_hashes(self):
+        for attack in ("foreign", "hash", "identity"):
+            with self.subTest(attack=attack):
+                backend, calls = FakeBackend(), []
+                def boundary():
+                    calls.append(1)
+                    if len(calls) == 2:
+                        raise rt.IntegrityError("post-evaluation boundary")
+                def forged(_):
+                    if attack == "foreign":
+                        return {"evidence": [payload_entry("foreign/input.json", b"{}\n")]}
+                    if attack == "hash":
+                        return {"input_hashes": dict.fromkeys(m.INPUT_FILES, "d"*64)}
+                    return {"identity": {}}
+                with patch.object(backend, "failure_evidence", new=forged):
+                    slots, stopped = r._drive("smoke", backend, boundary)
+                self.assert_global_stop(slots, stopped, "smoke", 1)
+                self.assertEqual(slots[0]["identity"], v.evaluation_inventory("smoke")[0])
+                self.assertEqual(slots[0]["input_hashes"], dict.fromkeys(m.INPUT_FILES, "a"*64))
+                self.assertEqual([e["path"] for e in slots[0]["evidence"]], ["fixture/evaluation.json"])
+
+
+class DiskBoundaryIOAttackTests(unittest.TestCase):
+    """Full hand-saved bytes through the production backend, no registered PRNG."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.addClassCleanup(release_class_fields, cls, "pair", "hashes")
+        cls.pair = hand_pair()
+        cls.hashes = cls.pair[0].input_hashes()
+
+    def drive_disk(self, store, candidate, *, verify=None):
+        with patch.object(m, "materialize_pair", new=lambda *_: self.pair), \
+                patch.object(m, "normal_stream", side_effect=AssertionError("registered generation")), \
+                patch.object(r, "_execute_candidate", new=candidate):
+            if verify is None:
+                return r._drive("dev", r._DiskBackend(store, fixture_checkout()), lambda: None)
+            with patch.object(r, "verify_evaluation", new=verify):
+                return r._drive("dev", r._DiskBackend(store, fixture_checkout()), lambda: None)
+
+    def assert_global_stop(self, slots, stopped):
+        self.assertTrue(stopped)
+        self.assertEqual(len(slots), 576)
+        self.assertEqual(r._coverage(slots)["not_started"], 575)
+        self.assertEqual(r._matrix_status(slots, stopped), r._status("failed", "fail"))
+        self.assertTrue(all(row["status"] == "not_started" for row in slots[1:]))
+
+    def test_saved_input_write_io_stops_after_first_attempt(self):
+        for error in (OSError, PermissionError):
+            with self.subTest(error=error.__name__):
+                store, candidates = MemoryStore(), []
+                original = store.write
+                def write(name, raw):
+                    if name.endswith("/observations.jsonl"):
+                        raise error("input write denied")
+                    original(name, raw)
+                with patch.object(store, "write", new=write):
+                    slots, stopped = self.drive_disk(store, lambda *_: candidates.append(1))
+                self.assert_global_stop(slots, stopped)
+                self.assertEqual(candidates, [])
+                self.assertGreater(len(slots[0]["evidence"]), 0)
+                self.assertIsNone(slots[0]["input_hashes"])
+
+    def test_saved_input_read_io_stops_without_claiming_unverified_hashes(self):
+        for error in (OSError, PermissionError):
+            with self.subTest(error=error.__name__):
+                store, candidates = MemoryStore(), []
+                def read(_):
+                    raise error("input read denied")
+                with patch.object(store, "read", new=read):
+                    slots, stopped = self.drive_disk(store, lambda *_: candidates.append(1))
+                self.assert_global_stop(slots, stopped)
+                self.assertEqual(candidates, [])
+                self.assertEqual(len(slots[0]["evidence"]), 10)
+                self.assertIsNone(slots[0]["input_hashes"])
+
+    def test_saved_input_reread_and_evaluation_write_io_keep_verified_hashes(self):
+        for operation in ("reread", "evaluation-write"):
+            for error in (OSError, PermissionError):
+                with self.subTest(operation=operation, error=error.__name__):
+                    store, computed = MemoryStore(), []
+                    original_read, original_write = store.read, store.write
+                    def read(name):
+                        if operation == "reread" and computed:
+                            raise error("input unavailable after computation")
+                        return original_read(name)
+                    def write(name, raw):
+                        if operation == "evaluation-write" and name.startswith("evaluations/"):
+                            raise error("evaluation evidence write denied")
+                        original_write(name, raw)
+                    def candidate(*_):
+                        computed.append(1)
+                        return {"profiles": []}  # The injected I/O failure precedes any completion.
+                    with patch.object(store, "read", new=read), patch.object(store, "write", new=write):
+                        slots, stopped = self.drive_disk(store, candidate, verify=lambda result, *_: result)
+                    self.assert_global_stop(slots, stopped)
+                    self.assertEqual(computed, [1])
+                    self.assertEqual(slots[0]["input_hashes"], self.hashes)
+                    self.assertEqual(len(slots[0]["evidence"]), 10)
+
+    def test_interrupt_and_integrity_failure_after_verified_saved_files_keep_evidence(self):
+        for error in (KeyboardInterrupt, SystemExit, rt.IntegrityError):
+            with self.subTest(error=error.__name__), tempfile.TemporaryDirectory(prefix="banto-v03-io-attack-") as name:
+                with publication.FixturePublication(Path(name), "attempt") as store:
+                    forbidden = []
+                    def no_io(*_):
+                        forbidden.append(1)
+                        raise PermissionError("unsafe root must not be revisited")
+                    def candidate(*_):
+                        store.read, store.write = no_io, no_io
+                        raise error("interrupt after all ten inputs were saved and validated")
+                    slots, stopped = self.drive_disk(store, candidate)
+                    self.assert_global_stop(slots, stopped)
+                    self.assertEqual(slots[0]["status"], "failed" if error is rt.IntegrityError else "partial")
+                    self.assertEqual(slots[0]["input_hashes"], self.hashes)
+                    expected = [store.expected[p] for p in sorted(store.expected)
+                                if p.startswith("datasets/"+identity()["dataset_id"]+"/")]
+                    self.assertEqual(len(expected), 10)
+                    self.assertEqual(slots[0]["evidence"], expected)
+                    self.assertEqual(forbidden, [])
+                    self.assertFalse((store.root/".complete").exists())
 
 
 class SavedEvaluationTests(unittest.TestCase):

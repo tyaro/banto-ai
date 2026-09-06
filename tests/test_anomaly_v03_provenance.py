@@ -107,18 +107,16 @@ class PreparedEngineTests(unittest.TestCase):
     def tearDown(self):
         self.temporary.cleanup()
 
-    def test_all_failed_campaign_publishes_full_failure_ledger_not_success(self):
+    def test_materializer_failure_is_global_and_retains_full_failure_ledger(self):
         with out.FixturePublication(self.parent, "all-failed") as store, \
                 patch.object(m, "materialize_pair", side_effect=OSError("deliberate fixture failure")) as materialize:
             run = r._run_prepared("smoke", store, self.checkout, self.runtime, lambda: None)
-        self.assertEqual(materialize.call_count, 24)  # 2 seeds * 12 paired layouts
-        self.assertEqual(run["result"]["coverage"]["failed"], 144)
-        self.assertEqual(run["result"]["status"], r._status("complete", "fail"))
-        self.assertIsNotNone(run["publication"])
-        receipt = run["publication"]
-        report = out.verify_fixture_publication(Path(receipt["output_path"]), expected_marker_sha256=receipt["marker_raw_sha256"],
-            verify_semantics=lambda files:r._verify_producer_tree(files, self.checkout, self.runtime))
-        self.assertTrue(report["fixture_verified"])
+        self.assertEqual(materialize.call_count, 1)
+        self.assertEqual(run["result"]["coverage"], dict(success=0, partial=0, inconclusive=0, failed=1, not_started=143))
+        self.assertEqual(run["result"]["status"], r._status("failed", "fail"))
+        self.assertIsNone(run["publication"])
+        self.assertTrue((store.stage/"result.json").exists())
+        self.assertFalse((store.root/".complete").exists())
 
     def test_global_integrity_failure_retains_all_planned_slots_no_marker(self):
         with out.FixturePublication(self.parent, "global") as store, \
@@ -131,8 +129,10 @@ class PreparedEngineTests(unittest.TestCase):
             self.assertFalse((store.root/".complete").exists())
 
     def test_publication_failure_has_complete_ledger_in_exception_and_owned_evidence(self):
+        def scoring_failure(*_):
+            raise r.CellFailure("scoring")
         with out.FixturePublication(self.parent, "publish-failed") as store, \
-                patch.object(m, "materialize_pair", side_effect=OSError("fixture failure")), \
+                patch.object(r._DiskBackend, "evaluate", side_effect=scoring_failure), \
                 patch.object(out, "_rename_no_replace", side_effect=OSError("fixture rename failure")):
             with self.assertRaises(r.RunAborted) as error:
                 r._run_prepared("smoke", store, self.checkout, self.runtime, lambda: None)
