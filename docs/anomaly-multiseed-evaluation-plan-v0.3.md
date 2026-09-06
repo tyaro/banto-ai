@@ -1,12 +1,14 @@
 # event-aware anomaly multi-seed evaluation v0.3: 実装前 preregistration
 
-状態: **P2 3件の修正候補作成済み / 独立再監査待ち / plan only**。2026-09-06作成・改訂。
-`FREEZE_READY=no`、`DOCS_READY=no`、`IMPLEMENTATION_READY=no`を再監査まで維持する。
+状態: **独立監査合格 / S0 frozen・adopted / plan only**。2026-09-06作成・監査採択。
+`SCIENCE_READY=yes`、`FREEZE_READY=yes`、`DOCS_READY=yes`、
+`IMPLEMENTATION_READY=yes`、`STACK_READY=yes`。S1以降は未着手である。
 計画の基準は `026aa77fe96afd954957acb2fc7d0df9ee3cc938`。初稿S0 commit
 `41decf9b6f8d6c876715729516354bf6da49422c`はAstra/max監査でP0/P1 0件・P2 3件となり、
-本改訂は文書同期commit `e92c83df03b2f798d60246e14411d249a0b76202`の上の修正候補である。
-candidate stackはmain未統合。独立再監査後に採択する計画commitを`plan_revision`としてpinし、
-採択前にS1以降の実装・開発評価・formal holdoutを開始しない。
+文書同期commit `e92c83df03b2f798d60246e14411d249a0b76202`の上の監査対象revision
+`4b02201f95e8ffa3a243be716872d95815a554bd`は独立監査でP0〜P3 0件となり、S0として採択した。
+candidate stackはmain未統合。S1 registryは`4b02201...`を科学仕様revisionとしてpinし、
+本監査後のstatus/result同期commitもGit historyから解決してprovenanceとして併記する。
 
 v0.3のconfig、schema、validator、scorer、runner、test、run、結果artifactは**まだ作成・実施していない**。候補の勝者、性能達成、製品昇格も未決定である。本書は、それらの実装を承認する前に、仮説・データ・算法・母数・判定・停止条件を固定する文書であり、run結果ではない。以下の新しい数値、seed数、候補、閾値、実験規模、gateは、既存の実測値と明記したものを除き、すべて**v0.3の設計上の決定**である。
 
@@ -432,19 +434,24 @@ phase/recipe/time-since-mode-entryを含むversioned normal profileは、将来�
 
 本計画から発行できるのは研究候補のqualified / no promotion / inconclusiveだけ。Commissioning Profileの製品登録、閾値自動書込み、PLCのPID・interlock・安全上限・運転許可変更、Banto Hub連携の実行、production中のonline learningは行わない。
 
-本改訂はS0候補へのP2 3件の修正を文書に実装した段階で、独立再監査待ちである。
-`FREEZE_READY=no`、`DOCS_READY=no`、`IMPLEMENTATION_READY=no`を維持し、監査合格を主張しない。
+監査対象revision `4b02201f95e8ffa3a243be716872d95815a554bd`はP0〜P3 0件で独立監査に合格し、
+S0としてfrozen・adoptedとなった。監査結果は
+[v0.3計画監査結果](results/anomaly-multiseed-v0.3-plan-audit-2026-09-06.md)に記録する。
+`SCIENCE_READY=yes`、`FREEZE_READY=yes`、`DOCS_READY=yes`、
+`IMPLEMENTATION_READY=yes`、`STACK_READY=yes`である。
 **S1以降およびv0.3 config/schema/code/test/run/artifact、winner、性能達成は未実施・未確定**である。
 
 ## 11. 科学監査P2への対応記録
 
-初稿`41decf9...`のP2 3件について、下表の修正文と仕様fixtureを本savepointで追加した。
-まだ採択されていないS0への修正として履歴を残し、独立再監査合格後の計画revisionをS1から使用する。
-採択後の変更は§9の再登録規則に従う。本改訂でseed、layout、母数、閾値、bootstrap、gate、
+初稿`41decf9...`のP2 3件について、下表の修正文と仕様fixtureを監査対象`4b02201...`で追加し、
+独立監査でP0〜P3 0件として解消を確認した。`4b02201...`をS0の科学仕様revisionとして採択し、
+この新commitはpost-audit status/result同期だけを行う。自己参照hashを本文へ埋め込まず、S1 registryで
+`4b02201...`と本同期commitの確定hashをそれぞれ科学仕様・provenanceとしてpinする。
+採択後の変更は§9の再登録規則に従う。監査対象でseed、layout、母数、閾値、bootstrap、gate、
 候補間の優先順、既存のhash計算契約は変更していない。
 
 | 監査項目 | 修正文 | 反例・次工程の確認 | 現在状態 |
 | --- | --- | --- | --- |
-| P2-1 最初の候補のsupport失敗後の探索が曖昧 | [§5.1 列挙→選択→検証→確定](#v03-incident-selection) | M1/M5は後続に適格episodeがあってもmiss。M3は窓外episodeを候補から除外。M9はengineering failure | 修正候補作成済み、独立再監査待ち |
-| P2-2 旧6桁丸めと各split入力が未固定 | [§3.1 観測丸め](#v03-quantization) | Q1のoverlay順序、Q2/Q3のlatent state、Q4/Q5のbinary64/JSON値。全splitは保存観測のみ | 修正候補作成済み、独立再監査待ち |
-| P2-3 共通CI、Windows native受入、formal pinが未固定 | [§8 runtime/platform](#v03-runtime-acceptance) | Linux 3.12/3.14、Windows実API・DACL/AccessCheck、唯一の正式OS/Python、非対応環境での事前拒否 | 修正候補作成済み、独立再監査待ち |
+| P2-1 最初の候補のsupport失敗後の探索が曖昧 | [§5.1 列挙→選択→検証→確定](#v03-incident-selection) | M1/M5は後続に適格episodeがあってもmiss。M3は窓外episodeを候補から除外。M9はengineering failure | 解消、独立監査合格 |
+| P2-2 旧6桁丸めと各split入力が未固定 | [§3.1 観測丸め](#v03-quantization) | Q1のoverlay順序、Q2/Q3のlatent state、Q4/Q5のbinary64/JSON値。全splitは保存観測のみ | 解消、独立監査合格 |
+| P2-3 共通CI、Windows native受入、formal pinが未固定 | [§8 runtime/platform](#v03-runtime-acceptance) | Linux 3.12/3.14、Windows実API・DACL/AccessCheck、唯一の正式OS/Python、非対応環境での事前拒否 | 解消、独立監査合格 |

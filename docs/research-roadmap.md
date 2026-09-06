@@ -80,13 +80,17 @@ v0.3の仮説材料にのみ使います。計画は
 
 v0.3は実装前S0計画候補をcommit
 `41decf9b6f8d6c876715729516354bf6da49422c`に作成しましたが、このcandidate stackは
-main未統合です。初稿へのAstra/max監査はP0/P1 0件・P2 3件で、その3件の修正候補を
-文書同期commit `e92c83df03b2f798d60246e14411d249a0b76202`の上の計画文書に実装しました。
+main未統合です。初稿へのAstra/max監査はP0/P1 0件・P2 3件で、その3件を
+文書同期commit `e92c83df03b2f798d60246e14411d249a0b76202`の上の監査対象
+`4b02201f95e8ffa3a243be716872d95815a554bd`で修正しました。
 最初のequipment episodeを固定する再探索なしmatchingと境界fixture、event/quality適用後の
 6桁丸めと保存済みfit/calibration/test入力、Linux 3.12/3.14共通試験とWindows native受入を
 明記しました。正式runtimeはWindows 11 Pro 25H2 build `10.0.26200.9168`／CPython `3.14.0`です。
-現在は独立再監査待ちで、監査合格を主張しません。`FREEZE_READY=no`、`DOCS_READY=no`、
-`IMPLEMENTATION_READY=no`を再監査まで維持し、S1以降、config/schema/code/test/run/artifactは未着手です。
+独立再監査はP0〜P3 0件で合格し、`SCIENCE_READY=yes`、`FREEZE_READY=yes`、
+`DOCS_READY=yes`、`IMPLEMENTATION_READY=yes`、`STACK_READY=yes`としてS0をfrozen・adoptedにしました。
+S1以降、config/schema/code/test/CI/run/artifact、Linux／Windows native acceptance、formal run、
+性能評価、promotionは未着手です。監査根拠は
+[`anomaly-multiseed-v0.3-plan-audit-2026-09-06.md`](results/anomaly-multiseed-v0.3-plan-audit-2026-09-06.md)、
 候補本文は[`anomaly-multiseed-evaluation-plan-v0.3.md`](anomaly-multiseed-evaluation-plan-v0.3.md)、
 最新の文書状態と正本の読み方は[文書索引](README.md)を参照してください。
 
