@@ -304,3 +304,12 @@ record分割はLFに限定し、CRを含む未確認tailも全bytesを集計す�
 
 修正前の2テスト9 subcases失敗を確認し、修正後は関連96/96と同一parent実Win32 1/1がpass。
 制限付きchildの起動や独立レビューの代替とは扱わない。
+
+## 2026-09-07 operation failureの即時停止
+
+positive controlは例外が出た時点で元例外を再送出する。error 0付き例外を成功とは扱わない。
+frozen controlだけで、明示的access deniedかつ許可されたfailure種別を期待する拒否として扱う。
+rights-openも各API直後に判定し、失敗後にmutationへ進まない。INVALID_HANDLE_VALUEなのに
+last error 0の場合は固定failureとし、無効handleのcloseやsuccessとしての記録を行わない。
+
+関連pure/fault 98/98、同一parent実Win32 2/2がpass。required restricted-childは未実行。

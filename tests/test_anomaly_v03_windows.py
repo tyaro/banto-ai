@@ -912,6 +912,34 @@ class PureWindowsControls(unittest.TestCase):
         with self.assertRaises(w._Failure):
             w._check_access(dict(api_success=True, mask=2, access_status=False, granted=0, privileges_used=0), 2, True)
 
+    def test_positive_operation_exception_stops_before_any_following_operation(self):
+        errors = [OSError("DUMMY_PRIVATE"), w._Failure("object_open", 0),
+                  w._Failure("mutation_api", 0), w._Failure("object_open", 5)]
+        explicit_zero = OSError("DUMMY_PRIVATE")
+        explicit_zero.winerror = 0
+        errors.append(explicit_zero)
+        for error in errors:
+            api = Mock()
+            api.k.CreateFileW.return_value = 7
+            with self.subTest(error=type(error), reason=getattr(error, "reason", None)), \
+                 patch.object(w, "_Bound", side_effect=error) as bound, self.assertRaises(BaseException) as caught:
+                w._operations(api, Path("owned"), "user", {})
+            self.assertIs(caught.exception, error)
+            bound.assert_called_once()
+            api.k.SetFileTime.assert_not_called()
+            api.k.MoveFileW.assert_not_called()
+
+    def test_right_open_failure_stops_before_mutation_even_without_last_error(self):
+        for error in (0, 5):
+            api = Mock()
+            api.k.CreateFileW.return_value = ctypes.c_void_p(-1).value
+            with self.subTest(error=error), patch.object(w.C, "get_last_error", return_value=error), \
+                 patch.object(w, "_Bound") as bound, self.assertRaises(w._Failure):
+                w._operations(api, Path("owned"), "user", {})
+            api.k.CreateFileW.assert_called_once()
+            api.close.assert_not_called()
+            bound.assert_not_called()
+
     def test_dacl_masks_and_no_inheritable_aces(self):
         for directory, mask in ((False, 0x10116), (True, 0x10156)):
             sddl, rows = w._dacl("S-1-5-21-1", "frozen", directory)

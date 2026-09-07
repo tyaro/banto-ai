@@ -1813,28 +1813,38 @@ def _operations(api, root, user, ledger, *, replace_trace=None):
         # Successful control operations are reversible and use only the fixed fixture.
         for key, mask in _FILE_RIGHTS.items():
             h = api.k.CreateFileW(str(file), mask, 7, None, 3, 0x00200000, None)
-            error = C.get_last_error() if h == C.c_void_p(-1).value else 0
-            if not error:
+            invalid = h == C.c_void_p(-1).value
+            error = C.get_last_error() if invalid else 0
+            if not invalid:
                 api.close(h)
+            _need(not invalid or error != 0, "right_open_error_missing")
+            _need(error == (0 if mode == "control" else 5), "operation_unexpected")
             result[mode]["file_right_open"][key] = error
         for key, mask in _DIR_RIGHTS.items():
             h = api.k.CreateFileW(str(directory), mask, 7, None, 3, 0x02200000, None)
-            error = C.get_last_error() if h == C.c_void_p(-1).value else 0
-            if not error:
+            invalid = h == C.c_void_p(-1).value
+            error = C.get_last_error() if invalid else 0
+            if not invalid:
                 api.close(h)
+            _need(not invalid or error != 0, "right_open_error_missing")
+            _need(error == (0 if mode == "control" else 5), "operation_unexpected")
             result[mode]["directory_right_open"][key] = error
         def attempt(key, operation):
             try:
                 operation()
                 error = 0
             except OSError as exc:
-                if isinstance(getattr(exc, "teardown", None), _Teardown) or isinstance(getattr(exc, "private_replace_evidence", None), _ReplaceTrace):
+                if (mode != "frozen" or getattr(exc, "winerror", None) != 5
+                        or isinstance(getattr(exc, "teardown", None), _Teardown)
+                        or isinstance(getattr(exc, "private_replace_evidence", None), _ReplaceTrace)):
                     raise
-                error = getattr(exc, "winerror", 0)
+                error = 5
             except _Failure as exc:
-                # Only a real CreateFile denial can be an expected negative;
-                # a failed native mutation/flush/query is NOT a passing denial.
-                if isinstance(getattr(exc, "teardown", None), _Teardown) or isinstance(getattr(exc, "private_replace_evidence", None), _ReplaceTrace):
+                # Only explicit denial of an open/direct mutation in the frozen
+                # control is expected. Positive-control exceptions always stop.
+                if (mode != "frozen" or exc.error != 5
+                        or isinstance(getattr(exc, "teardown", None), _Teardown)
+                        or isinstance(getattr(exc, "private_replace_evidence", None), _ReplaceTrace)):
                     raise  # A denial never excuses unconfirmed handle release.
                 if exc.reason not in ("object_open", "mutation_api"):
                     raise

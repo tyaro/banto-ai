@@ -348,3 +348,21 @@ record終端をLFだけに限定し、未確認tailの全bytesを保持・集計
 required restricted-child、Windows 3.12、full suite、独立レビューは未実施。全gateはnoを維持する。
 D2 exact inventory 1/1 pass（15.646秒）。既存成果物・失敗rootのinventoryは5,763 entries／
 592,342,788 bytes／6 failure rootsで不変、raw hash・属性・SDDLを含むdigestも既記録と一致した。
+
+## 17. 2026-09-07 operation failureの即時停止
+
+`f76687d`の自己点検で、positive controlの例外がerror 0なら成功扱いとなり、
+後続operationへ進む経路を確認した。通常のOSErrorでwinerrorがNoneの場合も元例外が
+operation_unexpectedへ置き換わっていた。positive controlの例外はそのまま再送出し、
+frozen controlで明示的なerror 5を得た場合だけ期待する拒否として受理する。
+flush／query等の失敗、teardown failure、private replacement evidence付き例外は従来どおり停止する。
+
+rights-openは各API直後に結果を判定する。INVALID_HANDLE_VALUEとlast error 0の組合せを
+失敗として扱い、無効handleをcloseしない。controlでのopen拒否もmutation開始前に停止する。
+
+回帰試験はOSError、明示的error 0、object_open／mutation_apiのfailure、open失敗を注入し、
+元例外保持と後続操作未実行を確認した。関連pure/fault 98/98 pass（0.449秒）、
+同一parent実Win32 2/2 pass（2.132秒）、repository safetyもpass。
+required restricted-child、Windows 3.12、full suite、独立レビューは未実施。全gateはno。
+D2 exact inventory 1/1 pass（10.880秒）。既存成果物・失敗rootのinventoryは5,763 entries／
+592,342,788 bytes／6 failure rootsで、raw hash・属性・SDDLを含むdigestも既記録と一致した。
