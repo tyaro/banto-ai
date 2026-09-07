@@ -379,3 +379,12 @@ faulting DLLは未特定。公式仕様と照合し、空lpDesktopが非対話de
 [調査記録と次に必要な証拠](anomaly-multiseed-v0.3-s4-b1-startup-triage-2026-09-07.md)を参照。
 今回は実引数・動作・testsを変更せず、追加child起動／native mutation／ACL変更を行っていない。
 独立レビューとrequired child E2Eは未完了。全gateはno。
+
+## 19. 2026-09-07 独立レビューの開始
+
+実装固定対象`f2f2d95`、比較基準`16a037f`として、ユーザー承認により別エージェント1体へ
+read-only独立レビューを依頼した。依頼時点ではレビュー結果は未取得で、監査済みとは扱わない。
+[レビュー用資料](anomaly-multiseed-v0.3-s4-b1-review-packet-2026-09-07.md)に対象・反証項目・
+許可するpure試験・禁止するnative実行を集約した。設計書冒頭の古い最新試験数も訂正した。
+レビュー中は実装を固定し、進捗の反復ポーリングを行わず完了通知を待つ。
+全gateはnoを維持する。

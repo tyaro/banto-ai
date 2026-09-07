@@ -4,8 +4,11 @@
 
 状態: **candidate / cleanup + replacement trace tested / independent audit pending**
 
-最新状態: `8cc67c6`のnative cleanupに、置換操作の事前snapshotと追記trace、child/parent接続を追加した。
-93 pure/fault＋same-parent Windows native 2件がpass。最新節「置換trace checkpoint」を参照。
+最新実装状態: `f2f2d95`。native cleanup、置換snapshot/trace、child/parent接続に加え、
+bootstrap resource-stop、report二次障害、trace parser、operation即時停止を修正済み。
+`74c42ee`時点で98 pure/fault＋same-parent Windows native 2件がpass。
+`f2f2d95`は起動障害の調査文書とコメントの訂正で、実行構造は変更していない。
+[独立レビュー用資料](results/anomaly-multiseed-v0.3-s4-b1-review-packet-2026-09-07.md)を参照。
 以下のprototype節は`068e45b`時点の設計・実測を保持する。cleanup/evidence全体のP2解消、
 独立監査、restricted-child E2E、main統合、正式受入は主張しない。
 
