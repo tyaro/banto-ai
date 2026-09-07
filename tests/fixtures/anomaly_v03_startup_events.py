@@ -41,20 +41,29 @@ class StartupEvents:
     KINDS = ("create_process", "create_thread", "load_dll", "unload_dll",
              "exception", "debug_string", "exit_thread", "exit_process", "rip")
 
-    def __init__(self, pid):
-        require(type(pid) is int and 0 < pid < 2**32)
-        self.pid = pid
+    def __init__(self, pid=None):
+        self.pid = None
         self.slots = [None] * self.LIMIT
         self.count = self.confirmed = self.elapsed_ms = 0
         self.pending = None
         self.status = "prepared"
         self.resource_stop = False
         self.exit_observed = None
+        if pid is not None:
+            self.bind(pid)
+
+    def bind(self, pid):
+        """Bind once after creation; all record slots already exist."""
+        require(self.pid is None and self.status == "prepared" and self.count == 0
+                and not self.resource_stop)
+        require(type(pid) is int and 0 < pid < 2**32)
+        self.pid = pid
 
     def __repr__(self):
         return "StartupEvents(<private>)"
 
     def receive(self, event, elapsed_ms):
+        require(self.pid is not None)
         require(self.status in ("prepared", "running") and self.pending is None)
         require(type(event) is StartupEvent and event.kind in self.KINDS)
         require(type(event.pid) is int and event.pid == self.pid)

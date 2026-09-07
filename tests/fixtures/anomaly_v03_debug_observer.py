@@ -61,7 +61,7 @@ class DebugObserver:
         self._time()
         memory = self.sample_memory()
         need(type(memory) is int and memory >= 0, "memory_sample")
-        if memory > self.MEMORY_LIMIT:
+        if memory >= self.MEMORY_LIMIT:
             self.resource_stop = True
             raise TransportError("memory_budget")
         need(not (self.resource_stop or self.transport.resource_stop or self.stop.resource_stop
@@ -76,6 +76,9 @@ class DebugObserver:
                  and self.stop.drain.pid == self.transport.pid, "observation_owner")
             need(self.transport.state == "idle" and self.transport.count == 0,
                  "observation_transport")
+            if self.events.pid is None:
+                self.events.bind(self.transport.pid)
+            need(self.events.pid == self.transport.pid, "recorder_identity")
             self.transport._thread()
             need(self.transport.kernel.GetProcessId(self.stop.handles[0]) == self.transport.pid,
                  "owned_process_identity")

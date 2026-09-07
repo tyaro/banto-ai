@@ -6,13 +6,14 @@ from unittest.mock import Mock, patch
 
 from tests.fixtures.anomaly_v03_debug_observer import DebugObserver
 from tests.fixtures.anomaly_v03_debug_stop import OwnedDebugStop
+from tests.fixtures.anomaly_v03_debug_memory import DebugMemory
 from tests.fixtures.anomaly_v03_debug_transport import (
     DebugEventTransport, TransportError, BREAKPOINT, DBG_NOT_HANDLED,
 )
 
 
 class DebugObserverTests(unittest.TestCase):
-    def observer(self, events=(3, 6, 5), *, code=0, clock=lambda: 0, memory=lambda: 0):
+    def observer(self, events=(3, 6, 5), *, code=0, clock=lambda: 0, memory=lambda: 0, deferred=False):
         kernel = Mock()
         kernel.GetCurrentThreadId.return_value = 7
         kernel.GetProcessId.return_value = 17
@@ -39,9 +40,45 @@ class DebugObserverTests(unittest.TestCase):
         kernel.WaitForDebugEventEx.side_effect = deliver
         transport = DebugEventTransport(kernel=kernel, last_error=lambda: 121)
         stop = OwnedDebugStop(transport, clock=lambda: 0)
+        if deferred:
+            observer = DebugObserver(stop, sample_memory=memory, clock=clock)
         transport.bind(17)
         stop.adopt(501, 502)
-        return DebugObserver(stop, sample_memory=memory, clock=clock), kernel
+        return observer if deferred else DebugObserver(stop, sample_memory=memory, clock=clock), kernel
+
+    def test_observer_and_recorder_are_preallocated_before_pid_is_known(self):
+        observer, kernel = self.observer(deferred=True)
+        self.assertIsNone(observer.events.pid)
+        slots, result = observer.events.slots, observer.result
+        with patch("tests.fixtures.anomaly_v03_debug_observer.StartupEvents", side_effect=MemoryError()):
+            returned = observer.run()
+        self.assertIs(returned, result)
+        self.assertIs(observer.events.slots, slots)
+        self.assertEqual(observer.events.pid, 17)
+        self.assertEqual(returned["status"], "observed")
+
+    def test_exact_memory_limit_stops_before_wait(self):
+        observer, kernel = self.observer(memory=lambda: DebugObserver.MEMORY_LIMIT)
+        result = observer.run()
+        self.assertTrue(result["resource_stop"])
+        kernel.WaitForDebugEventEx.assert_not_called()
+
+    def test_memory_adapter_integrates_with_deferred_recorder_and_owned_stop(self):
+        for amount in (100, DebugMemory.LIMIT // 2):
+            observer, kernel = self.observer(deferred=True)
+            kernel.GetCurrentProcess.return_value = -1
+            psapi = Mock()
+            def query(handle, pointer, size):
+                pointer.contents.peak_pagefile = amount
+                return True
+            psapi.GetProcessMemoryInfo.side_effect = query
+            observer.sample_memory = DebugMemory(observer.stop, psapi)
+            result = observer.run()
+            self.assertEqual(result["status"], "observed" if amount == 100 else "failed")
+            self.assertEqual(result["resource_stop"], amount != 100)
+            if amount != 100:
+                kernel.WaitForDebugEventEx.assert_not_called()
+                self.assertEqual(psapi.GetProcessMemoryInfo.call_count, 2)
 
     def test_observed_exit_is_never_native_acceptance_or_cause_attribution(self):
         observer, kernel = self.observer(code=0xC0000142)

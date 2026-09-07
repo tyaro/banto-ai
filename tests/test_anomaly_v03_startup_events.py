@@ -7,6 +7,24 @@ from tests.fixtures.anomaly_v03_startup_events import EventContractError, Startu
 
 
 class StartupEventTests(unittest.TestCase):
+    def test_preallocation_binding_and_stopped_unbound_recorder(self):
+        journal = StartupEvents()
+        slots = journal.slots
+        with self.assertRaises(EventContractError):
+            journal.receive(StartupEvent("create_process", 17, 19), 0)
+        for pid in (0, True, -1, 2**32, "17"):
+            with self.assertRaises(EventContractError):
+                journal.bind(pid)
+        journal.bind(17)
+        self.assertIs(journal.slots, slots)
+        with self.assertRaises(EventContractError):
+            journal.bind(17)
+        journal.receive(StartupEvent("create_process", 17, 19), 0)
+        unbound = StartupEvents()
+        unbound.stop(resource=True)
+        with self.assertRaises(EventContractError):
+            unbound.bind(17)
+
     def started(self):
         journal = StartupEvents(17)
         journal.receive(StartupEvent("create_process", 17, 19), 0)
