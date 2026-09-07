@@ -2,7 +2,8 @@
 
 No TemporaryDirectory/rmtree, campaign, generated observations or repository
 artifact mutation. Successful native controls clean only their exact ledger.
-Failed native controls print a safe basename/size and retain all evidence.
+Failed cleanup retains private snapshots and partial state; it cannot retain files
+already deleted. Public results omit raw security descriptors and content.
 """
 
 from copy import deepcopy
@@ -281,6 +282,7 @@ class PureWindowsControls(unittest.TestCase):
             self.assertFalse(result["native_accepted"])
             if failure:
                 self.assertEqual(result["reason"], "owned_teardown_failed")
+                self.assertNotIn("success_residue_count", result)
                 if guard is not None:
                     self.assertEqual(guard.handle, 77)
                     self.assertEqual(fixture.guards, [guard])
@@ -334,6 +336,11 @@ class PureWindowsControls(unittest.TestCase):
         guard.api.close.side_effect = OSError("DUMMY_SECRET")
         fixture.guards = [guard]
         restore = Mock(identity=identity, directory=True)
+        restore.freeze.return_value = {}
+        journal = w.CleanupJournal((w.CapturedObject("", True, b"{}", b"{}", b"{}", b""),), b"{}")
+        fixture.cleanup_journal = journal
+        fixture.capture_cleanup = Mock(return_value=journal)
+        fixture._cleanup_verify = Mock()
         with patch.object(w, "_Bound", return_value=restore), patch.object(w, "_verify_sd"), \
              patch.object(Path, "exists", side_effect=AssertionError), patch.object(Path, "iterdir", side_effect=AssertionError):
             try:
@@ -1050,10 +1057,16 @@ class NativeWindowsControls(unittest.TestCase):
             before_operations = deepcopy(fixture.ledger)
             # Same-parent native operation controls are useful but NOT evidence
             # for the separate restricted-child requirement below.
-            self.assertEqual(w._operations(api, fixture.root, user, fixture.ledger), w._expected_operations())
-            self.assertEqual(fixture.ledger, before_operations)
+            operations = w._operations(api, fixture.root, user, fixture.ledger)
+            self.assertEqual(operations, w._expected_operations())
+            self.assertTrue(fixture.ledger == before_operations, "owned ledger changed")
             fixture.check()
-            fixture.cleanup()
+            journal = fixture.cleanup(operations=w._canonical(operations))
+            self.assertEqual(journal.report()["status"], "completed")
+            self.assertEqual(journal.report()["confirmed_absent_objects"], 6)
+            self.assertEqual(len(journal.private_snapshot[0]), 6)
+            self.assertTrue(fixture.ledger == before_operations, "cleanup changed original ledger")
+            self.assertTrue(all(bound is None for bound in fixture.cleanup_handles))
         finally:
             api.close(token)
             if fixture:

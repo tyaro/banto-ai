@@ -1,7 +1,8 @@
 """S4-B1, engineering-only Windows controls. NOT a publisher or a sandbox.
 
 Only run_control_harness() is public; it accepts no path, ACL or token. All
-mutations belong to a newly created UUID system-temp tree. Failure retains it.
+mutations belong to a newly created UUID system-temp tree. Cleanup failure retains
+its private pre-cleanup evidence and a partial transition record, not every file.
 Protected DACL means no inherited ACEs, not WORM, owner/admin/WRITE_DAC or
 WRITE_OWNER resistance, privileged-writer protection, or power-loss durability.
 The parent and fixed child are trusted code in the same account/logon. A hostile
@@ -12,6 +13,7 @@ No S4 acceptance or campaign permission is issued, even on native success.
 from __future__ import annotations
 
 import ctypes as C
+from dataclasses import dataclass, field
 import hashlib
 import json
 import os
@@ -836,10 +838,230 @@ def _source_pin():
     return rows
 
 
+_MAX_OBJECTS = 32
+_MAX_FILE_BYTES = 1024 * 1024
+_MAX_TOTAL_BYTES = 4 * _MAX_FILE_BYTES
+_MAX_METADATA_BYTES = 64 * 1024
+
+
+class CleanupEvidenceError(ValueError):
+    def __init__(self):
+        super().__init__("cleanup_evidence_contract")
+
+
+def _require(condition):
+    if not condition:
+        raise CleanupEvidenceError()
+
+
+def _metadata(value):
+    # Only captured canonical bytes cross this boundary. No arbitrary serializers
+    # or callbacks may execute after a native mutation has begun.
+    _require(type(value) is bytes and 0 < len(value) <= _MAX_METADATA_BYTES)
+    return value
+
+
+@dataclass(frozen=True, repr=False)
+class CapturedObject:
+    name: str
+    directory: bool
+    identity: bytes = field(repr=False)
+    security: bytes = field(repr=False)
+    cleanup_security: bytes = field(repr=False)
+    content: bytes = field(repr=False)
+
+    def __post_init__(self):
+        _require(type(self.name) is str and len(self.name) <= 128)
+        _require(self.name == "" or re.fullmatch(r"[a-z0-9_.-]+(?:/[a-z0-9_.-]+)*", self.name)
+                 and all(part not in (".", "..") for part in self.name.split("/")))
+        _require(type(self.directory) is bool)
+        _metadata(self.identity)
+        _metadata(self.security)
+        _metadata(self.cleanup_security)
+        _require(type(self.content) is bytes and len(self.content) <= _MAX_FILE_BYTES)
+        _require(not self.directory or not self.content)
+
+    def __repr__(self):
+        return "CapturedObject(<private evidence>)"
+
+
+@dataclass(repr=False)
+class _Progress:
+    acl: str = "unchanged"
+    deletion: str = "not_started"
+    close: str = "not_started"
+    failed_operation: str | None = None
+
+
+class CleanupJournal:
+    """One attempt, no retries; mark pending BEFORE each external mutation.
+
+    A failed native call can have side effects. 'unknown' preserves that fact.
+    A successful delete disposition and close do not prove name absence.
+    Full snapshots are retained in memory only, with no crash-durability claim.
+    """
+
+    def __init__(self, objects, operations):
+        _require(type(objects) is tuple and 0 < len(objects) <= _MAX_OBJECTS)
+        _require(all(type(item) is CapturedObject for item in objects))
+        _require(type(operations) is bytes and 0 < len(operations) <= _MAX_FILE_BYTES)
+        names = {item.name for item in objects}
+        _require(len(names) == len(objects) and "" in names)
+        by_name = {item.name: item for item in objects}
+        _require(by_name[""].directory)
+        for item in objects:
+            if item.name:
+                parent = item.name.rpartition("/")[0]
+                _require(parent in by_name and by_name[parent].directory)
+        _require(sum(len(item.content) for item in objects) <= _MAX_TOTAL_BYTES)
+        # Immutable input objects and byte strings cannot alias the mutable native
+        # ledger. Allocate every transition slot before exposing this journal.
+        self._objects = tuple(sorted(objects, key=lambda item: item.name))
+        self._operations = operations
+        self._progress = {item.name: _Progress() for item in self._objects}
+        inventory = [{"name": item.name, "directory": item.directory,
+                      "identity_sha256": _sha(item.identity), "security_sha256": _sha(item.security),
+                      "cleanup_security_sha256": _sha(item.cleanup_security),
+                      "content_sha256": _sha(item.content), "bytes": len(item.content)}
+                     for item in self._objects]
+        self._snapshot_digest = _sha(json.dumps(
+            {"version": 1, "objects": inventory, "operations_sha256": _sha(operations)},
+            sort_keys=True, separators=(",", ":")).encode("ascii"))
+        self._status = "prepared"
+        self._resource_stop = False
+        self._active = None
+
+    def __repr__(self):
+        return "CleanupJournal(<private evidence>)"
+
+    @property
+    def private_snapshot(self):
+        """Explicit in-memory access only; callers must not log this evidence."""
+        return self._objects, self._operations
+
+    def _row(self, name):
+        _require(type(name) is str and name in self._progress)
+        return self._progress[name]
+
+    def begin(self, name, operation):
+        _require(self._status in ("prepared", "running") and not self._resource_stop)
+        _require(self._active is None and operation in ("acl", "delete", "absence"))
+        row = self._row(name)
+        if operation == "acl":
+            _require(row.acl == "unchanged" and row.deletion == "not_started")
+        elif operation == "delete":
+            _require(row.acl == "changed" and row.deletion == "not_started")
+            # A parent may be deleted only after all its captured descendants
+            # have confirmed absence. Unknown/foreign children remain a native
+            # preflight concern, and never get added to this journal.
+            _require(all(other.deletion == "absent" for child, other in self._progress.items()
+                         if child != name and (not name or child.startswith(name + "/"))))
+        else:
+            _require(row.deletion == "armed" and row.close == "confirmed")
+        # Allocate the pair before updating any state; allocation failure leaves
+        # the old state intact and the native caller has not started the API yet.
+        active = (name, operation)
+        if operation == "acl":
+            row.acl = "pending"
+        elif operation == "delete":
+            row.deletion = "pending"
+        self._active, self._status = active, "running"
+
+    def confirmed(self):
+        _require(self._status == "running" and self._active is not None and not self._resource_stop)
+        name, operation = self._active
+        row = self._progress[name]
+        if operation == "acl":
+            row.acl = "changed"  # Caller has verified the new descriptor.
+        elif operation == "delete":
+            row.deletion = "armed"  # Native disposition accepted, not absence.
+        else:
+            row.deletion = "absent"  # Caller has positively verified absence.
+        self._active = None
+
+    def close_confirmed(self, name):
+        # Handle-only teardown is permitted after a failure/resource stop. It
+        # never upgrades an uncertain disposition to confirmed absence.
+        row = self._row(name)
+        _require(self._active is None and row.deletion in ("armed", "unknown") and row.close != "confirmed")
+        row.close = "confirmed"
+
+    def failed(self, *, resource_stop=False):
+        _require(type(resource_stop) is bool and self._status != "completed")
+        if self._active is not None:
+            name, operation = self._active
+            row = self._progress[name]
+            row.failed_operation = operation
+            if operation == "acl":
+                row.acl = "unknown"
+            elif operation == "delete":
+                row.deletion = "unknown"
+            self._active = None
+        self._status = "failed"
+        self._resource_stop |= resource_stop
+
+    def close_failed(self, name, *, resource_stop=False):
+        _require(type(resource_stop) is bool and self._status != "completed")
+        row = self._row(name)
+        _require(self._active is None and row.deletion in ("armed", "unknown") and row.close != "confirmed")
+        row.close = "unknown"
+        self.failed(resource_stop=resource_stop)
+        # Keep a prior mutation failure as the primary cause.
+        if row.failed_operation is None:
+            row.failed_operation = "close"
+
+    def complete(self):
+        _require(self._status == "running" and self._active is None and not self._resource_stop)
+        _require(all(row.deletion == "absent" for row in self._progress.values()))
+        self._status = "completed"
+
+    def report(self):
+        """Redacted, bounded memory-only view. It allocates; not an OOM handler.
+
+        Retained bounds describe captured objects only. They are not a fresh
+        filesystem inventory and say nothing about foreign objects or disk usage.
+        """
+        rows, absent_bytes, present_bytes, uncertain_bytes = [], 0, 0, 0
+        absent_count = present_count = uncertain_count = 0
+        for item in self._objects:
+            row = self._progress[item.name]
+            size = len(item.content)
+            if row.deletion == "absent":
+                absent_count += 1
+                absent_bytes += size
+            elif row.deletion == "not_started":
+                present_count += 1
+                present_bytes += size
+            else:
+                uncertain_count += 1
+                uncertain_bytes += size
+            rows.append({"name": item.name, "acl": row.acl, "deletion": row.deletion,
+                         "close": row.close, "failed_operation": row.failed_operation})
+        return {"version": 1, "status": self._status, "resource_stop": self._resource_stop,
+                "snapshot_sha256": self._snapshot_digest, "objects": rows,
+                "captured_objects": len(rows), "captured_bytes": absent_bytes + present_bytes + uncertain_bytes,
+                "confirmed_absent_objects": absent_count, "confirmed_absent_bytes": absent_bytes,
+                "retained_captured_objects_min": present_count,
+                "retained_captured_objects_max": present_count + uncertain_count,
+                "retained_captured_bytes_min": present_bytes,
+                "retained_captured_bytes_max": present_bytes + uncertain_bytes,
+                "unknown_objects": uncertain_count,
+                "success_residue_count": 0 if self._status == "completed" else None,
+                "report_performed_filesystem_io": False, "native_accepted": False, "formal_permission": False}
+
+
 class _Fixture:
     def __init__(self, api, user):
         self.api, self.user, self.ledger, self.guards, self.root = api, user, {}, [], None
         self.teardown = _Teardown()
+        self.cleanup_journal = None
+        self.cleanup_handles = [None] * _MAX_OBJECTS
+        # Allocate diagnostics before any owned fixture exists. The retry uses
+        # separate collectors so it cannot mutate diagnostics attached to a
+        # primary exception during the original close attempt.
+        self.cleanup_collectors = [_Teardown() for _ in range(_MAX_OBJECTS)]
+        self.cleanup_retry_collectors = [_Teardown() for _ in range(_MAX_OBJECTS)]
+        self.cleanup_attempted = False
 
     def create(self):
         temporary = _temporary_path(self.api)
@@ -929,44 +1151,163 @@ class _Fixture:
                 row["sd"] = sd
         self.check()  # ALL pins have been closed before launching the child.
 
-    def cleanup(self):
-        self.check()  # Whole-tree verification BEFORE any restoration or deletion.
-        for name in sorted(self.ledger, key=lambda x: (x.count("/")+bool(x), x), reverse=True):
-            self.check()
-            row = self.ledger[name]
-            bound = _Bound(self.api, self.path(name), directory=row["identity"]["directory"], access=0x60081)
-            with _Closing(bound.close):
-                _need(bound.identity == row["identity"], "cleanup_identity")
-                row["sd"] = bound.freeze(_dacl(self.user, "private", bound.directory)[0])
-                _verify_sd(row["sd"], self.user, "private", bound.directory)
-        # Read-back checked known objects only. No recursive deletion or adoption.
-        for name in sorted(self.ledger, key=lambda x: (x.count("/")+bool(x), x), reverse=True):
-            row = self.ledger[name]
-            if not name:
-                _need(self.guards[-1].path == self.root, "cleanup_root_guard")
-                _need(self.guards[-1].close() is True, "cleanup_guard_close")
-                self.guards.pop()
-            bound = _Bound(self.api, self.path(name), directory=row["identity"]["directory"], access=0x30081, share=1)
-            with _Closing(bound.close):
-                _need(bound.identity == row["identity"], "cleanup_delete_identity")
-                if bound.directory:
-                    _need(not list(bound.path.iterdir()), "cleanup_unknown_child")
+    def _cleanup_children(self, bound, expected):
+        observed = set()
+        with os.scandir(bound.path) as entries:
+            for entry in entries:
+                _need(len(observed) < _MAX_OBJECTS and entry.name in expected, "cleanup_unknown_child")
+                observed.add(entry.name)
+        _need(observed == expected, "cleanup_missing_child")
+
+    def _cleanup_close(self, index, primary=None, *, retry=False):
+        bound = self.cleanup_handles[index]
+        if bound is None:
+            return
+        local = self.cleanup_retry_collectors[index] if retry else self.cleanup_collectors[index]
+        confirmed = bound.close(teardown=local)
+        if not confirmed and not local.count:
+            local.record("cleanup_handle_close")
+        journal = self.cleanup_journal
+        # The snapshot order also indexes retained handle ownership.
+        if journal is not None:
+            name = journal._objects[index].name
+            row = journal._progress[name]
+            if row.deletion in ("armed", "unknown"):
+                if confirmed:
+                    journal.close_confirmed(name)
                 else:
-                    _need(_sha(bound.read()) == row["sha256"], "cleanup_bytes")
-                disposition = B(1)
-                self.api.call(self.api.k.SetFileInformationByHandle(bound.handle, 4, C.byref(disposition), C.sizeof(disposition)), "cleanup_disposition")
-        _need(not self.root.exists(), "cleanup_residue")
+                    journal.close_failed(name, resource_stop=local.resource_stop)
+            elif not confirmed:
+                journal.failed(resource_stop=local.resource_stop)
+        if confirmed:
+            self.cleanup_handles[index] = None
+        _preserve_teardown(primary, local)
+
+    def capture_cleanup(self, operations):
+        """Complete private snapshot, no ACL changes or deletes. Never retries."""
+        _need(not self.cleanup_attempted, "cleanup_retry")
+        self.cleanup_attempted = True
+        _need(type(operations) is bytes and 0 < len(operations) <= _LIMIT, "cleanup_operations_size")
+        _need(0 < len(self.ledger) <= _MAX_OBJECTS, "cleanup_object_count")
+        for guard in self.guards:
+            guard.check()
+        captured, total = [], 0
+        names = sorted(self.ledger)
+        for index, name in enumerate(names):
+            primary = None
+            row = self.ledger[name]
+            bound = _Bound(self.api, self.path(name), directory=row["identity"]["directory"], share=1)
+            self.cleanup_handles[index] = bound
+            try:
+                sd = self.api.security(bound.handle)
+                _need(bound.identity == row["identity"] and sd == row["sd"], "cleanup_capture_identity_or_sd")
+                bound.streams()
+                raw = b""
+                if bound.directory:
+                    expected = {child.rpartition("/")[2] for child in names
+                                if child and child.rpartition("/")[0] == name}
+                    self._cleanup_children(bound, expected)
+                else:
+                    raw = bound.read()
+                    _need(len(raw) == row["bytes"] and _sha(raw) == row["sha256"], "cleanup_capture_bytes")
+                total += len(raw)
+                _need(total <= _MAX_TOTAL_BYTES, "file_size")
+                target = {**sd, "aces": _dacl(self.user, "private", bound.directory)[1]}
+                captured.append(CapturedObject(name, bound.directory, _canonical(bound.identity),
+                                               _canonical(sd), _canonical(target), raw))
+            except BaseException as error:
+                primary = error
+                raise
+            finally:
+                self._cleanup_close(index, primary)
+        # All allocations and hashes complete BEFORE the first mutation. Caller
+        # retains this object even if cleanup or result serialization later fails.
+        self.cleanup_journal = CleanupJournal(tuple(captured), operations)
+        return self.cleanup_journal
+
+    def _cleanup_verify(self, bound, item, *, private):
+        _need(_canonical(bound.check()) == item.identity, "cleanup_identity")
+        expected_sd = item.cleanup_security if private else item.security
+        _need(_canonical(self.api.security(bound.handle)) == expected_sd, "cleanup_sd")
+        bound.streams()
+        if bound.directory:
+            expected = {child.name.rpartition("/")[2] for child in self.cleanup_journal._objects
+                        if child.name and child.name.rpartition("/")[0] == item.name
+                        and self.cleanup_journal._progress[child.name].deletion != "absent"}
+            self._cleanup_children(bound, expected)
+        else:
+            _need(bound.read() == item.content, "cleanup_bytes")
+
+    def cleanup(self, *, operations=b'{"scope":"same-parent","operations":"not-supplied"}'):
+        journal = self.capture_cleanup(operations)
+        # The captured order indexes handle slots; deletion order is bottom-up.
+        order = sorted(range(len(journal._objects)),
+                       key=lambda i: (journal._objects[i].name.count("/") + bool(journal._objects[i].name),
+                                      journal._objects[i].name), reverse=True)
+        try:
+            for index in order:
+                item, primary = journal._objects[index], None
+                bound = _Bound(self.api, self.path(item.name), directory=item.directory, access=0x60081, share=1)
+                self.cleanup_handles[index] = bound
+                try:
+                    self._cleanup_verify(bound, item, private=False)
+                    journal.begin(item.name, "acl")
+                    actual = bound.freeze(_dacl(self.user, "private", item.directory)[0])
+                    _need(_canonical(actual) == item.cleanup_security, "cleanup_acl_readback")
+                    journal.confirmed()
+                except BaseException as error:
+                    primary = error
+                    journal.failed(resource_stop=_resource_stop(error))
+                    raise
+                finally:
+                    self._cleanup_close(index, primary)
+            for index in order:
+                item, primary = journal._objects[index], None
+                if not item.name:
+                    _need(self.guards and self.guards[-1].path == self.root, "cleanup_root_guard")
+                    _need(self.guards[-1].close() is True, "cleanup_guard_close")
+                    self.guards.pop()  # Only a confirmed close releases ownership.
+                bound = _Bound(self.api, self.path(item.name), directory=item.directory, access=0x30081, share=1)
+                self.cleanup_handles[index] = bound
+                try:
+                    self._cleanup_verify(bound, item, private=True)
+                    disposition = B(1)
+                    journal.begin(item.name, "delete")
+                    self.api.call(self.api.k.SetFileInformationByHandle(
+                        bound.handle, 4, C.byref(disposition), C.sizeof(disposition)), "cleanup_disposition")
+                    journal.confirmed()
+                except BaseException as error:
+                    primary = error
+                    journal.failed(resource_stop=_resource_stop(error))
+                    raise
+                finally:
+                    self._cleanup_close(index, primary)
+                journal.begin(item.name, "absence")
+                try:
+                    self.path(item.name).lstat()
+                except FileNotFoundError as error:
+                    _need(getattr(error, "winerror", 2) == 2, "cleanup_absence_error")
+                else:
+                    raise _Failure("cleanup_residue")
+                journal.confirmed()
+            journal.complete()
+        except BaseException as error:
+            journal.failed(resource_stop=_resource_stop(error))
+            raise
+        return journal
 
     def close(self, *, primary=None, teardown=None):
         if teardown is not None:
             self.teardown = teardown
+        for index in range(len(self.cleanup_handles)-1, -1, -1):
+            self.teardown.attempt("cleanup_handle_close", lambda: self._cleanup_close(index, retry=True))
         for index in range(len(self.guards)-1, -1, -1):
             guard = self.guards[index]
             if self.teardown.attempt("fixture_guard_close", lambda: _need(guard.close() is not False, "fixture_guard_close")):
                 del self.guards[index]
         if teardown is None:
             _preserve_teardown(primary, self.teardown)
-        return not self.guards
+        return not self.guards and not any(self.cleanup_handles)
 
 
 def _process_identity(api, process):
@@ -1023,6 +1364,14 @@ def _owned_teardown(api, process, handles, fixture, teardown):
         teardown.attempt("fixture_close", lambda: fixture.close(teardown=teardown))
 
 
+class _ControlOutcome(dict):
+    """JSON/repr expose only the safe mapping; private evidence lives with it."""
+    def __init__(self):
+        super().__init__()
+        self.private_evidence = None
+        self.private_control_evidence = None
+
+
 def _finish_outcome(outcome, primary, teardown):
     previous = getattr(primary, "teardown", None)
     if isinstance(previous, _Teardown):
@@ -1034,19 +1383,21 @@ def _finish_outcome(outcome, primary, teardown):
         outcome["teardown"] = teardown.report()
         if outcome["status"] == "native_control_pass":
             outcome.update(status="failed", reason="owned_teardown_failed", winerror=0)
+            outcome.pop("success_residue_count", None)
         if teardown.resource_stop:
             outcome.update(retained_exists=None, retained_existence="unverified")
     return outcome
 
 
 def run_control_harness():
-    """Run a fixed small control; safe failure preserves evidence, never publishes."""
+    """Run a fixed control; return safe JSON plus explicit private evidence access."""
     started = time.monotonic()
     fixture = api = None
     parent = restricted = actual = impersonation = None
     process = None
     peaks = None
     outcome, primary, teardown = None, None, _Teardown()
+    result, control_status = _ControlOutcome(), "not_completed"
     try:
         api = _api()
         runtime, source = _runtime(), _source_pin()
@@ -1105,9 +1456,12 @@ def run_control_harness():
                     "duplicate_profile": duplicate_profile, "access": parent_access, "child_report": report,
                     "fixture_basename": fixture.root.name, "fixture_bytes": sum(x["bytes"] for x in fixture.ledger.values()),
                     "resources": peaks}
-        fixture.cleanup()
-        evidence.update(success_residue_count=0, elapsed_seconds=time.monotonic()-started)
-        outcome = evidence
+        control_status = "pass"
+        result.private_control_evidence = _canonical(evidence)
+        fixture.cleanup(operations=result.private_control_evidence)
+        outcome = {**_result_status(), "status": "native_control_pass", "runtime": runtime, "source": source,
+                   "fixture_basename": fixture.root.name, "fixture_bytes": evidence["fixture_bytes"],
+                   "resources": peaks, "success_residue_count": 0, "elapsed_seconds": time.monotonic()-started}
     except BaseException as exc:
         primary = exc
         reason, error = (exc.reason, exc.error) if type(exc) is _Failure else ("resource_failure" if isinstance(exc, MemoryError) else "unexpected_failure", 0)
@@ -1122,16 +1476,35 @@ def run_control_harness():
                     "elapsed_seconds": time.monotonic()-started}
         else:
             outcome = {**_result_status(), "status": "failed", "reason": reason, "winerror": error,
-                       "retained_basename": fixture.root.name if fixture and fixture.root and fixture.root.exists() else None,
+                       "retained_basename": fixture.root.name if fixture and fixture.root else None,
+                       "retained_exists": None, "retained_existence": "unverified",
                        "known_bytes": sum(x["bytes"] for x in fixture.ledger.values()) if fixture else 0,
                        "child_exit_code": exc.child_exit_code if type(exc) is _Failure else None,
                        "resources": peaks,
                        "elapsed_seconds": time.monotonic()-started}
     finally:
-        # Never clean failed trees or alter their ACLs. Terminate only our own child.
+        # Never resume cleanup or inspect failed trees. Terminate only our child.
         _owned_teardown(api, process, (impersonation, actual, restricted, parent,
                         process.thread if process else None, process.process if process else None), fixture, teardown)
-    return _finish_outcome(outcome, primary, teardown)
+    result.update(_finish_outcome(outcome, primary, teardown))
+    result["control_status"] = "failed" if primary is not None and control_status == "not_completed" else control_status
+    journal = getattr(fixture, "cleanup_journal", None)
+    result.private_evidence = journal if type(journal) is CleanupJournal else None
+    result["cleanup_status"] = journal._status if type(journal) is CleanupJournal else (
+        "capture_failed" if getattr(fixture, "cleanup_attempted", False) is True else "not_started")
+    result["teardown_status"] = "failed" if "teardown" in result else "pass"
+    if type(journal) is CleanupJournal:
+        result["known_bytes_basis"] = "pre_cleanup_snapshot_not_retained_bytes"
+        # Detail rendering allocates; defer it after any resource stop. The actual
+        # immutable snapshot and transition slots remain owned by the result.
+        if not _resource_stop(primary) and not teardown.resource_stop and not journal._resource_stop:
+            try:
+                result["cleanup"] = journal.report()
+            except BaseException as error:
+                result.update(status="failed", reason="resource_failure" if _resource_stop(error)
+                              else "cleanup_report_failed", winerror=0)
+                result.pop("success_residue_count", None)
+    return result
 
 
 def _access_matrix(api, root, ledger, token):

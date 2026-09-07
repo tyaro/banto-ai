@@ -2,7 +2,12 @@
 
 日付: 2026-09-07
 
-状態: **draft / pure prototype tested / native integration not implemented**
+状態: **candidate / native cleanup adapter tested / independent audit pending**
+
+最新状態: `068e45b`のprototypeからnative snapshot captureとcleanupへ接続した。
+81 pure/fault＋same-parent Windows native 1件がpass。詳細は末尾の「native接続checkpoint」を参照。
+以下のprototype節は`068e45b`時点の設計・実測を保持する。cleanup/evidence全体のP2解消、
+独立監査、restricted-child E2E、main統合、正式受入は主張しない。
 
 基準: `0d917d9`（実装基準 `16a037f` + 引継書2 commit）。
 [引継書](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md) §6〜7に対応する。
@@ -120,3 +125,67 @@ path/type attributes/byte count/raw SHA-256/SDDLを含む同一手順のdigest�
 
 全gateを維持する: `B1_READY=no`、`B1_NATIVE_ACCEPTED=no`、`S4_B_ACCEPTED=no`、
 `S4_ACCEPTED=no`、`INTEGRATION_READY=no`、`FORMAL_PERMISSION=no`。
+
+## 2026-09-07 native接続checkpoint
+
+基準は `068e45b59202f9f6850faa1d30b28f5ca9814e72`。
+記録部品を既存の [Windows implementation](../src/banto_ai/_anomaly_v03_windows.py) に移し、
+新しいproduction source pathは増やさなかった。旧prototype moduleは同じ部品を参照する入口とした。
+固定current-only 32 paths、historical 88、科学config/schema、child sourceは保持する。
+
+### 実装した動作
+
+- `capture_cleanup()` が全owned objectのidentity/SD/content/子集合/streamsを検証する。
+  全snapshotの構築成功後にだけ清掃を始め、capture失敗や二度目の清掃はmutation前に拒否する。
+- ACL復元と削除の直前に保持handleからidentity、SD、content、残存child集合を再検証する。
+  元の `fixture.ledger` は上書きしない。変更後SDはsnapshotに先に記録したdescriptorとexact比較する。
+- 各disposition/close/absenceを別に記録する。`lstat()` のWin32 error 2だけを名前の消失とし、
+  access denied、parent missing、残存objectは成功にしない。失敗後のfilesystem再走査はしない。
+- 清掃中のhandleはslotへ保存し、close成功まで保持する。fixture最終終了時も全owned handleを試す。
+  close診断collectorはfixture作成前に確保し、終了時の再試行用collectorも別に確保する。
+  再試行が一次例外へ添付済みの診断を上書きしない。
+- `run_control_harness()` は `control_status` / `cleanup_status` / `teardown_status` を分離する。
+  control pass後の清掃失敗でも元のcontrol evidenceを保持し、総合statusはfailedにする。
+- 返却値はdict互換の `_ControlOutcome`。JSON/reprにはsafe summaryだけが現れる。
+  `private_control_evidence` にimmutable control bytes、`private_evidence` にsnapshot＋遷移記録を保持する。
+  利用者はこのresult object自体を保持する必要がある。`dict(result)`やJSONへの変換は安全な要約の
+  複製であって、private evidenceの永続保存ではない。
+- resource stop後は詳細 `report()` の生成を延期する。private snapshotと状態はresultに保持し、
+  filesystemに戻らない。全体がfailedならtop-levelの `success_residue_count` は返さない。
+
+### 検証結果
+
+| 対象 | 結果 |
+| --- | --- |
+| 記録契約15＋adapter故障注入11＋既存pure/fault55 | 81/81 pass、0.167秒 |
+| same-parent Windows native | 1/1 pass、0.239秒 |
+| D2 current-only exact inventory | 1/1 pass、3.816秒 |
+| in-memory compile | 5 files pass |
+| repository safety / diff-check | pass |
+| artifact / failure inventory | 5,763 entries・592,342,788 bytes・6 failure roots、前後digest一致 |
+| formal roots | main/candidateとも全5種類不存在 |
+| required restricted-child / Windows 3.12 / full suite | 未実施 |
+
+[adapter故障注入](../tests/test_anomaly_v03_cleanup_native.py) は、ACL変更後のエラー、
+各削除位置でのエラー、close失敗と後続teardown、identity/SD差替え、unknown child、
+capture内容不一致、MemoryError＋close失敗、access denied/parent missing、再清掃拒否、
+safe resultとprivate evidenceの寿命を検証する。mock成功をnative受入には換算しない。
+
+実Windowsの小fixtureでは6 objectsすべての消失を確認し、元のledgerが不変、snapshotが
+返却後も6 objects分残ること、owned handle slotが空になることを検証した。
+前後inventoryはprototype節と同じ範囲・方式で、digestも
+`0ae21dd53bd4f5a6994d720e019386e50ce4437c9cccf9b883d380b6f0964aa7`のまま。
+新しいfailure rootは残っていない。
+
+### 残件と判定
+
+作者による検討・故障注入・小native試験までのcandidateである。先行条件と記した独立threat reviewは
+未実施のため、順序上は独立レビュー前の実装として記録する。作者確認を独立監査とは扱わない。
+
+`_replace_control()`の途中identity遷移をchildから完全に回収する仕組みは未実装である。
+今回保持するoperation evidenceは清掃前に検証済みのcontrol結果とfile内容であり、
+その結果が生成される前の置換途中失敗を完全に復元するtraceではない。
+また、restricted child `0xC0000142`は診断・再実行していない。
+
+したがってcleanup/evidence P2全体は未解消、B1未完了、main統合不可、formal permissionなしを維持する。
+次はこのnative adapterの独立レビューと、置換操作の証拠記録を別の限定変更として扱う。

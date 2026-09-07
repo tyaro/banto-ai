@@ -282,3 +282,13 @@ git -C 'C:\Users\TKent\.codex\worktrees\70b0\banto-ai' log -8 --oneline
 result容器、native cleanupへの接続、same-parent native再検証は未実施である。
 既存native実装・D2 pins・科学config/schemaは変更せず、全gateは引き続きno。
 次は設計書のレビュー項目を確認し、native capture/result容器から接続する。
+
+## 12. 2026-09-07 native cleanup接続checkpoint
+
+`068e45b`から、native snapshot capture、元ledgerを変更しないcleanup、disposition/close/absenceの
+別記録、private evidenceを所有するdict互換resultを実装した。81 pure/fault、same-parent native1件、
+D2 inventory1件がpass。詳細・制約は[設計書の最新節](../anomaly-v03-cleanup-evidence-design.md)を参照。
+
+清掃開始後の部分失敗とcontrol結果の保持は接続したが、置換操作の途中identity traceは未接続である。
+独立レビューも未実施で、cleanup/evidence P2全体の解消とは判定しない。
+restricted-child再実行、追加DLL probe、B2、正式試験、main merge/pushは未実施。全gateはnoを保持する。

@@ -6,7 +6,7 @@ from pathlib import Path
 import unittest
 from unittest.mock import patch
 
-from tests.fixtures.anomaly_v03_cleanup_model import CapturedObject, CleanupEvidenceError, CleanupJournal
+from banto_ai._anomaly_v03_windows import CapturedObject, CleanupEvidenceError, CleanupJournal
 
 
 def captured(name, *, directory=False, content=b"abc"):
