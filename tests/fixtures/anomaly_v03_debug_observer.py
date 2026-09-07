@@ -106,8 +106,16 @@ class DebugObserver:
         except BaseException as error:
             self.primary = error
             self._latch(error)
-            self.events.stop(resource=self.resource_stop)
+            try:
+                self.events.stop(resource=self.resource_stop)
+            except BaseException as secondary:
+                self.secondary = secondary
+                self._latch(secondary)
         finally:
+            # Publish the terminal normal-channel state independently of the
+            # stop controller, whose own entry/report can be interrupted.
+            # Raw pending/inflight ownership is preserved for its drain path.
+            self.transport.state = "stopped"
             try:
                 self.stop_result = self.stop.run(self.primary)
             except BaseException as error:

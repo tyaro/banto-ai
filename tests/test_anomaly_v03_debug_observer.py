@@ -6,7 +6,9 @@ from unittest.mock import Mock, patch
 
 from tests.fixtures.anomaly_v03_debug_observer import DebugObserver
 from tests.fixtures.anomaly_v03_debug_stop import OwnedDebugStop
-from tests.fixtures.anomaly_v03_debug_transport import DebugEventTransport, BREAKPOINT, DBG_NOT_HANDLED
+from tests.fixtures.anomaly_v03_debug_transport import (
+    DebugEventTransport, TransportError, BREAKPOINT, DBG_NOT_HANDLED,
+)
 
 
 class DebugObserverTests(unittest.TestCase):
@@ -180,6 +182,39 @@ class DebugObserverTests(unittest.TestCase):
         self.assertTrue(result["resource_stop"])
         memory.assert_not_called()
         kernel.WaitForDebugEventEx.assert_not_called()
+
+    def test_interrupt_after_recorder_completion_preserves_primary_and_returns_result(self):
+        observer, kernel = self.observer()
+        original = KeyboardInterrupt("DUMMY_PRIVATE")
+        complete = observer.events.process_signaled
+        def interrupted():
+            complete()
+            raise original
+        with patch.object(observer.events, "process_signaled", side_effect=interrupted):
+            result = observer.run()
+        self.assertEqual(result["status"], "failed")
+        self.assertIs(observer.primary, original)
+        self.assertIs(observer.stop.primary, original)
+        self.assertIsNotNone(observer.secondary)
+        self.assertIs(result.private_owner, observer)
+        self.assertEqual(observer.transport.state, "stopped")
+
+    def test_stop_entry_interruption_cannot_reopen_normal_continue(self):
+        observer, kernel = self.observer()
+        primary = ValueError("DUMMY_PRIVATE_PRIMARY")
+        secondary = KeyboardInterrupt("DUMMY_PRIVATE_SECONDARY")
+        with patch.object(observer.events, "receive", side_effect=primary), \
+             patch.object(observer.stop, "run", side_effect=secondary):
+            result = observer.run()
+        self.assertEqual(result["status"], "failed")
+        self.assertIs(observer.primary, primary)
+        self.assertIs(observer.secondary, secondary)
+        self.assertEqual(observer.transport.pending, 0)
+        self.assertEqual(observer.stop.handles, [501, 502])
+        observer.transport.close_file(0)
+        with self.assertRaises(TransportError):
+            observer.transport.continue_event()
+        kernel.ContinueDebugEvent.assert_not_called()
 
 
 if __name__ == "__main__":
