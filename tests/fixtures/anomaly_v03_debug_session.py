@@ -6,6 +6,7 @@ preflight, suspended creation, actual-child checks, resume and observation to
 one retained result. Bootstrap remains fail-closed in the existing transport.
 """
 
+import ctypes as C
 import os
 
 from banto_ai import _anomaly_v03_windows as w
@@ -27,6 +28,9 @@ class DebugSession:
         self.api, self.stop, self.transport = launch.api, launch.stop, launch.transport
         self.parent_profile, self.restricted_profile = parent_profile, restricted_profile
         self.tokens = [None, None]
+        self.token_buffers = (w.H(), w.H())
+        self.token_pointers = tuple(C.pointer(value) for value in self.token_buffers)
+        self.token_acquire_state = ["not_started", "not_started"]
         self.token_close_state = ["not_started", "not_started"]
         self.primary = self.secondary = None
         self.resource_stop = self.started = False
@@ -47,11 +51,16 @@ class DebugSession:
 
     def _close_tokens(self):
         for index in (1, 0):
-            handle = self.tokens[index]
-            if handle is None or self.token_close_state[index] != "not_started":
+            if self.token_acquire_state[index] != "acquired" or self.token_close_state[index] != "not_started":
                 continue
-            self.token_close_state[index] = "uncertain"
             try:
+                # Recover confirmed output even if slot assignment after the
+                # success marker was interrupted. Uncertain API output is only
+                # retained, never guessed to be a valid token for CloseHandle.
+                handle = self.token_buffers[index].value
+                self.tokens[index] = handle
+                need(handle not in (None, 0, w.H(-1).value), "session_token_handle")
+                self.token_close_state[index] = "uncertain"
                 if not self.api.k.CloseHandle(handle):
                     self.token_close_state[index] = "failed"
                     raise TransportError("session_token_close", self.transport.last_error())
@@ -61,6 +70,20 @@ class DebugSession:
                 if self.secondary is None:
                     self.secondary = error
                 self._latch(error)
+
+    def _acquire_token(self, index):
+        need(self.token_acquire_state[index] == "not_started", "session_token_retry")
+        self.token_acquire_state[index] = "uncertain"
+        if index == 0:
+            ok = self.api.a.OpenProcessToken(self.launch.process.process, 0xA, self.token_pointers[0])
+        else:
+            ok = self.api.a.DuplicateTokenEx(self.tokens[0], 8, None, 2, 2, self.token_pointers[1])
+        if not ok:
+            self.token_acquire_state[index] = "failed"
+            raise TransportError("session_token_acquire", self.transport.last_error())
+        self.token_acquire_state[index] = "acquired"
+        self.tokens[index] = self.token_buffers[index].value
+        need(self.tokens[index] not in (None, 0, w.H(-1).value), "session_token_handle")
 
     def _completed(self, result, owner, status, reason):
         if result["status"] != status or self.resource_stop:
@@ -72,12 +95,12 @@ class DebugSession:
         self.identity = w._process_identity(self.api, process.process)
         need(self.identity["pid"] != os.getpid() and self.identity["pid"] == process.pid, "child_pid")
         self.observer._budget()
-        self.tokens[0] = self.api.token(process.process)
+        self._acquire_token(0)
         self.actual_profile = self.api.profile(self.tokens[0])
         w._validate_restricted(self.parent_profile, self.actual_profile)
         need(w._shape(self.actual_profile) == w._shape(self.restricted_profile), "child_primary_profile")
         self.observer._budget()
-        self.tokens[1] = self.api.impersonation(self.tokens[0])
+        self._acquire_token(1)
         self.duplicate_profile = self.api.profile(self.tokens[1])
         need(self.duplicate_profile["type"] == 2
              and w._shape(self.duplicate_profile) == w._shape(self.actual_profile), "child_duplicate_profile")
@@ -124,7 +147,10 @@ class DebugSession:
             self._close_tokens()
         try:
             self._latch(self.secondary)
-            token_clean = all(handle is None for handle in self.tokens)
+            token_clean = all(self.tokens[index] is None
+                              and (self.token_acquire_state[index] in ("not_started", "failed")
+                                   or self.token_acquire_state[index] == "acquired"
+                                   and self.token_close_state[index] == "closed") for index in (0, 1))
             self.result.update(status="observed" if self.primary is None and self.secondary is None
                                and not self.resource_stop and token_clean else "failed",
                                resume_state=self.resume_state, resource_stop=self.resource_stop,

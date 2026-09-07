@@ -1,7 +1,9 @@
 """Session integration uses fake Win32 and preflight, never a native child."""
 
 from contextlib import ExitStack
+import inspect
 import json
+import sys
 import unittest
 from unittest.mock import Mock, patch
 
@@ -16,6 +18,14 @@ class DebugSessionTests(unittest.TestCase):
         launch.fixture.ledger = []
         api.token = Mock(return_value=701)
         api.impersonation = Mock(return_value=702)
+        def token(*args):
+            args[-1].contents.value = 701
+            return True
+        def duplicate_token(*args):
+            args[-1].contents.value = 702
+            return True
+        api.a.OpenProcessToken.side_effect = token
+        api.a.DuplicateTokenEx.side_effect = duplicate_token
         actual, duplicate = {"type": 1, "shape": "same"}, {"type": 2, "shape": "same"}
         api.profile = Mock(side_effect=lambda handle: actual if handle == 701 else duplicate)
         kernel.ResumeThread.return_value = 1
@@ -72,7 +82,7 @@ class DebugSessionTests(unittest.TestCase):
             with ExitStack() as stack, self.subTest(phase=phase):
                 session, api, kernel, identity, validate, access = self.session(stack)
                 original = MemoryError()
-                target = {"identity": identity, "actual": validate, "duplicate": api.impersonation,
+                target = {"identity": identity, "actual": validate, "duplicate": api.a.DuplicateTokenEx,
                           "access": access}[phase]
                 target.side_effect = original
                 result = session.run()
@@ -145,6 +155,49 @@ class DebugSessionTests(unittest.TestCase):
                 self.assertIn(original, (session.primary, session.secondary))
                 self.assertEqual(session.tokens, [None, None])
                 self.assertTrue(session.stop.started)
+
+    def test_token_output_interruption_retains_buffer_without_false_teardown_pass(self):
+        for index in (0, 1):
+            with ExitStack() as stack, self.subTest(index=index):
+                session, api, kernel, identity, validate, access = self.session(stack)
+                function = api.a.OpenProcessToken if index == 0 else api.a.DuplicateTokenEx
+                original_call = function.side_effect
+                original = MemoryError()
+                def interrupted(*args):
+                    original_call(*args)
+                    raise original
+                function.side_effect = interrupted
+                result = session.run()
+                self.assertIs(session.primary, original)
+                self.assertEqual(session.token_buffers[index].value, 701 + index)
+                self.assertEqual(session.token_acquire_state[index], "uncertain")
+                self.assertEqual(result["token_teardown"], "failed")
+                self.assertNotIn(701 + index, [call.args[0] for call in kernel.CloseHandle.call_args_list])
+                kernel.ResumeThread.assert_not_called()
+
+    def test_confirmed_token_is_recovered_if_slot_assignment_is_interrupted(self):
+        source, first = inspect.getsourcelines(s.DebugSession._acquire_token)
+        boundary = next(first + index for index, line in enumerate(source)
+                        if line.strip() == "self.tokens[index] = self.token_buffers[index].value")
+        for target in (0, 1):
+            with ExitStack() as stack, self.subTest(index=target):
+                session, api, kernel, identity, validate, access = self.session(stack)
+                original = MemoryError()
+                def trace(frame, event, arg):
+                    if (frame.f_code is s.DebugSession._acquire_token.__code__ and event == "line"
+                            and frame.f_lineno == boundary and frame.f_locals["index"] == target):
+                        raise original
+                    return trace
+                previous = sys.gettrace()
+                try:
+                    sys.settrace(trace)
+                    result = session.run()
+                finally:
+                    sys.settrace(previous)
+                self.assertIs(session.primary, original)
+                self.assertEqual(result["token_teardown"], "pass")
+                self.assertIn(701 + target, [call.args[0] for call in kernel.CloseHandle.call_args_list])
+                self.assertEqual(session.tokens, [None, None])
 
 
 if __name__ == "__main__":
