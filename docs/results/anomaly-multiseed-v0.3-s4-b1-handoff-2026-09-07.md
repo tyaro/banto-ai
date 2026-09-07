@@ -1,10 +1,15 @@
 # anomaly multi-seed v0.3 S4-B1 引継書
 
-状態: **handoff / blocked engineering candidate / no integration / no formal permission**  
-作成日: 2026-09-07  
-本流基準: `889cfc3d5e1fd6dd7fc6c9656273d16d7d56d64e`  
-引継ぎ候補: `16a037f73b9033c811ba8b9f7144d7d92d464b05`  
-保存ブランチ: `codex/s4-b1-windows-engineering`  
+状態: **handoff / blocked engineering candidate / no integration / no formal permission**
+
+作成日: 2026-09-07
+
+本流基準: `889cfc3d5e1fd6dd7fc6c9656273d16d7d56d64e`
+
+引継ぎ候補: `16a037f73b9033c811ba8b9f7144d7d92d464b05`
+
+保存ブランチ: `codex/s4-b1-windows-engineering`
+
 候補worktree: `C:\Users\TKent\.codex\worktrees\70b0\banto-ai`
 
 ## 1. 最初に読む結論
