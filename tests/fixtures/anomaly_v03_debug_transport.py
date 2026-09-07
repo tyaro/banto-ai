@@ -96,6 +96,7 @@ class DebugEventTransport:
         self.buffers = tuple(DebugEvent() for _ in range(self.LIMIT))
         self.pointers = tuple(C.pointer(event) for event in self.buffers)
         self.file_closed = [False] * self.LIMIT
+        self.file_close_state = ["not_started"] * self.LIMIT
         self.file_close_attempts = [0] * self.LIMIT
         self.count = 0
         self.pending = None
@@ -113,7 +114,12 @@ class DebugEventTransport:
         self.pid = pid
 
     def _thread(self):
-        need(self.kernel.GetCurrentThreadId() == self.creator_thread, "creator_thread")
+        try:
+            need(self.kernel.GetCurrentThreadId() == self.creator_thread, "creator_thread")
+        except BaseException as error:
+            self.resource_stop |= isinstance(error, MemoryError)
+            self.state = "stopped"
+            raise
 
     def wait(self, timeout_ms=100):
         self._thread()
@@ -185,11 +191,17 @@ class DebugEventTransport:
             self.file_closed[index] = True
             return
         need(handle != C.c_void_p(-1).value, "invalid_event_file")
+        need(self.file_close_state[index] in ("not_started", "failed"), "close_result_uncertain")
         need(self.file_close_attempts[index] < 2, "close_retry_limit")
         self.file_close_attempts[index] += 1
+        # Publish uncertainty before the API: interruption after it succeeds
+        # must never cause a second CloseHandle on a potentially reused value.
+        self.file_close_state[index] = "uncertain"
         if not self.kernel.CloseHandle(handle):
+            self.file_close_state[index] = "failed"
             raise TransportError("event_file_close", self.last_error())
         self.file_closed[index] = True
+        self.file_close_state[index] = "closed"
 
     def continue_event(self):
         self._thread()

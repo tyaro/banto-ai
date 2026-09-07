@@ -1,6 +1,8 @@
 """Fake-kernel tests for a dormant native transport. No debug/child APIs run."""
 
 import ctypes as C
+import inspect
+import sys
 import unittest
 from unittest.mock import Mock, patch
 
@@ -109,6 +111,52 @@ class DebugTransportTests(unittest.TestCase):
             with self.assertRaises(d.TransportError):
                 transport.continue_event()
             kernel.ContinueDebugEvent.assert_called_once()
+
+    def test_thread_check_oom_latches_stop_before_wait_or_continue(self):
+        for operation in ("wait", "continue_event"):
+            transport, kernel = self.transport()
+            if operation == "continue_event":
+                transport.wait()
+                transport.close_file(0)
+            kernel.WaitForDebugEventEx.reset_mock()
+            kernel.GetCurrentThreadId.side_effect = [MemoryError("DUMMY_PRIVATE"), 7]
+            with self.subTest(operation=operation), self.assertRaises(MemoryError):
+                getattr(transport, operation)()
+            self.assertTrue(transport.resource_stop)
+            self.assertEqual(transport.state, "stopped")
+            with self.assertRaises(d.TransportError):
+                getattr(transport, operation)()
+            kernel.WaitForDebugEventEx.assert_not_called()
+            kernel.ContinueDebugEvent.assert_not_called()
+
+    def test_uncertain_close_side_effect_or_post_return_interrupt_is_not_retried(self):
+        source, first_line = inspect.getsourcelines(d.DebugEventTransport._close_file)
+        success_line = max(first_line + index for index, line in enumerate(source)
+                           if line.strip() == "self.file_closed[index] = True")
+        for phase in ("inside_api", "after_return"):
+            transport, kernel = self.transport(6)
+            transport.wait()
+            if phase == "inside_api":
+                kernel.CloseHandle.side_effect = KeyboardInterrupt("after simulated side effect")
+            def interrupt_after_return(frame, event, arg):
+                if (frame.f_code is d.DebugEventTransport._close_file.__code__
+                        and event == "line" and frame.f_lineno == success_line):
+                    raise KeyboardInterrupt("after successful API return")
+                return interrupt_after_return
+            previous_trace = sys.gettrace()
+            try:
+                if phase == "after_return":
+                    sys.settrace(interrupt_after_return)
+                with self.subTest(phase=phase), self.assertRaises(KeyboardInterrupt):
+                    transport.close_file(0)
+            finally:
+                sys.settrace(previous_trace)
+            self.assertEqual(transport.file_close_state[0], "uncertain")
+            self.assertFalse(transport.file_closed[0])
+            self.assertEqual(transport.buffers[0].info.load_dll.file, 102)
+            with self.assertRaises(d.TransportError):
+                transport.close_retained_files()
+            kernel.CloseHandle.assert_called_once_with(102)
 
     def test_wait_timeout_vs_failure_and_boundaries(self):
         for code in (121, 5):
