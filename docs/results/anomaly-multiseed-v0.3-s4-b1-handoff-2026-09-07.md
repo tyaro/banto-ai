@@ -269,3 +269,16 @@ git -C 'C:\Users\TKent\.codex\worktrees\70b0\banto-ai' log -8 --oneline
 
 したがって、研究の準備は進んでいるが、正式試験や製品利用を開始できる状態ではない。
 次は片付け途中の記録を完成させ、その後にWindows起動問題を解決する。
+
+## 11. 2026-09-07 再開checkpoint: cleanup記録契約
+
+`0d917d9`から、[cleanup evidence設計とpure prototype](../anomaly-v03-cleanup-evidence-design.md)
+を追加した。変更前のimmutable snapshot、ACL/deletion/close/absenceの別状態、
+部分清掃のcaptured byte/object下限・上限、解除不能なresource stopを実装した。
+新規15＋既存55 pure/faultの計70 test methodsがpassした。
+
+これは実行可能な契約の準備であり、Windows harnessへの接続やcleanup/evidence P2の解消ではない。
+独立threat review、native snapshot capture、replace identity遷移、private evidenceを保持する
+result容器、native cleanupへの接続、same-parent native再検証は未実施である。
+既存native実装・D2 pins・科学config/schemaは変更せず、全gateは引き続きno。
+次は設計書のレビュー項目を確認し、native capture/result容器から接続する。
