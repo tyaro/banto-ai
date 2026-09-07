@@ -486,3 +486,21 @@ pure/fault 156/156（0.366秒）、D2 exact inventory 1/1（4.905秒）、reposi
 初期breakpointのimage/symbol/命令位置の検証。公式仕様は固定addressを保証していないため、
 DbgBreakPoint exportのRVAのみで初期breakpointを識別する案は採用しない。
 全breakpoint拒否、実probe未実行、全acceptance gate noを維持する。
+
+## 26. 2026-09-08 固定source/runtime事前検査
+
+916f908で診断用10ファイルのdisk/index照合と既存_runtime確認を行うStartupPreflightを追加した。
+固定hash/size行と部分結果を保持し、30秒・parent512 MiB未満・source累計1 MiB以下を検査する。
+失敗・resource stop後の追加読込は行わない。起動entry、fixture作成、CreateProcessは呼ばない。
+verifiedはdisk/index一致のみで、loaded-code認証・起動許可・native受入はすべてfalse。
+
+独立監査のP2 1件（最終report書込みOOM後のverified残留）を05d65f8で修正した。
+pure/fault 165/165（0.306秒）、D2 1/1（3.841秒）、repository safety pass。
+独立再監査でP2修正確認、新規P0〜P3=0、指定pure 8/8 pass。
+詳細・再監査は[事前検査記録](anomaly-multiseed-v0.3-s4-b1-debug-transport-2026-09-08.md)を参照。
+実preflight・child・debugger・native APIは今回未実行。
+
+次の接続点はlauncherの固定allowlist追加と、新規fixtureからCreateProcess/Resumeへの所有移管。
+PROCESS_INFORMATIONはAPI呼出前に確保して結果ownerへ保持し、成否不確実時に捨てない設計が必要。
+初期breakpointの検証方法、system commit情報、完成driverのfault試験/独立監査も残る。
+実probe未実行、全acceptance gate noを維持する。

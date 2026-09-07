@@ -1,7 +1,7 @@
 # S4-B1 debug-event transport savepoint
 
 状態: **dormant observation + owned stop / no launch**。
-最新の観測結合候補: `deef50d`。下記のtransport初回記録は`ac876b1`、比較基準`09a1150`。
+最新の事前検査候補: `05d65f8`。下記のtransport初回記録は`ac876b1`、比較基準`09a1150`。
 production harnessとsource pinは変更していない。
 
 ## 今回の接続範囲
@@ -183,3 +183,32 @@ deef50dでprocess別の確認済みpeakを保持し、各照会直後に既知�
 同じ独立担当が38e7ebc..deef50dbc98db6b82d2f3dcefd5f4941aef5365eを再監査し、
 前回P2の修正、新規P0〜P3=0を確認した。関連pure 57/57 pass、元の反例も独立に再実行した。
 追加照会なし、既知peakとresource latch保持を確認。実child/debugger/native APIは未実行。
+
+### 固定source/runtime事前検査（2026-09-08）
+
+916f908でStartupPreflightを追加した。固定allowlistはcore/child、package初期化2ファイル、
+startup events/transport/stop/observer/memory/preflightの計10ファイル。
+既存のbounded source/index readerを再利用し、全ファイルのdisk bytesとGit index bytesを照合する。
+既存_runtimeでOS/Python/exe/DLLの固定条件を確認する。D2とproductionの2-source pinは変更しない。
+
+事前検査は30秒未満、親peak commit 512 MiB未満、source bytes累計1 MiB以下を要求する。
+既存readerの1ファイル上限は読込前に適用され、累計上限は各source読込後、index読込前に確認する。
+各IO前後の予算確認に失敗すれば次の読込へ進まず、失敗時に診断目的の再読込もしない。
+公開結果は固定相対path/hash/sizeとruntime情報だけで、private ownerが部分hash行と一次障害を保持する。
+source bodiesを報告へ複製しない。既存readerに由来する例外/teardownはprivate primaryに保持する。
+
+verifiedはdisk/index照合の成功だけを表す。loaded-code認証やprobe実行許可には使わず、
+execution_authenticated/launch_authorized/native_accepted/formal_permissionはfalse。
+将来launcherファイルを追加する際はこのallowlistにも追加し、child作成前に全体を確認する必要がある。
+本番driver、fixture、CreateProcess/Resumeへの接続はまだない。
+
+pure/fault 164/164 pass（0.321秒）。実preflight、Windows API、child、debuggerは未実行。
+同じ独立担当へf059922..916f908の2ファイル差分を依頼した。
+
+初回独立監査でP2を1件検出した。最終resource_stop書込みのOOMでprivate停止が立つ一方、
+公開statusがverifiedのまま残る問題である。05d65f8でsecondary handlerにもreport_failedと
+resource_stopを反映した。元の一次失敗とprivate ownerは保持する。追加反例を含め165/165 pass（0.306秒）。
+D2 exact inventory 1/1（3.841秒）、repository safety pass。実preflightは依然未実行。
+同じ独立担当が916f908..05d65f863d7ea89a9d4b78e475e3dab6d5866919を再監査し、
+前回P2の修正と新規P0〜P3=0を確認した。指定pure 8/8 pass、sys.settraceによる元反例も再実行した。
+report_failed/resource_stop=True、一次・二次例外とprivate ownerの保持を確認。全acceptance gateはno。
