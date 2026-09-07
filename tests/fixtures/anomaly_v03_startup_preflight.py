@@ -107,4 +107,6 @@ class StartupPreflight:
         except BaseException as error:
             self.secondary = error
             self.resource_stop |= w._resource_stop(error)
+            self.result["status"] = "report_failed"
+            self.result["resource_stop"] = self.resource_stop
         return self.result

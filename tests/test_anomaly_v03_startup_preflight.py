@@ -103,6 +103,30 @@ class StartupPreflightTests(unittest.TestCase):
             self.assertTrue(result["resource_stop"])
             self.assertIs(result.private_owner, preflight)
 
+    def test_final_resource_flag_write_failure_cannot_leave_verified(self):
+        for fail_source in (False, True):
+            with ExitStack() as stack, self.subTest(fail_source=fail_source):
+                preflight, api, runtime, source, index = self.setup_preflight(stack)
+                primary = p.w._Failure("source_index_bytes")
+                if fail_source:
+                    index.side_effect = primary
+                secondary = MemoryError("DUMMY_PRIVATE")
+                injected = False
+                def write(mapping, key, value):
+                    nonlocal injected
+                    if key == "resource_stop" and not injected:
+                        injected = True
+                        raise secondary
+                    dict.__setitem__(mapping, key, value)
+                stack.enter_context(patch.object(p.PreflightResult, "__setitem__", write))
+                result = preflight.run()
+                self.assertEqual(result["status"], "report_failed")
+                self.assertTrue(result["resource_stop"])
+                self.assertIs(preflight.secondary, secondary)
+                self.assertIs(preflight.primary, primary if fail_source else None)
+                self.assertIs(result.private_owner, preflight)
+                self.assertFalse(result["launch_authorized"])
+
 
 if __name__ == "__main__":
     unittest.main()
