@@ -451,3 +451,19 @@ production harness、D2 pins、science config、既存artifact/failure rootは�
 次はsource/runtimeを固定したlauncher、新規fixture、初期bootstrap breakpoint識別、
 累計資源上限を持つ観測loopと今回の終了controllerを結合する。現状は起動entry未接続で実probe未実行。
 完成driverのfault試験・独立レビュー後、初回probe実行条件を確認する。全acceptance gateはno。
+
+## 24. 2026-09-08 有界観測loopと終了controllerの結合
+
+116db41で通常event観測をStartupEventsとOwnedDebugStopへ結合した。
+30秒未満・300 wait・256 event・合算memory sample 512 MiB以下で制限し、失敗時は通常Continueを止める。
+exit80はresource stop、その他のexit観測もnative合格にしない。private_ownerがraw buffer、
+primary/secondary、未解放handleを保持する。launcherと実memory samplerはまだ未接続。
+
+独立監査のP2 2件（完了直後の中断時に二次例外が漏れる、owned stop中断後の通常Continue再実行）を
+abaebe6で修正した。pure/faultは147/147 pass（0.506秒）。D2 1/1（13.689秒）、repository safety pass。
+同じ担当の独立再監査で2件の修正と新規P0〜P3=0、関連pure 47/47 passを確認した。
+詳細・再監査結果は[観測結合記録](anomaly-multiseed-v0.3-s4-b1-debug-transport-2026-09-08.md)を参照。
+
+次は初期bootstrap breakpointの検証可能な識別方法を確定し、source/runtime pinと新規fixtureを持つ
+launcherへ接続する。発生順だけで初期breakpointと見なさず、現状はすべて拒否する。
+実child/debugger/probeは未実行、mainは889cfc3のままclean。全acceptance gateはno。

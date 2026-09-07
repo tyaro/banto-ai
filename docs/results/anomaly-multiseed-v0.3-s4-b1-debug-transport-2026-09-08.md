@@ -1,7 +1,7 @@
 # S4-B1 debug-event transport savepoint
 
-状態: **dormant transport / scoped findings resolved / no launch**。
-実装候補: `ac876b1`、初回比較基準: `09a1150`。
+状態: **dormant observation + owned stop / no launch**。
+最新の観測結合候補: `abaebe6`。下記のtransport初回記録は`ac876b1`、比較基準`09a1150`。
 production harnessとsource pinは変更していない。
 
 ## 今回の接続範囲
@@ -121,3 +121,31 @@ teardown passにする問題と、元transportのresource latchをowner/result�
 前回P2の2件の修正と新規P0〜P3=0を確認した。担当のpureも33/33 pass。
 元の反例とreport障害を追加注入し、未解決所有・resource latch・private owner保持を確認した。
 native/child/debuggerは引き続き未実行。
+
+### 有界観測loopの結合（2026-09-08）
+
+116db41でDebugObserverを追加した。fake kernelでevent記録→hFile解放→Continue確認→
+EXIT後のprocess signal確認を結合し、成功・失敗とも既存OwnedDebugStopへ所有を渡す。
+通常観測は30秒未満、最大300 wait、256 event、合算memory sample 512 MiB以下を要求する。
+時刻はsample前後で確認し、上限超過や既存resource latchがあれば通常観測を止める。
+停止側の最大32 drain waitは別枠。これは注入されたsamplerを用いる部品であり、
+実processのmemory計測・起動前確保・source/runtime pinは将来のlauncher側で接続する必要がある。
+
+観測結果はprivate_ownerでrecorder、native buffer、終了controller、primary/secondaryを保持する。
+exit code 80はchild resource stopとして通常完了させない。非zero exitを観測できても
+status=observedは観測の完了だけを意味し、native_accepted/formal_permissionは常にfalse。
+初期breakpoint識別は未実装で、全breakpointを通常Continue前に拒否する。
+起動順から識別したと推定せず、owned停止後のdrainだけが例外を未処理として解放する。
+
+追加12件を含めpure/fault 145/145 pass（1.070秒）、D2 exact inventory 1/1（13.689秒）、
+repository safety pass。mainは889cfc3のままclean。今回もnative/child/debuggerは未実行。
+独立レビューは同じ担当へ116db41の2ファイル差分に限定して依頼した。
+
+初回監査でP2を2件検出した。recorder完了直後の中断を処理する際に二次例外が漏れる問題と、
+owned stop入口の中断後に通常Continueできる問題である。abaebe6でrecorder停止の二次例外を保持し、
+finally入口で通常transportを必ずstoppedにしてからowned stopへ渡すよう修正した。
+pending/inflightは消さず、teardownは従来どおり所有を確認する。追加反例2件を含め147/147 pass（0.506秒）。
+同じ独立担当が116db41..abaebe6fd478b8ead03056753c582cc2ba075213を再監査し、
+前回P2の2件の修正と新規P0〜P3=0を確認した。担当の関連pureは47/47 pass。
+元の2反例も独立再実行し、通常Continue拒否、private結果・未解放所有の保持を確認した。
+完成launcher、bootstrap識別、実Windows E2Eは未確認。全acceptance gateはno。

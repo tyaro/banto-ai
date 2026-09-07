@@ -1,7 +1,7 @@
 # S4-B1 startup probe 準備savepoint
 
-状態: **offline contract + dormant event transport tested / driver incomplete / probe not run**。
-更新: 2026-09-08にイベント受領・継続・file handle解放のtransportを追加。
+状態: **dormant observation + owned stop tested / launcher incomplete / probe not run**。
+更新: 2026-09-08にevent transport、owned停止、有界観測loopを結合した。初期breakpointは識別未完のため拒否する。
 以下は09a1150時点の計画を保持する。現在の接続済み範囲と未接続部分は
 [transport記録](anomaly-multiseed-v0.3-s4-b1-debug-transport-2026-09-08.md)を参照。
 基準: `673f762`（cleanup/evidence修正`9797500`の独立再監査記録済み）。
