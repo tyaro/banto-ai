@@ -37,6 +37,187 @@ def restricted_profile():
 
 
 class PureWindowsControls(unittest.TestCase):
+    def test_temp_path_counts_utf16_units_and_rejects_unpaired_surrogates(self):
+        for value in ("C:\\candidate-\U0001f600\\", "C:\\candidate-\ud800\\", "C:\\candidate-\udfff\\"):
+            def query(size, buffer):
+                buffer.value = value
+                return len(value.encode("utf-16-le", errors="surrogatepass")) // 2
+            api = SimpleNamespace(k=SimpleNamespace(GetTempPath2W=query))
+            with self.subTest(value=ascii(value)), patch.object(w, "Path", PureWindowsPath):
+                if "\U0001f600" in value:
+                    self.assertEqual(w._temporary_path(api), PureWindowsPath(value))
+                else:
+                    with self.assertRaises(w._Failure) as caught:
+                        w._temporary_path(api)
+                    self.assertEqual(caught.exception.reason, "temp_path_result")
+
+    def test_replace_control_requires_existing_owned_destination_and_restores_source(self):
+        for fail in (False, True, "no_op"):
+            root, raw = Path("owned"), b"B1-control\n"
+            original = {"file_id": "source"}
+            ledger = {"control/data.bin": {"identity": original, "sha256": w._sha(raw), "bytes": len(raw)}}
+            initial = deepcopy(ledger)
+            state = {"control/data.bin": (original, raw)}
+            def create(owned, name, data, mode):
+                self.assertNotIn(name, state)
+                self.assertIs(owned.ledger, ledger)
+                state[name] = ({"file_id": "destination"}, data)
+                ledger[name] = {"identity": state[name][0], "sha256": w._sha(data), "bytes": len(data)}
+            def bind(api, path, **kwargs):
+                identity, data = state[path.relative_to(root).as_posix()]
+                return Mock(identity=identity, read=Mock(return_value=data))
+            def replace(source, target, flags):
+                self.assertEqual(flags, 1)
+                self.assertIn("control/replaced.bin", ledger)
+                self.assertIn("control/replaced.bin", state)
+                self.assertNotEqual(state["control/replaced.bin"], state["control/data.bin"])
+                if fail == "no_op":
+                    return True  # Claimed success without replacing must fail readback.
+                if fail:
+                    return False
+                state["control/replaced.bin"] = state.pop("control/data.bin")
+                return True
+            def restore(source, target):
+                state["control/data.bin"] = state.pop("control/replaced.bin")
+                return True
+            api = Mock()
+            api.call.side_effect = lambda ok, reason: w._need(ok, reason)
+            api.k.MoveFileExW.side_effect = replace
+            api.k.MoveFileW.side_effect = restore
+            with self.subTest(fail=fail), patch.object(w._Fixture, "file", create), \
+                 patch.object(w, "_Bound", side_effect=bind), \
+                 patch.object(Path, "exists", autospec=True, side_effect=lambda p: p.relative_to(root).as_posix() in state):
+                if fail:
+                    with self.assertRaises(w._Failure):
+                        w._replace_control(api, root, "user", ledger)
+                else:
+                    w._replace_control(api, root, "user", ledger)
+            api.k.MoveFileExW.assert_called_once()
+            if fail:
+                api.k.MoveFileW.assert_not_called()
+                self.assertEqual(set(state), {"control/data.bin", "control/replaced.bin"})
+                self.assertIn("control/replaced.bin", ledger)
+            else:
+                self.assertEqual(ledger, initial)
+                self.assertEqual(state, {"control/data.bin": (original, raw)})
+            api.k.DeleteFileW.assert_not_called()
+            api.k.RemoveDirectoryW.assert_not_called()
+
+    def test_source_size_limit_precedes_content_read(self):
+        for size in (w._LIMIT, w._LIMIT+1, 1 << 32):
+            api, bound = Mock(), Mock(handle=1)
+            bound.read.return_value = b"x"  # A mismatched short read must also fail.
+            def info(handle, pointer):
+                obj = ctypes.cast(pointer, ctypes.POINTER(w._FileInfo)).contents
+                obj.size_high, obj.size_low = size >> 32, size & 0xffffffff
+                return True
+            api.k.GetFileInformationByHandle.side_effect = info
+            api.call.side_effect = lambda ok, reason: w._need(ok, reason)
+            with self.subTest(size=size), \
+                 patch.object(w, "_Bound", side_effect=lambda api, path, **kw: Mock() if kw["directory"] else bound), \
+                 self.assertRaises(w._Failure):
+                w._source_bytes(api, Path("source.py"))
+            if size > w._LIMIT:
+                bound.read.assert_not_called()
+            else:
+                bound.read.assert_called_once()
+            bound.close.assert_called_once()
+
+    def test_index_pipe_bounded_output_timeout_and_memory_failure(self):
+        for case in ("ok", "overflow", "cumulative", "timeout", "memory"):
+            api, process = Mock(), Mock()
+            process.stdout.fileno.return_value = 7
+            process.poll.return_value = None if case != "ok" else 0
+            process.wait.return_value = 0
+            process.stdout.read.side_effect = MemoryError() if case == "memory" else [b"raw"]
+            amounts = iter([w._LIMIT+1] if case == "overflow" else [3, 2] if case == "cumulative" else [3, 0])
+            def peek(handle, unused, size, read, available, left):
+                ctypes.cast(available, ctypes.POINTER(w.D)).contents.value = next(amounts)
+                return True
+            api.k.PeekNamedPipe.side_effect = peek
+            clock = [0, 11] if case == "timeout" else [0, 0, 0, 0]
+            with self.subTest(case=case), patch.dict(sys.modules, {"msvcrt": SimpleNamespace(get_osfhandle=lambda _: 7)}), \
+                 patch.object(w.subprocess, "Popen", return_value=process) as popen, \
+                 patch.object(w, "_LIMIT", 4), \
+                 patch.object(w.time, "monotonic", side_effect=clock):
+                if case == "ok":
+                    self.assertEqual(w._index_bytes(api, w._SOURCE, {}), b"raw")
+                else:
+                    with self.assertRaises(MemoryError if case == "memory" else w._Failure):
+                        w._index_bytes(api, w._SOURCE, {})
+            options = popen.call_args.kwargs
+            self.assertEqual(options["stderr"], w.subprocess.DEVNULL)
+            self.assertEqual(options["bufsize"], 0)
+            process.stdout.close.assert_called_once()
+            if case in ("overflow", "timeout"):
+                process.stdout.read.assert_not_called()
+            if case == "cumulative":
+                process.stdout.read.assert_called_once_with(3)
+            if case != "ok":
+                process.kill.assert_called_once()
+            else:
+                process.stdout.read.assert_called_once_with(3)
+
+    def test_resource_stop_has_no_source_temp_or_artifact_io(self):
+        for failure in (MemoryError(), w._Failure("memory_budget"), w._Failure("source_size"),
+                        w._Failure("source_index_size"), w._Failure("file_size")):
+            api = Mock()
+            api.profile.return_value = parent_profile()
+            fixture = Mock(root=Path("owned")/(w._PREFIX+"0"*32), ledger={"known": {"bytes": 11}})
+            fixture.create.side_effect = failure
+            with self.subTest(failure=type(failure).__name__), patch.object(w, "_api", return_value=api), \
+                 patch.object(w, "_runtime", return_value={}) as runtime, patch.object(w, "_source_pin", return_value=[]) as source, \
+                 patch.object(w, "_Fixture", return_value=fixture), \
+                 patch.object(Path, "exists", side_effect=AssertionError), patch.object(Path, "stat", side_effect=AssertionError), \
+                 patch.object(Path, "iterdir", side_effect=AssertionError), patch.object(Path, "read_bytes", side_effect=AssertionError), \
+                 patch.object(w, "_temporary_path", side_effect=AssertionError), patch.object(w, "_Bound", side_effect=AssertionError):
+                report = w.run_control_harness()
+            self.assertEqual(report["status"], "failed")
+            self.assertIsNone(report["retained_exists"])
+            self.assertEqual(report["retained_existence"], "unverified")
+            self.assertEqual(report["known_bytes"], 11)
+            runtime.assert_called_once()
+            source.assert_called_once()
+            fixture.check.assert_not_called()
+            fixture.cleanup.assert_not_called()
+            fixture.close.assert_called_once()
+
+    def test_source_pin_retains_raw_index_equality_and_stops_on_resource_failure(self):
+        for failure in (None, MemoryError(), w._Failure("source_size")):
+            with self.subTest(failure=type(failure).__name__), patch.object(w, "_api", return_value=Mock()), \
+                 patch.object(w, "_source_bytes", return_value=b"raw", side_effect=failure) as read, \
+                 patch.object(w, "_index_bytes", return_value=b"raw") as index, \
+                 patch.object(Path, "read_bytes", side_effect=AssertionError), \
+                 patch.object(w.subprocess, "run", side_effect=AssertionError):
+                if failure:
+                    with self.assertRaises(type(failure)):
+                        w._source_pin()
+                    self.assertEqual(read.call_count, 1)
+                    index.assert_not_called()
+                else:
+                    self.assertEqual(len(w._source_pin()), 2)
+                    self.assertEqual(index.call_count, 2)
+        with patch.object(w, "_api", return_value=Mock()), patch.object(w, "_source_bytes", return_value=b"raw"), \
+             patch.object(w, "_index_bytes", return_value=b"different"), self.assertRaises(w._Failure) as caught:
+            w._source_pin()
+        self.assertEqual(caught.exception.reason, "source_index_bytes")
+
+    def test_memory_error_during_source_read_or_index_never_rereads(self):
+        api, bound = Mock(), Mock(handle=1)
+        bound.read.side_effect = MemoryError()
+        api.call.side_effect = lambda ok, reason: w._need(ok, reason)
+        with patch.object(w, "_Bound", side_effect=lambda api, path, **kw: Mock() if kw["directory"] else bound), \
+             self.assertRaises(MemoryError):
+            w._source_bytes(api, Path("source.py"))
+        bound.read.assert_called_once()
+        bound.check.assert_not_called()
+        bound.close.assert_called_once()
+        with patch.object(w, "_api", return_value=Mock()), patch.object(w, "_source_bytes", return_value=b"raw") as read, \
+             patch.object(w, "_index_bytes", side_effect=MemoryError()) as index, self.assertRaises(MemoryError):
+            w._source_pin()
+        read.assert_called_once()
+        index.assert_called_once()
+
     def test_temp_path_api_has_fixed_wide_signature_and_no_fallback(self):
         kernel = Mock()
         with patch.object(w.os, "name", "nt"), patch.object(w.C, "WinDLL", return_value=kernel, create=True):
@@ -374,6 +555,7 @@ def _prefix_inventory():
 class NativeWindowsControls(unittest.TestCase):
     def test_held_identity_protected_acl_and_success_cleanup(self):
         before = _prefix_inventory()
+        self.assertEqual(len(w._source_pin()), 2)  # Bounded, read-only index equality.
         api = w._api()
         token = api.token(api.k.GetCurrentProcess())
         fixture = None
@@ -385,9 +567,11 @@ class NativeWindowsControls(unittest.TestCase):
             fixture.check()
             self.assertEqual(len(fixture.ledger), 6)
             self.assertTrue(all(x["sd"]["protected"] for x in fixture.ledger.values()))
+            before_operations = deepcopy(fixture.ledger)
             # Same-parent native operation controls are useful but NOT evidence
             # for the separate restricted-child requirement below.
             self.assertEqual(w._operations(api, fixture.root, user, fixture.ledger), w._expected_operations())
+            self.assertEqual(fixture.ledger, before_operations)
             fixture.check()
             fixture.cleanup()
         finally:

@@ -195,6 +195,7 @@ class _Win:
         bind(k, "GetDriveTypeW", D, C.c_wchar_p)
         bind(k, "QueryDosDeviceW", D, C.c_wchar_p, C.c_wchar_p, D)
         bind(k, "ReadFile", B, H, H, D, P(D), H)
+        bind(k, "PeekNamedPipe", B, H, H, D, P(D), P(D), P(D))
         bind(k, "WriteFile", B, H, H, D, P(D), H)
         bind(k, "SetFilePointerEx", B, H, C.c_int64, H, D)
         bind(k, "FlushFileBuffers", B, H)
@@ -460,7 +461,11 @@ def _temporary_path(api):
     size = api.k.GetTempPath2W(len(buffer), buffer)
     _need(0 < size < len(buffer), "temp_path_query")
     value = buffer.value
-    _need(len(value) == size and value.endswith("\\"), "temp_path_result")
+    try:
+        units = len(value.encode("utf-16-le", errors="strict")) // 2
+    except UnicodeEncodeError:
+        raise _Failure("temp_path_result") from None
+    _need(units == size and value.endswith("\\"), "temp_path_result")
     path = Path(value)
     _lexical(path)
     return path  # Untrusted until the caller's existing ancestry/handle checks.
@@ -649,15 +654,76 @@ def _runtime():
     return {"build": "10.0.26200.9168", "python": "3.14.0", "exe_sha256": _EXE_SHA, "dll_sha256": _DLL_SHA}
 
 
+def _source_bytes(api, path):
+    guards = []
+    try:
+        for ancestor in reversed(path.parents):
+            guards.append(_Bound(api, ancestor, directory=True))
+        bound = _Bound(api, path, directory=False, share=1)
+        try:
+            info = _FileInfo()
+            api.call(api.k.GetFileInformationByHandle(bound.handle, C.byref(info)), "source_size_query")
+            size = (info.size_high << 32) | info.size_low
+            _need(size <= _LIMIT, "source_size")  # Before any content read/allocation.
+            raw = bound.read()  # Independently bounded; retained identity checked.
+            _need(len(raw) == size, "source_size_changed")
+            return raw
+        finally:
+            bound.close()
+    finally:
+        for guard in reversed(guards):
+            guard.close()
+
+
+def _index_bytes(api, path, environment):
+    import msvcrt
+    # One unbuffered stdout reader, no competing pipe reader, no stderr capture.
+    # Peek only queries available bytes; read never waits for a full-sized chunk.
+    process = subprocess.Popen(
+        ["git", "--no-pager", "-c", "core.fsmonitor=false", "show", ":"+path.relative_to(_ROOT).as_posix()],
+        cwd=_ROOT, env=environment, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL, bufsize=0, close_fds=True, creationflags=0x08000000)
+    try:
+        handle = msvcrt.get_osfhandle(process.stdout.fileno())
+        deadline, output = time.monotonic()+10, bytearray()
+        while True:
+            _need(time.monotonic() < deadline, "source_index_timeout")
+            exited = process.poll() is not None
+            available = D()
+            ok = api.k.PeekNamedPipe(handle, None, 0, None, C.byref(available), None)
+            if not ok:
+                _need(C.get_last_error() == 109, "source_index_pipe")  # Broken pipe / EOF.
+                break
+            if available.value:
+                _need(available.value <= _LIMIT-len(output), "source_index_size")
+                raw = process.stdout.read(min(available.value, 65536))
+                _need(raw and len(raw) <= available.value, "source_index_pipe")
+                output.extend(raw)
+            elif exited:
+                break
+            else:
+                time.sleep(0.005)
+        _need(process.wait(timeout=max(0.001, deadline-time.monotonic())) == 0, "source_index_bytes")
+        return bytes(output)
+    except subprocess.TimeoutExpired:
+        raise _Failure("source_index_timeout") from None
+    finally:
+        # Only this git child: no filesystem fallback or diagnostic reread.
+        try:
+            if process.poll() is None:
+                process.kill()
+            process.wait(timeout=5)
+        finally:
+            process.stdout.close()
+
+
 def _source_pin():
     rows = []
     environment = {**os.environ, "GIT_OPTIONAL_LOCKS": "0", "GIT_NO_LAZY_FETCH": "1"}
     for path in (_SOURCE, _CHILD):
-        raw = path.read_bytes()
-        _need(_read_source(_api(), path) == (_sha(raw), len(raw)), "source_handle_hash")
-        result = subprocess.run(["git", "-c", "core.fsmonitor=false", "show", ":"+path.relative_to(_ROOT).as_posix()],
-                                cwd=_ROOT, env=environment, capture_output=True, check=False, timeout=10)
-        _need(result.returncode == 0 and result.stdout == raw, "source_index_bytes")
+        api = _api()
+        raw = _source_bytes(api, path)
+        _need(_index_bytes(api, path, environment) == raw, "source_index_bytes")
         rows.append({"path": path.relative_to(_ROOT).as_posix(), "sha256": _sha(raw), "bytes": len(raw)})
     return rows
 
@@ -902,6 +968,15 @@ def run_control_harness():
         return evidence
     except BaseException as exc:
         reason, error = (exc.reason, exc.error) if type(exc) is _Failure else ("resource_failure" if isinstance(exc, MemoryError) else "unexpected_failure", 0)
+        if isinstance(exc, MemoryError) or reason in ("memory_budget", "source_size", "source_index_size", "file_size"):
+            # Resource stop: memory-only metadata, never exists/stat/hash/list or
+            # source/temp/artifact rereads. Handle-only finally remains unchanged.
+            return {**_result_status(), "status": "failed", "reason": reason, "winerror": error,
+                    "retained_basename": fixture.root.name if fixture and fixture.root else None,
+                    "retained_exists": None, "retained_existence": "unverified",
+                    "known_bytes": sum(x["bytes"] for x in fixture.ledger.values()) if fixture else 0,
+                    "child_exit_code": None, "resources": peaks,
+                    "elapsed_seconds": time.monotonic()-started}
         return {**_result_status(), "status": "failed", "reason": reason, "winerror": error,
                 "retained_basename": fixture.root.name if fixture and fixture.root and fixture.root.exists() else None,
                 "known_bytes": sum(x["bytes"] for x in fixture.ledger.values()) if fixture else 0,
@@ -1021,6 +1096,34 @@ def _child_main(root):
         api.close(primary)
 
 
+def _replace_control(api, root, user, ledger):
+    source_name, target_name = "control/data.bin", "control/replaced.bin"
+    source, target = root/source_name, root/target_name
+    def snapshot(path):
+        bound = _Bound(api, path, directory=False)
+        try:
+            return dict(bound.identity), bound.read()
+        finally:
+            bound.close()
+    before, raw = snapshot(source)
+    _need(before == ledger[source_name]["identity"] and _sha(raw) == ledger[source_name]["sha256"]
+          and len(raw) == ledger[source_name]["bytes"], "replace_source_pin")
+    _need(target_name not in ledger, "replace_target_collision")
+    # Register the CREATE_NEW destination in this existing owned ledger. It is
+    # not an external fixture, and failures must leave all involved objects alone.
+    owned = _Fixture(api, user)
+    owned.root, owned.ledger = root, ledger
+    owned.file(target_name, b"B1-replace-destination\n", "control")
+    target_before, target_raw = snapshot(target)
+    _need(target_before == ledger[target_name]["identity"] and target_before != before
+          and target_raw == b"B1-replace-destination\n" and target_raw != raw, "replace_target_pin")
+    api.call(api.k.MoveFileExW(str(source), str(target), 1), "mutation_api")
+    _need(snapshot(target) == (before, raw) and not source.exists(), "replace_readback")
+    api.call(api.k.MoveFileW(str(target), str(source)), "mutation_api")
+    _need(snapshot(source) == (before, raw) and not target.exists(), "replace_restore")
+    del ledger[target_name]  # Consumed target, only after fully verified success.
+
+
 def _operations(api, root, user, ledger):
     result = {mode: {"file_right_open": {}, "directory_right_open": {}, "mutation": {}} for mode in ("control", "frozen")}
     for mode in ("control", "frozen"):
@@ -1121,8 +1224,7 @@ def _operations(api, root, user, ledger):
             attempt("truncate", lambda: write_data(truncate=True))
             attempt("rename", lambda: rename(file, directory/"renamed.bin"))
             rename(directory/"renamed.bin", file)
-            attempt("replace", lambda: rename(file, directory/"replaced.bin", True))
-            rename(directory/"replaced.bin", file)
+            attempt("replace", lambda: _replace_control(api, root, user, ledger))
         else:
             attempt("write", write_data)
             attempt("append", lambda: write_data(append=True))
