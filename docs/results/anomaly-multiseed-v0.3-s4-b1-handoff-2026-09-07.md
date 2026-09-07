@@ -467,3 +467,22 @@ abaebe6で修正した。pure/faultは147/147 pass（0.506秒）。D2 1/1（13.6
 次は初期bootstrap breakpointの検証可能な識別方法を確定し、source/runtime pinと新規fixtureを持つ
 launcherへ接続する。発生順だけで初期breakpointと見なさず、現状はすべて拒否する。
 実child/debugger/probeは未実行、mainは889cfc3のままclean。全acceptance gateはno。
+
+## 25. 2026-09-08 起動前確保とowned memory計測
+
+38e7ebcでrecorder/observer結果をPID未確定の段階で確保できるようにし、後から一度だけbindする。
+DebugMemoryを追加し、事前確保した2組のbuffer/pointerで親とowned childのピークcommitを取得する。
+partial取得・API失敗・OOM・中断でbufferを保持し、通常transportと再照会を止める。
+512 MiBちょうども拒否するよう既存productionの境界へ整合した。
+
+pure/fault 156/156（0.366秒）、D2 exact inventory 1/1（4.905秒）、repository safety pass。
+独立監査P2 1件（既知child peakによる上限到達確定後の再照会）をdeef50dで修正した。
+修正後pure/faultは157/157（0.341秒）。確認済みprocess別peakを使って早期停止する。
+独立再監査でP2修正確認、新規P0〜P3=0、関連pure 57/57 pass。繰り返しの進捗照会は行っていない。
+独立監査の詳細は[観測結合記録](anomaly-multiseed-v0.3-s4-b1-debug-transport-2026-09-08.md)を参照。
+今回もchild/debugger/native APIは実行せず、fake kernel/PSAPIのみを使用した。
+
+残り: source/runtime pin、新規fixtureとCreateProcess/Resumeの所有接続、system commit情報、
+初期breakpointのimage/symbol/命令位置の検証。公式仕様は固定addressを保証していないため、
+DbgBreakPoint exportのRVAのみで初期breakpointを識別する案は採用しない。
+全breakpoint拒否、実probe未実行、全acceptance gate noを維持する。

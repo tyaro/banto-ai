@@ -1,7 +1,7 @@
 # S4-B1 debug-event transport savepoint
 
 状態: **dormant observation + owned stop / no launch**。
-最新の観測結合候補: `abaebe6`。下記のtransport初回記録は`ac876b1`、比較基準`09a1150`。
+最新の観測結合候補: `deef50d`。下記のtransport初回記録は`ac876b1`、比較基準`09a1150`。
 production harnessとsource pinは変更していない。
 
 ## 今回の接続範囲
@@ -149,3 +149,37 @@ pending/inflightは消さず、teardownは従来どおり所有を確認する�
 前回P2の2件の修正と新規P0〜P3=0を確認した。担当の関連pureは47/47 pass。
 元の2反例も独立再実行し、通常Continue拒否、private結果・未解放所有の保持を確認した。
 完成launcher、bootstrap識別、実Windows E2Eは未確認。全acceptance gateはno。
+
+### child作成前の記録確保とmemory adapter（2026-09-08）
+
+38e7ebcでStartupEventsの固定slotとDebugObserver結果をPID判明前に確保可能にした。
+PIDは一度だけbindする。未bindの受領、再bind、停止後bind、transportとのPID不一致を拒否する。
+これにより将来のlauncherでchild作成後にrecorderを新規確保する必要がなくなる。
+
+DebugMemoryは既存productionのPROCESS_MEMORY_COUNTERS_EX ABI（x64 80 bytes）を再利用し、
+親のpseudo handleとowned child handleをGetProcessMemoryInfoに渡す。2つのnative buffer/pointerは
+事前確保し、部分取得・OOM・中断・API失敗でも保持する。失敗後の再照会と通常transportを止める。
+同thread、child PID、owned stop未開始、resource latchを確認する。handleは借用しcloseしない。
+productionと同じPeakPagefileUsageの合計を使い、512 MiB**未満**を要求する。
+前節の「以下」は38e7ebc以前の実装を指す。今回、ちょうど上限の値も拒否するよう整合した。
+PeakWorkingSetSizeの合計は別に記録する。システムcommit診断と起動前preflightへの接続は未完了。
+[GetProcessMemoryInfo](https://learn.microsoft.com/en-us/windows/win32/api/psapi/nf-psapi-getprocessmemoryinfo)、
+[PROCESS_MEMORY_COUNTERS_EX](https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-process_memory_counters_ex)
+
+実装側pure/fault 156/156 pass（0.366秒）。Windows API実行はfake kernel/PSAPIに限る。
+最初のABI test期待値88は誤りで、既存structと公式の2 DWORD + 9 SIZE_Tに合わせ80へ修正した。
+独立レビューは同じ担当へ6aebb06..38e7ebcの6ファイルに限定して依頼した。
+
+初期breakpointについて公式資料が保証するのは発生時期であり、固定の例外addressや特定exportとの
+一致ではない。DbgBreakPoint exportのRVAだけからbootstrapを認定する案は採用しない。
+実imageと対応するsymbol/命令位置を検証できる方法の確定が残る。全breakpoint拒否を維持する。
+[Initial breakpoint](https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/initial-breakpoint)
+
+初回38e7ebcの独立監査でP2を1件検出した。前回のchild peakと今回のparent peakで上限到達が
+確定してもchildを再照会し、その照会失敗でresource判定を落とす問題である。
+deef50dでprocess別の確認済みpeakを保持し、各照会直後に既知合計を判定するよう修正した。
+反例100+300 MiB→parent212 MiBでは3回目のAPI直後にresource stopを確定し、4回目を呼ばない。
+追加反例を含めpure/fault 157/157 pass（0.341秒）。D2 1/1（4.905秒）、repository safety pass。
+同じ独立担当が38e7ebc..deef50dbc98db6b82d2f3dcefd5f4941aef5365eを再監査し、
+前回P2の修正、新規P0〜P3=0を確認した。関連pure 57/57 pass、元の反例も独立に再実行した。
+追加照会なし、既知peakとresource latch保持を確認。実child/debugger/native APIは未実行。
