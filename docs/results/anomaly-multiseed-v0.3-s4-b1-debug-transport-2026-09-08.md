@@ -1,7 +1,7 @@
 # S4-B1 debug-event transport savepoint
 
 状態: **dormant observation + owned stop / no launch**。
-最新の事前検査候補: `05d65f8`。下記のtransport初回記録は`ac876b1`、比較基準`09a1150`。
+最新の起動接続候補: `11b7efd`。下記のtransport初回記録は`ac876b1`、比較基準`09a1150`。
 production harnessとsource pinは変更していない。
 
 ## 今回の接続範囲
@@ -212,3 +212,43 @@ D2 exact inventory 1/1（3.841秒）、repository safety pass。実preflightは�
 同じ独立担当が916f908..05d65f863d7ea89a9d4b78e475e3dab6d5866919を再監査し、
 前回P2の修正と新規P0〜P3=0を確認した。指定pure 8/8 pass、sys.settraceによる元反例も再実行した。
 report_failed/resource_stop=True、一次・二次例外とprivate ownerの保持を確認。全acceptance gateはno。
+
+### 停止状態での作成とhandle所有移管（2026-09-08）
+
+a73c966でSuspendedDebugLaunchを追加した。低レベル部品であり、import/constructorでは作成せず、
+CLIや完成driverもない。create()を呼ぶ将来driverがpreflight/token/fixture検証を完了させる必要がある。
+固定allowlistへ本部品を追加し、現時点のdiagnostic inputは11ファイルとなった。
+
+core _startと同じ固定exe/-B/-I/child/root、最小環境、空lpDesktop、非継承handleを使い、
+NO_WINDOW/UNICODE_ENV/CREATE_SUSPENDEDにDEBUG_ONLY_THIS_PROCESSだけを追加する。
+STARTUPINFO、PROCESS_INFORMATION、pointer、可変command/environment、引数tuple、結果ownerを事前確保する。
+API呼出前にuncertainを記録し、TRUEを確認するまで出力を有効なowned handleと推定しない。
+明示FALSEでもraw出力は保持する。create再試行、通常Popen fallback、Resumeは行わない。
+
+確認成功後にtransportへPIDをbindし、OwnedDebugStopへlaunch process/thread handleをadoptする。
+移管後の中断・report失敗は既存owned stopを一度だけ試み、primary/secondary/未解放所有を保持する。
+成否不確実、またはbind/adopt未完で終了を確認できない場合はraw outputとunconfirmed結果を残す。
+この未解決経路があるため、部品のテスト成功だけで実probe実行可能とはしない。
+fixture/tokenは借用し、清掃も解放もしない。将来driverが全所有を統合する必要がある。
+
+pure/fault 173/173 pass（0.328秒）。API内部・TRUE直後のOOM、bind/adopt中断、初期/final report故障、
+teardown中OOM、作成前resource latchをfakeで確認した。Windows API/child/debuggerは未実行。
+同じ独立担当へb07094e..a73c966の3ファイルを限定して監査依頼した。
+
+初回監査でP2を1件検出した。TRUE確認後のbind OOMでhandle未登録のstopを使用済みにし、
+確定childの停止経路を失う問題である。ed12507で確認済みPIを通常bindより先にstopへ保持する。
+終了時はPIからhandle/PIDを回復し、GetProcessId一致確認後にteardown用のPIDを設定する。
+通常transportの停止/resource/inflightは変更しない。成否不確実なAPI出力には適用しない。
+元のbind OOM反例でTerminateProcess→EXIT drain→owned handle 2件closeを確認した。
+部分adoptとforeign PIDの反例も追加し、pure/fault 174/174 pass（0.367秒）。
+D2 1/1（5.234秒）、repository safety pass。
+
+ed12507の再監査で、成功後のcapture_creation自体がOOMになると同じP2が残ることを確認した。
+11b7efdではAPI呼出前のconstructorでstopからlaunch owner（PIとcreation_state）への参照を接続する。
+成功後に所有移譲関数を呼ばず、stopはcreation_state=createdの場合だけPIを回復する。
+uncertain/failed/not_startedの出力から推測してclose/terminateしない。
+成功確認直後の次行への中断注入でも既存owned stopへ到達する。修正後pure/fault 175/175（3.255秒）。
+同じ独立担当がed12507..11b7efdf53775d15f829f7339a19bbafcd965250を再監査し、
+P2残件の修正と新規P0〜P3=0を確認した。指定pure 30/30 pass。
+成功確認直後OOM＋未終了fake processでTerminate→EXIT drain→signaled→owned handle 2件closeを独立確認した。
+一次例外/private owner/通常停止を保持し、成否不確実時の推測操作禁止も維持。mainは889cfc3のままclean。

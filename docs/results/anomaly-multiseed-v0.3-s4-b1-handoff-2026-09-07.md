@@ -504,3 +504,25 @@ pure/fault 165/165（0.306秒）、D2 1/1（3.841秒）、repository safety pass
 PROCESS_INFORMATIONはAPI呼出前に確保して結果ownerへ保持し、成否不確実時に捨てない設計が必要。
 初期breakpointの検証方法、system commit情報、完成driverのfault試験/独立監査も残る。
 実probe未実行、全acceptance gate noを維持する。
+
+## 27. 2026-09-08 suspended createとhandle移管
+
+a73c966で低レベルSuspendedDebugLaunchを追加した。child作成前からPROCESS_INFORMATIONと結果ownerを
+保持し、API成否不確実時はraw outputを捨てず、確認成功後に既存transport/OwnedDebugStopへ移管する。
+core起動条件へDEBUG_ONLY_THIS_PROCESSのみ追加し、Resumeは未接続。完成driver/CLIはない。
+診断source allowlistはこの部品を含む11ファイルへ拡張し、production/D2 pinは変更しない。
+
+pure/fault 173/173（0.328秒）、D2 1/1（5.234秒）、repository safety pass。
+独立監査P2 1件（bind失敗で確定childの停止経路を失う）をed12507で修正した。
+確認済みPIを先にstopへ保持し、終了時に実PIDを照合して所有を回復する。修正後174/174（0.367秒）。
+再監査で成功後capture自体の中断に同じP2が残ったため、11b7efdでAPI前にowner参照を接続する構造へ変更した。
+stop回復はcreation_state=createdのみ。修正後175/175（3.255秒）。
+独立再監査でP2残件の修正、新規P0〜P3=0、指定pure 30/30 pass。未終了fake childの停止まで独立確認した。
+独立監査の詳細は[起動接続記録](anomaly-multiseed-v0.3-s4-b1-debug-transport-2026-09-08.md)を参照。
+API成否不確実時はraw所有を保持するが、child停止確認を保証しない。
+作成確認済みのbind/adopt失敗と成功確認直後の中断は11b7efdで回復して停止を試みる。
+実probeに進む前に、この未解決所有を含むdriver全体の終了手順を整える必要がある。
+
+次は新規fixture/tokenと全collectorの所有をまとめ、preflight→作成→実child検証→Resume→観測へ接続する。
+初期breakpoint識別、system commit情報、完成driverのfault試験/独立監査も残る。
+実child/debugger/native APIは未実行、全acceptance gate no。
