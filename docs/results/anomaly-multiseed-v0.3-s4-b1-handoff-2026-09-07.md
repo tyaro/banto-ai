@@ -2,6 +2,10 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
+最新の自己点検: cleanup/置換traceの候補実装と追加修正は§11〜17を参照。
+起動障害の既存ログ・公式仕様の照合は§18を参照。独立レビューとchild E2Eは未完了。
+以下の初期結論・commit一覧・試験数は引継書作成時点の記録である。
+
 作成日: 2026-09-07
 
 本流基準: `889cfc3d5e1fd6dd7fc6c9656273d16d7d56d64e`
@@ -366,3 +370,12 @@ rights-openは各API直後に結果を判定する。INVALID_HANDLE_VALUEとlast
 required restricted-child、Windows 3.12、full suite、独立レビューは未実施。全gateはno。
 D2 exact inventory 1/1 pass（10.880秒）。既存成果物・失敗rootのinventoryは5,763 entries／
 592,342,788 bytes／6 failure rootsで、raw hash・属性・SDDLを含むdigestも既記録と一致した。
+
+## 18. 2026-09-07 起動障害のread-only切り分け
+
+`74c42ee`を対象に既存Application/WERの直近3日分を確認し、Python/cmdの該当障害記録は得られなかった。
+faulting DLLは未特定。公式仕様と照合し、空lpDesktopが非対話desktopを保証するとのコメントを訂正した。
+実際の接続先は未観測であり、既存AccessCheckの結果だけでは同一objectへの接続を証明しない。
+[調査記録と次に必要な証拠](anomaly-multiseed-v0.3-s4-b1-startup-triage-2026-09-07.md)を参照。
+今回は実引数・動作・testsを変更せず、追加child起動／native mutation／ACL変更を行っていない。
+独立レビューとrequired child E2Eは未完了。全gateはno。

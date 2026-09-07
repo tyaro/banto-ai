@@ -1328,7 +1328,8 @@ def _start(api, token, fixture):
     startup, process = _Startup(), _Process()
     startup.cb = C.sizeof(startup)
     startup.desktop = ""
-    # Deliberately no inherited handles or standard handles, and no interactive desktop.
+    # No inherited handles or standard handles. Empty lpDesktop delegates the
+    # station/desktop selection to Windows; it does not prove noninteraction.
     arguments = [sys.executable, "-B", "-I", str(_CHILD), str(fixture.root)]
     command = C.create_unicode_buffer(subprocess.list2cmdline(arguments))
     environment = C.create_unicode_buffer("SystemRoot="+os.environ["SystemRoot"]+"\0TEMP="+str(fixture.root.parent)
