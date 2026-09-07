@@ -20,7 +20,6 @@ import re
 import stat
 import subprocess
 import sys
-import tempfile
 import time
 import uuid
 
@@ -183,6 +182,10 @@ class _Win:
         bind(k, "LocalFree", H, H)
         bind(k, "GetCurrentProcess", H)
         bind(k, "GetCurrentThread", H)
+        try:
+            bind(k, "GetTempPath2W", D, D, P(C.c_wchar))
+        except AttributeError:
+            raise _Failure("temp_path_api_unavailable") from None
         bind(k, "CreateFileW", H, C.c_wchar_p, D, D, P(_SA), D, D, H)
         bind(k, "CreateDirectoryW", B, C.c_wchar_p, P(_SA))
         bind(k, "GetFileInformationByHandle", B, H, P(_FileInfo))
@@ -449,6 +452,20 @@ def _lexical(path):
     _need(not any(re.fullmatch(r"(?i:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])", x.split(".")[0]) for x in path.parts[1:]), "path_device")
 
 
+def _temporary_path(api):
+    # GetTempPath2W only retrieves a candidate: it does not test existence or
+    # access by creating a probe file. No fallback or candidate/cache probing.
+    # https://learn.microsoft.com/windows/win32/api/fileapi/nf-fileapi-gettemppath2w
+    buffer = C.create_unicode_buffer(32768)
+    size = api.k.GetTempPath2W(len(buffer), buffer)
+    _need(0 < size < len(buffer), "temp_path_query")
+    value = buffer.value
+    _need(len(value) == size and value.endswith("\\"), "temp_path_result")
+    path = Path(value)
+    _lexical(path)
+    return path  # Untrusted until the caller's existing ancestry/handle checks.
+
+
 class _Bound:
     def __init__(self, api, path, *, directory, access=0x20081, creation=3, sd=None, share=3):
         _lexical(path)
@@ -650,8 +667,7 @@ class _Fixture:
         self.api, self.user, self.ledger, self.guards, self.root = api, user, {}, [], None
 
     def create(self):
-        temporary = Path(tempfile.gettempdir()).absolute()
-        _lexical(temporary)
+        temporary = _temporary_path(self.api)
         for path in reversed((temporary, *temporary.parents)):
             self.guards.append(_Bound(self.api, path, directory=True))
         _need(not any((path/".git").exists() for path in (temporary, *temporary.parents)), "temp_in_repository")
@@ -953,7 +969,7 @@ def _child_main(root):
     """Private fixed protocol entry; never called by ordinary project consumers."""
     api = _api()
     _runtime()
-    _need(root.parent == Path(tempfile.gettempdir()).absolute()
+    _need(root.parent == _temporary_path(api)
           and re.fullmatch(_PREFIX+r"[0-9a-f]{32}", root.name), "child_scope")
     api.no_impersonation()
     primary = api.token(api.k.GetCurrentProcess())

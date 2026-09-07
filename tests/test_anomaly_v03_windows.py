@@ -6,12 +6,13 @@ Failed native controls print a safe basename/size and retain all evidence.
 """
 
 from copy import deepcopy
+import ast
 import ctypes
 import inspect
 import json
 import os
 from pathlib import Path, PureWindowsPath
-import tempfile
+import sys
 from types import SimpleNamespace
 import unittest
 from unittest.mock import Mock, patch
@@ -36,6 +37,147 @@ def restricted_profile():
 
 
 class PureWindowsControls(unittest.TestCase):
+    def test_temp_path_api_has_fixed_wide_signature_and_no_fallback(self):
+        kernel = Mock()
+        with patch.object(w.os, "name", "nt"), patch.object(w.C, "WinDLL", return_value=kernel, create=True):
+            w._Win()
+        self.assertIs(kernel.GetTempPath2W.restype, w.D)
+        self.assertEqual(kernel.GetTempPath2W.argtypes, [w.D, ctypes.POINTER(ctypes.c_wchar)])
+        kernel.GetTempPath2W.assert_not_called()
+        del kernel.GetTempPath2W
+        with patch.object(w.os, "name", "nt"), patch.object(w.C, "WinDLL", return_value=kernel, create=True), \
+             self.assertRaises(w._Failure) as caught:
+            w._Win()
+        self.assertEqual(caught.exception.reason, "temp_path_api_unavailable")
+
+    def test_temp_path_ignores_python_temp_cache_and_never_probes_candidates(self):
+        # Poison a cold/warm Python temp module without importing or using it.
+        # Every environment value is synthetic; no outside object is created.
+        for cache in (None, r"C:\foreign-cache"):
+            poison = SimpleNamespace(tempdir=cache, gettempdir=Mock(side_effect=AssertionError),
+                                     _get_default_tempdir=Mock(side_effect=AssertionError))
+            def query(size, buffer):
+                self.assertEqual(size, 32768)
+                buffer.value = "C:\\candidate\\"
+                return len(buffer.value)
+            api = SimpleNamespace(k=SimpleNamespace(GetTempPath2W=Mock(side_effect=query)))
+            with self.subTest(cache=cache), patch.dict(sys.modules, {"tempfile": poison}), \
+                 patch.dict(os.environ, {"TMP": r"\\foreign\share", "TEMP": r"C:\foreign:stream",
+                                         "TMPDIR": r"C:\foreign-repository"}), \
+                 patch.object(w, "Path", PureWindowsPath), \
+                 patch.object(os, "open", side_effect=AssertionError), \
+                 patch.object(os, "unlink", side_effect=AssertionError), \
+                 patch.object(w, "_Bound", side_effect=AssertionError):
+                self.assertEqual(w._temporary_path(api), PureWindowsPath(r"C:\candidate"))
+            api.k.GetTempPath2W.assert_called_once()
+            poison.gettempdir.assert_not_called()
+            poison._get_default_tempdir.assert_not_called()
+            self.assertEqual(poison.tempdir, cache)
+
+    def test_bad_temp_api_results_reject_before_any_object_operation(self):
+        cases = [(0, ""), (32768, ""), (32769, ""), (4, "C:\\"), (3, "abc"),
+                 (None, "\\\\server\\share\\"), (None, "relative\\"),
+                 (None, "C:\\foreign:stream\\"), (None, "C:\\foreign.\\"),
+                 (None, "C:\\a\\..\\foreign\\")]
+        for size, value in cases:
+            def query(capacity, buffer):
+                buffer.value = value
+                return len(value) if size is None else size
+            api = Mock()
+            api.k.GetTempPath2W.side_effect = query
+            fixture = w._Fixture(api, "user")
+            with self.subTest(size=size, value=value), patch.object(w, "Path", PureWindowsPath), \
+                 patch.object(w, "_Bound", side_effect=AssertionError) as bound, \
+                 patch.object(fixture, "directory", side_effect=AssertionError) as create, \
+                 self.assertRaises(w._Failure):
+                fixture.create()
+            bound.assert_not_called()
+            create.assert_not_called()
+            self.assertIsNone(fixture.root)
+            self.assertEqual(fixture.ledger, {})
+            self.assertEqual(len(api.mock_calls), 1)  # Path query only; no native mutation.
+
+    def test_temp_ancestry_faults_cannot_create_delete_or_change_acl(self):
+        temporary = PureWindowsPath(r"C:\candidate\leaf")
+        for failed_index in range(3):
+            for reason in ("object_reparse_or_type", "volume_not_local_ntfs", "mapped_drive", "object_path_changed"):
+                api = Mock()
+                fixture = w._Fixture(api, "user")
+                opened = []
+                def bind(api, path, *, directory):
+                    self.assertTrue(directory)
+                    if len(opened) == failed_index:
+                        raise w._Failure(reason)
+                    guard = Mock(path=path)
+                    opened.append(guard)
+                    return guard
+                with self.subTest(index=failed_index, reason=reason), \
+                     patch.object(w, "_temporary_path", return_value=temporary), \
+                     patch.object(w, "_Bound", side_effect=bind), \
+                     patch.object(fixture, "directory", side_effect=AssertionError) as create, \
+                     patch.object(os, "open", side_effect=AssertionError), \
+                     patch.object(os, "unlink", side_effect=AssertionError), self.assertRaises(w._Failure):
+                    fixture.create()
+                self.assertIsNone(fixture.root)
+                self.assertEqual(fixture.ledger, {})
+                create.assert_not_called()
+                self.assertEqual(api.mock_calls, [])
+                fixture.close()
+                for guard in opened:
+                    guard.close.assert_called_once_with()
+
+    def test_repository_and_formal_temp_candidates_reject_before_root_creation(self):
+        for suffix in ("", "artifacts/anomaly-multiseed-v03-holdout", "artifacts/anomaly-multiseed-v03-audit"):
+            temporary = w._ROOT / suffix
+            api, fixture = Mock(), None
+            fixture = w._Fixture(api, "user")
+            # Synthetic metadata only, including absent formal roots; no mkdir/unlink.
+            with self.subTest(suffix=suffix), patch.object(w, "_temporary_path", return_value=temporary), \
+                 patch.object(w, "_Bound", return_value=Mock()), \
+                 patch.object(Path, "exists", autospec=True, side_effect=lambda p: p == w._ROOT/".git"), \
+                 patch.object(fixture, "directory", side_effect=AssertionError) as create, \
+                 patch.object(os, "open", side_effect=AssertionError), \
+                 patch.object(os, "unlink", side_effect=AssertionError), self.assertRaises(w._Failure) as caught:
+                fixture.create()
+            self.assertEqual(caught.exception.reason, "temp_in_repository")
+            self.assertIsNone(fixture.root)
+            self.assertEqual(fixture.ledger, {})
+            create.assert_not_called()
+            self.assertEqual(api.mock_calls, [])
+            fixture.close()
+
+    def test_child_uses_same_temp_query_and_scope_rejects_before_objects(self):
+        api = Mock()
+        def query(size, buffer):
+            buffer.value = "C:\\candidate\\"
+            return len(buffer.value)
+        api.k.GetTempPath2W.side_effect = query
+        with patch.object(w, "_api", return_value=api), patch.object(w, "_runtime"), \
+             patch.object(w, "Path", PureWindowsPath), patch.object(w, "_Bound", side_effect=AssertionError), \
+             self.assertRaises(w._Failure) as caught:
+            w._child_main(PureWindowsPath(r"C:\foreign")/(w._PREFIX+"0"*32))
+        self.assertEqual(caught.exception.reason, "child_scope")
+        self.assertEqual(len(api.mock_calls), 1)
+
+    def test_prefix_inventory_uses_same_side_effect_free_query(self):
+        api, temporary = Mock(), Mock()
+        temporary.iterdir.return_value = [SimpleNamespace(name="foreign"), SimpleNamespace(name=w._PREFIX+"known")]
+        with patch.object(w, "_api", return_value=api), patch.object(w, "_temporary_path", return_value=temporary) as query:
+            self.assertEqual(_prefix_inventory(), [w._PREFIX+"known"])
+        query.assert_called_once_with(api)
+        self.assertEqual(api.mock_calls, [])
+
+    def test_no_temp_module_dependency_in_implementation_child_or_helpers(self):
+        for path in (w._SOURCE, w._CHILD, Path(__file__)):
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Import):
+                    self.assertNotIn("tempfile", [item.name.split(".")[0] for item in node.names])
+                if isinstance(node, ast.ImportFrom):
+                    self.assertNotEqual((node.module or "").split(".")[0], "tempfile")
+                if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                    self.assertNotEqual(node.func.attr, "gettempdir")
+
     def test_non_windows_rejects_before_loading_or_creating(self):
         with patch.object(w.os, "name", "posix"), patch.object(w, "_Win", side_effect=AssertionError), \
              patch.object(w, "_runtime", side_effect=AssertionError), patch.object(w, "_Fixture", side_effect=AssertionError):
@@ -225,7 +367,7 @@ class PureWindowsControls(unittest.TestCase):
 
 
 def _prefix_inventory():
-    return sorted(p.name for p in Path(tempfile.gettempdir()).iterdir() if p.name.startswith(w._PREFIX))
+    return sorted(p.name for p in w._temporary_path(w._api()).iterdir() if p.name.startswith(w._PREFIX))
 
 
 @unittest.skipUnless(os.name == "nt", "Windows-only native control; NOT acceptance on Linux")
