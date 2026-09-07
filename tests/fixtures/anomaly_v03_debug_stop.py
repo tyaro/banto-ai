@@ -42,7 +42,7 @@ class OwnedDebugStop:
                 function = getattr(self.kernel, name)
                 function.restype, function.argtypes = result, args
         self.handles = [None, None]
-        self.creation = None
+        self.creation_owner = None
         self.close_state = ["not_started", "not_started"]
         self.errors = [None] * 8
         self.error_count = 0
@@ -67,23 +67,24 @@ class OwnedDebugStop:
         need(self.kernel.GetProcessId(process) == self.transport.pid, "owned_process_identity")
         self.drain.bind(self.transport.pid)
 
-    def capture_creation(self, process):
-        """Retain only an API-success-confirmed output, before normal binding."""
-        need(not self.started and self.creation is None
+    def prepare_creation(self, owner):
+        """Connect output ownership before the launch API can ever be called."""
+        need(not self.started and self.creation_owner is None
              and all(handle is None for handle in self.handles), "creation_already_owned")
-        self.creation = process
+        self.creation_owner = owner
 
     def _recover_creation(self):
-        if self.creation is None:
+        if self.creation_owner is None or self.creation_owner.creation_state != "created":
             return
         # These are launch-owned handles, never debug-event handles. Recover
         # their slots even if a normal bind/adopt was interrupted midway.
-        process = self.creation.process
-        thread = self.creation.thread
-        pid = self.creation.pid
+        creation = self.creation_owner.process
+        process = creation.process
+        thread = creation.thread
+        pid = creation.pid
         self.handles[0], self.handles[1] = process, thread
         need(type(process) is int and process > 0 and type(thread) is int and thread > 0
-             and process != thread and pid != 0 and self.creation.tid != 0, "creation_identity")
+             and process != thread and pid != 0 and creation.tid != 0, "creation_identity")
         need(self.kernel.GetProcessId(process) == pid, "owned_process_identity")
         need(self.transport.pid in (None, pid) and self.drain.pid in (None, pid), "creation_pid_conflict")
         # Same creator thread was checked by run(). This is teardown metadata

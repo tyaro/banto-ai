@@ -38,6 +38,7 @@ class DebugLaunchTests(unittest.TestCase):
     def test_exact_flags_fixed_child_environment_and_preallocated_ownership(self):
         launch, api, kernel = self.launcher()
         output, result = launch.process, launch.result
+        self.assertIs(launch.stop.creation_owner, launch)
         api.a.CreateProcessAsUserW.assert_not_called()
         returned = launch.create()
         self.assertIs(returned, result)
@@ -163,6 +164,29 @@ class DebugLaunchTests(unittest.TestCase):
         self.assertTrue(launch.stop.started)
         self.assertEqual(launch.stop.handles, [None, None])
         self.assertEqual([call.args[0] for call in kernel.CloseHandle.call_args_list], [502, 501])
+
+    def test_first_line_after_confirmed_creation_can_stop_without_capture_call(self):
+        launch, api, kernel = self.launcher()
+        source, first = inspect.getsourcelines(SuspendedDebugLaunch.create)
+        boundary = next(first + index for index, line in enumerate(source)
+                        if line.strip().startswith("need(self.process.pid"))
+        original = MemoryError()
+        def trace(frame, event, arg):
+            if frame.f_code is SuspendedDebugLaunch.create.__code__ and event == "line" and frame.f_lineno == boundary:
+                raise original
+            return trace
+        previous = sys.gettrace()
+        try:
+            sys.settrace(trace)
+            result = launch.create()
+        finally:
+            sys.settrace(previous)
+        self.assertIs(launch.primary, original)
+        self.assertIs(launch.stop.creation_owner, launch)
+        self.assertEqual(result["creation_state"], "created")
+        self.assertEqual(launch.stop_result["status"], "stopped")
+        self.assertEqual(launch.stop.handles, [None, None])
+        self.assertEqual(kernel.CloseHandle.call_count, 2)
 
     def test_report_faults_stop_owned_child_and_keep_private_result(self):
         for final in (False, True):

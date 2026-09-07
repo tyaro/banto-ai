@@ -46,6 +46,7 @@ class SuspendedDebugLaunch:
         self.primary = self.secondary = None
         self.stop_result = None
         self.result = LaunchResult(self)
+        self.stop.prepare_creation(self)
 
     def __repr__(self):
         return "SuspendedDebugLaunch(<private buffers and ownership>)"
@@ -63,6 +64,7 @@ class SuspendedDebugLaunch:
             self.transport._thread()
             need(not self.stop.started and self.transport.pid is None and self.stop.drain.pid is None
                  and self.transport.state == "idle" and self.transport.count == 0
+                 and self.stop.creation_owner is self
                  and all(handle is None for handle in self.stop.handles), "launch_owner_state")
             self._latch(None)
             need(not self.resource_stop, "launch_resource_latched")
@@ -74,7 +76,6 @@ class SuspendedDebugLaunch:
                 self.creation_state = "failed"
                 raise TransportError("restricted_debug_create", self.transport.last_error())
             self.creation_state = "created"
-            self.stop.capture_creation(self.process)
             need(self.process.pid != 0 and self.process.tid != 0, "launch_process_identity")
             self.transport.bind(self.process.pid)
             self.stop.adopt(self.process.process, self.process.thread)
