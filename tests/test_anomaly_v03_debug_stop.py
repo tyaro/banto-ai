@@ -136,6 +136,51 @@ class DebugStopTests(unittest.TestCase):
         kernel.TerminateProcess.assert_not_called()
         kernel.WaitForDebugEventEx.assert_not_called()
 
+    def test_signaled_process_does_not_resolve_uncertain_wait_or_continue(self):
+        for phase in ("wait", "continue"):
+            stop, kernel = self.controller((6,))
+            if phase == "wait":
+                def interrupted(pointer, timeout):
+                    pointer.contents.kind = 6
+                    pointer.contents.info.load_dll.file = 102
+                    raise MemoryError()
+                kernel.WaitForDebugEventEx.side_effect = interrupted
+                with self.assertRaises(MemoryError):
+                    stop.transport.wait()
+            else:
+                stop.transport.wait()
+                stop.transport.close_file(0)
+                kernel.ContinueDebugEvent.return_value = False
+                with self.assertRaises(TransportError):
+                    stop.transport.continue_event()
+            kernel.WaitForSingleObject.side_effect = [0]
+            previous_continues = kernel.ContinueDebugEvent.call_count
+            result = stop.run()
+            self.assertTrue(result["process_signaled"])
+            self.assertFalse(result["debug_ownership_resolved"])
+            self.assertEqual(result["teardown_status"], "failed")
+            self.assertGreater(result["failure_count"], 0)
+            self.assertIs(result.private_owner.transport, stop.transport)
+            self.assertEqual(kernel.ContinueDebugEvent.call_count, previous_continues)
+            kernel.TerminateProcess.assert_not_called()
+            if phase == "wait":
+                self.assertEqual(stop.transport.buffers[stop.transport.pending].info.load_dll.file, 102)
+                self.assertNotIn(102, [call.args[0] for call in kernel.CloseHandle.call_args_list])
+
+    def test_existing_transport_resource_latch_survives_successful_stop_without_primary(self):
+        stop, kernel = self.controller((6, 5))
+        stop.transport.wait()
+        with patch("tests.fixtures.anomaly_v03_debug_transport.StartupEvent", side_effect=MemoryError()), \
+             self.assertRaises(MemoryError):
+            stop.transport.event()
+        result = stop.run()
+        self.assertTrue(result["process_signaled"])
+        self.assertTrue(result["debug_ownership_resolved"])
+        self.assertTrue(result["resource_stop"])
+        self.assertTrue(stop.resource_stop)
+        self.assertTrue(stop.transport.resource_stop)
+        self.assertTrue(stop.drain.resource_stop)
+
     def test_result_render_failure_keeps_private_owner_and_primary(self):
         stop, kernel = self.controller()
         primary = ValueError("DUMMY_PRIVATE")

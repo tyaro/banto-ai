@@ -17,7 +17,8 @@ class StopResult(dict):
     def __init__(self, owner):
         super().__init__(status="not_started", native_accepted=False, formal_permission=False,
                          process_signaled=False, terminate_state="not_started", exit_continued=False,
-                         failure_count=0, resource_stop=False, drain_waits=0, teardown_status="not_started")
+                         failure_count=0, resource_stop=False, drain_waits=0, teardown_status="not_started",
+                         debug_ownership_resolved=False)
         self.private_owner = owner
 
 
@@ -118,7 +119,8 @@ class OwnedDebugStop:
         need(not self.started, "stop_retry")
         self.started = True
         self.primary = primary
-        self.resource_stop |= isinstance(primary, MemoryError)
+        self.resource_stop |= (isinstance(primary, MemoryError) or self.transport.resource_stop
+                               or self.drain.resource_stop)
         self.result["status"] = "stopping"
         try:
             self.transport._thread()
@@ -162,13 +164,24 @@ class OwnedDebugStop:
                 source.resource_stop |= self.resource_stop
                 source.state = "stopped"
             self._close_launch_handles()
+            for source in (self.transport, self.drain):
+                source.resource_stop |= self.resource_stop
         try:
+            resolved = all(source.pending is None and not source.wait_inflight and not source.continue_inflight
+                           and all(source.file_closed[:source.count]) for source in (self.transport, self.drain))
+            if not resolved:
+                self._record("debug_ownership_unresolved", TransportError("debug_ownership_unresolved"))
             self.result.update(status="stopped" if self.signaled else "unconfirmed",
                                process_signaled=self.signaled, terminate_state=self.terminate_state,
                                exit_continued=self.exit_continued, failure_count=self.error_count,
                                resource_stop=self.resource_stop, drain_waits=self.waits,
-                               teardown_status="failed" if self.error_count else "pass")
+                               teardown_status="failed" if self.error_count else "pass",
+                               debug_ownership_resolved=resolved)
         except BaseException as error:
             self._record("stop_report", error)
             self.result["status"] = "report_failed"
+            self.result["teardown_status"] = "failed"
+            self.result["resource_stop"] = self.resource_stop
+            self.transport.resource_stop |= self.resource_stop
+            self.drain.resource_stop |= self.resource_stop
         return self.result
