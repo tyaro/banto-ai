@@ -417,3 +417,20 @@ native adapterは未実装で、probeは未実行。次はevent/file handle所�
 fault試験、独立レビューを行い、その後に初回probeの具体的な実行条件を確認する。
 LOAD_DLLだけでfaulting DLLを断定しない。全acceptance gateはnoを維持する。
 D2 exact inventory 1/1 pass（31.604秒）、repository safety/diff-checkもpass。
+
+## 22. 2026-09-08 休眠Win32 event transportと独立再監査
+
+09a1150からx64 DEBUG_EVENT ABIとWait/Continue/file-close接続部をtests/fixturesへ追加した。
+初回9b41df5の独立レビューで、呼出前OOM停止漏れと成否不確実なcloseの再試行にP2を2件検出。
+ac876b1で修正し、同じ担当の再監査で2件の解消と新規P0〜P3=0を確認した。
+[transport記録](anomaly-multiseed-v0.3-s4-b1-debug-transport-2026-09-08.md)を参照。
+
+実装担当: transport/event 21件＋既存100件=121/121 pass（0.243秒）、D2 1/1（4.603秒）、safety/diff-check pass。
+独立担当: transport/event 21/21、元の反例と追加failure注入を確認した。
+production harness/source pins、科学config、既存artifact/failure rootは変更していない。
+child・debugger・native mutationは今回起動していない。
+
+次は起動driverとsource/runtime pin、新規fixture、初期bootstrap breakpointの識別、
+総資源上限、owned child停止と有界event drain、private結果保持を接続する。
+休眠transport単体ではchildの終了処理を行わないため、実probeはまだ開始できない。
+完成driverのfault試験と独立レビュー後、初回実行条件を具体化する。全acceptance gateはno。

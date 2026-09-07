@@ -1,0 +1,85 @@
+# S4-B1 debug-event transport savepoint
+
+状態: **dormant transport / scoped findings resolved / no launch**。
+実装候補: `ac876b1`、初回比較基準: `09a1150`。
+production harnessとsource pinは変更していない。
+
+## 今回の接続範囲
+
+[DebugEventTransport](../../tests/fixtures/anomaly_v03_debug_transport.py)にx64 DEBUG_EVENTのABIと
+WaitForDebugEventEx / ContinueDebugEvent / CloseHandleのbindingを実装した。
+importだけではnative DLLを読まない。実起動entry、CreateProcess、attach、remote memory readはない。
+testsではfake kernelだけを注入し、Windows debug APIを実行していない。
+
+| 項目 | 実装 |
+| --- | --- |
+| ABI | DWORDを32-bit固定、pointer/ULONG_PTRを64-bit、DEBUG_EVENT 176 bytes、union offset 16 |
+| 事前確保 | 256個のnative bufferとpointer、file-close確認・試行回数slot |
+| 作成thread | bind/wait/decode/continue/closeで同じthread IDを要求 |
+| Wait | 0〜100 ms、event limit 256。ERROR_SEM_TIMEOUT=121だけをeventなしと扱う |
+| pending所有 | Wait呼出前にbufferを保持。decode失敗後もnative bytesを保持する |
+| file handle | CREATE_PROCESS/LOAD_DLLのhFileのみ対象。API前にuncertainを記録し、明示FALSEのときだけ再試行可、最大2試行 |
+| OS管理handle | eventのprocess/thread handleは手動closeしない |
+| Continue | API呼出前にattempted。失敗時はuncertainで停止し、無条件再送しない |
+| 例外 | 一般例外はDBG_EXCEPTION_NOT_HANDLED。breakpointは識別未実装のため拒否 |
+| Exit | Continue成功はexit_continuedまで。process signaledやnative合格を主張しない |
+
+ABIの定義は[DEBUG_EVENT](https://learn.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-debug_event)、
+継続statusとOSによるhandle解放は
+[ContinueDebugEvent](https://learn.microsoft.com/en-us/windows/win32/api/debugapi/nf-debugapi-continuedebugevent)を参照。
+image/DLL handleの所有は
+[WaitForDebugEvent](https://learn.microsoft.com/en-us/windows/win32/api/debugapi/nf-debugapi-waitfordebugevent)に基づく。
+
+## 失敗状態の意味
+
+Waitの成功返却前に例外が出た場合、bufferを保持するが、その中身の配送完了は未確認とする。
+その状態でbuffer内の数値を無条件にhandleとしてcloseしない。上位driverはtransport自体を保持し、
+未確認状態を解消したと報告してはならない。
+
+呼出前thread照合を含め、decode/closeのMemoryErrorはresource latchを立てて停止する。
+file handleのclose再試行は未解放を確定できる明示FALSEの場合だけ許す。
+成功返却直後の記録前中断や、API内での副作用後例外ではuncertainを保持して再closeしない。
+native file handleがcloseできなくても、そのbufferを捨てない。
+運用driverは例外でtransportをローカル変数ごと失わず、private resultの寿命まで保持する必要がある。
+
+このtransportだけではchildを止めたりdebugger終了時の状態を確定したりしない。
+上位driver未接続のため、現状のclassを使って実probeを開始することは許可していない。
+
+## 検証
+
+- transport 13件＋既存event契約8件: 21/21 pass。
+- B1の既存100件も合わせたpure/fault: 121/121 pass、0.243秒。
+- D2 exact inventory: 1/1 pass、4.603秒。
+- repository safety: pass。
+- native/child/debugger/同一parent mutation/full suite: 今回は実行していない。
+
+故障注入ではdecode直後OOM、Wait返却不確実、CloseHandle failure、Continue failure、
+wrong thread、foreign PID、不正event、容量・待機上限、exitの段階を確認した。
+このfake-kernel試験を実Windows APIの動作検証として扱わない。
+
+## 未接続部分と次工程
+
+1. 起動前のsource/runtime固定、新規fixture、restricted child作成との結合。
+2. bootstrap breakpointの実体識別、固定された1回だけの適切な継続。
+3. 累計30秒・512 MiB・private evidence 1 MiB制限を持つ上位driver。
+4. primary保持、owned childの停止、bounded event drain、exit後signaled確認。
+5. partial/uncertain ownershipを保持するprivate resultとsafe summary。
+6. 完成driverへの故障注入、独立レビュー、初回probe実行条件の確認。
+
+## 独立レビューと是正
+
+同じ独立担当が9b41df5をread-only監査し、P0=0 / P1=0 / P2=2 / P3=0を報告した。
+指定19件passに加え、ディスク変更なしの追加故障注入で次を再現した。
+
+1. wait/continue前のthread照合OOMで停止latchが立たず、再呼出でAPIへ進む。
+2. close成功後の記録前中断を明示的失敗と区別せず、同じhandleを再closeする。
+
+ac876b1で両経路を修正した。2件目はAPI内例外に加え、True返却後の記録直前へ
+sys.settraceでKeyboardInterruptを注入して再close禁止を確認した。
+独立担当が9b41df5..ac876b1982ecf3dc5da73379a63217fca07b2f27を再監査し、
+**前回P2の2件は修正確認済み、新規P0〜P3は0件**と報告した。
+担当のpure試験は21/21 pass。元の反例、close中MemoryError、明示FALSE後の再試行、
+True返却後KeyboardInterruptを確認した。native実行・編集はしていない。
+この限定差分の確認を完成driverや実Windows E2Eの合格に拡張しない。
+
+既知0xC0000142は未解消、Windows 3.12/required child未確認。全acceptance gateはno。
