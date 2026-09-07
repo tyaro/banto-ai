@@ -37,6 +37,115 @@ def restricted_profile():
 
 
 class PureWindowsControls(unittest.TestCase):
+    def test_stream_enumeration_success_empty_directory_and_single_findclose_failure(self):
+        for directory, close_ok in ((False, True), (True, True), (False, False)):
+            api = Mock()
+            api.call.side_effect = lambda ok, reason: w._need(ok, reason)
+            api.close.return_value = True
+            api.k.FindNextStreamW.return_value = False
+            api.k.FindClose.return_value = close_ok
+            bound = object.__new__(w._Bound)
+            bound.api, bound.path, bound.handle, bound.directory = api, Path("owned"), 77, directory
+            bound.check = Mock()
+            def first(path, level, pointer, flags):
+                ctypes.cast(pointer, ctypes.POINTER(w._StreamInfo)).contents.name = "::$DATA"
+                return ctypes.c_void_p(-1).value if directory else 88
+            api.k.FindFirstStreamW.side_effect = first
+            with self.subTest(directory=directory, close_ok=close_ok), \
+                 patch.object(w.C, "get_last_error", return_value=38, create=True):
+                if close_ok:
+                    with w._Closing(bound.close):
+                        bound.streams()
+                    self.assertEqual(bound.check.call_count, 2)
+                else:
+                    with self.assertRaises(w._Failure) as caught, w._Closing(bound.close):
+                        bound.streams()
+                    self.assertEqual(caught.exception.reason, "owned_teardown_failed")
+                    self.assertEqual(caught.exception.teardown.report()["reasons"], ["stream_close"])
+                    self.assertEqual(bound.check.call_count, 1)
+            if directory:
+                api.k.FindClose.assert_not_called()
+            else:
+                api.k.FindClose.assert_called_once_with(88)
+            api.k.CloseHandle.assert_not_called()  # Enumeration handle is not CloseHandle-owned.
+            api.close.assert_called_once_with(77)
+            self.assertIsNone(bound.handle)
+
+    def test_stream_resource_failure_survives_findclose_and_outer_bound_close_without_fs_io(self):
+        for stage in ("name", "next", "resource_reason"):
+            primary = w._Failure("memory_budget") if stage == "resource_reason" else MemoryError()
+            stream_api, api = Mock(), Mock()
+            stream_api.call.side_effect = lambda ok, reason: w._need(ok, reason)
+            stream_api.k.FindFirstStreamW.return_value = 88
+            stream_api.k.FindClose.return_value = False
+            stream_api.close.side_effect = OSError("DUMMY_SECRET")
+            if stage != "name":
+                stream_api.k.FindNextStreamW.side_effect = primary
+            class Item:
+                @property
+                def name(self):
+                    if stage == "name":
+                        raise primary
+                    return "::$DATA"
+            bound = object.__new__(w._Bound)
+            bound.api, bound.path, bound.handle, bound.directory = stream_api, Path("owned"), 77, False
+            bound.check = Mock()
+            fixture = Mock(root=Path("owned")/(w._PREFIX+"0"*32), ledger={"known": {"bytes": 11}})
+            def create():
+                with w._Closing(bound.close):
+                    bound.streams()
+            fixture.create.side_effect = create
+            api.profile.return_value = parent_profile()
+            api.token.return_value, api.restricted.return_value = 11, 22
+            api.k.CloseHandle.return_value = True
+            api.call.side_effect = lambda ok, reason: w._need(ok, reason)
+            with self.subTest(stage=stage), patch.object(w, "_StreamInfo", Item), \
+                 patch.object(w.C, "byref", side_effect=lambda value: value), \
+                 patch.object(w, "_api", return_value=api), patch.object(w, "_runtime", return_value={}), \
+                 patch.object(w, "_source_pin", return_value=[]), patch.object(w, "_Fixture", return_value=fixture), \
+                 patch.object(Path, "exists", side_effect=AssertionError), patch.object(Path, "stat", side_effect=AssertionError), \
+                 patch.object(Path, "read_bytes", side_effect=AssertionError), patch.object(Path, "iterdir", side_effect=AssertionError), \
+                 patch.object(w, "_temporary_path", side_effect=AssertionError):
+                result = w.run_control_harness()
+            self.assertEqual(result["reason"], "memory_budget" if stage == "resource_reason" else "resource_failure")
+            self.assertEqual(result["status"], "failed")
+            self.assertEqual(result["retained_existence"], "unverified")
+            self.assertEqual(result["teardown"]["reasons"], ["stream_close", "bound_handle_close"])
+            self.assertEqual(result["teardown"]["failure_count"], 2)
+            self.assertTrue(result["teardown"]["resource_stop"])
+            self.assertNotIn("DUMMY", json.dumps(result))
+            stream_api.k.FindClose.assert_called_once_with(88)
+            stream_api.k.CloseHandle.assert_not_called()
+            stream_api.close.assert_called_once_with(77)
+            self.assertEqual(bound.handle, 77)
+            self.assertEqual(bound.check.call_count, 1)
+            self.assertEqual(api.k.CloseHandle.call_count, 2)
+            fixture.close.assert_called_once()
+
+    def test_stream_primary_failure_and_findfirst_failure_do_not_skip_outer_close(self):
+        for first_fails in (False, True):
+            primary = MemoryError() if first_fails else w._Failure("stream_next", 5)
+            api = Mock()
+            api.call.side_effect = lambda ok, reason: w._need(ok, reason)
+            api.k.FindFirstStreamW.side_effect = primary if first_fails else None
+            api.k.FindFirstStreamW.return_value = 88
+            api.k.FindNextStreamW.side_effect = primary
+            api.k.FindClose.return_value = False
+            api.close.side_effect = OSError("DUMMY_SECRET")
+            bound = object.__new__(w._Bound)
+            bound.api, bound.path, bound.handle, bound.directory = api, Path("owned"), 77, False
+            bound.check = Mock()
+            with self.subTest(first_fails=first_fails), self.assertRaises(type(primary)) as caught, w._Closing(bound.close):
+                bound.streams()
+            self.assertIs(caught.exception, primary)
+            self.assertEqual(primary.teardown.count, 1 if first_fails else 2)
+            if first_fails:
+                api.k.FindClose.assert_not_called()  # No enumeration handle was returned.
+            else:
+                api.k.FindClose.assert_called_once_with(88)
+            api.close.assert_called_once_with(77)
+            self.assertEqual(bound.check.call_count, 1)
+
     def test_bound_handle_identity_survives_close_failure_until_success(self):
         bound = object.__new__(w._Bound)
         bound.handle, bound.api = 77, Mock()

@@ -634,8 +634,9 @@ class _Bound:
     def streams(self):
         self.check()
         item = _StreamInfo()
-        handle = self.api.k.FindFirstStreamW(str(self.path), 0, C.byref(item), 0)
         names = []
+        primary, teardown = None, _Teardown()
+        handle = self.api.k.FindFirstStreamW(str(self.path), 0, C.byref(item), 0)
         if handle == C.c_void_p(-1).value:
             _need(self.directory and C.get_last_error() == 38, "stream_query")
         else:
@@ -646,8 +647,12 @@ class _Bound:
                     if not self.api.k.FindNextStreamW(handle, C.byref(item)):
                         _need(C.get_last_error() == 38, "stream_next")
                         break
+            except BaseException as error:
+                primary = error
+                raise
             finally:
-                self.api.call(self.api.k.FindClose(handle), "stream_close")
+                teardown.attempt("stream_close", lambda: self.api.call(self.api.k.FindClose(handle), "stream_close"))
+                _preserve_teardown(primary, teardown)
         _need(names == ([] if self.directory else ["::$DATA"]), "alternate_stream")
         self.check()
 
