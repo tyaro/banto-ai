@@ -83,3 +83,41 @@ True返却後KeyboardInterruptを確認した。native実行・編集はして�
 この限定差分の確認を完成driverや実Windows E2Eの合格に拡張しない。
 
 既知0xC0000142は未解消、Windows 3.12/required child未確認。全acceptance gateはno。
+
+## 2026-09-08 owned-child停止controller checkpoint
+
+34774a9で`OwnedDebugStop`を追加した。transportとresult容器をchild作成前に確保し、
+未来launcherが所有するprocess/thread handleだけをadoptする。GetProcessIdで対象PIDを照合する。
+launcher/attach/fixture作成/通常観測loop/初期bootstrap識別はまだ接続していない。
+
+- TerminateProcessは非同期の要求として記録し、成功をprocess消失と同一視しない。
+- pending eventは停止要求の成功後だけ処理する。追加drainは最大32回、各Waitは100ms以下、
+  loop期限5秒。取得したnative bufferとimage/DLL file handleを保持する。
+- wait/continueのinflight flagを別途保持し、stopによるstate変更でも不確実性を消さない。
+  結果不明のContinueを再送しない。停止後の例外はNOT_HANDLEDで処理する。
+- EXIT eventのContinueとowned process handleのsignaledを別々に確認する。
+  未確認ならlaunch handleを保持する。解放は成否不明を先に記録し、一方の失敗でも他方を試す。
+- safe resultはprivate_owner経由でprimary、buffers、未解放handleを保持する。
+  要約生成自体の失敗もprimaryを上書きしない。fixture清掃・filesystem再走査は行わない。
+
+停止要求と終了確認を分ける根拠:
+[TerminateProcess](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-terminateprocess)。
+これはevent/resource上限を持つ停止用部品であり、native launcherの代用品ではない。
+
+検証: stop/transport/event 31/31、既存を含め131/131（0.493秒）、D2 1/1（6.742秒）、safety pass。
+全てfake-kernel/pureで、native/child/debuggerは未実行。独立担当へ34774a9差分の監査を依頼済み。
+監査結果は未受領。次は監査是正の後、起動と初期breakpoint識別、資源上限を持つ観測loopを接続する。
+
+### 停止controllerの独立監査と是正
+
+34774a9の独立監査でP2を2件検出した。processがsignaledの早期経路で未解決debug所有を
+teardown passにする問題と、元transportのresource latchをowner/resultへ引き継がない問題である。
+942c94aで、signaledとdebug_ownership_resolvedを分離し、未解決pending/inflight/file所有をfailureとして
+保持するよう修正した。既存resource latchを開始時に取り込み、close/report障害後も解除せず伝播する。
+
+追加反例: wait/continue不確実＋signaled、decode OOM後primaryを省略したstop。
+修正後はstop/transport/event 33件、既存を含め133/133 pass（0.237秒）。
+同じ独立担当が34774a9..942c94aa208d608f7b4703f10d8c27d059bb9b7cを再監査し、
+前回P2の2件の修正と新規P0〜P3=0を確認した。担当のpureも33/33 pass。
+元の反例とreport障害を追加注入し、未解決所有・resource latch・private owner保持を確認した。
+native/child/debuggerは引き続き未実行。

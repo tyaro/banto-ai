@@ -434,3 +434,20 @@ child・debugger・native mutationは今回起動していない。
 総資源上限、owned child停止と有界event drain、private結果保持を接続する。
 休眠transport単体ではchildの終了処理を行わないため、実probeはまだ開始できない。
 完成driverのfault試験と独立レビュー後、初回実行条件を具体化する。全acceptance gateはno。
+
+## 23. 2026-09-08 owned-child停止と有界event drain
+
+休眠終了controllerを34774a9で追加し、owned child停止要求→最大32回のevent drain→
+EXIT Continue→process signaled→owned launch handle解放を接続した。結果はprivate_ownerで
+未解放handle、raw buffer、primaryを保持する。wait/continueの不確実性はstateとは別flagに保持する。
+
+独立レビューのP2 2件（signaled時の未解決所有見落とし、resource latch引継ぎ漏れ）を942c94aで修正した。
+同じ担当の再監査で2件の修正、新規P0〜P3=0を確認。詳細は[終了controller記録](anomaly-multiseed-v0.3-s4-b1-debug-transport-2026-09-08.md)を参照。
+
+実装担当: pure/fault 133/133（0.237秒）、D2 1/1（6.742秒）、safety/diff-check pass。
+独立担当: 関連33/33と元の反例・report障害の注入を確認。今回もchild/debugger/native mutation未実行。
+production harness、D2 pins、science config、既存artifact/failure rootは変更していない。
+
+次はsource/runtimeを固定したlauncher、新規fixture、初期bootstrap breakpoint識別、
+累計資源上限を持つ観測loopと今回の終了controllerを結合する。現状は起動entry未接続で実probe未実行。
+完成driverのfault試験・独立レビュー後、初回probe実行条件を確認する。全acceptance gateはno。
