@@ -303,3 +303,19 @@ native追記、child/parent protocol `b1.2`、private raw evidence保持、resou
 §12で未接続だった置換traceは候補実装済みになった。ただし独立レビューとrestricted-child E2Eは未実施で、
 cleanup/evidence P2の監査済み解消とは扱わない。起動障害の追加probe、main統合、正式試験は未実施。
 次は候補の独立レビューと、別savepointでのchild起動障害の切り分けである。全gateは引き続きno。
+
+## 14. 2026-09-07 child bootstrap resource-stop修正
+
+`a66d3f5`の自己点検で、childが共有moduleをimportする前にMemoryErrorを受けると、
+resource classifierが未定義のため通常exit 1となり、parentがtrace再読込へ進む経路を確認した。
+wrapperでMemoryErrorを先に判定し、import前でも固定protocol exit 80を返すよう修正した。
+通常のImportErrorはexit 1を維持する。独立レビューではない。
+
+pathlib／共有moduleのimportにMemoryErrorとImportErrorを注入する回帰テストを追加した。
+実childは起動せず、classifier未定義・child本体未実行・終了コードを検証する。
+関連pure/fault 94件、D2 exact inventory 1件、repository safetyがpass。
+変更はbootstrapの例外分岐であり、same-parent native試験は今回は再実行していない。
+
+既存記録ではPythonとcmd.exeがともに0xC0000142で停止しているが、原因DLLは未特定。
+追加probe、required restricted-child E2E、Windows 3.12、full suite、main統合、正式試験は未実施。
+独立レビューと起動障害切り分けは残件。全gateは引き続きno。

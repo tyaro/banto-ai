@@ -270,3 +270,16 @@ raw hash/attributes/SDDLを含むdigestも
 したがって、cleanup/evidence P2全体の監査済み解消、B1完了、main統合、S4受入はまだ主張しない。
 `0xC0000142`の追加probe、tokenの弱化、required testのskip化、formal runは行っていない。
 全gateはnoを維持する。
+
+## 2026-09-07 bootstrap resource-stop補正
+
+child wrapperの共有module import以前のMemoryErrorもexit 80へ写す。
+従来はclassifier未定義時にexit 1となり、parentの通常失敗後trace回収を許していた。
+MemoryErrorを診断stage分岐より先に判定する。import前に共有定数を参照できないため、
+固定値80と共有`_CHILD_RESOURCE_EXIT`の一致を回帰テストで検証する。
+通常ImportErrorの扱いは変更しない。
+
+pathlib／共有module importでのMemoryError・ImportErrorを注入し、child本体未実行と
+正しいexitを確認した。関連pure/faultは94/94、D2 inventoryは1/1、repository safetyはpass。
+実restricted childやsame-parent nativeは今回は起動していない。
+これは候補の自己点検による修正であり、独立レビューやB1受入を意味しない。

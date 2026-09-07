@@ -2,6 +2,7 @@
 
 from contextlib import ExitStack
 from copy import deepcopy
+import builtins
 import ctypes
 import json
 import os
@@ -260,6 +261,25 @@ class ReplacementTraceTests(unittest.TestCase):
                  patch.object(sys, "path", list(sys.path)), patch.object(sys, "flags", Flags()), self.assertRaises(SystemExit) as caught:
                 runpy.run_path(str(w._CHILD), run_name="__main__")
             self.assertEqual(caught.exception.code, w._CHILD_RESOURCE_EXIT)
+
+    def test_child_import_memory_failure_uses_resource_exit_before_classifier_is_available(self):
+        wrapper = compile(w._CHILD.read_bytes(), str(w._CHILD), "exec")
+        original_import = builtins.__import__
+        for module in ("pathlib", "banto_ai._anomaly_v03_windows"):
+            for error, expected in ((MemoryError(), w._CHILD_RESOURCE_EXIT), (ImportError(), 1)):
+                def import_with_failure(name, *args, **kwargs):
+                    if name == module:
+                        raise error
+                    return original_import(name, *args, **kwargs)
+                scope = {"__file__": str(w._CHILD), "__name__": "__main__"}
+                with self.subTest(module=module, error=type(error)), \
+                     patch.object(builtins, "__import__", side_effect=import_with_failure), \
+                     patch.object(sys, "path", list(sys.path)), \
+                     patch.object(w, "_child_main") as child, self.assertRaises(SystemExit) as caught:
+                    exec(wrapper, scope)
+                self.assertEqual(caught.exception.code, expected)
+                self.assertNotIn("_resource_stop", scope)
+                child.assert_not_called()
 
     def test_parent_skips_evidence_io_after_child_resource_exit_and_preserves_primary_capture_errors(self):
         for code, capture_error in ((w._CHILD_RESOURCE_EXIT, None), (1, None), (1, MemoryError())):

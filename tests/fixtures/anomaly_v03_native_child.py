@@ -13,11 +13,16 @@ try:
         raise ValueError()
     _code = _child_main(Path(sys.argv[1]))
 except BaseException as _error:
-    # Fixed diagnostic stages, never exception text, paths or token material.
-    _stages = ("child_scope", "child_profile", "child_source", "object_open", "write_file",
-               "operation_unexpected", "operation_matrix", "access_expectation", "child_token_drift")
-    _reason = getattr(_error, "reason", "")
-    _code = (_CHILD_RESOURCE_EXIT if "_resource_stop" in globals() and _resource_stop(_error)
-             else 32 + _stages.index(_reason) if _reason in _stages else 1)
+    # Imports can fail before the shared classifier/constant is available.
+    # Keep this protocol literal synchronized with _CHILD_RESOURCE_EXIT.
+    if isinstance(_error, MemoryError):
+        _code = 80
+    else:
+        # Fixed diagnostic stages, never exception text, paths or token material.
+        _stages = ("child_scope", "child_profile", "child_source", "object_open", "write_file",
+                   "operation_unexpected", "operation_matrix", "access_expectation", "child_token_drift")
+        _reason = getattr(_error, "reason", "")
+        _code = (_CHILD_RESOURCE_EXIT if "_resource_stop" in globals() and _resource_stop(_error)
+                 else 32 + _stages.index(_reason) if _reason in _stages else 1)
 
 raise SystemExit(_code)
