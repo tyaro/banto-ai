@@ -402,3 +402,18 @@ teardown report二次例外による一次原因・result証跡喪失を9797500�
 限定checkpointの保存と次の診断準備は可。次は別savepointで起動障害の診断方法を具体化する。
 required restricted-child、Windows 3.12、full suiteは未実施。起動障害0xC0000142は未解消。
 main統合・native acceptance・formal permissionはnoを維持する。
+
+## 21. 2026-09-07 startup probeのoffline準備
+
+673f762を基準に、起動障害観測の[probe準備計画](anomaly-multiseed-v0.3-s4-b1-startup-probe-plan-2026-09-07.md)を固定した。
+PATH外のWindows SDK x64にCDB/WinDbg/GFlagsがあることを確認し、CDBのversion/hashを記録した。
+実行・install・registry変更はしていない。
+
+tests/fixturesにIOなしのStartupEvents部品を追加した。固定PID、256 events、30秒未満、
+pending/Continue/exit/signaledの区別、resource latch、型・容量・順序の拒否をofflineで確認した。
+追加8件＋既存100件=108/108 pass（1.787秒）。production source・D2 pins・science configは変更していない。
+
+native adapterは未実装で、probeは未実行。次はevent/file handle所有と有界teardownを含むadapter実装、
+fault試験、独立レビューを行い、その後に初回probeの具体的な実行条件を確認する。
+LOAD_DLLだけでfaulting DLLを断定しない。全acceptance gateはnoを維持する。
+D2 exact inventory 1/1 pass（31.604秒）、repository safety/diff-checkもpass。
