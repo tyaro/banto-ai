@@ -74,6 +74,7 @@ class SuspendedDebugLaunch:
                 self.creation_state = "failed"
                 raise TransportError("restricted_debug_create", self.transport.last_error())
             self.creation_state = "created"
+            self.stop.capture_creation(self.process)
             need(self.process.pid != 0 and self.process.tid != 0, "launch_process_identity")
             self.transport.bind(self.process.pid)
             self.stop.adopt(self.process.process, self.process.thread)

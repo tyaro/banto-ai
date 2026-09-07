@@ -42,6 +42,7 @@ class OwnedDebugStop:
                 function = getattr(self.kernel, name)
                 function.restype, function.argtypes = result, args
         self.handles = [None, None]
+        self.creation = None
         self.close_state = ["not_started", "not_started"]
         self.errors = [None] * 8
         self.error_count = 0
@@ -65,6 +66,30 @@ class OwnedDebugStop:
              and process != thread, "owned_handles")
         need(self.kernel.GetProcessId(process) == self.transport.pid, "owned_process_identity")
         self.drain.bind(self.transport.pid)
+
+    def capture_creation(self, process):
+        """Retain only an API-success-confirmed output, before normal binding."""
+        need(not self.started and self.creation is None
+             and all(handle is None for handle in self.handles), "creation_already_owned")
+        self.creation = process
+
+    def _recover_creation(self):
+        if self.creation is None:
+            return
+        # These are launch-owned handles, never debug-event handles. Recover
+        # their slots even if a normal bind/adopt was interrupted midway.
+        process = self.creation.process
+        thread = self.creation.thread
+        pid = self.creation.pid
+        self.handles[0], self.handles[1] = process, thread
+        need(type(process) is int and process > 0 and type(thread) is int and thread > 0
+             and process != thread and pid != 0 and self.creation.tid != 0, "creation_identity")
+        need(self.kernel.GetProcessId(process) == pid, "owned_process_identity")
+        need(self.transport.pid in (None, pid) and self.drain.pid in (None, pid), "creation_pid_conflict")
+        # Same creator thread was checked by run(). This is teardown metadata
+        # repair only: preserve normal state/resource/inflight latches.
+        self.transport.pid = pid
+        self.drain.pid = pid
 
     def _record(self, reason, error):
         if self.error_count < len(self.errors):
@@ -124,6 +149,7 @@ class OwnedDebugStop:
         self.result["status"] = "stopping"
         try:
             self.transport._thread()
+            self._recover_creation()
             process = self.handles[0]
             need(process is not None and self.drain.pid == self.transport.pid, "unbound_owner")
             need(self.kernel.GetProcessId(process) == self.transport.pid, "owned_process_identity")

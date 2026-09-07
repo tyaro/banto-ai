@@ -109,17 +109,45 @@ class DebugLaunchTests(unittest.TestCase):
             kernel.CloseHandle.assert_not_called()
             kernel.TerminateProcess.assert_not_called()
 
-    def test_bind_failure_retains_confirmed_creation_without_claiming_transfer(self):
+    def test_bind_failure_recovers_confirmed_creation_for_owned_stop(self):
         launch, api, kernel = self.launcher()
         original = MemoryError()
+        kernel.WaitForSingleObject.side_effect = [258, 0]
+        kernel.TerminateProcess.return_value = kernel.ContinueDebugEvent.return_value = True
+        def exit_event(pointer, timeout):
+            pointer.contents.kind, pointer.contents.pid, pointer.contents.tid = 5, 17, 19
+            return True
+        kernel.WaitForDebugEventEx.side_effect = exit_event
         with patch.object(launch.transport, "bind", side_effect=original):
             result = launch.create()
         self.assertEqual(result["creation_state"], "created")
         self.assertFalse(result["ownership_transferred"])
         self.assertEqual(launch.process.process, 501)
-        self.assertEqual(launch.stop_result["status"], "unconfirmed")
+        self.assertEqual(launch.stop_result["status"], "stopped")
+        kernel.TerminateProcess.assert_called_once_with(501, 1)
+        self.assertEqual(launch.stop.handles, [None, None])
+        self.assertEqual(kernel.CloseHandle.call_count, 2)
         self.assertIs(launch.primary, original)
         self.assertEqual(launch.transport.state, "stopped")
+
+    def test_partial_adoption_is_recovered_but_foreign_pid_is_not_terminated(self):
+        for foreign in (False, True):
+            launch, api, kernel = self.launcher()
+            def partial(*args):
+                launch.stop.handles[0] = args[0]
+                raise MemoryError()
+            if foreign:
+                kernel.GetProcessId.return_value = 99
+            with patch.object(launch.stop, "adopt", side_effect=partial):
+                result = launch.create()
+            self.assertEqual(result["status"], "failed")
+            if foreign:
+                self.assertEqual(launch.stop_result["status"], "unconfirmed")
+                kernel.TerminateProcess.assert_not_called()
+                kernel.CloseHandle.assert_not_called()
+            else:
+                self.assertEqual(launch.stop.handles, [None, None])
+                self.assertEqual(kernel.CloseHandle.call_count, 2)
 
     def test_interruption_after_adoption_attempts_owned_stop_once(self):
         launch, api, kernel = self.launcher()
