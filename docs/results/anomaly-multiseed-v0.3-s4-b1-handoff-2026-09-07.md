@@ -526,3 +526,20 @@ API成否不確実時はraw所有を保持するが、child停止確認を保証
 次は新規fixture/tokenと全collectorの所有をまとめ、preflight→作成→実child検証→Resume→観測へ接続する。
 初期breakpoint識別、system commit情報、完成driverのfault試験/独立監査も残る。
 実child/debugger/native APIは未実行、全acceptance gate no。
+
+## 28. 2026-09-08 prepared sessionの接続
+
+a059067でpreflight→suspended create→実child検証→Resume→観測/終了をまとめるDebugSessionを追加した。
+新規fixture/親restricted tokenは外側driverが所有し、sessionは実childのprimary/duplicate tokenを所有する。
+token closeの成否不確実性とprivate例外を保持する。検証失敗はResumeせず、Resume自体も1回だけ。
+create前からobserver終了まで同じ30秒時計を使う。診断source allowlistは12ファイル。
+
+pure/fault 182/182（0.410秒）、D2 1/1（3.783秒）、repository safety pass。
+独立監査P2 1件（token取得成功後のhelper返却前中断による所有漏れ/teardown誤成功）をcbac022で修正した。
+token出力bufferを事前所有し、成否不確実と取得確定を分離する。修正後184/184（0.351秒）。
+独立再監査でP2修正確認、新規P0〜P3=0、指定pure 56/56 pass。
+監査の詳細は[session統合記録](anomaly-multiseed-v0.3-s4-b1-debug-transport-2026-09-08.md)を参照。
+実preflight/child/debugger/native APIは未実行。全acceptance gate no。
+
+次は外側driverによる新規fixture/親restricted tokenの作成・証拠保持・終了時解放、
+system commit情報、初期breakpoint識別を接続する。完成driverのfault試験/独立監査はまだ必要。

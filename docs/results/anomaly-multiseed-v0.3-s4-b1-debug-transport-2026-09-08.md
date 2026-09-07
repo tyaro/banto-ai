@@ -1,7 +1,7 @@
 # S4-B1 debug-event transport savepoint
 
 状態: **dormant observation + owned stop / no launch**。
-最新の起動接続候補: `11b7efd`。下記のtransport初回記録は`ac876b1`、比較基準`09a1150`。
+最新のsession接続候補: `cbac022`。下記のtransport初回記録は`ac876b1`、比較基準`09a1150`。
 production harnessとsource pinは変更していない。
 
 ## 今回の接続範囲
@@ -252,3 +252,36 @@ uncertain/failed/not_startedの出力から推測してclose/terminateしない�
 P2残件の修正と新規P0〜P3=0を確認した。指定pure 30/30 pass。
 成功確認直後OOM＋未終了fake processでTerminate→EXIT drain→signaled→owned handle 2件closeを独立確認した。
 一次例外/private owner/通常停止を保持し、成否不確実時の推測操作禁止も維持。mainは889cfc3のままclean。
+
+### 準備済みfixtureでのsession統合（2026-09-08）
+
+a059067でDebugSessionを追加した。preflight、suspended create、実childのexe/PIDとtoken profile、
+duplicate impersonation profile、parent AccessCheck、Resume、観測、終了を接続する。
+既存coreのidentity/profile/access検証を再利用し、production harnessは変更していない。
+diagnostic allowlistへsessionを追加し12ファイルとした。
+
+sessionは事前確保済みlaunch/observerを受け取り、fixtureと親/restricted tokenは借用する。
+実childのprimary/duplicate tokenだけをsessionの固定slotで所有し、終了時に1回ずつcloseする。
+close前にuncertainを記録し、成否不確実なhandleを再closeしない。一次/二次例外とprivate ownerを保持する。
+preflight失敗はcreateへ進まず、child検証失敗はResumeへ進まない。
+Resume前にuncertainを記録し、戻り値1だけをresumedとする。再Resumeはしない。
+preflight後の30秒時計をcreate前からobserver終了まで共用し、検証各段階でもメモリ/時間を確認する。
+
+新規fixture/親restricted token作成と全体の清掃を担う外側driver、CLI、初期breakpoint識別、
+system commit情報の接続はまだ残る。transportは全breakpointを拒否するため、実観測は未開始。
+sessionのobservedもnative_accepted/formal_permissionはfalse。
+
+pure/fault 182/182 pass（0.410秒）。新規7件で実行順、preflight/検証/Resume故障、検証中deadline、
+token close中断、observer/report OOMをfakeで確認した。実preflight/child/debugger/native APIは未実行。
+同じ独立担当へae30ac3..a059067の3ファイルに限定して監査を依頼した。
+
+初回監査でP2を1件検出した。既存token helperがAPI取得成功後に返る前の中断で、sessionのtoken slotが
+空のままになり、token_teardown=passとしてしまう問題である。cbac022でH出力buffer 2個とpointerを
+session constructorに確保した。OpenProcessToken/ DuplicateTokenExは既存helperと同じ権限/型で直接呼ぶ。
+API前uncertain、成功確認後acquired、slot記録を分け、確定後slot記録前の中断はbufferから解放する。
+API成否不確実の出力は保持し、推測closeせずtoken_teardown=failedとする。
+双方の取得API内部中断と、取得確定後slot代入前の中断を追加し、184/184 pass（0.351秒）。
+D2 1/1（3.783秒）、repository safety pass。実child等は引き続き未実行。
+同じ独立担当がa059067..cbac022c9e4c43d9180327016c4a1939efc6dbd3を再監査し、
+P2修正と新規P0〜P3=0を確認した。指定pure 56/56 pass。
+両APIの未確定所有/取得確定後のslot代入中断、一次例外/private owner、Resume抑止と二重close防止を確認した。
