@@ -71,6 +71,20 @@ class DebugMemoryTests(unittest.TestCase):
             self.assertEqual(psapi.GetProcessMemoryInfo.call_count, 2)
             self.assertEqual(sampler.transport.state, "stopped")
 
+    def test_prior_child_peak_proves_limit_before_another_child_query(self):
+        mib = 1024 * 1024
+        sampler, kernel, psapi = self.sampler((100 * mib, 300 * mib, 212 * mib))
+        self.assertEqual(sampler(), 400 * mib)
+        with self.assertRaises(TransportError) as caught:
+            sampler()
+        self.assertEqual(caught.exception.reason, "memory_budget")
+        self.assertEqual(sampler.peak_commit, DebugMemory.LIMIT)
+        self.assertTrue(sampler.resource_stop)
+        self.assertTrue(sampler.transport.resource_stop)
+        self.assertEqual(sampler.samples, 1)
+        self.assertEqual(psapi.GetProcessMemoryInfo.call_count, 3)
+        self.assertEqual(sampler.process_commit_peaks, [212 * mib, 300 * mib])
+
     def test_stop_resource_identity_and_thread_checks_block_queries(self):
         for fault in ("stopped", "resource", "identity", "thread"):
             sampler, kernel, psapi = self.sampler()

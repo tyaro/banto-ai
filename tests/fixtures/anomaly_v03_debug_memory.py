@@ -23,6 +23,8 @@ class DebugMemory:
         self.resource_stop = False
         self.primary = None
         self.samples = 0
+        self.process_commit_peaks = [0, 0]
+        self.process_working_peaks = [0, 0]
         self.peak_commit = self.peak_working = 0
 
     def __repr__(self):
@@ -53,18 +55,18 @@ class DebugMemory:
                     raise TransportError("memory_query", self.transport.last_error())
                 self.state = "ready"
                 need(self.buffers[index].cb == C.sizeof(_Memory), "memory_size")
-                # A parent alone at the limit is already conclusive; do not
-                # issue another query after a known resource stop.
-                if self.buffers[index].peak_pagefile >= self.LIMIT:
+                # Lifetime peaks already confirmed for the other process are
+                # still lower bounds. Stop as soon as their sum is conclusive,
+                # before a second query can fail and mask the resource stop.
+                self.process_commit_peaks[index] = max(self.process_commit_peaks[index],
+                                                       self.buffers[index].peak_pagefile)
+                self.process_working_peaks[index] = max(self.process_working_peaks[index],
+                                                        self.buffers[index].peak_working)
+                self.peak_commit = self.process_commit_peaks[0] + self.process_commit_peaks[1]
+                self.peak_working = self.process_working_peaks[0] + self.process_working_peaks[1]
+                if self.peak_commit >= self.LIMIT:
                     self.resource_stop = True
                     raise TransportError("memory_budget")
-            self.peak_commit = max(self.peak_commit,
-                                   self.buffers[0].peak_pagefile + self.buffers[1].peak_pagefile)
-            self.peak_working = max(self.peak_working,
-                                    self.buffers[0].peak_working + self.buffers[1].peak_working)
-            if self.peak_commit >= self.LIMIT:
-                self.resource_stop = True
-                raise TransportError("memory_budget")
             self.samples += 1
             return self.peak_commit
         except BaseException as error:
