@@ -121,6 +121,28 @@ def _preserve_teardown(primary, teardown):
         primary.teardown = teardown
 
 
+def _close_call(operation, reason, primary=None, teardown=None):
+    collector = _Teardown() if teardown is None else teardown
+    confirmed = collector.attempt(reason, operation)
+    if teardown is None:
+        _preserve_teardown(primary, collector)
+    return confirmed
+
+
+class _Closing:
+    """The with statement supplies only this body's exception, never ambient state."""
+    def __init__(self, close):
+        self.close, self.teardown = close, _Teardown()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, kind, primary, traceback):
+        self.teardown.attempt("bound_handle_close", self.close)
+        _preserve_teardown(primary, self.teardown)
+        return False
+
+
 def _canonical(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False).encode()
 
@@ -307,18 +329,11 @@ class _Win:
         if not ok:
             raise _Failure(reason, C.get_last_error())
 
-    def close(self, handle, *, _preserve=True):
+    def close(self, handle, *, primary=None, teardown=None):
         if handle:
-            primary = sys.exception() if _preserve else None
-            try:
-                self.call(self.k.CloseHandle(handle), "handle_close")
-            except BaseException as error:
-                if primary is None:
-                    raise
-                teardown = _Teardown()
-                teardown.record("owned_handle_close", error)
-                _preserve_teardown(primary, teardown)
-                return False
+            return _close_call(lambda: self.call(self.k.CloseHandle(handle), "handle_close"),
+                               "owned_handle_close", primary, teardown)
+        return True
 
     def sid(self, pointer):
         value = H()
@@ -402,8 +417,8 @@ class _Win:
             try:
                 _validate_restricted(profile, self.profile(result))
                 return result.value
-            except BaseException:
-                self.close(result)
+            except BaseException as error:
+                self.close(result, primary=error)
                 raise
         finally:
             for value in allocations:
@@ -556,8 +571,8 @@ class _Bound:
         try:
             self.identity = self.observe()
             self.check()
-        except BaseException:
-            self.close()
+        except BaseException as error:
+            self.close(primary=error)
             raise
 
     def observe(self):
@@ -596,12 +611,10 @@ class _Bound:
         h = self.api.k.CreateFileW(str(self.path), 0x80, 7, None, 3, 0x00200000 | (0x02000000 if self.directory else 0), None)
         if h == C.c_void_p(-1).value:
             raise _Failure("identity_reopen", C.get_last_error())
-        try:
+        with _Closing(lambda: self.api.close(h)):
             ident = _FileId()
             self.api.call(self.api.k.GetFileInformationByHandleEx(h, 18, C.byref(ident), C.sizeof(ident)), "identity_requery")
             _need(ident.volume == observed["volume"] and bytes(ident.identifier).hex() == observed["file_id"], "named_handle_mismatch")
-        finally:
-            self.api.close(h)
         return observed
 
     def read(self):
@@ -662,19 +675,13 @@ class _Bound:
         _need(self.check() == before, "freeze_identity")
         return result
 
-    def close(self, *, _preserve=True):
+    def close(self, *, primary=None, teardown=None):
         if self.handle is not None:
-            primary = sys.exception() if _preserve else None
-            try:
-                _need(self.api.close(self.handle, _preserve=False) is not False, "handle_close")
-            except BaseException as error:
-                if primary is None:
-                    raise
-                teardown = _Teardown()
-                teardown.record("bound_handle_close", error)
-                _preserve_teardown(primary, teardown)
-                return
+            if not _close_call(lambda: _need(self.api.close(self.handle) is not False, "handle_close"),
+                               "bound_handle_close", primary, teardown):
+                return False
             self.handle = None  # Retain identity until CloseHandle is confirmed.
+        return True
 
 
 def _dacl(user, mode, directory):
@@ -716,9 +723,9 @@ def _read_source(api, path):
         raise
     finally:
         if bound is not None:
-            teardown.attempt("source_handle_close", lambda: bound.close(_preserve=False))
+            teardown.attempt("source_handle_close", bound.close)
         for guard in reversed(guards):
-            teardown.attempt("source_guard_close", lambda: guard.close(_preserve=False))
+            teardown.attempt("source_guard_close", guard.close)
         _preserve_teardown(primary, teardown)
 
 
@@ -756,9 +763,9 @@ def _source_bytes(api, path):
         raise
     finally:
         if bound is not None:
-            teardown.attempt("source_handle_close", lambda: bound.close(_preserve=False))
+            teardown.attempt("source_handle_close", bound.close)
         for guard in reversed(guards):
-            teardown.attempt("source_guard_close", lambda: guard.close(_preserve=False))
+            teardown.attempt("source_guard_close", guard.close)
         _preserve_teardown(primary, teardown)
 
 
@@ -860,11 +867,9 @@ class _Fixture:
             self.api.k.LocalFree(sd)
         # No claim that CreateDirectoryW + this bind is atomic against a hostile owner.
         bound = _Bound(self.api, path, directory=True, access=0x60081)
-        try:
+        with _Closing(bound.close):
             _need(not list(path.iterdir()), "new_directory_not_empty")
             self.record(name, bound, mode, None)
-        finally:
-            bound.close()
 
     def file(self, name, raw, mode):
         sd = self.api.descriptor(_dacl(self.user, mode, False)[0])
@@ -872,12 +877,10 @@ class _Fixture:
             bound = _Bound(self.api, self.path(name), directory=False, access=0x60083, creation=1, sd=sd)
         finally:
             self.api.k.LocalFree(sd)
-        try:
+        with _Closing(bound.close):
             bound.write(raw)
             _need(bound.read() == raw, "file_readback")
             self.record(name, bound, mode, raw)
-        finally:
-            bound.close()
 
     def record(self, name, bound, mode, raw):
         _need(name not in self.ledger, "duplicate_owned_path")
@@ -897,7 +900,7 @@ class _Fixture:
             _need(name in self.ledger, "unknown_fixture_object")
             row = self.ledger[name]
             bound = _Bound(self.api, self.path(name), directory=row["identity"]["directory"])
-            try:
+            with _Closing(bound.close):
                 _need(bound.identity == row["identity"] and self.api.security(bound.handle) == row["sd"], "fixture_identity_or_acl")
                 bound.streams()
                 if bound.directory:
@@ -906,8 +909,6 @@ class _Fixture:
                     raw = bound.read()
                     _need(_sha(raw) == row["sha256"] and len(raw) == row["bytes"], "fixture_content")
                 observed.add(name)
-            finally:
-                bound.close()
         _need(observed == set(self.ledger), "fixture_missing_object")
 
     def freeze(self):
@@ -917,12 +918,10 @@ class _Fixture:
         for name in ("frozen/data.bin", "frozen/empty", "frozen", ""):
             row = self.ledger[name]
             bound = _Bound(self.api, self.path(name), directory=row["identity"]["directory"], access=0x60081, share=1)
-            try:
+            with _Closing(bound.close):
                 sd = bound.freeze(_dacl(self.user, "frozen", bound.directory)[0])
                 _verify_sd(sd, self.user, "frozen", bound.directory)
                 row["sd"] = sd
-            finally:
-                bound.close()
         self.check()  # ALL pins have been closed before launching the child.
 
     def cleanup(self):
@@ -931,21 +930,19 @@ class _Fixture:
             self.check()
             row = self.ledger[name]
             bound = _Bound(self.api, self.path(name), directory=row["identity"]["directory"], access=0x60081)
-            try:
+            with _Closing(bound.close):
                 _need(bound.identity == row["identity"], "cleanup_identity")
                 row["sd"] = bound.freeze(_dacl(self.user, "private", bound.directory)[0])
                 _verify_sd(row["sd"], self.user, "private", bound.directory)
-            finally:
-                bound.close()
         # Read-back checked known objects only. No recursive deletion or adoption.
         for name in sorted(self.ledger, key=lambda x: (x.count("/")+bool(x), x), reverse=True):
             row = self.ledger[name]
             if not name:
                 _need(self.guards[-1].path == self.root, "cleanup_root_guard")
-                self.guards[-1].close()
+                _need(self.guards[-1].close() is True, "cleanup_guard_close")
                 self.guards.pop()
             bound = _Bound(self.api, self.path(name), directory=row["identity"]["directory"], access=0x30081, share=1)
-            try:
+            with _Closing(bound.close):
                 _need(bound.identity == row["identity"], "cleanup_delete_identity")
                 if bound.directory:
                     _need(not list(bound.path.iterdir()), "cleanup_unknown_child")
@@ -953,17 +950,18 @@ class _Fixture:
                     _need(_sha(bound.read()) == row["sha256"], "cleanup_bytes")
                 disposition = B(1)
                 self.api.call(self.api.k.SetFileInformationByHandle(bound.handle, 4, C.byref(disposition), C.sizeof(disposition)), "cleanup_disposition")
-            finally:
-                bound.close()
         _need(not self.root.exists(), "cleanup_residue")
 
-    def close(self):
-        primary = sys.exception()
+    def close(self, *, primary=None, teardown=None):
+        if teardown is not None:
+            self.teardown = teardown
         for index in range(len(self.guards)-1, -1, -1):
             guard = self.guards[index]
-            if self.teardown.attempt("fixture_guard_close", lambda: guard.close(_preserve=False)):
+            if self.teardown.attempt("fixture_guard_close", lambda: _need(guard.close() is not False, "fixture_guard_close")):
                 del self.guards[index]
-        _preserve_teardown(primary, self.teardown)
+        if teardown is None:
+            _preserve_teardown(primary, self.teardown)
+        return not self.guards
 
 
 def _process_identity(api, process):
@@ -1017,7 +1015,7 @@ def _owned_teardown(api, process, handles, fixture, teardown):
             if handle:
                 teardown.attempt("owned_handle_close", lambda: api.call(api.k.CloseHandle(handle), "owned_handle_close"))
     if fixture is not None:
-        teardown.attempt("fixture_close", fixture.close)
+        teardown.attempt("fixture_close", lambda: fixture.close(teardown=teardown))
 
 
 def _finish_outcome(outcome, primary, teardown):
@@ -1090,13 +1088,11 @@ def run_control_harness():
             raise _Failure("child_failed", child_exit_code=code.value)
         _need(api.profile(actual) == actual_profile and api.profile(parent) == parent_profile, "token_drift")
         report_handle = _Bound(api, fixture.path("control/report.json"), directory=False)
-        try:
+        with _Closing(report_handle.close):
             raw = report_handle.read()
             report = _json(raw)
             _verify_report(report, identity, nonce, _sha(request_raw), actual_profile, parent_access, source)
             fixture.record("control/report.json", report_handle, "control", raw)
-        finally:
-            report_handle.close()
         fixture.check()
         _need(_source_pin() == source and _runtime() == runtime, "source_runtime_drift")
         evidence = {**_result_status(), "status": "native_control_pass", "runtime": runtime, "source": source,
@@ -1138,15 +1134,13 @@ def _access_matrix(api, root, ledger, token):
     for name in ("control/data.bin", "control", "frozen/data.bin", "frozen", "frozen/empty"):
         row = ledger[name]
         bound = _Bound(api, root/name, directory=row["identity"]["directory"])
-        try:
+        with _Closing(bound.close):
             _need(bound.identity == row["identity"] and api.security(bound.handle) == row["sd"], "access_object_identity")
             rights = _DIR_RIGHTS if bound.directory else _FILE_RIGHTS
             result[name] = {key: api.access(bound.handle, token, mask) for key, mask in {"read": 0x80000000, **rights, "write_dac": 0x40000, "write_owner": 0x80000}.items()}
             _need(result[name]["read"]["access_status"], "read_access_denied")
             for key, mask in rights.items():
                 _check_access(result[name][key], mask, not name.startswith("frozen"))
-        finally:
-            bound.close()
     return result
 
 
@@ -1173,6 +1167,15 @@ def _expected_operations():
             for mode, code in (("control", 0), ("frozen", 5))}
 
 
+def _child_teardown(api, guards, tokens, primary, teardown):
+    for guard in reversed(guards):
+        teardown.attempt("child_guard_close", guard.close)
+    for token in tokens:
+        if token:
+            teardown.attempt("child_token_close", lambda: api.close(token))
+    _preserve_teardown(primary, teardown)
+
+
 def _child_main(root):
     """Private fixed protocol entry; never called by ordinary project consumers."""
     api = _api()
@@ -1180,17 +1183,15 @@ def _child_main(root):
     _need(root.parent == _temporary_path(api)
           and re.fullmatch(_PREFIX+r"[0-9a-f]{32}", root.name), "child_scope")
     api.no_impersonation()
-    primary = api.token(api.k.GetCurrentProcess())
-    duplicate = None
-    guards = []
+    primary = duplicate = failure = None
+    guards, teardown = [], _Teardown()
     try:
+        primary = api.token(api.k.GetCurrentProcess())
         for path in reversed((root, *root.parents)):
             guards.append(_Bound(api, path, directory=True))
         request_handle = _Bound(api, root/"control/request.json", directory=False)
-        try:
+        with _Closing(request_handle.close):
             raw = request_handle.read()
-        finally:
-            request_handle.close()
         request = _json(raw)
         _need(set(request) == {"version", "nonce", "objects", "parent", "restricted", "source"}
               and request["version"] == "b1.1" and re.fullmatch(r"[0-9a-f]{32}", request["nonce"]), "request_shape")
@@ -1217,16 +1218,14 @@ def _child_main(root):
             output = _Bound(api, root/"control/report.json", directory=False, access=0x20083, creation=1, sd=sd)
         finally:
             api.k.LocalFree(sd)
-        try:
+        with _Closing(output.close):
             output.write(_canonical(report))
-        finally:
-            output.close()
         return 0
+    except BaseException as error:
+        failure = error
+        raise
     finally:
-        for guard in reversed(guards):
-            guard.close()
-        api.close(duplicate)
-        api.close(primary)
+        _child_teardown(api, guards, (duplicate, primary), failure, teardown)
 
 
 def _replace_control(api, root, user, ledger):
@@ -1234,10 +1233,8 @@ def _replace_control(api, root, user, ledger):
     source, target = root/source_name, root/target_name
     def snapshot(path):
         bound = _Bound(api, path, directory=False)
-        try:
+        with _Closing(bound.close):
             return dict(bound.identity), bound.read()
-        finally:
-            bound.close()
     before, raw = snapshot(source)
     _need(before == ledger[source_name]["identity"] and _sha(raw) == ledger[source_name]["sha256"]
           and len(raw) == ledger[source_name]["bytes"], "replace_source_pin")
@@ -1279,6 +1276,8 @@ def _operations(api, root, user, ledger):
                 operation()
                 error = 0
             except OSError as exc:
+                if isinstance(getattr(exc, "teardown", None), _Teardown):
+                    raise
                 error = getattr(exc, "winerror", 0)
             except _Failure as exc:
                 # Only a real CreateFile denial can be an expected negative;
@@ -1292,15 +1291,13 @@ def _operations(api, root, user, ledger):
             _need(error == (0 if mode == "control" else 5), "operation_unexpected")
         def write_data(append=False, truncate=False):
             bound = _Bound(api, file, directory=False, access=0x80 | (4 if append else 2))
-            try:
+            with _Closing(bound.close):
                 if truncate:
                     position = len(b"B1-control\n") if mode == "control" else 0
                     api.call(api.k.SetFilePointerEx(bound.handle, position, None, 0), "mutation_api")
                     api.call(api.k.SetEndOfFile(bound.handle), "mutation_api")
                 else:
                     bound.write(b"append\n" if append else b"B1-control\n")
-            finally:
-                bound.close()
         def delete(path, directory=False):
             api.call((api.k.RemoveDirectoryW if directory else api.k.DeleteFileW)(str(path)), "mutation_api")
         def rename(source, target, replace=False):
@@ -1309,22 +1306,18 @@ def _operations(api, root, user, ledger):
         for label, path, is_dir in (("file", file, False), ("directory", directory, True)):
             def attributes():
                 bound = _Bound(api, path, directory=is_dir, access=0x180)
-                try:
+                with _Closing(bound.close):
                     timestamp = C.c_uint64(132537600000000000)
                     api.call(api.k.SetFileTime(bound.handle, None, None, C.byref(timestamp)), "attributes_write")
-                finally:
-                    bound.close()
             def ea():
                 bound = _Bound(api, path, directory=is_dir, access=0x80 | 0x10)
-                try:
+                with _Closing(bound.close):
                     # FILE_FULL_EA_INFORMATION, fixed test-owned EA, then removal.
                     # NtSetEaFile is the user-mode native equivalent of ZwSetEaFile.
                     for value in (b"1", b""):
                         raw = b"\0\0\0\0\0\x08"+len(value).to_bytes(2, "little")+b"BANTO_B1\0"+value
                         buf, status = C.create_string_buffer(raw), _IoStatus()
                         _need(api.n.NtSetEaFile(bound.handle, C.byref(status), buf, len(raw)) == 0, "ea_write")
-                finally:
-                    bound.close()
             attempt(label+"_attributes", attributes)
             attempt(label+"_ea", ea)
         if mode == "control":
@@ -1340,10 +1333,8 @@ def _operations(api, root, user, ledger):
                     bound = _Bound(api, new, directory=False, access=0x20083, creation=1, sd=sd)
                 finally:
                     api.k.LocalFree(sd)
-                try:
+                with _Closing(bound.close):
                     bound.write(b"transient\n")
-                finally:
-                    bound.close()
             attempt("add_file", create_control)
             attempt("delete", lambda: delete(new))
             new = directory/"transient-dir"
@@ -1378,7 +1369,7 @@ def _operations(api, root, user, ledger):
             for name in ("control", "control/data.bin"):
                 expected = ledger[name]["identity"]
                 bound = _Bound(api, root/name, directory=expected["directory"], access=0x180)
-                try:
+                with _Closing(bound.close):
                     observed = dict(bound.identity)
                     _need(observed["attributes"] & ~32 == expected["attributes"] & ~32, "control_attributes_drift")
                     observed["attributes"] = expected["attributes"]
@@ -1388,6 +1379,4 @@ def _operations(api, root, user, ledger):
                     api.call(api.k.SetFileInformationByHandle(bound.handle, 0, C.byref(basic), C.sizeof(basic)), "control_attributes_restore")
                     bound.identity = dict(expected)
                     bound.check()
-                finally:
-                    bound.close()
     return result

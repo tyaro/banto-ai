@@ -49,7 +49,7 @@ class PureWindowsControls(unittest.TestCase):
         self.assertEqual(bound.api.close.call_count, 2)
         self.assertTrue(all(call.args == (77,) for call in bound.api.close.call_args_list))
 
-    def test_bound_finally_cannot_mask_active_memory_error(self):
+    def test_bound_close_preserves_explicit_local_memory_error(self):
         bound = object.__new__(w._Bound)
         bound.handle, bound.api = 77, Mock()
         bound.api.close.side_effect = OSError("DUMMY_SECRET")
@@ -57,8 +57,9 @@ class PureWindowsControls(unittest.TestCase):
         with self.assertRaises(MemoryError) as caught:
             try:
                 raise primary
-            finally:
-                bound.close()
+            except MemoryError as local:
+                bound.close(primary=local)
+                raise
         self.assertIs(caught.exception, primary)
         self.assertEqual(bound.handle, 77)
         self.assertEqual(primary.teardown.report()["reasons"], ["bound_handle_close"])
@@ -75,7 +76,7 @@ class PureWindowsControls(unittest.TestCase):
         self.assertEqual(caught.exception.reason, "owned_teardown_failed")
         self.assertEqual(fixture.guards, [guards[1], guards[3]])
         for guard in guards:
-            guard.close.assert_called_once_with(_preserve=False)
+            guard.close.assert_called_once_with()
         self.assertEqual(fixture.teardown.count, 2)
         self.assertEqual(fixture.teardown.report()["first_reason"], "fixture_guard_close")
 
@@ -125,7 +126,7 @@ class PureWindowsControls(unittest.TestCase):
         self.assertIsNone(result["retained_exists"])
 
     def test_harness_pending_success_is_decided_after_all_owned_teardown(self):
-        for failure in (None, "handle", "memory"):
+        for failure in (None, "handle", "memory", "bound_os", "bound_memory"):
             api, fixture = Mock(), Mock()
             parent, child = parent_profile(), restricted_profile()
             api.profile.side_effect = [parent, child, child, {**child, "type": 2}, child, parent]
@@ -139,6 +140,17 @@ class PureWindowsControls(unittest.TestCase):
             fixture.root, fixture.ledger = Path("owned")/(w._PREFIX+"0"*32), {}
             if failure == "memory":
                 fixture.close.side_effect = MemoryError()
+            guard = None
+            if failure in ("bound_os", "bound_memory"):
+                fixture = w._Fixture(api, "user")
+                fixture.root = Path("owned")/(w._PREFIX+"0"*32)
+                for name in ("create", "freeze", "file", "record", "check", "cleanup"):
+                    setattr(fixture, name, Mock())
+                guard = object.__new__(w._Bound)
+                guard.api, guard.handle = Mock(), 77
+                guard.api.close.side_effect = OSError("DUMMY_SECRET") if failure == "bound_os" else MemoryError()
+                fixture.guards = [guard]
+                fixture.close = Mock(wraps=fixture.close)  # Real Fixture and Bound close.
             process = SimpleNamespace(process=1, thread=2, pid=99)
             report = Mock(read=Mock(return_value=b"{}"))
             with self.subTest(failure=failure), patch.object(w, "_api", return_value=api), \
@@ -148,7 +160,11 @@ class PureWindowsControls(unittest.TestCase):
                  patch.object(w, "_Bound", return_value=report), patch.object(w, "_verify_report"), \
                  patch.object(Path, "exists", side_effect=AssertionError), patch.object(Path, "stat", side_effect=AssertionError), \
                  patch.object(Path, "iterdir", side_effect=AssertionError), patch.object(Path, "read_bytes", side_effect=AssertionError):
-                result = w.run_control_harness()
+                try:
+                    raise ValueError("unrelated outer exception")
+                except ValueError as ambient:
+                    result = w.run_control_harness()
+                    self.assertFalse(hasattr(ambient, "teardown"))
             fixture.cleanup.assert_called_once()
             fixture.close.assert_called_once()
             self.assertEqual(api.k.CloseHandle.call_count, 6)
@@ -156,8 +172,126 @@ class PureWindowsControls(unittest.TestCase):
             self.assertFalse(result["native_accepted"])
             if failure:
                 self.assertEqual(result["reason"], "owned_teardown_failed")
+                if guard is not None:
+                    self.assertEqual(guard.handle, 77)
+                    self.assertEqual(fixture.guards, [guard])
+                    self.assertIs(fixture.close.call_args.kwargs["teardown"], fixture.teardown)
+                    self.assertEqual(result["teardown"]["failure_count"], 1)
             else:
                 self.assertNotIn("teardown", result)
+
+    def test_collectorless_closes_raise_inside_unrelated_outer_except(self):
+        for failure in (OSError("DUMMY_SECRET"), MemoryError()):
+            api = object.__new__(w._Win)
+            api.k = Mock()
+            api.k.CloseHandle.side_effect = failure
+            bound = object.__new__(w._Bound)
+            bound.api, bound.handle = api, 77
+            fixture = w._Fixture(api, "user")
+            fixture.guards = [bound]
+            for close in (lambda: api.close(77), bound.close, fixture.close):
+                try:
+                    raise ValueError("unrelated outer exception")
+                except ValueError as ambient:
+                    with self.assertRaises(w._Failure):
+                        close()
+                    self.assertFalse(hasattr(ambient, "teardown"))
+                self.assertEqual(bound.handle, 77)
+            self.assertEqual(fixture.guards, [bound])
+
+    def test_bound_constructor_preserves_its_local_primary_not_outer_exception(self):
+        api, primary = Mock(), MemoryError()
+        api.k.CreateFileW.return_value = 77
+        api.close.side_effect = OSError("DUMMY_SECRET")
+        with patch.object(w, "_lexical"), patch.object(w._Bound, "observe", side_effect=primary):
+            try:
+                raise ValueError("unrelated outer exception")
+            except ValueError as ambient:
+                with self.assertRaises(MemoryError) as caught:
+                    w._Bound(api, Path("owned"), directory=False)
+                self.assertIs(caught.exception, primary)
+                self.assertFalse(hasattr(ambient, "teardown"))
+        self.assertEqual(primary.teardown.count, 1)
+
+    def test_cleanup_root_guard_is_not_popped_when_close_is_unconfirmed(self):
+        api = Mock()
+        fixture = w._Fixture(api, "user")
+        fixture.root = Path("owned")
+        fixture.check = Mock()
+        identity = {"directory": True}
+        fixture.ledger = {"": {"identity": identity, "sd": {}, "bytes": 0}}
+        guard = object.__new__(w._Bound)
+        guard.path, guard.api, guard.handle = fixture.root, Mock(), 77
+        guard.api.close.side_effect = OSError("DUMMY_SECRET")
+        fixture.guards = [guard]
+        restore = Mock(identity=identity, directory=True)
+        with patch.object(w, "_Bound", return_value=restore), patch.object(w, "_verify_sd"), \
+             patch.object(Path, "exists", side_effect=AssertionError), patch.object(Path, "iterdir", side_effect=AssertionError):
+            try:
+                raise ValueError("unrelated outer exception")
+            except ValueError as ambient:
+                with self.assertRaises(w._Failure):
+                    fixture.cleanup()
+                self.assertFalse(hasattr(ambient, "teardown"))
+        self.assertEqual(fixture.guards, [guard])
+        self.assertEqual(guard.handle, 77)
+        api.k.SetFileInformationByHandle.assert_not_called()
+
+    def test_child_teardown_attempts_all_guards_and_tokens_with_explicit_primary(self):
+        for primary in (None, MemoryError()):
+            api, guards, teardown = Mock(), [Mock(), Mock(), Mock()], w._Teardown()
+            guards[-1].close.side_effect = OSError("DUMMY_SECRET")
+            api.close.side_effect = [OSError("DUMMY_SECRET"), None]
+            try:
+                raise ValueError("unrelated outer exception")
+            except ValueError as ambient:
+                if primary is None:
+                    with self.assertRaises(w._Failure) as caught:
+                        w._child_teardown(api, guards, (11, 22), primary, teardown)
+                    self.assertEqual(caught.exception.reason, "owned_teardown_failed")
+                else:
+                    w._child_teardown(api, guards, (11, 22), primary, teardown)
+                    self.assertIs(primary.teardown, teardown)
+                self.assertFalse(hasattr(ambient, "teardown"))
+            self.assertEqual(teardown.count, 2)
+            for guard in guards:
+                guard.close.assert_called_once_with()
+            self.assertEqual([call.args for call in api.close.call_args_list], [(11,), (22,)])
+
+    def test_child_main_preserves_local_memory_error_and_closes_every_guard(self):
+        api, primary, guards = Mock(), MemoryError(), []
+        api.token.return_value = 11
+        api.close.side_effect = OSError("DUMMY_SECRET")
+        request = Mock()
+        request.read.side_effect = primary
+        request.close.side_effect = OSError("DUMMY_SECRET")
+        root = Path("owned")/(w._PREFIX+"0"*32)
+        def bind(api, path, **kwargs):
+            if kwargs["directory"]:
+                guard = Mock()
+                guard.close.side_effect = OSError("DUMMY_SECRET")
+                guards.append(guard)
+                return guard
+            return request
+        with patch.object(w, "_api", return_value=api), patch.object(w, "_runtime"), \
+             patch.object(w, "_temporary_path", return_value=root.parent), patch.object(w, "_Bound", side_effect=bind), \
+             patch.object(Path, "exists", side_effect=AssertionError), patch.object(Path, "stat", side_effect=AssertionError), \
+             patch.object(Path, "read_bytes", side_effect=AssertionError), patch.object(Path, "iterdir", side_effect=AssertionError):
+            try:
+                raise ValueError("unrelated outer exception")
+            except ValueError as ambient:
+                with self.assertRaises(MemoryError) as caught:
+                    w._child_main(root)
+                self.assertIs(caught.exception, primary)
+                self.assertFalse(hasattr(ambient, "teardown"))
+        self.assertEqual(primary.teardown.count, len(guards)+2)
+        api.close.assert_called_once_with(11)
+        request.close.assert_called_once_with()
+        for guard in guards:
+            guard.close.assert_called_once_with()
+
+    def test_no_ambient_exception_dependency_in_close_implementation(self):
+        self.assertNotIn("sys.exception", w._SOURCE.read_text(encoding="utf-8"))
 
     def test_all_primary_resource_reasons_survive_source_guard_failures(self):
         for reason in w._RESOURCE_REASONS:
@@ -175,8 +309,8 @@ class PureWindowsControls(unittest.TestCase):
             self.assertEqual(primary.reason, reason)
             self.assertTrue(primary.teardown.resource_stop)
             self.assertEqual(primary.teardown.count, 2)
-            file.close.assert_called_once_with(_preserve=False)
-            guard.close.assert_called_once_with(_preserve=False)
+            file.close.assert_called_once_with()
+            guard.close.assert_called_once_with()
 
     def test_streaming_source_memory_error_preserved_after_guard_close_errors(self):
         api, file, guard = Mock(), Mock(handle=9), Mock()
@@ -191,8 +325,8 @@ class PureWindowsControls(unittest.TestCase):
         self.assertEqual(primary.teardown.count, 2)
         api.k.ReadFile.assert_called_once()
         file.check.assert_not_called()
-        file.close.assert_called_once_with(_preserve=False)
-        guard.close.assert_called_once_with(_preserve=False)
+        file.close.assert_called_once_with()
+        guard.close.assert_called_once_with()
 
     def test_compound_resource_failure_preserved_across_all_teardown_layers(self):
         for overflow in (False, True):
@@ -244,7 +378,7 @@ class PureWindowsControls(unittest.TestCase):
             self.assertNotIn("DUMMY", json.dumps(report))
             self.assertEqual(api.k.CloseHandle.call_count, 2)
             for item in (file, guard, *fixture_guards):
-                item.close.assert_called_once_with(_preserve=False)
+                item.close.assert_called_once_with()
             process.kill.assert_called_once()
             process.wait.assert_called_once()
             process.stdout.close.assert_called_once()
@@ -542,7 +676,7 @@ class PureWindowsControls(unittest.TestCase):
                 self.assertEqual(api.mock_calls, [])
                 fixture.close()
                 for guard in opened:
-                    guard.close.assert_called_once_with(_preserve=False)
+                    guard.close.assert_called_once_with()
 
     def test_repository_and_formal_temp_candidates_reject_before_root_creation(self):
         for suffix in ("", "artifacts/anomaly-multiseed-v03-holdout", "artifacts/anomaly-multiseed-v03-audit"):
