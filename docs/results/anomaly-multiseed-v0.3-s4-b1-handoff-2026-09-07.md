@@ -292,3 +292,14 @@ D2 inventory1件がpass。詳細・制約は[設計書の最新節](../anomaly-v
 清掃開始後の部分失敗とcontrol結果の保持は接続したが、置換操作の途中identity traceは未接続である。
 独立レビューも未実施で、cleanup/evidence P2全体の解消とは判定しない。
 restricted-child再実行、追加DLL probe、B2、正式試験、main merge/pushは未実施。全gateはnoを保持する。
+
+## 13. 2026-09-07 置換trace checkpoint
+
+`8cc67c6`から、source/置換先の操作前snapshotと6段階のbounded JSONL traceを追加した。
+native追記、child/parent protocol `b1.2`、private raw evidence保持、resource exit後の回収抑止まで接続した。
+93 pure/fault＋same-parent native2件＋D2 inventory1件がpass。
+既存成果物・6 failure roots・formal領域は不変。詳細は[設計書の最新節](../anomaly-v03-cleanup-evidence-design.md)を参照。
+
+§12で未接続だった置換traceは候補実装済みになった。ただし独立レビューとrestricted-child E2Eは未実施で、
+cleanup/evidence P2の監査済み解消とは扱わない。起動障害の追加probe、main統合、正式試験は未実施。
+次は候補の独立レビューと、別savepointでのchild起動障害の切り分けである。全gateは引き続きno。

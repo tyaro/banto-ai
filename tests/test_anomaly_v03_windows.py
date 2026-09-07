@@ -267,6 +267,7 @@ class PureWindowsControls(unittest.TestCase):
                  patch.object(w, "_runtime", return_value={}), patch.object(w, "_source_pin", return_value=[]), \
                  patch.object(w, "_Fixture", return_value=fixture), patch.object(w, "_start", return_value=process), \
                  patch.object(w, "_process_identity", return_value={"pid": 99}), patch.object(w, "_access_matrix", return_value={}), \
+                 patch.object(w, "_capture_replace_trace"), \
                  patch.object(w, "_Bound", return_value=report), patch.object(w, "_verify_report"), \
                  patch.object(Path, "exists", side_effect=AssertionError), patch.object(Path, "stat", side_effect=AssertionError), \
                  patch.object(Path, "iterdir", side_effect=AssertionError), patch.object(Path, "read_bytes", side_effect=AssertionError):
@@ -541,15 +542,15 @@ class PureWindowsControls(unittest.TestCase):
     def test_replace_control_requires_existing_owned_destination_and_restores_source(self):
         for fail in (False, True, "no_op"):
             root, raw = Path("owned"), b"B1-control\n"
-            original = {"file_id": "source"}
-            ledger = {"control/data.bin": {"identity": original, "sha256": w._sha(raw), "bytes": len(raw)}}
+            original = {"file_id": "source", "directory": False, "volume": 1}
+            ledger = {"control/data.bin": {"identity": original, "sd": {}, "sha256": w._sha(raw), "bytes": len(raw)}}
             initial = deepcopy(ledger)
             state = {"control/data.bin": (original, raw)}
             def create(owned, name, data, mode):
                 self.assertNotIn(name, state)
                 self.assertIs(owned.ledger, ledger)
-                state[name] = ({"file_id": "destination"}, data)
-                ledger[name] = {"identity": state[name][0], "sha256": w._sha(data), "bytes": len(data)}
+                state[name] = ({"file_id": "destination", "directory": False, "volume": 1}, data)
+                ledger[name] = {"identity": state[name][0], "sd": {}, "sha256": w._sha(data), "bytes": len(data)}
             def bind(api, path, **kwargs):
                 identity, data = state[path.relative_to(root).as_posix()]
                 return Mock(identity=identity, read=Mock(return_value=data))
@@ -568,12 +569,19 @@ class PureWindowsControls(unittest.TestCase):
                 state["control/data.bin"] = state.pop("control/replaced.bin")
                 return True
             api = Mock()
+            api.security.return_value = {}
             api.call.side_effect = lambda ok, reason: w._need(ok, reason)
             api.k.MoveFileExW.side_effect = replace
             api.k.MoveFileW.side_effect = restore
+            def lstat(path):
+                if path.relative_to(root).as_posix() not in state:
+                    error = FileNotFoundError()
+                    error.winerror = 2
+                    raise error
+                return object()
             with self.subTest(fail=fail), patch.object(w._Fixture, "file", create), \
                  patch.object(w, "_Bound", side_effect=bind), \
-                 patch.object(Path, "exists", autospec=True, side_effect=lambda p: p.relative_to(root).as_posix() in state):
+                 patch.object(Path, "lstat", autospec=True, side_effect=lstat):
                 if fail:
                     with self.assertRaises(w._Failure):
                         w._replace_control(api, root, "user", ledger)
@@ -937,11 +945,11 @@ class PureWindowsControls(unittest.TestCase):
 
     def test_ipc_replay_pid_profile_and_source_spoof_fail(self):
         identity, profile, access, source = {"pid": 11}, restricted_profile(), {}, []
-        report = dict(version="b1.1", nonce="nonce", request_sha256="digest", identity=identity, profile=profile,
+        report = dict(version="b1.2", nonce="nonce", request_sha256="digest", identity=identity, profile=profile,
                       source=source, access=access, operations=w._expected_operations(), no_impersonation=True,
                       isolated=True, no_bytecode=True, inherited_handles=False)
         w._verify_report(report, identity, "nonce", "digest", profile, access, source)
-        for change in ({"nonce": "replay"}, {"request_sha256": "wrong"}, {"identity": {"pid": 12}},
+        for change in ({"version": "b1.1"}, {"nonce": "replay"}, {"request_sha256": "wrong"}, {"identity": {"pid": 12}},
                        {"profile": {}}, {"source": ["spoof"]}, {"access": {"wrong": 0}},
                        {"inherited_handles": True}, {"operations": {}}, {"new_key": 1}):
             with self.subTest(change=change), self.assertRaises(w._Failure):

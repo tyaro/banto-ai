@@ -2,10 +2,10 @@
 
 日付: 2026-09-07
 
-状態: **candidate / native cleanup adapter tested / independent audit pending**
+状態: **candidate / cleanup + replacement trace tested / independent audit pending**
 
-最新状態: `068e45b`のprototypeからnative snapshot captureとcleanupへ接続した。
-81 pure/fault＋same-parent Windows native 1件がpass。詳細は末尾の「native接続checkpoint」を参照。
+最新状態: `8cc67c6`のnative cleanupに、置換操作の事前snapshotと追記trace、child/parent接続を追加した。
+93 pure/fault＋same-parent Windows native 2件がpass。最新節「置換trace checkpoint」を参照。
 以下のprototype節は`068e45b`時点の設計・実測を保持する。cleanup/evidence全体のP2解消、
 独立監査、restricted-child E2E、main統合、正式受入は主張しない。
 
@@ -189,3 +189,84 @@ safe resultとprivate evidenceの寿命を検証する。mock成功をnative受�
 
 したがってcleanup/evidence P2全体は未解消、B1未完了、main統合不可、formal permissionなしを維持する。
 次はこのnative adapterの独立レビューと、置換操作の証拠記録を別の限定変更として扱う。
+
+## 2026-09-07 置換trace checkpoint
+
+基準は `8cc67c67888421a2f30365276d8abc23be9e96cd`。
+`_replace_control()` の上書きで消える置換先を、操作後のfilesystemから再構成することはできない。
+そこでsourceと置換先のidentity/SD/実bytesを先に保存し、次の6段階をbounded JSONLへ追記する。
+
+| stage | 保存する情報・状態 |
+| --- | --- |
+| create_pending | 検証済みsourceの完全snapshot。置換先の新規作成前に書く |
+| target_captured | 実際に新規作成した置換先の完全snapshot |
+| replace_pending | 上書き操作の直前。実行済みとは解釈しない |
+| replaced | sourceが置換先へ移動し、元source名が消失したことを確認済み |
+| restore_pending | source名へ戻す操作の直前。位置は未確認として扱う |
+| restored | sourceのidentity/SD/contentが元どおりで、置換先名の消失も確認済み |
+
+### 記録と検証
+
+最大6 records / 合計128 KiB。各recordにversion、sequence、nonce、前recordのraw SHA-256を含める。
+canonical JSON＋改行で追記し、native sinkのWriteFile/FlushFileBuffers/identity checkが成功するまで
+次のmutationへ進まない。例外handlerでは追記、再読込、hash、serialization、repairを行わない。
+
+末尾の改行がないrecordは未確認のtailとして扱い、完全prefixだけを検証する。
+完全なintent recordが読めてもAPIが実行されたとは限らない。例えばflush/check失敗時には
+intentが残ってもmutationを始めないため、pending段階は常にuncertainとする。
+これを含め、source位置と元置換先の残存/消費状態をsafe summaryへ分けて返す。
+その状態は固定producerとtraceに基づく推定であり、fresh filesystem inventoryではない。
+
+sourceは元のparent ledgerのidentity/SD/hash/bytesと一致させる。置換先は固定content、
+sourceと同じmetadata型・volume・属性・権限、別の128-bit file IDを要求する。
+順序、nonce、hash chain、strict型、未知field、snapshot content/hash、旧identityへの偽装を検査する。
+nonceやhash chainはowner/管理者に対する署名や改変防止を提供するものではない。
+
+### child / parentへの接続
+
+- parentが専用fixture内の固定 `control/replace-trace.jsonl` をexclusive createし、identity/SDをpinする。
+  childはその空fileへ保持handleで追記する。新たなrepository/artifact/publication先は作らない。
+- private protocolを `b1.2` とし、旧 `b1.1` reportは拒否する。parent/child source 2本のraw pinは維持する。
+- child終了を確認したparentは、成功なら完全6 recordsを必須にする。通常のchild失敗時は有効prefixを
+  read-onlyで回収する。writer fileのidentity/SDを照合し、完全traceを検証した場合だけ、そのfileの
+  content hash/byte countをparent ledgerへ反映する。未知objectの採用やACL変更は行わない。
+- `_ControlOutcome.private_replace_evidence` がraw bytesをclose/parse前から保持する。
+  parseやcloseに失敗しても取得済みraw bytesは捨てず、総合statusはfailedのままにする。
+  公開mapping/reprにはraw SD/SID/contentを出さず、safe summaryだけを含める。
+- 完全traceのhashをprivate control evidenceへ含め、清掃前snapshotにはtrace file自体の実bytesも保存する。
+  清掃後に置換先の実fileがなくても、操作前snapshotと段階記録がresultの寿命まで残る。
+- childのresource failureは専用exit 80へ写し、parentは`child_resource_stop`としてfilesystem再読込をしない。
+  timeout、未終了child、resource stop時には回収を追加せず、既に書いたprefixをfixture内に残す。
+  通常child failure後のtrace回収にも失敗した場合は、元のchild failureを診断エラーで上書きしない。
+
+### 検証結果
+
+| 対象 | 結果 |
+| --- | --- |
+| 置換trace pure/fault 12＋既存81 | 93/93 pass、0.227秒 |
+| 同一parent内の実Win32 trace/operation/cleanup＋既存native cleanup | 2/2 pass、0.539秒 |
+| D2 current-only exact inventory | 1/1 pass、4.377秒 |
+| in-memory compile | 5 files pass |
+| repository safety / diff-check | pass |
+| required restricted-child E2E / Windows 3.12 / full suite | 未実施 |
+
+[置換trace試験](../tests/test_anomaly_v03_replace_trace.py) は、各mutation後の停止、追記/flush失敗、
+途中record、偽snapshotと再計算済みchain、resource停止後のIO禁止、raw evidence保持、旧protocol拒否、
+child wrapperのresource exitとparentの回収抑止を検証した。wrapper試験は`_child_main`をmockし、
+制限付きprocessは起動していない。
+
+実Windowsでは保持handleへの追記を全operation controlsと組み合わせ、parent相当のraw読取・pin/trace検証、
+7 objectsのexact cleanup、trace bytesを含むprivate snapshotの保持を確認した。
+これは同一parentの試験であり、restricted child経由のE2E合格ではない。
+
+前後inventoryは5,763 entries / 592,342,788 bytes / 6 failure rootsで不変。
+raw hash/attributes/SDDLを含むdigestも
+`0ae21dd53bd4f5a6994d720e019386e50ce4437c9cccf9b883d380b6f0964aa7`のまま。
+新しいfailure rootは残らず、main/candidateのformal 5 rootも全て不存在。
+
+### 残件
+
+置換traceの候補実装と同一parentでの限定検証まで完了した。独立レビューとrestricted-child E2Eは未完了。
+したがって、cleanup/evidence P2全体の監査済み解消、B1完了、main統合、S4受入はまだ主張しない。
+`0xC0000142`の追加probe、tokenの弱化、required testのskip化、formal runは行っていない。
+全gateはnoを維持する。

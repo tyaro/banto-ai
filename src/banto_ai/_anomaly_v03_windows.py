@@ -29,6 +29,10 @@ __all__ = ["run_control_harness"]
 _PREFIX = "banto-s4-b1-"
 _LIMIT = 1024 * 1024
 _MEMORY_LIMIT = 512 * 1024 * 1024
+_REPLACE_TRACE_NAME = "control/replace-trace.jsonl"
+_REPLACE_TRACE_LIMIT = 128 * 1024
+_CHILD_RESOURCE_EXIT = 80
+_REPLACE_STAGES = ("create_pending", "target_captured", "replace_pending", "replaced", "restore_pending", "restored")
 _FILE_RIGHTS = {"write": 2, "append": 4, "write_ea": 16, "write_attributes": 256, "delete": 65536}
 _DIR_RIGHTS = {"add_file": 2, "add_subdirectory": 4, "write_ea": 16,
                "write_attributes": 256, "delete": 65536, "delete_child": 64}
@@ -60,7 +64,7 @@ def _need(ok, reason):
         raise _Failure(reason)
 
 
-_RESOURCE_REASONS = ("memory_budget", "source_size", "source_index_size", "file_size")
+_RESOURCE_REASONS = ("memory_budget", "source_size", "source_index_size", "file_size", "child_resource_stop")
 
 
 def _resource_stop(error):
@@ -1370,6 +1374,7 @@ class _ControlOutcome(dict):
         super().__init__()
         self.private_evidence = None
         self.private_control_evidence = None
+        self.private_replace_evidence = None
 
 
 def _finish_outcome(outcome, primary, teardown):
@@ -1398,6 +1403,7 @@ def run_control_harness():
     peaks = None
     outcome, primary, teardown = None, None, _Teardown()
     result, control_status = _ControlOutcome(), "not_completed"
+    trace_teardown = _Teardown()
     try:
         api = _api()
         runtime, source = _runtime(), _source_pin()
@@ -1409,8 +1415,9 @@ def run_control_harness():
         fixture = _Fixture(api, parent_profile["user"][0])
         fixture.create()
         fixture.freeze()
+        fixture.file(_REPLACE_TRACE_NAME, b"", "control")
         nonce = uuid.uuid4().hex
-        request = {"version": "b1.1", "nonce": nonce, "objects": fixture.ledger,
+        request = {"version": "b1.2", "nonce": nonce, "objects": fixture.ledger,
                    "parent": parent_profile, "restricted": restricted_profile, "source": source}
         request_raw = _canonical(request)
         fixture.file("control/request.json", request_raw, "private")
@@ -1441,7 +1448,16 @@ def run_control_harness():
         code = D()
         api.call(api.k.GetExitCodeProcess(process.process, C.byref(code)), "child_exit_query")
         if code.value:
-            raise _Failure("child_failed", child_exit_code=code.value)
+            child_failure = _Failure("child_resource_stop" if code.value == _CHILD_RESOURCE_EXIT else "child_failed",
+                                     child_exit_code=code.value)
+            if not _resource_stop(child_failure):
+                try:
+                    _capture_replace_trace(api, fixture, result, nonce, complete=False)
+                except BaseException as error:
+                    trace_teardown.record("replace_trace_capture", error)
+                    _preserve_teardown(child_failure, trace_teardown)
+            raise child_failure
+        _capture_replace_trace(api, fixture, result, nonce, complete=True)
         _need(api.profile(actual) == actual_profile and api.profile(parent) == parent_profile, "token_drift")
         report_handle = _Bound(api, fixture.path("control/report.json"), directory=False)
         with _Closing(report_handle.close):
@@ -1455,7 +1471,7 @@ def run_control_harness():
                     "parent_profile": parent_profile, "child_os_identity": identity, "child_profile": actual_profile,
                     "duplicate_profile": duplicate_profile, "access": parent_access, "child_report": report,
                     "fixture_basename": fixture.root.name, "fixture_bytes": sum(x["bytes"] for x in fixture.ledger.values()),
-                    "resources": peaks}
+                    "resources": peaks, "replace_trace": result.get("replace_trace")}
         control_status = "pass"
         result.private_control_evidence = _canonical(evidence)
         fixture.cleanup(operations=result.private_control_evidence)
@@ -1472,7 +1488,7 @@ def run_control_harness():
                     "retained_basename": fixture.root.name if fixture and fixture.root else None,
                     "retained_exists": None, "retained_existence": "unverified",
                     "known_bytes": sum(x["bytes"] for x in fixture.ledger.values()) if fixture else 0,
-                    "child_exit_code": None, "resources": peaks,
+                    "child_exit_code": exc.child_exit_code if type(exc) is _Failure else None, "resources": peaks,
                     "elapsed_seconds": time.monotonic()-started}
         else:
             outcome = {**_result_status(), "status": "failed", "reason": reason, "winerror": error,
@@ -1529,7 +1545,7 @@ def _check_access(row, mask, allowed):
 
 def _verify_report(report, identity, nonce, request_sha, profile, access, source):
     _need(set(report) == {"version", "nonce", "request_sha256", "identity", "profile", "source", "access", "operations", "no_impersonation", "isolated", "no_bytecode", "inherited_handles"}, "report_shape")
-    _need(report["version"] == "b1.1" and report["nonce"] == nonce and report["request_sha256"] == request_sha, "report_replay")
+    _need(report["version"] == "b1.2" and report["nonce"] == nonce and report["request_sha256"] == request_sha, "report_replay")
     _need(_canonical(report["identity"]) == _canonical(identity) and _canonical(report["profile"]) == _canonical(profile)
           and _canonical(report["source"]) == _canonical(source), "report_provenance")
     _need(_canonical(report["access"]) == _canonical(access) and report["no_impersonation"] is True and report["isolated"] is True
@@ -1572,7 +1588,7 @@ def _child_main(root):
             raw = request_handle.read()
         request = _json(raw)
         _need(set(request) == {"version", "nonce", "objects", "parent", "restricted", "source"}
-              and request["version"] == "b1.1" and re.fullmatch(r"[0-9a-f]{32}", request["nonce"]), "request_shape")
+              and request["version"] == "b1.2" and re.fullmatch(r"[0-9a-f]{32}", request["nonce"]), "request_shape")
         profile = api.profile(primary)
         _validate_restricted(request["parent"], profile)
         _need(_shape(profile) == _shape(request["restricted"]), "child_profile")
@@ -1582,11 +1598,18 @@ def _child_main(root):
             _need(descriptor == {"path": path.relative_to(_ROOT).as_posix(), "sha256": digest, "bytes": count}, "child_source")
         duplicate = api.impersonation(primary)
         access = _access_matrix(api, root, request["objects"], duplicate)
-        operations = _operations(api, root, profile["user"][0], request["objects"])
+        trace_handle = _Bound(api, root/_REPLACE_TRACE_NAME, directory=False, access=0x20083, share=1)
+        guards.append(trace_handle)  # Retain ownership even if its later close fails.
+        trace_row = request["objects"][_REPLACE_TRACE_NAME]
+        _need(trace_handle.identity == trace_row["identity"] and api.security(trace_handle.handle) == trace_row["sd"]
+              and trace_handle.read() == b"", "replace_trace_initial")
+        trace_handle.streams()
+        trace = _ReplaceTrace(request["nonce"], trace_handle.write)
+        operations = _operations(api, root, profile["user"][0], request["objects"], replace_trace=trace)
         _need(api.profile(primary) == profile, "child_token_drift")
         api.no_impersonation()
         _need(all(api.k.GetStdHandle(value & 0xffffffff) in (None, C.c_void_p(-1).value) for value in (-10, -11, -12)), "child_standard_handles")
-        report = {"version": "b1.1", "nonce": request["nonce"], "request_sha256": _sha(raw),
+        report = {"version": "b1.2", "nonce": request["nonce"], "request_sha256": _sha(raw),
                   "identity": _process_identity(api, api.k.GetCurrentProcess()), "profile": profile,
                   "source": request["source"], "access": access, "operations": operations,
                   "no_impersonation": True, "isolated": bool(sys.flags.isolated), "no_bytecode": sys.dont_write_bytecode,
@@ -1606,33 +1629,175 @@ def _child_main(root):
         _child_teardown(api, guards, (duplicate, primary), failure, teardown)
 
 
-def _replace_control(api, root, user, ledger):
+class _ReplaceTrace:
+    """Six bounded append records. Never writes from an exception handler.
+
+    Intent is flushed before the operation. A partial final record is not a
+    confirmation. Private records contain original bytes/SDs; repr is redacted.
+    """
+    def __init__(self, nonce, sink=None):
+        _need(type(nonce) is str and re.fullmatch(r"[0-9a-f]{32}", nonce), "replace_trace_nonce")
+        self.nonce, self.sink = nonce, sink
+        self.lines, self.count, self.size = [None] * len(_REPLACE_STAGES), 0, 0
+        self.previous, self.failed = "0" * 64, False
+        self.pending_record = None
+
+    def __repr__(self):
+        return "_ReplaceTrace(<private evidence>)"
+
+    def emit(self, stage, details):
+        _need(not self.failed and self.count < len(_REPLACE_STAGES)
+              and stage == _REPLACE_STAGES[self.count], "replace_trace_order")
+        raw = _canonical({"version": 1, "sequence": self.count, "nonce": self.nonce,
+                          "stage": stage, "previous_sha256": self.previous, "details": details}) + b"\n"
+        _need(self.size + len(raw) <= _REPLACE_TRACE_LIMIT, "file_size")
+        digest = _sha(raw)
+        self.pending_record = raw  # Before the sink; retained even on short write.
+        if self.sink is not None:
+            self.sink(raw)  # Native sink is WriteFile + FlushFileBuffers + identity check.
+        self.lines[self.count] = raw
+        self.count += 1
+        self.size += len(raw)
+        self.previous, self.pending_record = digest, None
+
+    def raw(self):
+        """Allocates; only call outside a resource-failure handler."""
+        return b"".join(self.lines[:self.count])
+
+
+def _replace_snapshot(api, path):
+    bound = _Bound(api, path, directory=False)
+    with _Closing(bound.close):
+        bound.streams()
+        raw = bound.read()
+        return {"identity": dict(bound.identity), "security": api.security(bound.handle),
+                "content_hex": raw.hex(), "bytes": len(raw), "sha256": _sha(raw)}
+
+
+def _replace_absent(path):
+    try:
+        path.lstat()
+    except FileNotFoundError as error:
+        _need(getattr(error, "winerror", 2) == 2, "replace_absence_error")
+        return
+    raise _Failure("replace_expected_absence")
+
+
+def _validate_replace_trace(raw, source_row, nonce, *, complete):
+    _need(type(nonce) is str and re.fullmatch(r"[0-9a-f]{32}", nonce)
+          and type(complete) is bool, "replace_trace_context")
+    _need(type(raw) is bytes and len(raw) <= _REPLACE_TRACE_LIMIT, "replace_trace_size")
+    rows, previous, size = [], "0" * 64, 0
+    tail = b""
+    for line in raw.splitlines(keepends=True):
+        if not line.endswith(b"\n"):
+            tail = line
+            break
+        _need(len(rows) < len(_REPLACE_STAGES), "replace_trace_count")
+        row = _json(line[:-1])
+        _need(type(row) is dict and set(row) == {"version", "sequence", "nonce", "stage", "previous_sha256", "details"}
+              and type(row["version"]) is int and row["version"] == 1
+              and type(row["sequence"]) is int and row["sequence"] == len(rows)
+              and row["nonce"] == nonce and row["stage"] == _REPLACE_STAGES[len(rows)]
+              and row["previous_sha256"] == previous, "replace_trace_record")
+        _need(type(row["details"]) is dict, "replace_trace_details")
+        if len(rows) < 2:
+            key = "source" if not rows else "target"
+            _need(set(row["details"]) == {key}, "replace_trace_snapshot")
+            snapshot = row["details"][key]
+            _need(type(snapshot) is dict and set(snapshot) == {"identity", "security", "content_hex", "bytes", "sha256"}, "replace_trace_snapshot")
+            value = snapshot["content_hex"]
+            _need(type(value) is str and len(value) % 2 == 0 and re.fullmatch(r"[0-9a-f]*", value), "replace_trace_content")
+            content = bytes.fromhex(value)
+            _need(type(snapshot["bytes"]) is int and snapshot["bytes"] == len(content)
+                  and snapshot["sha256"] == _sha(content), "replace_trace_content")
+            _need(type(snapshot["identity"]) is dict and snapshot["identity"].get("directory") is False
+                  and snapshot["security"] == source_row["sd"], "replace_trace_identity")
+            if not rows:
+                _need(snapshot["identity"] == source_row["identity"] and snapshot["bytes"] == source_row["bytes"]
+                      and snapshot["sha256"] == source_row["sha256"], "replace_trace_source")
+            else:
+                source_id, target_id = source_row["identity"], snapshot["identity"]
+                _need(set(target_id) == set(source_id)
+                      and all(type(target_id[key]) is type(source_id[key]) for key in source_id)
+                      and type(target_id.get("file_id")) is str and re.fullmatch(r"[0-9a-f]{32}", target_id["file_id"])
+                      and content == b"B1-replace-destination\n"
+                      and {**target_id, "file_id": source_id["file_id"]} == source_id
+                      and target_id["file_id"] != source_id["file_id"], "replace_trace_target")
+        else:
+            _need(row["details"] == {}, "replace_trace_details")
+        rows.append(row)
+        previous, size = _sha(line), size + len(line)
+    if complete:
+        _need(len(rows) == len(_REPLACE_STAGES) and not tail, "replace_trace_incomplete")
+    # These are inferences from the confirmed prefix under the fixed producer,
+    # not a fresh filesystem inventory. Pending records deliberately stay uncertain.
+    source_state = ("not_observed", "at_original", "at_original", "uncertain", "at_destination", "uncertain", "at_original")[len(rows)]
+    target_state = ("not_observed", "uncertain", "captured_present", "uncertain", "consumed", "consumed", "consumed")[len(rows)]
+    return {"status": "complete" if len(rows) == len(_REPLACE_STAGES) and not tail else "incomplete",
+            "confirmed_records": len(rows), "last_stage": rows[-1]["stage"] if rows else None,
+            "source_state": "uncertain" if tail else source_state,
+            "original_destination_state": "uncertain" if tail else target_state,
+            "complete_prefix_bytes": size, "unconfirmed_tail_bytes": len(tail), "sha256": _sha(raw),
+            "native_accepted": False}
+
+
+def _capture_replace_trace(api, fixture, result, nonce, *, complete):
+    row = fixture.ledger[_REPLACE_TRACE_NAME]
+    bound = _Bound(api, fixture.path(_REPLACE_TRACE_NAME), directory=False, share=1)
+    with _Closing(bound.close):
+        _need(bound.identity == row["identity"] and api.security(bound.handle) == row["sd"], "replace_trace_pin")
+        bound.streams()
+        raw = bound.read()
+        result.private_replace_evidence = raw  # Retain before close/parsing; invalid evidence is not discarded.
+    result["replace_trace"] = _validate_replace_trace(raw, fixture.ledger["control/data.bin"], nonce, complete=complete)
+    if complete:
+        # This is the one explicitly writable child evidence file. Identity/SD
+        # remain pinned; accept its content only after the entire trace validates.
+        row["sha256"], row["bytes"] = _sha(raw), len(raw)
+
+
+def _replace_control(api, root, user, ledger, trace=None):
     source_name, target_name = "control/data.bin", "control/replaced.bin"
     source, target = root/source_name, root/target_name
-    def snapshot(path):
-        bound = _Bound(api, path, directory=False)
-        with _Closing(bound.close):
-            return dict(bound.identity), bound.read()
-    before, raw = snapshot(source)
-    _need(before == ledger[source_name]["identity"] and _sha(raw) == ledger[source_name]["sha256"]
-          and len(raw) == ledger[source_name]["bytes"], "replace_source_pin")
-    _need(target_name not in ledger, "replace_target_collision")
-    # Register the CREATE_NEW destination in this existing owned ledger. It is
-    # not an external fixture, and failures must leave all involved objects alone.
-    owned = _Fixture(api, user)
-    owned.root, owned.ledger = root, ledger
-    owned.file(target_name, b"B1-replace-destination\n", "control")
-    target_before, target_raw = snapshot(target)
-    _need(target_before == ledger[target_name]["identity"] and target_before != before
-          and target_raw == b"B1-replace-destination\n" and target_raw != raw, "replace_target_pin")
-    api.call(api.k.MoveFileExW(str(source), str(target), 1), "mutation_api")
-    _need(snapshot(target) == (before, raw) and not source.exists(), "replace_readback")
-    api.call(api.k.MoveFileW(str(target), str(source)), "mutation_api")
-    _need(snapshot(source) == (before, raw) and not target.exists(), "replace_restore")
-    del ledger[target_name]  # Consumed target, only after fully verified success.
+    trace = _ReplaceTrace(uuid.uuid4().hex) if trace is None else trace
+    try:
+        before = _replace_snapshot(api, source)
+        source_row = ledger[source_name]
+        _need(before["identity"] == source_row["identity"] and before["security"] == source_row["sd"]
+              and before["sha256"] == source_row["sha256"] and before["bytes"] == source_row["bytes"], "replace_source_pin")
+        _need(target_name not in ledger, "replace_target_collision")
+        _replace_absent(target)
+        trace.emit("create_pending", {"source": before})
+        owned = _Fixture(api, user)
+        owned.root, owned.ledger = root, ledger
+        owned.file(target_name, b"B1-replace-destination\n", "control")
+        destination = _replace_snapshot(api, target)
+        _need(destination["identity"] == ledger[target_name]["identity"]
+              and destination["identity"].get("volume") == before["identity"].get("volume")
+              and destination["identity"].get("file_id") != before["identity"].get("file_id")
+              and destination["security"] == before["security"]
+              and destination["content_hex"] == b"B1-replace-destination\n".hex(), "replace_target_pin")
+        trace.emit("target_captured", {"target": destination})
+        trace.emit("replace_pending", {})
+        api.call(api.k.MoveFileExW(str(source), str(target), 1), "mutation_api")
+        _need(_replace_snapshot(api, target) == before, "replace_readback")
+        _replace_absent(source)
+        trace.emit("replaced", {})
+        trace.emit("restore_pending", {})
+        api.call(api.k.MoveFileW(str(target), str(source)), "mutation_api")
+        _need(_replace_snapshot(api, source) == before, "replace_restore")
+        _replace_absent(target)
+        trace.emit("restored", {})
+        del ledger[target_name]
+        return trace
+    except BaseException as error:
+        trace.failed = True
+        error.private_replace_evidence = trace  # No FS, hashes, serialization or repair after failure.
+        raise
 
 
-def _operations(api, root, user, ledger):
+def _operations(api, root, user, ledger, *, replace_trace=None):
     result = {mode: {"file_right_open": {}, "directory_right_open": {}, "mutation": {}} for mode in ("control", "frozen")}
     for mode in ("control", "frozen"):
         directory, file = root/mode, root/mode/"data.bin"
@@ -1654,13 +1819,13 @@ def _operations(api, root, user, ledger):
                 operation()
                 error = 0
             except OSError as exc:
-                if isinstance(getattr(exc, "teardown", None), _Teardown):
+                if isinstance(getattr(exc, "teardown", None), _Teardown) or isinstance(getattr(exc, "private_replace_evidence", None), _ReplaceTrace):
                     raise
                 error = getattr(exc, "winerror", 0)
             except _Failure as exc:
                 # Only a real CreateFile denial can be an expected negative;
                 # a failed native mutation/flush/query is NOT a passing denial.
-                if isinstance(getattr(exc, "teardown", None), _Teardown):
+                if isinstance(getattr(exc, "teardown", None), _Teardown) or isinstance(getattr(exc, "private_replace_evidence", None), _ReplaceTrace):
                     raise  # A denial never excuses unconfirmed handle release.
                 if exc.reason not in ("object_open", "mutation_api"):
                     raise
@@ -1728,7 +1893,7 @@ def _operations(api, root, user, ledger):
             attempt("truncate", lambda: write_data(truncate=True))
             attempt("rename", lambda: rename(file, directory/"renamed.bin"))
             rename(directory/"renamed.bin", file)
-            attempt("replace", lambda: _replace_control(api, root, user, ledger))
+            attempt("replace", lambda: _replace_control(api, root, user, ledger, replace_trace))
         else:
             attempt("write", write_data)
             attempt("append", lambda: write_data(append=True))

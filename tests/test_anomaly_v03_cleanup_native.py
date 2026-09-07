@@ -168,6 +168,7 @@ class CleanupAdapterTests(unittest.TestCase):
                  patch.object(w, "_runtime", return_value={}), patch.object(w, "_source_pin", return_value=[]), \
                  patch.object(w, "_Fixture", return_value=fixture), patch.object(w, "_start", return_value=process), \
                  patch.object(w, "_process_identity", return_value={"pid": 99}), patch.object(w, "_access_matrix", return_value={}), \
+                 patch.object(w, "_capture_replace_trace"), \
                  patch.object(w, "_Bound", return_value=report), patch.object(w, "_verify_report"), \
                  patch.object(Path, "exists", side_effect=AssertionError), patch.object(Path, "stat", side_effect=AssertionError), \
                  patch.object(Path, "iterdir", side_effect=AssertionError), patch.object(Path, "read_bytes", side_effect=AssertionError):
