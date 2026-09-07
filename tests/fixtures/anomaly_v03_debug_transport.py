@@ -102,6 +102,8 @@ class DebugEventTransport:
         self.pending = None
         self.state = "idle"
         self.resource_stop = False
+        self.wait_inflight = False
+        self.continue_inflight = False
         self.pid = None
 
     def __repr__(self):
@@ -129,17 +131,20 @@ class DebugEventTransport:
         # Retain the exact buffer before the OS can deliver any owned handles.
         self.pending = self.count
         self.state = "waiting"
+        self.wait_inflight = True
         try:
             ok = self.kernel.WaitForDebugEventEx(self.pointers[self.count], timeout_ms)
             if not ok:
                 code = self.last_error()
                 if code == 121:  # ERROR_SEM_TIMEOUT; no event was delivered.
                     self.pending, self.state = None, "idle"
+                    self.wait_inflight = False
                     return False
                 self.state = "wait_failed"
                 raise TransportError("debug_wait", code)
             self.count += 1
             self.state = "pending"
+            self.wait_inflight = False
             return True
         except BaseException as error:
             self.resource_stop |= isinstance(error, MemoryError)
@@ -213,11 +218,13 @@ class DebugEventTransport:
         need(self.file_closed[self.pending], "event_file_not_closed")
         status = DBG_NOT_HANDLED if event.kind == "exception" else DBG_CONTINUE
         self.state = "continue_attempted"
+        self.continue_inflight = True
         try:
             if not self.kernel.ContinueDebugEvent(event.pid, event.tid, status):
                 raise TransportError("debug_continue", self.last_error())
             self.pending = None
             self.state = "exit_continued" if event.kind == "exit_process" else "idle"
+            self.continue_inflight = False
         except BaseException as error:
             self.resource_stop |= isinstance(error, MemoryError)
             self.state = "continue_uncertain"
