@@ -294,3 +294,13 @@ private snapshotやcontrol evidenceを破棄しない。清掃がcompletedでも
 mock harnessで清掃失敗／成功とreport MemoryError／ValueErrorの組合せを検証した。
 resource停止済みならreportを呼ばない既存条件も確認した。関連pure/fault 94件、safetyがpass。
 同一parent nativeおよびrestricted childの追加起動は行っていない。独立レビューは未完了。
+
+## 2026-09-07 trace parserの厳密化
+
+source identityと両snapshotのsecurityはcanonical JSON bytesでpinと照合する。
+Pythonのdict等値だけではtrue／1／1.0の置換を見逃すため、nested fieldのJSON型も一致させる。
+record分割はLFに限定し、CRを含む未確認tailも全bytesを集計する。
+`complete_prefix_bytes + unconfirmed_tail_bytes`が入力全長と一致することを回帰試験で検証した。
+
+修正前の2テスト9 subcases失敗を確認し、修正後は関連96/96と同一parent実Win32 1/1がpass。
+制限付きchildの起動や独立レビューの代替とは扱わない。

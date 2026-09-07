@@ -333,3 +333,18 @@ mock harnessの回帰試験を6ケースへ拡張し、清掃failure＋report Me
 関連pure/fault 94件とrepository safetyがpass。実process・native mutationは今回は実行していない。
 独立レビュー、restricted-child起動障害、Windows 3.12、full suiteは残件で、全gateはnoを維持する。
 D2 current-only exact inventoryも1/1 pass（35.628秒）。
+
+## 16. 2026-09-07 trace parserの型・末尾境界修正
+
+`efc5a06`の自己点検で、trace snapshotの比較がPythonの等値判定に依存し、
+identity／nested security内のtrue・1・1.0を区別せず受理する経路を再現した。
+source identityと両snapshotのsecurityはcanonical JSON bytesで比較し、pinの型を厳密に維持する。
+またsplitlinesがCRでも分割するため、未確認tailのCR以降がbyte countから抜ける経路を再現した。
+record終端をLFだけに限定し、未確認tailの全bytesを保持・集計する。
+
+修正前は追加2テストの9 subcasesが失敗。修正後は関連pure/fault 96/96 pass（1.367秒）。
+同一parentの実Win32 trace／snapshot／cleanup試験1/1 pass（0.560秒）、repository safetyもpass。
+追加試験は偽snapshotのchainを再計算しており、hash chainだけに依存しない拒否を検証している。
+required restricted-child、Windows 3.12、full suite、独立レビューは未実施。全gateはnoを維持する。
+D2 exact inventory 1/1 pass（15.646秒）。既存成果物・失敗rootのinventoryは5,763 entries／
+592,342,788 bytes／6 failure rootsで不変、raw hash・属性・SDDLを含むdigestも既記録と一致した。

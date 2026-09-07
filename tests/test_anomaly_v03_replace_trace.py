@@ -230,6 +230,51 @@ class ReplacementTraceTests(unittest.TestCase):
         with self.assertRaises(w._Failure):
             trace.emit("create_pending", {})
 
+    def test_trace_snapshot_comparison_rejects_equal_valued_wrong_json_types(self):
+        model = ReplacementModel()
+        # Include nested numeric/bool security fields as present in native SDs.
+        model.sd.update(protected=True, mandatory_policy=1, aces=[[0, 0, 1, "DUMMY_SID"]])
+        model.source["security"] = deepcopy(model.sd)
+        model.state["control/data.bin"] = deepcopy(model.source)
+        model.ledger["control/data.bin"] = model.row(model.source)
+        model.run()
+        original = [json.loads(line) for line in bytes(model.raw).splitlines()]
+        mutations = ((0, ("identity", "volume"), True), (0, ("identity", "links"), 1.0),
+                     (0, ("identity", "attributes"), 32.0),
+                     (0, ("security", "protected"), 1), (1, ("security", "mandatory_policy"), True),
+                     (1, ("security", "aces", 0, 0), False))
+        for index, path, value in mutations:
+            rows = deepcopy(original)
+            snapshot = rows[index]["details"]["source" if index == 0 else "target"]
+            item = snapshot
+            for key in path[:-1]:
+                item = item[key]
+            item[path[-1]] = value
+            lines, previous = [], "0"*64
+            for row in rows:
+                row["previous_sha256"] = previous
+                line = w._canonical(row) + b"\n"
+                previous = w._sha(line)
+                lines.append(line)
+            with self.subTest(index=index, path=path), self.assertRaises(w._Failure):
+                w._validate_replace_trace(b"".join(lines), model.row(model.source), model.nonce, complete=True)
+
+    def test_unconfirmed_tail_counts_every_byte_including_carriage_returns(self):
+        model = ReplacementModel()
+        model.run()
+        prefix = bytes(model.raw).split(b"\n", 1)[0] + b"\n"
+        for tail in (b"\rignored", b'{"partial":\rhidden\rtail', b"\r"*64):
+            raw = prefix + tail
+            with self.subTest(tail=tail):
+                report = w._validate_replace_trace(raw, model.row(model.source), model.nonce, complete=False)
+                self.assertEqual(report["confirmed_records"], 1)
+                self.assertEqual(report["complete_prefix_bytes"], len(prefix))
+                self.assertEqual(report["unconfirmed_tail_bytes"], len(tail))
+                self.assertEqual(report["complete_prefix_bytes"] + report["unconfirmed_tail_bytes"], len(raw))
+                self.assertEqual(report["source_state"], "uncertain")
+                with self.assertRaises(w._Failure):
+                    w._validate_replace_trace(raw, model.row(model.source), model.nonce, complete=True)
+
     def test_capture_retains_raw_bytes_even_when_parser_or_close_fails(self):
         model = ReplacementModel()
         model.run()

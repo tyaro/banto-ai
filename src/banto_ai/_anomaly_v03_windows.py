@@ -1693,11 +1693,12 @@ def _validate_replace_trace(raw, source_row, nonce, *, complete):
           and type(complete) is bool, "replace_trace_context")
     _need(type(raw) is bytes and len(raw) <= _REPLACE_TRACE_LIMIT, "replace_trace_size")
     rows, previous, size = [], "0" * 64, 0
-    tail = b""
-    for line in raw.splitlines(keepends=True):
-        if not line.endswith(b"\n"):
-            tail = line
-            break
+    # Only LF terminates a protocol record. splitlines would also split on CR
+    # and silently omit the remaining bytes after the first unconfirmed part.
+    lines = raw.split(b"\n")
+    tail = lines.pop()
+    for body in lines:
+        line = body + b"\n"
         _need(len(rows) < len(_REPLACE_STAGES), "replace_trace_count")
         row = _json(line[:-1])
         _need(type(row) is dict and set(row) == {"version", "sequence", "nonce", "stage", "previous_sha256", "details"}
@@ -1717,9 +1718,12 @@ def _validate_replace_trace(raw, source_row, nonce, *, complete):
             _need(type(snapshot["bytes"]) is int and snapshot["bytes"] == len(content)
                   and snapshot["sha256"] == _sha(content), "replace_trace_content")
             _need(type(snapshot["identity"]) is dict and snapshot["identity"].get("directory") is False
-                  and snapshot["security"] == source_row["sd"], "replace_trace_identity")
+                  and _canonical(snapshot["security"]) == _canonical(source_row["sd"]), "replace_trace_identity")
             if not rows:
-                _need(snapshot["identity"] == source_row["identity"] and snapshot["bytes"] == source_row["bytes"]
+                # Python equality treats True, 1 and 1.0 as equal, including
+                # nested SD/identity fields. The pinned JSON types must match.
+                _need(_canonical(snapshot["identity"]) == _canonical(source_row["identity"])
+                      and snapshot["bytes"] == source_row["bytes"]
                       and snapshot["sha256"] == source_row["sha256"], "replace_trace_source")
             else:
                 source_id, target_id = source_row["identity"], snapshot["identity"]
