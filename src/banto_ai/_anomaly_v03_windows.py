@@ -58,6 +58,69 @@ def _need(ok, reason):
         raise _Failure(reason)
 
 
+_RESOURCE_REASONS = ("memory_budget", "source_size", "source_index_size", "file_size")
+
+
+def _resource_stop(error):
+    return (isinstance(error, MemoryError)
+            or type(error) is _Failure and error.reason in _RESOURCE_REASONS
+            or isinstance(getattr(error, "teardown", None), _Teardown) and error.teardown.resource_stop)
+
+
+class _Teardown:
+    """Small fixed-capacity diagnostics; no exception text, paths or handles."""
+    def __init__(self):
+        self.count, self.reasons, self.resource_stop = 0, [None] * 8, False
+
+    def record(self, reason, error=None):
+        if self.count < len(self.reasons):
+            self.reasons[self.count] = reason
+        self.count = min(self.count + 1, 65535)
+        self.resource_stop |= _resource_stop(error)
+
+    def merge(self, other):
+        if other is self:
+            return
+        count = self.count
+        for index in range(min(other.count, len(other.reasons), len(self.reasons) - min(count, len(self.reasons)))):
+            self.reasons[count + index] = other.reasons[index]
+        self.count = min(count + other.count, 65535)
+        self.resource_stop |= other.resource_stop
+
+    def attempt(self, reason, operation):
+        try:
+            operation()
+            return True
+        except BaseException as error:
+            nested = getattr(error, "teardown", None)
+            if isinstance(nested, _Teardown) and nested.count:
+                self.merge(nested)
+                self.resource_stop |= _resource_stop(error)
+            else:
+                self.record(reason, error)
+            return False
+
+    def report(self):
+        return {"failure_count": self.count, "first_reason": self.reasons[0],
+                "reasons": self.reasons[:min(self.count, len(self.reasons))],
+                "omitted_count": max(0, self.count-len(self.reasons)), "resource_stop": self.resource_stop}
+
+
+def _preserve_teardown(primary, teardown):
+    if not teardown.count:
+        return
+    if primary is None:
+        primary = _Failure("owned_teardown_failed")
+        primary.teardown = teardown
+        raise primary
+    teardown.resource_stop |= _resource_stop(primary)
+    existing = getattr(primary, "teardown", None)
+    if isinstance(existing, _Teardown):
+        existing.merge(teardown)
+    else:
+        primary.teardown = teardown
+
+
 def _canonical(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True, allow_nan=False).encode()
 
@@ -244,9 +307,18 @@ class _Win:
         if not ok:
             raise _Failure(reason, C.get_last_error())
 
-    def close(self, handle):
+    def close(self, handle, *, _preserve=True):
         if handle:
-            self.call(self.k.CloseHandle(handle), "handle_close")
+            primary = sys.exception() if _preserve else None
+            try:
+                self.call(self.k.CloseHandle(handle), "handle_close")
+            except BaseException as error:
+                if primary is None:
+                    raise
+                teardown = _Teardown()
+                teardown.record("owned_handle_close", error)
+                _preserve_teardown(primary, teardown)
+                return False
 
     def sid(self, pointer):
         value = H()
@@ -590,10 +662,19 @@ class _Bound:
         _need(self.check() == before, "freeze_identity")
         return result
 
-    def close(self):
+    def close(self, *, _preserve=True):
         if self.handle is not None:
-            h, self.handle = self.handle, None
-            self.api.close(h)
+            primary = sys.exception() if _preserve else None
+            try:
+                _need(self.api.close(self.handle, _preserve=False) is not False, "handle_close")
+            except BaseException as error:
+                if primary is None:
+                    raise
+                teardown = _Teardown()
+                teardown.record("bound_handle_close", error)
+                _preserve_teardown(primary, teardown)
+                return
+            self.handle = None  # Retain identity until CloseHandle is confirmed.
 
 
 def _dacl(user, mode, directory):
@@ -612,30 +693,33 @@ def _verify_sd(sd, user, mode, directory):
 
 
 def _read_source(api, path):
-    guards = []
+    guards, bound, primary, teardown = [], None, None, _Teardown()
     try:
         for ancestor in reversed(path.parents):
             guards.append(_Bound(api, ancestor, directory=True))
         bound = _Bound(api, path, directory=False, share=1)
-        try:
-            # Runtime DLLs exceed the small fixture bound. Hash streaming through
-            # the retained descriptor, without permitting arbitrary large IPC.
-            digest, count = hashlib.sha256(), 0
-            while True:
-                buf, size = C.create_string_buffer(65536), D()
-                api.call(api.k.ReadFile(bound.handle, buf, len(buf), C.byref(size), None), "source_read")
-                if not size.value:
-                    break
-                digest.update(buf.raw[:size.value])
-                count += size.value
-                _need(count <= 128*1024*1024, "source_size")
-            bound.check()
-            return digest.hexdigest(), count
-        finally:
-            bound.close()
+        # Runtime DLLs exceed the small fixture bound. Hash streaming through
+        # the retained descriptor, without permitting arbitrary large IPC.
+        digest, count = hashlib.sha256(), 0
+        while True:
+            buf, size = C.create_string_buffer(65536), D()
+            api.call(api.k.ReadFile(bound.handle, buf, len(buf), C.byref(size), None), "source_read")
+            if not size.value:
+                break
+            digest.update(buf.raw[:size.value])
+            count += size.value
+            _need(count <= 128*1024*1024, "source_size")
+        bound.check()
+        return digest.hexdigest(), count
+    except BaseException as error:
+        primary = error
+        raise
     finally:
+        if bound is not None:
+            teardown.attempt("source_handle_close", lambda: bound.close(_preserve=False))
         for guard in reversed(guards):
-            guard.close()
+            teardown.attempt("source_guard_close", lambda: guard.close(_preserve=False))
+        _preserve_teardown(primary, teardown)
 
 
 def _runtime():
@@ -655,28 +739,32 @@ def _runtime():
 
 
 def _source_bytes(api, path):
-    guards = []
+    guards, bound, primary, teardown = [], None, None, _Teardown()
     try:
         for ancestor in reversed(path.parents):
             guards.append(_Bound(api, ancestor, directory=True))
         bound = _Bound(api, path, directory=False, share=1)
-        try:
-            info = _FileInfo()
-            api.call(api.k.GetFileInformationByHandle(bound.handle, C.byref(info)), "source_size_query")
-            size = (info.size_high << 32) | info.size_low
-            _need(size <= _LIMIT, "source_size")  # Before any content read/allocation.
-            raw = bound.read()  # Independently bounded; retained identity checked.
-            _need(len(raw) == size, "source_size_changed")
-            return raw
-        finally:
-            bound.close()
+        info = _FileInfo()
+        api.call(api.k.GetFileInformationByHandle(bound.handle, C.byref(info)), "source_size_query")
+        size = (info.size_high << 32) | info.size_low
+        _need(size <= _LIMIT, "source_size")  # Before any content read/allocation.
+        raw = bound.read()  # Independently bounded; retained identity checked.
+        _need(len(raw) == size, "source_size_changed")
+        return raw
+    except BaseException as error:
+        primary = error
+        raise
     finally:
+        if bound is not None:
+            teardown.attempt("source_handle_close", lambda: bound.close(_preserve=False))
         for guard in reversed(guards):
-            guard.close()
+            teardown.attempt("source_guard_close", lambda: guard.close(_preserve=False))
+        _preserve_teardown(primary, teardown)
 
 
 def _index_bytes(api, path, environment):
     import msvcrt
+    primary, teardown = None, _Teardown()
     # One unbuffered stdout reader, no competing pipe reader, no stderr capture.
     # Peek only queries available bytes; read never waits for a full-sized chunk.
     process = subprocess.Popen(
@@ -706,15 +794,23 @@ def _index_bytes(api, path, environment):
         _need(process.wait(timeout=max(0.001, deadline-time.monotonic())) == 0, "source_index_bytes")
         return bytes(output)
     except subprocess.TimeoutExpired:
-        raise _Failure("source_index_timeout") from None
+        primary = _Failure("source_index_timeout")
+        raise primary from None
+    except BaseException as error:
+        primary = error
+        raise
     finally:
         # Only this git child: no filesystem fallback or diagnostic reread.
+        exited = False
         try:
-            if process.poll() is None:
-                process.kill()
-            process.wait(timeout=5)
-        finally:
-            process.stdout.close()
+            exited = process.poll() is not None
+        except BaseException as error:
+            teardown.record("index_process_poll", error)
+        if not exited:
+            teardown.attempt("index_process_kill", process.kill)
+        teardown.attempt("index_process_wait", lambda: _need(type(process.wait(timeout=5)) is int, "index_process_wait"))
+        teardown.attempt("index_pipe_close", process.stdout.close)
+        _preserve_teardown(primary, teardown)
 
 
 def _source_pin():
@@ -731,6 +827,7 @@ def _source_pin():
 class _Fixture:
     def __init__(self, api, user):
         self.api, self.user, self.ledger, self.guards, self.root = api, user, {}, [], None
+        self.teardown = _Teardown()
 
     def create(self):
         temporary = _temporary_path(self.api)
@@ -845,7 +942,8 @@ class _Fixture:
             row = self.ledger[name]
             if not name:
                 _need(self.guards[-1].path == self.root, "cleanup_root_guard")
-                self.guards.pop().close()
+                self.guards[-1].close()
+                self.guards.pop()
             bound = _Bound(self.api, self.path(name), directory=row["identity"]["directory"], access=0x30081, share=1)
             try:
                 _need(bound.identity == row["identity"], "cleanup_delete_identity")
@@ -860,9 +958,12 @@ class _Fixture:
         _need(not self.root.exists(), "cleanup_residue")
 
     def close(self):
-        for guard in reversed(self.guards):
-            guard.close()
-        self.guards.clear()
+        primary = sys.exception()
+        for index in range(len(self.guards)-1, -1, -1):
+            guard = self.guards[index]
+            if self.teardown.attempt("fixture_guard_close", lambda: guard.close(_preserve=False)):
+                del self.guards[index]
+        _preserve_teardown(primary, self.teardown)
 
 
 def _process_identity(api, process):
@@ -896,6 +997,45 @@ def _result_status():
             "source_scope": "two-candidate-index-blobs-only", "execution_authenticated": False}
 
 
+def _owned_teardown(api, process, handles, fixture, teardown):
+    # These are exclusively the handles returned to this harness for its child
+    # and tokens. No path lookup, cleanup, adoption or publication occurs here.
+    if api is not None:
+        if process is not None:
+            wait = None
+            try:
+                wait = api.k.WaitForSingleObject(process.process, 0)
+                _need(wait in (0, 258), "owned_process_wait")
+            except BaseException as error:
+                teardown.record("owned_process_wait", error)
+            if wait != 0:
+                teardown.attempt("owned_process_terminate", lambda: api.call(
+                    api.k.TerminateProcess(process.process, 1), "owned_process_terminate"))
+                teardown.attempt("owned_process_unconfirmed", lambda: _need(
+                    api.k.WaitForSingleObject(process.process, 5000) == 0, "owned_process_unconfirmed"))
+        for handle in handles:
+            if handle:
+                teardown.attempt("owned_handle_close", lambda: api.call(api.k.CloseHandle(handle), "owned_handle_close"))
+    if fixture is not None:
+        teardown.attempt("fixture_close", fixture.close)
+
+
+def _finish_outcome(outcome, primary, teardown):
+    previous = getattr(primary, "teardown", None)
+    if isinstance(previous, _Teardown):
+        # Preserve the earliest diagnostics as well as the primary reason.
+        previous.merge(teardown)
+        teardown = previous
+    if teardown.count:
+        teardown.resource_stop |= _resource_stop(primary)
+        outcome["teardown"] = teardown.report()
+        if outcome["status"] == "native_control_pass":
+            outcome.update(status="failed", reason="owned_teardown_failed", winerror=0)
+        if teardown.resource_stop:
+            outcome.update(retained_exists=None, retained_existence="unverified")
+    return outcome
+
+
 def run_control_harness():
     """Run a fixed small control; safe failure preserves evidence, never publishes."""
     started = time.monotonic()
@@ -903,6 +1043,7 @@ def run_control_harness():
     parent = restricted = actual = impersonation = None
     process = None
     peaks = None
+    outcome, primary, teardown = None, None, _Teardown()
     try:
         api = _api()
         runtime, source = _runtime(), _source_pin()
@@ -965,39 +1106,31 @@ def run_control_harness():
                     "resources": peaks}
         fixture.cleanup()
         evidence.update(success_residue_count=0, elapsed_seconds=time.monotonic()-started)
-        return evidence
+        outcome = evidence
     except BaseException as exc:
+        primary = exc
         reason, error = (exc.reason, exc.error) if type(exc) is _Failure else ("resource_failure" if isinstance(exc, MemoryError) else "unexpected_failure", 0)
-        if isinstance(exc, MemoryError) or reason in ("memory_budget", "source_size", "source_index_size", "file_size"):
+        if _resource_stop(exc):
             # Resource stop: memory-only metadata, never exists/stat/hash/list or
-            # source/temp/artifact rereads. Handle-only finally remains unchanged.
-            return {**_result_status(), "status": "failed", "reason": reason, "winerror": error,
+            # source/temp/artifact rereads. Remaining teardown is handle/process-only.
+            outcome = {**_result_status(), "status": "failed", "reason": reason, "winerror": error,
                     "retained_basename": fixture.root.name if fixture and fixture.root else None,
                     "retained_exists": None, "retained_existence": "unverified",
                     "known_bytes": sum(x["bytes"] for x in fixture.ledger.values()) if fixture else 0,
                     "child_exit_code": None, "resources": peaks,
                     "elapsed_seconds": time.monotonic()-started}
-        return {**_result_status(), "status": "failed", "reason": reason, "winerror": error,
-                "retained_basename": fixture.root.name if fixture and fixture.root and fixture.root.exists() else None,
-                "known_bytes": sum(x["bytes"] for x in fixture.ledger.values()) if fixture else 0,
-                "child_exit_code": exc.child_exit_code if type(exc) is _Failure else None,
-                "resources": peaks,
-                "elapsed_seconds": time.monotonic()-started}
+        else:
+            outcome = {**_result_status(), "status": "failed", "reason": reason, "winerror": error,
+                       "retained_basename": fixture.root.name if fixture and fixture.root and fixture.root.exists() else None,
+                       "known_bytes": sum(x["bytes"] for x in fixture.ledger.values()) if fixture else 0,
+                       "child_exit_code": exc.child_exit_code if type(exc) is _Failure else None,
+                       "resources": peaks,
+                       "elapsed_seconds": time.monotonic()-started}
     finally:
         # Never clean failed trees or alter their ACLs. Terminate only our own child.
-        if api:
-            if process and api.k.WaitForSingleObject(process.process, 0) == 258:
-                api.k.TerminateProcess(process.process, 1)
-                api.k.WaitForSingleObject(process.process, 5000)
-            for handle in (impersonation, actual, restricted, parent,
-                           process.thread if process else None, process.process if process else None):
-                if handle:
-                    api.k.CloseHandle(handle)
-            if fixture:
-                try:
-                    fixture.close()
-                except BaseException:
-                    pass  # Handle close is not permission to repair a retained tree.
+        _owned_teardown(api, process, (impersonation, actual, restricted, parent,
+                        process.thread if process else None, process.process if process else None), fixture, teardown)
+    return _finish_outcome(outcome, primary, teardown)
 
 
 def _access_matrix(api, root, ledger, token):
@@ -1150,6 +1283,8 @@ def _operations(api, root, user, ledger):
             except _Failure as exc:
                 # Only a real CreateFile denial can be an expected negative;
                 # a failed native mutation/flush/query is NOT a passing denial.
+                if isinstance(getattr(exc, "teardown", None), _Teardown):
+                    raise  # A denial never excuses unconfirmed handle release.
                 if exc.reason not in ("object_open", "mutation_api"):
                     raise
                 error = exc.error

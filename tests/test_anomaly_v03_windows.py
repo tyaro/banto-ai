@@ -37,6 +37,243 @@ def restricted_profile():
 
 
 class PureWindowsControls(unittest.TestCase):
+    def test_bound_handle_identity_survives_close_failure_until_success(self):
+        bound = object.__new__(w._Bound)
+        bound.handle, bound.api = 77, Mock()
+        bound.api.close.side_effect = [w._Failure("handle_close"), None]
+        with self.assertRaises(w._Failure):
+            bound.close()
+        self.assertEqual(bound.handle, 77)
+        bound.close()
+        self.assertIsNone(bound.handle)
+        self.assertEqual(bound.api.close.call_count, 2)
+        self.assertTrue(all(call.args == (77,) for call in bound.api.close.call_args_list))
+
+    def test_bound_finally_cannot_mask_active_memory_error(self):
+        bound = object.__new__(w._Bound)
+        bound.handle, bound.api = 77, Mock()
+        bound.api.close.side_effect = OSError("DUMMY_SECRET")
+        primary = MemoryError()
+        with self.assertRaises(MemoryError) as caught:
+            try:
+                raise primary
+            finally:
+                bound.close()
+        self.assertIs(caught.exception, primary)
+        self.assertEqual(bound.handle, 77)
+        self.assertEqual(primary.teardown.report()["reasons"], ["bound_handle_close"])
+        self.assertNotIn("DUMMY", json.dumps(primary.teardown.report()))
+
+    def test_fixture_close_attempts_every_guard_and_retains_unconfirmed_ones(self):
+        fixture = w._Fixture(Mock(), "user")
+        guards = [Mock() for _ in range(4)]
+        guards[1].close.side_effect = OSError("DUMMY_SECRET")
+        guards[3].close.side_effect = w._Failure("handle_close")
+        fixture.guards = guards.copy()
+        with self.assertRaises(w._Failure) as caught:
+            fixture.close()
+        self.assertEqual(caught.exception.reason, "owned_teardown_failed")
+        self.assertEqual(fixture.guards, [guards[1], guards[3]])
+        for guard in guards:
+            guard.close.assert_called_once_with(_preserve=False)
+        self.assertEqual(fixture.teardown.count, 2)
+        self.assertEqual(fixture.teardown.report()["first_reason"], "fixture_guard_close")
+
+    def test_owned_teardown_checks_wait_terminate_and_all_close_results(self):
+        for initial, final, terminate, close in ((258, 258, False, False), (0xffffffff, 0xffffffff, False, False),
+                                                 (0, 0, True, False), (0, 0, True, True)):
+            api, process, fixture = Mock(), SimpleNamespace(process=1), Mock()
+            api.call.side_effect = lambda ok, reason: w._need(ok, reason)
+            api.k.WaitForSingleObject.side_effect = [initial, final]
+            api.k.TerminateProcess.return_value = terminate
+            api.k.CloseHandle.return_value = close
+            teardown = w._Teardown()
+            with self.subTest(initial=initial, final=final, close=close), \
+                 patch.object(Path, "exists", side_effect=AssertionError), patch.object(w, "_Bound", side_effect=AssertionError):
+                w._owned_teardown(api, process, (2, 3, 4, 5, 6, 1), fixture, teardown)
+            self.assertEqual(api.k.CloseHandle.call_count, 6)
+            fixture.close.assert_called_once()
+            if initial != 0:
+                api.k.TerminateProcess.assert_called_once_with(1, 1)
+                self.assertEqual(api.k.WaitForSingleObject.call_count, 2)
+            else:
+                api.k.TerminateProcess.assert_not_called()
+            pending = {**w._result_status(), "status": "native_control_pass"}
+            result = w._finish_outcome(pending, None, teardown)
+            if initial == 0 and close:
+                self.assertEqual(result["status"], "native_control_pass")
+                self.assertNotIn("teardown", result)
+            else:
+                self.assertEqual(result["status"], "failed")
+                self.assertEqual(result["reason"], "owned_teardown_failed")
+                self.assertGreater(result["teardown"]["failure_count"], 0)
+            self.assertFalse(result["native_accepted"])
+
+    def test_process_api_exceptions_do_not_skip_remaining_teardown(self):
+        api, fixture, teardown = Mock(), Mock(), w._Teardown()
+        api.k.WaitForSingleObject.side_effect = MemoryError()
+        api.k.TerminateProcess.side_effect = OSError("DUMMY_SECRET")
+        api.k.CloseHandle.side_effect = [OSError("DUMMY_SECRET"), True, True]
+        api.call.side_effect = lambda ok, reason: w._need(ok, reason)
+        w._owned_teardown(api, SimpleNamespace(process=1), (2, 3, 1), fixture, teardown)
+        self.assertEqual(api.k.WaitForSingleObject.call_count, 2)
+        self.assertEqual(api.k.CloseHandle.call_count, 3)
+        fixture.close.assert_called_once()
+        result = w._finish_outcome({"status": "native_control_pass"}, None, teardown)
+        self.assertEqual(result["status"], "failed")
+        self.assertTrue(result["teardown"]["resource_stop"])
+        self.assertIsNone(result["retained_exists"])
+
+    def test_harness_pending_success_is_decided_after_all_owned_teardown(self):
+        for failure in (None, "handle", "memory"):
+            api, fixture = Mock(), Mock()
+            parent, child = parent_profile(), restricted_profile()
+            api.profile.side_effect = [parent, child, child, {**child, "type": 2}, child, parent]
+            api.token.side_effect = [11, 33]
+            api.restricted.return_value, api.impersonation.return_value = 22, 44
+            api.resources.return_value = {"peak_pagefile_bytes": 1, "peak_working_bytes": 1,
+                                          "system_commit_bytes": 1, "system_commit_limit_bytes": 2}
+            api.call.side_effect = lambda ok, reason: w._need(ok, reason)
+            api.k.WaitForSingleObject.return_value = 0
+            api.k.CloseHandle.return_value = failure != "handle"
+            fixture.root, fixture.ledger = Path("owned")/(w._PREFIX+"0"*32), {}
+            if failure == "memory":
+                fixture.close.side_effect = MemoryError()
+            process = SimpleNamespace(process=1, thread=2, pid=99)
+            report = Mock(read=Mock(return_value=b"{}"))
+            with self.subTest(failure=failure), patch.object(w, "_api", return_value=api), \
+                 patch.object(w, "_runtime", return_value={}), patch.object(w, "_source_pin", return_value=[]), \
+                 patch.object(w, "_Fixture", return_value=fixture), patch.object(w, "_start", return_value=process), \
+                 patch.object(w, "_process_identity", return_value={"pid": 99}), patch.object(w, "_access_matrix", return_value={}), \
+                 patch.object(w, "_Bound", return_value=report), patch.object(w, "_verify_report"), \
+                 patch.object(Path, "exists", side_effect=AssertionError), patch.object(Path, "stat", side_effect=AssertionError), \
+                 patch.object(Path, "iterdir", side_effect=AssertionError), patch.object(Path, "read_bytes", side_effect=AssertionError):
+                result = w.run_control_harness()
+            fixture.cleanup.assert_called_once()
+            fixture.close.assert_called_once()
+            self.assertEqual(api.k.CloseHandle.call_count, 6)
+            self.assertEqual(result["status"], "failed" if failure else "native_control_pass")
+            self.assertFalse(result["native_accepted"])
+            if failure:
+                self.assertEqual(result["reason"], "owned_teardown_failed")
+            else:
+                self.assertNotIn("teardown", result)
+
+    def test_all_primary_resource_reasons_survive_source_guard_failures(self):
+        for reason in w._RESOURCE_REASONS:
+            api, file, guard = Mock(), Mock(handle=9), Mock()
+            api.call.side_effect = lambda ok, reason: w._need(ok, reason)
+            primary = w._Failure(reason)
+            file.read.side_effect = primary
+            file.close.side_effect = OSError("DUMMY_SECRET")
+            guard.close.side_effect = OSError("DUMMY_SECRET")
+            with self.subTest(reason=reason), \
+                 patch.object(w, "_Bound", side_effect=lambda api, path, **kw: guard if kw["directory"] else file), \
+                 self.assertRaises(w._Failure) as caught:
+                w._source_bytes(api, Path("source.py"))
+            self.assertIs(caught.exception, primary)
+            self.assertEqual(primary.reason, reason)
+            self.assertTrue(primary.teardown.resource_stop)
+            self.assertEqual(primary.teardown.count, 2)
+            file.close.assert_called_once_with(_preserve=False)
+            guard.close.assert_called_once_with(_preserve=False)
+
+    def test_streaming_source_memory_error_preserved_after_guard_close_errors(self):
+        api, file, guard = Mock(), Mock(handle=9), Mock()
+        primary = MemoryError()
+        api.k.ReadFile.side_effect = primary
+        file.close.side_effect = OSError("DUMMY_SECRET")
+        guard.close.side_effect = OSError("DUMMY_SECRET")
+        with patch.object(w, "_Bound", side_effect=lambda api, path, **kw: guard if kw["directory"] else file), \
+             self.assertRaises(MemoryError) as caught:
+            w._read_source(api, Path("source.py"))
+        self.assertIs(caught.exception, primary)
+        self.assertEqual(primary.teardown.count, 2)
+        api.k.ReadFile.assert_called_once()
+        file.check.assert_not_called()
+        file.close.assert_called_once_with(_preserve=False)
+        guard.close.assert_called_once_with(_preserve=False)
+
+    def test_compound_resource_failure_preserved_across_all_teardown_layers(self):
+        for overflow in (False, True):
+            api, process = Mock(), Mock()
+            api.profile.return_value = parent_profile()
+            api.token.return_value, api.restricted.return_value = 11, 22
+            api.call.side_effect = lambda ok, reason: w._need(ok, reason)
+            api.k.CloseHandle.return_value = False
+            process.poll.return_value = None
+            process.stdout.fileno.return_value = 7
+            process.kill.side_effect = OSError("DUMMY_SECRET")
+            process.wait.side_effect = OSError("DUMMY_SECRET")
+            process.stdout.close.side_effect = OSError("DUMMY_SECRET")
+            primary = MemoryError()
+            process.stdout.read.side_effect = primary
+            def peek(handle, unused, size, read, available, left):
+                ctypes.cast(available, ctypes.POINTER(w.D)).contents.value = w._LIMIT+1 if overflow else 1
+                return True
+            api.k.PeekNamedPipe.side_effect = peek
+            file, guard = Mock(handle=9), Mock()
+            file.close.side_effect = OSError("DUMMY_SECRET")
+            guard.close.side_effect = OSError("DUMMY_SECRET")
+            file.read.side_effect = lambda: w._index_bytes(api, w._SOURCE, {})
+            fixture = w._Fixture(api, "user")
+            fixture.root = Path("owned")/(w._PREFIX+"0"*32)
+            fixture.ledger = {"known": {"bytes": 11}}
+            fixture.guards = [Mock(), Mock()]
+            fixture_guards = fixture.guards.copy()
+            for item in fixture_guards:
+                item.close.side_effect = OSError("DUMMY_SECRET")
+            fixture.create = lambda: w._source_bytes(api, Path("source.py"))
+            with self.subTest(overflow=overflow), \
+                 patch.dict(sys.modules, {"msvcrt": SimpleNamespace(get_osfhandle=lambda _: 7)}), \
+                 patch.object(w.subprocess, "Popen", return_value=process), \
+                 patch.object(w, "_api", return_value=api), patch.object(w, "_runtime", return_value={}), \
+                 patch.object(w, "_source_pin", return_value=[]), patch.object(w, "_Fixture", return_value=fixture), \
+                 patch.object(w, "_Bound", side_effect=lambda api, path, **kw: guard if kw["directory"] else file), \
+                 patch.object(Path, "exists", side_effect=AssertionError), patch.object(Path, "stat", side_effect=AssertionError), \
+                 patch.object(Path, "iterdir", side_effect=AssertionError), patch.object(Path, "read_bytes", side_effect=AssertionError), \
+                 patch.object(w, "_temporary_path", side_effect=AssertionError):
+                report = w.run_control_harness()
+            self.assertEqual(report["reason"], "source_index_size" if overflow else "resource_failure")
+            self.assertEqual(report["status"], "failed")
+            self.assertEqual(report["retained_existence"], "unverified")
+            self.assertEqual(report["teardown"]["failure_count"], 9)
+            self.assertEqual(len(report["teardown"]["reasons"]), 8)
+            self.assertEqual(report["teardown"]["omitted_count"], 1)
+            self.assertEqual(report["teardown"]["first_reason"], "index_process_kill")
+            self.assertNotIn("DUMMY", json.dumps(report))
+            self.assertEqual(api.k.CloseHandle.call_count, 2)
+            for item in (file, guard, *fixture_guards):
+                item.close.assert_called_once_with(_preserve=False)
+            process.kill.assert_called_once()
+            process.wait.assert_called_once()
+            process.stdout.close.assert_called_once()
+            self.assertEqual(fixture.guards, fixture_guards)
+
+    def test_no_primary_source_or_index_close_failure_cannot_return_success(self):
+        api, file, guard = Mock(), Mock(handle=9), Mock()
+        api.call.side_effect = lambda ok, reason: w._need(ok, reason)
+        file.read.return_value = b""
+        file.close.side_effect = OSError("DUMMY_SECRET")
+        guard.close.side_effect = OSError("DUMMY_SECRET")
+        with patch.object(w, "_Bound", side_effect=lambda api, path, **kw: guard if kw["directory"] else file), \
+             self.assertRaises(w._Failure) as caught:
+            w._source_bytes(api, Path("source.py"))
+        self.assertEqual(caught.exception.reason, "owned_teardown_failed")
+        self.assertEqual(caught.exception.teardown.count, 2)
+        process = Mock()
+        process.poll.return_value, process.wait.return_value = 0, 0
+        process.stdout.close.side_effect = OSError("DUMMY_SECRET")
+        def peek(handle, unused, size, read, available, left):
+            ctypes.cast(available, ctypes.POINTER(w.D)).contents.value = 0
+            return True
+        api.k.PeekNamedPipe.side_effect = peek
+        with patch.dict(sys.modules, {"msvcrt": SimpleNamespace(get_osfhandle=lambda _: 7)}), \
+             patch.object(w.subprocess, "Popen", return_value=process), self.assertRaises(w._Failure) as caught:
+            w._index_bytes(api, w._SOURCE, {})
+        self.assertEqual(caught.exception.reason, "owned_teardown_failed")
+        self.assertEqual(caught.exception.teardown.report()["reasons"], ["index_pipe_close"])
+
     def test_temp_path_counts_utf16_units_and_rejects_unpaired_surrogates(self):
         for value in ("C:\\candidate-\U0001f600\\", "C:\\candidate-\ud800\\", "C:\\candidate-\udfff\\"):
             def query(size, buffer):
@@ -305,7 +542,7 @@ class PureWindowsControls(unittest.TestCase):
                 self.assertEqual(api.mock_calls, [])
                 fixture.close()
                 for guard in opened:
-                    guard.close.assert_called_once_with()
+                    guard.close.assert_called_once_with(_preserve=False)
 
     def test_repository_and_formal_temp_candidates_reject_before_root_creation(self):
         for suffix in ("", "artifacts/anomaly-multiseed-v03-holdout", "artifacts/anomaly-multiseed-v03-audit"):
