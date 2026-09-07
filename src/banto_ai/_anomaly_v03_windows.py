@@ -1066,6 +1066,9 @@ class _Fixture:
         self.cleanup_collectors = [_Teardown() for _ in range(_MAX_OBJECTS)]
         self.cleanup_retry_collectors = [_Teardown() for _ in range(_MAX_OBJECTS)]
         self.cleanup_attempted = False
+        self.trace_handle = None
+        self.trace_close_collector = _Teardown()
+        self.trace_retry_collector = _Teardown()
 
     def create(self):
         temporary = _temporary_path(self.api)
@@ -1300,9 +1303,20 @@ class _Fixture:
             raise
         return journal
 
+    def close_trace(self, primary=None, *, retry=False):
+        bound = self.trace_handle
+        if bound is None:
+            return
+        collector = self.trace_retry_collector if retry else self.trace_close_collector
+        if collector.attempt("replace_trace_handle_close", lambda: _need(
+                bound.close() is not False, "replace_trace_handle_close")):
+            self.trace_handle = None
+        _preserve_teardown(primary, collector)
+
     def close(self, *, primary=None, teardown=None):
         if teardown is not None:
             self.teardown = teardown
+        self.teardown.attempt("replace_trace_handle_close", lambda: self.close_trace(retry=True))
         for index in range(len(self.cleanup_handles)-1, -1, -1):
             self.teardown.attempt("cleanup_handle_close", lambda: self._cleanup_close(index, retry=True))
         for index in range(len(self.guards)-1, -1, -1):
@@ -1311,7 +1325,7 @@ class _Fixture:
                 del self.guards[index]
         if teardown is None:
             _preserve_teardown(primary, self.teardown)
-        return not self.guards and not any(self.cleanup_handles)
+        return self.trace_handle is None and not self.guards and not any(self.cleanup_handles)
 
 
 def _process_identity(api, process):
@@ -1376,6 +1390,7 @@ class _ControlOutcome(dict):
         self.private_evidence = None
         self.private_control_evidence = None
         self.private_replace_evidence = None
+        self.private_teardown_evidence = None
 
 
 def _finish_outcome(outcome, primary, teardown):
@@ -1386,10 +1401,16 @@ def _finish_outcome(outcome, primary, teardown):
         teardown = previous
     if teardown.count:
         teardown.resource_stop |= _resource_stop(primary)
-        outcome["teardown"] = teardown.report()
         if outcome["status"] == "native_control_pass":
             outcome.update(status="failed", reason="owned_teardown_failed", winerror=0)
             outcome.pop("success_residue_count", None)
+        outcome["teardown_status"] = "failed"
+        try:
+            outcome["teardown"] = teardown.report()
+        except BaseException as error:
+            teardown.resource_stop |= _resource_stop(error)
+            outcome.update(teardown_report_status="failed",
+                           teardown_report_resource_stop=_resource_stop(error))
         if teardown.resource_stop:
             outcome.update(retained_exists=None, retained_existence="unverified")
     return outcome
@@ -1503,13 +1524,15 @@ def run_control_harness():
         # Never resume cleanup or inspect failed trees. Terminate only our child.
         _owned_teardown(api, process, (impersonation, actual, restricted, parent,
                         process.thread if process else None, process.process if process else None), fixture, teardown)
-    result.update(_finish_outcome(outcome, primary, teardown))
-    result["control_status"] = "failed" if primary is not None and control_status == "not_completed" else control_status
     journal = getattr(fixture, "cleanup_journal", None)
     result.private_evidence = journal if type(journal) is CleanupJournal else None
+    previous = getattr(primary, "teardown", None)
+    result.private_teardown_evidence = previous if isinstance(previous, _Teardown) else teardown
+    result.update(_finish_outcome(outcome, primary, teardown))
+    result["control_status"] = "failed" if primary is not None and control_status == "not_completed" else control_status
     result["cleanup_status"] = journal._status if type(journal) is CleanupJournal else (
         "capture_failed" if getattr(fixture, "cleanup_attempted", False) is True else "not_started")
-    result["teardown_status"] = "failed" if "teardown" in result else "pass"
+    result.setdefault("teardown_status", "pass")
     if type(journal) is CleanupJournal:
         result["known_bytes_basis"] = "pre_cleanup_snapshot_not_retained_bytes"
         # Detail rendering allocates; defer it after any resource stop. The actual
@@ -1754,12 +1777,20 @@ def _validate_replace_trace(raw, source_row, nonce, *, complete):
 
 def _capture_replace_trace(api, fixture, result, nonce, *, complete):
     row = fixture.ledger[_REPLACE_TRACE_NAME]
+    _need(fixture.trace_handle is None, "replace_trace_handle_owned")
     bound = _Bound(api, fixture.path(_REPLACE_TRACE_NAME), directory=False, share=1)
-    with _Closing(bound.close):
+    fixture.trace_handle = bound
+    primary = None
+    try:
         _need(bound.identity == row["identity"] and api.security(bound.handle) == row["sd"], "replace_trace_pin")
         bound.streams()
         raw = bound.read()
         result.private_replace_evidence = raw  # Retain before close/parsing; invalid evidence is not discarded.
+    except BaseException as error:
+        primary = error
+        raise
+    finally:
+        fixture.close_trace(primary)
     result["replace_trace"] = _validate_replace_trace(raw, fixture.ledger["control/data.bin"], nonce, complete=complete)
     if complete:
         # This is the one explicitly writable child evidence file. Identity/SD

@@ -287,13 +287,22 @@ class ReplacementTraceTests(unittest.TestCase):
                               w._REPLACE_TRACE_NAME: {"identity": {}, "sd": {}, "bytes": 0, "sha256": w._sha(b"")}}
             bound = Mock(identity={}, read=Mock(return_value=raw))
             if failure == "close":
-                bound.close.side_effect = OSError("DUMMY_PRIVATE_CLOSE")
+                bound.close.side_effect = [OSError("DUMMY_PRIVATE_CLOSE"), True]
             result = w._ControlOutcome()
-            with patch.object(w, "_Bound", return_value=bound), self.assertRaises(w._Failure):
+            with patch.object(w, "_Bound", return_value=bound), \
+                 patch.object(w, "_Closing", side_effect=MemoryError("post-open allocation")) as closing, \
+                 self.assertRaises(w._Failure):
                 w._capture_replace_trace(api, fixture, result, model.nonce, complete=True)
+            closing.assert_not_called()
             self.assertEqual(result.private_replace_evidence, raw)
             self.assertEqual(fixture.ledger[w._REPLACE_TRACE_NAME]["bytes"], 0)
             self.assertNotIn("DUMMY", json.dumps(result))
+            if failure == "close":
+                self.assertIs(fixture.trace_handle, bound)
+                with patch.object(w, "_Bound", side_effect=AssertionError("reopen during teardown")):
+                    self.assertTrue(fixture.close())
+                self.assertEqual(bound.close.call_count, 2)
+            self.assertIsNone(fixture.trace_handle)
 
     def test_child_wrapper_has_distinct_resource_exit_without_running_native_child(self):
         class Flags:

@@ -136,6 +136,56 @@ class SimpleNamespaceContext:
 
 
 class CleanupAdapterTests(unittest.TestCase):
+    def test_teardown_report_failure_cannot_leave_success_or_replace_child_exit(self):
+        for primary in (None, w._Failure("child_failed", child_exit_code=0xC0000142)):
+            collector = w._Teardown()
+            collector.record("owned_handle_close")
+            outcome = ({"status": "native_control_pass", "success_residue_count": 0} if primary is None else
+                       {"status": "failed", "reason": "child_failed", "winerror": 0, "child_exit_code": 0xC0000142})
+            with self.subTest(primary=primary), patch.object(collector, "report", side_effect=MemoryError()):
+                result = w._finish_outcome(outcome, primary, collector)
+            self.assertEqual(result["status"], "failed")
+            self.assertEqual(result["reason"], "owned_teardown_failed" if primary is None else "child_failed")
+            self.assertNotIn("success_residue_count", result)
+            self.assertTrue(collector.resource_stop)
+            if primary is not None:
+                self.assertEqual(result["child_exit_code"], 0xC0000142)
+
+    def test_teardown_report_failure_preserves_primary_and_private_journal_in_harness(self):
+        tree = MemoryTree()
+        with tree.patched():
+            journal = tree.fixture.capture_cleanup(b"DUMMY_PRIVATE_CONTROL")
+        for report_error in (MemoryError("DUMMY_REPORT"), ValueError("DUMMY_REPORT")):
+            api = Mock()
+            api.profile.return_value = parent_profile()
+            fixture = Mock(root=Path("owned"), ledger={})
+            fixture.cleanup_journal, fixture.cleanup_attempted = journal, True
+            primary = w._Failure("freeze_set", 5)
+            # Inject the existing captured journal at the harness failure boundary;
+            # process/native creation is forbidden in this pure result-path test.
+            fixture.create.side_effect = primary
+            api.k.CloseHandle.return_value = False
+            api.call.side_effect = lambda ok, reason: w._need(ok, reason)
+            with self.subTest(error=type(report_error)), patch.object(w, "_api", return_value=api), \
+                 patch.object(w, "_runtime", return_value={}), patch.object(w, "_source_pin", return_value=[]), \
+                 patch.object(w, "_Fixture", return_value=fixture), \
+                 patch.object(w._Teardown, "report", side_effect=report_error) as render, \
+                 patch.object(journal, "report", return_value={}) as detail, \
+                 patch.object(w, "_start", side_effect=AssertionError("native child")), \
+                 patch.object(w, "_Bound", side_effect=AssertionError("filesystem read")):
+                result = w.run_control_harness()
+            self.assertEqual((result["status"], result["reason"], result["winerror"]), ("failed", "freeze_set", 5))
+            self.assertEqual(result["teardown_status"], "failed")
+            self.assertEqual(result["teardown_report_status"], "failed")
+            self.assertIs(result.private_evidence, journal)
+            self.assertTrue(result.private_teardown_evidence.count)
+            self.assertEqual(result.private_teardown_evidence.resource_stop, isinstance(report_error, MemoryError))
+            self.assertNotIn("success_residue_count", result)
+            self.assertNotIn("DUMMY", json.dumps(result) + repr(result))
+            render.assert_called_once()
+            self.assertEqual(detail.call_count, 0 if isinstance(report_error, MemoryError) else 1)
+            fixture.close.assert_called_once()
+
     def test_harness_retains_primary_and_snapshot_on_cleanup_or_report_failure_without_post_failure_io(self):
         for resource, report_error, completed in ((False, None, False), (True, None, False),
                 (False, MemoryError("DUMMY_REPORT_OOM"), False),
