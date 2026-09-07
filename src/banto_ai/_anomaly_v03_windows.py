@@ -1517,8 +1517,13 @@ def run_control_harness():
             try:
                 result["cleanup"] = journal.report()
             except BaseException as error:
-                result.update(status="failed", reason="resource_failure" if _resource_stop(error)
-                              else "cleanup_report_failed", winerror=0)
+                # Rendering is secondary to an existing control/cleanup/close
+                # failure. Keep its original reason and native error intact.
+                resource = _resource_stop(error)
+                if result["status"] != "failed":
+                    result.update(status="failed", reason="resource_failure" if resource
+                                  else "cleanup_report_failed", winerror=0)
+                result.update(cleanup_report_status="failed", cleanup_report_resource_stop=resource)
                 result.pop("success_residue_count", None)
     return result
 

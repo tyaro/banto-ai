@@ -136,8 +136,12 @@ class SimpleNamespaceContext:
 
 
 class CleanupAdapterTests(unittest.TestCase):
-    def test_harness_retains_control_and_snapshot_on_cleanup_failure_without_post_failure_io(self):
-        for resource in (False, True):
+    def test_harness_retains_primary_and_snapshot_on_cleanup_or_report_failure_without_post_failure_io(self):
+        for resource, report_error, completed in ((False, None, False), (True, None, False),
+                (False, MemoryError("DUMMY_REPORT_OOM"), False),
+                (False, ValueError("DUMMY_REPORT_ERROR"), False),
+                (False, MemoryError("DUMMY_REPORT_OOM"), True),
+                (False, ValueError("DUMMY_REPORT_ERROR"), True)):
             api, fixture = Mock(), Mock()
             parent, child = parent_profile(), restricted_profile()
             api.profile.side_effect = [parent, child, child, {**child, "type": 2}, child, parent]
@@ -156,15 +160,28 @@ class CleanupAdapterTests(unittest.TestCase):
                 fixture.cleanup_journal = w.CleanupJournal((w.CapturedObject(
                     "", True, b"{}", b"DUMMY_OLD_SD", b"DUMMY_NEW_SD", b""),), operations)
                 fixture.cleanup_journal.begin("", "acl")
+                if completed:
+                    journal = fixture.cleanup_journal
+                    journal.confirmed()
+                    journal.begin("", "delete")
+                    journal.confirmed()
+                    journal.close_confirmed("")
+                    journal.begin("", "absence")
+                    journal.confirmed()
+                    journal.complete()
+                    journal.report = Mock(side_effect=report_error)
+                    return journal
                 fixture.cleanup_journal.failed(resource_stop=resource)
                 if resource:
                     fixture.cleanup_journal.report = Mock(side_effect=AssertionError("report allocation after OOM"))
                     raise MemoryError()
-                raise w._Failure("freeze_set")
+                if report_error is not None:
+                    fixture.cleanup_journal.report = Mock(side_effect=report_error)
+                raise w._Failure("freeze_set", 5)
             fixture.cleanup.side_effect = cleanup
             process = SimpleNamespace(process=1, thread=2, pid=99)
             report = Mock(read=Mock(return_value=b"{}"))
-            with self.subTest(resource=resource), patch.object(w, "_api", return_value=api), \
+            with self.subTest(resource=resource, report_error=type(report_error), completed=completed), patch.object(w, "_api", return_value=api), \
                  patch.object(w, "_runtime", return_value={}), patch.object(w, "_source_pin", return_value=[]), \
                  patch.object(w, "_Fixture", return_value=fixture), patch.object(w, "_start", return_value=process), \
                  patch.object(w, "_process_identity", return_value={"pid": 99}), patch.object(w, "_access_matrix", return_value={}), \
@@ -175,15 +192,27 @@ class CleanupAdapterTests(unittest.TestCase):
                 result = w.run_control_harness()
             self.assertEqual(result["status"], "failed")
             self.assertEqual(result["control_status"], "pass")
-            self.assertEqual(result["cleanup_status"], "failed")
+            self.assertEqual(result["cleanup_status"], "completed" if completed else "failed")
             self.assertEqual(result["teardown_status"], "pass")
             self.assertIs(result.private_evidence, fixture.cleanup_journal)
             self.assertEqual(result.private_evidence.private_snapshot[1], result.private_control_evidence)
             self.assertEqual(json.loads(result.private_control_evidence)["parent_profile"], parent)
             self.assertNotIn(parent["user"][0], json.dumps(result))
             self.assertNotIn("DUMMY", json.dumps(result))
-            self.assertEqual(result["retained_existence"], "unverified")
-            self.assertEqual("cleanup" in result, not resource)
+            if not completed:
+                self.assertEqual(result["retained_existence"], "unverified")
+            expected = ("resource_failure" if isinstance(report_error, MemoryError) else "cleanup_report_failed") if completed \
+                else "resource_failure" if resource else "freeze_set"
+            self.assertEqual(result["reason"], expected)
+            self.assertEqual(result["winerror"], 0 if resource or completed else 5)
+            self.assertNotIn("success_residue_count", result)
+            self.assertEqual("cleanup" in result, not resource and report_error is None)
+            if report_error is not None:
+                fixture.cleanup_journal.report.assert_called_once()
+                self.assertEqual(result["cleanup_report_status"], "failed")
+                self.assertEqual(result["cleanup_report_resource_stop"], isinstance(report_error, MemoryError))
+            if resource:
+                fixture.cleanup_journal.report.assert_not_called()
             self.assertEqual(api.k.CloseHandle.call_count, 6)
             fixture.close.assert_called_once()
 

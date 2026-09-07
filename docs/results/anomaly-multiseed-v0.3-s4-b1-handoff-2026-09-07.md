@@ -319,3 +319,17 @@ pathlib／共有moduleのimportにMemoryErrorとImportErrorを注入する回帰
 既存記録ではPythonとcmd.exeがともに0xC0000142で停止しているが、原因DLLは未特定。
 追加probe、required restricted-child E2E、Windows 3.12、full suite、main統合、正式試験は未実施。
 独立レビューと起動障害切り分けは残件。全gateは引き続きno。
+
+## 15. 2026-09-07 cleanup report二次障害の原因保持
+
+`b526868`の自己点検で、清掃失敗後に`CleanupJournal.report()`も失敗すると、
+元のreason／Win32 errorがreportのエラーで上書きされる経路を確認した。
+既存failureのreasonとwinerrorを保持し、reportの失敗は`cleanup_report_status`と
+`cleanup_report_resource_stop`へ分離した。private snapshotとcontrol evidenceは保持する。
+清掃成功後にreportだけ失敗した場合も総合statusはfailedとし、success_residue_countを除去する。
+
+mock harnessの回帰試験を6ケースへ拡張し、清掃failure＋report MemoryError／ValueError、
+清掃成功＋report MemoryError／ValueError、resource停止後のreport呼出抑止を確認した。
+関連pure/fault 94件とrepository safetyがpass。実process・native mutationは今回は実行していない。
+独立レビュー、restricted-child起動障害、Windows 3.12、full suiteは残件で、全gateはnoを維持する。
+D2 current-only exact inventoryも1/1 pass（35.628秒）。

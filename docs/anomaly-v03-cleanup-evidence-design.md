@@ -283,3 +283,14 @@ pathlib／共有module importでのMemoryError・ImportErrorを注入し、child
 正しいexitを確認した。関連pure/faultは94/94、D2 inventoryは1/1、repository safetyはpass。
 実restricted childやsame-parent nativeは今回は起動していない。
 これは候補の自己点検による修正であり、独立レビューやB1受入を意味しない。
+
+## 2026-09-07 cleanup report二次障害の分離
+
+cleanup／teardownのfailure後にreport生成が失敗しても、元のreasonとwinerrorを維持する。
+追加診断は`cleanup_report_status=failed`と`cleanup_report_resource_stop`で表し、
+private snapshotやcontrol evidenceを破棄しない。清掃がcompletedでもreport生成に失敗したら
+総合結果をfailedにし、top-level success_residue_countは残さない。
+
+mock harnessで清掃失敗／成功とreport MemoryError／ValueErrorの組合せを検証した。
+resource停止済みならreportを呼ばない既存条件も確認した。関連pure/fault 94件、safetyがpass。
+同一parent nativeおよびrestricted childの追加起動は行っていない。独立レビューは未完了。
