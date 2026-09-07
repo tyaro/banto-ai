@@ -1,6 +1,8 @@
 # S4-B1 cleanup / replacement evidence 独立レビュー用資料
 
-状態: **review prepared / independent review pending / all acceptance gates no**。
+状態: **review completed / findings fixed and rechecked / all acceptance gates no**。
+結果は[監査・是正記録](anomaly-multiseed-v0.3-s4-b1-evidence-audit-2026-09-07.md)を参照。
+以下は初回依頼時に固定した対象とレビュー条件を保持する。
 資料作成は実装者による整理であり、独立レビュー結果ではない。
 
 ## 固定対象

@@ -2,15 +2,15 @@
 
 日付: 2026-09-07
 
-状態: **candidate / cleanup + replacement trace tested / independent audit pending**
+状態: **candidate / scoped independent findings resolved / child E2E blocked**
 
-最新実装状態: `f2f2d95`。native cleanup、置換snapshot/trace、child/parent接続に加え、
-bootstrap resource-stop、report二次障害、trace parser、operation即時停止を修正済み。
-`74c42ee`時点で98 pure/fault＋same-parent Windows native 2件がpass。
-`f2f2d95`は起動障害の調査文書とコメントの訂正で、実行構造は変更していない。
+最新実装状態: `9797500`。独立レビューでtrace handle所有とteardown reportのP2を2件検出し修正した。
+同じ独立担当の再監査で2件の修正を確認、新規P0〜P3は0件。
+100 pure/fault＋same-parent Windows native 2件がpass。独立担当もpure 100件を確認した。
+[監査・是正記録](results/anomaly-multiseed-v0.3-s4-b1-evidence-audit-2026-09-07.md)を参照。
 [独立レビュー用資料](results/anomaly-multiseed-v0.3-s4-b1-review-packet-2026-09-07.md)を参照。
-以下のprototype節は`068e45b`時点の設計・実測を保持する。cleanup/evidence全体のP2解消、
-独立監査、restricted-child E2E、main統合、正式受入は主張しない。
+以下のprototype節は`068e45b`時点の設計・実測を保持する。
+今回の限定監査をrestricted-child E2E、main統合、正式受入へ拡張しない。
 
 基準: `0d917d9`（実装基準 `16a037f` + 引継書2 commit）。
 [引継書](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md) §6〜7に対応する。

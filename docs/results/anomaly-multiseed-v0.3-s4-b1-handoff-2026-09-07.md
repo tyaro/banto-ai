@@ -3,7 +3,8 @@
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
 最新の自己点検: cleanup/置換traceの候補実装と追加修正は§11〜17を参照。
-起動障害の既存ログ・公式仕様の照合は§18を参照。独立レビューとchild E2Eは未完了。
+起動障害の既存ログ・公式仕様の照合は§18、独立レビューと是正結果は§19〜20を参照。
+独立レビューのP2 2件は修正確認済み。child E2Eと本流統合は引き続き未完了。
 以下の初期結論・commit一覧・試験数は引継書作成時点の記録である。
 
 作成日: 2026-09-07
@@ -388,3 +389,16 @@ read-only独立レビューを依頼した。依頼時点ではレビュー結�
 許可するpure試験・禁止するnative実行を集約した。設計書冒頭の古い最新試験数も訂正した。
 レビュー中は実装を固定し、進捗の反復ポーリングを行わず完了通知を待つ。
 全gateはnoを維持する。
+
+## 20. 2026-09-07 独立レビュー指摘の是正完了
+
+初回独立レビューはf2f2d95にP2を2件検出した。trace読取handleのclose失敗時の所有喪失と、
+teardown report二次例外による一次原因・result証跡喪失を9797500で修正した。
+同じ独立担当の再監査で2件の修正を確認し、今回差分の新規P0〜P3は0件だった。
+[監査・是正記録](anomaly-multiseed-v0.3-s4-b1-evidence-audit-2026-09-07.md)に反例と結果を保存した。
+
+実装担当の検証: pure/fault 100/100、同一parent実Win32 2/2、D2 1/1、safety/diff-check pass。
+独立担当もpure 100/100と元の反例の解消を確認した。既存成果物・6 failure rootsのinventoryは不変。
+限定checkpointの保存と次の診断準備は可。次は別savepointで起動障害の診断方法を具体化する。
+required restricted-child、Windows 3.12、full suiteは未実施。起動障害0xC0000142は未解消。
+main統合・native acceptance・formal permissionはnoを維持する。
