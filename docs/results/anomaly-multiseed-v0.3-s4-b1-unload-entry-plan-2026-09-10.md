@@ -1,6 +1,6 @@
 # S4-B1 最初のunload時の管理情報観測
 
-状態: **v1実機診断1回終了 / v2修正・fake試験・独立レビュー完了 / v2 preflight待ち / v2実機は未承認・未実行 / no native acceptance**。
+状態: **v1実機診断1回終了 / v2修正・fake試験・独立レビュー・preflight完了 / v2実機1回の判断待ち / no native acceptance**。
 
 v1はサイズ検査で停止した。[実機結果と観測側の前提修正](anomaly-multiseed-v0.3-s4-b1-unload-entry-result-2026-09-10.md)を参照。
 以下の取得計画はv2に更新した。末尾のv1実装/承認準備の記録は当時の履歴である。
@@ -132,3 +132,9 @@ recipeはntdll-26200.9445-unload-v2。code3窓のRVA/サイズ/hashと追加4 re
 fake32件、debug全体131件、独立レビューを通過し、成功例最大幅JSON7418 bytesで8 KiB内。
 v2 sourceの保存・read-only preflight後、**v2で新規専用fixtureを使う限定実機診断1回**を判断対象として提示する。
 v1の承認1回は消化済み。v2の起動は個別の返答を待ち、未保存のv1 flagsを埋めるために自動再実行しない。
+
+v2修正と実機結果を3699d2eに保存した。保存後の実read-only preflightは19 sources/216179 bytes、2.256秒、verified。
+Windows10.0.26200.9445/Python3.14.0、既存exe/DLL hash一致、resource_stop=false。
+確認済みの実行範囲はv1の1回だけで、v2の起動・実RPM/GetThreadContextは未実施。
+次の判断対象は、v2を新規専用fixtureで1回、追加最大4 reads/1059 bytes、既存30秒/256 events/512 MiB予算で実施すること。
+条件不一致・失敗時の再試行なし、終了結果の先行保存、過去証跡保持を維持する。

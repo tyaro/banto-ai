@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §56を最初に参照。管理情報観測v1はサイズ前提で停止。終了/保存は確認済み。v2修正とfake/独立レビュー完了、追加実機は未実行。
+2026-09-10最新: §56を最初に参照。管理情報v1はサイズ前提で停止。終了/保存確認済み。v2修正・fake/独立レビュー・preflight完了、v2実機1回の判断待ち。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1094,3 +1094,8 @@ v1の同run preflightは19 sources/215813 bytes、Windows10.0.26200.9445/Python3
 単発値からリーク有無は判断しない。追加権限/設定変更・他project操作なし。全acceptance gate no。
 次はv2 source保存とread-only preflight後、[計画末尾のv2限定実機1回](anomaly-multiseed-v0.3-s4-b1-unload-entry-plan-2026-09-10.md)について判断を求める。
 今回承認済みのv1は消化済み。v2の実child/実RPMはまだ行っていない。
+
+v2修正保存3699d2e後のread-only preflightは19 sources/216179 bytes、2.256秒、verified、同じruntime/hash、resource_stop=false。
+公開要約6件51469 bytesを保存。実行後の参照image有界read4回/今回証跡read2回、全reader close。
+参照readには静的fragment境界の仮定誤りで停止した1回を含む。実childの追加再試行ではない。
+mainは基準commitのままclean。v2で新規fixtureを使う実機診断1回について返答を待つ。

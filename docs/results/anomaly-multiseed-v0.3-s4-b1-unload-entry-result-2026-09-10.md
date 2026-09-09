@@ -79,3 +79,13 @@ driver接続試験でも、サイズ0の正常観測と、上限不一致後のo
 関係fake32/32 pass（0.499秒）、debug全体131/131 pass（1.078秒）。独立レビュー新規P0〜P3=0、指定32/32 pass（0.478秒）。
 context成功例の最大幅JSONは7418 bytesで8 KiB枠内。全体64 KiB容量試験もpass。repository safety/diff-check pass。
 担当の完了通知を利用し、進捗ポーリングなし。v2で追加の実child・実RPMは行っていない。
+
+修正保存3699d2e後のread-only preflightは19 sources/216179 bytes、2.256秒、verified、同じruntime/hash、resource_stop=false。
+今回の公開要約6件はignored artifacts/context-offline-2026-09-10に保持し、計51469 bytes。
+native-summary.jsonl、native-readback.json、rejected-size-static.json、stop-and-internal-status.json、v2-preflight.json
+（これら5件はunload-entry-接頭辞）とunload-size-zero-path.json。新規private証跡は別に114763 bytes。
+実行後の参照ntdll有界readは4回、今回証跡の有界readは2回で、hash一致・reader closeを確認した。
+参照read回数には、静的解析でfragment終端を短く仮定して停止した1回と、次の関数境界を使って修正した読取りを含む。
+診断childを追加起動したものではない。PDBは既存cacheを1回再使用し、追加download/raw imageコピーなし。
+確認後PC空きRAM8.38 GiB、C102.34 GiB、D75.36 GiB。主作業以外の変動も含むためリーク有無は未判定。
+mainは基準commitのままclean。v2の実機実行は別の1回として判断待ち。
