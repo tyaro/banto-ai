@@ -85,6 +85,20 @@ class OfflineUnwindTests(unittest.TestCase):
         self.assertNotIn(str(0x1122334455667788), json.dumps(report))
         self.assertFalse(report["native_accepted"])
 
+    def test_recovered_registers_are_private_snapshots_of_accepted_frames(self):
+        raw, stack = fixture()
+        report = walk(bytes(raw), BASE, BASE + 0x1000, bytes(stack))
+        self.assertEqual(len(report.private_registers), len(report["frames"]))
+        self.assertEqual(report.private_registers[:2], [{}, {}])
+        self.assertEqual(report.private_registers[2], {3: 0x1122334455667788})
+        self.assertNotIn(str(0x1122334455667788), json.dumps(report))
+        self.assertNotIn("1122334455667788", repr(report))
+        # The second unwind restores RBX, but a failed target check must not
+        # publish that partial context as another accepted frame.
+        struct.pack_into("<i", raw, 0x245, 1)
+        rejected = walk(bytes(raw), BASE, BASE + 0x1000, bytes(stack))
+        self.assertEqual(rejected.private_registers, [{}, {}])
+
     def test_call_target_mismatch_does_not_accept_candidate(self):
         raw, stack = fixture()
         struct.pack_into("<i", raw, 0x226, 1)

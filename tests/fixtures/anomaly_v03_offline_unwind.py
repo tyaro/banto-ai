@@ -14,6 +14,20 @@ class UnwindStop(ValueError):
     pass
 
 
+class UnwindReading(dict):
+    """Public summary with private recovered GPRs for accepted frames only.
+
+    Missing register keys are unknown: initial CONTEXT values are not imported.
+    The attribute is intentionally excluded from dict/JSON summary output.
+    """
+    def __init__(self, summary):
+        super().__init__(summary)
+        self.private_registers = []
+
+    def __repr__(self):
+        return "UnwindReading(<private recovered registers>)"
+
+
 def need(value, reason):
     if not value:
         raise UnwindStop(reason)
@@ -139,9 +153,9 @@ def walk(raw_image, image_base, rip, stack, *, limit=16):
     image = Image(raw_image)
     decoder = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
     decoder.detail = True
-    report = {"frames": [], "steps": [], "stop_reason": "frame_limit",
+    report = UnwindReading({"frames": [], "steps": [], "stop_reason": "frame_limit",
               "capstone_version": capstone.__version__, "loaded_bytes_match_proven": False,
-              "native_accepted": False, "handlers_invoked": False}
+              "native_accepted": False, "handlers_invoked": False})
     sp, rva = 0, rip - image_base
     registers = {}
 
@@ -153,6 +167,7 @@ def walk(raw_image, image_base, rip, stack, *, limit=16):
         first_function = image.function(rva)
         report["frames"].append({"rip_rva": hex(rva), "begin_rva": hex(first_function[0]),
                                  "end_rva": hex(first_function[1]), "stack_offset": sp})
+        report.private_registers.append({})
         for _ in range(limit):
             function = image.function(rva)
             start, end, unwind = function
@@ -230,6 +245,7 @@ def walk(raw_image, image_base, rip, stack, *, limit=16):
             sp, rva = cursor + 8, caller_rva
             report["frames"].append({"rip_rva": hex(rva), "begin_rva": hex(caller_function[0]),
                                      "end_rva": hex(caller_function[1]), "stack_offset": sp})
+            report.private_registers.append(dict(registers))
     except UnwindStop as error:
         report["stop_reason"] = str(error)
     return report
