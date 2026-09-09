@@ -164,9 +164,15 @@ def walk(raw_image, image_base, rip, stack, *, limit=16):
                 # A bare RET is the last epilogue instruction; no prolog effects remain.
                 step["mode"] = "bare_ret"
             else:
-                # Reject potential epilogues instead of guessing where restores begin.
-                need(instruction.mnemonic not in ("pop", "ret", "jmp", "add", "lea"),
+                # Stack adjustment can begin an epilogue; arithmetic on other
+                # registers cannot. Still reject unknown destinations and SP aliases.
+                need(instruction.mnemonic not in ("pop", "ret", "jmp"),
                      "possible_epilogue_unsupported")
+                if instruction.mnemonic in ("add", "lea"):
+                    operands = instruction.operands
+                    need(operands and operands[0].type == capstone.x86.X86_OP_REG
+                         and instruction.reg_name(operands[0].reg) not in ("rsp", "esp", "sp", "spl"),
+                         "possible_epilogue_unsupported")
                 step["mode"] = "body"
                 for _, prolog, count, codes in records:
                     index, last_offset = 0, prolog + 1

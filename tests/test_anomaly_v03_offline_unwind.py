@@ -178,6 +178,17 @@ class OfflineUnwindTests(unittest.TestCase):
         report = walk(bytes(raw), BASE, BASE + 0x102b, bytes(stack))
         self.assertEqual(report["stop_reason"], "instruction_boundary")
 
+    def test_non_stack_arithmetic_is_body_but_stack_aliases_still_stop(self):
+        for code, accepted in (("488d4c2420", True), ("83c0019090", True),
+                               ("488d642420", False), ("8d64242090", False),
+                               ("4883c40190", False), ("83c4019090", False)):
+            raw, stack = fixture()
+            raw[0x22a:0x22f] = bytes.fromhex(code)
+            report = walk(bytes(raw), BASE, BASE + 0x1000, bytes(stack))
+            self.assertEqual(len(report["steps"]), 2 if accepted else 1, code)
+            if not accepted:
+                self.assertEqual(report["stop_reason"], "possible_epilogue_unsupported", code)
+
     def test_pe_range_and_stack_shape_are_checked(self):
         raw, stack = fixture()
         with self.assertRaises(UnwindStop): Image(bytes(raw[:64]))
