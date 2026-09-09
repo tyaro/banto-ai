@@ -45,6 +45,23 @@ def fixture():
     return raw, stack
 
 
+def chained_fixture():
+    raw, stack = fixture()
+    raw[0x210:0x216] = bytes.fromhex("534883ec2090")
+    raw[0x220:0x232] = (bytes.fromhex("488974243048897c2438e8")
+                        + struct.pack("<i", 0x1000 - 0x102f) + bytes.fromhex("31c0c3"))
+    raw[0x330:0x338] = bytes.fromhex("0105020005320130")
+    raw[0x340:0x358] = (bytes.fromhex("210a04000a74070005640600")
+                        + struct.pack("<III", 0x1010, 0x1016, 0x1130))
+    struct.pack_into("<II", raw, 0x98 + 136, 0x1200, 48)
+    struct.pack_into("<12I", raw, 0x400, 0x1000, 0x1001, 0x1100,
+                     0x1010, 0x1016, 0x1130, 0x1020, 0x1032, 0x1140,
+                     0x1040, 0x1050, 0x1120)
+    struct.pack_into("<i", raw, 0x245, 0x1010 - 0x1049)
+    struct.pack_into("<Q", stack, 0, BASE + 0x102f)
+    return raw, stack
+
+
 @unittest.skipUnless(importlib.util.find_spec("capstone"),
                      "optional offline-analysis extra is not installed; not native acceptance")
 class OfflineUnwindTests(unittest.TestCase):
@@ -76,7 +93,7 @@ class OfflineUnwindTests(unittest.TestCase):
         self.assertEqual(len(report["frames"]), 1)
 
     def test_chain_and_unhandled_opcodes_stop(self):
-        for value, expected in ((0x21, "unwind_flags_or_frame_register"),
+        for value, expected in ((0x29, "unwind_flags_or_frame_register"),
                                 (2, "unwind_version")):
             raw, stack = fixture()
             raw[0x310] = value
@@ -87,6 +104,65 @@ class OfflineUnwindTests(unittest.TestCase):
         raw[0x315] = 0x3a
         report = walk(bytes(raw), BASE, BASE + 0x1000, bytes(stack))
         self.assertEqual(report["stop_reason"], "unwind_opcode_unsupported_10")
+
+    def test_chained_saves_use_primary_entry_and_fixed_stack_base(self):
+        raw, stack = chained_fixture()
+        report = walk(bytes(raw), BASE, BASE + 0x1000, bytes(stack))
+        self.assertEqual(len(report["steps"]), 2)
+        step = report["steps"][1]
+        self.assertEqual(step["primary_entry_rva"], "0x1010")
+        self.assertEqual(step["unwind_chain_rvas"], ["0x1140", "0x1130"])
+        self.assertEqual(step["restored_registers"], [7, 6, 3])
+        self.assertEqual(step["return_stack_offset"], 48)
+        self.assertEqual(step["call_target_rva"], "0x1010")
+        # A direct call to the secondary fragment is not a primary entry call.
+        struct.pack_into("<i", raw, 0x245, 0x1020 - 0x1049)
+        rejected = walk(bytes(raw), BASE, BASE + 0x1000, bytes(stack))
+        self.assertEqual(len(rejected["steps"]), 1)
+        self.assertEqual(rejected["stop_reason"], "direct_call_target_mismatch")
+
+    def test_chained_bare_ret_does_not_unwind_body_again(self):
+        raw, stack = chained_fixture()
+        struct.pack_into("<Q", stack, 0, BASE + 0x1049)
+        report = walk(bytes(raw), BASE, BASE + 0x1031, bytes(stack))
+        self.assertEqual(len(report["steps"]), 1)
+        self.assertEqual(report["steps"][0]["return_stack_offset"], 0)
+        self.assertEqual(report["steps"][0]["restored_registers"], [])
+
+    def test_chain_cycle_and_non_table_parent_are_rejected(self):
+        for parent, expected in (((0x1020, 0x1032, 0x1140), "unwind_chain_cycle"),
+                                 ((0x1010, 0x1015, 0x1130), "unwind_chain_entry")):
+            raw, stack = chained_fixture()
+            struct.pack_into("<III", raw, 0x34c, *parent)
+            report = walk(bytes(raw), BASE, BASE + 0x1000, bytes(stack))
+            self.assertEqual(report["stop_reason"], expected)
+            self.assertEqual(len(report["steps"]), 1)
+
+    def test_chain_rejects_stack_changes_bad_slots_and_saved_window_escape(self):
+        for offset, value, expected in ((0x345, 0x32, "unwind_chain_save_only"),
+                                        (0x342, 3, "unwind_chain_save_only"),
+                                        (0x344, 11, "unwind_code_order"),
+                                        (0x347, 1, "saved_stack_exhausted")):
+            raw, stack = chained_fixture()
+            raw[offset] = value
+            report = walk(bytes(raw), BASE, BASE + 0x1000, bytes(stack))
+            self.assertEqual(report["stop_reason"], expected)
+            self.assertEqual(len(report["steps"]), 1)
+
+    def test_chain_depth_is_bounded(self):
+        raw, _ = fixture()
+        rows = [(0x1000 + i * 16, 0x1001 + i * 16, 0x1300 + i * 16) for i in range(9)]
+        struct.pack_into("<II", raw, 0x98 + 136, 0x1200, len(rows) * 12)
+        for i, row in enumerate(rows):
+            struct.pack_into("<III", raw, 0x400 + i * 12, *row)
+            off = row[2] - 0x1000 + 0x200
+            raw[off:off + 4] = bytes((0x21 if i else 1, 0, 0, 0))
+            if i:
+                struct.pack_into("<III", raw, off + 4, *rows[i - 1])
+        image = Image(bytes(raw))
+        self.assertEqual(len(image.unwind_chain(rows[7], rows[7][0])), 8)
+        with self.assertRaisesRegex(UnwindStop, "unwind_chain_limit"):
+            image.unwind_chain(rows[8], rows[8][0])
 
     def test_large_allocation_cannot_leave_saved_window(self):
         raw, stack = fixture()

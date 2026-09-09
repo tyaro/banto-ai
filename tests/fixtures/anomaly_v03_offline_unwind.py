@@ -1,8 +1,9 @@
 """Conservative byte-only x64 unwind of one PE image and a saved stack window.
 
 No IO, remote reads, symbols, execution or native acceptance. Only complete
-version-1, unchained, frame-pointer-free bodies and a bare RET are supported.
-Every accepted caller must contain a direct CALL to the previous function start.
+version-1, frame-pointer-free bodies and a bare RET are supported. Secondary
+chained records may only save nonvolatile registers without changing RSP.
+Every accepted caller must directly CALL the previous function's primary entry.
 """
 
 import struct
@@ -79,6 +80,41 @@ class Image:
         need(instructions and sum(i.size for i in instructions) == len(code), "function_decode_incomplete")
         return instructions
 
+    def unwind_chain(self, function, rva):
+        """Bounded metadata chain, with exact pdata membership for each parent."""
+        records, seen = [], set()
+        for _ in range(8):
+            start, end, unwind = function
+            need(unwind not in seen, "unwind_chain_cycle")
+            seen.add(unwind)
+            version_flags, prolog, count, frame = self.at(unwind, 4)
+            need(version_flags & 7 == 1, "unwind_version")
+            flags = version_flags >> 3
+            need(flags in (0, 4) and frame == 0, "unwind_flags_or_frame_register")
+            need(prolog <= end - start, "unwind_prolog_size")
+            need(records or rva - start >= prolog, "in_prolog")
+            padded_size = ((count + 1) // 2) * 4
+            codes = self.at(unwind + 4, padded_size)[:count * 2]
+            if flags == 4:
+                # Shrink-wrapped saves may not push or allocate another frame.
+                index, last_offset = 0, prolog + 1
+                while index < count:
+                    offset, packed = codes[index * 2:index * 2 + 2]
+                    need(0 < offset <= prolog and offset <= last_offset, "unwind_code_order")
+                    need(packed & 15 == 4 and packed >> 4 in (3, 5, 6, 7, 12, 13, 14, 15)
+                         and index + 2 <= count, "unwind_chain_save_only")
+                    last_offset, index = offset, index + 2
+            records.append((function, prolog, count, codes))
+            if flags == 0:
+                return records
+            parent = struct.unpack("<III", self.at(unwind + 4 + padded_size, 12))
+            need(parent in self.functions and self.function(parent[0]) == parent,
+                 "unwind_chain_entry")
+            need(parent[2] not in seen, "unwind_chain_cycle")
+            need(parent[1] <= start, "unwind_chain_order")
+            function = parent
+        raise UnwindStop("unwind_chain_limit")
+
 
 def walk(raw_image, image_base, rip, stack, *, limit=16):
     """Return image-relative frames only; input provenance belongs to the caller.
@@ -116,13 +152,12 @@ def walk(raw_image, image_base, rip, stack, *, limit=16):
             current = [i for i in instructions if i.address == rva]
             need(len(current) == 1, "instruction_boundary")
             instruction = current[0]
-            version_flags, prolog, count, frame = image.at(unwind, 4)
-            need(version_flags & 7 == 1, "unwind_version")
-            need(version_flags >> 3 == 0 and frame == 0, "unwind_flags_or_frame_register")
-            need(prolog <= end - start and rva - start >= prolog, "in_prolog")
-            codes = image.at(unwind + 4, ((count + 1) // 2) * 4)[:count * 2]
+            records = image.unwind_chain(function, rva)
+            primary_start = records[-1][0][0]
             step = {"from_rva": hex(rva), "unwind_rva": hex(unwind), "stack_offset_before": sp,
                     "instruction": instruction.mnemonic,
+                    "primary_entry_rva": hex(primary_start),
+                    "unwind_chain_rvas": [hex(row[0][2]) for row in records],
                     "restored_registers": []}
             cursor = sp
             if instruction.bytes == b"\xc3":
@@ -133,36 +168,37 @@ def walk(raw_image, image_base, rip, stack, *, limit=16):
                 need(instruction.mnemonic not in ("pop", "ret", "jmp", "add", "lea"),
                      "possible_epilogue_unsupported")
                 step["mode"] = "body"
-                index, last_offset = 0, prolog + 1
-                while index < count:
-                    code_offset, packed = codes[index * 2:index * 2 + 2]
-                    opcode, info = packed & 15, packed >> 4
-                    need(0 < code_offset <= prolog and code_offset <= last_offset, "unwind_code_order")
-                    last_offset = code_offset
-                    index += 1
-                    if opcode == 0:  # UWOP_PUSH_NONVOL
-                        need(info in (3, 5, 6, 7, 12, 13, 14, 15), "volatile_register")
-                        registers[info] = read_stack(cursor)
-                        step["restored_registers"].append(info)
-                        cursor += 8
-                    elif opcode == 2:  # UWOP_ALLOC_SMALL
-                        cursor += info * 8 + 8
-                    elif opcode == 1:  # UWOP_ALLOC_LARGE
-                        slots = 1 if info == 0 else 2
-                        need(info in (0, 1) and index + slots <= count, "unwind_large_slots")
-                        amount = int.from_bytes(codes[index * 2:(index + slots) * 2], "little")
-                        cursor += amount * 8 if info == 0 else amount
-                        index += slots
-                    elif opcode == 4:  # UWOP_SAVE_NONVOL, no frame pointer
-                        need(info in (3, 5, 6, 7, 12, 13, 14, 15) and index < count,
-                             "unwind_save_slots")
-                        offset = int.from_bytes(codes[index * 2:index * 2 + 2], "little") * 8
-                        registers[info] = read_stack(sp + offset)
-                        step["restored_registers"].append(info)
+                for _, prolog, count, codes in records:
+                    index, last_offset = 0, prolog + 1
+                    while index < count:
+                        code_offset, packed = codes[index * 2:index * 2 + 2]
+                        opcode, info = packed & 15, packed >> 4
+                        need(0 < code_offset <= prolog and code_offset <= last_offset, "unwind_code_order")
+                        last_offset = code_offset
                         index += 1
-                    else:
-                        raise UnwindStop("unwind_opcode_unsupported_" + str(opcode))
-                    need(sp <= cursor <= len(stack), "saved_stack_exhausted")
+                        if opcode == 0:  # UWOP_PUSH_NONVOL
+                            need(info in (3, 5, 6, 7, 12, 13, 14, 15), "volatile_register")
+                            registers[info] = read_stack(cursor)
+                            step["restored_registers"].append(info)
+                            cursor += 8
+                        elif opcode == 2:  # UWOP_ALLOC_SMALL
+                            cursor += info * 8 + 8
+                        elif opcode == 1:  # UWOP_ALLOC_LARGE
+                            slots = 1 if info == 0 else 2
+                            need(info in (0, 1) and index + slots <= count, "unwind_large_slots")
+                            amount = int.from_bytes(codes[index * 2:(index + slots) * 2], "little")
+                            cursor += amount * 8 if info == 0 else amount
+                            index += slots
+                        elif opcode == 4:  # UWOP_SAVE_NONVOL, no frame pointer
+                            need(info in (3, 5, 6, 7, 12, 13, 14, 15) and index < count,
+                                 "unwind_save_slots")
+                            offset = int.from_bytes(codes[index * 2:index * 2 + 2], "little") * 8
+                            registers[info] = read_stack(sp + offset)
+                            step["restored_registers"].append(info)
+                            index += 1
+                        else:
+                            raise UnwindStop("unwind_opcode_unsupported_" + str(opcode))
+                        need(sp <= cursor <= len(stack), "saved_stack_exhausted")
             address = read_stack(cursor)
             caller_rva = address - image_base
             caller_function = image.function(caller_rva)
@@ -172,7 +208,7 @@ def walk(raw_image, image_base, rip, stack, *, limit=16):
             need(len(calls) == 1, "direct_callsite_missing")
             call = calls[0]
             target = caller_rva + int.from_bytes(call.bytes[1:], "little", signed=True)
-            need(target == start, "direct_call_target_mismatch")
+            need(target == primary_start, "direct_call_target_mismatch")
             step.update(return_stack_offset=cursor, caller_rva=hex(caller_rva),
                         callsite_rva=hex(call.address), call_target_rva=hex(target))
             report["steps"].append(step)
