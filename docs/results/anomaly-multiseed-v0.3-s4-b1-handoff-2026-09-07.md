@@ -2,9 +2,9 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §38を最初に参照。保存fileを実行時hashと照合し、unload対応と次の権限観測案を整理した。
+2026-09-10最新: §39を最初に参照。token/process/thread権限の読取りcollectorを実装・検証した。追加実機診断は未承認・未実行。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
-候補06f1e63はpure224件と独立再監査を通過。現在の10.0.26200.9445で16 sourceの実read-only preflightもverified。
+候補c6fc191はpure/fake231件と独立レビューを通過。現在の10.0.26200.9445で17 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
 
 最新の自己点検: cleanup/置換traceの候補実装と追加修正は§11〜17を参照。
@@ -755,3 +755,28 @@ file用SD検証やgeneric mappingをkernel objectへ流用しない。collector�
 解析と設計文書のみのため、テスト再実行や独立担当への再委譲は省略した。
 開始時の空きRAM8.22 GiB/C102.25 GiB/D75.36 GiB、終了付近RAM8.26 GiB/C102.26 GiB/D75.36 GiB。
 同時稼働中のPC全体の値であり、リーク有無の判定はしない。全acceptance gate no。
+
+## 39. 2026-09-10 token/process/thread権限の読取り準備完了
+
+c6fc191でDebugSecurityを実装し、driver/session/private evidenceへ接続した。
+親・restricted・実child primary tokenのTokenDefaultDaclと、実child process・初期threadの
+owner/group/DACL/mandatory labelを、既存ownerのhandleを借用して取得する。
+親2対象はchild作成前、子3対象はResume前。handleの追加open/close、ACLや権限の変更はない。
+
+5対象各1 KiBのbufferと状態枠をchild作成前に確保する。token情報class6、kernel情報0x17を使い、
+audit SACLは要求しない。各対象1回だけ照会し、失敗・容量不足・不正pointer/SD/ACLでは停止する。
+tokenのpointerは所有bufferの返却範囲内だけで解釈し、絶対pointerを保存しない。
+NULL/空ACL/未知ACE/照会失敗を区別し、未知ACEは権限へ解釈せずbytesを保持する。
+5対象の最大raw保存を含むsecurity JSONが16 KiB未満になることを試験した。全体64 KiB上限も維持する。
+
+許可されたpure/fake231/231（1.321秒）、repository safety PASS。
+既存の独立担当へ差分のみレビューを委譲し、新規P0〜P3=0、指定fake36/36（0.641秒）。
+完了通知を利用し、進捗の繰返し照会は行っていない。
+実read-only preflightは17 sources / 199,864 bytes、verified、resource_stop=false。
+Windows10.0.26200.9445、Python3.14.0、既存exe/DLL hash一致。実childは追加起動していない。
+
+検証後の空きRAM8.55 GiB/C102.25 GiB/D75.36 GiB、文書保存前RAM8.46 GiB/C102.25 GiB/D75.36 GiB。
+PC全体の単発値でありリーク有無は未判定。他プロジェクトへの操作や負荷試験はない。
+次の判断点は[権限観測計画](anomaly-multiseed-v0.3-s4-b1-process-security-plan-2026-09-10.md)の追加診断1回。
+30秒/256 events/親＋child512 MiB未満、breakpoint停止、drain32回/5秒を維持する。
+既存証跡は保持し、設定変更は行わない。main統合・native受入・formal permissionは未達。

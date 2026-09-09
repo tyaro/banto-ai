@@ -2,7 +2,8 @@
 
 状態: **two separately authorized limited probes completed / startup failure reproduced / no native acceptance**。
 次の未測定項目は[process/thread権限観測案](anomaly-multiseed-v0.3-s4-b1-process-security-plan-2026-09-10.md)に整理した。
-現時点では設計のみで、追加実機診断は行っていない。保存記録のhash照合は引継書§38を参照。
+読取りcollectorはc6fc191で実装済み。pure/fake231件・独立レビュー・17 source preflight通過（引継書§39）。
+権限観測付き追加実機診断は未承認・未実行。保存記録のhash照合は引継書§38を参照。
 最新: image identity/name付き追加1回を承認の上で実行し、4 image名と0xC0000142を記録した。
 詳細は引継書§37と[image診断結果](anomaly-multiseed-v0.3-s4-b1-startup-image-probe-result-2026-09-10.md)を参照。
 以下の準備中/未起動という記述は、この追加実行前の履歴として保持する。

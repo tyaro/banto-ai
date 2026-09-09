@@ -1,7 +1,8 @@
 # S4-B1 debug-event transport savepoint
 
 状態: **two separately authorized limited native diagnostics completed / no native acceptance**。
-最新のoffline hash照合とprocess/thread権限観測案は引継書§38を参照。実機追加起動なし、collector未実装。
+最新のprocess/thread権限観測準備は引継書§39を参照。c6fc191でcollector実装済み、pure/fake231件・独立レビュー・17 source preflight通過。
+権限観測付き追加実機診断は未承認・未実行。offline hash照合は§38を参照。
 最新は引継書§37と[image診断結果](anomaly-multiseed-v0.3-s4-b1-startup-image-probe-result-2026-09-10.md)。
 image記録付き追加1回でpython.exe/ntdll.dll/kernel32.dll/KernelBase.dllを確認し、0xC0000142を再現した。
 以下の次回準備/未起動という記述は、この追加実行前の履歴として保持する。
