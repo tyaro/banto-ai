@@ -1,5 +1,9 @@
 # S4-B1 startup probe 準備savepoint
 
+最新: 権限観測付き追加診断1回を承認の上で実行済み。5対象取得と起動障害を確認した。
+表示失敗による確認限界を含め、引継書§40と[診断結果](anomaly-multiseed-v0.3-s4-b1-startup-security-probe-result-2026-09-10.md)を参照。
+以下の未承認・未実行記述は準備時の履歴として保持する。
+
 状態: **two separately authorized limited probes completed / startup failure reproduced / no native acceptance**。
 次の未測定項目は[process/thread権限観測案](anomaly-multiseed-v0.3-s4-b1-process-security-plan-2026-09-10.md)に整理した。
 読取りcollectorはc6fc191で実装済み。pure/fake231件・独立レビュー・17 source preflight通過（引継書§39）。

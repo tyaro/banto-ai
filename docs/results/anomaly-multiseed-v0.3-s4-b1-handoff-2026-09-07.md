@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §39を最初に参照。token/process/thread権限の読取りcollectorを実装・検証した。追加実機診断は未承認・未実行。
+2026-09-10最新: §40を最初に参照。権限観測付き診断1回を承認の上で実行し、5対象取得と0xC0000142を記録した。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c6fc191はpure/fake231件と独立レビューを通過。現在の10.0.26200.9445で17 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -780,3 +780,21 @@ PC全体の単発値でありリーク有無は未判定。他プロジェクト
 次の判断点は[権限観測計画](anomaly-multiseed-v0.3-s4-b1-process-security-plan-2026-09-10.md)の追加診断1回。
 30秒/256 events/親＋child512 MiB未満、breakpoint停止、drain32回/5秒を維持する。
 既存証跡は保持し、設定変更は行わない。main統合・native受入・formal permissionは未達。
+
+## 40. 2026-09-10 権限観測付き実機診断1回と表示失敗後の証跡確認
+
+§39後の1回実行確認へユーザーが「続けてください」と回答し、HEAD1af72edで1回実行した。
+5対象のsecurity取得confirmed。親/restricted/child tokenのdefault ACL bytesは一致し、各ACE3件。
+process/threadはowner/group、DACL ACE3件、label対象SACL ACE1件を取得した。権限変更はない。
+通常7 events/Continue7件、0xC0000142、breakpoint/exceptionなし。停止記録はprocess終了・debug所有解放・teardown pass。
+
+driver実行後の対話用要約にNone枠の扱い漏れがあり、表示前にAttributeErrorとなった。
+再起動せず保存証跡107403 bytesを有界read-only解析し、上記取得・停止・保存前resource_stop=falseを確認した。
+最終Write/Flush/file closeの結果、memory peak、実行時buffer hashは取得できず、不明として保持する。
+読取り時SHA-256は80d7ce1c602ca04e0a6d7f3488126acd0104f1f0fbcd28577c10a3a7d49d0c1c。
+詳細と確認限界は[権限観測診断結果](anomaly-multiseed-v0.3-s4-b1-startup-security-probe-result-2026-09-10.md)を参照。
+
+17 sources、Windows10.0.26200.9445、Python3.14.0と固定hash一致。
+空きRAMは開始8.25 GiB→実行後8.17 GiB、C102.25 GiB/D75.36 GiBは同値。リーク有無は未判定。
+他プロジェクトへの操作、権限変更、追加試行、既存証跡の変更はない。全acceptance gate no。
+次回は保存ACL/SDのoffline比較から継続可能。実機再試行は今回の承認へ含めない。
