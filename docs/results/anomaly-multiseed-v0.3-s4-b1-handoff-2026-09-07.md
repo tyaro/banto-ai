@@ -2,9 +2,10 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §33を最初に参照。UBR固定の承認済み緩和と実測buildは§31に記録する。
+2026-09-10最新: §34を最初に参照。承認済みの限定実機診断1回で0xC0000142を再現、7 eventsと記録保存を確認した。
+UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補b916de9はpure213件と独立監査を通過。現在の10.0.26200.9445で15 sourceの実read-only preflightもverified。
-実child/fixture/debuggerは未起動。本流統合・native受入・formal permissionは引き続き未達。
+限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
 
 最新の自己点検: cleanup/置換traceの候補実装と追加修正は§11〜17を参照。
 起動障害の既存ログ・公式仕様の照合は§18、独立レビューと是正結果は§19〜20を参照。
@@ -649,3 +650,24 @@ Windows10.0.26200.9445、Python3.14.0、exe/DLL hashは§31と一致。
 
 次は提示済み条件で実機の限定診断1回を実行するかの確認。準備承認を実行承認へ拡張しない。
 全breakpoint拒否とowned停止を維持し、結果をnative受入/main統合/formal permissionへ昇格させない。
+
+## 34. 2026-09-10 承認済み限定実機診断1回の結果
+
+§33の準備完了後に提示した実機診断1回の確認へ、ユーザーは「続けてください」と回答した。
+HEAD963a77a（実装b916de9）でDebugDriverを1回だけ明示実行し、2.346秒で終了した。
+driver/session/observerはobserved、child終了codeは0xC0000142。
+CREATE_PROCESS→LOAD_DLL×3→UNLOAD_DLL×2→EXIT_PROCESSの7 eventを取得・Continue確認した。
+breakpoint/exceptionは観測されず、障害DLLや原因は特定できていない。
+
+process signaledとdebug ownership resolvedを確認し、Terminate不要、drain0回、token/driver teardownはpass。
+private保存103,859 bytesのWrite/Flushとfile closeを確認した。resource stopなし、親＋child記録上peak commit約22.87 MiB。
+同runのpreflightは15 source / 186,269 bytesを照合し、Windows10.0.26200.9445とPython3.14.0を記録した。
+通常観測の完了をchild起動成功やrequired E2Eの合格へ読み替えない。
+
+開始前の空きRAM6.82 GiB/C103.09 GiB/D75.36 GiB、終了後RAM7.68 GiB/C103.09 GiB/D75.36 GiB。
+別プロジェクトへの操作はなく、全PCの単発値からリーク有無を判定しない。
+mainは889cfc3でclean。追加probe、既存rootの削除/修復/再利用、負荷試験、main統合、formal実行は行っていない。
+実行後のsource/temp/remote memoryの再読込みや保存fileのreadbackも行っていない。
+
+詳細・証拠の限界・次の未解決点は[実行記録](anomaly-multiseed-v0.3-s4-b1-startup-probe-result-2026-09-10.md)を参照。
+引き続き追加実機probeは自動再試行しない。全acceptance gate no。

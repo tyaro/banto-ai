@@ -1,7 +1,12 @@
 # S4-B1 startup probe 準備savepoint
 
-状態: **dormant driver tested / read-only preflight verified / probe not run**。
-2026-09-10追記: ユーザーの「続けてください」を受け、下記限定案で保存処理の準備を進めた。
+状態: **limited probe run once / startup failure reproduced / no native acceptance**。
+2026-09-10最新: 実行1回の承認を受け、2.346秒で0xC0000142と7 eventsを記録した。
+breakpoint/exceptionは観測されず、終了・解放・private記録Write/Flushを確認した。
+詳細は[実行記録](anomaly-multiseed-v0.3-s4-b1-startup-probe-result-2026-09-10.md)と引継書§34を参照。
+以下の準備/承認待ちの記述は今回の実行前の履歴として保持する。
+
+2026-09-10準備時の追記: ユーザーの「続けてください」を受け、下記限定案で保存処理の準備を進めた。
 これは準備継続の指示として扱い、実childは起動していない。
 2026-09-10更新: 承認によりUBR固定を記録へ変更。実10.0.26200.9445で14 sourceの事前照合が通過。
 限定案の保存実装と初回実行条件は下記、最新の試験・監査・実preflightは引継書§33を参照。

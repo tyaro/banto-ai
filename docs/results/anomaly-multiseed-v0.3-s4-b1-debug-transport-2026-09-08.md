@@ -1,8 +1,11 @@
 # S4-B1 debug-event transport savepoint
 
-状態: **dormant observation + owned stop / no launch**。
+状態: **limited native diagnostic run once / no native acceptance**。
+2026-09-10最新: 承認済み1回の実行で0xC0000142を再現し、7 events、process終了/所有解放、private保存を確認した。
+詳細は引継書§34と[実行記録](anomaly-multiseed-v0.3-s4-b1-startup-probe-result-2026-09-10.md)を参照。
+以下の未起動/承認待ちの記述は準備時の履歴として保持する。
 最新候補: `b916de9`（2026-09-10）。限定案のprivate保存を接続、pure213件通過・独立再監査の新規所見0。
-最新詳細は引継書§33と初回probe計画を参照。実childは未起動。
+保存実装の試験・監査は引継書§33と初回probe計画を参照。
 966723cでユーザー承認によりS4-B1のUBR固定を解除し、実測buildを記録する。
 現在10.0.26200.9445で実read-only preflightはverified。下記の旧runtime停止記録は当時の状態。
 productionの変更は_runtimeのUBR条件/記録のみ。source pin方式と他のruntime条件は維持する。
