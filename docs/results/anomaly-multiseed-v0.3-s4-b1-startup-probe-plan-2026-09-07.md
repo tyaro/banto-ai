@@ -1,6 +1,8 @@
 # S4-B1 startup probe 準備savepoint
 
 状態: **limited probe run once / startup failure reproduced / no native acceptance**。
+次回向けimage identity/name観測の準備は末尾の2026-09-10追加案を参照。追加実機起動はまだ行っていない。
+最新候補06f1e63はpure224件・独立再監査を通過。16 sourceの実read-only preflightもverified。詳細は引継書§36。
 実行後の別工程による保存記録解析は引継書§35と下記実行記録を参照。追加probeは行っていない。
 2026-09-10最新: 実行1回の承認を受け、2.346秒で0xC0000142と7 eventsを記録した。
 breakpoint/exceptionは観測されず、終了・解放・private記録Write/Flushを確認した。
@@ -186,3 +188,45 @@ first/second chance分離、public redactionを確認した。新規production s
 次は上記adapterの実装と故障注入・独立レビュー。native probe自体の実行準備はまだ未完了である。
 初回実行条件が具体化した時点で、引継書の追加probe承認条件に従う。
 Windows 3.12、required child、B1受入、main統合、formal permissionは引き続き未達/no。
+
+## 2026-09-10 追加案: event file handleのidentity/name記録
+
+前回は7 eventとraw pointerだけを保存し、offline解析で匿名module3→2のunloadを対応付けた。
+DLL名を後から推定せず、次回用のDebugImages collectorを準備した。
+実行条件は従来の限定案を維持し、追加するのは通常観測中のCREATE_PROCESS/LOAD_DLLのfile情報照会だけ。
+
+observerのevent検証後、file handleをcloseする前に、借用handleから次を行う。
+
+1. FileIdInfoを取得し、volumeと128-bit file IDを保持する。
+2. 同じhandleからGetFinalPathNameByHandleWでnormalized NT pathを取得する。
+3. 同じhandleのFileIdInfoを再取得し、1と一致することを確認する。
+
+前・各API間・終了後に既存の時間/メモリ予算を確認する。pathを使った再openやfile内容の読込はしない。
+lpImageNameやbase addressからremote memoryを読まない。取得handleのcloseは既存transportだけが所有する。
+file identityの一致は内容hashやloaded bytesの認証ではなく、名前から障害DLLや原因を断定しない。
+
+collectorはchild起動前に16枠を確保する。各枠のname bufferは1024 wchar、identity bufferは2個。
+images全体のJSONは24 KiB以下（外枠・区切り・未完成枠の予約分を含む）。event slotと状態、volume/file ID/nameをprivate metadataのimagesへ追加する。
+名前長がbuffer以上、identity変化、API失敗、容量超過では再試行せず観測を停止し、部分bufferを保持する。
+NULL hFileはno_file_handleと明示し、別手段へfallbackしない。停止drain中には新しい情報照会を行わない。
+resource stop後は既存方針どおりsnapshot/writeを始めず、process終了後の完全保存は保証しない。
+
+既存B1DBG001のheader/raw領域は変更しない。imagesは追加private metadataであり、旧記録への追記はしない。
+旧offline readerの匿名対応はそのまま使える。collector sourceをallowlistへ追加し、次回は16 sourceを照合する。
+今回の変更はproduction sourceやformal pinを変更せず、既存保存記録を改変しない。
+
+Win32仕様の根拠:
+[LOAD_DLL_DEBUG_INFO](https://learn.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-load_dll_debug_info)は
+debugger側のread/read-sharing hFileとclose責務、およびimage name pointerの任意性を記載する。
+[GetFinalPathNameByHandleW](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfinalpathnamebyhandlew)は
+NT path指定とbuffer不足時の長さを定義する。
+[FILE_ID_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winbase/ns-winbase-file_id_info)はvolume/file IDの組によるfile比較を説明する。
+
+次の実機診断は、review済みcommit固定・16 source preflight・空き資源確認の後、restricted child1個を1回だけ。
+観測30秒/256 events/親＋child512 MiB未満、未識別breakpoint停止、drain32回/5秒の条件は変えない。
+新しいfile情報照会による追加停止の可能性を結果として扱い、ACL緩和や別childへの再試行に進まない。
+この案の準備継続は、追加の実機診断を実行する承認とは別に扱う。
+
+準備savepoint: 06f1e63。pure/fake224/224、独立再監査の新規P0〜P3=0、指定fake50/50。
+実read-only preflightは16 source / 192,088 bytes / verified、OS10.0.26200.9445と既存exe/DLL hash一致。
+上記16枠のJSON上限は、独立監査P3を受け外枠と将来の部分row予約を含むよう是正済み。

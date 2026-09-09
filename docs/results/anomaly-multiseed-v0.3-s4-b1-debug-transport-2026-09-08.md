@@ -1,6 +1,8 @@
 # S4-B1 debug-event transport savepoint
 
 状態: **limited native diagnostic run once / no native acceptance**。
+最新の次回準備は06f1e63（image identity/nameの有界取得）。pure224件・独立再監査・16 source preflight通過。
+詳細は引継書§36を参照。追加の実機起動はまだ行っていない。
 最新の保存記録解析は引継書§35を参照。eefae0fのoffline readerで匿名module3→2のunload対応を確認。実機の追加起動はない。
 2026-09-10最新: 承認済み1回の実行で0xC0000142を再現し、7 events、process終了/所有解放、private保存を確認した。
 詳細は引継書§34と[実行記録](anomaly-multiseed-v0.3-s4-b1-startup-probe-result-2026-09-10.md)を参照。

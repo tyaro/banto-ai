@@ -2,9 +2,9 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §35を最初に参照。実機診断1回の後、保存記録だけを解析し、匿名DLLのload/unload対応を確認した。
+2026-09-10最新: §36を最初に参照。次回用のimage identity/name記録を準備し、模擬試験・再監査・16 source照合を通過した。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
-候補b916de9はpure213件と独立監査を通過。現在の10.0.26200.9445で15 sourceの実read-only preflightもverified。
+候補06f1e63はpure224件と独立再監査を通過。現在の10.0.26200.9445で16 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
 
 最新の自己点検: cleanup/置換traceの候補実装と追加修正は§11〜17を参照。
@@ -693,3 +693,27 @@ DLL名・image file identityが未保存で、pointerも追跡しないため、
 Cの空きは約0.83 GiB減少したが102 GiB以上残る。全PCの同時稼働を含む値で、発生元やリーク有無は未判定。
 この工程で追加したのは小さいreader/test/文書だけ。child/driver/debugger/負荷試験、既存rootの変更、
 他プロジェクトへの操作、大きな再走査は行っていない。main統合/native受入/formal permissionは未達のまま。
+
+## 36. 2026-09-10 次回用image identity/name記録の準備
+
+ユーザーの継続指示を受け、06f1e638c6f07dd1f733aa7bce0e392536e60befでDebugImagesを追加した。
+observerのevent検証後、file close前に借用hFileからFileIdInfo→normalized NT path→FileIdInfo再確認を行う。
+fileの再open・内容読込・remote pointer参照・collectorによるhandle closeはない。
+NULL hFile、API失敗、部分取得、名前長超過、identity変化を区別し、再試行せず既存owned停止へ進む。
+停止drainでは情報照会しない。volume/file IDとnameはprivate情報として保存し、公開結果へ出さない。
+
+16枠、各name1024 wchar、各identity2bufferを起動前に確保。images全体のJSONを24 KiB以下に制限する。
+独立監査P3 1件（24KiBが行合計だけで外枠等を含まない）を修正し、外枠・区切りと
+未来の部分row向け各256bytesを予約する。超過する名前は確定rowへ保存しない。
+再監査でP3解消、新規P0〜P3=0、指定fake50/50（0.977秒）。実装側pure/fake224/224（1.570秒）。
+repository safety/diff-check pass。production/D2/formal pinに変更はなく、D2の大きな再走査は省略した。
+
+collector sourceを追加したallowlist16件の実read-only preflightはverified、192,088 bytes、resource_stop=false。
+Windows10.0.26200.9445、Python3.14.0、exe/DLL hashは前回と一致。
+開始付近の空きRAM8.16 GiB/C102.25 GiB/D75.36 GiB、終了付近RAM8.13 GiB/C102.25 GiB/D75.36 GiB。
+単発値からリーク有無は判断しない。今回の検査processは短命で終了済み。
+
+既存保存記録には変更を加えていない。追加child/実driver/debugger/負荷試験、他プロジェクトへの操作は行っていない。
+次回条件は[初回probe計画の追加案](anomaly-multiseed-v0.3-s4-b1-startup-probe-plan-2026-09-07.md)へ具体化した。
+観測30秒/256 events、親＋child512 MiB未満、未識別breakpoint停止、drain32回/5秒は維持する。
+名前の取得は原因判定ではない。追加実機診断1回の確認を次の判断点とし、準備承認を起動承認に拡張しない。
