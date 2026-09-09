@@ -83,6 +83,7 @@ class DebugEventTransport:
         if kernel is None:
             need(os.name == "nt", "platform")
             kernel = C.WinDLL("kernel32", use_last_error=True)
+        if isinstance(kernel, C.CDLL):
             for name, result, args in (
                     ("WaitForDebugEventEx", C.c_int32, (C.POINTER(DebugEvent), D)),
                     ("ContinueDebugEvent", C.c_int32, (D, D, D)),

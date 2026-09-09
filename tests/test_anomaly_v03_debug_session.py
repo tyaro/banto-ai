@@ -36,7 +36,7 @@ class DebugSessionTests(unittest.TestCase):
             raw.kind, raw.pid, raw.tid = next(events), 17, 19
             return True
         kernel.WaitForDebugEventEx.side_effect = wait
-        preflight = Mock(resource_stop=False, primary=None, secondary=None)
+        preflight = Mock(started=False, resource_stop=False, primary=None, secondary=None)
         preflight.run.return_value = {"status": "verified"}
         observer = DebugObserver(launch.stop, sample_memory=lambda: 0, clock=lambda: 0)
         identity = stack.enter_context(patch.object(s.w, "_process_identity", return_value={"pid": 17}))

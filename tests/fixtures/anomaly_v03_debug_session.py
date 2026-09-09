@@ -115,7 +115,7 @@ class DebugSession:
         try:
             need(not self.launch.started and not self.observer.started and not self.stop.started,
                  "session_started_components")
-            self.preflight_result = self.preflight.run()
+            self.preflight_result = self.preflight.result if self.preflight.started else self.preflight.run()
             self._latch(self.preflight.primary)
             self._completed(self.preflight_result, self.preflight, "verified", "session_preflight")
             # One 30-second observation clock includes creation/validation and
