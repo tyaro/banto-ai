@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §49を最初に参照。保存RIPをidentity一致の現在ntdllと照合し、Nt/ZwUnmapViewOfSectionの範囲に対応すると確認。原因未特定、追加childなし。
+2026-09-10最新: §50を最初に参照。保存stackから1段の呼出し元を復元し、直前CALLのtarget一致で照合。原因未特定、追加childなし。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -938,3 +938,17 @@ ntdllは2522080 bytes、SHA-256=a74f7482085eab125ccc09152ab7e0b5994bcb13e1a7b298
 未対応の命令/chain/epilogueや保存範囲外では推測で補完しない。今回はunwind・symbol取得未実施。
 追加child・remote read・code/権限設定変更・他project操作なし。全acceptance gate no。
 開始空きRAM9.13 GiB/C102.31 GiB/D75.36 GiB。リーク有無は未判定。
+
+## 50. 2026-09-10 保存stackから1段の呼出し元復元
+
+保存証跡と現在ntdllを有界read-onlyで読み、既存hash・image identity一致を再確認した。
+観測RIP0x161304の命令はRET、UNWIND_INFOはversion1/flags0/code0/prolog0。
+保存RSP先頭8 bytesから復元した戻り先はntdll RVA0xa7956、関数範囲[0xa7914,0xa7962)。
+直前RVA0xa7951のCALL rel32はtarget0x1612f0で、観測したNt/ZwUnmapViewOfSection beginと一致した。
+現在imageを適用した条件付きの1段復元であり、loaded bytes完全一致・呼出し元の私有関数名・起動失敗原因は未確定。
+
+詳細は[context診断結果の1段復元](anomaly-multiseed-v0.3-s4-b1-startup-context-probe-result-2026-09-10.md)を参照。
+次frameのunwind情報（32-byte allocation/RBX保存に対応する形）を確認したが、2段目は未復元。
+次はbody/epilogue判別・保存stack内offset・nonvolatile register・callsiteを検証し、対応できる範囲だけ進める。
+追加child・remote memory・symbol取得・設定変更なし。文書のみのためtest/レビュー再実行なし。全acceptance gate no。
+開始空きRAM8.80 GiB/C102.31 GiB/D75.36 GiB。リーク有無は未判定。

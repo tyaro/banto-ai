@@ -127,3 +127,45 @@ raw stack2048 bytesはまだunwindしていない。呼出し元を推定する�
 DLL bytesや生stackの追加コピーは保存していない。複数の読取り試行と停止理由も上記の通り記録した。
 今回code変更なし。test再実行・レビュー再委譲・負荷試験・権限設定変更なし。
 開始空きRAM9.13 GiB/C102.31 GiB/D75.36 GiB。PC全体の値からリーク有無を判定しない。
+
+## 保存スタックからの1段の復元（2026-09-10）
+
+追加child・remote read・symbol downloadなし。保存証跡と現在ntdllを前節の有界read-only手順で読み、
+両方の記録済みSHA-256と一致した。ntdllのvolume/file ID/name、access timeを除くfile infoも前後で一致し、
+取得後に全reader handleをcloseした。以下は現在のidentity/hash一致imageを適用した条件付き解析である。
+実行時loaded bytesの完全一致未証明という制約は維持する。
+
+最初のRUNTIME_FUNCTIONのUNWIND_INFO（RVA0x1b5630）はversion1、flags0、prolog0、
+code count0、frame register0。保存RIP RVA0x161304の現在image bytesはC3 CD 2E C3で、先頭C3はnear RET。
+[x64 epilogue](https://learn.microsoft.com/en-us/cpp/build/prolog-and-epilog?view=msvc-170)と
+[unwind仕様](https://learn.microsoft.com/en-us/cpp/build/exception-handling-x64?view=msvc-170)に照らし、
+この限定形では保存RSP先頭の8 bytesを戻り先として取り出し、RSPを8進める1段のみを復元した。
+stack全体の走査や、addressらしい値の列挙をcall stackの代用にしていない。
+
+| 項目 | image相対値 |
+| --- | --- |
+| 観測した関数 | Nt/ZwUnmapViewOfSection、[0x1612f0,0x161308) |
+| 観測RIP | 0x161304 |
+| 保存stackから復元した戻り先 | ntdll RVA0xa7956 |
+| 戻り先を含むRUNTIME_FUNCTION | [0xa7914,0xa7962) |
+| 呼出し命令の位置 | RVA0xa7951 |
+| 呼出し命令bytes | E8 9A 99 0B 00 |
+| rel32を符号付きで計算した呼出し先 | RVA0x1612f0（観測関数beginと一致） |
+
+戻り先はntdllのexecutable section内で、一意なRUNTIME_FUNCTION範囲に入った。
+直前5 bytesのCALL rel32の終端が戻り先に一致し、そのtargetも観測したNt/ZwUnmapViewOfSectionと一致した。
+このcallsite照合により1段の復元を補強した。ただし呼出し元の私有関数名や、元の起動失敗原因は未特定。
+
+### 次のframeに必要な情報と未実施範囲
+
+呼出し元のUNWIND_INFOはRVA0x1a3ca4、version1、flags0、prolog6、frame register0、codes06320230。
+公開定義上のUWOP_ALLOC_SMALL（32 bytes）とUWOP_PUSH_NONVOL（RBX）に対応する形である。
+戻り先以降のimage bytesは48 83 63 30 00 48 83 C4 20 5B C3 CC。
+今回、このframeのbody/epilogue判別を含むunwindは実行しておらず、2段目の戻り先を確認済みとは扱わない。
+次に進む場合は保存stack内のoffset、nonvolatile register復元、実行位置、callsiteを検査し、
+未対応opcode/chain/保存範囲外ならそこで停止する。単純に全frameへ同じRSP加算を繰り返さない。
+
+解析の公開可能なRVA/命令/状態だけをartifacts/context-offline-2026-09-10/first-unwind.jsonと
+first-unwind-verified.jsonへ保存した。前者の未照合状態も残し、後者にCALL target照合結果を追記した。
+絶対address・raw stackの追加コピーは保存していない。production/test code変更、実機再実行、設定変更なし。
+開始空きRAM8.80 GiB/C102.31 GiB/D75.36 GiB。全体値の単発測定でリーク有無を判定しない。
