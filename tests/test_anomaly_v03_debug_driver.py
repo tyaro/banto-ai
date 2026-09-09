@@ -56,6 +56,15 @@ class DebugDriverTests(unittest.TestCase):
             return True
         kernel.WriteFile.side_effect = write
         kernel.FlushFileBuffers.return_value = True
+        def image_id(handle, kind, pointer, size):
+            pointer.contents.volume = 1
+            pointer.contents.identifier[0] = handle & 255
+            return True
+        def image_name(handle, buffer, size, flags):
+            buffer.value = "\\Device\\HarddiskVolume1\\DUMMY_PRIVATE.dll"
+            return len(buffer.value)
+        kernel.GetFileInformationByHandleEx.side_effect = image_id
+        kernel.GetFinalPathNameByHandleW.side_effect = image_name
         return d.DebugDriver(), api, kernel, preflight, tokens, fixture, disk
 
     def test_full_wiring_preflight_once_and_evidence_retention_without_acceptance(self):
@@ -161,6 +170,8 @@ class DebugDriverTests(unittest.TestCase):
                 fixture.capture_cleanup.assert_not_called()
                 self.assertFalse(result["native_accepted"])
                 self.assertFalse(result["formal_permission"])
+                self.assertEqual([row["status"] for row in driver.images.rows[:driver.images.count]],
+                                 ["confirmed", "confirmed"])
                 self.assertEqual(result["evidence_status"], "resource_skipped" if fault == "continue" else "flushed")
                 driver.evidence_file.close.assert_called_once()
 
@@ -286,6 +297,32 @@ class DebugDriverTests(unittest.TestCase):
             self.assertEqual(result["status"], "failed")
             self.assertEqual(result["evidence_status"], "flushed")
             driver.evidence_file.close.assert_called_once()
+
+    def test_image_query_failure_stops_before_continue_and_keeps_file_teardown(self):
+        with ExitStack() as stack:
+            driver, api, kernel, preflight, tokens, fixture, disk = self.driver(stack)
+            events = iter((3, 5))
+            def deliver(pointer, timeout):
+                raw = pointer.contents
+                raw.kind, raw.pid, raw.tid = next(events), 17, 19
+                if raw.kind == 3:
+                    raw.info.create_process.file = 101
+                return True
+            kernel.WaitForDebugEventEx.side_effect = deliver
+            kernel.WaitForSingleObject.side_effect = [258, 0]
+            original = MemoryError()
+            kernel.GetFinalPathNameByHandleW.side_effect = original
+            result = driver.run()
+            self.assertIs(driver.primary, original)
+            self.assertEqual(result["status"], "failed")
+            self.assertTrue(result["resource_stop"])
+            self.assertEqual(driver.images.rows[0]["status"], "name_uncertain")
+            kernel.GetFinalPathNameByHandleW.assert_called_once()
+            methods = [call[0] for call in kernel.mock_calls]
+            self.assertLess(methods.index("TerminateProcess"), methods.index("ContinueDebugEvent"))
+            self.assertEqual([call.args[0] for call in kernel.CloseHandle.call_args_list].count(101), 1)
+            self.assertEqual(result["evidence_status"], "resource_skipped")
+            kernel.WriteFile.assert_not_called()
 
 
 if __name__ == "__main__":

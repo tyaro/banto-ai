@@ -91,6 +91,8 @@ class DebugEvidence:
                         "observation": dict(driver.observer.result),
                         "runtime": driver.preflight.runtime, "sources": driver.preflight.rows,
                         "nonce": driver.nonce,
+                        "images": ({"state": driver.images.state, "rows": driver.images.rows}
+                                   if getattr(driver, "images", None) is not None else None),
                         "primary_reason": getattr(driver.primary, "reason", None)}
             offset = self.HEADER.size
             # Bound accumulated metadata before copying; never serialize raw

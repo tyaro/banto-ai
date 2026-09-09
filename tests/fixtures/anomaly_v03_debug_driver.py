@@ -19,6 +19,7 @@ from tests.fixtures.anomaly_v03_debug_launch import SuspendedDebugLaunch
 from tests.fixtures.anomaly_v03_debug_observer import DebugObserver
 from tests.fixtures.anomaly_v03_debug_session import DebugSession
 from tests.fixtures.anomaly_v03_debug_evidence import DebugEvidence, EvidenceFile
+from tests.fixtures.anomaly_v03_debug_images import DebugImages
 
 
 class DriverResult(dict):
@@ -43,6 +44,7 @@ class DebugDriver:
         self.token_resolved = True
         self.evidence = DebugEvidence()
         self.evidence_file = None
+        self.images = DebugImages()
         self.result = DriverResult(self)
 
     def __repr__(self):
@@ -90,7 +92,7 @@ class DebugDriver:
         self.transport = DebugEventTransport(kernel=self.api.k, last_error=C.get_last_error)
         self.stop = OwnedDebugStop(self.transport)
         self.memory = DebugMemory(self.stop, self.api.p)
-        self.observer = DebugObserver(self.stop, sample_memory=self.memory)
+        self.observer = DebugObserver(self.stop, sample_memory=self.memory, images=self.images)
         self.launch = SuspendedDebugLaunch(self.api, self.tokens.buffers[1].value, self.fixture, self.stop)
         self.session = DebugSession(self.preflight, self.launch, self.observer,
                                     self.tokens.parent_profile, self.tokens.restricted_profile)

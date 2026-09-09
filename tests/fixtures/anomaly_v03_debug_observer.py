@@ -24,9 +24,10 @@ class DebugObserver:
     MEMORY_LIMIT = 512 * 1024 * 1024
     WAIT_LIMIT = 300
 
-    def __init__(self, stop, *, sample_memory, clock=time.monotonic):
+    def __init__(self, stop, *, sample_memory, clock=time.monotonic, images=None):
         self.stop, self.transport = stop, stop.transport
         self.sample_memory, self.clock = sample_memory, clock
+        self.images = images
         self.events = StartupEvents(self.transport.pid)
         self.started = False
         self.primary = self.secondary = None
@@ -96,6 +97,8 @@ class DebugObserver:
                 if event.kind == "exit_process" and event.code == 80:
                     self.resource_stop = True
                     raise TransportError("child_resource_stop")
+                if self.images is not None:
+                    self.images.capture(self.transport, self._budget)
                 self.transport.close_file(self.transport.pending)
                 self._budget()
                 # Transport refuses every unverified breakpoint. No callback
