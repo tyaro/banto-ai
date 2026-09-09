@@ -74,3 +74,56 @@ PC全体の変化には別作業を含むため、増減の原因・リーク有
 load baseの大小だけで所属moduleやreturn addressを決めず、raw stackをそのままcall stackとして表示しない。
 実行中の追加メモリ取得を行わず、対応資料が不足する場合は不足として保持する。
 この1回の承認で実childを再起動しない。原因未特定、required E2E/main統合/formal permissionは未達。
+
+## 保存RIPと現在のntdll image情報の照合（2026-09-10）
+
+追加child・remote memory取得・debugger起動なし。前節の保存証跡を同じ上限でread-only読込みし、
+実行時buffer hashと一致することを再確認した。image rowのntdll.dllと同じslotのLOAD_DLL baseを対応させた。
+
+最初は既存fixture向け_Boundで現在のSystem32/ntdll.dllを開こうとしたが、hardlink数1の条件で停止した。
+production/fixtureの検査は変更せず、解析専用の一時的な読取り手順でnamed default streamを開いた。
+既存held-handle検査でancestorのlocal NTFS/reparse/identityを確認し、対象fileは読取りのみ・share-readのみで保持した。
+GetFileInformationByHandle/FILE_ID_INFO/normalized NT nameにより非directory・非reparse、volume/file IDと
+完全なNT nameが保存image rowに一致することを読取り前後で確認した。ntdllのhardlink数は2だった。
+
+最初の解析専用読取りは、前後のfile info全bytes比較で停止した。再確認では変化項目がaccess timeだけと判明した。
+解析用の比較はaccess timeを記録対象に分け、creation/write time、attributes、size、link count、identity等は一致を要求した。
+この調整は解析専用で、fixture側のhardlink/identity条件は緩和していない。
+取得APIは同じhandleから既定data streamを読むだけで、DLLをload/executeしない。
+各読み取り8 MiB/10秒上限、64 KiB単位。最後に全reader handleをcloseした。
+
+現在のntdll.dll:
+
+- file bytes: 2,522,080
+- 読取り時SHA-256: `a74f7482085eab125ccc09152ab7e0b5994bcb13e1a7b29880bdbb24179ecb8b`
+- machine: AMD64、optional header: PE32+
+- SizeOfImage: 2,519,040 bytes
+- 保存RIPから保存load baseを引いたRVA: `0x161304`
+- 上記RVAは現在fileのimage範囲内・executable section内
+
+[PE形式](https://learn.microsoft.com/en-us/windows/win32/debug/pe-format)に従い、DOS/PE signature、machine、
+section数（最大96）、raw file範囲とimage範囲を検査した。RVAからfile offsetへの変換は一意なsectionでのみ行った。
+例外tableは1 MiB以下・12-byte単位とし、各entryのbegin/end/unwind RVAの範囲を確認した。
+[x64 RUNTIME_FUNCTION](https://learn.microsoft.com/en-us/cpp/build/exception-handling-x64?view=msvc-170)の
+begin<=RVA<endを満たすentryは1件で、begin=`0x1612f0`、end=`0x161308`、unwind RVA=`0x1b5630`だった。
+
+export tableの照合ではNtUnmapViewOfSectionとZwUnmapViewOfSectionが同じ`0x1612f0`を指していた。
+保存RIPはそこから`+0x14`、かつ上記RUNTIME_FUNCTION範囲内である。
+直前export名の近さだけで所属を決めず、今回のsection/range/entryとの一致を併記した。
+この時点の実行位置を、失敗した元のAPIやDLL初期化の原因と断定しない。
+
+### 同一性と解釈の限界
+
+volume/file ID/name一致は現在のfileと当時取得したimage handleの識別情報が一致することを示す。
+当時のloaded bytes hashは保存していないため、今回読んだ全file bytesが当時のmemory imageと完全一致した証明ではない。
+従って関数範囲との対応は、この現在fileを解析資料として適用した結果として扱う。
+実行時のrelocation・patch・file変更履歴まで検証したことにはしない。
+
+raw stack2048 bytesはまだunwindしていない。呼出し元を推定する前に、このentryのUNWIND_INFOを境界検査し、
+保存CONTEXT/stack内だけで復元できるかを確認する。未対応unwind opcode、chain、epilogue、保存stack範囲外なら止め、
+値を並べてcall stackと表示しない。PDB/symbol downloadや現行processへの追加照会は行っていない。
+
+公開可能な照合要約のみartifacts/context-offline-2026-09-10/image-check.jsonへ保持した（Git対象外）。
+DLL bytesや生stackの追加コピーは保存していない。複数の読取り試行と停止理由も上記の通り記録した。
+今回code変更なし。test再実行・レビュー再委譲・負荷試験・権限設定変更なし。
+開始空きRAM9.13 GiB/C102.31 GiB/D75.36 GiB。PC全体の値からリーク有無を判定しない。

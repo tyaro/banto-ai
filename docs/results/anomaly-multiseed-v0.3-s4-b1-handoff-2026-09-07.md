@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §48を最初に参照。承認済み1回でunload時context/2 KiB stack取得に成功。起動は0xC0000142、終了・保存・hash一致を確認。
+2026-09-10最新: §49を最初に参照。保存RIPをidentity一致の現在ntdllと照合し、Nt/ZwUnmapViewOfSectionの範囲に対応すると確認。原因未特定、追加childなし。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -921,3 +921,20 @@ memory sampler64回、親＋child peak commit約23.65 MiB、working約33.09 MiB�
 開始空きRAM8.57 GiB/C102.32 GiB/D75.36 GiB→照合後9.28 GiB/C102.31 GiB/D75.36 GiB。
 PC全体の単発値でリーク有無は判定しない。権限/設定変更・他project操作・追加試行なし。
 次は保存context/stackを解釈するためのimage identity/範囲/unwind情報の検証方法を検討する。全acceptance gate no。
+
+## 49. 2026-09-10 保存RIPとntdll image範囲のoffline照合
+
+保存証跡hash一致を確認し、現在のSystem32/ntdll.dllのvolume/file ID/normalized nameが保存image rowと一致した。
+fixture向けのhardlink数1検査は変更せず、解析専用のread-only手順でhardlink2を記録した。
+file infoのaccess time変化だけを別扱いとし、identity/size/write等は読取り前後で一致を確認した。
+詳細な停止経緯と範囲検査は[context診断結果のRIP照合](anomaly-multiseed-v0.3-s4-b1-startup-context-probe-result-2026-09-10.md)を参照。
+
+ntdllは2522080 bytes、SHA-256=a74f7482085eab125ccc09152ab7e0b5994bcb13e1a7b29880bdbb24179ecb8b。
+保存RIPのRVA0x161304はexecutable section内で、RUNTIME_FUNCTION [0x1612f0,0x161308)、unwind RVA0x1b5630に対応。
+同beginを指すexportはNtUnmapViewOfSection/ZwUnmapViewOfSection（+0x14）。元の失敗APIとは断定しない。
+現在fileのbytesと実行時loaded bytesの完全一致は未証明として保持する。
+
+次はUNWIND_INFOを確認し、保存CONTEXT/2 KiB stackの範囲内だけで呼出し元を復元できるかを調べる。
+未対応の命令/chain/epilogueや保存範囲外では推測で補完しない。今回はunwind・symbol取得未実施。
+追加child・remote read・code/権限設定変更・他project操作なし。全acceptance gate no。
+開始空きRAM9.13 GiB/C102.31 GiB/D75.36 GiB。リーク有無は未判定。
