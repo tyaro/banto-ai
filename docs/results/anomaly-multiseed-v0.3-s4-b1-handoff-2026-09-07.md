@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §36を最初に参照。次回用のimage identity/name記録を準備し、模擬試験・再監査・16 source照合を通過した。
+2026-09-10最新: §37を最初に参照。承認済みimage記録付き診断1回で4 image名を取得し、0xC0000142を再現した。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補06f1e63はpure224件と独立再監査を通過。現在の10.0.26200.9445で16 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -717,3 +717,21 @@ Windows10.0.26200.9445、Python3.14.0、exe/DLL hashは前回と一致。
 次回条件は[初回probe計画の追加案](anomaly-multiseed-v0.3-s4-b1-startup-probe-plan-2026-09-07.md)へ具体化した。
 観測30秒/256 events、親＋child512 MiB未満、未識別breakpoint停止、drain32回/5秒は維持する。
 名前の取得は原因判定ではない。追加実機診断1回の確認を次の判断点とし、準備承認を起動承認に拡張しない。
+
+## 37. 2026-09-10 image identity/name付き実機診断1回の結果
+
+§36の準備後に提示した実機診断1回の確認へ、ユーザーは「続けてください」と回答した。
+HEAD43d05f5（実装06f1e63）で明示的に1回実行し、3.216秒で戻った。
+通常event7件/Continue7件、exit0xC0000142、breakpoint/exceptionなし。
+slot0 python.exe、slot1 ntdll.dll、slot2 kernel32.dll、slot3 KernelBase.dllのfile identity/nameを確認した。
+python314.dllのload eventは観測されていない。最後のDLLや読み込み順から原因を判定しない。
+
+process終了・debug所有解放・token/driver teardown=pass、Terminate不要、drain0回。
+private104,807 bytesのWrite/Flushとfile closeを確認し、同process内出力bufferのhashを記録した。
+fileのreadbackではない。hash・詳細・限界は[image診断結果](anomaly-multiseed-v0.3-s4-b1-startup-image-probe-result-2026-09-10.md)を参照。
+
+同runで16 source / 192,088 bytesを照合し、OS10.0.26200.9445とPython3.14.0/既存hash一致。
+記録上の親＋child peak commit約22.93 MiB、resource stopなし。
+開始前の空きRAM8.14 GiB/C102.25 GiB/D75.36 GiB、終了後RAM7.97 GiB/C102.24 GiB/D75.36 GiB。
+単発値からリーク有無は判定しない。他プロジェクトへの操作・負荷試験・既存rootの変更はない。
+mainは889cfc3でclean、追加再試行なし。全acceptance gate no。

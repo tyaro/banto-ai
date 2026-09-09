@@ -1,6 +1,9 @@
 # S4-B1 debug-event transport savepoint
 
-状態: **limited native diagnostic run once / no native acceptance**。
+状態: **two separately authorized limited native diagnostics completed / no native acceptance**。
+最新は引継書§37と[image診断結果](anomaly-multiseed-v0.3-s4-b1-startup-image-probe-result-2026-09-10.md)。
+image記録付き追加1回でpython.exe/ntdll.dll/kernel32.dll/KernelBase.dllを確認し、0xC0000142を再現した。
+以下の次回準備/未起動という記述は、この追加実行前の履歴として保持する。
 最新の次回準備は06f1e63（image identity/nameの有界取得）。pure224件・独立再監査・16 source preflight通過。
 詳細は引継書§36を参照。追加の実機起動はまだ行っていない。
 最新の保存記録解析は引継書§35を参照。eefae0fのoffline readerで匿名module3→2のunload対応を確認。実機の追加起動はない。

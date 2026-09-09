@@ -1,6 +1,9 @@
 # S4-B1 startup probe 準備savepoint
 
-状態: **limited probe run once / startup failure reproduced / no native acceptance**。
+状態: **two separately authorized limited probes completed / startup failure reproduced / no native acceptance**。
+最新: image identity/name付き追加1回を承認の上で実行し、4 image名と0xC0000142を記録した。
+詳細は引継書§37と[image診断結果](anomaly-multiseed-v0.3-s4-b1-startup-image-probe-result-2026-09-10.md)を参照。
+以下の準備中/未起動という記述は、この追加実行前の履歴として保持する。
 次回向けimage identity/name観測の準備は末尾の2026-09-10追加案を参照。追加実機起動はまだ行っていない。
 最新候補06f1e63はpure224件・独立再監査を通過。16 sourceの実read-only preflightもverified。詳細は引継書§36。
 実行後の別工程による保存記録解析は引継書§35と下記実行記録を参照。追加probeは行っていない。
