@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §37を最初に参照。承認済みimage記録付き診断1回で4 image名を取得し、0xC0000142を再現した。
+2026-09-10最新: §38を最初に参照。保存fileを実行時hashと照合し、unload対応と次の権限観測案を整理した。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補06f1e63はpure224件と独立再監査を通過。現在の10.0.26200.9445で16 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -735,3 +735,23 @@ fileのreadbackではない。hash・詳細・限界は[image診断結果](anoma
 開始前の空きRAM8.14 GiB/C102.25 GiB/D75.36 GiB、終了後RAM7.97 GiB/C102.24 GiB/D75.36 GiB。
 単発値からリーク有無は判定しない。他プロジェクトへの操作・負荷試験・既存rootの変更はない。
 mainは889cfc3でclean、追加再試行なし。全acceptance gate no。
+
+## 38. 2026-09-10 出力buffer hashとの照合と次の未測定項目
+
+ユーザーの継続指示を受け、104,807 bytesの保存file1件だけを有界read-onlyで解析した。
+SHA-256は§37の実行時メモリ内出力buffer hashと一致。16 source、OS、event数も一致した。
+同じ記録内のevent slot/image row/base対応により、KernelBase.dll→kernel32.dllのunloadを確認した。
+これは保存bytesの一致確認であり、DLL内容の認証や原因DLLの特定ではない。
+詳細は[image診断結果の解析追記](anomaly-multiseed-v0.3-s4-b1-startup-image-probe-result-2026-09-10.md)を参照。
+
+コードと公式仕様の照合では、process/thread作成のSECURITY_ATTRIBUTESはNone、
+token profileにTokenDefaultDaclはなく、既存AccessCheckはテストfile/directoryが対象だった。
+実child自身と初期threadのSD/default DACLは未測定。原因と断定せず、設定変更前の読取り観測候補として
+[process/thread権限観測案](anomaly-multiseed-v0.3-s4-b1-process-security-plan-2026-09-10.md)を作成した。
+対象5個、既存handle借用、固定buffer、NULL/空ACL/取得失敗の分離、保存容量・pointer境界検査を要件にした。
+file用SD検証やgeneric mappingをkernel objectへ流用しない。collectorはまだ未実装で、実行承認も求めていない。
+
+今回はcode変更・追加child/driver/debugger・token/ACL設定変更なし。保存file/旧rootは書換え・修復・削除していない。
+解析と設計文書のみのため、テスト再実行や独立担当への再委譲は省略した。
+開始時の空きRAM8.22 GiB/C102.25 GiB/D75.36 GiB、終了付近RAM8.26 GiB/C102.26 GiB/D75.36 GiB。
+同時稼働中のPC全体の値であり、リーク有無の判定はしない。全acceptance gate no。

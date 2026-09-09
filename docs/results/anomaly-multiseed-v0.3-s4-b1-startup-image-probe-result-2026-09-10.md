@@ -81,3 +81,20 @@ docs追記のための確認のみで、既存artifactの大きな再走査やte
 原因DLL、初期化object、restricted token/default DACL等との因果関係は未特定。
 次は保存buffer hashと照合したoffline解析、または必要な追加観測の範囲を具体化する。
 追加の実機probeをこの承認のまま繰り返さない。B1 required E2E、Windows3.12、main統合、formal実行は未達。
+
+## 別工程のhash照合とunload対応（2026-09-10）
+
+次の継続指示を受け、保存記録をread-onlyで解析した。temp直下4,096件、専用prefix root32個の上限で、
+固定名control/startup-evidence.binのmetadataだけを調べ、104,807 bytesの候補1件を選択した。
+既存のheld-handle/reparse/NTFS検査付き有界readerで当該fileだけを読み込んだ。
+SHA-256は上記の実行時メモリ内出力buffer hashと一致した。
+format、OS build、source16行、event7件も一致し、旧記録への書込み・修復・削除は行っていない。
+
+同じ記録内でevent slotと保存image rowを結び、base一致を用いてslot4はKernelBase.dll、slot5はkernel32.dllの
+unloadと対応付けた。前回の別processのbaseやload順から名前を割り当てたものではない。
+normal7、drain0、wait/continue inflight=false、confirmed範囲外の保存bytesはzeroだった。
+この工程でもchild/driver/debuggerは起動していない。
+
+hash一致は保存bytesが実行時出力bufferと一致することの確認であり、DLL内容の認証や原因DLLの特定ではない。
+readerのprovenance_verified=false / native_accepted=falseを維持する。
+次の権限観測候補は[process/thread権限観測案](anomaly-multiseed-v0.3-s4-b1-process-security-plan-2026-09-10.md)へ整理した。
