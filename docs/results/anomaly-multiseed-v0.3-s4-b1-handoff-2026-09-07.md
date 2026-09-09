@@ -2,6 +2,10 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
+2026-09-09最新: §30を最初に参照。driver候補94bbdceはpure197件と独立再監査を通過したが、
+実read-only preflightはOS UBR差分（固定9168 / 現在9445）で停止。新OS向け候補条件の扱いは判断待ち。
+実child/fixture/debuggerは今回起動せず、固定runtime/本流/受入条件も変更していない。
+
 最新の自己点検: cleanup/置換traceの候補実装と追加修正は§11〜17を参照。
 起動障害の既存ログ・公式仕様の照合は§18、独立レビューと是正結果は§19〜20を参照。
 独立レビューのP2 2件は修正確認済み。child E2Eと本流統合は引き続き未完了。
@@ -560,3 +564,21 @@ D2対象変更なし、追加ディスク走査は省略した。独立監査詳
 
 残りは外側driverの新規fixture/親restricted tokenの所有と清掃、初期breakpoint識別、完成driver監査。
 実preflight/child/debuggerは未実行、全acceptance gate no。
+
+## 30. 2026-09-09 外側driver統合とOS固定条件の判断点
+
+6d97709で親/restricted tokenとSIDの出力を事前所有する部品を追加し、独立監査は新規P0〜P3=0。
+b4c1365で新規fixture・b1.2 request・preflight・session・終了を接続する外側driverを追加した。
+temp空き1 GiB以上を要求し、診断fixtureは証拠として保持、終了時はhandleのみ解放する。
+既存failure rootを再利用・清掃しない。source allowlistは14ファイル。production/D2 pinは変更なし。
+
+独立監査P2 1件（child側未解決所有をouter teardownへ集約しない）を94bbdceで修正した。
+再監査P2解消、新規P0〜P3=0、関連pure41/41。実装側197/197（0.674秒）、safety/diff-check pass。
+詳細は[driver記録](anomaly-multiseed-v0.3-s4-b1-debug-transport-2026-09-08.md)を参照。
+
+その後、child/fixtureを作成しないStartupPreflightだけを実行（0.502秒）。runtime_pinで停止した。
+OSは26200.9445、固定条件は26200.9168。Edition/DisplayVersionとPython3.14.0のcompiler/tag/architectureは一致。
+sources_checked=0でexe/DLL hash・source実照合は未到達。OSと固定条件は変更していない。
+現在OS向けの別候補条件を整備するか、既存条件を維持して実機検証を保留するかがユーザー判断点。
+
+初期breakpoint識別と実probe準備は引き続き未完了。別プロジェクト連続稼働中への資源配慮は継続する。

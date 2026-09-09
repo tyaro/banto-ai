@@ -1,7 +1,8 @@
 # S4-B1 debug-event transport savepoint
 
 状態: **dormant observation + owned stop / no launch**。
-最新のmemory診断候補: `b749c08`（2026-09-09）。下記のtransport初回記録は`ac876b1`、比較基準`09a1150`。
+最新のdriver候補: `94bbdce`（2026-09-09）。実read-only preflightはruntime_pinで停止。
+現在OSは26200.9445、固定条件は26200.9168。下記のtransport初回記録は`ac876b1`、比較基準`09a1150`。
 production harnessとsource pinは変更していない。
 
 ## 今回の接続範囲
@@ -307,3 +308,51 @@ repository safety/diff-check pass。今回はproduction source/allowlist/D2対�
 関連pureは1回、25/25 pass。成功sample後の部分書込みOOMでもraw/uncertain保持と再照会抑止を確認した。
 終了付近の空きRAM9.45 GiB、C102.64 GiB、D75.36 GiB。併行稼働中の全PC測定のため、
 開始時との差だけで本作業または他プロジェクトのリークと断定しない。今回のテストprocessは終了済み。
+
+### 外側driverと親token所有（2026-09-09）
+
+6d97709でDebugTokensを追加。親token、restricted token、disable SID/RC SIDの出力bufferを事前保持し、
+API成功確認/不確実を区別する。flags9、privileged groups disable、RC制限はproductionと同じ。
+SIDはLocalFree、tokenはCloseHandleを使い、成否不確実な解放を再試行しない。
+独立監査はdf49fdb..6d97709305820f518f255e4b1e22329e7c3f8798、新規P0〜P3=0、指定pure5/5 pass。
+LocalFree非NULL返却の追加反例も保持/再試行抑止を確認した。
+
+b4c1365でDebugDriverを追加。preflight→temp空き1 GiB以上確認→親/restricted token→
+新規core fixture/b1.2 request→事前確保したtransport/stop/memory/observer/launch/sessionを接続する。
+事前検査済み結果はsessionで再実行せず使う。diagnostic allowlistはtokens/driverを含む14ファイル。
+既存_Winのkernel32をtransportへ渡した場合にも必要なdebug bindingを設定する。
+
+driverは通常CLIへ接続しておらず、importだけでは実行しない。実driverは今回未実行。
+診断fixtureは成功/失敗とも証拠として残し、handleだけを解放する。既存failure rootには触らず、
+失敗/resource stop後にfilesystemを再読込して清掃・ACL修復・削除する経路はない。
+retention=unverifiedとprivate ownerを返し、観測成功をnative受入にはしない。
+親tokenとfixtureはdriver所有、実child tokenはsession所有、child process/threadはstop所有。
+
+pure/fake196/196 pass（0.482秒）、safety/diff-check pass。テストは短命processで逐次実行した。
+今回の開始付近は空きRAM9.86 GiB、C102.63 GiB、D75.36 GiB。
+独立担当へ6d97709..b4c1365の6ファイルに絞った監査を依頼した。
+
+初回監査P2 1件: outer teardownがchild token不確実性とstopの未解決所有を集約せずpassとする問題。
+94bbdceでsession.tokens_resolvedを共通化し、child作成状態、stop teardown、process signaled、
+debug所有、launch handlesを最終判定へ含めた。元の2反例にcreate不確実も追加。
+修正後pure/fake197/197 pass（0.674秒）。同じ独立担当がb4c1365..94bbdcefd44301fb52ff69305933b77e7d0282daを
+再監査しP2解消、新規P0〜P3=0、指定pure41/41 pass。不確実操作の再実行はしない。
+
+### 実read-only preflightで判明したruntime差分（2026-09-09）
+
+StartupPreflightだけを1回実行した（0.502秒）。fixture/child/debuggerは作成・起動していない。
+結果はfailed、reason=runtime_pin、resource_stop=false、sources_checked=0、source_bytes=0。
+OS確認段階で停止したため、exe/DLL hashと14 sourceの実照合は未到達。
+read-only registry/既存Python照会で以下を確認した。
+
+| 条件 | 固定 | 現在 |
+| --- | --- | --- |
+| Windows build / UBR | 26200 / 9168 | 26200 / 9445 |
+| Edition / DisplayVersion | Professional / 25H2 | 一致 |
+| Python / machine | 3.14.0 / AMD64 | 一致 |
+| compiler / git tag | MSC v.1944 64 bit (AMD64) / tags/v3.14.0, ebf955d | 一致 |
+| free threading | 無効 | 無効 |
+
+固定runtime条件やOSに変更は加えていない。現在OS向けの別候補条件を設けるか、元条件を維持して
+実機検証を保留するかはユーザー判断が必要。現PCをダウングレードする案は採用しない。
+別プロジェクト連続稼働への配慮を継続する。全acceptance gateはno。
