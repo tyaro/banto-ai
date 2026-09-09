@@ -2,6 +2,8 @@
 
 状態: **承認済み追加診断1回完了 / context・2 KiB stack取得 / 起動障害再現 / 原因未特定**。
 
+最新追記: 末尾の「保存範囲までの10段復元」を参照。10件のCALL targetを照合し、保存stack範囲外で停止した。原因は未特定。
+
 ユーザーは「30秒・512 MiB上限で、実行状態と最大2 KiBのスタックを読み取る実機診断を1回」へ
 「続けてください」と回答した。HEAD2b0dee1（実装c4fe99e）のcleanな候補worktreeでDebugDriver.runを1回実行した。
 新規の専用fixtureを使用し、追加再試行・既存rootの削除/修復/再利用は行っていない。
@@ -235,3 +237,87 @@ movabs即値の非出力回帰試験を追加し、同担当が修正確認、�
 実装中の空きRAM8.70→8.69→8.66 GiB、C102.31→102.30 GiB、D75.36 GiB。
 PC全体のsnapshotからメモリリークを判定しない。追加実child・remote read・権限/設定変更・他project操作なし。
 required E2E/main統合/native受入/formal permissionは未達のまま保存する。
+
+## 保存範囲までの10段復元（2026-09-10）
+
+前節の未対応停止を順に分類し、同じ保存証跡に対するoffline解析を拡張した。
+最終実装は `b4ff9e7`（CHAININFO対応 `a647a7f`、非SP演算の判別 `68ea66e` を含む）。
+新たなchild、GetThreadContext/ReadProcessMemory、Windows unwind API、symbol取得は実行していない。
+
+### 停止形式の分類と対応
+
+最初の停止RVA0x17fdaのUNWIND_INFOはRVA0x1a577c、version1/flags4/frame0、prolog10/code slots4だった。
+codes0a74070005640600はRDI/RSIのSAVE_NONVOLで、連結先はRUNTIME_FUNCTION [0x17f40,0x17fb2)、
+unwind RVA0x1a5774、version1/flags0/frame0、prolog6/codes06320230だった。
+[MicrosoftのCHAININFO定義](https://learn.microsoft.com/en-us/cpp/build/exception-handling-x64?view=msvc-170#chained-unwind-info-structures)と照合した。
+
+連結は最大8 records、各parentはpdataの完全一致entryで、前方循環・順序違反・範囲外なら拒否する。
+secondaryはRSPを変えないSAVE_NONVOLだけに限定し、parentの全unwind codesを適用する。
+CALL targetはsecondary断片のbeginではなくprimary procedureのentryと照合する。
+この変更で呼出し元5段と5件のCALL targetが一致し、次のLEAで停止した。
+
+RVA0x86444はLEAの直後にCALLが続くbodyだった。
+[epilogue形式](https://learn.microsoft.com/en-us/cpp/build/prolog-and-epilog?view=msvc-170)に合わせて、
+ADD/LEAはdestinationが明確な非SP registerの場合だけbodyとして扱うよう判別を狭めた。
+RSP/ESP/SP/SPL、未知destination、その他のPOP/RET/JMP停止は維持する。一般epilogueの実行再現は追加しない。
+これで6段目を照合した後、RVA0x1ff1bのversion1/flags2/frame0で停止した。
+
+最後に、exception/termination handlerを持つprimaryのflags1/2/3をcontext復元の対象にした。
+handler RVAはexecutableな一意のRUNTIME_FUNCTION先頭とraw mappingを検査するだけで、
+handler codeのdecode/呼出しやlanguage-specific dataの解釈は行わない。CHAININFOとの混在flags5/6/7は拒否する。
+これは保存した呼出し時のcontextを逆算する処理で、例外dispatchや終了処理の実行を再現するものではない。
+[RtlVirtualUnwindのcontext復元とcallback情報](https://learn.microsoft.com/en-us/windows/win32/api/winnt/nf-winnt-rtlvirtualunwind)も参照したが、同API自体は使っていない。
+handler有りという属性だけで、観測時にexceptionやhandler実行があったとは推定しない。
+
+### 最終結果と保存範囲
+
+観測frame（RVA0x161304）に加え、下表の10段を復元した。各行で直前CALLの終端が戻り先、
+CALL targetが直前frameのprimary entryと一致した。全て同じntdll image内である。
+
+| 呼出し元の段 | 戻り先RVA | 戻り先を読んだstack offset (bytes) | CALL位置RVA | 照合したtarget RVA |
+| --- | --- | --- | --- | --- |
+| 1 | 0xa7956 | 0 | 0xa7951 | 0x1612f0 |
+| 2 | 0x17fda | 48 | 0x17fd5 | 0xa7914 |
+| 3 | 0x8683e | 96 | 0x86839 | 0x17f40 |
+| 4 | 0x867a2 | 192 | 0x8679d | 0x865c0 |
+| 5 | 0x86444 | 288 | 0x8643f | 0x865c0 |
+| 6 | 0x1ff1b | 352 | 0x1ff16 | 0x86390 |
+| 7 | 0x1fac0 | 496 | 0x1fabb | 0x1fc30 |
+| 8 | 0x3cd60 | 960 | 0x3cd5b | 0x1f9c0 |
+| 9 | 0xb80e4 | 1200 | 0xb80df | 0x3cbf0 |
+| 10 | 0x8dda6 | 1616 | 0x8dda1 | 0xb8024 |
+
+最終frameはRVA0x8dda6、関数範囲[0x8c404,0x8e24a)、保存stack先頭からのRSP差分1624 bytes。
+その先は `saved_stack_exhausted` で停止した。次frameを復元するには保存2048-byte window外の参照が必要となり、
+11回目のunwind/CALL照合は成立していない。欠けた値の補完や追加memory取得は行っていない。
+同じ関数断片内に戻る2行も、stack上の別位置と各CALL target照合に基づく別frameとして記録する。
+
+volume/file ID/nameと既存hashの一致は維持したが、実行時loaded bytesの完全一致は依然未証明。
+今回の結果も、現在の一致imageを適用した条件付き解析である。私有関数名、元の失敗API、起動失敗原因は未特定。
+保存範囲内でこれ以上frame数を増やす根拠は得られていない。
+次の低負荷工程は、既に復元した関数の役割を照合できるsymbol資料の同一性・取得量・保存上限を検討すること。
+その資料確認と、新たな実機診断の承認は別に扱う。
+
+### 検証・取得量・保存
+
+独立レビューは各差分の完了通知を利用し、進捗ポーリングなし。
+CHAININFO差分17/17 pass（ローカル0.129秒、独立0.122秒）、非SP判別18/18 pass（0.127秒、0.113秒）、
+最終handler差分20/20 pass（0.122秒、0.125秒）。各独立レビューの新規P0〜P3=0。
+最終20件はoptional offline解析15件＋既存evidence reader5件のsynthetic/pure試験である。
+循環/深さ/不正連結、primary target不一致、stack範囲、SP aliases、handler entry/末尾切れを含む。
+repository safety/diff-check pass。必須native試験の条件は変更していない。
+
+今回は段階的な分類2回と保存証跡への適用3回で、ntdll2522080 bytesを合計5回read-only読取りした。
+各回、保持handleによる非reparse/一意path/前後identity・file info（access timeを除く）、祖先のlocal NTFS、
+8 MiB上限・64 KiB単位・10秒deadlineの検査を行い、同じSHA-256だった。全handleをcloseした。
+分類2回は先にidentity一致済みのimage hashとの照合、適用3回では保存image rowのvolume/file ID/nameも直接照合した。
+保存証跡114419 bytesは適用時の計3回、temp候補4096/root32以内の探索と既存held-handle/stream検査を経て読んだ。
+毎回実行時buffer SHA-256と一致し、raw context/metadata/eventのRIP/RSP/TID整合も確認した。
+追加のDLL bytes、raw context/stackのdiskコピーは作っていない。
+
+公開可能な派生要約はartifacts/context-offline-2026-09-10内に新規5件、計16921 bytesを保存した（Git対象外）。
+stopped-unwind-header.json、chain-unwind.json、epilogue-stop-check.json、chain-body-unwind.jsonは途中の確認履歴。
+現在の参照結果はhandler-context-unwind.jsonで、handlers_invoked/loaded_bytes_match_proven/native_acceptedはいずれもfalse。
+過去の証跡・要約は保持した。code/DLL取得のdownload/install、設定/権限変更、他project操作なし。
+開始空きRAM8.94 GiB→解析後9.02 GiB、C102.30 GiB/D75.36 GiBは同値。
+短時間のPC全体snapshotであり、リーク試験や別projectの状態判定は行っていない。全acceptance gate no。

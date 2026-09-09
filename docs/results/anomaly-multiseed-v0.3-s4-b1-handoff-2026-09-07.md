@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §51を最初に参照。限定offline処理で呼出し元2段と両CALL targetを照合。次の未対応形式で停止、原因未特定、追加childなし。
+2026-09-10最新: §52を最初に参照。offlineで呼出し元10段と全CALL targetを照合し、保存stack範囲外で停止。原因未特定、追加childなし。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -974,3 +974,26 @@ source hashとntdll identityは再照合したが、当時loaded bytesの完全�
 空きRAM8.70→8.66 GiB、C102.31→102.30 GiB、D75.36 GiB。snapshotだけでリーク有無を判定しない。
 追加child/remote memory/symbol取得/設定変更/他project操作なし。全acceptance gate no。
 次は停止したentryのheaderを検証して未対応形式を分類し、保存範囲内で対応可能かを調べる。
+
+## 52. 2026-09-10 限定offline解析を保存stack範囲まで進行
+
+CHAININFO対応a647a7f、非SP宛てADD/LEAのbody判別68ea66e、handler metadata付きcontext復元b4ff9e7を保存した。
+連結は最大8 records、pdata完全一致・循環/順序検査、secondary SAVE_NONVOL限定、CALL targetはprimary entryと照合する。
+handlerはRVA範囲/entry検査のみで、codeやlanguage dataの解釈・実行なし。frame pointerや未対応形式での推測補完はしない。
+
+保存2048-byte stackから観測frameを含む11 frames、呼出し元10段を復元し、10件すべての直前CALL targetを照合した。
+途中の5段LEA停止と6段handler flag停止も分類・修正・再レビュー後に進めた。
+最終frameはntdll RVA0x8dda6、[0x8c404,0x8e24a)、保存RSP差分1624 bytes。
+次はsaved_stack_exhaustedで停止し、11回目のunwindは未成立。保存範囲外の追加memory取得は行っていない。
+詳細な10段の表・制約・途中経過は[context診断結果の保存範囲解析](anomaly-multiseed-v0.3-s4-b1-startup-context-probe-result-2026-09-10.md)を参照。
+
+最終pure/fake20/20 pass（ローカル0.122秒、独立0.125秒）、各差分の独立レビュー新規P0〜P3=0。
+repository safety/diff-check pass。optional解析依存のみで、必須native試験の条件は変更なし。進捗ポーリングなし。
+ntdllは段階的確認で計5回、既存証跡は適用時の計3回、有界read-onlyで読み、記録済みhash一致と全reader handle closeを確認した。
+現在の参照要約はartifacts/context-offline-2026-09-10/handler-context-unwind.json。新規要約5件計16921 bytes、過去証跡は保持。
+実行時loaded bytesの完全一致は未証明、私有関数名/元の失敗API/起動失敗原因は未特定。全acceptance gate no。
+
+空きRAM8.94→9.02 GiB、C102.30 GiB/D75.36 GiBは同値。単発値からリーク有無は判定しない。
+追加実child/remote memory/symbol download/設定変更/他project操作なし。
+次は復元済み関数の役割を調べるsymbol資料について、imageとの同一性と有界な取得・保存方法を検討する。
+これ以上のframe復元のために証跡採取を自動でやり直さない。新たな実機診断は既存の個別承認gateを維持する。
