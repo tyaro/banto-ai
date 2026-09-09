@@ -59,3 +59,53 @@ PC全体の単発値でリーク有無や変化の原因は判定しない。他
 
 次は保存したACL/SDの内容を範囲を限定してoffline比較できる。追加childはこの承認で繰り返さない。
 通常起動成功・原因特定・required E2E・main統合・formal実行は未達。
+
+## 保存ACL/SDのoffline比較（2026-09-10、追加childなし）
+
+前節と同じ上限・held-handle検査で最新証跡1件107403 bytesを読み、記録済みSHA-256との一致を確認した。
+既存parserで返却保存bytesのSD/ACL境界を再検査し、ACE type/flags/mask/SIDの対応を比較した。
+SIDは実process ownerと一致するものをowner、別の同一SIDを匿名Aとして扱う。
+匿名Aの所属種別や有効性はこの証跡だけから決めていない。ユーザー識別子は公開しない。
+
+| ACE対象（同じ順序） | 3 tokenのdefault ACL | process DACL | thread DACL |
+| --- | --- | --- | --- |
+| owner | 0x10000000 | 0x001fffff | 0x001fffff |
+| SYSTEM（S-1-5-18） | 0x10000000 | 0x001fffff | 0x001fffff |
+| 匿名A | 0xa0000000 | 0x00121411 | 0x00121848 |
+
+全9 token ACEおよび全6 object DACL ACEはtype0（allow）、flags0。3 token間のACL bytesは完全一致。
+process/threadのownerとgroupはともに同じowner SID。両objectのDACL bytes/SD bytesは互いに異なる。
+上表は記録されたmaskの比較であり、アクセス許可のOS判定ではない。
+
+[Generic Access Rights](https://learn.microsoft.com/en-us/windows/win32/secauthz/generic-access-rights)では
+0x10000000はGENERIC_ALL、0xa0000000はGENERIC_READとGENERIC_EXECUTEの組合せであり、
+generic権限はobject種別に応じて具体的な権限へ対応する。
+したがってtokenのgeneric bitsと実process/threadのspecific bitsの数値差だけを、権限の欠落や破損としない。
+この観測だけではWindows内部のmapping全体や適用経路を検証したことにはならない。
+
+[Process rights](https://learn.microsoft.com/en-us/windows/win32/procthread/process-security-and-access-rights)の定義と照合すると、
+匿名Aのprocess maskはREAD_CONTROL、SYNCHRONIZE、PROCESS_QUERY_INFORMATION、
+PROCESS_QUERY_LIMITED_INFORMATION、PROCESS_VM_READ、PROCESS_TERMINATEの組合せ。
+[Thread rights](https://learn.microsoft.com/en-us/windows/win32/procthread/thread-security-and-access-rights)と照合すると、
+thread maskにはREAD_CONTROL、SYNCHRONIZE、THREAD_GET_CONTEXT、THREAD_QUERY_INFORMATION、
+THREAD_QUERY_LIMITED_INFORMATIONが含まれ、さらに0x1000のbitがある。
+この0x1000は参照した公開thread rights表に説明がないため、今回の解析では未解釈として保持する。
+file用mappingを使ったり、processの0x1000の意味をthreadへ転用したりしない。
+
+両objectのlabel ACEはtype17、flags0、mask0x3、SID S-1-16-8192で一致。
+[Mandatory label ACE仕様](https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-dtyp/25fa6565-6cb0-46ab-a30a-016b32c4939a)により
+mediumラベルとNO_WRITE_UP | NO_READ_UPを表す。これは対象より低いintegrityからのアクセスに関する方針であり、
+このラベルだけで今回のchildが拒否されたとは判断しない。
+
+## この比較で残る確認点
+
+今回得たのは記述されたACL/SDであり、実child tokenで特定操作を要求したAccessCheckや、
+初期化処理が実際に失敗したアクセスの記録ではない。拒否ACEがないこともアクセス成功の保証ではない。
+親/restricted/childでdefault ACLが異なるという仮説は、今回の取得範囲では支持されない。
+一方、restricted SID評価やobject固有権限、他の初期化対象、WinSta/desktopの実child接続は未解決。
+権限緩和やACL変更を行う根拠は得られていない。
+
+次の低負荷工程は、同じfixtureの保存requestを別途有界read-onlyで読み、証跡のnonce/sourceと照合した上で、
+匿名Aのtoken内の所属・属性とintegrityを比較すること。tokenの再作成や追加childは不要。
+requestは親が準備したprofileであり、実child token全体の独立保存記録とは区別する。
+診断時のmemory peak・最終保存API状態が不明という前節の制約は、この比較でも解消していない。

@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §40を最初に参照。権限観測付き診断1回を承認の上で実行し、5対象取得と0xC0000142を記録した。
+2026-09-10最新: §41を最初に参照。保存ACL/SDをoffline比較した。追加childなし、起動原因は未特定。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c6fc191はpure/fake231件と独立レビューを通過。現在の10.0.26200.9445で17 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -798,3 +798,16 @@ driver実行後の対話用要約にNone枠の扱い漏れがあり、表示前�
 空きRAMは開始8.25 GiB→実行後8.17 GiB、C102.25 GiB/D75.36 GiBは同値。リーク有無は未判定。
 他プロジェクトへの操作、権限変更、追加試行、既存証跡の変更はない。全acceptance gate no。
 次回は保存ACL/SDのoffline比較から継続可能。実機再試行は今回の承認へ含めない。
+
+## 41. 2026-09-10 保存ACL/SDのoffline比較
+
+保存証跡1件107403 bytesを有界read-onlyで読み、§40のSHA-256と一致した。
+親/restricted/childのdefault ACLは同一。実process/threadは同じ3 SID・allow ACE順序を持つがmaskは異なる。
+tokenのgeneric権限とobject固有権限は区別し、数値差だけを異常や欠落としない。
+両objectのmandatory labelはmedium、NO_WRITE_UP | NO_READ_UPで一致した。
+threadの匿名SID向けmaskに含まれる0x1000は公開表で意味を確認できず、未解釈として保持した。
+詳細・公式参照・限界は[診断結果のoffline比較](anomaly-multiseed-v0.3-s4-b1-startup-security-probe-result-2026-09-10.md)を参照。
+
+権限変更の根拠は得られていない。次は同じfixtureのrequestを有界read-onlyで照合し、匿名SIDのtoken所属・属性を確認可能。
+今回の工程はcode変更なし、test再実行・レビュー再委譲・追加childなし。最終保存状態不明の制約も維持する。
+開始時空きRAM8.55 GiB/C102.24 GiB/D75.36 GiB。全acceptance gate no。
