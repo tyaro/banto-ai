@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §42を最初に参照。同じfixtureの保存profileとACLを照合し、ログオンSIDが有効でintegrityがmediumのままと確認した。追加childなし、原因未特定。
+2026-09-10最新: §43を最初に参照。最終結果を先に出す表示処理を追加し、失敗operationの観測方法を比較した。追加childなし、原因未特定。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c6fc191はpure/fake231件と独立レビューを通過。現在の10.0.26200.9445で17 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -826,3 +826,18 @@ userはprocess ownerと一致し、integrityは両方medium。restricting SID li
 次の観測案は初期化で失敗したobject/操作/要求権限を特定できるかを検討する。追加実機起動の承認は未取得。
 code変更・負荷試験・追加child・権限変更・旧証跡変更・レビュー再委譲なし。全acceptance gate no。
 開始時空きRAM8.65 GiB/C102.24 GiB/D75.36 GiB。PC全体の単発値からリーク有無を判定しない。
+
+## 43. 2026-09-10 最終結果の表示対策と次の観測方法
+
+前回のNone画像枠による表示失敗を避けるため、post-run専用debug_report.write_summaryを追加した。
+最終driver結果を先に1行出してflushし、任意詳細は別行。resource停止時は詳細省略、出力失敗は再試行しない。
+private情報をwhitelistで除外。各行16 KiB上限。既存driverへ接続せず、追加起動も行っていない。
+pure4/4、独立レビュー新規P0〜P3=0（指定pure4/4）、repository safety/diff-check pass。
+独立担当の完了通知を利用し、進捗ポーリングは行っていない。
+
+診断証跡の最終書込み時刻前後15秒、Application event ID1000/1001を有界照会したが該当0件だった。
+全ログや全期間に障害記録がないという意味ではない。
+次の方法は[失敗operation観測計画](anomaly-multiseed-v0.3-s4-b1-failure-observation-plan-2026-09-10.md)で比較した。
+Process Monitorは候補だが表示filterだけで収集負荷が限定されると仮定せず、収集除外・容量停止の条件を先に調べる。
+loader snaps/debugger breakpointは既存許可範囲外であり、自動fallbackしない。
+次回実機承認を求める段階ではない。main統合・native受入・formal permissionは引き続きno。
