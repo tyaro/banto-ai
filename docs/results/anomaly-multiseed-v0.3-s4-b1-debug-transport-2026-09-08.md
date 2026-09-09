@@ -1,7 +1,9 @@
 # S4-B1 debug-event transport savepoint
 
 状態: **dormant observation + owned stop / no launch**。
-最新候補: `966723c`（2026-09-10）。ユーザー承認によりS4-B1のUBR固定を解除し、実測buildを記録する。
+最新候補: `b916de9`（2026-09-10）。限定案のprivate保存を接続、pure213件通過・独立再監査の新規所見0。
+最新詳細は引継書§33と初回probe計画を参照。実childは未起動。
+966723cでユーザー承認によりS4-B1のUBR固定を解除し、実測buildを記録する。
 現在10.0.26200.9445で実read-only preflightはverified。下記の旧runtime停止記録は当時の状態。
 productionの変更は_runtimeのUBR条件/記録のみ。source pin方式と他のruntime条件は維持する。
 

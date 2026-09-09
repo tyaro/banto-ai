@@ -1,8 +1,11 @@
 # S4-B1 startup probe 準備savepoint
 
 状態: **dormant driver tested / read-only preflight verified / probe not run**。
+2026-09-10追記: ユーザーの「続けてください」を受け、下記限定案で保存処理の準備を進めた。
+これは準備継続の指示として扱い、実childは起動していない。
 2026-09-10更新: 承認によりUBR固定を記録へ変更。実10.0.26200.9445で14 sourceの事前照合が通過。
-初期breakpoint識別と初回probe準備は残る。最新詳細は引継書§32と下記transport記録を参照。
+限定案の保存実装と初回実行条件は下記、最新の試験・監査・実preflightは引継書§33を参照。
+初期breakpointの識別/継続は限定案の対象外で、全拒否を維持する。
 
 ## 2026-09-10 次の診断範囲の判断案（実行前）
 
@@ -37,6 +40,54 @@ Windows条件は§31の承認済み条件を使う。既存failure rootは再利
 - 完成差分をfault試験・独立レビューしたうえで、実行1回の具体的な条件を提示する。
 
 PCで別プロジェクトが連続稼働しているため、範囲の判断までは短命のpure/fake試験だけを続ける。
+
+## 限定案の保存実装と初回実行条件（2026-09-10）
+
+DebugEvidence / EvidenceFileをdriverへ接続した。private記録は
+新規fixtureのcontrol/startup-evidence.binに保存する。既存rootは使わない。
+起動前に空のprivate fileをledgerへ追加し、その後にb1.2 requestを生成する。
+保存先はprotected DACLのprivate方針で、取得handleからidentity/SD/stream/空sizeを検証する。
+共有はreadのみ、同期write用handleを起動前から保持する。所有者/adminへの不変性は保証しない。
+
+観測後はパス・source・temp・remote memoryを再読込みせず、既存ローカルbufferから記録する。
+通常event256枠と停止drain256枠を別領域で保存し、未確認枠を含めた全事前bufferをコピーする。
+confirmed count、pending、wait/continueの不確実性、file close状態をmetadataへ含める。
+source/runtime、nonce、driver/observer/stopの公開状態も保存する。例外message/tracebackは含めない。
+rawに含まれるaddressやpointerは値だけで、指示先の内容・DLL名を取得したことにはしない。
+
+保存formatはlittle-endianの24-byte header（magic B1DBG001、metadata長、event size176、
+region当たり256枠、region数2）、ASCII JSON metadata、通常raw領域45,056 bytes、
+drain raw領域45,056 bytesの順。metadata最大65,536 bytes、全体最大155,672 bytes。
+固定bufferとWriteFileの出力領域はchild起動前に確保する。
+metadataのdriver結果は保存write/flush/file close前であることをresult_scopeへ明記する。
+保存それ自体の成功・close結果をそのファイル自身で証明することはしない。
+
+WriteFileは1回、全長確認後にFlushFileBuffersを1回だけ実行する。部分write・API失敗・OOM・中断では
+確認できた段階を保持し、上書き/再試行/削除しない。flushedは両APIの成功確認でありreadbackや耐障害性の保証ではない。
+最後に保持fileをcloseし、未解放/close失敗をouter teardownへ集約する。初期化途中の所有不確実性も成功扱いしない。
+resource latchが立っていたらsnapshot/writeを始めず、既存のprivate_ownerを保持する。
+この場合や途中保存失敗では、Python process終了後の完全な証跡保持を保証しない。
+
+初回実行として提示する条件は以下。
+
+1. 独立レビュー後のcommitを固定し、15 sourceのread-only preflightを確認する。
+   OSは承認済みの26200/Professional/25H2条件と実UBR記録を用いる。
+2. 同PCの空きRAM/C・D残容量を確認し、別プロジェクトの負荷が増えている場合は起動を見合わせる。
+   既存のtemp空き1 GiB以上・親＋child512 MiB未満も維持する。
+3. 実行は明示呼出1回、新規fixtureとrestricted child1個、通常観測30秒/256 eventsまで。
+   最初の未識別breakpointで停止し、初期breakpointだったと断定しない。
+4. 停止はowned childだけ。drain32回/5秒上限、停止結果が不明でも再試行しない。
+   通常Popen、elevation、ACL緩和、loader snaps、追加DLL probeへのfallbackはない。
+5. 実行結果は診断として記録し、native受入・main統合・formal permissionへ昇格させない。
+   bootstrap_unverifiedによるdriver failedは限定範囲の停止理由として区別する。
+
+実行前の承認確認は、この1回のrestricted child診断を対象とする。限定案の準備承認とは分ける。
+
+b916de9で実装を保存。pure/fake213/213、独立再監査の新規P0〜P3=0。
+commit後の15 source / 186,269 bytesの実read-only preflightはverified。
+同期bufferの寿命と全長確認は[WriteFile](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-writefile)、
+保存用handleのGENERIC_WRITE要求は[FlushFileBuffers](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-flushfilebuffers)、
+共有/既存file openの指定は[CreateFileW](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew)の仕様を参照した。
 
 更新: 2026-09-08にevent transport、owned停止、有界観測loopを結合した。初期breakpointは識別未完のため拒否する。
 以下は09a1150時点の計画を保持する。現在の接続済み範囲と未接続部分は

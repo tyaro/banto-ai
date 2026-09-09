@@ -2,8 +2,8 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §32を最初に参照。UBR固定の承認済み緩和と実測buildは§31に記録する。
-候補966723cはpure200件と独立監査を通過。現在の10.0.26200.9445で実read-only preflightもverified。
+2026-09-10最新: §33を最初に参照。UBR固定の承認済み緩和と実測buildは§31に記録する。
+候補b916de9はpure213件と独立監査を通過。現在の10.0.26200.9445で15 sourceの実read-only preflightもverified。
 実child/fixture/debuggerは未起動。本流統合・native受入・formal permissionは引き続き未達。
 
 最新の自己点検: cleanup/置換traceの候補実装と追加修正は§11〜17を参照。
@@ -620,3 +620,32 @@ bootstrap_unverifiedを一次原因として保持し、raw例外code/address、
 raw eventはprivate_ownerによるprocess内保持のみであり、fixtureを残すことと永続保存を混同しない。
 限定案を選んだ場合も、取得済みbuffer/状態の有界private保存と失敗時の扱い、fault試験・独立レビューを
 完成させてから実行1回の条件を提示する。実child/debugger/負荷試験は未実行、全acceptance gate no。
+
+## 33. 2026-09-10 限定案の保存処理を接続し初回実行の確認へ
+
+ユーザーは§32の限定案で保存処理の準備を進める提案に「続けてください」と回答した。
+準備継続の承認として扱い、実childの起動は行っていない。
+b916de9でDebugEvidence/EvidenceFileをdriverへ接続し、source allowlistを15ファイルへ増やした。
+production source・D2 pin・formal campaign条件は変更していない。
+
+保存先は新規fixture内のprivate control/startup-evidence.bin。空fileの作成・identity/SD/stream/sizeの確認、
+書込用handleの保持を起動前に済ませる。snapshotは全512 raw枠と最大64 KiB metadata、全体155,672 bytes以内。
+通常観測と停止drainを区別し、未確認枠・待機/継続の不確実性を記録する。
+write/flushは各1回。resource後の再読込・再試行はしない。最後にfile closeし、未解放をouter結果へ集約する。
+file内容のdriver結果は保存処理前の時点であり、保存/closeの自己証明ではない。
+resource時や保存途中失敗では、process終了後の完全な記録保持を保証しない。
+format・制約・実行1回の具体的な条件は[初回probe計画](anomaly-multiseed-v0.3-s4-b1-startup-probe-plan-2026-09-07.md)を参照。
+
+独立監査でP2 1件（保存成功後の二次中断を無視してobservedへ戻す）を検出し、
+最終判定へsecondary/teardown失敗を集約する修正と中断注入の回帰試験を追加した。
+再監査でP2解消、新規P0〜P3=0、指定fake27/27（0.495秒）。担当の反例はfakeのみ。
+実装側の最終pure/fake213/213（1.601秒）、repository safety/diff-check pass。D2対象不変のため追加走査は省略した。
+
+commit後の実read-only preflightは15 source / 186,269 bytes / verified / resource_stop=false。
+Windows10.0.26200.9445、Python3.14.0、exe/DLL hashは§31と一致。
+空き資源は途中RAM7.87 GiB/C102.88 GiB/D75.36 GiB、終了付近RAM7.33 GiB/C102.84 GiB/D75.36 GiB。
+他プロジェクトを含むPC全体の値であり、この差だけではメモリリークを判定しない。
+短命テストは終了済み。既存rootの削除・他プロジェクトへの変更・child/debugger/負荷試験は行っていない。
+
+次は提示済み条件で実機の限定診断1回を実行するかの確認。準備承認を実行承認へ拡張しない。
+全breakpoint拒否とowned停止を維持し、結果をnative受入/main統合/formal permissionへ昇格させない。
