@@ -1,6 +1,7 @@
 # S4-B1 startup probe 準備savepoint
 
 状態: **limited probe run once / startup failure reproduced / no native acceptance**。
+実行後の別工程による保存記録解析は引継書§35と下記実行記録を参照。追加probeは行っていない。
 2026-09-10最新: 実行1回の承認を受け、2.346秒で0xC0000142と7 eventsを記録した。
 breakpoint/exceptionは観測されず、終了・解放・private記録Write/Flushを確認した。
 詳細は[実行記録](anomaly-multiseed-v0.3-s4-b1-startup-probe-result-2026-09-10.md)と引継書§34を参照。

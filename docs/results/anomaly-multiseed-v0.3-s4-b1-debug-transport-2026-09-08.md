@@ -1,6 +1,7 @@
 # S4-B1 debug-event transport savepoint
 
 状態: **limited native diagnostic run once / no native acceptance**。
+最新の保存記録解析は引継書§35を参照。eefae0fのoffline readerで匿名module3→2のunload対応を確認。実機の追加起動はない。
 2026-09-10最新: 承認済み1回の実行で0xC0000142を再現し、7 events、process終了/所有解放、private保存を確認した。
 詳細は引継書§34と[実行記録](anomaly-multiseed-v0.3-s4-b1-startup-probe-result-2026-09-10.md)を参照。
 以下の未起動/承認待ちの記述は準備時の履歴として保持する。

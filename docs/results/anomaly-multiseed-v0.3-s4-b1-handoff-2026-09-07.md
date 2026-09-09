@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §34を最初に参照。承認済みの限定実機診断1回で0xC0000142を再現、7 eventsと記録保存を確認した。
+2026-09-10最新: §35を最初に参照。実機診断1回の後、保存記録だけを解析し、匿名DLLのload/unload対応を確認した。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補b916de9はpure213件と独立監査を通過。現在の10.0.26200.9445で15 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -671,3 +671,25 @@ mainは889cfc3でclean。追加probe、既存rootの削除/修復/再利用、�
 
 詳細・証拠の限界・次の未解決点は[実行記録](anomaly-multiseed-v0.3-s4-b1-startup-probe-result-2026-09-10.md)を参照。
 引き続き追加実機probeは自動再試行しない。全acceptance gate no。
+
+## 35. 2026-09-10 保存記録だけの解析と情報不足の確認
+
+ユーザーの継続指示を受け、eefae0fでbyte-onlyのoffline readerとpure試験を追加した。
+元のdriver・保存部品・15 source pin・production sourceは変更していない。
+pure5/5 pass、独立レビューの新規P0〜P3=0、指定pure5/5（0.006秒）。レビュー側は実記録を読んでいない。
+
+別工程で前回のprivate記録1ファイルを有界にread-only解析した。103,859 bytes、OS/source数/event数/exit codeが
+前回の要約に一致し、formatも正常だった。hashと限定した選択・読込手順は
+[実行記録の解析追記](anomaly-multiseed-v0.3-s4-b1-startup-probe-result-2026-09-10.md)を参照。
+今回のhashはread時点のもので、実行時からの無変更やnative由来の真正性を認証しない。
+
+DLL load順の匿名module1/2/3のうち、module3、module2の順に同じbaseのunloadを確認した。
+normal confirmed7、drain0、wait/continue不確実flagなし。confirmed範囲外の保存bytesはzero。
+DLL名・image file identityが未保存で、pointerも追跡しないため、名前や原因の特定には進めない。
+次にこの情報が必要なら、eventのfile handleをcloseする前にidentity/名前を有界に保持する部品を準備する。
+現時点では追加実機probeを承認済みと扱わず、自動再起動しない。
+
+この工程の開始時の空きRAM7.24 GiB/C103.09 GiB/D75.36 GiB、終了付近RAM8.33 GiB/C102.26 GiB/D75.36 GiB。
+Cの空きは約0.83 GiB減少したが102 GiB以上残る。全PCの同時稼働を含む値で、発生元やリーク有無は未判定。
+この工程で追加したのは小さいreader/test/文書だけ。child/driver/debugger/負荷試験、既存rootの変更、
+他プロジェクトへの操作、大きな再走査は行っていない。main統合/native受入/formal permissionは未達のまま。

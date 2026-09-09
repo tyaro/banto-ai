@@ -75,3 +75,47 @@ PC全体の開始前の空きRAMは6.82 GiB、C103.09 GiB、D75.36 GiB。
 障害DLL・初期化object・権限条件との因果関係は未特定。
 追加の実機probeは自動実行しない。保存済み証拠の解析範囲や次の観測手段を具体化してから扱う。
 B1 required E2E、Windows3.12、main統合、formal campaignは引き続き未達。
+
+## 別工程での保存記録解析（2026-09-10）
+
+上記実行の終了後、ユーザーの継続指示を受け、保存済みprivate記録だけをread-onlyで解析した。
+実行時の「観測後にsource/temp/remote memoryを再読込みしない」手順はそのまま保持し、
+今回は実行完了済みの記録を対象とする別工程とした。child/driver/debuggerは再起動していない。
+
+temp直下の列挙は4,096件まで、banto-s4-b1-という専用prefixのroot候補は32個までに制限した。
+候補rootの固定名control/startup-evidence.binだけを調べ、候補は1ファイルだった。
+実行記録の103,859 bytesと照合し、既存のheld-handle/reparse/NTFS検査付き有界readerでその1ファイルを読んだ。
+OS build、source15行、通常event7件、終了codeも前回の要約と一致した。
+元fileの書込・削除・ACL変更や、他のfailure rootの内容読込は行っていない。
+
+今回読んだbytesのSHA-256:
+`45a310ebc2183d4ea90cd02ca150c39699ca79edea41382ac3ecec3ccbf41bba`
+
+このhashは今回のread時点の値。実行時に保存したhashとの比較ではなく、真正性や過去の無変更を認証しない。
+readerはformat_valid=true / provenance_verified=false / native_accepted=falseを返す。
+
+| event順 | byte記録の解釈 |
+| --- | --- |
+| 0 | process image（匿名module0） |
+| 1 | DLL load（匿名module1） |
+| 2 | DLL load（匿名module2） |
+| 3 | DLL load（匿名module3） |
+| 4 | module3と同じbaseのunload |
+| 5 | module2と同じbaseのunload |
+| 6 | exit 0xC0000142 |
+
+normal confirmed7、drain confirmed0、両領域のwait/continue inflight=false。
+confirmed範囲外の保存bytesは両領域ともzeroだった。未観測eventの不在をOS全体について保証するものではない。
+匿名番号はこのfile内のload順。baseの一致だけを対応付け、例外所在や原因DLLの特定には使わない。
+保存rawにあるimage_name等のpointerは追跡しない。プロセスは終了済みであり、DLL名の文字列や
+event file handleのfile identity/pathを保存していなかったため、今回の記録からDLL名は復元できない。
+
+新しいbyte-only readerは別テスト部品とし、実診断driverからはimportしない。
+当時の15 source pinや保存format、production sourceは変更しない。
+長さ/型/重複JSON key、不正count、未確認枠、匿名load/unload、公開redactionのpure5/5 pass。
+独立レビューの新規P0〜P3=0、指定pure5/5（0.006秒）。担当は実記録を読んでいない。
+
+次にDLL名を必要とする場合は、LOAD_DLL/CREATE_PROCESS eventのfile handleをcloseする前に
+file identityと名前を有界に取得・保持する観測部品が必要になる。
+終了後のpointer参照、現在の親processのDLL配置からの推定、load順序だけのDLL名割当ては採用しない。
+追加実機probeはこの工程では承認も実行もしていない。
