@@ -72,6 +72,11 @@ class DebugObserverTests(unittest.TestCase):
                 pointer.contents.peak_pagefile = amount
                 return True
             psapi.GetProcessMemoryInfo.side_effect = query
+            def performance(pointer, size):
+                pointer.contents.page_size = 4096
+                pointer.contents.limit = pointer.contents.physical = 100
+                return True
+            psapi.GetPerformanceInfo.side_effect = performance
             observer.sample_memory = DebugMemory(observer.stop, psapi)
             result = observer.run()
             self.assertEqual(result["status"], "observed" if amount == 100 else "failed")

@@ -6,7 +6,7 @@ supplied by an existing _Win instance; tests supply only a fake PSAPI function.
 
 import ctypes as C
 
-from banto_ai._anomaly_v03_windows import _Memory
+from banto_ai._anomaly_v03_windows import _Memory, _Performance
 from tests.fixtures.anomaly_v03_debug_transport import TransportError, need
 
 
@@ -17,6 +17,12 @@ class DebugMemory:
         self.stop, self.transport, self.psapi = stop, stop.transport, psapi
         self.buffers = (_Memory(), _Memory())
         self.pointers = tuple(C.pointer(buffer) for buffer in self.buffers)
+        self.performance = _Performance()
+        self.performance.cb = C.sizeof(_Performance)
+        self.performance_pointer = C.pointer(self.performance)
+        self.system_sample_state = "not_started"
+        self.system_commit_bytes = self.system_commit_limit_bytes = None
+        self.system_physical_bytes = self.system_available_bytes = None
         for buffer in self.buffers:
             buffer.cb = C.sizeof(_Memory)
         self.state = "ready"
@@ -47,6 +53,21 @@ class DebugMemory:
             need(kernel.GetProcessId(process) == self.transport.pid, "memory_identity")
             parent = kernel.GetCurrentProcess()
             need(parent not in (None, 0), "memory_parent")
+            self._ready()
+            self.system_sample_state = "uncertain"
+            self.state = "querying"
+            if not self.psapi.GetPerformanceInfo(self.performance_pointer, C.sizeof(_Performance)):
+                self.system_sample_state = "failed"
+                raise TransportError("system_memory_query", self.transport.last_error())
+            value = self.performance
+            need(value.cb == C.sizeof(_Performance) and value.page_size > 0 and value.limit > 0
+                 and value.physical > 0 and value.available <= value.physical, "system_memory_fields")
+            self.system_commit_bytes = value.commit * value.page_size
+            self.system_commit_limit_bytes = value.limit * value.page_size
+            self.system_physical_bytes = value.physical * value.page_size
+            self.system_available_bytes = value.available * value.page_size
+            self.system_sample_state = "confirmed"
+            self.state = "ready"
             # Slots are retained even if only one API writes before failure.
             for index, handle in enumerate((parent, process)):
                 self._ready()

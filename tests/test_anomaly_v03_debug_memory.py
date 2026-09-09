@@ -20,6 +20,12 @@ class DebugMemoryTests(unittest.TestCase):
             pointer.contents.peak_working = 50
             return True
         psapi.GetProcessMemoryInfo.side_effect = query
+        def performance(pointer, size):
+            value = pointer.contents
+            value.commit, value.limit, value.page_size = 20, 100, 4096
+            value.physical, value.available = 80, 60
+            return True
+        psapi.GetPerformanceInfo.side_effect = performance
         return DebugMemory(stop, psapi), kernel, psapi
 
     def test_native_layout_and_reused_buffers_preserve_peak_metric(self):
@@ -32,6 +38,12 @@ class DebugMemoryTests(unittest.TestCase):
         self.assertEqual(sampler(), 300)
         self.assertEqual(sampler.peak_working, 100)
         self.assertEqual(sampler.samples, 2)
+        self.assertEqual(C.sizeof(sampler.performance), 104)
+        self.assertEqual(sampler.system_commit_bytes, 20 * 4096)
+        self.assertEqual(sampler.system_commit_limit_bytes, 100 * 4096)
+        self.assertEqual(sampler.system_available_bytes, 60 * 4096)
+        self.assertEqual(sampler.system_sample_state, "confirmed")
+        self.assertEqual(psapi.GetPerformanceInfo.call_count, 2)
         self.assertEqual(tuple(id(buffer) for buffer in sampler.buffers), identities)
         self.assertEqual([call.args[0] for call in psapi.GetProcessMemoryInfo.call_args_list], [-1, 501, -1, 501])
         kernel.CloseHandle.assert_not_called()
@@ -112,6 +124,40 @@ class DebugMemoryTests(unittest.TestCase):
         with self.assertRaises(TransportError):
             sampler()
         psapi.GetProcessMemoryInfo.assert_called_once()
+
+    def test_system_query_failure_preserves_output_and_stops_further_queries(self):
+        for fault in (False, MemoryError(), KeyboardInterrupt()):
+            sampler, kernel, psapi = self.sampler()
+            def query(pointer, size):
+                pointer.contents.commit = 777
+                if isinstance(fault, BaseException):
+                    raise fault
+                return False
+            psapi.GetPerformanceInfo.side_effect = query
+            with self.assertRaises((TransportError, MemoryError, KeyboardInterrupt)):
+                sampler()
+            self.assertEqual(sampler.performance.commit, 777)
+            self.assertEqual(sampler.system_sample_state, "failed" if fault is False else "uncertain")
+            self.assertEqual(sampler.resource_stop, isinstance(fault, MemoryError))
+            self.assertEqual(sampler.samples, 0)
+            with self.assertRaises(TransportError):
+                sampler()
+            psapi.GetPerformanceInfo.assert_called_once()
+            psapi.GetProcessMemoryInfo.assert_not_called()
+
+    def test_invalid_system_counters_do_not_become_confirmed_samples(self):
+        for field, invalid in (("cb", 0), ("page_size", 0), ("limit", 0), ("physical", 0), ("available", 81)):
+            sampler, kernel, psapi = self.sampler()
+            original = psapi.GetPerformanceInfo.side_effect
+            def query(pointer, size):
+                original(pointer, size)
+                setattr(pointer.contents, field, invalid)
+                return True
+            psapi.GetPerformanceInfo.side_effect = query
+            with self.subTest(field=field), self.assertRaises(TransportError):
+                sampler()
+            self.assertNotEqual(sampler.system_sample_state, "confirmed")
+            psapi.GetProcessMemoryInfo.assert_not_called()
 
 
 if __name__ == "__main__":
