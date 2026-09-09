@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §44を最初に参照。Process Monitorの除外・履歴制限・終了仕様を一次資料で確認。共有PCでの実行条件は未完成、追加childなし。
+2026-09-10最新: §45を最初に参照。公式ZIPに独立helpはなく、exe内の静的説明で/Terminateが全instance対象と確認。実行・追加childなし。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c6fc191はpure/fake231件と独立レビューを通過。現在の10.0.26200.9445で17 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -854,3 +854,17 @@ loader snaps/debugger breakpointは既存許可範囲外であり、自動fallba
 今回download/install/run、driver/service/registry操作、追加child、他プロジェクトへの操作はない。
 文書のみのためtest再実行・レビュー再委譲は省略。全acceptance gate no。
 開始時空きRAM8.22 GiB/C102.24 GiB/D75.36 GiB。リーク有無は未判定。
+
+## 45. 2026-09-10 公式配布物の非実行確認
+
+現行ProcessMonitor.zip（3,191,035 bytes）にはexe3個とEula.txtのみで、独立CHM/HTMLはなかった。
+Procmon64.exeを実行せずメモリ内bytesから関連説明を抽出し、/Terminateが全instance終了を意味すると確認した。
+/Runtimeは指定秒数で終了する説明だが、他instanceからの分離やhard deadlineは静的情報だけでは検証できない。
+単純な/Terminateを、今回所有した収集だけを止める自動停止として使わない。
+詳細・取得hash・残る条件は[観測計画の非実行調査](anomaly-multiseed-v0.3-s4-b1-failure-observation-plan-2026-09-10.md)へ保存。
+
+配布物は3回の有界取得で合計約9.13 MiB転送。ZIP/exeはdisk保存せず、小さい目録・抽出文字列・EULAのみ計9,764 bytesを
+artifacts/procmon-help-2026-09-10に保持（Git対象外）。この配布物の再取得は不要。
+Procmon/help UI/driver/serviceの起動・設定変更・追加child・他プロジェクトへの操作なし。
+開始空きRAM8.34 GiB→終了付近8.22 GiB、C102.24 GiB/D75.36 GiBは同値。リーク有無は未判定。
+次は既存debugger停止条件を維持する観測と、条件変更を要する方式を比較する。全acceptance gate no。

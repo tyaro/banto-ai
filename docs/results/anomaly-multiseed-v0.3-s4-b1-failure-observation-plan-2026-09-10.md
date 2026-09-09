@@ -111,3 +111,56 @@ file-backed記録、最大file size設定、終了保存の例を示し、上限
 
 今回は文書変更のみで、test再実行や独立レビューの再委譲は省略した。
 開始時の空きRAM8.22 GiB/C102.24 GiB/D75.36 GiB。PC全体の単発値からリーク有無を判定しない。
+
+## 現行公式配布物の非実行調査（2026-09-10）
+
+[公式配布ページ](https://learn.microsoft.com/en-us/sysinternals/downloads/procmon)が案内する
+https://download.sysinternals.com/files/ProcessMonitor.zip をHTTPSで取得し、redirect先不変・各取得4 MiB以下を確認した。
+実ZIPは3,191,035 bytes。取得時SHA-256:
+
+`4ff309fe52c56599377896b7863cb77b6c601d9f2522e52da7a182eac593e8e1`
+
+ZIP内の4項目はProcmon.exe（4,247,832 bytes）、Procmon64.exe（2,232,136 bytes）、
+Procmon64a.exe（2,316,576 bytes）、Eula.txt（7,490 bytes）。CHM/HTMLの独立helpは同梱されていなかった。
+最初のCHM存在検査で想定との差を検出し、取得を2回追加して目録と静的文字列を確認した。
+合計転送は9,573,105 bytes。後の取得は上記hash一致を確認した。ZIP自体やexeはdiskへ保存していない。
+
+Procmon64.exeをメモリ内のbytesとして読み、UTF-16LEの印字可能文字列から関連説明のみ抽出した。
+PEをload/executeせず、DLLロード・アプリ起動・help UI起動・driver/service/registry操作もない。
+調べたexe bytesのSHA-256:
+
+`78d7148ef5e1472bbcec02cfd655f5aa789006b65d9990862dd8546ecf6c9af1`
+
+公式ページはv4.1表記だが、exeのversion resourceや署名はこの調査では別途検証していない。
+取得元とhashによる記録であり、署名検証済みや実動作確認済みとは表現しない。
+
+### 静的説明で新たに確認できた点
+
+- /Terminateの説明は「Terminate all instances of ProcMon and exit」。対象所有instanceだけの停止ではない。
+- /Runtimeは指定秒数後に終了する説明。入力エラー用文字列には1〜3600秒の範囲が示されている。
+- /WaitForIdle、/LoadConfig、/BackingFileの名称と関連説明が含まれる。
+- History Depth、Drop Filtered EventsのUI文字列があり、履歴の総event数を制限する説明も含まれる。
+
+これらは埋込みテキストの存在確認であり、実際のCLI構文・config適用・終了対象・時間精度・資源動作を試験したものではない。
+特に/Runtimeをhard deadlineとしたり、/WaitForIdleを対象PID filter適用完了の保証としたりしない。
+古いevent数ベースの説明と前節のsize/time機能を、同じ意味の厳密なbyte上限とみなさない。
+
+ローカル保存は隔離worktreeのartifacts/procmon-help-2026-09-10内に限定し、
+acquisition.json（500 bytes）、embedded-text.json（1,774 bytes）、Eula.txt（7,490 bytes）の合計9,764 bytes。
+artifactsはGit対象外。EULAを保存したことはアプリ上のaccept操作を行ったことを意味しない。
+配布物中のファイル名をそのまま任意pathへ展開せず、root直下の小さい文書だけに限定した。
+
+## この調査を受けた判断
+
+前節の「停止対象が不明」は、少なくとも/Terminateの文書化された対象が全instanceだと判明した。
+したがって、他作業の収集を停止しないという条件の下で、単純な/Terminateを自動停止処理へ組み込まない。
+これは現在他のProcmonが稼働しているという認定ではない。今回はprocess一覧や他作業の収集状態を調べていない。
+
+本PCでのProcmon案には、使用中instanceとの排他・起動後の所有・自動終了の対象範囲・全体資源・
+初期event保持の実動作確認が依然必要。付属CHMを探すだけの調査はここで完了し、同じ配布物を再取得しない。
+次の準備では、既存debugger方式の停止条件を維持できる追加観測と、条件変更が必要な方式を比較する。
+実動作検証が必要になった時点で、その具体的範囲を提示する。未確認のCLI/configで共有PCの収集を始めない。
+
+今回の変更は文書だけでtest再実行・レビュー再委譲なし。追加child・Procmon実行・設定変更はない。
+開始時空きRAM8.34 GiB、終了付近8.22 GiB。C102.24 GiB/D75.36 GiBは同値。
+短命の資料取得processは終了済み。単発のPC全体値でリーク有無を判定しない。
