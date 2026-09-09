@@ -116,3 +116,72 @@ PDBは保存済みcacheを再使用でき、同一fileの再downloadは不要。
 次は、この内部statusを書き込む静的な候補箇所と、保存情報で遡れる限界を整理する。
 追加の観測が必要なら、変更内容・上限・停止条件を具体化してから個別の実機承認gateへ進める。
 このoffline解析を根拠に既存の診断を自動再実行しない。
+
+## 5. statusの静的な生成・伝播候補（2026-09-10追記）
+
+前節の次工程を、同じhashの現在ntdllと保存済みPDBで実施した。
+LdrpLoadDllInternalの全277命令をdecodeし、statusを指すRBXへの参照と書込みを列挙した。
+併せて実行section内のlittle-endian即値0xC0000142を最大64件で探索し、13 byte hitsと13個の対応するdecode命令を得た。
+比較・ログ引数も含むため「13箇所がstatusを書き込む」という意味ではない。
+別の計算・データ参照・呼出し先から同値が生じる場合まで網羅したものではない。
+
+### 5.1 LoadDllInternal内の直接即値は、保存EDIと条件が合わない
+
+同関数内には0x20020のMOV dword [RBX],0xC0000142がある。
+このブロックへ入る直接分岐は0x1ffcdと0x1ffd7で、いずれも0x1ffad以降にある。
+その領域への外側からの直接分岐は0x1fedbのJEだけで、直前0x1fed8はCMP EDI,9。
+領域直前0x1ffa8と即値書込み直前0x2001bはいずれも別領域への無条件JMPであり、直前からのfall-throughはない。
+全277命令に間接JMPは見つからなかった。
+
+保存証跡のhashとimage identityを再照合し、既存の10段unwind/CALL照合からframe0x1ff1bのRDIを復元した。
+**保存EDIが9かという比較結果はfalse**。値そのものや絶対register addressは公開要約に含めない。
+関数内のRDI/EDI書込みはprolog0x1fc4aのMOV EDI,R9Dとepilog0x1fd7fのPOP RDIのみだった。
+現在image、通常の関数内制御フロー、calleeによるnonvolatile register保存という前提では、
+直接即値書込み0x20020をこの保存frameのstatus生成元とする説明は整合しない。
+実行時loaded bytes一致や過去の分岐実行を証明したわけではなく、コード破損等まで排除する断定にはしない。
+
+### 5.2 初期化処理から戻り値を伝える経路は複数ある
+
+| 静的に確認した箇所 | 観察内容 | 保存証跡から未確定な点 |
+| --- | --- | --- |
+| LoadDllInternal 0x1feaf→0x1feb4 | LdrpPrepareModuleForExecutionをCALLし、EAXを[RBX]へ格納 | そのCALLの実行有無・戻り値 |
+| PrepareModuleForExecution 0x86ec2/0x86ed4/0x86f36 | NotifyLoadOfGraph、DynamicShimModule、InitializeGraphRecurseの戻り値をEBXに取り、0x86f4fでEAXへ返す経路 | どの呼出しと分岐を通ったか |
+| InitializeGraphRecurse 0x87d69→0x87e03、0x87dac→0x87e12 | nodeまたは参照先の状態値-4から0xC0000142を返す。0x87dc5ではInitializeNodeをCALLし、失敗時はnode状態を-4にして戻る | 対象node・依存関係・状態が変わった時点 |
+| InitializeNode 0xe767→0xe76c、0xe80c→0xe837→0xe868 | CallInitRoutineのALをR12Dへ保持し、R12Bが0なら0xC0000142をR14Dに設定、node状態-4とEAXへ反映する通常経路 | 初期化対象・戻り値・この経路の実行有無 |
+| CallInitRoutine 0x10c2e→0x10c33、0x10c88→0x10cca | CallInitRoutineInternalのALを保持。0かつ呼出し理由値1なら0xC0000142をLogErrorの引数にする | ログ呼出しの発生や初期化対象の特定 |
+
+関数名は既存matcherでS_PUB32 Functionのentry完全一致を照合した。
+InitializeNodeには別に0xe788のXOR R12B,R12Bもあり、その進入条件をここでは解析していない。
+したがって、同関数で0xC0000142が生じる理由を「初期化callbackがfalseを返した場合だけ」とは扱わない。
+LoadDllInternalには他にもBuildForwarderLinkやApplyPatchImage等のEAXをstatusへ保存する箇所がある。
+この表は候補の説明であり、保存したunload時点からそれ以前のCALL列を復元したtraceではない。
+
+分割codeには既存unwind helperがunwind_code_orderで停止するfragment（0x87013、0x87de9、0x87e12）があった。
+静的な直接branchと完全decodeされた命令は記録したが、これらを新しいunwind成功として扱わず、helper条件も緩和していない。
+0x87013は隣接するPrepareModuleForExecutionへの名前推定を避け、NotifyLoadOfGraphからの直接分岐先として記録する。
+
+### 5.3 今の証跡で答えられないことと次の観測要件
+
+確認できたのは、解放中の保存statusと、現在image上でその値を作成・伝播し得る命令である。
+最初の失敗DLL、初期化callbackの実際の戻り値、最初の書込み命令は未特定。
+module/nodeを指すregisterは、その構造体や依存関係を保存した証拠にはならない。
+保存範囲外へのpointer追跡や、現在の別processの値での補完は行っていない。
+
+次の診断設計では「失敗した初期化対象と、その時点の戻り値または失敗nodeとの対応」を得られることを先に示す必要がある。
+同じunload時点のstackだけを再採取しても、この区別に必要な履歴が増えるとは限らない。
+現行の全breakpoint拒否を維持できる観測方法か、変更が必要な方法かを明示し、
+追加取得範囲・予算・停止・証跡保存の実装/試験/レビューを終えてから具体的な実機実行範囲を提示する。
+この追記は追加実機診断やbreakpoint/対象memory書込みの承認ではない。
+
+### 5.4 保存とPCへの負荷
+
+今回の新規要約は同じartifacts配下のloader-status-write-candidates.json、init-failure-static-candidates.json、
+status-propagation-static-flow.json、init-routine-static-flow.jsonの4件、計193708 bytes。
+既存の証跡とPDBは保持し、追加downloadやraw context/stack/ntdllのdiskコピーはない。
+今回の現在ntdll held-handle readは4回、保存証跡readは1回。サイズ・hash・時間予算検査を通し、reader handleをcloseした。
+保存済みPDBは各解析で再使用しhash一致を確認した。新しい常駐processは追加していない。
+空きRAM8.85→8.85 GiB、C102.29 GiB/D75.36 GiBは同値。PC全体の単発値からリーク有無は判定しない。
+tracked変更は文書のみ。codeや必須native試験の条件は変えず、追加実child・設定権限変更・他project操作なし。
+公開要約の277命令・分岐進入・RDI書込み・EDI比較結果・保存容量の整合性とdiff-checkを確認した。
+文書§5と公開要約4件に限定した独立レビューは新規P0〜P3=0。private値の復元を再検証したレビューではない。
+追加test/native実行なし。担当の完了通知を待ち、進捗ポーリングは行っていない。mainは基準commitのままcleanを確認した。

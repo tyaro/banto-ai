@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §53を最初に参照。11 framesのsymbol名とloader内部の保存status0xC0000142を照合。原因未特定、追加childなし。
+2026-09-10最新: §54を最初に参照。status生成・伝播候補を静的に整理。直接即値の1候補は保存EDIと不整合。原因未特定、追加childなし。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1017,3 +1017,26 @@ EXIT_PROCESS値と一致したが、元の失敗API/DLLや、この値を最初�
 空きRAM8.69→8.78 GiB、C102.30→102.29 GiB、D75.36 GiB。リーク有無は未判定。
 追加実child/remote memory/設定権限変更/他project操作なし。全acceptance gate no。
 次は内部statusの静的な書込み候補と保存情報の限界を整理し、新規観測が必要なら具体化後に個別承認gateへ進める。
+
+## 54. 2026-09-10 statusの生成・伝播候補と保存情報の限界
+
+現在ntdllと保存PDBを再使用し、LoadDllInternal全277命令と関連する初期化関数の静的経路を確認した。
+同関数の直接即値書込み0x20020は通常の関数内フローでEDI=9を必要とするが、保存frame0x1ff1bの復元EDIは9ではなかった。
+現在imageとABIを前提に、この直接書込みを保存statusの生成元とする説明は整合しない。
+コードの実行履歴を証明した除外ではなく、loaded bytes完全一致未証明の制約を維持する。
+
+PrepareModuleForExecutionの戻り値をstatusに格納する箇所と、初期化処理/依存nodeの失敗状態から
+0xC0000142を返す複数の候補を確認した。比較・ログを含む即値13件を、13個のstatus書込みとは数えない。
+初期化callbackのfalseだけが原因とは断定せず、最初の失敗DLL/API・実行された生成箇所は未特定。
+新しいunwind対応や範囲外memory読取りは追加していない。
+
+詳細は[解析結果§5](anomaly-multiseed-v0.3-s4-b1-startup-symbol-analysis-2026-09-10.md#5-statusの静的な生成伝播候補2026-09-10追記)。
+次工程は失敗対象と戻り値/失敗nodeの対応を得る観測の設計。同じstackだけの再採取では区別が増えるとは限らない。
+現行の全breakpoint拒否との関係と追加取得範囲を明示し、実装・試験・レビュー後に個別の実機判断対象を提示する。
+追加実child・memory書込み・breakpoint許可をこの文書や準備継続指示から読み替えない。
+
+新規要約4件193708 bytesをignored artifactsへ保存。現在ntdllの有界read4回、保存証跡read1回、全reader handle close。
+tracked変更は文書のみでtest再実行なし。追加download・設定権限変更・他project操作なし。全acceptance gate no。
+公開要約の整合性/diff-check pass。文書と公開要約に限定した独立レビュー新規P0〜P3=0、private復元の再検証なし。
+完了通知を利用し進捗ポーリングなし。mainは基準commitのままclean。
+空きRAM8.85→8.85 GiB、C102.29 GiB/D75.36 GiB同値。リーク有無は未判定。
