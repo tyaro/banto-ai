@@ -25,6 +25,7 @@ SOURCES = (
     "tests/fixtures/anomaly_v03_debug_memory.py",
     "tests/fixtures/anomaly_v03_debug_launch.py",
     "tests/fixtures/anomaly_v03_debug_session.py",
+    "tests/fixtures/anomaly_v03_debug_tokens.py",
     "tests/fixtures/anomaly_v03_startup_preflight.py",
 )
 
