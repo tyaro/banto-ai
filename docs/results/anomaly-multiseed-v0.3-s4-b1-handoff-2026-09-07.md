@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §55を最初に参照。最初のunload対象の管理情報を読む候補を実装・レビュー・事前確認済み。追加実機診断1回の判断待ち。
+2026-09-10最新: §56を最初に参照。管理情報観測v1はサイズ前提で停止。終了/保存は確認済み。v2修正とfake/独立レビュー完了、追加実機は未実行。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1068,3 +1068,29 @@ ntdll3窓に参照PEのbase relocation重なりなし。実loaded bytesの3窓�
 
 次は計画末尾の**追加memory読取りを含む限定実機診断1回**について判断を求める。
 前回承認はその1回限りで、今回の取得を含まない。承認前にdriverを追加実行しない。
+
+## 56. 2026-09-10 管理情報v1実機結果とサイズ前提の修正
+
+ユーザーの「続けてください」を§55の限定診断1回への了承として、cleanなfb08c34で1回実行した。
+初期reportまで2.214秒。追加1059 bytesの完全readとntdll3窓SHA一致、KernelBase.dllのbase一致を確認したが、
+entry_image_sizeで停止した。v1はこの検査後にしかraw/size/flagsを保存しないため、その実値は未保存・未確定。
+サイズが0だったか上限超過だったかを決めつけない。KernelBase.dllが初期化失敗したという断定もできない。
+
+normal5件/observer Continue4件、owned stopがTerminateProcessを要求しdrain1件でEXIT code1。
+今回の自然終了値は未観測。終了signal、debug ownership解消、handle close、teardown pass、failure_count0を確認した。
+先行最終reportとprivate証跡write/flush/closeを確認。114763 bytes/hash36dcd18871234b76b5db32b7a258b7bf157a61f8ad3763cfbf4a9cff3a6b1a87。
+保存fileの有界readbackはhash一致。保存stackの10段unwindからoffset584の内部status0xC0000142も再確認した。
+詳しくは[管理情報v1実機結果](anomaly-multiseed-v0.3-s4-b1-unload-entry-result-2026-09-10.md)。
+
+現在imageのUnloadNodeには、0x86815でサイズ[entry+0x40]を0にしてから解放する経路があった。
+6 fragments/164命令のR15書込みも確認。「unload時でもサイズは正」という観測側の前提を修正する。
+v2は0を許容し、完全read後のraw112/sizeをprivate保存してからfieldを検証する。不一致時はflags/bit未確定のまま停止。
+追加4 reads/1059 bytes、同じcode3窓・base照合・128 MiB/user上限、既定off、全breakpoint拒否、再試行抑止は維持。
+関係fake32/32、debug131/131 pass。独立新規P0〜P3=0、指定32/32 pass（0.478秒）、進捗ポーリングなし。
+成功例最大幅JSON7418 bytes/8 KiB、全体64 KiB容量試験pass。repository safety/diff-check pass。
+
+v1の同run preflightは19 sources/215813 bytes、Windows10.0.26200.9445/Python3.14.0、既存hash一致。
+親＋child記録上peak commit約22.69 MiB、resource_stop=false。PC空きRAM8.68→8.38 GiB、C102.31→102.34 GiB、D75.36 GiB。
+単発値からリーク有無は判断しない。追加権限/設定変更・他project操作なし。全acceptance gate no。
+次はv2 source保存とread-only preflight後、[計画末尾のv2限定実機1回](anomaly-multiseed-v0.3-s4-b1-unload-entry-plan-2026-09-10.md)について判断を求める。
+今回承認済みのv1は消化済み。v2の実child/実RPMはまだ行っていない。

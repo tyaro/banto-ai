@@ -1,6 +1,9 @@
 # S4-B1 最初のunload時の管理情報観測
 
-状態: **実装・fake試験・独立レビュー・read-only preflight完了 / 新規実機診断は未承認・未実行 / no native acceptance**。
+状態: **v1実機診断1回終了 / v2修正・fake試験・独立レビュー完了 / v2 preflight待ち / v2実機は未承認・未実行 / no native acceptance**。
+
+v1はサイズ検査で停止した。[実機結果と観測側の前提修正](anomaly-multiseed-v0.3-s4-b1-unload-entry-result-2026-09-10.md)を参照。
+以下の取得計画はv2に更新した。末尾のv1実装/承認準備の記録は当時の履歴である。
 
 ## 目的と得られる判断
 
@@ -43,8 +46,9 @@ collectorと845-byte scratchはchild作成前に確保する。最初のnormal U
 1. 既存image行と過去のLOAD/UNLOADから、ntdllと解放対象が有効なloadに対応することを確認する。
 2. RIP=ntdll+0x161304、stack先頭=ntdll+0xa7956、RDX=UNLOAD base、RBXの8-byte alignment/user範囲を要求する。
 3. 下表のcode windowsを所有childから各1回読んでSHA-256を比較する。全3件が一致するまでRBX先を読まない。
-4. RBXから**112 bytesを1回**読む。baseフィールドがUNLOAD baseと一致し、image sizeが(0,128 MiB]かつuser範囲内であることを要求する。
-5. 0x68のDWORDとbit比較結果、112 bytes、対応するLOAD slotをprivate証跡へ保存する。
+4. RBXから**112 bytesを1回**読む。成功/要求長一致/直後の予算検査後、rawとサイズ値をprivate保存する。
+5. baseフィールドがUNLOAD baseと一致し、image sizeが[0,128 MiB]かつuser範囲内であることを要求する。解放中に0にする経路があるため0を許容する。
+6. 検証後に0x68のDWORDとbit比較結果を確定する。base/size不一致の場合、rawは保持するがstatusはentry_uncertainで停止し、flags/bitは確定しない。
 
 | RVA範囲 | bytes | 必須SHA-256 |
 | --- | --- | --- |
@@ -116,3 +120,15 @@ mainは基準commitのままclean。他projectや設定権限への操作なし�
 30秒/256 events/親＋child512 MiB未満の既存予算とowned stopを維持し、条件不一致や取得失敗でも追加実行しない。
 post-run summaryを先にwrite/flush/closeし、rawはprivate証跡のまま保存する。
 前回の実機承認はその診断1回に限られ、この新しい対象memory読取りを含まないため、実行前に個別の判断を求める。
+
+## v2修正と次の実機範囲
+
+上記のv1実機1回は承認後に実行し、entry_image_sizeで停止した。詳細は結果文書を参照。
+v2は解放経路で0にされるサイズを許容し、完全読取り済みのraw/sizeをfield検証前にprivate保持する。
+取得の成功と解釈の成功を分け、code/base/上限の不一致を成功に補完しない。entry_hexの存在だけでは検証完了とみなさない。
+recipeはntdll-26200.9445-unload-v2。code3窓のRVA/サイズ/hashと追加4 reads/1059 bytesはv1から不変。
+同じ停止/メモリ/イベント予算を使い、memory/codeへの書込み・pointer追跡・設定変更なし。
+
+fake32件、debug全体131件、独立レビューを通過し、成功例最大幅JSON7418 bytesで8 KiB内。
+v2 sourceの保存・read-only preflight後、**v2で新規専用fixtureを使う限定実機診断1回**を判断対象として提示する。
+v1の承認1回は消化済み。v2の起動は個別の返答を待ち、未保存のv1 flagsを埋めるために自動再実行しない。

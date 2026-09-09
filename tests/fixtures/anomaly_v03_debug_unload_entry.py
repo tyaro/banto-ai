@@ -14,7 +14,7 @@ from tests.fixtures.anomaly_v03_debug_transport import need
 
 
 class DebugUnloadEntry:
-    RECIPE = "ntdll-26200.9445-unload-v1"
+    RECIPE = "ntdll-26200.9445-unload-v2"
     RIP_RVA, RETURN_RVA = 0x161304, 0xA7956
     ENTRY_SIZE = 112
     USER_MAX = 0x00007FFFFFFFFFFF
@@ -114,13 +114,18 @@ class DebugUnloadEntry:
                 need(hashlib.sha256(data).hexdigest() == digest, "entry_code_mismatch")
                 self.row["code_windows_confirmed"] += 1
             data = self._read(context, budget, rbx, self.ENTRY_SIZE, "entry")
-            need(struct.unpack_from("<Q", data, 0x30)[0] == unload_base, "entry_base_mismatch")
             size = struct.unpack_from("<I", data, 0x40)[0]
-            need(0 < size <= 128 * 1024 * 1024, "entry_image_size")
-            self._address(unload_base, size, 0x10000)
+            # Exact read completion is distinct from interpreting its fields.
+            # Retain these bounded private bytes even when a later check fails.
+            self.row.update(entry_hex=data.hex(), image_size=size)
+            need(struct.unpack_from("<Q", data, 0x30)[0] == unload_base, "entry_base_mismatch")
+            # LdrpUnloadNode can clear +0x40 before LdrpUnmapModule is called.
+            # Size does not control any read length or additional pointer walk.
+            need(size <= 128 * 1024 * 1024, "entry_image_size")
+            self._address(unload_base, max(1, size), 0x10000)
             flags = struct.unpack_from("<I", data, 0x68)[0]
             context._budget(budget)
-            self.row.update(status="confirmed", entry_hex=data.hex(), flags=flags,
+            self.row.update(status="confirmed", flags=flags,
                             init_failure_bit=bool(flags & 0x100000))
             self.state = "completed"
         except BaseException:

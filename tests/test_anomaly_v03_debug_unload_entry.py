@@ -153,21 +153,38 @@ class DebugUnloadEntryTests(unittest.TestCase):
                     self.assertNotIn("entry_hex", c.entry.row)
                     self.assertEqual(c.state, "stopped")
 
-    def test_entry_shape_mismatch_keeps_raw_scratch_private(self):
-        for offset, code, value in ((0x30, "Q", 0x60000000), (0x40, "I", 0), (0x40, "I", 2**32 - 1)):
+    def test_cleared_size_retains_flag_without_another_read(self):
+        c, k, stop, budget, memory, windows = self.fixture()
+        struct.pack_into("<I", memory[0x20000], 0x40, 0)
+        with patch.object(DebugUnloadEntry, "WINDOWS", windows):
+            c.capture(budget)
+        self.assertEqual(c.entry.row["status"], "confirmed")
+        self.assertEqual(c.entry.row["image_size"], 0)
+        self.assertTrue(c.entry.row["init_failure_bit"])
+        self.assertEqual(k.ReadProcessMemory.call_count, 5)
+        self.assertEqual(c.entry.row["confirmed_bytes"], 1059)
+
+    def test_entry_shape_mismatch_retains_exact_read_without_confirming_fields(self):
+        for offset, code, value in ((0x30, "Q", 0x60000000), (0x40, "I", 2**32 - 1)):
             c, k, stop, budget, memory, windows = self.fixture()
             struct.pack_into("<" + code, memory[0x20000], offset, value)
             with patch.object(DebugUnloadEntry, "WINDOWS", windows):
                 with self.assertRaises(TransportError): c.capture(budget)
             self.assertEqual(k.ReadProcessMemory.call_count, 5)
-            self.assertNotIn("entry_hex", c.entry.row)
+            self.assertEqual(c.entry.row["entry_hex"], bytes(memory[0x20000]).hex())
+            self.assertEqual(c.entry.row["status"], "entry_uncertain")
+            self.assertNotIn("flags", c.entry.row)
+            self.assertNotIn("init_failure_bit", c.entry.row)
+            self.assertEqual(c.entry.state, "stopped")
 
     def test_outer_driver_opt_in_evidence_and_owned_stop_do_not_capture_during_drain(self):
-        for fault in (None, "code_mismatch", "resource"):
+        for fault in (None, "code_mismatch", "resource", "entry_size"):
             with ExitStack() as scope, self.subTest(fault=fault):
                 driver, api, k, preflight, tokens, fixture, disk = (
                     driver_fixtures.DebugDriverTests().driver(scope, unload_entry=True))
                 c, unused, stop, budget, memory, windows = self.fixture()
+                if fault is None or fault == "entry_size":
+                    struct.pack_into("<I", memory[0x20000], 0x40, 0 if fault is None else 0xFFFFFFFF)
                 scope.enter_context(patch.object(DebugUnloadEntry, "WINDOWS", windows))
                 events = iter((3, 6, 6, 7, 7, 5))
                 last = [None]
@@ -216,7 +233,7 @@ class DebugUnloadEntryTests(unittest.TestCase):
                 result = driver.run()
                 k.GetThreadContext.assert_called_once()
                 self.assertEqual(k.ReadProcessMemory.call_count,
-                                 5 if fault is None else 2 if fault == "code_mismatch" else 3)
+                                 5 if fault in (None, "entry_size") else 2 if fault == "code_mismatch" else 3)
                 self.assertEqual(result["teardown_status"], "pass")
                 self.assertFalse(result["native_accepted"])
                 self.assertFalse(result["formal_permission"])
@@ -231,8 +248,16 @@ class DebugUnloadEntryTests(unittest.TestCase):
                     row = saved.private_metadata["context"]["row"]["module_entry"]
                     if fault is None:
                         self.assertTrue(row["init_failure_bit"])
+                        self.assertEqual(row["image_size"], 0)
                         self.assertEqual(row["module_load_slot"], 2)
                         self.assertEqual(row["entry_hex"], bytes(memory[0x20000]).hex())
+                    elif fault == "entry_size":
+                        self.assertEqual(row["entry_hex"], bytes(memory[0x20000]).hex())
+                        self.assertEqual(row["image_size"], 0xFFFFFFFF)
+                        self.assertEqual(row["status"], "entry_uncertain")
+                        self.assertNotIn("flags", row)
+                        self.assertNotIn("init_failure_bit", row)
+                        self.assertEqual(driver.primary.reason, "entry_image_size")
                     else:
                         self.assertNotIn("entry_hex", row)
                         self.assertEqual(driver.primary.reason, "entry_code_mismatch")
