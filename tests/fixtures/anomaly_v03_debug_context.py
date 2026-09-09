@@ -1,7 +1,8 @@
 """One read-only initial-thread snapshot during the first normal DLL unload.
 
 Borrowed launch handles only. No suspend/resume, open/close, write, unwind,
-symbol lookup or retry. Partial buffers remain private and never become a stack.
+symbol lookup or retry. An opt-in collector can inspect the same stopped event.
+Partial buffers remain private and never become a stack.
 """
 
 import ctypes as C
@@ -21,7 +22,7 @@ class DebugContext:
     JSON_LIMIT = 8 * 1024
     USER_MAX = 0x00007FFFFFFFFFFF
 
-    def __init__(self):
+    def __init__(self, *, entry=None, images=None):
         need(C.sizeof(w.H) == 8, "context_abi")
         self.storage = C.create_string_buffer(self.CONTEXT_SIZE + 15)
         base = C.addressof(self.storage)
@@ -42,6 +43,9 @@ class DebugContext:
         self.row = {"status": "not_observed", "context_state": "not_started",
                     "stack_state": "not_started", "identity_state": "not_started"}
         self.slot = None
+        self.entry, self.images = entry, images
+        if entry is not None:
+            self.row["module_entry"] = entry.row
 
     def __repr__(self):
         return "DebugContext(<private context and stack>)"
@@ -142,6 +146,8 @@ class DebugContext:
             self._budget(budget)
             need(self.bytes_read.value == self.STACK_SIZE, "context_stack_length")
             self.row.update(stack_state="confirmed", stack_hex=self.stack.raw.hex(), status="confirmed")
+            if self.entry is not None:
+                self.entry.capture(self, self.images, budget)
             need(len(json.dumps({"state": "completed", "row": self.row}, ensure_ascii=True))
                  <= self.JSON_LIMIT, "context_json_size")
             self._budget(budget)
