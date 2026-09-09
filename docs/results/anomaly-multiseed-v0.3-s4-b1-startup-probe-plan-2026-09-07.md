@@ -2,7 +2,42 @@
 
 状態: **dormant driver tested / read-only preflight verified / probe not run**。
 2026-09-10更新: 承認によりUBR固定を記録へ変更。実10.0.26200.9445で14 sourceの事前照合が通過。
-初期breakpoint識別と初回probe準備は残る。最新詳細は引継書§31と下記transport記録を参照。
+初期breakpoint識別と初回probe準備は残る。最新詳細は引継書§32と下記transport記録を参照。
+
+## 2026-09-10 次の診断範囲の判断案（実行前）
+
+現状のdriverは全breakpointをbootstrap_unverifiedとして拒否する。初期breakpointの
+address/image/symbolを検証して正常継続する仕組みはない。既存の200件のpure/fake試験に加え、
+outer driverから実際のsession/observer/transport/stop部品を通すfake統合試験を追加した。
+CREATE→LOAD_DLL→BREAKPOINTを受けた後、正常な停止、Terminate失敗、停止後ContinueのOOMを確認する。
+停止に成功してもdriverはfailedのままで、通常観測のexit codeへ停止処理のexitを混入させない。
+ここでいう実際の部品とはPython実装であり、Win32、filesystem、runtimeはすべてfakeである。
+
+次工程は、当初の「初期breakpointを検証してDLL初期化を観測する」範囲を維持するか、
+最初の観測を次の限定範囲へ分けるかで変わる。
+
+| 方針 | 得られるもの | 残るもの |
+| --- | --- | --- |
+| 当初範囲を維持 | 検証可能なbootstrap識別を実装した後、初期化中のevent観測を目指す | 識別根拠の調査・実装・故障試験が必要。継続可能性はまだ未確認 |
+| 限定した初回観測（提案） | 新規childを1個だけ起動し、最初の未識別breakpointで停止。それまでのevent順序・例外codeとaddress・停止結果を保持 | breakpointが初期breakpointかどうか、以後のDLL初期化障害原因は判定しない |
+
+限定案でもbreakpointを握り潰したり通常継続したりしない。停止処理が要求するContinueは
+Terminate成功後にのみ行い、例外はnot-handledとする。時間30秒、event256件、親＋child512 MiB未満、
+停止drainは最大32回/5秒の既存上限を維持し、追加probeの自動再試行はしない。
+Windows条件は§31の承認済み条件を使う。既存failure rootは再利用・削除しない。
+
+これは範囲の判断案であり、実行準備完了や実行承認ではない。限定案を選んだ場合も、次が必要である。
+
+- raw bufferは現在private_ownerを参照しているPython process内にだけ保持される。
+  fixture保持はraw eventの永続保存ではない。process終了前に有界private記録を残す手順と失敗時の扱いを実装・確認する。
+- 保存対象は取得済みbufferと状態に限定する。image_name等は対象process内のpointerであり、DLL名の取得済み証拠として扱わない。
+  観測後にsource/temp/remote memoryを追加読込みして欠落を補わない。
+- 公開要約とprivate情報を分け、保存容量・アクセス権・停止結果の不確実性を確認する。
+  メモリ不足時の永続保存成功は保証しない。
+- 完成差分をfault試験・独立レビューしたうえで、実行1回の具体的な条件を提示する。
+
+PCで別プロジェクトが連続稼働しているため、範囲の判断までは短命のpure/fake試験だけを続ける。
+
 更新: 2026-09-08にevent transport、owned停止、有界観測loopを結合した。初期breakpointは識別未完のため拒否する。
 以下は09a1150時点の計画を保持する。現在の接続済み範囲と未接続部分は
 [transport記録](anomaly-multiseed-v0.3-s4-b1-debug-transport-2026-09-08.md)を参照。

@@ -9,6 +9,7 @@ from unittest.mock import Mock, patch
 
 from tests import test_anomaly_v03_debug_session as fixtures
 from tests.fixtures import anomaly_v03_debug_driver as d
+from tests.fixtures.anomaly_v03_debug_transport import BREAKPOINT, DBG_NOT_HANDLED
 
 
 class DebugDriverTests(unittest.TestCase):
@@ -85,6 +86,67 @@ class DebugDriverTests(unittest.TestCase):
                 if phase == "preflight":
                     disk.assert_not_called()
                     self.assertIs(driver.primary, preflight.primary)
+
+    def test_unverified_breakpoint_stops_whole_driver_and_retains_raw_evidence(self):
+        for fault in (None, "terminate", "continue"):
+            with ExitStack() as stack, self.subTest(fault=fault):
+                driver, api, kernel, preflight, tokens, fixture, disk = self.driver(stack)
+                events = iter((3, 6, 1, 5))
+                def deliver(pointer, timeout):
+                    raw = pointer.contents
+                    raw.kind, raw.pid, raw.tid = next(events), 17, 19
+                    if raw.kind == 3:
+                        raw.info.create_process.file = 101
+                    elif raw.kind == 6:
+                        raw.info.load_dll.file = 102
+                    elif raw.kind == 1:
+                        raw.info.exception.record.code = BREAKPOINT
+                        raw.info.exception.record.address = 0x12345678
+                        raw.info.exception.first_chance = 1
+                    elif raw.kind == 5:
+                        raw.info.exit_code = 1
+                    return True
+                kernel.WaitForDebugEventEx.side_effect = deliver
+                kernel.WaitForSingleObject.side_effect = [258, 0]
+                kernel.TerminateProcess.return_value = fault != "terminate"
+                if fault == "continue":
+                    kernel.ContinueDebugEvent.side_effect = [True, True, MemoryError()]
+                result = driver.run()
+                self.assertEqual(result["status"], "failed")
+                self.assertEqual(result["teardown_status"], "pass" if fault is None else "failed")
+                self.assertEqual(driver.primary.reason, "bootstrap_unverified")
+                self.assertIs(driver.primary, driver.observer.primary)
+                self.assertEqual(driver.transport.count, 3)
+                raw = result.private_owner.transport.buffers[2]
+                self.assertEqual(raw.info.exception.record.address, 0x12345678)
+                self.assertEqual(raw.info.exception.record.code, BREAKPOINT)
+                self.assertEqual(driver.observer.events.confirmed, 2)
+                self.assertIsNone(driver.observer.result["exit_code_observed"])
+                kernel.ResumeThread.assert_called_once_with(502)
+                kernel.TerminateProcess.assert_called_once_with(501, 1)
+                methods = [call[0] for call in kernel.mock_calls]
+                stop_index = methods.index("TerminateProcess")
+                continues = [i for i, method in enumerate(methods) if method == "ContinueDebugEvent"]
+                self.assertLess(continues[1], stop_index)
+                self.assertEqual(len(continues), 4 if fault is None else 2 if fault == "terminate" else 3)
+                if fault != "terminate":
+                    self.assertGreater(continues[2], stop_index)
+                    self.assertEqual(kernel.ContinueDebugEvent.call_args_list[2].args[2], DBG_NOT_HANDLED)
+                self.assertEqual(driver.stop.handles, [None, None] if fault is None else [501, 502])
+                if fault is None:
+                    self.assertEqual(driver.stop.drain.buffers[0].info.exit_code, 1)
+                    self.assertTrue(driver.stop.result["process_signaled"])
+                self.assertEqual(result["resource_stop"], fault == "continue")
+                self.assertEqual(driver.session.tokens, [None, None])
+                closed = [call.args[0] for call in kernel.CloseHandle.call_args_list]
+                self.assertEqual(closed, [101, 102, 502, 501, 702, 701] if fault is None
+                                 else [101, 102, 702, 701])
+                fixture.close.assert_called_once()
+                tokens.close.assert_called_once()
+                fixture.cleanup.assert_not_called()
+                fixture.capture_cleanup.assert_not_called()
+                self.assertFalse(result["native_accepted"])
+                self.assertFalse(result["formal_permission"])
 
     def test_preparation_faults_close_only_existing_owners_without_cleanup(self):
         for phase in ("tokens", "create", "freeze", "request"):

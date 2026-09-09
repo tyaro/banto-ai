@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §31を最初に参照。ユーザー承認によりUBR固定を解除し、実測buildを記録する。
+2026-09-10最新: §32を最初に参照。UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補966723cはpure200件と独立監査を通過。現在の10.0.26200.9445で実read-only preflightもverified。
 実child/fixture/debuggerは未起動。本流統合・native受入・formal permissionは引き続き未達。
 
@@ -600,3 +600,23 @@ tags/v3.14.0 / ebf955d、free threading無効。exe/python314.dll hashは既存�
 pure/fake200/200（1.169秒）、D2 1/1（12.838秒）、safety/diff-check pass。
 独立担当のd3a53f9..966723c4bf4ddcf786aeb744288a3ca88fa96211監査は新規P0〜P3=0、指定pure60/60 pass。
 実driver/child/debugger/負荷試験は未実行。別プロジェクト連続稼働への配慮を継続する。
+
+## 32. 2026-09-10 未識別breakpointの全体停止確認と診断範囲の判断案
+
+test_anomaly_v03_debug_driverへ、CREATE→LOAD_DLL→BREAKPOINTからouter driver全体を通す
+fake統合試験を追加した。正常停止、Terminate失敗、停止後ContinueのOOMの3条件で、
+bootstrap_unverifiedを一次原因として保持し、raw例外code/address、通常観測と停止drainの分離、
+未解放handle、token解放、resource stop伝播を確認した。production/診断driver実装の変更はない。
+
+関連pure/fake58/58（0.421秒）、diff-check pass。独立担当は指定test差分だけを監査し、
+新規P0〜P3=0、指定fake7/7 pass（1回）。繰り返しpollはしていない。D2対象変更なし、追加走査は省略。
+開始付近の空きRAM7.51 GiB、C102.89 GiB、D75.36 GiB。PC全体の単発値でリーク有無を判断しない。
+
+残る判断は、初期breakpointの厳密な識別・継続実装を先に完成させる当初範囲を維持するか、
+最初の観測を「最初の未識別breakpointまで記録して停止」に限定するかである。
+後者を提案として[初回probe計画](anomaly-multiseed-v0.3-s4-b1-startup-probe-plan-2026-09-07.md)へ具体化した。
+限定案ではその後のDLL初期化原因を判定しない。これは範囲の判断案であり実行承認ではない。
+
+raw eventはprivate_ownerによるprocess内保持のみであり、fixtureを残すことと永続保存を混同しない。
+限定案を選んだ場合も、取得済みbuffer/状態の有界private保存と失敗時の扱い、fault試験・独立レビューを
+完成させてから実行1回の条件を提示する。実child/debugger/負荷試験は未実行、全acceptance gate no。
