@@ -14,6 +14,70 @@ from tests.fixtures.anomaly_v03_debug_transport import BREAKPOINT, DBG_NOT_HANDL
 
 
 class DebugDriverTests(unittest.TestCase):
+    def test_unload_context_wiring_once_and_resource_stop_drain_without_queries(self):
+        for failure in (False, True):
+            with ExitStack() as stack, self.subTest(failure=failure):
+                driver, api, kernel, preflight, tokens, fixture, disk = self.driver(stack)
+                events = iter((3, 7, 7, 5))
+                last_kind = [None]
+                def deliver(pointer, timeout):
+                    raw = pointer.contents
+                    raw.kind, raw.pid, raw.tid = next(events), 17, 19
+                    last_kind[0] = raw.kind
+                    if raw.kind == 3:
+                        raw.info.create_process.file = 101
+                    elif raw.kind == 5:
+                        raw.info.exit_code = 0xC0000142
+                    return True
+                kernel.WaitForDebugEventEx.side_effect = deliver
+                kernel.WaitForSingleObject.side_effect = lambda handle, timeout: 0 if last_kind[0] == 5 else 258
+                kernel.GetThreadId.return_value = 19
+                kernel.GetProcessIdOfThread.return_value = 17
+                def context(handle, pointer):
+                    self.assertEqual(driver.transport.buffers[driver.transport.pending].kind, 7)
+                    self.assertFalse(driver.stop.started)
+                    struct.pack_into("<Q", driver.context.context, 152, 0x10000)
+                    struct.pack_into("<Q", driver.context.context, 248, 0x20000)
+                    return True
+                def read(handle, address, output, size, length):
+                    if failure:
+                        raise MemoryError()
+                    d.C.memmove(output, b"X" * size, size)
+                    length.contents.value = size
+                    return True
+                kernel.GetThreadContext.side_effect = context
+                kernel.ReadProcessMemory.side_effect = read
+                result = driver.run()
+                kernel.GetThreadContext.assert_called_once()
+                kernel.ReadProcessMemory.assert_called_once()
+                self.assertTrue(driver.stop.result["process_signaled"])
+                self.assertTrue(driver.stop.result["debug_ownership_resolved"])
+                self.assertEqual(result["teardown_status"], "pass")
+                if failure:
+                    self.assertTrue(result["resource_stop"])
+                    self.assertEqual(driver.evidence.capture_state, "resource_skipped")
+                    kernel.WriteFile.assert_not_called()
+                else:
+                    self.assertEqual(result["status"], "observed")
+                    self.assertEqual(driver.context.row["status"], "confirmed")
+                    from tests.fixtures.anomaly_v03_debug_evidence_reader import interpret
+                    saved = interpret(driver.evidence.buffer.raw[:driver.evidence.size])
+                    self.assertEqual(saved.private_metadata["context"]["row"]["bytes_read"], 2048)
+                    # Reserve the independent collectors' entire documented JSON
+                    # allowances, not just this run's short fake rows.
+                    meta = dict(saved.private_metadata)
+                    for name in ("images", "security", "context"):
+                        meta.pop(name)
+                    from tests.fixtures.anomaly_v03_startup_preflight import SOURCES
+                    meta["sources"] = [{"path": path, "sha256": "f" * 64, "bytes": 2**20}
+                                       for path in SOURCES]
+                    meta["runtime"] = {"build": "10.0.26200.4294967295", "python": "3.14.0",
+                                       "exe_sha256": "f" * 64, "dll_sha256": "f" * 64}
+                    meta["primary_reason"] = "context_handle_identity"
+                    baseline = len(json.dumps(meta, ensure_ascii=True))
+                    self.assertLess(baseline + (24 + 16 + 8) * 1024 + 128,
+                                    driver.evidence.METADATA_LIMIT)
+
     def driver(self, stack):
         unused, api, kernel, identity, validate, access = fixtures.DebugSessionTests().session(stack)
         api.p = Mock()

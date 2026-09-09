@@ -21,6 +21,7 @@ from tests.fixtures.anomaly_v03_debug_session import DebugSession
 from tests.fixtures.anomaly_v03_debug_evidence import DebugEvidence, EvidenceFile
 from tests.fixtures.anomaly_v03_debug_images import DebugImages
 from tests.fixtures.anomaly_v03_debug_security import DebugSecurity
+from tests.fixtures.anomaly_v03_debug_context import DebugContext
 
 
 class DriverResult(dict):
@@ -47,6 +48,7 @@ class DebugDriver:
         self.evidence_file = None
         self.images = DebugImages()
         self.security = DebugSecurity()
+        self.context = DebugContext()
         self.result = DriverResult(self)
 
     def __repr__(self):
@@ -60,6 +62,7 @@ class DebugDriver:
                                or self.stop is not None and self.stop.resource_stop
                                or self.evidence.resource_stop
                                or self.security.resource_stop
+                               or self.context.resource_stop
                                or self.evidence_file is not None and self.evidence_file.resource_stop)
 
     def _prepare(self):
@@ -99,8 +102,10 @@ class DebugDriver:
         self.transport = DebugEventTransport(kernel=self.api.k, last_error=C.get_last_error)
         self.stop = OwnedDebugStop(self.transport)
         self.memory = DebugMemory(self.stop, self.api.p)
-        self.observer = DebugObserver(self.stop, sample_memory=self.memory, images=self.images)
+        self.observer = DebugObserver(self.stop, sample_memory=self.memory, images=self.images,
+                                      context=self.context)
         self.launch = SuspendedDebugLaunch(self.api, self.tokens.buffers[1].value, self.fixture, self.stop)
+        self.context.bind(self.stop, self.launch)
         self.session = DebugSession(self.preflight, self.launch, self.observer,
                                     self.tokens.parent_profile, self.tokens.restricted_profile, security=self.security)
 

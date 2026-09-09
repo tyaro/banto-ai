@@ -24,10 +24,11 @@ class DebugObserver:
     MEMORY_LIMIT = 512 * 1024 * 1024
     WAIT_LIMIT = 300
 
-    def __init__(self, stop, *, sample_memory, clock=time.monotonic, images=None):
+    def __init__(self, stop, *, sample_memory, clock=time.monotonic, images=None, context=None):
         self.stop, self.transport = stop, stop.transport
         self.sample_memory, self.clock = sample_memory, clock
         self.images = images
+        self.context = context
         self.events = StartupEvents(self.transport.pid)
         self.started = False
         self.primary = self.secondary = None
@@ -42,7 +43,8 @@ class DebugObserver:
 
     def _latch(self, error):
         self.resource_stop |= (isinstance(error, MemoryError) or self.transport.resource_stop
-                               or self.stop.resource_stop or self.stop.drain.resource_stop)
+                               or self.stop.resource_stop or self.stop.drain.resource_stop
+                               or self.context is not None and self.context.resource_stop)
         self.transport.resource_stop |= self.resource_stop
         self.events.resource_stop |= self.resource_stop
 
@@ -99,6 +101,8 @@ class DebugObserver:
                     raise TransportError("child_resource_stop")
                 if self.images is not None:
                     self.images.capture(self.transport, self._budget)
+                if self.context is not None and event.kind == "unload_dll":
+                    self.context.capture(self._budget)
                 self.transport.close_file(self.transport.pending)
                 self._budget()
                 # Transport refuses every unverified breakpoint. No callback
