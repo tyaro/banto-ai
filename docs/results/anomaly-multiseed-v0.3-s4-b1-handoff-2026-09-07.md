@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §50を最初に参照。保存stackから1段の呼出し元を復元し、直前CALLのtarget一致で照合。原因未特定、追加childなし。
+2026-09-10最新: §51を最初に参照。限定offline処理で呼出し元2段と両CALL targetを照合。次の未対応形式で停止、原因未特定、追加childなし。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -952,3 +952,25 @@ ntdllは2522080 bytes、SHA-256=a74f7482085eab125ccc09152ab7e0b5994bcb13e1a7b298
 次はbody/epilogue判別・保存stack内offset・nonvolatile register・callsiteを検証し、対応できる範囲だけ進める。
 追加child・remote memory・symbol取得・設定変更なし。文書のみのためtest/レビュー再実行なし。全acceptance gate no。
 開始空きRAM8.80 GiB/C102.31 GiB/D75.36 GiB。リーク有無は未判定。
+
+## 51. 2026-09-10 保存stackの限定複数段unwindと独立レビュー
+
+実装保存commit: `1f8b300`。byte-only offline helperを実装し、保存2048-byte stackと現在ntdllを適用して2回のunwindを確認した。
+観測RVA0x161304から呼出し元0xa7956、さらに0x17fdaへ復元し、両段の直前CALL targetが前frameの関数beginと一致した。
+2段目はbodyの32-byte allocation/RBX保存を巻き戻し、戻り先をstack offset48から取得、次のRSP差分は56 bytes。
+その先はunwind_flags_or_frame_registerで停止した。該当flags/frame registerの分類と3段目の復元は未実施。
+
+helperはPE/命令境界/stack範囲/callsiteを検査し、version1/flags0/frame register0の限定bodyとbare RETだけを扱う。
+source hashとntdll identityは再照合したが、当時loaded bytesの完全一致は未証明。関数名や起動失敗原因を断定しない。
+詳しい範囲と結果は[context診断結果の複数段解析](anomaly-multiseed-v0.3-s4-b1-startup-context-probe-result-2026-09-10.md)を参照。
+
+独立レビューP2 1件（命令operandの任意値出力）をmnemonicだけの出力に修正し、即値非出力の回帰試験を追加した。
+再レビュー新規P0〜P3=0。Capstone5.0.7はoptional extraへ分離し、未導入時の任意offline試験skipも独立確認済み。
+最終対象pure/fake12/12 pass（0.118秒）、未導入条件7件skip/discovery成功、repository safety/diff-check pass。
+必須native試験の受入条件は変更なし。担当の完了通知を利用し、進捗ポーリングなし。
+
+派生要約multi-unwind.jsonを保持し、operandを省いたmulti-unwind-reviewed.jsonを現在の参照要約とした（Git対象外）。
+後者は元要約hashと変換内容を記録した表示修正であり、証跡取得/解析の再実行ではない。
+空きRAM8.70→8.66 GiB、C102.31→102.30 GiB、D75.36 GiB。snapshotだけでリーク有無を判定しない。
+追加child/remote memory/symbol取得/設定変更/他project操作なし。全acceptance gate no。
+次は停止したentryのheaderを検証して未対応形式を分類し、保存範囲内で対応可能かを調べる。

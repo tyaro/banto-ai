@@ -169,3 +169,69 @@ stack全体の走査や、addressらしい値の列挙をcall stackの代用に�
 first-unwind-verified.jsonへ保存した。前者の未照合状態も残し、後者にCALL target照合結果を追記した。
 絶対address・raw stackの追加コピーは保存していない。production/test code変更、実機再実行、設定変更なし。
 開始空きRAM8.80 GiB/C102.31 GiB/D75.36 GiB。全体値の単発測定でリーク有無を判定しない。
+
+## 保存スタックの限定複数段unwind（2026-09-10）
+
+前節の1段復元をbyte-only helperへまとめ、対応形式の範囲だけ呼出し元をたどった。
+[解析実装](../../tests/fixtures/anomaly_v03_offline_unwind.py)はPE bytes、image base、保存RIPと
+2048-byte stackを引数に取り、最大16段で停止する。内部でfile/remote memory取得、child起動、
+Windows unwind API、symbol downloadは行わない。既存環境のCapstone 5.0.7で命令境界を照合した。
+この解析専用依存はpyproject.tomlのoptional extra `offline-analysis` に分離し、標準環境の依存は増やさない。
+追加install/downloadは行っていない。
+
+### 対応条件と停止条件
+
+PE/section/RVA/例外tableの一意な有界mapping、RUNTIME_FUNCTION全体の命令decodeを要求する。
+[Microsoft x64 unwind仕様](https://learn.microsoft.com/en-us/cpp/build/exception-handling-x64?view=msvc-170)に基づき、
+version1/flags0/frame register0、prolog外のbodyを対象に、PUSH_NONVOL、ALLOC_SMALL、ALLOC_LARGE、
+SAVE_NONVOLだけを扱う。復元する保存registerの値は内部だけに保持する。
+[epilogue仕様](https://learn.microsoft.com/en-us/cpp/build/prolog-and-epilog?view=msvc-170)を踏まえ、
+bare RET（C3）は現在のstackから戻る操作だけを行い、prolog効果を二重に巻き戻さない。
+pop/ret/jmp/add/leaから始まるその他の位置は、未対応の可能なepilogueとして停止する。
+一般的なx64 unwinderの完全実装ではなく、未対応opcode/flags/frame register/prolog、
+不完全なdecode、保存stack範囲外やcallsite不一致では追加frameを採用しない。
+各戻り先は同じimageのexecutable sectionと一意な関数範囲に入り、その直前のCALL rel32の
+終端が戻り先、targetが直前frameの関数beginと一致することを要求する。
+
+### 保存証跡への適用結果
+
+証跡114419 bytesと現在ntdll2522080 bytesを既述の有界read-only手順で各1回読取り、
+記録済みSHA-256一致を再確認した。ntdllのvolume/file ID/nameと、access timeを除くfile infoも
+前後で一致した。全reader handleをcloseし、DLL bytesやraw stackの追加diskコピーは作らなかった。
+実行時loaded bytesの完全一致は引き続き未証明であり、以下は現在のidentity/hash一致imageを適用した条件付き結果である。
+
+| 段 | 実行位置RVA | RUNTIME_FUNCTION範囲 | 保存stack先頭からのRSP差分 |
+| --- | --- | --- | --- |
+| 観測frame | 0x161304 | [0x1612f0,0x161308) | 0 bytes |
+| 呼出し元1 | 0xa7956 | [0xa7914,0xa7962) | 8 bytes |
+| 呼出し元2 | 0x17fda | [0x17fb2,0x18016) | 56 bytes |
+
+1段目は前節のbare RETとCALL照合を再現した。
+2段目はbodyのALLOC_SMALL32 bytesとPUSH_NONVOL RBXを巻き戻し、保存stack offset40からRBX、
+offset48から戻り先を取得した。CALL位置0x17fd5のtargetは0xa7914で、前frameの関数beginと一致した。
+合計2回のunwindと2件のCALL target照合に成功した。私有関数名や元の起動失敗原因は特定していない。
+
+呼出し元2から先は `unwind_flags_or_frame_register` で停止した。
+この要約だけではflagsとframe registerのどちらが該当したかを区別していない。
+handler/chain/frame pointerの特定形式を確認済みとは扱わず、3回目のunwindは成立していない。
+次は停止したentryのheaderを境界検査して分類し、対応拡張が保存範囲内で可能かを検討する。
+新たなchildの実行承認には進んでいない。
+
+### 検証・保存・資源
+
+synthetic PE/stackで2段成功、CALL不一致、未知形式、範囲外、epilogue/命令途中、PE境界を検証した。
+独立レビューのP2 1件（命令operandに任意即値/絶対addressが入り得る）を修正し、公開出力をmnemonicだけにした。
+movabs即値の非出力回帰試験を追加し、同担当が修正確認、新規P0〜P3=0。
+依存がない環境でtest discoveryを壊さないようoptional extraと明示skipを追加し、追加差分も新規所見0。
+
+最終pure/fakeはoffline unwind7件＋既存evidence reader5件の12/12 pass（0.118秒）。
+独立担当も12/12 pass（0.110秒、依存分離前）を確認し、依存分離後はsite-packages無効環境の7件skipを確認した。
+こちらでも同じ未導入条件でdiscovery成功・7件skipを確認した。これは任意offline解析試験に限る扱いで、
+必須native試験のskip/受入には転用しない。repository safety/diff-check pass。レビューの進捗ポーリングなし。
+
+初回の派生要約をartifacts/context-offline-2026-09-10/multi-unwind.jsonへ保持した。
+修正後の参照要約multi-unwind-reviewed.jsonは、その既存要約からoperandのみ省いた派生物であり、
+取得/解析を再実行した結果ではない。元要約のhashと変換内容を併記し、初回要約も履歴として保持した（いずれもGit対象外）。
+実装中の空きRAM8.70→8.69→8.66 GiB、C102.31→102.30 GiB、D75.36 GiB。
+PC全体のsnapshotからメモリリークを判定しない。追加実child・remote read・権限/設定変更・他project操作なし。
+required E2E/main統合/native受入/formal permissionは未達のまま保存する。
