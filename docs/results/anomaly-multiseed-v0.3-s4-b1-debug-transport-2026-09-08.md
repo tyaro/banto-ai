@@ -1,7 +1,7 @@
 # S4-B1 debug-event transport savepoint
 
 状態: **dormant observation + owned stop / no launch**。
-最新のsession接続候補: `cbac022`。下記のtransport初回記録は`ac876b1`、比較基準`09a1150`。
+最新のmemory診断候補: `b749c08`（2026-09-09）。下記のtransport初回記録は`ac876b1`、比較基準`09a1150`。
 production harnessとsource pinは変更していない。
 
 ## 今回の接続範囲
@@ -285,3 +285,25 @@ D2 1/1（3.783秒）、repository safety pass。実child等は引き続き未実
 同じ独立担当がa059067..cbac022c9e4c43d9180327016c4a1939efc6dbd3を再監査し、
 P2修正と新規P0〜P3=0を確認した。指定pure 56/56 pass。
 両APIの未確定所有/取得確定後のslot代入中断、一次例外/private owner、Resume抑止と二重close防止を確認した。
+
+### システム全体のmemory情報（2026-09-09）
+
+同PCで別プロジェクトの連続稼働試験中との指示を受け、短時間のpure/fake検証だけを行った。
+作業時点のread-only確認: RAM総量31.70 GiB、空き9.83 GiB、C空き102.65 GiB、D空き75.36 GiB。
+これは一時点の観測であり、別プロジェクトのmemory leak有無を判定する証拠ではない。
+他プロジェクトのprocess/設定/ファイルへ変更は加えない。既存failure rootも削除しない。
+
+b749c08でDebugMemoryに既存_Performance（x64 104 bytes）のbuffer/pointerを事前確保した。
+GetPerformanceInfoのcommit/limit/physical/availableのpage数をPageSizeでbytesへ換算して保持する。
+API前uncertain、全field検査/換算後confirmedを区別し、失敗時はraw bufferを保持して後続照会を止める。
+新規system値は診断情報であり、既存の親＋child peak commit 512 MiB未満という判定は変更しない。
+[PERFORMANCE_INFORMATION](https://learn.microsoft.com/en-us/windows/win32/api/psapi/ns-psapi-performance_information)
+
+追加故障注入はFALSE/OOM/中断、不正fieldと後続query抑止。pure/fake 186/186 pass（0.440秒）、
+repository safety/diff-check pass。今回はproduction source/allowlist/D2対象を変更していないため、
+前回D2結果を引き継ぎ、ディスク走査を追加実行しなかった。実native sampler/child/debuggerは未実行。
+独立担当にも今回の3ファイルと関連pureの1回実行に限定した監査を依頼した。
+独立担当が33f6e44..b749c08926030e9494c32f3810b05d3ea0077d1fを監査し、新規P0〜P3=0。
+関連pureは1回、25/25 pass。成功sample後の部分書込みOOMでもraw/uncertain保持と再照会抑止を確認した。
+終了付近の空きRAM9.45 GiB、C102.64 GiB、D75.36 GiB。併行稼働中の全PC測定のため、
+開始時との差だけで本作業または他プロジェクトのリークと断定しない。今回のテストprocessは終了済み。

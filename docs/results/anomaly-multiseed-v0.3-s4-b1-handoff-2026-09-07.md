@@ -543,3 +543,20 @@ token出力bufferを事前所有し、成否不確実と取得確定を分離す
 
 次は外側driverによる新規fixture/親restricted tokenの作成・証拠保持・終了時解放、
 system commit情報、初期breakpoint識別を接続する。完成driverのfault試験/独立監査はまだ必要。
+
+## 29. 2026-09-09 別プロジェクト連続稼働への配慮とsystem memory診断
+
+ユーザー指示: 同PCで別プロジェクトの連続稼働試験中。メモリリークとディスク残容量へ配慮する。
+この指示は次回以降も継続。作業の区切りで空きメモリ/C・D空きをread-only確認し、
+短時間のpure/fakeテストを逐次実行する。他プロジェクトのprocess停止、設定変更、ファイル整理をしない。
+実child/負荷試験/大きな生成物は現在の作業に追加しない。小さな差分の独立監査だけを委譲する。
+
+今回開始付近: 空きRAM9.83 GiB（総量31.70）、C102.65 GiB、D75.36 GiB。
+b749c08でGetPerformanceInfoの事前bufferをDebugMemoryへ追加し、system commit/limit/physical/availableを保持する。
+親＋child512 MiB予算は変更なし。pure/fake186/186（0.440秒）、safety/diff-check pass。
+D2対象変更なし、追加ディスク走査は省略した。独立監査詳細は[system memory記録](anomaly-multiseed-v0.3-s4-b1-debug-transport-2026-09-08.md)を参照。
+独立監査は新規P0〜P3=0、関連pure25/25（1回）。終了付近は空きRAM9.45 GiB、C102.64 GiB、D75.36 GiB。
+測定差は全PCの併行負荷を含み、リーク有無の結論ではない。今回の短命test processは終了済み。
+
+残りは外側driverの新規fixture/親restricted tokenの所有と清掃、初期breakpoint識別、完成driver監査。
+実preflight/child/debuggerは未実行、全acceptance gate no。
