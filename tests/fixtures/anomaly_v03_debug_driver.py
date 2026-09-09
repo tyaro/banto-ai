@@ -18,6 +18,7 @@ from tests.fixtures.anomaly_v03_debug_memory import DebugMemory
 from tests.fixtures.anomaly_v03_debug_launch import SuspendedDebugLaunch
 from tests.fixtures.anomaly_v03_debug_observer import DebugObserver
 from tests.fixtures.anomaly_v03_debug_session import DebugSession
+from tests.fixtures.anomaly_v03_debug_evidence import DebugEvidence, EvidenceFile
 
 
 class DriverResult(dict):
@@ -40,6 +41,8 @@ class DebugDriver:
         self.teardown = w._Teardown()
         self.session_result = None
         self.token_resolved = True
+        self.evidence = DebugEvidence()
+        self.evidence_file = None
         self.result = DriverResult(self)
 
     def __repr__(self):
@@ -50,7 +53,9 @@ class DebugDriver:
                                or self.teardown.resource_stop
                                or self.tokens is not None and self.tokens.resource_stop
                                or self.session is not None and self.session.resource_stop
-                               or self.stop is not None and self.stop.resource_stop)
+                               or self.stop is not None and self.stop.resource_stop
+                               or self.evidence.resource_stop
+                               or self.evidence_file is not None and self.evidence_file.resource_stop)
 
     def _prepare(self):
         self.api = w._api()
@@ -69,6 +74,8 @@ class DebugDriver:
         self.fixture.create()
         self.fixture.freeze()
         self.fixture.file(w._REPLACE_TRACE_NAME, b"", "control")
+        self.evidence_file = EvidenceFile(self.api)
+        self.evidence_file.prepare(self.fixture)
         source = [row for row in result["sources"] if row["path"] in (
             "src/banto_ai/_anomaly_v03_windows.py", "tests/fixtures/anomaly_v03_native_child.py")]
         need(len(source) == 2, "driver_child_source")
@@ -136,4 +143,40 @@ class DebugDriver:
             self.result["status"] = "report_failed"
             self.result["resource_stop"] = self.resource_stop
             self.result["teardown_status"] = "failed"
+        # Use only already-owned local buffers and the prelaunch file handle.
+        # No path lookup, readback, or cleanup is introduced after observation.
+        try:
+            if (self.evidence_file is not None and self.evidence_file.open_state == "prepared"
+                    and self.transport is not None and self.stop is not None):
+                self.evidence.capture(self)
+                self._latch(self.evidence.primary)
+                if self.evidence.capture_state == "captured":
+                    self.evidence.write(self.api.k, self.evidence_file.handle)
+                    self._latch(self.evidence.primary)
+        except BaseException as error:
+            self.secondary = error
+            self._latch(error)
+        finally:
+            if self.evidence_file is not None:
+                self.teardown.attempt("driver_evidence_close", self.evidence_file.close)
+        try:
+            self._latch(self.evidence.primary)
+            saved = self.evidence.flush_state == "confirmed"
+            evidence_closed = self.evidence_file is None or self.evidence_file.resolved()
+            self.result["evidence_status"] = "flushed" if saved else self.evidence.capture_state
+            self.result["evidence_write_state"] = self.evidence.write_state
+            self.result["evidence_flush_state"] = self.evidence.flush_state
+            self.result["evidence_file_closed"] = evidence_closed
+            self.result["resource_stop"] = self.resource_stop
+            if not evidence_closed or self.teardown.count:
+                self.result["teardown_status"] = "failed"
+            if (not saved or not evidence_closed or self.resource_stop or self.evidence.primary is not None
+                    or self.secondary is not None or self.teardown.count):
+                if self.result["status"] != "report_failed":
+                    self.result["status"] = "failed"
+        except BaseException as error:
+            self.secondary = error
+            self._latch(error)
+            self.result["status"] = "report_failed"
+            self.result["resource_stop"] = self.resource_stop
         return self.result

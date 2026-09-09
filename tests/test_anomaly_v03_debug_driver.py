@@ -29,6 +29,8 @@ class DebugDriverTests(unittest.TestCase):
         preflight.result = {"status": "verified", "sources": [
             {"path": "src/banto_ai/_anomaly_v03_windows.py", "sha256": "a" * 64, "bytes": 1},
             {"path": "tests/fixtures/anomaly_v03_native_child.py", "sha256": "b" * 64, "bytes": 1}]}
+        preflight.runtime = {"build": "10.0.26200.9445"}
+        preflight.rows = preflight.result["sources"]
         def verify():
             preflight.started = True
             return preflight.result
@@ -41,10 +43,19 @@ class DebugDriverTests(unittest.TestCase):
         fixture = Mock(root=Path("C:/DUMMY PRIVATE/new-fixture"), ledger={})
         stack.enter_context(patch.object(d, "StartupPreflight", return_value=preflight))
         stack.enter_context(patch.object(d.w, "_api", return_value=api))
+        stack.enter_context(patch.object(d.C, "get_last_error", return_value=0))
         stack.enter_context(patch.object(d.w, "_temporary_path", return_value=Path("C:/DUMMY PRIVATE")))
         disk = stack.enter_context(patch.object(d.shutil, "disk_usage", return_value=SimpleNamespace(free=d.DebugDriver.MIN_FREE_DISK)))
         stack.enter_context(patch.object(d, "DebugTokens", return_value=tokens))
         stack.enter_context(patch.object(d.w, "_Fixture", return_value=fixture))
+        evidence_file = Mock(open_state="prepared", resource_stop=False, handle=801)
+        evidence_file.resolved.return_value = True
+        stack.enter_context(patch.object(d, "EvidenceFile", return_value=evidence_file))
+        def write(handle, pointer, size, written, overlapped):
+            written.contents.value = size
+            return True
+        kernel.WriteFile.side_effect = write
+        kernel.FlushFileBuffers.return_value = True
         return d.DebugDriver(), api, kernel, preflight, tokens, fixture, disk
 
     def test_full_wiring_preflight_once_and_evidence_retention_without_acceptance(self):
@@ -54,6 +65,9 @@ class DebugDriverTests(unittest.TestCase):
             self.assertEqual(result["status"], "observed")
             self.assertEqual(result["teardown_status"], "pass")
             self.assertEqual(result["fixture_retention"], "unverified")
+            self.assertEqual(result["evidence_status"], "flushed")
+            self.assertTrue(result["evidence_file_closed"])
+            driver.evidence_file.close.assert_called_once()
             self.assertIs(result.private_owner, driver)
             preflight.run.assert_called_once()
             fixture.create.assert_called_once()
@@ -147,6 +161,8 @@ class DebugDriverTests(unittest.TestCase):
                 fixture.capture_cleanup.assert_not_called()
                 self.assertFalse(result["native_accepted"])
                 self.assertFalse(result["formal_permission"])
+                self.assertEqual(result["evidence_status"], "resource_skipped" if fault == "continue" else "flushed")
+                driver.evidence_file.close.assert_called_once()
 
     def test_preparation_faults_close_only_existing_owners_without_cleanup(self):
         for phase in ("tokens", "create", "freeze", "request"):
@@ -219,6 +235,57 @@ class DebugDriverTests(unittest.TestCase):
                 else:
                     self.assertEqual(driver.launch.creation_state, "uncertain")
                     kernel.TerminateProcess.assert_not_called()
+
+    def test_evidence_io_and_file_ownership_failures_reach_outer_result(self):
+        for fault in ("prepare", "write", "flush", "close"):
+            with ExitStack() as stack, self.subTest(fault=fault):
+                driver, api, kernel, preflight, tokens, fixture, disk = self.driver(stack)
+                # The factory returns this preallocated fake file; every other
+                # evidence component, including capture/write, remains real.
+                evidence_file = d.EvidenceFile.return_value
+                if fault == "prepare":
+                    evidence_file.prepare.side_effect = MemoryError()
+                    evidence_file.open_state = "preparing"
+                elif fault == "write":
+                    kernel.WriteFile.side_effect = None
+                    kernel.WriteFile.return_value = False
+                elif fault == "flush":
+                    kernel.FlushFileBuffers.side_effect = MemoryError()
+                else:
+                    evidence_file.close.side_effect = MemoryError()
+                    evidence_file.resolved.return_value = False
+                    evidence_file.resource_stop = True
+                result = driver.run()
+                self.assertEqual(result["status"], "failed")
+                evidence_file.close.assert_called_once()
+                self.assertEqual(result["resource_stop"], fault != "write")
+                if fault == "prepare":
+                    api.a.CreateProcessAsUserW.assert_not_called()
+                    kernel.WriteFile.assert_not_called()
+                elif fault == "write":
+                    self.assertEqual(result["evidence_write_state"], "failed")
+                    kernel.FlushFileBuffers.assert_not_called()
+                elif fault == "flush":
+                    self.assertEqual(result["evidence_flush_state"], "uncertain")
+                else:
+                    self.assertFalse(result["evidence_file_closed"])
+                    self.assertEqual(result["teardown_status"], "failed")
+
+    def test_interrupt_after_confirmed_flush_does_not_report_observed(self):
+        with ExitStack() as stack:
+            driver, api, kernel, preflight, tokens, fixture, disk = self.driver(stack)
+            original = driver._latch
+            interrupted = KeyboardInterrupt()
+            def latch(error):
+                if driver.evidence.flush_state == "confirmed" and driver.secondary is None:
+                    raise interrupted
+                return original(error)
+            stack.enter_context(patch.object(driver, "_latch", side_effect=latch))
+            result = driver.run()
+            self.assertIs(driver.secondary, interrupted)
+            self.assertEqual(result["status"], "failed")
+            self.assertEqual(result["evidence_status"], "flushed")
+            driver.evidence_file.close.assert_called_once()
 
 
 if __name__ == "__main__":
