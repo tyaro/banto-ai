@@ -12,6 +12,9 @@ license = { file = "LICENSE" }
 authors = [{ name = "tyaro" }]
 dependencies = []
 
+[project.optional-dependencies]
+offline-analysis = ["capstone==5.0.7"]
+
 [project.scripts]
 banto-ai = "banto_ai.cli:main"
 
