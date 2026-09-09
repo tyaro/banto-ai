@@ -131,6 +131,33 @@ class DebugDriverTests(unittest.TestCase):
                 self.assertEqual(result["teardown_status"], "failed")
                 self.assertIs(result.private_owner, driver)
 
+    def test_outer_teardown_includes_uncertain_child_token_and_live_process(self):
+        for phase in ("token", "continue", "create"):
+            with ExitStack() as stack, self.subTest(phase=phase):
+                driver, api, kernel, preflight, tokens, fixture, disk = self.driver(stack)
+                if phase in ("token", "create"):
+                    function = api.a.OpenProcessToken if phase == "token" else api.a.CreateProcessAsUserW
+                    original = function.side_effect
+                    def interrupted(*args):
+                        original(*args)
+                        raise MemoryError()
+                    function.side_effect = interrupted
+                else:
+                    kernel.ContinueDebugEvent.return_value = False
+                    kernel.WaitForSingleObject.return_value = 258
+                result = driver.run()
+                self.assertEqual(result["status"], "failed")
+                self.assertEqual(result["teardown_status"], "failed")
+                if phase == "token":
+                    self.assertFalse(driver.session.tokens_resolved())
+                    self.assertEqual(driver.session.token_buffers[0].value, 701)
+                elif phase == "continue":
+                    self.assertEqual(driver.stop.handles, [501, 502])
+                    kernel.ContinueDebugEvent.assert_called_once()
+                else:
+                    self.assertEqual(driver.launch.creation_state, "uncertain")
+                    kernel.TerminateProcess.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()

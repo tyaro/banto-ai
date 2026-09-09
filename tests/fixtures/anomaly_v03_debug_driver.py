@@ -119,7 +119,13 @@ class DebugDriver:
                     self._latch(error)
         try:
             self._latch(self.secondary)
-            clean = self.token_resolved and self.teardown.count == 0
+            child_clean = self.launch is None or self.launch.creation_state in ("not_started", "failed")
+            if self.launch is not None and self.launch.creation_state == "created":
+                child_clean = (self.stop.started and self.stop.result["teardown_status"] == "pass"
+                               and self.stop.result["process_signaled"] and self.stop.result["debug_ownership_resolved"]
+                               and all(handle is None for handle in self.stop.handles))
+            clean = (self.token_resolved and self.teardown.count == 0 and child_clean
+                     and (self.session is None or self.session.tokens_resolved()))
             self.result.update(status="observed" if self.primary is None and self.secondary is None
                                and clean and not self.resource_stop else "failed",
                                resource_stop=self.resource_stop, teardown_status="pass" if clean else "failed",

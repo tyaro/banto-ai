@@ -89,6 +89,12 @@ class DebugSession:
         if result["status"] != status or self.resource_stop:
             raise owner.primary or owner.secondary or TransportError(reason)
 
+    def tokens_resolved(self):
+        return all(self.tokens[index] is None
+                   and (self.token_acquire_state[index] in ("not_started", "failed")
+                        or self.token_acquire_state[index] == "acquired"
+                        and self.token_close_state[index] == "closed") for index in (0, 1))
+
     def _validate_child(self):
         process = self.launch.process
         self.observer._budget()
@@ -147,10 +153,7 @@ class DebugSession:
             self._close_tokens()
         try:
             self._latch(self.secondary)
-            token_clean = all(self.tokens[index] is None
-                              and (self.token_acquire_state[index] in ("not_started", "failed")
-                                   or self.token_acquire_state[index] == "acquired"
-                                   and self.token_close_state[index] == "closed") for index in (0, 1))
+            token_clean = self.tokens_resolved()
             self.result.update(status="observed" if self.primary is None and self.secondary is None
                                and not self.resource_stop and token_clean else "failed",
                                resume_state=self.resume_state, resource_stop=self.resource_stop,
