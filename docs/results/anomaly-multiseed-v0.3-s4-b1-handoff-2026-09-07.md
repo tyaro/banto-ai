@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §54を最初に参照。status生成・伝播候補を静的に整理。直接即値の1候補は保存EDIと不整合。原因未特定、追加childなし。
+2026-09-10最新: §55を最初に参照。最初のunload対象の管理情報を読む候補を実装・レビュー・事前確認済み。追加実機診断1回の判断待ち。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1040,3 +1040,31 @@ tracked変更は文書のみでtest再実行なし。追加download・設定権�
 公開要約の整合性/diff-check pass。文書と公開要約に限定した独立レビュー新規P0〜P3=0、private復元の再検証なし。
 完了通知を利用し進捗ポーリングなし。mainは基準commitのままclean。
 空きRAM8.85→8.85 GiB、C102.29 GiB/D75.36 GiB同値。リーク有無は未判定。
+
+## 55. 2026-09-10 最初のunload対象の管理情報観測を準備
+
+実装保存316abf5。[管理情報観測計画](anomaly-multiseed-v0.3-s4-b1-unload-entry-plan-2026-09-10.md)を次の実機判断対象とする。
+保存RIP/stack戻り先/RDXとunload通知が一致し、RBXも復元済みDereferenceModule frameと一致した。
+現在imageでは管理情報のbase消去と解放が観測位置の後にあるが、内容自体は既存stack保存範囲外だった。
+node状態はunload中に書換わる経路があるため、今回nodeや名前pointerの追跡は追加しない。
+
+DebugDriver(unload_entry=True)だけで有効になるcollectorを追加（既定off）。最初のnormal初期thread UNLOADのみ。
+有効なimage load、RIP/戻り先/RDX、user範囲、code3 windowsのSHAを照合後、RBX先112 bytesを1回読む。
+追加RPM最大4回/1059 bytes、従来stackを含めて最大5回/3107 bytes。既存GetThreadContextの追加繰返しなし。
+entryのbase/sizeを照合し、[entry+0x68]の0x100000 bitとraw prefixをprivate保存する。
+bitは参照imageで初期化失敗時に設定する印だが、callback戻り値・最初の失敗APIを直接観測したものとは扱わない。
+全breakpoint拒否、書換えなし、API前後の所有/予算検査、失敗時停止と再試行抑止を維持する。
+
+関連fake34/34、debug全体130/130 pass。独立レビュー新規P0〜P3=0、指定fake34/34 pass（0.540秒）。
+source保存後の実read-only preflightは19 sources/215813 bytes、2.187秒、verified、resource_stop=false。
+実測Windows10.0.26200.9445/Python3.14.0、既存exe/DLL hash一致。repository safety/diff-check pass。
+context成功例最大幅7389 bytesで8 KiB内。19 sourceと各collector予約を含む全体64 KiB容量試験もpass。
+ntdll3窓に参照PEのbase relocation重なりなし。実loaded bytesの3窓一致は次の実機時に別途確認する。
+
+新規要約3件7430 bytes。参照image有界read4回/private証跡2回（初回集計のfield名誤り修正による再読取りを含む）、全reader close。
+空きRAM8.61→9.02 GiB、C102.28 GiB/D75.36 GiB同値。リーク有無は未判定。
+追加実child・実RPM/GetThreadContext・対象memory書換え・他project操作なし。mainは基準commitのままclean。
+独立担当の進捗ポーリングなし。全acceptance gate no。
+
+次は計画末尾の**追加memory読取りを含む限定実機診断1回**について判断を求める。
+前回承認はその1回限りで、今回の取得を含まない。承認前にdriverを追加実行しない。

@@ -1,6 +1,6 @@
 # S4-B1 最初のunload時の管理情報観測
 
-状態: **実装・fake試験・独立レビュー完了 / read-only preflight待ち / 新規実機診断は未承認・未実行 / no native acceptance**。
+状態: **実装・fake試験・独立レビュー・read-only preflight完了 / 新規実機診断は未承認・未実行 / no native acceptance**。
 
 ## 目的と得られる判断
 
@@ -95,3 +95,24 @@ contextのRIP/RSP/TID/slotを最大幅にした成功例のJSONは7389 bytesで�
 独立差分レビュー新規P0〜P3=0、指定fake34/34 pass（0.540秒）。repository safety/diff-check pass。
 独立担当は完了通知のみを利用し、進捗ポーリングなし。実child・native preflight・private証跡への操作は委譲していない。
 今回の実装準備で実ReadProcessMemory/GetThreadContext、対象memoryの書換え、追加child起動は行っていない。
+
+## 保存・事前確認と次の判断対象
+
+実装と計画を316abf5に保存した。実read-only preflightは19 sources/215813 bytes、2.187秒でverified。
+Windows10.0.26200.9445、Python3.14.0、従来のexe/DLL hash一致。resource_stop=false。
+execution_authenticated/launch_authorized/native_accepted/formal_permissionはすべてfalseを維持している。
+source読取りの確認であり、追加collectorの実メモリ読取りが成功したという結果ではない。
+
+新規要約はignored artifacts/context-offline-2026-09-10のunload-entry-feasibility.json、
+unload-entry-code-relocations.json、unload-entry-preflight.jsonの3件、計7430 bytes。
+参照ntdllの有界held-handle read4回、既存private証跡read2回、各hash/範囲を検査してreaderをcloseした。
+この回数には、初回集計でUNLOAD unionのfield名を誤り要約作成前に停止した分と、修正後の再読取りを含む。
+追加の実診断を再試行したものではない。raw context/stack/ntdllの追加diskコピー、PDB再取得なし。
+空きRAM8.61→9.02 GiB、C102.28 GiB/D75.36 GiBは同値。単発値からリーク有無は判断しない。
+mainは基準commitのままclean。他projectや設定権限への操作なし。
+
+次の判断対象は、**新規専用fixtureでunload_entry=Trueの限定実機診断を1回だけ実施すること**。
+最初のnormal UNLOADで従来context/stackに加え、code947 bytesと管理情報112 bytesを最大4 readsで取得する。
+30秒/256 events/親＋child512 MiB未満の既存予算とowned stopを維持し、条件不一致や取得失敗でも追加実行しない。
+post-run summaryを先にwrite/flush/closeし、rawはprivate証跡のまま保存する。
+前回の実機承認はその診断1回に限られ、この新しい対象memory読取りを含まないため、実行前に個別の判断を求める。
