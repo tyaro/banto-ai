@@ -61,3 +61,53 @@ post-run helperは実行後にimportする運用であり、現行preflightの17
 pure4/4 pass。独立レビュー新規P0〜P3=0、指定pure4/4 pass（0.001秒）。
 repository safety PASS、diff-check pass。codeはpost-run helperとその試験のみ。
 この対策で過去runの不明な最終保存状態・memory peakを復元したとは扱わない。
+
+## Process Monitorの収集除外・容量・停止の一次資料確認（2026-09-10）
+
+結論: 機能の存在は確認できたが、この共有PCで従来の資源・証跡保持条件を満たす実行案は未完成。
+ツールのdownload/install/run、driver/service操作、追加childは行っていない。
+Microsoft Q&Aも検索に現れたが、利用者の回答を製品の動作保証として採用していない。
+
+| 項目 | 一次資料から確認できたこと | この診断で残る確認 |
+| --- | --- | --- |
+| 対象外イベント | Drop Filtered Eventsを使った収集例がある | 収集開始前の設定適用、PID対象分離、非対象process情報や収集処理の負荷 |
+| 記録量・履歴時間 | v3.70でデータ量/分数に応じて古いeventを破棄する機能を追加 | byte上限到達時の全体停止とは異なる。最初の失敗eventを失わない条件 |
+| backing file | fileへの記録と最大file size設定に言及 | 最小設定値、PMLと補助fileの合計上限、flush中の増加量 |
+| 終了 | -terminate -quietによる停止・保存の公式例あり | 特定所有instanceだけを選択できるか、終了期限・保存失敗・既存収集との干渉 |
+| メモリ | 今回参照した一次資料に全関連process/driverの固定commit上限保証はない | 既存の親＋child512 MiB監視だけでは追加ツールの資源を管理できない |
+
+[Microsoft AskPerfの実例](https://techcommunity.microsoft.com/blog/askperf/the-case-of-the-randomly-launching-internet-explorer-processes/374702/)は
+backing file、Drop Filtered Events、process/operation filterを併用している。
+これは対象外eventを破棄する設定の実例であり、監視処理自体が対象PID以外へ全く作用しないという保証ではない。
+
+[Sysinternals v3.70リリース記録](https://techcommunity.microsoft.com/blog/sysinternals-blog/procmon-v3-70-sysmon-v13-10-autoruns-v13-99-tcpview-v4-01-and-winobj-v3-03/2280263)は
+履歴の分数/データ量による制限と、必要に応じた古いeventの破棄を説明する。
+同じ記録にはDrop Filtered Eventsが常に尊重されなかった不具合の修正もある。
+従って古い設定例を現行版へ無検証で移さず、使用版と実際の設定適用を確認する必要がある。
+この履歴制限を全process commitや全disk writeの厳密な上限に読み替えない。
+
+[Windows Clientの公式診断手順](https://learn.microsoft.com/en-us/troubleshoot/windows-client/shell-experience/troubleshoot-apps-start-failure-use-process-monitor)は
+file-backed記録、最大file size設定、終了保存の例を示し、上限なしの長期記録によるdisk/virtual memory枯渇に言及する。
+終了例には対象PID指定が示されていない。既存の他作業の収集があれば一括終了してよいとは扱わない。
+資料中のPsExec/SYSTEM実行例やACL修正例は、本作業への実施指示・承認ではない。
+今回は終了コマンドや関連ツールを実行していない。
+
+## 実行案へ進むための具体的な不足
+
+1. 対象版の公式付属help等で、履歴容量・収集時除外・設定の読込み完了・停止の正確な仕様を確認する。
+   公開ページの例だけから未確認のCLI flagやconfig binaryを作らない。
+2. 既存収集を利用/停止せず、今回の収集だけを識別・終了できることを確かめる。
+   instanceの識別が不明なまま-terminateを発行しない。
+3. child PIDは作成後に確定するため、suspended作成→PID照合/filter適用→収集準備確認→Resumeの順序を設計する。
+   現行driverにはその待合せ処理がなく、追加接続には停止・資源・失敗時所有を含む試験が必要。
+   この順序ではCreateProcess以前のeventが取得できない可能性も明示し、観測対象を混同しない。
+4. 初期eventの上書きや欠落が起きたtraceを完全な原因解析記録と判定しない。
+   データ上限到達・停止期限超過・drop不明を明示する結果項目が必要。
+5. 親＋childに加え収集toolと関連driverの負荷を評価する。単なる定期メモリ照会は瞬間的超過を防ぐ上限ではない。
+
+準備の次工程は付属helpを実行せず読める形で確認すること。資料の取得と実行は区別する。
+それでも資源・所有・証跡条件を満たす案を示せなければ、共有PC上の収集は提案せず、
+別環境や別方式に必要な条件を具体化して判断を求める。未完成のまま同じ限定probeを再実行しない。
+
+今回は文書変更のみで、test再実行や独立レビューの再委譲は省略した。
+開始時の空きRAM8.22 GiB/C102.24 GiB/D75.36 GiB。PC全体の単発値からリーク有無を判定しない。

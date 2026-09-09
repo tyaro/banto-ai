@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §43を最初に参照。最終結果を先に出す表示処理を追加し、失敗operationの観測方法を比較した。追加childなし、原因未特定。
+2026-09-10最新: §44を最初に参照。Process Monitorの除外・履歴制限・終了仕様を一次資料で確認。共有PCでの実行条件は未完成、追加childなし。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c6fc191はpure/fake231件と独立レビューを通過。現在の10.0.26200.9445で17 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -841,3 +841,16 @@ pure4/4、独立レビュー新規P0〜P3=0（指定pure4/4）、repository safe
 Process Monitorは候補だが表示filterだけで収集負荷が限定されると仮定せず、収集除外・容量停止の条件を先に調べる。
 loader snaps/debugger breakpointは既存許可範囲外であり、自動fallbackしない。
 次回実機承認を求める段階ではない。main統合・native受入・formal permissionは引き続きno。
+
+## 44. 2026-09-10 Process Monitorの低負荷収集条件の調査
+
+一次資料でDrop Filtered Eventsの利用、v3.70の履歴分数/データ量制限、file-backed記録と終了保存の例を確認した。
+履歴制限は古いeventを破棄する方式であり、初期化の証拠を保持して上限で停止する保証ではない。
+追加tool/driverの全体メモリ上限、所有instanceだけの停止、PID確定後の収集設定適用は未確認。
+親＋child512 MiBの既存監視だけでProcmon込みの資源保証をしたことにしない。
+
+[観測計画の一次資料確認](anomaly-multiseed-v0.3-s4-b1-failure-observation-plan-2026-09-10.md)に根拠と不足5項目を保存した。
+次は付属helpを実行せず読む方法で設定仕様を確認する。実行案が具体化する前の承認質問は行っていない。
+今回download/install/run、driver/service/registry操作、追加child、他プロジェクトへの操作はない。
+文書のみのためtest再実行・レビュー再委譲は省略。全acceptance gate no。
+開始時空きRAM8.22 GiB/C102.24 GiB/D75.36 GiB。リーク有無は未判定。
