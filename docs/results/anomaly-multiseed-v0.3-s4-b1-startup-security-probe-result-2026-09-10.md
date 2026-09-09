@@ -109,3 +109,54 @@ mediumラベルとNO_WRITE_UP | NO_READ_UPを表す。これは対象より低�
 匿名Aのtoken内の所属・属性とintegrityを比較すること。tokenの再作成や追加childは不要。
 requestは親が準備したprofileであり、実child token全体の独立保存記録とは区別する。
 診断時のmemory peak・最終保存API状態が不明という前節の制約は、この比較でも解消していない。
+
+## 同じfixtureの保存token profileとの照合（2026-09-10）
+
+追加childやtoken再作成なし。専用root32個・temp直下4096項目の上限で最新証跡を選択し、
+前節のSHA-256一致を確認した。同じcontrol内のrequest.jsonもancestor/fileのheld-handle、
+reparse/NTFS/identity/stream検査付きで有界read-only読込みし、全reader handleをcloseした。
+requestは6448 bytes、読取り時SHA-256は次の通り。
+
+`71bb3fd4a20bb8ad840362ebbbf5632e58004d4f7681c2af09aa509ff264b0cf`
+
+重複JSON keyを拒否し、version=b1.2、証跡とのnonce一致、core/childのsource2行の完全一致を確認した。
+保存parent/restricted profileは既存の純粋なpolicy検査を通過した。これは保存内容の整合性確認で、
+当時のrequest bytesを署名・認証したものではない。request内のpath等を実行命令として使用していない。
+
+| 比較項目 | 保存parent profile | 保存restricted profile |
+| --- | --- | --- |
+| user SID | process ownerと一致 | process ownerと一致 |
+| 匿名A | 同一ログオンSID | 同一ログオンSID |
+| 匿名Aのgroup attributes | 0xc0000007 | 0xc0000007 |
+| integrity | S-1-16-8192（medium） | 同左 |
+| elevated | 0 | 0 |
+| has_restrictions | 1 | 1 |
+| restricting SID list | 空 | S-1-5-12、attributes7 |
+
+匿名AはS-1-5-5-X-Y形式かつSE_GROUP_LOGON_ID付きであり、ログオンSIDと確認した。
+実値のX/Yは公開しない。[SID定義](https://learn.microsoft.com/en-us/windows/win32/secauthz/well-known-sids)と
+[TOKEN_GROUPS属性](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-token_groups)に照らすと、
+0xc0000007はLOGON_ID | MANDATORY | ENABLED_BY_DEFAULT | ENABLEDで、DENY_ONLY bitはない。
+匿名Aはrestricted-code SID（S-1-5-12）とは異なり、restricting SID listには入っていない。
+前節の3つのDACL trustee（user、SYSTEM、ログオンSID）にS-1-5-12の直接ACEはない。
+
+親のhas_restrictions=1をrestricting SID listが非空という意味に読み替えない。
+既存parent policyは非昇格のfiltered token（elevation_type3、has_restrictions1）を許容し、
+今回の保存profileはその検査を通過した。ここから親にも今回と同じwrite restrictionがあるとは推論しない。
+
+## 結論と次の切り分け
+
+保存profileでログオンSIDの無効化・deny-only化や、medium未満へのintegrity低下は見られない。
+前節のprocess/thread labelもmediumである。ただしrequestは親が保存した準備profileで、実child全profileの
+独立snapshotではない。実装はResume前に実childのprofileを取得し、token_id/modified_id/type以外を
+restricted profileと比較する。今回の観測完了記録はその検査経路の通過と整合するが、snapshot保存の代用にはしない。
+
+[CreateRestrictedToken](https://learn.microsoft.com/en-us/windows/win32/api/securitybaseapi/nf-securitybaseapi-createrestrictedtoken)の
+WRITE_RESTRICTEDはrestricting SIDをwrite access評価に使う。本候補はflags9でその指定を含む。
+したがってRCの直接ACEがないことだけからread/executeの全面拒否や今回の初期化失敗を断定しない。
+同様にログオンSIDが有効でもwrite評価・object固有権限・他の初期化対象まで成功したとは判断しない。
+
+次の未解決点は、初期化中にどのobjectへどの権限を要求し失敗したかである。
+追加のdescriptor列挙だけではその事実を得られない。今後の観測案は失敗した操作を特定できるかで評価し、
+実child診断の再実行や権限緩和は自動的に行わない。表示処理の未使用None枠への対策と、最終状態を先に出力する
+方法も次回実行準備で必要。既存保存状態・memory peakが不明という制約は維持する。

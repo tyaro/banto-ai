@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §41を最初に参照。保存ACL/SDをoffline比較した。追加childなし、起動原因は未特定。
+2026-09-10最新: §42を最初に参照。同じfixtureの保存profileとACLを照合し、ログオンSIDが有効でintegrityがmediumのままと確認した。追加childなし、原因未特定。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c6fc191はpure/fake231件と独立レビューを通過。現在の10.0.26200.9445で17 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -811,3 +811,18 @@ threadの匿名SID向けmaskに含まれる0x1000は公開表で意味を確認�
 権限変更の根拠は得られていない。次は同じfixtureのrequestを有界read-onlyで照合し、匿名SIDのtoken所属・属性を確認可能。
 今回の工程はcode変更なし、test再実行・レビュー再委譲・追加childなし。最終保存状態不明の制約も維持する。
 開始時空きRAM8.55 GiB/C102.24 GiB/D75.36 GiB。全acceptance gate no。
+
+## 42. 2026-09-10 保存requestとのtoken所属・integrity照合
+
+§40の証跡hash一致を確認し、同じfixtureのrequest6448 bytesだけを追加で有界read-only読込みした。
+version/nonce/source2行が証跡と一致、保存parent/restricted profileの既存純粋policy検査も通過した。
+requestの読取り時SHA-256は71bb3fd4a20bb8ad840362ebbbf5632e58004d4f7681c2af09aa509ff264b0cf。
+匿名AはログオンSIDで、両profileのgroup attributesは0xc0000007（有効、deny-onlyではない）。
+userはprocess ownerと一致し、integrityは両方medium。restricting SID listは親が空、restrictedがRCのみ。
+保存DACLにRCの直接ACEはないが、WRITE_RESTRICTEDの範囲や実際の要求権限を無視した拒否判定はしない。
+
+保存情報はログオンSID無効化・integrity低下の説明を支持しない。実child全profileの独立snapshotとは区別する。
+詳細・参照・残る仮説は[診断結果のprofile照合](anomaly-multiseed-v0.3-s4-b1-startup-security-probe-result-2026-09-10.md)を参照。
+次の観測案は初期化で失敗したobject/操作/要求権限を特定できるかを検討する。追加実機起動の承認は未取得。
+code変更・負荷試験・追加child・権限変更・旧証跡変更・レビュー再委譲なし。全acceptance gate no。
+開始時空きRAM8.65 GiB/C102.24 GiB/D75.36 GiB。PC全体の単発値からリーク有無を判定しない。
