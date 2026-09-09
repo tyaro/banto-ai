@@ -4,6 +4,7 @@ No IO, remote reads, symbols, execution or native acceptance. Only complete
 version-1, frame-pointer-free bodies and a bare RET are supported. Secondary
 chained records may only save nonvolatile registers without changing RSP.
 Every accepted caller must directly CALL the previous function's primary entry.
+Handler RVAs are range-checked only; no handler or language data is evaluated.
 """
 
 import struct
@@ -90,7 +91,7 @@ class Image:
             version_flags, prolog, count, frame = self.at(unwind, 4)
             need(version_flags & 7 == 1, "unwind_version")
             flags = version_flags >> 3
-            need(flags in (0, 4) and frame == 0, "unwind_flags_or_frame_register")
+            need(flags in (0, 1, 2, 3, 4) and frame == 0, "unwind_flags_or_frame_register")
             need(prolog <= end - start, "unwind_prolog_size")
             need(records or rva - start >= prolog, "in_prolog")
             padded_size = ((count + 1) // 2) * 4
@@ -104,8 +105,15 @@ class Image:
                     need(packed & 15 == 4 and packed >> 4 in (3, 5, 6, 7, 12, 13, 14, 15)
                          and index + 2 <= count, "unwind_chain_save_only")
                     last_offset, index = offset, index + 2
-            records.append((function, prolog, count, codes))
-            if flags == 0:
+            handler = None
+            if flags in (1, 2, 3):
+                handler = struct.unpack("<I", self.at(unwind + 4 + padded_size, 4))[0]
+                # This is a context walk, not exception dispatch. Validate the
+                # handler entry but never decode/call it or parse language data.
+                need(self.function(handler)[0] == handler, "unwind_handler_entry")
+                self.at(handler, 1)
+            records.append((function, prolog, count, codes, handler))
+            if flags != 4:
                 return records
             parent = struct.unpack("<III", self.at(unwind + 4 + padded_size, 12))
             need(parent in self.functions and self.function(parent[0]) == parent,
@@ -133,7 +141,7 @@ def walk(raw_image, image_base, rip, stack, *, limit=16):
     decoder.detail = True
     report = {"frames": [], "steps": [], "stop_reason": "frame_limit",
               "capstone_version": capstone.__version__, "loaded_bytes_match_proven": False,
-              "native_accepted": False}
+              "native_accepted": False, "handlers_invoked": False}
     sp, rva = 0, rip - image_base
     registers = {}
 
@@ -158,6 +166,7 @@ def walk(raw_image, image_base, rip, stack, *, limit=16):
                     "instruction": instruction.mnemonic,
                     "primary_entry_rva": hex(primary_start),
                     "unwind_chain_rvas": [hex(row[0][2]) for row in records],
+                    "handler_rva": hex(records[-1][4]) if records[-1][4] is not None else None,
                     "restored_registers": []}
             cursor = sp
             if instruction.bytes == b"\xc3":
@@ -174,7 +183,7 @@ def walk(raw_image, image_base, rip, stack, *, limit=16):
                          and instruction.reg_name(operands[0].reg) not in ("rsp", "esp", "sp", "spl"),
                          "possible_epilogue_unsupported")
                 step["mode"] = "body"
-                for _, prolog, count, codes in records:
+                for _, prolog, count, codes, _ in records:
                     index, last_offset = 0, prolog + 1
                     while index < count:
                         code_offset, packed = codes[index * 2:index * 2 + 2]

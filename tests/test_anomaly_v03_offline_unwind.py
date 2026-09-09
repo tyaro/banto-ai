@@ -164,6 +164,38 @@ class OfflineUnwindTests(unittest.TestCase):
         with self.assertRaisesRegex(UnwindStop, "unwind_chain_limit"):
             image.unwind_chain(rows[8], rows[8][0])
 
+    def test_handler_metadata_does_not_change_context_unwind(self):
+        for flags in (1, 2, 3):
+            raw, stack = fixture()
+            raw[0x310] = 1 | flags << 3
+            struct.pack_into("<I", raw, 0x318, 0x1000)
+            raw[0x31c:0x320] = b"\xff" * 4  # Opaque language-specific data.
+            report = walk(bytes(raw), BASE, BASE + 0x1000, bytes(stack))
+            self.assertEqual(len(report["steps"]), 2)
+            self.assertEqual(report["steps"][1]["handler_rva"], "0x1000")
+            self.assertEqual(report["steps"][1]["return_stack_offset"], 48)
+            self.assertFalse(report["handlers_invoked"])
+        raw, stack = chained_fixture()
+        raw[0x330] = 0x11
+        struct.pack_into("<I", raw, 0x338, 0x1000)
+        report = walk(bytes(raw), BASE, BASE + 0x1000, bytes(stack))
+        self.assertEqual(len(report["steps"]), 2)
+        self.assertEqual(report["steps"][1]["handler_rva"], "0x1000")
+
+    def test_invalid_or_truncated_handler_rva_stops_before_accepting(self):
+        for target in (0, 0x1021, 0x1fff, 0xffffffff):
+            raw, stack = fixture()
+            raw[0x310] = 0x11
+            struct.pack_into("<I", raw, 0x318, target)
+            report = walk(bytes(raw), BASE, BASE + 0x1000, bytes(stack))
+            self.assertEqual(len(report["steps"]), 1)
+        raw, stack = fixture()
+        struct.pack_into("<I", raw, 0x414, 0x13fc)
+        raw[0x5fc:0x600] = bytes.fromhex("11000000")
+        report = walk(bytes(raw), BASE, BASE + 0x1000, bytes(stack))
+        self.assertEqual(len(report["steps"]), 1)
+        self.assertEqual(report["stop_reason"], "rva_mapping")
+
     def test_large_allocation_cannot_leave_saved_window(self):
         raw, stack = fixture()
         raw[0x314:0x318] = bytes.fromhex("05010002")
