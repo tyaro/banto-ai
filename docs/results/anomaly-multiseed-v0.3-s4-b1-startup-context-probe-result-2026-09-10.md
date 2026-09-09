@@ -3,6 +3,7 @@
 状態: **承認済み追加診断1回完了 / context・2 KiB stack取得 / 起動障害再現 / 原因未特定**。
 
 最新追記: 末尾の「保存範囲までの10段復元」を参照。10件のCALL targetを照合し、保存stack範囲外で停止した。原因は未特定。
+後続の関数名と内部statusの照合は[シンボル解析結果](anomaly-multiseed-v0.3-s4-b1-startup-symbol-analysis-2026-09-10.md)を参照。
 
 ユーザーは「30秒・512 MiB上限で、実行状態と最大2 KiBのスタックを読み取る実機診断を1回」へ
 「続けてください」と回答した。HEAD2b0dee1（実装c4fe99e）のcleanな候補worktreeでDebugDriver.runを1回実行した。

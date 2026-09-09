@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §52を最初に参照。offlineで呼出し元10段と全CALL targetを照合し、保存stack範囲外で停止。原因未特定、追加childなし。
+2026-09-10最新: §53を最初に参照。11 framesのsymbol名とloader内部の保存status0xC0000142を照合。原因未特定、追加childなし。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -997,3 +997,23 @@ ntdllは段階的確認で計5回、既存証跡は適用時の計3回、有界r
 追加実child/remote memory/symbol download/設定変更/他project操作なし。
 次は復元済み関数の役割を調べるsymbol資料について、imageとの同一性と有界な取得・保存方法を検討する。
 これ以上のframe復元のために証跡採取を自動でやり直さない。新たな実機診断は既存の個別承認gateを維持する。
+
+## 53. 2026-09-10 公開PDBと内部statusのoffline照合
+
+実装保存: symbol照合3db6a98、検証済みframeのprivate register保持3e8d64d。
+Microsoft公開PDB1912832 bytesを非圧縮16 MiB上限で1回取得し、現在ntdllのCodeView GUIDとDBI age/section headersを照合した。
+Info age4/DBI age1/image age1はMicrosoftの検証規則で適合する。PDB hashと各ageを別々に記録した。
+10個のprimary entryすべてにS_PUB32 Functionのexact一致があり、重複を含む11 framesに関数名を対応させた。
+process初期化→Kernel32関連初期化→DLL読込み→module解放/unmapの呼出し経路だった。
+
+LdrpLoadDllInternalの保存戻り先0x1ff1b近傍でCMP dword [RBX],0と解放処理へのCALLを確認した。
+検証済みunwindから復元したRBXは保存stack offset584を指し、その4 bytesは0xC0000142だった。
+EXIT_PROCESS値と一致したが、元の失敗API/DLLや、この値を最初に書いた命令は未特定。
+比較命令が実行された過去時点の値・loaded bytesの完全一致は未証明。保存範囲外のpointer追跡なし。
+
+詳しいsymbol表・取得条件・age規則・status解釈は[シンボルと内部statusの解析結果](anomaly-multiseed-v0.3-s4-b1-startup-symbol-analysis-2026-09-10.md)を参照。
+最終pure/fake29/29 pass（0.125秒）、独立差分レビュー新規P0〜P3=0。repository safety/diff-check pass、進捗ポーリングなし。
+公開PDBと新規要約は同じartifacts配下に保持済み。再download不要、元のprivate証跡も保持。
+空きRAM8.69→8.78 GiB、C102.30→102.29 GiB、D75.36 GiB。リーク有無は未判定。
+追加実child/remote memory/設定権限変更/他project操作なし。全acceptance gate no。
+次は内部statusの静的な書込み候補と保存情報の限界を整理し、新規観測が必要なら具体化後に個別承認gateへ進める。
