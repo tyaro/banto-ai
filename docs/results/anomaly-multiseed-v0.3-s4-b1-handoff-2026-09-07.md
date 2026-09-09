@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §47を最初に参照。c4fe99eでunload時context/2 KiB stack観測を実装・検証済み。追加実機診断は未承認・未実行。
+2026-09-10最新: §48を最初に参照。承認済み1回でunload時context/2 KiB stack取得に成功。起動は0xC0000142、終了・保存・hash一致を確認。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -902,3 +902,22 @@ Windows10.0.26200.9445、Python3.14.0、固定exe/DLL hash一致。実child/cont
 実装中の空きRAM8.74 GiB/C102.31 GiB/D75.36 GiB。単発値でリーク有無を判断しない。
 次の判断は[観測計画の具体条件](anomaly-multiseed-v0.3-s4-b1-unload-context-plan-2026-09-10.md)による実機診断1回。
 従来の実行承認を新しい子メモリ取得へ拡張して使わない。全acceptance gate no。
+
+## 48. 2026-09-10 context/stack付き承認済み実機診断1回
+
+§47後の具体的1回実行確認へユーザーが「続けてください」と回答し、HEAD2b0dee1で1回実施した。
+所要2.069秒、通常7 events/Continue7件、0xC0000142、breakpoint/exception等なし。
+最初のUNLOAD slot4で初期threadのcontext1232 bytesとstack2048 bytesを取得confirmed。
+RIP/RSPとraw context、event slot/TIDの一致も保存fileで照合した。call stackや失敗APIは未特定。
+
+終了・debug所有解放・driver/stop teardown=pass、Terminate不要、drain0回。resource_stop=false。
+最終結果を先に出す表示処理は正常動作し、Write/Flush確認とevidence file close=trueを記録できた。
+保存114419 bytesは別工程のread-only読取りで実行時buffer hashと一致した。
+SHA-256=c98e30a618e2933d5c206ec292e8dc4d3c5756f751c6cb541b0ea255ef0fb4fe。
+詳細・限界は[context診断結果](anomaly-multiseed-v0.3-s4-b1-startup-context-probe-result-2026-09-10.md)を参照。
+
+18 sources / 208782 bytes、Windows10.0.26200.9445、Python3.14.0と既存hash一致。
+memory sampler64回、親＋child peak commit約23.65 MiB、working約33.09 MiB。
+開始空きRAM8.57 GiB/C102.32 GiB/D75.36 GiB→照合後9.28 GiB/C102.31 GiB/D75.36 GiB。
+PC全体の単発値でリーク有無は判定しない。権限/設定変更・他project操作・追加試行なし。
+次は保存context/stackを解釈するためのimage identity/範囲/unwind情報の検証方法を検討する。全acceptance gate no。

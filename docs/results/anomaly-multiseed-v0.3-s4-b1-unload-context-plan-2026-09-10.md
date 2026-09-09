@@ -1,5 +1,9 @@
 # S4-B1 最初のDLL unload通知での実行状態観測案（2026-09-10）
 
+最新: context付き実機診断1回を承認の上で実施済み。context/2 KiB stack取得、終了・保存・hash一致を確認した。
+起動は0xC0000142。引継書§48と[実行結果](anomaly-multiseed-v0.3-s4-b1-startup-context-probe-result-2026-09-10.md)を参照。
+以下の未承認・未実行という記述は準備時の履歴として保持する。
+
 状態: **実装・fake試験・独立レビュー完了 / read-only preflight verified / 追加実機診断未承認・未実行**。
 
 実装commit c4fe99e。以下の設計時の要件は履歴として保持し、現在の実装・試験結果は末尾を参照。
