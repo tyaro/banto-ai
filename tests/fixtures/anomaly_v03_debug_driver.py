@@ -20,6 +20,7 @@ from tests.fixtures.anomaly_v03_debug_observer import DebugObserver
 from tests.fixtures.anomaly_v03_debug_session import DebugSession
 from tests.fixtures.anomaly_v03_debug_evidence import DebugEvidence, EvidenceFile
 from tests.fixtures.anomaly_v03_debug_images import DebugImages
+from tests.fixtures.anomaly_v03_debug_security import DebugSecurity
 
 
 class DriverResult(dict):
@@ -45,6 +46,7 @@ class DebugDriver:
         self.evidence = DebugEvidence()
         self.evidence_file = None
         self.images = DebugImages()
+        self.security = DebugSecurity()
         self.result = DriverResult(self)
 
     def __repr__(self):
@@ -57,6 +59,7 @@ class DebugDriver:
                                or self.session is not None and self.session.resource_stop
                                or self.stop is not None and self.stop.resource_stop
                                or self.evidence.resource_stop
+                               or self.security.resource_stop
                                or self.evidence_file is not None and self.evidence_file.resource_stop)
 
     def _prepare(self):
@@ -71,6 +74,10 @@ class DebugDriver:
         self.tokens.prepare()
         if self.tokens.status != "prepared":
             raise self.tokens.primary or self.tokens.secondary or TransportError("driver_tokens")
+        self.security.bind(self.api)
+        for index in (0, 1):
+            self.security.capture(index, self.tokens.buffers[index].value,
+                                  lambda: self.preflight._budget(self.api))
         self.preflight._budget(self.api)
         self.fixture = w._Fixture(self.api, self.tokens.parent_profile["user"][0])
         self.fixture.create()
@@ -95,7 +102,7 @@ class DebugDriver:
         self.observer = DebugObserver(self.stop, sample_memory=self.memory, images=self.images)
         self.launch = SuspendedDebugLaunch(self.api, self.tokens.buffers[1].value, self.fixture, self.stop)
         self.session = DebugSession(self.preflight, self.launch, self.observer,
-                                    self.tokens.parent_profile, self.tokens.restricted_profile)
+                                    self.tokens.parent_profile, self.tokens.restricted_profile, security=self.security)
 
     def run(self):
         need(not self.started, "driver_retry")

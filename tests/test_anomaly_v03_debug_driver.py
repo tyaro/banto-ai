@@ -2,6 +2,7 @@
 
 from contextlib import ExitStack
 import json
+import struct
 from pathlib import Path
 from types import SimpleNamespace
 import unittest
@@ -65,6 +66,17 @@ class DebugDriverTests(unittest.TestCase):
             return len(buffer.value)
         kernel.GetFileInformationByHandleEx.side_effect = image_id
         kernel.GetFinalPathNameByHandleW.side_effect = image_name
+        def token_dacl(handle, kind, pointer, size, length):
+            d.C.memmove(pointer, bytes(8), 8)
+            length.contents.value = 8
+            return True
+        def kernel_sd(handle, info, pointer, size, length):
+            raw = struct.pack("<BBHIIII", 1, 0, 0x8004, 0, 0, 0, 0)
+            d.C.memmove(pointer, raw, len(raw))
+            length.contents.value = len(raw)
+            return True
+        api.a.GetTokenInformation.side_effect = token_dacl
+        api.a.GetKernelObjectSecurity.side_effect = kernel_sd
         return d.DebugDriver(), api, kernel, preflight, tokens, fixture, disk
 
     def test_full_wiring_preflight_once_and_evidence_retention_without_acceptance(self):
@@ -75,6 +87,7 @@ class DebugDriverTests(unittest.TestCase):
             self.assertEqual(result["teardown_status"], "pass")
             self.assertEqual(result["fixture_retention"], "unverified")
             self.assertEqual(result["evidence_status"], "flushed")
+            self.assertEqual([row["status"] for row in driver.security.rows], ["confirmed"] * 5)
             self.assertTrue(result["evidence_file_closed"])
             driver.evidence_file.close.assert_called_once()
             self.assertIs(result.private_owner, driver)
@@ -323,6 +336,26 @@ class DebugDriverTests(unittest.TestCase):
             self.assertEqual([call.args[0] for call in kernel.CloseHandle.call_args_list].count(101), 1)
             self.assertEqual(result["evidence_status"], "resource_skipped")
             kernel.WriteFile.assert_not_called()
+
+    def test_security_capture_faults_prevent_creation_or_resume(self):
+        for phase in ("parent", "process"):
+            with ExitStack() as stack, self.subTest(phase=phase):
+                driver, api, kernel, preflight, tokens, fixture, disk = self.driver(stack)
+                original = MemoryError()
+                function = api.a.GetTokenInformation if phase == "parent" else api.a.GetKernelObjectSecurity
+                function.side_effect = original
+                result = driver.run()
+                self.assertIs(driver.primary, original)
+                self.assertTrue(result["resource_stop"])
+                kernel.ResumeThread.assert_not_called()
+                kernel.WriteFile.assert_not_called()
+                tokens.close.assert_called_once()
+                if phase == "parent":
+                    fixture.create.assert_not_called()
+                    api.a.CreateProcessAsUserW.assert_not_called()
+                else:
+                    self.assertTrue(driver.stop.started)
+                    self.assertEqual(driver.session.tokens, [None, None])
 
 
 if __name__ == "__main__":

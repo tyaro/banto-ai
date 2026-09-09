@@ -93,6 +93,8 @@ class DebugEvidence:
                         "nonce": driver.nonce,
                         "images": ({"state": driver.images.state, "rows": driver.images.rows}
                                    if getattr(driver, "images", None) is not None else None),
+                        "security": ({"state": driver.security.state, "rows": driver.security.rows}
+                                     if getattr(driver, "security", None) is not None else None),
                         "primary_reason": getattr(driver.primary, "reason", None)}
             offset = self.HEADER.size
             # Bound accumulated metadata before copying; never serialize raw

@@ -22,11 +22,12 @@ class SessionResult(dict):
 
 
 class DebugSession:
-    def __init__(self, preflight, launch, observer, parent_profile, restricted_profile):
+    def __init__(self, preflight, launch, observer, parent_profile, restricted_profile, *, security=None):
         need(observer.stop is launch.stop and observer.transport is launch.transport, "session_owner")
         self.preflight, self.launch, self.observer = preflight, launch, observer
         self.api, self.stop, self.transport = launch.api, launch.stop, launch.transport
         self.parent_profile, self.restricted_profile = parent_profile, restricted_profile
+        self.security = security
         self.tokens = [None, None]
         self.token_buffers = (w.H(), w.H())
         self.token_pointers = tuple(C.pointer(value) for value in self.token_buffers)
@@ -43,6 +44,8 @@ class DebugSession:
         return "DebugSession(<private profiles, evidence and ownership>)"
 
     def _latch(self, error):
+        if self.security is not None and self.security.resource_stop:
+            self.resource_stop = self.transport.resource_stop = True
         self.resource_stop |= (w._resource_stop(error) or self.preflight.resource_stop
                                or self.launch.resource_stop or self.observer.resource_stop
                                or self.transport.resource_stop or self.stop.resource_stop)
@@ -113,6 +116,9 @@ class DebugSession:
         self.observer._budget()
         self.access = w._access_matrix(self.api, self.launch.fixture.root,
                                        self.launch.fixture.ledger, self.tokens[1])
+        if self.security is not None:
+            for index, handle in ((2, self.tokens[0]), (3, process.process), (4, process.thread)):
+                self.security.capture(index, handle, self.observer._budget)
         self.observer._budget()
 
     def run(self):
