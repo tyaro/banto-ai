@@ -2,9 +2,9 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §46を最初に参照。最初のunload通知でcontextと2 KiB stackを読む設計を独立レビュー済み。未実装・追加childなし。
+2026-09-10最新: §47を最初に参照。c4fe99eでunload時context/2 KiB stack観測を実装・検証済み。追加実機診断は未承認・未実行。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
-候補c6fc191はpure/fake231件と独立レビューを通過。現在の10.0.26200.9445で17 sourceの実read-only preflightもverified。
+候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
 
 最新の自己点検: cleanup/置換traceの候補実装と追加修正は§11〜17を参照。
@@ -884,3 +884,21 @@ Procmon/help UI/driver/serviceの起動・設定変更・追加child・他プロ
 
 今回は文書とread-only code/SDK調査のみ。実child/native context/memory取得・権限変更・他project操作なし。
 開始空きRAM8.77 GiB/C102.24 GiB/D75.36 GiB。全acceptance gate no。
+
+## 47. 2026-09-10 最初のUNLOADでのcontext/stack観測実装
+
+c4fe99eでDebugContextを実装し、driver/observer/evidence/preflightへ接続した。
+事前確保した16-byte aligned x64 CONTEXTと2048-byte stackを使い、借用初期threadだけから各1回取得する。
+対象外TID・不正identity/pending・部分read・OOM・中断を区別し、再試行せず既存停止へ引き渡す。
+最初のnormal UNLOADだけで選択固定。breakpoint/EXIT/drain時の追加取得、補完open、code/権限変更はない。
+
+保存枠は設計16 KiBから外枠込み8 KiBへ縮小。既存24 KiB画像/16 KiB security枠とmetadataを合わせた64 KiB容量試験を通過。
+許可pure/fake243/243（1.425秒）、独立実装レビュー新規P0〜P3=0（指定46/46、0.801秒）。
+容量試験条件強化後driver12/12（0.300秒）。repository safety/diff-check pass。
+独立担当の完了通知を利用し、進捗ポーリングなし。
+
+実read-only preflightは18 sources / 208782 bytes、verified、resource_stop=false。
+Windows10.0.26200.9445、Python3.14.0、固定exe/DLL hash一致。実child/context/memory取得は追加実行していない。
+実装中の空きRAM8.74 GiB/C102.31 GiB/D75.36 GiB。単発値でリーク有無を判断しない。
+次の判断は[観測計画の具体条件](anomaly-multiseed-v0.3-s4-b1-unload-context-plan-2026-09-10.md)による実機診断1回。
+従来の実行承認を新しい子メモリ取得へ拡張して使わない。全acceptance gate no。

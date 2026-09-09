@@ -1,6 +1,8 @@
 # S4-B1 最初のDLL unload通知での実行状態観測案（2026-09-10）
 
-状態: **独立設計レビュー完了 / collector未実装 / 追加実機診断未承認・未実行**。
+状態: **実装・fake試験・独立レビュー完了 / read-only preflight verified / 追加実機診断未承認・未実行**。
+
+実装commit c4fe99e。以下の設計時の要件は履歴として保持し、現在の実装・試験結果は末尾を参照。
 
 目的は、既に観測された最初のUNLOAD_DLL通知の時点で、初期threadがどこを実行しているかを保存すること。
 現在の全breakpoint拒否、既存所有processだけの停止、30秒/256 events/親＋child512 MiB未満を維持する。
@@ -96,3 +98,40 @@ debug registers、integer registers、Rip、512-byte floating-point領域、vect
 
 今回code変更・実child・GetThreadContext/ReadProcessMemory実呼出しはない。
 開始時空きRAM8.77 GiB/C102.24 GiB/D75.36 GiB。次工程はこの範囲の実装とfake試験であり、実機実行ではない。
+
+## 実装と検証の完了（2026-09-10）
+
+DebugContextをdriverでchild作成前に確保し、launch ownerを事前bindした。
+observerのnormal UNLOAD分岐だけに接続し、private evidenceへcontext state/rowを追加した。
+借用process/threadとPID/TIDを照合し、API前後でpending/inflight/owner/resource/時間予算を確認する。
+context要求は0x00100003、固定1232 bytesを16-byte alignedにして保持。RIP/RSPのuser address範囲を確認し、
+RSPから2048 bytesを1回読む。ReadProcessMemoryの成功と要求長一致を両方確認する。
+不確定・短いreadは確定stackへ変換せず、再試行せず既存owned stopへ進む。
+別threadの最初のUNLOADはnot_initial_threadとして消費し、後続UNLOADへ選択をずらさない。
+
+追加JSON枠は外枠込み8 KiBに縮小した（設計時16 KiBは採用しない）。
+当初の予約容量試験で全体64 KiBを超える組合せが見つかったため、実際のcontext/stackが収まる8 KiBを上限とした。
+images24 KiB/security16 KiB/context8 KiB、18 source行・実runtime形式・通常/drainの256枠状態を含む
+予約容量試験で全体64 KiBに収まることを確認した。実serialize時の64 KiB検査も維持する。
+
+許可されたpure/fake243/243（1.425秒）。独立実装レビュー新規P0〜P3=0、指定fake46/46（0.801秒）。
+容量試験のruntime/source余裕をさらに保守的にした後、driver12/12（0.300秒）を再確認。
+repository safety PASS、diff-check pass。新規ABI/失敗/中断試験と既存breakpoint拒否試験を含む。
+検証用fakeは最初のUNLOADでの読み取り失敗からTerminate/残りevent drain/終了確認を再現し、
+追加context/memory取得をせず、resource時は証跡書込みを抑止することを確認した。
+
+実read-only preflightは18 sources / 208,782 bytes、verified、resource_stop=false。
+Windows10.0.26200.9445、Python3.14.0、既存exe/DLL hash一致。GetThreadContext/ReadProcessMemoryの実呼出しは未実施。
+署名/loaded-code認証・実child起動成功・native受入は未達。production/coreやformal pinに変更なし。
+
+## 次の判断対象：context付き実機診断1回
+
+- 新規専用fixtureのrestricted childを1回だけ起動し、最初のnormal UNLOADで初期threadのcontextと最大2 KiB stackを取得。
+- 30秒/256 events/親＋child512 MiB未満、全breakpoint停止、停止drain最大32回/5秒を維持する。
+- 読取り失敗・対象外thread・UNLOAD未観測でも追加実行せず結果を保持する。buffer縮小や別addressへの再試行なし。
+- 既存のACL/image/event観測に加え今回の子メモリ読取りを明示的に含める。権限・code・registry・PEBの変更は行わない。
+- driver.runが戻った直後にpost-run write_summaryで最終結果を先にflushする。任意解析より優先する。
+- raw register/stackはprivate証跡に限定。表示は状態/byte数とし、正確なcall stackや失敗APIと断定しない。
+- 既存証跡を削除・修復・再利用しない。他projectやProcmon/CDBへの操作は行わない。
+
+この新しい観測を含む1回について実施前に判断を求める。準備継続指示だけで追加childは起動していない。

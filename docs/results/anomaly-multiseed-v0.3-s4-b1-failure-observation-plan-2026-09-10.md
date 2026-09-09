@@ -174,3 +174,9 @@ artifactsはGit対象外。EULAを保存したことはアプリ上のaccept操�
 ただし新しいchildメモリ読取りを含むため、実行は実装・試験・レビュー後の別判断とする。
 独立設計レビューは新規P0〜P3=0。collectorは未実装。得られるのは通知時点の状態で、失敗APIやcall stackの確定ではない。
 Procmonは現在の自動実行案には採用せず、既存の調査結果を保持する。
+
+## 実装準備の完了
+
+unload時context/stack collectorはc4fe99eで接続済み。pure/fake243件、独立実装レビュー、18 sourceの実read-only preflightを通過した。
+追加private枠は8 KiB、全体64 KiBを維持。次の判断対象は[unload観測計画末尾](anomaly-multiseed-v0.3-s4-b1-unload-context-plan-2026-09-10.md)の実機診断1回。
+追加実機診断は未承認・未実行。以前の未実装という記述は当時の履歴として保持する。
