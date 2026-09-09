@@ -164,3 +164,13 @@ artifactsはGit対象外。EULAを保存したことはアプリ上のaccept操�
 今回の変更は文書だけでtest再実行・レビュー再委譲なし。追加child・Procmon実行・設定変更はない。
 開始時空きRAM8.34 GiB、終了付近8.22 GiB。C102.24 GiB/D75.36 GiBは同値。
 短命の資料取得processは終了済み。単発のPC全体値でリーク有無を判定しない。
+
+## 次工程の選択（2026-09-10）
+
+[最初のunload通知中の実行状態取得案](anomaly-multiseed-v0.3-s4-b1-unload-context-plan-2026-09-10.md)を
+次の実装準備対象に選んだ。通常debug通知ですでに停止している初期threadからcontextと最大2 KiBのstackを
+各1回取得し、既存の全breakpoint拒否とowned stopを維持する設計である。
+別の監視processやsystem-wide収集を追加せず、source/evidence/resource管理を既存adapterへ接続できる。
+ただし新しいchildメモリ読取りを含むため、実行は実装・試験・レビュー後の別判断とする。
+独立設計レビューは新規P0〜P3=0。collectorは未実装。得られるのは通知時点の状態で、失敗APIやcall stackの確定ではない。
+Procmonは現在の自動実行案には採用せず、既存の調査結果を保持する。

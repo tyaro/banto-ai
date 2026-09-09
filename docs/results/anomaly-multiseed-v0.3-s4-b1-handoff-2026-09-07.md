@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §45を最初に参照。公式ZIPに独立helpはなく、exe内の静的説明で/Terminateが全instance対象と確認。実行・追加childなし。
+2026-09-10最新: §46を最初に参照。最初のunload通知でcontextと2 KiB stackを読む設計を独立レビュー済み。未実装・追加childなし。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c6fc191はpure/fake231件と独立レビューを通過。現在の10.0.26200.9445で17 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -868,3 +868,19 @@ artifacts/procmon-help-2026-09-10に保持（Git対象外）。この配布物�
 Procmon/help UI/driver/serviceの起動・設定変更・追加child・他プロジェクトへの操作なし。
 開始空きRAM8.34 GiB→終了付近8.22 GiB、C102.24 GiB/D75.36 GiBは同値。リーク有無は未判定。
 次は既存debugger停止条件を維持する観測と、条件変更を要する方式を比較する。全acceptance gate no。
+
+## 46. 2026-09-10 既存停止条件を維持するunload時観測の設計
+
+既存raw eventと公式仕様を照合し、debug通知中の停止区間で初期threadのcontextとRSPから最大2048 bytesを
+各1回だけ取得する案を選んだ。最初のnormal UNLOAD_DLL限定で、別thread/通知なしは未観測として扱う。
+追加breakpoint、Suspend/Resume、SetThreadContext、code/PEB/registry変更、監視toolは使わない。
+取得失敗・短いread・資源停止では追加取得を止め、既存owned stopへ渡す。過去の実行承認は再利用しない。
+
+公式説明はprocess終了時の自動unloadではUNLOAD_DLL通知を発生させないとしている。
+ただし観測したunloadから原因APIやloader rollbackを断定しない。context/stackも通知時点の観測にとどめる。
+詳細は[unload実行状態観測案](anomaly-multiseed-v0.3-s4-b1-unload-context-plan-2026-09-10.md)を参照。
+独立設計レビュー新規P0〜P3=0。ローカルSDKのx64構造/flagsを照合したが、実装とABI試験は未実施。
+次はaligned buffer、pending/identity/予算、1回制限、partial失敗、保存容量をfakeで実装検証する。
+
+今回は文書とread-only code/SDK調査のみ。実child/native context/memory取得・権限変更・他project操作なし。
+開始空きRAM8.77 GiB/C102.24 GiB/D75.36 GiB。全acceptance gate no。
