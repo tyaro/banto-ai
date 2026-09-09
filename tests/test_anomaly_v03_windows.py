@@ -7,6 +7,7 @@ already deleted. Public results omit raw security descriptors and content.
 """
 
 from copy import deepcopy
+from contextlib import ExitStack, nullcontext
 import ast
 import ctypes
 import inspect
@@ -38,6 +39,43 @@ def restricted_profile():
 
 
 class PureWindowsControls(unittest.TestCase):
+    def runtime_case(self, *, ubr=9445, build="26200", machine="AMD64", hashes=None):
+        import platform
+        import sysconfig
+        values = {"CurrentBuildNumber": build, "UBR": ubr, "EditionID": "Professional", "DisplayVersion": "25H2"}
+        registry = SimpleNamespace(HKEY_LOCAL_MACHINE=0, OpenKey=lambda *args: nullcontext(1),
+                                   QueryValueEx=lambda key, name: (values[name], 0))
+        with ExitStack() as stack:
+            stack.enter_context(patch.dict(sys.modules, {"winreg": registry}))
+            stack.enter_context(patch.object(w, "os", SimpleNamespace(name="nt")))
+            stack.enter_context(patch.object(w, "sys", SimpleNamespace(
+                version_info=(3, 14, 0), _git=("CPython", "tags/v3.14.0", "ebf955d"),
+                executable=sys.executable, base_prefix=sys.base_prefix)))
+            stack.enter_context(patch.object(platform, "machine", return_value=machine))
+            stack.enter_context(patch.object(platform, "python_compiler", return_value="MSC v.1944 64 bit (AMD64)"))
+            stack.enter_context(patch.object(sysconfig, "get_config_var", return_value=0))
+            stack.enter_context(patch.object(w, "_api", return_value=Mock()))
+            stack.enter_context(patch.object(w, "_read_source", side_effect=hashes or [(w._EXE_SHA,), (w._DLL_SHA,)]))
+            return w._runtime()
+
+    def test_windows_update_revision_is_recorded_instead_of_fixed(self):
+        recorded = [self.runtime_case(ubr=value) for value in (9168, 9445, 9446)]
+        self.assertEqual([row["build"] for row in recorded],
+                         ["10.0.26200.9168", "10.0.26200.9445", "10.0.26200.9446"])
+        self.assertNotEqual(recorded[1], recorded[2])  # End-of-run drift comparison remains meaningful.
+
+    def test_windows_revision_type_and_release_boundary_remain_checked(self):
+        for kwargs in ({"ubr": -1}, {"ubr": True}, {"ubr": "9445"}, {"ubr": 2**32},
+                       {"build": "26100"}, {"machine": "ARM64"}):
+            with self.subTest(kwargs=kwargs), self.assertRaises(w._Failure) as caught:
+                self.runtime_case(**kwargs)
+            self.assertEqual(caught.exception.reason, "runtime_pin")
+
+    def test_windows_update_does_not_relax_python_binary_hashes(self):
+        with self.assertRaises(w._Failure) as caught:
+            self.runtime_case(hashes=[("wrong",)])
+        self.assertEqual(caught.exception.reason, "runtime_hash")
+
     def test_stream_enumeration_success_empty_directory_and_single_findclose_failure(self):
         for directory, close_ok in ((False, True), (True, True), (False, False)):
             api = Mock()

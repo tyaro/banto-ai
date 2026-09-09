@@ -747,13 +747,16 @@ def _runtime():
     import sysconfig
     with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion") as key:
         values = [winreg.QueryValueEx(key, name)[0] for name in ("CurrentBuildNumber", "UBR", "EditionID", "DisplayVersion")]
-    _need(values == ["26200", 9168, "Professional", "25H2"] and platform.machine() == "AMD64"
+    # Automatic cumulative updates may change UBR between runs. Record the
+    # observed revision; keep the OS release and Python compatibility boundary.
+    _need(values[0] == "26200" and type(values[1]) is int and 0 <= values[1] < 2**32
+          and values[2:] == ["Professional", "25H2"] and platform.machine() == "AMD64"
           and platform.python_compiler() == "MSC v.1944 64 bit (AMD64)" and sys._git == ("CPython", "tags/v3.14.0", "ebf955d")
           and not sysconfig.get_config_var("Py_GIL_DISABLED"), "runtime_pin")
     api = _api()
     _need(_read_source(api, Path(sys.executable))[0] == _EXE_SHA
           and _read_source(api, Path(sys.base_prefix)/"python314.dll")[0] == _DLL_SHA, "runtime_hash")
-    return {"build": "10.0.26200.9168", "python": "3.14.0", "exe_sha256": _EXE_SHA, "dll_sha256": _DLL_SHA}
+    return {"build": f"10.0.{values[0]}.{values[1]}", "python": "3.14.0", "exe_sha256": _EXE_SHA, "dll_sha256": _DLL_SHA}
 
 
 def _source_bytes(api, path):
