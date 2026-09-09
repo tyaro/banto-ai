@@ -1,6 +1,8 @@
 # S4-B1 startup probe 準備savepoint
 
-状態: **dormant observation + owned stop tested / launcher incomplete / probe not run**。
+状態: **dormant driver tested / read-only preflight verified / probe not run**。
+2026-09-10更新: 承認によりUBR固定を記録へ変更。実10.0.26200.9445で14 sourceの事前照合が通過。
+初期breakpoint識別と初回probe準備は残る。最新詳細は引継書§31と下記transport記録を参照。
 更新: 2026-09-08にevent transport、owned停止、有界観測loopを結合した。初期breakpointは識別未完のため拒否する。
 以下は09a1150時点の計画を保持する。現在の接続済み範囲と未接続部分は
 [transport記録](anomaly-multiseed-v0.3-s4-b1-debug-transport-2026-09-08.md)を参照。

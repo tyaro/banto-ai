@@ -1,9 +1,9 @@
 # S4-B1 debug-event transport savepoint
 
 状態: **dormant observation + owned stop / no launch**。
-最新のdriver候補: `94bbdce`（2026-09-09）。実read-only preflightはruntime_pinで停止。
-現在OSは26200.9445、固定条件は26200.9168。下記のtransport初回記録は`ac876b1`、比較基準`09a1150`。
-production harnessとsource pinは変更していない。
+最新候補: `966723c`（2026-09-10）。ユーザー承認によりS4-B1のUBR固定を解除し、実測buildを記録する。
+現在10.0.26200.9445で実read-only preflightはverified。下記の旧runtime停止記録は当時の状態。
+productionの変更は_runtimeのUBR条件/記録のみ。source pin方式と他のruntime条件は維持する。
 
 ## 今回の接続範囲
 
@@ -356,3 +356,18 @@ read-only registry/既存Python照会で以下を確認した。
 固定runtime条件やOSに変更は加えていない。現在OS向けの別候補条件を設けるか、元条件を維持して
 実機検証を保留するかはユーザー判断が必要。現PCをダウングレードする案は採用しない。
 別プロジェクト連続稼働への配慮を継続する。全acceptance gateはno。
+
+### 承認済み更新リビジョンの記録化（2026-09-10）
+
+自動Windows Updateに追従するよう、ユーザーが固定条件の緩和と状態記録を承認した。
+966723cでUBRを有効なuint32として扱い、返却buildを10.0.26200.<実測UBR>とした。
+OS release/edition/architectureとPython/hash条件、実行前後のruntime drift確認は維持する。
+旧9168・現在9445・別9446の記録、異常値/別release/別architecture/Python hashの拒否をpureで確認した。
+200/200 pass（1.169秒）、D2 1/1（12.838秒）、safety/diff-check pass。
+独立監査d3a53f9..966723c4bf4ddcf786aeb744288a3ca88fa96211は新規P0〜P3=0、指定pure60/60 pass。
+
+実read-only preflightでOS/Python/hash条件を通過した後、2つの初期化ファイルでCRLF/LFだけの差を検出した。
+src/banto_ai/__init__.py（96→93 bytes）、tests/__init__.py（110→106 bytes）をworktree内でLFへ整合し、
+内容の変更なくGit indexと一致させた。再検査はverified、14 source、172259 bytes、resource_stop=false。
+観測runtime.build=10.0.26200.9445、python=3.14.0、exe/python314.dll hashは固定値と一致。
+実driver/child/debuggerは未実行。UBR差分による判断待ちは解消し、初期breakpoint識別と初回probe準備が残る。

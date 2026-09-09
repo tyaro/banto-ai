@@ -2,9 +2,9 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-09最新: §30を最初に参照。driver候補94bbdceはpure197件と独立再監査を通過したが、
-実read-only preflightはOS UBR差分（固定9168 / 現在9445）で停止。新OS向け候補条件の扱いは判断待ち。
-実child/fixture/debuggerは今回起動せず、固定runtime/本流/受入条件も変更していない。
+2026-09-10最新: §31を最初に参照。ユーザー承認によりUBR固定を解除し、実測buildを記録する。
+候補966723cはpure200件と独立監査を通過。現在の10.0.26200.9445で実read-only preflightもverified。
+実child/fixture/debuggerは未起動。本流統合・native受入・formal permissionは引き続き未達。
 
 最新の自己点検: cleanup/置換traceの候補実装と追加修正は§11〜17を参照。
 起動障害の既存ログ・公式仕様の照合は§18、独立レビューと是正結果は§19〜20を参照。
@@ -582,3 +582,21 @@ sources_checked=0でexe/DLL hash・source実照合は未到達。OSと固定条�
 現在OS向けの別候補条件を整備するか、既存条件を維持して実機検証を保留するかがユーザー判断点。
 
 初期breakpoint識別と実probe準備は引き続き未完了。別プロジェクト連続稼働中への資源配慮は継続する。
+
+## 31. 2026-09-10 承認済みWindows更新条件の緩和と実状態
+
+ユーザー指示: 「Windowsアップデート自動的にかかったのでそこの条件は緩和してください。状態としては記録してください」。
+966723cでS4-B1の_runtimeについてUBR=9168一致を外し、有効なuint32値を受け入れて実buildへ記録する。
+26200/Professional/25H2/AMD64、Python3.14.0のcompiler/tag/hash、非free-threaded条件は維持する。
+run前後のruntime比較は実測UBRを含むため、途中の状態変化は引き続き拒否する。
+旧10.0.26200.9168は当初条件の履歴として保存。formal campaignのpinや実行許可を変更するものではない。
+
+実状態: Windows 11 Pro 25H2 / AMD64 / 10.0.26200.9445、CPython3.14.0、MSC v.1944 64 bit (AMD64)、
+tags/v3.14.0 / ebf955d、free threading無効。exe/python314.dll hashは既存固定値に一致した。
+初回の再検査でsrc/banto_ai/__init__.pyとtests/__init__.pyのCRLFだけがindexのLFと不一致と判明。
+内容差がないことを確認して、このworktreeだけを.gitattributesのLF方針へ整合した。Gitの内容差はない。
+再検査はverified、sources_checked=14、source_bytes=172259、resource_stop=false。
+
+pure/fake200/200（1.169秒）、D2 1/1（12.838秒）、safety/diff-check pass。
+独立担当のd3a53f9..966723c4bf4ddcf786aeb744288a3ca88fa96211監査は新規P0〜P3=0、指定pure60/60 pass。
+実driver/child/debugger/負荷試験は未実行。別プロジェクト連続稼働への配慮を継続する。
