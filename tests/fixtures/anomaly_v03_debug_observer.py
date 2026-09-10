@@ -24,11 +24,13 @@ class DebugObserver:
     MEMORY_LIMIT = 512 * 1024 * 1024
     WAIT_LIMIT = 300
 
-    def __init__(self, stop, *, sample_memory, clock=time.monotonic, images=None, context=None):
+    def __init__(self, stop, *, sample_memory, clock=time.monotonic, images=None, context=None,
+                 bootstrap=None):
         self.stop, self.transport = stop, stop.transport
         self.sample_memory, self.clock = sample_memory, clock
         self.images = images
         self.context = context
+        self.bootstrap = bootstrap
         self.events = StartupEvents(self.transport.pid)
         self.started = False
         self.primary = self.secondary = None
@@ -44,7 +46,8 @@ class DebugObserver:
     def _latch(self, error):
         self.resource_stop |= (isinstance(error, MemoryError) or self.transport.resource_stop
                                or self.stop.resource_stop or self.stop.drain.resource_stop
-                               or self.context is not None and self.context.resource_stop)
+                               or self.context is not None and self.context.resource_stop
+                               or self.bootstrap is not None and self.bootstrap.resource_stop)
         self.transport.resource_stop |= self.resource_stop
         self.events.resource_stop |= self.resource_stop
 
@@ -101,12 +104,14 @@ class DebugObserver:
                     raise TransportError("child_resource_stop")
                 if self.images is not None:
                     self.images.capture(self.transport, self._budget)
+                if self.bootstrap is not None:
+                    self.bootstrap.capture(self._budget)
                 if self.context is not None:
                     self.context.capture(self._budget)
                 self.transport.close_file(self.transport.pending)
                 self._budget()
-                # Transport refuses every unverified breakpoint. No callback
-                # supplied by the caller can mark an arbitrary exception handled.
+                # Transport refuses every breakpoint without a consumed proof
+                # from the fixed opt-in verifier for this exact pending event.
                 self.transport.continue_event()
                 self.events.continued()
             wait = self.transport.kernel.WaitForSingleObject(self.stop.handles[0], 100)

@@ -106,6 +106,7 @@ class DebugEventTransport:
         self.wait_inflight = False
         self.continue_inflight = False
         self.pid = None
+        self.bootstrap = None
 
     def __repr__(self):
         return "DebugEventTransport(<private evidence and ownership>)"
@@ -213,11 +214,17 @@ class DebugEventTransport:
         self._thread()
         need(self.state == "pending" and not self.resource_stop, "continue_state")
         event = self.event()
-        # Bootstrap identity is not implemented: stop rather than swallow an
-        # arbitrary breakpoint or deliver the OS bootstrap breakpoint unhandled.
-        need(not (event.kind == "exception" and event.code == BREAKPOINT), "bootstrap_unverified")
         need(self.file_closed[self.pending], "event_file_not_closed")
         status = DBG_NOT_HANDLED if event.kind == "exception" else DBG_CONTINUE
+        bootstrap = None
+        if event.kind == "exception" and event.code == BREAKPOINT:
+            # Only the fixed opt-in verifier may consume this exact pending
+            # event. No caller-supplied bool/status or drain permission exists.
+            from tests.fixtures.anomaly_v03_debug_bootstrap import DebugBootstrap
+            need(type(self.bootstrap) is DebugBootstrap, "bootstrap_unverified")
+            bootstrap = self.bootstrap
+            bootstrap.consume(self)
+            status = DBG_CONTINUE
         self.state = "continue_attempted"
         self.continue_inflight = True
         try:
@@ -226,6 +233,8 @@ class DebugEventTransport:
             self.pending = None
             self.state = "exit_continued" if event.kind == "exit_process" else "idle"
             self.continue_inflight = False
+            if bootstrap is not None:
+                bootstrap.continued()
         except BaseException as error:
             self.resource_stop |= isinstance(error, MemoryError)
             self.state = "continue_uncertain"

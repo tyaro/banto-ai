@@ -23,7 +23,7 @@ def _resource(error):
 class DebugEvidence:
     MAGIC = b"B1DBG001"
     HEADER = struct.Struct("<8sIIII")
-    METADATA_LIMIT = 64 * 1024
+    METADATA_LIMIT = 72 * 1024
     SLOTS = DebugEventTransport.LIMIT
     EVENT_SIZE = 176
     REGION_SIZE = SLOTS * EVENT_SIZE
@@ -100,6 +100,8 @@ class DebugEvidence:
                                      if getattr(driver, "security", None) is not None else None),
                         "context": ({"state": driver.context.state, "row": driver.context.row}
                                     if getattr(driver, "context", None) is not None else None),
+                        "bootstrap": ({"state": driver.bootstrap.state, "row": driver.bootstrap.row}
+                                      if getattr(driver, "bootstrap", None) is not None else None),
                         "primary_reason": getattr(driver.primary, "reason", None)}
             offset = self.HEADER.size
             # Bound accumulated metadata before copying; never serialize raw

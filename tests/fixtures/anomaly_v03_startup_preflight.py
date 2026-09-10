@@ -34,6 +34,7 @@ SOURCES = (
     "tests/fixtures/anomaly_v03_debug_unload_entry.py",
     "tests/fixtures/anomaly_v03_debug_init_return.py",
     "tests/fixtures/anomaly_v03_debug_console_failure.py",
+    "tests/fixtures/anomaly_v03_debug_bootstrap.py",
     "tests/fixtures/anomaly_v03_debug_driver.py",
     "tests/fixtures/anomaly_v03_startup_preflight.py",
 )

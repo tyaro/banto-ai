@@ -1,6 +1,6 @@
 # S4-B1 DETACHED条件での最初のDLL UNLOAD観測
 
-状態: **候補修正・全体回帰・独立レビュー・保存後preflight完了 / 実機未実施**。
+状態: **了承済み1回実施 / bootstrap_unverifiedで停止 / UNLOAD未観測 / teardown・保存pass**。
 
 ## 目的と最小変更
 
@@ -92,3 +92,9 @@ child起動・SetThreadContextなし、全acceptance gate no。限定診断の�
 Get最大1回、RPM最大5回3107 bytes、Setなし、既存30秒/256 events/親＋child512 MiB予算とowned stopを維持する。
 この問いへの「続けてください」は当該1回への了承として扱い、clean状態/wrapper hashを確認後、同じ了承を再確認せず実行する。
 条件不一致・失敗時の自動再試行なし。自然EXITと強制停止、未観測と検査失敗、証跡保存結果を分けて記録する。
+
+
+## 実施結果
+
+af3a0b2で了承済み1回を実施。UNLOAD前の最初のbreakpointを既定拒否し、所有終了処理と証跡保存を確認。
+[実行結果](anomaly-multiseed-v0.3-s4-b1-detached-unload-result-2026-09-10.md)を参照。この計画の1回は消化済み。

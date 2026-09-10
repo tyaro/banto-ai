@@ -66,7 +66,7 @@ class DebugDriverTests(unittest.TestCase):
                     # Reserve the independent collectors' entire documented JSON
                     # allowances, not just this run's short fake rows.
                     meta = dict(saved.private_metadata)
-                    for name in ("images", "security", "context"):
+                    for name in ("images", "security", "context", "bootstrap"):
                         meta.pop(name)
                     from tests.fixtures.anomaly_v03_startup_preflight import SOURCES
                     meta["sources"] = [{"path": path, "sha256": "f" * 64, "bytes": 2**20}
@@ -75,11 +75,11 @@ class DebugDriverTests(unittest.TestCase):
                                        "exe_sha256": "f" * 64, "dll_sha256": "f" * 64}
                     meta["primary_reason"] = "context_handle_identity"
                     baseline = len(json.dumps(meta, ensure_ascii=True))
-                    self.assertLess(baseline + (24 + 16 + 8) * 1024 + 128,
+                    self.assertLess(baseline + (24 + 16 + 8 + 4) * 1024 + 128,
                                     driver.evidence.METADATA_LIMIT)
 
     def driver(self, stack, *, unload_entry=False, init_return=False, console_failure=False,
-               detached_console=False):
+               detached_console=False, bootstrap=False):
         unused, api, kernel, identity, validate, access = fixtures.DebugSessionTests().session(stack)
         api.p = Mock()
         def memory(handle, pointer, size):
@@ -143,7 +143,8 @@ class DebugDriverTests(unittest.TestCase):
         api.a.GetTokenInformation.side_effect = token_dacl
         api.a.GetKernelObjectSecurity.side_effect = kernel_sd
         return d.DebugDriver(unload_entry=unload_entry, init_return=init_return,
-                             console_failure=console_failure, detached_console=detached_console), api, kernel, preflight, tokens, fixture, disk
+                             console_failure=console_failure, detached_console=detached_console,
+                             bootstrap=bootstrap), api, kernel, preflight, tokens, fixture, disk
 
     def test_full_wiring_preflight_once_and_evidence_retention_without_acceptance(self):
         with ExitStack() as stack:

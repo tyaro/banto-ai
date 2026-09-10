@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §65を最初に参照。DETACHED通常childは0xC0000142で失敗し、teardown pass・失敗fixture保持。E2E未達。DETACHEDで最初のUNLOADを観測する候補はpure/fake235件・独立レビュー是正確認pass。修正021956cを保存し、22 sourcesのread-only preflightもverified。追加実機は未実施。
+2026-09-10最新: §66を最初に参照。DETACHED UNLOAD診断はPython関連DLLのLOAD後のbreakpointで既定停止し、UNLOAD未観測。終了/保存確認済み。固定初期停止点を検証して1回継続する候補はpure/fake245件・独立実装レビューpass。保存後preflight前。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1440,3 +1440,40 @@ detached-unload-preflight.jsonへ保存。child起動・SetThreadContextなし�
 既存時間・memory・disk・owned stop条件で1回だけ実施することへの返答を待つ。§6の追加probeの条件を引き継ぐ。
 この問いへの「続けてください」は当該1回への了承として扱い、同じ了承を再確認せず実行する。自動再試行なし。
 実行wrapper detached-unload-once.pyは2427 bytes/hashb8ce387f512c150804a6e4de9b6c596f2f5bc063eee7f3e004d4f83a0c8112a7。
+
+
+## 66. 2026-09-10 DETACHED診断は初期停止点候補まで進み、検証付き継続を準備
+
+ユーザーの「お願いします」を§65の1回への了承として、cleanなaf3a0b2（実装021956c）で新規fixture1回を実行。
+初期reportまで2.168秒、primary=bootstrap_unverified、driver/observer failed、resource_stop=false、secondaryなし。
+起動要求0x40e、通常18/Continue17、python.exe＋13 DLL load、3 create_thread、slot17で初期threadのfirst-chance BREAKPOINT。
+UNLOAD未観測、context ready/not_observed、entry not_started、Get/RPM/Set各0。自然EXIT未観測。
+owned termination後pendingを解放し、drain4件（thread exit3/process exit1、全code1）をContinue。
+signal/ownership解消/所有handle close/teardown pass/failure_count0/driver teardown failures0を確認。
+今回のcode1を自然な失敗理由とは扱わない。詳細は[DETACHED UNLOAD結果](anomaly-multiseed-v0.3-s4-b1-detached-unload-result-2026-09-10.md)。
+
+private110163 bytes/hash051289d145635778ec9073fc44440694ffc110304af6442d770b2d427ff99cfb、write/flush/close確認済み。
+有界private read1回で全events/launch/stop/hashを照合。設計レビューでparameter契約の確認が必要となり、
+同じ証跡を追加1回読みparameter[0]=0を確認（計2回、各reader close）。child再実行なし。
+例外80000003/first_chance1/flags0/chained null/parameters1、初期PID/TID一致、ntdll RVA122239。
+現在ntdllの有界同一handle read1回/hash既存一致と既存PDB照合で、LdrpDoDebuggerBreakのint3に対応することを確認。
+関数62 bytes、caller候補3件とRSP+38の静的根拠をntdll-bootstrap-static.jsonに保存。追加downloadなし。
+
+同run preflight22 sources/242703 bytes、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+memory125 samples/親＋child peak commit26464256 bytes（25.24 MiB）、peak working35581952 bytes（33.93 MiB）。
+実行前空きRAM8.44 GiB、C107.92/D75.36 GiB。単発値からリーク有無未判定。他project操作なし。
+
+次の[初期停止点照合と継続計画](anomaly-multiseed-v0.3-s4-b1-bootstrap-unload-plan-2026-09-10.md)は、
+DETACHED+unload専用のbootstrap=Trueで固定地点の最初の例外を検証し、同じpendingだけ1回DBG_CONTINUEする候補。
+追加Get1/RPM3回75 bytes、RIP=address+1/TF0/RSP整列、固定code hash/caller/CALL/parameter0を照合する。
+RIP条件は未測定の候補で、一致しなければ補完せず停止。選択/消費/不確定/継続確認を分け、drainへ許可を渡さない。
+以後は既存unload collector、合計Get2/RPM8回3182 bytes。Setやtarget書換えなし。
+追加metadata4 KiBを保持するためmetadata64→72 KiB（buffer163864 bytes）へ小幅拡大、process512 MiB条件は維持。
+新sourceを含む23 sourcesを照合する。設計独立点検は新規P0〜P3=0、関係fake75/75（1.608秒）pass。
+全体回帰・独立実装レビュー・保存後preflightで準備を完成する。今回了承された1回は消化済み。
+
+
+全体pure/fake245/245（3.558秒）、repository safety/diff-check pass。
+独立実装レビュー新規P0〜P3=0、指定fake75/75（1.790秒）pass。担当のnative/private/source変更なし。
+完了通知のみを利用し進捗ポーリングなし。作業後RAM8.06 GiB、C107.92/D75.36 GiB。
+次は候補を保存してread-only preflightを行い、検証に一致した停止点だけを継続する診断1回を提示する。

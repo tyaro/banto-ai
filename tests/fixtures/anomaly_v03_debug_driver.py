@@ -25,6 +25,7 @@ from tests.fixtures.anomaly_v03_debug_context import DebugContext
 from tests.fixtures.anomaly_v03_debug_unload_entry import DebugUnloadEntry
 from tests.fixtures.anomaly_v03_debug_init_return import DebugInitReturn
 from tests.fixtures.anomaly_v03_debug_console_failure import DebugConsoleFailure
+from tests.fixtures.anomaly_v03_debug_bootstrap import DebugBootstrap
 
 
 class DriverResult(dict):
@@ -38,7 +39,7 @@ class DebugDriver:
     MIN_FREE_DISK = 1024 * 1024 * 1024
 
     def __init__(self, *, unload_entry=False, init_return=False, console_failure=False,
-                 detached_console=False):
+                 detached_console=False, bootstrap=False):
         need(type(unload_entry) is bool, "entry_option")
         need(type(init_return) is bool and not (unload_entry and init_return), "return_option")
         need(type(console_failure) is bool and not (console_failure and (unload_entry or init_return)),
@@ -46,6 +47,8 @@ class DebugDriver:
         need(type(detached_console) is bool and (not detached_console or init_return or unload_entry),
              "detached_option")
         self.detached_console = detached_console
+        need(type(bootstrap) is bool and (not bootstrap or detached_console and unload_entry),
+             "bootstrap_option")
         self.preflight = StartupPreflight()
         self.api = self.tokens = self.fixture = self.transport = self.stop = None
         self.memory = self.launch = self.observer = self.session = None
@@ -58,6 +61,7 @@ class DebugDriver:
         self.evidence = DebugEvidence()
         self.evidence_file = None
         self.images = DebugImages()
+        self.bootstrap = DebugBootstrap(self.images) if bootstrap else None
         self.security = DebugSecurity()
         self.context = (DebugConsoleFailure(self.images) if console_failure else
                         DebugInitReturn(self.images) if init_return else
@@ -76,6 +80,7 @@ class DebugDriver:
                                or self.evidence.resource_stop
                                or self.security.resource_stop
                                or self.context.resource_stop
+                               or self.bootstrap is not None and self.bootstrap.resource_stop
                                or self.evidence_file is not None and self.evidence_file.resource_stop)
 
     def _prepare(self):
@@ -116,10 +121,13 @@ class DebugDriver:
         self.stop = OwnedDebugStop(self.transport)
         self.memory = DebugMemory(self.stop, self.api.p)
         self.observer = DebugObserver(self.stop, sample_memory=self.memory, images=self.images,
-                                      context=self.context)
+                                      context=self.context, bootstrap=self.bootstrap)
         self.launch = SuspendedDebugLaunch(self.api, self.tokens.buffers[1].value, self.fixture, self.stop,
                                           detached_console=self.detached_console)
         self.context.bind(self.stop, self.launch)
+        if self.bootstrap is not None:
+            self.bootstrap.bind(self.stop, self.launch)
+            self.transport.bootstrap = self.bootstrap
         self.session = DebugSession(self.preflight, self.launch, self.observer,
                                     self.tokens.parent_profile, self.tokens.restricted_profile, security=self.security)
 
