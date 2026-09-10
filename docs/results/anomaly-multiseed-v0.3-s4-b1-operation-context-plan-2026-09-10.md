@@ -1,6 +1,8 @@
 # S4-B1 子の作業場所と操作結果診断の修正
 
-状態: **選抜87件・全pure/fake293件・独立レビュー・保存後preflight完了。下記の最大3候補の進行方針は未承認、修正後child未実行**。
+状態: **最大3候補の了承を受領し、1回目がnative_control_pass。成功条件により試行枠を終了、追加実行なし**。
+[実行結果](anomaly-multiseed-v0.3-s4-b1-operation-context-result-2026-09-10.md)とhandoff §76を参照。
+以下の未実行・未承認・返答待ち表記は準備時点の履歴であり、再実行の指示ではない。
 直前のcontrolは子側の実操作へ進み、旧exit37で停止した。
 実API errorと操作名が失われているため、今回の停止原因をCWDやWinError32と断定しない。
 

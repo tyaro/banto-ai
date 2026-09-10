@@ -1,16 +1,14 @@
 # anomaly multi-seed v0.3 S4-B1 引継書
 
-状態: **handoff / blocked engineering candidate / no integration / no formal permission**
+状態: **限定Windows engineering control成功 / no integration / no formal permission**
 
-2026-09-10最新: §72を最初に参照。2種類のpackage候補はtoken作成Error87、child/fixture未作成・teardown pass。実機試行を打ち切り、RC＋Everyoneの未実行candidateを準備（選抜70件・独立レビューpass）。許可範囲が広がるため、保存後preflightのうえ新規control1回へのユーザー判断待ち。本流/formal未許可。
-UBR固定の承認済み緩和と実測buildは§31に記録する。
-候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
-限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
+2026-09-10最新: §76を最初に参照。実装0b30e63のRC＋Everyone候補で、子の全48期待値・報告照合・成功cleanup・teardownが通過した。
+専用fixture9対象の削除を確認し、残存0、資源停止なし。最大3回の了承を受領し、1回目の成功でその試行枠を終了した。残り2回は実行しない。
+実行前の全pure/fake293件と独立差分レビュー、実行内27 source preflightも通過。現在のruntimeはWindows10.0.26200.9445/Python3.14.0。
+UBR固定緩和は§31、直近の実測資源・bootは§76に記録する。Windows Python3.12を含む既定受入、本流統合、formal/B2/publisherは未完了・未許可。
 
-最新の自己点検: cleanup/置換traceの候補実装と追加修正は§11〜17を参照。
-起動障害の既存ログ・公式仕様の照合は§18、独立レビューと是正結果は§19〜20を参照。
-独立レビューのP2 2件は修正確認済み。child E2Eと本流統合は引き続き未完了。
-以下の初期結論・commit一覧・試験数は引継書作成時点の記録である。
+以下の§1〜§10の初期結論・commit一覧・試験数・blocked表記は作成時点の履歴であり、最新のchild E2E結果ではない。
+cleanup/置換traceの修正履歴は§11〜17、起動診断と逐次是正は§18〜75を参照。
 
 作成日: 2026-09-07
 
@@ -2008,3 +2006,43 @@ child作成前に失敗した呼出も1回と数える。同じcandidateの再�
 この問いへの「お願いします」「続けてください」を上記最大3回への了承として扱い、受領後は§6の都度確認をこの範囲だけ緩和する。
 現時点では未承認であり、今回実施済みのruntime-machine1回を再実行する意味ではない。
 §75の先の「次の1回への返答待ち」は準備途中の記録で、今回最終提示する対象はこの限定した最大3回の方針とする。
+
+
+## 76. 2026-09-10 限定engineering control成功・最大3回枠を1回で終了
+
+ユーザー「続けてください」を§75の最大3候補・各1回の提案への了承として記録する。
+§6の都度確認をこの範囲で緩和し、準備済み候補1回を実行。成功時停止の条件に従い、この試行枠は終了した。
+残り2回は実行・予約・繰越しない。以前の単独診断の再実行ではない。
+[成功結果](anomaly-multiseed-v0.3-s4-b1-operation-context-result-2026-09-10.md)を新たな基準とする。
+実装0b30e63、clean HEADf15af39、実行前wrapper4047 bytes/hash8dc7b3940930212f477c95b195a2960a0eac0c7bffadcea27784f77a113b0658一致。
+新規専用fixture1個、固定RC＋Everyone、起動flags0x40c/child CWDfixture.root。token/ACL/必須期待値/資源上限は維持した。
+
+native_control_pass、control pass/cleanup completed/teardown pass、resource_stopfalse、core0.9394162999960827秒。
+実child token、親子AccessCheck、runtime/source、子の全48期待値、private report照合を通過した。
+48は両modeのfile right-open5＋directory right-open6＋mutation13。各private report条件も実行wrapperで確認済み。
+replace trace complete/6 records/2385 bytes、最終restored、未確認tail0。
+成功cleanupは9対象/15616 bytesを捕捉し、9対象すべてabsent/close confirmed、unknown0/residue0。
+15616 bytesはcleanup前の捕捉量であり残存容量ではない。終了後fixtureの再open・追加走査なし。
+公開summary4305 bytes/hash830ead15ce782c023a895fc3aefe0bbfb8a433d252c3032f8e85d338ae100293を既知pathから1回有界readして照合。
+operation-context-result-check.jsonへ最大3/消化1/成功終了も保存。
+private control16494 bytes/hash5d888eaebd1cea0980c2ae66f37692fd2f46b26f8574a138e8d059e001de2af2、
+private replace2385 bytes/hashd876cf2a222b7d63b4a02ecc86422e4bbc081989dfd4f650ddd826c38bfda66f。
+private rawはexportせず、fixture上の報告も成功cleanupで削除済み。公開要約から生報告を復元できるという主張はしない。
+旧exit37の実API error/操作名は失われているため、唯一原因をCWD/WinError32と遡って確定しない。
+
+親＋子ピークprivate42.72 MiB/working53.13 MiB。実行前09:48:47Z RAM8.05 GiB/C108.16/D75.36 GiB、
+実行後09:49:50Z RAM7.87 GiB/C108.15/D75.36 GiB。Windows26200.9445、boot2026-09-09T10:43:08.5+09:00。
+点の資源量からリーク有無を断定せず、今回のowned teardown passを記録する。UBR緩和と実測記録を維持。
+実行内preflight27/288326 bytes verified、Python3.14.0、既存exe/DLL hash一致。
+前回pure/fake293件・独立差分レビュー後のsource変更なし。結果文書のみを保存するため、fake/preflight/nativeを繰り返さない。
+
+全受入/認証/formal各flagはfalse。本流889cfc3 clean、push/merge・formal/B2/publisher/Hub/PLC writeなし。
+Windows Python3.12を含む既定受入・本流統合・S4全体は未完了。full suite/S3長期回帰の追加実行なし。
+次の作業はこの成功結果を基準に、受入条件・Python3.12の扱いと本流統合に必要な確認を整理する。
+今回の成功を既存failure rootsの清掃・追加試験・formal許可へ読み替えない。
+
+
+成功結果・公開要約・handoff最新記述の独立照合は新規P0〜P3=0。
+48期待値は実行中wrapperのoperations_matchと保存sourceの期待値件数に基づく。
+公開要約だけからprivate reportの個別値を独立再検証した主張はしない。
+担当は指定公開資料のみをreadし、native/query/fixture再open/試験/編集なし。進捗ポーリングなし。
