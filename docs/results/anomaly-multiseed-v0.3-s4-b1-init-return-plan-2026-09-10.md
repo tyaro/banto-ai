@@ -1,6 +1,6 @@
 # S4-B1 KernelBase初期化の戻り直前を観測する限定診断
 
-状態: **実装・fake・独立レビュー完了 / 実機未実施 / 保存後preflightへ / no native acceptance**。
+状態: **実装・fake・独立レビュー・保存後preflight完了 / 限定実機1回の判断待ち / no native acceptance**。
 
 ## 目的と観測位置
 
@@ -113,3 +113,13 @@ DR6 baseline比較等の追加後、関係fake10/10 pass（0.184秒）、全回�
 source保存・preflight・独立確認後、**この設定変更を含む限定診断を新規fixtureで1回だけ実施すること**を提示する。
 初期threadのdebug register設定1回と最大2197-byte読取りを含む。観測・不一致・失敗のいずれでも追加起動なし。
 前回のv2承認は消化済みで、この新しいdebug register変更を含まない。実機未実施のまま個別の返答を待つ。
+
+## 保存後の事前確認
+
+実装・試験・計画を5fc0276に保存した。read-only preflightは2.293秒、20 sources/228061 bytes、verified。
+Windows10.0.26200.9445/Python3.14.0、既存exe/python314.dll hash一致、resource_stop=false。
+execution_authenticated/launch_authorized/native_accepted/formal_permissionはfalse。実child/実SetThreadContextは未実施。
+ignored artifactsのinit-return-preflight.jsonへ保存した。これはsource/indexとruntimeの確認であり、停止点設定の実機成功を示さない。
+repository safety/diff-check pass、mainは基準889cfc3のままclean。
+PC空きRAM8.53→9.37 GiB、C105.06→105.04 GiB、D75.36 GiB。単発値からリーク有無は判断しない。
+次の返答がこの実行範囲への了承なら、新規fixtureで上記診断を1回実施し、最終reportと保存の確認を先に行う。

@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §58を最初に参照。KernelBaseの戻り直前の限定観測を実装・fake/独立レビュー済み。新しいdebug register設定を含むため、実機は未実施。§57の失敗bit/自然終了結果は保持。
+2026-09-10最新: §58を最初に参照。KernelBaseの戻り直前の限定観測を実装・fake/独立レビュー・preflight済み。新しいdebug register設定を含む限定実機1回の判断待ち。§57の失敗bit/自然終了結果は保持。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1153,3 +1153,10 @@ relocation表236492 bytes/117072 DIR64を有界解析した。初回64 KiB仮定
 fake10/10（0.184秒）、debug＋preflight/event全体158/158（1.104秒）pass。
 独立レビューは初回とDR6等の追加確認とも新規P0〜P3=0、最終指定fake10/10（0.197秒）pass。進捗ポーリングなし。
 次はsource保存・read-only preflightを完了し、計画の限定実機1回を判断対象として提示する。全acceptance gate no。
+
+実装保存5fc0276後のread-only preflightは2.293秒、20 sources/228061 bytes、verified、resource_stop=false。
+Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。init-return-preflight.jsonへ保存した。
+repository safety/diff-check pass、mainは基準889cfc3のままclean。
+PC空きRAM8.53→9.37 GiB、C105.06→105.04 GiB、D75.36 GiB。単発値からリーク有無は未判定。
+準備は完了。新規fixture1回、debug register設定最大1回、取得最大2197 bytes、既存予算/owned stopの範囲について返答を待つ。
+ユーザーがこの問いに「続けてください」と返答した場合は当該1回への了承として扱い、同じ了承を再確認しない。
