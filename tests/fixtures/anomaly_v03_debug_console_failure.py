@@ -91,6 +91,11 @@ class DebugConsoleFailure(DebugInitReturn):
             need(hashlib.sha256(self._read(self.base + rva, size, budget)).hexdigest() == digest,
                  "console_code_mismatch")
             self.row["code_windows_confirmed"] += 1
+        self._program_registers(budget)
+
+    def _program_registers(self, budget):
+        """Program four selected fixed targets once while the event is pending."""
+        need(self.state == "querying" and self.row["set_state"] == "not_started", "console_rearm")
         original = self._get(self.DEBUG_FLAGS, budget)
         self.row["original_debug_hex"] = bytes(self.context[72:120]).hex()
         need(original[:4] == (0, 0, 0, 0) and original[5] in (0, 0x400)

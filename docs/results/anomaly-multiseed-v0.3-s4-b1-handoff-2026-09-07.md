@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §67を最初に参照。bootstrap照合・継続が成功し、UNLOADなしで自然EXIT C0000142を観測。終了/保存確認済み。次のDLL候補取得用実装0b19750はpure/fake252件・独立実装レビューpass、24 sourceの保存後preflight verified。次の限定診断1回は未実施。
+2026-09-10最新: §68を最初に参照。初期化失敗地点でbcrypt.dllのLOAD/entry対応を取得、所有終了・証跡readback確認済み。次の内部4経路の候補実装はpure/fake259件・独立レビューpass、保存後preflight前。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1535,3 +1535,46 @@ init-failure-preflight.jsonへ保存。child起動・SetThreadContextなし、�
 この問いへの「お願いします」「続けてください」は当該1回への了承として扱い、同じ了承を再確認せず実行する。
 実行wrapper init-failure-once.pyは2736 bytes/hash2de5eb72f155257271d3c7aa638abc2373713dbe6e8a9e6010bbc0e72fc408c2、未実行。
 §6の追加probe条件を引き継ぎ、自動再試行なし。今回のbootstrap/unload観測1回への了承は消化済み。
+
+
+## 68. 2026-09-10 初期化失敗候補はbcrypt.dll、内部の4経路を一度に調べる準備
+
+ユーザーの「お願いします」を§67の1回への了承として、cleanなa76439b（実装0b19750）で新規fixture1回を実行。
+初期reportまで2.175秒、primary=init_failure_observed_stop、driver/observer failed、
+context completed/status confirmed、Set verified、secondaryなし、resource_stop=false。
+要求flags0x40e、通常19/Continue18、slot17 bootstrapを検証して継続、slot18で初期threadのntdll e86eにhit。
+R14D=C0000142/R12B=0、112 bytesのentryとconfirmed LOAD slot16からbcrypt.dllを候補として取得。
+SizeOfImage172032、callback RVA11140、flags2ca2ec（失敗bit書込み前）。
+callback FALSEや例外経路の別、特定API/根本原因は未判定。観測をchild E2E成功とは扱わない。
+
+bootstrap込みGet4/Set1/RPM5回1032 bytes。DR6 arm0/hitffff0ff1、DR7 arm1/hit401、各code/register/load照合。
+hitを通常Continueせずowned terminate→pending解放→drain4（thread3/process1、全code1）をContinue。
+signal/ownership解消/owned handles close/teardown pass/failure_count0/driver teardown failures0。
+自然EXIT未観測、code1は意図した終了処理の結果。fixture保持は存在unverified、cleanup/repairなし。
+
+private117499 bytes/hash494901a58011faa315f03acd029bfe0d3cacb8f91077f8df1c8191eb03d2621a、
+write/flush/file close確認済み。有界held-file read1回でevents/bootstrap/debug CONTEXT/entry/LOAD/launch/stop/hashを照合しreader close。
+全inflight false、未確定buffer領域zero。詳細は[初期化失敗地点の結果](anomaly-multiseed-v0.3-s4-b1-init-failure-result-2026-09-10.md)。
+
+同run preflight24 sources/262701 bytes、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+memory167 samples、親＋child peak commit26488832（25.26 MiB）/working36392960（34.71 MiB）。
+作業前後RAM7.71→8.55 GiB、C107.91→107.98/D75.36 GiB。last boot2026-09-09T10:43:08.5000000+09:00。
+UBR緩和を維持し状態として記録する。単発値からリーク有無は未判定。他project操作なし。
+
+現在bcrypt.dllを保存LOADのname/volume/file IDと照合して同一handleで1回有界readし、前後不変/close確認。
+file183376 bytes/hashb5691584e857caf0c6c590dda13779966b383d66be3c87d5b3cbbc2f5005495b。
+参照bytesをbcrypt-reference-entry.jsonへ保存し、以後はcacheのみでPE/code/importを調査。
+PDB/downloadなし。現在参照fileとの対応であり過去のloaded bytesやcallback実行の認証ではない。
+
+次の[bcrypt内部失敗値取得計画](anomaly-multiseed-v0.3-s4-b1-bcrypt-failure-plan-2026-09-10.md)は、
+検証済みbootstrapでDR0〜3へb270/b24d/b22d/1128dを1回設定する。
+前3地点は内部callからのEAX=EBX非zero値と固定caller slot8 bytes、後1地点はGetLastError後の生値を記録する。
+bootstrap込みGet4/Set1/RPM最大6回805 bytes、同じ時間/memory/disk/metadata条件。
+hitの通常Continueなし、所有終了処理のみ、再選択/再armなし。既定off/DETACHED+bootstrap必須/他collectorと排他。
+初回fakeで待機slot=Noneの照合不具合を検出し、選択済みarm/hit中の寿命照合へ修正、追加実機なし。
+
+関係fake47/47（2.935秒）、全体pure/fake259/259（5.006秒）、repository safety/diff-check pass。
+独立設計・実装点検は新規P0〜P3=0、担当の指定fake47/47（2.818秒）pass。
+担当のnative/wrapper/private参照/source変更なし、完了通知のみ、進捗ポーリングなし。
+本流889cfc3 clean。次は保存後read-only preflightを行い、新規fixtureで固定4地点から最初の1hitを取得する1回を提示する。
+今回のinit-failure1回への了承は消化済み。全acceptance gate no、本流統合/formal/B2/publisher未実施。
