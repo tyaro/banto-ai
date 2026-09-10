@@ -1951,3 +1951,38 @@ resource_stopfalse、primary/secondaryなし、Windows10.0.26200.9445/Python3.14
 最終09:17:16Zの空きRAM8.06 GiB、C108.38/D75.36 GiB、last bootは同じ。
 点の資源量からリーク有無を断定せず、別projectや既存失敗fixtureへの操作なしを維持。
 本流889cfc3 clean。今回追記は文書のみであり、source preflight・fake試験を再実行しない。
+
+
+## 75. 2026-09-10 子の実操作検証への到達とCWD/操作診断の修正
+
+ユーザー「続けてください」を準備済みruntime-machine control1回への了承として実行。
+実装6094466、clean HEAD60b1b70、wrapper3982 bytes/hash4292c3aefc011adfc7a204b76304ba3648e523c72eca2531babe11ec1413d9e9を実行前照合した。
+新規fixtureの1回だけで、既存fixture/同wrapper再利用・debug collector・SetThreadContextなし。
+[結果](anomaly-multiseed-v0.3-s4-b1-runtime-machine-result-2026-09-10.md)はexit37/operation_unexpected、core0.6436681000050157秒。
+保存sourceの順序から子のruntime/source/token/AccessCheck/trace初期確認を通過し_operationsへ到達。
+旧_needは実API errorを保持しないため、診断winerror0を実API成功とは解釈しない。操作名・実WinErrorは未確定。
+前回runtime_pinは観測されなかったが、前回の個別原因がCPUだけだったと遡って断定しない。
+control failed/cleanup not_started/teardown pass/resource_stopfalse、trace incomplete/0 records/0 bytes。
+private_controlなし/private_replace0 bytes、known_bytes5926、fixture存在・残量unverified。
+公開summary2086 bytes/hash0568e33c6a1c40abb478cb5f0a532021c7b3cdebe4a34744c585423bde02b882を既知pathから1回有界readして照合。
+runtime-machine-result-check.jsonへ保存。failed fixture再open/ACL修復/清掃/再利用なし。
+親＋子ピークprivate42.45 MiB/working52.96 MiB、実行内preflight27/285764 bytes verified、runtime hash一致。
+実行前09:28:51Z RAM7.88 GiB/C108.38/D75.36 GiB、Windows26200.9445、boot2026-09-09T10:43:08.5+09:00。
+
+[次候補](anomaly-multiseed-v0.3-s4-b1-operation-context-plan-2026-09-10.md)ではchildのCWDをcontrolから専用fixture.rootへ変更。
+親CWD・操作対象・全期待値・token・ACL・環境は維持。Microsoftのcurrent directory lock仕様に基づく干渉回避であり、
+旧37の唯一原因をCWD/WinError32と実測した主張ではない。
+operation_unexpectedだけ固定48操作IDの独立数値領域と実WinErrorで診断し、既存206理由ID/旧37を維持。
+資源errorを80へ優先し、任意case/パス/token/例外文を公開しない。
+positive mutation自体が例外を出す場合などは旧理由のままで操作IDが付かない場合がある。
+選抜87/87（0.557秒）、全pure/fake293/293（10.843秒）pass。
+独立差分レビュー新規P0〜P3=0、担当のnative/query/再試験/編集なし、進捗ポーリングなし。
+repository safety/diff-check pass。
+
+未実行operation-context-control-once.pyは4047 bytes/hash8dc7b3940930212f477c95b195a2960a0eac0c7bffadcea27784f77a113b0658。
+AST上harness呼出1箇所、新規summary先と保存source上CWDラベルの変更のみ。
+source保存後read-only preflightを完了した新規fixtureの次のcontrol1回を準備する。
+今回のruntime-machine1回の了承は消化済み。§6に従い自動反復せず、次の「お願いします」「続けてください」を次の1回への了承として扱う。
+RC＋Everyone/非昇格/必須操作/保護DACL、30秒/512 MiB未満/temp空き1 GiB以上と資源停止後の追加hash/save/scan禁止を維持。
+別project操作・既存fixture操作・追加権限は含まない。成功時もnative_accepted/s4_accepted/formal_permission/execution_authenticated=false。
+Python3.12既定受入・本流統合・formal/B2/publisherは閉じたまま。UBR緩和と状態記録を維持する。

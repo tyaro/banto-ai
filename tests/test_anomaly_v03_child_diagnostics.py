@@ -62,6 +62,45 @@ class ChildDiagnostics(unittest.TestCase):
                          {"phase": "child_call", "reason": "runtime_pin", "winerror": 0})
         self.assertEqual(self.invoke(w._Failure("runtime_pin"))[0], 278331392)
 
+    def test_operation_expectations_keep_all_required_cases_and_reject_wrong_results(self):
+        expected_cases = {f"{mode}.{category}.{key}" for mode, groups in w._expected_operations().items()
+                          for category, entries in groups.items() for key in entries}
+        self.assertEqual(set(w._CHILD_OPERATION_CASES), expected_cases)
+        self.assertEqual(len(w._CHILD_OPERATION_CASES), 48)
+        codes = set()
+        for case in w._CHILD_OPERATION_CASES:
+            mode, category, key = case.split(".")
+            w._operation_expectation(mode, category, key, 0 if mode == "control" else 5)
+            unexpected = 32 if mode == "control" else 0
+            with self.subTest(case=case), self.assertRaises(w._Failure) as caught:
+                w._operation_expectation(mode, category, key, unexpected)
+            code, _ = self.invoke(caught.exception)
+            self.assertNotIn(code, codes)
+            self.assertLess(code, 2**31)
+            codes.add(code)
+            self.assertEqual(w._child_failure_diagnostic(code),
+                             {"phase": "child_call", "reason": "operation_unexpected",
+                              "operation_case": case, "winerror": unexpected})
+
+    def test_operation_metadata_is_allowlisted_and_resource_stop_still_wins(self):
+        for number in w._CHILD_RESOURCE_ERRORS:
+            failure = w._Failure("operation_unexpected", number)
+            failure.operation_case = "control.directory_right_open.delete"
+            self.assertEqual(self.invoke(failure)[0], 80)
+        foreign = w._Failure("operation_unexpected", 32)
+        foreign.operation_case = "DUMMY_PRIVATE"
+        self.assertEqual(w._child_failure_diagnostic(self.invoke(foreign)[0]),
+                         {"phase": "child_call", "reason": "operation_unexpected", "winerror": 32})
+        other = w._Failure("object_open", 5)
+        other.operation_case = "control.directory_right_open.delete"
+        self.assertEqual(w._child_failure_diagnostic(self.invoke(other)[0]),
+                         {"phase": "child_call", "reason": "object_open", "winerror": 5})
+        self.assertEqual(self.invoke(w._Failure("operation_unexpected"))[0], 37)
+        self.assertEqual(w._child_failure_diagnostic(37),
+                         {"phase": "child_call", "reason": "operation_unexpected", "winerror": 0})
+        for code in (0x20000005, 0x20310005, 0x20ff0005, 0x20010005 + 2**32):
+            self.assertIsNone(w._child_failure_diagnostic(code))
+
     def test_bootstrap_and_child_exceptions_are_distinct_and_redacted(self):
         for kind in (*w._CHILD_EXCEPTION_TYPES, Exception):
             for bootstrap in (False, True):

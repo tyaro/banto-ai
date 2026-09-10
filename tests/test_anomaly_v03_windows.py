@@ -58,7 +58,8 @@ class PureWindowsControls(unittest.TestCase):
         self.assertEqual(args[3:7], (None, None, False, 0x40C))
         self.assertEqual(args[7][:].rstrip("\0"), "SystemRoot=C:\\Windows\0TEMP="
                          + str(fixture.root.parent) + "\0TMP=" + str(fixture.root.parent))
-        self.assertEqual(args[8], str(fixture.root / "control"))
+        self.assertEqual(args[8], str(fixture.root))
+        self.assertNotIn(args[8], [str(fixture.root / mode) for mode in w._expected_operations()])
         startup = args[9]._obj
         self.assertEqual(startup.desktop, "")
         self.assertEqual(startup.flags, 0)
@@ -1153,6 +1154,42 @@ class PureWindowsControls(unittest.TestCase):
             with self.subTest(error=error), patch.object(w.C, "get_last_error", return_value=error), \
                  patch.object(w, "_Bound") as bound, self.assertRaises(w._Failure):
                 w._operations(api, Path("owned"), "user", {})
+            api.k.CreateFileW.assert_called_once()
+            api.close.assert_not_called()
+            bound.assert_not_called()
+
+    def test_each_positive_right_open_retains_its_case_and_native_error(self):
+        root = Path("owned")
+        cases = [("file_right_open", key, mask, root / "control/data.bin") for key, mask in w._FILE_RIGHTS.items()]
+        cases += [("directory_right_open", key, mask, root / "control") for key, mask in w._DIR_RIGHTS.items()]
+        for index, (category, key, mask, path) in enumerate(cases):
+            api = Mock()
+            def opening(name, requested, *args):
+                return ctypes.c_void_p(-1).value if (name, requested) == (str(path), mask) else 7
+            api.k.CreateFileW.side_effect = opening
+            with self.subTest(category=category, key=key), \
+                 patch.object(w.C, "get_last_error", return_value=32), \
+                 patch.object(w, "_Bound") as bound, self.assertRaises(w._Failure) as caught:
+                w._operations(api, root, "user", {})
+            self.assertEqual((caught.exception.reason, caught.exception.error), ("operation_unexpected", 32))
+            self.assertEqual(w._child_failure_diagnostic(w._child_failure_exit(caught.exception)),
+                             {"phase": "child_call", "reason": "operation_unexpected",
+                              "operation_case": f"control.{category}.{key}", "winerror": 32})
+            self.assertEqual(api.k.CreateFileW.call_count, index + 1)
+            self.assertEqual(api.close.call_count, index)
+            bound.assert_not_called()
+            api.k.MoveFileW.assert_not_called()
+
+    def test_resource_failure_of_right_open_reaches_child_stop_code(self):
+        for error in w._CHILD_RESOURCE_ERRORS:
+            api = Mock()
+            api.k.CreateFileW.return_value = ctypes.c_void_p(-1).value
+            with self.subTest(error=error), patch.object(w.C, "get_last_error", return_value=error), \
+                 patch.object(w, "_Bound") as bound, self.assertRaises(w._Failure) as caught:
+                w._operations(api, Path("owned"), "user", {})
+            self.assertEqual(caught.exception.error, error)
+            self.assertEqual(w._child_failure_exit(caught.exception), 80)
+            self.assertFalse(hasattr(caught.exception, "operation_case"))
             api.k.CreateFileW.assert_called_once()
             api.close.assert_not_called()
             bound.assert_not_called()

@@ -138,6 +138,27 @@ _CHILD_LEGACY_REASONS = ("child_scope", "child_profile", "child_source", "object
 _CHILD_EXCEPTION_TYPES = (ModuleNotFoundError, ImportError, PermissionError, FileNotFoundError,
                           OSError, ValueError, TypeError, KeyError, AttributeError, RuntimeError, SystemExit)
 _CHILD_RESOURCE_ERRORS = (8, 14, 39, 112, 1450, 1455, 1816)
+# Separate append-only operation IDs; fixed labels, never filesystem paths.
+_CHILD_OPERATION_CASES = tuple("""
+control.file_right_open.write control.file_right_open.append control.file_right_open.write_ea
+control.file_right_open.write_attributes control.file_right_open.delete
+control.directory_right_open.add_file control.directory_right_open.add_subdirectory
+control.directory_right_open.write_ea control.directory_right_open.write_attributes
+control.directory_right_open.delete control.directory_right_open.delete_child
+control.mutation.write control.mutation.append control.mutation.file_ea control.mutation.file_attributes
+control.mutation.directory_ea control.mutation.directory_attributes control.mutation.delete
+control.mutation.add_file control.mutation.add_subdirectory control.mutation.delete_child
+control.mutation.truncate control.mutation.rename control.mutation.replace
+frozen.file_right_open.write frozen.file_right_open.append frozen.file_right_open.write_ea
+frozen.file_right_open.write_attributes frozen.file_right_open.delete
+frozen.directory_right_open.add_file frozen.directory_right_open.add_subdirectory
+frozen.directory_right_open.write_ea frozen.directory_right_open.write_attributes
+frozen.directory_right_open.delete frozen.directory_right_open.delete_child
+frozen.mutation.write frozen.mutation.append frozen.mutation.file_ea frozen.mutation.file_attributes
+frozen.mutation.directory_ea frozen.mutation.directory_attributes frozen.mutation.delete
+frozen.mutation.add_file frozen.mutation.add_subdirectory frozen.mutation.delete_child
+frozen.mutation.truncate frozen.mutation.rename frozen.mutation.replace
+""".split())
 
 
 def _child_failure_exit(error):
@@ -151,6 +172,9 @@ def _child_failure_exit(error):
             return 172
         if type(error.error) is not int or not 0 <= error.error <= 65535:
             return 173  # Do not truncate or alias an unrepresentable error number.
+        case = getattr(error, "operation_case", None)
+        if error.reason == "operation_unexpected" and type(case) is str and case in _CHILD_OPERATION_CASES:
+            return 0x20000000 | ((_CHILD_OPERATION_CASES.index(case) + 1) << 16) | error.error
         if not error.error and error.reason in _CHILD_LEGACY_REASONS:
             return 32 + _CHILD_LEGACY_REASONS.index(error.reason)
         return 0x10000000 | ((_CHILD_FAILURE_REASONS.index(error.reason) + 1) << 16) | error.error
@@ -172,6 +196,9 @@ def _child_failure_diagnostic(code):
     if code in (172, 173):
         return {"phase": "child_call", "reason": "unknown_failure" if code == 172 else "unrepresentable_winerror"}
     index = ((code >> 16) & 0xff) - 1
+    if code & 0xff000000 == 0x20000000 and 0 <= index < len(_CHILD_OPERATION_CASES):
+        return {"phase": "child_call", "reason": "operation_unexpected",
+                "operation_case": _CHILD_OPERATION_CASES[index], "winerror": code & 0xffff}
     if code & 0xff000000 == 0x10000000 and 0 <= index < len(_CHILD_FAILURE_REASONS):
         return {"phase": "child_call", "reason": _CHILD_FAILURE_REASONS[index], "winerror": code & 0xffff}
     return None
@@ -1474,8 +1501,10 @@ def _start(api, token, fixture):
     command = C.create_unicode_buffer(subprocess.list2cmdline(arguments))
     environment = C.create_unicode_buffer("SystemRoot="+os.environ["SystemRoot"]+"\0TEMP="+str(fixture.root.parent)
                                          +"\0TMP="+str(fixture.root.parent)+"\0\0")
+    # Windows locks a process's current directory against deletion/rename.
+    # Keep that lock on the fixture root, outside both operation-matrix targets.
     api.call(api.a.CreateProcessAsUserW(token, sys.executable, command, None, None, False,
-                                      0x8 | 0x400 | 4, environment, str(fixture.root/"control"),
+                                      0x8 | 0x400 | 4, environment, str(fixture.root),
                                       C.byref(startup), C.byref(process)), "restricted_process_prerequisite")
     return process
 
@@ -1964,6 +1993,14 @@ def _replace_control(api, root, user, ledger, trace=None):
         raise
 
 
+def _operation_expectation(mode, category, key, error):
+    if error != (0 if mode == "control" else 5):
+        failure = _Failure("operation_unexpected", error)
+        if error not in _CHILD_RESOURCE_ERRORS:
+            failure.operation_case = f"{mode}.{category}.{key}"
+        raise failure
+
+
 def _operations(api, root, user, ledger, *, replace_trace=None):
     result = {mode: {"file_right_open": {}, "directory_right_open": {}, "mutation": {}} for mode in ("control", "frozen")}
     for mode in ("control", "frozen"):
@@ -1976,7 +2013,7 @@ def _operations(api, root, user, ledger, *, replace_trace=None):
             if not invalid:
                 api.close(h)
             _need(not invalid or error != 0, "right_open_error_missing")
-            _need(error == (0 if mode == "control" else 5), "operation_unexpected")
+            _operation_expectation(mode, "file_right_open", key, error)
             result[mode]["file_right_open"][key] = error
         for key, mask in _DIR_RIGHTS.items():
             h = api.k.CreateFileW(str(directory), mask, 7, None, 3, 0x02200000, None)
@@ -1985,7 +2022,7 @@ def _operations(api, root, user, ledger, *, replace_trace=None):
             if not invalid:
                 api.close(h)
             _need(not invalid or error != 0, "right_open_error_missing")
-            _need(error == (0 if mode == "control" else 5), "operation_unexpected")
+            _operation_expectation(mode, "directory_right_open", key, error)
             result[mode]["directory_right_open"][key] = error
         def attempt(key, operation):
             try:
@@ -2008,7 +2045,7 @@ def _operations(api, root, user, ledger, *, replace_trace=None):
                     raise
                 error = exc.error
             result[mode]["mutation"][key] = error
-            _need(error == (0 if mode == "control" else 5), "operation_unexpected")
+            _operation_expectation(mode, "mutation", key, error)
         def write_data(append=False, truncate=False):
             bound = _Bound(api, file, directory=False, access=0x80 | (4 if append else 2))
             with _Closing(bound.close):

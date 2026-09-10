@@ -1,6 +1,8 @@
 # S4-B1 実行環境のCPU構成をWindows APIで確認する修正
 
-状態: **修正・pure/fake289件・独立レビュー・保存後preflight完了。修正済みcontrol1回への返答待ち、修正後のchildは未実行**。
+状態: **ユーザー「続けてください」によりcontrol1回を実施済み。子のruntime検査を通過し、operation_unexpectedで停止**。
+[実行結果](anomaly-multiseed-v0.3-s4-b1-runtime-machine-result-2026-09-10.md)を参照。
+以下の未実行・返答待ち表記は準備時点の履歴。同じwrapperを再実行しない。
 直前の診断1回はchild_call/runtime_pinで停止した。個別の不一致項目は未観測。
 今回の修正が実機の唯一原因を解消したとは、追加実測前には主張しない。
 
