@@ -1,6 +1,6 @@
 # S4-B1 初期化失敗経路のDLL候補の限定取得
 
-状態: **候補実装・全体pure/fake・独立実装レビュー完了 / 保存後preflight前 / 実機未実施**。
+状態: **候補実装・全体pure/fake・独立実装レビュー・保存後preflight完了 / 実機未実施**。
 
 ## 観測対象
 
@@ -62,7 +62,7 @@ field解釈前raw保持、load寿命照合、callback候補と実行事実の区
 関係fake41/41 pass（1.891秒）。bootstrapと失敗hitの全経路、Get4/Set1/RPM5、
 flag未設定/設定済み/NULL callback、設定・readback・pending・hit/context/read/field不一致、OOM、
 不一致例外後の再選択禁止、hitなし終了、既存return/bootstrapとの回帰を確認した。
-全体回帰・独立実装レビュー・保存後preflightを追記する。
+全体回帰・独立実装レビュー・保存後preflightの結果は下記に記録した。
 
 準備完了後、新規専用fixture1個でこの固定停止点の設定・取得・所有終了処理を1回実施することを判断対象にする。
 引継書§6の追加probe条件を維持し、具体的な問いへの「続けてください」は当該1回への了承として扱う。
@@ -77,3 +77,16 @@ flag未設定/設定済み/NULL callback、設定・readback・pending・hit/con
 書込み前flags/NULL callback、module候補の解釈、取得上限・単一実行・report資源停止を確認した。
 担当はnative/wrapper実行/private証跡参照/source変更なし、完了通知のみで進捗ポーリングなし。
 作業前後の空きRAM7.48→8.26 GiB、C107.92/D75.36 GiB。本流889cfc3はclean、追加実機なし。
+
+## 保存後の事前確認と実行範囲
+
+実装・試験・結果・計画を0b19750へ保存した。保存後のread-only preflightは2.403秒、
+24 sources/262701 bytes、verified、resource_stop=false、primary/secondaryなし。
+Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+init-failure-preflight.jsonへ保存。child起動・SetThreadContextなし、全acceptance gate no。
+
+準備は完了。新規専用fixture1個で、検証済みbootstrapから固定失敗地点を設定し、
+DLL候補情報を取得して所有終了処理まで行う診断1回への返答を待つ。
+取得上限はbootstrap込みGet4/Set1/RPM5回1032 bytes、既存時間・memory・disk・終了処理条件を維持する。
+この具体的な問いへの「お願いします」「続けてください」は当該1回への了承として扱い、同じ了承は再確認しない。
+wrapperは上記2736 bytes/hashの未実行版を用い、自動再試行しない。

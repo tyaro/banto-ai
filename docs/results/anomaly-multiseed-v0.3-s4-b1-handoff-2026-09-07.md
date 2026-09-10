@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §67を最初に参照。bootstrap照合・継続が成功し、UNLOADなしで自然EXIT C0000142を観測。終了/保存確認済み。初期化失敗経路のDLL候補を取得する候補はpure/fake252件・独立実装レビューpass。保存後preflight前。
+2026-09-10最新: §67を最初に参照。bootstrap照合・継続が成功し、UNLOADなしで自然EXIT C0000142を観測。終了/保存確認済み。次のDLL候補取得用実装0b19750はpure/fake252件・独立実装レビューpass、24 sourceの保存後preflight verified。次の限定診断1回は未実施。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1524,3 +1524,14 @@ bootstrap込みGet4/Set1/RPM5回1032 bytes、同じ時間/memory/disk/metadata�
 独立実装レビューは新規P0〜P3=0、指定fake41/41（2.924秒）pass。担当のnative/private/source変更なし。
 完了通知のみ、進捗ポーリングなし。作業後RAM8.26 GiB、C107.92/D75.36 GiB。本流889cfc3 clean。
 次はsource保存後read-only preflightで準備を完了し、固定失敗地点の設定/取得を新規fixtureで1回行う範囲を提示する。
+
+
+実装・試験・結果・計画を0b19750へ保存した。保存後read-only preflightは2.403秒、24 sources/262701 bytes、
+verified、resource_stop=false、primary/secondaryなし、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+init-failure-preflight.jsonへ保存。child起動・SetThreadContextなし、全acceptance gate no。
+
+準備は完了。検証済みbootstrapから固定失敗地点を設定し、DLL候補情報を取得して所有終了処理まで行う、
+新規fixture診断1回への返答を待つ。bootstrap込みGet4/Set1/RPM5回1032 bytes、既存時間・memory・disk・終了処理条件。
+この問いへの「お願いします」「続けてください」は当該1回への了承として扱い、同じ了承を再確認せず実行する。
+実行wrapper init-failure-once.pyは2736 bytes/hash2de5eb72f155257271d3c7aa638abc2373713dbe6e8a9e6010bbc0e72fc408c2、未実行。
+§6の追加probe条件を引き継ぎ、自動再試行なし。今回のbootstrap/unload観測1回への了承は消化済み。
