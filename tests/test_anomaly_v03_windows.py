@@ -33,7 +33,7 @@ def parent_profile():
 
 def restricted_profile():
     value = parent_profile()
-    value.update(token_id="4", modified_id="5", restricted=[[w._COMPATIBILITY_PACKAGES, 7], [w._RC, 7]],
+    value.update(token_id="4", modified_id="5", restricted=[[w._COMPATIBILITY_SID, 7], [w._RC, 7]],
                  privileges=[["SeChangeNotifyPrivilege", 3]])
     return value
 
@@ -963,14 +963,15 @@ class PureWindowsControls(unittest.TestCase):
 
     def test_compatibility_restrictions_reject_missing_extra_duplicate_and_bad_attributes(self):
         parent, child = parent_profile(), restricted_profile()
-        expected = [[w._COMPATIBILITY_PACKAGES, 7], [w._RC, 7]]
-        self.assertEqual(w._RESTRICTING_SIDS, (w._RC, "S-1-15-2-1"))
+        expected = [[w._COMPATIBILITY_SID, 7], [w._RC, 7]]
+        self.assertEqual(w._RESTRICTING_SIDS, (w._RC, "S-1-1-0"))
         for restricted in (expected[:1], expected[1:], list(reversed(expected)),
-                           expected + [expected[1]], expected + [["S-1-1-0", 7]],
+                           expected + [expected[1]], expected + [["S-1-5-11", 7]],
                            [["S-1-15-2-2", 7], [w._RC, 7]],
+                           [["S-1-15-2-1", 7], [w._RC, 7]],
                            [[w._RC, 7], ["S-1-5-18", 7]],
-                           [[w._COMPATIBILITY_PACKAGES, 7], [w._RC, 0]],
-                           [[w._COMPATIBILITY_PACKAGES, 4], [w._RC, 7]]):
+                           [[w._COMPATIBILITY_SID, 7], [w._RC, 0]],
+                           [[w._COMPATIBILITY_SID, 4], [w._RC, 7]]):
             with self.subTest(restricted=restricted), self.assertRaises(w._Failure) as caught:
                 w._validate_restricted(parent, {**child, "restricted": restricted})
             self.assertEqual(caught.exception.reason, "restricted_sids")
@@ -979,7 +980,7 @@ class PureWindowsControls(unittest.TestCase):
         # Run the real profile parser on owned fake buffers, including its SID sort.
         api = Mock()
         identifiers = {501: parent_profile()["user"][0], 502: "S-1-16-8192",
-                       503: "S-1-5-32-544", 504: w._RC, 505: w._COMPATIBILITY_PACKAGES}
+                       503: "S-1-5-32-544", 504: w._RC, 505: w._COMPATIBILITY_SID}
         api.sid.side_effect = identifiers.__getitem__
         def groups(rows):
             raw = ctypes.create_string_buffer(w._Groups.rows.offset + len(rows) * ctypes.sizeof(w._SidAttr))
@@ -1003,7 +1004,7 @@ class PureWindowsControls(unittest.TestCase):
         for native_order in ([(504, 7), (505, 7)], [(505, 7), (504, 7)]):
             buffers[11] = groups(native_order)
             profile = w._Win.profile(api, 401)
-            self.assertEqual(profile["restricted"], [[w._COMPATIBILITY_PACKAGES, 7], [w._RC, 7]])
+            self.assertEqual(profile["restricted"], [[w._COMPATIBILITY_SID, 7], [w._RC, 7]])
             parent = {**parent_profile(), "authentication_id": profile["authentication_id"]}
             w._validate_restricted(parent, profile)
         buffers[11] = groups([(504, 7), (504, 7)])
@@ -1015,9 +1016,9 @@ class PureWindowsControls(unittest.TestCase):
         api = Mock()
         api.call.side_effect = lambda ok, reason: w._need(ok, reason)
         api.profile.return_value = restricted_profile()
-        ids = {"S-1-5-32-544": 701, w._RC: 702, w._COMPATIBILITY_PACKAGES: 703}
+        ids = {"S-1-5-32-544": 701, w._RC: 702, w._COMPATIBILITY_SID: 703}
         def sid(value, pointer):
-            if fail_compatibility_sid and value == w._COMPATIBILITY_PACKAGES:
+            if fail_compatibility_sid and value == w._COMPATIBILITY_SID:
                 return False
             pointer._obj.value = ids[value]
             return True

@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §72を最初に参照。RC＋制限アプリ候補14e2f53はtoken作成Error87、child/fixture未作成、結果df09964へ保存。ユーザー了承範囲で実測されたもう一方のAllApplicationPackagesを固定候補として準備、選抜70件pass・独立確認中。本流統合・formal未許可。
+2026-09-10最新: §72を最初に参照。2種類のpackage候補はtoken作成Error87、child/fixture未作成・teardown pass。実機試行を打ち切り、RC＋Everyoneの未実行candidateを準備（選抜70件・独立レビューpass）。許可範囲が広がるため、保存後preflightのうえ新規control1回へのユーザー判断待ち。本流/formal未許可。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1826,3 +1826,24 @@ ARAP一般禁止や唯一原因とは断定せず、同候補の再実行なし�
 前計画のARAP優先選定を、ユーザー了承済み見直し範囲で更新する。広いEveryone/user/admin/system追加はしない。
 変更3ファイル、選抜70/70(0.237秒)pass、独立確認中。新規device queryなし。
 この候補もtoken作成に失敗ならSID試行を打ち切る。本流/formal gateは閉鎖を維持する。
+
+
+AllApplicationPackages候補はc795b05へ保存。独立差分レビュー新規P0〜P3=0、
+保存後preflight2.651秒、27/278084 bytes、verified。新規control1回は再びrestricted_token_create/WinError87。
+core0.221246秒、child/fixture未作成、teardown pass/resource_stopfalse、private control/replaceなし。
+実行内preflightもverified、runtime hash一致。ここでSIDを替える実機試行を打ち切った。
+2候補のsummaryは各1444 bytes、ARAP hashadc2b952ff73a399b52f2ad0263606eaa9818b66f552f1257a78dcd4138b5ee0、
+AAP hash9e6d0545dddc5e4f101bb1ac986b8349a3204598b3cb281615983986848fea16。
+既知pathから各1回有界readで結果照合、package-candidates-result-check.jsonへ保存。
+fixture再open/追加native/新規ACL操作なし。[2候補の結果](anomaly-multiseed-v0.3-s4-b1-token-compatibility-result-2026-09-10.md)を参照。
+
+[RC＋Everyoneの判断資料](anomaly-multiseed-v0.3-s4-b1-world-compatibility-plan-2026-09-10.md)と未実行candidateを準備した。
+これは前判断資料の「Everyoneのような広いgrantを自動採用しない」範囲なので、新しいユーザー判断が必要。
+固定RC＋Everyone、属性7/canonical順序、flags9、normal groups/privilege削減/非昇格、protected DACLを維持。
+既存Everyone allowにより他objectへの許可が広がりうること、KsecDD専用・RCとのAND・隔離同等ではないことを明記した。
+core定数名/値と対応fakeを更新、選抜70/70（0.219秒）pass。新規nativeは実行していない。
+独立差分・計画レビュー新規P0〜P3=0、担当のnative/query/再試験/編集なし、進捗ポーリングなし。
+未実行world-compatibility-control-once.pyは3891 bytes/hash1c1a92734ce87ea8d3988cd2a3653fb2d096b93a074cf415e7d394607d207348。
+保存後preflightを完了した具体的候補で、専用fixture1個のcontrolを1回行うか判断を求める。
+この問いへの「お願いします」「続けてください」は当該1回への了承として扱い、同じ了承を再確認しない。
+前2候補を再実行する指示へ読み替えない。本流統合・formal/B2/publisherの許可を含まない。

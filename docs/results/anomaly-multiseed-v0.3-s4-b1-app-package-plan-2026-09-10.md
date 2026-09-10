@@ -1,6 +1,9 @@
 # S4-B1 AllApplicationPackages互換性候補
 
-状態: **ユーザー了承済み見直し方針の次候補 / 実装・選抜70件pass / native未実施**。
+状態: **c795b05でnative1回実施済み / token作成WinError87 / child・fixture未作成**。
+
+[2候補の結果](anomaly-multiseed-v0.3-s4-b1-token-compatibility-result-2026-09-10.md)が最新状態である。
+以下の未実施・未実行表記は実行前の履歴。同じ候補の再実行はしない。
 
 [RC＋AllRestrictedApplicationPackages候補](anomaly-multiseed-v0.3-s4-b1-token-compatibility-result-2026-09-10.md)は、
 CreateRestrictedTokenでWinError87となり、child/fixtureを作成する前に終了した。
