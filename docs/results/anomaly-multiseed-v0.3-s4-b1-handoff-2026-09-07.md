@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §65を最初に参照。DETACHED通常childは0xC0000142で失敗し、teardown pass・失敗fixture保持。E2E未達。DETACHEDで最初のUNLOADを観測する候補はpure/fake235件・独立レビュー是正確認pass。保存後preflight前。
+2026-09-10最新: §65を最初に参照。DETACHED通常childは0xC0000142で失敗し、teardown pass・失敗fixture保持。E2E未達。DETACHEDで最初のUNLOADを観測する候補はpure/fake235件・独立レビュー是正確認pass。修正021956cを保存し、22 sourcesのread-only preflightもverified。追加実機は未実施。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1430,3 +1430,13 @@ MemoryErrorをownerへlatchして再送出し、先行flush済みの最終行を
 完了通知だけを利用し進捗ポーリングなし。担当のnative/private操作なし。
 最終空きRAM7.74 GiB、C107.92/D75.36 GiB。本流889cfc3 clean、追加実機なし。
 次は保存後read-only preflightを行い、DETACHED指定の最初のUNLOAD観測1回を提示する。
+
+
+修正・試験・結果・計画を021956cへ保存した。保存後read-only preflightは2.028秒、
+22 sources/242703 bytes、verified、resource_stop=false、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+detached-unload-preflight.jsonへ保存。child起動・SetThreadContextなし、全acceptance gate no。
+
+準備は完了。次はDETACHED指定の最初の通常UNLOADを、新規fixture1個/Get最大1/RPM最大5回3107 bytes/Setなし、
+既存時間・memory・disk・owned stop条件で1回だけ実施することへの返答を待つ。§6の追加probeの条件を引き継ぐ。
+この問いへの「続けてください」は当該1回への了承として扱い、同じ了承を再確認せず実行する。自動再試行なし。
+実行wrapper detached-unload-once.pyは2427 bytes/hashb8ce387f512c150804a6e4de9b6c596f2f5bc063eee7f3e004d4f83a0c8112a7。

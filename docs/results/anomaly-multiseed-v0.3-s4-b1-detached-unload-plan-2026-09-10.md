@@ -1,6 +1,6 @@
 # S4-B1 DETACHED条件での最初のDLL UNLOAD観測
 
-状態: **候補修正・全体回帰・独立レビュー完了 / 保存後preflight前 / 実機未実施**。
+状態: **候補修正・全体回帰・独立レビュー・保存後preflight完了 / 実機未実施**。
 
 ## 目的と最小変更
 
@@ -79,3 +79,16 @@ images・hash・JSON構築中のOOMを注入し、最終1行の保持、同じ�
 是正確認の追加差分は新規P0〜P3=0、report fake5/5（0.001秒）pass。
 担当は実機・wrapper実行・private証跡参照・source変更をせず、完了通知だけを利用した。進捗ポーリングなし。
 修正後の空きRAM7.74 GiB、C107.92/D75.36 GiB。mainは889cfc3でclean、追加実機は未実施。
+
+
+## 保存後preflightと次の1回
+
+実装・試験・通常control結果・次の計画を021956cへ保存した。
+保存後read-only preflightは2.028秒、22 sources/242703 bytes、verified、resource_stop=false。
+Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。detached-unload-preflight.jsonへ保存した。
+child起動・SetThreadContextなし、全acceptance gate no。限定診断の準備は完了。
+
+次の判断対象は、新規fixture1個でDETACHED指定の最初の通常UNLOADを1回だけ観測すること。
+Get最大1回、RPM最大5回3107 bytes、Setなし、既存30秒/256 events/親＋child512 MiB予算とowned stopを維持する。
+この問いへの「続けてください」は当該1回への了承として扱い、clean状態/wrapper hashを確認後、同じ了承を再確認せず実行する。
+条件不一致・失敗時の自動再試行なし。自然EXITと強制停止、未観測と検査失敗、証跡保存結果を分けて記録する。
