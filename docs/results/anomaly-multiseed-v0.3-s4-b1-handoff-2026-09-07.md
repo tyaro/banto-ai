@@ -1215,3 +1215,12 @@ baseline差分も同じmaskで比較し、全返却bytesを保持。BLD/RTM/rese
 
 独立差分レビュー新規P0〜P3=0、指定fake12/12（0.377秒）pass。API表現とhardware状態の区別を維持する。
 担当の完了通知を利用し進捗ポーリングなし。独立担当はnative実行/private証跡参照を行っていない。
+
+
+v3修正・試験・v2結果を2127527に保存。保存後read-only preflightは2.178秒、20 sources/229453 bytes、verified、resource_stop=false。
+Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。init-return-v3-preflight.jsonへ保存した。
+今回のpreflightによるchild起動・SetThreadContextなし、全acceptance gate no。repository safety/diff-check pass、mainは基準889cfc3のままclean。
+保存時のPC空きRAM9.97 GiB、C105.23 GiB、D75.36 GiB。単発値からリーク有無は未判定。
+
+v3準備は完了。v2の1回承認は消化済みで、同じ上限（Get最大3/Set最大1/RPM最大3回2197 bytes）の新規fixture1回について返答を待つ。
+この問いへの「続けてください」は当該v3の1回への了承として扱い、再確認せず実行する。失敗しても自動再試行しない。

@@ -1,6 +1,6 @@
 # S4-B1 KernelBase初期化の戻り直前を観測する限定診断
 
-状態: **v1/v2各1回終了 / v3のDR6判定修正・fake/独立レビュー完了 / v3実機未実施 / no native acceptance**。
+状態: **v1/v2各1回終了 / v3修正保存・fake/独立レビュー/preflight完了 / v3限定1回の返答待ち・実機未実施 / no native acceptance**。
 
 [v2の実機結果](anomaly-multiseed-v0.3-s4-b1-init-return-v2-result-2026-09-10.md)を参照。
 v1の未保存値は未確定のまま。v2では要求/返却値を保存し、DR6要求0x10800に対してAPI返却0だけが不一致と判明した。
@@ -155,3 +155,16 @@ v2承認1回は消化済み。v3を自動実行せず、同じ取得・時間・
 
 独立新規P0〜P3=0、指定fake12/12（0.377秒）pass。API値からhardware状態を推測しない留保を維持する。
 担当の完了通知を利用し、進捗ポーリングなし。
+
+
+## v3保存後の事前確認と再開条件
+
+v3修正・試験・v2結果を2127527に保存した。read-only preflightは2.178秒、20 sources/229453 bytes、verified、resource_stop=false。
+Windows10.0.26200.9445/Python3.14.0、既存exe/python314.dll hash一致。init-return-v3-preflight.jsonへ保存済み。
+execution_authenticated/launch_authorized/native_accepted/formal_permissionはfalse。今回のpreflightはchild起動・SetThreadContextを行っていない。
+repository safety/diff-check pass、mainは基準889cfc3のままclean。
+保存時のPC空きRAM9.97 GiB、C105.23 GiB、D75.36 GiB。単発値からリーク有無は判断しない。
+
+v2で了承された1回は終了した。次の判断対象は、**修正版v3を同じ上限で新規fixtureから1回実施すること**。
+Get最大3回/Set最大1回/RPM最大3回2197 bytes、既存の時間・memory・disk・owned stop条件を維持する。
+この問いへの「続けてください」は当該v3の1回への了承として扱い、再確認せず実行する。失敗しても自動再試行しない。

@@ -81,3 +81,9 @@ PC空きRAM8.46→9.36 GiB、C105.72→105.71 GiB、D75.36 GiB。単発値から
 追加DLL/PDB読取り・download・常駐helper・他project操作なし。
 次はv3保存・事前確認後、[同じ範囲の限定実機1回](anomaly-multiseed-v0.3-s4-b1-init-return-plan-2026-09-10.md)を判断対象とする。
 本流統合、child E2E成功、native受入、formal permissionは未達。
+
+
+v3修正・試験と本結果を2127527に保存。保存後のread-only preflightは2.178秒、20 sources/229453 bytes、verified、resource_stop=false。
+Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。init-return-v3-preflight.jsonへ保存済み。
+この事前確認でchild起動・SetThreadContextは行っていない。v3実機の限定1回について別の返答を待つ。
+repository safety/diff-check pass、mainは基準889cfc3のままclean。保存時の空きRAM9.97 GiB、C105.23 GiB、D75.36 GiB。
