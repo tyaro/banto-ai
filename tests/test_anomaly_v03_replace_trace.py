@@ -320,7 +320,8 @@ class ReplacementTraceTests(unittest.TestCase):
         wrapper = compile(w._CHILD.read_bytes(), str(w._CHILD), "exec")
         original_import = builtins.__import__
         for module in ("pathlib", "banto_ai._anomaly_v03_windows"):
-            for error, expected in ((MemoryError(), w._CHILD_RESOURCE_EXIT), (ImportError(), 1)):
+            # Bootstrap ImportError has a fixed wire code even before the shared classifier imports.
+            for error, expected in ((MemoryError(), w._CHILD_RESOURCE_EXIT), (ImportError(), 97)):
                 def import_with_failure(name, *args, **kwargs):
                     if name == module:
                         raise error
@@ -332,7 +333,7 @@ class ReplacementTraceTests(unittest.TestCase):
                      patch.object(w, "_child_main") as child, self.assertRaises(SystemExit) as caught:
                     exec(wrapper, scope)
                 self.assertEqual(caught.exception.code, expected)
-                self.assertNotIn("_resource_stop", scope)
+                self.assertNotIn("_child_failure_exit", scope)
                 child.assert_not_called()
 
     def test_parent_skips_evidence_io_after_child_resource_exit_and_preserves_primary_capture_errors(self):
