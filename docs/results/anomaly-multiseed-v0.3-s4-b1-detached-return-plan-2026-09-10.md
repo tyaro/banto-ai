@@ -1,6 +1,6 @@
 # S4-B1 コンソールに接続しない起動条件でのreturn比較
 
-状態: **比較オプション実装・全体fake・独立レビュー完了 / 保存後preflight前 / 実機未実施 / no native acceptance**。
+状態: **修正保存・全体fake・独立レビュー/preflight完了 / 限定1回の返答待ち・実機未実施 / no native acceptance**。
 
 ## 目的と変える条件
 
@@ -65,3 +65,15 @@ allocation候補と拒否された内部API/object/ACLの確定、単発比較�
 repository safety/diff-check pass、mainは基準889cfc3のままclean。
 PC空きRAM9.23→8.88 GiB、C108.21 GiB、D75.36 GiB。単発値からリーク有無は未判定。
 比較用の実child/実SetThreadContextは未実施。
+
+
+## 保存後の事前確認と再開条件
+
+実装・試験・結果・計画をeaacd30に保存。read-only preflightは1.943秒、21 sources/239171 bytes、verified、resource_stop=false。
+Windows10.0.26200.9445/Python3.14.0、既存exe/python314.dll hash一致。detached-return-preflight.jsonへ保存した。
+execution_authenticated/launch_authorized/native_accepted/formal_permissionはfalse。この確認でchild起動・SetThreadContextは行っていない。
+repository safety/diff-check pass、mainは基準889cfc3のままclean。
+
+準備は完了。DETACHED指定で新規fixture1回、既存return観測Get3/Set1/RPM3回2197 bytesの実施について返答を待つ。
+この問いへの「続けてください」は当該比較の1回への了承として扱い、再確認せず実行する。
+観測・不一致・失敗のいずれでも自動再試行しない。最終report・終了・証跡保存の確認を先に行う。

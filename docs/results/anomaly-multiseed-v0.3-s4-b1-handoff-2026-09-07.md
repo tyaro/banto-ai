@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §63を最初に参照。console失敗診断でallocation候補のC0000022を取得し、終了/保存確認済み。DETACHED指定で既存return観測を比較する修正はfake173件・独立レビューpass。比較実機は未実施。
+2026-09-10最新: §63を最初に参照。console失敗診断でallocation候補のC0000022を取得し、終了/保存確認済み。DETACHED指定で既存return観測を比較する修正はfake173件・独立レビュー・保存後preflight pass。比較の限定1回への返答待ち、実機未実施。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1335,3 +1335,11 @@ repository safety/diff-check pass、mainは基準889cfc3のままclean。他proj
 
 次は比較修正を保存してread-only preflightを行い、新規fixtureでの限定1回を判断対象として提示する。
 console_failure v1の承認済み1回は消化済み。追加の実機起動なし。
+
+
+実装・試験・結果・計画をeaacd30に保存。保存後read-only preflightは1.943秒、21 sources/239171 bytes、verified、resource_stop=false。
+Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。detached-return-preflight.jsonへ保存した。
+preflightによるchild起動・SetThreadContextなし、全acceptance gate no。比較の準備は完了。
+
+DETACHED指定、既存return観測Get最大3/Set最大1/RPM最大3回2197 bytes、同じ時間/memory/disk上限の新規fixture1回について返答を待つ。
+この問いへの「続けてください」は当該比較の1回への了承として扱い、再確認せず実行する。失敗しても自動再試行しない。
