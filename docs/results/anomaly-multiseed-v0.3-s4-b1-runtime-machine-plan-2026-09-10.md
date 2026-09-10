@@ -1,6 +1,6 @@
 # S4-B1 実行環境のCPU構成をWindows APIで確認する修正
 
-状態: **修正・pure/fake289件・独立レビュー完了。修正後のchildは未実行**。
+状態: **修正・pure/fake289件・独立レビュー・保存後preflight完了。修正済みcontrol1回への返答待ち、修正後のchildは未実行**。
 直前の診断1回はchild_call/runtime_pinで停止した。個別の不一致項目は未観測。
 今回の修正が実機の唯一原因を解消したとは、追加実測前には主張しない。
 
@@ -43,3 +43,12 @@ RC＋Everyone、flags9、非昇格・同一user/session/integrity、privilege削
 
 未実行runtime-machine-control-once.pyは3982 bytes、SHA4292c3aefc011adfc7a204b76304ba3648e523c72eca2531babe11ec1413d9e9。
 前wrapperから新規summary出力先だけを変更。AST上harness呼出1箇所、追加のnative実行なし。
+
+
+修正コードを6094466へ保存。保存後preflight2.822秒、27 sources/285764 bytes、verified。
+resource_stopfalse、primary/secondaryなし、Windows10.0.26200.9445/Python3.14.0、既存exe/DLL hash一致。
+保存sourceの分岐順から、親側のIsWow64Process2によるnative AMD64照合も通過したと判断できる。
+修正後のrestricted childで成功した証拠ではない。runtime-machine-preflight.jsonへ保存。
+最終09:17:16Zの空きRAM8.06 GiB、C108.38/D75.36 GiB、last bootは同じ。
+点の資源量からリーク有無を断定せず、別projectや既存失敗fixtureへの操作なしを維持。
+本流889cfc3 clean。今回追記は文書のみであり、source preflight・fake試験を再実行しない。

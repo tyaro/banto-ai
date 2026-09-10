@@ -1942,3 +1942,12 @@ source保存後read-only preflightを完了し、次の新規fixture control1回
 今回のchild-diagnostic1回は消化済み。§6に従い自動反復せず、次の「お願いします」「続けてください」を次の1回への了承として扱う。
 追加権限・既存fixture操作・別project操作を含まない。成功時も受入/認証/formal各flagはfalse。
 Python3.12既定受入・本流統合・formal/B2/publisherは閉じたまま。UBR緩和と状態記録を維持する。
+
+
+修正コードを6094466へ保存。保存後preflight2.822秒、27 sources/285764 bytes、verified。
+resource_stopfalse、primary/secondaryなし、Windows10.0.26200.9445/Python3.14.0、既存exe/DLL hash一致。
+保存sourceの分岐順から、親側のIsWow64Process2によるnative AMD64照合も通過したと判断できる。
+修正後のrestricted childで成功した証拠ではない。runtime-machine-preflight.jsonへ保存。
+最終09:17:16Zの空きRAM8.06 GiB、C108.38/D75.36 GiB、last bootは同じ。
+点の資源量からリーク有無を断定せず、別projectや既存失敗fixtureへの操作なしを維持。
+本流889cfc3 clean。今回追記は文書のみであり、source preflight・fake試験を再実行しない。
