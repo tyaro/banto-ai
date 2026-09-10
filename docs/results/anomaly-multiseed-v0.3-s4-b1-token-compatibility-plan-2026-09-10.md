@@ -1,6 +1,9 @@
 # S4-B1 RCと制限アプリ識別子の互換性候補
 
-状態: **ユーザーの見直し方針了承済み / 候補実装・pure/fake276件pass / 限定native未実施**。
+状態: **14e2f53で限定native1回実施済み / token作成WinError87 / child・fixture未作成**。
+
+[実行結果](anomaly-multiseed-v0.3-s4-b1-token-compatibility-result-2026-09-10.md)が最新状態である。
+以下の未実施・未実行表記は準備時の履歴。今回の候補の再実行はしない。
 
 2026-09-10の「お願いします」は[判断資料](anomaly-multiseed-v0.3-s4-b1-token-compatibility-decision-2026-09-10.md)への了承。
 保護対象のwrite禁止を維持し、権限構成を見直して検証を進める。引継書§6の従来RCのみを前提とした禁止は、
