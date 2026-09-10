@@ -2,7 +2,7 @@
 
 日付: 2026-09-10。初回照合の基準HEAD `f9244a735dff982cfce7d1493efda9431bc31b42`。
 補完テスト修正savepoint: `cdbc0a1`。Windows3.14.0一本化の実装savepoint: `9fd3490`。
-2026-09-11追記: Linux CI固定・unittest記録の実装は `3c69f9e`、Linuxのfakeテスト修正は `9846f52`。
+2026-09-11追記: Linux CI固定・unittest記録の実装は `3c69f9e`、Linuxのfakeテスト修正は `9846f52` / `7870362`。
 [CI整備・実行記録](anomaly-multiseed-v0.3-s4-b1-ci-evidence-2026-09-11.md)を参照。
 本流 `889cfc3` は変更なし。
 
@@ -18,7 +18,7 @@
 | 境界 | 必須条件 | 現在の証拠・残件 |
 | --- | --- | --- |
 | B1 engineering control | 子のruntime/source/token、実AccessCheck、全操作、置換証跡、所有物cleanup/teardown | 実装 `0b30e63` / 実行HEAD `f15af39` / Windows 26200.9445 / Python 3.14.0で限定成功。全48期待値、9対象削除、残存0。全S4受入とは別 |
-| Linux共通契約 | Ubuntu 24.04 x86_64、Python 3.12/3.14、共通契約と既存stdlib全回帰、safety、実patch/build・image・source・各test結果の記録 | `ubuntu-24.04`へ固定し、両minorの1099件と逐次記録を実行。初回34514721185はfakeのWindows関数mock欠落で失敗。5ファイル8箇所を9846f52で修正し、関数不存在の選抜66件pass。修正後CI34516991115進行中。VM image digest・共有fixture payloadのplatform間exact照合は未収集。過去の本流CI greenは候補の証拠に代用しない |
+| Linux共通契約 | Ubuntu 24.04 x86_64、Python 3.12/3.14、共通契約と既存stdlib全回帰、safety、実patch/build・image・source・各test結果の記録 | `ubuntu-24.04`へ固定し、両minorの1099件と逐次記録を実行。初回はfakeのWindows関数mock欠落、2回目はfakeのSystemRoot依存で失敗。9846f52/7870362で修正し、関数不存在・空の環境変数で選抜66件pass。3回目CI34518948145進行中。VM image digest・共有fixture payloadのplatform間exact照合は未収集。過去の本流CI greenは候補の証拠に代用しない |
 | Windows native受入 | 正式3.14.0の1 runtime。共通回帰、publisher、DACL、独立token/process、競合・非上書き・失敗証跡 | Windows3.12要件を削除済み。各必須検査自体は維持し、全native受入は未完了 |
 | B2 publisher/marker | 新規fixtureで公開・非上書き・競合・marker・失敗証跡を検証 | B1のcontrol成功で完了扱いにしない。未実装・未受入の残件として分離 |
 | S4全体 | 必須platform受入、完全runtime inventory、producer/consumer revision凍結、正式pin上のdev/smoke | 未完了。`require_campaign_acceptance()` は `s4_acceptance_not_frozen` を無条件に返す |

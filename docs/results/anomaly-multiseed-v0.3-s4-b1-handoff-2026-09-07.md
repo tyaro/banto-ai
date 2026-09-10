@@ -2148,8 +2148,20 @@ compile/safety/artifact保存pass、smoke/dataset quality/benchmarkは前段失�
 初回異常66 methodsが66/66 pass、5.648702秒、failure/error/skip0。mock残留なし・元の関数を復元した。
 linux-mock-regression.json（9393 bytes/hash e60b1b29b00b37fc150fc8a4bf3157f13352dc767b44a4c8a4fc254558e8eb2c）へ保存。
 独立レビュー新規P0〜P3=0、担当の試験/native/ネット接続/編集なし。進捗ポーリングなし。
-safety/diff-check pass。9846f52を候補branchへpushし、修正後CI34516991115が進行中。
-URL https://github.com/tyaro/banto-ai/actions/runs/34516991115 。新runの証拠は初回と別保存し、結果を確認する。
+safety/diff-check pass。9846f52のCI34516991115もfailure。1099 methods中979 pass/67 skip/53異常、
+unittest集計failure174/error42。関数mock欠落は解消したが、その先のfake launchでSystemRoot環境変数欠落が発生。
+3.14 job logで原因と後続波及を確認。全ID・集計・source不変・未受入flag、両minor結果/skip記録の一致を照合。
+新runの証拠は初回と別のartifacts/ci-evidence-2026-09-11/run-34516991115/へ保存した。
+
+追加修正7870362d76eb26a6086222b3947aaa102bd22c79は共通fake driverの2行だけ。
+ExitStack内でSystemRoot=C:\Windowsを仮設定し、終了時に元へ戻す。実装/native/恒久環境設定への変更なし。
+get_last_error不存在・空の環境変数・WinDLL生成拒否の条件でも既失敗66 methodsが66/66 pass、5.652595秒。
+mock属性/環境の残留なし、元の状態を復元。linux-host-independent-regression.jsonへ保存
+（8961 bytes/hash eb810beb5b9c0f8b0131b3457598fda9f5e2b35debd5540a686be4db747807f5）。
+独立レビュー新規P0〜P3=0、担当の試験/native/ネット接続/編集なし、進捗ポーリングなし。safety/diff-check pass。
+7870362を候補branchへpushし、3回目CI34518948145が進行中。
+URL https://github.com/tyaro/banto-ai/actions/runs/34518948145 。全suite・後続工程・新artifactを確認する。
+このCI回数は終了済みWindows native試行枠とは別である。
 
 初回実runtimeはUbuntu24.04 x86_64、Python3.12.14/3.14.7、GCC13.3.0、kernel6.17.0-1022-azure。
 ImageVersion20260907.300.1は観測値、VM image digestではない。
@@ -2160,5 +2172,6 @@ skip67はWindows固有49、optional Capstone16、Toto2ローカルartifact不存
 
 資源UTC2026-09-10T18:16:03Z RAM7.73 GiB/C107.94/D75.36、18:31:02Z RAM8.09/C107.93/D75.36。
 修正選抜検証後18:55:08Z RAM8.13 GiB/C107.91/D75.36。
+追加修正検証後19:15:10Z RAM7.19 GiB/C107.91/D75.36。owned待機Python private11.27MiB/working15.30MiB。
 build26200.9445、boot2026-09-09T10:43:08.5000000+09:00。点の変化でリーク有無を断定しない。
 ローカル検証Pythonは終了済み。別project・既存失敗fixture・旧artifact操作、新runtime導入なし。

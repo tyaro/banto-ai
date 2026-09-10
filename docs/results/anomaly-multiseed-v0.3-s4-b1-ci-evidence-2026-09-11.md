@@ -98,13 +98,42 @@ test IDs・各変更source hash・実条件・結果を保存した。
 独立レビュー新規P0〜P3=0、担当の試験/native/ネット接続/編集なし、進捗ポーリングなし。
 repository safety / diff-check pass。
 
-修正版を候補branchへpushし、[修正後CI run 34516991115](https://github.com/tyaro/banto-ai/actions/runs/34516991115)
-が9846f52に対して開始された。開始確認時in_progress。結果と新artifactを確認する。
-初回失敗の記録を上書きせず、新runの証拠は別に保存する。
+修正版を候補branchへpushした[2回目CI run 34516991115](https://github.com/tyaro/banto-ai/actions/runs/34516991115)
+も両jobでfailureとなった。1099 methods中979 pass / 67 skip / 53 methods異常、
+unittest集計failure174 / error42。元のget_last_error属性欠落は解消したが、
+その先のfake launch構築が `os.environ["SystemRoot"]` に依存し、LinuxでKeyErrorになっていた。
+後続のdebug/evidence検査へ波及したことを3.14 job logで確認した。
+compile/safety/artifact保存pass、smoke/dataset quality/benchmarkはskip。
+全予定/開始/終了ID・集計・source不変・未受入flagを照合し、両minorの結果とskip記録はexact一致。
+
+初回と別の `artifacts/ci-evidence-2026-09-11/run-34516991115/` に保存した。
+各ZIPのAPI digest・単一member・サイズを確認して取得・展開。
+3.12 JSONLは779772 bytes / SHA-256 `b113673d508c70f1b7f171eac465beff62ad89a5a8eb762ce9b1def26fdd4cb0`、
+3.14 JSONLは779774 bytes / SHA-256 `cd6ac56c2065326351d83694813cd3ef9982e2d42b080d9e39db889736f27857`。
 
 初回の待機接続はGitHub CLIのunexpected EOFで2回終了したが、これは試験結果ではない。
 直接APIの状態を60秒間隔で記録する単一の待機processへ切り替え、CI failureを確認した。
 修正後の待機も60秒間隔・query timeout30秒・最大24回で区切る。このPCで全suiteは実行しない。
+
+## fake launchの環境変数依存を除去
+
+追加修正 **`7870362d76eb26a6086222b3947aaa102bd22c79`**。
+単体launchテストでは既に仮設定していたSystemRootを、共通fake driverでもExitStack内で
+`C:\Windows` に設定する。変更はtest_anomaly_v03_debug_driver.pyの2行だけ。
+テスト終了時に元の環境へ復元し、実launch部品やホストの恒久設定は変更しない。
+
+既失敗66 methodsを、今度は `get_last_error` 不存在に加え**環境変数を空にした条件**で確認した。
+WinDLL生成は拒否し、**66/66 pass、5.652595秒、failure/error/skip0**。
+mock属性・環境の残留なし、元の状態への復元も確認した。実行base38bb317と変更source hashを記録する。
+`linux-host-independent-regression.json`（8961 bytes / SHA-256
+`eb810beb5b9c0f8b0131b3457598fda9f5e2b35debd5540a686be4db747807f5`）へ保存。
+これはWindows上での不足条件の模擬検査であり、実Linux ABIを再現したとは扱わない。
+独立レビュー新規P0〜P3=0、担当の試験/native/ネット接続/編集なし、進捗ポーリングなし。
+safety/diff-check pass。
+
+7870362を候補branchへpushし、[3回目CI run 34518948145](https://github.com/tyaro/banto-ai/actions/runs/34518948145)
+を開始した。開始確認時in_progress。全suite・後続工程と保存artifactを確認する。
+このCI回数は、既に終了したWindows native controlの試行枠とは別である。
 
 ## 観測したruntimeとskipの分類
 
@@ -137,7 +166,10 @@ Windows3.14.0の全native受入、正式OS条件、B2、runtime closureとconsum
 | 2026-09-10 18:16:03 | 7.73 | 107.94 | 75.36 |
 | 2026-09-10 18:31:02 | 8.09 | 107.93 | 75.36 |
 | 2026-09-10 18:55:08 | 8.13 | 107.91 | 75.36 |
+| 2026-09-10 19:15:10 | 7.19 | 107.91 | 75.36 |
 
 Windows26200.9445、boot `2026-09-09T10:43:08.5000000+09:00` を記録した。
 点の変化からリークの有無を断定しない。ローカルの検証Pythonは終了済み。
+19:15時点のowned CI待機Pythonはprivate11.27MiB / working set15.30MiB。
+この待機process単体の値であり、PC全体のRAM変化をこの作業へ帰属させない。
 既存失敗fixture・別project・旧artifactへの操作、新runtimeの導入なし。
