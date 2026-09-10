@@ -1902,3 +1902,11 @@ Python3.12既定受入・本流統合・formal/B2/publisherは閉じたまま。
 build26200.9445、boot2026-09-09T10:43:08.5+09:00。UBR緩和と実測記録を維持。
 点の資源量からリーク有無は断定しない。今回のowned teardown passを記録する。
 本流889cfc3 clean、別projectの連続稼働試験へ操作していない。
+
+
+診断コードを911d5a5へ保存。保存後read-only preflightは2.572秒、27 sources/284856 bytes、verified。
+resource_stopfalse、primary/secondaryなし、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+child-diagnostic-preflight.jsonへ保存。新しいchild/control/token作成、SetThreadContextは未実施。
+最終09:04:47Zの空きRAM8.52 GiB、C108.44/D75.36 GiB、last bootは作業前と同じ。
+本流889cfc3 clean、別projectの連続稼働テスト・失敗fixtureへ追加操作なし。
+この追記は記録のみでsource/試験対象を変更していないため、fake試験・preflightを再実行しない。

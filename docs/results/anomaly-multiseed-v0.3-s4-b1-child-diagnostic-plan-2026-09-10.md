@@ -1,6 +1,6 @@
 # S4-B1 固定child終了コードの診断計画
 
-状態: **修正後pure/fake283件pass・独立是正確認済み。追加nativeは未実施**。
+状態: **修正後pure/fake283件pass・独立是正確認・保存後preflight完了。準備済み診断1回への返答待ち、追加nativeは未実施**。
 直前のRC＋Everyone controlは、親側の実child token/AccessCheckまで通り、resume後exit1で停止した。
 権限やACLをさらに変更せず、同じ必須controlの失敗理由を固定数値で区別する。
 
@@ -57,3 +57,11 @@ OSError資源停止P2是正と120除外を追加。修正後全体283/283（5.98
 未実行child-diagnostic-control-once.pyは3983 bytes、
 SHA31c8e05df0eba398f6a7d528250acaee5eb8e1171a6dcd4616ad61fa345a0e9e。
 AST上run_control_harness呼出は1箇所。公開detailsの固定コード復号も資源停止チェック後に限る。
+
+
+診断コードを911d5a5へ保存。保存後read-only preflightは2.572秒、27 sources/284856 bytes、verified。
+resource_stopfalse、primary/secondaryなし、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+child-diagnostic-preflight.jsonへ保存。新しいchild/control/token作成、SetThreadContextは未実施。
+最終09:04:47Zの空きRAM8.52 GiB、C108.44/D75.36 GiB、last bootは作業前と同じ。
+本流889cfc3 clean、別projectの連続稼働テスト・失敗fixtureへ追加操作なし。
+この追記は記録のみでsource/試験対象を変更していないため、fake試験・preflightを再実行しない。
