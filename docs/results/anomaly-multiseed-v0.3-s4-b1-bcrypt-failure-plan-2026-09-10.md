@@ -1,6 +1,6 @@
 # S4-B1 bcrypt.dll 内部の失敗値を1回の診断で取得
 
-状態: **候補実装・pure/fake259件・独立実装レビューpass / 保存後preflight前 / 実機未実施**。
+状態: **候補実装・pure/fake259件・独立実装レビュー・保存後preflight完了 / 実機未実施**。
 
 ## 観測の目的
 
@@ -67,7 +67,7 @@ SHA-256 7a452b75ccfc721ecfd53ca8293b0fc9ccaae599fc6c0aec9555a57f49c1b2a8。
 初回fakeで待機中slot=Noneをload寿命照合へ渡すTypeErrorを検出し、選択slotを持つarm/hit中の照合へ修正した。
 関係fake47/47 pass（2.935秒）、全体pure/fake259/259 pass（5.006秒）、repository safety/diff-check pass。
 4site・0/非zero・Set/readback・code/pending/load変化・CONTEXT・caller短read/不一致/OOM・再選択禁止・hitなしを確認した。
-既存console/init_failure/bootstrap/driverも回帰確認済み。独立実装レビューと保存後preflightを追記する。
+既存console/init_failure/bootstrap/driverも回帰確認済み。独立実装レビューと保存後preflightの結果は下記に記録した。
 
 準備完了後、この固定4地点から最初の1hitを取得する新規fixture診断1回を判断対象にする。
 引継書§6の追加probe条件を維持し、この問いへの「お願いします」「続けてください」は当該1回への了承として扱う。
@@ -76,3 +76,18 @@ SHA-256 7a452b75ccfc721ecfd53ca8293b0fc9ccaae599fc6c0aec9555a57f49c1b2a8。
 
 独立実装レビューは新規P0〜P3=0、指定fake47/47（2.818秒）pass。担当はnative/wrapper/private参照/source変更なし。
 完了通知のみを利用し進捗ポーリングなし。作業後空きRAM8.55 GiB、C107.98/D75.36 GiB、本流889cfc3 clean。
+
+
+## 保存後の事前確認と実行範囲
+
+実装・試験・結果・計画を1c56b89へ保存した。保存後read-only preflightは2.871秒、
+25 sources/270313 bytes、verified、resource_stop=false、primary/secondaryなし。
+Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+bcrypt-failure-preflight.jsonへ保存。child起動・SetThreadContextなし、全acceptance gate no。
+
+準備は完了。新規専用fixture1個で、検証済みbootstrapから固定4地点を設定し、
+最初の1hitで候補値を取得して所有終了処理まで行う診断1回への返答を待つ。
+bootstrap込みGet4/Set1/RPM最大6回805 bytes、既存時間・memory・disk・終了処理条件を維持する。
+この具体的な問いへの「お願いします」「続けてください」は当該1回への了承として扱い、同じ了承を再確認しない。
+実行wrapperはbcrypt-failure-once.py、2735 bytes/hash7a452b75ccfc721ecfd53ca8293b0fc9ccaae599fc6c0aec9555a57f49c1b2a8、未実行。
+§6の追加probe条件を引き継ぎ、自動再試行なし。今回のinit-failure1回への了承は消化済み。

@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §68を最初に参照。初期化失敗地点でbcrypt.dllのLOAD/entry対応を取得、所有終了・証跡readback確認済み。次の内部4経路の候補実装はpure/fake259件・独立レビューpass、保存後preflight前。
+2026-09-10最新: §68を最初に参照。初期化失敗地点でbcrypt.dllのLOAD/entry対応を取得、所有終了・証跡readback確認済み。次の内部4経路の実装1c56b89はpure/fake259件・独立レビューpass、25 sourceの保存後preflight verified。次の限定診断1回は未実施。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1578,3 +1578,17 @@ hitの通常Continueなし、所有終了処理のみ、再選択/再armなし�
 担当のnative/wrapper/private参照/source変更なし、完了通知のみ、進捗ポーリングなし。
 本流889cfc3 clean。次は保存後read-only preflightを行い、新規fixtureで固定4地点から最初の1hitを取得する1回を提示する。
 今回のinit-failure1回への了承は消化済み。全acceptance gate no、本流統合/formal/B2/publisher未実施。
+
+
+
+実装・試験・結果・計画を1c56b89へ保存した。保存後read-only preflightは2.871秒、
+25 sources/270313 bytes、verified、resource_stop=false、primary/secondaryなし。
+Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+bcrypt-failure-preflight.jsonへ保存。child起動・SetThreadContextなし、全acceptance gate no。
+
+準備は完了。新規専用fixture1個で、検証済みbootstrapから固定4地点を設定し、
+最初の1hitで候補値を取得して所有終了処理まで行う診断1回への返答を待つ。
+bootstrap込みGet4/Set1/RPM最大6回805 bytes、既存時間・memory・disk・終了処理条件を維持する。
+この具体的な問いへの「お願いします」「続けてください」は当該1回への了承として扱い、同じ了承を再確認しない。
+実行wrapperはbcrypt-failure-once.py、2735 bytes/hash7a452b75ccfc721ecfd53ca8293b0fc9ccaae599fc6c0aec9555a57f49c1b2a8、未実行。
+§6の追加probe条件を引き継ぎ、自動再試行なし。今回のinit-failure1回への了承は消化済み。
