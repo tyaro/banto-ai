@@ -2,10 +2,11 @@
 
 状態: **限定Windows engineering control成功 / no integration / no formal permission**
 
-2026-09-10最新: §76を最初に参照。実装0b30e63のRC＋Everyone候補で、子の全48期待値・報告照合・成功cleanup・teardownが通過した。
+2026-09-10最新: §77の受入条件整理・追加回帰と§76の実機成功を最初に参照。実装0b30e63のRC＋Everyone候補で、子の全48期待値・報告照合・成功cleanup・teardownが通過した。
 専用fixture9対象の削除を確認し、残存0、資源停止なし。最大3回の了承を受領し、1回目の成功でその試行枠を終了した。残り2回は実行しない。
-実行前の全pure/fake293件と独立差分レビュー、実行内27 source preflightも通過。現在のruntimeはWindows10.0.26200.9445/Python3.14.0。
-UBR固定緩和は§31、直近の実測資源・bootは§76に記録する。Windows Python3.12を含む既定受入、本流統合、formal/B2/publisherは未完了・未許可。
+実行前の選抜pure/fake293件と独立差分レビュー、実行内27 source preflightも通過。今回の補完・関連78件も指定Capstone5.0.7でpass。全回帰ではない。
+現在のruntimeはWindows10.0.26200.9445/Python3.14.0。UBR固定緩和は§31、直近の実測資源・bootは§77に記録する。
+Windows Python3.12受入は要件から外す案への返答待ちで、まだ削除していない。本流統合、formal/B2/publisherは未完了・未許可。
 
 以下の§1〜§10の初期結論・commit一覧・試験数・blocked表記は作成時点の履歴であり、最新のchild E2E結果ではない。
 cleanup/置換traceの修正履歴は§11〜17、起動診断と逐次是正は§18〜75を参照。
@@ -2046,3 +2047,38 @@ Windows Python3.12を含む既定受入・本流統合・S4全体は未完了。
 48期待値は実行中wrapperのoperations_matchと保存sourceの期待値件数に基づく。
 公開要約だけからprivate reportの個別値を独立再検証した主張はしない。
 担当は指定公開資料のみをreadし、native/query/fixture再open/試験/編集なし。進捗ポーリングなし。
+
+## 77. 2026-09-10 受入条件の照合・追加回帰・Windows 3.12要件の確認
+
+[受入整理と実行記録](anomaly-multiseed-v0.3-s4-b1-acceptance-readiness-2026-09-10.md)を参照。
+基準f9244a7、実機controlの追加実行なし。前回の成功で最大3回枠は終了したまま。
+既定計画ではLinux Ubuntu24.04/Python3.12・3.14と、Windows3.12・正式3.14.0の受入が必要。
+現CIはubuntu-latestのLinux2jobs、Windows jobなし。候補source上の既存stdlib全回帰・所定のruntime/image証跡は未完了。
+現B1 coreは3.14.0限定のため、3.12の導入だけでは受入不可。B2 publisher/markerとS4完全inventory・consumer凍結は別残件。
+独立read-onlyの条件照合で、限定control成功と全受入の区別、正式OS pin9168が未変更であることを確認した。
+UBR緩和と9445でのengineering成功を、正式計画・registry・S3 runtimeの更新として扱わない。
+
+従来の「全pure/fake293件」はdebug群・child diagnostics・startup events/preflight・PureWindowsControlsの選抜数であり、
+全repository回帰や他のcleanup/replace/offline群まで網羅した数ではない。
+今回5つの明示pure/fakeクラス67件を補完し、旧ImportError exit1期待のテスト1件がfail、他66pass。
+固定bootstrap ImportError97へ期待値を更新し、共有classifier不在確認を_child_failure_exitへ修正した。
+現runtime/child wrapper/token/ACL/正式入口は変更なし。修正はcdbc0a1へ保存。
+上記67＋既存child diagnostics10＋D2 exact inventory1の78件を実行してpass。
+共有環境Capstone5.0.9とoptional pin5.0.7の差を発見し、専用ignored領域へ5.0.7を配置して再確認。
+PyPI wheel1272204 bytes/hash4ab8bcb7da8f221ff45926ca168ca33e76f7237d06fbf3c10780002faa2670e1一致、展開63members/8409204bytes。
+import版と専用pathを確認した最終78/78は10.504489秒、failure/error/skip0。
+exact test IDs・source/差分hash・依存版・結果はacceptance-supplement-pure-pinned.json（11269 bytes）へ保存。
+共有Capstone・PATH・registry変更なし。初回失敗/5.0.9条件の記録も別に保持した。
+独立テスト差分レビューは新規P0〜P3=0。担当のnative/query/試験/編集なし、進捗ポーリングなし。
+repository safety/diff-check pass。D2の1件はsource inventoryの読み取りだけで、artifact再読や全長期回帰ではない。
+
+ユーザー「3.12必要？」を受領。現在の動作には不要で、既定の互換性受入条件のため残件に挙げたと回答。
+Windowsは3.14.0に一本化しLinux3.12/3.14 CIを維持する案を提示して返答待ち。
+要件削除は未実施。受領した場合は計画§8・acceptance_requirements・対応契約テストを合わせて変更し、
+pure/fake拒否経路・独立レビューを確認する。Windows必須native検査やB2/S4残件の削除と混同しない。
+py -0pは3.14/3.11のみ。3.12は未導入・未起動、PC全体のportable runtime探索なし。
+
+資源10:10:49Z RAM8.28 GiB/C108.16/D75.36、10:18:24Z RAM7.82/C107.66/D75.36。
+最終10:25:02Z RAM8.33 GiB/C107.66/D75.36。acceptance-resources-final.jsonへ保存した。
+build26200.9445、boot2026-09-09T10:43:08.5000000+09:00。点の変化をリークと断定しない。
+各検証process終了確認済み。別project・既存failure fixture・旧artifactへの操作、本流変更/push/merge/formal実行なし。
