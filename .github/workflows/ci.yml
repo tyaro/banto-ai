@@ -9,8 +9,9 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.12", "3.14"]
     steps:
@@ -21,7 +22,7 @@ jobs:
       - name: Compile Python sources
         run: python -m compileall -q src tests tools
       - name: Run unittest
-        run: python -m unittest discover -s tests -t . -v
+        run: python -B tools/ci_test_report.py
       - name: Validate manifests and naive smoke
         run: python tools/smoke.py
       - name: Generate and quality-check synthetic dataset from clean checkout entrypoints
@@ -31,4 +32,13 @@ jobs:
       - name: Run benchmark from clean checkout entrypoint
         run: python tools/evaluator/run_benchmark.py --config examples/configs/benchmark-small.json
       - name: Repository safety guard
+        if: always()
         run: python tools/safety_check.py
+      - name: Preserve unittest evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: unittest-ubuntu24-python${{ matrix.python-version }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/ci-tests/unittest.jsonl
+          if-no-files-found: error
+          retention-days: 14
