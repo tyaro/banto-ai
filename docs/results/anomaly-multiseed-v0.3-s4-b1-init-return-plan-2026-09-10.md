@@ -1,6 +1,10 @@
 # S4-B1 KernelBase初期化の戻り直前を観測する限定診断
 
-状態: **実装・fake・独立レビュー・保存後preflight完了 / 限定実機1回の判断待ち / no native acceptance**。
+状態: **v1実機1回終了 / v2の保存処理修正・fake/独立レビュー完了 / v2実機未実施 / no native acceptance**。
+
+[v1の実機結果](anomaly-multiseed-v0.3-s4-b1-init-return-result-2026-09-10.md)を参照。
+v1は設定後のregister照合で停止し、終了・証跡保存を確認した。読み戻し値自体は未保存だったため、v2で取得時点の保存を追加した。
+以下の取得条件はv2でも維持する。過去の判断待ち/preflight記述はv1実行前の履歴で、追加実行の承認ではない。
 
 ## 目的と観測位置
 
@@ -58,6 +62,10 @@ collector、16-byte aligned CONTEXT1232 bytes、2048-byte scratch、private証�
    ALや段階値が既知の値に属するかで値を補完・破棄しない。未知値も実測値として残す。
 8. `init_return_observed_stop` を理由に観測ループを終了する。
    成立時もdriver/observerのstatusはfailedとなり、collectorのconfirmedと意図的終了理由を別々に評価する。
+
+v2では最大3回のGetごとに固定slotへ要求flags/取得状態を保持し、API成功とpost-budget通過後のdebug48 bytesと返却flagsを解釈前に保存する。
+Set要求debug bytesと照合の個別boolもprivate保持する。hitのcontext1232 bytesもflags検査前に保持するが、有効性は別に判定する。
+API失敗・中断・資源停止を有効なrawへ補完せず、Getの成功とflags/DRの一致を別々に評価する。
 
 | LOAD時に照合するRVA範囲 | bytes | SHA-256 |
 | --- | --- | --- |
@@ -123,3 +131,11 @@ ignored artifactsのinit-return-preflight.jsonへ保存した。これはsource/
 repository safety/diff-check pass、mainは基準889cfc3のままclean。
 PC空きRAM8.53→9.37 GiB、C105.06→105.04 GiB、D75.36 GiB。単発値からリーク有無は判断しない。
 次の返答がこの実行範囲への了承なら、新規fixtureで上記診断を1回実施し、最終reportと保存の確認を先に行う。
+
+## v2の検証と新しい実機判断対象
+
+v1の承認1回は消化済み。v2は保存を解釈前へ移し、要求/返却bytesと不一致項目を残す修正に限定した。
+DRの検査条件や時間・memory・取得回数を緩和しない。recipeはkernelbase-26200.9445-return-v2。
+関係fake11/11（0.223秒）、全回帰159/159（1.229秒）pass。独立新規P0〜P3=0、指定11/11（0.213秒）pass。
+v2を保存してread-only preflightを確認後、**同じ停止点設定最大1回・取得最大2197 bytesで、新規fixtureの限定診断1回**を提示する。
+未保存のv1値を埋めるために自動で実行せず、別の返答を待つ。

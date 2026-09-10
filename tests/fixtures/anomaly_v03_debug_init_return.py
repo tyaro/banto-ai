@@ -17,7 +17,7 @@ from tests.fixtures.anomaly_v03_debug_transport import TransportError, need
 
 
 class DebugInitReturn(DebugContext):
-    RECIPE = "kernelbase-26200.9445-return-v1"
+    RECIPE = "kernelbase-26200.9445-return-v2"
     BREAK_RVA, STAGE_RVA, IMAGE_SIZE = 0x50BA, 0x3AEEA0, 4202496
     DEBUG_FLAGS, HIT_FLAGS = 0x100010, 0x100013
     CAUSE_MASK = 0xE00F
@@ -31,7 +31,8 @@ class DebugInitReturn(DebugContext):
         # Reuse the preallocated 2048-byte scratch; no target stack is read.
         self.row = {"status": "not_observed", "recipe": self.RECIPE,
                     "set_state": "not_started", "get_attempts": 0,
-                    "read_attempts": 0, "confirmed_bytes": 0, "code_windows_confirmed": 0}
+                    "read_attempts": 0, "confirmed_bytes": 0, "code_windows_confirmed": 0,
+                    "debug_queries": [None, None, None]}
         self.base = self.target = None
         self.armed_dr6 = None
         self.selected_kind = None
@@ -81,14 +82,24 @@ class DebugInitReturn(DebugContext):
         need(self.row["get_attempts"] < 3, "return_get_limit")
         C.memset(self.context_pointer, 0, self.CONTEXT_SIZE)
         struct.pack_into("<I", self.context, 48, flags)
+        query = {"state": "uncertain", "requested_flags": flags}
+        self.row["debug_queries"][self.row["get_attempts"]] = query
         self.row["get_attempts"] += 1
         self.row["get_state"] = "uncertain"
         if not self.kernel.GetThreadContext(self.stop.handles[1], self.context_pointer):
+            query["state"] = "failed"
             self.row["get_state"] = "failed"
             raise w._Failure("return_context_query", self.transport.last_error())
+        query["state"] = "query_confirmed"
         self.row["get_state"] = "query_confirmed"
         self._budget(budget)
-        need(struct.unpack_from("<I", self.context, 48)[0] & flags == flags, "return_context_flags")
+        returned_flags = struct.unpack_from("<I", self.context, 48)[0]
+        # Preserve successful API bytes before interpreting flags or registers.
+        query.update(state="captured", returned_flags=returned_flags,
+                     debug_hex=bytes(self.context[72:120]).hex())
+        if flags == self.HIT_FLAGS:
+            self.row["context_hex"] = bytes(self.context).hex()
+        need(returned_flags & flags == flags, "return_context_flags")
         self.row["get_state"] = "confirmed"
         return struct.unpack_from("<6Q", self.context, 72)
 
@@ -116,12 +127,16 @@ class DebugInitReturn(DebugContext):
     def _programmed(self, registers, *, hit):
         dr0, dr1, dr2, dr3, dr6, dr7 = registers
         # Bit 10 of DR7 may be normalized by the OS; all other bits are exact.
-        need(dr0 == self.target and (dr1, dr2, dr3) == (0, 0, 0) and dr6 & 0x10800 == 0x10800
-             and dr7 & ~0x400 == 1 and dr6 & self.CAUSE_MASK == (1 if hit else 0),
-             "return_debug_registers")
+        checks = {"dr0_matches": dr0 == self.target, "dr1_to_dr3_zero": (dr1, dr2, dr3) == (0, 0, 0),
+                  "dr6_inactive_bits_set": dr6 & 0x10800 == 0x10800,
+                  "dr7_matches": dr7 & ~0x400 == 1,
+                  "dr6_standard_cause_matches": dr6 & self.CAUSE_MASK == (1 if hit else 0)}
         if hit:
-            need(self.armed_dr6 is not None and dr6 == self.armed_dr6 | 1,
-                 "return_debug_cause_changed")
+            checks["dr6_baseline_matches"] = self.armed_dr6 is not None and dr6 == self.armed_dr6 | 1
+        self.row["debug_checks"] = {"phase": "hit" if hit else "arm", "matches": checks}
+        need(all(value for key, value in checks.items() if key != "dr6_baseline_matches"),
+             "return_debug_registers")
+        need(checks.get("dr6_baseline_matches", True), "return_debug_cause_changed")
 
     def _arm(self, raw, budget):
         need(self.state == "ready" and self.row["set_state"] == "not_started", "return_rearm")
@@ -147,6 +162,7 @@ class DebugInitReturn(DebugContext):
         struct.pack_into("<Q", self.context, 112, original[5] | 1)
         # Only the DEBUG_REGISTERS group is written. RIP/EFLAGS/GPRs stay untouched.
         struct.pack_into("<I", self.context, 48, self.DEBUG_FLAGS)
+        self.row["requested_debug_hex"] = bytes(self.context[72:120]).hex()
         self._budget(budget)
         self.row["set_state"] = "uncertain"
         if not self.kernel.SetThreadContext(self.stop.handles[1], self.context_pointer):
@@ -172,7 +188,6 @@ class DebugInitReturn(DebugContext):
              "return_exception_mismatch")
         self._identity(budget)
         registers = self._get(self.HIT_FLAGS, budget)
-        self.row["context_hex"] = bytes(self.context).hex()
         self._programmed(registers, hit=True)
         need(struct.unpack_from("<Q", self.context, 248)[0] == self.target
              and struct.unpack_from("<I", self.context, 144)[0] == 1

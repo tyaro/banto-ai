@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §58を最初に参照。KernelBaseの戻り直前の限定観測を実装・fake/独立レビュー・preflight済み。新しいdebug register設定を含む限定実機1回の判断待ち。§57の失敗bit/自然終了結果は保持。
+2026-09-10最新: §59を最初に参照。return観測v1は設定読み戻しの照合で停止、終了/保存確認済み。未保存の読み戻し値を残すv2修正・fake/独立レビュー済み。v2実機は未実施。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1160,3 +1160,28 @@ repository safety/diff-check pass、mainは基準889cfc3のままclean。
 PC空きRAM8.53→9.37 GiB、C105.06→105.04 GiB、D75.36 GiB。単発値からリーク有無は未判定。
 準備は完了。新規fixture1回、debug register設定最大1回、取得最大2197 bytes、既存予算/owned stopの範囲について返答を待つ。
 ユーザーがこの問いに「続けてください」と返答した場合は当該1回への了承として扱い、同じ了承を再確認しない。
+
+## 59. 2026-09-10 return観測v1の実機停止と保存不足の修正
+
+ユーザーの「続けてください」を§58の停止点設定を含む1回への了承として、cleanな029fb99で1回実行した。
+初期reportまで2.085秒。LOADのcode2窓2195 bytes一致、初回Get・Set・2回目GetのAPI成功とflags検査通過を確認。
+その後return_debug_registersで停止した。set_state=query_confirmed、設定内容検証は未成立。
+元のDR0〜3/DR6/DR7はすべて0。一方、設定後の読み戻し値は検査後にしか保存しない実装だったため未保存・未確定。
+DR6/DR7等のどれが不一致だったかを推測で補完しない。callback戻り値・stage値も未取得。
+
+normal4/Continue3、owned stopのTerminateProcess確認後にpending LOADを解放、drain1件のEXIT code1をContinueした。
+自然終了値は未観測。signal/ownership解消/所有handle close/teardown pass/failure_count0、先行reportと証跡write/flush/close確認済み。
+private108274 bytes/hash1c6f865ff148e20d2deaf9e2f822cb70096ab32d5511393464407b870cc385cb、保存fileの有界readback1回で一致、reader close。
+詳細は[return観測v1結果](anomaly-multiseed-v0.3-s4-b1-init-return-result-2026-09-10.md)。
+
+v2はGet3回分の固定slotへAPI成功/post-budget後のdebug bytes/返却flagsを解釈前に保存する。
+Set要求bytesと照合項目別bool、hitのcontextも保持し、取得と解釈を分ける。
+API false/中断/資源停止を成功に補完しない。DR検査条件や追加取得上限/停止方法は変更なし、recipeのみreturn-v2へ。
+関係fake11/11（0.223秒）、debug＋preflight/event159/159（1.229秒）pass。独立新規P0〜P3=0、指定11/11（0.213秒）pass。
+担当の完了通知を利用し、進捗ポーリングなし。追加実機は行っていない。
+
+同run preflightは20 sources/228061 bytes、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致、resource_stop=false。
+親＋child peak commit約22.48 MiB、sample58回。PC空きRAM8.88→9.33 GiB、C105.81→105.82 GiB、D75.36 GiB。
+単発値からリーク有無は未判定。追加DLL/PDB読取り・download・他project操作なし。全acceptance gate no。
+次はv2保存とread-only preflight後、計画末尾の新規fixtureでの限定1回について判断を求める。v1承認は消化済み。
+context/全metadata容量確認、repository safety/diff-check pass。mainは基準889cfc3のままclean。
