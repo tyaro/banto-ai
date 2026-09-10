@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §61を最初に参照。return観測v3でAL=0・stage=600を取得、終了/保存確認済み。ConsoleInitializeのfalse戻りが有力候補。内部statusは未取得、追加の静的解析で4か所の確認候補を記録した。
+2026-09-10最新: §62を最初に参照。ConsoleInitializeの4失敗候補を初回例外で区別する診断を準備。Get3/Set1/RPM4回2432 bytes、fake171件・独立レビューpass。新方式の実機は未実施。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1258,3 +1258,34 @@ ConsoleCreateConnectionObjectの負statusはlowbox条件により回復できる
 新方式は案のみで実装・実機設定・承認依頼は未実施。v3の承認済み1回は消化済みで、自動再試行しない。
 
 保存前の空きRAM9.61 GiB、C108.21 GiB、D75.36 GiB。repository safety/diff-check pass、mainは基準889cfc3のままclean。
+
+
+## 62. 2026-09-10 ConsoleInitializeの失敗候補を区別する診断を準備
+
+[限定診断計画](anomaly-multiseed-v0.3-s4-b1-console-failure-plan-2026-09-10.md)を実装した。
+DebugDriver(console_failure=True)のみ、既定off、unload_entry/init_returnとの同時使用は拒否。
+DR0〜3に0xbecc2/0xbecaf/0xbed34/0xbed9cを設定するSetThreadContext1回、DR7 local enable0x55。
+全4地点・DR7・標準cause clearを設定後Getで確認する。最初の例外だけを選び、対応する単一B0〜3、RIP/thread/flags/TFを検査する。
+code2窓2422 bytesをLOADで照合し、hitでRSP16-byte整列/RBP=RSP+0x70/user範囲を確認する。
+RSP+0x88のcaller8 bytesがbase+0x4ebe6に一致するときだけstage2 bytesへ進み、stage600/EAX負値を確認。
+Get返却・CONTEXT・caller/stage生bytesを解釈前にprivate保存し、取得値と候補分類を分ける。
+共有出口は先行監視地点を通過していない前提付き。connectionの負statusは回復可能で、根本原因や最終失敗とは断定しない。
+
+Get最大3/Set最大1/RPM最大4回2432 bytes。従来2197 bytesから235 bytesだけ増。
+ユーザーの上限小幅拡大の意向に沿い、時間/memory/diskや設定API回数は据え置いた。
+既存scratch・contextを再利用し、pointer追跡・追加handle取得なし。
+観測成立後もconsole_failure_observed_stopでowned stopへ進み、通常Continue・handled化・DR復元・再設定・自動再試行なし。
+Terminate確認後のみpendingを解放。停止失敗なら未解消の所有とpendingを保持する。
+
+現在KernelBase.dllの有界同一handle read1回、既存hashとclose確認。今回PDB読取り/download・過去private証跡参照なし。
+code2窓と4命令、frame関係を照合、relocation236492 bytes/117072 DIR64にcode窓との重なりなし。
+kernelbase-console-probe-recipe.jsonをignored artifactsに保存した。
+
+関係fake11/11（0.442秒）、全体171/171（1.762秒）pass。初回のhelperオプション受渡し不足を修正済み。
+独立新規P0〜P3=0、指定11/11（0.475秒）pass。担当の完了通知を利用し、進捗ポーリングなし。
+21 sourcesと全collector予約枠のmetadata容量確認もpass。native実行・private証跡参照を担当へ委譲していない。
+repository safety/diff-check pass、mainは基準889cfc3のままclean。
+PC空きRAM9.46→9.76 GiB、C108.21→108.20 GiB、D75.36 GiB。単発値からリーク有無は未判定。他project操作なし。
+
+次は保存後のread-only preflightを実施し、準備が整った新規fixtureでの限定1回を判断対象として提示する。
+今回の新方式は実機未実施。v3の1回承認は消化済み、全acceptance gate no。
