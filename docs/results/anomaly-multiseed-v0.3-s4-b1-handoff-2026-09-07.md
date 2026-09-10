@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §57を最初に参照。管理情報v2でKernelBase.dllの初期化失敗bitと自然終了0xC0000142を確認。終了/保存済み。原因APIは未確定、次の観測方法を検討する。
+2026-09-10最新: §58を最初に参照。KernelBaseの戻り直前の限定観測を実装・fake/独立レビュー済み。新しいdebug register設定を含むため、実機は未実施。§57の失敗bit/自然終了結果は保持。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1129,3 +1129,27 @@ source変更なし、既存fake試験再実行なし。公開要約5件に限定
 mainは基準889cfc3のままclean。
 全acceptance gate no。v2の承認済み1回は消化済み。
 次は全breakpoint拒否・書換えなしの条件内で、失敗後にも意味が残る値と観測位置を検討する。
+
+## 58. 2026-09-10 初期化の戻り直前を観測する案を準備
+
+UNLOAD通知のbaseから、解放済みDLL内の段階値を読める保証はないため、同じ位置の追加readだけを試す案は採用しない。
+今回の候補はKernelBaseDllInitializeの共通return RVA0x50ba直前。
+[限定観測計画](anomaly-multiseed-v0.3-s4-b1-init-return-plan-2026-09-10.md)に変更条件と上限を記録した。
+DebugDriver(init_return=True)のみ、既定off、unload_entryとの同時使用不可。
+LOADで固定code2窓2195 bytesを照合し、空のdebug slotを検査後、借用初期threadのSetThreadContext(DEBUG_REGISTERS)を1回だけ実施する設計。
+再GetでDR0/DR7/DR6を照合してLOADを継続し、最初の一致したfirst-chance SINGLE_STEPでRIP/reason1/DR等を検査する。
+ALとstage WORD2 bytesをprivate保存し、成功時もinit_return_observed_stopで既存owned stopへ進む。
+通常の例外Continue/handled化やDR復元・再設定は行わず、TerminateProcess確認後だけpendingを解放する。
+停止要求が失敗したらpendingと所有未解消を保持する。今回の停止EXITを自然終了とは扱わない。
+
+追加取得はGetThreadContext最大3回、Set最大1回、RPM最大3回/2197 bytes。unload context/stack/entryは併用しない。
+既存の30秒/256 events/512 MiB/空きdisk1 GiB、drain32/5秒、private証跡保持条件を維持する。
+DLL code、一般register、RIP/EFLAGSは書換えないが、**debug register変更を含むので読取り専用ではない**。
+この新しい設定変更は過去v2の1回承認に含まれず、実機診断は未実施のまま。
+
+固定recipeは現在KernelBase hash一致、code2窓へのbase relocation重なりなし。
+relocation表236492 bytes/117072 DIR64を有界解析した。初回64 KiB仮定で停止した分を含み、参照image read2回、reader close済み。
+新規要約kernelbase-return-probe-recipe.jsonをignored artifactsへ保存。追加PDB download/過去private証跡readなし。
+fake10/10（0.184秒）、debug＋preflight/event全体158/158（1.104秒）pass。
+独立レビューは初回とDR6等の追加確認とも新規P0〜P3=0、最終指定fake10/10（0.197秒）pass。進捗ポーリングなし。
+次はsource保存・read-only preflightを完了し、計画の限定実機1回を判断対象として提示する。全acceptance gate no。

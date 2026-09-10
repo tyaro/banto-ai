@@ -101,7 +101,7 @@ class DebugObserver:
                     raise TransportError("child_resource_stop")
                 if self.images is not None:
                     self.images.capture(self.transport, self._budget)
-                if self.context is not None and event.kind == "unload_dll":
+                if self.context is not None:
                     self.context.capture(self._budget)
                 self.transport.close_file(self.transport.pending)
                 self._budget()

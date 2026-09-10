@@ -23,6 +23,7 @@ from tests.fixtures.anomaly_v03_debug_images import DebugImages
 from tests.fixtures.anomaly_v03_debug_security import DebugSecurity
 from tests.fixtures.anomaly_v03_debug_context import DebugContext
 from tests.fixtures.anomaly_v03_debug_unload_entry import DebugUnloadEntry
+from tests.fixtures.anomaly_v03_debug_init_return import DebugInitReturn
 
 
 class DriverResult(dict):
@@ -35,8 +36,9 @@ class DriverResult(dict):
 class DebugDriver:
     MIN_FREE_DISK = 1024 * 1024 * 1024
 
-    def __init__(self, *, unload_entry=False):
+    def __init__(self, *, unload_entry=False, init_return=False):
         need(type(unload_entry) is bool, "entry_option")
+        need(type(init_return) is bool and not (unload_entry and init_return), "return_option")
         self.preflight = StartupPreflight()
         self.api = self.tokens = self.fixture = self.transport = self.stop = None
         self.memory = self.launch = self.observer = self.session = None
@@ -50,8 +52,8 @@ class DebugDriver:
         self.evidence_file = None
         self.images = DebugImages()
         self.security = DebugSecurity()
-        self.context = DebugContext(entry=DebugUnloadEntry() if unload_entry else None,
-                                    images=self.images)
+        self.context = (DebugInitReturn(self.images) if init_return else
+                        DebugContext(entry=DebugUnloadEntry() if unload_entry else None, images=self.images))
         self.result = DriverResult(self)
 
     def __repr__(self):
