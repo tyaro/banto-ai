@@ -20,7 +20,7 @@ class DebugTokensTests(unittest.TestCase):
             pointer.contents.value = 401
             return True
         def sid(value, pointer):
-            pointer.contents.value = {group: 601, t.w._RC: 602, t.w._RESTRICTED_PACKAGES: 603}[value]
+            pointer.contents.value = {group: 601, t.w._RC: 602, t.w._COMPATIBILITY_PACKAGES: 603}[value]
             return True
         def restrict(*args):
             args[-1].contents.value = 402
@@ -58,7 +58,7 @@ class DebugTokensTests(unittest.TestCase):
                 original = function.side_effect
                 def interrupted(*args):
                     result = original(*args)
-                    if phase != "compatibility_sid" or args[0] == t.w._RESTRICTED_PACKAGES:
+                    if phase != "compatibility_sid" or args[0] == t.w._COMPATIBILITY_PACKAGES:
                         raise MemoryError()
                     return result
                 function.side_effect = interrupted

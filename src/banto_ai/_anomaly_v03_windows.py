@@ -39,10 +39,10 @@ _DIR_RIGHTS = {"add_file": 2, "add_subdirectory": 4, "write_ea": 16,
 _PRIVILEGED = {"S-1-5-32-544", "S-1-5-32-547", "S-1-5-32-548", "S-1-5-32-549",
                "S-1-5-32-550", "S-1-5-32-551"}
 _RC = "S-1-5-12"
-# Fixed compatibility principal for Windows initialization (including KsecDD).
+# Fixed AllApplicationPackages compatibility principal for Windows initialization.
 # This affects any object granting this SID; it does not create an AppContainer.
-_RESTRICTED_PACKAGES = "S-1-15-2-2"
-_RESTRICTING_SIDS = (_RC, _RESTRICTED_PACKAGES)
+_COMPATIBILITY_PACKAGES = "S-1-15-2-1"
+_RESTRICTING_SIDS = (_RC, _COMPATIBILITY_PACKAGES)
 _NON_GOALS = ["owner-admin", "write-dac-write-owner", "privileged-writer", "writable-mapping",
               "hostile-same-user-bootstrap-swap", "sandbox", "worm", "power-loss", "publication"]
 _ROOT = Path(__file__).absolute().parents[2]

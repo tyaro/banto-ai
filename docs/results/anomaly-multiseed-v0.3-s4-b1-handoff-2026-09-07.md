@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §72を最初に参照。ユーザー了承によりRC＋AllRestrictedApplicationPackagesの互換性候補を実装。KsecDDの既知SID分類を実測で確認、pure/fake275件pass、独立実装レビュー中。保護DACL・flags・非昇格条件を維持し、保存後preflightと限定control1回を予定。本流統合・formal未許可。
+2026-09-10最新: §72を最初に参照。RC＋制限アプリ候補14e2f53はtoken作成Error87、child/fixture未作成、結果df09964へ保存。ユーザー了承範囲で実測されたもう一方のAllApplicationPackagesを固定候補として準備、選抜70件pass・独立確認中。本流統合・formal未許可。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1813,3 +1813,16 @@ P2是正確認済み、新規P0〜P3=0、独立担当は新回帰1件だけpass�
 担当のnative/query/wrapper/編集なし、進捗ポーリングなし。repository safety/diff-check pass。
 最新wrapper3907 bytes/hash01fbc5015ea5fc91beaa3544cd478ab18532199f3c6ca56bb2b8b55011b97ad6、未実行。
 分類summary1606 bytes/hash26be0758bdd1113c9933dc11a1fee87fb5cddc1a1576051b2b394d3488c9e915、既知pathから有界readで確認済み。
+
+
+互換性候補を14e2f53へ保存。保存後preflight2.257秒、27/278074 bytes、verified。
+限定control1回はrestricted_token_create/WinError87で停止、core0.234487秒、child/fixture未作成。
+teardown pass/resource_stopfalse、private control/replaceなし。実行内preflightもverified、Windows10.0.26200.9445/Python3.14.0。
+結果はtoken-compatibility-result文書とdf09964へ保存。再点検と独立点検に引数/配列/寿命の新規所見なし。
+ARAP一般禁止や唯一原因とは断定せず、同候補の再実行なし。
+
+[AllApplicationPackages候補](anomaly-multiseed-v0.3-s4-b1-app-package-plan-2026-09-10.md)を準備する。
+実測されたもう一方の非特権ACEに対応し、RC＋追加1種を維持。flags/属性/canonical順序/非昇格/保護DACLは不変。
+前計画のARAP優先選定を、ユーザー了承済み見直し範囲で更新する。広いEveryone/user/admin/system追加はしない。
+変更3ファイル、選抜70/70(0.237秒)pass、独立確認中。新規device queryなし。
+この候補もtoken作成に失敗ならSID試行を打ち切る。本流/formal gateは閉鎖を維持する。
