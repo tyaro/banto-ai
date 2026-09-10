@@ -16,6 +16,10 @@ class DebugBcryptFailure(DebugInitFailure):
     BREAK_RVAS = (0xB270, 0xB24D, 0xB22D, 0x1128D)
     CANDIDATES = ("call_b3b8", "call_b348", "call_59e0", "module_handle_last_error")
     CALLER_RVA = 0x111CF
+    CALLER_OFFSETS = (0x48,) * 4
+    CALLER_RVAS = (CALLER_RVA,) * 4
+    CODE_READS, CODE_BYTES = 2, 722
+    STOP_REASON = "bcrypt_failure_observed_stop"
     WINDOWS = (
         (0x11140, 475, "7ad0379a750d6a424bdae27d8d4800b5562e59bc73a59547915a86806990e75a"),
         (0xB1C0, 247, "4deae110e20cec3932557987e6fcc1814cad99931cc2d02ac0499cf192f3260b"),
@@ -73,14 +77,15 @@ class DebugBcryptFailure(DebugInitFailure):
         self._program_registers(budget)
 
     def _caller(self, rsp, budget):
-        DebugUnloadEntry._address(rsp, 0x50, 16)
+        offset, caller_rva = self.CALLER_OFFSETS[self.hit_index], self.CALLER_RVAS[self.hit_index]
+        DebugUnloadEntry._address(rsp, offset+8, 16)
         self._budget(budget)
-        need(self.row["read_attempts"] == 2 and self.row["confirmed_bytes"] == 722,
+        need(self.row["read_attempts"] == self.CODE_READS and self.row["confirmed_bytes"] == self.CODE_BYTES,
              "bcrypt_caller_retry")
         self.row["read_attempts"] += 1
         self.row["read_state"] = "caller_uncertain"
         self.bytes_read.value = 0
-        ok = self.kernel.ReadProcessMemory(self.stop.handles[0], w.H(rsp+0x48),
+        ok = self.kernel.ReadProcessMemory(self.stop.handles[0], w.H(rsp+offset),
                                           self.stack_pointer, 8, self.bytes_read_pointer)
         self.row["last_read_bytes"] = self.bytes_read.value
         self.row["caller_hex"] = self.stack.raw[:min(8, self.bytes_read.value)].hex()
@@ -90,9 +95,23 @@ class DebugBcryptFailure(DebugInitFailure):
         need(self.bytes_read.value == 8, "bcrypt_caller_length")
         self.row["confirmed_bytes"] += 8
         self.row["read_state"] = "caller_confirmed"
-        need(struct.unpack("<Q", self.stack.raw[:8])[0] == self.base+self.CALLER_RVA,
+        need(struct.unpack("<Q", self.stack.raw[:8])[0] == self.base+caller_rva,
              "bcrypt_caller_mismatch")
-        self.row["caller_rva"] = self.CALLER_RVA
+        self.row["caller_rva"] = caller_rva
+
+    def _inspect_result(self, budget):
+        value = struct.unpack_from("<I", self.context, 120)[0]
+        self.row.update(status_u32=value, candidate=self.CANDIDATES[self.hit_index],
+                        status_domain="unclassified_nonzero" if self.hit_index < 3 else "win32_candidate")
+        if self.hit_index < 3:
+            need(value != 0 and struct.unpack_from("<I", self.context, 144)[0] == value,
+                 "bcrypt_result")
+            self._caller(struct.unpack_from("<Q", self.context, 152)[0], budget)
+        else:
+            # The entry path preserves hInstance in RDI and zero in ESI.
+            # Keep GetLastError zero as an observed value, without interpretation.
+            need(struct.unpack_from("<Q", self.context, 176)[0] == self.base
+                 and struct.unpack_from("<I", self.context, 168)[0] == 0, "bcrypt_entry_frame")
 
     def _hit(self, raw, budget):
         self.state, self.slot, self.selected_kind = "querying", self.transport.pending, 1
@@ -111,21 +130,10 @@ class DebugBcryptFailure(DebugInitFailure):
         self._programmed(registers, hit=True)
         need(struct.unpack_from("<Q", self.context, 248)[0] == self.targets[self.hit_index]
              and struct.unpack_from("<I", self.context, 68)[0] & 0x100 == 0, "bcrypt_callsite")
-        value = struct.unpack_from("<I", self.context, 120)[0]
-        self.row.update(status_u32=value, candidate=self.CANDIDATES[self.hit_index],
-                        status_domain="unclassified_nonzero" if self.hit_index < 3 else "win32_candidate")
-        if self.hit_index < 3:
-            need(value != 0 and struct.unpack_from("<I", self.context, 144)[0] == value,
-                 "bcrypt_result")
-            self._caller(struct.unpack_from("<Q", self.context, 152)[0], budget)
-        else:
-            # The entry path preserves hInstance in RDI and zero in ESI.
-            # Keep GetLastError zero as an observed value, without interpretation.
-            need(struct.unpack_from("<Q", self.context, 176)[0] == self.base
-                 and struct.unpack_from("<I", self.context, 168)[0] == 0, "bcrypt_entry_frame")
+        self._inspect_result(budget)
         self._budget(budget)
         self.row.update(status="confirmed", intended_termination=True)
         need(len(json.dumps({"state": "completed", "row": self.row}, ensure_ascii=True)) <= self.JSON_LIMIT,
              "bcrypt_json_size")
         self.state = "completed"
-        raise TransportError("bcrypt_failure_observed_stop")
+        raise TransportError(self.STOP_REASON)

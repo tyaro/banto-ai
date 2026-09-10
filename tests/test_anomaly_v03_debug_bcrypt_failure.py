@@ -16,16 +16,16 @@ from tests.fixtures.anomaly_v03_debug_transport import DBG_CONTINUE, DBG_NOT_HAN
 class BcryptFailureTests(unittest.TestCase):
     BASE, MODULE, RSP = 0x40000000, 0x50000000, 0x30000
 
-    def fixture(self, scope, *, site=0, value=5, hit=True):
-        o,api,k,fixture,memory=bootstrap_fixtures.BootstrapTests().fixture(scope,bcrypt_failure=True)
-        p=o.context; regs=[0]*6
+    def fixture(self, scope, *, site=0, value=5, hit=True, detail=False):
+        o,api,k,fixture,memory=bootstrap_fixtures.BootstrapTests().fixture(scope,bcrypt_failure=not detail,bcrypt_detail=detail)
+        p=o.context; regs=[0]*6; probe=type(p)
         windows=[]
-        for rva,size,digest in Probe.WINDOWS:
+        for rva,size,digest in probe.WINDOWS:
             code=b"X"*size
             memory[self.MODULE+rva]=code
             windows.append((rva,size,hashlib.sha256(code).hexdigest()))
-        scope.enter_context(patch.object(Probe,"WINDOWS",tuple(windows)))
-        memory[self.RSP+0x48]=struct.pack("<Q",self.MODULE+Probe.CALLER_RVA)
+        scope.enter_context(patch.object(probe,"WINDOWS",tuple(windows)))
+        memory[self.RSP+probe.CALLER_OFFSETS[site]]=struct.pack("<Q",self.MODULE+probe.CALLER_RVAS[site])
         events=iter((3,6,6,1,1,5) if hit else (3,6,6,1,5))
         last=[None]; exceptions=[0]
         def deliver(pointer,timeout):
@@ -43,7 +43,7 @@ class BcryptFailureTests(unittest.TestCase):
                 info.first_chance=1
                 info.record.code=0x80000003 if exceptions[0]==1 else 0x80000004
                 info.record.address=(self.BASE+o.bootstrap.BREAK_RVA if exceptions[0]==1
-                                     else self.MODULE+Probe.BREAK_RVAS[site])
+                                     else self.MODULE+probe.BREAK_RVAS[site])
                 info.record.parameters=1 if exceptions[0]==1 else 0
                 if exceptions[0]==2:regs[4],regs[5]=0xFFFF0FF0|(1<<site),0x455
             else:raw.info.exit_code=1 if hit else 0xC0000142
@@ -56,9 +56,12 @@ class BcryptFailureTests(unittest.TestCase):
             if pointer.value==o.bootstrap.context_pointer.value:return bootstrap_get(handle,pointer)
             struct.pack_into("<6Q",p.context,72,*regs)
             if struct.unpack_from("<I",p.context,48)[0]==p.HIT_FLAGS:
-                for offset,number in ((248,self.MODULE+Probe.BREAK_RVAS[site]),(120,value),(144,value),
+                for offset,number in ((248,self.MODULE+probe.BREAK_RVAS[site]),(120,value),(144,value),
                                       (152,self.RSP),(176,self.MODULE)):
                     struct.pack_into("<Q",p.context,offset,number)
+                if detail and site in (1,2):
+                    struct.pack_into("<Q",p.context,168,self.MODULE+0x25B10)
+                    struct.pack_into("<Q",p.context,176,5 if site==2 else self.MODULE)
             return True
         def set_context(handle,pointer):
             self.assertEqual(handle,502)
