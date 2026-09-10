@@ -1986,3 +1986,25 @@ source保存後read-only preflightを完了した新規fixtureの次のcontrol1�
 RC＋Everyone/非昇格/必須操作/保護DACL、30秒/512 MiB未満/temp空き1 GiB以上と資源停止後の追加hash/save/scan禁止を維持。
 別project操作・既存fixture操作・追加権限は含まない。成功時もnative_accepted/s4_accepted/formal_permission/execution_authenticated=false。
 Python3.12既定受入・本流統合・formal/B2/publisherは閉じたまま。UBR緩和と状態記録を維持する。
+
+
+修正コードを0b30e63へ保存。保存後preflight2.884秒、27 sources/288326 bytes、verified。
+resource_stopfalse、primary/secondaryなし、Windows10.0.26200.9445/Python3.14.0、既存exe/DLL hash一致。
+operation-context-preflight.jsonへ保存。修正後のrestricted child/controlは未実施。
+最終09:40:09Zの空きRAM8.24 GiB、C108.16/D75.36 GiB、last bootは作業前と同じ。
+本流889cfc3 clean、別project・失敗fixtureへの追加操作なし。点の資源量でリーク有無は断定しない。
+この追記は文書のみでsourceを変えないため、fake試験・preflightを再実行しない。
+
+## 今回提示する進行方針（未承認）
+
+準備済み0b30e63候補を含む最大3候補について、各候補control harness1回、合計最大3回まで進める。
+child作成前に失敗した呼出も1回と数える。同じcandidateの再実行はしない。
+次の候補は観測結果に基づく修正・診断改善が必要な場合だけ準備し、各候補の適切なpure/fake検証、
+独立差分レビュー、source保存、read-only preflightと空き資源確認を終えてから1回実行する。
+権限/token/保護DACL/必須期待値/起動隔離条件/資源上限は変更しない。既存failure rootsや別projectを操作しない。
+成功、資源停止、所有後処理の不確実性、許可条件外の変更が必要な場合、または3回消化で停止して記録する。
+各結果・修正は保存する。正式受入/本流統合/formal/B2/publisherの許可を含まない。
+
+この問いへの「お願いします」「続けてください」を上記最大3回への了承として扱い、受領後は§6の都度確認をこの範囲だけ緩和する。
+現時点では未承認であり、今回実施済みのruntime-machine1回を再実行する意味ではない。
+§75の先の「次の1回への返答待ち」は準備途中の記録で、今回最終提示する対象はこの限定した最大3回の方針とする。
