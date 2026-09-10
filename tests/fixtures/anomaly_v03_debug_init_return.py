@@ -17,7 +17,7 @@ from tests.fixtures.anomaly_v03_debug_transport import TransportError, need
 
 
 class DebugInitReturn(DebugContext):
-    RECIPE = "kernelbase-26200.9445-return-v2"
+    RECIPE = "kernelbase-26200.9445-return-v3"
     BREAK_RVA, STAGE_RVA, IMAGE_SIZE = 0x50BA, 0x3AEEA0, 4202496
     DEBUG_FLAGS, HIT_FLAGS = 0x100010, 0x100013
     CAUSE_MASK = 0xE00F
@@ -127,13 +127,18 @@ class DebugInitReturn(DebugContext):
     def _programmed(self, registers, *, hit):
         dr0, dr1, dr2, dr3, dr6, dr7 = registers
         # Bit 10 of DR7 may be normalized by the OS; all other bits are exact.
+        # CONTEXT.Dr6 is an API result, not a raw processor-register read.
+        # Keep every returned bit in debug_queries, but compare B0-B3/BD/BS/BT.
+        # The observed API returned zero BLD/RTM bits despite the requested value;
+        # do not infer their hardware state from this representation.
         checks = {"dr0_matches": dr0 == self.target, "dr1_to_dr3_zero": (dr1, dr2, dr3) == (0, 0, 0),
-                  "dr6_inactive_bits_set": dr6 & 0x10800 == 0x10800,
                   "dr7_matches": dr7 & ~0x400 == 1,
                   "dr6_standard_cause_matches": dr6 & self.CAUSE_MASK == (1 if hit else 0)}
         if hit:
-            checks["dr6_baseline_matches"] = self.armed_dr6 is not None and dr6 == self.armed_dr6 | 1
-        self.row["debug_checks"] = {"phase": "hit" if hit else "arm", "matches": checks}
+            checks["dr6_baseline_matches"] = (self.armed_dr6 is not None
+                and dr6 & self.CAUSE_MASK == (self.armed_dr6 & self.CAUSE_MASK) | 1)
+        self.row["debug_checks"] = {"phase": "hit" if hit else "arm", "matches": checks,
+                                    "dr6_compared_mask": self.CAUSE_MASK}
         need(all(value for key, value in checks.items() if key != "dr6_baseline_matches"),
              "return_debug_registers")
         need(checks.get("dr6_baseline_matches", True), "return_debug_cause_changed")
@@ -157,7 +162,7 @@ class DebugInitReturn(DebugContext):
         need(original[:4] == (0, 0, 0, 0) and original[5] in (0, 0x400)
              and original[4] & self.CAUSE_MASK == 0, "return_debug_in_use")
         struct.pack_into("<Q", self.context, 72, self.target)
-        # BLD and RTM are active-low causes; establish their inactive baseline.
+        # Request inactive BLD/RTM bits; the Windows API may normalize them.
         struct.pack_into("<Q", self.context, 104, original[4] | 0x10800)
         struct.pack_into("<Q", self.context, 112, original[5] | 1)
         # Only the DEBUG_REGISTERS group is written. RIP/EFLAGS/GPRs stay untouched.

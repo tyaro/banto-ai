@@ -1,10 +1,10 @@
 # S4-B1 KernelBase初期化の戻り直前を観測する限定診断
 
-状態: **v1実機1回終了 / v2修正・fake/独立レビュー・preflight完了 / v2限定実機1回の判断待ち / no native acceptance**。
+状態: **v1/v2各1回終了 / v3のDR6判定修正・fake/独立レビュー完了 / v3実機未実施 / no native acceptance**。
 
-[v1の実機結果](anomaly-multiseed-v0.3-s4-b1-init-return-result-2026-09-10.md)を参照。
-v1は設定後のregister照合で停止し、終了・証跡保存を確認した。読み戻し値自体は未保存だったため、v2で取得時点の保存を追加した。
-以下の取得条件はv2でも維持する。過去の判断待ち/preflight記述はv1実行前の履歴で、追加実行の承認ではない。
+[v2の実機結果](anomaly-multiseed-v0.3-s4-b1-init-return-v2-result-2026-09-10.md)を参照。
+v1の未保存値は未確定のまま。v2では要求/返却値を保存し、DR6要求0x10800に対してAPI返却0だけが不一致と判明した。
+以下はv3の取得条件へ更新した。過去の判断待ち/preflight記述は当時の履歴で、追加実行の承認ではない。
 
 ## 目的と観測位置
 
@@ -27,7 +27,7 @@ reason1の通常経路では、基本初期化のALをそのまま返す経路�
 明示的な `DebugDriver(init_return=True)` のみで使い、既定はoff。unload_entry=Trueとは同時使用不可。
 対象は新規の専用fixtureから起動する診断childの初期threadだけ。
 **SetThreadContextのDEBUG_REGISTERS指定による設定を最大1回**追加し、DR0/DR7で1か所のprocessor execution breakpointを置く。
-DR6には原因判定のためのinactive baselineも設定する。DLLコード・一般register・RIP/EFLAGSへの書換えはない。
+DR6には従来と同じinactive bitsを要求するが、API返却値の表現は別に判定する。DLLコード・一般register・RIP/EFLAGSへの書換えはない。
 
 [Microsoftのprocessor breakpoint説明](https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/processor-breakpoints---ba-breakpoints-)
 ではprocessor breakpointはコード上でも利用できる一方、debug registerの手動編集は推奨されていない。
@@ -53,11 +53,11 @@ collector、16-byte aligned CONTEXT1232 bytes、2048-byte scratch、private証�
    使用中のdebug slotは上書きしない。元のdebug register bytesをprivate保存する。
 4. DR0=base+0x50ba、DR7のL0だけを追加し、R/W0=00・LEN0=00のexecution/1-byteを指定する。
    DR6のBLD/RTMをinactiveの1にし、DEBUG_REGISTERSだけのSetThreadContextを1回呼ぶ。
-   直後に再Getし、DR0〜3、DR7（bit10だけ補正可）、DR6を照合してからLOADを通常Continueする。
+   直後に再Getし、DR0〜3、DR7（bit10だけ補正可）、DR6のcause mask0xe00fが0であることを照合してからLOADを通常Continueする。
 5. 設定後の最初の例外を選ぶ。他thread、別address、second chance、別exception code等なら停止し、後続で再試行しない。
    first-chance 0x80000004、例外flags=0/連結recordなし/parameters=0、address一致を要求する。
 6. GetThreadContext(CONTROL | INTEGER | DEBUG_REGISTERS)を1回行い、rawをprivate保持する。
-   RIP=base+0x50ba、EBX下位32 bits=1、TF=0、DR0〜3/DR7一致、DR6が設定確認時の値にB0だけを加えた値であることを要求する。
+   RIP=base+0x50ba、EBX下位32 bits=1、TF=0、DR0〜3/DR7一致、DR6のcause mask0xe00f内が設定確認時からB0だけ変化したことを要求する。
 7. 同じpending eventでbase+0x3aeea0から**2 bytesを1回**読み、AL、AL==0、段階値を保存する。
    ALや段階値が既知の値に属するかで値を補完・破棄しない。未知値も実測値として残す。
 8. `init_return_observed_stop` を理由に観測ループを終了する。
@@ -78,9 +78,10 @@ PE SizeOfImage=4202496、段階値のsection flags=0xc0000040。
 参照fileの情報であり、実loaded bytesの2窓一致は今回の実機で判定する。LOAD時点の照合をimage全体やその後の完全一致とは扱わない。
 
 [Intel SDM Volume3B §20.2.3–20.2.4](https://cdrdv2-public.intel.com/874250/253669-090-sdm-vol-3b.pdf)
-を参照し、B0〜3/BD/BS/BTをmask0xe00fで照合する。BLD(bit11)/RTM(bit16)はactive-lowなので、設定時に1を要求する。
-hit時はDR6全体のbaseline比較も行い、他の原因・reserved bits等の変化を推測で許容しない。
-Windows側の正規化がこの条件と異なる場合も停止し、自動で条件を緩和しない。
+を参照し、B0〜3/BD/BS/BTをmask0xe00fで照合する。BLD(bit11)/RTM(bit16)はCPU上ではactive-lowである。
+v2実測ではSet要求0x10800に対してGetのDR6は0だったため、v3ではAPI値をCPUの生のbit表現と同一視しない。
+hitのbaseline比較も同じcause mask内で行い、DR6全体はprivate保存する。BLD/RTM/reservedのAPI表現からhardware状態を断定しない。
+他の報告された標準cause、RIP/thread等の不一致は停止する。複合例外原因の不存在を証明したとは扱わない。
 
 ## 停止と証跡の扱い
 
@@ -143,3 +144,14 @@ v2を保存してread-only preflightを確認後、**同じ停止点設定最大
 v2修正とv1結果をe601921に保存した。保存後read-only preflightは1.951秒、20 sources/229087 bytes、verified、resource_stop=false。
 Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。init-return-v2-preflight.jsonへ保存済み。
 v2の実child/実SetThreadContextは未実施。次の判断対象は、同じ設定/取得/停止上限でv2を新規fixtureで1回実施すること。
+
+## v3の変更と次の判断対象
+
+上記v2の限定1回は承認後に実施し、DR6返却表現の前提で停止した。詳細はv2結果を参照。
+v3はDR6の比較をAPIが報告するcause mask0xe00fに揃える。設定時の要求bytes、停止点、最大Get3/Set1/RPM3回2197 bytesは不変。
+生bytesと比較maskを保存し、範囲外のbitをhardwareの状態として推測しない。各回の成功/失敗・raw保持、通常Continue禁止も維持。
+関係fake12/12（0.349秒）、全体160/160（1.470秒）pass。独立確認・保存後preflightを経て、v3の新規fixture1回を判断対象にする。
+v2承認1回は消化済み。v3を自動実行せず、同じ取得・時間・メモリ上限での限定1回について別の返答を待つ。
+
+独立新規P0〜P3=0、指定fake12/12（0.377秒）pass。API値からhardware状態を推測しない留保を維持する。
+担当の完了通知を利用し、進捗ポーリングなし。

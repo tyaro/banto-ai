@@ -177,7 +177,7 @@ class DebugInitReturnTests(unittest.TestCase):
 
     def test_wrong_exception_or_context_never_reads_stage(self):
         for fault in ("code", "chance", "address", "flags", "record", "parameters", "thread",
-                      "dr0", "dr6", "dr6_other", "dr7", "rip", "reason", "trap"):
+                      "dr0", "dr6", "dr6_b0_clear", "dr7", "rip", "reason", "trap"):
             with self.subTest(fault=fault), patch.object(DebugInitReturn, "WINDOWS", self.WINDOWS):
                 o, k, stop, launch, budget, regs = self.fixture()
                 o.capture(budget)
@@ -191,7 +191,7 @@ class DebugInitReturnTests(unittest.TestCase):
                 elif fault == "thread": raw.tid = 20
                 elif fault == "dr0": regs[0] += 1
                 elif fault == "dr6": regs[4] |= 2
-                elif fault == "dr6_other": regs[4] ^= 0x800
+                elif fault == "dr6_b0_clear": regs[4] &= ~1
                 elif fault == "dr7": regs[5] |= 2
                 else:
                     original = k.GetThreadContext.side_effect
@@ -206,7 +206,7 @@ class DebugInitReturnTests(unittest.TestCase):
                 self.assertNotIn("return_byte", o.row)
 
     def test_driver_terminates_before_releasing_exception_and_retains_evidence(self):
-        for fault in (None, "resource", "set_uncertain", "readback_mismatch", "terminate_false"):
+        for fault in (None, "normalized_dr6", "resource", "set_uncertain", "readback_mismatch", "terminate_false"):
             with self.subTest(fault=fault), ExitStack() as scope:
                 scope.enter_context(patch.object(DebugInitReturn, "WINDOWS", self.WINDOWS))
                 driver, api, k, preflight, tokens, fixture, disk = df.DebugDriverTests().driver(scope, init_return=True)
@@ -259,12 +259,12 @@ class DebugInitReturnTests(unittest.TestCase):
                         original(*args)
                         raise KeyboardInterrupt()
                     k.SetThreadContext.side_effect = put
-                elif fault == "readback_mismatch":
+                elif fault in ("readback_mismatch", "normalized_dr6"):
                     original = k.GetThreadContext.side_effect
                     def get(*args):
                         result = original(*args)
                         if k.GetThreadContext.call_count == 2:
-                            struct.pack_into("<Q", o.context, 104, 0)
+                            struct.pack_into("<Q", o.context, 104, 2 if fault == "readback_mismatch" else 0)
                         return result
                     k.GetThreadContext.side_effect = get
                 result = driver.run()
@@ -293,14 +293,19 @@ class DebugInitReturnTests(unittest.TestCase):
                     elif fault == "readback_mismatch":
                         query = row["debug_queries"][1]
                         self.assertEqual(query["state"], "captured")
-                        self.assertEqual(struct.unpack_from("<Q", bytes.fromhex(query["debug_hex"]), 32)[0], 0)
-                        self.assertFalse(row["debug_checks"]["matches"]["dr6_inactive_bits_set"])
+                        self.assertEqual(struct.unpack_from("<Q", bytes.fromhex(query["debug_hex"]), 32)[0], 2)
+                        self.assertFalse(row["debug_checks"]["matches"]["dr6_standard_cause_matches"])
                         self.assertEqual(saved.private_metadata["primary_reason"], "return_debug_registers")
                         self.assertNotIn("stage_value", row)
                     else:
                         self.assertEqual(row["status"], "confirmed")
                         self.assertEqual(row["stage_value"], 100)
                         self.assertEqual(saved.private_metadata["primary_reason"], "init_return_observed_stop")
+                        if fault == "normalized_dr6":
+                            queries = row["debug_queries"]
+                            values = [struct.unpack_from("<Q", bytes.fromhex(q["debug_hex"]), 32)[0] for q in queries]
+                            self.assertEqual(values[1:], [0, 0xFFFF0FF1])
+                            self.assertEqual(row["debug_checks"]["dr6_compared_mask"], 0xE00F)
                 k.WriteProcessMemory.assert_not_called()
 
     def test_opt_in_is_explicit_and_mutually_exclusive(self):
@@ -317,7 +322,7 @@ class DebugInitReturnTests(unittest.TestCase):
                 def get(*args):
                     result = original(*args)
                     if k.GetThreadContext.call_count == 2:
-                        offset, code, value = {"dr0": (72, "Q", 0), "dr6": (104, "Q", 0),
+                        offset, code, value = {"dr0": (72, "Q", 0), "dr6": (104, "Q", 2),
                                                "dr7": (112, "Q", 0), "flags": (48, "I", 0)}[fault]
                         struct.pack_into("<" + code, o.context, offset, value)
                     return result
@@ -332,7 +337,7 @@ class DebugInitReturnTests(unittest.TestCase):
                     self.assertEqual(query["returned_flags"], 0)
                     self.assertNotIn("debug_checks", o.row)
                 else:
-                    key = {"dr0": "dr0_matches", "dr6": "dr6_inactive_bits_set", "dr7": "dr7_matches"}[fault]
+                    key = {"dr0": "dr0_matches", "dr6": "dr6_standard_cause_matches", "dr7": "dr7_matches"}[fault]
                     self.assertFalse(o.row["debug_checks"]["matches"][key])
                 k.SetThreadContext.assert_called_once()
                 k.ContinueDebugEvent.assert_not_called()
@@ -402,6 +407,32 @@ class DebugInitReturnTests(unittest.TestCase):
                 self.assertEqual(o.state, "stopped")
                 self.assertEqual(k.ReadProcessMemory.call_count, 2)
                 k.SetThreadContext.assert_called_once()
+
+    def test_dr6_api_representation_does_not_hide_other_reported_causes(self):
+        for baseline in (0, 0x10800, 0xFFFF0FF0):
+            for reported in (1, 0x10801, 0xFFFF0FF1, 0, 3, 5, 9, 0x2001, 0x4001, 0x8001):
+                with self.subTest(baseline=baseline, reported=reported), patch.object(DebugInitReturn, "WINDOWS", self.WINDOWS):
+                    o, k, stop, launch, budget, regs = self.fixture()
+                    original = k.GetThreadContext.side_effect
+                    def get(*args):
+                        result = original(*args)
+                        if k.GetThreadContext.call_count == 2:
+                            struct.pack_into("<Q", o.context, 104, baseline)
+                        elif k.GetThreadContext.call_count == 3:
+                            struct.pack_into("<Q", o.context, 104, reported)
+                        return result
+                    k.GetThreadContext.side_effect = get
+                    o.capture(budget)
+                    self.hit(o, regs)
+                    with self.assertRaises(TransportError) as error: o.capture(budget)
+                    valid = reported in (1, 0x10801, 0xFFFF0FF1)
+                    self.assertEqual(error.exception.reason,
+                                     "init_return_observed_stop" if valid else "return_debug_registers")
+                    self.assertEqual("stage_value" in o.row, valid)
+                    self.assertEqual(k.ReadProcessMemory.call_count, 3 if valid else 2)
+                    queries = o.row["debug_queries"]
+                    self.assertEqual(struct.unpack_from("<Q", bytes.fromhex(queries[2]["debug_hex"]), 32)[0], reported)
+                    k.SetThreadContext.assert_called_once()
 
 
 if __name__ == "__main__":

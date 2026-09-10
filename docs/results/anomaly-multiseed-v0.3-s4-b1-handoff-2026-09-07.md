@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §59を最初に参照。return観測v1は設定読み戻しの照合で停止、終了/保存確認済み。読み戻し値を残すv2修正・fake/独立レビュー・preflight済み。v2限定実機1回の判断待ち。
+2026-09-10最新: §60を最初に参照。return観測v2でDR6要求0x10800/返却0だけが不一致と判明、終了/保存確認済み。v3はAPIのcause maskに比較を揃える修正・fake済み。v3実機は未実施。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1190,3 +1190,28 @@ v2修正保存e601921後のread-only preflightは1.951秒、20 sources/229087 by
 Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。init-return-v2-preflight.jsonに保存。
 v2実機は未実施。新規fixture1回、Set最大1回/Get最大3回/RPM最大3回2197 bytes、同じ停止上限の範囲について返答を待つ。
 この問いへの「続けてください」は当該v2の1回への了承として扱い、再確認せず実行する。
+
+## 60. 2026-09-10 return観測v2でDR6のAPI返却表現を特定
+
+ユーザーの「続けてください」をv2限定1回への了承として、cleanな0f19157（実装e601921）で新規fixture1回を実行した。
+初期reportまで1.819秒。固定code2窓2195 bytes一致、Get2回/Set1回のAPI成功とflags一致を確認。
+要求DR0=target/DR1〜3=0/DR6=0x10800/DR7=1に対し、返却はDR6だけ0、その他一致だった。
+dr6_inactive_bits_setだけfalseで停止し、callback戻り値とstageは未取得。v1の未保存値は補完しない。
+通常4 events/Continue3、Terminate要求確認後にpending LOADを解放、drain1件EXIT code1をContinueした。自然終了は未観測。
+signal/ownership解消/所有handle close/teardown pass/failure_count0、先行reportと証跡write/flush/close確認済み。
+private108952 bytes/hash27cd3c147d687b6c8ff5655476837402c49219c17739b7fa4368da1794b87103、有界readback1回で一致、reader close。
+詳細は[return観測v2結果](anomaly-multiseed-v0.3-s4-b1-init-return-v2-result-2026-09-10.md)。
+
+v3はCONTEXT.Dr6をCPU生registerと同一視する前提を修正し、B0〜3/BD/BS/BTのmask0xe00fでarm0/hit1を検査する。
+baseline差分も同じmaskで比較し、全返却bytesを保持。BLD/RTM/reservedのAPI表現からhardware状態を推定しない。
+最初の例外、DR0/DR7/初期thread/first-chance/address/RIP/reason1/TF=0を維持し、他の報告された標準causeは拒否する。
+複合した例外原因の不存在を証明したとは扱わない。Set要求bytes/回数、RPM最大2197 bytes、通常Continueせずowned stopで終了する条件は不変。
+関係fake12/12（0.349秒）、debug＋preflight/event160/160（1.470秒）pass。v3実機は未実施。
+
+同run preflightは20 sources/229087 bytes、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致、resource_stop=false。
+親＋child peak commit約22.33 MiB、sample58回。PC空きRAM8.46→9.36 GiB、C105.72→105.71 GiB、D75.36 GiB。
+単発値からリーク有無は未判定。新規公開要約2件、追加DLL/PDB読取り・download・他project操作なし。全acceptance gate no。
+次はv3の独立確認・保存・preflightを完了し、同じ上限で新規fixture1回の判断を求める。v2承認は消化済み。
+
+独立差分レビュー新規P0〜P3=0、指定fake12/12（0.377秒）pass。API表現とhardware状態の区別を維持する。
+担当の完了通知を利用し進捗ポーリングなし。独立担当はnative実行/private証跡参照を行っていない。
