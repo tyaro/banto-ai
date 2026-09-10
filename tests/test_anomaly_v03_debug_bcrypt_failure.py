@@ -16,8 +16,8 @@ from tests.fixtures.anomaly_v03_debug_transport import DBG_CONTINUE, DBG_NOT_HAN
 class BcryptFailureTests(unittest.TestCase):
     BASE, MODULE, RSP = 0x40000000, 0x50000000, 0x30000
 
-    def fixture(self, scope, *, site=0, value=5, hit=True, detail=False):
-        o,api,k,fixture,memory=bootstrap_fixtures.BootstrapTests().fixture(scope,bcrypt_failure=not detail,bcrypt_detail=detail)
+    def fixture(self, scope, *, site=0, value=5, hit=True, detail=False, device=False):
+        o,api,k,fixture,memory=bootstrap_fixtures.BootstrapTests().fixture(scope,bcrypt_failure=not (detail or device),bcrypt_detail=detail,bcrypt_device=device)
         p=o.context; regs=[0]*6; probe=type(p)
         windows=[]
         for rva,size,digest in probe.WINDOWS:
@@ -45,7 +45,7 @@ class BcryptFailureTests(unittest.TestCase):
                 info.record.address=(self.BASE+o.bootstrap.BREAK_RVA if exceptions[0]==1
                                      else self.MODULE+probe.BREAK_RVAS[site])
                 info.record.parameters=1 if exceptions[0]==1 else 0
-                if exceptions[0]==2:regs[4],regs[5]=0xFFFF0FF0|(1<<site),0x455
+                if exceptions[0]==2:regs[4],regs[5]=0xFFFF0FF0|(1<<site),p.DEBUG_ENABLES|0x400
             else:raw.info.exit_code=1 if hit else 0xC0000142
             return True
         def name(handle,buffer,size,flags):
@@ -62,6 +62,15 @@ class BcryptFailureTests(unittest.TestCase):
                 if detail and site in (1,2):
                     struct.pack_into("<Q",p.context,168,self.MODULE+0x25B10)
                     struct.pack_into("<Q",p.context,176,5 if site==2 else self.MODULE)
+                if device:
+                    if site<2:
+                        for offset,number in ((168,self.RSP+0x60),(176,0),(232,0),(240,8),
+                                              (216,value if site==0 else 0),(136,4)):
+                            struct.pack_into("<Q",p.context,offset,number)
+                    else:
+                        struct.pack_into("<Q",p.context,168,self.MODULE+0x25B10)
+                        struct.pack_into("<Q",p.context,176,0)
+                        struct.pack_into("<I",p.context,160,value)
             return True
         def set_context(handle,pointer):
             self.assertEqual(handle,502)

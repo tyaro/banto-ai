@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §69を最初に参照。bcrypt call_59e0の戻りC0000022を取得、所有終了・証跡readback確認済み。次の詳細4経路実装0f34eceはpure/fake265件・独立レビューpass、26 sourceの保存後preflight verified。次の限定診断1回は未実施。
+2026-09-10最新: §70を最初に参照。bcrypt後始末前でEAX/EBP=C0000022・EDI0を取得、所有終了・証跡readback確認済み。次のデバイス3地点候補はpure/fake272件pass、独立P2是正確認済み、新規所見0。保存後preflight前。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1649,3 +1649,46 @@ bootstrap込みGet4/Set1/RPM最大7回1873 bytes、既存時間・memory・disk�
 この具体的な問いへの「お願いします」「続けてください」は当該1回への了承として扱い、同じ了承を再確認しない。
 実行wrapperはbcrypt-detail-once.py、2760 bytes/hash21855bf61836619d7f0aaa58a0167de136f0ba9b034cf6fbddf0cc9c5853565a、未実行。
 §6の追加probe条件を引き継ぎ、自動再試行なし。今回のbcrypt-failure1回への了承は消化済み。
+
+
+## 70. 2026-09-10 bcrypt後始末前のEBP負値を確認、デバイス経路の3地点を準備
+
+ユーザーの「お願いします」を§69の1回への了承として、cleanな7fff7f8（実装0f34ece）で新規fixture1回を実行。
+初期reportまで2.709秒、primary=bcrypt_detail_observed_stop、driver/observer failed、
+context completed/status confirmed/Set verified、secondaryなし、resource_stop=false。
+通常19/Continue18、slot17 bootstrapを照合継続、slot18でDR2 bcrypt5dd5にhit。
+EAX=EBP=C0000022、EDI0、RSI=base25b10/R15=0、caller5ab5、LOAD slot16と一致。
+5dafのイベント失敗値は未観測、mixed_cleanup_candidatesのまま保持。特定APIやDACL原因と断定しない。
+詳細は[bcrypt詳細経路の結果](anomaly-multiseed-v0.3-s4-b1-bcrypt-detail-result-2026-09-10.md)を参照。
+
+bootstrap込みGet4/Set1/RPM7回1873 bytes、DR6 arm0/hitffff0ff4、DR7 arm55/hit455。
+hitの通常Continueなし、owned terminate→pending解放→drain4（thread3/process1、全code1）Continue。
+signal/ownership解消/owned handles close/teardown pass/failure_count0/driver teardown failures0。
+自然EXIT未観測、code1は意図した終了処理。fixture存在unverified、cleanup/repairなし、child E2E未達。
+
+private117656 bytes/hash562d2d593fe971756d0b3f8d0cc39b19dbf070e00b3742a4ac7100d613ce9526、
+write/flush/file close確認済み。有界held-file read1回で全events/bootstrap/CONTEXT/caller/混合値/LOAD/launch/stop/hashを照合。
+reader close、全inflight false、未確定buffer領域zero。公開summary/readback保存。
+同run preflight26 sources/273838 bytes、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+memory171 samples、親＋child peak commit26103808（24.89 MiB）/working36925440（35.21 MiB）。
+作業前後RAM8.10→7.82 GiB、C107.99→107.98/D75.36 GiB、last boot2026-09-09T10:43:08.5000000+09:00。
+UBR緩和を維持して状態記録、単発値からリーク有無は未判定。他project操作なし。
+
+前回参照cacheのみから7f50/8154を解析、追加DLL/PDB read/downloadなし。
+NtOpenFile helper8154、NtDeviceIoControlFile戻り/応答解釈が候補。固定名はRVA1f098の\\Device\\KsecDD、終端込み30 bytes。
+name/要求access100003/share7/options20/control390400/command10500は静的参照値。
+過去のCALL完了・実行時IAT・既存handle対象の認証ではなく、token/DACL/ACLやデバイス設定は変更していない。
+
+次の[デバイス経路計画](anomaly-multiseed-v0.3-s4-b1-bcrypt-device-plan-2026-09-10.md)は8129/80ac/5dd5の3site。
+初案の8131応答値は80acで先に停止して到達できないP2を独立設計レビューで検出し除外した。
+mask15/DR3zero、全4DR照合、最初の例外で終了を維持。80000005も80acの戻り値までを記録、応答値取得を主張しない。
+従来4siteはmask55を維持。候補値はR12D負値/EAX負値/mixed EAX・EDI・EBPとsite別に分ける。
+caller offsetsb8/128、参照窓3回1758（文字列30含む）＋caller8、bootstrap込みGet4/Set1/RPM7回1841 bytes。
+同じ時間/memory/disk/metadata条件、通常Continue/再選択/再armなし、既定off/DETACHED+bootstrap必須/他collector排他。
+親から追加device open/IOCTLなし、childの既存起動経路のみを観測。27 sourcesを保存後照合する。
+
+関係fake60/60（4.429秒）、全体pure/fake272/272（5.802秒）、repository safety/diff-check pass。
+独立P2は是正確認済み、新規P0〜P3=0、担当fake60/60（4.596秒）pass。
+担当のnative/wrapper/private参照/source変更/本流操作なし、完了通知のみ、進捗ポーリングなし。
+本流889cfc3 clean。次は保存後read-only preflightを完了し、新規fixture診断1回を提示する。
+今回のbcrypt-detail1回への了承は消化済み。全acceptance gate no、本流統合/formal/B2/publisher未実施。

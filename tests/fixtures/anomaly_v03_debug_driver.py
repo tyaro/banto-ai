@@ -29,6 +29,7 @@ from tests.fixtures.anomaly_v03_debug_bootstrap import DebugBootstrap
 from tests.fixtures.anomaly_v03_debug_init_failure import DebugInitFailure
 from tests.fixtures.anomaly_v03_debug_bcrypt_failure import DebugBcryptFailure
 from tests.fixtures.anomaly_v03_debug_bcrypt_detail import DebugBcryptDetail
+from tests.fixtures.anomaly_v03_debug_bcrypt_device import DebugBcryptDevice
 
 
 class DriverResult(dict):
@@ -42,7 +43,7 @@ class DebugDriver:
     MIN_FREE_DISK = 1024 * 1024 * 1024
 
     def __init__(self, *, unload_entry=False, init_return=False, console_failure=False,
-                 detached_console=False, bootstrap=False, init_failure=False, bcrypt_failure=False, bcrypt_detail=False):
+                 detached_console=False, bootstrap=False, init_failure=False, bcrypt_failure=False, bcrypt_detail=False, bcrypt_device=False):
         need(type(unload_entry) is bool, "entry_option")
         need(type(init_return) is bool and not (unload_entry and init_return), "return_option")
         need(type(console_failure) is bool and not (console_failure and (unload_entry or init_return)),
@@ -53,14 +54,17 @@ class DebugDriver:
              (unload_entry or init_return or console_failure or init_failure)), "bcrypt_failure_option")
         need(type(bcrypt_detail) is bool and not (bcrypt_detail and
              (unload_entry or init_return or console_failure or init_failure or bcrypt_failure)), "bcrypt_detail_option")
-        need(type(detached_console) is bool and (not detached_console or init_return or unload_entry or init_failure or bcrypt_failure or bcrypt_detail),
+        need(type(bcrypt_device) is bool and not (bcrypt_device and
+             (unload_entry or init_return or console_failure or init_failure or bcrypt_failure or bcrypt_detail)), "bcrypt_device_option")
+        need(type(detached_console) is bool and (not detached_console or init_return or unload_entry or init_failure or bcrypt_failure or bcrypt_detail or bcrypt_device),
              "detached_option")
         self.detached_console = detached_console
-        need(type(bootstrap) is bool and (not bootstrap or detached_console and (unload_entry or init_failure or bcrypt_failure or bcrypt_detail)),
+        need(type(bootstrap) is bool and (not bootstrap or detached_console and (unload_entry or init_failure or bcrypt_failure or bcrypt_detail or bcrypt_device)),
              "bootstrap_option")
         need(not init_failure or bootstrap and detached_console, "init_failure_bootstrap_option")
         need(not bcrypt_failure or bootstrap and detached_console, "bcrypt_bootstrap_option")
         need(not bcrypt_detail or bootstrap and detached_console, "bcrypt_detail_bootstrap_option")
+        need(not bcrypt_device or bootstrap and detached_console, "bcrypt_device_bootstrap_option")
         self.preflight = StartupPreflight()
         self.api = self.tokens = self.fixture = self.transport = self.stop = None
         self.memory = self.launch = self.observer = self.session = None
@@ -75,7 +79,8 @@ class DebugDriver:
         self.images = DebugImages()
         self.bootstrap = DebugBootstrap(self.images) if bootstrap else None
         self.security = DebugSecurity()
-        self.context = (DebugBcryptDetail(self.images, self.bootstrap) if bcrypt_detail else
+        self.context = (DebugBcryptDevice(self.images, self.bootstrap) if bcrypt_device else
+                        DebugBcryptDetail(self.images, self.bootstrap) if bcrypt_detail else
                         DebugBcryptFailure(self.images, self.bootstrap) if bcrypt_failure else
                         DebugInitFailure(self.images, self.bootstrap) if init_failure else
                         DebugConsoleFailure(self.images) if console_failure else

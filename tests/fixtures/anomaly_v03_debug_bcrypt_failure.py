@@ -16,6 +16,7 @@ class DebugBcryptFailure(DebugInitFailure):
     BREAK_RVAS = (0xB270, 0xB24D, 0xB22D, 0x1128D)
     CANDIDATES = ("call_b3b8", "call_b348", "call_59e0", "module_handle_last_error")
     CALLER_RVA = 0x111CF
+    DEBUG_ENABLES = DebugConsoleFailure.DEBUG_ENABLES
     CALLER_OFFSETS = (0x48,) * 4
     CALLER_RVAS = (CALLER_RVA,) * 4
     CODE_READS, CODE_BYTES = 2, 722
@@ -67,7 +68,9 @@ class DebugBcryptFailure(DebugInitFailure):
         DebugUnloadEntry._address(self.base, self.IMAGE_SIZE, 0x10000)
         self.image_row = row
         self._active_bcrypt()
-        self.targets = tuple(self.base+rva for rva in self.BREAK_RVAS)
+        need(1 <= len(self.BREAK_RVAS) <= 4 and len(set(self.BREAK_RVAS)) == len(self.BREAK_RVAS),
+             "bcrypt_target_recipe")
+        self.targets = tuple(self.base+rva for rva in self.BREAK_RVAS) + (0,) * (4-len(self.BREAK_RVAS))
         self.row.update(status="arming", arm_slot=self.slot, load_slot=index)
         self._identity(budget)
         for rva, size, digest in self.WINDOWS:
@@ -121,7 +124,7 @@ class DebugBcryptFailure(DebugInitFailure):
         info = raw.info.exception
         need(info.first_chance == 1 and info.record.code == 0x80000004
              and info.record.flags == 0 and info.record.record is None
-             and info.record.parameters == 0 and info.record.address in self.targets,
+             and info.record.parameters == 0 and info.record.address in self.targets[:len(self.BREAK_RVAS)],
              "bcrypt_exception")
         self.hit_index = self.targets.index(info.record.address)
         self.row.update(hit_index=self.hit_index, hit_rva=self.BREAK_RVAS[self.hit_index])

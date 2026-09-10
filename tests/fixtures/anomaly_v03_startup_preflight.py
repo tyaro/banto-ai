@@ -38,6 +38,7 @@ SOURCES = (
     "tests/fixtures/anomaly_v03_debug_init_failure.py",
     "tests/fixtures/anomaly_v03_debug_bcrypt_failure.py",
     "tests/fixtures/anomaly_v03_debug_bcrypt_detail.py",
+    "tests/fixtures/anomaly_v03_debug_bcrypt_device.py",
     "tests/fixtures/anomaly_v03_debug_driver.py",
     "tests/fixtures/anomaly_v03_startup_preflight.py",
 )

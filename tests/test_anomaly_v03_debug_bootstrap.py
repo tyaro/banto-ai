@@ -18,10 +18,10 @@ class BootstrapTests(unittest.TestCase):
     BASE, RSP = 0x40000000, 0x10000
     CODE = bytes.fromhex("4883ec38c64424400048836424200041b9010000004c8d442440418d511048c7c1feffffffe822f0030085c0780a807c2440007503cceb004883c438c3cc")
 
-    def fixture(self, scope, *, caller=0x8DBE1, second_break=False, init_failure=False, bcrypt_failure=False, bcrypt_detail=False):
+    def fixture(self, scope, *, caller=0x8DBE1, second_break=False, init_failure=False, bcrypt_failure=False, bcrypt_detail=False, bcrypt_device=False):
         o, api, k, preflight, tokens, fixture, disk = wiring.DebugDriverTests().driver(
-            scope, unload_entry=not (init_failure or bcrypt_failure or bcrypt_detail), detached_console=True, bootstrap=True,
-            init_failure=init_failure, bcrypt_failure=bcrypt_failure, bcrypt_detail=bcrypt_detail)
+            scope, unload_entry=not (init_failure or bcrypt_failure or bcrypt_detail or bcrypt_device), detached_console=True, bootstrap=True,
+            init_failure=init_failure, bcrypt_failure=bcrypt_failure, bcrypt_detail=bcrypt_detail, bcrypt_device=bcrypt_device)
         b = o.bootstrap
         events = iter((3, 6, 1, 1, 5) if second_break else (3, 6, 1, 5))
         last = [None]

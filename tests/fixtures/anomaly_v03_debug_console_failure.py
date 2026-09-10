@@ -19,6 +19,7 @@ class DebugConsoleFailure(DebugInitReturn):
     BREAK_RVAS = (0xBECC2, 0xBECAF, 0xBED34, 0xBED9C)
     CANDIDATES = ("critical_section", "allocation", "connection", "standard_io")
     CALLER_RVA = 0x4EBE6
+    DEBUG_ENABLES = 0x55
     WINDOWS = (
         (0x4E6C0, 1836, "ff2bf35f46cc2d9a066260b8678a9e0ef6d0bacfb12c4374199e6bb58ae8870c"),
         (0xBEB60, 586, "d162a1ead64d7d54975d3b4440ee8280b3a924113f1a870f284f5a6d36aceeb3"),
@@ -65,7 +66,7 @@ class DebugConsoleFailure(DebugInitReturn):
         dr6, dr7 = registers[4:]
         cause = (1 << self.hit_index) if hit else 0
         checks = {"dr0_to_dr3_match": registers[:4] == self.targets,
-                  "dr7_matches": dr7 & ~0x400 == 0x55,
+                  "dr7_matches": dr7 & ~0x400 == self.DEBUG_ENABLES,
                   "dr6_standard_cause_matches": dr6 & self.CAUSE_MASK == cause}
         if hit:
             checks["dr6_baseline_matches"] = (self.armed_dr6 is not None
@@ -100,7 +101,7 @@ class DebugConsoleFailure(DebugInitReturn):
         self.row["original_debug_hex"] = bytes(self.context[72:120]).hex()
         need(original[:4] == (0, 0, 0, 0) and original[5] in (0, 0x400)
              and original[4] & self.CAUSE_MASK == 0, "console_debug_in_use")
-        struct.pack_into("<6Q", self.context, 72, *self.targets, original[4] | 0x10800, original[5] | 0x55)
+        struct.pack_into("<6Q", self.context, 72, *self.targets, original[4] | 0x10800, original[5] | self.DEBUG_ENABLES)
         struct.pack_into("<I", self.context, 48, self.DEBUG_FLAGS)
         self.row["requested_debug_hex"] = bytes(self.context[72:120]).hex()
         self._budget(budget)

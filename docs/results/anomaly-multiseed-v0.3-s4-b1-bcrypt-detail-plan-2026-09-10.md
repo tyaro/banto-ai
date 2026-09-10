@@ -1,6 +1,8 @@
 # S4-B1 bcryptの同期オブジェクト初期化と後始末直前の候補値を観測
 
-状態: **候補実装・pure/fake265件・独立実装レビュー・保存後preflight完了 / 実機未実施**。
+状態: **了承済み限定実機1回を実施済み / 後始末前の混合値を取得 / 所有終了・証跡保存確認済み**。
+
+実測は[詳細経路の結果](anomaly-multiseed-v0.3-s4-b1-bcrypt-detail-result-2026-09-10.md)を参照。以下は実行前に保存した計画。
 
 [今回の結果](anomaly-multiseed-v0.3-s4-b1-bcrypt-failure-result-2026-09-10.md)はcall_59e0からC0000022が返る地点を示した。
 次はDebugDriver(bcrypt_detail=True, detached_console=True, bootstrap=True)を使い、
