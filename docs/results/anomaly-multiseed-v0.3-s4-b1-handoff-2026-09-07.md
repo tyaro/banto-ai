@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §66を最初に参照。DETACHED UNLOAD診断はPython関連DLLのLOAD後のbreakpointで既定停止し、UNLOAD未観測。終了/保存確認済み。固定初期停止点を検証して1回継続する候補はpure/fake245件・独立実装レビューpass。保存後preflight前。
+2026-09-10最新: §66を最初に参照。DETACHED UNLOAD診断はPython関連DLLのLOAD後のbreakpointで既定停止し、UNLOAD未観測。終了/保存確認済み。固定初期停止点を検証して1回継続する候補はpure/fake245件・独立実装レビューpass。修正4c964c8を保存し、23 sourcesのread-only preflightもverified。追加実機は未実施。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1477,3 +1477,13 @@ RIP条件は未測定の候補で、一致しなければ補完せず停止。�
 独立実装レビュー新規P0〜P3=0、指定fake75/75（1.790秒）pass。担当のnative/private/source変更なし。
 完了通知のみを利用し進捗ポーリングなし。作業後RAM8.06 GiB、C107.92/D75.36 GiB。
 次は候補を保存してread-only preflightを行い、検証に一致した停止点だけを継続する診断1回を提示する。
+
+
+実装・試験・結果・計画を4c964c8へ保存した。保存後read-only preflightは2.270秒、23 sources/255021 bytes、
+verified、resource_stop=false、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+bootstrap-unload-preflight.jsonへ保存。child起動・SetThreadContextなし、全acceptance gate no。
+
+準備は完了。固定初期停止点が検証できた場合だけ1回継続し、以後の最初のUNLOAD/終了まで観測する、
+新規fixture診断1回への返答を待つ。合計Get2/RPM8回3182 bytes/Setなし、既存時間・memory・disk・owned stop条件。
+この問いへの「続けてください」は当該1回への了承として扱い、同じ了承を再確認せず実行する。自動再試行なし。
+実行wrapper bootstrap-unload-once.pyは2768 bytes/hash01f6e8074f8bfc1657b2b0eed4c02b5f4bf4a35ae37ed88a754442e7e4d6350b。

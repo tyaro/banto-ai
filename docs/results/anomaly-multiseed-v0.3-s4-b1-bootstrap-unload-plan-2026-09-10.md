@@ -1,6 +1,6 @@
 # S4-B1 初期停止点の限定照合とUNLOAD観測の継続
 
-状態: **候補実装・全体pure/fake・独立実装レビュー完了 / 保存後preflight前 / 実機未実施**。
+状態: **候補実装・全体pure/fake・独立実装レビュー・保存後preflight完了 / 実機未実施**。
 
 ## 目的と許可する条件
 
@@ -87,3 +87,16 @@ API前後のresource停止、deferred pending改変、Continue false/OOM/成功�
 担当は実機・wrapper実行・private証跡参照・source変更なし、完了通知のみを利用して進捗ポーリングなし。
 空きRAM8.44→8.06 GiB、C107.92/D75.36 GiB。単発値からリーク有無は未判定。
 通常control/追加診断の実機再実行なし。次はsource保存後のread-only preflightを行う。
+
+
+## 保存後preflightと次の1回
+
+実装・試験・今回結果・計画を4c964c8に保存した。保存後read-only preflightは2.270秒、
+23 sources/255021 bytes、verified、resource_stop=false、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+bootstrap-unload-preflight.jsonへ保存。child起動・SetThreadContextなし、全acceptance gate no。
+
+準備は完了。新規fixture1個で固定初期停止点の全条件が一致した場合だけ1回DBG_CONTINUEし、
+以後の最初のUNLOAD/終了まで観測する診断1回を判断対象とする。
+合計Get最大2/RPM最大8回3182 bytes、Setなし、既存時間・memory・disk・owned stop条件を維持する。
+この問いへの「続けてください」は当該1回への了承として扱い、clean状態とwrapper hashを照合後、同じ了承を再確認せず実行する。
+RIP/code/caller等が一致しない場合も自動再試行せず、未観測/検証失敗/通常継続/強制停止/証跡保存を分けて記録する。
