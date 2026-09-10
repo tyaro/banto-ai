@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §59を最初に参照。return観測v1は設定読み戻しの照合で停止、終了/保存確認済み。未保存の読み戻し値を残すv2修正・fake/独立レビュー済み。v2実機は未実施。
+2026-09-10最新: §59を最初に参照。return観測v1は設定読み戻しの照合で停止、終了/保存確認済み。読み戻し値を残すv2修正・fake/独立レビュー・preflight済み。v2限定実機1回の判断待ち。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1185,3 +1185,8 @@ API false/中断/資源停止を成功に補完しない。DR検査条件や追�
 単発値からリーク有無は未判定。追加DLL/PDB読取り・download・他project操作なし。全acceptance gate no。
 次はv2保存とread-only preflight後、計画末尾の新規fixtureでの限定1回について判断を求める。v1承認は消化済み。
 context/全metadata容量確認、repository safety/diff-check pass。mainは基準889cfc3のままclean。
+
+v2修正保存e601921後のread-only preflightは1.951秒、20 sources/229087 bytes、verified、resource_stop=false。
+Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。init-return-v2-preflight.jsonに保存。
+v2実機は未実施。新規fixture1回、Set最大1回/Get最大3回/RPM最大3回2197 bytes、同じ停止上限の範囲について返答を待つ。
+この問いへの「続けてください」は当該v2の1回への了承として扱い、再確認せず実行する。

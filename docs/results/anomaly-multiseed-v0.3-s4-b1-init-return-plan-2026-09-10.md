@@ -1,6 +1,6 @@
 # S4-B1 KernelBase初期化の戻り直前を観測する限定診断
 
-状態: **v1実機1回終了 / v2の保存処理修正・fake/独立レビュー完了 / v2実機未実施 / no native acceptance**。
+状態: **v1実機1回終了 / v2修正・fake/独立レビュー・preflight完了 / v2限定実機1回の判断待ち / no native acceptance**。
 
 [v1の実機結果](anomaly-multiseed-v0.3-s4-b1-init-return-result-2026-09-10.md)を参照。
 v1は設定後のregister照合で停止し、終了・証跡保存を確認した。読み戻し値自体は未保存だったため、v2で取得時点の保存を追加した。
@@ -139,3 +139,7 @@ DRの検査条件や時間・memory・取得回数を緩和しない。recipeは
 関係fake11/11（0.223秒）、全回帰159/159（1.229秒）pass。独立新規P0〜P3=0、指定11/11（0.213秒）pass。
 v2を保存してread-only preflightを確認後、**同じ停止点設定最大1回・取得最大2197 bytesで、新規fixtureの限定診断1回**を提示する。
 未保存のv1値を埋めるために自動で実行せず、別の返答を待つ。
+
+v2修正とv1結果をe601921に保存した。保存後read-only preflightは1.951秒、20 sources/229087 bytes、verified、resource_stop=false。
+Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。init-return-v2-preflight.jsonへ保存済み。
+v2の実child/実SetThreadContextは未実施。次の判断対象は、同じ設定/取得/停止上限でv2を新規fixtureで1回実施すること。

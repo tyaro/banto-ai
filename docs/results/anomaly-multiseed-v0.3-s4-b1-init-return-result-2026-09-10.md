@@ -76,3 +76,6 @@ PC空きRAM8.88→9.33 GiB、C105.81→105.82 GiB、D75.36 GiB。
 今回private証跡の有界readbackは1回、reader close済み。既存の証跡/fixtureは保持し、再利用/削除/修復なし。
 実機後の追加DLL/PDB読取り・download、追加設定操作、常駐helper、他project操作なし。
 本流統合、child E2E成功、native受入、formal permissionは未達。
+
+v2修正保存e601921後のread-only preflightは1.951秒、20 sources/229087 bytes、verified、resource_stop=false。
+同じ実測build/Python/runtime hash。公開要約init-return-v2-preflight.jsonを追加し、v2の実機1回は返答待ち。
