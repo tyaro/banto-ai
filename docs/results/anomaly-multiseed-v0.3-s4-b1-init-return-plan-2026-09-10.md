@@ -1,6 +1,6 @@
 # S4-B1 KernelBase初期化の戻り直前を観測する限定診断
 
-状態: **v1/v2各1回終了 / v3修正保存・fake/独立レビュー/preflight完了 / v3限定1回の返答待ち・実機未実施 / no native acceptance**。
+状態: **v1/v2/v3各1回終了 / v3はAL=0・stage=600観測、終了・保存確認済み / no native acceptance**。
 
 [v2の実機結果](anomaly-multiseed-v0.3-s4-b1-init-return-v2-result-2026-09-10.md)を参照。
 v1の未保存値は未確定のまま。v2では要求/返却値を保存し、DR6要求0x10800に対してAPI返却0だけが不一致と判明した。
@@ -168,3 +168,14 @@ repository safety/diff-check pass、mainは基準889cfc3のままclean。
 v2で了承された1回は終了した。次の判断対象は、**修正版v3を同じ上限で新規fixtureから1回実施すること**。
 Get最大3回/Set最大1回/RPM最大3回2197 bytes、既存の時間・memory・disk・owned stop条件を維持する。
 この問いへの「続けてください」は当該v3の1回への了承として扱い、再確認せず実行する。失敗しても自動再試行しない。
+
+
+## v3実施結果（最新）
+
+ユーザーの了承後、cleanなa7cf252（実装2127527）で限定1回を実施した。
+AL=0、stage=600、reason=1、RIP RVA0x50baを取得し、設計どおり通常Continueせずowned stopで終了した。
+Get3/Set1/RPM3回2197 bytes、resource_stop=false、終了と証跡保存・有界readbackを確認済み。
+[詳細結果とConsoleInitializeの確認候補](anomaly-multiseed-v0.3-s4-b1-init-return-v3-result-2026-09-10.md)を参照。
+v3の承認済み1回は消化済み。過去の返答待ち記述は履歴であり、再実行の承認として使わない。
+ユーザーは上限の小幅拡大を許容する意向を示したが、今回の停止原因は資源上限ではなく、実行上限を据え置いた。
+次は内部の失敗候補を区別する最小の診断設計・模擬検証を進める。新しい候補の実機実行は未実施。

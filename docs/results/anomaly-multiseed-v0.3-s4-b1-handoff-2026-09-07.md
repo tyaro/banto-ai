@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §60を最初に参照。return観測v2でDR6要求0x10800/返却0だけが不一致と判明、終了/保存確認済み。v3はAPIのcause maskに比較を揃える修正・fake済み。v3実機は未実施。
+2026-09-10最新: §61を最初に参照。return観測v3でAL=0・stage=600を取得、終了/保存確認済み。ConsoleInitializeのfalse戻りが有力候補。内部statusは未取得、追加の静的解析で4か所の確認候補を記録した。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1224,3 +1224,37 @@ Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。init-return-v3-
 
 v3準備は完了。v2の1回承認は消化済みで、同じ上限（Get最大3/Set最大1/RPM最大3回2197 bytes）の新規fixture1回について返答を待つ。
 この問いへの「続けてください」は当該v3の1回への了承として扱い、再確認せず実行する。失敗しても自動再試行しない。
+
+
+## 61. 2026-09-10 return観測v3でAL=0・stage=600を取得
+
+ユーザーの「お願いします。上限もう少し上げても大丈夫かと」をv3限定1回への了承として、cleanなa7cf252（実装2127527）で実施。
+上限の小幅拡大を許容する意向は記録するが、今回上限不足ではないためGet3/Set1/RPM3回2197 bytes等は据え置いた。
+初期reportまで1.795秒、resource_stop=false。collector completed/confirmed、primary=init_return_observed_stopによる意図的終了。
+初期threadのfirst-chance SINGLE_STEP、RIP RVA0x50ba、reason1、AL0、WORD RVA0x3aeea0=600、TF0を確認。
+code2窓2195 bytes一致。DR6は設定後0、hit時0xffff0ff1、DR7は1→0x401。v3のcause/地点等の条件がすべて一致した。
+
+通常5/Continue4。例外を通常Continueせず、Terminate確認後pendingを解放、drain1件EXIT1をContinueした。
+実RETと自然終了は未観測。signal/ownership解消/所有handle close/teardown pass/failure_count0。
+private111847 bytes/hash147926b48ab9dee968f965bed545848b899b138d3dfcae502d5ce42796499879、write/flush/close確認済み。
+有界readback1回でhash、raw events/context、AL/stage等を照合、reader close。
+詳細は[return観測v3結果](anomaly-multiseed-v0.3-s4-b1-init-return-v3-result-2026-09-10.md)。
+
+静的な600書込み→ConsoleInitialize CALL→AL0なら700を書かず戻る経路と整合し、ConsoleInitializeのfalse戻りが有力。
+ただし呼出先等によるstage全書込み、異常制御移動、非介入時との同一性は未証明。ARI側を完全除外せず、API/statusも未確定。
+独立確認は公開4件のみ、新規P0〜P3=0。進捗ポーリングなし、追加実行/試験なし。
+
+現在KernelBase.dllの有界同一handle read1回、既存hashとclose確認。既存PDBのみ参照、追加downloadなし。
+ConsoleInitialize [0xbeb60,0xbedaa)の139命令を静的解析し、RtlInitializeCriticalSection、ConsoleAllocate、
+ConsoleCreateConnectionObject、ConsoleSanitizeStandardIoObjectsの失敗分岐候補を記録した。
+ConsoleCreateConnectionObjectの負statusはlowbox条件により回復できるため、途中の負statusを最終原因と即断しない。
+
+同run preflightは20 sources/229453 bytes、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+親＋child peak commit23420928 bytes（約22.34 MiB）、sample72回。実行前空きRAM9.90 GiB/C108.22 GiB/D75.36 GiB。
+単発値からリーク有無は未判定。全acceptance gate no、他project操作なし、既存fixture・証跡は保持。
+
+次は内部の4候補を区別する最小の診断を設計・模擬検証する。最初の失敗候補で通常Continueせず止める方式を検討する。
+候補地点は0xbecc2/0xbecaf/0xbed34/0xbed9cだが、共有出口と回復可能な経路、呼出元確認、debug slots/取得上限を具体化する必要がある。
+新方式は案のみで実装・実機設定・承認依頼は未実施。v3の承認済み1回は消化済みで、自動再試行しない。
+
+保存前の空きRAM9.61 GiB、C108.21 GiB、D75.36 GiB。repository safety/diff-check pass、mainは基準889cfc3のままclean。
