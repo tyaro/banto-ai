@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §56を最初に参照。管理情報v1はサイズ前提で停止。終了/保存確認済み。v2修正・fake/独立レビュー・preflight完了、v2実機1回の判断待ち。
+2026-09-10最新: §57を最初に参照。管理情報v2でKernelBase.dllの初期化失敗bitと自然終了0xC0000142を確認。終了/保存済み。原因APIは未確定、次の観測方法を検討する。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1099,3 +1099,33 @@ v2修正保存3699d2e後のread-only preflightは19 sources/216179 bytes、2.256
 公開要約6件51469 bytesを保存。実行後の参照image有界read4回/今回証跡read2回、全reader close。
 参照readには静的fragment境界の仮定誤りで停止した1回を含む。実childの追加再試行ではない。
 mainは基準commitのままclean。v2で新規fixtureを使う実機診断1回について返答を待つ。
+
+## 57. 2026-09-10 v2でKernelBaseの初期化失敗の印を観測
+
+ユーザーの「続けてください」をv2限定診断1回への了承として、cleanなb0a81ee（実装3699d2e）で1回実行した。
+初期reportまで2.365秒、driver/observer=observed、primary/secondaryなし、resource_stop=false。
+ntdll3窓一致、追加1059 bytesの完全read、KernelBase.dllのLOAD/UNLOADとentry base一致を確認。
+entry size=0、flags=0x38a28e、init_failure_bit=true、callback RVA0x5060を保存した。
+v1の未保存値は未確定のまま。今回はnormal7/Continue7、drain0、自然EXIT0xC0000142、Terminate要求なし。
+signal/ownership解消/所有handle close/teardown pass/failure_count0、先行reportと証跡write/flush/closeを確認した。
+private115051 bytes/hash155215a8f0b1cb4d6dd69f29b3c2c401c3f0b741b5672b890acc69f71c23c325、保存fileの有界readback一致。
+
+現在KernelBase.dllの保存image行とのidentity/name照合とPE entry0x5060一致を確認した。
+公開PDB12521472 bytesを16 MiB上限で1件取得し、GUID/DBI age1/AMD64/section headersを既存matcherで照合。
+Info age2/image age1の適合を確認し、entryにKernelBaseDllInitializeのexact公開symbol名が対応した。
+通常reason1の静的経路は基本初期化のALを返す系統と、ARI::Globals::Initializeの負statusでfalseを返す系統に分かれる。
+前者の分岐条件AL≠1をすべてfalseとは扱わない。どちらの実行履歴も、最初の失敗APIも未確定。
+
+基本初期化にWORD RVA0x3aeea0の段階値100/200/400/500/600/700を発見したが、今回の取得対象外。
+cleanup側の参照も確認した。全呼出し先を含む値の不変性とunmap時点での読取り可否は未証明。
+この値だけで失敗APIが一意に分かるとは判断せず、追加実機を自動実行しない。
+詳細な分岐表、hash、取得条件、保存物は[管理情報v2結果](anomaly-multiseed-v0.3-s4-b1-unload-entry-v2-result-2026-09-10.md)を参照。
+
+同run preflightは19 sources/216179 bytes、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+親＋child peak commit約22.70 MiB、sample74回。PC空きRAM7.99→8.62 GiB、C102.09→101.93 GiB、D75.36 GiB。
+単発値からリーク有無は未判定。Windows UpdateのUBR緩和・実測記録は維持した。
+source変更なし、既存fake試験再実行なし。公開要約5件に限定した独立レビュー新規P0〜P3=0、進捗ポーリングなし。
+公開要約7件104477 bytesとPDBを保存。要約値/段階値の書込み先/文書リンクを照合、repository safety/diff-check pass。
+mainは基準889cfc3のままclean。
+全acceptance gate no。v2の承認済み1回は消化済み。
+次は全breakpoint拒否・書換えなしの条件内で、失敗後にも意味が残る値と観測位置を検討する。

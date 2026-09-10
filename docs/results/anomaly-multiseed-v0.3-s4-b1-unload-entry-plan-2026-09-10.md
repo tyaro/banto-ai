@@ -1,6 +1,9 @@
 # S4-B1 最初のunload時の管理情報観測
 
-状態: **v1実機診断1回終了 / v2修正・fake試験・独立レビュー・preflight完了 / v2実機1回の判断待ち / no native acceptance**。
+状態: **v1/v2各1回終了 / v2でKernelBase.dllの初期化失敗bitと自然終了0xC0000142を確認 / no native acceptance**。
+
+[v2実機結果と次の観測候補](anomaly-multiseed-v0.3-s4-b1-unload-entry-v2-result-2026-09-10.md)を参照。
+承認済みのv2診断1回は実行・終了・保存済み。以下の判断待ちの記述は実行前の履歴であり、追加実行の承認ではない。
 
 v1はサイズ検査で停止した。[実機結果と観測側の前提修正](anomaly-multiseed-v0.3-s4-b1-unload-entry-result-2026-09-10.md)を参照。
 以下の取得計画はv2に更新した。末尾のv1実装/承認準備の記録は当時の履歴である。
