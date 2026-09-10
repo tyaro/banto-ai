@@ -20,7 +20,7 @@ class DebugTokensTests(unittest.TestCase):
             pointer.contents.value = 401
             return True
         def sid(value, pointer):
-            pointer.contents.value = 601 if value == group else 602
+            pointer.contents.value = {group: 601, t.w._RC: 602, t.w._RESTRICTED_PACKAGES: 603}[value]
             return True
         def restrict(*args):
             args[-1].contents.value = 402
@@ -39,30 +39,35 @@ class DebugTokensTests(unittest.TestCase):
             self.assertEqual(owner.status, "prepared")
             args = api.a.CreateRestrictedToken.call_args.args
             self.assertEqual(args[:3], (401, 9, 1))
-            self.assertEqual(args[4:7], (0, None, 1))
+            self.assertEqual(args[4:7], (0, None, 2))
             self.assertEqual(args[3][0].sid, 601)
             self.assertEqual(args[7][0].sid, 602)
-            self.assertEqual([call.args[0] for call in api.k.LocalFree.call_args_list], [601, 602])
+            self.assertEqual([(row.sid, row.attributes) for row in args[7]], [(602, 0), (603, 0)])
+            self.assertEqual([call.args[0] for call in api.k.LocalFree.call_args_list], [601, 602, 603])
             self.assertTrue(owner.close())
             self.assertTrue(owner.close())
             self.assertEqual([call.args[0] for call in api.k.CloseHandle.call_args_list], [402, 401])
 
     def test_uncertain_output_is_retained_and_cannot_be_called_resolved(self):
-        for phase in ("parent", "sid", "restricted"):
+        for phase in ("parent", "sid", "compatibility_sid", "restricted"):
             with ExitStack() as stack, self.subTest(phase=phase):
                 owner, api, validate = self.owner(stack)
                 function = {"parent": api.a.OpenProcessToken, "sid": api.a.ConvertStringSidToSidW,
+                            "compatibility_sid": api.a.ConvertStringSidToSidW,
                             "restricted": api.a.CreateRestrictedToken}[phase]
                 original = function.side_effect
                 def interrupted(*args):
-                    original(*args)
-                    raise MemoryError()
+                    result = original(*args)
+                    if phase != "compatibility_sid" or args[0] == t.w._RESTRICTED_PACKAGES:
+                        raise MemoryError()
+                    return result
                 function.side_effect = interrupted
                 owner.prepare()
                 self.assertEqual(owner.status, "failed")
                 self.assertTrue(owner.resource_stop)
                 self.assertFalse(owner.close())
-                index = {"parent": 0, "restricted": 1, "sid": 2}[phase]
+                index = {"parent": 0, "restricted": 1, "sid": 2,
+                         "compatibility_sid": len(owner.buffers) - 1}[phase]
                 self.assertEqual(owner.acquire[index], "uncertain")
                 self.assertIsNotNone(owner.buffers[index].value)
                 released = [call.args[0] for call in api.k.CloseHandle.call_args_list + api.k.LocalFree.call_args_list]
@@ -83,7 +88,7 @@ class DebugTokensTests(unittest.TestCase):
             with ExitStack() as stack, self.subTest(release=release):
                 owner, api, validate = self.owner(stack)
                 if release == "sid":
-                    api.k.LocalFree.side_effect = [MemoryError(), None]
+                    api.k.LocalFree.side_effect = [MemoryError(), None, None]
                 owner.prepare()
                 if release == "token":
                     api.k.CloseHandle.side_effect = [False, True]

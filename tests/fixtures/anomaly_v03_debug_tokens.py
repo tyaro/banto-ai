@@ -13,12 +13,12 @@ from tests.fixtures.anomaly_v03_debug_transport import TransportError, need
 class DebugTokens:
     def __init__(self, api):
         self.api = api
-        self.buffers = tuple(w.H() for _ in range(2 + len(w._PRIVILEGED) + 1))
+        self.buffers = tuple(w.H() for _ in range(2 + len(w._PRIVILEGED) + len(w._RESTRICTING_SIDS)))
         self.pointers = tuple(C.pointer(value) for value in self.buffers)
         self.acquire = ["not_started"] * len(self.buffers)
         self.release = ["not_started"] * len(self.buffers)
         self.disable = (w._SidAttr * len(w._PRIVILEGED))()
-        self.restrict = (w._SidAttr * 1)()
+        self.restrict = (w._SidAttr * len(w._RESTRICTING_SIDS))()
         self.parent_profile = self.restricted_profile = None
         self.primary = self.secondary = None
         self.started = self.closed = self.resource_stop = False
@@ -77,10 +77,11 @@ class DebugTokens:
             need(len(groups) <= len(self.disable), "token_disable_capacity")
             for index, group in enumerate(groups):
                 self.disable[index].sid = self._sid(index + 2, group)
-            self.restrict[0].sid = self._sid(len(self.buffers) - 1, w._RC)
+            for index, value in enumerate(w._RESTRICTING_SIDS):
+                self.restrict[index].sid = self._sid(2 + len(w._PRIVILEGED) + index, value)
             self.acquire[1] = "uncertain"
             self._confirmed(1, self.api.a.CreateRestrictedToken(
-                self.buffers[0].value, 9, len(groups), self.disable, 0, None, 1,
+                self.buffers[0].value, 9, len(groups), self.disable, 0, None, len(w._RESTRICTING_SIDS),
                 self.restrict, self.pointers[1]))
             self.restricted_profile = self.api.profile(self.buffers[1].value)
             w._validate_restricted(self.parent_profile, self.restricted_profile)

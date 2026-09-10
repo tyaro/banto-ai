@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §71を最初に参照。bcrypt KsecDD open helperのR12D=C0000022を確認、所有終了・証跡readback pass。親の読み取り専用確認ではRC allow1200a9に要求100003のwrite mask0x2が不足し拒否と整合。token/ACL/coreは未変更、child E2E未達。互換性のための権限構成見直しを許容するか、判断資料を保存して返答待ち。
+2026-09-10最新: §72を最初に参照。ユーザー了承によりRC＋AllRestrictedApplicationPackagesの互換性候補を実装。KsecDDの既知SID分類を実測で確認、pure/fake275件pass、独立実装レビュー中。保護DACL・flags・非昇格条件を維持し、保存後preflightと限定control1回を予定。本流統合・formal未許可。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1767,3 +1767,49 @@ repository safety/diff-check pass、runtime/core/test source変更なしのた�
 他processを含む環境変動から本作業のリーク有無を推測しない。確認済みの今回owned handle解放を事実として記録する。
 本流889cfc3 clean、候補文書だけを保存。次の「お願いします」「続けてください」は今回の権限構成見直し方針への返答として扱い、
 消化済みbcrypt-device診断を再実行する指示へ読み替えない。
+
+## 72. 2026-09-10 ユーザー了承に基づくRC＋制限アプリ識別子の互換性候補
+
+直前の権限構成見直し方針へのユーザー「お願いします」を了承として記録する。
+[判断資料](anomaly-multiseed-v0.3-s4-b1-token-compatibility-decision-2026-09-10.md)の保護対象write禁止を維持し、
+今回の限定候補を検証する範囲について§6の従来条件を更新する。同じ方針了承を再確認しない。
+消化済みbcrypt-device診断の再実行ではない。
+
+親metadata readの既存scriptに既知SIDの固定ラベル2種だけを追加し、新規出力先で1回実行。
+2026-09-10T08:23:34Z、open/query/close各1回confirmed、188 bytes、0.001秒、resource_stop=false。
+SD hash80855ee5cacdab07dcb48643d08ae3898dd45bef77695ab67057a08395cd8521は前回と一致。
+前回未分類2 ACEはAllApplicationPackagesとAllRestrictedApplicationPackages、双方allow1201bf。
+前回のraw SDは未保存のため、新たな1回のqueryで分類した。未知SIDを推測で命名したものではない。
+分類script8111 bytes/hashd16bd371df2732614c75999919dd1201f5da90b09820956fb2ab245367e0e428。
+child/token/ACL/IOCTL変更なし。公開要約ksecdd-security-classified.jsonを保存。
+Microsoft WinSDKのauthority/base/RIDを参照し、後者1種類を候補に選定した。
+
+[具体的候補と検証計画](anomaly-multiseed-v0.3-s4-b1-token-compatibility-plan-2026-09-10.md)を作成。
+coreとDebugTokensのrestricting SIDを固定RC＋AllRestrictedApplicationPackagesに統一し、属性7まで厳密検証。
+flags9、非昇格・同一user/session/integrity、privilege削減とnormal group条件を維持。
+protected frozen/control DACLは不変、Everyone等の広い追加なし。
+追加SIDはそのSIDへのallowがある他objectにも効く。RCが各追加grantをさらにANDで制限するものではなく、
+KsecDD専用・従来同等の隔離・AppContainer化とは主張しない。
+
+選抜pure/fake69/69（0.173秒）、全体275/275（6.274秒）pass。
+不足/余分/重複/順序/属性/別package/Everyone/SYSTEM、作成flags・配列、追加SID失敗時の未作成・解放、
+DebugTokens追加SIDの中断出力保持を確認。独立設計レビュー新規P0〜P3=0。実装レビュー中。
+
+未実行wrapper token-compatibility-control-once.pyは3899 bytes、
+SHA eec528b2dfdfd13b19330958efdc3ad6df97566635846a0a5dc43d6678948ead、AST run_control_harness 1箇所。
+独立実装レビュー・commit・保存後preflightの後、新規fixture1個で既存control harnessを1回検証する。
+child token照合→親AccessCheck→resume→child AccessCheckと全実操作→report照合→cleanup/teardownを確認する。
+30秒/親＋child512 MiB未満/temp空き1 GiB以上を維持。失敗時は証跡保持、自動再試行なし。
+本流889cfc3 clean、正式受入/Python3.12/本流統合/formal/B2/publisherは未完了。
+作業前08:22:42Zの空きRAM8.16 GiB、C108.47/D75.36 GiB、Windows26200.9445、
+last boot2026-09-09T10:43:08.5+09:00。UBR緩和と状態記録、他project無操作を維持。
+
+
+実装レビューでprofile()のSID文字列ソートと期待順の不一致P2を検出。作成順はRC→制限アプリのまま、
+検証・wrapper期待値をsortedへ修正し、実profile()を通すowned fake buffer回帰を追加した。
+初回69/275件が非canonical fakeを返して見逃した点を記録する。
+是正後選抜70/70（0.216秒）、全体276/276（7.118秒）pass。
+P2是正確認済み、新規P0〜P3=0、独立担当は新回帰1件だけpass（0.002秒）。
+担当のnative/query/wrapper/編集なし、進捗ポーリングなし。repository safety/diff-check pass。
+最新wrapper3907 bytes/hash01fbc5015ea5fc91beaa3544cd478ab18532199f3c6ca56bb2b8b55011b97ad6、未実行。
+分類summary1606 bytes/hash26be0758bdd1113c9933dc11a1fee87fb5cddc1a1576051b2b394d3488c9e915、既知pathから有界readで確認済み。

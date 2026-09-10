@@ -33,7 +33,7 @@ def parent_profile():
 
 def restricted_profile():
     value = parent_profile()
-    value.update(token_id="4", modified_id="5", restricted=[[w._RC, 7]],
+    value.update(token_id="4", modified_id="5", restricted=[[w._RESTRICTED_PACKAGES, 7], [w._RC, 7]],
                  privileges=[["SeChangeNotifyPrivilege", 3]])
     return value
 
@@ -960,6 +960,92 @@ class PureWindowsControls(unittest.TestCase):
                        {"privileges": [["SeDebugPrivilege", 2]]}, {"groups": [["S-1-5-32-544", 4]]}):
             with self.subTest(change=change), self.assertRaises(w._Failure):
                 w._validate_restricted(parent_profile(), {**restricted_profile(), **change})
+
+    def test_compatibility_restrictions_reject_missing_extra_duplicate_and_bad_attributes(self):
+        parent, child = parent_profile(), restricted_profile()
+        expected = [[w._RESTRICTED_PACKAGES, 7], [w._RC, 7]]
+        self.assertEqual(w._RESTRICTING_SIDS, (w._RC, "S-1-15-2-2"))
+        for restricted in (expected[:1], expected[1:], list(reversed(expected)),
+                           expected + [expected[1]], expected + [["S-1-1-0", 7]],
+                           [[w._RC, 7], ["S-1-15-2-1", 7]],
+                           [[w._RC, 7], ["S-1-5-18", 7]],
+                           [[w._RESTRICTED_PACKAGES, 7], [w._RC, 0]],
+                           [[w._RESTRICTED_PACKAGES, 4], [w._RC, 7]]):
+            with self.subTest(restricted=restricted), self.assertRaises(w._Failure) as caught:
+                w._validate_restricted(parent, {**child, "restricted": restricted})
+            self.assertEqual(caught.exception.reason, "restricted_sids")
+
+    def test_native_profile_buffer_order_matches_compatibility_validation(self):
+        # Run the real profile parser on owned fake buffers, including its SID sort.
+        api = Mock()
+        identifiers = {501: parent_profile()["user"][0], 502: "S-1-16-8192",
+                       503: "S-1-5-32-544", 504: w._RC, 505: w._RESTRICTED_PACKAGES}
+        api.sid.side_effect = identifiers.__getitem__
+        def groups(rows):
+            raw = ctypes.create_string_buffer(w._Groups.rows.offset + len(rows) * ctypes.sizeof(w._SidAttr))
+            w.D.from_buffer(raw).value = len(rows)
+            for target, (sid, attributes) in zip(
+                    (w._SidAttr * len(rows)).from_buffer(raw, w._Groups.rows.offset), rows):
+                target.sid, target.attributes = sid, attributes
+            return raw
+        def sid(pointer):
+            raw = ctypes.create_string_buffer(ctypes.sizeof(w._SidAttr))
+            w._SidAttr.from_buffer(raw).sid = pointer
+            return raw
+        stats = ctypes.create_string_buffer(ctypes.sizeof(w._Statistics))
+        values = w._Statistics.from_buffer(stats)
+        values.token.low, values.modified.low, values.authentication.low = 4, 5, 3
+        buffers = {1: sid(501), 25: sid(502), 2: groups([(503, 0x10)]),
+                   3: ctypes.create_string_buffer(w._Privileges.rows.offset), 10: stats}
+        buffers.update({key: ctypes.create_string_buffer(value.to_bytes(4, "little"), 4)
+                        for key, value in ((8, 1), (20, 0), (18, 3), (12, 1), (21, 1))})
+        api.query.side_effect = lambda token, kind: buffers[kind]
+        for native_order in ([(504, 7), (505, 7)], [(505, 7), (504, 7)]):
+            buffers[11] = groups(native_order)
+            profile = w._Win.profile(api, 401)
+            self.assertEqual(profile["restricted"], [[w._RESTRICTED_PACKAGES, 7], [w._RC, 7]])
+            parent = {**parent_profile(), "authentication_id": profile["authentication_id"]}
+            w._validate_restricted(parent, profile)
+        buffers[11] = groups([(504, 7), (504, 7)])
+        with self.assertRaises(w._Failure) as caught:
+            w._Win.profile(api, 401)
+        self.assertEqual(caught.exception.reason, "token_duplicate_sid")
+
+    def compatibility_api(self, *, fail_compatibility_sid=False):
+        api = Mock()
+        api.call.side_effect = lambda ok, reason: w._need(ok, reason)
+        api.profile.return_value = restricted_profile()
+        ids = {"S-1-5-32-544": 701, w._RC: 702, w._RESTRICTED_PACKAGES: 703}
+        def sid(value, pointer):
+            if fail_compatibility_sid and value == w._RESTRICTED_PACKAGES:
+                return False
+            pointer._obj.value = ids[value]
+            return True
+        def create(parent, flags, disable_count, disable, delete_count, delete, count, restrict, output):
+            self.assertEqual((parent, flags, disable_count, delete_count, delete, count),
+                             (401, 9, 1, 0, None, 2))
+            self.assertEqual([(row.sid, row.attributes) for row in disable], [(701, 0)])
+            self.assertEqual([(row.sid, row.attributes) for row in restrict], [(702, 0), (703, 0)])
+            output._obj.value = 402
+            return True
+        api.a.ConvertStringSidToSidW.side_effect = sid
+        api.a.CreateRestrictedToken.side_effect = create
+        return api
+
+    def test_core_creates_fixed_compatibility_token_and_releases_all_sid_allocations(self):
+        api = self.compatibility_api()
+        self.assertEqual(w._Win.restricted(api, 401, parent_profile()), 402)
+        api.a.CreateRestrictedToken.assert_called_once()
+        self.assertEqual([call.args[0].value for call in api.k.LocalFree.call_args_list], [701, 702, 703])
+        api.close.assert_not_called()
+
+    def test_core_compatibility_sid_failure_never_creates_partial_token(self):
+        api = self.compatibility_api(fail_compatibility_sid=True)
+        with self.assertRaises(w._Failure):
+            w._Win.restricted(api, 401, parent_profile())
+        api.a.CreateRestrictedToken.assert_not_called()
+        self.assertEqual([call.args[0].value for call in api.k.LocalFree.call_args_list], [701, 702])
+        api.close.assert_not_called()
 
     def test_duplicate_token_luid_is_not_assumed_equal(self):
         a, b = restricted_profile(), restricted_profile()

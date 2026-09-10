@@ -39,6 +39,10 @@ _DIR_RIGHTS = {"add_file": 2, "add_subdirectory": 4, "write_ea": 16,
 _PRIVILEGED = {"S-1-5-32-544", "S-1-5-32-547", "S-1-5-32-548", "S-1-5-32-549",
                "S-1-5-32-550", "S-1-5-32-551"}
 _RC = "S-1-5-12"
+# Fixed compatibility principal for Windows initialization (including KsecDD).
+# This affects any object granting this SID; it does not create an AppContainer.
+_RESTRICTED_PACKAGES = "S-1-15-2-2"
+_RESTRICTING_SIDS = (_RC, _RESTRICTED_PACKAGES)
 _NON_GOALS = ["owner-admin", "write-dac-write-owner", "privileged-writer", "writable-mapping",
               "hostile-same-user-bootstrap-swap", "sandbox", "worm", "power-loss", "publication"]
 _ROOT = Path(__file__).absolute().parents[2]
@@ -417,9 +421,11 @@ class _Win:
             disable = (_SidAttr * len([g for g in profile["groups"] if g[0] in _PRIVILEGED]))()
             for row, group in zip(disable, (g for g in profile["groups"] if g[0] in _PRIVILEGED)):
                 row.sid, row.attributes = sid(group[0]).value, 0
-            restrict = (_SidAttr * 1)(_SidAttr(sid(_RC).value, 0))
+            restrict = (_SidAttr * len(_RESTRICTING_SIDS))(
+                *(_SidAttr(sid(value).value, 0) for value in _RESTRICTING_SIDS))
             result = H()
-            self.call(self.a.CreateRestrictedToken(parent, 9, len(disable), disable, 0, None, 1, restrict, C.byref(result)), "restricted_token_create")
+            self.call(self.a.CreateRestrictedToken(parent, 9, len(disable), disable, 0, None,
+                                                  len(_RESTRICTING_SIDS), restrict, C.byref(result)), "restricted_token_create")
             try:
                 _validate_restricted(profile, self.profile(result))
                 return result.value
@@ -533,7 +539,7 @@ def _validate_restricted(parent, child):
     _need(child["user"] == parent["user"] and child["authentication_id"] == parent["authentication_id"]
           and child["session"] == parent["session"] and child["integrity"] == parent["integrity"], "restricted_identity")
     _need(child["token_id"] != parent["token_id"], "restricted_same_token")
-    _need([g[0] for g in child["restricted"]] == [_RC], "restricted_sids")
+    _need(child["restricted"] == sorted([sid, 7] for sid in _RESTRICTING_SIDS), "restricted_sids")
     expected = [[sid, (attrs | 0x10) & ~6 if sid in _PRIVILEGED else attrs] for sid, attrs in parent["groups"]]
     _need(child["groups"] == expected, "restricted_groups")
     _need(all(name == "SeChangeNotifyPrivilege" for name, attrs in child["privileges"]), "restricted_privileges")
