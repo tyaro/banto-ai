@@ -110,6 +110,8 @@ class DebugDriverTests(unittest.TestCase):
         stack.enter_context(patch.object(d, "StartupPreflight", return_value=preflight))
         stack.enter_context(patch.object(d.w, "_api", return_value=api))
         stack.enter_context(patch.object(d.C, "get_last_error", return_value=0, create=True))
+        # The fake launch must not depend on a Windows host environment.
+        stack.enter_context(patch.dict("os.environ", {"SystemRoot": "C:\\Windows"}))
         stack.enter_context(patch.object(d.w, "_temporary_path", return_value=Path("C:/DUMMY PRIVATE")))
         disk = stack.enter_context(patch.object(d.shutil, "disk_usage", return_value=SimpleNamespace(free=d.DebugDriver.MIN_FREE_DISK)))
         stack.enter_context(patch.object(d, "DebugTokens", return_value=tokens))
