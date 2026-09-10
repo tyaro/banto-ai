@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §70を最初に参照。bcrypt後始末前でEAX/EBP=C0000022・EDI0を取得、所有終了・証跡readback確認済み。次のデバイス3地点実装d557a20はpure/fake272件pass、独立P2是正済み・新規所見0、27 sourceの保存後preflight verified。次の限定診断1回は未実施。
+2026-09-10最新: §71を最初に参照。bcrypt KsecDD open helperのR12D=C0000022を確認、所有終了・証跡readback pass。親の読み取り専用確認ではRC allow1200a9に要求100003のwrite mask0x2が不足し拒否と整合。token/ACL/coreは未変更、child E2E未達。互換性のための権限構成見直しを許容するか、判断資料を保存して返答待ち。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1706,3 +1706,64 @@ bootstrap込みGet4/Set1/RPM最大7回1841 bytes、既存時間・memory・disk�
 この具体的な問いへの「お願いします」「続けてください」は当該1回への了承として扱い、同じ了承を再確認しない。
 実行wrapperはbcrypt-device-once.py、2760 bytes/hash6ef9ba31f8ddebdf112453375f365f5cdee0f8b9f4db845bdc928b3469aee0a0、未実行。
 §6の追加probe条件を引き継ぎ、自動再試行なし。今回のbcrypt-detail1回への了承は消化済み。
+
+## 71. 2026-09-10 bcryptのKsecDD open helperでアクセス拒否の経路を確認
+
+ユーザーの「お願いします」を§70の1回への了承として、clean be05b42（実装d557a20）で新規fixture1回を実行。
+初期reportまで2.654秒、primary=bcrypt_device_observed_stop、secondaryなし、resource_stop=false。
+通常19/Continue18、bootstrap slot17を照合継続、slot18でDR0/8129にhit。
+R12D=C0000022、caller5d53、RSI=RSP+60/RDI・R14=0/R15=8、LOAD slot16と一致。
+context completed/confirmed、Set verified。直前LeaveCriticalSection後のEAXをhelper戻り値とは扱わない。
+[デバイス経路結果](anomaly-multiseed-v0.3-s4-b1-bcrypt-device-result-2026-09-10.md)を参照。
+
+固定参照8154は \Device\KsecDD のNtOpenFileを呼び、戻りがR12Dへ保存される。
+このopen helperの負値を確認した。実行時IAT/OBJECT_ATTRIBUTESやCALLそのものの直接観測ではない。
+NtDeviceIoControlFile失敗や応答値、CreateEvent失敗を観測したとは扱わない。
+個別拒否access、デバイスDACL、driver内条件はこのchild診断だけでは未確定。
+token default DACL RC ACEなしを原因と断定せず、token/ACL/core不変。
+
+bootstrap込みGet4/Set1/RPM7回1841 bytes、DR6 arm0/hitffff0ff1、DR7 arm15/hit415。
+owned terminate→pending解放→drain4（thread3/process1、全code1）Continue、
+signal/ownership解消/owned handles close/teardown pass/failure_count0/driver teardown failures0。
+自然EXIT未観測、exit1は意図した終了処理。fixture存在unverified、cleanup/repairなし、child E2E未達。
+
+private117759 bytes/hashf04e02ae4ccab8a2f0f512d612f954d11e9380be9b097d4d6ffae4fdfac31d35。
+write/flush/file close確認済み。有界held-file read1回でraw全events/bootstrap/CONTEXT/R12D/frame/caller/LOAD/launch/stop/hashを照合。
+reader close、全inflight false、未確定buffer zero。公開native-summary/readback保存。
+同run preflight27 sources/277511 bytes verified、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+既存codeのpure/fake272件・独立レビュー結果を維持、コード変更によらない全体fake再実行なし。
+
+memory171 samples、親＋child peak commit26034176（24.83 MiB）/working36872192（35.16 MiB）。
+08:03:33Z→08:09:28Zの空きRAM8.32→7.99 GiB、C108.00→107.99/D75.36 GiB。
+last boot2026-09-09 10:43:08 +09:00。Windows Update UBR緩和と状態記録を維持。
+単発資源値からリーク有無を断定しない。他project操作なし。本流889cfc3 clean。
+
+child breakpointをさらに追加する前に、作業継続指示に基づく親contextの読み取り専用メタデータ確認を準備した。
+固定KsecDDのみREAD_CONTROL|SYNCHRONIZEでopen1回、owner/group/DACL query1回/4096 bytes、close。
+token作成・変更/impersonation/ACL変更/IOCTL/data read-write/child/retryなし。
+これはchild診断1回を繰り返すものではなく、親権限でrestricted childの処理を代替するものでもない。
+AccessCheckや実行時対象identity認証・driver固有判定は行わず、匿名化DACL観測の限界を維持する。
+独立事前レビューで取得未確認handleのcloseと資源停止後JSON/saveのP2 2点を検出し修正、是正確認済み・新規P0〜P3=0。
+今回のchild1回への了承は消化済み。全acceptance gate no、本流統合/formal/B2/publisher未実施。
+
+
+親contextの読み取りは2026-09-10T08:15:48Zに1回完了。open/query/close各1回confirmed、0.002秒、resource_stop=false。
+取得188 bytes、DACL6 allow ACE、RC allow1200a9、他はEveryone1201bf/System・Administrators1f01ff/未分類2 ACE1201bf。
+固定参照の要求100003との差分は書き込み権限0x2。現行flags9/RCのみという構成とopen helper拒否に整合する。
+RC ACE不存在ではない。単純mask比較で、実AccessCheck・唯一原因・同時点identity認証は未実施。
+生SD/SIDは新規保存せず、匿名化summary1576 bytes/hashc3227d3fdefc1adaec0c50b7211fc2444ecc7da51c705902ceff087b4b383aebを
+既知pathから1回有界readし確認。script7993 bytes/hash4eff849764ccb4165b4ac5bea749b2e6d263164dd3b37c3830b2532d681921bf。
+詳細と制約は結果文書末尾へ保存した。追加child/IOCTL/ACL/token変更なし。
+
+[権限構成の判断資料](anomaly-multiseed-v0.3-s4-b1-token-compatibility-decision-2026-09-10.md)を作成した。
+保護対象へのwrite禁止とRC/flags/privilege削減を維持し、Windows互換性のため制限SID構成の見直しを許容するか判断する。
+追加SIDは未選定。SID追加が保護対象外の許可を広げうるため、§6の禁止条件を黙って変更しない。
+現在のRCのみ維持ならB1はblockedのまま。未分類ACEを推測で命名せず、広いEveryone等の追加は自動採用しない。
+具体的recipe選定・独立レビュー前に変更tokenのchild実行なし。本流統合/formal許可は含めない。
+
+結果追記と判断資料の独立レビューは新規P0〜P3=0。担当のnative/query/試験/編集なし、完了通知のみ。
+repository safety/diff-check pass、runtime/core/test source変更なしのため272件fake/preflight再実行なし。
+最終08:20:29Zの空きRAM8.69 GiB、C108.47/D75.36 GiB。直前08:19:58ZはRAM7.64 GiBであり、
+他processを含む環境変動から本作業のリーク有無を推測しない。確認済みの今回owned handle解放を事実として記録する。
+本流889cfc3 clean、候補文書だけを保存。次の「お願いします」「続けてください」は今回の権限構成見直し方針への返答として扱い、
+消化済みbcrypt-device診断を再実行する指示へ読み替えない。

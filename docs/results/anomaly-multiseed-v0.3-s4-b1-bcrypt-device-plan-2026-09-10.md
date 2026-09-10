@@ -1,6 +1,11 @@
 # S4-B1 bcryptのデバイスopen・制御要求・後始末の3地点を観測
 
-状態: **候補実装・pure/fake272件・独立実装レビュー・保存後preflight完了 / 実機未実施**。
+状態: **2026-09-10に承認済み1回を実施済み / child E2E未達**。
+
+clean be05b42（実装d557a20）でDR0/8129にhit、R12D=C0000022、caller5d53を確認した。
+所有終了・証跡readback pass。今回の1回への了承は消化済み、自動再試行なし。
+詳しくは[実行結果](anomaly-multiseed-v0.3-s4-b1-bcrypt-device-result-2026-09-10.md)を参照。
+以下の準備・未実行表記は実行前の履歴であり、この状態記録が優先する。
 
 [今回の実測](anomaly-multiseed-v0.3-s4-b1-bcrypt-detail-result-2026-09-10.md)は後始末前にEAX/EBP=C0000022、EDI0を示した。
 次はDebugDriver(bcrypt_device=True, detached_console=True, bootstrap=True)で、
