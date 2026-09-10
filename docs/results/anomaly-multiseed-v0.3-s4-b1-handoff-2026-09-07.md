@@ -2,10 +2,10 @@
 
 状態: **限定Windows engineering control成功 / no integration / no formal permission**
 
-2026-09-10最新: §78のWindows3.14.0一本化と§76の実機成功を最初に参照。実装0b30e63のRC＋Everyone候補で、子の全48期待値・報告照合・成功cleanup・teardownが通過した。
+2026-09-11最新: §79のLinux CI整備・実行、§78のWindows3.14.0一本化、§76の実機成功を最初に参照。実装0b30e63のRC＋Everyone候補で、子の全48期待値・報告照合・成功cleanup・teardownが通過した。
 専用fixture9対象の削除を確認し、残存0、資源停止なし。最大3回の了承を受領し、1回目の成功でその試行枠を終了した。残り2回は実行しない。
 実行前の選抜pure/fake293件と独立差分レビュー、実行内27 source preflightも通過。補完・関連78件は指定Capstone5.0.7でpass、今回の要件改訂に対応する25件もpass。全回帰ではない。
-現在のruntimeはWindows10.0.26200.9445/Python3.14.0。UBR固定緩和は§31、直近の実測資源・bootは§78に記録する。
+現在のruntimeはWindows10.0.26200.9445/Python3.14.0。UBR固定緩和は§31、直近の実測資源・bootは§79に記録する。
 Windows Python3.12受入は要件から削除済み。3.14.0へ一本化しLinux3.12/3.14は維持する。§77の返答待ちは解消した。
 本流統合、formal/B2/publisherは未完了・未許可。
 
@@ -2113,3 +2113,32 @@ repository safety/diff-check pass。B1の既存failure rootsや別projectへの�
 追加native枠は前回成功で終了したまま。本流統合・B2 publisher/marker・S4完全受入は未完了。
 次の残件はLinux所定CI環境/全回帰証跡、Windows3.14.0の全回帰・native受入範囲と正式OS条件の整合、
 B2公開部品・完全runtime inventory・producer/consumer revision凍結である。
+
+## 79. 2026-09-11 Linux CI固定・unittest記録の実装と候補CI
+
+ユーザー「続けてください」を受け、§78の残件であるLinux CIの整備を実施。
+基準e9588dc、実装3c69f9ea3203313ac1b300e3e74e6607cf891262。
+[詳細記録](anomaly-multiseed-v0.3-s4-b1-ci-evidence-2026-09-11.md)を参照。
+ubuntu-24.04 x86_64 / CPython3.12・3.14の2 jobs、fail-fast falseを設定。
+従来の全unittest discoveryを維持し、実runtime/source/各予定test ID・開始・結果・終了をJSONLへ逐次保存する。
+Windowsではdiscovery前に拒否するため、このPCの全suite/native controlは実行していない。
+失敗後もsafetyを試行し、unittest JSONL1個だけをminor/run/attempt別に14日保存する。
+記録は新規作成のみ・16MiB上限。これは全processメモリの上限ではない。
+途中中断でrun_finishedがなければ未完了。ImageOS/ImageVersionは観測値でありimage digestに代用しない。
+runner_image_digest=null/not_collected、S4受入/formal許可はfalseのまま。
+
+初回合成テスト12pass後、独立レビューP2「unittest.stop後に未実行を残して成功扱い」を検出。
+shouldStopを成功条件から除外し、停止フラグも記録。未実行維持・exit1と通常failureのexit1を回帰で確認。
+修正後14/14 pass（1.037秒）、既存SourceCollectorTests2/2 pass（0.550728秒）。
+Windows実CLIは想定exit2、stdoutなし、report領域追加なし。workflow YAML/safety/diff-checkもpass。
+再レビューでP2是正・新規P0〜P3=0。担当の実行/試験/native/編集なし、進捗ポーリングなし。
+local-checks.jsonに16個の異なるtest IDsと各source hash・条件を保存した。
+
+保存済み候補branch codex/s4-b1-windows-engineeringをGitHubへ新規pushし、
+CI https://github.com/tyaro/banto-ai/actions/runs/34514721185 が3c69f9eに対して開始された。
+本流mainの変更・merge・force push・Windows追加native枠の再開ではない。
+開始確認時in_progress。GitHub CLIの60秒watch1本で完了を待ち、結果・保存artifactを確認する。
+
+資源UTC2026-09-10T18:16:03Z RAM7.73 GiB/C107.94/D75.36、18:31:02Z RAM8.09/C107.93/D75.36。
+build26200.9445、boot2026-09-09T10:43:08.5000000+09:00。点の変化でリーク有無を断定しない。
+ローカル検証Pythonは終了済み。別project・既存失敗fixture・旧artifact操作、新runtime導入なし。
