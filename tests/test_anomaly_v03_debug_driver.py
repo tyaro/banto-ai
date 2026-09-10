@@ -79,7 +79,7 @@ class DebugDriverTests(unittest.TestCase):
                                     driver.evidence.METADATA_LIMIT)
 
     def driver(self, stack, *, unload_entry=False, init_return=False, console_failure=False,
-               detached_console=False, bootstrap=False):
+               detached_console=False, bootstrap=False, init_failure=False):
         unused, api, kernel, identity, validate, access = fixtures.DebugSessionTests().session(stack)
         api.p = Mock()
         def memory(handle, pointer, size):
@@ -144,7 +144,7 @@ class DebugDriverTests(unittest.TestCase):
         api.a.GetKernelObjectSecurity.side_effect = kernel_sd
         return d.DebugDriver(unload_entry=unload_entry, init_return=init_return,
                              console_failure=console_failure, detached_console=detached_console,
-                             bootstrap=bootstrap), api, kernel, preflight, tokens, fixture, disk
+                             bootstrap=bootstrap, init_failure=init_failure), api, kernel, preflight, tokens, fixture, disk
 
     def test_full_wiring_preflight_once_and_evidence_retention_without_acceptance(self):
         with ExitStack() as stack:

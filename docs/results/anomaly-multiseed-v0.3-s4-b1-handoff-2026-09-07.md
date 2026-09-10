@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §66を最初に参照。DETACHED UNLOAD診断はPython関連DLLのLOAD後のbreakpointで既定停止し、UNLOAD未観測。終了/保存確認済み。固定初期停止点を検証して1回継続する候補はpure/fake245件・独立実装レビューpass。修正4c964c8を保存し、23 sourcesのread-only preflightもverified。追加実機は未実施。
+2026-09-10最新: §67を最初に参照。bootstrap照合・継続が成功し、UNLOADなしで自然EXIT C0000142を観測。終了/保存確認済み。初期化失敗経路のDLL候補を取得する候補はpure/fake252件・独立実装レビューpass。保存後preflight前。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1487,3 +1487,40 @@ bootstrap-unload-preflight.jsonへ保存。child起動・SetThreadContextなし�
 新規fixture診断1回への返答を待つ。合計Get2/RPM8回3182 bytes/Setなし、既存時間・memory・disk・owned stop条件。
 この問いへの「続けてください」は当該1回への了承として扱い、同じ了承を再確認せず実行する。自動再試行なし。
 実行wrapper bootstrap-unload-once.pyは2768 bytes/hash01f6e8074f8bfc1657b2b0eed4c02b5f4bf4a35ae37ed88a754442e7e4d6350b。
+
+
+## 67. 2026-09-10 bootstrap継続後の自然初期化失敗を観測し、失敗地点の取得を準備
+
+ユーザーの「お願いします」を§66の1回への了承として、cleanなca6a6da（実装4c964c8）で新規fixture1回を実行。
+初期reportまで2.376秒、driver/observer observed、primary/secondaryなし、resource_stop=false。
+要求flags0x40e、通常22/Continue22、初期停止点slot17を検証して通常継続、slot18〜21のthread3/process1 exitはC0000142。
+UNLOADなし、entry未取得。診断observedをchild E2E成功とは扱わず、失敗DLL/内部APIは未特定。
+
+bootstrapは初期PID/TID・例外metadata/parameter0・ntdll寿命・code hash一致、
+実Get RIP12223a/TF0/RSP整列、caller8df44/CALL一致。Get1/RPM3回75 bytes、continue confirmed。
+Terminateなし/drain0、signal/ownership解消/所有handle close/teardown pass/failure_count0、driver teardown failures0。
+private113291 bytes/hashc5aae2427953ccc3d1545fecf6a2e33e7c0d41818f022a8f99cbb3a9185c46d2、write/flush/close確認済み。
+有界held-file read1回でraw全events/CONTEXT/code/caller/launch/stop/hashを照合しreader close。
+詳細は[bootstrap継続結果](anomaly-multiseed-v0.3-s4-b1-bootstrap-unload-result-2026-09-10.md)。
+
+同run preflight23 sources/255021 bytes、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+memory153 samples/親＋child peak commit27140096 bytes（25.88 MiB）、peak working36941824 bytes（35.23 MiB）。
+実行前RAM7.48 GiB、C107.92/D75.36 GiB。単発値からリーク有無未判定。他project操作なし。
+既存静的JSONから次のcode845 bytesとe86e命令を照合し、init-failure-probe-recipe.jsonに保存。追加DLL/PDB read/downloadなし。
+
+次の[初期化失敗地点計画](anomaly-multiseed-v0.3-s4-b1-init-failure-plan-2026-09-10.md)は、
+検証済みbootstrapのpendingでntdll e86eをDR0に1回設定し、hitでR14D=C0000142/R12B=0と
+RDI entry112 bytes、module LOAD寿命/entrypoint=R15等を照合してDLL候補を記録する。
+flagsは失敗bit書込み前の値であり、callback FALSEだけでなく例外経路も対象となり得る。
+bootstrap込みGet4/Set1/RPM5回1032 bytes、同じ時間/memory/disk/metadata上限。hitは通常継続せずowned stop。
+既定off/DETACHED+bootstrap必須/他collectorと排他、任意addressなし、再arm/再選択/既存fixture cleanupなし。
+
+既存returnのdebug-register設定部分を共通methodとして再利用し、既存return/bootstrapも回帰した。
+独立設計点検は新規P0〜P3=0、関係fake41/41（1.891秒）pass。
+次は全体回帰・独立実装レビュー・保存後preflightを完了する。今回の了承済み1回は消化済み。
+
+
+全体pure/fake252/252（5.164秒）、repository safety/diff-check pass。
+独立実装レビューは新規P0〜P3=0、指定fake41/41（2.924秒）pass。担当のnative/private/source変更なし。
+完了通知のみ、進捗ポーリングなし。作業後RAM8.26 GiB、C107.92/D75.36 GiB。本流889cfc3 clean。
+次はsource保存後read-only preflightで準備を完了し、固定失敗地点の設定/取得を新規fixtureで1回行う範囲を提示する。

@@ -1,6 +1,6 @@
 # S4-B1 初期停止点の限定照合とUNLOAD観測の継続
 
-状態: **候補実装・全体pure/fake・独立実装レビュー・保存後preflight完了 / 実機未実施**。
+状態: **了承済み1回実施 / bootstrap継続confirmed / 自然EXIT C0000142 / UNLOADなし**。
 
 ## 目的と許可する条件
 
@@ -100,3 +100,9 @@ bootstrap-unload-preflight.jsonへ保存。child起動・SetThreadContextなし�
 合計Get最大2/RPM最大8回3182 bytes、Setなし、既存時間・memory・disk・owned stop条件を維持する。
 この問いへの「続けてください」は当該1回への了承として扱い、clean状態とwrapper hashを照合後、同じ了承を再確認せず実行する。
 RIP/code/caller等が一致しない場合も自動再試行せず、未観測/検証失敗/通常継続/強制停止/証跡保存を分けて記録する。
+
+
+## 実施結果
+
+ca6a6daで了承済み1回を実行し、bootstrapの全条件とDBG_CONTINUEを確認。UNLOADなしで自然EXIT C0000142を観測した。
+[実行結果](anomaly-multiseed-v0.3-s4-b1-bootstrap-unload-result-2026-09-10.md)を参照。RIP=address+1もこのrunで確認済み。この計画の1回は消化済み。
