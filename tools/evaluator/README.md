@@ -259,7 +259,7 @@ consumerは外部marker pin、全payload inventory、意味再計算、再読込
 source inventory／Git blobとworking bytes／正常generator基準を照合します。CRLF差も黙認しません。
 Windows基本pinのread-only probe、独立reader token用AccessCheckのread-only部品、拒否すべきfile／
 directory権限集合を準備しました。protected DACLの実際の設置、別process/tokenの出所証明、
-Windows 3.12／3.14 native受入、Linux CI image受入、完全なstdlib／loaded DLL／CRT inventoryと
+Windows 3.14.0 native受入、Linux CI image受入、完全なstdlib／loaded DLL／CRT inventoryと
 consumer freezeはS4に残ります。これらの完了や正式受入をS3のfake試験で代用しません。
 
 `run_campaign`／CLI `--run`は非対応runtimeを`unsupported_runtime`として、対応する基本pinでも
@@ -283,7 +283,7 @@ python -B tools/evaluator/inspect_anomaly_v03.py --root . --expected-head <full-
 出力はstdoutのinspection envelopeのみで、output root、観測生成、ACL/token変更、campaignはありません。
 source/producerと`.github/workflows/ci.yml`のGit blob・実bytesを照合し、浅いcloneで歴史objectが
 欠ける場合はfetchせず拒否します。dirty、missing、extra source、link/reparse、途中の変化も拒否します。
-Windows基本pinまたは限定したWindows 3.12／Ubuntu 24.04 CPython 3.12/3.14互換環境を対象とし、
+Windows CPython 3.14.0の基本pinまたはUbuntu 24.04 CPython 3.12/3.14互換環境を対象とし、
 OS/build/UBR/fs、Python version/compiler/GIL/tag/exe、CPU/features、stdlib tree、実loaded native
 modules（Windows module API／Linux executable mappings）、Python extension/DLL/CRTのraw hashとbyte数を
 収集・再読します。stdlibのsite-packagesは対象外です。`sys.modules`はextensionの照合だけに使い、
@@ -302,6 +302,9 @@ stable部だけをequivalence digestへ含め、PID/時刻/load order/free/peak/
 独立token、Windows/Linux各版の受入、Linux image identity、runtime closure、dev/smoke容量確認は
 未完了として明記します。自己申告accepted receiptは拒否し、`require_campaign_acceptance()`の
 無条件拒否とformal entryの閉鎖は維持します。S4 B–Eの実装・正式受入・実campaignは含みません。
+2026-09-10の要件改訂でWindows 3.12を対象から外し、receipt revisionを`s4-a.2`へ更新しました。
+engineering schemaのpathは維持し、旧`s4-a.1`や旧`windows-3.12`要件を含むreceiptは拒否します。
+過去の検査記録は履歴として保持し、今回の形式や受入結果へ自動変換しません。
 wrapped candidate `MemoryError`はglobal stopへ分類し、全ledgerと未来slotのnot_startedを保持して
 stop後IOを禁止します。過去の実機MemoryErrorの根本原因解決を意味しません。
 

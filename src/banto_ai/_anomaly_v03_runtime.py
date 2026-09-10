@@ -183,6 +183,6 @@ def require_campaign_acceptance() -> None:
 
 def acceptance_requirements() -> dict:
     return {"status": "not_completed", "linux_python": ["3.12", "3.14"],
-            "windows_python": ["3.12", "3.14.0"], "native_publisher": "not_accepted",
+            "windows_python": ["3.14.0"], "native_publisher": "not_accepted",
             "protected_dacl": "not_accepted", "independent_token_access_check": "not_accepted",
             "full_runtime_inventory": "not_frozen", "consumer_revision": "not_frozen"}

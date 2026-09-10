@@ -37,7 +37,7 @@ def fixture():
     sources = [{"role": role, "state": "not_collected", "revision": None, "files": []} for role in a.ROLES]
     sources[0].update(state="collected", revision="a"*40, files=[entry(p) for p in sorted(a.REQUIRED_PRODUCER_PATHS)])
     sources[4].update(state="collected", revision="a"*40, files=[entry(a.WORKFLOW)])
-    return {"receipt_version": "s4-a.1", "acceptance_status": "not_completed",
+    return {"receipt_version": "s4-a.2", "acceptance_status": "not_completed",
         "requirements": dict.fromkeys(a.REQUIREMENTS, "not_completed"),
         "stable": {"platform": {"system": "Linux", "release": "24.04", "version": "hand-kernel", "build": None,
             "ubr": None, "edition": "ubuntu", "architecture": "x86_64", "filesystem": "ext4", "local_fixed": True},
@@ -97,6 +97,26 @@ class AcceptanceContractTests(unittest.TestCase):
             if key == "acceptance_status": value[key] = "accepted"
             else: value["requirements"][key] = "complete"
             with self.subTest(key=key), self.assertRaises(v.V03ValidationError): check(value)
+
+    def test_previous_receipt_revision_and_removed_requirement_are_not_reinterpreted(self):
+        for previous_version, previous_requirement in ((True, False), (False, True), (True, True)):
+            value = fixture()
+            if previous_version:
+                value["receipt_version"] = "s4-a.1"
+            if previous_requirement:
+                value["requirements"]["windows-3.12"] = "not_completed"
+            with self.subTest(version=previous_version, requirement=previous_requirement), \
+                    self.assertRaisesRegex(v.V03ValidationError, "engineering schema violation"):
+                check(value)
+
+    def test_both_linux_minors_remain_compatibility_only_and_unaccepted(self):
+        for version in ("3.12.8", "3.14.0"):
+            value = fixture()
+            value["stable"]["python"]["version"] = version
+            with self.subTest(version=version):
+                report = check(value)
+                self.assertEqual(report["acceptance_status"], "not_completed")
+                self.assertFalse(report["formal_permission"])
 
     def test_external_pin_required_no_self_pin_or_circular_envelope(self):
         value = fixture()
@@ -197,6 +217,12 @@ class AcceptanceContractTests(unittest.TestCase):
         for field, val in (("version", "3.14.1"), ("source_tag", "other"), ("gil_disabled", True)):
             bad = copy.deepcopy(value); bad["stable"]["python"][field] = val
             with self.assertRaises(v.V03ValidationError): check(bad)
+
+    def test_windows_312_compatibility_receipt_is_no_longer_supported(self):
+        value = self._windows_fixture()
+        value["stable"]["python"].update(version="3.12.10", basic_pin="compatibility-only")
+        with self.assertRaisesRegex(v.V03ValidationError, "formal basic pin mismatch"):
+            check(value)
 
     def test_executable_native_reference_is_required_unique_and_byte_equal(self):
         for system, make in (("Linux", fixture), ("Windows", self._windows_fixture)):
@@ -328,6 +354,17 @@ class ReadOnlyCollectorTests(unittest.TestCase):
                 patch.object(inv, "capture_sources", side_effect=AssertionError("source")), \
                 patch.object(Path, "mkdir", side_effect=AssertionError("write")), self.assertRaises(rt.IntegrityError):
             inv.collect_receipt(self.root, "a"*40)
+
+    def test_windows_other_python_versions_rejected_before_path_or_native_probe(self):
+        for version in ((3, 12, 10), (3, 14, 1)):
+            with self.subTest(version=version), \
+                    patch.object(inv, "os", SimpleNamespace(name="nt")), \
+                    patch.object(inv, "sys", SimpleNamespace(dont_write_bytecode=True, version_info=version)), \
+                    patch.object(rt, "regular_path", side_effect=AssertionError("path inspection")), \
+                    patch.object(inv, "capture_sources", side_effect=AssertionError("source")), \
+                    patch.object(inv, "native_paths", side_effect=AssertionError("native inventory")), \
+                    self.assertRaisesRegex(rt.IntegrityError, "unsupported_runtime"):
+                inv.collect_receipt(self.root, "a"*40)
 
     def _capture(self, attack=None):
         hand = fixture()["stable"]

@@ -186,7 +186,8 @@ class PublicationTests(unittest.TestCase):
         self.assertEqual(set(rights["file"]), {"write", "append", "write_ea", "write_attributes", "delete"})
         self.assertEqual(set(rights["directory"]), {"add_file", "add_subdirectory", "delete_child", "write_ea", "write_attributes", "delete"})
         requirements = rt.acceptance_requirements()
-        self.assertEqual(requirements["windows_python"], ["3.12", "3.14.0"])
+        self.assertEqual(requirements["windows_python"], ["3.14.0"])
+        self.assertEqual(requirements["linux_python"], ["3.12", "3.14"])
         self.assertEqual(requirements["independent_token_access_check"], "not_accepted")
         with patch.object(out.os, "name", "posix"), self.assertRaises(rt.IntegrityError):
             out.windows_readonly_access_check(self.parent, 123)

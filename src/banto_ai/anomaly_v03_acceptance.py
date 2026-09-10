@@ -16,10 +16,11 @@ from . import _anomaly_v03_contract as c
 from .manifest import ManifestValidationError, validate
 
 SCHEMA_PATH = "schemas/anomaly-v03-engineering-inspection-v1.schema.json"
+RECEIPT_VERSION = "s4-a.2"
 WORKFLOW = ".github/workflows/ci.yml"
 ROLES = ("producer", "analysis", "audit", "worker", "workflow")
 REQUIREMENTS = (
-    "native-publisher", "protected-dacl", "independent-token", "windows-3.12",
+    "native-publisher", "protected-dacl", "independent-token",
     "windows-3.14.0", "linux-3.12", "linux-3.14", "linux-image-identity",
     "consumer-freeze", "runtime-closure", "dev-smoke-capacity",
 )
@@ -78,7 +79,7 @@ def receipt_schema():
             "native_method": enum("EnumProcessModulesEx", "proc-self-maps"),
             "limitations": {"const": list(LIMITATIONS), "type": "array", "items": text}}),
     })
-    schema = obj({"receipt_version": {"const": "s4-a.1", "type": "string"},
+    schema = obj({"receipt_version": {"const": RECEIPT_VERSION, "type": "string"},
         "acceptance_status": {"const": "not_completed", "type": "string"},
         "requirements": obj({name: {"const": "not_completed", "type": "string"} for name in REQUIREMENTS}),
         "stable": stable,
@@ -149,14 +150,11 @@ def validate_receipt(receipt, *, expected_stable_sha256: str, source_snapshots: 
         v.require(host["version"] == "10.0.26200.9168", "Windows version mismatch")
         v.require(py["loaded_python_dll"] in native, "loaded Python DLL missing")
         v.require(stable["scope"]["native_method"] == "EnumProcessModulesEx", "native method mismatch")
-        if py["version"].startswith("3.14."):
-            pin = c.formal_runtime()
-            v.require(py["version"] == "3.14.0" and py["compiler"] == "MSC v.1944 64 bit (AMD64)"
-                and py["source_tag"] == "v3.14.0:ebf955d" and py["basic_pin"] == "matches-formal-basic-pin"
-                and py["executable"]["raw_sha256"] == pin["python_exe_raw_sha256"]
-                and native[py["loaded_python_dll"]]["raw_sha256"] == pin["python_dll_raw_sha256"], "formal basic pin mismatch")
-        else:
-            v.require(py["basic_pin"] == "compatibility-only", "3.12 is not formal")
+        pin = c.formal_runtime()
+        v.require(py["version"] == "3.14.0" and py["compiler"] == "MSC v.1944 64 bit (AMD64)"
+            and py["source_tag"] == "v3.14.0:ebf955d" and py["basic_pin"] == "matches-formal-basic-pin"
+            and py["executable"]["raw_sha256"] == pin["python_exe_raw_sha256"]
+            and native[py["loaded_python_dll"]]["raw_sha256"] == pin["python_dll_raw_sha256"], "formal basic pin mismatch")
     else:
         v.require(host["architecture"] == "x86_64" and host["edition"] == "ubuntu" and host["release"] == "24.04"
             and host["filesystem"] in ("ext4", "xfs", "btrfs")

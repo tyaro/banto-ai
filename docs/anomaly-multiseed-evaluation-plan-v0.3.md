@@ -10,6 +10,11 @@
 candidate stackはmain未統合。S1 registryは`4b02201...`を科学仕様revisionとしてpinし、
 本監査後のstatus/result同期commitもGit historyから解決してprovenanceとして併記する。
 
+2026-09-10追記: 上記はS0採択時点の履歴。ユーザー判断に基づき、§8のWindows受入を
+CPython3.14.0に一本化した。Linux3.12/3.14の互換性試験は継続する。
+[変更・検証記録](results/anomaly-multiseed-v0.3-s4-b1-acceptance-readiness-2026-09-10.md)を参照。
+このplatform受入範囲の改訂は、科学仕様の履歴pinや正式runtime pinを変更せず、S4受入完了を意味しない。
+
 v0.3のconfig、schema、validator、scorer、runner、test、run、結果artifactは**まだ作成・実施していない**。候補の勝者、性能達成、製品昇格も未決定である。本書は、それらの実装を承認する前に、仮説・データ・算法・母数・判定・停止条件を固定する文書であり、run結果ではない。以下の新しい数値、seed数、候補、閾値、実験規模、gateは、既存の実測値と明記したものを除き、すべて**v0.3の設計上の決定**である。
 
 ## 1. 根拠と研究の境界
@@ -362,13 +367,18 @@ Windowsでは新しいv0.3成果物だけに、公開後のprotected DACL・独�
 CIの互換性試験と正式campaignのruntimeを次のとおり固定する。
 これはS1以降に実装・検証する受入条件であり、本改訂で各platformの試験を実行したとは扱わない。
 
+2026-09-10のplatform受入改訂でWindows3.12の実機試験要件を外した。
+Windows運用を既存の3.14.0に限定し、同じPCで別projectの連続稼働試験が進む中で
+追加runtimeの導入・保守・実機試験を省くユーザー判断による。正式な性能結果に基づく選択ではない。
+Windowsで必要なpublisher・DACL・独立token/process・競合・失敗証跡の各検査はすべて維持する。
+
 | 境界 | 必須platform/runtime | S4までに通す条件 |
 | --- | --- | --- |
 | 共通契約のLinux CI | Ubuntu 24.04 x86_64、CPython 3.12系と3.14系の2 jobs | 同じstrict/pure validator、Q1〜Q5、M1〜M9、profile/score/merge/母数、seed hash、bootstrap golden、fake runner・独立consumer試験を両minorでpass |
-| Windows native受入 | 下記Windows 11 AMD64/NTFS、CPython 3.12系と正式pinの3.14.0 | 共通試験に加えて実Win32 publisher、protected DACL、別process/tokenのAccessCheck、競合・非上書き・失敗時証跡保持を両minorでpass |
+| Windows native受入 | 下記Windows 11 AMD64/NTFS、正式pinのCPython 3.14.0 | 共通試験に加えて実Win32 publisher、protected DACL、別process/tokenのAccessCheck、競合・非上書き・失敗時証跡保持をこのruntimeでpass |
 | S4 smokeとS5/S6 formal | 下記の唯一のWindows/CPython組合せ | Windowsで生成する同じ保存観測を全候補へ渡し、producer/analysis/auditの厳密な再計算・hash照合を実施 |
 
-Linux jobsのPython 3.12/3.14とWindows互換性用3.12のpatch/build、CI image digest、
+Linux jobsのPython 3.12/3.14のpatch/build・CI image digestと、Windows 3.14.0の実build/hash、
 OS/kernel、architecture、実行source SHA、各testのpass/fail/skipをS4の受入証跡へ保存する。
 各jobでは既存stdlib回帰suiteとrepository safetyも必須とし、v0.3専用fixtureだけのpassで代用しない。
 既存CIの`ubuntu-latest`やminor labelだけをformal runtime pinの代わりにしない。
@@ -388,14 +398,14 @@ seed/整数bootstrap goldenは全platformでexact一致を要求する。
 
 S1 registryはこの選定値を保存し、S4ではstdlib・ロードした拡張/DLL・CRT・CPU/OS情報を含む
 完全なruntime inventoryを追加でhash pinする。配置pathそのものは同一性の代用にしない。
-S4の承認対象revisionでLinux 2 jobsとWindows native 2 runtimesの受入を完了してから、
+S4の承認対象revisionでLinux 2 jobsとWindows native 1 runtime（3.14.0）の受入を完了してから、
 正式pin上のdev/smokeを検証し、全inventoryをcommitして初めてS5へ進む。
 S2/S3時点でも同じ共通試験を継続し、Windows受入をS5実行後まで延期しない。
 
 Windowsのnative試験はmockによるWin32成功値の代用では完了しない。
 将来の試験時に新規の専用fixture領域だけを使い、公開物のfile write/delete、directory add-child/
 delete-child/write/deleteの通常権限が独立reader process/tokenで拒否されることをAccessCheckで確認する。
-Windows 3.12の受入はこのfixture用publisher部品に限定し、formal rootsへの公開入口は持たせない。
+Windows 3.14.0の受入はこのfixture用publisher部品に限定し、この受入経路にformal rootsへの公開入口は持たせない。
 既存のowner/privilege限界を保持し、repositoryや旧artifactのACLは変更しない。
 Linux CIでWindows専用項目を明示skipすることは許すが、Windows受入で必要項目がskip・未実行・失敗なら
 S4不合格とする。CIからformal holdoutの生成・採用判定は行わない。

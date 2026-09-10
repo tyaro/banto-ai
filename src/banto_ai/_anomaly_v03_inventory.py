@@ -253,6 +253,7 @@ def probe_host(root):
     rt.require(sys.dont_write_bytecode, "inspection requires disabled bytecode writes")
     rt.require(platform.python_implementation() == "CPython" and sys.version_info[:2] in ((3, 12), (3, 14))
                and struct.calcsize("P") == 8 and not sysconfig.get_config_var("Py_GIL_DISABLED"), "unsupported_runtime")
+    rt.require(os.name != "nt" or sys.version_info[:3] == (3, 14, 0), "unsupported_runtime")
     root = rt.regular_path(root, directory=True)
     basic = "compatibility-only"
     if os.name == "nt":
@@ -271,9 +272,8 @@ def probe_host(root):
         volume, filesystem = ctypes.create_unicode_buffer(32768), ctypes.create_unicode_buffer(128)
         rt.require(kernel.GetVolumePathNameW(str(root), volume, len(volume)) and kernel.GetDriveTypeW(volume.value) == 3
             and kernel.GetVolumeInformationW(volume.value, None, 0, None, None, None, filesystem, len(filesystem)) and filesystem.value == "NTFS", "unsupported_runtime")
-        if sys.version_info[:2] == (3, 14):
-            rt.probe_runtime(root)
-            basic = "matches-formal-basic-pin"
+        rt.probe_runtime(root)
+        basic = "matches-formal-basic-pin"
         host = dict(system="Windows", release=release, version=f"{version.major}.{version.minor}.{build}.{ubr}",
             build=int(build), ubr=ubr, edition=edition, architecture="AMD64", filesystem="NTFS", local_fixed=True)
         cpu, features = _windows_cpu()
@@ -376,7 +376,7 @@ def collect_receipt(root: Path, expected_head: str):
     rt.require(probe_host(root) == (host, cpu, executable, basic), "host/CPU changed")
     rt.require(stdlib_paths() == stdlib and set(native_paths()) == set(native)
                and extension_paths() == extensions, "final runtime inventory changed")
-    receipt = {"receipt_version": "s4-a.1", "acceptance_status": "not_completed",
+    receipt = {"receipt_version": a.RECEIPT_VERSION, "acceptance_status": "not_completed",
         "requirements": dict.fromkeys(a.REQUIREMENTS, "not_completed"), "stable": stable,
         "observation": {"pid": os.getpid(), "observed_utc": datetime.now(timezone.utc).isoformat(),
             "elapsed_seconds": time.monotonic()-started, "free_bytes": shutil.disk_usage(root).free,
