@@ -178,10 +178,12 @@ class DebugUnloadEntryTests(unittest.TestCase):
             self.assertEqual(c.entry.state, "stopped")
 
     def test_outer_driver_opt_in_evidence_and_owned_stop_do_not_capture_during_drain(self):
-        for fault in (None, "code_mismatch", "resource", "entry_size"):
-            with ExitStack() as scope, self.subTest(fault=fault):
+        for detached, fault in ((detached, fault) for detached in (False, True)
+                                for fault in (None, "code_mismatch", "resource", "entry_size")):
+            with ExitStack() as scope, self.subTest(detached=detached, fault=fault):
                 driver, api, k, preflight, tokens, fixture, disk = (
-                    driver_fixtures.DebugDriverTests().driver(scope, unload_entry=True))
+                    driver_fixtures.DebugDriverTests().driver(scope, unload_entry=True,
+                                                           detached_console=detached))
                 c, unused, stop, budget, memory, windows = self.fixture()
                 if fault is None or fault == "entry_size":
                     struct.pack_into("<I", memory[0x20000], 0x40, 0 if fault is None else 0xFFFFFFFF)
@@ -231,6 +233,14 @@ class DebugUnloadEntryTests(unittest.TestCase):
                 k.ReadProcessMemory.side_effect = read
                 k.WaitForSingleObject.side_effect = lambda handle, timeout: 0 if last[0] == 5 else 258
                 result = driver.run()
+                expected_flags = 0x40E if detached else 0x08000406
+                api.a.CreateProcessAsUserW.assert_called_once()
+                self.assertEqual(api.a.CreateProcessAsUserW.call_args.args[6], expected_flags)
+                self.assertFalse(api.a.CreateProcessAsUserW.call_args.args[5])
+                k.ResumeThread.assert_called_once_with(502)
+                k.SetThreadContext.assert_not_called()
+                fixture.cleanup.assert_not_called()
+                self.assertEqual(driver.stop.handles, [None, None])
                 k.GetThreadContext.assert_called_once()
                 self.assertEqual(k.ReadProcessMemory.call_count,
                                  5 if fault in (None, "entry_size") else 2 if fault == "code_mismatch" else 3)
@@ -245,6 +255,8 @@ class DebugUnloadEntryTests(unittest.TestCase):
                 else:
                     from tests.fixtures.anomaly_v03_debug_evidence_reader import interpret
                     saved = interpret(driver.evidence.buffer.raw[:driver.evidence.size])
+                    self.assertEqual(saved.private_metadata["launch"]["requested_creation_flags"], expected_flags)
+                    self.assertEqual(saved.private_metadata["launch"]["creation_state"], "created")
                     row = saved.private_metadata["context"]["row"]["module_entry"]
                     if fault is None:
                         self.assertTrue(row["init_failure_bit"])

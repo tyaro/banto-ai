@@ -335,6 +335,8 @@ class DebugInitReturnTests(unittest.TestCase):
             with self.assertRaises(TransportError): DebugDriver(**options)
         for options in ({"detached_console": True}, {"init_return": True, "detached_console": 1},
                         {"init_return": True, "detached_console": None},
+                        {"unload_entry": True, "detached_console": 1},
+                        {"unload_entry": True, "detached_console": None},
                         {"console_failure": True, "detached_console": True}):
             with self.assertRaises(TransportError): DebugDriver(**options)
 

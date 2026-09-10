@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §64を最初に参照。DETACHED比較でAL1/stage700を取得、終了/保存確認済み。core起動flagsを同じ条件へ修正し、通常child E2Eの準備はpure/fake234件・独立レビュー・保存後read-only preflight pass。修正ab147d5を保存済み。通常childの実機は未実施。
+2026-09-10最新: §65を最初に参照。DETACHED通常childは0xC0000142で失敗し、teardown pass・失敗fixture保持。E2E未達。DETACHEDで最初のUNLOADを観測する候補はpure/fake235件・独立レビュー是正確認pass。保存後preflight前。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1389,3 +1389,44 @@ detached-control-preflight.jsonへ保存。child起動・SetThreadContextなし�
 通常controlの準備は完了。新規fixture内の固定child操作・拒否確認・report/trace照合・成功時exact-ledger cleanupまで、
 既存child wait30秒/親＋child512 MiB条件の1回について返答を待つ。§6の追加probeの条件を引き継ぐ。
 この問いへの「続けてください」は当該通常control1回への了承として扱い、再確認せず実行する。失敗時の自動再試行なし。
+
+
+## 65. 2026-09-10 DETACHED通常childは初期化失敗、最初のUNLOAD観測を準備
+
+ユーザーの「お願いします」を§64の通常control1回への了承として、cleanな6d1466a（core修正ab147d5）で1回実行した。
+準備wrapper3526 bytes/hashcae6a4ee47236fbfd8a9d024204105e5b4484e91b3154033ce2af18821f04c48を照合。
+status=failed/reason=child_failed/child_exit=0xC0000142、control failed、cleanup not_started、teardown pass、resource_stop=false。
+core elapsed0.3133907秒、wrapper全体2.407秒。置換trace0 records/0 bytes、private_control=null、private_replace空bytes。
+失敗fixtureを保持し存在確認/走査/repair/削除しない。詳細は[通常child結果](anomaly-multiseed-v0.3-s4-b1-detached-control-result-2026-09-10.md)。
+
+公開要約2016 bytes/hashb41de63f393c01b02d4f492cb46d7bea2957cb8319147b663f43c80d7d4a40c4を1回有界readで照合。
+完全control証拠を取得・保存したとは扱わない。native test classではなく同じharnessの直接1回実行である。
+同run preflight21 sources/239293 bytes、verified、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+親＋child peak private23097344 bytes（22.03 MiB）、peak working32804864 bytes（31.29 MiB）。
+PC空きRAM7.66→7.80 GiB、C107.93/D75.36 GiB。リーク有無は単発値から未判定。他project操作なし。
+
+前回のdebug0x40eでAL1/stage700はRET直前の観測で、今回の非debug0x40cでのE2E成功を意味しない。
+今回の失敗DLL/内部APIは未特定で、debugger有無等の因果関係も未確定。
+coreのDETACHED候補は隔離保存のまま、修正完了/本流統合可能とは扱わない。
+
+次の[DETACHED UNLOAD計画](anomaly-multiseed-v0.3-s4-b1-detached-unload-plan-2026-09-10.md)を準備する。
+DebugDriverのdetached_consoleを既存unload_entryでも使えるようにし、最初の通常UNLOADで
+既存Get1/stack2048 bytes＋code947/entry112 bytes（RPM最大5回3107 bytes）を取得する。
+collector自体のcode/RVA/hash/解釈、token/ACL、core、停止・資源予算は変更しない。
+Setなし、breakpoint拒否、必要時owned stop、診断fixture保持。追加実機は未実施。
+関係fake44/44（1.136秒）pass。次は全体回帰・独立レビュー・保存後preflightで準備を完成する。
+通常controlの了承済み1回は消化済み。S4/native受入・formal/B2/publisher・main統合は未達。
+
+
+次の診断準備の初回独立レビューでP2=1を検出した。既存write_summaryが詳細構築MemoryErrorを通常失敗として捕捉し、
+その後のreport/hash/file保存を続けられる問題で、今回の実機で資源停止したという意味ではない。
+MemoryErrorをownerへlatchして再送出し、先行flush済みの最終行を残して後続処理を止める修正を追加した。
+画像要約/hash/JSON構築のOOM注入回帰を追加し、関係fake49/49（0.929秒）pass。
+変更したreport sourceをpreflightにも追加した。次は22 sourcesを照合する。wrapperのbyte/hashは不変、追加実機なし。
+
+
+最終pure/fake235/235（2.719秒）、repository safety/diff-check pass。
+独立P2は是正確認済み、追加差分の新規P0〜P3=0、report fake5/5（0.001秒）pass。
+完了通知だけを利用し進捗ポーリングなし。担当のnative/private操作なし。
+最終空きRAM7.74 GiB、C107.92/D75.36 GiB。本流889cfc3 clean、追加実機なし。
+次は保存後read-only preflightを行い、DETACHED指定の最初のUNLOAD観測1回を提示する。

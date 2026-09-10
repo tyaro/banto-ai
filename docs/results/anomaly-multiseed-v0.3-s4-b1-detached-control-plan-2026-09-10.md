@@ -1,6 +1,6 @@
 # S4-B1 DETACHED指定での制限付きchild E2E確認
 
-状態: **起動flags修正・全体pure/fake・独立レビュー・保存後preflight完了 / 実機未実施 / no native acceptance**。
+状態: **通常control1回実施済み / child_failed=0xC0000142 / teardown pass / no native acceptance**。
 
 ## 目的と修正
 
@@ -84,3 +84,9 @@ preflightによるchild起動やSetThreadContextなし、全acceptance gate no�
 この具体的な問いへの「続けてください」は通常controlの1回への了承として扱い、同じ了承を再確認しない。
 実施時はclean状態と準備済みwrapperのhashを照合し、wrapper内の直前preflightを通してharnessを1回だけ呼ぶ。
 失敗しても自動再試行せず、そのrunの公開resultと資源停止状態から次を判断する。
+
+
+## 実施結果
+
+6d1466aで了承済み1回を実行した。child_failed/0xC0000142、cleanup未開始、teardown pass、resource_stop=false。
+[実行結果](anomaly-multiseed-v0.3-s4-b1-detached-control-result-2026-09-10.md)を参照。この計画の1回は消化済みで自動再試行しない。

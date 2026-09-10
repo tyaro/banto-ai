@@ -43,7 +43,8 @@ class DebugDriver:
         need(type(init_return) is bool and not (unload_entry and init_return), "return_option")
         need(type(console_failure) is bool and not (console_failure and (unload_entry or init_return)),
              "console_option")
-        need(type(detached_console) is bool and (not detached_console or init_return), "detached_option")
+        need(type(detached_console) is bool and (not detached_console or init_return or unload_entry),
+             "detached_option")
         self.detached_console = detached_console
         self.preflight = StartupPreflight()
         self.api = self.tokens = self.fixture = self.transport = self.stop = None

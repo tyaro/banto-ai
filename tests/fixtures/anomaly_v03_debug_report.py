@@ -63,6 +63,11 @@ Details use owned local values. Raw identities, profiles and errors stay private
         encoded = json.dumps(details, ensure_ascii=True, allow_nan=False)
         if len(encoded) > 16384:
             raise ValueError("report_size")
+    except MemoryError:
+        # The final driver state was already flushed. Stop the caller before
+        # another summary, hash or file write; do not format a failure detail.
+        owner.resource_stop = True
+        raise
     except Exception as error:
         details = {"phase": "details", "status": "failed", "error_type": type(error).__name__}
     _line(stream, details)

@@ -2,7 +2,9 @@ import io
 import json
 import unittest
 from types import SimpleNamespace as NS
+from unittest.mock import Mock, patch
 
+from tests.fixtures import anomaly_v03_debug_report as report
 from tests.fixtures.anomaly_v03_debug_report import write_summary
 
 
@@ -50,6 +52,41 @@ class ReportTests(unittest.TestCase):
         stream = io.StringIO()
         write_summary(value, stream)
         self.assertEqual(json.loads(stream.getvalue().splitlines()[1])["status"], "resource_skipped")
+
+    def test_detail_memory_failure_preserves_final_and_prevents_following_report(self):
+        for stage in ("images", "hash", "serialization"):
+            with self.subTest(stage=stage):
+                value = owner()
+                first, second = io.StringIO(), io.StringIO()
+                original = MemoryError("private failure text")
+                if stage == "images":
+                    class BrokenImages:
+                        @property
+                        def rows(self):
+                            raise original
+                    value.images = BrokenImages()
+                value.evidence = NS(capture_state="captured", size=4, CAPACITY=4,
+                                    buffer=NS(raw=b"data"))
+                digest = Mock(return_value=NS(hexdigest=lambda: "a" * 64))
+                if stage == "hash":
+                    digest.side_effect = original
+                dumps = json.dumps
+                def encode(obj, **options):
+                    if stage == "serialization" and obj.get("phase") == "details":
+                        raise original
+                    return dumps(obj, **options)
+                with patch.object(report.hashlib, "sha256", digest), patch.object(report.json, "dumps", encode):
+                    with self.assertRaises(MemoryError) as raised:
+                        write_summary(value, first)
+                        write_summary(value, second)
+                self.assertIs(raised.exception, original)
+                self.assertTrue(value.resource_stop)
+                lines = first.getvalue().splitlines()
+                self.assertEqual(len(lines), 1)
+                self.assertEqual(json.loads(lines[0])["driver"]["status"], "observed")
+                self.assertNotIn("private", first.getvalue())
+                self.assertEqual(second.getvalue(), "")
+                self.assertEqual(digest.call_count, 0 if stage == "images" else 1)
 
     def test_output_failure_is_not_retried(self):
         class BrokenStream:
