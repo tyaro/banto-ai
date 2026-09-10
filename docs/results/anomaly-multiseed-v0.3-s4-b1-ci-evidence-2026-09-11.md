@@ -1,7 +1,10 @@
-# S4-B1 Linux CI環境の固定とunittest記録
+# S4-B1 Linux CI整備・互換性修正・実行結果
 
 日付: 2026-09-11 JST。基準候補 `e9588dc`、実装 `3c69f9ea3203313ac1b300e3e74e6607cf891262`。
 本流 `889cfc3` の変更・統合、Windows native control、正式campaign実行は含まない。
+
+**最終結果: 候補 `7870362` のLinux CIは両minorで成功。各1099 methods中1032 pass / 67 skip、
+failure/error0。保存された全test ID・結果・sourceを照合済み。S4完全受入は未完了。**
 
 ## 変更
 
@@ -131,9 +134,38 @@ mock属性・環境の残留なし、元の状態への復元も確認した。�
 独立レビュー新規P0〜P3=0、担当の試験/native/ネット接続/編集なし、進捗ポーリングなし。
 safety/diff-check pass。
 
-7870362を候補branchへpushし、[3回目CI run 34518948145](https://github.com/tyaro/banto-ai/actions/runs/34518948145)
-を開始した。開始確認時in_progress。全suite・後続工程と保存artifactを確認する。
+7870362を候補branchへpushした[3回目CI run 34518948145](https://github.com/tyaro/banto-ai/actions/runs/34518948145)
+は**両job成功**で終了した。sourceは `7870362d76eb26a6086222b3947aaa102bd22c79`、attempt1。
+Python3.14 jobは19:25:12Z、3.12 jobは19:27:44Zに終了、待機processは19:28:25Zに成功を確認してexit0。
 このCI回数は、既に終了したWindows native controlの試行枠とは別である。
+
+## 最終CIの検証結果
+
+| 実Python | 予定/実行method | pass | skip | failure/error | JSONL bytes |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 3.12.14 | 1099/1099 | 1032 | 67 | 0/0 | 739802 |
+| 3.14.7 | 1099/1099 | 1032 | 67 | 0/0 | 739872 |
+
+両jobともexpected failure0 / unexpected success0 / stopped=false / source_unchanged=true。
+compile・全unittest・manifest/naive smoke・synthetic dataset生成/quality・benchmark・safety・artifact保存がすべてpass。
+最終runtimeのOS/kernel/compiler/image観測値は下記の初回値と一致する。
+
+保存先は `artifacts/ci-evidence-2026-09-11/run-34518948145/`。
+3.12 JSONL SHA-256 `1b8161b06bf518784df7ca00699e145348b16a34a5755afacd5741525f187f95`、
+3.14 JSONL SHA-256 `1335a3d6c360b9a3731da606a0838c035d2a4c6b898178c1d467d51b6ac05be9`。
+約78KBの各ZIPについてAPI digestと実SHA-256を照合し、単一member・展開後16MiB以内を確認した。
+3.12の最初の取得だけunexpected EOFで0 bytesとなり、別名で取り直した正しいZIPを採用。
+取得失敗の空ファイルを証拠として使用せず、CI自体の再実行もしていない。
+
+全予定/開始/終了IDの重複・欠落なし、全件の結果集計とsource/workflow/run/attemptを確認。
+両minor間で予定ID/順序・終了結果・skip ID/reasonがexact一致した。
+3回のCIを比較しても予定ID/順序とskip67件は同一で、初回に異常だった66 methodsはすべて最終pass。
+試験削除やskip追加による成功ではない。共有fixture payloadそのものの比較とは区別する。
+`recovery-comparison.json`（25642 bytes / SHA-256
+`7bb1ab77ea30dbd886d93af8b1dbce64af83ba7e61f01a5322b32551e7edff13`）に各版のruntime・集計・修復66 IDsを保存した。
+
+以後の保存は記録だけのcommitで、CIが実行したrevisionは7870362のまま。
+記録だけのpushで同じ全suiteを再起動しない。本流の変更・統合はない。
 
 ## 観測したruntimeとskipの分類
 
@@ -148,7 +180,7 @@ ImageOS `ubuntu24` / ImageVersion `20260907.300.1` を両jobで観測した。
 | optional Capstone未導入によるoffline unwind | 16 | stdlib CIで未実行。既存Windowsの固定5.0.7選抜証拠とは分ける |
 | Toto2のローカルartifact不存在 | 2 | 過去artifactの照合が未実行。新規生成・取得はしておらず、passと数えない |
 
-skip67件は初回両minorでID・reasonが一致した。
+skip67件は3回のCIの両minorでID・reasonが一致した。
 Toto2の2件を含め、skipを受入済みに読み替えない。
 
 ## 受入として残る条件
@@ -167,9 +199,13 @@ Windows3.14.0の全native受入、正式OS条件、B2、runtime closureとconsum
 | 2026-09-10 18:31:02 | 8.09 | 107.93 | 75.36 |
 | 2026-09-10 18:55:08 | 8.13 | 107.91 | 75.36 |
 | 2026-09-10 19:15:10 | 7.19 | 107.91 | 75.36 |
+| 2026-09-10 19:26:08 | 7.85 | 107.90 | 75.36 |
+| 2026-09-10 19:30:17 | 7.68 | 107.91 | 75.36 |
 
 Windows26200.9445、boot `2026-09-09T10:43:08.5000000+09:00` を記録した。
 点の変化からリークの有無を断定しない。ローカルの検証Pythonは終了済み。
 19:15時点のowned CI待機Pythonはprivate11.27MiB / working set15.30MiB。
+19:26時点もprivate11.27MiB / working set15.40MiB。待機は成功確認後に終了した。
 この待機process単体の値であり、PC全体のRAM変化をこの作業へ帰属させない。
+最終観測をresources-final.jsonに保存。今回の検証・取得・照合processも終了済み。
 既存失敗fixture・別project・旧artifactへの操作、新runtimeの導入なし。

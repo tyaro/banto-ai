@@ -18,7 +18,7 @@
 | 境界 | 必須条件 | 現在の証拠・残件 |
 | --- | --- | --- |
 | B1 engineering control | 子のruntime/source/token、実AccessCheck、全操作、置換証跡、所有物cleanup/teardown | 実装 `0b30e63` / 実行HEAD `f15af39` / Windows 26200.9445 / Python 3.14.0で限定成功。全48期待値、9対象削除、残存0。全S4受入とは別 |
-| Linux共通契約 | Ubuntu 24.04 x86_64、Python 3.12/3.14、共通契約と既存stdlib全回帰、safety、実patch/build・image・source・各test結果の記録 | `ubuntu-24.04`へ固定し、両minorの1099件と逐次記録を実行。初回はfakeのWindows関数mock欠落、2回目はfakeのSystemRoot依存で失敗。9846f52/7870362で修正し、関数不存在・空の環境変数で選抜66件pass。3回目CI34518948145進行中。VM image digest・共有fixture payloadのplatform間exact照合は未収集。過去の本流CI greenは候補の証拠に代用しない |
+| Linux共通契約 | Ubuntu 24.04 x86_64、Python 3.12/3.14、共通契約と既存stdlib全回帰、safety、実patch/build・image・source・各test結果の記録 | 候補7870362のCI34518948145は両job成功。実Python3.12.14/3.14.7、各1099 methods中1032 pass/67 skip、failure/error0。smoke/quality/benchmark/safetyもpass。各ID・結果・sourceと初回からの66件修復を照合。skipはWindows固有49/optional Capstone16/Toto2 artifact不存在2。VM image digest・共有fixture payloadのplatform間exact照合は未収集で、S4完全受入とは別 |
 | Windows native受入 | 正式3.14.0の1 runtime。共通回帰、publisher、DACL、独立token/process、競合・非上書き・失敗証跡 | Windows3.12要件を削除済み。各必須検査自体は維持し、全native受入は未完了 |
 | B2 publisher/marker | 新規fixtureで公開・非上書き・競合・marker・失敗証跡を検証 | B1のcontrol成功で完了扱いにしない。未実装・未受入の残件として分離 |
 | S4全体 | 必須platform受入、完全runtime inventory、producer/consumer revision凍結、正式pin上のdev/smoke | 未完了。`require_campaign_acceptance()` は `s4_acceptance_not_frozen` を無条件に返す |

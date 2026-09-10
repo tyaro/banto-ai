@@ -1,8 +1,8 @@
 # anomaly multi-seed v0.3 S4-B1 引継書
 
-状態: **限定Windows engineering control成功 / no integration / no formal permission**
+状態: **限定Windows engineering control成功 / Linux CI両minor成功 / no integration / no formal permission**
 
-2026-09-11最新: §79のLinux CI整備・fake修正・再検証、§78のWindows3.14.0一本化、§76の実機成功を最初に参照。実装0b30e63のRC＋Everyone候補で、子の全48期待値・報告照合・成功cleanup・teardownが通過した。
+2026-09-11最新: §79のLinux CI成功（候補7870362、各1032 pass/67 skip）、§78のWindows3.14.0一本化、§76の実機成功を最初に参照。実装0b30e63のRC＋Everyone候補で、子の全48期待値・報告照合・成功cleanup・teardownが通過した。
 専用fixture9対象の削除を確認し、残存0、資源停止なし。最大3回の了承を受領し、1回目の成功でその試行枠を終了した。残り2回は実行しない。
 実行前の選抜pure/fake293件と独立差分レビュー、実行内27 source preflightも通過。補完・関連78件は指定Capstone5.0.7でpass、今回の要件改訂に対応する25件もpass。全回帰ではない。
 現在のruntimeはWindows10.0.26200.9445/Python3.14.0。UBR固定緩和は§31、直近の実測資源・bootは§79に記録する。
@@ -2159,8 +2159,15 @@ get_last_error不存在・空の環境変数・WinDLL生成拒否の条件でも
 mock属性/環境の残留なし、元の状態を復元。linux-host-independent-regression.jsonへ保存
 （8961 bytes/hash eb810beb5b9c0f8b0131b3457598fda9f5e2b35debd5540a686be4db747807f5）。
 独立レビュー新規P0〜P3=0、担当の試験/native/ネット接続/編集なし、進捗ポーリングなし。safety/diff-check pass。
-7870362を候補branchへpushし、3回目CI34518948145が進行中。
-URL https://github.com/tyaro/banto-ai/actions/runs/34518948145 。全suite・後続工程・新artifactを確認する。
+7870362の3回目CI34518948145は両job成功で終了。
+URL https://github.com/tyaro/banto-ai/actions/runs/34518948145 。Python3.12.14/3.14.7、各1099 methods実行、
+1032 pass/67 skip、failure/error/expected failure/unexpected success0、stopped=false、source_unchanged=true。
+compile/smoke/dataset quality/benchmark/safety/artifact保存もpass。全予定/開始/終了IDの重複・欠落なし。
+両minorの予定ID/順序・終了結果・skip ID/reasonを照合。3回とも対象・skipは同一で、初回異常66件すべて最終pass。
+新runのZIPはAPI digestと実SHA-256を照合してから単一JSONLを展開し、source/workflow/run/attempt/集計を確認した。
+保存先artifacts/ci-evidence-2026-09-11/run-34518948145/。3.12の取得時EOFは別名の正しいZIPで回復し、CI再実行なし。
+recovery-comparison.json（25642 bytes/hash 7bb1ab77ea30dbd886d93af8b1dbce64af83ba7e61f01a5322b32551e7edff13）へ
+3回の条件・結果・修復66 IDsを保存。後続doc-only commitをCI実行revisionと混同しない。
 このCI回数は終了済みWindows native試行枠とは別である。
 
 初回実runtimeはUbuntu24.04 x86_64、Python3.12.14/3.14.7、GCC13.3.0、kernel6.17.0-1022-azure。
@@ -2168,10 +2175,14 @@ ImageVersion20260907.300.1は観測値、VM image digestではない。
 skip67はWindows固有49、optional Capstone16、Toto2ローカルartifact不存在2。いずれもpassに数えない。
 共有fixture payload自体のplatform間exact一致とS4完全受入は未完了のまま。
 初回待機のunexpected EOFは接続エラーとして保持。CIを再実行する根拠には使っていない。
-修正後は60秒間隔/query timeout30秒/最大24回の単一API待機processで確認する。
+待機は60秒間隔/query timeout30秒/最大24回の単一API processで行い、すべて終了済み。
+次の残件はVM image digest、共有fixture payloadのplatform間照合、Windows3.14.0の全native受入と正式OS条件、
+B2 publisher/marker、runtime closureとconsumer凍結である。今回のCI成功でこれらを完了扱いにしない。
 
 資源UTC2026-09-10T18:16:03Z RAM7.73 GiB/C107.94/D75.36、18:31:02Z RAM8.09/C107.93/D75.36。
 修正選抜検証後18:55:08Z RAM8.13 GiB/C107.91/D75.36。
 追加修正検証後19:15:10Z RAM7.19 GiB/C107.91/D75.36。owned待機Python private11.27MiB/working15.30MiB。
+19:26:08Z RAM7.85 GiB/C107.90/D75.36、待機Python private11.27MiB/working15.40MiB。
+最終19:30:17Z RAM7.68 GiB/C107.91/D75.36。待機exit0、今回の検証・取得・照合process終了。resources-final.jsonへ保存。
 build26200.9445、boot2026-09-09T10:43:08.5000000+09:00。点の変化でリーク有無を断定しない。
 ローカル検証Pythonは終了済み。別project・既存失敗fixture・旧artifact操作、新runtime導入なし。
