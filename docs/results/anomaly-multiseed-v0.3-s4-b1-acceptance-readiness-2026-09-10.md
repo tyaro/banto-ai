@@ -1,7 +1,8 @@
 # S4-B1 成功後の受入条件と追加回帰確認
 
-日付: 2026-09-10。基準HEAD `f9244a735dff982cfce7d1493efda9431bc31b42`。
-今回のテスト修正savepoint: `cdbc0a1`。本流 `889cfc3` は変更なし。
+日付: 2026-09-10。初回照合の基準HEAD `f9244a735dff982cfce7d1493efda9431bc31b42`。
+補完テスト修正savepoint: `cdbc0a1`。Windows3.14.0一本化の実装savepoint: `9fd3490`。
+本流 `889cfc3` は変更なし。
 
 限定Windows engineering controlの成功は[前回結果](anomaly-multiseed-v0.3-s4-b1-operation-context-result-2026-09-10.md)を参照。
 今回native controlを追加実行していない。最大3回枠は前回の1回目成功で終了している。
@@ -10,13 +11,13 @@
 
 [計画§8](../anomaly-multiseed-evaluation-plan-v0.3.md#v03-runtime-acceptance)、
 `_anomaly_v03_runtime.acceptance_requirements()`、CI定義を照合した。
-以下は今回の確認時点の現行条件であり、Windows 3.12を外す変更はまだ適用していない。
+以下はWindows3.14.0への一本化を適用した現行条件。以前のWindows3.12要件を復活させない。
 
 | 境界 | 必須条件 | 現在の証拠・残件 |
 | --- | --- | --- |
 | B1 engineering control | 子のruntime/source/token、実AccessCheck、全操作、置換証跡、所有物cleanup/teardown | 実装 `0b30e63` / 実行HEAD `f15af39` / Windows 26200.9445 / Python 3.14.0で限定成功。全48期待値、9対象削除、残存0。全S4受入とは別 |
 | Linux共通契約 | Ubuntu 24.04 x86_64、Python 3.12/3.14、共通契約と既存stdlib全回帰、safety、実patch/build・image・source・各test結果の記録 | CIは両minorがあるが `ubuntu-latest`。候補revision上の所定環境・全回帰・証跡は未確認。過去の本流CI greenは候補の証拠に代用しない |
-| Windows互換性/native受入 | 現行計画では3.12系と正式3.14.0の両方。共通回帰、publisher、DACL、独立token/process、競合・非上書き・失敗証跡 | 現coreは3.14.0専用。3.12を導入するだけでは通らない。現行条件の全native受入は未完了 |
+| Windows native受入 | 正式3.14.0の1 runtime。共通回帰、publisher、DACL、独立token/process、競合・非上書き・失敗証跡 | Windows3.12要件を削除済み。各必須検査自体は維持し、全native受入は未完了 |
 | B2 publisher/marker | 新規fixtureで公開・非上書き・競合・marker・失敗証跡を検証 | B1のcontrol成功で完了扱いにしない。未実装・未受入の残件として分離 |
 | S4全体 | 必須platform受入、完全runtime inventory、producer/consumer revision凍結、正式pin上のdev/smoke | 未完了。`require_campaign_acceptance()` は `s4_acceptance_not_frozen` を無条件に返す |
 | 正式OS pin | 現行計画・registry・S3 runtimeは26200.9168。正式Pythonは3.14.0 | B1 engineeringではユーザー了承によりUBRを記録する方式へ緩和済み。9445での限定成功を正式pinの更新と扱わない。正式段階へ進む前に計画・実装・registryの整合と独立監査・受入が必要 |
@@ -81,26 +82,40 @@ wheel `capstone-5.0.7-py3-none-win_amd64.whl` は1,272,204 bytes、SHA-256
 独立差分レビューは新規P0〜P3=0、レビュー担当の試験/native/API呼出/編集なし。進捗ポーリングなし。
 repository safety / diff-check pass。
 
-## Windows 3.12要件の判断
+## Windows 3.14.0への一本化を採択
 
-ユーザーから「3.12必要？」との確認を受領した。
-3.14.0でこの機能を動かすための技術的必須条件ではなく、既定の互換性受入要件であると回答した。
-Windowsを3.14.0に一本化し、Linuxの3.12/3.14 CIは維持する案を提示して回答待ち。
-この確認だけでは要件削除済みと扱わず、現行の計画・実装の受入リストを維持する。
+ユーザー「3.12必要？」に対し、現在の3.14.0での動作に追加3.12は不要と回答し、
+Windows受入を3.14.0に一本化してLinuxの3.12/3.14 CIを維持する案を提示した。
+その後の「続けてください」をこの方針への了承として受領し、実装を `9fd3490` へ保存した。
+現在のWindows運用と同じPCの別project連続稼働を踏まえたplatform範囲の判断であり、
+正式な性能結果に基づく事後選択ではない。3.12の導入・起動・source buildは行わない。
 
-一本化する場合の修正箇所は計画§8、`acceptance_requirements().windows_python`、
-`test_anomaly_v03_publication.py` の対応する契約期待値、今回の受入記録/handoffである。
-Linuxの2 jobs、`requires-python >=3.12`、正式3.14.0のruntime/hash判定、未受入を拒否する入口は維持する。
-選抜した契約・拒否経路のpure/fake検証と独立レビューを行い、
-Windows nativeの必須検査自体やB2/S4残件を削減したように扱わない。
+計画§8と `acceptance_requirements().windows_python` を `["3.14.0"]` にそろえた。
+Linuxの2 jobs、`requires-python >=3.12`、科学config/schema/registryと歴史的な科学・status revision、
+正式3.14.0のruntime/hash判定、正式OS pin9168、未受入を拒否する入口は維持する。
+改訂した現行planはcandidate source inventoryに含め、過去の科学plan snapshotを上書きしない。
 
-3.12要件を維持する場合だけ、fixture専用の正確なpatch/build/exe/DLL pinと親子共通照合が必要になる。
-新runtimeの導入だけでは現coreの3.14.0限定判定で拒否される。
-`py -0p`では3.14と3.11のみ登録されている。全ディスクのportable runtime有無は走査していない。
-3.12の導入・起動・source buildは未実施。
-調査時点では[3.12.14公式release](https://www.python.org/downloads/release/python-31214/)は
-2026-08-12公開のsource-only security releaseで、公式binary installerの最終版は3.12.10。
-維持案では供給元・buildの選定も必要であり、版番号だけを設定して済ませない。
+S4-A inspectionの要件・schema・pure validator・collectorにもWindows3.12が残っていたため同期した。
+新しいreceipt revisionは **`s4-a.2`**。engineering schemaの既存pathはD2 current-onlyのexact pathsを保つため維持する。
+旧`s4-a.1`や`windows-3.12`を含むreceiptは現validatorで拒否し、過去の記録を新形式へ自動変換しない。
+新形式でも全項目は`not_completed`、formal permissionはfalseである。
+collectorはWindows3.12および3.14.1などを対象path検査・source収集・native inventoryより前に拒否する。
+Linux3.12/3.14のcompatibility-only観測は継続し、正式実行へ読み替えない。
+Windows3.14.0では従来と同じ正式基本pin照合を要求する。B1の9445での限定成功はその受入証拠ではない。
+
+関連25件をPython3.14.0で実行し、**25/25 pass、10.286753秒、failure/error/skip0**。
+内訳はAcceptanceContractTests15、選抜ReadOnlyCollectorTests4、publication要件1、
+runner拒否境界1、科学・歴史plan pin検証3、D2 exact inventory1。
+旧receipt/旧要件拒否、Windows3.12拒否の順序、両Linux minorの継続、fresh collector結果、
+科学pinと全未受入状態を確認した。full suite・native control・campaignは実行していない。
+通常の小さなテスト用temp領域だけを作成・終了時清掃し、B1の既存失敗fixtureは操作していない。
+
+実行時base HEADは `56f6a69`、検証対象は保存した8ファイルの差分。
+`windows314-acceptance-tests.json` にtest IDs・各source hash・差分hash・各結果を保存した。
+記録6268 bytes、SHA-256 `dbcc0b679aebae32423d5fe83cef65f3506ea2d6fbb685f804ad34c82da8c0c5`。
+検証したstaged diff SHA-256は `ff6f998e990b37f27d1142e5071cc21384f4f9b4bde799b21692c61e7a7c4100`。
+独立差分レビュー新規P0〜P3=0、担当の試験/native/編集なし。進捗ポーリングなし。
+repository safety/diff-check pass。今回の一本化は必須native検査・B2/S4残件の完了ではない。
 
 ## 資源と保全
 
@@ -109,7 +124,10 @@ Windows nativeの必須検査自体やB2/S4残件を削減したように扱わ�
 | 10:10:49 | 8.28 | 108.16 | 75.36 |
 | 10:18:24 | 7.82 | 107.66 | 75.36 |
 | 10:25:02 | 8.33 | 107.66 | 75.36 |
+| 11:07:49（一本化作業前） | 8.60 | 107.64 | 75.36 |
+| 11:17:01（一本化検証後） | 7.64 | 107.63 | 75.36 |
 
 Windows build26200 / UBR9445、boot `2026-09-09T10:43:08.5000000+09:00` を記録する。
 点の資源値の変化をこの作業のリークと断定しない。今回のPython検証processは終了を確認している。
+一本化作業後の観測は`windows314-resources-final.json`へ保存した。
 別project、既存失敗fixture、旧artifactへの操作なし。本流の変更・push/merge・formal実行なし。

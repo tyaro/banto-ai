@@ -2,11 +2,12 @@
 
 状態: **限定Windows engineering control成功 / no integration / no formal permission**
 
-2026-09-10最新: §77の受入条件整理・追加回帰と§76の実機成功を最初に参照。実装0b30e63のRC＋Everyone候補で、子の全48期待値・報告照合・成功cleanup・teardownが通過した。
+2026-09-10最新: §78のWindows3.14.0一本化と§76の実機成功を最初に参照。実装0b30e63のRC＋Everyone候補で、子の全48期待値・報告照合・成功cleanup・teardownが通過した。
 専用fixture9対象の削除を確認し、残存0、資源停止なし。最大3回の了承を受領し、1回目の成功でその試行枠を終了した。残り2回は実行しない。
-実行前の選抜pure/fake293件と独立差分レビュー、実行内27 source preflightも通過。今回の補完・関連78件も指定Capstone5.0.7でpass。全回帰ではない。
-現在のruntimeはWindows10.0.26200.9445/Python3.14.0。UBR固定緩和は§31、直近の実測資源・bootは§77に記録する。
-Windows Python3.12受入は要件から外す案への返答待ちで、まだ削除していない。本流統合、formal/B2/publisherは未完了・未許可。
+実行前の選抜pure/fake293件と独立差分レビュー、実行内27 source preflightも通過。補完・関連78件は指定Capstone5.0.7でpass、今回の要件改訂に対応する25件もpass。全回帰ではない。
+現在のruntimeはWindows10.0.26200.9445/Python3.14.0。UBR固定緩和は§31、直近の実測資源・bootは§78に記録する。
+Windows Python3.12受入は要件から削除済み。3.14.0へ一本化しLinux3.12/3.14は維持する。§77の返答待ちは解消した。
+本流統合、formal/B2/publisherは未完了・未許可。
 
 以下の§1〜§10の初期結論・commit一覧・試験数・blocked表記は作成時点の履歴であり、最新のchild E2E結果ではない。
 cleanup/置換traceの修正履歴は§11〜17、起動診断と逐次是正は§18〜75を参照。
@@ -2082,3 +2083,33 @@ py -0pは3.14/3.11のみ。3.12は未導入・未起動、PC全体のportable ru
 最終10:25:02Z RAM8.33 GiB/C107.66/D75.36。acceptance-resources-final.jsonへ保存した。
 build26200.9445、boot2026-09-09T10:43:08.5000000+09:00。点の変化をリークと断定しない。
 各検証process終了確認済み。別project・既存failure fixture・旧artifactへの操作、本流変更/push/merge/formal実行なし。
+
+## 78. 2026-09-10 Windows受入をPython3.14.0へ一本化
+
+ユーザー「3.12必要？」への一本化提案に続く「続けてください」を方針への了承として記録する。
+§77の返答待ちは解消し、[現行受入記録](anomaly-multiseed-v0.3-s4-b1-acceptance-readiness-2026-09-10.md)を更新した。
+Windows3.12の追加導入・互換性実装・実機試験は不要となった。Linuxの3.12/3.14 CIは維持する。
+
+実装9fd3490（基準56f6a69）。計画§8、runtime受入リスト、S4-Aの要件/schema/validator/collector、
+対応テストと評価tool説明を同期。receiptはs4-a.2へ更新し、旧s4-a.1/旧windows-3.12要件を現validatorで拒否する。
+schemaのpathは据置き、D2のhistorical88/current-only32と科学config/schema/registry・歴史plan pinを維持した。
+過去のreceiptを変換・上書きしない。fresh receiptも全項目not_completed、formal_permissionfalseである。
+Windows collectorは3.12/3.14.1などを対象path・source・native inventory検査前に拒否し、3.14.0では従来の基本pinを要求。
+Linux両minorのcompatibility-only観測を維持。正式OS pin9168・exe/DLL hash・campaign無条件拒否は変更なし。
+B1の9445でのcontrol成功を正式受入に読み替えない。Windows必須nativeの権限・競合・失敗証跡条件を減らさない。
+
+関連25/25 pass、10.286753秒、failure/error/skip0。旧形式拒否・非対応Windowsの早期停止、Linux両minor、
+collectorの新形式出力、正式入口拒否、科学planとD2 exact inventoryを選抜して確認。
+通常の小さなowned-temp fixtureだけを終了時清掃。native control、全suite、正式campaignの実行なし。
+windows314-acceptance-tests.json（6268 bytes/hashdbcc0b679aebae32423d5fe83cef65f3506ea2d6fbb685f804ad34c82da8c0c5）へ保存。
+各test ID/source hash・検証差分hashを記録し、検証済み8ファイルを9fd3490へcommitした。
+独立差分レビュー新規P0〜P3=0、担当の試験/native/編集なし。進捗ポーリングなし。
+repository safety/diff-check pass。B1の既存failure rootsや別projectへの操作なし。
+
+作業前11:07:49Z RAM8.60 GiB/C107.64/D75.36、build26200.9445、boot2026-09-09T10:43:08.5000000+09:00。
+検証後11:17:01Z RAM7.64 GiB/C107.63/D75.36、同build/boot。windows314-resources-final.jsonへ保存。
+今回のPython検証processは終了確認済み。点の変化をリークと断定しない。
+3.12インストール・起動なし、主環境変更なし。本流889cfc3はclean、push/mergeなし。
+追加native枠は前回成功で終了したまま。本流統合・B2 publisher/marker・S4完全受入は未完了。
+次の残件はLinux所定CI環境/全回帰証跡、Windows3.14.0の全回帰・native受入範囲と正式OS条件の整合、
+B2公開部品・完全runtime inventory・producer/consumer revision凍結である。
