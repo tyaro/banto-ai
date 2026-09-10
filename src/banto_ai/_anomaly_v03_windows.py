@@ -77,6 +77,105 @@ def _resource_stop(error):
             or isinstance(getattr(error, "teardown", None), _Teardown) and error.teardown.resource_stop)
 
 
+# Child exit protocol v1: append-only reason IDs; never regenerate/reorder this table.
+# Only fixed labels and a bounded numeric WinError cross the process boundary.
+_CHILD_FAILURE_REASONS = tuple("""
+    access_api_failure access_buffer_changed access_buffer_size access_expectation
+    access_object_identity access_sd access_sd_owner alternate_stream
+    attributes_write child_duplicate_profile child_exit_query child_pid
+    child_primary_profile child_profile child_resume child_scope
+    child_source child_source_count child_standard_handles child_timeout
+    child_token_drift cleanup_absence_error cleanup_acl_readback cleanup_bytes
+    cleanup_capture_bytes cleanup_capture_identity_or_sd cleanup_disposition cleanup_guard_close
+    cleanup_identity cleanup_missing_child cleanup_object_count cleanup_operations_size
+    cleanup_residue cleanup_retry cleanup_root_guard cleanup_sd
+    cleanup_unknown_child commit_query control_attributes_drift control_attributes_restore
+    control_directory_create control_identity_drift directory_create drive_query
+    duplicate_owned_path ea_write file_id file_info
+    file_readback file_size fixture_content fixture_escape
+    fixture_guard_close fixture_identity_or_acl fixture_missing_object fixture_name
+    flush_file freeze_dacl freeze_identity freeze_null
+    freeze_set handle_close handle_flags handle_inheritable
+    identity_reopen identity_requery index_process_wait ipc_canonical
+    ipc_duplicate ipc_json ipc_number ipc_size
+    mapped_drive memory_budget memory_query mutation_api
+    named_handle_mismatch new_directory_not_empty object_final_path object_hardlink
+    object_id_missing object_identity_changed object_open object_path_changed
+    object_readonly object_remote object_reparse_or_type operation_matrix
+    operation_unexpected owned_handle_close owned_process_terminate owned_process_unconfirmed
+    owned_process_wait owned_teardown_failed parent_integrity_policy parent_privileged_group
+    parent_token_policy partial_write path_alias path_device
+    path_local path_reparse privilege_name process_image
+    process_image_hash process_image_path process_times read_access_denied
+    read_file read_seek replace_absence_error replace_expected_absence
+    replace_readback replace_restore replace_source_pin replace_target_collision
+    replace_target_pin replace_trace_content replace_trace_context replace_trace_count
+    replace_trace_details replace_trace_handle_close replace_trace_handle_owned replace_trace_identity
+    replace_trace_incomplete replace_trace_initial replace_trace_nonce replace_trace_order
+    replace_trace_pin replace_trace_record replace_trace_size replace_trace_snapshot
+    replace_trace_source replace_trace_target report_controls report_operations
+    report_provenance report_replay report_shape request_shape
+    restricted_groups restricted_identity restricted_policy restricted_privileges
+    restricted_process_prerequisite restricted_same_token restricted_sids restricted_token_create
+    right_open_error_missing runtime_hash runtime_pin runtime_unavailable
+    sd_ace sd_ace_count sd_control sd_create
+    sd_inherited_or_unknown_ace sd_label_ace sd_label_count sd_label_type
+    sd_mandatory_integrity sd_not_protected sd_null sd_policy_mismatch
+    sd_query sid_create sid_query source_index_bytes
+    source_index_pipe source_index_size source_index_timeout source_read
+    source_runtime_drift source_size source_size_changed source_size_query
+    stream_close stream_next stream_query temp_collision
+    temp_in_repository temp_path_api_unavailable temp_path_query temp_path_result
+    thread_token_query token_drift token_duplicate token_duplicate_sid
+    token_groups_size token_integer_size token_open token_privileges_size
+    token_query token_query_changed token_query_size unexpected_impersonation
+    unknown_fixture_object unsupported_platform volume_not_local_ntfs volume_query
+    write_file write_size
+""".split())
+_CHILD_LEGACY_REASONS = ("child_scope", "child_profile", "child_source", "object_open", "write_file",
+                         "operation_unexpected", "operation_matrix", "access_expectation", "child_token_drift")
+_CHILD_EXCEPTION_TYPES = (ModuleNotFoundError, ImportError, PermissionError, FileNotFoundError,
+                          OSError, ValueError, TypeError, KeyError, AttributeError, RuntimeError, SystemExit)
+_CHILD_RESOURCE_ERRORS = (8, 14, 39, 112, 1450, 1455, 1816)
+
+
+def _child_failure_exit(error):
+    """Called only after invoking _child_main; resource stop always takes precedence."""
+    if (_resource_stop(error)
+            or type(error) is _Failure and error.error in _CHILD_RESOURCE_ERRORS
+            or isinstance(error, OSError) and getattr(error, "winerror", None) in _CHILD_RESOURCE_ERRORS):
+        return _CHILD_RESOURCE_EXIT
+    if type(error) is _Failure:
+        if type(error.reason) is not str or error.reason not in _CHILD_FAILURE_REASONS:
+            return 172
+        if type(error.error) is not int or not 0 <= error.error <= 65535:
+            return 173  # Do not truncate or alias an unrepresentable error number.
+        if not error.error and error.reason in _CHILD_LEGACY_REASONS:
+            return 32 + _CHILD_LEGACY_REASONS.index(error.reason)
+        return 0x10000000 | ((_CHILD_FAILURE_REASONS.index(error.reason) + 1) << 16) | error.error
+    # Avoid CPython's exit 120 for a failure during interpreter finalization.
+    return 160 + _CHILD_EXCEPTION_TYPES.index(type(error)) if type(error) in _CHILD_EXCEPTION_TYPES else 171
+
+
+def _child_failure_diagnostic(code):
+    """Decode this saved protocol only; unknown/OS exits do not prove child entry."""
+    if type(code) is not int or not 0 <= code <= 0xffffffff:
+        return None
+    if 32 <= code < 32 + len(_CHILD_LEGACY_REASONS):
+        return {"phase": "child_call", "reason": _CHILD_LEGACY_REASONS[code - 32], "winerror": 0}
+    if 96 <= code <= 107 or 160 <= code <= 171:
+        bootstrap = code < 160
+        index = code - (96 if bootstrap else 160)
+        name = _CHILD_EXCEPTION_TYPES[index].__name__ if index < len(_CHILD_EXCEPTION_TYPES) else "unknown_exception"
+        return {"phase": "bootstrap" if bootstrap else "child_call", "exception_class": name}
+    if code in (172, 173):
+        return {"phase": "child_call", "reason": "unknown_failure" if code == 172 else "unrepresentable_winerror"}
+    index = ((code >> 16) & 0xff) - 1
+    if code & 0xff000000 == 0x10000000 and 0 <= index < len(_CHILD_FAILURE_REASONS):
+        return {"phase": "child_call", "reason": _CHILD_FAILURE_REASONS[index], "winerror": code & 0xffff}
+    return None
+
+
 class _Teardown:
     """Small fixed-capacity diagnostics; no exception text, paths or handles."""
     def __init__(self):

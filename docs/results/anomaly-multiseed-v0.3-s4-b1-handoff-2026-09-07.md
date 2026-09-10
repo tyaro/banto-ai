@@ -1857,3 +1857,48 @@ world-compatibility-preflight.jsonへ保存。World token作成・child・SetThr
 作業後08:46:53Zの空きRAM8.45 GiB、C108.46/D75.36 GiB、last bootは作業前と同じ。
 別projectの連続試験や既存failure rootsを操作していない。単発の資源値からリーク有無を断定しない。
 本流889cfc3 clean、repository safety/diff-check pass。記録だけの更新でsource preflightや試験を再実行しない。
+
+
+## 73. 2026-09-10 RC＋Everyone実行結果と固定終了コード診断
+
+ユーザー「続けてください」を直前のWorld候補control1回への了承として実行済み。
+実装c0909ac、clean HEAD8c83192、既知wrapper3891 bytes/hash
+1c1a92734ce87ea8d3988cd2a3653fb2d096b93a074cf415e7d394607d207348を実行前照合した。
+新規fixtureのcontrol1回のみ、debug collector/SetThreadContextなし、再実行なし。
+[実行結果](anomaly-multiseed-v0.3-s4-b1-world-compatibility-result-2026-09-10.md)へ保存。
+
+failed/child_failed/WinError0/child_exit_code1、core0.6294818999886047秒。
+固定sourceの分岐順からtoken作成、実child primary/duplicate profile照合、親AccessCheck、resumeを通過。
+親AccessCheckの生データを別途保存した主張ではない。今回はC0000142を観測しなかったが、
+exit1からPython _child_main到達・保護検証・起動全体成功を断定しない。
+replace trace incomplete/0 records/0 bytes、private_controlなし、private_replace0 bytes。
+known_bytes5926、fixtureの存在・残存量unverified、failed fixture再open/cleanup/ACL修復/再利用なし。
+control failed/cleanup not_started/teardown pass/resource_stopfalse。
+親＋子ピークprivate42.55 MiB/working53.77 MiB、system commit34,679,246,848/limit70,493,097,984 bytes。
+実行内preflight verified、27/278078 bytes、Windows10.0.26200.9445/Python3.14.0、runtime hash一致。
+summary1997 bytes/hash20c80de096fa753c4dbae6281c1df255f06e175f8c461d12eb95391384f477b3を
+既知pathから1回有界readし、world-compatibility-result-check.jsonへ照合保存した。
+
+[次の固定診断計画](anomaly-multiseed-v0.3-s4-b1-child-diagnostic-plan-2026-09-10.md)を準備。
+coreと固定childにappend-only202理由ID＋WinError16bitの数値診断、bootstrap/child_callの区別を追加。
+成功0/legacy32〜40/resource80を維持し、CPython最終処理の120は割当てず未知扱い。
+例外文/traceback/パス/token/SDを出さず、例外処理からの書込み・標準出力を増やさない。
+初回選抜76/76（0.357秒）、全体282/282（5.605秒）pass。
+独立レビューP2のOSError.winerror資源停止漏れを両経路で是正し、派生クラス含む全7番号の回帰を追加。
+修正後全体283/283（5.982秒）pass。独立是正・文書・wrapperレビュー新規P0〜P3=0。
+担当のnative/query/再試験/編集なし、完了通知だけを受け進捗ポーリングなし。
+repository safety/diff-check pass。
+
+未実行child-diagnostic-control-once.pyは3983 bytes/hash
+31c8e05df0eba398f6a7d528250acaee5eb8e1171a6dcd4616ad61fa345a0e9e、harness呼出1箇所。
+同じRC＋Everyone/保護DACL/全必須control/30秒/512 MiB未満/temp空き1 GiB以上を維持。
+既存fixtureの再利用なし、新規fixture1個の次の診断1回を具体化し、source保存後preflightを行う。
+今回のWorld1回の了承は消化済み。§6の追加probe無断反復禁止により、新たな診断1回への返答を待つ。
+次の「お願いします」「続けてください」はこの診断1回への了承と扱い、同じ了承を再確認しない。
+成功時もnative_accepted/s4_accepted/formal_permission/execution_authenticated=false。
+Python3.12既定受入・本流統合・formal/B2/publisherは閉じたまま。
+
+作業前08:49:27Z RAM8.04 GiB/C108.45/D75.36 GiB、検証後08:59:08Z RAM7.61 GiB/C108.43/D75.36 GiB。
+build26200.9445、boot2026-09-09T10:43:08.5+09:00。UBR緩和と実測記録を維持。
+点の資源量からリーク有無は断定しない。今回のowned teardown passを記録する。
+本流889cfc3 clean、別projectの連続稼働試験へ操作していない。

@@ -1,6 +1,8 @@
 # S4-B1 Everyoneを追加する限定control候補
 
-状態: **候補コードと選抜70件pass / native未実施 / 許可範囲の拡大についてユーザー判断待ち**。
+状態: **ユーザー「続けてください」により限定control1回を実施済み。token作成・実child token検証・親AccessCheckを通過し、resume後exit1で停止**。
+[実行結果](anomaly-multiseed-v0.3-s4-b1-world-compatibility-result-2026-09-10.md)を参照。
+以下の未実施・判断待ちの記述は準備時点の履歴。今回分の了承を再確認せず、同じwrapperは再実行しない。
 
 ## 判断する具体的な内容
 
