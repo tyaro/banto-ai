@@ -37,11 +37,14 @@ class DriverResult(dict):
 class DebugDriver:
     MIN_FREE_DISK = 1024 * 1024 * 1024
 
-    def __init__(self, *, unload_entry=False, init_return=False, console_failure=False):
+    def __init__(self, *, unload_entry=False, init_return=False, console_failure=False,
+                 detached_console=False):
         need(type(unload_entry) is bool, "entry_option")
         need(type(init_return) is bool and not (unload_entry and init_return), "return_option")
         need(type(console_failure) is bool and not (console_failure and (unload_entry or init_return)),
              "console_option")
+        need(type(detached_console) is bool and (not detached_console or init_return), "detached_option")
+        self.detached_console = detached_console
         self.preflight = StartupPreflight()
         self.api = self.tokens = self.fixture = self.transport = self.stop = None
         self.memory = self.launch = self.observer = self.session = None
@@ -113,7 +116,8 @@ class DebugDriver:
         self.memory = DebugMemory(self.stop, self.api.p)
         self.observer = DebugObserver(self.stop, sample_memory=self.memory, images=self.images,
                                       context=self.context)
-        self.launch = SuspendedDebugLaunch(self.api, self.tokens.buffers[1].value, self.fixture, self.stop)
+        self.launch = SuspendedDebugLaunch(self.api, self.tokens.buffers[1].value, self.fixture, self.stop,
+                                          detached_console=self.detached_console)
         self.context.bind(self.stop, self.launch)
         self.session = DebugSession(self.preflight, self.launch, self.observer,
                                     self.tokens.parent_profile, self.tokens.restricted_profile, security=self.security)

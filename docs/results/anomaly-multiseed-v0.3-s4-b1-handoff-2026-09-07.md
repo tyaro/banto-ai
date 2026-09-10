@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §62を最初に参照。ConsoleInitializeの4失敗候補を初回例外で区別する診断を準備。Get3/Set1/RPM4回2432 bytes、fake171件・独立レビュー・保存後preflight pass。新方式の限定1回への返答待ち、実機未実施。
+2026-09-10最新: §63を最初に参照。console失敗診断でallocation候補のC0000022を取得し、終了/保存確認済み。DETACHED指定で既存return観測を比較する修正はfake173件・独立レビューpass。比較実機は未実施。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1297,3 +1297,41 @@ preflightによるchild起動・SetThreadContextなし、全acceptance gate no�
 
 4地点の設定最大1回、Get最大3回、RPM最大4回2432 bytes、同じ時間/memory/disk/owned stop上限の新規fixture1回について返答を待つ。
 この問いへの「続けてください」は当該console_failure v1の1回への了承として扱い、再確認せず実行する。失敗しても自動再試行しない。
+
+
+## 63. 2026-09-10 コンソール確保候補のアクセス拒否とDETACHED比較準備
+
+ユーザーの「続けてください」を4地点の限定1回への了承として、cleanな67ad5ae（実装78617f2）で1回実行した。
+初期reportまで1.870秒、resource_stop=false、collector completed/confirmed、primary=console_failure_observed_stop。
+DR1/RVA0xbecafでEAX下位32 bits=C0000022、caller=0x4ebe6、stage600、TF0、初期threadを確認。
+固定code2窓2422 bytes一致、Get3/Set1/RPM4回2432 bytes。
+DR6は設定後0/hit0xffff0ff2、DR7は0x55→0x455。全4地点・B1のみ等の検査が一致した。
+
+通常5/Continue4、Terminate確認後にpendingを解放、drain1件EXIT1をContinueした。実RET/自然終了は未観測。
+signal/ownership解消/所有handle close/teardown pass/failure_count0、secondaryなし。
+private112171 bytes/hash3430591eddf072ac619aa18c1a5102abf5ad22129d07cc0227fe32f83d74a812、write/flush/close確認済み。
+有界readback1回でhashとraw events/CONTEXT/DR/caller/stage/statusを照合、reader close。
+詳細は[console失敗候補結果](anomaly-multiseed-v0.3-s4-b1-console-failure-result-2026-09-10.md)。
+
+C0000022はMicrosoft定義でSTATUS_ACCESS_DENIED。静的なConsoleAllocate後の負分岐と整合する。
+共有出口と初回例外の前提を維持し、内部API/object/ACLや根本原因の確定とは区別する。
+現在KernelBase.dllの有界同一handle read1回と既存PDB参照で、ConsoleAllocate214命令/ConsoleShouldAllocateConsole40命令を追加解析。
+既存image hashとclose確認、追加downloadなし。内部にも複数の失敗候補があり、拒否されたCALLは未特定。
+公開要約2件とkernelbase-console-allocation-static.jsonをignored artifactsに保存。
+
+次の[比較診断](anomaly-multiseed-v0.3-s4-b1-detached-return-plan-2026-09-10.md)はDebugDriver(init_return=True, detached_console=True)のみ。
+診断launchのNO_WINDOWをDETACHEDへ置換し、flags0x08000406→0x40e。bool検査、init_return以外との併用拒否。
+token/ACL、非継承、desktop、固定child/environment、core通常launchは維持する。
+実際の起動要求flagsとcreation_stateをprivate証跡へ保存し、過去の記録には補完しない。
+既存return-v3でAL/stageを比較する。AL1/stage700でも実RET前の値であり、E2Eや原因確定とは扱わない。
+Get3/Set1/RPM3回2197 bytes、同じ時間/memory/disk上限、通常Continueせずowned stop。比較実機は未実施。
+
+関係fake46/46（0.874秒）、全体173/173（1.762秒）pass。独立新規P0〜P3=0、指定46/46（0.824秒）pass。
+担当の完了通知のみを利用し、進捗ポーリングなし。native/private参照/source変更を委譲していない。
+同run preflightは21 sources/238228 bytes、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+native親＋child peak commit24358912 bytes（約23.23 MiB）、sample74回。
+PC空きRAM9.23→8.88 GiB、C108.21 GiB、D75.36 GiB。単発値からリーク有無は未判定。
+repository safety/diff-check pass、mainは基準889cfc3のままclean。他project操作なし、全acceptance gate no。
+
+次は比較修正を保存してread-only preflightを行い、新規fixtureでの限定1回を判断対象として提示する。
+console_failure v1の承認済み1回は消化済み。追加の実機起動なし。

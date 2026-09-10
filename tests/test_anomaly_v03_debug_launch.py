@@ -16,7 +16,7 @@ from tests.fixtures import anomaly_v03_startup_preflight as preflight
 
 
 class DebugLaunchTests(unittest.TestCase):
-    def launcher(self):
+    def launcher(self, *, detached_console=False):
         kernel = Mock()
         kernel.GetCurrentThreadId.return_value = 7
         kernel.GetProcessId.return_value = 17
@@ -32,7 +32,7 @@ class DebugLaunchTests(unittest.TestCase):
         stop = OwnedDebugStop(transport, clock=lambda: 0)
         fixture = SimpleNamespace(root=Path("C:/DUMMY PRIVATE/new-fixture"))
         with patch.dict("os.environ", {"SystemRoot": "C:\\Windows"}):
-            launch = SuspendedDebugLaunch(api, 401, fixture, stop)
+            launch = SuspendedDebugLaunch(api, 401, fixture, stop, detached_console=detached_console)
         return launch, api, kernel
 
     def test_exact_flags_fixed_child_environment_and_preallocated_ownership(self):
@@ -77,6 +77,29 @@ class DebugLaunchTests(unittest.TestCase):
         with self.assertRaises(TransportError):
             launch.create()
         api.a.CreateProcessAsUserW.assert_called_once()
+
+    def test_detached_replaces_only_console_flag_and_records_exact_request(self):
+        for detached in (False, True):
+            with self.subTest(detached=detached):
+                launch, api, kernel = self.launcher(detached_console=detached)
+                result = launch.create()
+                args = api.a.CreateProcessAsUserW.call_args.args
+                expected = 0x40E if detached else 0x08000406
+                self.assertEqual(args[3:7], (None, None, False, expected))
+                self.assertEqual(result["requested_creation_flags"], expected)
+                self.assertEqual(args[0], 401)
+                self.assertEqual(args[9].contents.desktop, "")
+                self.assertEqual(args[9].contents.flags, 0)
+                self.assertEqual(result["creation_state"], "created")
+                self.assertEqual(launch.stop.handles, [501, 502])
+                api.a.CreateProcessAsUserW.assert_called_once()
+                kernel.ResumeThread.assert_not_called()
+                kernel.TerminateProcess.assert_not_called()
+
+    def test_console_option_rejects_non_booleans_before_api(self):
+        for value in (None, 1, "detached"):
+            with self.subTest(value=value), self.assertRaises(TransportError):
+                self.launcher(detached_console=value)
 
     def test_uncertain_api_side_effect_and_post_return_interrupt_preserve_raw_output(self):
         source, first = inspect.getsourcelines(SuspendedDebugLaunch.create)

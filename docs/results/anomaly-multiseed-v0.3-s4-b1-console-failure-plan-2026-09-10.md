@@ -1,6 +1,6 @@
 # S4-B1 ConsoleInitializeの最初の失敗候補を観測する限定診断
 
-状態: **修正保存・全体fake・独立レビュー/preflight完了 / 限定1回の返答待ち・実機未実施 / no native acceptance**。
+状態: **限定1回実施済み / allocation候補でC0000022観測・終了/保存確認済み / no native acceptance**。
 
 ## 目的
 
@@ -118,3 +118,11 @@ execution_authenticated/launch_authorized/native_accepted/formal_permissionはfa
 準備は完了。今回の判断対象は、上記4地点の設定を含む限定診断を、新規fixtureで1回実施すること。
 この問いへの「続けてください」は当該console_failure v1の1回への了承として扱い、再確認せず実行する。
 観測・不一致・失敗のいずれでも自動再試行しない。最終report・終了・証跡保存の確認を先に行う。
+
+
+## 限定1回の実施結果（最新）
+
+承認後、cleanな67ad5ae（実装78617f2）で1回実行した。DR1 RVA0xbecaf、caller0x4ebe6、stage600、EAX C0000022を確認。
+通常Continueせずowned stopで終了し、終了・証跡保存・有界readbackを確認した。
+[結果と比較候補](anomaly-multiseed-v0.3-s4-b1-console-failure-result-2026-09-10.md)を参照。
+当該1回承認は消化済み。過去の返答待ち記述を再実行の承認として使わない。

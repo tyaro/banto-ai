@@ -89,6 +89,9 @@ class DebugEvidence:
                         "normal": self._source(sources[0]), "drain": self._source(sources[1]),
                         "driver": dict(driver.result), "stop": dict(driver.stop.result),
                         "observation": dict(driver.observer.result),
+                        "launch": ({"requested_creation_flags": driver.launch.arguments[6],
+                                    "creation_state": driver.launch.creation_state}
+                                   if getattr(driver, "launch", None) is not None else None),
                         "runtime": driver.preflight.runtime, "sources": driver.preflight.rows,
                         "nonce": driver.nonce,
                         "images": ({"state": driver.images.state, "rows": driver.images.rows}

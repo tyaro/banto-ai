@@ -206,10 +206,11 @@ class DebugInitReturnTests(unittest.TestCase):
                 self.assertNotIn("return_byte", o.row)
 
     def test_driver_terminates_before_releasing_exception_and_retains_evidence(self):
-        for fault in (None, "normalized_dr6", "resource", "set_uncertain", "readback_mismatch", "terminate_false"):
+        for fault in (None, "normalized_dr6", "detached_success", "resource", "set_uncertain", "readback_mismatch", "terminate_false"):
             with self.subTest(fault=fault), ExitStack() as scope:
                 scope.enter_context(patch.object(DebugInitReturn, "WINDOWS", self.WINDOWS))
-                driver, api, k, preflight, tokens, fixture, disk = df.DebugDriverTests().driver(scope, init_return=True)
+                driver, api, k, preflight, tokens, fixture, disk = df.DebugDriverTests().driver(
+                    scope, init_return=True, detached_console=fault == "detached_success")
                 o = driver.context
                 regs = [0, 0, 0, 0, 0xFFFF0FF0, 0x400]
                 self.configure(o, k, regs)
@@ -267,6 +268,18 @@ class DebugInitReturnTests(unittest.TestCase):
                             struct.pack_into("<Q", o.context, 104, 2 if fault == "readback_mismatch" else 0)
                         return result
                     k.GetThreadContext.side_effect = get
+                elif fault == "detached_success":
+                    original_get, original_read = k.GetThreadContext.side_effect, k.ReadProcessMemory.side_effect
+                    def get(*args):
+                        result = original_get(*args)
+                        if k.GetThreadContext.call_count == 3:
+                            struct.pack_into("<Q", o.context, 120, 1)
+                        return result
+                    def read(*args):
+                        result = original_read(*args)
+                        if args[3] == 2: C.memmove(args[2], struct.pack("<H", 700), 2)
+                        return result
+                    k.GetThreadContext.side_effect, k.ReadProcessMemory.side_effect = get, read
                 result = driver.run()
                 self.assertEqual(result["status"], "failed")
                 self.assertFalse(result["native_accepted"])
@@ -286,6 +299,10 @@ class DebugInitReturnTests(unittest.TestCase):
                     self.assertEqual(result["evidence_status"], "flushed")
                     from tests.fixtures.anomaly_v03_debug_evidence_reader import interpret
                     saved = interpret(driver.evidence.buffer.raw[:driver.evidence.size])
+                    expected_flags = 0x40E if fault == "detached_success" else 0x08000406
+                    self.assertEqual(api.a.CreateProcessAsUserW.call_args.args[6], expected_flags)
+                    self.assertEqual(saved.private_metadata["launch"],
+                                     {"requested_creation_flags": expected_flags, "creation_state": "created"})
                     row = saved.private_metadata["context"]["row"]
                     if fault == "set_uncertain":
                         self.assertEqual(row["set_state"], "uncertain")
@@ -299,7 +316,10 @@ class DebugInitReturnTests(unittest.TestCase):
                         self.assertNotIn("stage_value", row)
                     else:
                         self.assertEqual(row["status"], "confirmed")
-                        self.assertEqual(row["stage_value"], 100)
+                        self.assertEqual(row["stage_value"], 700 if fault == "detached_success" else 100)
+                        if fault == "detached_success":
+                            self.assertEqual(row["return_byte"], 1)
+                            self.assertFalse(row["returns_false"])
                         self.assertEqual(saved.private_metadata["primary_reason"], "init_return_observed_stop")
                         if fault == "normalized_dr6":
                             queries = row["debug_queries"]
@@ -312,6 +332,10 @@ class DebugInitReturnTests(unittest.TestCase):
         from tests.fixtures.anomaly_v03_debug_driver import DebugDriver
         self.assertNotIsInstance(DebugDriver().context, DebugInitReturn)
         for options in ({"init_return": 1}, {"init_return": None}, {"init_return": True, "unload_entry": True}):
+            with self.assertRaises(TransportError): DebugDriver(**options)
+        for options in ({"detached_console": True}, {"init_return": True, "detached_console": 1},
+                        {"init_return": True, "detached_console": None},
+                        {"console_failure": True, "detached_console": True}):
             with self.assertRaises(TransportError): DebugDriver(**options)
 
     def test_readback_mismatch_stops_before_resuming_load(self):

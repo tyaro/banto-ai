@@ -18,6 +18,7 @@ class LaunchResult(dict):
     def __init__(self, owner):
         super().__init__(status="not_started", creation_state="not_started",
                          ownership_transferred=False, resource_stop=False,
+                         requested_creation_flags=owner.arguments[6],
                          native_accepted=False, formal_permission=False)
         self.private_owner = owner
 
@@ -25,8 +26,9 @@ class LaunchResult(dict):
 class SuspendedDebugLaunch:
     FLAGS = 0x08000000 | 0x400 | 4 | 2  # NO_WINDOW, UNICODE_ENV, SUSPENDED, DEBUG_ONLY_THIS_PROCESS
 
-    def __init__(self, api, token, fixture, stop):
+    def __init__(self, api, token, fixture, stop, *, detached_console=False):
         need(api.k is stop.kernel, "launch_kernel")
+        need(type(detached_console) is bool, "launch_console_option")
         self.api, self.stop, self.transport = api, stop, stop.transport
         self.fixture = fixture  # Borrowed; caller owns fixture/token teardown.
         self.startup, self.process = w._Startup(), w._Process()
@@ -38,7 +40,10 @@ class SuspendedDebugLaunch:
         self.environment = C.create_unicode_buffer(
             "SystemRoot=" + os.environ["SystemRoot"] + "\0TEMP=" + str(fixture.root.parent)
             + "\0TMP=" + str(fixture.root.parent) + "\0\0")
-        self.arguments = (token, sys.executable, self.command, None, None, False, self.FLAGS,
+        # Explicit comparison only: DETACHED replaces NO_WINDOW, never combines
+        # with NEW_CONSOLE. Token, inheritance and remaining flags stay fixed.
+        flags = (0x8 | 0x400 | 4 | 2) if detached_console else self.FLAGS
+        self.arguments = (token, sys.executable, self.command, None, None, False, flags,
                           self.environment, str(fixture.root / "control"),
                           self.startup_pointer, self.process_pointer)
         self.started = self.resource_stop = self.transferred = False
