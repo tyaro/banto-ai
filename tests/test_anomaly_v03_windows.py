@@ -39,6 +39,35 @@ def restricted_profile():
 
 
 class PureWindowsControls(unittest.TestCase):
+    def test_restricted_control_launch_is_detached_suspended_and_noninheriting(self):
+        api = Mock()
+        fixture = SimpleNamespace(root=Path("C:/DUMMY PRIVATE/new-fixture"))
+        def create(*args):
+            process = args[-1]._obj
+            process.process, process.thread, process.pid, process.tid = 501, 502, 17, 19
+            return True
+        api.a.CreateProcessAsUserW.side_effect = create
+        api.call.side_effect = lambda ok, reason: w._need(ok, reason)
+        with patch.dict(os.environ, {"SystemRoot": "C:\\Windows"}):
+            process = w._start(api, 401, fixture)
+        api.a.CreateProcessAsUserW.assert_called_once()
+        args = api.a.CreateProcessAsUserW.call_args.args
+        self.assertEqual(args[0:2], (401, sys.executable))
+        self.assertEqual(args[2].value, w.subprocess.list2cmdline(
+            [sys.executable, "-B", "-I", str(w._CHILD), str(fixture.root)]))
+        self.assertEqual(args[3:7], (None, None, False, 0x40C))
+        self.assertEqual(args[7][:].rstrip("\0"), "SystemRoot=C:\\Windows\0TEMP="
+                         + str(fixture.root.parent) + "\0TMP=" + str(fixture.root.parent))
+        self.assertEqual(args[8], str(fixture.root / "control"))
+        startup = args[9]._obj
+        self.assertEqual(startup.desktop, "")
+        self.assertEqual(startup.flags, 0)
+        self.assertEqual((startup.stdin, startup.stdout, startup.stderr), (None, None, None))
+        self.assertEqual((process.process, process.thread, process.pid, process.tid), (501, 502, 17, 19))
+        api.k.ResumeThread.assert_not_called()
+        api.k.TerminateProcess.assert_not_called()
+        api.k.CloseHandle.assert_not_called()
+
     def runtime_case(self, *, ubr=9445, build="26200", machine="AMD64", hashes=None):
         import platform
         import sysconfig

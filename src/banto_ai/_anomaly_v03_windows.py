@@ -1347,12 +1347,14 @@ def _start(api, token, fixture):
     startup.desktop = ""
     # No inherited handles or standard handles. Empty lpDesktop delegates the
     # station/desktop selection to Windows; it does not prove noninteraction.
+    # DETACHED starts the control without an attached console. Keep the
+    # restricted token and suspended creation unchanged.
     arguments = [sys.executable, "-B", "-I", str(_CHILD), str(fixture.root)]
     command = C.create_unicode_buffer(subprocess.list2cmdline(arguments))
     environment = C.create_unicode_buffer("SystemRoot="+os.environ["SystemRoot"]+"\0TEMP="+str(fixture.root.parent)
                                          +"\0TMP="+str(fixture.root.parent)+"\0\0")
     api.call(api.a.CreateProcessAsUserW(token, sys.executable, command, None, None, False,
-                                      0x08000000 | 0x400 | 4, environment, str(fixture.root/"control"),
+                                      0x8 | 0x400 | 4, environment, str(fixture.root/"control"),
                                       C.byref(startup), C.byref(process)), "restricted_process_prerequisite")
     return process
 

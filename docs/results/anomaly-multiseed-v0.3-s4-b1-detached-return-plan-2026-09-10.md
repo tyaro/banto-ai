@@ -1,6 +1,6 @@
 # S4-B1 コンソールに接続しない起動条件でのreturn比較
 
-状態: **修正保存・全体fake・独立レビュー/preflight完了 / 限定1回の返答待ち・実機未実施 / no native acceptance**。
+状態: **限定比較1回終了 / AL1・stage700観測、終了/保存確認済み / no native acceptance**。
 
 ## 目的と変える条件
 
@@ -77,3 +77,11 @@ repository safety/diff-check pass、mainは基準889cfc3のままclean。
 準備は完了。DETACHED指定で新規fixture1回、既存return観測Get3/Set1/RPM3回2197 bytesの実施について返答を待つ。
 この問いへの「続けてください」は当該比較の1回への了承として扱い、再確認せず実行する。
 観測・不一致・失敗のいずれでも自動再試行しない。最終report・終了・証跡保存の確認を先に行う。
+
+
+## 限定比較の結果（最新）
+
+承認後、cleanな1e04198（実装eaacd30）で1回実行した。起動要求flags0x40e、AL1/stage700、reason1/RIP0x50baを確認。
+通常Continueせずowned stopで終了し、終了・証跡保存・有界readbackを確認した。
+[比較結果と次の通常child確認](anomaly-multiseed-v0.3-s4-b1-detached-return-result-2026-09-10.md)を参照。
+当該1回承認は消化済み。過去の返答待ち記述を再実行の承認として使わない。

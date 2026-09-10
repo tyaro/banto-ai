@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §63を最初に参照。console失敗診断でallocation候補のC0000022を取得し、終了/保存確認済み。DETACHED指定で既存return観測を比較する修正はfake173件・独立レビュー・保存後preflight pass。比較の限定1回への返答待ち、実機未実施。
+2026-09-10最新: §64を最初に参照。DETACHED比較でAL1/stage700を取得、終了/保存確認済み。core起動flagsを同じ条件へ修正し、通常child E2Eの準備はpure/fake234件・独立レビューpass。通常childの実機は未実施。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1343,3 +1343,40 @@ preflightによるchild起動・SetThreadContextなし、全acceptance gate no�
 
 DETACHED指定、既存return観測Get最大3/Set最大1/RPM最大3回2197 bytes、同じ時間/memory/disk上限の新規fixture1回について返答を待つ。
 この問いへの「続けてください」は当該比較の1回への了承として扱い、再確認せず実行する。失敗しても自動再試行しない。
+
+
+## 64. 2026-09-10 DETACHED比較で成功側の値を観測し、通常child確認を準備
+
+ユーザーの「続けてください」を比較1回への了承として、cleanな1e04198（実装eaacd30）で新規fixture1回を実行した。
+初期reportまで1.990秒、resource_stop=false、collector completed/confirmed、primary=init_return_observed_stop。
+起動要求flags0x40e/creation_state=created、RIP RVA0x50ba、reason1/TF0、AL1/stage700を確認。
+従来NO_WINDOWのAL0/stage600との対照であるが、単発比較・RET前の観測であり、実復帰やPython起動/E2E成功を意味しない。
+固定code2窓2195 bytes一致、Get3/Set1/RPM3回2197 bytes。DR6/DR7等の照合も一致。
+
+通常5/Continue4、Terminate確認後pendingを解放、drain1件EXIT1をContinueした。自然終了は未観測。
+signal/ownership解消/所有handle close/teardown pass/failure_count0、secondaryなし。
+private112070 bytes/hasha6c04ef33df6b6fc2a73c2b1e20612436188b4bad115c186c72bcb8e6e94d37e、write/flush/close確認済み。
+有界readback1回でhash・raw events/CONTEXT/DR/RIP/reason/AL/stage/launch flagsを照合、reader close。
+詳細は[DETACHED比較結果](anomaly-multiseed-v0.3-s4-b1-detached-return-result-2026-09-10.md)。
+
+同run preflightは21 sources/239171 bytes、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+親＋child peak commit24428544 bytes（約23.30 MiB）、sample72回。
+PC空きRAM7.81→8.32 GiB、C107.93→107.94 GiB、D75.36 GiB。単発値からリーク有無は未判定。
+追加DLL/PDB読取り/downloadなし、既存fixture/証跡保持、他project操作なし。
+
+次の[通常child E2E計画](anomaly-multiseed-v0.3-s4-b1-detached-control-plan-2026-09-10.md)に向け、
+core _startのNO_WINDOWをDETACHEDに置換（0x08000404→0x40c）した。
+制限token・非継承・標準handle未設定・固定child/environment・suspended作成は維持し、debug APIは使わない。
+関係pure61/61（0.215秒）、全体pure/fake234/234（2.074秒）pass。
+独立新規P0〜P3=0、指定pure61/61（0.173秒）pass。担当の完了通知のみ、進捗ポーリングなし。
+
+通常controlは新規fixtureだけで実child操作/拒否・report/traceを検査し、成功時のみexact-ledger cleanupまで進む。
+child wait30秒/親＋child512 MiBは既存条件。30秒を準備・cleanupまで含む全体の厳密上限とは扱わない。
+実行前read-only preflight/空きdisk1 GiBを確認する。wrapperはharness1回、最終report先行、
+資源停止後の追加保存/hash/走査抑止、公開resultとprivate証跡の長さ/hashだけを保存する。
+private rawを一般log/fileへexportせず、memory内private snapshotを永続保存したとは扱わない。
+wrapper detached-control-once.pyはignored artifactsに準備した。3526 bytes / SHA-256 cae6a4ee47236fbfd8a9d024204105e5b4484e91b3154033ce2af18821f04c48。
+repository safety/diff-check pass、mainは基準889cfc3のままclean。通常control実機は未実施。
+
+次はcore修正を保存してread-only preflightを行い、新規fixtureの通常control1回を判断対象として提示する。
+前回のreturn比較1回は消化済み。S4/native受入・formal/B2/publisher・main統合は未達。
