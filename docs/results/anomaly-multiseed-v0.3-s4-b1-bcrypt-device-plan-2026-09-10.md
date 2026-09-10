@@ -1,6 +1,6 @@
 # S4-B1 bcryptのデバイスopen・制御要求・後始末の3地点を観測
 
-状態: **候補実装・pure/fake272件・独立実装レビュー完了 / 保存後preflight前 / 実機未実施**。
+状態: **候補実装・pure/fake272件・独立実装レビュー・保存後preflight完了 / 実機未実施**。
 
 [今回の実測](anomaly-multiseed-v0.3-s4-b1-bcrypt-detail-result-2026-09-10.md)は後始末前にEAX/EBP=C0000022、EDI0を示した。
 次はDebugDriver(bcrypt_device=True, detached_console=True, bootstrap=True)で、
@@ -64,7 +64,7 @@ SHA-256 6ef9ba31f8ddebdf112453375f365f5cdee0f8b9f4db845bdc928b3469aee0a0。
 関係fake60/60（4.429秒）、全体pure/fake272/272（5.802秒）、repository safety/diff-check pass。
 3site・warning停止・R12とEAXの区別・未使用DR3・各frame/status・caller失敗/OOM/pending/load・固定名不一致・
 除外した応答地点の再選択禁止・排他/hitなしを確認した。既存4site collectorも回帰済み。
-独立実装レビュー・保存後preflightを追記する。
+独立実装レビュー・保存後preflightの結果は下記に記録した。
 
 準備完了後、新規fixture1個で固定3地点から最初の1hitを取得して終了する診断1回を判断対象とする。
 引継書§6の追加probe条件を維持し、この問いへの「お願いします」「続けてください」は当該1回への了承として扱う。
@@ -74,3 +74,18 @@ SHA-256 6ef9ba31f8ddebdf112453375f365f5cdee0f8b9f4db845bdc928b3469aee0a0。
 独立P2は是正確認済み、実装レビューの新規P0〜P3=0、指定fake60/60（4.596秒）pass。
 担当のnative/wrapper/private参照/編集なし、完了通知のみ、進捗ポーリングなし。
 作業後RAM7.82 GiB、C107.98/D75.36 GiB、本流889cfc3 clean。
+
+
+## 保存後の事前確認と実行範囲
+
+実装・試験・結果・計画をd557a20へ保存した。保存後read-only preflightは2.400秒、
+27 sources/277511 bytes、verified、resource_stop=false、primary/secondaryなし。
+Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+bcrypt-device-preflight.jsonへ保存。child起動・SetThreadContextなし、全acceptance gate no。
+
+準備は完了。新規専用fixture1個で、検証済みbootstrapから固定3地点を設定し、
+最初の1hitでデバイス経路の候補値を取得して所有終了処理まで行う診断1回への返答を待つ。
+bootstrap込みGet4/Set1/RPM最大7回1841 bytes、既存時間・memory・disk・終了処理条件を維持する。
+この具体的な問いへの「お願いします」「続けてください」は当該1回への了承として扱い、同じ了承を再確認しない。
+実行wrapperはbcrypt-device-once.py、2760 bytes/hash6ef9ba31f8ddebdf112453375f365f5cdee0f8b9f4db845bdc928b3469aee0a0、未実行。
+§6の追加probe条件を引き継ぎ、自動再試行なし。今回のbcrypt-detail1回への了承は消化済み。
