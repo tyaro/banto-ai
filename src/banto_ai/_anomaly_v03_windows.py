@@ -131,6 +131,7 @@ _CHILD_FAILURE_REASONS = tuple("""
     token_query token_query_changed token_query_size unexpected_impersonation
     unknown_fixture_object unsupported_platform volume_not_local_ntfs volume_query
     write_file write_size
+    runtime_machine_api_unavailable runtime_machine_query runtime_architecture runtime_python_metadata
 """.split())
 _CHILD_LEGACY_REASONS = ("child_scope", "child_profile", "child_source", "object_open", "write_file",
                          "operation_unexpected", "operation_matrix", "access_expectation", "child_token_drift")
@@ -377,6 +378,10 @@ class _Win:
         bind(k, "GetCurrentProcess", H)
         bind(k, "GetCurrentThread", H)
         try:
+            bind(k, "IsWow64Process2", B, H, P(C.c_uint16), P(C.c_uint16))
+        except AttributeError:
+            raise _Failure("runtime_machine_api_unavailable") from None
+        try:
             bind(k, "GetTempPath2W", D, D, P(C.c_wchar))
         except AttributeError:
             raise _Failure("temp_path_api_unavailable") from None
@@ -437,6 +442,13 @@ class _Win:
     def call(self, ok, reason):
         if not ok:
             raise _Failure(reason, C.get_last_error())
+
+    def architecture(self):
+        # Borrow the current-process pseudo handle; no WMI, environment or fallback.
+        process, native = C.c_uint16(), C.c_uint16()
+        self.call(self.k.IsWow64Process2(self.k.GetCurrentProcess(), C.byref(process), C.byref(native)),
+                  "runtime_machine_query")
+        return process.value, native.value
 
     def close(self, handle, *, primary=None, teardown=None):
         if handle:
@@ -855,10 +867,14 @@ def _runtime():
     # Automatic cumulative updates may change UBR between runs. Record the
     # observed revision; keep the OS release and Python compatibility boundary.
     _need(values[0] == "26200" and type(values[1]) is int and 0 <= values[1] < 2**32
-          and values[2:] == ["Professional", "25H2"] and platform.machine() == "AMD64"
-          and platform.python_compiler() == "MSC v.1944 64 bit (AMD64)" and sys._git == ("CPython", "tags/v3.14.0", "ebf955d")
-          and not sysconfig.get_config_var("Py_GIL_DISABLED"), "runtime_pin")
+          and values[2:] == ["Professional", "25H2"], "runtime_pin")
     api = _api()
+    # CPython platform.machine() uses WMI then PROCESSOR_* environment variables.
+    # The fixed child deliberately receives neither CPU environment variable.
+    _need(api.architecture() == (0, 0x8664), "runtime_architecture")  # Native AMD64, no WOW64.
+    _need(platform.python_compiler() == "MSC v.1944 64 bit (AMD64)"
+          and sys._git == ("CPython", "tags/v3.14.0", "ebf955d")
+          and not sysconfig.get_config_var("Py_GIL_DISABLED"), "runtime_python_metadata")
     _need(_read_source(api, Path(sys.executable))[0] == _EXE_SHA
           and _read_source(api, Path(sys.base_prefix)/"python314.dll")[0] == _DLL_SHA, "runtime_hash")
     return {"build": f"10.0.{values[0]}.{values[1]}", "python": "3.14.0", "exe_sha256": _EXE_SHA, "dll_sha256": _DLL_SHA}

@@ -68,7 +68,8 @@ class PureWindowsControls(unittest.TestCase):
         api.k.TerminateProcess.assert_not_called()
         api.k.CloseHandle.assert_not_called()
 
-    def runtime_case(self, *, ubr=9445, build="26200", machine="AMD64", hashes=None):
+    def runtime_case(self, *, ubr=9445, build="26200", architecture=(0, 0x8664), hashes=None,
+                     compiler="MSC v.1944 64 bit (AMD64)", git=("CPython", "tags/v3.14.0", "ebf955d"), free_threaded=0):
         import platform
         import sysconfig
         values = {"CurrentBuildNumber": build, "UBR": ubr, "EditionID": "Professional", "DisplayVersion": "25H2"}
@@ -78,12 +79,12 @@ class PureWindowsControls(unittest.TestCase):
             stack.enter_context(patch.dict(sys.modules, {"winreg": registry}))
             stack.enter_context(patch.object(w, "os", SimpleNamespace(name="nt")))
             stack.enter_context(patch.object(w, "sys", SimpleNamespace(
-                version_info=(3, 14, 0), _git=("CPython", "tags/v3.14.0", "ebf955d"),
+                version_info=(3, 14, 0), _git=git,
                 executable=sys.executable, base_prefix=sys.base_prefix)))
-            stack.enter_context(patch.object(platform, "machine", return_value=machine))
-            stack.enter_context(patch.object(platform, "python_compiler", return_value="MSC v.1944 64 bit (AMD64)"))
-            stack.enter_context(patch.object(sysconfig, "get_config_var", return_value=0))
-            stack.enter_context(patch.object(w, "_api", return_value=Mock()))
+            stack.enter_context(patch.object(platform, "machine", side_effect=AssertionError("must not use WMI/environment")))
+            stack.enter_context(patch.object(platform, "python_compiler", return_value=compiler))
+            stack.enter_context(patch.object(sysconfig, "get_config_var", return_value=free_threaded))
+            stack.enter_context(patch.object(w, "_api", return_value=Mock(architecture=Mock(return_value=architecture))))
             stack.enter_context(patch.object(w, "_read_source", side_effect=hashes or [(w._EXE_SHA,), (w._DLL_SHA,)]))
             return w._runtime()
 
@@ -95,7 +96,7 @@ class PureWindowsControls(unittest.TestCase):
 
     def test_windows_revision_type_and_release_boundary_remain_checked(self):
         for kwargs in ({"ubr": -1}, {"ubr": True}, {"ubr": "9445"}, {"ubr": 2**32},
-                       {"build": "26100"}, {"machine": "ARM64"}):
+                       {"build": "26100"}):
             with self.subTest(kwargs=kwargs), self.assertRaises(w._Failure) as caught:
                 self.runtime_case(**kwargs)
             self.assertEqual(caught.exception.reason, "runtime_pin")
@@ -104,6 +105,68 @@ class PureWindowsControls(unittest.TestCase):
         with self.assertRaises(w._Failure) as caught:
             self.runtime_case(hashes=[("wrong",)])
         self.assertEqual(caught.exception.reason, "runtime_hash")
+
+    def test_runtime_uses_native_architecture_when_wmi_and_cpu_environment_are_absent(self):
+        import platform
+        with patch.dict(os.environ, {}, clear=True), \
+             patch.object(platform, "_wmi_query", side_effect=OSError("simulated unavailable"), create=True):
+            if sys.platform == "win32":
+                self.assertEqual(platform._get_machine_win32(), "")
+            self.assertEqual(self.runtime_case()["python"], "3.14.0")
+
+    def test_runtime_rejects_other_architectures_despite_spoofed_cpu_environment(self):
+        for architecture in ((0, 0xaa64), (0x8664, 0xaa64), (0x14c, 0x8664), (0, 0), (0x8664, 0x8664)):
+            with self.subTest(architecture=architecture), \
+                 patch.dict(os.environ, {"PROCESSOR_ARCHITECTURE": "AMD64", "PROCESSOR_ARCHITEW6432": "AMD64"}), \
+                 self.assertRaises(w._Failure) as caught:
+                self.runtime_case(architecture=architecture)
+            self.assertEqual(caught.exception.reason, "runtime_architecture")
+
+    def test_runtime_python_metadata_remains_pinned(self):
+        for changes in ({"compiler": "unknown"}, {"git": ("CPython", "other", "build")}, {"free_threaded": 1}):
+            with self.subTest(changes=changes), self.assertRaises(w._Failure) as caught:
+                self.runtime_case(**changes)
+            self.assertEqual(caught.exception.reason, "runtime_python_metadata")
+
+    def test_native_architecture_query_has_fixed_signature_and_borrowed_handle(self):
+        kernel = Mock()
+        with patch.object(w.os, "name", "nt"), patch.object(w.C, "WinDLL", return_value=kernel, create=True):
+            api = w._Win()
+        self.assertIs(kernel.IsWow64Process2.restype, w.B)
+        self.assertEqual(kernel.IsWow64Process2.argtypes,
+                         [w.H, ctypes.POINTER(ctypes.c_uint16), ctypes.POINTER(ctypes.c_uint16)])
+        kernel.GetCurrentProcess.return_value = -1
+        def query(process, process_machine, native_machine):
+            self.assertEqual(process, -1)
+            self.assertIs(type(process_machine._obj), ctypes.c_uint16)
+            self.assertIs(type(native_machine._obj), ctypes.c_uint16)
+            process_machine._obj.value, native_machine._obj.value = 0, 0x8664
+            return 1
+        kernel.IsWow64Process2.side_effect = query
+        self.assertEqual(api.architecture(), (0, 0x8664))
+        kernel.IsWow64Process2.assert_called_once()
+        kernel.GetCurrentProcess.assert_called_once_with()
+        kernel.CloseHandle.assert_not_called()
+        kernel.OpenProcess.assert_not_called()
+
+    def test_native_architecture_failure_never_accepts_outputs_or_falls_back(self):
+        kernel = Mock()
+        with patch.object(w.os, "name", "nt"), patch.object(w.C, "WinDLL", return_value=kernel, create=True):
+            api = w._Win()
+        def fail(process, process_machine, native_machine):
+            process_machine._obj.value, native_machine._obj.value = 0, 0x8664
+            return 0
+        kernel.IsWow64Process2.side_effect = fail
+        with patch.object(w.C, "get_last_error", return_value=5, create=True), self.assertRaises(w._Failure) as caught:
+            api.architecture()
+        self.assertEqual((caught.exception.reason, caught.exception.error), ("runtime_machine_query", 5))
+        kernel.IsWow64Process2.assert_called_once()
+        kernel.CloseHandle.assert_not_called()
+        del kernel.IsWow64Process2
+        with patch.object(w.os, "name", "nt"), patch.object(w.C, "WinDLL", return_value=kernel, create=True), \
+             self.assertRaises(w._Failure) as caught:
+            w._Win()
+        self.assertEqual(caught.exception.reason, "runtime_machine_api_unavailable")
 
     def test_stream_enumeration_success_empty_directory_and_single_findclose_failure(self):
         for directory, close_ok in ((False, True), (True, True), (False, False)):

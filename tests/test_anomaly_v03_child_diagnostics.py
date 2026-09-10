@@ -57,6 +57,11 @@ class ChildDiagnostics(unittest.TestCase):
         self.assertEqual(w._child_failure_diagnostic(code),
                          {"phase": "child_call", "reason": "runtime_pin", "winerror": 5})
 
+    def test_recorded_runtime_pin_exit_keeps_its_original_reason_id(self):
+        self.assertEqual(w._child_failure_diagnostic(278331392),
+                         {"phase": "child_call", "reason": "runtime_pin", "winerror": 0})
+        self.assertEqual(self.invoke(w._Failure("runtime_pin"))[0], 278331392)
+
     def test_bootstrap_and_child_exceptions_are_distinct_and_redacted(self):
         for kind in (*w._CHILD_EXCEPTION_TYPES, Exception):
             for bootstrap in (False, True):

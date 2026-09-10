@@ -1,6 +1,8 @@
 # S4-B1 固定child終了コードの診断計画
 
-状態: **修正後pure/fake283件pass・独立是正確認・保存後preflight完了。準備済み診断1回への返答待ち、追加nativeは未実施**。
+状態: **ユーザー「続けてください」により診断1回を実施済み。child_call/runtime_pin/WinError0で停止**。
+[実行結果](anomaly-multiseed-v0.3-s4-b1-child-diagnostic-result-2026-09-10.md)を参照。
+以下の未実施・返答待ち表記は準備時点の履歴。同じwrapperは再実行しない。
 直前のRC＋Everyone controlは、親側の実child token/AccessCheckまで通り、resume後exit1で停止した。
 権限やACLをさらに変更せず、同じ必須controlの失敗理由を固定数値で区別する。
 

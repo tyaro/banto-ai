@@ -1910,3 +1910,35 @@ child-diagnostic-preflight.jsonへ保存。新しいchild/control/token作成、
 最終09:04:47Zの空きRAM8.52 GiB、C108.44/D75.36 GiB、last bootは作業前と同じ。
 本流889cfc3 clean、別projectの連続稼働テスト・失敗fixtureへ追加操作なし。
 この追記は記録のみでsource/試験対象を変更していないため、fake試験・preflightを再実行しない。
+
+
+## 74. 2026-09-10 child runtime_pin特定とCPU構成の直接確認
+
+ユーザー「続けてください」を直前の準備済みchild-diagnostic1回への了承として実行した。
+実装911d5a5、clean HEAD a429a9c、wrapper3983 bytes/hash31c8e05df0eba398f6a7d528250acaee5eb8e1171a6dcd4616ad61fa345a0e9eを実行前照合。
+新規fixtureのcontrol1回だけ、既存fixture/消化済みwrapper再実行・debug collector・SetThreadContextなし。
+[結果](anomaly-multiseed-v0.3-s4-b1-child-diagnostic-result-2026-09-10.md)はchild_exit_code278331392、
+保存protocolでchild_call/runtime_pin/WinError0。core0.6305790999904275秒、teardown pass/resource_stopfalse。
+ここで子側の固定理由を観測。_child_main冒頭_runtimeで停止、子のsource/token/AccessCheck/実操作検証は未完了。
+OS/CPU/Python metadataの複合条件のため、失敗した個別項目は未確定。以前のexit1を同一原因と断定しない。
+trace incomplete/0 records/0 bytes、private_controlなし、private_replace0 bytes、known_bytes5926、存在・残量unverified。
+公開summary2091 bytes/hashd3ee07bd86d846726d810812524676fdcaba3cbef49ad22feee63ec130544bd2を既知pathから1回有界readして確認。
+child-diagnostic-result-check.jsonへ保存。failed fixture再open/ACL修復/cleanup/再利用なし。
+親＋子ピークprivate42.20 MiB/working53.46 MiB、実行内preflight27/284856 bytes verified、runtime hash一致。
+実行前09:08:09Z RAM8.16 GiB/C108.44/D75.36 GiB、build26200.9445/boot2026-09-09T10:43:08.5+09:00。
+
+[CPU構成の直接確認への修正](anomaly-multiseed-v0.3-s4-b1-runtime-machine-plan-2026-09-10.md)を準備。
+固定stdlibはWMIが失敗しCPU環境変数もなければmachine名を空にする。実WMIなしの模擬入力で再現した。
+実childのWMI失敗・単独原因を確定したという意味ではない。
+platform.machine()をIsWow64Process2によるnative AMD64/process非WOW64の厳密照合へ置換。
+環境変数追加・token/ACL変更なし。OS/UBR/Python metadata/hash条件を維持し、理由4個を末尾追加して区別する。
+選抜82/82（0.470秒）pass後、実測旧exitのID維持回帰を追加。全pure/fake289/289（9.282秒）pass。
+独立差分レビュー新規P0〜P3=0、担当のnative/query/再試験/編集なし、進捗ポーリングなし。
+repository safety/diff-check pass、本流889cfc3 clean。
+
+未実行runtime-machine-control-once.pyは3982 bytes/hash4292c3aefc011adfc7a204b76304ba3648e523c72eca2531babe11ec1413d9e9。
+新規summary先のみ変更、harness呼出1箇所。同じtoken/保護DACL/全必須検証と30秒/512 MiB未満/temp空き1 GiB以上を維持。
+source保存後read-only preflightを完了し、次の新規fixture control1回への返答を待つ。
+今回のchild-diagnostic1回は消化済み。§6に従い自動反復せず、次の「お願いします」「続けてください」を次の1回への了承として扱う。
+追加権限・既存fixture操作・別project操作を含まない。成功時も受入/認証/formal各flagはfalse。
+Python3.12既定受入・本流統合・formal/B2/publisherは閉じたまま。UBR緩和と状態記録を維持する。
