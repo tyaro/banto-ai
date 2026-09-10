@@ -1,6 +1,6 @@
 # S4-B1 ConsoleInitializeの最初の失敗候補を観測する限定診断
 
-状態: **実装・全体fake・独立レビュー完了 / 保存後preflight前 / 実機未実施 / no native acceptance**。
+状態: **修正保存・全体fake・独立レビュー/preflight完了 / 限定1回の返答待ち・実機未実施 / no native acceptance**。
 
 ## 目的
 
@@ -106,3 +106,15 @@ debug＋preflight/event全体171/171 pass（1.762秒）。21 sourcesと各collec
 repository safety/diff-check pass、mainは基準889cfc3のままclean。
 PC空きRAM9.46→9.76 GiB、C108.21→108.20 GiB、D75.36 GiB。単発値からリーク有無は未判定。
 新規の常駐helper・他project操作なし。実機診断は未実施。
+
+
+## 保存後の事前確認と再開条件
+
+実装・試験・計画を78617f2に保存した。read-only preflightは1.939秒、21 sources/238228 bytes、verified、resource_stop=false。
+Windows10.0.26200.9445/Python3.14.0、既存exe/python314.dll hash一致。console-failure-preflight.jsonへ保存済み。
+execution_authenticated/launch_authorized/native_accepted/formal_permissionはfalse。この事前確認でchild起動・SetThreadContextは行っていない。
+試験後の変更は文書と試験file末尾の空行のみで、実装の変更はない。repository safety/diff-check pass。
+
+準備は完了。今回の判断対象は、上記4地点の設定を含む限定診断を、新規fixtureで1回実施すること。
+この問いへの「続けてください」は当該console_failure v1の1回への了承として扱い、再確認せず実行する。
+観測・不一致・失敗のいずれでも自動再試行しない。最終report・終了・証跡保存の確認を先に行う。
