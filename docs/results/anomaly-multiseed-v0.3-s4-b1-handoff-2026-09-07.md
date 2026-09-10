@@ -2,7 +2,7 @@
 
 状態: **限定Windows engineering control成功 / no integration / no formal permission**
 
-2026-09-11最新: §79のLinux CI整備・実行、§78のWindows3.14.0一本化、§76の実機成功を最初に参照。実装0b30e63のRC＋Everyone候補で、子の全48期待値・報告照合・成功cleanup・teardownが通過した。
+2026-09-11最新: §79のLinux CI整備・fake修正・再検証、§78のWindows3.14.0一本化、§76の実機成功を最初に参照。実装0b30e63のRC＋Everyone候補で、子の全48期待値・報告照合・成功cleanup・teardownが通過した。
 専用fixture9対象の削除を確認し、残存0、資源停止なし。最大3回の了承を受領し、1回目の成功でその試行枠を終了した。残り2回は実行しない。
 実行前の選抜pure/fake293件と独立差分レビュー、実行内27 source preflightも通過。補完・関連78件は指定Capstone5.0.7でpass、今回の要件改訂に対応する25件もpass。全回帰ではない。
 現在のruntimeはWindows10.0.26200.9445/Python3.14.0。UBR固定緩和は§31、直近の実測資源・bootは§79に記録する。
@@ -2137,8 +2137,28 @@ local-checks.jsonに16個の異なるtest IDsと各source hash・条件を保存
 保存済み候補branch codex/s4-b1-windows-engineeringをGitHubへ新規pushし、
 CI https://github.com/tyaro/banto-ai/actions/runs/34514721185 が3c69f9eに対して開始された。
 本流mainの変更・merge・force push・Windows追加native枠の再開ではない。
-開始確認時in_progress。GitHub CLIの60秒watch1本で完了を待ち、結果・保存artifactを確認する。
+初回は両jobともfailureで終了。1099 methods中966 pass/67 skip/66異常、unittest集計failure1/errors261。
+259件の直接原因はLinuxにないctypes.get_last_errorを既存と仮定したfake mock、残り3件は後続assertの連鎖。
+compile/safety/artifact保存pass、smoke/dataset quality/benchmarkは前段失敗によりskip。
+両jobの単一JSONLを取得し、ZIPのAPI digest・source/workflow/run・全1099予定/開始/終了ID・集計を照合した。
+未開始0、両minorの予定ID/順序・終了結果・skip ID/reasonがexact一致。失敗記録は保持する。
+
+修正9846f52775cc5841fca63430adac7216cfbe516cは5ファイル8箇所のmockへcreate=Trueを追加。
+実装・期待値・native skipの変更なし。関数を一時除去しWinDLL生成を拒否した専用processで、
+初回異常66 methodsが66/66 pass、5.648702秒、failure/error/skip0。mock残留なし・元の関数を復元した。
+linux-mock-regression.json（9393 bytes/hash e60b1b29b00b37fc150fc8a4bf3157f13352dc767b44a4c8a4fc254558e8eb2c）へ保存。
+独立レビュー新規P0〜P3=0、担当の試験/native/ネット接続/編集なし。進捗ポーリングなし。
+safety/diff-check pass。9846f52を候補branchへpushし、修正後CI34516991115が進行中。
+URL https://github.com/tyaro/banto-ai/actions/runs/34516991115 。新runの証拠は初回と別保存し、結果を確認する。
+
+初回実runtimeはUbuntu24.04 x86_64、Python3.12.14/3.14.7、GCC13.3.0、kernel6.17.0-1022-azure。
+ImageVersion20260907.300.1は観測値、VM image digestではない。
+skip67はWindows固有49、optional Capstone16、Toto2ローカルartifact不存在2。いずれもpassに数えない。
+共有fixture payload自体のplatform間exact一致とS4完全受入は未完了のまま。
+初回待機のunexpected EOFは接続エラーとして保持。CIを再実行する根拠には使っていない。
+修正後は60秒間隔/query timeout30秒/最大24回の単一API待機processで確認する。
 
 資源UTC2026-09-10T18:16:03Z RAM7.73 GiB/C107.94/D75.36、18:31:02Z RAM8.09/C107.93/D75.36。
+修正選抜検証後18:55:08Z RAM8.13 GiB/C107.91/D75.36。
 build26200.9445、boot2026-09-09T10:43:08.5000000+09:00。点の変化でリーク有無を断定しない。
 ローカル検証Pythonは終了済み。別project・既存失敗fixture・旧artifact操作、新runtime導入なし。
