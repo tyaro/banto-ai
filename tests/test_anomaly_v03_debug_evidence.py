@@ -149,7 +149,7 @@ class DebugEvidenceTests(unittest.TestCase):
 class EvidenceFileTests(unittest.TestCase):
     def file(self, stack):
         api, fixture = Mock(), Mock()
-        stack.enter_context(patch.object(e.C, "get_last_error", return_value=0))
+        stack.enter_context(patch.object(e.C, "get_last_error", return_value=0, create=True))
         api.k.CreateFileW.return_value = 801
         api.k.CloseHandle.return_value = True
         fixture.path.return_value = "C:/DUMMY_PRIVATE/control/startup-evidence.bin"
@@ -226,7 +226,7 @@ class EvidenceFileTests(unittest.TestCase):
             with ExitStack() as stack, self.subTest(code=code):
                 owner, api, fixture, check = self.file(stack)
                 api.k.CreateFileW.return_value = C.c_void_p(-1).value
-                stack.enter_context(patch.object(e.C, "get_last_error", return_value=code))
+                stack.enter_context(patch.object(e.C, "get_last_error", return_value=code, create=True))
                 with self.assertRaises(e.w._Failure):
                     owner.prepare(fixture)
                 self.assertTrue(owner.resource_stop)

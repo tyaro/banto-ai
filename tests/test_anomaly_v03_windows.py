@@ -1151,7 +1151,7 @@ class PureWindowsControls(unittest.TestCase):
         for error in (0, 5):
             api = Mock()
             api.k.CreateFileW.return_value = ctypes.c_void_p(-1).value
-            with self.subTest(error=error), patch.object(w.C, "get_last_error", return_value=error), \
+            with self.subTest(error=error), patch.object(w.C, "get_last_error", return_value=error, create=True), \
                  patch.object(w, "_Bound") as bound, self.assertRaises(w._Failure):
                 w._operations(api, Path("owned"), "user", {})
             api.k.CreateFileW.assert_called_once()
@@ -1168,7 +1168,7 @@ class PureWindowsControls(unittest.TestCase):
                 return ctypes.c_void_p(-1).value if (name, requested) == (str(path), mask) else 7
             api.k.CreateFileW.side_effect = opening
             with self.subTest(category=category, key=key), \
-                 patch.object(w.C, "get_last_error", return_value=32), \
+                 patch.object(w.C, "get_last_error", return_value=32, create=True), \
                  patch.object(w, "_Bound") as bound, self.assertRaises(w._Failure) as caught:
                 w._operations(api, root, "user", {})
             self.assertEqual((caught.exception.reason, caught.exception.error), ("operation_unexpected", 32))
@@ -1184,7 +1184,7 @@ class PureWindowsControls(unittest.TestCase):
         for error in w._CHILD_RESOURCE_ERRORS:
             api = Mock()
             api.k.CreateFileW.return_value = ctypes.c_void_p(-1).value
-            with self.subTest(error=error), patch.object(w.C, "get_last_error", return_value=error), \
+            with self.subTest(error=error), patch.object(w.C, "get_last_error", return_value=error, create=True), \
                  patch.object(w, "_Bound") as bound, self.assertRaises(w._Failure) as caught:
                 w._operations(api, Path("owned"), "user", {})
             self.assertEqual(caught.exception.error, error)

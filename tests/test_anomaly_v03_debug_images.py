@@ -72,7 +72,7 @@ class DebugImagesTests(unittest.TestCase):
 
     def test_partial_failures_preserve_buffers_and_do_not_retry(self):
         for fault in ("identity", "name", "long_name", "changed", "json", "budget"):
-            with self.subTest(fault=fault), patch.object(C, "get_last_error", return_value=8):
+            with self.subTest(fault=fault), patch.object(C, "get_last_error", return_value=8, create=True):
                 images, transport, kernel, budget = self.setup_images()
                 if fault == "identity":
                     kernel.GetFileInformationByHandleEx.side_effect = None

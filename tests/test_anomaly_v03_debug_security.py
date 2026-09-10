@@ -90,7 +90,7 @@ class DebugSecurityTests(unittest.TestCase):
 
     def test_api_size_and_memory_failures_stop_without_retry(self):
         for phase in ("false", "oversize", "oom", "budget"):
-            with self.subTest(phase=phase), patch.object(C, "get_last_error", return_value=8):
+            with self.subTest(phase=phase), patch.object(C, "get_last_error", return_value=8, create=True):
                 collector, api, budget = self.collector()
                 if phase == "false":
                     api.a.GetTokenInformation.side_effect = None
