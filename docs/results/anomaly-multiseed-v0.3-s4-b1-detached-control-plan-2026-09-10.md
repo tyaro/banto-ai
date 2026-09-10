@@ -1,6 +1,6 @@
 # S4-B1 DETACHED指定での制限付きchild E2E確認
 
-状態: **起動flags修正・全体pure/fake・独立レビュー完了 / 保存後preflight前 / 実機未実施 / no native acceptance**。
+状態: **起動flags修正・全体pure/fake・独立レビュー・保存後preflight完了 / 実機未実施 / no native acceptance**。
 
 ## 目的と修正
 
@@ -52,7 +52,7 @@ private rawは一般log/fileへexportしない。cleanup snapshotを含むprivat
 
 関係PureWindowsControls 61/61 pass（0.215秒）。追加caseで0x40c、固定child/environment/cwd、制限tokenの受渡し、
 非継承・標準handle未設定・suspended状態の出力と、その段階でResume/Terminate/Closeを呼ばないことを確認した。
-wrapperは構文とharness呼出し1か所を確認済みで、実機未実行。全体回帰・独立レビュー・保存後preflightは追記する。
+wrapperは構文とharness呼出し1か所を確認済みで、実機未実行。全体回帰・独立レビュー・保存後preflightは以下に記録する。
 
 準備完了後、**この新規fixtureでの通常control harnessを1回実行すること**を提示する。
 前回のreturn比較1回の承認は消化済み。今回は固定child内の操作と成功時cleanupまで進むため、新しい判断対象として扱う。
@@ -70,3 +70,17 @@ core起動引数・制限維持、wrapperの1回呼出し/先行report/資源停
 wrapperは既存resource reasons/MemoryError由来の状態に加え、報告されたWindows資源errorでも追加保存/hashを抑止する。
 PC空きRAM7.81→8.32 GiB、C107.93→107.94 GiB、D75.36 GiB。単発値からリーク有無は未判定。
 mainは基準889cfc3のままclean。通常control harnessの実機は未実施。
+
+
+## 保存後のread-only確認と次の1回
+
+実装・試験・比較結果・計画をab147d5へ保存した。
+保存後read-only preflightは1.788秒、21 sources/239293 bytes、status=verified、resource_stop=false。
+Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。detached-control-preflight.jsonへ保存済み。
+preflightによるchild起動やSetThreadContextなし、全acceptance gate no。通常control実行の準備は完了。
+
+新規fixtureでの固定child操作・アクセス拒否確認・report/trace照合・成功時exact-ledger cleanupまでを、1回の判断対象とする。
+引継書§6の「追加probeは承認なしに繰り返さない」に沿い、今回の比較診断の了承でこの追加実行まで行ったとは扱わない。
+この具体的な問いへの「続けてください」は通常controlの1回への了承として扱い、同じ了承を再確認しない。
+実施時はclean状態と準備済みwrapperのhashを照合し、wrapper内の直前preflightを通してharnessを1回だけ呼ぶ。
+失敗しても自動再試行せず、そのrunの公開resultと資源停止状態から次を判断する。

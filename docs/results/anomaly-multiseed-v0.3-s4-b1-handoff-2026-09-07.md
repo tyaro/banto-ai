@@ -2,7 +2,7 @@
 
 状態: **handoff / blocked engineering candidate / no integration / no formal permission**
 
-2026-09-10最新: §64を最初に参照。DETACHED比較でAL1/stage700を取得、終了/保存確認済み。core起動flagsを同じ条件へ修正し、通常child E2Eの準備はpure/fake234件・独立レビューpass。通常childの実機は未実施。
+2026-09-10最新: §64を最初に参照。DETACHED比較でAL1/stage700を取得、終了/保存確認済み。core起動flagsを同じ条件へ修正し、通常child E2Eの準備はpure/fake234件・独立レビュー・保存後read-only preflight pass。修正ab147d5を保存済み。通常childの実機は未実施。
 UBR固定の承認済み緩和と実測buildは§31に記録する。
 候補c4fe99eはpure/fake243件と独立レビューを通過。現在の10.0.26200.9445で18 sourceの実read-only preflightもverified。
 限定診断の実childは起動・終了確認済み。本流統合・native受入・formal permissionは引き続き未達。
@@ -1380,3 +1380,12 @@ repository safety/diff-check pass、mainは基準889cfc3のままclean。通常c
 
 次はcore修正を保存してread-only preflightを行い、新規fixtureの通常control1回を判断対象として提示する。
 前回のreturn比較1回は消化済み。S4/native受入・formal/B2/publisher・main統合は未達。
+
+
+core修正・試験・結果・計画をab147d5へ保存した。保存後read-only preflightは1.788秒、
+21 sources/239293 bytes、verified、resource_stop=false、Windows10.0.26200.9445/Python3.14.0、既存runtime hash一致。
+detached-control-preflight.jsonへ保存。child起動・SetThreadContextなし、全acceptance gate no。
+
+通常controlの準備は完了。新規fixture内の固定child操作・拒否確認・report/trace照合・成功時exact-ledger cleanupまで、
+既存child wait30秒/親＋child512 MiB条件の1回について返答を待つ。§6の追加probeの条件を引き継ぐ。
+この問いへの「続けてください」は当該通常control1回への了承として扱い、再確認せず実行する。失敗時の自動再試行なし。
