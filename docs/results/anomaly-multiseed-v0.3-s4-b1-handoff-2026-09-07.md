@@ -2186,3 +2186,38 @@ B2 publisher/marker、runtime closureとconsumer凍結である。今回のCI成
 最終19:30:17Z RAM7.68 GiB/C107.91/D75.36。待機exit0、今回の検証・取得・照合process終了。resources-final.jsonへ保存。
 build26200.9445、boot2026-09-09T10:43:08.5000000+09:00。点の変化でリーク有無を断定しない。
 ローカル検証Pythonは終了済み。別project・既存失敗fixture・旧artifact操作、新runtime導入なし。
+
+## 80. 2026-09-11 共有手計算fixtureの採取とLinux両minor比較
+
+ユーザー「続けてください」を受け、§79の共有fixture payload照合を進めた。
+基準3f3f7ad、実装036ecb474dc8fd975263e0ddbb387f5763750109。
+[詳細記録](anomaly-multiseed-v0.3-s4-b1-shared-fixtures-2026-09-11.md)を参照。
+既存19 methodsの試験中に29 payloadを採取。23はID・判定・保存JSON等の完全一致、
+6はprofile/scoreの未丸め数値で、同じ型・構造とfloat相対/絶対許容差1e-12を要求する。
+通常試験の計算を再利用し、非capture時はfactoryを評価しない。
+payload各512KiB/合計4MiB、JSONL16MiB上限。process全体やfactory構築のメモリ制限ではない。
+新形式ci-unittest.2のみ比較し、29件採取完了・各ownerのpassを必須にした。
+別source/workflow/run/attempt、欠落・重複・不正hash・不正JSON・未完了・不一致を拒否する。
+予定methodが未開始になるclass/module単位skipも保守的に拒否する。
+両Linux試験jobの成功後に第3 jobが小さな2 JSONLを比較し、限定receiptを14日保存する。
+全receiptはnot_completed/formal_permissionfalse/execution_authenticatedfalse。正式入口は閉鎖のまま。
+
+新規13＋既存14の27 tests pass、1.355秒。実所有19 methods選抜も19/19 pass、37.531秒、skip0。
+Windows3.14.0の実採取29/29、payload合計1,178,567 bytes、JSONL1,256,529 bytes。
+local-hand-fixtures.jsonlには基準HEAD・未commit実装raw hash・Windows runtimeを明記。
+保存先artifacts/ci-shared-fixtures-2026-09-11/。テストprocess終了0。
+独立差分レビュー新規P0〜P3=0、担当の試験/native/ネット接続/編集なし、進捗ポーリングなし。
+YAML構造/safety/diff-check pass。科学config/schema/registry、src実装、正式OS pinの変更なし。
+
+036ecb4を候補branchへpush。CI34546440692が実行中。
+URL https://github.com/tyaro/banto-ai/actions/runs/34546440692 。本流889cfc3は変更なし。
+初回状態取得のunexpected EOFは接続障害でありCI再実行の根拠にしない。
+待機は60秒/query timeout30秒/最大24回の単一process。取得ZIPのAPI digest照合と単一member限定展開後に、
+raw JSONL/source/全ID/集計を確認し、CI receiptを手元で再計算して照合する予定。
+採取済みWindows手計算fixtureも同じ29件へ読取比較するが、Windows全回帰/native受入へ算入しない。
+
+UTC00:25:35Z RAM空き7.97GiB/C107.66GiB/D75.36GiB、build26200.9445、
+boot2026-09-09T10:43:08.5000000+09:00。resources-local.jsonへ保存。
+00:30:09Z待機Python private18.61MiB/working25.22MiB。点の変化でリークを断定しない。
+追加Windows native枠は以前の成功で終了したまま。B2/全Windows native/正式OS条件/VM image digest/
+runtime closure/consumer凍結が残る。別projectや既存失敗fixtureは操作していない。
