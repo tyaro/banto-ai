@@ -2209,15 +2209,37 @@ local-hand-fixtures.jsonlには基準HEAD・未commit実装raw hash・Windows ru
 独立差分レビュー新規P0〜P3=0、担当の試験/native/ネット接続/編集なし、進捗ポーリングなし。
 YAML構造/safety/diff-check pass。科学config/schema/registry、src実装、正式OS pinの変更なし。
 
-036ecb4を候補branchへpush。CI34546440692が実行中。
+036ecb4を候補branchへpush。CI34546440692は3 jobsすべてsuccessで終了。
 URL https://github.com/tyaro/banto-ai/actions/runs/34546440692 。本流889cfc3は変更なし。
 初回状態取得のunexpected EOFは接続障害でありCI再実行の根拠にしない。
-待機は60秒/query timeout30秒/最大24回の単一process。取得ZIPのAPI digest照合と単一member限定展開後に、
-raw JSONL/source/全ID/集計を確認し、CI receiptを手元で再計算して照合する予定。
-採取済みWindows手計算fixtureも同じ29件へ読取比較するが、Windows全回帰/native受入へ算入しない。
+待機は60秒/query timeout30秒/最大24回の単一process。完了metadata保存後にjobs取得で接続エラーとなりexit1。
+取得だけを再開し、3 ZIPのAPI digest/bytes照合と単一member限定展開後に、raw JSONL/source/全ID/集計を再検証。
+最終取得/照合processはexit0。CI receiptと手元再計算の全内容が一致した。
+comparison-attempt1、python3.14-attempt1/2の0-byte失敗ZIPは保持するが証拠には使用しない。
+検証済みZIPはcomparison-attempt2、python3.12-attempt1、python3.14-attempt3。CI再実行なし。
+
+実LinuxはUbuntu24.04 x86_64/Python3.12.14・3.14.7、GCC13.3.0、kernel6.17.0-1022-azure。
+各1112 methods中1045 pass/67 skip、failure/error/expected failure/unexpected success0、未開始・重複0。
+compile/manifests/smoke/quality/benchmark/safety/upload、比較job各工程もpass。
+前回成功1099 methodsの相対順序・結果・skip ID/reasonは同じで、追加13 methodsが両minor全pass。
+skip67はWindows固有49/optional Capstone16/Toto2 artifact不存在2。各testと全29 payloadのowner/hashを照合済み。
+両minorのpayload合計各1,178,567 bytes/最大249,753 bytes、29件すべてraw SHA-256も一致。
+記録JSONLは3.12が1,992,469 bytes/hash df8351ae7258d5196c693f35bc90666e3b254fca8aa131abbd6a25ae3dd90b99、
+3.14が1,992,511 bytes/hash 3390a4e74c6ab1722eaa7fb7fc779c1ad450fd7c95bbe9b8e3b7cb7496064517。
+比較receiptは11,842 bytes/hash d04d10961ae7d9b14122c3a5e9798e1faa51e060ef13ccb53adea10b850702f3。
+raw evidenceは同rootのrun-34546440692/へ保存。ImageVersion20260907.300.1は観測値でVM digestではない。
+
+採取済みWindows19 methods/29 payloadも読取専用で比較し、両Linux minorへの58件すべてraw bytes一致。
+採取時の5ファイルraw hashは036ecb4のGit blobと一致し、基準3f3f7adからの10ファイル差分にsrc変更なし。
+windows-linux-selected-comparison.json（15,786 bytes/hash 79bb4603018b0f8c21f5d6d460c36dd40380ce15a77fe3b1f54505c8c63b72b6）へ保存。
+これは選抜Windows fixtureの照合であり、Windows全回帰/native受入へ算入しない。
+production比較器のLinux制限・未受入flagは維持。docs-only保存を実CI revisionと混同しない。
 
 UTC00:25:35Z RAM空き7.97GiB/C107.66GiB/D75.36GiB、build26200.9445、
 boot2026-09-09T10:43:08.5000000+09:00。resources-local.jsonへ保存。
 00:30:09Z待機Python private18.61MiB/working25.22MiB。点の変化でリークを断定しない。
+00:36:01Z RAM7.47GiB/C107.67GiB/D75.36GiB、待機Python private18.64MiB/working25.33MiB。
+最終00:46:47Z RAM8.55GiB/C107.67GiB/D75.36GiB、build/boot同一。resources-final.jsonへ保存。
+今回のローカル試験・待機・取得・照合processすべて終了し、追加バックグラウンド処理なし。
 追加Windows native枠は以前の成功で終了したまま。B2/全Windows native/正式OS条件/VM image digest/
 runtime closure/consumer凍結が残る。別projectや既存失敗fixtureは操作していない。

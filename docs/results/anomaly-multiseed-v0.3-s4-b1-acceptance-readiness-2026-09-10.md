@@ -4,6 +4,7 @@
 補完テスト修正savepoint: `cdbc0a1`。Windows3.14.0一本化の実装savepoint: `9fd3490`。
 2026-09-11追記: Linux CI固定・unittest記録の実装は `3c69f9e`、Linuxのfakeテスト修正は `9846f52` / `7870362`。
 [CI整備・実行記録](anomaly-multiseed-v0.3-s4-b1-ci-evidence-2026-09-11.md)を参照。
+共有fixtureの実装036ecb4は[CI34546440692とWindows選抜照合](anomaly-multiseed-v0.3-s4-b1-shared-fixtures-2026-09-11.md)で検証済み。
 本流 `889cfc3` は変更なし。
 
 限定Windows engineering controlの成功は[前回結果](anomaly-multiseed-v0.3-s4-b1-operation-context-result-2026-09-10.md)を参照。
@@ -18,7 +19,8 @@
 | 境界 | 必須条件 | 現在の証拠・残件 |
 | --- | --- | --- |
 | B1 engineering control | 子のruntime/source/token、実AccessCheck、全操作、置換証跡、所有物cleanup/teardown | 実装 `0b30e63` / 実行HEAD `f15af39` / Windows 26200.9445 / Python 3.14.0で限定成功。全48期待値、9対象削除、残存0。全S4受入とは別 |
-| Linux共通契約 | Ubuntu 24.04 x86_64、Python 3.12/3.14、共通契約と既存stdlib全回帰、safety、実patch/build・image・source・各test結果の記録 | 候補7870362のCI34518948145は両job成功。実Python3.12.14/3.14.7、各1099 methods中1032 pass/67 skip、failure/error0。smoke/quality/benchmark/safetyもpass。各ID・結果・sourceと初回からの66件修復を照合。skipはWindows固有49/optional Capstone16/Toto2 artifact不存在2。VM image digest・共有fixture payloadのplatform間exact照合は未収集で、S4完全受入とは別 |
+| Linux共通契約 | Ubuntu 24.04 x86_64、Python 3.12/3.14、共通契約と既存stdlib全回帰、safety、実patch/build・image・source・各test結果の記録 | 候補036ecb4のCI34546440692は両試験jobと比較job成功。実Python3.12.14/3.14.7、各1112 methods中1045 pass/67 skip、failure/error0。smoke/quality/benchmark/safetyもpass。前回1099 methodsの順序・結果・skipを保持し追加13全pass。skipはWindows固有49/optional Capstone16/Toto2 artifact不存在2。VM image digestは未収集で、S4完全受入とは別 |
+| 選択した共有手計算fixture | Q1〜Q5、M1〜M9、registry/bootstrap/accounting、C0〜C2 profile/scoreの29 payload | Linux両minorの29件、およびWindows3.14.0選抜19 methodsからの同29件を比較し全raw bytes一致。23件exact、数値6件は所定1e-12許容差で判定。CI receiptと手元再計算も一致。選択範囲外のfixtureやWindows全回帰/native受入を代替しない |
 | Windows native受入 | 正式3.14.0の1 runtime。共通回帰、publisher、DACL、独立token/process、競合・非上書き・失敗証跡 | Windows3.12要件を削除済み。各必須検査自体は維持し、全native受入は未完了 |
 | B2 publisher/marker | 新規fixtureで公開・非上書き・競合・marker・失敗証跡を検証 | B1のcontrol成功で完了扱いにしない。未実装・未受入の残件として分離 |
 | S4全体 | 必須platform受入、完全runtime inventory、producer/consumer revision凍結、正式pin上のdev/smoke | 未完了。`require_campaign_acceptance()` は `s4_acceptance_not_frozen` を無条件に返す |

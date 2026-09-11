@@ -298,7 +298,9 @@ fixture所有試験は全pass必須です。予定methodを未開始にするcla
 比較結果は`artifacts/ci-fixtures/comparison.json`へ新規保存し、単独artifactとして14日保持します。
 `matched`は選択したLinux手計算fixtureの照合結果で、Windowsとの比較・全S4受入・実行者認証ではありません。
 `acceptance_status=not_completed`、`formal_permission=false`、`execution_authenticated=false`を維持します。
-VM image identity、Windowsとのpayload照合、runtime closure、正式受入は別の残件です。
+候補036ecb4の実CIは3 jobs成功、各1112 methods中1045 pass/67 skip。選択29 payloadはLinux両minorと
+Windows3.14.0選抜採取の間ですべてraw bytes一致しました。[検証記録](../../docs/results/anomaly-multiseed-v0.3-s4-b1-shared-fixtures-2026-09-11.md)を参照。
+VM image identity、選択範囲外のplatform間検査、runtime closure、正式受入は別の残件です。
 
 `inspect_anomaly_v03.py`は新規のengineering schemaとpure validatorを使うread-only collectorです。
 9つの科学schemaと5 configは変更しません。cleanなfull-SHA checkoutを指定します。
