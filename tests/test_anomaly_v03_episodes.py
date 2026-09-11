@@ -11,6 +11,7 @@ from banto_ai import _anomaly_v03_contract as c
 from banto_ai import anomaly_v03 as v
 from banto_ai import anomaly_v03_episodes as e
 from tests.test_anomaly_v03_scoring import identity
+from tools.ci_shared_fixtures import record
 
 
 def profiles_for(ident):
@@ -62,6 +63,11 @@ def selected(ident, event, ledgers):
 
 
 class MatchingGoldenTests(unittest.TestCase):
+    def record_matching(self, fixture_id, ident, event, rows, incident, episodes):
+        record(fixture_id, self.id(), lambda: {"identity": ident, "event": event,
+               "profile_ids": [p["profile_id"] for p in rows["profiles"]], "scores": rows["scores"],
+               "sources": rows["source_episodes"], "incident": incident, "episodes": episodes})
+
     def test_M1_first_pre_event_support_no_retry(self):
         ident, event, rows = fixture({"T": {-1, 0, 3, 4}})
         incident, episodes = selected(ident, event, rows)
@@ -69,6 +75,7 @@ class MatchingGoldenTests(unittest.TestCase):
         self.assertEqual(incident["selected_candidate_episode_id"], episodes[0]["episode_id"])
         self.assertFalse(incident["causal_detected"])
         self.assertTrue(all(r["matched_event_id"] is None for r in episodes))
+        self.record_matching("M1", ident, event, rows, incident, episodes)
 
     def test_M2_minimum_causal_delay_one_second(self):
         ident, event, rows = fixture({"T": {0, 1}})
@@ -76,23 +83,27 @@ class MatchingGoldenTests(unittest.TestCase):
         self.assertEqual((incident["causal_detected"], incident["delay_seconds"]), (True, 1.0))
         self.assertEqual(incident["support_score_ids"], rows["source_episodes"][0]["support_score_ids"])
         self.assertEqual(len(episodes), 1)
+        self.record_matching("M2", ident, event, rows, incident, episodes)
 
     def test_M3_ended_pre_event_episode_not_a_candidate(self):
         ident, event, rows = fixture({"T": {-2, -1, 2, 3}})
         incident, episodes = selected(ident, event, rows)
         self.assertEqual((incident["candidate_count"], incident["delay_seconds"]), (1, 3.0))
         self.assertEqual(incident["selected_candidate_episode_id"], episodes[1]["episode_id"])
+        self.record_matching("M3", ident, event, rows, incident, episodes)
 
     def test_M4_right_endpoint_is_outside_half_open_window(self):
         ident, event, rows = fixture({"T": {5, 6}})
         incident, episodes = selected(ident, event, rows)
         self.assertEqual((len(episodes), incident["candidate_count"], incident["reason"]), (1, 0, "no_candidate_in_window"))
+        self.record_matching("M4", ident, event, rows, incident, episodes)
 
     def test_M5_first_other_target_does_not_retry(self):
         ident, event, rows = fixture({"U": {0, 1}, "T": {3, 4}})
-        incident, _ = selected(ident, event, rows)
+        incident, episodes = selected(ident, event, rows)
         self.assertEqual((incident["candidate_count"], incident["reason"]), (2, "first_candidate_no_target_onset"))
         self.assertIsNone(incident["selected_source_episode_id"])
+        self.record_matching("M5", ident, event, rows, incident, episodes)
 
     def test_M6_late_target_in_merge_never_moves_group_onset(self):
         ident, event, rows = fixture({"U": {0, 1, 2}, "T": {1, 2}})
@@ -100,18 +111,21 @@ class MatchingGoldenTests(unittest.TestCase):
         self.assertEqual((len(episodes), incident["reason"]), (1, "first_candidate_no_target_onset"))
         self.assertEqual(episodes[0]["onset_ms"], event["start_ms"]+1000)
         self.assertEqual(len(episodes[0]["source_episode_ids"]), 2)
+        self.record_matching("M6", ident, event, rows, incident, episodes)
 
     def test_M7_mode_entry_minimum_delay_two_seconds(self):
         ident, event, rows = fixture({"T": {1, 2}}, mode_entry=True)
-        incident, _ = selected(ident, event, rows)
+        incident, episodes = selected(ident, event, rows)
         self.assertFalse(rows["scores"][0]["available"])
         self.assertEqual((incident["causal_detected"], incident["delay_seconds"]), (True, 2.0))
+        self.record_matching("M7", ident, event, rows, incident, episodes)
 
     def test_M8_equality_does_not_exceed(self):
         ident, event, rows = fixture({"T": {0, 1}}, exact={("T", 1): 6.0})
         incident, episodes = selected(ident, event, rows)
         self.assertEqual(episodes, [])
         self.assertEqual(incident["reason"], "no_candidate_in_window")
+        self.record_matching("M8", ident, event, rows, incident, episodes)
 
     def test_M9_forged_unavailable_support_stops_before_selection(self):
         ident, _, rows = fixture({"T": {0, 1}})
@@ -119,9 +133,12 @@ class MatchingGoldenTests(unittest.TestCase):
         bad.update(score=None, residual=None, available=False, threshold_exceeded=False, streak=0, source_episode_id=None,
                    exclusion_reason="current_target_quality", exclusion_tags=["current_target_quality"])
         before = copy.deepcopy(rows)
-        with self.assertRaises(v.V03ValidationError), patch.object(e, "_context", side_effect=AssertionError("matching started before structure check")):
+        with self.assertRaises(v.V03ValidationError) as caught, patch.object(e, "_context", side_effect=AssertionError("matching started before structure check")) as context:
             e.match_incidents(ident, **rows)
         self.assertEqual(rows, before)
+        context.assert_not_called()
+        record("M9", self.id(), lambda: {"rejected": type(caught.exception).__name__, "context_calls": context.call_count,
+                                         "scores": rows["scores"], "unchanged": rows == before})
 
 
 class EpisodeAdversarialTests(unittest.TestCase):
@@ -255,6 +272,8 @@ class AccountingTests(unittest.TestCase):
         self.assertTrue(all(a["metric"]["denominator"] == 1800 and a["metric"]["numerator"] == 1740 for a in metrics["availability"]))
         self.assertEqual(metrics["delay_summary"]["count"], 0)
         self.assertIsNone(metrics["delay_summary"]["mean"])
+        record("accounting", self.id(), lambda: {"identity": self.ident, "score_count": len(self.scores),
+                                                 "incidents": self.incidents, "metrics": metrics})
 
     def test_clean_time_not_multiplied_by_signals_and_core_mask_matches_stress(self):
         core = identity(1)

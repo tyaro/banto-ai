@@ -17,6 +17,10 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from tools import ci_shared_fixtures as shared
+
 REPORT = Path("artifacts/ci-tests/unittest.jsonl")
 MAX_REPORT_BYTES = 16 * 1024 * 1024
 
@@ -157,14 +161,17 @@ def main():
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("xb") as output:
         journal = Journal(output)
-        journal.emit("run_started", report_version="ci-unittest.1", started_utc=datetime.now(timezone.utc).isoformat(),
+        journal.emit("run_started", report_version="ci-unittest.2", started_utc=datetime.now(timezone.utc).isoformat(),
                      runtime=runtime, source=source, acceptance_status="not_completed", formal_permission=False)
         # An interruption/discovery failure leaves a partial journal without run_finished.
         suite = unittest.defaultTestLoader.discover(str(ROOT / "tests"), top_level_dir=str(ROOT))
-        summary = run_suite(suite, journal.emit, sys.stderr)
+        with shared.capture(journal.emit) as fixtures:
+            summary = run_suite(suite, journal.emit, sys.stderr)
+        summary.update(shared_fixture_version=shared.VERSION, shared_fixtures=len(fixtures.seen),
+                       shared_fixtures_complete=fixtures.complete())
         unchanged = source_identity(ROOT) == source
         journal.emit("run_finished", **summary, source_unchanged=unchanged, acceptance_status="not_completed", formal_permission=False)
-        return 0 if summary["unittest_success"] and unchanged else 1
+        return 0 if summary["unittest_success"] and unchanged and fixtures.complete() else 1
 
 
 if __name__ == "__main__":

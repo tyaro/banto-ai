@@ -273,18 +273,32 @@ S1/S2 semantics、凍結planと過去resultは変更していません。
 
 ### S4-A engineering inspection（受入未完了・実行許可なし）
 
-Linux共通CIはUbuntu24.04 x86_64 / Python3.12・3.14の2 jobsを使います。
+Linux共通CIはUbuntu24.04 x86_64 / Python3.12・3.14の2試験jobsと、両者の成功後に動く比較jobを使います。
 `tools/ci_test_report.py`が従来と同じtests全体のunittest discoveryを行い、実patch/build、
 kernel/architecture、clean source SHA、workflow hash、各testの予定ID・開始・結果・終了を
-`artifacts/ci-tests/unittest.jsonl`へ逐次保存します。Windowsではdiscoveryより前に拒否します。
+`artifacts/ci-tests/unittest.jsonl`（`ci-unittest.2`）へ逐次保存します。Windowsではdiscoveryより前に拒否します。
 失敗・skip理由・fixture error・subtest失敗・expected failure・unexpected success・停止状態を区別し、
 途中停止やsource変化を成功にしません。`run_finished`がない記録は未完了です。
 記録は16MiBまで、新規作成のみ。これは保存量の上限で、unittest全体のメモリ上限ではありません。
 CIは失敗後もsafetyを試行し、単一のJSONLだけを各minor/run/attempt別に14日間保存します。
 全工程の成否はCI jobログも照合してください。このファイルはunittest工程の記録です。
 ImageOS/ImageVersionは観測値として保存しますが、VM image digestの代わりにはしません。
-image digestは`null/not_collected`、S4受入は未完了のままです。CIの実行・imageの厳密な同一性確認・
-必要なskipの分類と共有fixtureの両minor比較は、候補revision上の別の受入確認として残ります。
+image digestは`null/not_collected`、S4受入は未完了のままです。
+
+既存の19手計算fixture試験中に29 payloadを採取します。Q1〜Q5、M1〜M9、seed registry、
+bootstrap hash/slices、accounting、C0〜C2のprofile/scoreを対象に、追加のfixture計算runを行いません。
+ID・判定・丸め済み値・保存JSON等の23 payloadはcanonical bytes完全一致、profile/scoreの未丸め数値6 payloadは
+同じ型・構造を要求した上でfloatだけを計画書の相対/絶対許容差`1e-12`で比較します。
+captureが無効な通常試験では記録用factoryを評価しません。payloadは各512KiB、合計4MiBまでです。
+この上限は保存bytesの制限であり、factoryやJSON構築を含むprocess全体のメモリ制限ではありません。
+
+`tools/ci_compare_fixtures.py`は同じworkflow/run/attempt/sourceの2 JSONLのみを比較し、
+欠落・重複・別owner・hash不一致・異なる予定ID/結果/skip・未完了・旧形式を拒否します。
+fixture所有試験は全pass必須です。予定methodを未開始にするclass/module単位skipも保守的に拒否します。
+比較結果は`artifacts/ci-fixtures/comparison.json`へ新規保存し、単独artifactとして14日保持します。
+`matched`は選択したLinux手計算fixtureの照合結果で、Windowsとの比較・全S4受入・実行者認証ではありません。
+`acceptance_status=not_completed`、`formal_permission=false`、`execution_authenticated=false`を維持します。
+VM image identity、Windowsとのpayload照合、runtime closure、正式受入は別の残件です。
 
 `inspect_anomaly_v03.py`は新規のengineering schemaとpure validatorを使うread-only collectorです。
 9つの科学schemaと5 configは変更しません。cleanなfull-SHA checkoutを指定します。

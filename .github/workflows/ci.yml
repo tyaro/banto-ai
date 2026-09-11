@@ -42,3 +42,35 @@ jobs:
           path: artifacts/ci-tests/unittest.jsonl
           if-no-files-found: error
           retention-days: 14
+
+  compare-shared-fixtures:
+    needs: test
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+      - uses: actions/download-artifact@v8
+        with:
+          name: unittest-ubuntu24-python3.12-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/ci-fixtures/python3.12
+          digest-mismatch: error
+      - uses: actions/download-artifact@v8
+        with:
+          name: unittest-ubuntu24-python3.14-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/ci-fixtures/python3.14
+          digest-mismatch: error
+      - name: Compare shared hand fixtures
+        run: python -B tools/ci_compare_fixtures.py
+      - name: Repository safety guard
+        if: always()
+        run: python tools/safety_check.py
+      - name: Preserve shared fixture comparison
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: shared-fixtures-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/ci-fixtures/comparison.json
+          if-no-files-found: error
+          retention-days: 14

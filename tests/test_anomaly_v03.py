@@ -219,6 +219,9 @@ class V03ContractTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(canonical).hexdigest(), "fa072f5299132fc22cce471c94ca189ddfc0f3acd27c2c5201bc31a2a9287505")
         self.assertEqual([r["seeds"] for r in v.seed_registry()["entries"]],list(output.values()))
         self.assertEqual(len(used),60)
+        from tools.ci_shared_fixtures import record
+        record("seeds", self.id(), lambda: {"seeds": output, "seed_count": len(used)-10,
+                                            "canonical_sha256": hashlib.sha256(canonical).hexdigest()})
 
     def test_full_bootstrap_independent_hash_and_golden(self):
         # Independent loop, hex conversion and streaming digest, no production draw helper.
@@ -247,6 +250,9 @@ class V03ContractTests(unittest.TestCase):
         self.assertEqual(registered["indices_raw_sha256"], digest.hexdigest())
         for draw in registered["golden_draws"]:
             self.assertEqual(draw["indices"],golden[draw["replicate"]])
+        from tools.ci_shared_fixtures import record
+        record("bootstrap", self.id(), lambda: {"bytes": len(actual), "raw_sha256": hashlib.sha256(actual).hexdigest(),
+                                                "golden_draws": [{"replicate": i, "indices": list(actual[i*40:(i+1)*40])} for i in (0,1,24999,49999)]})
 
     def test_strict_json_rejects_duplicates_nonfinite_and_bad_encoding(self):
         for raw in (b'{"x":1,"x":2}', b'{"nested":{"x":1,"x":2}}', b'NaN', b'Infinity', b'-Infinity', b'1e9999', b'\xff', b'"\\ud800"', b'\xef\xbb\xbf{}'):

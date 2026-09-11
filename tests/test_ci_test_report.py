@@ -142,6 +142,7 @@ class CiTestReportTests(unittest.TestCase):
     def invoke_main(self, root, suite, identities):
         with patch.object(ci, "ROOT", root), patch.object(ci, "runtime_metadata", return_value={"fixture": True}), \
                 patch.object(ci, "source_identity", side_effect=identities), \
+                patch.object(ci.shared, "EXPECTED", {}), \
                 patch.object(unittest.TestLoader, "discover", return_value=suite), patch.object(ci.sys, "stderr", io.StringIO()):
             return ci.main()
 

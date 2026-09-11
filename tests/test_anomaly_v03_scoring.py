@@ -16,6 +16,7 @@ from banto_ai import _anomaly_v03_contract as c
 from banto_ai import _anomaly_v03_numeric as n
 from banto_ai import anomaly_v03 as v
 from banto_ai import anomaly_v03_scoring as s
+from tools.ci_shared_fixtures import record
 
 
 def identity(candidate=0, layout=0, stratum="core"):
@@ -48,22 +49,31 @@ def obs(sample, *, mode="stopped", recipe="stop", equipment="motor-01", values=(
 
 class QuantizationAndCaptureTests(unittest.TestCase):
     def test_Q1_overlay_before_rounding(self):
-        self.assertEqual(s.quantize_observation(max(0, 1.0000014*(1-0.55))), 0.450001)
-        self.assertEqual(s.quantize_observation(s.quantize_observation(1.0000014)*(1-0.55)), 0.45)
+        correct = s.quantize_observation(max(0, 1.0000014*(1-0.55)))
+        premature = s.quantize_observation(s.quantize_observation(1.0000014)*(1-0.55))
+        self.assertEqual(correct, 0.450001)
+        self.assertEqual(premature, 0.45)
+        record("Q1", self.id(), lambda: {"overlay_then_round": correct, "premature_round": premature})
 
     def test_Q2_finalizer_does_not_round_or_replace_normal_latent_state(self):
         normal = {"temperature": 24.123456789}
-        self.assertEqual(s.quantize_observation(normal["temperature"]+8.0), 32.123457)
+        result = s.quantize_observation(normal["temperature"]+8.0)
+        self.assertEqual(result, 32.123457)
         self.assertEqual(normal["temperature"], 24.123456789)
+        record("Q2", self.id(), lambda: {"normal": normal, "observation": result})
 
     def test_Q3_final_quality_null_is_not_imputed(self):
         normal = 24.123456789
         masked, quality = None, "missing"
-        self.assertIsNone(s.quantize_observation(masked))
+        result = s.quantize_observation(masked)
+        self.assertIsNone(result)
         self.assertEqual((normal, quality), (24.123456789, "missing"))
+        record("Q3", self.id(), lambda: {"normal": normal, "quality": quality, "observation": result})
 
     def test_Q4_binary64_ties(self):
-        self.assertEqual([s.quantize_observation(x) for x in (0.0078125, 0.0234375)], [0.007812, 0.023438])
+        result = [s.quantize_observation(x) for x in (0.0078125, 0.0234375)]
+        self.assertEqual(result, [0.007812, 0.023438])
+        record("Q4", self.id(), lambda: result)
 
     def test_Q5_signed_zero_numeric_and_saved_JSON_bytes(self):
         value = s.quantize_observation(-0.0000004)
@@ -74,6 +84,8 @@ class QuantizationAndCaptureTests(unittest.TestCase):
         raw, digest = encode([row])
         projected = s.decode_saved_observations(raw, expected_sha256=digest)[0]
         self.assertEqual(math.copysign(1, projected.values[0]), -1)
+        record("Q5", self.id(), lambda: {"value": value, "saved_jsonl": raw.decode("utf-8"),
+                                         "sha256": digest, "decoded_value": projected.values[0]})
 
     def test_nonfinite_bool_and_unquantized_rejected(self):
         for value in (True, False, float("nan"), float("inf"), -float("inf"), 10**1000):
@@ -266,7 +278,11 @@ class ProfileAndScoreTests(unittest.TestCase):
                 self.assertEqual(len(profile.fit_samples), 0 if i == 0 else 600)
                 self.assertEqual(len(profile.calibration_samples), 290)
                 self.assertGreater(profile.scale, 0)
-            v.validate_ledger_rows(identity(i), events=v.event_inventory(identity(i)), profiles=bank.ledger_rows(), scores=[], source_episodes=[], equipment_episodes=[], incidents=[])
+            ledger = bank.ledger_rows()
+            v.validate_ledger_rows(identity(i), events=v.event_inventory(identity(i)), profiles=ledger, scores=[], source_episodes=[], equipment_episodes=[], incidents=[])
+            numeric = {"phase_medians", "center", "scale", "c2_state"}
+            record(f"profiles-C{i}", self.id(), lambda: [{k: value for k, value in row.items() if k not in numeric} for row in ledger])
+            record(f"profile-values-C{i}", self.id(), lambda: {row["profile_id"]: {k: row[k] for k in sorted(numeric)} for row in ledger})
         with self.assertRaises(FrozenInstanceError): self.banks[1].profiles[0].center = 999
         exported = self.banks[2].ledger_rows(); exported[0]["c2_state"]["scales"][0] = 999
         self.assertNotEqual(self.banks[2].ledger_rows()[0]["c2_state"]["scales"][0], 999)
@@ -287,6 +303,8 @@ class ProfileAndScoreTests(unittest.TestCase):
                 self.assertEqual(row["score"], abs(expected-profile.center)/profile.scale)
             self.assertEqual(len(row["dependencies"]), 8 if i == 2 else 2)
             self.assertTrue(any(r["score"] != round(r["score"], 6) for r in rows if r["available"]))
+            record(f"scores-C{i}", self.id(), lambda: [{k: value for k, value in row.items() if k not in ("score", "residual")} for row in rows])
+            record(f"score-values-C{i}", self.id(), lambda: {row["score_id"]: {k: row[k] for k in ("residual", "score")} for row in rows})
 
     def test_test_future_values_do_not_change_fit_or_earlier_scores(self):
         changed = copy.deepcopy(self.rows)
