@@ -305,6 +305,9 @@ VM image identity、選択範囲外のplatform間検査、runtime closure、正�
 B2公開部品は[状態・完了印のpureモデル](../../docs/anomaly-v03-publication-model-design.md)を
 tests/fixturesへ追加した段階です。実機接続前の順序・失敗/不明・teardownの設計検証で、production APIはありません。
 16 pure/fault＋関連3件の[検証結果](../../docs/results/anomaly-multiseed-v0.3-s4-b2-model-2026-09-11.md)を保存しています。
+続く[保持handleのrename部品](../../docs/anomaly-v03-rename-adapter-design.md)もtests/fixturesの注入backend用です。
+同名競合・応答喪失・停止後の呼出し抑止・資源エラーを模擬表で確認し、新規18＋既存16の
+[34件がpass](../../docs/results/anomaly-multiseed-v0.3-s4-b2-rename-adapter-2026-09-11.md)。実Win32 backendと受入は未完了です。
 
 `inspect_anomaly_v03.py`は新規のengineering schemaとpure validatorを使うread-only collectorです。
 9つの科学schemaと5 configは変更しません。cleanなfull-SHA checkoutを指定します。

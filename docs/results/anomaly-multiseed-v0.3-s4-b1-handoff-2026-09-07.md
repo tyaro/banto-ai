@@ -2277,3 +2277,38 @@ C空きは今回開始前から前回107.67GiBより減少。原因は未調査�
 今回の検証/記録processは終了、常駐処理なし。別project・既存failure roots・共有runtimeへの操作なし。
 次はnative adapterの具体設計、marker/親directoryの保護、保持handleによる同一物とno-replace、
 競合/flush/close/resource失敗証跡を詰める。実機受入・正式OS整合・VM digest・runtime closure/consumerは未完了。
+
+## 82. 2026-09-11 B2保持handle renameの注入backend部品
+
+ユーザー「続けてください」を受け、基準be61da8から2つの固定renameの接続面を具体化した。
+実装savepoint dd318aec56f8e43909ff6df6192d62e11aa914bd。
+[結果](anomaly-multiseed-v0.3-s4-b2-rename-adapter-2026-09-11.md)と[設計](../anomaly-v03-rename-adapter-design.md)を参照。
+tests/fixturesにのみ実装し、DLLロード/実Win32 backend/production入口は追加していない。
+
+stage→payload、marker-pending.json→.completeは借用source handleからno-replace renameを要求する案。
+親/sourceのvolume/file ID・種別・marker hashを固定し、begin前や再検査失敗後はbackendを呼ばない。
+backendが停止・再入エラーを握り潰した場合もpendingの再確認で次操作を止める。
+応答喪失はunknown、記録済みcommit後の異常はconfirmedのまま全体停止。再試行・自動cleanupなし。
+既存S3 hardlink marker、D2のabsolute target経路は不変。handle所有終了は呼出側の別工程。
+Win64要求のABIと公式RootDirectory記述を照合したが、相対renameの実API挙動は未確認。
+
+独立したhandle/object/name表と別decoderによる新規18件＋既存model16件の34件がpass。
+初回0.028秒、既知資源WinError1451〜1454の追加後は0.021秒。両回failure/error/skip0。
+独立レビュー初回P2（WinErrorの資源分類漏れ）を是正。再レビューと最終小差分確認の新規P0〜P3は0。
+資源分類は8/14/39/112/1450〜1455/1816、MemoryError/BudgetStop、cause/context/groupを含む。
+既知集合の網羅範囲を限定し、未知エラーでも停止する。担当の試験/native/ネット/編集なし、進捗ポーリングなし。
+repository safety / staged diff-check pass。試験対象4ファイルは確定Git blobとraw bytes一致。
+全記録not_completed/formal_permissionfalse/execution_authenticatedfalse。旧Linux CIへ件数加算しない。
+
+小さな記録はartifacts/rename-adapter-2026-09-11/へ新規保存。
+initial-checks.jsonl 24222 bytes、final-checks.jsonl 24224 bytes/hash63cfad456db4af0c3f6a9e56fcef7619e358bd958094ebbafa1e4dde71ca846f。
+savepoint-evidence.jsonにsource/hash一致、確定commit、初回と最終の区別、レビュー是正を記録した。
+開始UTC02:46:02Z RAM8.54GiB/C105.38GiB/D75.36GiB、最終03:04:14Z RAM7.60GiB/C105.37GiB/D75.36GiB。
+build26200.9445、boot2026-09-09T10:43:08.5000000+09:00。resources-final.jsonへ保存。
+点のRAM変化を本作業のリークへ帰属させない。試験・記録process終了、常駐処理なし。
+別project/旧failure fixture/共有runtimeへの操作、新runtime導入、push/merge/CI起動なし。本流889cfc3不変。
+
+次はnative backendのfixture/全ancestorの保持と所有終了、marker/親directory保護、
+payload子handleとdirectory renameの両立、flush/close失敗時のprivate bytes保持を具体化する。
+実機試行の範囲・資源上限を具体化してから接続し、前回成功で終了したB1枠を流用しない。
+実Win32受入、正式OS整合、VM image digest、runtime closure/consumer、S4受入は未完了。
