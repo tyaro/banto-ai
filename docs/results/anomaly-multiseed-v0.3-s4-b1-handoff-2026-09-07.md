@@ -2,12 +2,12 @@
 
 状態: **限定Windows engineering control成功 / Linux CI両minor成功 / no integration / no formal permission**
 
-2026-09-11最新: §79のLinux CI成功（候補7870362、各1032 pass/67 skip）、§78のWindows3.14.0一本化、§76の実機成功を最初に参照。実装0b30e63のRC＋Everyone候補で、子の全48期待値・報告照合・成功cleanup・teardownが通過した。
+2026-09-11最新: §81のB2 pureモデル（e42a8e5、実機未接続）、§80のLinux CI成功と共有29 payload一致（036ecb4、各1045 pass/67 skip）、§78のWindows3.14.0一本化、§76の実機成功を最初に参照。実装0b30e63のRC＋Everyone候補で、子の全48期待値・報告照合・成功cleanup・teardownが通過した。
 専用fixture9対象の削除を確認し、残存0、資源停止なし。最大3回の了承を受領し、1回目の成功でその試行枠を終了した。残り2回は実行しない。
 実行前の選抜pure/fake293件と独立差分レビュー、実行内27 source preflightも通過。補完・関連78件は指定Capstone5.0.7でpass、今回の要件改訂に対応する25件もpass。全回帰ではない。
-現在のruntimeはWindows10.0.26200.9445/Python3.14.0。UBR固定緩和は§31、直近の実測資源・bootは§79に記録する。
+現在のruntimeはWindows10.0.26200.9445/Python3.14.0。UBR固定緩和は§31、直近の実測資源・bootは§81に記録する。
 Windows Python3.12受入は要件から削除済み。3.14.0へ一本化しLinux3.12/3.14は維持する。§77の返答待ちは解消した。
-本流統合、formal/B2/publisherは未完了・未許可。
+B2はpureモデルの設計・検証に着手。実機publisher/本流統合/正式受入は未完了で、formal入口は閉じたまま。
 
 以下の§1〜§10の初期結論・commit一覧・試験数・blocked表記は作成時点の履歴であり、最新のchild E2E結果ではない。
 cleanup/置換traceの修正履歴は§11〜17、起動診断と逐次是正は§18〜75を参照。
@@ -2243,3 +2243,37 @@ boot2026-09-09T10:43:08.5000000+09:00。resources-local.jsonへ保存。
 今回のローカル試験・待機・取得・照合processすべて終了し、追加バックグラウンド処理なし。
 追加Windows native枠は以前の成功で終了したまま。B2/全Windows native/正式OS条件/VM image digest/
 runtime closure/consumer凍結が残る。別projectや既存失敗fixtureは操作していない。
+
+## 81. 2026-09-11 B2公開状態・完了印のpureモデル
+
+ユーザー「続けてください」を受け、基準f9f3ea5からB2の実機接続前の契約モデルを具体化した。
+実装savepoint e42a8e55768278ad10388b8f4017a308aa74ebd8。
+[結果](anomaly-multiseed-v0.3-s4-b2-model-2026-09-11.md)と[設計](../anomaly-v03-publication-model-design.md)を参照。
+tests/fixtures/anomaly_v03_publication_model.pyはI/Oなしの単一attempt journalとtoy marker部品。
+prepare/verify_prepared/seal_payload/rename_payload/verify_final/commit_markerを固定順序で扱い、
+別のteardown成功までcompleteにしない。操作を実行したことは証明せず、trusted callerの観測をモデル化する。
+mutationの成功応答不明はunknown、検査失敗はfailed、未来slotはnot_startedを残す。
+commit後teardown失敗はcommit confirmed/model stopped。未公開へ巻き戻さず再試行を認めない。
+順序違反の握り潰し、二重操作、早い完了、後発resource stop、snapshot参照共有を反証試験した。
+
+toy markerはsource revisionと全payloadのpath/bytes/hashから構成し、external marker pinとexact再構成で照合。
+最大8 files、各64KiB/合計256KiB、path128文字、marker16KiB。case aliasとfile/ancestor衝突も拒否。
+trusted inputsとpinを両方交換できるcallerには独立意味検査が必要。semantic検査・実行認証の主張なし。
+全出力not_completed/formal_permissionfalse/execution_authenticatedfalse。
+src、科学config/schema/registry、D2 current-only32/historical88、正式OS pinは変更していない。
+既存S3 markerや本番publisherへ接続せず、native/ACL/token操作、正式campaign、B1枠の再開なし。
+
+pure/fault16件pass、0.009秒。SourceCollector2＋D2 exact inventory1も3/3 pass、11.024秒。failure/error/skip0。
+独立read-onlyレビュー2範囲とも新規P0〜P3=0。担当の試験/native/ネット/編集なし、進捗ポーリングなし。
+最初のdiff-checkがtest末尾の空行を検出して除去。試験後の差はその1行だけとhashで照合。
+repository safety/最終diff-check pass。小さな記録はartifacts/publication-model-2026-09-11/。
+local-checks.json（3372 bytes/hash7071316a99db3707d7cbbd0b3e6ba2b5a968907a711b53c1610a6beef8740fb4）、
+source-boundary-checks.jsonl、model-examples.json（8個のin-memory例）、savepoint-evidence.jsonへ保存した。
+今回はローカルWindows3.14.0のみの検証。前回CIのpass数へ足さない。push/merge/CI起動なし、本流889cfc3不変。
+
+開始UTC01:12:08Z RAM8.32GiB/C105.51GiB/D75.36GiB、最終01:28:35Z RAM8.38GiB/C105.56GiB/D75.36GiB。
+build26200.9445、boot2026-09-09T10:43:08.5000000+09:00。resources-final.jsonへ保存。
+C空きは今回開始前から前回107.67GiBより減少。原因は未調査で、この作業やリークへ帰属させない。
+今回の検証/記録processは終了、常駐処理なし。別project・既存failure roots・共有runtimeへの操作なし。
+次はnative adapterの具体設計、marker/親directoryの保護、保持handleによる同一物とno-replace、
+競合/flush/close/resource失敗証跡を詰める。実機受入・正式OS整合・VM digest・runtime closure/consumerは未完了。

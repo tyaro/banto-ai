@@ -302,6 +302,10 @@ fixture所有試験は全pass必須です。予定methodを未開始にするcla
 Windows3.14.0選抜採取の間ですべてraw bytes一致しました。[検証記録](../../docs/results/anomaly-multiseed-v0.3-s4-b1-shared-fixtures-2026-09-11.md)を参照。
 VM image identity、選択範囲外のplatform間検査、runtime closure、正式受入は別の残件です。
 
+B2公開部品は[状態・完了印のpureモデル](../../docs/anomaly-v03-publication-model-design.md)を
+tests/fixturesへ追加した段階です。実機接続前の順序・失敗/不明・teardownの設計検証で、production APIはありません。
+16 pure/fault＋関連3件の[検証結果](../../docs/results/anomaly-multiseed-v0.3-s4-b2-model-2026-09-11.md)を保存しています。
+
 `inspect_anomaly_v03.py`は新規のengineering schemaとpure validatorを使うread-only collectorです。
 9つの科学schemaと5 configは変更しません。cleanなfull-SHA checkoutを指定します。
 
