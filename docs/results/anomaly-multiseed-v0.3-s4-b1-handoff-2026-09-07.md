@@ -2312,3 +2312,40 @@ build26200.9445、boot2026-09-09T10:43:08.5000000+09:00。resources-final.json�
 payload子handleとdirectory renameの両立、flush/close失敗時のprivate bytes保持を具体化する。
 実機試行の範囲・資源上限を具体化してから接続し、前回成功で終了したB1枠を流用しない。
 実Win32受入、正式OS整合、VM image digest、runtime closure/consumer、S4受入は未完了。
+
+## 83. 2026-09-11 B2終端handle解放・権限接続設計
+
+ユーザー「続けてください」を受け、基準e3317f9から最大32の所有handleの終端解放を実装した。
+実装savepoint 8f96f3d12b9ec2d2ec01460a28d9730b0ab80bc1。
+[結果](anomaly-multiseed-v0.3-s4-b2-handle-owner-2026-09-11.md)と[設計](../anomaly-v03-handle-lifecycle-design.md)を参照。
+tests/fixtures/anomaly_v03_handle_owner.pyは注入CloseHandle backendのみ。実取得/ACL/flush/native操作なし。
+
+構築成功までcaller所有。親indexの順序・同volume・同handle/identity重複なしを検証して管理slotを確保する。
+終端finishは公開途中なら先に停止し、子から親へ各handleのcloseを1回ずつ試す。
+失敗後も別handleの解放は試みるが、公開・再検査・path削除・未知handleの再closeを行わない。
+close応答喪失後に同じ数字が別handleへ再利用される反例を試験し、二度目のcloseを抑止した。
+元primaryは同じ例外を再送出、後発resource stopは昇格。commit確定と公開停止は保持する。
+
+新規17＋既存34＝51件pass、0.043秒。独立レビューP2は、teardown記録失敗後のstopも失敗すると
+元primaryを隠す経路。二次障害も捕捉し、ownerのjournal_finalization=unknownを残すよう是正。
+primary有無×記録前後の4 casesを1 methodとして追加し、最終18＋34＝52件pass、0.052秒。
+両回failure/error/skip0。raw journalにcompleteが残る故障でも例外とowner unknownを無視して成功にしない。
+再レビュー新規P0〜P3=0、担当の実行/native/ネット/編集なし、進捗ポーリングなし。
+repository safety/staged diff-check pass。最終試験の6 source filesは確定Git blobとraw bytes一致。
+
+設計書にwriterのGENERIC_WRITEによるflush→照合→close、検査pin取得とDACL固定、
+子handle事前解放、stage/markerの保持DELETE handle、最終名確定、private証跡を具体化した。
+権限/share条件は候補で、保護後の相対renameは実機未確認。既存祖先のDACLを変える案ではない。
+今回の終端ownerに取得途中の失敗追跡・事前close・借用排他・安全なfixture清掃があるとは扱わない。
+全記録not_completed/formal_permissionfalse/execution_authenticatedfalse。旧Linux CIへ件数加算なし。
+
+新規ignored root artifacts/handle-owner-2026-09-11/に初回/最終JSONLとsavepoint-evidence.jsonを保存。
+最終JSONL36939 bytes/hash936eb7df0034d0935581306856d1eec562f54260e1d38e6311d438710071d9bb。
+開始UTC11:00:16Z RAM5.52GiB/C103.02GiB/D75.20GiB、最終11:09:53Z RAM5.49GiB/C103.02GiB/D75.20GiB。
+build26200.9445、boot2026-09-09T10:43:08.5000000+09:00を記録。resources-final.jsonへ保存。
+開始前から前回より空きが減っていたが、本作業やリークへ帰属させない。短い試験processはすべて終了。
+常駐処理・別project/旧failure fixture/共有runtime操作なし。push/merge/CI起動なし。本流889cfc3不変。
+
+次は取得途中失敗の所有移管、writer/子handle事前解放と後続操作禁止、private証跡の保存予算を実装し、
+native試行の具体的な対象・時間/メモリ/空きdisk等の上限をレビュー可能にする。
+B1終了済み試行枠を流用しない。native全受入、正式OS整合、VM digest、runtime closure/consumer、S4は未完了。

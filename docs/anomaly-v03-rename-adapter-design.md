@@ -68,6 +68,9 @@ backendの元例外は伝播するが、journalへ例外本文・pathを複写�
 
 ## native接続前の残件
 
+終端の所有handle解放は[所有終了・権限接続設計](anomaly-v03-handle-lifecycle-design.md)の
+注入backend部品で具体化した。取得途中の所有移管、事前writer/子handle解放、実権限検証は別の残件である。
+
 新規fixtureの所有確認と全ancestorのhandle保持、DELETE等の取得rights、share mode、link/reparse/ADSの検査、
 payload子handle保持とdirectory renameの両立、marker/親directoryのDACL保護とcommit可能性、
 flush/close/競合時の実証跡とprivate bytes保持、独立tokenの実効権限を別途実装・検証する。
