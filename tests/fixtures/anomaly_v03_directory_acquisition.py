@@ -185,7 +185,7 @@ class WindowsDirectoryBackend:
         sddl = win._dacl(self._user, "private", True)[0]
         self._descriptor_state = "allocating"
         self._descriptor = api.descriptor(sddl)
-        owned._need(rename._handle(self._descriptor), "directory_descriptor")
+        owned._need(rename._handle(self._descriptor_address()), "directory_descriptor")
         self._descriptor_state = "owned"
         self._security = win._SA(C.sizeof(win._SA), self._descriptor, False)
         self._arguments = (str(self._path), ROOT_ACCESS, SHARE_READ, DISALLOW_REDIRECTS, C.byref(self._security))
@@ -234,13 +234,17 @@ class WindowsDirectoryBackend:
     def get_last_error(self):
         return C.get_last_error()
 
+    def _descriptor_address(self):
+        # Existing _Api.descriptor returns an H cell, not its integer value.
+        return self._descriptor.value if type(self._descriptor) is C.c_void_p else self._descriptor
+
     def release(self):
         if self._released:
             return
         self._released = True
         if self._called and not self._returned:
             self._descriptor_state = "retained_unknown"  # Do not free possible in-flight input.
-        elif rename._handle(self._descriptor):
+        elif rename._handle(self._descriptor_address()):
             self._descriptor_state = "free_unknown"  # No second LocalFree on reply loss.
             owned._need(not self._api.k.LocalFree(self._descriptor), "directory_descriptor_free")
             self._descriptor_state = "freed"

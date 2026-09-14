@@ -52,7 +52,7 @@ class FakeApi:
     def descriptor(self, sddl):
         self.hit("descriptor")
         assert sddl == win._dacl(USER, "private", True)[0]
-        return 808
+        return C.c_void_p(808)
 
     def create(self, *args):
         self.arguments = args
@@ -79,7 +79,7 @@ class FakeApi:
 
     def free(self, pointer):
         self.hit("free")
-        assert pointer == 808
+        assert type(pointer) is C.c_void_p and pointer.value == 808
         return None
 
 
