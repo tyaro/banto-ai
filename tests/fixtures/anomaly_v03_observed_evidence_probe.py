@@ -29,7 +29,7 @@ def _notice():
         pass
 
 
-def main():
+def main(*, scenario=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--expected-head", required=True)
     parser.add_argument("--attempt", type=int, choices=(1, 2), required=True)
@@ -37,7 +37,8 @@ def main():
     actual = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     if actual != args.expected_head or subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT):
         raise ValueError("probe_requires_exact_clean_head")
-    attempt = BASE / f"attempt-{args.attempt}"
+    probe_base = BASE if scenario is None else scenario.base
+    attempt = probe_base / f"attempt-{args.attempt}"
     attempt.mkdir()  # Exclusive new attempt. Existing BASE only.
     source, sink, group = WindowsPrivateSink(), WindowsPrivateSink(), bridge.AcquiredOwner()
     failure, resource_stop = None, False
@@ -66,7 +67,7 @@ def main():
                  "private_bytes": memory.private, "working_bytes": memory.working,
                  "peak_working_bytes": memory.peak_working, "peak_commit_bytes": memory.peak_pagefile,
                  "available_ram_bytes": performance.available * performance.page_size,
-                 "free_disk_bytes": shutil.disk_usage(BASE).free}
+                 "free_disk_bytes": shutil.disk_usage(probe_base).free}
         points.append(point)
         if point["elapsed_seconds"] > 40 or memory.private > 256 * 1024**2 or memory.working > 384 * 1024**2 \
                 or point["available_ram_bytes"] < 2 * 1024**3 or point["free_disk_bytes"] < 2 * 1024**3:
@@ -100,14 +101,23 @@ def main():
                                        bindings=((1, "facts.json"), (2, None)), private_indices=(0, 1, 2), user=source._user)
         if len(record.raw) > 64 * 1024:
             raise MemoryError("evidence_probe_budget")
+        if scenario is not None:
+            scenario.before_release(source, group, record)
         barrier = prep.EvidenceBarrier(sink, owner=group.owner, protected=(0,))
         barrier.save_and_release(record, (1, 2))
         owned._need(barrier.snapshot()["steps"][0]["state"] == "released", "barrier_not_released")
+        if scenario is not None:
+            scenario.after_release()
         budget()
     except BaseException as error:
         failed(error)
     finally:
         # Only terminal ownership release after failure/resource stop.
+        if scenario is not None:
+            try:
+                scenario.finish(primary=failure)
+            except BaseException as error:
+                failed(error)
         if group.active:
             try:
                 group.finish(primary=failure)
@@ -144,6 +154,8 @@ def main():
                 owned._need((source._root / name).read_bytes() == raw, "source_postclose_readback")
             owned._need({p.name for p in sink._root.iterdir()} == {"prepare.json"}
                         and (sink._root / "prepare.json").read_bytes() == record.raw, "evidence_postclose_readback")
+            if scenario is not None:
+                scenario.validate_terminal()
     except BaseException as error:
         failed(error)
     if resource_stop:
@@ -162,6 +174,7 @@ def main():
                   "source_token": None if source._token is None else source._token.snapshot(),
                   "owner": None if not group.active else group.owner.snapshot(),
                   "sink": sink.snapshot(), "journal": journal.snapshot(), "resources": points,
+                  "scenario": None if scenario is None else scenario.snapshot(),
                   "resource_stop": False, "native_publication_performed": False, "native_acceptance_completed": False,
                   "acceptance_status": "not_completed", "formal_permission": False, "execution_authenticated": False}
         raw = (json.dumps(result, ensure_ascii=True, indent=2) + "\n").encode("ascii")

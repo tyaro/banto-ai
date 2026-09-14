@@ -77,7 +77,9 @@ class AcquiredOwner:
             raise primary
 
 
-def _observation_ready(lease):
+def _observation_ready(lease, guard=None):
+    if guard is not None:
+        guard()
     owned._need(type(lease) is TrackedOpen, "observation_lease_type")
     if lease._error is not None:
         raise lease._error
@@ -93,18 +95,18 @@ def _observation_ready(lease):
                     "observation_owner_stopped")
 
 
-def inspect_native(lease, *, expected=None, private_user=None):
+def inspect_native(lease, *, expected=None, private_user=None, guard=None):
     """Read one already-held _Bound view; never open a writer or change DACL.
 
     expected is exact file bytes; directories require None. The descriptor is
     canonical JSON of the existing Win.security observation, not a binary SD
     nor evidence of independent-token enforcement.
     """
-    _observation_ready(lease)
+    _observation_ready(lease, guard)
     view = lease.observed
     owned._need(view.handle == lease.handle, "observation_handle_mismatch")
     before = view.check()
-    _observation_ready(lease)
+    _observation_ready(lease, guard)
     owned._need(type(before) is dict and type(before["directory"]) is bool, "observation_shape")
     if before["directory"]:
         owned._need(expected is None, "directory_bytes")
@@ -112,19 +114,19 @@ def inspect_native(lease, *, expected=None, private_user=None):
     else:
         owned._need(type(expected) is bytes and len(expected) <= model.MAX_FILE_BYTES, "file_bytes")
         actual = view.read()
-        _observation_ready(lease)
+        _observation_ready(lease, guard)
         owned._need(actual == expected, "native_bytes_mismatch")
         digest = hashlib.sha256(actual).hexdigest()
     security = view.api.security(lease.handle)
-    _observation_ready(lease)
+    _observation_ready(lease, guard)
     if private_user is not None:
         from banto_ai import _anomaly_v03_windows as win
         win._verify_sd(security, private_user, "private", before["directory"])
-    _observation_ready(lease)
+    _observation_ready(lease, guard)
     descriptor = json.dumps(security, ensure_ascii=True, sort_keys=True, separators=(",", ":")).encode("ascii")
     owned._need(0 < len(descriptor) <= prep.MAX_DESCRIPTOR_BYTES, "descriptor_budget")
     after = view.check()
-    _observation_ready(lease)
+    _observation_ready(lease, guard)
     owned._need(after == before, "observation_interrupted")
     pin = rename.ObjectPin(lease.handle, before["volume"], bytes.fromhex(before["file_id"]),
                            before["directory"], digest)
