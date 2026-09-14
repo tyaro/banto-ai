@@ -18,11 +18,14 @@ class TrackedOpen:
         self.resource_stop = False
         self._error = None
         self._acquiring = False
+        self._custodian = None
 
     def _record(self, error):
         if self._error is None:
             self._error = error
         self.resource_stop = self.resource_stop or owned._resource(error)
+        if self._custodian is not None and self._custodian.active:
+            self._custodian.reject(error)
 
     def acquire(self, opener, inspect):
         if self.state != "not_started":
@@ -48,6 +51,17 @@ class TrackedOpen:
             self._acquiring = False
 
     def close(self, *, primary=None):
+        if self._custodian is not None and self._custodian.active:
+            error = owned.OwnershipError("acquisition_transferred")
+            self._record(error)
+            raise error
+        return self._close(primary=primary)
+
+    def _close_owned(self, custodian):
+        owned._need(custodian is self._custodian and custodian.active, "wrong_close_custodian")
+        return self._close()
+
+    def _close(self, *, primary=None):
         owned._need(primary is None or isinstance(primary, BaseException), "primary_type")
         if self._acquiring:
             error = owned.OwnershipError("close_during_acquisition")

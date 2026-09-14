@@ -106,25 +106,25 @@ def main():
                 if not resource_stop:
                     report.update(storage_smoke="fail", error_type=type(error).__name__,
                                   error_reason=getattr(error, "reason", None))
-        if resource_stop:
+    if resource_stop:
+        _resource_notice()
+        return 80
+    try:
+        report.update(sink=sink.snapshot(), resources=points, resource_stop=False)
+        raw = (json.dumps(report, ensure_ascii=True, indent=2) + "\n").encode("ascii")
+        if len(raw) > 128 * 1024:
+            raise MemoryError("probe_report_budget")
+        with (root.parent / "probe-result.json").open("xb") as stream:
+            stream.write(raw)
+        print(json.dumps({"storage_smoke": report["storage_smoke"], "attempt": args.attempt,
+                          "files": len(expected), "payload_bytes": sum(map(len, expected.values())),
+                          "handles": len(sink.snapshot()["handles"]),
+                          "result": str((root.parent / "probe-result.json").relative_to(ROOT))}))
+    except BaseException as error:
+        if owned._resource(error):
             _resource_notice()
             return 80
-        try:
-            report.update(sink=sink.snapshot(), resources=points, resource_stop=False)
-            raw = (json.dumps(report, ensure_ascii=True, indent=2) + "\n").encode("ascii")
-            if len(raw) > 128 * 1024:
-                raise MemoryError("probe_report_budget")
-            with (root.parent / "probe-result.json").open("xb") as stream:
-                stream.write(raw)
-            print(json.dumps({"storage_smoke": report["storage_smoke"], "attempt": args.attempt,
-                              "files": len(expected), "payload_bytes": sum(map(len, expected.values())),
-                              "handles": len(sink.snapshot()["handles"]),
-                              "result": str((root.parent / "probe-result.json").relative_to(ROOT))}))
-        except BaseException as error:
-            if owned._resource(error):
-                _resource_notice()
-                return 80
-            raise
+        raise
     return 0 if failure is None else 1
 
 
