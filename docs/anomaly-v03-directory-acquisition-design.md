@@ -58,3 +58,10 @@ rootのprivate期間、既取得ADD/DELETE_CHILD、外側parent、handle移管�
 停止・所有unknown時のworker終了、source/evidence保存順序、衝突時の既存object非接触を具体化して独立レビューする。
 pure/fault、source固定、監視と資源上限をそろえてから別の実機枠を固定する。今回の変更から自動実行しない。
 局所取得に成功してもpeer経路が未解決ならnative publisherへ進めず、旧batch/失敗source/S3/D2を操作しない。
+
+## 後続の局所driver
+
+3a71934で[局所driver](anomaly-v03-directory-driver-design.md)を追加し、祖先結合・保存・終了・監視を具体化した。
+既存APIのdescriptor返却がctypes.c_void_p cellである点を取得部品/fakeへ反映した。
+[240件passと新規max1の実機取得pass](results/anomaly-multiseed-v0.3-s4-b2-directory-driver-2026-09-14.md)、独立残件0。
+この後続試行枠は閉鎖済み。元の部品単体の試験はfakeのみという履歴を維持し、局所取得成功から隔離認定は行わない。

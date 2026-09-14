@@ -2822,3 +2822,46 @@ build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineeri
 旧batch/B1/失敗source、push/merge/CI、新runtime/account/service、別projectに操作なし。本流889cfc3不変、旧CI件数加算なし。
 親全保護、marker/全publisher、独立token/競合、consumer/runtime closure、正式OS/VM digest、B2/S4受入は未完了。
 isolation_certified/protected_commit_allowed/formal_permission/execution_authenticated=false、acceptance_status=not_completed。
+
+## 95. 2026-09-14 B2 局所directory取得driverと新規実機確認
+
+ユーザー「許可するのでセーブポイント作りながら暫く自走してください」を受け、実装・独立レビュー・固定した新規1回の実機確認まで進めた。
+実装savepoint **3a719347e736e7770036b6b7882f0f4614774424**。
+[局所driver設計](../anomaly-v03-directory-driver-design.md)と[結果](anomaly-multiseed-v0.3-s4-b2-directory-driver-2026-09-14.md)を参照。
+
+callerがdriver/contextを先行保持し、private sinkの全祖先leaseをsource.parentsへexact結合する。
+既存祖先の元ID/type/pathとowner/group/DACL/labelの自己相対SDを読取り比較し、継承ACLへ新規private root専用制約を誤適用しない。
+SDは8192 bytes上限、既知pointerを1回free、不明応答では再取得/freeせず祖先保持とworker終了が必要。
+既存APIのdescriptor返却がc_void_p cellである点を取得部品/fakeへ修正した。原cellの先行保持は維持。
+保存→原handle再観測→source close/free→祖先closeの順。resource stop後は固定通知/exit80、通常snapshotを作らない。
+
+初回238件pass/0.212秒。独立P2=2（既知resource後の後続IO、finishだけでpass）を修正し、最終240件pass/0.210秒。
+新規19＋既存221、failure/error/skip等0。入口/guard前後で資源停止を取り込み、成功にはrun/保存/再確認/終了が必要。
+修正差分・入口・監視・設計の独立再レビュー残件P0〜P3=0、read-only、進捗ポーリングなし。
+corrected-checks.jsonl176164 bytes/hashb976b48bcb43636f82ba20fb38faaee8413b95056165d021ab86a7060ba05fd3。
+
+nativeは別clean detached checkout C:\Users\TKent\.codex\worktrees\directory-driver-20260914\banto-ai の固定HEAD3a71934から実行。
+39 sourceのraw/Git blob/checkout一致、launch-plan.json8157 bytes/hash0002fe3d6504bd710a6f082693f89c593b4c9d9ec11a2ae6638a254f8beda185を実行前後で照合。
+新規directory-driver-2026-09-14枠のattempt-1だけ、CreateDirectory2W/root0x1600a7/share READ/redirect拒否/private SD/非継承。
+UTC12:07:48.6954047〜12:07:49.2453203、実機pass/0.540秒、worker exit0/終了確認、stop reasonなし。
+元handleで取得/ID/実権限/SD/再観測pass、祖先10、台帳上13 handles/query token1本closed、入力descriptorと祖先SDはfreed。
+prepare.json1990 bytes/hashbf8747dc4c809dd8ba06152f38ae7de82fb93d42d2dea2057b0f5f7fe8e9790d、saved。
+stdout9547/stderr0 bytes。内部23資源点、最後0.095秒、観測private最大20975616/working29458432 bytes、OS報告working peak35790848 bytes。
+外側1秒周期より早く終了し外側process memory観測0点。点観測を全期間最大や長期リーク不在としない。
+
+今回max1枠は閉鎖。source-fixtureをclose後に列挙/open/hash/copy/deleteしない。成功した既知prepareだけworker記録と照合した。
+子/payload/marker/rename操作なし。private sinkのbootstrap信頼制約とpeer/外側parent/consumer未解決を維持し、取得成功を隔離認定にしない。
+ignored artifacts/directory-driver-2026-09-14/へ14 artifacts/論理478167 bytes（manifest/別checkout複製を除く）。
+savepoint-evidence.json13060 bytes/hash94cee204de69aa67acb2444b8489a1fed200128eb08b6eccd0c6f9c139666f2e。
+前回manifest/10 artifacts不変、34 source中32不変、descriptor修正2 filesだけ更新。repository safety/差分空白検査pass。
+
+UTC12:05:46の空きRAM15.02GiB/C118.06GiB/D60.12GiB、12:09:03はRAM14.77GiB/C118.05GiB/D60.12GiB。
+開始11:50:53からのdisk変動は別途観測され原因未特定。他processへ介入なし。build26200.9445、boot2026-09-09T10:43:08.5000000+09:00。
+Windows Update engineering緩和/正式pin不変。worker/監視終了、常駐なし、新規detached checkout1個とfixtureを保存。
+既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持しcommitから除外。
+本流889cfc3 clean不変。旧batch/B1/失敗source/S3/D2/production、push/merge/CI、別project、新runtime/account/serviceへの操作なし。
+
+次はprivate期間中のpeerのADD_FILE/ADD_SUBDIRECTORY/DELETE_CHILD取得と実操作を分ける検証仕様を具体化する。
+この成功fixtureや試行枠を再利用しない。source作成と取得の成功だけではpeer権限を排除できず、native publisherへ進めない。
+親全保護・marker/全publisher・独立token/競合、handle移管・consumer/runtime closure・正式OS/VM digest・B2/S4受入は未完了。
+isolation_certified/protected_commit_allowed/formal_permission/execution_authenticated=false、acceptance_status=not_completed。

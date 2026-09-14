@@ -124,9 +124,9 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 
 ## 結果文書
 
-2026-09-14のS4-B2最新engineering結果は[単一呼出しdirectory取得部品](results/anomaly-multiseed-v0.3-s4-b2-directory-acquisition-2026-09-14.md)。
-原handleの先行記録・同handle観測・単回close/freeを実装し、fake APIを含む221件pass。独立P2を修正、残件0。実機試行の追加なし。
-次は局所driverの祖先結合・終了・保存順序の具体化。[隔離条件](anomaly-v03-isolation-basis-design.md)は引き続き未充足、B2/S4受入は未完了。
+2026-09-14のS4-B2最新engineering結果は[局所directory取得driverの実機確認](results/anomaly-multiseed-v0.3-s4-b2-directory-driver-2026-09-14.md)。
+祖先結合・保存・終了を接続し240件pass、独立残件0。固定した新規1回の実機取得はpass/0.540秒、worker終了を確認し試行枠を閉じた。
+次はprivate期間中のpeer権限取得と操作を分ける検証仕様。[隔離条件](anomaly-v03-isolation-basis-design.md)は引き続き未充足、B2/S4受入は未完了。
 [設計](anomaly-v03-directory-acquisition-design.md)と[引継書§94](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
 
 `docs/results`には実測・監査で22件あります（2026-09-07時点のMarkdown実測）。すべて結果条件と制約を伴う索引であり、

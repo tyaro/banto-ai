@@ -103,4 +103,7 @@ formal_permission/execution_authenticated/protected_commit_allowed=false、accep
 7f93322で[単一呼出し取得部品](anomaly-v03-directory-acquisition-design.md)を追加した。
 [fake APIを含む221件pass、独立残件0](results/anomaly-multiseed-v0.3-s4-b2-directory-acquisition-2026-09-14.md)。実機試行の追加なし。
 原handle先行記録、同handleのID/実権限/SD、単回close/free、返却不明時のdescriptor保持を扱う。
-callerの祖先guardとの結合、局所driver/監視/実機仕様は次の作業。上記peer/外側parent/consumerの未解決条件は維持する。
+3a71934でcallerの祖先guard・保存・終了と[局所driver/監視](anomaly-v03-directory-driver-design.md)を接続した。
+[240件pass、新規max1の実機取得pass/0.540秒](results/anomaly-multiseed-v0.3-s4-b2-directory-driver-2026-09-14.md)、独立残件0、worker終了確認、枠閉鎖。
+上記は原handleでの取得/観測/保存/終了だけの結果。次はprivate期間中のpeerの各権限取得と操作を分ける仕様を具体化する。
+上記peer/外側parent/consumerの未解決条件は維持する。
