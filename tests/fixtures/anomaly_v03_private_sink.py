@@ -86,13 +86,16 @@ class WindowsPrivateSink:
                 if primary is None:
                     raise
 
+    def _open_access(self, path, *, directory, create):
+        return 0xC0020000 if create else 0x20081
+
     def _open(self, path, *, directory, create=False):
         lease = TrackedOpen(self._backend)
         self._leases.append(lease)  # Register BEFORE any native acquisition.
         def opener(cell):
             def create_file(descriptor):
                 security = self._win._SA(C.sizeof(self._win._SA), descriptor, False) if descriptor else None
-                cell.handle = self._api.k.CreateFileW(str(path), 0xC0020000 if create else 0x20081,
+                cell.handle = self._api.k.CreateFileW(str(path), self._open_access(path, directory=directory, create=create),
                     0 if create else 3, C.byref(security) if security else None, 1 if create else 3,
                     0x00200000 | (0x02000000 if directory else 0), None)
                 if cell.handle == C.c_void_p(-1).value:

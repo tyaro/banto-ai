@@ -24,17 +24,19 @@ def access_for(plan):
 class SealedPins:
     parent: object
     observations: tuple
-    marker_index: int
+    marker_index: int | None
 
 
 class SealedFiles(reopen.ReacquiredReaders):
-    def __init__(self, backend, *, group, root_index, plans, user):
+    def __init__(self, backend, *, group, root_index, plans, user, require_marker=True):
         super().__init__(backend, group=group, root_index=root_index, plans=plans, user=user)
         markers = [i for i, plan in enumerate(plans) if plan.name == "marker-pending.json"]
-        owned._need(len(markers) == 1 and len(plans) >= 2, "seal_marker_plan")
-        self._marker_index = markers[0]
-        owned._need(plans[self._marker_index].previous.pin.content_sha256
-                    == group.owner._journal.snapshot()["marker_sha256"], "seal_marker_binding")
+        owned._need(type(require_marker) is bool and
+                    (len(markers) == 1 and len(plans) >= 2 if require_marker else not markers), "seal_marker_plan")
+        self._marker_index = markers[0] if require_marker else None
+        if require_marker:
+            owned._need(plans[self._marker_index].previous.pin.content_sha256
+                        == group.owner._journal.snapshot()["marker_sha256"], "seal_marker_binding")
         self._sealed = [None] * len(plans)
         self._seal_states = ["not_started"] * len(plans)
         self._held_access = [None] * len(plans)
@@ -115,11 +117,17 @@ class WindowsSealBackend(reopen.WindowsReaderBackend):
             raise owned.OwnershipError("seal_open_failed", C.get_last_error())
 
     def seal(self, handle, *, guard, reject):
+        return self._seal(handle, directory=False, guard=guard, reject=reject)
+
+    def seal_directory(self, handle, *, guard, reject):
+        return self._seal(handle, directory=True, guard=guard, reject=reject)
+
+    def _seal(self, handle, *, directory, guard, reject):
         source, descriptor, primary = self._source, None, None
         present, defaulted, acl = C.c_int32(), C.c_int32(), C.c_void_p()
         try:
             guard()
-            descriptor = source._api.descriptor(source._win._dacl(source._user, "frozen", False)[0])
+            descriptor = source._api.descriptor(source._win._dacl(source._user, "frozen", directory)[0])
             guard()
             source._api.call(source._api.a.GetSecurityDescriptorDacl(
                 descriptor, C.byref(present), C.byref(acl), C.byref(defaulted)), "seal_dacl")
