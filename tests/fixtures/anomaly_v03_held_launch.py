@@ -62,7 +62,7 @@ def validate_inputs(root, pin_path, revision, expected_sha):
     return len(names)
 
 
-def execute(context, revision, pin_sha, source_count, write):
+def execute(context, revision, pin_sha, source_count, write, *, scope="held consumer local engineering attempt"):
     global _LIVE_WORKER
     owned._need(_LIVE_WORKER is None, "held_launch_worker_reused")
     driver = HeldDriver(context)
@@ -78,7 +78,7 @@ def execute(context, revision, pin_sha, source_count, write):
         try:
             report = json.loads(driver.report_bytes())
             report.update(source_revision=revision, input_sha256=pin_sha, pinned_source_count=source_count,
-                          attempt=1, scope="held consumer local engineering attempt")
+                          attempt=1, scope=scope)
             raw = (json.dumps(report, sort_keys=True, ensure_ascii=True) + "\n").encode("ascii")
             if len(raw) > MAX_OUTPUT_BYTES:
                 raise MemoryError("held_launch_output_budget")
@@ -96,10 +96,11 @@ def execute(context, revision, pin_sha, source_count, write):
     return driver.exit_code()
 
 
-def launch(root, base, revision, pin_sha, write, *, context_factory=WindowsHeldContext):
+def launch(root, base, revision, pin_sha, write, *, context_factory=WindowsHeldContext,
+           scope="held consumer local engineering attempt"):
     owned._need(_LIVE_WORKER is None, "held_launch_worker_reused")
     count = validate_inputs(root, base / "input-pin.json", revision, pin_sha)
     attempt = base / "attempt-1"
     context = context_factory(attempt, revision)  # No native work in constructor.
     attempt.mkdir()  # Exclusive; no exists check, cleanup, fallback or retry.
-    return execute(context, revision, pin_sha, count, write)
+    return execute(context, revision, pin_sha, count, write, scope=scope)
