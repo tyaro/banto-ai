@@ -7,6 +7,7 @@ source/runtime/token acceptance, and a native entrypoint are NOT implemented.
 from dataclasses import dataclass
 import re
 import struct
+import sys
 
 from . import anomaly_v03_publication_model as model
 
@@ -86,6 +87,12 @@ def _resource(error):
             winerror = getattr(current, "winerror", None)
             if isinstance(current, (AdapterError, OSError)) and type(winerror) is int and winerror in _RESOURCE_WINERRORS:
                 return True
+            # B1's already-loaded low-level helpers expose a fixed .error field
+            # instead of OSError.winerror. Do not load a DLL or import it here.
+            core = sys.modules.get("banto_ai._anomaly_v03_windows")
+            if core is not None and type(current) is core._Failure:
+                if current.error in _RESOURCE_WINERRORS or core._resource_stop(current):
+                    return True
             edges = (current.__cause__, current.__context__)
             if isinstance(current, BaseExceptionGroup):
                 if len(current.exceptions) > 64:
