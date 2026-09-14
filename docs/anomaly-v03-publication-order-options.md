@@ -61,3 +61,8 @@ closeは電源断耐久性の証明ではない。新方式でrenameの原子的
 既取得権限を親固定で消さず、最終確認後/公開後の外部変更、部分write・応答喪失、consumerの単発分類を扱った。
 全照合一致もsnapshot_matchesに限り、方式採用・保護済みcommit・将来不変性を認めない。
 次は実際の生成/隔離条件と一貫したconsumer観測、例外的marker writerの権限/寿命を具体化する。上記native開始条件は維持する。
+
+生成/隔離の次段は[隔離条件と単一呼出し取得候補](anomaly-v03-isolation-basis-design.md)で具体化した。
+CreateDirectory2WのSDK宣言/exportは確認済みだが、API本体は未実行。取得間隙の縮小とnamespace隔離を区別し、
+既取得parent権限・peerの取得/使用・writer移管・consumer一貫性の未解決条件を維持する。
+[設計レビュー指摘0・保存結果](results/anomaly-multiseed-v0.3-s4-b2-isolation-basis-2026-09-14.md)を参照。

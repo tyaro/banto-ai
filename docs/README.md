@@ -124,10 +124,10 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 
 ## 結果文書
 
-2026-09-14のS4-B2最新engineering結果は[残存権限と完了印のpure model](results/anomaly-multiseed-v0.3-s4-b2-publication-order-model-2026-09-14.md)。
-202件pass・独立指摘0。隔離が不明なら書込みを拒否し、完了印の部分書込み・応答喪失と読み手の単発判定を確認した。実機試行の追加なし。
-次は実際の隔離条件とconsumerの一貫した観測を具体化する。[順序案](anomaly-v03-publication-order-options.md)は未採用、B2/S4受入は未完了。
-[設計](anomaly-v03-publication-order-model-design.md)と[引継書§92](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
+2026-09-14のS4-B2最新engineering結果は[隔離条件の具体化とAPI存在確認](results/anomaly-multiseed-v0.3-s4-b2-isolation-basis-2026-09-14.md)。
+作成とhandle取得を1回にするAPI候補のSDK宣言/exportを確認し、peer権限・外側parent・consumer整合の未解決条件を整理した。設計の独立指摘0。
+前回202件passのコードは不変、再試験/実機追加なし。次は限定取得部品の実装と故障確認。[順序案](anomaly-v03-publication-order-options.md)は未採用、B2/S4受入は未完了。
+[設計](anomaly-v03-isolation-basis-design.md)と[引継書§93](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
 
 `docs/results`には実測・監査で22件あります（2026-09-07時点のMarkdown実測）。すべて結果条件と制約を伴う索引であり、
 顧客設備一般の性能保証ではありません。

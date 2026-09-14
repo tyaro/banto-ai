@@ -2754,3 +2754,34 @@ consumerの一貫した実観測/共有違反の有界処理、marker writerの�
 親全保護、marker/全publisher、独立token、native故障/競合、正式OS整合、VM digest、runtime closure/consumer、B2/S4受入は未完了。
 protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated=false、acceptance_status=not_completed。
 本流889cfc3・正式pin不変、旧CI加算/push/merge/CI、新runtime/サービス/account、別project操作なし。既存文書差分を消してcleanにしない。
+
+## 93. 2026-09-14 B2 隔離条件と単一呼出し取得候補
+
+ユーザー「続けてください」を受け、基準1f70faaから実際の隔離の必要条件を具体化した。
+設計savepoint **5b81bf032768d0ac486aff48143b77268ab36158**。
+[設計](../anomaly-v03-isolation-basis-design.md)と[結果](anomaly-multiseed-v0.3-s4-b2-isolation-basis-2026-09-14.md)を参照。
+
+現行private DACL/作成後の別openを確認し、次の部品にCreateDirectory2Wの作成＋初回handle取得を選んだ。
+既存SDK10.0.26100.0とMicrosoft headerの5引数HANDLE宣言、redirect拒否flag=1、ローカルkernel32 export存在を確認した。
+API本体の呼出しは0。公式ページの5引数syntax/6引数例・失敗0本文/INVALID_HANDLE_VALUE例の不整合を記録した。
+6引数例を転写せず、0/-1を成功にせず、返却喪失・記録前割込みを所有unknownとして扱う取得仕様を固定した。
+候補要求はroot0x1600a7/share READ=1/redirect拒否=1/既存private SD/非継承。原handleの先行記録、元ID/実権限/SD検査、単回closeが必要。
+
+取得間隙の縮小はnamespace隔離の証明ではない。外側parentの既取得権限、private期間のADD/DELETE_CHILD、子の内部open、writer移管は未解決。
+rootのDELETE共有拒否をDELETE_CHILDや子全体のmutexへ読み替えず、同じuserのpeerを新たに除外しない。
+consumerの共通の変更不能期間/同じpin・handle・bytesが必要で、二度の一致だけでは同時性やABA不在を証明しない。
+前回modelのunresolved→write拒否は維持。仮想隔離flagを実機認定に転用しない。
+新規設計1ファイルの独立P0〜P3=0、read-only、進捗ポーリングなし。reviewerのAPI再照合・実機実行はない。
+
+今回はcode変更/新規テスト/前回202件の再実行0。32 source/Git blob一致、前回manifest/6 artifacts不変を確認した。
+ignored artifacts/isolation-basis-2026-09-14/へ保存。local-api-basis.json993 bytes/hash261decf99e6fbd0e9495008427a3500ad932812a24ddd9e48b208640237a9780。
+savepoint-evidence.json9337 bytes/hashbb10fdd7744db58c7e0b87e04e85fdea5f8864b73089c1966fbf4d868aa2d7f6、manifest以外5 artifacts/論理7725 bytes。
+開始UTC11:05:49 RAM13.30GiB/C118.92GiB/D74.23GiB、終了11:12:38 RAM12.77GiB/C118.91GiB/D74.02GiB。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和・正式pin不変。点観測を長期リーク/変動原因の証明にしない。
+記録用process終了、常駐/監視/別checkout追加なし。既存親policy結果書の8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持しcommitから除外。
+
+次は新規取得部品をtests/fixturesへ分離し、fake backendで0/-1/衝突/検査失敗/権限差/close応答喪失/資源停止/再入を確認して独立レビューする。
+局所実機仕様はその後に別途固定。隔離条件未確認ならnative publisherへは進まない。専用account等の追加判断は現在不要。
+既存6工程/native入口/S3/D2/production、本流889cfc3は不変。旧batch/B1/失敗source、push/merge/CI、別projectへの操作なし。
+親全保護、marker/全publisher、独立token/native競合、consumer/runtime closure、正式OS整合/VM digest、B2/S4受入は未完了。
+formal_permission/execution_authenticated/protected_commit_allowed=false、acceptance_status=not_completed。既存文書差分を消してcleanにしない。
