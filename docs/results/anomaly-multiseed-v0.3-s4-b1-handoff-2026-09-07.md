@@ -3116,3 +3116,18 @@ build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineeri
 
 次は親作成エラー数値をnamespace報告に加えてfake故障を確認し、別の新規max1診断仕様を固定する。今回の失われたエラー値は復元したと扱わない。
 親/祖先/全inventoryの共通期間、独立process/token・競合、全publisherと正式B2/S4受入は未完了。全許可flags=false。
+
+## 103. 2026-09-15 B2 親作成エラー87の新規診断
+
+実装savepoint **c0f17d8e4dd8b9835215869633bd55c6c2536402**。
+[診断仕様](../anomaly-v03-namespace-diagnostic-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-namespace-diagnostic-2026-09-15.md)を参照。
+親作成例外の数値をreportへ伝える修正後、新規max1でshare3最初の親がWinError87/ERROR_INVALID_PARAMETER。具体的不適合引数は未確定。
+peer/child/第2root未開始。11 lease保持、query token closed、worker PID25756/exit81/0.661秒/終了確認、stopなし、stdout10432/stderr0。
+前回失敗の数値を復元したとは扱わない。両旧枠閉鎖、失敗sourceへ再アクセスなし。
+399件pass/修正後0.487秒、独立P2総1件（fakeテストLinux互換）修正済み/残0、進捗ポーリングなし。
+input109/選抜71/union140 source、既存CRLFのみ22件を記録。前回manifest/13 artifacts不変、70 source中66不変。
+artifacts/namespace-diagnostic-2026-09-15に15 artifacts/論理812764 bytes、manifest46686 bytes/hashe5b4255afc638c015daf3246fa6227be7f126a9bb69dab3410d8a2940018aa6f。
+UTC15:51:50 RAM15885922304/C125462380544/D47691575296 bytes、上限超過なし。他process操作なし。build26200.9445/boot不変、Windows Update engineering緩和/正式pin不変。
+既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持しcommit除外。
+次は過去に作成実績のあるshare1だけの新規有界caseへ限定し、peer要求とpath追加を確認する。share3不適合の再試行や一般化を行わない。
+namespace/全期間/独立token/全publisher/B2/S4未完了、全許可flags=false。
