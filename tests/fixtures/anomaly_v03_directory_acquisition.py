@@ -159,6 +159,8 @@ class WindowsDirectoryBackend:
     prepare() must finish before create(). Keep the backend reachable even when
     creation loses its response: its descriptor may need to live until exit.
     """
+    DIRECTORY = True
+
     def __init__(self, win, api, *, path, user):
         self._path = _path(path)
         owned._need(type(user) is str and len(user) <= 184
@@ -182,7 +184,7 @@ class WindowsDirectoryBackend:
         create.argtypes = [C.c_wchar_p, C.c_uint32, C.c_uint32, C.c_uint32, C.POINTER(win._SA)]
         self._create = create
         self._reader = WindowsReaderBackend(self)
-        sddl = win._dacl(self._user, "private", True)[0]
+        sddl = self._sddl()
         self._descriptor_state = "allocating"
         self._descriptor = api.descriptor(sddl)
         owned._need(rename._handle(self._descriptor_address()), "directory_descriptor")
@@ -207,24 +209,35 @@ class WindowsDirectoryBackend:
     def granted_access(self, handle):
         return self._reader.granted_access(handle)
 
+    def _sddl(self):
+        return self._win._dacl(self._user, "private", self.DIRECTORY)[0]
+
+    def _verify_policy(self, sd):
+        self._win._verify_sd(sd, self._user, "private", self.DIRECTORY)
+
+    def _content_hash(self, handle, *, guard):
+        return None
+
     def inspect(self, handle, *, guard):
         # _Bound.check() reopens by name. Only observe() is used here: the
         # original returned handle is the sole directory handle acquired.
         view = self._win._Bound.__new__(self._win._Bound)
-        view.api, view.path, view.directory, view.handle = self._api, self._path, True, handle
+        view.api, view.path, view.directory, view.handle = self._api, self._path, self.DIRECTORY, handle
         guard()
         before = view.observe()
         guard()
         sd = self._api.security(handle)
         guard()
-        self._win._verify_sd(sd, self._user, "private", True)
+        self._verify_policy(sd)
         descriptor = json.dumps(sd, ensure_ascii=True, sort_keys=True, separators=(",", ":")).encode("ascii")
         owned._need(0 < len(descriptor) <= prep.MAX_DESCRIPTOR_BYTES, "directory_descriptor_budget")
         guard()
         after = view.observe()
         guard()
         owned._need(before == after, "directory_identity_changed")
-        pin = rename.ObjectPin(handle, before["volume"], bytes.fromhex(before["file_id"]), before["directory"])
+        content_hash = self._content_hash(handle, guard=guard)
+        guard()
+        pin = rename.ObjectPin(handle, before["volume"], bytes.fromhex(before["file_id"]), before["directory"], content_hash)
         rename._pin(pin)
         return prep.Observation(pin, descriptor)
 
@@ -254,6 +267,10 @@ class WindowsDirectoryBackend:
     def snapshot(self):
         return {"prepared": self._prepared, "create_called": self._called, "create_returned": self._returned,
                 "descriptor_state": self._descriptor_state,
-                "worker_exit_required": (self._called and not self._returned)
-                    or self._descriptor_state in ("allocating", "unavailable", "free_unknown", "retained_unknown"),
+                "worker_exit_required": self.requires_exit(),
                 "retry_permitted": False, "cleanup_permitted": False, "isolation_certified": False}
+
+    def requires_exit(self):
+        # Teardown must not allocate a report just to decide input lifetime.
+        return (self._called and not self._returned) or self._descriptor_state in (
+            "allocating", "unavailable", "free_unknown", "retained_unknown")
