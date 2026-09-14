@@ -3057,3 +3057,40 @@ build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineeri
 報告/出力失敗時も終了状態を失わず失敗sourceへ戻らないことをfake/構文で先に確認し、その後に別clean checkoutで新規限定nativeを実施する。
 既存bootstrap競合/内部割当、親/祖先/全inventoryの共通期間、独立process/token・競合、marker write/renameと全publisher、正式OS/VM digest・B2/S4受入は未完了。
 isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated=false、acceptance_status=not_completed。
+
+## 101. 2026-09-14 B2 保持consumerの専用worker・限定実機
+
+ユーザー「次に進めて下さい」により専用起動と外側監視を接続し、新規max1限定実機を完了した。
+実装savepoint **9cc926f3c2c6cadff10c041ec0d0521c32016d3e**。
+[設計](../anomaly-v03-held-launch-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-held-launch-2026-09-14.md)を参照。
+
+HEAD/入力pin SHA/追跡py・ps1全inventory/bytes/hash照合後だけ取得。排他claim/attempt、module参照で終了までcontext保持、stdout単回と80/81維持を接続。
+既存driver変更はsnapshotへのreader metadata追加のみ。report/出力MemoryErrorは80へ昇格し、一次例外/保持を保つ。出力失敗後の再試行なし。
+新規17＋既存360＝377件pass/0.508秒、全failure/error/skip等0。独立P0〜P3所見0件、read-only/進捗ポーリングなし、レビュー後code変更なし。
+PowerShell構文/repository safety/diff検査pass。initial-checks.jsonl273518 bytes/hashf12b722db71d77b58a6da440bcde5766adf7ab58b0cefe4329acd7d36c903c68が回帰根拠。
+
+別clean detached C:\Users\TKent\.codex\worktrees\held-launch-20260914\banto-ai、HEAD9cc926f。
+新規attempt-1、UTC14:43:21.2087356〜14:43:22.0892657、0.860秒。worker PID43324/exit0/終了確認、stopなし、max1枠閉鎖。
+facts.json42 bytes/hashbe793aa97ba27ec1a79877d13399612d07a66fcd6d45848664964a193591e09b、marker-pending.json415 bytes/hashc67f80da25b921237b5603d6cb330fd741597383fbbf5dcbecf4cddf5aff0c71。
+consumer complete/61 guards/2file closed、元source13＋sink13＋sealed reader2＝28 handle、query token2 closed。生bytes返却は拒否。
+prepare報告2876 bytes/hash3a6eefc745936247fd9e174ceb19b759f8de3d13e7aa2d519f186f10e5cd2778、収集証拠1063 bytes/hash84983d51e4314e6dd7a4f734cdd440881242e113d1c68ccdbab962d514a59181。
+証拠値はworker内の保存/読戻し報告に基づき、終了後source/private-evidenceを再openして独立照合していない。stdout27846/stderr0。
+内部資源100点/最後0.266秒、private最大21245952/working29495296、OS working peak報告36118528 bytes。
+外側1点/0.599秒でprivate28524544/working35942400 bytes。40秒内側/45秒外側、private256MiB/working384MiB、空きRAM/disk各2GiBの範囲。
+worker/監視終了、常駐なし。取得後/失敗後のsource列挙・再open・hash/copy/deleteなし。
+
+選抜65 sourceはraw/Git blob/候補・nativeを前後照合。input pin106 sourceを含むunion134 sourceはnative raw/Git blob一致。
+input-pin.json17176 bytes/hash0aaa69ce665e9af43f2ee6d29808453081fe4e009af7325c00e4a4450f7f8026。
+候補追加runtime source22件は既存CRLF、Git/nativeはLF。改行正規化だけの一致を記録し、候補fileを変更せずnative bytesをpinに採用。検出時はattempt未作成で実機再試行ではない。
+前回held-driverの60 source中59不変、変更はdriver snapshotの1件。前回manifest/8artifactsは不変。
+ignored artifacts/held-launch-2026-09-14/へ13artifacts/論理440266 bytes（manifest自身/別checkout複製/実fixture除外）。
+savepoint-evidence.json40219 bytes/hash1eaba249cdbd404120bb8671f8112876e6f26cd0fddc71bee399016266cd667d。
+UTC14:41:05 RAM13.94GiB/C117.29GiB/D51.39GiB、14:45:23 RAM14.03GiB/C117.29GiB/D51.39GiB。PC全体変動原因は未特定、長期リーク不在の主張なし。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和/正式pin不変。既存Python3.14.0使用。
+既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持しcommitから除外。本流889cfc3 clean不変。
+旧case/旧source、S3/D2/production、push/merge/CI、新runtime/account/serviceへ操作なし。
+
+次は親フォルダー保持中の名前一覧への追加条件を具体化する。新規fixtureで親share条件とpath指定の新規file作成を分ける。
+ADD_FILE用handle取得拒否だけでpath追加も拒否されると推定せず、別の有界仕様/fake故障/独立レビューを先に行う。今回のsource/成功枠を再利用しない。
+親/祖先/全inventoryの共通期間、bootstrap競合/内部割当、独立process/tokenのpeer・競合、marker write/renameと全publisher、正式OS/VM digest・B2/S4受入は未完了。
+運用変更が必要なら具体的な差分と負担を判断材料にする。isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated=false、acceptance_status=not_completed。

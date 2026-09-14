@@ -124,10 +124,10 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 
 ## 結果文書
 
-2026-09-14のS4-B2最新engineering結果は[保持consumerの準備・保存・終了接続](results/anomaly-multiseed-v0.3-s4-b2-held-driver-2026-09-14.md)。
-360件pass、独立所見0件。子/root/祖先の順に終了し、不明状態なら親を保持してworker終了を要求。状態query・報告障害でも一次例外と資源停止を維持する。
-実機追加0回。次は専用launcherと外側監視の固定・接続。生bytesの外部返却、[隔離条件](anomaly-v03-isolation-basis-design.md)、B2/S4受入は未充足。
-[設計](anomaly-v03-held-driver-design.md)と[引継書§100](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
+2026-09-14のS4-B2最新engineering結果は[保持consumerの専用worker・限定実機](results/anomaly-multiseed-v0.3-s4-b2-held-launch-2026-09-14.md)。
+377件pass、独立所見0件。新規2fileの準備・同handle読取・保存・全closeを0.860秒で完了。worker exit0/終了確認、max1枠閉鎖。
+次は親フォルダーの保持と名前一覧への追加条件。生bytesの外部返却、[隔離条件](anomaly-v03-isolation-basis-design.md)、B2/S4受入は未充足。
+[設計](anomaly-v03-held-launch-design.md)と[引継書§101](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
 
 `docs/results`には実測・監査で22件あります（2026-09-07時点のMarkdown実測）。すべて結果条件と制約を伴う索引であり、
 顧客設備一般の性能保証ではありません。

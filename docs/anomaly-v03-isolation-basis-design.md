@@ -148,3 +148,12 @@ sourceのbootstrapは既存private sink方式であり、単一呼出しdirector
 収集証拠のseal_payload.jsonは保存slot名にとどまり、publication journal工程を進めない。consumer生bytes返却は依然isolation_unresolved。
 独立所見0件、新規実機0回。次は専用launcherと外側監視を固定・接続し、新規限定実機の条件を整える。
 親/祖先/全inventoryの共通期間と独立token/競合、B2/S4受入は未完了。旧caseへ操作なし、全許可flags=falseを維持する。
+
+## 2026-09-14 専用workerでの保持consumer限定確認
+
+9cc926fの[専用worker仕様](anomaly-v03-held-launch-design.md)と[377件pass・実機結果](results/anomaly-multiseed-v0.3-s4-b2-held-launch-2026-09-14.md)で、新規2fileのprepare/保持中read/証拠保存/全closeを0.860秒で完了した。
+worker exit0/終了確認、max1枠閉鎖。28 handle＋2 query token closed、consumer内のpath再openなし。周囲のprepare/sealer/evidence処理とは区別する。
+input pin106 sourceと選抜65 sourceのunion134をnative raw/Git blobで照合し、候補側追加22 sourceの既存CRLFだけの差分を記録した。
+専用worker化は独立peer/tokenによる干渉検証を意味せず、source rootの既存bootstrap/TOCTOU制約も解消しない。
+生bytes返却・namespace共通期間は未解決。次は親保持中のpathによる新規file追加を別fixtureの有界仕様で検証する。
+ADD_FILE handleの取得拒否だけで名前一覧が保護されたとは推定しない。今回のsource/枠は再利用せず、B2/S4未完了と全許可flags=falseを維持する。
