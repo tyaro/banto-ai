@@ -124,10 +124,10 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 
 ## 結果文書
 
-2026-09-14のS4-B2最新engineering結果は[同一token peerの権限取得](results/anomaly-multiseed-v0.3-s4-b2-directory-peer-2026-09-14.md)。
-259件pass、独立残件0。実機でADD_FILE/ADD_SUBDIRECTORYは共有違反、DELETE_CHILDは取得可。行列完了/0.966秒、worker終了確認、max1枠閉鎖。
-実際の子変更・独立process/tokenは未検証。次は子のDELETE権限と共有、親DELETE_CHILDの操作境界。[隔離条件](anomaly-v03-isolation-basis-design.md)とB2/S4受入は未充足。
-[設計](anomaly-v03-directory-peer-design.md)と[引継書§96](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
+2026-09-14のS4-B2最新engineering結果は[空ファイルの削除条件](results/anomaly-multiseed-v0.3-s4-b2-delete-matrix-2026-09-14.md)。
+283件pass、初回独立P2を修正し残件0。子DELETE拒否でも親DELETE_CHILD許可で要求受理、子のDELETE共有拒否は共有違反、両権限拒否はアクセス拒否。
+実機4ケース完了/0.843秒、worker終了確認、max1枠閉鎖。close後の名前消滅・保持parent権限使用・独立process/tokenは未検証。[隔離条件](anomaly-v03-isolation-basis-design.md)とB2/S4受入は未充足。
+[設計](anomaly-v03-delete-matrix-design.md)と[引継書§97](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
 
 `docs/results`には実測・監査で22件あります（2026-09-07時点のMarkdown実測）。すべて結果条件と制約を伴う索引であり、
 顧客設備一般の性能保証ではありません。

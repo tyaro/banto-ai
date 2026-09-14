@@ -2914,3 +2914,40 @@ private childの削除成功だけでは保持parent handleの権限使用の証
 今回取得できたDELETE_CHILDを削除実行成功へ昇格しない。この成功sourceやmax1枠を再利用しない。
 親全保護・marker/全publisher・独立token/競合、外側parent/handle移管/consumer/runtime closure、正式OS/VM digest・B2/S4受入は未完了。
 isolation_certified/protected_commit_allowed/formal_permission/execution_authenticated=false、acceptance_status=not_completed。
+
+## 97. 2026-09-14 B2 新規空ファイルの削除条件
+
+ユーザー「次に進めて下さい」と継続中の自走/セーブポイント許可で、新規4ケースのDeleteFileW行列を実装・レビュー・実機確認した。
+実装savepoint **26bc403836a2b191e7e8344716c50cf49be50f47**。
+[設計](../anomaly-v03-delete-matrix-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-delete-matrix-2026-09-14.md)を参照。
+
+各新規case親はCreateDirectory2W/access0x1600a7/share READ/非継承。新規空子はCREATE_NEW/access0x120081/非継承、作成後ACL変更なし。
+file-permission（親DELETE_CHILD拒否/子DELETE許可/share7）は受理、parent-permission（親許可/子拒否/share7）も受理。
+双方とも保持childのDeletePending=true/links0、元ID/SD一致。sharing-block（親許可/子拒否/share3）はWinError32、both-denied/share7はWinError5、pending=false/links1。
+親share READだけでは子削除を防げない。子DELETE共有拒否は保持期間中の局所条件であり、close後/公開後へ一般化しない。
+同process/primary非昇格medium token、有効privilegeはSeChangeNotifyPrivilegeのみ。token変更/生成/impersonation/AccessCheckなし。
+path指定であり、保持parent handleの権限使用や独立process/token/競合の証明ではない。close後の名前消滅や外部handle不存在も未検査。
+
+新規24＋既存259＝283件pass/0.205秒。初回独立P2 1件は終了判定snapshot失敗時の一次例外/親保持の欠落。
+報告生成と状態判定を分離し、query故障時は元例外/resourceを維持、未終了root/祖先を保守保持。追加4故障試験・再レビューP0〜P3=0。
+最終根拠はcorrected-checks.jsonl。read-only独立レビュー、進捗ポーリングなし。safety/PowerShell構文/diff検査pass、再レビュー後code変更なし。
+
+nativeは別clean detached C:\Users\TKent\.codex\worktrees\delete-matrix-20260914\banto-ai、HEAD26bc403。49 sourceのraw/Git blob/両checkoutを前後照合。
+新規attempt-1だけ、UTC13:11:17.5783595〜13:11:18.4303207、0.843秒、worker exit0/終了確認、max1枠閉鎖。
+case親4/子4とsink等12のhandle20本＋query token1本closed、入力descriptor/祖先SDはfreed。
+prepare9118 bytes/hash26c2c3ab9ad4696ea4e44886ed2510a4082bebd0b36189aa39f64abb183b7ce3。stdout52366/stderr0。
+内部209資源点/上限256、最後0.413秒、private最大21422080/working29589504、OS working peak35758080 bytes。
+40秒/外側45秒、private256MiB/working384MiB、空きRAM/disk各2GiBを維持。
+
+ignored artifacts/delete-matrix-2026-09-14/へ14 artifacts/論理610560 bytes（manifest自身/別checkout複製を除く）。
+savepoint-evidence.json28705 bytes/hash5e4755ba021b5221d12cd1cb1da5e3d2d1e7eba32262fe7da587ce35d525df5a。
+前回peer manifest/12 artifacts不変、44 source中43不変、既存source変更はacquisition backendのhookのみ。
+UTC12:56:23 RAM16.44GiB/C117.52GiB/D53.16GiB、13:11:51 RAM15.54GiB/C117.51GiB/D53.16GiB。PC全体変動の原因は未特定、長期リーク不在の主張なし。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和/正式pin不変。
+worker/監視終了、常駐なし。caseのclose後/失敗後列挙・open・hash/copy/deleteなし。既知の成功prepareだけを照合し、拒否された新規空ファイルも保存して残す。
+旧batch/旧source、別project、新runtime/account/service、push/merge/CIへ操作なし。本流889cfc3 clean不変、既存親policy結果書は保存時の8461 bytes/hashを保持しcommitから除外。
+
+次はsealed-file保持と公開順序modelへ、子handleの全期間保持、close/移管の間隙、consumer共通観測期間を接続する。
+条件が閉じない場合に専用principal等の運用変更を判断材料へ出す。新accountは現時点で作らない。
+保持parentを直接使うAPI、外側parentの事前権限、独立token/競合、marker/全publisher、正式OS/VM digest・B2/S4受入は未完了。
+今回のcase/max1枠を再利用せず、isolation_certified/protected_commit_allowed/formal_permission/execution_authenticated=false、acceptance_status=not_completed。

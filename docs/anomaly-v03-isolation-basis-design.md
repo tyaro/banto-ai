@@ -110,3 +110,13 @@ formal_permission/execution_authenticated/protected_commit_allowed=false、accep
 ADD_FILE/ADD_SUBDIRECTORYは共有違反、DELETE_CHILDは取得可。元rootのshare READだけで全変更用handleの取得は排除できない。
 独立process/tokenと実際の子変更は未検証。次は子DELETE権限/DELETE共有、親DELETE_CHILD、path APIと保持parentを使う操作の違いを具体化する。
 上記peer/外側parent/consumerの未解決条件は維持する。
+
+## 2026-09-14 削除条件の限定確認
+
+26bc403で[新規空ファイル4条件](anomaly-v03-delete-matrix-design.md)を実装し、[283件pass・実機完了](results/anomaly-multiseed-v0.3-s4-b2-delete-matrix-2026-09-14.md)を確認した。
+子DELETE拒否でも親DELETE_CHILD許可・子share7ならDeleteFileW受理/保持childのDeletePending=true。
+子share3ではWinError32、親と子の両権限拒否ではWinError5。各case親はshare READで保持していた。
+この親の共有条件だけでは子削除を防げない。子のDELETE共有拒否の効果は保持中の局所結果で、公開後/close後まで一般化しない。
+close後の名前消滅、保持parent handleの権限使用、独立process/token/競合は検証していない。
+次はsealed-file保持と公開順序modelに、子handleの全期間保持・移管/closeの間隙・consumer共通観測期間を接続する。
+max1枠は閉鎖しcaseを再利用しない。上記隔離条件とB2/S4未完了、全許可flags=falseは維持する。
