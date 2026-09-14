@@ -132,6 +132,8 @@ class WindowsAcquisitionContext:
     Evidence bootstrap retains the earlier private sink trust limitations.
     No failed/colliding source is read, opened by name, reused or deleted.
     """
+    MAX_POINTS = 64
+
     def __init__(self, attempt, revision):
         self.attempt, self.revision = Path(attempt), revision
         self.source_path = self.attempt / "source-fixture"
@@ -191,7 +193,7 @@ class WindowsAcquisitionContext:
         return raw
 
     def budget(self):
-        if len(self._points) >= 64:
+        if len(self._points) >= self.MAX_POINTS:
             raise MemoryError("driver_point_budget")
         win, api = self.sink._win, self.sink._api
         memory, performance = win._Memory(), win._Performance()
