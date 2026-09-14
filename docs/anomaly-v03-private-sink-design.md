@@ -58,6 +58,12 @@ B1の失敗物や無関係なprocessは終了・削除しない。別workerの�
 native保存smoke成功でもS4受入・独立token実効権限・観測認証・publisher成功は主張しない。
 formal_permission/execution_authenticatedはfalse、acceptance_statusはnot_completedのまま。
 
+## 実行結果と枠の終了
+
+847de63のclean HEADで2026-09-14に1回目を実行し、3 files/478 bytesの保存・読戻し・所有終了が成功した。
+外側0.400秒、追跡14 handles/token closed、worker exit0。今回枠はここで終了し、2回目の未使用枠を繰り越さない。
+[結果・資源・記録上の注意点](results/anomaly-multiseed-v0.3-s4-b2-private-sink-2026-09-14.md)を参照。
+
 ## 次の境界
 
 このsinkを前回のEvidenceBarrierへ接続するには、native観測のpin/descriptor収集、

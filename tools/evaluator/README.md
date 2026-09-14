@@ -312,7 +312,10 @@ tests/fixturesへ追加した段階です。実機接続前の順序・失敗/�
 閉鎖応答喪失・二重閉鎖防止・記録の二重故障を含む[新規18＋既存34＝52件](../../docs/results/anomaly-multiseed-v0.3-s4-b2-handle-owner-2026-09-11.md)がpass。
 続く[公開前の証跡保存・選択解放](../../docs/anomaly-v03-prepublication-design.md)は、同じownerで3段階の保存と両renameを通す
 [新規20＋既存52＝72件](../../docs/results/anomaly-multiseed-v0.3-s4-b2-prepublication-2026-09-14.md)がpass。
-途中取得・native private保存・実権限の検査は引き続き未実装です。
+続く[取得追跡とprivate保存](../../docs/anomaly-v03-private-sink-design.md)は、
+[新規18＋既存72＝90件pass、実Windows上の合成JSON3個478 bytes保存成功](../../docs/results/anomaly-multiseed-v0.3-s4-b2-private-sink-2026-09-14.md)。
+全追跡handle/tokenのcloseとworker終了を確認し、今回の限定枠は1回目成功で終了しました。
+実native観測とbarrierの接続、動的所有移管・権限移行、native publisher/全受入は引き続き未完了です。
 
 `inspect_anomaly_v03.py`は新規のengineering schemaとpure validatorを使うread-only collectorです。
 9つの科学schemaと5 configは変更しません。cleanなfull-SHA checkoutを指定します。

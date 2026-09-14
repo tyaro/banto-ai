@@ -2382,3 +2382,55 @@ D空きは開始前から減少していたが原因未調査で、本作業や�
 今回のownerは構築時に固定slotを渡す前提で、実取得途中の追跡やnative private保存を実装したものではない。
 限定native試行の対象・時間・資源上限を具体化して接続する。B1終了枠の流用なし。
 native全受入、正式OS整合、VM digest、runtime closure/consumer、S4受入は未完了。
+
+## 85. 2026-09-14 B2取得追跡とprivate保存の限定実機確認
+
+ユーザー「続けてください」を受け、基準af97323から取得途中の追跡と実private保存を追加した。
+実装・実行savepoint **847de63d63e3ec0cdc9b2063401c19be63533241**。
+[結果](anomaly-multiseed-v0.3-s4-b2-private-sink-2026-09-14.md)と[設計](../anomaly-v03-private-sink-design.md)を参照。
+別project連続稼働の追加負荷制約は解除済み、通常のRAM/disk確認とsavepointを継続する。
+
+TrackedOpenはraw handleを観測前に記録し、取得後失敗を一度だけcloseする。
+未取得/未記録のraw値を推測せず、応答喪失時も再closeしない。動的な既存ownerへの移管は未実装。
+WindowsPrivateSinkは保持祖先の下で新規private root/fileを作成し、
+SD検証→全量write→flush→同handle読戻し→SD再検証→closeを追跡する。
+記録は3個まで・各512KiB/計1.5MiB。既存root/fileの上書きや自動清掃なし。
+
+新規14＋既存72＝86件pass、3件補強後89件、資源停止回帰追加後は新規18＋既存72＝90件pass。
+全回failure/error/skip0。最終正本corrected-checks.jsonl、final-checks.jsonlは89件時点の中間記録。
+独立レビューP2計5件（資源WinError分類、失敗token出力所有、close再入停止の握り潰し、
+資源停止後の通常報告、監視起動直後の所有空白）を是正。最終再確認の新規P0〜P3=0。
+担当はread-only、試験/native/編集なし、進捗ポーリングなし。
+repository safety/staged diff-check pass。最終試験source等14 filesを確定Git blobとraw bytes一致確認した。
+
+clean HEADと監視script hashをlaunch-plan.jsonへ固定し、別の最大2回枠で1回目だけ実行。
+UTC07:37:55、Windows26200.9445/CPython3.14.0 Win64、外側0.400秒で成功。
+新規artifacts/private-sink-2026-09-14/attempt-1/private-evidenceに合成JSON3個/計478 bytesを保持。
+private SD、exact inventory/bytes/hash、追跡14 handlesと照会tokenのclose、worker exit0を確認した。
+観測private最大17.84MiB/OS peak working25.64MiB、資源停止なし。
+成功で今回枠を終了し、2回目の未使用枠を繰り越さない。B1終了枠も再開しない。
+
+workerが1秒未満で終了したため外側samplesは0、worker内5境界の観測を保存。
+stderrにfinally内returnのSyntaxWarning2件を保持。監視console要約のnull表示も記録した。
+成功判定は実値の入ったsupervision JSONとprobe-resultの別途照合による。表示修正のための再試行はしない。
+Start-Process内部で起動後に返却が失われる場合や、全期間の最大メモリ/長期リーク不在の保証はない。
+
+ignored root artifacts/private-sink-2026-09-14/に初回/中間/最終JSONL、native/監視/資源/各private bytesを保存。
+corrected-checks.jsonl 64466 bytes/hash e2b4457c040ab38acdbd2314e977071880a395dfe5a80860631b6825f15bdd93。
+savepoint-evidence.json 7624 bytes/hash f5b19ea0da77f228472fccaf7ac98fb0b8d9f9c9639ddbaaefb6cd59d01e5acf。
+manifest以外の16記録は計210654 bytes、記録用scriptを含む。実記録のhash表は結果書を参照。
+
+開始UTC07:13:01 RAM5.37GiB/C106.74GiB/D71.08GiBは当時の取得値から転記。
+実機前の保存07:34:32 RAM9.13GiB/C108.01GiB/D87.12GiB、
+最終保存07:38:45 RAM8.15GiB/C107.45GiB/D87.12GiB。
+build26200.9445、boot2026-09-09T10:43:08.5000000+09:00。
+点の増減を本作業やリークへ帰属させない。worker・短い検証process終了、常駐処理なし。
+
+今回は正常private保存の実機確認。実nativeの失敗/競合試行、rename/.complete、token変更は実行していない。
+全acceptance/formal/authenticated flagsは未受入のまま。src/科学config/schema/registry/正式OS pin不変。
+旧Linux CIへ件数加算なし。新runtime/共有環境/別project/旧failure roots操作なし。
+push/merge/CI起動なし、本流889cfc3 cleanを維持。
+
+次は取得済みpinの既存ownerへの移管、writer解放後の再取得、実pin/descriptor観測からの証跡構築と
+EvidenceBarrier→今回sinkの接続を具体化する。probeの構文警告・監視console要約は次の改修時に整備する。
+native全受入、正式OS整合、VM digest、runtime closure/consumer凍結、S4受入は未完了。
