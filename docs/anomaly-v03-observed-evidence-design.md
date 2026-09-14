@@ -62,3 +62,6 @@ commit_observation=not_startedを確認する。モデル6工程を架空に成�
 9172afbのclean HEADで1回目が成功。source2 files/460 bytesから実観測を含むprepare証跡2880 bytesを保存し、
 選択解放・追跡25 handles/token2個のclose・worker exit0を確認した。外側0.355秒、stderr0 bytes。
 今回枠は成功で終了し、2回目を繰り越さない。[結果・保存記録](results/anomaly-multiseed-v0.3-s4-b2-observed-evidence-2026-09-14.md)を参照。
+
+後続の[reader再取得](anomaly-v03-reader-reacquisition-design.md)で、writer解放後の新読取り世代を追加した。
+親borrow内で元ID/bytes/SD・実GrantedAccessを確認してreaderを閉じる。動的slot追加やseal/renameへのlive移管は残る。

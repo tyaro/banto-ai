@@ -56,3 +56,9 @@ hidden workerと保持Processのみを監視し、終了を確認する。監視
 hard時間上限、Start-Process内部の返却喪失、電源断耐久性、長期リーク不在の保証はしない。
 公開前の局所試行なのでjournalはprepare unknown/stopped、teardown succeeded、commit not_startedを維持する。
 正式OS整合、VM digest、runtime closure/consumer、独立token/競合/失敗native全受入、S4受入は残る。
+
+## 実行結果
+
+cbb5a82のclean HEADで1回目成功。元writer2個0x12019f→new reader2個0x120081を実照会し、
+元ID/bytes/SD一致、27 tracked handles/token2個close、worker exit0、外側0.400秒、stderr0 bytesを確認した。
+今回枠は成功で終了し、未使用枠を繰り越さない。[結果・保存記録](results/anomaly-multiseed-v0.3-s4-b2-reader-reacquisition-2026-09-14.md)を参照。

@@ -317,7 +317,9 @@ tests/fixturesへ追加した段階です。実機接続前の順序・失敗/�
 全追跡handle/tokenのcloseとworker終了を確認し、今回の限定枠は1回目成功で終了しました。
 [実観測証跡の接続](../../docs/anomaly-v03-observed-evidence-design.md)は、新規18＋既存90＝108件pass。
 [取得済み3 slotsを一括移管し、実観測を含むprepare証跡2880 bytesの保存・選択解放が実機で成功](../../docs/results/anomaly-multiseed-v0.3-s4-b2-observed-evidence-2026-09-14.md)しました。
-権限を変えた再取得・動的slot追加、native publisher/全受入は引き続き未完了です。
+続く[reader再取得](../../docs/anomaly-v03-reader-reacquisition-design.md)は、
+[新規16＋既存108＝124件pass、writer解放後のread権限・元ID/bytes/SD照合が実機成功](../../docs/results/anomaly-multiseed-v0.3-s4-b2-reader-reacquisition-2026-09-14.md)。
+一時readerは親borrow内で閉じます。seal/rename用のlive handle移管・動的slot追加、native publisher/全受入は未完了です。
 
 `inspect_anomaly_v03.py`は新規のengineering schemaとpure validatorを使うread-only collectorです。
 9つの科学schemaと5 configは変更しません。cleanなfull-SHA checkoutを指定します。

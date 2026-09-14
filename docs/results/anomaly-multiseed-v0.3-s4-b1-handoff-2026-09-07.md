@@ -2481,3 +2481,45 @@ worker内4境界の観測、外側は1秒未満のためsamples0。長期リー�
 全acceptance/formal/authenticated flagsは未受入。正式OS整合、VM digest、runtime closure/consumer、S4受入は未完了。
 src/科学config/schema/registry/正式pin、本流889cfc3不変。旧CIへ件数加算なし。
 push/merge/CI起動、新runtime/共有環境/別project/旧failure roots操作なし。
+
+## 87. 2026-09-14 B2 writer解放後のreader再取得
+
+ユーザー「続けてください」を受け、基準c50aabcから読取り専用の再取得と実権限観測を接続した。
+実装・実行savepoint **cbb5a8263eef1be110ab86333a986dca9f4e87ba**。
+[結果](anomaly-multiseed-v0.3-s4-b2-reader-reacquisition-2026-09-14.md)と[設計](../anomaly-v03-reader-reacquisition-design.md)を参照。
+
+ReacquiredReadersは元writerの確定closeを条件に別世代のTrackedOpenを取得し、
+元identity/bytes/private SDと照合する。親root借用中に新readerを全終了する。
+既存ownerのclosed slotは復活させず、raw番号再利用でも世代別にclose主体を保つ。
+要求値に加えてNtQueryObjectで実GrantedAccessを確認する。DACL変更なし。
+新readerのlive handleを後続seal/renameへ移管する機能や動的slot追加は今回の範囲外。
+
+記録済み初回123件pass/0.116秒、最終は新規16＋既存108＝124件pass/0.119秒。
+両回failure/error/skip/expected failure/unexpected success0。
+componentとscenario接続の独立レビューは各新規P0〜P3=0、read-only、進捗ポーリングなし。
+最終source等20 filesを確定Git blobとraw bytes照合。repository safety/staged diff-check/監視構文確認pass。
+
+clean HEADと監視hash固定後、新規artifacts/reader-reacquisition-2026-09-14/attempt-1で限定実機確認。
+writer2個の実権限0x12019fからreader2個の0x120081へ縮小し、同じidentity/bytes/SDとの照合に成功。
+source13＋sink12＋new reader2＝27 tracked handlesと照会token2個close、worker exit0、外側0.400秒、stderr0 bytes。
+source exact2 files計460 bytes、private prepare.json2880 bytes、終了後inventory/raw/hash一致。
+journalはprepare=unknown/model_status=stopped、teardown=succeeded、commit=not_startedの局所確認。
+今回の最大2回枠は1回目成功で終了、未使用枠の繰越なし。旧batch/B1終了枠の再開なし。
+
+新規ignored rootにJSONL/native/監視/資源/実bytes/manifestを保存し、前回manifest全artifact不変も確認した。
+final-checks.jsonl90397 bytes/hash e400e7c0c2f5cb8c2f881bbee3eaa2506fab1eb9cc040fb6ebf230b4a4d8f5d8。
+savepoint-evidence.json8320 bytes/hash 11fbba243086a44670ffe23f3000ab673299b99447b084fd4a0a6db613bbbb4a。
+manifest以外17記録の論理bytesは259832。その他hash・観測範囲は結果書を参照。
+
+開始UTC08:15:31 RAM8.64GiB/C109.48GiB/D87.12GiBは当時取得値から転記。
+実機前保存08:26:21 RAM7.61GiB/C119.94GiB/D87.12GiB、最終08:28:08 RAM7.78GiB/C119.96GiB/D87.12GiB。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、正式OS pinは変更していない。
+worker内4境界でprivate最大18.17MiB/working・peak working25.94MiB、外側は1秒未満でsamples0。
+C空きの増加原因は未調査。点の増減を本作業・リーク不在へ帰属させない。
+worker・短い検証processは終了、常駐処理なし。長期リーク不在や全期間最大メモリの証明ではない。
+
+次はseal/相対renameに必要な権限とlive handle寿命、DACL固定後のreadbackを具体化する。
+短いreader世代の正常実機確認と、後続公開phase・実native故障/競合の受入を分ける。
+全acceptance/formal/authenticated flagsは未受入。正式OS整合、VM digest、runtime closure/consumer、S4受入は未完了。
+src/科学config/schema/registry/正式pin、本流889cfc3不変。旧CIへ件数加算なし。
+push/merge/CI起動、新runtime/共有環境/別project/旧failure roots操作なし。

@@ -68,7 +68,7 @@ marker名が消える前にraw bytesと観測情報を保存する順序を固�
 ## 接続範囲と実機への残件
 
 既存6工程journalを増やさず、各工程内の事前解放と証跡保存を接続した。
-ownerの固定slot集合は構築時の全取得を前提とし、writer解放後に別権限で開く途中取得・所有移管は未実装。
+ownerの固定slot集合は構築時の全取得を前提とし、途中取得した新handleをその集合へ追加・移管するAPIはない。
 新旧handleが同じ物を重複所有する案にはしない。取得順/再取得時のidentityとbyte照合をnative側で設計する。
 事前解放APIを直接呼ぶtrusted callerに保存barrierを強制する仕組みではない。
 production入口を作る際はbarrier経由へ閉じ、試験用APIを正式受入の証明としない。
@@ -80,4 +80,5 @@ production入口を作る際はbarrier経由へ閉じ、試験用APIを正式受
 [限定実機保存](results/anomaly-multiseed-v0.3-s4-b2-private-sink-2026-09-14.md)は3個478 bytesで成功した。
 続く[実観測証跡](anomaly-v03-observed-evidence-design.md)で取得済み3 slotsの一括管理移管と
 native pin/descriptor/bytes→本barrier→private sinkのprepare保存・選択解放を限定実機で確認した。
-writer解放後の権限を変えた再取得、動的slot追加、後続phaseの実観測・renameは残る。
+[reader再取得](anomaly-v03-reader-reacquisition-design.md)では、writer解放後に別の短命読取り世代を開き、
+親borrow内で元ID/bytes/SD・実権限を照合して閉じる範囲を確認した。動的slot追加、seal/renameへのlive移管は残る。
