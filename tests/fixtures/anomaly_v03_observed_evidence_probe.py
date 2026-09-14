@@ -79,7 +79,7 @@ def main(*, scenario=None):
         root_lease = source._leases[-1]
         selected = [root_lease]
         # This fixture retains the original writers until the prepare barrier.
-        # There is no writer->readonly reacquisition or DACL sealing in this run.
+        # Optional scenarios run only after the prepare barrier releases writers.
         for name, raw in (("facts.json", files["facts.json"]), ("marker-pending.json", marker)):
             if len(raw) > 4096:
                 raise MemoryError("source_fixture_budget")

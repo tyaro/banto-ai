@@ -95,7 +95,7 @@ def _observation_ready(lease, guard=None):
                     "observation_owner_stopped")
 
 
-def inspect_native(lease, *, expected=None, private_user=None, guard=None):
+def inspect_native(lease, *, expected=None, private_user=None, guard=None, security_mode="private"):
     """Read one already-held _Bound view; never open a writer or change DACL.
 
     expected is exact file bytes; directories require None. The descriptor is
@@ -103,6 +103,7 @@ def inspect_native(lease, *, expected=None, private_user=None, guard=None):
     nor evidence of independent-token enforcement.
     """
     _observation_ready(lease, guard)
+    owned._need(security_mode in ("private", "frozen"), "observation_security_mode")
     view = lease.observed
     owned._need(view.handle == lease.handle, "observation_handle_mismatch")
     before = view.check()
@@ -121,7 +122,7 @@ def inspect_native(lease, *, expected=None, private_user=None, guard=None):
     _observation_ready(lease, guard)
     if private_user is not None:
         from banto_ai import _anomaly_v03_windows as win
-        win._verify_sd(security, private_user, "private", before["directory"])
+        win._verify_sd(security, private_user, security_mode, before["directory"])
     _observation_ready(lease, guard)
     descriptor = json.dumps(security, ensure_ascii=True, sort_keys=True, separators=(",", ":")).encode("ascii")
     owned._need(0 < len(descriptor) <= prep.MAX_DESCRIPTOR_BYTES, "descriptor_budget")

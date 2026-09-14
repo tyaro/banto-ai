@@ -71,6 +71,12 @@ class ReacquiredReaders:
         owned._need(not self._done, "readers_finished")
         bridge._observation_ready(self._group._leases[self._root_index])
 
+    def _expected_access(self, plan):
+        return READER_ACCESS
+
+    def _after_verified(self):
+        """Trusted subclass hook; runs inside the parent borrow before close."""
+
     def acquire(self):
         entered = False
         try:
@@ -98,7 +104,7 @@ class ReacquiredReaders:
                         access = self._backend.granted_access(lease.handle)
                         self._guard()
                         self._access[index] = access
-                        owned._need(type(access) is int and access == READER_ACCESS, "reader_granted_access")
+                        owned._need(type(access) is int and access == self._expected_access(plan), "reader_granted_access")
                         self._states[index] = "verify_pending"
                         observation = bridge.inspect_native(lease, expected=plan.raw, private_user=self._user, guard=self._guard)
                         old, new = plan.previous.pin, observation.pin
@@ -108,6 +114,8 @@ class ReacquiredReaders:
                         self._guard()
                         self._observations[index] = observation
                         self._states[index] = "verified"
+                    self._guard()
+                    self._after_verified()
                     self._guard()
                 except BaseException as error:
                     self._record(error)
