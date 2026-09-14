@@ -157,3 +157,11 @@ input pin106 sourceと選抜65 sourceのunion134をnative raw/Git blobで照合�
 専用worker化は独立peer/tokenによる干渉検証を意味せず、source rootの既存bootstrap/TOCTOU制約も解消しない。
 生bytes返却・namespace共通期間は未解決。次は親保持中のpathによる新規file追加を別fixtureの有界仕様で検証する。
 ADD_FILE handleの取得拒否だけで名前一覧が保護されたとは推定しない。今回のsource/枠は再利用せず、B2/S4未完了と全許可flags=falseを維持する。
+
+## 2026-09-15 親共有とpath作成比較の取得段階停止
+
+2ec193aの[比較仕様](anomaly-v03-namespace-create-design.md)と[397件pass・限定実機結果](results/anomaly-multiseed-v0.3-s4-b2-namespace-create-2026-09-15.md)を保存した。
+share3の最初のroot作成がdirectory_create_failedとなり、peer/child/第2rootへ未到達。worker81/終了確認、失敗枠閉鎖。
+WinError数値がreportにないため原因は未確定。share3の一般的制約、ACL原因、名前一覧の保護・非保護を推定しない。
+次は親作成エラーの記録を改善し、新規の有界診断を先に固定する。旧source/枠へ戻らない。
+生bytes返却・namespace共通期間・B2/S4受入は未解決、全許可flags=falseを維持する。

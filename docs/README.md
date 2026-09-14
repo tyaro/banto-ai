@@ -124,10 +124,10 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 
 ## 結果文書
 
-2026-09-14のS4-B2最新engineering結果は[保持consumerの専用worker・限定実機](results/anomaly-multiseed-v0.3-s4-b2-held-launch-2026-09-14.md)。
-377件pass、独立所見0件。新規2fileの準備・同handle読取・保存・全closeを0.860秒で完了。worker exit0/終了確認、max1枠閉鎖。
-次は親フォルダーの保持と名前一覧への追加条件。生bytesの外部返却、[隔離条件](anomaly-v03-isolation-basis-design.md)、B2/S4受入は未充足。
-[設計](anomaly-v03-held-launch-design.md)と[引継書§101](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
+2026-09-15のS4-B2最新engineering結果は[親共有とpath新規作成の比較準備・実機停止](results/anomaly-multiseed-v0.3-s4-b2-namespace-create-2026-09-15.md)。
+397件pass、独立所見0件。新規max1は最初の親作成で停止し、worker exit81/終了確認。名前追加の比較には未到達、失敗枠は閉鎖。
+次は親作成エラーの記録改善と新規診断。生bytesの外部返却、[隔離条件](anomaly-v03-isolation-basis-design.md)、B2/S4受入は未充足。
+[設計](anomaly-v03-namespace-create-design.md)と[引継書§102](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
 
 `docs/results`には実測・監査で22件あります（2026-09-07時点のMarkdown実測）。すべて結果条件と制約を伴う索引であり、
 顧客設備一般の性能保証ではありません。

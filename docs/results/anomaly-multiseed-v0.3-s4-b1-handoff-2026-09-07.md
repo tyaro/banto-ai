@@ -3094,3 +3094,25 @@ build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineeri
 ADD_FILE用handle取得拒否だけでpath追加も拒否されると推定せず、別の有界仕様/fake故障/独立レビューを先に行う。今回のsource/成功枠を再利用しない。
 親/祖先/全inventoryの共通期間、bootstrap競合/内部割当、独立process/tokenのpeer・競合、marker write/renameと全publisher、正式OS/VM digest・B2/S4受入は未完了。
 運用変更が必要なら具体的な差分と負担を判断材料にする。isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated=false、acceptance_status=not_completed。
+
+## 102. 2026-09-15 B2 親共有とpath新規作成の比較準備・実機停止
+
+ユーザーは適度なsavepointを伴う自走を許可。実装savepoint **2ec193adf8f81bed5685de0ff0cc09276e2741f7**。
+[設計](../anomaly-v03-namespace-create-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-namespace-create-2026-09-15.md)を参照。
+新規20＋既存377＝397件pass/0.727秒、独立P0〜P3所見0件、read-only/進捗ポーリングなし。構文/safety/diff検査pass。
+親share3/1下のpeer取得とpath CREATE_NEWを独立比較する実装だが、新規max1は最初の親CreateDirectory2Wでdirectory_create_failed。
+peer/child/第2root未開始、名前追加の比較結果なし。root close=unavailable、入力descriptor freed、祖先/evidence root11 leaseはworker終了まで保持、query token closed。
+worker PID41196/exit81/終了確認、UTC2026-09-14T15:43:06.7531569Z〜15:43:07.4616119Z、0.689秒、stopなし、stdout10369/stderr0。
+失敗のWinError数値はreportに未保存で原因未確定。share3固有問題・ACL拒否・namespace保護の証明とは扱わない。枠閉鎖、失敗後sourceアクセス/再試行なし。
+
+新規clean detached namespace-create-20260915/banto-ai、input109/選抜70/union139 sourceを固定・前後照合。既存CRLFのみ22件は候補を変更せず記録。
+input pin17695 bytes/hash82a3fa6e08bfbb6b3ae1fc1bd4c5b4202d2e62d2406681d0986667a84d56ffba。
+前回held-launchの65 source中64不変、変更はlauncher scope1件。旧manifest/13 artifactsは不変。
+artifacts/namespace-create-2026-09-15に13 artifacts/論理443868 bytes、manifest45792 bytes/hashcb146bf4aebab18e24dacd4ea3eb5e222ec6758f270cad4756bce7d924de981a。
+内部8資源点/private最大21127168/working29368320、外側1点/private20918272/working28045312 bytes。全上限内。
+UTC15:45:07 RAM16178049024/C125442588672/D48269496320 bytes。前後のPC全体変動の原因は未特定、長期リーク不在は主張しない。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和/正式pin不変、Python3.14.0。
+既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持しcommit除外。本流889cfc3不変。
+
+次は親作成エラー数値をnamespace報告に加えてfake故障を確認し、別の新規max1診断仕様を固定する。今回の失われたエラー値は復元したと扱わない。
+親/祖先/全inventoryの共通期間、独立process/token・競合、全publisherと正式B2/S4受入は未完了。全許可flags=false。
