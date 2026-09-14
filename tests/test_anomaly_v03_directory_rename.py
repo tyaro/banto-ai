@@ -59,7 +59,7 @@ class DirectoryTable:
         return self.error
 
 
-def setup(seal_children=True):
+def setup(seal_children=True, *, parent_policy="frozen"):
     table, leases, _, journal, group = observed.setup(adopt=False)
     leases[1].observed.identity["directory"] = True
     leases[1].observed.raw = None
@@ -78,12 +78,86 @@ def setup(seal_children=True):
     if seal_children:
         files.seal_and_use(lambda pins: None)
     backend = DirectoryTable(table, leases)
-    operation = move.DirectoryRename(backend, group=group, previous=observations[:2], files=files)
+    operation = move.DirectoryRename(backend, group=group, previous=observations[:2], files=files,
+                                     parent_policy=parent_policy)
     table.calls.clear()
     return table, leases, group, files, backend, operation
 
 
 class DirectoryRenameTests(unittest.TestCase):
+    def test_private_parent_comparison_keeps_acl_and_still_seals_stage(self):
+        table, leases, group, files, backend, operation = setup(parent_policy="private")
+        parent_before = operation._previous[0]
+        saved = []
+        operation.run(lambda directories, children: saved.append((directories, children)))
+        self.assertEqual(saved[0][0][0], parent_before)
+        self.assertEqual(json_sd(saved[0][0][1])["aces"][0][2], 0x10156)
+        self.assertEqual([row for row in table.calls if row[0] == "seal"], [("seal", 202)])
+        self.assertEqual(operation.snapshot()["directory_states"], ["private_verified", "verified"])
+        self.assertEqual(operation.snapshot()["rights_after"], [move.ROOT_ACCESS, move.STAGE_ACCESS])
+        self.assertEqual(operation.snapshot()["rename"], "confirmed")
+        self.assertEqual(operation.snapshot()["acceptance_status"], "not_completed")
+        group.finish()
+        self.assertFalse(table.live)
+
+    def test_private_parent_change_at_save_or_stage_seal_blocks_rename(self):
+        for when in ("stage_seal", "save"):
+            table, leases, group, files, backend, operation = setup(parent_policy="private")
+            def change(*args):
+                leases[0].observed.identity["file_id"] = "ab" * 16
+            if when == "stage_seal":
+                backend.hooks["set_done"] = change
+            with self.assertRaises(owned.OwnershipError):
+                operation.run(change if when == "save" else lambda *args: None)
+            self.assertFalse(any(row[0] == "rename" for row in table.calls))
+            with self.assertRaises(owned.OwnershipError) as closed:
+                group.finish(primary=operation._error)
+            self.assertIs(closed.exception, operation._error)
+            self.assertFalse(table.live)
+
+    def test_comparison_never_skips_child_close_or_retained_parent_access(self):
+        for defect in ("child", "rights"):
+            table, leases, group, files, backend, operation = setup(parent_policy="private")
+            if defect == "child":
+                files._leases[0].close_state = "unknown"
+            else:
+                backend.hooks["set_done"] = lambda h: backend.rights.__setitem__(101, move.ROOT_ACCESS ^ 2)
+            with self.assertRaises(owned.OwnershipError):
+                operation.run(lambda *args: None)
+            self.assertFalse(any(row[0] == "rename" for row in table.calls))
+
+    def test_parent_policy_is_explicit_and_invalid_values_cannot_broaden_it(self):
+        for policy in (True, None, "PRIVATE", "unprotected"):
+            with self.assertRaises(owned.OwnershipError):
+                setup(parent_policy=policy)
+
+    def test_target_parent_access_model_distinguishes_arms_without_retry(self):
+        for policy in ("private", "frozen"):
+            table, leases, group, files, backend, operation = setup(parent_policy=policy)
+            backend.error = 5
+            def target_open(h):
+                # Simulate a new target-parent write request, not reuse of
+                # the access already granted to the held root handle.
+                if leases[0].observed.sd["aces"][0][0] == 1:
+                    backend.result = 0
+            backend.hooks["rename"] = target_open
+            if policy == "frozen":
+                with self.assertRaises(owned.OwnershipError) as caught:
+                    operation.run(lambda *args: None)
+                self.assertEqual(caught.exception.winerror, 5)
+            else:
+                operation.run(lambda *args: None)
+            self.assertEqual(sum(row[0] == "rename" for row in table.calls), 1)
+            self.assertEqual(operation.snapshot()["rename"], "confirmed" if policy == "private" else "pending")
+            self.assertFalse(operation.snapshot()["formal_permission"])
+            if policy == "frozen":
+                with self.assertRaises(owned.OwnershipError) as closed:
+                    group.finish(primary=operation._error)
+                self.assertIs(closed.exception, operation._error)
+            else:
+                group.finish()
+            self.assertFalse(table.live)
+
     def test_seal_save_relative_rename_then_owner_closes_without_observation(self):
         table, leases, group, files, backend, operation = setup()
         saved = []

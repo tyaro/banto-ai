@@ -33,7 +33,8 @@ def notice():
         pass
 
 
-def main():
+def main(*, compare_parent_policy=False):
+    owned._need(type(compare_parent_policy) is bool, "probe_comparison_mode")
     parser = argparse.ArgumentParser()
     parser.add_argument("--expected-head", required=True)
     parser.add_argument("--attempt", type=int, choices=(1, 2), required=True)
@@ -41,7 +42,9 @@ def main():
     actual = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     if actual != args.expected_head or subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT):
         raise ValueError("probe_requires_exact_clean_head")
-    attempt = BASE / f"attempt-{args.attempt}"
+    base = ROOT / "artifacts/parent-policy-rename-2026-09-14" if compare_parent_policy else BASE
+    parent_policy = "private" if compare_parent_policy and args.attempt == 1 else "frozen"
+    attempt = base / f"attempt-{args.attempt}"
     attempt.mkdir()
     # A relative name resolved against CWD would stay within this new attempt
     # but fail the expected source-fixture/payload inventory and identity check.
@@ -75,7 +78,7 @@ def main():
         point = {"elapsed_seconds": round(time.monotonic() - started, 3), "private_bytes": memory.private,
                  "working_bytes": memory.working, "peak_working_bytes": memory.peak_working,
                  "available_ram_bytes": performance.available * performance.page_size,
-                 "free_disk_bytes": shutil.disk_usage(BASE).free}
+                 "free_disk_bytes": shutil.disk_usage(base).free}
         points.append(point)
         if point["elapsed_seconds"] > 40 or memory.private > 256*1024**2 or memory.working > 384*1024**2 \
                 or point["available_ram_bytes"] < 2*1024**3 or point["free_disk_bytes"] < 2*1024**3:
@@ -117,7 +120,8 @@ def main():
         budget()
         generation = seal.SealedFiles(move.WindowsStageFileBackend(source), group=group, root_index=1,
             plans=(reopen.ReadPlan(2, "facts.json", raw_file, observations[2]),), user=source._user, require_marker=False)
-        operation = move.DirectoryRename(backend, group=group, previous=observations[:2], files=generation)
+        operation = move.DirectoryRename(backend, group=group, previous=observations[:2], files=generation,
+                                         parent_policy=parent_policy)
         journal.begin("prepare")
         record = prep.build_evidence("prepare", source_revision=actual, files=files, marker=marker, observations=observations)
         if len(record.raw) > 64*1024:
@@ -184,7 +188,8 @@ def main():
                     if receiver.handle == C.c_void_p(-1).value:
                         raise owned.OwnershipError("final_reader_open", C.get_last_error())
                 cell.acquire(opener, lambda h, path=path, before=before: source._file_view(h, path, before.pin.directory))
-                after = bridge.inspect_native(cell, expected=contents, private_user=source._user, security_mode="frozen")
+                mode = parent_policy if path == source._root else "frozen"
+                after = bridge.inspect_native(cell, expected=contents, private_user=source._user, security_mode=mode)
                 owned._need((after.pin.volume, after.pin.file_id, after.pin.directory, after.pin.content_sha256, after.descriptor)
                             == (before.pin.volume, before.pin.file_id, before.pin.directory, before.pin.content_sha256, before.descriptor),
                             "renamed_identity_or_content")
@@ -210,6 +215,7 @@ def main():
     try:
         report = {"scope": "B2 held directory sealing and relative rename engineering smoke",
                   "utc": datetime.now(timezone.utc).isoformat(), "source_revision": actual, "attempt": args.attempt,
+                  "parent_policy_comparison": compare_parent_policy, "parent_policy": parent_policy,
                   "directory_rename": "pass" if failure is None else "fail",
                   "error_type": None if failure is None else type(failure).__name__,
                   "error_reason": None if failure is None else getattr(failure, "reason", None),

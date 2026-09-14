@@ -18,7 +18,8 @@ STAGE_ACCESS = 0x1700A1  # LIST/TRAVERSE/ATTR/RC/WDAC/DELETE/SYNC.
 
 class DirectoryRename:
     """Caller retains group and child generation; this borrows, never closes."""
-    def __init__(self, backend, *, group, previous, files):
+    def __init__(self, backend, *, group, previous, files, parent_policy="frozen"):
+        owned._need(type(parent_policy) is str and parent_policy in ("private", "frozen"), "directory_parent_policy")
         owned._need(type(group) is bridge.AcquiredOwner and group.active, "directory_owner")
         owner = group.owner
         owner._usable()
@@ -32,6 +33,7 @@ class DirectoryRename:
                     and all(slot.parent == 1 and not slot.pin.directory for slot in owner._slots[2:]),
                     "directory_child_inventory")
         self._backend, self._group, self._previous, self._files = backend, group, previous, files
+        self._parent_policy = parent_policy
         self._request = rename.rename_request(previous[0].pin.handle, "rename_payload")
         self._states = ["not_started", "not_started"]
         self._sealed = [None, None]
@@ -81,30 +83,37 @@ class DirectoryRename:
                     self._guard()
                     owned._need(type(granted) is int and granted == access, "directory_granted_access")
                     self._rights_before[index] = granted
-                # Seal the stage before its parent; no inheritable ACEs.
+                # Comparative private-parent mode leaves only the parent ACL
+                # unchanged. Both arms still seal the stage and all children.
                 for index in (1, 0):
                     before = self._observe(index, "private")
                     owned._need(before == self._previous[index], "directory_precondition_changed")
-                    self._states[index] = "set_pending"
-                    result = self._backend.seal_directory(pins[index].handle, guard=self._guard, reject=self._record)
-                    self._guard()
-                    owned._need(result is None, "directory_seal_response")
+                    mode = self._parent_policy if index == 0 else "frozen"
+                    if mode == "frozen":
+                        self._states[index] = "set_pending"
+                        result = self._backend.seal_directory(pins[index].handle, guard=self._guard, reject=self._record)
+                        self._guard()
+                        owned._need(result is None, "directory_seal_response")
                     self._states[index] = "readback_pending"
-                    after = self._observe(index, "frozen")
+                    after = self._observe(index, mode)
                     old_sd, new_sd = json.loads(before.descriptor), json.loads(after.descriptor)
                     old_sd.pop("aces")
                     new_sd.pop("aces")
                     owned._need(before.pin == after.pin and old_sd == new_sd, "sealed_directory_changed")
+                    if mode == "private":
+                        owned._need(after == before, "private_parent_changed")
                     granted = self._backend.granted_access(pins[index].handle)
                     self._guard()
                     owned._need(type(granted) is int and granted == self._rights_before[index], "directory_retained_access")
-                    self._rights_after[index], self._sealed[index], self._states[index] = granted, after, "verified"
+                    self._rights_after[index], self._sealed[index] = granted, after
+                    self._states[index] = "verified" if mode == "frozen" else "private_verified"
                 self._evidence = "save_pending"
                 owned._need(persist(tuple(self._sealed), tuple(self._files._sealed)) is None, "directory_evidence_response")
                 self._guard()
                 self._evidence = "saved"
                 for index in (0, 1):
-                    owned._need(self._observe(index, "frozen") == self._sealed[index], "directory_prerename_changed")
+                    mode = self._parent_policy if index == 0 else "frozen"
+                    owned._need(self._observe(index, mode) == self._sealed[index], "directory_prerename_changed")
                 self._guard()
                 self._rename = "pending"
                 result = self._backend.set_file_information_by_handle(pins[1].handle, rename.FILE_RENAME_INFO, self._request)
@@ -125,6 +134,7 @@ class DirectoryRename:
 
     def snapshot(self):
         return {"used": self._used, "stopped": self._error is not None, "resource_stop": self._resource,
+                "parent_policy": self._parent_policy,
                 "directory_states": self._states[:], "rights_before": self._rights_before[:],
                 "rights_after": self._rights_after[:], "evidence": self._evidence, "rename": self._rename,
                 "retry_permitted": False, "cleanup_permitted": False, "native_publication_performed": False,
