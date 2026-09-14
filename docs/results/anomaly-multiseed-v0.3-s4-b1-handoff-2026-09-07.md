@@ -2621,3 +2621,49 @@ manifest以外34記録の論理bytes548113。失敗source treeを走査せず明
 rename後検査、marker/全phase、独立token実操作、native故障/競合、正式OS整合、VM digest、runtime closure/consumer、S4受入は未完了。
 全acceptance/formal/authenticated flagsは未受入。src/科学config/schema/registry/正式pin、本流889cfc3不変、旧CIへ件数加算なし。
 push/merge/CI起動、新runtime/共有環境/別project/旧failure roots操作なし。
+
+## 90. 2026-09-14 B2 親policy比較の成立と2条件枠終了
+
+ユーザー「続けてください」を受け、基準594bf1dから親DACLの条件差を比較した。
+実装・2条件の実行savepoint **a31ae9b5119ed28c5271502d252ce2425c4b448e**。
+[結果](anomaly-multiseed-v0.3-s4-b2-parent-policy-rename-2026-09-14.md)と[設計](../anomaly-v03-parent-policy-rename-design.md)を参照。
+
+DirectoryRenameの既定frozenは維持し、privateを明示する比較modeを追加した。
+親DACL設定だけを省き、stage/file固定、全子close、親元ID/private SD完全一致、実権限、証跡後再検査を残す。
+親状態はprivate_verified。終了後読取りもrootは選択policy、payload/factsはfrozenとして元ID/bytes/SDを照合する。
+新規parent_policy_probeは条件1private/条件2frozenを固定し、監視側が1の完全成功・同一revision・終了を確認したときだけ2を許す。
+
+初期29件の故障後finish再送出の期待漏れ2件を修正し29件pass/0.045秒。
+記録済み新規5＋既存167＝172件pass/0.181秒、failure/error/skip等0。initial-checks.jsonlが最終根拠。
+コード/probe/監視/仕様の独立レビューはP0〜P3=0、read-only、進捗ポーリングなし。
+25 source＋補助2 filesのraw/Git blob一致、repository safety/差分/PowerShell構文確認pass。以後コード変更・重複試験なし。
+
+clean HEAD・source/監視hash固定後、新規artifacts/parent-policy-rename-2026-09-14/で2条件を順次実行。
+root0x1600a7/stage0x1700a1、writer0x12019f→file0x160081、facts.json45 bytes、同じNtSetInformationFile/class10/40 bytes。
+非NULL保持親・leaf payload・no-replace、CWDは別の新規attempt親、stage/fileは両方frozen。
+条件1privateはNTSTATUS0/rename confirmed、終了後root/payload/factsの3 objects一致、31 tracked handles/token2個close、worker exit0/0.454秒。
+条件2frozenはNTSTATUS0xc0000022/WinError5を再現、rename pendingで停止、28 tracked handles/token2個close、worker exit1/0.392秒。
+両方native非pending/completion_unknown=false、stderr0、資源停止なし。条件2sourceの終了後再検査なし。
+証跡3個はprivate2817/2886/2950＝8653 bytes、frozen2817/2886/3014＝8717 bytes。第3予約名もrename前記録。
+marker file/.completeなし、journalはprepare unknown/stopped・teardown succeeded・commit not_started。
+親policyと成否の差を観測したが、内部拒否箇所のtraceや親private期間のadd/delete拒否の証明ではない。
+**各条件1回、最大2条件枠は終了。再試行・第3条件・繰越・前回batch/B1再開なし。**
+
+ignored新規rootへ原記録/監視/資源/manifestを保存。成功条件1だけ原bytesを再照合し、条件2/前回失敗sourceは再検査・再利用・削除なし。
+前回directory-rename manifestと34 artifactsのhash不変を照合した。
+initial-checks.jsonl124681 bytes/hash 4b3cc498c2c47b88e4f4e04d23ee02df157130f02e7d8fd8f3119657cb049a03。
+savepoint-evidence.json13938 bytes/hash 3949580d5f6b81787b7d9aad4d8bba10bd7101edc3b712b63ddd7975aa0ac93c。
+manifest以外24 artifactsの論理bytes226568。失敗source走査なし。
+
+開始前UTC09:40:05 RAM9.25GiB/C119.70GiB/D87.92GiB、条件2前09:40:36 RAM9.24GiB、終了後09:41:28 RAM9.25GiB。
+C/Dは各点で同じ丸め値。build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和・正式pin不変。
+private最大18.03MiB、working最大26.04/25.98MiB、各4/2境界、外側samples0。両worker・検証process終了、常駐なし。
+点観測を全期間最大値・長期リーク不在の証明にしない。
+
+次は公式の同一親内NT rename（単一leaf/RootDirectory=NULL）を別adapter候補として設計する。
+保持rootの同一物・寿命検査を残し、元source/親結合、固定wire、異なるCWD、非上書き、故障後停止をpure/faultで具体化する。
+親frozen下での成功・競合耐性は未確認。新規仕様/review/source固定後の別枠とし、今回枠への3回目・失敗後fallbackは行わない。
+既定保持親形式・既存6工程/S3 hardlink marker/D2契約を変更しない。この候補が不成立なら親保護/marker順序と競合の具体案を判断点として示す。
+親全保護、marker/全publisher、独立token、native故障/競合、正式OS整合、VM digest、runtime closure/consumer、S4受入は未完了。
+全formal/authenticated flags=false、acceptance=not_completed。src/科学config/schema/registry/正式pin、本流889cfc3不変、旧CIへ件数加算なし。
+push/merge/CI、新runtime、共有環境、別project、旧failure rootsへの操作なし。

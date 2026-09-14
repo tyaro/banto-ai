@@ -85,3 +85,7 @@ B1の終了済み試行枠を流用せず、具体的なnative試行範囲と資
 子解放後のstage/root固定・権限保持・証跡3個保存を実行した。Win32相対要求は87、明示的NT要求は5で失敗し2回枠を終了。
 既存BoundRenameをnative成功済みとは扱わない。非NULL保持親・固定済み親でのrenameは成立未確認のため、
 次は親保護と名前変更順序を見直す。初回Win32 wrapperの静的変換推定と、NT呼出しのbuffer寿命修正は上記設計を参照。
+
+[親policy比較](anomaly-v03-parent-policy-rename-design.md)で、同じ保持親のNT要求がprivateでは成功しfrozenでは5で拒否された。
+BoundRenameの既定wire/契約は不変。次の候補は同一親内の直接NT leaf/NULL RootDirectoryを明示する別adapterで、
+保持親の観測/寿命を残した設計・pure故障検証を先に行う。実機成功やCWD/競合に関する保証はまだない。

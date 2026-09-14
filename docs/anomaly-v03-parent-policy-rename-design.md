@@ -56,3 +56,15 @@ frozenの拒否はworker exit1/directory_rename=failのまま記録し、試験�
 root固定を遅らせて6工程の成功を捏造したり、既存S3 hardlink marker/D2契約を黙って変えたりしない。
 今回変更は試験fixtureの比較状態だけで、production入口・marker commit・正式pin・既存modelの工程順は変更しない。
 独立token実操作、native競合/故障、全publisher、S4受入は未完了。全formal/authenticated flags=false、acceptance=not_completed。
+
+## 実結果と次の候補
+
+a31ae9bの同じclean実装で172件pass・独立P0〜P3=0を経て2条件を実行した。
+privateはNTSTATUS0、3 objectsの終了後読戻し一致、31 handles/token2個close、worker exit0。
+frozenはNTSTATUS0xc0000022/WinError5を再現し、28 handles/token2個close、worker exit1。最大2条件枠は終了。
+[結果・保存記録](results/anomaly-multiseed-v0.3-s4-b2-parent-policy-rename-2026-09-14.md)を参照。
+
+同じ公式資料が記す同一親内rename（RootDirectory=NULL、単一leaf）を、次の別adapter候補として設計する。
+保持rootの同一物/寿命検査は残し、固定済み親で成功するかは別の新規仕様・pure/fault・reviewを経て実検証する。
+今回の保持親形式からの自動fallbackではなく、既定API・既存6工程/S3/D2契約を変更しない。
+この候補で成立しない場合は、親保護/marker順序と競合の具体案へ進む。

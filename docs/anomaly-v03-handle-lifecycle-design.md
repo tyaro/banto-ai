@@ -100,4 +100,8 @@ marker-pending名の消失後も必要なmarker bytes、payloadの固定inventor
 同一物/SDと実権限0x1700a1/0x1600a7を照合した。2回とも証跡保存・28 handles/token2個closeまで確認したが、
 Win32はWinError87、修正NT経路はWinError5で停止した。相対renameの成立は未確認、今回枠は終了。
 次は親の固定と名前変更の順序・競合保護の再設計であり、保持親のADD権限だけで成功を仮定しない。
+
+[親policy比較](anomaly-v03-parent-policy-rename-design.md)で、privateはrename/終了後3 objects一致、frozenは5拒否となった。
+両条件で全所有終了を確認した。親privateの成功は親経由add/delete拒否を含まない。
+次は保持親自体の検査を維持した同一親内NT形式の別adapterを設計し、root固定の順序を変える必要性を検証する。
 B1の終了済み試行枠を再開しない。native実行範囲を具体化・レビューしてから次の試行へ進む。

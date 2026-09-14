@@ -130,3 +130,7 @@ native返却は非pendingでcompletion_unknown=false。operation.renameは成功
 次は親private/frozenの条件差と、root固定・payload rename・marker commitの順序をpure modelから検討する。
 rootをprivateに保つ間の競合/親経由deleteと、完了印前の保護を同時に満たす必要がある。
 固定を後回しにするだけで受入へ進めず、新規比較の範囲・終了条件を具体化してから別枠を作る。
+
+続く[親policy比較](anomaly-v03-parent-policy-rename-design.md)で、同じ直接NT形式の親private成功・親frozen拒否を観測した。
+privateでは終了後3 objects一致、全31 handles/token2個close。frozenでは5を再現し全28 handles/token2個close。
+比較の2条件枠も終了済み。次の候補は、保持親検査を残す同一親内NT leaf形式の別設計である。
