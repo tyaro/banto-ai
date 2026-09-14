@@ -7,6 +7,19 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+function Get-SetupLaunchFailure {
+    param([System.Management.Automation.ErrorRecord]$Failure, [string]$Stage, [Nullable[int]]$OwnedProcessId)
+    $chain = @()
+    $current = $Failure.Exception
+    for ($index = 0; $index -lt 4 -and $null -ne $current; $index++) {
+        $native = $null
+        if ($current -is [ComponentModel.Win32Exception]) { $native = $current.NativeErrorCode }
+        $chain += [ordered]@{ exception_type = $current.GetType().FullName; hresult = $current.HResult; native_error = $native }
+        $current = $current.InnerException
+    }
+    # Do not log Message/InvocationInfo/command text; they may contain arbitrary input.
+    return [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); launch_failed = $true; failure_stage = $Stage; process_id = $OwnedProcessId; exception_chain = $chain; chain_truncated = ($null -ne $current); no_retry = $true }
+}
 $project = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $artifacts = Join-Path $project 'artifacts/principal-setup-2026-09-15'
 $library = Join-Path $artifacts "PrincipalSetup-$Build.dll"
@@ -96,17 +109,25 @@ $attempt = [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); approved = $true;
 $record = [IO.File]::Open($attemptFile, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
 try { $data = [Text.Encoding]::UTF8.GetBytes(($attempt | ConvertTo-Json)); $record.Write($data, 0, $data.Length); $record.Flush($true) } finally { $record.Dispose() }
 $startedUtc = [DateTime]::UtcNow
+$launchStage = 'request-uac'
+$ownedProcessId = $null
 try {
     $process = Start-Process -FilePath $powershell -Verb RunAs -WindowStyle Hidden -WorkingDirectory 'C:\Windows\System32' -ArgumentList $arguments -PassThru
+    $launchStage = 'read-owned-process-id'
+    $ownedProcessId = $process.Id
+    $launchStage = 'wait-for-exit'
     $exited = $process.WaitForExit(45000)
+    $launchStage = 'collect-exit-result'
     $result = [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); launch_elapsed_ms = ([DateTime]::UtcNow - $startedUtc).TotalMilliseconds; process_id = $process.Id; exit_observed = $exited; exit_code = $null; phase_number = $null; native_detail = $null; release_failed = $false; observer_termination_attempted = $false }
     if ($exited) {
         $result.exit_code = $process.ExitCode
         if ($process.ExitCode -ge 65536) { $result.phase_number = ($process.ExitCode -shr 16) -band 16383; $result.native_detail = $process.ExitCode -band 65535; $result.release_failed = ($process.ExitCode -band 0x40000000) -ne 0 }
     }
+    $launchStage = 'dispose-observer-handle'
     $process.Dispose()
 } catch {
-    $result = [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); launch_failed = $true; exception_type = $_.Exception.GetType().FullName; hresult = $_.Exception.HResult; no_retry = $true }
+    $result = Get-SetupLaunchFailure -Failure $_ -Stage $launchStage -OwnedProcessId $ownedProcessId
+    $result.launch_elapsed_ms = ([DateTime]::UtcNow - $startedUtc).TotalMilliseconds
 }
 $resultFile = Join-Path $artifacts 'launch-result.json'
 $record = [IO.File]::Open($resultFile, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
