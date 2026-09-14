@@ -20,6 +20,7 @@ from tests.fixtures import anomaly_v03_prepublication as prep
 from tests.fixtures import anomaly_v03_publication_model as model
 from tests.fixtures import anomaly_v03_reader_reacquisition as reopen
 from tests.fixtures import anomaly_v03_sealed_files as seal
+from tests.fixtures import anomaly_v03_same_parent_rename as same
 from tests.fixtures.anomaly_v03_private_sink import WindowsPrivateSink
 from tests.fixtures.anomaly_v03_tracked_open import TrackedOpen
 
@@ -33,16 +34,20 @@ def notice():
         pass
 
 
-def main(*, compare_parent_policy=False):
-    owned._need(type(compare_parent_policy) is bool, "probe_comparison_mode")
+def main(*, compare_parent_policy=False, same_parent=False):
+    owned._need(type(compare_parent_policy) is bool and type(same_parent) is bool
+                and not (compare_parent_policy and same_parent), "probe_comparison_mode")
     parser = argparse.ArgumentParser()
     parser.add_argument("--expected-head", required=True)
     parser.add_argument("--attempt", type=int, choices=(1, 2), required=True)
     args = parser.parse_args()
+    owned._need(not same_parent or args.attempt == 1, "same_parent_single_attempt")
     actual = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     if actual != args.expected_head or subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT):
         raise ValueError("probe_requires_exact_clean_head")
     base = ROOT / "artifacts/parent-policy-rename-2026-09-14" if compare_parent_policy else BASE
+    if same_parent:
+        base = ROOT / "artifacts/same-parent-rename-2026-09-14"
     parent_policy = "private" if compare_parent_policy and args.attempt == 1 else "frozen"
     attempt = base / f"attempt-{args.attempt}"
     attempt.mkdir()
@@ -113,15 +118,18 @@ def main(*, compare_parent_policy=False):
         observations = tuple(bridge.inspect_native(cell, expected=value, private_user=source._user)
                              for cell, value in zip(selected, (None, None, raw_file)))
         group.adopt(leases=selected, journal=journal, observations=observations, parents=(None, 0, 1))
-        backend = move.WindowsNtDirectoryBackend(source)
+        backend = (same.WindowsNtSameParentBackend if same_parent else move.WindowsNtDirectoryBackend)(source)
         writer_access = group.owner.borrowed((2,), lambda pins: backend.granted_access(pins[0].handle))
         owned._need(type(writer_access) is int and writer_access == reopen.WRITER_ACCESS, "writer_access")
         sink.connect(attempt / "private-evidence")
         budget()
         generation = seal.SealedFiles(move.WindowsStageFileBackend(source), group=group, root_index=1,
             plans=(reopen.ReadPlan(2, "facts.json", raw_file, observations[2]),), user=source._user, require_marker=False)
-        operation = move.DirectoryRename(backend, group=group, previous=observations[:2], files=generation,
-                                         parent_policy=parent_policy)
+        if same_parent:
+            operation = same.SameParentDirectoryRename(backend, group=group, previous=observations[:2], files=generation)
+        else:
+            operation = move.DirectoryRename(backend, group=group, previous=observations[:2], files=generation,
+                                             parent_policy=parent_policy)
         journal.begin("prepare")
         record = prep.build_evidence("prepare", source_revision=actual, files=files, marker=marker, observations=observations)
         if len(record.raw) > 64*1024:
@@ -216,6 +224,7 @@ def main(*, compare_parent_policy=False):
         report = {"scope": "B2 held directory sealing and relative rename engineering smoke",
                   "utc": datetime.now(timezone.utc).isoformat(), "source_revision": actual, "attempt": args.attempt,
                   "parent_policy_comparison": compare_parent_policy, "parent_policy": parent_policy,
+                  "same_parent_rename": same_parent,
                   "directory_rename": "pass" if failure is None else "fail",
                   "error_type": None if failure is None else type(failure).__name__,
                   "error_reason": None if failure is None else getattr(failure, "reason", None),

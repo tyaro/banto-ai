@@ -190,10 +190,12 @@ class WindowsNtDirectoryBackend(seal.WindowsSealBackend):
         self._attempted = self.pending = self.completion_unknown = False
         self.ntstatus, self._last_error, self._buffer, self._io = None, 0, None, None
 
+    def _matches_request(self, raw):
+        return (type(raw) is bytes and len(raw) == 36
+                and raw == rename.rename_request(int.from_bytes(raw[8:16], "little"), "rename_payload"))
+
     def set_file_information_by_handle(self, handle, info_class, raw):
-        owned._need(not self._attempted and info_class == rename.FILE_RENAME_INFO
-                    and type(raw) is bytes and len(raw) == 36
-                    and raw == rename.rename_request(int.from_bytes(raw[8:16], "little"), "rename_payload"),
+        owned._need(not self._attempted and info_class == rename.FILE_RENAME_INFO and self._matches_request(raw),
                     "nt_directory_request")
         self._attempted = True
         # Same field offsets as Win64 FILE_RENAME_INFO, with trailing padding
