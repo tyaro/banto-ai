@@ -69,6 +69,8 @@ formal_permission/execution_authenticatedはfalse、acceptance_statusはnot_comp
 
 [後続の実観測接続](anomaly-v03-observed-evidence-design.md)で、取得済み3 slotsの一括管理移管と
 native pin/descriptor/bytes→EvidenceBarrier→本sinkのprepare保存・選択解放を限定実機で確認した。
-writer解放後の一時reader再取得は確認済み。seal/rename用の権限取得とlive移管、動的slot追加、rename前後の同一物統合は残る。
+writer解放後の一時reader再取得は確認済み。続く[file権限固定](anomaly-v03-file-sealing-design.md)では
+2 filesのWRITE_DAC/marker DELETE取得・固定とlive continuationを確認した。
+directory/root seal・rename、動的slot追加、rename前後の同一物統合は残る。
 今回のnative JSONは保存部品用の合成bytesであり、正式完了印や性能結果ではない。
 正式OS整合、VM image digest、runtime closure/consumer凍結、native全受入は引き続き別の残件。

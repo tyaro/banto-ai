@@ -2523,3 +2523,47 @@ worker・短い検証processは終了、常駐処理なし。長期リーク不�
 全acceptance/formal/authenticated flagsは未受入。正式OS整合、VM digest、runtime closure/consumer、S4受入は未完了。
 src/科学config/schema/registry/正式pin、本流889cfc3不変。旧CIへ件数加算なし。
 push/merge/CI起動、新runtime/共有環境/別project/旧failure roots操作なし。
+
+## 88. 2026-09-14 B2 file権限固定と保持世代
+
+ユーザー「続けてください」を受け、基準c73a602からfileのDACL固定と保持handleでの継続処理を接続した。
+実装・実行savepoint **48f701f51fdf3d8e4312dc097b9a6d8bc18066f8**。
+[結果](anomaly-multiseed-v0.3-s4-b2-file-sealing-2026-09-14.md)と[設計](../anomaly-v03-file-sealing-design.md)を参照。
+
+SealedFilesはwriter確定close後、payload0x160081/marker0x170081を別世代で取得する。
+全対象の元ID/bytes/private SD・実権限を検査してから、各対象再検査→同handleでfrozen DACL設定→読戻し。
+ID/bytes・owner/group/integrity/policy不変と、固定後もWRITE_DAC/marker DELETEを保持することを確認する。
+全検査後だけ、親borrowと新世代handleがliveの同期continuationへ進み、戻って全新世代をcloseする。
+旧closed writer slotsは復活せず、動的slot追加/恒久移管は導入しない。今回continuationは観測だけでrenameなし。
+
+SetSecurityInfoのDWORD結果、NULL/defaulted DACL拒否、内部native境界guardとLocalFree1回を追加。
+応答喪失/途中失敗/親停止/再入後は後続IOを止め、元例外・後発資源停止を保持する。
+部品52件pass/0.075秒、記録済み新規19＋既存124＝143件pass/0.168秒、failure/error/skip等0。
+initial-checks.jsonlを最終根拠とする。以後コード変更なし、重複試験なし。source等23 filesをGit blob/raw照合。
+本体/追加scenario・監視・仕様の独立レビューは各新規P0〜P3=0、read-only、進捗ポーリングなし。
+repository safety/staged diff-check/PowerShell構文確認pass。
+
+clean HEADと監視hash固定後、新規artifacts/file-sealing-2026-09-14/attempt-1だけで限定実機成功。
+新規2 filesでfrozen DACL設定/同一物・bytes・SD読戻し、親root不変、固定前後の実権限一致を確認した。
+source13＋sink12＋new files2＝27 tracked handlesと照会token2個close、worker exit0、外側0.555秒、stderr0 bytes。
+source exact2 files計460 bytes、prepare証跡2880 bytes、終了後inventory/raw/hash一致。
+journalはprepare unknown/stopped、teardown succeeded、commit not_started。全公開phaseの成功に読み替えない。
+最大2回枠は1回目成功で終了、未使用繰越なし。旧batch/B1枠再開なし。
+
+新規ignored rootに試験/native/監視/資源/原bytes/manifestを保存、前回reader manifest全artifact不変を照合。
+initial-checks.jsonl103693 bytes/hash 3f78ca2784357f6868a644b65b62fd4879b5f8636b29ae9b47cd9907d44f3b9d。
+savepoint-evidence.json8005 bytes/hash e9809b687bcf368f13720e9b0bdba6bdd10f3e1ee3da872ec862294445a92edb。
+manifest以外15記録の論理bytesは166713。全hash表は結果書を参照。
+
+開始UTC08:38:48 RAM7.56GiB/C119.96GiB/D87.07GiBは取得結果から転記。
+実機前08:49:04/最終08:49:37はともにRAM7.83GiB/C119.95GiB/D91.03GiB。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、正式pin不変。
+worker4境界でprivate最大18.05MiB/working・peak25.83MiB、最後0.084秒。外側samples0。
+D空き増加の原因は未調査。資源の増減を本作業/リーク不在へ帰属させない。worker・検証process終了、常駐なし。
+
+次はstage/root directoryの権限取得/DACL固定と保持source/parentでの相対renameを進める。
+今回rootはprivateのまま。親経由delete等の全保護、独立token実操作、子解放後directory rename、
+後続phase証跡更新、実native故障/競合は未完了。全acceptance/formal/authenticated flagsは未受入。
+正式OS整合、VM digest、runtime closure/consumer、S4受入は残る。
+src/科学config/schema/registry/正式pin、本流889cfc3不変。旧CIへ件数加算なし。
+push/merge/CI起動、新runtime/共有環境/別project/旧failure roots操作なし。

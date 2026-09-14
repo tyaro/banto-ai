@@ -65,3 +65,6 @@ commit_observation=not_startedを確認する。モデル6工程を架空に成�
 
 後続の[reader再取得](anomaly-v03-reader-reacquisition-design.md)で、writer解放後の新読取り世代を追加した。
 親borrow内で元ID/bytes/SD・実GrantedAccessを確認してreaderを閉じる。動的slot追加やseal/renameへのlive移管は残る。
+
+続く[file権限固定](anomaly-v03-file-sealing-design.md)でinspect_nativeのfrozen SD検証を追加し、
+2 filesの固定後観測を別世代へ接続した。後続phaseの証跡barrier更新・directory/root seal・renameは残る。

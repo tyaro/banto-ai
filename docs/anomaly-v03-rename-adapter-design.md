@@ -76,3 +76,7 @@ payload子handle保持とdirectory renameの両立、marker/親directoryのDACL�
 flush/close/競合時の実証跡とprivate bytes保持、独立tokenの実効権限を別途実装・検証する。
 権限固定後に必要rightsを名前経由で取り直すことを前提にしない。
 B1の終了済み試行枠を流用せず、具体的なnative試行範囲と資源上限を確定してから実機へ進む。
+
+2026-09-14の[file権限固定](anomaly-v03-file-sealing-design.md)で、marker DELETEをDACL固定前に取得し、
+固定後も同handleの実権限を保持して親borrow内の継続処理へ渡す範囲を限定実機確認した。
+継続処理は観測のみで、このBoundRenameの実API接続、directory/root固定と親の追加権限は未完了。

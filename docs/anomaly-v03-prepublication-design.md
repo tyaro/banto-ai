@@ -82,3 +82,6 @@ production入口を作る際はbarrier経由へ閉じ、試験用APIを正式受
 native pin/descriptor/bytes→本barrier→private sinkのprepare保存・選択解放を限定実機で確認した。
 [reader再取得](anomaly-v03-reader-reacquisition-design.md)では、writer解放後に別の短命読取り世代を開き、
 親borrow内で元ID/bytes/SD・実権限を照合して閉じる範囲を確認した。動的slot追加、seal/renameへのlive移管は残る。
+
+[file権限固定](anomaly-v03-file-sealing-design.md)では同じprepare保存・writer解放後に、別世代で
+2 filesのfrozen DACL設定/読戻しとlive continuationを確認した。後続phase証跡への接続は未完了。

@@ -73,3 +73,10 @@ Windows Update後のUBRはengineering記録として扱い、正式OS pinは更�
 次はstage/root directoryの取得権限・DACL固定と保持source/parentによる相対renameを接続する。
 directory rename前の子handle解放、後続phaseの証跡更新、独立token/実故障/競合は未完了。
 formal_permission/execution_authenticatedはfalse、acceptance_statusはnot_completedのまま。
+
+## 実行結果
+
+48f701fのclean HEADで1回目成功。新規2 filesにfrozen DACLを設定し、固定前後の実権限
+0x160081/0x170081・同一物/bytes/SDを照合した。親root不変、27 tracked handles/token2個close、worker exit0。
+外側0.555秒、stderr0 bytes。今回枠は成功で終了、未使用繰越なし。
+[結果・保存記録](results/anomaly-multiseed-v0.3-s4-b2-file-sealing-2026-09-14.md)を参照。

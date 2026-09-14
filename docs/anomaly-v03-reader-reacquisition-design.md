@@ -62,3 +62,7 @@ hard時間上限、Start-Process内部の返却喪失、電源断耐久性、長
 cbb5a82のclean HEADで1回目成功。元writer2個0x12019f→new reader2個0x120081を実照会し、
 元ID/bytes/SD一致、27 tracked handles/token2個close、worker exit0、外側0.400秒、stderr0 bytesを確認した。
 今回枠は成功で終了し、未使用枠を繰り越さない。[結果・保存記録](results/anomaly-multiseed-v0.3-s4-b2-reader-reacquisition-2026-09-14.md)を参照。
+
+後続の[file権限固定](anomaly-v03-file-sealing-design.md)は内部hookを使う別のSealedFiles世代で、
+WRITE_DAC/marker DELETE取得・frozen DACL読戻し・親borrow内のlive continuationを接続した。
+通常ReacquiredReadersのread権限・終了契約は維持する。

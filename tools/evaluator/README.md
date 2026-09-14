@@ -321,6 +321,10 @@ tests/fixturesへ追加した段階です。実機接続前の順序・失敗/�
 [新規16＋既存108＝124件pass、writer解放後のread権限・元ID/bytes/SD照合が実機成功](../../docs/results/anomaly-multiseed-v0.3-s4-b2-reader-reacquisition-2026-09-14.md)。
 一時readerは親borrow内で閉じます。seal/rename用のlive handle移管・動的slot追加、native publisher/全受入は未完了です。
 
+[file権限固定](../../docs/anomaly-v03-file-sealing-design.md)では、
+[新規19＋既存124＝143件pass、2 filesのfrozen DACL設定・保持権限と同一物読戻しが実機成功](../../docs/results/anomaly-multiseed-v0.3-s4-b2-file-sealing-2026-09-14.md)。
+親borrow内の継続処理と全handle終了を確認しました。directory/root固定・相対rename・全受入は残ります。
+
 `inspect_anomaly_v03.py`は新規のengineering schemaとpure validatorを使うread-only collectorです。
 9つの科学schemaと5 configは変更しません。cleanなfull-SHA checkoutを指定します。
 
