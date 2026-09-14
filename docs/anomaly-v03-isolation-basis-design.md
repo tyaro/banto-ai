@@ -187,3 +187,12 @@ share3の作成は直前の新規診断で87となり、今回controlを省略�
 専用標準account BantoS4Publisherと C:\ProgramData\BantoAI-S4B2-principal-20260915 の追加案をユーザー判断へ出す。名前/場所は読取確認時には未存在だが、まだ作成していない。
 独立P0〜P3所見0件。OS変更/native追加/新worker0、前回選抜72 source/13 artifacts不変。
 この環境案への同意に、frozen/markerの正式契約変更やB2/S4受入を含めない。生bytes返却・全期間の未解決と全許可flags=falseを維持する。
+
+## 2026-09-15 承認済みprincipal準備の管理者起動停止
+
+ユーザーが環境準備を承認。e202677の[限定準備仕様](anomaly-v03-principal-setup-design.md)と[34件＋診断6項目pass/実機起動結果](results/anomaly-multiseed-v0.3-s4-b2-principal-setup-2026-09-15.md)を保存した。
+最初からdisabledの標準account、BA所有/保護DACL/medium labelのroot、U/P readonly、祖先handle/linked U preflight、資格情報をB内memoryに限定する準備を実装した。
+管理者起動max1はlaunch_failedで戻り、外側例外だけのため原因/開始/終了を確定できない。accountは対象SAM読取で未存在、rootはunknownを保持して再訪しない。
+f8495edで将来の起動stage/内側native error記録を改善したが、閉鎖済みattemptを再起動せず、今回の原因の確定にも使わない。
+次はOS設定を変更しない独立の昇格診断。環境準備の許可を再確認する必要はないが、Windowsの管理者確認を操作できる条件が必要。
+P/U実process、namespace/共通保持期間、全publisher、frozen/markerの契約、正式B2/S4は未完了。準備実装やaccount方式への許可を隔離認定に読み替えず、全許可flags=falseを維持する。

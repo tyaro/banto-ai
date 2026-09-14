@@ -3182,3 +3182,28 @@ build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineeri
 新規native枠/checkout/worker/常駐なし、旧fixture再open/列挙/hash/copy/deleteなし。他project/process、本流889cfc3、push/merge/CIへ操作なし。
 既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持しcommit除外。
 環境準備未承認、全isolation/protected commit/future immutability/formal permission/execution authentication flags=false、acceptance_status=not_completed。
+
+## 106. 2026-09-15 承認済み専用principal準備・管理者起動の停止
+
+ユーザー「はい、それで続けて下さい」で、専用標準account BantoS4Publisherと新規保護root C:\ProgramData\BantoAI-S4B2-principal-20260915の準備を承認済み。再承認を求めない。§105以前の未承認記録は履歴。
+実装 **e202677e66356e7b3e554d258ed73f73def7ea0f**、事後診断改善 **f8495ed64908dded70e9737c9b0615d55f23f044**。
+[準備仕様](../anomaly-v03-principal-setup-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-principal-setup-2026-09-15.md)を参照。
+
+既存.NET compilerで通常権限compile、SHA固定した公開DLL bytesを有界圧縮引数でBへ渡し、有界展開/hash/Assembly.Load。BからU書換え可能DLL pathへ戻らず、System32 P/Invoke、secretはunmanaged memoryだけに置く。
+accountはNetUserAdd flags0x203/priv1で最初からdisabled。SID/Users所属を確認し、rootはBA owner/SY・BA full/U・P read-only/protected DACL/medium label。今回はPへ作成権限を与えず、ログオンしない。
+祖先をDELETE shareなしで保持、linked ordinary U tokenの限定祖先権限をpreflight。失敗後のretry/補償/先行ancestor closeなし。LocalFree/NetApiBufferFree失敗も事前確保stateで一次code/phaseとbit30へ反映する。
+最終build-03の34件pass、通常loader PID18112/exit0。独立P2総3/P3総1を修正し残0、進捗ポーリングなし。DLL SHA e10c53362b5cf726b0e49605d3f9f83a88be5450a3ec89fafc40e242e3a62168。
+
+UTC17:03:09 account/root不存在確認。17:04:20にmax1起動を記録し、17:06:23 launch_failedで戻った。外側System.InvalidOperationException/HRESULT -2146233079のみで内側WinError/stage/PIDなし。UAC取消・別障害・process取得後の観測失敗を区別できない。
+UTC17:07:18のSAM読取でaccount不存在。**rootの状態はunknown、存在確認/再open/列挙/hash/copy/deleteしていない**。account不存在からroot不存在を推定しない。helper開始/終了も不明、launcher sessionのみ終了確認。環境準備は未完了。
+作成attemptは閉鎖し再実行なし。launch-attempt.jsonの存在guardを解除しない。旧test source/枠への再訪もない。
+f8495edでは将来の失敗を最大4段のexception type/HRESULT/native code、起動stage、取得済みPIDだけで記録する。Message/commandは保存しない。純粋記録関数の追加6項目pass/独立所見0。今回の失敗原因を遡及確定しない。
+
+ignored artifacts/principal-setup-2026-09-15に27 artifacts/論理437818 bytes、最終manifest22001 bytes/hash e5acb7c762bac4f91f59c879eebd5e115a5d41e9f97aa58c00e6379efa898e21。
+native input18733 bytes/hash34e49c942f16123745fd9ac62dabc013d0871d72f66fef35695077091adf06c7とinput時20 artifactsは不変。最終78 sourceを診断revisionでGit/raw一致確認、前回73 source/5 artifacts不変。既存401件は対象実装不変のため再実行なし。
+UTC16:40:36 RAM16880279552/C125132517376/D37115596800 bytes→17:09:46 RAM15485636608/C125072465920/D27387604992 bytes。D約25.51GiB、今回約9.06GiB減少の原因未特定、17:03以降ほぼ横ばい。他project/processの走査・停止なし。長期リーク不在の主張なし。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和/正式pin不変、Python3.14.0。新runtime/service/task/VM/profile追加なし、本流889cfc3/clean不変、push/merge/CIなし。
+既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全しcommit除外。
+
+次はWindowsの管理者確認を操作できる状態で、OS設定を変更しない独立の昇格診断を先に実装・確認する。閉鎖attemptのretryや不明rootへの再訪を診断と呼ばない。実際の起動を確認してから新規対象と保全状態を仕様へ固定する。
+専用環境方式への許可は継続。Pのactivation/reset/logon/disable、protected code/process/thread/token/IPC、P/U試験、namespace共通期間、全publisher/frozen/marker/正式B2/S4は未完了。全許可flags=false、acceptance_status=not_completed。

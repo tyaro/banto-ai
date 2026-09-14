@@ -124,10 +124,10 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 
 ## 結果文書
 
-2026-09-15のS4-B2最新engineering結果は[公開側と通常peerの権限分離案](results/anomaly-multiseed-v0.3-s4-b2-principal-boundary-2026-09-15.md)。
-専用標準accountと新規保護rootの候補、各操作の権限・寿命、process/token/資格情報境界、最初の限定harnessを設計。独立所見0件。
-OS変更/新規native/workerは0。前回401件passの対象を含む72 sourceを不変確認。PCにaccountを追加する方式の環境準備についてユーザー判断を受ける。
-[設計](anomaly-v03-principal-boundary-design.md)、[隔離条件](anomaly-v03-isolation-basis-design.md)、[引継書§105](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。生bytes返却とB2/S4受入は未充足。
+2026-09-15のS4-B2最新engineering結果は[専用principal環境の準備記録](results/anomaly-multiseed-v0.3-s4-b2-principal-setup-2026-09-15.md)。
+環境準備はユーザー承認済み。無効標準account/保護rootの有界準備を実装、34件と追加診断6項目pass、独立レビュー残0。
+管理者起動max1は原因未確定のlaunch_failed。account不存在を読取確認、rootはunknown/再訪なし。次はOS設定を変更しない昇格診断。P/U干渉試験は未実行。
+[準備仕様](anomaly-v03-principal-setup-design.md)、[隔離条件](anomaly-v03-isolation-basis-design.md)、[引継書§106](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。生bytes返却とB2/S4受入は未充足。
 
 `docs/results`には実測・監査で22件あります（2026-09-07時点のMarkdown実測）。すべて結果条件と制約を伴う索引であり、
 顧客設備一般の性能保証ではありません。
