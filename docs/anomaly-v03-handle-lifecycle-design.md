@@ -86,8 +86,9 @@ marker-pending名の消失後も必要なmarker bytes、payloadの固定inventor
 これは実機試行の承認やprocess全体の資源上限ではない。time/private bytes/空きRAM/空きdisk等の
 監視上限、書込証跡の予算と保存の失敗時方針をnative試行仕様で別途確定する。
 
-未実装は、取得途中失敗時の即時所有追跡、実native writer/子handleの事前close接続、API外/thread間の借用排他、
-全ancestorの実pin、ACL/link/reparse/ADS/同一物検査、相対rename、証跡の実保存・回収である。
+[後続の取得追跡・実観測接続](anomaly-v03-observed-evidence-design.md)で、raw取得追跡、取得済み3 slotsの一括管理移管、
+祖先保持、実identity/private SD/bytesからprepare証跡を保存して子を解放する範囲を限定実機で確認した。
+権限を変えた再取得、動的slot追加、API外/thread間の排他、ADS等の全検査、seal/相対rename、実故障受入は残る。
 未知closeは再試行せず、限定worker終了による資源回収と終了確認をnative試行仕様へ含める。
 今回のHandleOwnerに安全なfixture削除機能があるとは扱わない。
 B1の終了済み試行枠を再開しない。native実行範囲を具体化・レビューしてから次の試行へ進む。

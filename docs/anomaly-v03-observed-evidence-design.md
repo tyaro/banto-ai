@@ -56,3 +56,9 @@ Start-Process内部の起動後返却喪失、hardリアルタイム上限、電
 両照会token close、worker exit0。journalは公開前で意図的に停止しteardown成功、
 commit_observation=not_startedを確認する。モデル6工程を架空に成功させない。
 全native受入、正式OS整合、VM digest、runtime closure/consumer凍結、S4受入は別の残件。
+
+## 実行結果
+
+9172afbのclean HEADで1回目が成功。source2 files/460 bytesから実観測を含むprepare証跡2880 bytesを保存し、
+選択解放・追跡25 handles/token2個のclose・worker exit0を確認した。外側0.355秒、stderr0 bytes。
+今回枠は成功で終了し、2回目を繰り越さない。[結果・保存記録](results/anomaly-multiseed-v0.3-s4-b2-observed-evidence-2026-09-14.md)を参照。

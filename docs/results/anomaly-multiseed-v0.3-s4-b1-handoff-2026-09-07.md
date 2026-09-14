@@ -2434,3 +2434,50 @@ push/merge/CI起動なし、本流889cfc3 cleanを維持。
 次は取得済みpinの既存ownerへの移管、writer解放後の再取得、実pin/descriptor観測からの証跡構築と
 EvidenceBarrier→今回sinkの接続を具体化する。probeの構文警告・監視console要約は次の改修時に整備する。
 native全受入、正式OS整合、VM digest、runtime closure/consumer凍結、S4受入は未完了。
+
+## 86. 2026-09-14 B2管理移管と実観測prepare証跡
+
+ユーザー「続けてください」を受け、基準19e474bから取得済みハンドル管理と実観測保存を接続した。
+実装・実行savepoint **9172afb13d1d2b2afc9034c6d352639d47d7c3ec**。
+[結果](anomaly-multiseed-v0.3-s4-b2-observed-evidence-2026-09-14.md)と[設計](../anomaly-v03-observed-evidence-design.md)を参照。
+
+AcquiredOwnerはcaller保持receiverに全状態を確保し、単一active切替で固定batchを管理移管する。
+切替前の失敗はcaller所有、切替後の返却喪失も保持receiverで終了できる。
+raw close主体は各TrackedOpenで一元化し、移管元のclose/acquire・二度目adoptを拒否/停止する。
+capture_recordは全live slotsを借用し、実bytes/identity/private SDと採用時pinを照合して
+build_evidence→EvidenceBarrier→WindowsPrivateSinkへ接続した。
+
+独立レビューP2（停止後にも観測IOが継続）を是正し、各境界とownerのみのresource stopを回帰確認した。
+再adopt拒否の握り潰しも補強。最終独立確認の新規P0〜P3=0、担当はread-only、進捗ポーリングなし。
+記録済み初回107件pass/0.102秒、最終は新規18＋既存90＝108件pass/0.084秒、両回failure/error/skip0。
+その前のテスト整備時の配置ミスNameErrorは是正済み。最終source等17 filesを確定Git blobとraw bytes照合。
+repository safety/staged diff-check/PowerShell構文確認pass。
+
+clean HEADと監視hash固定後、新規artifacts/observed-evidence-2026-09-14/attempt-1だけで限定実機を実行した。
+source-fixtureにfacts.json45 bytes＋marker-pending.json415 bytes、実観測を含むprepare.json2880 bytesを別private領域へ保存。
+source root/file3 slotsを管理移管し、barrier保存後のfile選択解放、残るroot/祖先/sinkの終了を確認。
+source13＋sink12＝25 tracked handles、照会token2個close、worker exit0、外側0.355秒。
+終了後source exact2 files/証跡exact1 file・raw bytes/hash一致。stderr0 bytes、監視console要約のnull表示を修正済み。
+旧probeのfinally内return警告も解消。旧実行済みscript/原記録は不変で、前回manifestの全artifact hashを照合した。
+
+journalはprepare=unknown/model_status=stopped/failure_reason=operation_error、teardown=succeeded、
+commit_observation=not_started。prepare中の局所確認後に意図的に停止した結果で、全公開工程の成功ではない。
+今回の最大2回枠は1回目成功で終了、未使用枠の繰越なし。前回private保存枠/B1終了枠の再開なし。
+DACL seal・writer再取得・rename/.complete・独立token操作・native実故障/競合試験は行っていない。
+
+新規ignored rootに初回/最終JSONL、native/監視/資源/各bytes/manifestを保存。
+final-checks.jsonl78019 bytes/hash4befd0bdc4898dafd641896805db9c45a4e969abcd83f03802096a4999306c02。
+savepoint-evidence.json7495 bytes/hash2b86f64832772d21e6640ec1dd0c4cd97c6c1cbb13fc46d5a7aacf4515e67e95。
+manifest以外16記録の論理bytesは205392。全hash表は結果書を参照。
+
+開始UTC07:55:38 RAM8.42GiB/C107.75GiB/D87.12GiBは当時取得値から転記。
+実機前保存08:07:10 RAM8.66GiB/C107.75GiB/D87.12GiB、最終08:09:16 RAM7.86GiB/C108.28GiB/D87.12GiB。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00。観測private最大18.43MiB/peak working26.26MiB。
+worker内4境界の観測、外側は1秒未満のためsamples0。長期リーク不在・全期間最大メモリは保証しない。
+点の増減を本作業へ帰属させない。worker・検証process終了、常駐処理なし。
+
+次はwriter解放後に権限を変えた再取得、元identity/bytesとの対応、slot寿命設計を進める。
+固定batch管理移管を動的slot追加と混同しない。後続phaseの実観測、seal/相対rename・実故障受入は残る。
+全acceptance/formal/authenticated flagsは未受入。正式OS整合、VM digest、runtime closure/consumer、S4受入は未完了。
+src/科学config/schema/registry/正式pin、本流889cfc3不変。旧CIへ件数加算なし。
+push/merge/CI起動、新runtime/共有環境/別project/旧failure roots操作なし。

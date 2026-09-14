@@ -315,7 +315,9 @@ tests/fixturesへ追加した段階です。実機接続前の順序・失敗/�
 続く[取得追跡とprivate保存](../../docs/anomaly-v03-private-sink-design.md)は、
 [新規18＋既存72＝90件pass、実Windows上の合成JSON3個478 bytes保存成功](../../docs/results/anomaly-multiseed-v0.3-s4-b2-private-sink-2026-09-14.md)。
 全追跡handle/tokenのcloseとworker終了を確認し、今回の限定枠は1回目成功で終了しました。
-実native観測とbarrierの接続、動的所有移管・権限移行、native publisher/全受入は引き続き未完了です。
+[実観測証跡の接続](../../docs/anomaly-v03-observed-evidence-design.md)は、新規18＋既存90＝108件pass。
+[取得済み3 slotsを一括移管し、実観測を含むprepare証跡2880 bytesの保存・選択解放が実機で成功](../../docs/results/anomaly-multiseed-v0.3-s4-b2-observed-evidence-2026-09-14.md)しました。
+権限を変えた再取得・動的slot追加、native publisher/全受入は引き続き未完了です。
 
 `inspect_anomaly_v03.py`は新規のengineering schemaとpure validatorを使うread-only collectorです。
 9つの科学schemaと5 configは変更しません。cleanなfull-SHA checkoutを指定します。

@@ -10,7 +10,8 @@ inspect/後続割当て失敗でも取得済みraw値を一度だけcloseする�
 raw値を記録する前にopenerが失敗した場合はunavailableであり、存在するか不明なhandleを推測しない。
 残留資源の回収には限定worker終了が必要。無制限OOM下で漏れのない取得を保証しない。
 CloseHandle対象の所有資源だけを受け取り、二重acquire/取得中close/握り潰しを拒否する。
-取得済みpinを動的に既存HandleOwnerへ移管する機構や、writerを別権限で再取得する工程は未実装。
+固定batchの管理移管は[後続の接続](anomaly-v03-observed-evidence-design.md)で追加した。
+動的slot追加やwriterを別権限で再取得する工程は未実装。
 
 WindowsPrivateSinkはB1の低水準Win/_Bound観測・SD検証部品を遅延importして再利用する。
 B1のpublic harness、制限token生成、impersonation、別token/processのcontrolsは呼ばない。
@@ -66,7 +67,8 @@ formal_permission/execution_authenticatedはfalse、acceptance_statusはnot_comp
 
 ## 次の境界
 
-このsinkを前回のEvidenceBarrierへ接続するには、native観測のpin/descriptor収集、
-取得途中の所有移管、writer→検査/rename handleへの権限移行、parent/source実同一物を統合する必要がある。
+[後続の実観測接続](anomaly-v03-observed-evidence-design.md)で、取得済み3 slotsの一括管理移管と
+native pin/descriptor/bytes→EvidenceBarrier→本sinkのprepare保存・選択解放を限定実機で確認した。
+writer→検査/rename handleへの権限移行、動的slot追加、rename前後のparent/source同一物の統合は残る。
 今回のnative JSONは保存部品用の合成bytesであり、正式完了印や性能結果ではない。
 正式OS整合、VM image digest、runtime closure/consumer凍結、native全受入は引き続き別の残件。

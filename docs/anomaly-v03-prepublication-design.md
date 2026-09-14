@@ -78,5 +78,6 @@ production入口を作る際はbarrier経由へ閉じ、試験用APIを正式受
 既存B1の終了済み試行枠や正式受入条件は、この通知によって更新・再開しない。
 後続の[取得追跡・private sink](anomaly-v03-private-sink-design.md)で新規root/fileの取得・保存部品を追加し、
 [限定実機保存](results/anomaly-multiseed-v0.3-s4-b2-private-sink-2026-09-14.md)は3個478 bytesで成功した。
-これは独立した合成bytes保存であり、本barrierのnative pin/descriptor観測との接続はまだ行っていない。
-次は途中取得の所有移管、writer解放後の再取得とnative観測からの証跡構築を具体化する。
+続く[実観測証跡](anomaly-v03-observed-evidence-design.md)で取得済み3 slotsの一括管理移管と
+native pin/descriptor/bytes→本barrier→private sinkのprepare保存・選択解放を限定実機で確認した。
+writer解放後の権限を変えた再取得、動的slot追加、後続phaseの実観測・renameは残る。
