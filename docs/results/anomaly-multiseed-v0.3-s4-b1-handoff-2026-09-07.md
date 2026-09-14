@@ -3021,3 +3021,39 @@ build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineeri
 親/祖先/全inventoryの共通期間、marker write/rename・全publisher、独立process/token・競合、正式OS/VM digest・B2/S4受入は未完了。
 別account/サービスや受入条件変更が必要なら具体的な差分と運用負担を判断材料にする。現時点で追加accountやnative publisher開始はしない。
 isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated=false、acceptance_status=not_completed。
+
+## 100. 2026-09-14 B2 保持consumerの準備・保存・終了接続
+
+ユーザー「次に進めて下さい」により、新規fixtureの準備とheld consumer、証拠保存、親/祖先保持を有界driverへ接続した。
+実装savepoint **fe6f7a8cce80476396ba8eea573a9b1812fc1747**。
+[設計](../anomaly-v03-held-driver-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-held-driver-2026-09-14.md)を参照。
+
+元root/新規facts.json/marker-pending.jsonのObservationを固定し、prepare証拠保存後にwriterをreleaseして既存HeldConsumerを1回実行する。
+収集状態・byte count・hashをprivate-evidenceのseal_payload.jsonへ保存するが、publication journalの同名工程は進めない。
+生bytes返却は常にisolation_unresolved。準備/path確認/sealer再openとconsumer内の直接readを区別する。
+source rootは既存WindowsPrivateSinkのCreateDirectoryW/再open方式。単一呼出しdirectory取得部品の保証を組み合わせていない。
+
+RetainedSinkがbootstrap自動finishを保留し、子→root→source祖先→evidence側の終了をdriverが制御する。
+writer release未確認のadopted treeや子close不明はroot/祖先ごと保持。root/祖先close不明でも上位を閉じず、lifetime query例外/異常応答は保守保持。
+一次例外をstatus/report割当から独立して記録し、後発resourceを昇格。exit80/81/1/0はcacheだけから選ぶ。
+再入・報告中の停止を検査し古いcompleteを出さない。reader/driver完了は隔離・全期間不変・B2/S4受入を与えない。
+
+新規29＋既存331＝360件pass/0.416秒。初回359件後、prepare証拠をdriverで64KiBに制限し、保存/writer release前の上限停止回帰を追加。
+既存barrier自体は512KiB。収集証拠16KiB/report256KiB、新規2file/各write4096 bytes、資源1024点/40秒/private256MiB/working384MiB/空きRAM・disk各2GiB。
+fake Win32で実prepare barrier/collector/所有部品を通し、終了喪失・未release・query/report故障・再入・resource/容量/時間上限を確認。
+独立P0〜P3所見0件、read-only/進捗ポーリングなし、最終差分再レビュー後code変更なし。repository safety/diff検査pass。
+corrected-checks.jsonl261905 bytes/hash4fdff65547449a40072b7ff3df79775ec5037fdf36b7c8774d926513d9c7f41fが最終根拠。
+
+60sourceのraw/Git blob/候補一致。前回held-consumerの57source/10artifactsは全て不変。
+ignored artifacts/held-driver-2026-09-14/へ8artifacts/論理670411 bytes（manifest自身除外）、初回/修正後記録保持。
+savepoint-evidence.json13498 bytes/hash2ebaa67b936e5e8cfbe969ab46520f13520d644f89fd9be68cea42c619f9e6c1。
+UTC14:12:23 RAM14.29GiB/C117.55GiB/D52.68GiB、14:14:26 RAM13.62GiB/C117.50GiB/D51.39GiB。PC全体の減少原因は未特定、今回記録量と分離し長期リーク不在を主張しない。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和/正式pin不変。
+実機追加0回、新worker/監視/checkout/常駐なし、旧caseへの読取/再open/cleanupなし。既存Python3.14.0使用。
+既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持しcommitから除外。
+本流889cfc3 clean不変、S3/D2/production、push/merge/CI、新runtime/account/serviceへ操作なし。
+
+次は新規max1専用launcher/外側監視の仕様を固定する。clean revision/入力hash、排他的attempt、40秒内側/45秒外側、context保持、worker終了確認、stdout単回保存を接続する。
+報告/出力失敗時も終了状態を失わず失敗sourceへ戻らないことをfake/構文で先に確認し、その後に別clean checkoutで新規限定nativeを実施する。
+既存bootstrap競合/内部割当、親/祖先/全inventoryの共通期間、独立process/token・競合、marker write/renameと全publisher、正式OS/VM digest・B2/S4受入は未完了。
+isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated=false、acceptance_status=not_completed。

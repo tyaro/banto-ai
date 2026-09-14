@@ -139,3 +139,12 @@ actual bytesはprivate証拠にとどめ、consumer_payloadは常にisolation_un
 同じhandleと前後一致は全期間不変性/親・祖先・全inventoryの一貫性を証明しない。既存native publisherの開始条件は変更しない。
 次は元root/祖先保持と子close不明時のworker終了を含む有界driverのfake故障確認。その後の新規限定native仕様は別途固定する。
 今回新規実機0回、旧caseへ操作なし。B2/S4未完了、全許可flags=falseを維持する。
+
+## 2026-09-14 保持consumerの準備・保存・終了driver
+
+fe6f7a8の[接続仕様](anomaly-v03-held-driver-design.md)と[360件passの結果](results/anomaly-multiseed-v0.3-s4-b2-held-driver-2026-09-14.md)で、新規2fileのprepare barrierとconsumer、収集証拠保存、元root/祖先の終了をfake APIで接続した。
+子close不明・writer release未確認では元root/祖先を保持し、root/祖先のclose不明でも上位を閉じない。状態query障害も保持側へ倒す。
+sourceのbootstrapは既存private sink方式であり、単一呼出しdirectory取得部品の保証を合成しない。初期競合と既存内部割当の制約は継承する。
+収集証拠のseal_payload.jsonは保存slot名にとどまり、publication journal工程を進めない。consumer生bytes返却は依然isolation_unresolved。
+独立所見0件、新規実機0回。次は専用launcherと外側監視を固定・接続し、新規限定実機の条件を整える。
+親/祖先/全inventoryの共通期間と独立token/競合、B2/S4受入は未完了。旧caseへ操作なし、全許可flags=falseを維持する。
