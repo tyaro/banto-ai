@@ -232,7 +232,7 @@ class CreationCase:
 
 class CreationMatrix:
     def __init__(self, cases, guard):
-        owned._need(type(cases) is tuple and len(cases) == 2 and tuple(c.plan for c in cases) == PLANS,
+        owned._need(type(cases) is tuple and tuple(c.plan for c in cases) in (PLANS, (PLANS[1],)),
                     "namespace_matrix_plan")
         self.cases, self._guard = cases, guard
         self._started = self._busy = self._complete = self._resource = False
@@ -299,6 +299,9 @@ class RetainedProfiledSink(peer.ProfiledSink, terminal.RetainedSink):
 
 
 class NamespaceContext(terminal.WindowsHeldContext):
+    CASE_PLANS = PLANS
+    SOURCE_SCOPE = "two fresh case directories; source-fixture is not created"
+
     def __init__(self, attempt, revision):
         super().__init__(attempt, revision)
         self.sink = RetainedProfiledSink()
@@ -306,7 +309,7 @@ class NamespaceContext(terminal.WindowsHeldContext):
     def prepare(self, guard):
         owned._need(self.reader is None, "namespace_context_reused")
         cases = []
-        for plan in PLANS:
+        for plan in self.CASE_PLANS:
             parent = ParentBackend(self.sink._win, self.sink._api, path=str(self.attempt / plan.name),
                                    user=self.sink._user, share=plan.parent_share)
             child = empty.FileBackend(self.sink._win, self.sink._api,
@@ -352,5 +355,10 @@ class NamespaceContext(terminal.WindowsHeldContext):
     def snapshot(self):
         report = super().snapshot()
         report["initial_token_basis"] = self.sink.token_basis
-        report["source_scope"] = "two fresh case directories; source-fixture is not created"
+        report["source_scope"] = self.SOURCE_SCOPE
         return report
+
+
+class ReadOnlyNamespaceContext(NamespaceContext):
+    CASE_PLANS = (PLANS[1],)
+    SOURCE_SCOPE = "one fresh share-read-only case; share-read-write control is omitted"

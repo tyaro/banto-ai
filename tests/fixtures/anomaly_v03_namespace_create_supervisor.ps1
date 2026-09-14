@@ -5,7 +5,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $heldRepo = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
-$heldBase = Join-Path $heldRepo 'artifacts\namespace-diagnostic-2026-09-15'
+$heldBase = Join-Path $heldRepo 'artifacts\namespace-readonly-2026-09-15'
 $heldStdout = Join-Path $heldBase 'attempt-1.stdout.txt'
 $heldStderr = Join-Path $heldBase 'attempt-1.stderr.txt'
 $heldRecord = Join-Path $heldBase 'attempt-1.supervision.json'

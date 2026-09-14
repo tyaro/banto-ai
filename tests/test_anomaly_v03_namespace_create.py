@@ -173,7 +173,7 @@ class Context(ns.NamespaceContext):
         self.hit("connect")
 
     def prepare(self,guard):
-        self.parts=[setup(i,guard) for i in range(2)]
+        self.parts=[setup(ns.PLANS.index(plan),guard) for plan in self.CASE_PLANS]
         self.reader=ns.CreationMatrix(tuple(p[0] for p in self.parts),guard)
         self.hit("prepare")
 
@@ -190,6 +190,34 @@ class Context(ns.NamespaceContext):
 
 
 class DriverTests(unittest.TestCase):
+    def test_single_share_read_case_keeps_root_until_save_and_closes_in_order(self):
+        ctx=Context();ctx.CASE_PLANS=ns.ReadOnlyNamespaceContext.CASE_PLANS
+        ctx.hooks["persist"]=lambda:self.assertTrue(ctx.parts[0][1].live)
+        driver=ns.terminal.HeldDriver(ctx);driver.run()
+        self.assertEqual(driver.exit_code(),0)
+        self.assertEqual(len(ctx.parts),1)
+        state=ctx.saved["cases"][0]
+        self.assertEqual(state["parent_share"],1)
+        self.assertEqual(state["child_create"],"accepted")
+        self.assertEqual(state["peers"]["cases"][1]["state"],"denied")
+        self.assertFalse(ctx.parts[0][1].live)
+        first=setup(0)[0];second=setup(1)[0]
+        for invalid in ((),(first,),(second,first),(second,second),(first,second,second)):
+            with self.assertRaises(owned.OwnershipError):ns.CreationMatrix(invalid,lambda:None)
+
+    def test_native_readonly_context_prepares_only_one_selected_case(self):
+        ctx=ns.ReadOnlyNamespaceContext(Path.cwd()/"unused-fake-case","a"*40)
+        ctx.sink._win=ctx.sink._api=object();ctx.sink._user=acquisition.USER
+        _,parent,child,peer,_,_=setup(1)
+        with patch.object(ns,"ParentBackend",return_value=parent) as parent_factory, \
+             patch.object(ns.empty,"FileBackend",return_value=child),patch.object(ns,"ParentPeers",return_value=peer):
+            ctx.prepare(lambda:None)
+        self.assertEqual(parent_factory.call_count,1)
+        self.assertEqual(parent_factory.call_args.kwargs["share"],1)
+        self.assertEqual(tuple(c.plan for c in ctx.reader.cases),(ns.PLANS[1],))
+        self.assertIn("control is omitted",ctx.snapshot()["source_scope"])
+        self.assertFalse(parent.called or child.called)
+
     def test_parent_create_error_reaches_single_worker_report_without_child_calls(self):
         ctx=Context();writes=[]
         primary=owned.OwnershipError("directory_create_failed",87)

@@ -8,9 +8,9 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "src"))
 from tests.fixtures.anomaly_v03_held_launch import launch
-from tests.fixtures.anomaly_v03_namespace_create import NamespaceContext
+from tests.fixtures.anomaly_v03_namespace_create import ReadOnlyNamespaceContext
 
-BASE = ROOT / "artifacts/namespace-diagnostic-2026-09-15"
+BASE = ROOT / "artifacts/namespace-readonly-2026-09-15"
 
 
 def main():
@@ -20,7 +20,7 @@ def main():
     parser.add_argument("--attempt", type=int, choices=(1,), required=True)
     args = parser.parse_args()
     return launch(ROOT, BASE, args.expected_head, args.input_sha256, os.write,
-                  context_factory=NamespaceContext, scope="namespace path creation engineering attempt")
+                  context_factory=ReadOnlyNamespaceContext, scope="share-read-only path creation engineering attempt")
 
 
 if __name__ == "__main__":
