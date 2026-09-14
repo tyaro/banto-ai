@@ -124,10 +124,10 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 
 ## 結果文書
 
-2026-09-14のS4-B2最新engineering結果は[固定済み親内のNT leaf rename](results/anomaly-multiseed-v0.3-s4-b2-same-parent-rename-2026-09-14.md)。
-182件pass・独立指摘0、file/stage/root固定と証跡保存は成功したが、同一親内形式も5拒否。全28 handles/token2個close、1回枠終了。
-次は[未採用の順序案と残存権限](anomaly-v03-publication-order-options.md)の小model/consumer条件。B2/S4受入は未完了。
-[設計](anomaly-v03-same-parent-rename-design.md)と[引継書§91](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
+2026-09-14のS4-B2最新engineering結果は[残存権限と完了印のpure model](results/anomaly-multiseed-v0.3-s4-b2-publication-order-model-2026-09-14.md)。
+202件pass・独立指摘0。隔離が不明なら書込みを拒否し、完了印の部分書込み・応答喪失と読み手の単発判定を確認した。実機試行の追加なし。
+次は実際の隔離条件とconsumerの一貫した観測を具体化する。[順序案](anomaly-v03-publication-order-options.md)は未採用、B2/S4受入は未完了。
+[設計](anomaly-v03-publication-order-model-design.md)と[引継書§92](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
 
 `docs/results`には実測・監査で22件あります（2026-09-07時点のMarkdown実測）。すべて結果条件と制約を伴う索引であり、
 顧客設備一般の性能保証ではありません。

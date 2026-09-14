@@ -52,3 +52,12 @@ closeは電源断耐久性の証明ではない。新方式でrenameの原子的
 まず残存権限があれば受入を拒否するpure modelとconsumer条件を具体化し、隔離が必要な点と既存の受入契約に触れる点を判断可能な形にする。
 別actorの事前取得を防ぐ生成/隔離手順、または権限の残存下でも守れる別方式が固まるまでは、候補のnative実装へ進まない。
 現時点ではS4の全保護・marker commit・正式受入は未完了であり、どちらの案も正式契約へ採用していない。
+
+## 2026-09-14 pure modelでの具体化
+
+[残存権限と完了印のmodel](anomaly-v03-publication-order-model-design.md)を39cac0dで実装した。
+[202件pass・独立指摘0](results/anomaly-multiseed-v0.3-s4-b2-publication-order-model-2026-09-14.md)、実機試行の追加なし。
+隔離unresolvedでは既知peerが0・全照合一致でもwriteを拒否する。後段故障用の隔離仮定は実OSの根拠にならない。
+既取得権限を親固定で消さず、最終確認後/公開後の外部変更、部分write・応答喪失、consumerの単発分類を扱った。
+全照合一致もsnapshot_matchesに限り、方式採用・保護済みcommit・将来不変性を認めない。
+次は実際の生成/隔離条件と一貫したconsumer観測、例外的marker writerの権限/寿命を具体化する。上記native開始条件は維持する。

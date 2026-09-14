@@ -2716,3 +2716,41 @@ consumerの一致は時点観測であり将来の不変性ではない。自分
 全publisher、独立token、native故障/競合、正式OS整合、VM digest、runtime closure/consumer、S4受入は未完了。
 全formal/authenticated flags=false、acceptance=not_completed。src/科学config/schema/registry/正式pin、本流889cfc3不変、旧CI加算なし。
 push/merge/CI、新runtime/サービス/account、別project、旧failure roots操作なし。元の文書差分を消してcleanにしないこと。
+
+## 92. 2026-09-14 B2 残存権限・完了印のpure modelを保存
+
+ユーザー「続けてください」を受け、基準5826995からIOしない別modelを実装した。
+実装savepoint **39cac0d947bbb51cd2079af416edce1c01fc23b9**。
+[結果](anomaly-multiseed-v0.3-s4-b2-publication-order-model-2026-09-14.md)、[設計](../anomaly-v03-publication-order-model-design.md)、
+[未採用の順序案](../anomaly-v03-publication-order-options.md)を参照。
+
+最大8 peer handleのadd_child/delete_childを親固定で消さず、発見/外部変更を合計32件まで追跡する。
+epochと最終照合を結び、検査後・停止後・仮想公開後の変更を記録して現在の照合を失効させる。
+隔離の既定はunresolved。既知peerが0・inventory/ID/bytes/SD全一致でもmarker writeを拒否する。
+assume_isolated_for_testは後段故障を試す反実仮想で、実OSの隔離根拠ではない。既知peerがあれば仮定付きでも拒否。
+rename応答不明は後続禁止、write intent後からclose応答前までの停止はunknown。部分write/全量/flush/closeを分けた。
+最初の失敗を保ち資源停止を昇格、工程skip/repeat/停止後再開を拒否する。仮想closeの履歴も将来不変性とは区別する。
+consumerは単発synthetic観測のみ。共有違反/空/部分/読取り失敗/不正を分け、exact markerと4照合一致もsnapshot_matchesに限定。
+producerが完全writeの応答を失った場合、consumerで完全bytesが見えても隔離成立・正式受入としない。
+最大16KiBのtoy markerとsynthetic応答を使うmodelであり、実権限・所有終了・観測の真正性/同時性を証明しない。
+
+新規20＋既存182＝202件pass/0.205秒、failure/error/skip等0、initial-checks.jsonlが最終根拠。
+実装/試験/設計の独立P0〜P3=0、read-only、進捗ポーリングなし。30 source＋補助2 filesの記録/raw/Git blob一致。
+repository safety/差分空白検査pass、以後コード変更・重複試験なし。既存6工程/native entry/S3/D2/productionは不変。
+今回native0、監視/別checkout/常駐処理の追加なし。前回batch/B1は再開せず、失敗sourceの再検査/複製/hash取得/削除なし。
+ignored artifacts/publication-order-model-2026-09-14/へ保存し、前回same-parent manifest/18 artifactsの不変も確認した。
+initial-checks.jsonl147351 bytes/hash a58d9f063229a26004e87a5a190aa84d697bf4ea8966c8f3dc3d870804875407。
+savepoint-evidence.json9006 bytes/hash c5f2844abdf7bbbc9fdcaf32497e8819b64e17c40fc1fc72eeceb5ee936896e6。
+manifest以外6 artifacts/論理193851 bytes。filesystem総占有量ではない。
+既存親policy結果書の差分8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621は維持しcommitへ含めない。
+
+試験前UTC10:48:30 RAM13.55GiB/C118.93GiB/D74.23GiB、試験後10:52:01 RAM13.38GiB/C118.92GiB/D74.23GiB。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和・正式pin不変を維持。
+試験processは終了。点観測をprocessピーク/長期リーク不在の証明にせず、空き容量変動の原因を特定しない。
+
+次は別actorの事前取得を防ぐ生成/隔離条件、または残存権限下でも変更できない操作境界の根拠を具体化する。
+consumerの一貫した実観測/共有違反の有界処理、marker writerの権限/寿命も未実装。別actorを脅威範囲から除外しない。
+隔離根拠不明のまま候補のnative publisherへ進まず、正式契約に触れる点は具体案を作って判断対象にする。
+親全保護、marker/全publisher、独立token、native故障/競合、正式OS整合、VM digest、runtime closure/consumer、B2/S4受入は未完了。
+protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated=false、acceptance_status=not_completed。
+本流889cfc3・正式pin不変、旧CI加算/push/merge/CI、新runtime/サービス/account、別project操作なし。既存文書差分を消してcleanにしない。
