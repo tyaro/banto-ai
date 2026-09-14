@@ -10,7 +10,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from tests.fixtures.anomaly_v03_held_launch import launch
 from tests.fixtures.anomaly_v03_namespace_create import NamespaceContext
 
-BASE = ROOT / "artifacts/namespace-create-2026-09-15"
+BASE = ROOT / "artifacts/namespace-diagnostic-2026-09-15"
 
 
 def main():

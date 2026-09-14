@@ -190,6 +190,24 @@ class Context(ns.NamespaceContext):
 
 
 class DriverTests(unittest.TestCase):
+    def test_parent_create_error_reaches_single_worker_report_without_child_calls(self):
+        ctx=Context();writes=[]
+        primary=owned.OwnershipError("directory_create_failed",87)
+        ctx.hooks["prepare"]=lambda:ctx.parts[0][5].update(root_created=acquisition.failing(primary))
+        with patch.object(launch,"_LIVE_WORKER",None):
+            code=launch.execute(ctx,"a"*40,"b"*64,10,lambda fd,raw:writes.append(raw) or len(raw))
+        self.assertEqual(code,81)
+        self.assertEqual(len(writes),1)
+        state=json.loads(writes[0])
+        first,second=state["context"]["reader"]["cases"]
+        self.assertEqual(first["parent_create_winerror"],87)
+        self.assertIsNone(second["parent_create_winerror"])
+        self.assertEqual(first["child_create"],"not_started")
+        self.assertTrue(state["retained_for_worker_exit"])
+        self.assertNotIn("persist",ctx.events)
+        self.assertNotIn("ancestors",ctx.events)
+        self.assertFalse(ctx.parts[1][1].called)
+
     def test_two_cases_keep_both_roots_until_persist_and_confirm_terminal_closes(self):
         ctx=Context()
         ctx.hooks["persist"]=lambda:self.assertTrue(all(p[1].live for p in ctx.parts))
@@ -272,6 +290,24 @@ class DriverTests(unittest.TestCase):
 
 
 class BackendTests(unittest.TestCase):
+    def test_captured_parent_native_error_is_preserved_without_a_new_error_query(self):
+        for code in (5,32,87,183):
+            api=acquisition.FakeApi();api.value=ns.peer.INVALID
+            surface=SimpleNamespace(_SA=acquisition.win._SA,D=acquisition.win.D,_dacl=acquisition.win._dacl,
+                _verify_sd=acquisition.win._verify_sd,_Bound=acquisition.BorrowedView)
+            with patch.object(ns.acq.os,"name","nt"),patch.object(ns.acq.sys,"version_info",(3,14,0)), \
+                 patch.object(ns.acq,"Path",lambda p:p),patch.object(C,"get_last_error",return_value=code,create=True) as last_error:
+                parent=ns.ParentBackend(surface,api,path=acquisition.PATH,user=acquisition.USER,share=3)
+                _,_,child,_,calls,_=setup()
+                case=ns.CreationCase(ns.PLANS[0],parent,child,ns.ParentPeers(parent),guard=lambda:None)
+                with self.assertRaises(owned.OwnershipError):case.run()
+                self.assertEqual(case.snapshot()["parent_create_winerror"],code)
+                self.assertTrue(case.root_requires_exit())
+                self.assertNotIn("file_created",calls)
+                last_error.assert_called_once()
+                self.assertEqual(api.calls.count("create"),1)
+                self.assertNotIn("observe",api.calls)
+
     def test_parent_share_changes_only_the_share_argument(self):
         for share in (1,3):
             api=acquisition.FakeApi()

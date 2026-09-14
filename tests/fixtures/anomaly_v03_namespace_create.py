@@ -213,7 +213,12 @@ class CreationCase:
 
     def snapshot(self):
         owned._need(not self._busy and not self._resource, "namespace_report_unavailable")
+        error = self.root._error
+        code = error.winerror if (type(error) is owned.OwnershipError
+            and error.reason == "directory_create_failed" and self.root._phase == "create_pending") else None
+        code = code if type(code) is int and 0 < code < 1 << 32 else None
         return {"name": self.plan.name, "parent_share": self.plan.parent_share,
+                "parent_create_winerror": code,
                 "complete": self._complete and self._error is None, "child_create": self._creation,
                 "create_winerror": self._create_error,
                 "parent": self.root.snapshot(), "parent_backend": self.parent_backend.snapshot(),
