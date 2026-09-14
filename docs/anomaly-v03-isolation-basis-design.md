@@ -105,5 +105,8 @@ formal_permission/execution_authenticated/protected_commit_allowed=false、accep
 原handle先行記録、同handleのID/実権限/SD、単回close/free、返却不明時のdescriptor保持を扱う。
 3a71934でcallerの祖先guard・保存・終了と[局所driver/監視](anomaly-v03-directory-driver-design.md)を接続した。
 [240件pass、新規max1の実機取得pass/0.540秒](results/anomaly-multiseed-v0.3-s4-b2-directory-driver-2026-09-14.md)、独立残件0、worker終了確認、枠閉鎖。
-上記は原handleでの取得/観測/保存/終了だけの結果。次はprivate期間中のpeerの各権限取得と操作を分ける仕様を具体化する。
+上記は原handleでの取得/観測/保存/終了だけの結果。
+13ad057で[同一token peer取得](anomaly-v03-directory-peer-design.md)を実装し、[259件passと実機4ケース](results/anomaly-multiseed-v0.3-s4-b2-directory-peer-2026-09-14.md)を確認した。
+ADD_FILE/ADD_SUBDIRECTORYは共有違反、DELETE_CHILDは取得可。元rootのshare READだけで全変更用handleの取得は排除できない。
+独立process/tokenと実際の子変更は未検証。次は子DELETE権限/DELETE共有、親DELETE_CHILD、path APIと保持parentを使う操作の違いを具体化する。
 上記peer/外側parent/consumerの未解決条件は維持する。

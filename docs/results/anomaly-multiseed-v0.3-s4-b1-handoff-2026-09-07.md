@@ -2865,3 +2865,52 @@ Windows Update engineering緩和/正式pin不変。worker/監視終了、常駐�
 この成功fixtureや試行枠を再利用しない。source作成と取得の成功だけではpeer権限を排除できず、native publisherへ進めない。
 親全保護・marker/全publisher・独立token/競合、handle移管・consumer/runtime closure・正式OS/VM digest・B2/S4受入は未完了。
 isolation_certified/protected_commit_allowed/formal_permission/execution_authenticated=false、acceptance_status=not_completed。
+
+## 96. 2026-09-14 B2 同一token peerの変更権限取得
+
+ユーザー「進めて下さい」と継続中の自走/セーブポイント許可を受け、private期間の別handle権限取得を実装・レビュー・実機確認した。
+実装savepoint **13ad057c2662cd0bf67a19853602c43eeac7d42e**。
+[peer設計](../anomaly-v03-directory-peer-design.md)と[結果](anomaly-multiseed-v0.3-s4-b2-directory-peer-2026-09-14.md)を参照。
+
+新規rootをCreateDirectory2W/root0x1600a7/share READ/private SD/redirect拒否/非継承で取得し、原handleを保持。
+同じprocess/primary tokenのpeerでOPEN_EXISTINGを4件。全requestedにREAD_ATTRIBUTES/READ_CONTROL/SYNCHRONIZEを含める。
+LIST control0x120081はgranted、ADD_FILE0x120082とADD_SUBDIRECTORY0x120084はWinError32、DELETE_CHILD0x1200c0はgranted。
+成功peerのGrantedAccessは各requested exact、原rootのID/type/SDに一致。share READだけで全変更用handle取得を排除できない。
+実際の子作成/削除/rename、独立process/token、外側parentの事前権限はこの確認に含まれない。
+
+4 slotを先行予約し、返却値を観測前に保持。文書化されたINVALID_HANDLE_VALUE＋直後error5/32だけを非作成openのknown denialに分類。
+TrackedOpenのunknown/unavailable履歴は書き換えず、known_no_handle_denialを別記録にする。作成失敗や不明応答に一般化しない。
+control拒否/他error/異常値/観測差/不明返却で打切る。正常peerは次のケース/保存前にclose。
+不明peer時は原root/input descriptor/祖先も保持してworker終了。既知peerの検査失敗は通常終了し、primary/resource/reentry契約を維持。
+初期tokenはquery slotを使って読み、primary/非昇格/medium/BackupRestore無効を要求。実機のenabled privilegeはSeChangeNotifyPrivilegeのみ。
+token変更/生成/impersonationは行わない。期間中の外部token変更や独立actorの完全な再現を主張しない。
+
+新規19＋既存240＝259件pass/0.263秒。failure/error/skip等0、initial-checks.jsonlが最終根拠。
+独立code/試験/入口/監視と設計のP0〜P3=0、read-only、進捗ポーリングなし。review後code変更/重複回帰なし。
+repository safety/PowerShell構文/差分空白検査pass。基底driverは観測点定数化だけ変更し既定64維持、新peerだけ96点。
+時間40秒/外側45秒、private256MiB/working384MiB、空きRAM/disk各2GiBの制限は不変。
+
+nativeは別clean detached checkout C:\Users\TKent\.codex\worktrees\directory-peer-20260914\banto-ai、HEAD13ad057から実行。
+44 sourceのraw/Git blob/両checkout一致を実行前後で照合。launch-plan.json9342 bytes/hash915a531ac2efe7b7feca0cc02af832ff4fe92827b8c20321fc94f1d234d8f77b。
+新規directory-peer-2026-09-14のattempt-1だけ。UTC12:38:18.4199669〜12:38:19.3984811、行列完了/0.966秒、worker exit0/終了確認。
+原rootの取得/再確認pass、祖先10、台帳上実handle15本とquery token1本closed、別にknown no-handle denial2件。
+input descriptor/祖先SDはfreed、prepare.json2464 bytes/hash2abd9c1f50acdf20ba77c46535ea6bca98cb237f2edd4afe1f695be65b1f7796。
+stdout16854/stderr0 bytes。内部50資源点、最終0.433秒、観測private最大21299200/working29822976 bytes、OS報告working peak36167680 bytes。
+外側1秒周期より早く終了し外側memory観測0点。max1枠は閉鎖。sourceはclose後/失敗後に再検査・再open・hash/copy/deleteしない。
+成功した既知prepareだけをbytes/hash・行列/token報告と照合し、sourceの名前からの再openは原root保持中のpeer4件だけ。
+
+ignored artifacts/directory-peer-2026-09-14/へ12 artifacts/論理285363 bytes（manifest自身/別checkout複製を除く）。
+initial-checks.jsonl190058 bytes/hash056fc8104a090291899f9fa0d3e12bfdecdb20791ddbcef34a09b5961200e4fa。
+savepoint-evidence.json16763 bytes/hashb3f9b558e9700c583a657a85dd14d22c5375e9401d9c73f16a956a07162e26ce。
+前回manifest/14 artifacts不変、39 source中38不変、変更は上記driver定数化のみ。
+UTC12:29:28 RAM13.92GiB/C117.76GiB/D57.85GiB、12:41:01 RAM13.77GiB/C117.52GiB/D56.81GiB。
+空き容量変動の原因は未特定。点観測を長期リーク不在/全期間最大や試験の全占有量へ読み替えず、他processへ操作なし。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和/正式pin不変。
+worker/監視終了、常駐なし、新規detached checkout1個とfixtureを保存。既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持しcommitから除外。
+本流889cfc3 clean不変。旧batch/旧source/B1/S3/D2/production、push/merge/CI、別project、新runtime/account/serviceへ操作なし。
+
+次は新規fixtureの子DELETE許可、親DELETE_CHILD、子DELETE共有を分け、削除操作の成否を調べる仕様へ進む。
+private childの削除成功だけでは保持parent handleの権限使用の証明にならず、path APIの再評価と保持parentを直接使う操作を区別する。
+今回取得できたDELETE_CHILDを削除実行成功へ昇格しない。この成功sourceやmax1枠を再利用しない。
+親全保護・marker/全publisher・独立token/競合、外側parent/handle移管/consumer/runtime closure、正式OS/VM digest・B2/S4受入は未完了。
+isolation_certified/protected_commit_allowed/formal_permission/execution_authenticated=false、acceptance_status=not_completed。
