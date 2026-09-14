@@ -47,7 +47,7 @@ def main():
     # but fail the expected source-fixture/payload inventory and identity check.
     os.chdir(attempt)
     source, sink, group = move.WindowsDirectoryFixture(), WindowsPrivateSink(), bridge.AcquiredOwner()
-    generation = operation = None
+    generation = operation = backend = None
     failure, resource_stop = None, False
     points, evidence, final_leases, final_observations = [], [], [], []
     raw_file = b'{"scope":"directory_rename_probe","count":1}\n'
@@ -62,6 +62,7 @@ def main():
         if failure is None:
             failure = error
         resource_stop = resource_stop or owned._resource(error) or source._resource or sink._resource
+        resource_stop = resource_stop or (backend is not None and backend.completion_unknown)
         if group.active:
             resource_stop = resource_stop or group.owner._resource_stop
 
@@ -109,7 +110,7 @@ def main():
         observations = tuple(bridge.inspect_native(cell, expected=value, private_user=source._user)
                              for cell, value in zip(selected, (None, None, raw_file)))
         group.adopt(leases=selected, journal=journal, observations=observations, parents=(None, 0, 1))
-        backend = move.WindowsDirectoryBackend(source)
+        backend = move.WindowsNtDirectoryBackend(source)
         writer_access = group.owner.borrowed((2,), lambda pins: backend.granted_access(pins[0].handle))
         owned._need(type(writer_access) is int and writer_access == reopen.WRITER_ACCESS, "writer_access")
         sink.connect(attempt / "private-evidence")
@@ -158,6 +159,8 @@ def main():
             failed(error)
     if resource_stop:
         notice()
+        if backend is not None and backend.completion_unknown:
+            os._exit(80)  # Retain pending request buffers until process death.
         return 80
 
     # Separate post-close reader verification only after successful operation
@@ -217,6 +220,7 @@ def main():
                   "source_token": None if source._token is None else source._token.snapshot(), "sink": sink.snapshot(),
                   "generation": None if generation is None else generation.snapshot(),
                   "operation": None if operation is None else operation.snapshot(),
+                  "native_rename": None if backend is None else backend.native_snapshot(),
                   "owner": group.owner.snapshot() if group.active else None,
                   "final_reader_handles": [cell.snapshot() for cell in final_leases],
                   "postclose_objects_matched": len(final_observations),

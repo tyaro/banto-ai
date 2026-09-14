@@ -80,3 +80,39 @@ build/bootを記録し、Windows Update後UBRのengineering緩和は正式OS pin
 
 次は実結果に基づく親権限/相対rename可否の確定と、marker/後続phaseの統合・独立token/故障/競合。
 formal_permission/execution_authenticatedはfalse、acceptance_statusはnot_completedを維持する。
+
+## 初回結果と修正した2回目仕様
+
+初回はclean a20988688e65d829a6619c399813da2a319d22a2で実行し、
+file/stage/rootの固定と証跡3個保存は成功したが、SetFileInformationByHandleがWinError87を返した。
+renameはpendingのまま停止、終了後読取りは未実行。source13＋sink14＋file1＝28 tracked handlesとtoken2個をcloseしworker exit1。
+初回artifactは保存したまま再利用しない。上の31 handlesは正常時の読取り3個を含む期待値である。
+
+インストール済みKernelBase.dll（10.0.26100.9278、4212112 bytes、
+SHA256 becad014fb8efa8cb5e314931cca92778ad42c649b12a6909632cacd68af4f40）をファイルとして読取り、
+export/例外表/既存Capstoneの静的解析を保存した。追加のrename/DLL関数呼出は行っていない。
+class3分岐RVA0xf172cはRVA0xf1795でRtlDosPathNameToNtPathName_U_WithStatusを呼び、
+入力RootDirectoryをRVA0xf17fcで複写してからRVA0xf1816でNtSetInformationFileを呼ぶ。
+通常leaf payloadが絶対NT名へ変換され、非NULL親との組合せで拒否されたという推定が初回87と整合する。
+実際の内部NTSTATUSや動的引数をtraceした証明ではなく、呼出先はPE import表から同定した。
+現行Win32文書の相対RootDirectory説明だけでは、この実装の成立を保証できない。
+
+2回目は別の新規attempt-2で、同じ保持親と単一leafを直接
+[NtSetInformationFile](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/nf-ntifs-ntsetinformationfile)
+へ渡すWindowsNtDirectoryBackendを明示選択する。初回失敗から自動fallbackする経路は作らない。
+user modeのNt呼出を使い、FileRenameInformation=10、同じoffset0/8/16/20を保ち末尾paddingを含め40 bytesとする。
+NtのFILE_RENAME_INFORMATIONのsizeof＋名前長を満たす。NTSTATUS0だけを成功とし、
+他statusは既存RtlNtStatusToDosErrorで記録する。Win32 GetLastErrorは読まない。
+
+[IO_STATUS_BLOCK](https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_io_status_block)は
+既存SDK winternl.h:223のunion/ULONG_PTR定義と照合し、Win64 sizeof16/Information offset8。
+非pendingは返却NTSTATUSが根拠で、IOSBの値を別の成功要件にしない。
+sourceはOVERLAPPEDなしの同期handle。予期せぬSTATUS_PENDINGは成功にせず資源停止とし、
+caller保持backendへ入出力bufferを保持したまま所有終了し、workerをos._exit(80)で終える。
+独立レビューP2を受け、呼出前にcompletion_unknownを立て、正常な非pending返却の検証後だけ解除する。
+API内の返却喪失やpending判定前の中断も資源停止へ昇格し、同じbuffer保持・固定通知・worker即時終了へ接続する。
+待機・再送信・別経路への変更はしない。通常エラー/成功時には従来の終端処理を使う。
+
+root/stage/子の権限、DACL、証跡順、CWD、資源上限は初回と同じ。
+親DACL固定後に内部target openが拒否される可能性も残るため、NT経路の成功を事前に仮定しない。
+2回目で成功または失敗した時点で今回枠を終了する。3回目や旧fixture再操作はしない。

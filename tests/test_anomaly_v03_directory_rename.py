@@ -328,3 +328,81 @@ class DirectoryRenameTests(unittest.TestCase):
 def json_sd(observation):
     import json
     return json.loads(observation.descriptor)
+
+
+class NtDirectoryBackendTests(unittest.TestCase):
+    def backend(self, result=0):
+        calls = []
+        class ApiFunction:
+            def __call__(self, *args):
+                calls.append(args)
+                return result
+        backend = move.WindowsNtDirectoryBackend(SimpleNamespace(_api=SimpleNamespace(n=SimpleNamespace(
+            NtQueryObject=ApiFunction(), RtlNtStatusToDosError=ApiFunction(), NtSetInformationFile=ApiFunction()))))
+        backend._map_status = lambda status: 8
+        return backend, calls
+
+    def test_relative_wire_class_and_iosb_layout(self):
+        backend, calls = self.backend()
+        raw = move.rename.rename_request(101, "rename_payload")
+        self.assertEqual(backend.set_file_information_by_handle(202, 3, raw), 1)
+        handle, status, buffer, size, kind = calls[-1]
+        self.assertEqual((handle, size, kind), (202, 40, 10))
+        self.assertEqual(C.string_at(buffer, size), raw + b"\0"*4)
+        self.assertEqual(C.sizeof(move._IoStatus), 16)
+        self.assertEqual(move._IoStatus.information.offset, 8)
+        self.assertEqual(backend.native_snapshot()["ntstatus"], 0)
+        # No requirement to invent IOSB completion: non-pending return is authoritative.
+        self.assertEqual(backend.native_snapshot()["io_status"], 0xffffffff)
+
+    def test_nt_failure_maps_error_and_cannot_be_submitted_again(self):
+        backend, calls = self.backend(-1073741801)
+        raw = move.rename.rename_request(101, "rename_payload")
+        self.assertEqual(backend.set_file_information_by_handle(202, 3, raw), 0)
+        self.assertEqual(backend.get_last_error(), 8)
+        self.assertEqual(backend.native_snapshot()["ntstatus"], 0xc0000017)
+        with self.assertRaises(owned.OwnershipError):
+            backend.set_file_information_by_handle(202, 3, raw)
+        self.assertEqual(len(calls), 1)
+
+    def test_unexpected_pending_retains_buffers_and_stops_as_resource(self):
+        backend, calls = self.backend(0x103)
+        with self.assertRaises(MemoryError):
+            backend.set_file_information_by_handle(202, 3, move.rename.rename_request(101, "rename_payload"))
+        self.assertTrue(backend.pending)
+        self.assertIsNotNone(backend._buffer)
+        self.assertIsNotNone(backend._io)
+        self.assertEqual(backend.ntstatus, 0x103)
+
+    def test_bad_status_mapping_or_wire_never_implies_success(self):
+        for response in (True, None, 1 << 31):
+            backend, calls = self.backend(response)
+            with self.assertRaises(owned.OwnershipError):
+                backend.set_file_information_by_handle(202, 3, move.rename.rename_request(101, "rename_payload"))
+        backend, calls = self.backend(-1)
+        backend._map_status = lambda status: 0
+        with self.assertRaises(owned.OwnershipError):
+            backend.set_file_information_by_handle(202, 3, move.rename.rename_request(101, "rename_payload"))
+        for raw in (b"x"*36, move.rename.rename_request(101, "commit_marker")):
+            backend, calls = self.backend()
+            with self.assertRaises(owned.OwnershipError):
+                backend.set_file_information_by_handle(202, 3, raw)
+            self.assertFalse(calls)
+
+    def test_interrupted_native_return_keeps_completion_unknown_and_buffers(self):
+        for interruption in ("inside_call", "before_status_check"):
+            backend, calls = self.backend(0x103)
+            primary = KeyboardInterrupt()
+            if interruption == "inside_call":
+                backend._set = lambda *args: (_ for _ in ()).throw(primary)
+            original_need = move.owned._need
+            def interrupted_need(condition, reason="invalid_owned_handles"):
+                if interruption == "before_status_check" and reason == "nt_directory_status":
+                    raise primary
+                return original_need(condition, reason)
+            with patch.object(move.owned, "_need", side_effect=interrupted_need), self.assertRaises(KeyboardInterrupt):
+                backend.set_file_information_by_handle(202, 3, move.rename.rename_request(101, "rename_payload"))
+            self.assertTrue(backend.completion_unknown)
+            self.assertFalse(backend.pending)
+            self.assertIsNotNone(backend._buffer)
+            self.assertIsNotNone(backend._io)
