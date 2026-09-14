@@ -165,3 +165,15 @@ share3の最初のroot作成がdirectory_create_failedとなり、peer/child/第
 WinError数値がreportにないため原因は未確定。share3の一般的制約、ACL原因、名前一覧の保護・非保護を推定しない。
 次は親作成エラーの記録を改善し、新規の有界診断を先に固定する。旧source/枠へ戻らない。
 生bytes返却・namespace共通期間・B2/S4受入は未解決、全許可flags=falseを維持する。
+
+## 2026-09-15 share READ保持中でもpathによる新規名前追加は成立
+
+674d119の[単独case仕様](anomaly-v03-namespace-readonly-design.md)と[401件pass・限定実機結果](results/anomaly-multiseed-v0.3-s4-b2-namespace-readonly-2026-09-15.md)で、親ADD_FILE/ADD_SUBDIRECTORY用handleは32で拒否された一方、path CREATE_NEWで空fileを追加できた。
+元rootのID/SDを前後照合して保存まで保持、全既知handle close/worker exit0/0.770秒。同じworker/primary tokenの実例であり、独立peer/tokenの干渉試験ではない。
+親share READ保持とADD権限open拒否だけをnamespace追加の隔離根拠にする経路は採用しない。親ID/SDの観測一致もinventory不変を示さない。
+share3の作成は直前の新規診断で87となり、今回controlを省略した。share3対照比較や具体的不適合原因の確定は未完了。
+
+次はpublisherが行う追加/renameと通常peerへ与えない権限を、取得前/保持中/公開後と外側親・process handle移管に分けて整理する。
+同一SIDの通常tokenと同じDACLだけでは両actorの区別根拠にならず、restricted publisher tokenだけで通常token peerを隔離したことにもならない。
+専用principalが必要となる場合はlocal account/隔離VM、資格情報・起動・consumerアクセスの運用差を具体化してからユーザー判断へ出す。現時点でaccount/service作成は行わない。
+これまでの旧source/枠は再利用しない。生bytes返却・全期間・B2/S4受入は未解決、全許可flags=falseを維持する。

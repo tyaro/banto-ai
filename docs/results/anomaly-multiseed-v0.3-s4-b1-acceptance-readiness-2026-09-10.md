@@ -22,7 +22,7 @@
 | Linux共通契約 | Ubuntu 24.04 x86_64、Python 3.12/3.14、共通契約と既存stdlib全回帰、safety、実patch/build・image・source・各test結果の記録 | 候補036ecb4のCI34546440692は両試験jobと比較job成功。実Python3.12.14/3.14.7、各1112 methods中1045 pass/67 skip、failure/error0。smoke/quality/benchmark/safetyもpass。前回1099 methodsの順序・結果・skipを保持し追加13全pass。skipはWindows固有49/optional Capstone16/Toto2 artifact不存在2。VM image digestは未収集で、S4完全受入とは別 |
 | 選択した共有手計算fixture | Q1〜Q5、M1〜M9、registry/bootstrap/accounting、C0〜C2 profile/scoreの29 payload | Linux両minorの29件、およびWindows3.14.0選抜19 methodsからの同29件を比較し全raw bytes一致。23件exact、数値6件は所定1e-12許容差で判定。CI receiptと手元再計算も一致。選択範囲外のfixtureやWindows全回帰/native受入を代替しない |
 | Windows native受入 | 正式3.14.0の1 runtime。共通回帰、publisher、DACL、独立token/process、競合・非上書き・失敗証跡 | Windows3.12要件を削除済み。各必須検査自体は維持し、全native受入は未完了 |
-| B2 publisher/marker | 新規fixtureで公開・非上書き・競合・marker・失敗証跡を検証 | 2ec193aで[親共有とpath作成比較、397件pass・実機停止](anomaly-multiseed-v0.3-s4-b2-namespace-create-2026-09-15.md)。独立所見0件。新規max1は最初の親作成で停止、worker81/終了確認。peer/子作成は未開始、比較結果なし。次は親作成エラー記録の改善と新規診断。保持consumer限定成功は維持、親/祖先/全inventoryの共通期間・全publisher・独立token/競合・B2/S4受入は未完了 |
+| B2 publisher/marker | 新規fixtureで公開・非上書き・競合・marker・失敗証跡を検証 | 674d119で[親share READ下のpath追加、401件pass・限定実機完了](anomaly-multiseed-v0.3-s4-b2-namespace-readonly-2026-09-15.md)。独立所見0件。親ADD用openは拒否、path CREATE_NEWは成功。0.770秒/全既知handle close/worker0。親共有だけのnamespace隔離は採用しない。次はpublisher/通常peerの権限境界。share3対照・独立token/競合・全期間・全publisher・B2/S4受入は未完了 |
 | S4全体 | 必須platform受入、完全runtime inventory、producer/consumer revision凍結、正式pin上のdev/smoke | 未完了。`require_campaign_acceptance()` は `s4_acceptance_not_frozen` を無条件に返す |
 | 正式OS pin | 現行計画・registry・S3 runtimeは26200.9168。正式Pythonは3.14.0 | B1 engineeringではユーザー了承によりUBRを記録する方式へ緩和済み。9445での限定成功を正式pinの更新と扱わない。正式段階へ進む前に計画・実装・registryの整合と独立監査・受入が必要 |
 

@@ -3131,3 +3131,29 @@ UTC15:51:50 RAM15885922304/C125462380544/D47691575296 bytes、上限超過なし
 既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持しcommit除外。
 次は過去に作成実績のあるshare1だけの新規有界caseへ限定し、peer要求とpath追加を確認する。share3不適合の再試行や一般化を行わない。
 namespace/全期間/独立token/全publisher/B2/S4未完了、全許可flags=false。
+
+## 104. 2026-09-15 B2 親share READ中のpath追加を確認
+
+ユーザーのsavepoint付き自走許可の範囲で、比較準備2ec193a→失敗保存2b865dc→エラー記録c0f17d8→診断保存37ec1c9→単独case実装 **674d1193711334fefd21bc56c11ffa8000943e6a** まで進めた。
+[単独case仕様](../anomaly-v03-namespace-readonly-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-namespace-readonly-2026-09-15.md)を参照。
+親share3の作成停止（初回数値なし、別新規診断87）を反復せず、実績あるshare1へ限定した新規max1を実施。
+親access0x1600a7/share1/private SD/非継承で作成・保持。LIST0x120081/DELETE_CHILD0x1200c0 peerはgranted/closed、ADD_FILE0x120082/ADD_SUBDIRECTORY0x120084は32でknown no-handle denied。
+同じworker/primary tokenによるpath CREATE_NEW/子0x120081/share7でnew-empty.bin作成はaccepted、空/links1/非delete-pending/ID/SD/実accessを同handleで確認。
+親ID86690d00000080000000000000000000、子ID0f6b0d00000034000000000000000000。親ID/SD再確認・保存まで保持、親1＋子1＋peer2＋sink12＝16 handle/query token1 closed。
+親share READとADD用open拒否だけで名前追加を防げない実例。独立peer/token干渉、share3対照比較、全namespace/全期間不変の証明ではない。
+
+401件pass/2.278秒、全failure/error/skip等0、独立所見0件/進捗ポーリングなし。repository safety/PowerShell構文/diff pass。
+新規clean namespace-readonly-20260915/banto-ai、input109/選抜72/union141 source、既存CRLFのみ22件を記録し候補を保全。
+input17695 bytes/hashf039debbb0b99a2ebebfc398681f7b8912b341b1fa686521614d6f6515f4805e。
+UTC2026-09-14T15:56:31.4716823Z〜15:56:32.2623011Z、0.770秒、worker PID25500/exit0/終了確認/stopなし、stdout23949/stderr0。
+prepare.json slotへmetadata4082 bytes/hash6e066529de9207b26f87ed8533ce7ee25958e704ab73152e1fe578321feac59e保存。reportではcollection_evidence_*、prepare_*はnull。worker内readback報告であり終了後の独立再openなし。
+前回namespace-diagnostic manifest/15 artifacts不変、71 source中67不変。artifacts/namespace-readonly-2026-09-15へ13 artifacts/論理462313 bytes、manifest47676 bytes/hash4b26123e10ba815ea10e8f1e809991609e669a2c34e4fa0d7a0920f149317f6c。
+内部79点/最後0.189秒、private最大21180416/working29548544、外側1点/private21184512/working29007872 bytes。全上限内。
+UTC15:57:35 RAM15456075776/C125327585280/D45614665728 bytes。D空きは作業開始時ツール観測55098978304 bytesから約8.83GiB減少、原因未特定・他process操作なし。3工程記録はmanifest込み1859099 bytes（複製/Git/worktree/実fixture除外）。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和/正式pin不変、Python3.14.0。長期リーク不在の主張なし。
+全新worker/監視終了、各max1枠閉鎖。旧source/枠への再open/列挙/hash/copy/deleteなし。
+既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持しcommit除外。本流889cfc3、push/merge/CI、runtime/account/service不変。
+
+次はpublisherの追加/renameと通常peerへ与えない権限、取得前/保持中/公開後、外側親・process handle移管を一覧化し、権限境界の具体案を作る。
+専用principalが必要ならlocal account/隔離VM、資格情報と起動・consumer読取の運用差を具体化してからユーザー判断へ出す。無断でaccount/serviceを追加しない。
+同じ結果の反復や親shareの設定名を隔離成立の根拠にしない。生bytes返却・全期間・全publisher・正式B2/S4受入未完了、全許可flags=false。

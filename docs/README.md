@@ -124,10 +124,10 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 
 ## 結果文書
 
-2026-09-15のS4-B2最新engineering結果は[親共有とpath新規作成の比較準備・実機停止](results/anomaly-multiseed-v0.3-s4-b2-namespace-create-2026-09-15.md)。
-397件pass、独立所見0件。新規max1は最初の親作成で停止し、worker exit81/終了確認。名前追加の比較には未到達、失敗枠は閉鎖。
-次は親作成エラーの記録改善と新規診断。生bytesの外部返却、[隔離条件](anomaly-v03-isolation-basis-design.md)、B2/S4受入は未充足。
-[設計](anomaly-v03-namespace-create-design.md)と[引継書§102](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
+2026-09-15のS4-B2最新engineering結果は[親share READ保持中のpath新規作成](results/anomaly-multiseed-v0.3-s4-b2-namespace-readonly-2026-09-15.md)。
+401件pass、独立所見0件。親ADD用handleは共有違反で拒否された一方、path CREATE_NEWによる空file追加は成功。0.770秒/全既知handle close/worker exit0・終了確認。
+親share READ保持だけで名前一覧の追加を防げないことを同一tokenの実例で確認。次はpublisherと通常peerの権限境界の設計。生bytes返却とB2/S4受入は未充足。
+[仕様](anomaly-v03-namespace-readonly-design.md)、[隔離条件](anomaly-v03-isolation-basis-design.md)、[引継書§104](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
 
 `docs/results`には実測・監査で22件あります（2026-09-07時点のMarkdown実測）。すべて結果条件と制約を伴う索引であり、
 顧客設備一般の性能保証ではありません。
