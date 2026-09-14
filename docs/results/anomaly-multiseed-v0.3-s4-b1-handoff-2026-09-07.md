@@ -2667,3 +2667,52 @@ private最大18.03MiB、working最大26.04/25.98MiB、各4/2境界、外側sampl
 親全保護、marker/全publisher、独立token、native故障/競合、正式OS整合、VM digest、runtime closure/consumer、S4受入は未完了。
 全formal/authenticated flags=false、acceptance=not_completed。src/科学config/schema/registry/正式pin、本流889cfc3不変、旧CIへ件数加算なし。
 push/merge/CI、新runtime、共有環境、別project、旧failure rootsへの操作なし。
+
+## 91. 2026-09-14 B2 同一親内NT leafも拒否、1回枠終了
+
+ユーザー「続けてください」を受け、基準7aa4d30から親frozenを維持する別adapterを実装した。
+実装・native savepoint **685d670499cdc42e72d3f3ab948349fea2f4281c**。
+[結果](anomaly-multiseed-v0.3-s4-b2-same-parent-rename-2026-09-14.md)、[設計](../anomaly-v03-same-parent-rename-design.md)、
+[次の未採用順序案](../anomaly-v03-publication-order-options.md)を参照。
+
+SameParentDirectoryRenameは親/source/全子の結合、全子close、stage/root固定・実権限・元ID/SD、証跡後再検査を継承する。
+parent_policy=frozen固定、wireだけNULL RootDirectory＋固定payload leaf、直接NtSetInformationFile/class10/40 bytesへ渡す。
+専用backendと旧保持親backendは互いのwireを拒否し、旧encoder/BoundRename/S3/D2/6工程/productionは不変。
+親private比較modeとの併用不可、entry/監視ともattempt-2不可。completion_unknown/buffer寿命・資源停止は既存と共用。
+部品39件pass/0.041秒、記録済み新規10＋既存172＝182件pass/0.186秒、failure/error/skip等0。
+initial-checks.jsonlが最終根拠、以後コード変更・重複試験なし。実装/probe/監視/仕様の独立P0〜P3=0、read-only、ポーリングなし。
+
+実装commit後のclean検査で、前回親policy結果書に今回の変更外の文書差分を検出した。
+元70b0ではworkerを起動せず、原bytes/patchを保存し差分を上書きしなかった。その差分は今回commitに含めない。
+C:\Users\TKent\.codex\worktrees\same-parent-685d670\banto-ai を同じ685d670のclean detached checkoutとして新規作成し、nativeだけ分離した。
+テストは70b0、nativeは別領域。28 source＋補助2 filesが両領域/Git blobに一致し、clean HEAD/監視hashを固定。
+追加tracked448 files/論理5603301 bytes。原文保存8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621。
+
+新規artifacts/same-parent-rename-2026-09-14/attempt-1を1回実行。facts.json45 bytes、marker file/.completeなし。
+file/stage/root固定と保持権限0x160081/0x1700a1/0x1600a7、証跡2817/2886/3014＝8717 bytesの保存は成功した。
+renameはNTSTATUSとIOSBとも0xc0000022→WinError5。native非pending/completion_unknown=false、operation.renameはpendingで停止。
+全28 tracked handles/token2個close、worker exit1/0.562秒、stderr0、資源停止なし。終了後source読取り0、再検査/複製/削除なし。
+CWDは保持source-fixtureとは異なる新規attempt親だが、拒否結果から名前解決成功は主張しない。内部拒否箇所も未trace。
+1回枠は終了。追加試行・旧batch/B1再開・API/名前/親policy fallbackなし。
+journalはprepare unknown/stopped・teardown succeeded・commit not_started。第3証跡名をmodelの完了に読み替えない。
+
+元70b0のignored同名rootへ試験・文書差分・manifestを保存。別checkoutのnative原記録10個をnative-run/へ明示複製して一致を検査した。
+失敗sourceは触らず、前回親policy manifest/24 artifactsの不変も照合した。
+initial-checks.jsonl132318 bytes/hash ed7c7bf5b7474c7ff324e2a7c9a1034552cf7ea260ae7246786967587aac58bd。
+savepoint-evidence.json11246 bytes/hash e3eba37e48436c02918e4214d8417f410b1932992c0c375a06d60b584979b719。
+manifest以外18 artifactsの論理bytes219345。native側原記録/checkout等を含む全disk占有量ではない。
+
+実機前UTC10:24:10 RAM13.44GiB/C119.18GiB/D76.44GiB、終了後10:27:17 RAM13.49GiB/C119.17GiB/D76.44GiB。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和と正式pin不変を維持。
+worker2境界でprivate20.79MiB/working28.04MiB/peak working35.24MiB、外側samples0。worker・検証process終了、常駐なし。
+点観測を全期間最大値・長期リーク不在の証明にしない。
+
+次の案は親privateでpayload rename→親固定→最終検査→予約した空.completeへ保持writerでwrite/flush/closeだが、未実装・未採用。
+案の独立P2は別actorの親private中の既取得ADD/DELETE_CHILD等の残存権限。sealで消去せず、検査後/公開後変更をmodel化し、
+隔離根拠なし/不明なら保護済みcommitを拒否する条件を追記、再レビュー新規P0〜P3=0。
+consumerの一致は時点観測であり将来の不変性ではない。自分のmarker writer以外が変更不能とは保証しない。
+次は残存権限を含む小modelとconsumer条件を具体化する。別actorを脅威範囲から除外しない。
+事前取得の防止/隔離条件が固まるまで候補のnative実装へ進まない。正式契約に触れる点は具体的な判断材料を作る。
+全publisher、独立token、native故障/競合、正式OS整合、VM digest、runtime closure/consumer、S4受入は未完了。
+全formal/authenticated flags=false、acceptance=not_completed。src/科学config/schema/registry/正式pin、本流889cfc3不変、旧CI加算なし。
+push/merge/CI、新runtime/サービス/account、別project、旧failure roots操作なし。元の文書差分を消してcleanにしないこと。

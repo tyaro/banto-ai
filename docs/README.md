@@ -124,10 +124,10 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 
 ## 結果文書
 
-2026-09-14のS4-B2最新engineering結果は[親policyと相対renameの比較](results/anomaly-multiseed-v0.3-s4-b2-parent-policy-rename-2026-09-14.md)。
-最終172件pass、親privateでrename/終了後3 objects一致、親frozenで5拒否を再現し、両条件の全所有終了を確認した。
-2条件枠は終了。次は保持親検査を残した同一親内NT形式の別設計。B2/S4受入は未完了。[設計](anomaly-v03-parent-policy-rename-design.md)と
-[引継書§90](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
+2026-09-14のS4-B2最新engineering結果は[固定済み親内のNT leaf rename](results/anomaly-multiseed-v0.3-s4-b2-same-parent-rename-2026-09-14.md)。
+182件pass・独立指摘0、file/stage/root固定と証跡保存は成功したが、同一親内形式も5拒否。全28 handles/token2個close、1回枠終了。
+次は[未採用の順序案と残存権限](anomaly-v03-publication-order-options.md)の小model/consumer条件。B2/S4受入は未完了。
+[設計](anomaly-v03-same-parent-rename-design.md)と[引継書§91](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
 
 `docs/results`には実測・監査で22件あります（2026-09-07時点のMarkdown実測）。すべて結果条件と制約を伴う索引であり、
 顧客設備一般の性能保証ではありません。

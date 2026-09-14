@@ -68,3 +68,7 @@ frozenはNTSTATUS0xc0000022/WinError5を再現し、28 handles/token2個close、
 保持rootの同一物/寿命検査は残し、固定済み親で成功するかは別の新規仕様・pure/fault・reviewを経て実検証する。
 今回の保持親形式からの自動fallbackではなく、既定API・既存6工程/S3/D2契約を変更しない。
 この候補で成立しない場合は、親保護/marker順序と競合の具体案へ進む。
+
+続く[同一親内形式](anomaly-v03-same-parent-rename-design.md)も親frozen下で5拒否となり、1回枠を終了した。
+[順序案](anomaly-v03-publication-order-options.md)は未採用で、親private中の別actorの既取得権限を排除/隔離する条件が未充足。
+次はこの残存権限を消去しない小modelとconsumer条件を具体化し、追加nativeより先に保護の成立条件を整理する。

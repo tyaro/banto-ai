@@ -89,3 +89,6 @@ B1の終了済み試行枠を流用せず、具体的なnative試行範囲と資
 [親policy比較](anomaly-v03-parent-policy-rename-design.md)で、同じ保持親のNT要求がprivateでは成功しfrozenでは5で拒否された。
 BoundRenameの既定wire/契約は不変。次の候補は同一親内の直接NT leaf/NULL RootDirectoryを明示する別adapterで、
 保持親の観測/寿命を残した設計・pure故障検証を先に行う。実機成功やCWD/競合に関する保証はまだない。
+
+[同一親内NT leaf試行](anomaly-v03-same-parent-rename-design.md)は182件pass・独立指摘0を経て実行し、親frozen下で5を返した。
+API形式だけでは解消せず、1回枠は終了。[順序案と既取得権限の論点](anomaly-v03-publication-order-options.md)を次の検討対象にする。

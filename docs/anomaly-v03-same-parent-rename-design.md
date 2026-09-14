@@ -56,3 +56,14 @@ native同名衝突/競合、独立token実操作、rename後の保持handle内�
 private証跡3個はいずれもrename前。verify_final予約名をmodelの完了に読み替えない。
 journalはprepare unknown/stopped、teardown succeeded、commit not_startedを維持し、marker file/.completeを作らない。
 formal_permission/execution_authenticated=false、acceptance_status=not_completed。科学仕様・production入口・既存正式pinは変更しない。
+
+## 実結果と終了
+
+685d670の182件pass・独立指摘0を経て、同じsource bytesのclean detached checkoutで1回実行した。
+元candidateに生じた対象外の文書編集差分は保持し、起動前のclean検査で停止してから実機領域を分離した。
+file/stage/root固定と3証跡保存は成功したが、NTSTATUS/IOSBとも0xc0000022、WinError5でrename失敗。
+28 handles/token2個close、worker exit1/0.562秒、終了後source読取りなし。1回枠は終了。
+[結果・領域・原記録](results/anomaly-multiseed-v0.3-s4-b2-same-parent-rename-2026-09-14.md)を参照。
+
+次は[未採用の順序案と残存権限](anomaly-v03-publication-order-options.md)をpure modelで具体化する。
+名前形式を変更する追加native試行は行わず、別actorの事前取得権限を含む隔離条件を先に検討する。

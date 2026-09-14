@@ -104,4 +104,8 @@ Win32はWinError87、修正NT経路はWinError5で停止した。相対renameの
 [親policy比較](anomaly-v03-parent-policy-rename-design.md)で、privateはrename/終了後3 objects一致、frozenは5拒否となった。
 両条件で全所有終了を確認した。親privateの成功は親経由add/delete拒否を含まない。
 次は保持親自体の検査を維持した同一親内NT形式の別adapterを設計し、root固定の順序を変える必要性を検証する。
+
+[同一親内NT形式](anomaly-v03-same-parent-rename-design.md)も5拒否で、全28 handles/token2個closeを確認して1回枠を終了した。
+次の[順序候補](anomaly-v03-publication-order-options.md)では、自分のmarker writerだけでなく別actorの既取得親権限もモデル化する。
+DACL固定は既取得権限の失効ではない。隔離根拠なしに最終inventory一致を将来の不変性や保護済みcommitへ読み替えない。
 B1の終了済み試行枠を再開しない。native実行範囲を具体化・レビューしてから次の試行へ進む。
