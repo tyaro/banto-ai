@@ -124,10 +124,10 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 
 ## 結果文書
 
-2026-09-14のS4-B2最新engineering結果は[保持期間とconsumer観測model](results/anomaly-multiseed-v0.3-s4-b2-retention-window-2026-09-14.md)。
-306件pass、初回独立P2を修正し残件0。close/reopenの欠落と共通観測期間、markerのDELETE権限とreader共有条件を区別。未確定操作が残る結果返却を拒否。
-実機追加0回。次は元rootと全sealed fileを借りたまま読み終える部品。[隔離条件](anomaly-v03-isolation-basis-design.md)とB2/S4受入は未充足。
-[設計](anomaly-v03-retention-window-design.md)と[引継書§98](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
+2026-09-14のS4-B2最新engineering結果は[保持handle内の有界consumer読取](results/anomaly-multiseed-v0.3-s4-b2-held-consumer-2026-09-14.md)。
+331件pass、独立P2計2件を修正し残件0。全fileを保持したまま直接読み、前後の照合と終了時の停止状態を確認。actual bytesは内部証拠として保持し、外部返却は未解決条件により拒否する。
+実機追加0回。次は元root/祖先の保持と不明close時の終了を含む有界driver。[隔離条件](anomaly-v03-isolation-basis-design.md)とB2/S4受入は未充足。
+[設計](anomaly-v03-held-consumer-design.md)と[引継書§99](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
 
 `docs/results`には実測・監査で22件あります（2026-09-07時点のMarkdown実測）。すべて結果条件と制約を伴う索引であり、
 顧客設備一般の性能保証ではありません。

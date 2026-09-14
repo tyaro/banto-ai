@@ -2986,3 +2986,38 @@ build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineeri
 marker write/rename・全publisher、親/祖先/全inventoryの共通期間、独立process/token・競合、正式OS/VM digest・B2/S4受入は未完了。
 別account/サービスや受入契約の変更が必要になれば具体的な差分と運用負担を判断材料にする。現時点で追加accountやnative publisherの開始はしない。
 isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated=false、acceptance_status=not_completed。
+
+## 99. 2026-09-14 B2 保持handle内の有界consumer読取
+
+ユーザー「次に進めて下さい」により、元root/全sealed fileを保持中の実読取adapterを具体化した。
+実装savepoint **8c35fce85ced37c8d3edf2d9bde9b4f5487ecae1**。
+[設計](../anomaly-v03-held-consumer-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-held-consumer-2026-09-14.md)を参照。
+
+開始前に元root Observation、plans/marker/source revisionを照合しbufferを確保する。
+既存SealedFiles continuation内で全子を保持し、全metadata/実権限の先行照合、同handle単回read、全子/元rootの再照合を行う。
+consumer内のpath再open/close/ACL変更/名前列挙/renameなし。周囲の既存SealedFiles準備open/seal/path照合は維持する。
+同期local NTFS/非OVERLAPPED、N+1要求/exact N返却、file64KiB、最大8file/plan総量256KiB、marker16KiB、descriptor8KiB、guard512回。
+actual read bytesを保存し、plan bytesで代用しない。全子close応答、最終guardとowner/generation/journal停止確認後だけ収集complete。
+途中変更、上位停止、一次例外と後発resource停止、close不明、再入・差替えで全候補を破棄する。
+子close不明のrequires_exitを受けて元root/関連祖先を保持しworker終了へ進むcallerの接続は未実装。root最終closeもcallerの責任。
+生bytesはprivate証拠であり外部返却は常にisolation_unresolved。modelのtest仮定による返却switchを実部品に設けていない。
+
+新規25＋既存306＝331件pass/0.286秒。初回327件後の独立P2は最終guardが正常returnした場合の上位停止の取りこぼし。
+3回帰追加/330件後の再レビューP2はjournal snapshotの二次障害による元例外の欠落。既知一次例外/resourceを先に確保し1回帰追加。
+最終P0〜P3残件0、read-only/進捗ポーリングなし、最終再レビュー後code変更なし。repository safety/diff検査pass。
+最終根拠final-checks.jsonl242599 bytes/hash95cc1f9bf25ce8840916f25c1874abf2a9f6054ad91a9cb88bcfdb9f6d5266cf。
+
+57sourceのraw/Git blob/候補一致。前回retention-windowの54source/8artifactsは全て不変。
+ignored artifacts/held-consumer-2026-09-14/へ10artifacts/論理924883 bytes（manifest自身除外）、3テスト記録保持。
+savepoint-evidence.json13272 bytes/hashba126b80b360bfa4ac84d1a47415ff61065df92101a2e9d44cfdca5ebd2f55a0。
+UTC13:46:18 RAM14.55GiB/C117.56GiB/D52.68GiB、13:57:20 RAM14.36GiB/C117.56GiB/D52.68GiB。PC全体変動の原因は未特定、長期リーク不在の主張なし。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和/正式pin不変。
+実機追加0回、新worker/監視/checkout/常駐なし、旧caseへの読取/再open/cleanupなし。既存Python3.14.0を使用。
+既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持しcommitから除外。
+本流889cfc3 clean不変、S3/D2/production、push/merge/CI、新runtime/account/serviceへ操作なし。
+
+次はこの部品を新規fixture専用の有界driverへ接続し、元root/祖先の保持、子close不明時のworker終了、資源監視、結果保存をfake故障で固定する。
+新規限定native仕様はその後に別途固定する。旧source/閉鎖済み枠を再利用しない。
+親/祖先/全inventoryの共通期間、marker write/rename・全publisher、独立process/token・競合、正式OS/VM digest・B2/S4受入は未完了。
+別account/サービスや受入条件変更が必要なら具体的な差分と運用負担を判断材料にする。現時点で追加accountやnative publisher開始はしない。
+isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated=false、acceptance_status=not_completed。

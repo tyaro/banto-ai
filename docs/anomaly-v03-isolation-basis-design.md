@@ -129,3 +129,13 @@ marker sealerの既存DELETEと新reader/share1の衝突は双方向共有仕様
 次は元root/全sealed fileのborrow中に有界読取を完了し、照合したbytesだけを返す部品。既存native publisherの開始条件は変更しない。
 親/祖先namespace・inventory・descriptor・保持者の権限行使/移管は別条件として未解決。test仮定によるcommon_interval_model_onlyは隔離認定や受入許可を与えない。
 新規実機枠/fixture/checkoutを追加せず、旧caseへ操作なし。B2/S4未完了、全許可flags=falseを維持する。
+
+## 2026-09-14 保持handle内のconsumer読取
+
+8c35fceの[有界読取部品](anomaly-v03-held-consumer-design.md)と[331件passの結果](results/anomaly-multiseed-v0.3-s4-b2-held-consumer-2026-09-14.md)で、全sealed fileを保持したcontinuation中に同handleの実readを接続した。
+全子のmetadata/実権限を先に照合し、各file単回read後に全子/元rootを再照合する。最後の子close/guard/上位停止確認まで成功しなければ取得候補を破棄する。
+正常returnしたguardが残した停止と、journal snapshotの二次障害が一次例外を隠す問題を修正。独立P2計2件を是正し残件0。
+actual bytesはprivate証拠にとどめ、consumer_payloadは常にisolation_unresolvedで拒否する。前回modelのtest仮定による返却switchを実adapterへ導入していない。
+同じhandleと前後一致は全期間不変性/親・祖先・全inventoryの一貫性を証明しない。既存native publisherの開始条件は変更しない。
+次は元root/祖先保持と子close不明時のworker終了を含む有界driverのfake故障確認。その後の新規限定native仕様は別途固定する。
+今回新規実機0回、旧caseへ操作なし。B2/S4未完了、全許可flags=falseを維持する。
