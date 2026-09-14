@@ -2951,3 +2951,38 @@ worker/監視終了、常駐なし。caseのclose後/失敗後列挙・open・ha
 条件が閉じない場合に専用principal等の運用変更を判断材料へ出す。新accountは現時点で作らない。
 保持parentを直接使うAPI、外側parentの事前権限、独立token/競合、marker/全publisher、正式OS/VM digest・B2/S4受入は未完了。
 今回のcase/max1枠を再利用せず、isolation_certified/protected_commit_allowed/formal_permission/execution_authenticated=false、acceptance_status=not_completed。
+
+## 98. 2026-09-14 B2 公開前後の保持とconsumer共通観測期間
+
+ユーザー「次に進めて下さい」により、前回削除条件をpureな保持期間modelへ接続した。
+実装savepoint **1c03cfece1464f8231b7d223c7f91828a639bd97**。
+[設計](../anomaly-v03-retention-window-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-retention-window-2026-09-14.md)を参照。
+
+2〜8fileの初期pin、24世代slot/128events。DELETE共有拒否とdata WRITE共有拒否を別追跡し、公開開始から観測完了までとconsumer全fileの共通期間を分離。
+open確認前はguardでなく、close intent以降は依存しない。再取得の同ID/同bytesで欠落履歴を消さず、観測済fileも完了まで保持する。
+既存SealedFilesはcallback内で全子を保持し、戻る前にcloseすることをfake backendで照合。
+payload sealer0x160081/share1とreader/share1は共有条件が両立。一方marker0x170081のDELETEと新reader/share1は衝突する仕様上の予測。
+marker readerをshare5にすると共有条件は両立するが、旧guardのclose後のDELETE拒否を維持できない。追加native実証ではない。
+
+既定の他境界unresolvedでは全照合一致でもobservations_match_only、bytes返却不可。
+明示的test仮定と共有条件の共通期間がある場合のみcommon_interval_model_only、同じ照合済immutable bytesを返せる。
+親/祖先namespace・inventory・descriptor・保持者の権限行使/移管は共有条件から導かず、実隔離・将来不変性は主張しない。
+consumerのmodel一致で既存PublicationOrderのwrite gateやproducer unknownを変えない。
+
+新規23＋既存283＝306件pass/0.219秒。初回304件pass後、独立P2で余分なslotの未確定open/closeを残した完了・返却を検出。
+完了前と返却前に全slotを検査して拒否するよう修正し、2故障試験追加。再レビューP0〜P3=0、read-only/進捗ポーリングなし、再レビュー後code変更なし。
+最終根拠corrected-checks.jsonl224673 bytes/hash9c614996c3ab2715be80c817f5165e4af4e54b0902760e8641e5c2a133d08b81。repository safety/diff検査pass。
+
+54sourceのraw/Git blob/候補一致。前回delete-matrixの49source/14artifactsは全て不変。
+ignored artifacts/retention-window-2026-09-14/へ8artifacts/論理574370 bytes（manifest自身除外）。
+savepoint-evidence.json12370 bytes/hash8c43033877fd80b3fac04c6155e5c11e7bfb915c64959b052078db5879eb0ee7。
+UTC13:26:58 RAM14.73GiB/C117.51GiB/D53.16GiB、13:29:45 RAM14.32GiB/C117.51GiB/D52.96GiB。PC全体変動の原因は未特定、長期リーク不在の主張なし。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和/正式pin不変。
+実機追加0回、新worker/監視/checkout/常駐なし、旧caseへの読取/再open/cleanupなし。
+既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持しcommitから除外。
+本流889cfc3 clean不変、S3/D2/production、push/merge/CI、新runtime/account/serviceへ操作なし。
+
+次は元root/全sealed fileのborrow内で有界consumer読取を完了し、照合したbytesを返す部品を具体化する。
+marker write/rename・全publisher、親/祖先/全inventoryの共通期間、独立process/token・競合、正式OS/VM digest・B2/S4受入は未完了。
+別account/サービスや受入契約の変更が必要になれば具体的な差分と運用負担を判断材料にする。現時点で追加accountやnative publisherの開始はしない。
+isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated=false、acceptance_status=not_completed。

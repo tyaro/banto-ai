@@ -120,3 +120,12 @@ ADD_FILE/ADD_SUBDIRECTORYは共有違反、DELETE_CHILDは取得可。元rootの
 close後の名前消滅、保持parent handleの権限使用、独立process/token/競合は検証していない。
 次はsealed-file保持と公開順序modelに、子handleの全期間保持・移管/closeの間隙・consumer共通観測期間を接続する。
 max1枠は閉鎖しcaseを再利用しない。上記隔離条件とB2/S4未完了、全許可flags=falseは維持する。
+
+## 2026-09-14 保持期間とconsumer model
+
+1c03cfeの[保持期間仕様](anomaly-v03-retention-window-design.md)と[306件passの結果](results/anomaly-multiseed-v0.3-s4-b2-retention-window-2026-09-14.md)で、公開期間とconsumer全fileの共通期間を別々に追跡した。
+同ID/bytesの再取得でも途中のclose/reopen欠落を消さず、他境界unresolvedのまま照合済みbytesを返さない。余分なslotを含む不明open/closeも完了/返却を止める。
+marker sealerの既存DELETEと新reader/share1の衝突は双方向共有仕様からの予測で、追加実機の結果ではない。share5なら両立しても旧guardのclose後に削除拒否を維持できない。
+次は元root/全sealed fileのborrow中に有界読取を完了し、照合したbytesだけを返す部品。既存native publisherの開始条件は変更しない。
+親/祖先namespace・inventory・descriptor・保持者の権限行使/移管は別条件として未解決。test仮定によるcommon_interval_model_onlyは隔離認定や受入許可を与えない。
+新規実機枠/fixture/checkoutを追加せず、旧caseへ操作なし。B2/S4未完了、全許可flags=falseを維持する。
