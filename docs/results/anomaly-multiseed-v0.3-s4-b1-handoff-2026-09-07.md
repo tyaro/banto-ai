@@ -2785,3 +2785,40 @@ build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineeri
 既存6工程/native入口/S3/D2/production、本流889cfc3は不変。旧batch/B1/失敗source、push/merge/CI、別projectへの操作なし。
 親全保護、marker/全publisher、独立token/native競合、consumer/runtime closure、正式OS整合/VM digest、B2/S4受入は未完了。
 formal_permission/execution_authenticated/protected_commit_allowed=false、acceptance_status=not_completed。既存文書差分を消してcleanにしない。
+
+## 94. 2026-09-14 B2 単一呼出しdirectory取得部品と故障確認
+
+ユーザー「続けてください」を受け、基準46b8d35から独立した取得部品を実装した。
+実装savepoint **7f9332289494f9b24e9e5e786737864ac88b0ae3**。
+[設計](../anomaly-v03-directory-acquisition-design.md)と[結果](anomaly-multiseed-v0.3-s4-b2-directory-acquisition-2026-09-14.md)を参照。
+
+DirectoryAcquisitionは予約TrackedOpenへCreateDirectory2Wの原handleを先行記録する。API/descriptor/SA/引数は事前準備。
+5引数HANDLE/root0x1600a7/share READ=1/redirect拒否=1/private SD/非継承。0/NULL/-1等を成功にしない。
+同handleのGrantedAccess/ID/type/private SDを確認し、明示的path再openを行う_Bound.checkを避けobserveだけを借用する。
+成功handleはfinishまで保持し、CloseHandle→LocalFreeを各1回。再入・元例外保持・後発resource昇格、unknown時の再試行禁止を扱う。
+作成返却/記録前の喪失は所有unknown、descriptorを保持しworker終了が必要。free応答不明も再freeしない。
+callerはancestorをfinishまで保持する前提で、この部品は祖先結合やpeer/外側parent/consumer隔離を証明しない。
+既存private sink/6工程/S3/D2/productionは不変。今回native0、entry/監視/新規枠追加なし。
+
+新規19＋既存202＝221件pass/0.361秒、failure/error/skip等0。corrected-checks.jsonlが最終根拠。
+初回全体も221件pass/3.101秒。独立P2はfake試験のホストPython版依存で、本体を緩めずsetUpのruntime固定/cleanup復元3行で修正。
+外側synthetic3.12.9/posix下の正常系1件と外側復元も確認。実Python3.12の実行や追加installではない。
+修正差分の再レビュー残件P0〜P3=0、read-only、進捗ポーリングなし。以後コード変更・重複試験なし。
+32 source＋補助2 filesのraw/Git blob一致、前回isolation-basis manifest/5 artifacts・既存32 source不変を照合した。
+repository safety/差分空白検査pass。ignored artifacts/directory-acquisition-2026-09-14/へ原記録を保存。
+corrected-checks.jsonl162016 bytes/hashcdb64fe52b37b0c645599d942687193086fa10e09cba93c95fbeba2d7916c3f3。
+savepoint-evidence.json11031 bytes/hash45084efd046a472c889a9bad65124046e1d033ecdd8ffb3985261511dd443591。
+manifest以外10 artifacts/論理419071 bytes。filesystem全占有量ではない。
+
+開始UTC11:26:41 RAM12.50GiB/C118.49GiB/D73.73GiB、試験後11:39:00 RAM4.50GiB/C118.16GiB/D66.77GiB。
+低下を受け文書保存に作業を絞り、11:40:40再観測はRAM16.00GiB/C118.16GiB/D64.04GiB。上位6 processの資源を読取りだけで保存した。
+RAMは回復、disk減少を含む変動原因は未特定。他processを停止せず、点観測を長期リーク不在/最大使用量の証明にしない。
+今回の試験/記録process終了、常駐/監視/checkout追加なし。次の局所実機検討でも先に資源を再確認する。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和・正式pin不変。
+既存親policy結果書の8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持しcommitから除外。
+
+次は局所driverの祖先元ID/SD/寿命との結合、所有unknown時の終了、保存順序、衝突時の既存object非接触を具体化し独立レビューする。
+その検証・source固定・監視と上限の準備後に別の実機仕様を定める。取得成功だけで隔離やnative publisher開始を認定しない。
+旧batch/B1/失敗source、push/merge/CI、新runtime/account/service、別projectに操作なし。本流889cfc3不変、旧CI件数加算なし。
+親全保護、marker/全publisher、独立token/競合、consumer/runtime closure、正式OS/VM digest、B2/S4受入は未完了。
+isolation_certified/protected_commit_allowed/formal_permission/execution_authenticated=false、acceptance_status=not_completed。

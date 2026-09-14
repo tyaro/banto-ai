@@ -124,10 +124,10 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 
 ## 結果文書
 
-2026-09-14のS4-B2最新engineering結果は[隔離条件の具体化とAPI存在確認](results/anomaly-multiseed-v0.3-s4-b2-isolation-basis-2026-09-14.md)。
-作成とhandle取得を1回にするAPI候補のSDK宣言/exportを確認し、peer権限・外側parent・consumer整合の未解決条件を整理した。設計の独立指摘0。
-前回202件passのコードは不変、再試験/実機追加なし。次は限定取得部品の実装と故障確認。[順序案](anomaly-v03-publication-order-options.md)は未採用、B2/S4受入は未完了。
-[設計](anomaly-v03-isolation-basis-design.md)と[引継書§93](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
+2026-09-14のS4-B2最新engineering結果は[単一呼出しdirectory取得部品](results/anomaly-multiseed-v0.3-s4-b2-directory-acquisition-2026-09-14.md)。
+原handleの先行記録・同handle観測・単回close/freeを実装し、fake APIを含む221件pass。独立P2を修正、残件0。実機試行の追加なし。
+次は局所driverの祖先結合・終了・保存順序の具体化。[隔離条件](anomaly-v03-isolation-basis-design.md)は引き続き未充足、B2/S4受入は未完了。
+[設計](anomaly-v03-directory-acquisition-design.md)と[引継書§94](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
 
 `docs/results`には実測・監査で22件あります（2026-09-07時点のMarkdown実測）。すべて結果条件と制約を伴う索引であり、
 顧客設備一般の性能保証ではありません。

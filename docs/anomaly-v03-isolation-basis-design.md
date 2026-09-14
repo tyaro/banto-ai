@@ -97,3 +97,10 @@ DLL symbolの解決・ABIと全引数準備・所有slot予約を作成前に終
 この経路で隔離条件が成立しなければ、専用principalでpublisher/peerを分ける案を、権限・運用負担・正式契約変更とともに判断対象へ出す。
 専用principalだけでも生成前からの祖先権限やhandle移管、別account運用を自動解決しない。現時点で追加account等を作る判断は不要。
 formal_permission/execution_authenticated/protected_commit_allowed=false、acceptance_status=not_completedを維持する。
+
+## 取得部品の実装状況
+
+7f93322で[単一呼出し取得部品](anomaly-v03-directory-acquisition-design.md)を追加した。
+[fake APIを含む221件pass、独立残件0](results/anomaly-multiseed-v0.3-s4-b2-directory-acquisition-2026-09-14.md)。実機試行の追加なし。
+原handle先行記録、同handleのID/実権限/SD、単回close/free、返却不明時のdescriptor保持を扱う。
+callerの祖先guardとの結合、局所driver/監視/実機仕様は次の作業。上記peer/外側parent/consumerの未解決条件は維持する。
