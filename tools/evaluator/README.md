@@ -310,7 +310,9 @@ tests/fixturesへ追加した段階です。実機接続前の順序・失敗/�
 [34件がpass](../../docs/results/anomaly-multiseed-v0.3-s4-b2-rename-adapter-2026-09-11.md)。実Win32 backendと受入は未完了です。
 さらに[終端handle解放と権限の設計](../../docs/anomaly-v03-handle-lifecycle-design.md)を追加し、
 閉鎖応答喪失・二重閉鎖防止・記録の二重故障を含む[新規18＋既存34＝52件](../../docs/results/anomaly-multiseed-v0.3-s4-b2-handle-owner-2026-09-11.md)がpass。
-取得・事前解放・実権限の検査は引き続き未実装です。
+続く[公開前の証跡保存・選択解放](../../docs/anomaly-v03-prepublication-design.md)は、同じownerで3段階の保存と両renameを通す
+[新規20＋既存52＝72件](../../docs/results/anomaly-multiseed-v0.3-s4-b2-prepublication-2026-09-14.md)がpass。
+途中取得・native private保存・実権限の検査は引き続き未実装です。
 
 `inspect_anomaly_v03.py`は新規のengineering schemaとpure validatorを使うread-only collectorです。
 9つの科学schemaと5 configは変更しません。cleanなfull-SHA checkoutを指定します。

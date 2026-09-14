@@ -6,7 +6,9 @@
 ## 今回実装した所有終了
 
 tests/fixtures/anomaly_v03_handle_owner.pyのHandleOwnerは、構築時に最大32個の
-検証済みfile handleのpinと親indexを受け取り、終端のcloseだけを担当する。
+検証済みfile handleのpinと親indexを受け取り、初回設計では終端のcloseを担当した。
+2026-09-14拡張: [公開前の証跡保存と選択解放](anomaly-v03-prepublication-design.md)により、
+同期borrowと3工程内の事前解放も追加した。以下の初回設計の実native取得・権限検証は引き続き未完了。
 入力はtuple、同handle/同volume-file IDの重複は禁止。親は先行indexの同volume directoryに限定する。
 循環やfileを親とする登録を拒否し、全管理slotの確保が終わって構築が正常に戻るまでcaller所有のまま。
 pinの型検査は本物のhandleの有効性や所有権の証明ではない。実取得・移管のbackendは未実装。
@@ -74,7 +76,7 @@ DACL固定前に得たwriter/DELETE/WRITE_DAC等の権限を、DACL変更で取�
 writerを先に閉じ、独立した通常tokenによるwrite/add/delete拒否と、保持rename handleによる
 意図したcommitをそれぞれ実検証する。意図的にDACLを変えるownerや特権者へのsandbox保証はしない。
 子の検査handleを閉じる前に全identity/bytes/SDをprivate証跡へ固定し、directory rename後のverify_finalでは
-保持rootからの名前と元identityを改めて照合する案。この事前解放の部品は今回の終端ownerとは別の未実装工程。
+保持rootからの名前と元identityを改めて照合する案。選択解放の部品は2026-09-14に追加したが、実nativeへの接続は未実装。
 
 ## private証跡と実機接続の残件
 
@@ -84,7 +86,7 @@ marker-pending名の消失後も必要なmarker bytes、payloadの固定inventor
 これは実機試行の承認やprocess全体の資源上限ではない。time/private bytes/空きRAM/空きdisk等の
 監視上限、書込証跡の予算と保存の失敗時方針をnative試行仕様で別途確定する。
 
-未実装は、取得途中失敗時の即時所有追跡、事前writer/子handle close、借用中の排他、
+未実装は、取得途中失敗時の即時所有追跡、実native writer/子handleの事前close接続、API外/thread間の借用排他、
 全ancestorの実pin、ACL/link/reparse/ADS/同一物検査、相対rename、証跡の実保存・回収である。
 未知closeは再試行せず、限定worker終了による資源回収と終了確認をnative試行仕様へ含める。
 今回のHandleOwnerに安全なfixture削除機能があるとは扱わない。

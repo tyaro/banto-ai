@@ -2349,3 +2349,36 @@ build26200.9445、boot2026-09-09T10:43:08.5000000+09:00を記録。resources-fin
 次は取得途中失敗の所有移管、writer/子handle事前解放と後続操作禁止、private証跡の保存予算を実装し、
 native試行の具体的な対象・時間/メモリ/空きdisk等の上限をレビュー可能にする。
 B1終了済み試行枠を流用しない。native全受入、正式OS整合、VM digest、runtime closure/consumer、S4は未完了。
+
+## 84. 2026-09-14 連続稼働終了とB2公開前の保存・選択解放
+
+ユーザー「連続稼働テスト終わりましたので進めましょう」を受領。
+別projectとの同時負荷を避ける追加抑制は解除し、通常のRAM/disk確認と各所のsavepointを継続する。
+B1の終了済み試行枠や正式受入条件を更新・再開する通知とは扱わない。
+
+基準5c76c58、実装savepoint b9b7fb168641cf078dcb5fa5692f13e709fabedf。
+[結果](anomaly-multiseed-v0.3-s4-b2-prepublication-2026-09-14.md)と[設計](../anomaly-v03-prepublication-design.md)を参照。
+ownerへ同期borrow排他とprepare/seal_payload/verify_final中の各1回の選択解放を追加した。
+終端finishはclosed/unknownを再closeせず、残るownedのみを解放する。
+証跡barrierはmarkerと全payload bytes、pin/descriptor観測を固定し、journalの期待marker hashと全owner pinへ
+exact再構成照合してから保存する。保存確認前に解放せず、root/rename等のprotected slotは解放しない。
+各記録512KiB/3記録合計1.5MiBまで。観測/実保存の認証ではなく、全受入flagは未完了のまま。
+
+新規19＋既存52＝71件pass、0.079秒。独立レビュー欠陥0、補強案により同じowner/barrierで3段階の保存・解放、
+既存BoundRenameのpayload/.complete両操作、終端finishを通す1 methodを追加した。
+最終20＋既存52＝72件pass、0.050秒。両回failure/error/skip0、最終レビュー指摘0、進捗ポーリングなし。
+1 methodだけ通常tempfileのexclusive保存/readbackを実施し、終了時に清掃。native private DACL/flushの証拠ではない。
+repository safety/staged diff-check pass。最終試験の8 source filesは確定Git blobとraw bytes一致。
+src/科学config/schema/registry/正式OS pinは不変。旧Linux CIへ件数加算なし。
+
+新規ignored root artifacts/prepublication-2026-09-14/へ初回/最終JSONL、資源、savepoint-evidence.jsonを保存。
+最終JSONL51679 bytes/hash160e9ea2f21cfefc0becc008fcce22a72ea111f3f2e8d1bd4ca6fd9fc9158b34。
+開始UTC06:45:05Z RAM8.37GiB/C105.24GiB/D59.78GiB、最終06:55:54Z RAM8.39GiB/C105.21GiB/D59.78GiB。
+build26200.9445、boot2026-09-09T10:43:08.5000000+09:00を記録。
+D空きは開始前から減少していたが原因未調査で、本作業やリークへ帰属させない。
+試験・記録processは終了。常駐処理、別project/旧failure fixture/共有環境操作、push/merge/CI起動なし。本流889cfc3不変。
+
+次は取得途中失敗の所有移管とwriter解放後の再取得、新規native private sinkの保存・途中失敗証跡を実装する。
+今回のownerは構築時に固定slotを渡す前提で、実取得途中の追跡やnative private保存を実装したものではない。
+限定native試行の対象・時間・資源上限を具体化して接続する。B1終了枠の流用なし。
+native全受入、正式OS整合、VM digest、runtime closure/consumer、S4受入は未完了。
