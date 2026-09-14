@@ -85,3 +85,7 @@ native pin/descriptor/bytes→本barrier→private sinkのprepare保存・選択
 
 [file権限固定](anomaly-v03-file-sealing-design.md)では同じprepare保存・writer解放後に、別世代で
 2 filesのfrozen DACL設定/読戻しとlive continuationを確認した。後続phase証跡への接続は未完了。
+
+[directory試行](anomaly-v03-directory-rename-design.md)はpayload-onlyの新規fixtureで全子close後にstage/rootを固定し、
+3個の実観測証跡を保存した。2回のrename失敗でもprepare unknown/stopped・teardown succeededを維持し、
+既存6工程の成功へ読み替えていない。親保護/rename順序、marker/全phaseの統合は未完了。

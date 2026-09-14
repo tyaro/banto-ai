@@ -80,3 +80,10 @@ formal_permission/execution_authenticatedはfalse、acceptance_statusはnot_comp
 0x160081/0x170081・同一物/bytes/SDを照合した。親root不変、27 tracked handles/token2個close、worker exit0。
 外側0.555秒、stderr0 bytes。今回枠は成功で終了、未使用繰越なし。
 [結果・保存記録](results/anomaly-multiseed-v0.3-s4-b2-file-sealing-2026-09-14.md)を参照。
+
+## directory接続の続報
+
+[次の試行](anomaly-v03-directory-rename-design.md)ではrequire_marker=Falseを明示したpayload-onlyの1〜8 filesを追加した。
+既定は従来のmarker必須であり、明示Falseではmarkerを含められない。stage配下のfile世代を閉じてからdirectory固定へ進む。
+実機2回でfile/stage/root固定と証跡保存は確認したが、renameは87/5で停止。最終167件pass、今回枠は終了。
+親DACLとrename順序、rename後検証、marker/全公開の統合は残る。

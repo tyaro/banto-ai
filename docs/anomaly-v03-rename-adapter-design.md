@@ -80,3 +80,8 @@ B1の終了済み試行枠を流用せず、具体的なnative試行範囲と資
 2026-09-14の[file権限固定](anomaly-v03-file-sealing-design.md)で、marker DELETEをDACL固定前に取得し、
 固定後も同handleの実権限を保持して親borrow内の継続処理へ渡す範囲を限定実機確認した。
 継続処理は観測のみで、このBoundRenameの実API接続、directory/root固定と親の追加権限は未完了。
+
+続く[directory固定試行](anomaly-v03-directory-rename-design.md)は別のsingle-use DirectoryRenameで、
+子解放後のstage/root固定・権限保持・証跡3個保存を実行した。Win32相対要求は87、明示的NT要求は5で失敗し2回枠を終了。
+既存BoundRenameをnative成功済みとは扱わない。非NULL保持親・固定済み親でのrenameは成立未確認のため、
+次は親保護と名前変更順序を見直す。初回Win32 wrapperの静的変換推定と、NT呼出しのbuffer寿命修正は上記設計を参照。

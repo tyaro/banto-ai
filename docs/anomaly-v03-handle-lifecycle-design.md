@@ -90,8 +90,14 @@ marker-pending名の消失後も必要なmarker bytes、payloadの固定inventor
 祖先保持、実identity/private SD/bytesからprepare証跡を保存して子を解放する範囲を限定実機で確認した。
 [reader再取得](anomaly-v03-reader-reacquisition-design.md)ではwriter解放後の一時読取り世代を親borrow内で検査・終了した。
 [file権限固定](anomaly-v03-file-sealing-design.md)でWRITE_DAC/marker DELETEを取得し、2 filesのfrozen DACL読戻しと
-親borrow内のlive continuation・全終了を限定実機確認した。stage/root directoryの権限・固定・相対rename、
+親borrow内のlive continuation・全終了を限定実機確認した。stage/root directoryの続報は下記を参照。
+相対rename成功、
 動的slot追加、API外/thread間の排他、ADS等の全検査、実故障受入は残る。
 未知closeは再試行せず、限定worker終了による資源回収と終了確認をnative試行仕様へ含める。
 今回のHandleOwnerに安全なfixture削除機能があるとは扱わない。
+
+[directory固定・相対rename](anomaly-v03-directory-rename-design.md)では、全子close後に保持stage/rootを固定し、
+同一物/SDと実権限0x1700a1/0x1600a7を照合した。2回とも証跡保存・28 handles/token2個closeまで確認したが、
+Win32はWinError87、修正NT経路はWinError5で停止した。相対renameの成立は未確認、今回枠は終了。
+次は親の固定と名前変更の順序・競合保護の再設計であり、保持親のADD権限だけで成功を仮定しない。
 B1の終了済み試行枠を再開しない。native実行範囲を具体化・レビューしてから次の試行へ進む。

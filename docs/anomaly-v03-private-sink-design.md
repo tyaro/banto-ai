@@ -72,5 +72,8 @@ native pin/descriptor/bytes→EvidenceBarrier→本sinkのprepare保存・選択
 writer解放後の一時reader再取得は確認済み。続く[file権限固定](anomaly-v03-file-sealing-design.md)では
 2 filesのWRITE_DAC/marker DELETE取得・固定とlive continuationを確認した。
 directory/root seal・rename、動的slot追加、rename前後の同一物統合は残る。
+続く[directory試行](anomaly-v03-directory-rename-design.md)では新規sinkにprepare2817/seal_payload2886/verify_final3014 bytesを保存した。
+3番目はrename前の予約名であり、rename後検査の成功を意味しない。stage/root固定後のrenameは2回とも失敗し、枠を終了した。
+sink保存・全所有終了を確認し、失敗source treeを終了後に再検査していない。親保護/rename順序の見直しが次の境界である。
 今回のnative JSONは保存部品用の合成bytesであり、正式完了印や性能結果ではない。
 正式OS整合、VM image digest、runtime closure/consumer凍結、native全受入は引き続き別の残件。

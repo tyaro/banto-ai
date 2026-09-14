@@ -25,7 +25,7 @@ root/stage両方の元ID/private SD・実権限を確認してから、stage→r
 各directoryは設定直前にも元観測へ照合し、設定後ID/SDと非DACL属性不変、実権限の保持を確認する。
 frozen directoryはEveryone deny0x10156、private allow3個＋Restricted Code read allow、継承ACEなし。
 
-保存callbackが成功した後、root/stageのfrozen観測を再照合してから既存rename_requestの
+初回仕様では、保存callbackが成功した後、root/stageのfrozen観測を再照合してから既存rename_requestの
 FileRenameInfo=3、RootDirectory=保持root、固定leaf payload、replace/追加flags0を実APIへ渡す。
 [FILE_RENAME_INFO](https://learn.microsoft.com/en-us/windows/win32/api/winbase/ns-winbase-file_rename_info)の
 相対名/RootDirectoryの定義と[SetFileInformationByHandle](https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-setfileinformationbyhandle)
@@ -116,3 +116,17 @@ API内の返却喪失やpending判定前の中断も資源停止へ昇格し、�
 root/stage/子の権限、DACL、証跡順、CWD、資源上限は初回と同じ。
 親DACL固定後に内部target openが拒否される可能性も残るため、NT経路の成功を事前に仮定しない。
 2回目で成功または失敗した時点で今回枠を終了する。3回目や旧fixture再操作はしない。
+
+## 実結果・枠の終了と次の設計
+
+修正91cd5acのclean HEAD/source24 files/監視hashを固定した2回目は、NTSTATUS0xc0000022→WinError5で失敗。
+file/stage/root固定と3証跡保存、保持権限0x1600a7/0x1700a1は確認したが、相対rename成功は確認できなかった。
+native返却は非pendingでcompletion_unknown=false。operation.renameは成功未確認のpendingで停止する。
+各試行28 tracked handles/token2個close、worker exit1、終了後source再検査なし。最大2回枠は終了した。
+最終167件pass、レビューP2を1件修正して残りP0〜P3=0。
+[結果・記録・資源](results/anomaly-multiseed-v0.3-s4-b2-directory-rename-2026-09-14.md)を参照。
+
+親のfrozen DACLによる内部target open拒否が候補だが、原因を分離する比較はまだ行っていない。
+次は親private/frozenの条件差と、root固定・payload rename・marker commitの順序をpure modelから検討する。
+rootをprivateに保つ間の競合/親経由deleteと、完了印前の保護を同時に満たす必要がある。
+固定を後回しにするだけで受入へ進めず、新規比較の範囲・終了条件を具体化してから別枠を作る。

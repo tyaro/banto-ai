@@ -124,6 +124,11 @@ v0.1の計画、artifact、監査は削除しません。v0.1監査がartifact�
 
 ## 結果文書
 
+2026-09-14のS4-B2最新engineering結果は[directory固定・相対rename試行](results/anomaly-multiseed-v0.3-s4-b2-directory-rename-2026-09-14.md)。
+最終167件pass、file/stage/root固定・証跡保存・全所有終了を確認したが、renameは初回87/修正後5で失敗し2回枠を終了した。
+次は親保護と名前変更の順序の再設計。B2/S4受入は未完了。[設計](anomaly-v03-directory-rename-design.md)と
+[引継書§89](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)を参照。
+
 `docs/results`には実測・監査で22件あります（2026-09-07時点のMarkdown実測）。すべて結果条件と制約を伴う索引であり、
 顧客設備一般の性能保証ではありません。
 

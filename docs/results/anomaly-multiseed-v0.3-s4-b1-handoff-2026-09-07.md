@@ -2567,3 +2567,57 @@ D空き増加の原因は未調査。資源の増減を本作業/リーク不在
 正式OS整合、VM digest、runtime closure/consumer、S4受入は残る。
 src/科学config/schema/registry/正式pin、本流889cfc3不変。旧CIへ件数加算なし。
 push/merge/CI起動、新runtime/共有環境/別project/旧failure roots操作なし。
+
+## 89. 2026-09-14 B2 directory固定と相対renameの2回枠終了
+
+ユーザー「続けてください」を受け、基準9375b3eからstage/rootのDACL固定と保持親からの相対renameを接続した。
+初回実装・実行 **a20988688e65d829a6619c399813da2a319d22a2**、修正実装・実行 **91cd5acfc29b9186739d3e99831f6f19ede08502**。
+[結果](anomaly-multiseed-v0.3-s4-b2-directory-rename-2026-09-14.md)と[設計](../anomaly-v03-directory-rename-design.md)を参照。
+
+新規root0x1600a7/stage0x1700a1を初回から保持し、stage内facts.json45 bytesだけを作成。
+prepare保存→writer close→payload-only SealedFiles0x160081でfile固定/読戻し→証跡保存→全子close→
+stage/root固定/同一物・SD・実権限読戻し→第3証跡保存→同じ保持親を使うstage→payloadの順で実行した。
+require_marker=Falseの明示利用だけ1〜8 payloadを許し、既定marker必須は維持する。marker file/.completeは作っていない。
+CWDは新規attempt親で、保持source-fixture rootとは別。3証跡は2817/2886/3014 bytesで、verify_final名もrename前記録。
+
+初回SetFileInformationByHandle(class3/36 bytes)はWinError87。
+インストール済みKernelBase.dllの静的解析でDOS→NT名変換と入力RootDirectory複写を確認し、
+絶対名＋非NULL親の組合せが87を説明するという推定を記録。動的内部引数/NTSTATUSの証明ではない。
+解析version10.0.26100.9278/SHA becad014fb8efa8cb5e314931cca92778ad42c649b12a6909632cacd68af4f40。
+追加のDLL関数/renameは呼ばず、既存Capstoneを使用して新runtimeは追加しなかった。
+
+2回目は明示WindowsNtDirectoryBackend(class10/40 bytes/IOSB16)に切替え、新規attempt-2でNTSTATUS0xc0000022→WinError5。
+native pending=false/completion_unknown=falseで同期失敗を受領。operation.renameは成功未確認のpendingで停止した。
+両回ともfile/stage/root固定と3証跡保存は成功し、実権限0x1600a7/0x1700a1が固定前後一致。
+各source13＋sink14＋file1＝28 tracked handlesとtoken2個close、worker exit1。外側初回1.208秒/2回目0.441秒、stderr0。
+終了後source検査・hash取得・削除を行わず、最終読取りhandles0/postclose一致0。
+journalはprepare unknown/stopped、teardown succeeded、commit not_started。全公開やrename成功として記録しない。
+**最大2回枠は使用済みで終了。3回目・初回fixture再操作・旧batch/B1再開・自動fallbackなし。**
+
+初期部品確認のowned import漏れ12 NameErrorを修正後54件pass/0.068秒。
+記録済み162件pass/0.220秒→NT切替166件pass/0.218秒→中断時寿命修正167件pass/0.366秒。
+最終新規24＋既存143、failure/error/skip等0。final-checks.jsonlが最終根拠。
+独立レビューP2はNT呼出直後の中断で入出力buffer寿命を失う可能性。呼出前completion_unknownを追加し、
+正常非pending返却の検証後だけ解除、それ以外はbuffer保持・固定通知・所有終了後worker exit80へ接続した。
+再レビュー新規P0〜P3=0。本体/scenario先行レビューも各0、read-only、進捗ポーリングなし。
+source24＋補助2 filesは最終raw/Git一致、初回sourceは初回Gitへ照合。166件の中間hashは最終Git一致を主張しない。
+repository safety/差分検査/PowerShell構文確認pass。コード変更のない重複試験は省略した。
+
+ignored artifacts/directory-rename-2026-09-14/へ保存。初回receipt12 artifacts・前回file-sealing15 artifactsの不変を照合。
+final-checks.jsonl120883 bytes/hash c22784dfc37249bd233229ff3ac148ab53cb311b7f3e0737fe2787ec5491ba26。
+savepoint-evidence.json27893 bytes/hash 4aa5e974f3211bf328c2c388818c01f0fcdf0eeff3df18562568280ad91edfbe。
+manifest以外34記録の論理bytes548113。失敗source treeを走査せず明示証跡だけ保存した。
+
+初回前UTC09:08:09 RAM7.40GiB/C119.67GiB/D90.94GiB、2回目前09:21:30 RAM9.50GiB/C119.70GiB/D87.92GiB。
+終了後09:22:23 RAM9.49GiB/C119.71GiB/D87.92GiB。build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、正式pin不変。
+各worker2境界、private最大初回18.71MiB/2回目18.68MiB、working26.61/26.60MiB。初回外側1 sample working26.68MiB、2回目samples0。
+資源停止なし、worker・検証process終了、常駐なし。空きの変化原因は未調査で、本作業やリーク不在へ帰属させない。
+
+次は親保護とpayload rename/marker commitの順序を再設計する。
+親frozenの内部target open拒否が候補だが、同じNT要求で親private/frozenだけを比較した証明はまだない。
+その小比較仕様と、親private時間帯のadd/delete競合・完了印前保護をpure modelで具体化し、
+実装/review/source固定を経て新しい別枠を作る。root固定を遅らせるだけで受入にしない。
+既存6工程/S3 hardlink marker/D2 rename契約を変える必要がある場合は具体案として判断点を示す。
+rename後検査、marker/全phase、独立token実操作、native故障/競合、正式OS整合、VM digest、runtime closure/consumer、S4受入は未完了。
+全acceptance/formal/authenticated flagsは未受入。src/科学config/schema/registry/正式pin、本流889cfc3不変、旧CIへ件数加算なし。
+push/merge/CI起動、新runtime/共有環境/別project/旧failure roots操作なし。
