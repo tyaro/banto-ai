@@ -386,6 +386,7 @@ class WindowsHeldContext(acquisition.WindowsAcquisitionContext):
     def snapshot(self):
         return {"prepared": self._prepared, "prepare_bytes": self._prepare_bytes, "prepare_sha256": self._prepare_sha,
                 "collection_evidence_bytes": self._evidence_bytes, "collection_evidence_sha256": self._evidence_sha,
+                "reader": None if self.reader is None else self.reader.snapshot(),
                 "source": self.source.snapshot(), "sink": self.sink.snapshot(), "resources": list(self._points),
                 "root_finished": self._root_finished, "ancestors_finished": self._finished,
                 "postclose_source_inspected": False, "source_cleanup_performed": False}
