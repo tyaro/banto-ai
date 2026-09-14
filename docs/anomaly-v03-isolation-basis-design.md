@@ -177,3 +177,13 @@ share3の作成は直前の新規診断で87となり、今回controlを省略�
 同一SIDの通常tokenと同じDACLだけでは両actorの区別根拠にならず、restricted publisher tokenだけで通常token peerを隔離したことにもならない。
 専用principalが必要となる場合はlocal account/隔離VM、資格情報・起動・consumerアクセスの運用差を具体化してからユーザー判断へ出す。現時点でaccount/service作成は行わない。
 これまでの旧source/枠は再利用しない。生bytes返却・全期間・B2/S4受入は未解決、全許可flags=falseを維持する。
+
+## 2026-09-15 公開側と通常peerの主体を分ける案
+
+60ac6c4の[権限境界案](anomaly-v03-principal-boundary-design.md)と[保存結果](results/anomaly-multiseed-v0.3-s4-b2-principal-boundary-2026-09-15.md)を追加した。
+専用標準local account P、現在userのordinary peer U、管理者側bootstrap B、consumer Rを分ける案。別SIDだけでなく、共通ACE、外側祖先、process/thread/token/移管、初期SD/code/資格情報の窓を含める。
+同じuserへの許可を残したままrestricted tokenやAppContainer ACEを加えるだけの案には、通常peer排除の根拠が不足する。AppContainer一般の隔離機能を否定する結論ではない。
+初回は新規P作成/U拒否を確認するharnessだけを設計し、起動/SDDL/IPC/複数process所有の実装前残件を明記した。
+専用標準account BantoS4Publisherと C:\ProgramData\BantoAI-S4B2-principal-20260915 の追加案をユーザー判断へ出す。名前/場所は読取確認時には未存在だが、まだ作成していない。
+独立P0〜P3所見0件。OS変更/native追加/新worker0、前回選抜72 source/13 artifacts不変。
+この環境案への同意に、frozen/markerの正式契約変更やB2/S4受入を含めない。生bytes返却・全期間の未解決と全許可flags=falseを維持する。

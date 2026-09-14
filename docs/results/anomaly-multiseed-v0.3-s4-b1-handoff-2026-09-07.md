@@ -3157,3 +3157,28 @@ build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineeri
 次はpublisherの追加/renameと通常peerへ与えない権限、取得前/保持中/公開後、外側親・process handle移管を一覧化し、権限境界の具体案を作る。
 専用principalが必要ならlocal account/隔離VM、資格情報と起動・consumer読取の運用差を具体化してからユーザー判断へ出す。無断でaccount/serviceを追加しない。
 同じ結果の反復や親shareの設定名を隔離成立の根拠にしない。生bytes返却・全期間・全publisher・正式B2/S4受入未完了、全許可flags=false。
+
+## 105. 2026-09-15 B2 公開側と通常peerの権限分離案
+
+ユーザー「次に進めて下さい」により、次の権限境界を方式判断できる設計へ具体化した。
+設計savepoint **60ac6c45c737c0785540f976de1dfb16abb4d7f0**。
+[設計](../anomaly-v03-principal-boundary-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-principal-boundary-2026-09-15.md)を参照。
+専用標準local account Pと現在userのordinary peer U、管理者側bootstrap B、consumer Rを区別。各object/期間の必要権限とUの禁止操作、外側祖先・既取得handle・process/thread/token/IPC・code/資格情報を一覧化した。
+同一userのrestricted token/AppContainer ACE追加だけで通常peer排除が成立とはしない。P/Uの別SIDだけでも成立としない。
+候補account BantoS4Publisher、root C:\ProgramData\BantoAI-S4B2-principal-20260915 はUTC2026-09-14T16:09:00Zの読取確認で未存在。OS設定は変更していない。
+このPCに標準accountと保護rootを追加する環境案についてユーザー判断を受ける。理由は永続設定・管理者承認・資格情報/起動管理の追加。skillや自動審査による停止ではない。
+ユーザーの方式選択前にaccount/profile/service/VMを作らない。選択後は実装・故障確認・レビュー・savepointを経て新規max1だけに進む。追加承認を求める場合も、既に許可された範囲を再確認しない。
+
+初回harnessはPの新規root/空file作成と、独立U workerの読取control/変更open/path CREATE_NEWを比較する案。
+SDDL/mask、保護された起動、code/runtime配置、IPC、作成失敗時のP/B親保持とU終了確認は実装前残件。既存単一worker所有を無変更で流用しない。
+P/U合計private256MiB/working384MiB、40秒内側/45秒外側、空きRAM/disk2GiB、出力合計384KiBは初回上限案（まだ実装/強制されていない）。
+frozen親内renameとmarker方式の契約選択は、環境準備への同意に含めない。通常peerを対象外にせず、全期間/全publisher/正式B2/S4は未完了。
+
+独立一次資料調査・設計レビューP0〜P3=0、read-only/進捗ポーリングなし。文書のみ変更なのでunit tests/native再実行0。
+前回401件passの対象を含む72 source/旧manifest/13 artifacts不変。新設計を加え73 sourceをraw/Git blob一致確認。safety/diff/設計リンクpass。
+artifacts/principal-boundary-2026-09-15に5 artifacts/論理6400 bytes、manifest15459 bytes/hash59c213c693f4a3f9f78f052f12da812c66d78ae18e7f8309ff62522c807b04ec。
+UTC16:09:00 RAM15287701504/C125320380416/D45614538752 bytes、16:15:06 RAM15147569152/C125313695744/D45614526464 bytes。D空きは約42.48GiB、今回記録間の減少12288 bytes。前工程の約8.83GiB減少の履歴と原因未特定を維持する。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和/正式pin不変、既存Python3.14.0。
+新規native枠/checkout/worker/常駐なし、旧fixture再open/列挙/hash/copy/deleteなし。他project/process、本流889cfc3、push/merge/CIへ操作なし。
+既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持しcommit除外。
+環境準備未承認、全isolation/protected commit/future immutability/formal permission/execution authentication flags=false、acceptance_status=not_completed。
