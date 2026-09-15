@@ -20,7 +20,7 @@ function Read-PrincipalDiagnosticBytes {
 
 function New-PrincipalPreflightDiagnosticCommand {
     param([byte[]]$Bytes)
-    $expected = 'e4f6434af6af374e9170781c901ed3e82f802c617d18cf2a87fa20c41b10dbdc'
+    $expected = '05a77ce8bfe3c16d166eabd14c614ce85040f2f0089cdfc673c611ae161d6e6f'
     if ($null -eq $Bytes -or $Bytes.Length -eq 0 -or $Bytes.Length -gt 262144) { throw 'Assembly size outside bound.' }
     $sha = [Security.Cryptography.SHA256]::Create()
     try { $actual = [BitConverter]::ToString($sha.ComputeHash($Bytes)).Replace('-', '').ToLowerInvariant() }
@@ -88,7 +88,7 @@ try {
 } finally { $identity.Dispose() }
 $project = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 # This is saved public program code, not an old fixture or protected-root path.
-$library = Join-Path $project 'artifacts/principal-preflight-diagnostic-2026-09-15/PrincipalPreflight-build-01.dll'
+$library = Join-Path $project 'artifacts/principal-identification-diagnostic-2026-09-15/PrincipalPreflight-build-01.dll'
 $stream = [IO.File]::Open($library, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read)
 try { $bytes = Read-PrincipalDiagnosticBytes -Stream $stream } finally { $stream.Dispose() }
 $arguments = New-PrincipalPreflightDiagnosticCommand -Bytes $bytes
@@ -105,12 +105,12 @@ if ($Mode -eq 'Run') { $info.Verb = 'runas' }
 $attempt = [ordered]@{
     utc = [DateTime]::UtcNow.ToString('o'); mode = $Mode; api = 'System.Diagnostics.Process.Start(ProcessStartInfo)'
     executable = $info.FileName; command_characters = $arguments.Length; command_sha256 = $commandHash
-    assembly_sha256 = 'e4f6434af6af374e9170781c901ed3e82f802c617d18cf2a87fa20c41b10dbdc'; assembly_bytes = $bytes.Length
+    assembly_sha256 = '05a77ce8bfe3c16d166eabd14c614ce85040f2f0089cdfc673c611ae161d6e6f'; assembly_bytes = $bytes.Length
     observer_wait_ms = 45000; uac_wait_in_observer_bound = $false; maximum_attempts = 1
     preparation_entry_called = $false; os_configuration_changed = $false; old_roots_accessed = $false
 }
 if ($Mode -eq 'Verify') { $attempt | ConvertTo-Json; exit 0 }
-$base = Join-Path $project 'artifacts/principal-preflight-diagnostic-2026-09-15'
+$base = Join-Path $project 'artifacts/principal-identification-diagnostic-2026-09-15'
 [IO.Directory]::CreateDirectory($base) | Out-Null
 $prefix = $Mode.ToLowerInvariant()
 Write-PrincipalDiagnosticJson -Path (Join-Path $base ($prefix + '-attempt.json')) -Value $attempt

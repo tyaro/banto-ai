@@ -208,7 +208,7 @@ namespace Banto.PrincipalSetup
                     Policy.Require(identity.User.Value == Policy.Peer, "UAC must link to expected ordinary user");
                 Check(Native.GetTokenInformation(linkedToken, 20, buffer, 4, out size));
                 Policy.Require(size == 4 && Marshal.ReadInt32(buffer) == 0, "peer must be unelevated");
-                Check(Native.DuplicateToken(linkedToken, 2, out peerToken));
+                Check(Native.DuplicateToken(linkedToken, 1, out peerToken)); // SecurityIdentification: AccessCheck only.
                 VerifyNonInherit(adminToken); VerifyNonInherit(linkedToken); VerifyNonInherit(peerToken);
             }
             finally { Marshal.FreeHGlobal(buffer); }

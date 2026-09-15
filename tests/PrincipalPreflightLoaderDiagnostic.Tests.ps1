@@ -21,7 +21,7 @@ if ($actual -isnot [byte[]] -or ($actual -join ',') -ne '1,2,3') { throw 'Exact 
 $rejected = $false
 try { $null = New-PrincipalPreflightDiagnosticCommand -Bytes $actual } catch { $rejected = $true }
 if (-not $rejected) { throw 'Wrong assembly hash accepted.' }
-$library = Join-Path $PSScriptRoot '../artifacts/principal-preflight-diagnostic-2026-09-15/PrincipalPreflight-build-01.dll'
+$library = Join-Path $PSScriptRoot '../artifacts/principal-identification-diagnostic-2026-09-15/PrincipalPreflight-build-01.dll'
 $stream = [IO.File]::OpenRead($library)
 try { $bytes = Read-PrincipalDiagnosticBytes -Stream $stream } finally { $stream.Dispose() }
 $arguments = New-PrincipalPreflightDiagnosticCommand -Bytes $bytes
