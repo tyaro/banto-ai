@@ -83,6 +83,91 @@ namespace Banto.PrincipalSetup
             return result;
         }
     }
+    public interface IPrivilegeBackend
+    {
+        bool ReadEnabled();
+        void SetEnabled(bool enabled);
+    }
+    public sealed class PrivilegeLease
+    {
+        private readonly IPrivilegeBackend backend;
+        private bool started, active, original;
+        public PrivilegeLease(IPrivilegeBackend backend) { this.backend = backend; }
+        public void Enable()
+        {
+            Policy.Require(!started, "privilege lease cannot be reused");
+            started = true;
+            original = backend.ReadEnabled(); // Missing privilege must fail before adjustment.
+            if (!original) backend.SetEnabled(true);
+            Policy.Require(backend.ReadEnabled(), "privilege enable not confirmed");
+            active = true;
+        }
+        public void Restore()
+        {
+            Policy.Require(active, "privilege lease not active");
+            active = false; // A failed restoration is terminal, never retried.
+            if (!original) backend.SetEnabled(false);
+            Policy.Require(backend.ReadEnabled() == original, "privilege restore not confirmed");
+        }
+        public static void RequireAdjusted(bool succeeded, int error)
+        {
+            // TRUE with ERROR_NOT_ALL_ASSIGNED is a failure too.
+            if (!succeeded || error != 0) throw new Win32Exception(error > 0 ? error : 65535);
+        }
+        public static bool ReadEnabled(byte[] bytes, Native.LUID target)
+        {
+            Policy.Require(bytes != null && bytes.Length >= 4 && bytes.Length <= 4096, "privilege buffer bound");
+            uint count = BitConverter.ToUInt32(bytes, 0);
+            Policy.Require(count <= (bytes.Length - 4) / 12 && 4 + count * 12 == bytes.Length, "privilege ABI");
+            bool found = false, enabled = false;
+            for (int index = 0; index < count; index++)
+            {
+                int offset = 4 + index * 12;
+                if (BitConverter.ToUInt32(bytes, offset) != target.Low || BitConverter.ToInt32(bytes, offset + 4) != target.High) continue;
+                Policy.Require(!found, "duplicate privilege response");
+                uint attributes = BitConverter.ToUInt32(bytes, offset + 8);
+                Policy.Require((attributes & 4) == 0, "removed privilege response");
+                found = true; enabled = (attributes & 2) != 0;
+            }
+            if (!found) throw new Win32Exception(1314);
+            return enabled;
+        }
+    }
+    // This adapter borrows the one owned B process token; it never closes or replaces it.
+    public sealed class NativeSecurityPrivilege : IPrivilegeBackend
+    {
+        private readonly IntPtr token;
+        private Native.LUID luid;
+        public NativeSecurityPrivilege(IntPtr token)
+        {
+            Policy.Require(token != IntPtr.Zero && token != new IntPtr(-1), "privilege token authority");
+            this.token = token;
+            if (!Native.LookupPrivilegeValueW(null, "SeSecurityPrivilege", out luid))
+                throw new Win32Exception(Marshal.GetLastWin32Error());
+        }
+        public bool ReadEnabled()
+        {
+            IntPtr buffer = Marshal.AllocHGlobal(4096);
+            try
+            {
+                uint needed;
+                if (!Native.GetTokenInformation(token, 3, buffer, 4096, out needed))
+                    throw new Win32Exception(Marshal.GetLastWin32Error());
+                Policy.Require(needed >= 4 && needed <= 4096, "privilege response bound");
+                byte[] bytes = new byte[needed]; Marshal.Copy(buffer, bytes, 0, bytes.Length);
+                return PrivilegeLease.ReadEnabled(bytes, luid);
+            }
+            finally { Marshal.FreeHGlobal(buffer); }
+        }
+        public void SetEnabled(bool enabled)
+        {
+            Native.TOKEN_PRIVILEGES_ONE state = new Native.TOKEN_PRIVILEGES_ONE();
+            state.Count = 1; state.Luid = luid; state.Attributes = enabled ? 2U : 0U;
+            bool succeeded = Native.AdjustTokenPrivileges(token, false, ref state, 0, IntPtr.Zero, IntPtr.Zero);
+            int error = Marshal.GetLastWin32Error();
+            PrivilegeLease.RequireAdjusted(succeeded, error);
+        }
+    }
     public static class Policy
     {
         public const string Account = "BantoS4Publisher";
@@ -121,6 +206,7 @@ namespace Banto.PrincipalSetup
         public FailureState Failure { get { return failure; } }
         private IntPtr volume, parent, root, receipt, adminToken, linkedToken, peerToken;
         private IntPtr initialSd, finalSd;
+        private PrivilegeLease securityPrivilege;
         private string volumePin, parentPin, rootPin, publisher, usersName, finalPolicy;
         private byte[] receiptBytes;
         private readonly ManualResetEvent stopped = new ManualResetEvent(false);
@@ -176,7 +262,8 @@ namespace Banto.PrincipalSetup
                 case Phase.CloseVolume: Close(ref volume); break;
                 case Phase.ClosePeerToken: Close(ref peerToken); break;
                 case Phase.CloseLinkedToken: Close(ref linkedToken); break;
-                case Phase.CloseAdminToken: Close(ref adminToken); break;
+                case Phase.CloseAdminToken:
+                    securityPrivilege.Restore(); Close(ref adminToken); break;
                 case Phase.StopWatchdog:
                     // These allocated descriptors are not file ownership authorities.
                     Free(ref finalSd); Free(ref initialSd);
@@ -187,7 +274,8 @@ namespace Banto.PrincipalSetup
         private void Preflight()
         {
             Policy.Require(Environment.Is64BitProcess && Environment.OSVersion.Platform == PlatformID.Win32NT, "Win64");
-            Policy.Require(new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator), "elevated admin required");
+            using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
+                Policy.Require(new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator), "elevated admin required");
             // A self-terminating watchdog covers blocking SAM/file APIs. U need not hold PROCESS_TERMINATE on B.
             Budget();
             watchdog = new Thread(delegate()
@@ -196,7 +284,7 @@ namespace Banto.PrincipalSetup
                 catch { Environment.Exit(80); }
             });
             watchdog.IsBackground = true; watchdog.Start();
-            Check(Native.OpenProcessToken(Native.GetCurrentProcess(), 0x000a, out adminToken));
+            Check(Native.OpenProcessToken(Native.GetCurrentProcess(), 0x002a, out adminToken)); // QUERY, DUPLICATE, ADJUST_PRIVILEGES.
             IntPtr buffer = Marshal.AllocHGlobal(64);
             try
             {
@@ -213,6 +301,8 @@ namespace Banto.PrincipalSetup
             }
             finally { Marshal.FreeHGlobal(buffer); }
             Policy.Require(File.Exists(@"C:\Python314\python.exe"), "existing runtime absent");
+            securityPrivilege = new PrivilegeLease(new NativeSecurityPrivilege(adminToken));
+            securityPrivilege.Enable();
         }
         private void Budget()
         {
@@ -424,6 +514,8 @@ namespace Banto.PrincipalSetup
     }
     public static class Native
     {
+        [StructLayout(LayoutKind.Sequential)] public struct LUID { public uint Low; public int High; }
+        [StructLayout(LayoutKind.Sequential)] public struct TOKEN_PRIVILEGES_ONE { public uint Count; public LUID Luid; public uint Attributes; }
         [StructLayout(LayoutKind.Sequential)] public struct SA
         { public uint Length; public IntPtr Descriptor; public int Inherit; public SA(IntPtr sd) { Length = 24; Descriptor = sd; Inherit = 0; } }
         [StructLayout(LayoutKind.Sequential)] public struct GENERIC_MAPPING { public uint Read, Write, Execute, All; }
@@ -448,6 +540,8 @@ namespace Banto.PrincipalSetup
         [DllImport("advapi32.dll", SetLastError = true)] public static extern bool OpenProcessToken(IntPtr process, uint access, out IntPtr token);
         [DllImport("advapi32.dll", SetLastError = true)] public static extern bool GetTokenInformation(IntPtr token, int type, IntPtr data, uint length, out uint needed);
         [DllImport("advapi32.dll", SetLastError = true)] public static extern bool DuplicateToken(IntPtr token, int level, out IntPtr duplicate);
+        [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)] public static extern bool LookupPrivilegeValueW(string system, string name, out LUID luid);
+        [DllImport("advapi32.dll", SetLastError = true)] public static extern bool AdjustTokenPrivileges(IntPtr token, bool disableAll, ref TOKEN_PRIVILEGES_ONE state, uint length, IntPtr previous, IntPtr needed);
         [DllImport("advapi32.dll", SetLastError = true)] public static extern bool AccessCheck(IntPtr sd, IntPtr token, uint desired, ref GENERIC_MAPPING mapping, IntPtr privileges, ref uint length, out uint granted, out bool allowed);
         [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)] public static extern bool ConvertStringSecurityDescriptorToSecurityDescriptorW(string text, uint revision, out IntPtr descriptor, out uint size);
         [DllImport("advapi32.dll", CharSet = CharSet.Unicode, SetLastError = true)] public static extern bool ConvertSecurityDescriptorToStringSecurityDescriptorW(IntPtr descriptor, uint revision, uint information, out IntPtr text, out uint length);
