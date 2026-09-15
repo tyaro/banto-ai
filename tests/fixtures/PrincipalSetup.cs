@@ -222,7 +222,7 @@ namespace Banto.PrincipalSetup
     public static class Policy
     {
         public const string Account = "BantoS4Publisher";
-        public const string Root = @"C:\ProgramData\BantoAI-S4B2-principal-20260916g";
+        public const string Root = @"C:\ProgramData\BantoAI-S4B2-principal-20260916h";
         public const string Peer = "S-1-5-21-2169670816-255940906-2713565042-1001";
         public const string Users = "S-1-5-32-545";
         public const uint DisabledNormalFlags = 0x203;
@@ -236,7 +236,7 @@ namespace Banto.PrincipalSetup
                 if (!sid.IsAccountSid() || publisher == Peer) throw new InvalidOperationException("publisher SID");
             }
             return "O:BAG:BAD:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;0x1200a9;;;" + Peer + ")" +
-                (publisher == null ? "" : "(A;;0x1200a9;;;" + publisher + ")") + "S:P(ML;;NW;;;ME)";
+                (publisher == null ? "" : "(A;;0x1200a9;;;" + publisher + ")") + "S:PAI(ML;;NW;;;ME)";
         }
         public static void Require(bool value, string reason)
         { if (!value) throw new InvalidOperationException(reason); }

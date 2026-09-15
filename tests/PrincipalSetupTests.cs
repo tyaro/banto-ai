@@ -206,7 +206,7 @@ public static class PrincipalSetupTests
             {
                 string expected = Policy.Descriptor(null);
                 Assert(InspectionFailure.ComparePolicy(expected.Replace("S:P", "S:"), expected) == 40, "SACL protection");
-                Assert(InspectionFailure.ComparePolicy(expected.Replace("S:P", "S:PAI"), expected) == 136, "SACL auto flag");
+                Assert(InspectionFailure.ComparePolicy(expected.Replace("S:PAI", "S:P"), expected) == 136, "SACL auto flag");
                 Assert(InspectionFailure.ComparePolicy(expected.Replace(";;;ME)", ";;;HI)"), expected) == 8, "label level");
                 Assert(InspectionFailure.ComparePolicy(expected.Replace("ML;;NW", "ML;;NR"), expected) == 8, "label mask");
             });
@@ -224,6 +224,23 @@ public static class PrincipalSetupTests
                 Sequence sequence = new Sequence(); sequence.Run(backend);
                 bool rejected = false; try { sequence.Run(backend); } catch (InvalidOperationException) { rejected = true; }
                 Assert(rejected && backend.Calls.Count == 5 && !backend.Calls.Contains(Phase.CreateDisabledAccount), "terminal");
+            });
+            Test("explicit SACL AI changes only inheritance-state bit while preserving all security bytes", delegate()
+            {
+                foreach (string publisher in new string[] { null, "S-1-5-21-2169670816-255940906-2713565042-2999" })
+                {
+                    string current = NativeBackend.Canonical(Policy.Descriptor(publisher));
+                    RawSecurityDescriptor actual = new RawSecurityDescriptor(current);
+                    RawSecurityDescriptor prior = new RawSecurityDescriptor(current.Replace("S:PAI", "S:P"));
+                    Assert((actual.ControlFlags ^ prior.ControlFlags) == ControlFlags.SystemAclAutoInherited, "one state bit only");
+                    Assert((actual.ControlFlags & (ControlFlags.DiscretionaryAclProtected | ControlFlags.SystemAclProtected)) ==
+                        (ControlFlags.DiscretionaryAclProtected | ControlFlags.SystemAclProtected), "both protected");
+                    Assert(actual.SystemAcl.Count == 1 && current.Contains("(ML;;NW;;;ME)"), "one explicit medium label");
+                    byte[] a = new byte[actual.BinaryLength], b = new byte[prior.BinaryLength];
+                    actual.GetBinaryForm(a, 0); prior.GetBinaryForm(b, 0);
+                    Assert(a.Length == b.Length, "same descriptor length");
+                    for (int i = 0; i < a.Length; i++) Assert((i == 3 ? a[i] ^ 8 : a[i]) == b[i], "unchanged owner/group/ACL bytes");
+                }
             });
             Console.WriteLine("RESULT " + count + " passed; OS mutations=0"); return 0;
         }

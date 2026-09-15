@@ -38,7 +38,7 @@ function Get-SetupExitDetails {
     return [ordered]@{ phase_number = $phase; native_detail = $detail; release_failed = (($Code -band 0x40000000) -ne 0); inspection_failure = $inspection }
 }
 $project = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$artifacts = Join-Path $project 'artifacts/principal-setup-g-2026-09-16'
+$artifacts = Join-Path $project 'artifacts/principal-setup-h-2026-09-16'
 $library = Join-Path $artifacts "PrincipalSetup-$Build.dll"
 $tests = Join-Path $artifacts "PrincipalSetupTests-$Build.exe"
 $privilegeTests = Join-Path $artifacts "PrincipalPrivilegeTests-$Build.exe"
@@ -130,7 +130,7 @@ if ($Mode -eq 'CheckLoader') {
 }
 # Load only observation functions before consuming the new attempt guard.
 Import-Module (Join-Path $PSScriptRoot 'windows_process_observation.psm1') -ErrorAction Stop
-$attempt = [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); approved = $true; assembly_sha256 = $actual; build = $Build; command_chars = $arguments.Length; phase = 'before-uac'; account = 'BantoS4Publisher'; root = 'C:\ProgramData\BantoAI-S4B2-principal-20260916g'; observer_wait_ms = 45000; api = 'System.Diagnostics.Process.Start(ProcessStartInfo)' }
+$attempt = [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); approved = $true; assembly_sha256 = $actual; build = $Build; command_chars = $arguments.Length; phase = 'before-uac'; account = 'BantoS4Publisher'; root = 'C:\ProgramData\BantoAI-S4B2-principal-20260916h'; observer_wait_ms = 45000; api = 'System.Diagnostics.Process.Start(ProcessStartInfo)' }
 $record = [IO.File]::Open($attemptFile, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
 try { $data = [Text.Encoding]::UTF8.GetBytes(($attempt | ConvertTo-Json)); $record.Write($data, 0, $data.Length); $record.Flush($true) } finally { $record.Dispose() }
 # The already-tested observer is shared with the configuration-free diagnostic.
