@@ -3362,3 +3362,19 @@ environment_preparation_complete=trueは前回j結果のみ。native_launch_auth
 **次の「続けて」では、専用principal試験を自動再開しない。** まず上記の通常保存経路を整理して機能開発へ戻る。既存の科学的評価条件・S4受入契約に影響する差分は明示し、未実施native試験をpassへ置換したり、`require_campaign_acceptance()`を黙って開放したりしない。隔離/将来不変性/正式受入は未完了の記録を維持する。
 
 準備済みPとroot、既存証跡は保存する。今回SAM/rootアクセス、account reset/enable/logon、追加特権、UAC、worker/service/task起動、削除は行わない。P無効という最後の確認は§114のSAM記録であり、今回の再照会ではない。旧9 root閉鎖、jと診断の消費済みguard、既存親policy結果書の保全、本流不変更を継続する。厳密な分離試験の再開やOS資源の削除は今回の方針変更に含めない。
+
+## 117. 2026-09-16 通常保存API・実ファイルの順次保存/読取り成功
+
+§116の単一writer方針で再開し、**75a245ac190b944426371118ebda3fe820391f5c** に通常保存APIを実装。[使い方](../anomaly-v03-local-publication.md) / [結果](anomaly-multiseed-v0.3-local-publication-2026-09-16.md)。既存 `_anomaly_v03_io` の排他作成/非上書き/完了印/readbackを共用するLocalPublication・publish_local_result・verify_local_publicationを追加。新しい `anomaly-v03-local-complete` markerでfixtureと区別する。通常権限だけで動作し、temp外の明示した既存親の新規実行名へ保存可能。
+writeが作成前に失敗した後やclose後でも再使用できる穴をfailed/closedで修正。commit試行を先に記録し、応答喪失後の失敗記録追記を拒否。独立レビューのcallback内失敗握りつぶしP2 1件はcommit前のfailed再確認・回帰で修正し、残存P0〜P3=0。既存1体、進捗poll0。
+最終 **12 local＋15既存PublicationTests＝27件pass / failure・error・skip0 / 3.715秒**、safety/diff pass。実際の通常Python子processを保存途中で終了させ、完了印なし、reader拒否、同じroot再使用拒否を確認した。
+最初の修正途中の4 module回帰は重い評価データ生成を含み、対象PID23824のcommand/start時刻照合後UTC16:34:06に停止。CPU320.8125秒/private104050688/working115589120。**中断でありpassに数えない。TemporaryDirectory cleanup完了は未確認で、個別path記録がなかったため古いfixtureと混同する探索/削除は行わない。** 最終変更は上記27件で検証済み。次回も必要な試験を選び、広い評価moduleを無条件に回さない。
+
+公開実演 `artifacts/local-publication-2026-09-16/results/demo-01`。手書き2ファイル/合計28 bytesを通常writer PID6436（UTC16:35:46/exit0）が保存・readbackし、同じ名前への2回目をFileExistsErrorで拒否。元の結果も再検証成功。writer終了後、通常reader PID18180（UTC16:37:05/exit0）が開き直し、local_verified=true/payloads2。P-U分離試験ではない。
+marker hash64e214f17417960928cd9d517d66414c97a22e8413162074ae2ef7d29b154df1、実演943 bytes/hashd4690ba3b30dd30a370abc01c6346bfe94485376f4636bab80a35616b3479178、別reader274 bytes/hash0ccc5803ca842153412fe474f00a640a20a7434b02b8a6b0998061686588d3cf。保存済みdemo-01へ再実行せず新しい実行名を使う。
+input24101 bytes/hasha6f0cf63d0cf944097747b20bad74516b980aa9516207cda7ef774debeaceeb4。前回選抜113不変＋新規選抜4（既存改修2/新規ファイル2）、計117 source workspace/git blob一致、前回16 artifact不変。最終manifest27900 bytes/hash7504a0c6d241e22b35a0891acfcfd0e6dae3715acc8d84d822955deb3b512d81、自身除外8 artifacts/論理26958 bytes（中断テスト一時出力を含まない）。
+終了後RAM6307483648/C149470707712/D198224175104 bytes、D約184.6GiB。OS26200.9445/boot2026-09-15T14:30:24.5000000+09:00、Windows Update engineering緩和/正式pin不変。リーク不在やPC全体の変動原因は断定しない。本流889cfc3/clean、既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。
+専用principal/SAM/全保護rootへのアクセス、account reset/enable/logon、特権追加/UAC/ACL変更、service/task/VM/profile追加、push/merge/CIなし。旧9 root閉鎖とj/診断の消費済みguardを継続。
+
+**次は、結果を作る側から通常保存APIへ接続する小さな開発用経路を進める。** 保存APIの作り直しや厳密なprincipal試験を自動再開しない。同じ出力先を並列更新せず、計算結果と保存検査をつなぐ。既存formal campaign entry/科学的評価条件/受入gateは今回未変更で、正式契約への接続は通常保存の成功とは別に扱う。
+local_publication_performed=true。native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed。
