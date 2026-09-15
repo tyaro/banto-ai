@@ -201,12 +201,12 @@ namespace Banto.PrincipalSetup
             try
             {
                 uint size;
-                Check(Native.GetTokenInformation(adminToken, 19, buffer, 64, out size));
+                Check(Native.GetTokenInformation(adminToken, 19, buffer, (uint)IntPtr.Size, out size));
                 Policy.Require(size == IntPtr.Size, "linked token ABI");
                 linkedToken = Marshal.ReadIntPtr(buffer); ValidHandle(linkedToken);
                 using (WindowsIdentity identity = new WindowsIdentity(linkedToken))
                     Policy.Require(identity.User.Value == Policy.Peer, "UAC must link to expected ordinary user");
-                Check(Native.GetTokenInformation(linkedToken, 20, buffer, 64, out size));
+                Check(Native.GetTokenInformation(linkedToken, 20, buffer, 4, out size));
                 Policy.Require(size == 4 && Marshal.ReadInt32(buffer) == 0, "peer must be unelevated");
                 Check(Native.DuplicateToken(linkedToken, 2, out peerToken));
                 VerifyNonInherit(adminToken); VerifyNonInherit(linkedToken); VerifyNonInherit(peerToken);
