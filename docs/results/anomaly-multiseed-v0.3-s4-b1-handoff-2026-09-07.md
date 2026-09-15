@@ -3207,3 +3207,12 @@ build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineeri
 
 次はWindowsの管理者確認を操作できる状態で、OS設定を変更しない独立の昇格診断を先に実装・確認する。閉鎖attemptのretryや不明rootへの再訪を診断と呼ばない。実際の起動を確認してから新規対象と保全状態を仕様へ固定する。
 専用環境方式への許可は継続。Pのactivation/reset/logon/disable、protected code/process/thread/token/IPC、P/U試験、namespace共通期間、全publisher/frozen/marker/正式B2/S4は未完了。全許可flags=false、acceptance_status=not_completed。
+
+## 107. 2026-09-15 容量整理後の復帰・管理者起動診断成功
+
+ユーザー「容量余裕がでましたので再開しましょう」により本来の権限分離へ復帰。実装d7253c8dd16ece6c128656e716371863d4e5bc2f、[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-elevation-diagnostic-2026-09-15.md)。
+通常control PID37092/exit41/492ms、RunAs PID39144/exit40/5958ms、固定U SIDでadmin切替を自己照会。Handle確保・終了code・解放を観測、例外なし。UACを含む起動要求は5260ms、返却後待機650ms。
+OS設定変更・準備Entry・P logon・旧rootアクセスなし。前回原因unknown/旧attempt閉鎖を維持する。今回の2診断guardも閉鎖し再試行しない。
+13故障ケースpass/独立所見0/進捗ポーリングなし。前回78 source不変、新規を含む81 source Git/raw一致。manifest17286 bytes/hash9e4c0c8fb6f45208820c590fc5d7141fd03b62de45512dd3e3be45e26ef1bf89、9 artifacts/論理18269 bytes。
+UTC02:38:48 RAM10558652416/C130972598272/D203548774400 bytes。build26200.9445/boot不変、Windows Update engineering緩和/正式pin不変。既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全。本流889cfc3/clean不変。
+次は新規root/記録場所を仕様に固定し、観測処理を準備launcherへ適用して確認・保存後に承認済み準備を進める。環境準備/P-U/正式B2-S4未完了、全許可flags=false。
