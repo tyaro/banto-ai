@@ -29,8 +29,8 @@ function Get-SetupExitDetails {
     if ($marked) {
         $step = ($Code -shr 8) -band 31
         $kind = ($Code -shr 13) -band 7
-        $names = @('none','budget','volume-pin','parent-pin','volume-peer-access','parent-peer-access','root-identity','actual-policy','expected-policy','compare-details','exact-policy-comparison')
-        $valid = $phase -eq 5 -and $step -ge 1 -and $step -lt $names.Count -and $kind -le 4
+        $names = @('none','budget','volume-pin','parent-pin','volume-peer-access','parent-peer-access','root-identity','actual-policy','expected-policy','compare-details','exact-policy-comparison','account','groups')
+        $valid = ($phase -eq 5 -or $phase -eq 11) -and $step -ge 1 -and $step -lt $names.Count -and $kind -le 4
         $inspection = [ordered]@{ encoding_valid = $valid; step_id = $step; exception_kind = $kind; policy_difference_mask = ($Code -band 255); original_unknown_detail = 65535 }
         if ($valid) { $inspection.step = $names[$step] }
         $inspection.policy_difference_available = $valid -and $step -eq 10
@@ -38,7 +38,7 @@ function Get-SetupExitDetails {
     return [ordered]@{ phase_number = $phase; native_detail = $detail; release_failed = (($Code -band 0x40000000) -ne 0); inspection_failure = $inspection }
 }
 $project = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$artifacts = Join-Path $project 'artifacts/principal-setup-h-2026-09-16'
+$artifacts = Join-Path $project 'artifacts/principal-setup-i-2026-09-16'
 $library = Join-Path $artifacts "PrincipalSetup-$Build.dll"
 $tests = Join-Path $artifacts "PrincipalSetupTests-$Build.exe"
 $privilegeTests = Join-Path $artifacts "PrincipalPrivilegeTests-$Build.exe"
@@ -110,11 +110,11 @@ try {
   $sha.Dispose()
   if ($actual -cne '__HASH__') { [Environment]::Exit(82) }
   $assembly = [Reflection.Assembly]::Load($bytes)
-  [Environment]::Exit([Banto.PrincipalSetup.Entry]::Run())
+  [Environment]::Exit([Banto.PrincipalSetup.ExistingEntry]::Run())
 } catch { [Environment]::Exit(83) }
 '@
 $loader = $loader.Replace('__DATA__', $payload).Replace('__HASH__', $ExpectedAssemblySha256)
-if ($Mode -eq 'CheckLoader') { $loader = $loader.Replace('[Environment]::Exit([Banto.PrincipalSetup.Entry]::Run())', '[Environment]::Exit(0)') }
+if ($Mode -eq 'CheckLoader') { $loader = $loader.Replace('[Environment]::Exit([Banto.PrincipalSetup.ExistingEntry]::Run())', '[Environment]::Exit(0)') }
 # Literal ASCII code uses single quotes only; no shell interpolation or path arguments.
 if ($loader.Contains('"') -or $loader.Length -gt 29000) { throw 'Loader quoting/command-length bound.' }
 $arguments = '-NoProfile -NonInteractive -Command "& { ' + $loader + ' }"'
@@ -130,7 +130,7 @@ if ($Mode -eq 'CheckLoader') {
 }
 # Load only observation functions before consuming the new attempt guard.
 Import-Module (Join-Path $PSScriptRoot 'windows_process_observation.psm1') -ErrorAction Stop
-$attempt = [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); approved = $true; assembly_sha256 = $actual; build = $Build; command_chars = $arguments.Length; phase = 'before-uac'; account = 'BantoS4Publisher'; root = 'C:\ProgramData\BantoAI-S4B2-principal-20260916h'; observer_wait_ms = 45000; api = 'System.Diagnostics.Process.Start(ProcessStartInfo)' }
+$attempt = [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); approved = $true; assembly_sha256 = $actual; build = $Build; command_chars = $arguments.Length; phase = 'before-uac'; account = 'BantoS4Publisher'; principal_mode = 'existing-disabled-readonly'; publisher_sid = 'S-1-5-21-2169670816-255940906-2713565042-1010'; root = 'C:\ProgramData\BantoAI-S4B2-principal-20260916i'; observer_wait_ms = 45000; api = 'System.Diagnostics.Process.Start(ProcessStartInfo)' }
 $record = [IO.File]::Open($attemptFile, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
 try { $data = [Text.Encoding]::UTF8.GetBytes(($attempt | ConvertTo-Json)); $record.Write($data, 0, $data.Length); $record.Flush($true) } finally { $record.Dispose() }
 # The already-tested observer is shared with the configuration-free diagnostic.

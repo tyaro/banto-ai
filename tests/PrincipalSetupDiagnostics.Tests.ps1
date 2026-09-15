@@ -40,3 +40,7 @@ if ($invalid.inspection_failure.encoding_valid -or $invalid.inspection_failure.p
 $success = Get-SetupExitDetails -Code 0
 if ($null -ne $success.phase_number -or $null -ne $success.inspection_failure -or $success.release_failed) { throw 'Success changed.' }
 [Console]::WriteLine('RESULT 6 exit decoding assertions passed; no launcher/native/account/root execution')
+
+$final = Get-SetupExitDetails -Code (0x20000000 -bor (11 -shl 16) -bor (1 -shl 13) -bor (12 -shl 8))
+if (-not $final.inspection_failure.encoding_valid -or $final.phase_number -ne 11 -or $final.inspection_failure.step -ne 'groups' -or $final.inspection_failure.policy_difference_available) { throw 'Final inspection classification failed.' }
+[Console]::WriteLine('RESULT 1 final inspection decoding assertion passed; no native execution')

@@ -176,7 +176,7 @@ public static class PrincipalSetupTests
                 Assert(InspectionFailure.Encode(Phase.InspectInitialRoot, 65535, error, state) == ((5 << 16) | 65535), "no stale observation");
                 state.InspectionStep = InspectionStep.ExactPolicyComparison;
                 Assert(InspectionFailure.Encode(Phase.InspectInitialRoot, 5, error, state) == ((5 << 16) | 5), "native error");
-                Assert(InspectionFailure.Encode(Phase.InspectFinalRoot, 65535, error, state) == ((11 << 16) | 65535), "other phase");
+                Assert(InspectionFailure.Encode(Phase.CreateReceipt, 65535, error, state) == ((12 << 16) | 65535), "other phase");
             });
             Test("secondary release flag survives diagnostic encoding without cleanup", delegate()
             {
@@ -240,6 +240,61 @@ public static class PrincipalSetupTests
                     actual.GetBinaryForm(a, 0); prior.GetBinaryForm(b, 0);
                     Assert(a.Length == b.Length, "same descriptor length");
                     for (int i = 0; i < a.Length; i++) Assert((i == 3 ? a[i] ^ 8 : a[i]) == b[i], "unchanged owner/group/ACL bytes");
+                }
+            });
+            Test("existing principal sequence skips all account mutation phases", delegate()
+            {
+                FaultBackend backend = new FaultBackend();
+                Assert(new Sequence(true).Run(backend) == 0, "success");
+                Assert(backend.Calls.Count == 20 && !backend.Calls.Contains(Phase.CreateDisabledAccount) && !backend.Calls.Contains(Phase.AddUsersGroup), "no account mutation phases");
+                Assert(backend.Calls.IndexOf(Phase.CheckAbsent) < backend.Calls.IndexOf(Phase.CreateRoot) && backend.Calls.Contains(Phase.InspectAccount) && backend.Calls.Contains(Phase.InspectGroups), "checks retained");
+                Assert(backend.Calls.IndexOf(Phase.CloseReceipt) < backend.Calls.IndexOf(Phase.CloseRoot) && backend.Calls[19] == Phase.StopWatchdog, "normal teardown retained");
+            });
+            Test("every existing-principal failure is terminal and single use", delegate()
+            {
+                int expectedCalls = 0;
+                foreach (Phase phase in Enum.GetValues(typeof(Phase)))
+                {
+                    if (phase == Phase.CreateDisabledAccount || phase == Phase.AddUsersGroup) continue;
+                    expectedCalls++;
+                    FaultBackend backend = new FaultBackend(); backend.Fault = phase; Sequence sequence = new Sequence(true);
+                    Assert(sequence.Run(backend) == (((int)phase << 16) | 5) && backend.Calls.Count == expectedCalls, "first failure and prefix retained");
+                    bool rejected = false; try { sequence.Run(backend); } catch (InvalidOperationException) { rejected = true; }
+                    Assert(rejected && backend.Calls.Count == expectedCalls, "no retry");
+                }
+            });
+            Test("existing account pin rejects changed name SID and every changed flag bit", delegate()
+            {
+                Policy.RequireExistingAccount(Policy.Account, Policy.ExistingPublisher, Policy.DisabledNormalFlags);
+                string[] names = { "other", Policy.Account, Policy.Account };
+                string[] sids = { Policy.ExistingPublisher, Policy.Peer, null };
+                for (int i = 0; i < names.Length; i++)
+                {
+                    bool rejected = false; try { Policy.RequireExistingAccount(names[i], sids[i], 0x203); } catch (InvalidOperationException) { rejected = true; }
+                    Assert(rejected, "name/SID pin");
+                }
+                for (int i = 0; i < 32; i++)
+                {
+                    bool rejected = false; try { Policy.RequireExistingAccount(Policy.Account, Policy.ExistingPublisher, 0x203u ^ (1u << i)); } catch (InvalidOperationException) { rejected = true; }
+                    Assert(rejected, "flags exact");
+                }
+            });
+            Test("native library has no account creation membership change or secret-generation imports", delegate()
+            {
+                foreach (string name in new string[] { "NetUserAdd", "NetLocalGroupAddMembers", "NetUserSetInfo", "NetUserDel", "LogonUserW", "BCryptGenRandom" })
+                    Assert(typeof(Native).GetMethod(name) == null, "forbidden import " + name);
+                Assert(typeof(ExistingEntry).GetMethod("Run") != null, "explicit existing-principal entry");
+            });
+            Test("final inspection diagnostic identifies all substeps with original phase", delegate()
+            {
+                foreach (InspectionStep step in Enum.GetValues(typeof(InspectionStep)))
+                {
+                    if (step == InspectionStep.None) continue;
+                    FaultBackend backend = new FaultBackend(); backend.Fault = Phase.InspectFinalRoot; backend.Error = new InvalidOperationException();
+                    backend.State.InspectionStep = step; backend.State.PolicyDifference = 68;
+                    int code = new Sequence(true).Run(backend);
+                    Assert(code == (InspectionFailure.Marker | (11 << 16) | (1 << 13) | ((int)step << 8) | 68), "final step/phase");
+                    Assert(backend.Calls.Count == 9 && !backend.Calls.Contains(Phase.CreateReceipt), "terminal before receipt");
                 }
             });
             Console.WriteLine("RESULT " + count + " passed; OS mutations=0"); return 0;

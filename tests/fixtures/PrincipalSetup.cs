@@ -32,16 +32,16 @@ namespace Banto.PrincipalSetup
     public enum InspectionStep
     {
         None = 0, Budget, VolumePin, ParentPin, VolumePeerAccess, ParentPeerAccess,
-        RootIdentity, ActualPolicy, ExpectedPolicy, CompareDetails, ExactPolicyComparison
+        RootIdentity, ActualPolicy, ExpectedPolicy, CompareDetails, ExactPolicyComparison, Account, Groups
     }
     public static class InspectionFailure
     {
         public const int Marker = 0x20000000;
-        // This refines only phase 5's otherwise-unknown detail. No exception text or new OS calls.
+        // Refine initial/final inspection's otherwise-unknown detail without new OS calls.
         public static int Encode(Phase phase, int detail, Exception error, FailureState state)
         {
             int release = state.ReleaseFailed ? 0x40000000 : 0;
-            if (phase != Phase.InspectInitialRoot || detail != 65535 || state.InspectionStep == InspectionStep.None)
+            if ((phase != Phase.InspectInitialRoot && phase != Phase.InspectFinalRoot) || detail != 65535 || state.InspectionStep == InspectionStep.None)
                 return ((int)phase << 16) | detail | release;
             int kind = Object.ReferenceEquals(error, state.ReleaseStop) ? 4 :
                 error is Win32Exception ? 3 : error is OutOfMemoryException ? 2 :
@@ -82,6 +82,9 @@ namespace Banto.PrincipalSetup
     public sealed class Sequence
     {
         private bool started;
+        private readonly bool existingPrincipal;
+        public Sequence() : this(false) { }
+        public Sequence(bool existingPrincipal) { this.existingPrincipal = existingPrincipal; }
         public Phase Current { get; private set; }
         public int Run(IBackend backend)
         {
@@ -92,6 +95,7 @@ namespace Banto.PrincipalSetup
             {
                 foreach (Phase phase in Enum.GetValues(typeof(Phase)))
                 {
+                    if (existingPrincipal && (phase == Phase.CreateDisabledAccount || phase == Phase.AddUsersGroup)) continue;
                     Current = phase;
                     backend.Execute(phase);
                 }
@@ -222,10 +226,13 @@ namespace Banto.PrincipalSetup
     public static class Policy
     {
         public const string Account = "BantoS4Publisher";
-        public const string Root = @"C:\ProgramData\BantoAI-S4B2-principal-20260916h";
+        public const string Root = @"C:\ProgramData\BantoAI-S4B2-principal-20260916i";
         public const string Peer = "S-1-5-21-2169670816-255940906-2713565042-1001";
         public const string Users = "S-1-5-32-545";
+        public const string ExistingPublisher = "S-1-5-21-2169670816-255940906-2713565042-1010";
         public const uint DisabledNormalFlags = 0x203;
+        public static void RequireExistingAccount(string name, string sid, uint flags)
+        { Require(name == Account && sid == ExistingPublisher && flags == DisabledNormalFlags, "existing disabled account changed"); }
         public const uint RootAccess = 0x1600a7;
         public const uint DangerousAncestorAccess = 0x000d0040; // DELETE, WDAC, WOWNER, DELETE_CHILD
         public static string Descriptor(string publisher)
@@ -241,14 +248,14 @@ namespace Banto.PrincipalSetup
         public static void Require(bool value, string reason)
         { if (!value) throw new InvalidOperationException(reason); }
     }
-    public static class Entry
+    public static class ExistingEntry
     {
         private static NativeBackend live;
         public static int Run()
         {
             // Caller must immediately exit with the returned status, including failures.
             live = new NativeBackend();
-            return new Sequence().Run(live);
+            return new Sequence(true).Run(live);
         }
     }
     public sealed class NativeBackend : IBackend
@@ -267,7 +274,7 @@ namespace Banto.PrincipalSetup
 
         public void Execute(Phase phase)
         {
-            failure.InspectionStep = phase == Phase.InspectInitialRoot ? InspectionStep.Budget : InspectionStep.None;
+            failure.InspectionStep = phase == Phase.InspectInitialRoot || phase == Phase.InspectFinalRoot ? InspectionStep.Budget : InspectionStep.None;
             failure.PolicyDifference = 0;
             if (phase != Phase.Preflight) Budget();
             if (phase >= Phase.CheckAbsent && phase <= Phase.CloseRoot) CheckAncestors();
@@ -287,9 +294,9 @@ namespace Banto.PrincipalSetup
                 case Phase.InspectInitialRoot:
                     MarkInspection(InspectionStep.RootIdentity);
                     rootPin = Identity(root); VerifyPolicy(root, Policy.Descriptor(null)); break;
-                case Phase.CreateDisabledAccount: CreateAccount(); break;
+                case Phase.CreateDisabledAccount: throw new InvalidOperationException("account mutation forbidden");
                 case Phase.InspectAccount: InspectAccount(); break;
-                case Phase.AddUsersGroup: AddUsers(); break;
+                case Phase.AddUsersGroup: throw new InvalidOperationException("account mutation forbidden");
                 case Phase.InspectGroups: InspectGroups(); break;
                 case Phase.SetRootPolicy:
                     finalPolicy = Policy.Descriptor(publisher); finalSd = Parse(finalPolicy, failure);
@@ -298,8 +305,11 @@ namespace Banto.PrincipalSetup
                     Policy.Require(present && acl != IntPtr.Zero && !defaulted, "DACL");
                     Status(Native.SetSecurityInfo(root, 1, 0x80000004, IntPtr.Zero, IntPtr.Zero, acl, IntPtr.Zero)); break;
                 case Phase.InspectFinalRoot:
+                    MarkInspection(InspectionStep.RootIdentity);
                     Policy.Require(Identity(root) == rootPin, "root identity");
-                    VerifyPolicy(root, finalPolicy); InspectAccount(); InspectGroups(); break;
+                    VerifyPolicy(root, finalPolicy);
+                    MarkInspection(InspectionStep.Account); InspectAccount();
+                    MarkInspection(InspectionStep.Groups); InspectGroups(); break;
                 case Phase.CreateReceipt:
                     receiptBytes = Receipt();
                     Native.SA childSa = new Native.SA(finalSd);
@@ -417,46 +427,11 @@ namespace Banto.PrincipalSetup
         }
         private void CheckAbsent()
         {
-            IntPtr info;
-            uint result = Native.NetUserGetInfo(null, Policy.Account, 23, out info);
-            ReleaseGuard.Run(failure, delegate { Policy.Require(result == 2221, "account exists or account query failed"); return 0; },
-                delegate { return info == IntPtr.Zero ? 0 : Native.NetApiBufferFree(info); });
+            // Existing P is read only and pinned before any new root creation.
+            InspectAccount(); ResolveUsers(); InspectGroups();
             uint attributes = Native.GetFileAttributesW(Policy.Root);
             int error = Marshal.GetLastWin32Error();
             Policy.Require(attributes == 0xffffffff && error == 2, "root exists or absence is uncertain");
-        }
-        private static void CreateAccount()
-        {
-            IntPtr random = IntPtr.Zero, password = IntPtr.Zero;
-            try
-            {
-                random = Marshal.AllocHGlobal(32); password = Marshal.AllocHGlobal(138);
-                Policy.Require(Native.BCryptGenRandom(IntPtr.Zero, random, 32, 2) == 0, "system RNG failure");
-                const string prefix = "Aa9!";
-                for (int i = 0; i < 4; i++) Marshal.WriteInt16(password, i * 2, prefix[i]);
-                const string hex = "0123456789abcdef";
-                for (int i = 0; i < 32; i++)
-                {
-                    byte value = Marshal.ReadByte(random, i);
-                    Marshal.WriteInt16(password, (4 + i * 2) * 2, hex[value >> 4]);
-                    Marshal.WriteInt16(password, (5 + i * 2) * 2, hex[value & 15]);
-                }
-                Marshal.WriteInt16(password, 136, 0);
-                // No managed secret array/string, GC relocation copy or password string marshalling.
-                Native.USER_INFO_1 info = new Native.USER_INFO_1();
-                info.Name = Policy.Account; info.Password = password; info.Privilege = 1;
-                info.Flags = Policy.DisabledNormalFlags; info.Comment = "Banto S4-B2 isolated engineering; disabled at rest";
-                uint parameter; Status(Native.NetUserAdd(null, 1, ref info, out parameter));
-            }
-            finally
-            {
-                if (password != IntPtr.Zero)
-                {
-                    for (int i = 0; i < 138; i++) Marshal.WriteByte(password, i, 0);
-                    Marshal.FreeHGlobal(password);
-                }
-                if (random != IntPtr.Zero) { for (int i = 0; i < 32; i++) Marshal.WriteByte(random, i, 0); Marshal.FreeHGlobal(random); }
-            }
         }
         private void InspectAccount()
         {
@@ -468,27 +443,18 @@ namespace Banto.PrincipalSetup
                 Policy.Require(Marshal.PtrToStringUni(info.Name) == Policy.Account && (info.Flags & 0x203) == 0x203 &&
                     (info.Flags & (0x10 | 0x20 | 0x100 | 0x800 | 0x1000 | 0x2000)) == 0, "account flags");
                 string actual = new SecurityIdentifier(info.Sid).Value;
+                Policy.RequireExistingAccount(Marshal.PtrToStringUni(info.Name), actual, info.Flags);
                 Policy.Require(actual != Policy.Peer && new SecurityIdentifier(actual).IsAccountSid(), "account SID");
                 Policy.Require(publisher == null || publisher == actual, "account SID changed"); publisher = actual;
                 return 0;
             }, delegate { return buffer == IntPtr.Zero ? 0 : Native.NetApiBufferFree(buffer); });
         }
-        private void AddUsers()
+        private void ResolveUsers()
         {
             SecurityIdentifier group = new SecurityIdentifier(Policy.Users);
             string translated = ((NTAccount)group.Translate(typeof(NTAccount))).Value;
             int slash = translated.IndexOf('\\'); Policy.Require(slash > 0 && slash == translated.LastIndexOf('\\'), "Users alias");
             usersName = translated.Substring(slash + 1);
-            SecurityIdentifier sid = new SecurityIdentifier(publisher); byte[] bytes = new byte[sid.BinaryLength]; sid.GetBinaryForm(bytes, 0);
-            IntPtr pointer = Marshal.AllocHGlobal(bytes.Length);
-            try
-            {
-                Marshal.Copy(bytes, 0, pointer, bytes.Length);
-                Native.LOCALGROUP_MEMBERS_INFO_0 info = new Native.LOCALGROUP_MEMBERS_INFO_0(); info.Sid = pointer;
-                uint status = Native.NetLocalGroupAddMembers(null, usersName, 0, ref info, 1);
-                if (status != 1378) Status(status); // Already a member still requires the full verification below.
-            }
-            finally { Marshal.FreeHGlobal(pointer); }
         }
         private void InspectGroups()
         {
@@ -507,6 +473,7 @@ namespace Banto.PrincipalSetup
             string text = "{\n  \"schema\": \"banto-principal-setup-v1\",\n  \"state\": \"prepared-preclose\",\n" +
                 "  \"account\": \"" + Policy.Account + "\",\n  \"publisher_sid\": \"" + publisher + "\",\n" +
                 "  \"peer_sid\": \"" + Policy.Peer + "\",\n  \"local_group_sid\": \"" + Policy.Users + "\",\n" +
+                "  \"principal_mode\": \"existing-disabled-readonly\",\n  \"account_created_this_run\": false,\n  \"account_modified_this_run\": false,\n" +
                 "  \"account_disabled\": true,\n  \"publisher_logon_performed\": false,\n  \"isolation_certified\": false,\n" +
                 "  \"root_pin\": \"" + Pin(root) + "\",\n  \"root_sddl\": \"" + Security(root, failure) + "\",\n" +
                 "  \"utc\": \"" + DateTime.UtcNow.ToString("o") + "\",\n  \"elapsed_ms\": " + elapsed.ElapsedMilliseconds + ",\n" +
@@ -620,11 +587,8 @@ namespace Banto.PrincipalSetup
         [DllImport("advapi32.dll")] public static extern uint GetSecurityInfo(IntPtr handle, uint type, uint information, out IntPtr owner, out IntPtr group, out IntPtr dacl, out IntPtr sacl, out IntPtr descriptor);
         [DllImport("advapi32.dll")] public static extern uint SetSecurityInfo(IntPtr handle, uint type, uint information, IntPtr owner, IntPtr group, IntPtr dacl, IntPtr sacl);
         [DllImport("advapi32.dll", SetLastError = true)] public static extern bool GetSecurityDescriptorDacl(IntPtr sd, out bool present, out IntPtr dacl, out bool defaulted);
-        [DllImport("netapi32.dll", CharSet = CharSet.Unicode)] public static extern uint NetUserAdd(string server, uint level, ref USER_INFO_1 info, out uint parameter);
         [DllImport("netapi32.dll", CharSet = CharSet.Unicode)] public static extern uint NetUserGetInfo(string server, string user, uint level, out IntPtr info);
         [DllImport("netapi32.dll", CharSet = CharSet.Unicode)] public static extern uint NetUserGetLocalGroups(string server, string user, uint level, uint flags, out IntPtr groups, uint max, out uint read, out uint total);
-        [DllImport("netapi32.dll", CharSet = CharSet.Unicode)] public static extern uint NetLocalGroupAddMembers(string server, string group, uint level, ref LOCALGROUP_MEMBERS_INFO_0 info, uint count);
         [DllImport("netapi32.dll")] public static extern uint NetApiBufferFree(IntPtr buffer);
-        [DllImport("bcrypt.dll")] public static extern uint BCryptGenRandom(IntPtr algorithm, IntPtr buffer, uint length, uint flags);
     }
 }
