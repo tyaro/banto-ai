@@ -3260,3 +3260,22 @@ UTC04:24:07 RAM7059361792/C148160946176/D219494100992 bytes、D約204.42GiB。�
 
 次は修正buildを使う**管理者Preflight専用**の新規読取診断を仕様化・確認する。root/account作成phaseやEntry.Runを呼ばず、取得tokenと自己watchdogを終了まで管理する。新規guardを使用し、旧root/guardは再使用しない。NativeBackend.Execute(Preflight)だけを呼んで終了管理を省略してはいけない。この事前確認が通ってから次の新規環境準備を具体化する。専用環境準備の許可は継続、UAC表示は回答済みで再質問不要。
 環境準備/P-U/IPC/namespace共通期間/全publisher/frozen/marker/正式B2-S4は未完了。isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed。
+
+## 111. 2026-09-15 管理者Preflight成功・準備dの特権不足停止
+
+d025f4bbd83a9e928c3b93ecdae373605c47459bで5 phase限定のPreflight診断を追加。[最初の結果](anomaly-multiseed-v0.3-s4-b2-principal-preflight-2026-09-15.md)。既存34件/新診断9件/loader10件pass、独立P2一件を修正して残0。Entry前にidentity解放を完了し、診断codeを二次例外で失わない。通常Control PID41156/exit41、管理者Run PID39304/exit66882（phase1/native1346）で終了。manifest21180 bytes/hash46fa0a7d1e4a882d4d8e31d2fcdb43ed305057a7956d1bcaa406a52c3fe405c4、97 source/17 artifacts/論理75892 bytes。
+
+35c46670f560bff054af63ffe0ac7c346404b01aでAccessCheck専用peerTokenのDuplicateToken要求level2→1へ一行修正。[結果](anomaly-multiseed-v0.3-s4-b2-principal-identification-2026-09-15.md)。SID/非昇格/危険権限mask/予算を緩めず、34/9/10件pass/独立0。新DLL24576 bytes/hash05a77ce8bfe3c16d166eabd14c614ce85040f2f0089cdfc673c611ae161d6e6f、command16754文字/hash9694e60e2c6fcac316aeaeab5c862176e0d77711d93f7cff18fbd4d24826876c。
+通常Control PID18720/exit41/2603ms成功。管理者Runは05:09:45〜05:11:49、123261ms後request-launchで内側Win32 error1223、PID/Handle/exit未取得。Windowsの取消扱いを記録し、手動操作と時間経過を区別しない。両guard閉鎖、旧rootアクセスなし。manifest21412 bytes/hash55b53f9d0125575392a8752ef939c94133995c3606fce138e869341281fea7ec、98 source/14 artifacts/論理75372 bytes。
+
+管理者画面を操作できる都合を質問し、ユーザー「今なら操作できます」と回答。方式の再承認ではない。57904679ef4b11c401fa176f04012f6c513a8e52で記録先一行だけを新規principal-identification-confirmation枠へ変更、公開DLL/commandは同一。既存Controlを参照し再実行せず、新規Runのみ実施、差分独立0。
+[成功結果](anomaly-multiseed-v0.3-s4-b2-principal-identification-confirmation-2026-09-15.md)。UTC05:16:32.0030613Z〜05:16:40.5498031Z、PID43308/exit0、起動4715ms/待機3754ms/合計8541ms、Handle・終了・observer解放成功、例外なし。修正Preflightと3 token close/StopWatchdog完了を確認した。SAM/root/作成Entryなし、当該guard閉鎖。manifest18985 bytes/hash92de13846a4f7208994ee1a2b9606f84333a3bdca3f6a2497d92d8e29be21d76、98 source/6 artifacts/論理22240 bytes。
+
+f5ad7c21389e7ae26eb48858b6017691fecedb22で承認済みの[新規準備d](../anomaly-v03-principal-setup-d-design.md)を保存。新規root C:\ProgramData\BantoAI-S4B2-principal-20260915d、artifacts/principal-setup-d-2026-09-15。root/記録固定値のみ変更、34件pass/独立0、通常load-only PID20872/exit0。DLL22528 bytes/hashfc88778d472098160f81302b8058b4b8cabcfa015119098b585fd03cce57007e。
+UTC05:20:34 SAM2221/root attributes0xffffffff/error2で新規対象不存在を確認。[実行結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-d-2026-09-15.md)。05:21:30.6208593Z〜05:23:38.6962403Z、PID22336/exit263458（phase4 CreateRoot/native1314）、起動124066ms/待機3952ms/合計128068ms。Handle・終了・observer解放成功、観測例外なし、release_failed=false。
+固定codeではPreflight/祖先保持とpeer AccessCheck/不存在確認を通過し、root作成phaseで停止。個別API名の記録ではない。account作成phaseへ未到達、05:25:12のSAMは2221/free0でaccount不存在。**root dは再確認せずunknown、末尾なし/b/c/dの4 rootを閉鎖。存在確認/再open/列挙/hash/copy/deleteしない。** 作成guardを再利用せず、account不存在からroot不存在を推定しない。
+準備d input19396 bytes/hash45bc965885a1335787546854b06d077ece3f72172bc1f17ca43a4e885de8c725、99 source、前回96 source/6 artifacts不変・2変更/新規1。最終manifest20341 bytes/hashd009f150c6cfbeb3796517ca6dda2390669884b7a870766bcae817a18059a989、9 artifacts/論理62344 bytes。
+
+終了UTC05:25:12 RAM6053531648/C148569583616/D218658721792 bytes、D約203.64GiB。長期リーク不在や他の空き変動原因は断定しない。build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和/正式pin不変。新runtime/service/task/VM/profileなし、本流889cfc3/clean不変、push/merge/CIなし。既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全しcommit除外。独立レビューは既存1体へ差分だけ委譲し、進捗ポーリングなし。
+次は明示SACLに必要な特権の事前確認と、B process内の一時有効化/元状態復元を設計・故障検証する。公式SACL仕様はSeSecurityPrivilege有効化を要求するが、今回失敗processの特権一覧/有効状態は未観測なので原因確定とはしない。OSへ追加の特権付与を行わず、SACL/medium labelや初期保護条件も省かない。確認用の新規診断枠で検証してから次の新規環境準備へ進み、閉鎖dをretryしない。専用環境の許可と画面操作可能の回答は記録済み。
+環境準備、P activation/reset/logon/disable、protected code/process/thread/token/IPC、P/U、namespace共通期間、全publisher/frozen/marker/正式B2-S4は未完了。全許可flags=false、acceptance_status=not_completed。

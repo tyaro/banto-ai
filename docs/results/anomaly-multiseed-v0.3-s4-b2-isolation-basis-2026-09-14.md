@@ -50,3 +50,8 @@ formal_permission/execution_authenticated/protected_commit_allowed=false、accep
 通常/管理者で公開DLLの読み込みに成功。新規準備cはPreflightのerror24で終了し、固定コード上はroot/account作成phaseへ到達していない。終了後SAM2221でaccount不存在を確認したが、rootの再確認はしていない。末尾なし/b/cの3 rootと各guardを閉鎖し、再訪・再実行しない。
 通常の自token4条件で64-byte指定の失敗、8/4-byte指定の成功を観測した。7a2f066で2行修正、34件pass/独立所見0。修正後の管理者Preflight全体は未確認なので、環境準備完了やP/U隔離の根拠にはしない。次は作成phaseを含まない新規の管理者Preflight専用診断を仕様化し、token/watchdogの終了まで確認する。
 専用環境準備の既存許可は継続。正式受入条件は緩和せず、全許可flags=false、acceptance_status=not_completed。
+
+## 2026-09-15 管理者Preflight成功後の更新
+
+最新は[引継書111節](anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)。識別用token要求をlevel1へ修正し、[管理者Preflight](anomaly-multiseed-v0.3-s4-b2-principal-identification-confirmation-2026-09-15.md)は3 token close/StopWatchdogまで成功した。後続の[準備d](anomaly-multiseed-v0.3-s4-b2-principal-setup-d-2026-09-15.md)は祖先確認と不存在確認を通過したが、phase4のroot作成でerror1314。終了後SAMはaccount不存在、dの状態は再確認せずunknownとして閉鎖した。閉鎖rootは末尾なし/b/c/dの4件。
+次は明示SACLに必要な既存特権の確認と、B process内だけの一時有効化/復元を検証する。初期保護条件を省かず、OSへの追加特権付与や閉鎖root再使用をしない。環境準備/P-U/正式受入は未完了、全許可flags=falseを維持する。
