@@ -226,7 +226,7 @@ namespace Banto.PrincipalSetup
     public static class Policy
     {
         public const string Account = "BantoS4Publisher";
-        public const string Root = @"C:\ProgramData\BantoAI-S4B2-principal-20260916i";
+        public const string Root = @"C:\ProgramData\BantoAI-S4B2-principal-20260916j";
         public const string Peer = "S-1-5-21-2169670816-255940906-2713565042-1001";
         public const string Users = "S-1-5-32-545";
         public const string ExistingPublisher = "S-1-5-21-2169670816-255940906-2713565042-1010";
@@ -242,7 +242,7 @@ namespace Banto.PrincipalSetup
                 SecurityIdentifier sid = new SecurityIdentifier(publisher);
                 if (!sid.IsAccountSid() || publisher == Peer) throw new InvalidOperationException("publisher SID");
             }
-            return "O:BAG:BAD:P(A;;FA;;;SY)(A;;FA;;;BA)(A;;0x1200a9;;;" + Peer + ")" +
+            return "O:BAG:BAD:" + (publisher == null ? "P" : "PAI") + "(A;;FA;;;SY)(A;;FA;;;BA)(A;;0x1200a9;;;" + Peer + ")" +
                 (publisher == null ? "" : "(A;;0x1200a9;;;" + publisher + ")") + "S:PAI(ML;;NW;;;ME)";
         }
         public static void Require(bool value, string reason)

@@ -297,6 +297,23 @@ public static class PrincipalSetupTests
                     Assert(backend.Calls.Count == 9 && !backend.Calls.Contains(Phase.CreateReceipt), "terminal before receipt");
                 }
             });
+            Test("final DACL AI changes only its state bit and leaves initial policy unchanged", delegate()
+            {
+                foreach (string publisher in new string[] { null, Policy.ExistingPublisher })
+                {
+                    string current = NativeBackend.Canonical(Policy.Descriptor(publisher));
+                    RawSecurityDescriptor actual = new RawSecurityDescriptor(current);
+                    RawSecurityDescriptor prior = new RawSecurityDescriptor(current.Replace("D:PAI", "D:P"));
+                    ControlFlags delta = publisher == null ? 0 : ControlFlags.DiscretionaryAclAutoInherited;
+                    Assert((actual.ControlFlags ^ prior.ControlFlags) == delta, "one final state bit only");
+                    Assert((actual.ControlFlags & (ControlFlags.DiscretionaryAclProtected | ControlFlags.SystemAclProtected)) ==
+                        (ControlFlags.DiscretionaryAclProtected | ControlFlags.SystemAclProtected), "both protected");
+                    Assert((actual.ControlFlags & (ControlFlags.DiscretionaryAclAutoInheritRequired | ControlFlags.SystemAclAutoInheritRequired)) == 0, "no AR flags");
+                    byte[] a = new byte[actual.BinaryLength], b = new byte[prior.BinaryLength];
+                    actual.GetBinaryForm(a, 0); prior.GetBinaryForm(b, 0); Assert(a.Length == b.Length, "same length");
+                    for (int i = 0; i < a.Length; i++) Assert((i == 3 && publisher != null ? a[i] ^ 4 : a[i]) == b[i], "all other descriptor bytes unchanged");
+                }
+            });
             Console.WriteLine("RESULT " + count + " passed; OS mutations=0"); return 0;
         }
         catch (Exception error) { Console.WriteLine("FAIL " + error); return 1; }
