@@ -3352,3 +3352,13 @@ input19627 bytes/hash **d4ccd4546b5fb26d61030de7795b8b8f1d6211ba8381c15b04b628a3
 
 **次は追加のOS権利を付与せず成立する起動API条件を確定する。** CreateProcessAsUserWのtoken条件、process/thread/tokenの初期SD、desktop/環境/IPC、作成時job参加を結び付ける。既存privilege有効化と新しい権利付与は別。SeAssignPrimaryTokenPrivilegeを勝手に追加せず、SA引数のないAPIへ自動fallbackしない。既存権利で成立しない場合は必要権利/構成変更と影響を具体化してユーザー判断を求める。その後に実所有台帳/制限/containment adapterを実装・故障試験・レビューし、仕事をしないsuspended workerから進める。
 environment_preparation_complete=trueは前回j結果のみ。native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed。P-U/全publisher/namespace共通期間/frozen/marker/正式B2-S4は未完了。
+
+## 116. 2026-09-16 単一writer運用を優先・厳密な権限分離試験を保留
+
+ユーザーが試験の目的と必要性を確認し、「同時に同じ個所を進めない限りは不要な気がします」と運用前提を示した。現在の開発は**同じ出力先への書込みを一度に1処理だけに限定する運用**を優先し、§115末尾の起動API/特権/専用P-U worker検証を次工程から外して保留する。単一writerは意図的な改ざんへの耐性の証明ではなく、その保証を今回の通常開発の前提にしないという範囲の整理である。
+
+残す保存要件は、実行ごとの出力先分離、既存出力の非上書き、同じ出力先の重複使用拒否、失敗/途中終了した出力を完了扱いしないこと、完成を確認してから読むこと。これらの事故対策まで不要とは扱わない。既存 `tests/test_anomaly_v03_publication.py` に既存root/二重claim/完了印/非上書きのfixture試験があるため、再開時はこれを棚卸しし、通常アカウント・単一writer向けの最小保存契約と不足する処理だけを具体化する。今回fixture/native試験は追加実行していない。
+
+**次の「続けて」では、専用principal試験を自動再開しない。** まず上記の通常保存経路を整理して機能開発へ戻る。既存の科学的評価条件・S4受入契約に影響する差分は明示し、未実施native試験をpassへ置換したり、`require_campaign_acceptance()`を黙って開放したりしない。隔離/将来不変性/正式受入は未完了の記録を維持する。
+
+準備済みPとroot、既存証跡は保存する。今回SAM/rootアクセス、account reset/enable/logon、追加特権、UAC、worker/service/task起動、削除は行わない。P無効という最後の確認は§114のSAM記録であり、今回の再照会ではない。旧9 root閉鎖、jと診断の消費済みguard、既存親policy結果書の保全、本流不変更を継続する。厳密な分離試験の再開やOS資源の削除は今回の方針変更に含めない。

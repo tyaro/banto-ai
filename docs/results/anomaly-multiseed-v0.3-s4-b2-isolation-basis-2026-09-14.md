@@ -76,3 +76,7 @@ jは保存された準備済み環境、旧9 rootは閉鎖、作成guardは全�
 最新は[引継書115節](anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)と[worker lifecycle結果](anomaly-multiseed-v0.3-s4-b2-worker-lifecycle-2026-09-16.md)。26操作の純粋model、応答不明時のcontainment、QUERY用handleの取得確定/単回解放を実装し、65＋8＋15の88件pass、レビューのP2計3件修正後は残存0。
 通常Uのlinked full tokenを一度だけ読み取り、SeIncreaseQuotaPrivilegeは存在/無効、SeAssignPrimaryTokenPrivilegeは不存在、SeImpersonatePrivilegeは存在/有効。両query handle close/launcher exit0。将来のP token assignabilityや別UAC tokenの証明ではない。
 今回P/SAM/全保護rootへアクセスせず、privilege調整/UAC/worker起動もなし。既存権利の範囲で起動API/初期SD/原子的job参加が成立する条件を先に確定する。native backendと隔離/正式受入は未実装・未完了、全許可flags=false。
+
+## 2026-09-16 ユーザーの運用前提に合わせた保留
+
+[引継書§116](anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)が現在の作業方針。同じ出力先へ同時に書かない単一writer運用を優先し、専用principal/起動API/厳密な分離検証は保留する。通常の非上書き・重複使用拒否・途中終了時の未完了判定は残す。上記の観測結果や未達の隔離保証は変更せず、次の開発指示で分離試験を自動再開しない。今回OS操作・削除・受入gate変更はない。
