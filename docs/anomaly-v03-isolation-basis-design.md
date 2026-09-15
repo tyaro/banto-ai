@@ -196,3 +196,9 @@ share3の作成は直前の新規診断で87となり、今回controlを省略�
 f8495edで将来の起動stage/内側native error記録を改善したが、閉鎖済みattemptを再起動せず、今回の原因の確定にも使わない。
 次はOS設定を変更しない独立の昇格診断。環境準備の許可を再確認する必要はないが、Windowsの管理者確認を操作できる条件が必要。
 P/U実process、namespace/共通保持期間、全publisher、frozen/markerの契約、正式B2/S4は未完了。準備実装やaccount方式への許可を隔離認定に読み替えず、全許可flags=falseを維持する。
+
+## 2026-09-15 復帰後の昇格診断と新規準備b
+
+[短い自己照会](results/anomaly-multiseed-v0.3-s4-b2-elevation-diagnostic-2026-09-15.md)は通常/管理者とも終了確認したが、[新規準備b](results/anomaly-multiseed-v0.3-s4-b2-principal-setup-b-2026-09-15.md)はrequest-launchで停止した。account不存在、旧/新rootともunknown・閉鎖を維持し、設定準備を成功としない。
+WindowsPowerShellのエラー置換でnative番号が落ちることを実装/host ILから確認した。これは起動失敗原因とは別。[直接Shell診断](results/anomaly-multiseed-v0.3-s4-b2-shell-launch-diagnostic-2026-09-15.md)は15331文字の無害commandを用い、3ケースと通常Controlだけを確認した。
+直前の管理者確認画面の表示状況をユーザーへ質問中で、新Run枠は未使用。環境方式の許可は継続する。全期間/全publisher/正式B2-S4は未完了、全許可flags=falseを維持する。

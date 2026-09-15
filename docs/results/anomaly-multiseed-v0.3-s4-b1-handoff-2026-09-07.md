@@ -3216,3 +3216,19 @@ OS設定変更・準備Entry・P logon・旧rootアクセスなし。前回原�
 13故障ケースpass/独立所見0/進捗ポーリングなし。前回78 source不変、新規を含む81 source Git/raw一致。manifest17286 bytes/hash9e4c0c8fb6f45208820c590fc5d7141fd03b62de45512dd3e3be45e26ef1bf89、9 artifacts/論理18269 bytes。
 UTC02:38:48 RAM10558652416/C130972598272/D203548774400 bytes。build26200.9445/boot不変、Windows Update engineering緩和/正式pin不変。既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全。本流889cfc3/clean不変。
 次は新規root/記録場所を仕様に固定し、観測処理を準備launcherへ適用して確認・保存後に承認済み準備を進める。環境準備/P-U/正式B2-S4未完了、全許可flags=false。
+
+## 108. 2026-09-15 新規準備bの起動停止・直接Shell診断の通常control完了
+
+準備b実装4bdeaeda871ac5d65b27ae1b45f564f609b89b6d、[停止結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-b-2026-09-15.md)。rootをC:\ProgramData\BantoAI-S4B2-principal-20260915b、記録をartifacts/principal-setup-b-2026-09-15へ固定した新規max1。account名BantoS4Publisher/同名不存在条件は維持。
+34件＋共有observer13ケースpass/独立0。通常load-only PID37216/exit0、DLL SHA4ea7c99167a71c9ba6e26f2d6d3a74ad16226d8209dc3535d19660696440a88a。UTC02:57:08 account/root不存在確認。
+02:58:09〜03:00:12 request-launch段階で123158ms後に失敗、PID/Handle/exit不明、InvalidOperationException/HRESULT -2146233079/innerなし。03:01:00 SAM2221でaccount不存在、新rootもunknownとして閉鎖。末尾bなし/ありの両rootへ再訪しない。両作成guardを再利用しない。manifest19470 bytes/hash3813fb07fcb1ece244c094cacfdcf17d89393d1984865e9516f7da91258e46ab、83 source/11 artifacts/論理61089 bytes。
+
+このPCのWindowsPowerShell Management assembly/StartWithShellExecute IL63 bytesをread-onlyで確認し、Win32ExceptionをMessage-only InvalidOperationExceptionへ置き換えることを特定。起動原因は未確定のまま。
+新しい[Shell診断仕様](../anomaly-v03-shell-launch-diagnostic-design.md)と[通常control結果・正本hash](anomaly-multiseed-v0.3-s4-b2-shell-launch-diagnostic-2026-09-15.md)、実装558b118a378d0819f0776e727e9a78cb125f289a。
+Process.Start(ProcessStartInfo)を直接呼び、UseShellExecute=true/Runだけrunas/Hiddenを維持。OS変更なしの固定SID/admin自己照会をASCII Command＋commentで15331文字へ固定。DLL/準備Entry/旧rootを含まない。
+新規3ケースpass（非Shellの実missing-exe error2保持含む）/独立0。通常ControlはUTC03:08:52〜53/PID43368/exit41/532ms、Handle・終了・解放確認、例外なし。Control枠閉鎖、Run枠は未使用。
+ユーザーへ「直前のアカウント準備でWindowsの確認画面が表示されたか」をasync質問中。返答まで新診断Runを保留し、未回答を承認/画面なしと扱わない。専用環境準備の許可は継続、方式再承認を求めない。
+input16278 bytes/hash90da7ba37f5a9c71652d60e1bb562c4d3812e418fd31f1159b3c3ac8329740f1、86 source、前回83 source/11 artifacts不変。checkpoint17947 bytes/hash57d8b1e198c1ea5ffa90ffc31fea7242e3f858bffeb2b3fa25b04716d2a3fa9c、6 artifacts/論理18438 bytes。途中checkpointは上書きせず、Run後は別の最終manifestへ記録する。
+記録追記＋commit複合操作に自動審査blocked by policy（詳細なし）があった。副次的な個別記録を省いて対象4ファイルのstage/差分確認/commitへ限定し保存成功。同じ複合操作は再実行せず、レビュー/IL要約を後続inputへ記録した。
+UTC03:09:42 RAM10321457152/C130921562112/D202743402496 bytes、D約188.82GiB。build26200.9445/boot不変、Windows Update engineering緩和/正式pin不変。本流889cfc3/clean、既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全しcommit除外。
+次は質問への回答を踏まえ、新Shell診断Runだけを新規max1実行する。さらに別の準備rootは未定で、設定作成へ直行しない。P-U/全期間/全publisher/frozen/marker/B2-S4未完了、全許可flags=false。
