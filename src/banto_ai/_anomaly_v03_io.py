@@ -1,9 +1,9 @@
-"""S3 exclusive staging, fresh readback and completion-inventory publication.
+"""Exclusive staging, readback and completion-inventory publication.
 
-The runnable publisher is restricted to dedicated system-temp fixtures. Native
-DACL installation/independent-token acceptance and formal publication remain
-S4 obligations. No recovery, overwrite, cleanup, repository ACL or old artifact
-mutation is performed. Failed staging is retained for explicit inspection.
+LocalPublication supports ordinary single-writer results; FixturePublication
+retains the dedicated-temp contract. Neither grants formal campaign acceptance
+or protection against a hostile process. Failed attempts are retained without
+recovery, overwrite, cleanup, or ACL changes.
 """
 
 from __future__ import annotations
@@ -13,6 +13,7 @@ import os
 import stat
 import tempfile
 from collections.abc import Mapping
+from functools import wraps
 from pathlib import Path
 
 from . import anomaly_v03 as v
@@ -211,6 +212,27 @@ def _fixture_parent(parent: Path):
     return parent
 
 
+def _local_parent(parent: Path):
+    parent = regular_path(parent, directory=True)
+    require(parent != Path(parent.anchor), "dedicated local output parent required")
+    require(not any(p.name.casefold().startswith("anomaly-multiseed-v0") for p in (parent, *parent.parents)),
+            "formal root is not a local output workspace")
+    return parent
+
+
+def _active_operation(method):
+    @wraps(method)
+    def guarded(self, *args, **kwargs):
+        require(not self.closed, "publication is closed")
+        require(not self.failed, "publication stopped after failure")
+        try:
+            return method(self, *args, **kwargs)
+        except BaseException:
+            self.failed = True
+            raise
+    return guarded
+
+
 class FixturePublication:
     """Single attempt, dedicated temp only. Final marker is the commit point.
 
@@ -219,12 +241,15 @@ class FixturePublication:
     inventoried control files, never payload inputs. No native ACL claim is made.
     """
 
+    _parent_validator = staticmethod(_fixture_parent)
+    _marker_type = "anomaly-v03-fixture-complete"
+
     def __init__(self, parent: Path, name: str):
-        self.parent = _fixture_parent(parent)
+        self.parent = self._parent_validator(parent)
         v.safe_relative_path(name)
-        require("/" not in name and not name.startswith("anomaly-multiseed-v0"), "unsafe fixture name")
+        require("/" not in name and not name.casefold().startswith("anomaly-multiseed-v0"), "unsafe publication name")
         self.root, self.bindings, self.expected = self.parent/name, [], {}
-        self.committed = False
+        self.committed = self.failed = self.closed = self.commit_attempted = False
         self.bindings.append(DirectoryBinding(self.parent))
         try:
             self.root.mkdir()  # exclusive even when an old root has no marker
@@ -237,9 +262,11 @@ class FixturePublication:
             raise
 
     def check(self):
+        require(not self.closed, "publication is closed")
         for binding in self.bindings:
             binding.check()
 
+    @_active_operation
     def write(self, name: str, raw: bytes):
         self.check()
         require(not self.committed and self.stage.name == "stage", "publication already finalized")
@@ -258,6 +285,7 @@ class FixturePublication:
         self.expected[name] = payload_entry(name, raw)
         self.check()
 
+    @_active_operation
     def read(self, name):
         v.safe_relative_path(name)
         self.check()
@@ -266,19 +294,22 @@ class FixturePublication:
         require(payload_entry(name, raw) == self.expected[name], "saved input/evidence changed")
         return raw
 
+    @_active_operation
     def verify(self):
         self.check()
         captured = PayloadView(self.stage)
         require(inventory(captured) == [self.expected[n] for n in sorted(self.expected)], "staged payload inventory changed")
         return captured
 
+    @_active_operation
     def publish(self, verify_semantics, recheck_boundary):
+        require(not self.committed and self.stage.name == "stage", "publication already finalized")
         captured = self.verify()
         fixed_inventory = [dict(self.expected[n]) for n in sorted(self.expected)]
         verify_semantics(captured)
         recheck_boundary()
         require(inventory(self.verify()) == fixed_inventory, "payload changed during semantic verification")
-        marker = {"schema_version": "0.3", "marker_type": "anomaly-v03-fixture-complete",
+        marker = {"schema_version": "0.3", "marker_type": self._marker_type,
                   "payload_inventory": fixed_inventory, "inventory_sha256": v.canonical_sha256(fixed_inventory),
                   "native_acceptance": "not_completed", "performance_status": "not_evaluated"}
         marker_raw = json_bytes(marker)
@@ -292,15 +323,18 @@ class FixturePublication:
         require(inventory(PayloadView(self.stage)) == fixed_inventory, "payload changed at finalization")
         recheck_boundary()
         self.check()
+        require(not self.failed, "publication stopped after failure")
         require(inventory(PayloadView(self.stage)) == fixed_inventory and read_regular(self.root/"marker-pending.json") == marker_raw,
                 "payload/marker changed before commit")
         # Link creation is atomic and fails on an existing marker. Retain source
         # evidence; no potentially failing mutation follows the commit point.
+        self.commit_attempted = True
         os.link(self.root/"marker-pending.json", self.root/".complete", follow_symlinks=False)
         self.committed = True
         return {"output_path": str(self.root), "marker_raw_sha256": sha(marker_raw), "native_acceptance": "not_completed"}
 
     def close(self):
+        self.closed = True
         for binding in reversed(self.bindings):
             binding.close()
         self.bindings = []
@@ -308,20 +342,22 @@ class FixturePublication:
     def preserve_failure(self, result):
         """Best effort, owned root only; a bad topology is never repaired."""
         self.check()
-        require(not self.committed, "cannot change committed publication")
+        require(not self.commit_attempted, "cannot change publication after commit attempt")
+        self.failed = True
         _exclusive(self.root/"failure.json", json_bytes({"schema_version": "0.3", "failure_stage": "publication",
                    "safe_reason": "incomplete", "result": result}))
 
     def __enter__(self):
+        require(not self.closed and not self.failed, "publication is not active")
         return self
 
     def __exit__(self, *_):
         self.close()  # handle release only, retain every attempt
 
 
-def verify_fixture_publication(root: Path, *, expected_marker_sha256: str, verify_semantics):
+def _verify_publication(root: Path, *, expected_marker_sha256: str, verify_semantics, parent_validator, marker_type, result_key):
     root = regular_path(root, directory=True)
-    _fixture_parent(root.parent)
+    parent_validator(root.parent)
     require({p.name for p in root.iterdir()} == {"payload", "marker-pending.json", ".complete"}, "publication control inventory")
     # These two known control names are intentionally hardlinked. They are not
     # opened through read_regular, which rejects all multiply-linked payloads.
@@ -336,12 +372,44 @@ def verify_fixture_publication(root: Path, *, expected_marker_sha256: str, verif
     v.strict_json(raw)
     files = PayloadView(root/"payload")
     entries = inventory(files)
-    expected = {"schema_version": "0.3", "marker_type": "anomaly-v03-fixture-complete", "payload_inventory": entries,
+    expected = {"schema_version": "0.3", "marker_type": marker_type, "payload_inventory": entries,
                 "inventory_sha256": v.canonical_sha256(entries), "native_acceptance": "not_completed", "performance_status": "not_evaluated"}
     require(raw == json_bytes(expected), "completion inventory/hash mismatch")
     verify_semantics(files)  # A newly forged marker/summary still cannot bless wrong ledgers.
     require(inventory(PayloadView(root/"payload")) == entries and read_regular(marker_path, links=2) == raw, "publication changed during verification")
-    return {"payloads": len(entries), "fixture_verified": True, "native_acceptance": "not_completed"}
+    return {"payloads": len(entries), result_key: True, "native_acceptance": "not_completed"}
+
+
+def verify_fixture_publication(root: Path, *, expected_marker_sha256: str, verify_semantics):
+    return _verify_publication(root, expected_marker_sha256=expected_marker_sha256, verify_semantics=verify_semantics,
+                               parent_validator=_fixture_parent, marker_type=FixturePublication._marker_type, result_key="fixture_verified")
+
+
+class LocalPublication(FixturePublication):
+    """One trusted writer per new result directory, under an existing parent.
+
+    No resume or overwrite. Readers require a completed, verified inventory.
+    The caller serializes access to this object and supplies semantic validation.
+    This local result format does not open the formal v0.3 campaign entry.
+    """
+    _parent_validator = staticmethod(_local_parent)
+    _marker_type = "anomaly-v03-local-complete"
+
+
+def publish_local_result(parent: Path, name: str, files: Mapping[str, bytes], *, verify_semantics):
+    """Save a small prepared result and return its externally retainable receipt."""
+    require(isinstance(files, Mapping) and bool(files), "nonempty result mapping required")
+    require(callable(verify_semantics), "semantic verifier required")
+    with LocalPublication(parent, name) as store:
+        for path, raw in files.items():
+            store.write(path, raw)
+        return store.publish(verify_semantics, lambda: None)
+
+
+def verify_local_publication(root: Path, *, expected_marker_sha256: str, verify_semantics):
+    """Validate a completed ordinary result, including its caller-defined meaning."""
+    return _verify_publication(root, expected_marker_sha256=expected_marker_sha256, verify_semantics=verify_semantics,
+                               parent_validator=_local_parent, marker_type=LocalPublication._marker_type, result_key="local_verified")
 
 
 def native_acl_requirements():
