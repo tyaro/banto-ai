@@ -3332,3 +3332,23 @@ root identity部分はtaBg2tdg2iouDAAAAABPAAAAAAAAAAAA（24 bytes）。実SDDL�
 preclose記録elapsed148ms、観測peak private63029248/working73957376 bytes、minimum RAM5974740992/C149730889728。process全寿命の厳密peakや長期リーク不在ではない。最終RAM6247051264/C149730881536/D198225158144 bytes、D約184.61GiB。OS26200.9445/boot2026-09-15T14:30:24.5000000+09:00、Windows Update engineering緩和/正式pin不変。新runtime/service/task/VM/profile、push/merge/CIなし。独立レビューは既存1体へ差分限定、進捗ポーリングなし。
 
 **専用principal環境の準備は完了。** 次はprincipal境界案の保護code/runtime、B/P/U process/thread/tokenの初期SDと起動経路、IPC/所有台帳、単回有効化/ログオン/再無効化と全process終了を具体化して故障試験する。準備済みP/rootを再作成せず、現在のPを有効化して試す前にこの残件の実装・レビューを済ませる。P-U干渉/namespace共通期間/全publisher/frozen/marker/正式B2-S4は未完了。全許可flags=false、acceptance_status=not_completed。
+
+## 115. 2026-09-16 worker lifecycle model・起動特権の読み取り診断
+
+「次に進めてください」で再開し、**cbd3df9a61348562019a2c4ae9113e17e122dd96** に[起動・終了modelと読み取り診断](../anomaly-v03-principal-worker-lifecycle-design.md)を保存。[結果書](anomaly-multiseed-v0.3-s4-b2-worker-lifecycle-2026-09-16.md)。setup jのsource/guardを変更せず、新規6 sourceを追加した。
+26操作の純粋modelはenable応答前にriskを記録、logonの成否に関わらずDisable→Verify、既知secretのゼロ化/解放後だけlaunch。未知取得は推測closeせず、job停止要求と所有process終了/job空確認を区別し、外側code/祖先を保持する。primary/secondary障害を別保存、同じ操作は再試行しない。実handle台帳・時間/メモリ制限・ACL/jobを強制するnative backendは未実装。
+レビューでmodelの動的HashSet記録のOOM時工程飛ばしP2 1件を固定bitset/配列へ修正。診断の未確定out handle closeとclose例外によるprimary/他方close喪失P2 2件をQueryHandleLeaseへ修正。既存Maxwell 1体、進捗poll0、最終残存P0〜P3所見0。
+採用build-03は**65 model＋8 query lease＋15 privilege/parser＝88件pass**、safety/diff pass。最初の手動csc相対path解決失敗は出力生成前に停止、固定launcherは絶対pathを使用。中間build-01/02は未採用として証跡だけ保存。
+
+診断exe32768 bytes/hash **5f4f4ae2fa623067f7d4f05d3a4b1782f8fbcb7a11980de2ad3a4f54ab731a33**。通常Windows PowerShellで有界read/hash後の同一bytesをLoadし、一度だけMain実行。own tokenをTOKEN_QUERYで開き固定U SID末尾1001/elevation0/typeLimited、linked tokenも同SID/elevation1/typeFullを確認し固定3特権を読んだ。UAC/調整/権利付与なし。
+UTC **2026-09-15T16:11:05.2815534Z**、query_complete=true、launcher exit0、own/linked close=true、acquisition_unknown=false、primary/release/両個別release error=null。
+**SeIncreaseQuotaPrivilege: present=true/enabled=false、SeAssignPrimaryTokenPrivilege: present=false/enabled=null、SeImpersonatePrivilege: present=true/enabled=true。** このlinked tokenから将来のP token assignabilityや別UAC起動tokenを認定しない。不足特権からAPI失敗を断定せず、別user Pにcallerのrestricted-token例外を適用したとも扱わない。
+
+公開artifact `artifacts/principal-worker-lifecycle-2026-09-16`。診断結果614 bytes/hash **9d44ebe97433f9ef71b86f71a6d32618c7dbd0022b3fa9cc2cc094a689ee8cee**、**launch-capability.jsonはCREATE_NEW guard消費済み・Diagnose再実行不可**。
+input19627 bytes/hash **d4ccd4546b5fb26d61030de7795b8b8f1d6211ba8381c15b04b628a3d9bb41b2**。113 source（前回107不変/新規6）のworkspace/git blob一致と旧j13公開artifact不変を実行前後に確認。
+最終manifest24645 bytes/hash **1cae772d518ca0d62cb91a44deacc87560910ecc2e4b5159dfa3b088c2e0959a**、自身を除く16 artifacts/論理249764 bytes。本流889cfc3/clean、既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。
+今回**旧9 rootと準備済みjを含む全保護rootへのアクセス、SAM照会/変更、P reset/enable/logon、worker起動なし**。P無効/Usersという最後の確認は前回j成功後SAMの記録。j準備成功は維持し、全rootの消費済みguard・閉鎖条件を継続する。
+終了後UTC16:12:57、空きRAM6608343040/C149446660096/D198224842752 bytes、D約184.61GiB。観測点だけで長期リーク不在や変動原因、process全寿命peakを断定しない。OS26200.9445/boot2026-09-15T14:30:24.5000000+09:00、Windows Update engineering緩和/正式pin不変。新runtime/service/task/VM/profile、push/merge/CIなし。
+
+**次は追加のOS権利を付与せず成立する起動API条件を確定する。** CreateProcessAsUserWのtoken条件、process/thread/tokenの初期SD、desktop/環境/IPC、作成時job参加を結び付ける。既存privilege有効化と新しい権利付与は別。SeAssignPrimaryTokenPrivilegeを勝手に追加せず、SA引数のないAPIへ自動fallbackしない。既存権利で成立しない場合は必要権利/構成変更と影響を具体化してユーザー判断を求める。その後に実所有台帳/制限/containment adapterを実装・故障試験・レビューし、仕事をしないsuspended workerから進める。
+environment_preparation_complete=trueは前回j結果のみ。native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed。P-U/全publisher/namespace共通期間/frozen/marker/正式B2-S4は未完了。

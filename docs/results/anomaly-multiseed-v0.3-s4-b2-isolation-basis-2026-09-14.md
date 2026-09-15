@@ -70,3 +70,9 @@ P SID S-1-5-21-2169670816-255940906-2713565042-1010、flags0x203、Usersのみ�
 
 最新は[引継書114節](anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)と[準備j結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-j-2026-09-16.md)。既存無効P専用経路でaccount変更APIを除去し、iで最終DACL比較の差を観測。jは最終D:PAI/S:PAIを厳密照合し、receipt/特権復元/close/watchdogまでexit0で終了した。成功後の既知receiptとSAMも検証済み。P SID末尾1010/flags0x203/Usersのみ、enable/logonなし。
 jは保存された準備済み環境、旧9 rootは閉鎖、作成guardは全て消費済み。78件pass/独立指摘0。専用環境準備のみ完了し、P-U process/token/IPC/干渉、全publisher/正式受入は未完了。全許可flags=falseを維持する。
+
+## 2026-09-16 起動・終了のmodel検証とlinked token照会
+
+最新は[引継書115節](anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)と[worker lifecycle結果](anomaly-multiseed-v0.3-s4-b2-worker-lifecycle-2026-09-16.md)。26操作の純粋model、応答不明時のcontainment、QUERY用handleの取得確定/単回解放を実装し、65＋8＋15の88件pass、レビューのP2計3件修正後は残存0。
+通常Uのlinked full tokenを一度だけ読み取り、SeIncreaseQuotaPrivilegeは存在/無効、SeAssignPrimaryTokenPrivilegeは不存在、SeImpersonatePrivilegeは存在/有効。両query handle close/launcher exit0。将来のP token assignabilityや別UAC tokenの証明ではない。
+今回P/SAM/全保護rootへアクセスせず、privilege調整/UAC/worker起動もなし。既存権利の範囲で起動API/初期SD/原子的job参加が成立する条件を先に確定する。native backendと隔離/正式受入は未実装・未完了、全許可flags=false。
