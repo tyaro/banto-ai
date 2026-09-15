@@ -1,0 +1,17 @@
+# S4-B2 管理者Preflight専用診断
+
+2026-09-15。[前回の長さ修正](results/anomaly-multiseed-v0.3-s4-b2-token-length-2026-09-15.md)の後、環境作成前に修正済みPreflightの実動作と終了を確認する。
+
+PrincipalSetup.csは7a2f066のまま使用し、新規PrincipalPreflightDiagnostic.csと同じ公開DLLへ通常権限でcompileする。呼ぶ入口はBanto.PrincipalPreflight.Entry.Runだけ。既存の準備Entry.Runや全phaseのSequenceを呼ばない。新しいDiagnosticSequenceの許可phaseはPreflight、ClosePeerToken、CloseLinkedToken、CloseAdminToken、StopWatchdogの5つに固定する。
+PreflightはWin64/admin、資源予算、linked U SID/非昇格、duplicate token/noninherit、既存Python存在を確認する。own/linked/peer tokenを取得し、自己watchdogを開始する。SAM、protected root、祖先handle、account/directory作成、ACL、logon、impersonation、publisherは呼ばない。Cドライブ空きと既存Pythonの存在の読取りは既存Preflightに含まれる。
+
+成功時は3 tokenのcloseとwatchdogのSet/Joinまで通過してexit0。途中で失敗したらそれ以降のbackend呼出し・retry・追加closeは行わず、staticでbackendを保持したまま直ちにEnvironment.Exitで終了する。OSによる終了時解放と、明示close成功を区別する。watchdog開始前の通常権限control拒否も失敗終了。ManualResetEventを含むprocess内管理資源はprocess終了までの寿命で、新規常駐は作らない。
+エラーは既存phase<<16|detail/解放失敗bit30を保持。watchdog80、loader81/82/83を維持。成功はexit0・process終了観測・観測/解放例外なしの全条件で判定する。通常controlは事前の固定SID/非昇格自己照会だけでexit41とし、Preflightを呼ばない。これにより不明なPreflight例外を正常controlに読み替えない。
+loaderのSID/admin判定用WindowsIdentityは診断Entryの前に解放する。解放失敗ならEntryへ進まずexit83。診断が返した後は直ちにそのcodeで終了し、後片付けの二次例外で一次codeを置換しない。
+
+公開DLLは262144 bytes以下を読取り前に確認し、正確読取り/EOF/SHA256照合。固定ASCII inline loaderが262145-byte bufferで有界展開し、同じbytesをhash/Assembly.Loadする。ControlとRunは同一command。固定U SIDを確認して、非昇格なら41、管理者なら診断Entryを実行する。Process.Start/UseShellExecute/runas/Hidden/System32、返却後の共有observer待機45秒を用いる。UAC待ちとloaderは自己watchdog40秒に含まれない。private256MiB/working384MiB/空きRAMとC各2GiB、500ms確認を維持する。
+
+新しい記録先artifacts/principal-preflight-diagnostic-2026-09-15へControl/RunのCREATE_NEW+flush済みmax1 guardと結果を分けて保存する。以前のguardを再利用せず、末尾なし/b/cの閉鎖rootへ存在確認/再open/列挙/hash/copy/deleteしない。失敗でもSAM/root確認は追加せず、今回のprocess結果だけを保存する。
+fake backendで5 phase以外の呼出しがないこと、各失敗で後続処理・再使用が止まること、一次/解放errorを検証する。loaderの上限/hash/同bytes/正しい入口/guardを通常側で確認し、独立レビュー・commit・hash証拠を保存してからControl/Runを各一度行う。既存PrincipalSetupの34件も今回compileしたDLLに対して確認する。
+
+この診断は環境準備や権限分離の完了ではない。成功後に次の新規環境準備を具体化する。専用環境準備の既存許可は継続し、再承認は不要。全許可flags=false、acceptance_status=not_completed。既存Python3.14.0/.NETを使用し、新runtime/service/task/VM/profileなし。Windows Update engineering緩和/正式pin不変、build/boot/資源を記録する。
