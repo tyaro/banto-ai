@@ -171,7 +171,7 @@ namespace Banto.PrincipalSetup
     public static class Policy
     {
         public const string Account = "BantoS4Publisher";
-        public const string Root = @"C:\ProgramData\BantoAI-S4B2-principal-20260915d";
+        public const string Root = @"C:\ProgramData\BantoAI-S4B2-principal-20260915e";
         public const string Peer = "S-1-5-21-2169670816-255940906-2713565042-1001";
         public const string Users = "S-1-5-32-545";
         public const uint DisabledNormalFlags = 0x203;

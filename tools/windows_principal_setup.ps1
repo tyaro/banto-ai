@@ -21,20 +21,25 @@ function Get-SetupLaunchFailure {
     return [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); launch_failed = $true; failure_stage = $Stage; process_id = $OwnedProcessId; exception_chain = $chain; chain_truncated = ($null -ne $current); no_retry = $true }
 }
 $project = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$artifacts = Join-Path $project 'artifacts/principal-setup-d-2026-09-15'
+$artifacts = Join-Path $project 'artifacts/principal-setup-e-2026-09-15'
 $library = Join-Path $artifacts "PrincipalSetup-$Build.dll"
 $tests = Join-Path $artifacts "PrincipalSetupTests-$Build.exe"
+$privilegeTests = Join-Path $artifacts "PrincipalPrivilegeTests-$Build.exe"
 $compiler = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe'
 $powershell = 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
 if (-not [IO.Directory]::Exists($artifacts)) { throw 'Create the planned artifact directory first.' }
 if ($Mode -eq 'Build') {
-    if ([IO.File]::Exists($library) -or [IO.File]::Exists($tests)) { throw 'Build output already exists; do not overwrite evidence.' }
+    if ([IO.File]::Exists($library) -or [IO.File]::Exists($tests) -or [IO.File]::Exists($privilegeTests)) { throw 'Build output already exists; do not overwrite evidence.' }
     & $compiler /nologo /target:library /platform:x64 /optimize+ /warnaserror+ "/out:$library" (Join-Path $project 'tests/fixtures/PrincipalSetup.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Library compilation failed.' }
     & $compiler /nologo /target:exe /platform:x64 /optimize+ /warnaserror+ "/reference:$library" "/out:$tests" (Join-Path $project 'tests/PrincipalSetupTests.cs')
     if ($LASTEXITCODE -ne 0) { throw 'Test compilation failed.' }
     & $tests
     if ($LASTEXITCODE -ne 0) { throw 'Fault tests failed.' }
+    & $compiler /nologo /target:exe /platform:x64 /optimize+ /warnaserror+ "/reference:$library" "/out:$privilegeTests" (Join-Path $project 'tests/PrincipalPrivilegeTests.cs')
+    if ($LASTEXITCODE -ne 0) { throw 'Privilege test compilation failed.' }
+    & $privilegeTests
+    if ($LASTEXITCODE -ne 0) { throw 'Privilege tests failed.' }
     Get-FileHash -LiteralPath $library -Algorithm SHA256 | Select-Object Path, Hash
     exit 0
 }
@@ -108,7 +113,7 @@ if ($Mode -eq 'CheckLoader') {
 }
 # Load only observation functions before consuming the new attempt guard.
 Import-Module (Join-Path $PSScriptRoot 'windows_process_observation.psm1') -ErrorAction Stop
-$attempt = [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); approved = $true; assembly_sha256 = $actual; build = $Build; command_chars = $arguments.Length; phase = 'before-uac'; account = 'BantoS4Publisher'; root = 'C:\ProgramData\BantoAI-S4B2-principal-20260915d'; observer_wait_ms = 45000; api = 'System.Diagnostics.Process.Start(ProcessStartInfo)' }
+$attempt = [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); approved = $true; assembly_sha256 = $actual; build = $Build; command_chars = $arguments.Length; phase = 'before-uac'; account = 'BantoS4Publisher'; root = 'C:\ProgramData\BantoAI-S4B2-principal-20260915e'; observer_wait_ms = 45000; api = 'System.Diagnostics.Process.Start(ProcessStartInfo)' }
 $record = [IO.File]::Open($attemptFile, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
 try { $data = [Text.Encoding]::UTF8.GetBytes(($attempt | ConvertTo-Json)); $record.Write($data, 0, $data.Length); $record.Flush($true) } finally { $record.Dispose() }
 # The already-tested observer is shared with the configuration-free diagnostic.
