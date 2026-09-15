@@ -65,3 +65,8 @@ formal_permission/execution_authenticated/protected_commit_allowed=false、accep
 
 最新は[引継書113節](anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)と[準備h結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-h-2026-09-16.md)。fの初期検査停止を受けgで固定診断を追加し、SACL/auto flags差を観測した。hではS:PAIを明示し、初期の全SDDL厳密比較、disabled account作成/Users確認、最終DACL設定まで通過。phase11の最終検査で停止し、具体的な条件は未特定。
 P SID S-1-5-21-2169670816-255940906-2713565042-1010、flags0x203、Usersのみを終了後SAMで確認。Pをenable/reset/logonしていない。旧8 rootは全て閉鎖し、次は既存の無効Pを変更しない新規準備経路を設計する。71件pass/独立指摘0。環境準備/隔離/正式受入は未完了、全許可flags=falseを維持する。
+
+## 2026-09-16 専用環境の準備完了
+
+最新は[引継書114節](anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)と[準備j結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-j-2026-09-16.md)。既存無効P専用経路でaccount変更APIを除去し、iで最終DACL比較の差を観測。jは最終D:PAI/S:PAIを厳密照合し、receipt/特権復元/close/watchdogまでexit0で終了した。成功後の既知receiptとSAMも検証済み。P SID末尾1010/flags0x203/Usersのみ、enable/logonなし。
+jは保存された準備済み環境、旧9 rootは閉鎖、作成guardは全て消費済み。78件pass/独立指摘0。専用環境準備のみ完了し、P-U process/token/IPC/干渉、全publisher/正式受入は未完了。全許可flags=falseを維持する。

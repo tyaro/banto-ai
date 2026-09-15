@@ -3314,3 +3314,21 @@ h最終manifest23372 bytes/hash0540df3b7945f65f7e6a641af7c0f96bb79f4694d7f31a138
 次は、既存の無効Pを変更せず使う新規root準備経路を設計する。name/SID/flags/Usersを通常側とhelper側で固定検査し、NetUserAdd/所属追加/reset/enable/logonを呼ばない専用経路が候補。Pへの権限は新規rootのreadonly ACEのみ。新規失敗枠でphase11の停止substepを返し、現rootやaccountの削除・補償で解決しない。DACL auto flagsの差は仮説であり、実観測前に最終SDDL条件を緩めない。設計・故障試験・独立レビュー・savepoint後に新規管理者実行へ進む。
 最終RAM4387188736/C149664280576/D198225702912 bytes、D約184.61GiB。PC全体の変動原因や長期リーク不在は未確認。OS26200.9445/boot2026-09-15T14:30:24.5000000+09:00、Windows Update engineering緩和/正式pin不変。既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。新runtime/service/task/VM/profile、push/merge/CIなし。独立レビューは既存1体に差分限定、進捗ポーリングなし。
 環境準備/P activation/reset/logon/disable、protected code/process/thread/token/IPC、P-U/namespace共通期間/全publisher/frozen/marker/正式B2-S4未完了。全許可flags=false、acceptance_status=not_completed。
+
+## 114. 2026-09-16 既存P維持経路・専用環境準備j成功
+
+092fb4b7b83e2467b2f26b4258a30ecd94c8b682で[既存P専用i](../anomaly-v03-principal-setup-i-design.md)を実装。ExistingEntryはphase6/8を省く20phase、作成/所属変更/RNGの実装とimportを削除。phase3でP name/SID末尾1010/flags0x203/Usersを固定照会し、新規root不存在だけ確認して進む。phase7/9/11でも再検査。phase11へ固定step診断を拡張し、77件pass/独立0。
+[i結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-i-2026-09-16.md)はPID31244/exit537602628/phase11 kind1 step10差68(DACL4+auto64)。終了/observer解放確認、SAMのP無効/Users不変。iへ再訪せず閉鎖した。最終manifest24200 bytes/hash3bde24e28de4a1c0076c0ebf0e5826577179fe3217ac4864f4f82ad3a47b2524、11 artifacts/論理90815 bytes。iの差からAI/ARや実ACEの一致を遡って断定しない。
+
+1f253cc4fa984462a3d0bf7d4e66d23d230eaf56で[新規j](../anomaly-v03-principal-setup-j-design.md)の最終要求をD:PAIへ限定変更。初期D:P/S:PAIは不変、最終descriptor binary差は0x0400のみで全権限/両protectedを維持。50＋15＋launcher13の78件pass、独立指摘0、safety/diff pass。通常load-only PID20772/exit0/command17271文字。DLL26112 bytes/hash4d6b2fa835176986faa4791a62865144451fd4a6b6823dc95a711a5b9a34be25。
+107 source（前回103不変/3変更/新規1）と旧i11 artifacts不変。直前SAM固定条件/root error2確認、input21338 bytes/hash5fe087c324fa68b2882908c3d3bced0b4d01f7c780a9dbadd466850e4ee92b17。
+[j成功結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-j-2026-09-16.md)。UTC2026-09-15T15:44:08.8914053Z〜15:44:17.7382677Z、PID3284/exit0、launch4125/wait4680/total8841ms。Handle/終了/observer解放確認、例外なし。初期/最終の厳密policy、receipt write/flush、child/root/ancestor/token close、元の特権有効bit復元・再照会、watchdog終了まで完了。
+
+**準備済みroot C:\ProgramData\BantoAI-S4B2-principal-20260916j を保存。旧末尾なし/b/c/d/e/f/g/h/iの9 rootは閉鎖し、存在確認/再open/列挙/hash/copy/deleteしない。jも作成guard消費済みでRun再使用不可。** 成功後だけjの既知bootstrap-result.jsonを有界読取・publicへコピーして確認。1128 bytes/hashf736744e7870f492f6913cba9476327246d0b82babc5a9f198ec6e58224a06d4、state=prepared-preclose、account作成/変更/logon=false。receipt単体ではなくexit0と組み合わせて正常終了を認定した。
+root identity部分はtaBg2tdg2iouDAAAAABPAAAAAAAAAAAA（24 bytes）。実SDDLはO:BAG:BAD:PAI、SY/BA full、U SID末尾1001とP SID末尾1010各0x1200a9、S:PAI(ML;;NW;;;ME)。完全な文字列は結果書/public receiptに保存。取得範囲0x17はowner/group/DACL/mandatory labelで、全audit SACLや将来不変性の認定ではない。
+終了後UTC15:45:24、P BantoS4Publisher/S-1-5-21-2169670816-255940906-2713565042-1010/flags515/disabled、Usersだけ（SAM/group/status/free全0、read=total1）。今回accountの作成/変更/reset/enable/logonなし。
+
+成功verification953 bytes/hash1d70cd4dd4ab95a2be7a472a4506a51554548920357185ff4d6eb521826a6eb2、最終manifest26606 bytes/hash03a60920912a2157ea3183f2645829a2f0211dbc4a42c736c37cd2b11c4b3afe、13 artifacts/論理93657 bytes（自身除外）。107 source/inputartifact不変、本流889cfc3/clean。既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。
+preclose記録elapsed148ms、観測peak private63029248/working73957376 bytes、minimum RAM5974740992/C149730889728。process全寿命の厳密peakや長期リーク不在ではない。最終RAM6247051264/C149730881536/D198225158144 bytes、D約184.61GiB。OS26200.9445/boot2026-09-15T14:30:24.5000000+09:00、Windows Update engineering緩和/正式pin不変。新runtime/service/task/VM/profile、push/merge/CIなし。独立レビューは既存1体へ差分限定、進捗ポーリングなし。
+
+**専用principal環境の準備は完了。** 次はprincipal境界案の保護code/runtime、B/P/U process/thread/tokenの初期SDと起動経路、IPC/所有台帳、単回有効化/ログオン/再無効化と全process終了を具体化して故障試験する。準備済みP/rootを再作成せず、現在のPを有効化して試す前にこの残件の実装・レビューを済ませる。P-U干渉/namespace共通期間/全publisher/frozen/marker/正式B2-S4は未完了。全許可flags=false、acceptance_status=not_completed。
