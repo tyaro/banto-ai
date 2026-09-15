@@ -2,6 +2,8 @@
 
 通常権限・単一writerで計算済みの小さな結果を保存するAPIは、[通常権限での結果保存](../../docs/anomaly-v03-local-publication.md)を参照してください。実行ごとに新しい保存先を使い、上書き・重複使用を拒否し、完了印と内容を確認してから読み取ります。専用アカウントは使わず、正式v0.3 campaignの受入gateは変更しません。
 
+保存済みv0.3形式の観測から候補1つのスコアを計算して保存するコマンドは、[ローカルスコア計算](../../docs/anomaly-v03-local-preview.md)を参照してください。`preview_anomaly_v03.py run` と `verify` で計算・保存・再計算確認を行い、入力不足や利用不能な値も結果へ残します。
+
 `tools/data-generator/generate.py`で合成データを作成し、`check_quality.py`で品質gateを通した後、次の順で評価します。
 
 ```text

@@ -20,7 +20,7 @@ from . import anomaly_v03 as v
 
 __all__ = ["Observation", "PhaseState", "ProfileSet", "quantize_observation",
            "decode_saved_observations", "advance_phase", "exclusion_tags",
-           "fit_profiles", "score_test"]
+           "fit_profiles", "score_test", "preview_saved_observations"]
 
 
 def quantize_observation(value):
@@ -248,8 +248,12 @@ def fit_profiles(identity: dict, raw: bytes, *, expected_sha256: str) -> Profile
     suffice numerically. A runner must not treat such diagnostics as acceptance.
     """
     v.validate_identity(identity)
+    profiles, issues = _fit_profile_values(identity["candidate_id"], raw, expected_sha256=expected_sha256)
+    return ProfileSet(v.canonical_json(identity), profiles, issues)
+
+
+def _fit_profile_values(candidate: str, raw: bytes, *, expected_sha256: str):
     observations = decode_saved_observations(raw, expected_sha256=expected_sha256)
-    candidate = identity["candidate_id"]
     phased = [x for x in _phased(observations) if _sample(x[0]) < 7200]
     issues, by_mode = [], {}
     coordinates = {(row.equipment, _sample(row)) for row, _, _ in phased}
@@ -315,7 +319,7 @@ def fit_profiles(identity: dict, raw: bytes, *, expected_sha256: str) -> Profile
                     profiles[i] = replace(profile, calibration_samples=tuple(samples), reason=str(exc) if isinstance(exc, n.NumericalInconclusive) else "nonfinite")
             modes[mode] = profiles
         result.extend(modes[mode][i] for i in range(4) for mode in c.MODES)
-    return ProfileSet(v.canonical_json(identity), tuple(result), tuple(sorted(set(issues))))
+    return tuple(result), tuple(sorted(set(issues)))
 
 
 def score_test(profiles: ProfileSet, raw: bytes, *, expected_sha256: str) -> list[dict]:
@@ -329,10 +333,14 @@ def score_test(profiles: ProfileSet, raw: bytes, *, expected_sha256: str) -> lis
     v.require(type(profiles) is ProfileSet, "locked ProfileSet required")
     identity = v.strict_json(profiles.identity_json)
     v.validate_identity(identity)
+    return _score_profile_values(identity["candidate_id"], profiles.profiles, raw,
+                                 expected_sha256=expected_sha256, identity=identity)
+
+
+def _score_profile_values(candidate, profiles, raw, *, expected_sha256, identity=None):
     observations = decode_saved_observations(raw, expected_sha256=expected_sha256)
-    candidate = identity["candidate_id"]
-    bank = {(p.equipment, p.mode, p.target): p for p in profiles.profiles}
-    v.require(len(bank) == len(profiles.profiles) == 48, "profile inventory incomplete")
+    bank = {(p.equipment, p.mode, p.target): p for p in profiles}
+    v.require(len(bank) == len(profiles) == 48, "profile inventory incomplete")
     scores = []
     for row, previous, phase in _phased(observations):
         sample = _sample(row)
@@ -357,11 +365,34 @@ def score_test(profiles: ProfileSet, raw: bytes, *, expected_sha256: str) -> lis
                         dependencies.append({"full_target": row.equipment+"."+c.TARGETS[j], "sample": _sample(obs),
                                              "timestamp_ms": obs.timestamp_ms, "quality": obs.quality[j], "value": obs.values[j]})
             exceeded = score is not None and score > (4.0 if candidate == c.CANDIDATES[0] else 6.0)
-            scores.append({"score_id": f'{identity["evaluation_id"]}-score-{row.equipment}-{c.TARGETS[i]}-{sample:04d}',
-                           "dataset_id": identity["dataset_id"], "candidate_id": candidate, "sample": sample,
+            record = {"candidate_id": candidate, "sample": sample,
                            "timestamp_ms": row.timestamp_ms, "phase": phase, "equipment": row.equipment,
                            "full_target": row.equipment+"."+c.TARGETS[i], "mode": row.mode, "recipe": row.recipe,
-                           "profile_id": profile.identifier(identity), "dependencies": dependencies,
+                           "dependencies": dependencies,
                            "residual": residual, "score": score, "available": not tags, "exclusion_reason": tags[0] if tags else None,
-                           "exclusion_tags": tags, "threshold_exceeded": exceeded, "streak": int(exceeded), "source_episode_id": None})
+                           "exclusion_tags": tags, "threshold_exceeded": exceeded, "streak": int(exceeded), "source_episode_id": None}
+            if identity is not None:
+                record.update(score_id=f'{identity["evaluation_id"]}-score-{row.equipment}-{c.TARGETS[i]}-{sample:04d}',
+                              dataset_id=identity["dataset_id"], profile_id=profile.identifier(identity))
+            scores.append(record)
     return scores
+
+
+def preview_saved_observations(candidate: str, raw: bytes, *, expected_sha256: str) -> dict:
+    """Reuse S2 arithmetic for local input, without assigning campaign identities.
+
+    Partial captures retain their prefix issues and unavailable scores. This is
+    an instantaneous score preview, not episode detection or performance review.
+    """
+    v.require(type(candidate) is str and candidate in c.CANDIDATES, "unknown candidate")
+    profiles, issues = _fit_profile_values(candidate, raw, expected_sha256=expected_sha256)
+    scores = _score_profile_values(candidate, profiles, raw, expected_sha256=expected_sha256)
+    # Dependency, streak and episode fields belong to the full evaluation path.
+    for row in scores:
+        for field in ("dependencies", "streak", "source_episode_id"):
+            del row[field]
+    return {"normal_prefix_issues": list(issues), "scores": scores, "profiles": [
+        {"equipment": p.equipment, "full_target": p.equipment+"."+c.TARGETS[p.target], "mode": p.mode,
+         "status": p.status, "reason": p.reason, "fit_points": len(p.fit_samples),
+         "calibration_points": len(p.calibration_samples), "center": p.center, "scale": p.scale}
+        for p in profiles]}
