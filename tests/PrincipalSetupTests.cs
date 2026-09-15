@@ -151,6 +151,80 @@ public static class PrincipalSetupTests
                 FaultBackend backend = new FaultBackend(); backend.State = state; backend.Fault = Phase.StopWatchdog; backend.Error = caught;
                 Assert(calls == 1 && new Sequence().Run(backend) == (0x40000000 | ((int)Phase.StopWatchdog << 16) | 8), "terminal release status");
             });
+            Test("all initial inspection substeps retain phase and unknown exception classification", delegate()
+            {
+                foreach (InspectionStep step in Enum.GetValues(typeof(InspectionStep)))
+                {
+                    if (step == InspectionStep.None) continue;
+                    FaultBackend backend = new FaultBackend(); backend.Fault = Phase.InspectInitialRoot;
+                    backend.Error = new InvalidOperationException("do not disclose"); backend.State.InspectionStep = step;
+                    int code = new Sequence().Run(backend);
+                    Assert(code == (InspectionFailure.Marker | (5 << 16) | (1 << 13) | ((int)step << 8)), "substep encoding");
+                    Assert(backend.Calls.Count == 5, "no calls after inspection failure");
+                }
+            });
+            Test("inspection exception kinds are bounded and preserve unknown native classification", delegate()
+            {
+                FailureState state = new FailureState(); state.InspectionStep = InspectionStep.RootIdentity;
+                Exception[] errors = { new Exception(), new InvalidOperationException(), new OutOfMemoryException(), new Win32Exception(65535), state.ReleaseStop };
+                for (int i = 0; i < errors.Length; i++)
+                    Assert(((InspectionFailure.Encode(Phase.InspectInitialRoot, 65535, errors[i], state) >> 13) & 7) == i, "kind");
+            });
+            Test("known native errors and noninitial failures preserve legacy encoding", delegate()
+            {
+                FailureState state = new FailureState(); Exception error = new Win32Exception(5);
+                Assert(InspectionFailure.Encode(Phase.InspectInitialRoot, 65535, error, state) == ((5 << 16) | 65535), "no stale observation");
+                state.InspectionStep = InspectionStep.ExactPolicyComparison;
+                Assert(InspectionFailure.Encode(Phase.InspectInitialRoot, 5, error, state) == ((5 << 16) | 5), "native error");
+                Assert(InspectionFailure.Encode(Phase.InspectFinalRoot, 65535, error, state) == ((11 << 16) | 65535), "other phase");
+            });
+            Test("secondary release flag survives diagnostic encoding without cleanup", delegate()
+            {
+                FaultBackend backend = new FaultBackend(); backend.Fault = Phase.InspectInitialRoot;
+                backend.Error = new InvalidOperationException(); backend.State.InspectionStep = InspectionStep.ExactPolicyComparison;
+                backend.State.PolicyDifference = 40; backend.State.ReleaseFailed = true; backend.State.ReleaseError = 8;
+                int code = new Sequence().Run(backend);
+                Assert(code == (0x60000000 | (5 << 16) | (1 << 13) | (10 << 8) | 40), "release and diagnostic fields");
+                Assert(backend.Calls.Count == 5, "no cleanup");
+            });
+            Test("policy comparison separates owner group and exact match", delegate()
+            {
+                string expected = Policy.Descriptor(null);
+                Assert(InspectionFailure.ComparePolicy(expected, expected) == 0, "equal");
+                Assert(InspectionFailure.ComparePolicy(expected.Replace("O:BA", "O:SY"), expected) == 1, "owner");
+                Assert(InspectionFailure.ComparePolicy(expected.Replace("G:BA", "G:SY"), expected) == 2, "group");
+            });
+            Test("policy comparison retains DACL rights inheritance and protection differences", delegate()
+            {
+                string expected = Policy.Descriptor(null);
+                foreach (string actual in new string[] { expected.Replace("0x1200a9", "FA"), expected.Replace("(A;;FA;;;SY)", "(A;OI;FA;;;SY)"), expected.Replace("D:P", "D:") })
+                    Assert((InspectionFailure.ComparePolicy(actual, expected) & 4) != 0, "DACL difference");
+                Assert(InspectionFailure.ComparePolicy(expected.Replace("D:P", "D:"), expected) == 20, "DACL protection");
+                Assert(InspectionFailure.ComparePolicy(expected.Replace("D:P", "D:PAI"), expected) == 68, "DACL auto flag");
+            });
+            Test("policy comparison retains label and SACL control differences", delegate()
+            {
+                string expected = Policy.Descriptor(null);
+                Assert(InspectionFailure.ComparePolicy(expected.Replace("S:P", "S:"), expected) == 40, "SACL protection");
+                Assert(InspectionFailure.ComparePolicy(expected.Replace("S:P", "S:PAI"), expected) == 136, "SACL auto flag");
+                Assert(InspectionFailure.ComparePolicy(expected.Replace(";;;ME)", ";;;HI)"), expected) == 8, "label level");
+                Assert(InspectionFailure.ComparePolicy(expected.Replace("ML;;NW", "ML;;NR"), expected) == 8, "label mask");
+            });
+            Test("tagged exception path never accesses Exception Data", delegate()
+            {
+                HostileDataException error = new HostileDataException(); FailureState state = new FailureState();
+                state.InspectionStep = InspectionStep.ActualPolicy;
+                int code = InspectionFailure.Encode(Phase.InspectInitialRoot, 65535, error, state);
+                Assert(error.DataReads == 0 && ((code >> 13) & 7) == 3, "no exception metadata allocations");
+            });
+            Test("diagnostic failure remains single use with no account continuation", delegate()
+            {
+                FaultBackend backend = new FaultBackend(); backend.Fault = Phase.InspectInitialRoot;
+                backend.Error = new OutOfMemoryException(); backend.State.InspectionStep = InspectionStep.CompareDetails;
+                Sequence sequence = new Sequence(); sequence.Run(backend);
+                bool rejected = false; try { sequence.Run(backend); } catch (InvalidOperationException) { rejected = true; }
+                Assert(rejected && backend.Calls.Count == 5 && !backend.Calls.Contains(Phase.CreateDisabledAccount), "terminal");
+            });
             Console.WriteLine("RESULT " + count + " passed; OS mutations=0"); return 0;
         }
         catch (Exception error) { Console.WriteLine("FAIL " + error); return 1; }

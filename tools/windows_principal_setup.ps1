@@ -20,8 +20,25 @@ function Get-SetupLaunchFailure {
     # Do not log Message/InvocationInfo/command text; they may contain arbitrary input.
     return [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); launch_failed = $true; failure_stage = $Stage; process_id = $OwnedProcessId; exception_chain = $chain; chain_truncated = ($null -ne $current); no_retry = $true }
 }
+function Get-SetupExitDetails {
+    param([int]$Code)
+    $marked = ($Code -band 0x20000000) -ne 0
+    $phase = if ($Code -ge 65536) { ($Code -shr 16) -band 8191 } else { $null }
+    $detail = if ($Code -ge 65536 -and -not $marked) { $Code -band 65535 } else { $null }
+    $inspection = $null
+    if ($marked) {
+        $step = ($Code -shr 8) -band 31
+        $kind = ($Code -shr 13) -band 7
+        $names = @('none','budget','volume-pin','parent-pin','volume-peer-access','parent-peer-access','root-identity','actual-policy','expected-policy','compare-details','exact-policy-comparison')
+        $valid = $phase -eq 5 -and $step -ge 1 -and $step -lt $names.Count -and $kind -le 4
+        $inspection = [ordered]@{ encoding_valid = $valid; step_id = $step; exception_kind = $kind; policy_difference_mask = ($Code -band 255); original_unknown_detail = 65535 }
+        if ($valid) { $inspection.step = $names[$step] }
+        $inspection.policy_difference_available = $valid -and $step -eq 10
+    }
+    return [ordered]@{ phase_number = $phase; native_detail = $detail; release_failed = (($Code -band 0x40000000) -ne 0); inspection_failure = $inspection }
+}
 $project = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$artifacts = Join-Path $project 'artifacts/principal-setup-f-2026-09-15'
+$artifacts = Join-Path $project 'artifacts/principal-setup-g-2026-09-16'
 $library = Join-Path $artifacts "PrincipalSetup-$Build.dll"
 $tests = Join-Path $artifacts "PrincipalSetupTests-$Build.exe"
 $privilegeTests = Join-Path $artifacts "PrincipalPrivilegeTests-$Build.exe"
@@ -113,7 +130,7 @@ if ($Mode -eq 'CheckLoader') {
 }
 # Load only observation functions before consuming the new attempt guard.
 Import-Module (Join-Path $PSScriptRoot 'windows_process_observation.psm1') -ErrorAction Stop
-$attempt = [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); approved = $true; assembly_sha256 = $actual; build = $Build; command_chars = $arguments.Length; phase = 'before-uac'; account = 'BantoS4Publisher'; root = 'C:\ProgramData\BantoAI-S4B2-principal-20260915f'; observer_wait_ms = 45000; api = 'System.Diagnostics.Process.Start(ProcessStartInfo)' }
+$attempt = [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); approved = $true; assembly_sha256 = $actual; build = $Build; command_chars = $arguments.Length; phase = 'before-uac'; account = 'BantoS4Publisher'; root = 'C:\ProgramData\BantoAI-S4B2-principal-20260916g'; observer_wait_ms = 45000; api = 'System.Diagnostics.Process.Start(ProcessStartInfo)' }
 $record = [IO.File]::Open($attemptFile, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
 try { $data = [Text.Encoding]::UTF8.GetBytes(($attempt | ConvertTo-Json)); $record.Write($data, 0, $data.Length); $record.Flush($true) } finally { $record.Dispose() }
 # The already-tested observer is shared with the configuration-free diagnostic.
@@ -135,12 +152,10 @@ $result.os_configuration_change_status = 'unknown-until-success-verification'
 $result.phase_number = $null
 $result.native_detail = $null
 $result.release_failed = $null
+$result.inspection_failure = $null
 if ($result.exit_observed) {
-    $result.release_failed = ($result.exit_code -band 0x40000000) -ne 0
-    if ($result.exit_code -ge 65536) {
-        $result.phase_number = ($result.exit_code -shr 16) -band 16383
-        $result.native_detail = $result.exit_code -band 65535
-    }
+    $decoded = Get-SetupExitDetails -Code $result.exit_code
+    foreach ($key in $decoded.Keys) { $result[$key] = $decoded[$key] }
 }
 $result.observer_termination_attempted = $false
 $result.setup_exit_success = $result.expected_probe_result -and $null -eq $result.failure -and $null -eq $result.dispose_failure

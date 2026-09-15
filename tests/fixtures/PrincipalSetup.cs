@@ -23,9 +23,60 @@ namespace Banto.PrincipalSetup
     }
     public sealed class FailureState
     {
+        public InspectionStep InspectionStep;
+        public byte PolicyDifference;
         public bool ReleaseFailed;
         public uint ReleaseError;
         public readonly Exception ReleaseStop = new InvalidOperationException("native memory release failed");
+    }
+    public enum InspectionStep
+    {
+        None = 0, Budget, VolumePin, ParentPin, VolumePeerAccess, ParentPeerAccess,
+        RootIdentity, ActualPolicy, ExpectedPolicy, CompareDetails, ExactPolicyComparison
+    }
+    public static class InspectionFailure
+    {
+        public const int Marker = 0x20000000;
+        // This refines only phase 5's otherwise-unknown detail. No exception text or new OS calls.
+        public static int Encode(Phase phase, int detail, Exception error, FailureState state)
+        {
+            int release = state.ReleaseFailed ? 0x40000000 : 0;
+            if (phase != Phase.InspectInitialRoot || detail != 65535 || state.InspectionStep == InspectionStep.None)
+                return ((int)phase << 16) | detail | release;
+            int kind = Object.ReferenceEquals(error, state.ReleaseStop) ? 4 :
+                error is Win32Exception ? 3 : error is OutOfMemoryException ? 2 :
+                error is InvalidOperationException ? 1 : 0;
+            return Marker | ((int)phase << 16) | (kind << 13) |
+                ((int)state.InspectionStep << 8) | state.PolicyDifference | release;
+        }
+        public static byte ComparePolicy(string actual, string expected)
+        {
+            RawSecurityDescriptor a = new RawSecurityDescriptor(actual), e = new RawSecurityDescriptor(expected);
+            int difference = 0;
+            AccessControlSections[] sections = { AccessControlSections.Owner, AccessControlSections.Group,
+                AccessControlSections.Access, AccessControlSections.Audit };
+            for (int i = 0; i < sections.Length; i++)
+                if (a.GetSddlForm(sections[i]) != e.GetSddlForm(sections[i])) difference |= 1 << i;
+            // GetSddlForm(Audit) omits mandatory-label ACEs on this runtime.
+            // Compare the raw ACL bytes as well so label SID/mask/order cannot disappear.
+            if (!SameAcl(a.DiscretionaryAcl, e.DiscretionaryAcl)) difference |= 4;
+            if (!SameAcl(a.SystemAcl, e.SystemAcl)) difference |= 8;
+            ControlFlags changed = a.ControlFlags ^ e.ControlFlags;
+            if ((changed & ControlFlags.DiscretionaryAclProtected) != 0) difference |= 16;
+            if ((changed & ControlFlags.SystemAclProtected) != 0) difference |= 32;
+            if ((changed & (ControlFlags.DiscretionaryAclAutoInherited | ControlFlags.DiscretionaryAclAutoInheritRequired)) != 0) difference |= 64;
+            if ((changed & (ControlFlags.SystemAclAutoInherited | ControlFlags.SystemAclAutoInheritRequired)) != 0) difference |= 128;
+            return (byte)difference;
+        }
+        private static bool SameAcl(RawAcl a, RawAcl b)
+        {
+            if (a == null || b == null) return a == b;
+            if (a.BinaryLength != b.BinaryLength) return false;
+            byte[] first = new byte[a.BinaryLength], second = new byte[b.BinaryLength];
+            a.GetBinaryForm(first, 0); b.GetBinaryForm(second, 0);
+            for (int i = 0; i < first.Length; i++) if (first[i] != second[i]) return false;
+            return true;
+        }
     }
     public interface IBackend { FailureState Failure { get; } void Execute(Phase phase); }
     public sealed class Sequence
@@ -54,7 +105,7 @@ namespace Banto.PrincipalSetup
                 int detail = Object.ReferenceEquals(error, failure.ReleaseStop) ? unchecked((int)failure.ReleaseError) :
                     native == null ? 65535 : native.NativeErrorCode;
                 if (detail <= 0 || detail > 65534) detail = 65535;
-                return ((int)Current << 16) | detail | (failure.ReleaseFailed ? 0x40000000 : 0);
+                return InspectionFailure.Encode(Current, detail, error, failure);
             }
         }
     }
@@ -171,7 +222,7 @@ namespace Banto.PrincipalSetup
     public static class Policy
     {
         public const string Account = "BantoS4Publisher";
-        public const string Root = @"C:\ProgramData\BantoAI-S4B2-principal-20260915f";
+        public const string Root = @"C:\ProgramData\BantoAI-S4B2-principal-20260916g";
         public const string Peer = "S-1-5-21-2169670816-255940906-2713565042-1001";
         public const string Users = "S-1-5-32-545";
         public const uint DisabledNormalFlags = 0x203;
@@ -216,6 +267,8 @@ namespace Banto.PrincipalSetup
 
         public void Execute(Phase phase)
         {
+            failure.InspectionStep = phase == Phase.InspectInitialRoot ? InspectionStep.Budget : InspectionStep.None;
+            failure.PolicyDifference = 0;
             if (phase != Phase.Preflight) Budget();
             if (phase >= Phase.CheckAbsent && phase <= Phase.CloseRoot) CheckAncestors();
             switch (phase)
@@ -232,6 +285,7 @@ namespace Banto.PrincipalSetup
                     root = Native.CreateDirectory2W(Policy.Root, Policy.RootAccess, 1, 1, ref sa);
                     ValidHandle(root); break;
                 case Phase.InspectInitialRoot:
+                    MarkInspection(InspectionStep.RootIdentity);
                     rootPin = Identity(root); VerifyPolicy(root, Policy.Descriptor(null)); break;
                 case Phase.CreateDisabledAccount: CreateAccount(); break;
                 case Phase.InspectAccount: InspectAccount(); break;
@@ -330,8 +384,12 @@ namespace Banto.PrincipalSetup
         }
         private void CheckAncestors()
         {
-            Policy.Require(Pin(volume) == volumePin && Pin(parent) == parentPin, "ancestor identity/policy changed");
-            CheckPeerParent(volume); CheckPeerParent(parent);
+            MarkInspection(InspectionStep.VolumePin);
+            Policy.Require(Pin(volume) == volumePin, "ancestor identity/policy changed");
+            MarkInspection(InspectionStep.ParentPin);
+            Policy.Require(Pin(parent) == parentPin, "ancestor identity/policy changed");
+            MarkInspection(InspectionStep.VolumePeerAccess); CheckPeerParent(volume);
+            MarkInspection(InspectionStep.ParentPeerAccess); CheckPeerParent(parent);
         }
         private string Pin(IntPtr handle)
         { return Identity(handle) + ":" + Security(handle, failure); }
@@ -487,8 +545,22 @@ namespace Banto.PrincipalSetup
             if (!converted) ReleaseGuard.Run<int>(state, delegate { throw new Win32Exception(error); }, delegate { return sd == IntPtr.Zero ? 0 : FreeStatus(sd); });
             return sd;
         }
+        private void MarkInspection(InspectionStep step)
+        { if (failure.InspectionStep != InspectionStep.None) failure.InspectionStep = step; }
         private void VerifyPolicy(IntPtr handle, string expected)
-        { Policy.Require(Security(handle, failure) == Canonical(expected, failure), "exact owner/group/DACL/label policy"); }
+        {
+            MarkInspection(InspectionStep.ActualPolicy);
+            string actual = Security(handle, failure);
+            MarkInspection(InspectionStep.ExpectedPolicy);
+            string canonical = Canonical(expected, failure);
+            if (failure.InspectionStep != InspectionStep.None)
+            {
+                MarkInspection(InspectionStep.CompareDetails);
+                failure.PolicyDifference = InspectionFailure.ComparePolicy(actual, canonical);
+                MarkInspection(InspectionStep.ExactPolicyComparison);
+            }
+            Policy.Require(actual == canonical, "exact owner/group/DACL/label policy");
+        }
         private static void VerifyNonInherit(IntPtr handle)
         { uint flags; Check(Native.GetHandleInformation(handle, out flags)); Policy.Require((flags & 1) == 0, "inheritable handle"); }
         private static void ValidHandle(IntPtr handle)
