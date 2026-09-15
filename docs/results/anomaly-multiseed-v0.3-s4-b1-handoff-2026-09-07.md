@@ -3378,3 +3378,18 @@ input24101 bytes/hasha6f0cf63d0cf944097747b20bad74516b980aa9516207cda7ef774debea
 
 **次は、結果を作る側から通常保存APIへ接続する小さな開発用経路を進める。** 保存APIの作り直しや厳密なprincipal試験を自動再開しない。同じ出力先を並列更新せず、計算結果と保存検査をつなぐ。既存formal campaign entry/科学的評価条件/受入gateは今回未変更で、正式契約への接続は通常保存の成功とは別に扱う。
 local_publication_performed=true。native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed。
+
+## 118. 2026-09-16 保存済み観測のローカル計算CLI・順次再計算検証成功
+
+§116を継続し、**8f42c9e18e533e85afb5e2be0b7b5aede17dcc9f** に結果生成側と通常保存APIの接続を実装。[使い方](../anomaly-v03-local-preview.md) / [結果](anomaly-multiseed-v0.3-local-preview-2026-09-16.md)。`preview_anomaly_v03.py run/verify` が入力snapshot→既存S2計算→4 payload保存→保存済み入力から再計算照合を行う。C0/C1/C2を1候補ずつ扱い、campaign identityを作らない。重複実行名を計算前に拒否し、部分入力の不足理由をinconclusiveとして残す。
+
+新規8件＋通常保存12件＋既存QuantizationAndCaptureTests 10件＝**30件pass**（4.406＋1.562秒）、独立P0〜P3所見0/進捗poll0、safety/diff-check pass。変更前2f5a147のscorerと、代数的14,410行で3候補すべての48 profile全ledger・40行の全score dictionary・ローカル射影が一致（32.230秒）。広い評価module回帰は再実行しない。
+
+実演 `artifacts/local-preview-2026-09-16/results/demo-c0-01` は両設備sample0〜7204の14,410行、motor-01/sample7202のmotor_currentに15を加えた代数的入力。登録seed/データ生成器/性能評価なし。入力7664634 bytes/hashe104d67861c37870af170a3e74aed987f3ba402a04181cf80af9cf1bf252dbc0。
+通常C0 run PID8720/17.546秒/exit0（UTC16:59:06〜23）、writer終了後にverify PID13064/6.467秒/exit0（UTC16:59:23〜30）。computed、48 calibrated、40 score行/利用可能32/不能8/瞬間的閾値超過2、normal-prefix issuesなし。別CLI再計算でlocal_verified=true/payloads4・集計一致。超過2を異常イベント数や性能成功と扱わない。marker hash0dd554fe9f6800dc6bd13f2abb96f1d2dac5d89c4c4b14e45c05ea5b704ddf4f。保存済み実行名は再使用しない。
+
+選抜128 source workspace/Git blob一致（前回116不変/README変更1/新規選抜11）、前回公開8 artifact不変。選抜は完全な依存閉包ではない。input22421 bytes/hasha9a400edb41c1f8026e6ee7d3a0ccdbbc5ccd834a2a73bd50c4de93dd304a6ad。最終manifest31342 bytes/hash93afbcfbd61ab3222addda92812a6dc671fc03b2056694df72c9e244386c908d、自身除外18 artifacts/論理15394076 bytes。
+終了後UTC16:59:57、RAM6084988928/C149202980864/D198223626240 bytes（D約184.6GiB）。入力上限16MiB/18000行はprocess全体のメモリ上限ではなく、長期リーク不在の確認ではない。OS26200.9445/boot2026-09-15T14:30:24.5000000+09:00、Windows Update engineering緩和/正式pin不変。本流889cfc3/clean、既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。
+
+**次は、CLI出力を使う小さな開発用比較・表示へ進む。** 既存decoderの固定capture時刻/設備/canonical入力条件を維持しており、任意の実設備データを直接扱えるとはしない。保存APIの作り直し・厳密なprincipal試験・広い重い評価moduleを自動再開せず、必要な対象試験を選ぶ。§116の旧root閉鎖とj/診断の消費済みguardを維持し、今回専用principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
+local_publication_performed/local_preview_computed=true。native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed。正式campaign entry/科学的評価条件/受入gateは未変更。
