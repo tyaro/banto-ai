@@ -3242,3 +3242,21 @@ UTC03:21:34.6280050Z〜03:21:38.8898553Z、PID26600/exit40/合計4256ms、起動
 最終manifest20428 bytes/hash313d3ac89b1b5d92d803920aee8cf2a4a105cec19151018292fb1149dff8bb0d、11 artifacts/論理38536 bytes。途中checkpoint/inputは上書きせず保全。実装変更なし、既存3ケース/共有13ケース/C#34件は対象不変のため再実行なし。
 UTC03:22:55 RAM9855365120/C130778591232/D202743259136 bytes、D約188.82GiB。build26200.9445/boot不変、Windows Update engineering緩和/正式pin不変。本流889cfc3/clean、既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全しcommit除外。
 次は公開DLLの有界展開/hash/Assembly.Loadだけを管理者側で行う読取専用の新規診断を仕様化・確認・レビュー・保存する。準備bの公開build-01 DLLを使用する場合はSHA4ea7c99167a71c9ba6e26f2d6d3a74ad16226d8209dc3535d19660696440a88aを固定する。準備Entry.Runを呼ばず、新規診断guardを用い、旧Control/Run/準備の再実行やさらに別root作成へ直行しない。質問は回答済みで同じ表示確認を再質問しない。P-U/全期間/全publisher/frozen/marker/B2-S4未完了、全許可flags=false。
+
+## 110. 2026-09-15 公開DLL読込み成功・準備cの停止・token照会長の修正
+
+公開DLL読込み専用診断を64307e50aef7d48902e3a5db76a78d1bec7d377eで保存。[結果](anomaly-multiseed-v0.3-s4-b2-principal-loader-diagnostic-2026-09-15.md)。8ケースpass/独立0。通常Control PID4592/exit41/2980ms、管理者Run PID33600/exit40/6951msで終了・解放を確認。既存b公開DLLを有界読取り/hash照合後にAssembly.Loadし、Entry.Runは呼んでいない。両guard閉鎖。manifest19096 bytes/hash e0698abf81077fcca1828c00534bbb6d0f1814102bbbc41b0109f539465fe2bf、89 source/9 artifacts/論理20661 bytes。
+
+既存許可の範囲で新規準備cを9fec67862b1629193b47bac2f1bcfbcebaa0dfd0に固定。[結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-c-2026-09-15.md)。rootはC:\ProgramData\BantoAI-S4B2-principal-20260915c、記録はartifacts/principal-setup-c-2026-09-15。直接Process.Startを適用し、34件pass/独立0、実行前SAM/root不存在を確認した。
+UTC03:37:25.6325778Z〜03:37:54.4438124Z、PID26584/exit65560（phase1 Preflight＋native24）、起動25947ms/待機2814ms/合計28808ms。今回helper開始・終了・Handle解放を確認。固定コードの順序ではHoldAncestors/root/account作成前に停止したという推論であり、終了後rootの実観測ではない。UTC03:39:29のSAM2221でaccount不存在を確認したが、rootは再確認せず閉鎖した。旧3 rootの存在確認/再open/列挙/hash/copy/delete、作成guard解除・retryなし。
+準備c manifest20120 bytes/hash c6be745af63eb0bc79e5d48170b3fd40f38f8e1d7727e1c56fb438e70a3ead7b、90 source/9 artifacts/論理60750 bytes。現在の準備Runは閉鎖済みc定数/guardのままなので再使用しない。
+
+通常の自process tokenだけを比較する読取診断を79a8ef302016ace8514cce03767aa10419204396で保存。[結果と修正](anomaly-multiseed-v0.3-s4-b2-token-length-2026-09-15.md)。UTC03:51:53、class19/長さ64はerror24/必要8、長さ8は成功、class20/長さ64はerror24/必要4、長さ4は成功/elevation0。成功取得したown/linked handleは解放成功、一次/解放例外なし。UAC・impersonation・Entry・SAM/root操作なし。独立レビューP2一件と結果保持を修正し残0で実施、進捗ポーリングなし。診断guard閉鎖。
+診断manifest18201 bytes/hash7cd7fa72532618593a34421881b786353847c0e8a282dae1312a9e98946900e0、92 source/2 artifacts/論理2195 bytes。source照合は観測後に行った。通常tokenでの結果なので管理者Preflight全体や旧起動障害の原因まで確定しない。
+
+7a2f066ff36e90abe4f88c5103cd2a665bc97c59でPrincipalSetup.csの要求長2行だけをIntPtr.Size/4へ修正。64-byte確保と返却長・所有権・解放・他phaseは維持。独立追加所見0、絶対source pathによる別名build-02で34件pass。最初の相対path compileはCS1504でDLL出力前に停止した。修正buildの管理者Preflight/Entryは未実行。
+artifacts/principal-token-fix-2026-09-15のmanifest17683 bytes/hash1958f45e3c14f41b04e6027a10c057c83460a378aa964ba707798ed6f5efda7b、4 artifacts/論理40531 bytes。92 sourceをGit/raw照合、前回91不変/C#一件変更、前回2 artifacts不変。新規常駐/runtime/service/task/VM/profileなし、閉鎖rootアクセスなし。
+UTC04:24:07 RAM7059361792/C148160946176/D219494100992 bytes、D約204.42GiB。空き増加の原因は今回と関連付けず、長期リーク不在の主張なし。build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和/正式pin不変。本流889cfc3/clean不変、push/merge/CIなし。既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全しcommit除外。
+
+次は修正buildを使う**管理者Preflight専用**の新規読取診断を仕様化・確認する。root/account作成phaseやEntry.Runを呼ばず、取得tokenと自己watchdogを終了まで管理する。新規guardを使用し、旧root/guardは再使用しない。NativeBackend.Execute(Preflight)だけを呼んで終了管理を省略してはいけない。この事前確認が通ってから次の新規環境準備を具体化する。専用環境準備の許可は継続、UAC表示は回答済みで再質問不要。
+環境準備/P-U/IPC/namespace共通期間/全publisher/frozen/marker/正式B2-S4は未完了。isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed。

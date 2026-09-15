@@ -20,3 +20,8 @@ UTC03:51:53.7950481Zに完了。class19で成功取得したlinked handleとown 
 
 次は修正buildのPreflightだけを管理者側で実行し、取得tokenと自己watchdogを終了まで管理する新規の読取専用診断を仕様化・確認する。root/account作成phaseを呼ばず、旧guardや閉鎖対象に触れない。これを確認してから次の新規環境準備を具体化する。既存環境準備の許可は継続し、再承認やUAC表示状況の再質問は不要。
 環境準備/P-U/IPC/namespace全期間/全publisher/frozen/marker/正式B2-S4は未完了。全許可flags=false、acceptance_status=not_completed。
+
+修正保存revision **7a2f066ff36e90abe4f88c5103cd2a665bc97c59**。前回92 source中、PrincipalSetup.csだけ変更、残91不変。全92を修正revisionのGit blob/rawと照合し、前回manifest/2 artifacts不変も確認した。
+修正artifactは4件/論理40531 bytes。最終manifestは17683 bytes/SHA256 **1958f45e3c14f41b04e6027a10c057c83460a378aa964ba707798ed6f5efda7b**（集計外）。
+UTC04:24:07の空きRAM7059361792/C148160946176/D219494100992 bytes。D約204.42GiB。空き容量増加の原因は今回の作業と関連付けない。点観測から長期リーク不在は判断しない。
+build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineering緩和/正式pin不変。本流889cfc3/cleanを維持。既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全しcommitから除外した。

@@ -43,3 +43,10 @@ build26200.9445/boot2026-09-09T10:43:08.5000000+09:00を記録。Windows Update 
 旧batch/B1・失敗sourceへの操作、push/merge/CI、別project、新account/service/runtimeの追加なし。本流889cfc3不変。
 親全保護、marker/全publisher、独立token/native競合、consumer/runtime closure、正式OS整合/VM digest、B2/S4受入は未完了。
 formal_permission/execution_authenticated/protected_commit_allowed=false、acceptance_status=not_completedを維持する。
+
+## 2026-09-15 権限分離準備の現状
+
+後続作業の最新状態は[引継書110節](anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)と[長さ不具合の結果](anomaly-multiseed-v0.3-s4-b2-token-length-2026-09-15.md)を参照する。
+通常/管理者で公開DLLの読み込みに成功。新規準備cはPreflightのerror24で終了し、固定コード上はroot/account作成phaseへ到達していない。終了後SAM2221でaccount不存在を確認したが、rootの再確認はしていない。末尾なし/b/cの3 rootと各guardを閉鎖し、再訪・再実行しない。
+通常の自token4条件で64-byte指定の失敗、8/4-byte指定の成功を観測した。7a2f066で2行修正、34件pass/独立所見0。修正後の管理者Preflight全体は未確認なので、環境準備完了やP/U隔離の根拠にはしない。次は作成phaseを含まない新規の管理者Preflight専用診断を仕様化し、token/watchdogの終了まで確認する。
+専用環境準備の既存許可は継続。正式受入条件は緩和せず、全許可flags=false、acceptance_status=not_completed。
