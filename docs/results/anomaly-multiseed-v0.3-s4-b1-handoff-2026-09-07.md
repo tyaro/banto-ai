@@ -3297,3 +3297,20 @@ e23564c43e7a3c50101c07e38b9c4da052be4c38で[準備e](../anomaly-v03-principal-se
 最終UTC08:40:41 RAM13034573824/C144674852864/D204764569600 bytes、D約190.70GiB。開始08:26:44 D211023683584からのPC全体の変動原因は未確認で、今回の小規模出力と区別する。長期リーク不在の主張なし。build26200.9445、bootは**2026-09-15T14:30:24.5000000+09:00**へ変化（前回9/9起動、原因未確認）。Windows Update engineering緩和/正式pin不変を維持する。
 本流889cfc3/clean、既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。新runtime/service/task/VM/profile、push/merge/CIなし。独立レビューは既存1体へ差分限定、進捗ポーリングなし。
 環境準備、P activation/reset/logon/disable、protected code/process/thread/token/IPC、P/U、namespace共通期間/全publisher/frozen/marker/正式B2-S4は未完了。全許可flags=false、acceptance_status=not_completed。
+
+## 113. 2026-09-16 初期policy通過・無効P作成・最終検査の診断待ち
+
+2026-09-16 JSTの「次に進めてください」で再開した。管理者画面操作への回答待ちは今回の再開指示と実際の起動成功で解消。c8c4a36の準備fはsource103/ready6/旧e公開artifact10の不変と不存在を確認後、一度実行。PID12448/exit393215、phase5/detail65535、終了・observer解放確認。後続SAM2221/free0、f rootへ再訪せず閉鎖。[f結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-f-2026-09-16.md)。最終manifest22508 bytes/hash541dfa7c139626693e011668f2ea32f52a1a73f83c687815c952c1866abd0553、12 artifacts/論理97805 bytes。
+
+5fe02878bd75911a56878406f081db8c28bc08a6で[固定診断g](../anomaly-v03-principal-setup-g-design.md)を保存。phase5のunknownのみbit29で細分化し、事前確保step/SD差を返す。保護条件・厳密比較・失敗停止を維持。build01でGetSddlForm(Audit)のlabel省略を試験検出、raw ACL比較を加えたbuild02で43＋15＋launcher12件pass/独立0。[g結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-g-2026-09-16.md)はPID10092/exit537209480、phase5/kind1/step10/差136=8+128。初期policyのSACL部分とauto flags差を観測したが、AI/ARやlabel自体の差まで特定せず、fの原因にも遡及しない。後続SAM2221/free0、g閉鎖。最終manifest23630 bytes/hash753f2f440a0f8edfb4b9f43668ca2de736fbb634e25c10dce2f8cf20cda95912、14 artifacts/論理135727 bytes。
+
+aa0bc5e16010e8fd3a61239359ed1f67f41df5faで[新規h](../anomaly-v03-principal-setup-h-design.md)を保存。要求SDDLをS:PAIへ限定変更し、旧descriptorとのbinary差が0x0800だけである試験を追加。owner/group/全ACL bytes、両protectedとmedium/no-write-upを維持し、差の無視はしない。44＋15＋launcher12の71件pass、独立0、safety/diff pass、通常load-only PID11952/exit0/command17859文字。
+採用DLL26624 bytes/hash4b04ed4b32a6e1713cc806804c8532fca22a7e9f32685bf087b4c345b7e93c0f。105 source（前回101不変/3変更/新規1）と旧g14 artifacts不変。直前SAM2221/root error2、input20709 bytes/hash1784e62199d216d66551e0fa7240a44cc2a055f4997507d41b5a31705685bc19。
+[h実行結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-h-2026-09-16.md)。UTC2026-09-15T15:25:59.3588285Z〜15:26:07.5741839Z、PID26248/exit786431=phase11/detail65535、launch3842/wait4330/total8215ms。Handle/終了/observer解放確認、例外なし。初期root厳密検査、disabled account作成、Users確認、最終DACL設定を通過。phase11はBudget/祖先/root identity/policy/account/groupを含むため具体的停止条件は未特定。失敗後の特権復元や通常teardown完了は認定しない。
+
+終了後UTC15:28:37 SAM/status/free各0、P **BantoS4Publisher/S-1-5-21-2169670816-255940906-2713565042-1010/flags515=0x203/disabled=true**。group照会/解放各0、read=total1、Usersだけ。enable/reset/logonなし。h rootとreceiptへ再訪なし。**旧末尾なし/b/c/d/e/f/g/hの8 rootはunknown/閉鎖。存在確認/再open/列挙/hash/copy/delete、旧guard再使用をしない。** accountは存在するので従来の同名不存在→作成経路も再実行しない。
+h最終manifest23372 bytes/hash0540df3b7945f65f7e6a641af7c0f96bb79f4694d7f31a13804df242b654fef4、11 artifacts/論理86253 bytes。105 source/保存artifact/既存親policy結果書不変、本流889cfc3/cleanを確認。
+
+次は、既存の無効Pを変更せず使う新規root準備経路を設計する。name/SID/flags/Usersを通常側とhelper側で固定検査し、NetUserAdd/所属追加/reset/enable/logonを呼ばない専用経路が候補。Pへの権限は新規rootのreadonly ACEのみ。新規失敗枠でphase11の停止substepを返し、現rootやaccountの削除・補償で解決しない。DACL auto flagsの差は仮説であり、実観測前に最終SDDL条件を緩めない。設計・故障試験・独立レビュー・savepoint後に新規管理者実行へ進む。
+最終RAM4387188736/C149664280576/D198225702912 bytes、D約184.61GiB。PC全体の変動原因や長期リーク不在は未確認。OS26200.9445/boot2026-09-15T14:30:24.5000000+09:00、Windows Update engineering緩和/正式pin不変。既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。新runtime/service/task/VM/profile、push/merge/CIなし。独立レビューは既存1体に差分限定、進捗ポーリングなし。
+環境準備/P activation/reset/logon/disable、protected code/process/thread/token/IPC、P-U/namespace共通期間/全publisher/frozen/marker/正式B2-S4未完了。全許可flags=false、acceptance_status=not_completed。

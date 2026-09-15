@@ -60,3 +60,8 @@ formal_permission/execution_authenticated/protected_commit_allowed=false、accep
 
 最新は[引継書112節](anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)。B processの既存SeSecurityPrivilege一件について存在/有効確認/元の有効ビットへの復元を実装し、管理者診断exit0でtoken/watchdog終了まで確認した。追加のOS特権付与はない。
 後続準備eは管理者起動のrequest-launch/error1223でPID/exit未取得。SAMはaccount不存在、eへ再訪せず閉鎖したため、閉鎖rootは末尾なし/b/c/d/eの5件となる。新規fは49件と通常load-onlyを通過し、今回の管理者画面操作の回答待ちでRun未開始。環境準備や隔離を完了扱いせず、全許可flags=falseを維持する。
+
+## 2026-09-16 初期検査通過・専用account無効状態を確認
+
+最新は[引継書113節](anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)と[準備h結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-h-2026-09-16.md)。fの初期検査停止を受けgで固定診断を追加し、SACL/auto flags差を観測した。hではS:PAIを明示し、初期の全SDDL厳密比較、disabled account作成/Users確認、最終DACL設定まで通過。phase11の最終検査で停止し、具体的な条件は未特定。
+P SID S-1-5-21-2169670816-255940906-2713565042-1010、flags0x203、Usersのみを終了後SAMで確認。Pをenable/reset/logonしていない。旧8 rootは全て閉鎖し、次は既存の無効Pを変更しない新規準備経路を設計する。71件pass/独立指摘0。環境準備/隔離/正式受入は未完了、全許可flags=falseを維持する。
