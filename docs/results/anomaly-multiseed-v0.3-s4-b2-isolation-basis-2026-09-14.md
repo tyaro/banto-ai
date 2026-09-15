@@ -55,3 +55,8 @@ formal_permission/execution_authenticated/protected_commit_allowed=false、accep
 
 最新は[引継書111節](anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)。識別用token要求をlevel1へ修正し、[管理者Preflight](anomaly-multiseed-v0.3-s4-b2-principal-identification-confirmation-2026-09-15.md)は3 token close/StopWatchdogまで成功した。後続の[準備d](anomaly-multiseed-v0.3-s4-b2-principal-setup-d-2026-09-15.md)は祖先確認と不存在確認を通過したが、phase4のroot作成でerror1314。終了後SAMはaccount不存在、dの状態は再確認せずunknownとして閉鎖した。閉鎖rootは末尾なし/b/c/dの4件。
 次は明示SACLに必要な既存特権の確認と、B process内だけの一時有効化/復元を検証する。初期保護条件を省かず、OSへの追加特権付与や閉鎖root再使用をしない。環境準備/P-U/正式受入は未完了、全許可flags=falseを維持する。
+
+## 2026-09-15 既存特権の復元確認後
+
+最新は[引継書112節](anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)。B processの既存SeSecurityPrivilege一件について存在/有効確認/元の有効ビットへの復元を実装し、管理者診断exit0でtoken/watchdog終了まで確認した。追加のOS特権付与はない。
+後続準備eは管理者起動のrequest-launch/error1223でPID/exit未取得。SAMはaccount不存在、eへ再訪せず閉鎖したため、閉鎖rootは末尾なし/b/c/d/eの5件となる。新規fは49件と通常load-onlyを通過し、今回の管理者画面操作の回答待ちでRun未開始。環境準備や隔離を完了扱いせず、全許可flags=falseを維持する。
