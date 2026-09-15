@@ -110,7 +110,7 @@ $attempt = [ordered]@{
     preparation_entry_called = $false; os_configuration_changed = $false; old_roots_accessed = $false
 }
 if ($Mode -eq 'Verify') { $attempt | ConvertTo-Json; exit 0 }
-$base = Join-Path $project 'artifacts/principal-identification-diagnostic-2026-09-15'
+$base = Join-Path $project 'artifacts/principal-identification-confirmation-2026-09-15'
 [IO.Directory]::CreateDirectory($base) | Out-Null
 $prefix = $Mode.ToLowerInvariant()
 Write-PrincipalDiagnosticJson -Path (Join-Path $base ($prefix + '-attempt.json')) -Value $attempt
