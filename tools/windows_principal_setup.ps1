@@ -21,7 +21,7 @@ function Get-SetupLaunchFailure {
     return [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); launch_failed = $true; failure_stage = $Stage; process_id = $OwnedProcessId; exception_chain = $chain; chain_truncated = ($null -ne $current); no_retry = $true }
 }
 $project = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
-$artifacts = Join-Path $project 'artifacts/principal-setup-2026-09-15'
+$artifacts = Join-Path $project 'artifacts/principal-setup-b-2026-09-15'
 $library = Join-Path $artifacts "PrincipalSetup-$Build.dll"
 $tests = Join-Path $artifacts "PrincipalSetupTests-$Build.exe"
 $compiler = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe'
@@ -99,37 +99,43 @@ $arguments = '-NoProfile -NonInteractive -Command "& { ' + $loader + ' }"'
 if ($Mode -eq 'CheckLoader') {
     $check = Start-Process -FilePath $powershell -WindowStyle Hidden -WorkingDirectory 'C:\Windows\System32' -ArgumentList $arguments -PassThru
     try {
+        if ($check.Handle -eq [IntPtr]::Zero) { throw 'Missing loader process handle.' }
         if (-not $check.WaitForExit(10000)) { $check.Kill(); [void]$check.WaitForExit(5000); throw 'Owned loader check timed out.' }
-        if ($check.ExitCode -ne 0) { throw "Loader check failed: $($check.ExitCode)" }
+        if ($null -eq $check.ExitCode -or $check.ExitCode -ne 0) { throw "Loader check failed: $($check.ExitCode)" }
         [ordered]@{ mode = 'unelevated-load-only'; account_root_apis_called = $false; process_id = $check.Id; exit_code = $check.ExitCode; command_chars = $arguments.Length; assembly_sha256 = $actual } | ConvertTo-Json
     } finally { $check.Dispose() }
     exit 0
 }
-$attempt = [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); approved = $true; assembly_sha256 = $actual; build = $Build; command_chars = $arguments.Length; phase = 'before-uac'; account = 'BantoS4Publisher'; root = 'C:\ProgramData\BantoAI-S4B2-principal-20260915' }
+# Load only observation functions before consuming the new attempt guard.
+Import-Module (Join-Path $PSScriptRoot 'windows_process_observation.psm1') -ErrorAction Stop
+$attempt = [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); approved = $true; assembly_sha256 = $actual; build = $Build; command_chars = $arguments.Length; phase = 'before-uac'; account = 'BantoS4Publisher'; root = 'C:\ProgramData\BantoAI-S4B2-principal-20260915b'; observer_wait_ms = 45000 }
 $record = [IO.File]::Open($attemptFile, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
 try { $data = [Text.Encoding]::UTF8.GetBytes(($attempt | ConvertTo-Json)); $record.Write($data, 0, $data.Length); $record.Flush($true) } finally { $record.Dispose() }
-$startedUtc = [DateTime]::UtcNow
-$launchStage = 'request-uac'
-$ownedProcessId = $null
-try {
-    $process = Start-Process -FilePath $powershell -Verb RunAs -WindowStyle Hidden -WorkingDirectory 'C:\Windows\System32' -ArgumentList $arguments -PassThru
-    $launchStage = 'read-owned-process-id'
-    $ownedProcessId = $process.Id
-    $launchStage = 'wait-for-exit'
-    $exited = $process.WaitForExit(45000)
-    $launchStage = 'collect-exit-result'
-    $result = [ordered]@{ utc = [DateTime]::UtcNow.ToString('o'); launch_elapsed_ms = ([DateTime]::UtcNow - $startedUtc).TotalMilliseconds; process_id = $process.Id; exit_observed = $exited; exit_code = $null; phase_number = $null; native_detail = $null; release_failed = $false; observer_termination_attempted = $false }
-    if ($exited) {
-        $result.exit_code = $process.ExitCode
-        if ($process.ExitCode -ge 65536) { $result.phase_number = ($process.ExitCode -shr 16) -band 16383; $result.native_detail = $process.ExitCode -band 65535; $result.release_failed = ($process.ExitCode -band 0x40000000) -ne 0 }
+# The already-tested observer is shared with the configuration-free diagnostic.
+$result = Invoke-ElevationDiagnosticObservation -ExpectedExitCode 0 -Launch {
+    Start-Process -FilePath $powershell -Verb RunAs -WindowStyle Hidden -WorkingDirectory 'C:\Windows\System32' -ArgumentList $arguments -PassThru
+} -ReadId { param($process) $process.Id } -CaptureHandle {
+    param($process)
+    if ($process.Handle -eq [IntPtr]::Zero) { throw 'Missing setup process handle.' }
+} -Wait { param($process) $process.WaitForExit(45000) } -ReadExit {
+    param($process) $process.ExitCode
+} -Dispose { param($process) $process.Dispose() }
+# Setup can mutate the OS even when launch/exit is unconfirmed.
+$result.os_configuration_change_status = 'unknown-until-success-verification'
+$result.phase_number = $null
+$result.native_detail = $null
+$result.release_failed = $null
+if ($result.exit_observed) {
+    $result.release_failed = ($result.exit_code -band 0x40000000) -ne 0
+    if ($result.exit_code -ge 65536) {
+        $result.phase_number = ($result.exit_code -shr 16) -band 16383
+        $result.native_detail = $result.exit_code -band 65535
     }
-    $launchStage = 'dispose-observer-handle'
-    $process.Dispose()
-} catch {
-    $result = Get-SetupLaunchFailure -Failure $_ -Stage $launchStage -OwnedProcessId $ownedProcessId
-    $result.launch_elapsed_ms = ([DateTime]::UtcNow - $startedUtc).TotalMilliseconds
 }
+$result.observer_termination_attempted = $false
+$result.setup_exit_success = $result.expected_probe_result -and $null -eq $result.failure -and $null -eq $result.dispose_failure
 $resultFile = Join-Path $artifacts 'launch-result.json'
 $record = [IO.File]::Open($resultFile, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
-try { $data = [Text.Encoding]::UTF8.GetBytes(($result | ConvertTo-Json)); $record.Write($data, 0, $data.Length); $record.Flush($true) } finally { $record.Dispose() }
-$result | ConvertTo-Json
+try { $data = [Text.Encoding]::UTF8.GetBytes(($result | ConvertTo-Json -Depth 12)); $record.Write($data, 0, $data.Length); $record.Flush($true) } finally { $record.Dispose() }
+$result | ConvertTo-Json -Depth 12
+if (-not $result.setup_exit_success) { exit 1 }

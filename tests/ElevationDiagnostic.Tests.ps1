@@ -1,12 +1,13 @@
-# Extract function ASTs only: these failure tests do not start any process or request UAC.
+# Import observation functions and extract the writer AST only; no process or UAC is started.
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+Import-Module (Join-Path $PSScriptRoot '../tools/windows_process_observation.psm1') -ErrorAction Stop
 $source = Join-Path $PSScriptRoot '../tools/windows_elevation_diagnostic.ps1'
 $tokens = $null
 $errors = $null
 $ast = [Management.Automation.Language.Parser]::ParseFile($source, [ref]$tokens, [ref]$errors)
 if ($errors.Count -ne 0) { throw 'Diagnostic parse failed.' }
-foreach ($name in @('Get-ElevationDiagnosticFailure', 'Invoke-ElevationDiagnosticObservation', 'Write-ElevationDiagnosticJson')) {
+foreach ($name in @('Write-ElevationDiagnosticJson')) {
     $definitions = @($ast.FindAll({ param($node) $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq $name }, $false))
     if ($definitions.Count -ne 1) { throw 'Expected exactly one function.' }
     . ([scriptblock]::Create($definitions[0].Extent.Text))
@@ -41,7 +42,7 @@ foreach ($case in $cases) {
         if ($case -in @('dispose-error', 'double-error')) { throw 'omit-message' }
     }
     Assert-Probe (-not (($actual | ConvertTo-Json -Depth 12).Contains('omit-message'))) "$case leaked message"
-    Assert-Probe ($actual.no_retry -and -not $actual.os_configuration_changed) "$case scope flags"
+    Assert-Probe ($actual.no_retry -and -not $actual.Contains('os_configuration_changed')) "$case scope flags"
     if ($case -eq 'launch-error') {
         Assert-Probe (($calls -join ',') -eq 'launch') 'Launch failure continued'
         Assert-Probe ($null -eq $actual.process_id -and $actual.failure.stage -eq 'request-launch') 'Unknown launch lost'
