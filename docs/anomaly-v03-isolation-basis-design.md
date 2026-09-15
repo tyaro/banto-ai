@@ -202,3 +202,5 @@ P/U実process、namespace/共通保持期間、全publisher、frozen/markerの�
 [短い自己照会](results/anomaly-multiseed-v0.3-s4-b2-elevation-diagnostic-2026-09-15.md)は通常/管理者とも終了確認したが、[新規準備b](results/anomaly-multiseed-v0.3-s4-b2-principal-setup-b-2026-09-15.md)はrequest-launchで停止した。account不存在、旧/新rootともunknown・閉鎖を維持し、設定準備を成功としない。
 WindowsPowerShellのエラー置換でnative番号が落ちることを実装/host ILから確認した。これは起動失敗原因とは別。[直接Shell診断](results/anomaly-multiseed-v0.3-s4-b2-shell-launch-diagnostic-2026-09-15.md)は15331文字の無害commandを用い、3ケースと通常Controlだけを確認した。
 直前の管理者確認画面の表示状況をユーザーへ質問中で、新Run枠は未使用。環境方式の許可は継続する。全期間/全publisher/正式B2-S4は未完了、全許可flags=falseを維持する。
+
+続報：ユーザーから画面表示の回答を得て、直接Shell診断の管理者Runを一度実行した。PID26600/exit40/4256ms、Handle・終了・解放成功。通常Controlと同じ15331文字の無害commandで当該形式の管理者起動を確認した。準備処理の以前の失敗原因は未確定、両rootのunknown/閉鎖と全許可flags=falseを維持する。次は準備Entryを呼ばない管理者側の公開DLL読込みだけを別の診断として具体化する。

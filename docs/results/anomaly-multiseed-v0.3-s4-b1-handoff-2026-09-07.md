@@ -3232,3 +3232,13 @@ input16278 bytes/hash90da7ba37f5a9c71652d60e1bb562c4d3812e418fd31f1159b3c3ac8329
 記録追記＋commit複合操作に自動審査blocked by policy（詳細なし）があった。副次的な個別記録を省いて対象4ファイルのstage/差分確認/commitへ限定し保存成功。同じ複合操作は再実行せず、レビュー/IL要約を後続inputへ記録した。
 UTC03:09:42 RAM10321457152/C130921562112/D202743402496 bytes、D約188.82GiB。build26200.9445/boot不変、Windows Update engineering緩和/正式pin不変。本流889cfc3/clean、既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全しcommit除外。
 次は質問への回答を踏まえ、新Shell診断Runだけを新規max1実行する。さらに別の準備rootは未定で、設定作成へ直行しない。P-U/全期間/全publisher/frozen/marker/B2-S4未完了、全許可flags=false。
+
+## 109. 2026-09-15 管理者画面表示の回答・直接Shell診断Run成功
+
+ユーザー「管理者確認画面でました」を受け、直前の準備bのUAC表示をuser reportとして記録。「はい」操作の有無は未報告、以前の失敗を取消と断定しない。既存環境方式への許可を再確認せず、用意済みの読取専用Shell診断Runだけを一度実行した。
+[結果](anomaly-multiseed-v0.3-s4-b2-shell-launch-diagnostic-2026-09-15.md)。実行前に86 source/途中6 artifacts/checkpoint/既存親policy結果書不変を確認し、新規resume-inputを保存。
+UTC03:21:34.6280050Z〜03:21:38.8898553Z、PID26600/exit40/合計4256ms、起動要求3715ms/終了待機493ms。固定U SID/admin、Handle確保・終了・解放成功、例外なし。15331文字/引数hash21d6c88f3189451971464c90615fa7c7d2a54af9db2fc4c9eb5063d7e822ec44は通常Controlと同一。今回形式で起動可能という結果で、準備の実内容や以前の失敗原因を確定しない。
+設定変更・準備Entry・account/root APIなし。旧root2件はunknownのまま再訪なし。Shell診断Control/Run両guardも閉鎖し再使用しない。観測した今回process終了済み、以前の不明helperまで終了済みとはしない。
+最終manifest20428 bytes/hash313d3ac89b1b5d92d803920aee8cf2a4a105cec19151018292fb1149dff8bb0d、11 artifacts/論理38536 bytes。途中checkpoint/inputは上書きせず保全。実装変更なし、既存3ケース/共有13ケース/C#34件は対象不変のため再実行なし。
+UTC03:22:55 RAM9855365120/C130778591232/D202743259136 bytes、D約188.82GiB。build26200.9445/boot不変、Windows Update engineering緩和/正式pin不変。本流889cfc3/clean、既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全しcommit除外。
+次は公開DLLの有界展開/hash/Assembly.Loadだけを管理者側で行う読取専用の新規診断を仕様化・確認・レビュー・保存する。準備bの公開build-01 DLLを使用する場合はSHA4ea7c99167a71c9ba6e26f2d6d3a74ad16226d8209dc3535d19660696440a88aを固定する。準備Entry.Runを呼ばず、新規診断guardを用い、旧Control/Run/準備の再実行やさらに別root作成へ直行しない。質問は回答済みで同じ表示確認を再質問しない。P-U/全期間/全publisher/frozen/marker/B2-S4未完了、全許可flags=false。
