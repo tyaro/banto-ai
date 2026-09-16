@@ -11,6 +11,8 @@
 
 保存済み6件のscoreから警報・matching・集計を別実装で確かめる `audit_anomaly_v03_saved.py` は、[独立検算と進行記録の設計](../../docs/anomaly-v03-independent-audit-and-checkpoints.md)を参照してください。profile/scoreの導出や完全S6監査は未検証と明示し、全dev/smokeの長時間実行はまだ開始しません。
 
+固定120区切り・720評価の計画表示と進捗記録の読取り検査には `checkpoint_anomaly_v03.py plan/inspect` を使います。[metadata CLIの説明](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#実装済みのmetadata-cli)にある外部plan/head hashと件数を必須にし、途中終了・記録欠落・順序違反・未検証の保存状態を区別します。metadataの宣言を復元する段階で、実データ生成・実行再開・全campaign完了には接続していません。
+
 `tools/data-generator/generate.py`で合成データを作成し、`check_quality.py`で品質gateを通した後、次の順で評価します。
 
 ```text
