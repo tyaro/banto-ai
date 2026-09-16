@@ -20,6 +20,8 @@
 
 [§125の進捗復元](anomaly-multiseed-v0.3-checkpoint-metadata-2026-09-16.md): 固定120 chunks/720 evaluationsのmetadata plan/validatorとjournal reader/reducerを実装。21件pass、独立P2修正後0。CLI実演は各1秒未満/最大20.08MiB、失敗監視証拠を残し検証待ち状態を復元。保存済み成果物の再照合・実行再開・追記writerは未接続で、全campaignのcoverage/正式受入を追加しない。
 
+[§126の証拠照合](anomaly-multiseed-v0.3-checkpoint-evidence-binding-2026-09-16.md): 参照journalと旧trialの実ファイル・終了監視・保存auditを結ぶpreflight-trialを追加。39件pass/独立所見0。旧6件のledger再検算と保存auditが一致、116.420秒/185.97MiB、入力46 files不変。旧trial専用の参照検証で、campaign credit=0、resume/全体完了/正式受入は追加しない。
+
 日付: 2026-09-10。初回照合の基準HEAD `f9244a735dff982cfce7d1493efda9431bc31b42`。
 補完テスト修正savepoint: `cdbc0a1`。Windows3.14.0一本化の実装savepoint: `9fd3490`。
 2026-09-11追記: Linux CI固定・unittest記録の実装は `3c69f9e`、Linuxのfakeテスト修正は `9846f52` / `7870362`。

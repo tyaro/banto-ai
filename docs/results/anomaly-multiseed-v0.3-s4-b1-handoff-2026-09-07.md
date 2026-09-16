@@ -3495,3 +3495,17 @@ UTC04:46:36空きRAM15625842688/C151835779072/D171825303552 bytes（D約160.0GiB
 
 **次は保存済み6件を読取り専用で参照し、journal宣言と実ファイルのhash/来歴/監視/検算を結び付ける証拠照合を接続する。** 旧trialを新campaign coverageへ流用しない。追記writer/controller、profile/score導出の独立検算、runtime inventory、予算とsource/consumer freezeは残件。全dev/smokeやholdout実行を自動開始しない。§116の専用principal追加試験保留、旧root閉鎖・j/診断消費済みguardを継続。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
 checkpoint_metadata_implemented=true。native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed、performance_status=not_evaluated。
+
+## 126. 2026-09-16 参照journalと保存済み6件の実証拠照合に成功
+
+**6b77db9bf603aceb09f73a72241a57992c64716d** に `checkpoint_anomaly_v03.py preflight-trial` を追加。[使い方](../anomaly-v03-independent-audit-and-checkpoints.md#保存済み6件とのpreflight証拠照合) / [結果](anomaly-multiseed-v0.3-checkpoint-evidence-binding-2026-09-16.md)。外部reference hashから固定plan/3-record参照journal、旧trialのmarker/supervision/audit/audit-monitorを結び付け、6件ledgerを再検算して保存auditと照合する。旧consumerと新verifierを個別に固定し、長い読取りの後にjournal/reference/証拠を再読取りする。
+
+新規12＋既存checkpoint21＋saved-audit6＝**39件pass/5.393秒/failure・error・skip0**。初回33件/7.166秒の1 failureはfixtureの比較元/先object共有によるテスト不備で、独立copyへ修正後pass。独立P0〜P3所見0/進捗poll0、safety/diff-check pass。広い重い評価moduleは実行していない。
+新clean detached worktree **C:/Users/TKent/.codex/worktrees/engineering-binding-20260916** / 6b77db9から、既存producer0086ffe/旧consumer0c8377d/trial-01と保存auditを読取り。PID16484、UTC10:45:38.194649〜10:47:34.778884、116.420秒/peak private195002368 bytes（185.97MiB）/exit0/終了確認。所有processを10分/1GiB/ログ8MiBで監視し、停止理由なし・観測エラー0。binding.resourcesの96.628秒は既存audit部分で、全体はbinding-process.jsonを参照する。
+
+参照/旧audit7 files、既存trial46 files、前回証拠12 filesは不変。登録dataset生成0/producer score計算0/保存ledger再検算6件。証拠 `artifacts/checkpoint-evidence-binding-2026-09-16` は9 files/383006 bytes（最終manifest除く）。binding3449 bytes/hash5e680d45ed08cf645169372e193d66d5d744dd26cf38091b132b61567f0cd8d1、reference hasha2ccef6286fc8e4343957278c978a9851115a3679a8ce920716a26b017491f86。
+終了後空きRAM14151684096/C152356487168/D169743474688 bytes（D約158.1GiB）。3 runtimeはOS26200.9445、開始時boot2026-09-16T08:46:30.5000000+09:00。Windows Update engineering緩和/正式pin不変、長期リーク不在未評価。本流889cfc3とproducer/旧consumer/verifierはclean。既存親policy文書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。
+
+**これは旧trial専用のpreflight。** 参照journalは今回の宣言であり、新campaignの実行履歴として採用しない。preflight_evidence_revalidated=true、campaign_evaluations_credited=0、campaign_attempt_roots_verified/resume_authorized/campaign_completed/independent_s6_complete/score_derivation_verified=false。
+**次はplan/journalを上書きせず追記するwriterと、新campaignのattempt保存先・終了監視・検算出力の契約を整える。** まずmetadata fixtureで中断/再開を確認。profile/score導出の独立検算、runtime inventory、予算・source/consumer freezeは残件で、全dev/smokeやholdout実行は自動開始しない。§116の専用principal試験保留、旧root閉鎖・j/診断消費済みguardを維持。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
+native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed、performance_status=not_evaluated。
