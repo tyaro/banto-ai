@@ -134,6 +134,8 @@ def main(argv=None):
     compare = commands.add_parser("compare", help="verify and compare two or three saved candidates without writing files")
     compare.add_argument("--result", nargs=2, action="append", required=True, metavar=("OUTPUT", "MARKER_SHA256"))
     compare.add_argument("--format", choices=("markdown", "json"), default="markdown")
+    compare.add_argument("--details-limit", type=int, default=20, help="maximum detail rows, 0 to 100 (default: 20)")
+    compare.add_argument("--details-offset", type=int, default=0, help="skip this many differences before displaying details")
     args = parser.parse_args(argv)
     try:
         if args.command == "run":
@@ -142,7 +144,7 @@ def main(argv=None):
             result = verify_local_preview(args.output, marker_sha256=args.marker_sha256)
         else:
             from .anomaly_v03_local_compare import compare_local_previews, comparison_markdown
-            result = compare_local_previews(args.result)
+            result = compare_local_previews(args.result, details_limit=args.details_limit, details_offset=args.details_offset)
             if args.format == "markdown":
                 print(comparison_markdown(result), end="")
                 return 0

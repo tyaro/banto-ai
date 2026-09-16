@@ -39,6 +39,23 @@ python tools/evaluator/preview_anomaly_v03.py compare --result artifacts/local-r
 全候補がcomputedの場合だけcomparisonもcomputedになり、部分入力などはinconclusiveを維持する。入力不足の理由と除外タグも表示する。
 候補ごとにスコアの定義・閾値が異なるため、生スコアの大小による順位や勝者は出さない。判定差の確認用であり、正解ラベルに基づく検出性能の比較ではない。
 
+### 判定差の詳細
+
+比較表には、判定または利用可否が分かれた **sample/targetの組**を既定で最大20組表示する。
+各組にUTC時刻と差の種類を付け、候補ごとのスコア・残差・phase・mode/recipe・除外理由を並べる。
+判定は `threshold_exceeded` / `below_or_at_threshold` / `unavailable` の3種類。利用不能のスコア・残差はMarkdownでは `n/a`、JSONでは `null` とし、「異常なし」と区別する。
+数値は保存済み値を保持し、候補間のスコア差を計算したり順位付けしたりしない。
+
+```text
+python tools/evaluator/preview_anomaly_v03.py compare --result artifacts/local-results/c0 <C0のmarker hash> --result artifacts/local-results/c1 <C1のmarker hash> --details-limit 20 --details-offset 20
+```
+
+`--details-limit` は0〜100（既定20）、`--details-offset` は先頭から省略する組数（既定0）。上の例は21組目から最大20組を表示する。sample順、同じsampleではtarget名順に並べ、全体の差の組数・表示数・前後の省略数も出す。
+0件表示や範囲外のoffsetでも、全体の差の件数と候補別/ペア別集計は保持する。全候補が利用不能の行は詳細対象に含めず、除外理由の集計で確認する。
+同じ組が複数ペアで異なることがあるため、詳細の組数はペア別の不一致件数の合計とは限らない。
+`--format json` の `details` に同じ詳細とページ情報を追加する。以前のdetailsなし比較JSONもMarkdown表示できる。
+上限は表示量の制限であり、入力読取りや再計算を一部に限定するものではない。
+
 ## 入力形式と上限
 
 既存 `decode_saved_observations` と同じcanonical UTF-8/LF JSONLを受け付ける。

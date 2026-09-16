@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
+from datetime import datetime, timezone
 from itertools import combinations
 from pathlib import Path
 
@@ -12,30 +14,51 @@ from . import anomaly_v03 as v
 from . import anomaly_v03_local_preview as preview
 
 
+DEFAULT_DETAILS_LIMIT = 20
+MAX_DETAILS_LIMIT = 100
+
+
+@dataclass(frozen=True, slots=True)
+class _Score:
+    available: bool
+    threshold_exceeded: bool
+    timestamp_ms: int
+    score: float | None
+    residual: float | None
+    phase: int | None
+    mode: str
+    recipe: str
+    exclusion_tags: tuple[str, ...]
+
+
 def _load_result(root, marker_sha256):
     rt.require(type(marker_sha256) is str and re.fullmatch("[0-9a-f]{64}", marker_sha256), "invalid marker digest")
     captured = {}
     def verify(files):
         report = preview._verify_payloads(files)
-        # Retain only the decisions needed for comparison after sequential replay.
+        # Compact records avoid retaining all parsed score dictionaries.
         decisions = {}
         for line in files["scores.jsonl"].splitlines():
             row = v.strict_json(line)
             key = (row["full_target"], row["sample"])
             rt.require(key not in decisions, "duplicate comparison score key")
-            decisions[key] = (row["available"], row["threshold_exceeded"])
+            decisions[key] = _Score(row["available"], row["threshold_exceeded"], row["timestamp_ms"],
+                                    row["score"], row["residual"], row["phase"], row["mode"], row["recipe"],
+                                    tuple(row["exclusion_tags"]))
         captured.update(report=report, decisions=decisions)
     storage.verify_local_publication(Path(root), expected_marker_sha256=marker_sha256, verify_semantics=verify)
     return captured["report"], captured["decisions"]
 
 
-def compare_local_previews(results):
+def compare_local_previews(results, *, details_limit=DEFAULT_DETAILS_LIMIT, details_offset=0):
     """Recompute each completed result, require identical input, compare decisions.
 
     results contains (output_directory, marker_sha256) pairs. No file is written.
     Scores from different candidate definitions are not ranked or subtracted.
     """
     rt.require(2 <= len(results) <= len(c.CANDIDATES), "comparison requires two or three results")
+    rt.require(type(details_limit) is int and 0 <= details_limit <= MAX_DETAILS_LIMIT, "details limit must be between 0 and 100")
+    rt.require(type(details_offset) is int and details_offset >= 0, "details offset must be nonnegative")
     candidates, decisions_by_candidate = {}, {}
     common_input = None
     common_keys = None
@@ -58,22 +81,70 @@ def compare_local_previews(results):
         counts = dict.fromkeys(("both_available", "same_decision", "different_decision",
                                 "only_left_available", "only_right_available", "neither_available"), 0)
         for key in common_keys:
-            left_available, left_exceeded = decisions_by_candidate[left][key]
-            right_available, right_exceeded = decisions_by_candidate[right][key]
-            if left_available and right_available:
+            left_score = decisions_by_candidate[left][key]
+            right_score = decisions_by_candidate[right][key]
+            if left_score.available and right_score.available:
                 counts["both_available"] += 1
-                counts["same_decision" if left_exceeded == right_exceeded else "different_decision"] += 1
-            elif left_available:
+                counts["same_decision" if left_score.threshold_exceeded == right_score.threshold_exceeded else "different_decision"] += 1
+            elif left_score.available:
                 counts["only_left_available"] += 1
-            elif right_available:
+            elif right_score.available:
                 counts["only_right_available"] += 1
             else:
                 counts["neither_available"] += 1
         pairs.append({"left": left, "right": right, "total": len(common_keys), **counts})
+    detail_rows, total_differences = [], 0
+    for key in sorted(common_keys, key=lambda key: (key[1], key[0])):
+        scores = [decisions_by_candidate[name][key] for name in ordered]
+        kinds = []
+        if len({row.threshold_exceeded for row in scores if row.available}) > 1:
+            kinds.append("threshold_decision")
+        if len({row.available for row in scores}) > 1:
+            kinds.append("availability")
+        if not kinds:
+            continue
+        index = total_differences
+        total_differences += 1
+        if not details_offset <= index < details_offset + details_limit:
+            continue
+        items = []
+        for candidate, row in zip(ordered, scores):
+            decision = ("threshold_exceeded" if row.threshold_exceeded else "below_or_at_threshold") if row.available else "unavailable"
+            items.append({"candidate_id": candidate, "available": row.available, "decision": decision,
+                          "score": row.score, "residual": row.residual, "phase": row.phase,
+                          "mode": row.mode, "recipe": row.recipe, "exclusion_tags": list(row.exclusion_tags)})
+        detail_rows.append({"sample": key[1], "timestamp_ms": scores[0].timestamp_ms, "full_target": key[0],
+                            "difference_kinds": kinds, "candidates": items})
+    details = {"order": "sample_then_full_target", "total": total_differences, "offset": details_offset,
+               "limit": details_limit, "shown": len(detail_rows), "omitted_before": min(details_offset, total_differences),
+               "omitted_after": max(total_differences-details_offset-len(detail_rows), 0), "rows": detail_rows}
     return {"format": "anomaly-v03-local-comparison-v1", "scope": "local_development", "input": common_input,
             "comparison_status": "computed" if all(item["preview_status"] == "computed" for item in candidates.values()) else "inconclusive",
             "coverage": "provided_observations_only", "candidates": [candidates[name] for name in ordered],
-            "pairs": pairs, "performance_status": "not_evaluated", "formal_permission": False}
+            "pairs": pairs, "details": details, "performance_status": "not_evaluated", "formal_permission": False}
+
+
+def _details_markdown(details):
+    lines = ["", "## Difference details", "",
+             f"Unique sample/target differences: {details['total']}; shown: {details['shown']}; offset: {details['offset']}; limit: {details['limit']}.",
+             f"Omitted before: {details['omitted_before']}; omitted after: {details['omitted_after']}.", "",
+             "Rows are ordered by sample, then target. Pairwise counts can include the same row more than once.",
+             "Differences include threshold decisions among available candidates and availability mismatches."]
+    if not details["rows"]:
+        lines.extend(["", "No detail rows on this page; use the total and omitted counts above to distinguish an empty page from no differences."])
+    for row in details["rows"]:
+        timestamp = datetime.fromtimestamp(row["timestamp_ms"]/1000, timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+        lines.extend(["", f"### Sample {row['sample']} / {row['full_target']}", "",
+                      f"UTC: {timestamp}; differences: {', '.join(row['difference_kinds'])}.", "",
+                      "| Candidate | Decision | Score | Residual | Phase | Mode / recipe | Exclusions |",
+                      "| --- | --- | ---: | ---: | ---: | --- | --- |"])
+        for item in row["candidates"]:
+            score = "n/a" if item["score"] is None else repr(item["score"])
+            residual = "n/a" if item["residual"] is None else repr(item["residual"])
+            phase = "n/a" if item["phase"] is None else str(item["phase"])
+            exclusions = ", ".join(item["exclusion_tags"]) or "none"
+            lines.append(f"| {item['candidate_id']} | {item['decision']} | {score} | {residual} | {phase} | {item['mode']} / {item['recipe']} | {exclusions} |")
+    return lines
 
 
 def comparison_markdown(report):
@@ -91,6 +162,8 @@ def comparison_markdown(report):
                   "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |"])
     for pair in report["pairs"]:
         lines.append(f"| {pair['left']} | {pair['right']} | {pair['both_available']} | {pair['same_decision']} | {pair['different_decision']} | {pair['only_left_available']} | {pair['only_right_available']} | {pair['neither_available']} |")
+    if "details" in report:  # Existing v1 comparison JSON remains renderable.
+        lines.extend(_details_markdown(report["details"]))
     lines.extend(["", "## Targets", "", "| Target | Candidate | Available | Unavailable | Threshold exceeded |",
                   "| --- | --- | ---: | ---: | ---: |"])
     for full_target in c.FULL_TARGETS:
