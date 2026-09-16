@@ -3509,3 +3509,16 @@ checkpoint_metadata_implemented=true。native_launch_authorized/isolation_certif
 **これは旧trial専用のpreflight。** 参照journalは今回の宣言であり、新campaignの実行履歴として採用しない。preflight_evidence_revalidated=true、campaign_evaluations_credited=0、campaign_attempt_roots_verified/resume_authorized/campaign_completed/independent_s6_complete/score_derivation_verified=false。
 **次はplan/journalを上書きせず追記するwriterと、新campaignのattempt保存先・終了監視・検算出力の契約を整える。** まずmetadata fixtureで中断/再開を確認。profile/score導出の独立検算、runtime inventory、予算・source/consumer freezeは残件で、全dev/smokeやholdout実行は自動開始しない。§116の専用principal試験保留、旧root閉鎖・j/診断消費済みguardを維持。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
 native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed、performance_status=not_evaluated。
+
+## 127. 2026-09-16 metadataの追記保存とreceipt回復を実装
+
+**d8ceed423e9ccd36540e88aa2bf559351366ad2e** にmetadata専用store APIと `store-init/append/inspect/recover-init/recover-append` を追加。[使い方と次の契約案](../anomaly-v03-independent-audit-and-checkpoints.md#metadataを上書きせず保存追記する) / [結果](anomaly-multiseed-v0.3-checkpoint-store-2026-09-16.md)。通常単一writer、既存exclusive/flush/読戻し/no-replace renameを再利用し、旧recordを上書きしない。外部receipt/intent pinsを必須にし、全prefix・次状態・上限を検査後に1件を確定。確定後のreceipt喪失は旧prefix＋厳密1件を読取り回復する。partial pending/初期化失敗は残して拒否し、自動cleanupや自動公開を行わない。
+
+新規store16＋既存checkpoint21＋evidence12＝**49件pass/11.620秒/failure・error・skip0**、独立P0〜P3所見0/進捗poll0、safety/diff-check pass。reader共通化の回帰、中断/flush/rename境界・二重追記・余分な末尾・誤intent/receipt・上限を小規模fixtureで確認。専用principal/同時writerの追加試験なし。
+実CLIは候補のcommit済み実装から `artifacts/checkpoint-store-2026-09-16/store-demo` を新設。新worktreeなし、metadata fixture4 recordsだけ。9 process合計3.004秒、1回0.208〜0.412秒、peak private21671936 bytes（20.67MiB）、通常8回exit0/二重追記拒否1回expected exit2。各60秒/256MiB/ログ2MiB監視で全終了確認・停止理由なし。receipt回復/二重追記拒否時はstore bytes不変、各追記でも既存prefix不変。最終attempts2/interrupted履歴1/saved_pending_verification1/not_started119。markerは架空値で、実評価完了の主張ではない。
+
+証拠30 files/576625 bytes（最終manifest除く）、demo-evidence4035 bytes/hash27b73abe6731633482722841300b3dc23c4dca16405c5ff261101fced87633c5。前回証拠10 files不変。登録dataset生成0/evaluation0/ledger再検算0。本流889cfc3/clean、既存親policy文書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。
+UTC12:37:26空きRAM14465695744/C151697453056/D169742598144 bytes（D約158.1GiB）。OS26200.9445、開始時boot2026-09-16T08:46:30.5000000+09:00。Windows Update engineering緩和/正式pin維持、長期リーク不在未評価。
+
+**次は新campaignのattempt descriptorと固定path/hashのvalidatorをmetadata fixtureで実装する。** 案は固定chunks/attempt基点のresult・producer-control・auditを別formatで束ね、metadata専用storeに混在させない。まだattempt/監視process/controllerを起動しない。予算・source/consumer freeze・runtime inventory・profile/score導出独立検算は残件で、全dev/smoke/holdoutを自動開始しない。§116の専用principal試験保留、旧root閉鎖・j消費済みguardを維持。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
+checkpoint_metadata_writer_implemented=true。execution_authorized/resume_authorized/campaign_completed/native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed、performance_status=not_evaluated。
