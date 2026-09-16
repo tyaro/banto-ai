@@ -61,6 +61,22 @@ def write_metadata(args):
     return store.recover_append(args.root, receipt, record)
 
 
+def attempt_metadata(args):
+    from banto_ai import anomaly_v03_attempt_descriptor as attempt
+    pins = {"expected_plan_sha256": args.plan_sha256, "expected_record_count": args.record_count,
+            "expected_head_sha256": args.head_sha256}
+    inputs = (args.plan, args.journal_dir, args.plan_sha256, args.record_count, args.head_sha256)
+    plan, records, _ = load_journal(*inputs)
+    if args.command == "attempt-layout":
+        return attempt.describe_layout(plan, records, **pins)
+    descriptor = _pinned_json(args.descriptor, args.descriptor_sha256, 64 * 1024)
+    report = attempt.validate_descriptor(descriptor, plan, records, **pins)
+    load_journal(*inputs)
+    _pinned_json(args.descriptor, args.descriptor_sha256, 64 * 1024)
+    report["descriptor_raw_sha256"] = args.descriptor_sha256
+    return report
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -95,6 +111,16 @@ def main(argv=None):
         if name != "store-inspect":
             command.add_argument("--record", type=Path, required=True)
             command.add_argument("--record-sha256", required=True)
+    for name in ("attempt-layout", "attempt-validate"):
+        command = commands.add_parser(name, help="Attempt metadata declarations only; no filesystem evidence or run permission")
+        command.add_argument("--plan", type=Path, required=True)
+        command.add_argument("--plan-sha256", required=True)
+        command.add_argument("--journal-dir", type=Path, required=True)
+        command.add_argument("--record-count", type=int, required=True)
+        command.add_argument("--head-sha256", required=True)
+        if name == "attempt-validate":
+            command.add_argument("--descriptor", type=Path, required=True)
+            command.add_argument("--descriptor-sha256", required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == "plan":
@@ -103,6 +129,8 @@ def main(argv=None):
             report = inspect(args.plan, args.journal_dir, args.plan_sha256, args.record_count, args.head_sha256)
         elif args.command == "preflight-trial":
             report = preflight(args)
+        elif args.command in ("attempt-layout", "attempt-validate"):
+            report = attempt_metadata(args)
         else:
             report = write_metadata(args)
         print(json.dumps(report, ensure_ascii=False, sort_keys=True))

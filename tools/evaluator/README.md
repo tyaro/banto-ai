@@ -14,6 +14,7 @@
 固定120区切り・720評価の計画表示と進捗記録の読取り検査には `checkpoint_anomaly_v03.py plan/inspect` を使います。[metadata CLIの説明](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#実装済みのmetadata-cli)にある外部plan/head hashと件数を必須にし、途中終了・記録欠落・順序違反・未検証の保存状態を区別します。metadataの宣言を復元する段階で、実データ生成・実行再開・全campaign完了には接続していません。
 同CLIの `preflight-trial` は、[保存済み6件との証拠照合](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#保存済み6件とのpreflight証拠照合)を行います。参照journal・旧trial・終了監視・旧独立検算のhash/来歴を結び付け、6件のledgerを再検算します。旧trialを新campaignの完了件数に加えず、実行再開や全体の完了印は作りません。
 metadataの保存には同CLIの `store-init/store-append/store-inspect` を使います。[追記と中断時の回復](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#metadataを上書きせず保存追記する)では、外部receipt/record hashを保持し、既存記録を上書きせず追記します。確定後のreceipt喪失は読取りだけで回復し、部分pendingは残して拒否します。実campaignの開始・再開には接続していません。
+同CLIの `attempt-layout/attempt-validate` は、[attemptの保存先と証拠metadata](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#attemptの保存先と証拠metadataを検査する)を検査します。外部journal/descriptor hashから固定path・4役割の証拠宣言・source/runtime・6件のidentityを照合し、試行の取り違えや検証済み宣言の証拠不足を拒否します。実ファイル本文の検証や実行許可は含みません。
 
 `tools/data-generator/generate.py`で合成データを作成し、`check_quality.py`で品質gateを通した後、次の順で評価します。
 

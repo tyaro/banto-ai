@@ -157,7 +157,36 @@ receiptは標準出力の `anomaly-v03-checkpoint-metadata-receipt-v1`。root絶
 
 `store-recover-append` の引数は `store-append` と同じ。回復コマンドは書込みを行わない。recordのrunning/verified等は依然として宣言で、writerがデータ処理を実行した証拠にはならない。process停止の境界を小さなfixtureで検査する段階で、実campaignの再開や受入には接続していない。
 
-### 次のattempt出力契約案（実行未接続）
+### attemptの保存先と証拠metadataを検査する
 
-metadata専用storeへのデータ混在は拒否し、将来のcampaign出力は別formatで扱う。chunk/attemptごとに既存の固定 `chunks/000/attempt-0001` を基点とし、result（payloadとmarker）、producer-control（終了監視）、audit（検算結果と終了監視）を区別する。これらのpathと各hash、6件のidentity、source/runtimeを一つのattempt descriptorで固定する案とする。
-全120 chunksの順序や旧試行の非流用、失敗attempt保持、marker単独の成功扱い禁止は維持する。次はこのdescriptorとpathのvalidatorをmetadata fixtureで実装する。今回のwriterはattempt directory、監視process、独立consumerを起動しない。実行開始前に予算、source/consumer freeze、runtime inventory、残る独立計算検算を整える。
+`anomaly_v03_attempt_descriptor.py` は `anomaly-v03-attempt-descriptor-v1` / scope `engineering-dev-smoke-attempt-metadata` のpure builder/validator。外部に保持したplan hash・journal件数・head hashから最後のrecordを選び、そのchunk/attempt/state、6件のidentity、source/runtime、outcomeをexactに結び付ける。新campaignの出力契約であり、metadata専用storeのexact構成にattemptや実データを混在させない。
+
+基点はjournalの固定 `chunks/000/attempt-0001` 等。以下の相対pathを固定し、別chunk/attempt、役割の混同、絶対path、別separator、`..` を拒否する。
+
+| 役割 | attempt基点からのpath |
+| --- | --- |
+| descriptor宣言 | `descriptors/<journal sequence 6桁>.json` |
+| result / payload | `result` / `result/payload` |
+| marker | `result/.complete` |
+| producerの終了監視 | `producer-control/supervision.json` |
+| 独立検算結果 | `audit/report.json` |
+| 検算processの終了監視 | `audit/supervision.json` |
+
+descriptorの `artifacts` は4役割それぞれに `{path, bytes, sha256}` または未取得を示す `null` を持つ。hashやサイズを代入したfixtureは実ファイルの証拠にならない。marker/producer監視/auditのhashはjournalと一致必須。audit監視を含むdescriptor全体はCLI引数の外部raw hashで固定する。`new_descriptor` は明示されたmetadataのみを束ね、存在しない証拠のhash/サイズを生成しない。
+
+runningは全証拠未取得。途中失敗ではmarkerなしのproducer監視や、report/runtime取得前に終了したauditの監視だけも保持できる。verified_complete/inconclusiveの宣言には4証拠とaudit runtimeのbefore/afterが必要。audit前後の変化はblocked_integrity/runtime_changedだけで保持し、verifiedでは拒否する。producerと後日のauditのWindows build/UBRは異なってよく、それぞれの実値を保持する。
+
+```powershell
+C:\Python314\python.exe -B tools/evaluator/checkpoint_anomaly_v03.py attempt-layout `
+  --plan <plan.json> --plan-sha256 <外部canonical plan hash> `
+  --journal-dir <journal directory> --record-count <外部件数> --head-sha256 <外部head hash>
+
+C:\Python314\python.exe -B tools/evaluator/checkpoint_anomaly_v03.py attempt-validate `
+  --plan <plan.json> --plan-sha256 <外部canonical plan hash> `
+  --journal-dir <journal directory> --record-count <外部件数> --head-sha256 <外部head hash> `
+  --descriptor <descriptor.json> --descriptor-sha256 <外部raw hash>
+```
+
+`attempt-layout` は固定pathと必要な証拠を表示する。`attempt-validate` は64KiB以下のdescriptorを読み、検証後にjournal/descriptorを再照合する。入力descriptorの実際の保存場所はこのmetadata CLIでは自由で、宣言された `descriptor_path` に存在する証明ではない。成果物のbytes/hash再計算、directory topology、sourceのclean確認、監視/検算結果本文は次の読取り処理で検証する。
+
+成功表示は `attempt_descriptor_metadata_valid`。`artifact_bytes_verified/filesystem_containment_verified/execution_authorized/resume_authorized/campaign_completed/independent_s6_complete/formal_permission=false`、`campaign_evaluations_credited=0` を維持する。attempt directory、監視process、独立consumerは起動しない。全120 chunksの順序、旧試行の非流用、失敗attempt保持を維持し、実行開始前に予算、source/consumer freeze、runtime inventory、残る独立計算検算を整える。
