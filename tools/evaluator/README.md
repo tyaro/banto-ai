@@ -7,7 +7,7 @@
 判定・利用可否が分かれたsample/targetには各候補のスコアと除外理由を表示します。`--details-limit` / `--details-offset` で表示量と続きを指定できます。
 詳細には前後1秒の保存済み観測値・単位・品質も併記します。直後の値は閲覧専用で、判定計算には使用しません。
 
-研究評価へ進めるための[単一writer評価実行への移行案](../../docs/anomaly-v03-single-writer-evaluation-proposal.md)を整理しています。固定6件のengineering-dev試行と現行S4契約との差分を示す提案であり、実行コマンドはまだありません。
+採択済みの[単一writer運用改訂](../../docs/anomaly-v03-single-writer-evaluation-proposal.md)による固定6件のengineering-dev試行は、[実行ガイド](../../docs/anomaly-v03-engineering-evaluation.md)を参照してください。`run_anomaly_v03_engineering.py plan` は計画だけを表示し、`run` はclean作業コピーから15分/2GiB/出力1GiBの上限で順次計算・保存・再計算を行います。正式S4受入やholdoutを開くものではありません。
 
 `tools/data-generator/generate.py`で合成データを作成し、`check_quality.py`で品質gateを通した後、次の順で評価します。
 

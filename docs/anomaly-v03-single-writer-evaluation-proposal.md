@@ -1,7 +1,8 @@
 # 単一writerによるv0.3評価実行への移行案
 
 2026-09-16。照合した実装は `9365d513a40ce34b7160aab190c943007e682774`。
-状態は **proposal / 実行処理未実装 / 登録データ未生成**。
+2026-09-16の提案確認後、ユーザーの「次に進めてください」を受け、運用改訂を採択した。
+現在は **adopted / 固定6件controller実装済み / 初回実データ試行前**。[実行方法と記録の読み方](anomaly-v03-engineering-evaluation.md)を参照。
 ユーザーの「同時に同じ個所を進めない限りは不要」と、Windows Updateの条件緩和・資源配慮の方針を、研究評価へ接続するための具体案。
 既存の[科学計画](anomaly-multiseed-evaluation-plan-v0.3.md)・registry・runtime gateは、この文書では変更しない。
 
@@ -31,7 +32,7 @@
 新scopeのmanifest/result wrapperが実行方針ID・attempt ID・実source/runtime・固定対象一覧を持つ。個別の科学的identityは元の登録値を保持し、外側の実行区分で正式campaignと区別する。
 Windowsのobserved runtimeを記録し、`formal_runtime()` の固定辞書を観測値として渡すことはしない。
 
-この方針は、凍結済み計画§8/9の受入条件を変更するため、**実装前に運用改訂として採択する判断が必要**。元の計画の失敗・保留を合格へ置換する意味ではない。
+この方針は、凍結済み計画§8/9とは異なる運用条件として採択した。元の計画の失敗・保留を合格へ置換する意味ではない。
 将来の正式研究評価まで進める際は、新scopeの受入証拠・完全runtime inventory・consumer revision・全dev/smoke・容量見積りを揃えて別のfreezeを行う。engineering trialの成功だけではholdoutを開かない。
 
 ## 最初の試行を固定する
@@ -46,11 +47,11 @@ Windowsのobserved runtimeを記録し、`formal_runtime()` の固定辞書を�
 
 新manifestは `anomaly-v03-engineering-run-v1` とし、source/runtime/attempt/6枠ledger/各dataset hash/各evaluation hashを持つ。
 LocalPublicationの完了印は保存の完了を示す。6枠が全て完了したことや科学的合格はmanifestのcoverage/statusから別途判定する。
-global integrity failureでは後続をnot_startedとし、残せる失敗証跡を保全して完了印を付けない。通常のprofile inconclusiveを成功へ変換しない。
+公開前のglobal integrity failureでは後続をnot_startedとし、残せる失敗証跡を保全して完了印を付けない。公開後readerや監視で失敗した場合は既存markerを撤回せず、試行全体のsupervisionをfailedとして残す。通常のprofile inconclusiveを成功へ変換しない。
 
 ## 資源と失敗時の扱い
 
-最初の試行上限案は **全体15分・専用worker private bytes 2GiB・新attemptの出力1GiB**。
+最初の試行上限は **全体15分・専用worker private bytes 2GiB・新attemptの出力1GiB**。
 開始条件は空きRAM4GiB以上・出力volume空き20GiB以上。これは既存計画の正式実行容量見積りを代替しない。
 専用workerを1体だけ起動し、同時の評価・bootstrapを走らせない。監視はローカルsupervisorが行い、モデルの進捗ポーリングで代替しない。
 上限超過では当該attemptの所有workerだけを停止・回収し、既存ファイルを削除しない。同名再開や自動の予算拡大はしない。
@@ -64,4 +65,4 @@ global integrity failureでは後続をnot_startedとし、残せる失敗証跡
 3. 新attemptで固定6枠を1回実行し、全枠の工程状態と実測資源を保存する。失敗しても部分結果を正式な成功へ読み替えない。
 4. その結果で全dev/smokeへ拡張する容量を見積もり、新scopeの受入・独立consumer・freezeの残件を整理する。
 
-**今回の到達点は、この接続案と現行契約の照合まで。** materializer呼出し、登録seedのデータ生成、evaluation、正式root作成、principal/SAM/UAC/ACL操作は行っていない。
+初回提案時の到達点は接続案と現行契約の照合までだった。採択後の実装・実行記録は[実行ガイド](anomaly-v03-engineering-evaluation.md)と引継書の最新節へ追加する。旧formal gateは維持する。
