@@ -3393,3 +3393,19 @@ local_publication_performed=true。native_launch_authorized/isolation_certified/
 
 **次は、CLI出力を使う小さな開発用比較・表示へ進む。** 既存decoderの固定capture時刻/設備/canonical入力条件を維持しており、任意の実設備データを直接扱えるとはしない。保存APIの作り直し・厳密なprincipal試験・広い重い評価moduleを自動再開せず、必要な対象試験を選ぶ。§116の旧root閉鎖とj/診断の消費済みguardを維持し、今回専用principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
 local_publication_performed/local_preview_computed=true。native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed。正式campaign entry/科学的評価条件/受入gateは未変更。
+
+## 119. 2026-09-16 保存済み候補の比較CLI・実3候補比較成功
+
+**204e8e8e9397e3276441a682a3283ff78bf3a0a8** に `preview_anomaly_v03.py compare` を追加。[使い方](../anomaly-v03-local-preview.md#保存済み候補の比較) / [結果](anomaly-multiseed-v0.3-local-comparison-2026-09-16.md)。同一入力bytesの異なる2〜3候補をmarker hash付きで指定し、順番に再計算検証してMarkdown/JSON表示する。比較は結果ファイルを書き換えず、既存保存API・数式も変更なし。
+候補別/target別件数・不足理由を表示し、判定一致/不一致は両側利用可能な行だけ。片側のみ可能・両側不能を別集計し、不能を「異常なし」に含めない。生スコアの大小や超過件数で性能順位を付けない。
+新規比較7＋既存preview8＝**15件pass/6.929秒/failure・error・skip0**、独立P0〜P3所見0/進捗poll0、safety/diff-check pass。初回7件の1 errorはテスト側の引数切出しミスで修正済み。広い評価module・principal試験は追加しない。
+
+前回C0と保存済み入力14410行/7664634 bytes/hashe104d67861c37870af170a3e74aed987f3ba402a04181cf80af9cf1bf252dbc0を再利用。新規 `artifacts/local-comparison-2026-09-16/results/c1-01`、`c2-01` を通常権限で順次作成。UTC00:05:18〜00:06:19、C1 PID31080/16.569秒、C2 PID18640/24.510秒、compare PID16436/20.037秒、全exit0。
+3候補ともcomputed/48 calibrated/40 score行（可能32/不能8）。瞬間的超過C0=2/C1=1/C2=2。共通32行の判定差はC0–C1=1/C0–C2=2/C1–C2=1、両側不能8は一致件数に含めない。C2のmotor-01.vibration_featureにも超過1があり、超過総数だけでは同じ判定とはいえない。性能やイベント数の評価ではない。
+比較表 `artifacts/local-comparison-2026-09-16/comparison.md` は3193 bytes/hash989ec54ad6b9b64416cbf93081fc074ddc101843abba28e1fec8fc11e5b20ec2。保存済み実行名は再使用しない。
+
+選抜130 source workspace/Git blob一致（前回125不変/preview・guide・READMEの3変更/新規選抜2）、前回公開18 artifact不変。input22866 bytes/hashcb5e5c788162053bd1616c5129fbb9962895afab460482de5162f3800857d718。最終manifest38826 bytes/hash3ea72ca950f2aa67d161b2a03c26e566f3a1018c26f2ea6985e620adf8024487、自身除外26 artifacts/論理15437207 bytes（約14.7MiB）。選抜は完全な依存閉包ではない。
+実行後UTC00:06:44 RAM12520452096/C154338992128/D197797593088 bytes、D約184.2GiB。OS26200.9445、**boot2026-09-16T08:46:30.5000000+09:00へ変化**を記録し、再起動理由は未確認。Windows Update engineering緩和/正式pin不変。容量変動原因や長期リーク不在は断定しない。本流889cfc3/clean、既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。
+
+**次は、判定が分かれたsample/targetを具体的に追える表示を検討する。** 保存済み観測・スコアを活用し、性能順位やイベント数には読み替えない。§116の方針、旧root閉鎖とj/診断の消費済みguardを継続。保存APIや厳密なprincipal試験を作り直さず、必要な対象試験だけを選ぶ。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
+local_publication_performed/local_comparison_computed=true。native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed。正式campaign entry/科学的評価条件/受入gateは未変更。
