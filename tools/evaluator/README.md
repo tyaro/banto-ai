@@ -9,6 +9,8 @@
 
 採択済みの[単一writer運用改訂](../../docs/anomaly-v03-single-writer-evaluation-proposal.md)による固定6件のengineering-dev試行は、[実行ガイド](../../docs/anomaly-v03-engineering-evaluation.md)を参照してください。`run_anomaly_v03_engineering.py plan` は計画だけを表示し、`run` はclean作業コピーから15分/2GiB/出力1GiBの上限で順次計算・保存・再計算を行います。正式S4受入やholdoutを開くものではありません。
 
+保存済み6件のscoreから警報・matching・集計を別実装で確かめる `audit_anomaly_v03_saved.py` は、[独立検算と進行記録の設計](../../docs/anomaly-v03-independent-audit-and-checkpoints.md)を参照してください。profile/scoreの導出や完全S6監査は未検証と明示し、全dev/smokeの長時間実行はまだ開始しません。
+
 `tools/data-generator/generate.py`で合成データを作成し、`check_quality.py`で品質gateを通した後、次の順で評価します。
 
 ```text
