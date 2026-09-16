@@ -3522,3 +3522,15 @@ UTC12:37:26空きRAM14465695744/C151697453056/D169742598144 bytes（D約158.1GiB
 
 **次は新campaignのattempt descriptorと固定path/hashのvalidatorをmetadata fixtureで実装する。** 案は固定chunks/attempt基点のresult・producer-control・auditを別formatで束ね、metadata専用storeに混在させない。まだattempt/監視process/controllerを起動しない。予算・source/consumer freeze・runtime inventory・profile/score導出独立検算は残件で、全dev/smoke/holdoutを自動開始しない。§116の専用principal試験保留、旧root閉鎖・j消費済みguardを維持。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
 checkpoint_metadata_writer_implemented=true。execution_authorized/resume_authorized/campaign_completed/native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed、performance_status=not_evaluated。
+
+## 128. 2026-09-17 attempt保存先と証拠metadataのvalidatorを実装
+
+**92772268ce968d9a4c74cb5d1811fddffb709c83** にpure descriptor builder/validatorと `attempt-layout/attempt-validate` CLIを追加。[使い方](../anomaly-v03-independent-audit-and-checkpoints.md#attemptの保存先と証拠metadataを検査する) / [結果](anomaly-multiseed-v0.3-attempt-descriptor-2026-09-17.md)。外部plan/head hashと件数から最後のrecordを選び、固定chunk/attempt path、6件identity、source/runtime/outcome、marker/producer監視/audit/その監視の宣言を結び付ける。descriptorは外部raw hash/64KiB上限で読み、journalとともに読戻し確認。3証拠hashはjournalと一致必須。verifiedには4証拠とaudit前後runtime一致を要求し、失敗時の欠落や監視のみの証拠は保持する。
+
+新規descriptor15＋既存store16＋checkpoint21＝**52件pass/11.693秒/failure・error・skip0**、独立P0〜P3所見0/進捗poll0、safety/diff-check pass。4回の実CLIはmetadata fixtureだけで合計0.934秒/peak private22265856 bytes（21.23MiB）。正常2回exit0、別attempt path/audit監視欠落の拒否2回expected exit2。各60秒/256MiB/出力2MiB監視で全終了確認・停止理由なし。新worktreeなし、attempt directory作成0、dataset/evaluation/ledger再検算0。入力7 files不変、前回checkpoint-store証拠31 files不変。
+
+証拠 `artifacts/attempt-descriptor-2026-09-17` は17 files/310739 bytes（最終manifest除く）。demo-evidence3087 bytes/hashd01ba9162c32f313e84e61d94ff584ea77732eceb5d587eb7011915847d22808。本流889cfc3/clean、既存親policy文書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。
+UTC2026-09-16T16:49:40、空きRAM14423298048/C151299223552/D169709887488 bytes（D約158.1GiB）。OS26200.9445/boot2026-09-16T08:46:30.5+09:00。実演前後runtime一致。Windows Update engineering緩和/正式pin維持、長期リーク不在未評価。
+
+**次は固定pathにある実ファイルの読取りとhash/サイズ照合を実装し、descriptor・保存済み結果・終了監視・検算本文を結び付ける。** 既存reader/auditを再利用し、小規模fixtureで確認する。今回の宣言validatorはdescriptor実配置・directory topology・証拠本文・clean sourceをまだ検証しない。controller、予算・source/consumer freeze、runtime inventory、profile/score導出独立検算は残件。全dev/smoke/holdoutを自動開始しない。§116の専用principal試験保留、旧root閉鎖・j消費済みguardを維持。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
+attempt_descriptor_metadata_implemented=true。artifact_bytes_verified/filesystem_containment_verified/execution_authorized/resume_authorized/campaign_completed/independent_s6_complete/formal_permission=false、campaign_evaluations_credited=0、acceptance_status=not_completed、performance_status=not_evaluated。

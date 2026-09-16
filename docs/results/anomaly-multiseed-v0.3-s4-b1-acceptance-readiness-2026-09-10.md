@@ -24,6 +24,8 @@
 
 [§127の追記保存](anomaly-multiseed-v0.3-checkpoint-store-2026-09-16.md): metadata専用storeの新規作成・追記・検査、確定後に失われたreceiptの読取り回復を追加。49件pass/独立所見0。9回のCLI実演は合計3.004秒/最大20.67MiBで、二重書込み拒否と元の記録保持を確認。実campaignのattempt出力やcontrollerは未接続で、再開/正式受入の許可を追加しない。
 
+[§128のattempt証拠宣言](anomaly-multiseed-v0.3-attempt-descriptor-2026-09-17.md): 固定pathと4役割の証拠metadataを外部journal/descriptor hashへ結び付けるvalidatorを追加。52件pass/独立所見0。4回のCLI実演は合計0.934秒/最大21.23MiB、別attemptのpathとaudit監視欠落を拒否。成果物本文・実directory構造は未検証で、campaign加算0、再開/正式受入の許可は追加しない。
+
 日付: 2026-09-10。初回照合の基準HEAD `f9244a735dff982cfce7d1493efda9431bc31b42`。
 補完テスト修正savepoint: `cdbc0a1`。Windows3.14.0一本化の実装savepoint: `9fd3490`。
 2026-09-11追記: Linux CI固定・unittest記録の実装は `3c69f9e`、Linuxのfakeテスト修正は `9846f52` / `7870362`。
