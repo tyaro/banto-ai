@@ -3425,6 +3425,18 @@ local_publication_performed/local_comparison_computed=true。native_launch_autho
 **次は、差のある時点前後の保存済み観測値を併記し、入力と残差の対応を追える表示を検討する。** 既存3候補を再利用し、常駐処理や大きなデータ生成を追加しない。§116方針、旧root閉鎖・j/診断の消費済みguardを継続。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
 local_comparison_computed=true、今回local publication0。native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed。正式campaign entry/科学的評価条件/受入gateは未変更。
 
+## 122. 2026-09-16 単一writer評価経路の接続案・運用改訂の判断
+
+**7f1708a7450857517f28fe3b23dd05404088b73b** に[移行案](../anomaly-v03-single-writer-evaluation-proposal.md)とREADME案内を保存。[照合結果](anomaly-multiseed-v0.3-single-writer-route-2026-09-16.md)。現行公開runnerはruntime/受入gate後も未接続。既存計算には完全18,000行と全metadata/events・登録identityが必要で、部分previewを性能評価へ読み替えない。別clean作業コピーと、新scopeのcontroller/manifest/runtime captureが必要。
+
+提案 `anomaly-v03-single-writer-v1` / engineering-dev は、最初のdev seed・layout 0・2層×3候補＝固定6件（2 dataset/288 profile/86400 score行）。科学的な式・seed・閾値等を維持し、保存とOS更新の扱いを運用改訂する。15分/所有worker private 2GiB/新出力1GiB、開始時空きRAM4GiB/volume20GiBを上限案とした。旧gateを解除せず、全dev/smokeやholdoutの代替にしない。
+独立レビュー所見0/進捗poll0。既存CLIのvalidate-onlyはdev576/smoke144枠でexit0/configuration_valid、両方not_run/output_created=false。今回は文書のみで登録データ生成0/evaluation0。重い評価moduleやprincipal試験なし。
+
+選抜131 source workspace/Git blob一致（前回129不変/README変更1/新提案1）、前回公開8 artifact不変。選抜は完全な依存閉包ではない。証拠 `artifacts/local-evaluation-route-2026-09-16`、manifest26953 bytes/hash4da69a1b957a701be90f9bd2ed0851f67d6641d2bac8601bcb82c823cf04e32c、manifest込み34572 bytes。UTC01:50:17の空きRAM16886415360/C153019449344/D171638751232 bytes（D約159.9GiB）。OS26200.9445/boot2026-09-16T08:46:30.5000000+09:00、Windows Update engineering緩和/正式pin不変。本流889cfc3/clean、既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。
+
+**次は運用改訂の採択判断。** 凍結計画§9の「条件削減は新登録」に対応し、承認後は新policy/manifest validatorと固定6枠planの実装から進む。まだ改訂採択や6件試行を完了したとは扱わない。§116の専用principal試験保留、旧root閉鎖とj/診断の消費済みguardを継続し、自動再開しない。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
+native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed。正式campaign entry/科学的評価条件/受入gateは未変更。
+
 ## 121. 2026-09-16 判定差と保存済み観測値の対応表示
 
 **a013ec2c4175725b091702ad9d6e0fa7804bac31** に観測contextを追加。[使い方](../anomaly-v03-local-preview.md#判定差の詳細) / [結果](anomaly-multiseed-v0.3-local-observation-context-2026-09-16.md)。各詳細の同一設備・t-1/t/t+1で4 targetの値/unit/quality/mode/recipeを表示。正確な時点の欠測は補間せずpresent=falseとし、null値と区別する。t+1は計算後の閲覧専用。最初の検証済み入力bytesだけ保持し、展開済み観測は表示対象の時点に限定、詳細0件なら解析を省く。自由文字列をMarkdownでescapeし、旧observationsなしJSONも描画可能。scorer/storage/CLI引数変更なし。
