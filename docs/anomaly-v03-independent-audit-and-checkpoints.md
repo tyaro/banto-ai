@@ -1,6 +1,6 @@
 # 保存結果の独立検算と長時間実行の進行記録
 
-2026-09-16。単一writerの運用改訂を継続する。独立ledger検算、固定plan・journalのmetadata検査/状態復元、旧6件trialとのpreflight証拠照合は実装済み。全dev/smokeを動かすcampaign controllerは**未接続・実行未許可**。
+2026-09-16。単一writerの運用改訂を継続する。独立ledger検算、固定plan・journalのmetadata検査/状態復元、旧6件trialとのpreflight証拠照合、metadata専用の追記writerは実装済み。全dev/smokeを動かすcampaign controllerは**未接続・実行未許可**。
 科学的な式・seed・layout・候補・母数・bootstrap・性能gateと、旧formal gateを変更しない。
 
 ## 独立検算の到達範囲
@@ -73,7 +73,7 @@ Windows更新は各attemptで実値を記録し、そのattempt内の変化を�
 
 ### 予算と次の実装
 
-plan builder/validatorとjournalの状態導出を、データ生成なしのfixtureで実装した。切断されたjournal、重複chunk、順序違反、source差分、markerだけの偽完了を拒否する。保存済み6件を読取り専用で参照する証拠照合も接続した。次は、追記writerと新scopeのattempt出力契約を整える。既存計算結果を上書き・再生成せず、旧trialを新campaign coverageへ流用しない。
+plan builder/validatorとjournalの状態導出を、データ生成なしのfixtureで実装した。切断されたjournal、重複chunk、順序違反、source差分、markerだけの偽完了を拒否する。保存済み6件を読取り専用で参照する証拠照合と、metadata専用追記writerも接続した。次は、新scopeのattempt出力契約をvalidatorへ具体化し、controllerへの接続を準備する。既存計算結果を上書き・再生成せず、旧trialを新campaign coverageへ流用しない。
 consumerのprofile/score導出とruntime inventoryの残件を整え、新scopeのproducer/consumer revisionを固定する。
 長時間実行の開始前に、controller・consumerも含む容量/所要時間、1 chunkとcampaign全体の上限、途中停止の境界を確定する。前回概算14.8GiB/19.1時間はbootstrap・独立consumer等を含まず、正式容量保証に使わない。
 全dev/smokeの実行開始、上限拡大、holdout実行は今回の設計や部分検算だけでは行わない。
@@ -102,7 +102,7 @@ planは120 chunks/720 identities・順序・ID・sourceの参照revision・runti
 
 ただし、これらのhashとoutcomeも現段階では宣言値にすぎない。`verified_complete` / `verified_inconclusive` は**journalが宣言している状態**であり、reportは常に `evidence_revalidated=false`、`resume_authorized=false`、`campaign_completed=false`、`independent_s6_complete=false`。120 chunks全部の宣言が揃ってもcoverage宣言を示すだけで、成果物の再照合を要求する。runningで記録が終われば中断状態の確認、markerだけなら保存済みattemptの検証を案内する。
 
-読み取りではplan 1MiB/record 16KiB/journal合計16MiB/最大4096 recordsを検査し、番号付きファイル以外・途中JSON・非canonical record・読み取り中の変更を拒否する。これはmetadata file上限であり、process全体の資源監視は未接続。一般のsingle-writer保存APIを使う追記writerも次工程。CLIは独自にmarkerや完了印を作らない。
+読み取りではplan 1MiB/record 16KiB/journal合計16MiB/最大4096 recordsを検査し、番号付きファイル以外・途中JSON・非canonical record・読み取り中の変更を拒否する。readerは `anomaly_v03_checkpoint_store.py` に共通化した。これはmetadata file上限であり、process全体の資源監視は未接続。CLIはcampaignのmarkerや完了印を作らない。
 
 ### 保存済み6件とのpreflight証拠照合
 
@@ -123,3 +123,41 @@ plan/head hashとrecord件数を `journal.expected_plan_sha256/expected_record_c
 結果の `preflight_evidence_revalidated=true` は旧trialとの参照照合だけを示す。`campaign_evaluations_credited=0`、`campaign_attempt_roots_verified=false`、`resume_authorized=false`、`campaign_completed=false` を維持する。journalの仮想attempt_rootと旧trialの実rootを分けて報告し、実campaignへのroot対応機能には使わない。profile/score導出の独立検算と完全S6受入も未完了のまま。
 
 source照合には旧producer・旧consumer・今回verifierのclean作業コピーを使う。Windows更新があれば過去のproducer/consumerと今回verifierの実値を別々に保持し、過去の値を書き換えない。各実行内のruntime変化は既存readerの停止条件。今回verifierの資源欄は既存audit処理部分の値で、全CLIの実測/停止監視は外側の所有process監視に記録する。実読取りは10分/1GiB/ログ8MiBの範囲で行う。
+
+### metadataを上書きせず保存・追記する
+
+`anomaly_v03_checkpoint_store.py` とCLIの `store-*` は、単一writerでmetadataだけを保存する。既存のexclusive write・flush・読戻し・置換禁止renameを再利用し、専用principalや権限分離を追加しない。rootは `plan.json` / `journal/` / `pending/` のexact構成とし、実データやattemptは作らない。
+
+```powershell
+# 新しい専用rootを作る。既存rootは空でも拒否する。
+C:\Python314\python.exe -B tools/evaluator/checkpoint_anomaly_v03.py store-init `
+  --parent <既存の親directory> --name <新しい保存名> `
+  --plan <入力plan.json> --plan-sha256 <外部保持したcanonical plan hash>
+
+# 前回receiptと次recordのbytesを外部に保持してから、1件だけ追記する。
+C:\Python314\python.exe -B tools/evaluator/checkpoint_anomaly_v03.py store-append `
+  --root <metadata root> --receipt <前回receipt.json> --receipt-sha256 <そのraw hash> `
+  --record <次record.json> --record-sha256 <そのraw hash>
+
+# 保持した最新receiptを使い、保存済みmetadataを再検査する。
+C:\Python314\python.exe -B tools/evaluator/checkpoint_anomaly_v03.py store-inspect `
+  --root <metadata root> --receipt <最新receipt.json> --receipt-sha256 <そのraw hash>
+```
+
+receiptは標準出力の `anomaly-v03-checkpoint-metadata-receipt-v1`。root絶対pathと `journal.expected_plan_sha256/expected_record_count/expected_head_sha256` を含み、root外へ履歴ごと保持する。既存receiptを上書きしたり、directoryから最新headを自動推定したりしない。record入力はcanonical JSON＋LFで、既存 `make_record` の出力を使う。receiptのscopeはmetadata-only、execution_authorized/resume_authorized/campaign_completed/formal_permissionはfalse。
+
+追記は全prefixと次recordの状態遷移・上限を検査→`pending/000001.json` 等へ排他的保存→flush/読戻し→prefix再検査→置換禁止renameで `journal/000001.json` へ確定→新receiptを返す順。renameが1件の確定点で、既存plan/recordは変更しない。旧receiptで同じ追記を繰り返すと、追加済みの末尾を検出して拒否する。
+
+| 中断位置 | 状態と対応 |
+| --- | --- |
+| 初期化・record書込み途中、flush/rename前 | 部分rootやpendingをそのまま残して停止。再使用や自動cleanup・自動公開はしない |
+| plan確定後、最初のreceipt受領前 | `store-recover-init --root ... --plan-sha256 ...` で、完全な空storeだけを読取り確認してreceiptを再取得 |
+| record確定後、receipt受領前 | `store-recover-append` に直前receiptと同じrecordのpath/raw hashを渡す。旧prefix＋厳密に1件の一致だけを読取り確認してreceiptを再取得 |
+| 意図したrecordと不一致・余分な末尾・pendingあり | 回復せず止める。途中のevaluationを継ぎ足さない |
+
+`store-recover-append` の引数は `store-append` と同じ。回復コマンドは書込みを行わない。recordのrunning/verified等は依然として宣言で、writerがデータ処理を実行した証拠にはならない。process停止の境界を小さなfixtureで検査する段階で、実campaignの再開や受入には接続していない。
+
+### 次のattempt出力契約案（実行未接続）
+
+metadata専用storeへのデータ混在は拒否し、将来のcampaign出力は別formatで扱う。chunk/attemptごとに既存の固定 `chunks/000/attempt-0001` を基点とし、result（payloadとmarker）、producer-control（終了監視）、audit（検算結果と終了監視）を区別する。これらのpathと各hash、6件のidentity、source/runtimeを一つのattempt descriptorで固定する案とする。
+全120 chunksの順序や旧試行の非流用、失敗attempt保持、marker単独の成功扱い禁止は維持する。次はこのdescriptorとpathのvalidatorをmetadata fixtureで実装する。今回のwriterはattempt directory、監視process、独立consumerを起動しない。実行開始前に予算、source/consumer freeze、runtime inventory、残る独立計算検算を整える。

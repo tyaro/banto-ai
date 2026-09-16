@@ -1,53 +1,17 @@
 """Inspect checkpoint metadata or verify historical preflight evidence; never resume."""
 from pathlib import Path
 import argparse
-import hashlib
 import json
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from banto_ai import anomaly_v03 as v
 from banto_ai import anomaly_v03_checkpoints as checkpoints
+from banto_ai import anomaly_v03_checkpoint_store as store
 from banto_ai import _anomaly_v03_runtime as rt
 from banto_ai import _anomaly_v03_io as storage
 
-MAX_PLAN_BYTES = 1024**2
-MAX_RECORD_BYTES = 16 * 1024
-MAX_JOURNAL_BYTES = 16 * 1024**2
-
-
-def _read(path, maximum):
-    path = rt.regular_path(path)
-    v.require(path.stat().st_size <= maximum, "metadata file too large")
-    raw = storage.read_regular(path)
-    v.require(len(raw) <= maximum, "metadata file grew beyond limit")
-    return raw
-
-
-def load_journal(plan_path, journal_dir, plan_hash, count, head_hash):
-    v.require(type(count) is int and 0 <= count <= checkpoints.MAX_RECORDS, "journal record count limit")
-    plan_raw = _read(plan_path, MAX_PLAN_BYTES)
-    plan = v.strict_json(plan_raw)
-    journal_dir = rt.regular_path(journal_dir, directory=True)
-    expected = [f"{number:06d}.json" for number in range(1, count + 1)]
-    v.require(sorted(p.name for p in journal_dir.iterdir()) == expected, "journal file inventory differs")
-    records, pins, total = [], [], 0
-    for name in expected:
-        path = journal_dir / name
-        raw = _read(path, MAX_RECORD_BYTES)
-        total += len(raw)
-        v.require(total <= MAX_JOURNAL_BYTES, "journal byte limit")
-        record = v.strict_json(raw)
-        v.require(raw == checkpoints.encode_record(record), "noncanonical or incomplete journal record")
-        records.append(record)
-        pins.append((path, hashlib.sha256(raw).digest()))
-    report = checkpoints.reduce_journal(plan, records, expected_plan_sha256=plan_hash,
-        expected_record_count=count, expected_head_sha256=head_hash)
-    v.require(_read(plan_path, MAX_PLAN_BYTES) == plan_raw, "plan changed during inspection")
-    v.require(sorted(p.name for p in journal_dir.iterdir()) == expected, "journal changed during inspection")
-    for path, digest in pins:
-        v.require(hashlib.sha256(_read(path, MAX_RECORD_BYTES)).digest() == digest, "journal changed during inspection")
-    return plan, records, report
+load_journal = store.load_journal
 
 
 def inspect(plan_path, journal_dir, plan_hash, count, head_hash):
@@ -71,6 +35,32 @@ def preflight(args):
     return result
 
 
+def _pinned_json(path, digest, maximum, *, canonical=False):
+    rt.require(type(digest) is str and len(digest) == 64, "external metadata file hash")
+    raw = store.read_metadata(path, maximum)
+    rt.require(storage.sha(raw) == digest, "external metadata file hash mismatch")
+    value = v.strict_json(raw)
+    if canonical:
+        rt.require(raw == v.canonical_json(value) + b"\n", "record intent must be canonical JSON plus LF")
+    return value
+
+
+def write_metadata(args):
+    if args.command == "store-init":
+        plan = v.strict_json(store.read_metadata(args.plan, store.MAX_PLAN_BYTES))
+        rt.require(v.canonical_sha256(plan) == args.plan_sha256, "external plan hash mismatch")
+        return store.create_store(args.parent, args.name, plan)
+    if args.command == "store-recover-init":
+        return store.recover_initialization(args.root, args.plan_sha256)
+    receipt = _pinned_json(args.receipt, args.receipt_sha256, 16 * 1024)
+    if args.command == "store-inspect":
+        return store.inspect_store(args.root, receipt)
+    record = _pinned_json(args.record, args.record_sha256, store.MAX_RECORD_BYTES, canonical=True)
+    if args.command == "store-append":
+        return store.append_record(args.root, receipt, record)
+    return store.recover_append(args.root, receipt, record)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -89,14 +79,32 @@ def main(argv=None):
     verify.add_argument("--reference", type=Path, required=True)
     verify.add_argument("--reference-sha256", required=True)
     verify.add_argument("--verifier-revision", required=True)
+    initialize = commands.add_parser("store-init", help="Create a new metadata-only store; refuses every existing root")
+    initialize.add_argument("--parent", type=Path, required=True)
+    initialize.add_argument("--name", required=True)
+    initialize.add_argument("--plan", type=Path, required=True)
+    initialize.add_argument("--plan-sha256", required=True)
+    recover = commands.add_parser("store-recover-init", help="Read an empty committed store after a lost initial receipt")
+    recover.add_argument("--root", type=Path, required=True)
+    recover.add_argument("--plan-sha256", required=True)
+    for name in ("store-inspect", "store-append", "store-recover-append"):
+        command = commands.add_parser(name, help="Metadata only; requires externally retained receipt and intent pins")
+        command.add_argument("--root", type=Path, required=True)
+        command.add_argument("--receipt", type=Path, required=True)
+        command.add_argument("--receipt-sha256", required=True)
+        if name != "store-inspect":
+            command.add_argument("--record", type=Path, required=True)
+            command.add_argument("--record-sha256", required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == "plan":
             report = checkpoints.fixed_plan(args.producer_revision, args.consumer_revision)
         elif args.command == "inspect":
             report = inspect(args.plan, args.journal_dir, args.plan_sha256, args.record_count, args.head_sha256)
-        else:
+        elif args.command == "preflight-trial":
             report = preflight(args)
+        else:
+            report = write_metadata(args)
         print(json.dumps(report, ensure_ascii=False, sort_keys=True))
         return 0
     except (OSError, ValueError, KeyError, TypeError) as error:

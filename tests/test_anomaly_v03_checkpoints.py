@@ -318,17 +318,17 @@ class ReaderTests(unittest.TestCase):
             self.inspect()
 
     def test_metadata_size_caps_and_negative_count(self):
-        with patch.object(self.cli, "MAX_PLAN_BYTES", 10), self.assertRaises(ValueError):
+        with patch.object(self.cli.store, "MAX_PLAN_BYTES", 10), self.assertRaises(ValueError):
             self.inspect()
-        with patch.object(self.cli, "MAX_RECORD_BYTES", 10), self.assertRaises(ValueError):
+        with patch.object(self.cli.store, "MAX_RECORD_BYTES", 10), self.assertRaises(ValueError):
             self.inspect()
-        with patch.object(self.cli, "MAX_JOURNAL_BYTES", 10), self.assertRaises(ValueError):
+        with patch.object(self.cli.store, "MAX_JOURNAL_BYTES", 10), self.assertRaises(ValueError):
             self.inspect()
         with self.assertRaises(ValueError):
             self.cli.inspect(self.plan_path, self.journal, self.f.plan_hash, -1, self.f.head)
 
     def test_change_between_initial_read_and_final_recheck_is_rejected(self):
-        original = self.cli._read
+        original = self.cli.store.read_metadata
         calls = 0
         def changing_read(path, maximum):
             nonlocal calls
@@ -338,7 +338,7 @@ class ReaderTests(unittest.TestCase):
                 with (self.journal / "000001.json").open("ab") as stream:
                     stream.write(b" ")
             return raw
-        with patch.object(self.cli, "_read", side_effect=changing_read):
+        with patch.object(self.cli.store, "read_metadata", side_effect=changing_read):
             with self.assertRaisesRegex(ValueError, "journal changed during inspection"):
                 self.inspect()
 
