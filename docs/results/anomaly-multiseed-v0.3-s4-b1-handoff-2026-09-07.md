@@ -3409,3 +3409,18 @@ local_publication_performed/local_preview_computed=true。native_launch_authoriz
 
 **次は、判定が分かれたsample/targetを具体的に追える表示を検討する。** 保存済み観測・スコアを活用し、性能順位やイベント数には読み替えない。§116の方針、旧root閉鎖とj/診断の消費済みguardを継続。保存APIや厳密なprincipal試験を作り直さず、必要な対象試験だけを選ぶ。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
 local_publication_performed/local_comparison_computed=true。native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed。正式campaign entry/科学的評価条件/受入gateは未変更。
+
+## 120. 2026-09-16 判定差の時点・対象別詳細表示
+
+**47f5367b64ef41ef0ef263dbcf0a628fcbd164a0** にcompareの詳細表示を追加。[使い方](../anomaly-v03-local-preview.md#判定差の詳細) / [結果](anomaly-multiseed-v0.3-local-comparison-details-2026-09-16.md)。判定/利用可否が分かれたsample/targetごとにUTC時刻・候補別score/residual/phase/mode/recipe/除外理由を表示。既定20組/max100、details-offset、全体組数/表示数/前後省略数を追加。同じ組をペア間で重複計上せず、unavailableを陰性に含めない。全体集計と旧detailsなしJSONの描画を維持。保存API・数式変更なし。
+**関連19件pass/11.572秒/failure・error・skip0**、独立P0〜P3所見0/進捗poll0、safety/diff-check pass。重複・全availability組合せ・値の一致・順序・ページ境界/非表示・上限・旧JSON・CLIを確認した。広い評価moduleやprincipal試験は実施しない。
+
+保存済みC0/C1/C2を再利用したcompare PID25968、UTC00:42:56.153678〜00:43:10.371583、14.218秒/exit0。入力・候補payloadの新規生成0。前回比較からdetails以外の全項目不変、各詳細値・判定・理由は保存済みscores.jsonlに一致。
+差は2組：sample7202/UTC02:00:02のmotor-01.vibration_featureはC2だけ閾値超過、sample7203/UTC02:00:03のmotor-01.motor_currentはC0だけ閾値超過。日付は入力の2026-01-01 UTC。全件表示/省略0、性能順位や異常イベント数の主張なし。
+表 `artifacts/local-comparison-details-2026-09-16/comparison-details.md` は4653 bytes/hash7d65e23198da9fd6f9a884af3e079c6841aa738935d7dcb3e9e4f9695e5f04c4。
+
+選抜130 source workspace/Git blob一致（125不変/5変更）、前回公開26 artifact不変。input22799 bytes/hashfd26747971d304f0bc5b0dca4db0bd2f6545e8e1519fc32d0235314db1e2db16。最終manifest26948 bytes/hashbffef1a360356453ce5ff4f1061aaecceaac2652063d8c1e922a4d44bf638b0a、自身除外8 artifacts/41857 bytes、manifest込み68805 bytes（約67KiB）。選抜は完全な依存閉包ではない。
+終了後UTC00:44:16 RAM16581005312/C153473536000/D172064628736 bytes（D約160.2GiB）。開始時D173141708800との容量差をこの処理に帰属させず、長期リーク不在も断定しない。OS26200.9445/boot2026-09-16T08:46:30.5000000+09:00、Windows Update engineering緩和/正式pin不変。本流889cfc3/clean、既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。
+
+**次は、差のある時点前後の保存済み観測値を併記し、入力と残差の対応を追える表示を検討する。** 既存3候補を再利用し、常駐処理や大きなデータ生成を追加しない。§116方針、旧root閉鎖・j/診断の消費済みguardを継続。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
+local_comparison_computed=true、今回local publication0。native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed。正式campaign entry/科学的評価条件/受入gateは未変更。
