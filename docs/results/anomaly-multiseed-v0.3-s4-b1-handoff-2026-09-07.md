@@ -3481,3 +3481,17 @@ UTC04:20:34、空きRAM16154693632/C151848161280/D171825594368 bytes（D約160.0
 
 **次はデータ生成なしで、固定campaign plan/validatorとjournalから状態を復元する処理を実装する。** 独立consumerのprofile/score導出・runtime inventoryは受入残件として維持。全dev/smokeの予算・source/consumer freezeを整える前に長時間実行やholdoutを開始しない。§116の専用principal試験保留、旧root閉鎖とj/診断の消費済みguardを継続し、自動再開しない。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
 independent_ledger_audit_completed=true。native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed、performance_status=not_evaluated。
+
+## 125. 2026-09-16 固定campaign planとjournal状態復元を実装
+
+**9c9975294fe4c22c1cc8dbffbcc140cf00c687e1** にmetadata-onlyのplan builder/validator、hash-linked journal reader/reducerを追加。[使い方](../anomaly-v03-independent-audit-and-checkpoints.md#実装済みのmetadata-cli) / [結果](anomaly-multiseed-v0.3-checkpoint-metadata-2026-09-16.md)。dev96 chunks/576 evaluations→smoke24/144の固定120/720。planのsource参照revision・runtime方針・identity/order/hashを検査し、予算未確定/実行未許可を維持する。
+
+外部plan hash・record件数・head hashを必須にし、欠落/重複/順序違反/途中JSON/source差分/markerだけの偽完了を拒否。失敗・中断後は新attempt、integrity失敗後は停止。失敗時の監視hash/context/理由を復元結果にも残す。120 chunksがverifiedと宣言されても、成果物はまだ照合せずevidence_revalidated/resume_authorized/campaign_completed/independent_s6_complete=false。全範囲のwriter/controllerを実行できる状態ではない。
+
+初回19件pass/1.530秒。独立P2指摘1件（公開前失敗のmarkerなしsupervision pinを拒否）を修正し、最終**21件pass/1.993秒/failure・error・skip0**、再レビュー0/進捗poll0。safety/diff-check pass。小規模CLI実演はplan PID22784/0.224秒/peak private19853312 bytes、inspect PID8076/0.310秒/21057536 bytes、両exit0/終了確認。各60秒/256MiB/出力2MiB監視で停止理由なし。架空hashのfixture4 recordsから失敗attempt1と保存済み検証待ちattempt2を復元、旧監視hash保持、not_started119。登録dataset生成0/evaluation0。
+
+証拠 `artifacts/checkpoint-metadata-2026-09-16` の実演11 files/308504 bytes（最終manifest除く）。demo-evidence SHA256 e551aa7751d8edcd2cda0efc16c0c649f95f69040039b1ce6cdf220484dea3d2。実演入力6 filesと前回証拠9 files不変。本流889cfc3・producer0086ffe・consumer0c8377dはclean。既存親policy文書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621の未commit変更を保全・commit除外。
+UTC04:46:36空きRAM15625842688/C151835779072/D171825303552 bytes（D約160.0GiB）。OS26200.9445/boot2026-09-16T08:46:30.5000000+09:00。Windows Update engineering緩和/正式pin不変、長期リーク不在は未評価。
+
+**次は保存済み6件を読取り専用で参照し、journal宣言と実ファイルのhash/来歴/監視/検算を結び付ける証拠照合を接続する。** 旧trialを新campaign coverageへ流用しない。追記writer/controller、profile/score導出の独立検算、runtime inventory、予算とsource/consumer freezeは残件。全dev/smokeやholdout実行を自動開始しない。§116の専用principal追加試験保留、旧root閉鎖・j/診断消費済みguardを継続。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
+checkpoint_metadata_implemented=true。native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed、performance_status=not_evaluated。
