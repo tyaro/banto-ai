@@ -23,6 +23,22 @@ python tools/evaluator/preview_anomaly_v03.py verify --output artifacts/local-re
 
 保存済み入力から再計算して、結果JSON・score JSONL・summaryの全bytesを照合する。元の入力ファイルがその後変わっても、保存したsnapshotが再計算の入力になる。
 
+## 保存済み候補の比較
+
+同じ入力で作った異なる2〜3候補を、保存先と各receiptのmarker hashで指定する。
+
+```text
+python tools/evaluator/preview_anomaly_v03.py compare --result artifacts/local-results/c0 <C0のmarker hash> --result artifacts/local-results/c1 <C1のmarker hash>
+```
+
+各結果を順番に再計算検証し、候補別・target別の利用可能/不能・瞬間的な閾値超過件数と、候補ペアの判定一致/不一致をMarkdownで標準出力へ表示する。`--format json` で同じ集計をJSON出力できる。3候補なら `--result` をもう1つ追加する。候補はC0/C1/C2の順に表示する。
+比較コマンドはファイルを作成・変更しない。各候補の実行を先に完了させ、同じ保存先への書込みと比較を同時に行わない。
+
+入力bytesのSHA256・行数・サイズが違う結果、同じ候補の重複、未完成・内容不一致の結果は比較を拒否する。各候補の保存済み観測から再計算するため、比較にも計算時間がかかる。
+判定一致/不一致は**両候補で利用可能な同じtarget・sampleの行だけ**を数える。片側だけ利用可能、両側とも不能な行は別欄に表示する。利用不能を「異常なし」に含めない。
+全候補がcomputedの場合だけcomparisonもcomputedになり、部分入力などはinconclusiveを維持する。入力不足の理由と除外タグも表示する。
+候補ごとにスコアの定義・閾値が異なるため、生スコアの大小による順位や勝者は出さない。判定差の確認用であり、正解ラベルに基づく検出性能の比較ではない。
+
 ## 入力形式と上限
 
 既存 `decode_saved_observations` と同じcanonical UTF-8/LF JSONLを受け付ける。

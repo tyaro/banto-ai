@@ -131,10 +131,21 @@ def main(argv=None):
     verify = commands.add_parser("verify", help="recompute and verify a completed local result")
     verify.add_argument("--output", type=Path, required=True)
     verify.add_argument("--marker-sha256", required=True)
+    compare = commands.add_parser("compare", help="verify and compare two or three saved candidates without writing files")
+    compare.add_argument("--result", nargs=2, action="append", required=True, metavar=("OUTPUT", "MARKER_SHA256"))
+    compare.add_argument("--format", choices=("markdown", "json"), default="markdown")
     args = parser.parse_args(argv)
     try:
-        result = (run_local_preview(args.observations, args.output_parent, args.name, candidate=args.candidate)
-                  if args.command == "run" else verify_local_preview(args.output, marker_sha256=args.marker_sha256))
+        if args.command == "run":
+            result = run_local_preview(args.observations, args.output_parent, args.name, candidate=args.candidate)
+        elif args.command == "verify":
+            result = verify_local_preview(args.output, marker_sha256=args.marker_sha256)
+        else:
+            from .anomaly_v03_local_compare import compare_local_previews, comparison_markdown
+            result = compare_local_previews(args.result)
+            if args.format == "markdown":
+                print(comparison_markdown(result), end="")
+                return 0
         print(json.dumps(result, ensure_ascii=False, sort_keys=True))
         return 0
     except (OSError, ValueError) as error:
