@@ -16,6 +16,8 @@
 
 [§123の運用改訂と初回試行](anomaly-multiseed-v0.3-engineering-trial-2026-09-16.md): 実装0086ffe、37件pass/独立2指摘是正後0。clean作業コピーで登録済み固定6件を1回実行し、全保存・公開前再計算・writer終了後readerが成功。572.048秒/peak private321.59MiB/出力126.41MiB、全worker終了確認済み。単一writerの開発評価が動作した証拠であり、以下の旧S4受入passを追加したものではない。
 
+[§124の独立ledger検算](anomaly-multiseed-v0.3-independent-ledger-audit-2026-09-16.md): 保存済み6件のscoreからepisode/matching/metricsを別実装で再構成し、全件一致。18件pass/独立所見0。実読取り92.828秒/177.83MiB、入力46 files不変。profile/score導出・bootstrap等は未検算で、完全S6受入ではない。全dev/smokeの120 chunks/720 evaluationsはmetadata設計のみ。
+
 日付: 2026-09-10。初回照合の基準HEAD `f9244a735dff982cfce7d1493efda9431bc31b42`。
 補完テスト修正savepoint: `cdbc0a1`。Windows3.14.0一本化の実装savepoint: `9fd3490`。
 2026-09-11追記: Linux CI固定・unittest記録の実装は `3c69f9e`、Linuxのfakeテスト修正は `9846f52` / `7870362`。
