@@ -1,6 +1,6 @@
 # 保存結果の独立検算と長時間実行の進行記録
 
-2026-09-16。単一writerの運用改訂を継続する。独立ledger検算と、固定plan・journalのmetadata検査/状態復元は実装済み。全dev/smokeを動かすcampaign controllerは**未接続・実行未許可**。
+2026-09-16。単一writerの運用改訂を継続する。独立ledger検算、固定plan・journalのmetadata検査/状態復元、旧6件trialとのpreflight証拠照合は実装済み。全dev/smokeを動かすcampaign controllerは**未接続・実行未許可**。
 科学的な式・seed・layout・候補・母数・bootstrap・性能gateと、旧formal gateを変更しない。
 
 ## 独立検算の到達範囲
@@ -73,14 +73,14 @@ Windows更新は各attemptで実値を記録し、そのattempt内の変化を�
 
 ### 予算と次の実装
 
-plan builder/validatorとjournalの状態導出を、データ生成なしのfixtureで実装した。切断されたjournal、重複chunk、順序違反、source差分、markerだけの偽完了を拒否する。次は、保存済み6件を読取り専用で参照する証拠照合を接続する。既存計算結果を上書き・再生成せず、旧trialを新campaign coverageへ流用しない。
+plan builder/validatorとjournalの状態導出を、データ生成なしのfixtureで実装した。切断されたjournal、重複chunk、順序違反、source差分、markerだけの偽完了を拒否する。保存済み6件を読取り専用で参照する証拠照合も接続した。次は、追記writerと新scopeのattempt出力契約を整える。既存計算結果を上書き・再生成せず、旧trialを新campaign coverageへ流用しない。
 consumerのprofile/score導出とruntime inventoryの残件を整え、新scopeのproducer/consumer revisionを固定する。
 長時間実行の開始前に、controller・consumerも含む容量/所要時間、1 chunkとcampaign全体の上限、途中停止の境界を確定する。前回概算14.8GiB/19.1時間はbootstrap・独立consumer等を含まず、正式容量保証に使わない。
 全dev/smokeの実行開始、上限拡大、holdout実行は今回の設計や部分検算だけでは行わない。
 
 ### 実装済みのmetadata CLI
 
-`src/banto_ai/anomaly_v03_checkpoints.py` はファイルを開かず、渡されたplanとjournalだけを検査する。CLIも読み取りと標準出力だけで、実行・追記・再開・成果物の書換えを行わない。
+`src/banto_ai/anomaly_v03_checkpoints.py` はファイルを開かず、渡されたplanとjournalだけを検査する。CLIの `plan/inspect` も読み取りと標準出力だけで、実行・追記・再開・成果物の書換えを行わない。
 
 ```powershell
 C:\Python314\python.exe -B tools/evaluator/checkpoint_anomaly_v03.py plan `
@@ -103,3 +103,23 @@ planは120 chunks/720 identities・順序・ID・sourceの参照revision・runti
 ただし、これらのhashとoutcomeも現段階では宣言値にすぎない。`verified_complete` / `verified_inconclusive` は**journalが宣言している状態**であり、reportは常に `evidence_revalidated=false`、`resume_authorized=false`、`campaign_completed=false`、`independent_s6_complete=false`。120 chunks全部の宣言が揃ってもcoverage宣言を示すだけで、成果物の再照合を要求する。runningで記録が終われば中断状態の確認、markerだけなら保存済みattemptの検証を案内する。
 
 読み取りではplan 1MiB/record 16KiB/journal合計16MiB/最大4096 recordsを検査し、番号付きファイル以外・途中JSON・非canonical record・読み取り中の変更を拒否する。これはmetadata file上限であり、process全体の資源監視は未接続。一般のsingle-writer保存APIを使う追記writerも次工程。CLIは独自にmarkerや完了印を作らない。
+
+### 保存済み6件とのpreflight証拠照合
+
+`checkpoint_anomaly_v03.py preflight-trial` は、旧engineering-devの6件を参照する専用の読取り経路。最初のchunk/attempt1についてrunning→saved_pending_verification→verifiedの3 recordsを持つ**参照journal**を使う。これは実行履歴を後付けしてcampaignへ採用する機能ではない。
+
+```powershell
+C:\Python314\python.exe -B tools/evaluator/checkpoint_anomaly_v03.py preflight-trial `
+  --plan <参照planの絶対path> --journal-dir <参照journalの絶対path> `
+  --reference <reference.jsonの絶対path> --reference-sha256 <外部保持したreference raw hash> `
+  --verifier-revision <今回のclean検証用作業コピーの40桁commit>
+```
+
+referenceは `anomaly-v03-checkpoint-preflight-reference-v1` / `purpose=historical-six-cell-trial-only`。
+plan/head hashとrecord件数を `journal.expected_plan_sha256/expected_record_count/expected_head_sha256` に格納する。`trial_root/producer_root/consumer_root/audit_path/audit_monitor_path` は明示した絶対pathで、`audit_monitor_sha256` も外部固定する。marker/supervision/audit hashは検証済み宣言recordから得る。consumer_rootは**過去の監査consumer**で、今回のverifierとは個別に固定する。
+
+処理は参照journal検査→各証拠hash/旧consumer source照合→既存readerによる全payload検証と6件ledger再検算→保存済みauditの安定項目との比較→journal・参照/証拠の再読取り。この間、新たな観測生成やproducer score計算は行わない。参照revision・runtime・6件のIDとsuccess/inconclusive・監視の正常終了/上限/呼出し先・auditの入出力を結び付け、相違があればexit2で止まる。
+
+結果の `preflight_evidence_revalidated=true` は旧trialとの参照照合だけを示す。`campaign_evaluations_credited=0`、`campaign_attempt_roots_verified=false`、`resume_authorized=false`、`campaign_completed=false` を維持する。journalの仮想attempt_rootと旧trialの実rootを分けて報告し、実campaignへのroot対応機能には使わない。profile/score導出の独立検算と完全S6受入も未完了のまま。
+
+source照合には旧producer・旧consumer・今回verifierのclean作業コピーを使う。Windows更新があれば過去のproducer/consumerと今回verifierの実値を別々に保持し、過去の値を書き換えない。各実行内のruntime変化は既存readerの停止条件。今回verifierの資源欄は既存audit処理部分の値で、全CLIの実測/停止監視は外側の所有process監視に記録する。実読取りは10分/1GiB/ログ8MiBの範囲で行う。

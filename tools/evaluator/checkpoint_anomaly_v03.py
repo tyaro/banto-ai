@@ -1,4 +1,4 @@
-"""Emit/inspect campaign metadata only; never creates campaign output or starts work."""
+"""Inspect checkpoint metadata or verify historical preflight evidence; never resume."""
 from pathlib import Path
 import argparse
 import hashlib
@@ -24,7 +24,7 @@ def _read(path, maximum):
     return raw
 
 
-def inspect(plan_path, journal_dir, plan_hash, count, head_hash):
+def load_journal(plan_path, journal_dir, plan_hash, count, head_hash):
     v.require(type(count) is int and 0 <= count <= checkpoints.MAX_RECORDS, "journal record count limit")
     plan_raw = _read(plan_path, MAX_PLAN_BYTES)
     plan = v.strict_json(plan_raw)
@@ -47,7 +47,28 @@ def inspect(plan_path, journal_dir, plan_hash, count, head_hash):
     v.require(sorted(p.name for p in journal_dir.iterdir()) == expected, "journal changed during inspection")
     for path, digest in pins:
         v.require(hashlib.sha256(_read(path, MAX_RECORD_BYTES)).digest() == digest, "journal changed during inspection")
-    return report
+    return plan, records, report
+
+
+def inspect(plan_path, journal_dir, plan_hash, count, head_hash):
+    return load_journal(plan_path, journal_dir, plan_hash, count, head_hash)[2]
+
+
+def preflight(args):
+    from banto_ai import anomaly_v03_checkpoint_evidence as evidence
+    from banto_ai import anomaly_v03_saved_audit as audit
+    raw = audit._pin(args.reference, args.reference_sha256)
+    reference = v.strict_json(raw)
+    evidence.validate_reference(reference)
+    pins = reference["journal"]
+    inputs = (args.plan, args.journal_dir, pins["expected_plan_sha256"], pins["expected_record_count"], pins["expected_head_sha256"])
+    plan, records, _ = load_journal(*inputs)
+    result = evidence.verify_preflight(plan, records, reference, args.verifier_revision)
+    # Re-read the journal/reference after the longer saved-ledger audit.
+    load_journal(*inputs)
+    rt.require(storage.read_regular(args.reference) == raw, "preflight reference changed during verification")
+    result["reference_sha256"] = args.reference_sha256
+    return result
 
 
 def main(argv=None):
@@ -62,12 +83,20 @@ def main(argv=None):
     check.add_argument("--journal-dir", type=Path, required=True)
     check.add_argument("--record-count", type=int, required=True)
     check.add_argument("--head-sha256", required=True, help="Externally retained last record raw hash, or empty plan hash")
+    verify = commands.add_parser("preflight-trial", help="Bind one reference journal to an existing six-cell trial; no campaign credit")
+    verify.add_argument("--plan", type=Path, required=True)
+    verify.add_argument("--journal-dir", type=Path, required=True)
+    verify.add_argument("--reference", type=Path, required=True)
+    verify.add_argument("--reference-sha256", required=True)
+    verify.add_argument("--verifier-revision", required=True)
     args = parser.parse_args(argv)
     try:
         if args.command == "plan":
             report = checkpoints.fixed_plan(args.producer_revision, args.consumer_revision)
-        else:
+        elif args.command == "inspect":
             report = inspect(args.plan, args.journal_dir, args.plan_sha256, args.record_count, args.head_sha256)
+        else:
+            report = preflight(args)
         print(json.dumps(report, ensure_ascii=False, sort_keys=True))
         return 0
     except (OSError, ValueError, KeyError, TypeError) as error:
