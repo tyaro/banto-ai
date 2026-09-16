@@ -56,3 +56,5 @@ profile不足はinconclusiveを維持する。6枠完了でも全dev576件/smoke
 
 小さなfixtureによる新規25件と既存通常保存12件がpass。固定範囲・順序・paired入力・再計算・失敗時の保存・重複拒否・資源停止・監視の二次障害を確認した。試験で登録seedの観測は生成していない。
 独立レビューの2指摘（監視二次障害時の記録欠落、資源値の計測期間）を是正し、再レビュー指摘0。
+
+[初回実試行](results/anomaly-multiseed-v0.3-engineering-trial-2026-09-16.md)は実装0086ffeのclean worktreeで6件完了・reader検証成功。全体572.048秒、peak private 321.59MiB、出力126.41MiBだった。試行の成功は正式S4受入や性能判定の合格を意味しない。

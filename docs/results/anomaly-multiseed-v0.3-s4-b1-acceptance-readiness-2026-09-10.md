@@ -1,6 +1,6 @@
 # S4-B1 成功後の受入条件と追加回帰確認
 
-2026-09-16の最新作業方針: [引継書§116](anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)に基づき、同じ出力先は単一writerとする通常保存経路を優先する。専用principal/起動特権/厳密なP-U分離の追加試験は保留。以下の既存受入条件と未完了の事実は維持し、保留を合格や正式実行許可に読み替えない。ローカル計算・保存・比較・観測照合を実装済み。[単一writer評価への移行案](../anomaly-v03-single-writer-evaluation-proposal.md)で現行契約との差分を整理し、固定6件のengineering-dev試行を提案済み。運用改訂の採択前で、登録データ生成・評価実行はしていない。
+2026-09-16の最新作業方針: [引継書§116](anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)に基づき、同じ出力先は単一writerとする通常保存経路を優先する。専用principal/起動特権/厳密なP-U分離の追加試験は保留。以下の既存受入条件と未完了の事実は維持し、保留を合格や正式実行許可に読み替えない。[単一writer運用改訂](../anomaly-v03-single-writer-evaluation-proposal.md)を採択し、固定6件のengineering-dev経路を実装。初回6件の計算・保存・両再計算が成功した。旧formal gateを開かず、新scopeの独立consumer/全dev・smoke/受入freezeは今後の工程。
 
 [§117の実装結果](anomaly-multiseed-v0.3-local-publication-2026-09-16.md): 通常保存APIを追加し、27件pass/独立指摘解消、実2ファイル保存・重複拒否・writer終了後の別reader検証に成功。通常開発の保存経路が利用可能になった。次は結果生成側との小さな接続であり、下表の正式受入passを追加したものではない。
 
@@ -13,6 +13,8 @@
 [§121の観測照合](anomaly-multiseed-v0.3-local-observation-context-2026-09-16.md): 各詳細へ前後1秒・同一設備4信号の保存済み観測を追加。22件pass/独立指摘0。既存3候補で24セルを照合し、C0残差と入力差分の一致も確認した。直後の観測は閲覧専用で計算式は不変。通常開発の確認経路が揃ったが、正式受入や性能評価の状態は変わらない。
 
 [§122の接続案](anomaly-multiseed-v0.3-single-writer-route-2026-09-16.md): 旧runnerの未接続、完全dataset・clean sourceの必要性、runtime/受入条件との差を整理。dev576/smoke144枠の設定検証は両方configuration_valid/not_run。新運用方針・固定6件・資源上限を提案し、独立指摘0。旧gate・正式受入・科学的条件は変更していない。
+
+[§123の運用改訂と初回試行](anomaly-multiseed-v0.3-engineering-trial-2026-09-16.md): 実装0086ffe、37件pass/独立2指摘是正後0。clean作業コピーで登録済み固定6件を1回実行し、全保存・公開前再計算・writer終了後readerが成功。572.048秒/peak private321.59MiB/出力126.41MiB、全worker終了確認済み。単一writerの開発評価が動作した証拠であり、以下の旧S4受入passを追加したものではない。
 
 日付: 2026-09-10。初回照合の基準HEAD `f9244a735dff982cfce7d1493efda9431bc31b42`。
 補完テスト修正savepoint: `cdbc0a1`。Windows3.14.0一本化の実装savepoint: `9fd3490`。

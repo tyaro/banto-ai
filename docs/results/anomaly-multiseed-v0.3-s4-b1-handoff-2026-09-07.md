@@ -3434,8 +3434,23 @@ local_comparison_computed=true、今回local publication0。native_launch_author
 
 選抜131 source workspace/Git blob一致（前回129不変/README変更1/新提案1）、前回公開8 artifact不変。選抜は完全な依存閉包ではない。証拠 `artifacts/local-evaluation-route-2026-09-16`、manifest26953 bytes/hash4da69a1b957a701be90f9bd2ed0851f67d6641d2bac8601bcb82c823cf04e32c、manifest込み34572 bytes。UTC01:50:17の空きRAM16886415360/C153019449344/D171638751232 bytes（D約159.9GiB）。OS26200.9445/boot2026-09-16T08:46:30.5000000+09:00、Windows Update engineering緩和/正式pin不変。本流889cfc3/clean、既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。
 
-**次は運用改訂の採択判断。** 凍結計画§9の「条件削減は新登録」に対応し、承認後は新policy/manifest validatorと固定6枠planの実装から進む。まだ改訂採択や6件試行を完了したとは扱わない。§116の専用principal試験保留、旧root閉鎖とj/診断の消費済みguardを継続し、自動再開しない。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
+**この時点の次工程は運用改訂の採択判断だった（§123で採択・初回試行完了）。** 凍結計画§9の「条件削減は新登録」に対応し、承認後は新policy/manifest validatorと固定6枠planの実装から進む。§122の時点では改訂採択や6件試行は未完了。§116の専用principal試験保留、旧root閉鎖とj/診断の消費済みguardを継続し、自動再開しない。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
 native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed。正式campaign entry/科学的評価条件/受入gateは未変更。
+
+## 123. 2026-09-16 運用改訂採択・固定6件の計算保存と両再計算成功
+
+提案確認後の「次に進めてください」を受け `anomaly-v03-single-writer-v1` を採択し、**0086ffe226ed58c618f6bc001ebd0c99a90e66e9** に実装。[ガイド](../anomaly-v03-engineering-evaluation.md) / [結果と概算](anomaly-multiseed-v0.3-engineering-trial-2026-09-16.md)。固定plan/manifest、Windows更新実値記録、1 worker/15分/2GiB/出力1GiB監視、全pair保存後の順次計算・公開前再計算・writer終了後readerを追加した。新規25＋通常保存12＝37件pass/7.941秒。独立P2/P3各1件是正・再レビュー0/進捗poll0。safety/diff-check pass。既存科学計画/config/schema/数式/旧gate/保存API変更なし。
+
+同commitのclean detached worktree **C:/Users/TKent/.codex/worktrees/engineering-v03-20260916** を新設。実行と生成物はこのコピーの `artifacts/anomaly-v03-engineering-dev/trial-01` と `trial-01-control`。**同名を再使用せず、削除・cleanup対象にも自動追加しない。** 1回の実試行は最初のdev seed/layout 0/core・quality-stress/全候補の6件成功、0 inconclusive/failed/not_started。360 source Git/作業コピー一致、2 dataset/288 profile/86400 score行、payload41件。両再計算・local_verified=true。marker hash ebe96bacce7ec85bf032fc196c383efa3a5a01a09a99f0d23521e9a60b615106。
+PID31828/exit0/終了確認済み、全体572.048秒、peak private337215488 bytes（321.59MiB）、出力46 files/132553275 bytes（126.41MiB）、stop_reasonなし/観測エラー0。manifestのresourcesは計算保存段階まで（189.136秒）であり、全体実測はsupervision.jsonを使う。公開後の異常では既存markerを撤回せずsupervision failedとして判定する。
+
+概算は全dev576件で15.3時間/11.9GiB、smoke144件で3.8時間/3.0GiB、合計19.1時間/14.8GiB。1条件の線形外挿で上限保証ではなく、bootstrap/独立consumer等は含まない。6件の完了は検出性能の合格ではない。各保存済みmetricは結果書に分子/分母で記録し、この1条件だけで候補選択・閾値変更をしない。
+
+候補側証拠 `artifacts/engineering-evaluation-2026-09-16` は6 files/54234 bytes。trial-evidence44532 bytes/hash1ca9c3a33eca0adc60a36526dcfb12c8d336542d9dc48b67ead80969fbb478a2、最終manifest1060 bytes/hasha22b4bd142a046b7833556a6c3dbe2e535df48849f2c8aa127e5ba854396cb58。前回公開3 artifacts＋manifest不変。本流889cfc3/clean、既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。
+UTC02:24:22の空きRAM17062436864/C152602251264/D171823501312 bytes（D約160.0GiB）、OS26200.9445/boot2026-09-16T08:46:30.5000000+09:00。Windows Update engineering緩和/正式pin不変。長期リーク不在は未評価。
+
+**次は、保存済み6件を使う独立consumerの検査項目と、全dev/smokeへ拡張する固定inventory・中断時進行記録を設計する。** 現CLIの対象・上限をその場で拡大せず、新scope受入/consumer revision/runtime inventoryを整備してから長時間実行へ進む。今回の完了だけでholdoutを開かない。§116の専用principal試験保留、旧root閉鎖とj/診断の消費済みguardを継続し、自動再開しない。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
+engineering_trial_completed=true。native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed、performance_status=not_evaluated。
 
 ## 121. 2026-09-16 判定差と保存済み観測値の対応表示
 

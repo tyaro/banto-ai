@@ -2,7 +2,7 @@
 
 2026-09-16。照合した実装は `9365d513a40ce34b7160aab190c943007e682774`。
 2026-09-16の提案確認後、ユーザーの「次に進めてください」を受け、運用改訂を採択した。
-現在は **adopted / 固定6件controller実装済み / 初回実データ試行前**。[実行方法と記録の読み方](anomaly-v03-engineering-evaluation.md)を参照。
+現在は **adopted / 固定6件controller実装済み / 初回6件の保存・再計算成功**。[実行方法と記録の読み方](anomaly-v03-engineering-evaluation.md)と[初回結果](results/anomaly-multiseed-v0.3-engineering-trial-2026-09-16.md)を参照。
 ユーザーの「同時に同じ個所を進めない限りは不要」と、Windows Updateの条件緩和・資源配慮の方針を、研究評価へ接続するための具体案。
 既存の[科学計画](anomaly-multiseed-evaluation-plan-v0.3.md)・registry・runtime gateは、この文書では変更しない。
 
