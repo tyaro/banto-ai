@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import re
+from html import escape
+from io import BytesIO
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from itertools import combinations
@@ -31,7 +33,7 @@ class _Score:
     exclusion_tags: tuple[str, ...]
 
 
-def _load_result(root, marker_sha256):
+def _load_result(root, marker_sha256, *, keep_observations=False):
     rt.require(type(marker_sha256) is str and re.fullmatch("[0-9a-f]{64}", marker_sha256), "invalid marker digest")
     captured = {}
     def verify(files):
@@ -45,9 +47,48 @@ def _load_result(root, marker_sha256):
             decisions[key] = _Score(row["available"], row["threshold_exceeded"], row["timestamp_ms"],
                                     row["score"], row["residual"], row["phase"], row["mode"], row["recipe"],
                                     tuple(row["exclusion_tags"]))
-        captured.update(report=report, decisions=decisions)
+        captured.update(report=report, decisions=decisions,
+                        observations=files["observations.jsonl"] if keep_observations else None)
     storage.verify_local_publication(Path(root), expected_marker_sha256=marker_sha256, verify_semantics=verify)
-    return captured["report"], captured["decisions"]
+    return captured["report"], captured["decisions"], captured["observations"]
+
+
+def _attach_observation_context(raw, details):
+    """Select exact adjacent timestamps from a verified snapshot, after scoring.
+
+    Retain only the displayed equipment/times, not the entire decoded input.
+    The next observation is inspection context and never a scoring input here.
+    """
+    if not details:
+        return
+    rt.require(type(raw) is bytes, "verified observations required for context")
+    wanted = {(item["full_target"].split(".", 1)[0], item["sample"]+offset)
+              for item in details for offset in (-1, 0, 1)}
+    selected = {}
+    start = datetime.fromtimestamp(c.START_MS/1000, timezone.utc)
+    for line in BytesIO(raw):
+        row = v.strict_json(line)
+        delta = datetime.fromisoformat(row["timestamp"]) - start
+        sample = delta.days*86400 + delta.seconds
+        key = row["equipment_id"], sample
+        if key not in wanted:
+            continue
+        selected[key] = {"mode": row["operating_mode"], "recipe": row["recipe_step"],
+                         "signals": [{"full_target": row["equipment_id"]+"."+target,
+                                      "value": row["signals"][target]["value"], "unit": row["signals"][target]["unit"],
+                                      "quality": row["quality"][target]} for target in c.TARGETS]}
+    for item in details:
+        equipment = item["full_target"].split(".", 1)[0]
+        observations = []
+        for offset, relation in ((-1, "previous"), (0, "current"), (1, "next")):
+            sample = item["sample"]+offset
+            source = selected.get((equipment, sample))
+            observations.append({"sample": sample, "timestamp_ms": c.START_MS+sample*1000,
+                                 "relation": relation, "present": source is not None,
+                                 "mode": source["mode"] if source else None,
+                                 "recipe": source["recipe"] if source else None,
+                                 "signals": source["signals"] if source else []})
+        item["observations"] = observations
 
 
 def compare_local_previews(results, *, details_limit=DEFAULT_DETAILS_LIMIT, details_offset=0):
@@ -62,12 +103,14 @@ def compare_local_previews(results, *, details_limit=DEFAULT_DETAILS_LIMIT, deta
     candidates, decisions_by_candidate = {}, {}
     common_input = None
     common_keys = None
+    saved_observations = None
     for root, marker_sha256 in results:
-        report, decisions = _load_result(root, marker_sha256)
+        report, decisions, raw = _load_result(root, marker_sha256, keep_observations=common_input is None and details_limit > 0)
         candidate = report["candidate_id"]
         rt.require(candidate not in candidates, "duplicate comparison candidate")
         if common_input is None:
             common_input, common_keys = report["input"], set(decisions)
+            saved_observations = raw
         rt.require(report["input"] == common_input, "comparison inputs differ")
         rt.require(set(decisions) == common_keys, "comparison score keys differ")
         candidates[candidate] = {name: report[name] for name in (
@@ -115,6 +158,7 @@ def compare_local_previews(results, *, details_limit=DEFAULT_DETAILS_LIMIT, deta
                           "mode": row.mode, "recipe": row.recipe, "exclusion_tags": list(row.exclusion_tags)})
         detail_rows.append({"sample": key[1], "timestamp_ms": scores[0].timestamp_ms, "full_target": key[0],
                             "difference_kinds": kinds, "candidates": items})
+    _attach_observation_context(saved_observations, detail_rows)
     details = {"order": "sample_then_full_target", "total": total_differences, "offset": details_offset,
                "limit": details_limit, "shown": len(detail_rows), "omitted_before": min(details_offset, total_differences),
                "omitted_after": max(total_differences-details_offset-len(detail_rows), 0), "rows": detail_rows}
@@ -122,6 +166,28 @@ def compare_local_previews(results, *, details_limit=DEFAULT_DETAILS_LIMIT, deta
             "comparison_status": "computed" if all(item["preview_status"] == "computed" for item in candidates.values()) else "inconclusive",
             "coverage": "provided_observations_only", "candidates": [candidates[name] for name in ordered],
             "pairs": pairs, "details": details, "performance_status": "not_evaluated", "formal_permission": False}
+
+
+def _markdown_cell(value):
+    # Units are free text in the input contract. Keep them inside one table cell.
+    text = escape(str(value), quote=False).replace("|", "&#124;")
+    text = re.sub(r"([\\`*_{}\[\]()!])", r"\\\1", text)
+    return text.replace("\r\n", "\n").replace("\r", "\n").replace("\n", "<br>")
+
+
+def _observations_markdown(observations):
+    lines = ["", "Saved observations (same equipment, all four scoring signals). Next is inspection only; it is not used to compute the displayed score.", "",
+             "| Relative time / sample | Signal | Value | Unit | Quality | Mode / recipe |",
+             "| --- | --- | ---: | --- | --- | --- |"]
+    for observation in observations:
+        relative = f"{observation['relation']} / {observation['sample']}"
+        if not observation["present"]:
+            lines.append(f"| {relative} | observation absent | n/a | n/a | n/a | n/a |")
+            continue
+        for signal in observation["signals"]:
+            value = "null" if signal["value"] is None else repr(signal["value"])
+            lines.append(f"| {relative} | {signal['full_target']} | {value} | {_markdown_cell(signal['unit'])} | {signal['quality']} | {_markdown_cell(observation['mode'])} / {_markdown_cell(observation['recipe'])} |")
+    return lines
 
 
 def _details_markdown(details):
@@ -144,6 +210,8 @@ def _details_markdown(details):
             phase = "n/a" if item["phase"] is None else str(item["phase"])
             exclusions = ", ".join(item["exclusion_tags"]) or "none"
             lines.append(f"| {item['candidate_id']} | {item['decision']} | {score} | {residual} | {phase} | {item['mode']} / {item['recipe']} | {exclusions} |")
+        if "observations" in row:  # Previous detail JSON remains renderable.
+            lines.extend(_observations_markdown(row["observations"]))
     return lines
 
 

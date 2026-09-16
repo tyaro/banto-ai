@@ -56,6 +56,14 @@ python tools/evaluator/preview_anomaly_v03.py compare --result artifacts/local-r
 `--format json` の `details` に同じ詳細とページ情報を追加する。以前のdetailsなし比較JSONもMarkdown表示できる。
 上限は表示量の制限であり、入力読取りや再計算を一部に限定するものではない。
 
+各詳細には、同じ設備の **直前1秒・当該時点・直後1秒** の保存済み観測も併記する。
+4つの計算対象信号について値・単位・品質とmode/recipeを表示し、C2が参照する他信号の変化も確認できる。load_proxyは計算対象外のため含めない。
+正確な時点の観測がない場合は `present=false` / `observation absent` として残し、離れた時点の値や別設備の値で埋めない。観測行はあるが信号値が欠ける場合の `null` とも区別する。
+直後の観測は **計算終了後の閲覧専用** であり、表示済みスコア・残差・判定の計算には使わない。
+観測は完了結果の検証済みsnapshotから取り出すため、元の入力ファイルを変更しても表示は変わらない。
+同一入力は1候補分だけ保持し、追加で保持する展開済み観測は表示対象の時点に限定する。詳細が0件なら観測表示用の解析を省く。
+JSONでは各詳細行の `observations` に追加する。既存のobservationsなし詳細JSONも引き続き描画できる。
+
 ## 入力形式と上限
 
 既存 `decode_saved_observations` と同じcanonical UTF-8/LF JSONLを受け付ける。

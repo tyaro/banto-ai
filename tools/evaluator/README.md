@@ -5,6 +5,7 @@
 保存済みv0.3形式の観測から候補1つのスコアを計算して保存するコマンドは、[ローカルスコア計算](../../docs/anomaly-v03-local-preview.md)を参照してください。`preview_anomaly_v03.py run` と `verify` で計算・保存・再計算確認を行い、入力不足や利用不能な値も結果へ残します。
 同一入力の保存済み2〜3候補は `compare` で検証して比較できます。候補別・target別件数と、両側で利用可能な行の判定一致をMarkdown/JSONへ表示します。
 判定・利用可否が分かれたsample/targetには各候補のスコアと除外理由を表示します。`--details-limit` / `--details-offset` で表示量と続きを指定できます。
+詳細には前後1秒の保存済み観測値・単位・品質も併記します。直後の値は閲覧専用で、判定計算には使用しません。
 
 `tools/data-generator/generate.py`で合成データを作成し、`check_quality.py`で品質gateを通した後、次の順で評価します。
 
