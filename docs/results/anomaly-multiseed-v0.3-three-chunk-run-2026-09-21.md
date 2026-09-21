@@ -2,7 +2,7 @@
 
 2026-09-21 JST。対象はclean `C:/Users/TKent/.codex/worktrees/v03p/banto-ai`、実装 **c01d1c978f78bab51391392d56cdcb7aab5afaab**、出力`artifacts/v03-runs/r1`。
 
-## 実行中の保存点
+## 開始時の保存点
 
 ユーザーの「お願いします」に基づき、準備済みの初期closed記録から`continue --max-chunks 3`を開始した。登録dev seed2486912926863618161のlayout0〜2、各core/quality-stress×3候補＝最大18評価。同じrunの完了済み区間はまだなく、旧trialを転用しない。
 
@@ -13,3 +13,9 @@
 開始時Windows26200.9457/CPython3.14.0/exe・DLL hashは前回と同じ。事前空きRAM13133750272/C174109761536/D119512887296 bytes。実行中のsourceは編集しない。保護root/principal、UAC/ACL/service/task、本流や過去trialに変更なし。
 
 この保存点では実行中で、3区間完了や全120区間、Phase 2/3、S6の完了を追加しない。終了結果は同文書に追記する。
+
+## 中間保存点
+
+経過約30分でchunk0/1（12評価）のverified記録が揃い、chunk2へ自動継続した。生成workerはそれぞれ554.821秒/343572480 bytes、555.890秒/344481792 bytesで正常終了確認。controllerは照合中にpeak218877952 bytesとなり、chunk2開始時にはprivate86491136 bytesへ低下した。
+
+verified sequence3/6のreceiptを外部`first-verified-receipt.json` / `second-verified-receipt.json`へ保持した。descriptor hashはseq3=`333de70acc1f3a94c9393e8c2cbd661bacfeeef021bcec7243c389d940f1676e`、seq6=`64620177c2dde14ff912d1f140093654c12637a336ea73e08b07751d17e892de`。まだ同じinvocationが稼働中であり、これらをclosed状態として再起動しない。
