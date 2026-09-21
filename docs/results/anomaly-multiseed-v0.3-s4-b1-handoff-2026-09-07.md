@@ -3650,3 +3650,15 @@ prepared hash **be582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7
 producer最大349065216 bytes（332.9MiB）、audit最大195768320 bytes（186.7MiB）、controller peak226635776 bytes（216.1MiB）/終了時82321408 bytes（78.5MiB）。60秒間隔42標本で空きRAM最小12900720640 bytes（約12.0GiB）、観測エラーなし。区間確定後のcontroller privateは増加し続けておらず、長期リーク不在は未評価。UTC2026-09-21T14:10:40.410982+00:00、空きRAM13235781632/C173706485760/D119512846336 bytes。OS26200.9457/CPython3.14.0/exe・DLL hashは開始・終了・workerで一致、Windows Update engineering緩和を維持。
 
 証拠は候補`artifacts/three-chunk-run-2026-09-21/savepoint-evidence.json`。前回campaign-launcher manifest5681 bytes/SHA-256 aa90c244104a2d83e444407f7f38914ac2e2d80c23587154ca3bf9d9877ab55fと記載11ファイル、本流889cfc3/clean、既存dirty8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全。保護root/principal参照、UAC/ACL/service/task変更、push/merge/CIなし。独立監査は保存score以降のみ、campaign加算0/正式許可false。完全runtime inventory、profile/score導出・bootstrapの独立検算、全dev/smoke/holdout、性能評価、Phase 2/3全体は未完了。
+
+## 137. 完了済み3区間からの6区間継続（2026-09-22 JST）
+
+ユーザーの継続指示に基づき、同じclean **c01d1c978f78bab51391392d56cdcb7aab5afaab** / `C:/Users/TKent/.codex/worktrees/v03p/banto-ai` のr1を`continue --max-chunks 6`で継続した。[最終結果と次回の試算](anomaly-multiseed-v0.3-six-chunk-continuation-2026-09-21.md)。chunk3〜8の新規36評価がすべて成功し、累計9区間/54評価。実時間5442.063274秒（90分42秒）、累積活動8005.085221秒。exit0/yielded/stop_reason=null、journal27/next chunk9、全所有process正常終了確認済み。開始1873c37、中間18評価追加ed28579で保存し、sequence12/15/18/21/24のreceiptも外部保持した。
+
+最新closedは **`run/control/000002/closed.json`** / raw SHA-256 **37b94e035b4468b18ff6381e0a17ed7ca6aaedb99cccb14cfaebcb10d8597501**。prepared hash **be582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7** は不変。全595 files/1196786729 logical bytesを照合し、既存205ファイルは完全一致。collectorは128.340秒のIO/hash照合のみ、数値計算の再実行なし。証拠は候補`artifacts/six-chunk-continuation-2026-09-21/savepoint-evidence.json`。前回three-chunk-run manifest4953 bytes/hashadf08b7f2f32907c45c94bf8e9656a91292137efe02f83a00f6cb0d68ff1d5aaと記載11ファイルを保全する。
+
+producer最大333.3MiB、audit最大185.9MiB、controller peak216.6MiB/終了時77.3MiB。60秒間隔90標本の空きRAM最小約11.88GiB、診断エラーなし。UTC2026-09-21T15:55:10.529690+00:00、空きRAM13211693056/C173294256128/D119512580096 bytes。OS26200.9457/CPython3.14.0/exe・DLL hashは開始・終了・各workerで一致、Windows Update engineering緩和を維持。長期リーク不在は未評価。
+
+残り111区間/666評価。再開時の既存3区間確認を含む起動に約9〜10分かかり、細分化した再開が全体予算に響くことが分かった。1回の再開実測による線形試算では、残りを6区間単位で進めると累積約81〜88時間、24区間単位なら約40〜42時間。**次の候補は24区間/144評価、約6時間/追加約3GiB**とし、途中保存は同じinvocation内で続ける。固定起動費、seed/layout差、inventory増加、再試行など未分離の費用があり、48時間/32GiBへの収束保証ではない。次の実行・全残区間の自動起動はしていない。
+
+実装変更・追加agent・広い回帰試験の再実行なし、repository safety/diff-check pass。本流889cfc3/clean、既存dirty8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621は保全・commit除外。保護root/principal参照、UAC/ACL/service/task変更、push/merge/CIなし。監査は保存score以降のみ、campaign加算0/正式許可false。完全runtime inventory/独立S6、全dev/smoke/holdout、性能評価、Phase 2/3全体の完了は追加しない。

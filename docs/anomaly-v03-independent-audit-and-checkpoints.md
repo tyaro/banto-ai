@@ -330,4 +330,6 @@ source照合では同期の読取り用Git subprocessを呼ぶ。専用の計算
 
 実prepareはc01d1c9/clean `v03p/banto-ai` の`r1`で成功した。source397/stdlib2559/native48/extension8、7 files/749075 bytes、journal0/next chunk0。完全runtime inventory、受入freeze、全120実行、独立S6の完了は追加しない。[結果と操作手順](results/anomaly-multiseed-v0.3-campaign-launcher-2026-09-21.md)を参照する。
 
-その後、同じc01d1c9/r1で実CLI `continue --max-chunks 3` が3区間/18評価を2563.527秒で完走した。journal9/next chunk3/yielded、監査は各区間`ledger_checks_passed`、全所有process正常終了確認済み。最新closedは`run/control/000001/closed.json`、205 files/399625685 logical bytesを照合し、初期7ファイルは不変。次回は[3区間の最終結果](results/anomaly-multiseed-v0.3-three-chunk-run-2026-09-21.md)の最新外部pinで再開する。古い初期closedや中間receiptから起動しない。残り117区間/702評価、campaign加算0/正式許可false、独立監査は保存score以降のみである。
+初回は同じc01d1c9/r1で実CLI `continue --max-chunks 3` が3区間/18評価を2563.527秒で完走した。journal9/next chunk3/yielded、監査は各区間`ledger_checks_passed`、全所有process正常終了確認済み。当時のclosedは`run/control/000001/closed.json`、205 files/399625685 logical bytesを照合し、初期7ファイルは不変。[3区間の最終結果](results/anomaly-multiseed-v0.3-three-chunk-run-2026-09-21.md)はこの初回保存時点の記録である。campaign加算0/正式許可false、独立監査は保存score以降のみである。
+
+さらに2026-09-22 JST、実CLI `continue --max-chunks 6` でchunk3〜8/36評価が成功し、累計9区間/54評価となった。現時点の最新closedは **`run/control/000002/closed.json`**、journal27/next chunk9/yielded。595 files/1196786729 logical bytesを照合し、既存205ファイルは不変。[6区間の最終結果](results/anomaly-multiseed-v0.3-six-chunk-continuation-2026-09-21.md)の外部pinを使う。短い区間数での再開を繰り返すと既存verified再照合の費用が累積するため、次の区間上限候補を24とし、途中保存は同じinvocation内で続ける。試算は保証ではなく、次回以降の実行や全体予算の正式freezeは追加していない。

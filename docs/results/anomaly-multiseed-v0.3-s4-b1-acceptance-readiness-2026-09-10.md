@@ -1,5 +1,7 @@
 # S4-B1 成功後の受入条件と追加回帰確認
 
+[§137の6区間継続](anomaly-multiseed-v0.3-six-chunk-continuation-2026-09-21.md): 2026-09-22 JST、同じclean c01d1c9/r1で新規36評価がすべて成功、累計9区間/54評価。5442.063秒、journal27/next9/yielded、595 files/1196786729 bytesを照合し既存205ファイルは不変、全所有process終了済み。開始1873c37/中間ed28579を保存。再開時の既存区間照合費用から、次の候補は24区間単位としたが未起動。campaign加算0/正式許可false、監査は保存score以降、完全runtime inventory/独立S6未完了。以下の正式受入passは追加しない。
+
 [§136の3区間連続運転](anomaly-multiseed-v0.3-three-chunk-run-2026-09-21.md): clean c01d1c9/r1で新規18評価すべて成功。生成・保存・再計算照合・別process ledger監査・journal確定まで2563.527秒、明示3区間上限で正常閉鎖（journal9/next3/yielded）。205 files/399625685 bytesを照合し、全所有process終了確認済み。実行中に6aff0c1/3d4f91cを保存し、実装変更なし。残り117区間/702評価。独立監査は保存score以降のみ、campaign加算0/正式許可false/完全runtime inventoryとS6未完了。以下の正式受入passは追加しない。続く§135以前の未開始表記は各保存時点の履歴である。
 
 [§135の環境snapshotと起動CLI](anomaly-multiseed-v0.3-campaign-launcher-2026-09-21.md): engineeringの実OS値でsource/stdlib/nativeを収集・再読し、prepareと明示max-chunksによるcontinueを接続。c01d1c9/17件pass/6.691秒/独立指摘0。実prepareはclean v03pのr1で成功（67.650秒/inspection37.20MiB、source397/stdlib2559/native48/extension8、7 files/749075 bytes）。journal0/実データ計算未開始。snapshotはinspection processの時点観測でruntime closure/正式freezeではなく、以下の正式受入passは追加しない。
