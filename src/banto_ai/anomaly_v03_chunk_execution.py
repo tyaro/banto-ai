@@ -76,7 +76,7 @@ def _worker(root, revision, tree, plan_path, plan_hash, index, attempt):
 
 
 class NativeCallbacks:
-    """One producer process, then a separate ledger-auditor process; no descendants."""
+    """One compute worker, then a separate ledger auditor; source checks invoke Git."""
     def __init__(self, session):
         self.session = session
         self.plan_path, self.plan_raw, plan = audit.read_plan(session.metadata_root / "plan.json",

@@ -3594,3 +3594,23 @@ producer/旧engineering **31件pass/20.300秒**、controller/store/監視の最�
 証拠は `artifacts/attempt-controller-2026-09-21`。前回chunk-auditのmanifest＋4証拠を保持・照合する。本流889cfc3/clean、既存親policy文書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621は保持・commit除外。§116の専用principal保留・保護root参照禁止・j/診断guard消費済みを維持。principal/SAM/保護root参照、UAC/ACL変更、service/task追加、push/merge/CIなし。
 
 **次はproducer worker/独立audit CLIを監視/controllerへ接続するadapter。** 専用監視format/binding/limits、全体予算/source/consumer freeze/runtime inventoryを整えてから実データ実行を判断する。[短い引継ぎ](../current-handoff.md)を更新。今回の3 componentはPhase 3全条件実行の準備で、Phase 2/3全体の完了追加ではない。budgets_frozen/execution_authorized/resume_authorized/campaign_completed/independent_s6_complete/formal_permission=false、campaign_evaluations_credited=0。
+
+## 133. 2026-09-21 native接続と新しい実6評価を完走
+
+ユーザーからこのPCで他作業なし・大きめ作業OKの許可を受領。native callbacks/接続試行CLIを **8b343873e052103fb78fd304551eba09c8015bfc**、実試行で判明したpath長の事前検査を **25d1084ecf8f24f17fe6f8f5b253c317bc80daa7** へ保存した。[結果と実測](anomaly-multiseed-v0.3-chunk-execution-2026-09-21.md) / [実行方法](../anomaly-v03-independent-audit-and-checkpoints.md#新しい6評価を別processの監査まで通す)。
+
+producer worker→保存確定→別processのledger audit→controllerのfresh照合→journal確定を接続し、各監視を対象/argv/source/runtimeと結合した。外部receiptを3遷移それぞれ保存する。未終了workerは元ownerを保持し、失敗・再試行可能なjournalへ進めない。監視記録や診断出力が書けない場合も元の停止理由・ownerを失わない。controller内fresh検算の資源検査は開始/終了時で、全controllerの強制停止予算は未整備。
+
+関連42件pass/77.920秒/peak private67751936 bytes、path修正後13件pass/22.771秒。独立指摘解消後0/進捗poll0、safety/diff-check pass。初回新10件のfixture PIDとResourceStop誤分類、レビューでの一次停止保持を修正した。小規模mock試験と下記のmockなし実計算は分けて記録する。
+
+初回clean root `C:/Users/TKent/.codex/worktrees/engineering-chunk-20260921/banto-ai` / 8b34387では、6件目quality-stress/C2の261文字pathがFileNotFoundErrorとなった。producer PID17252/exit2/終了確認、258.007秒/249008128 bytes、5 success/1 failed。running→failed、完了印なし、54 files/107889570 bytesを保持。OS設定や共通IOを変えず、登録stage/payload pathが248 UTF-16文字未満か計算前に確認する修正を追加した。
+
+短いclean root **`C:/Users/TKent/.codex/worktrees/v03/banto-ai`** / 25d1084で、同じ登録6枠を新たに生成した。`artifacts/anomaly-v03-chunk-trials/trial-01` は **connection_trial_verified/exit0/6 success・0 failed・inconclusive・not_started**。source390 files、payload41 files、全体68 files/133323148 bytes。journalはrunning→saved_pending_verification→verified_complete、外部receipt3件。最終descriptor hash **3aa4f1a0511f3671afa093145c34f01c17435781771ede4963d53e8a76b5b8ca**。旧失敗出力の再使用なし。
+
+全体1008.679秒（16分49秒）。producer PID15676/666.089秒/peak341819392 bytes（326.0MiB）、audit PID23244/91.316秒/189100032 bytes（180.34MiB）、controller peak221065216 bytes（210.82MiB）。両worker正常終了・停止理由なし・観測エラー空。Gitの同期読取りsubprocessを含むtree全体のメモリ値ではない。終了後にdocstringの説明だけを修正し、実行sourceは25d1084として保持する。
+
+UTC2026-09-21T12:32:07.339235+00:00、空きRAM13116989440/C174142107648/D119513669632 bytes（D約111.3GiB）。OS26200.9457/CPython3.14.0/exe・DLL hashと試行前後runtime一致。Windows Update engineering緩和・正式pin不変、長期リーク不在は未評価。
+
+証拠は候補の `artifacts/chunk-execution-2026-09-21`。実試行の終了後は数値再計算を繰り返さず、journal/descriptor/receiptと成功68 files・失敗54 filesをpinした。前回attempt-controller証拠と本流889cfc3/clean、既存親policy文書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持・commit除外。保護root参照、principal/SAM、UAC/ACL変更、service/task追加、push/merge/CIなし。
+
+**次は全dev/smokeの予算・source/consumer・完全runtime inventoryと、複数区切りの継続入口。** 初期callback setup後935.916秒の120倍は約31.2時間、保存量は約14.9GiB。初期source照合も毎回含む単純換算は約33.6時間。seed/layout差・再試行・余裕・bootstrap等を含む保証ではない。今回の接続試行を全campaignのcoverageへ読み替えない。profile/score導出等の独立検算、全dev/smoke/holdout、性能評価は残件。Phase 2/3全体の完了は追加せず、campaign_evaluations_credited=0、formal_permission/independent_s6_complete=falseを維持する。

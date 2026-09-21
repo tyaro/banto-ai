@@ -306,4 +306,6 @@ C:\Python314\python.exe -B tools/evaluator/run_anomaly_v03_chunk.py trial `
 
 producerは900秒/2GiB、payloadは書込み前の既存1GiB上限、stdout/stderrは合計1MiB。auditは600秒/1GiB/ログ8MiB。controller内のfresh ledger検証は既存readerの開始・終了資源検査で、controller自体を強制停止する外側process上限や全campaign予算はまだ設けていない。開始時は空きRAM4GiB・volume20GiBを要求する。trial成功は `connection_trial_verified` / `verified_evaluations=6` で、campaign加算0・正式許可false。全dev/smoke予算、完全runtime inventory、profile/score導出等の独立検算と正式受入は別途残る。
 
+source照合では同期の読取り用Git subprocessを呼ぶ。専用の計算workerを増やすことはないが、監視のprivate bytesは直接所有するPython processの値であり、Gitを含むprocess tree全体の合計ではない。
+
 終了不明時のCLIは新しい仕事を始めず、元の子processに停止・終了確認を繰り返す。ログを繰り返し走査したり、PIDから別processを探したりしない。途中出力/intent/監視を残し、自動cleanupは行わない。
