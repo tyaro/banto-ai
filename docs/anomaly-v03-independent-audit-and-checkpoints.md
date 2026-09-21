@@ -302,6 +302,8 @@ C:\Python314\python.exe -B tools/evaluator/run_anomaly_v03_chunk.py trial `
 
 `trial` は接続確認専用で、常に新しい `artifacts/anomaly-v03-chunk-trials/<name>` と最初のdev chunk/attempt 1だけを作る。実行前にplan hash・revision・対象数1区切り・上限・実runtimeを `request.json` に固定する。metadata/attempt/外部receipt保存先を分け、running/saved/verifiedの戻り値を順番に `receipts/` へ保存する。既存試行の再開や全120区切りの起動はできない。producerとconsumerは同じ固定revisionでも別process・別計算経路で、検算の範囲は保存score以降のledger。
 
+実行前に登録dataset/evaluationのstage/payload保存先を組み立て、UTF-16で248文字未満を要求する。Windowsの長いpath設定は変更せず、上限を超えるcheckout/試行名は計算前に拒否する。短いcheckout名を使う。初回実試行で261文字のC2出力が保存できなかったため追加した境界で、途中失敗の出力はそのまま保持する。
+
 producerは900秒/2GiB、payloadは書込み前の既存1GiB上限、stdout/stderrは合計1MiB。auditは600秒/1GiB/ログ8MiB。controller内のfresh ledger検証は既存readerの開始・終了資源検査で、controller自体を強制停止する外側process上限や全campaign予算はまだ設けていない。開始時は空きRAM4GiB・volume20GiBを要求する。trial成功は `connection_trial_verified` / `verified_evaluations=6` で、campaign加算0・正式許可false。全dev/smoke予算、完全runtime inventory、profile/score導出等の独立検算と正式受入は別途残る。
 
 終了不明時のCLIは新しい仕事を始めず、元の子processに停止・終了確認を繰り返す。ログを繰り返し走査したり、PIDから別processを探したりしない。途中出力/intent/監視を残し、自動cleanupは行わない。

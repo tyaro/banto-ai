@@ -17,6 +17,7 @@ from . import anomaly_v03_chunk_contract as chunk
 from . import anomaly_v03_chunk_producer as producer
 from . import anomaly_v03_engineering as engine
 from . import anomaly_v03_engineering_contract as policy
+from . import anomaly_v03_materializer as materializer
 from . import anomaly_v03_process_supervisor as processes
 from . import _anomaly_v03_engineering_runtime as resources
 from . import _anomaly_v03_io as storage
@@ -27,11 +28,26 @@ AUDIT_LIMITS = {"wall_seconds": 600, "private_bytes": 1024**3, "output_bytes": 8
 TRIAL_PARENT = "artifacts/anomaly-v03-chunk-trials"
 
 
+def _path_budget(tree, plan, index, attempt):
+    """Reject long native paths before generating data, without OS policy changes."""
+    manifest = chunk.new_manifest(plan, index, attempt)
+    names = ["planned.json", "context.json", "manifest.json"]
+    names += ["evaluations/" + slot["identity"]["evaluation_id"] + ".json" for slot in manifest["slots"]]
+    names += ["datasets/" + dataset["identity"]["dataset_id"] + "/" + name
+              for dataset in manifest["datasets"] for name in materializer.DATASET_FILES]
+    result = Path(tree).absolute() / f"chunks/{index:03d}/attempt-{attempt:04d}/result"
+    # Include the longer final directory spelling, not only the staging path.
+    longest = max(len(str(result / phase / name).encode("utf-16-le")) // 2
+                  for phase in ("stage", "payload") for name in names)
+    rt.require(longest < 248, "output path too long; use a shorter checkout or trial name")
+
+
 def _worker(root, revision, tree, plan_path, plan_hash, index, attempt):
     started = time.monotonic()
     root = engine._root(root)
     plan_path, raw, plan = audit.read_plan(plan_path, plan_hash)
     selected = chunk.chunk_plan(plan, index, attempt)
+    _path_budget(tree, plan, index, attempt)
     engine._same(revision, plan["source_bindings"]["producer_revision"], "worker revision selection")
     checkout = rt.capture_checkout(root, revision)
     tree = rt.regular_path(tree, directory=True)
@@ -85,6 +101,7 @@ class NativeCallbacks:
                      [status, context["chunk_index"], context["attempt"]], "native callback journal order")
         engine._same(context["plan"], self.session.plan, "native callback context plan")
         layout = descriptor._layout(row)
+        _path_budget(self.session.root, self.session.plan, row["chunk_index"], row["attempt"])
         # descriptor_path changes with each record; all output paths stay fixed.
         engine._same({k: val for k, val in layout.items() if k != "descriptor_path"},
                      {k: val for k, val in context["layout"].items() if k != "descriptor_path"}, "native callback layout")
@@ -181,11 +198,12 @@ def trial(root, revision, name):
     before = resources.require_start_resources(root)
     checkout = rt.capture_checkout(root, revision)
     parent = root / TRIAL_PARENT
+    target = parent / name
+    plan = checkpoints.fixed_plan(revision, revision)
+    _path_budget(target / "attempts", plan, 0, 1)
     rt.regular_path(parent, directory=True, missing=True)
     parent.mkdir(parents=True, exist_ok=True)
-    target = parent / name
     target.mkdir()  # Existing or partially written trials are never reused.
-    plan = checkpoints.fixed_plan(revision, revision)
     request = {"format": "anomaly-v03-chunk-connection-trial-v1", "chunk_index": 0, "attempt": 1,
         "maximum_chunks": 1, "plan_sha256": v.canonical_sha256(plan), "revision": revision,
         "producer_limits": PRODUCER_LIMITS, "audit_limits": AUDIT_LIMITS, "payload_limit_bytes": policy.limits()["output_bytes"],

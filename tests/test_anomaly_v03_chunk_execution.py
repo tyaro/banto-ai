@@ -181,3 +181,25 @@ class NativeWorkerTests(unittest.TestCase):
             self.worker("0" * 64)
         self.generate.assert_not_called()
         self.assertFalse((self.tree / "chunks/096/attempt-0002/result").exists())
+
+    def test_trial_rejects_long_paths_before_output_allocation_or_generation(self):
+        long_root = self.root / ("x" * 100)
+        with self.assertRaisesRegex(ValueError, "path too long"):
+            execution.trial(long_root, "a" * 40, "trial-01")
+        self.generate.assert_not_called()
+        self.assertFalse(long_root.exists())
+
+    def test_path_budget_includes_final_payload_name_and_utf16_length(self):
+        prefix = Path("C:/" if sys.platform == "win32" else "/")
+        # Determine the boundary using the same registered names, without file IO.
+        first_rejected = None
+        for length in range(1, 180):
+            try:
+                execution._path_budget(prefix / ("x" * length), self.plan, 0, 1)
+            except ValueError:
+                first_rejected = length
+                break
+        self.assertIsNotNone(first_rejected)
+        execution._path_budget(prefix / ("x" * (first_rejected - 1)), self.plan, 0, 1)
+        with self.assertRaisesRegex(ValueError, "path too long"):
+            execution._path_budget(prefix / ("x" * (first_rejected - 2) + "\U0001f680"), self.plan, 0, 1)
