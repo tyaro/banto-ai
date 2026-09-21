@@ -2,6 +2,14 @@
 
 更新: 2026-09-21 JST。最初にこの文書を読み、下記候補worktreeの `git status` / `git log -3 --oneline` を確認する。全履歴は必要箇所だけ読む。
 
+## 実行中の接続確認（§132より新しい状態）
+
+2026-09-21 21:20 JST時点: native接続を8b34387、Windows path長の事前検査を **25d1084ecf8f24f17fe6f8f5b253c317bc80daa7** に保存した。関連42件とpath修正後13件pass、独立指摘解消。ユーザーは他PC作業なし・大きめ作業OKと許可済み。
+
+実行用clean rootは **`C:\Users\TKent\.codex\worktrees\v03\banto-ai`**。このrootの `artifacts/anomaly-v03-chunk-trials/trial-01` で新しい6評価を生成し、6件の保存後に再計算中。consumer監査・journal確定は終了確認前なので成功とみなさない。起動済みの処理や保存先を重ねて再使用しない。候補の `artifacts/chunk-execution-2026-09-21/short-trial-driver-report.json` が終了記録、`run_trial_short.py` がdriver。終了後は同じclean rootをcwdに `collect_trial.py` を実行して保存済み結果だけをpinする。
+
+先行する長いroot `C:\Users\TKent\.codex\worktrees\engineering-chunk-20260921\banto-ai` / 8b34387では261文字pathで6件目保存に失敗。worker終了・running→failedを確認し、54 files/107889570 bytesを `failed-trial-evidence.json` にpin済み。修理・再使用・削除しない。[進行中結果書](results/anomaly-multiseed-v0.3-chunk-execution-2026-09-21.md)へ実試行終了後の値を追記し、この一時節と以下の現在地を同期する。全campaignは未開始。
+
 ## 場所と最新保存点
 
 - **作業先**: `C:\Users\TKent\.codex\worktrees\70b0\banto-ai`、branch `codex/s4-b1-windows-engineering`。
