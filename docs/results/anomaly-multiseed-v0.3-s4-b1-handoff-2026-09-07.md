@@ -3534,3 +3534,17 @@ UTC2026-09-16T16:49:40、空きRAM14423298048/C151299223552/D169709887488 bytes�
 
 **次は固定pathにある実ファイルの読取りとhash/サイズ照合を実装し、descriptor・保存済み結果・終了監視・検算本文を結び付ける。** 既存reader/auditを再利用し、小規模fixtureで確認する。今回の宣言validatorはdescriptor実配置・directory topology・証拠本文・clean sourceをまだ検証しない。controller、予算・source/consumer freeze、runtime inventory、profile/score導出独立検算は残件。全dev/smoke/holdoutを自動開始しない。§116の専用principal試験保留、旧root閉鎖・j消費済みguardを維持。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
 attempt_descriptor_metadata_implemented=true。artifact_bytes_verified/filesystem_containment_verified/execution_authorized/resume_authorized/campaign_completed/independent_s6_complete/formal_permission=false、campaign_evaluations_credited=0、acceptance_status=not_completed、performance_status=not_evaluated。
+
+## 129. 2026-09-21 attempt実ファイル読取りと先頭chunk検算を接続
+
+**072773e181a17135a34de5c662b377281352f568** に `attempt-files/attempt-audit` を追加。[使い方](../anomaly-v03-independent-audit-and-checkpoints.md#attemptの実ファイルを読取り照合する) / [結果](anomaly-multiseed-v0.3-attempt-files-2026-09-21.md)。固定位置のdescriptorを外部hashで読み、宣言した証拠サイズ/hash・不在と、markerのpayload inventoryを照合する。reparse/通常file hardlink別名・上限超過・未記録の証拠を拒否。directory保持と処理後のcontrol/payload/journal再照合を行う。file検査のbody/numeric/source検証flagはfalseのまま。
+
+auditはverifiedのchunk 0だけ、既存 `audit_saved` を再実行して旧preflightと共用の本文照合へ接続。producer/過去consumer/今回verifier、manifest/journal outcome、保存audit、両監視、runtimeを結び付ける。明示supervision引数はresultの兄弟producer-control/supervision.jsonだけで、旧既定位置は不変。全120へ旧6件契約を緩和しない。旧trialのコピー/再ラベル化や新campaign加算はしない。
+
+初回47件pass/11.817秒、追加後は新規16＋descriptor15＋preflight12＋saved-audit6＝**49件pass/12.266秒/failure・error・skip0**。独立P0〜P3所見0/進捗poll0、safety/diff-check pass。audit接続の数値/source処理はmockを明示した検査。実CLIは小規模fixture4回、合計1.441秒/peak private22622208 bytes（21.57MiB）。正常1回exit0、未記録監視/変更payload/検証待ちaudit拒否3回expected exit2。各60秒/256MiB/出力2MiB監視で全終了確認・停止理由なし。入力16 files不変、前回証拠18 files不変。新worktree/登録dataset/evaluation/実演ledger再計算0。
+
+証拠 `artifacts/attempt-files-2026-09-21` は26 files/332098 bytes（最終manifest除く）。demo-evidence4633 bytes/hashdb718e6da385f1b5a3d9019d2ca65dc1e39c9c86354b8d95e5fcf57c7f1b263c。本流889cfc3/clean、既存親policy文書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。
+UTC2026-09-21T09:34:30、空きRAM13215277056/C170894483456/D119515004928 bytes（D約111.3GiB）。前回以降boot2026-09-19T03:46:06.5+09:00/OS26200.9457へ変化を記録。Python3.14.0と実行file hashは不変、今回実演前後runtime一致。Windows Update engineering緩和/正式pin維持、長期リーク不在未評価。
+
+**次は登録inventoryの1 chunkを引数として扱う新scopeの結果契約を整え、旧6件用契約を変更せずreader/consumerを全120 chunksへ接続する。** 対象・source/runtime・6 slot・結果/監視の対応を小規模fixtureで検証し、実行側の接続へ進む。controller、予算・source/consumer freeze、runtime inventory、profile/score導出独立検算は残件。新配置の実6件と全dev/smoke/holdoutは未実施。§116の専用principal試験保留、旧root閉鎖・j消費済みguardを維持。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
+attempt_file_reader_implemented=true。実演artifact_bytes_verified/payload_inventory_verified=true、実演evidence_body_bindings_verified/saved_ledgers_revalidated/source_checkouts_verified=false。execution_authorized/resume_authorized/campaign_completed/independent_s6_complete/formal_permission=false、campaign_evaluations_credited=0、acceptance_status=not_completed、performance_status=not_evaluated。

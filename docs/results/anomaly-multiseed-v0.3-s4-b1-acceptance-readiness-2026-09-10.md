@@ -26,6 +26,8 @@
 
 [§128のattempt証拠宣言](anomaly-multiseed-v0.3-attempt-descriptor-2026-09-17.md): 固定pathと4役割の証拠metadataを外部journal/descriptor hashへ結び付けるvalidatorを追加。52件pass/独立所見0。4回のCLI実演は合計0.934秒/最大21.23MiB、別attemptのpathとaudit監視欠落を拒否。成果物本文・実directory構造は未検証で、campaign加算0、再開/正式受入の許可は追加しない。
 
+[§129の実ファイル照合](anomaly-multiseed-v0.3-attempt-files-2026-09-21.md): 固定実配置のdescriptor/証拠bytes/hash/payload inventory readerと、最初のdev chunkに限定した既存独立consumer接続を追加。49件pass/独立所見0。小規模実ファイルCLI4回は合計1.441秒/最大21.57MiB、変更・未記録証拠・検証待ちauditを拒否。新しいaudit接続は数値/source処理をmockしたテストで、新配置の実6件実行証拠ではない。全campaign再開・加算・正式受入は未許可。
+
 日付: 2026-09-10。初回照合の基準HEAD `f9244a735dff982cfce7d1493efda9431bc31b42`。
 補完テスト修正savepoint: `cdbc0a1`。Windows3.14.0一本化の実装savepoint: `9fd3490`。
 2026-09-11追記: Linux CI固定・unittest記録の実装は `3c69f9e`、Linuxのfakeテスト修正は `9846f52` / `7870362`。
