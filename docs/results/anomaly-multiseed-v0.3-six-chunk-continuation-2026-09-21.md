@@ -15,3 +15,9 @@ starting closedは`run/control/000001/closed.json` / raw SHA-256 **bfa729b447de0
 同folderの`run.py`は前回wrapperから明示区間数・外部closed pinだけを更新し、`request.json`に実argv/runtimeを保存する。60秒間隔でcontroller private/空きRAM/disk/journal状態を記録し、所有producer/auditの既存時間・メモリ上限も維持する。診断表示だけで成功判定せず、終了後のclosed記録と成果物を照合する。全体48時間/32GiBは境界での協調停止による候補予算である。
 
 実装変更・追加agent・広い回帰試験の再実行なし。単一writerを維持し、保護root/principal参照、UAC/ACL/service/task変更、push/merge/CIは行わない。全120区間の自動起動や正式gate変更、Phase 2/3完了へ読み替えない。
+
+## 前半の中間保存点（2026-09-22 JST）
+
+開始保存点1873c37の後、約10分の既存3区間の再開照合を経て新規計算へ進んだ。経過約51分でchunk3/4/5がverified_completeとなり、今回18評価追加・累計6区間/36評価の記録が揃った。chunk6はrunning、同じinvocation000002を継続中である。
+
+verified sequence12/15/18のreceiptを外部`verified-receipt-000012.json` / `verified-receipt-000015.json` / `verified-receipt-000018.json`へ保持した。これは中間確定記録で、再開用closed pinではない。管理処理の最大privateは225722368 bytes（約215.3MiB）、chunk6開始後の標本は105472000 bytes（約100.6MiB）、空きRAM13051863040/C173314277376/D119512604672 bytes。後半3区間の成功や最終closedはまだ確定していない。

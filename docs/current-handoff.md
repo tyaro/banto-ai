@@ -1,6 +1,6 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-21 JST。最初にこの文書を読み、下記候補worktreeの `git status` / `git log -3 --oneline` を確認する。全履歴は必要箇所だけ読む。
+更新: 2026-09-22 JST。最初にこの文書を読み、下記候補worktreeの `git status` / `git log -3 --oneline` を確認する。全履歴は必要箇所だけ読む。
 
 ## 場所と最新保存点
 
@@ -13,6 +13,8 @@
 ## 目的と現在地
 
 **現在の実行**: ユーザーの継続指示に基づき、最新closedから`continue --max-chunks 6`を開始した。対象chunk3〜8/最大36新規評価、外部記録は`artifacts/six-chunk-continuation-2026-09-21`、[実行記録](results/anomaly-multiseed-v0.3-six-chunk-continuation-2026-09-21.md)。同じrunを再起動しない。下記closedは開始時のpinであり、終了後に新しいpinへ更新する。
+
+**中間経過**: 約51分でchunk3〜5の追加18評価がverified_complete、累計6区間/36評価。sequence12/15/18のreceiptを外部保持し、chunk6を開始した。同じinvocationが稼働中のため、これらの中間receiptで再開しない。
 
 前回の`continue --max-chunks 3`は3区間/18評価すべて成功、約42分43秒で正常閉鎖。205保存ファイル・journal・監査記録を照合済み。[前回結果](results/anomaly-multiseed-v0.3-three-chunk-run-2026-09-21.md)。今回の開始前にも205ファイルと前回証拠12ファイルの不変を確認した。
 
