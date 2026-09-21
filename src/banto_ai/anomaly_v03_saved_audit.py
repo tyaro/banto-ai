@@ -80,6 +80,15 @@ def _audit_payloads(files, producer, manifest, planned):
 
 def audit_saved(root, marker_sha256, supervision_sha256, producer_root, producer_revision, consumer_revision,
                 *, supervision_path=None):
+    return _audit_saved(root, marker_sha256, supervision_sha256, producer_root, producer_revision, consumer_revision,
+        supervision_path=supervision_path, payload_auditor=audit_payloads, supervision_scope=policy.SCOPE,
+        report_format="anomaly-v03-independent-ledger-audit-v1", report_scope="saved-engineering-six-cell-ledgers")
+
+
+def _audit_saved(root, marker_sha256, supervision_sha256, producer_root, producer_revision, consumer_revision,
+                 *, supervision_path, payload_auditor, supervision_scope, report_format, report_scope,
+                 supervision_validator=None, input_extra=None):
+    """Shared IO envelope; public entry points fix their own scope and validators."""
     started = time.monotonic()
     root = rt.regular_path(root, directory=True)
     control = root.parent / (root.name + "-control") / "supervision.json"
@@ -100,14 +109,16 @@ def audit_saved(root, marker_sha256, supervision_sha256, producer_root, producer
         and supervision["stop_reason"] is None and supervision["formal_permission"] is False
         and supervision["performance_status"] == "not_evaluated", "trial supervision did not complete")
     _same([supervision["policy_id"], supervision["scope"], supervision["attempt_id"]],
-          [policy.POLICY_ID, policy.SCOPE, root.name], "supervision identity changed")
+          [policy.POLICY_ID, supervision_scope, root.name], "supervision identity changed")
     resources.check_budget(supervision["elapsed_seconds"], supervision["peak_worker_private_bytes"], 0)
+    if supervision_validator is not None:
+        supervision_validator(supervision)
     view = storage.PayloadView(root / "payload")
     sizes = [rt.regular_path(view.root / name).stat().st_size for name in view]
     rt.require(sizes and max(sizes) <= MAX_FILE_BYTES and sum(sizes) <= MAX_PAYLOAD_BYTES, "audit input byte limit")
     captured = {}
     def verify(files):
-        manifest, reports = audit_payloads(files, producer)
+        manifest, reports = payload_auditor(files, producer)
         _same(supervision["runtime"], manifest["runtime"], "supervision/runtime mismatch")
         rt.require(manifest["attempt_id"] == root.name, "attempt path mismatch")
         captured.update(manifest=manifest, evaluations=reports)
@@ -119,10 +130,11 @@ def audit_saved(root, marker_sha256, supervision_sha256, producer_root, producer
     peak = resources.memory_bytes()["peak_private_bytes"]
     elapsed = time.monotonic() - started
     resources.check_budget(elapsed, peak, 0)
-    return {"format": "anomaly-v03-independent-ledger-audit-v1", "scope": "saved-engineering-six-cell-ledgers",
+    return {"format": report_format, "scope": report_scope,
         "status": "ledger_checks_passed", "producer_source": producer.source_descriptor(),
         "consumer_source": consumer.source_descriptor(), "consumer_runtime": observed_runtime,
-        "input": {"root": str(root), "marker_sha256": marker_sha256, "supervision_sha256": supervision_sha256},
+        "input": {"root": str(root), "marker_sha256": marker_sha256, "supervision_sha256": supervision_sha256,
+                  **(input_extra or {})},
         "storage_verification": verified, "evaluations": captured["evaluations"],
         "checked": ["strict_threshold", "streak_and_source_episodes", "equipment_merge", "first_candidate_no_retry",
                     "causal_support", "context_tags", "fixed_denominator_metrics", "availability", "delay_summary"],

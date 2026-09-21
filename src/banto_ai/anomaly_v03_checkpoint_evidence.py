@@ -52,7 +52,7 @@ def validate_declaration(plan, records, reference):
     return reduced
 
 
-def _monitor(monitor, audit_raw, reference, pins, bindings, *, supervision_path=None):
+def _monitor(monitor, audit_raw, reference, pins, bindings, *, supervision_path=None, invocation=None):
     _same([monitor["status"], monitor["exit_code"], monitor["worker_exit_confirmed"], monitor["stop_reason"],
            monitor["observation_errors"], monitor["formal_permission"]],
           ["complete", 0, True, None, [], False], "saved audit monitor did not complete")
@@ -71,6 +71,8 @@ def _monitor(monitor, audit_raw, reference, pins, bindings, *, supervision_path=
         "--producer-revision", bindings["producer_revision"], "--consumer-revision", bindings["consumer_revision"]]
     if supervision_path is not None:
         expected_argv.extend(("--supervision-path", str(supervision_path)))
+    if invocation is not None:
+        expected_argv = invocation
     _same(monitor["argv"], expected_argv, "audit monitor invocation binding")
 
 
@@ -86,6 +88,16 @@ def _bind_trial(plan, record, reference, manifest, supervision, stored_audit, fr
                 monitor, audit_raw, historical_consumer_source, *, supervision_path=None):
     """Shared six-cell body binding. Callers separately validate their journal/scope."""
     policy.validate_manifest(manifest)
+    return _bind_checked_trial(plan, record, reference, manifest, supervision, stored_audit, fresh_audit,
+        monitor, audit_raw, historical_consumer_source, supervision_path=supervision_path,
+        scope=policy.SCOPE, audit_format="anomaly-v03-independent-ledger-audit-v1",
+        audit_scope="saved-engineering-six-cell-ledgers")
+
+
+def _bind_checked_trial(plan, record, reference, manifest, supervision, stored_audit, fresh_audit,
+                        monitor, audit_raw, historical_consumer_source, *, scope, audit_format, audit_scope,
+                        supervision_path=None, input_extra=None, invocation=None):
+    """Bind already scope-validated evidence; callers validate their manifest first."""
     rt.require(manifest["state"] == "complete", "preflight trial is incomplete")
     _same(manifest["attempt_id"], Path(reference["trial_root"]).name, "trial name mismatch")
     _same(manifest["plan"]["identities"], plan["chunks"][record["chunk_index"]]["identities"], "trial identity inventory")
@@ -101,14 +113,15 @@ def _bind_trial(plan, record, reference, manifest, supervision, stored_audit, fr
            supervision["observation_errors"], supervision["formal_permission"], supervision["performance_status"],
            supervision["attempt_id"], supervision["policy_id"], supervision["scope"], supervision["runtime"]],
           ["complete", 0, True, None, [], False, "not_evaluated", manifest["attempt_id"], policy.POLICY_ID,
-           policy.SCOPE, manifest["runtime"]], "trial supervision binding")
+           scope, manifest["runtime"]], "trial supervision binding")
     _same(supervision["resource_measurement_scope"], "whole_worker_including_replays_and_exit", "supervision scope")
     resources.check_budget(supervision["elapsed_seconds"], supervision["peak_worker_private_bytes"], 0)
     _same(stored_audit["consumer_source"], historical_consumer_source, "historical consumer source changed")
     _same(historical_consumer_source["revision"], bindings["consumer_revision"], "declared consumer revision")
     policy.validate_runtime(stored_audit["consumer_runtime"])
     _same(stored_audit["input"], {"root": str(Path(reference["trial_root"])),
-        "marker_sha256": pins["marker_sha256"], "supervision_sha256": pins["supervision_sha256"]}, "audit input binding")
+        "marker_sha256": pins["marker_sha256"], "supervision_sha256": pins["supervision_sha256"],
+        **(input_extra or {})}, "audit input binding")
     _same(stored_audit["input"], fresh_audit["input"], "fresh audit input differs")
     # Compare stable conclusions, not elapsed time or the new verifier's source/runtime.
     for key in ("format", "scope", "status", "producer_source", "storage_verification", "evaluations",
@@ -117,14 +130,14 @@ def _bind_trial(plan, record, reference, manifest, supervision, stored_audit, fr
         _same(stored_audit[key], fresh_audit[key], "stored/fresh audit differs: " + key)
     _same([fresh_audit["format"], fresh_audit["scope"], fresh_audit["status"], fresh_audit["independent_s6_complete"],
            fresh_audit["formal_permission"], fresh_audit["performance_status"]],
-          ["anomaly-v03-independent-ledger-audit-v1", "saved-engineering-six-cell-ledgers", "ledger_checks_passed",
+          [audit_format, audit_scope, "ledger_checks_passed",
            False, False, "not_evaluated"], "partial audit status")
     _same([row["identity"] for row in fresh_audit["evaluations"]], manifest["plan"]["identities"], "audit six-cell coverage")
     for row in fresh_audit["evaluations"]:
         _same([row["status"], row["score_derivation_verified"], row["independent_s6_complete"], row["performance_status"]],
               ["ledger_checks_passed", False, False, "not_evaluated"], "evaluation audit scope")
     _same(stored_audit["resources"]["input_payload_bytes"], fresh_audit["resources"]["input_payload_bytes"], "payload byte count")
-    _monitor(monitor, audit_raw, reference, pins, bindings, supervision_path=supervision_path)
+    _monitor(monitor, audit_raw, reference, pins, bindings, supervision_path=supervision_path, invocation=invocation)
     return {"format": "anomaly-v03-checkpoint-preflight-binding-v1", "status": "preflight_evidence_verified",
         "purpose": PURPOSE, "journal": reference["journal"], "declared_attempt_root": record["attempt_root"],
         "historical_trial_root": reference["trial_root"], "preflight_evidence_revalidated": True,

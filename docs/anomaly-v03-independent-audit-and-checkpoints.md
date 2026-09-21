@@ -227,7 +227,7 @@ producerと過去consumerのrevisionはplanで固定、今回verifierのrevision
 
 成功表示は `attempt_saved_ledgers_verified`、`evidence_body_bindings_verified/saved_ledgers_revalidated/source_checkouts_verified=true`。scopeは保存score以降の独立検算のままで、profile/score導出の独立性や完全S6は未完了。campaign credit=0、execution/resume/campaign_completed/formal_permission=false。旧trialを新campaignの実行履歴としてコピー・再ラベル化しない。
 
-CLI内の資源観測は既存audit部分の開始/終了検査で、監視process自体の起動機能はない。実データの読取りでは所有processの外側監視を付ける。今回の接続確認は小規模fixtureとmockを明示したテストまでで、新配置の実6件や全120 chunksの実行証拠ではない。次は登録inventoryの1 chunkを引数として扱う新scopeの結果契約を整え、旧6件契約を変更せずreader/consumerを全120へ接続する。
+CLI内の資源観測は既存audit部分の開始/終了検査で、監視process自体の起動機能はない。実データの読取りでは所有processの外側監視を付ける。この接続確認は小規模fixtureとmockを明示したテストまでで、新配置の実6件や全120 chunksの実行証拠ではない。全120区切りに対応する別scopeの結果契約と専用reader/consumerは次節を参照する。
 
 ### 全120区切りの結果形式とpayload検算API
 
@@ -239,4 +239,37 @@ manifest内planの `binding` は外部campaignのcanonical hash、chunk/attempt�
 
 `audit_chunk_payloads(files, producer, campaign, chunk_index, attempt)` は、保存bytesのmappingから新形式を照合し、既存の保存score以降の独立ledger検算へ6件を順に渡す。planned/context、dataset/evaluationのhash/サイズ、identity/input/event/source、profile状態、開始/終了journal、exact payload inventoryを検査する。profile/score導出そのものの独立性は追加しない。
 
-このAPIはファイル読取りや監視processを起動しない。外部planの信頼性、入力サイズ制限、公開marker、clean source capture、consumer revision、process監視、campaign journal/descriptorとの対応は呼出側の責務。**現行 `attempt-audit` CLIは旧形式のchunk 0専用のまま**で、新APIはまだCLIへ接続していない。次は新形式に対応するIO/監視/監査reportとjournalの照合を接続し、そこから実行側controllerへ進む。全120区切りの実データ実行を今回完了したものではない。
+このAPIはファイル読取りや監視processを起動しない。外部planの信頼性、入力サイズ制限、公開marker、clean source capture、consumer revision、process監視、campaign journal/descriptorとの対応は呼出側の責務。**現行 `attempt-audit` CLIは旧形式のchunk 0専用のまま**。新形式の読取りは次節の専用CLIに接続した。全120区切りの実データ実行を完了したものではない。
+
+### 新形式の区切りを実ファイルから検算する
+
+`anomaly_v03_chunk_audit.py` / `audit_anomaly_v03_chunk.py` は、新形式の保存済み6件を検算する。1MiB以下のplanを外部canonical hashと固定campaign仕様へ照合し、対象のchunk index/attempt番号を必須にする。publication名は `result`、producer監視は固定の兄弟 `producer-control/supervision.json`。入力は512 files・1 file32MiB・合計256MiB以内。producer revisionはplanから、今回consumer/verifier revisionは明示引数から取得し、各clean checkoutのsourceと実runtimeを確認する。
+
+```powershell
+C:\Python314\python.exe -B tools/evaluator/audit_anomaly_v03_chunk.py `
+  --input-root <選択attemptのresult> --marker-sha256 <外部marker hash> `
+  --supervision-sha256 <外部producer監視hash> --producer-root <clean producer checkout> `
+  --consumer-revision <今回consumerのfull revision> `
+  --plan <plan.json> --plan-sha256 <外部canonical plan hash> --chunk-index <0〜119> --attempt <試行番号>
+```
+
+producer監視の新formatは `anomaly-v03-chunk-supervision-v1`。policy_idは単一writer方針、scopeは `engineering-dev-smoke-chunk`、attempt_idは `result`。manifestと同じ `binding`、正常終了・worker終了確認・停止理由なし・観測エラー空、全workerの資源観測を必須にする。`runtime` と `runtime_after` の一致を確認し、試行中のWindows更新は許容しない。異なる試行や後日のaudit間では実OS値を個別に記録できる。
+
+結果は `anomaly-v03-chunk-ledger-audit-v1` / scope `saved-dev-smoke-chunk-ledgers`。inputに絶対plan pathとbinding、result rootとmarker/監視hashを保存する。公開inventory・6件のledger・保存source・runtimeを検査し、終了前にsource、producer監視、planのbytesを再照合する。監視process自体は起動しない。内部の資源検査は開始/終了時で、旧consumerと同じ900秒/2GiBの検査上限を共用する。実データ読取り時の外側監視は別途必要で、campaign全体の予算freezeとは別。
+
+`checkpoint_anomaly_v03.py attempt-chunk-audit` は、上記検算を外部journal/descriptorと結ぶ。引数は既存 `attempt-audit` と同じ。最後のrecordがverified_complete/verified_inconclusiveであることを要求し、固定保存先の全証拠を `attempt-files` と同じ方法で読む。旧formatへの自動fallbackや新旧の再ラベル化は行わない。
+
+```powershell
+C:\Python314\python.exe -B tools/evaluator/checkpoint_anomaly_v03.py attempt-chunk-audit `
+  --root <attempt tree root> --descriptor-sha256 <外部descriptor raw hash> `
+  --plan <plan.json> --plan-sha256 <外部canonical plan hash> `
+  --journal-dir <journal directory> --record-count <外部件数> --head-sha256 <外部head hash> `
+  --producer-root <保存時producer checkout> --consumer-root <保存時audit checkout> `
+  --verifier-revision <今回verifierのfull revision>
+```
+
+保存auditと新検算は6 identities・ledger・来歴・入力・安定した結論を照合し、過去と現在のconsumer revision/runtimeは別々に記録する。audit監視は出力raw hash/サイズ・正常終了・stderr空・固定600秒/1GiB/8MiB以内の実測値と上限・専用CLIのexact argvを照合する。argvには保存時consumer/producer、plan絶対path/hash、chunk/attempt、marker/producer監視hashを含める。監視の `runtime_before/runtime_after` は保存auditのconsumer_runtimeおよびdescriptorと一致必須。読取り後にcontrol・payload・source・plan・journalを再照合する。
+
+成功は `attempt_chunk_ledgers_verified`。evidence_body_bindings_verified/saved_ledgers_revalidated/source_checkouts_verified=true、evaluations_checked=6。budgets_frozen/execution_authorized/resume_authorized/campaign_completed/independent_s6_complete/formal_permission=false、campaign_evaluations_credited=0。成功したファイル照合をcontrollerの再開許可にはしない。profile/score導出の独立性は追加しない。
+
+接続検証は小規模な実ファイルで行い、source/runtime/schema/数値処理のmockを明示する。登録dataset生成や新campaign実行の証拠にはしない。次はこの読取り側契約を使う単一writer controller・終了監視・失敗attemptの保存を実装し、全体予算/source/consumer/runtimeを確定してから実行へ進む。

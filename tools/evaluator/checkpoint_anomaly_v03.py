@@ -85,6 +85,10 @@ def attempt_files(args):
     plan, records, _ = load_journal(*inputs)
     if args.command == "attempt-files":
         report = attempt.inspect_attempt(args.root, plan, records, args.descriptor_sha256, **pins)
+    elif args.command == "attempt-chunk-audit":
+        from banto_ai import anomaly_v03_chunk_audit as chunk_audit
+        report = chunk_audit.audit_chunk_attempt(args.root, plan, records, args.descriptor_sha256,
+            args.producer_root, args.consumer_root, args.verifier_revision, args.plan, **pins)
     else:
         report = attempt.audit_attempt(args.root, plan, records, args.descriptor_sha256,
             args.producer_root, args.consumer_root, args.verifier_revision, **pins)
@@ -126,8 +130,8 @@ def main(argv=None):
         if name != "store-inspect":
             command.add_argument("--record", type=Path, required=True)
             command.add_argument("--record-sha256", required=True)
-    for name in ("attempt-layout", "attempt-validate", "attempt-files", "attempt-audit"):
-        command = commands.add_parser(name, help="Inspect attempt declarations/files or audit saved first-chunk ledgers; never resume")
+    for name in ("attempt-layout", "attempt-validate", "attempt-files", "attempt-audit", "attempt-chunk-audit"):
+        command = commands.add_parser(name, help="Inspect attempt files or audit saved ledgers; never resume")
         command.add_argument("--plan", type=Path, required=True)
         command.add_argument("--plan-sha256", required=True)
         command.add_argument("--journal-dir", type=Path, required=True)
@@ -137,9 +141,9 @@ def main(argv=None):
             command.add_argument("--descriptor", type=Path, required=True)
         if name != "attempt-layout":
             command.add_argument("--descriptor-sha256", required=True)
-        if name in ("attempt-files", "attempt-audit"):
+        if name in ("attempt-files", "attempt-audit", "attempt-chunk-audit"):
             command.add_argument("--root", type=Path, required=True, help="Attempt tree root, separate from metadata-only store")
-        if name == "attempt-audit":
+        if name in ("attempt-audit", "attempt-chunk-audit"):
             command.add_argument("--producer-root", type=Path, required=True)
             command.add_argument("--consumer-root", type=Path, required=True, help="Historical audit checkout")
             command.add_argument("--verifier-revision", required=True, help="This clean verifier checkout's full revision")
@@ -153,7 +157,7 @@ def main(argv=None):
             report = preflight(args)
         elif args.command in ("attempt-layout", "attempt-validate"):
             report = attempt_metadata(args)
-        elif args.command in ("attempt-files", "attempt-audit"):
+        elif args.command in ("attempt-files", "attempt-audit", "attempt-chunk-audit"):
             report = attempt_files(args)
         else:
             report = write_metadata(args)

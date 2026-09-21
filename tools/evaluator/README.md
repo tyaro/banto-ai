@@ -16,6 +16,7 @@
 metadataの保存には同CLIの `store-init/store-append/store-inspect` を使います。[追記と中断時の回復](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#metadataを上書きせず保存追記する)では、外部receipt/record hashを保持し、既存記録を上書きせず追記します。確定後のreceipt喪失は読取りだけで回復し、部分pendingは残して拒否します。実campaignの開始・再開には接続していません。
 同CLIの `attempt-layout/attempt-validate` は、[attemptの保存先と証拠metadata](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#attemptの保存先と証拠metadataを検査する)を検査します。外部journal/descriptor hashから固定path・4役割の証拠宣言・source/runtime・6件のidentityを照合し、試行の取り違えや検証済み宣言の証拠不足を拒否します。実ファイル本文の検証や実行許可は含みません。
 `attempt-files` は[固定保存先の実ファイル照合](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#attemptの実ファイルを読取り照合する)、`attempt-audit` は最初のdev chunkの独立ledger再検算と監視/保存audit本文の照合を行います。前者は計算内容の検証を主張せず、後者もchunk 1以降を拒否します。campaignの開始・再開・完了加算は行いません。
+新しいchunk結果形式には `audit_anomaly_v03_chunk.py` と `checkpoint_anomaly_v03.py attempt-chunk-audit` を使います。[新形式の実ファイル検算](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#新形式の区切りを実ファイルから検算する)では、外部plan/chunk/attempt指定・保存結果・producer/audit終了監視・過去consumerと現在verifierを照合します。全120区切りから選んだ6件を扱えますが、実行controllerや再開許可は含みません。
 
 `tools/data-generator/generate.py`で合成データを作成し、`check_quality.py`で品質gateを通した後、次の順で評価します。
 
