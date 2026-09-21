@@ -1,0 +1,179 @@
+"""Bound one owned Windows process; no campaign launcher or descendant claim."""
+from __future__ import annotations
+
+import hashlib
+import math
+from pathlib import Path
+import subprocess
+import time
+
+from . import anomaly_v03_engineering_contract as policy
+from . import _anomaly_v03_engineering_runtime as resources
+from . import _anomaly_v03_runtime as rt
+
+
+class UnreapedWorker(RuntimeError):
+    """Keep the original process handle available; caller must reconcile it."""
+    def __init__(self, process, report):
+        self.process, self.report = process, report
+        super().__init__("owned worker exit could not be confirmed")
+
+
+def _limits(value):
+    rt.require(type(value) is dict and set(value) == {"wall_seconds", "private_bytes", "output_bytes"}, "process limit fields")
+    wall = value["wall_seconds"]
+    rt.require(type(wall) in (int, float) and math.isfinite(wall) and wall > 0, "process wall limit")
+    for key in ("private_bytes", "output_bytes"):
+        rt.require(type(value[key]) is int and value[key] > 0, "process byte limit")
+
+
+def _file_pin(path, maximum):
+    rt.regular_path(path, missing=True)
+    if not path.exists():
+        return None
+    if path.stat().st_size > maximum:
+        raise resources.ResourceStop("output_limit")
+    digest, size = hashlib.sha256(), 0
+    with path.open("rb") as stream:
+        while raw := stream.read(min(64 * 1024, maximum - size + 1)):
+            digest.update(raw)
+            size += len(raw)
+            if size > maximum:
+                raise resources.ResourceStop("output_limit")
+    return {"bytes": size, "sha256": digest.hexdigest()}
+
+
+def supervise(argv, cwd, control_root, limits, *, stdout_name="report.json", runtime_probe=None, boundary=lambda: None):
+    """Return observations after reaping the owned process; caller saves the report.
+
+    control_root is newly claimed and every output is exclusive. The caller owns
+    command/source authorization and budget selection. Only this process is
+    supervised; descendants require a separate ownership contract.
+    """
+    _limits(limits)
+    rt.require(type(argv) is list and argv and all(type(x) is str and x for x in argv), "process argv")
+    rt.require(stdout_name in ("report.json", "stdout.jsonl"), "process stdout name")
+    cwd = rt.regular_path(Path(cwd), directory=True)
+    control = Path(control_root).absolute()
+    rt.regular_path(control.parent, directory=True)
+    rt.regular_path(control, directory=True, missing=True)
+    control.mkdir()  # A previous partial directory is evidence, never reused.
+    stdout_path, stderr_path = control / stdout_name, control / "stderr.json"
+    probe = runtime_probe or (lambda: resources.probe_runtime(cwd))
+    process, before, after, free_before, free_after = None, None, None, None, None
+    errors, peak, reason = [], 0, None
+    observation_failed = False
+    started = time.monotonic()
+
+    def error(stage, value):
+        nonlocal observation_failed
+        observation_failed = True
+        try:
+            errors.append({"stage": stage, "error_type": type(value).__name__})
+        except BaseException:
+            pass
+
+    def observe_memory():
+        nonlocal peak
+        peak = max(peak, resources.memory_bytes(process._handle)["peak_private_bytes"])
+
+    def budget():
+        if time.monotonic() - started > limits["wall_seconds"]:
+            return "time_limit"
+        if peak > limits["private_bytes"]:
+            return "memory_limit"
+        total = sum(path.stat().st_size for path in (stdout_path, stderr_path) if path.exists())
+        return "output_limit" if total > limits["output_bytes"] else None
+
+    try:
+        before = probe()
+        policy.validate_runtime(before)
+        free_before = resources.require_start_resources(cwd)
+        boundary()
+        reason = budget()
+        if reason is None:
+            with stdout_path.open("xb") as stdout, stderr_path.open("xb") as stderr:
+                process = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr,
+                    creationflags=subprocess.CREATE_NO_WINDOW)
+                while process.poll() is None:
+                    observe_memory()
+                    reason = budget()
+                    if reason is not None:
+                        break
+                    time.sleep(0.25)
+    except resources.ResourceStop as value:
+        reason = value.reason
+    except KeyboardInterrupt:
+        reason = "interrupted"
+    except Exception as value:
+        error("supervision", value)
+        reason = reason or "observation_error"
+    finally:
+        if process is not None:
+            try:
+                running = process.poll() is None
+            except BaseException as value:
+                error("worker_state", value)
+                running = True
+            if running:
+                try:
+                    process.kill()
+                except BaseException as value:
+                    error("worker_stop", value)
+            try:
+                process.wait(timeout=30)
+            except BaseException as value:
+                error("worker_reap", value)
+            try:
+                observe_memory()
+            except BaseException as value:
+                error("final_worker_memory", value)
+            try:
+                process.poll()
+            except BaseException as value:
+                error("final_worker_state", value)
+        try:
+            after = probe()
+            policy.validate_runtime(after)
+            if before is not None and before != after:
+                reason = "runtime_changed"
+            free_after = resources.free_resources(cwd)
+            boundary()
+        except BaseException as value:
+            error("final_context", value)
+            reason = reason or "observation_error"
+    output, stderr = None, None
+    exit_code = process.returncode if process is not None else None
+    # A live/unconfirmed worker may still be appending. Return ownership without
+    # scanning its logs, and bound reads even after a confirmed exit.
+    if process is None or exit_code is not None:
+        try:
+            limit_reason = budget()
+            reason = reason or limit_reason
+            if limit_reason != "output_limit":
+                output = _file_pin(stdout_path, limits["output_bytes"])
+                remaining = limits["output_bytes"] - (output["bytes"] if output else 0)
+                stderr = _file_pin(stderr_path, remaining)
+        except resources.ResourceStop as value:
+            reason = value.reason
+        except BaseException as value:
+            error("output_observation", value)
+    if process is not None and exit_code is not None:
+        # CPython's Windows Popen retains this handle after wait(). Close only
+        # after the final memory sample; no later process observation is needed.
+        try:
+            process._handle.Close()
+        except BaseException as value:
+            error("worker_handle_close", value)
+    complete = exit_code == 0 and reason is None and not observation_failed and before is not None and after == before
+    report = {"format": "anomaly-v03-owned-process-monitor-v1", "argv": list(argv), "limits": dict(limits),
+        "status": "complete" if complete else "failed", "exit_code": exit_code,
+        "worker_pid": process.pid if process is not None else None, "worker_started": process is not None,
+        "worker_exit_confirmed": exit_code is not None, "stop_reason": reason,
+        "elapsed_seconds": time.monotonic() - started, "peak_worker_private_bytes": peak,
+        "observation_errors": errors, "output": output, "stderr": stderr,
+        "runtime_before": before, "runtime_after": after, "free_before": free_before, "free_after": free_after,
+        "formal_permission": False, "performance_status": "not_evaluated"}
+    if process is not None and exit_code is None:
+        raise UnreapedWorker(process, report)
+    return report

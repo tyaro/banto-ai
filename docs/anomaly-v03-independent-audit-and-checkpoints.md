@@ -272,4 +272,20 @@ C:\Python314\python.exe -B tools/evaluator/checkpoint_anomaly_v03.py attempt-chu
 
 成功は `attempt_chunk_ledgers_verified`。evidence_body_bindings_verified/saved_ledgers_revalidated/source_checkouts_verified=true、evaluations_checked=6。budgets_frozen/execution_authorized/resume_authorized/campaign_completed/independent_s6_complete/formal_permission=false、campaign_evaluations_credited=0。成功したファイル照合をcontrollerの再開許可にはしない。profile/score導出の独立性は追加しない。
 
-接続検証は小規模な実ファイルで行い、source/runtime/schema/数値処理のmockを明示する。登録dataset生成や新campaign実行の証拠にはしない。次はこの読取り側契約を使う単一writer controller・終了監視・失敗attemptの保存を実装し、全体予算/source/consumer/runtimeを確定してから実行へ進む。
+接続検証は小規模な実ファイルで行い、source/runtime/schema/数値処理のmockを明示する。登録dataset生成や新campaign実行の証拠にはしない。
+
+### producer・単一writer controller・所有process監視
+
+`anomaly_v03_chunk_producer.execute_chunk` は外部campaign/chunk/attemptとsource/runtimeを検査してから、既存の逐次producer・公開・再計算を新形式の6件へ適用する。`verify_payloads` も同じ区切り契約を先に検査する。旧固定6件のpublic APIとCLIは維持する。storeの割当てやprocess起動は呼出し側が担う。
+
+`anomaly_v03_attempt_controller.Controller` はmetadata root、最新receipt、別のattempt tree root、producer/consumer root、verifier revisionを明示して構築する。verified履歴があれば、各verified sequenceをkeyとする外部保持のdescriptor raw hash map `descriptor_pins` も必須。保存treeから信頼するpinを自動採取しない。
+
+通常は `run_next(observed, produce=..., inspect_audit=...)` が、最初の未完了chunkの新attemptを排他的に確保し、running→producer保存→saved_pending_verification→独立audit→fresh照合→verifiedの順で進める。callbackは同期で、所有workerの終了を確認してから戻る必要がある。controller自身はprocessを起動しない。分割呼出しは `start` / `producer_saved` / `finish` / `fail`。戻り値のreceiptとdescriptor pinsをroot外で保持する。再起動後は過去のverified証拠を再照合してから次へ進み、同じcontroller session内で検証済みの区切りは繰り返し再計算しない。
+
+各遷移は `controller/<sequence 6桁>/intent.json` と固定位置のdescriptorを先に排他的保存し、実証拠照合、journal追記、同じstepの `receipt.json` 保存へ進む。失敗attemptと部分出力は保持し、正常に記録できたfailed/interruptedからは別attemptへ進む。runtimeや証拠の不整合は停止する。失敗記録自体の保存エラーも元の停止例外を隠さず、可能な範囲で `last_stop` / `failure-recording.json` に残す。
+
+intent保存後の処理が完了しなければ `TransitionIncomplete`。journal確定後にreceiptだけ失った場合は `recover_committed_transition` に外部保存のintent path/raw hashを渡し、意図した1件が確定済みで実証拠も一致する場合だけreceiptを読取り回復する。未確定intentを公開・上書き・再利用しない。照合で拒否されたverified intentも自動的に失敗recordへ置き換えず、そのまま調査対象にする。
+
+`anomaly_v03_process_supervisor.supervise` は、明示argv/cwd、新しいcontrol directory、wall/private/output上限で**所有するWindows子process 1個**を監視する。stdout/stderr合計を監視し、上限・中断・観測失敗時は停止と終了確認を試みる。終了後のhash読取りも上限内に限定する。終了を確認できない場合はログを走査せず、`UnreapedWorker.process` に元の所有handleを保持して返す。子孫processの管理はこのAPIの範囲外。実行権限、sourceの選定、全体予算は呼出し側で確定する。
+
+監視はgeneric観測reportを返すだけで、producer/audit専用の `supervision.json` は保存しない。次工程はproducer worker/独立audit CLIをこの監視とcontrollerへ接続するadapter。専用監視format/binding/limitsとの整合、source/consumer freeze、runtime inventory、全体予算を整えてから実データ実行を判断する。今回のcomponent試験は小規模fixtureとprintのみの実子processに限定し、campaign加算0、formal_permission=falseを維持する。
