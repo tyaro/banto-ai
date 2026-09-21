@@ -12,7 +12,9 @@
 
 ## 目的と現在地
 
-**直近の実行は終了済み**: ユーザー了承による`continue --max-chunks 3`が3区間/18評価すべて成功、約42分43秒で正常閉鎖した。次の未完了区間は3、全所有process終了確認済み。外部記録は`artifacts/three-chunk-run-2026-09-21`、[最終結果と最新再開pin](results/anomaly-multiseed-v0.3-three-chunk-run-2026-09-21.md)。205保存ファイル・journal・監査記録の照合も完了。
+**現在の実行**: ユーザーの継続指示に基づき、最新closedから`continue --max-chunks 6`を開始した。対象chunk3〜8/最大36新規評価、外部記録は`artifacts/six-chunk-continuation-2026-09-21`、[実行記録](results/anomaly-multiseed-v0.3-six-chunk-continuation-2026-09-21.md)。同じrunを再起動しない。下記closedは開始時のpinであり、終了後に新しいpinへ更新する。
+
+前回の`continue --max-chunks 3`は3区間/18評価すべて成功、約42分43秒で正常閉鎖。205保存ファイル・journal・監査記録を照合済み。[前回結果](results/anomaly-multiseed-v0.3-three-chunk-run-2026-09-21.md)。今回の開始前にも205ファイルと前回証拠12ファイルの不変を確認した。
 
 [研究ロードマップ](research-roadmap.md)のPhase 2（予測モデル比較）、Phase 3（異常検知・ドリフト）が目標。現在はPhase 3のanomaly v0.3、全dev/smoke実行へ進むための接続作業。小さい保存点の完了をPhase全体の完了として数えない。
 
