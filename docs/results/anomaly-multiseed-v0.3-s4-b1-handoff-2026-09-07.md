@@ -3548,3 +3548,19 @@ UTC2026-09-21T09:34:30、空きRAM13215277056/C170894483456/D119515004928 bytes�
 
 **次は登録inventoryの1 chunkを引数として扱う新scopeの結果契約を整え、旧6件用契約を変更せずreader/consumerを全120 chunksへ接続する。** 対象・source/runtime・6 slot・結果/監視の対応を小規模fixtureで検証し、実行側の接続へ進む。controller、予算・source/consumer freeze、runtime inventory、profile/score導出独立検算は残件。新配置の実6件と全dev/smoke/holdoutは未実施。§116の専用principal試験保留、旧root閉鎖・j消費済みguardを維持。今回principal/SAM/保護rootアクセス、UAC/ACL変更、service/task追加、push/merge/CIなし。
 attempt_file_reader_implemented=true。実演artifact_bytes_verified/payload_inventory_verified=true、実演evidence_body_bindings_verified/saved_ledgers_revalidated/source_checkouts_verified=false。execution_authorized/resume_authorized/campaign_completed/independent_s6_complete/formal_permission=false、campaign_evaluations_credited=0、acceptance_status=not_completed、performance_status=not_evaluated。
+
+## 130. 2026-09-21 全dev/smoke区切りの結果契約とpayload検算APIを実装
+
+**60b2bdb3d2556b280b10991a2fd1d47d4566714d** に `anomaly_v03_chunk_contract.py` を追加。[結果](anomaly-multiseed-v0.3-chunk-contract-2026-09-21.md) / [API仕様](../anomaly-v03-independent-audit-and-checkpoints.md#全120区切りの結果形式とpayload検算api)。外部campaign・chunk index・attempt番号から登録6件を選び、campaign/identity hash、producer source、runtime、dataset/slot、入力共有、順序、failure/判定保留、coverage/resourcesを固定する。新format/scopeとし、旧engineering-devの6件用public APIを変えず、新旧形式はchunk 0でも相互拒否する。
+
+新 `audit_chunk_payloads` は保存bytesのmappingから既存独立ledger検算へ6件を渡す。planned/context、dataset/evaluation hash、identity/input/events/source、profile状態、開始/終了journal、exact inventoryを照合。IO/公開marker/source capture/consumer pin/監視/campaign journalは呼出側責務。**現行attempt-audit CLIは旧形式のchunk 0専用のまま**。profile/score導出の独立性や完全S6は追加しない。旧上限はprovisional validation capsで、campaign実行予算は未確定。
+
+新14件pass/5.936秒。最終は新14＋旧契約10＋saved-audit6＋ledger実計算12＋attempt-files16＋preflight12＝**70件pass/failure・error・skip0**。新接続のschema/数値mockを明示し、別の小規模ledger12件は実計算。記録helper初回はrepo import path不足の6 module読込みエラーで試験本体未実行、helper修正後の最終結果と初回ログを両方保存。広い評価moduleは実行していない。独立P0〜P3所見0/進捗poll0、safety/diff-check pass。
+
+最終PID4640/exit0、約15.981秒/peak private53411840 bytes（50.94MiB）。UTC2026-09-21T09:56:53.988620、空きRAM13260976128/C170882428928/D119514677248 bytes（D約111.3GiB、着手時と同値）。OS26200.9457/boot2026-09-19T03:46:06.5+09:00、Python3.14.0/exe・DLL hash不変、前後runtime一致。Windows Update engineering緩和/正式pin不変。長期リーク不在は未評価。
+
+証拠は `artifacts/chunk-contract-2026-09-21`。前回attempt-files証拠27 filesをpinへ再照合し全不変、最終manifestにも記録する。本流889cfc3/clean、既存親policy文書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。新worktree/登録dataset/evaluation/全campaign実行0。
+
+**次は新形式を実ファイル読取り・producer/audit終了監視・audit report・journal/descriptor照合へ接続する。** 続いてcontroller、予算・source/consumer freeze、runtime inventoryを整える。§116の専用principal保留、旧保護root参照禁止・j消費済みguardを維持。今回principal/SAM/保護root参照、UAC/ACL変更、service/task追加、push/merge/CIなし。
+
+再開用入口を **[短い引継ぎ](../current-handoff.md)** に整理した。新しいタスクはユーザーが選んだ場合にこの文書から再開できる。研究ロードマップPhase 3の全条件実行の準備を進めたもので、Phase 2/3全体の完了数は今回増やさない。execution_authorized/resume_authorized/budgets_frozen/campaign_completed/independent_s6_complete/formal_permission=false、campaign_evaluations_credited=0、acceptance_status=not_completed、performance_status=not_evaluated。
