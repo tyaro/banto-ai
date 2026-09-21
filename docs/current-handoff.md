@@ -12,7 +12,11 @@
 
 ## 目的と現在地
 
-**直近の実行は終了済み**: `continue --max-chunks 6`でchunk3〜8の新規36評価がすべて成功、約90分42秒で正常閉鎖。累計9区間/54評価、次の未完了区間は9、全所有process終了確認済み。595保存ファイルを照合し、既存205ファイルは不変。[最終結果と次回の区間数の試算](results/anomaly-multiseed-v0.3-six-chunk-continuation-2026-09-21.md)。次の実行はまだ起動していない。
+**現在の実行**: 2026-09-22 JST02:36、`continue --max-chunks 24`を起動した。対象chunk9〜32/最大144新規評価、control000003、controller PID2320/開始UTC2026-09-21T17:36:34.2941005Z。実行中は同じrunを再起動しない。[今回の実行記録](results/anomaly-multiseed-v0.3-twenty-four-chunk-continuation-2026-09-22.md)。候補`artifacts/twenty-four-chunk-continuation-2026-09-22/status.py`で小さい状態ファイルを読む。PID・開始日時・コマンドを照合する。
+
+**継続確認**: このタスクの30分間隔heartbeat **banto-24** が稼働・資源と6区間ごとの保存を確認し、終了後の照合・最終保存まで行う。wrapper自身も60秒診断と各区間のreceipt保持を行う。詳細は同artifact folderの`FOLLOWUP.md`。会話側で短い間隔のポーリングを追加しない。成功・異常終了を記録したらheartbeatを停止し、追加invocationを自動起動しない。
+
+前回までの完了は累計9区間/54評価、595保存ファイル。今回の開始前にも595ファイルと前回証拠21ファイルの不変、関連計算processなし、runtime一致を確認した。下記000002のclosedは今回の開始pinであり、終了後に新しいpinへ更新する。
 
 [研究ロードマップ](research-roadmap.md)のPhase 2（予測モデル比較）、Phase 3（異常検知・ドリフト）が目標。現在はPhase 3のanomaly v0.3、全dev/smoke実行へ進むための接続作業。小さい保存点の完了をPhase全体の完了として数えない。
 
@@ -22,7 +26,7 @@
 
 **継続入口**: `anomaly_v03_campaign_launcher.py` / `tools/evaluator/run_anomaly_v03_campaign.py`。`prepare`は所有processで実環境snapshotを収集し、新しいmetadata/初期closed記録と外部prepared pinを作る。`continue`は外部prepared/最新closed hashと明示`--max-chunks`を必須にし、Run.run活動時間内でfresh inspectionしてからNativeCallbacksへ進む。終了不明の元ownerはCLIが終了確認まで保持する。別requestの48時間/32GiB候補、逐次処理、未閉鎖呼出しの再使用拒否を維持する。
 
-**次に行う作業**: `r1`の最新closedから段階的に継続する。**次の候補は明示24区間/144評価（約6時間/追加約3GiBの単純試算）**。今回、既存3区間を含む再開確認に約9〜10分かかった。残りを6区間ずつ再開する線形試算では累積約81〜88時間、24区間単位なら約40〜42時間となる。途中receipt・文書の保存は実行を終了させずに行い、再開確認の繰返しを減らす。試算は1回の再開実測だけに基づき、固定起動費、seed/layout差、inventory増加・再試行を分離していない。48時間/32GiBへの収束保証や全残区間の自動起動許可ではない。
+**次に行う作業**: 起動済み24区間の終了確認と保存結果の照合。今回の目安は約6時間/追加約3GiB。前回、既存3区間を含む再開確認に約9〜10分かかった。残りを6区間ずつ再開する線形試算では累積約81〜88時間、24区間単位なら約40〜42時間となるため、実行を終了させずに途中保存する方式を選んだ。試算は1回の再開実測だけに基づき、固定起動費、seed/layout差、inventory増加・再試行を分離していない。48時間/32GiBへの収束保証や全残区間の自動起動許可ではない。
 
 source/consumer/controllerはすべてc01d1c9、Python3.14.0を維持。snapshotはsource397/stdlib2559/native48/extension8の時点観測で、worker/auditorのruntime closureや完全S6ではない。全体上限は境界での協調停止で、controller/process treeへの強制上限は未整備。再開時の過去verified再照合には一連の処理途中のwrapper予算検査がない。旧trialを新runのcoverageへコピーしない。
 
