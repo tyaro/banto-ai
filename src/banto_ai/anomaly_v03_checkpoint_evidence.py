@@ -52,7 +52,7 @@ def validate_declaration(plan, records, reference):
     return reduced
 
 
-def _monitor(monitor, audit_raw, reference, pins, bindings):
+def _monitor(monitor, audit_raw, reference, pins, bindings, *, supervision_path=None):
     _same([monitor["status"], monitor["exit_code"], monitor["worker_exit_confirmed"], monitor["stop_reason"],
            monitor["observation_errors"], monitor["formal_permission"]],
           ["complete", 0, True, None, [], False], "saved audit monitor did not complete")
@@ -69,6 +69,8 @@ def _monitor(monitor, audit_raw, reference, pins, bindings):
         "--input-root", str(Path(reference["trial_root"])), "--marker-sha256", pins["marker_sha256"],
         "--supervision-sha256", pins["supervision_sha256"], "--producer-root", str(Path(reference["producer_root"])),
         "--producer-revision", bindings["producer_revision"], "--consumer-revision", bindings["consumer_revision"]]
+    if supervision_path is not None:
+        expected_argv.extend(("--supervision-path", str(supervision_path)))
     _same(monitor["argv"], expected_argv, "audit monitor invocation binding")
 
 
@@ -76,11 +78,17 @@ def bind_evidence(plan, records, reference, manifest, supervision, stored_audit,
                   monitor, audit_raw, historical_consumer_source):
     """Cross-check supplied evidence; caller must verify file/source pins first."""
     validate_declaration(plan, records, reference)
-    record = records[-1]
+    return _bind_trial(plan, records[-1], reference, manifest, supervision, stored_audit, fresh_audit,
+                       monitor, audit_raw, historical_consumer_source)
+
+
+def _bind_trial(plan, record, reference, manifest, supervision, stored_audit, fresh_audit,
+                monitor, audit_raw, historical_consumer_source, *, supervision_path=None):
+    """Shared six-cell body binding. Callers separately validate their journal/scope."""
     policy.validate_manifest(manifest)
     rt.require(manifest["state"] == "complete", "preflight trial is incomplete")
     _same(manifest["attempt_id"], Path(reference["trial_root"]).name, "trial name mismatch")
-    _same(manifest["plan"]["identities"], plan["chunks"][0]["identities"], "trial identity inventory")
+    _same(manifest["plan"]["identities"], plan["chunks"][record["chunk_index"]]["identities"], "trial identity inventory")
     bindings, pins = plan["source_bindings"], record["evidence"]
     _same(manifest["source"], fresh_audit["producer_source"], "manifest/fresh source mismatch")
     _same(manifest["source"]["revision"], bindings["producer_revision"], "declared producer revision")
@@ -116,7 +124,7 @@ def bind_evidence(plan, records, reference, manifest, supervision, stored_audit,
         _same([row["status"], row["score_derivation_verified"], row["independent_s6_complete"], row["performance_status"]],
               ["ledger_checks_passed", False, False, "not_evaluated"], "evaluation audit scope")
     _same(stored_audit["resources"]["input_payload_bytes"], fresh_audit["resources"]["input_payload_bytes"], "payload byte count")
-    _monitor(monitor, audit_raw, reference, pins, bindings)
+    _monitor(monitor, audit_raw, reference, pins, bindings, supervision_path=supervision_path)
     return {"format": "anomaly-v03-checkpoint-preflight-binding-v1", "status": "preflight_evidence_verified",
         "purpose": PURPOSE, "journal": reference["journal"], "declared_attempt_root": record["attempt_root"],
         "historical_trial_root": reference["trial_root"], "preflight_evidence_revalidated": True,

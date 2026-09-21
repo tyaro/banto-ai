@@ -190,3 +190,41 @@ C:\Python314\python.exe -B tools/evaluator/checkpoint_anomaly_v03.py attempt-val
 `attempt-layout` は固定pathと必要な証拠を表示する。`attempt-validate` は64KiB以下のdescriptorを読み、検証後にjournal/descriptorを再照合する。入力descriptorの実際の保存場所はこのmetadata CLIでは自由で、宣言された `descriptor_path` に存在する証明ではない。成果物のbytes/hash再計算、directory topology、sourceのclean確認、監視/検算結果本文は次の読取り処理で検証する。
 
 成功表示は `attempt_descriptor_metadata_valid`。`artifact_bytes_verified/filesystem_containment_verified/execution_authorized/resume_authorized/campaign_completed/independent_s6_complete/formal_permission=false`、`campaign_evaluations_credited=0` を維持する。attempt directory、監視process、独立consumerは起動しない。全120 chunksの順序、旧試行の非流用、失敗attempt保持を維持し、実行開始前に予算、source/consumer freeze、runtime inventory、残る独立計算検算を整える。
+
+### attemptの実ファイルを読取り照合する
+
+`anomaly_v03_attempt_files.py` / `attempt-files` は、明示したattempt tree rootから、最後のjournal recordが指定する固定位置のdescriptorを読む。任意のdescriptor pathや別名から代用しない。metadata専用storeは従来どおり別rootに置く。
+
+```powershell
+C:\Python314\python.exe -B tools/evaluator/checkpoint_anomaly_v03.py attempt-files `
+  --root <attempt tree root> --descriptor-sha256 <外部raw hash> `
+  --plan <plan.json> --plan-sha256 <外部canonical plan hash> `
+  --journal-dir <journal directory> --record-count <外部件数> --head-sha256 <外部head hash>
+```
+
+descriptorの実配置・外部hashと、宣言した各証拠のサイズ/hash・JSON objectを確認する。nullの役割に実ファイルがある場合も拒否し、新しい記録での確認を求める。祖先のreparse/symlink、通常ファイルのhardlink別名を拒否し、markerの2つの既知hardlinkだけは既存publisher契約に従う。選択attemptのdirectoryを保持して読取り後に同一性を確認する。別chunk/過去attemptへ再帰探索しない。
+
+markerがあれば既存storage readerでpayloadのexact inventory、framing、hashを照合する。descriptor64KiB、marker/各監視1MiB、audit report8MiB、payload512 files・1 file32MiB・合計256MiBまで。これらはファイル入力上限であり、process全体のメモリ保証ではない。記録済み証拠とその不在を処理後に再確認し、CLIはjournalも再照合する。途中終了のpartial payloadはmarkerなしでは検証済みとしない。
+
+成功表示は `attempt_files_verified`。`artifact_bytes_verified/filesystem_containment_verified=true` は選択した通常pathの読取り時点での照合を意味し、将来の不変性や敵対的な同時writerへの保証ではない。markerがあれば `payload_inventory_verified=true`。このコマンドでは `evidence_body_bindings_verified/saved_ledgers_revalidated/source_checkouts_verified=false` のまま。ファイルが一致しても計算・来歴の検証成功とは扱わない。
+
+### 固定保存先から最初の6件を再検算する
+
+`attempt-audit` は `attempt-files` の全検査に加え、既存の保存score以降の独立consumerを呼ぶ。**現時点ではchunk 0のverified_complete/inconclusiveだけ**を対象とする。retryのattempt番号は外部journalに従う。chunk 1以降やsmokeは既存6件用の計算契約を広げず拒否する。
+
+```powershell
+C:\Python314\python.exe -B tools/evaluator/checkpoint_anomaly_v03.py attempt-audit `
+  --root <attempt tree root> --descriptor-sha256 <外部raw hash> `
+  --plan <plan.json> --plan-sha256 <外部canonical plan hash> `
+  --journal-dir <journal directory> --record-count <外部件数> --head-sha256 <外部head hash> `
+  --producer-root <保存時producerのclean checkout> `
+  --consumer-root <保存時auditのclean checkout> --verifier-revision <今回verifierのfull revision>
+```
+
+producerと過去consumerのrevisionはplanで固定、今回verifierのrevisionは別引数で固定する。既存 `audit_saved` のsource照合・数値検算を再利用し、manifestの6件とjournal outcome、source/runtime、producer監視、保存auditと再検算の安定項目、audit監視の正常終了・出力hash/サイズ・上限・呼出し先を照合する。descriptorのaudit runtime前後は保存auditのconsumer runtimeと一致必須。過去と今回のWindows実値を別々に保持する。処理後に全証拠、payload inventory、source、journalを再確認する。
+
+新配置ではpublication root名は `result`、manifest/producer監視のattempt_idもその名前とする。chunk/attempt番号との対応はdescriptorの固定pathとauditの入力絶対pathで照合する。既存 `audit_anomaly_v03_saved.py` には `--supervision-path <resultの兄弟producer-control/supervision.json>` を追加した。この固定位置のみ許可し、未指定時の旧 `<result名>-control/supervision.json` は不変。新配置のaudit監視argvには、この引数を末尾へ含める。
+
+成功表示は `attempt_saved_ledgers_verified`、`evidence_body_bindings_verified/saved_ledgers_revalidated/source_checkouts_verified=true`。scopeは保存score以降の独立検算のままで、profile/score導出の独立性や完全S6は未完了。campaign credit=0、execution/resume/campaign_completed/formal_permission=false。旧trialを新campaignの実行履歴としてコピー・再ラベル化しない。
+
+CLI内の資源観測は既存audit部分の開始/終了検査で、監視process自体の起動機能はない。実データの読取りでは所有processの外側監視を付ける。今回の接続確認は小規模fixtureとmockを明示したテストまでで、新配置の実6件や全120 chunksの実行証拠ではない。次は登録inventoryの1 chunkを引数として扱う新scopeの結果契約を整え、旧6件契約を変更せずreader/consumerを全120へ接続する。

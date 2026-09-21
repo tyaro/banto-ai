@@ -77,6 +77,21 @@ def attempt_metadata(args):
     return report
 
 
+def attempt_files(args):
+    from banto_ai import anomaly_v03_attempt_files as attempt
+    pins = {"expected_plan_sha256": args.plan_sha256, "expected_record_count": args.record_count,
+            "expected_head_sha256": args.head_sha256}
+    inputs = (args.plan, args.journal_dir, args.plan_sha256, args.record_count, args.head_sha256)
+    plan, records, _ = load_journal(*inputs)
+    if args.command == "attempt-files":
+        report = attempt.inspect_attempt(args.root, plan, records, args.descriptor_sha256, **pins)
+    else:
+        report = attempt.audit_attempt(args.root, plan, records, args.descriptor_sha256,
+            args.producer_root, args.consumer_root, args.verifier_revision, **pins)
+    load_journal(*inputs)
+    return report
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
@@ -111,8 +126,8 @@ def main(argv=None):
         if name != "store-inspect":
             command.add_argument("--record", type=Path, required=True)
             command.add_argument("--record-sha256", required=True)
-    for name in ("attempt-layout", "attempt-validate"):
-        command = commands.add_parser(name, help="Attempt metadata declarations only; no filesystem evidence or run permission")
+    for name in ("attempt-layout", "attempt-validate", "attempt-files", "attempt-audit"):
+        command = commands.add_parser(name, help="Inspect attempt declarations/files or audit saved first-chunk ledgers; never resume")
         command.add_argument("--plan", type=Path, required=True)
         command.add_argument("--plan-sha256", required=True)
         command.add_argument("--journal-dir", type=Path, required=True)
@@ -120,7 +135,14 @@ def main(argv=None):
         command.add_argument("--head-sha256", required=True)
         if name == "attempt-validate":
             command.add_argument("--descriptor", type=Path, required=True)
+        if name != "attempt-layout":
             command.add_argument("--descriptor-sha256", required=True)
+        if name in ("attempt-files", "attempt-audit"):
+            command.add_argument("--root", type=Path, required=True, help="Attempt tree root, separate from metadata-only store")
+        if name == "attempt-audit":
+            command.add_argument("--producer-root", type=Path, required=True)
+            command.add_argument("--consumer-root", type=Path, required=True, help="Historical audit checkout")
+            command.add_argument("--verifier-revision", required=True, help="This clean verifier checkout's full revision")
     args = parser.parse_args(argv)
     try:
         if args.command == "plan":
@@ -131,6 +153,8 @@ def main(argv=None):
             report = preflight(args)
         elif args.command in ("attempt-layout", "attempt-validate"):
             report = attempt_metadata(args)
+        elif args.command in ("attempt-files", "attempt-audit"):
+            report = attempt_files(args)
         else:
             report = write_metadata(args)
         print(json.dumps(report, ensure_ascii=False, sort_keys=True))

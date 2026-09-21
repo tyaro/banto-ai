@@ -73,15 +73,22 @@ def audit_payloads(files, producer):
     return manifest, reports
 
 
-def audit_saved(root, marker_sha256, supervision_sha256, producer_root, producer_revision, consumer_revision):
+def audit_saved(root, marker_sha256, supervision_sha256, producer_root, producer_revision, consumer_revision,
+                *, supervision_path=None):
     started = time.monotonic()
     root = rt.regular_path(root, directory=True)
+    control = root.parent / (root.name + "-control") / "supervision.json"
+    if supervision_path is not None:
+        # New attempt layout only; not a general arbitrary control-path override.
+        _same(str(Path(supervision_path).absolute()), str(root.parent / "producer-control/supervision.json"),
+              "attempt supervision path differs")
+        rt.require(root.name == "result", "attempt result directory name")
+        control = Path(supervision_path)
     producer = rt.capture_checkout(producer_root, producer_revision)
     consumer = rt.capture_checkout(Path(__file__).resolve().parents[2], consumer_revision)
     before = resources.require_start_resources(root)
     observed_runtime = resources.probe_runtime(root)
-    control = root.parent / (root.name + "-control")
-    supervision_raw = _pin(control / "supervision.json", supervision_sha256)
+    supervision_raw = _pin(control, supervision_sha256)
     supervision = v.strict_json(supervision_raw)
     rt.require(supervision["status"] == "complete" and type(supervision["exit_code"]) is int and supervision["exit_code"] == 0
         and supervision["worker_exit_confirmed"] is True and not supervision["observation_errors"]
@@ -102,7 +109,7 @@ def audit_saved(root, marker_sha256, supervision_sha256, producer_root, producer
     verified = storage.verify_local_publication(root, expected_marker_sha256=marker_sha256, verify_semantics=verify)
     producer.recheck()
     consumer.recheck()
-    rt.require(storage.read_regular(control / "supervision.json") == supervision_raw, "supervision changed while auditing")
+    rt.require(storage.read_regular(control) == supervision_raw, "supervision changed while auditing")
     _same(resources.probe_runtime(root), observed_runtime, "audit runtime changed")
     peak = resources.memory_bytes()["peak_private_bytes"]
     elapsed = time.monotonic() - started
@@ -130,10 +137,12 @@ def main(argv=None):
     parser.add_argument("--producer-root", type=Path, required=True)
     parser.add_argument("--producer-revision", required=True)
     parser.add_argument("--consumer-revision", required=True)
+    parser.add_argument("--supervision-path", type=Path, help="Only the fixed sibling producer-control/supervision.json")
     args = parser.parse_args(argv)
     try:
         report = audit_saved(args.input_root, args.marker_sha256, args.supervision_sha256,
-                             args.producer_root, args.producer_revision, args.consumer_revision)
+                             args.producer_root, args.producer_revision, args.consumer_revision,
+                             supervision_path=args.supervision_path)
         print(json.dumps(report, ensure_ascii=False, sort_keys=True))
         return 0
     except (OSError, ValueError, KeyError, TypeError) as error:
