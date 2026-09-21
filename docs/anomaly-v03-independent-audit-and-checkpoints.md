@@ -329,3 +329,5 @@ source照合では同期の読取り用Git subprocessを呼ぶ。専用の計算
 `continue` は同じroot/revision/nameと、`--prepared-sha256`、`--state-path`、`--state-sha256`、**明示した`--max-chunks`（1〜120）**を必須にする。外部pinを照合し、Run.run活動時間内で新しいinspectionと基本runtime一致を確認してから既存NativeCallbacksへ接続する。終了不明のownerは元handleで保持し、終了確認まで新しい仕事へ進まない。固定source選定は同一revisionをproducer/consumer/controllerに使うengineering構成である。
 
 実prepareはc01d1c9/clean `v03p/banto-ai` の`r1`で成功した。source397/stdlib2559/native48/extension8、7 files/749075 bytes、journal0/next chunk0。完全runtime inventory、受入freeze、全120実行、独立S6の完了は追加しない。[結果と操作手順](results/anomaly-multiseed-v0.3-campaign-launcher-2026-09-21.md)を参照する。
+
+その後、同じc01d1c9/r1で実CLI `continue --max-chunks 3` が3区間/18評価を2563.527秒で完走した。journal9/next chunk3/yielded、監査は各区間`ledger_checks_passed`、全所有process正常終了確認済み。最新closedは`run/control/000001/closed.json`、205 files/399625685 logical bytesを照合し、初期7ファイルは不変。次回は[3区間の最終結果](results/anomaly-multiseed-v0.3-three-chunk-run-2026-09-21.md)の最新外部pinで再開する。古い初期closedや中間receiptから起動しない。残り117区間/702評価、campaign加算0/正式許可false、独立監査は保存score以降のみである。

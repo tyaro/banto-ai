@@ -1,5 +1,7 @@
 # S4-B1 成功後の受入条件と追加回帰確認
 
+[§136の3区間連続運転](anomaly-multiseed-v0.3-three-chunk-run-2026-09-21.md): clean c01d1c9/r1で新規18評価すべて成功。生成・保存・再計算照合・別process ledger監査・journal確定まで2563.527秒、明示3区間上限で正常閉鎖（journal9/next3/yielded）。205 files/399625685 bytesを照合し、全所有process終了確認済み。実行中に6aff0c1/3d4f91cを保存し、実装変更なし。残り117区間/702評価。独立監査は保存score以降のみ、campaign加算0/正式許可false/完全runtime inventoryとS6未完了。以下の正式受入passは追加しない。続く§135以前の未開始表記は各保存時点の履歴である。
+
 [§135の環境snapshotと起動CLI](anomaly-multiseed-v0.3-campaign-launcher-2026-09-21.md): engineeringの実OS値でsource/stdlib/nativeを収集・再読し、prepareと明示max-chunksによるcontinueを接続。c01d1c9/17件pass/6.691秒/独立指摘0。実prepareはclean v03pのr1で成功（67.650秒/inspection37.20MiB、source397/stdlib2559/native48/extension8、7 files/749075 bytes）。journal0/実データ計算未開始。snapshotはinspection processの時点観測でruntime closure/正式freezeではなく、以下の正式受入passは追加しない。
 
 [§134の予算付き継続API](anomaly-multiseed-v0.3-budgeted-run-2026-09-21.md): 48時間/32GiBの候補予算を別requestに保持し、閉鎖記録・外部pin・累積活動時間から区間単位で継続するAPIを追加。実装eee93cf、17件pass/78.522秒/peak63.32MiB、独立指摘修正後0/進捗poll0。境界での協調停止であり全体の強制上限ではない。新規launcher、完全runtime inventory、予算の最終確定と全120区間実行は未完了。小規模mock試験であり、以下の正式受入passは追加しない。

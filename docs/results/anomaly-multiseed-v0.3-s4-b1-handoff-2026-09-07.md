@@ -3638,3 +3638,15 @@ prepareは新しいrootに所有inspection worker（300秒/512MiB/log16MiB）と
 prepared raw hash **be582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7**、初期`run/control/000000/closed.json` raw hash **85a6163034c5392ce1ef78f4cbaa6da0faf9c06a66faae03c8c0f8df0c8ebf39**。外部stdoutからopen_runで再照合済み。次はこのr1で3区間/18評価のengineering連続運転とclosed記録を確認する。prepareを同じrootで再実行せず、latest pinからcontinueする。
 
 UTC2026-09-21T13:18:09.894216+00:00、空きRAM13306019840/C174107738112/D119513100288 bytes。OS26200.9457/CPython3.14.0/exe・DLL hashは前回同値、前後runtime一致、全所有process終了済み。Windows Updateのengineering実値記録を維持する。既存dirty8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621と本流889cfc3/clean、過去trialは保持。保護root/principal参照、UAC/ACL/service/task変更、push/merge/CIなし。証拠は候補`artifacts/campaign-launcher-2026-09-21/savepoint-evidence.json`。Phase 2/3、全120実行、完全runtime inventory/独立S6の完了は追加しない。
+
+## 136. 3区間・18評価の連続運転と閉鎖記録（2026-09-21）
+
+ユーザー了承に基づき、clean **`C:/Users/TKent/.codex/worktrees/v03p/banto-ai`** / **c01d1c978f78bab51391392d56cdcb7aab5afaab** の`artifacts/v03-runs/r1`を実CLI `continue --max-chunks 3`で継続した。[最終結果](anomaly-multiseed-v0.3-three-chunk-run-2026-09-21.md)。登録dev seed2486912926863618161/layout0〜2の新規18評価がすべて成功。区間ごとの生成・保存・両再計算・別process ledger監査・fresh照合・journal確定まで完走し、exit0/yielded/stop_reason=null。journal9/next chunk3、全所有process終了確認済み。開始6aff0c1、中間12件3d4f91cで保存した。実装変更や追加agent、回帰試験の繰返しなし。
+
+全体2563.527295秒（約42分43秒）、累積活動時間2563.286712秒。205 files/399625685 logical bytes（約381.1MiB）、初期7ファイルは不変。各区間のauditは`ledger_checks_passed`。終了後にclosed/request/inspection、journal/descriptor、保存auditとmarker/payload inventoryをIO/hash照合し、205ファイルを外部pinした。数値計算は繰り返していない。
+
+prepared hash **be582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7** は不変。最新closedは **`run/control/000001/closed.json`** / raw SHA-256 **bfa729b447de0ce57d32439acb65ce025e718e82e7c40ebd55dda5d316d9c2da**。次回はこのpinと同じclean c01d1c9から、明示上限を決めて残り117区間/702評価を段階的に進める。初期closedや中間receiptを再使用しない。全120区間の自動起動は行わない。48時間/32GiBは境界での協調停止による候補で、再開時の過去verified照合・seed/layout差・再試行等の費用は残る。
+
+producer最大349065216 bytes（332.9MiB）、audit最大195768320 bytes（186.7MiB）、controller peak226635776 bytes（216.1MiB）/終了時82321408 bytes（78.5MiB）。60秒間隔42標本で空きRAM最小12900720640 bytes（約12.0GiB）、観測エラーなし。区間確定後のcontroller privateは増加し続けておらず、長期リーク不在は未評価。UTC2026-09-21T14:10:40.410982+00:00、空きRAM13235781632/C173706485760/D119512846336 bytes。OS26200.9457/CPython3.14.0/exe・DLL hashは開始・終了・workerで一致、Windows Update engineering緩和を維持。
+
+証拠は候補`artifacts/three-chunk-run-2026-09-21/savepoint-evidence.json`。前回campaign-launcher manifest5681 bytes/SHA-256 aa90c244104a2d83e444407f7f38914ac2e2d80c23587154ca3bf9d9877ab55fと記載11ファイル、本流889cfc3/clean、既存dirty8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全。保護root/principal参照、UAC/ACL/service/task変更、push/merge/CIなし。独立監査は保存score以降のみ、campaign加算0/正式許可false。完全runtime inventory、profile/score導出・bootstrapの独立検算、全dev/smoke/holdout、性能評価、Phase 2/3全体は未完了。
