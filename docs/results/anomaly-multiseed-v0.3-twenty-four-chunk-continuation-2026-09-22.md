@@ -27,3 +27,9 @@ wrapperは60秒間隔でcontroller private、空きRAM/C/D、journal段階を`pr
 開始時の累積活動は8005.085221秒、48時間候補予算の残り164794.914779秒（約45.8時間）。前回の単純試算では今回約6時間/追加約3GiB。seed/layout差や再試行等を含む保証ではない。32GiB出力候補上限、空きRAM4GiB/disk20GiBの区間開始条件と所有worker上限を維持する。全体上限は協調的な区間境界検査で、process treeへの強制上限ではない。
 
 全所有processの終了確認、最新closed、追加24区間の生成・保存・再計算照合・監査・journal確定、既存595ファイル不変と資源の最終照合を完了条件とする。後処理`collect.py`と`finalize_evidence.py`は準備済みで、終了後に1回だけ実行する。実行中の成功判定や全120区間の自動起動はしない。campaign加算0/正式許可false、独立監査は保存score以降のみ、完全runtime inventory/独立S6・Phase 2/3の完了は追加しない。
+
+## 中間保存: 新規6区間の節目
+
+30分間隔の確認で、UTC2026-09-21T19:44:54.018292+00:00（JST2026-09-22 04:44）の診断を観測した。新規7区間/42評価（chunk9〜15）のverified receiptが外部保存され、累計16区間/96評価。journal49の最新状態はchunk16/attempt1/running、経過7699.2秒。PID2320の開始日時とwrapperコマンドが起動記録に一致し、同じcontrollerが継続中。stdout/stderr/console-stderrは空で、終了報告はまだない。
+
+空きRAM13087911936/C171746562048/D119512326144 bytes、controller private116641792/peak225419264 bytes。今回の観測値では資源に余裕がある。receiptは区間の確定記録として保持し、未閉鎖のcontrol000003を再開に使用しない。6区間の節目としてこの文書とcurrent-handoffだけを保存し、外部`followup-state.json`に対象節目・観測値・commitを記録する。新規12区間到達後の次回保存まで既存計算を継続し、追加実行や過去成果物の再計算は行わない。
