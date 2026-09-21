@@ -19,6 +19,20 @@ class UnreapedWorker(RuntimeError):
         super().__init__("owned worker exit could not be confirmed")
 
 
+def retain_until_exit(error):
+    """Keep the original owner, even if interruption or diagnostic output fails."""
+    while error.process.returncode is None:
+        try:
+            error.process.kill()
+        except BaseException:
+            pass
+        try:
+            error.process.wait(timeout=30)
+        except BaseException:
+            pass
+    error.process._handle.Close()
+
+
 def _limits(value):
     rt.require(type(value) is dict and set(value) == {"wall_seconds", "private_bytes", "output_bytes"}, "process limit fields")
     wall = value["wall_seconds"]

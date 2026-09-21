@@ -266,16 +266,7 @@ def main(argv=None):
             pass  # Keep ownership even when diagnostic output cannot be written.
         # No new work or journal transition while the worker may still write.
         # Even an interrupt during reconciliation must not silently orphan it.
-        while error.process.returncode is None:
-            try:
-                error.process.kill()
-            except BaseException:
-                pass
-            try:
-                error.process.wait(timeout=30)
-            except BaseException:
-                pass
-        error.process._handle.Close()
+        processes.retain_until_exit(error)
         return 2
     except (OSError, ValueError, RuntimeError) as error:
         print(json.dumps({"status": "chunk_execution_failed", "error_type": type(error).__name__,
