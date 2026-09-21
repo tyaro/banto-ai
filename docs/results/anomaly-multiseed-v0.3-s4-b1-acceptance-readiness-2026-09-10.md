@@ -1,5 +1,7 @@
 # S4-B1 成功後の受入条件と追加回帰確認
 
+[§134の予算付き継続API](anomaly-multiseed-v0.3-budgeted-run-2026-09-21.md): 48時間/32GiBの候補予算を別requestに保持し、閉鎖記録・外部pin・累積活動時間から区間単位で継続するAPIを追加。実装eee93cf、17件pass/78.522秒/peak63.32MiB、独立指摘修正後0/進捗poll0。境界での協調停止であり全体の強制上限ではない。新規launcher、完全runtime inventory、予算の最終確定と全120区間実行は未完了。小規模mock試験であり、以下の正式受入passは追加しない。
+
 2026-09-16の最新作業方針: [引継書§116](anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)に基づき、同じ出力先は単一writerとする通常保存経路を優先する。専用principal/起動特権/厳密なP-U分離の追加試験は保留。以下の既存受入条件と未完了の事実は維持し、保留を合格や正式実行許可に読み替えない。[単一writer運用改訂](../anomaly-v03-single-writer-evaluation-proposal.md)を採択し、固定6件のengineering-dev経路を実装。初回6件の計算・保存・両再計算が成功した。旧formal gateを開かず、新scopeの独立consumer/全dev・smoke/受入freezeは今後の工程。
 
 [§117の実装結果](anomaly-multiseed-v0.3-local-publication-2026-09-16.md): 通常保存APIを追加し、27件pass/独立指摘解消、実2ファイル保存・重複拒否・writer終了後の別reader検証に成功。通常開発の保存経路が利用可能になった。次は結果生成側との小さな接続であり、下表の正式受入passを追加したものではない。

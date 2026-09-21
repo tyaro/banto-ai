@@ -3614,3 +3614,15 @@ UTC2026-09-21T12:32:07.339235+00:00、空きRAM13116989440/C174142107648/D119513
 証拠は候補の `artifacts/chunk-execution-2026-09-21`。実試行の終了後は数値再計算を繰り返さず、journal/descriptor/receiptと成功68 files・失敗54 filesをpinした。前回attempt-controller証拠と本流889cfc3/clean、既存親policy文書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持・commit除外。保護root参照、principal/SAM、UAC/ACL変更、service/task追加、push/merge/CIなし。
 
 **次は全dev/smokeの予算・source/consumer・完全runtime inventoryと、複数区切りの継続入口。** 初期callback setup後935.916秒の120倍は約31.2時間、保存量は約14.9GiB。初期source照合も毎回含む単純換算は約33.6時間。seed/layout差・再試行・余裕・bootstrap等を含む保証ではない。今回の接続試行を全campaignのcoverageへ読み替えない。profile/score導出等の独立検算、全dev/smoke/holdout、性能評価は残件。Phase 2/3全体の完了は追加せず、campaign_evaluations_credited=0、formal_permission/independent_s6_complete=falseを維持する。
+
+## 134. 全体予算候補と閉鎖記録からの逐次継続（2026-09-21）
+
+実装保存点 **eee93cfa8162e3e161f3b22cf1644a79b02b5a52**。[結果記録](anomaly-multiseed-v0.3-budgeted-run-2026-09-21.md)。`anomaly_v03_budgeted_run.py` に新規metadata準備と閉鎖記録からの継続APIを追加した。外部request/closed hash、receipt、全verified descriptor pinsと累積活動時間を引き継ぐ。呼出しごとに新しいcontrol番号を確保し、区間単位で進む。未終了worker・未確定transitionはclosed記録を作らず、元のprocess owner/例外を返す。旧trialや未閉鎖呼出しを自動再使用しない。
+
+48時間/32GiBを全体予算候補として別requestに記録する。残り2460秒/1GiB＋32MiBの開始余裕、controller private2GiB、空きRAM4GiB/disk20GiBを境界で検査する。累積時間は各run呼出しの活動時間で、準備・休止・最終closed書込みを含まない。全体の強制上限やprocess tree監視ではない。再開時の過去verified証拠の一連の再照合にはwrapperの途中予算検査が入らない。所有producer/auditの既存監視は維持する。
+
+初回15件pass/76.956秒。独立P2指摘1件（最終chunk/最終inventoryの時間超過表示）を修正し、**最終17件pass/78.522秒/peak66396160 bytes**。再レビュー残存0/進捗poll0、safety/diff-check pass。小規模実IOでnative/source/runtime/数値/時計のmockを明示し、新規実データworkerや全120区間は起動していない。初回証拠driverのimport path不足によるloader errorは修正し、失敗記録も保持する。
+
+UTC2026-09-21T12:57:49.595269+00:00、空きRAM13260709888/C174123429888/D119513456640 bytes、試験process終了済み。Windows26200.9457/CPython3.14.0/exe・DLL hashは前回同値、runtime前後一致。Windows Update engineering緩和を維持する。
+
+次は全体source/consumerと完全runtime inventory、予算確定の材料、元worker ownerの保持を含むlauncher接続。全体起動・正式gate・S6・Phase 2/3完了を追加しない。証拠は `artifacts/budgeted-run-2026-09-21/savepoint-evidence.json`。前回chunk-executionのmanifestと18ファイル、本流889cfc3/clean、既存dirty8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持する。保護root/principal参照、UAC/ACL/service/task変更、push/merge/CIなし。

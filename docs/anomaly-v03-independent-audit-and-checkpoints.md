@@ -309,3 +309,13 @@ producerは900秒/2GiB、payloadは書込み前の既存1GiB上限、stdout/stde
 source照合では同期の読取り用Git subprocessを呼ぶ。専用の計算workerを増やすことはないが、監視のprivate bytesは直接所有するPython processの値であり、Gitを含むprocess tree全体の合計ではない。
 
 終了不明時のCLIは新しい仕事を始めず、元の子processに停止・終了確認を繰り返す。ログを繰り返し走査したり、PIDから別processを探したりしない。途中出力/intent/監視を残し、自動cleanupは行わない。
+
+### 閉鎖記録からの予算付き継続API（2026-09-21）
+
+`anomaly_v03_budgeted_run.py` は新規run専用の `prepare` / `Run` を提供する。固定planや旧trialへ予算を後付けせず、別requestへ48時間/32GiBの候補上限を記録する。全体CLI・全120区間の実行・完全runtime inventory・予算の最終確定は未完了。詳しい適用範囲は[結果記録](results/anomaly-multiseed-v0.3-budgeted-run-2026-09-21.md)を参照する。
+
+`prepare(parent, name, plan, observed)` は全120の保存pathを先に検査し、新しいmetadata/attempts/controlと初期closed記録を作る。返されたrequestとstateのpath/hashを外部に保持する。`Run(root, request_hash, state_path, state_hash, producer_root, consumer_root, verifier_revision)` はこの外部pin、全closed履歴、receipt、descriptor hash mapを照合する。`run(observed, max_chunks=...)` は既存native callbacksを逐次呼び、新しいclosed state pinを返す。エラー時に安全なclosed記録を保存できた場合は `last_closed` にそのpinを保持する。
+
+累積時間は各 `run` 呼出しの活動時間を加算する。準備、休止、最終closed書込みは対象外。残り2460秒または出力1GiB＋32MiBの余裕がない場合に次区間を開始しない。controller private2GiB/空きRAM4GiB/空きdisk20GiBを境界で確認し、所有workerの個別監視は維持する。全体の時間/容量上限やcontroller/process treeを強制停止する仕組みではない。再開時の過去verified証拠の再照合中にはwrapperの途中検査は入らない。
+
+`control/NNNNNN/stop.request` を区間の境界で読み、新規control番号にclosed記録を残す。古いclosed状態、未閉鎖呼出し、未確定transitionを自動再使用しない。未終了workerは出力walk/closed書込みをせず元の `UnreapedWorker` を返し、呼出元によるowner保持・終了確認を必要とする。旧trialのcoverage転用、campaign加算、正式gate変更は行わない。
