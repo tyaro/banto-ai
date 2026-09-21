@@ -32,10 +32,16 @@ def _verify_payloads(files, checkout, observed):
     """Sequential producer replay from saved bytes; not independent S6 audit."""
     manifest = v.strict_json(files["manifest.json"])
     policy.validate_manifest(manifest)
+    _verify_manifest_payloads(files, checkout, observed, manifest, policy.new_manifest(manifest["attempt_id"]))
+    return policy.validate_manifest(manifest)
+
+
+def _verify_manifest_payloads(files, checkout, observed, manifest, planned):
+    """Replay an already scope-validated six-slot manifest using saved inputs."""
     rt.require(manifest["state"] == "complete", "engineering trial incomplete")
     _same(manifest["source"], checkout.source_descriptor(), "engineering source changed")
     _same(manifest["runtime"], observed, "engineering runtime changed")
-    rt.require(files["planned.json"] == m.json_bytes(policy.new_manifest(manifest["attempt_id"])), "initial plan changed")
+    rt.require(files["planned.json"] == m.json_bytes(planned), "initial plan changed")
     rt.require(files["context.json"] == m.json_bytes({"source": manifest["source"], "runtime": observed}), "context changed")
     allowed = {"manifest.json", "planned.json", "context.json"}
     pair = m.materialize_pair(manifest["plan"]["identities"][0])
@@ -62,12 +68,18 @@ def _verify_payloads(files, checkout, observed):
         del result, saved, raw
     rt.require(set(files) == allowed, "engineering payload inventory differs")
     rt.require(sum(len(files[name]) for name in allowed - {"manifest.json"}) == manifest["resources"]["payload_bytes"], "payload byte accounting differs")
-    return policy.validate_manifest(manifest)
 
 
 def _execute(store, checkout, observed, name, started, *, boundary, sample_memory):
     """One owned store; seams permit small scheduler fixtures without generation."""
-    manifest = policy.new_manifest(name)
+    return _execute_manifest(store, checkout, observed, policy.new_manifest(name), started,
+        boundary=boundary, sample_memory=sample_memory, validate_manifest=policy.validate_manifest,
+        verify_payloads=lambda files: _verify_payloads(files, checkout, observed))
+
+
+def _execute_manifest(store, checkout, observed, manifest, started, *, boundary, sample_memory,
+                       validate_manifest, verify_payloads):
+    """Shared producer loop; scope-specific entry points supply a fixed manifest."""
     stage, current, written, peak = "source", None, 0, 0
 
     def check(extra=0):
@@ -126,12 +138,12 @@ def _execute(store, checkout, observed, name, started, *, boundary, sample_memor
         check()
         policy.refresh_coverage(manifest)
         manifest["state"], manifest["resources"] = "complete", resource_record()
-        policy.validate_manifest(manifest)
+        validate_manifest(manifest)
         write("manifest.json", m.json_bytes(manifest))
         stage = "replay"
 
         def verify(files):
-            _verify_payloads(files, checkout, observed)
+            verify_payloads(files)
 
         def publication_boundary():
             nonlocal stage
