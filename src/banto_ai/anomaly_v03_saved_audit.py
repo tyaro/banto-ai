@@ -39,9 +39,14 @@ def _same(actual, expected, reason):
 def audit_payloads(files, producer):
     manifest = v.strict_json(files["manifest.json"])
     policy.validate_manifest(manifest)
+    return _audit_payloads(files, producer, manifest, policy.new_manifest(manifest["attempt_id"]))
+
+
+def _audit_payloads(files, producer, manifest, planned):
+    """Shared saved-score audit; a scope-specific caller validates the manifest."""
     rt.require(manifest["state"] == "complete", "only completed engineering trials can be audited")
     _same(manifest["source"], producer.source_descriptor(), "producer source descriptor mismatch")
-    _same(v.strict_json(files["planned.json"]), policy.new_manifest(manifest["attempt_id"]), "planned slots changed")
+    _same(v.strict_json(files["planned.json"]), planned, "planned slots changed")
     _same(v.strict_json(files["context.json"]), {"source": manifest["source"], "runtime": manifest["runtime"]}, "saved context changed")
     expected = {"manifest.json", "planned.json", "context.json"}
     for dataset in manifest["datasets"]:

@@ -98,8 +98,12 @@ def _file(value, path):
 
 
 def new_manifest(name):
-    plan = fixed_plan()
-    return {"format": MANIFEST_FORMAT, "plan": plan, "attempt_id": attempt_name(name),
+    return _new_manifest(name, fixed_plan(), MANIFEST_FORMAT)
+
+
+def _new_manifest(name, plan, manifest_format):
+    """Shared six-slot shape; public contracts choose their own fixed plan."""
+    return {"format": manifest_format, "plan": plan, "attempt_id": attempt_name(name),
             "source": None, "runtime": None, "state": "planned", "failure": None,
             "datasets": [{"identity": plan["identities"][i], "files": None} for i in (0, 3)],
             "slots": [{"identity": identity, "status": "not_started", "input_hashes": None,
@@ -116,9 +120,12 @@ def refresh_coverage(manifest):
 
 def validate_manifest(value):
     """Structural/accounting checks only, never proof of execution or trust."""
+    return _validate_manifest(value, fixed_plan(), MANIFEST_FORMAT, SCOPE, limits())
+
+
+def _validate_manifest(value, plan, manifest_format, scope, validation_limits):
     _keys(value, "format plan attempt_id source runtime state failure datasets slots coverage resources", "manifest fields")
-    require(value["format"] == MANIFEST_FORMAT, "engineering manifest format")
-    plan = fixed_plan()
+    require(value["format"] == manifest_format, "engineering manifest format")
     _exact(value["plan"], plan, "fixed engineering plan changed")
     attempt_name(value["attempt_id"])
     state = value["state"]
@@ -175,16 +182,16 @@ def validate_manifest(value):
     require(_integer(resource["peak_worker_private_bytes"]) and _integer(resource["payload_bytes"])
             and resource["payload_bytes"] >= known_bytes, "resource byte accounting")
     if state == "planned":
-        _exact(value, new_manifest(value["attempt_id"]), "planned manifest contains execution")
+        _exact(value, _new_manifest(value["attempt_id"], plan, manifest_format), "planned manifest contains execution")
     elif state == "complete":
         require(value["failure"] is None and counts["success"] + counts["inconclusive"] == 6, "incomplete claimed completion")
-        require(resource["elapsed_seconds"] <= limits()["wall_seconds"]
-                and resource["peak_worker_private_bytes"] <= limits()["worker_private_bytes"]
-                and resource["payload_bytes"] <= limits()["output_bytes"], "completed beyond resource limit")
+        require(resource["elapsed_seconds"] <= validation_limits["wall_seconds"]
+                and resource["peak_worker_private_bytes"] <= validation_limits["worker_private_bytes"]
+                and resource["payload_bytes"] <= validation_limits["output_bytes"], "completed beyond resource limit")
     else:
         _keys(value["failure"], "stage reason", "failed manifest needs reason")
         require(value["failure"]["stage"] in STAGES and value["failure"]["reason"] in REASONS, "failure classification")
         require(failure_count <= 1, "multiple stopped slots")
     return {"validation_status": "engineering_manifest_contract_valid", "result_trusted": False,
-            "scope": SCOPE, "state": state, "coverage": dict(value["coverage"]),
+            "scope": scope, "state": state, "coverage": dict(value["coverage"]),
             "performance_status": "not_evaluated", "formal_permission": False}

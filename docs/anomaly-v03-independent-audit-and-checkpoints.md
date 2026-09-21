@@ -228,3 +228,15 @@ producerと過去consumerのrevisionはplanで固定、今回verifierのrevision
 成功表示は `attempt_saved_ledgers_verified`、`evidence_body_bindings_verified/saved_ledgers_revalidated/source_checkouts_verified=true`。scopeは保存score以降の独立検算のままで、profile/score導出の独立性や完全S6は未完了。campaign credit=0、execution/resume/campaign_completed/formal_permission=false。旧trialを新campaignの実行履歴としてコピー・再ラベル化しない。
 
 CLI内の資源観測は既存audit部分の開始/終了検査で、監視process自体の起動機能はない。実データの読取りでは所有processの外側監視を付ける。今回の接続確認は小規模fixtureとmockを明示したテストまでで、新配置の実6件や全120 chunksの実行証拠ではない。次は登録inventoryの1 chunkを引数として扱う新scopeの結果契約を整え、旧6件契約を変更せずreader/consumerを全120へ接続する。
+
+### 全120区切りの結果形式とpayload検算API
+
+`anomaly_v03_chunk_contract.py` は、外部campaign planとchunk index（0〜119）、attempt番号（1〜4096）を受け取る。`chunk_plan` / `new_manifest` / `validate_manifest` で、選択した登録6件だけの結果を構築・照合する。dev96区切りの後にsmoke24区切りが続き、holdoutや任意のidentity指定は許可しない。plan formatは `anomaly-v03-dev-smoke-chunk-plan-v1`、manifest formatは `anomaly-v03-dev-smoke-chunk-result-v1`、scopeは `engineering-dev-smoke-chunk`。旧engineering-devのpublic APIと形式は維持し、chunk 0でも新旧形式を相互に受け付けない。
+
+manifest内planの `binding` は外部campaignのcanonical hash、chunk/attempt番号、role/seed/layout、6件のidentity hashを持つ。source/runtime方針もcampaignとexactに対応し、実source revisionはproducer pinと一致必須。publication名 `attempt_id` は固定 `result`。2 dataset/6 slotの順序、候補間の同一input hash、逐次処理、failure/未着手/判定保留、coverageとresource accountingを共通validatorで検査する。OS build/UBRのengineering緩和を維持し、Pythonや科学条件のpinは変えない。
+
+旧6件の上限は `limits_status=provisional_validation_caps` として構造検証だけに適用する。新campaignの実行予算は未確定のまま。`result_trusted/execution_authorized/budgets_frozen/formal_permission=false`、`campaign_evaluations_credited=0` で、宣言検査を実行証拠にはしない。
+
+`audit_chunk_payloads(files, producer, campaign, chunk_index, attempt)` は、保存bytesのmappingから新形式を照合し、既存の保存score以降の独立ledger検算へ6件を順に渡す。planned/context、dataset/evaluationのhash/サイズ、identity/input/event/source、profile状態、開始/終了journal、exact payload inventoryを検査する。profile/score導出そのものの独立性は追加しない。
+
+このAPIはファイル読取りや監視processを起動しない。外部planの信頼性、入力サイズ制限、公開marker、clean source capture、consumer revision、process監視、campaign journal/descriptorとの対応は呼出側の責務。**現行 `attempt-audit` CLIは旧形式のchunk 0専用のまま**で、新APIはまだCLIへ接続していない。次は新形式に対応するIO/監視/監査reportとjournalの照合を接続し、そこから実行側controllerへ進む。全120区切りの実データ実行を今回完了したものではない。
