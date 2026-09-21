@@ -288,4 +288,20 @@ intent保存後の処理が完了しなければ `TransitionIncomplete`。journa
 
 `anomaly_v03_process_supervisor.supervise` は、明示argv/cwd、新しいcontrol directory、wall/private/output上限で**所有するWindows子process 1個**を監視する。stdout/stderr合計を監視し、上限・中断・観測失敗時は停止と終了確認を試みる。終了後のhash読取りも上限内に限定する。終了を確認できない場合はログを走査せず、`UnreapedWorker.process` に元の所有handleを保持して返す。子孫processの管理はこのAPIの範囲外。実行権限、sourceの選定、全体予算は呼出し側で確定する。
 
-監視はgeneric観測reportを返すだけで、producer/audit専用の `supervision.json` は保存しない。次工程はproducer worker/独立audit CLIをこの監視とcontrollerへ接続するadapter。専用監視format/binding/limitsとの整合、source/consumer freeze、runtime inventory、全体予算を整えてから実データ実行を判断する。今回のcomponent試験は小規模fixtureとprintのみの実子processに限定し、campaign加算0、formal_permission=falseを維持する。
+監視はgeneric観測reportを返すだけで、producer/audit専用の `supervision.json` は保存しない。下記adapterが専用formatへ結び付けて保存する。component単体試験は小規模fixtureとprintのみの実子processに限定し、campaign加算0、formal_permission=falseを維持する。
+
+### 新しい6評価を別processの監査まで通す
+
+`anomaly_v03_chunk_execution.NativeCallbacks` は、controllerの固定保存先でproducer worker→保存確定→別processのaudit CLI→fresh照合→journal確定を順次実行する。producer/consumerはplanで固定したclean checkoutを検査する。fresh検証を行うcontroller自身はconsumerと同じcheckout/revisionで起動する。各監視を `producer-control/supervision.json` / `audit/supervision.json` へ排他的保存し、停止理由を保存障害で置き換えない。終了未確認workerがあればjournalを失敗・再試行可能へ進めず、元のownerを保持する。
+
+```powershell
+C:\Python314\python.exe -B tools/evaluator/run_anomaly_v03_chunk.py trial `
+  --root <このentrypointを置いたclean checkoutの絶対path> `
+  --expected-head <固定した40桁revision> --name <未使用の試行名>
+```
+
+`trial` は接続確認専用で、常に新しい `artifacts/anomaly-v03-chunk-trials/<name>` と最初のdev chunk/attempt 1だけを作る。実行前にplan hash・revision・対象数1区切り・上限・実runtimeを `request.json` に固定する。metadata/attempt/外部receipt保存先を分け、running/saved/verifiedの戻り値を順番に `receipts/` へ保存する。既存試行の再開や全120区切りの起動はできない。producerとconsumerは同じ固定revisionでも別process・別計算経路で、検算の範囲は保存score以降のledger。
+
+producerは900秒/2GiB、payloadは書込み前の既存1GiB上限、stdout/stderrは合計1MiB。auditは600秒/1GiB/ログ8MiB。controller内のfresh ledger検証は既存readerの開始・終了資源検査で、controller自体を強制停止する外側process上限や全campaign予算はまだ設けていない。開始時は空きRAM4GiB・volume20GiBを要求する。trial成功は `connection_trial_verified` / `verified_evaluations=6` で、campaign加算0・正式許可false。全dev/smoke予算、完全runtime inventory、profile/score導出等の独立検算と正式受入は別途残る。
+
+終了不明時のCLIは新しい仕事を始めず、元の子processに停止・終了確認を繰り返す。ログを繰り返し走査したり、PIDから別processを探したりしない。途中出力/intent/監視を残し、自動cleanupは行わない。
