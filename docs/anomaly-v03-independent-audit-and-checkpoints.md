@@ -319,3 +319,13 @@ source照合では同期の読取り用Git subprocessを呼ぶ。専用の計算
 累積時間は各 `run` 呼出しの活動時間を加算する。準備、休止、最終closed書込みは対象外。残り2460秒または出力1GiB＋32MiBの余裕がない場合に次区間を開始しない。controller private2GiB/空きRAM4GiB/空きdisk20GiBを境界で確認し、所有workerの個別監視は維持する。全体の時間/容量上限やcontroller/process treeを強制停止する仕組みではない。再開時の過去verified証拠の再照合中にはwrapperの途中検査は入らない。
 
 `control/NNNNNN/stop.request` を区間の境界で読み、新規control番号にclosed記録を残す。古いclosed状態、未閉鎖呼出し、未確定transitionを自動再使用しない。未終了workerは出力walk/closed書込みをせず元の `UnreapedWorker` を返し、呼出元によるowner保持・終了確認を必要とする。旧trialのcoverage転用、campaign加算、正式gate変更は行わない。
+
+### engineeringの実行環境snapshotと起動CLI（2026-09-21）
+
+`anomaly_v03_engineering_inventory.py` はWindows更新の実値を記録する別formatで、source/stdlib/loaded native/extension/CPU/起動条件を収集・再読する。従来正式collector/schema/pinは不変。snapshotはinspection processの時点観測で、worker/auditorのwarmupやruntime closureではない。`full_runtime_inventory_complete=false`を維持する。
+
+`tools/evaluator/run_anomaly_v03_campaign.py prepare --root <clean checkout> --expected-head <full SHA> --name <new name>` は、短いpathの新規rootにsnapshotと固定plan/空journal/初期closed記録を作る。所有inspection processは300秒/private512MiB/log16MiB。stdoutへ返すpreparedとclosedのpath/raw hashを外部保持する。実データ計算は行わない。
+
+`continue` は同じroot/revision/nameと、`--prepared-sha256`、`--state-path`、`--state-sha256`、**明示した`--max-chunks`（1〜120）**を必須にする。外部pinを照合し、Run.run活動時間内で新しいinspectionと基本runtime一致を確認してから既存NativeCallbacksへ接続する。終了不明のownerは元handleで保持し、終了確認まで新しい仕事へ進まない。固定source選定は同一revisionをproducer/consumer/controllerに使うengineering構成である。
+
+実prepareはc01d1c9/clean `v03p/banto-ai` の`r1`で成功した。source397/stdlib2559/native48/extension8、7 files/749075 bytes、journal0/next chunk0。完全runtime inventory、受入freeze、全120実行、独立S6の完了は追加しない。[結果と操作手順](results/anomaly-multiseed-v0.3-campaign-launcher-2026-09-21.md)を参照する。

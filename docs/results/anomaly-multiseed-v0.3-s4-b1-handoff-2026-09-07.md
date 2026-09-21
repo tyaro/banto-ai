@@ -3626,3 +3626,15 @@ UTC2026-09-21T12:32:07.339235+00:00、空きRAM13116989440/C174142107648/D119513
 UTC2026-09-21T12:57:49.595269+00:00、空きRAM13260709888/C174123429888/D119513456640 bytes、試験process終了済み。Windows26200.9457/CPython3.14.0/exe・DLL hashは前回同値、runtime前後一致。Windows Update engineering緩和を維持する。
 
 次は全体source/consumerと完全runtime inventory、予算確定の材料、元worker ownerの保持を含むlauncher接続。全体起動・正式gate・S6・Phase 2/3完了を追加しない。証拠は `artifacts/budgeted-run-2026-09-21/savepoint-evidence.json`。前回chunk-executionのmanifestと18ファイル、本流889cfc3/clean、既存dirty8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持する。保護root/principal参照、UAC/ACL/service/task変更、push/merge/CIなし。
+
+## 135. 実行環境snapshotと明示起動CLI（2026-09-21）
+
+実装保存点 **c01d1c978f78bab51391392d56cdcb7aab5afaab**。[結果と操作](anomaly-multiseed-v0.3-campaign-launcher-2026-09-21.md)。engineeringのWindows実値でsource/stdlib/native/extension/CPU/起動条件を収集・再読する別snapshotと、`run_anomaly_v03_campaign.py prepare/continue`を追加した。旧正式collector/schema/pinは不変。snapshotはinspection processの時点観測で、worker/auditorのruntime closureや完全S6ではない。
+
+prepareは新しいrootに所有inspection worker（300秒/512MiB/log16MiB）と固定plan/空journal/初期closed記録を作り、外部prepared/state pinを返す。continueは同じsource/consumer/controller revision、外部pin、明示max-chunksを必須にし、活動時間内でfresh inspection後にNativeCallbacksへ接続する。未終了owner保持を共通helperにし、旧trial CLIも動作を維持した。全120の自動起動、予算の最終freeze、正式受入の許可は追加しない。
+
+17件pass/6.691秒/peak42209280 bytes、独立P0〜P2指摘0/進捗poll0、safety/diff-check pass。小規模実IOでOS/source/native/数値mockを明示し、初期のtuple比較、API参照とfixtureの不一致は修正した。実prepareはclean **`C:/Users/TKent/.codex/worktrees/v03p/banto-ai`** / c01d1c9 の **`artifacts/v03-runs/r1`** で成功。全体67.650秒、inspection PID6136/60.791秒/peak39006208 bytes、正常終了確認。source397/stdlib2559（51017552 bytes）/native48/extension8を収集・再読。出力7 files/749075 bytes、journal0/next0/ready、実データ計算は未開始。
+
+prepared raw hash **be582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7**、初期`run/control/000000/closed.json` raw hash **85a6163034c5392ce1ef78f4cbaa6da0faf9c06a66faae03c8c0f8df0c8ebf39**。外部stdoutからopen_runで再照合済み。次はこのr1で3区間/18評価のengineering連続運転とclosed記録を確認する。prepareを同じrootで再実行せず、latest pinからcontinueする。
+
+UTC2026-09-21T13:18:09.894216+00:00、空きRAM13306019840/C174107738112/D119513100288 bytes。OS26200.9457/CPython3.14.0/exe・DLL hashは前回同値、前後runtime一致、全所有process終了済み。Windows Updateのengineering実値記録を維持する。既存dirty8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621と本流889cfc3/clean、過去trialは保持。保護root/principal参照、UAC/ACL/service/task変更、push/merge/CIなし。証拠は候補`artifacts/campaign-launcher-2026-09-21/savepoint-evidence.json`。Phase 2/3、全120実行、完全runtime inventory/独立S6の完了は追加しない。
