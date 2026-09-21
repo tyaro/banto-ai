@@ -3564,3 +3564,17 @@ attempt_file_reader_implemented=true。実演artifact_bytes_verified/payload_inv
 **次は新形式を実ファイル読取り・producer/audit終了監視・audit report・journal/descriptor照合へ接続する。** 続いてcontroller、予算・source/consumer freeze、runtime inventoryを整える。§116の専用principal保留、旧保護root参照禁止・j消費済みguardを維持。今回principal/SAM/保護root参照、UAC/ACL変更、service/task追加、push/merge/CIなし。
 
 再開用入口を **[短い引継ぎ](../current-handoff.md)** に整理した。新しいタスクはユーザーが選んだ場合にこの文書から再開できる。研究ロードマップPhase 3の全条件実行の準備を進めたもので、Phase 2/3全体の完了数は今回増やさない。execution_authorized/resume_authorized/budgets_frozen/campaign_completed/independent_s6_complete/formal_permission=false、campaign_evaluations_credited=0、acceptance_status=not_completed、performance_status=not_evaluated。
+
+## 131. 2026-09-21 新形式の実ファイル・終了監視・journal照合を接続
+
+**04630e436d7b99a97005944fe7cf7b8ec4687701** に専用 `audit_anomaly_v03_chunk.py` と `checkpoint_anomaly_v03.py attempt-chunk-audit` を追加。[結果](anomaly-multiseed-v0.3-chunk-audit-2026-09-21.md) / [CLI仕様](../anomaly-v03-independent-audit-and-checkpoints.md#新形式の区切りを実ファイルから検算する)。外部plan/hash/chunk/attemptから新形式の保存6件を選び、固定位置・公開hash/inventory・source・producer監視・保存audit・新検算・audit監視・journal outcomeを結合する。全120区切りに対応し、旧attempt-auditは旧形式chunk 0専用を維持する。
+
+producer監視はmanifestと同じbindingとruntime_after、audit監視は保存report出力hash/サイズ・正常終了・600秒/1GiB/8MiB上限と実測・専用CLI exact argv・runtime_before/afterが必須。過去consumerと今回verifierはsource/runtimeを別々に固定する。終了前にcontrol/payload/source/plan/journalを再照合。新status=attempt_chunk_ledgers_verified、evaluations_checked=6。profile/score導出の独立性は追加しない。監視process起動と実行controllerはまだない。
+
+初回新12件pass/56.731秒。単独readerへの既存入力上限適用と拒否テストを補足し、最終は新13＋chunk契約14＋saved-audit6＋attempt-files16＋preflight12＝**61件pass/failure・error・skip0**。独立P0〜P3所見0/進捗poll0、入力上限追加1行は親側で確認、safety/diff-check pass。小規模な実ファイルを公開・読取りし、source/runtime/schema/数値処理は明示mock。CLI入口はテスト内呼出しで確認し、別processの実データ実演は繰り返していない。広い数値module、登録dataset/evaluation生成、全campaign実行、新worktreeなし。
+
+最終PID30140/exit0、80.642秒/peak private60731392 bytes（57.92MiB）。UTC2026-09-21T10:21:18.662914、空きRAM13440172032/C170884177920/D119514456064 bytes（D約111.3GiB、着手時と同値）。OS26200.9457/boot2026-09-19T03:46:06.5+09:00、CPython3.14.0/exe・DLL hash不変、試験前後runtime一致。Windows Update engineering緩和/旧正式pin不変。長期リーク不在は未評価。
+
+証拠は `artifacts/chunk-audit-2026-09-21`。前回chunk-contract証拠7 filesは全pin一致。本流889cfc3/clean、既存親policy文書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全・commit除外。§116の専用principal保留・旧保護root参照禁止・j/診断guard消費済みを維持。principal/SAM/保護root参照、UAC/ACL変更、service/task追加、push/merge/CIなし。
+
+**次はproducer→保存→独立audit→監視→journal確定を結ぶ単一writer controllerと失敗attempt保持を実装する。** まず小規模fixtureで確認し、予算/source/consumer freeze・runtime inventoryを整えてから実データ実行を判断する。[短い引継ぎ](../current-handoff.md)をこの工程へ更新した。研究ロードマップPhase 3の全条件実行に向けた読取り側接続が完了した段階で、Phase 2/3全体の完了ではない。budgets_frozen/execution_authorized/resume_authorized/campaign_completed/independent_s6_complete/formal_permission=false、campaign_evaluations_credited=0、acceptance_status=not_completed、performance_status=not_evaluated。

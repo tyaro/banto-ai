@@ -30,6 +30,8 @@
 
 [§130の全区切り結果形式](anomaly-multiseed-v0.3-chunk-contract-2026-09-21.md): 全120の登録chunkから外部指定した6件の新manifest契約と保存ledger検算APIを追加。70件pass/約16秒/最大50.94MiB、独立所見0。旧6件契約は維持し、実ファイル・監視・CLIは新形式へ未接続。campaign加算0、実行/正式受入未許可。[短い引継ぎ](../current-handoff.md)を再開時の入口とする。
 
+[§131の新形式IO/監視接続](anomaly-multiseed-v0.3-chunk-audit-2026-09-21.md): 全120から選ぶ新結果形式に専用reader/attempt検算CLIを追加し、実ファイル・producer/audit監視・journalを結合。61件pass/約81秒/最大57.92MiB、独立所見0。小規模実ファイルと明示mockでの検証で、実データ/全campaignは未実行。次は単一writer controller。campaign加算0、再開/正式受入未許可。
+
 日付: 2026-09-10。初回照合の基準HEAD `f9244a735dff982cfce7d1493efda9431bc31b42`。
 補完テスト修正savepoint: `cdbc0a1`。Windows3.14.0一本化の実装savepoint: `9fd3490`。
 2026-09-11追記: Linux CI固定・unittest記録の実装は `3c69f9e`、Linuxのfakeテスト修正は `9846f52` / `7870362`。
