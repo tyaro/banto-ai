@@ -12,6 +12,8 @@
 
 ## 目的と現在地
 
+**現在の実行**: ユーザー了承に基づき、下記`r1`の初期closedから`continue --max-chunks 3`を開始した。外部wrapper/記録は`artifacts/three-chunk-run-2026-09-21`、[実行記録](results/anomaly-multiseed-v0.3-three-chunk-run-2026-09-21.md)。実行中は同じrunを再起動しない。終了後にCLIの最新closed pin、3区間の成果物・監査・資源を確認する。
+
 [研究ロードマップ](research-roadmap.md)のPhase 2（予測モデル比較）、Phase 3（異常検知・ドリフト）が目標。現在はPhase 3のanomaly v0.3、全dev/smoke実行へ進むための接続作業。小さい保存点の完了をPhase全体の完了として数えない。
 
 通常の単一writer保存を優先する方針を採択済み。初回固定6件の実計算・保存・再計算、および保存score以降の独立ledger検算は成功済み。全dev/smokeはdev96＋smoke24＝120 chunks/720 evaluations、1 chunkは同一seed/layoutのcore/stress×3候補。全体実行は未開始。
