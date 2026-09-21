@@ -32,6 +32,8 @@
 
 [§131の新形式IO/監視接続](anomaly-multiseed-v0.3-chunk-audit-2026-09-21.md): 全120から選ぶ新結果形式に専用reader/attempt検算CLIを追加し、実ファイル・producer/audit監視・journalを結合。61件pass/約81秒/最大57.92MiB、独立所見0。小規模実ファイルと明示mockでの検証で、実データ/全campaignは未実行。次は単一writer controller。campaign加算0、再開/正式受入未許可。
 
+[§132のproducer/controller/監視](anomaly-multiseed-v0.3-attempt-controller-2026-09-21.md): 選択chunkのproducer、失敗attemptと遷移intentを保持する単一writer controller、所有Windows子process 1個の資源監視を追加。producer/旧経路31件、controller/store/監視41件pass、後者約48秒/最大54.75MiB。独立レビュー修正後0。小規模fixtureとprintのみの実子processで確認し、campaignは未実行。次はworker/audit CLIを結ぶadapterと予算/source/runtime整理。campaign加算0、正式受入のpass追加なし。
+
 日付: 2026-09-10。初回照合の基準HEAD `f9244a735dff982cfce7d1493efda9431bc31b42`。
 補完テスト修正savepoint: `cdbc0a1`。Windows3.14.0一本化の実装savepoint: `9fd3490`。
 2026-09-11追記: Linux CI固定・unittest記録の実装は `3c69f9e`、Linuxのfakeテスト修正は `9846f52` / `7870362`。
