@@ -18,7 +18,7 @@
 
 前回までの完了は累計9区間/54評価、595保存ファイル。今回の開始前にも595ファイルと前回証拠21ファイルの不変、関連計算processなし、runtime一致を確認した。下記000002のclosedは今回の開始pinであり、終了後に新しいpinへ更新する。
 
-**今回の中間保存（12区間の節目）**: UTC2026-09-21T20:47:59.218876+00:00（JST05:47）の診断で、新規12区間/72評価（chunk9〜20）のverified receiptを保持、累計21区間/126評価。journal64、chunk21/attempt1はrunning、経過11484.3秒。同じcontrollerのPID・開始日時・wrapperコマンドを照合済み。空きRAM13033336832/C171074265088/D119512301568 bytes、controller private123125760/peak225886208 bytes、エラーログは空。今回全24区間の終了・最終照合は未完了。最初の6区間の節目はdad47eeで保存済み。各保存commitは外部`followup-state.json`に記録し、次の中間保存は新規18区間到達後に行う。
+**今回の中間保存（18区間の節目）**: UTC2026-09-21T22:20:05.627288+00:00（JST07:20）の診断で、新規19区間/114評価（chunk9〜27）のverified receiptを保持、累計28区間/168評価。journal85、chunk28/attempt1はrunning、経過17010.6秒。同じcontrollerのPID・開始日時・wrapperコマンドを照合済み。空きRAM12968243200/C169833291776/D119512272896 bytes、controller private118558720/peak228282368 bytes、エラーログは空。今回全24区間の終了・最終照合は未完了。6区間の節目はdad47ee、12区間の節目は82e69deで保存済み。各保存commitは外部`followup-state.json`に記録する。予定した中間保存はここまでとし、次はcontroller終了後の結果照合・最終保存を行う。
 
 [研究ロードマップ](research-roadmap.md)のPhase 2（予測モデル比較）、Phase 3（異常検知・ドリフト）が目標。現在はPhase 3のanomaly v0.3、全dev/smoke実行へ進むための接続作業。小さい保存点の完了をPhase全体の完了として数えない。
 
