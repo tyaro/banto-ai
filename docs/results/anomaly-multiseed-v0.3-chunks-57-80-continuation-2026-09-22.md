@@ -27,3 +27,9 @@ wrapperは60秒ごとにcontroller private/peak、空きRAM/C/D、journal段階�
 終了後はexit0/yielded/新規24/next81を確認し、collect.pyのIO/hash照合を1回実行する。全所有process終了、各監査、前回3679ファイル不変を確認し、5文書の最終保存（長い引継書§140）とfinalize_evidence.pyを完了してheartbeatを停止する。異常終了でも記録を保全し、成功専用collectorや未閉鎖invocationを再使用せず判断点を報告して停止する。追加invocationは自動起動しない。
 
 campaign加算0/正式許可false、独立監査は保存score以降のみ。完全runtime inventory/独立S6、全120区間/holdout/性能評価、Phase 2/3全体の完了は追加しない。保護ProgramData roots/principal/SAM参照、UAC/ACL/service/task/VM変更、push/merge/CIなし。
+
+## 中間保存: 新規6区間の節目
+
+UTC2026-09-22T13:54:34.490327+00:00（JST22:54）の診断で、新規7区間/42評価（chunk57〜63）のverified receiptを保持し、累計64区間/384評価となった。journal193の最新状態はchunk64/attempt1/running、経過14940.8秒。PID39544の開始日時・wrapperコマンドが起動記録に一致し、同じcontrollerが継続中。stdout/stderr/console-stderrは空で、終了報告はまだない。
+
+空きRAM12935745536/C163327361024/D119511687168 bytes、controller private125571072/peak231378944 bytes。資源に余裕があることを確認し、6区間の節目としてこの文書とcurrent-handoffだけを中間保存する。対象節目・観測値・commitは今回の外部followup-state.jsonへ保持する。次の中間保存は新規12区間到達後。中間receiptは未閉鎖control000005の再開pinに使わず、今回全24区間の終了・最終照合は未完了として扱う。
