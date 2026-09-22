@@ -6,19 +6,19 @@
 
 - **作業先**: `C:\Users\TKent\.codex\worktrees\70b0\banto-ai`、branch `codex/s4-b1-windows-engineering`。
 - 最新実装保存点: **c01d1c978f78bab51391392d56cdcb7aab5afaab**（環境snapshotと明示起動CLI、§135）。前段の継続APIはeee93cf/§134。初回3区間、追加6区間に続き、今回24区間/144評価も成功し、累計33区間/198評価（§138）。
-- 最新の実データ確認も **c01d1c9**。今回の開始af393cb、中間dad47ee/82e69de/55faa8d、最終commitは下記`savepoint-evidence.json`に記録。変更は結果・引継ぎ5文書のみ。前回cc7a459と以前の保存点・試行も保持。
+- 最新の完了済み実データ確認も **c01d1c9**。前回chunk9〜32の最終保存点 **28100c4da280c3c56e043e871923ff9cc5e1a0d8**、開始af393cb/中間dad47ee・82e69de・55faa8d。今回はそこから次の24区間を開始した。実装変更なし。過去の保存点・試行は保持する。
 - 本流 `D:\develop\banto-ai` は **889cfc3d5e1fd6dd7fc6c9656273d16d7d56d64e** / clean、作業対象にしない。push/mergeなし。
 - **既存dirtyを保全・commit除外**: `docs/results/anomaly-multiseed-v0.3-s4-b2-parent-policy-rename-2026-09-14.md`、8461 bytes、SHA-256 `443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621`。
 
 ## 目的と現在地
 
-**現在の状態**: 今回の`continue --max-chunks 24`はJST2026-09-22 08:24に正常終了。chunk9〜32/144評価がすべて成功し、累計33区間/198評価。control000003、journal99/next33/yielded/stop_reason=null。controller PID2320と全所有processの終了を確認済み。[今回の結果](results/anomaly-multiseed-v0.3-twenty-four-chunk-continuation-2026-09-22.md)。追加の実行は起動していない。
+**現在の実行**: JST2026-09-22 10:24に次の`continue --max-chunks 24`を起動した。対象chunk33〜56/最大144新規評価、control000004、controller PID6872/開始UTC2026-09-22T01:24:22.5430796Z。前回の33区間/198評価は完了済みで、今回分は未確定。[今回の記録](results/anomaly-multiseed-v0.3-chunks-33-56-continuation-2026-09-22.md)。状態は候補`artifacts/chunks-33-56-continuation-2026-09-22/status.py`で読み、PID・開始日時・wrapperを照合する。同じrunを重複起動しない。
 
-**継続確認**: 今回だけを対象にした30分間隔heartbeat **banto-24** は最終保存後に停止する。次回は起動用の手順と予算を判断してから進め、終了済みcontrollerを再起動しない。保存済みevidence/manifestを再利用し、完了したcollectorや数値計算を繰り返さない。
+**継続確認**: 30分間隔heartbeat **banto-24** を今回の区間33〜56だけを対象に更新・再開した。手順は候補`artifacts/chunks-33-56-continuation-2026-09-22/FOLLOWUP.md`。稼働中は1回確認し、新規6/12/18区間で中間保存する。wrapperは60秒診断と各区間のreceipt保持を行う。成功・異常終了時とも記録を保全してheartbeatを停止し、追加invocationは起動しない。前回PID2320/collectorは正常終了済みで再実行しない。
 
-今回の終了後、2137 files/4384532669 logical bytesと既存595ファイルの不変を確認した。前回証拠21ファイルを保全し、外部receipt24件と正常閉鎖pinを保存。最新closedは下記000003である。
+今回の開始前にも、前回2137 files/4384532669 logical bytesと前回証拠49件の不変を確認した。関連計算processなし、runtime一致。下記000003のclosedは今回の開始pinであり、実行中の再開に使わない。終了後の最新pinは000004へ更新する。
 
-**今回の保存点**: 6/12/18区間の節目をdad47ee/82e69de/55faa8dで保存した（観測時の新規確定数は7/12/19）。各commitと観測値は外部`followup-state.json`に記録。最終の成果物・文書・commitを`savepoint-evidence.json`に結合する。
+**前回の保存点**: 6/12/18区間の節目をdad47ee/82e69de/55faa8dで保存した（観測時の新規確定数は7/12/19）。各commitと観測値は前回の`followup-state.json`に記録。前回の最終manifestは10289 bytes/SHA256 `ddbb32983dadb84fbdca50d990f346c02cdaa5bedc8949d016504562e6d48ec8`。今回の起動保存は新artifact folderの`launch-savepoint.json`に記録する。
 
 [研究ロードマップ](research-roadmap.md)のPhase 2（予測モデル比較）、Phase 3（異常検知・ドリフト）が目標。現在はPhase 3のanomaly v0.3、全dev/smoke実行へ進むための接続作業。小さい保存点の完了をPhase全体の完了として数えない。
 
@@ -28,7 +28,7 @@
 
 **継続入口**: `anomaly_v03_campaign_launcher.py` / `tools/evaluator/run_anomaly_v03_campaign.py`。`prepare`は所有processで実環境snapshotを収集し、新しいmetadata/初期closed記録と外部prepared pinを作る。`continue`は外部prepared/最新closed hashと明示`--max-chunks`を必須にし、Run.run活動時間内でfresh inspectionしてからNativeCallbacksへ進む。終了不明の元ownerはCLIが終了確認まで保持する。別requestの48時間/32GiB候補、逐次処理、未閉鎖呼出しの再使用拒否を維持する。
 
-**次に行う作業**: 保存点と資源を確認し、残り87区間に対する次の明示上限を判断する。今回24区間は20851.249秒（約5時間48分）、累積活動28855.997764秒、48時間候補の残り143944.002236秒（約39.98時間）。既存33区間の再照合費用、seed/layout差、inventory増加・再試行を見込む。細分化した再開を避け、途中保存は同じinvocation内で行う方針を維持するが、今回のheartbeatから追加実行はしない。48時間/32GiBへの収束保証や全残区間の自動起動許可ではない。
+**次に行う作業**: 起動済みの区間33〜56を観測・中間保存し、終了後に照合・最終保存する。今回の見積りは約7.1時間/追加約3GiBで、最初の約1.8時間は既存33区間の再照合が中心。累積活動の開始値28855.997764秒、48時間候補の残り143944.002236秒（約39.98時間）。前回実測から仮に残りを24/24/24/15に分ける線形試算は全累積42.1〜42.7時間だが、固定費・seed/layout差・inventory増加・再試行等を分離しておらず保証ではない。今回の上限は24区間のみ。成功時next57/累計342評価、残り63区間/378評価。追加invocationを自動起動しない。
 
 source/consumer/controllerはすべてc01d1c9、Python3.14.0を維持。snapshotはsource397/stdlib2559/native48/extension8の時点観測で、worker/auditorのruntime closureや完全S6ではない。全体上限は境界での協調停止で、controller/process treeへの強制上限は未整備。再開時の過去verified再照合には一連の処理途中のwrapper予算検査がない。旧trialを新runのcoverageへコピーしない。
 
@@ -65,7 +65,7 @@ Windows 26200.9457、boot既存観測2026-09-19T03:46:06.5+09:00、CPython3.14.0
 
 ## 必要になったときに読む記録
 
-- [最新24区間の継続結果](results/anomaly-multiseed-v0.3-twenty-four-chunk-continuation-2026-09-22.md)、[前回6区間と試算](results/anomaly-multiseed-v0.3-six-chunk-continuation-2026-09-21.md)、[snapshot/launcherの操作](results/anomaly-multiseed-v0.3-campaign-launcher-2026-09-21.md)、[API/CLI仕様](anomaly-v03-independent-audit-and-checkpoints.md)。まず次工程に関連する末尾を読む。
+- [今回の区間33〜56の記録](results/anomaly-multiseed-v0.3-chunks-33-56-continuation-2026-09-22.md)、[前回24区間の結果](results/anomaly-multiseed-v0.3-twenty-four-chunk-continuation-2026-09-22.md)、[snapshot/launcherの操作](results/anomaly-multiseed-v0.3-campaign-launcher-2026-09-21.md)、[API/CLI仕様](anomaly-v03-independent-audit-and-checkpoints.md)。まず次工程に関連する末尾を読む。
 - [長い引継書](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)の§116（運用変更）、§123〜138（現在の実装経緯）。全体の再読込みは不要。
 - 最新ローカル証拠: `artifacts/twenty-four-chunk-continuation-2026-09-22/savepoint-evidence.json`。前回`artifacts/six-chunk-continuation-2026-09-21/savepoint-evidence.json`（6331 bytes/SHA256 `f16e7470bac1ef637f2bb019f80ebe36ffcc7499c4c07844699d1a2a969d4754`）と記載20ファイルを保全。さらに以前の証拠も保持し、過去の実試行は再計算しない。
 - 以前の実6件: clean `C:\Users\TKent\.codex\worktrees\v03\banto-ai` / 25d1084の `artifacts/anomaly-v03-chunk-trials/trial-01`（68 files/133323148 bytes）。`trial-evidence.json` に全pin。完走済みで再起動不要。
