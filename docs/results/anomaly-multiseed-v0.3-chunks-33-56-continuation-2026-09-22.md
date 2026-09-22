@@ -29,3 +29,9 @@ preflight UTC2026-09-22T01:22:52.725775+00:00。空きRAM13703512064/C1678151639
 48時間候補の残り活動時間143944.002236秒（約39.98時間）。残り87区間を仮に24/24/24/15で区切る線形試算は全累積42.1〜42.7時間だが、固定起動費、seed/layout差、inventory増加、再試行・遅延は分離しておらず保証ではない。今回許可された実行範囲は区間33〜56のみ。32GiB候補出力上限、空きRAM4GiB/disk20GiBの開始条件と所有producer/audit上限を維持する。全体上限は協調的な区間境界検査で、process treeへの強制上限ではない。
 
 終了後はexit0/yielded/新規24/next57を確認し、準備済み`collect.py`によるIO/hash照合を1回実行する。全所有process終了、各監査、前回2137ファイル不変を確認し、5文書の最終保存と`finalize_evidence.py`を完了してheartbeatを停止する。異常終了でも記録を保全し、成功専用collectorや未閉鎖invocationを再使用せず判断点を報告して停止する。campaign加算0/正式許可false、独立監査は保存score以降のみ。完全runtime inventory/独立S6、全120区間/holdout/性能評価、Phase 2/3全体の完了は追加しない。
+
+## 中間保存: 新規6区間の節目
+
+UTC2026-09-22T05:03:05.021046+00:00（JST14:03）の診断で、新規7区間/42評価（chunk33〜39）のverified receiptを保持し、累計40区間/240評価となった。journal121の最新状態はchunk40/attempt1/running、経過13121.9秒。PID6872の開始日時とwrapperコマンドが起動記録と一致し、同じcontrollerが継続中。stdout/stderr/console-stderrは空で、終了報告はまだない。
+
+空きRAM12813946880/C165461995520/D119512002560 bytes、controller private116826112/peak230563840 bytes。資源に余裕があることを確認し、6区間の節目としてこの文書とcurrent-handoffだけを中間保存する。対象節目・観測値・commitは今回の外部`followup-state.json`に保持する。次の中間保存は新規12区間到達後。中間receiptは未閉鎖control000004の再開pinに使わず、今回全24区間の終了・最終照合は未完了として扱う。
