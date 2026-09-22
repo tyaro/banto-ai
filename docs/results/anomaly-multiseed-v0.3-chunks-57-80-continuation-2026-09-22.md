@@ -1,6 +1,6 @@
 # v0.3 完了済み57区間からの24区間継続
 
-2026-09-22 JST。**現在は実行中であり、新規144評価の成功は未確定。** ユーザーの次工程への指示に基づき、保存点d3eda57942e2ca4cab68ad9c95ebf967238f555aと最新closedを照合し、`continue --max-chunks 24`を起動した。対象はchunk57〜80の24区間だけ。成功時は累計81区間/486評価、next81、残り39区間/234評価となる。実装変更なし。
+2026-09-23 JST更新。**区間57〜80の24区間・144評価がすべて成功し、累計81区間・486評価となった。** 30205.374秒（約8時間23分）で正常終了し、終了後のIO/hash照合を完了した。実装変更なし。以下の起動・中間記録は各保存時点の履歴である。
 
 ## 開始確認と外部pin
 
@@ -45,3 +45,17 @@ UTC2026-09-22T15:28:42.991649+00:00（JST2026-09-23 00:28）の診断で、新�
 UTC2026-09-22T16:31:48.312054+00:00（JST2026-09-23 01:31）の診断で、新規18区間/108評価（chunk57〜74）のverified receiptを保持し、累計75区間/450評価となった。journal226の最新状態はchunk75/attempt1/running、経過24374.5秒。PID39544の開始日時・wrapperコマンドが起動記録に一致し、同じcontrollerが継続中。stdout/stderr/console-stderrは空で、終了報告はまだない。
 
 空きRAM12878155776/C159643848704/D119511638016 bytes、controller private133644288/peak231895040 bytes。資源に余裕があることを確認し、この文書とcurrent-handoffだけを中間保存する。6/12区間の節目は8f2358705e2a525947ac37d8afccb364db60c957/ba25ca0b88a8431f2ac7bb41692bc1846465ba17で保存済み。各節目のcommit・観測値は今回の外部followup-state.jsonへ保持する。次は今回の全24区間が終了した後に最終照合・保存を行う。未閉鎖状態の再使用や追加起動は行わず、今回全24区間の終了・最終照合は未完了として扱う。
+
+## 最終結果
+
+同じclean c01d1c9/r1の`continue --max-chunks 24`でchunk57〜80の新規144評価がすべて成功し、累計81区間/486評価となった。30205.374秒（約8時間23分）、累積活動86406.475041秒、journal243/next81/yielded。各監査は`ledger_checks_passed`、controllerと全所有process終了済み。5221 files/10761163678 logical bytesを照合し、開始前3679ファイルはすべて不変。終了後のcollectorは522.586秒のIO/hash照合のみで、数値計算は繰り返していない。
+
+最新closedは **`run/control/000005/closed.json`** / raw SHA-256 **a6b8fd6160b496d9a7dea83cef3ec22814c8b12676df273eb591fb5368384758**。prepared raw hash **be582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7** は不変。旧000004以前のclosedや中間receiptは再開pinに使わない。
+
+終了UTC **2026-09-22T18:08:59.297124+00:00**（JST2026-09-23 03:08）。control000005はexit0/stop_reason=null、全24区間のfailed/inconclusive/not_startedは0。開始日時・wrapperを照合してきたcontroller PID39544の消失と正常終了報告、inspection/producer/auditの全所有process正常終了を確認した。stdoutに正常閉鎖を記録し、stderr/console-stderrは空、診断threadは終了済み。外部receipt24件を保持する。collector peak private188.3MiB。
+
+producer最大334.3MiB、audit最大188.6MiB、controller peak225.6MiB/終了時90.2MiB。60秒間隔501標本の空きRAM最小9602994176 bytes（約8.94GiB）、診断エラーなし。終了UTC2026-09-22T18:08:59.297124+00:00（JST2026-09-23 03:08）、空きRAM11659157504/C161118416896/D119168434176 bytes。OS26200.9457/CPython3.14.0/exe・DLL hashと各workerのruntimeは開始・終了で一致。Windows Updateのengineering実値記録と旧正式pin不変を維持。controller privateは終了時に低下したが、長期リーク不在は未評価。
+
+開始09eb51f、中間8f23587（新規7区間で6区間の節目）/ba25ca0（新規13で12区間の節目）/26e0d0a（新規18）を保存した。最終commit・文書・成果物のpinは候補`artifacts/chunks-57-80-continuation-2026-09-22/savepoint-evidence.json`へ記録する。前回manifest10290 bytes/SHA-256 6f734135d9712a477fef2b2a88b5b234e47701737139324e7c941f8a8a21ef77と記載48ファイルを保全。本流889cfc3/clean、実計算c01d1c9/clean、既存dirty親policy文書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持・commit除外。実装変更・追加agent・合格済み回帰試験の再実行なし。保護root/principal参照、UAC/ACL/service/task変更、push/merge/CIなし。
+
+残り39区間/234評価、48時間候補予算の残り活動時間86393.524959秒（約24.00時間）。次回は完了済み81区間の再照合費用も含めて明示上限を判断する。今回のheartbeat banto-24は最終保存後に停止し、追加invocationは起動しない。 監査は保存score以降のみ、campaign加算0/正式許可false。完全runtime inventory、profile/score導出・bootstrapの独立検算、全dev/smoke/holdout、性能評価、Phase 2/3全体は未完了。
