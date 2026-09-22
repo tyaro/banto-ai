@@ -20,7 +20,7 @@
 
 **前回の保存点**: 6/12/18区間の節目を85c2f2b/41dd75d/dfb4107で保存した（観測時の新規確定数は7/13/18）。最終保存点d3eda57、manifest10290 bytes/SHA256 6f734135d9712a477fef2b2a88b5b234e47701737139324e7c941f8a8a21ef77。今回の起動保存は新artifact folderのlaunch-savepoint.jsonへ記録する。
 
-**今回の中間保存（12区間の節目）**: UTC2026-09-22T15:28:42.991649+00:00（JST2026-09-23 00:28）の診断で、新規13区間/78評価（chunk57〜69）のverified receiptを保持、累計70区間/420評価。journal212、chunk70/attempt1はsaved_pending_verification、経過20589.2秒。同じcontroller PID39544の開始日時・wrapperコマンドを照合済み。空きRAM13024149504/C162465112064/D119511662592 bytes、controller private154185728/peak231895040 bytes、エラーログは空。今回全24区間の終了・最終照合は未完了。6区間の節目は8f23587で保存済み。各保存commitは今回の外部followup-state.jsonへ保持し、次の中間保存は新規18区間到達後に行う。
+**今回の中間保存（18区間の節目）**: UTC2026-09-22T16:31:48.312054+00:00（JST2026-09-23 01:31）の診断で、新規18区間/108評価（chunk57〜74）のverified receiptを保持、累計75区間/450評価。journal226、chunk75/attempt1はrunning、経過24374.5秒。同じcontroller PID39544の開始日時・wrapperコマンドを照合済み。空きRAM12878155776/C159643848704/D119511638016 bytes、controller private133644288/peak231895040 bytes、エラーログは空。今回全24区間の終了・最終照合は未完了。6/12区間の節目は8f23587/ba25ca0で保存済み。各保存commitは今回の外部followup-state.jsonへ保持し、次は今回の全24区間が終了した後に最終照合・保存を行う。
 
 [研究ロードマップ](research-roadmap.md)のPhase 2（予測モデル比較）、Phase 3（異常検知・ドリフト）が目標。現在はPhase 3のanomaly v0.3、全dev/smoke実行へ進むための接続作業。小さい保存点の完了をPhase全体の完了として数えない。
 
