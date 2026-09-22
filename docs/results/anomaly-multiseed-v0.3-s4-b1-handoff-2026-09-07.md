@@ -3662,3 +3662,13 @@ producer最大333.3MiB、audit最大185.9MiB、controller peak216.6MiB/終了時
 残り111区間/666評価。再開時の既存3区間確認を含む起動に約9〜10分かかり、細分化した再開が全体予算に響くことが分かった。1回の再開実測による線形試算では、残りを6区間単位で進めると累積約81〜88時間、24区間単位なら約40〜42時間。**次の候補は24区間/144評価、約6時間/追加約3GiB**とし、途中保存は同じinvocation内で続ける。固定起動費、seed/layout差、inventory増加、再試行など未分離の費用があり、48時間/32GiBへの収束保証ではない。次の実行・全残区間の自動起動はしていない。
 
 実装変更・追加agent・広い回帰試験の再実行なし、repository safety/diff-check pass。本流889cfc3/clean、既存dirty8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621は保全・commit除外。保護root/principal参照、UAC/ACL/service/task変更、push/merge/CIなし。監査は保存score以降のみ、campaign加算0/正式許可false。完全runtime inventory/独立S6、全dev/smoke/holdout、性能評価、Phase 2/3全体の完了は追加しない。
+
+## 138. 完了済み9区間からの24区間継続（2026-09-22 JST）
+
+同じclean **c01d1c978f78bab51391392d56cdcb7aab5afaab** / `C:/Users/TKent/.codex/worktrees/v03p/banto-ai` のr1を`continue --max-chunks 24`で継続し、chunk9〜32の新規144評価がすべて成功した。[最終結果](anomaly-multiseed-v0.3-twenty-four-chunk-continuation-2026-09-22.md)。累計33区間/198評価、exit0/yielded/stop_reason=null、journal99/next chunk33、controllerと全所有processの終了を確認済み。今回20851.249秒（約5時間48分）、累積活動28855.997764秒。開始af393cb、中間dad47ee/82e69de/55faa8dを保存し、区間ごとの外部receipt24件を保持した。
+
+最新closedは **`run/control/000003/closed.json`** / raw SHA-256 **af04684d25c99f69e64a2ac5aacffd92be930d6325ceddd5d9a0ee254f5fa7a0**。prepared raw hash **be582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7** は不変。2137 files/4384532669 logical bytesを照合し、開始前595ファイルはすべて不変。各監査は`ledger_checks_passed`、collectorは456.468秒のIO/hash照合のみ。証拠は候補`artifacts/twenty-four-chunk-continuation-2026-09-22/savepoint-evidence.json`。前回manifest6331 bytes/hashf16e7470bac1ef637f2bb019f80ebe36ffcc7499c4c07844699d1a2a969d4754と記載20ファイルを保全。
+
+producer最大333.3MiB、audit最大186.3MiB、controller peak218.5MiB/終了時88.5MiB。60秒間隔346標本の空きRAM最小12526116864 bytes（約11.67GiB）、診断エラーなし。終了UTC2026-09-21T23:24:06.304847+00:00（JST08:24）、空きRAM13213487104/C169208168448/D119512244224 bytes。OS26200.9457/CPython3.14.0/exe・DLL hashと各workerのruntimeは開始・終了で一致。Windows Update engineering実値記録、旧正式pin不変を維持。長期リーク不在は未評価。
+
+残り87区間/522評価、48時間候補予算の残り活動時間143944.002236秒（約39.98時間）。次回は既存33区間の照合費用も含めて明示上限を判断する。今回の30分間隔heartbeat banto-24は最終保存後に停止し、追加invocationは起動しない。実装変更・追加agent・合格済み回帰試験の再実行なし、diff-check pass。本流889cfc3/clean、実計算c01d1c9/clean、既存dirty8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全・commit除外。保護root/principal参照、UAC/ACL/service/task変更、push/merge/CIなし。監査は保存score以降のみ、campaign加算0/正式許可false。完全runtime inventory/独立S6、全dev/smoke/holdout、性能評価、Phase 2/3全体は未完了。

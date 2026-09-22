@@ -332,4 +332,10 @@ source照合では同期の読取り用Git subprocessを呼ぶ。専用の計算
 
 初回は同じc01d1c9/r1で実CLI `continue --max-chunks 3` が3区間/18評価を2563.527秒で完走した。journal9/next chunk3/yielded、監査は各区間`ledger_checks_passed`、全所有process正常終了確認済み。当時のclosedは`run/control/000001/closed.json`、205 files/399625685 logical bytesを照合し、初期7ファイルは不変。[3区間の最終結果](results/anomaly-multiseed-v0.3-three-chunk-run-2026-09-21.md)はこの初回保存時点の記録である。campaign加算0/正式許可false、独立監査は保存score以降のみである。
 
-さらに2026-09-22 JST、実CLI `continue --max-chunks 6` でchunk3〜8/36評価が成功し、累計9区間/54評価となった。現時点の最新closedは **`run/control/000002/closed.json`**、journal27/next chunk9/yielded。595 files/1196786729 logical bytesを照合し、既存205ファイルは不変。[6区間の最終結果](results/anomaly-multiseed-v0.3-six-chunk-continuation-2026-09-21.md)の外部pinを使う。短い区間数での再開を繰り返すと既存verified再照合の費用が累積するため、次の区間上限候補を24とし、途中保存は同じinvocation内で続ける。試算は保証ではなく、次回以降の実行や全体予算の正式freezeは追加していない。
+さらに2026-09-22 JST、実CLI `continue --max-chunks 6` でchunk3〜8/36評価が成功し、累計9区間/54評価となった。その保存時点のclosedは **`run/control/000002/closed.json`**、journal27/next chunk9/yielded。595 files/1196786729 logical bytesを照合し、既存205ファイルは不変。[6区間の最終結果](results/anomaly-multiseed-v0.3-six-chunk-continuation-2026-09-21.md)の外部pinを使う。短い区間数での再開を繰り返すと既存verified再照合の費用が累積するため、次の区間上限候補を24とし、途中保存は同じinvocation内で続ける。試算は保証ではなく、次回以降の実行や全体予算の正式freezeは追加していない。
+
+### 24区間継続の完了記録（2026-09-22 JST）
+
+同じclean c01d1c9/r1で`continue --max-chunks 24`がchunk9〜32/144評価をすべて成功で完了し、累計33区間/198評価となった。20851.249秒（約5時間48分）、累積活動28855.997764秒、journal99/next33/yielded、全所有process終了済み。2137 files/4384532669 logical bytesを照合し、既存595ファイルは不変。終了後はIO/hash照合のみで、数値再計算は行っていない。
+
+最新closedは **`run/control/000003/closed.json`** / raw SHA-256 **af04684d25c99f69e64a2ac5aacffd92be930d6325ceddd5d9a0ee254f5fa7a0**、prepared raw hash **be582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7**。[24区間の最終結果](results/anomaly-multiseed-v0.3-twenty-four-chunk-continuation-2026-09-22.md)と候補`artifacts/twenty-four-chunk-continuation-2026-09-22/savepoint-evidence.json`に保存する。旧closedや中間receiptは再開pinに使わない。残り87区間/522評価、次回は完了済み33区間の再照合費用も含めて明示上限を判断する。今回のheartbeatは最終保存後に停止し、追加invocationは起動しない。campaign加算0/正式許可false、完全runtime inventory/独立S6/Phase 2・3の完了は追加しない。
