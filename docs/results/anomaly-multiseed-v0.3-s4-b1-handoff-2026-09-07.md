@@ -3672,3 +3672,13 @@ producer最大333.3MiB、audit最大185.9MiB、controller peak216.6MiB/終了時
 producer最大333.3MiB、audit最大186.3MiB、controller peak218.5MiB/終了時88.5MiB。60秒間隔346標本の空きRAM最小12526116864 bytes（約11.67GiB）、診断エラーなし。終了UTC2026-09-21T23:24:06.304847+00:00（JST08:24）、空きRAM13213487104/C169208168448/D119512244224 bytes。OS26200.9457/CPython3.14.0/exe・DLL hashと各workerのruntimeは開始・終了で一致。Windows Update engineering実値記録、旧正式pin不変を維持。長期リーク不在は未評価。
 
 残り87区間/522評価、48時間候補予算の残り活動時間143944.002236秒（約39.98時間）。次回は既存33区間の照合費用も含めて明示上限を判断する。今回の30分間隔heartbeat banto-24は最終保存後に停止し、追加invocationは起動しない。実装変更・追加agent・合格済み回帰試験の再実行なし、diff-check pass。本流889cfc3/clean、実計算c01d1c9/clean、既存dirty8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全・commit除外。保護root/principal参照、UAC/ACL/service/task変更、push/merge/CIなし。監査は保存score以降のみ、campaign加算0/正式許可false。完全runtime inventory/独立S6、全dev/smoke/holdout、性能評価、Phase 2/3全体は未完了。
+
+## 139. 完了済み33区間からの24区間継続（2026-09-22 JST）
+
+同じclean c01d1c9/r1の`continue --max-chunks 24`でchunk33〜56の新規144評価がすべて成功し、累計57区間/342評価となった。27346.369秒（約7時間36分）、累積活動56201.874418秒、journal171/next57/yielded。各監査は`ledger_checks_passed`、controllerと全所有process終了済み。3679 files/7572651569 logical bytesを照合し、開始前2137ファイルはすべて不変。終了後のcollectorは553.670秒のIO/hash照合のみで、数値計算は繰り返していない。 [最終結果](anomaly-multiseed-v0.3-chunks-33-56-continuation-2026-09-22.md)。開始3859efc、中間85c2f2b/41dd75d/dfb4107を保存し、外部receipt24件を保持した。
+
+最新closedは **`run/control/000004/closed.json`** / raw SHA-256 **f21ca40084af17fc0d961c529963c984ccd80d2b0cfea7803fab30c1ce7382a6**。prepared raw hash **be582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7** は不変。旧000003以前のclosedや中間receiptは再開pinに使わない。 証拠は候補`artifacts/chunks-33-56-continuation-2026-09-22/savepoint-evidence.json`。
+
+producer最大335.5MiB、audit最大188.3MiB、controller peak220.9MiB/終了時83.7MiB。60秒間隔454標本の空きRAM最小11128786944 bytes（約10.36GiB）、診断エラーなし。終了UTC2026-09-22T09:00:09.756724+00:00（JST18:00）、空きRAM13120614400/C165132275712/D119511928832 bytes。OS26200.9457/CPython3.14.0/exe・DLL hashと各workerのruntimeは開始・終了で一致。Windows Updateのengineering実値記録と旧正式pin不変を維持。controller privateは終了時に低下したが、長期リーク不在は未評価。
+
+残り63区間/378評価、48時間候補予算の残り活動時間116598.125582秒（約32.39時間）。次回は完了済み57区間の再照合費用も含めて明示上限を判断する。今回のheartbeat banto-24は最終保存後に停止し、追加invocationは起動しない。 前回manifest10289 bytes/SHA-256 ddbb32983dadb84fbdca50d990f346c02cdaa5bedc8949d016504562e6d48ec8と記載48ファイルを保全。本流889cfc3/clean、実計算c01d1c9/clean、既存dirty親policy文書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持・commit除外。実装変更・追加agent・合格済み回帰試験の再実行なし。保護root/principal参照、UAC/ACL/service/task変更、push/merge/CIなし。 監査は保存score以降のみ、campaign加算0/正式許可false。完全runtime inventory、profile/score導出・bootstrapの独立検算、全dev/smoke/holdout、性能評価、Phase 2/3全体は未完了。
