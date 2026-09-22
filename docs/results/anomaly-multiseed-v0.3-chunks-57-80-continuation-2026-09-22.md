@@ -33,3 +33,9 @@ campaign加算0/正式許可false、独立監査は保存score以降のみ。完
 UTC2026-09-22T13:54:34.490327+00:00（JST22:54）の診断で、新規7区間/42評価（chunk57〜63）のverified receiptを保持し、累計64区間/384評価となった。journal193の最新状態はchunk64/attempt1/running、経過14940.8秒。PID39544の開始日時・wrapperコマンドが起動記録に一致し、同じcontrollerが継続中。stdout/stderr/console-stderrは空で、終了報告はまだない。
 
 空きRAM12935745536/C163327361024/D119511687168 bytes、controller private125571072/peak231378944 bytes。資源に余裕があることを確認し、6区間の節目としてこの文書とcurrent-handoffだけを中間保存する。対象節目・観測値・commitは今回の外部followup-state.jsonへ保持する。次の中間保存は新規12区間到達後。中間receiptは未閉鎖control000005の再開pinに使わず、今回全24区間の終了・最終照合は未完了として扱う。
+
+## 中間保存: 新規12区間の節目
+
+UTC2026-09-22T15:28:42.991649+00:00（JST2026-09-23 00:28）の診断で、新規13区間/78評価（chunk57〜69）のverified receiptを保持し、累計70区間/420評価となった。journal212の最新状態はchunk70/attempt1/saved_pending_verification、経過20589.2秒。PID39544の開始日時・wrapperコマンドが起動記録に一致し、同じcontrollerが継続中。stdout/stderr/console-stderrは空で、終了報告はまだない。
+
+空きRAM13024149504/C162465112064/D119511662592 bytes、controller private154185728/peak231895040 bytes。資源に余裕があることを確認し、この文書とcurrent-handoffだけを中間保存する。最初の6区間の節目は8f2358705e2a525947ac37d8afccb364db60c957で保存済み。各節目のcommit・観測値は今回の外部followup-state.jsonへ保持する。次の中間保存は新規18区間到達後。未閉鎖状態の再使用や追加起動は行わず、今回全24区間の終了・最終照合は未完了として扱う。

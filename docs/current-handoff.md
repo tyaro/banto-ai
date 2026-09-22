@@ -1,6 +1,6 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-22 JST。最初にこの文書を読み、下記候補worktreeの `git status` / `git log -3 --oneline` を確認する。全履歴は必要箇所だけ読む。
+更新: 2026-09-23 JST。最初にこの文書を読み、下記候補worktreeの `git status` / `git log -3 --oneline` を確認する。全履歴は必要箇所だけ読む。
 
 ## 場所と最新保存点
 
@@ -20,7 +20,7 @@
 
 **前回の保存点**: 6/12/18区間の節目を85c2f2b/41dd75d/dfb4107で保存した（観測時の新規確定数は7/13/18）。最終保存点d3eda57、manifest10290 bytes/SHA256 6f734135d9712a477fef2b2a88b5b234e47701737139324e7c941f8a8a21ef77。今回の起動保存は新artifact folderのlaunch-savepoint.jsonへ記録する。
 
-**今回の中間保存（6区間の節目）**: UTC2026-09-22T13:54:34.490327+00:00（JST22:54）の診断で、新規7区間/42評価（chunk57〜63）のverified receiptを保持、累計64区間/384評価。journal193、chunk64/attempt1はrunning、経過14940.8秒。同じcontroller PID39544の開始日時・wrapperコマンドを照合済み。空きRAM12935745536/C163327361024/D119511687168 bytes、controller private125571072/peak231378944 bytes、エラーログは空。今回全24区間の終了・最終照合は未完了。各保存commitは今回の外部followup-state.jsonへ保持し、次の中間保存は新規12区間到達後に行う。
+**今回の中間保存（12区間の節目）**: UTC2026-09-22T15:28:42.991649+00:00（JST2026-09-23 00:28）の診断で、新規13区間/78評価（chunk57〜69）のverified receiptを保持、累計70区間/420評価。journal212、chunk70/attempt1はsaved_pending_verification、経過20589.2秒。同じcontroller PID39544の開始日時・wrapperコマンドを照合済み。空きRAM13024149504/C162465112064/D119511662592 bytes、controller private154185728/peak231895040 bytes、エラーログは空。今回全24区間の終了・最終照合は未完了。6区間の節目は8f23587で保存済み。各保存commitは今回の外部followup-state.jsonへ保持し、次の中間保存は新規18区間到達後に行う。
 
 [研究ロードマップ](research-roadmap.md)のPhase 2（予測モデル比較）、Phase 3（異常検知・ドリフト）が目標。現在はPhase 3のanomaly v0.3、全dev/smoke実行へ進むための接続作業。小さい保存点の完了をPhase全体の完了として数えない。
 
