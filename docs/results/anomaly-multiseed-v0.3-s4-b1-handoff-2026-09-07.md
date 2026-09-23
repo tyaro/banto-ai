@@ -3692,3 +3692,17 @@ producer最大335.5MiB、audit最大188.3MiB、controller peak220.9MiB/終了時
 producer最大334.3MiB、audit最大188.6MiB、controller peak225.6MiB/終了時90.2MiB。60秒間隔501標本の空きRAM最小9602994176 bytes（約8.94GiB）、診断エラーなし。終了UTC2026-09-22T18:08:59.297124+00:00（JST2026-09-23 03:08）、空きRAM11659157504/C161118416896/D119168434176 bytes。OS26200.9457/CPython3.14.0/exe・DLL hashと各workerのruntimeは開始・終了で一致。Windows Updateのengineering実値記録と旧正式pin不変を維持。controller privateは終了時に低下したが、長期リーク不在は未評価。
 
 残り39区間/234評価、48時間候補予算の残り活動時間86393.524959秒（約24.00時間）。次回は完了済み81区間の再照合費用も含めて明示上限を判断する。今回のheartbeat banto-24は最終保存後に停止し、追加invocationは起動しない。 前回manifest10290 bytes/SHA-256 6f734135d9712a477fef2b2a88b5b234e47701737139324e7c941f8a8a21ef77と記載48ファイルを保全。本流889cfc3/clean、実計算c01d1c9/clean、既存dirty親policy文書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持・commit除外。実装変更・追加agent・合格済み回帰試験の再実行なし。保護root/principal参照、UAC/ACL/service/task変更、push/merge/CIなし。 監査は保存score以降のみ、campaign加算0/正式許可false。完全runtime inventory、profile/score導出・bootstrapの独立検算、全dev/smoke/holdout、性能評価、Phase 2/3全体は未完了。
+
+## 141. 区間81〜104呼出しのMemoryError停止（2026-09-23 JST）
+
+区間81〜104を対象に起動したcontrol000006は、既存区間の再照合中とみられる段階でMemoryErrorによりexit2で終了した。新規区間の開始記録・確定は0、journal243/前回checkpointと完全一致。累計81区間/486評価、残り39区間/234評価を維持する。今回の24区間成功は追加しない。 [停止記録](anomaly-multiseed-v0.3-chunks-81-104-continuation-2026-09-23.md)。
+
+失敗時の最新closedは **`run/control/000006/closed.json`** / raw SHA-256 **18af12a119e3acc0600594d8eaf6263607f5f7c85d68ff3acbda31931d4b9e4c**、status=failed/stop_reason=exception。直前000005は開始pinとして保持し、現在の再開pinとして使い回さない。
+
+終了UTC2026-09-23T02:57:30.180163+00:00（JST2026-09-23 11:57）、今回11198.201秒（約3時間7分）、累積活動97603.864249秒、48時間候補の残り75196.135751秒（約20.89時間）。終了時の空きRAM7879757824/C131049820160/D116994351104 bytes、controller peak232960000/終了時private159330304 bytes。
+
+controller PID29852の消失、診断threadの終了、inspection worker PID35784のexit0/終了確認を記録した。新規producer/auditは起動記録なし。前回manifestと記載49ファイルの計50件、既存journal243ファイルのpinを照合済み。runの名前一覧は前回5221ファイル＋今回control6ファイルの5227件で一致。既存の数値payload全体は再hashしていない。今回controlの6ファイルはfailure-controlへコピーし原本とhash一致。成功用collect.py/finalize_evidence.pyと数値計算は再実行していない。
+
+原因は未特定。最後の診断から終了まで約26秒の間にC空き容量が161239666688→131049820160 bytesへ減ったことも記録するが、pagefile増加や他processとの因果関係は未確認。空き物理RAMだけから原因やリーク有無を断定しない。自動再起動せず、割当失敗とシステム全体のメモリ状況を切り分けてから再開条件を判断する。
+
+次の判断点はMemoryError原因の切り分けと再開条件の見直し。今回のheartbeat banto-24はPAUSEDに変更済み。追加区間や同じinvocationを自動再起動しない。 起動21860d5、失敗保存は候補`artifacts/chunks-81-104-continuation-2026-09-23/failure-savepoint-evidence.json`。campaign加算0/正式許可false、監査は保存score以降のみ。Phase 2/3、完全runtime inventory/独立S6、全120/holdout/性能評価は未完了。実装変更・追加agent・push/merge/CI・OS/権限設定変更なし。

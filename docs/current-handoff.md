@@ -12,15 +12,15 @@
 
 ## 目的と現在地
 
-**現在の実行**: JST2026-09-23 08:50に次の`continue --max-chunks 24`を起動した。対象chunk81〜104/最大144新規評価、control000006、controller PID29852/開始UTC2026-09-22T23:50:51.3450097Z。前回の81区間/486評価は完了済みで、今回分は未確定。[今回の記録](results/anomaly-multiseed-v0.3-chunks-81-104-continuation-2026-09-23.md)。状態は候補`artifacts/chunks-81-104-continuation-2026-09-23/status.py`で読み、PID・開始日時・wrapperを照合する。同じrunを重複起動しない。
+**現在地**: 区間81〜104を対象に起動したcontrol000006は、既存区間の再照合中とみられる段階でMemoryErrorによりexit2で終了した。新規区間の開始記録・確定は0、journal243/前回checkpointと完全一致。累計81区間/486評価、残り39区間/234評価を維持する。今回の24区間成功は追加しない。 controller PID29852は終了済み。[今回の停止記録](results/anomaly-multiseed-v0.3-chunks-81-104-continuation-2026-09-23.md)。
 
-**継続確認**: 30分間隔heartbeat **banto-24** を今回の区間81〜104だけを対象に更新・再開した。手順は候補`artifacts/chunks-81-104-continuation-2026-09-23/FOLLOWUP.md`。稼働中は1回確認し、新規6/12/18区間で中間保存する。wrapperは60秒診断と各区間のreceipt保持を行う。成功・異常終了時とも記録を保全してheartbeatを停止し、追加invocationは起動しない。前回PID39544/collectorは正常終了済みで再実行しない。
+**継続確認**: heartbeat **banto-24** はMemoryErrorの終了記録を保全して停止済み（PAUSED）。候補`artifacts/chunks-81-104-continuation-2026-09-23/FOLLOWUP.md`を確認し、計算や成功用collectorを再実行しない。
 
-今回の開始前にも、前回5221 files/10761163678 logical bytesと前回証拠50件の不変を確認した。関連計算processなし、runtime一致。下記000005のclosedは今回の開始pinであり、実行中の再開に使わない。終了後の最新pinは000006へ更新する。
+今回の開始前に前回5221 files/10761163678 logical bytesと前回証拠50件を照合済み。異常終了後も前回証拠50件とjournal243ファイルは不変。run一覧は既存5221＋control6件。旧数値payload全体の再hashは行っていない。
 
 **前回の保存点**: 最終855e359、manifest10443 bytes/SHA256 c4017dacb4a80da2a27fe90c57f53c0fab95991ce44bb8a91b969909c891f0ca。過去の起動・中間・最終証拠を保持する。
 
-**今回の保存点**: 起動後の2文書commitと起動記録のpinは候補`artifacts/chunks-81-104-continuation-2026-09-23/launch-savepoint.json`へ保持する。中間保存は新規6/12/18区間の節目に行い、各commit・観測値を同folderの`followup-state.json`に記録する。
+**今回の保存点**: 起動21860d5。新規確定0のため6区間の中間保存には未到達。失敗時の記録・control6ファイルのコピーは候補`artifacts/chunks-81-104-continuation-2026-09-23/failure-evidence.json`と`failure-control/`に保持する。最終commit/pinは`failure-savepoint-evidence.json`へ保存する。
 
 [研究ロードマップ](research-roadmap.md)のPhase 2（予測モデル比較）、Phase 3（異常検知・ドリフト）が目標。現在はPhase 3のanomaly v0.3、全dev/smoke実行へ進むための接続作業。小さい保存点の完了をPhase全体の完了として数えない。
 
@@ -30,11 +30,11 @@
 
 **継続入口**: `anomaly_v03_campaign_launcher.py` / `tools/evaluator/run_anomaly_v03_campaign.py`。`prepare`は所有processで実環境snapshotを収集し、新しいmetadata/初期closed記録と外部prepared pinを作る。`continue`は外部prepared/最新closed hashと明示`--max-chunks`を必須にし、Run.run活動時間内でfresh inspectionしてからNativeCallbacksへ進む。終了不明の元ownerはCLIが終了確認まで保持する。別requestの48時間/32GiB候補、逐次処理、未閉鎖呼出しの再使用拒否を維持する。
 
-**次に行う作業**: 起動済みの区間81〜104を観測・中間保存し、終了後に照合・最終保存する。今回見積りは約9.4〜9.5時間/追加約3GiBで、最初の約3.5時間は既存81区間の再照合が中心。累積活動の開始値86406.475041秒、48時間候補の残り86393.524959秒（約24.00時間）。仮に残りを24/15に分ける線形試算は全累積約41.65〜41.74時間だが保証ではない。今回の上限は24区間のみ。成功時next105/累計630評価、残り15区間/90評価。追加invocationを自動起動しない。
+**次に行う作業**: 次の判断点はMemoryError原因の切り分けと再開条件の見直し。今回のheartbeat banto-24はPAUSEDに変更済み。追加区間や同じinvocationを自動再起動しない。 原因は未特定。最後の診断から終了まで約26秒の間にC空き容量が161239666688→131049820160 bytesへ減ったことも記録するが、pagefile増加や他processとの因果関係は未確認。空き物理RAMだけから原因やリーク有無を断定しない。自動再起動せず、割当失敗とシステム全体のメモリ状況を切り分けてから再開条件を判断する。 累積活動97603.864249秒、残り候補活動時間75196.135751秒（約20.89時間）。
 
 source/consumer/controllerはすべてc01d1c9、Python3.14.0を維持。snapshotはsource397/stdlib2559/native48/extension8の時点観測で、worker/auditorのruntime closureや完全S6ではない。全体上限は境界での協調停止で、controller/process treeへの強制上限は未整備。再開時の過去verified再照合には一連の処理途中のwrapper予算検査がない。旧trialを新runのcoverageへコピーしない。
 
-**再開対象run**: clean `C:/Users/TKent/.codex/worktrees/v03p/banto-ai` / c01d1c9、`artifacts/v03-runs/r1`。最新closedは **`run/control/000005/closed.json`** / raw SHA-256 **a6b8fd6160b496d9a7dea83cef3ec22814c8b12676df273eb591fb5368384758**。prepared raw hash **be582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7** は不変。旧000004以前のclosedや中間receiptは再開pinに使わない。 5221 files/10761163678 logical bytes、journal243/next81/yielded、累積活動86406.475041秒。外部stdout/evidenceは候補`artifacts/chunks-57-80-continuation-2026-09-22`。prepareを同じrootで再実行せず、再開する場合は最新pinと明示上限を使う。
+**再開判断対象run**: clean `C:/Users/TKent/.codex/worktrees/v03p/banto-ai` / c01d1c9、`artifacts/v03-runs/r1`。失敗時の最新closedは **`run/control/000006/closed.json`** / raw SHA-256 **18af12a119e3acc0600594d8eaf6263607f5f7c85d68ff3acbda31931d4b9e4c**、status=failed/stop_reason=exception。直前000005は開始pinとして保持し、現在の再開pinとして使い回さない。 prepared raw hash **be582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7** は不変。journal243、descriptor map/receiptは前回と同一。調査前に再使用せず、失敗時のpinと累積活動を保持する。
 
 controllerは最新receiptと各verified sequenceのdescriptor hash mapを外部保持し、再起動時に完了済み証拠を再照合する。同じsession内の再検算は省く。`TransitionIncomplete` は未確定intentを保持して停止する状態で、自動再使用不可。確定後のreceipt喪失だけは外部intent hashから読取り回復できる。`UnreapedWorker` は元のprocessを保持し、終了確認が必要。現在のattemptやログを上書きしない。
 
@@ -42,7 +42,7 @@ controllerは最新receiptと各verified sequenceのdescriptor hash mapを外部
 
 ## 検証と資源
 
-最新の実確認は**mockなし追加24区間/144評価成功**、30205.374秒（約8時間23分）、監査24件とも`ledger_checks_passed`。終了後のcollectorは522.586秒のIO/hash照合のみ、数値再計算なし。今回は文書のみ更新し、追加agentや合格済み回帰試験の再実行なし。diff-checkを最終保存前に確認する。
+最新の実確認は今回MemoryErrorで停止、新規確定0。終了UTC2026-09-23T02:57:30.180163+00:00（JST2026-09-23 11:57）、今回11198.201秒（約3時間7分）、累積活動97603.864249秒、48時間候補の残り75196.135751秒（約20.89時間）。終了時の空きRAM7879757824/C131049820160/D116994351104 bytes、controller peak232960000/終了時private159330304 bytes。 直前の成功記録はchunk57〜80/144評価、累計81区間/486評価（§140）。controller PID29852の消失、診断threadの終了、inspection worker PID35784のexit0/終了確認を記録した。新規producer/auditは起動記録なし。前回manifestと記載49ファイルの計50件、既存journal243ファイルのpinを照合済み。runの名前一覧は前回5221ファイル＋今回control6ファイルの5227件で一致。既存の数値payload全体は再hashしていない。今回controlの6ファイルはfailure-controlへコピーし原本とhash一致。成功用collect.py/finalize_evidence.pyと数値計算は再実行していない。
 
 実装時のsnapshot/launcherと従来owner保持回帰は **17件pass/6.691秒/peak private40.25MiB**。独立P0〜P2指摘0/進捗poll0、safety/diff-check pass。小規模実IOでOS/source/native/数値mockを明示した。mockなし実prepare67.650秒/inspection37.20MiB、継続API17件、native接続42件＋path修正後13件、以前の実6評価の証拠も保持。広い数値テストはMemoryError歴があるため必要な選抜を使う。
 
@@ -52,9 +52,9 @@ Pythonは **`C:\Python314\python.exe -B`**、`$env:PYTHONPATH='src'`。最新の
 C:\Python314\python.exe -B -m unittest tests.test_anomaly_v03_campaign_launcher
 ```
 
-新変更に必要な範囲だけ検証し、合格済み試験/実演を理由なく繰り返さない。producer最大334.3MiB、audit最大188.6MiB、controller peak225.6MiB/終了時90.2MiB。60秒間隔501標本の空きRAM最小9602994176 bytes（約8.94GiB）、観測エラーなし。controller privateは終了時に低下したが、長期リーク不在は未評価。
+新変更に必要な範囲だけ検証し、合格済み試験/実演を理由なく繰り返さない。以下は前回成功時の観測: producer最大334.3MiB、audit最大188.6MiB、controller peak225.6MiB/終了時90.2MiB。60秒間隔501標本の空きRAM最小9602994176 bytes（約8.94GiB）、観測エラーなし。controller privateは終了時に低下したが、長期リーク不在は未評価。
 
-連続運転終了UTC2026-09-22T18:08:59.297124+00:00（JST2026-09-23 03:08）、空きRAM11659157504/C161118416896/D119168434176 bytes。Windows26200.9457/CPython3.14.0とexe/DLL hashは前回同値、開始・終了・各workerのruntime一致、全所有process終了済み。
+前回成功した連続運転の終了UTC2026-09-22T18:08:59.297124+00:00（JST2026-09-23 03:08）、空きRAM11659157504/C161118416896/D119168434176 bytes。Windows26200.9457/CPython3.14.0とexe/DLL hashは前回同値、開始・終了・各workerのruntime一致、全所有process終了済み。
 
 Windows 26200.9457、boot既存観測2026-09-19T03:46:06.5+09:00、CPython3.14.0。Windows Updateはengineeringでは実値記録で許容、旧正式pinは不変。ユーザーはこのPCで他作業なし・大きめ作業OKと許可済み。資源監視とセーブポイントは継続する。
 
@@ -68,8 +68,8 @@ Windows 26200.9457、boot既存観測2026-09-19T03:46:06.5+09:00、CPython3.14.0
 ## 必要になったときに読む記録
 
 - [今回の区間81〜104の記録](results/anomaly-multiseed-v0.3-chunks-81-104-continuation-2026-09-23.md)、[前回区間57〜80の結果](results/anomaly-multiseed-v0.3-chunks-57-80-continuation-2026-09-22.md)、[snapshot/launcherの操作](results/anomaly-multiseed-v0.3-campaign-launcher-2026-09-21.md)、[API/CLI仕様](anomaly-v03-independent-audit-and-checkpoints.md)。まず次工程に関連する末尾を読む。
-- [長い引継書](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)の§116（運用変更）、§123〜140（現在の実装経緯）。全体の再読込みは不要。
-- 最新ローカル証拠: `artifacts/chunks-57-80-continuation-2026-09-22/savepoint-evidence.json`。前回`artifacts/chunks-33-56-continuation-2026-09-22/savepoint-evidence.json`（10290 bytes/SHA256 6f734135d9712a477fef2b2a88b5b234e47701737139324e7c941f8a8a21ef77）と記載48ファイルを保全。さらに以前の証拠も保持し、過去の実試行は再計算しない。
+- [長い引継書](results/anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md)の§116（運用変更）、§123〜141（現在の実装経緯と今回停止）。全体の再読込みは不要。
+- 最新の失敗・保全証拠: `artifacts/chunks-81-104-continuation-2026-09-23/failure-savepoint-evidence.json`。直前の成功証拠は`artifacts/chunks-57-80-continuation-2026-09-22/savepoint-evidence.json`（10443 bytes/SHA256 c4017dacb4a80da2a27fe90c57f53c0fab95991ce44bb8a91b969909c891f0ca）と記載49ファイル。過去の証拠は保持し、数値再計算しない。
 - 以前の実6件: clean `C:\Users\TKent\.codex\worktrees\v03\banto-ai` / 25d1084の `artifacts/anomaly-v03-chunk-trials/trial-01`（68 files/133323148 bytes）。`trial-evidence.json` に全pin。完走済みで再起動不要。
 - 保持する新しい失敗試行: `C:\Users\TKent\.codex\worktrees\engineering-chunk-20260921\banto-ai` / 8b34387の同名trial（54 files/107889570 bytes）。261文字pathで6件目保存に失敗し、終了・failed記録済み。`failed-trial-evidence.json` に全pin。修理・再使用・削除せず、今後も登録保存pathを248 UTF-16文字未満に抑える。OS設定は変更しない。
 - 元の実6件: clean producer `C:\Users\TKent\.codex\worktrees\engineering-v03-20260916` / `0086ffe226ed58c618f6bc001ebd0c99a90e66e9` の `artifacts/anomaly-v03-engineering-dev/trial-01`（46 files/132553275 bytes）。必要がなければ再検算しない。

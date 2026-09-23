@@ -1,6 +1,6 @@
 # v0.3 完了済み81区間からの24区間継続
 
-2026-09-23 JST。**現在は実行中であり、新規144評価の成功は未確定。** ユーザーの「進めて下さい」に基づき、保存点855e359136d568ddf5b29bef84a7d69e82e9e009と最新closedを照合して、`continue --max-chunks 24`を起動した。対象はchunk81〜104の24区間だけ。成功時は累計105区間/630評価、next105、残り15区間/90評価となる。実装変更なし。
+2026-09-23 JST更新。**今回の区間81〜104の呼出しはMemoryErrorで停止。新規確定0、累計81区間/486評価のまま。** 終了記録を保全し、定期確認を停止した。以下の開始記録は起動時点の履歴である。
 
 ## 開始確認と外部pin
 
@@ -27,3 +27,17 @@ wrapperは60秒ごとにcontroller private/peak、空きRAM/C/D、journal段階�
 終了後はexit0/yielded/新規24/next105を確認し、collect.pyのIO/hash照合を1回実行する。全所有process終了、各監査、前回5221ファイル不変を確認し、5文書の最終保存（長い引継書§141）とfinalize_evidence.pyを完了してheartbeatを停止する。異常終了でも記録を保全し、成功専用collectorや未閉鎖invocationを再使用せず判断点を報告して停止する。追加invocationは自動起動しない。
 
 campaign加算0/正式許可false、独立監査は保存score以降のみ。完全runtime inventory/独立S6、全120区間/holdout/性能評価、Phase 2/3全体の完了は追加しない。保護ProgramData roots/principal/SAM参照、UAC/ACL/service/task/VM変更、push/merge/CIなし。
+
+## 異常終了と保全
+
+区間81〜104を対象に起動したcontrol000006は、既存区間の再照合中とみられる段階でMemoryErrorによりexit2で終了した。新規区間の開始記録・確定は0、journal243/前回checkpointと完全一致。累計81区間/486評価、残り39区間/234評価を維持する。今回の24区間成功は追加しない。
+
+失敗時の最新closedは **`run/control/000006/closed.json`** / raw SHA-256 **18af12a119e3acc0600594d8eaf6263607f5f7c85d68ff3acbda31931d4b9e4c**、status=failed/stop_reason=exception。直前000005は開始pinとして保持し、現在の再開pinとして使い回さない。
+
+終了UTC2026-09-23T02:57:30.180163+00:00（JST2026-09-23 11:57）、今回11198.201秒（約3時間7分）、累積活動97603.864249秒、48時間候補の残り75196.135751秒（約20.89時間）。終了時の空きRAM7879757824/C131049820160/D116994351104 bytes、controller peak232960000/終了時private159330304 bytes。
+
+controller PID29852の消失、診断threadの終了、inspection worker PID35784のexit0/終了確認を記録した。新規producer/auditは起動記録なし。前回manifestと記載49ファイルの計50件、既存journal243ファイルのpinを照合済み。runの名前一覧は前回5221ファイル＋今回control6ファイルの5227件で一致。既存の数値payload全体は再hashしていない。今回controlの6ファイルはfailure-controlへコピーし原本とhash一致。成功用collect.py/finalize_evidence.pyと数値計算は再実行していない。
+
+原因は未特定。最後の診断から終了まで約26秒の間にC空き容量が161239666688→131049820160 bytesへ減ったことも記録するが、pagefile増加や他processとの因果関係は未確認。空き物理RAMだけから原因やリーク有無を断定しない。自動再起動せず、割当失敗とシステム全体のメモリ状況を切り分けてから再開条件を判断する。
+
+起動保存点21860d5。失敗証拠は候補`artifacts/chunks-81-104-continuation-2026-09-23/failure-evidence.json`、最終文書commitと保全pinは同folderの`failure-savepoint-evidence.json`へ記録する。次の判断点はMemoryError原因の切り分けと再開条件の見直し。今回のheartbeat banto-24はPAUSEDに変更済み。追加区間や同じinvocationを自動再起動しない。 campaign加算0/正式許可false、監査は保存score以降のみ。Phase 2/3、完全runtime inventory/独立S6、全120/holdout/性能評価は未完了。実装変更・追加agent・push/merge/CI・OS/権限設定変更なし。
