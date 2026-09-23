@@ -1,6 +1,6 @@
 # v0.3 区間81〜104の診断付き再開
 
-2026-09-23 JST起動、2026-09-24 JST中間保存。ユーザーの「再開しましょう」に従い、失敗したcontrol000006のclosed状態から、**control000007・最大24新規区間（81〜104）**として起動した。起動時の完了済みは81区間/486評価。今回の新規12区間が確定し、累計93区間/558評価となった。全24区間の最終結果は未確定。
+2026-09-23 JST起動、2026-09-24 JST中間保存。ユーザーの「再開しましょう」に従い、失敗したcontrol000006のclosed状態から、**control000007・最大24新規区間（81〜104）**として起動した。起動時の完了済みは81区間/486評価。今回の新規18区間が確定し、累計99区間/594評価となった。全24区間の最終結果は未確定。
 
 ## 起動と保全
 
@@ -37,6 +37,14 @@ UTC **2026-09-23T18:22:20.220959+00:00**（JST2026-09-24 03:22）、起動後261
 空きRAM14104588288/C154597003264/D441718099968 bytes（約13.14/143.98/411.38GiB）。system commit31135866880 / limit47691943936 bytes、余力16556077056 bytes（約15.42GiB）。controller private131391488/peak233762816 bytes。診断ログ396153 bytes、観測エラー0/欠落0/無効化なし、stdout/stderr/console-stderrは空。
 
 前の6区間保存点0c98a7dとmilestone-06.jsonのpinを保持し、今回増えた6件の保持receiptだけを原本とhash照合した。先の6件は保存済みpinを再利用し、観測値と計12件のpinをOUT/milestone-12.jsonへ保存した。今回の結果文書とcurrent-handoffだけをcommitし、commitをfollowup-state.jsonへ記録する。数値再計算・controller再起動は行わず、次の保存は新規18区間。中間保存をclosed再開pinや最終照合として扱わない。
+
+## 中間保存: 新規18区間
+
+UTC **2026-09-23T19:57:32.353575+00:00**（JST2026-09-24 04:57）、起動後31870.1秒の観測で、区間81〜98の**18区間/108評価**が確定した。累計99区間/594評価。journal299、区間99はsaved_pending_verification、保持receiptは18件。既存区間の再照合は終了しており、active_auditはnull。PID40372の作成日時・wrapperも一致した。
+
+空きRAM14217084928/C153837621248/D441718063104 bytes（約13.24/143.27/411.38GiB）。system commit31022981120 / limit47691886592 bytes、余力16668905472 bytes（約15.52GiB）。controller private133799936/peak233762816 bytes。診断ログ460207 bytes、観測エラー0/欠落0/無効化なし、stdout/stderr/console-stderrは空。
+
+前の12区間保存点28ca9f7とmilestone-12.jsonのpinを保持し、今回増えた6件の保持receiptだけを原本とhash照合した。先の12件は保存済みpinを再利用し、観測値と計18件のpinをOUT/milestone-18.jsonへ保存した。今回の結果文書とcurrent-handoffだけをcommitし、commitをfollowup-state.jsonへ記録する。数値再計算・controller再起動は行わず、残り6区間を継続する。中間保存をclosed再開pinや最終照合として扱わず、終了後に今回24区間の照合と最終保存を行う。
 
 ## 範囲と終了時
 
