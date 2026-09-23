@@ -12,7 +12,7 @@
 
 ## 目的と現在地
 
-**現在地**: ユーザーの再開指示に従い、区間81〜104（最大24新規区間）を診断付きcontrol000007として起動した。controller PID **40372**、開始UTC **2026-09-23T11:06:21.3962444Z**（JST20:06）。[今回の再開記録](results/anomaly-multiseed-v0.3-chunks-81-104-retry-2026-09-23.md)。開始時の確定数は累計81区間/486評価、残39区間/234評価。今回の成功はまだ加算しない。前回control000006/PID29852はMemoryErrorで終了・保全済みで、[旧停止記録](results/anomaly-multiseed-v0.3-chunks-81-104-continuation-2026-09-23.md)を変更しない。
+**現在地**: ユーザーの再開指示に従い、区間81〜104（最大24新規区間）を診断付きcontrol000007として起動した。controller PID **40372**、開始UTC **2026-09-23T11:06:21.3962444Z**（JST20:06）。[今回の再開記録](results/anomaly-multiseed-v0.3-chunks-81-104-retry-2026-09-23.md)。開始時の確定数は累計81区間/486評価、残39区間/234評価。新規12区間まで中間確定し、累計93区間/558評価。今回全24区間の最終照合は未完了。前回control000006/PID29852はMemoryErrorで終了・保全済みで、[旧停止記録](results/anomaly-multiseed-v0.3-chunks-81-104-continuation-2026-09-23.md)を変更しない。
 
 **継続確認**: heartbeat **banto-24** を今回の再開へ更新しACTIVEにした。候補 `artifacts/chunks-81-104-retry-2026-09-23/FOLLOWUP.md` に従い、30分ごとに1回だけ状態・資源・新しい診断を確認し、新規6/12/18区間で保存する。旧失敗folderや今回controllerを重複起動しない。正常/異常終了とも記録を保存して定期確認を停止する。
 
@@ -20,11 +20,13 @@
 
 **前回の保存点**: 最終855e359、manifest10443 bytes/SHA256 c4017dacb4a80da2a27fe90c57f53c0fab95991ce44bb8a91b969909c891f0ca。過去の起動・中間・最終証拠を保持する。
 
-**今回の保存点**: 再開OUT `artifacts/chunks-81-104-retry-2026-09-23/` のlaunch-savepoint.jsonに起動保存点9340199/pinを保持する。新規6区間の中間観測をmilestone-06.jsonへ保存し、今回2文書のcommitをfollowup-state.jsonへ記録する。前回の失敗は保存点3bba1bdと旧OUT/failure-savepoint-evidence.jsonに保持し、診断コードと短い確認は27346e9に保存済み。
+**今回の保存点**: 再開OUT `artifacts/chunks-81-104-retry-2026-09-23/` のlaunch-savepoint.jsonに起動保存点9340199/pinを保持する。新規6区間は0c98a7d/milestone-06.jsonに保存済み。新規12区間の中間観測をmilestone-12.jsonへ保存し、今回2文書のcommitをfollowup-state.jsonへ記録する。前回の失敗は保存点3bba1bdと旧OUT/failure-savepoint-evidence.jsonに保持し、診断コードと短い確認は27346e9に保存済み。
 
 初期確認UTC11:09:21（JST20:09、180.2秒）: 既存chunk0再照合中、journal243/新規0、メモリ診断エラー/欠落0、stderr空。空きRAM約14.28GiB/C144.76GiB/D47.95GiB、commit余力約15.50GiB。PID40372のwrapper/開始日時も一致。以降は30分間隔の1回確認へ任せる。
 
 **新規6区間の中間保存**: UTC2026-09-23T16:48:08.366742+00:00（JST2026-09-24 01:48、20506.3秒）。区間81〜86の6区間/36評価が確定し、累計87区間/522評価。区間87はrunning、journal262/保持receipt6、既存81区間の再照合は終了（active_audit=null）。PID40372の同一性を確認した。空きRAM14446272512/C154833727488/D441718124544 bytes、commit31256702976/limit47691943936/余力16435240960 bytes。controller private132116480/peak233762816 bytes、診断エラー0/欠落0/無効化なし、stderr空。6件の保持receiptは原本とhash一致。milestone-06.jsonに保存した中間観測で、全24区間の最終照合やclosed再開pinではない。次は新規12区間で保存し、今回の処理をそのまま継続する。
+
+**新規12区間の中間保存**: UTC2026-09-23T18:22:20.220959+00:00（JST2026-09-24 03:22、26158.0秒）。区間81〜92の12区間/72評価が確定し、累計93区間/558評価。区間93はrunning、journal280/保持receipt12、active_audit=null。PID40372の同一性を確認した。空きRAM14104588288/C154597003264/D441718099968 bytes、commit31135866880/limit47691943936/余力16556077056 bytes。controller private131391488/peak233762816 bytes、診断エラー0/欠落0/無効化なし、stderr空。今回増えた6件の保持receiptは原本とhash一致、先の6件は保存済みpinを再利用し、milestone-12.jsonへ中間観測を保存した。次は新規18区間で保存する。処理は継続中であり、全24区間の最終照合は未実施。
 
 [研究ロードマップ](research-roadmap.md)のPhase 2（予測モデル比較）、Phase 3（異常検知・ドリフト）が目標。現在はPhase 3のanomaly v0.3、全dev/smoke実行へ進むための接続作業。小さい保存点の完了をPhase全体の完了として数えない。
 
