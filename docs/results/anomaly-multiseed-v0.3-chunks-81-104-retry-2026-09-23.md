@@ -1,6 +1,6 @@
 # v0.3 区間81〜104の診断付き再開
 
-2026-09-23 JST。ユーザーの「再開しましょう」に従い、失敗したcontrol000006のclosed状態から、**control000007・最大24新規区間（81〜104）**として起動した。現時点の完了済みは81区間/486評価。今回の結果は未確定。
+2026-09-23 JST起動、2026-09-24 JST中間保存。ユーザーの「再開しましょう」に従い、失敗したcontrol000006のclosed状態から、**control000007・最大24新規区間（81〜104）**として起動した。起動時の完了済みは81区間/486評価。今回の新規6区間が確定し、累計87区間/522評価となった。全24区間の最終結果は未確定。
 
 ## 起動と保全
 
@@ -21,6 +21,14 @@ preflight UTC11:05の空きRAM15104352256/C155433873408/D51483267072 bytes（約
 wrapperは既存60秒threadでRAM/C/D、controller private/peak、system memory、監査中の区間、診断エラー/欠落を記録する。verified receiptは新規区間ごとに外部保存。heartbeat **banto-24** を今回のFOLLOWUPへ更新し、30分間隔で再開した。各回1回の確認に留め、新規6/12/18区間で中間保存する。追加agent・短時間pollは行わない。
 
 初期確認UTC11:09:21（JST20:09、180.2秒）では既存chunk0の再照合中、journal243/新規receipt0。空きRAM15331557376/C155435704320/D51483267072 bytes、commit余力16639852544 bytes、controller private76189696/peak196096000 bytes。新しい診断のエラー/欠落0、stderr空、PID・wrapper・作成日時を照合済み。PowerShellによるJSON日時の暗黙変換が開始時刻の比較を誤らせたため、実値をtimezone付きで比較して一致を確認し、FOLLOWUPへ解析上の注意を残した。controllerを再起動していない。
+
+## 中間保存: 新規6区間
+
+UTC **2026-09-23T16:48:08.366742+00:00**（JST2026-09-24 01:48）、起動後20506.3秒の観測で、区間81〜86の**6区間/36評価**が確定した。累計87区間/522評価。journal262、区間87はrunning、保持receiptは6件。既存81区間の再照合を終え、active_auditはnull。PID40372の作成日時・wrapperも一致した。
+
+空きRAM14446272512/C154833727488/D441718124544 bytes（約13.45/144.20/411.38GiB）。system commit31256702976 / limit47691943936 bytes、余力16435240960 bytes（約15.31GiB）。controller private132116480/peak233762816 bytes。診断ログ332662 bytes、観測エラー0/欠落0/無効化なし、stdout/stderr/console-stderrは空。
+
+観測値と6件の保持receiptのhash・原本一致をOUT/milestone-06.jsonに保存した。今回の結果文書とcurrent-handoffだけをcommitし、commitをfollowup-state.jsonへ記録する。数値再計算・controller再起動は行わず、処理を継続する。これは中間保存であり、closed再開pinや全24区間の最終照合として扱わない。
 
 ## 範囲と終了時
 

@@ -1,6 +1,6 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-23 JST。最初にこの文書を読み、下記候補worktreeの `git status` / `git log -3 --oneline` を確認する。全履歴は必要箇所だけ読む。
+更新: 2026-09-24 JST。最初にこの文書を読み、下記候補worktreeの `git status` / `git log -3 --oneline` を確認する。全履歴は必要箇所だけ読む。
 
 ## 場所と最新保存点
 
@@ -20,9 +20,11 @@
 
 **前回の保存点**: 最終855e359、manifest10443 bytes/SHA256 c4017dacb4a80da2a27fe90c57f53c0fab95991ce44bb8a91b969909c891f0ca。過去の起動・中間・最終証拠を保持する。
 
-**今回の保存点**: 再開OUT `artifacts/chunks-81-104-retry-2026-09-23/` のlaunch-savepoint.jsonへ起動commit/pinを保存する。新規6区間の節目までは未到達。前回の失敗は保存点3bba1bdと旧OUT/failure-savepoint-evidence.jsonに保持し、診断コードと短い確認は27346e9に保存済み。
+**今回の保存点**: 再開OUT `artifacts/chunks-81-104-retry-2026-09-23/` のlaunch-savepoint.jsonに起動保存点9340199/pinを保持する。新規6区間の中間観測をmilestone-06.jsonへ保存し、今回2文書のcommitをfollowup-state.jsonへ記録する。前回の失敗は保存点3bba1bdと旧OUT/failure-savepoint-evidence.jsonに保持し、診断コードと短い確認は27346e9に保存済み。
 
 初期確認UTC11:09:21（JST20:09、180.2秒）: 既存chunk0再照合中、journal243/新規0、メモリ診断エラー/欠落0、stderr空。空きRAM約14.28GiB/C144.76GiB/D47.95GiB、commit余力約15.50GiB。PID40372のwrapper/開始日時も一致。以降は30分間隔の1回確認へ任せる。
+
+**新規6区間の中間保存**: UTC2026-09-23T16:48:08.366742+00:00（JST2026-09-24 01:48、20506.3秒）。区間81〜86の6区間/36評価が確定し、累計87区間/522評価。区間87はrunning、journal262/保持receipt6、既存81区間の再照合は終了（active_audit=null）。PID40372の同一性を確認した。空きRAM14446272512/C154833727488/D441718124544 bytes、commit31256702976/limit47691943936/余力16435240960 bytes。controller private132116480/peak233762816 bytes、診断エラー0/欠落0/無効化なし、stderr空。6件の保持receiptは原本とhash一致。milestone-06.jsonに保存した中間観測で、全24区間の最終照合やclosed再開pinではない。次は新規12区間で保存し、今回の処理をそのまま継続する。
 
 [研究ロードマップ](research-roadmap.md)のPhase 2（予測モデル比較）、Phase 3（異常検知・ドリフト）が目標。現在はPhase 3のanomaly v0.3、全dev/smoke実行へ進むための接続作業。小さい保存点の完了をPhase全体の完了として数えない。
 
