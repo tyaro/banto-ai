@@ -12,15 +12,17 @@
 
 ## 目的と現在地
 
-**現在地**: 区間81〜104を対象に起動したcontrol000006は、既存区間の再照合中とみられる段階でMemoryErrorによりexit2で終了した。新規区間の開始記録・確定は0、journal243/前回checkpointと完全一致。累計81区間/486評価、残り39区間/234評価を維持する。今回の24区間成功は追加しない。 controller PID29852は終了済み。[今回の停止記録](results/anomaly-multiseed-v0.3-chunks-81-104-continuation-2026-09-23.md)。
+**現在地**: ユーザーの再開指示に従い、区間81〜104（最大24新規区間）を診断付きcontrol000007として起動した。controller PID **40372**、開始UTC **2026-09-23T11:06:21.3962444Z**（JST20:06）。[今回の再開記録](results/anomaly-multiseed-v0.3-chunks-81-104-retry-2026-09-23.md)。開始時の確定数は累計81区間/486評価、残39区間/234評価。今回の成功はまだ加算しない。前回control000006/PID29852はMemoryErrorで終了・保全済みで、[旧停止記録](results/anomaly-multiseed-v0.3-chunks-81-104-continuation-2026-09-23.md)を変更しない。
 
-**継続確認**: heartbeat **banto-24** はMemoryErrorの終了記録を保全して停止済み（PAUSED）。候補`artifacts/chunks-81-104-continuation-2026-09-23/FOLLOWUP.md`を確認し、計算や成功用collectorを再実行しない。
+**継続確認**: heartbeat **banto-24** を今回の再開へ更新しACTIVEにした。候補 `artifacts/chunks-81-104-retry-2026-09-23/FOLLOWUP.md` に従い、30分ごとに1回だけ状態・資源・新しい診断を確認し、新規6/12/18区間で保存する。旧失敗folderや今回controllerを重複起動しない。正常/異常終了とも記録を保存して定期確認を停止する。
 
-今回の開始前に前回5221 files/10761163678 logical bytesと前回証拠50件を照合済み。異常終了後も前回証拠50件とjournal243ファイルは不変。run一覧は既存5221＋control6件。旧数値payload全体の再hashは行っていない。
+今回の再開前に成功済み5221＋失敗control6件の計5227ファイルを1回hash照合し、旧成功・失敗・調査・診断検証の証拠94ファイルを確認した。今回OUTのbaseline.json/preserved-artifacts.jsonに保存した。数値計算は行わず、前回の失敗状態と累積活動を維持して起動した。
 
 **前回の保存点**: 最終855e359、manifest10443 bytes/SHA256 c4017dacb4a80da2a27fe90c57f53c0fab95991ce44bb8a91b969909c891f0ca。過去の起動・中間・最終証拠を保持する。
 
-**今回の保存点**: 起動21860d5。新規確定0のため6区間の中間保存には未到達。失敗時の記録・control6ファイルのコピーは候補`artifacts/chunks-81-104-continuation-2026-09-23/failure-evidence.json`と`failure-control/`に保持する。最終commit/pinは`failure-savepoint-evidence.json`へ保存する。
+**今回の保存点**: 再開OUT `artifacts/chunks-81-104-retry-2026-09-23/` のlaunch-savepoint.jsonへ起動commit/pinを保存する。新規6区間の節目までは未到達。前回の失敗は保存点3bba1bdと旧OUT/failure-savepoint-evidence.jsonに保持し、診断コードと短い確認は27346e9に保存済み。
+
+初期確認UTC11:09:21（JST20:09、180.2秒）: 既存chunk0再照合中、journal243/新規0、メモリ診断エラー/欠落0、stderr空。空きRAM約14.28GiB/C144.76GiB/D47.95GiB、commit余力約15.50GiB。PID40372のwrapper/開始日時も一致。以降は30分間隔の1回確認へ任せる。
 
 [研究ロードマップ](research-roadmap.md)のPhase 2（予測モデル比較）、Phase 3（異常検知・ドリフト）が目標。現在はPhase 3のanomaly v0.3、全dev/smoke実行へ進むための接続作業。小さい保存点の完了をPhase全体の完了として数えない。
 
@@ -30,11 +32,11 @@
 
 **継続入口**: `anomaly_v03_campaign_launcher.py` / `tools/evaluator/run_anomaly_v03_campaign.py`。`prepare`は所有processで実環境snapshotを収集し、新しいmetadata/初期closed記録と外部prepared pinを作る。`continue`は外部prepared/最新closed hashと明示`--max-chunks`を必須にし、Run.run活動時間内でfresh inspectionしてからNativeCallbacksへ進む。終了不明の元ownerはCLIが終了確認まで保持する。別requestの48時間/32GiB候補、逐次処理、未閉鎖呼出しの再使用拒否を維持する。
 
-**診断準備済み・次の作業**: [MemoryError調査](results/anomaly-multiseed-v0.3-memory-error-diagnosis-2026-09-23.md)（§142）の原因は未確定。記録不足を補う外部helper `tools/evaluator/anomaly_v03_memory_diagnostics.py` を追加し、診断12件/既存launcher16件、実Windows APIの短い確認、c01d1c9のfailed状態を読むだけの確認が合格した（[結果・組込み手順](results/anomaly-multiseed-v0.3-memory-diagnostics-validation-2026-09-23.md)、§143）。実計算source・状態を変更せず、再照合・continue/runは未実行。次は保存したhelperを新規wrapperへ組み込み、最新failed pinと明示上限で再開条件を確認する。新規invocationは000007となり、旧失敗folderを再使用しない。heartbeat banto-24はPAUSED。累積活動97603.864249秒、残り候補活動時間75196.135751秒（約20.89時間）を維持。診断準備の証拠は `artifacts/memory-diagnostics-validation-2026-09-23/` に保存し、旧失敗/原因調査の証拠は変更しない。
+**次に行う作業**: 今回のcontrollerだけを継続確認する。[MemoryError調査](results/anomaly-multiseed-v0.3-memory-error-diagnosis-2026-09-23.md)の原因は未確定。検証済み外部helper27346e9を今回OUT/memory_diagnostics.pyへ保存し、SHA256 4c44f9de74f5e3207efce471442be55b4ebb7f650968578fd1887602b7531c72を起動時照合した。最新状態のsystem_memory/active_audit/memory_diagnostics、異常時はmemory-events.jsonlの例外位置を見る。累積活動97603.864249秒から継続、起動時残り75196.135751秒。既存81区間の再照合を含め約9.4〜9.5時間の見込みで、今回を越える区間は起動しない。
 
 source/consumer/controllerはすべてc01d1c9、Python3.14.0を維持。snapshotはsource397/stdlib2559/native48/extension8の時点観測で、worker/auditorのruntime closureや完全S6ではない。全体上限は境界での協調停止で、controller/process treeへの強制上限は未整備。再開時の過去verified再照合には一連の処理途中のwrapper予算検査がない。旧trialを新runのcoverageへコピーしない。
 
-**再開判断対象run**: clean `C:/Users/TKent/.codex/worktrees/v03p/banto-ai` / c01d1c9、`artifacts/v03-runs/r1`。失敗時の最新closedは **`run/control/000006/closed.json`** / raw SHA-256 **18af12a119e3acc0600594d8eaf6263607f5f7c85d68ff3acbda31931d4b9e4c**、status=failed/stop_reason=exception。直前000005は開始pinとして保持し、現在の再開pinとして使い回さない。 prepared raw hash **be582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7** は不変。journal243、descriptor map/receiptは前回と同一。調査前に再使用せず、失敗時のpinと累積活動を保持する。
+**稼働中runと開始pin**: clean `C:/Users/TKent/.codex/worktrees/v03p/banto-ai` / c01d1c9、`artifacts/v03-runs/r1`、今回control000007。開始closedは **`run/control/000006/closed.json`** / raw SHA-256 **18af12a119e3acc0600594d8eaf6263607f5f7c85d68ff3acbda31931d4b9e4c**、status=failed/stop_reason=exception。今回起動中にこのpinを再使用しない。prepared raw hash **be582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7** は不変。開始journal243/next81、成功時はclosed000007の実測hash/journal315/next105を保存する。
 
 controllerは最新receiptと各verified sequenceのdescriptor hash mapを外部保持し、再起動時に完了済み証拠を再照合する。同じsession内の再検算は省く。`TransitionIncomplete` は未確定intentを保持して停止する状態で、自動再使用不可。確定後のreceipt喪失だけは外部intent hashから読取り回復できる。`UnreapedWorker` は元のprocessを保持し、終了確認が必要。現在のattemptやログを上書きしない。
 
