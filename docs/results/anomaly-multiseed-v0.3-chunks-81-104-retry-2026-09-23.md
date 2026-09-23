@@ -1,6 +1,6 @@
 # v0.3 区間81〜104の診断付き再開
 
-2026-09-23 JST起動、2026-09-24 JST中間保存。ユーザーの「再開しましょう」に従い、失敗したcontrol000006のclosed状態から、**control000007・最大24新規区間（81〜104）**として起動した。起動時の完了済みは81区間/486評価。今回の新規18区間が確定し、累計99区間/594評価となった。全24区間の最終結果は未確定。
+2026-09-23 JST起動、2026-09-24 JST中間保存。ユーザーの「再開しましょう」に従い、失敗したcontrol000006のclosed状態から、**control000007・最大24新規区間（81〜104）**として起動した。起動時の完了済みは81区間/486評価。今回の24区間/144評価がすべて正常終了し、最終照合済み。累計105区間/630評価となった。
 
 ## 起動と保全
 
@@ -53,3 +53,21 @@ UTC **2026-09-23T19:57:32.353575+00:00**（JST2026-09-24 04:57）、起動後318
 成功時は最新closed000007、journal315/next105、累計105区間/630評価、残15区間/90評価。終了確認後に今回OUTのcollect.pyでIO/hash照合を1回行い、5文書（長い引継書§144を含む）とfinalize_evidence.pyで最終保存してheartbeatを停止する。失敗・途中停止時も記録を保全し、成功用collectorを通さず判断点を報告してheartbeatを停止する。今回以外の追加invocationは自動起動しない。
 
 formal_permission=false/campaign加算0、独立監査は保存score以降のみ。完全runtime inventory/独立S6、全120/holdout/性能評価、Phase 2/3全体は未完了。本流889cfc3/clean、実計算c01d1c9/clean、既存dirty親policy文書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全・commit除外。保護root/principal/SAM参照、UAC/ACL/service/task/VM変更、push/merge/CIなし。
+
+## 最終結果（2026-09-24 JST）
+
+診断付きcontrol000007で区間81〜104の24区間/144評価がすべて成功し、累計105区間/630評価となった。終了UTC **2026-09-23T21:17:02.345893+00:00**（JST2026-09-24 06:17）、exit0/yielded/stop_reason=null、journal315/next105。controller PID40372の消失と全所有workerの終了を確認した。今回36639.971秒（約10時間11分）、累積活動134242.935420秒（前回失敗分を含む）。
+
+保存済み6769 files/13947570419 logical bytesを照合し、開始前5227ファイルはすべて不変。各区間の監査はledger_checks_passed。終了後のcollectorは574.907秒のIO/hash照合のみで、数値計算を繰り返していない。latest.jsonは最後の60秒標本で23件のままだが、最終run-report/stdout/closed/24件の保持receiptとjournal315で全24件の完了を照合した。
+
+最新closedは **`run/control/000007/closed.json`** / raw SHA-256 **04f198137bbcace5176734e594e5cf3fb9a19c422a7186c002b50a78ab52035c**。prepared raw hash **be582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7** は不変。旧control000006は失敗履歴として保全し、古いclosedや中間receiptを次回の再開pinに使わない。
+
+診断は608標本/824イベント、audit_begin/end各105件（既存81＋新規24）の順序が一致。観測エラー0/欠落0/無効化なし、例外イベントなし、診断thread終了済み。controller peak235261952 bytes（約224.4MiB）、終了時private95719424 bytes（約91.3MiB）。producer最大333.0MiB、audit最大187.3MiB。空きRAM標本最小10996932608 bytes（約10.24GiB）、commit余力標本最小10455838720 bytes（約9.74GiB）。今回MemoryErrorは再発しなかったが、前回の原因解明や長期リーク不在の証明にはしない。
+
+終了時空きRAM14128013312/C153025306624/D441718030336 bytes。最後のrun_end診断はcommit30933463040/limit47691886592/余力16758423552 bytes。Windows26200.9457/CPython3.14.0・exe/DLL hashは開始/終了・各workerで一致。Windows Updateはengineering実値を記録し旧正式pinを維持した。OS/pagefile/Python設定変更なし。
+
+起動9340199、中間0c98a7d/28ca9f7/1bcbcbeを保持。今回OUTのevidence.json、diagnostics-summary.json、controller-exit-check.json、24件のreceiptと最終savepoint-evidence.jsonへ保存する。旧成功/失敗/原因調査/診断検証の94保持pin、既存dirty親policy文書と本流889cfc3/cleanを保全する。今回5文書だけを更新し、追加agent・広い回帰試験・push/merge/CI・OS/権限設定変更なし。
+
+全120区間の残りは15区間/90評価。48時間候補の残り活動時間は38557.064580秒（約10.71時間）。次回は完了済み105区間の再照合費用も含め、最新closedからの明示上限を判断する。今回のheartbeat banto-24は最終保存後に停止し、追加invocationは起動しない。
+
+実計算source c01d1c9は不変、外部診断helper27346e9を使用。監査は保存score以降のみ、campaign加算0/正式許可false。完全runtime inventory、profile/score導出・bootstrapの独立検算、全120/holdout/性能評価、Phase 2/3全体は未完了。
