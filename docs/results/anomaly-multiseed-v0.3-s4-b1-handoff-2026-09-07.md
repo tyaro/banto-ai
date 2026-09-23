@@ -3714,3 +3714,11 @@ controller PID29852の消失、診断threadの終了、inspection worker PID3578
 現在の診断は停止約7時間後。空きRAM約14.16GiB、commit約28.98/44.42GiB、C空き約144.83GiB、D空き約49.35GiB。自動pagefileの現在値や現在のprocess一覧を停止時へ逆算しない。既存コードはコミット量・上限、失敗traceback、再照合中chunkを保存していないため、次はこの記録を追加する最小限の診断と短い確認を準備する。今回の調査で数値計算・81区間再照合・追加起動・OS変更は実行していない。
 
 証拠は別folder `artifacts/memory-error-diagnosis-2026-09-23/`、文書保存点とpinは同folder `savepoint-evidence.json`。失敗証拠は変更せず、最新closed000006と累積活動97603.864249秒/残り75196.135751秒を維持する。累計81区間/486評価、heartbeat PAUSED、実装c01d1c9、formal_permission=falseは不変。既存dirty文書は保全しcommit除外する。
+
+## 143. 外部メモリ診断の準備と短い確認（2026-09-23 JST）
+
+[確認結果と次回組込み手順](anomaly-multiseed-v0.3-memory-diagnostics-validation-2026-09-23.md)。固定sourceを変更せず使える外部helperを `tools/evaluator/anomaly_v03_memory_diagnostics.py` へ追加した。コミット量/上限・pagefile量、監査中chunk、例外のfile/function/lineを記録する。controllerの作り直しを含めて一時的に観測し、元の引数/結果/例外と未終了workerの所有権を維持して復元する。新しい監視threadは作らず、記録は最大16MiB、エラー/欠落を明示する。
+
+診断12件は6.237秒で合格、既存launcher16件も合格。実Windows APIの短い確認は注入MemoryErrorを記録し、エラー/欠落0・元例外の保持・method復元を確認した。実際のメモリ枯渇や評価計算は発生させていない。実source c01d1c9からfailed closed000006を `open_run` で読む確認も1.251秒/peak約26.98MiBで成功。journal243/next81/累積活動97603.864249秒、closed原本とcontrol一覧は不変。continue/run・旧81区間の再照合・新規invocationは未実行。
+
+UTC10:51:58（JST19:51）の空きRAM約14.25GiB/C144.77GiB/D47.95GiB、runtime pin不変。次はhelperのhash/保存commitを明示して新しいwrapperへ組み込む。既存の失敗・原因調査証拠を保全し、heartbeat PAUSED、累計81区間/486評価、formal_permission=falseを維持する。今回の証拠は `artifacts/memory-diagnostics-validation-2026-09-23/savepoint-evidence.json`。本流・実計算source・既存dirtyを保全し、push/merge/OS設定変更なし。

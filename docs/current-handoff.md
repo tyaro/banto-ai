@@ -30,7 +30,7 @@
 
 **継続入口**: `anomaly_v03_campaign_launcher.py` / `tools/evaluator/run_anomaly_v03_campaign.py`。`prepare`は所有processで実環境snapshotを収集し、新しいmetadata/初期closed記録と外部prepared pinを作る。`continue`は外部prepared/最新closed hashと明示`--max-chunks`を必須にし、Run.run活動時間内でfresh inspectionしてからNativeCallbacksへ進む。終了不明の元ownerはCLIが終了確認まで保持する。別requestの48時間/32GiB候補、逐次処理、未閉鎖呼出しの再使用拒否を維持する。
 
-**原因調査済み・次の作業**: [MemoryError調査](results/anomaly-multiseed-v0.3-memory-error-diagnosis-2026-09-23.md)（§142）。保存185標本ではcontroller peak約222.17MiBで持続的増大は観測せず、停止前後のWindowsイベントにメモリ枯渇記録なし。OS全体のコミット不足・pagefile拡張遅延は候補だが、当時のコミット量・上限、traceback、再照合中のchunkが未記録で原因未確定。約26秒でC空き約28.12GiB減少の因果関係も未確認。次はこの不足を埋める最小限の診断を準備し、短い確認で取得・資源・終了を検証して再開条件を判断する。全81区間の再照合や追加区間は自動起動しない。heartbeat banto-24はPAUSEDを維持。累積活動97603.864249秒、残り候補活動時間75196.135751秒（約20.89時間）。調査証拠は `artifacts/memory-error-diagnosis-2026-09-23/` に分離し、以前の失敗証拠を上書きしない。
+**診断準備済み・次の作業**: [MemoryError調査](results/anomaly-multiseed-v0.3-memory-error-diagnosis-2026-09-23.md)（§142）の原因は未確定。記録不足を補う外部helper `tools/evaluator/anomaly_v03_memory_diagnostics.py` を追加し、診断12件/既存launcher16件、実Windows APIの短い確認、c01d1c9のfailed状態を読むだけの確認が合格した（[結果・組込み手順](results/anomaly-multiseed-v0.3-memory-diagnostics-validation-2026-09-23.md)、§143）。実計算source・状態を変更せず、再照合・continue/runは未実行。次は保存したhelperを新規wrapperへ組み込み、最新failed pinと明示上限で再開条件を確認する。新規invocationは000007となり、旧失敗folderを再使用しない。heartbeat banto-24はPAUSED。累積活動97603.864249秒、残り候補活動時間75196.135751秒（約20.89時間）を維持。診断準備の証拠は `artifacts/memory-diagnostics-validation-2026-09-23/` に保存し、旧失敗/原因調査の証拠は変更しない。
 
 source/consumer/controllerはすべてc01d1c9、Python3.14.0を維持。snapshotはsource397/stdlib2559/native48/extension8の時点観測で、worker/auditorのruntime closureや完全S6ではない。全体上限は境界での協調停止で、controller/process treeへの強制上限は未整備。再開時の過去verified再照合には一連の処理途中のwrapper予算検査がない。旧trialを新runのcoverageへコピーしない。
 
@@ -59,6 +59,8 @@ C:\Python314\python.exe -B -m unittest tests.test_anomaly_v03_campaign_launcher
 Windows 26200.9457、boot既存観測2026-09-19T03:46:06.5+09:00、CPython3.14.0。Windows Updateはengineeringでは実値記録で許容、旧正式pinは不変。ユーザーはこのPCで他作業なし・大きめ作業OKと許可済み。資源監視とセーブポイントは継続する。
 
 調査時UTC2026-09-23T10:03:22（JST19:03）は、空きRAM約14.16GiB、system commit約28.98/44.42GiB、C空き約144.83GiB、D空き約49.35GiB。ページファイル自動管理。停止から約7時間後の観測なので停止時の状態と混同しない。現在のD空きは停止時約108.96GiBより減少しているが原因未確認。
+
+診断準備の最新probeはUTC2026-09-23T10:51:58（JST19:51）。空きRAM約14.25GiB/C144.77GiB/D47.95GiB、runtime pin不変。固定sourceの `open_run` による状態確認1.251秒/peak private約26.98MiB。新invocationなし、closed000006 bytes/control一覧不変。累計件数や活動時間を増やしていない。
 
 ## 継続する制約
 
