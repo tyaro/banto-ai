@@ -3706,3 +3706,11 @@ controller PID29852の消失、診断threadの終了、inspection worker PID3578
 原因は未特定。最後の診断から終了まで約26秒の間にC空き容量が161239666688→131049820160 bytesへ減ったことも記録するが、pagefile増加や他processとの因果関係は未確認。空き物理RAMだけから原因やリーク有無を断定しない。自動再起動せず、割当失敗とシステム全体のメモリ状況を切り分けてから再開条件を判断する。
 
 次の判断点はMemoryError原因の切り分けと再開条件の見直し。今回のheartbeat banto-24はPAUSEDに変更済み。追加区間や同じinvocationを自動再起動しない。 起動21860d5、失敗保存は候補`artifacts/chunks-81-104-continuation-2026-09-23/failure-savepoint-evidence.json`。campaign加算0/正式許可false、監査は保存score以降のみ。Phase 2/3、完全runtime inventory/独立S6、全120/holdout/性能評価は未完了。実装変更・追加agent・push/merge/CI・OS/権限設定変更なし。
+
+## 142. MemoryErrorの読取り調査（2026-09-23 JST）
+
+[調査結果](anomaly-multiseed-v0.3-memory-error-diagnosis-2026-09-23.md)。保存185標本、停止前後のWindowsイベント、現在のpagefile/system commit、c01d1c9の再照合・例外処理を確認した。controller peak約222.17MiBは途中で頭打ちとなり、持続的増大は観測なし。OSのメモリ枯渇イベントも見つからなかったが、これだけで一時的不足を否定しない。コミット余力不足・pagefile拡張遅延は仮説で、原因は未確定。C空き容量約28.12GiBの急減がpagefileだったとは断定できない。
+
+現在の診断は停止約7時間後。空きRAM約14.16GiB、commit約28.98/44.42GiB、C空き約144.83GiB、D空き約49.35GiB。自動pagefileの現在値や現在のprocess一覧を停止時へ逆算しない。既存コードはコミット量・上限、失敗traceback、再照合中chunkを保存していないため、次はこの記録を追加する最小限の診断と短い確認を準備する。今回の調査で数値計算・81区間再照合・追加起動・OS変更は実行していない。
+
+証拠は別folder `artifacts/memory-error-diagnosis-2026-09-23/`、文書保存点とpinは同folder `savepoint-evidence.json`。失敗証拠は変更せず、最新closed000006と累積活動97603.864249秒/残り75196.135751秒を維持する。累計81区間/486評価、heartbeat PAUSED、実装c01d1c9、formal_permission=falseは不変。既存dirty文書は保全しcommit除外する。

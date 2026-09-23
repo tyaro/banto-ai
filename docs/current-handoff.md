@@ -30,7 +30,7 @@
 
 **継続入口**: `anomaly_v03_campaign_launcher.py` / `tools/evaluator/run_anomaly_v03_campaign.py`。`prepare`は所有processで実環境snapshotを収集し、新しいmetadata/初期closed記録と外部prepared pinを作る。`continue`は外部prepared/最新closed hashと明示`--max-chunks`を必須にし、Run.run活動時間内でfresh inspectionしてからNativeCallbacksへ進む。終了不明の元ownerはCLIが終了確認まで保持する。別requestの48時間/32GiB候補、逐次処理、未閉鎖呼出しの再使用拒否を維持する。
 
-**次に行う作業**: 次の判断点はMemoryError原因の切り分けと再開条件の見直し。今回のheartbeat banto-24はPAUSEDに変更済み。追加区間や同じinvocationを自動再起動しない。 原因は未特定。最後の診断から終了まで約26秒の間にC空き容量が161239666688→131049820160 bytesへ減ったことも記録するが、pagefile増加や他processとの因果関係は未確認。空き物理RAMだけから原因やリーク有無を断定しない。自動再起動せず、割当失敗とシステム全体のメモリ状況を切り分けてから再開条件を判断する。 累積活動97603.864249秒、残り候補活動時間75196.135751秒（約20.89時間）。
+**原因調査済み・次の作業**: [MemoryError調査](results/anomaly-multiseed-v0.3-memory-error-diagnosis-2026-09-23.md)（§142）。保存185標本ではcontroller peak約222.17MiBで持続的増大は観測せず、停止前後のWindowsイベントにメモリ枯渇記録なし。OS全体のコミット不足・pagefile拡張遅延は候補だが、当時のコミット量・上限、traceback、再照合中のchunkが未記録で原因未確定。約26秒でC空き約28.12GiB減少の因果関係も未確認。次はこの不足を埋める最小限の診断を準備し、短い確認で取得・資源・終了を検証して再開条件を判断する。全81区間の再照合や追加区間は自動起動しない。heartbeat banto-24はPAUSEDを維持。累積活動97603.864249秒、残り候補活動時間75196.135751秒（約20.89時間）。調査証拠は `artifacts/memory-error-diagnosis-2026-09-23/` に分離し、以前の失敗証拠を上書きしない。
 
 source/consumer/controllerはすべてc01d1c9、Python3.14.0を維持。snapshotはsource397/stdlib2559/native48/extension8の時点観測で、worker/auditorのruntime closureや完全S6ではない。全体上限は境界での協調停止で、controller/process treeへの強制上限は未整備。再開時の過去verified再照合には一連の処理途中のwrapper予算検査がない。旧trialを新runのcoverageへコピーしない。
 
@@ -57,6 +57,8 @@ C:\Python314\python.exe -B -m unittest tests.test_anomaly_v03_campaign_launcher
 前回成功した連続運転の終了UTC2026-09-22T18:08:59.297124+00:00（JST2026-09-23 03:08）、空きRAM11659157504/C161118416896/D119168434176 bytes。Windows26200.9457/CPython3.14.0とexe/DLL hashは前回同値、開始・終了・各workerのruntime一致、全所有process終了済み。
 
 Windows 26200.9457、boot既存観測2026-09-19T03:46:06.5+09:00、CPython3.14.0。Windows Updateはengineeringでは実値記録で許容、旧正式pinは不変。ユーザーはこのPCで他作業なし・大きめ作業OKと許可済み。資源監視とセーブポイントは継続する。
+
+調査時UTC2026-09-23T10:03:22（JST19:03）は、空きRAM約14.16GiB、system commit約28.98/44.42GiB、C空き約144.83GiB、D空き約49.35GiB。ページファイル自動管理。停止から約7時間後の観測なので停止時の状態と混同しない。現在のD空きは停止時約108.96GiBより減少しているが原因未確認。
 
 ## 継続する制約
 
