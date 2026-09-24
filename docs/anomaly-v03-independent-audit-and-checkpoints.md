@@ -369,3 +369,13 @@ source照合では同期の読取り用Git subprocessを呼ぶ。専用の計算
 [最終結果](results/anomaly-multiseed-v0.3-chunks-81-104-retry-2026-09-23.md)。全120区間の残りは15区間/90評価。48時間候補の残り活動時間は38557.064580秒（約10.71時間）。次回は完了済み105区間の再照合費用も含め、最新closedからの明示上限を判断する。今回のheartbeat banto-24は最終保存後に停止し、追加invocationは起動しない。
 
 実計算source c01d1c9は不変、外部診断helper27346e9を使用。監査は保存score以降のみ、campaign加算0/正式許可false。完全runtime inventory、profile/score導出・bootstrapの独立検算、全120/holdout/性能評価、Phase 2/3全体は未完了。
+
+### 区間105〜119呼出しのMemoryError停止（2026-09-24 JST）
+
+control000008は既存区間58の保存データを再照合中、MemoryErrorでexit2となった。終了UTC **2026-09-24T00:55:23.946366+00:00**（JST **09:55:23**）。新規区間の開始・確定は0、journal315/next105とcheckpointは前回のclosed000007と同一。累計**105区間/630評価**、残り**15区間/90評価**を維持する。
+
+最新closedは **`run/control/000008/closed.json`** / raw SHA256 **02531b247b12b1275a57c8907924f5ac710c90c4d8dfd079f885d0fd2d5c9211**（failed/exception）。 [停止記録](results/anomaly-multiseed-v0.3-chunks-105-119-continuation-2026-09-24.md)。checkpointは前回と同一だが、最新state pinには000008を使い、旧000007や中間receiptを流用しない。 累積活動144993.320914秒、残り27806.679086秒（約7.72時間）。 既存105区間の再照合を含む再開見積り約9時間は残予算を上回るため、原因/再開条件/予算を判断するまで追加invocationを起動しない。
+
+保存datasetを読むread_regular/stream.readでMemoryError、同時にsystem commit急増とpagefile拡張を観測。診断欠落/観測エラー0、controller終了済み、新規producer/auditなし。失敗原本とcontrol6ファイルのコピーを保全し、成功用collector/finalizerは実行していない。heartbeat banto-24はPAUSED。
+
+campaign加算0/正式許可falseを維持。監査は保存score以降のみ。完全runtime inventory、profile/score導出・bootstrapの独立S6、全120/holdout/性能評価、研究ロードマップPhase 2/3全体は未完了。実装変更・追加agent・回帰試験・push/merge/CI・OS/権限設定変更なし。
