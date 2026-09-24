@@ -57,10 +57,16 @@ class ConnectedAuditTests(unittest.TestCase):
         for identity in self.identities:
             directory = self.stem+'/result/payload/datasets/'+identity['dataset_id']+'/'
             hashes = {}
-            for key, name in audit.DATASET_INPUTS.items():
+            # The schema's input event hash names the complete ledger, whereas
+            # events.jsonl is the separate enabled-event generation input.
+            dataset_files = {'observations': 'observations.jsonl', 'events': 'event-ledger.jsonl',
+                'origins': 'origins.json', 'quality_mask': 'quality-mask.jsonl',
+                'split': 'split-manifest.json', 'targets': 'targets.json'}
+            for key, name in dataset_files.items():
                 raw = encoded({'fixture': key})
                 self.put(directory+name, raw)
                 hashes[key] = pin(raw)['sha256']
+            self.put(directory+'events.jsonl', encoded({'fixture': 'enabled-events-only'}))
             name = self.stem+'/result/payload/evaluations/'+identity['evaluation_id']+'.json'
             self.put(name, encoded({'identity': identity, 'input_hashes': hashes,
                 'events': v.event_inventory(identity)}))
@@ -123,6 +129,12 @@ class ConnectedAuditTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.call()
         self.numeric.assert_not_called()
+
+    def test_full_event_ledger_is_authenticated_not_enabled_event_input(self):
+        report = self.call()
+        names = report['input_pins']
+        self.assertEqual(sum(name.endswith('/event-ledger.jsonl') for name in names), 2)
+        self.assertFalse(any(name.endswith('/events.jsonl') for name in names))
 
     def test_changed_missing_and_unpinned_evaluation_rejected(self):
         path = self.run/self.results[0]

@@ -23,7 +23,7 @@ from . import anomaly_v03_ledger_audit as ledger
 from . import anomaly_v03_score_audit as scores
 
 MIB = 1024**2
-DATASET_INPUTS = {'observations': 'observations.jsonl', 'events': 'events.jsonl',
+DATASET_INPUTS = {'observations': 'observations.jsonl', 'events': 'event-ledger.jsonl',
     'origins': 'origins.json', 'quality_mask': 'quality-mask.jsonl',
     'split': 'split-manifest.json', 'targets': 'targets.json'}
 
