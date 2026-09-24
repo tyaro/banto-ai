@@ -1,8 +1,8 @@
 """Independent observation -> calibrated profile -> score audit, stdlib only.
 
 This consumer deliberately imports no producer/contract/numerical helpers.
-Only complete dev/smoke captures with calibrated profiles are supported so far.
-Unsupported or numerically inconclusive input raises; it never earns a pass.
+Only complete dev/smoke captures with a healthy normal prefix are supported.
+Numerically inconclusive profiles are reconstructed, not promoted to success.
 The caller authenticates both input files and the registered identity. Normal
 generation, pre-rounding values, episodes, CI and formal acceptance are outside
 this module's scope. Existing frozen campaign audits are not changed.
@@ -26,14 +26,34 @@ START_MS = 1767225600000
 TOLERANCE = 1e-12
 
 
+class NumericalInconclusive(ValueError):
+    """An observed arithmetic failure; distinct from malformed input."""
+
+    def __init__(self, reason):
+        super().__init__(reason)
+        self.reason = reason
+
+
 def need(ok, message):
     if not ok:
         raise ValueError('score audit: ' + message)
 
 
 def number(value):
-    need(type(value) in (int, float) and math.isfinite(value), 'nonfinite or nonnumeric arithmetic')
+    need(type(value) in (int, float), 'nonnumeric arithmetic')
+    try:
+        if not math.isfinite(value):
+            raise NumericalInconclusive('nonfinite')
+    except OverflowError as exc:
+        raise NumericalInconclusive('nonfinite') from exc
     return value
+
+
+def _sum(values):
+    try:
+        return number(math.fsum(number(v) for v in values))
+    except (OverflowError, NumericalInconclusive) as exc:
+        raise NumericalInconclusive('nonfinite') from exc
 
 
 def reported_threshold(score, flag, limit):
@@ -155,10 +175,12 @@ def exclusions(candidate, row, previous, phase, target):
 
 def center_scale(values):
     values = [number(v) for v in values]
-    need(bool(values), 'no calibration points')
+    if not values:
+        raise NumericalInconclusive('insufficient_points')
     center = number(float(statistics.median(values)))
-    scale = number(1.4826 * statistics.median(abs(v-center) for v in values))
-    need(scale > 0, 'unsupported inconclusive zero scale')
+    scale = number(1.4826 * statistics.median(number(abs(v-center)) for v in values))
+    if scale <= 0:
+        raise NumericalInconclusive('zero_scale')
     return center, scale
 
 
@@ -169,7 +191,8 @@ def inverse(matrix):
     work = [list(row) + [float(i == j) for j in range(4)] for i, row in enumerate(matrix)]
     for column in range(4):
         pivot = max(range(column, 4), key=lambda i: abs(work[i][column]))
-        need(work[pivot][column] != 0, 'singular covariance')
+        if work[pivot][column] == 0:
+            raise NumericalInconclusive('cholesky_failure')
         work[column], work[pivot] = work[pivot], work[column]
         divisor = work[column][column]
         work[column] = [number(v/divisor) for v in work[column]]
@@ -178,7 +201,8 @@ def inverse(matrix):
                 factor = work[i][column]
                 work[i] = [number(a-factor*b) for a, b in zip(work[i], work[column])]
     result = [row[4:] for row in work]
-    need(all(result[i][i] > 0 for i in range(4)), 'nonpositive precision diagonal')
+    if any(result[i][i] <= 0 for i in range(4)):
+        raise NumericalInconclusive('cholesky_failure')
     return result
 
 
@@ -187,12 +211,12 @@ def conditional_state(errors):
     pairs = [center_scale([row[j] for row in errors]) for j in range(4)]
     centers, scales = [p[0] for p in pairs], [p[1] for p in pairs]
     vectors = [[number((row[j]-centers[j])/scales[j]) for j in range(4)] for row in errors]
-    mean = [number(math.fsum(row[j] for row in vectors)/580) for j in range(4)]
+    mean = [number(_sum(row[j] for row in vectors)/580) for j in range(4)]
     covariance = []
     for i in range(4):
         line = []
         for j in range(4):
-            sample = number(math.fsum((row[i]-mean[i])*(row[j]-mean[j]) for row in vectors)/579)
+            sample = number(_sum((row[i]-mean[i])*(row[j]-mean[j]) for row in vectors)/579)
             line.append(number(.75*sample + (.25*sample if i == j else 0.)))
         covariance.append(line)
     return dict(centers=centers, scales=scales, mean=mean, covariance=covariance, precision=inverse(covariance))
@@ -206,7 +230,7 @@ def residual(candidate, current, previous, phase, bank, target):
         return number(current.values[target] - own[target]['phase_medians'][phase])
     state = own[target]['c2_state']
     standardized = [number((current.values[j]-own[j]['phase_medians'][phase]-state['centers'][j])/state['scales'][j]-state['mean'][j]) for j in range(4)]
-    return number(math.fsum(number(state['precision'][target][j]*standardized[j]) for j in range(4))/math.sqrt(state['precision'][target][target]))
+    return number(_sum(state['precision'][target][j]*standardized[j] for j in range(4))/math.sqrt(state['precision'][target][target]))
 
 
 def rebuild_profiles(identity, phased):
@@ -222,28 +246,47 @@ def rebuild_profiles(identity, phased):
             subset = [p for p in normal if p[0].equipment == equipment and p[0].mode == mode]
             fit = [p for p in subset if p[0].sample < 5400]
             for i, target in enumerate(TARGETS):
-                medians = None
+                medians, reason = None, None
                 if candidate != CANDIDATES[0]:
                     buckets = [[p[0].values[i] for p in fit if p[2] == u] for u in range(30)]
                     need(all(len(b) == 20 for b in buckets), 'phase fit coverage')
-                    medians = [number(float(statistics.median(b))) for b in buckets]
+                    try:
+                        medians = [number(float(statistics.median(b))) for b in buckets]
+                    except (NumericalInconclusive, OverflowError) as exc:
+                        reason = exc.reason if isinstance(exc, NumericalInconclusive) else 'nonfinite'
                 bank[equipment, mode, i] = {'profile_id': f"{identity['evaluation_id']}-profile-{equipment}-{target}-{mode}",
                     'identity': dict(identity), 'profile_version': '0.3', 'equipment': equipment,
                     'full_target': equipment+'.'+target, 'mode': mode, 'recipe': RECIPES[MODES.index(mode)],
-                    'status': 'calibrated', 'reason': None, 'fit_samples': [] if candidate == CANDIDATES[0] else [p[0].sample for p in fit],
+                    'status': 'inconclusive', 'reason': reason, 'fit_samples': [] if candidate == CANDIDATES[0] else [p[0].sample for p in fit],
                     'calibration_samples': [], 'planned_calibration_points': 290, 'minimum_calibration_points': 250,
                     'phase_medians': medians, 'c2_state': None, 'center': None, 'scale': None}
             if candidate == CANDIDATES[2]:
-                errors = [[p[0].values[i]-bank[equipment, mode, i]['phase_medians'][p[2]] for i in range(4)] for p in fit if not exclusions(candidate, *p, 0)]
-                state = conditional_state(errors)
+                reason = next((bank[equipment, mode, i]['reason'] for i in range(4) if bank[equipment, mode, i]['reason']), None)
+                state = None
+                if reason is None:
+                    try:
+                        errors = [[number(p[0].values[i]-bank[equipment, mode, i]['phase_medians'][p[2]]) for i in range(4)] for p in fit if not exclusions(candidate, *p, 0)]
+                        state = conditional_state(errors)
+                    except (NumericalInconclusive, OverflowError) as exc:
+                        reason = exc.reason if isinstance(exc, NumericalInconclusive) else 'nonfinite'
                 for i in range(4):
                     bank[equipment, mode, i]['c2_state'] = state
+                    bank[equipment, mode, i]['reason'] = reason
             for i in range(4):
+                profile = bank[equipment, mode, i]
+                if profile['reason'] is not None:
+                    continue
                 calibration = [p for p in subset if p[0].sample >= 5400 and not exclusions(candidate, *p, i)]
                 need(len(calibration) == 290, 'complete calibration required')
-                profile = bank[equipment, mode, i]
-                profile['calibration_samples'] = [p[0].sample for p in calibration]
-                profile['center'], profile['scale'] = center_scale([residual(candidate, *p, bank, i) for p in calibration])
+                values = []
+                try:
+                    for p in calibration:
+                        values.append(residual(candidate, *p, bank, i))
+                        profile['calibration_samples'].append(p[0].sample)
+                    profile['center'], profile['scale'] = center_scale(values)
+                    profile['status'] = 'calibrated'
+                except (NumericalInconclusive, OverflowError) as exc:
+                    profile['reason'] = exc.reason if isinstance(exc, NumericalInconclusive) else 'nonfinite'
     return bank
 
 
@@ -276,12 +319,14 @@ def audit_score_derivation(result, observation_bytes, *, expected_observation_sh
         for i, target in enumerate(TARGETS):
             profile = bank[row.equipment, row.mode, i]
             tags = exclusions(candidate, row, previous, phase, i)
+            if profile['status'] != 'calibrated':
+                tags.append('profile_inconclusive')
             h = z = None
             if not tags:
                 try:
                     h = residual(candidate, row, previous, phase, bank, i)
                     z = number(abs(h-profile['center'])/profile['scale'])
-                except (ValueError, OverflowError, ZeroDivisionError):
+                except (NumericalInconclusive, OverflowError, ZeroDivisionError):
                     tags.append('nonfinite_score')
                     h = z = None
             dependencies = [{'full_target': row.equipment+'.'+TARGETS[j], 'sample': obs.sample,
@@ -301,12 +346,15 @@ def audit_score_derivation(result, observation_bytes, *, expected_observation_sh
             _exact(actual['dependencies'], dependencies, f'scores[{cursor}].dependencies')
             available += int(not tags)
             cursor += 1
+    inconclusive = [p for p in expected_profiles if p['status'] == 'inconclusive']
     return {'status': 'observation_profile_score_checks_passed', 'identity': dict(identity),
+            'evaluation_outcome': 'inconclusive' if inconclusive else 'success',
+            'inconclusive_profiles': [{'profile_id': p['profile_id'], 'reason': p['reason']} for p in inconclusive],
             'observation_rows': len(phased), 'profiles_checked': 48, 'score_rows_checked': cursor,
             'available_score_rows': available, 'score_derivation_verified': True,
             'profile_derivation_verified': True, 'normal_generation_verified': False,
             'pre_rounding_overlay_verified': False, 'independent_s6_complete': False,
             'formal_permission': False, 'promotion_allowed': False, 'performance_status': 'not_evaluated',
             'numeric_tolerance': {'relative': TOLERANCE, 'absolute': TOLERANCE},
-            'limits': ['complete calibrated dev/smoke captures only', 'caller authenticates identity and both files',
+            'limits': ['complete dev/smoke captures with healthy normal prefix only', 'caller authenticates identity and both files',
                        'streak/episodes/matching/metrics require the separate ledger audit', 'no generation, CI or formal gate verification']}

@@ -11,6 +11,9 @@ from unittest.mock import patch
 
 from banto_ai import anomaly_v03_score_audit as audit
 from banto_ai import anomaly_v03_scoring as producer
+from banto_ai import anomaly_v03 as registry
+from banto_ai import anomaly_v03_ledger_audit as ledger
+from tests.test_anomaly_v03_ledger_audit import zero_result
 from tests.test_anomaly_v03_scoring import saved_row, encode, identity
 
 
@@ -164,6 +167,87 @@ class ScoreAuditTests(unittest.TestCase):
         altered = [(replace(r, quality=('missing',)*4) if r.sample == 6000 else r, old, phase) for r,old,phase in phased]
         with self.assertRaisesRegex(ValueError, 'normal prefix quality'):
             audit.rebuild_profiles(self.results[2]['identity'], altered)
+
+    def fixture_result(self, raw, digest, candidate):
+        ident = identity(candidate)
+        profiles = producer.fit_profiles(ident, raw, expected_sha256=digest)
+        return {'identity': ident, 'input_hashes': {'observations': digest},
+                'profiles': profiles.ledger_rows(), 'scores': producer.score_test(profiles, raw, expected_sha256=digest)}
+
+    def test_zero_scale_is_verified_as_inconclusive_for_all_candidates(self):
+        raw, digest = encode([saved_row(e, s, constant=True) for e in audit.EQUIPMENT for s in range(9000)])
+        observations = audit.decode_observations(raw, digest)
+        with patch.object(audit, 'decode_observations', return_value=observations):
+            for candidate in range(3):
+                result = self.fixture_result(raw, digest, candidate)
+                report = audit.audit_score_derivation(result, raw, expected_observation_sha256=digest)
+                self.assertEqual(report['evaluation_outcome'], 'inconclusive')
+                self.assertEqual(report['available_score_rows'], 0)
+                self.assertEqual(len(report['inconclusive_profiles']), 48)
+                self.assertEqual({p['reason'] for p in report['inconclusive_profiles']}, {'zero_scale'})
+                self.assertFalse(report['formal_permission'])
+                self.assertTrue(all(r['score'] is None and 'profile_inconclusive' in r['exclusion_tags'] for r in result['scores']))
+                # Hand-counted no-alert ledger, with registered event identities.
+                # The same inconclusive numeric result must reach the ledger audit
+                # without claiming available time or a defined precision.
+                full = zero_result() | result
+                full['events'] = registry.event_inventory(result['identity'])
+                positives = sorted((e for e in full['events'] if e['event_class'] in ('machine', 'sensor')),
+                                   key=lambda e: (e['start_ms'], e['event_id']))
+                for incident, event in zip(full['incidents'], positives):
+                    incident.update(event_id=event['event_id'], dataset_id=event['dataset_id'])
+                for entry in full['metrics']['availability']:
+                    entry['metric'].update(numerator=0, value=0.0)
+                full['metrics'].update(effective_clean_seconds=0, effective_clean_rate=None)
+                checked = ledger.audit_evaluation(full)
+                self.assertEqual(checked['source_episodes'], 0)
+                self.assertIsNone(checked['metrics']['precision']['value'])
+                forged = copy.deepcopy(result)
+                forged['profiles'][0]['reason'] = 'insufficient_points'
+                with self.assertRaisesRegex(ValueError, 'profiles'):
+                    audit.audit_score_derivation(forged, raw, expected_observation_sha256=digest)
+
+    def test_one_failed_fit_signal_propagates_only_within_c2_equipment_mode(self):
+        for value, reason in ((42., 'zero_scale'), (1.7e308, 'nonfinite')):
+            rows = [saved_row(e, s) for e in audit.EQUIPMENT for s in range(9000)]
+            for row in rows[:9000]:
+                row['signals']['motor_temperature']['value'] = value
+            raw, digest = encode(rows)
+            observations = audit.decode_observations(raw, digest)
+            with patch.object(audit, 'decode_observations', return_value=observations):
+                for candidate, count in ((1, 6), (2, 24)):
+                    result = self.fixture_result(raw, digest, candidate)
+                    report = audit.audit_score_derivation(result, raw, expected_observation_sha256=digest)
+                    self.assertEqual(len(report['inconclusive_profiles']), count)
+                    self.assertEqual({p['reason'] for p in report['inconclusive_profiles']}, {reason})
+                    self.assertEqual(report['evaluation_outcome'], 'inconclusive')
+                    self.assertTrue(all(p['equipment'] == 'motor-01' for p in result['profiles'] if p['status'] == 'inconclusive'))
+                    self.assertGreater(report['available_score_rows'], 0)
+
+    def test_calibration_overflow_preserves_only_completed_sample_ids(self):
+        rows = [saved_row(e, s) for e in audit.EQUIPMENT for s in range(9000)]
+        rows[5401]['signals']['motor_current']['value'] = -1.7e308
+        rows[5402]['signals']['motor_current']['value'] = 1.7e308
+        raw, digest = encode(rows)
+        result = self.fixture_result(raw, digest, 0)
+        report = audit.audit_score_derivation(result, raw, expected_observation_sha256=digest)
+        self.assertEqual(len(report['inconclusive_profiles']), 1)
+        self.assertEqual(result['profiles'][0]['calibration_samples'], [5401])
+        self.assertEqual(result['profiles'][0]['reason'], 'nonfinite')
+        self.assertIsNone(result['profiles'][0]['center'])
+        self.assertIsNone(result['profiles'][0]['scale'])
+
+    def test_mad_checks_every_deviation_and_numeric_reason_codes(self):
+        with self.assertRaises(audit.NumericalInconclusive) as caught:
+            audit.center_scale([-1.7e308, -1.7e308, 1.7e308])
+        self.assertEqual(caught.exception.reason, 'nonfinite')
+        for values, reason in (([], 'insufficient_points'), ([1., 1.], 'zero_scale')):
+            with self.assertRaises(audit.NumericalInconclusive) as caught:
+                audit.center_scale(values)
+            self.assertEqual(caught.exception.reason, reason)
+        with self.assertRaises(audit.NumericalInconclusive) as caught:
+            audit.inverse([[1.]*4 for _ in range(4)])
+        self.assertEqual(caught.exception.reason, 'cholesky_failure')
 
 
 if __name__ == '__main__':
