@@ -171,3 +171,9 @@ v0.2のstandalone seed-cluster analysisは [`anomaly-multiseed-evaluation-plan-v
 独立した計算部分を実装し、手計算21試験と固定200万個のbootstrap抽出番号照合を通過しました。件数の合算、候補間の共通抽出、分母0の扱い、全層・全信号の判定とC1優先選択を確認しています。[検証結果](results/anomaly-multiseed-v0.3-independent-inference-math-2026-09-24.md)。
 
 実データの信頼区間は未算出です。次は監査済み結果のseed単位集計を認証する入口を実装します。dev/smokeを正式40holdoutの代わりに使わず、正式採択・完全S6・Phase 2/3全体は未完了を維持します。
+
+### 2026-09-24：監査済み結果のseed単位集計を完了
+
+検算済み720評価を保存点のhashで認証し、開発用8 seedと動作確認用2 seedを分けて集計しました。各seedの12区間・両条件・3候補を確認し、seed別90表と用途別18表、候補差12表が過去の記述集計と一致しました。警報0件の適合率46評価もnullとして保持しています。関連33試験通過、処理約1.3秒、最大メモリ約39MiB。[結果](results/anomaly-multiseed-v0.3-independent-seed-aggregation-2026-09-24.md)。
+
+次は独立analysis出力とschemaの接続を手例で確認します。正式40 holdoutの解析を現10 seedに代用せず、実信頼区間・正式gate・完全S6・Phase 2/3全体は未完了を維持します。

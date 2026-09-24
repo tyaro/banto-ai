@@ -1,6 +1,6 @@
 # 保存結果の独立検算と長時間実行の進行記録
 
-最新（2026-09-24）: [bootstrap/CI/候補比較の独立算術が21試験と固定200万index照合を通過](results/anomaly-multiseed-v0.3-independent-inference-math-2026-09-24.md)。実データCIの入口は未接続。前回の全240datasets生成/丸めと720評価score/ledger検算は完了済み。正式gate・完全S6は残る。以下は段階ごとの履歴である。
+最新（2026-09-24）: [監査済み720評価のseed counts認証・集計が33試験と旧集計照合を通過](results/anomaly-multiseed-v0.3-independent-seed-aggregation-2026-09-24.md)。dev8/smoke2を分け、全12 layouts・2層・3候補を検査した。実CI/正式gate・完全S6は未完了。以下は段階ごとの履歴である。
 
 2026-09-16。単一writerの運用改訂を継続する。独立ledger検算、固定plan・journalのmetadata検査/状態復元、旧6件trialとのpreflight証拠照合、metadata専用の追記writerは実装済み。全dev/smokeを動かすcampaign controllerは**未接続・実行未許可**。
 科学的な式・seed・layout・候補・母数・bootstrap・性能gateと、旧formal gateを変更しない。
@@ -456,3 +456,9 @@ Random/gauss/binary64/round/JSONは共有primitive。外部pin付き完走保存
 [詳細](results/anomaly-multiseed-v0.3-independent-inference-math-2026-09-24.md)。独立stdlib実装で固定2,000,000 draw indicesのhash/golden照合、ratio-of-sums・paired draw・type-7・null保持・全180gate checksとC1優先選択を手例で確認した。21試験、7保存手例。実際の12-layout seed集計・実CIには未接続で、正式performanceはnot_evaluated、fixture選択を実採択へ転用しない。
 
 次は監査済み保存結果のseed集計を登録順・coverage・profile・母数・identity/pin付きで認証する。現dev/smokeに正式40holdout CIを代入せず、role別の記述集計を維持。formal/完全S6/runtime受入は別の残件。
+
+## 認証済み保存結果のseed集計（2026-09-24）
+
+[詳細](results/anomaly-multiseed-v0.3-independent-seed-aggregation-2026-09-24.md)。保存点hashから全生成/score/ledger報告を認証し、120区間/720評価を登録順の10 seedへ集計した。seed90表・role18表・候補差12表は既存記述統計と一致。警報0件の46評価も予定母数から落とさず、null診断を保存。関連33試験通過、raw payload再読込み・新規評価・実CIは0。
+
+今回の出力は記述集計で、正式analysis schemaには未接続。次はschema接続を手例で検証する。実データCI/40holdout/gateやslice/delay、runtime/単一writer受入は残る。

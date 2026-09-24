@@ -3883,3 +3883,13 @@ OUT artifacts/independent-inference-math-2026-09-24。draws/rules/fixture/hand-a
 実観測/実seed集計/実性能CIは読取り・生成・計算していない。fixture_*の選択例を実採択にせず、selected_candidate=null、formal/promotion/S6=false、performance=not_evaluated。既存旧保存点・source・本流・dirty guard不変、banto-24 PAUSED。
 
 次は保存済み監査結果のseed単位raw counts集計と認証入口。登録順、全12layouts×2層×3候補、profile/母数/重複欠落を確認し算術へ接続する。現dev8/smoke2を正式40holdoutへ代用しない。正式schema/実CI/全gate/slice/delay、runtime/単一writer受入は残る。
+
+## 157. 認証済み保存報告からのseed raw counts集計（2026-09-24）
+
+[詳細](anomaly-multiseed-v0.3-independent-seed-aggregation-2026-09-24.md)。最終実装`d48ecb4ac2a1d6c7c72d3cd16966b84600e165c5`、OUT `artifacts/independent-seed-aggregation-2026-09-24`、成功はverified/。33試験通過、dev8/smoke2×各12 layouts/2層/3候補の全720評価を認証。seed90表・role18表の1404 countsと候補差12表144点が旧記述集計と一致。登録順、母数、profile状態、入力pin、verified attemptを確認し、区間119失敗attempt1を除外して保全した。
+
+初回5c8c4f8では警報0件の適合率46評価の正しいinconclusive状態を入口が拒否。分母0のnull状態を修正し、手例を追加。undefined_input_pointsを保持し、recall/予定露出から当該区間を落とさない。実評価の失敗ではない。初回記録はOUT直下、成功結果はverified/に分離保存。
+
+処理1.289秒、peak private 39.27MiB、最小空きRAM 15.63GiB/commit余裕 21.22GiB、終了時C/D空き 130.22/297.07GiB。新規観測/評価/score再計算/実CIは0。旧保存点・本流・実計算source・dirty guard保全、banto-24 PAUSED。
+
+次は独立analysis出力のschema接続を手例で検証する。実dev/smokeに正式40holdoutのbootstrap/gateを代用しない。slice/delay/runtime・単一writer受入/正式holdout/完全S6は未完了。formal/promotion=false、selected_candidate=null、performance=not_evaluated。

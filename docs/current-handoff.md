@@ -1,27 +1,29 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-24 JST。**信頼区間・候補比較の独立算術を実装。21試験通過、全200万個の固定bootstrap抽出番号と凍結hashが一致。実データの信頼区間は未算出。**
+更新: 2026-09-24 JST。**監査済み720評価のseed raw countsを認証・集計。関連33試験と旧集計照合を通過。実データCIは未算出。**
 
-- [今回の計算層検証](results/anomaly-multiseed-v0.3-independent-inference-math-2026-09-24.md)、[全240datasetsの生成検算](results/anomaly-multiseed-v0.3-independent-generation-audit-2026-09-24.md)、[全720評価のscore/ledger検算](results/anomaly-multiseed-v0.3-full-connected-audit-2026-09-24.md)。長い引継書§156。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。推論算術実装/実行 `4dd9795c347fc5d00a38c4dfb42379ffc1f8337d`。今回OUT `artifacts/independent-inference-math-2026-09-24`、最終文書revision/pinは`savepoint-evidence.json`。
+- [今回の認証・seed集計](results/anomaly-multiseed-v0.3-independent-seed-aggregation-2026-09-24.md)、[前工程の独立算術](results/anomaly-multiseed-v0.3-independent-inference-math-2026-09-24.md)。長い引継書§157。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。最終実装`d48ecb4ac2a1d6c7c72d3cd16966b84600e165c5`。OUT `artifacts/independent-seed-aggregation-2026-09-24`、成功は`verified/`。最終文書revision/pinはOUTの`savepoint-evidence.json`。
 
 ## 今回の成果と次の作業
 
-`anomaly_v03_inference_audit.py`はstdlibのみ。固定drawのrejection sampling、ratio-of-sums、同じcluster drawでの候補差、type-7 CI、null replicate保全、全層/8 targetsのabsolute/paired gate、C1優先選択を実装した。入力は手計算用cluster集計で、実データの認証や12-layout coverageをまだ検査しない。
+`anomaly_v03_seed_aggregate.py`は、前工程manifestを外部SHAで認証し、生成/score/完走保存点と全報告の入力pin・identity・最終attemptを接続する。観測payloadやscoreを再計算せず、保存時点の検算結果を使う。新たな生payloadの完全性証明ではない。
 
-40×50,000=2,000,000個の固定index全列hashはe375bf3feacb2f04bf5e1d40b141c1cfc5f69fa5437ea2704e323fd7523b22e5と一致。4 golden行も一致。観測生成用の登録seedは実行していない。21単体試験通過、7手例を各2 clusters/4 replicates・9tables/180gatesで保存した。結果はfixture_*欄だけ。実際のselected_candidate=null、formal/promotion=false、performance=not_evaluated。
+dev8/smoke2を登録順で保持し、各seedの全12 layouts×2層×3候補、profile状態、予定母数を検査した。seed90表・role18表・候補差12表を保存。旧集計の1404組の整数countsと144差分点が一致。整数は完全一致、点だけ1e-12 relative/absoluteで比較。overallは両層の分子/分母の合計。共通算術のcounts/ratioへ接続し、実bootstrap/gateは呼んでいない。
 
-所要3.633秒、peak private 29.26MiB、最小空きRAM 17.71GiB / commit余裕 21.68GiB、終了時C/D空き 131.04/298.63GiB。初回の十進手答えassertの1 ULP差は試験側だけを修正。算術やgate比較を丸めず、境界試験通過。旧artifacts/実計算source/本流/dirty guardは不変、banto-24 PAUSED。
+初回は警報0件の適合率46評価の`ci_status=inconclusive`を厳しすぎる入口が拒否した。初回記録を保持し、分母0のnull形式を受け入れる修正を実施。全警報0/一部警報0を含む新規12＋既存21=33試験通過。undefined_input_pointsにIDを残して分母や予定時間から当該区間を落とさない。profile判定不能は今回0件だがfixtureで伝播を確認。
 
-**次は、監査済み保存結果からseed単位のraw countsを認証・集計する入口を実装する。** 登録順、12 layouts×両層×3候補、profile状態、予定母数、重複/欠落、今回の算術との対応を検査する。現dev8/smoke2はroleを区別した記述集計まで。正式40 holdout bootstrapを現10 seedへ代用しない。holdout/producer/正式gateは起動しない。
+実行1.289秒、peak private 39.27MiB、最小空きRAM 15.63GiB / commit余裕 21.22GiB、終了時C/D空き 130.22/297.07GiB。小さな248 JSONを認証。追加観測/評価/score再計算/実CIは0。旧保存点/source/本流/dirty guard不変、banto-24 PAUSED。
 
-正式analysis schemaへの接続、実データCI/全gate/選択監査、slice/delay、runtime/単一writer受入は残る。Phase 2/3全体や完全S6を完了扱いしない。CIを算出するための算術検証と、Bantoの実性能CIの完了を混同しない。
+**次は独立analysis出力のschema接続。** 認証済みcountsと算術の入力/出力を整理し、手例でschema/gate/選択の接続を検証する。現dev8/smoke2はrole別の記述集計を維持し、正式40 holdout bootstrapを代用しない。実CI/holdout/producer/正式gateを自動起動しない。
+
+slice/delay、runtime/単一writer受入、正式実データCI/全gate、完全S6は残る。selected_candidate=null、formal/promotion/S6=false、performance=not_evaluated。Phase 2/3全体を完了扱いしない。
 
 ## 前工程の到達範囲
 
 全120区間・240datasetsの正常生成/overlay/丸めは4,320,000保存観測行で完全一致。全720評価のprofile/score/ledger検算と入力pinで接続済み。旧C1/C2の記述統計は変わらない。生成検算の実装47dbc165f12fb1ce7608bb57625cb498bc4a4d04、文書31b73008828a52681f2ae9a887d88ddedecb516f、OUT artifacts/independent-generation-audit-2026-09-24、成功はverified/、manifest 29473bytes/SHA256322a7fe20b23febcb4467ba16034ab9bae5c209777590150c61bccbae09c90f8。
 
-前工程は既存10 seedを120 pairs分メモリ内で検算再構成し、新dataset/新評価は0だった。今回の算術検証は観測seed再構成も0で、固定bootstrap indexだけを計算した。旧観測/score検算は不要に繰り返さない。
+生成検算工程は既存10 seedを120 pairs分メモリ内で再構成し、新dataset/新評価は0だった。その次の算術検証は固定bootstrap indexと手例だけを計算した。今回のseed集計は保存済み監査報告を読み、観測seed再構成/score再計算/bootstrapを行っていない。旧観測/score検算は不要に繰り返さない。
 
 ## 完走証拠と保全
 
