@@ -1,6 +1,6 @@
 # 保存結果の独立検算と長時間実行の進行記録
 
-最新（2026-09-25）: [保存済み720評価の遅延・条件別集計が完了](results/anomaly-multiseed-v0.3-independent-slice-audit-2026-09-25.md)。関連32試験、seed90/用途18表の旧counts照合を通過。次はcounts・delay・sliceの認証済み解析入力への統合。正式full document・実CI・gate・完全S6は残る。以下は段階ごとの履歴である。
+最新（2026-09-25）: [720評価の認証済み解析入力への統合を完了](results/anomaly-multiseed-v0.3-analysis-inputs-2026-09-25.md)。関連39試験、108表と48組の加算照合を通過。元payload読取り0。次はdev/smokeの記述結果・診断表への出力対応。正式holdout/CI/gate・source/runtime受入・完全S6は残る。以下は段階ごとの履歴である。
 
 2026-09-16。単一writerの運用改訂を継続する。独立ledger検算、固定plan・journalのmetadata検査/状態復元、旧6件trialとのpreflight証拠照合、metadata専用の追記writerは実装済み。全dev/smokeを動かすcampaign controllerは**未接続・実行未許可**。
 科学的な式・seed・layout・候補・母数・bootstrap・性能gateと、旧formal gateを変更しない。
@@ -472,3 +472,7 @@ Random/gauss/binary64/round/JSONは共有primitive。外部pin付き完走保存
 [実装と結果](results/anomaly-multiseed-v0.3-independent-slice-audit-2026-09-25.md)。全120区間/720評価を認証し、保存判定10,368,000行・14,400事例を独立に分類・合算。incident6軸/score9軸、正確な遅延度数をseed90表・用途18表へ保存し、全表が旧countsと一致した。32試験通過。入力認証を担当する呼出し側と純集計を区別する。新score計算や実CIは行わない。正式schema全体のslice検証ではない。
 
 処理844.159秒、process peak private 145.32MiB、最小空きRAM 9.60GiB/commit余裕 16.49GiB。終了時C/D空き 127.05/298.62GiB。 1評価ずつの読取りと6区間ごとの保存。次は、別々に検算したcounts・遅延・sliceを単一の認証済み解析入力へ統合し、正式schemaで不足するsource/runtime証拠等を整理する。現dev8/smoke2は記述集計に限定し、正式40holdoutの代用にしない。
+
+## 認証済み解析入力への統合（2026-09-25）
+
+[詳細](results/anomaly-multiseed-v0.3-analysis-inputs-2026-09-25.md)。counts・delay・slice・有効露出をseed90/role18表へ結合し、48組の加算を確認した。元payloadを開かず、明示した三保存点・集計2ファイル・凍結schemaを認証。39試験通過、正式schema必須10項目のreadinessを記録した。処理3.176秒、process peak private 53.00MiB、前後観測の最小空きRAM 10.68GiB/commit余裕 15.14GiB、終了時C/D空き 126.79/298.91GiB。 次は統合済み入力から、dev/smoke別の記述結果表と診断表を出力する。正式schemaとの列対応を確認し、event-offsetの対象外/試験外参照やavailability・閾値超過・警報開始数を落とさない。

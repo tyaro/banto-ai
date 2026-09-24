@@ -3913,3 +3913,11 @@ OUT artifacts/independent-inference-math-2026-09-24。draws/rules/fixture/hand-a
 処理844.159秒、process peak private 145.32MiB、最小空きRAM 9.60GiB/commit余裕 16.49GiB。終了時C/D空き 127.05/298.62GiB。 21 checkpointと120区間reportを保存。最終文書revision/pinはsavepoint-evidence.json。旧保存点/実source/本流/dirty guard不変、banto-24 PAUSED。新観測・新評価・score計算・実CI0。
 
 次は、別々に検算したcounts・遅延・sliceを単一の認証済み解析入力へ統合し、正式schemaで不足するsource/runtime証拠等を整理する。現dev8/smoke2は記述集計に限定し、正式40holdoutの代用にしない。 正式holdout/CI/gate、runtime/単一writer受入、完全S6/Phase 2/3は残る。formal/promotion/S6=false、selected=null、performance=not_evaluated。
+
+## 160. 認証済みcounts・遅延・sliceの解析入力統合（2026-09-25）
+
+[詳細](anomaly-multiseed-v0.3-analysis-inputs-2026-09-25.md)。実装`1db34dc3502552feb0869da2cec68508736f1b8d`、OUT artifacts/independent-analysis-inputs-2026-09-25。関連39試験通過。外部slice保存点SHAから三保存点・counts/slices・schemaを認証し、全720評価のseed90/role18表を結合。overall30組/role18組の加算を確認し、未定義適合率46記録、profile診断、offsetの対象外/試験外参照を保持した。読取6入力ファイル5,453,594bytes、元payload読取0。
+
+処理3.176秒、process peak private 53.00MiB、前後観測の最小空きRAM 10.68GiB/commit余裕 15.14GiB、終了時C/D空き 126.79/298.91GiB。 最終文書revision/pinはsavepoint-evidence.json。新観測・新評価・score再計算・実CI0、旧保存点/source/本流/dirty guard不変、banto-24 PAUSED。
+
+正式schema必須10項目のreadinessを保存。dev/smokeの記述入力は揃ったが、正式40holdout/50,000 bootstrap・CI/gate・source/runtime受入・正式slice行への対応・完全S6は未完了。formal/promotion/S6=false、selected=null、performance=not_evaluated。次は統合済み入力から、dev/smoke別の記述結果表と診断表を出力する。正式schemaとの列対応を確認し、event-offsetの対象外/試験外参照やavailability・閾値超過・警報開始数を落とさない。
