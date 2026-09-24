@@ -1,23 +1,27 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-24 JST。**全120区間・240datasetsの正常生成/overlay/丸めが保存bytesと完全一致。前回の全720評価のprofile/score/ledger検算と入力hashを接続した。**
+更新: 2026-09-24 JST。**信頼区間・候補比較の独立算術を実装。21試験通過、全200万個の固定bootstrap抽出番号と凍結hashが一致。実データの信頼区間は未算出。**
 
-- [今回の正常生成検算](results/anomaly-multiseed-v0.3-independent-generation-audit-2026-09-24.md)、[前回全720評価の検算](results/anomaly-multiseed-v0.3-full-connected-audit-2026-09-24.md)、[比較](results/anomaly-multiseed-v0.3-dev-smoke-comparison-2026-09-24.md)、[上司向け報告](results/banto-ai-anomaly-briefing-2026-09-24.md)。長い引継書§155。
-- 候補: C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。生成検算の実装/実行 `47dbc165f12fb1ce7608bb57625cb498bc4a4d04`、score検算本体2505fed。今回OUT `artifacts/independent-generation-audit-2026-09-24`、成功結果は`verified/`。最終文書revision/pinはOUT直下の`savepoint-evidence.json`。
+- [今回の計算層検証](results/anomaly-multiseed-v0.3-independent-inference-math-2026-09-24.md)、[全240datasetsの生成検算](results/anomaly-multiseed-v0.3-independent-generation-audit-2026-09-24.md)、[全720評価のscore/ledger検算](results/anomaly-multiseed-v0.3-full-connected-audit-2026-09-24.md)。長い引継書§156。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。推論算術実装/実行 `4dd9795c347fc5d00a38c4dfb42379ffc1f8337d`。今回OUT `artifacts/independent-inference-math-2026-09-24`、最終文書revision/pinは`savepoint-evidence.json`。
 
 ## 今回の成果と次の作業
 
-`anomaly_v03_generation_audit.py`はstdlibだけで正常式、乱数消費順、温度state、event時刻、overlayと丸めを独立に復元する。Random/gauss・binary64・round・JSONは共有する指定primitive。IO/CLIは外部pin付き完走保存点から登録planとverified attemptを選び、8filesを認証して渡す。producerの生成関数や検出器を呼ばない。
+`anomaly_v03_inference_audit.py`はstdlibのみ。固定drawのrejection sampling、ratio-of-sums、同じcluster drawでの候補差、type-7 CI、null replicate保全、全層/8 targetsのabsolute/paired gate、C1優先選択を実装した。入力は手計算用cluster集計で、実データの認証や12-layout coverageをまだ検査しない。
 
-全120区間（dev96/smoke24）、240datasets、4,320,000観測行/21,600,000 signal cells、3,600欠損cells、9,600計画events/8,400有効eventsが厳密bytes一致。前回全720評価の検算報告と観測/mask/event-ledgerの720filesのpin、identity、attemptが一致。今回profile/scoreを再計算せず、旧報告を変更していない。
+40×50,000=2,000,000個の固定index全列hashはe375bf3feacb2f04bf5e1d40b141c1cfc5f69fa5437ea2704e323fd7523b22e5と一致。4 golden行も一致。観測生成用の登録seedは実行していない。21単体試験通過、7手例を各2 clusters/4 replicates・9tables/180gatesで保存した。結果はfixture_*欄だけ。実際のselected_candidate=null、formal/promotion=false、performance=not_evaluated。
 
-**登録済み10 seedについて120 pairsの正常系列をメモリ内で再構成した**。新規producer/追加attempt/holdout/保存dataset作成は0だが、seed計算0とは書かない。手計算・対照fixture等22試験と実行補助6試験通過。WindowsのUTF-8 decodeと組込みmoduleの実行補助を修正した事前停止2件は保存済みで、両方dataset読取り前。成功分だけを集計する。
+所要3.633秒、peak private 29.26MiB、最小空きRAM 17.71GiB / commit余裕 21.68GiB、終了時C/D空き 131.04/298.63GiB。初回の十進手答えassertの1 ULP差は試験側だけを修正。算術やgate比較を丸めず、境界試験通過。旧artifacts/実計算source/本流/dirty guardは不変、banto-24 PAUSED。
 
-所要113.560秒、peak private57.41MiB、最小空きRAM14.57GiB/commit余裕14.84GiB、終了時C/D空き136.81/315.18GiB。pilot保存と6区間ごとの19中間保存、全件最終保存済み。漏れなく一致したのは保存bytesの再現であり、過去内部stateの直接観測や実設備性能の証明ではない。
+**次は、監査済み保存結果からseed単位のraw countsを認証・集計する入口を実装する。** 登録順、12 layouts×両層×3候補、profile状態、予定母数、重複/欠落、今回の算術との対応を検査する。現dev8/smoke2はroleを区別した記述集計まで。正式40 holdout bootstrapを現10 seedへ代用しない。holdout/producer/正式gateは起動しない。
 
-**次はbootstrap/信頼区間/候補比較の独立実装と手計算fixtureの検算を整理する。** 正式bootstrapは40 holdout seed・50,000 replicates。現10 seedで正式CIを代用しない。生成不要の契約/集計検算から進め、holdoutや長時間producerは起動しない。runtime/単一writer受入、Phase 2 forecastも残る。
+正式analysis schemaへの接続、実データCI/全gate/選択監査、slice/delay、runtime/単一writer受入は残る。Phase 2/3全体や完全S6を完了扱いしない。CIを算出するための算術検証と、Bantoの実性能CIの完了を混同しない。
 
-今回normal_generation/pre_rounding_overlay/rounding_verifiedは全240datasetsでtrue。前回profile/score/ledger_verifiedは720評価でtrue。independent_s6_complete/formal_permission/promotion_allowed=false、performance_status=not_evaluated、campaign加算0。既存C1/C2の記述統計は変わらない。Phase 2/3全体を完了扱いしない。
+## 前工程の到達範囲
+
+全120区間・240datasetsの正常生成/overlay/丸めは4,320,000保存観測行で完全一致。全720評価のprofile/score/ledger検算と入力pinで接続済み。旧C1/C2の記述統計は変わらない。生成検算の実装47dbc165f12fb1ce7608bb57625cb498bc4a4d04、文書31b73008828a52681f2ae9a887d88ddedecb516f、OUT artifacts/independent-generation-audit-2026-09-24、成功はverified/、manifest 29473bytes/SHA256322a7fe20b23febcb4467ba16034ab9bae5c209777590150c61bccbae09c90f8。
+
+前工程は既存10 seedを120 pairs分メモリ内で検算再構成し、新dataset/新評価は0だった。今回の算術検証は観測seed再構成も0で、固定bootstrap indexだけを計算した。旧観測/score検算は不要に繰り返さない。
 
 ## 完走証拠と保全
 

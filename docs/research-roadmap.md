@@ -165,3 +165,9 @@ v0.2のstandalone seed-cluster analysisは [`anomaly-multiseed-evaluation-plan-v
 全120区間・240データセットについて、正常生成式、異常の重ね方、欠損処理、丸めから復元した4,320,000観測行が保存bytesと完全に一致しました。前回の全720評価のprofile/score/ledger検算とも入力hashで接続しました。[詳細](results/anomaly-multiseed-v0.3-independent-generation-audit-2026-09-24.md)。保存済みseedをメモリ内で再構成する検算で、新規データセットやholdoutは作成していません。
 
 次はbootstrap/信頼区間/候補比較の独立実装と手計算fixtureを検証します。正式計画の40 holdout seedを現dev/smoke 10 seedで代用せず、正式gateや採択判定は進めません。Phase 3 active、Phase 2 forecast比較・runtime/単一writer受入の残件も維持します。
+
+### 2026-09-24：信頼区間・候補比較の計算部分を検証
+
+独立した計算部分を実装し、手計算21試験と固定200万個のbootstrap抽出番号照合を通過しました。件数の合算、候補間の共通抽出、分母0の扱い、全層・全信号の判定とC1優先選択を確認しています。[検証結果](results/anomaly-multiseed-v0.3-independent-inference-math-2026-09-24.md)。
+
+実データの信頼区間は未算出です。次は監査済み結果のseed単位集計を認証する入口を実装します。dev/smokeを正式40holdoutの代わりに使わず、正式採択・完全S6・Phase 2/3全体は未完了を維持します。

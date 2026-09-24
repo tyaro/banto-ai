@@ -3873,3 +3873,13 @@ consumer/IO22試験、実行補助6試験通過。準備中のWindows文字コ�
 所要113.560秒、peak private57.41MiB、最小空きRAM14.57GiB/commit余裕14.84GiB、終了時C/D空き136.81/315.18GiB。pilotと6区間ごと19中間保存。生成primitiveのRandom/gauss/binary64/round/JSONは共有仕様で、独立PRNGを実装した意味ではない。新規producer/検出器評価/追加attempt/holdout/保存datasetは0、既存seedの検算再構成は120回。旧score計算を繰り返していない。
 
 normal_generation/pre_rounding_overlay/rounding_verifiedは全240datasetsでtrue。完全S6/formal/promotionはfalse、performance=not_evaluated、campaign加算0。次はbootstrap/信頼区間/候補比較の独立実装と手計算fixtureを整理する。正式40 holdout seedを現10 seedで代用せず、holdoutは開かない。単一writer/runtime受入とPhase 2/3全体は残る。実計算source・本流clean、既存dirty guard・旧anchor不変、banto-24 PAUSED維持。
+
+## 156. 独立bootstrap/CI/候補比較の算術検証（2026-09-24）
+
+[検証記録](anomaly-multiseed-v0.3-independent-inference-math-2026-09-24.md)。実装/実行 `4dd9795c347fc5d00a38c4dfb42379ffc1f8337d`。stdlibのみで固定rejection draw、ratio-of-sums、paired差、type-7、null replicate、全層/target gates、C1優先選択を実装した。21試験通過。全200万個のindex SHA256 e375bf3feacb2f04bf5e1d40b141c1cfc5f69fa5437ea2704e323fd7523b22e5と4golden行が一致。7手例（各2clusters/4replicates/9tables/180gates）も保存した。
+
+OUT artifacts/independent-inference-math-2026-09-24。draws/rules/fixture/hand-answers/test-results/summary、最終文書revisionはsavepoint-evidence.json。所要3.633秒、peak private29.26MiB、最小空きRAM17.71GiB/commit余裕21.68GiB、終了時C/D空き131.04/298.63GiB。初回の十進手答えassertの1 ULP差はテスト側だけ修正し、閾値の1 ULP境界試験を維持。
+
+実観測/実seed集計/実性能CIは読取り・生成・計算していない。fixture_*の選択例を実採択にせず、selected_candidate=null、formal/promotion/S6=false、performance=not_evaluated。既存旧保存点・source・本流・dirty guard不変、banto-24 PAUSED。
+
+次は保存済み監査結果のseed単位raw counts集計と認証入口。登録順、全12layouts×2層×3候補、profile/母数/重複欠落を確認し算術へ接続する。現dev8/smoke2を正式40holdoutへ代用しない。正式schema/実CI/全gate/slice/delay、runtime/単一writer受入は残る。

@@ -1,6 +1,6 @@
 # 保存結果の独立検算と長時間実行の進行記録
 
-最新（2026-09-24）: [全240datasetsの正常生成/overlay/丸めの独立検算が完了](results/anomaly-multiseed-v0.3-independent-generation-audit-2026-09-24.md)し、前回の全720評価profile/score/ledger検算と入力pinで接続した。bootstrap/CI・正式gate・完全S6は残る。以下の冒頭は初期設計、その後の追記は段階ごとの履歴である。
+最新（2026-09-24）: [bootstrap/CI/候補比較の独立算術が21試験と固定200万index照合を通過](results/anomaly-multiseed-v0.3-independent-inference-math-2026-09-24.md)。実データCIの入口は未接続。前回の全240datasets生成/丸めと720評価score/ledger検算は完了済み。正式gate・完全S6は残る。以下は段階ごとの履歴である。
 
 2026-09-16。単一writerの運用改訂を継続する。独立ledger検算、固定plan・journalのmetadata検査/状態復元、旧6件trialとのpreflight証拠照合、metadata専用の追記writerは実装済み。全dev/smokeを動かすcampaign controllerは**未接続・実行未許可**。
 科学的な式・seed・layout・候補・母数・bootstrap・性能gateと、旧formal gateを変更しない。
@@ -450,3 +450,9 @@ OUT artifacts/full-connected-audit-2026-09-24、全件checkpointとsummaryを保
 [anomaly-multiseed-v0.3-independent-generation-audit-2026-09-24.md](results/anomaly-multiseed-v0.3-independent-generation-audit-2026-09-24.md)に全120 pairs/240datasetsの検算を保存。別実装の正常生成→overlay→丸めが全4,320,000保存行と完全bytes一致し、前回全720評価のscore/ledger検算と同一入力pinで結び付いた。22本体/IO試験と6実行補助試験通過。登録済みseedをメモリ内で検算再構成したが、新規dataset/producer/holdoutは起動せず、旧score検算を再実行していない。
 
 Random/gauss/binary64/round/JSONは共有primitive。外部pin付き完走保存点と最終verified attemptが必要。独立PRNG、過去runtime受入、bootstrap/CI/gateまでは主張しない。次は40 holdout seed用に凍結したbootstrap/候補比較を、holdout生成不要の手計算fixtureから検証する。現dev/smoke 10 seedで正式CIを出さない。
+
+## 信頼区間・候補比較の算術検証（2026-09-24）
+
+[詳細](results/anomaly-multiseed-v0.3-independent-inference-math-2026-09-24.md)。独立stdlib実装で固定2,000,000 draw indicesのhash/golden照合、ratio-of-sums・paired draw・type-7・null保持・全180gate checksとC1優先選択を手例で確認した。21試験、7保存手例。実際の12-layout seed集計・実CIには未接続で、正式performanceはnot_evaluated、fixture選択を実採択へ転用しない。
+
+次は監査済み保存結果のseed集計を登録順・coverage・profile・母数・identity/pin付きで認証する。現dev/smokeに正式40holdout CIを代入せず、role別の記述集計を維持。formal/完全S6/runtime受入は別の残件。
