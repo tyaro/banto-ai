@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ctypes
 import os
+import stat
 import subprocess
 import sys
 from contextlib import contextmanager
@@ -24,6 +25,23 @@ _TOKEN_DUPLICATE = 0x2
 _DISABLE_MAX_PRIVILEGE = 0x1
 _SECURITY_IMPERSONATION = 2
 _TOKEN_IMPERSONATION = 2
+_READ_CONTROL = 0x00020000
+_WRITE_DAC = 0x00040000
+_FILE_READ_ATTRIBUTES = 0x80
+_FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
+_FILE_FLAG_OPEN_REPARSE_POINT = 0x00200000
+
+
+class _FileTime(ctypes.Structure):
+    _fields_ = [("low", wintypes.DWORD), ("high", wintypes.DWORD)]
+
+
+class _ByHandleFileInformation(ctypes.Structure):
+    _fields_ = [("attributes", wintypes.DWORD), ("created", _FileTime),
+                ("accessed", _FileTime), ("written", _FileTime),
+                ("volume", wintypes.DWORD), ("size_high", wintypes.DWORD),
+                ("size_low", wintypes.DWORD), ("links", wintypes.DWORD),
+                ("index_high", wintypes.DWORD), ("index_low", wintypes.DWORD)]
 
 
 def _api():
@@ -38,10 +56,10 @@ def _api():
         wintypes.LPVOID, ctypes.POINTER(wintypes.BOOL), ctypes.POINTER(wintypes.LPVOID),
         ctypes.POINTER(wintypes.BOOL)]
     security.GetSecurityDescriptorDacl.restype = wintypes.BOOL
-    security.SetNamedSecurityInfoW.argtypes = [
-        wintypes.LPWSTR, wintypes.DWORD, wintypes.DWORD, wintypes.LPVOID,
+    security.SetSecurityInfo.argtypes = [
+        wintypes.HANDLE, wintypes.DWORD, wintypes.DWORD, wintypes.LPVOID,
         wintypes.LPVOID, wintypes.LPVOID, wintypes.LPVOID]
-    security.SetNamedSecurityInfoW.restype = wintypes.DWORD
+    security.SetSecurityInfo.restype = wintypes.DWORD
     security.OpenProcessToken.argtypes = [wintypes.HANDLE, wintypes.DWORD, ctypes.POINTER(wintypes.HANDLE)]
     security.OpenProcessToken.restype = wintypes.BOOL
     security.CreateRestrictedToken.argtypes = [
@@ -55,6 +73,11 @@ def _api():
     security.DuplicateTokenEx.restype = wintypes.BOOL
     kernel.CloseHandle.argtypes = [wintypes.HANDLE]
     kernel.CloseHandle.restype = wintypes.BOOL
+    kernel.CreateFileW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+                                   wintypes.LPVOID, wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE]
+    kernel.CreateFileW.restype = wintypes.HANDLE
+    kernel.GetFileInformationByHandle.argtypes = [wintypes.HANDLE, ctypes.POINTER(_ByHandleFileInformation)]
+    kernel.GetFileInformationByHandle.restype = wintypes.BOOL
     kernel.LocalFree.argtypes = [wintypes.LPVOID]
     kernel.LocalFree.restype = wintypes.LPVOID
     return security, kernel
@@ -62,6 +85,10 @@ def _api():
 
 def _set_dacl(path: Path, sddl: str):
     security, kernel = _api()
+    path = Path(path)
+    before = path.lstat()
+    is_directory = stat.S_ISDIR(before.st_mode)
+    regular_path(path, directory=is_directory, links=before.st_nlink)
     descriptor = wintypes.LPVOID()
     require(security.ConvertStringSecurityDescriptorToSecurityDescriptorW(
         sddl, 1, ctypes.byref(descriptor), None), "fixture SDDL conversion failed")
@@ -70,10 +97,23 @@ def _set_dacl(path: Path, sddl: str):
         require(security.GetSecurityDescriptorDacl(
             descriptor, ctypes.byref(present), ctypes.byref(dacl), ctypes.byref(defaulted))
             and present.value and dacl.value, "fixture DACL extraction failed")
-        error = security.SetNamedSecurityInfoW(
-            str(path), 1, _DACL_SECURITY_INFORMATION | _PROTECTED_DACL_SECURITY_INFORMATION,
-            None, None, dacl, None)
-        require(error == 0, "fixture DACL installation failed")
+        handle = kernel.CreateFileW(str(path), _READ_CONTROL | _WRITE_DAC | _FILE_READ_ATTRIBUTES,
+                                    7, None, 3, _FILE_FLAG_BACKUP_SEMANTICS | _FILE_FLAG_OPEN_REPARSE_POINT,
+                                    None)
+        require(handle != ctypes.c_void_p(-1).value, "fixture security handle open failed")
+        try:
+            info = _ByHandleFileInformation()
+            require(kernel.GetFileInformationByHandle(handle, ctypes.byref(info)), "fixture handle identity unavailable")
+            index = (info.index_high << 32) | info.index_low
+            require(not info.attributes & 0x400 and index == before.st_ino and info.links == before.st_nlink,
+                    "fixture security target changed")
+            error = security.SetSecurityInfo(
+                handle, 1, _DACL_SECURITY_INFORMATION | _PROTECTED_DACL_SECURITY_INFORMATION,
+                None, None, dacl, None)
+            require(error == 0, "fixture DACL installation failed")
+            require(path.lstat().st_ino == index, "fixture security path changed")
+        finally:
+            kernel.CloseHandle(handle)
     finally:
         kernel.LocalFree(descriptor)
 
