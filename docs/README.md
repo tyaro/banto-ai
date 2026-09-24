@@ -13,7 +13,7 @@ S1初回監査（`0368769acf12a0279c84f30c6435e853208386e9`）はP2=6／P3=1件�
 修正commit `d6ca0f9ee85172caae3b658bdb105287f8e43141`への独立再監査はP0〜P3 0件で合格し、
 S1は完了し、candidate stackはmain統合済みです。S2も独立監査P0〜P3 0件で完了しました。S3 deterministic runnerも独立監査P0〜P3 0件で完了し、`S3_READY=yes`、`INTEGRATION_READY=yes`です。S4-A engineering inspection/resource guardも`8befc5bb`と`e61d14c4`でmainへ統合され、初回監査P2/P3を修正した再監査はP0〜P3 0件、`S4_A_READY=yes`、`INTEGRATION_READY=yes`です。受入statusは常に`not_completed`で、formal run・性能評価・promotionは未実施です。次はS4-Bのtemp-only native publisher/DACL/restricted-token/race harnessです。最新状態は[S4-A監査結果](results/anomaly-multiseed-v0.3-s4-a-audit-2026-09-07.md)を参照してください。
 
-2026-09-25のS4-B作業では、既存fixture publisherの公開物だけにprotected read-only DACLを設定し、別Python process由来の制限付きimpersonation tokenによる実Win32 AccessCheck、別processの実write/delete拒否、2 processの同名公開競合を検証した。Windows CPython 3.14.0でnative 2/2、S4-A/公開関連46/46がpassした。Windows 3.12はこの端末に存在せず、同runtimeのnative受入、独立監査、S4全体の受入、dev/smoke、formal permissionは未完了である。追加したnative moduleはsystem-temp fixture専用で、正式rootへの公開入口ではない。
+2026-09-25のS4-B作業では、既存fixture publisherの公開物だけにprotected read-only DACLを設定し、別Python process由来の制限付きimpersonation tokenによる実Win32 AccessCheck、別processの実write/delete拒否、2 processの同名公開競合を検証した。DACL変更はopen済みhandleのfile identityとreparse属性を確認して行う。Windows CPython 3.14.0でS4-A/公開関連46/46、Python.orgの[3.12.10 embeddable package](https://www.python.org/downloads/release/python-31210/)を一時領域に展開した3.12.10で公開/native 19/19がpassした。3.12.10 archive SHA-256は`156c7eea90d58cd7e91a23f28a0056616b13e9f4cf4901b7b99b837b7848c6da`、実行ファイルのAuthenticode署名はValidだった。Windows Server 2025 CIの3.12.10/3.14.7互換jobも[run 36054996701](https://github.com/tyaro/banto-ai/actions/runs/36054996701)で各19/19 passした。ただし手元のWindows 11 25H2はbuild 26200 **UBR 9457**で、事前登録の**UBR 9168**と異なる。CIも正式Windows 11環境ではない。独立監査、S4全体の受入、dev/smoke、formal permissionは未完了である。追加したnative moduleはsystem-temp fixture専用で、正式rootへの公開入口ではない。
 
 ## 正本の読み方
 
@@ -77,7 +77,7 @@ Phase 3の内訳は次のとおりです。
   独立監査P0〜P3 0件、S2 67/67 pass。詳細はS2監査結果を参照
 - v0.3 S3実装commit群 `bdd59c5`、`2a01146`、`bb42d37`、`dc52266`: 固定inventory、paired materialization、完全ledger、安全停止、provenance、non-overwrite publisherを実装し、独立監査P0〜P3 0件。CI run `34044283016`はPython 3.12/3.14の全工程green。S3 73/73 pass。MemoryErrorはglobal stopへ強化したが、実OOM根因・commit limitは未解明。次はS4-Bのtemp-only native publisher/DACL/restricted-token/race harness。S4全体・性能評価・formal run・promotionは未実施
 - v0.3 S4-A: engineering inspection/resource guardを実装し、独立再監査P0〜P3 0件。acceptanceは`not_completed`、`FORMAL_PERMISSION=no`で、S4全体は未完了。次はS4-B
-- v0.3 S4-B進行中（2026-09-25）: Windows 3.14.0でtemp fixtureのprotected DACL、別process由来restricted tokenのAccessCheck、実write/delete拒否、2 process競合を検証。Windows 3.12と独立監査は未実施。S4受入・formal permissionは未完了
+- v0.3 S4-B進行中（2026-09-25）: Windows 3.14.0/3.12.10でtemp fixtureのprotected DACL、別process由来restricted tokenのAccessCheck、実write/delete拒否、2 process競合を検証。Windows Server CIも両minorでnative 19/19 pass。手元のWindows 11 UBR 9457は正式pin 9168と不一致。独立監査、S4受入、formal permissionは未完了
 
 ## 文書カテゴリ
 
