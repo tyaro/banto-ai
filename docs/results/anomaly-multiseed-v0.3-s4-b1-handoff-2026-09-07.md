@@ -3929,3 +3929,15 @@ OUT artifacts/independent-inference-math-2026-09-24。draws/rules/fixture/hand-a
 report.md/HTML/JSONを保存。HTMLは18展開セクション/54表/2,610行を構造確認。3入力5,171,731bytesを認証し元payload読取0。処理1.625秒、process peak private 44.18MiB、前後観測の最小空きRAM 14.70GiB/commit余裕 21.44GiB、終了時C/D空き 126.09/293.77GiB。 最終文書revision/pinはsavepoint-evidence.json。新観測/評価/score再計算/実CI0、旧保存点/source/本流/dirty guard不変、banto-24 PAUSED。
 
 正式full documentは出さず、実dev/smoke母数によるschema部分検証のみ。入力時点のreadinessは文脈として保持する。formal/promotion/S6=false、selected=null、performance=not_evaluated。次は既存のsource/runtime・単一writer受入記録と独立consumerの接続状況を調べ、freeze前に必要な実装・証拠の残件を確定する。既存合格試験を繰り返す必要があるかを先に判断し、保留principalや正式holdoutは起動しない。
+
+## 162. 受入証拠・consumer接続の残件整理（2026-09-25）
+
+[詳細と5まとまりの完了条件](anomaly-multiseed-v0.3-acceptance-gap-review-2026-09-25.md)。基準ddd0165a45f42e9921e849e150d2cba63714b3a6、OUT artifacts/acceptance-gap-review-2026-09-25、成功verified/とsupplement-source-map.json、最終文書revision/pinはsavepoint-evidence.json。11保存点＋3小型receipt203,543bytesを外部hashへ照合。158source等比較中157一致、差分は旧READMEの追記だけ。単一writer実装は旧27試験時点から不変。
+
+10consumer入口から静的import候補17モジュールを記録。manifest.pyのみworking CRLF/Git LF差があり、正規化後同一だがraw不一致のまま保全。旧Linux CI036ecb4からselected11本に差があるため、そのpassは最新候補の全回帰受入ではない。完全dependency/runtime closureやconsumer freezeとは記録しない。
+
+本流が別作業でclean 6f1285d28a37edf486ba5c49b8dac3708c7f3067へ進んだ（4commit/5path）。main docs/READMEのtemp native/Windows互換試験記録はGit bytesまで確認し、raw/CI独立再検証なし。自動統合やWindows3.12必須化、§116保留principalの再開なし。今後helper.boundariesの旧main HEAD固定をそのまま使わず、今回review.pyの観測境界を参照する。実計算c01d1c9、完走closed、旧保存点、dirty guardは不変。
+
+OSはProfessional25H2/26200/UBR9457。旧engineering9445からの更新を記録、正式pin9168や過去runtimeは変更なし。主確認2.450秒、peak26.82MiB、最小空きRAM11.49GiB/commit余裕19.98GiB、C126.24/D293.31GiB。新観測・評価・score/bootstrap・試験実行・元payload読取0。初回main guard停止とraw差guard停止をOUT直下に残し、成功確認をverified/へ分離した。
+
+freeze前は(1)単一writer/OS方針の正式運用契約、(2)consumer正式入出力、(3)source/runtime受入・版固定、(4)保存公開接続、(5)容量時間予算の5まとまり。正式holdoutと最終独立監査はその後。次は1/2の接点として、consumerの入力・検査・出力と必要な接続試験を具体案にする。既存合格試験/720評価を反射的に再実行せず、実holdout・gateは閉じたまま。banto-24 PAUSED、formal/promotion/S6=false、Phase2/3全体未完了。

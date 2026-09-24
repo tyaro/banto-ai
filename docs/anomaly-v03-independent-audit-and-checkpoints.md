@@ -1,6 +1,6 @@
 # 保存結果の独立検算と長時間実行の進行記録
 
-最新（2026-09-25）: [用途別18結果表・5,670診断行の出力を完了](results/anomaly-multiseed-v0.3-descriptive-report-2026-09-25.md)。27試験、元入力照合、schema部分形式、Markdown/HTMLの構造確認を通過。元payload読取0。次は既存受入記録とconsumer freeze前の残件を確認する。正式holdout/CI/gate・source/runtime受入・完全S6は残る。以下は段階ごとの履歴である。
+最新（2026-09-25、受入残件整理）: [既存受入記録とconsumer接続の確認](results/anomaly-multiseed-v0.3-acceptance-gap-review-2026-09-25.md)を完了。11保存点＋3 receiptを照合し、freeze前を5まとまりに整理。計算・試験の再実行なし。17モジュールの静的候補表、manifest.pyの改行差、本流の別更新、UBR9457を記録。次は単一writer方針でconsumerの入出力・公開手順の契約案を具体化する。以下は各時点の履歴。
 
 2026-09-16。単一writerの運用改訂を継続する。独立ledger検算、固定plan・journalのmetadata検査/状態復元、旧6件trialとのpreflight証拠照合、metadata専用の追記writerは実装済み。全dev/smokeを動かすcampaign controllerは**未接続・実行未許可**。
 科学的な式・seed・layout・候補・母数・bootstrap・性能gateと、旧formal gateを変更しない。
