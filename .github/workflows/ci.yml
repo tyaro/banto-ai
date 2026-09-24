@@ -43,7 +43,13 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Create canonical fixture temp
+        shell: pwsh
+        run: New-Item -ItemType Directory -Path C:\banto-v03-ci-temp -ErrorAction Stop | Out-Null
       - name: Windows native fixture compatibility
         env:
           PYTHONPATH: src;.
+          TMPDIR: C:\banto-v03-ci-temp
+          TEMP: C:\banto-v03-ci-temp
+          TMP: C:\banto-v03-ci-temp
         run: python -m unittest tests.test_anomaly_v03_publication tests.test_anomaly_v03_native -v
