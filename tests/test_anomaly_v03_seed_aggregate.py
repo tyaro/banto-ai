@@ -123,11 +123,31 @@ class CountTests(unittest.TestCase):
             for kind in audit.arithmetic.METRICS[:5]:
                 metric = row['ledger_audit']['metrics'][kind]
                 metric.update(numerator=0, value=0.)
-                if kind == 'precision': metric.update(denominator=0, value=None)
+                if kind == 'precision': metric.update(denominator=0, value=None, ci_status='inconclusive')
             row['ledger_audit']['metrics']['effective_clean_rate'] = 0.
         result = audit.aggregate_evaluations(self.rows)
         self.assertIsNone(result['by_seed'][0]['points']['precision'])
         self.assertEqual(result['by_seed'][0]['counts']['precision'], [0, 0])
+        self.assertEqual(result['zero_denominator_input_metrics'], 240)
+        self.assertEqual(len(result['by_seed'][0]['undefined_input_points']), 12)
+        self.rows[0]['ledger_audit']['metrics']['precision']['ci_status'] = 'not_evaluated'
+        with self.assertRaises(ValueError): audit.aggregate_evaluations(self.rows)
+
+    def test_some_zero_alert_layouts_stay_in_seed_counts(self):
+        row = self.rows[0]
+        row['ledger_audit']['equipment_episodes'] = 0
+        for kind in audit.arithmetic.METRICS[:5]:
+            metric = row['ledger_audit']['metrics'][kind]
+            metric.update(numerator=0, value=0.)
+            if kind == 'precision': metric.update(denominator=0, value=None, ci_status='inconclusive')
+        row['ledger_audit']['metrics']['effective_clean_rate'] = 0.
+        result = audit.aggregate_evaluations(self.rows)
+        seed = result['by_seed'][0]
+        self.assertEqual(seed['evaluations'], 12)
+        self.assertEqual(seed['counts']['precision'], [33, 55])
+        self.assertEqual(seed['counts']['machine_recall'], [11, 120])
+        self.assertEqual(seed['counts']['clean_rate'], [11, 40380])
+        self.assertEqual(seed['undefined_input_points'], [{'evaluation_id': row['identity']['evaluation_id'], 'metrics': ['precision']}])
 
     def test_unknown_or_duplicate_profile_diagnostic_rejected(self):
         row = self.rows[0]

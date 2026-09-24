@@ -35,7 +35,7 @@ def point_matches(actual, expected):
 
 def metric_counts(metric, kind):
     pair = arithmetic.counts([metric['numerator'], metric['denominator']], kind)
-    fields(metric, {'ci_status': 'not_evaluated', 'ci_lower': None, 'ci_upper': None,
+    fields(metric, {'ci_status': 'not_evaluated' if pair[1] else 'inconclusive', 'ci_lower': None, 'ci_upper': None,
                     'null_replicates': 0}, 'saved CI must be unevaluated')
     point_matches(metric['value'], arithmetic.ratio(*pair, kind))
     return list(pair)
@@ -89,11 +89,15 @@ def table(rows, **identity):
     counts = {kind: [sum(r['counts'][kind][i] for r in rows) for i in (0, 1)] for kind in arithmetic.METRICS}
     diagnostics = [{'evaluation_id': r['identity']['evaluation_id'], 'profiles': r['inconclusive_profiles']}
                    for r in rows if r['inconclusive_profiles']]
+    undefined = [{'evaluation_id': r['identity']['evaluation_id'],
+                  'metrics': [k for k, pair in r['counts'].items() if pair[1] == 0]}
+                 for r in rows if any(pair[1] == 0 for pair in r['counts'].values())]
     return {**identity, 'evaluations': len(rows), 'counts': counts,
         'points': {kind: arithmetic.ratio(*pair, kind) for kind, pair in counts.items()},
         'scheduled_clean_seconds': counts['clean_rate'][1],
         'effective_clean_seconds': sum(r['effective_clean_seconds'] for r in rows),
         'profile_status': 'inconclusive' if diagnostics else 'success', 'profile_diagnostics': diagnostics,
+        'undefined_input_points': undefined,
         'ci_status': 'not_evaluated', 'ci_lower': None, 'ci_upper': None}
 
 
@@ -145,6 +149,7 @@ def aggregate_evaluations(evaluations):
                     'ci_status': 'not_evaluated', 'ci_lower': None, 'ci_upper': None})
     return {**QUIET, 'format': 'anomaly-v03-dev-smoke-seed-counts-v1',
         'status': 'complete_dev_smoke_counts', 'evaluations': 720, 'seed_clusters': clusters,
+        'zero_denominator_input_metrics': sum(pair[1] == 0 for r in rows for pair in r['counts'].values()),
         'by_seed': by_seed, 'by_role': by_role, 'paired_descriptive': paired,
         'selected_candidate': None, 'bootstrap_performed': False, 'real_performance_intervals_computed': 0,
         'limits': ['dev8 and smoke2 kept separate; no combined inferential population',
