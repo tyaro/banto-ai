@@ -3903,3 +3903,13 @@ OUT artifacts/independent-inference-math-2026-09-24。draws/rules/fixture/hand-a
 実行2.516秒、peak 27.36MiB、RAM空き最小15.09GiB/commit余裕21.12GiB、C/D空き128.43/298.74GiB。保存約1.3MB、旧保存点/実source/本流/dirty guard保全、banto-24 PAUSED。
 
 次は保存済み検出遅延・sliceの独立集計。必要列の認証と有限メモリでの読取り、母数/重複/欠落、結合delayを確認し、既存score再計算は不要。正式holdout/CI/gateや保留principalを起動しない。
+
+## 159. 保存済み720評価の検出遅延・診断slice独立集計（2026-09-25）
+
+[詳細](anomaly-multiseed-v0.3-independent-slice-audit-2026-09-25.md)。実装`782dcb7957e29dce481f0dea5c136df85a9152f3`、OUT artifacts/independent-slice-audit-2026-09-25。関連32試験通過。全120区間/720評価JSONを監査済みpinで認証して読み、10,368,000 score行・14,400事例からincident6軸/score9軸を集計。seed90/role18表が旧countsと一致し、母数・重複欠落・順序を確認した。旧score/matching検算を再利用し、再計算しない。
+
+因果検出だけの遅延1〜5秒の正確な度数を合算し、全体median/mean/min/maxを算出。未検出はnull。event-offsetは40計画event参照で10件のload_proxyを対象外として明示、負offset試験外も保持。target品質・有効qualityと交差する同target正例窓のoverlapという診断定義を明記。正式slice schema/full documentを完了扱いしない。
+
+処理844.159秒、process peak private 145.32MiB、最小空きRAM 9.60GiB/commit余裕 16.49GiB。終了時C/D空き 127.05/298.62GiB。 21 checkpointと120区間reportを保存。最終文書revision/pinはsavepoint-evidence.json。旧保存点/実source/本流/dirty guard不変、banto-24 PAUSED。新観測・新評価・score計算・実CI0。
+
+次は、別々に検算したcounts・遅延・sliceを単一の認証済み解析入力へ統合し、正式schemaで不足するsource/runtime証拠等を整理する。現dev8/smoke2は記述集計に限定し、正式40holdoutの代用にしない。 正式holdout/CI/gate、runtime/単一writer受入、完全S6/Phase 2/3は残る。formal/promotion/S6=false、selected=null、performance=not_evaluated。

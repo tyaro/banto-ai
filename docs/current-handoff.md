@@ -1,23 +1,21 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-24 JST。**独立算術→凍結analysis結果表の接続を実装。59試験、7手例の各9表/180判定を通過。正式文書全体・実データCIは未接続。**
+更新: 2026-09-25 JST。**全120区間/720評価の保存済み検出遅延・条件別集計を完了。関連32試験、seed90表/用途18表と旧countsの照合を通過。**
 
-- [今回の結果表接続](results/anomaly-multiseed-v0.3-analysis-table-adapter-2026-09-24.md)、[前工程の認証済みseed集計](results/anomaly-multiseed-v0.3-independent-seed-aggregation-2026-09-24.md)。長い引継書§158。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装`9b18626703c40801a164f61eb01dab3acbb36eae`。OUT `artifacts/independent-analysis-adapter-2026-09-24`、最終文書revision/pinは`savepoint-evidence.json`。
+- [今回の遅延・条件別集計](results/anomaly-multiseed-v0.3-independent-slice-audit-2026-09-25.md)。長い引継書§159。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装`782dcb7957e29dce481f0dea5c136df85a9152f3`。OUT `artifacts/independent-slice-audit-2026-09-25`、最終文書revision/pinは`savepoint-evidence.json`。
 
 ## 今回の成果と次の作業
 
-`anomaly_v03_analysis_adapter.py`は手例cluster/4 draw/diagnosticsから独立算術を呼び、9表・8 availability・全180gate・候補選択を凍結schemaの部分形式へ変換する。effective clean秒と全検出delayを明示入力し、結合delayからmedian/mean/min/maxを計算。区間中央値の平均や未検出0秒補完はしない。
+保存済み10,368,000 score行・14,400異常事例から6軸のincident集計と9軸のscore診断を導出した。720評価JSONは過去の独立監査が認証したpinと全bytes一致。既存profile/score/matchingの導出検算を再利用し、score計算は繰り返していない。dev/smokeを分離し、登録順・12 layouts・予定母数・重複欠落・profile状態を保持する。
 
-新規11＋算術21＋S1報告契約27=59試験通過。両候補合格/C1のみ/C2のみ/両方不合格/engineering未受入/C0警報0/C0 profile判定不能の7手例を保存した。各2架空clusters/4replicates。旧固定40×50,000 metadataを手例の実行証拠に使わない。
+検出遅延は因果検出時だけの1〜5秒の正確な度数を保存。全体中央値を元の度数合算から求め、未検出0秒補完や区間中央値の平均をしない。event-offsetは40計画eventの指定target参照で、10件のload_proxyをunscored_target、負offsetの試験外をoutside_testとして保持する。qualityは当該target自身、overlapは有効qualityと交差する正例の同じtargetの判定窓全体。正式slice schemaを完成扱いしない。
 
-**今回出力はfixture packetで正式analysis文書ではない。** 表・仮選択はfixture_*欄、実selected_candidate=null、formal/promotion/S6=false、performance=not_evaluated、formal_document_emitted=false。実dev/smoke countsはreadiness確認だけに読み、CI計算には渡していない。実際のholdout、formal source/runtime証拠、sliceの導出は未接続。
+処理844.159秒、process peak private 145.32MiB、最小空きRAM 9.60GiB/commit余裕 16.49GiB。終了時C/D空き 127.05/298.62GiB。 最初の1区間＋6区間ごとの保存、旧保存点/source/本流/dirty guard不変、banto-24 PAUSED。新観測・新評価・score再計算・実CIは0。
 
-実行2.516秒、peak private 27.36MiB、最小空きRAM 15.09GiB/commit余裕 21.12GiB、終了時C/D空き 128.43/298.74GiB、保存約1.3MB。旧保存点/source/本流/dirty guard不変、banto-24 PAUSED。新観測・新評価・score再計算・実CIは0。
+**次は、別々に検算したcounts・遅延・sliceを単一の認証済み解析入力へ統合し、正式schemaで不足するsource/runtime証拠等を整理する。現dev8/smoke2は記述集計に限定し、正式40holdoutの代用にしない。** `slices.json`と前工程`verified/authenticated-counts.json`は今回manifestのpinを信頼起点に再利用できる。新しい情報が不要なら巨大な元payloadを再読取りしない。
 
-**次は保存済み実データの検出遅延と条件別sliceの独立集計。** 必要列とpinを調べ、メモリを抑えた読取りで全検出delay・slice母数/重複/欠落を照合する。区間別中央値から全体中央値を推定しない。既存scoreを計算し直す必要はない。
-
-現dev8/smoke2は用途別の記述集計を維持。正式40 holdout bootstrapを代用しない。holdout/producer/実CI/正式gateを自動起動しない。正式analysis文書全体のprovenance/runtime、単一writer受入、完全S6、Phase 2/3全体は未完了。
+前工程analysis adapter（実装9b18626703c40801a164f61eb01dab3acbb36eae、OUT independent-analysis-adapter-2026-09-24）は7手例の9表/180判定、関連59試験まで接続済み。fixture packetであり正式full document・実CIではない。formal/promotion/S6=false、performance=not_evaluated、selected_candidate=nullを維持する。holdout/producer/実CI/正式gateを自動起動しない。正式analysis全体のprovenance/runtime、単一writer受入、完全S6、Phase 2/3全体は未完了。
 
 ## 前工程のseed集計
 

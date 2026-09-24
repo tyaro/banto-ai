@@ -1,6 +1,6 @@
 # 保存結果の独立検算と長時間実行の進行記録
 
-最新（2026-09-24）: [独立算術からanalysis結果表への接続が59試験と7手例を通過](results/anomaly-multiseed-v0.3-analysis-table-adapter-2026-09-24.md)。表の部分形式を検証し、full documentや実CIは未出力。次は保存済みdelay/slice集計。正式gate・完全S6は残る。以下は段階ごとの履歴である。
+最新（2026-09-25）: [保存済み720評価の遅延・条件別集計が完了](results/anomaly-multiseed-v0.3-independent-slice-audit-2026-09-25.md)。関連32試験、seed90/用途18表の旧counts照合を通過。次はcounts・delay・sliceの認証済み解析入力への統合。正式full document・実CI・gate・完全S6は残る。以下は段階ごとの履歴である。
 
 2026-09-16。単一writerの運用改訂を継続する。独立ledger検算、固定plan・journalのmetadata検査/状態復元、旧6件trialとのpreflight証拠照合、metadata専用の追記writerは実装済み。全dev/smokeを動かすcampaign controllerは**未接続・実行未許可**。
 科学的な式・seed・layout・候補・母数・bootstrap・性能gateと、旧formal gateを変更しない。
@@ -466,3 +466,9 @@ Random/gauss/binary64/round/JSONは共有primitive。外部pin付き完走保存
 ## analysis結果表への接続（2026-09-24）
 
 [詳細](results/anomaly-multiseed-v0.3-analysis-table-adapter-2026-09-24.md)。独立算術の9表・180判定を凍結schemaの部分形式へ接続。全検出delayとeffective exposureを必須にし、中央値は元delayから計算する。59試験・7架空例を保存。2clusters/4replicatesを正式40×50,000の実行に見せず、fixture packetだけを出力した。実dev/smokeはreadiness確認のみ、CI未計算。次は実保存delay/sliceの独立集計で、正式文書全体/source/runtime受入は別途残る。
+
+## 保存済み検出遅延・条件別集計（2026-09-25）
+
+[実装と結果](results/anomaly-multiseed-v0.3-independent-slice-audit-2026-09-25.md)。全120区間/720評価を認証し、保存判定10,368,000行・14,400事例を独立に分類・合算。incident6軸/score9軸、正確な遅延度数をseed90表・用途18表へ保存し、全表が旧countsと一致した。32試験通過。入力認証を担当する呼出し側と純集計を区別する。新score計算や実CIは行わない。正式schema全体のslice検証ではない。
+
+処理844.159秒、process peak private 145.32MiB、最小空きRAM 9.60GiB/commit余裕 16.49GiB。終了時C/D空き 127.05/298.62GiB。 1評価ずつの読取りと6区間ごとの保存。次は、別々に検算したcounts・遅延・sliceを単一の認証済み解析入力へ統合し、正式schemaで不足するsource/runtime証拠等を整理する。現dev8/smoke2は記述集計に限定し、正式40holdoutの代用にしない。
