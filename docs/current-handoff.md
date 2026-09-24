@@ -1,29 +1,33 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-24 JST。**監査済み720評価のseed raw countsを認証・集計。関連33試験と旧集計照合を通過。実データCIは未算出。**
+更新: 2026-09-24 JST。**独立算術→凍結analysis結果表の接続を実装。59試験、7手例の各9表/180判定を通過。正式文書全体・実データCIは未接続。**
 
-- [今回の認証・seed集計](results/anomaly-multiseed-v0.3-independent-seed-aggregation-2026-09-24.md)、[前工程の独立算術](results/anomaly-multiseed-v0.3-independent-inference-math-2026-09-24.md)。長い引継書§157。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。最終実装`d48ecb4ac2a1d6c7c72d3cd16966b84600e165c5`。OUT `artifacts/independent-seed-aggregation-2026-09-24`、成功は`verified/`。最終文書revision/pinはOUTの`savepoint-evidence.json`。
+- [今回の結果表接続](results/anomaly-multiseed-v0.3-analysis-table-adapter-2026-09-24.md)、[前工程の認証済みseed集計](results/anomaly-multiseed-v0.3-independent-seed-aggregation-2026-09-24.md)。長い引継書§158。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装`9b18626703c40801a164f61eb01dab3acbb36eae`。OUT `artifacts/independent-analysis-adapter-2026-09-24`、最終文書revision/pinは`savepoint-evidence.json`。
 
 ## 今回の成果と次の作業
 
-`anomaly_v03_seed_aggregate.py`は、前工程manifestを外部SHAで認証し、生成/score/完走保存点と全報告の入力pin・identity・最終attemptを接続する。観測payloadやscoreを再計算せず、保存時点の検算結果を使う。新たな生payloadの完全性証明ではない。
+`anomaly_v03_analysis_adapter.py`は手例cluster/4 draw/diagnosticsから独立算術を呼び、9表・8 availability・全180gate・候補選択を凍結schemaの部分形式へ変換する。effective clean秒と全検出delayを明示入力し、結合delayからmedian/mean/min/maxを計算。区間中央値の平均や未検出0秒補完はしない。
 
-dev8/smoke2を登録順で保持し、各seedの全12 layouts×2層×3候補、profile状態、予定母数を検査した。seed90表・role18表・候補差12表を保存。旧集計の1404組の整数countsと144差分点が一致。整数は完全一致、点だけ1e-12 relative/absoluteで比較。overallは両層の分子/分母の合計。共通算術のcounts/ratioへ接続し、実bootstrap/gateは呼んでいない。
+新規11＋算術21＋S1報告契約27=59試験通過。両候補合格/C1のみ/C2のみ/両方不合格/engineering未受入/C0警報0/C0 profile判定不能の7手例を保存した。各2架空clusters/4replicates。旧固定40×50,000 metadataを手例の実行証拠に使わない。
 
-初回は警報0件の適合率46評価の`ci_status=inconclusive`を厳しすぎる入口が拒否した。初回記録を保持し、分母0のnull形式を受け入れる修正を実施。全警報0/一部警報0を含む新規12＋既存21=33試験通過。undefined_input_pointsにIDを残して分母や予定時間から当該区間を落とさない。profile判定不能は今回0件だがfixtureで伝播を確認。
+**今回出力はfixture packetで正式analysis文書ではない。** 表・仮選択はfixture_*欄、実selected_candidate=null、formal/promotion/S6=false、performance=not_evaluated、formal_document_emitted=false。実dev/smoke countsはreadiness確認だけに読み、CI計算には渡していない。実際のholdout、formal source/runtime証拠、sliceの導出は未接続。
 
-実行1.289秒、peak private 39.27MiB、最小空きRAM 15.63GiB / commit余裕 21.22GiB、終了時C/D空き 130.22/297.07GiB。小さな248 JSONを認証。追加観測/評価/score再計算/実CIは0。旧保存点/source/本流/dirty guard不変、banto-24 PAUSED。
+実行2.516秒、peak private 27.36MiB、最小空きRAM 15.09GiB/commit余裕 21.12GiB、終了時C/D空き 128.43/298.74GiB、保存約1.3MB。旧保存点/source/本流/dirty guard不変、banto-24 PAUSED。新観測・新評価・score再計算・実CIは0。
 
-**次は独立analysis出力のschema接続。** 認証済みcountsと算術の入力/出力を整理し、手例でschema/gate/選択の接続を検証する。現dev8/smoke2はrole別の記述集計を維持し、正式40 holdout bootstrapを代用しない。実CI/holdout/producer/正式gateを自動起動しない。
+**次は保存済み実データの検出遅延と条件別sliceの独立集計。** 必要列とpinを調べ、メモリを抑えた読取りで全検出delay・slice母数/重複/欠落を照合する。区間別中央値から全体中央値を推定しない。既存scoreを計算し直す必要はない。
 
-slice/delay、runtime/単一writer受入、正式実データCI/全gate、完全S6は残る。selected_candidate=null、formal/promotion/S6=false、performance=not_evaluated。Phase 2/3全体を完了扱いしない。
+現dev8/smoke2は用途別の記述集計を維持。正式40 holdout bootstrapを代用しない。holdout/producer/実CI/正式gateを自動起動しない。正式analysis文書全体のprovenance/runtime、単一writer受入、完全S6、Phase 2/3全体は未完了。
+
+## 前工程のseed集計
+
+全120区間/720評価を5保存点のhashと全報告のidentity/最終attempt/入力pinで認証済み。seed90表・role18表の1404 counts、候補差12表144点が旧集計と一致。dev8/smoke2は各12layouts×両層×3候補。警報0の適合率46評価はnull診断を保持し、予定母数から除外していない。実装d48ecb4、文書c02e7b0、OUT artifacts/independent-seed-aggregation-2026-09-24、成功verified/。manifest7935bytes/SHA2563d03cdef2852e8432b7d1ca9de7cab25ff9b994fefa9819cb290263145426bb5。counts533126bytes/SHA256e6f3012a0a6fe622b5fc7d6365a7a1f2afadec16517f1bbe2cc423253ae68b2e。保存時点の監査連結であり、今日の全payload再検査ではない。
 
 ## 前工程の到達範囲
 
 全120区間・240datasetsの正常生成/overlay/丸めは4,320,000保存観測行で完全一致。全720評価のprofile/score/ledger検算と入力pinで接続済み。旧C1/C2の記述統計は変わらない。生成検算の実装47dbc165f12fb1ce7608bb57625cb498bc4a4d04、文書31b73008828a52681f2ae9a887d88ddedecb516f、OUT artifacts/independent-generation-audit-2026-09-24、成功はverified/、manifest 29473bytes/SHA256322a7fe20b23febcb4467ba16034ab9bae5c209777590150c61bccbae09c90f8。
 
-生成検算工程は既存10 seedを120 pairs分メモリ内で再構成し、新dataset/新評価は0だった。その次の算術検証は固定bootstrap indexと手例だけを計算した。今回のseed集計は保存済み監査報告を読み、観測seed再構成/score再計算/bootstrapを行っていない。旧観測/score検算は不要に繰り返さない。
+生成検算工程は既存10 seedを120 pairs分メモリ内で再構成し、新dataset/新評価は0だった。その次の算術検証は固定bootstrap indexと手例だけを計算した。前工程のseed集計は保存済み監査報告を読み、観測seed再構成/score再計算/bootstrapを行っていない。旧観測/score検算は不要に繰り返さない。
 
 ## 完走証拠と保全
 

@@ -177,3 +177,9 @@ v0.2のstandalone seed-cluster analysisは [`anomaly-multiseed-evaluation-plan-v
 検算済み720評価を保存点のhashで認証し、開発用8 seedと動作確認用2 seedを分けて集計しました。各seedの12区間・両条件・3候補を確認し、seed別90表と用途別18表、候補差12表が過去の記述集計と一致しました。警報0件の適合率46評価もnullとして保持しています。関連33試験通過、処理約1.3秒、最大メモリ約39MiB。[結果](results/anomaly-multiseed-v0.3-independent-seed-aggregation-2026-09-24.md)。
 
 次は独立analysis出力とschemaの接続を手例で確認します。正式40 holdoutの解析を現10 seedに代用せず、実信頼区間・正式gate・完全S6・Phase 2/3全体は未完了を維持します。
+
+### 2026-09-24：解析結果表の出力形式への接続
+
+独立した計算結果を所定の9表へ変換し、候補比較・分母0・判定不能の扱いを7手例で確認しました。関連59試験通過。検出遅延の中央値は元の値を結合して計算し、区間別中央値の平均を避けています。[結果](results/anomaly-multiseed-v0.3-analysis-table-adapter-2026-09-24.md)。
+
+検証したのは表の形式と手例の整合性で、正式な解析文書全体や実データの信頼区間はまだ完成していません。次は保存済み実データの検出遅延と条件別内訳の独立集計です。正式holdout/gate・完全S6・Phase 2/3全体の残件を維持します。

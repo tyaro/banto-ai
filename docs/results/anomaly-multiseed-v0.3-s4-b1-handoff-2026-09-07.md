@@ -3893,3 +3893,13 @@ OUT artifacts/independent-inference-math-2026-09-24。draws/rules/fixture/hand-a
 処理1.289秒、peak private 39.27MiB、最小空きRAM 15.63GiB/commit余裕 21.22GiB、終了時C/D空き 130.22/297.07GiB。新規観測/評価/score再計算/実CIは0。旧保存点・本流・実計算source・dirty guard保全、banto-24 PAUSED。
 
 次は独立analysis出力のschema接続を手例で検証する。実dev/smokeに正式40holdoutのbootstrap/gateを代用しない。slice/delay/runtime・単一writer受入/正式holdout/完全S6は未完了。formal/promotion=false、selected_candidate=null、performance=not_evaluated。
+
+## 158. 独立算術からanalysis結果表への手例接続（2026-09-24）
+
+[詳細](anomaly-multiseed-v0.3-analysis-table-adapter-2026-09-24.md)。実装`9b18626703c40801a164f61eb01dab3acbb36eae`、OUT artifacts/independent-analysis-adapter-2026-09-24。新11＋算術21＋S1契約27=59試験通過、7手例の各9表/180判定を保存。raw counts/CI/gatesを丸めずschema部分形式へ変換し、必要なeffective exposureと全検出delayを明示入力、全体medianを元delay結合から算出。
+
+手例は2架空clusters/4replicatesで、正式40×50,000やsource evidenceを偽装したfull documentは出力しない。fixture_*だけに仮選択を置き、実selected=null/performance=not_evaluated/formal/promotion/S6=false。実dev/smoke集計はreadiness確認だけ。full schema/source/runtime/slicesは未完了。
+
+実行2.516秒、peak 27.36MiB、RAM空き最小15.09GiB/commit余裕21.12GiB、C/D空き128.43/298.74GiB。保存約1.3MB、旧保存点/実source/本流/dirty guard保全、banto-24 PAUSED。
+
+次は保存済み検出遅延・sliceの独立集計。必要列の認証と有限メモリでの読取り、母数/重複/欠落、結合delayを確認し、既存score再計算は不要。正式holdout/CI/gateや保留principalを起動しない。
