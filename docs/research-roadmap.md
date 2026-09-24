@@ -195,3 +195,9 @@ v0.2のstandalone seed-cluster analysisは [`anomaly-multiseed-evaluation-plan-v
 720評価の件数・遅延・条件別内訳・診断を用途別にまとめ、108表の対応と48組の加算を確認しました。大きな元評価ファイルを読まず、集計約5.5MBから約3.2秒で作成。39試験通過、最大メモリ約53MiB。[統合結果と正式判定の残件](results/anomaly-multiseed-v0.3-analysis-inputs-2026-09-25.md)。
 
 正式schemaの必須10項目について、用意できた情報と不足する証拠を整理しました。次は用途別の記述結果表と診断表への出力です。正式holdout・信頼区間・性能判定・source/runtime受入・完全S6は未完了で、Phase 2/3全体の完了にはしません。
+
+### 2026-09-25：用途別の結果表・全条件別診断表を出力
+
+検算済み720評価から、開発用と動作確認用を分けた18結果表・5,670診断行を作りました。検出率、利用可能率、閾値超過率、警報開始率を区別し、元入力との全セル照合と所定の表形式の検査を通過。27試験通過、閲覧用の要約と展開式HTMLを保存しました。[結果](results/anomaly-multiseed-v0.3-descriptive-report-2026-09-25.md)。
+
+次は既存のsource/runtime・単一writer受入記録とconsumer実装を対応づけ、freeze前の残件を確定します。今回も正式holdout・信頼区間・性能判定を実施しておらず、Phase 2/3全体は未完了です。

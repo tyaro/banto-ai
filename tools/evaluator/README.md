@@ -27,6 +27,8 @@
 
 同日続報：[認証済み解析入力への統合](../../docs/results/anomaly-multiseed-v0.3-analysis-inputs-2026-09-25.md)。`anomaly_v03_analysis_inputs.authenticate_analysis_inputs(savepoints, root_sha256, schema_path)`は`slices/seeds/adapter`の三保存点を明示指定し、compact counts/slicesを結合します。登録順・全108表・48組の加算を確認し、delay/exposure/診断を保持。実行例は`artifacts/independent-analysis-inputs-2026-09-25/verify.py`。39試験通過、元payload読取りなし。`join_inputs`は純関数で認証機能を持ちません。出力はdev/smoke記述用の独自formatで、正式analysis文書ではありません。
 
+同日続報：[用途別の記述結果表・診断表](../../docs/results/anomaly-multiseed-v0.3-descriptive-report-2026-09-25.md)。`anomaly_v03_descriptive_report.authenticate_report(input_savepoint, root_sha256, schema_path)`は認証済み解析入力から各用途9表を出力します。4系列の5,670診断行と234主指標を元入力に照合し、schema部分形式を検証。`summary_markdown`/`detailed_html`で閲覧用を生成します。実行例と成果物は`artifacts/descriptive-report-2026-09-25`。27試験通過。純関数build_reportにbytes認証はなく、正式full analysis/CI/gateは出力しません。
+
 固定120区切り・720評価の計画表示と進捗記録の読取り検査には `checkpoint_anomaly_v03.py plan/inspect` を使います。[metadata CLIの説明](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#実装済みのmetadata-cli)にある外部plan/head hashと件数を必須にし、途中終了・記録欠落・順序違反・未検証の保存状態を区別します。metadataの宣言を復元する段階で、実データ生成・実行再開・全campaign完了には接続していません。
 同CLIの `preflight-trial` は、[保存済み6件との証拠照合](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#保存済み6件とのpreflight証拠照合)を行います。参照journal・旧trial・終了監視・旧独立検算のhash/来歴を結び付け、6件のledgerを再検算します。旧trialを新campaignの完了件数に加えず、実行再開や全体の完了印は作りません。
 metadataの保存には同CLIの `store-init/store-append/store-inspect` を使います。[追記と中断時の回復](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#metadataを上書きせず保存追記する)では、外部receipt/record hashを保持し、既存記録を上書きせず追記します。確定後のreceipt喪失は読取りだけで回復し、部分pendingは残して拒否します。実campaignの開始・再開には接続していません。

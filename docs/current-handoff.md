@@ -1,21 +1,23 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-25 JST。**720評価のcounts・遅延・sliceを認証済み解析入力へ統合。関連39試験、108表の対応と48組の加算照合を通過。**
+更新: 2026-09-25 JST。**dev/smoke別の18結果表・5,670診断行を出力、元入力照合とschema部分形式を通過。関連27試験、閲覧用Markdown/HTMLも保存。**
 
-- [今回の解析入力統合](results/anomaly-multiseed-v0.3-analysis-inputs-2026-09-25.md)。長い引継書§160。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装`1db34dc3502552feb0869da2cec68508736f1b8d`。OUT `artifacts/independent-analysis-inputs-2026-09-25`、最終文書revision/pinは`savepoint-evidence.json`。
+- [今回の結果表・診断表](results/anomaly-multiseed-v0.3-descriptive-report-2026-09-25.md)、[閲覧用要約](../artifacts/descriptive-report-2026-09-25/report.md)。長い引継書§161。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装`e0753ba4e1518706002cb3a51f9b5a3c891a4e7c`。OUT `artifacts/descriptive-report-2026-09-25`、最終文書revision/pinは`savepoint-evidence.json`。
 
 ## 今回の成果と次の作業
 
-`anomaly_v03_analysis_inputs.authenticate_analysis_inputs`は明示したslices/seeds/adapter保存点を外部SHAで認証し、固定名のcompact counts/slicesと凍結schemaを読む。旧source pinも照合する。今回6入力ファイル・5,453,594 bytesを利用し、元payloadは0 bytes。履歴上の監査済み結果の再利用であり、今日の元payload再確認ではない。純関数join_inputsだけを入力認証と呼ばない。
+`anomaly_v03_descriptive_report.authenticate_report`は明示した統合入力保存点の外部SHAから固定名のbundleと凍結schemaを認証し、必要な旧source pinも照合する。3入力5,171,731 bytes、元payload読取0。`build_report`単独は純変換で認証をしない。report.jsonに用途別9表、4診断系列、対象外/試験外参照内訳・遅延度数・元診断を保存する。
 
-analysis-inputs.jsonにdev8/smoke2の10 clusters、seed90/role18表、counts・有効露出・遅延度数・全診断を統合。overall30組とrole18組の加算を照合し、警報0の未定義適合率46記録を保持。用途を混ぜず、率/中央値は平均せず、未検出0秒補完もしない。readiness.jsonは正式schemaの必須10項目を対応づけるが、full documentではない。
+主指標234セルと5,670診断行を元入力に照合。incident864行、score3系列各1,602行。actual_countは各系列の分子、planned_countは予定事例/参照。event-offsetはmetric分母を試験内score行とし、除外をsidecarに保持。補助分母0はnull/not_applicable、主指標0分母はnull/CI未実施。未定義適合率46記録を保持する。
 
-処理3.176秒、process peak private 53.00MiB、前後観測の最小空きRAM 10.68GiB/commit余裕 15.14GiB、終了時C/D空き 126.79/298.91GiB。 旧保存点/source/本流/dirty guard不変、banto-24 PAUSED。新観測・新評価・score再計算・実CIは0。
+report.mdは18結果表、report.htmlは18セクションを展開する静的全条件表。gate/CI/採択なし。部品schemaは実dev/smoke母数で検証し、full formal documentの固定母数を使わない。入力時点のreadinessを文脈として保持し、今回の到達範囲はvalidation.json/summary.jsonを参照する。
 
-**次は統合済み入力から、dev/smoke別の記述結果表と診断表を出力する。正式schemaとの列対応を確認し、event-offsetの対象外/試験外参照やavailability・閾値超過・警報開始数を落とさない。** 今回manifestでanalysis-inputs.json/readiness.jsonを認証して再利用できる。巨大な元payloadの再読取りは不要。元slice定義・元報告は[前工程](results/anomaly-multiseed-v0.3-independent-slice-audit-2026-09-25.md)を参照。
+処理1.625秒、process peak private 44.18MiB、前後観測の最小空きRAM 14.70GiB/commit余裕 21.44GiB、終了時C/D空き 126.09/293.77GiB。 旧保存点/source/本流/dirty guard不変、banto-24 PAUSED。新観測・評価・score再計算・実CIは0。
 
-前工程analysis adapter（9b18626）は7手例/59試験のfixture packetまで接続済み。正式40holdout/50,000 bootstrap、CI・gate、consumer source/runtime受入・freeze・provenance/publication、完全S6は残る。formal/promotion/S6=false、performance=not_evaluated、selected_candidate=null。これらと保留principalを自動起動しない。Phase 2/3全体は未完了。
+**次は既存のsource/runtime・単一writer受入記録と独立consumerの接続状況を調べ、freeze前に必要な実装・証拠の残件を確定する。既存合格試験を繰り返す必要があるかを先に判断し、保留principalや正式holdoutは起動しない。** 正式holdout/CI/gateの自動起動はしない。consumer単体の計算・集計・記述出力を、正式source freeze/runtime受入・公開経路・完全S6の完了と混同しない。
+
+統合入力は前工程`artifacts/independent-analysis-inputs-2026-09-25/analysis-inputs.json`（実装1db34dc、39試験）。その保存点7,305bytes/SHA2568527dfe71bcb7544f6276b14eeb8bd853491cd2be87ee4f3e8bec2375b0f876d。巨大な元payloadの再読取りは不要。formal/promotion/S6=false、performance=not_evaluated、selected_candidate=null、Phase 2/3全体は未完了。
 
 ## 前工程のseed集計
 

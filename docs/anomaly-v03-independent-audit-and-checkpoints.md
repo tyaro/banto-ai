@@ -1,6 +1,6 @@
 # 保存結果の独立検算と長時間実行の進行記録
 
-最新（2026-09-25）: [720評価の認証済み解析入力への統合を完了](results/anomaly-multiseed-v0.3-analysis-inputs-2026-09-25.md)。関連39試験、108表と48組の加算照合を通過。元payload読取り0。次はdev/smokeの記述結果・診断表への出力対応。正式holdout/CI/gate・source/runtime受入・完全S6は残る。以下は段階ごとの履歴である。
+最新（2026-09-25）: [用途別18結果表・5,670診断行の出力を完了](results/anomaly-multiseed-v0.3-descriptive-report-2026-09-25.md)。27試験、元入力照合、schema部分形式、Markdown/HTMLの構造確認を通過。元payload読取0。次は既存受入記録とconsumer freeze前の残件を確認する。正式holdout/CI/gate・source/runtime受入・完全S6は残る。以下は段階ごとの履歴である。
 
 2026-09-16。単一writerの運用改訂を継続する。独立ledger検算、固定plan・journalのmetadata検査/状態復元、旧6件trialとのpreflight証拠照合、metadata専用の追記writerは実装済み。全dev/smokeを動かすcampaign controllerは**未接続・実行未許可**。
 科学的な式・seed・layout・候補・母数・bootstrap・性能gateと、旧formal gateを変更しない。
@@ -476,3 +476,7 @@ Random/gauss/binary64/round/JSONは共有primitive。外部pin付き完走保存
 ## 認証済み解析入力への統合（2026-09-25）
 
 [詳細](results/anomaly-multiseed-v0.3-analysis-inputs-2026-09-25.md)。counts・delay・slice・有効露出をseed90/role18表へ結合し、48組の加算を確認した。元payloadを開かず、明示した三保存点・集計2ファイル・凍結schemaを認証。39試験通過、正式schema必須10項目のreadinessを記録した。処理3.176秒、process peak private 53.00MiB、前後観測の最小空きRAM 10.68GiB/commit余裕 15.14GiB、終了時C/D空き 126.79/298.91GiB。 次は統合済み入力から、dev/smoke別の記述結果表と診断表を出力する。正式schemaとの列対応を確認し、event-offsetの対象外/試験外参照やavailability・閾値超過・警報開始数を落とさない。
+
+## 用途別記述結果表・診断表の出力（2026-09-25）
+
+[詳細](results/anomaly-multiseed-v0.3-descriptive-report-2026-09-25.md)。認証済み解析入力から18結果表・4診断系列5,670行を出力し、全セルを元入力と凍結schema部分形式へ照合。event-offsetの参照内訳・3種類のscore診断・遅延度数を保持。27試験通過、閲覧用Markdown/HTMLを保存。処理1.625秒、process peak private 44.18MiB、前後観測の最小空きRAM 14.70GiB/commit余裕 21.44GiB、終了時C/D空き 126.09/293.77GiB。 次は既存のsource/runtime・単一writer受入記録と独立consumerの接続状況を調べ、freeze前に必要な実装・証拠の残件を確定する。既存合格試験を繰り返す必要があるかを先に判断し、保留principalや正式holdoutは起動しない。

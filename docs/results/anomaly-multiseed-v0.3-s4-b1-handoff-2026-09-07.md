@@ -3921,3 +3921,11 @@ OUT artifacts/independent-inference-math-2026-09-24。draws/rules/fixture/hand-a
 処理3.176秒、process peak private 53.00MiB、前後観測の最小空きRAM 10.68GiB/commit余裕 15.14GiB、終了時C/D空き 126.79/298.91GiB。 最終文書revision/pinはsavepoint-evidence.json。新観測・新評価・score再計算・実CI0、旧保存点/source/本流/dirty guard不変、banto-24 PAUSED。
 
 正式schema必須10項目のreadinessを保存。dev/smokeの記述入力は揃ったが、正式40holdout/50,000 bootstrap・CI/gate・source/runtime受入・正式slice行への対応・完全S6は未完了。formal/promotion/S6=false、selected=null、performance=not_evaluated。次は統合済み入力から、dev/smoke別の記述結果表と診断表を出力する。正式schemaとの列対応を確認し、event-offsetの対象外/試験外参照やavailability・閾値超過・警報開始数を落とさない。
+
+## 161. 用途別記述結果表と全条件別診断の出力（2026-09-25）
+
+[詳細](anomaly-multiseed-v0.3-descriptive-report-2026-09-25.md)。実装`e0753ba4e1518706002cb3a51f9b5a3c891a4e7c`、OUT artifacts/descriptive-report-2026-09-25。新9＋統合7＋adapter11=27試験通過。認証済み解析入力からdev/smoke各9表を出し、234主指標・5,670診断行を元入力/schema部分形式へ照合した。incident recall864行、scoreのavailability/threshold exceedance/signal onset各1,602行を別系列にし、対象外・試験外参照や遅延度数・適合率未定義46記録を保持。
+
+report.md/HTML/JSONを保存。HTMLは18展開セクション/54表/2,610行を構造確認。3入力5,171,731bytesを認証し元payload読取0。処理1.625秒、process peak private 44.18MiB、前後観測の最小空きRAM 14.70GiB/commit余裕 21.44GiB、終了時C/D空き 126.09/293.77GiB。 最終文書revision/pinはsavepoint-evidence.json。新観測/評価/score再計算/実CI0、旧保存点/source/本流/dirty guard不変、banto-24 PAUSED。
+
+正式full documentは出さず、実dev/smoke母数によるschema部分検証のみ。入力時点のreadinessは文脈として保持する。formal/promotion/S6=false、selected=null、performance=not_evaluated。次は既存のsource/runtime・単一writer受入記録と独立consumerの接続状況を調べ、freeze前に必要な実装・証拠の残件を確定する。既存合格試験を繰り返す必要があるかを先に判断し、保留principalや正式holdoutは起動しない。
