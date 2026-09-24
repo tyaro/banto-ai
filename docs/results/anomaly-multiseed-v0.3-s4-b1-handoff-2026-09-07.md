@@ -3762,3 +3762,9 @@ controller PID36728の消失とdiagnostic threadの終了、inspection worker PI
 heartbeat **banto-24はPAUSED**。失敗証拠は今回OUTのfailure-evidence.json、diagnostics-summary.json、controller-exit-check.json、automation-stop.json、最終文書commitと保全pinはfailure-savepoint-evidence.jsonに保持する。起動保存点5bcb3cfを保全。次の判断点は一時的なsystem commit急増の発生元/読込み割当経路の切り分けと、残り予算を踏まえた再開条件の見直し。
 
 campaign加算0/正式許可falseを維持。監査は保存score以降のみ。完全runtime inventory、profile/score導出・bootstrapの独立S6、全120/holdout/性能評価、研究ロードマップPhase 2/3全体は未完了。実装変更・追加agent・回帰試験・push/merge/CI・OS/権限設定変更なし。
+
+## 146. 既存監査のbyte照合による再利用（2026-09-24 JST）
+
+[再開方針と検証](anomaly-multiseed-v0.3-verified-resume-2026-09-24.md)。ユーザーの再開指示と既存照合の必要性への質問を受け、外部helperで全6775ファイルの保存pin/source/runtime/checkpointを照合して既存105区間の監査cacheだけを初期化する。数値algorithm・固定計算source c01d1c9は変更せず、新しい15区間の監査は元の実装を使う。実データ13,948,054,577 bytesを65.357秒で読取検証、peak private約65.3MiB、新規13試験/既存関連45試験通過。前回成功/失敗の196artifactpinsを保全。
+
+control000008の失敗保存点daf17f2を起点に新しいcontrol000009として105〜119だけを再開する。累積失敗時間を維持し48h/32GiBは変更しない。残り約7.72hに対し約4hの見積り。既存105再利用はresume-verification.json、新規audit_begin/endは各15件が期待値。単一writerの通常運用に限定し、正式許可/完全S6を追加しない。起動状況はcurrent-handoffと今回OUT/followup-state.jsonを優先する。

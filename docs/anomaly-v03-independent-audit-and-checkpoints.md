@@ -379,3 +379,9 @@ control000008は既存区間58の保存データを再照合中、MemoryErrorで
 保存datasetを読むread_regular/stream.readでMemoryError、同時にsystem commit急増とpagefile拡張を観測。診断欠落/観測エラー0、controller終了済み、新規producer/auditなし。失敗原本とcontrol6ファイルのコピーを保全し、成功用collector/finalizerは実行していない。heartbeat banto-24はPAUSED。
 
 campaign加算0/正式許可falseを維持。監査は保存score以降のみ。完全runtime inventory、profile/score導出・bootstrapの独立S6、全120/holdout/性能評価、研究ロードマップPhase 2/3全体は未完了。実装変更・追加agent・回帰試験・push/merge/CI・OS/権限設定変更なし。
+
+### 2026-09-24: 単一writerでの既存監査再利用
+
+`tools/evaluator/anomaly_v03_verified_resume.py` は外部snapshotのraw hashを受け、前回監査済みの全保存ファイルを1MiB単位でhash照合し、source/runtime/最新closed/checkpointと一致した既存prefixだけをControllerのsession cacheへ登録する。Run.runが選び直したControllerに一度だけ適用し、context終了時に元のメソッドを復元する。新しい区間の監査は元のController._verifyを使う。任意の現存payloadを新たに合格扱いしない。単一writerの通常運用向けで、悪意ある同時変更への隔離保証ではない。
+
+区間105〜119再開の実データ検証は6775files/13,948,054,577bytes、65.357秒。新規13/既存関連45試験通過。固定実計算source c01d1c9不変、外部再開policyの変更を記録する。実行時のpinは[再開記録](results/anomaly-multiseed-v0.3-verified-resume-2026-09-24.md)。正式許可false/campaign加算0、保存score以降の監査範囲は不変。
