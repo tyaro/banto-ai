@@ -385,3 +385,15 @@ campaign加算0/正式許可falseを維持。監査は保存score以降のみ。
 `tools/evaluator/anomaly_v03_verified_resume.py` は外部snapshotのraw hashを受け、前回監査済みの全保存ファイルを1MiB単位でhash照合し、source/runtime/最新closed/checkpointと一致した既存prefixだけをControllerのsession cacheへ登録する。Run.runが選び直したControllerに一度だけ適用し、context終了時に元のメソッドを復元する。新しい区間の監査は元のController._verifyを使う。任意の現存payloadを新たに合格扱いしない。単一writerの通常運用向けで、悪意ある同時変更への隔離保証ではない。
 
 区間105〜119再開の実データ検証は6775files/13,948,054,577bytes、65.357秒。新規13/既存関連45試験通過。固定実計算source c01d1c9不変、外部再開policyの変更を記録する。実行時のpinは[再開記録](results/anomaly-multiseed-v0.3-verified-resume-2026-09-24.md)。正式許可false/campaign加算0、保存score以降の監査範囲は不変。
+
+### 2026-09-24: 高速再開後の119区間保全・最後のproducer時間上限
+
+control000009は最後の区間119/attempt1のproducerが900秒（15分）の上限に達し、ResourceStop/time_limitでexit2となった。producer実測909.083秒、worker PID17908/exit1/終了確認済み。終了UTC **2026-09-24T05:46:49.451914+00:00**（JST **2026-09-24 14:46:49**）。新規14区間/84評価が確定し、累計**119区間/714評価**。残り**1区間/6評価**。journal359/next119、最終recordはfailed/resource_limit。全120区間の完了ではない。
+
+既存105区間のcache再利用は56.252秒の全byte/source/runtime一致後に成功し、新規14区間は元の独立audit/controller監査を通過。新しい数値監査の省略はしていない。最後のproducerは6件stage保存後、完了marker作成前に900秒上限となり、所有worker終了を確認してfailed/resource_limitを記録した。
+
+最新closedは **run/control/000009/closed.json** / raw SHA256 **362c2ed425d38a6a6ae3436518fa4cafa0cc4d9a017b012f15de4816fa44156d**、status=failed/stop_reason=exception。累積活動**159294.585066秒（44.25時間）**、48時間候補の残り**13505.414934秒（3.75時間）**。失敗時間を含めて保持し、48h/32GiBとworker上限は変更していない。prepared pinはbe582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7。旧control8や中間receiptを最新closedの代わりに使わない。
+
+次の判断は、システムの負荷が落ち着いた状態で、残り1区間だけを別の試行として再実行するか。今回の失敗attempt1は未公開stageを含めそのまま保持し、再使用・削除しない。現在の高速再開helperは「完了数×3＝journal件数」を要求するため、今回のfailed末尾2recordを含む359件をそのまま受け入れない。再開する場合は外部pinに基づく失敗末尾の扱いを検証する必要がある。無条件にcacheへ追加したり、上限引上げ・新しいinvocationを自動実施したりしない。
+
+詳細は[停止記録](results/anomaly-multiseed-v0.3-verified-resume-2026-09-24.md)。正式許可false/campaign加算0。

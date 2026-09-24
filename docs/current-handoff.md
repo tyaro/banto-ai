@@ -1,33 +1,36 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-24 JST。**control000009で残り15区間を再開済み（PID 25724）。既存105区間の全byte照合と監査再利用は成功。** 起動済みかは今回OUT/launch.jsonとfollowup-state.jsonを先に読む。重複起動しない。
+更新: 2026-09-24 JST。**最後の区間119がproducerの15分上限で停止。累計119区間/714評価を保全し、heartbeatはPAUSED。追加起動しない。**
 
-起動UTC 2026-09-24T01:48:22.1234253Z、実装保存点aab4d58e5359497fa8016b8ccb808101dfe9fd40。heartbeat banto-24は今回OUTを対象にACTIVE。初期観測journal 316/running、新規確定0、診断欠落なし。起動保存点はOUT/launch-savepoint.json参照。
-
-最新観測UTC 2026-09-24T05:29:41.972864+00:00：**新規14/15区間完了、累計119区間/714評価**。最後の区間119実行中（journal358）。新規12区間の節目（receipt351）を含め、前回保存後の8区間/receipt336〜357を照合しOUT/milestone-12.jsonへ中間保存。前回6区間のpinは保存済み証拠を再利用。診断error/drop=0、空きRAM約14.12GiB、commit余力約15.35GiB。次は今回15区間の終了確認と最終照合・保存。中間commitはOUT/followup-state.json参照。
-
-## 現在の作業と場所
+## 場所と保存点
 
 - 候補: `C:/Users/TKent/.codex/worktrees/70b0/banto-ai`、branch `codex/s4-b1-windows-engineering`。
-- 今回OUT: `artifacts/chunks-105-119-fast-resume-2026-09-24`。次のheartbeat手順はOUT/FOLLOWUP.md。結果は[再開記録](results/anomaly-multiseed-v0.3-verified-resume-2026-09-24.md)、長い引継書§146。
-- 実計算source: clean c01d1c978f78bab51391392d56cdcb7aab5afaab、`C:/Users/TKent/.codex/worktrees/v03p/banto-ai`、出力`artifacts/v03-runs/r1`。固定sourceを変更せず外部helperだけで再開policyを切り替える。
-- 本流D:/develop/banto-aiは889cfc3d5e1fd6dd7fc6c9656273d16d7d56d64e/clean。既存dirty親policy文書は8461 bytes/SHA256443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持しcommit除外。
+- 今回OUT: `artifacts/chunks-105-119-fast-resume-2026-09-24`。failure-evidence.json/diagnostics-summary.jsonが停止証拠。最終commit/pinはfailure-savepoint-evidence.json/followup-state.json。実装aab4d58、起動dd45a37、中間eb1a67e/105960c。
+- 実計算source: clean c01d1c978f78bab51391392d56cdcb7aab5afaab、`C:/Users/TKent/.codex/worktrees/v03p/banto-ai`、出力`artifacts/v03-runs/r1`。
+- 本流D:/develop/banto-aiは889cfc3d5e1fd6dd7fc6c9656273d16d7d56d64e/clean。既存dirty親policy文書は8461bytes/SHA256443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持、stage/commitしない。
+- [今回の停止記録](results/anomaly-multiseed-v0.3-verified-resume-2026-09-24.md)、長い引継書§147。保存済みの旧成功・失敗OUTは変更しない。
 
-## 再開方針と保存点
+## 現在地
 
-最新closedはcontrol000008/closed.json、SHA25602531b247b12b1275a57c8907924f5ac710c90c4d8dfd079f885d0fd2d5c9211。preparedはbe582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7。control8は失敗終了/保全済み、journal315/next105、累計105区間/630評価。失敗保存点daf17f2d747f080eba893cd1b9f320ce02e5c3c5、旧OUT chunks-105-119-continuation-2026-09-24のfailure manifest SHA2566dbe0e6780a011fcd601fed8a0647275eb2404c977fdd6a6209eaebcd448a32b。元の成功/失敗OUTは変更しない。
+control000009は最後の区間119/attempt1のproducerが900秒（15分）の上限に達し、ResourceStop/time_limitでexit2となった。producer実測909.083秒、worker PID17908/exit1/終了確認済み。終了UTC **2026-09-24T05:46:49.451914+00:00**（JST **2026-09-24 14:46:49**）。新規14区間/84評価が確定し、累計**119区間/714評価**。残り**1区間/6評価**。journal359/next119、最終recordはfailed/resource_limit。全120区間の完了ではない。
 
-新しい外部helperは全6775 files/13,948,054,577 bytesとsource/runtime/closed/journalを照合して既存105区間のcacheだけを初期化する。読取専用の実検証65.357秒/peak約65.3MiB。新規13試験と既存関連45試験は通過。起動時にも同じsnapshotを再照合してから再利用する。snapshot SHA25605152fb2b81570b573fc96932a1576970e85aaab2673fb067c4b6df2e1cd1d37、helper SHA25697990096b9ccea31054209b164c8643fab7b54c2d512d8ce52256efe7fa8063d。新しい15区間の数値監査は従来どおり。単一writer前提で、敵対的同時書換えの隔離ではない。
+最新closedは **run/control/000009/closed.json** / raw SHA256 **362c2ed425d38a6a6ae3436518fa4cafa0cc4d9a017b012f15de4816fa44156d**、status=failed/stop_reason=exception。累積活動**159294.585066秒（44.25時間）**、48時間候補の残り**13505.414934秒（3.75時間）**。失敗時間を含めて保持し、48h/32GiBとworker上限は変更していない。prepared pinはbe582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7。旧control8や中間receiptを最新closedの代わりに使わない。
 
-48h/32GiB・worker上限は不変。累積144993.320914秒、残り27806.679086秒（約7.72h）を継承し、失敗時間を戻さない。既存105の約5.2h再計算を省き、残り15は約4h見込み。control9のみ最大15区間（105〜119）、完走時は全120区間/720評価・journal360・status=completed/next=null。6/12区間で中間保存。終了時に照合・最終保存しheartbeatをPAUSED、追加呼出しやholdoutは起動しない。
+controller PID25724の消失と全所有workerの終了を確認済み。失敗attempt1には6件のstageファイルが残るが完了markerなし/audit未開始のため成功扱いしない。生存workerの放置や追加起動はない。
 
-## 資源・診断
+## 診断と保全
 
-60秒診断/30分heartbeatを再利用する。今回のaudit_begin/end期待値は**新規105〜119の各15件**。既存105再利用の証拠はresume-verification.json。error/drop/disabled、RAM/C/D、system commit余力を確認する。1回確認したら次回へ任せ、連続poll/追加agent/再計算なし。
+診断は238周期標本/273イベント、audit_begin/end各14件（105〜118）、ResourceStop例外1件、観測error/drop=0、無効化なし、診断thread終了済み。今回の停止はMemoryErrorではなくproducerの時間上限。標本UTC **2026-09-24T05:44:43.907054+00:00** でsystem commit 54.90/54.96GiB、割当余力**52.73MiB**を記録した。同時刻のpagefile確保量は23.26GiB。空きRAM最小標本は3.38GiB。controller peak 0.22GiB、失敗producer peak 326.05MiB。システム全体の資源逼迫は観測したが、割当元process・時間超過への因果寄与・実際のCPU/I/O競合は未確定。メモリリークの有無を断定しない。
 
-前回は既存区間58のdataset読込みstream.readでMemoryError。直前52.4秒でsystem commit+26.56GiB/pagefile+16.68GiB、controller peak約223MiBを記録した。他作業との競合は考えられるが急増元processは未特定。今回の正常再開を原因解明やリーク不在の証明にはしない。Windows26200.9457/CPython3.14.0。OS/pagefile/Python設定を変更しない。
+既存105区間は起動時の全byte/source/runtime照合（56.252秒）で監査を再利用し、新規105〜118の14区間は元の独立監査とcontroller監査を通過した。今回保全では新規14区間のdescriptor/control pin、完了markerが示すpayload raw hash、全6件success、producer/audit workerの終了を照合した。新規runファイル955件/1999730138 bytesをstreaming hashし、前回6775ファイルの一覧/サイズと旧journal315件のhashを確認。旧payload全体の再hashや数値再計算はしていない。全体は7730 files/15947784715 logical bytes。過去196artifact pinsと起動時24immutable artifactsも保持。小さなcontrol/journal/失敗worker記録98ファイルをOUT/failure-controlへ複製してhash照合した。成功用collector/finalizerは実行していない。
 
-正式許可false/campaign加算0、監査は保存score以降。完全runtime inventory・profile/score導出/全bootstrapの独立S6・holdout/性能評価・Phase 2/3全体は未完了。
+## 次の判断
+
+次の判断は、システムの負荷が落ち着いた状態で、残り1区間だけを別の試行として再実行するか。今回の失敗attempt1は未公開stageを含めそのまま保持し、再使用・削除しない。現在の高速再開helperは「完了数×3＝journal件数」を要求するため、今回のfailed末尾2recordを含む359件をそのまま受け入れない。再開する場合は外部pinに基づく失敗末尾の扱いを検証する必要がある。無条件にcacheへ追加したり、上限引上げ・新しいinvocationを自動実施したりしない。
+
+Python C:/Python314/python.exe -B。既存外部helperのraw hashは97990096b9ccea31054209b164c8643fab7b54c2d512d8ce52256efe7fa8063d、起動snapshotは05152fb2b81570b573fc96932a1576970e85aaab2673fb067c4b6df2e1cd1d37。今回も実OS26200.9457/CPython3.14.0、exe/DLL pinは開始/終了で一致。旧正式pinは維持。
+
+formal_permission=false/campaign加算0、保存score以降の監査という範囲を維持。完全runtime inventory・profile/score導出/全bootstrapの独立S6・全120/holdout/性能評価・研究Phase 2/3全体は未完了。実計算source c01d1c9と本流889cfc3は変更せず、既存dirty親policy文書を保全しcommit除外。OS/pagefile/Python設定変更、追加agent、回帰試験、push/merge/CIなし。
 
 ## 継続する制約
 

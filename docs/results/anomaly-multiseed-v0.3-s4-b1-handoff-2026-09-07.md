@@ -3768,3 +3768,19 @@ campaign加算0/正式許可falseを維持。監査は保存score以降のみ。
 [再開方針と検証](anomaly-multiseed-v0.3-verified-resume-2026-09-24.md)。ユーザーの再開指示と既存照合の必要性への質問を受け、外部helperで全6775ファイルの保存pin/source/runtime/checkpointを照合して既存105区間の監査cacheだけを初期化する。数値algorithm・固定計算source c01d1c9は変更せず、新しい15区間の監査は元の実装を使う。実データ13,948,054,577 bytesを65.357秒で読取検証、peak private約65.3MiB、新規13試験/既存関連45試験通過。前回成功/失敗の196artifactpinsを保全。
 
 control000008の失敗保存点daf17f2を起点に新しいcontrol000009として105〜119だけを再開する。累積失敗時間を維持し48h/32GiBは変更しない。残り約7.72hに対し約4hの見積り。既存105再利用はresume-verification.json、新規audit_begin/endは各15件が期待値。単一writerの通常運用に限定し、正式許可/完全S6を追加しない。起動状況はcurrent-handoffと今回OUT/followup-state.jsonを優先する。
+
+## 147. 最後の区間のproducer時間上限と119区間保全（2026-09-24 JST）
+
+[停止・保全記録](anomaly-multiseed-v0.3-verified-resume-2026-09-24.md)。control000009は最後の区間119/attempt1のproducerが900秒（15分）の上限に達し、ResourceStop/time_limitでexit2となった。producer実測909.083秒、worker PID17908/exit1/終了確認済み。終了UTC **2026-09-24T05:46:49.451914+00:00**（JST **2026-09-24 14:46:49**）。新規14区間/84評価が確定し、累計**119区間/714評価**。残り**1区間/6評価**。journal359/next119、最終recordはfailed/resource_limit。全120区間の完了ではない。
+
+診断は238周期標本/273イベント、audit_begin/end各14件（105〜118）、ResourceStop例外1件、観測error/drop=0、無効化なし、診断thread終了済み。今回の停止はMemoryErrorではなくproducerの時間上限。標本UTC **2026-09-24T05:44:43.907054+00:00** でsystem commit 54.90/54.96GiB、割当余力**52.73MiB**を記録した。同時刻のpagefile確保量は23.26GiB。空きRAM最小標本は3.38GiB。controller peak 0.22GiB、失敗producer peak 326.05MiB。システム全体の資源逼迫は観測したが、割当元process・時間超過への因果寄与・実際のCPU/I/O競合は未確定。メモリリークの有無を断定しない。
+
+既存105区間は起動時の全byte/source/runtime照合（56.252秒）で監査を再利用し、新規105〜118の14区間は元の独立監査とcontroller監査を通過した。今回保全では新規14区間のdescriptor/control pin、完了markerが示すpayload raw hash、全6件success、producer/audit workerの終了を照合した。新規runファイル955件/1999730138 bytesをstreaming hashし、前回6775ファイルの一覧/サイズと旧journal315件のhashを確認。旧payload全体の再hashや数値再計算はしていない。全体は7730 files/15947784715 logical bytes。過去196artifact pinsと起動時24immutable artifactsも保持。小さなcontrol/journal/失敗worker記録98ファイルをOUT/failure-controlへ複製してhash照合した。成功用collector/finalizerは実行していない。
+
+最新closedは **run/control/000009/closed.json** / raw SHA256 **362c2ed425d38a6a6ae3436518fa4cafa0cc4d9a017b012f15de4816fa44156d**、status=failed/stop_reason=exception。累積活動**159294.585066秒（44.25時間）**、48時間候補の残り**13505.414934秒（3.75時間）**。失敗時間を含めて保持し、48h/32GiBとworker上限は変更していない。prepared pinはbe582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7。旧control8や中間receiptを最新closedの代わりに使わない。
+
+次の判断は、システムの負荷が落ち着いた状態で、残り1区間だけを別の試行として再実行するか。今回の失敗attempt1は未公開stageを含めそのまま保持し、再使用・削除しない。現在の高速再開helperは「完了数×3＝journal件数」を要求するため、今回のfailed末尾2recordを含む359件をそのまま受け入れない。再開する場合は外部pinに基づく失敗末尾の扱いを検証する必要がある。無条件にcacheへ追加したり、上限引上げ・新しいinvocationを自動実施したりしない。
+
+heartbeat banto-24はPAUSED、追加起動なし。最終保存commit/pinは今回OUT/failure-savepoint-evidence.json。
+
+formal_permission=false/campaign加算0、保存score以降の監査という範囲を維持。完全runtime inventory・profile/score導出/全bootstrapの独立S6・全120/holdout/性能評価・研究Phase 2/3全体は未完了。実計算source c01d1c9と本流889cfc3は変更せず、既存dirty親policy文書を保全しcommit除外。OS/pagefile/Python設定変更、追加agent、回帰試験、push/merge/CIなし。
