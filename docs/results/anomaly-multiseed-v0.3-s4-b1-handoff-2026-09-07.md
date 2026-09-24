@@ -3806,3 +3806,11 @@ producer 558.891秒、独立audit 91.668秒、audit_status=ledger_checks_passed�
 最新closedはrun/control/000010/closed.json / SHA256 **a716478fa46eddcab2300de2d1f06ba6982eb94f738ca794cfc4fc931b33028a**。累積活動160357.173828秒（44.54時間）、48hまで残り12442.826172秒。失敗時間・worker900秒/48h/32GiBは維持。追加invocationは起動しない。heartbeat banto-24はPAUSEDに変更済み。今回の継続確認は停止した。
 
 今回予定の120区間の実行と保存score以降の監査は完了。formal_permission=false/campaign加算0を維持し、完全runtime inventory・profile/score導出/全bootstrapの独立S6・正式gate/holdout/性能評価・研究Phase2/3全体の完了とは区別する。次はこの結果を根拠に研究計画の残項目を整理する判断であり、新たな評価はこのheartbeatでは開始しない。
+
+## 150. 保存済み720評価の比較・上司向け資料（2026-09-24 JST）
+
+[比較結果](anomaly-multiseed-v0.3-dev-smoke-comparison-2026-09-24.md)と[上司向け報告](banto-ai-anomaly-briefing-2026-09-24.md)を作成。完走保存点0e02d04を起点に、120監査reportとplan/closed/evidence等124ファイル約20.18MBをhash確認し、720 identityを照合して0.602秒で集計。raw分子/分母を合算し、dev/smoke・欠損なし/あり・seed/layout別を保持する。集計器7テスト通過、実装保存点eb3f4cc。失敗attempt1は除外し監査済みattempt2を採用。追加producer/score計算/数値監査/holdout/CIは実行していない。
+
+両条件合算でC1は機械91.67%、センサー95.00%、警報正解率95.73%、検知済み平均delay1.26秒。C2は機械89.92%、センサー95.00%、正解率94.83%。正常区間の誤警報は両者0だが全区間の未対応警報は200/242件。C1/C2はコンベヤー停止条件、C2はモーター停止条件に追加見逃しがあり、欠損条件のsensor recallは100%→90%。3件の保存評価例のhashと失敗reasonも読んだが、全原因の断定ではない。
+
+今回は記述統計のみ。formal_permission=false/performance_status=not_evaluated/promotion_allowed=falseを維持。既存正式gate・閾値・対象方式は変更しない。次は停止条件/欠損重複の原因切り分けと独立score検算の具体化。Phase2/3全体、運用受入/runtime inventory、bootstrap/CI、holdoutは別の残件として整理した。heartbeat PAUSEDを維持する。今回OUT artifacts/dev-smoke-comparison-2026-09-24のsavepoint-evidence.jsonへ最終保存点を保持。

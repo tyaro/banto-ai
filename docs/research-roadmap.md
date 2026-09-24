@@ -143,3 +143,11 @@ online または commissioning 実験へ進む前に、mode、rollback、stale d
 - Commissioning: profile coverage、校正誤差、却下・判定不能な step、オペレーターのレビュー時間、shadow 誤警報率。
 - System: p95 inference latency、リソース使用量、欠損耐性、実行間の再現性。
 v0.2のstandalone seed-cluster analysisは [`anomaly-multiseed-evaluation-plan-v0.2.md`](anomaly-multiseed-evaluation-plan-v0.2.md) の固定config、stable SHA-256 bootstrap、ratio-of-sums、slice別CI、strict read-only artifact verifierを使って完了しました。engineering gateは`pass`、performance gateとoverall statusは`fail`であり、formal run、analysis、bootstrap、promotion判定の詳細は[`anomaly-multiseed-v02-evaluation-2026-09-05.md`](results/anomaly-multiseed-v02-evaluation-2026-09-05.md)に記録しています。
+
+## 2026-09-24: v0.3開発・動作確認720評価と比較
+
+単一writerの運用経路で、dev 8 seeds/576評価とsmoke 2 seeds/144評価、計120区間/720評価の実行・保存照合が完了しました。最後の区間の失敗attemptは保持し、再試行成功分だけを集計しています。[完走記録](results/anomaly-multiseed-v0.3-final-chunk-retry-2026-09-24.md)。
+
+保存監査に基づく記述的な比較では、C1（運転段階別の正常値）は機械異常91.67%、センサー異常95.00%、警報正解率95.73%。C2は機械89.92%、センサー95.00%、警報正解率94.83%でした。停止中のコンベヤー、C2の停止中モーター、欠損とセンサー異常が重なる条件が次の切り分け対象です。[比較表と残項目](results/anomaly-multiseed-v0.3-dev-smoke-comparison-2026-09-24.md)、[上司向け説明](results/banto-ai-anomaly-briefing-2026-09-24.md)。
+
+全scoreの再生成なしで既存120監査reportを利用しました。これは合成dev/smokeの記述統計であり、holdout、bootstrap信頼区間、正式gate、完全S6、方式の正式選択・昇格は未実施です。Phase 3はactiveのまま、独立score検算・正式実行条件の整理と、別方式や公開/実設備への一般化が残ります。Phase 2のforecast比較の残項目は今回の試験では解消しません。凍結済み科学計画と登録済み3候補を維持し、保留した専用principal試験は再開していません。

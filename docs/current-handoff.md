@@ -1,22 +1,31 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-24 JST。**最後の1区間の再試行に成功し、全120区間/720評価の照合完了。今回の評価は終了、追加起動なし。**
+更新: 2026-09-24 JST。**120区間/720評価の完走・照合に続き、開発・動作確認データの3方式比較と上司向け資料を作成済み。追加評価は起動していない。**
 
-候補C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。今回OUTはartifacts/chunk-119-retry-2026-09-24。最終commit/pinはOUT/savepoint-evidence.jsonとfollowup-state.json。実装f4cda3b、起動06c9f88を保持。[今回の結果](results/anomaly-multiseed-v0.3-final-chunk-retry-2026-09-24.md)、長い引継書§149。
+- [上司向け報告](results/banto-ai-anomaly-briefing-2026-09-24.md)
+- [比較表・件数・残項目・再現手順](results/anomaly-multiseed-v0.3-dev-smoke-comparison-2026-09-24.md)
+- 今回OUT: `artifacts/dev-smoke-comparison-2026-09-24`。data/summary.json、evaluations.json、input-pins.json、diagnostic-examples.json。最終commit/pinはsavepoint-evidence.json。
+- 候補: C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。集計器保存点eb3f4cc。長い引継書§150。
 
-control000010のchunk119/attempt2は正常終了し、最後の6評価がすべてsuccess、累計**120区間/720評価**の保存結果を照合した。status=completed/next_unverified_chunk=null、journal362件。失敗したattempt1の2記録とstageは保持した。終了UTC **2026-09-24T08:54:05.861275+00:00**（JST **2026-09-24 17:54:05**）、exit0、所要1063.882秒（約17分44秒）。
+## 結果と次の作業
 
-producer 558.891秒、独立audit 91.668秒、audit_status=ledger_checks_passed。controller PID35264の消失をUTC2026-09-24T09:11:55.6213023Zに確認。producer/audit/inspectionの所有workerはすべてexit0/終了確認済み。既存119区間は全7730ファイルのbyte/source/runtime一致（75.222秒）後に監査を再利用し、新規attempt2は元の監査を完了した。
+開発8 seeds/576評価、smoke2 seeds/144評価を分離し、欠損なし/ありと両条件合算を出した。両条件合算でC1は機械異常2200/2400（91.67%）、センサー異常2280/2400（95.00%）、正解警報4480/4680（95.73%）。C2は機械異常2158/2400（89.92%）、センサー異常95.00%、正解警報4438/4680（94.83%）。C1/C2は正常区間の誤警報0件だが、全区間の未対応警報200/242件。検知できた異常の平均delayはC1約1.26秒、C2約1.25秒。母集団が異なるため速度優位とは解釈しない。
 
-終了後のcollectorは7800 files/16081676236 logical bytesをhash照合し、前回7730ファイルと過去356artifact pinsの不変、最新receipt000362/descriptor/marker/全6successを確認した。所要50.227秒。数値再計算は行わず、最終manifest作成時の全payload再hashも省く。証拠は新OUTのevidence.jsonとdiagnostics-summary.json、最終commit/pinはsavepoint-evidence.jsonに保存する。
+C1/C2共通の見逃しはlayout6（コンベヤー・停止）の機械異常。C2はlayout0（モーター・停止）にも追加見逃し。欠損ありではセンサー異常検知率が100%→90%、C2は温度欠損が他3信号の判定にも影響した。3件の保存評価を例としてhash確認して読み、停止条件のfirst_candidate_no_target_onsetと欠損重複時のno_candidate_in_windowを記録した。全原因をこの3例から断定しない。
 
-診断は17周期標本/25イベント、新規audit_begin/end各1件、観測error/drop=0、無効化なし、診断thread終了済み。system commit余力の最小標本14.50GiB、空き物理RAMの最小標本12.62GiB。controller peak private 218.80MiB、producer peak 330.73MiB。終了時空きRAM/C/Dは13.52/140.62/402.76GiB。今回の標本は安定していたが、前回失敗の原因やリーク不在は断定しない。
+**次の小さな作業は、停止中の2条件と欠損重複の失敗理由を保存済みデータで切り分けること。** その結果を文書化し、profile/残差/score導出の独立検算範囲を具体化する。登録済み3方式・閾値・分母・困難な配置を維持し、結果に合わせた除外や緩和はしない。単一writer・OS更新許容の受入条件、完全runtime inventory、producer/consumer凍結、資源見積りも正式評価前に整理する。保留した専用principal試験を再開する意味ではない。
 
-最新closedはrun/control/000010/closed.json / SHA256 **a716478fa46eddcab2300de2d1f06ba6982eb94f738ca794cfc4fc931b33028a**。累積活動160357.173828秒（44.54時間）、48hまで残り12442.826172秒。失敗時間・worker900秒/48h/32GiBは維持。追加invocationは起動しない。heartbeat banto-24はPAUSEDに変更済み。今回の継続確認は停止した。
+今回集計は124入力/20179770bytesの保存監査等をhash確認して0.602秒。巨大な観測/scoreの全再読込み・再計算は不要だった。集計器7テスト通過。raw数/分母を合算し、ゼロ警報のprecisionや未検知delayをnullとして保持。平均delayは検知件数で加重し、全体中央値は推定しない。補助の診断例3評価は別途約53.5MBを読んだだけ。
 
-今回予定の120区間の実行と保存score以降の監査は完了。formal_permission=false/campaign加算0を維持し、完全runtime inventory・profile/score導出/全bootstrapの独立S6・正式gate/holdout/性能評価・研究Phase2/3全体の完了とは区別する。次はこの結果を根拠に研究計画の残項目を整理する判断であり、新たな評価はこのheartbeatでは開始しない。
+formal_permission=false/promotion_allowed=false/performance_status=not_evaluated、holdout未参照、bootstrap未実施。今回の比較は合成dev/smokeの記述統計であり、完全S6・正式gate・実設備性能・Phase2/3全体の完了ではない。今回のC1の良好さで登録済みholdoutの比較方式を減らさない。
 
-実計算sourceはC:/Users/TKent/.codex/worktrees/v03p/banto-ai / clean c01d1c978f78bab51391392d56cdcb7aab5afaab、出力artifacts/v03-runs/r1。本流D:/develop/banto-aiはclean 889cfc3d5e1fd6dd7fc6c9656273d16d7d56d64e。旧OUTと既存dirty親policy文書は保全しcommit除外。prepared pinはbe582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7。最新stateにはclosed000010を使う。
+## 完走証拠と保全
+
+今回集計の起点は完走保存点0e02d04b0a5a2151664cda6e8518bf412ff70aab。旧OUT artifacts/chunk-119-retry-2026-09-24のsavepoint-evidence.jsonは8366bytes/SHA256 ca976322e0bb9e7b033b94948497a41acc79900668d01edbeebfc3fea8b22c8d。旧OUTは変更禁止。失敗chunk119/attempt1は保存し、監査済みattempt2のみ集計した。
+
+実計算sourceはC:/Users/TKent/.codex/worktrees/v03p/banto-ai / clean c01d1c978f78bab51391392d56cdcb7aab5afaab、出力artifacts/v03-runs/r1。本流D:/develop/banto-aiはclean 889cfc3d5e1fd6dd7fc6c9656273d16d7d56d64e。既存dirty docs/results/anomaly-multiseed-v0.3-s4-b2-parent-policy-rename-2026-09-14.mdは8461bytes/SHA256443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持・commit除外。
+
+最終実行control000010は2026-09-24 JST17:54:05に正常終了。全120区間/720評価、journal362、status=completed/next=null。closed SHA256 a716478fa46eddcab2300de2d1f06ba6982eb94f738ca794cfc4fc931b33028a、累積160357.1738277001秒。controller/所有worker終了確認済み、heartbeat banto-24はPAUSED。追加invocation/holdoutは起動しない。
 
 ## 継続する制約
 

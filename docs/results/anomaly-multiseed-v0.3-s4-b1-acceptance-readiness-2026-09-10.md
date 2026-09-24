@@ -1,5 +1,7 @@
 # S4-B1 成功後の受入条件と追加回帰確認
 
+[§150の720評価の比較](anomaly-multiseed-v0.3-dev-smoke-comparison-2026-09-24.md): 保存監査から全件の記述統計を集計し、C1の機械91.67%/センサー95.00%/警報正解率95.73%、停止条件と欠損重複の課題を確認した。7集計テスト通過、数値再計算/holdout/CI/gate/昇格判定は未実施。正式受入passは追加しない。
+
 [§149の全120区間照合完了](anomaly-multiseed-v0.3-final-chunk-retry-2026-09-24.md): control000010のchunk119/attempt2は正常終了し、最後の6評価がすべてsuccess、累計**120区間/720評価**の保存結果を照合した。status=completed/next_unverified_chunk=null、journal362件。失敗したattempt1の2記録とstageは保持した。終了UTC **2026-09-24T08:54:05.861275+00:00**（JST **2026-09-24 17:54:05**）、exit0、所要1063.882秒（約17分44秒）。 新規attempt2の監査と全保存ファイルのhash照合を完了。119件の既存監査再利用と失敗attempt1保全も確認。今回予定の120区間の実行と保存score以降の監査は完了。formal_permission=false/campaign加算0を維持し、完全runtime inventory・profile/score導出/全bootstrapの独立S6・正式gate/holdout/性能評価・研究Phase2/3全体の完了とは区別する。次はこの結果を根拠に研究計画の残項目を整理する判断であり、新たな評価はこのheartbeatでは開始しない。
 
 [§148の1区間再試行](anomaly-multiseed-v0.3-final-chunk-retry-2026-09-24.md): ユーザー許可により最後のchunk119/attempt2だけをcontrol000010で起動。既存119区間/714評価と失敗記録を保持し、18テスト済みの外部helperで既存byte一致後に監査を再利用。新規監査と計算上限は維持する。heartbeat ACTIVE、起動後の状態はcurrent-handoffと新OUTを優先。正式受入passは追加しない。以下は各保存時点の履歴。
