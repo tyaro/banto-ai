@@ -1,23 +1,29 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-25 JST。**既存受入証拠を整理し、freeze前の作業を5まとまりに確定。720評価の再計算・再試験なし。**
+更新: 2026-09-25 JST。**単一writer方針でconsumerの入力・検証・保存・独立auditを具体案にした。次はI/Oなし入力契約validator。**
 
-- [今回の残件表](results/anomaly-multiseed-v0.3-acceptance-gap-review-2026-09-25.md)。長い引継書§162。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。確認基準ddd0165a45f42e9921e849e150d2cba63714b3a6。OUT artifacts/acceptance-gap-review-2026-09-25、成功結果verified/とsupplement-source-map.json、最終文書revision/pinはsavepoint-evidence.json。
+- [契約案](anomaly-v03-consumer-io-proposal.md)、[確認記録](results/anomaly-multiseed-v0.3-consumer-io-contract-2026-09-25.md)。長い引継書§163。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。起点0b75c1ea89a15e04dbde0963ae2b634648a10201。OUT artifacts/consumer-io-contract-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。
 
 ## 今回の成果と次の作業
 
-11保存点manifest＋3小型receipt（203,543 bytes）を外部hashへ照合。旧source等158比較中157一致、差分1件はREADMEへの追記だけ。単一writer保存実装は旧27試験時点と同じ。既存720評価・生成/score/ledger/seed/slice検算・記述表は再実行しない。
+提案ID anomaly-v03-consumer-io-proposal-v1、draft/実行許可なし。入力7項目、8工程、予定payload、失敗状態、10consumer/22関数とschema必須10欄、接続試験12群T01〜T12を具体化。科学config/schema/registry・旧formal gateは不変。関数/test method/schemaの参照整合を確認しただけで、12群の試験実行ではない。
 
-freeze前の5まとまりは、(1)正式化する単一writer/OS運用契約、(2)正式consumerの入出力接続、(3)source/runtime受入と版固定、(4)controller/保存/readerの公開接続、(5)容量・時間予算。Phase 2/3全体の残件数や試験数ではない。正式holdout実行と最終独立監査はさらに後。
+正式slice schemaは一意keyと単一metricのため、主analysis.slicesへincident recall＋score availability、別diagnosticsへ全4系列を保存する案。主slice1,233/sidecar2,835行は予定在庫で実測ではない。補助sliceのCI/有意差探索/gateは追加しない。formal mapping未採択。
 
-**次は単一writer方針でconsumerが受け取り・検証・保存するものを具体的な契約案にする。既存10入口と正式schemaの不足を対応づけ、必要な接続試験を指定する。** 案がレビュー可能になる前に正式化の判断を求めない。元の科学式/seed/母数/閾値を変えず、実holdout/CI/gate・新評価は起動しない。保留principalも再開しない。
+**次はT01〜T04前段のI/Oなし入力契約validatorをfixture/engineering専用で実装する。** 正式modeは明示拒否、identity・全coverage・partial/failed/not_startedとprofile inconclusiveの違いを検査。観測読取り・推論・writerは接続しない。旧720/dev-smoke固定APIを黙って緩めない。小さな架空metadataで新しい境界だけ検証し、既存算術/保存の合格試験を反射的に繰り返さない。
 
-静的import候補は17モジュール。manifest.pyにworking CRLF / Git LFのraw差あり、正規化後同一だが未修正。最終freezeは別clean checkoutでraw一致確認が必要。完全dependency/runtime closureではない。旧Linux CI036ecb4からselected11モジュールに差があり、古いpassを最新候補の全回帰受入へ読み替えない。正式入口run_campaignは未接続、runtime受入はnot_completedのまま。
+正式運用方針の候補ID anomaly-v03-single-writer-research-v1は予約案で未採択。正式運用契約の差分・slice対応・runtime/source受入・容量・正式失敗時の再登録条件をレビュー可能にしてから正式化を判断する。単なるwrapperや自己申告accepted=trueで許可しない。実holdout/CI/gate・追加評価・保留principalは起動しない。
 
-本流が別作業で889cfc3からclean 6f1285dへ進んだ（4 commit/5 path）。main docs/READMEにはtemp native fixtureの追加試験pass記録があるが、今回は文書のGit bytesまで照合しraw/CI再検証なし。自動統合せず、Windows3.12の必須化も行わない。旧helperのmain HEAD guardはそのまま再使用すると停止するため、今回review.pyのboundary記録を参照する。
+主確認peak private22.72MiB、空きRAM最小11.67GiB/commit余裕20.34GiB、C/D空き124.98/293.92GiB。新評価・観測読取り・bootstrap・試験実行0。23参照ファイルのpinと前保存点を保持、banto-24 PAUSED。
 
-今回OS実測はProfessional25H2/build26200/UBR9457。旧engineering9445からの更新を記録。旧formal pin9168や過去のruntime証拠は変更しない。主確認2.450秒/peak private26.82MiB、最小空きRAM11.49GiB/commit余裕19.98GiB、C/D空き126.24/293.31GiB。新評価/試験/元payload読取0。初回main guard停止とraw差停止をOUT直下に保全した。
+## 前工程の受入残件
+
+[残件表](results/anomaly-multiseed-v0.3-acceptance-gap-review-2026-09-25.md)。freeze前は運用契約、consumer接続、source/runtime固定、公開接続、容量時間予算の5まとまり。今回で全5完了とはしない。11保存点＋3receipt203,543bytesを照合済み、158source等比較中157一致、差分は旧READMEの追記だけ。720評価を再計算しない。
+
+17モジュールの静的候補表にはmanifest.pyのworking CRLF/Git LF差が残る。正規化後同一だがraw不一致なので別clean checkoutでfreeze時に確認。旧Linux CI036ecb4からselected11本が変更/追加、古いpassは最新候補全回帰の代わりにならない。完全runtime/dependency closureは未完了。
+
+本流は別作業でclean6f1285d（旧889cfc3）。temp native/互換試験のmain README記載はGit bytesまで照合し、raw/CI再検証・mergeなし。Windows3.12必須化なし。旧helper.boundariesのmain固定値は古いため、acceptance-gap-review/review.pyのboundary関数を参照。OS直近観測はProfessional25H2/26200/UBR9457、旧engineering9445から更新。formal pin9168と過去runtimeは維持。
 
 ## 前工程の記述表
 

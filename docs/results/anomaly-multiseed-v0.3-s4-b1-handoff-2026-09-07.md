@@ -3941,3 +3941,11 @@ report.md/HTML/JSONを保存。HTMLは18展開セクション/54表/2,610行を�
 OSはProfessional25H2/26200/UBR9457。旧engineering9445からの更新を記録、正式pin9168や過去runtimeは変更なし。主確認2.450秒、peak26.82MiB、最小空きRAM11.49GiB/commit余裕19.98GiB、C126.24/D293.31GiB。新観測・評価・score/bootstrap・試験実行・元payload読取0。初回main guard停止とraw差guard停止をOUT直下に残し、成功確認をverified/へ分離した。
 
 freeze前は(1)単一writer/OS方針の正式運用契約、(2)consumer正式入出力、(3)source/runtime受入・版固定、(4)保存公開接続、(5)容量時間予算の5まとまり。正式holdoutと最終独立監査はその後。次は1/2の接点として、consumerの入力・検査・出力と必要な接続試験を具体案にする。既存合格試験/720評価を反射的に再実行せず、実holdout・gateは閉じたまま。banto-24 PAUSED、formal/promotion/S6=false、Phase2/3全体未完了。
+
+## 163. consumer入出力と保存の具体契約案（2026-09-25）
+
+[契約案](../anomaly-v03-consumer-io-proposal.md)、[確認記録](anomaly-multiseed-v0.3-consumer-io-contract-2026-09-25.md)。起点0b75c1ea89a15e04dbde0963ae2b634648a10201、OUT artifacts/consumer-io-contract-2026-09-25、最終revision/pinはsavepoint-evidence.json。入力7項目・8工程・保存payloadと失敗状態を具体化、10consumer/22関数/schema必須10欄とT01〜T12の接続確認群を対応づけた。既存算術/保存の試験を再利用し、新入口の境界へ確認を絞る。
+
+主analysisのsliceはincident recall＋score availability、sidecarは全4系列とする案。主1,233/sidecar2,835行は予定在庫、実行結果ではない。補助sliceは記述値でCI/gate未計算。formal mapping/新運用契約未採択、旧科学schema/registry/正式gate不変。23ファイルpinとAST/schema参照の整合確認を実施、試験実行/観測読取/評価/bootstrapは0。
+
+資源peak22.72MiB、最小空きRAM11.67GiB/commit余裕20.34GiB、C124.98/D293.92GiB。前保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変。manifest.py改行差は保全、banto-24 PAUSED。次はT01〜T04前段のI/Oなし入力契約validatorをfixture/engineering専用で実装。正式mode拒否を維持し、観測reader/推論/writerは接続しない。正式採択・freeze・S4/S6・Phase2/3全体の完了とはしない。
