@@ -1,38 +1,22 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-24 JST。**ユーザーが最後の1区間の再試行を許可。区間119/attempt2をcontrol000010で1回だけ起動済み（PID35264、JST17:36:21）。確定済み119区間/714評価と失敗attempt1を保持する。**
+更新: 2026-09-24 JST。**最後の1区間の再試行に成功し、全120区間/720評価の照合完了。今回の評価は終了、追加起動なし。**
 
-今回OUTは `artifacts/chunk-119-retry-2026-09-24`。まずそのFOLLOWUP.md/followup-state.jsonを読む。[今回の再試行](results/anomaly-multiseed-v0.3-final-chunk-retry-2026-09-24.md)。外部helperを失敗末尾の明示pinに対応させ、関連18テスト通過。起動時に既存7730ファイルを1回hash照合して119監査だけ再利用する。新規attempt2は元の監査を行う。worker900秒/48h/32GiBは不変。成功時journal362/全120区間720評価/next=null。再失敗したら保全し停止、attempt3なし。heartbeat banto-24は今回1区間だけを対象にACTIVE。実装保存点f4cda3b、起動保存点は新OUT/launch-savepoint.json。全7730ファイル照合は75.222秒で成功、119監査再利用/失敗末尾2記録保持。journal360/chunk119/attempt2/running確認済み。結果は未確定。以下は前回停止の記録。
+候補C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。今回OUTはartifacts/chunk-119-retry-2026-09-24。最終commit/pinはOUT/savepoint-evidence.jsonとfollowup-state.json。実装f4cda3b、起動06c9f88を保持。[今回の結果](results/anomaly-multiseed-v0.3-final-chunk-retry-2026-09-24.md)、長い引継書§149。
 
-## 場所と保存点
+control000010のchunk119/attempt2は正常終了し、最後の6評価がすべてsuccess、累計**120区間/720評価**の保存結果を照合した。status=completed/next_unverified_chunk=null、journal362件。失敗したattempt1の2記録とstageは保持した。終了UTC **2026-09-24T08:54:05.861275+00:00**（JST **2026-09-24 17:54:05**）、exit0、所要1063.882秒（約17分44秒）。
 
-- 候補: `C:/Users/TKent/.codex/worktrees/70b0/banto-ai`、branch `codex/s4-b1-windows-engineering`。
-- 今回OUT: `artifacts/chunks-105-119-fast-resume-2026-09-24`。failure-evidence.json/diagnostics-summary.jsonが停止証拠。最終commit/pinはfailure-savepoint-evidence.json/followup-state.json。実装aab4d58、起動dd45a37、中間eb1a67e/105960c。
-- 実計算source: clean c01d1c978f78bab51391392d56cdcb7aab5afaab、`C:/Users/TKent/.codex/worktrees/v03p/banto-ai`、出力`artifacts/v03-runs/r1`。
-- 本流D:/develop/banto-aiは889cfc3d5e1fd6dd7fc6c9656273d16d7d56d64e/clean。既存dirty親policy文書は8461bytes/SHA256443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保持、stage/commitしない。
-- [今回の停止記録](results/anomaly-multiseed-v0.3-verified-resume-2026-09-24.md)、長い引継書§147。保存済みの旧成功・失敗OUTは変更しない。
+producer 558.891秒、独立audit 91.668秒、audit_status=ledger_checks_passed。controller PID35264の消失をUTC2026-09-24T09:11:55.6213023Zに確認。producer/audit/inspectionの所有workerはすべてexit0/終了確認済み。既存119区間は全7730ファイルのbyte/source/runtime一致（75.222秒）後に監査を再利用し、新規attempt2は元の監査を完了した。
 
-## 現在地
+終了後のcollectorは7800 files/16081676236 logical bytesをhash照合し、前回7730ファイルと過去356artifact pinsの不変、最新receipt000362/descriptor/marker/全6successを確認した。所要50.227秒。数値再計算は行わず、最終manifest作成時の全payload再hashも省く。証拠は新OUTのevidence.jsonとdiagnostics-summary.json、最終commit/pinはsavepoint-evidence.jsonに保存する。
 
-control000009は最後の区間119/attempt1のproducerが900秒（15分）の上限に達し、ResourceStop/time_limitでexit2となった。producer実測909.083秒、worker PID17908/exit1/終了確認済み。終了UTC **2026-09-24T05:46:49.451914+00:00**（JST **2026-09-24 14:46:49**）。新規14区間/84評価が確定し、累計**119区間/714評価**。残り**1区間/6評価**。journal359/next119、最終recordはfailed/resource_limit。全120区間の完了ではない。
+診断は17周期標本/25イベント、新規audit_begin/end各1件、観測error/drop=0、無効化なし、診断thread終了済み。system commit余力の最小標本14.50GiB、空き物理RAMの最小標本12.62GiB。controller peak private 218.80MiB、producer peak 330.73MiB。終了時空きRAM/C/Dは13.52/140.62/402.76GiB。今回の標本は安定していたが、前回失敗の原因やリーク不在は断定しない。
 
-最新closedは **run/control/000009/closed.json** / raw SHA256 **362c2ed425d38a6a6ae3436518fa4cafa0cc4d9a017b012f15de4816fa44156d**、status=failed/stop_reason=exception。累積活動**159294.585066秒（44.25時間）**、48時間候補の残り**13505.414934秒（3.75時間）**。失敗時間を含めて保持し、48h/32GiBとworker上限は変更していない。prepared pinはbe582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7。旧control8や中間receiptを最新closedの代わりに使わない。
+最新closedはrun/control/000010/closed.json / SHA256 **a716478fa46eddcab2300de2d1f06ba6982eb94f738ca794cfc4fc931b33028a**。累積活動160357.173828秒（44.54時間）、48hまで残り12442.826172秒。失敗時間・worker900秒/48h/32GiBは維持。追加invocationは起動しない。heartbeat banto-24はPAUSEDに変更済み。今回の継続確認は停止した。
 
-controller PID25724の消失と全所有workerの終了を確認済み。失敗attempt1には6件のstageファイルが残るが完了markerなし/audit未開始のため成功扱いしない。生存workerの放置や追加起動はない。
+今回予定の120区間の実行と保存score以降の監査は完了。formal_permission=false/campaign加算0を維持し、完全runtime inventory・profile/score導出/全bootstrapの独立S6・正式gate/holdout/性能評価・研究Phase2/3全体の完了とは区別する。次はこの結果を根拠に研究計画の残項目を整理する判断であり、新たな評価はこのheartbeatでは開始しない。
 
-## 診断と保全
-
-診断は238周期標本/273イベント、audit_begin/end各14件（105〜118）、ResourceStop例外1件、観測error/drop=0、無効化なし、診断thread終了済み。今回の停止はMemoryErrorではなくproducerの時間上限。標本UTC **2026-09-24T05:44:43.907054+00:00** でsystem commit 54.90/54.96GiB、割当余力**52.73MiB**を記録した。同時刻のpagefile確保量は23.26GiB。空きRAM最小標本は3.38GiB。controller peak 0.22GiB、失敗producer peak 326.05MiB。システム全体の資源逼迫は観測したが、割当元process・時間超過への因果寄与・実際のCPU/I/O競合は未確定。メモリリークの有無を断定しない。
-
-既存105区間は起動時の全byte/source/runtime照合（56.252秒）で監査を再利用し、新規105〜118の14区間は元の独立監査とcontroller監査を通過した。今回保全では新規14区間のdescriptor/control pin、完了markerが示すpayload raw hash、全6件success、producer/audit workerの終了を照合した。新規runファイル955件/1999730138 bytesをstreaming hashし、前回6775ファイルの一覧/サイズと旧journal315件のhashを確認。旧payload全体の再hashや数値再計算はしていない。全体は7730 files/15947784715 logical bytes。過去196artifact pinsと起動時24immutable artifactsも保持。小さなcontrol/journal/失敗worker記録98ファイルをOUT/failure-controlへ複製してhash照合した。成功用collector/finalizerは実行していない。
-
-## 前回停止時の判断（今回のユーザー指示で再試行を許可）
-
-次の判断は、システムの負荷が落ち着いた状態で、残り1区間だけを別の試行として再実行するか。今回の失敗attempt1は未公開stageを含めそのまま保持し、再使用・削除しない。現在の高速再開helperは「完了数×3＝journal件数」を要求するため、今回のfailed末尾2recordを含む359件をそのまま受け入れない。再開する場合は外部pinに基づく失敗末尾の扱いを検証する必要がある。無条件にcacheへ追加したり、上限引上げ・新しいinvocationを自動実施したりしない。
-
-Python C:/Python314/python.exe -B。既存外部helperのraw hashは97990096b9ccea31054209b164c8643fab7b54c2d512d8ce52256efe7fa8063d、起動snapshotは05152fb2b81570b573fc96932a1576970e85aaab2673fb067c4b6df2e1cd1d37。今回も実OS26200.9457/CPython3.14.0、exe/DLL pinは開始/終了で一致。旧正式pinは維持。
-
-formal_permission=false/campaign加算0、保存score以降の監査という範囲を維持。完全runtime inventory・profile/score導出/全bootstrapの独立S6・全120/holdout/性能評価・研究Phase 2/3全体は未完了。実計算source c01d1c9と本流889cfc3は変更せず、既存dirty親policy文書を保全しcommit除外。OS/pagefile/Python設定変更、追加agent、回帰試験、push/merge/CIなし。
+実計算sourceはC:/Users/TKent/.codex/worktrees/v03p/banto-ai / clean c01d1c978f78bab51391392d56cdcb7aab5afaab、出力artifacts/v03-runs/r1。本流D:/develop/banto-aiはclean 889cfc3d5e1fd6dd7fc6c9656273d16d7d56d64e。旧OUTと既存dirty親policy文書は保全しcommit除外。prepared pinはbe582d48faf61a764cd0341d742af2112fd9cd0e7e9d16e979aff8770d2538c7。最新stateにはclosed000010を使う。
 
 ## 継続する制約
 

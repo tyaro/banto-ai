@@ -1,5 +1,7 @@
 # S4-B1 成功後の受入条件と追加回帰確認
 
+[§149の全120区間照合完了](anomaly-multiseed-v0.3-final-chunk-retry-2026-09-24.md): control000010のchunk119/attempt2は正常終了し、最後の6評価がすべてsuccess、累計**120区間/720評価**の保存結果を照合した。status=completed/next_unverified_chunk=null、journal362件。失敗したattempt1の2記録とstageは保持した。終了UTC **2026-09-24T08:54:05.861275+00:00**（JST **2026-09-24 17:54:05**）、exit0、所要1063.882秒（約17分44秒）。 新規attempt2の監査と全保存ファイルのhash照合を完了。119件の既存監査再利用と失敗attempt1保全も確認。今回予定の120区間の実行と保存score以降の監査は完了。formal_permission=false/campaign加算0を維持し、完全runtime inventory・profile/score導出/全bootstrapの独立S6・正式gate/holdout/性能評価・研究Phase2/3全体の完了とは区別する。次はこの結果を根拠に研究計画の残項目を整理する判断であり、新たな評価はこのheartbeatでは開始しない。
+
 [§148の1区間再試行](anomaly-multiseed-v0.3-final-chunk-retry-2026-09-24.md): ユーザー許可により最後のchunk119/attempt2だけをcontrol000010で起動。既存119区間/714評価と失敗記録を保持し、18テスト済みの外部helperで既存byte一致後に監査を再利用。新規監査と計算上限は維持する。heartbeat ACTIVE、起動後の状態はcurrent-handoffと新OUTを優先。正式受入passは追加しない。以下は各保存時点の履歴。
 
 [§147の時間上限停止と保全](anomaly-multiseed-v0.3-verified-resume-2026-09-24.md): control000009は最後の区間119/attempt1のproducerが900秒（15分）の上限に達し、ResourceStop/time_limitでexit2となった。producer実測909.083秒、worker PID17908/exit1/終了確認済み。終了UTC **2026-09-24T05:46:49.451914+00:00**（JST **2026-09-24 14:46:49**）。新規14区間/84評価が確定し、累計**119区間/714評価**。残り**1区間/6評価**。journal359/next119、最終recordはfailed/resource_limit。全120区間の完了ではない。 新規14区間の保存監査・payload raw hashを照合。最後のstage6件は未公開/未監査で加算しない。システムcommit余力約53MiBの標本があるが負荷発生元/因果は未確定。heartbeat PAUSED、残り1区間の再試行は未起動。以下の正式受入passは追加しない。

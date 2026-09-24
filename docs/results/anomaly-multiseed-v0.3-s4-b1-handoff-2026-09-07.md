@@ -3792,3 +3792,17 @@ formal_permission=false/campaign加算0、保存score以降の監査という範
 control000010をUTC 2026-09-24T08:36:21.2971453Z（JST 17:36:21、PID 35264）に非表示で起動。対象はchunk119/attempt2、最大1区間/6評価。起動前の空きRAM/C/Dは13.17/140.76/397.33GiB、system commit余力14.99GiB。実装保存点f4cda3bc5abf3e437b32037d4607564083669a18。既存Banto Pythonなしを確認して起動し、PID/作成UTC/絶対wrapperを照合した。30分heartbeat banto-24を今回1区間だけに更新してACTIVE。起動保存点はOUT/launch-savepoint.jsonに保持する。
 
 実計算source c01d1c9、worker900秒/候補48h/32GiBは不変。失敗時間も引き継ぐ。再失敗時は保存・heartbeat停止しattempt3は起動しない。正式許可false/campaign加算0、完全S6/holdout/Phase2/3完了とは区別する。
+
+## 149. 最後の区間の再試行成功・全120区間の照合完了（2026-09-24 JST）
+
+[結果記録](anomaly-multiseed-v0.3-final-chunk-retry-2026-09-24.md)。control000010のchunk119/attempt2は正常終了し、最後の6評価がすべてsuccess、累計**120区間/720評価**の保存結果を照合した。status=completed/next_unverified_chunk=null、journal362件。失敗したattempt1の2記録とstageは保持した。終了UTC **2026-09-24T08:54:05.861275+00:00**（JST **2026-09-24 17:54:05**）、exit0、所要1063.882秒（約17分44秒）。
+
+producer 558.891秒、独立audit 91.668秒、audit_status=ledger_checks_passed。controller PID35264の消失をUTC2026-09-24T09:11:55.6213023Zに確認。producer/audit/inspectionの所有workerはすべてexit0/終了確認済み。既存119区間は全7730ファイルのbyte/source/runtime一致（75.222秒）後に監査を再利用し、新規attempt2は元の監査を完了した。
+
+終了後のcollectorは7800 files/16081676236 logical bytesをhash照合し、前回7730ファイルと過去356artifact pinsの不変、最新receipt000362/descriptor/marker/全6successを確認した。所要50.227秒。数値再計算は行わず、最終manifest作成時の全payload再hashも省く。証拠は新OUTのevidence.jsonとdiagnostics-summary.json、最終commit/pinはsavepoint-evidence.jsonに保存する。
+
+診断は17周期標本/25イベント、新規audit_begin/end各1件、観測error/drop=0、無効化なし、診断thread終了済み。system commit余力の最小標本14.50GiB、空き物理RAMの最小標本12.62GiB。controller peak private 218.80MiB、producer peak 330.73MiB。終了時空きRAM/C/Dは13.52/140.62/402.76GiB。今回の標本は安定していたが、前回失敗の原因やリーク不在は断定しない。
+
+最新closedはrun/control/000010/closed.json / SHA256 **a716478fa46eddcab2300de2d1f06ba6982eb94f738ca794cfc4fc931b33028a**。累積活動160357.173828秒（44.54時間）、48hまで残り12442.826172秒。失敗時間・worker900秒/48h/32GiBは維持。追加invocationは起動しない。heartbeat banto-24はPAUSEDに変更済み。今回の継続確認は停止した。
+
+今回予定の120区間の実行と保存score以降の監査は完了。formal_permission=false/campaign加算0を維持し、完全runtime inventory・profile/score導出/全bootstrapの独立S6・正式gate/holdout/性能評価・研究Phase2/3全体の完了とは区別する。次はこの結果を根拠に研究計画の残項目を整理する判断であり、新たな評価はこのheartbeatでは開始しない。
