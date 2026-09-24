@@ -3814,3 +3814,13 @@ producer 558.891秒、独立audit 91.668秒、audit_status=ledger_checks_passed�
 両条件合算でC1は機械91.67%、センサー95.00%、警報正解率95.73%、検知済み平均delay1.26秒。C2は機械89.92%、センサー95.00%、正解率94.83%。正常区間の誤警報は両者0だが全区間の未対応警報は200/242件。C1/C2はコンベヤー停止条件、C2はモーター停止条件に追加見逃しがあり、欠損条件のsensor recallは100%→90%。3件の保存評価例のhashと失敗reasonも読んだが、全原因の断定ではない。
 
 今回は記述統計のみ。formal_permission=false/performance_status=not_evaluated/promotion_allowed=falseを維持。既存正式gate・閾値・対象方式は変更しない。次は停止条件/欠損重複の原因切り分けと独立score検算の具体化。Phase2/3全体、運用受入/runtime inventory、bootstrap/CI、holdoutは別の残件として整理した。heartbeat PAUSEDを維持する。今回OUT artifacts/dev-smoke-comparison-2026-09-24のsavepoint-evidence.jsonへ最終保存点を保持。
+
+## 151. 停止中・欠損重複の見逃し原因調査（2026-09-24 JST）
+
+[原因調査](anomaly-multiseed-v0.3-failure-analysis-2026-09-24.md)を保存し、上司向け報告を更新。前段保存点b5b9403を起点に、全10 seedsのcore停止2 layouts×C1/C2を40評価、最初のdev seedのquality-stress全12 layouts×C1/C2を24評価、合計64評価を読んだ。68入力約1.295GB、約40秒、680 incidentを確認。3,704点の残差/scoreが保存profile・依存値からの別途算出と各1e-12以内で一致し、元観測4ファイルと1,680依存セルも一致した。profile自体の独立推定は未実施。
+
+コンベヤー停止はC1/C2各100件の速度scoreが窓全体で閾値6以下（最大3.5862/4.3225）。振動警報はあるが、正解対象の速度にonsetがないため全件miss。停止時速度ほぼ0に55%低下を加える合成条件の限界と整理した。C2モーター停止は21/100 miss、3 seedsへ6/10/5件。利用可能なoffset1/2のうち28点が閾値以下で、主に振動の補正項が電流の残差を相殺した。後続の対象onsetを拾い損ねたケースではなかった。
+
+欠損重複のsensor missは計画§3.3の構造的上限90%に対応する。offset1..3欠損、offset4は直前qualityで利用不可となり、2点連続を作れない。最初のseedの12 layouts×2方式で最初9回検知・10回目missを確認。「原因未解明の不具合」という扱いを解消し、閾値/分母の変更・新しい長時間試験は行わない。
+
+次は観測からphase/availability、正常profile、残差/scoreを別実装で復元するconsumerの不足分。正常生成/丸め、bootstrap/CI/gate、単一writer受入/runtime inventory/資源見積りも残る。formal_permission/promotion_allowed/independent_s6_complete=false、holdout未参照、heartbeat PAUSED。今回OUT artifacts/dev-smoke-failure-analysis-2026-09-24のsavepoint-evidence.jsonに最終保存点を残す。資源終了時の空きRAM約13.64GiB、commit余裕13.05GiB、C/D空き139.61/374.40GiB。D空きが調査中約1.21GiB減った原因は未特定。本処理の新規出力はC上約4.8MB、原本を書き換えていない。
