@@ -11,3 +11,9 @@ helper SHA256は1fa260d9e8ff47681617f2a7cdefd828da04d7af050a75711372dbb06611c412
 開始状態はclosed000009 / 362c2ed425d38a6a6ae3436518fa4cafa0cc4d9a017b012f15de4816fa44156d、累積159294.58506560008秒。48hまで残り13505.414934399916秒。実計算source c01d1c9、900秒worker上限、48h/32GiBは不変。失敗時間を含める。成功時のjournalは362件、最後のreceiptは000362.json（失敗末尾2件を残すため3の倍数ではない）。全120区間/720評価、status=completed、next=nullを照合して保存する。
 
 formal_permission=false/campaign加算0、保存score以降の監査という範囲は維持する。完全S6/holdout/研究Phase2/3全体の完了ではない。再失敗時は保全して停止し、attempt3を自動起動しない。起動・資源・保存点は以下へ追記する。
+
+## 起動
+
+control000010をUTC 2026-09-24T08:36:21.2971453Z（JST 17:36:21、PID 35264）に非表示で起動。対象はchunk119/attempt2、最大1区間/6評価。起動前の空きRAM/C/Dは13.17/140.76/397.33GiB、system commit余力14.99GiB。実装保存点f4cda3bc5abf3e437b32037d4607564083669a18。既存Banto Pythonなしを確認して起動し、PID/作成UTC/絶対wrapperを照合した。30分heartbeat banto-24を今回1区間だけに更新してACTIVE。起動保存点はOUT/launch-savepoint.jsonに保持する。
+
+実起動内の全7730ファイル/15947784715 bytesの照合はUTC 2026-09-24T08:39:30.705105+00:00に成功し、75.222秒で既存119監査だけを再利用した。failed末尾2記録を保持し、失敗区間の監査再利用は0。journal360でchunk119/attempt2/runningを確認した。数値監査の繰返しはなく、最後の区間の新規計算へ進んだ。初期診断error/drop=0、無効化なし。結果は未確定。

@@ -3784,3 +3784,11 @@ control000008の失敗保存点daf17f2を起点に新しいcontrol000009とし�
 heartbeat banto-24はPAUSED、追加起動なし。最終保存commit/pinは今回OUT/failure-savepoint-evidence.json。
 
 formal_permission=false/campaign加算0、保存score以降の監査という範囲を維持。完全runtime inventory・profile/score導出/全bootstrapの独立S6・全120/holdout/性能評価・研究Phase 2/3全体は未完了。実計算source c01d1c9と本流889cfc3は変更せず、既存dirty親policy文書を保全しcommit除外。OS/pagefile/Python設定変更、追加agent、回帰試験、push/merge/CIなし。
+
+## 148. 最後の1区間だけの再試行（2026-09-24 JST）
+
+[再試行記録](anomaly-multiseed-v0.3-final-chunk-retry-2026-09-24.md)。ユーザーの明示指示を受け、119区間/714評価と失敗attempt1を保存したまま再開した。外部helperはpin済みの失敗末尾2記録を受け入れるが、cache/成功件数に加算しない。18テスト通過。7730 filesのbyte/source/runtime確認後に既存119監査だけを再利用し、attempt2は元の独立監査/controller監査を行う。成功時journal362/全120区間720評価/next=null。
+
+control000010をUTC 2026-09-24T08:36:21.2971453Z（JST 17:36:21、PID 35264）に非表示で起動。対象はchunk119/attempt2、最大1区間/6評価。起動前の空きRAM/C/Dは13.17/140.76/397.33GiB、system commit余力14.99GiB。実装保存点f4cda3bc5abf3e437b32037d4607564083669a18。既存Banto Pythonなしを確認して起動し、PID/作成UTC/絶対wrapperを照合した。30分heartbeat banto-24を今回1区間だけに更新してACTIVE。起動保存点はOUT/launch-savepoint.jsonに保持する。
+
+実計算source c01d1c9、worker900秒/候補48h/32GiBは不変。失敗時間も引き継ぐ。再失敗時は保存・heartbeat停止しattempt3は起動しない。正式許可false/campaign加算0、完全S6/holdout/Phase2/3完了とは区別する。

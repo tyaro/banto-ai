@@ -397,3 +397,9 @@ control000009は最後の区間119/attempt1のproducerが900秒（15分）の上
 次の判断は、システムの負荷が落ち着いた状態で、残り1区間だけを別の試行として再実行するか。今回の失敗attempt1は未公開stageを含めそのまま保持し、再使用・削除しない。現在の高速再開helperは「完了数×3＝journal件数」を要求するため、今回のfailed末尾2recordを含む359件をそのまま受け入れない。再開する場合は外部pinに基づく失敗末尾の扱いを検証する必要がある。無条件にcacheへ追加したり、上限引上げ・新しいinvocationを自動実施したりしない。
 
 詳細は[停止記録](results/anomaly-multiseed-v0.3-verified-resume-2026-09-24.md)。正式許可false/campaign加算0。
+
+### 2026-09-24: 明示pinした失敗末尾を保持する1区間再試行
+
+外部VerifiedResumeはverified prefixの後のfirst-attempt running→failed/resource_limitの2記録をsnapshotで明示pinした場合のみ保存状態として受け入れる。元のclosed/checkpoint/全file/source/runtimeの照合が必要で、失敗末尾をcache/完了件数には加えない。不正な末尾や欠落を拒否し、attempt2の新規verified記録には元の監査を実行する。関連18テスト通過。
+
+[今回の起動](results/anomaly-multiseed-v0.3-final-chunk-retry-2026-09-24.md): control000010、chunk119/attempt2だけの1回。既存119件と失敗attempt1を保持するため成功時journal362となる。worker900秒/48h/32GiB、固定source c01d1c9、正式許可false/campaign加算0を維持する。

@@ -1,8 +1,8 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-24 JST。**ユーザーが最後の1区間の再試行を許可。区間119/attempt2をcontrol000010で1回だけ再開準備中。確定済み119区間/714評価と失敗attempt1を保持する。**
+更新: 2026-09-24 JST。**ユーザーが最後の1区間の再試行を許可。区間119/attempt2をcontrol000010で1回だけ起動済み（PID35264、JST17:36:21）。確定済み119区間/714評価と失敗attempt1を保持する。**
 
-今回OUTは `artifacts/chunk-119-retry-2026-09-24`。まずそのFOLLOWUP.md/followup-state.jsonを読む。[今回の再試行](results/anomaly-multiseed-v0.3-final-chunk-retry-2026-09-24.md)。外部helperを失敗末尾の明示pinに対応させ、関連18テスト通過。起動時に既存7730ファイルを1回hash照合して119監査だけ再利用する。新規attempt2は元の監査を行う。worker900秒/48h/32GiBは不変。成功時journal362/全120区間720評価/next=null。再失敗したら保全し停止、attempt3なし。以下は前回停止の記録。
+今回OUTは `artifacts/chunk-119-retry-2026-09-24`。まずそのFOLLOWUP.md/followup-state.jsonを読む。[今回の再試行](results/anomaly-multiseed-v0.3-final-chunk-retry-2026-09-24.md)。外部helperを失敗末尾の明示pinに対応させ、関連18テスト通過。起動時に既存7730ファイルを1回hash照合して119監査だけ再利用する。新規attempt2は元の監査を行う。worker900秒/48h/32GiBは不変。成功時journal362/全120区間720評価/next=null。再失敗したら保全し停止、attempt3なし。heartbeat banto-24は今回1区間だけを対象にACTIVE。実装保存点f4cda3b、起動保存点は新OUT/launch-savepoint.json。全7730ファイル照合は75.222秒で成功、119監査再利用/失敗末尾2記録保持。journal360/chunk119/attempt2/running確認済み。結果は未確定。以下は前回停止の記録。
 
 ## 場所と保存点
 
