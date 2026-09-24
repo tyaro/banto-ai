@@ -351,7 +351,7 @@ def native_acl_requirements():
                           "write_ea": 0x10, "write_attributes": 0x100, "delete": 0x10000}}
 
 
-def windows_readonly_access_check(path: Path, reader_token: int) -> dict:
+def windows_readonly_access_check(path: Path, reader_token: int, *, links: int = 1) -> dict:
     """Read a protected DACL and call real AccessCheck. Never installs an ACL.
 
     S4 must create an independent-process impersonation token and establish its
@@ -361,7 +361,7 @@ def windows_readonly_access_check(path: Path, reader_token: int) -> dict:
     from ctypes import wintypes
     path = Path(path)
     directory = path.is_dir()
-    regular_path(path, directory=directory)
+    regular_path(path, directory=directory, links=links)
     security = ctypes.WinDLL("advapi32", use_last_error=True)
     kernel = ctypes.WinDLL("kernel32", use_last_error=True)
     security.GetNamedSecurityInfoW.argtypes = [wintypes.LPWSTR, ctypes.c_int, wintypes.DWORD,

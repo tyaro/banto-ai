@@ -1,6 +1,6 @@
 # banto-ai 文書索引・状態台帳
 
-最終更新: 2026-09-07
+最終更新: 2026-09-25
 
 この索引は、文書の入口と現在状態を示すliving documentです。初稿S0 commitは
 `41decf9b6f8d6c876715729516354bf6da49422c`、そのparentはmainの
@@ -12,6 +12,8 @@ S0監査記録commit `0b40e7295cfa20f32889005ceca2d29d29ca340c`の上でS1を実
 S1初回監査（`0368769acf12a0279c84f30c6435e853208386e9`）はP2=6／P3=1件でした。
 修正commit `d6ca0f9ee85172caae3b658bdb105287f8e43141`への独立再監査はP0〜P3 0件で合格し、
 S1は完了し、candidate stackはmain統合済みです。S2も独立監査P0〜P3 0件で完了しました。S3 deterministic runnerも独立監査P0〜P3 0件で完了し、`S3_READY=yes`、`INTEGRATION_READY=yes`です。S4-A engineering inspection/resource guardも`8befc5bb`と`e61d14c4`でmainへ統合され、初回監査P2/P3を修正した再監査はP0〜P3 0件、`S4_A_READY=yes`、`INTEGRATION_READY=yes`です。受入statusは常に`not_completed`で、formal run・性能評価・promotionは未実施です。次はS4-Bのtemp-only native publisher/DACL/restricted-token/race harnessです。最新状態は[S4-A監査結果](results/anomaly-multiseed-v0.3-s4-a-audit-2026-09-07.md)を参照してください。
+
+2026-09-25のS4-B作業では、既存fixture publisherの公開物だけにprotected read-only DACLを設定し、別Python process由来の制限付きimpersonation tokenによる実Win32 AccessCheck、別processの実write/delete拒否、2 processの同名公開競合を検証した。Windows CPython 3.14.0でnative 2/2、S4-A/公開関連46/46がpassした。Windows 3.12はこの端末に存在せず、同runtimeのnative受入、独立監査、S4全体の受入、dev/smoke、formal permissionは未完了である。追加したnative moduleはsystem-temp fixture専用で、正式rootへの公開入口ではない。
 
 ## 正本の読み方
 
@@ -75,6 +77,7 @@ Phase 3の内訳は次のとおりです。
   独立監査P0〜P3 0件、S2 67/67 pass。詳細はS2監査結果を参照
 - v0.3 S3実装commit群 `bdd59c5`、`2a01146`、`bb42d37`、`dc52266`: 固定inventory、paired materialization、完全ledger、安全停止、provenance、non-overwrite publisherを実装し、独立監査P0〜P3 0件。CI run `34044283016`はPython 3.12/3.14の全工程green。S3 73/73 pass。MemoryErrorはglobal stopへ強化したが、実OOM根因・commit limitは未解明。次はS4-Bのtemp-only native publisher/DACL/restricted-token/race harness。S4全体・性能評価・formal run・promotionは未実施
 - v0.3 S4-A: engineering inspection/resource guardを実装し、独立再監査P0〜P3 0件。acceptanceは`not_completed`、`FORMAL_PERMISSION=no`で、S4全体は未完了。次はS4-B
+- v0.3 S4-B進行中（2026-09-25）: Windows 3.14.0でtemp fixtureのprotected DACL、別process由来restricted tokenのAccessCheck、実write/delete拒否、2 process競合を検証。Windows 3.12と独立監査は未実施。S4受入・formal permissionは未完了
 
 ## 文書カテゴリ
 
