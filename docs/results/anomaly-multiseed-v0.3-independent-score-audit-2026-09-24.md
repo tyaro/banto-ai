@@ -1,5 +1,7 @@
 # v0.3 保存観測からのprofile・score独立検算（2026-09-24）
 
+続報: [判定不能の独立検算と保存済み監査の接続](anomaly-multiseed-v0.3-connected-observation-audit-2026-09-24.md)を完了した。以下は最初のcalibrated限定実装の記録であり、最新の対応範囲・入口は続報を参照する。
+
 保存された正常profileやscoreを正しいと仮定せず、元の観測JSONLから計算し直す検算器を追加した。C0/C1/C2の正常profile、残差、score、phase、availability、依存値を別実装で照合する。生産側の検知方式や実験条件は変えていない。
 
 ## 実装した範囲

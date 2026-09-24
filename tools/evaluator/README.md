@@ -11,7 +11,7 @@
 
 保存済み6件のscoreから警報・matching・集計を別実装で確かめる `audit_anomaly_v03_saved.py` は、[独立検算と進行記録の設計](../../docs/anomaly-v03-independent-audit-and-checkpoints.md)を参照してください。この既存CLIはprofile/score導出や完全S6監査を検証しません。
 
-2026-09-24追記：dev/smokeの120区間/720評価は完走済みです。元観測から正常profile・残差・scoreを別実装で再構成する`banto_ai.anomaly_v03_score_audit.audit_score_derivation`を追加し、保存済み12評価で照合しました。[対応範囲・入力pinの責任・使用例](../../docs/results/anomaly-multiseed-v0.3-independent-score-audit-2026-09-24.md)を参照してください。完全でcalibratedなdev/smoke入力だけに対応し、既存controllerや監査CLIへの接続、判定不能profile、全720評価への適用、正常生成・bootstrap・完全S6は未完了です。
+2026-09-24追記：dev/smokeの120区間/720評価は完走済みです。元観測から正常profile・残差・scoreを再構成する検算器に、数値的な判定不能の理由・状態の確認を追加しました。`audit_anomaly_v03_observations.py`は外部pin付き完走保存点から指定1区間を読み、profile/score→警報・matching・集計まで照合します。[対応範囲と使用例](../../docs/results/anomaly-multiseed-v0.3-connected-observation-audit-2026-09-24.md)を参照してください。新しい入口は保存済み6評価で確認済み、元観測からのユニークな検算数は前回との重複を除いて12です。正常prefix健全・完全なdev/smokeに限定し、全720評価への適用、正常生成・bootstrap・完全S6は未完了です。旧controller/監査CLIは変更していません。
 
 固定120区切り・720評価の計画表示と進捗記録の読取り検査には `checkpoint_anomaly_v03.py plan/inspect` を使います。[metadata CLIの説明](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#実装済みのmetadata-cli)にある外部plan/head hashと件数を必須にし、途中終了・記録欠落・順序違反・未検証の保存状態を区別します。metadataの宣言を復元する段階で、実データ生成・実行再開・全campaign完了には接続していません。
 同CLIの `preflight-trial` は、[保存済み6件との証拠照合](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#保存済み6件とのpreflight証拠照合)を行います。参照journal・旧trial・終了監視・旧独立検算のhash/来歴を結び付け、6件のledgerを再検算します。旧trialを新campaignの完了件数に加えず、実行再開や全体の完了印は作りません。

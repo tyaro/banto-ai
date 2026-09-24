@@ -3835,3 +3835,17 @@ producer 558.891秒、独立audit 91.668秒、audit_status=ledger_checks_passed�
 完全でcalibratedなdev/smokeだけに対応し、判定不能/partial/holdoutは拒否。APIだけでは登録identityや入力ファイルの出所を認証せず、今回IO側で完走保存点からpinを照合した。既存監査CLI/controllerには未接続、旧720評価のaudit不変。profile/score_derivation_verified=trueは検算した対象だけ。完全S6/formal/promotion=false。次は判定不能の理由・状態と、外部pin/identity/既存ledger監査を結ぶ入口を整える。正常生成/丸め、bootstrap/CI/gate、runtime/単一writer受入も残る。
 
 OUT artifacts/independent-score-audit-2026-09-24、最終実行はverified-final/配下、最終文書commit/pinはsavepoint-evidence.json。終了時RAM空き15.57GiB、commit余裕15.60GiB、C/D空き139.26/361.71GiB。前後観測だけでpeak/リーク証明ではない。過去artifact・既存dirty guard・本流・実計算sourceを保持する。
+
+## 153. 判定不能profileの独立検算と保存済み監査の接続（2026-09-24）
+
+[接続記録](anomaly-multiseed-v0.3-connected-observation-audit-2026-09-24.md)。正常prefix健全・完全なdev/smoke入力について数値的な判定不能の理由・null状態・途中までの校正sample・score利用不能を別実装で照合する。ゼロMAD/非有限演算、C2の設備・運転段階内への影響、全利用不能時のledger指標も試験。部分capture/正常prefix品質不良/holdoutは対象外。照合が通ったことと評価success/inconclusiveを別に報告する。
+
+新CLI audit_anomaly_v03_observations.pyは外部pin付き完走savepointから1区間の最後のverified attemptだけを読む。固定計画・登録identity/event・入力pin照合後、同じ評価を独立profile/score→既存独立ledger監査へ渡す。旧controller/旧CLI/旧reportを変更しない。旧publication/source/runtime/supervisionの検査は保存点を前提とする。数値検算器はproducer関数を呼ばず、IO入口だけが共有metadata helperを使用する。
+
+実装26296b8で関連40試験/120.120秒通過後、実入力接続がevents hashの参照先違いを検出して数値計算前に停止した。正しいevent-ledger.jsonlへ修正し、別のevents.jsonlがある回帰fixtureを追加。入口13試験/13.510秒通過（重複除外41項目）。最終実装保存点2505fed6527a00891b9991720421b504a678899f。初回記録は上書きせず保持した。
+
+最終実装でchunk0/attempt1、最初のdev seed・layout0×3方式×2条件の6評価を接続検算。288 profiles/86400 scores、source146/equipment84 episodes、120 incidentsと指標が一致。20 files/132760979bytes、10.061610秒、検証process peak private159862784bytes（152.46MiB）。前回12評価中の6件と重複し、profile/scoreのユニーク検算済み実データは12件のまま。
+
+OUT artifacts/connected-observation-audit-2026-09-24、最終成功はverified-final/、文書commit/pinはsavepoint-evidence.json。終了時RAM空き16.79GiB、commit余裕15.73GiB、C/D空き138.31/332.30GiB、10秒の照合前後でD空き同値。継続的なリーク不在・PC全体の容量変動原因の保証ではない。本流889cfc3/fixed c01d1c9 clean、過去4保存点・closed・既存dirty guardのpin不変。banto-24 PAUSED維持。追加producer/holdout/push/mergeなし。
+
+次は保存済み全120区間/720評価への接続監査の適用範囲・区切り・保存方法を決める。正常生成/overlay/丸め、bootstrap/CI/gate、runtime/単一writer受入も残る。対象6評価のprofile/score/ledger導出検算完了と、完全S6/formal/promotion=false/campaign加算0を区別する。

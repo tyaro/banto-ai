@@ -424,3 +424,13 @@ producer 558.891秒、独立audit 91.668秒、audit_status=ledger_checks_passed�
 完全でcalibratedなdev/smoke入力に限定し、判定不能・部分capture・holdoutは拒否。呼出側の外部pin/identity認証が必要。旧audit CLI/controllerへ接続せず、過去の監査報告を書き換えない。全720評価への導出監査は未完了。対象12評価のprofile/score_derivation_verified=trueと、independent_s6_complete/formal_permission/promotion_allowed=falseを区別する。
 
 次は判定不能profileの理由・状態の再構成と、外部pin・登録identity・既存ledger監査を結ぶconsumer入口を整える。正常生成式・overlay・丸め前の値、bootstrap/CI/gate、runtime/運用受入も残る。現consumerの保存精度チェックを丸め工程全体の検算とは扱わない。
+
+### 2026-09-24: 判定不能の照合と保存済み1区間の監査入口
+
+[接続記録](results/anomaly-multiseed-v0.3-connected-observation-audit-2026-09-24.md)。数値検算器を拡張し、健全な正常prefix・完全なdev/smoke入力でzero_scale/nonfinite等の理由、途中までの校正sample、profile_inconclusiveを再構成する。照合成功とevaluation_outcome=inconclusiveを区別する。部分capture/正常prefix品質不良/holdoutは対象外。
+
+新CLI audit_anomaly_v03_observations.pyは、外部pin付き完走savepoint→evidence→固定計画・最終監査済みattempt→入力bytes/hashを確認し、profile/scoreから既存独立ledger監査まで同じ評価を渡す。登録identity/eventとpath検査は共通metadata helper、数値計算はproducerを呼ばない。選択1区間だけを順次読み、旧controller・旧audit reportを変更しない。歴史的なpublication/source/runtime/supervisionは保存点の記録を前提とする。
+
+関連40試験通過後、実入力のevents hashはevents.jsonlでなくevent-ledger.jsonlへ結び付ける必要があることを検出・修正。回帰試験を含む入口13試験通過（重複除外41項目）。最終実装2505fedでchunk0の6評価、288 profiles/86400 scores、source146/equipment84 episodes、120 incidentsと指標が一致。20 files/132760979bytes、10.06秒、検証process peak private152.46MiB。
+
+前回12評価中の6件と重なるため、profile/scoreのユニークな実データ検算数は12のまま。全720評価の導出検算、正常生成・overlay・丸め、bootstrap/CI/gate、runtime/運用受入は残る。完全S6/formal/promotion=false/campaign加算0。OUT artifacts/connected-observation-audit-2026-09-24、初回停止記録を保全し最終成功はverified-final/へ保存した。

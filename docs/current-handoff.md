@@ -1,28 +1,28 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-24 JST。**元観測→正常profile→scoreの独立検算器を追加し、保存済み12評価で一致を確認した。新しい実験は起動していない。**
+更新: 2026-09-24 JST。**判定不能の理由・状態の独立検算と、外部pin→profile/score→既存ledger監査の接続を完了。新しい入口を保存済み1区間/6評価で確認した。新しい実験は起動していない。**
 
-- [今回の実装・検証範囲](results/anomaly-multiseed-v0.3-independent-score-audit-2026-09-24.md)
+- [今回の実装・検証範囲](results/anomaly-multiseed-v0.3-connected-observation-audit-2026-09-24.md)、[前回のscore検算](results/anomaly-multiseed-v0.3-independent-score-audit-2026-09-24.md)
 - [720評価の比較](results/anomaly-multiseed-v0.3-dev-smoke-comparison-2026-09-24.md)、[原因調査](results/anomaly-multiseed-v0.3-failure-analysis-2026-09-24.md)、[上司向け報告](results/banto-ai-anomaly-briefing-2026-09-24.md)
-- 候補: C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。最新実装保存点14e6c33985c63a649c7a89c60ccb4e8ab680d601。長い引継書§152。
-- 今回OUT: artifacts/independent-score-audit-2026-09-24。最終の保存結果検算はverified-final/配下。最終文書commit/pinはsavepoint-evidence.json。
+- 候補: C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。最新実装保存点2505fed6527a00891b9991720421b504a678899f。長い引継書§153。
+- 今回OUT: artifacts/connected-observation-audit-2026-09-24。最終成功結果はverified-final/配下。最終文書commit/pinはsavepoint-evidence.json。初回停止記録を保持。
 - 前段原因調査の保存点1f4242f、OUT artifacts/dev-smoke-failure-analysis-2026-09-24のmanifestは2704bytes/SHA256 0c1cd127e95f1ad2e8924ed410f5ab33b73372f47261684a5ac889f109af0c1e。比較・原因調査・完走の既存artifactは変更しない。
 
 ## 今回の成果と次の作業
 
 src/banto_ai/anomaly_v03_score_audit.pyはstdlibのみでC0/C1/C2を復元する。producer/数値helper/契約定数をimportしない。phaseは観測transitionから、profileは正常fit/calibrationだけから作る。C2逆行列は別方式のpivot付きGauss-Jordan。浮動小数値はabs/rel各1e-12、状態/整数/判定フラグと依存観測値は厳密に照合する。保存score自身と閾値フラグの矛盾も拒否する。
 
-12テスト通過（21.716秒）。最初のdev seedのlayout0/6×3候補×core/stress、計12保存評価の576 profiles/172800 score行が最終実装で一致。16入力/252536767bytes、約21.48秒。初回実装f3c1992の検証記録も保持し、閾値境界の検査を補強したため最終版を別出力で再確認した。同じ12件を24評価へ加算しない。
+関連40試験が120.120秒で通過。実データ接続でevents hashの参照先がevents.jsonlでなくevent-ledger.jsonlであることを検出・修正し、入口13試験を13.510秒で再実行（重複除外41項目）。最終実装でchunk0/attempt1の6保存評価について288 profiles/86400 score行、source146/equipment84 episodes、incident120件と指標が一致。20入力/132760979bytes、10.061610秒。前回12評価中の6件と重複するため、profile/scoreのユニーク検算済み数は12のまま。接続入口を通した実データは6件。
 
-現在は完全なdev/smoke capture・正常prefix健全・全profile calibratedに限定。判定不能/部分capture/holdoutはpassを返さず拒否する。関数の呼出側が保存点の外部pinと登録identityを認証する。元のcontroller/監査CLIには未接続、旧720評価のaudit reportも変更していない。全720評価のprofile/score導出が検算済みになったわけではない。
+現在は完全なdev/smoke capture・正常prefix健全に限定。ゼロMADや非有限演算の判定不能について理由・部分的な校正sample・score利用不能を照合し、evaluation_outcome=inconclusiveを維持する。部分capture/正常prefix欠損/holdoutは拒否する。新CLI audit_anomaly_v03_observations.pyは外部SHA256付き完走保存点から登録計画・最終監査済みattempt・各入力pinを照合し、独立score検算後に同じ結果をledger監査へ渡す。元controller/監査CLIや旧720評価のaudit reportは変更していない。過去publication/source/runtime/supervisionは保存点を前提とし、再検査したとは扱わない。
 
-**次は判定不能profileの理由・状態の独立検算と、外部pin/登録identity/既存ledger監査を結ぶ入口を整える。** その後、保存済み全720評価への適用範囲を決める。正常生成/overlay/丸め、bootstrap/CI/gate、単一writer受入/runtime inventory/資源見積りは別の残件。新しいholdoutや長時間producerは起動しない。
+**次は、完成した接続入口を保存済み全120区間/720評価に適用する範囲と区切りごとの保存方法を決める。** 新しいproducerの実行ではない。正常生成/overlay/丸め、bootstrap/CI/gate、単一writer受入/runtime inventory/資源見積りは別の残件。新しいholdoutや長時間producerは起動しない。
 
-今回対象にはprofile_derivation_verified=true/score_derivation_verified=trueを返すが、independent_s6_complete/formal_permission/promotion_allowed=false、performance_status=not_evaluatedを維持。整数等を浮動小数の許容誤差で緩めない。判定不能を未対応のまま合格にしない。
+今回対象にはprofile/score/ledger_derivation_verified=trueを返すが、independent_s6_complete/formal_permission/promotion_allowed=false、performance_status=not_evaluatedを維持。整数等を浮動小数の許容誤差で緩めない。照合成功と評価のsuccess/inconclusiveを分けて報告する。
 
 研究上はC1が有力（機械91.67%・センサー95%・警報正解率95.73%）。停止中コンベヤーは対象速度が弱く、C2モーターは補正による相殺が見られた。欠損重複の90%上限は計画§3.3の想定どおり。閾値/候補/分母を変更せず、正式採用や実設備性能とは分けて扱う。
 
-最終検算後の空きRAM約15.57GiB、commit余裕15.60GiB、C/D空き139.26/361.71GiB。前後観測のみでpeakやリーク不在を保証しない。
+最終検算後の空きRAM約16.79GiB、commit余裕15.73GiB、C/D空き138.31/332.30GiB。検証process peak private約152.46MiB。10秒の検証前後でD空きは同値。継続的なリーク不在やPC全体の容量変動原因は保証しない。
 
 ## 完走証拠と保全
 
