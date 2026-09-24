@@ -36,6 +36,14 @@ def number(value):
     return value
 
 
+def reported_threshold(score, flag, limit):
+    """A tolerant score comparison must never admit a contradictory saved flag."""
+    if score is not None:
+        number(score)
+        need(score >= 0, 'negative saved score')
+    need(type(flag) is bool and flag == (score is not None and score > limit), 'saved strict threshold')
+
+
 def strict_json(raw):
     def pairs(entries):
         result = {}
@@ -288,6 +296,7 @@ def audit_score_derivation(result, observation_bytes, *, expected_observation_sh
                 'dataset_id': identity['dataset_id'], 'profile_id': profile['profile_id']}
             actual = scores[cursor]
             need(type(actual) is dict and set(actual) == set(expected) | {'dependencies', 'streak', 'source_episode_id'}, 'score fields')
+            reported_threshold(actual['score'], actual['threshold_exceeded'], 4. if candidate == CANDIDATES[0] else 6.)
             _close({key: actual[key] for key in expected}, expected, f'scores[{cursor}]')
             _exact(actual['dependencies'], dependencies, f'scores[{cursor}].dependencies')
             available += int(not tags)

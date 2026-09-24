@@ -106,7 +106,7 @@ class ScoreAuditTests(unittest.TestCase):
         for name, change in changes.items():
             value = copy.deepcopy(self.results[1])
             change(value['scores'][4])
-            with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'scores'):
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'scores|strict threshold'):
                 self.run_audit(value)
 
     def test_discrete_threshold_flag_is_not_masked_by_numeric_tolerance(self):
@@ -116,8 +116,18 @@ class ScoreAuditTests(unittest.TestCase):
         original = score['score']
         score['score'] = original + 1e-14
         score['threshold_exceeded'] = not score['threshold_exceeded']
-        with self.assertRaisesRegex(ValueError, 'threshold_exceeded'):
+        with self.assertRaisesRegex(ValueError, 'strict threshold'):
             self.run_audit(result)
+
+    def test_reported_score_and_threshold_agree_at_float_neighbors(self):
+        for limit in (4., 6.):
+            for value, flag in ((None, False), (limit, False), (math.nextafter(limit, 0), False), (math.nextafter(limit, math.inf), True)):
+                audit.reported_threshold(value, flag, limit)
+                with self.assertRaises(ValueError):
+                    audit.reported_threshold(value, not flag, limit)
+        for value in (-1e-15, True, math.nan, math.inf):
+            with self.assertRaises(ValueError):
+                audit.reported_threshold(value, False, 6.)
 
     def test_duplicate_profile_missing_score_identity_and_holdout_are_rejected(self):
         for kind in ('profile', 'score', 'identity', 'holdout'):
