@@ -3863,3 +3863,13 @@ OUT artifacts/full-connected-audit-2026-09-24。区間別report、checkpoint-120
 新producer/登録seed生成/追加attempt/holdout起動0。固定source c01d1c9と本流889cfc3 clean、過去保存点・closed・dirty guard不変。banto-24 PAUSED維持。旧controller/旧audit reportを変更せず、歴史的なpublication/source/runtime/supervisionは完走保存点を前提とする。
 
 次は正常生成/overlay/丸めの独立検算の設計・実装。bootstrap/CI/gate、runtime/単一writer受入も残る。全720件のprofile/score/ledger導出検証済みと、完全S6/formal/promotion=false/campaign加算0を区別する。Phase 2/3全体は未完了。
+
+## 155. 全240datasetsの正常生成/overlay/丸め検算完了（2026-09-24）
+
+[検算記録](anomaly-multiseed-v0.3-independent-generation-audit-2026-09-24.md)。実装/実行 `47dbc165f12fb1ce7608bb57625cb498bc4a4d04`。stdlibのみの独立consumerを追加し、全120 pairsの正常系列を既存10 seedからメモリ内で再構成した。保存観測4,320,000行/21,600,000cells、quality-mask、計画/有効eventが完全bytes一致。前回全720評価のprofile/score/ledger報告とも共通入力pin・identity・attemptで接続した。失敗chunk119/attempt1は保全し、attempt2のみ使用。
+
+consumer/IO22試験、実行補助6試験通過。準備中のWindows文字コード/組込みmodule記録での停止2件はdataset読取り前であり、旧runner/logを保全した。OUT artifacts/independent-generation-audit-2026-09-24、成功結果verified/。最終文書revision/pinはsavepoint-evidence.json。
+
+所要113.560秒、peak private57.41MiB、最小空きRAM14.57GiB/commit余裕14.84GiB、終了時C/D空き136.81/315.18GiB。pilotと6区間ごと19中間保存。生成primitiveのRandom/gauss/binary64/round/JSONは共有仕様で、独立PRNGを実装した意味ではない。新規producer/検出器評価/追加attempt/holdout/保存datasetは0、既存seedの検算再構成は120回。旧score計算を繰り返していない。
+
+normal_generation/pre_rounding_overlay/rounding_verifiedは全240datasetsでtrue。完全S6/formal/promotionはfalse、performance=not_evaluated、campaign加算0。次はbootstrap/信頼区間/候補比較の独立実装と手計算fixtureを整理する。正式40 holdout seedを現10 seedで代用せず、holdoutは開かない。単一writer/runtime受入とPhase 2/3全体は残る。実計算source・本流clean、既存dirty guard・旧anchor不変、banto-24 PAUSED維持。

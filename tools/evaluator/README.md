@@ -15,6 +15,8 @@
 
 同日続報：[全120区間/720評価の接続検算が完了](../../docs/results/anomaly-multiseed-v0.3-full-connected-audit-2026-09-24.md)しました。正常profile 34,560件、score 10,368,000行、検出結果・集計が一致し、前回比較表とも全720件で整合しました。区間0の6評価をpin確認後に再利用し、残り714評価を約20分で検算しました。元観測からのユニーク検算数は720です。正常生成・overlay・丸め前の値、bootstrap/CI・正式gate・完全S6は残ります。
 
+同日続報：[全240datasetsの正常生成・overlay・丸め検算](../../docs/results/anomaly-multiseed-v0.3-independent-generation-audit-2026-09-24.md)も完了しました。`audit_anomaly_v03_generation.py`は外部pin付き完走保存点から指定pairの既存seedをメモリ内で再構成し、観測/mask/eventの保存bytesを厳密照合します。必須引数は`--savepoint`、`--savepoint-sha256`、`--run-root`、`--chunk-index`。新規datasetは書きません。先行するscore/ledger検算と全720評価で入力pinが一致しました。bootstrap/CI・正式gate・完全S6は引き続き残ります。
+
 固定120区切り・720評価の計画表示と進捗記録の読取り検査には `checkpoint_anomaly_v03.py plan/inspect` を使います。[metadata CLIの説明](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#実装済みのmetadata-cli)にある外部plan/head hashと件数を必須にし、途中終了・記録欠落・順序違反・未検証の保存状態を区別します。metadataの宣言を復元する段階で、実データ生成・実行再開・全campaign完了には接続していません。
 同CLIの `preflight-trial` は、[保存済み6件との証拠照合](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#保存済み6件とのpreflight証拠照合)を行います。参照journal・旧trial・終了監視・旧独立検算のhash/来歴を結び付け、6件のledgerを再検算します。旧trialを新campaignの完了件数に加えず、実行再開や全体の完了印は作りません。
 metadataの保存には同CLIの `store-init/store-append/store-inspect` を使います。[追記と中断時の回復](../../docs/anomaly-v03-independent-audit-and-checkpoints.md#metadataを上書きせず保存追記する)では、外部receipt/record hashを保持し、既存記録を上書きせず追記します。確定後のreceipt喪失は読取りだけで回復し、部分pendingは残して拒否します。実campaignの開始・再開には接続していません。

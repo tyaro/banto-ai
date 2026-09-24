@@ -159,3 +159,9 @@ v0.2のstandalone seed-cluster analysisは [`anomaly-multiseed-evaluation-plan-v
 検算済みの6評価を全対象入力hash一致後に再利用し、残り714評価を順次検算しました。6新規区間ごとに中間保存し、約19分56秒、process peak private約188MiBで完了しています。追加のproducer・登録seed生成・holdoutは起動していません。
 
 保存観測→profile/score→ledgerの独立検算は全720件で完了しました。正常生成・overlay・丸め工程、bootstrap/信頼区間、正式gate/holdout、runtime/運用受入は残ります。Phase 3はactive、Phase 2のforecast比較の残件も維持します。C1/C2の既存の記述統計は変わらず、正式採択や実設備の性能保証には進めていません。
+
+### 2026-09-24：正常生成から保存観測までの検算完了
+
+全120区間・240データセットについて、正常生成式、異常の重ね方、欠損処理、丸めから復元した4,320,000観測行が保存bytesと完全に一致しました。前回の全720評価のprofile/score/ledger検算とも入力hashで接続しました。[詳細](results/anomaly-multiseed-v0.3-independent-generation-audit-2026-09-24.md)。保存済みseedをメモリ内で再構成する検算で、新規データセットやholdoutは作成していません。
+
+次はbootstrap/信頼区間/候補比較の独立実装と手計算fixtureを検証します。正式計画の40 holdout seedを現dev/smoke 10 seedで代用せず、正式gateや採択判定は進めません。Phase 3 active、Phase 2 forecast比較・runtime/単一writer受入の残件も維持します。

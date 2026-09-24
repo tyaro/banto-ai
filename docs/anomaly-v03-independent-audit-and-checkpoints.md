@@ -1,6 +1,6 @@
 # 保存結果の独立検算と長時間実行の進行記録
 
-最新（2026-09-24）: [全120区間/720評価の保存観測→profile/score→ledger検算が完了](results/anomaly-multiseed-v0.3-full-connected-audit-2026-09-24.md)。正常生成・overlay・丸め、bootstrap/CI・正式gate・完全S6は残る。以下の冒頭は2026-09-16の初期設計、その後の追記は段階ごとの履歴である。
+最新（2026-09-24）: [全240datasetsの正常生成/overlay/丸めの独立検算が完了](results/anomaly-multiseed-v0.3-independent-generation-audit-2026-09-24.md)し、前回の全720評価profile/score/ledger検算と入力pinで接続した。bootstrap/CI・正式gate・完全S6は残る。以下の冒頭は初期設計、その後の追記は段階ごとの履歴である。
 
 2026-09-16。単一writerの運用改訂を継続する。独立ledger検算、固定plan・journalのmetadata検査/状態復元、旧6件trialとのpreflight証拠照合、metadata専用の追記writerは実装済み。全dev/smokeを動かすcampaign controllerは**未接続・実行未許可**。
 科学的な式・seed・layout・候補・母数・bootstrap・性能gateと、旧formal gateを変更しない。
@@ -444,3 +444,9 @@ producer 558.891秒、独立audit 91.668秒、audit_status=ledger_checks_passed�
 所要1196.095751秒、6新規区間ごとの中間保存19回、process peak private187.53MiB、最小空きRAM14.59GiB/commit余裕13.42GiB。区間119はattempt2のみ検算し、failed attempt1を保持。実行補助4試験通過、前回41項目を通過した検算本体はhash不変。新producer/holdout/追加attemptは起動しない。
 
 OUT artifacts/full-connected-audit-2026-09-24、全件checkpointとsummaryを保存。対象720件のprofile/score/ledger導出は検証済み。正常生成/overlay/丸め、bootstrap/CI/gate、runtime/運用受入は未完了、完全S6/formal/promotion=false/campaign加算0を維持する。
+
+## 保存観測の生成工程までの独立検算（2026-09-24）
+
+[anomaly-multiseed-v0.3-independent-generation-audit-2026-09-24.md](results/anomaly-multiseed-v0.3-independent-generation-audit-2026-09-24.md)に全120 pairs/240datasetsの検算を保存。別実装の正常生成→overlay→丸めが全4,320,000保存行と完全bytes一致し、前回全720評価のscore/ledger検算と同一入力pinで結び付いた。22本体/IO試験と6実行補助試験通過。登録済みseedをメモリ内で検算再構成したが、新規dataset/producer/holdoutは起動せず、旧score検算を再実行していない。
+
+Random/gauss/binary64/round/JSONは共有primitive。外部pin付き完走保存点と最終verified attemptが必要。独立PRNG、過去runtime受入、bootstrap/CI/gateまでは主張しない。次は40 holdout seed用に凍結したbootstrap/候補比較を、holdout生成不要の手計算fixtureから検証する。現dev/smoke 10 seedで正式CIを出さない。
