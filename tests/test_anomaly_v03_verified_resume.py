@@ -105,6 +105,63 @@ class VerifiedResumeTests(unittest.TestCase):
         self.payload.write_bytes(b'X saved payload')
         self.assert_rejected(policy)
 
+    def add_failed_tail(self):
+        tail = [{'sequence': i + 4, 'chunk_index': 1, 'attempt': 1,
+                 'status': status, 'reason': reason, 'outcome': None}
+                for i, (status, reason) in enumerate((('running', None), ('failed', 'resource_limit')))]
+        self.records.extend(tail)
+        for row in tail:
+            name = f"run/metadata/journal/{row['sequence']:06d}.json"
+            self.write(name, row)
+            self.snapshot['files'][name] = self.pin(self.root / name)
+        self.snapshot['failed_tail_records'] = copy.deepcopy(tail)
+
+    def test_failed_tail_preserved_and_retry_still_requires_new_audit(self):
+        self.add_failed_tail()
+        before = {name: self.pin(self.root / name) for name in self.snapshot['files']}
+        policy, controller = self.policy(), self.Controller()
+        with policy.install(self.Controller):
+            controller._revalidate_completed()
+            self.assertEqual(len(controller.verified_in_session), 1)
+            self.assertEqual(controller.audited, [])
+            controller.records.extend({'sequence': i + 6, 'chunk_index': 1, 'attempt': 2, 'status': status}
+                                      for i, status in enumerate(('running', 'saved_pending_verification', 'verified_complete')))
+            controller.descriptor_pins['8'] = 'c' * 64
+            controller._revalidate_completed()
+            controller._revalidate_completed()
+        self.assertEqual(controller.audited, [1])
+        self.assertEqual(policy.report['failed_tail_records_preserved'], 2)
+        self.assertEqual(policy.report['failed_chunk_audits_reused'], 0)
+        self.assertEqual(before, {name: self.pin(self.root / name) for name in before})
+
+    def test_unpinned_failed_tail_rejected(self):
+        self.add_failed_tail()
+        del self.snapshot['failed_tail_records']
+        self.assert_rejected(self.policy())
+
+    def test_failed_tail_controller_or_saved_journal_change_rejected(self):
+        self.add_failed_tail()
+        controller = self.Controller()
+        controller.records[-1]['reason'] = 'interrupted'
+        self.assert_rejected(self.policy(), controller)
+        self.write('run/metadata/journal/000005.json', {'changed': True})
+        self.assert_rejected(self.policy())
+
+    def test_invalid_or_incomplete_failed_tail_rejected(self):
+        self.add_failed_tail()
+        original = copy.deepcopy(self.snapshot['failed_tail_records'])
+        variants = [original[:1], original + [original[-1]]]
+        for key, value in (('chunk_index', 0), ('attempt', 2), ('status', 'blocked_integrity'),
+                           ('reason', 'interrupted'), ('sequence', 9), ('outcome', {'success': True})):
+            rows = copy.deepcopy(original)
+            rows[-1][key] = value
+            variants.append(rows)
+        for rows in variants:
+            with self.subTest(rows=rows):
+                self.snapshot['failed_tail_records'] = rows
+                with self.assertRaises(ValueError):
+                    self.policy()
+
     def test_missing_file_rejected(self):
         policy = self.policy()
         self.payload.unlink()

@@ -1,6 +1,8 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-24 JST。**最後の区間119がproducerの15分上限で停止。累計119区間/714評価を保全し、heartbeatはPAUSED。追加起動しない。**
+更新: 2026-09-24 JST。**ユーザーが最後の1区間の再試行を許可。区間119/attempt2をcontrol000010で1回だけ再開準備中。確定済み119区間/714評価と失敗attempt1を保持する。**
+
+今回OUTは `artifacts/chunk-119-retry-2026-09-24`。まずそのFOLLOWUP.md/followup-state.jsonを読む。[今回の再試行](results/anomaly-multiseed-v0.3-final-chunk-retry-2026-09-24.md)。外部helperを失敗末尾の明示pinに対応させ、関連18テスト通過。起動時に既存7730ファイルを1回hash照合して119監査だけ再利用する。新規attempt2は元の監査を行う。worker900秒/48h/32GiBは不変。成功時journal362/全120区間720評価/next=null。再失敗したら保全し停止、attempt3なし。以下は前回停止の記録。
 
 ## 場所と保存点
 
@@ -24,7 +26,7 @@ controller PID25724の消失と全所有workerの終了を確認済み。失敗a
 
 既存105区間は起動時の全byte/source/runtime照合（56.252秒）で監査を再利用し、新規105〜118の14区間は元の独立監査とcontroller監査を通過した。今回保全では新規14区間のdescriptor/control pin、完了markerが示すpayload raw hash、全6件success、producer/audit workerの終了を照合した。新規runファイル955件/1999730138 bytesをstreaming hashし、前回6775ファイルの一覧/サイズと旧journal315件のhashを確認。旧payload全体の再hashや数値再計算はしていない。全体は7730 files/15947784715 logical bytes。過去196artifact pinsと起動時24immutable artifactsも保持。小さなcontrol/journal/失敗worker記録98ファイルをOUT/failure-controlへ複製してhash照合した。成功用collector/finalizerは実行していない。
 
-## 次の判断
+## 前回停止時の判断（今回のユーザー指示で再試行を許可）
 
 次の判断は、システムの負荷が落ち着いた状態で、残り1区間だけを別の試行として再実行するか。今回の失敗attempt1は未公開stageを含めそのまま保持し、再使用・削除しない。現在の高速再開helperは「完了数×3＝journal件数」を要求するため、今回のfailed末尾2recordを含む359件をそのまま受け入れない。再開する場合は外部pinに基づく失敗末尾の扱いを検証する必要がある。無条件にcacheへ追加したり、上限引上げ・新しいinvocationを自動実施したりしない。
 

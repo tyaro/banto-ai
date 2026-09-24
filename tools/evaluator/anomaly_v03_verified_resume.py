@@ -101,6 +101,19 @@ class VerifiedResume:
         rt.require(type(s['closed_sequence']) is int and 0 <= s['closed_sequence'] < 4095, 'closed sequence')
         closed_name = f"run/control/{s['closed_sequence']:06d}/closed.json"
         rt.require(s['files'][closed_name]['sha256'] == s['closed_sha256'], 'closed snapshot binding')
+        # A pinned, terminal first-attempt resource failure may follow the
+        # verified prefix. Preserve it; it never earns an audit-cache entry.
+        tail = s.get('failed_tail_records', [])
+        rt.require(type(tail) is list and len(tail) in (0, 2), 'invalid failed resume tail')
+        for index, row in enumerate(tail):
+            rt.require(type(row) is dict and
+                       row.get('sequence') == s['completed_chunks'] * 3 + index + 1 and
+                       row.get('chunk_index') == s['completed_chunks'] and row.get('attempt') == 1 and
+                       row.get('status') == ('running', 'failed')[index] and
+                       row.get('reason') == (None, 'resource_limit')[index] and row.get('outcome') is None,
+                       'failed resume tail is not a terminal first-attempt resource failure')
+            rt.require(f"run/metadata/journal/{row['sequence']:06d}.json" in s['files'],
+                       'failed resume tail missing from inventory')
         self.live_control = live_control
         self.controller = None
         self.report = None
@@ -112,7 +125,9 @@ class VerifiedResume:
         rt.require(Path(controller.producer_root) == Path(controller.consumer_root) == self.source and
                    controller.verifier_revision == s['source_revision'], 'controller source differs')
         rt.require(not controller.verified_in_session, 'resume must precede any verification cache use')
-        rt.require(len(controller.records) == s['completed_chunks'] * 3, 'resume record count differs')
+        tail = s.get('failed_tail_records', [])
+        rt.require(len(controller.records) == s['completed_chunks'] * 3 + len(tail), 'resume record count differs')
+        rt.require(not tail or controller.records[-len(tail):] == tail, 'failed resume tail differs')
         rt.require(controller.state['next_unverified_chunk'] == s['completed_chunks'], 'resume next chunk differs')
         before_checkpoint = {'receipt': controller.receipt, 'descriptor_pins': controller.descriptor_pins}
         closed_name = f"run/control/{s['closed_sequence']:06d}/closed.json"
@@ -121,9 +136,10 @@ class VerifiedResume:
         closed = v.strict_json(closed_raw)
         rt.require(closed['checkpoint'] == before_checkpoint, 'closed checkpoint differs')
         rt.require(closed['status'] in ('yielded', 'failed') and closed['formal_permission'] is False, 'closed status not reusable')
+        rt.require(not tail or closed['status'] == 'failed', 'failed tail requires failed closed state')
         prefix = [r for r in controller.records if r['status'] in checkpoints.VERIFIED]
         rt.require([r['chunk_index'] for r in prefix] == list(range(s['completed_chunks'])), 'completed prefix differs')
-        for row in prefix:
+        for row in prefix + tail:
             name = f"run/metadata/journal/{row['sequence']:06d}.json"
             raw = storage.read_regular(self.root / name)
             rt.require(v.strict_json(raw) == row, 'controller record differs from saved journal')
@@ -153,6 +169,7 @@ class VerifiedResume:
             'snapshot_sha256': self.snapshot_sha256, 'source_revision': s['source_revision'],
             'closed_sha256': s['closed_sha256'], 'files_verified': len(s['files']), 'bytes_verified': count,
             'completed_chunk_audits_reused': len(prefix), 'elapsed_seconds': time.monotonic() - started,
+            'failed_tail_records_preserved': len(tail), 'failed_chunk_audits_reused': 0,
             'hash_read_buffer_bytes': BUFFER_BYTES, 'runtime_unchanged': True, 'source_unchanged': True,
             'scope': 'reuse_previously_audited_unchanged_bytes_single_writer', 'existing_numerical_audits_repeated': False,
             'new_chunk_audits_unchanged': True, 'campaign_evaluations_credited': 0, 'formal_permission': False}
