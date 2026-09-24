@@ -1,6 +1,8 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-24 JST。**既存105区間のbyte照合による監査再利用を検証済み。ユーザー指示に従い残り15区間をcontrol000009で再開準備中。** 起動済みかは今回OUT/launch.jsonとfollowup-state.jsonを先に読む。重複起動しない。
+更新: 2026-09-24 JST。**control000009で残り15区間を再開済み（PID 25724）。既存105区間の全byte照合と監査再利用は成功。** 起動済みかは今回OUT/launch.jsonとfollowup-state.jsonを先に読む。重複起動しない。
+
+起動UTC 2026-09-24T01:48:22.1234253Z、実装保存点aab4d58e5359497fa8016b8ccb808101dfe9fd40。heartbeat banto-24は今回OUTを対象にACTIVE。初期観測journal 316/running、新規確定0、診断欠落なし。起動保存点はOUT/launch-savepoint.json参照。
 
 ## 現在の作業と場所
 

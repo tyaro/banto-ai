@@ -27,3 +27,11 @@
 既存メモリ診断helper27346e9を変更せず使い、60秒ごとのsystem commit/空きRAM/C/D/controller private/診断欠落を記録する。30分heartbeatは対象をこの呼出しだけに更新し、1回確認して次回へ任せる。今回のaudit_begin/endは新規105〜119の15件ずつが期待値で、既存105件の再利用は別のresume-verification.jsonへ記録する。
 
 前回のsystem commit急増を起こしたprocessは未特定。今回の正常再開を原因解明やメモリリーク不在の証明にはしない。formal_permission=false/campaign加算0、保存score以降の監査という範囲を維持。完全runtime inventory・profile/score導出/全bootstrapの独立S6・holdout/性能評価・Phase 2/3全体の完了ではない。
+
+## 再開済み
+
+control000009をUTC 2026-09-24T01:48:22.1234253Z（controller PID 25724）に非表示で起動した。既存Banto Pythonがないことを確認し、PID/作成日時/wrapperを照合。外部再開helperの実装保存点はaab4d58e5359497fa8016b8ccb808101dfe9fd40。
+
+実起動内の全6775ファイル照合も成功し、56.252秒で既存105監査を再利用した。初期観測UTC 2026-09-24T01:51:22.837388+00:00、journalの最新状態{"attempt": 1, "chunk_index": 105, "sequence": 316, "status": "running"}、今回確定0区間。まだ15区間の完了は主張しない。診断error/drop=0、無効化なし、stderrは空。
+
+起動前の空きRAM/C/Dは14.51/144.05/382.44GiB、system commit余力15.58GiB。30分heartbeat banto-24を今回OUT/FOLLOWUP.mdへ更新してACTIVE。6/12区間で中間保存、今回15区間の終了・失敗時に保存し停止する。追加invocation/holdoutは起動しない。
