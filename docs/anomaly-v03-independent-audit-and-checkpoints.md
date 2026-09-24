@@ -1,9 +1,11 @@
 # 保存結果の独立検算と長時間実行の進行記録
 
+最新（2026-09-24）: [全120区間/720評価の保存観測→profile/score→ledger検算が完了](results/anomaly-multiseed-v0.3-full-connected-audit-2026-09-24.md)。正常生成・overlay・丸め、bootstrap/CI・正式gate・完全S6は残る。以下の冒頭は2026-09-16の初期設計、その後の追記は段階ごとの履歴である。
+
 2026-09-16。単一writerの運用改訂を継続する。独立ledger検算、固定plan・journalのmetadata検査/状態復元、旧6件trialとのpreflight証拠照合、metadata専用の追記writerは実装済み。全dev/smokeを動かすcampaign controllerは**未接続・実行未許可**。
 科学的な式・seed・layout・候補・母数・bootstrap・性能gateと、旧formal gateを変更しない。
 
-## 独立検算の到達範囲
+## 初期ledger監査の到達範囲（2026-09-16）
 
 `anomaly_v03_ledger_audit.py` は標準ライブラリだけを使い、保存scoreの連続区間を分割する別実装で下記を再構成する。
 producerのscoring/episode/matching/accounting関数は呼ばない。IO側は既存のstrict JSON/schema、登録event inventory、保存inventory/hash、Git source captureを共用する。
@@ -434,3 +436,11 @@ producer 558.891秒、独立audit 91.668秒、audit_status=ledger_checks_passed�
 関連40試験通過後、実入力のevents hashはevents.jsonlでなくevent-ledger.jsonlへ結び付ける必要があることを検出・修正。回帰試験を含む入口13試験通過（重複除外41項目）。最終実装2505fedでchunk0の6評価、288 profiles/86400 scores、source146/equipment84 episodes、120 incidentsと指標が一致。20 files/132760979bytes、10.06秒、検証process peak private152.46MiB。
 
 前回12評価中の6件と重なるため、profile/scoreのユニークな実データ検算数は12のまま。全720評価の導出検算、正常生成・overlay・丸め、bootstrap/CI/gate、runtime/運用受入は残る。完全S6/formal/promotion=false/campaign加算0。OUT artifacts/connected-observation-audit-2026-09-24、初回停止記録を保全し最終成功はverified-final/へ保存した。
+
+### 2026-09-24: 全保存区間への接続監査完了
+
+[全件検算記録](results/anomaly-multiseed-v0.3-full-connected-audit-2026-09-24.md)。検算実装2505fedを変更せず、区間1〜119の714評価を順次検算した。区間0の6評価は外部pin付き報告と全入力hashの一致後に再利用。全120区間/720評価に重複・欠落なし、34560 profiles/10368000 scores、source17272/equipment9949 episodes、14400 incidentsと指標が一致した。前回比較表の720元記録とも全件一致。
+
+所要1196.095751秒、6新規区間ごとの中間保存19回、process peak private187.53MiB、最小空きRAM14.59GiB/commit余裕13.42GiB。区間119はattempt2のみ検算し、failed attempt1を保持。実行補助4試験通過、前回41項目を通過した検算本体はhash不変。新producer/holdout/追加attemptは起動しない。
+
+OUT artifacts/full-connected-audit-2026-09-24、全件checkpointとsummaryを保存。対象720件のprofile/score/ledger導出は検証済み。正常生成/overlay/丸め、bootstrap/CI/gate、runtime/運用受入は未完了、完全S6/formal/promotion=false/campaign加算0を維持する。

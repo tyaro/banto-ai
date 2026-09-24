@@ -151,3 +151,11 @@ v0.2のstandalone seed-cluster analysisは [`anomaly-multiseed-evaluation-plan-v
 保存監査に基づく記述的な比較では、C1（運転段階別の正常値）は機械異常91.67%、センサー異常95.00%、警報正解率95.73%。C2は機械89.92%、センサー95.00%、警報正解率94.83%でした。停止中のコンベヤー、C2の停止中モーター、欠損とセンサー異常が重なる条件が次の切り分け対象です。[比較表と残項目](results/anomaly-multiseed-v0.3-dev-smoke-comparison-2026-09-24.md)、[上司向け説明](results/banto-ai-anomaly-briefing-2026-09-24.md)。
 
 全scoreの再生成なしで既存120監査reportを利用しました。これは合成dev/smokeの記述統計であり、holdout、bootstrap信頼区間、正式gate、完全S6、方式の正式選択・昇格は未実施です。Phase 3はactiveのまま、独立score検算・正式実行条件の整理と、別方式や公開/実設備への一般化が残ります。Phase 2のforecast比較の残項目は今回の試験では解消しません。凍結済み科学計画と登録済み3候補を維持し、保留した専用principal試験は再開していません。
+
+## 2026-09-24: 全720保存評価の独立profile・score・ledger検算
+
+続いて、全120区間/720評価の保存観測から正常profile・残差・scoreを別実装で復元し、警報・異常との照合・集計まで一致を確認しました。正常profile 34,560件、score 10,368,000行が対象です。前回の比較表の全720件ともidentity・attempt・件数・指標が一致しました。[検算結果と対応範囲](results/anomaly-multiseed-v0.3-full-connected-audit-2026-09-24.md)に保存しています。
+
+検算済みの6評価を全対象入力hash一致後に再利用し、残り714評価を順次検算しました。6新規区間ごとに中間保存し、約19分56秒、process peak private約188MiBで完了しています。追加のproducer・登録seed生成・holdoutは起動していません。
+
+保存観測→profile/score→ledgerの独立検算は全720件で完了しました。正常生成・overlay・丸め工程、bootstrap/信頼区間、正式gate/holdout、runtime/運用受入は残ります。Phase 3はactive、Phase 2のforecast比較の残件も維持します。C1/C2の既存の記述統計は変わらず、正式採択や実設備の性能保証には進めていません。

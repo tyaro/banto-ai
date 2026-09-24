@@ -3849,3 +3849,17 @@ OUT artifacts/independent-score-audit-2026-09-24、最終実行はverified-final
 OUT artifacts/connected-observation-audit-2026-09-24、最終成功はverified-final/、文書commit/pinはsavepoint-evidence.json。終了時RAM空き16.79GiB、commit余裕15.73GiB、C/D空き138.31/332.30GiB、10秒の照合前後でD空き同値。継続的なリーク不在・PC全体の容量変動原因の保証ではない。本流889cfc3/fixed c01d1c9 clean、過去4保存点・closed・既存dirty guardのpin不変。banto-24 PAUSED維持。追加producer/holdout/push/mergeなし。
 
 次は保存済み全120区間/720評価への接続監査の適用範囲・区切り・保存方法を決める。正常生成/overlay/丸め、bootstrap/CI/gate、runtime/単一writer受入も残る。対象6評価のprofile/score/ledger導出検算完了と、完全S6/formal/promotion=false/campaign加算0を区別する。
+
+## 154. 全720保存評価の観測→profile/score→ledger検算完了（2026-09-24）
+
+[全件検算記録](anomaly-multiseed-v0.3-full-connected-audit-2026-09-24.md)。前回実装2505fedを変更せず、HEAD f727be6bfb02b8fb7385bd34ce1121a866d8f64fで区間1〜119の714評価を順次検算。区間0の6評価は前回保存点SHA256 5a79114f8af267688e942b52763ad0d70b5cb8c55b650b3a1dcdf91ffe94d089と全対象入力hash一致後に再利用した。失敗区間119/attempt1を保持し、verified attempt2のみ検算する。
+
+全120区間/720評価（dev576/smoke144）、240datasetsに重複・欠落なし。34560 profiles/10368000 scores、source17272/equipment9949 episodes、14400 incidentsと指標が一致。保存上の評価結果success720。前回比較表の全720元記録ともidentity/attempt/件数/指標が一致し、C1機械2200/2400、センサー2280/2400、precision4480/4680、未対応警報200件などの記述統計は変わらない。
+
+検算済み実データのユニーク数は720へ更新。前回の12評価を別加算しない。新規6区間ごとの中間保存19回、所要1196.095751秒（19分56秒）。実行補助4試験通過、前回41項目を通過した本体はcode pin不変。照合対象は重複除外2281files/15903023776bytes、savepoint/evidenceの繰返し読取り等は別。
+
+OUT artifacts/full-connected-audit-2026-09-24。区間別report、checkpoint-120-completed.json、summary.json、119区間の資源記録を保存。最終文書commit/pinはsavepoint-evidence.json。process peak private187.53MiB、処理後private83.82→129.47MiB/最大129.89MiB、最小空きRAM14.59GiB/commit余裕13.42GiB。終了時RAM15.47GiB/commit15.58GiB、C/D空き137.72/323.55GiB、新OUT約7.96MB。継続的なリーク不在の証明ではない。
+
+新producer/登録seed生成/追加attempt/holdout起動0。固定source c01d1c9と本流889cfc3 clean、過去保存点・closed・dirty guard不変。banto-24 PAUSED維持。旧controller/旧audit reportを変更せず、歴史的なpublication/source/runtime/supervisionは完走保存点を前提とする。
+
+次は正常生成/overlay/丸めの独立検算の設計・実装。bootstrap/CI/gate、runtime/単一writer受入も残る。全720件のprofile/score/ledger導出検証済みと、完全S6/formal/promotion=false/campaign加算0を区別する。Phase 2/3全体は未完了。
