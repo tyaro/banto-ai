@@ -35,3 +35,9 @@ control000009をUTC 2026-09-24T01:48:22.1234253Z（controller PID 25724）に非
 実起動内の全6775ファイル照合も成功し、56.252秒で既存105監査を再利用した。初期観測UTC 2026-09-24T01:51:22.837388+00:00、journalの最新状態{"attempt": 1, "chunk_index": 105, "sequence": 316, "status": "running"}、今回確定0区間。まだ15区間の完了は主張しない。診断error/drop=0、無効化なし、stderrは空。
 
 起動前の空きRAM/C/Dは14.51/144.05/382.44GiB、system commit余力15.58GiB。30分heartbeat banto-24を今回OUT/FOLLOWUP.mdへ更新してACTIVE。6/12区間で中間保存、今回15区間の終了・失敗時に保存し停止する。追加invocation/holdoutは起動しない。
+
+## 新規6区間の中間保存（2026-09-24 JST）
+
+観測UTC 2026-09-24T03:24:31.095120+00:00、起動後5768.2秒。区間105〜110の6区間/36評価がverified_complete、累計111区間/666評価。区間111はrunning（journal334）、今回残り9区間。保持receipt318/321/324/327/330/333の原本とコピー、journal終端hash/6件ずつsuccessを照合し、OUT/milestone-06.jsonへ保存した。中間receiptはclosed再開pinではない。数値payloadの再読・再計算なし。
+
+controller PID25724/作成時刻/wrapper一致。既存105再利用の証拠pinも一致。診断error/drop=0、disabled=false。controller private/peakは107708416/232718336 bytes。空きRAM/C/D約13.64/143.20/415.02GiB、system commit合計/上限/余力約29.30/44.42/15.12GiB。pagefile確保量13653180416 bytes。次は新規12区間の節目で保存。今回のcontrol000009を継続し、追加起動はしない。
