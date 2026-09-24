@@ -1,29 +1,28 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-24 JST。**120区間/720評価の比較に続き、停止中・欠損重複の見逃し原因を保存データで調査済み。次は正常profile・score導出の独立検算。追加評価は起動していない。**
+更新: 2026-09-24 JST。**元観測→正常profile→scoreの独立検算器を追加し、保存済み12評価で一致を確認した。新しい実験は起動していない。**
 
-- [上司向け報告](results/banto-ai-anomaly-briefing-2026-09-24.md)
-- [比較表・件数・残項目・再現手順](results/anomaly-multiseed-v0.3-dev-smoke-comparison-2026-09-24.md)
-- [見逃しの原因調査](results/anomaly-multiseed-v0.3-failure-analysis-2026-09-24.md)
-- 今回OUT: `artifacts/dev-smoke-failure-analysis-2026-09-24`。findings.json、summary.json、input-pins.json、validation.json。最終commit/pinはsavepoint-evidence.json。
-- 前段比較OUT: `artifacts/dev-smoke-comparison-2026-09-24`、保存点b5b9403、manifest SHA256 `074647cbe858e92d0fe064ab3902c8fab6304a2037cb9d28280b6668a521b095`。既存artifactを変更しない。
-- 候補: C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。集計器保存点eb3f4cc。長い引継書§151。
+- [今回の実装・検証範囲](results/anomaly-multiseed-v0.3-independent-score-audit-2026-09-24.md)
+- [720評価の比較](results/anomaly-multiseed-v0.3-dev-smoke-comparison-2026-09-24.md)、[原因調査](results/anomaly-multiseed-v0.3-failure-analysis-2026-09-24.md)、[上司向け報告](results/banto-ai-anomaly-briefing-2026-09-24.md)
+- 候補: C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。最新実装保存点14e6c33985c63a649c7a89c60ccb4e8ab680d601。長い引継書§152。
+- 今回OUT: artifacts/independent-score-audit-2026-09-24。最終の保存結果検算はverified-final/配下。最終文書commit/pinはsavepoint-evidence.json。
+- 前段原因調査の保存点1f4242f、OUT artifacts/dev-smoke-failure-analysis-2026-09-24のmanifestは2704bytes/SHA256 0c1cd127e95f1ad2e8924ed410f5ab33b73372f47261684a5ac889f109af0c1e。比較・原因調査・完走の既存artifactは変更しない。
 
-## 結果と次の作業
+## 今回の成果と次の作業
 
-開発8 seeds/576評価、smoke2 seeds/144評価を分離し、欠損なし/ありと両条件合算を出した。両条件合算でC1は機械異常2200/2400（91.67%）、センサー異常2280/2400（95.00%）、正解警報4480/4680（95.73%）。C2は機械異常2158/2400（89.92%）、センサー異常95.00%、正解警報4438/4680（94.83%）。C1/C2は正常区間の誤警報0件だが、全区間の未対応警報200/242件。検知できた異常の平均delayはC1約1.26秒、C2約1.25秒。母集団が異なるため速度優位とは解釈しない。
+src/banto_ai/anomaly_v03_score_audit.pyはstdlibのみでC0/C1/C2を復元する。producer/数値helper/契約定数をimportしない。phaseは観測transitionから、profileは正常fit/calibrationだけから作る。C2逆行列は別方式のpivot付きGauss-Jordan。浮動小数値はabs/rel各1e-12、状態/整数/判定フラグと依存観測値は厳密に照合する。保存score自身と閾値フラグの矛盾も拒否する。
 
-C1/C2共通の見逃しはlayout6（コンベヤー・停止）の機械異常。C2はlayout0（モーター・停止）にも追加見逃し。欠損ありではセンサー異常検知率が100%→90%、C2は温度欠損が他3信号の判定にも影響した。3件の保存評価を例としてhash確認して読み、停止条件のfirst_candidate_no_target_onsetと欠損重複時のno_candidate_in_windowを記録した。全原因をこの3例から断定しない。
+12テスト通過（21.716秒）。最初のdev seedのlayout0/6×3候補×core/stress、計12保存評価の576 profiles/172800 score行が最終実装で一致。16入力/252536767bytes、約21.48秒。初回実装f3c1992の検証記録も保持し、閾値境界の検査を補強したため最終版を別出力で再確認した。同じ12件を24評価へ加算しない。
 
-**原因調査完了：** 全10 seedsのcore停止2 layouts×C1/C2（40評価）と、最初のdev seedの全12 layouts×C1/C2のquality-stress（24評価）を確認。コンベヤー停止100件/方式は速度scoreが6秒窓で一度も閾値を超えず、振動警報があっても対象速度の検知として正解にならない。C2モーター停止21見逃しは3 seedsに6/10/5件、offset 1/2の28点が閾値以下で、他信号（主に振動）の項が電流の異常残差を打ち消していた。欠損重複の10回目はoffset 1..4が利用不可で2点連続を作れない。stress sensor recall上限90%は計画§3.3の登録済み仕様であり、不具合として直ちに修正する必要はない。
+現在は完全なdev/smoke capture・正常prefix健全・全profile calibratedに限定。判定不能/部分capture/holdoutはpassを返さず拒否する。関数の呼出側が保存点の外部pinと登録identityを認証する。元のcontroller/監査CLIには未接続、旧720評価のaudit reportも変更していない。全720評価のprofile/score導出が検算済みになったわけではない。
 
-64評価・68入力ファイル約1.295GBを約40秒で読み、680 incidentを調査。保存profileと依存値から3,704点の残差/scoreを別途算出し、絶対/相対各1e-12以内で一致。最初のseedの停止2 layouts×両条件の4観測ファイルで1,680依存セルも一致。保存profileの生成過程は検算していないので完全S6の代用にしない。新規生成/評価/holdoutは0。新規出力は約4.8MB。資源は前後観測のみでpeak/リーク証明ではなく、D空き約1.21GiBの減少の原因は未特定（終了時約374.40GiB空き）。
+**次は判定不能profileの理由・状態の独立検算と、外部pin/登録identity/既存ledger監査を結ぶ入口を整える。** その後、保存済み全720評価への適用範囲を決める。正常生成/overlay/丸め、bootstrap/CI/gate、単一writer受入/runtime inventory/資源見積りは別の残件。新しいholdoutや長時間producerは起動しない。
 
-**次の作業は保存観測からC0/C1/C2の正常profile・score導出を別実装で検算するconsumerの不足分を進めること。** 観測時刻/qualityからのphase/availability、正常fit/calibrationからのprofile復元、残差/scoreを順に検証する。今回の抽出例は回帰確認に使える。正常生成/overlay/丸め、bootstrap/CI/gateの独立検算は別に残る。登録済み方式・閾値・分母・困難な配置を維持する。単一writer・OS更新許容の受入条件、完全runtime inventory、producer/consumer凍結、資源見積りも正式評価前に整理する。保留した専用principal試験を再開する意味ではない。
+今回対象にはprofile_derivation_verified=true/score_derivation_verified=trueを返すが、independent_s6_complete/formal_permission/promotion_allowed=false、performance_status=not_evaluatedを維持。整数等を浮動小数の許容誤差で緩めない。判定不能を未対応のまま合格にしない。
 
-今回集計は124入力/20179770bytesの保存監査等をhash確認して0.602秒。巨大な観測/scoreの全再読込み・再計算は不要だった。集計器7テスト通過。raw数/分母を合算し、ゼロ警報のprecisionや未検知delayをnullとして保持。平均delayは検知件数で加重し、全体中央値は推定しない。補助の診断例3評価は別途約53.5MBを読んだだけ。
+研究上はC1が有力（機械91.67%・センサー95%・警報正解率95.73%）。停止中コンベヤーは対象速度が弱く、C2モーターは補正による相殺が見られた。欠損重複の90%上限は計画§3.3の想定どおり。閾値/候補/分母を変更せず、正式採用や実設備性能とは分けて扱う。
 
-formal_permission=false/promotion_allowed=false/performance_status=not_evaluated、holdout未参照、bootstrap未実施。今回の比較は合成dev/smokeの記述統計であり、完全S6・正式gate・実設備性能・Phase2/3全体の完了ではない。今回のC1の良好さで登録済みholdoutの比較方式を減らさない。
+最終検算後の空きRAM約15.57GiB、commit余裕15.60GiB、C/D空き139.26/361.71GiB。前後観測のみでpeakやリーク不在を保証しない。
 
 ## 完走証拠と保全
 

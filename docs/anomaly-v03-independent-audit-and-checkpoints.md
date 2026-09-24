@@ -415,3 +415,12 @@ producer 558.891秒、独立audit 91.668秒、audit_status=ledger_checks_passed�
 最新closedはrun/control/000010/closed.json / SHA256 **a716478fa46eddcab2300de2d1f06ba6982eb94f738ca794cfc4fc931b33028a**。累積活動160357.173828秒（44.54時間）、48hまで残り12442.826172秒。失敗時間・worker900秒/48h/32GiBは維持。追加invocationは起動しない。heartbeat banto-24はPAUSEDに変更済み。今回の継続確認は停止した。
 
 今回予定の120区間の実行と保存score以降の監査は完了。formal_permission=false/campaign加算0を維持し、完全runtime inventory・profile/score導出/全bootstrapの独立S6・正式gate/holdout/性能評価・研究Phase2/3全体の完了とは区別する。次はこの結果を根拠に研究計画の残項目を整理する判断であり、新たな評価はこのheartbeatでは開始しない。
+
+
+### 2026-09-24: 保存観測からprofile・scoreを再構成するconsumer
+
+[実装と検証範囲](results/anomaly-multiseed-v0.3-independent-score-audit-2026-09-24.md)を追加した。anomaly_v03_score_audit.pyはproducer関数を共有せず、観測からphase/availability・正常profile・残差・scoreを再構成する。C0/C1/C2に対応し、12テスト通過。保存済み12評価で576 profiles/172800 score行が一致した。実装保存点14e6c33。
+
+完全でcalibratedなdev/smoke入力に限定し、判定不能・部分capture・holdoutは拒否。呼出側の外部pin/identity認証が必要。旧audit CLI/controllerへ接続せず、過去の監査報告を書き換えない。全720評価への導出監査は未完了。対象12評価のprofile/score_derivation_verified=trueと、independent_s6_complete/formal_permission/promotion_allowed=falseを区別する。
+
+次は判定不能profileの理由・状態の再構成と、外部pin・登録identity・既存ledger監査を結ぶconsumer入口を整える。正常生成式・overlay・丸め前の値、bootstrap/CI/gate、runtime/運用受入も残る。現consumerの保存精度チェックを丸め工程全体の検算とは扱わない。

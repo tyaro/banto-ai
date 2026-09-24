@@ -3824,3 +3824,14 @@ producer 558.891秒、独立audit 91.668秒、audit_status=ledger_checks_passed�
 欠損重複のsensor missは計画§3.3の構造的上限90%に対応する。offset1..3欠損、offset4は直前qualityで利用不可となり、2点連続を作れない。最初のseedの12 layouts×2方式で最初9回検知・10回目missを確認。「原因未解明の不具合」という扱いを解消し、閾値/分母の変更・新しい長時間試験は行わない。
 
 次は観測からphase/availability、正常profile、残差/scoreを別実装で復元するconsumerの不足分。正常生成/丸め、bootstrap/CI/gate、単一writer受入/runtime inventory/資源見積りも残る。formal_permission/promotion_allowed/independent_s6_complete=false、holdout未参照、heartbeat PAUSED。今回OUT artifacts/dev-smoke-failure-analysis-2026-09-24のsavepoint-evidence.jsonに最終保存点を残す。資源終了時の空きRAM約13.64GiB、commit余裕13.05GiB、C/D空き139.61/374.40GiB。D空きが調査中約1.21GiB減った原因は未特定。本処理の新規出力はC上約4.8MB、原本を書き換えていない。
+
+
+## 152. 正常profile・score導出の独立検算器（2026-09-24 JST）
+
+[実装・検証記録](anomaly-multiseed-v0.3-independent-score-audit-2026-09-24.md)。新規anomaly_v03_score_audit.pyはstdlibのみで保存観測からphase/availability、C0/C1/C2の正常profile、残差/scoreを復元する。producerの数値関数・契約定数を共有せず、逆行列はpivot付きGauss-Jordan。浮動小数abs/rel各1e-12、状態/ID/整数/判定と依存値はexact。保存score自身と超過フラグの矛盾も拒否。実装14e6c33985c63a649c7a89c60ccb4e8ab680d601、12テスト/21.716秒で通過。
+
+最初のdev seedのlayout0/6×全3方式×両条件、計12保存評価の576 profiles/172800 score行を元観測から検算し一致。16入力252536767bytes、最終実装で21.48秒。初回f3c1992の数値検証26.20秒を保持し、閾値境界の検査補強後の結果をverified-finalへ分離した。新規登録seed生成・producer/controller・holdout起動は0。同じ12件の検証を24評価には加算しない。
+
+完全でcalibratedなdev/smokeだけに対応し、判定不能/partial/holdoutは拒否。APIだけでは登録identityや入力ファイルの出所を認証せず、今回IO側で完走保存点からpinを照合した。既存監査CLI/controllerには未接続、旧720評価のaudit不変。profile/score_derivation_verified=trueは検算した対象だけ。完全S6/formal/promotion=false。次は判定不能の理由・状態と、外部pin/identity/既存ledger監査を結ぶ入口を整える。正常生成/丸め、bootstrap/CI/gate、runtime/単一writer受入も残る。
+
+OUT artifacts/independent-score-audit-2026-09-24、最終実行はverified-final/配下、最終文書commit/pinはsavepoint-evidence.json。終了時RAM空き15.57GiB、commit余裕15.60GiB、C/D空き139.26/361.71GiB。前後観測だけでpeak/リーク証明ではない。過去artifact・既存dirty guard・本流・実計算sourceを保持する。
