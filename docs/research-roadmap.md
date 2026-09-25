@@ -299,3 +299,9 @@ T11/T12のengineering部分が接続できました。次は40-cluster入力・�
 [実観測reader](anomaly-v03-reader-evidence.md)を追加し、親が起動したprocessと子が報告したprocessの生成時刻/PID・プログラム・起動条件を照合しました。架空データを使う実process試験を含む新規13種類が通過し、変更していない既存回帰27種類の同工程の合格記録も再利用しました。[結果](results/anomaly-multiseed-v0.3-reader-observed-evidence-2026-09-25.md)。
 
 現時点は選択source10本とPython2file等の部分記録です。次は依存program/runtimeの採取範囲を広げます。正式holdout・性能判定・S4/S6・Phase2/3全体は未完了です。
+
+### v0.3追記: 読取処理の依存記録を拡張（2026-09-25）
+
+読取processが使うsource28本と、標準ライブラリ・拡張・DLL等を合わせて232fileの前後記録を追加しました。架空公開結果による新規13試験が通過し、同工程の不変な既存回帰29種類も再利用しました。[結果](results/anomaly-multiseed-v0.3-reader-dependency-observation-2026-09-25.md)。
+
+今回は実際に観測できた依存の記録です。次は、実行結果と別に保持する役割別期待profileへ進みます。完全な依存固定・正式受入、Phase2/3全体は引き続き未完了です。

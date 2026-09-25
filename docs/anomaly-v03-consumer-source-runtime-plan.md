@@ -64,3 +64,9 @@ producerの過去実行revision `c01d1c978f78bab51391392d56cdcb7aab5afaab`と新
 候補レビュー時の54試験は当時のsource pin一致を確認した過去の合格記録。その後readerとその試験の2fileを変更し、reader14試験を新たに実行した。他suiteは再実行していない。旧CI revisionからselected source28本が変わっているため、旧CIを最新全体の回帰合格には用いない。現在のworkflowはLinux3.12/3.14の試験で、今回実行/再検証はしていない。
 
 正式gate/holdout、実データ50,000回bootstrap、principal/UAC/ACL、同時書換え試験、push/mergeは起動していない。banto-24はPAUSED。正式source/runtime受入・S4/S6・Phase2/3全体は未完了。
+
+## reader依存の実観測を拡張（2026-09-25）
+
+実装0b03b91a59c7359e4eb05e3585242b88aa8c8cab、[結果](results/anomaly-multiseed-v0.3-reader-dependency-observation-2026-09-25.md)。opt-inの子processでsource28/stdlib79/cache候補77/extension8/その他native40の232fileを採取し、前後一致と親のdisk/Git照合を確認。別候補checkout743fileのraw/Git一致を確認し、元copyの既知CRLF差を維持した。
+
+新規13試験pass、同工程の不変な既存回帰29種類のpassを再利用。現在の一覧はchild-inventory-crosschecked-by-parent-after-exitであり、独立した事前runtime期待値や全closureではない。既存cache候補を実loadしたbytecodeとは断定しない。reader用の依存一覧を実行結果とは別に保持する期待profileへ落とし込み、import準備の境界と照合手順を定義する。今回の観測一覧をそのまま正式な期待値やfreezeとして採択しない。 正式source/runtime受入・全体予算・analysis/auditへの展開は残る。

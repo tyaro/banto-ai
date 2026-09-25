@@ -41,4 +41,14 @@ supervisorの追加on_started hookはPopenが返した元のhandleからGetProce
 
 UnreapedWorkerは元ownerをそのまま再送出し、保存記録の書込み失敗があってもownerを失わない。呼出し側は既存retain_until_exit等で終了を回収する。確認できていないworkerのログは読まない。on_started失敗もsupervisorの停止/reap経路に入る。
 
-実際に観測した範囲はselected source10本/Python2file/保持した入出力。stdlib内部、extension、OS DLL/CRT、Git helper、全source依存、実行真正性の完全な証明は残る。formal/promotion/S6/trust/execution_authenticated/full closure=false。正式documentや性能判定は開かない。readerの依存sourceとstdlib/extension/loaded DLLの記録範囲を広げる。既知のCRLF差を現在の作業コピーで修正せず、必要なら指定revisionの一時的な候補checkoutでraw一致を確認する。正式freezeとしては扱わない。
+既定APIが外部期待値へ結合する範囲はselected source10本/Python2file/保持した入出力。formal/promotion/S6/trust/execution_authenticated/full closure=false。追加の依存観測は以下のopt-inを使う。
+
+## 依存fileの追加観測
+
+`observe_dependencies=True` を指定すると、子の実import origin・既存cache候補・EnumProcessModulesExで得たloaded imageを検査前後で採取する。collectorをimportしrequestを解読した後が前観測の境界。builtin/frozen/no-file moduleも分類する。既存file/moduleの消失・変化は拒否し、新たなimportは差分として記録する。
+
+親は終了確定とstdout pinの確認後、sourceは指定Git revision、runtime等は現在のdisk bytes/identityと照合する。Python/Windows System32外のnative fileは、親のloaded image一覧にもある同一pathに限定。1MiB buffer、512file、1file64MiB、合計256MiB。opt-in時のみ監視output枠は1MiB、30秒/512MiBは既定と同じ。
+
+成功例ではsource28、stdlib79、既存cache候補77、extension8、その他native40の232fileを記録した。dependencies.jsonとdependency-crosscheck.jsonを追加保存する。従来evidence/bindingの10source/Python2fileとは別の補助記録で、子由来の一覧を独立した事前期待値とは扱わない。cacheの実使用やmemory内code、完全依存閉包は未証明。正式freeze/受入ではない。
+
+既知のCRLF差を保全するため、今回の接続試験は指定commitから作る候補checkoutで実施した。[詳細結果](results/anomaly-multiseed-v0.3-reader-dependency-observation-2026-09-25.md)。次は役割別の独立した期待profileとimport準備境界を具体化する。

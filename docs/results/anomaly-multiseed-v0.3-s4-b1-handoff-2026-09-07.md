@@ -4073,3 +4073,11 @@ OS26200.9457/Python3.14.0。旧境界・dirty guard不変、banto-24 PAUSED。�
 保存例child 38824 exit0/reaped、監視0.809秒、OS26200.9457/CPython3.14.0。今回processの最大private 50.43MiB、保存例の子は36.34MiB。観測時の最小空きRAM 10.21GiB / commit余裕 17.88GiB、保存例後C/D空き 124.38/365.97GiB。 旧境界/dirty guard/banto-24 PAUSED不変。新評価・登録データ・bootstrap0。parentの期待値はメモリ保持し、保存記録から再採用しない。未終了ownerは保存失敗時も保持。
 
 次：readerの依存sourceとstdlib/extension/loaded DLLの記録範囲を広げる。既知のCRLF差を現在の作業コピーで修正せず、必要なら指定revisionの一時的な候補checkoutでraw一致を確認する。正式freezeとしては扱わない。 完全closure/正式consumer/独立audit/資源予算は残る。正式gate・holdout・principal/UAC/ACLは開始しない。
+
+## 177. reader依存source/runtimeの観測拡張（2026-09-25）
+
+[API](../anomaly-v03-reader-evidence.md)、[結果](anomaly-multiseed-v0.3-reader-dependency-observation-2026-09-25.md)。実装0b03b91a59c7359e4eb05e3585242b88aa8c8cab、OUT artifacts/reader-dependency-observation-2026-09-25、成功attempt-2/。source28/stdlib79/cache候補77/extension8/その他native40、計232file/47,574,229bytes。177modules/loaded48images。前後差分0。親がdisk/Gitを照合し、外部nativeは親にもloadした同一pathに限定。完全closure/独立runtime事前期待値ではない。
+
+新規13pass＋同工程の不変な既存29種類を再利用、unique42。初期ctime差とESET DLLによる失敗を記録。sample PID20520 exit0/reaped、監視1.566秒、private36.30MiB。資料生成後RAM11.08GiB/commit余裕19.47GiB、C124.35/D365.94GiB。候補rd01はclean0b03b91a59c7359e4eb05e3585242b88aa8c8cab、743file/8,430,967bytes、raw/Git一致。元70b0のCRLF差は変更しない。旧境界/dirty guard/PAUSED維持、新評価/実データ/実bootstrap0。
+
+次：reader用の依存一覧を実行結果とは別に保持する期待profileへ落とし込み、import準備の境界と照合手順を定義する。今回の観測一覧をそのまま正式な期待値やfreezeとして採択しない。 既定APIのsource10/Python2file bindingと補助観測を区別。正式consumer/最終audit/全体予算、analysis/audit roleは残る。正式gate/holdout/principal/UAC/ACLを開始しない。

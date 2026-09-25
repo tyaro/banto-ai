@@ -1,25 +1,29 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-25 JST。**実際のreader観測を証拠validatorへ接続。新規13＋既存回帰27種類pass。次は依存source/runtimeの採取範囲の拡張。**
+更新: 2026-09-25 JST。**readerの依存記録を232fileへ拡張。新規13試験pass＋不変な既存回帰29種類を再利用。次は役割別の独立した期待profile。**
 
-- [API](anomaly-v03-reader-evidence.md)、[結果](results/anomaly-multiseed-v0.3-reader-observed-evidence-2026-09-25.md)、[計画](anomaly-v03-consumer-source-runtime-plan.md)、長い引継書§176。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装0ee336e72ca52849e6725415a3d7f8e4ff75aeeb。OUT artifacts/reader-observed-evidence-2026-09-25、成功attempt-3/。最終文書revision/pinは最上位savepoint-evidence.json。
+- [API](anomaly-v03-reader-evidence.md)、[結果](results/anomaly-multiseed-v0.3-reader-dependency-observation-2026-09-25.md)、[計画](anomaly-v03-consumer-source-runtime-plan.md)、長い引継書§177。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装0b03b91a59c7359e4eb05e3585242b88aa8c8cab。OUT artifacts/reader-dependency-observation-2026-09-25、成功attempt-2/。文書保存revision/pinは最上位savepoint-evidence.json。
 
 ## 今回の成果と次の作業
 
-anomaly_v03_reader_evidence.check_with_evidenceを追加。親が指定HEADのselected source10本をGit/raw比較し、外部anchorから期待report・入力15fileを保持。supervisorに任意on_started hookを追加して元handleからPID/生成FILETIMEを取得。子はself handle/起動flags/path/OS/CPU/Python executableとloaded DLL/sourceを前後観測。元ownerの記録・保存launch/expectedファイル・子report/証拠を、親のメモリ保持値で検証する。
+`check_with_evidence(..., observe_dependencies=True)` を追加。前後のsys.modules/実file origin/既存pyc候補/EnumProcessModulesExのloaded imageを採取。request解読とcollector import後が前観測の境界。parentは終了・stdout pin・元handle観測を確認してから、依存sourceは指定Git、runtime等はdisk内容/identityへ照合する。外部nativeは親にもloadされた同一絶対pathのみ許可。
 
-最終13新規試験pass、failure/error/skip0、15.385秒。同工程初回のsupervisor13＋通常reader14passを、その後source不変確認のうえ再利用（unique40、最後に全40を再実行したわけではない）。初回7failure/1errorはGit hardlink2の扱い。Gitだけ実リンク数とhashを記録・前後照合するよう修正。attempt-2は12pass、記録のメモリ保持を加えたattempt-3で13pass。失敗・中間OUTは保全。
+成功例はsource28、stdlib79、cache候補77、extension8、その他native40の232file/47,574,229bytes。177modules、native48images。検査中の追加/消失/変更0。ESET eamsi.dll/ebehmoni.dllを含む。dependencies.jsonとdependency-crosscheck.jsonは補助記録。**既存validatorのsource10/Python2file bindingと区別し、child由来の一覧を独立した事前期待値や完全closureとは扱わない。** cache候補を実使用済みbytecodeとは断定しない。
 
-保存例は実child PID 38824、exit0/reaped、監視0.809秒。15入力/19773bytes→reader report 1317bytes。子のOS26200.9457/CPython3.14.0/no_site=1/hook0が親の起動前期待値と一致。fixture原本は一時directory終了で片付け、保存例のexpected/evidence/report/monitorは保持。実データ評価ではない。
+新規13pass、failure/error/skip0、10.825秒。初回41件中、新規live2件がESET範囲外でfail、他39件pass。修正はnew collector/testのみなので、初回の既存reader13＋pure evidence16を再利用（unique42、最終全42再実行ではない）。前段unit10件中2errorだったWindows lstat/fstatのctime差も記録、device/inode/links/size/mtimeとhashへ統一。失敗記録を保持。
 
-今回processの最大private 50.43MiB、保存例の子は36.34MiB。観測時の最小空きRAM 10.21GiB / commit余裕 17.88GiB、保存例後C/D空き 124.38/365.97GiB。 旧境界・dirty guard・closed・banto-24 PAUSED維持。前工程49code/18dataから意図的に変えたのはsupervisor1本、新規adapter/tests2本。以前のraw pinを更新しない。前工程manifest16683bytes/SHAaa64a001a17ea0a4cb54778c1d5d775323e7cb32619c8f7ed108aaecf3f26e1d。
+候補checkout C:/Users/TKent/.codex/worktrees/rd01/banto-ai はclean 0b03b91a59c7359e4eb05e3585242b88aa8c8cab。743tracked files/8,430,967bytesをGit blobへ比較済み。候補を保全し、元70b0のgenerator.py/manifest.pyのCRLF差は維持。正式freezeではない。sample child20520 exit0/reaped、1.566秒、peak private36.30MiB、stdout240,485bytes。架空入力原本はtemp cleanup済み、観測/期待値/monitor/reportは保存。
 
-**次：readerの依存sourceとstdlib/extension/loaded DLLの記録範囲を広げる。既知のCRLF差を現在の作業コピーで修正せず、必要なら指定revisionの一時的な候補checkoutでraw一致を確認する。正式freezeとしては扱わない。** 現adapterはsource10本/Python2fileの部分記録。既存inspection collectorはproducer/workflow前提なので直接正式受入へ転用しない。Git helper/DLL、stdlib内部/extension/OS DLL、全project依存は未完了。現在のvalidatorは前後profileの一致を要求するので、import準備と実処理のどこを前観測とするかも明示する必要がある。
+資源は資料生成後RAM11.08GiB/commit余裕19.47GiB、C124.35/D365.94GiB。最終値はsave-checks.json。依存採取512file/1file64MiB/合計256MiB、1MiB buffer。opt-in時のみoutput枠1MiB、既定64KiBと30秒/512MiBは維持。親preflight含む正式総予算ではない。試験harness全期間peakは未採取。
 
-新APIは通常権限・単一writer終了後・新規確認directoryに限る。30秒/512MiB/64KiBは子の監視枠で、親のpreflightを含む正式全体予算ではない。1file16MiB/入力合計32MiB、各Git10秒を上限とする。所有worker未終了はUnreapedWorkerをそのまま返し、記録保存失敗でもownerを保持する。principal/UAC/ACL/同時書換え保証は追加していない。
+**次：reader用の依存一覧を実行結果とは別に保持する期待profileへ落とし込み、import準備の境界と照合手順を定義する。今回の観測一覧をそのまま正式な期待値やfreezeとして採択しない。** まず通常権限readerの小さな架空入力に限定し、別に保持した候補profileと本番読取の実観測を照合する境界を設計・実装する。analysis/audit役割、動的にunloadされたimage/Git helper、全体資源予算は残る。
 
-既存document_draft.analysis_consumer=nullとformal/promotion/S6/trust/full closure=falseは維持。source/runtime受入・正式consumer/最終audit・全体予算は残る。正式契約/予算を判断できる実装・証拠を先に用意する。240h/96GiB案は未適用。正式freeze/gate/holdout・50,000実データdraw・新評価と保留principal/UAC/ACLは起動しない。旧formal OS pin9168不変、Windows3.12必須化なし。Phase2/3全体は未完了。
+前工程manifest23326bytes/SHA661238bb87e0d8f03bcab795d470a174e4806b4d746775bf6fee483c37bf06ca。旧52code/18dataの意図的変更はadapter1本、新collector/test2本追加。旧境界/dirty guard/closed/PAUSED維持。document_draft.analysis_consumer=null、formal/promotion/S6/trust/execution_authenticated/full closure=false。新評価/登録データ/実bootstrap0。正式gate/holdout/正式freeze/保留principal/UAC/ACLは開始しない。
+
+## 直前の実reader接続
+
+実装0ee336e72ca52849e6725415a3d7f8e4ff75aeeb、文書fa5d9f5f1ebcfb274828c26e1203a4f45549bd54。OUT reader-observed-evidence-2026-09-25、成功attempt-3。selected source10/Python2file、元Popen handleと子selfのPID/生成FILETIME、入出力15fileを外部期待値に結合。新規13pass＋不変な既存27種類を再利用。記録は親memory保持値と比較し、未終了ownerは保存失敗時も保持。通常権限・single writer終了後、新しい確認directoryに限定。
 
 ## 直前のslice接続
 
