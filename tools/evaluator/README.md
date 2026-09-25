@@ -1,5 +1,7 @@
 # benchmark runner
 
+2026-09-25：[engineering結果の別process reader](../../docs/anomaly-v03-consumer-reader.md)を追加。writer終了後に外部marker/保存点pinを使って確認し、結果を別directoryへ記録します。13接続試験と実公開物の読取りが通過。通常権限で、元payload/markerは変更しません。
+
 2026-09-25：[engineering consumer API/CLI](../../docs/anomaly-v03-engineering-consumer.md)を追加。明示入力・2保存点pinから同じ入力の記述結果を選び、新規保存・読み戻しまで接続します。16試験通過、全120区間720評価の既存記述値を保持。集計/scoreの再計算・正式評価の起動なし。
 
 2026-09-25：[集計入力の公開metadataへの結合API](../../docs/anomaly-v03-consumer-analysis-binding.md)を追加。10保存artifactを認証し、全120区間の最終attempt・input/evaluation hash・元集計値を照合します。14試験通過。旧検証履歴を再利用し、観測/score再計算やCLI/正式評価の起動はありません。

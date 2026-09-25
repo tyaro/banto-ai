@@ -4009,3 +4009,11 @@ peak37.25MiB、最小RAM12.53GiB/commit余裕19.81GiB、C/D122.78/268.83GiB。OS
 過去区間119 attempt1はproducer900秒停止、同時期commit余裕52.73MiBの標本。原因帰属/リークは未確定で、privateとsystem commitを別に扱う必要を記録。今回C121.97/D256.05GiB、peak50.29MiB、最小RAM10.38GiB/commit余裕16.88GiB。主確認0.538秒。OS実値os-state.json、全旧境界不変、banto-24 PAUSED。
 
 次はT11/T12：通常権限、writer終了後の別process reader、応答消失/読取失敗の外側receiptを接続。小さな架空入力と拒否例に絞り、旧保存試験や評価を繰り返さない。principal/UAC/ACL/同時書換え作業を再開せず、確定payload/markerは保全。正式化の5まとまり、source/runtime freeze、正式gate/holdout、S4/S6、Phase2/3は未完了。
+
+## 170. 別process readerと外側receipt（2026-09-25）
+
+[API](../anomaly-v03-consumer-reader.md)、[結果](anomaly-multiseed-v0.3-consumer-separate-reader-2026-09-25.md)。実装35842261a90b1efe475056dc9ef962c56773f1f1、OUT artifacts/consumer-separate-reader-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。writerを閉じた後の読取専用子processを既存supervisorへ接続し、外部marker/2保存点pinを新規requestに固定。旧source/結果からの対応を確認し、成功/不一致/応答消失を外側のresultへ保存。元結果/markerは不変。
+
+13新規試験pass、failure/error/skip0、3.291秒。実確認は親35884/子27688、exit0/終了確認、監視error0。7file/7,896,608bytesから4payload/2,755,533bytesを確認し、元4payload＋2marker名の6pin不変。reader0.826秒、外側1.055秒。親peak33.34MiB/子35.91MiB、最小RAM12.30GiB/commit余裕20.24GiB、C/D130.25/329.72GiB。監視側OS26200.9457/Python3.14.0前後一致、全runtime/dependency受入ではない。
+
+T11/T12 engineering部分を接続。再封印不整合は元保存点とのbytes比較で拒否し、独立数値audit実行はfalse。正式full document/source-runtime受入は未完了。次は40-cluster入力・推論/full document adapterを非登録の架空入力で準備し、正式mode/holdout/新評価/実データbootstrapは起動しない。旧境界・dirty guard・banto-24 PAUSEDを維持し、保留principal/UAC/ACL/同時書換え作業を再開しない。

@@ -1,25 +1,27 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-25 JST。**T01〜T12の実装対応・残件・容量時間シナリオを保存。次は通常権限での別process readerと外側状態の接続（T11/T12）。再計算・新試験の実行は今回0。**
+更新: 2026-09-25 JST。**通常権限の別process readerと外側receiptを接続、13試験pass。実公開レポートを別processで確認済み。次は40-cluster入力・推論/full documentへのadapterを架空入力で準備。**
 
-- [対応表・容量時間](results/anomaly-multiseed-v0.3-consumer-coverage-budget-2026-09-25.md)、[入口API](anomaly-v03-engineering-consumer.md)、長い引継書§169。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。調査対象6af1c024be52c063e82f9a43143f2fc5e228258b、OUT artifacts/consumer-coverage-budget-review-2026-09-25。最終文書revision/pinはsavepoint-evidence.json。source変更なし。
+- [API/CLI](anomaly-v03-consumer-reader.md)、[結果](results/anomaly-multiseed-v0.3-consumer-separate-reader-2026-09-25.md)、長い引継書§170。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装35842261a90b1efe475056dc9ef962c56773f1f1、OUT artifacts/consumer-separate-reader-2026-09-25。最終文書revision/pinはsavepoint-evidence.json。
 
 ## 今回の成果と次の作業
 
-契約案の12群は、engineering接続5（T01/02/03/04/10）、旧証拠再利用3（T05/06/08）、計算部品まで1（T07）、接続残り3（T09/11/12）。正式評価の合格数ではない。20保存file/2,818,781bytes、33 source/契約pin、30 method参照を照合。直近5工程の新規試験計81件は保存済み合格記録の参照で、今回実行0。約0.538秒、peak50.29MiB、最小RAM10.38GiB/commit余裕16.88GiB。
+anomaly_v03_consumer_reader.check_in_subprocessとCLIを追加。呼出し側がwriter終了を保証してから、外部保持したmarker hash＋binding/reportの2pinと明示analysis入力で確認する。新しい確認directoryにrequest、worker出力、supervision、resultを保存。-I -Bの別Pythonへ明示srcを渡し、既存supervisorで30秒/private512MiB/log64KiB。6入口source/requestの前後hashと監視側runtime前後一致を確認する。完全dependency/runtime閉包ではない。
 
-正式40 seed/480区間960datasets/2880評価への単純外挿は59.91GiB/活動178.17時間（7.42日）。元実績は7800file/16,081,676,236bytes/160,357.174秒で失敗・再照合を含む。別工程のscore/ledger監査約80.41分と生成監査約7.57分も参考値。正式推論/最終独立audit予算は未確定。
+13新規試験pass（failure/error/skip0、3.291秒）。応答消失・再封印不整合・未完了・上書き/重複root・hash差・timeout・未終了owner保持を確認。旧保存/算術suiteは再実行なし。実公開物の子PID27688（親35884）はexit0/終了確認、監視error0。7file/7,896,608bytesから4payload/2,755,533bytesへの対応を確認。元4payloadと2marker名の6pin不変。reader0.826秒、外側1.055秒。
 
-仮のproducer活動枠240時間/出力96GiB、空き予約32GiB、1コピー開始128GiB/同volume2コピー224GiBの案。設定・運用上限へは適用していない。今回C121.97/D256.05GiBでDが候補。開始前の再確認が必要。system commit余裕52.73MiBの過去標本を確認し、process上限と全体commit停止方針を分ける必要を記録。リークや他作業との因果は未断定。OS実値os-state.json。
+親peak33.34MiB/reader35.91MiB、最小RAM12.30GiB/commit余裕20.24GiB、C/D130.25/329.72GiB。監視側OS26200.9457/CPython3.14.0前後一致。今回の記録はverified/request.json、worker/report.json、supervision.json、result.json。子の完全runtime受入ではない。
 
-**次はT11/T12のconsumer接続：writerを閉じた後、通常権限の別process readerと外側receiptをつなぐ。** 固定入力で応答消失・読取不一致・再封印不整合を確認し、旧保存APIの合格済み試験を重複させない。既存確定payload/markerを修正しない。専用principal/P-U/同時書換え試験、UAC/ACL変更は再開しない。正式40-cluster推論/full document、source/runtime受入、契約採択は別の残りで正式gate/holdoutを起動しない。
+T11/T12のengineering接続は完了。別processは独立数値監査の代替ではなくindependent_numerical_audit_performed=false。元publicationからmarker hashを自己採用せず、応答消失時も独立に保持した期待pinが必要。元結果へ追記/撤回しない。確認側の応答消失は新しい確認名で再読取。UnreapedWorkerのAPIは元ownerを保持し、呼出し側がreap。CLIは既存retain_until_exitを使い、古い未確認resultは書き換えない。
 
-前工程のengineering consumerは16試験と実接続済み（実装6567a857455847baf225f552abf5ff9df6644c08、文書6af1c024be52c063e82f9a43143f2fc5e228258b）。7file/7,896,608bytes、約2.055秒。全120区間720評価、18表234主指標5670診断行を保持。chunk119 attempt2、失敗1件、判定不能46指標を保全。観測/score/集計/比率再計算なし。
+**次は正式consumerの40-cluster入力と推論・full documentへのadapterを、非登録の架空入力で準備する。** 既存算術・schema部品を使い、現工程のdev/smoke記述入口を緩和しない。実holdout/正式modeを起動せず、50,000回の実データbootstrapや新評価を行わない。source/runtime freeze・正式契約採択は別の残件。保留principal/UAC/ACL/同時書換え作業は再開しない。
 
-そのOUTはengineering-consumer-entry-2026-09-25、成功published-success/payload/report.md/html。保存点11477bytes/SHA830d2de2202166c7f3f735603c21b317cb18bb33809530d1f3bf8d8c87403219。marker97c8bc637328cb173e6c1a678765c7785512fb2ad7b66ed8af15939e819c874e、receipt11507bytes/SHAe2ac5bb2b36d5121062dd8bdc790556cd767cd22a7168ec0579d5aab6570cf3a。初回tuple比較失敗/HTML末尾LF欠落による未完了publishedとtest-attempt-1/2を保全済み。再使用しない。
+前工程の対応/容量見積りはconsumer-coverage-budget-review-2026-09-25（16387bytes/SHA948751649d613e74af6930ee77d57824d9ecee8a8fbbcbec7b8ea3e7fd337cf3）。正式2880評価への単純外挿59.91GiB/活動178.17時間、producer枠240時間/96GiB＋空き32GiBは未採択・未適用の案。正式推論/最終audit予算は未確定。D等の空きは変動するため実行前確認が必要。
 
-新評価・payload読取・再計算・bootstrap・新試験0。旧保存点・実計算c01d1c9・本流clean6f1285d・closed・既存dirty guard不変、banto-24 PAUSED。正式契約案draft、formal/promotion/S6=false、全5まとまりに正式化の残りあり。
+読取元はengineering-consumer-entry-2026-09-25（11477bytes/SHA830d2de2202166c7f3f735603c21b317cb18bb33809530d1f3bf8d8c87403219）のpublished-success。marker97c8bc637328cb173e6c1a678765c7785512fb2ad7b66ed8af15939e819c874e、receipt11507bytes/SHAe2ac5bb2b36d5121062dd8bdc790556cd767cd22a7168ec0579d5aab6570cf3a。旧未完了published/test-attempt-1/2は保全し再使用しない。
+
+新評価・観測/score読取・再計算・bootstrap0。旧保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変、banto-24 PAUSED。formal/promotion/S6/trust=false。Phase2/3全体の完了ではない。
 
 ## 前工程の受入残件
 

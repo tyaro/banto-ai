@@ -251,3 +251,9 @@ v0.2のstandalone seed-cluster analysisは [`anomaly-multiseed-evaluation-plan-v
 [T01〜T12の対応表](results/anomaly-multiseed-v0.3-consumer-coverage-budget-2026-09-25.md)を保存しました。engineering接続5群、旧検証再利用3群、計算部品まで1群、受入・外側状態・別reader/auditの接続残り3群です。新試験や720評価の再計算は行っていません。
 
 正式2,880評価への単純外挿は約59.91GiB/活動178.17時間。240時間/96GiB＋空き32GiBを仮の予算枠として整理しましたが、正式推論/最終独立auditの予算は未確定で、設定へ適用していません。次は通常権限の別process readerと外側receipt（T11/T12）を接続します。正式契約採択・freeze・正式gate/holdout・S4/S6・Phase2/3全体は未完了です。
+
+### 2026-09-25：保存結果を別processで確認し、外側に結果を記録
+
+[engineering reader](anomaly-v03-consumer-reader.md)を実装し、13接続試験と実公開物の読取りが通過しました。元の保存点に対応する4payloadを別processで照合し、終了を確認。応答消失・不一致の記録は外側に保存し、元の結果と完了印を変更しません。[結果](results/anomaly-multiseed-v0.3-consumer-separate-reader-2026-09-25.md)。
+
+T11/T12のengineering部分が接続できました。次は40-cluster入力・固定推論/full documentのadapterを架空入力で準備します。独立数値audit、正式契約採択、source/runtime freeze、正式gate/holdout、S4/S6、Phase2/3全体は未完了です。
