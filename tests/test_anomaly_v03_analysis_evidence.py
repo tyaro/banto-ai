@@ -36,7 +36,7 @@ class AnalysisEvidenceTests(unittest.TestCase):
         before=self.inputs();expected,_=self.fixture.call();result=self.call()
         self.assertEqual(result['status'],'verified',result)
         self.assertTrue(result['worker_exit_confirmed']);self.assertNotEqual(result['worker_pid'],os.getpid())
-        self.assertEqual(result['selected_source_files'],12);self.assertEqual(result['authenticated_input_files'],9)
+        self.assertEqual(result['selected_source_files'],13);self.assertEqual(result['authenticated_input_files'],9)
         self.assertEqual(len(result['payload_pins']),4);self.assertEqual(result['runtime_files'],2)
         target=Path(result['check_directory'])
         self.assertEqual({p.name:p.read_bytes() for p in (target/'payload').iterdir()},expected)
@@ -45,7 +45,7 @@ class AnalysisEvidenceTests(unittest.TestCase):
         self.assertEqual(value['runtime_before'],value['runtime_after']);self.assertEqual(value['runtime_before'],retained['runtime'])
         self.assertEqual(value['source_before'],value['source_after']);self.assertEqual(value['source_before'],retained['source'])
         self.assertTrue(result['parent_and_child_creation_matched'])
-        self.assertGreater(result['dependency_observation']['project_files'],12)
+        self.assertGreater(result['dependency_observation']['project_files'],13)
         self.assertFalse((target/'.complete').exists());self.assertEqual(before,self.inputs())
         receipt=json.loads((target/'payload/consumer-receipt.json').read_bytes())
         for name in ('score_recalculations','aggregate_recalculations','report_value_recalculations','source_payload_bytes_read'):
