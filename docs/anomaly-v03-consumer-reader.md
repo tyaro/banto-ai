@@ -1,6 +1,6 @@
 # engineering結果の別process readerと外側の確認記録
 
-2026-09-25確認：[source/runtimeレビュー](anomaly-v03-consumer-source-runtime-plan.md)で、現-I -Bにはsystem site-packagesが残ることを観測。次の変更案は-I -S -B。以下は現行APIの説明で、まだ-Sを適用していない。
+2026-09-25更新：子の起動に`-S`を適用し、siteの自動初期化とsystem site-packages追加を除外。通常権限の14試験が通過し、旧起動条件を検出する対照試験も確認した。[結果](results/anomaly-multiseed-v0.3-consumer-reader-no-site-2026-09-25.md)。source/runtimeの完全受入は引き続き未完了。
 
 `anomaly_v03_consumer_reader` は、[engineering consumer](anomaly-v03-engineering-consumer.md)のwriterを閉じた後に、保存済みレポートを別processで確認する。[確認結果](results/anomaly-multiseed-v0.3-consumer-separate-reader-2026-09-25.md)。既存のprocess監視とLocalPublication readerを使用し、通常権限で動く。
 
@@ -33,7 +33,7 @@ C:/Python314/python.exe -B -m banto_ai.anomaly_v03_consumer_reader --mode engine
 
 ## 検査と所有process
 
-親は新しい確認directoryを排他的に作り、入力・期待pinをrequest.jsonへ保存する。Pythonを `-I -B` で起動し、明示した現在checkoutのsrcだけを検索pathへ追加する。環境変数のPYTHONPATHやuser siteを子へ引き継いでimport先を選ばない。子はproducer/別process/writerを起動しない。
+親は新しい確認directoryを排他的に作り、入力・期待pinをrequest.jsonへ保存する。Pythonを `-I -S -B` で起動し、明示した現在checkoutのsrcだけを検索pathへ追加する。環境変数のPYTHONPATHやuser siteを子へ引き継いでimport先を選ばない。`-S`によりsite初期化・system site-packagesの自動追加も止める。子はproducer/別process/writerを起動しない。
 
 既存supervisorで所有する子を、30秒・private512MiB・stdout/stderr合計64KiB以内に監視する。Windowsでは非表示起動し、終了code・PID・メモリ・監視側runtimeの前後値を記録する。6つの入口/保存/監視sourceとrequestのraw hashも前後で確認する。これは全依存閉包や子processの完全runtime受入ではない。
 

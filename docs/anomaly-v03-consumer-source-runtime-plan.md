@@ -26,9 +26,9 @@ producerの過去実行revision `c01d1c978f78bab51391392d56cdcb7aab5afaab`と新
 
 ### 起動と検索経路
 
-現readerは`-I -B`。実際のinterpreter-only probeではisolated=1、user site無効、**no_site=0**で、`C:/Python314/Lib/site-packages`が検索対象に残った。今回観測したsitecustomize/usercustomize moduleは0。
+変更前のreaderは`-I -B`。実際のinterpreter-only probeではisolated=1、user site無効、**no_site=0**で、`C:/Python314/Lib/site-packages`が検索対象に残った。今回観測したsitecustomize/usercustomize moduleは0。
 
-提案の`-I -S -B`ではno_site=1、site未import、同site-packages pathが消えた。明示したcheckoutのsrcだけをproject検索先へ追加する方針と組み合わせる。今回は起動probeだけを行い、readerのコードは変更していない。次の小さな変更で`-S`を加え、実readerの接続試験を行う。
+提案の`-I -S -B`ではno_site=1、site未import、同site-packages pathが消えた。明示したcheckoutのsrcだけをproject検索先へ追加する方針と組み合わせる。候補レビュー時点では起動probeのみだった。その後readerへ`-S`を適用し、14接続試験と旧条件を検出する対照試験で確認した（[結果](results/anomaly-multiseed-v0.3-consumer-reader-no-site-2026-09-25.md)）。この変更はengineering readerに限り、正式runtime受入ではない。
 
 ここで使うruntimeはCPython3.14.0（v3.14.0:ebf955d、MSC v.1944、64bit）。Python3.12をWindowsの追加必須条件にはしない。repositoryの>=3.12宣言やLinux CIの3.12/3.14 matrixは別の互換性範囲として保持する。
 
@@ -46,7 +46,7 @@ producerの過去実行revision `c01d1c978f78bab51391392d56cdcb7aab5afaab`と新
 
 | 順序 | 作業 | 完了の根拠 |
 | --- | --- | --- |
-| 直近 | engineering readerへ-Sを追加 | 実読取成功・起動flag/検索経路・失敗時所有processの既存動作を小さい試験で確認 |
+| 完了（engineering） | readerへ-Sを追加 | 14接続試験pass、起動flag/検索経路と旧条件の検出を確認 |
 | 続く実装 | 正式consumerとsource/runtime証拠validatorを接続 | 間違ったrole/source/process・自己申告pass等を拒否、既存入口の制限を維持 |
 | 候補確定後 | 別clean checkoutでsource固定、役割別runtime採取 | 全raw bytes、実process前後、正式contractとの対応 |
 | 必要な回帰 | 最終revisionで関連純粋・通常権限Windows試験、必要なplatform確認 | 現候補に結び付く試験証拠。保留principal試験を混ぜない |
@@ -57,6 +57,6 @@ producerの過去実行revision `c01d1c978f78bab51391392d56cdcb7aab5afaab`と新
 - 正式運用契約：通常権限の単一writer、OS実値記録、本文slice＋補助記録、解析と監査の別出力、正式失敗時のversion/root/未使用seedでの再登録。完全consumer・証拠結合・最終audit接続を仕上げてから対象revisionとともに提示する。科学的な閾値は維持する。
 - 正式実行予算：旧案のproducer240時間・出力96GiB・空き32GiB（開始時1copy128GiB、同volume2copy224GiB）は未適用。正式推論と最終独立auditの時間・メモリ枠が未確定のため、現時点で全体予算を確定しない。既存上限を変更しない。
 
-直近4工程の54新規試験はsource pin一致を確認した過去の合格記録。今回のunit test実行は0。旧CI revisionからselected source28本が変わっているため、旧CIを最新全体の回帰合格には用いない。現在のworkflowはLinux3.12/3.14の試験で、今回実行/再検証はしていない。
+候補レビュー時の54試験は当時のsource pin一致を確認した過去の合格記録。その後readerとその試験の2fileを変更し、reader14試験を新たに実行した。他suiteは再実行していない。旧CI revisionからselected source28本が変わっているため、旧CIを最新全体の回帰合格には用いない。現在のworkflowはLinux3.12/3.14の試験で、今回実行/再検証はしていない。
 
 正式gate/holdout、実データ50,000回bootstrap、principal/UAC/ACL、同時書換え試験、push/mergeは起動していない。banto-24はPAUSED。正式source/runtime受入・S4/S6・Phase2/3全体は未完了。

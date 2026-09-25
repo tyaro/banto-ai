@@ -4046,3 +4046,12 @@ T11/T12 engineering部分を接続。再封印不整合は元保存点とのbyte
 直近4保存点の54試験記録とsource pinを照合し、unit test0。起動probe2件では-I -Bにsystem siteが残り、-I -S -Bで除外。project import0、OS26200.9457/CPython3.14.0一致。Python exe/DLLとGit2.51.2.windows.1のpinを観測、全DLL/stdlib/外部tool閉包は未確認。主確認7.670秒、最大private 52.37MiB、最小空きRAM 10.26GiB / commit余裕 18.97GiB、主確認後C/D 124.43/370.49GiB。
 
 6作業と将来の採択2まとまりを保存。次はreaderへ-S追加、通常権限の小さい接続試験。続いてsource/runtime証拠validatorを具体化する。正式consumer/証拠結合/予算が揃う前に採択待ちとしない。旧240h/96GiB案は未適用。実freeze・正式評価0、旧境界/dirty guard/banto-24 PAUSEDを維持、principal/UAC/ACL/同時書換えは保留。
+
+
+## 174. engineering readerのsite初期化除外（2026-09-25）
+
+[結果](anomaly-multiseed-v0.3-consumer-reader-no-site-2026-09-25.md)、[API](../anomaly-v03-consumer-reader.md)。実装863af36c74aad1bc63ff42bd5b2b469c748882df、OUT artifacts/consumer-reader-no-site-2026-09-25。最終文書revision/pinはsavepoint-evidence.json。-I -S -Bで起動し、reader＋testsの2fileだけを変更。旧pinは保全。
+
+14接続試験pass、failure/error/skip0、3.963秒。実子の起動flag/site除外と架空公開結果の読取を確認。-Sだけを外した対照1件はno_site=0で期待どおり失敗し、sourceは変更していない。timeout/終了未確認は既存模擬試験、7子processの実監視は終了確定。試験processの最大private 32.27MiB、監視した子の最大private 21.44MiB。試験前後の最小空きRAM 11.15GiB / commit余裕 19.45GiB、試験後C/D空き 124.34/365.97GiB。
+
+OS26200.9457/Python3.14.0。旧境界・dirty guard不変、banto-24 PAUSED。新評価/登録データ/正式bootstrap/freeze0。次は役割別source/runtime証拠validator。完全closure、正式consumer・最終audit/資源予算・S4/S6は未完了、principal/UAC/ACL/同時書換えは保留。

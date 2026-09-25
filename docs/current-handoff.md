@@ -1,25 +1,23 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-25 JST。**最新consumerのsource/runtime候補を整理。41source・設定等18file、起動probe2件を記録。次はreaderへ-S追加の小さい接続変更。**
+更新: 2026-09-25 JST。**engineering readerに-Sを追加、14試験pass。次は役割別source/runtime証拠validatorの具体化。**
 
-- [固定方法/判断資料](anomaly-v03-consumer-source-runtime-plan.md)、[結果](results/anomaly-multiseed-v0.3-consumer-source-runtime-review-2026-09-25.md)、長い引継書§173。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。対象e9826bd0245cf26cf540e1ff470528c001f3cd5f、OUT artifacts/consumer-source-runtime-review-2026-09-25。今回source変更なし、最終文書revision/pinはsavepoint-evidence.json。
+- [API](anomaly-v03-consumer-reader.md)、[結果](results/anomaly-multiseed-v0.3-consumer-reader-no-site-2026-09-25.md)、[固定計画](anomaly-v03-consumer-source-runtime-plan.md)、長い引継書§174。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装863af36c74aad1bc63ff42bd5b2b469c748882df、OUT artifacts/consumer-reader-no-site-2026-09-25。最終文書revision/pinはsavepoint-evidence.json。
 
 ## 今回の成果と次の作業
 
-5役割の静的候補はwriter23/reader25/架空推論文書17/独立監査部品15/inspection19、union41source（566551bytes）。39本raw/Git一致、generator.pyとmanifest.pyはCRLF/LF差のみ。元sourceは修正せず、候補確定後に別clean checkoutでraw一致を確認する方針。設定等18file・補助CLI2fileもraw一致。33外部importはstdlib名/位置候補、native/subprocess等15箇所、13method参照を保存。完全closureではない。
+子readerを-I -S -B起動に変更。14試験（既存13＋起動観測1）failure/error/skip0、3.963秒。子のno_site=1、site未import、system/user siteと環境指定先の除外、架空公開結果の読取成功を確認。観測コードは試験時のbootstrap先頭だけに挿入し、本体の起動optionは維持。既存成功試験では通常bootstrapを使う。旧条件として-Sを除去した新fixtureの対照1件はno_site=0を検出して期待どおり失敗。本体変更や新評価ではない。
 
-直近4工程の54試験は保存点/test-results/source pinで照合した歴史的記録。今回unit test0。旧CI036ecb4からselected28sourceが変わり、旧CIは現候補全回帰の代替にしない。Python3.12のWindows必須条件は追加しない。
+試験processの最大private 32.27MiB、監視した子の最大private 21.44MiB。試験前後の最小空きRAM 11.15GiB / commit余裕 19.45GiB、試験後C/D空き 124.34/365.97GiB。 OS26200.9457/Python3.14.0、banto-24 PAUSED。監視側のruntime前後一致は子のfull runtime受入とは区別。既存owner保持・失敗記録・元公開物不変を維持し、未完了の確認directoryを再利用しない。
 
-**次はanomaly_v03_consumer_reader.check_in_subprocessの起動を-I -S -Bへ変更し、通常権限の小さい別reader接続試験で確認する。** 現-I -Bのinterpreter-only probeはno_site=0/system site-packagesあり、-I -S -Bはno_site=1/site未importで当該pathなし。2probeでOS26200.9457/Python3.14.0一致、project module import0。現コードはまだ変更していない。
+前工程consumer-source-runtime-reviewの保存点18344bytes/SHA8747c3b4b2b4cd7e7094bf9c51a6731c3d7f962e8a47e0b87f44e29ddadfcf37から変更前47code/18data pin一致を確認。意図した変更はreaderとそのtestsの2本で、過去pinを更新しない。旧boundary、dirty guard、本流clean6f1285d・実計算clean c01d1c9・closedを保全。
 
-既存readerとそのtestsを変更する工程になるため、今回pinとの差は意図した変更として分けて記録し、過去保存点のpinを更新しない。元の公開report/markerは保全。旧720評価や算術suiteは再実行せず、起動条件・保存済み架空結果の接続・失敗時ownerを必要範囲だけ確認する。次いでsource/runtime証拠validatorを具体化する。
+**次はsource/runtime証拠validatorを具体化する。** [計画](anomaly-v03-consumer-source-runtime-plan.md)の役割・revision・process/起動条件・input/output対応をまず小さいfixtureで実装し、自己申告pass、役割/source違い、終了未確認、前後差を拒否する。現readerがpinする6fileは静的25候補のclosureではない。既存inspection collectorはinspection scope/producer必須なので、そのまま正式受入に転用しない。
 
-source/runtime受入は未完了。現readerがpinする6fileは静的25候補のclosureではない。inspection collectorはproducer/workflow必須・inspection scopeであり、役割別実processの受入にそのまま転用しない。Python exe/DLL、stdlib、extension、OS DLL/CRT、Git等の外部program、検索経路、実process前後を役割ごとに結合する必要がある。今回Git2.51.2.windows.1とPython exe/DLL pinを観測しただけでfull freezeにはしていない。
+静的union41source、設定等18file、CLI2file、33stdlib候補・native等15箇所/13参照は前工程の候補記録。generator.pyとmanifest.pyのraw CRLF/LF差は保全し、最終候補の別clean checkoutで確認する。Python exe/DLL・stdlib/extension・OS DLL/CRT・Git等の実process結合と完全closureは未完了。Windows更新は実値記録を維持、旧formal pin9168は変更しない。Windows3.12の必須条件は追加しない。
 
-freeze-plan.jsonに6作業、将来の採択2まとまり（正式運用契約/完全実行予算）を記録。正式consumer/証拠結合・最終auditの接続と予算が未完成なので、今は判断待ちで止める段階ではない。旧案240h/96GiB/空き32GiBは未適用。実holdout/正式gate/50,000実データdraw/新評価/実freezeは起動しない。
-
-主確認7.670秒、最大private 52.37MiB、最小空きRAM 10.26GiB / commit余裕 18.97GiB、主確認後C/D 124.43/370.49GiB。 旧境界とdirty guard不変、banto-24 PAUSED。Windows更新は実値記録方針を維持し、旧formal pin9168と過去runtimeを保全。principal/UAC/ACL/同時書換え試験は保留、Phase2/3全体は未完了。
+正式consumer・証拠結合・最終audit・全体予算を具体化してから運用契約/予算を判断する。現時点で判断待ちにしない。240h/96GiB案は未適用。実freeze・正式gate/holdout・50,000実データdraw・新評価、保留principal/UAC/ACL/同時書換え試験を起動しない。Phase2/3全体は未完了。
 
 ## 直前のslice接続
 

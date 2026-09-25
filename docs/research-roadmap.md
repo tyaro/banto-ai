@@ -278,3 +278,10 @@ T11/T12のengineering部分が接続できました。次は40-cluster入力・�
 [固定方法と判断資料](anomaly-v03-consumer-source-runtime-plan.md)を保存しました。最新41sourceと設定等18fileを照合し、改行差2本を保全。直近54試験の証拠を再利用し、unit testを再実行していません。Python起動条件の比較から、次はreaderへ-Sを追加する小さな接続変更を行います。[結果](results/anomaly-multiseed-v0.3-consumer-source-runtime-review-2026-09-25.md)。
 
 正式consumer・役割別source/runtime証拠・全体予算を先に完成させ、その後に運用契約/実行予算を判断する順序です。実freeze、正式gate/holdout、S4/S6、Phase2/3全体は未完了です。
+
+
+### v0.3追記: readerの起動条件を限定（2026-09-25）
+
+保存結果を読む子processに-Sを追加し、PCに追加されたPython packageを起動時に取り込まない条件へ変更しました。架空入力による14接続試験が通過し、以前の条件に戻すと検出できることも確認しました。[結果](results/anomaly-multiseed-v0.3-consumer-reader-no-site-2026-09-25.md)。
+
+次は、解析・監査・読取の役割ごとに、実際のsourceと実行環境を結果へ結び付ける検査を具体化します。正式holdoutや性能判定は開始しておらず、Phase2/3全体は引き続き未完了です。
