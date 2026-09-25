@@ -1,5 +1,7 @@
 # consumer接続の到達範囲と容量・時間の見積り（2026-09-25）
 
+2026-09-26更新：[最新のT01〜T12・5まとまり・予算の未充足](anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)。以下の件数区分と「次の作業」は当時の履歴。通常公開・別readerは実レポートまで完了し、架空文書/sliceも接続済み。予算案は未適用のまま維持する。
+
 後続更新（2026-09-25）：[別process reader接続](anomaly-multiseed-v0.3-consumer-separate-reader-2026-09-25.md)により、T11/T12のengineering部分は接続済み。下表は調査時点の記録で、正式数値audit・受入の残りは維持する。予算案は引き続き未適用。
 
 [契約案](../anomaly-v03-consumer-io-proposal.md)のT01〜T12を、[engineering consumer入口](../anomaly-v03-engineering-consumer.md)までの実装へ対応付けた。**engineering接続済み5群、保存済み検証の再利用3群、計算部品まで1群、受入・外側状態・別reader/auditの接続が残る3群**。この区分は正式評価の合格数でも、Phase2/3全体の残件数でもない。

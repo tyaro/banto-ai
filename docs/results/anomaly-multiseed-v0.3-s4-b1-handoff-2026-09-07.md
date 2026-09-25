@@ -4135,3 +4135,15 @@ pc01候補はclean f8f20bcf4ac7ade2f20e96f37bc1567328d88a48、757tracked files/8
 analysis PID14244、writer PID22020、reader PID21668。両子ともexit0/reaped、観測error0。全体26.528秒、子の監視はanalysis 2.072秒、reader 2.077秒。analysisの依存234fileは保持候補と前後一致、readerの依存232fileは終了後disk/Git照合。全処理harnessのpeak private 69.38MiB、analysis子 54.05MiB、reader子 52.51MiB。保存準備時は空きRAM 10.81GiB、commit余裕 19.30GiB、C/D空き 133.19/345.92GiB。最終値はsave-checks.json。
 
 前工程manifest29435bytes/SHAe25092c42073f9129615bdb8188789a0eb07933d70dc9faa2f97469b7fb71dd3。62code/18data・旧境界/dirty guard/closed/PAUSED不変。新公開marker 97c8bc637328cb173e6c1a678765c7785512fb2ad7b66ed8af15939e819c874e、chain result 1709bytes/SHAea8b5c8b1185d06de8ae93a2e620191e742214be123fc630b7cc73edc8fc0f0c。候補・旧公開を削除せず、今回の解析/公開/reader記録を保持。formal/promotion/S6/trust/full closure=false、正式analysis_consumer=null。次は受入残件表を現在の実装・保存結果に合わせて更新し、正式consumer/本文provenance、独立数値audit、writer実行証拠、完全資源予算の未充足を具体化する。既存720評価は再実行しない。
+
+## 183. 正式受入の残件・実行前後の区別（2026-09-26）
+
+[更新表](anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)。OUT artifacts/acceptance-gap-update-2026-09-26、開始文書56bb9a3698e80c082b698b2a45be4adf94064e31、実装f8f20bcf4ac7ade2f20e96f37bc1567328d88a48は不変。前保存点26548bytes/SHA53a0c1be44cb21114ada147e32d35346948d9664737bde9b9c41054dc362853a、62code/18data、11receipt20,083bytesと祖先保存点を照合。13sourceの静的確認とpc01/Git/作業版一致、保存済みslice草稿9表/1233行/2835行/null4欄を確認した。
+
+5作業群とT01〜T12を更新し、通常保存・別readerは完了扱い。開始前に準備する契約/実装/役割期待値/回帰/予算と、開始後に得る実producer・50,000反復・正式本文・最終数値監査を分離した。新評価・数値再計算・suite起動・source変更・新checkoutなし。
+
+次はI/Oなしのfixture専用5payload wrapper/証拠結合adapter。文書/slice/証拠validatorを再利用し、保持期待pin・役割・段階状態・coverageとの対応を小さい架空例で検査する。本文nullと不足は維持、正式mode拒否、保存結果準備を正式数値解析へ流用しない。既存保存/reader試験の反復や新公開process起動を含めない。完了後に数値解析/audit入口と資源停止へ進む。
+
+仮予算240h/96GiB等は未適用。現在のsystem commit診断は強制停止ではなく、process supervisorのoutput制限はstdout/stderr分。全成果物・最終auditを含む予算と停止処理は正式準備の残り。開始時空きRAM10.85GiB/commit余裕19.36GiB/C133.12GiB/D367.39GiB、最終値はsave-checks.json。リークや他作業の原因は断定しない。
+
+旧候補・実計算c01d1c9・本流6f1285d・closed・dirty文書/CRLF差保全、banto-24 PAUSED。formal/promotion/S6/trust/execution_authenticated/full closure=false。正式採択確認は具体的な契約差分・候補revision・受入記録・全体予算が揃ってから。principal/保護root/UAC/ACL/push/mergeは対象外。

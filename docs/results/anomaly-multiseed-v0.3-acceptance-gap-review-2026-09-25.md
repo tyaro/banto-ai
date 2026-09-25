@@ -1,5 +1,7 @@
 # v0.3 受入証拠とconsumer接続の残件整理
 
+2026-09-26更新：[最新の残件と次の実装](anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)。実レポートの保存・別readerは完了済み。開始前の準備と実行後の証拠を分け、T01〜T12を更新した。以下は2026-09-25時点の履歴として保持する。
+
 2026-09-25 JST。確認対象は作業版 `ddd0165a45f42e9921e849e150d2cba63714b3a6` と保存済み記録。OUTは `artifacts/acceptance-gap-review-2026-09-25`、成功した確認は `verified/` と `supplement-source-map.json`。最終文書revision・各ファイルのhashは同OUTの `savepoint-evidence.json` に保存する。
 
 **既存720評価の計算・独立検算・記述出力は再実行しない。freeze前の作業を5まとまりに整理した。** これは試験数やPhase 2/3全体の残件数ではない。正式実行と最終独立監査は、この5まとまりの後に別途残る。

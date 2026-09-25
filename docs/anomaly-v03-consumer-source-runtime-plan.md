@@ -1,5 +1,7 @@
 # consumerのsource/runtime固定対象と実行前の残件
 
+2026-09-26現在：[残件と次の実装](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)。実装f8f20bcのanalysis準備・公開・readerを実レポートへ適用済み。次は予定5payloadと証拠を結ぶpure adapterを架空入力で実装する。正式実行後の成功証拠を、実行開始の前提へ含めない。以下の静的候補表や「次は」は各時点の履歴として保持する。
+
 2026-09-25接続追記：[実観測reader](anomaly-v03-reader-evidence.md)がsource10本・Python2file・実process identity・15入力を外部期待値へ結合。新規13＋既存回帰27種類がpass。source/runtime全閉包は未完了。次は依存source/stdlib/extension/loaded DLLの採取範囲を広げる。[結果](results/anomaly-multiseed-v0.3-reader-observed-evidence-2026-09-25.md)。
 
 2026-09-25実装追記：[役割別実行証拠validator](anomaly-v03-consumer-evidence.md)を追加。16架空試験pass、外部期待値・前後source/runtime・process・全入出力bytesの対応を検査する。実processの採取・正式受入・closureは未完了。次は通常権限readerの実観測との接続。[結果](results/anomaly-multiseed-v0.3-consumer-execution-evidence-2026-09-25.md)。以下の41source候補表はe9826bd時点の記録。
@@ -116,3 +118,9 @@ pc01候補はclean f8f20bcf4ac7ade2f20e96f37bc1567328d88a48、757tracked files/8
 実装f8f20bcf4ac7ade2f20e96f37bc1567328d88a48のpc01と事前保持analysis候補を再利用し、原本7file/7,896,608bytes→4payload/2,755,533bytesの通常公開と別reader確認に成功した。原本7file/旧公開6fileは不変、新公開は旧公開とbytes一致。[結果](results/anomaly-multiseed-v0.3-saved-report-publication-2026-09-26.md)。今回source変更0、suite再実行0、旧43試験の合格記録をcode pin不変で再利用。analysis依存234fileの事前一致とreader依存232fileの終了後照合を確認した。
 
 engineeringの保存結果接続は実レポートまで進んだ。正式数値consumer/document_draft/独立audit、writer全実行証拠、source/runtime正式受入と全体予算は未完了。次は受入残件表を現在の実装・保存結果に合わせて更新し、正式consumer/本文provenance、独立数値audit、writer実行証拠、完全資源予算の未充足を具体化する。既存720評価は再実行しない。
+
+## 残件の再整理（2026-09-26）
+
+[更新表](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)で工程ごとの開始前/実行後を分離した。analysis準備の234file、readerの232fileは役割限定の記録であり、数値analysis・独立audit・writer全実行の正式証拠ではない。writer PIDと接続sourceのpinだけでwriter全processを認証しない。報告値のschema検査だけで正式50,000反復の実行を認定しない。
+
+正式候補のsource/runtime期待値・起動条件・検査範囲・必要な回帰は開始前に準備し、実processの前後/入力/出力/終了証拠は実行時に採取する。system commit診断は停止制御と別で、現行supervisorは時間/private/stdout・stderr容量を制限する。全成果物の連続容量監視やcommit不足の強制停止は未接続。数値解析/独立auditを含む予算と停止処理を具体化してから正式採択資料を揃える。今回sourceや上限設定を変更していない。

@@ -1,5 +1,7 @@
 # 単一writer方針での解析consumer入出力契約案
 
+2026-09-26現在：[受入残件更新](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)を参照。実レポート4payloadの通常公開・別readerまで完了した。次の実装は§4の予定5payloadと役割別証拠を結ぶ、I/Oなし・架空入力専用のadapter。正式modeを拒否し、本文のnull 4欄と未充足を維持する。以下の日付付き追記・初期実装順は履歴で、契約はdraftのまま。
+
 2026-09-25追記：[実観測reader](anomaly-v03-reader-evidence.md)からT09部品へ接続。元handleと子のPID/生成時刻、前後source/runtime、入出力を照合した。通常権限の部分接続で、full closure・正式full document/契約の採択は未完了。
 
 2026-09-25追記：T09の部品として[実行証拠validator](anomaly-v03-consumer-evidence.md)を追加し16架空試験pass。外部期待値にrole/process/source/runtime/入出力bytesを結ぶ。実観測の採取・正式full document受入へは未接続で、契約draftを維持。

@@ -1,23 +1,29 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-26 JST。**既存dev/smoke記述レポートの解析証拠→通常公開→別readerまで成功。次は正式受入の残件整理。**
+更新: 2026-09-26 JST。**受入残件の更新完了。次は予定5payloadと役割別証拠を結ぶpure adapterを架空入力で実装する。**
 
-- [今回の結果](results/anomaly-multiseed-v0.3-saved-report-publication-2026-09-26.md)、[API](anomaly-v03-analysis-publication.md)、[source/runtime計画](anomaly-v03-consumer-source-runtime-plan.md)、長い引継書§182。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。OUT artifacts/saved-report-publication-2026-09-26。文書保存revision/pinは最上位savepoint-evidence.json。
+- [今回の残件更新](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)、[契約案](anomaly-v03-consumer-io-proposal.md)、長い引継書§183。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。OUT artifacts/acceptance-gap-update-2026-09-26。文書revision/pinは同OUTのsavepoint-evidence.json。
 
-## 今回の成果と次の作業
+## 次の実装単位
 
-既存dev/smokeの保存済み記述レポートに、profile付きanalysis→通常公開→別observed readerを適用して成功。実装f8f20bcf4ac7ade2f20e96f37bc1567328d88a48のpc01と前工程の依存候補を再利用し、source変更・新checkout・新reference起動・試験suite再実行は0。前回43試験の合格記録はcode pin不変を確認して再利用した。
+I/Oを持たないfixture専用wrapper/証拠結合adapterで、execution.json・coverage.json・analysis.json・diagnostics.json・verification.jsonの対応を作る。既存の文書・slice・証拠validatorを再利用し、架空入力/呼出し側保持期待pin/役割証拠/段階状態を結ぶ。role/mode/operation/revision/入出力・coverageを検査し、正式modeと証拠の自己承認を拒否する。本文のnull4欄と不足一覧は維持し、実行していない正式結果を埋めない。
 
-認証した原本7file/7,896,608bytesから4payload/2,755,533bytesを出力。旧published-successの4payloadと2marker、計6fileのbytes/pinが新公開と一致し、原本7fileと旧公開6fileも実行前後で不変。過去の120区間/720評価の記述結果を保存したもので、新評価/数値再計算は0。
+小さな正常例と役割違い・pin違い・coverage不整合・失敗の成功化拒否に絞って試験する。保存/readerの同じ試験は繰り返さず、この単位で新たな観測・評価・公開processや正式50,000反復を起動しない。完了後に仕様/対象試験/保存点を残し、数値解析・独立auditの実行入口と資源停止条件へ進む。
 
-analysis PID14244、writer PID22020、reader PID21668。両子ともexit0/reaped、観測error0。全体26.528秒、子の監視はanalysis 2.072秒、reader 2.077秒。analysisの依存234fileは保持候補と前後一致、readerの依存232fileは終了後disk/Git照合。全処理harnessのpeak private 69.38MiB、analysis子 54.05MiB、reader子 52.51MiB。保存準備時は空きRAM 10.81GiB、commit余裕 19.30GiB、C/D空き 133.19/345.92GiB。最終値はsave-checks.json。
+実行前に残るのは運用契約・consumer入出力・source/runtime受入・公開/監査接続・予算の5作業群。実行後の正式結果/成功receipt/最終数値監査は別段階で、開始条件へ循環して要求しない。正式採択の判断は候補revision・契約差分・受入記録・全体予算が具体化してから。通常権限single writerとOS実値記録は既に許可されている。
 
-前工程manifest29435bytes/SHAe25092c42073f9129615bdb8188789a0eb07933d70dc9faa2f97469b7fb71dd3。公開marker 97c8bc637328cb173e6c1a678765c7785512fb2ad7b66ed8af15939e819c874e。chain result 1709bytes/SHAea8b5c8b1185d06de8ae93a2e620191e742214be123fc630b7cc73edc8fc0f0c。保存先profiled-analysis/、published/、chain/。元の7入力も旧公開も残っているので削除しない。失敗attemptのcleanup/再利用なし。
+## 今回の照合と保全
 
-旧62code/18data・pc01/旧候補・実計算c01d1c9/本流6f1285d/closed・既存dirty文書/CRLF差は保全、banto-24 PAUSED。今回の通常公開はengineering記述結果だけ。formal/promotion/S6/trust/execution_authenticated/full closure=false、document_draft.analysis_consumer=nullを維持。
+前工程保存点26548bytes/SHA53a0c1be44cb21114ada147e32d35346948d9664737bde9b9c41054dc362853a。62code/18data不変、11receipt計20,083bytes・祖先保存点を照合。13sourceを静的確認しpc01/Git/作業版bytes一致。草稿は9表/本文1233行/補助2835行、nullはstatus/provenance/analysis_consumer/bootstrap。旧720評価の元payload再読取・数値再計算・評価・suite起動・source変更0。
 
-**次は受入残件表を現在の実装・保存結果に合わせて更新し、正式consumer/本文provenance、独立数値audit、writer実行証拠、完全資源予算の未充足を具体化する。既存720評価は再実行しない。** 独立数値検算、writer全実行観測、正式source/runtime受入と総予算は未完了。正式gate/holdout/freeze、principal/UAC/ACL、push/mergeを開始しない。
+実装pc01 clean f8f20bcf4ac7ade2f20e96f37bc1567328d88a48。旧候補・実計算c01d1c9・本流6f1285d・closed・既存dirty文書/CRLF差を保全、banto-24 PAUSED。単時点の資源記録からリークを断定しない。system commit診断と強制停止は別、正式推論/最終auditを含む全体予算は未完成。正式gate/holdout/freeze・principal/UAC/ACL・保護root・push/mergeは対象外。
+
+## 直前の実レポート公開接続
+
+[保存済みdev/smoke記述レポートの結果](results/anomaly-multiseed-v0.3-saved-report-publication-2026-09-26.md)、文書56bb9a3698e80c082b698b2a45be4adf94064e31、長い引継書§182。原本7file/7,896,608bytes→4payload/2,755,533bytesのanalysis準備→通常writer→別observed reader成功。原本7file/旧公開6file不変で、新公開は旧公開とbytes一致。全体26.528秒、harness peak private69.38MiB。analysis依存234fileの事前一致、reader232fileの終了後照合。両子exit0/reaped/error0。旧43試験をcode不変で再利用、新評価0。通常保存・別readerの接続は完了扱いとする。
+
+formal/promotion/S6/trust/execution_authenticated/full closure=false、document_draft.analysis_consumer=null。別readerはbytes/構造検査で、独立数値auditではない。旧公開/profiled-analysis/published/chainと候補は保全し、再利用のために削除しない。
 
 ## 直前の公開接続実装と架空試験
 
