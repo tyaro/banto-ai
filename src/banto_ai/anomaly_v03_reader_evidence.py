@@ -162,14 +162,23 @@ def worker_main(argv):
         inputs=_inputs(bundle['inputs']);request=v.strict_json(inputs['reader/request.json']);reader._request(request)
         inputs['reader/invocation.json']=raw;input_pins={n:_pin(b) for n,b in inputs.items()}
         dependency_reply={}
+        profile=None
+        v.require('reader/dependency-profile.json' not in inputs or observe_dependencies,'profile requires dependency observation')
         if observe_dependencies:
             from . import _anomaly_v03_reader_dependencies as dependencies
+            if 'reader/dependency-profile.json' in inputs:
+                profile=dependencies.load_profile(inputs['reader/dependency-profile.json'],input_pins['reader/dependency-profile.json'],
+                    root=ROOT,revision=bundle['source']['revision'])
             dependency_reply['dependencies_before']=dependencies.collect(ROOT)
+            if profile is not None:
+                dependencies.match_profile(profile,dependency_reply['dependencies_before'],runtime_before,phase='before')
         result=reader.verify_saved_publication(request);result['request_pin']=input_pins['reader/request.json']
         output=io.json_bytes(result)
         if observe_dependencies:
             dependency_reply['dependencies_after']=dependencies.collect(ROOT)
         runtime_after=_observed_runtime();source_after=_working_source(bundle['source']['revision'])
+        if profile is not None:
+            dependencies.match_profile(profile,dependency_reply['dependencies_after'],runtime_after,phase='after')
         consumer._same({n:_pin(b) for n,b in _inputs(bundle['inputs']).items()},
             {n:p for n,p in input_pins.items() if n!='reader/invocation.json'},'child inputs changed during read')
         value={'format':evidence.FORMAT,'mode':consumer.MODE,'role':'reader','invocation_id':bundle['invocation_id'],
@@ -187,7 +196,8 @@ def worker_main(argv):
                           'formal_permission':False},sort_keys=True));return 2
 
 
-def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_name, observe_dependencies=False):
+def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_name, observe_dependencies=False,
+                        dependency_profile=None, expected_dependency_profile_pin=None):
     """After the single writer exits, bind a new reader attempt to retained pins.
 
     Only the selected source files must match the specified current Git commit;
@@ -196,6 +206,11 @@ def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
     """
     reader._request(request);evidence._digest(expected_revision,40)
     v.require(type(observe_dependencies) is bool,'dependency observation option')
+    v.require((dependency_profile is None)==(expected_dependency_profile_pin is None),'dependency profile path/pin pair')
+    if dependency_profile is not None:
+        v.require(observe_dependencies and Path(dependency_profile).is_absolute(),'explicit observed dependency profile required')
+        evidence._pin(expected_dependency_profile_pin)
+        expected_dependency_profile_pin=copy.deepcopy(expected_dependency_profile_pin)
     limits=DEPENDENCY_LIMITS if observe_dependencies else reader.LIMITS
     request=copy.deepcopy(request)
     parent=io._local_parent(Path(receipt_parent));v.safe_relative_path(receipt_name)
@@ -203,6 +218,7 @@ def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
     target=io.regular_path(parent/receipt_name,directory=True,missing=True)
     blocked=[Path(request['publication_root']),ROOT/'src',
              *(Path(request[n]).parent for n in ('binding_savepoint','report_savepoint','analysis_input'))]
+    if dependency_profile is not None:blocked.append(Path(dependency_profile))
     v.require(not any(reader._overlap(target,p) for p in blocked),'evidence receipt overlaps inputs/source')
     target.mkdir()
     outer={**evidence.CLOSED,'status':'failed','format':'anomaly-v03-observed-reader-check-v1',
@@ -211,6 +227,16 @@ def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
         source,source_bytes,git=_git_sources(expected_revision)
         _save(target/'source-tool.json',git.tool_record)
         runtime,runtime_bytes=_expected_runtime()
+        profile=None
+        if dependency_profile is not None:
+            from . import _anomaly_v03_reader_dependencies as dependencies
+            profile_raw=_file(Path(dependency_profile),dependencies.PROFILE_MAX)
+            profile=dependencies.load_profile(profile_raw,expected_dependency_profile_pin,root=ROOT,revision=expected_revision)
+            consumer._same(profile['runtime'],runtime,'dependency profile preflight runtime mismatch')
+            dependencies.verify_pair(profile['snapshot'],profile['snapshot'],root=ROOT,revision=expected_revision,
+                git=git,required_sources=(*SOURCE_FILES,'src/banto_ai/_anomaly_v03_reader_dependencies.py'))
+            io._exclusive(target/'dependency-profile.json',profile_raw)
+            outer['dependency_profile_pin']=expected_dependency_profile_pin
         prepared,receipt=consumer.prepare_engineering_result(request['binding_savepoint'],request['report_savepoint'],
             request['analysis_input'],expected_mode=request['mode'],expected_binding_pin=request['expected_binding_pin'],
             expected_report_pin=request['expected_report_pin'])
@@ -218,6 +244,9 @@ def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
         request_raw=io.json_bytes(request);io._exclusive(target/'reader-request.json',request_raw)
         expected_report['request_pin']=_pin(request_raw)
         records={'reader/request.json':{'path':str(target/'reader-request.json'),'pin':_pin(request_raw),'links':1}}
+        if profile is not None:
+            records['reader/dependency-profile.json']={'path':str(target/'dependency-profile.json'),
+                'pin':expected_dependency_profile_pin,'links':1}
         for i,(path,pin) in enumerate(sorted(receipt['authenticated_files'].items())):
             records[f'authenticated/{i:02d}.json']={'path':path,'pin':pin,'links':1}
         publication=Path(request['publication_root'])
@@ -244,6 +273,9 @@ def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
                 {n:p for n,p in expected['inputs'].items() if n!='reader/invocation.json'},'parent input changed')
             evidence._raw(_file(bundle_path,64*1024),bundle_pin,'invocation changed')
             current,current_bytes=_expected_runtime();consumer._same(current,runtime,'parent runtime expectation changed')
+            if profile is not None:
+                evidence._raw(_file(Path(dependency_profile),dependencies.PROFILE_MAX),expected_dependency_profile_pin,
+                    'retained dependency profile changed')
         def started(process):
             observed=creation_observation(process.pid,process._handle)
             launch_observed.update(observed)
@@ -269,6 +301,12 @@ def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
             output=io.json_bytes(reply['reader_report']);evidence._raw(output,expected['outputs']['reader/report.json'],'reader output differs')
             if observe_dependencies:
                 from . import _anomaly_v03_reader_dependencies as dependencies
+                if profile is not None:
+                    for path in (Path(dependency_profile),target/'dependency-profile.json'):
+                        evidence._raw(_file(path,dependencies.PROFILE_MAX),expected_dependency_profile_pin,
+                            'retained dependency profile changed')
+                    for phase in ('before','after'):
+                        dependencies.match_profile(profile,reply['dependencies_'+phase],reply['evidence']['runtime_'+phase],phase=phase)
                 supplement=dependencies.verify_pair(reply['dependencies_before'],reply['dependencies_after'],
                     root=ROOT,revision=expected_revision,git=git,
                     required_sources=(*SOURCE_FILES,'src/banto_ai/_anomaly_v03_reader_dependencies.py'))
@@ -285,6 +323,12 @@ def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
                 runtime_snapshots=runtime_bytes,input_snapshots=input_bytes,output_snapshots={'reader/report.json':output})
             io._exclusive(target/'reader-report.json',output);io._exclusive(target/'evidence.json',raw_evidence)
             _save(target/'binding.json',checked)
+            if profile is not None:
+                profile_binding={**evidence.CLOSED,'status':'retained_candidate_profile_matched','role':'reader',
+                    'mode':consumer.MODE,'source_revision':expected_revision,'profile_pin':expected_dependency_profile_pin,
+                    'reference_result_pin':profile['reference']['result_pin'],'comparison':'exact-before-and-after'}
+                _save(target/'dependency-profile-binding.json',profile_binding)
+                outer['dependency_profile_binding_pin']=_pin(io.json_bytes(profile_binding))
             outer.update(status='verified',reason=None,evidence_pin=_pin(raw_evidence),binding_pin=_pin(io.json_bytes(checked)),
                          selected_source_files=len(SOURCE_FILES),runtime_files=2,authenticated_input_files=len(input_bytes),
                          parent_and_child_creation_matched=True,stdout_pin=monitor['output'])

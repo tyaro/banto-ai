@@ -27,6 +27,41 @@ SCOPE = {'source_closure_complete': False, 'runtime_closure_complete': False,
          'cache_policy': 'existing-candidates-not-proven-loaded',
          'file_policy': 'disk-bytes-not-in-memory-code',
          'native_policy': 'python-system32-or-exact-parent-loaded-external-image'}
+PROFILE_FORMAT = 'anomaly-v03-reader-dependency-profile-v1'
+PROFILE_MAX = 512 * 1024
+PROFILE_BOUNDARY = 'request-decoded-collector-imported-before-publication-read-v1'
+
+
+def load_profile(raw, expected_pin, *, root, revision):
+    """Decode a caller-pinned engineering candidate without opening its paths."""
+    from . import anomaly_v03_consumer_evidence as evidence
+    v.require(type(raw) is bytes and 0 < len(raw) <= PROFILE_MAX, 'dependency profile size')
+    evidence._raw(raw, expected_pin, 'retained dependency profile pin')
+    profile = v.strict_json(raw)
+    evidence._keys(profile, 'format mode role acceptance source_revision root runtime snapshot boundary reference scope',
+                   'dependency profile fields')
+    v.require(profile['format'] == PROFILE_FORMAT and profile['mode'] == 'engineering-dev-smoke'
+              and profile['role'] == 'reader' and profile['acceptance'] == 'candidate-not-accepted',
+              'dependency profile role/mode/acceptance')
+    evidence._digest(revision, 40)
+    v.require(profile['source_revision'] == revision and profile['root'] == str(root), 'dependency profile source/root')
+    v.require(profile['boundary'] == PROFILE_BOUNDARY and profile['scope'] == SCOPE, 'dependency profile scope/boundary')
+    evidence._runtime(profile['runtime'])
+    evidence._keys(profile['reference'], 'result_pin evidence_pin dependency_pin stdout_pin', 'dependency profile reference')
+    for pin in profile['reference'].values(): evidence._pin(pin)
+    snapshot = profile['snapshot']
+    evidence._keys(snapshot, 'format modules files native_files scope', 'dependency profile snapshot')
+    v.require(snapshot['format'] == FORMAT and snapshot['scope'] == SCOPE, 'dependency profile snapshot scope')
+    v.require(type(snapshot['files']) is dict and 0 < len(snapshot['files']) <= MAX_FILES, 'dependency profile files')
+    v.require(type(snapshot['modules']) is dict and len(snapshot['modules']) <= 2048, 'dependency profile modules')
+    return profile
+
+
+def match_profile(profile, snapshot, runtime, *, phase):
+    """Exact comparison against pre-retained bytes, including extra imports."""
+    v.require(phase in ('before', 'after'), 'dependency profile comparison phase')
+    v.require(runtime == profile['runtime'], 'dependency profile runtime '+phase+' mismatch')
+    v.require(snapshot == profile['snapshot'], 'dependency profile inventory '+phase+' mismatch')
 
 
 def _stamp(meta):
