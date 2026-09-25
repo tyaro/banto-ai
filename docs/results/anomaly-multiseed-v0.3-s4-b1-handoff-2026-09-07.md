@@ -3949,3 +3949,13 @@ freeze前は(1)単一writer/OS方針の正式運用契約、(2)consumer正式入
 主analysisのsliceはincident recall＋score availability、sidecarは全4系列とする案。主1,233/sidecar2,835行は予定在庫、実行結果ではない。補助sliceは記述値でCI/gate未計算。formal mapping/新運用契約未採択、旧科学schema/registry/正式gate不変。23ファイルpinとAST/schema参照の整合確認を実施、試験実行/観測読取/評価/bootstrapは0。
 
 資源peak22.72MiB、最小空きRAM11.67GiB/commit余裕20.34GiB、C124.98/D293.92GiB。前保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変。manifest.py改行差は保全、banto-24 PAUSED。次はT01〜T04前段のI/Oなし入力契約validatorをfixture/engineering専用で実装。正式mode拒否を維持し、観測reader/推論/writerは接続しない。正式採択・freeze・S4/S6・Phase2/3全体の完了とはしない。
+
+## 164. consumer入力宣言のI/Oなし検査（2026-09-25）
+
+[API](../anomaly-v03-consumer-input.md)、[結果](anomaly-multiseed-v0.3-consumer-input-validator-2026-09-25.md)。実装3fb988292e433311cfd86f00c773b8f17384a750、OUT artifacts/consumer-input-validator-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。fixture1区間6評価/engineering120区間720評価のplanned_inputとvalidate_inputを実装。formal modeを対象展開前で拒否し、canonical metadataの外部digest、固定identity/order/coverage、6種input pinと失敗履歴を検査。
+
+既知入力pinを候補間/attempt間で固定。過去failed記録を残し最新attemptのみcoverageへ加算、成功後/連番欠落/integrity後のretryを拒否。profile inconclusiveをsuccessやsoftware failureへ変換しない。全chunkが完了してもproducer失敗ならdeclared_complete=false、公開済みmarkerは保持。検査成功でもデータ・source/runtime認証やexecution/analysis/formal/promotion/S6許可は全false。
+
+22新規試験pass、failure/error/skip0、0.268秒。架空metadataと登録720枠だけで、file/process/bootstrapを呼ばない検査も実施。実payload/観測読取・評価・再計算0。peak29.58MiB、最小空きRAM12.93GiB/commit余裕20.23GiB、C124.32/D294.53GiB。前保存点/23参照ファイル・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変、banto-24 PAUSED。
+
+次は完了記録から入力宣言への変換adapterをdecoded metadataだけで実装し、identity/最終attempt/失敗履歴/6種pinを外部anchorへ結合。観測reader・推論・writer・正式modeは接続しない。T01〜T04前段のみで、raw/path/marker認証や正式運用採択、S4/S6、Phase2/3全体は未完了。

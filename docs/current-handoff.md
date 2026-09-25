@@ -1,21 +1,23 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-25 JST。**単一writer方針でconsumerの入力・検証・保存・独立auditを具体案にした。次はI/Oなし入力契約validator。**
+更新: 2026-09-25 JST。**consumer入力宣言のI/Oなしvalidatorを実装、22試験すべて通過。次は完了記録からの変換adapter。**
 
-- [契約案](anomaly-v03-consumer-io-proposal.md)、[確認記録](results/anomaly-multiseed-v0.3-consumer-io-contract-2026-09-25.md)。長い引継書§163。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。起点0b75c1ea89a15e04dbde0963ae2b634648a10201。OUT artifacts/consumer-io-contract-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。
+- [API](anomaly-v03-consumer-input.md)、[結果](results/anomaly-multiseed-v0.3-consumer-input-validator-2026-09-25.md)。長い引継書§164。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装3fb988292e433311cfd86f00c773b8f17384a750。OUT artifacts/consumer-input-validator-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。
 
 ## 今回の成果と次の作業
 
-提案ID anomaly-v03-consumer-io-proposal-v1、draft/実行許可なし。入力7項目、8工程、予定payload、失敗状態、10consumer/22関数とschema必須10欄、接続試験12群T01〜T12を具体化。科学config/schema/registry・旧formal gateは不変。関数/test method/schemaの参照整合を確認しただけで、12群の試験実行ではない。
+anomaly_v03_consumer_input.planned_input(mode)とvalidate_input(value, expected_mode=..., expected_sha256=...)を追加。fixtureは独自IDの1区間6評価、engineering-dev-smokeは登録済み120区間720評価。formal/未知modeは対象展開前に拒否。外部canonical metadata hashを要求し、閉じたkey集合・厳密型・全identity/order/coverageを検査する。
 
-正式slice schemaは一意keyと単一metricのため、主analysis.slicesへincident recall＋score availability、別diagnosticsへ全4系列を保存する案。主slice1,233/sidecar2,835行は予定在庫で実測ではない。補助sliceのCI/有意差探索/gateは追加しない。formal mapping未採択。
+同じdatasetの3候補と再試行間で、既知のobservations/events/quality_mask/split/origins/targetsの6種hashが一致することを要求。過去failed attemptを残し、最新だけでcoverage算出。成功/進行中を越すretry、連番欠落、integrity失敗後のretryを拒否。64attempt上限はmetadataサイズ制限であり再試行許可ではない。
 
-**次はT01〜T04前段のI/Oなし入力契約validatorをfixture/engineering専用で実装する。** 正式modeは明示拒否、identity・全coverage・partial/failed/not_startedとprofile inconclusiveの違いを検査。観測読取り・推論・writerは接続しない。旧720/dev-smoke固定APIを黙って緩めない。小さな架空metadataで新しい境界だけ検証し、既存算術/保存の合格試験を反射的に繰り返さない。
+profile inconclusiveは完了評価として保持しsuccess/qualifiedにしない。全coverage・writer終了宣言・receipt/markerが揃った場合だけdeclared_complete。公開後supervision failedはmarker保持のまま未完了とする。検査成功でもinput_bytes_verified/source_runtime_accepted/trust/execution/analysis/formal/promotion/S6は全false、performance未実施、selected=null。hash一致はpayloadや実行を認証しない。
 
-正式運用方針の候補ID anomaly-v03-single-writer-research-v1は予約案で未採択。正式運用契約の差分・slice対応・runtime/source受入・容量・正式失敗時の再登録条件をレビュー可能にしてから正式化を判断する。単なるwrapperや自己申告accepted=trueで許可しない。実holdout/CI/gate・追加評価・保留principalは起動しない。
+22新規試験pass（failure/error/skip0、0.268秒）。架空metadataと720枠の登録metadataのみ。file open/process/bootstrap禁止下の検査を含む。実観測読取・評価・再計算0。peak29.58MiB、最小空きRAM12.93GiB/commit余裕20.23GiB、C/D124.32/294.53GiB。
 
-主確認peak private22.72MiB、空きRAM最小11.67GiB/commit余裕20.34GiB、C/D空き124.98/293.92GiB。新評価・観測読取り・bootstrap・試験実行0。23参照ファイルのpinと前保存点を保持、banto-24 PAUSED。
+**次は既存完了記録から入力宣言へ変換するadapterをdecoded metadataだけで実装する。** identity・最終attempt・失敗履歴・6種pinの対応と外部anchorへの束縛を固定する。観測reader・推論・writerは起動せず、既存720評価を再計算しない。元の固定APIやformal拒否を緩めない。今回はT01〜T04前段の実装であり、T02のraw/path/marker認証等と完全接続は未完了。
+
+[前工程の契約案](anomaly-v03-consumer-io-proposal.md)は引き続きdraft。入力7項目・8工程、10consumer/22関数/schema10欄、接続試験12群。主sliceはincident recall＋availability、sidecar全4系列の案（予定1,233/2,835行）は未採択。正式運用方針の候補ID anomaly-v03-single-writer-research-v1も未採択。旧科学config/schema/registry/正式gate、保留principal、banto-24 PAUSEDを維持。
 
 ## 前工程の受入残件
 
