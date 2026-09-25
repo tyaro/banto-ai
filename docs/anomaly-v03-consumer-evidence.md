@@ -52,3 +52,9 @@ runtime.startupは6起動flag、明示されたsys_path、site_imported=false、
 成功は`status=supplied_consumer_evidence_bound`、scopeはsupplied-bytes-only。外部pin、source descriptor、input/output pinを独立copyとして返す。正式許可・昇格・S6・結果信頼・実行認証・source/runtime閉包はすべてfalse、性能判定はnot_evaluated、selected_candidate=nullを維持する。
 
 既存の正式schemaやdocument_draft.analysis_consumer=nullは変更しない。inspection receiptや通常readerをこの新APIへ自動接続したものでもない。通常権限readerの実際の起動観測と外側で保持した期待値を、このvalidatorへ接続する。最初は既存の小さな架空公開結果で確認し、親の観測値を子の値として流用しない。 完全runtime closure、正式consumer・独立audit・予算採択は別の残件。
+
+## 保存結果準備のanalysis入口との接続（2026-09-26）
+
+[analysis実観測API](anomaly-v03-analysis-evidence.md)がexpected_role=analysisで接続された。既存engineering consumerの7保存file認証・4payload準備を別processへ分離し、親が保持する期待bytesとsource/runtime/process/全入出力を照合する。新規15＋既存32の47試験pass。[結果](results/anomaly-multiseed-v0.3-analysis-observed-evidence-2026-09-26.md)。
+
+この役割は保存済み記述結果の準備だけを観測し、数値再計算・正式文書・独立S6を行わない。source/runtime全閉包、analysis専用事前依存profileは未完了。document_draft.analysis_consumer=nullとCLOSEDを維持する。

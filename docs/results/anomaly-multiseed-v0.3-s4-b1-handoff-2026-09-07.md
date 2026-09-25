@@ -4089,3 +4089,11 @@ OS26200.9457/Python3.14.0。旧境界・dirty guard不変、banto-24 PAUSED。�
 新規16pass、failure/error/skip0、53.083秒。初回41passのうち不変26種類を再利用、unique42。sample reference40904→reader29764、両者exit0/reaped、reader1.846秒。profile110646bytes/SHAa682eb680def9a61227696de7f76c6d6259d99705403cb150e41933ebb66a0ab。最終試験harnessのpeak private 52.46MiB、保存例readerのpeak 36.85MiB。資料作成前は空きRAM 10.35GiB / commit余裕 18.89GiB、C/D空き 126.00/326.57GiB。
 
 rp01はclean0b2da336d90bcc60e97798d83d17d9f6f7421a34、746file/8,461,710bytes、Git/raw一致。rd01保全、元CRLF差/dirty guard/旧境界/closed/PAUSED維持。架空入力原本cleanup済み。次：解析側（engineering consumer）の実行観測と、別に保持した役割別期待値の接続を、小さな架空入力で具体化する。reader候補をanalysis/auditへ使い回さない。 候補の正式採択、準備processの観測、正式consumer/最終audit/全体予算も残る。正式gate/holdout/principal/UAC/ACLは開始しない。
+
+## 179. analysis役割の保存結果準備を実process証拠へ接続（2026-09-26）
+
+[API](../anomaly-v03-analysis-evidence.md)、[結果](anomaly-multiseed-v0.3-analysis-observed-evidence-2026-09-26.md)。実装2db441e44a65857f288f800a104ba436339358b9、OUT artifacts/analysis-observed-evidence-2026-09-25（開始日維持）、成功observed-example/。新module/test2本のみ。operation=prepare-saved-descriptive-resultに限定、7保存file/6622bytes、request/invocation込9入力/11272bytes→4payload/5237bytes。selected source12/Python2fileを親保持期待へ結ぶ。補助source29/全233file/178modules/48images、前後差分0。
+
+全47pass（新15＋既存consumer16＋pure evidence16）、failure/error/skip0、36.157秒。sample child17940 exit0/reaped、監視1.546秒。試験harnessのpeak private 50.52MiB、保存例childのpeak 36.24MiB。資料作成前の空きRAM 10.59GiB、commit余裕 19.29GiB、C/D空き 125.95/326.57GiB。 ao01はclean2db441e44a65857f288f800a104ba436339358b9、750file/8,498,798bytes Git/raw一致。旧56code/18data・rp01/元CRLF差/dirty guard/closed/PAUSED維持。原本fixtureはcleanup済み、payloadと証拠は保持。
+
+次：analysis専用の依存候補profileを別に準備し、後続の小さな保存結果準備が、起動前から保持した全依存一覧に一致するかを検査する。reader profileは使い回さない。 今回は保存済み記述結果の認証・準備のみで、数値再計算/完了publication/正式文書はなし。analysis_consumer=null、CLOSED維持。正式gate/holdout/freeze/principal/UAC/ACLは開始しない。

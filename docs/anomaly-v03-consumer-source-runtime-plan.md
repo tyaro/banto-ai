@@ -76,3 +76,9 @@ producerの過去実行revision `c01d1c978f78bab51391392d56cdcb7aab5afaab`と新
 実装0b2da336d90bcc60e97798d83d17d9f6f7421a34、[API](anomaly-v03-reader-profile.md)、[結果](results/anomaly-multiseed-v0.3-reader-dependency-profile-2026-09-25.md)。prepare_profileで別の成功した依存観測を候補化し、後続readerが起動前から保持するpin/全一覧へ一致するかを検査。採取境界・role/revision/root/runtimeも固定。新規16pass＋同工程の不変な既存26種類を再利用。232fileを別PIDで照合した。
 
 候補は観測由来で、正式承認された完全依存定義ではない。OS更新を記録して新候補を作ることは許容し、旧候補を自動更新しない。解析側（engineering consumer）の実行観測と、別に保持した役割別期待値の接続を、小さな架空入力で具体化する。reader候補をanalysis/auditへ使い回さない。 準備processの観測・正式source/runtime受入・全体予算は残る。
+
+## 保存結果準備のanalysis実観測を接続（2026-09-26）
+
+実装2db441e44a65857f288f800a104ba436339358b9、[API](anomaly-v03-analysis-evidence.md)、[結果](results/anomaly-multiseed-v0.3-analysis-observed-evidence-2026-09-26.md)。既存consumerの7入力認証・4payload準備をanalysis専用の実processへ分離。selected source12/Python2file・元handle・前後入出力を外部期待へ結び、source29/全233fileの補助観測をdisk/Gitと比較した。新規15＋既存32の47試験pass。
+
+数値再計算や公開完了ではない。依存の補助一覧は終了後の観測照合で、事前固定したanalysis依存集合ではない。analysis専用の依存候補profileを別に準備し、後続の小さな保存結果準備が、起動前から保持した全依存一覧に一致するかを検査する。reader profileは使い回さない。 正式consumer・文書provenance・公開/独立auditと全体予算は残る。
