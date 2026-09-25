@@ -110,3 +110,9 @@ candidate-not-acceptedであり、正式source/runtime固定やmemory codeの証
 pc01候補はclean f8f20bcf4ac7ade2f20e96f37bc1567328d88a48、757tracked files/8,567,147bytesのGit/raw一致。旧60code/18data pinとap01/旧候補、実計算checkout/本流/closed、既知CRLF差/既存dirty文書は不変、banto-24 PAUSED。新評価/数値再計算/登録データ読取/実bootstrap/正式gate/holdout/freeze/principal/UAC/ACL/push/mergeなし。
 
 公開成功は架空engineering記述結果の通常公開で、正式文書や独立数値auditではない。formal/promotion/S6/trust/execution_authenticated/full closure=false、document_draft.analysis_consumer=nullを維持。接続moduleのGit/raw一致は確認したが、writer全processの実行証拠や全依存固定を完了したとは扱わない。次は、既存dev/smokeの保存済み記述レポートへこの一連の処理を適用し、外部anchor・解析証拠・公開marker・別reader結果を保存する。720評価は再実行せず、数値の正式受入やholdoutへ範囲を広げない。 正式consumer/文書provenance/独立数値audit/完全資源予算は残る。
+
+## 既存dev/smoke記述結果への適用（2026-09-26）
+
+実装f8f20bcf4ac7ade2f20e96f37bc1567328d88a48のpc01と事前保持analysis候補を再利用し、原本7file/7,896,608bytes→4payload/2,755,533bytesの通常公開と別reader確認に成功した。原本7file/旧公開6fileは不変、新公開は旧公開とbytes一致。[結果](results/anomaly-multiseed-v0.3-saved-report-publication-2026-09-26.md)。今回source変更0、suite再実行0、旧43試験の合格記録をcode pin不変で再利用。analysis依存234fileの事前一致とreader依存232fileの終了後照合を確認した。
+
+engineeringの保存結果接続は実レポートまで進んだ。正式数値consumer/document_draft/独立audit、writer全実行証拠、source/runtime正式受入と全体予算は未完了。次は受入残件表を現在の実装・保存結果に合わせて更新し、正式consumer/本文provenance、独立数値audit、writer実行証拠、完全資源予算の未充足を具体化する。既存720評価は再実行しない。

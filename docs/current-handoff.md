@@ -1,27 +1,27 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-26 JST。**profile付きanalysis→通常公開→別observed readerを接続。全43試験pass。次は既存dev/smoke記述レポートへの適用。**
+更新: 2026-09-26 JST。**既存dev/smoke記述レポートの解析証拠→通常公開→別readerまで成功。次は正式受入の残件整理。**
 
-- [API](anomaly-v03-analysis-publication.md)、[結果](results/anomaly-multiseed-v0.3-analysis-publication-chain-2026-09-26.md)、長い引継書§181。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。文書保存revisionとpinはOUT最上位savepoint-evidence.json。
+- [今回の結果](results/anomaly-multiseed-v0.3-saved-report-publication-2026-09-26.md)、[API](anomaly-v03-analysis-publication.md)、[source/runtime計画](anomaly-v03-consumer-source-runtime-plan.md)、長い引継書§182。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。OUT artifacts/saved-report-publication-2026-09-26。文書保存revision/pinは最上位savepoint-evidence.json。
 
 ## 今回の成果と次の作業
 
-実装f8f20bcf4ac7ade2f20e96f37bc1567328d88a48、OUT artifacts/analysis-publication-chain-2026-09-26。新module/test2本のみ追加し、既存analysis/profile/reader/collector/consumer/LocalPublicationを変更しない。外部result pinで選択したprofile付きanalysisの成功記録・4payloadを再認証し、保存原本との意味・bytes一致を確認して既存single-writer公開へ渡す。writerを閉じた後だけ、別のobserved readerを起動する。
+既存dev/smokeの保存済み記述レポートに、profile付きanalysis→通常公開→別observed readerを適用して成功。実装f8f20bcf4ac7ade2f20e96f37bc1567328d88a48のpc01と前工程の依存候補を再利用し、source変更・新checkout・新reference起動・試験suite再実行は0。前回43試験の合格記録はcode pin不変を確認して再利用した。
 
-公開物は従来どおり4payload。別directoryのpublication-binding.jsonが解析result/evidence/profile/binding pin、payload pin、公開root/marker、revisionと接続module pinを結ぶ。そのpinとreader result/evidence pinを最終chain resultへ保存し、呼出し側がresult_pinを保持する。公開marker単体は解析証拠の結合を証明しない。
+認証した原本7file/7,896,608bytesから4payload/2,755,533bytesを出力。旧published-successの4payloadと2marker、計6fileのbytes/pinが新公開と一致し、原本7fileと旧公開6fileも実行前後で不変。過去の120区間/720評価の記述結果を保存したもので、新評価/数値再計算は0。
 
-全43試験pass（新14＋既存consumer16＋observed reader13）、failure/error/skip0、75.509秒。誤anchor・payload/evidence改変・reader role・未profile化・入力/出力重複・部分書き込み・writer応答喪失・reader失敗・結合記録改変・未終了ownerの保持を検査。正常時は二度目の公開を拒否し、元入力/公開物を保持する。
+analysis PID14244、writer PID22020、reader PID21668。両子ともexit0/reaped、観測error0。全体26.528秒、子の監視はanalysis 2.072秒、reader 2.077秒。analysisの依存234fileは保持候補と前後一致、readerの依存232fileは終了後disk/Git照合。全処理harnessのpeak private 69.38MiB、analysis子 54.05MiB、reader子 52.51MiB。保存準備時は空きRAM 10.81GiB、commit余裕 19.30GiB、C/D空き 133.19/345.92GiB。最終値はsave-checks.json。
 
-保存例reference PID11136→profile付きanalysis PID10040→通常writer PID39840→reader PID16652。全ての子はexit0/reaped。analysisはsource13/Python2file/10入力と依存234fileの事前候補一致、readerはsource10/Python2file/15入力と依存232fileの終了後照合。readerへanalysis候補は流用しない。4payload/5237bytes、marker SHA3837efdce90f6c7070ad0da8b1befa4c306ced1d6afcdebe2d976793e6fa997b。reader監視2.409秒。公開物/両analysis証拠/reader証拠/chain記録を保存し、架空原本だけtemp cleanup済み。
+前工程manifest29435bytes/SHAe25092c42073f9129615bdb8188789a0eb07933d70dc9faa2f97469b7fb71dd3。公開marker 97c8bc637328cb173e6c1a678765c7785512fb2ad7b66ed8af15939e819c874e。chain result 1709bytes/SHAea8b5c8b1185d06de8ae93a2e620191e742214be123fc630b7cc73edc8fc0f0c。保存先profiled-analysis/、published/、chain/。元の7入力も旧公開も残っているので削除しない。失敗attemptのcleanup/再利用なし。
 
-試験harness peak private 53.32MiB、保存例analysis child 37.66MiB、reader child 36.26MiB。資料作成前の空きRAM 10.13GiB、commit余裕 18.56GiB、C/D空き 133.21/345.91GiB。最終値はsave-checks.json。
+旧62code/18data・pc01/旧候補・実計算c01d1c9/本流6f1285d/closed・既存dirty文書/CRLF差は保全、banto-24 PAUSED。今回の通常公開はengineering記述結果だけ。formal/promotion/S6/trust/execution_authenticated/full closure=false、document_draft.analysis_consumer=nullを維持。
 
-pc01候補はclean f8f20bcf4ac7ade2f20e96f37bc1567328d88a48、757tracked files/8,567,147bytesのGit/raw一致。旧60code/18data pinとap01/旧候補、実計算checkout/本流/closed、既知CRLF差/既存dirty文書は不変、banto-24 PAUSED。新評価/数値再計算/登録データ読取/実bootstrap/正式gate/holdout/freeze/principal/UAC/ACL/push/mergeなし。
+**次は受入残件表を現在の実装・保存結果に合わせて更新し、正式consumer/本文provenance、独立数値audit、writer実行証拠、完全資源予算の未充足を具体化する。既存720評価は再実行しない。** 独立数値検算、writer全実行観測、正式source/runtime受入と総予算は未完了。正式gate/holdout/freeze、principal/UAC/ACL、push/mergeを開始しない。
 
-公開成功は架空engineering記述結果の通常公開で、正式文書や独立数値auditではない。formal/promotion/S6/trust/execution_authenticated/full closure=false、document_draft.analysis_consumer=nullを維持。接続moduleのGit/raw一致は確認したが、writer全processの実行証拠や全依存固定を完了したとは扱わない。次は、既存dev/smokeの保存済み記述レポートへこの一連の処理を適用し、外部anchor・解析証拠・公開marker・別reader結果を保存する。720評価は再実行せず、数値の正式受入やholdoutへ範囲を広げない。 正式consumer/文書provenance/独立数値audit/完全資源予算は残る。
+## 直前の公開接続実装と架空試験
 
-前工程manifest25374bytes/SHAd68ceaeefcea0c669456052023346875d9f449a207663157404234a45541abcc。旧60code/18data不変、新module/test2本。出力published-example/、chain-example/、profiled-example/、reference-example/とanalysis-candidate.jsonを保持。失敗時に出力を掃除・再利用しない。
+実装f8f20bcf4ac7ade2f20e96f37bc1567328d88a48、文書f93396977642ed09c32522e516969f95dc9e4b53。OUT analysis-publication-chain-2026-09-26。新14＋既存29の43pass。外部analysis result pinから4payloadを通常公開し、writer終了後のobserved readerへ接続。公開と解析を別のpublication-bindingで結ぶ。部分書込み/応答喪失はunconfirmed、公開後reader失敗でも公開物を保全し、未終了ownerも保持する。pc01と前工程profileを今回再利用した。
 
 ## 直前のanalysis事前依存候補
 

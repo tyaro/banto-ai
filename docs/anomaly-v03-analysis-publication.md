@@ -46,3 +46,7 @@ readerは従来のsource10/Python2file/15入力の結合と補助依存採取を
 親のpreflight失敗は例外で返し、出力先を作らない。開始後の失敗は記録を残すが、結果記録自体のIO失敗は例外となる。再開や上書きはしない。各工程は呼出し側が直列に実行し、敵対的な同時writer/別principalの保護は対象外。
 
 子の上限は各30秒/private512MiB/観測stdout+stderr1MiB。4payload合計8MiB以下、候補512KiB、固定証拠には各64KiBまたは1MiBの読取上限を適用する。親の全工程時間・保存directory全体を含む正式総予算は未確定。次は、既存dev/smokeの保存済み記述レポートへこの一連の処理を適用し、外部anchor・解析証拠・公開marker・別reader結果を保存する。720評価は再実行せず、数値の正式受入やholdoutへ範囲を広げない。
+
+## 保存済みレポートへの適用（2026-09-26）
+
+実装を変更せず、既存dev/smokeの原本7file/7,896,608bytesへ適用した。4payload/2,755,533bytesとmarkerが旧公開に完全一致し、原本・旧公開は不変。解析子/reader子は正常終了し、約27秒で完了。前回43試験のsource pin不変を確認して再利用し、試験suiteや720評価を再実行していない。[保存結果](results/anomaly-multiseed-v0.3-saved-report-publication-2026-09-26.md)。正式数値受入・独立auditは含まない。

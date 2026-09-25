@@ -325,3 +325,7 @@ T11/T12のengineering部分が接続できました。次は40-cluster入力・�
 ## 2026-09-26: 保存結果の解析証拠・公開・別readerを接続
 
 profile付きanalysisの照合済み4payloadを既存single-writerで通常公開し、writer終了後の別observed readerまでを接続した。解析証拠と公開marker/reader結果を外部保持pinで結ぶ。小さな架空入力で43試験pass。[結果](results/anomaly-multiseed-v0.3-analysis-publication-chain-2026-09-26.md)。正式解析/数値audit/Phase2・3全体の完了ではない。次は、既存dev/smokeの保存済み記述レポートへこの一連の処理を適用し、外部anchor・解析証拠・公開marker・別reader結果を保存する。720評価は再実行せず、数値の正式受入やholdoutへ範囲を広げない。
+
+## 2026-09-26: 既存評価レポートの解析証拠・公開・別reader接続を確認
+
+過去の120区間/720評価に対応するdev/smoke記述レポートで、解析役割の準備証拠→通常公開→別process確認が成功。4payload/約2.76MBは旧公開と完全一致し、原本を維持した。新評価・数値再計算0、既存43試験をcode不変で再利用。[結果](results/anomaly-multiseed-v0.3-saved-report-publication-2026-09-26.md)。Phase2/3全体や正式解析・独立S6の完了とはしない。次は受入残件表を現在の実装・保存結果に合わせて更新し、正式consumer/本文provenance、独立数値audit、writer実行証拠、完全資源予算の未充足を具体化する。既存720評価は再実行しない。
