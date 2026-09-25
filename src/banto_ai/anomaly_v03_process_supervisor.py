@@ -57,12 +57,15 @@ def _file_pin(path, maximum):
     return {"bytes": size, "sha256": digest.hexdigest()}
 
 
-def supervise(argv, cwd, control_root, limits, *, stdout_name="report.json", runtime_probe=None, boundary=lambda: None):
+def supervise(argv, cwd, control_root, limits, *, stdout_name="report.json", runtime_probe=None, boundary=lambda: None,
+              on_started=None):
     """Return observations after reaping the owned process; caller saves the report.
 
     control_root is newly claimed and every output is exclusive. The caller owns
     command/source authorization and budget selection. Only this process is
-    supervised; descendants require a separate ownership contract.
+    supervised; descendants require a separate ownership contract. An optional
+    on_started callback may observe the original owned handle before polling.
+    Its failure follows the same stop/reap path; it must not transfer ownership.
     """
     _limits(limits)
     rt.require(type(argv) is list and argv and all(type(x) is str and x for x in argv), "process argv")
@@ -109,6 +112,8 @@ def supervise(argv, cwd, control_root, limits, *, stdout_name="report.json", run
             with stdout_path.open("xb") as stdout, stderr_path.open("xb") as stderr:
                 process = subprocess.Popen(argv, cwd=cwd, stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr,
                     creationflags=subprocess.CREATE_NO_WINDOW)
+                if on_started is not None:
+                    on_started(process)
                 while process.poll() is None:
                     observe_memory()
                     reason = budget()
