@@ -1,29 +1,27 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-26 JST。**analysis役割の保存済み記述結果準備を別processの実行証拠へ接続。新規15＋既存32の全47試験pass。次はanalysis専用の事前依存候補。**
+更新: 2026-09-26 JST。**analysis専用の事前依存候補を実装、全43試験pass。次は準備結果からsingle-writer公開・別readerへの接続。**
 
-- [API](anomaly-v03-analysis-evidence.md)、[結果](results/anomaly-multiseed-v0.3-analysis-observed-evidence-2026-09-26.md)、[計画](anomaly-v03-consumer-source-runtime-plan.md)、長い引継書§179。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装2db441e44a65857f288f800a104ba436339358b9。OUT artifacts/analysis-observed-evidence-2026-09-25（開始日維持）、成功observed-example/。文書保存revision/pinは最上位savepoint-evidence.json。
+- [API](anomaly-v03-analysis-evidence.md)、[結果](results/anomaly-multiseed-v0.3-analysis-dependency-profile-2026-09-26.md)、[計画](anomaly-v03-consumer-source-runtime-plan.md)、長い引継書§180。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。文書保存revision/pinはOUT最上位savepoint-evidence.json。
 
 ## 今回の成果と次の作業
 
-anomaly_v03_analysis_evidence.prepare_with_evidenceを追加。role=analysis、operation=prepare-saved-descriptive-resultに固定。既存engineering consumerの7保存file認証・4payload準備をowned childへ分離し、親が外部anchorから保持した期待bytesに照合する。reader/audit役割・reader profile・別operationをIO前に拒否。新しい確認directoryだけに書き、元入力/sourceとの重複と既存attemptを拒否。
+実装140e91de93e2cc43c45fab9efb9a7cbc6ece43c7、OUT artifacts/analysis-dependency-profile-2026-09-26。analysis専用のprepare_profileを追加し、別の成功した未profile化referenceと外部result pinから新規候補を保存する。format/role/operation/採取境界を固定し、reader候補の流用を拒否する。後続analysisは親が起動前から保持した候補のraw bytes/pinと依存集合へ前後一致を要求する。
 
-**analysisと呼ぶ範囲は保存済み記述結果の認証・準備だけ。数値再計算/正式解析/公開完了とは扱わない。** 正式document_draft.analysis_consumer=nullを維持。payloadは確認用にstageされる4fileで、LocalPublication markerを発行しない。numerical_analysis_performed=false、published=false。
+全43試験pass（新規20＋既存analysis15＋reader候補の純粋検査8）、failure/error/skip0、145.715秒。誤pin、file hash改変、module欠落、子の再封印、保存copy差し替え、reference payload改変、候補の自動更新を拒否。source13/Python2file、候補を含む10入力を証拠へ結ぶ。依存source30/全234file/179modules/48images、47,606,116bytesが前後一致した。
 
-親はsource12/Python2file、runtime・起動条件、元Popen handleのPID/生成時刻、7保存入力＋request/invocation=9入力、期待4出力を保持。子は-I -S -B、request解読後の準備/保存前後を観測。親は終了確認後に全payloadの実bytesと保持期待を比較し、analysis専用roleで共通validatorへ結合。余分なfileや再封印、保存expected/token/runtime差を拒否。UnreapedWorkerは記録保存失敗でもownerを失わず、未終了出力を読まない。
+保存例reference PID24184→後続PID8184は別process、双方exit0/reaped。後続監視2.123秒。候補111843bytes/SHA6502078885a3f42c7a356f0057a23f45ad24c384719380980cc4c4b0302b78ab。4payload/5237bytesはreferenceと後続で一致。原本の架空入力はcleanup済み、両実行のpayload/期待値/観測/監視と候補を保持する。試験harnessのpeak private 52.97MiB、保存例childのpeak 37.61MiB。資料作成前の空きRAM 9.77GiB、commit余裕 17.74GiB、C/D空き 125.89/346.17GiB。最終値はsave-checks.json。
 
-補助依存はsource29を含む233file/178modules/48images、47,594,659bytes。低水準collectorはreaderと共有するが、役割・command・request・期待出力はanalysis専用。現在の全依存一覧は終了後にdisk/Gitと照合する方式で、事前profileではない。前後差分0。
+ap01候補はclean 140e91de93e2cc43c45fab9efb9a7cbc6ece43c7、754tracked files/8,535,094bytesのGit/raw一致を検査。旧ao01/rp01/rd01、実計算checkout/本流/closed、元70b0の既知CRLF差と既存dirty文書を保全。banto-24 PAUSED。数値再計算・新評価・登録データ読取・実bootstrap・正式gate/holdout/freeze・principal/UAC/ACL・push/mergeなし。
 
-全47pass（新API15＋既存consumer16＋pure evidence16を今回実行）、failure/error/skip0、36.157秒。保存例は7原本/6622bytes（request/invocation込9入力/11272bytes）→4payload/5237bytes。child17940 exit0/reaped、監視1.546秒、stdout240554bytes。fixture原本はtemp cleanup済み、payload・期待値・観測・monitorは保存。
+candidate-not-acceptedであり、正式source/runtime固定やmemory codeの証明ではない。analysisの対象は保存済み記述結果の認証・準備だけ。numerical_analysis_performed/published/formal/promotion/S6/trust/execution_authenticated/full closure=false、document_draft.analysis_consumer=nullを維持。次は、照合済みの4payloadを既存のsingle-writer公開処理へ接続し、writer終了後の別readerまでを小さな架空入力で通す。公開時に解析証拠と保持pinを結合し、数値再計算や正式採択へ範囲を広げない。 正式consumer/文書provenance/独立数値audit/完全資源予算は残る。
 
-試験harnessのpeak private 50.52MiB、保存例childのpeak 36.24MiB。資料作成前の空きRAM 10.59GiB、commit余裕 19.29GiB、C/D空き 125.95/326.57GiB。 最終値はsave-checks.json。子30秒/512MiB/監視output1MiB、payload各4/1/2/1MiB・合計8MiB、入力1file16MiB/合計32MiB。payloadはchild/parentの上限検査で、supervisorの全directory容量監視ではない。親Git/preflight含む正式総予算は未確定。
+旧58code中のanalysis実装/test2本だけ更新、新API/test2本追加。その他56code/18data pin一致。前工程manifest21155bytes/SHA5a539a6d5c9f1479fd357d7867a7f61c46d0c0fdc9d761f0136cfe22bcc57f5b。最終資源値はsave-checks.json。
 
-ao01候補 C:/Users/TKent/.codex/worktrees/ao01/banto-ai はclean2db441e44a65857f288f800a104ba436339358b9、750tracked files/8,498,798bytesのGit/raw一致を検査。前工程rp01保全。元70b0のgenerator.py/manifest.pyのCRLF差と既存dirty文書は変更しない。
+## 直前のanalysis実観測
 
-**次：analysis専用の依存候補profileを別に準備し、後続の小さな保存結果準備が、起動前から保持した全依存一覧に一致するかを検査する。reader profileは使い回さない。** reader候補と同様、別に完了した成功referenceと外部result pinを起点とし、analysis専用format/role/operation/採取境界で作成する。数値処理・正式consumerを未検証のまま起動しない。公開/最終独立audit、文書provenance、完全資源予算も残る。
-
-前工程manifest29258bytes/SHA78d270d88822defba784693b22b1247a372b336dae319d65d4850724b68b849e。旧56code/18dataは不変、新API/test2本のみ追加。旧境界/dirty guard/closed/PAUSED維持。formal/promotion/S6/trust/execution_authenticated/full closure=false。新評価/登録データ/実bootstrap0。正式gate/holdout/正式freeze・保留principal/UAC/ACL・push/mergeなし。
+実装2db441e44a65857f288f800a104ba436339358b9、文書edd34cdf00d98b72527232b380ffd1ee4f0f24a7。OUT analysis-observed-evidence-2026-09-25、observed-example/。新15＋既存32の47pass。7保存入力から4payloadの準備をowned childへ分離。source12/Python2file/9入力を親保持期待へ結合。補助source29/全233fileは終了後照合。今回の候補対応がこの次工程。ao01の元候補は保全。
 
 ## 直前のreader事前依存候補
 

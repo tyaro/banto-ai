@@ -317,3 +317,7 @@ T11/T12のengineering部分が接続できました。次は40-cluster入力・�
 保存済みの記述結果を認証して4出力を準備する工程を、解析専用の別processで検証できるようにしました。新規15＋既存32の47試験が通過し、入力・出力・実行環境・processの対応を確認しました。[結果](results/anomaly-multiseed-v0.3-analysis-observed-evidence-2026-09-26.md)。
 
 数値の再計算や正式な解析完了ではなく、保存結果準備の実行記録です。次は解析用の依存候補を事前保持する照合へ進みます。正式consumer/最終audit、Phase2/3全体は未完了です。
+
+## 2026-09-26: analysis用依存候補を別に保持して照合
+
+保存済み記述結果を準備するanalysis役割に、別reference由来の候補を実行前に保持する仕組みを追加した。後続の別processで依存234fileの前後一致を確認し、改変・欠落・役割違い等を含む43試験pass。[検証結果](results/anomaly-multiseed-v0.3-analysis-dependency-profile-2026-09-26.md)。数値評価の追加やPhase2/3全体の完了ではない。次は、照合済みの4payloadを既存のsingle-writer公開処理へ接続し、writer終了後の別readerまでを小さな架空入力で通す。公開時に解析証拠と保持pinを結合し、数値再計算や正式採択へ範囲を広げない。

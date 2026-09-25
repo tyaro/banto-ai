@@ -58,3 +58,7 @@ runtime.startupは6起動flag、明示されたsys_path、site_imported=false、
 [analysis実観測API](anomaly-v03-analysis-evidence.md)がexpected_role=analysisで接続された。既存engineering consumerの7保存file認証・4payload準備を別processへ分離し、親が保持する期待bytesとsource/runtime/process/全入出力を照合する。新規15＋既存32の47試験pass。[結果](results/anomaly-multiseed-v0.3-analysis-observed-evidence-2026-09-26.md)。
 
 この役割は保存済み記述結果の準備だけを観測し、数値再計算・正式文書・独立S6を行わない。source/runtime全閉包、analysis専用事前依存profileは未完了。document_draft.analysis_consumer=nullとCLOSEDを維持する。
+
+## analysis依存候補の事前保持（2026-09-26）
+
+[analysis API](anomaly-v03-analysis-evidence.md)は、別の未profile化referenceから作ったanalysis専用候補を後続実行前に保持できる。source13/Python2fileと候補込み10入力を結合し、依存234fileの前後一致を別processで確認。全43試験pass。[結果](results/anomaly-multiseed-v0.3-analysis-dependency-profile-2026-09-26.md)。前節のanalysis事前profile未完了はこのengineering範囲で解消した。正式consumer/全閉包/数値auditの受入は未完了。document_draft.analysis_consumer=nullとCLOSEDを維持する。

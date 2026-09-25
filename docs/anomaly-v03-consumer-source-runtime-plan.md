@@ -82,3 +82,15 @@ producerの過去実行revision `c01d1c978f78bab51391392d56cdcb7aab5afaab`と新
 実装2db441e44a65857f288f800a104ba436339358b9、[API](anomaly-v03-analysis-evidence.md)、[結果](results/anomaly-multiseed-v0.3-analysis-observed-evidence-2026-09-26.md)。既存consumerの7入力認証・4payload準備をanalysis専用の実processへ分離。selected source12/Python2file・元handle・前後入出力を外部期待へ結び、source29/全233fileの補助観測をdisk/Gitと比較した。新規15＋既存32の47試験pass。
 
 数値再計算や公開完了ではない。依存の補助一覧は終了後の観測照合で、事前固定したanalysis依存集合ではない。analysis専用の依存候補profileを別に準備し、後続の小さな保存結果準備が、起動前から保持した全依存一覧に一致するかを検査する。reader profileは使い回さない。 正式consumer・文書provenance・公開/独立auditと全体予算は残る。
+
+## analysis専用の事前保持依存候補（2026-09-26）
+
+[API](anomaly-v03-analysis-evidence.md)、[結果](results/anomaly-multiseed-v0.3-analysis-dependency-profile-2026-09-26.md)。実装140e91de93e2cc43c45fab9efb9a7cbc6ece43c7、OUT artifacts/analysis-dependency-profile-2026-09-26。analysis専用のprepare_profileを追加し、別の成功した未profile化referenceと外部result pinから新規候補を保存する。format/role/operation/採取境界を固定し、reader候補の流用を拒否する。後続analysisは親が起動前から保持した候補のraw bytes/pinと依存集合へ前後一致を要求する。
+
+全43試験pass（新規20＋既存analysis15＋reader候補の純粋検査8）、failure/error/skip0、145.715秒。誤pin、file hash改変、module欠落、子の再封印、保存copy差し替え、reference payload改変、候補の自動更新を拒否。source13/Python2file、候補を含む10入力を証拠へ結ぶ。依存source30/全234file/179modules/48images、47,606,116bytesが前後一致した。
+
+保存例reference PID24184→後続PID8184は別process、双方exit0/reaped。後続監視2.123秒。候補111843bytes/SHA6502078885a3f42c7a356f0057a23f45ad24c384719380980cc4c4b0302b78ab。4payload/5237bytesはreferenceと後続で一致。原本の架空入力はcleanup済み、両実行のpayload/期待値/観測/監視と候補を保持する。試験harnessのpeak private 52.97MiB、保存例childのpeak 37.61MiB。資料作成前の空きRAM 9.77GiB、commit余裕 17.74GiB、C/D空き 125.89/346.17GiB。最終値はsave-checks.json。
+
+ap01候補はclean 140e91de93e2cc43c45fab9efb9a7cbc6ece43c7、754tracked files/8,535,094bytesのGit/raw一致を検査。旧ao01/rp01/rd01、実計算checkout/本流/closed、元70b0の既知CRLF差と既存dirty文書を保全。banto-24 PAUSED。数値再計算・新評価・登録データ読取・実bootstrap・正式gate/holdout/freeze・principal/UAC/ACL・push/mergeなし。
+
+candidate-not-acceptedであり、正式source/runtime固定やmemory codeの証明ではない。analysisの対象は保存済み記述結果の認証・準備だけ。numerical_analysis_performed/published/formal/promotion/S6/trust/execution_authenticated/full closure=false、document_draft.analysis_consumer=nullを維持。次は、照合済みの4payloadを既存のsingle-writer公開処理へ接続し、writer終了後の別readerまでを小さな架空入力で通す。公開時に解析証拠と保持pinを結合し、数値再計算や正式採択へ範囲を広げない。 正式consumer/文書provenance/独立数値audit/完全資源予算は残る。
