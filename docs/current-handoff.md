@@ -1,25 +1,25 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-25 JST。**engineering consumer入口の接続が完了。16試験pass、実保存7ファイルから記述結果を出力・読み戻し済み。次は契約案との対応と残件・容量時間予算の整理。**
+更新: 2026-09-25 JST。**T01〜T12の実装対応・残件・容量時間シナリオを保存。次は通常権限での別process readerと外側状態の接続（T11/T12）。再計算・新試験の実行は今回0。**
 
-- [API/CLI](anomaly-v03-engineering-consumer.md)、[結果](results/anomaly-multiseed-v0.3-engineering-consumer-entry-2026-09-25.md)。長い引継書§168。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装6567a857455847baf225f552abf5ff9df6644c08。OUT artifacts/engineering-consumer-entry-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。
+- [対応表・容量時間](results/anomaly-multiseed-v0.3-consumer-coverage-budget-2026-09-25.md)、[入口API](anomaly-v03-engineering-consumer.md)、長い引継書§169。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。調査対象6af1c024be52c063e82f9a43143f2fc5e228258b、OUT artifacts/consumer-coverage-budget-review-2026-09-25。最終文書revision/pinはsavepoint-evidence.json。source変更なし。
 
 ## 今回の成果と次の作業
 
-anomaly_v03_engineering_consumerのprepare_engineering_result/run_engineering_consumerとCLI mainを追加。外部保持した結合・記述保存点の2pinと明示analysis-inputs.jsonから、固定7file/7,896,608bytesを認証。元レポートの同じanalysis anchor/input pin/campaignを確認し、LocalPublicationで4payloadを新規保存、writer終了後にreaderで全出力を照合した。
+契約案の12群は、engineering接続5（T01/02/03/04/10）、旧証拠再利用3（T05/06/08）、計算部品まで1（T07）、接続残り3（T09/11/12）。正式評価の合格数ではない。20保存file/2,818,781bytes、33 source/契約pin、30 method参照を照合。直近5工程の新規試験計81件は保存済み合格記録の参照で、今回実行0。約0.538秒、peak50.29MiB、最小RAM10.38GiB/commit余裕16.88GiB。
 
-16新規試験pass（failure/error/skip0、0.560秒）。実接続は同一processのCLI mainで約2.055秒。120区間/720評価、18表・234主指標・5,670診断行を保持。最終chunk119 attempt2、過去失敗1件、判定不能46指標を保持。集計入力はhash照合のみで解析・コピーなし。JSONはcanonical化して値は完全一致、MD raw一致、HTML末尾LFだけ追加。観測/score読取、集計/比率/score再計算、追加評価/bootstrap0。
+正式40 seed/480区間960datasets/2880評価への単純外挿は59.91GiB/活動178.17時間（7.42日）。元実績は7800file/16,081,676,236bytes/160,357.174秒で失敗・再照合を含む。別工程のscore/ledger監査約80.41分と生成監査約7.57分も参考値。正式推論/最終独立audit予算は未確定。
 
-成功保存published-successのmarker hash97c8bc637328cb173e6c1a678765c7785512fb2ad7b66ed8af15939e819c874e、receipt11507bytes/SHAe2ac5bb2b36d5121062dd8bdc790556cd767cd22a7168ec0579d5aab6570cf3a。閲覧はpayload/report.md/html。初回tuple比較の単体試験失敗と、その後のHTML末尾LF欠落による未完了publishedをtest-attempt-1/2とともに保全。成功した最終出力と区別する。
+仮のproducer活動枠240時間/出力96GiB、空き予約32GiB、1コピー開始128GiB/同volume2コピー224GiBの案。設定・運用上限へは適用していない。今回C121.97/D256.05GiBでDが候補。開始前の再確認が必要。system commit余裕52.73MiBの過去標本を確認し、process上限と全体commit停止方針を分ける必要を記録。リークや他作業との因果は未断定。OS実値os-state.json。
 
-現在のanalysis/report bytesは認証。旧公開metadata・集計・診断・cell/schema検証は再利用し、全payload/source-runtime正式受入/trust/analysis/execution/formal/promotion/S6/controllerプロセス終了はfalse。local_verifiedは通常権限の新しい結果保存の確認に限る。契約案はdraft、正式gate/holdoutを開いていない。
+**次はT11/T12のconsumer接続：writerを閉じた後、通常権限の別process readerと外側receiptをつなぐ。** 固定入力で応答消失・読取不一致・再封印不整合を確認し、旧保存APIの合格済み試験を重複させない。既存確定payload/markerを修正しない。専用principal/P-U/同時書換え試験、UAC/ACL変更は再開しない。正式40-cluster推論/full document、source/runtime受入、契約採択は別の残りで正式gate/holdoutを起動しない。
 
-外部結合保存点7032bytes/SHA3d7d53fc00ad90de695d44e128d29c45467318da58e11b8ab3bf9d0571521305（consumer-analysis-binding-2026-09-25）。外部記述保存点7932bytes/SHA79364b641f8f7a047298ca73d46fcdc49b1931c23394a043cb8802255392af39（descriptive-report-2026-09-25）。旧OUT不変。
+前工程のengineering consumerは16試験と実接続済み（実装6567a857455847baf225f552abf5ff9df6644c08、文書6af1c024be52c063e82f9a43143f2fc5e228258b）。7file/7,896,608bytes、約2.055秒。全120区間720評価、18表234主指標5670診断行を保持。chunk119 attempt2、失敗1件、判定不能46指標を保全。観測/score/集計/比率再計算なし。
 
-peak37.25MiB、最小RAM12.53GiB/commit余裕19.81GiB、C/D122.78/268.83GiB。OS実値os-state.json。banto-24 PAUSED、旧保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変。
+そのOUTはengineering-consumer-entry-2026-09-25、成功published-success/payload/report.md/html。保存点11477bytes/SHA830d2de2202166c7f3f735603c21b317cb18bb33809530d1f3bf8d8c87403219。marker97c8bc637328cb173e6c1a678765c7785512fb2ad7b66ed8af15939e819c874e、receipt11507bytes/SHAe2ac5bb2b36d5121062dd8bdc790556cd767cd22a7168ec0579d5aab6570cf3a。初回tuple比較失敗/HTML末尾LF欠落による未完了publishedとtest-attempt-1/2を保全済み。再使用しない。
 
-**次は契約案T01〜T12へ実装済みの入口を対応付け、未接続項目と容量・所要時間の見積もりを整理する。** 重い評価・観測/score検算を繰り返さず、正式採択/freezeの判断に必要な残件を具体化する。保留principal/P-U試験は再開しない。
+新評価・payload読取・再計算・bootstrap・新試験0。旧保存点・実計算c01d1c9・本流clean6f1285d・closed・既存dirty guard不変、banto-24 PAUSED。正式契約案draft、formal/promotion/S6=false、全5まとまりに正式化の残りあり。
 
 ## 前工程の受入残件
 

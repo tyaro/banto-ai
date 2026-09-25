@@ -1,5 +1,7 @@
 # 保存済み記述結果のengineering consumer
 
+2026-09-25追記：[契約案への対応・残件と容量時間見積り](results/anomaly-multiseed-v0.3-consumer-coverage-budget-2026-09-25.md)を保存。次はwriter終了後の別process readerと外側の確認receiptを通常権限で接続する。現APIのlocal_verifiedは同一processの読取確認である。
+
 `anomaly_v03_engineering_consumer` は、認証済みの[集計入力結合receipt](anomaly-v03-consumer-analysis-binding.md)から、同じ入力で作られた記述レポートを選び、新しい保存先へ出力する。既存の数値検証を再利用し、集計・比率・観測・スコアを再計算しない。[実接続結果](results/anomaly-multiseed-v0.3-engineering-consumer-entry-2026-09-25.md)。
 
 ## APIとCLI

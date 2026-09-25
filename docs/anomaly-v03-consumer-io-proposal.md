@@ -1,5 +1,7 @@
 # 単一writer方針での解析consumer入出力契約案
 
+2026-09-25 対応更新：[T01〜T12の実装対応と容量・時間](results/anomaly-multiseed-v0.3-consumer-coverage-budget-2026-09-25.md)を整理。engineering接続5群、旧検証再利用3群、部品まで1群、受入・外側状態・別reader/auditの接続残り3群。正式2,880評価の外挿は約59.91GiB/累積178.17時間。予算案は未適用で、正式推論/最終auditの予算は未確定。以下の初期実装順序は提案時点の履歴。
+
 最新実装（2026-09-25）：[engineering consumer入口](anomaly-v03-engineering-consumer.md)の16試験と実接続を完了。既存dev/smokeの記述結果を再利用して通常権限で保存・読み戻しする。新しい数値解析や正式評価は起動しない。本契約案の正式採択状態はdraftのまま。
 
 実装追記（2026-09-25）：[入力validator](anomaly-v03-consumer-input.md)・[checkpoint adapter](anomaly-v03-consumer-checkpoints.md)・[公開reader](anomaly-v03-consumer-publication.md)に続き、[監査済み集計入力との結合](anomaly-v03-consumer-analysis-binding.md)を追加。14新規試験と120区間720評価の導出対応を確認し、過去失敗・判定不能を保持。旧算術検証を再利用し、新規解析/全payload認証/正式採択は行わない。全体契約はdraftのまま。

@@ -3999,3 +3999,13 @@ peak47.41MiB、最小RAM12.38GiB/commit余裕19.72GiB、C/D122.79/268.83GiB。�
 初回tuple比較の単体試験失敗を修正し、その後の実接続で判明したHTML末尾LF欠落に最小補正を追加。test-attempt-1/2と未完了publishedを保全し、最終成功はpublished-success。marker97c8bc637328cb173e6c1a678765c7785512fb2ad7b66ed8af15939e819c874e、receipt11507bytes/SHAe2ac5bb2b36d5121062dd8bdc790556cd767cd22a7168ec0579d5aab6570cf3a。
 
 peak37.25MiB、最小RAM12.53GiB/commit余裕19.81GiB、C/D122.78/268.83GiB。OS実値os-state.json。旧保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変、banto-24 PAUSED。旧公開/数値/schema検証は保存点から再利用し、source-runtime受入/trust/formal/promotion/S6等へ格上げしない。次は契約案T01〜T12への対応と残件・容量時間予算の整理。正式採択/freeze/holdout/S4/S6/Phase2/3全体は未完了。
+
+## 169. consumer契約対応と容量・時間シナリオ（2026-09-25）
+
+[対応表](anomaly-multiseed-v0.3-consumer-coverage-budget-2026-09-25.md)。対象6af1c024be52c063e82f9a43143f2fc5e228258b、OUT artifacts/consumer-coverage-budget-review-2026-09-25。source変更なし、最終文書revision/pinはsavepoint-evidence.json。T01〜T12はengineering接続5群、旧検証再利用3群、部品まで1群、受入/外側状態/別reader接続残り3群。20保存file/2,818,781bytes、33 source/契約pin、30method参照を照合。直近5工程の新規81試験は歴史的合格記録で、今回新試験0。
+
+元実績120区間720評価・16,081,676,236bytes・活動160,357.174秒から、正式480区間2880評価へ59.91GiB/178.17時間（7.42日）を単純外挿。別工程のscore/ledger約80.41分・生成約7.57分も参考値。正式CI/gate/選択・最終独立auditは未接続で予算未確定。240時間/96GiB＋空き32GiB（開始128GiB、同volume2コピー224GiB）は未採択・未適用の案。既存上限は変更なし。
+
+過去区間119 attempt1はproducer900秒停止、同時期commit余裕52.73MiBの標本。原因帰属/リークは未確定で、privateとsystem commitを別に扱う必要を記録。今回C121.97/D256.05GiB、peak50.29MiB、最小RAM10.38GiB/commit余裕16.88GiB。主確認0.538秒。OS実値os-state.json、全旧境界不変、banto-24 PAUSED。
+
+次はT11/T12：通常権限、writer終了後の別process reader、応答消失/読取失敗の外側receiptを接続。小さな架空入力と拒否例に絞り、旧保存試験や評価を繰り返さない。principal/UAC/ACL/同時書換え作業を再開せず、確定payload/markerは保全。正式化の5まとまり、source/runtime freeze、正式gate/holdout、S4/S6、Phase2/3は未完了。
