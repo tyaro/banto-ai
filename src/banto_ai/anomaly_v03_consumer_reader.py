@@ -130,10 +130,11 @@ def check_in_subprocess(publication_root,binding_savepoint,report_savepoint,anal
         for path,pin in selected_sources.items():v.require(consumer._pin(Path(path).read_bytes())==pin,'reader entry source changed')
         v.require(consumer._pin(request_path.read_bytes())==request_pin,'reader request changed')
 
-    # -I ignores PYTHONPATH and user site; only this explicit source checkout is
-    # added. The child invokes no producer, generator, writer, or subprocess.
+    # -I ignores PYTHONPATH and user site; -S skips site initialization, including
+    # system site-packages. Only this explicit source checkout is added. The
+    # child invokes no producer, generator, writer, or subprocess.
     bootstrap='import sys;sys.path.insert(0,sys.argv.pop(1));from banto_ai.anomaly_v03_consumer_reader import worker_main;raise SystemExit(worker_main(sys.argv[1:]))'
-    argv=[sys.executable,'-I','-B','-c',bootstrap,str(PROJECT/'src'),str(request_path),str(request_pin['bytes']),request_pin['sha256']]
+    argv=[sys.executable,'-I','-S','-B','-c',bootstrap,str(PROJECT/'src'),str(request_path),str(request_pin['bytes']),request_pin['sha256']]
     outer={**consumer.QUIET,**consumer.BOUNDARY,'format':'anomaly-v03-engineering-reader-check-v1',
         'status':'failed','request_pin':request_pin,'publication_root':str(publication),
         'expected_marker_sha256':expected_marker_sha256,'reader_exit_confirmed':False,

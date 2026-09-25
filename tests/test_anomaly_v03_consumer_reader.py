@@ -53,6 +53,36 @@ class ConsumerReaderTests(unittest.TestCase):
         self.assertFalse(result['separate_process_verified']);self.assertEqual(before,self.saved(root))
         self.assertEqual(json.loads((Path(result['check_directory'])/'result.json').read_bytes())['status'],'failed')
 
+    def test_child_startup_excludes_site_and_environment_paths(self):
+        published=self.publish();root=Path(published['output_path']);before=self.saved(root)
+        poison=self.root/'environment-packages';poison.mkdir()
+        (poison/'sitecustomize.py').write_text("raise RuntimeError('unexpected startup hook')\n",encoding='utf-8')
+        observation=self.root/'startup.json';original=reader.supervisor.supervise
+
+        def capture_startup(argv,*args,**kwargs):
+            # Observe inside the real child before its ordinary bootstrap.
+            # Leave launch options and request/publication handling untouched.
+            argv=list(argv);code=argv.index('-c')+1
+            probe=("import sys,json;"
+                "startup={'flags':{n:getattr(sys.flags,n) for n in "
+                "('isolated','ignore_environment','no_user_site','no_site','safe_path','dont_write_bytecode')},"
+                "'path':sys.path[:],'site_imported':'site' in sys.modules,"
+                "'hooks':[n for n in ('sitecustomize','usercustomize') if n in sys.modules]};"
+                f"open({str(observation)!r},'x',encoding='utf-8').write(json.dumps(startup));")
+            argv[code]=probe+argv[code]
+            return original(argv,*args,**kwargs)
+
+        with patch.dict(os.environ,{'PYTHONPATH':str(poison),'PYTHONUSERBASE':str(poison)}),patch.object(reader.supervisor,'supervise',capture_startup):
+            result=self.call(published)
+        self.assertEqual(result['status'],'verified');self.assertTrue(result['reader_exit_confirmed'])
+        self.assertTrue(result['separate_process_verified']);self.assertEqual(before,self.saved(root))
+        startup=json.loads(observation.read_text(encoding='utf-8'))
+        self.assertEqual(startup['flags']['no_site'],1)
+        self.assertTrue(all(startup['flags'].values()))
+        self.assertFalse(startup['site_imported']);self.assertEqual(startup['hooks'],[])
+        self.assertNotIn(str(poison),startup['path'])
+        self.assertFalse(any({'site-packages','dist-packages'} & set(Path(p).parts) for p in startup['path']))
+
     def test_resealed_changed_value_rejected_against_original_source(self):
         files,_=self.fixture.call();value=json.loads(files['report.json'])
         value['cohorts'][0]['candidate_tables'][0]['saved_null']=True
