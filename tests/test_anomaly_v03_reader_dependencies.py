@@ -1,6 +1,5 @@
 """Dependency snapshots remain bounded observations, not closure acceptance."""
 import copy
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -16,6 +15,8 @@ from tests import test_anomaly_v03_reader_evidence as fixtures
 class DependencyChecks(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
+        self.images=patch.object(dep,'windows_modules',return_value=[])
+        self.images.start();self.addCleanup(self.images.stop)
         self.root=Path(self.tmp.name);(self.root/'src').mkdir()
         self.path=self.root/'src/example.py';self.path.write_bytes(b'value = 1\n')
         self.row={**dep.file_observation(self.path),'category':'project','native':False}
@@ -75,6 +76,15 @@ class DependencyChecks(unittest.TestCase):
     def test_cache_candidate_reference_is_checked(self):
         value=copy.deepcopy(self.snapshot);value['modules']['example']['cache_candidate']=self.name
         with self.assertRaisesRegex(ValueError,'cache candidate reference'):self.verify(value,value)
+
+    def test_external_native_requires_exact_loaded_parent_image(self):
+        path=self.root/'external.dll';path.write_bytes(b'invented-native-file')
+        name='external-native/external.dll';value=copy.deepcopy(self.snapshot)
+        value['files'][name]={**dep.file_observation(path,native=True),'category':'native','native':True}
+        value['native_files']=[name]
+        with self.assertRaisesRegex(ValueError,'permitted'):self.verify(value,value)
+        with patch.object(dep,'windows_modules',return_value=[path]):
+            self.assertEqual(self.verify(value,value)['native_files'],1)
 
 
 @unittest.skipUnless(os.name=='nt','Windows loaded image observations')

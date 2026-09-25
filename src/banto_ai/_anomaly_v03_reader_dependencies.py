@@ -26,7 +26,7 @@ SCOPE = {'source_closure_complete': False, 'runtime_closure_complete': False,
          'execution_authenticated': False, 'formal_permission': False,
          'cache_policy': 'existing-candidates-not-proven-loaded',
          'file_policy': 'disk-bytes-not-in-memory-code',
-         'native_policy': 'loaded-images-under-python-or-windows-system32'}
+         'native_policy': 'python-system32-or-exact-parent-loaded-external-image'}
 
 
 def _stamp(meta):
@@ -91,7 +91,7 @@ def system32():
     return Path(name.value)
 
 
-def _location(path, root, base, windows, *, native=False):
+def _location(path, root, base, windows, *, native=False, external_images=()):
     """Validate before opening any path supplied by a child observation."""
     path = Path(path)
     v.require(path.is_absolute() and '..' not in path.parts and ':' not in str(path)[2:], 'dependency absolute path')
@@ -102,8 +102,10 @@ def _location(path, root, base, windows, *, native=False):
         relative = path.relative_to(base)
         v.require('site-packages' not in [p.casefold() for p in relative.parts], 'third-party dependency')
         return 'python-files/' + relative.as_posix(), 'native' if native else 'stdlib'
-    v.require(native and path.is_relative_to(windows), 'dependency outside permitted observation roots')
-    return 'windows-system32/' + path.relative_to(windows).as_posix(), 'native'
+    if native and path.is_relative_to(windows):
+        return 'windows-system32/' + path.relative_to(windows).as_posix(), 'native'
+    v.require(native and path in external_images, 'dependency outside permitted observation roots')
+    return 'external-native/' + path.name, 'native'
 
 
 def _inventory(root):
@@ -114,7 +116,7 @@ def _inventory(root):
 
     def add(path, *, native=False, cache=False):
         path = Path(path)
-        logical, category = _location(path, root, base, windows, native=native)
+        logical, category = _location(path, root, base, windows, native=native, external_images=images)
         key = str(path).casefold()
         if key in physical:
             return physical[key]
@@ -169,6 +171,7 @@ def verify_pair(before, after, *, root, revision, git, required_sources):
     existing rows may not disappear or change. No completeness claim is made.
     """
     root, base, windows = Path(root), Path(sys.base_prefix), system32()
+    parent_images = windows_modules()
     for snapshot in (before, after):
         v.require(type(snapshot) is dict and set(snapshot) == {'format','modules','files','native_files','scope'}, 'dependency snapshot fields')
         v.require(snapshot['format'] == FORMAT and snapshot['scope'] == SCOPE, 'dependency observation scope')
@@ -181,7 +184,7 @@ def verify_pair(before, after, *, root, revision, git, required_sources):
             v.require(type(row) is dict and set(row) == {'physical_path','pin','identity','category','native'}, 'dependency file fields')
             v.require(type(row['native']) is bool, 'dependency native flag')
             path = Path(row['physical_path'])
-            logical, category = _location(path, root, base, windows, native=row['native'])
+            logical, category = _location(path, root, base, windows, native=row['native'], external_images=parent_images)
             if row['native'] and any(str(path).lower().endswith(s.lower()) for s in importlib.machinery.EXTENSION_SUFFIXES): category = 'extension'
             if row['category'] == 'bytecode-cache-candidate':
                 v.require(not row['native'] and path.suffix == '.pyc', 'dependency cache candidate')
