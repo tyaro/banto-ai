@@ -292,3 +292,10 @@ T11/T12のengineering部分が接続できました。次は40-cluster入力・�
 [実行証拠validator](anomaly-v03-consumer-evidence.md)を追加し、16件の架空試験を通過しました。処理の役割・プログラム・実行条件・入出力が、外部に保持した期待値と一致するかを確認します。役割の取り違えや途中の環境変化、結果の差し替えを検出します。[結果](results/anomaly-multiseed-v0.3-consumer-execution-evidence-2026-09-25.md)。
 
 次は実際の読取processから採取した記録と接続します。今回の架空記録の一致だけで実行の真正性や正式受入を認定せず、Phase2/3全体は未完了です。
+
+
+### v0.3追記: 実読取processの記録を接続（2026-09-25）
+
+[実観測reader](anomaly-v03-reader-evidence.md)を追加し、親が起動したprocessと子が報告したprocessの生成時刻/PID・プログラム・起動条件を照合しました。架空データを使う実process試験を含む新規13種類が通過し、変更していない既存回帰27種類の同工程の合格記録も再利用しました。[結果](results/anomaly-multiseed-v0.3-reader-observed-evidence-2026-09-25.md)。
+
+現時点は選択source10本とPython2file等の部分記録です。次は依存program/runtimeの採取範囲を広げます。正式holdout・性能判定・S4/S6・Phase2/3全体は未完了です。

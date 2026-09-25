@@ -4064,3 +4064,12 @@ OS26200.9457/Python3.14.0。旧境界・dirty guard不変、banto-24 PAUSED。�
 試験processの最大private 27.20MiB、試験前後の最小空きRAM 11.20GiB / commit余裕 19.57GiB、試験後C/D空き 124.34/365.97GiB。 前工程47code/18data pin・旧境界/dirty guard不変、banto-24 PAUSED。実process採取・評価・登録データ・bootstrap0。成功はsupplied-bytes-only、正式受入/全closure/実行真正性/S6ではない。
 
 次：通常権限readerの実際の起動観測と外側で保持した期待値を、このvalidatorへ接続する。最初は既存の小さな架空公開結果で確認し、親の観測値を子の値として流用しない。 正式consumer・最終auditと予算、source/runtime受入は残る。正式freeze/holdoutや保留principal/UAC/ACLは開始しない。
+
+
+## 176. 実reader観測と外部期待値の結合（2026-09-25）
+
+[API](../anomaly-v03-reader-evidence.md)、[結果](anomaly-multiseed-v0.3-reader-observed-evidence-2026-09-25.md)。実装0ee336e72ca52849e6725415a3d7f8e4ff75aeeb、OUT artifacts/reader-observed-evidence-2026-09-25、成功attempt-3/。新APIはselected source10/Python2file、元handle・子selfのPID/生成FILETIME、前後環境、入力15fileを結合。新規13試験pass＋同工程の不変な既存回帰27種類を再利用。初回Git hardlinkによる失敗とattempt-2中間成功を保全。
+
+保存例child 38824 exit0/reaped、監視0.809秒、OS26200.9457/CPython3.14.0。今回processの最大private 50.43MiB、保存例の子は36.34MiB。観測時の最小空きRAM 10.21GiB / commit余裕 17.88GiB、保存例後C/D空き 124.38/365.97GiB。 旧境界/dirty guard/banto-24 PAUSED不変。新評価・登録データ・bootstrap0。parentの期待値はメモリ保持し、保存記録から再採用しない。未終了ownerは保存失敗時も保持。
+
+次：readerの依存sourceとstdlib/extension/loaded DLLの記録範囲を広げる。既知のCRLF差を現在の作業コピーで修正せず、必要なら指定revisionの一時的な候補checkoutでraw一致を確認する。正式freezeとしては扱わない。 完全closure/正式consumer/独立audit/資源予算は残る。正式gate・holdout・principal/UAC/ACLは開始しない。

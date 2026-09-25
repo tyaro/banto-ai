@@ -1,5 +1,7 @@
 # consumerのsource/runtime固定対象と実行前の残件
 
+2026-09-25接続追記：[実観測reader](anomaly-v03-reader-evidence.md)がsource10本・Python2file・実process identity・15入力を外部期待値へ結合。新規13＋既存回帰27種類がpass。source/runtime全閉包は未完了。次は依存source/stdlib/extension/loaded DLLの採取範囲を広げる。[結果](results/anomaly-multiseed-v0.3-reader-observed-evidence-2026-09-25.md)。
+
 2026-09-25実装追記：[役割別実行証拠validator](anomaly-v03-consumer-evidence.md)を追加。16架空試験pass、外部期待値・前後source/runtime・process・全入出力bytesの対応を検査する。実processの採取・正式受入・closureは未完了。次は通常権限readerの実観測との接続。[結果](results/anomaly-multiseed-v0.3-consumer-execution-evidence-2026-09-25.md)。以下の41source候補表はe9826bd時点の記録。
 
 2026-09-25、状態 **proposal / 未freeze**。対象revision `e9826bd0245cf26cf540e1ff470528c001f3cd5f`。[実確認](results/anomaly-multiseed-v0.3-consumer-source-runtime-review-2026-09-25.md)、[運用契約案](anomaly-v03-consumer-io-proposal.md)。現在の実装と保存証拠を整理したもので、正式実行を許可する文書ではない。

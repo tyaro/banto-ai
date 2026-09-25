@@ -1,5 +1,7 @@
 # engineering結果の別process readerと外側の確認記録
 
+2026-09-25追加：[実観測を結合する任意API](anomaly-v03-reader-evidence.md)を実装。既存check_in_subprocessの既定動作は維持し、追加APIは元handle/子の生成identityと前後source/runtimeを検証する。[結果](results/anomaly-multiseed-v0.3-reader-observed-evidence-2026-09-25.md)。
+
 2026-09-25更新：子の起動に`-S`を適用し、siteの自動初期化とsystem site-packages追加を除外。通常権限の14試験が通過し、旧起動条件を検出する対照試験も確認した。[結果](results/anomaly-multiseed-v0.3-consumer-reader-no-site-2026-09-25.md)。source/runtimeの完全受入は引き続き未完了。
 
 `anomaly_v03_consumer_reader` は、[engineering consumer](anomaly-v03-engineering-consumer.md)のwriterを閉じた後に、保存済みレポートを別processで確認する。[確認結果](results/anomaly-multiseed-v0.3-consumer-separate-reader-2026-09-25.md)。既存のprocess監視とLocalPublication readerを使用し、通常権限で動く。
