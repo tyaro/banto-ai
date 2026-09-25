@@ -55,4 +55,4 @@ attemptは1から連番。各attemptはstate、failure、6評価を持つ。評�
 
 この段階で確認するのは**同じ入力だという宣言の整合**まで。正常系列のcore/stress対応、元bytesとhashの一致、実source/runtime、payloadの数値、実writer終了、失敗履歴の網羅性は、信頼された外部記録と今後のadapterで確認する。新しい自己整合metadataを作れば実行が認証される、という境界にはしない。
 
-次は保存済み完了記録からこの入力宣言へ変換するadapterを用意し、既存のidentity・最終attempt・失敗履歴・6種の入力pinを落とさず渡す。まずdecodedな小さい記録で接続を確認し、観測reader・推論・writerをまだ起動しない。
+2026-09-25追記：[checkpoint adapter](anomaly-v03-consumer-checkpoints.md)を実装し、共通slot検査へ接続した。区間別markerと全体producer markerの違い、失敗時の未知内訳を保持する別envelopeであり、このv1のproducer完了条件は変更しない。37試験と保存済み120区間/720評価の管理記録への適用を確認。次は公開印と終了記録を認証するreader結合。

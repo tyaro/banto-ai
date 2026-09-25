@@ -1,6 +1,6 @@
 # 単一writer方針での解析consumer入出力契約案
 
-実装追記（2026-09-25）：[入力宣言の純validator](anomaly-v03-consumer-input.md)を追加し22試験通過。fixture/engineering専用のT01〜T04前段であり、raw/path/marker認証・観測reader・解析・writer・正式運用採択は未接続。以下の全体契約は引き続きdraft。
+実装追記（2026-09-25）：[入力宣言validator](anomaly-v03-consumer-input.md)に続き、[checkpoint adapter](anomaly-v03-consumer-checkpoints.md)を追加。15新規＋22関連試験と実管理記録120区間/720評価への適用を確認。区間別公開と失敗履歴を保持する別envelopeであり、公開印・payload・終了認証/解析/writerは未接続。全体契約はdraftのまま。
 
 2026-09-25。提案ID `anomaly-v03-consumer-io-proposal-v1`、状態 **draft / 実行許可なし**。基準revision `0b75c1ea89a15e04dbde0963ae2b634648a10201`。[受入残件表](results/anomaly-multiseed-v0.3-acceptance-gap-review-2026-09-25.md)の1「運用契約」と2「consumer接続」を具体化する。これは正式な受入証明やfreezeではない。
 

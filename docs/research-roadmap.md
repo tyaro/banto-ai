@@ -221,3 +221,9 @@ v0.2のstandalone seed-cluster analysisは [`anomaly-multiseed-evaluation-plan-v
 [入力検査](anomaly-v03-consumer-input.md)を実装し、22試験が通過しました。対象の欠落・順序違い、候補間/再試行間の入力hash不一致、失敗履歴の不整合を拒否し、途中停止と計算上の判定不能を分けて保持します。評価データは読まず、正式評価の起動にも接続していません。[結果](results/anomaly-multiseed-v0.3-consumer-input-validator-2026-09-25.md)。
 
 次は保存済みの完了記録から、この検査へ渡す入力宣言への変換です。検査成功は実データの認証や実行許可を意味せず、正式受入・Phase 2/3全体は未完了です。
+
+### 2026-09-25：保存済み完了記録と入力検査を接続
+
+[checkpoint adapter](anomaly-v03-consumer-checkpoints.md)を実装し、新規15＋既存22の37試験が通過しました。保存済みの管理記録でも全120区間・720評価との対応を確認し、最後の再試行前の失敗を残したまま最終attemptを選択します。観測やスコアの再計算はありません。[結果](results/anomaly-multiseed-v0.3-consumer-checkpoint-adapter-2026-09-25.md)。
+
+区間別の公開印と全体の終了は別に認証する必要があり、そのreader結合を次に進めます。正式評価・運用契約採択・Phase 2/3全体は未完了です。

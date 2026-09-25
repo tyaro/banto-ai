@@ -3959,3 +3959,13 @@ freeze前は(1)単一writer/OS方針の正式運用契約、(2)consumer正式入
 22新規試験pass、failure/error/skip0、0.268秒。架空metadataと登録720枠だけで、file/process/bootstrapを呼ばない検査も実施。実payload/観測読取・評価・再計算0。peak29.58MiB、最小空きRAM12.93GiB/commit余裕20.23GiB、C124.32/D294.53GiB。前保存点/23参照ファイル・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変、banto-24 PAUSED。
 
 次は完了記録から入力宣言への変換adapterをdecoded metadataだけで実装し、identity/最終attempt/失敗履歴/6種pinを外部anchorへ結合。観測reader・推論・writer・正式modeは接続しない。T01〜T04前段のみで、raw/path/marker認証や正式運用採択、S4/S6、Phase2/3全体は未完了。
+
+## 165. checkpoint記録からconsumerへの変換（2026-09-25）
+
+[API](../anomaly-v03-consumer-checkpoints.md)、[結果](anomaly-multiseed-v0.3-consumer-checkpoint-adapter-2026-09-25.md)。実装1a88d33d3dc4953e239a536f2bd5ea183904f02f、OUT artifacts/consumer-checkpoint-adapter-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。decoded plan/journal/全attempt manifestと外部4pin/countを既存reducer/manifest契約/consumer slot検査へ接続。最終attemptと過去失敗記録を保持し、既知6種hashを候補/再試行間で固定する。
+
+区間別markerと全体producer markerは別なので、既存入力v1を緩和せず別checkpoint envelopeを返す。失敗manifest欠落はunreported/evaluations=null。profile_statusもslot宣言からの対応づけで、profile bytesの確認ではない。37試験（15新規＋22関連既存）pass、failure/error/skip0、35.876秒。
+
+旧保存点のraw pinへ管理記録484件10,013,204bytesを1回照合。362journal/121manifest/120区間/720評価の実対応を確認（5.890秒）。区間119 attempt1はstage complete宣言6評価があるがmarkerなし/resource_limit失敗、attempt2だけ集計。原記録を補正せず保全。観測/evaluation本文/score読取・再計算・追加評価0。
+
+peak73.05MiB、最小空きRAM12.57GiB/commit余裕20.16GiB、C/D124.22/298.67GiB。旧保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変、banto-24 PAUSED。次は固定hash readerと結合して区間公開印・manifest・終了記録の参照を認証。管理記録hash照合を公開/実終了/payload認証へ格上げしない。正式採択/freeze/推論/writer/S4/S6/Phase2/3は未完了。
