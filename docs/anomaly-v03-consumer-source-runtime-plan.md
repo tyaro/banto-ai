@@ -70,3 +70,9 @@ producerの過去実行revision `c01d1c978f78bab51391392d56cdcb7aab5afaab`と新
 実装0b03b91a59c7359e4eb05e3585242b88aa8c8cab、[結果](results/anomaly-multiseed-v0.3-reader-dependency-observation-2026-09-25.md)。opt-inの子processでsource28/stdlib79/cache候補77/extension8/その他native40の232fileを採取し、前後一致と親のdisk/Git照合を確認。別候補checkout743fileのraw/Git一致を確認し、元copyの既知CRLF差を維持した。
 
 新規13試験pass、同工程の不変な既存回帰29種類のpassを再利用。現在の一覧はchild-inventory-crosschecked-by-parent-after-exitであり、独立した事前runtime期待値や全closureではない。既存cache候補を実loadしたbytecodeとは断定しない。reader用の依存一覧を実行結果とは別に保持する期待profileへ落とし込み、import準備の境界と照合手順を定義する。今回の観測一覧をそのまま正式な期待値やfreezeとして採択しない。 正式source/runtime受入・全体予算・analysis/auditへの展開は残る。
+
+## readerの候補を別に保持して照合（2026-09-25）
+
+実装0b2da336d90bcc60e97798d83d17d9f6f7421a34、[API](anomaly-v03-reader-profile.md)、[結果](results/anomaly-multiseed-v0.3-reader-dependency-profile-2026-09-25.md)。prepare_profileで別の成功した依存観測を候補化し、後続readerが起動前から保持するpin/全一覧へ一致するかを検査。採取境界・role/revision/root/runtimeも固定。新規16pass＋同工程の不変な既存26種類を再利用。232fileを別PIDで照合した。
+
+候補は観測由来で、正式承認された完全依存定義ではない。OS更新を記録して新候補を作ることは許容し、旧候補を自動更新しない。解析側（engineering consumer）の実行観測と、別に保持した役割別期待値の接続を、小さな架空入力で具体化する。reader候補をanalysis/auditへ使い回さない。 準備processの観測・正式source/runtime受入・全体予算は残る。

@@ -1,25 +1,31 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-25 JST。**readerの依存記録を232fileへ拡張。新規13試験pass＋不変な既存回帰29種類を再利用。次は役割別の独立した期待profile。**
+更新: 2026-09-25 JST。**readerの依存候補を実行前に保持して、別processと照合。新規16pass＋不変26種類を再利用。次は解析側の役割別実行観測。**
 
-- [API](anomaly-v03-reader-evidence.md)、[結果](results/anomaly-multiseed-v0.3-reader-dependency-observation-2026-09-25.md)、[計画](anomaly-v03-consumer-source-runtime-plan.md)、長い引継書§177。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装0b03b91a59c7359e4eb05e3585242b88aa8c8cab。OUT artifacts/reader-dependency-observation-2026-09-25、成功attempt-2/。文書保存revision/pinは最上位savepoint-evidence.json。
+- [API](anomaly-v03-reader-profile.md)、[結果](results/anomaly-multiseed-v0.3-reader-dependency-profile-2026-09-25.md)、[計画](anomaly-v03-consumer-source-runtime-plan.md)、長い引継書§178。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装0b2da336d90bcc60e97798d83d17d9f6f7421a34。OUT artifacts/reader-dependency-profile-2026-09-25、最終成功final/。文書保存revision/pinは最上位savepoint-evidence.json。
 
 ## 今回の成果と次の作業
 
-`check_with_evidence(..., observe_dependencies=True)` を追加。前後のsys.modules/実file origin/既存pyc候補/EnumProcessModulesExのloaded imageを採取。request解読とcollector import後が前観測の境界。parentは終了・stdout pin・元handle観測を確認してから、依存sourceは指定Git、runtime等はdisk内容/identityへ照合する。外部nativeは親にもloadされた同一絶対pathのみ許可。
+anomaly_v03_reader_profile.prepare_profileを追加。別に完了した未profile化readerの外部保持result pinから、evidence/binding/dependencies/stdoutと現在のGit/disk/runtimeを照合し、新しい候補fileを作る。元reference/publication/input/sourceに重なる保存先を拒否。
 
-成功例はsource28、stdlib79、cache候補77、extension8、その他native40の232file/47,574,229bytes。177modules、native48images。検査中の追加/消失/変更0。ESET eamsi.dll/ebehmoni.dllを含む。dependencies.jsonとdependency-crosscheck.jsonは補助記録。**既存validatorのsource10/Python2file bindingと区別し、child由来の一覧を独立した事前期待値や完全closureとは扱わない。** cache候補を実使用済みbytecodeとは断定しない。
+check_with_evidenceにdependency_profile＋expected_dependency_profile_pinを追加。observe_dependencies=Trueで使う。親は起動前にpin/役割/revision/root/runtime/依存fileを検査しメモリ保持。子と親が前後一覧を保持profileへ一致比較し、追加moduleも拒否。候補原本と保存copyの差し替えも拒否。copyを16番目の入力としてevidenceへ結び、dependency-profile-binding.jsonを保存する。期待値を当該readerの結果から採用し直さない。
 
-新規13pass、failure/error/skip0、10.825秒。初回41件中、新規live2件がESET範囲外でfail、他39件pass。修正はnew collector/testのみなので、初回の既存reader13＋pure evidence16を再利用（unique42、最終全42再実行ではない）。前段unit10件中2errorだったWindows lstat/fstatのctime差も記録、device/inode/links/size/mtimeとhashへ統一。失敗記録を保持。
+採取境界はrequest解読・collector import後、公開結果検査前。候補状態candidate-not-accepted、role reader、engineering-dev-smoke、root/file identityにも結合。OS更新は工程状態として記録し、新しいreference/候補を別作成できる。旧候補自動更新や旧formal pin変更はしない。候補は別観測由来で、正式承認された完全依存定義ではない。
 
-候補checkout C:/Users/TKent/.codex/worktrees/rd01/banto-ai はclean 0b03b91a59c7359e4eb05e3585242b88aa8c8cab。743tracked files/8,430,967bytesをGit blobへ比較済み。候補を保全し、元70b0のgenerator.py/manifest.pyのCRLF差は維持。正式freezeではない。sample child20520 exit0/reaped、1.566秒、peak private36.30MiB、stdout240,485bytes。架空入力原本はtemp cleanup済み、観測/期待値/monitor/reportは保存。
+保存例reference PID40904→reader PID29764、両方exit0/reaped。232file/177modules/48loaded images（source28）、47,580,270bytesが候補と前後一致。profile110646bytes/SHAa682eb680def9a61227696de7f76c6d6259d99705403cb150e41933ebb66a0ab。reader1.846秒/stdout240593bytes。新規16pass、failure/error/skip0、53.083秒。先行候補41passのうち、その後不変のreader13＋dependencies13を再利用（unique42、最終全42再実行ではない）。先行成功記録も保全。
 
-資源は資料生成後RAM11.08GiB/commit余裕19.47GiB、C124.35/D365.94GiB。最終値はsave-checks.json。依存採取512file/1file64MiB/合計256MiB、1MiB buffer。opt-in時のみoutput枠1MiB、既定64KiBと30秒/512MiBは維持。親preflight含む正式総予算ではない。試験harness全期間peakは未採取。
+最終試験harnessのpeak private 52.46MiB、保存例readerのpeak 36.85MiB。資料作成前は空きRAM 10.35GiB / commit余裕 18.89GiB、C/D空き 126.00/326.57GiB。 最終値はsave-checks.json。子30秒/512MiB/output1MiB、profile512KiB、依存512files/1file64MiB/合計256MiBを維持。親Git/preflight全体の正式予算は未確定。
 
-**次：reader用の依存一覧を実行結果とは別に保持する期待profileへ落とし込み、import準備の境界と照合手順を定義する。今回の観測一覧をそのまま正式な期待値やfreezeとして採択しない。** まず通常権限readerの小さな架空入力に限定し、別に保持した候補profileと本番読取の実観測を照合する境界を設計・実装する。analysis/audit役割、動的にunloadされたimage/Git helper、全体資源予算は残る。
+candidate checkout C:/Users/TKent/.codex/worktrees/rp01/banto-ai はclean0b2da336d90bcc60e97798d83d17d9f6f7421a34、746tracked files/8,461,710bytesのGit/raw一致を確認。前工程rd01はclean0b03b91a59c7359e4eb05e3585242b88aa8c8cabで保全。元70b0のgenerator.py/manifest.pyのCRLF差は変更しない。架空入力原本はtemp cleanup済み、profile/reference/readerの観測・期待値・monitor/reportを保存。
 
-前工程manifest23326bytes/SHA661238bb87e0d8f03bcab795d470a174e4806b4d746775bf6fee483c37bf06ca。旧52code/18dataの意図的変更はadapter1本、新collector/test2本追加。旧境界/dirty guard/closed/PAUSED維持。document_draft.analysis_consumer=null、formal/promotion/S6/trust/execution_authenticated/full closure=false。新評価/登録データ/実bootstrap0。正式gate/holdout/正式freeze/保留principal/UAC/ACLは開始しない。
+**次：解析側（engineering consumer）の実行観測と、別に保持した役割別期待値の接続を、小さな架空入力で具体化する。reader候補をanalysis/auditへ使い回さない。** consumer側の既存実装とprovenance欄を確認し、通常権限・単一writer終了後・架空入力から接続する。reader profileをformalや完全closureへ昇格しない。準備processの完全観測、独立audit・全体資源予算も残る。
+
+前工程manifest20804bytes/SHA25041034d839b2d76fc2335aad32cc6a66ce5d6df1b9f0b77012a80c03dfe501。旧54code/18dataの意図的変更はadapter/collector2本、新profile API/test2本追加。旧境界/dirty guard/closed/PAUSED不変。document_draft.analysis_consumer=null、formal/promotion/S6/trust/execution_authenticated/full closure=false。新評価/登録データ/実bootstrap0。正式gate/holdout/正式freeze・保留principal/UAC/ACL・push/mergeは開始しない。
+
+## 直前の依存採取拡張
+
+実装0b03b91a59c7359e4eb05e3585242b88aa8c8cab、文書49c37f3afc52b8a7c5b807b7624d361a2664dddb。OUT reader-dependency-observation-2026-09-25、成功attempt-2。source28/stdlib79/cache候補77/extension8/その他native40、計232file。外部nativeは親にもloadした同一pathに限定（ESETを含む）。新規13pass＋不変29種類を再利用。disk bytesはmemory codeを証明せず、cache候補は実使用bytecodeとは断定しない。Git helper/一時unloadも未完了。
 
 ## 直前の実reader接続
 

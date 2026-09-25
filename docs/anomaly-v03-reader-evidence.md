@@ -52,3 +52,9 @@ UnreapedWorkerは元ownerをそのまま再送出し、保存記録の書込み�
 成功例ではsource28、stdlib79、既存cache候補77、extension8、その他native40の232fileを記録した。dependencies.jsonとdependency-crosscheck.jsonを追加保存する。従来evidence/bindingの10source/Python2fileとは別の補助記録で、子由来の一覧を独立した事前期待値とは扱わない。cacheの実使用やmemory内code、完全依存閉包は未証明。正式freeze/受入ではない。
 
 既知のCRLF差を保全するため、今回の接続試験は指定commitから作る候補checkoutで実施した。[詳細結果](results/anomaly-multiseed-v0.3-reader-dependency-observation-2026-09-25.md)。次は役割別の独立した期待profileとimport準備境界を具体化する。
+
+## 事前保持profileとの照合
+
+別に完了したreaderから候補を作り、`dependency_profile`と`expected_dependency_profile_pin`を指定できるようになった。候補は起動前に検査してメモリに保持し、子と親の両方で前後の依存一覧へ比較する。追加/欠落module、候補や保存copyの差し替えを拒否。profileを入力へ結び付け、この場合は16入力になる。[作成APIと制限](anomaly-v03-reader-profile.md)、[検証結果](results/anomaly-multiseed-v0.3-reader-dependency-profile-2026-09-25.md)。
+
+これはengineering候補の事前照合で、独立に定義・承認された完全な依存集合や正式freezeではない。既定動作・正式受入の境界は維持する。

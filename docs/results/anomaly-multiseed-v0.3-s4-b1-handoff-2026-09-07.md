@@ -4081,3 +4081,11 @@ OS26200.9457/Python3.14.0。旧境界・dirty guard不変、banto-24 PAUSED。�
 新規13pass＋同工程の不変な既存29種類を再利用、unique42。初期ctime差とESET DLLによる失敗を記録。sample PID20520 exit0/reaped、監視1.566秒、private36.30MiB。資料生成後RAM11.08GiB/commit余裕19.47GiB、C124.35/D365.94GiB。候補rd01はclean0b03b91a59c7359e4eb05e3585242b88aa8c8cab、743file/8,430,967bytes、raw/Git一致。元70b0のCRLF差は変更しない。旧境界/dirty guard/PAUSED維持、新評価/実データ/実bootstrap0。
 
 次：reader用の依存一覧を実行結果とは別に保持する期待profileへ落とし込み、import準備の境界と照合手順を定義する。今回の観測一覧をそのまま正式な期待値やfreezeとして採択しない。 既定APIのsource10/Python2file bindingと補助観測を区別。正式consumer/最終audit/全体予算、analysis/audit roleは残る。正式gate/holdout/principal/UAC/ACLを開始しない。
+
+## 178. readerの事前保持依存候補への接続（2026-09-25）
+
+[API](../anomaly-v03-reader-profile.md)、[結果](anomaly-multiseed-v0.3-reader-dependency-profile-2026-09-25.md)。実装0b2da336d90bcc60e97798d83d17d9f6f7421a34、OUT artifacts/reader-dependency-profile-2026-09-25、最終final/。prepare_profileは別の未profile化referenceの保持result pinから候補を新規保存。後続readerは保持candidateへ232files/177modules/48images、runtime/role/revision/root/境界を前後比較。candidateは16番目の入力。原本・copy差し替え、追加/欠落も拒否。
+
+新規16pass、failure/error/skip0、53.083秒。初回41passのうち不変26種類を再利用、unique42。sample reference40904→reader29764、両者exit0/reaped、reader1.846秒。profile110646bytes/SHAa682eb680def9a61227696de7f76c6d6259d99705403cb150e41933ebb66a0ab。最終試験harnessのpeak private 52.46MiB、保存例readerのpeak 36.85MiB。資料作成前は空きRAM 10.35GiB / commit余裕 18.89GiB、C/D空き 126.00/326.57GiB。
+
+rp01はclean0b2da336d90bcc60e97798d83d17d9f6f7421a34、746file/8,461,710bytes、Git/raw一致。rd01保全、元CRLF差/dirty guard/旧境界/closed/PAUSED維持。架空入力原本cleanup済み。次：解析側（engineering consumer）の実行観測と、別に保持した役割別期待値の接続を、小さな架空入力で具体化する。reader候補をanalysis/auditへ使い回さない。 候補の正式採択、準備processの観測、正式consumer/最終audit/全体予算も残る。正式gate/holdout/principal/UAC/ACLは開始しない。
