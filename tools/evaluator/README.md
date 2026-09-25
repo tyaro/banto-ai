@@ -1,6 +1,6 @@
 # benchmark runner
 
-2026-09-25：[checkpoint adapter](../../docs/anomaly-v03-consumer-checkpoints.md)を追加。decoded plan/journal/manifestから最終attemptと全失敗履歴を保持し、共通slot検査へ渡します。37試験と実管理記録120区間/720評価の対応確認が完了。CLI/観測reader/解析の起動はなく、公開印/実終了の認証は次工程です。
+2026-09-25：[公開metadata reader](../../docs/anomaly-v03-consumer-publication.md)を追加。区間別8管理fileで公開印・manifest・終了記録を照合します。14新規試験と全120区間の対応確認が完了。CLI/観測reader/解析/writerは起動せず、全payloadや実controllerプロセス終了の認証とは区別します。
 
 通常権限・単一writerで計算済みの小さな結果を保存するAPIは、[通常権限での結果保存](../../docs/anomaly-v03-local-publication.md)を参照してください。実行ごとに新しい保存先を使い、上書き・重複使用を拒否し、完了印と内容を確認してから読み取ります。専用アカウントは使わず、正式v0.3 campaignの受入gateは変更しません。
 

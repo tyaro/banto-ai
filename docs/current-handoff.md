@@ -1,21 +1,23 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-25 JST。**checkpoint adapterを実装。37試験pass、実管理記録でも全120区間/720評価と失敗履歴の対応を確認。次は公開印・終了記録を認証するreader結合。**
+更新: 2026-09-25 JST。**公開・終了記録readerを実装、14試験pass。全120区間/720評価の公開metadata・worker終了記録を照合済み。次は既存監査済み集計入力との接続。**
 
-- [API](anomaly-v03-consumer-checkpoints.md)、[結果](results/anomaly-multiseed-v0.3-consumer-checkpoint-adapter-2026-09-25.md)。長い引継書§165。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装1a88d33d3dc4953e239a536f2bd5ea183904f02f。OUT artifacts/consumer-checkpoint-adapter-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。
+- [API](anomaly-v03-consumer-publication.md)、[結果](results/anomaly-multiseed-v0.3-consumer-publication-reader-2026-09-25.md)。長い引継書§166。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装1b3021f8debbd4edb78b8d75efcf73cd6de88a7c。OUT artifacts/consumer-publication-reader-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。
 
 ## 今回の成果と次の作業
 
-anomaly_v03_consumer_checkpoints.adapt_completed_journalを追加。decoded plan/journal/全attemptのmanifestと外部4pin/countを受け、既存checkpoint reducerとchunk manifest契約、consumer共通slot検査へ渡す。最終attemptだけでcoverageを算出し、過去失敗をterminal record全体ごと保持。既知input pinは候補/再試行間で固定。manifestがない失敗はunreported/evaluations=nullであり未実行と推定しない。
+anomaly_v03_consumer_publication.read_chunk_publicationを追加。run/ root、plan、検証済みadapterと外部canonical hash、区間番号、closed番号/外部raw hashを受ける。closed→terminal record/descriptor→hardlink marker→manifest/worker終了監視記録の参照を確認する。区間ごと固定8管理file、最大1,040KiB。任意の保存pathを辿らず、上限付き読取・ancestor/identity/hash確認。実payload/score/audit report本文は開かない。
 
-重要: checkpointには区間別の公開印があり、全体producerのmarkerは存在しない。戻り値は別checkpoint envelopeで、既存consumer入力v1のproducer条件を緩和していない。全体終了や公開を補わずtrust/campaign_completed/許可等はfalse。profile_statusもmanifest slotからの宣言上の対応づけに限る。
+14新規試験pass（failure/error/skip0、62.046秒）。実保存記録の0/95/96/119の4区間を確認後、未確認116区間に適用。最初の4区間を再読取りせず結果を併合。全120区間/720評価、841unique file/13,518,584bytes。closedの区間別照合を含む960読取/14,663,483bytes。観測/evaluation本文/score/監査本文の読取・再計算・追加評価0。peak44.61MiB、最小RAM10.71GiB/commit余裕17.57GiB、C/D122.85/270.18GiB。
 
-15新規＋22関連既存試験pass（計37、failure/error/skip0、35.876秒）。旧保存点に固定された管理記録484件10,013,204bytesを1回確認し、362journal/121manifest/120区間/720評価を照合。区間119 attempt1はstage complete宣言があるがmarkerなし/resource_limit失敗、attempt2のみ採用。管理記録変換5.890秒、観測/evaluation本文/score読取・再計算0。peak73.05MiB、RAM12.57GiB/commit20.16GiB、C/D124.22/298.67GiB以上。
+重要: publication_metadata_verified、manifest_bytes_verified、worker_exit_records_verified、controller_closure_record_verifiedはtrue。全payload、監査本文は未認証。closedはcontrollerが終了前に保存する処理完了記録のため、controller_process_exit_verified=false。trust/analysis/execution/formal/promotion/S6はfalse。敵対的同時writerやprincipal保証を再開しない。
 
-**次は固定hash readerへ結合し、区間の公開印・manifest・終了記録の参照関係を認証する。** fixture→保存済み管理記録で進め、数値再計算・追加評価・writer起動はしない。現段階の管理記録raw hash確認をpayload/公開/実終了の認証へ格上げしない。既存source/runtimeの正式受入も別工程。元validator formal拒否と旧科学条件を維持。
+前adapterの外部保存点6720bytes/SHA256 b730387f5b90616a598b8560b05d479b6db6cd43e090df384d1a3a289766a1cc、adapter raw1,581,421bytes/SHA256 a829bde9ae98725d0b6b4fd97288e7b846349e9c306694d248a54a85839c776cを使用。区間119 attempt1のstage complete宣言/resource_limit失敗を元adapterへ保全し、readerはattempt2を選択。元validator/adapterや旧37試験の結果は不変。
 
-[契約案](anomaly-v03-consumer-io-proposal.md)はdraft。正式運用候補IDも未採択。保留principal作業・旧正式gateは再開せず、banto-24 PAUSED。前入力validator（22試験）の実装3fb9882と保存点は不変。
+**次は既存の独立監査済み集計入力と、認証した公開metadataのhash対応を固定する。** 既存の観測/scoreを重ねて再計算せず、保存点と導出履歴を明示してconsumer接続を進める。今回のmetadata認証を全payload認証や正式受入へ格上げしない。追加writer/評価/正式gate/holdoutなし。
+
+[契約案](anomaly-v03-consumer-io-proposal.md)はdraft。正式運用候補IDも未採択。保留principal作業は再開せずbanto-24 PAUSED。元科学条件・formal拒否を維持する。
 
 ## 前工程の受入残件
 

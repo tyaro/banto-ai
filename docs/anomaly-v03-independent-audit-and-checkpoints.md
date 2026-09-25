@@ -1,6 +1,6 @@
 # 保存結果の独立検算と長時間実行の進行記録
 
-最新（2026-09-25、checkpoint adapter）: [完了記録の変換](anomaly-v03-consumer-checkpoints.md)を実装。[37試験と実管理記録の対応確認](results/anomaly-multiseed-v0.3-consumer-checkpoint-adapter-2026-09-25.md)が完了。最終attempt・失敗履歴・6種pinを保持する。公開印/実終了の認証とreader結合が次工程。以下は各時点の履歴。
+最新（2026-09-25、公開metadata reader）: [公開印・結果目録・終了記録の読取](anomaly-v03-consumer-publication.md)を実装。[14試験と全120区間の実記録照合](results/anomaly-multiseed-v0.3-consumer-publication-reader-2026-09-25.md)が完了。全payloadを再計算せず、次は既存監査済み集計入力との参照を固定する。以下は各時点の履歴。
 
 2026-09-16。単一writerの運用改訂を継続する。独立ledger検算、固定plan・journalのmetadata検査/状態復元、旧6件trialとのpreflight証拠照合、metadata専用の追記writerは実装済み。全dev/smokeを動かすcampaign controllerは**未接続・実行未許可**。
 科学的な式・seed・layout・候補・母数・bootstrap・性能gateと、旧formal gateを変更しない。

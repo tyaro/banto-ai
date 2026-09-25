@@ -227,3 +227,9 @@ v0.2のstandalone seed-cluster analysisは [`anomaly-multiseed-evaluation-plan-v
 [checkpoint adapter](anomaly-v03-consumer-checkpoints.md)を実装し、新規15＋既存22の37試験が通過しました。保存済みの管理記録でも全120区間・720評価との対応を確認し、最後の再試行前の失敗を残したまま最終attemptを選択します。観測やスコアの再計算はありません。[結果](results/anomaly-multiseed-v0.3-consumer-checkpoint-adapter-2026-09-25.md)。
 
 区間別の公開印と全体の終了は別に認証する必要があり、そのreader結合を次に進めます。正式評価・運用契約採択・Phase 2/3全体は未完了です。
+
+### 2026-09-25：公開完了の印と終了記録を接続
+
+[公開metadata reader](anomaly-v03-consumer-publication.md)を実装し、14新規試験が通過しました。全120区間の公開印・結果目録・worker終了記録を照合し、720評価の管理参照を確認しています。観測/スコアは再計算していません。[結果](results/anomaly-multiseed-v0.3-consumer-publication-reader-2026-09-25.md)。
+
+次は既存の独立監査済み集計入力とのhash対応を固定します。全payloadの再認証、controllerプロセス自体の終了認証、正式受入・Phase 2/3全体の完了とは区別します。

@@ -3969,3 +3969,13 @@ freeze前は(1)単一writer/OS方針の正式運用契約、(2)consumer正式入
 旧保存点のraw pinへ管理記録484件10,013,204bytesを1回照合。362journal/121manifest/120区間/720評価の実対応を確認（5.890秒）。区間119 attempt1はstage complete宣言6評価があるがmarkerなし/resource_limit失敗、attempt2だけ集計。原記録を補正せず保全。観測/evaluation本文/score読取・再計算・追加評価0。
 
 peak73.05MiB、最小空きRAM12.57GiB/commit余裕20.16GiB、C/D124.22/298.67GiB。旧保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変、banto-24 PAUSED。次は固定hash readerと結合して区間公開印・manifest・終了記録の参照を認証。管理記録hash照合を公開/実終了/payload認証へ格上げしない。正式採択/freeze/推論/writer/S4/S6/Phase2/3は未完了。
+
+## 166. 公開・終了記録のconsumer reader（2026-09-25）
+
+[API](../anomaly-v03-consumer-publication.md)、[結果](anomaly-multiseed-v0.3-consumer-publication-reader-2026-09-25.md)。実装1b3021f8debbd4edb78b8d75efcf73cd6de88a7c、OUT artifacts/consumer-publication-reader-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。外部anchorのadapter/closedを使い、固定8管理file/区間（上限1,040KiB）で公開印・manifest・worker終了記録を照合する。hardlinkの同一identity、path/role/hash/attempt/runtime/outcomeの対応を確認。
+
+14新規試験pass、failure/error/skip0、62.046秒。実記録4境界区間→残116区間を確認し、4区間の再読取なしで全120区間/720評価の報告を併合。960読取14,663,483bytes（closedは区間ごと）、unique841file/13,518,584bytes。所要0.867＋18.140秒。観測/evaluation本文/score/監査本文の読取・再計算・追加評価0。
+
+metadata/manifest bytes/過去worker終了記録/controller closureは認証したが、全payload/監査本文は未認証。controller closedは処理完了記録でOSプロセス終了証明ではない。controller_process_exit_verifiedとtrust/analysis/execution/formal/promotion/S6はfalse。区間119 attempt1の失敗は元adapterに保全、attempt2のみ選択。
+
+peak44.61MiB、最小RAM10.71GiB/commit余裕17.57GiB、C/D122.85/270.18GiB。旧保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変、banto-24 PAUSED。次は既存の独立監査済み集計入力との参照対応を固定し、重い再計算を避けてconsumer接続を進める。旧検証履歴の再利用範囲を明示、正式採択/freeze/推論/writer/S4/S6/Phase2/3は未完了。

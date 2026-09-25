@@ -37,3 +37,5 @@ profile_statusはmanifest slotのsuccess/inconclusiveから対応づけた宣言
 `journal_declares_coverage_complete=true` はjournalの宣言だけを表す。`input_bytes_verified`、`publication_verified`、`producer_exit_verified`、`source_runtime_accepted`、`result_trusted`、`campaign_completed`、execution/analysis/formal/promotion/S6はfalse。performance未実施、selected_candidate=null。
 
 必要な次工程は `authenticate_checkpoint_publications_and_controller_exit`。このadapterは既存chunk契約の構造validatorを呼ぶが、同モジュールのpayload audit関数は呼ばない。raw file/path/marker認証、実writer終了、source/runtimeの正式受入は未実装。旧正式運用の契約案はdraftのまま。
+
+2026-09-25追記：[公開・終了記録reader](anomaly-v03-consumer-publication.md)を接続し、14新規試験と全120区間の実metadata照合が完了。adapter本体と上記のfalse flagsは変更しない。reader側でmetadata/manifest/worker終了記録を限定的に認証し、全payloadとcontrollerプロセス自体の終了は未認証と分ける。
