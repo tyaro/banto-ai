@@ -4017,3 +4017,14 @@ peak37.25MiB、最小RAM12.53GiB/commit余裕19.81GiB、C/D122.78/268.83GiB。OS
 13新規試験pass、failure/error/skip0、3.291秒。実確認は親35884/子27688、exit0/終了確認、監視error0。7file/7,896,608bytesから4payload/2,755,533bytesを確認し、元4payload＋2marker名の6pin不変。reader0.826秒、外側1.055秒。親peak33.34MiB/子35.91MiB、最小RAM12.30GiB/commit余裕20.24GiB、C/D130.25/329.72GiB。監視側OS26200.9457/Python3.14.0前後一致、全runtime/dependency受入ではない。
 
 T11/T12 engineering部分を接続。再封印不整合は元保存点とのbytes比較で拒否し、独立数値audit実行はfalse。正式full document/source-runtime受入は未完了。次は40-cluster入力・推論/full document adapterを非登録の架空入力で準備し、正式mode/holdout/新評価/実データbootstrapは起動しない。旧境界・dirty guard・banto-24 PAUSEDを維持し、保留principal/UAC/ACL/同時書換え作業を再開しない。
+
+
+## 171. 架空40clusterから結果文書草稿への接続（2026-09-25）
+
+[API](../anomaly-v03-document-fixture.md)、[結果](anomaly-multiseed-v0.3-consumer-document-fixture-2026-09-25.md)。実装e2abbdce00719db482253c140a200d0776288284、OUT artifacts/consumer-document-fixture-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。既存推論・表adapter・固定schemaを使い、40cluster/1〜64drawの純粋関数を追加。9表180gate、10文書項目の対応、入力canonical hashと実drawを保持する。
+
+12新規試験pass、failure/error/skip0、1.085秒。旧suite再実行なし。初回1失敗はcontrol precision nullに関する試験側想定の修正、既存科学条件は不変。test-attempt-1保全。保存例40cluster/4draw/160indexは0.089秒、入力279174bytes・出力220078bytes。正式validatorの草稿拒否も確認。
+
+今回の測定process peak private 31.09MiB、最小空きRAM 10.01GiB / commit余裕 19.26GiB、例の保存後C/D 129.89/327.19GiB。 OS26200.9457/Python3.14.0、旧境界とdirty guard不変、banto-24 PAUSED。新評価/登録データ読取/正式bootstrap0。架空CI計算は実施、formal/promotion/S6/trust=false、実selected=null。
+
+草稿のstatus/provenance/analysis_consumer/bootstrap/slicesはnull、正式full documentは未完了。次は架空診断からincident recall/availability slice行を作り、草稿へ接続する。正式実行/freeze・追加上限変更・保留principal/UAC/ACL作業は開始しない。

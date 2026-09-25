@@ -1,5 +1,7 @@
 # 単一writer方針での解析consumer入出力契約案
 
+2026-09-25追記：[架空40clusterの文書adapter](anomaly-v03-document-fixture.md)を追加。12新規試験pass、9表180gateを10項目の草稿へ配置し、不足5欄をnullで明示。正式運用契約はdraft、実holdout/正式bootstrapは未実行。次は架空診断のslice行接続。
+
 2026-09-25追記：[別process reader](anomaly-v03-consumer-reader.md)を追加し、T11の外側状態とT12の順次読取をengineeringの保存済み記述結果へ接続。13試験と実レポートの別process確認が通過。独立した数値audit・正式full document・source/runtime受入は残る。
 
 2026-09-25 対応更新：[T01〜T12の実装対応と容量・時間](results/anomaly-multiseed-v0.3-consumer-coverage-budget-2026-09-25.md)を整理。engineering接続5群、旧検証再利用3群、部品まで1群、受入・外側状態・別reader/auditの接続残り3群。正式2,880評価の外挿は約59.91GiB/累積178.17時間。予算案は未適用で、正式推論/最終auditの予算は未確定。以下の初期実装順序は提案時点の履歴。

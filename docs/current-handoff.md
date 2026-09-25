@@ -1,27 +1,31 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-25 JST。**通常権限の別process readerと外側receiptを接続、13試験pass。実公開レポートを別processで確認済み。次は40-cluster入力・推論/full documentへのadapterを架空入力で準備。**
+更新: 2026-09-25 JST。**架空40clusterの推論→結果文書草稿adapterを保存、12試験pass。次は架空診断のslice行を草稿へ接続する。**
 
-- [API/CLI](anomaly-v03-consumer-reader.md)、[結果](results/anomaly-multiseed-v0.3-consumer-separate-reader-2026-09-25.md)、長い引継書§170。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装35842261a90b1efe475056dc9ef962c56773f1f1、OUT artifacts/consumer-separate-reader-2026-09-25。最終文書revision/pinはsavepoint-evidence.json。
+- [API](anomaly-v03-document-fixture.md)、[結果](results/anomaly-multiseed-v0.3-consumer-document-fixture-2026-09-25.md)、長い引継書§171。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装e2abbdce00719db482253c140a200d0776288284、OUT artifacts/consumer-document-fixture-2026-09-25。最終文書revision/pinはsavepoint-evidence.json。
 
 ## 今回の成果と次の作業
 
-anomaly_v03_consumer_reader.check_in_subprocessとCLIを追加。呼出し側がwriter終了を保証してから、外部保持したmarker hash＋binding/reportの2pinと明示analysis入力で確認する。新しい確認directoryにrequest、worker出力、supervision、resultを保存。-I -Bの別Pythonへ明示srcを渡し、既存supervisorで30秒/private512MiB/log64KiB。6入口source/requestの前後hashと監視側runtime前後一致を確認する。完全dependency/runtime閉包ではない。
+anomaly_v03_document_fixture.build_fixture_document/validate_fixture_documentを追加。invented-00〜39の固定40cluster、各12layouts/候補3/層2、1〜64drawの純粋関数。実IOや正式modeはなし。既存算術/閾値/schemaを再利用し、9表180gateと10項目の草稿へ接続。実際のdrawとcanonical input hashを記録し、欠けた正式証拠を補わない。
 
-13新規試験pass（failure/error/skip0、3.291秒）。応答消失・再封印不整合・未完了・上書き/重複root・hash差・timeout・未終了owner保持を確認。旧保存/算術suiteは再実行なし。実公開物の子PID27688（親35884）はexit0/終了確認、監視error0。7file/7,896,608bytesから4payload/2,755,533bytesへの対応を確認。元4payloadと2marker名の6pin不変。reader0.826秒、外側1.055秒。
+12新規試験pass、failure/error/skip0、1.085秒。40clusterの絶対/paired Type-7 CIを手計算照合、raw和・全delay・選択分岐・入力拒否・schema/出力改変を確認。旧suite再実行なし。初回1失敗はcontrol precision nullの試験側想定を修正し、test-attempt-1を保全。既存科学条件は不変。
 
-親peak33.34MiB/reader35.91MiB、最小RAM12.30GiB/commit余裕20.24GiB、C/D130.25/329.72GiB。監視側OS26200.9457/CPython3.14.0前後一致。今回の記録はverified/request.json、worker/report.json、supervision.json、result.json。子の完全runtime受入ではない。
+invented-input.json（279174bytes/SHA0c269fc912a58533279b2c7aae832ad080805b5c36afd597002751ba3160dd93）→document-fixture.json（220078bytes/SHA2d26ad83778bc068ec41da01b9b84468a4e16b2e7c4a1a3a3b79021a769d1b5d）の例を保存。4draw/160index、0.089秒。正式validatorが草稿を拒否することを確認。
 
-T11/T12のengineering接続は完了。別processは独立数値監査の代替ではなくindependent_numerical_audit_performed=false。元publicationからmarker hashを自己採用せず、応答消失時も独立に保持した期待pinが必要。元結果へ追記/撤回しない。確認側の応答消失は新しい確認名で再読取。UnreapedWorkerのAPIは元ownerを保持し、呼出し側がreap。CLIは既存retain_until_exitを使い、古い未確認resultは書き換えない。
+今回の測定process peak private 31.09MiB、最小空きRAM 10.01GiB / commit余裕 19.26GiB、例の保存後C/D 129.89/327.19GiB。 OS26200.9457/Python3.14.0。正式推論・正式結果文書の完了とはしない。外側selected=null、performance=not_evaluated、formal/promotion/S6/trust=false。架空入力の数値計算は行ったが、登録holdout/新評価/実データbootstrap0。
 
-**次は正式consumerの40-cluster入力と推論・full documentへのadapterを、非登録の架空入力で準備する。** 既存算術・schema部品を使い、現工程のdev/smoke記述入口を緩和しない。実holdout/正式modeを起動せず、50,000回の実データbootstrapや新評価を行わない。source/runtime freeze・正式契約採択は別の残件。保留principal/UAC/ACL/同時書換え作業は再開しない。
+**次は非登録の架空40cluster診断入力からincident recall/availabilityの正式slice行を組立て、document_draft.slicesへ接続する。** 既存診断/schema部品を使い、raw母数・counts・delay・行inventoryを確認する。現入口のdev/smoke制限や正式schemaは緩和せず、実holdout/50,000回の実データbootstrap/新評価は起動しない。
 
-前工程の対応/容量見積りはconsumer-coverage-budget-review-2026-09-25（16387bytes/SHA948751649d613e74af6930ee77d57824d9ecee8a8fbbcbec7b8ea3e7fd337cf3）。正式2880評価への単純外挿59.91GiB/活動178.17時間、producer枠240時間/96GiB＋空き32GiBは未採択・未適用の案。正式推論/最終audit予算は未確定。D等の空きは変動するため実行前確認が必要。
+現在の草稿はstatus/provenance/analysis_consumer/bootstrap/slicesの5欄がnull。schema_version/result_type/candidate_tables/架空selected/架空decisionだけを配置済み。fixture identityとinvented宣言は登録データの起源認証ではない。5欄はプロジェクト全体の残件数ではない。正式契約・source/runtime freeze・予算・S4/S6も残る。
 
-読取元はengineering-consumer-entry-2026-09-25（11477bytes/SHA830d2de2202166c7f3f735603c21b317cb18bb33809530d1f3bf8d8c87403219）のpublished-success。marker97c8bc637328cb173e6c1a678765c7785512fb2ad7b66ed8af15939e819c874e、receipt11507bytes/SHAe2ac5bb2b36d5121062dd8bdc790556cd767cd22a7168ec0579d5aab6570cf3a。旧未完了published/test-attempt-1/2は保全し再使用しない。
+## 直前の別process reader
 
-新評価・観測/score読取・再計算・bootstrap0。旧保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変、banto-24 PAUSED。formal/promotion/S6/trust=false。Phase2/3全体の完了ではない。
+別process readerの実装35842261a90b1efe475056dc9ef962c56773f1f1、文書fecea3614e0e818d5e4004fa4672ada06f77021a、OUT consumer-separate-reader-2026-09-25。manifest10053bytes/SHA8e2a647c5539901ce1aa7c5b0924fc98e6b5ed435f1a8a0c9e7fe875d5d92b53を今回の外部起点にした。13試験と実公開物4payload/2,755,533bytesの別process確認済み。T11/T12 engineering部分のみ接続。独立数値auditは実施していない。
+
+writer終了後の通常権限reader、外部markerと2保存点pin、別確認directoryを維持。確認側失敗は元publicationを変更しない。UnreapedWorkerはowner保持、CLI retain_until_exit。旧未完了published/test-attempt等を再利用/清掃しない。
+
+旧保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変、banto-24 PAUSED。principal/UAC/ACL/同時書換え作業は保留。Phase2/3全体は未完了。
 
 ## 前工程の受入残件
 

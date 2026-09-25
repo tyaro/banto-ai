@@ -257,3 +257,10 @@ v0.2のstandalone seed-cluster analysisは [`anomaly-multiseed-evaluation-plan-v
 [engineering reader](anomaly-v03-consumer-reader.md)を実装し、13接続試験と実公開物の読取りが通過しました。元の保存点に対応する4payloadを別processで照合し、終了を確認。応答消失・不一致の記録は外側に保存し、元の結果と完了印を変更しません。[結果](results/anomaly-multiseed-v0.3-consumer-separate-reader-2026-09-25.md)。
 
 T11/T12のengineering部分が接続できました。次は40-cluster入力・固定推論/full documentのadapterを架空入力で準備します。独立数値audit、正式契約採択、source/runtime freeze、正式gate/holdout、S4/S6、Phase2/3全体は未完了です。
+
+
+### v0.3追記: 架空40clusterの推論・文書接続（2026-09-25）
+
+[文書adapter](anomaly-v03-document-fixture.md)で40個の架空clusterから9表180gateを組み立て、正式文書の10項目へ対応づけました。12新規試験が通過し、候補差の信頼区間を手計算とも照合しています。[結果](results/anomaly-multiseed-v0.3-consumer-document-fixture-2026-09-25.md)。
+
+不足するstatus・provenance・consumer source・正式bootstrap・slicesの5欄はnullの草稿です。実データや正式採択の結果ではありません。次は架空診断からslice行を接続します。正式契約、source/runtime freeze、正式gate/holdout、独立S6、Phase2/3全体は引き続き未完了です。
