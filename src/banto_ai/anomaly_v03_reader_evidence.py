@@ -224,6 +224,7 @@ def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
               str(bundle_pin['bytes']),bundle_pin['sha256']]
         expected={'invocation_id':bundle['invocation_id'],'source':source,'runtime':runtime,
                   'inputs':{n:_pin(b) for n,b in input_bytes.items()}}
+        launch_observed={}
         def boundary():
             v.require(git('rev-parse','HEAD').decode().strip()==expected_revision,'reader revision changed')
             consumer._same(_working_source(expected_revision),source,'selected source changed')
@@ -233,6 +234,7 @@ def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
             current,current_bytes=_expected_runtime();consumer._same(current,runtime,'parent runtime expectation changed')
         def started(process):
             observed=creation_observation(process.pid,process._handle)
+            launch_observed.update(observed)
             expected['process']={'pid':process.pid,'parent_pid':os.getpid(),'start_token':observed['start_token'],
                                  'argv':list(argv),'cwd':str(ROOT)}
             expected_report['reader_pid']=process.pid
@@ -248,7 +250,9 @@ def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
             v.require(monitor['worker_pid']==expected['process']['pid'],'owned worker PID changed')
             raw=consumer.pinned.read_pinned(target/'worker/report.json',monitor['output'],reader.LIMITS['output_bytes'])
             reply=v.strict_json(raw);evidence._keys(reply,'evidence reader_report creation_observation','reader observation envelope')
-            consumer._same(reply['creation_observation'],v.strict_json(_file(target/'launch.json',4096)),'child/owned creation differs')
+            evidence._raw(_file(target/'launch.json',4096),_pin(io.json_bytes(launch_observed)),'retained launch changed')
+            evidence._raw(_file(target/'expected.json',64*1024),_pin(io.json_bytes(expected)),'retained expectation changed')
+            consumer._same(reply['creation_observation'],launch_observed,'child/owned creation differs')
             output=io.json_bytes(reply['reader_report']);evidence._raw(output,expected['outputs']['reader/report.json'],'reader output differs')
             # Extract from the parent's externally pinned, reaped stdout. Field
             # expectations come from preflight/owned launch, never from reply.

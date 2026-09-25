@@ -84,6 +84,14 @@ class ReaderEvidenceTests(unittest.TestCase):
         result=self._tamper_reply(lambda r:r['creation_observation'].update(start_token='0'*64))
         self.assertIn('child/owned creation differs',result['detail'])
 
+    def test_saved_launch_cannot_redefine_the_retained_owned_observation(self):
+        def changed(reply):
+            # Sequential corruption after worker exit; no concurrent writer.
+            reply['creation_observation']['creation_time_100ns']+=1
+            (self.root/'checks/check/launch.json').write_bytes(observed.io.json_bytes(reply['creation_observation']))
+        result=self._tamper_reply(changed)
+        self.assertIn('retained launch changed',result['detail'])
+
     def test_revision_mismatch_prevents_launch(self):
         request=self.request(self.publish())
         with patch.object(observed.supervisor,'supervise',side_effect=AssertionError('launch')):
