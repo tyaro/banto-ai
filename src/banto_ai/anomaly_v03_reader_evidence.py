@@ -28,6 +28,7 @@ SOURCE_FILES=tuple(sorted('src/banto_ai/'+n+'.py' for n in (
     'anomaly_v03_engineering_contract','_anomaly_v03_io','_anomaly_v03_runtime','_anomaly_v03_engineering_runtime')))
 BOOTSTRAP='import sys;sys.path.insert(0,sys.argv.pop(1));from banto_ai.anomaly_v03_reader_evidence import worker_main;raise SystemExit(worker_main(sys.argv[1:]))'
 FORMAT='anomaly-v03-observed-reader-invocation-v1'
+DEPENDENCY_LIMITS={**reader.LIMITS,'output_bytes':1024**2}
 
 
 def _pin(raw):return consumer._pin(raw)
@@ -149,7 +150,9 @@ def worker_main(argv):
         bundle_pin={'bytes':int(argv[1]),'sha256':argv[2]}
         raw=consumer.pinned.read_pinned(Path(argv[0]),bundle_pin,64*1024)
         bundle=v.strict_json(raw)
-        evidence._keys(bundle,'format invocation_id source inputs','observed invocation fields')
+        evidence._keys(bundle,'format invocation_id source inputs'+(' observe_dependencies' if 'observe_dependencies' in bundle else ''),'observed invocation fields')
+        observe_dependencies=bundle.get('observe_dependencies',False)
+        v.require(type(observe_dependencies) is bool,'dependency observation option')
         v.require(bundle['format']==FORMAT,'observed invocation format');evidence._digest(bundle['invocation_id'])
         evidence._source(bundle['source'])
         source_before=_working_source(bundle['source']['revision'])
@@ -158,8 +161,14 @@ def worker_main(argv):
         runtime_before=_observed_runtime()
         inputs=_inputs(bundle['inputs']);request=v.strict_json(inputs['reader/request.json']);reader._request(request)
         inputs['reader/invocation.json']=raw;input_pins={n:_pin(b) for n,b in inputs.items()}
+        dependency_reply={}
+        if observe_dependencies:
+            from . import _anomaly_v03_reader_dependencies as dependencies
+            dependency_reply['dependencies_before']=dependencies.collect(ROOT)
         result=reader.verify_saved_publication(request);result['request_pin']=input_pins['reader/request.json']
         output=io.json_bytes(result)
+        if observe_dependencies:
+            dependency_reply['dependencies_after']=dependencies.collect(ROOT)
         runtime_after=_observed_runtime();source_after=_working_source(bundle['source']['revision'])
         consumer._same({n:_pin(b) for n,b in _inputs(bundle['inputs']).items()},
             {n:p for n,p in input_pins.items() if n!='reader/invocation.json'},'child inputs changed during read')
@@ -171,14 +180,14 @@ def worker_main(argv):
             'outputs':{'reader/report.json':_pin(output)},
             # Parent must still confirm exit from its owned handle before validation.
             'completion':{'status':'completed','exit_code':0,'worker_exit_confirmed':True,'observation_errors':[]}}
-        print(json.dumps({'evidence':value,'reader_report':result,'creation_observation':process},sort_keys=True))
+        print(json.dumps({'evidence':value,'reader_report':result,'creation_observation':process,**dependency_reply},sort_keys=True))
         return 0
     except (ValueError,OSError,KeyError,TypeError) as error:
         print(json.dumps({'status':'reader_observation_rejected','error_type':type(error).__name__,'detail':str(error),
                           'formal_permission':False},sort_keys=True));return 2
 
 
-def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_name):
+def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_name, observe_dependencies=False):
     """After the single writer exits, bind a new reader attempt to retained pins.
 
     Only the selected source files must match the specified current Git commit;
@@ -186,6 +195,8 @@ def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
     Original publications are read-only. An unreaped worker retains its owner.
     """
     reader._request(request);evidence._digest(expected_revision,40)
+    v.require(type(observe_dependencies) is bool,'dependency observation option')
+    limits=DEPENDENCY_LIMITS if observe_dependencies else reader.LIMITS
     request=copy.deepcopy(request)
     parent=io._local_parent(Path(receipt_parent));v.safe_relative_path(receipt_name)
     v.require('/' not in receipt_name and not receipt_name.casefold().startswith('anomaly-multiseed-v0'),'reader attempt name')
@@ -218,6 +229,7 @@ def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
             records['publication/'+label+'.json']={'path':str(publication/name),'pin':_pin(raw),'links':2}
         input_bytes=_inputs(records)
         bundle={'format':FORMAT,'invocation_id':secrets.token_hex(32),'source':source,'inputs':records}
+        if observe_dependencies:bundle['observe_dependencies']=True
         bundle_raw=io.json_bytes(bundle);bundle_path=target/'invocation.json';io._exclusive(bundle_path,bundle_raw)
         bundle_pin=_pin(bundle_raw);input_bytes['reader/invocation.json']=bundle_raw
         argv=[sys.executable,'-I','-S','-B','-c',BOOTSTRAP,str(ROOT/'src'),str(bundle_path),
@@ -240,7 +252,7 @@ def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
             expected_report['reader_pid']=process.pid
             expected['outputs']={'reader/report.json':_pin(io.json_bytes(expected_report))}
             _save(target/'launch.json',observed);_save(target/'expected.json',expected)
-        monitor=supervisor.supervise(argv,ROOT,target/'worker',reader.LIMITS,boundary=boundary,on_started=started)
+        monitor=supervisor.supervise(argv,ROOT,target/'worker',limits,boundary=boundary,on_started=started)
         _save(target/'supervision.json',monitor)
         outer.update(reader_exit_confirmed=monitor['worker_exit_confirmed'],reader_pid=monitor['worker_pid'],
                      reason=monitor['stop_reason'] or 'worker_failed')
@@ -248,12 +260,23 @@ def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
             v.require(monitor['worker_exit_confirmed'] and monitor['exit_code']==0 and not monitor['observation_errors'],
                       'owned worker completion required')
             v.require(monitor['worker_pid']==expected['process']['pid'],'owned worker PID changed')
-            raw=consumer.pinned.read_pinned(target/'worker/report.json',monitor['output'],reader.LIMITS['output_bytes'])
-            reply=v.strict_json(raw);evidence._keys(reply,'evidence reader_report creation_observation','reader observation envelope')
+            raw=consumer.pinned.read_pinned(target/'worker/report.json',monitor['output'],limits['output_bytes'])
+            reply=v.strict_json(raw);evidence._keys(reply,'evidence reader_report creation_observation'+
+                (' dependencies_before dependencies_after' if observe_dependencies else ''),'reader observation envelope')
             evidence._raw(_file(target/'launch.json',4096),_pin(io.json_bytes(launch_observed)),'retained launch changed')
             evidence._raw(_file(target/'expected.json',64*1024),_pin(io.json_bytes(expected)),'retained expectation changed')
             consumer._same(reply['creation_observation'],launch_observed,'child/owned creation differs')
             output=io.json_bytes(reply['reader_report']);evidence._raw(output,expected['outputs']['reader/report.json'],'reader output differs')
+            if observe_dependencies:
+                from . import _anomaly_v03_reader_dependencies as dependencies
+                supplement=dependencies.verify_pair(reply['dependencies_before'],reply['dependencies_after'],
+                    root=ROOT,revision=expected_revision,git=git,
+                    required_sources=(*SOURCE_FILES,'src/banto_ai/_anomaly_v03_reader_dependencies.py'))
+                dependency_value={'before':reply['dependencies_before'],'after':reply['dependencies_after']}
+                _save(target/'dependencies.json',dependency_value)
+                _save(target/'dependency-crosscheck.json',supplement)
+                outer['dependency_observation']=supplement
+                outer['dependency_pin']=_pin(io.json_bytes(dependency_value))
             # Extract from the parent's externally pinned, reaped stdout. Field
             # expectations come from preflight/owned launch, never from reply.
             raw_evidence=io.json_bytes(reply['evidence'])
