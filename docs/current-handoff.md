@@ -1,27 +1,29 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-25 JST。**架空40clusterのsliceを文書へ接続し13試験pass。次は最新consumerのsource/runtime固定対象と正式実行前の判断資料を整理する。**
+更新: 2026-09-25 JST。**最新consumerのsource/runtime候補を整理。41source・設定等18file、起動probe2件を記録。次はreaderへ-S追加の小さい接続変更。**
 
-- [API](anomaly-v03-slice-fixture.md)、[結果](results/anomaly-multiseed-v0.3-consumer-slice-fixture-2026-09-25.md)、長い引継書§172。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装52a032bf8bb22a1eee301ba0cb6d4bbb77a35bed、OUT artifacts/consumer-slice-fixture-2026-09-25。最終文書revision/pinはsavepoint-evidence.json。
+- [固定方法/判断資料](anomaly-v03-consumer-source-runtime-plan.md)、[結果](results/anomaly-multiseed-v0.3-consumer-source-runtime-review-2026-09-25.md)、長い引継書§173。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。対象e9826bd0245cf26cf540e1ff470528c001f3cd5f、OUT artifacts/consumer-source-runtime-review-2026-09-25。今回source変更なし、最終文書revision/pinはsavepoint-evidence.json。
 
 ## 今回の成果と次の作業
 
-anomaly_v03_slice_fixture.attach_fixture_slices/validate_connected_documentを追加。元の架空入力、前工程の文書草稿、40clusterのcompact診断countsを対応づける。候補3×2層×12layout、counts/5秒delay度数/設備contextから本文1233行、補助4系列2835行、詳細9表を作る。全体だけでなくclusterごとの入力対応、class/equipment/mode結合・周辺表、target/modeの対応を確認する。
+5役割の静的候補はwriter23/reader25/架空推論文書17/独立監査部品15/inspection19、union41source（566551bytes）。39本raw/Git一致、generator.pyとmanifest.pyはCRLF/LF差のみ。元sourceは修正せず、候補確定後に別clean checkoutでraw一致を確認する方針。設定等18file・補助CLI2fileもraw一致。33外部importはstdlib名/位置候補、native/subprocess等15箇所、13method参照を保存。完全closureではない。
 
-13新規試験pass（failure/error/skip0、16.694秒）、旧suite再実行なし。母数/件数/null/offset除外/度数の和/行inventory/不整合拒否を確認。既存の記述集計・schema部品を使用。旧APIや科学条件は変更していない。少数drawは試験fixture作成のみ、接続処理は主CIを再計算しない。
+直近4工程の54試験は保存点/test-results/source pinで照合した歴史的記録。今回unit test0。旧CI036ecb4からselected28sourceが変わり、旧CIは現候補全回帰の代替にしない。Python3.12のWindows必須条件は追加しない。
 
-保存例は前工程の主表を再利用し接続1.831秒。invented-slices.json（4337681bytes/SHA820ef31286fa1f572f8ffb9c1839695c4aefe2e7d29bb5565cb23076edac5844）、document-with-slices.json（3162172bytes/SHA1673653d73b9666fada8d3e7857ca2532846029912b84241784c80d3cfacce56）。保存後の元counts対応と正式validator拒否を確認。
+**次はanomaly_v03_consumer_reader.check_in_subprocessの起動を-I -S -Bへ変更し、通常権限の小さい別reader接続試験で確認する。** 現-I -Bのinterpreter-only probeはno_site=0/system site-packagesあり、-I -S -Bはno_site=1/site未importで当該pathなし。2probeでOS26200.9457/Python3.14.0一致、project module import0。現コードはまだ変更していない。
 
-測定processの最大private 70.88MiB、最小空きRAM 9.98GiB / commit余裕 18.87GiB、例の保存後C/D 125.54/370.16GiB。 OS26200.9457/Python3.14.0。外側selected=null、performance=not_evaluated、formal/promotion/S6/trust=false。登録holdout/新評価/実データbootstrap0。
+既存readerとそのtestsを変更する工程になるため、今回pinとの差は意図した変更として分けて記録し、過去保存点のpinを更新しない。元の公開report/markerは保全。旧720評価や算術suiteは再実行せず、起動条件・保存済み架空結果の接続・失敗時ownerを必要範囲だけ確認する。次いでsource/runtime証拠validatorを具体化する。
 
-**次は現consumerのsource/runtime依存一覧と固定方法を更新し、正式実行前の残件・判断資料をまとめる。** 静的な依存候補とraw/Git bytesの対応、別clean checkoutでの固定、OS/Python/標準library・入口/監視/readerの受入範囲を具体化する。実freeze・実holdout・50,000回の実データbootstrap・新評価は始めない。必要な判断をまとめて提示できる状態にする。
+source/runtime受入は未完了。現readerがpinする6fileは静的25候補のclosureではない。inspection collectorはproducer/workflow必須・inspection scopeであり、役割別実processの受入にそのまま転用しない。Python exe/DLL、stdlib、extension、OS DLL/CRT、Git等の外部program、検索経路、実process前後を役割ごとに結合する必要がある。今回Git2.51.2.windows.1とPython exe/DLL pinを観測しただけでfull freezeにはしていない。
 
-document_draft.slicesを接続し、未充足はstatus/provenance/analysis_consumer/bootstrapの4欄。全体の残件数ではない。本文はincident recall＋availability、他系列とoffsetの対象外/試験外は補助記録。正式mapping採択や実観測からの導出受入、独立数値audit、運用契約・source/runtime freeze・予算・S4/S6は残る。
+freeze-plan.jsonに6作業、将来の採択2まとまり（正式運用契約/完全実行予算）を記録。正式consumer/証拠結合・最終auditの接続と予算が未完成なので、今は判断待ちで止める段階ではない。旧案240h/96GiB/空き32GiBは未適用。実holdout/正式gate/50,000実データdraw/新評価/実freezeは起動しない。
 
-前工程の保存点consumer-document-fixture-2026-09-25は9469bytes/SHA1ad997f5ef8fca4e16d0193974eea6defdae6319505d2487d6c8a57fa431b6c3。実装e2abbdce00719db482253c140a200d0776288284、文書a0e37dfc16e23cb6b3b33720f5c2346d3c1d1309。v1 API/保存例は変更せず、今回v1にslicesを接続する別formatを追加した。
+主確認7.670秒、最大private 52.37MiB、最小空きRAM 10.26GiB / commit余裕 18.97GiB、主確認後C/D 124.43/370.49GiB。 旧境界とdirty guard不変、banto-24 PAUSED。Windows更新は実値記録方針を維持し、旧formal pin9168と過去runtimeを保全。principal/UAC/ACL/同時書換え試験は保留、Phase2/3全体は未完了。
 
-旧境界・dirty guard不変、banto-24 PAUSED。principal/UAC/ACL/同時書換え作業は保留。Phase2/3全体は未完了。
+## 直前のslice接続
+
+実装52a032bf8bb22a1eee301ba0cb6d4bbb77a35bed、文書e9826bd0245cf26cf540e1ff470528c001f3cd5f、OUT consumer-slice-fixture-2026-09-25。manifest9528bytes/SHAd369b8c848d9137f9a95279eff84746cf06ef9854cf5bd830f5fd645d64d4fe0。13試験pass、本文1233行/補助2835行/詳細9表。文書の未充足はstatus/provenance/analysis_consumer/bootstrap。slicesの接続は架空入力のmapping確認で、正式採択やraw観測導出の受入ではない。
 
 ## 直前の別process reader
 

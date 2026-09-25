@@ -4037,3 +4037,12 @@ T11/T12 engineering部分を接続。再封印不整合は元保存点とのbyte
 13新規試験pass、failure/error/skip0、16.694秒。旧suite再実行なし。保存例は前工程の主CIを再利用し、接続1.831秒、入力4337681bytes・出力3162172bytes。正式validatorの拒否を確認。測定processの最大private 70.88MiB、最小空きRAM 9.98GiB / commit余裕 18.87GiB、例の保存後C/D 125.54/370.16GiB。 OS26200.9457/Python3.14.0。旧境界・dirty guard不変、banto-24 PAUSED。
 
 草稿6項目を配置、status/provenance/analysis_consumer/bootstrapはnull。新評価/登録データ/実データbootstrap0。正式mapping採択・source/runtime受入・独立S6は未完了。次は最新consumerの依存一覧/固定方法と正式実行前の判断資料を整理する。正式freeze・holdout・上限変更・保留principal/UAC/ACL作業は始めない。
+
+
+## 173. 最新consumerのsource/runtime候補と固定方法（2026-09-25）
+
+[計画](../anomaly-v03-consumer-source-runtime-plan.md)、[結果](anomaly-multiseed-v0.3-consumer-source-runtime-review-2026-09-25.md)。対象e9826bd0245cf26cf540e1ff470528c001f3cd5f、OUT artifacts/consumer-source-runtime-review-2026-09-25。source変更なし、最終文書revision/pinはsavepoint-evidence.json。5役割union41source/566551bytes、設定等18file・CLI2fileを照合。39source raw一致、generator.py/manifest.pyは改行差のみ。33stdlib候補、dynamic/native/subprocess15箇所、13method参照を記録。closure/freezeではない。
+
+直近4保存点の54試験記録とsource pinを照合し、unit test0。起動probe2件では-I -Bにsystem siteが残り、-I -S -Bで除外。project import0、OS26200.9457/CPython3.14.0一致。Python exe/DLLとGit2.51.2.windows.1のpinを観測、全DLL/stdlib/外部tool閉包は未確認。主確認7.670秒、最大private 52.37MiB、最小空きRAM 10.26GiB / commit余裕 18.97GiB、主確認後C/D 124.43/370.49GiB。
+
+6作業と将来の採択2まとまりを保存。次はreaderへ-S追加、通常権限の小さい接続試験。続いてsource/runtime証拠validatorを具体化する。正式consumer/証拠結合/予算が揃う前に採択待ちとしない。旧240h/96GiB案は未適用。実freeze・正式評価0、旧境界/dirty guard/banto-24 PAUSEDを維持、principal/UAC/ACL/同時書換えは保留。

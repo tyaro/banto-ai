@@ -1,5 +1,7 @@
 # 単一writer方針での解析consumer入出力契約案
 
+2026-09-25追記：[source/runtime固定方法](anomaly-v03-consumer-source-runtime-plan.md)を更新。最新41source候補、raw改行差2本、system siteを除く起動案を記録。正式consumer/役割別証拠と予算を揃えた後に採択する方針で、本契約はdraftを維持。
+
 2026-09-25追記：[架空診断のslice接続](anomaly-v03-slice-fixture.md)を実装。本文1233行、補助4系列2835行、13試験pass。提案した単一指標mappingを試験した段階で、正式採択状態はdraftのまま。source/runtime固定対象と残件の整理へ進む。
 
 2026-09-25追記：[架空40clusterの文書adapter](anomaly-v03-document-fixture.md)を追加。12新規試験pass、9表180gateを10項目の草稿へ配置し、不足5欄をnullで明示。正式運用契約はdraft、実holdout/正式bootstrapは未実行。次は架空診断のslice行接続。

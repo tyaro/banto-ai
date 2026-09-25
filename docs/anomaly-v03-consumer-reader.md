@@ -1,5 +1,7 @@
 # engineering結果の別process readerと外側の確認記録
 
+2026-09-25確認：[source/runtimeレビュー](anomaly-v03-consumer-source-runtime-plan.md)で、現-I -Bにはsystem site-packagesが残ることを観測。次の変更案は-I -S -B。以下は現行APIの説明で、まだ-Sを適用していない。
+
 `anomaly_v03_consumer_reader` は、[engineering consumer](anomaly-v03-engineering-consumer.md)のwriterを閉じた後に、保存済みレポートを別processで確認する。[確認結果](results/anomaly-multiseed-v0.3-consumer-separate-reader-2026-09-25.md)。既存のprocess監視とLocalPublication readerを使用し、通常権限で動く。
 
 ## API/CLI

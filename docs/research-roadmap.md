@@ -271,3 +271,10 @@ T11/T12のengineering部分が接続できました。次は40-cluster入力・�
 [slice接続adapter](anomaly-v03-slice-fixture.md)で、異常検出率・信号利用可能率の本文1233行と、4系列の補助表2835行を配置しました。13新規試験が通過し、cluster単位と全体の件数・遅延、結合表と周辺表、試験内外の参照数を確認しています。[結果](results/anomaly-multiseed-v0.3-consumer-slice-fixture-2026-09-25.md)。
 
 正式実行前の練習用データによる接続です。文書の残る4欄は実行状態・producer証拠・consumer source・正式bootstrapで、正式受入や実行の完了ではありません。次は最新consumerのsource/runtime固定対象と判断資料を整理します。Phase2/3全体は未完了です。
+
+
+### v0.3追記: source/runtime固定対象の更新（2026-09-25）
+
+[固定方法と判断資料](anomaly-v03-consumer-source-runtime-plan.md)を保存しました。最新41sourceと設定等18fileを照合し、改行差2本を保全。直近54試験の証拠を再利用し、unit testを再実行していません。Python起動条件の比較から、次はreaderへ-Sを追加する小さな接続変更を行います。[結果](results/anomaly-multiseed-v0.3-consumer-source-runtime-review-2026-09-25.md)。
+
+正式consumer・役割別source/runtime証拠・全体予算を先に完成させ、その後に運用契約/実行予算を判断する順序です。実freeze、正式gate/holdout、S4/S6、Phase2/3全体は未完了です。
