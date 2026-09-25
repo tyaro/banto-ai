@@ -4055,3 +4055,12 @@ T11/T12 engineering部分を接続。再封印不整合は元保存点とのbyte
 14接続試験pass、failure/error/skip0、3.963秒。実子の起動flag/site除外と架空公開結果の読取を確認。-Sだけを外した対照1件はno_site=0で期待どおり失敗し、sourceは変更していない。timeout/終了未確認は既存模擬試験、7子processの実監視は終了確定。試験processの最大private 32.27MiB、監視した子の最大private 21.44MiB。試験前後の最小空きRAM 11.15GiB / commit余裕 19.45GiB、試験後C/D空き 124.34/365.97GiB。
 
 OS26200.9457/Python3.14.0。旧境界・dirty guard不変、banto-24 PAUSED。新評価/登録データ/正式bootstrap/freeze0。次は役割別source/runtime証拠validator。完全closure、正式consumer・最終audit/資源予算・S4/S6は未完了、principal/UAC/ACL/同時書換えは保留。
+
+
+## 175. consumerの実行証拠と供給bytesの結合（2026-09-25）
+
+[API](../anomaly-v03-consumer-evidence.md)、[結果](anomaly-multiseed-v0.3-consumer-execution-evidence-2026-09-25.md)。実装c79fc9e5db7d486a22c2ed4b5f5e75ca0027f7a0、OUT artifacts/consumer-execution-evidence-2026-09-25。新規module/test2本。analysis/audit/readerの外部期待値に前後source/runtime、process、全入出力bytesを結ぶ。16架空試験pass、failure/error/skip0、0.081秒。自己申告pass・役割/PID生成token違い・bytes差・未終了・前後OS差を拒否。
+
+試験processの最大private 27.20MiB、試験前後の最小空きRAM 11.20GiB / commit余裕 19.57GiB、試験後C/D空き 124.34/365.97GiB。 前工程47code/18data pin・旧境界/dirty guard不変、banto-24 PAUSED。実process採取・評価・登録データ・bootstrap0。成功はsupplied-bytes-only、正式受入/全closure/実行真正性/S6ではない。
+
+次：通常権限readerの実際の起動観測と外側で保持した期待値を、このvalidatorへ接続する。最初は既存の小さな架空公開結果で確認し、親の観測値を子の値として流用しない。 正式consumer・最終auditと予算、source/runtime受入は残る。正式freeze/holdoutや保留principal/UAC/ACLは開始しない。

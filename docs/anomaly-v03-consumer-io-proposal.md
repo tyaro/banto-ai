@@ -1,5 +1,7 @@
 # 単一writer方針での解析consumer入出力契約案
 
+2026-09-25追記：T09の部品として[実行証拠validator](anomaly-v03-consumer-evidence.md)を追加し16架空試験pass。外部期待値にrole/process/source/runtime/入出力bytesを結ぶ。実観測の採取・正式full document受入へは未接続で、契約draftを維持。
+
 2026-09-25追記：engineering readerの`-I -S -B`起動を実装し、14接続試験passと旧起動条件の検出を確認。[結果](results/anomaly-multiseed-v0.3-consumer-reader-no-site-2026-09-25.md)。次は役割別source/runtime証拠validator。契約のdraft状態は維持。
 
 2026-09-25追記：[source/runtime固定方法](anomaly-v03-consumer-source-runtime-plan.md)を更新。最新41source候補、raw改行差2本、system siteを除く起動案を記録。正式consumer/役割別証拠と予算を揃えた後に採択する方針で、本契約はdraftを維持。

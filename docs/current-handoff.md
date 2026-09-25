@@ -1,23 +1,25 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-25 JST。**engineering readerに-Sを追加、14試験pass。次は役割別source/runtime証拠validatorの具体化。**
+更新: 2026-09-25 JST。**consumer実行証拠validatorを追加、16架空試験pass。次は通常権限readerの実起動観測と結合。**
 
-- [API](anomaly-v03-consumer-reader.md)、[結果](results/anomaly-multiseed-v0.3-consumer-reader-no-site-2026-09-25.md)、[固定計画](anomaly-v03-consumer-source-runtime-plan.md)、長い引継書§174。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装863af36c74aad1bc63ff42bd5b2b469c748882df、OUT artifacts/consumer-reader-no-site-2026-09-25。最終文書revision/pinはsavepoint-evidence.json。
+- [API](anomaly-v03-consumer-evidence.md)、[結果](results/anomaly-multiseed-v0.3-consumer-execution-evidence-2026-09-25.md)、[固定計画](anomaly-v03-consumer-source-runtime-plan.md)、長い引継書§175。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装c79fc9e5db7d486a22c2ed4b5f5e75ca0027f7a0、OUT artifacts/consumer-execution-evidence-2026-09-25。最終文書revision/pinはsavepoint-evidence.json。
 
 ## 今回の成果と次の作業
 
-子readerを-I -S -B起動に変更。14試験（既存13＋起動観測1）failure/error/skip0、3.963秒。子のno_site=1、site未import、system/user siteと環境指定先の除外、架空公開結果の読取成功を確認。観測コードは試験時のbootstrap先頭だけに挿入し、本体の起動optionは維持。既存成功試験では通常bootstrapを使う。旧条件として-Sを除去した新fixtureの対照1件はno_site=0を検出して期待どおり失敗。本体変更や新評価ではない。
+anomaly_v03_consumer_evidence.validate_execution_evidenceを追加。fixture/engineering-dev-smokeのanalysis/audit/readerを対象に、外部に保持した期待値とraw証拠pin、前後source/runtime、process identity/command、全source/runtime/input/output bytesを対応づける。新規16試験pass、failure/error/skip0、0.081秒。期待値まで偽造された場合の実行真正性は保証せず、execution_authenticated/full closure/formal等falseを返す。
 
-試験processの最大private 32.27MiB、監視した子の最大private 21.44MiB。試験前後の最小空きRAM 11.15GiB / commit余裕 19.45GiB、試験後C/D空き 124.34/365.97GiB。 OS26200.9457/Python3.14.0、banto-24 PAUSED。監視側のruntime前後一致は子のfull runtime受入とは区別。既存owner保持・失敗記録・元公開物不変を維持し、未完了の確認directoryを再利用しない。
+source descriptorは既存形式。Windows/AMD64・CPython3.14.0・-I -S -Bが初期profile。OS更新はinvocationごとに実値記録を許し、同一実行内の変化を拒否。formal/inspection自己申告pass・役割違い・PID再利用/token違い・欠けたsource・bytes差・未終了を拒否。成功返り値が持つinput/output pinは全供給byte照合済みだが、実process採取へはまだ未接続。既存document_draftのanalysis_consumer=nullは維持。
 
-前工程consumer-source-runtime-reviewの保存点18344bytes/SHA8747c3b4b2b4cd7e7094bf9c51a6731c3d7f962e8a47e0b87f44e29ddadfcf37から変更前47code/18data pin一致を確認。意図した変更はreaderとそのtestsの2本で、過去pinを更新しない。旧boundary、dirty guard、本流clean6f1285d・実計算clean c01d1c9・closedを保全。
+試験processの最大private 27.20MiB、試験前後の最小空きRAM 11.20GiB / commit余裕 19.57GiB、試験後C/D空き 124.34/365.97GiB。 新たなruntime collector/子process/登録データ/評価/bootstrapは0。前工程47code/18data pinは不変、新規module/test2本を追加。旧boundary・dirty guard・closedを保全、banto-24 PAUSED。資源snapshotは今回の監視値で、保存例のOS/CPU/PID/file内容は架空。
 
-**次はsource/runtime証拠validatorを具体化する。** [計画](anomaly-v03-consumer-source-runtime-plan.md)の役割・revision・process/起動条件・input/output対応をまず小さいfixtureで実装し、自己申告pass、役割/source違い、終了未確認、前後差を拒否する。現readerがpinする6fileは静的25候補のclosureではない。既存inspection collectorはinspection scope/producer必須なので、そのまま正式受入に転用しない。
+**次の作業：通常権限readerの実際の起動観測と外側で保持した期待値を、このvalidatorへ接続する。最初は既存の小さな架空公開結果で確認し、親の観測値を子の値として流用しない。** 呼出し側が保持するinvocation_id/start_token・実PID/commandと、別process側の起動観測、指定revisionのsource bytes、保存済み結果のbytesを対応づける。証拠から期待値を自己採用しない。新APIの期待値/Mappingは信頼した呼出し側の責務で、今後その採取adapterが必要。最初の接続は通常権限・単一writer終了後・新しい確認directoryに限る。
 
-静的union41source、設定等18file、CLI2file、33stdlib候補・native等15箇所/13参照は前工程の候補記録。generator.pyとmanifest.pyのraw CRLF/LF差は保全し、最終候補の別clean checkoutで確認する。Python exe/DLL・stdlib/extension・OS DLL/CRT・Git等の実process結合と完全closureは未完了。Windows更新は実値記録を維持、旧formal pin9168は変更しない。Windows3.12の必須条件は追加しない。
+前工程readerは実装863af36c74aad1bc63ff42bd5b2b469c748882df/保存86fc575480da0549e2f6e9ecaf0c2b3cce87b181、OUT consumer-reader-no-site-2026-09-25。manifest16722bytes/SHA64b3e6010c59b2123ebcf519c97d95ec3f5f86524d47a182f2deff70c38a133e。14試験passと-S除去の対照検出済み。未終了owner保持、公開結果保全、既存失敗directory非再利用を維持。今回はこのsuiteを再実行していない。
 
-正式consumer・証拠結合・最終audit・全体予算を具体化してから運用契約/予算を判断する。現時点で判断待ちにしない。240h/96GiB案は未適用。実freeze・正式gate/holdout・50,000実データdraw・新評価、保留principal/UAC/ACL/同時書換え試験を起動しない。Phase2/3全体は未完了。
+静的41source/18data候補はe9826bd時点のレビュー。reader6file pinは25静的候補のclosureではなく、inspection collectorはproducer/workflow必須のinspection scope。generator.py/manifest.pyの既知raw CRLF/LF差は保全し、候補確定時に別clean checkoutで確認する。source/runtime full closure、正式consumer・最終audit・資源予算は未完了。旧CIを現候補の全回帰と扱わず、Windows3.12必須化もしない。
+
+正式契約/予算を判断できる実装・証拠を先に仕上げる。240h/96GiB案は未適用、実freeze・正式gate/holdout・50,000実データdraw・新評価と保留principal/UAC/ACL/同時書換え試験は起動しない。旧formal OS pin9168不変。Phase2/3全体は未完了。
 
 ## 直前のslice接続
 

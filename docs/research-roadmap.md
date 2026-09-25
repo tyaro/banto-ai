@@ -285,3 +285,10 @@ T11/T12のengineering部分が接続できました。次は40-cluster入力・�
 保存結果を読む子processに-Sを追加し、PCに追加されたPython packageを起動時に取り込まない条件へ変更しました。架空入力による14接続試験が通過し、以前の条件に戻すと検出できることも確認しました。[結果](results/anomaly-multiseed-v0.3-consumer-reader-no-site-2026-09-25.md)。
 
 次は、解析・監査・読取の役割ごとに、実際のsourceと実行環境を結果へ結び付ける検査を具体化します。正式holdoutや性能判定は開始しておらず、Phase2/3全体は引き続き未完了です。
+
+
+### v0.3追記: 実行記録と入出力を照合する部品（2026-09-25）
+
+[実行証拠validator](anomaly-v03-consumer-evidence.md)を追加し、16件の架空試験を通過しました。処理の役割・プログラム・実行条件・入出力が、外部に保持した期待値と一致するかを確認します。役割の取り違えや途中の環境変化、結果の差し替えを検出します。[結果](results/anomaly-multiseed-v0.3-consumer-execution-evidence-2026-09-25.md)。
+
+次は実際の読取processから採取した記録と接続します。今回の架空記録の一致だけで実行の真正性や正式受入を認定せず、Phase2/3全体は未完了です。
