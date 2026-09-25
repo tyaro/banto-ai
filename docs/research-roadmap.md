@@ -239,3 +239,9 @@ v0.2のstandalone seed-cluster analysisは [`anomaly-multiseed-evaluation-plan-v
 [結合API](anomaly-v03-consumer-analysis-binding.md)を実装し、14新規試験が通過しました。全120区間・720評価の公開記録と集計入力が同じ最終attempt・input/evaluation hashを参照することを確認し、失敗履歴と判定不能46指標を維持しています。旧数値検証を再利用し、観測/scoreを再計算していません。[結果](results/anomaly-multiseed-v0.3-consumer-analysis-binding-2026-09-25.md)。
 
 次はengineering consumerの入力選択・記述結果までの入口を接続します。全payloadの新規認証、正式運用契約採択、source/runtime freeze、Phase 2/3全体は未完了です。
+
+### 2026-09-25：engineering consumerの入力から結果保存までを接続
+
+[API/CLI](anomaly-v03-engineering-consumer.md)を実装し、16新規試験が通過しました。7保存fileを認証し、全120区間720評価の記述結果18表・234主指標・5,670診断行を新規保存・読み戻し確認しました。旧数値検証を再利用し、集計や観測/scoreを再計算していません。[結果](results/anomaly-multiseed-v0.3-engineering-consumer-entry-2026-09-25.md)。
+
+次は契約案T01〜T12への対応と残件・容量時間予算を整理します。正式運用契約採択、source/runtime freeze、正式gate/holdout、S4/S6、Phase2/3全体は未完了です。

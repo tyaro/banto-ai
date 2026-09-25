@@ -1,5 +1,7 @@
 # 保存結果の独立検算と長時間実行の進行記録
 
+最新（2026-09-25、入口接続）：[engineering consumer](anomaly-v03-engineering-consumer.md)を実装。[16試験と保存結果の出力・読み戻し](results/anomaly-multiseed-v0.3-engineering-consumer-entry-2026-09-25.md)が完了。7保存fileを認証し、旧数値検証を再利用。次は契約案との対応と残件・容量時間予算を整理する。以下は各時点の履歴。
+
 最新（2026-09-25、集計入力の結合）: [監査済み集計と公開metadataの対応](anomaly-v03-consumer-analysis-binding.md)を実装。[14試験と全120区間の結合](results/anomaly-multiseed-v0.3-consumer-analysis-binding-2026-09-25.md)が完了。旧数値検証を再利用し、次はengineering consumer入口の接続。以下は各時点の履歴。
 
 2026-09-16。単一writerの運用改訂を継続する。独立ledger検算、固定plan・journalのmetadata検査/状態復元、旧6件trialとのpreflight証拠照合、metadata専用の追記writerは実装済み。全dev/smokeを動かすcampaign controllerは**未接続・実行未許可**。

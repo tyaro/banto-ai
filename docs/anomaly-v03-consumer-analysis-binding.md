@@ -1,5 +1,7 @@
 # 監査済み集計入力と公開記録の結合
 
+2026-09-25追記：[engineering consumer入口](anomaly-v03-engineering-consumer.md)へ接続済み。結合receiptと同じ入力の記述結果を選択し、数値を再計算せず専用directoryへ保存・読み戻しする。以下は結合API自体の仕様。
+
 `anomaly_v03_consumer_analysis_binding.authenticate_analysis_binding` は、[公開・終了記録reader](anomaly-v03-consumer-publication.md)の保存済み結果と、独立監査から作成済みの集計入力を照合する。数値や区間評価を再計算せず、導出元と採用attemptの対応を固定する。[確認結果](results/anomaly-multiseed-v0.3-consumer-analysis-binding-2026-09-25.md)。
 
 ```python

@@ -3989,3 +3989,13 @@ peak44.61MiB、最小RAM10.71GiB/commit余裕17.57GiB、C/D122.85/270.18GiB。�
 集計入力bytesと公開metadataへの参照は認証したが、旧算術/診断の独立検証は保存点から再利用した。historical_aggregate_authentication_reused/historical_diagnostic_join_reused=true。全payload/source-runtime受入/trust/analysis/execution/formal/promotion/S6/controllerプロセス終了はfalse。
 
 peak47.41MiB、最小RAM12.38GiB/commit余裕19.72GiB、C/D122.79/268.83GiB。旧保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変、banto-24 PAUSED。次は結合receiptからengineering consumerの入力選択・記述結果までを接続。既存APIと検証履歴を使い、重い再計算や正式gate/holdoutを起動しない。正式採択/freeze/S4/S6/Phase2/3は未完了。
+
+## 168. engineering consumerの入力選択・記述結果保存（2026-09-25）
+
+[API/CLI](../anomaly-v03-engineering-consumer.md)、[結果](anomaly-multiseed-v0.3-engineering-consumer-entry-2026-09-25.md)。実装6567a857455847baf225f552abf5ff9df6644c08、OUT artifacts/engineering-consumer-entry-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。結合receiptと記述結果の2保存点を外部pinで固定し、明示analysis-inputs.jsonを含む7fileを各1回認証。同じclosed/input anchor/hashを照合し、LocalPublicationへ4payloadを保存、writer終了後にreaderで確認した。
+
+16新規試験pass（failure/error/skip0、0.560秒）。実保存7,896,608bytes、約2.055秒で入口から出力・読取を確認。全120区間720評価、dev8/smoke2、18表234主指標5,670診断行、chunk119 attempt2、過去失敗1件、判定不能46指標を保持。JSONのcanonical化は値を変えず、MD raw一致、HTMLは末尾LFだけ補った。観測/score読取・集計/比率/score再計算・追加評価/bootstrap0。
+
+初回tuple比較の単体試験失敗を修正し、その後の実接続で判明したHTML末尾LF欠落に最小補正を追加。test-attempt-1/2と未完了publishedを保全し、最終成功はpublished-success。marker97c8bc637328cb173e6c1a678765c7785512fb2ad7b66ed8af15939e819c874e、receipt11507bytes/SHAe2ac5bb2b36d5121062dd8bdc790556cd767cd22a7168ec0579d5aab6570cf3a。
+
+peak37.25MiB、最小RAM12.53GiB/commit余裕19.81GiB、C/D122.78/268.83GiB。OS実値os-state.json。旧保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変、banto-24 PAUSED。旧公開/数値/schema検証は保存点から再利用し、source-runtime受入/trust/formal/promotion/S6等へ格上げしない。次は契約案T01〜T12への対応と残件・容量時間予算の整理。正式採択/freeze/holdout/S4/S6/Phase2/3全体は未完了。

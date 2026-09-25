@@ -1,5 +1,7 @@
 # 単一writer方針での解析consumer入出力契約案
 
+最新実装（2026-09-25）：[engineering consumer入口](anomaly-v03-engineering-consumer.md)の16試験と実接続を完了。既存dev/smokeの記述結果を再利用して通常権限で保存・読み戻しする。新しい数値解析や正式評価は起動しない。本契約案の正式採択状態はdraftのまま。
+
 実装追記（2026-09-25）：[入力validator](anomaly-v03-consumer-input.md)・[checkpoint adapter](anomaly-v03-consumer-checkpoints.md)・[公開reader](anomaly-v03-consumer-publication.md)に続き、[監査済み集計入力との結合](anomaly-v03-consumer-analysis-binding.md)を追加。14新規試験と120区間720評価の導出対応を確認し、過去失敗・判定不能を保持。旧算術検証を再利用し、新規解析/全payload認証/正式採択は行わない。全体契約はdraftのまま。
 
 2026-09-25。提案ID `anomaly-v03-consumer-io-proposal-v1`、状態 **draft / 実行許可なし**。基準revision `0b75c1ea89a15e04dbde0963ae2b634648a10201`。[受入残件表](results/anomaly-multiseed-v0.3-acceptance-gap-review-2026-09-25.md)の1「運用契約」と2「consumer接続」を具体化する。これは正式な受入証明やfreezeではない。

@@ -1,23 +1,25 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-25 JST。**集計入力と公開metadataの結合を実装、14試験pass。全120区間/720評価が同じ最終attempt・入力hashへ結び付くことを確認。次はengineering consumerの入口接続。**
+更新: 2026-09-25 JST。**engineering consumer入口の接続が完了。16試験pass、実保存7ファイルから記述結果を出力・読み戻し済み。次は契約案との対応と残件・容量時間予算の整理。**
 
-- [API](anomaly-v03-consumer-analysis-binding.md)、[結果](results/anomaly-multiseed-v0.3-consumer-analysis-binding-2026-09-25.md)。長い引継書§167。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装c4f04121764c882e1cb885f9fea173e4bc2d6cc3。OUT artifacts/consumer-analysis-binding-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。
+- [API/CLI](anomaly-v03-engineering-consumer.md)、[結果](results/anomaly-multiseed-v0.3-engineering-consumer-entry-2026-09-25.md)。長い引継書§168。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装6567a857455847baf225f552abf5ff9df6644c08。OUT artifacts/engineering-consumer-entry-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。
 
 ## 今回の成果と次の作業
 
-anomaly_v03_consumer_analysis_binding.authenticate_analysis_bindingを追加。明示5保存点（publication/analysis/adapter/seeds/completed）と外部publication/analysis raw pinから10artifactを各1回認証。旧報告内のpathは照合だけで、payloadへアクセスしない。元集計入力を複製せずpath/raw pinと導出関係を小さなreceiptへ保存する。
+anomaly_v03_engineering_consumerのprepare_engineering_result/run_engineering_consumerとCLI mainを追加。外部保持した結合・記述保存点の2pinと明示analysis-inputs.jsonから、固定7file/7,896,608bytesを認証。元レポートの同じanalysis anchor/input pin/campaignを確認し、LocalPublicationで4payloadを新規保存、writer終了後にreaderで全出力を照合した。
 
-14新規試験pass（failure/error/skip0、11.189秒）。実保存記録10artifact/9,785,474bytesを0.542秒で結合。120区間720評価、公開管理記録960参照、input hash4,320件、evaluation hash720件が一致。10seed cluster/90seed表/18role表の元集計欄も保持。区間119 attempt2を選択し、過去失敗1件と判定不能46指標を保全。観測/score payload読取・score/集計再計算・新評価・bootstrapは0。
+16新規試験pass（failure/error/skip0、0.560秒）。実接続は同一processのCLI mainで約2.055秒。120区間/720評価、18表・234主指標・5,670診断行を保持。最終chunk119 attempt2、過去失敗1件、判定不能46指標を保持。集計入力はhash照合のみで解析・コピーなし。JSONはcanonical化して値は完全一致、MD raw一致、HTML末尾LFだけ追加。観測/score読取、集計/比率/score再計算、追加評価/bootstrap0。
 
-重要: publication_metadata_binding_verified/analysis_input_bytes_verified=true。historical_aggregate_authentication_reused/historical_diagnostic_join_reused=trueであり、旧算術・診断検証を再実行していない。full_payload/source-runtime受入/trust/analysis/execution/formal/promotion/S6/controllerプロセス終了はfalse。前工程の公開metadata/worker終了記録認証と合わせても正式受入へ格上げしない。
+成功保存published-successのmarker hash97c8bc637328cb173e6c1a678765c7785512fb2ad7b66ed8af15939e819c874e、receipt11507bytes/SHAe2ac5bb2b36d5121062dd8bdc790556cd767cd22a7168ec0579d5aab6570cf3a。閲覧はpayload/report.md/html。初回tuple比較の単体試験失敗と、その後のHTML末尾LF欠落による未完了publishedをtest-attempt-1/2とともに保全。成功した最終出力と区別する。
 
-外部publication保存点7257bytes/SHA256 00b5e1bb5a668e2636091938604492fc486e78b8c83b3fe3ac1c50da738feaba、analysis保存点7305bytes/SHA256 8527dfe71bcb7544f6276b14eeb8bd853491cd2be87ee4f3e8bec2375b0f876dを使用。結果はanalysis-binding.json/saved-binding-check.json。peak47.41MiB、最小RAM12.38GiB/commit19.72GiB、C/D122.79/268.83GiB。
+現在のanalysis/report bytesは認証。旧公開metadata・集計・診断・cell/schema検証は再利用し、全payload/source-runtime正式受入/trust/analysis/execution/formal/promotion/S6/controllerプロセス終了はfalse。local_verifiedは通常権限の新しい結果保存の確認に限る。契約案はdraft、正式gate/holdoutを開いていない。
 
-**次は結合receiptからengineering consumerの入力選択・記述結果までの入口をつなぐ。** 既存の独立監査・集計・記述結果APIを再利用し、重い観測/scoreを再計算しない。旧検証の再利用範囲と、新しく認証したbytesを区別する。正式gate/holdout・追加評価は起動しない。
+外部結合保存点7032bytes/SHA3d7d53fc00ad90de695d44e128d29c45467318da58e11b8ab3bf9d0571521305（consumer-analysis-binding-2026-09-25）。外部記述保存点7932bytes/SHA79364b641f8f7a047298ca73d46fcdc49b1931c23394a043cb8802255392af39（descriptive-report-2026-09-25）。旧OUT不変。
 
-[契約案](anomaly-v03-consumer-io-proposal.md)はdraft。正式運用候補IDも未採択。保留principal作業は再開せずbanto-24 PAUSED。元科学条件・formal拒否を維持する。旧保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変。
+peak37.25MiB、最小RAM12.53GiB/commit余裕19.81GiB、C/D122.78/268.83GiB。OS実値os-state.json。banto-24 PAUSED、旧保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変。
+
+**次は契約案T01〜T12へ実装済みの入口を対応付け、未接続項目と容量・所要時間の見積もりを整理する。** 重い評価・観測/score検算を繰り返さず、正式採択/freezeの判断に必要な残件を具体化する。保留principal/P-U試験は再開しない。
 
 ## 前工程の受入残件
 
