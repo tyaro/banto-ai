@@ -4028,3 +4028,12 @@ T11/T12 engineering部分を接続。再封印不整合は元保存点とのbyte
 今回の測定process peak private 31.09MiB、最小空きRAM 10.01GiB / commit余裕 19.26GiB、例の保存後C/D 129.89/327.19GiB。 OS26200.9457/Python3.14.0、旧境界とdirty guard不変、banto-24 PAUSED。新評価/登録データ読取/正式bootstrap0。架空CI計算は実施、formal/promotion/S6/trust=false、実selected=null。
 
 草稿のstatus/provenance/analysis_consumer/bootstrap/slicesはnull、正式full documentは未完了。次は架空診断からincident recall/availability slice行を作り、草稿へ接続する。正式実行/freeze・追加上限変更・保留principal/UAC/ACL作業は開始しない。
+
+
+## 172. 架空診断のsliceを文書へ接続（2026-09-25）
+
+[API](../anomaly-v03-slice-fixture.md)、[結果](anomaly-multiseed-v0.3-consumer-slice-fixture-2026-09-25.md)。実装52a032bf8bb22a1eee301ba0cb6d4bbb77a35bed、OUT artifacts/consumer-slice-fixture-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。40clusterの診断countsから本文1233行・補助4系列2835行・詳細9表を接続。個別clusterと主表への件数/delay/profile対応、incident結合・周辺表、target/modeを検査する。既存v1と実入口は不変。
+
+13新規試験pass、failure/error/skip0、16.694秒。旧suite再実行なし。保存例は前工程の主CIを再利用し、接続1.831秒、入力4337681bytes・出力3162172bytes。正式validatorの拒否を確認。測定processの最大private 70.88MiB、最小空きRAM 9.98GiB / commit余裕 18.87GiB、例の保存後C/D 125.54/370.16GiB。 OS26200.9457/Python3.14.0。旧境界・dirty guard不変、banto-24 PAUSED。
+
+草稿6項目を配置、status/provenance/analysis_consumer/bootstrapはnull。新評価/登録データ/実データbootstrap0。正式mapping採択・source/runtime受入・独立S6は未完了。次は最新consumerの依存一覧/固定方法と正式実行前の判断資料を整理する。正式freeze・holdout・上限変更・保留principal/UAC/ACL作業は始めない。

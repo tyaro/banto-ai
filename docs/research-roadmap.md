@@ -264,3 +264,10 @@ T11/T12のengineering部分が接続できました。次は40-cluster入力・�
 [文書adapter](anomaly-v03-document-fixture.md)で40個の架空clusterから9表180gateを組み立て、正式文書の10項目へ対応づけました。12新規試験が通過し、候補差の信頼区間を手計算とも照合しています。[結果](results/anomaly-multiseed-v0.3-consumer-document-fixture-2026-09-25.md)。
 
 不足するstatus・provenance・consumer source・正式bootstrap・slicesの5欄はnullの草稿です。実データや正式採択の結果ではありません。次は架空診断からslice行を接続します。正式契約、source/runtime freeze、正式gate/holdout、独立S6、Phase2/3全体は引き続き未完了です。
+
+
+### v0.3追記: 架空診断の文書接続（2026-09-25）
+
+[slice接続adapter](anomaly-v03-slice-fixture.md)で、異常検出率・信号利用可能率の本文1233行と、4系列の補助表2835行を配置しました。13新規試験が通過し、cluster単位と全体の件数・遅延、結合表と周辺表、試験内外の参照数を確認しています。[結果](results/anomaly-multiseed-v0.3-consumer-slice-fixture-2026-09-25.md)。
+
+正式実行前の練習用データによる接続です。文書の残る4欄は実行状態・producer証拠・consumer source・正式bootstrapで、正式受入や実行の完了ではありません。次は最新consumerのsource/runtime固定対象と判断資料を整理します。Phase2/3全体は未完了です。

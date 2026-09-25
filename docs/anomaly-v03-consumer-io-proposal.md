@@ -1,5 +1,7 @@
 # 単一writer方針での解析consumer入出力契約案
 
+2026-09-25追記：[架空診断のslice接続](anomaly-v03-slice-fixture.md)を実装。本文1233行、補助4系列2835行、13試験pass。提案した単一指標mappingを試験した段階で、正式採択状態はdraftのまま。source/runtime固定対象と残件の整理へ進む。
+
 2026-09-25追記：[架空40clusterの文書adapter](anomaly-v03-document-fixture.md)を追加。12新規試験pass、9表180gateを10項目の草稿へ配置し、不足5欄をnullで明示。正式運用契約はdraft、実holdout/正式bootstrapは未実行。次は架空診断のslice行接続。
 
 2026-09-25追記：[別process reader](anomaly-v03-consumer-reader.md)を追加し、T11の外側状態とT12の順次読取をengineeringの保存済み記述結果へ接続。13試験と実レポートの別process確認が通過。独立した数値audit・正式full document・source/runtime受入は残る。

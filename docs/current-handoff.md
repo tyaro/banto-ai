@@ -1,23 +1,27 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-25 JST。**架空40clusterの推論→結果文書草稿adapterを保存、12試験pass。次は架空診断のslice行を草稿へ接続する。**
+更新: 2026-09-25 JST。**架空40clusterのsliceを文書へ接続し13試験pass。次は最新consumerのsource/runtime固定対象と正式実行前の判断資料を整理する。**
 
-- [API](anomaly-v03-document-fixture.md)、[結果](results/anomaly-multiseed-v0.3-consumer-document-fixture-2026-09-25.md)、長い引継書§171。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装e2abbdce00719db482253c140a200d0776288284、OUT artifacts/consumer-document-fixture-2026-09-25。最終文書revision/pinはsavepoint-evidence.json。
+- [API](anomaly-v03-slice-fixture.md)、[結果](results/anomaly-multiseed-v0.3-consumer-slice-fixture-2026-09-25.md)、長い引継書§172。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装52a032bf8bb22a1eee301ba0cb6d4bbb77a35bed、OUT artifacts/consumer-slice-fixture-2026-09-25。最終文書revision/pinはsavepoint-evidence.json。
 
 ## 今回の成果と次の作業
 
-anomaly_v03_document_fixture.build_fixture_document/validate_fixture_documentを追加。invented-00〜39の固定40cluster、各12layouts/候補3/層2、1〜64drawの純粋関数。実IOや正式modeはなし。既存算術/閾値/schemaを再利用し、9表180gateと10項目の草稿へ接続。実際のdrawとcanonical input hashを記録し、欠けた正式証拠を補わない。
+anomaly_v03_slice_fixture.attach_fixture_slices/validate_connected_documentを追加。元の架空入力、前工程の文書草稿、40clusterのcompact診断countsを対応づける。候補3×2層×12layout、counts/5秒delay度数/設備contextから本文1233行、補助4系列2835行、詳細9表を作る。全体だけでなくclusterごとの入力対応、class/equipment/mode結合・周辺表、target/modeの対応を確認する。
 
-12新規試験pass、failure/error/skip0、1.085秒。40clusterの絶対/paired Type-7 CIを手計算照合、raw和・全delay・選択分岐・入力拒否・schema/出力改変を確認。旧suite再実行なし。初回1失敗はcontrol precision nullの試験側想定を修正し、test-attempt-1を保全。既存科学条件は不変。
+13新規試験pass（failure/error/skip0、16.694秒）、旧suite再実行なし。母数/件数/null/offset除外/度数の和/行inventory/不整合拒否を確認。既存の記述集計・schema部品を使用。旧APIや科学条件は変更していない。少数drawは試験fixture作成のみ、接続処理は主CIを再計算しない。
 
-invented-input.json（279174bytes/SHA0c269fc912a58533279b2c7aae832ad080805b5c36afd597002751ba3160dd93）→document-fixture.json（220078bytes/SHA2d26ad83778bc068ec41da01b9b84468a4e16b2e7c4a1a3a3b79021a769d1b5d）の例を保存。4draw/160index、0.089秒。正式validatorが草稿を拒否することを確認。
+保存例は前工程の主表を再利用し接続1.831秒。invented-slices.json（4337681bytes/SHA820ef31286fa1f572f8ffb9c1839695c4aefe2e7d29bb5565cb23076edac5844）、document-with-slices.json（3162172bytes/SHA1673653d73b9666fada8d3e7857ca2532846029912b84241784c80d3cfacce56）。保存後の元counts対応と正式validator拒否を確認。
 
-今回の測定process peak private 31.09MiB、最小空きRAM 10.01GiB / commit余裕 19.26GiB、例の保存後C/D 129.89/327.19GiB。 OS26200.9457/Python3.14.0。正式推論・正式結果文書の完了とはしない。外側selected=null、performance=not_evaluated、formal/promotion/S6/trust=false。架空入力の数値計算は行ったが、登録holdout/新評価/実データbootstrap0。
+測定processの最大private 70.88MiB、最小空きRAM 9.98GiB / commit余裕 18.87GiB、例の保存後C/D 125.54/370.16GiB。 OS26200.9457/Python3.14.0。外側selected=null、performance=not_evaluated、formal/promotion/S6/trust=false。登録holdout/新評価/実データbootstrap0。
 
-**次は非登録の架空40cluster診断入力からincident recall/availabilityの正式slice行を組立て、document_draft.slicesへ接続する。** 既存診断/schema部品を使い、raw母数・counts・delay・行inventoryを確認する。現入口のdev/smoke制限や正式schemaは緩和せず、実holdout/50,000回の実データbootstrap/新評価は起動しない。
+**次は現consumerのsource/runtime依存一覧と固定方法を更新し、正式実行前の残件・判断資料をまとめる。** 静的な依存候補とraw/Git bytesの対応、別clean checkoutでの固定、OS/Python/標準library・入口/監視/readerの受入範囲を具体化する。実freeze・実holdout・50,000回の実データbootstrap・新評価は始めない。必要な判断をまとめて提示できる状態にする。
 
-現在の草稿はstatus/provenance/analysis_consumer/bootstrap/slicesの5欄がnull。schema_version/result_type/candidate_tables/架空selected/架空decisionだけを配置済み。fixture identityとinvented宣言は登録データの起源認証ではない。5欄はプロジェクト全体の残件数ではない。正式契約・source/runtime freeze・予算・S4/S6も残る。
+document_draft.slicesを接続し、未充足はstatus/provenance/analysis_consumer/bootstrapの4欄。全体の残件数ではない。本文はincident recall＋availability、他系列とoffsetの対象外/試験外は補助記録。正式mapping採択や実観測からの導出受入、独立数値audit、運用契約・source/runtime freeze・予算・S4/S6は残る。
+
+前工程の保存点consumer-document-fixture-2026-09-25は9469bytes/SHA1ad997f5ef8fca4e16d0193974eea6defdae6319505d2487d6c8a57fa431b6c3。実装e2abbdce00719db482253c140a200d0776288284、文書a0e37dfc16e23cb6b3b33720f5c2346d3c1d1309。v1 API/保存例は変更せず、今回v1にslicesを接続する別formatを追加した。
+
+旧境界・dirty guard不変、banto-24 PAUSED。principal/UAC/ACL/同時書換え作業は保留。Phase2/3全体は未完了。
 
 ## 直前の別process reader
 

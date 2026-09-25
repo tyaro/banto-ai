@@ -1,5 +1,7 @@
 # 40-cluster推論と結果文書の架空入力adapter
 
+2026-09-25追記：[slice接続adapter](anomaly-v03-slice-fixture.md)を追加。v1と元の保存例は維持し、別formatの接続結果でslicesを埋める。13試験pass。以下は5欄未充足のv1 API仕様。
+
 `anomaly_v03_document_fixture` は、40個の非登録・架空クラスタを既存の推論/表adapterへ接続し、正式analysis schemaの10項目に対応する文書草稿を作る純粋関数。[試験結果](results/anomaly-multiseed-v0.3-consumer-document-fixture-2026-09-25.md)。ファイル操作・評価起動・公開・実runtime検査は行わない。
 
 ## 呼出し
