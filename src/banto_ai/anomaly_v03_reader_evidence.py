@@ -113,11 +113,18 @@ def _working_source(revision):
 def _git_sources(revision):
     evidence._digest(revision,40)
     executable=shutil.which('git');v.require(executable is not None,'Git unavailable')
-    executable=str(io.regular_path(Path(executable)))
+    tool_path=Path(executable);links=tool_path.lstat().st_nlink
+    v.require(links>=1,'invalid Git link count')
+    executable=str(io.regular_path(tool_path,links=links))
+    tool_pin=_pin(_file(tool_path,links=links))
     def git(*args):
-        return subprocess.check_output([executable,'-c','core.fsmonitor=false','-C',str(ROOT),*args],
+        evidence._raw(_file(tool_path,links=links),tool_pin,'Git bytes changed')
+        result=subprocess.check_output([executable,'-c','core.fsmonitor=false','-C',str(ROOT),*args],
             stdin=subprocess.DEVNULL,stderr=subprocess.PIPE,timeout=10,creationflags=subprocess.CREATE_NO_WINDOW,
             env={**os.environ,'GIT_OPTIONAL_LOCKS':'0','GIT_NO_LAZY_FETCH':'1'})
+        evidence._raw(_file(tool_path,links=links),tool_pin,'Git bytes changed')
+        return result
+    git.tool_record={'path':executable,'pin':tool_pin,'hardlinks':links,'full_tool_runtime_closure':False}
     v.require(git('rev-parse','HEAD').decode().strip()==revision,'reader revision changed')
     snapshots={n:git('show',revision+':'+n) for n in SOURCE_FILES}
     v.require(all(len(raw)<=MIB and _file(ROOT/n,MIB)==raw for n,raw in snapshots.items()),'selected working/Git bytes differ')
@@ -191,6 +198,7 @@ def check_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
         'reader_exit_confirmed':False,'reader_pid':None,'new_evaluations':0,'original_publication_modified':False}
     try:
         source,source_bytes,git=_git_sources(expected_revision)
+        _save(target/'source-tool.json',git.tool_record)
         runtime,runtime_bytes=_expected_runtime()
         prepared,receipt=consumer.prepare_engineering_result(request['binding_savepoint'],request['report_savepoint'],
             request['analysis_input'],expected_mode=request['mode'],expected_binding_pin=request['expected_binding_pin'],
