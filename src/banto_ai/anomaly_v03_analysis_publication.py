@@ -66,7 +66,7 @@ def _prepared(reference, result_pin, revision):
     consumer._same(pins,result['payload_pins'],'staged result inventory')
     consumer._same(pins,value['outputs'],'staged analysis evidence outputs')
     expected,_=analysis._prepare(request)
-    consumer._same(files,expected,'staged payload differs from authenticated originals')
+    v.require(files==expected,'staged payload differs from authenticated originals')
     retained.update({'payload/'+name:raw for name,raw in files.items()})
     return request,files,result,retained
 
@@ -99,7 +99,7 @@ remain separate states, and an unreaped reader retains its original owner.
     source,_,git=analysis._git_sources(expected_revision)
     consumer._same(v.strict_json(retained['evidence.json'])['source_before'],source,'analysis source differs from publisher')
     connector_raw=git('show',expected_revision+':'+SOURCE)
-    consumer._same(observed._file(ROOT/SOURCE,1024**2),connector_raw,'publication connector differs from Git')
+    v.require(observed._file(ROOT/SOURCE,1024**2)==connector_raw,'publication connector differs from Git')
     target.mkdir()
     outer={**evidence.CLOSED,'format':FORMAT,'mode':consumer.MODE,'status':'failed',
         'analysis_result_pin':result_pin,'analysis_directory':str(reference),'source_revision':expected_revision,
@@ -108,12 +108,12 @@ remain separate states, and an unreaped reader retains its original owner.
         'reader_exit_confirmed':False,'writer_closed_before_reader':False,'new_evaluations':0,
         'numerical_analysis_performed':False,'independent_numerical_audit_performed':False}
     def verify(saved):
-        consumer._same(set(saved),set(files),'chain publication inventory')
-        for name,raw in files.items():consumer._same(saved[name],raw,'chain publication bytes')
+        v.require(set(saved)==set(files),'chain publication inventory')
+        for name,raw in files.items():v.require(saved[name]==raw,'chain publication bytes')
     def unchanged():
         for name,raw in retained.items():
             evidence._raw(observed._file(reference/name,len(raw)),observed._pin(raw),'retained analysis changed')
-        consumer._same(observed._file(ROOT/SOURCE,1024**2),connector_raw,'publication connector changed')
+        v.require(observed._file(ROOT/SOURCE,1024**2)==connector_raw,'publication connector changed')
     try:
         unchanged();outer['publication_status']='unconfirmed'
         published=io.publish_local_result(parent,output_name,files,verify_semantics=verify)
