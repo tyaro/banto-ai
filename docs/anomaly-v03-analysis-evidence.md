@@ -63,3 +63,7 @@ profile指定時はpathとpinを必ず対で渡す。親は候補のpin/role/run
 子30秒/private512MiB/stdout+stderr1MiB、候補512KiB。payloadはJSON4MiB/Markdown1MiB/HTML2MiB/receipt1MiB、合計8MiB。入力は1file16MiB/合計32MiB。依存は最大512file/1file64MiB/合計256MiB。親Gitは各10秒で、親preflightを含む正式総予算は未確定。payload制限はchild/parent検査であり、supervisorの全directory容量監視ではない。
 
 候補は観測由来の`candidate-not-accepted`。source/runtime全閉包・memory code・実使用cacheを証明しない。numerical_analysis_performed/published/formal/promotion/S6/trust/execution_authenticated/full closure=false、document_draft.analysis_consumer=nullを維持。次は、照合済みの4payloadを既存のsingle-writer公開処理へ接続し、writer終了後の別readerまでを小さな架空入力で通す。公開時に解析証拠と保持pinを結合し、数値再計算や正式採択へ範囲を広げない。
+
+## 通常公開と別readerへの接続（2026-09-26）
+
+[publish_and_check](anomaly-v03-analysis-publication.md)で、外部result pinに結び付いたprofile付き成功の4payloadを既存LocalPublicationへ渡し、writer終了後のobserved readerへ接続した。全43試験pass。[結果](results/anomaly-multiseed-v0.3-analysis-publication-chain-2026-09-26.md)。解析側のpublished=falseは「解析処理自体は公開しない」の意味で維持し、公開状態は別chain resultのpublication_statusで記録する。数値再計算・正式文書・独立S6は含まない。

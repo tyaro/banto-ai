@@ -94,3 +94,19 @@ producerの過去実行revision `c01d1c978f78bab51391392d56cdcb7aab5afaab`と新
 ap01候補はclean 140e91de93e2cc43c45fab9efb9a7cbc6ece43c7、754tracked files/8,535,094bytesのGit/raw一致を検査。旧ao01/rp01/rd01、実計算checkout/本流/closed、元70b0の既知CRLF差と既存dirty文書を保全。banto-24 PAUSED。数値再計算・新評価・登録データ読取・実bootstrap・正式gate/holdout/freeze・principal/UAC/ACL・push/mergeなし。
 
 candidate-not-acceptedであり、正式source/runtime固定やmemory codeの証明ではない。analysisの対象は保存済み記述結果の認証・準備だけ。numerical_analysis_performed/published/formal/promotion/S6/trust/execution_authenticated/full closure=false、document_draft.analysis_consumer=nullを維持。次は、照合済みの4payloadを既存のsingle-writer公開処理へ接続し、writer終了後の別readerまでを小さな架空入力で通す。公開時に解析証拠と保持pinを結合し、数値再計算や正式採択へ範囲を広げない。 正式consumer/文書provenance/独立数値audit/完全資源予算は残る。
+
+## 解析証拠から通常公開・別readerへ（2026-09-26）
+
+[API](anomaly-v03-analysis-publication.md)、[結果](results/anomaly-multiseed-v0.3-analysis-publication-chain-2026-09-26.md)。実装f8f20bcf4ac7ade2f20e96f37bc1567328d88a48、OUT artifacts/analysis-publication-chain-2026-09-26。新module/test2本のみ追加し、既存analysis/profile/reader/collector/consumer/LocalPublicationを変更しない。外部result pinで選択したprofile付きanalysisの成功記録・4payloadを再認証し、保存原本との意味・bytes一致を確認して既存single-writer公開へ渡す。writerを閉じた後だけ、別のobserved readerを起動する。
+
+公開物は従来どおり4payload。別directoryのpublication-binding.jsonが解析result/evidence/profile/binding pin、payload pin、公開root/marker、revisionと接続module pinを結ぶ。そのpinとreader result/evidence pinを最終chain resultへ保存し、呼出し側がresult_pinを保持する。公開marker単体は解析証拠の結合を証明しない。
+
+全43試験pass（新14＋既存consumer16＋observed reader13）、failure/error/skip0、75.509秒。誤anchor・payload/evidence改変・reader role・未profile化・入力/出力重複・部分書き込み・writer応答喪失・reader失敗・結合記録改変・未終了ownerの保持を検査。正常時は二度目の公開を拒否し、元入力/公開物を保持する。
+
+保存例reference PID11136→profile付きanalysis PID10040→通常writer PID39840→reader PID16652。全ての子はexit0/reaped。analysisはsource13/Python2file/10入力と依存234fileの事前候補一致、readerはsource10/Python2file/15入力と依存232fileの終了後照合。readerへanalysis候補は流用しない。4payload/5237bytes、marker SHA3837efdce90f6c7070ad0da8b1befa4c306ced1d6afcdebe2d976793e6fa997b。reader監視2.409秒。公開物/両analysis証拠/reader証拠/chain記録を保存し、架空原本だけtemp cleanup済み。
+
+試験harness peak private 53.32MiB、保存例analysis child 37.66MiB、reader child 36.26MiB。資料作成前の空きRAM 10.13GiB、commit余裕 18.56GiB、C/D空き 133.21/345.91GiB。最終値はsave-checks.json。
+
+pc01候補はclean f8f20bcf4ac7ade2f20e96f37bc1567328d88a48、757tracked files/8,567,147bytesのGit/raw一致。旧60code/18data pinとap01/旧候補、実計算checkout/本流/closed、既知CRLF差/既存dirty文書は不変、banto-24 PAUSED。新評価/数値再計算/登録データ読取/実bootstrap/正式gate/holdout/freeze/principal/UAC/ACL/push/mergeなし。
+
+公開成功は架空engineering記述結果の通常公開で、正式文書や独立数値auditではない。formal/promotion/S6/trust/execution_authenticated/full closure=false、document_draft.analysis_consumer=nullを維持。接続moduleのGit/raw一致は確認したが、writer全processの実行証拠や全依存固定を完了したとは扱わない。次は、既存dev/smokeの保存済み記述レポートへこの一連の処理を適用し、外部anchor・解析証拠・公開marker・別reader結果を保存する。720評価は再実行せず、数値の正式受入やholdoutへ範囲を広げない。 正式consumer/文書provenance/独立数値audit/完全資源予算は残る。

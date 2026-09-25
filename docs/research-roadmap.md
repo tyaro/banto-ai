@@ -321,3 +321,7 @@ T11/T12のengineering部分が接続できました。次は40-cluster入力・�
 ## 2026-09-26: analysis用依存候補を別に保持して照合
 
 保存済み記述結果を準備するanalysis役割に、別reference由来の候補を実行前に保持する仕組みを追加した。後続の別processで依存234fileの前後一致を確認し、改変・欠落・役割違い等を含む43試験pass。[検証結果](results/anomaly-multiseed-v0.3-analysis-dependency-profile-2026-09-26.md)。数値評価の追加やPhase2/3全体の完了ではない。次は、照合済みの4payloadを既存のsingle-writer公開処理へ接続し、writer終了後の別readerまでを小さな架空入力で通す。公開時に解析証拠と保持pinを結合し、数値再計算や正式採択へ範囲を広げない。
+
+## 2026-09-26: 保存結果の解析証拠・公開・別readerを接続
+
+profile付きanalysisの照合済み4payloadを既存single-writerで通常公開し、writer終了後の別observed readerまでを接続した。解析証拠と公開marker/reader結果を外部保持pinで結ぶ。小さな架空入力で43試験pass。[結果](results/anomaly-multiseed-v0.3-analysis-publication-chain-2026-09-26.md)。正式解析/数値audit/Phase2・3全体の完了ではない。次は、既存dev/smokeの保存済み記述レポートへこの一連の処理を適用し、外部anchor・解析証拠・公開marker・別reader結果を保存する。720評価は再実行せず、数値の正式受入やholdoutへ範囲を広げない。
