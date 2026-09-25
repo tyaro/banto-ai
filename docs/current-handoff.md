@@ -1,23 +1,23 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-25 JST。**公開・終了記録readerを実装、14試験pass。全120区間/720評価の公開metadata・worker終了記録を照合済み。次は既存監査済み集計入力との接続。**
+更新: 2026-09-25 JST。**集計入力と公開metadataの結合を実装、14試験pass。全120区間/720評価が同じ最終attempt・入力hashへ結び付くことを確認。次はengineering consumerの入口接続。**
 
-- [API](anomaly-v03-consumer-publication.md)、[結果](results/anomaly-multiseed-v0.3-consumer-publication-reader-2026-09-25.md)。長い引継書§166。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装1b3021f8debbd4edb78b8d75efcf73cd6de88a7c。OUT artifacts/consumer-publication-reader-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。
+- [API](anomaly-v03-consumer-analysis-binding.md)、[結果](results/anomaly-multiseed-v0.3-consumer-analysis-binding-2026-09-25.md)。長い引継書§167。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装c4f04121764c882e1cb885f9fea173e4bc2d6cc3。OUT artifacts/consumer-analysis-binding-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。
 
 ## 今回の成果と次の作業
 
-anomaly_v03_consumer_publication.read_chunk_publicationを追加。run/ root、plan、検証済みadapterと外部canonical hash、区間番号、closed番号/外部raw hashを受ける。closed→terminal record/descriptor→hardlink marker→manifest/worker終了監視記録の参照を確認する。区間ごと固定8管理file、最大1,040KiB。任意の保存pathを辿らず、上限付き読取・ancestor/identity/hash確認。実payload/score/audit report本文は開かない。
+anomaly_v03_consumer_analysis_binding.authenticate_analysis_bindingを追加。明示5保存点（publication/analysis/adapter/seeds/completed）と外部publication/analysis raw pinから10artifactを各1回認証。旧報告内のpathは照合だけで、payloadへアクセスしない。元集計入力を複製せずpath/raw pinと導出関係を小さなreceiptへ保存する。
 
-14新規試験pass（failure/error/skip0、62.046秒）。実保存記録の0/95/96/119の4区間を確認後、未確認116区間に適用。最初の4区間を再読取りせず結果を併合。全120区間/720評価、841unique file/13,518,584bytes。closedの区間別照合を含む960読取/14,663,483bytes。観測/evaluation本文/score/監査本文の読取・再計算・追加評価0。peak44.61MiB、最小RAM10.71GiB/commit余裕17.57GiB、C/D122.85/270.18GiB。
+14新規試験pass（failure/error/skip0、11.189秒）。実保存記録10artifact/9,785,474bytesを0.542秒で結合。120区間720評価、公開管理記録960参照、input hash4,320件、evaluation hash720件が一致。10seed cluster/90seed表/18role表の元集計欄も保持。区間119 attempt2を選択し、過去失敗1件と判定不能46指標を保全。観測/score payload読取・score/集計再計算・新評価・bootstrapは0。
 
-重要: publication_metadata_verified、manifest_bytes_verified、worker_exit_records_verified、controller_closure_record_verifiedはtrue。全payload、監査本文は未認証。closedはcontrollerが終了前に保存する処理完了記録のため、controller_process_exit_verified=false。trust/analysis/execution/formal/promotion/S6はfalse。敵対的同時writerやprincipal保証を再開しない。
+重要: publication_metadata_binding_verified/analysis_input_bytes_verified=true。historical_aggregate_authentication_reused/historical_diagnostic_join_reused=trueであり、旧算術・診断検証を再実行していない。full_payload/source-runtime受入/trust/analysis/execution/formal/promotion/S6/controllerプロセス終了はfalse。前工程の公開metadata/worker終了記録認証と合わせても正式受入へ格上げしない。
 
-前adapterの外部保存点6720bytes/SHA256 b730387f5b90616a598b8560b05d479b6db6cd43e090df384d1a3a289766a1cc、adapter raw1,581,421bytes/SHA256 a829bde9ae98725d0b6b4fd97288e7b846349e9c306694d248a54a85839c776cを使用。区間119 attempt1のstage complete宣言/resource_limit失敗を元adapterへ保全し、readerはattempt2を選択。元validator/adapterや旧37試験の結果は不変。
+外部publication保存点7257bytes/SHA256 00b5e1bb5a668e2636091938604492fc486e78b8c83b3fe3ac1c50da738feaba、analysis保存点7305bytes/SHA256 8527dfe71bcb7544f6276b14eeb8bd853491cd2be87ee4f3e8bec2375b0f876dを使用。結果はanalysis-binding.json/saved-binding-check.json。peak47.41MiB、最小RAM12.38GiB/commit19.72GiB、C/D122.79/268.83GiB。
 
-**次は既存の独立監査済み集計入力と、認証した公開metadataのhash対応を固定する。** 既存の観測/scoreを重ねて再計算せず、保存点と導出履歴を明示してconsumer接続を進める。今回のmetadata認証を全payload認証や正式受入へ格上げしない。追加writer/評価/正式gate/holdoutなし。
+**次は結合receiptからengineering consumerの入力選択・記述結果までの入口をつなぐ。** 既存の独立監査・集計・記述結果APIを再利用し、重い観測/scoreを再計算しない。旧検証の再利用範囲と、新しく認証したbytesを区別する。正式gate/holdout・追加評価は起動しない。
 
-[契約案](anomaly-v03-consumer-io-proposal.md)はdraft。正式運用候補IDも未採択。保留principal作業は再開せずbanto-24 PAUSED。元科学条件・formal拒否を維持する。
+[契約案](anomaly-v03-consumer-io-proposal.md)はdraft。正式運用候補IDも未採択。保留principal作業は再開せずbanto-24 PAUSED。元科学条件・formal拒否を維持する。旧保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変。
 
 ## 前工程の受入残件
 

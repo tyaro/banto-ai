@@ -1,6 +1,6 @@
 # benchmark runner
 
-2026-09-25：[公開metadata reader](../../docs/anomaly-v03-consumer-publication.md)を追加。区間別8管理fileで公開印・manifest・終了記録を照合します。14新規試験と全120区間の対応確認が完了。CLI/観測reader/解析/writerは起動せず、全payloadや実controllerプロセス終了の認証とは区別します。
+2026-09-25：[集計入力の公開metadataへの結合API](../../docs/anomaly-v03-consumer-analysis-binding.md)を追加。10保存artifactを認証し、全120区間の最終attempt・input/evaluation hash・元集計値を照合します。14試験通過。旧検証履歴を再利用し、観測/score再計算やCLI/正式評価の起動はありません。
 
 通常権限・単一writerで計算済みの小さな結果を保存するAPIは、[通常権限での結果保存](../../docs/anomaly-v03-local-publication.md)を参照してください。実行ごとに新しい保存先を使い、上書き・重複使用を拒否し、完了印と内容を確認してから読み取ります。専用アカウントは使わず、正式v0.3 campaignの受入gateは変更しません。
 

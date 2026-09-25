@@ -45,3 +45,5 @@ manifest内のdataset/evaluation参照はmarker inventoryのraw hashと一致さ
 source/runtime正式受入、trust、execution/analysis/formal/promotion/S6はfalse、performance未実施、selected_candidate=null。敵対的同時書換えへのprincipal分離保証は追加しない。既存の保留試験やwriterは起動しない。
 
 次は既存の独立監査済み集計入力と、この公開metadataの参照対応を固定する。旧保存点の検証履歴を再利用する場合はその導出関係を明記し、観測/scoreの再計算や、payload全体を新規認証したという扱いを避ける。
+
+2026-09-25追記：[監査済み集計入力との結合](anomaly-v03-consumer-analysis-binding.md)を実装。14新規試験と全120区間の導出対応を確認済み。公開readerのflagsは変更せず、旧算術/診断検証の再利用を別receiptに明示する。

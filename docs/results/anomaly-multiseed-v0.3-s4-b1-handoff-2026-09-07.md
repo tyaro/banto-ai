@@ -3979,3 +3979,13 @@ peak73.05MiB、最小空きRAM12.57GiB/commit余裕20.16GiB、C/D124.22/298.67Gi
 metadata/manifest bytes/過去worker終了記録/controller closureは認証したが、全payload/監査本文は未認証。controller closedは処理完了記録でOSプロセス終了証明ではない。controller_process_exit_verifiedとtrust/analysis/execution/formal/promotion/S6はfalse。区間119 attempt1の失敗は元adapterに保全、attempt2のみ選択。
 
 peak44.61MiB、最小RAM10.71GiB/commit余裕17.57GiB、C/D122.85/270.18GiB。旧保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変、banto-24 PAUSED。次は既存の独立監査済み集計入力との参照対応を固定し、重い再計算を避けてconsumer接続を進める。旧検証履歴の再利用範囲を明示、正式採択/freeze/推論/writer/S4/S6/Phase2/3は未完了。
+
+## 167. 集計入力と公開metadataの導出結合（2026-09-25）
+
+[API](../anomaly-v03-consumer-analysis-binding.md)、[結果](anomaly-multiseed-v0.3-consumer-analysis-binding-2026-09-25.md)。実装c4f04121764c882e1cb885f9fea173e4bc2d6cc3、OUT artifacts/consumer-analysis-binding-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。外部publication/analysis保存点と明示5rootから固定10artifactを各1回認証。hash連鎖をcheckpoint adapter・counts・完走evidenceへつなぎ、任意の記録内pathを開かない。
+
+14新規試験pass（failure/error/skip0、11.189秒）。実記録10artifact/9,785,474bytes、0.542秒で全120区間/720評価を結合。公開管理記録960参照、input hash4,320件、evaluation hash720件が一致。10seed cluster/90seed表/18role表の元集計値・nullを維持。区間119 attempt2、過去失敗1件、判定不能46指標を保全。観測/score payload読取・score/集計再計算・新評価・bootstrap0。
+
+集計入力bytesと公開metadataへの参照は認証したが、旧算術/診断の独立検証は保存点から再利用した。historical_aggregate_authentication_reused/historical_diagnostic_join_reused=true。全payload/source-runtime受入/trust/analysis/execution/formal/promotion/S6/controllerプロセス終了はfalse。
+
+peak47.41MiB、最小RAM12.38GiB/commit余裕19.72GiB、C/D122.79/268.83GiB。旧保存点・実計算c01d1c9・本流clean6f1285d・closed・dirty guard不変、banto-24 PAUSED。次は結合receiptからengineering consumerの入力選択・記述結果までを接続。既存APIと検証履歴を使い、重い再計算や正式gate/holdoutを起動しない。正式採択/freeze/S4/S6/Phase2/3は未完了。
