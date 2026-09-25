@@ -35,6 +35,11 @@ def prepare_profile(reference_directory, *, expected_result_pin, expected_revisi
     for name,value in evidence.CLOSED.items():
         v.require(name in result and result[name]==value,'reference acceptance boundary')
     value=read('evidence.json',result['evidence_pin'],64*1024)
+    request=read('reader-request.json',value['inputs']['reader/request.json'],64*1024)
+    observed.reader._request(request)
+    inputs=[Path(request['publication_root']),
+            *(Path(request[n]).parent for n in ('binding_savepoint','report_savepoint','analysis_input'))]
+    v.require(not any(observed.reader._overlap(target,path) for path in inputs),'profile overlaps reference publication/inputs')
     binding=read('binding.json',result['binding_pin'],64*1024)
     v.require(binding['status']=='supplied_consumer_evidence_bound' and binding['evidence_pin']==result['evidence_pin'],
               'reference evidence binding')

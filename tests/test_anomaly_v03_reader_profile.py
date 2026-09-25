@@ -149,5 +149,11 @@ class LiveProfile(unittest.TestCase):
                 expected_revision=self.fixture.revision,profile_parent=self.fixture.root/'checks',profile_name='wrong-reference.json')
         self.assertFalse((self.fixture.root/'checks/wrong-reference.json').exists())
 
+    def test_profile_cannot_be_written_inside_original_publication(self):
+        with self.assertRaisesRegex(ValueError,'publication/inputs'):
+            preparation.prepare_profile(self.reference['check_directory'],expected_result_pin=self.reference['result_pin'],
+                expected_revision=self.fixture.revision,profile_parent=self.request['publication_root'],profile_name='forbidden.json')
+        self.assertFalse((Path(self.request['publication_root'])/'forbidden.json').exists())
+
 
 if __name__=='__main__':unittest.main()
