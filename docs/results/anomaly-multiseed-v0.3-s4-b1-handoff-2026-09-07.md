@@ -4147,3 +4147,13 @@ analysis PID14244、writer PID22020、reader PID21668。両子ともexit0/reaped
 仮予算240h/96GiB等は未適用。現在のsystem commit診断は強制停止ではなく、process supervisorのoutput制限はstdout/stderr分。全成果物・最終auditを含む予算と停止処理は正式準備の残り。開始時空きRAM10.85GiB/commit余裕19.36GiB/C133.12GiB/D367.39GiB、最終値はsave-checks.json。リークや他作業の原因は断定しない。
 
 旧候補・実計算c01d1c9・本流6f1285d・closed・dirty文書/CRLF差保全、banto-24 PAUSED。formal/promotion/S6/trust/execution_authenticated/full closure=false。正式採択確認は具体的な契約差分・候補revision・受入記録・全体予算が揃ってから。principal/保護root/UAC/ACL/push/mergeは対象外。
+
+## 184. 架空5payloadと供給実行記録を結合（2026-09-30）
+
+[結果](anomaly-multiseed-v0.3-wrapper-fixture-2026-09-30.md)、[API](../anomaly-v03-wrapper-fixture.md)。開始536c66721878c04fb8c781ffcb86c4e868407033、OUT artifacts/wrapper-fixture-2026-09-30、tests-2/。新module/testの2本、旧62code/18data不変。mode/role/operation/revision/入力/出力pinを外部期待値へ結び、全2880の架空宣言枠と文書/sliceを5payloadへ対応付けた。
+
+新16試験pass、failure/error/skip0、58.729秒。保存例5file/1,973,806bytes。未完了coverageの完成文書を拒否、None文書は失敗/未開始枠を保持。inconclusiveは処理済みの科学的判定不能として残す。本文null4欄、正式ready=false、writer/reader/audit not_run。架空PID/source/runtime bytesであり、実worker起動や正式解析の証明ではない。
+
+試験/例保存harnessのpeak private 104.19MiB。保存例後の空きRAM 13.74GiB、commit余裕 14.42GiB、C/D空き 115.31/365.67GiB。OS実値26200/9457を記録。旧候補・実計算c01d1c9・本流6f1285d・closed・既存dirty文書/CRLF差を保全、banto-24 PAUSED。前保存点18702bytes/SHA3d5338c6e51d901b513b748dc95438455e8e9c5e13190e7f4876b76edaf1c28f。既存評価再実行0、正式許可/S6/trust/full closureはfalse。最終revision/pinはsavepoint-evidence.json。
+
+次は、小さい架空入力を数値計算する所有workerと、起動前に呼出し側が保持する期待値を接続する。保存済み結果準備のoperationとは区別し、実holdout/正式50,000反復は起動しない。その後、独立数値auditの入口と全工程の資源停止条件を揃える。正式gate/holdout/freeze・principal/保護root/UAC/ACL・push/mergeは対象外。

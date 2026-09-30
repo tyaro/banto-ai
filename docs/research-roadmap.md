@@ -335,3 +335,9 @@ profile付きanalysisの照合済み4payloadを既存single-writerで通常公�
 [残件更新](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)で、実行前の5作業群と実行後の正式結果・最終数値監査を分けた。保存・別readerの実レポート接続は完了として再利用する。草稿のnull4欄は4本の追加試験を意味しない。文書整理/静的照合のみで、新評価・再計算・試験suite起動0。
 
 次は、予定5payloadと役割別証拠を結ぶI/Oなしのfixture adapterを実装し、小さい架空入力で欠落・役割違い・失敗の成功化を検査する。その後に数値解析/独立auditの入口と資源停止条件を接続する。正式候補の契約差分・受入・全体予算が揃うまで正式入口は閉じる。Phase2/3全体は未完了。
+
+## 2026-09-30: 架空入力の5出力と実行記録を結合
+
+[5payload adapter](anomaly-v03-wrapper-fixture.md)を実装し、新規16試験が通過。全予定枠・草稿・診断・別に保持した架空の実行記録を対応付け、途中失敗や役割違いを成功にしない。保存例5file/1,973,806bytes。既存720評価の再実行0、正式null4欄を保持。[結果](results/anomaly-multiseed-v0.3-wrapper-fixture-2026-09-30.md)。
+
+次は、小さい架空入力を数値計算する所有workerと、起動前に呼出し側が保持する期待値を接続する。保存済み結果準備のoperationとは区別し、実holdout/正式50,000反復は起動しない。その後、独立数値auditの入口と全工程の資源停止条件を揃える。正式受入・S4/S6・Phase2/3全体は未完了。

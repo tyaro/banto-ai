@@ -1,5 +1,7 @@
 # 単一writer方針での解析consumer入出力契約案
 
+2026-09-30現在：[架空5payloadの結合](anomaly-v03-wrapper-fixture.md)を実装し、新規16試験pass。T09/T10のfixture結合が完了。正式文書のnull4欄と受入未完了は維持する。次は限定したfixture数値workerへ接続する。以下の日付付き追記は履歴。
+
 2026-09-26現在：[受入残件更新](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)を参照。実レポート4payloadの通常公開・別readerまで完了した。次の実装は§4の予定5payloadと役割別証拠を結ぶ、I/Oなし・架空入力専用のadapter。正式modeを拒否し、本文のnull 4欄と未充足を維持する。以下の日付付き追記・初期実装順は履歴で、契約はdraftのまま。
 
 2026-09-25追記：[実観測reader](anomaly-v03-reader-evidence.md)からT09部品へ接続。元handleと子のPID/生成時刻、前後source/runtime、入出力を照合した。通常権限の部分接続で、full closure・正式full document/契約の採択は未完了。

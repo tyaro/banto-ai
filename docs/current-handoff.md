@@ -1,23 +1,29 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-26 JST。**受入残件の更新完了。次は予定5payloadと役割別証拠を結ぶpure adapterを架空入力で実装する。**
+更新: 2026-09-30 JST。**架空入力の5payload・実行記録結合を実装、16試験pass。次は数値計算を行うfixture workerと実行記録の接続。**
 
-- [今回の残件更新](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)、[契約案](anomaly-v03-consumer-io-proposal.md)、長い引継書§183。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。OUT artifacts/acceptance-gap-update-2026-09-26。文書revision/pinは同OUTのsavepoint-evidence.json。
+- [今回の結果](results/anomaly-multiseed-v0.3-wrapper-fixture-2026-09-30.md)、[API](anomaly-v03-wrapper-fixture.md)、長い引継書§184。
+- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。OUT artifacts/wrapper-fixture-2026-09-30、成功tests-2/。実装/文書revision・hashは最上位savepoint-evidence.json。
+
+## 今回の成果
+
+anomaly_v03_wrapper_fixture.pyとtestだけ追加。旧62code/18dataは不変。入力を開く前に非fixture modeを拒否。既存文書/slice/evidence検査を使い、外部保持pin・role・operation・revision・source/runtime/入出力bytesと5payloadを結ぶ。架空40cluster×12layout×2層×3候補の2880宣言枠を保持する。partial/failed/not_startedを含めば完成文書を拒否し、文書なしの記録は解析/診断Noneで保存。inconclusiveとsoftware failureを分ける。
+
+新16試験pass、failure/error/skip0、58.729秒。既存保存/reader試験は再実行せず、既存720評価の再生成/再計算0。保存例5payload/1,973,806bytes、本文1233行/補助2835行/詳細9表。fixture準備は4draw手例、adapter自体は推論・I/O・process起動なし。全役割の実観測ではなく供給された架空bytesの対応であり、正式null4欄・ready=falseを維持。
+
+試験/例保存harnessのpeak private 104.19MiB。保存例後の空きRAM 13.74GiB、commit余裕 14.42GiB、C/D空き 115.31/365.67GiB。OS実値26200/9457、古いformal pinは未変更。最終資源はsave-checks.json。banto-24 PAUSED、旧候補・実計算c01d1c9・本流6f1285d・closed・既存dirty文書/CRLF差を保全。
 
 ## 次の実装単位
 
-I/Oを持たないfixture専用wrapper/証拠結合adapterで、execution.json・coverage.json・analysis.json・diagnostics.json・verification.jsonの対応を作る。既存の文書・slice・証拠validatorを再利用し、架空入力/呼出し側保持期待pin/役割証拠/段階状態を結ぶ。role/mode/operation/revision/入出力・coverageを検査し、正式modeと証拠の自己承認を拒否する。本文のnull4欄と不足一覧は維持し、実行していない正式結果を埋めない。
+次は、小さい架空入力を数値計算する所有workerと、起動前に呼出し側が保持する期待値を接続する。保存済み結果準備のoperationとは区別し、実holdout/正式50,000反復は起動しない。その後、独立数値auditの入口と全工程の資源停止条件を揃える。
 
-小さな正常例と役割違い・pin違い・coverage不整合・失敗の成功化拒否に絞って試験する。保存/readerの同じ試験は繰り返さず、この単位で新たな観測・評価・公開processや正式50,000反復を起動しない。完了後に仕様/対象試験/保存点を残し、数値解析・独立auditの実行入口と資源停止条件へ進む。
+新adapterのOPERATIONはassemble-invented-document-v1。次のworkerはこれに対応する限定的なfixture計算を行い、fixture/input.json・fixture/slices.json・fixture/coverage.json・fixture/operation.jsonからfixture/document.jsonへの対応を外部期待値へ結ぶ。wrapperをもう一つ重ねたり、同じ保存/reader試験を増やしたりしない。既存owned-process supervisorと証拠validatorを再利用する。新しい数値役割のsource/runtime採取範囲と、適用する小さい資源上限を明示して実装・対象試験・保存点まで進める。
 
-実行前に残るのは運用契約・consumer入出力・source/runtime受入・公開/監査接続・予算の5作業群。実行後の正式結果/成功receipt/最終数値監査は別段階で、開始条件へ循環して要求しない。正式採択の判断は候補revision・契約差分・受入記録・全体予算が具体化してから。通常権限single writerとOS実値記録は既に許可されている。
+正式運用契約・consumer入出力・source/runtime受入・公開/監査・全体予算の5作業群は残る。[残件更新](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)。実行後の成功証拠を正式開始前の条件へ循環して要求しない。formal/promotion/S6/trust/execution_authenticated/full closure=false。正式gate/holdout/freeze、principal/保護root/UAC/ACL、push/mergeは対象外。単一writerとOS実値記録は既に許可済み。
 
-## 今回の照合と保全
+## 前工程の保存点
 
-前工程保存点26548bytes/SHA53a0c1be44cb21114ada147e32d35346948d9664737bde9b9c41054dc362853a。62code/18data不変、11receipt計20,083bytes・祖先保存点を照合。13sourceを静的確認しpc01/Git/作業版bytes一致。草稿は9表/本文1233行/補助2835行、nullはstatus/provenance/analysis_consumer/bootstrap。旧720評価の元payload再読取・数値再計算・評価・suite起動・source変更0。
-
-実装pc01 clean f8f20bcf4ac7ade2f20e96f37bc1567328d88a48。旧候補・実計算c01d1c9・本流6f1285d・closed・既存dirty文書/CRLF差を保全、banto-24 PAUSED。単時点の資源記録からリークを断定しない。system commit診断と強制停止は別、正式推論/最終auditを含む全体予算は未完成。正式gate/holdout/freeze・principal/UAC/ACL・保護root・push/mergeは対象外。
+受入残件更新536c66721878c04fb8c781ffcb86c4e868407033、manifest18702bytes/SHA3d5338c6e51d901b513b748dc95438455e8e9c5e13190e7f4876b76edaf1c28f。今回のbaselineはこれを外部起点にした。pc01は旧f8f20bcのまま保全し、新wrapperはまだその候補に含まれない。
 
 ## 直前の実レポート公開接続
 
