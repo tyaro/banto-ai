@@ -4183,3 +4183,15 @@ analysis PID14244、writer PID22020、reader PID21668。両子ともexit0/reaped
 slice/sidecar導出・coverage/producer・登録データは対象外と明示。正式S6/full closure/受入済み依存profileや文書全体監査としない。formal/promotion/S6/execution_authenticated/full closure=false、fixture_numerical_audit_performed=true。元文書/5payloadのnull4欄・audit未実行表記を遡って変更しない。次は限定fixture工程のdirectory総量/system commitを含む資源停止条件を接続し、正式化時は未検算範囲を残件として扱う。
 
 前保存点27575bytes/SHA5c0ff3a16f50589daf487a7f58a94a6acc85ae70625c32a97d5631d1c681f17d。旧実計算c01d1c9・本流6f1285d・closed・dirty文書/CRLF差・fw01を含む旧候補/保存点は保全、banto-24 PAUSED。新評価0、正式gate/holdout/freeze・principal/保護root/UAC/ACL・push/mergeは対象外。
+
+## 187. 限定fixture工程の共有資源停止（2026-10-01）
+
+[結果](anomaly-multiseed-v0.3-fixture-resource-budget-2026-10-01.md)、[API](../anomaly-v03-fixture-resource-budget.md)。開始a47b4ba1af372c8159413f0d8f2a8ce5cc5fbd3b、初回f4c1918、修正後cf4d9c42c11c202984aacdd71ac5efb0368f22d0、成功候補fb02。新module/test2本＋既存5本の変更、旧65code/18data不変、旧pinを保存。OUT artifacts/fixture-resource-budget-2026-10-01、成功tests-2/shared-example/。
+
+新budget16＋supervisor13＋analysis15＋audit9の53pass、83.808秒、failure/error/skip0。初回52試験の19failure/2errorはWindows DirEntryのst_nlink=0による過剰拒否で、path.lstatへ修正し、monitor異常も失敗にする試験を追加。初回記録/fb01を保全した。実子の小容量超過・模擬commit低下・終了直後超過・未終了owner/保存失敗を検査。
+
+親/共有120秒、親private512MiB、directory32MiB/256entries/深さ8、commit/RAM余裕2GiB、disk5GiBを監視。既存子60秒/256MiB/stdout+stderr1MiBと起動条件は併用。共有monitorで入力準備・analysis・auditを累積計測し、保存例23.623秒、両子exit0/reaped/error0、共有最大11.26MiB。小さい40cluster/4drawだけを各1回実行し、既知文書pin・主表検算が一致。元入力/既存720評価は変更・再実行なし。
+
+子analysis/audit peak66.09/46.81MiB、harness peak121.75MiB。保存例後RAM空き8.25GiB、commit余裕12.93GiB、C/D空き107.20/387.12GiB、OS26200/9457。最終値と文書revision/pinはsavepoint-evidence.json/save-checks.json。予算はsamplingと親checkpointによる停止でhard quotaではなく、最終診断に64KiB予約する。
+
+次は受入残件表を現在のfixture計算・primary audit・資源停止の証拠へ更新する。正式予算・契約/登録consumer/未検算slice・役割/source-runtime・公開受入は残る。正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure=false。前savepoint26669bytes/SHAa57343756c873d9c6e51ba2faa63d68bf8150f8bbde7200ebae69baacc20f531。旧実計算c01d1c9・本流6f1285d・closed・dirty文書/CRLF差・旧候補/保存点保全、banto-24 PAUSED。正式gate/holdout/freeze・principal/保護root/UAC/ACL・push/mergeは対象外。

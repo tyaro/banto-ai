@@ -1,28 +1,30 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-10-01 JST。**小さい架空入力の主集計を別実装・所有audit processで検算、22試験pass。次は限定fixture工程のdirectory総量/system commitを含む資源停止条件へ進む。**
+更新: 2026-10-01 JST。**限定fixture工程の容量/system commit停止を接続。新16＋既存37の53試験pass、共通予算のanalysis→audit成功。次は正式受入残件を現在の証拠へ更新する。**
 
-- [今回の結果](results/anomaly-multiseed-v0.3-fixture-numerical-audit-2026-10-01.md)、[APIと範囲](anomaly-v03-fixture-numerical-audit.md)、長い引継書§186。
-- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装8bd4b67eac5ecaaa72fb139bc12a0bff484448b8、clean候補fa01/banto-ai。元analysis候補fw01と旧候補は保全。
-- OUT artifacts/fixture-numerical-audit-2026-10-01、成功tests-1/observed-audit/。最終文書revisionと全hashは最上位savepoint-evidence.json。
+- [今回の結果](results/anomaly-multiseed-v0.3-fixture-resource-budget-2026-10-01.md)、[APIと限界](anomaly-v03-fixture-resource-budget.md)、長い引継書§187。
+- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装cf4d9c42c11c202984aacdd71ac5efb0368f22d0、成功候補fb02/banto-ai。初回fb01/f4c1918と旧fa01/fw01等を保全。
+- OUT artifacts/fixture-resource-budget-2026-10-01、成功tests-2/shared-example/。最終文書revision・全hashは最上位savepoint-evidence.json。
 
 ## 今回の成果
 
-新しい標準ライブラリのみの算術moduleとaudit worker、各testの4本を追加。旧66code/18dataは不変。元の架空input/document/result/evidenceを外部pinで保持し、analysisを再実行せず、別audit processで検算した。計算側のdraw重み付けと異なり、auditは各抽出番号を順に展開してcountを加算する。
+新resource budget module/testの2本、既存supervisor・analysis/audit・各testの5本を変更。旧70codeの65本と18dataは不変、変更した5本の旧pinもmanifestへ保存。親の入力/source検査、所有子、終了後照合、保存へ停止確認を接続。共通monitorを渡せば入力/両役割を同じroot・経過時間で合算する。
 
-9主表の117絶対推定・72対応差・180gate、effective exposure、検出済みdelayの和集合、profile/readiness、適格性/C1優先、packet/本文の対応が一致。新22試験pass（算術13・worker9）、failure/error/skip0、27.521秒。CI等を両方の表で改変して再封印しても拒否する。slice/診断sidecar導出、coverage/producer、登録データは今回の独立検算対象外とnot_checkedへ明記。
+新budget16＋supervisor13＋analysis15＋audit9の53試験pass、83.808秒。小さい容量超過と模擬commit低下で実子を停止/reapし、途中記録を保全。初回19failure/2errorはWindows DirEntryのリンク数0が原因で、path.lstatへ修正。tests-1/fb01/旧harnessを残し、成功はtests-2。
 
-保存例7.506秒、子監視1.532秒、exit0/reaped/error0。audit要約1185bytes、selected source13/Python2/入力5file、補助依存project30/全234files/179modules/native48を終了後disk/Git照合。親保持source/runtime/argv/元handleのPID・生成時刻とrole=auditを結合した。元analysisの4ファイルと5payloadは変更していない。
-
-子上限60秒/private256MiB/stdout+stderr合計1MiB、入力合計6MiB、最大8draw。子peak46.54MiB、harness peak76.08MiB。保存例後RAM空き8.18GiB、commit余裕12.90GiB、C/D空き111.43/387.12GiB。OS26200/9457、旧formal pin維持。最終資源はsave-checks.json。
+共有例は40cluster/4drawの架空analysisとauditを各1回通して23.623秒、両子exit0/reaped/error0。文書既知pin一致、主9表/180gate一致、全体・両役割resource_budget_passed=true。共有root観測最大11.26MiB、親harness peak121.75MiB、子analysis/audit peak66.09/46.81MiB。保存例後RAM空き8.25GiB、commit余裕12.93GiB、C/D空き107.20/387.12GiB。最終資源はsave-checks.json。
 
 ## 次の実装単位
 
-次は限定fixture工程の資源停止条件。現状のowned supervisorは子wall/private/stdout+stderrを監視するが、親処理・directory全体・system commitの連続停止予算は未接続。元analysis/auditの限定入力と保存済み記録を再利用し、全工程の境界、所有processの停止/終了確認、途中記録の保全を実装・対象試験・保存点まで進める。既存720評価や正式50,000反復を動かして予算を測ることはしない。
+次は[2026-09-26の受入残件](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)を現在の証拠に合わせる。5payload結合、数値worker、別実装primary audit、限定fixture資源停止まで接続したので、完了した範囲と正式化に不足する具体的な契約/登録consumer/監査範囲/役割・source-runtime/公開・正式全体予算を区別する。wrapperや同じ保存/reader試験を重ねず、既存結果・pinを再利用する。
 
-今回の数値auditはprimary-onlyで、slice/sidecar等を含む正式S6ではない。数値moduleのoperationとは別に、workerのoperationはaudit-invented-primary-numerics-v1。5入力と前analysis referenceを保持し、元analysisの全認証を再実行しない。実行証拠もowned process/disk照合であり、full closureや新役割の受入済み依存profileではない。
+今回の予算は親/共有120秒、親private512MiB、directory32MiB/256entries/深さ8、commit/RAM余裕各2GiB、disk余裕5GiB。子は従来60秒/256MiB/stdout+stderr1MiB。既存子起動条件RAM4GiB/disk20GiBも残る。共通monitorを渡さない別callは個別予算。sampling/親checkpoint方式でhard quotaではなく、診断budget/resultに64KiB予約。実行中の限定関数・writeや停止待ちの超過はありうる。
 
-formal/promotion/S6/trust/execution_authenticated/full closure=false、正式null4欄/ready=false。fixture_numerical_audit_performed=trueのみ追加。元wrapperのaudit段階を遡って変更しない。正式運用契約・登録consumer・source/runtime受入・監査範囲/公開・全体予算の5作業群は残る。[残件更新](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)。実行後の証拠を開始前へ循環要求せず、資源接続だけで正式gateを開かない。
+primary auditはslice/sidecar導出・coverage/producer・登録データを未検算。資源予算も正式2,880評価/50,000反復の登録予算ではない。formal/promotion/S6/trust/execution_authenticated/full closure=false、正式null4欄/ready=false。正式実行後の成功証拠を開始前へ循環要求せず、今回の接続だけで正式gateを開かない。新しい判断が必要なら具体的な候補・残件を揃えて提示する。
+
+## 前工程の主集計audit保存点
+
+実装8bd4b67eac5ecaaa72fb139bc12a0bff484448b8、文書a47b4ba1af372c8159413f0d8f2a8ce5cc5fbd3b、候補fa01/banto-ai。OUT artifacts/fixture-numerical-audit-2026-10-01、manifest26669bytes/SHAa57343756c873d9c6e51ba2faa63d68bf8150f8bbde7200ebae69baacc20f531。新22試験pass。元analysisを再実行せず9主表/117絶対推定/72対応差/180gateを別実装・所有auditで検算した。今回のbaselineであり、元の記録を保全する。
 
 ## 前工程の数値worker保存点
 

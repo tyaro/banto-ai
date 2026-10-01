@@ -6,7 +6,7 @@
 
 ## 呼出しと入力
 
-`calculate_with_evidence(request, *, expected_revision, receipt_parent, receipt_name)` を呼ぶ。出力先は毎回新しいdirectoryを使い、入力directory・sourceと重ねない。古いattemptへ上書きしない。sourceはGit revisionとraw bytesが一致するclean checkoutから実行する。
+`calculate_with_evidence(request, *, expected_revision, receipt_parent, receipt_name, budget_limits=None, resource_budget=None)` を呼ぶ。出力先は毎回新しいdirectoryを使い、入力directory・sourceと重ねない。古いattemptへ上書きしない。sourceはGit revisionとraw bytesが一致するclean checkoutから実行する。
 
 requestの固定欄はformat、mode、role、operation、inputs、expected_document_pin。formatは `anomaly-v03-fixture-numerical-request-v1`、mode=fixture、role=analysis、operation=`assemble-invented-document-v1`。保存済み結果準備のoperationやreader役割を代用しない。
 
@@ -35,7 +35,7 @@ PID・生成時刻・元handleの一致は所有した子との対応を強め�
 
 子の上限は60秒、private bytes 256MiB、stdout/stderr合計1MiB。既存supervisorが約0.25秒ごとに確認し、超過時は所有processを停止・終了確認する。入力・文書・5payload合計にも10/4/8MiBの上限を置く。出力値のサイズ検査は書込み前、保存後はhashを読み戻す。
 
-これは子processと限定ファイルの上限である。親の全計算を含む連続監視、directory全体の連続容量監視、システムcommit余裕の連続停止条件は今後の全工程予算で接続する。試験harnessは実行前後のRAM・commit・C/D容量と自身のpeak privateを記録する。
+2026-10-01に[fixture資源監視](anomaly-v03-fixture-resource-budget.md)を追加した。親のphase境界と背景monitorからdirectory総量/system commitを確認し、所有子の停止へ接続する。共有monitorを渡せばauditまで累積予算で扱える。sampling/協調停止でありhard quotaや正式登録予算ではない。
 
 起動・計算・照合に失敗した場合は成功payloadを組み立てず、保存できた診断を残す。未終了の子を示す `UnreapedWorker` は元process ownerとともに再送出し、診断保存の失敗でもownerを失わない。呼出し側はそのownerの終了確認を引き続き担う。子が停止済みでも失敗結果を自動再試行しない。
 

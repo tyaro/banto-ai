@@ -353,3 +353,9 @@ profile付きanalysisの照合済み4payloadを既存single-writerで通常公�
 保存済みの架空analysisを別算術実装で検算し、9主表/117絶対推定/72対応差/180gateが一致。新22試験pass、主表を改変した文書を再封印しても拒否。元analysisや既存720評価は再実行していない。[結果](results/anomaly-multiseed-v0.3-fixture-numerical-audit-2026-10-01.md)、[範囲](anomaly-v03-fixture-numerical-audit.md)。
 
 slice/sidecar導出・producer/登録データは今回の独立検算対象外。正式null4欄・S6/受入未完了を維持。次は限定fixture工程のdirectory総量/system commitを含む資源停止条件へ進み、正式受入では未検算範囲を明示する。正式50,000反復・holdoutは起動しない。
+
+## 2026-10-01: 限定fixture工程の資源停止を接続
+
+[容量/system commit監視](anomaly-v03-fixture-resource-budget.md)を親処理・所有子へ接続し、新16＋既存37の53試験pass。共有予算で架空analysis→auditを一度通し、23.623秒、全体/両役割成功。小さい容量超過・模擬commit低下で子の停止/reapと記録保全を確認。[結果](results/anomaly-multiseed-v0.3-fixture-resource-budget-2026-10-01.md)。
+
+sampling/協調停止でありhard quotaではなく、正式2,880評価/50,000反復の予算登録ではない。次は現在の計算・primary audit・資源停止を受入残件へ反映し、契約/登録consumer/未検算範囲/役割証拠/公開・正式予算を具体化する。既存720評価再実行0、Phase2/3全体は未完了。

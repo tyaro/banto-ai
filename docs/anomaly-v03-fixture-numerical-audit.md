@@ -23,7 +23,7 @@
 
 ## 入力と既存analysisの結合
 
-`audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_name)` を使う。requestはformat=`anomaly-v03-fixture-audit-request-v1`、mode=fixture、role=audit、operation=`audit-invented-primary-numerics-v1`、inputs、analysis_referenceを持つ。非fixture mode・役割/operation違いはファイルアクセス前に拒否する。
+`audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_name, budget_limits=None, resource_budget=None)` を使う。requestはformat=`anomaly-v03-fixture-audit-request-v1`、mode=fixture、role=audit、operation=`audit-invented-primary-numerics-v1`、inputs、analysis_referenceを持つ。非fixture mode・役割/operation違いはファイルアクセス前に拒否する。
 
 | 固定入力名 | 内容 | 上限 |
 | --- | --- | --- |
@@ -43,7 +43,7 @@
 
 子は数値の一致を確認した場合だけ、限定した成功要約を `payload/primary-audit.json` に保存する。元Popen handleと子自身のPID/生成時刻、role=audit、input/output、source/runtime前後一致を既存evidence validatorへ結ぶ。補助依存fileは終了後にdisk/Gitへ照合する。成功要約だけの一致を数値実行の証明とはせず、所有した子の終了・実行記録とともに確認する。
 
-子の上限は60秒、private256MiB、stdout+stderr合計1MiB。新しいreceipt directoryのみを使う。失敗時は再試行せず記録を残し、未終了ownerは診断保存の失敗でも呼出し側へ再送出する。全工程directory総量/system commitの連続停止は別の残件である。
+子の上限は60秒、private256MiB、stdout+stderr合計1MiB。新しいreceipt directoryのみを使う。失敗時は再試行せず記録を残し、未終了ownerは診断保存の失敗でも呼出し側へ再送出する。2026-10-01に[directory総量/system commitのfixture監視](anomaly-v03-fixture-resource-budget.md)を接続した。親はphase境界で協調停止し、共有monitorでanalysisから累積させられる。
 
 ## 結果の読み方
 
@@ -51,4 +51,4 @@
 
 formal/promotion/independent_s6_complete/execution_authenticated/full closureはfalse。これは別の算術実装による小さい手例の一致であり、独立組織による監査、登録データの正式数値検証、全依存の受入、公開完了を意味しない。旧analysis文書や5payloadを書き換えず、wrapperのaudit段階も遡って成功へ変更しない。
 
-次は、限定したfixture工程のdirectory総量・system commit余裕を含む資源停止条件を接続する。正式受入時は、このprimary-onlyの検算範囲とslice/sidecarを含む残件を明示して評価する。
+限定fixtureの資源停止接続まで完了した。次は正式受入残件を更新する。このprimary-onlyの検算範囲とslice/sidecarを含む未検算範囲を明示し、小さい資源監視を正式登録予算と扱わない。
