@@ -66,7 +66,9 @@ def directory_snapshot(root, maximum):
             for child in children:
                 entries += 1
                 if entries > maximum:raise resources.ResourceStop('pipeline_inventory_limit')
-                info = child.stat(follow_symlinks=False)
+                # Windows DirEntry's cached find-data stat reports st_nlink=0.
+                # Query the path itself for the actual link count, without following it.
+                info = Path(child.path).lstat()
                 if getattr(info,'st_file_attributes',0)&0x400 or stat.S_ISLNK(info.st_mode):
                     raise resources.ResourceStop('pipeline_unsafe_directory')
                 if stat.S_ISDIR(info.st_mode):pending.append((Path(child.path),depth+1))
@@ -125,9 +127,13 @@ class FixtureBudget:
                     self.reason = self.reason or 'pipeline_observation_error';self.observation_error = type(error).__name__
 
     def _run(self):
-        while not self._stop.wait(INTERVAL):
-            self._observe()
-            if self.probe() is not None:break
+        try:
+            while not self._stop.wait(INTERVAL):
+                self._observe()
+                if self.probe() is not None:break
+        except BaseException as error:
+            with self._lock:
+                self.reason = self.reason or 'pipeline_monitor_failure';self.observation_error = type(error).__name__
 
     def start(self):
         if self._thread is not None:raise ValueError('fixture monitor already started')
@@ -165,7 +171,8 @@ class FixtureBudget:
 def finish(monitor, target, result, owner_error=None):
     """Close/report even on an exception without losing an unreaped process owner."""
     try:report = monitor.close()
-    except BaseException:
+    except BaseException as error:
+        error.resource_monitor = monitor
         if owner_error is not None:
             owner_error.resource_monitor = monitor
             raise owner_error

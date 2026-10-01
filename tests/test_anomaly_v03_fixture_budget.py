@@ -105,6 +105,16 @@ class FixtureBudgetTests(unittest.TestCase):
             finally:outside=outer.close()
         self.assertEqual(outside['last']['directory_bytes'],16)
 
+    def test_unexpected_monitor_exit_is_not_reported_as_passed(self):
+        with patch.object(budgets,'system_snapshot',return_value=HEALTHY.copy()):
+            monitor=budgets.FixtureBudget(self.root);monitor.start()
+            try:
+                with patch.object(monitor,'_observe',side_effect=SystemExit('injected thread failure')):
+                    monitor._thread.join(timeout=2)
+                self.assertEqual(monitor.probe(),'pipeline_monitor_failure')
+            finally:report=monitor.close()
+        self.assertFalse(report['passed']);self.assertEqual(report['observation_error'],'SystemExit')
+
     def test_shared_budget_cannot_cover_unrelated_or_closed_root(self):
         parent=budgets.FixtureBudget(self.root)
         other=self.root/'child';other.mkdir()
