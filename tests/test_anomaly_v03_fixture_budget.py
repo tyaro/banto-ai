@@ -69,6 +69,32 @@ class FixtureBudgetTests(unittest.TestCase):
         linkroot=self.root/'links';linkroot.mkdir();os.link(self.root/'a',linkroot/'alias')
         with self.assertRaisesRegex(budgets.resources.ResourceStop,'unsafe'):budgets.directory_snapshot(linkroot,10)
 
+    def test_declared_publication_marker_pair_counted_twice_only(self):
+        root=self.root/'published';root.mkdir();pending=root/'marker-pending.json';pending.write_bytes(b'12345')
+        self.assertEqual(budgets.directory_snapshot(self.root,10,publication_roots=[root])['directory_bytes'],5)
+        os.link(pending,root/'.complete')
+        with self.assertRaises(budgets.resources.ResourceStop):budgets.directory_snapshot(self.root,10)
+        self.assertEqual(budgets.directory_snapshot(self.root,10,publication_roots=[root])['directory_bytes'],10)
+        os.link(pending,root/'third')
+        with self.assertRaises(budgets.resources.ResourceStop):budgets.directory_snapshot(self.root,10,publication_roots=[root])
+
+    def test_publication_marker_exception_does_not_allow_payload_links(self):
+        root=self.root/'published';root.mkdir();(root/'one').write_bytes(b'one');os.link(root/'one',root/'two')
+        with self.assertRaises(budgets.resources.ResourceStop):budgets.directory_snapshot(self.root,10,publication_roots=[root])
+        for path in (self.root,self.root.parent,self.root/'..'/'outside'):
+            with self.assertRaises(ValueError):budgets.FixtureBudget(self.root,publication_roots=[path])
+
+    def test_expected_stage_rename_restarts_bounded_scan(self):
+        root=self.root/'published';root.mkdir();stage=root/'stage';stage.mkdir();(stage/'one').write_bytes(b'123')
+        original=budgets.os.scandir;renamed=[]
+        def rename_once(path):
+            if Path(path)==stage and not renamed:
+                stage.rename(root/'payload');renamed.append(True)
+            return original(path)
+        with patch.object(budgets.os,'scandir',side_effect=rename_once):
+            self.assertEqual(budgets.directory_snapshot(self.root,10,publication_roots=[root]),{'directory_bytes':3,'directory_entries':3})
+        self.assertEqual(renamed,[True])
+
     def test_observation_failure_stops_and_missing_commit_is_not_zero(self):
         for sample in (OSError('observation unavailable'),HEALTHY|{'commit_headroom_bytes':True}):
             with self.subTest(sample=type(sample).__name__),patch.object(budgets,'system_snapshot') as observe:

@@ -53,7 +53,38 @@ def system_snapshot(root):
         'free_disk_bytes':shutil.disk_usage(root).free,'parent_peak_private_bytes':resources.memory_bytes()['peak_private_bytes']}
 
 
-def directory_snapshot(root, maximum):
+def _publication_roots(root, values):
+    values = tuple(Path(p) for p in values)
+    if len(values) > 4 or len(set(values)) != len(values):raise ValueError('publication budget roots')
+    if any(not p.is_absolute() or p != Path(os.path.abspath(p)) or p == root or not p.is_relative_to(root) for p in values):
+        raise ValueError('publication budget root must be an exact descendant')
+    return values
+
+
+def _marker_pair(path, publications):
+    if path.parent not in publications or path.name not in ('.complete','marker-pending.json'):return False
+    first,second = (path.parent/name for name in ('.complete','marker-pending.json'))
+    a,b = first.lstat(),second.lstat()
+    return all(stat.S_ISREG(s.st_mode) and not getattr(s,'st_file_attributes',0)&0x400 and s.st_nlink == 2 for s in (a,b)) and (a.st_dev,a.st_ino) == (b.st_dev,b.st_ino)
+
+
+def directory_snapshot(root, maximum, *, publication_roots=()):
+    publications = _publication_roots(Path(root),publication_roots)
+    try:return _directory_scan(root,maximum,publications)
+    except FileNotFoundError as error:
+        # One expected stage->payload rename by the owned ordinary writer.
+        # Restart the whole bounded scan once, never omit a missing file.
+        missing = Path(error.filename) if error.filename else None
+        for publication in publications:
+            stage = publication/'stage'
+            if missing is not None and missing.is_relative_to(stage) and not stage.exists():
+                info = (publication/'payload').lstat()
+                if stat.S_ISDIR(info.st_mode) and not getattr(info,'st_file_attributes',0)&0x400:
+                    return _directory_scan(root,maximum,publications)
+        raise
+
+
+def _directory_scan(root, maximum, publications):
     """Bounded metadata scan of this receipt only; never follow links/reparse nodes."""
     pending = [(Path(root),0)];entries = total = 0
     while pending:
@@ -72,7 +103,8 @@ def directory_snapshot(root, maximum):
                 if getattr(info,'st_file_attributes',0)&0x400 or stat.S_ISLNK(info.st_mode):
                     raise resources.ResourceStop('pipeline_unsafe_directory')
                 if stat.S_ISDIR(info.st_mode):pending.append((Path(child.path),depth+1))
-                elif stat.S_ISREG(info.st_mode) and info.st_nlink == 1:total += info.st_size
+                elif stat.S_ISREG(info.st_mode) and (info.st_nlink == 1 or _marker_pair(Path(child.path),publications)):
+                    total += info.st_size  # Both intentional names count toward the logical-byte budget.
                 else:raise resources.ResourceStop('pipeline_unsafe_directory')
     return {'directory_bytes':total,'directory_entries':entries}
 
@@ -84,9 +116,10 @@ class UnclosedMonitor(RuntimeError):
 
 
 class FixtureBudget:
-    def __init__(self, root, value=None, *, upstream=None):
+    def __init__(self, root, value=None, *, upstream=None, publication_roots=()):
         self.root = io.regular_path(Path(root),directory=True)
         self.limits = limits(value)
+        self.publication_roots = _publication_roots(self.root,publication_roots)
         if upstream is not None and (not isinstance(upstream,FixtureBudget) or self.root == upstream.root
                 or not self.root.is_relative_to(upstream.root) or upstream._thread is None or upstream._stop.is_set()):
             raise ValueError('shared fixture budget must own a live enclosing root')
@@ -98,7 +131,7 @@ class FixtureBudget:
     def _observe(self):
         with self._sampling:
             try:
-                current = {**system_snapshot(self.root),**directory_snapshot(self.root,self.limits['directory_entries']),
+                current = {**system_snapshot(self.root),**directory_snapshot(self.root,self.limits['directory_entries'],publication_roots=self.publication_roots),
                            'elapsed_seconds':time.monotonic()-self.started}
                 expected = {'commit_total_bytes','commit_limit_bytes','commit_headroom_bytes','free_ram_bytes','free_disk_bytes','parent_peak_private_bytes','directory_bytes','directory_entries','elapsed_seconds'}
                 if set(current) != expected or any(type(v) is not int or v < 0 for k,v in current.items() if k not in ('elapsed_seconds','commit_headroom_bytes')):
@@ -163,6 +196,7 @@ class FixtureBudget:
             return {'format':'anomaly-v03-fixture-resource-budget-v1','scope':'one-fixture-call-and-new-receipt-directory',
                 'limits':dict(self.limits),'poll_seconds':INTERVAL,'samples':self.samples,'first':self.first,'last':self.last,
                 'shared_root':str(self.upstream.root) if self.upstream is not None else None,
+                'publication_roots':[str(p) for p in self.publication_roots],
                 'extrema':{k:dict(v) for k,v in self.extrema.items()},'stop_reason':self.reason,'observation_error':self.observation_error,
                 'monitor_exit_confirmed':confirmed,'passed':confirmed and self.reason is None,'receipt_reserve_bytes':RECEIPT_RESERVE,
                 'enforcement':'sampled-and-cooperative-not-hard-quota','formal_permission':False}

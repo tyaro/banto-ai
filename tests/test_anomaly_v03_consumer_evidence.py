@@ -56,7 +56,7 @@ def set_at(value, path, replacement):
 
 
 class ConsumerEvidenceTests(unittest.TestCase):
-    def test_three_roles_bind_all_supplied_bytes_without_promoting(self):
+    def test_four_roles_bind_all_supplied_bytes_without_promoting(self):
         for role in evidence.ROLES:
             for mode in evidence.MODES:
                 with self.subTest(role=role, mode=mode):

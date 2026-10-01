@@ -16,7 +16,7 @@ from . import anomaly_v03 as v
 
 FORMAT = 'anomaly-v03-consumer-execution-evidence-v1'
 MODES = ('fixture', 'engineering-dev-smoke')
-ROLES = ('analysis', 'audit', 'reader')
+ROLES = ('analysis', 'audit', 'reader', 'writer')
 MAX_EVIDENCE_BYTES = 1024**2  # Metadata parser bound, not a run resource budget.
 MAX_FILES = 4096
 FLAGS = {'isolated': 1, 'ignore_environment': 1, 'no_user_site': 1,
