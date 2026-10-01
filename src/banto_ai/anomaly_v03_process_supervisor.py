@@ -58,7 +58,7 @@ def _file_pin(path, maximum):
 
 
 def supervise(argv, cwd, control_root, limits, *, stdout_name="report.json", runtime_probe=None, boundary=lambda: None,
-              on_started=None):
+              on_started=None, resource_probe=None):
     """Return observations after reaping the owned process; caller saves the report.
 
     control_root is newly claimed and every output is exclusive. The caller owns
@@ -66,6 +66,8 @@ def supervise(argv, cwd, control_root, limits, *, stdout_name="report.json", run
     supervised; descendants require a separate ownership contract. An optional
     on_started callback may observe the original owned handle before polling.
     Its failure follows the same stop/reap path; it must not transfer ownership.
+    resource_probe optionally returns a latched cooperative stop reason at each
+    budget sample. Its errors also stop/reap the owned child.
     """
     _limits(limits)
     rt.require(type(argv) is list and argv and all(type(x) is str and x for x in argv), "process argv")
@@ -95,6 +97,11 @@ def supervise(argv, cwd, control_root, limits, *, stdout_name="report.json", run
         peak = max(peak, resources.memory_bytes(process._handle)["peak_private_bytes"])
 
     def budget():
+        if resource_probe is not None:
+            reason = resource_probe()
+            rt.require(reason is None or (type(reason) is str and bool(reason)), "resource stop reason")
+            if reason is not None:
+                return reason
         if time.monotonic() - started > limits["wall_seconds"]:
             return "time_limit"
         if peak > limits["private_bytes"]:
@@ -158,6 +165,8 @@ def supervise(argv, cwd, control_root, limits, *, stdout_name="report.json", run
                 reason = "runtime_changed"
             free_after = resources.free_resources(cwd)
             boundary()
+        except resources.ResourceStop as value:
+            reason = reason or value.reason
         except BaseException as value:
             error("final_context", value)
             reason = reason or "observation_error"

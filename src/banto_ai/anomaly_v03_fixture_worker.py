@@ -17,6 +17,7 @@ import sys
 from . import anomaly_v03_wrapper_fixture as wrapper
 from . import anomaly_v03_reader_evidence as observed
 from . import _anomaly_v03_reader_dependencies as dependencies
+from . import _anomaly_v03_fixture_budget as budgets
 
 v = observed.v
 io = observed.io
@@ -37,7 +38,7 @@ EXTRA_SOURCES = tuple('src/banto_ai/'+name+'.py' for name in (
     'anomaly_v03_fixture_worker', 'anomaly_v03_wrapper_fixture', 'anomaly_v03_document_fixture',
     'anomaly_v03_slice_fixture', 'anomaly_v03_analysis_adapter', 'anomaly_v03_inference_audit',
     'anomaly_v03_analysis_inputs', 'anomaly_v03_descriptive_report', 'anomaly_v03_slices',
-    'anomaly_v03_consumer_input', '_anomaly_v03_reader_dependencies'))
+    'anomaly_v03_consumer_input', '_anomaly_v03_reader_dependencies','_anomaly_v03_fixture_budget'))
 SOURCE_FILES = tuple(sorted((*observed.SOURCE_FILES, *EXTRA_SOURCES)))
 BOOTSTRAP = ('import sys;sys.path.insert(0,sys.argv.pop(1));'
              'from banto_ai.anomaly_v03_fixture_worker import worker_main;'
@@ -160,7 +161,7 @@ def worker_main(argv):
         return 2
 
 
-def calculate_with_evidence(request, *, expected_revision, receipt_parent, receipt_name):
+def calculate_with_evidence(request, *, expected_revision, receipt_parent, receipt_name, budget_limits=None, resource_budget=None):
     """Compute a bounded known fixture, retain owned-child evidence and map five payloads.
 
     Input and expected document pins originate with the caller, before launch.
@@ -169,6 +170,7 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
     No registered observations, formal bootstrap, publication or independent audit.
     """
     _request(request);evidence._digest(expected_revision, 40)
+    budget_limits = budgets.limits(budget_limits)
     request = copy.deepcopy(request)
     parent = io._local_parent(Path(receipt_parent));v.safe_relative_path(receipt_name)
     v.require('/' not in receipt_name and not receipt_name.casefold().startswith('anomaly-multiseed-v0'),
@@ -178,14 +180,18 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
         (ROOT/'src', *(Path(row['path']).parent for row in request['inputs'].values()))),
         'fixture receipt overlaps inputs/source')
     target.mkdir()
+    budget = budgets.FixtureBudget(target,budget_limits,upstream=resource_budget)
     result = {**wrapper.CLOSED, 'format': 'anomaly-v03-fixture-worker-check-v1', 'status': 'failed',
         'role': 'analysis', 'mode': 'fixture', 'operation': OPERATION, 'fixture_inference_performed': False,
         'worker_exit_confirmed': False, 'worker_pid': None, 'new_evaluations': 0}
     try:
+        budget.start()
         source, source_bytes, git = _git_sources(expected_revision)
         observed._save(target/'source-tool.json', git.tool_record)
+        budget.checkpoint()
         runtime, runtime_bytes = observed._expected_runtime()
         raw_inputs, decoded = _load(request, expected_revision)
+        budget.checkpoint()
         bundle = {'format': INVOCATION, 'invocation_id': secrets.token_hex(32), 'source': source, 'request': request}
         bundle_raw = io.json_bytes(bundle);bundle_pin = observed._pin(bundle_raw)
         bundle_path = target/'invocation.json';io._exclusive(bundle_path, bundle_raw)
@@ -196,6 +202,7 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
                 str(bundle_pin['bytes']), bundle_pin['sha256']]
         launch = {}
         def boundary():
+            budget.checkpoint()
             v.require(git('rev-parse', 'HEAD').decode().strip() == expected_revision, 'fixture revision changed')
             evidence._same(_working_source(expected_revision), source, 'fixture source changed')
             evidence._same({n: observed._pin(b) for n, b in observed._inputs(request['inputs']).items()},
@@ -208,11 +215,12 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
             expected['process'] = {'pid': process.pid, 'parent_pid': os.getpid(), 'start_token': launch['start_token'],
                                    'argv': list(argv), 'cwd': str(ROOT)}
             observed._save(target/'launch.json', launch);observed._save(target/'expected.json', expected)
-        monitor = supervisor.supervise(argv, ROOT, target/'worker', LIMITS, boundary=boundary, on_started=started)
+        monitor = supervisor.supervise(argv, ROOT, target/'worker', LIMITS, boundary=boundary, on_started=started, resource_probe=budget.probe)
         observed._save(target/'supervision.json', monitor)
         result.update(worker_exit_confirmed=monitor['worker_exit_confirmed'], worker_pid=monitor['worker_pid'],
                       reason=monitor['stop_reason'] or 'worker_failed')
         if monitor['status'] == 'complete':
+            budget.checkpoint()
             v.require(monitor['worker_exit_confirmed'] and monitor['exit_code'] == 0 and not monitor['observation_errors'],
                       'fixture owned worker completion')
             v.require(monitor['worker_pid'] == expected['process']['pid'], 'fixture owned PID changed')
@@ -233,6 +241,7 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
                 runtime_snapshots=runtime_bytes, input_snapshots=raw_inputs, output_snapshots={'fixture/document.json': output})
             supplement = dependencies.verify_pair(reply['dependencies_before'], reply['dependencies_after'],
                 root=ROOT, revision=expected_revision, git=git, required_sources=SOURCE_FILES)
+            budget.checkpoint()
             draft = {'format': wrapper.FORMAT, 'mode': 'fixture', 'invented_only': True,
                 'fixture_input': decoded['fixture/input.json'], 'slice_input': decoded['fixture/slices.json'],
                 'coverage': decoded['fixture/coverage.json'], 'document': v.strict_json(output)}
@@ -242,8 +251,10 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
                 source_snapshots=source_bytes, runtime_snapshots=runtime_bytes)
             files = {n: v.canonical_json(value) for n, value in mapped['payloads'].items()}
             v.require(sum(map(len, files.values())) <= WRAPPER_LIMIT, 'fixture wrapper byte limit')
+            budget.checkpoint()
             (target/'wrapper').mkdir()
             for name, raw in files.items():
+                budget.checkpoint()
                 io._exclusive(target/'wrapper'/name, raw)
                 evidence._raw(observed._file(target/'wrapper'/name, WRAPPER_LIMIT), mapped['payload_pins'][name], 'fixture wrapper readback')
             io._exclusive(target/'evidence.json', record);observed._save(target/'binding.json', binding)
@@ -264,5 +275,7 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
             raise error
     except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as error:
         result.update(reason='fixture_evidence_rejected', error_type=type(error).__name__, detail=str(error))
-    observed._save(target/'result.json', result)
+    finally:
+        budgets.finish(budget,target,result,owner_error=sys.exception())
+    budgets.save_result(target,result)
     return {**result, 'check_directory': str(target), 'result_pin': observed._pin(io.json_bytes(result))}

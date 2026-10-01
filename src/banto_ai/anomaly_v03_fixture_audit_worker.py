@@ -11,6 +11,7 @@ import sys
 from . import anomaly_v03_fixture_numeric_audit as numeric
 from . import anomaly_v03_reader_evidence as observed
 from . import _anomaly_v03_reader_dependencies as dependencies
+from . import _anomaly_v03_fixture_budget as budgets
 
 v,io,evidence,supervisor = observed.v,observed.io,observed.evidence,observed.supervisor
 ROOT = Path(__file__).resolve().parents[2]
@@ -21,7 +22,7 @@ INPUT_LIMITS = {'fixture/input.json':1024**2,'fixture/document.json':4*1024**2,
                 'analysis/result.json':64*1024,'analysis/evidence.json':64*1024,'fixture/audit-operation.json':4096}
 LIMITS = {'wall_seconds':60,'private_bytes':256*1024**2,'output_bytes':1024**2}
 EXTRA_SOURCES = tuple('src/banto_ai/'+n+'.py' for n in
-    ('anomaly_v03_fixture_numeric_audit','anomaly_v03_fixture_audit_worker','_anomaly_v03_reader_dependencies'))
+    ('anomaly_v03_fixture_numeric_audit','anomaly_v03_fixture_audit_worker','_anomaly_v03_reader_dependencies','_anomaly_v03_fixture_budget'))
 SOURCE_FILES = tuple(sorted((*observed.SOURCE_FILES,*EXTRA_SOURCES)))
 BOOTSTRAP = ('import sys;sys.path.insert(0,sys.argv.pop(1));'
     'from banto_ai.anomaly_v03_fixture_audit_worker import worker_main;raise SystemExit(worker_main(sys.argv[1:]))')
@@ -116,19 +117,24 @@ def worker_main(argv):
         print(json.dumps({'status':'fixture_audit_rejected','detail':str(error),'formal_permission':False},sort_keys=True));return 2
 
 
-def audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_name):
+def audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_name, budget_limits=None, resource_budget=None):
     """Audit one pinned prior fixture output. Never rerun the analysis worker."""
     _request(request);evidence._digest(expected_revision,40);request = copy.deepcopy(request)
+    budget_limits = budgets.limits(budget_limits)
     parent = io._local_parent(Path(receipt_parent));v.safe_relative_path(receipt_name)
     v.require('/' not in receipt_name and not receipt_name.casefold().startswith('anomaly-multiseed-v0'),'audit receipt name')
     target = io.regular_path(parent/receipt_name,directory=True,missing=True)
     v.require(not any(observed.reader._overlap(target,p) for p in (ROOT/'src',*(Path(r['path']).parent for r in request['inputs'].values()))),'audit receipt overlaps inputs/source')
     target.mkdir()
+    budget = budgets.FixtureBudget(target,budget_limits,upstream=resource_budget)
     result = {**numeric.CLOSED,'format':'anomaly-v03-fixture-audit-check-v1','status':'failed','mode':'fixture','role':'audit',
         'operation':OPERATION,'fixture_numerical_audit_performed':False,'worker_exit_confirmed':False,'worker_pid':None,'new_evaluations':0}
     try:
+        budget.start()
         source,source_bytes,git = _git_sources(expected_revision);observed._save(target/'source-tool.json',git.tool_record)
+        budget.checkpoint()
         runtime,runtime_bytes = observed._expected_runtime();inputs,values = _load(request,expected_revision)
+        budget.checkpoint()
         # Construct only the required success claim; parent does not recompute numerics.
         output = v.canonical_json(numeric.success_summary(values['fixture/input.json']));output_pin = observed._pin(output)
         bundle = {'format':INVOCATION,'invocation_id':secrets.token_hex(32),'source':source,'request':request,'expected_output':output_pin}
@@ -138,6 +144,7 @@ def audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
         argv = [sys.executable,'-I','-S','-B','-c',BOOTSTRAP,str(ROOT/'src'),str(path),str(bundle_pin['bytes']),bundle_pin['sha256']]
         launch = {}
         def boundary():
+            budget.checkpoint()
             v.require(git('rev-parse','HEAD').decode().strip() == expected_revision,'audit revision changed')
             evidence._same(_source(expected_revision),source,'audit source changed')
             evidence._same({n:observed._pin(b) for n,b in observed._inputs(request['inputs']).items()},expected['inputs'],'parent audit inputs changed')
@@ -147,10 +154,11 @@ def audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
             launch.update(observed.creation_observation(process.pid,process._handle))
             expected['process'] = {'pid':process.pid,'parent_pid':os.getpid(),'start_token':launch['start_token'],'argv':list(argv),'cwd':str(ROOT)}
             observed._save(target/'launch.json',launch);observed._save(target/'expected.json',expected)
-        monitor = supervisor.supervise(argv,ROOT,target/'worker',LIMITS,boundary=boundary,on_started=started)
+        monitor = supervisor.supervise(argv,ROOT,target/'worker',LIMITS,boundary=boundary,on_started=started,resource_probe=budget.probe)
         observed._save(target/'supervision.json',monitor)
         result.update(worker_exit_confirmed=monitor['worker_exit_confirmed'],worker_pid=monitor['worker_pid'],reason=monitor['stop_reason'] or 'worker_failed')
         if monitor['status'] == 'complete':
+            budget.checkpoint()
             v.require(monitor['worker_exit_confirmed'] and monitor['exit_code'] == 0 and not monitor['observation_errors'],'audit owned completion')
             v.require(monitor['worker_pid'] == expected['process']['pid'],'audit owned PID')
             reply = v.strict_json(observed.consumer.pinned.read_pinned(target/'worker/report.json',monitor['output'],LIMITS['output_bytes']))
@@ -166,6 +174,7 @@ def audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
                 expected=expected,source_snapshots=source_bytes,runtime_snapshots=runtime_bytes,input_snapshots=inputs,
                 output_snapshots={'fixture/primary-audit.json':actual})
             supplement = dependencies.verify_pair(reply['dependencies_before'],reply['dependencies_after'],root=ROOT,revision=expected_revision,git=git,required_sources=SOURCE_FILES)
+            budget.checkpoint()
             io._exclusive(target/'evidence.json',record);observed._save(target/'binding.json',binding)
             observed._save(target/'dependencies.json',{'before':reply['dependencies_before'],'after':reply['dependencies_after']})
             observed._save(target/'dependency-crosscheck.json',supplement)
@@ -178,5 +187,7 @@ def audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
         finally:raise error
     except (ValueError,OSError,KeyError,TypeError,subprocess.SubprocessError) as error:
         result.update(reason='fixture_audit_rejected',error_type=type(error).__name__,detail=str(error))
-    observed._save(target/'result.json',result)
+    finally:
+        budgets.finish(budget,target,result,owner_error=sys.exception())
+    budgets.save_result(target,result)
     return {**result,'check_directory':str(target),'result_pin':observed._pin(io.json_bytes(result))}

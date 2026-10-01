@@ -63,7 +63,8 @@ class AuditWorkerTests(unittest.TestCase):
             result = self.run_audit()
         self.assertEqual(result['status'],'verified',result)
         self.assertTrue(result['fixture_numerical_audit_performed']);self.assertTrue(result['worker_exit_confirmed'])
-        self.assertEqual((result['selected_source_files'],result['runtime_files'],result['retained_input_files']),(13,2,5))
+        self.assertEqual((result['selected_source_files'],result['runtime_files'],result['retained_input_files']),(14,2,5))
+        self.assertTrue(result['resource_budget_passed'])
         path = Path(result['check_directory'])/'payload/primary-audit.json'
         self.assertEqual(worker.observed._pin(path.read_bytes()),result['audit_pin'])
         for key,value in worker.numeric.CLOSED.items():self.assertEqual(result[key],value)
