@@ -13,13 +13,14 @@ from tests import test_anomaly_v03_fixture_numeric_audit as hand
 from tests import test_anomaly_v03_consumer_evidence as supplied
 
 
-def write_request(parent, revision, fixture, document, *, real_analysis=None):
+def write_request(parent, revision, fixture, document, *, real_analysis=None, slice_input=None):
     parent.mkdir()
     raw_input = worker.v.canonical_json(fixture);raw_document = worker.v.canonical_json(document)
     if real_analysis is None:
         # Deliberately invented prior analysis receipts for unit tests only.
         record = supplied.case(role='analysis')['evidence']
         record['inputs'] = {'fixture/input.json':worker.observed._pin(raw_input)}
+        if slice_input is not None:record['inputs']['fixture/slices.json'] = worker.observed._pin(worker.v.canonical_json(slice_input))
         record['outputs'] = {'fixture/document.json':worker.observed._pin(raw_document)}
         raw_record = worker.io.json_bytes(record)
         result = {'format':'anomaly-v03-fixture-worker-check-v1','status':'verified','role':'analysis','mode':'fixture',
@@ -33,13 +34,15 @@ def write_request(parent, revision, fixture, document, *, real_analysis=None):
         record = worker.v.strict_json(raw_record)
     reference = {'result_pin':worker.observed._pin(raw_result),'evidence_pin':worker.observed._pin(raw_record),
                  'source_revision':record['source_before']['revision']}
+    operation = worker.SLICE_OPERATION if slice_input is not None else worker.OPERATION
     files = {'fixture/input.json':raw_input,'fixture/document.json':raw_document,'analysis/result.json':raw_result,
-        'analysis/evidence.json':raw_record,'fixture/audit-operation.json':worker.v.canonical_json(worker.operation_descriptor(revision,reference))}
+        'analysis/evidence.json':raw_record,'fixture/audit-operation.json':worker.v.canonical_json(worker.operation_descriptor(revision,reference,operation=operation))}
+    if slice_input is not None:files['fixture/slices.json'] = worker.v.canonical_json(slice_input)
     records = {}
     for name,raw in files.items():
         path = parent/name.replace('/','-');path.write_bytes(raw)
         records[name] = {'path':str(path),'pin':worker.observed._pin(raw),'links':1}
-    return {'format':worker.FORMAT,'mode':'fixture','role':'audit','operation':worker.OPERATION,'inputs':records,'analysis_reference':reference}
+    return {'format':worker.FORMAT,'mode':'fixture','role':'audit','operation':operation,'inputs':records,'analysis_reference':reference}
 
 
 @unittest.skipUnless(os.name == 'nt' and sys.version_info[:2] == (3,14),'Windows CPython 3.14 observation')
@@ -63,7 +66,7 @@ class AuditWorkerTests(unittest.TestCase):
             result = self.run_audit()
         self.assertEqual(result['status'],'verified',result)
         self.assertTrue(result['fixture_numerical_audit_performed']);self.assertTrue(result['worker_exit_confirmed'])
-        self.assertEqual((result['selected_source_files'],result['runtime_files'],result['retained_input_files']),(14,2,5))
+        self.assertEqual((result['selected_source_files'],result['runtime_files'],result['retained_input_files']),(15,2,5))
         self.assertTrue(result['resource_budget_passed'])
         path = Path(result['check_directory'])/'payload/primary-audit.json'
         self.assertEqual(worker.observed._pin(path.read_bytes()),result['audit_pin'])
@@ -129,6 +132,59 @@ class AuditWorkerTests(unittest.TestCase):
         target = self.receipts/'audit';target.mkdir();(target/'keep').write_bytes(b'evidence')
         with self.assertRaises((ValueError,OSError)):self.run_audit()
         self.assertEqual((target/'keep').read_bytes(),b'evidence')
+
+    def slice_request(self, document=None):
+        return write_request(self.root/'slice-inputs',self.revision,self.fixture,
+            self.document if document is None else document,slice_input=hand.hand.invented_slices(self.fixture))
+
+    def test_combined_actual_child_without_parent_recomputation(self):
+        request = self.slice_request()
+        with (patch.object(worker.numeric,'audit_primary_document',side_effect=AssertionError('parent primary audit')),
+              patch.object(worker.slices,'audit_slices',side_effect=AssertionError('parent slice audit'))):
+            result = self.run_audit(request)
+        self.assertEqual(result['status'],'verified',result)
+        self.assertTrue(result['fixture_slice_audit_performed']);self.assertTrue(result['resource_budget_passed'])
+        self.assertEqual((result['selected_source_files'],result['retained_input_files']),(15,6))
+        root = Path(result['check_directory']);report = json.loads((root/'payload/primary-and-slices-audit.json').read_text(encoding='utf-8'))
+        self.assertEqual(report['slice_audit']['main_slice_rows'],1233)
+        self.assertEqual(report['slice_audit']['diagnostic_rows'],2835)
+        self.assertFalse(report['independent_s6_complete']);self.assertFalse((root/'payload/primary-audit.json').exists())
+        record = json.loads((root/'evidence.json').read_text(encoding='utf-8'))
+        self.assertEqual(record['inputs']['fixture/slices.json'],request['inputs']['fixture/slices.json']['pin'])
+
+    def test_resealed_slice_value_fails_in_actual_child(self):
+        doc = copy.deepcopy(self.document);doc['document_draft']['slices'][0]['metric']['value'] += .01
+        result = self.run_audit(self.slice_request(doc))
+        self.assertEqual(result['status'],'failed');self.assertTrue(result['worker_exit_confirmed'])
+        self.assertFalse(result['fixture_slice_audit_performed'])
+        root = Path(result['check_directory']);monitor = json.loads((root/'supervision.json').read_text(encoding='utf-8'))
+        self.assertEqual(monitor['exit_code'],2)
+        self.assertIn('main slice rows differs',(root/'worker/report.json').read_text(encoding='utf-8'))
+        self.assertFalse((root/'payload').exists())
+
+    def test_changed_slice_input_not_bound_to_prior_analysis(self):
+        request = self.slice_request();row = request['inputs']['fixture/slices.json'];path = Path(row['path'])
+        value = json.loads(path.read_text(encoding='utf-8'));value['invented_only'] = False
+        raw = worker.v.canonical_json(value);path.write_bytes(raw);row['pin'] = worker.observed._pin(raw)
+        with patch.object(worker.supervisor,'supervise',side_effect=AssertionError('launch')):result = self.run_audit(request)
+        self.assertEqual(result['status'],'failed');self.assertIn('analysis slice input pin',result['detail'])
+
+    def test_scope_inventory_cannot_silently_drop_slice_input(self):
+        request = self.slice_request()
+        for change in ('missing','downgrade','formal'):
+            value = copy.deepcopy(request)
+            if change == 'missing':del value['inputs']['fixture/slices.json']
+            if change == 'downgrade':value['operation'] = worker.OPERATION
+            if change == 'formal':value['mode'] = 'formal'
+            with self.subTest(change=change),patch.object(worker.io,'_local_parent',side_effect=AssertionError('IO')):
+                with self.assertRaises(ValueError):self.run_audit(value)
+
+    def test_slice_operation_descriptor_must_match_request(self):
+        request = self.slice_request();row = request['inputs']['fixture/audit-operation.json'];path = Path(row['path'])
+        raw = worker.v.canonical_json(worker.operation_descriptor(self.revision,request['analysis_reference']))
+        path.write_bytes(raw);row['pin'] = worker.observed._pin(raw)
+        with patch.object(worker.supervisor,'supervise',side_effect=AssertionError('launch')):result = self.run_audit(request)
+        self.assertEqual(result['status'],'failed');self.assertIn('audit operation/revision',result['detail'])
 
 
 if __name__ == '__main__':unittest.main()
