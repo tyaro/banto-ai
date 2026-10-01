@@ -158,6 +158,20 @@ def _git_sources(revision):
     return _source(revision),snapshots,git
 
 
+def _cached_git(git, revision, snapshots):
+    """Reuse immutable blobs only within this call; working files stay rechecked."""
+    blobs = dict(snapshots[revision])
+    def cached(*args):
+        if len(args) != 2 or args[0] != 'show' or not args[1].startswith(revision+':'):return git(*args)
+        name = args[1][41:];v.safe_relative_path(name)
+        if name not in blobs:
+            v.require(len(blobs) < 64,'publication Git blob inventory limit')
+            raw = git(*args);v.require(len(raw) <= 1024**2,'publication Git blob limit');blobs[name] = raw
+        return blobs[name]
+    cached.tool_record = git.tool_record
+    return cached
+
+
 def _role_outputs(role,request,files,marker):
     if role == 'writer':return {'publication/'+n:b for n,b in files.items()}|{'publication/.complete':marker}
     return {'verification/readback.json':_readback(request,files,marker)}
@@ -201,8 +215,11 @@ def worker_main(argv):
         print(json.dumps({'status':'fixture_publication_rejected','detail':str(error),'formal_permission':False},sort_keys=True));return 2
 
 
-def _run_role(role,request,target,publication,revision,budget,files,inputs):
-    target.mkdir();source,source_bytes,git = _git_sources(revision)
+def _run_role(role,request,target,publication,revision,budget,files,inputs,source_context):
+    target.mkdir();source,source_bytes,git = source_context
+    budget.checkpoint()
+    v.require(git('rev-parse','HEAD').decode().strip() == revision and not git('status','--porcelain').strip(),'publication candidate changed')
+    evidence._same(_source(revision),source,'role source changed')
     observed._save(target/'source-tool.json',git.tool_record)
     runtime,runtime_bytes = observed._expected_runtime();marker = _marker(files)
     outputs = _role_outputs(role,request,files,marker)
@@ -269,11 +286,14 @@ def publish_with_evidence(request, *, expected_revision, receipt_parent, receipt
         'analysis_runs':0,'audit_runs':0,'analysis_reference':request['analysis_reference'],'audit_reference':request['audit_reference']}
     try:
         budget.start();inputs,files = _load(request);budget.checkpoint()
+        source,source_bytes,git = _git_sources(expected_revision)
+        source_context = source,source_bytes,_cached_git(git,expected_revision,source_bytes)
+        budget.checkpoint()
         result['publication_status'] = 'unconfirmed'
-        writer = _run_role('writer',request,target/'writer',publication,expected_revision,budget,files,inputs)
+        writer = _run_role('writer',request,target/'writer',publication,expected_revision,budget,files,inputs,source_context)
         result.update(publication_status='completed',writer=writer)
         result['reader_status'] = 'unconfirmed'
-        reader = _run_role('reader',request,target/'reader',publication,expected_revision,budget,files,inputs)
+        reader = _run_role('reader',request,target/'reader',publication,expected_revision,budget,files,inputs,source_context)
         result.update(reader_status='completed',reader=reader)
         budget.checkpoint();v.require(observed._inputs(request['inputs']) == inputs,'final saved inputs changed')
         binding = {**CLOSED,'format':'anomaly-v03-fixture-publication-binding-v1','mode':'fixture','scope':'supplied-fixture-bytes-and-owned-local-processes',

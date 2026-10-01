@@ -137,7 +137,7 @@ class FixturePublicationTests(unittest.TestCase):
         def broken(store,*args):
             if count:raise OSError('second write failed')
             count.append(1);return original(store,*args)
-        def role(role,request,target,publication,revision,budget,files,inputs):
+        def role(role,request,target,publication,revision,budget,files,inputs,source_context):
             self.assertEqual(role,'writer')
             with patch.object(flow.io.LocalPublication,'write',broken):
                 flow.io.publish_local_result(publication.parent,publication.name,files,verify_semantics=flow._semantic(files))
@@ -187,3 +187,15 @@ class FixturePublicationTests(unittest.TestCase):
         with patch.object(flow.budgets,'system_snapshot',return_value=snapshot),patch.object(flow,'_run_role',side_effect=AssertionError('launch')):
             result = self.run_flow()
         self.assertEqual(result['status'],'failed');self.assertFalse(result['resource_budget_passed']);self.assertEqual(result['publication_status'],'not_started')
+
+    def test_only_immutable_revision_blobs_reused_within_one_call(self):
+        calls = []
+        def git(*args):calls.append(args);return b'disk'
+        git.tool_record = {}
+        cached = flow._cached_git(git,self.revision,{self.revision:{'known.py':b'known'}})
+        self.assertEqual(cached('show',self.revision+':known.py'),b'known');self.assertEqual(calls,[])
+        for unused in range(2):self.assertEqual(cached('show',self.revision+':new.py'),b'disk')
+        self.assertEqual(len(calls),1)
+        for unused in range(2):cached('status','--porcelain');cached('show','HEAD:known.py')
+        self.assertEqual(len(calls),5)
+        with self.assertRaises(ValueError):cached('show',self.revision+':../outside.py')
