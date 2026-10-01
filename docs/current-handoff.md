@@ -1,26 +1,32 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-10-01 JST。**限定fixture工程の容量/system commit停止を接続。新16＋既存37の53試験pass、共通予算のanalysis→audit成功。次は正式受入残件を現在の証拠へ更新する。**
+更新: 2026-10-01 JST。**正式受入残件を最新fixture証拠へ更新。次は架空slice/補助診断表の別実装検算と所有auditへの接続を実装する。**
 
-- [今回の結果](results/anomaly-multiseed-v0.3-fixture-resource-budget-2026-10-01.md)、[APIと限界](anomaly-v03-fixture-resource-budget.md)、長い引継書§187。
-- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装cf4d9c42c11c202984aacdd71ac5efb0368f22d0、成功候補fb02/banto-ai。初回fb01/f4c1918と旧fa01/fw01等を保全。
-- OUT artifacts/fixture-resource-budget-2026-10-01、成功tests-2/shared-example/。最終文書revision・全hashは最上位savepoint-evidence.json。
+- [今回の残件表と次工程の合格条件](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-10-01.md)、長い引継書§188。
+- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装cf4d9c42c11c202984aacdd71ac5efb0368f22d0、clean候補fb02/banto-aiを維持。
+- OUT artifacts/acceptance-gap-update-2026-10-01。文書revision・全pinはsavepoint-evidence.json。コード変更・新試験・再計算・新評価0。
 
 ## 今回の成果
 
-新resource budget module/testの2本、既存supervisor・analysis/audit・各testの5本を変更。旧70codeの65本と18dataは不変、変更した5本の旧pinもmanifestへ保存。親の入力/source検査、所有子、終了後照合、保存へ停止確認を接続。共通monitorを渡せば入力/両役割を同じroot・経過時間で合算する。
+保存点7＋小receipt13＝20file/223,090bytes、72code/18dataのpinを照合。正式受入の5まとまりを「完了した部分／開始前に必要なもの／正式実行後の証拠」に整理し、T01〜T12へ反映した。5は残り試験数やPhase2/3全体の残件数ではない。4正式null欄も4試験という意味ではない。
 
-新budget16＋supervisor13＋analysis15＋audit9の53試験pass、83.808秒。小さい容量超過と模擬commit低下で実子を停止/reapし、途中記録を保全。初回19failure/2errorはWindows DirEntryのリンク数0が原因で、path.lstatへ修正。tests-1/fb01/旧harnessを残し、成功はtests-2。
-
-共有例は40cluster/4drawの架空analysisとauditを各1回通して23.623秒、両子exit0/reaped/error0。文書既知pin一致、主9表/180gate一致、全体・両役割resource_budget_passed=true。共有root観測最大11.26MiB、親harness peak121.75MiB、子analysis/audit peak66.09/46.81MiB。保存例後RAM空き8.25GiB、commit余裕12.93GiB、C/D空き107.20/387.12GiB。最終資源はsave-checks.json。
+5payload adapter、架空数値worker、主9表の独立audit、限定資源停止は接続済み。旧4payload通常公開・別readerも完了として維持。登録40seed/480区間/2,880評価のconsumer、全範囲audit、最終役割/source-runtime、5payload公開、正式全体予算・契約は未受入。
 
 ## 次の実装単位
 
-次は[2026-09-26の受入残件](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)を現在の証拠に合わせる。5payload結合、数値worker、別実装primary audit、限定fixture資源停止まで接続したので、完了した範囲と正式化に不足する具体的な契約/登録consumer/監査範囲/役割・source-runtime/公開・正式全体予算を区別する。wrapperや同じ保存/reader試験を重ねず、既存結果・pinを再利用する。
+次は上記結果文書「次の実装単位」の5手順に従い、架空40clusterのslice/sidecarを別実装で検算する。現在のprimary auditは明示的に対象外としている。本文1,233行、補助4系列2,835行、詳細9表の独立導出、合計を保った誤割当・ラベル/分母/null/省略の改変検出を含める。計算側slice/mapping関数を呼ぶ自己再検査にはしない。
 
-今回の予算は親/共有120秒、親private512MiB、directory32MiB/256entries/深さ8、commit/RAM余裕各2GiB、disk余裕5GiB。子は従来60秒/256MiB/stdout+stderr1MiB。既存子起動条件RAM4GiB/disk20GiBも残る。共通monitorを渡さない別callは個別予算。sampling/親checkpoint方式でhard quotaではなく、診断budget/resultに64KiB予約。実行中の限定関数・writeや停止待ちの超過はありうる。
+保存済み架空primary/slice入力・文書のpinを外部保持し、既存owned auditにslice入力と新scope receiptを接続する。元analysisの再計算、旧720評価の読直しは不要。変更に関係する試験と保存済み例への別audit1回を実施し、旧primary-only receipt・候補・失敗記録は保全する。これは次回の実装仕様であり、今回完了した検算ではない。
 
-primary auditはslice/sidecar導出・coverage/producer・登録データを未検算。資源予算も正式2,880評価/50,000反復の登録予算ではない。formal/promotion/S6/trust/execution_authenticated/full closure=false、正式null4欄/ready=false。正式実行後の成功証拠を開始前へ循環要求せず、今回の接続だけで正式gateを開かない。新しい判断が必要なら具体的な候補・残件を揃えて提示する。
+既定最大8draw/共有120秒/親512MiB/dir32MiB等を維持。予算不足を理由に自動拡大しない。slice検算を終えても、登録観測の導出、coverage、正式50,000反復、mapping採択、公開writer、S6/closureの受入は別。formal/promotion/S6/trust/execution_authenticated/full closure=false、正式null4欄/ready=falseを維持する。
+
+## 直前の資源停止保存点
+
+文書27e4d746979e9792b61b0017482890d0643565b1、manifest38,025bytes/SHA06317ff3eca553fed332622f4840616457363e71cc63554bd5bfac2cf1b671e8。OUT artifacts/fixture-resource-budget-2026-10-01、成功tests-2/shared-example。新budget16＋supervisor13＋analysis15＋audit9の53試験pass、83.808秒。初回DirEntryリンク数0の失敗はpath.lstatへ修正し、tests-1/fb01/旧harnessを保全。
+
+共有例は架空40cluster/4drawのanalysis→auditを各1回、23.623秒、両子exit0/reaped/error0。文書既知pin一致、主9表/180gate一致。観測最大dir11.26MiB、親peak121.75MiB、子analysis/audit66.09/46.81MiB。正式予算の推定には使わない。[APIと限界](anomaly-v03-fixture-resource-budget.md)。
+
+今回の開始時RAM空き7.62GiB、commit余裕12.29GiB、C/D空き126.13/387.12GiB。終了時資源はsave-checks.json。OS25H2/26200/UBR9457を観測、旧formal9168は変更しない。実計算c01d1c9、本流clean6f1285d、closed、既存dirty文書は不変。banto-24 PAUSED、principal/UAC/ACL/同時書換えは保留、push/mergeなし。
 
 ## 前工程の主集計audit保存点
 

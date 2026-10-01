@@ -4195,3 +4195,13 @@ slice/sidecar導出・coverage/producer・登録データは対象外と明示�
 子analysis/audit peak66.09/46.81MiB、harness peak121.75MiB。保存例後RAM空き8.25GiB、commit余裕12.93GiB、C/D空き107.20/387.12GiB、OS26200/9457。最終値と文書revision/pinはsavepoint-evidence.json/save-checks.json。予算はsamplingと親checkpointによる停止でhard quotaではなく、最終診断に64KiB予約する。
 
 次は受入残件表を現在のfixture計算・primary audit・資源停止の証拠へ更新する。正式予算・契約/登録consumer/未検算slice・役割/source-runtime・公開受入は残る。正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure=false。前savepoint26669bytes/SHAa57343756c873d9c6e51ba2faa63d68bf8150f8bbde7200ebae69baacc20f531。旧実計算c01d1c9・本流6f1285d・closed・dirty文書/CRLF差・旧候補/保存点保全、banto-24 PAUSED。正式gate/holdout/freeze・principal/保護root/UAC/ACL・push/mergeは対象外。
+
+## 188. 2026-10-01 正式受入残件の更新と次のslice audit
+
+[最新残件表](anomaly-multiseed-v0.3-acceptance-gap-update-2026-10-01.md)を保存。起点27e4d746979e9792b61b0017482890d0643565b1、実装cf4d9c42c11c202984aacdd71ac5efb0368f22d0/fb02は不変。OUT artifacts/acceptance-gap-update-2026-10-01、文書revisionとpinはsavepoint-evidence.json。保存点7＋receipt13＝20file/223,090bytes、72code/18dataを照合し、新評価/再計算/新試験0。
+
+5payload・数値worker・主9表audit・限定fixture資源停止を完了側へ反映した。正式化は運用契約、登録consumer、役割/source-runtime、公開/全監査、全体予算の5まとまり。正式開始前の実装/契約と実行後の成功証拠を分け、循環要求しない。旧4payload通常公開/別readerを未実装へ戻さない。
+
+次は架空40clusterのslice/sidecar別実装検算と既存owned auditへの接続。本文1,233行、補助4系列2,835行、詳細9表を独立導出し、合計維持の誤割当・key/分母/null/省略の不整合を検出する。保存済み入力・文書を使い、元analysis再計算0。必要なslice入力pinとaudit scopeを追加し、旧primary-only receiptを保全。限定予算を維持して関連試験と別audit例1回を実施する仕様を具体化した。今回まだこの検算は実装していない。
+
+今回の開始時RAM空き7.62GiB/commit余裕12.29GiB/C/D126.13/387.12GiB、確認process peak20.37MiB。OS25H2/26200/UBR9457。終了資源はsave-checks.json。旧実計算c01d1c9/main6f1285d/closed/dirty文書を保全、banto-24 PAUSED。正式gate/holdout/50,000反復なし、principal/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。

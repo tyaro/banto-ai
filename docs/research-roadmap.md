@@ -359,3 +359,9 @@ slice/sidecar導出・producer/登録データは今回の独立検算対象外�
 [容量/system commit監視](anomaly-v03-fixture-resource-budget.md)を親処理・所有子へ接続し、新16＋既存37の53試験pass。共有予算で架空analysis→auditを一度通し、23.623秒、全体/両役割成功。小さい容量超過・模擬commit低下で子の停止/reapと記録保全を確認。[結果](results/anomaly-multiseed-v0.3-fixture-resource-budget-2026-10-01.md)。
 
 sampling/協調停止でありhard quotaではなく、正式2,880評価/50,000反復の予算登録ではない。次は現在の計算・primary audit・資源停止を受入残件へ反映し、契約/登録consumer/未検算範囲/役割証拠/公開・正式予算を具体化する。既存720評価再実行0、Phase2/3全体は未完了。
+
+## 2026-10-01: 正式受入の残件をfixture接続結果へ更新
+
+[5まとまりの残件表](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-10-01.md)を更新。5payload結合、数値worker、主集計の独立検算、限定資源停止は接続済みとして保持し、開始前の契約/実装と実行後の証拠を分けた。20fileの保存証拠と72code/18dataを照合、新評価・再計算・新試験0。
+
+次は架空slice/補助診断表の独立検算を実装し、既存所有auditへ接続する。本文1,233行/補助2,835行/詳細9表の別導出と意味のある改変検出を完了条件にした。旧公開/readerの反復や受入表の再整理へ戻らない。正式契約、登録consumer、source/runtime、5payload公開、正式全体予算は未受入。Phase2/3全体は未完了。

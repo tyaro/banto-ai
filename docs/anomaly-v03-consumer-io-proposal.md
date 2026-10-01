@@ -1,6 +1,6 @@
 # 単一writer方針での解析consumer入出力契約案
 
-2026-10-01現在：[限定fixtureの資源停止](anomaly-v03-fixture-resource-budget.md)をanalysis/audit親処理と所有子へ接続。新16＋既存37の53試験と共有予算の小例が成功した。sampling/協調停止であり正式全体予算は未登録。次はfixture計算・primary audit・資源停止の証拠を受入残件へ反映する。以下の日付付き追記は履歴。
+2026-10-01現在：[正式受入残件を更新](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-10-01.md)。5payload結合・数値worker・主9表の独立検算・限定fixture資源停止は接続済み。5まとまりの正式残件に、開始前の契約/実装と実行後の証拠を分けて反映した。次は架空slice/補助診断表の別実装検算と所有auditへの接続。旧4payload公開・別readerを再試験する工程には戻らない。以下の日付付き追記は履歴、契約はdraft。
 
 2026-09-26現在：[受入残件更新](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)を参照。実レポート4payloadの通常公開・別readerまで完了した。次の実装は§4の予定5payloadと役割別証拠を結ぶ、I/Oなし・架空入力専用のadapter。正式modeを拒否し、本文のnull 4欄と未充足を維持する。以下の日付付き追記・初期実装順は履歴で、契約はdraftのまま。
 
