@@ -371,3 +371,9 @@ sampling/協調停止でありhard quotaではなく、正式2,880評価/50,000�
 [独立検算](anomaly-v03-fixture-slice-audit.md)を既存所有auditへ追加し、保存済み架空解析の主9表に加え本文1,233行/補助2,835行/詳細9表が一致した。元analysis再起動0、別audit1回、10.469秒。関連44項目は初回43passと試験データ修正後の1passで確認し、重複実行を抑えた。[結果](results/anomaly-multiseed-v0.3-fixture-slice-audit-2026-10-01.md)。
 
 入力差替えや合計維持の誤割当を検出。資源予算据置き、formal/S6/closure=false。次は生成済み5payloadを通常公開・別readerとaudit/writer記録へ接続する。旧4payload公開を反復するだけの工程に戻らない。登録観測・正式推論・契約/全体予算は未受入、Phase2/3全体は未完了。
+
+### 2026-10-02：5payload公開・writer証跡・別reader
+
+保存済みの架空解析と主表/slice検算を、所有writer→終了確認→別readerへ結合した。元5payloadは1,976,915bytes、公開5payloadは1,976,920bytes。各JSONにLFを1つ加えた差だけで、内容・数値は同一。 16項目pass＋コード不変の35pass再利用、関連51項目を確認。元解析・検算の再起動0、新評価0。[結果](results/anomaly-multiseed-v0.3-fixture-publication-2026-10-02.md)。
+
+時間停止を受けたGit bytes再利用の修正は上限を変えず、前後検査を保持した。次は登録producerの保存記録・coverageから集計済みconsumer入力への境界を、I/Oなしのfixture adapterとして具体化する。登録ID、予定全slot、最終attempt、入力pin、終了記録、集計countの対応を受け取り、欠落や失敗の成功化を拒否する。旧720評価を再読込み・再集計するだけの作業へ戻らず、正式40seedの実行や50,000反復はまだ開かない。 正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure=falseを維持。登録観測・coverageの真正性、正式契約、最終役割profile、全工程予算は未受入。 Phase2/3全体は未完了。

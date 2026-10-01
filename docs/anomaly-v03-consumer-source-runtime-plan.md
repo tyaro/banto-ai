@@ -1,5 +1,7 @@
 # consumerのsource/runtime固定対象と実行前の残件
 
+2026-10-02現在：最新実装a9de2f500020bb951dfd08d66b56e368859236b9/fp02。[5payload公開](anomaly-v03-fixture-publication.md)のwriter/readerを別所有子で観測し、selected source13/Python2/入力12＋invocationを親期待へ結合した。同revisionのGit blobは1工程内で再利用するが作業ファイルは前後照合する。依存は終了後観測で、承認済み事前profileやfull closureではない。次は登録入力とcoverageのconsumer境界へ進み、最終役割profile/正式固定の不足を残す。
+
 2026-10-01現在：最新候補はb6d578e7c577470ecb2fbef228413d6b2abf85bf/fs02。架空sliceの別実装をowned auditへ追加し、選択source15本/Python2file/入力6file、全236依存file（project32/module181/native48）の終了後照合が成功。旧primary-onlyは保持し、新operationはslice入力を元analysisのpinへ結ぶ。[結果](results/anomaly-multiseed-v0.3-fixture-slice-audit-2026-10-01.md)。次は既存5payloadの通常公開・別readerにaudit scopeとwriterの実行記録を接続する。完全closure・正式役割仕様の受入は未完了。正式実行後の成功証拠を開始前に循環要求しない。以下の静的候補表や日付付き追記は履歴。
 
 2026-09-25接続追記：[実観測reader](anomaly-v03-reader-evidence.md)がsource10本・Python2file・実process identity・15入力を外部期待値へ結合。新規13＋既存回帰27種類がpass。source/runtime全閉包は未完了。次は依存source/stdlib/extension/loaded DLLの採取範囲を広げる。[結果](results/anomaly-multiseed-v0.3-reader-observed-evidence-2026-09-25.md)。

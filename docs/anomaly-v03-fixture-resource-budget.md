@@ -51,3 +51,11 @@ Windowsの `GetPerformanceInfo` からsystem commit総量・limitを読み、差
 容量は指定root内の通常ファイルの見かけのbytesであり、alternate streams、物理割当量、別directoryの総容量を保証しない。出力先volumeの空き容量は別に監視する。敵対的な同時書換え、他processの停止、子孫探索・Job Objectによる任意tree終了は対象外。
 
 成功した呼出しは `resource_budget_passed=true` を追加する。resource-budget.jsonにはlimits、shared_root、samples、first/last、extrema、stop_reason、monitor_exit_confirmed、passedを保存する。正式許可・S6・full closureは引き続きfalse。小さいfixtureで停止条件が動いたことを、正式2,880評価/50,000反復の登録予算や実行許可へ変換しない。
+
+## 通常公開先の明示（2026-10-02）
+
+[5payload公開](anomaly-v03-fixture-publication.md)では `FixtureBudget(root, publication_roots=[root / "published"])` を使う。宣言rootは正規化された絶対パスの厳密な子に限り、重複を拒否、最大4。指定しない既存利用者は従来通りhardlinkを拒否する。
+
+宣言したroot直下の.complete/marker-pending.jsonだけ、regular・同一実体・2リンクの組を許可し、両方のbytesを足す。第三リンク、payloadのhardlink、reparseは拒否する。通常stage→payload renameで走査中のstageが消えた場合だけ、payloadが通常directoryであることを確認し全走査を1回やり直す。欠落ファイルを黙って除外しない。
+
+新公開・writer/readerのreceipt全体を1monitorで監視し、過去解析/auditの資源実績はその保存記録として別に保持する。時間上限を含め既定値は不変。source/Git等の親検査は協調停止なので、進行中の1操作の間に上限を超えることがある。今回の初回時間停止記録も保全した。

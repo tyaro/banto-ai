@@ -4219,3 +4219,15 @@ pure14＋owned14＋budget16の44項目。tests-1は43pass/1error・74.090秒、�
 共有budget成功、dir6.74MiB/25entries、親peak100.68MiB/子66.58MiB、commit余裕最小12.24GiB。例後RAM7.91GiB/commit12.74GiB/C121.32GiB/D388.26GiB、OS25H2/26200/9457。正式pin9168や旧実計算c01d1c9/main6f1285d/closed/dirty文書不変。banto-24 PAUSED。新評価0/旧720再実行0/正式50,000反復0。
 
 次は既存5payloadの通常公開・別readerへaudit scopeとwriter実行記録を結ぶ。自己参照とpartial/unconfirmed/応答喪失を扱い、旧4payload経路/元analysisを保全。今回の成果は架空countからの導出に限り、登録観測/coverage/正式推論/契約/全体予算/closureの受入ではない。正式null4/ready=false、principal/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+
+## 190. 2026-10-02 検算済み5payloadの通常公開・writer証跡・別reader
+
+[結果](anomaly-multiseed-v0.3-fixture-publication-2026-10-02.md)、[API](../anomaly-v03-fixture-publication.md)。開始596d31b、初回0c6dbae/fp01、実装a9de2f500020bb951dfd08d66b56e368859236b9/fp02。OUT artifacts/fixture-publication-2026-10-01、成功tests-4/saved-fixture-publication。新2＋既存4本変更、旧70code/18data不変、現在76code。文書revisionと全pinはsavepoint-evidence.json。
+
+新しい公開経路16項目が90.902秒で全pass（failure/error/skip0）。共通evidence16＋budget19の35passは初回からcode不変を照合して再利用し、関連51項目を確認。最終revisionで51項目すべてを再実行したとはしない。 初回tests-1は50項目中46pass/4failure、275.503秒。正常経路は120秒の共有上限で停止。tests-2は再確認ハーネスのテスト名重複により4件ともロードエラーで、本体未実行。修正したtests-3は同じ実装の失敗4項目だけを再確認し、3pass/1failure。正常経路146.192秒（writer45.034/reader99.862秒）で時間停止した。同revisionのGit blobを工程内で再利用する修正を加え、作業bytesと環境の前後検査は保持した。ほかの初回3失敗の原因を断定せず、記録を保全する。fp01/全失敗ログ/旧harnessを削除しない。
+
+保存例12.249秒。writer PID45580、reader PID42148、両子exit0/reaped/error0。元解析・検算再実行0、新評価0。 元5payloadは1,976,915bytes、公開5payloadは1,976,920bytes。各JSONにLFを1つ加えた差だけで、内容・数値は同一。 元12入力は保存点の連鎖で照合し不変。source13/Python2と元handle identityを結合し、writer/readerを順次実行。writer: project30 / 全234file / module179 / native48、前後追加file 0・module 0。reader: project30 / 全234file / module179 / native48、前後追加file 0・module 0。Gitの不変blobを工程内で保持して再利用するが、作業bytesの前後検査は省略しない。
+
+資源監視61sample、directory最大2.83MiB/39entries、親peak59.24MiB、子writer/reader peak50.16/49.18MiB、commit最小余裕13.82GiB。120秒/512MiB/32MiB等の上限は据置き。 .complete/marker-pendingの宣言済み2リンクだけを許可し、両方を容量計上。部分失敗/応答喪失はunconfirmed、reader失敗は公開済み記録を保全。元科学payloadの状態欄は当時のまま、外部bindingへ今回の実績を保存。
+
+次は登録producerの保存記録・coverageから集計済みconsumer入力への境界を、I/Oなしのfixture adapterとして具体化する。登録ID、予定全slot、最終attempt、入力pin、終了記録、集計countの対応を受け取り、欠落や失敗の成功化を拒否する。旧720評価を再読込み・再集計するだけの作業へ戻らず、正式40seedの実行や50,000反復はまだ開かない。 正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure=falseを維持。登録観測・coverageの真正性、正式契約、最終役割profile、全工程予算は未受入。 最終OS/資源はsave-checks.json。旧実計算c01d1c9/main6f1285d/closed/dirty文書・全候補保全、banto-24 PAUSED。正式gate/holdout/freeze・principal/保護root/UAC/ACL・push/mergeなし。

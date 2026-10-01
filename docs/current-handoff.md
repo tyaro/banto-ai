@@ -1,28 +1,34 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-10-01 JST。**架空slice/補助診断表の別実装検算と所有auditへの接続が完了。次は生成済み5payloadの通常公開・別readerとaudit/writer実行記録を結ぶ。**
+更新: 2026-10-02 JST。**検算済みfixtureの5payloadを通常公開・writer証跡・別readerへ接続済み。次は登録producerの記録とcoverageからconsumer入力への境界を具体化する。**
 
-- [今回の結果](results/anomaly-multiseed-v0.3-fixture-slice-audit-2026-10-01.md)、[利用方法と範囲](anomaly-v03-fixture-slice-audit.md)、長い引継書§189。
-- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装b6d578e7c577470ecb2fbef228413d6b2abf85bf、clean候補fs02/banto-ai。
-- OUT artifacts/fixture-slice-audit-2026-10-01、成功tests-2/saved-analysis-audit/。最終文書revision・全pinはsavepoint-evidence.json。初回ced27e3/fs01、tests-1、verify-attempt1.pyを保全。
+- [今回の結果](results/anomaly-multiseed-v0.3-fixture-publication-2026-10-02.md)、[利用方法](anomaly-v03-fixture-publication.md)、長い引継書§190。
+- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装a9de2f500020bb951dfd08d66b56e368859236b9、clean候補fp02/banto-ai。
+- OUT artifacts/fixture-publication-2026-10-01、成功tests-4/saved-fixture-publication/。最終文書revision・全pinはsavepoint-evidence.json。初回fp01とtests-1〜3/旧harnessを保全。
 
 ## 今回の成果
 
-新module/test2本、既存audit worker/test2本を更新。旧72code中70本・18data不変、現在74code。計算側のslice/mapperを呼ばず、固定座標の和・literal delay multisetで本文1,233行、補助4系列2,835行、詳細9表を検算する。合計維持の誤割当、ラベル/省略/分母/null/primary/profile/histogramの不整合を拒否。
+新しい公開経路16項目が90.902秒で全pass（failure/error/skip0）。共通evidence16＋budget19の35passは初回からcode不変を照合して再利用し、関連51項目を確認。最終revisionで51項目すべてを再実行したとはしない。
 
-pure14＋owned audit14＋budget16の44項目。初回43pass/1error（74.090秒）は等しいcellから異なるcountを探した試験データの問題。検算本体は不変で、1検出とhistogramを移す試験へ修正。修正1件を再実施してpass（1.964秒）、旧43passはsourceと他test/setupの不変を確認して再利用。最終revisionで全44件を再実行したとはしない。
+保存例12.249秒。writer PID45580、reader PID42148、両子exit0/reaped/error0。元解析・検算再実行0、新評価0。 元5payloadは1,976,915bytes、公開5payloadは1,976,920bytes。各JSONにLFを1つ加えた差だけで、内容・数値は同一。
 
-前resource工程のverified analysis（cf4d9c4）を保存点pinで受け取り、元analysis再起動0、別audit1回で成功。主9表/117絶対推定/72対応差/180gate＋slice全範囲一致、PID46224/exit0/reaped/error0、全体10.469秒/子2.868秒。新出力2,384bytes/SHAbe0a327a15db02a5881e51b682fefcdcfe05cae995a7443dc941647c51a863c4。原本5fileは不変。
+元analysis(cf4d9c4)・combined audit(b6d578e)の12保存入力を認証して再利用。writer/readerを所有子で順次実行し、元Popen identity、前後source/runtime、入出力pinを親期待へ結合した。source13/Python2/入力12＋invocation、依存観測は終了後照合。元科学payloadのstages/公開falseを遡って書き換えず、外部bindingへ今回の実績を記録。
 
-audit選択source15/Python2/入力6、依存project32/全236file/module181/native48、前後追加0。元Popen identity/親保持期待/入出力pinへ結合。共有資源予算も成功、41sample/dir最大6.74MiB/25entries、親peak100.68MiB/子66.58MiB、commit最小余裕12.24GiB。例直後RAM7.91GiB/commit12.74GiB/C121.32GiB/D388.26GiB空き、最終値はsave-checks.json。
+資源監視61sample、directory最大2.83MiB/39entries、親peak59.24MiB、子writer/reader peak50.16/49.18MiB、commit最小余裕13.82GiB。120秒/512MiB/32MiB等の上限は据置き。
+
+初回の時間停止を受け、同revisionのGit blobだけを工程内で再利用するよう変更。作業bytes・環境の前後検査を保持し、上限は緩和していない。初回の他3失敗の原因は断定せず、再確認passとログを保存。新module/test2＋既存4本変更、旧70code/18data不変、現在76code。旧4payload公開経路は保全。
 
 ## 次の実装単位
 
-既存wrapperの5payloadを通常公開・writer終了後の別readerへ接続し、今回の新audit scopeとwriterの実行記録を結ぶ。旧4payloadの公開経路は保全し、同じ試験の繰返しだけを目的にしない。科学payloadとpublication receiptの自己参照を避け、通常single writerの終了/応答喪失/partial/unconfirmedと確認側失敗時の記録を保全する。既存の数値worker・5payload adapterを作り直さず、元解析・旧720評価を再計算しない。
+登録producerの保存記録・coverageから集計済みconsumer入力への境界を、I/Oなしのfixture adapterとして具体化する。登録ID、予定全slot、最終attempt、入力pin、終了記録、集計countの対応を受け取り、欠落や失敗の成功化を拒否する。旧720評価を再読込み・再集計するだけの作業へ戻らず、正式40seedの実行や50,000反復はまだ開かない。
 
-新operationはaudit-invented-primary-and-slices-v1、6入力/14MiB、payload/primary-and-slices-audit.json。追加slice入力8MiBを元analysisのinput pinへ結合する。旧primary-only operationの5入力/6MiB、primary-audit.jsonは維持。既定最大8draw/共有120秒/親512MiB/dir32MiB/子60秒256MiB等も維持。
+正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure=falseを維持。登録観測・coverageの真正性、正式契約、最終役割profile、全工程予算は未受入。 今回でT09/T10/T11/T12のfixture公開接続を完了側へ進めた。旧4payloadの公開反復や残件表を再整理するだけの工程へ戻らない。正式開始前の契約/実装と、実行後に得る成功証拠を分け、循環要求しない。
 
-今回完了したのは架空countからのslice/sidecar導出。raw登録観測、coverage、正式50,000反復、mapping採択、5payload公開、正式全体予算・契約/closureは別の残件。formal/promotion/S6/trust/execution_authenticated/full closure=false、正式null4欄/ready=false。正式実行後の成功証拠を開始前へ循環要求しない。
+既存実計算c01d1c9、本流clean6f1285d、closed、dirty文書は不変。banto-24 PAUSED。最終資源・OSはsave-checks.json、旧正式OS pin9168は維持。principal/保護root/UAC/ACL/同時書換え保留、正式gate/holdout/freeze・push/mergeなし。
+
+## 直前のslice audit保存点
+
+文書596d31b298a649f50f5246e917889b51e1cc7f88、実装b6d578e7c577470ecb2fbef228413d6b2abf85bf/fs02。manifest31,897bytes/SHA5b3b86e6bb46b30318dfd77ae7752824ffc03553d219519e2d7453807cdfbc30。元analysis再起動0、別audit1回で主9表/180gate＋本文1,233行/補助2,835行/詳細9表一致。44項目は43pass再利用＋試験データ修正1pass。今回の元auditと起点として保全。
 
 ## 直前の受入残件保存点
 

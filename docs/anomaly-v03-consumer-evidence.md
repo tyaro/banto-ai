@@ -1,5 +1,7 @@
 # consumerの実行証拠と入出力bytesを結ぶ検証部品
 
+2026-10-02追記：roleにwriterを追加し、[5payload公開](anomaly-v03-fixture-publication.md)の所有writer/reader証跡を接続。純粋validatorの信頼境界・mode・formal/full closure=falseは維持する。
+
 2026-09-25接続追記：[実観測reader API](anomaly-v03-reader-evidence.md)を追加し、実際の子processと元handleの記録を本validatorへ接続した。期待値は親が起動前/起動時に保持する。以下の純粋関数自体は引き続き採取/起動を行わず、formal/full closureはfalse。[結果](results/anomaly-multiseed-v0.3-reader-observed-evidence-2026-09-25.md)。
 
 2026-09-25、実装 `c79fc9e5db7d486a22c2ed4b5f5e75ca0027f7a0`。[試験結果](results/anomaly-multiseed-v0.3-consumer-execution-evidence-2026-09-25.md)、[source/runtime計画](anomaly-v03-consumer-source-runtime-plan.md)。`anomaly_v03_consumer_evidence.validate_execution_evidence`は、外部に保持した期待値と、渡された証拠・source/runtime・入出力bytesの対応を検査する純粋関数。実process観測の採取や正式受入は行わない。
@@ -10,7 +12,7 @@
 checked = validate_execution_evidence(
     evidence_raw,
     expected_mode="fixture",  # or engineering-dev-smoke
-    expected_role="reader",  # analysis, audit, reader
+    expected_role="reader",  # analysis, audit, reader, writer
     expected_pin=retained_evidence_pin,
     expected=retained_invocation,
     source_snapshots=revision_scoped_source_bytes,
