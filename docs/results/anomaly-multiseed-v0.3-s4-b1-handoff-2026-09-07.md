@@ -4205,3 +4205,17 @@ slice/sidecar導出・coverage/producer・登録データは対象外と明示�
 次は架空40clusterのslice/sidecar別実装検算と既存owned auditへの接続。本文1,233行、補助4系列2,835行、詳細9表を独立導出し、合計維持の誤割当・key/分母/null/省略の不整合を検出する。保存済み入力・文書を使い、元analysis再計算0。必要なslice入力pinとaudit scopeを追加し、旧primary-only receiptを保全。限定予算を維持して関連試験と別audit例1回を実施する仕様を具体化した。今回まだこの検算は実装していない。
 
 今回の開始時RAM空き7.62GiB/commit余裕12.29GiB/C/D126.13/387.12GiB、確認process peak20.37MiB。OS25H2/26200/UBR9457。終了資源はsave-checks.json。旧実計算c01d1c9/main6f1285d/closed/dirty文書を保全、banto-24 PAUSED。正式gate/holdout/50,000反復なし、principal/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+
+## 189. 2026-10-01 架空slice/補助表の独立検算と所有audit接続
+
+[結果](anomaly-multiseed-v0.3-fixture-slice-audit-2026-10-01.md)、[利用方法](../anomaly-v03-fixture-slice-audit.md)。実装b6d578e7c577470ecb2fbef228413d6b2abf85bf/fs02、初回ced27e3895b00e6fadcbc21157b74d38112364de/fs01を保全。OUT artifacts/fixture-slice-audit-2026-10-01、最終文書revisionと74code/18data pinはsavepoint-evidence.json。
+
+計算側関数を使わず、fixed coordinate sums/literal delay multisetで本文1,233行・補助4系列2,835行・詳細9表を検算。新operation audit-invented-primary-and-slices-v1はslice pinを元analysisへ結び、6入力/14MiB、新出力primary-and-slices-audit.json。旧primary-only形式と5入力/6MiBは維持。
+
+pure14＋owned14＋budget16の44項目。tests-1は43pass/1error・74.090秒、同じcountのcellから差を探した試験データの組立てを1件修正。production code不変、他test/setup不変をpin/ASTで確認し43成功を再利用、修正1件はtests-2でpass・1.964秒。旧ログ/候補/harnessを保全。
+
+保存済みcf4d9c4解析を再実行せず、別audit1回で主9表/180gateとslice全対象一致。全体10.469秒/子2.868秒、PID46224/exit0/reaped/error0。selected15/Python2/入力6、依存project32/全236/module181/native48、追加0。出力2,384bytes/SHAbe0a327a15db02a5881e51b682fefcdcfe05cae995a7443dc941647c51a863c4、元文書既知pin/原本5file不変。
+
+共有budget成功、dir6.74MiB/25entries、親peak100.68MiB/子66.58MiB、commit余裕最小12.24GiB。例後RAM7.91GiB/commit12.74GiB/C121.32GiB/D388.26GiB、OS25H2/26200/9457。正式pin9168や旧実計算c01d1c9/main6f1285d/closed/dirty文書不変。banto-24 PAUSED。新評価0/旧720再実行0/正式50,000反復0。
+
+次は既存5payloadの通常公開・別readerへaudit scopeとwriter実行記録を結ぶ。自己参照とpartial/unconfirmed/応答喪失を扱い、旧4payload経路/元analysisを保全。今回の成果は架空countからの導出に限り、登録観測/coverage/正式推論/契約/全体予算/closureの受入ではない。正式null4/ready=false、principal/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。

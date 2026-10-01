@@ -1,6 +1,6 @@
 # 単一writer方針での解析consumer入出力契約案
 
-2026-10-01現在：[正式受入残件を更新](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-10-01.md)。5payload結合・数値worker・主9表の独立検算・限定fixture資源停止は接続済み。5まとまりの正式残件に、開始前の契約/実装と実行後の証拠を分けて反映した。次は架空slice/補助診断表の別実装検算と所有auditへの接続。旧4payload公開・別readerを再試験する工程には戻らない。以下の日付付き追記は履歴、契約はdraft。
+2026-10-01現在：[架空slice/補助表の独立audit](anomaly-v03-fixture-slice-audit.md)を所有processへ接続。主9表に加えて本文1,233行/補助2,835行/詳細9表を別実装で検算し、保存済み解析への適用が成功した。43試験の成功を不変で再利用し、試験データを修正した1件もpass、計44項目を確認。次は既存5payloadの通常公開・別readerとaudit scope/writer実行記録の結合。旧4payload公開は完了として保持する。正式契約はdraft、登録観測・正式推論・closureの受入は別。[結果](results/anomaly-multiseed-v0.3-fixture-slice-audit-2026-10-01.md)。以下の日付付き追記は履歴。
 
 2026-09-26現在：[受入残件更新](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)を参照。実レポート4payloadの通常公開・別readerまで完了した。次の実装は§4の予定5payloadと役割別証拠を結ぶ、I/Oなし・架空入力専用のadapter。正式modeを拒否し、本文のnull 4欄と未充足を維持する。以下の日付付き追記・初期実装順は履歴で、契約はdraftのまま。
 

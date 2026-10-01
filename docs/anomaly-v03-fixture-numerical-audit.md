@@ -4,6 +4,8 @@
 
 前工程の[数値worker](anomaly-v03-fixture-worker.md)と同じ期待文書を生成し直す処理ではなく、保持した入力から主集計の値を導出して比較する。算術moduleは標準ライブラリのみをimportし、既存のinference/adapter/gate/slice関数を使わない。正式解析・独立S6の完了を示す入口ではない。
 
+2026-10-01に[条件別集計・補助表の独立検算](anomaly-v03-fixture-slice-audit.md)を追加した。新operationでは主表とsliceの両検算を行う。以下は引き続き利用できるprimary-only operationの仕様。
+
 ## 検算範囲
 
 計算側のdraw頻度による重み付けとは別に、auditはdrawの40個の番号を順に展開して整数countを加算する。同じdrawをcontrol/候補・両層へ適用し、ratio-of-sumsと対応のある候補差を計算する。凍結したbinary64の演算順序とtype-7分位点の定義は維持する。
@@ -19,7 +21,7 @@
 
 ゼロ分母のdrawを削除・再抽出せず、null回数とinconclusiveを残す。profile不成立とゼロ分母を区別する。入力は固定のinvented ID、正確な整数counts、12layoutの分母、検出済み件数に対応する整数秒delayを検査する。
 
-**slice/診断sidecarの導出、全coverage枠、producer観測、登録データの推論は今回の独立検算対象外。** 結果の `not_checked` に明示する。これらが未検算なのに文書全体やS6が検算済みとは扱わない。本文の正式null4欄・外側の閉じたフラグも確認する。
+**primary-only operationではslice/診断sidecarの導出、全coverage枠、producer観測、登録データの推論は独立検算対象外。** 結果の `not_checked` に明示する。これらが未検算なのに文書全体やS6が検算済みとは扱わない。本文の正式null4欄・外側の閉じたフラグも確認する。
 
 ## 入力と既存analysisの結合
 
@@ -39,7 +41,7 @@
 
 ## auditの実行記録
 
-親は13本のselected source、Python本体/DLL、5入力、ランダムinvocation IDと固定argvを保持する。新しいclean checkoutでGit/raw bytes一致を要求する。親が事前に作るのは対象範囲・入力digest・次元を持つ固定の成功要約だけで、主集計の再計算はしない。成功要約のpinも起動前に保持する。
+親は15本のselected source（初回13本、資源監視追加で14本、slice audit追加で15本）、Python本体/DLL、5入力、ランダムinvocation IDと固定argvを保持する。新しいclean checkoutでGit/raw bytes一致を要求する。親が事前に作るのは対象範囲・入力digest・次元を持つ固定の成功要約だけで、主集計の再計算はしない。成功要約のpinも起動前に保持する。
 
 子は数値の一致を確認した場合だけ、限定した成功要約を `payload/primary-audit.json` に保存する。元Popen handleと子自身のPID/生成時刻、role=audit、input/output、source/runtime前後一致を既存evidence validatorへ結ぶ。補助依存fileは終了後にdisk/Gitへ照合する。成功要約だけの一致を数値実行の証明とはせず、所有した子の終了・実行記録とともに確認する。
 
@@ -51,4 +53,4 @@
 
 formal/promotion/independent_s6_complete/execution_authenticated/full closureはfalse。これは別の算術実装による小さい手例の一致であり、独立組織による監査、登録データの正式数値検証、全依存の受入、公開完了を意味しない。旧analysis文書や5payloadを書き換えず、wrapperのaudit段階も遡って成功へ変更しない。
 
-限定fixtureの資源停止接続まで完了した。次は正式受入残件を更新する。このprimary-onlyの検算範囲とslice/sidecarを含む未検算範囲を明示し、小さい資源監視を正式登録予算と扱わない。
+限定資源停止と新operationの架空slice/sidecar検算まで接続済み。次は5payloadの通常公開・別readerとaudit/writer記録を結ぶ。旧primary-only receiptの範囲は遡って変更せず、小さい資源監視を正式登録予算と扱わない。

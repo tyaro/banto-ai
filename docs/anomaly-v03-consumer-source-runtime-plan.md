@@ -1,6 +1,6 @@
 # consumerのsource/runtime固定対象と実行前の残件
 
-2026-10-01現在：[残件と次の実装](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-10-01.md)。最新実装cf4d9c4、clean候補fb02。架空数値analysis/auditの選択sourceは22/14本・Python各2file、終了後依存観測は全246/235file。これは主集計auditと限定資源監視までの証拠で、完全closure・writerを含む正式役割仕様の受入ではない。次はslice入力と別実装検算を所有auditへ接続し、その変更分の期待値を固定する。正式実行後の成功証拠を開始前に循環要求しない。以下の静的候補表や日付付き「次は」は各時点の履歴。
+2026-10-01現在：最新候補はb6d578e7c577470ecb2fbef228413d6b2abf85bf/fs02。架空sliceの別実装をowned auditへ追加し、選択source15本/Python2file/入力6file、全236依存file（project32/module181/native48）の終了後照合が成功。旧primary-onlyは保持し、新operationはslice入力を元analysisのpinへ結ぶ。[結果](results/anomaly-multiseed-v0.3-fixture-slice-audit-2026-10-01.md)。次は既存5payloadの通常公開・別readerにaudit scopeとwriterの実行記録を接続する。完全closure・正式役割仕様の受入は未完了。正式実行後の成功証拠を開始前に循環要求しない。以下の静的候補表や日付付き追記は履歴。
 
 2026-09-25接続追記：[実観測reader](anomaly-v03-reader-evidence.md)がsource10本・Python2file・実process identity・15入力を外部期待値へ結合。新規13＋既存回帰27種類がpass。source/runtime全閉包は未完了。次は依存source/stdlib/extension/loaded DLLの採取範囲を広げる。[結果](results/anomaly-multiseed-v0.3-reader-observed-evidence-2026-09-25.md)。
 

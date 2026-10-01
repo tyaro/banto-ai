@@ -1,24 +1,34 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-10-01 JST。**正式受入残件を最新fixture証拠へ更新。次は架空slice/補助診断表の別実装検算と所有auditへの接続を実装する。**
+更新: 2026-10-01 JST。**架空slice/補助診断表の別実装検算と所有auditへの接続が完了。次は生成済み5payloadの通常公開・別readerとaudit/writer実行記録を結ぶ。**
 
-- [今回の残件表と次工程の合格条件](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-10-01.md)、長い引継書§188。
-- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装cf4d9c42c11c202984aacdd71ac5efb0368f22d0、clean候補fb02/banto-aiを維持。
-- OUT artifacts/acceptance-gap-update-2026-10-01。文書revision・全pinはsavepoint-evidence.json。コード変更・新試験・再計算・新評価0。
+- [今回の結果](results/anomaly-multiseed-v0.3-fixture-slice-audit-2026-10-01.md)、[利用方法と範囲](anomaly-v03-fixture-slice-audit.md)、長い引継書§189。
+- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装b6d578e7c577470ecb2fbef228413d6b2abf85bf、clean候補fs02/banto-ai。
+- OUT artifacts/fixture-slice-audit-2026-10-01、成功tests-2/saved-analysis-audit/。最終文書revision・全pinはsavepoint-evidence.json。初回ced27e3/fs01、tests-1、verify-attempt1.pyを保全。
 
 ## 今回の成果
 
-保存点7＋小receipt13＝20file/223,090bytes、72code/18dataのpinを照合。正式受入の5まとまりを「完了した部分／開始前に必要なもの／正式実行後の証拠」に整理し、T01〜T12へ反映した。5は残り試験数やPhase2/3全体の残件数ではない。4正式null欄も4試験という意味ではない。
+新module/test2本、既存audit worker/test2本を更新。旧72code中70本・18data不変、現在74code。計算側のslice/mapperを呼ばず、固定座標の和・literal delay multisetで本文1,233行、補助4系列2,835行、詳細9表を検算する。合計維持の誤割当、ラベル/省略/分母/null/primary/profile/histogramの不整合を拒否。
 
-5payload adapter、架空数値worker、主9表の独立audit、限定資源停止は接続済み。旧4payload通常公開・別readerも完了として維持。登録40seed/480区間/2,880評価のconsumer、全範囲audit、最終役割/source-runtime、5payload公開、正式全体予算・契約は未受入。
+pure14＋owned audit14＋budget16の44項目。初回43pass/1error（74.090秒）は等しいcellから異なるcountを探した試験データの問題。検算本体は不変で、1検出とhistogramを移す試験へ修正。修正1件を再実施してpass（1.964秒）、旧43passはsourceと他test/setupの不変を確認して再利用。最終revisionで全44件を再実行したとはしない。
+
+前resource工程のverified analysis（cf4d9c4）を保存点pinで受け取り、元analysis再起動0、別audit1回で成功。主9表/117絶対推定/72対応差/180gate＋slice全範囲一致、PID46224/exit0/reaped/error0、全体10.469秒/子2.868秒。新出力2,384bytes/SHAbe0a327a15db02a5881e51b682fefcdcfe05cae995a7443dc941647c51a863c4。原本5fileは不変。
+
+audit選択source15/Python2/入力6、依存project32/全236file/module181/native48、前後追加0。元Popen identity/親保持期待/入出力pinへ結合。共有資源予算も成功、41sample/dir最大6.74MiB/25entries、親peak100.68MiB/子66.58MiB、commit最小余裕12.24GiB。例直後RAM7.91GiB/commit12.74GiB/C121.32GiB/D388.26GiB空き、最終値はsave-checks.json。
 
 ## 次の実装単位
 
-次は上記結果文書「次の実装単位」の5手順に従い、架空40clusterのslice/sidecarを別実装で検算する。現在のprimary auditは明示的に対象外としている。本文1,233行、補助4系列2,835行、詳細9表の独立導出、合計を保った誤割当・ラベル/分母/null/省略の改変検出を含める。計算側slice/mapping関数を呼ぶ自己再検査にはしない。
+既存wrapperの5payloadを通常公開・writer終了後の別readerへ接続し、今回の新audit scopeとwriterの実行記録を結ぶ。旧4payloadの公開経路は保全し、同じ試験の繰返しだけを目的にしない。科学payloadとpublication receiptの自己参照を避け、通常single writerの終了/応答喪失/partial/unconfirmedと確認側失敗時の記録を保全する。既存の数値worker・5payload adapterを作り直さず、元解析・旧720評価を再計算しない。
 
-保存済み架空primary/slice入力・文書のpinを外部保持し、既存owned auditにslice入力と新scope receiptを接続する。元analysisの再計算、旧720評価の読直しは不要。変更に関係する試験と保存済み例への別audit1回を実施し、旧primary-only receipt・候補・失敗記録は保全する。これは次回の実装仕様であり、今回完了した検算ではない。
+新operationはaudit-invented-primary-and-slices-v1、6入力/14MiB、payload/primary-and-slices-audit.json。追加slice入力8MiBを元analysisのinput pinへ結合する。旧primary-only operationの5入力/6MiB、primary-audit.jsonは維持。既定最大8draw/共有120秒/親512MiB/dir32MiB/子60秒256MiB等も維持。
 
-既定最大8draw/共有120秒/親512MiB/dir32MiB等を維持。予算不足を理由に自動拡大しない。slice検算を終えても、登録観測の導出、coverage、正式50,000反復、mapping採択、公開writer、S6/closureの受入は別。formal/promotion/S6/trust/execution_authenticated/full closure=false、正式null4欄/ready=falseを維持する。
+今回完了したのは架空countからのslice/sidecar導出。raw登録観測、coverage、正式50,000反復、mapping採択、5payload公開、正式全体予算・契約/closureは別の残件。formal/promotion/S6/trust/execution_authenticated/full closure=false、正式null4欄/ready=false。正式実行後の成功証拠を開始前へ循環要求しない。
+
+## 直前の受入残件保存点
+
+文書5fe7d822def8c1a100cdc78af91963a22db33777、manifest18,712bytes/SHA7f8d90060ea838dbabf8eed2afa77414b89a29220509b1bd9ed32008c9a27ab7。[5まとまりの残件表](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-10-01.md)のT08/T12 fixture範囲とT09追加入力を今回前進させた。5は残り試験数やPhase2/3全体の残件数ではない。
+
+旧実計算c01d1c9、本流clean6f1285d、closed、既存dirty文書は不変。banto-24 PAUSED。OS25H2/26200/UBR9457を記録し旧formal9168は維持。principal/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
 
 ## 直前の資源停止保存点
 
