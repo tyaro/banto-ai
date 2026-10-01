@@ -341,3 +341,9 @@ profile付きanalysisの照合済み4payloadを既存single-writerで通常公�
 [5payload adapter](anomaly-v03-wrapper-fixture.md)を実装し、新規16試験が通過。全予定枠・草稿・診断・別に保持した架空の実行記録を対応付け、途中失敗や役割違いを成功にしない。保存例5file/1,973,806bytes。既存720評価の再実行0、正式null4欄を保持。[結果](results/anomaly-multiseed-v0.3-wrapper-fixture-2026-09-30.md)。
 
 次は、小さい架空入力を数値計算する所有workerと、起動前に呼出し側が保持する期待値を接続する。保存済み結果準備のoperationとは区別し、実holdout/正式50,000反復は起動しない。その後、独立数値auditの入口と全工程の資源停止条件を揃える。正式受入・S4/S6・Phase2/3全体は未完了。
+
+## 2026-10-01: 小さい架空入力の数値workerと実行記録を接続
+
+[所有worker](anomaly-v03-fixture-worker.md)で40個の架空cluster・4drawを実際に計算し、親保持期待値とsource/runtime/4入力/出力、元process handle・生成時刻を照合した。新15試験pass、5payload/1,976,761bytesを保存。既存720評価再実行0、新評価0。[結果](results/anomaly-multiseed-v0.3-fixture-worker-2026-10-01.md)。
+
+子には60秒/256MiB/stdout+stderr合計1MiB、fixture最大8drawを適用。既知文書との一致は独立数値検算ではなく、正式null4欄・ready=falseを維持する。次は別実装の小さい数値audit、その後に全工程のdirectory/system commit停止予算を接続する。正式受入・holdout・Phase2/3全体は未完了。

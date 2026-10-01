@@ -4157,3 +4157,15 @@ analysis PID14244、writer PID22020、reader PID21668。両子ともexit0/reaped
 試験/例保存harnessのpeak private 104.19MiB。保存例後の空きRAM 13.74GiB、commit余裕 14.42GiB、C/D空き 115.31/365.67GiB。OS実値26200/9457を記録。旧候補・実計算c01d1c9・本流6f1285d・closed・既存dirty文書/CRLF差を保全、banto-24 PAUSED。前保存点18702bytes/SHA3d5338c6e51d901b513b748dc95438455e8e9c5e13190e7f4876b76edaf1c28f。既存評価再実行0、正式許可/S6/trust/full closureはfalse。最終revision/pinはsavepoint-evidence.json。
 
 次は、小さい架空入力を数値計算する所有workerと、起動前に呼出し側が保持する期待値を接続する。保存済み結果準備のoperationとは区別し、実holdout/正式50,000反復は起動しない。その後、独立数値auditの入口と全工程の資源停止条件を揃える。正式gate/holdout/freeze・principal/保護root/UAC/ACL・push/mergeは対象外。
+
+## 185. 架空入力の数値workerと所有実行記録を接続（2026-10-01）
+
+[結果](anomaly-multiseed-v0.3-fixture-worker-2026-10-01.md)、[API](../anomaly-v03-fixture-worker.md)。開始045bea45964585b003ac0fdf41b1dcde264230e8、実装4d3c08b4eb5e235e681ed0f0cafdde3c4f9ddde7。新module/testの2本、旧64code/18data不変。clean候補fw01/banto-aiを作成し旧候補を保全。OUT artifacts/fixture-numerical-worker-2026-10-01、tests-1/。
+
+新15試験pass、failure/error/skip0、54.015秒。所有子が40個の架空cluster・4drawを計算し、前工程の既知文書pinと一致。親保持4入力・source/runtime・元Popen handleのPID/生成時刻・固定argvを照合し、5payload/1,976,761bytesを保存。selected source21/Python2/input4、補助依存project37/全245files/188modules/native48を終了後disk/Git照合。保存例14.678秒、子監視4.056秒、exit0/reaped/error0。
+
+子上限60秒/private256MiB/stdout+stderr合計1MiB、fixture最大8draw、入力/文書/5payload上限10/4/8MiB。子peak64.95MiB、harness peak126.41MiB。保存例後RAM空き8.32GiB、commit余裕12.92GiB、C/D空き114.10/387.12GiB。OS26200/9457、旧formal pin不変。最終値・文書revision・hashはsavepoint-evidence.jsonとsave-checks.json。
+
+既知文書も同一計算実装の過去出力なので、独立数値auditではない。次は同じ限定入力とanalysis出力の別実装検算を接続し、その後全工程directory/system commit停止条件を揃える。子観測は実行認証/full closureや受入済み依存profileではない。正式null4欄/ready=false、formal/promotion/S6/trust/full closure=false、fixture_inference_performed=true。writer/reader/audit/公開markerは今回未起動。
+
+前保存点24493bytes/SHA8c96fb2649059b3a7500f20c2327435c95c193a7faa7199151329007a5f07046を照合。既存720評価再実行0、新評価0、登録データ読込み0。旧実計算c01d1c9・本流6f1285d・closed・dirty文書/CRLF差・候補/保存点を保全、banto-24 PAUSED。正式gate/holdout/freeze・principal/保護root/UAC/ACL・push/mergeは対象外。

@@ -1,25 +1,30 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-09-30 JST。**架空入力の5payload・実行記録結合を実装、16試験pass。次は数値計算を行うfixture workerと実行記録の接続。**
+更新: 2026-10-01 JST。**小さい架空入力を計算する所有workerと実行記録を接続、15試験pass。次は別実装の数値auditを同じ小さい入力へ接続する。**
 
-- [今回の結果](results/anomaly-multiseed-v0.3-wrapper-fixture-2026-09-30.md)、[API](anomaly-v03-wrapper-fixture.md)、長い引継書§184。
-- 作業先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。OUT artifacts/wrapper-fixture-2026-09-30、成功tests-2/。実装/文書revision・hashは最上位savepoint-evidence.json。
+- [今回の結果](results/anomaly-multiseed-v0.3-fixture-worker-2026-10-01.md)、[API](anomaly-v03-fixture-worker.md)、長い引継書§185。
+- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装4d3c08b4eb5e235e681ed0f0cafdde3c4f9ddde7、clean実行候補fw01/banto-ai。同じcandidateは保存し、旧pc01等を変更しない。
+- OUT artifacts/fixture-numerical-worker-2026-10-01、成功tests-1/。最終文書revisionと全hashは最上位savepoint-evidence.json。
 
 ## 今回の成果
 
-anomaly_v03_wrapper_fixture.pyとtestだけ追加。旧62code/18dataは不変。入力を開く前に非fixture modeを拒否。既存文書/slice/evidence検査を使い、外部保持pin・role・operation・revision・source/runtime/入出力bytesと5payloadを結ぶ。架空40cluster×12layout×2層×3候補の2880宣言枠を保持する。partial/failed/not_startedを含めば完成文書を拒否し、文書なしの記録は解析/診断Noneで保存。inconclusiveとsoftware failureを分ける。
+新anomaly_v03_fixture_worker.pyとtestの2本を追加、旧64code/18dataは不変。親が4入力・既知の出力pin・source/runtime・起動期待値を保持し、元Popen handleと子自身のPID/生成時刻を照合した。子は40個の架空clusterと4drawから文書を計算し、既存5payload adapterへ接続。正式mode・保存結果準備operation・別roleは拒否する。
 
-新16試験pass、failure/error/skip0、58.729秒。既存保存/reader試験は再実行せず、既存720評価の再生成/再計算0。保存例5payload/1,973,806bytes、本文1233行/補助2835行/詳細9表。fixture準備は4draw手例、adapter自体は推論・I/O・process起動なし。全役割の実観測ではなく供給された架空bytesの対応であり、正式null4欄・ready=falseを維持。
+新15試験pass、failure/error/skip0、54.015秒。保存例14.678秒、子監視4.056秒、exit0/reaped/error0。文書1,932,543bytesは前工程の既知pinと一致、5payload/1,976,761bytes。selected source21/Python2/入力4file、補助依存project37/全245files/188modules/native48は終了後disk/Gitへ照合した。親側の推論を禁止した試験も成功。
 
-試験/例保存harnessのpeak private 104.19MiB。保存例後の空きRAM 13.74GiB、commit余裕 14.42GiB、C/D空き 115.31/365.67GiB。OS実値26200/9457、古いformal pinは未変更。最終資源はsave-checks.json。banto-24 PAUSED、旧候補・実計算c01d1c9・本流6f1285d・closed・既存dirty文書/CRLF差を保全。
+子の上限60秒/private256MiB/stdout+stderr合計1MiB、最大8draw、入力/文書/5payload上限10/4/8MiB。子peak64.95MiB、試験harness peak126.41MiB。保存例後は空きRAM8.32GiB、commit余裕12.92GiB、C/D空き114.10/387.12GiB。OS実値26200/9457を記録し、古いformal pinは維持。最終資源はsave-checks.json。
 
 ## 次の実装単位
 
-次は、小さい架空入力を数値計算する所有workerと、起動前に呼出し側が保持する期待値を接続する。保存済み結果準備のoperationとは区別し、実holdout/正式50,000反復は起動しない。その後、独立数値auditの入口と全工程の資源停止条件を揃える。
+次は、同じ小さい架空入力とanalysis出力を、別実装で検算する数値auditへ接続する。既知文書は同じ計算実装の過去出力なので、今回のpin一致を独立数値auditと見なさない。新workerのoperationはassemble-invented-document-v1、入力4fileからfixture/document.jsonを作る。正式holdout/50,000反復へ広げず、別auditの入力期待値・role・owned processと照合結果を具体化する。wrapperを重ねたり同じ保存/reader試験を増やしたりしない。
 
-新adapterのOPERATIONはassemble-invented-document-v1。次のworkerはこれに対応する限定的なfixture計算を行い、fixture/input.json・fixture/slices.json・fixture/coverage.json・fixture/operation.jsonからfixture/document.jsonへの対応を外部期待値へ結ぶ。wrapperをもう一つ重ねたり、同じ保存/reader試験を増やしたりしない。既存owned-process supervisorと証拠validatorを再利用する。新しい数値役割のsource/runtime採取範囲と、適用する小さい資源上限を明示して実装・対象試験・保存点まで進める。
+その後、全工程のdirectory総量/system commitを含む資源停止条件を揃える。今回の依存採取はselected sourceと終了後disk照合で、新役割の事前受入profile/full closureではない。通常writer/reader/auditや公開markerも今回未起動。formal/promotion/S6/trust/execution_authenticated/full closure=false、正式null4欄/ready=false、fixture_inference_performed=trueのみ追加。
 
-正式運用契約・consumer入出力・source/runtime受入・公開/監査・全体予算の5作業群は残る。[残件更新](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)。実行後の成功証拠を正式開始前の条件へ循環して要求しない。formal/promotion/S6/trust/execution_authenticated/full closure=false。正式gate/holdout/freeze、principal/保護root/UAC/ACL、push/mergeは対象外。単一writerとOS実値記録は既に許可済み。
+正式運用契約・consumer入出力・source/runtime受入・公開/監査・全体予算の5作業群は残る。[残件更新](results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)。実行後の成功証拠を正式開始前の条件へ循環して要求しない。正式gate/holdout/freeze、principal/保護root/UAC/ACL、push/mergeは対象外。単一writerとOS実値記録は許可済み。
+
+## 前工程のwrapper保存点
+
+実装/文書045bea45964585b003ac0fdf41b1dcde264230e8、OUT artifacts/wrapper-fixture-2026-09-30、manifest24493bytes/SHA8c96fb2649059b3a7500f20c2327435c95c193a7faa7199151329007a5f07046。新16試験pass、供給された架空記録を5payloadへ結ぶI/Oなしadapter。今回のbaselineと既知fixture文書pinに使った。旧pc01はf8f20bcのまま保全。
 
 ## 前工程の保存点
 
