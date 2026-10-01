@@ -77,8 +77,11 @@ class SliceAuditTests(unittest.TestCase):
 
     def test_joint_reassignment_with_unchanged_totals_rejected(self):
         source,raw = self.raw_case();cells = raw['incident_slices']['class-equipment-mode']
-        left,right = next((a,b) for a in cells for b in cells if cells[a]['detected'] != cells[b]['detected'])
-        cells[left],cells[right] = cells[right],cells[left]
+        left,right = cells['machine.motor-01.stopped'],cells['sensor.conveyor-01.cooldown']
+        self.assertLess(left['detected'],left['planned']);self.assertGreater(right['detected'],0)
+        bucket = next(i for i,n in enumerate(right['delay_histogram']) if n)
+        left['detected'] += 1;right['detected'] -= 1
+        left['delay_histogram'][bucket] += 1;right['delay_histogram'][bucket] -= 1
         with self.assertRaisesRegex(ValueError,'joint/marginal'):self.check(source=source,document=self.reseal_source(source))
 
     def test_target_mode_reassignment_with_unchanged_totals_rejected(self):
