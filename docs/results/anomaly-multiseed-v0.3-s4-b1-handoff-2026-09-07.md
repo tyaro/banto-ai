@@ -4169,3 +4169,17 @@ analysis PID14244、writer PID22020、reader PID21668。両子ともexit0/reaped
 既知文書も同一計算実装の過去出力なので、独立数値auditではない。次は同じ限定入力とanalysis出力の別実装検算を接続し、その後全工程directory/system commit停止条件を揃える。子観測は実行認証/full closureや受入済み依存profileではない。正式null4欄/ready=false、formal/promotion/S6/trust/full closure=false、fixture_inference_performed=true。writer/reader/audit/公開markerは今回未起動。
 
 前保存点24493bytes/SHA8c96fb2649059b3a7500f20c2327435c95c193a7faa7199151329007a5f07046を照合。既存720評価再実行0、新評価0、登録データ読込み0。旧実計算c01d1c9・本流6f1285d・closed・dirty文書/CRLF差・候補/保存点を保全、banto-24 PAUSED。正式gate/holdout/freeze・principal/保護root/UAC/ACL・push/mergeは対象外。
+
+## 186. 架空主集計の別実装auditと所有process証拠（2026-10-01）
+
+[結果](anomaly-multiseed-v0.3-fixture-numerical-audit-2026-10-01.md)、[API](../anomaly-v03-fixture-numerical-audit.md)。開始362cb7544879c2e044423c5a84b13f6c185ca2b3、実装8bd4b67eac5ecaaa72fb139bc12a0bff484448b8、clean候補fa01/banto-ai。新算術/worker/test4本、旧66code/18data不変。OUT artifacts/fixture-numerical-audit-2026-10-01、tests-1/observed-audit/。
+
+標準ライブラリのみの別算術でdraw番号を順に展開し、9主表の117絶対推定・72対応差・180gate、effective exposure/検出済みdelay/候補判断を検算。元analysisの4ファイルを前savepoint pinで保持し、元analysis/720評価は再実行なし。新22試験pass、27.521秒、failure/error/skip0。CI改変を保持receiptごと再封印しても実子が数値不一致としてexit2で拒否した。
+
+実保存例7.506秒、子監視1.532秒、PID42012、exit0/reaped/error0。要約1185bytes/SHA6b78fea2e2863b99513cbf2e967a2ef70de99f0f5146d7762bbaf380c0696d1c。selected source13/Python2/5入力、補助依存project30/全234files/179modules/native48を終了後照合。role=audit、元handleと子PID/生成時刻、親保持期待値へ結合。
+
+子上限60秒/private256MiB/stdout+stderr1MiB、最大8draw、入力6MiB。子peak46.54MiB、harness peak76.08MiB。保存例後RAM空き8.18GiB、commit余裕12.90GiB、C/D空き111.43/387.12GiB、OS26200/9457。最終資源・文書revision/pinはsavepoint-evidence.json/save-checks.json。
+
+slice/sidecar導出・coverage/producer・登録データは対象外と明示。正式S6/full closure/受入済み依存profileや文書全体監査としない。formal/promotion/S6/execution_authenticated/full closure=false、fixture_numerical_audit_performed=true。元文書/5payloadのnull4欄・audit未実行表記を遡って変更しない。次は限定fixture工程のdirectory総量/system commitを含む資源停止条件を接続し、正式化時は未検算範囲を残件として扱う。
+
+前保存点27575bytes/SHA5c0ff3a16f50589daf487a7f58a94a6acc85ae70625c32a97d5631d1c681f17d。旧実計算c01d1c9・本流6f1285d・closed・dirty文書/CRLF差・fw01を含む旧候補/保存点は保全、banto-24 PAUSED。新評価0、正式gate/holdout/freeze・principal/保護root/UAC/ACL・push/mergeは対象外。

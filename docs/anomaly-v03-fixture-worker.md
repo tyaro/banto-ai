@@ -45,4 +45,4 @@ receiptにはinvocation、source tool、親のlaunch/expected、supervision、�
 
 成功はstatus=verified、fixture_inference_performed=true。この新欄は小さい架空計算を行ったことを示す。既存のnumerical_analysis_performedおよびformal/promotion/S6/trust/execution_authenticated/full closureはfalse、正式文書のstatus/provenance/analysis_consumer/bootstrapはnull、ready=falseを維持する。科学的合格や正式実行許可へ変換しない。
 
-次は、同じ小さい入力とanalysis出力を別実装で検算する数値auditを接続する。その後、全工程の資源停止条件と正式受入の残件を整理する。
+2026-10-01に[別実装の主集計audit](anomaly-v03-fixture-numerical-audit.md)を接続した。元analysis文書と保持receiptを再実行せずに別processへ渡し、9主表/180gateを検算する。slice/sidecar等は今回の数値audit範囲外。次は全工程の資源停止条件と正式受入の残件を整理する。

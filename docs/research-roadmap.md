@@ -347,3 +347,9 @@ profile付きanalysisの照合済み4payloadを既存single-writerで通常公�
 [所有worker](anomaly-v03-fixture-worker.md)で40個の架空cluster・4drawを実際に計算し、親保持期待値とsource/runtime/4入力/出力、元process handle・生成時刻を照合した。新15試験pass、5payload/1,976,761bytesを保存。既存720評価再実行0、新評価0。[結果](results/anomaly-multiseed-v0.3-fixture-worker-2026-10-01.md)。
 
 子には60秒/256MiB/stdout+stderr合計1MiB、fixture最大8drawを適用。既知文書との一致は独立数値検算ではなく、正式null4欄・ready=falseを維持する。次は別実装の小さい数値audit、その後に全工程のdirectory/system commit停止予算を接続する。正式受入・holdout・Phase2/3全体は未完了。
+
+## 2026-10-01: 架空主集計の別実装auditを所有processへ接続
+
+保存済みの架空analysisを別算術実装で検算し、9主表/117絶対推定/72対応差/180gateが一致。新22試験pass、主表を改変した文書を再封印しても拒否。元analysisや既存720評価は再実行していない。[結果](results/anomaly-multiseed-v0.3-fixture-numerical-audit-2026-10-01.md)、[範囲](anomaly-v03-fixture-numerical-audit.md)。
+
+slice/sidecar導出・producer/登録データは今回の独立検算対象外。正式null4欄・S6/受入未完了を維持。次は限定fixture工程のdirectory総量/system commitを含む資源停止条件へ進み、正式受入では未検算範囲を明示する。正式50,000反復・holdoutは起動しない。
