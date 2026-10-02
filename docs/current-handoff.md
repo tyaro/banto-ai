@@ -1,5 +1,27 @@
 # 次のタスク用の短い引継ぎ
 
+更新: 2026-10-03 JST。**結合済み記述集計を報告文書と4個の保存payloadへ接続済み。次は通常のローカル保存と書込み終了後の読取り。**
+
+- [今回の結果](results/anomaly-multiseed-v0.3-bound-summary-report-2026-10-03.md)、[API](anomaly-v03-bound-summary-report.md)、長い引継書§198。
+- 編集先70b0、branch codex/s4-b1-windows-engineering。実装c9556345cd16d7df3f762e8f50b95ec0a3d7887e、clean候補br01/banto-ai。
+- OUT artifacts/bound-summary-report-2026-10-03、tests-1/retained-tables-report。文書revision/90code/18dataと成果物pinはsavepoint-evidence.json。
+
+結合済みdev/smoke記述集計表から報告書と保存用payloadを準備する処理を追加。新10項目pass（25.650秒）。前回保存した架空集計表とschemaの2file/9,068,695bytesを一度だけ読み、1.011秒で4payload/3,040,268bytesを準備した。
+
+出力は2cohort/18候補表/234主指標/5,670診断項目。表示に架空データを明記。判定不能1評価/48profile、旧失敗1件、分母ゼロ720件、元summary等の出典と正式欄nullを保持。手計算検出1件を含む試験入力は保存例と区別する。HTML構造とMarkdown内容を確認したが、今回のブラウザ描画目視は未実施。
+
+保存例は前回の架空集計表を変更せず再利用した接続確認用であり、実際の検出性能を示す結果ではない。実720評価のraw payload読取り、入力再生成、再集計、全区間の再結合、score/ledger検算、新評価、bootstrap、正式gate、所有worker/公開process起動は0。外部pinで固定した過去の集計表を信頼する境界であり、現在の元payloadや実producerの認証ではない。
+
+試験peak 120.71MiB、例peak 59.34MiB、例directory観測最大2.90MiB、commit最小余裕26.60GiB。監視は試験72/例8sample、errorなし、終了確認済み、資源pass。120秒/512MiB/32MiB等の上限据置き。 D空きは開始348.26GiB→例終了348.26GiBでほぼ横ばい。短時間の結果から長期メモリリークの不存在は推定しない。
+
+次は今回の4個の準備済みpayloadを、通常のローカル保存と書込み終了後の読取りへ接続する。新しい出典情報とfixture/engineeringの区別を維持し、報告書の再生成・再集計・既存720評価の反復をしない。
+
+正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。正式40seed・生成導出・契約/役割profile/全工程予算は未受入。Phase2/3全体は未完了。
+
+実計算c01d1c9/main6f1285d/closed/既存dirty文書とbt01/旧候補を保全、banto-24 PAUSED。OS25H2/26200/9457を記録し旧formal9168不変。前工程の別Bantoリリース申告・資源停止・D空き減少の記録も保持し、因果未断定。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+
+## 直前の結合済み要約と比較表（以下は履歴）
+
 更新: 2026-10-03 JST。**結合済み要約をdev/smoke記述集計へ接続済み。次は報告文書・保存payload準備への接続。**
 
 - [今回の結果](results/anomaly-multiseed-v0.3-bound-summary-tables-2026-10-03.md)、[API](anomaly-v03-bound-summary-tables.md)、長い引継書§197。
