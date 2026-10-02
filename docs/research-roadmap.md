@@ -377,3 +377,9 @@ sampling/協調停止でありhard quotaではなく、正式2,880評価/50,000�
 保存済みの架空解析と主表/slice検算を、所有writer→終了確認→別readerへ結合した。元5payloadは1,976,915bytes、公開5payloadは1,976,920bytes。各JSONにLFを1つ加えた差だけで、内容・数値は同一。 16項目pass＋コード不変の35pass再利用、関連51項目を確認。元解析・検算の再起動0、新評価0。[結果](results/anomaly-multiseed-v0.3-fixture-publication-2026-10-02.md)。
 
 時間停止を受けたGit bytes再利用の修正は上限を変えず、前後検査を保持した。次は登録producerの保存記録・coverageから集計済みconsumer入力への境界を、I/Oなしのfixture adapterとして具体化する。登録ID、予定全slot、最終attempt、入力pin、終了記録、集計countの対応を受け取り、欠落や失敗の成功化を拒否する。旧720評価を再読込み・再集計するだけの作業へ戻らず、正式40seedの実行や50,000反復はまだ開かない。 正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure=falseを維持。登録観測・coverageの真正性、正式契約、最終役割profile、全工程予算は未受入。 Phase2/3全体は未完了。
+
+### 2026-10-02：架空producerからconsumer主集計への境界
+
+[入力adapter](anomaly-v03-producer-input-fixture.md)を追加。登録・全予定枠・最新attempt・外部input/summary pin・終了記録を結び、未完了なら全枠/失敗を保持して集計を返さない。新23項目pass、2.584秒。架空40cluster/480区間/2,880枠の保存例は2.539秒、旧失敗1件・判定不能1枠・precision0/0を保持し、既存主集計入力/diagnostics/wrapper coverageへ形式接続した。[結果](results/anomaly-multiseed-v0.3-producer-input-boundary-2026-10-02.md)。
+
+旧76code/18data不変、追加2本、資源上限据置き。実登録データの読込み・新評価・既存720評価の再実行・推論/正式50,000反復は0。正式契約、登録観測から要約への導出、実producerの実行認証、最終役割profile、全工程予算の受入は残る。formal/promotion/S6/trust/execution_authenticated/full closure=false、analysis_authorized=falseを維持する。 次は架空producerのslice/sidecar用要約を同じ登録・入力pin・最新attemptへ結合する。主集計と補助集計の対応を検査し、既存720評価や保存済み解析・公開を再実行しない。 Phase2/3全体は未完了。

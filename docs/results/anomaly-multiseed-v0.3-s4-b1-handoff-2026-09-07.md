@@ -4231,3 +4231,17 @@ pure14＋owned14＋budget16の44項目。tests-1は43pass/1error・74.090秒、�
 資源監視61sample、directory最大2.83MiB/39entries、親peak59.24MiB、子writer/reader peak50.16/49.18MiB、commit最小余裕13.82GiB。120秒/512MiB/32MiB等の上限は据置き。 .complete/marker-pendingの宣言済み2リンクだけを許可し、両方を容量計上。部分失敗/応答喪失はunconfirmed、reader失敗は公開済み記録を保全。元科学payloadの状態欄は当時のまま、外部bindingへ今回の実績を保存。
 
 次は登録producerの保存記録・coverageから集計済みconsumer入力への境界を、I/Oなしのfixture adapterとして具体化する。登録ID、予定全slot、最終attempt、入力pin、終了記録、集計countの対応を受け取り、欠落や失敗の成功化を拒否する。旧720評価を再読込み・再集計するだけの作業へ戻らず、正式40seedの実行や50,000反復はまだ開かない。 正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure=falseを維持。登録観測・coverageの真正性、正式契約、最終役割profile、全工程予算は未受入。 最終OS/資源はsave-checks.json。旧実計算c01d1c9/main6f1285d/closed/dirty文書・全候補保全、banto-24 PAUSED。正式gate/holdout/freeze・principal/保護root/UAC/ACL・push/mergeなし。
+
+## 191. 2026-10-02 架空producer記録とconsumer主集計の結合
+
+[結果](anomaly-multiseed-v0.3-producer-input-boundary-2026-10-02.md)、[API](../anomaly-v03-producer-input-fixture.md)。開始a0aee2ff732c45173cab1da4b3e5d804e1e5d65c、実装35032159133aa4d3866863b555bd23a3718f07be、clean候補pi01/banto-ai。OUT artifacts/producer-input-boundary-2026-10-02、tests-1/full-invented-example。新module/test2本、旧76code/18data不変、現在78code。文書revisionと全pinはsavepoint-evidence.json。
+
+新23項目pass、failure/error/skip0、2.584秒。外部manifest/登録pin、全予定枠とidentity/順序、候補間入力、latest attempt、入力/結果bytes、分母/precision/delay、終了/failureの整合性を検査。最新失敗や全体未完了は集計を返さず、全予定枠と旧失敗を保持する。判定不能とprecision0/0を補正しない。
+
+40架空cluster/480区間/2,880最新枠、attempt481、旧失敗1、success2,879/inconclusive1の保存例が2.539秒で成功。9,123論理payload/8,685,031bytesをJSONL容器へ保存し、manifest/外部期待値を保持。既存document入力/diagnostics/wrapper coverageの形式に接続したが、推論は実施せず、owned workerも起動しない。
+
+監視12sample、errorなし/終了確認済み、親peak private80.33MiB、directory最大12.06MiB、commit最小余裕27.16GiB。予算120秒/512MiB/32MiB等は据置き。保存例後RAM14.70GiB、C/D114.77/384.81GiB。最終資源・OSはsave-checks.json、旧formal OS9168は保全。
+
+実登録データの読込み・新評価・既存720評価の再実行・推論/正式50,000反復は0。正式契約、登録観測から要約への導出、実producerの実行認証、最終役割profile、全工程予算の受入は残る。formal/promotion/S6/trust/execution_authenticated/full closure=false、analysis_authorized=falseを維持する。 正式null4欄/ready=falseを保持。固定架空登録/placeholderの宣言と供給bytesの整合性までで、実producerの真正性を受け入れたとはしない。次は架空producerのslice/sidecar用要約を同じ登録・入力pin・最新attemptへ結合する。主集計と補助集計の対応を検査し、既存720評価や保存済み解析・公開を再実行しない。
+
+前savepoint43,429bytes/SHA16c93767a452d7c9169f9cb0bd0a8c4d50c18a87df9c7cc812c4dd87ce7de5e3。旧fp02を含む候補/成果物、実計算c01d1c9/main6f1285d/closed/dirty文書を保持、banto-24 PAUSED。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。

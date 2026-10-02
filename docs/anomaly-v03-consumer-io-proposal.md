@@ -1,5 +1,9 @@
 # 単一writer方針での解析consumer入出力契約案
 
+2026-10-02 最新：[架空producer入力境界](anomaly-v03-producer-input-fixture.md)を追加し、新23項目pass。外部pin、全予定枠、最新attempt、placeholder bytes、要約count、終了記録を結び、480区間/2,880枠の架空例が既存主集計入力/diagnostics/coverage形式へ接続した。未完了では集計を返さず失敗と全予定枠を保持。実producer形式や登録データの受入ではなく、契約draftを維持する。次は架空producerのslice/sidecar用要約を同じ登録・入力pin・最新attemptへ結合する。主集計と補助集計の対応を検査し、既存720評価や保存済み解析・公開を再実行しない。
+
+以下の日付付き追記は、その時点の履歴。現在の次工程は上記を優先する。
+
 2026-10-02現在：[5payloadの通常公開・writer証跡・別reader](anomaly-v03-fixture-publication.md)を接続済み。保存済み解析/auditと外部bindingで結び、元payloadは末尾LF以外不変。16項目pass＋不変35passを再利用。次は登録producerの保存記録・coverageから集計済みconsumer入力への境界を、I/Oなしのfixture adapterとして具体化する。登録ID、予定全slot、最終attempt、入力pin、終了記録、集計countの対応を受け取り、欠落や失敗の成功化を拒否する。旧720評価を再読込み・再集計するだけの作業へ戻らず、正式40seedの実行や50,000反復はまだ開かない。 正式契約はdraft、旧4payloadは完了として保持する。
 
 2026-10-01現在：[架空slice/補助表の独立audit](anomaly-v03-fixture-slice-audit.md)を所有processへ接続。主9表に加えて本文1,233行/補助2,835行/詳細9表を別実装で検算し、保存済み解析への適用が成功した。43試験の成功を不変で再利用し、試験データを修正した1件もpass、計44項目を確認。次は既存5payloadの通常公開・別readerとaudit scope/writer実行記録の結合。旧4payload公開は完了として保持する。正式契約はdraft、登録観測・正式推論・closureの受入は別。[結果](results/anomaly-multiseed-v0.3-fixture-slice-audit-2026-10-01.md)。以下の日付付き追記は履歴。

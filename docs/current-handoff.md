@@ -1,30 +1,30 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-10-02 JST。**検算済みfixtureの5payloadを通常公開・writer証跡・別readerへ接続済み。次は登録producerの記録とcoverageからconsumer入力への境界を具体化する。**
+更新: 2026-10-02 JST。**架空producerの登録・全予定枠・最新attempt・入力bytes・終了記録からconsumer主集計への境界を実装済み。次はslice/sidecar入力を同じ記録へ結合する。**
 
-- [今回の結果](results/anomaly-multiseed-v0.3-fixture-publication-2026-10-02.md)、[利用方法](anomaly-v03-fixture-publication.md)、長い引継書§190。
-- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装a9de2f500020bb951dfd08d66b56e368859236b9、clean候補fp02/banto-ai。
-- OUT artifacts/fixture-publication-2026-10-01、成功tests-4/saved-fixture-publication/。最終文書revision・全pinはsavepoint-evidence.json。初回fp01とtests-1〜3/旧harnessを保全。
+- [今回の結果](results/anomaly-multiseed-v0.3-producer-input-boundary-2026-10-02.md)、[API](anomaly-v03-producer-input-fixture.md)、長い引継書§191。
+- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装35032159133aa4d3866863b555bd23a3718f07be、clean候補pi01/banto-ai。
+- OUT artifacts/producer-input-boundary-2026-10-02、tests-1/full-invented-example/。文書revision・78code/18data・成果物pinはsavepoint-evidence.json。
 
 ## 今回の成果
 
-新しい公開経路16項目が90.902秒で全pass（failure/error/skip0）。共通evidence16＋budget19の35passは初回からcode不変を照合して再利用し、関連51項目を確認。最終revisionで51項目すべてを再実行したとはしない。
+新23項目pass、failure/error/skip0、2.584秒。外部pin、全inventory/identity、試行連番、共有入力、要約count、終了記録、failure evidenceを検査。最新試行が失敗またはproducer全体が未完了ならclusters/diagnosticsを返さず、予定枠と失敗履歴を保持する。
 
-保存例12.249秒。writer PID45580、reader PID42148、両子exit0/reaped/error0。元解析・検算再実行0、新評価0。 元5payloadは1,976,915bytes、公開5payloadは1,976,920bytes。各JSONにLFを1つ加えた差だけで、内容・数値は同一。
+保存例は架空40cluster/480区間/2,880枠、2.539秒。9,123論理payload/8,685,031bytes、attempt481、旧失敗1件、最新success2,879＋inconclusive1、precision0/0を保持した。実ファイルはJSONL容器等にまとめた。既存document入力/diagnostics/wrapper coverageの形式確認までで、実登録データ・評価・推論・owned worker起動は0。
 
-元analysis(cf4d9c4)・combined audit(b6d578e)の12保存入力を認証して再利用。writer/readerを所有子で順次実行し、元Popen identity、前後source/runtime、入出力pinを親期待へ結合した。source13/Python2/入力12＋invocation、依存観測は終了後照合。元科学payloadのstages/公開falseを遡って書き換えず、外部bindingへ今回の実績を記録。
-
-資源監視61sample、directory最大2.83MiB/39entries、親peak59.24MiB、子writer/reader peak50.16/49.18MiB、commit最小余裕13.82GiB。120秒/512MiB/32MiB等の上限は据置き。
-
-初回の時間停止を受け、同revisionのGit blobだけを工程内で再利用するよう変更。作業bytes・環境の前後検査を保持し、上限は緩和していない。初回の他3失敗の原因は断定せず、再確認passとログを保存。新module/test2＋既存4本変更、旧70code/18data不変、現在76code。旧4payload公開経路は保全。
+親peak private80.33MiB、監視中directory最大12.06MiB、commit最小余裕27.16GiB、errorなし。120秒/512MiB/32MiB等の予算は据置き。新module/test2本を追加し旧76code/18dataは不変。旧公開試験や720評価は再実行していない。
 
 ## 次の実装単位
 
-登録producerの保存記録・coverageから集計済みconsumer入力への境界を、I/Oなしのfixture adapterとして具体化する。登録ID、予定全slot、最終attempt、入力pin、終了記録、集計countの対応を受け取り、欠落や失敗の成功化を拒否する。旧720評価を再読込み・再集計するだけの作業へ戻らず、正式40seedの実行や50,000反復はまだ開かない。
+次は架空producerのslice/sidecar用要約を同じ登録・入力pin・最新attemptへ結合する。主集計と補助集計の対応を検査し、既存720評価や保存済み解析・公開を再実行しない。 I/Oなし・fixture専用から進め、実データ読込み・正式gate/holdout/freezeはまだ開かない。slice/sidecarは主count/有効時間/delayとは別の未接続入力である。
 
-正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure=falseを維持。登録観測・coverageの真正性、正式契約、最終役割profile、全工程予算は未受入。 今回でT09/T10/T11/T12のfixture公開接続を完了側へ進めた。旧4payloadの公開反復や残件表を再整理するだけの工程へ戻らない。正式開始前の契約/実装と、実行後に得る成功証拠を分け、循環要求しない。
+今回のfixture登録は固定架空ID/seedとplaceholder bytes。供給記録の一致は実producerの実行認証ではない。実登録データの読込み・新評価・既存720評価の再実行・推論/正式50,000反復は0。正式契約、登録観測から要約への導出、実producerの実行認証、最終役割profile、全工程予算の受入は残る。formal/promotion/S6/trust/execution_authenticated/full closure=false、analysis_authorized=falseを維持する。 正式文書のnull4欄/ready=falseは維持。
 
-既存実計算c01d1c9、本流clean6f1285d、closed、dirty文書は不変。banto-24 PAUSED。最終資源・OSはsave-checks.json、旧正式OS pin9168は維持。principal/保護root/UAC/ACL/同時書換え保留、正式gate/holdout/freeze・push/mergeなし。
+実計算c01d1c9/main6f1285d/closed/既存dirty文書は不変、banto-24 PAUSED。最終OS/資源はsave-checks.json、旧正式OS pin9168は維持。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+
+## 直前の5payload公開保存点
+
+文書a0aee2ff732c45173cab1da4b3e5d804e1e5d65c、実装a9de2f500020bb951dfd08d66b56e368859236b9/fp02。OUT artifacts/fixture-publication-2026-10-01、manifest43,429bytes/SHA16c93767a452d7c9169f9cb0bd0a8c4d50c18a87df9c7cc812c4dd87ce7de5e3。新公開16pass＋コード不変35pass再利用、関連51項目。保存例12.249秒、writer/reader exit0/reaped/error0。元5payload1,976,915bytes→公開1,976,920bytesは各末尾LFのみ。元analysis/audit再実行0、外部bindingへ今回の公開実績を記録。初回fp01とtests-1〜3の失敗・旧harnessを保全。
 
 ## 直前のslice audit保存点
 

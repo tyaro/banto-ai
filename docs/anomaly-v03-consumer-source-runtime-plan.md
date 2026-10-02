@@ -1,5 +1,9 @@
 # consumerのsource/runtime固定対象と実行前の残件
 
+2026-10-02 最新：実装35032159133aa4d3866863b555bd23a3718f07be/pi01。[架空producer入力境界](anomaly-v03-producer-input-fixture.md)の新module/test2本を追加し、旧76code/18data不変、現在78code。23試験と全予定枠の架空保存例を確認した。純粋関数のsupplied bytes照合であり、producerの実process/source/runtime認証や受入済み役割profileを追加したとはしない。旧fp02の公開/reader観測は保全。次は架空producerのslice/sidecar用要約を同じ登録・入力pin・最新attemptへ結合する。主集計と補助集計の対応を検査し、既存720評価や保存済み解析・公開を再実行しない。
+
+以下の日付付き追記は、その時点の履歴。現在の次工程は上記を優先する。
+
 2026-10-02現在：最新実装a9de2f500020bb951dfd08d66b56e368859236b9/fp02。[5payload公開](anomaly-v03-fixture-publication.md)のwriter/readerを別所有子で観測し、selected source13/Python2/入力12＋invocationを親期待へ結合した。同revisionのGit blobは1工程内で再利用するが作業ファイルは前後照合する。依存は終了後観測で、承認済み事前profileやfull closureではない。次は登録入力とcoverageのconsumer境界へ進み、最終役割profile/正式固定の不足を残す。
 
 2026-10-01現在：最新候補はb6d578e7c577470ecb2fbef228413d6b2abf85bf/fs02。架空sliceの別実装をowned auditへ追加し、選択source15本/Python2file/入力6file、全236依存file（project32/module181/native48）の終了後照合が成功。旧primary-onlyは保持し、新operationはslice入力を元analysisのpinへ結ぶ。[結果](results/anomaly-multiseed-v0.3-fixture-slice-audit-2026-10-01.md)。次は既存5payloadの通常公開・別readerにaudit scopeとwriterの実行記録を接続する。完全closure・正式役割仕様の受入は未完了。正式実行後の成功証拠を開始前に循環要求しない。以下の静的候補表や日付付き追記は履歴。
