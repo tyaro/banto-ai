@@ -125,6 +125,7 @@ def run_pipeline(raw, *, expected_mode, expected_pin, expected_revision, draws,
         a = analysis.calculate_with_evidence(request,expected_revision=expected_revision,receipt_parent=target,receipt_name='analysis',resource_budget=budget)
         result['analysis'] = a
         v.require(a['status'] == 'verified' and a['resource_budget_passed'],'analysis did not verify')
+        result['fixture_inference_performed'] = True
         budget.checkpoint();ap = target/'analysis'
         reference = {'result_pin':a['result_pin'],'evidence_pin':a['evidence_pin'],'source_revision':expected_revision}
         audit_op = _record(inputs/'audit-operation.json',v.canonical_json(audit.operation_descriptor(expected_revision,reference,operation=audit.SLICE_OPERATION)))
@@ -139,6 +140,7 @@ def run_pipeline(raw, *, expected_mode, expected_pin, expected_revision, draws,
         b = audit.audit_with_evidence(audit_request,expected_revision=expected_revision,receipt_parent=target,receipt_name='audit',resource_budget=budget)
         result['audit'] = b
         v.require(b['status'] == 'verified' and b['resource_budget_passed'] and b['fixture_slice_audit_performed'],'independent audit did not verify')
+        result.update(fixture_numerical_audit_performed=True,fixture_slice_audit_performed=True)
         budget.checkpoint()
         # Link the exact projected inputs to both owned records, after clean exit.
         for role,role_result in (('analysis',a),('audit',b)):

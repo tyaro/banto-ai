@@ -128,6 +128,7 @@ class BoundFixturePipelineTests(unittest.TestCase):
             value=self.run_flow(root)
             self.assertEqual(value['status'],'failed');self.assertEqual((a.call_count,b.call_count),(1,1))
             self.assertEqual(value['analysis']['status'],'verified');self.assertFalse(value['fixture_slice_audit_performed'])
+            self.assertTrue(value['fixture_inference_performed'])
 
     def test_unreaped_owner_survives_and_audit_never_runs(self):
         owner=object();error=flow.analysis.supervisor.UnreapedWorker(owner,{'status':'unconfirmed'})
