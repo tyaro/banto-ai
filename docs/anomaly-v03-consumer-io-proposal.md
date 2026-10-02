@@ -1,5 +1,9 @@
 # 単一writer方針での解析consumer入出力契約案
 
+2026-10-02 最新：[今回の保存・別reader接続](results/anomaly-multiseed-v0.3-bound-fixture-publication-2026-10-02.md)で、producer結合結果/projectionから生成・独立検算済みの新5payloadを既存経路へ渡し、10.801秒で成功した。元1,987,587bytes→公開1,987,592bytesは各末尾LFのみ。元analysis/audit再実行0、writer/reader各1回、両子exit0/reaped/error0、資源pass。本体コード変更0、82code/18data不変、既存16公開試験を再利用しsuite再実行0。 外部結合記録へ元producer/projectionと今回の公開証跡を保持し、正式契約draft/null4欄を維持。次は実producerの保存形式と現在の架空入力契約の差分を具体化し、観測・score・ledgerから主/補助要約へ渡す読取り境界を実装する。小さい固定入力で既存の独立監査部品を接続し、登録・coverage・最新attempt・入力pinの食い違いを拒否する。今回の公開/readerや既存720評価を反復せず、正式契約の採択・holdout・50,000反復はまだ開かない。
+
+以下の日付付き記録は履歴。現在の到達点と次工程は上記を優先する。
+
 2026-10-02 最新：[結合入力から解析・独立検算への接続](anomaly-v03-bound-fixture-pipeline.md)を追加。保存点の外部pinから4入力とprojectionへ写し、所有analysisと別の主表/slice auditが成功した。架空40cluster/4draw、元評価再実行0、正式契約draftを維持。最終13項目すべてpass。初回の試験データ修正と後段失敗時の実績保存も記録。次は今回の結合入力から生成・独立検算した新しい5payloadを、既存の通常writer/別readerへ接続する。元producer結合結果とprojectionのpinを維持し、今回のanalysis/auditを再実行しない。
 
 以下の日付付き記録は履歴。現在の次工程は上記を優先する。

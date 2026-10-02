@@ -4273,3 +4273,13 @@ pure14＋owned14＋budget16の44項目。tests-1は43pass/1error・74.090秒、�
 既存720評価の再実行・新評価・登録観測読込み・正式50,000反復・公開processは0。正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。raw観測導出・登録seed/coverageの真正性・正式契約/役割profile/全体予算の受入は残る。 架空推論/主表/slice検算フラグはtrue。次は今回の結合入力から生成・独立検算した新しい5payloadを、既存の通常writer/別readerへ接続する。元producer結合結果とprojectionのpinを維持し、今回のanalysis/auditを再実行しない。
 
 前savepoint24,824bytes/SHA9291c79fce30cde30132e8f1d5b2fc733eccaa1efab2afafd8bffaaa82553389。実計算c01d1c9/main6f1285d/closed/dirty文書・旧候補不変、banto-24 PAUSED。最終OS/資源はsave-checks.json、旧formal9168維持。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+
+## 194. producer結合済みの解析結果を通常保存・別readerへ接続（2026-10-02）
+
+[結果](anomaly-multiseed-v0.3-bound-fixture-publication-2026-10-02.md)。本体変更0、実装9705b7355cdabca189a60bd63a380fc3062b8ec0/bp03を再利用。起点889bf80、OUT artifacts/bound-fixture-publication-2026-10-02/attempt-1/publication。元5payload1,987,587bytes→公開1,987,592bytesは各末尾LFのみ。10.801秒、writer26636/reader13032、両子exit0/reaped/error0。元analysis/audit0、新評価0、既存720評価再実行0。旧公開16試験の対象code不変で再利用し新suite0、82code/18data不変。
+
+source-anchor.jsonとbound-publication-binding.jsonに前保存点、producer結合結果、登録/主補助manifest、projection4入力、解析・独立検算、今回のpublication result/binding/marker/writer/reader pinを保持した。元失敗1件・判定不能1枠も維持。別readerは再計算ではなく保存照合で、前独立検算の証拠を再利用する。正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=false。
+
+監視54sample、親peak61.01MiB、子49.89/49.49MiB、directory観測最大2.84MiB/39entries、commit最小余裕26.27GiB、上限据置き/pass。両役割source13/Python2/入力12＋invocation、補助依存233file/179module/47native/30project、追加0。OS25H2/26200/9457、旧formal9168・前工程の別Bantoリリース申告と資源停止記録を保持、原因未断定。実計算/main/closed/dirty guard/全候補保全、banto-24 PAUSED、principal/保護root/UAC/ACL/同時書換え保留、push/mergeなし。
+
+次は実producerの保存形式と現在の架空入力契約の差分を具体化し、観測・score・ledgerから主/補助要約へ渡す読取り境界を実装する。小さい固定入力で既存の独立監査部品を接続し、登録・coverage・最新attempt・入力pinの食い違いを拒否する。今回の公開/readerや既存720評価を反復せず、正式契約の採択・holdout・50,000反復はまだ開かない。

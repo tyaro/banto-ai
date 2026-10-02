@@ -397,3 +397,9 @@ sampling/協調停止でありhard quotaではなく、正式2,880評価/50,000�
 [新しい接続](anomaly-v03-bound-fixture-pipeline.md)で、保存済み架空主/補助結合結果の外部pinを4入力とprojectionへ写し、所有analysisと独立主表/slice auditが成功した。40cluster/4draw、全体26.370秒。主9表/180gate、本文1,233行/補助2,835行/詳細9表一致。参照文書は起動前に同じ実装で1回構成し、独立性は別auditで確認した。[結果](results/anomaly-multiseed-v0.3-bound-fixture-pipeline-2026-10-02.md)。
 
 最終13項目pass。試験データと後段失敗時の実績保存を修正し、旧80code/18data不変、新2本追加。共有資源上限据置き/pass。既存720評価の再実行・新評価・登録観測読込み・正式50,000反復・公開processは0。正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。raw観測導出・登録seed/coverageの真正性・正式契約/役割profile/全体予算の受入は残る。 次は今回の結合入力から生成・独立検算した新しい5payloadを、既存の通常writer/別readerへ接続する。元producer結合結果とprojectionのpinを維持し、今回のanalysis/auditを再実行しない。 Phase2/3全体は未完了。
+
+### 2026-10-02：producer結合済みの解析結果を通常保存・別readerへ接続
+
+[今回の保存・別reader接続](results/anomaly-multiseed-v0.3-bound-fixture-publication-2026-10-02.md)で、producer結合結果/projectionから生成・独立検算済みの新5payloadを既存経路へ渡し、10.801秒で成功した。元1,987,587bytes→公開1,987,592bytesは各末尾LFのみ。元analysis/audit再実行0、writer/reader各1回、両子exit0/reaped/error0、資源pass。本体コード変更0、82code/18data不変、既存16公開試験を再利用しsuite再実行0。
+
+元producer結合結果→projection→解析→独立主表/slice検算→通常writer→別readerのfixture経路を保存証拠で結んだ。実登録観測導出、coverageの真正性、正式契約、最終役割profile、全工程予算の受入は残る。正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=false。 Phase2/3全体は未完了。次は実producerの保存形式と現在の架空入力契約の差分を具体化し、観測・score・ledgerから主/補助要約へ渡す読取り境界を実装する。小さい固定入力で既存の独立監査部品を接続し、登録・coverage・最新attempt・入力pinの食い違いを拒否する。今回の公開/readerや既存720評価を反復せず、正式契約の採択・holdout・50,000反復はまだ開かない。

@@ -1,26 +1,32 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-10-02 JST。**producer結合済みの架空入力から所有analysis・独立主表/slice auditまで接続済み。次はこの新しい5payloadの通常公開/別readerへの接続。**
+更新: 2026-10-02 JST。**producer結合済みの架空入力から解析・独立主表/slice検算・通常保存・別readerまで接続済み。次は実producer保存形式から主/補助要約への読取り境界。**
 
-- [今回の結果](results/anomaly-multiseed-v0.3-bound-fixture-pipeline-2026-10-02.md)、[API](anomaly-v03-bound-fixture-pipeline.md)、長い引継書§193。
-- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装9705b7355cdabca189a60bd63a380fc3062b8ec0/bp03。初回568562f/bp01保全。
-- OUT artifacts/bound-fixture-pipeline-2026-10-02、tests-3/owned-example。文書revisionと82code/18data・成果物pinはsavepoint-evidence.json。
+- [今回の結果](results/anomaly-multiseed-v0.3-bound-fixture-publication-2026-10-02.md)、[既存公開API](anomaly-v03-fixture-publication.md)、長い引継書§194。
+- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。本体変更0、実装9705b7355cdabca189a60bd63a380fc3062b8ec0/bp03を再利用。
+- OUT artifacts/bound-fixture-publication-2026-10-02、成功attempt-1/publication。文書revisionと不変82code/18data・成果物pinはsavepoint-evidence.json。
 
 ## 今回の成果
 
-最終tests-3は13項目すべてpass、10.390秒、failure/error/skip0。初回tests-1は12pass/1failure（9.254秒）。元から0のdelayセルを0へ置換していた試験を0→1へ直し、tests-2の修正1件でpassした。その後、後段失敗でも前段の完了実績を残す実装修正を加えたため、最終候補で13件と接続例を再確認した。 初回失敗・中間保存例・旧harnessを保全、各試験の資源監視はpass。
+前工程tests-3/owned-example/pipelineの新5payloadを既存所有writer→終了確認→別readerへ1回渡し、10.801秒で成功。元1,987,587bytes→公開1,987,592bytesは各末尾LFのみ。writer PID26636/reader13032、両子exit0/reaped/error0。analysis/audit再実行0、新評価0、既存720評価再実行0。旧公開16試験を該当code不変で再利用し、suite反復0。
 
-保存済み40架空cluster/2,880枠の主・補助結合結果を4drawへ接続。参照文書の同一実装による事前作成1回、所有analysis1回、別実装audit1回で、全体26.370秒。主9表/117絶対推定/72対応差/180gate、本文1,233行・補助2,835行・詳細9表が一致した。 両子exit0/終了確認済み/error0、analysis PID40180、audit PID1156。文書1,943,210bytes/SHAb79970a4fbf18af525de01a4a7aa677cc2e6eb6ed603dc36d6499633a2446581、新5payload1,987,587bytes。元失敗1件・判定不能1枠・precision0/0を保持。参照値との一致のみを独立検算と扱わない。
+source-anchor.jsonとbound-publication-binding.jsonに、前保存点→producer結合結果/登録/主補助manifest→projection4入力→analysis/audit→今回の保存binding/marker/writer/readerを結ぶpinを保持。元失敗1件、判定不能1枠、precision0/0も保持。旧科学payload内のpublished=false等を上書きせず今回の保存実績を外側へ記録した。
 
-共有監視92sample、親peak private127.18MiB、directory最大10.99MiB、commit最小余裕26.70GiB、資源pass。120秒/512MiB/32MiB等は据置き。主入力・補助入力を新4fileへ写しただけで、上流の記録を再集計していない。旧80code/18data不変、新2本で82code。
+資源54sample、親peak61.01MiB、directory観測最大2.84MiB/39entries、commit最小余裕26.27GiBでpass。上限据置き。selected source13/Python2/入力12＋invocation、補助依存は両役割233file/179module/47native/30project、追加0。旧公開時の234file/48nativeを今回の観測値へ上書きしない。
 
 ## 次の実装単位
 
-次は今回の結合入力から生成・独立検算した新しい5payloadを、既存の通常writer/別readerへ接続する。元producer結合結果とprojectionのpinを維持し、今回のanalysis/auditを再実行しない。 公開へ進む際は本保存点のpipeline/projection/result/evidenceと新5payloadを起点にする。旧fixture-publicationの別入力で作った公開物を今回の成果物と混同しない。
+次は実producerの保存形式と現在の架空入力契約の差分を具体化し、観測・score・ledgerから主/補助要約へ渡す読取り境界を実装する。小さい固定入力で既存の独立監査部品を接続し、登録・coverage・最新attempt・入力pinの食い違いを拒否する。今回の公開/readerや既存720評価を反復せず、正式契約の採択・holdout・50,000反復はまだ開かない。
 
-既存720評価の再実行・新評価・登録観測読込み・正式50,000反復・公開processは0。正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。raw観測導出・登録seed/coverageの真正性・正式契約/役割profile/全体予算の受入は残る。 今回の架空計算/主表/slice検算はtrueとして別欄に記録。実観測導出・正式運用の完了とはしない。
+実データからの導出と正式契約は未受入。fixture経路の完了を全体の完了へ広げず、正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持する。最終役割profile・全工程予算も残る。
 
 実計算c01d1c9/main6f1285d/closed/既存dirty文書・全候補を保全、banto-24 PAUSED。最終OS/資源はsave-checks.json、旧formal9168維持。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+
+## 直前の結合入力から解析・独立検算
+
+文書889bf807c13a7b78845e2eb7dffe053f48be611f、実装9705b7355cdabca189a60bd63a380fc3062b8ec0/bp03。OUT artifacts/bound-fixture-pipeline-2026-10-02、manifest51,848bytes/SHA379b2ea7e190e7e343190eebf2e1697aafff167ea3fc870d55b40cf127a043c8。最終13項目pass/10.390秒、初回12pass/1failure（元0セルへ0代入の試験データ）と修正1pass、後段失敗時の実績保存修正を保全。
+
+40架空cluster/2,880枠/4draw、参照文書の事前構成1回、所有analysis1回・別実装audit1回、26.370秒。主9表/117絶対推定/72対応差/180gate、本文1,233行/補助2,835行/詳細9表一致。文書1,943,210bytes/SHAb79970a4fbf18af525de01a4a7aa677cc2e6eb6ed603dc36d6499633a2446581。analysis PID40180/audit1156、両子exit0/reaped/error0。補助依存analysis245/audit235file。親peak127.18MiB、共有資源pass。今回この結果を再計算せず公開へ渡した。
 
 ## 直前の補助入力結合保存点
 

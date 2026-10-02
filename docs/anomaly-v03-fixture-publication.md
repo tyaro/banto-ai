@@ -62,3 +62,7 @@ writerのexit0・終了確認・証跡検査が通るまでreaderを起動しな
 formal_permission/promotion/S6/trust/execution_authenticated/source_closure_complete/runtime_closure_completeはfalse。登録観測・coverageの真正性、正式運用契約、正式2,880評価/50,000反復の全体予算は別の残件である。旧4ファイル公開経路は変更しない。
 
 [保存例と試験結果](results/anomaly-multiseed-v0.3-fixture-publication-2026-10-02.md)。
+
+## 2026-10-02：producer結合済みの新解析結果への適用
+
+[今回の保存・別reader接続](results/anomaly-multiseed-v0.3-bound-fixture-publication-2026-10-02.md)で、producer結合結果/projectionから生成・独立検算済みの新5payloadを既存経路へ渡し、10.801秒で成功した。元1,987,587bytes→公開1,987,592bytesは各末尾LFのみ。元analysis/audit再実行0、writer/reader各1回、両子exit0/reaped/error0、資源pass。本体コード変更0、82code/18data不変、既存16公開試験を再利用しsuite再実行0。 source-anchor.jsonとbound-publication-binding.jsonへ、元保存点/producer結果/projection入力と今回のpublication result/binding/marker/両役割証跡を結ぶpinを保持した。元科学payloadの状態欄は作成時点のまま保持し、今回の保存成功は外側に記録する。登録観測導出・正式契約/profile/全工程予算は未受入。次は実producerの保存形式と現在の架空入力契約の差分を具体化し、観測・score・ledgerから主/補助要約へ渡す読取り境界を実装する。小さい固定入力で既存の独立監査部品を接続し、登録・coverage・最新attempt・入力pinの食い違いを拒否する。今回の公開/readerや既存720評価を反復せず、正式契約の採択・holdout・50,000反復はまだ開かない。

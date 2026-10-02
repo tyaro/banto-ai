@@ -45,3 +45,7 @@ analysis失敗ではauditを起動しない。audit失敗でもanalysisの成功
 成功時はfixture_inference_performed / fixture_numerical_audit_performed / fixture_slice_audit_performedをtrueにする。一方、正式許可・昇格・S6・trust・execution_authenticated・full closure・analysis_authorizedはfalseのまま。正式文書のnull4欄/ready=falseも保持する。
 
 登録観測からの導出、実seed/coverageの真正性、正式50,000反復、正式契約と全体予算の受入は別。今回writer/readerによる公開は起動しない。次はこの新しい解析・検算結果の5payloadを、既存の通常公開・別readerへ元のprojectionを保持して接続する。元analysisを再実行しない。
+
+## 2026-10-02：producer結合済みの新解析結果への適用
+
+[今回の保存・別reader接続](results/anomaly-multiseed-v0.3-bound-fixture-publication-2026-10-02.md)で、producer結合結果/projectionから生成・独立検算済みの新5payloadを既存経路へ渡し、10.801秒で成功した。元1,987,587bytes→公開1,987,592bytesは各末尾LFのみ。元analysis/audit再実行0、writer/reader各1回、両子exit0/reaped/error0、資源pass。本体コード変更0、82code/18data不変、既存16公開試験を再利用しsuite再実行0。 source-anchor.jsonとbound-publication-binding.jsonへ、元保存点/producer結果/projection入力と今回のpublication result/binding/marker/両役割証跡を結ぶpinを保持した。元科学payloadの状態欄は作成時点のまま保持し、今回の保存成功は外側に記録する。登録観測導出・正式契約/profile/全工程予算は未受入。次は実producerの保存形式と現在の架空入力契約の差分を具体化し、観測・score・ledgerから主/補助要約へ渡す読取り境界を実装する。小さい固定入力で既存の独立監査部品を接続し、登録・coverage・最新attempt・入力pinの食い違いを拒否する。今回の公開/readerや既存720評価を反復せず、正式契約の採択・holdout・50,000反復はまだ開かない。
