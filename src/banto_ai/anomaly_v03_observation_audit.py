@@ -53,13 +53,14 @@ def read_pinned(path, pin, maximum):
     return raw
 
 
-def audit_completed_chunk(savepoint, savepoint_sha256, run_root, chunk_index):
+def audit_completed_chunk(savepoint, savepoint_sha256, run_root, chunk_index, *, include_summaries=False):
     """Audit six evaluations from one completed campaign's final verified attempt.
 
     Paths come only from the explicit roots and fixed registered identifiers.
     Reads at most one evaluation plus one dataset's observations at a time.
     Returns a report; never writes to the run or the old savepoint.
     """
+    scores.need(type(include_summaries) is bool, 'summary option must be boolean')
     started = time.monotonic()
     scores.need(type(chunk_index) is int and 0 <= chunk_index < 120, 'chunk index outside plan')
     savepoint = paths.regular_path(savepoint)
@@ -116,7 +117,8 @@ def audit_completed_chunk(savepoint, savepoint_sha256, run_root, chunk_index):
     scores.need(type(slots) is list and len(slots) == 6, 'six saved slot outcomes required')
     expected_status = 'verified_inconclusive' if any(s['status'] == 'inconclusive' for s in slots) else 'verified_complete'
     same(chunk['status'], expected_status, 'inconclusive chunk outcome hidden')
-    reports, dataset, observations, input_hashes = [], None, None, None
+    reports, summaries, dataset, observations, input_hashes = [], [], None, None, None
+    event_bytes = None
     for identity, slot in zip(planned['identities'], slots):
         registry.validate_identity(identity)
         same(slot['evaluation_id'], identity['evaluation_id'], 'saved slot identity/order')
@@ -130,20 +132,29 @@ def audit_completed_chunk(savepoint, savepoint_sha256, run_root, chunk_index):
                 input_hashes[key] = hashlib.sha256(raw).hexdigest()
                 if key == 'observations':
                     observations = raw
+                if include_summaries and key == 'events':
+                    event_bytes = raw
                 del raw
         relative = stem+'/result/payload/evaluations/'+identity['evaluation_id']+'.json'
         result = scores.strict_json(read(relative, 32*MIB))
         same(result['identity'], identity, 'evaluation identity changed')
         same(result['input_hashes'], input_hashes, 'evaluation dataset hash binding')
         same(result['events'], registry.event_inventory(identity), 'registered event inventory changed')
+        if include_summaries:
+            scores.need(event_bytes == b''.join(registry.canonical_json(e)+b'\n' for e in result['events']),
+                        'saved full event ledger differs from evaluation events')
         numeric = scores.audit_score_derivation(result, observations,
             expected_observation_sha256=input_hashes['observations'])
         same(numeric['evaluation_outcome'], slot['status'], 'numeric outcome differs from saved outcome')
         ledgers = ledger.audit_evaluation(result)
-        reports.append({'identity': identity, 'evaluation_outcome': numeric['evaluation_outcome'],
-            'profile_and_score_audit': numeric, 'ledger_audit': ledgers})
+        row = {'identity': identity, 'evaluation_outcome': numeric['evaluation_outcome'],
+            'profile_and_score_audit': numeric, 'ledger_audit': ledgers}
+        reports.append(row)
+        if include_summaries:
+            from .anomaly_v03_saved_chunk_summary import _summarize
+            summaries.append(_summarize(result, row, evaluation_pin=pins[relative]))
         del result
-    return {'format': 'anomaly-v03-connected-observation-audit-v1',
+    report = {'format': 'anomaly-v03-connected-observation-audit-v1',
         'scope': 'selected-completed-dev-smoke-chunk', 'status': 'selected_chunk_checks_passed',
         'chunk_index': chunk_index, 'attempt': attempt, 'evaluations_checked': len(reports),
         'prior_attempts_not_credited': len(attempts)-1, 'evaluations': reports,
@@ -157,6 +168,9 @@ def audit_completed_chunk(savepoint, savepoint_sha256, run_root, chunk_index):
                          'normal generation', 'pre-rounding overlay', 'bootstrap/CI', 'formal gates'],
         'limits': ['externally trusted completed savepoint required', 'not protection against hostile concurrent filesystem mutation',
                    'complete dev/smoke captures with healthy normal prefix only']}
+    if include_summaries:
+        report['evaluation_summaries'] = summaries
+    return report
 
 
 def main(argv=None):
