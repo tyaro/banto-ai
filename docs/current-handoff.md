@@ -1,26 +1,32 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-10-02 JST。**架空producerの登録・全予定枠・最新attempt・入力bytes・終了記録からconsumer主集計への境界を実装済み。次はslice/sidecar入力を同じ記録へ結合する。**
+更新: 2026-10-02 JST。**架空producerの補助内訳を主入力・登録・最新試行へ結合済み。次は結合入力を既存の限定fixture解析/auditへ接続する。**
 
-- [今回の結果](results/anomaly-multiseed-v0.3-producer-input-boundary-2026-10-02.md)、[API](anomaly-v03-producer-input-fixture.md)、長い引継書§191。
-- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装35032159133aa4d3866863b555bd23a3718f07be、clean候補pi01/banto-ai。
-- OUT artifacts/producer-input-boundary-2026-10-02、tests-1/full-invented-example/。文書revision・78code/18data・成果物pinはsavepoint-evidence.json。
+- [今回の結果](results/anomaly-multiseed-v0.3-producer-slice-boundary-2026-10-02.md)、[API](anomaly-v03-producer-slice-fixture.md)、長い引継書§192。
+- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装bde59a7a98bd2ed1f5c263458a1ddf1e28211268、clean候補ps01/banto-ai。
+- OUT artifacts/producer-slice-boundary-2026-10-02、tests-1/full-invented-example。文書revisionと80code/18data・成果物pinはsavepoint-evidence.json。
 
-## 今回の成果
+## 今回の成果と資源停止
 
-新23項目pass、failure/error/skip0、2.584秒。外部pin、全inventory/identity、試行連番、共有入力、要約count、終了記録、failure evidenceを検査。最新試行が失敗またはproducer全体が未完了ならclusters/diagnosticsを返さず、予定枠と失敗履歴を保持する。
+新21項目はfailure/error/skip0、82.665秒で全pass。ただし同じ試験実行の資源監視はpipeline_commit_headroomで失敗。システムcommit余裕の最小値5.20MiBが2GiB下限を割った。試験processのpeak privateは86.71MiBであり、他processの内訳や因果は確認していない。ユーザーから別Bantoリリース処理の同時稼働が報告された。
 
-保存例は架空40cluster/480区間/2,880枠、2.539秒。9,123論理payload/8,685,031bytes、attempt481、旧失敗1件、最新success2,879＋inconclusive1、precision0/0を保持した。実ファイルはJSONL容器等にまとめた。既存document入力/diagnostics/wrapper coverageの形式確認までで、実登録データ・評価・推論・owned worker起動は0。
+元harness/資源停止記録を保全し、回復を確認して機能21passを再実行せず再利用した。純粋関数の途中を強制停止するhard quotaではなく、最後のcheckpointで停止理由を確定した。試験全体のresource_budget_passedはfalseのまま。別release処理との因果は未確認、他processの変更/停止なし。
 
-親peak private80.33MiB、監視中directory最大12.06MiB、commit最小余裕27.16GiB、errorなし。120秒/512MiB/32MiB等の予算は据置き。新module/test2本を追加し旧76code/18dataは不変。旧公開試験や720評価は再実行していない。
+保存例は別予算で67.880秒、資源pass。2,880補助payload/12,265,920bytes、主入力込み22,831,115bytes。40cluster/240集計セル、最新success2,879＋inconclusive1、旧失敗1件、ゼロセル・省略理由を保持。機能試験では旧失敗内の成功summaryも照合して最新だけを集計することを確認。
+
+親peak private99.51MiB、監視directory最大25.42MiB、commit最小余裕27.19GiB。上限120秒/512MiB/32MiB等は据置き。登録/attempt/input/summary pinと内訳を結び、joint/marginalや主countとの対応を検査。これ自体はraw観測の導出や実process認証ではない。
 
 ## 次の実装単位
 
-次は架空producerのslice/sidecar用要約を同じ登録・入力pin・最新attemptへ結合する。主集計と補助集計の対応を検査し、既存720評価や保存済み解析・公開を再実行しない。 I/Oなし・fixture専用から進め、実データ読込み・正式gate/holdout/freezeはまだ開かない。slice/sidecarは主count/有効時間/delayとは別の未接続入力である。
+次は外部pinで結んだ主入力と補助入力を、既存の限定fixture解析/audit経路へ接続する。供給記録から文書・別検算までの対応を確認し、旧720評価や正式holdout・50,000反復は起動しない。 新たなrelease処理が同時稼働する場合も上限を維持し、資源余裕を開始時に確認する。
 
-今回のfixture登録は固定架空ID/seedとplaceholder bytes。供給記録の一致は実producerの実行認証ではない。実登録データの読込み・新評価・既存720評価の再実行・推論/正式50,000反復は0。正式契約、登録観測から要約への導出、実producerの実行認証、最終役割profile、全工程予算の受入は残る。formal/promotion/S6/trust/execution_authenticated/full closure=false、analysis_authorized=falseを維持する。 正式文書のnull4欄/ready=falseは維持。
+主入力v1と旧78code/18dataは不変、新module/test2本で計80code。実観測読込み・新評価・既存720評価の再実行・数値推論・owned worker起動は0。登録観測からの導出、実producer/source/runtime認証、正式契約・全体予算の受入は残る。formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=false、正式null4欄/ready=falseを維持。 元主入力は3fileのpinから再利用し、補助記録はJSONL容器へ保存した。正式化や全体完了にはしない。
 
-実計算c01d1c9/main6f1285d/closed/既存dirty文書は不変、banto-24 PAUSED。最終OS/資源はsave-checks.json、旧正式OS pin9168は維持。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+実計算c01d1c9/main6f1285d/closed/既存dirty文書・旧候補は不変、banto-24 PAUSED。最終OS/資源はsave-checks.json、旧正式OS pin9168は維持。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+
+## 直前の主入力結合保存点
+
+文書c60f86747339f5d9011b1936adc7ce844499ce01、実装35032159133aa4d3866863b555bd23a3718f07be/pi01。OUT artifacts/producer-input-boundary-2026-10-02、manifest23,536bytes/SHAb7982e3d93125099e8668c1dd1a09f18f6994b546321ca6cb8cb43af11ecb12c。23pass/2.584秒、40cluster/480区間/2,880枠の例2.539秒、9,123論理payload/8,685,031bytes。登録/全予定枠/最新attempt/input/summary/終了記録の境界を実装。判定不能/precision0/0を保持し、主形式は今回も不変。
 
 ## 直前の5payload公開保存点
 

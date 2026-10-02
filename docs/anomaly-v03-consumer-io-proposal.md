@@ -1,5 +1,9 @@
 # 単一writer方針での解析consumer入出力契約案
 
+2026-10-02 最新：[補助入力の結合](anomaly-v03-producer-slice-fixture.md)を追加。各評価の内訳を主manifest/登録/attempt receipt/input/summary pinへ結び、最新だけを240集計セルへ合算した。新21機能試験pass、試験中のcommit余裕停止は失敗として保全し、回復後の保存例は資源pass。別Bantoリリースの同時稼働申告を記録。実観測導出や実producer認証の受入ではなく契約draftを維持する。次は外部pinで結んだ主入力と補助入力を、既存の限定fixture解析/audit経路へ接続する。供給記録から文書・別検算までの対応を確認し、旧720評価や正式holdout・50,000反復は起動しない。
+
+以下の日付付き記録は各時点の履歴。現在の次工程は上記を優先する。
+
 2026-10-02 最新：[架空producer入力境界](anomaly-v03-producer-input-fixture.md)を追加し、新23項目pass。外部pin、全予定枠、最新attempt、placeholder bytes、要約count、終了記録を結び、480区間/2,880枠の架空例が既存主集計入力/diagnostics/coverage形式へ接続した。未完了では集計を返さず失敗と全予定枠を保持。実producer形式や登録データの受入ではなく、契約draftを維持する。次は架空producerのslice/sidecar用要約を同じ登録・入力pin・最新attemptへ結合する。主集計と補助集計の対応を検査し、既存720評価や保存済み解析・公開を再実行しない。
 
 以下の日付付き追記は、その時点の履歴。現在の次工程は上記を優先する。

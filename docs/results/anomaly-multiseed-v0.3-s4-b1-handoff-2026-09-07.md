@@ -4245,3 +4245,17 @@ pure14＋owned14＋budget16の44項目。tests-1は43pass/1error・74.090秒、�
 実登録データの読込み・新評価・既存720評価の再実行・推論/正式50,000反復は0。正式契約、登録観測から要約への導出、実producerの実行認証、最終役割profile、全工程予算の受入は残る。formal/promotion/S6/trust/execution_authenticated/full closure=false、analysis_authorized=falseを維持する。 正式null4欄/ready=falseを保持。固定架空登録/placeholderの宣言と供給bytesの整合性までで、実producerの真正性を受け入れたとはしない。次は架空producerのslice/sidecar用要約を同じ登録・入力pin・最新attemptへ結合する。主集計と補助集計の対応を検査し、既存720評価や保存済み解析・公開を再実行しない。
 
 前savepoint43,429bytes/SHA16c93767a452d7c9169f9cb0bd0a8c4d50c18a87df9c7cc812c4dd87ce7de5e3。旧fp02を含む候補/成果物、実計算c01d1c9/main6f1285d/closed/dirty文書を保持、banto-24 PAUSED。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+
+## 192. 2026-10-02 架空producerの補助内訳を主入力と最新試行へ結合
+
+[結果](anomaly-multiseed-v0.3-producer-slice-boundary-2026-10-02.md)、[API](../anomaly-v03-producer-slice-fixture.md)。開始c60f86747339f5d9011b1936adc7ce844499ce01、実装bde59a7a98bd2ed1f5c263458a1ddf1e28211268、clean候補ps01/banto-ai。OUT artifacts/producer-slice-boundary-2026-10-02、tests-1/full-invented-example。文書revisionと全pinはsavepoint-evidence.json。
+
+新21項目はfailure/error/skip0、82.665秒で全pass。ただし同じ試験実行の資源監視はpipeline_commit_headroomで失敗。システムcommit余裕の最小値5.20MiBが2GiB下限を割った。試験processのpeak privateは86.71MiBであり、他processの内訳や因果は確認していない。ユーザーから別Bantoリリース処理の同時稼働が報告された。 元harness/停止診断を保全し、回復時のguardとcode不変を照合して機能passを再利用、再試験0。最後のcheckpointで停止理由を確定したもので、試験実行のresource_budget_passed=falseは維持。別release処理は変更/停止していない。
+
+保存例は前主入力の3fileをpinで再利用し、2,880補助payload/12,265,920bytes、全入力22,831,115bytesを確認。40cluster/240セル、success2,879/inconclusive1、旧失敗1、ゼロセル/省略理由を保持した。旧失敗内に成功summaryがある場合も照合し最新だけを合算することは機能試験で確認。供給されたincident/score/contextの分割、joint/marginal、主count/delay/profileの対応までで、raw観測導出は未検証。
+
+例67.880秒、監視165sample/errorなし/終了確認済み/資源pass。親peak private99.51MiB、directory最大25.42MiB、commit最小余裕27.19GiB。120秒/512MiB/32MiB等の上限据置き。例後RAM16.59GiB、C/D115.66/365.90GiB。最終OS/資源はsave-checks.json、OS25H2/26200/9457・旧formal9168を保持。
+
+主入力v1と旧78code/18dataは不変、新module/test2本で計80code。実観測読込み・新評価・既存720評価の再実行・数値推論・owned worker起動は0。登録観測からの導出、実producer/source/runtime認証、正式契約・全体予算の受入は残る。formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=false、正式null4欄/ready=falseを維持。 次は外部pinで結んだ主入力と補助入力を、既存の限定fixture解析/audit経路へ接続する。供給記録から文書・別検算までの対応を確認し、旧720評価や正式holdout・50,000反復は起動しない。
+
+前保存点23,536bytes/SHAb7982e3d93125099e8668c1dd1a09f18f6994b546321ca6cb8cb43af11ecb12c。旧候補/成果物、実計算c01d1c9/main6f1285d/closed/既存dirty文書不変、banto-24 PAUSED。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。

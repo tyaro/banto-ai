@@ -383,3 +383,11 @@ sampling/協調停止でありhard quotaではなく、正式2,880評価/50,000�
 [入力adapter](anomaly-v03-producer-input-fixture.md)を追加。登録・全予定枠・最新attempt・外部input/summary pin・終了記録を結び、未完了なら全枠/失敗を保持して集計を返さない。新23項目pass、2.584秒。架空40cluster/480区間/2,880枠の保存例は2.539秒、旧失敗1件・判定不能1枠・precision0/0を保持し、既存主集計入力/diagnostics/wrapper coverageへ形式接続した。[結果](results/anomaly-multiseed-v0.3-producer-input-boundary-2026-10-02.md)。
 
 旧76code/18data不変、追加2本、資源上限据置き。実登録データの読込み・新評価・既存720評価の再実行・推論/正式50,000反復は0。正式契約、登録観測から要約への導出、実producerの実行認証、最終役割profile、全工程予算の受入は残る。formal/promotion/S6/trust/execution_authenticated/full closure=false、analysis_authorized=falseを維持する。 次は架空producerのslice/sidecar用要約を同じ登録・入力pin・最新attemptへ結合する。主集計と補助集計の対応を検査し、既存720評価や保存済み解析・公開を再実行しない。 Phase2/3全体は未完了。
+
+### 2026-10-02：producer補助内訳を主入力・最新試行へ結合
+
+[補助入力adapter](anomaly-v03-producer-slice-fixture.md)を追加し、2,880件の架空内訳を同じ登録/入力/結果/attemptへ結合。最新試行だけを40cluster/240セルへ加算し、判定不能・zero cell・省略理由を保持する。joint/marginalと主count/遅延分布の整合性も検査した。[結果](results/anomaly-multiseed-v0.3-producer-slice-boundary-2026-10-02.md)。
+
+新21機能試験pass。ただし試験中のシステムcommit余裕低下で資源監視は失敗し、別Bantoリリース同時稼働の申告とともに保全した。回復後の保存例1回は67.880秒で資源pass。コード・上限を変更せず、通過した試験は反復しない。主入力v1と旧78code/18dataは不変、新module/test2本で計80code。実観測読込み・新評価・既存720評価の再実行・数値推論・owned worker起動は0。登録観測からの導出、実producer/source/runtime認証、正式契約・全体予算の受入は残る。formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=false、正式null4欄/ready=falseを維持。
+
+次は外部pinで結んだ主入力と補助入力を、既存の限定fixture解析/audit経路へ接続する。供給記録から文書・別検算までの対応を確認し、旧720評価や正式holdout・50,000反復は起動しない。 Phase2/3全体は未完了。

@@ -1,5 +1,9 @@
 # consumerのsource/runtime固定対象と実行前の残件
 
+2026-10-02 最新：実装bde59a7a98bd2ed1f5c263458a1ddf1e28211268/ps01。[補助入力adapter](anomaly-v03-producer-slice-fixture.md)の新module/test2本を追加し、旧78code/18data不変、現在80code。供給bytesの結合・純粋集計までで、実process/source/runtime認証や承認済みprofile/full closureを追加したとはしない。機能21passと資源停止記録を分け、回復後の例1回は予算内で成功。次は外部pinで結んだ主入力と補助入力を、既存の限定fixture解析/audit経路へ接続する。供給記録から文書・別検算までの対応を確認し、旧720評価や正式holdout・50,000反復は起動しない。
+
+以下の日付付き記録は各時点の履歴。現在の次工程は上記を優先する。
+
 2026-10-02 最新：実装35032159133aa4d3866863b555bd23a3718f07be/pi01。[架空producer入力境界](anomaly-v03-producer-input-fixture.md)の新module/test2本を追加し、旧76code/18data不変、現在78code。23試験と全予定枠の架空保存例を確認した。純粋関数のsupplied bytes照合であり、producerの実process/source/runtime認証や受入済み役割profileを追加したとはしない。旧fp02の公開/reader観測は保全。次は架空producerのslice/sidecar用要約を同じ登録・入力pin・最新attemptへ結合する。主集計と補助集計の対応を検査し、既存720評価や保存済み解析・公開を再実行しない。
 
 以下の日付付き追記は、その時点の履歴。現在の次工程は上記を優先する。
