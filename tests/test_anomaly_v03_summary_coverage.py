@@ -7,6 +7,7 @@ import copy
 from contextlib import ExitStack
 from functools import lru_cache
 import hashlib
+import json
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -123,6 +124,18 @@ class SummaryCoverageTests(unittest.TestCase):
         self.assertEqual(out['unverified_summary_evaluations'],720)
         self.assertEqual(out['bound_summary_evaluations'],0)
         self.assertEqual(out['status'],'partial_summary_binding')
+
+    def test_json_object_member_order_is_not_semantic(self):
+        def reverse(value):
+            if type(value) is dict:return {k:reverse(value[k]) for k in reversed(value)}
+            if type(value) is list:return [reverse(x) for x in value]
+            return value
+        raw=encoded(self.meta);report=json.dumps(reverse(self.report)).encode('utf-8')
+        out=binding.bind_summary_coverage(raw,{119:report},expected_mode='fixture',expected_metadata_pin=pin(raw),
+            expected_summary_pins={119:pin(report)},expected_savepoint_pin=SAVEPOINT,expected_evidence_pin=EVIDENCE)
+        self.assertEqual(out['bound_summary_coverage']['success'],5)
+        self.assertEqual(out['bound_summary_coverage']['inconclusive'],1)
+        self.assertEqual(out['unverified_summary_evaluations'],714)
 
     def test_formal_unknown_rejected_before_hash_or_decode(self):
         with patch.object(binding,'_load',side_effect=AssertionError('decode')):

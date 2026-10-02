@@ -31,6 +31,13 @@ def _load(raw,pin,maximum):
     return v.strict_json(raw)
 
 
+def _ordered_counts(value,shape):
+    # JSON object member order carries no meaning. After exact shape checks,
+    # restore schema order for the existing ordered-table consistency checker.
+    if type(shape) is dict:return {k:_ordered_counts(value[k],s) for k,s in shape.items()}
+    return copy.deepcopy(value)
+
+
 def _metadata(value):
     _fields(value,{'format':metadata.FORMAT,'mode':metadata.MODE,'validation_status':'checkpoint_metadata_adapted',
         'journal_declares_coverage_complete':True,'declared_complete_chunks':120,
@@ -141,7 +148,9 @@ def _bind_report(report,chunk,mode,savepoint_pin,evidence_pin):
         metadata.consumer._keys(primary,'counts effective_clean_seconds delay_histogram profile_status','primary summary fields')
         for key in ('counts','effective_clean_seconds'):same(primary[key],derived[key],'primary/audit '+key)
         same(primary['profile_status'],slot['profile_status'],'profile declaration binding')
-        summary.compact.connection._raw_shape(raw,summary.slices.empty_counts())
+        shape=summary.slices.empty_counts()
+        summary.compact.connection._raw_shape(raw,shape)
+        raw=_ordered_counts(raw,shape)
         same(raw['evaluations'],1,'one evaluation slice');summary.compact._check(raw,primary)
         summary.reader.ledger._numeric_equal(checked['ledger_audit']['metrics']['delay_summary'],summary.slices.delay_summary(raw['delay_histogram']))
         zero=[n for n,pair in derived['counts'].items() if pair[1]==0]
