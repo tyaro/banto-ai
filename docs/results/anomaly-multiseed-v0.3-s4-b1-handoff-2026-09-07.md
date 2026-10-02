@@ -4283,3 +4283,11 @@ source-anchor.jsonとbound-publication-binding.jsonに前保存点、producer結
 監視54sample、親peak61.01MiB、子49.89/49.49MiB、directory観測最大2.84MiB/39entries、commit最小余裕26.27GiB、上限据置き/pass。両役割source13/Python2/入力12＋invocation、補助依存233file/179module/47native/30project、追加0。OS25H2/26200/9457、旧formal9168・前工程の別Bantoリリース申告と資源停止記録を保持、原因未断定。実計算/main/closed/dirty guard/全候補保全、banto-24 PAUSED、principal/保護root/UAC/ACL/同時書換え保留、push/mergeなし。
 
 次は実producerの保存形式と現在の架空入力契約の差分を具体化し、観測・score・ledgerから主/補助要約へ渡す読取り境界を実装する。小さい固定入力で既存の独立監査部品を接続し、登録・coverage・最新attempt・入力pinの食い違いを拒否する。今回の公開/readerや既存720評価を反復せず、正式契約の採択・holdout・50,000反復はまだ開かない。
+
+## 195. 保存形式から主・条件別要約への接続（2026-10-02）
+
+[結果](anomaly-multiseed-v0.3-saved-chunk-summary-2026-10-02.md)。実装c8e3bd1cbc9a672096f4f4dac57bc09d0d64ef1e/sr01、起点d963448、OUT saved-chunk-summary-2026-10-02/tests-1。既存readerへinclude_summaries=Falseを追加し、true時のみ各評価の独立検算直後に主/補助要約を返す。評価二度読みなし、event-ledger bytes対応を追加。新12＋既存13の25pass/5.061秒、旧81code/18data不変、reader1本変更、新2本で84code。
+
+6slot I/Oは数値代替で結合を検証。別の定数手式1評価は18,000観測/14,400score/48profileの実構成→別数値検算→ledger検算→要約が5.644秒で成功。全profile判定不能・precision0/0・有効時間0を保持。要約44,370bytes/SHAee6c2d0ed1e896962ece62d61ac8a1013c5868a1dac11bf383c19c2a98c55a53。6評価すべてを実数値で通した確認ではない。実720読取り/再実行0、正式登録評価0、公開/所有worker0。
+
+試験peak75.22MiB/例107.60MiB、例dir22.44MiB、commit余裕最小26.23GiB、資源pass/上限据置き。実計算/main/closed/dirty guard/全旧候補、banto-24 PAUSED、OS9457/旧formal9168保全。正式null4欄/ready=falseと正式許可類falseを保持、push/mergeなし。次は今回の1区間分の小さい要約を、呼出し側が保持する登録・attempt・入力pin・全予定枠へ結ぶ。dev/smokeの識別子を40seedの正式集団や架空登録へ付け替えず、欠落・重複・異なる試行の混入を拒否する。固定データで接続を進め、既存720評価や公開/readerを反復しない。

@@ -1,26 +1,30 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-10-02 JST。**producer結合済みの架空入力から解析・独立主表/slice検算・通常保存・別readerまで接続済み。次は実producer保存形式から主/補助要約への読取り境界。**
+更新: 2026-10-02 JST。**保存形式の1区間readerから、独立検算済み主・条件別要約への接続を追加。次は小さい要約と登録/attempt/全予定枠の結合。**
 
-- [今回の結果](results/anomaly-multiseed-v0.3-bound-fixture-publication-2026-10-02.md)、[既存公開API](anomaly-v03-fixture-publication.md)、長い引継書§194。
-- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。本体変更0、実装9705b7355cdabca189a60bd63a380fc3062b8ec0/bp03を再利用。
-- OUT artifacts/bound-fixture-publication-2026-10-02、成功attempt-1/publication。文書revisionと不変82code/18data・成果物pinはsavepoint-evidence.json。
+- [今回の結果](results/anomaly-multiseed-v0.3-saved-chunk-summary-2026-10-02.md)、[API](anomaly-v03-saved-chunk-summary.md)、長い引継書§195。
+- 編集先70b0、branch codex/s4-b1-windows-engineering。実装c8e3bd1cbc9a672096f4f4dac57bc09d0d64ef1e、clean候補sr01/banto-ai。
+- OUT artifacts/saved-chunk-summary-2026-10-02、tests-1。文書revision/84code/18dataと成果物pinはsavepoint-evidence.json。
 
-## 今回の成果
+## 今回の成果と範囲
 
-前工程tests-3/owned-example/pipelineの新5payloadを既存所有writer→終了確認→別readerへ1回渡し、10.801秒で成功。元1,987,587bytes→公開1,987,592bytesは各末尾LFのみ。writer PID26636/reader13032、両子exit0/reaped/error0。analysis/audit再実行0、新評価0、既存720評価再実行0。旧公開16試験を該当code不変で再利用し、suite反復0。
+既存anomaly_v03_observation_audit.pyにinclude_summaries=Falseを追加し、既定の出力/CLIは維持。新read_chunk_summariesはfixture/engineeringのみ、formalはIO前に拒否。外部保存点・登録plan・最新attempt・終了宣言・6slot・入力pinを既存readerで確認し、各評価を一度だけ読み独立score/ledger検算→主/補助要約へ渡す。full event-ledgerと評価内eventsのcanonical LF bytes一致も追加した。大きい評価を保持せず小さい要約だけを蓄積する。
 
-source-anchor.jsonとbound-publication-binding.jsonに、前保存点→producer結合結果/登録/主補助manifest→projection4入力→analysis/audit→今回の保存binding/marker/writer/readerを結ぶpinを保持。元失敗1件、判定不能1枠、precision0/0も保持。旧科学payload内のpublished=false等を上書きせず今回の保存実績を外側へ記録した。
+新12＋既存reader13＝25pass、5.061秒、failure/error/skip0。6slot読取りの試験では数値処理を代替し呼出し順/結合を検証。主/補助の実集計試験と、別の定数手式1評価の数値接続を区別する。後者は5.644秒、18,000観測/14,400score/48profile、全判定不能・precision0/0・有効時間0を保持。score構成/独立数値検算/ledger検算/要約各1回、6評価全ての実数値通過とは扱わない。
 
-資源54sample、親peak61.01MiB、directory観測最大2.84MiB/39entries、commit最小余裕26.27GiBでpass。上限据置き。selected source13/Python2/入力12＋invocation、補助依存は両役割233file/179module/47native/30project、追加0。旧公開時の234file/48nativeを今回の観測値へ上書きしない。
+要約44,370bytes/SHAee6c2d0ed1e896962ece62d61ac8a1013c5868a1dac11bf383c19c2a98c55a53。試験peak75.22MiB/例107.60MiB、例directory観測最大22.44MiB、commit最小余裕26.23GiB。資源pass、上限据置き。既存82code中reader1本変更、81不変、新2本で84code。18data不変。
 
 ## 次の実装単位
 
-次は実producerの保存形式と現在の架空入力契約の差分を具体化し、観測・score・ledgerから主/補助要約へ渡す読取り境界を実装する。小さい固定入力で既存の独立監査部品を接続し、登録・coverage・最新attempt・入力pinの食い違いを拒否する。今回の公開/readerや既存720評価を反復せず、正式契約の採択・holdout・50,000反復はまだ開かない。
+次は今回の1区間分の小さい要約を、呼出し側が保持する登録・attempt・入力pin・全予定枠へ結ぶ。dev/smokeの識別子を40seedの正式集団や架空登録へ付け替えず、欠落・重複・異なる試行の混入を拒否する。固定データで接続を進め、既存720評価や公開/readerを反復しない。
 
-実データからの導出と正式契約は未受入。fixture経路の完了を全体の完了へ広げず、正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持する。最終役割profile・全工程予算も残る。
+実保存形式のdev/smoke要約を得る入口であり、正式40seedのcoverageや生成導出の受入ではない。origins/quality-mask/split/targetsはpin照合のみで生成を導出しない。過去process/終了状態は信頼した保存点に由来する。実720評価の再読込み/再実行0、公開/新worker0。正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。
 
-実計算c01d1c9/main6f1285d/closed/既存dirty文書・全候補を保全、banto-24 PAUSED。最終OS/資源はsave-checks.json、旧formal9168維持。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+実計算c01d1c9/main6f1285d/closed/既存dirty文書とbp03/全旧候補を保全、banto-24 PAUSED。OS9457記録/旧formal9168維持。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+
+## 直前の結合済み解析の公開・別reader
+
+文書d96344803a97e3dafec69f2a0eb5f15d36edfb8b、実装9705b7355cdabca189a60bd63a380fc3062b8ec0/bp03。OUT bound-fixture-publication-2026-10-02、manifest33,823bytes/SHA27634dfcccca272ec4409f9130f1a0db7e64c8531a1807b58dd7c19a8979f80b。producer/projection→解析→独立主表/slice検算→通常writer→別readerを保存証拠で接続済み。10.801秒、元5payload1,987,587bytes→公開1,987,592bytes（各末尾LFのみ）。writer26636/reader13032 exit0/reaped/error0。元解析/audit再実行0、既存公開16試験再利用、資源pass。今回の読取り境界作業でこの公開や旧解析を反復しない。
 
 ## 直前の結合入力から解析・独立検算
 

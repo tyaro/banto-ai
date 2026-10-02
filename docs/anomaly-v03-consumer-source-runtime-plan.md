@@ -1,5 +1,9 @@
 # consumerのsource/runtime固定対象と実行前の残件
 
+2026-10-02 最新：[保存済み1区間の要約接続](results/anomaly-multiseed-v0.3-saved-chunk-summary-2026-10-02.md)を実装。新12＋既存reader13の25項目pass。外部pinで確認した最新6評価を独立検算し、その場で主count/条件別countへ写す。登録identityを保持し、評価payloadの二度読みを避ける。別の手式1評価で18,000観測/14,400score/48profileの実検算→要約が成功し、全profile判定不能とprecision0/0を保持。実720評価は再読込み・再実行せず、正式入口は閉じたまま。 実装c8e3bd1cbc9a672096f4f4dac57bc09d0d64ef1e/sr01。既存reader1本更新、新module/test2本、現在84code/18data。旧bp03は保全。新しい役割profileやsource/runtime受入を認定せず、今回の検算は親process内の別実装で確認した。次は今回の1区間分の小さい要約を、呼出し側が保持する登録・attempt・入力pin・全予定枠へ結ぶ。dev/smokeの識別子を40seedの正式集団や架空登録へ付け替えず、欠落・重複・異なる試行の混入を拒否する。固定データで接続を進め、既存720評価や公開/readerを反復しない。
+
+以下は各時点の履歴。現在の到達点と次工程は上記を優先する。
+
 2026-10-02 最新：実装9705b7355cdabca189a60bd63a380fc3062b8ec0/bp03を再利用。[今回の保存・別reader接続](results/anomaly-multiseed-v0.3-bound-fixture-publication-2026-10-02.md)で、producer結合結果/projectionから生成・独立検算済みの新5payloadを既存経路へ渡し、10.801秒で成功した。元1,987,587bytes→公開1,987,592bytesは各末尾LFのみ。元analysis/audit再実行0、writer/reader各1回、両子exit0/reaped/error0、資源pass。本体コード変更0、82code/18data不変、既存16公開試験を再利用しsuite再実行0。 writer/reader各selected13/Python2/入力12＋invocation。補助依存は各233file/179module/47native/30project、終了後照合・追加0。旧観測値は保持し、正式profile/full closureの受入とはしない。次は実producerの保存形式と現在の架空入力契約の差分を具体化し、観測・score・ledgerから主/補助要約へ渡す読取り境界を実装する。小さい固定入力で既存の独立監査部品を接続し、登録・coverage・最新attempt・入力pinの食い違いを拒否する。今回の公開/readerや既存720評価を反復せず、正式契約の採択・holdout・50,000反復はまだ開かない。
 
 以下の日付付き記録は履歴。現在の到達点と次工程は上記を優先する。
