@@ -87,7 +87,7 @@ class BoundFixturePipelineTests(unittest.TestCase):
         changes=[lambda r:r.update(cluster_id='invented-39'),
             lambda r:r['candidates'][c]['core'].update(evaluations=11),
             lambda r:r['candidates'][c]['core'].update(profile_inconclusive_evaluations=1),
-            lambda r:r['candidates'][c]['core']['delay_histogram'].__setitem__(0,0)]
+            lambda r:r['candidates'][c]['core']['delay_histogram'].__setitem__(0,1)]
         for change in changes:
             case=self.fresh();change(case['slice_source']['clusters'][0])
             with self.assertRaises(ValueError):self.prepare(case)
