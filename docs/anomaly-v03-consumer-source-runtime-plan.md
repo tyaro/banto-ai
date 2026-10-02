@@ -1,5 +1,9 @@
 # consumerのsource/runtime固定対象と実行前の残件
 
+2026-10-02 最新：実装9705b7355cdabca189a60bd63a380fc3062b8ec0/bp03、旧80code/18data不変、現在82code。[結合入力の解析/audit接続](anomaly-v03-bound-fixture-pipeline.md)で親接続moduleのGit/raw前後、analysis selected22/Python2/入力4、audit selected15/Python2/入力6を確認。補助依存はanalysis245file/audit235fileの終了後照合、追加0。正式役割profile/full closureの受入とはしない。次は今回の結合入力から生成・独立検算した新しい5payloadを、既存の通常writer/別readerへ接続する。元producer結合結果とprojectionのpinを維持し、今回のanalysis/auditを再実行しない。
+
+以下の日付付き記録は履歴。現在の次工程は上記を優先する。
+
 2026-10-02 最新：実装bde59a7a98bd2ed1f5c263458a1ddf1e28211268/ps01。[補助入力adapter](anomaly-v03-producer-slice-fixture.md)の新module/test2本を追加し、旧78code/18data不変、現在80code。供給bytesの結合・純粋集計までで、実process/source/runtime認証や承認済みprofile/full closureを追加したとはしない。機能21passと資源停止記録を分け、回復後の例1回は予算内で成功。次は外部pinで結んだ主入力と補助入力を、既存の限定fixture解析/audit経路へ接続する。供給記録から文書・別検算までの対応を確認し、旧720評価や正式holdout・50,000反復は起動しない。
 
 以下の日付付き記録は各時点の履歴。現在の次工程は上記を優先する。

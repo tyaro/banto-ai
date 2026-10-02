@@ -1,28 +1,30 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-10-02 JST。**架空producerの補助内訳を主入力・登録・最新試行へ結合済み。次は結合入力を既存の限定fixture解析/auditへ接続する。**
+更新: 2026-10-02 JST。**producer結合済みの架空入力から所有analysis・独立主表/slice auditまで接続済み。次はこの新しい5payloadの通常公開/別readerへの接続。**
 
-- [今回の結果](results/anomaly-multiseed-v0.3-producer-slice-boundary-2026-10-02.md)、[API](anomaly-v03-producer-slice-fixture.md)、長い引継書§192。
-- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装bde59a7a98bd2ed1f5c263458a1ddf1e28211268、clean候補ps01/banto-ai。
-- OUT artifacts/producer-slice-boundary-2026-10-02、tests-1/full-invented-example。文書revisionと80code/18data・成果物pinはsavepoint-evidence.json。
+- [今回の結果](results/anomaly-multiseed-v0.3-bound-fixture-pipeline-2026-10-02.md)、[API](anomaly-v03-bound-fixture-pipeline.md)、長い引継書§193。
+- 編集先C:/Users/TKent/.codex/worktrees/70b0/banto-ai、branch codex/s4-b1-windows-engineering。実装9705b7355cdabca189a60bd63a380fc3062b8ec0/bp03。初回568562f/bp01保全。
+- OUT artifacts/bound-fixture-pipeline-2026-10-02、tests-3/owned-example。文書revisionと82code/18data・成果物pinはsavepoint-evidence.json。
 
-## 今回の成果と資源停止
+## 今回の成果
 
-新21項目はfailure/error/skip0、82.665秒で全pass。ただし同じ試験実行の資源監視はpipeline_commit_headroomで失敗。システムcommit余裕の最小値5.20MiBが2GiB下限を割った。試験processのpeak privateは86.71MiBであり、他processの内訳や因果は確認していない。ユーザーから別Bantoリリース処理の同時稼働が報告された。
+最終tests-3は13項目すべてpass、10.390秒、failure/error/skip0。初回tests-1は12pass/1failure（9.254秒）。元から0のdelayセルを0へ置換していた試験を0→1へ直し、tests-2の修正1件でpassした。その後、後段失敗でも前段の完了実績を残す実装修正を加えたため、最終候補で13件と接続例を再確認した。 初回失敗・中間保存例・旧harnessを保全、各試験の資源監視はpass。
 
-元harness/資源停止記録を保全し、回復を確認して機能21passを再実行せず再利用した。純粋関数の途中を強制停止するhard quotaではなく、最後のcheckpointで停止理由を確定した。試験全体のresource_budget_passedはfalseのまま。別release処理との因果は未確認、他processの変更/停止なし。
+保存済み40架空cluster/2,880枠の主・補助結合結果を4drawへ接続。参照文書の同一実装による事前作成1回、所有analysis1回、別実装audit1回で、全体26.370秒。主9表/117絶対推定/72対応差/180gate、本文1,233行・補助2,835行・詳細9表が一致した。 両子exit0/終了確認済み/error0、analysis PID40180、audit PID1156。文書1,943,210bytes/SHAb79970a4fbf18af525de01a4a7aa677cc2e6eb6ed603dc36d6499633a2446581、新5payload1,987,587bytes。元失敗1件・判定不能1枠・precision0/0を保持。参照値との一致のみを独立検算と扱わない。
 
-保存例は別予算で67.880秒、資源pass。2,880補助payload/12,265,920bytes、主入力込み22,831,115bytes。40cluster/240集計セル、最新success2,879＋inconclusive1、旧失敗1件、ゼロセル・省略理由を保持。機能試験では旧失敗内の成功summaryも照合して最新だけを集計することを確認。
-
-親peak private99.51MiB、監視directory最大25.42MiB、commit最小余裕27.19GiB。上限120秒/512MiB/32MiB等は据置き。登録/attempt/input/summary pinと内訳を結び、joint/marginalや主countとの対応を検査。これ自体はraw観測の導出や実process認証ではない。
+共有監視92sample、親peak private127.18MiB、directory最大10.99MiB、commit最小余裕26.70GiB、資源pass。120秒/512MiB/32MiB等は据置き。主入力・補助入力を新4fileへ写しただけで、上流の記録を再集計していない。旧80code/18data不変、新2本で82code。
 
 ## 次の実装単位
 
-次は外部pinで結んだ主入力と補助入力を、既存の限定fixture解析/audit経路へ接続する。供給記録から文書・別検算までの対応を確認し、旧720評価や正式holdout・50,000反復は起動しない。 新たなrelease処理が同時稼働する場合も上限を維持し、資源余裕を開始時に確認する。
+次は今回の結合入力から生成・独立検算した新しい5payloadを、既存の通常writer/別readerへ接続する。元producer結合結果とprojectionのpinを維持し、今回のanalysis/auditを再実行しない。 公開へ進む際は本保存点のpipeline/projection/result/evidenceと新5payloadを起点にする。旧fixture-publicationの別入力で作った公開物を今回の成果物と混同しない。
 
-主入力v1と旧78code/18dataは不変、新module/test2本で計80code。実観測読込み・新評価・既存720評価の再実行・数値推論・owned worker起動は0。登録観測からの導出、実producer/source/runtime認証、正式契約・全体予算の受入は残る。formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=false、正式null4欄/ready=falseを維持。 元主入力は3fileのpinから再利用し、補助記録はJSONL容器へ保存した。正式化や全体完了にはしない。
+既存720評価の再実行・新評価・登録観測読込み・正式50,000反復・公開processは0。正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。raw観測導出・登録seed/coverageの真正性・正式契約/役割profile/全体予算の受入は残る。 今回の架空計算/主表/slice検算はtrueとして別欄に記録。実観測導出・正式運用の完了とはしない。
 
-実計算c01d1c9/main6f1285d/closed/既存dirty文書・旧候補は不変、banto-24 PAUSED。最終OS/資源はsave-checks.json、旧正式OS pin9168は維持。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+実計算c01d1c9/main6f1285d/closed/既存dirty文書・全候補を保全、banto-24 PAUSED。最終OS/資源はsave-checks.json、旧formal9168維持。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+
+## 直前の補助入力結合保存点
+
+文書627ddc5f89980335ea20f1bc8cf912e383f0276f、実装bde59a7a98bd2ed1f5c263458a1ddf1e28211268/ps01。OUT artifacts/producer-slice-boundary-2026-10-02、manifest24,824bytes/SHA9291c79fce30cde30132e8f1d5b2fc733eccaa1efab2afafd8bffaaa82553389。21機能pass、試験中はcommit余裕5.20MiBの資源停止を記録。ユーザー申告で別Bantoリリース同時稼働、因果未確認。回復後の例67.880秒は資源pass。2,880補助payload/12,265,920bytes、全入力22,831,115bytes、40cluster/240セル。旧失敗/判定不能/省略を保持した。元記録を今回も保全。
 
 ## 直前の主入力結合保存点
 

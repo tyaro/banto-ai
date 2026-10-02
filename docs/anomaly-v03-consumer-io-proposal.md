@@ -1,5 +1,9 @@
 # 単一writer方針での解析consumer入出力契約案
 
+2026-10-02 最新：[結合入力から解析・独立検算への接続](anomaly-v03-bound-fixture-pipeline.md)を追加。保存点の外部pinから4入力とprojectionへ写し、所有analysisと別の主表/slice auditが成功した。架空40cluster/4draw、元評価再実行0、正式契約draftを維持。最終13項目すべてpass。初回の試験データ修正と後段失敗時の実績保存も記録。次は今回の結合入力から生成・独立検算した新しい5payloadを、既存の通常writer/別readerへ接続する。元producer結合結果とprojectionのpinを維持し、今回のanalysis/auditを再実行しない。
+
+以下の日付付き記録は履歴。現在の次工程は上記を優先する。
+
 2026-10-02 最新：[補助入力の結合](anomaly-v03-producer-slice-fixture.md)を追加。各評価の内訳を主manifest/登録/attempt receipt/input/summary pinへ結び、最新だけを240集計セルへ合算した。新21機能試験pass、試験中のcommit余裕停止は失敗として保全し、回復後の保存例は資源pass。別Bantoリリースの同時稼働申告を記録。実観測導出や実producer認証の受入ではなく契約draftを維持する。次は外部pinで結んだ主入力と補助入力を、既存の限定fixture解析/audit経路へ接続する。供給記録から文書・別検算までの対応を確認し、旧720評価や正式holdout・50,000反復は起動しない。
 
 以下の日付付き記録は各時点の履歴。現在の次工程は上記を優先する。

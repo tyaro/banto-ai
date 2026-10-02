@@ -391,3 +391,9 @@ sampling/協調停止でありhard quotaではなく、正式2,880評価/50,000�
 新21機能試験pass。ただし試験中のシステムcommit余裕低下で資源監視は失敗し、別Bantoリリース同時稼働の申告とともに保全した。回復後の保存例1回は67.880秒で資源pass。コード・上限を変更せず、通過した試験は反復しない。主入力v1と旧78code/18dataは不変、新module/test2本で計80code。実観測読込み・新評価・既存720評価の再実行・数値推論・owned worker起動は0。登録観測からの導出、実producer/source/runtime認証、正式契約・全体予算の受入は残る。formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=false、正式null4欄/ready=falseを維持。
 
 次は外部pinで結んだ主入力と補助入力を、既存の限定fixture解析/audit経路へ接続する。供給記録から文書・別検算までの対応を確認し、旧720評価や正式holdout・50,000反復は起動しない。 Phase2/3全体は未完了。
+
+### 2026-10-02：producer結合入力から所有解析と独立検算
+
+[新しい接続](anomaly-v03-bound-fixture-pipeline.md)で、保存済み架空主/補助結合結果の外部pinを4入力とprojectionへ写し、所有analysisと独立主表/slice auditが成功した。40cluster/4draw、全体26.370秒。主9表/180gate、本文1,233行/補助2,835行/詳細9表一致。参照文書は起動前に同じ実装で1回構成し、独立性は別auditで確認した。[結果](results/anomaly-multiseed-v0.3-bound-fixture-pipeline-2026-10-02.md)。
+
+最終13項目pass。試験データと後段失敗時の実績保存を修正し、旧80code/18data不変、新2本追加。共有資源上限据置き/pass。既存720評価の再実行・新評価・登録観測読込み・正式50,000反復・公開processは0。正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。raw観測導出・登録seed/coverageの真正性・正式契約/役割profile/全体予算の受入は残る。 次は今回の結合入力から生成・独立検算した新しい5payloadを、既存の通常writer/別readerへ接続する。元producer結合結果とprojectionのpinを維持し、今回のanalysis/auditを再実行しない。 Phase2/3全体は未完了。

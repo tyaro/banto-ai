@@ -4259,3 +4259,17 @@ pure14＋owned14＋budget16の44項目。tests-1は43pass/1error・74.090秒、�
 主入力v1と旧78code/18dataは不変、新module/test2本で計80code。実観測読込み・新評価・既存720評価の再実行・数値推論・owned worker起動は0。登録観測からの導出、実producer/source/runtime認証、正式契約・全体予算の受入は残る。formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=false、正式null4欄/ready=falseを維持。 次は外部pinで結んだ主入力と補助入力を、既存の限定fixture解析/audit経路へ接続する。供給記録から文書・別検算までの対応を確認し、旧720評価や正式holdout・50,000反復は起動しない。
 
 前保存点23,536bytes/SHAb7982e3d93125099e8668c1dd1a09f18f6994b546321ca6cb8cb43af11ecb12c。旧候補/成果物、実計算c01d1c9/main6f1285d/closed/既存dirty文書不変、banto-24 PAUSED。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+
+## 193. 2026-10-02 producer結合入力を所有解析・独立主表/slice auditへ接続
+
+[結果](anomaly-multiseed-v0.3-bound-fixture-pipeline-2026-10-02.md)、[API](../anomaly-v03-bound-fixture-pipeline.md)。開始627ddc5f89980335ea20f1bc8cf912e383f0276f、初回568562f/bp01、最終9705b7355cdabca189a60bd63a380fc3062b8ec0/bp03。OUT artifacts/bound-fixture-pipeline-2026-10-02、tests-3/owned-example。新module/test2本、旧80code/18data不変、現在82code。文書revision/pinはsavepoint-evidence.json。
+
+最終tests-3は13項目すべてpass、10.390秒、failure/error/skip0。初回tests-1は12pass/1failure（9.254秒）。元から0のdelayセルを0へ置換していた試験を0→1へ直し、tests-2の修正1件でpassした。その後、後段失敗でも前段の完了実績を残す実装修正を加えたため、最終候補で13件と接続例を再確認した。 初回/harness/candidateを保全。保存済み40架空cluster/2,880枠の主・補助結合結果を4drawへ接続。参照文書の同一実装による事前作成1回、所有analysis1回、別実装audit1回で、全体26.370秒。主9表/117絶対推定/72対応差/180gate、本文1,233行・補助2,835行・詳細9表が一致した。
+
+外部bound-slices pinから主manifest/登録/slice manifestと4worker入力pinへprojectionを作り、両役割の実行記録に結合。analysis PID40180・audit PID1156、両子exit0/終了確認済み/error0。source22/Python2/入力4とsource15/Python2/入力6、依存245/235fileの終了後照合、追加0。既知期待値の事前構成は同じ計算実装であり、それ単独を独立検算と呼ばない。
+
+新文書1,943,210bytes/SHAb79970a4fbf18af525de01a4a7aa677cc2e6eb6ed603dc36d6499633a2446581、5payload1,987,587bytes。元の失敗1件・判定不能1枠・precision0/0保持。共有監視92sample、親peak127.18MiB、directory10.99MiB/56entries、commit最小26.70GiB、上限据置き/pass。前工程の別release同時稼働/資源停止記録は上書きしない。
+
+既存720評価の再実行・新評価・登録観測読込み・正式50,000反復・公開processは0。正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。raw観測導出・登録seed/coverageの真正性・正式契約/役割profile/全体予算の受入は残る。 架空推論/主表/slice検算フラグはtrue。次は今回の結合入力から生成・独立検算した新しい5payloadを、既存の通常writer/別readerへ接続する。元producer結合結果とprojectionのpinを維持し、今回のanalysis/auditを再実行しない。
+
+前savepoint24,824bytes/SHA9291c79fce30cde30132e8f1d5b2fc733eccaa1efab2afafd8bffaaa82553389。実計算c01d1c9/main6f1285d/closed/dirty文書・旧候補不変、banto-24 PAUSED。最終OS/資源はsave-checks.json、旧formal9168維持。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
