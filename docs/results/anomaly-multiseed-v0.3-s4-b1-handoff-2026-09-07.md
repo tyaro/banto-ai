@@ -4291,3 +4291,19 @@ source-anchor.jsonとbound-publication-binding.jsonに前保存点、producer結
 6slot I/Oは数値代替で結合を検証。別の定数手式1評価は18,000観測/14,400score/48profileの実構成→別数値検算→ledger検算→要約が5.644秒で成功。全profile判定不能・precision0/0・有効時間0を保持。要約44,370bytes/SHAee6c2d0ed1e896962ece62d61ac8a1013c5868a1dac11bf383c19c2a98c55a53。6評価すべてを実数値で通した確認ではない。実720読取り/再実行0、正式登録評価0、公開/所有worker0。
 
 試験peak75.22MiB/例107.60MiB、例dir22.44MiB、commit余裕最小26.23GiB、資源pass/上限据置き。実計算/main/closed/dirty guard/全旧候補、banto-24 PAUSED、OS9457/旧formal9168保全。正式null4欄/ready=falseと正式許可類falseを保持、push/mergeなし。次は今回の1区間分の小さい要約を、呼出し側が保持する登録・attempt・入力pin・全予定枠へ結ぶ。dev/smokeの識別子を40seedの正式集団や架空登録へ付け替えず、欠落・重複・異なる試行の混入を拒否する。固定データで接続を進め、既存720評価や公開/readerを反復しない。
+
+## 196. 保存済み要約と全予定枠の結合（2026-10-02）
+
+[結果](anomaly-multiseed-v0.3-summary-coverage-2026-10-02.md)、[API](../anomaly-v03-summary-coverage.md)。起点8faf7a8、最終3e596bb0c8eafbc94c09f65ef114e54d6098ecf8/sc02、OUT summary-coverage-2026-10-02/tests-2/invented-full-coverage。旧84code/18data不変、新module/test2本で86code。文書revision/全pinはsavepoint-evidence.json。
+
+保存済み要約を登録・最新attempt・評価/入力hash・全120区間へ結ぶ純粋関数を追加した。新16項目pass（30.515秒）。供給が1区間なら119区間/714評価を未確認として残し、全件宣言から補わない。120区間/720枠の架空要約例は13.504秒で結合成功。719 success/1 inconclusive、旧失敗1件、precision分母ゼロ720件を保持した。
+
+初回tests-1は15項目中12pass/3error。JSON保存後のオブジェクト項目順に既存slice比較が依存していた。厳密なshape検査後にschema順へ並べ直す修正と、逆順JSONの回帰試験を追加した。元候補sc01/3be67c9と失敗記録・旧harnessを保全し、修正後sc02で16項目を再確認した。
+
+今回の全件例は1つの手計算テンプレートのcountを複写したメタデータ結合試験で、720種類のlayoutを数値検算した結果ではない。summary内の過去監査を外部pinで固定して照合するだけで、生の観測→score/ledgerの再検算や現在のpayload認証は行わない。実720評価の再読込み/再実行0、新評価0、所有worker/公開process0。
+
+全入力18,897,079bytes、結合出力107,125bytes/SHA7ed4094d91eba6377c4fdd1fb105e55f8629a7eedef9ebe221c2c794e59ac761。試験peak 64.59MiB、例peak 80.53MiB、例directory観測最大18.14MiB、commit最小余裕26.20GiB。監視は試験93/例55sample、errorなし、終了確認済み、資源pass。120秒/512MiB/32MiB等の上限据置き。 D空きは開始366.76GiB→例終了350.75GiB、約16.01GiB減を観測。今回の保存例はC上の18.14MiBで、D減少の内訳や別処理との因果は未調査。容量不足には達していない。
+
+実計算c01d1c9/main6f1285d/closed/既存dirty文書とsr01/旧候補を保全、banto-24 PAUSED。OS25H2/26200/9457を記録、旧formal9168不変。前工程の別Bantoリリース申告と資源停止記録を保持し、因果は断定しない。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+
+正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。正式40seed・生成導出・契約/役割profile/全工程予算は未受入。Phase2/3全体は未完了。 次は結合済みのdev/smoke主count・条件別countを、role/seed/candidate/stratum別の記述集計へ接続する。登録IDを正式40seedや架空40clusterへ変換せず、欠落した要約から全体集計を返さない。固定入力で進め、既存720評価のpayloadは読み直さない。

@@ -1,5 +1,9 @@
 # consumerのsource/runtime固定対象と実行前の残件
 
+2026-10-02 最新：[保存済み要約と全予定枠の結合](results/anomaly-multiseed-v0.3-summary-coverage-2026-10-02.md)。保存済み要約を登録・最新attempt・評価/入力hash・全120区間へ結ぶ純粋関数を追加した。新16項目pass（30.515秒）。供給が1区間なら119区間/714評価を未確認として残し、全件宣言から補わない。120区間/720枠の架空要約例は13.504秒で結合成功。719 success/1 inconclusive、旧失敗1件、precision分母ゼロ720件を保持した。 今回の全件例は1つの手計算テンプレートのcountを複写したメタデータ結合試験で、720種類のlayoutを数値検算した結果ではない。summary内の過去監査を外部pinで固定して照合するだけで、生の観測→score/ledgerの再検算や現在のpayload認証は行わない。実720評価の再読込み/再実行0、新評価0、所有worker/公開process0。 次は結合済みのdev/smoke主count・条件別countを、role/seed/candidate/stratum別の記述集計へ接続する。登録IDを正式40seedや架空40clusterへ変換せず、欠落した要約から全体集計を返さない。固定入力で進め、既存720評価のpayloadは読み直さない。 最終実装3e596bb0c8eafbc94c09f65ef114e54d6098ecf8/sc02、旧84code/18data不変、新2本で86code。正式役割profile/full closureの受入を追加しない。
+
+以下は各時点の履歴。現在の到達点と次工程は上記を優先する。
+
 2026-10-02 最新：[保存済み1区間の要約接続](results/anomaly-multiseed-v0.3-saved-chunk-summary-2026-10-02.md)を実装。新12＋既存reader13の25項目pass。外部pinで確認した最新6評価を独立検算し、その場で主count/条件別countへ写す。登録identityを保持し、評価payloadの二度読みを避ける。別の手式1評価で18,000観測/14,400score/48profileの実検算→要約が成功し、全profile判定不能とprecision0/0を保持。実720評価は再読込み・再実行せず、正式入口は閉じたまま。 実装c8e3bd1cbc9a672096f4f4dac57bc09d0d64ef1e/sr01。既存reader1本更新、新module/test2本、現在84code/18data。旧bp03は保全。新しい役割profileやsource/runtime受入を認定せず、今回の検算は親process内の別実装で確認した。次は今回の1区間分の小さい要約を、呼出し側が保持する登録・attempt・入力pin・全予定枠へ結ぶ。dev/smokeの識別子を40seedの正式集団や架空登録へ付け替えず、欠落・重複・異なる試行の混入を拒否する。固定データで接続を進め、既存720評価や公開/readerを反復しない。
 
 以下は各時点の履歴。現在の到達点と次工程は上記を優先する。

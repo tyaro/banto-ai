@@ -1,5 +1,27 @@
 # 次のタスク用の短い引継ぎ
 
+更新: 2026-10-02 JST。**保存済み要約と全予定枠の結合を追加。次は結合済みcountからdev/smoke記述集計への接続。**
+
+- [今回の結果](results/anomaly-multiseed-v0.3-summary-coverage-2026-10-02.md)、[API](anomaly-v03-summary-coverage.md)、長い引継書§196。
+- 編集先70b0、branch codex/s4-b1-windows-engineering。最終実装3e596bb0c8eafbc94c09f65ef114e54d6098ecf8、clean候補sc02/banto-ai。
+- OUT artifacts/summary-coverage-2026-10-02、tests-2/invented-full-coverage。文書revision/86code/18dataと全成果物pinはsavepoint-evidence.json。
+
+保存済み要約を登録・最新attempt・評価/入力hash・全120区間へ結ぶ純粋関数を追加した。新16項目pass（30.515秒）。供給が1区間なら119区間/714評価を未確認として残し、全件宣言から補わない。120区間/720枠の架空要約例は13.504秒で結合成功。719 success/1 inconclusive、旧失敗1件、precision分母ゼロ720件を保持した。
+
+初回tests-1は15項目中12pass/3error。JSON保存後のオブジェクト項目順に既存slice比較が依存していた。厳密なshape検査後にschema順へ並べ直す修正と、逆順JSONの回帰試験を追加した。元候補sc01/3be67c9と失敗記録・旧harnessを保全し、修正後sc02で16項目を再確認した。
+
+今回の全件例は1つの手計算テンプレートのcountを複写したメタデータ結合試験で、720種類のlayoutを数値検算した結果ではない。summary内の過去監査を外部pinで固定して照合するだけで、生の観測→score/ledgerの再検算や現在のpayload認証は行わない。実720評価の再読込み/再実行0、新評価0、所有worker/公開process0。
+
+試験peak 64.59MiB、例peak 80.53MiB、例directory観測最大18.14MiB、commit最小余裕26.20GiB。監視は試験93/例55sample、errorなし、終了確認済み、資源pass。120秒/512MiB/32MiB等の上限据置き。 D空きは開始366.76GiB→例終了350.75GiB、約16.01GiB減を観測。今回の保存例はC上の18.14MiBで、D減少の内訳や別処理との因果は未調査。容量不足には達していない。
+
+次は結合済みのdev/smoke主count・条件別countを、role/seed/candidate/stratum別の記述集計へ接続する。登録IDを正式40seedや架空40clusterへ変換せず、欠落した要約から全体集計を返さない。固定入力で進め、既存720評価のpayloadは読み直さない。
+
+正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。正式40seed・生成導出・契約/役割profile/全工程予算は未受入。Phase2/3全体は未完了。
+
+実計算c01d1c9/main6f1285d/closed/既存dirty文書とsr01/旧候補を保全、banto-24 PAUSED。OS25H2/26200/9457を記録、旧formal9168不変。前工程の別Bantoリリース申告と資源停止記録を保持し、因果は断定しない。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+
+## 直前の保存形式からの要約接続（以下は履歴）
+
 更新: 2026-10-02 JST。**保存形式の1区間readerから、独立検算済み主・条件別要約への接続を追加。次は小さい要約と登録/attempt/全予定枠の結合。**
 
 - [今回の結果](results/anomaly-multiseed-v0.3-saved-chunk-summary-2026-10-02.md)、[API](anomaly-v03-saved-chunk-summary.md)、長い引継書§195。
