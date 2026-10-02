@@ -4307,3 +4307,19 @@ source-anchor.jsonとbound-publication-binding.jsonに前保存点、producer結
 実計算c01d1c9/main6f1285d/closed/既存dirty文書とsr01/旧候補を保全、banto-24 PAUSED。OS25H2/26200/9457を記録、旧formal9168不変。前工程の別Bantoリリース申告と資源停止記録を保持し、因果は断定しない。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
 
 正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。正式40seed・生成導出・契約/役割profile/全工程予算は未受入。Phase2/3全体は未完了。 次は結合済みのdev/smoke主count・条件別countを、role/seed/candidate/stratum別の記述集計へ接続する。登録IDを正式40seedや架空40clusterへ変換せず、欠落した要約から全体集計を返さない。固定入力で進め、既存720評価のpayloadは読み直さない。
+
+## 197. 結合済み要約からdev/smoke比較表への接続（2026-10-03）
+
+[結果](anomaly-multiseed-v0.3-bound-summary-tables-2026-10-03.md)、[API](../anomaly-v03-bound-summary-tables.md)。起点16af80f、実装e70d55e6ebe84a6171ccdf2c53abbaf8a85d5fee/bt01、OUT bound-summary-tables-2026-10-03/tests-1/retained-summary-tables。旧86code/18data不変、新module/test2本で88code。文書revision/全pinはsavepoint-evidence.json。
+
+全120区間の結合済み要約からdev/smoke記述集計を作る処理を追加。新12項目pass（17.589秒）。前回の結合記録＋架空要約121file/17,877,645bytesを再利用し、4.894秒で90seed別表・18role別表・12比較・10seed群へ接続した。
+
+試験の1件手計算検出とnullのpooling確認を、旧zero-alert要約をそのまま使った保存例から区別する。保存例は判定不能1評価/48profile、旧失敗1件、precision0/0を720件保持。出力9,025,425bytes/SHA4eb9780514557bddbd00b7e2a46e9d43e282cc14566ad6bafe9725a63ed00185。
+
+保存例は前回の架空メタデータ/count要約をそのまま使い、入力生成・全区間結合を再実行しない。実720評価のraw payloadは読まず、観測→score/ledger検算・新評価・bootstrap・正式gate・所有worker/公開processは0。期待pinで固定した過去の記録を信頼する境界であり、現在の元payloadや実producerの認証ではない。
+
+試験peak 94.44MiB、例peak 81.38MiB、例directory観測最大8.62MiB、commit最小余裕26.86GiB。監視は試験54/例19sample、errorなし、終了確認済み、資源pass。120秒/512MiB/32MiB等の上限据置き。 D空きは開始348.26GiB→例終了348.26GiBでほぼ横ばい。短時間の結果から長期メモリリークの不存在は推定しない。
+
+実計算c01d1c9/main6f1285d/closed/既存dirty文書とsc02/旧候補を保全、banto-24 PAUSED。OS25H2/26200/9457を記録し旧formal9168不変。前工程の別Bantoリリース申告・資源停止・D空き減少の記録も保持し、因果未断定。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+
+正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。正式40seed・生成導出・契約/役割profile/全工程予算は未受入。Phase2/3全体は未完了。 次は今回の結合済み記述集計表を、既存の報告文書・保存payload準備へ接続する。元binding/summaryへの参照と正式欄の未充足を保ち、今回の集計や既存720評価を反復しない。

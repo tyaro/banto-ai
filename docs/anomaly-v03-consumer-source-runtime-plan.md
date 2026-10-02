@@ -1,5 +1,9 @@
 # consumerのsource/runtime固定対象と実行前の残件
 
+2026-10-03 最新：[結合済み要約からdev/smoke比較表への接続](results/anomaly-multiseed-v0.3-bound-summary-tables-2026-10-03.md)。全120区間の結合済み要約からdev/smoke記述集計を作る処理を追加。新12項目pass（17.589秒）。前回の結合記録＋架空要約121file/17,877,645bytesを再利用し、4.894秒で90seed別表・18role別表・12比較・10seed群へ接続した。 保存例は前回の架空メタデータ/count要約をそのまま使い、入力生成・全区間結合を再実行しない。実720評価のraw payloadは読まず、観測→score/ledger検算・新評価・bootstrap・正式gate・所有worker/公開processは0。期待pinで固定した過去の記録を信頼する境界であり、現在の元payloadや実producerの認証ではない。 次は今回の結合済み記述集計表を、既存の報告文書・保存payload準備へ接続する。元binding/summaryへの参照と正式欄の未充足を保ち、今回の集計や既存720評価を反復しない。 実装e70d55e6ebe84a6171ccdf2c53abbaf8a85d5fee/bt01、旧86code/18data不変、新2本で88code。新しい正式役割profileやfull closureの受入ではない。
+
+以下は各時点の履歴。現在の到達点と次工程は上記を優先する。
+
 2026-10-02 最新：[保存済み要約と全予定枠の結合](results/anomaly-multiseed-v0.3-summary-coverage-2026-10-02.md)。保存済み要約を登録・最新attempt・評価/入力hash・全120区間へ結ぶ純粋関数を追加した。新16項目pass（30.515秒）。供給が1区間なら119区間/714評価を未確認として残し、全件宣言から補わない。120区間/720枠の架空要約例は13.504秒で結合成功。719 success/1 inconclusive、旧失敗1件、precision分母ゼロ720件を保持した。 今回の全件例は1つの手計算テンプレートのcountを複写したメタデータ結合試験で、720種類のlayoutを数値検算した結果ではない。summary内の過去監査を外部pinで固定して照合するだけで、生の観測→score/ledgerの再検算や現在のpayload認証は行わない。実720評価の再読込み/再実行0、新評価0、所有worker/公開process0。 次は結合済みのdev/smoke主count・条件別countを、role/seed/candidate/stratum別の記述集計へ接続する。登録IDを正式40seedや架空40clusterへ変換せず、欠落した要約から全体集計を返さない。固定入力で進め、既存720評価のpayloadは読み直さない。 最終実装3e596bb0c8eafbc94c09f65ef114e54d6098ecf8/sc02、旧84code/18data不変、新2本で86code。正式役割profile/full closureの受入を追加しない。
 
 以下は各時点の履歴。現在の到達点と次工程は上記を優先する。
