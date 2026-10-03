@@ -1,6 +1,6 @@
 # v0.3 正式評価前の役割profileと架空保存attempt検証（2026-10-04）
 
-状態: **26H2向けの未採択preformal検証**。５役のcode保存点は `09b4da2291634ee07ff1eacb74d3ca114c1d76b4`、後述の保存済みproducer→50,000 draw算術接続は `cca54e9e1083d92f4cdf85aae65fdef943929bcf`。旧25H2正式gateは `s4_acceptance_not_frozen` のまま。登録holdout観測の生成・読取り、正式評価credit、S5/S6、候補昇格は0である。
+状態: **26H2向けの未採択preformal検証**。５役の初回code保存点は `09b4da2291634ee07ff1eacb74d3ca114c1d76b4`、保存済みproducer→50,000 draw算術接続は `cca54e9e1083d92f4cdf85aae65fdef943929bcf`。後述のwriter事前再照合と所有materializerを含む再試行はclean `723eaf1d83ba2f1d42abee9dbe54d57da1d2959d`。旧25H2正式gateは `s4_acceptance_not_frozen` のまま。登録holdout観測の生成・読取り、正式評価credit、S5/S6、候補昇格は0である。
 
 ## ５役の作業前候補profile
 
@@ -18,7 +18,19 @@ trial-10の最終rootは26,702,169 B/115 entries、共有上限48 MiB/256 entrie
 
 初回の候補必須[trial-08](../../artifacts/anomaly-v03-preformal-five-role-26h2/trial-08-prework-enforced/result.json)は、親がprofile生bytesをJSON比較に渡した型誤りでanalysis起動前に停止した。producerのみexit 0/reap、後続と公開markerは未生成、失敗receiptを保全した。[修正](../../src/banto_ai/anomaly_v03_platform_four_role_fixture.py)を `09b4da2` に保存し、trial-09から新しい参照・候補を取り直した。trial-07/08の旧revision候補を新revisionの事前期待値として流用していない。
 
-候補は観測されたdisk file集合とnative file集合を２点で比較する。in-memory code、既存`.pyc`候補の実ロード、将来の動的ロード、探索経路全体を証明せず、`source_closure_complete=false`、`runtime_closure_complete=false`、`execution_authenticated=false`を維持する。writerは公開markerを確定した後に終了時profileを照合するため、その照合失敗ではmarkerが残り得る。marker単独を成功証拠にせず、writer/readerの終了と外側のverified receiptを要求する。この公開保証は正式受入前の残件である。
+候補は観測されたdisk file集合とnative file集合を２点で比較する。in-memory code、既存`.pyc`候補の実ロード、将来の動的ロード、探索経路全体を証明せず、`source_closure_complete=false`、`runtime_closure_complete=false`、`execution_authenticated=false`を維持する。`068fb44`で[ローカル公開処理](../../src/banto_ai/_anomaly_v03_io.py)に任意の事前再照合を加え、profile必須の[writer子](../../src/banto_ai/anomaly_v03_fixture_publication.py)はpayload rename前後、`.complete`確定前に選択source・入力・invocation・依存snapshot・runtimeを再照合する。子でこの照合が失敗した試験では`marker-pending.json`とpayloadを残し、`.complete`とreaderを作らず、親失敗receiptを保全した。ただし親postflightで初めて失敗すると公開markerは残り得る。marker単独を成功証拠にせず、writer/readerの終了と外側のverified receiptを要求する。この公開保証は正式受入前の残件である。
+
+### 事前再照合後の５役再試行
+
+clean `723eaf1` の同一コードから参照を取り直し、別rootの外部pinsetから候補５件を生成して候補必須で再試行した。旧trial-09/10の候補を流用していない。
+
+| 保存試行 | 独立照合済みの結果 | raw pin |
+| --- | --- | --- |
+| [trial-13 参照](../../artifacts/anomaly-v03-preformal-five-role-26h2/trial-13-precommit-reference/result.json) | ５子がexit 0/reap。事前候補なし | top 7,213 B / `85c48ed0935adfa9ac4f5c11ce02762bc783be84c2ea4cb9cd398aaed0b9fcbf`; [予算](../../artifacts/anomaly-v03-preformal-five-role-26h2/trial-13-precommit-reference/resource-budget.json) 4,901 B / `4f78225dca269009653a31d62d786c817ddcab590b3d4cbe63f618565130c245` |
+| [外部pinset](../../artifacts/anomaly-v03-preformal-profile-pinsets-26h2/trial-13-reference-pins.json)と[候補set](../../artifacts/anomaly-v03-preformal-role-profiles-26h2/trial-13-precommit-candidates/candidate-set.json) | ５役×５件の参照fileを実bytesで照合し、各役のbefore/after snapshotとruntimeを候補化 | pinset 3,237 B / `09ce4e23ef10972d4dd124bfb486e7aaef69e0d41db413108581ad95a93ed863`; set 2,153 B / `3fff388ef445641d2040e0afff6c533f2d3bc1ba50eb35f6b9abdcb7f031b3e5` |
+| [trial-14 候補必須](../../artifacts/anomaly-v03-preformal-five-role-26h2/trial-14-precommit-enforced/result.json) | ５子の別PID/開始token/invocation、exit 0/reap。候補pinと実before/after・runtime一致。公開markerと別reader readback一致 | top 7,329 B / `c7557f1dc05fb9024f6cda90b9c8eb46d67c830a343a3a4304a01df3ac08f02d`; [予算](../../artifacts/anomaly-v03-preformal-five-role-26h2/trial-14-precommit-enforced/resource-budget.json) 4,895 B / `25f6f6f02f20df6d3914c9ad79915bc14549b7a85e25cdc2098ccb4df7c8236c` |
+
+trial-14の共有監視は74.539秒/277標本pass、最大標本root 26,690,081 B/113 entries、最低commit余裕18,207,379,456 B。最終root 26,702,305 B/115 entriesは48 MiB/256 entries内。独立postcheckは２試行の選択source 93行の作業raw/Git、各役の保存証拠・候補５件・公開payloadに不一致0件。writerの事前再照合時点に専用snapshot receiptはなく、成功receiptとコード経路の照合が証拠の範囲である。１drawの架空試行であり、正式同形の全工程予算・完全閉包・登録実観測には昇格しない。
 
 ## 架空保存データを読む２つの境界
 
@@ -29,9 +41,19 @@ trial-10の最終rootは26,702,169 B/115 entries、共有上限48 MiB/256 entrie
 
 現環境で純粋profile試験35件、partial reader関連28件、登録attemptと既存score/登録契約/readerの狭い回帰33件がpassした。26H2専用Windows platform fixtureのnative８件もclean `09b4da2` でpassした。旧25H2 engineering publication単独試験は現26H2を`unsupported engineering runtime`で拒否し、これを26H2回帰の失敗や正式runtimeの変更とは扱わない。repository safetyはpass。最終clean revisionのLinux CI 3.12/3.14実行証拠とrunner image digestはまだない。
 
+### 所有子による架空登録形式の物理保存
+
+clean `723eaf1` に[所有materializer](../../src/banto_ai/anomaly_v03_preformal_owned_saved_attempt.py)を追加した。呼出者が別rootで宣言した架空22 file（saved 4＋payload 18）の生bytes/pinを起動前に固定し、所有子が専用の`run/attempts/chunks/000/attempt-0001/result/payload/`へ**コピー**する。子終了後、親が入出力の完全file在庫と22 pinを再照合し、既存の架空登録形式readerを親processから呼ぶ。子のPID/開始token/exit/reapと失敗時の記録を保全する。純粋試験９件、opt-in native１件はpassした。
+
+保持した[native結果](../../artifacts/anomaly-v03-preformal-registered-attempt-owned-01/owned-materializer/result.json)は9,953 B / SHA256 `61688e3f45325df2f251b1d47022e5764ef8a6f9a8b4d30c4946f5f059c6c069`。[外部入力pinset](../../artifacts/anomaly-v03-preformal-registered-attempt-owned-01-external-pins.json) 4,336 B / `3d91b04e51c102d70c2010faeeef03f60fad3ed755f41bfa9cfb0813fda7641a`、[外部結果pin](../../artifacts/anomaly-v03-preformal-registered-attempt-owned-01-external-result-pin.json) 318 B / `bbd6b2983aa8e555c4ea9e0bf2a389520d7728fea3d997f07cc2aaca09baad23`。独立postcheckは入力22 fileと出力22 fileの各126,317,406 B、完全在庫、全raw pin、所有子PID 31828/exit 0/reap、readerの22 file・６契約/行を不一致0で確認した。観測→profile/score→要約は**架空値について**再導出した。
+
+materializerは観測を生成しない。readerも別所有子ではない。従って`generation_verified=false`、`actual_registered_producer_executed=false`、`actual_worker_exit_authenticated=false`、`actual_registered_observations_read=false`、正式credit0である。実producer生成から別readerまでの連続した登録保存経路と、役割別source/runtime閉包は残件である。
+
 ## 保存済み合成dev/smokeとproducer countの追加確認
 
 [現行readerでの区間0再確認](../../artifacts/real-saved-chunk-000-current-reader-2026-10-04/result.json)は、過去の外部savepoint 8,366 B / SHA256 `ca976322e0bb9e7b033b94948497a41acc79900668d01edbeebfc3fea8b22c8d` を固定し、保存済み合成dev/smokeの選択入力20 file / 132,760,979 B（savepointとevidenceを加え22 file）を読んだ。結果6,608 B / SHA256 `9a02e5bb812e99c07ff6be5700cb2e565f2514a1c39a277be57bd9518aea5f5b`、新要約151,954 B / SHA256 `7c2240316a97e5b31c6a7d97e83b621b7f305efc581eb02077c2be4bd60b3977`。６評価の要約と選択入力pinは[旧pilot](anomaly-multiseed-v0.3-saved-chunk-000-pilot-2026-10-03.md)に一致し、要約全体の差分は`audit.elapsed_seconds`だけだった。現行の全120件目録guardは通ったが、元観測の再読取り・再監査は区間0だけである。所有子PID 512はexit 0/reap、12.292秒、peak private 160,751,616 B、別rootの資源監視51標本pass。新規評価0、登録holdout読取り0、正式credit0。
+
+[区間119の現行reader再確認](../../artifacts/real-saved-chunk-119-current-reader-2026-10-04/result.json)も、同じ外部savepoint/evidenceを固定して保持済みの最新`attempt-0002`の20入力/133,301,078 Bを独立再hashし、20件すべてが保存pinに一致した。過去の失敗`attempt-0001`は採用していない。新result 6,714 B / SHA256 `9add2b8bf21a9aa97c9383b5b1dc9994c8ac2d3d1147f6bb76d9a60a81093c9d`、[新要約](../../artifacts/real-saved-chunk-119-current-reader-2026-10-04/summary.json) 152,141 B / `b3d9c21419b59391cb1c7d81e668bff3ecfb0d3efd54ea35d20453d91973bc58`。旧要約152,141 B / `b739e36e2d7267fb28bead9edaa2f31d0f34ad1ed32320383c0c106eceb0bd17`との差は`audit.elapsed_seconds`１項目のみで、６評価と監査配列は一致した。所有子PID 13004はexit 0/reap、16.304秒、peak private 160,813,056 B、資源監視pass。全120件の順序・状態を示すjournal guardは通るが、他の118区間のrawを今回再監査した証拠ではない。新規評価0、正式credit0。
 
 [架空producer出力→50,000 draw接続](../../src/banto_ai/anomaly_v03_preformal_bound_draw_bridge.py)は、上記５役のtrial-10で所有producerが保存したresult 2,923 B / SHA256 `54e9690cd4c42c97c920f8efbd6f68b2fba842f75af6565c4e30738aec05fd5d`、bound 5,148,721 B、４投影fileを外部pinと再投影bytesで確認した。固定の架空40 calibrated clusterを別の主算術子と独立算術監査子へ渡し、50,000 draw hash `e375bf3feacb2f04bf5e1d40b141c1cfc5f69fa5437ea2704e323fd7523b22e5`、主９表・117推定・72対応差・180 gateを照合した。
 
@@ -57,7 +79,7 @@ trial-10の最終rootは26,702,169 B/115 entries、共有上限48 MiB/256 entrie
 | データ・時点 | 許される次の作業と完了証拠 | この段階の境界 |
 | --- | --- | --- |
 | 固定した架空入力、S4採択前 | 登録形式の物理attemptを所有producerで保存し、そのexit/reap、外部pin、最新attempt、観測→profile/score→ledger→主/sliceを別readerで照合する。40架空clusterの50,000 drawから完全な表・文書・別実装監査・公開後読戻しまでを工程別rootの共通予算で通す | 架空identityや登録seedの文字列を使っても、登録holdoutの観測値は生成・読取りしない。架空試験は性能証拠ではない |
-| 保存済み合成dev/smoke、S4採択前 | 既存120区間・720評価と旧独立監査、全件engineering報告は参照証拠として保持する。必要な境界だけ外部pin付きで再確認し、元attemptを上書きしない | 今回の現行reader再確認は区間0の６評価だけ。旧データを新revisionのnative受入や正式holdoutへ付け替えない |
+| 保存済み合成dev/smoke、S4採択前 | 既存120区間・720評価と旧独立監査、全件engineering報告は参照証拠として保持する。必要な境界だけ外部pin付きで再確認し、元attemptを上書きしない | 今回の現行reader再確認は区間0と119の各６評価だけ。他の118区間のrawを今回再監査しておらず、旧データを新revisionのnative受入や正式holdoutへ付け替えない |
 | S4の最終dev/smoke | S1登録済みdev 8 seed・smoke 2 seedの全12 layout×２層×３候補を、改訂済み契約・最終clean revision・採択したWindows tupleで新rootに実行し、全在庫、独立再監査、CI/nativeを同じ受入記録へ結ぶ。smoke全artifact実測から正式同形のproducer+analysis+audit+staging必要量を見積り、式・実測bytes・予想時間を保存し、正式開始時の対象volume空きが見積りの２倍以上と確認する | 受入に失敗したらS5を開かない。科学条件・seed数・予算を途中で緩めない |
 | S4採択後のS5/S6 | 未使用holdout 40 seedの480区間・960 dataset・2,880評価を登録順で一回実行し、次段階でread-only独立再計算、50,000 draw、全gate・選択・別readerを照合する | 途中性能で停止・修正・seed追加をしない。S5成功結果をS4開始前の前提にしない。実設備・顧客データは本計画の対象外 |
 
