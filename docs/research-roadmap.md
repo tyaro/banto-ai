@@ -433,3 +433,9 @@ sampling/協調停止でありhard quotaではなく、正式2,880評価/50,000�
 2026-10-03 最新：[準備済み報告書の保存・読取り](results/anomaly-multiseed-v0.3-bound-report-publication-2026-10-03.md)。前回の準備済み報告書4file/3,040,268bytesを、通常のローカル保存とwriter終了後の別readerへ接続した。修正後11項目pass（4.545秒）。保存例は3.722秒で終了し、4ファイルのbytes/SHA256は元と一致した。 保存例は前回の「架空データ」と明示された報告書をそのまま再利用した接続確認で、実際の検出性能を示す結果ではない。mapper・再集計・全区間結合・元評価raw読取り・新評価・bootstrap・正式gateは0。数値とschemaの対応検査は過去の記録を再利用し、今回は独立数値監査を行わない。 次は要約・報告準備・保存読取りの完了済みの各工程を、外部pinと既存成果物を受け取る単一の資源制限付き入口へ接続する。実720評価の再実行・正式gateを起動せず、保存済み工程を反復しない。
 
 正式null4欄/formal_ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。通常のローカル保存と別processの直列実行を確認した範囲であり、principal境界・ソース全依存・実producerの認証ではない。正式40seed・生成導出・契約/役割profile/全工程予算は未受入。Phase2/3全体は未完了。
+
+### 2026-10-03：保存済み工程を再利用する単一入口と続行request
+
+2026-10-03 最新：[保存済み工程から続ける単一入口](results/anomaly-multiseed-v0.3-saved-report-pipeline-2026-10-03.md)。要約・集計表・報告書・保存完了記録の四つから開始できる単一入口とCLI、工程ごとの続行requestを追加した。23項目を確認（初回22成功、試験条件を分けた1項目のみ再確認）。前回の完了記録を0.620秒で再利用し、aggregation/report/publicationの呼出しと新しい所有processはいずれも0回。 今回の保存例は前回の架空報告書4file/3,040,268bytesの保存完了記録を再利用する。実720評価のrawを読まず、新評価・mapper・再集計・bootstrap・正式gateを起動しない。過去のwriter/reader終了記録と今回の保存bytes照合を区別し、過去PIDへアクセスしない。実際の検出性能やsource/runtime全依存の真正性を保証しない。 次は既存計画と受入記録を照合して、正式評価前の残件（運用契約、実入力への適用、版と実行環境の固定、全体の資源計画）を更新し、次に必要な実データ作業の範囲を具体化する。完成した接続工程を増設・反復せず、正式gate/holdoutや実720評価の再実行は起動しない。
+
+正式null4欄/formal_ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。登録観測の導出・正式40seed・契約/役割profile・全工程予算の受入は別。Phase2/3全体は未完了。

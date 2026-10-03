@@ -4355,3 +4355,19 @@ source-anchor.jsonとbound-publication-binding.jsonに前保存点、producer結
 実計算c01d1c9/main6f1285d/closed/既存dirty文書とbr01/旧候補を保全、banto-24 PAUSED。OS25H2/26200/9457、旧formal9168不変。別Bantoリリース申告・資源停止・D空き減少の履歴は保持し因果未断定。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
 
 正式null4欄/formal_ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。通常のローカル保存と別processの直列実行を確認した範囲であり、principal境界・ソース全依存・実producerの認証ではない。正式40seed・生成導出・契約/役割profile/全工程予算は未受入。Phase2/3全体は未完了。 次は要約・報告準備・保存読取りの完了済みの各工程を、外部pinと既存成果物を受け取る単一の資源制限付き入口へ接続する。実720評価の再実行・正式gateを起動せず、保存済み工程を反復しない。
+
+## 200. 保存済み工程から続ける単一の報告実行入口（2026-10-03）
+
+[結果](anomaly-multiseed-v0.3-saved-report-pipeline-2026-10-03.md)、[API](../anomaly-v03-saved-report-pipeline.md)。起点17d6029、最終実装6d48c39cdafdb883ce63fdd991ba063169e58cb7/sp02、OUT saved-report-pipeline-2026-10-03/tests-2/reused-completed-publication。旧91code不変、publication共有budget引渡し2行変更、2本追加で94code/18data。文書revision/全pinはsavepoint-evidence.json。
+
+要約・集計表・報告書・保存完了記録の四つから開始できる単一入口とCLI、工程ごとの続行requestを追加した。23項目を確認（初回22成功、試験条件を分けた1項目のみ再確認）。前回の完了記録を0.620秒で再利用し、aggregation/report/publicationの呼出しと新しい所有processはいずれも0回。
+
+初回85b18eb/sp01は23項目中22成功、1error（40.771秒）。既存ディレクトリ拒否の試験先が同時に入力を含んでおり、FileExistsErrorより先に入力との包含拒否が働いた。試験先を別の既存directoryへ分け、原内容の保持も確認するように修正した。本体は無変更で、他22項目の成功記録を保全・再利用。修正した1項目を6d48c39/sp02で再確認しpass（26.814秒）。そのsetUp内では架空要約から保存までのfixtureを構築するが、実評価の再計算ではない。tests-1/verify.py/sp01はinitial-test-record.jsonのpinで保全、最終確認はtests-2/verify-fixed.py。
+
+今回の保存例は前回の架空報告書4file/3,040,268bytesの保存完了記録を再利用する。実720評価のrawを読まず、新評価・mapper・再集計・bootstrap・正式gateを起動しない。過去のwriter/reader終了記録と今回の保存bytes照合を区別し、過去PIDへアクセスしない。実際の検出性能やsource/runtime全依存の真正性を保証しない。
+
+試験parent peak最大83.80MiB、完了記録再利用例のparent peak 40.50MiB。例monitorは6sample、観測中の新規directory最大738bytes（requestとcheckpoint）、監視/結果receipt等を含む終了後の保存量9,269bytes。例commit最小余裕25.91GiB。通常の試験監視と保存例はerrorなし/monitor終了確認済み/資源pass。意図的な資源停止は別の試験条件として確認した。 D空きは開始348.26GiB→終了348.26GiB。全体120秒/parent512MiB/32MiB、各子30秒/512MiB等は据置き。短時間の結果から長期メモリリーク不存在は推定しない。
+
+実計算c01d1c9/main6f1285d/closed/既存dirty文書とbrp2/旧候補を保全、banto-24 PAUSED。OS25H2/26200/9457、旧formal9168不変。別Bantoリリース申告・資源停止・D空き減少の履歴は保持し因果未断定。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+
+正式null4欄/formal_ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。登録観測の導出・正式40seed・契約/役割profile・全工程予算の受入は別。Phase2/3全体は未完了。 次は既存計画と受入記録を照合して、正式評価前の残件（運用契約、実入力への適用、版と実行環境の固定、全体の資源計画）を更新し、次に必要な実データ作業の範囲を具体化する。完成した接続工程を増設・反復せず、正式gate/holdoutや実720評価の再実行は起動しない。
