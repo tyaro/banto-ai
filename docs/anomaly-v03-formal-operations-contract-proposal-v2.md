@@ -4,22 +4,28 @@
 
 同日の[架空50,000 draw算術測定](results/anomaly-multiseed-v0.3-preformal-platform-raw-budget-2026-10-04.md)は主計算と別実装監査が完走したが、登録実保存reader・完全S6・公開を含む全工程予算や5役割の全source/runtime閉包は満たさない。本案の未採択状態と下記の受入順序は変わらない。
 
+### 後続のpreformal証拠による追補（契約は未採択）
+
+[最新の受入見取り図とraw pin](results/anomaly-multiseed-v0.3-preformal-profile-and-saved-attempt-2026-10-04.md)では、clean `e794790` で外部pin付き架空22 fileを所有コピー子→別reader子で実保存・読戻しし、clean `94be9ed` で５役の候補profile必須trial-16と、その保存済みproducerから50,000 draw主算術/別監査のtrial-03を別rootで測定した。各試行の子はexit 0/reap、保存pinの独立照合は不一致0。ただしコピー子は観測を生成せず、登録実観測・正式creditは0で、５役１drawと２算術子の予算を正式同形の全工程予算へ合算しない。完全S6、全source/runtime閉包、最終revisionのLinux CIと正式dev/smokeも残る。
+
+保証Aを**契約改訂の候補**として勧める。26H2限定fixtureでは、単一writer、非上書き、`.complete`前の再照合、writer終了後の別readerと失敗記録に証拠がある。一方、親postflight失敗なら`.complete`が残り得るため、markerだけをattempt成功証拠にせず、外側のverified receipt、writer/readerのexit/reap、全payloadのfresh readを必須にする。保証Aは別主体の並行write/deleteをDACLで阻止した証拠ではない。旧§8の独立read-only tokenに対するwrite/delete拒否を維持する保証Bを選ぶなら、26H2でdirectory/root/markerを含むpublisher、独立tokenのAccessCheck、競合と失敗時を新たに受入れる。どちらも現時点では正式採択せず、旧§8/§9との差を版付き計画へ明記して独立再監査する。
+
 ## 変更理由と現在の境界
 
-2026-10-04の[実測・停止記録](results/anomaly-multiseed-v0.3-registered-summary-runtime-change-2026-10-04.md)では、registryが `EditionID=Professional`、`DisplayVersion=26H2`、`CurrentBuildNumber=26300`、`UBR=9457`、`sys.getwindowsversion()` もbuild 26300を返した。registryの `ProductName=Windows 10 Pro` は互換用のlegacy文字列で、edition判定には使わない。CPythonは3.14.0、MSC v.1944、64-bit AMD64。これはその時点の観測であり、S4のruntime受入ではない。clean revisionでのfixture writer/reader実process試験は、writer起動前に `unsupported engineering runtime` で止まった。新しい保存証拠pinを実processで検証した結果ではない。
+2026-10-04の[実測・停止記録](results/anomaly-multiseed-v0.3-registered-summary-runtime-change-2026-10-04.md)では、registryが `EditionID=Professional`、`DisplayVersion=26H2`、`CurrentBuildNumber=26300`、`UBR=9457`、`sys.getwindowsversion()` もbuild 26300を返した。registryの `ProductName=Windows 10 Pro` は互換用のlegacy文字列で、edition判定には使わない。CPythonは3.14.0、MSC v.1944、64-bit AMD64。これはその時点の観測であり、S4のruntime受入ではない。この時点のclean revisionでのfixture writer/reader実process試験は、writer起動前に `unsupported engineering runtime` で止まった。この停止試行自体は新しい保存証拠pinを実processで検証した結果ではない。
 
 | 契約 | 許すOS | 現在の26H2の扱い |
 | --- | --- | --- |
 | 凍結済み正式計画・registry・`formal_runtime()` | Windows 11 Pro 25H2 / AMD64 / local NTFS、`10.0.26200.9168` と固定CPython 3.14.0 | 不一致。旧pinは変更しない。`require_campaign_acceptance()` も常に `s4_acceptance_not_frozen` を返す |
 | 採択済みengineering `anomaly-v03-single-writer-v1` | 25H2を固定し、build/UBRのみ各attemptで実測・照合 | release不一致。`validate_runtime()` のbuild緩和を26H2許可と解釈しない |
 | 未採択の運用案v1 | 25H2/build26200内でUBR変更をexact tupleとして再受入する候補 | releaseとbuildの両方が範囲外 |
-| 本案v2 | **候補**: Windows 11 Pro 26H2 / AMD64 / local NTFS、`10.0.26300.9457`、通常GILのCPython 3.14.0 | 新しい版と対象revisionで検査・採択するまで、engineering実processも正式S5/S6も許可しない |
+| 本案v2 | **候補**: Windows 11 Pro 26H2 / AMD64 / local NTFS、`10.0.26300.9457`、通常GILのCPython 3.14.0 | 旧engineering入口は26H2を拒否する。新版platform-v2の限定fixture実processのみ別scopeで実施済み。正式S5/S6は契約採択とS4受入まで許可しない |
 
 過去の25H2/build26200/UBR9457で保存したdev/smoke結果は、その時点のsource/runtime/attemptへ結ぶ。現在のOS値で過去のruntime記録を上書きせず、過去の成功を26H2のnative受入に算入しない。
 
 ## 新版に固定する契約
 
-提案する正式運用IDは `anomaly-v03-single-writer-research-v2`、26H2のpreformal engineering検証IDは `anomaly-v03-single-writer-platform-v2` とする。前者の正式入口、後者の限定fixture入口、既存の `anomaly-v03-single-writer-v1` は別scopeとする。専用root候補はそれぞれ `artifacts/anomaly-v03-formal-research-v2`、`artifacts/anomaly-v03-engineering-platform-v2` とし、採択時に実体pathと不存在・非上書きを確認する。attempt ID、schema/wrapper、対象clean commitのfull SHAとraw source pinを版ごとに定める。旧schemaやS1 registryのOS欄を観測値で上書きしない。旧formal root、旧engineering root、過去attemptのcheckpointを再利用しない。
+提案する正式運用IDは `anomaly-v03-single-writer-research-v2`、26H2のpreformal engineering検証IDは `anomaly-v03-single-writer-platform-v2` とする。前者の正式入口、後者の限定fixture入口、既存の `anomaly-v03-single-writer-v1` は別scopeとする。専用root候補はそれぞれ `artifacts/anomaly-v03-formal-research-v2`、`artifacts/anomaly-v03-engineering-platform-v2` とする。正式rootは採択時に実体pathと不存在を確認し、既存の限定engineering rootは保存済みattemptを保全して新attemptの不存在・非上書きを確認する。attempt ID、schema/wrapper、対象clean commitのfull SHAとraw source pinを版ごとに定める。旧schemaやS1 registryのOS欄を観測値で上書きしない。旧formal root、旧engineering root、過去attemptのcheckpointを再利用しない。
 
 26H2候補のruntime tupleは、OS major/minor `10.0`、registryのedition/release/build/UBR、`sys.getwindowsversion()` のmajor/minor/build、AMD64、local NTFS、通常GILの64-bit CPython 3.14.0、compiler `MSC v.1944`、source tag `v3.14.0:ebf955d`を照合する。この日の直接再読取りでは `python.exe` raw SHA-256が `467014615a5255aca450ae88100dd2caf887da87657f00e3c2171ec44a685aec`、`python314.dll` が `f1722bd369d79fecbc85f3ed2790c30c330b9413fd74332f95b086e60dfacc2a` で旧計画の値と一致した。これは候補観測であり、全runtime閉包の合格を意味しない。両raw hash、stdlib、拡張/DLL/CRT、CPU、起動flag・検索経路は**新版の外部期待値**として独立に照合してからpinする。path名だけを同一性の代用にしない。
 
@@ -44,4 +50,4 @@
 - attempt間でUBRのみ変わっても、`9457以上` のような範囲や自動追認を設けない。新しいexact tupleと影響範囲を版付きで記録し、対象native回帰、5役割profile、必要な独立再監査を済ませてから別attemptを許す。release/build/edition/architecture/FS/Python pinの変更は本v2候補の範囲外で、さらに別版を要する。
 - S5開始後のproducer/analysis/audit間のruntime/source変更はformal campaign全体のintegrity failureとして扱う。残りのseedだけ、同じroot/seedの再試行、性能を見た条件変更、既存audit receiptの無条件再利用はしない。必要な再実行は、元証拠を保持し、別version/root/未使用seedを再登録する。
 
-本案は採択済み条件、正式受入、S4完了、実保存holdoutの読み取り、50,000 draw完走、S6監査を示す文書ではない。旧 `require_campaign_acceptance()` の無条件拒否、旧formal runtime pin、現行validatorの26H2拒否を保持する。採択判断には新版の実装・試験・独立監査を揃えた最終clean revisionを提示する。
+本案は採択済み条件、正式受入、S4完了、実保存holdoutの読み取り、50,000 drawを含む正式同形の全工程完走、S6監査を示す文書ではない。旧 `require_campaign_acceptance()` の無条件拒否、旧formal runtime pin、現行validatorの26H2拒否を保持する。採択判断には新版の実装・試験・独立監査を揃えた最終clean revisionを提示する。
