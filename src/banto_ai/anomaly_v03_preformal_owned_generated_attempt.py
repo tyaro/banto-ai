@@ -17,6 +17,7 @@ import sys
 
 from . import _anomaly_v03_contract as contract
 from . import _anomaly_v03_io as io
+from . import _anomaly_v03_engineering_runtime as resources
 from . import _anomaly_v03_runtime as paths
 from . import anomaly_v03 as v
 from . import anomaly_v03_inference_audit as arithmetic
@@ -50,6 +51,8 @@ MAX_NATIVE_PATH = 245
 SOURCE_FILES = tuple(dict.fromkeys((
     *copied.SOURCE_FILES,
     'src/banto_ai/anomaly_v03_preformal_owned_generated_attempt.py',
+    'src/banto_ai/anomaly_v03_preformal_generated_chain_budget.py',
+    'tools/preformal_owned_generated_trial.py',
     'src/banto_ai/anomaly_v03_materializer.py',
     'src/banto_ai/anomaly_v03_runner.py',
     'src/banto_ai/anomaly_v03_episodes.py',
@@ -389,12 +392,14 @@ def worker_main(argv):
 
 
 def generate_and_read(root, *, expected_pins, source_snapshots,
-                      expected_revision, chunk_index=0, recipe_id=RECIPE):
+                      expected_revision, chunk_index=0, recipe_id=RECIPE,
+                      outer_budget=None):
     """Own a recipe generator, verify every saved byte, then own a reader.
 
     ``expected_pins`` must be retained by the caller outside ``root`` before
     this function starts.  The two roles have separate engineering stop bounds;
-    this wrapper does not claim a shared formal end-to-end budget.
+    this wrapper does not claim a shared formal end-to-end budget.  An optional
+    caller-owned engineering budget probes both child supervisors.
     """
     root = _root(root)
     target = root / 'owned-generator'
@@ -420,6 +425,8 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
               'formal_permission': False, 'analysis_authorized': False,
               'promotion_allowed': False, 'independent_s6_complete': False}
     try:
+        if outer_budget is not None:
+            outer_budget.checkpoint('preflight')
         v.require(recipe_id == RECIPE, 'invented generator recipe only')
         names = _preflight(root, chunk_index, expected_pins)
         _validated_snapshots(source_snapshots, expected_revision)
@@ -458,14 +465,23 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
             launch.update(observed.creation_observation(
                 process.pid, process._handle))
 
+        if outer_budget is not None:
+            outer_budget.checkpoint('generator')
         argv = [sys.executable, '-I', '-S', '-B', '-c', BOOTSTRAP,
                 str(ROOT / 'src'), str(invocation_path),
                 invocation_pin['sha256']]
         with platform._platform_scope():
             monitor = supervisor.supervise(
                 argv, ROOT, target / 'worker', LIMITS,
-                boundary=boundary, on_started=started)
-        io._exclusive(target / 'supervision.json', v.canonical_json(monitor))
+                boundary=boundary, on_started=started,
+                **({'resource_probe': outer_budget.probe}
+                   if outer_budget is not None else {}))
+        monitor_raw = v.canonical_json(monitor)
+        io._exclusive(target / 'supervision.json', monitor_raw)
+        if outer_budget is not None:
+            outer_budget.record_role(
+                'generator', monitor['status'], copied._pin(monitor_raw),
+                monitor['worker_pid'], monitor['worker_exit_confirmed'])
         result.update(owned_fixture_generator_executed=monitor['worker_started'],
                       owned_fixture_generator_exit_confirmed=
                           monitor['worker_exit_confirmed'],
@@ -512,6 +528,8 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
 
         active_role = 'reader'
         active_target = root / 'owned-reader'
+        if outer_budget is not None:
+            outer_budget.checkpoint('reader')
         active_target.mkdir()
         reader_invocation = {
             'format': copied.READER_INVOCATION, 'root': str(root),
@@ -550,9 +568,17 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
             reader_monitor = supervisor.supervise(
                 reader_argv, ROOT, active_target / 'worker',
                 copied.READER_LIMITS, boundary=reader_boundary,
-                on_started=reader_started)
-        io._exclusive(active_target / 'supervision.json',
-                      v.canonical_json(reader_monitor))
+                on_started=reader_started,
+                **({'resource_probe': outer_budget.probe}
+                   if outer_budget is not None else {}))
+        reader_monitor_raw = v.canonical_json(reader_monitor)
+        io._exclusive(active_target / 'supervision.json', reader_monitor_raw)
+        if outer_budget is not None:
+            outer_budget.record_role(
+                'reader', reader_monitor['status'],
+                copied._pin(reader_monitor_raw),
+                reader_monitor['worker_pid'],
+                reader_monitor['worker_exit_confirmed'])
         result.update(owned_fixture_reader_executed=
                           reader_monitor['worker_started'],
                       owned_fixture_reader_exit_confirmed=
@@ -634,6 +660,8 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
         }.items():
             copied._same(read[key], expected, 'owned reader result ' + key)
         reader_boundary()
+        if outer_budget is not None:
+            outer_budget.checkpoint('postflight')
         result.update(status='verified', reason=None, reader_result=read)
     except supervisor.UnreapedWorker as error:
         report = error.report
@@ -658,6 +686,9 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
                       v.canonical_json(report))
         result.update(reason='unreaped_' + active_role + '_reconciled_failure')
         result[field + '_exit_reconciled'] = True
+    except resources.ResourceStop as error:
+        result.update(reason=error.reason, failed_stage=active_role,
+                      error_type=type(error).__name__)
     except (ValueError, OSError, KeyError, TypeError,
             subprocess.SubprocessError) as error:
         result.update(reason='generator_or_reader_rejected',

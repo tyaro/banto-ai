@@ -11,8 +11,15 @@ from banto_ai import anomaly_v03_registered_saved_summary as saved
 
 
 class OwnedGeneratedAttemptTests(unittest.TestCase):
-    def root(self, suffix='g01'):
-        return generated.ROOT / 'artifacts' / (generated.fixture.PREFIX + suffix)
+    def root(self, suffix=None):
+        if suffix is not None:
+            return generated.ROOT / 'artifacts' / (generated.fixture.PREFIX + suffix)
+        for _ in range(20):
+            root = generated.ROOT / 'artifacts' / (
+                generated.fixture.PREFIX + 'g' + secrets.token_hex(1))
+            if not root.exists():
+                return root
+        self.fail('short unused generated-attempt root unavailable')
 
     def pins(self, root):
         pins = {logical: {'bytes': 1, 'sha256': '0' * 64}

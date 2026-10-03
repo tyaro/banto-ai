@@ -23,6 +23,7 @@ import hashlib
 import json
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 
@@ -36,11 +37,15 @@ from banto_ai import anomaly_v03 as v  # noqa: E402
 from banto_ai import anomaly_v03_preformal_owned_generated_attempt as generated  # noqa: E402
 from banto_ai import anomaly_v03_preformal_owned_saved_attempt as copied  # noqa: E402
 from banto_ai import anomaly_v03_reader_evidence as observed  # noqa: E402
+from banto_ai import _anomaly_v03_engineering_runtime as resources  # noqa: E402
 
 
 FORMAT = 'anomaly-v03-preformal-owned-generated-external-pins-v1'
 MAX_MANIFEST = 256 * 1024
 MAX_RESULT = 256 * 1024
+BUDGET_RESULT_FORMAT = 'anomaly-v03-preformal-owned-generated-two-role-budget-v1'
+BUDGET_CONTROL_RESERVE = 8 * 1024**2
+BUDGET_RECEIPT_MAX = 64 * 1024
 MANIFEST_FIELDS = {
     'format', 'scope', 'root', 'revision', 'chunk_index', 'recipe_id',
     'source', 'source_snapshots', 'source_snapshot_pins', 'output_pins',
@@ -145,7 +150,7 @@ def prepare(root_text: str, manifest_text: str, chunk_index: int) -> int:
     return 0
 
 
-def run(root_text: str, manifest_text: str, digest: str) -> int:
+def _verified_run_inputs(root_text: str, manifest_text: str, digest: str):
     v.require(bool(re.fullmatch(r'[0-9a-f]{64}', digest)),
               'caller-supplied manifest SHA-256 required')
     root = generated._root(_argument_path(root_text), missing=True)
@@ -187,15 +192,18 @@ def run(root_text: str, manifest_text: str, digest: str) -> int:
               sum(pin['bytes'] for pin in pins.values()),
               'external output inventory size mismatch')
 
+    return root, manifest_path, manifest, revision, pins, snapshots
+
+
+def _claim_empty_root(root: Path) -> None:
     if root.exists():
         paths.regular_path(root, directory=True)
         v.require(not any(root.iterdir()), 'generated-attempt root must be empty')
     else:
         root.mkdir()
-    result = generated.generate_and_read(
-        root, expected_pins=pins, source_snapshots=snapshots,
-        expected_revision=revision, chunk_index=manifest['chunk_index'],
-        recipe_id=generated.RECIPE)
+
+
+def _checked_inner_result(root: Path, result: dict) -> None:
     saved_result = observed._file(root / 'owned-generator' / 'result.json',
                                   MAX_RESULT)
     v.require(copied._pin(saved_result) == result['result_pin'] and
@@ -203,7 +211,224 @@ def run(root_text: str, manifest_text: str, digest: str) -> int:
                   key: value for key, value in result.items()
                   if key not in ('result_pin', 'check_directory')},
               'owned generator result retention/readback')
+
+
+def run(root_text: str, manifest_text: str, digest: str) -> int:
+    root, _, manifest, revision, pins, snapshots = _verified_run_inputs(
+        root_text, manifest_text, digest)
+
+    _claim_empty_root(root)
+    result = generated.generate_and_read(
+        root, expected_pins=pins, source_snapshots=snapshots,
+        expected_revision=revision, chunk_index=manifest['chunk_index'],
+        recipe_id=generated.RECIPE)
+    _checked_inner_result(root, result)
     print(v.canonical_json(result).decode('utf-8'))
+    return 0 if result['status'] == 'verified' else 2
+
+
+def run_budget(root_text: str, manifest_text: str, digest: str) -> int:
+    """Measure only pinned invented generation and its separate saved reader.
+
+    The external ``prepare`` computation and all downstream inference,
+    documentation, audit, and publication are outside this two-role interval.
+    """
+    from banto_ai import anomaly_v03_preformal_generated_chain_budget as chain_budget
+
+    root, manifest_path, manifest, revision, pins, snapshots = \
+        _verified_run_inputs(root_text, manifest_text, digest)
+    _claim_empty_root(root)
+    result = {
+        'format': BUDGET_RESULT_FORMAT,
+        'scope': 'invented-generated-two-role-only',
+        'status': 'failed', 'reason': 'not_started',
+        'root': str(root), 'source_revision': revision,
+        'external_manifest': str(manifest_path),
+        'external_manifest_pin': {'bytes': manifest_path.stat().st_size,
+                                  'sha256': digest},
+        'expected_output_file_count': manifest['output_file_count'],
+        'expected_output_bytes': manifest['output_bytes'],
+        'prelaunch_pin_preparation_included': False,
+        'shared_budget_measured': False,
+        'shared_budget_passed': False,
+        'both_owned_exits_reported': False,
+        'saved_role_evidence_bound': False,
+        'inner_verified': False,
+        'invented_only': True,
+        'registered_seed_consumed': False,
+        'actual_registered_observations_read': False,
+        'campaign_evaluations_credited': 0,
+        'full_end_to_end_budget_measured': False,
+        'formal_50000_draw_budget_measured': False,
+        'formal_permission': False,
+        'analysis_authorized': False,
+        'promotion_allowed': False,
+        'independent_s6_complete': False,
+    }
+    budget = chain_budget.GeneratedChainBudget(root)
+    critical = None
+    started = False
+    work_verified = False
+    try:
+        budget.start()
+        started = True
+        budget.checkpoint('preflight')
+        planned_bytes = manifest['output_bytes'] + BUDGET_CONTROL_RESERVE
+        v.require(planned_bytes + chain_budget.RECEIPT_RESERVE_BYTES <=
+                  budget.limits['directory_bytes'],
+                  'generated output pins and control reserve exceed outer byte cap')
+        v.require(shutil.disk_usage(root).free >=
+                  budget.limits['minimum_free_disk_bytes'] + 2 * planned_bytes,
+                  'two-times invented output disk headroom required')
+        inner = generated.generate_and_read(
+            root, expected_pins=pins, source_snapshots=snapshots,
+            expected_revision=revision, chunk_index=manifest['chunk_index'],
+            recipe_id=generated.RECIPE, outer_budget=budget)
+        _checked_inner_result(root, inner)
+        result.update(inner_status=inner['status'],
+                      inner_reason=inner.get('reason'),
+                      inner_result_pin=inner['result_pin'],
+                      generator_pid=inner.get('owned_fixture_generator_pid'),
+                      generator_exit_confirmed=inner.get(
+                          'owned_fixture_generator_exit_confirmed'),
+                      generator_start_token=inner.get(
+                          'owned_fixture_generator_start_token'),
+                      reader_pid=inner.get('owned_fixture_reader_pid'),
+                      reader_exit_confirmed=inner.get(
+                          'owned_fixture_reader_exit_confirmed'),
+                      reader_start_token=inner.get(
+                          'owned_fixture_reader_start_token'))
+        if inner['status'] == 'verified':
+            v.require(type(result['generator_pid']) is int and
+                      type(result['reader_pid']) is int and
+                      result['generator_pid'] > 0 and
+                      result['reader_pid'] > 0 and
+                      result['generator_pid'] != result['reader_pid'] and
+                      type(result['generator_start_token']) is str and
+                      type(result['reader_start_token']) is str and
+                      bool(result['generator_start_token']) and
+                      bool(result['reader_start_token']) and
+                      result['generator_start_token'] !=
+                      result['reader_start_token'] and
+                      result['generator_exit_confirmed'] is True and
+                      result['reader_exit_confirmed'] is True,
+                      'distinct owned generator and reader exits required')
+        v.require(hashlib.sha256(observed._file(
+            manifest_path, MAX_MANIFEST)).hexdigest() == digest and
+                  observed._file(_sidecar(manifest_path), 128) ==
+                  (digest + '\n').encode('ascii'),
+                  'external prelaunch manifest changed during measured roles')
+        v.require(generated._source(revision) == manifest['source'],
+                  'selected generated source changed after measured roles')
+        budget.checkpoint('postflight')
+        work_verified = inner['status'] == 'verified'
+        result['inner_verified'] = work_verified
+        result['reason'] = None if work_verified else (
+            inner.get('reason') or 'owned_generated_chain_failed')
+    except resources.ResourceStop as error:
+        result.update(reason=error.reason, error_type=type(error).__name__)
+    except (ValueError, OSError, KeyError, TypeError,
+            subprocess.SubprocessError) as error:
+        result.update(reason='budgeted_generated_chain_rejected',
+                      error_type=type(error).__name__, detail=str(error))
+    except BaseException as error:
+        result.update(reason='critical_budgeted_generated_chain_failure',
+                      error_type=type(error).__name__)
+        critical = error
+    finally:
+        if started:
+            try:
+                report = budget.close()
+                raw_budget = v.canonical_json(report)
+                v.require(len(raw_budget) <= BUDGET_RECEIPT_MAX,
+                          'outer budget receipt byte bound')
+                io._exclusive(root / 'resource-budget.json', raw_budget)
+                result['resource_budget_pin'] = copied._pin(raw_budget)
+                v.require(copied._pin(observed._file(
+                    root / 'resource-budget.json', BUDGET_RECEIPT_MAX)) ==
+                    result['resource_budget_pin'],
+                    'retained outer budget receipt changed')
+                result['shared_budget_measured'] = True
+                result['shared_budget_passed'] = (
+                    report['format'] == chain_budget.FORMAT and
+                    report['scope'] ==
+                    'invented-generated-attempt-to-separate-reader-only' and
+                    report['root'] == str(root) and
+                    type(report['samples']) is int and report['samples'] > 0 and
+                    report['sampler_exit_confirmed'] is True and
+                    report['stop_reason'] is None and
+                    report['passed'] is True and
+                    report['formal_permission'] is False and
+                    report['actual_registered_observations_read'] is False and
+                    report['campaign_evaluations_credited'] == 0)
+                roles = report['caller_reported_roles']
+                result['both_owned_exits_reported'] = (
+                    report['both_owned_exits_reported'] is True and
+                    type(roles) is dict and set(roles) ==
+                    {'generator', 'reader'} and all(
+                        roles[role]['status'] == 'complete' and
+                        roles[role]['worker_exit_confirmed'] is True and
+                        roles[role]['worker_pid'] == result.get(role + '_pid')
+                        for role in ('generator', 'reader')))
+                if work_verified and result['both_owned_exits_reported']:
+                    try:
+                        for role in ('generator', 'reader'):
+                            control = root / ('owned-' + role)
+                            saved_monitor = observed._file(
+                                control / 'supervision.json', BUDGET_RECEIPT_MAX)
+                            monitor = v.strict_json(saved_monitor)
+                            saved_stdout = observed._file(
+                                control / 'worker' / 'report.json',
+                                generated.LIMITS['output_bytes'] if role ==
+                                'generator' else copied.READER_LIMITS['output_bytes'])
+                            v.require(copied._pin(saved_monitor) ==
+                                      roles[role]['result_pin'] and
+                                      monitor['status'] == 'complete' and
+                                      monitor['exit_code'] == 0 and
+                                      monitor['worker_exit_confirmed'] is True and
+                                      monitor['worker_pid'] ==
+                                      result[role + '_pid'] and
+                                      copied._pin(saved_stdout) ==
+                                      monitor['output'] ==
+                                      inner[role + '_stdout_pin'],
+                                      'retained ' + role + ' role evidence changed')
+                        result['saved_role_evidence_bound'] = True
+                    except (ValueError, OSError, KeyError, TypeError) as error:
+                        result['role_evidence_error_type'] = type(error).__name__
+                if work_verified and result['shared_budget_passed'] and \
+                        result['both_owned_exits_reported'] and \
+                        result['saved_role_evidence_bound']:
+                    result.update(status='verified', reason=None)
+                elif result['reason'] is None or result['reason'] == 'not_started':
+                    result['reason'] = report['stop_reason'] or (
+                        'owned_exits_not_both_reported' if not
+                        result['both_owned_exits_reported'] else
+                        'saved_role_evidence_changed' if not
+                        result['saved_role_evidence_bound'] else
+                        'owned_generated_chain_failed')
+            except BaseException as error:
+                result.update(status='failed', reason='outer_budget_close_or_save_failed',
+                              budget_error_type=type(error).__name__)
+                if critical is None:
+                    critical = error
+                else:
+                    critical.outer_budget_error = error
+        try:
+            raw_result = v.canonical_json(result)
+            v.require(len(raw_result) <= BUDGET_RECEIPT_MAX,
+                      'budgeted result byte bound')
+            io._exclusive(root / 'budgeted-result.json', raw_result)
+            v.require(observed._file(root / 'budgeted-result.json',
+                                     BUDGET_RECEIPT_MAX) == raw_result,
+                      'retained budgeted result changed')
+        except BaseException as error:
+            if critical is None:
+                critical = error
+            else:
+                critical.outer_result_error = error
+    if critical is not None:
+        raise critical
+    print(v.canonical_json({**result, 'result_pin': copied._pin(raw_result)}).decode('utf-8'))
     return 0 if result['status'] == 'verified' else 2
 
 
@@ -218,10 +443,17 @@ def main() -> int:
     after.add_argument('--root', required=True)
     after.add_argument('--manifest', required=True)
     after.add_argument('--manifest-sha256', required=True)
+    measured = phases.add_parser(
+        'run-budget', help='measure the pinned generator and separate reader')
+    measured.add_argument('--root', required=True)
+    measured.add_argument('--manifest', required=True)
+    measured.add_argument('--manifest-sha256', required=True)
     args = parser.parse_args()
     try:
         if args.phase == 'prepare':
             return prepare(args.root, args.manifest, args.chunk_index)
+        if args.phase == 'run-budget':
+            return run_budget(args.root, args.manifest, args.manifest_sha256)
         return run(args.root, args.manifest, args.manifest_sha256)
     except (ValueError, OSError, KeyError, TypeError,
             subprocess.SubprocessError) as error:

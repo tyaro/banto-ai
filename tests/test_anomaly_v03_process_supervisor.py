@@ -42,7 +42,9 @@ class ProcessSupervisorTests(unittest.TestCase):
         self.limits = {"wall_seconds": 60, "private_bytes": 1024**3, "output_bytes": 1024**2}
         self.enterContext(patch.object(monitor.subprocess, "CREATE_NO_WINDOW", 0x08000000, create=True))
 
-    def run_fake(self, *, process=None, stdout=b'{}\n', stderr=b'', limits=None, memory=None, probe=None, boundary=lambda: None):
+    def run_fake(self, *, process=None, stdout=b'{}\n', stderr=b'', limits=None,
+                 memory=None, probe=None, boundary=lambda: None,
+                 resource_probe=None):
         process = process or FakeProcess()
         def launch(argv, **kwargs):
             kwargs["stdout"].write(stdout)
@@ -57,7 +59,8 @@ class ProcessSupervisorTests(unittest.TestCase):
              patch.object(monitor.resources, "free_resources", return_value={}), \
              patch.object(monitor.time, "sleep"):
             result = monitor.supervise([sys.executable, "-B", "fixture-only"], self.root, self.root / "control",
-                limits or self.limits, runtime_probe=probe or (lambda: copy.deepcopy(self.runtime)), boundary=boundary)
+                limits or self.limits, runtime_probe=probe or (lambda: copy.deepcopy(self.runtime)),
+                boundary=boundary, resource_probe=resource_probe)
         return result, process
 
     def test_normal_exit_records_output_runtime_and_closes_owned_handle(self):
@@ -81,6 +84,16 @@ class ProcessSupervisorTests(unittest.TestCase):
             report, process = self.run_fake(process=FakeProcess(running=True), limits=self.limits | {"wall_seconds": 1})
         self.assertEqual(report["stop_reason"], "time_limit")
         self.assertEqual(process.kills, 1)
+
+    def test_latched_outer_resource_stop_kills_and_reaps_owned_worker(self):
+        stops = iter((None, 'generated_wall_limit'))
+        report, process = self.run_fake(
+            process=FakeProcess(running=True),
+            resource_probe=lambda: next(stops, 'generated_wall_limit'))
+        self.assertEqual(report['status'], 'failed')
+        self.assertEqual(report['stop_reason'], 'generated_wall_limit')
+        self.assertTrue(report['worker_exit_confirmed'])
+        self.assertEqual((process.kills, process.waits), (1, 1))
 
     def test_combined_logs_and_post_exit_burst_are_limited(self):
         report, _ = self.run_fake(stdout=b'1234', stderr=b'5678', limits=self.limits | {"output_bytes": 7})

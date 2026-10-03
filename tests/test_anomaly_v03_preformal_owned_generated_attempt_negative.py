@@ -16,6 +16,27 @@ from banto_ai import anomaly_v03_preformal_owned_generated_attempt as generated
 REVISION = 'a' * 40
 
 
+class FakeOuterBudget:
+    def __init__(self, *, checkpoint_stop=None, probe_stop=None):
+        self.checkpoint_stop = checkpoint_stop
+        self.probe_stop = probe_stop
+        self.phase = None
+        self.checkpoints = []
+        self.roles = []
+
+    def checkpoint(self, phase):
+        self.phase = phase
+        self.checkpoints.append(phase)
+        if phase == self.checkpoint_stop:
+            raise generated.resources.ResourceStop('pipeline_wall_limit')
+
+    def probe(self):
+        return 'pipeline_directory_limit' if self.phase == self.probe_stop else None
+
+    def record_role(self, role, status, pin, pid, exit_confirmed):
+        self.roles.append((role, status, pin, pid, exit_confirmed))
+
+
 class OwnedGeneratedAttemptNegativeTests(unittest.TestCase):
     def setUp(self):
         self.roots = []
@@ -97,16 +118,28 @@ class OwnedGeneratedAttemptNegativeTests(unittest.TestCase):
         }
 
     def run_fake(self, root, *, mutate_reader=None, corrupt_output=False,
-                 reader_exit=0):
+                 reader_exit=0, outer_budget=None):
         names, content, pins = self.content_and_pins(root)
         source = {'revision': REVISION}
         calls = []
 
-        def supervise(argv, cwd, control, limits, *, boundary, on_started):
+        def supervise(argv, cwd, control, limits, *, boundary, on_started,
+                      resource_probe=None):
             index = len(calls)
             calls.append(argv)
             boundary()
             control.mkdir()
+            if outer_budget is not None:
+                self.assertIsNotNone(resource_probe)
+                reason = resource_probe()
+                if reason is not None:
+                    return {'status': 'failed', 'exit_code': None,
+                            'worker_started': False,
+                            'worker_exit_confirmed': False,
+                            'worker_pid': None, 'output': None,
+                            'stop_reason': reason}
+            else:
+                self.assertIsNone(resource_probe)
             pid = 401 + index
             on_started(SimpleNamespace(pid=pid, _handle=pid))
             if index == 0:
@@ -184,7 +217,8 @@ class OwnedGeneratedAttemptNegativeTests(unittest.TestCase):
             result = generated.generate_and_read(
                 root, expected_pins=pins,
                 source_snapshots={REVISION: {}},
-                expected_revision=REVISION)
+                expected_revision=REVISION,
+                outer_budget=outer_budget)
         return result, calls
 
     def test_valid_mock_chain_is_a_rejection_control(self):
@@ -304,6 +338,56 @@ class OwnedGeneratedAttemptNegativeTests(unittest.TestCase):
                 self.assertEqual(generated.v.strict_json((root /
                     'owned-generator/result.json').read_bytes())['status'],
                     'failed')
+
+    def test_one_outer_budget_probes_and_records_both_owned_roles(self):
+        budget = FakeOuterBudget()
+        result, calls = self.run_fake(self.root(), outer_budget=budget)
+        self.assertEqual(result['status'], 'verified')
+        self.assertEqual(len(calls), 2)
+        self.assertEqual(budget.checkpoints,
+                         ['preflight', 'generator', 'reader', 'postflight'])
+        self.assertEqual([(role, status, confirmed)
+                          for role, status, _, _, confirmed in budget.roles],
+                         [('generator', 'complete', True),
+                          ('reader', 'complete', True)])
+
+    def test_outer_stop_before_reader_retains_generator_and_skips_reader(self):
+        budget = FakeOuterBudget(checkpoint_stop='reader')
+        root = self.root()
+        result, calls = self.run_fake(root, outer_budget=budget)
+        self.assertEqual(result['status'], 'failed')
+        self.assertEqual(result['reason'], 'pipeline_wall_limit')
+        self.assertEqual(result['failed_stage'], 'reader')
+        self.assertEqual(len(calls), 1)
+        self.assertEqual([row[0] for row in budget.roles], ['generator'])
+        self.assertTrue((root / 'owned-generator/supervision.json').exists())
+        self.assertFalse((root / 'owned-reader').exists())
+
+    def test_outer_stop_during_each_owned_role_prevents_verification(self):
+        for phase, calls_expected in (('generator', 1), ('reader', 2)):
+            with self.subTest(phase=phase):
+                budget = FakeOuterBudget(probe_stop=phase)
+                root = self.root()
+                result, calls = self.run_fake(root, outer_budget=budget)
+                self.assertEqual(result['status'], 'failed')
+                self.assertEqual(len(calls), calls_expected)
+                self.assertFalse(result['formal_permission'])
+                self.assertNotIn('reader_result', result)
+                self.assertEqual(budget.roles[-1][0], phase)
+                self.assertEqual(budget.roles[-1][1], 'failed')
+                self.assertTrue((root / 'owned-generator/result.json').exists())
+
+    def test_outer_postflight_stop_overrides_inner_success(self):
+        budget = FakeOuterBudget(checkpoint_stop='postflight')
+        root = self.root()
+        result, calls = self.run_fake(root, outer_budget=budget)
+        self.assertEqual(result['status'], 'failed')
+        self.assertEqual(result['reason'], 'pipeline_wall_limit')
+        self.assertEqual(len(calls), 2)
+        self.assertEqual([row[0] for row in budget.roles],
+                         ['generator', 'reader'])
+        self.assertNotIn('reader_result', result)
+        self.assertTrue((root / 'owned-reader/supervision.json').exists())
 
 
 if __name__ == '__main__':
