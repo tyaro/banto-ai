@@ -186,7 +186,8 @@ def worker_main(argv):
         v.require(len(argv) == 3,'publication worker arguments')
         path = Path(argv[0]);pin = {'bytes':int(argv[1]),'sha256':argv[2]}
         bundle = v.strict_json(observed.consumer.pinned.read_pinned(path,pin,64*1024))
-        evidence._keys(bundle,'format invocation_id source request role publication expected_outputs','publication invocation')
+        evidence._keys(bundle,'format invocation_id source request role publication expected_outputs'+
+            (' dependency_profile_pin' if 'dependency_profile_pin' in bundle else ''),'publication invocation')
         evidence._same(bundle['format'],INVOCATION,'invocation format');evidence._digest(bundle['invocation_id'])
         role = bundle['role'];v.require(role in ('writer','reader'),'publication role')
         evidence._source(bundle['source']);revision = bundle['source']['revision']
@@ -197,11 +198,24 @@ def worker_main(argv):
         inputs,files = _load(bundle['request']);marker = _marker(files)
         outputs = _role_outputs(role,bundle['request'],files,marker)
         evidence._same({n:observed._pin(b) for n,b in outputs.items()},bundle['expected_outputs'],'expected role output')
+        profile = None
+        if 'dependency_profile_pin' in bundle:
+            raw_profile = observed._file(path.parent/'dependency-profile.json',
+                                         dependencies.PROFILE_MAX)
+            profile = dependencies.load_five_role_profile(
+                raw_profile, bundle['dependency_profile_pin'], role=role,
+                root=ROOT, revision=revision)
         deps_before = dependencies.collect(ROOT)
+        if profile is not None:
+            dependencies.match_five_role_profile(profile, deps_before,
+                                                 runtime_before, phase='before')
         if role == 'writer':io.publish_local_result(publication.parent,publication.name,files,verify_semantics=_semantic(files))
         _verify_publication(publication,files,marker)
         if role == 'reader':io._exclusive(path.parent/'readback.json',outputs['verification/readback.json'])
         deps_after = dependencies.collect(ROOT);runtime_after = observed._observed_runtime();source_after = _source(revision)
+        if profile is not None:
+            dependencies.match_five_role_profile(profile, deps_after,
+                                                 runtime_after, phase='after')
         v.require(observed._inputs(bundle['request']['inputs']) == inputs,'saved inputs changed')
         evidence._raw(observed._file(path,64*1024),pin,'invocation changed')
         inputs = inputs|{'operation/invocation.json':io.json_bytes(bundle)}
@@ -229,8 +243,21 @@ def _retain_role_observation_pins(role,target,monitor,dependency_pair):
     return {'dependency_pin':dependency_pin,'stdout_pin':stdout_pin,'supervision_pin':supervision_pin}
 
 
-def _run_role(role,request,target,publication,revision,budget,files,inputs,source_context):
+def _run_role(role,request,target,publication,revision,budget,files,inputs,
+              source_context,dependency_profile=None):
     target.mkdir();source,source_bytes,git = source_context
+    profile = None
+    if dependency_profile is not None:
+        evidence._keys(dependency_profile, 'raw pin' +
+            (' path' if 'path' in dependency_profile else ''), role + ' supplied profile')
+        if 'path' in dependency_profile:
+            evidence._raw(observed._file(dependency_profile['path'],
+                                         dependencies.PROFILE_MAX),
+                          dependency_profile['pin'], role + ' external profile changed')
+        profile = dependencies.load_five_role_profile(
+            dependency_profile['raw'], dependency_profile['pin'], role=role,
+            root=ROOT, revision=revision)
+        io._exclusive(target/'dependency-profile.json', dependency_profile['raw'])
     if budget.upstream is not None and hasattr(budget.upstream, 'record_role'):
         budget.upstream.checkpoint(role)
     budget.checkpoint()
@@ -241,6 +268,8 @@ def _run_role(role,request,target,publication,revision,budget,files,inputs,sourc
     outputs = _role_outputs(role,request,files,marker)
     bundle = {'format':INVOCATION,'invocation_id':secrets.token_hex(32),'source':source,'request':request,'role':role,
         'publication':str(publication),'expected_outputs':{n:observed._pin(b) for n,b in outputs.items()}}
+    if profile is not None:
+        bundle['dependency_profile_pin'] = copy.deepcopy(dependency_profile['pin'])
     raw = io.json_bytes(bundle);pin = observed._pin(raw);path = target/'invocation.json';io._exclusive(path,raw)
     all_inputs = inputs|{'operation/invocation.json':raw}
     expected = {'invocation_id':bundle['invocation_id'],'source':source,'runtime':runtime,
@@ -254,6 +283,10 @@ def _run_role(role,request,target,publication,revision,budget,files,inputs,sourc
         v.require(observed._inputs(request['inputs']) == inputs,'parent saved inputs changed')
         evidence._raw(observed._file(path,64*1024),pin,'publication invocation changed')
         current,_ = observed._expected_runtime();evidence._same(current,runtime,'publication runtime changed')
+        if profile is not None:
+            evidence._raw(observed._file(target/'dependency-profile.json',
+                                         dependencies.PROFILE_MAX),
+                          dependency_profile['pin'], role + ' profile changed')
     def started(process):
         launch.update(observed.creation_observation(process.pid,process._handle))
         expected['process'] = {'pid':process.pid,'parent_pid':os.getpid(),'start_token':launch['start_token'],'argv':list(argv),'cwd':str(ROOT)}
@@ -278,13 +311,23 @@ def _run_role(role,request,target,publication,revision,budget,files,inputs,sourc
     binding = evidence.validate_execution_evidence(record,expected_mode='fixture',expected_role=role,expected_pin=record_pin,
         expected=expected,source_snapshots=source_bytes,runtime_snapshots=runtime_bytes,input_snapshots=all_inputs,output_snapshots=outputs)
     supplement = dependencies.verify_pair(reply['dependencies_before'],reply['dependencies_after'],root=ROOT,revision=revision,git=git,required_sources=SOURCE_FILES)
+    if profile is not None:
+        for phase in ('before', 'after'):
+            dependencies.match_five_role_profile(
+                profile, reply['dependencies_' + phase],
+                reply['evidence']['runtime_' + phase], phase=phase)
+        boundary()
     budget.checkpoint();io._exclusive(target/'evidence.json',record);observed._save(target/'binding.json',binding)
     dependency_pair = {'before':reply['dependencies_before'],'after':reply['dependencies_after']}
     observation_pins = _retain_role_observation_pins(role,target,monitor,dependency_pair)
     observed._save(target/'dependency-crosscheck.json',supplement)
     receipt = {'status':'verified','role':role,'worker_pid':monitor['worker_pid'],'worker_exit_confirmed':True,
         'evidence_pin':record_pin,'invocation_pin':pin,'binding_pin':observed._pin(io.json_bytes(binding)),
-        'source_revision':revision,'dependency_observation':supplement,**observation_pins}
+        'source_revision':revision,'dependency_observation':supplement,**observation_pins,
+        'profile_required':profile is not None,'before_work_profile_enforcement':profile is not None}
+    if profile is not None:
+        receipt['dependency_profile_pin'] = copy.deepcopy(dependency_profile['pin'])
+        receipt['before_work_profile_enforcement'] = True
     observed._save(target/'result.json',receipt)
     if budget.upstream is not None and hasattr(budget.upstream, 'record_role'):
         raw_receipt = io.json_bytes(receipt)
@@ -297,9 +340,14 @@ def _run_role(role,request,target,publication,revision,budget,files,inputs,sourc
 
 
 def publish_with_evidence(request, *, expected_revision, receipt_parent, receipt_name,
-                          budget_limits=None, resource_budget=None):
+                          budget_limits=None, resource_budget=None,
+                          dependency_profiles=None):
     """Reuse pinned analysis and combined audit. Publish once, then read after reaping writer."""
     _request(request);evidence._digest(expected_revision,40);request = copy.deepcopy(request)
+    v.require(dependency_profiles is None or
+              (type(dependency_profiles) is dict and
+               set(dependency_profiles) == {'writer', 'reader'}),
+              'writer/reader profile inventory')
     budget_limits = budgets.limits(budget_limits)
     parent = io._local_parent(Path(receipt_parent));v.safe_relative_path(receipt_name)
     v.require('/' not in receipt_name and not receipt_name.casefold().startswith('anomaly-multiseed-v0'),'receipt name')
@@ -309,7 +357,8 @@ def publish_with_evidence(request, *, expected_revision, receipt_parent, receipt
         target,budget_limits,upstream=resource_budget,publication_roots=[publication])
     result = {**CLOSED,'format':'anomaly-v03-fixture-publication-check-v1','mode':'fixture','status':'failed',
         'publication_status':'not_started','reader_status':'not_started','inference_recomputed':False,'new_evaluations':0,
-        'analysis_runs':0,'audit_runs':0,'analysis_reference':request['analysis_reference'],'audit_reference':request['audit_reference']}
+        'analysis_runs':0,'audit_runs':0,'analysis_reference':request['analysis_reference'],'audit_reference':request['audit_reference'],
+        'profile_required':dependency_profiles is not None,'before_work_profile_enforcement':False}
     if resource_budget is not None:
         result['shared_budget_root'] = str(resource_budget.root)
     try:
@@ -318,10 +367,12 @@ def publish_with_evidence(request, *, expected_revision, receipt_parent, receipt
         source_context = source,source_bytes,_cached_git(git,expected_revision,source_bytes)
         budget.checkpoint()
         result['publication_status'] = 'unconfirmed'
-        writer = _run_role('writer',request,target/'writer',publication,expected_revision,budget,files,inputs,source_context)
+        writer = _run_role('writer',request,target/'writer',publication,expected_revision,budget,files,inputs,source_context,
+                           *((dependency_profiles['writer'],) if dependency_profiles is not None else ()))
         result.update(publication_status='completed',writer=writer)
         result['reader_status'] = 'unconfirmed'
-        reader = _run_role('reader',request,target/'reader',publication,expected_revision,budget,files,inputs,source_context)
+        reader = _run_role('reader',request,target/'reader',publication,expected_revision,budget,files,inputs,source_context,
+                           *((dependency_profiles['reader'],) if dependency_profiles is not None else ()))
         result.update(reader_status='completed',reader=reader)
         budget.checkpoint();v.require(observed._inputs(request['inputs']) == inputs,'final saved inputs changed')
         binding = {**CLOSED,'format':'anomaly-v03-fixture-publication-binding-v1','mode':'fixture','scope':'supplied-fixture-bytes-and-owned-local-processes',
@@ -333,6 +384,8 @@ def publish_with_evidence(request, *, expected_revision, receipt_parent, receipt
         observed._save(target/'publication-binding.json',binding)
         result.update(status='verified',publication_binding_pin=observed._pin(io.json_bytes(binding)),payload_files=5,
             marker_pin=binding['marker_pin'],selected_source_files=len(SOURCE_FILES),runtime_files=2,retained_input_files=len(INPUTS))
+        if dependency_profiles is not None:
+            result['before_work_profile_enforcement'] = True
     except supervisor.UnreapedWorker as error:
         try:observed._save(target/'unreaped.json',{'worker_exit_confirmed':False,'publication_status':result['publication_status']})
         finally:raise error

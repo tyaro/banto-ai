@@ -67,20 +67,28 @@ def worker_main(role, argv):
 
 
 def calculate_fixture(request, *, expected_revision, receipt_parent, receipt_name,
-                      budget_limits=None, resource_budget=None):
+                      budget_limits=None, resource_budget=None,
+                      dependency_profile_raw=None,
+                      expected_dependency_profile_pin=None):
     """Run the existing bounded invented analysis under the candidate runtime."""
     with _numeric_scope('analysis'):
         return analysis.calculate_with_evidence(
             request, expected_revision=expected_revision, receipt_parent=receipt_parent,
             receipt_name=receipt_name, budget_limits=budget_limits,
-            resource_budget=resource_budget)
+            resource_budget=resource_budget,
+            dependency_profile_raw=dependency_profile_raw,
+            expected_dependency_profile_pin=expected_dependency_profile_pin)
 
 
 def audit_fixture(request, *, expected_revision, receipt_parent, receipt_name,
-                  budget_limits=None, resource_budget=None):
+                  budget_limits=None, resource_budget=None,
+                  dependency_profile_raw=None,
+                  expected_dependency_profile_pin=None):
     """Run the existing independent invented audit under the candidate runtime."""
     with _numeric_scope('audit'):
         return audit.audit_with_evidence(
             request, expected_revision=expected_revision, receipt_parent=receipt_parent,
             receipt_name=receipt_name, budget_limits=budget_limits,
-            resource_budget=resource_budget)
+            resource_budget=resource_budget,
+            dependency_profile_raw=dependency_profile_raw,
+            expected_dependency_profile_pin=expected_dependency_profile_pin)

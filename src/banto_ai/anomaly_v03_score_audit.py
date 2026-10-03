@@ -304,6 +304,17 @@ def audit_score_derivation(result, observation_bytes, *, expected_observation_sh
     """Rebuild every profile and test score; no inference from saved fit state."""
     identity = result['identity']
     _identity(identity)
+    return _audit_score_derivation_validated(result, observation_bytes,
+        expected_observation_sha256=expected_observation_sha256)
+
+
+def _audit_score_derivation_validated(result, observation_bytes, *, expected_observation_sha256):
+    """Arithmetic core for callers that have already restricted identity scope.
+
+    The public audit above remains dev/smoke-only. A separate invented-only
+    fixture may validate its registered identity before using this private core.
+    """
+    identity = result['identity']
     need(result['input_hashes']['observations'] == expected_observation_sha256, 'result observation binding')
     phased = list(phase_rows(decode_observations(observation_bytes, expected_observation_sha256)))
     bank = rebuild_profiles(identity, phased)

@@ -30,6 +30,21 @@ SCOPE = {'source_closure_complete': False, 'runtime_closure_complete': False,
 PROFILE_FORMAT = 'anomaly-v03-reader-dependency-profile-v1'
 PROFILE_MAX = 512 * 1024
 PROFILE_BOUNDARY = 'request-decoded-collector-imported-before-publication-read-v1'
+FIVE_ROLE_PROFILE_FORMAT = 'anomaly-v03-preformal-five-role-dependency-profile-v3'
+FIVE_ROLE_OPERATIONS = {
+    'producer': 'join-invented-archive-and-project-one-draw',
+    'analysis': 'assemble-invented-document-v1',
+    'audit': 'audit-invented-primary-and-slices-v1',
+    'writer': 'publish-invented-five-payloads',
+    'reader': 'readback-invented-five-payloads',
+}
+FIVE_ROLE_BOUNDARIES = {
+    'producer': 'invocation-decoded-before-invented-archive-read-v1',
+    'analysis': 'request-loaded-before-invented-document-assembly-v1',
+    'audit': 'request-loaded-before-independent-invented-audit-v1',
+    'writer': 'publication-inputs-loaded-before-publish-v1',
+    'reader': 'publication-inputs-loaded-before-readback-v1',
+}
 
 
 def load_profile(raw, expected_pin, *, root, revision):
@@ -62,6 +77,68 @@ def match_profile(profile, snapshot, runtime, *, phase):
     v.require(phase in ('before', 'after'), 'dependency profile comparison phase')
     v.require(runtime == profile['runtime'], 'dependency profile runtime '+phase+' mismatch')
     v.require(snapshot == profile['snapshot'], 'dependency profile inventory '+phase+' mismatch')
+
+
+def load_five_role_profile(raw, expected_pin, *, role, root, revision):
+    """Load a caller-pinned, invented-only role candidate without trusting its path."""
+    from . import anomaly_v03_consumer_evidence as evidence
+    v.require(role in FIVE_ROLE_OPERATIONS and type(raw) is bytes and
+              0 < len(raw) <= PROFILE_MAX, 'five-role profile size/role')
+    evidence._raw(raw, expected_pin, 'retained five-role profile pin')
+    profile = v.strict_json(raw)
+    evidence._keys(profile, 'format mode role operation boundary acceptance '
+                   'source_revision root runtime snapshots observation_semantics '
+                   'crosscheck_scope reference_root reference scope formal_permission '
+                   'source_closure_complete runtime_closure_complete',
+                   'five-role profile fields')
+    v.require(profile['format'] == FIVE_ROLE_PROFILE_FORMAT and
+              profile['mode'] == 'fixture' and profile['role'] == role and
+              profile['operation'] == FIVE_ROLE_OPERATIONS[role] and
+              profile['boundary'] == FIVE_ROLE_BOUNDARIES[role] and
+              profile['acceptance'] == 'candidate-not-accepted' and
+              profile['source_revision'] == revision and profile['root'] == str(root) and
+              profile['scope'] == SCOPE and profile['formal_permission'] is False and
+              profile['source_closure_complete'] is False and
+              profile['runtime_closure_complete'] is False and
+              profile['observation_semantics'] ==
+                  'two-point-before-and-after-with-additions-only' and
+              profile['crosscheck_scope'] ==
+                  'historical-parent-verdict-pinned-no-current-image-allowlist',
+              'five-role profile identity/scope')
+    evidence._keys(profile['snapshots'], 'before after', 'five-role snapshots')
+    for phase in ('before', 'after'):
+        snapshot = profile['snapshots'][phase]
+        evidence._keys(snapshot, 'format modules files native_files scope',
+                       'five-role ' + phase + ' snapshot')
+        v.require(snapshot['format'] == FORMAT and snapshot['scope'] == SCOPE and
+                  type(snapshot['files']) is dict and 0 < len(snapshot['files']) <= MAX_FILES and
+                  type(snapshot['modules']) is dict and len(snapshot['modules']) <= 2048 and
+                  type(snapshot['native_files']) is list and
+                  snapshot['native_files'] == sorted(set(snapshot['native_files'])),
+                  'five-role ' + phase + ' snapshot bounds')
+    for section in ('files', 'modules'):
+        v.require(all(profile['snapshots']['after'][section].get(name) == row
+                      for name, row in profile['snapshots']['before'][section].items()),
+                  'five-role existing dependency changed/disappeared')
+    v.require(set(profile['snapshots']['before']['native_files']) <=
+              set(profile['snapshots']['after']['native_files']),
+              'five-role native image disappeared')
+    evidence._keys(profile['reference'],
+                   'top_result_pin result_pin supervision_pin stdout_pin '
+                   'dependency_pin crosscheck_pin' +
+                   ('' if role == 'producer' else ' evidence_pin'),
+                   'five-role reference pins')
+    for pin in profile['reference'].values():
+        evidence._pin(pin)
+    return profile
+
+
+def match_five_role_profile(profile, snapshot, runtime, *, phase):
+    """Exact role observation comparison; a late addition is only allowed after work."""
+    v.require(phase in ('before', 'after'), 'five-role profile phase')
+    v.require(runtime == profile['runtime'], 'five-role profile runtime ' + phase + ' mismatch')
+    v.require(snapshot == profile['snapshots'][phase],
+              'five-role profile inventory ' + phase + ' mismatch')
 
 
 def _stamp(meta):

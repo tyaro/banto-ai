@@ -1,10 +1,9 @@
-"""Full saved dev/smoke reader over a wholly invented one-chunk scaffold.
+"""Full numeric/ledger reader over a wholly invented one-chunk scaffold.
 
-The completed 120-chunk anchor is fabricated only to enter the existing
-selected-chunk reader.  Other 119 chunks have no payloads or authenticated
-coverage.  Auxiliary dataset files are externally pinned placeholders.  All
-six evaluations are engineered inconclusive.  No registered holdout
-observation is generated or read.
+The anchor explicitly describes only chunk 0. Other 119 chunks have no
+payloads or authenticated coverage. Auxiliary dataset files are externally
+pinned placeholders. All six evaluations are engineered inconclusive. No
+registered holdout observation is generated or read.
 """
 import copy
 import hashlib
@@ -131,16 +130,18 @@ class InventedFullChunkFixtureTests(unittest.TestCase):
                  'outcome': {'worker_exit_confirmed': True,
                              'slots': self.outcomes}}
         evidence = {'run_root': str(self.run), 'files': self.files,
+                    'fixture_scope': 'caller-declared-invented-one-chunk',
+                    'registered_data_read': False,
                     'journal_state': {'plan_sha256': v.canonical_sha256(self.plan),
-                                      'next_unverified_chunk': None,
-                                      'chunks': [chunk] + [None] * 119}}
+                                      'next_unverified_chunk': 1,
+                                      'chunks': [chunk]}}
         evidence_raw = encoded(evidence)
         (self.saved / 'evidence.json').write_bytes(evidence_raw)
         self.anchor = self.saved / 'savepoint-evidence.json'
-        anchor = {'status': 'completed', 'full_120_chunks_completed': True,
-                  'cumulative_verified_chunks': 120,
-                  'cumulative_verified_evaluations': 720,
-                  'next_unverified_chunk': None, 'formal_permission': False,
+        anchor = {'format': summary.reader.PARTIAL_FIXTURE_FORMAT,
+                  'status': 'partial_fixture', 'completed_chunk_index': 0,
+                  'next_unverified_chunk': 1, 'formal_permission': False,
+                  'registered_data_read': False,
                   'evidence': pin(evidence_raw),
                   'artifacts': {'evidence.json': pin(evidence_raw)}}
         anchor_raw = encoded(anchor)
@@ -148,13 +149,16 @@ class InventedFullChunkFixtureTests(unittest.TestCase):
         self.anchor_digest = pin(anchor_raw)['sha256']
 
     def call(self):
-        return summary.read_chunk_summaries(
-            self.anchor, self.anchor_digest, self.run, 0,
-            expected_mode='fixture')
+        return summary.read_partial_fixture_chunk_summaries(
+            self.anchor, self.anchor_digest, self.run, 0)
 
     def test_real_reader_rederives_six_invented_evaluations(self):
         checked = self.call()
         self.assertEqual(checked['status'], 'selected_chunk_summaries_verified')
+        self.assertEqual(checked['scope'], 'one-invented-partial-fixture-chunk')
+        self.assertTrue(checked['fixture_partial'])
+        self.assertFalse(checked['other_chunks_authenticated'])
+        self.assertFalse(checked['audit']['registered_data_read'])
         self.assertEqual(checked['evaluations_checked'], 6)
         self.assertEqual(checked['audit']['prior_attempts_not_credited'], 1)
         self.assertTrue(checked['current_observation_profile_score_audit'])
@@ -191,6 +195,33 @@ class InventedFullChunkFixtureTests(unittest.TestCase):
         self.anchor.write_bytes(raw)
         self.anchor_digest = pin(raw)['sha256']
         with self.assertRaisesRegex(ValueError, 'final attempt'):
+            self.call()
+
+    def test_partial_anchor_rejects_completion_claim_and_wrong_journal_extent(self):
+        anchor = json.loads(self.anchor.read_bytes())
+        anchor['full_120_chunks_completed'] = True
+        raw = encoded(anchor)
+        self.anchor.write_bytes(raw)
+        self.anchor_digest = pin(raw)['sha256']
+        with self.assertRaisesRegex(ValueError, 'partial fixture anchor fields'):
+            self.call()
+        anchor.pop('full_120_chunks_completed')
+        raw = encoded(anchor)
+        self.anchor.write_bytes(raw)
+        self.anchor_digest = pin(raw)['sha256']
+        with self.assertRaisesRegex(ValueError, 'completed savepoint required'):
+            summary.read_chunk_summaries(self.anchor, self.anchor_digest, self.run, 0,
+                                         expected_mode='fixture')
+        evidence_path = self.saved / 'evidence.json'
+        evidence = json.loads(evidence_path.read_bytes())
+        evidence['journal_state']['chunks'].append(None)
+        raw = encoded(evidence)
+        evidence_path.write_bytes(raw)
+        anchor['evidence'] = anchor['artifacts']['evidence.json'] = pin(raw)
+        raw = encoded(anchor)
+        self.anchor.write_bytes(raw)
+        self.anchor_digest = pin(raw)['sha256']
+        with self.assertRaisesRegex(ValueError, 'one partial fixture chunk'):
             self.call()
 
 

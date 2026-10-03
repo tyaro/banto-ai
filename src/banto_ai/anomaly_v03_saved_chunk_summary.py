@@ -35,23 +35,16 @@ def _summarize(result, audit, *, evaluation_pin):
         'zero_denominator_metrics':[n for n,pair in counts['counts'].items() if pair[1] == 0]}
 
 
-def read_chunk_summaries(savepoint, savepoint_sha256, run_root, chunk_index, *, expected_mode):
-    """Read one externally pinned completed chunk, auditing each selected result.
-
-    fixture means the caller supplies invented bytes in the saved dev/smoke
-    format; engineering permits those real saved bytes. Neither authenticates
-    how observations were generated or opens registered holdout processing.
-    """
-    reader.scores.need(type(expected_mode) is str and expected_mode in ('fixture','engineering'),
-                       'formal/unknown summary mode is closed')
-    report = reader.audit_completed_chunk(savepoint,savepoint_sha256,run_root,chunk_index,include_summaries=True)
+def _summaries_from_report(report, expected_mode, *, partial_fixture=False):
     rows = report.pop('evaluation_summaries')
     reader.same(len(rows),6,'six ordered summaries required')
     for row,audit in zip(rows,report['evaluations']):
         reader.same(row['identity'],audit['identity'],'summary/audit identity')
         reader.same(row['evaluation_outcome'],audit['evaluation_outcome'],'summary/audit outcome')
-    return {**CLOSED,'format':FORMAT,'mode':expected_mode,'status':'selected_chunk_summaries_verified',
-        'scope':'one-completed-dev-smoke-chunk','chunk_index':report['chunk_index'],'attempt':report['attempt'],
+    result = {**CLOSED,'format':FORMAT,'mode':expected_mode,'status':'selected_chunk_summaries_verified',
+        'scope':('one-invented-partial-fixture-chunk' if partial_fixture else
+                 'one-completed-dev-smoke-chunk'),
+        'chunk_index':report['chunk_index'],'attempt':report['attempt'],
         'prior_attempts_not_credited':report['prior_attempts_not_credited'],
         'evaluations':rows,'audit':report,'evaluations_checked':6,
         'current_observation_profile_score_audit':True,'current_ledger_audit':True,
@@ -64,3 +57,31 @@ def read_chunk_summaries(savepoint, savepoint_sha256, run_root, chunk_index, *, 
                   'origins/quality-mask/split/targets bytes pinned; their generation not derived',
                   'no formal 40-seed mapping or 50000-draw inference',
                   'caller must bound whole-call time, memory and resource use']}
+    if partial_fixture:
+        result.update(fixture_partial=True, other_chunks_authenticated=False,
+            limits=['external digest authenticates saved bytes, not invented data origin',
+                    'only chunk 0 is represented; no completed campaign coverage',
+                    'origins/quality-mask/split/targets bytes pinned; their generation not derived',
+                    'no formal 40-seed mapping or 50000-draw inference',
+                    'caller must bound whole-call time, memory and resource use'])
+    return result
+
+
+def read_chunk_summaries(savepoint, savepoint_sha256, run_root, chunk_index, *, expected_mode):
+    """Read one externally pinned completed chunk, auditing each selected result.
+
+    fixture means the caller supplies invented bytes in the saved dev/smoke
+    format; engineering permits those real saved bytes. Neither authenticates
+    how observations were generated or opens registered holdout processing.
+    """
+    reader.scores.need(type(expected_mode) is str and expected_mode in ('fixture','engineering'),
+                       'formal/unknown summary mode is closed')
+    report = reader.audit_completed_chunk(savepoint,savepoint_sha256,run_root,chunk_index,include_summaries=True)
+    return _summaries_from_report(report, expected_mode)
+
+
+def read_partial_fixture_chunk_summaries(savepoint, savepoint_sha256, run_root, chunk_index):
+    """Read an invented one-chunk scaffold with no completed savepoint claim."""
+    report = reader.audit_partial_fixture_chunk(savepoint,savepoint_sha256,run_root,chunk_index,
+                                                include_summaries=True)
+    return _summaries_from_report(report, 'fixture', partial_fixture=True)

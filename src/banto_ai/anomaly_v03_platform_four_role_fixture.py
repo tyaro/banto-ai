@@ -209,7 +209,20 @@ def _budget_role(budget, role, row):
                            exit_confirmed=row.get('worker_exit_confirmed'))
 
 
-def _run_roles(target, files, revision, result, *, resource_budget=None):
+def _run_roles(target, files, revision, result, *, resource_budget=None,
+               role_profiles=None):
+    v.require(role_profiles is None or
+              (type(role_profiles) is dict and
+               set(role_profiles) == {'analysis', 'audit', 'writer', 'reader'}),
+              'four-role profile inventory')
+    def current_profile(role):
+        if role_profiles is None:
+            return None
+        row = role_profiles[role]
+        raw = observed._file(row['path'], numeric.analysis.dependencies.PROFILE_MAX)
+        evidence._raw(raw, row['pin'], role + ' external profile changed')
+        evidence._same(raw, row['raw'], role + ' retained profile changed')
+        return {key: row[key] for key in ('path', 'pin', 'raw')}
     _budget_checkpoint(resource_budget, 'analysis')
     records = _retain_inputs(target, files)
     result['input_pins'] = {name: row['pin'] for name, row in records.items()}
@@ -225,8 +238,13 @@ def _run_roles(target, files, revision, result, *, resource_budget=None):
                'expected_document_pin': reference_pin}
     analysis._request(request)
     result['stage'] = 'analysis'
+    analysis_profile = current_profile('analysis')
     a = numeric.calculate_fixture(request, expected_revision=revision, receipt_parent=target,
-                                  receipt_name='analysis', resource_budget=resource_budget)
+                                  receipt_name='analysis', resource_budget=resource_budget,
+                                  dependency_profile_raw=(None if analysis_profile is None else
+                                                          analysis_profile['raw']),
+                                  expected_dependency_profile_pin=(None if analysis_profile is None else
+                                                                   analysis_profile['pin']))
     _saved_result(target / 'analysis', a, 'analysis')
     _budget_role(resource_budget, 'analysis', a)
     result['analysis'] = {'status': a['status'], 'result_pin': a['result_pin'],
@@ -238,8 +256,13 @@ def _run_roles(target, files, revision, result, *, resource_budget=None):
     audit_request = _audit_request(target, records, a, revision, reference_pin)
     audit._request(audit_request)
     result['stage'] = 'audit'
+    audit_profile = current_profile('audit')
     b = numeric.audit_fixture(audit_request, expected_revision=revision, receipt_parent=target,
-                              receipt_name='audit', resource_budget=resource_budget)
+                              receipt_name='audit', resource_budget=resource_budget,
+                              dependency_profile_raw=(None if audit_profile is None else
+                                                      audit_profile['raw']),
+                              expected_dependency_profile_pin=(None if audit_profile is None else
+                                                               audit_profile['pin']))
     _saved_result(target / 'audit', b, 'audit')
     _budget_role(resource_budget, 'audit', b)
     result['audit'] = {'status': b['status'], 'result_pin': b['result_pin'],
@@ -253,10 +276,13 @@ def _run_roles(target, files, revision, result, *, resource_budget=None):
     publication._request(publication_request)
     result['preflight_runtime'] = runtime.probe_runtime(ROOT)
     result['stage'] = 'writer_then_reader'
+    publication_profiles = (None if role_profiles is None else
+                            {role: current_profile(role) for role in ('writer', 'reader')})
     with platform._platform_scope():
         p = publication.publish_with_evidence(publication_request, expected_revision=revision,
             receipt_parent=target, receipt_name='publication',
-            resource_budget=resource_budget)
+            resource_budget=resource_budget,
+            dependency_profiles=publication_profiles)
     _saved_result(target / 'publication', p, 'publication')
     result['publication'] = {'status': p['status'], 'result_pin': p['result_pin'],
                              'binding_pin': p.get('publication_binding_pin'),

@@ -192,7 +192,8 @@ def _load_invocation(path, expected_pin):
     _same(_pin(raw), expected_pin, 'producer invocation pin')
     value = primary.v.strict_json(raw)
     primary.evidence._keys(value,
-        'format invocation_id archive_path archive_pin source_revision source output_root',
+        'format invocation_id archive_path archive_pin source_revision source output_root' +
+        (' dependency_profile_pin' if 'dependency_profile_pin' in value else ''),
         'producer invocation fields')
     primary.v.require(value['format'] == INVOCATION, 'producer invocation format')
     primary.evidence._digest(value['invocation_id'])
@@ -202,6 +203,8 @@ def _load_invocation(path, expected_pin):
                       'producer archive size')
     _same(value['source'], _sources(value['source_revision']),
           'producer selected source at invocation')
+    if 'dependency_profile_pin' in value:
+        primary.evidence._pin(value['dependency_profile_pin'])
     return value
 
 
@@ -230,7 +233,17 @@ def worker_main(argv):
         source_before = _sources(invocation['source_revision'])
         runtime_before = runtime.probe_runtime(ROOT)
         process = observed.creation_observation(os.getpid())
+        profile = None
+        if 'dependency_profile_pin' in invocation:
+            profile_raw = observed._file(Path(argv[0]).parent / 'dependency-profile.json',
+                                         dependencies.PROFILE_MAX)
+            profile = dependencies.load_five_role_profile(
+                profile_raw, invocation['dependency_profile_pin'], role='producer',
+                root=ROOT, revision=invocation['source_revision'])
         dependencies_before = dependencies.collect(ROOT)
+        if profile is not None:
+            dependencies.match_five_role_profile(profile, dependencies_before,
+                                                 runtime_before, phase='before')
         archive_raw = observed._file(invocation['archive_path'], ARCHIVE_MAX)
         _same(_pin(archive_raw), invocation['archive_pin'], 'producer external archive pin')
         case = _archive_case(archive_raw)
@@ -262,6 +275,9 @@ def worker_main(argv):
         runtime_after = runtime.probe_runtime(ROOT)
         source_after = _sources(invocation['source_revision'])
         dependencies_after = dependencies.collect(ROOT)
+        if profile is not None:
+            dependencies.match_five_role_profile(profile, dependencies_after,
+                                                 runtime_after, phase='after')
         _same(runtime_after, runtime_before, 'producer child runtime changed')
         _same(source_after, source_before, 'producer child selected source changed')
         _same(source_after, invocation['source'], 'producer selected source expectation')
@@ -290,8 +306,9 @@ def worker_main(argv):
 
 
 def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
-                       receipt_parent, receipt_name, expected_bound_pin=None,
-                       resource_budget=None):
+                        receipt_parent, receipt_name, expected_bound_pin=None,
+                        resource_budget=None, dependency_profile_raw=None,
+                        expected_dependency_profile_pin=None):
     """Own, reap and verify one 26H2 invented join child in a new local root."""
     primary.evidence._digest(expected_revision, 40)
     primary.evidence._pin(expected_archive_pin)
@@ -299,6 +316,14 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
                       'invented archive pin byte limit')
     if expected_bound_pin is not None:
         primary.evidence._pin(expected_bound_pin)
+    primary.v.require((dependency_profile_raw is None) ==
+                      (expected_dependency_profile_pin is None),
+                      'producer profile raw/pin pair')
+    profile = None
+    if dependency_profile_raw is not None:
+        profile = dependencies.load_five_role_profile(
+            dependency_profile_raw, expected_dependency_profile_pin,
+            role='producer', root=ROOT, revision=expected_revision)
     archive_path = Path(archive_path)
     primary.v.require(archive_path.is_absolute() and
                       archive_path.is_relative_to(ROOT / 'artifacts'),
@@ -330,10 +355,14 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
     output.mkdir()
     (output / 'projection').mkdir()
     (output / 'projection' / 'fixture').mkdir()
+    if profile is not None:
+        io._exclusive(target / 'dependency-profile.json', dependency_profile_raw)
     invocation = {'format': INVOCATION, 'invocation_id': secrets.token_hex(32),
                   'archive_path': str(archive_path), 'archive_pin': copy.deepcopy(expected_archive_pin),
                   'source_revision': expected_revision, 'source': source,
-                  'output_root': str(output)}
+                   'output_root': str(output)}
+    if profile is not None:
+        invocation['dependency_profile_pin'] = copy.deepcopy(expected_dependency_profile_pin)
     invocation_raw = primary.v.canonical_json(invocation)
     io._exclusive(target / 'invocation.json', invocation_raw)
     invocation_pin = _pin(invocation_raw)
@@ -348,6 +377,8 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
              'new_evaluations': 0, 'registered_data_read': False,
              'real_producer_executed': False, 'owned_producer_join_executed': False,
              'formal_permission': False, 'promotion_allowed': False,
+             'profile_required': profile is not None,
+             'before_work_profile_enforcement': False,
              'worker_exit_confirmed': False, 'worker_pid': None,
              'archive_pin': copy.deepcopy(expected_archive_pin),
              'invocation_pin': invocation_pin,
@@ -361,6 +392,10 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
               'external invented archive changed')
         _same(_pin(observed._file(target / 'invocation.json', 16 * 1024)),
               invocation_pin, 'producer invocation changed')
+        if profile is not None:
+            _same(_pin(observed._file(target / 'dependency-profile.json',
+                                     dependencies.PROFILE_MAX)),
+                  expected_dependency_profile_pin, 'producer profile changed')
 
     def started(process):
         launch.update(observed.creation_observation(process.pid, process._handle))
@@ -402,6 +437,12 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
             dependency_pin, dependency_observation = _retain_dependencies(
                 target, reply['dependencies_before'], reply['dependencies_after'],
                 expected_revision)
+            if profile is not None:
+                for phase in ('before', 'after'):
+                    dependencies.match_five_role_profile(
+                        profile, reply['dependencies_' + phase],
+                        reply['runtime_' + phase], phase=phase)
+                boundary()
             bound_raw = observed._file(output / 'bound.json', 8 * 1024**2)
             bound_pin = _pin(bound_raw)
             _same(bound_pin, reply['bound_pin'], 'producer bound output pin')
@@ -431,7 +472,10 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
                          projection_pins=pins, stdout_pin=monitor['output'],
                          dependency_pin=dependency_pin,
                          dependency_observation=dependency_observation,
-                         selected_source_files=len(SOURCE_FILES))
+                          selected_source_files=len(SOURCE_FILES))
+            if profile is not None:
+                outer['dependency_profile_pin'] = copy.deepcopy(expected_dependency_profile_pin)
+                outer['before_work_profile_enforcement'] = True
     except supervisor.UnreapedWorker:
         raise
     except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError,

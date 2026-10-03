@@ -116,7 +116,9 @@ def worker_main(argv):
         pin = {'bytes': int(argv[1]), 'sha256': argv[2]}
         raw_bundle = observed.consumer.pinned.read_pinned(invocation, pin, 64*1024)
         bundle = v.strict_json(raw_bundle)
-        evidence._keys(bundle, 'format invocation_id source request', 'fixture invocation fields')
+        evidence._keys(bundle, 'format invocation_id source request' +
+                       (' dependency_profile_pin' if 'dependency_profile_pin' in bundle else ''),
+                       'fixture invocation fields')
         evidence._same(bundle['format'], INVOCATION, 'fixture invocation identity')
         evidence._digest(bundle['invocation_id']);evidence._source(bundle['source'])
         revision = bundle['source']['revision']
@@ -126,7 +128,17 @@ def worker_main(argv):
         process = observed.creation_observation(os.getpid())
         runtime_before = observed._observed_runtime()
         inputs, decoded = _load(request, revision)
+        profile = None
+        if 'dependency_profile_pin' in bundle:
+            raw_profile = observed._file(invocation.parent/'dependency-profile.json',
+                                         dependencies.PROFILE_MAX)
+            profile = dependencies.load_five_role_profile(
+                raw_profile, bundle['dependency_profile_pin'], role='analysis',
+                root=ROOT, revision=revision)
         deps_before = dependencies.collect(ROOT)
+        if profile is not None:
+            dependencies.match_five_role_profile(profile, deps_before,
+                                                 runtime_before, phase='before')
         fixture, source = decoded['fixture/input.json'], decoded['fixture/slices.json']
         schema = v.schemas(v._expected_configs())[7]
         base = wrapper.document.build_fixture_document(fixture, schema)
@@ -140,6 +152,9 @@ def worker_main(argv):
                       'fixture output readback differs')
         deps_after = dependencies.collect(ROOT)
         runtime_after = observed._observed_runtime();source_after = _working_source(revision)
+        if profile is not None:
+            dependencies.match_five_role_profile(profile, deps_after,
+                                                 runtime_after, phase='after')
         evidence._same({n: observed._pin(b) for n, b in observed._inputs(request['inputs']).items()},
                        {n: observed._pin(b) for n, b in inputs.items()}, 'fixture inputs changed during computation')
         evidence._raw(observed._file(invocation, 64*1024), pin, 'fixture invocation changed')
@@ -161,7 +176,10 @@ def worker_main(argv):
         return 2
 
 
-def calculate_with_evidence(request, *, expected_revision, receipt_parent, receipt_name, budget_limits=None, resource_budget=None):
+def calculate_with_evidence(request, *, expected_revision, receipt_parent, receipt_name,
+                            budget_limits=None, resource_budget=None,
+                            dependency_profile_raw=None,
+                            expected_dependency_profile_pin=None):
     """Compute a bounded known fixture, retain owned-child evidence and map five payloads.
 
     Input and expected document pins originate with the caller, before launch.
@@ -170,6 +188,14 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
     No registered observations, formal bootstrap, publication or independent audit.
     """
     _request(request);evidence._digest(expected_revision, 40)
+    v.require((dependency_profile_raw is None) ==
+              (expected_dependency_profile_pin is None),
+              'analysis profile raw/pin pair')
+    profile = None
+    if dependency_profile_raw is not None:
+        profile = dependencies.load_five_role_profile(
+            dependency_profile_raw, expected_dependency_profile_pin,
+            role='analysis', root=ROOT, revision=expected_revision)
     budget_limits = budgets.limits(budget_limits)
     request = copy.deepcopy(request)
     parent = io._local_parent(Path(receipt_parent));v.safe_relative_path(receipt_name)
@@ -180,9 +206,12 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
         (ROOT/'src', *(Path(row['path']).parent for row in request['inputs'].values()))),
         'fixture receipt overlaps inputs/source')
     target.mkdir()
+    if profile is not None:
+        io._exclusive(target/'dependency-profile.json', dependency_profile_raw)
     budget = budgets.FixtureBudget(target,budget_limits,upstream=resource_budget)
     result = {**wrapper.CLOSED, 'format': 'anomaly-v03-fixture-worker-check-v1', 'status': 'failed',
         'role': 'analysis', 'mode': 'fixture', 'operation': OPERATION, 'fixture_inference_performed': False,
+        'profile_required': profile is not None, 'before_work_profile_enforcement': False,
         'worker_exit_confirmed': False, 'worker_pid': None, 'new_evaluations': 0}
     try:
         budget.start()
@@ -193,6 +222,8 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
         raw_inputs, decoded = _load(request, expected_revision)
         budget.checkpoint()
         bundle = {'format': INVOCATION, 'invocation_id': secrets.token_hex(32), 'source': source, 'request': request}
+        if profile is not None:
+            bundle['dependency_profile_pin'] = copy.deepcopy(expected_dependency_profile_pin)
         bundle_raw = io.json_bytes(bundle);bundle_pin = observed._pin(bundle_raw)
         bundle_path = target/'invocation.json';io._exclusive(bundle_path, bundle_raw)
         expected = {'invocation_id': bundle['invocation_id'], 'source': source, 'runtime': runtime,
@@ -210,6 +241,11 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
             evidence._raw(observed._file(bundle_path, 64*1024), bundle_pin, 'fixture invocation changed')
             current, _ = observed._expected_runtime()
             evidence._same(current, runtime, 'fixture runtime expectation changed')
+            if profile is not None:
+                evidence._raw(observed._file(target/'dependency-profile.json',
+                                             dependencies.PROFILE_MAX),
+                              expected_dependency_profile_pin,
+                              'analysis profile changed')
         def started(process):
             launch.update(observed.creation_observation(process.pid, process._handle))
             expected['process'] = {'pid': process.pid, 'parent_pid': os.getpid(), 'start_token': launch['start_token'],
@@ -241,6 +277,12 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
                 runtime_snapshots=runtime_bytes, input_snapshots=raw_inputs, output_snapshots={'fixture/document.json': output})
             supplement = dependencies.verify_pair(reply['dependencies_before'], reply['dependencies_after'],
                 root=ROOT, revision=expected_revision, git=git, required_sources=SOURCE_FILES)
+            if profile is not None:
+                for phase in ('before', 'after'):
+                    dependencies.match_five_role_profile(
+                        profile, reply['dependencies_' + phase],
+                        reply['evidence']['runtime_' + phase], phase=phase)
+                boundary()
             budget.checkpoint()
             draft = {'format': wrapper.FORMAT, 'mode': 'fixture', 'invented_only': True,
                 'fixture_input': decoded['fixture/input.json'], 'slice_input': decoded['fixture/slices.json'],
@@ -267,6 +309,9 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
                 document_pin=request['expected_document_pin'], wrapper_payload_pins=mapped['payload_pins'],
                 selected_source_files=len(SOURCE_FILES), runtime_files=2, authenticated_input_files=4,
                 dependency_observation=supplement, parent_and_child_creation_matched=True)
+            if profile is not None:
+                result['dependency_profile_pin'] = copy.deepcopy(expected_dependency_profile_pin)
+                result['before_work_profile_enforcement'] = True
     except supervisor.UnreapedWorker as error:
         try:
             observed._save(target/'supervision.json', error.report)

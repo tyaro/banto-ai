@@ -337,6 +337,71 @@ class RoleProfileTests(unittest.TestCase):
             self.prepare()
         self.assertFalse(self.output.exists())
 
+    def test_external_candidate_set_is_loaded_without_current_parent_image_allowlist(self):
+        prepared = self.prepare()
+        with patch.object(profiles.platform_runtime, 'probe_runtime',
+                          return_value=runtime.EXPECTED), \
+             patch.object(profiles.observed, '_expected_runtime',
+                          return_value=(child_runtime(), {})), \
+             patch.object(dependencies, 'verify_pair',
+                          side_effect=AssertionError('current parent images are not a historical allowlist')):
+            loaded = profiles.load_pinned_candidate_set(
+                self.output / 'candidate-set.json', prepared['candidate_set_pin'],
+                revision=REVISION)
+        self.assertEqual(set(loaded), set(profiles.ROLES))
+        for role in profiles.ROLES:
+            self.assertEqual(loaded[role]['pin'], prepared['role_profiles'][role]['pin'])
+            self.assertEqual(loaded[role]['profile']['role'], role)
+
+    def test_external_candidate_set_tamper_fails_before_role_use(self):
+        prepared = self.prepare()
+        path = self.output / 'candidate-set.json'
+        path.write_bytes(path.read_bytes() + b' ')
+        with self.assertRaises(ValueError):
+            profiles.load_pinned_candidate_set(
+                path, prepared['candidate_set_pin'], revision=REVISION)
+
+    def test_every_role_supervision_and_dependency_reference_is_rechecked(self):
+        prepared = self.prepare()
+        candidate_set = self.output / 'candidate-set.json'
+        for role in profiles.ROLES:
+            for name in ('supervision.json', 'dependencies.json'):
+                with self.subTest(role=role, name=name):
+                    path = self.reference / profiles.ROLE_PATHS[role] / name
+                    original = path.read_bytes()
+                    try:
+                        path.write_bytes(original + b' ')
+                        with patch.object(profiles.platform_runtime, 'probe_runtime',
+                                          return_value=runtime.EXPECTED), \
+                             patch.object(profiles.observed, '_expected_runtime',
+                                          return_value=(child_runtime(), {})), \
+                             self.assertRaises(ValueError):
+                            profiles.load_pinned_candidate_set(
+                                candidate_set, prepared['candidate_set_pin'],
+                                revision=REVISION)
+                    finally:
+                        path.write_bytes(original)
+
+    def test_before_and_after_role_snapshots_are_exact(self):
+        self._reference(producer_addition=True)
+        prepared = self.prepare()
+        raw = (self.output / 'producer.json').read_bytes()
+        profile = dependencies.load_five_role_profile(
+            raw, prepared['role_profiles']['producer']['pin'], role='producer',
+            root=self.root, revision=REVISION)
+        dependencies.match_five_role_profile(
+            profile, profile['snapshots']['before'], profile['runtime'], phase='before')
+        dependencies.match_five_role_profile(
+            profile, profile['snapshots']['after'], profile['runtime'], phase='after')
+        with self.assertRaises(ValueError):
+            dependencies.match_five_role_profile(
+                profile, profile['snapshots']['after'], profile['runtime'], phase='before')
+        wrong = copy.deepcopy(profile['runtime'])
+        wrong['os_ubr'] += 1
+        with self.assertRaises(ValueError):
+            dependencies.match_five_role_profile(
+                profile, profile['snapshots']['before'], wrong, phase='before')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -16,6 +16,7 @@ import time
 from . import anomaly_v03_owned_producer_fixture as producer
 from . import anomaly_v03_platform_four_role_fixture as four
 from . import anomaly_v03_preformal_chain_budget as chain_budget
+from . import anomaly_v03_preformal_role_profiles as role_profiles
 
 
 v, io, evidence, observed = four.v, four.io, four.evidence, four.observed
@@ -154,7 +155,8 @@ def _save(target, result, started):
 
 def run_chain(*, expected_mode, join_root, expected_join_receipt_pin,
               expected_revision, receipt_name, receipt_parent=OUTPUT_PARENT,
-              budget_limits=None):
+              budget_limits=None, candidate_set_path=None,
+              expected_candidate_set_pin=None):
     """One new attempt with five owned children and pinned stage succession."""
     v.require(type(expected_mode) is str and expected_mode == 'fixture',
               'only invented five-role fixture is open')
@@ -190,7 +192,10 @@ def run_chain(*, expected_mode, join_root, expected_join_receipt_pin,
               'real_producer_executed': False, 'owned_producer_join_executed': False,
               'independent_s6_complete': False, 'formal_permission': False,
               'promotion_allowed': False, 'new_evaluations': 0,
-              'stage': 'preflight', 'identities': {}}
+              'stage': 'preflight', 'identities': {},
+              'profile_required': (candidate_set_path is not None or
+                                   expected_candidate_set_pin is not None),
+              'before_work_profile_enforcement': False}
     budget = None
     critical = None
     try:
@@ -198,16 +203,35 @@ def run_chain(*, expected_mode, join_root, expected_join_receipt_pin,
             target, budget_limits,
             publication_roots=(target / 'publication' / 'published',)).start()
         budget.checkpoint('preflight')
+        v.require((candidate_set_path is None) ==
+                  (expected_candidate_set_pin is None),
+                  'external candidate set path/pin pair')
+        candidates = None
+        if candidate_set_path is not None:
+            candidates = role_profiles.load_pinned_candidate_set(
+                candidate_set_path, expected_candidate_set_pin,
+                revision=expected_revision)
+            result['candidate_profile_set_pin'] = copy.deepcopy(expected_candidate_set_pin)
         result['selected_source_pins'] = _git_sources(expected_revision)
         archive_path, archive_pin, bound_pin, lineage = _external_archive(
             join_root, expected_join_receipt_pin)
         result['archive_lineage'] = lineage
         result['stage'] = 'producer'
         budget.checkpoint('producer')
+        producer_profile = None
+        if candidates is not None:
+            producer_profile = candidates['producer']
+            evidence._raw(observed._file(producer_profile['path'],
+                                         role_profiles.MAX_PROFILE),
+                          producer_profile['pin'], 'external producer profile changed')
         p = producer.join_with_evidence(archive_path, archive_pin,
             expected_revision=expected_revision, receipt_parent=target,
             receipt_name='producer', expected_bound_pin=bound_pin,
-            resource_budget=budget)
+            resource_budget=budget,
+            dependency_profile_raw=(None if producer_profile is None else
+                                    producer_profile['raw']),
+            expected_dependency_profile_pin=(None if producer_profile is None else
+                                             producer_profile['pin']))
         four._saved_result(target / 'producer', p, 'producer')
         result['producer'] = {'status': p['status'], 'result_pin': p['result_pin'],
                               'bound_pin': p.get('bound_pin'),
@@ -218,6 +242,11 @@ def run_chain(*, expected_mode, join_root, expected_join_receipt_pin,
         v.require(p['status'] == 'verified' and p['worker_exit_confirmed'] and
                   p['owned_producer_join_executed'] and not p['real_producer_executed'],
                   'owned producer join failed')
+        if producer_profile is not None:
+            evidence._same(p['dependency_profile_pin'], producer_profile['pin'],
+                           'producer profile result pin')
+            v.require(p['before_work_profile_enforcement'] is True,
+                      'producer before-work profile check')
         result['owned_producer_join_executed'] = True
         producer_identity = _producer_identity(target / 'producer', p)
         result['identities']['producer'] = producer_identity
@@ -226,7 +255,10 @@ def run_chain(*, expected_mode, join_root, expected_join_receipt_pin,
         budget.checkpoint('analysis')
         try:
             four._run_roles(target, files, expected_revision, result,
-                            resource_budget=budget)
+                            resource_budget=budget,
+                            role_profiles=(None if candidates is None else
+                                           {role: candidates[role] for role in
+                                            ('analysis', 'audit', 'writer', 'reader')}))
         finally:
             # The reusable four-role helper initializes its own identity map.
             result['identities'] = {'producer': producer_identity, **result['identities']}
@@ -239,6 +271,39 @@ def run_chain(*, expected_mode, join_root, expected_join_receipt_pin,
             four._pin_file(target / 'producer' / 'output' / 'projection' / name,
                            p['projection_pins'][name], four.analysis.INPUT_LIMITS[name])
         _check_five_identities(result)
+        if candidates is not None:
+            for role in role_profiles.ROLES:
+                evidence._raw(observed._file(candidates[role]['path'],
+                                             role_profiles.MAX_PROFILE),
+                              candidates[role]['pin'],
+                              role + ' external profile changed at postflight')
+            evidence._raw(observed._file(candidate_set_path,
+                                         role_profiles.MAX_RESULT),
+                          expected_candidate_set_pin,
+                          'external candidate set changed at postflight')
+            for role in ('analysis', 'audit'):
+                saved_role = v.strict_json(four._pin_file(
+                    target / role / 'result.json', result[role]['result_pin'],
+                    64 * 1024))
+                evidence._same(saved_role['dependency_profile_pin'],
+                               candidates[role]['pin'], role + ' profile result pin')
+                v.require(saved_role['before_work_profile_enforcement'] is True,
+                          role + ' before-work profile check')
+            publication_result = v.strict_json(four._pin_file(
+                target / 'publication' / 'result.json',
+                result['publication']['result_pin'], 64 * 1024))
+            for role in ('writer', 'reader'):
+                saved_role = v.strict_json(four._pin_file(
+                    target / 'publication' / role / 'result.json',
+                    observed._pin(io.json_bytes(publication_result[role])),
+                    64 * 1024))
+                evidence._same(saved_role, publication_result[role],
+                               role + ' embedded/saved result')
+                evidence._same(saved_role['dependency_profile_pin'],
+                               candidates[role]['pin'], role + ' profile result pin')
+                v.require(saved_role['before_work_profile_enforcement'] is True,
+                          role + ' before-work profile check')
+            result['before_work_profile_enforcement'] = True
         result['status'] = 'verified'
         result['stage'] = 'complete'
     except four.analysis.supervisor.UnreapedWorker as error:
@@ -297,15 +362,19 @@ def run_chain(*, expected_mode, join_root, expected_join_receipt_pin,
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
-    if len(argv) != 3:
-        raise SystemExit('usage: RECEIPT_NAME SAVED_JOIN_ROOT SAVED_JOIN_RECEIPT_SHA256')
-    name, join_root, digest = argv
+    if len(argv) not in (3, 6):
+        raise SystemExit('usage: RECEIPT_NAME SAVED_JOIN_ROOT SAVED_JOIN_RECEIPT_SHA256 '
+                         '[EXTERNAL_CANDIDATE_SET_PATH BYTES SHA256]')
+    name, join_root, digest = argv[:3]
     pin = observed._pin(observed._file(Path(join_root) / 'receipt.json', 32 * 1024))
     v.require(pin['sha256'] == digest, 'caller join receipt digest')
     revision = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'],
         text=True, timeout=10).strip()
     value = run_chain(expected_mode='fixture', join_root=join_root,
-        expected_join_receipt_pin=pin, expected_revision=revision, receipt_name=name)
+        expected_join_receipt_pin=pin, expected_revision=revision, receipt_name=name,
+        candidate_set_path=(None if len(argv) == 3 else argv[3]),
+        expected_candidate_set_pin=(None if len(argv) == 3 else
+                                    {'bytes': int(argv[4]), 'sha256': argv[5]}))
     print(io.json_bytes({'status': value['status'], 'stage': value['stage'],
                          'result_pin': value['result_pin'], 'check_directory': value['check_directory']}).decode())
     return 0 if value['status'] == 'verified' else 2

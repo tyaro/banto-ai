@@ -50,11 +50,11 @@ class FiveRoleFixtureTests(unittest.TestCase):
         self.parent = self.artifacts / 'five-role'
         self.join = self.artifacts / 'anomaly-v03-preformal-join-budget-fixture'
 
-    def call_chain(self):
+    def call_chain(self, **options):
         with patch.object(chain, 'ROOT', self.root):
             return chain.run_chain(expected_mode='fixture', join_root=self.join,
                 expected_join_receipt_pin=PIN, expected_revision=REVISION,
-                receipt_name='attempt', receipt_parent=self.parent)
+                receipt_name='attempt', receipt_parent=self.parent, **options)
 
     def test_closed_mode_rejected_before_receipt_io(self):
         with patch.object(chain.io, '_local_parent', side_effect=AssertionError('receipt IO')):
@@ -95,7 +95,8 @@ class FiveRoleFixtureTests(unittest.TestCase):
                     'real_producer_executed': False,
                     'projection_pins': {name: PIN for name in chain.four.INPUT_NAMES},
                     'bound_pin': PIN, 'stdout_pin': PIN}
-        def four_roles(target, files, revision, state, *, resource_budget=None):
+        def four_roles(target, files, revision, state, *, resource_budget=None,
+                       role_profiles=None):
             self.assertEqual(files, FILES)
             self.assertEqual(revision, REVISION)
             state['analysis'] = {'status': 'verified', 'result_pin': PIN}
@@ -127,6 +128,28 @@ class FiveRoleFixtureTests(unittest.TestCase):
         self.assertTrue(result['five_role_budget_closure_passed'])
         self.assertFalse(result['real_producer_executed'])
         self.assertFalse(result['formal_permission'])
+
+    def test_bad_external_candidate_set_fails_before_producer_with_receipt(self):
+        with patch.object(chain.chain_budget, 'PreformalChainBudget', FakeBudget), \
+             patch.object(chain.role_profiles, 'load_pinned_candidate_set',
+                          side_effect=ValueError('candidate set pin changed')) as load, \
+             patch.object(chain.producer, 'join_with_evidence',
+                          side_effect=AssertionError('producer launched')) as producer, \
+             patch.object(chain, '_external_archive',
+                          side_effect=AssertionError('archive read')):
+            result = self.call_chain(
+                candidate_set_path=self.artifacts / 'external' / 'candidate-set.json',
+                expected_candidate_set_pin=PIN)
+        self.assertEqual(load.call_count, 1)
+        self.assertEqual(producer.call_count, 0)
+        self.assertEqual(result['status'], 'failed')
+        self.assertEqual(result['stage'], 'preflight')
+        self.assertTrue(result['profile_required'])
+        self.assertFalse(result['before_work_profile_enforcement'])
+        self.assertFalse(result['formal_permission'])
+        self.assertEqual(chain.v.strict_json((self.parent / 'attempt' /
+                                              'result.json').read_bytes())['status'], 'failed')
+        self.assertFalse((self.parent / 'attempt' / 'producer').exists())
 
     def test_duplicate_process_identity_rejects_chain(self):
         state = {'identities': {name: identity(index) for index, name in

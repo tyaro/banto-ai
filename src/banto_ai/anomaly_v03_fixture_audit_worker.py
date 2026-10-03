@@ -118,12 +118,24 @@ def worker_main(argv):
         v.require(len(argv) == 3,'audit worker arguments')
         path = Path(argv[0]);pin = {'bytes':int(argv[1]),'sha256':argv[2]}
         bundle = v.strict_json(observed.consumer.pinned.read_pinned(path,pin,64*1024))
-        evidence._keys(bundle,'format invocation_id source request expected_output','audit invocation')
+        evidence._keys(bundle,'format invocation_id source request expected_output'+
+            (' dependency_profile_pin' if 'dependency_profile_pin' in bundle else ''),'audit invocation')
         evidence._same(bundle['format'],INVOCATION,'audit invocation format');evidence._digest(bundle['invocation_id'])
         evidence._source(bundle['source']);revision = bundle['source']['revision'];request = bundle['request']
         source_before = _source(revision);evidence._same(source_before,bundle['source'],'audit child source')
         creation = observed.creation_observation(os.getpid());runtime_before = observed._observed_runtime()
-        inputs,values = _load(request,revision);deps_before = dependencies.collect(ROOT)
+        inputs,values = _load(request,revision)
+        profile = None
+        if 'dependency_profile_pin' in bundle:
+            raw_profile = observed._file(path.parent/'dependency-profile.json',
+                                         dependencies.PROFILE_MAX)
+            profile = dependencies.load_five_role_profile(
+                raw_profile, bundle['dependency_profile_pin'], role='audit',
+                root=ROOT, revision=revision)
+        deps_before = dependencies.collect(ROOT)
+        if profile is not None:
+            dependencies.match_five_role_profile(profile, deps_before,
+                                                 runtime_before, phase='before')
         numeric.audit_primary_document(values['fixture/input.json'],values['fixture/document.json'])
         if request['operation'] == SLICE_OPERATION:
             slices.audit_slices(values['fixture/input.json'],values['fixture/slices.json'],values['fixture/document.json'])
@@ -132,6 +144,9 @@ def worker_main(argv):
         evidence._raw(output,bundle['expected_output'],'independent audit verdict differs')
         payload = path.parent/'payload';payload.mkdir();io._exclusive(payload/output_name,output)
         deps_after = dependencies.collect(ROOT);runtime_after = observed._observed_runtime();source_after = _source(revision)
+        if profile is not None:
+            dependencies.match_five_role_profile(profile, deps_after,
+                                                 runtime_after, phase='after')
         evidence._same({n:observed._pin(b) for n,b in observed._inputs(request['inputs']).items()},
                        {n:observed._pin(b) for n,b in inputs.items()},'audit input changed')
         evidence._raw(observed._file(path,64*1024),pin,'audit invocation changed')
@@ -146,18 +161,31 @@ def worker_main(argv):
         print(json.dumps({'status':'fixture_audit_rejected','detail':str(error),'formal_permission':False},sort_keys=True));return 2
 
 
-def audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_name, budget_limits=None, resource_budget=None):
+def audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_name,
+                        budget_limits=None, resource_budget=None,
+                        dependency_profile_raw=None,
+                        expected_dependency_profile_pin=None):
     """Audit one pinned prior fixture output. Never rerun the analysis worker."""
     _request(request);evidence._digest(expected_revision,40);request = copy.deepcopy(request)
+    v.require((dependency_profile_raw is None) ==
+              (expected_dependency_profile_pin is None), 'audit profile raw/pin pair')
+    profile = None
+    if dependency_profile_raw is not None:
+        profile = dependencies.load_five_role_profile(
+            dependency_profile_raw, expected_dependency_profile_pin,
+            role='audit', root=ROOT, revision=expected_revision)
     budget_limits = budgets.limits(budget_limits)
     parent = io._local_parent(Path(receipt_parent));v.safe_relative_path(receipt_name)
     v.require('/' not in receipt_name and not receipt_name.casefold().startswith('anomaly-multiseed-v0'),'audit receipt name')
     target = io.regular_path(parent/receipt_name,directory=True,missing=True)
     v.require(not any(observed.reader._overlap(target,p) for p in (ROOT/'src',*(Path(r['path']).parent for r in request['inputs'].values()))),'audit receipt overlaps inputs/source')
     target.mkdir()
+    if profile is not None:
+        io._exclusive(target/'dependency-profile.json', dependency_profile_raw)
     budget = budgets.FixtureBudget(target,budget_limits,upstream=resource_budget)
     result = {**numeric.CLOSED,'format':'anomaly-v03-fixture-audit-check-v1','status':'failed','mode':'fixture','role':'audit',
-        'operation':request['operation'],'fixture_numerical_audit_performed':False,'worker_exit_confirmed':False,'worker_pid':None,'new_evaluations':0}
+        'operation':request['operation'],'fixture_numerical_audit_performed':False,'worker_exit_confirmed':False,'worker_pid':None,'new_evaluations':0,
+        'profile_required':profile is not None,'before_work_profile_enforcement':False}
     if request['operation'] == SLICE_OPERATION:result['fixture_slice_audit_performed'] = False
     try:
         budget.start()
@@ -169,6 +197,8 @@ def audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
         output_name = _output_name(request)
         output = v.canonical_json(_success_summary(request,values));output_pin = observed._pin(output)
         bundle = {'format':INVOCATION,'invocation_id':secrets.token_hex(32),'source':source,'request':request,'expected_output':output_pin}
+        if profile is not None:
+            bundle['dependency_profile_pin'] = copy.deepcopy(expected_dependency_profile_pin)
         bundle_raw = io.json_bytes(bundle);bundle_pin = observed._pin(bundle_raw);path = target/'invocation.json';io._exclusive(path,bundle_raw)
         expected = {'invocation_id':bundle['invocation_id'],'source':source,'runtime':runtime,'inputs':{n:observed._pin(b) for n,b in inputs.items()},
                     'outputs':{'fixture/'+output_name:output_pin}}
@@ -181,6 +211,11 @@ def audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
             evidence._same({n:observed._pin(b) for n,b in observed._inputs(request['inputs']).items()},expected['inputs'],'parent audit inputs changed')
             evidence._raw(observed._file(path,64*1024),bundle_pin,'audit invocation changed')
             current,_ = observed._expected_runtime();evidence._same(current,runtime,'audit runtime changed')
+            if profile is not None:
+                evidence._raw(observed._file(target/'dependency-profile.json',
+                                             dependencies.PROFILE_MAX),
+                              expected_dependency_profile_pin,
+                              'audit profile changed')
         def started(process):
             launch.update(observed.creation_observation(process.pid,process._handle))
             expected['process'] = {'pid':process.pid,'parent_pid':os.getpid(),'start_token':launch['start_token'],'argv':list(argv),'cwd':str(ROOT)}
@@ -205,6 +240,15 @@ def audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
                 expected=expected,source_snapshots=source_bytes,runtime_snapshots=runtime_bytes,input_snapshots=inputs,
                 output_snapshots={'fixture/'+output_name:actual})
             supplement = dependencies.verify_pair(reply['dependencies_before'],reply['dependencies_after'],root=ROOT,revision=expected_revision,git=git,required_sources=SOURCE_FILES)
+            if profile is not None:
+                for phase in ('before', 'after'):
+                    dependencies.match_five_role_profile(
+                        profile, reply['dependencies_' + phase],
+                        reply['evidence']['runtime_' + phase], phase=phase)
+                evidence._raw(observed._file(target/'dependency-profile.json',
+                                             dependencies.PROFILE_MAX),
+                              expected_dependency_profile_pin,
+                              'audit profile changed')
             budget.checkpoint()
             io._exclusive(target/'evidence.json',record);observed._save(target/'binding.json',binding)
             observed._save(target/'dependencies.json',{'before':reply['dependencies_before'],'after':reply['dependencies_after']})
@@ -212,6 +256,9 @@ def audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
             result.update(status='verified',reason=None,fixture_numerical_audit_performed=True,analysis_reference=request['analysis_reference'],
                 evidence_pin=record_pin,audit_pin=output_pin,invocation_pin=bundle_pin,selected_source_files=len(SOURCE_FILES),
                 runtime_files=2,retained_input_files=len(request['inputs']),dependency_observation=supplement,parent_and_child_creation_matched=True)
+            if profile is not None:
+                result['dependency_profile_pin'] = copy.deepcopy(expected_dependency_profile_pin)
+                result['before_work_profile_enforcement'] = True
             if request['operation'] == SLICE_OPERATION:result['fixture_slice_audit_performed'] = True
     except supervisor.UnreapedWorker as error:
         try:

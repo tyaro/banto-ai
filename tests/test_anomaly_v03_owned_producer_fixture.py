@@ -112,6 +112,35 @@ class OwnedProducerFixtureTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 git('show', 'a' * 40 + ':../outside.py')
 
+    def test_profile_mismatch_rejects_child_before_archive_read(self):
+        with tempfile.TemporaryDirectory(dir=owned.ROOT / 'artifacts') as temporary:
+            root = Path(temporary)
+            output = root / 'output'
+            output.mkdir()
+            archive_path = root / 'invented.zip'
+            invocation = {'output_root': str(output), 'source_revision': 'a' * 40,
+                          'archive_path': str(archive_path),
+                          'dependency_profile_pin': owned._pin(b'{}')}
+            def file_read(path, maximum):
+                self.assertNotEqual(Path(path), archive_path,
+                                    'archive read before profile mismatch')
+                return b'{}'
+            with patch.object(owned, '_load_invocation', return_value=invocation), \
+                 patch.object(owned, '_sources', return_value={}), \
+                 patch.object(owned.runtime, 'probe_runtime', return_value={}), \
+                 patch.object(owned.observed, 'creation_observation', return_value={}), \
+                 patch.object(owned.observed, '_file', side_effect=file_read), \
+                 patch.object(owned.dependencies, 'load_five_role_profile', return_value={}), \
+                 patch.object(owned.dependencies, 'collect', return_value={}), \
+                 patch.object(owned.dependencies, 'match_five_role_profile',
+                              side_effect=ValueError('before profile mismatch')) as match:
+                exit_code = owned.worker_main([str(root / 'invocation.json'), '2',
+                                               owned._pin(b'{}')['sha256']])
+            self.assertEqual(exit_code, 2)
+            self.assertEqual(match.call_count, 1)
+            self.assertFalse(archive_path.exists())
+            self.assertFalse((output / 'bound.json').exists())
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -212,6 +212,32 @@ class FixturePublicationTests(unittest.TestCase):
         self.assertEqual(call.call_count,1);self.assertEqual(result['status'],'failed');self.assertEqual(result['publication_status'],'unconfirmed')
         self.assertTrue((self.receipts/'chain/published/.complete').is_file());self.assertFalse((self.receipts/'chain/reader').exists())
 
+    def test_profile_after_failure_keeps_marker_but_not_success_claim(self):
+        def after_mismatch(role, request, target, publication, revision,
+                           budget, files, inputs, source_context, profile):
+            self.assertEqual(role, 'writer')
+            self.assertEqual(profile, {'invented': 'pinned-candidate'})
+            flow.io.publish_local_result(publication.parent, publication.name,
+                                         files, verify_semantics=flow._semantic(files))
+            raise ValueError('writer after profile mismatch')
+        candidates = {'writer': {'invented': 'pinned-candidate'},
+                      'reader': {'invented': 'pinned-candidate'}}
+        with patch.object(flow, '_git_sources', return_value=({}, {}, object())), \
+             patch.object(flow, '_cached_git', return_value=None), \
+             patch.object(flow, '_run_role', side_effect=after_mismatch) as launched:
+            result = self.run_flow(dependency_profiles=candidates)
+        self.assertEqual(launched.call_count, 1)
+        self.assertEqual(result['status'], 'failed')
+        self.assertEqual(result['publication_status'], 'unconfirmed')
+        self.assertEqual(result['reader_status'], 'not_started')
+        self.assertTrue(result['profile_required'])
+        self.assertFalse(result['before_work_profile_enforcement'])
+        self.assertFalse(result['formal_permission'])
+        self.assertFalse(result['source_closure_complete'])
+        self.assertFalse(result['runtime_closure_complete'])
+        self.assertTrue((self.receipts/'chain/published/.complete').is_file())
+        self.assertFalse((self.receipts/'chain/reader').exists())
+
     def test_changed_writer_observation_cannot_be_retained_as_a_successful_receipt(self):
         for name in ('supervision.json','worker/report.json','dependencies.json'):
             with self.subTest(name=name):

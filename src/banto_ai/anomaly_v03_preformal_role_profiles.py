@@ -216,6 +216,8 @@ def _require_reference_top(reference, top, budget, publication,
         v.require(top[key] is False, 'reference formal boundary ' + key)
     v.require(top['new_evaluations'] == 0 and
               set(top['identities']) == set(ROLES) and
+              top.get('profile_required') is not True and
+              top.get('before_work_profile_enforcement') is not True and
               not any(key in top for key in ('dependency_profile_set_pin',
                                               'profile_set_pin', 'role_profiles')),
               'unprofiled five-role reference required')
@@ -464,3 +466,93 @@ def prepare_profiles(reference_root, expected_result_pin, *, output_root,
             'candidate_set_pin': index_pin, 'role_profiles': role_pins,
             'source_revision': revision, 'formal_permission': False,
             'source_closure_complete': False, 'runtime_closure_complete': False}
+
+
+def load_pinned_candidate_set(path, expected_pin, *, revision):
+    """Preflight five external candidates before any invented role is launched.
+
+    The pin is supplied by the caller, never calculated from the candidate set.
+    Historical reference pins are provenance, not permission or runtime closure.
+    """
+    evidence._pin(expected_pin)
+    evidence._digest(revision, 40)
+    _head_clean(revision)
+    path = Path(path)
+    v.require(path.is_absolute() and path.name == 'candidate-set.json' and
+              path.parent.parent == PROFILE_PARENT,
+              'known external candidate set required')
+    _, index = _read(path, MAX_RESULT, pin=expected_pin)
+    evidence._keys(index, 'format status acceptance source_revision root '
+                   'reference_root reference_result_pin roles scope formal_permission '
+                   'registered_data_read source_closure_complete runtime_closure_complete '
+                   'execution_authenticated promotion_allowed',
+                   'five-role candidate set fields')
+    reference = Path(index['reference_root'])
+    v.require(index['format'] == SET_FORMAT and
+              index['status'] == 'candidate_profiles_prepared' and
+              index['acceptance'] == 'candidate-not-accepted' and
+              index['source_revision'] == revision and index['root'] == str(ROOT) and
+              reference.is_absolute() and reference.parent == REFERENCE_PARENT and
+              index['scope'] == dependencies.SCOPE and
+              all(index[key] is False for key in
+                  ('formal_permission', 'registered_data_read',
+                   'source_closure_complete', 'runtime_closure_complete',
+                   'execution_authenticated', 'promotion_allowed')) and
+              type(index['roles']) is dict and set(index['roles']) == set(ROLES),
+              'five-role candidate set identity/scope')
+    evidence._pin(index['reference_result_pin'])
+    roles = {}
+    external_role_pins = {}
+    for role in ROLES:
+        row = index['roles'][role]
+        evidence._keys(row, 'path pin', role + ' candidate set row')
+        evidence._pin(row['pin'])
+        role_path = Path(row['path'])
+        v.require(role_path == path.parent / (role + '.json'),
+                  role + ' external candidate path')
+        raw, _ = _read(role_path, MAX_PROFILE, pin=row['pin'])
+        profile = dependencies.load_five_role_profile(
+            raw, row['pin'], role=role, root=ROOT, revision=revision)
+        v.require(profile['reference_root'] == str(reference),
+                  role + ' candidate reference root')
+        _same(profile['reference']['top_result_pin'], index['reference_result_pin'],
+              role + ' candidate reference result pin')
+        for pin in profile['reference'].values():
+            evidence._pin(pin)
+        external_role_pins[role] = {
+            'result': profile['reference']['result_pin'],
+            'supervision': profile['reference']['supervision_pin'],
+            'stdout': profile['reference']['stdout_pin'],
+            'dependencies': profile['reference']['dependency_pin'],
+            'crosscheck': profile['reference']['crosscheck_pin']}
+        roles[role] = {'path': role_path, 'pin': copy.deepcopy(row['pin']),
+                       'profile': profile, 'raw': raw}
+    _, top = _read(reference / 'result.json', MAX_RESULT,
+                   pin=index['reference_result_pin'])
+    _, budget = _read(reference / 'resource-budget.json', MAX_RESULT,
+                      pin=top['resource_budget_pin'])
+    _, publication = _read(reference / 'publication' / 'result.json', MAX_RESULT,
+                           pin=top['publication']['result_pin'])
+    result_pins = _require_reference_top(reference, top, budget, publication,
+                                         external_role_pins)
+    for role in ROLES:
+        profile = roles[role]['profile']
+        runtime, pair, pins = _role_observation(
+            reference, role, external_role_pins[role], result_pins[role],
+            top, budget, revision, index['reference_result_pin'])
+        _same(profile['runtime'], runtime, role + ' pinned reference runtime')
+        _same(profile['snapshots'], pair, role + ' pinned reference dependencies')
+        _same(profile['reference'], pins, role + ' pinned reference file set')
+        if role == 'producer':
+            current_runtime = platform_runtime.probe_runtime(ROOT)
+        else:
+            with publication_platform._platform_scope():
+                current_runtime = observed._expected_runtime()[0]
+        _same(profile['runtime'], current_runtime, role + ' current runtime')
+    _head_clean(revision)
+    for role in ROLES:
+        evidence._raw(observed._file(roles[role]['path'], MAX_PROFILE),
+                      roles[role]['pin'], role + ' external profile changed during preflight')
+    evidence._raw(observed._file(path, MAX_RESULT), expected_pin,
+                  'external candidate set changed during preflight')
+    return roles

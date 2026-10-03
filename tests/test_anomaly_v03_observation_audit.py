@@ -52,7 +52,8 @@ class ConnectedAuditTests(unittest.TestCase):
                 {'evaluation_id': i['evaluation_id'], 'status': 'success'} for i in self.identities]}}
         self.evidence = {'run_root': str(self.run), 'files': self.files,
             'journal_state': {'plan_sha256': self.plan_hash, 'next_unverified_chunk': None,
-                'chunks': [self.chunk]+[None]*119}}
+                'chunks': [self.chunk]+[{'chunk_index': i, 'status': 'verified_complete'}
+                                       for i in range(1, 120)]}}
         self.results = []
         for identity in self.identities:
             directory = self.stem+'/result/payload/datasets/'+identity['dataset_id']+'/'
@@ -211,6 +212,13 @@ class ConnectedAuditTests(unittest.TestCase):
         self.chunk['attempts'].append({'attempt': 3, 'status': 'failed'})
         self.seal()
         with self.assertRaisesRegex(ValueError, 'final attempt'):
+            self.call()
+        self.numeric.assert_not_called()
+
+    def test_completed_reader_rejects_missing_other_chunk_inventory(self):
+        self.evidence['journal_state']['chunks'][1] = None
+        self.seal()
+        with self.assertRaisesRegex(ValueError, 'complete chunk inventory'):
             self.call()
         self.numeric.assert_not_called()
 
