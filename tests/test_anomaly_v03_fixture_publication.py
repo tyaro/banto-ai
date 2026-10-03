@@ -1,5 +1,6 @@
 """Invented saved receipts, real owned publication/readback, and fail-closed boundaries."""
 import copy
+from contextlib import nullcontext
 import json
 import os
 from pathlib import Path
@@ -44,6 +45,56 @@ def example():
         'audit_pin':flow.observed._pin(files['audit/verdict.json']),'evidence_pin':flow.observed._pin(files['audit/evidence.json'])}
     files['audit/result.json'] = flow.io.json_bytes(b)
     return files,ar,{'result_pin':flow.observed._pin(files['audit/result.json']),'evidence_pin':b['evidence_pin'],'source_revision':hand.REVISION}
+
+
+class RoleObservationPinTests(unittest.TestCase):
+    """Saved observation anchors need no native runtime or owned process."""
+
+    def setUp(self):
+        temp = tempfile.TemporaryDirectory(prefix='banto-role-anchor-');self.addCleanup(temp.cleanup)
+        self.root = Path(temp.name).resolve()
+
+    def saved_observations(self,name):
+        target = self.root/name;target.mkdir();(target/'worker').mkdir()
+        report = b'{"invented_report":true}\n'
+        (target/'worker/report.json').write_bytes(report)
+        monitor = {'status':'complete','output':flow.observed._pin(report)}
+        flow.observed._save(target/'supervision.json',monitor)
+        pair = {'before':{'invented':['source']},'after':{'invented':['source']}}
+        return target,monitor,pair
+
+    def test_writer_and_reader_pin_parent_values_to_saved_bytes(self):
+        for role in ('writer','reader'):
+            with self.subTest(role=role):
+                target,monitor,pair = self.saved_observations(role)
+                pins = flow._retain_role_observation_pins(role,target,monitor,pair)
+                self.assertEqual(set(pins),{'dependency_pin','stdout_pin','supervision_pin'})
+                for field,name in (('dependency_pin','dependencies.json'),('stdout_pin','worker/report.json'),
+                                   ('supervision_pin','supervision.json')):
+                    self.assertEqual(pins[field],flow.observed._pin((target/name).read_bytes()))
+                self.assertEqual(pins['stdout_pin'],monitor['output'])
+
+    def test_saved_copy_change_is_rejected_for_each_anchor(self):
+        for name in ('supervision.json','worker/report.json','dependencies.json'):
+            with self.subTest(name=name):
+                target,monitor,pair = self.saved_observations(name.replace('/','-'))
+                if name == 'dependencies.json':
+                    original = flow.observed._save
+                    def changed(path,value):
+                        original(path,value)
+                        if Path(path) == target/'dependencies.json':Path(path).write_bytes(b'{}\n')
+                    context = patch.object(flow.observed,'_save',side_effect=changed)
+                else:
+                    (target/name).write_bytes(b'{}\n')
+                    context = nullcontext()
+                with context,self.assertRaisesRegex(ValueError,'retained writer '+name+' changed'):
+                    flow._retain_role_observation_pins('writer',target,monitor,pair)
+
+    def test_other_role_is_rejected_before_saving_dependencies(self):
+        target,monitor,pair = self.saved_observations('other-role')
+        with self.assertRaisesRegex(ValueError,'publication role'):
+            flow._retain_role_observation_pins('analysis',target,monitor,pair)
+        self.assertFalse((target/'dependencies.json').exists())
 
 
 @unittest.skipUnless(os.name == 'nt' and sys.version_info[:2] == (3,14),'Windows CPython 3.14 observation')

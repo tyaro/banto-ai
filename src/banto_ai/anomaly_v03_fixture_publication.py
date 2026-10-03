@@ -215,6 +215,20 @@ def worker_main(argv):
         print(json.dumps({'status':'fixture_publication_rejected','detail':str(error),'formal_permission':False},sort_keys=True));return 2
 
 
+def _retain_role_observation_pins(role,target,monitor,dependency_pair):
+    """Pin parent-held observations, then reject changed saved copies."""
+    v.require(role in ('writer','reader'),'publication role')
+    stdout_pin = dict(monitor['output']);evidence._pin(stdout_pin)
+    supervision_pin = observed._pin(io.json_bytes(monitor))
+    dependency_pin = observed._pin(io.json_bytes(dependency_pair))
+    observed._save(target/'dependencies.json',dependency_pair)
+    for name,saved_pin,maximum in (('supervision.json',supervision_pin,64*1024),
+                                   ('worker/report.json',stdout_pin,LIMITS['output_bytes']),
+                                   ('dependencies.json',dependency_pin,LIMITS['output_bytes'])):
+        evidence._raw(observed._file(target/name,maximum),saved_pin,'retained '+role+' '+name+' changed')
+    return {'dependency_pin':dependency_pin,'stdout_pin':stdout_pin,'supervision_pin':supervision_pin}
+
+
 def _run_role(role,request,target,publication,revision,budget,files,inputs,source_context):
     target.mkdir();source,source_bytes,git = source_context
     budget.checkpoint()
@@ -247,7 +261,6 @@ def _run_role(role,request,target,publication,revision,budget,files,inputs,sourc
     except supervisor.UnreapedWorker as error:
         try:observed._save(target/'supervision.json',error.report)
         finally:raise error
-    supervision_pin = observed._pin(io.json_bytes(monitor))
     observed._save(target/'supervision.json',monitor)
     v.require(monitor['status'] == 'complete' and monitor['worker_exit_confirmed'] and monitor['exit_code'] == 0
         and not monitor['observation_errors'],'owned '+role+' did not complete')
@@ -265,17 +278,11 @@ def _run_role(role,request,target,publication,revision,budget,files,inputs,sourc
     supplement = dependencies.verify_pair(reply['dependencies_before'],reply['dependencies_after'],root=ROOT,revision=revision,git=git,required_sources=SOURCE_FILES)
     budget.checkpoint();io._exclusive(target/'evidence.json',record);observed._save(target/'binding.json',binding)
     dependency_pair = {'before':reply['dependencies_before'],'after':reply['dependencies_after']}
-    dependency_pin = observed._pin(io.json_bytes(dependency_pair))
-    observed._save(target/'dependencies.json',dependency_pair)
+    observation_pins = _retain_role_observation_pins(role,target,monitor,dependency_pair)
     observed._save(target/'dependency-crosscheck.json',supplement)
-    for name,saved_pin,maximum in (('supervision.json',supervision_pin,64*1024),
-                                   ('worker/report.json',monitor['output'],LIMITS['output_bytes']),
-                                   ('dependencies.json',dependency_pin,LIMITS['output_bytes'])):
-        evidence._raw(observed._file(target/name,maximum),saved_pin,'retained '+role+' '+name+' changed')
     receipt = {'status':'verified','role':role,'worker_pid':monitor['worker_pid'],'worker_exit_confirmed':True,
         'evidence_pin':record_pin,'invocation_pin':pin,'binding_pin':observed._pin(io.json_bytes(binding)),
-        'source_revision':revision,'dependency_observation':supplement,
-        'dependency_pin':dependency_pin,'stdout_pin':dict(monitor['output']),'supervision_pin':supervision_pin}
+        'source_revision':revision,'dependency_observation':supplement,**observation_pins}
     observed._save(target/'result.json',receipt)
     return receipt
 
