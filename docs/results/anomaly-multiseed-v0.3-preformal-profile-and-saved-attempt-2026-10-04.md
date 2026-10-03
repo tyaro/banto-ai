@@ -111,6 +111,12 @@ trial-03の独立postcheckでも11出力file、外部producerのresult/bound/４
 
 受入は、子のPID/開始token/終了・回収、source/runtime前後、保存４制御fileと18 payloadの完全在庫・全外部pin、最新attemptの選択を親が確認してから、現行の別所有readerで観測→profile/score→ledger→主/sliceを再導出すること。制御fileを親から供給する場合は入力pinと生成**出力**pinを区別し、receipt/report内のhash主張も生成物に結び直す。pin欠落・誤pin、レシピ変更、余分なfile、最新失敗attempt、子の時間超過、reader失敗を成功へ変えない焦点試験と、clean revisionの別root native１試行を要する。現行fixtureの架空source名を実際の生成・採点sourceの選択証拠へ改める一方、完全source/runtime閉包を証明した扱いにはしない。既存fixtureの総量126,317,406 Bは128 MiB上限に近いため、生成時の最大file、合計bytes、保持memoryを先に測る。
 
+### 手作り系列による生成の実現性試験
+
+clean `58ca05a`（source treeは`94be9ed`と同じ）で、登録seedの`normal_stream`/`materialize_pair`を呼ばず、固定した５信号×18,000座標の手作り正常系列を`_build_pair`へ渡した。２層のdatasetを保存bytesとして扱い、`compute_evaluation`で架空６評価を計算し、純粋な登録契約・score監査と既存保存readerを通した。[成功result](../../artifacts/anomaly-v03-preformal-registered-attempt-gded7/result.json)は3,044 B / SHA256 `cef018bc7fd9d01744076cacbd4ed1db30d80836b479598089d367cfbc69713a`。22 fileは131,143,089 Bで128 MiB上限まで3,074,639 B、最大単fileは24,794,427 B。６評価はいずれもinconclusive、readerは`latest_chunk_saved_bytes_bound`かつ観測→score再導出true。全体216.656秒/764標本、private最大432,431,104 B、OS peak pagefile 449,949,696 B。別の独立raw走査で22 fileの完全在庫とreport内の18 payload pin・３制御pinに不一致0件を確認した。
+
+[先行失敗result](../../artifacts/anomaly-v03-preformal-registered-attempt-hand-normal-probe-e2ddb044/result.json)は3,802 B / SHA256 `e41e0c66feb8ba421ea57082f1118b7afee160048f8c503356d6359dbb513bbd`。同じ純粋契約を通した後、最長266文字のWindows物理pathで`FileNotFoundError`となり、別readerは未実行。部分保存14 file/64,983,744 Bを保持した。成功rootの最長pathは245文字であり、次の所有生成子は対象rootと全出力pathを起動前に照合する。この２試行は**単一Python process**内で生成・読取りを行った実現性確認であり、全工程inline scriptは保存していない。版付きの再現手順、所有子exit/reap、独立した起動前外部出力pin、全source/runtime閉包、正式同形の共通予算がなお必要である。`registered_seed_consumed=false`、実登録観測の読取りfalse、正式credit 0、S4/S5/S6未開始を維持する。
+
 ### 共通外側予算への接続順
 
 現行[５役予算](../../src/banto_ai/anomaly_v03_preformal_chain_budget.py)は５役・240秒・48 MiBに限定され、保存形式２役のコピー前入力と出力はそれぞれ126,317,406 B（約120.5 MiB）ある。[保存形式２役](../../src/banto_ai/anomaly_v03_preformal_owned_saved_attempt.py)、[５役](../../src/banto_ai/anomaly_v03_platform_five_role_fixture.py)、[50,000 draw接続](../../src/banto_ai/anomaly_v03_preformal_bound_draw_bridge.py)は別々のrootと外側監視を所有する。[下位予算の祖先接続](../../src/banto_ai/_anomaly_v03_fixture_budget.py)を利用できても、現公開入口を直列に呼ぶだけでは同一予算・同一入力系譜にならない。新しい版付き外側監視と各工程のcaller所有target/budget入口を作り、保存形式２役の子監督へ停止probeを伝え、終了・回収後だけ次工程を起動する。別rootの事前作成入力は外部pinで固定し、その準備時間・容量を共通測定に入れないなら明記する。
