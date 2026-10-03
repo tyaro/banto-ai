@@ -103,6 +103,22 @@ class PreformalChainBudgetTests(unittest.TestCase):
         self.assertEqual(report['receipt_reserve_bytes'], 128 * 1024)
         self.assertFalse(report['passed'])
 
+    def test_final_receipt_entries_are_within_inventory_cap(self):
+        almost_full = outer.DEFAULTS['directory_entries'] - 1
+        with patch.object(outer.primitives, 'system_snapshot', side_effect=system_snapshot), \
+             patch.object(outer.primitives, 'directory_snapshot', return_value={
+                 'directory_bytes': 0, 'directory_entries': almost_full}), \
+             patch.object(outer, '_max_depth', return_value=4):
+            budget = outer.PreformalChainBudget(self.root).start()
+            try:
+                with self.assertRaisesRegex(outer.resources.ResourceStop,
+                                            'pipeline_inventory_limit'):
+                    budget.checkpoint('preflight')
+            finally:
+                report = budget.close()
+        self.assertEqual(report['receipt_reserve_entries'], 2)
+        self.assertFalse(report['passed'])
+
 
 if __name__ == '__main__':
     unittest.main()

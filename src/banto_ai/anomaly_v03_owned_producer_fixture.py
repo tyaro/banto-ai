@@ -2,8 +2,8 @@
 
 The external archive is a retained fixture declaration, not a registered
 observation or evidence that an evaluation ran.  This owns one child that
-joins those bytes and projects one numerical analysis input.  Selected source
-and two Python binary checks are deliberately short of S4 dependency closure.
+joins those bytes and projects one numerical analysis input.  Selected source,
+Python binary checks, and observed dependencies remain short of S4 closure.
 """
 from __future__ import annotations
 
@@ -25,6 +25,7 @@ from . import anomaly_v03_producer_input_fixture as primary
 from . import anomaly_v03_producer_slice_fixture as slices
 from . import anomaly_v03_process_supervisor as supervisor
 from . import anomaly_v03_reader_evidence as observed
+from . import _anomaly_v03_reader_dependencies as dependencies
 from . import _anomaly_v03_fixture_budget as budgets
 from . import _anomaly_v03_io as io
 
@@ -45,6 +46,7 @@ SOURCE_FILES = (
     'src/banto_ai/anomaly_v03_platform_fixture.py',
     'src/banto_ai/anomaly_v03_platform_fixture_runtime.py',
     'src/banto_ai/anomaly_v03_process_supervisor.py',
+    'src/banto_ai/_anomaly_v03_reader_dependencies.py',
     'src/banto_ai/_anomaly_v03_fixture_budget.py',
 )
 BOOTSTRAP = ('import sys;sys.path.insert(0,sys.argv.pop(1));'
@@ -82,6 +84,44 @@ def _git_sources(revision):
                                       stderr=subprocess.DEVNULL, timeout=10)
         _same(_pin(raw), row['pin'], 'selected working/Git raw source')
     return value
+
+
+def _dependency_git(revision):
+    """Read only bounded, revision-pinned project blobs for the disk crosscheck."""
+    cache = {}
+
+    def git(*args):
+        primary.v.require(len(args) == 2 and args[0] == 'show' and
+                          type(args[1]) is str and args[1].startswith(revision + ':'),
+                          'producer dependency Git request')
+        name = args[1][len(revision) + 1:]
+        primary.v.safe_relative_path(name)
+        primary.v.require(name.startswith('src/'), 'producer dependency Git source')
+        if name not in cache:
+            raw = subprocess.check_output(['git', '-C', str(ROOT), 'show',
+                                           revision + ':' + name],
+                                          stderr=subprocess.DEVNULL, timeout=10)
+            primary.v.require(len(raw) <= dependencies.MAX_FILE,
+                              'producer dependency Git blob limit')
+            cache[name] = raw
+        return cache[name]
+
+    return git
+
+
+def _retain_dependencies(target, before, after, revision):
+    """Crosscheck a child inventory after exit, then pin both retained records."""
+    crosscheck = dependencies.verify_pair(
+        before, after, root=ROOT, revision=revision,
+        git=_dependency_git(revision), required_sources=SOURCE_FILES)
+    pair_raw = primary.v.canonical_json({'before': before, 'after': after})
+    crosscheck_raw = primary.v.canonical_json(crosscheck)
+    for name, raw in (('dependencies.json', pair_raw),
+                      ('dependency-crosscheck.json', crosscheck_raw)):
+        io._exclusive(target / name, raw)
+        _same(_pin(observed._file(target / name, LIMITS['output_bytes'])),
+              _pin(raw), 'retained producer ' + name)
+    return _pin(pair_raw), crosscheck
 
 
 def _decode_archive(raw, expected_counts):
@@ -190,6 +230,7 @@ def worker_main(argv):
         source_before = _sources(invocation['source_revision'])
         runtime_before = runtime.probe_runtime(ROOT)
         process = observed.creation_observation(os.getpid())
+        dependencies_before = dependencies.collect(ROOT)
         archive_raw = observed._file(invocation['archive_path'], ARCHIVE_MAX)
         _same(_pin(archive_raw), invocation['archive_pin'], 'producer external archive pin')
         case = _archive_case(archive_raw)
@@ -220,6 +261,7 @@ def worker_main(argv):
                           'projected producer inventory')
         runtime_after = runtime.probe_runtime(ROOT)
         source_after = _sources(invocation['source_revision'])
+        dependencies_after = dependencies.collect(ROOT)
         _same(runtime_after, runtime_before, 'producer child runtime changed')
         _same(source_after, source_before, 'producer child selected source changed')
         _same(source_after, invocation['source'], 'producer selected source expectation')
@@ -233,6 +275,8 @@ def worker_main(argv):
                   'bound_pin': bound_pin, 'projection_pins': pins,
                   'source_before': source_before, 'source_after': source_after,
                   'runtime_before': runtime_before, 'runtime_after': runtime_after,
+                  'dependencies_before': dependencies_before,
+                  'dependencies_after': dependencies_after,
                   'joined_slices': 2880, 'projected_draws': 1,
                   'new_evaluations': 0, 'registered_data_read': False,
                   'real_producer_executed': False, 'formal_permission': False}
@@ -355,6 +399,9 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
                               reply['real_producer_executed'] is False and
                               reply['formal_permission'] is False,
                               'producer child fixture scope')
+            dependency_pin, dependency_observation = _retain_dependencies(
+                target, reply['dependencies_before'], reply['dependencies_after'],
+                expected_revision)
             bound_raw = observed._file(output / 'bound.json', 8 * 1024**2)
             bound_pin = _pin(bound_raw)
             _same(bound_pin, reply['bound_pin'], 'producer bound output pin')
@@ -382,6 +429,8 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
                          bound_path=str(output / 'bound.json'), bound_pin=bound_pin,
                          projection_root=str(output / 'projection'),
                          projection_pins=pins, stdout_pin=monitor['output'],
+                         dependency_pin=dependency_pin,
+                         dependency_observation=dependency_observation,
                          selected_source_files=len(SOURCE_FILES))
     except supervisor.UnreapedWorker:
         raise

@@ -74,6 +74,44 @@ class OwnedProducerFixtureTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'producer exact output inventory'):
                 owned._require_output_inventory(output)
 
+    def test_dependency_crosscheck_rejects_before_retaining_a_receipt(self):
+        with tempfile.TemporaryDirectory(dir=owned.ROOT / 'artifacts') as temporary:
+            target = Path(temporary)
+            with patch.object(owned.dependencies, 'verify_pair',
+                              side_effect=ValueError('parent dependency disk mismatch')):
+                with self.assertRaisesRegex(ValueError, 'parent dependency disk mismatch'):
+                    owned._retain_dependencies(target, {'before': 1}, {'after': 2},
+                                               'a' * 40)
+            self.assertFalse((target / 'dependencies.json').exists())
+            self.assertFalse((target / 'dependency-crosscheck.json').exists())
+
+    def test_dependency_receipts_are_pinned_after_parent_crosscheck(self):
+        before, after = {'phase': 'before'}, {'phase': 'after'}
+        crosscheck = {'status': 'observed_dependencies_disk_git_matched',
+                      'source_closure_complete': False,
+                      'runtime_closure_complete': False,
+                      'formal_permission': False}
+        with tempfile.TemporaryDirectory(dir=owned.ROOT / 'artifacts') as temporary:
+            target = Path(temporary)
+            with patch.object(owned.dependencies, 'verify_pair', return_value=crosscheck) as verify:
+                pin, observation = owned._retain_dependencies(target, before, after,
+                                                               'a' * 40)
+            self.assertEqual(pin, owned._pin((target / 'dependencies.json').read_bytes()))
+            self.assertEqual(observation, crosscheck)
+            self.assertEqual(owned.primary.v.strict_json(
+                (target / 'dependency-crosscheck.json').read_bytes()), crosscheck)
+            self.assertEqual(verify.call_args.kwargs['required_sources'],
+                             owned.SOURCE_FILES)
+
+    def test_dependency_git_reader_rejects_unpinned_or_parent_paths(self):
+        git = owned._dependency_git('a' * 40)
+        with patch.object(owned.subprocess, 'check_output',
+                          side_effect=AssertionError('Git should not be invoked')):
+            with self.assertRaises(ValueError):
+                git('show', 'b' * 40 + ':src/banto_ai/anomaly_v03.py')
+            with self.assertRaises(ValueError):
+                git('show', 'a' * 40 + ':../outside.py')
+
 
 if __name__ == '__main__':
     unittest.main()

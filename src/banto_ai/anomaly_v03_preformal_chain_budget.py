@@ -22,6 +22,7 @@ from . import _anomaly_v03_engineering_runtime as resources
 FORMAT = 'anomaly-v03-preformal-five-role-outer-budget-v1'
 INTERVAL = 0.25
 RECEIPT_RESERVE_BYTES = 128 * 1024  # Outer budget and result, each bounded to 64 KiB.
+RECEIPT_RESERVE_ENTRIES = 2  # The same two files are written after the last sample.
 DEFAULTS = {
     'wall_seconds': 240,
     'parent_private_bytes': 512 * 1024**2,
@@ -135,7 +136,8 @@ class PreformalChainBudget(primitives.FixtureBudget):
                     ('pipeline_parent_memory_limit', current['parent_peak_private_bytes'] > self.limits['parent_private_bytes']),
                     ('pipeline_directory_limit', current['directory_bytes'] +
                      RECEIPT_RESERVE_BYTES > self.limits['directory_bytes']),
-                    ('pipeline_inventory_limit', current['directory_entries'] > self.limits['directory_entries']),
+                    ('pipeline_inventory_limit', current['directory_entries'] +
+                     RECEIPT_RESERVE_ENTRIES > self.limits['directory_entries']),
                     ('pipeline_directory_depth', current['directory_depth'] > self.limits['directory_depth']),
                     ('pipeline_commit_headroom', current['commit_headroom_bytes'] < self.limits['minimum_commit_headroom_bytes']),
                     ('pipeline_free_ram', current['free_ram_bytes'] < self.limits['minimum_free_ram_bytes']),
@@ -250,8 +252,9 @@ class PreformalChainBudget(primitives.FixtureBudget):
                 'extrema': {k: dict(v) for k, v in self.extrema.items()},
                 'summary': summary, 'phase_log': list(self.phase_log),
                 'receipt_reserve_bytes': RECEIPT_RESERVE_BYTES,
+                'receipt_reserve_entries': RECEIPT_RESERVE_ENTRIES,
                 'root_measurement_scope':
-                    'samples exclude outer resource-budget.json and result.json; reserved within directory limit',
+                    'samples exclude outer resource-budget.json and result.json; bytes and entries reserved within limits',
                 'caller_reported_roles': dict(self.roles),
                 'caller_reported_all_five_exits':
                     set(self.roles) == set(ROLES) and all(
