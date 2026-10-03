@@ -3,9 +3,11 @@ from __future__ import annotations
 
 from contextlib import nullcontext
 import copy
+import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -126,6 +128,20 @@ class OwnedSavedAttemptMaterializerTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'clean materializer checkout'):
                 owned._source(revision)
 
+    def test_isolated_bootstrap_imports_fixture_worker(self):
+        # The worker rejects an empty invocation only after the repository
+        # package has imported under isolated Python startup.
+        completed = subprocess.run(
+            [sys.executable, '-I', '-S', '-B', '-c', owned.BOOTSTRAP,
+             str(owned.ROOT / 'src')], cwd=owned.ROOT,
+            capture_output=True, text=True, timeout=15, check=False)
+        self.assertNotEqual(completed.returncode, 0)
+        self.assertEqual(json.loads(completed.stdout), {
+            'format': owned.FORMAT, 'status': 'failed',
+            'error_type': 'V03ValidationError',
+            'detail': 'materializer worker arguments',
+            'formal_permission': False})
+
     def test_worker_failure_after_launch_retains_failed_receipt_and_exit(self):
         _, pins = self._input()
         failed_monitor = {'status': 'failed', 'exit_code': 2,
@@ -134,7 +150,8 @@ class OwnedSavedAttemptMaterializerTests(unittest.TestCase):
         with patch.object(owned, '_source', return_value={'revision': 'a' * 40}), \
              patch.object(owned.runtime, 'probe_runtime', return_value={}), \
              patch.object(owned.platform, '_platform_scope', return_value=nullcontext()), \
-             patch.object(owned.supervisor, 'supervise', return_value=failed_monitor):
+             patch.object(owned.supervisor, 'supervise',
+                          return_value=failed_monitor) as supervise:
             result = owned.materialize_and_read(
                 self.root, expected_mode=saved.MODE, chunk_index=0,
                 expected_registry_pin=pins['saved/registry.json'],
@@ -144,6 +161,8 @@ class OwnedSavedAttemptMaterializerTests(unittest.TestCase):
                 expected_payload_pins={k: p for k, p in pins.items()
                                        if k not in owned.SAVED},
                 source_snapshots={}, expected_revision='a' * 40)
+        self.assertEqual(supervise.call_args.args[0][:6],
+                         [sys.executable, '-I', '-S', '-B', '-c', owned.BOOTSTRAP])
         self.assertEqual(result['status'], 'failed')
         self.assertTrue(result['owned_fixture_materializer_exit_confirmed'])
         self.assertEqual(result['owned_fixture_materializer_pid'], 123)

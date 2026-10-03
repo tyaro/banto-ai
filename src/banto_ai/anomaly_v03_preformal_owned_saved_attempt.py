@@ -328,7 +328,7 @@ def materialize_and_read(root, *, expected_mode, chunk_index,
             launch.update(observed.creation_observation(process.pid,
                                                         process._handle))
 
-        argv = [sys.executable, '-c', BOOTSTRAP, str(ROOT / 'src'),
+        argv = [sys.executable, '-I', '-S', '-B', '-c', BOOTSTRAP, str(ROOT / 'src'),
                 str(target / 'invocation.json'), invocation_pin['sha256']]
         with platform._platform_scope():
             monitor = supervisor.supervise(argv, ROOT, target / 'worker',
