@@ -51,7 +51,8 @@ def _validate(files,pins,mode):
     prepared.tables.same(receipt['report_files'],{n:p for n,p in pins.items() if n!='consumer-receipt.json'},'preparation payload pins')
     prepared.tables.same(receipt['source_lineage'],packet['source_lineage'],'report/receipt lineage')
     prepared.tables.same(receipt['formal_readiness'],packet['formal_readiness'],'report readiness')
-    v.require(packet['formal_readiness']['ready'] is False,'formal readiness remains closed')
+    prepared.binding._fields(packet['formal_readiness'],{'formal_ready':False,
+        'status':'formal_analysis_not_ready','formal_document_emitted':False})
     if mode=='fixture':
         for name in ('report.md','report.html'):
             text=files[name].decode('utf-8')

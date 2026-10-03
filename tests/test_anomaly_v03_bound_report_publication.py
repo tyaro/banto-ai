@@ -10,13 +10,15 @@ from unittest.mock import patch
 from banto_ai import anomaly_v03_bound_report_publication as pub
 
 pin=pub.prepared._pin;encode=pub.io.json_bytes
+READINESS=pub.prepared.report.inputs.formal_readiness(pub.v.strict_json(
+    (Path(__file__).resolve().parents[1]/pub.prepared.report.inputs.SCHEMA).read_bytes()))
 
 
 def fixture(mode='fixture'):
     lineage={'coverage':{'success':719,'inconclusive':1},'failed_attempt_history':[{'attempt':1}],
         'source_summaries':[{'chunk_index':0,'opaque_path':'not-opened'}]}
     fields={**pub.prepared.CLOSED,'mode':mode,'formal_fields':pub.prepared.FORMAL_FIELDS,
-        'formal_readiness':{'ready':False},'source_lineage':lineage,
+        'formal_readiness':copy.deepcopy(READINESS),'source_lineage':lineage,
         'data_origin':'invented-compact-summaries' if mode=='fixture' else 'saved-dev-smoke-compact-summaries'}
     packet={**fields,'format':'anomaly-v03-dev-smoke-descriptive-report-v1'}
     files={'report.json':encode(packet),'report.md':'# 架空データ\n'.encode(),'report.html':'<h1>架空データ</h1>\n'.encode()}
@@ -77,6 +79,16 @@ class BoundReportPublicationTests(unittest.TestCase):
         with patch.object(pub.io,'regular_path',side_effect=AssertionError('filesystem')):
             for kw in variants:
                 with self.subTest(kw=kw),self.assertRaises(ValueError):self.call(**kw)
+
+    def test_real_schema_readiness_shape_and_promoted_readiness(self):
+        self.assertIn('formal_ready',READINESS);self.assertNotIn('ready',READINESS)
+        pub._validate(self.files,self.pins,'fixture')
+        files=dict(self.files)
+        for name in ('report.json','consumer-receipt.json'):
+            value=pub.v.strict_json(files[name]);value['formal_readiness']['formal_ready']=True
+            if name=='consumer-receipt.json':value['report_files']['report.json']=pin(files['report.json'])
+            files[name]=encode(value)
+        with self.assertRaises(ValueError):pub._validate(files,{n:pin(b) for n,b in files.items()},'fixture')
 
     def test_promotion_lineage_labels_and_receipt_hash_disagreement_reject(self):
         for field,value in (('formal_permission',True),('source_lineage',{}),('formal_fields',{})):
