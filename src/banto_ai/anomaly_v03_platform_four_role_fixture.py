@@ -194,7 +194,23 @@ def _publication_request(target, a, b, revision, reference_pin):
             'analysis_reference': analysis_ref, 'audit_reference': audit_ref}
 
 
-def _run_roles(target, files, revision, result):
+def _budget_checkpoint(budget, phase):
+    if budget is not None:
+        if hasattr(budget, 'record_role'):
+            budget.checkpoint(phase)
+        else:
+            budget.checkpoint()
+
+
+def _budget_role(budget, role, row):
+    if budget is not None and hasattr(budget, 'record_role'):
+        budget.record_role(role, row['status'], result_pin=row['result_pin'],
+                           worker_pid=row.get('worker_pid'),
+                           exit_confirmed=row.get('worker_exit_confirmed'))
+
+
+def _run_roles(target, files, revision, result, *, resource_budget=None):
+    _budget_checkpoint(resource_budget, 'analysis')
     records = _retain_inputs(target, files)
     result['input_pins'] = {name: row['pin'] for name, row in records.items()}
     reference = _reference_document(files)
@@ -203,38 +219,44 @@ def _run_roles(target, files, revision, result):
     reference_pin = _record(reference_path / 'document.json', reference)['pin']
     result['reference_document_pin'] = reference_pin
     result['reference_scope'] = 'same-fixture-algorithm-output-pin-before-child; independent audit follows'
+    _budget_checkpoint(resource_budget, 'analysis')
     request = {'format': analysis.FORMAT, 'mode': 'fixture', 'role': 'analysis',
                'operation': analysis.OPERATION, 'inputs': records,
                'expected_document_pin': reference_pin}
     analysis._request(request)
     result['stage'] = 'analysis'
     a = numeric.calculate_fixture(request, expected_revision=revision, receipt_parent=target,
-                                  receipt_name='analysis')
+                                  receipt_name='analysis', resource_budget=resource_budget)
     _saved_result(target / 'analysis', a, 'analysis')
+    _budget_role(resource_budget, 'analysis', a)
     result['analysis'] = {'status': a['status'], 'result_pin': a['result_pin'],
                           'evidence_pin': a.get('evidence_pin')}
     v.require(a['status'] == 'verified' and a['resource_budget_passed'] and
               a['worker_exit_confirmed'] and a['fixture_inference_performed'], 'owned analysis failed')
     result['identities'] = {'analysis': _role_identity(target / 'analysis', 'analysis', a['evidence_pin'])}
+    _budget_checkpoint(resource_budget, 'audit')
     audit_request = _audit_request(target, records, a, revision, reference_pin)
     audit._request(audit_request)
     result['stage'] = 'audit'
     b = numeric.audit_fixture(audit_request, expected_revision=revision, receipt_parent=target,
-                              receipt_name='audit')
+                              receipt_name='audit', resource_budget=resource_budget)
     _saved_result(target / 'audit', b, 'audit')
+    _budget_role(resource_budget, 'audit', b)
     result['audit'] = {'status': b['status'], 'result_pin': b['result_pin'],
                        'evidence_pin': b.get('evidence_pin'), 'verdict_pin': b.get('audit_pin')}
     v.require(b['status'] == 'verified' and b['resource_budget_passed'] and
               b['worker_exit_confirmed'] and b['fixture_numerical_audit_performed'] and
               b['fixture_slice_audit_performed'], 'owned audit failed')
     result['identities']['audit'] = _role_identity(target / 'audit', 'audit', b['evidence_pin'])
+    _budget_checkpoint(resource_budget, 'writer')
     publication_request = _publication_request(target, a, b, revision, reference_pin)
     publication._request(publication_request)
     result['preflight_runtime'] = runtime.probe_runtime(ROOT)
     result['stage'] = 'writer_then_reader'
     with platform._platform_scope():
         p = publication.publish_with_evidence(publication_request, expected_revision=revision,
-            receipt_parent=target, receipt_name='publication')
+            receipt_parent=target, receipt_name='publication',
+            resource_budget=resource_budget)
     _saved_result(target / 'publication', p, 'publication')
     result['publication'] = {'status': p['status'], 'result_pin': p['result_pin'],
                              'binding_pin': p.get('publication_binding_pin'),
@@ -259,6 +281,7 @@ def _run_roles(target, files, revision, result):
     for name, row in records.items():
         _pin_file(row['path'], row['pin'], analysis.INPUT_LIMITS[name])
     _pin_file(reference_path / 'document.json', reference_pin, analysis.DOCUMENT_LIMIT)
+    _budget_checkpoint(resource_budget, 'postflight')
 
 
 def run_chain(*, expected_mode, join_root, expected_join_receipt_pin,

@@ -25,6 +25,7 @@ from . import anomaly_v03_producer_input_fixture as primary
 from . import anomaly_v03_producer_slice_fixture as slices
 from . import anomaly_v03_process_supervisor as supervisor
 from . import anomaly_v03_reader_evidence as observed
+from . import _anomaly_v03_fixture_budget as budgets
 from . import _anomaly_v03_io as io
 
 
@@ -44,6 +45,7 @@ SOURCE_FILES = (
     'src/banto_ai/anomaly_v03_platform_fixture.py',
     'src/banto_ai/anomaly_v03_platform_fixture_runtime.py',
     'src/banto_ai/anomaly_v03_process_supervisor.py',
+    'src/banto_ai/_anomaly_v03_fixture_budget.py',
 )
 BOOTSTRAP = ('import sys;sys.path.insert(0,sys.argv.pop(1));'
              'from banto_ai.anomaly_v03_owned_producer_fixture import worker_main;'
@@ -244,7 +246,8 @@ def worker_main(argv):
 
 
 def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
-                       receipt_parent, receipt_name, expected_bound_pin=None):
+                       receipt_parent, receipt_name, expected_bound_pin=None,
+                       resource_budget=None):
     """Own, reap and verify one 26H2 invented join child in a new local root."""
     primary.evidence._digest(expected_revision, 40)
     primary.evidence._pin(expected_archive_pin)
@@ -267,6 +270,13 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
     primary.v.require(not target.is_relative_to(archive_path.parent) and
                       not archive_path.is_relative_to(target),
                       'producer input/output overlap')
+    if resource_budget is not None:
+        primary.v.require(isinstance(resource_budget, budgets.FixtureBudget) and
+                          resource_budget._thread is not None and
+                          resource_budget._thread.is_alive() and
+                          target.is_relative_to(resource_budget.root),
+                          'live enclosing producer resource budget required')
+        resource_budget.checkpoint()
     archive_raw = observed._file(archive_path, ARCHIVE_MAX)
     _same(_pin(archive_raw), expected_archive_pin, 'external invented archive pin')
     source = _git_sources(expected_revision)
@@ -296,7 +306,9 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
              'formal_permission': False, 'promotion_allowed': False,
              'worker_exit_confirmed': False, 'worker_pid': None,
              'archive_pin': copy.deepcopy(expected_archive_pin),
-             'invocation_pin': invocation_pin}
+             'invocation_pin': invocation_pin,
+             'shared_budget_root': (str(resource_budget.root) if resource_budget is not None
+                                    else None)}
 
     def boundary():
         _same(_git_sources(expected_revision), source, 'parent selected source changed')
@@ -312,7 +324,9 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
     try:
         with platform._platform_scope():
             monitor = supervisor.supervise(argv, ROOT, target / 'worker', LIMITS,
-                                           boundary=boundary, on_started=started)
+                                           boundary=boundary, on_started=started,
+                                           resource_probe=(resource_budget.probe
+                                                           if resource_budget is not None else None))
         io._exclusive(target / 'supervision.json', primary.v.canonical_json(monitor))
         outer.update(worker_exit_confirmed=monitor['worker_exit_confirmed'],
                      worker_pid=monitor['worker_pid'],
@@ -360,6 +374,8 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
                               'producer saved output total')
             _same(pins, reply['projection_pins'], 'producer projected file pins')
             _same(_git_sources(expected_revision), source, 'producer selected source postflight')
+            if resource_budget is not None:
+                resource_budget.checkpoint()
             outer.update(status='verified', reason=None,
                          owned_producer_join_executed=True,
                          child_start_token=launch['start_token'],
@@ -369,7 +385,8 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
                          selected_source_files=len(SOURCE_FILES))
     except supervisor.UnreapedWorker:
         raise
-    except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as error:
+    except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError,
+            supervisor.resources.ResourceStop) as error:
         outer.update(reason='producer_evidence_rejected',
                      error_type=type(error).__name__, detail=str(error))
     io._exclusive(target / 'result.json', primary.v.canonical_json(outer))

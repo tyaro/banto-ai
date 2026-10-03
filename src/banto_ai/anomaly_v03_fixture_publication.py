@@ -231,6 +231,8 @@ def _retain_role_observation_pins(role,target,monitor,dependency_pair):
 
 def _run_role(role,request,target,publication,revision,budget,files,inputs,source_context):
     target.mkdir();source,source_bytes,git = source_context
+    if budget.upstream is not None and hasattr(budget.upstream, 'record_role'):
+        budget.upstream.checkpoint(role)
     budget.checkpoint()
     v.require(git('rev-parse','HEAD').decode().strip() == revision and not git('status','--porcelain').strip(),'publication candidate changed')
     evidence._same(_source(revision),source,'role source changed')
@@ -284,10 +286,18 @@ def _run_role(role,request,target,publication,revision,budget,files,inputs,sourc
         'evidence_pin':record_pin,'invocation_pin':pin,'binding_pin':observed._pin(io.json_bytes(binding)),
         'source_revision':revision,'dependency_observation':supplement,**observation_pins}
     observed._save(target/'result.json',receipt)
+    if budget.upstream is not None and hasattr(budget.upstream, 'record_role'):
+        raw_receipt = io.json_bytes(receipt)
+        evidence._raw(observed._file(target/'result.json', 64*1024),
+                      observed._pin(raw_receipt), 'retained '+role+' result changed')
+        budget.upstream.record_role(role, 'verified',
+            result_pin=observed._pin(raw_receipt), worker_pid=monitor['worker_pid'],
+            exit_confirmed=monitor['worker_exit_confirmed'])
     return receipt
 
 
-def publish_with_evidence(request, *, expected_revision, receipt_parent, receipt_name, budget_limits=None):
+def publish_with_evidence(request, *, expected_revision, receipt_parent, receipt_name,
+                          budget_limits=None, resource_budget=None):
     """Reuse pinned analysis and combined audit. Publish once, then read after reaping writer."""
     _request(request);evidence._digest(expected_revision,40);request = copy.deepcopy(request)
     budget_limits = budgets.limits(budget_limits)
@@ -295,10 +305,13 @@ def publish_with_evidence(request, *, expected_revision, receipt_parent, receipt
     v.require('/' not in receipt_name and not receipt_name.casefold().startswith('anomaly-multiseed-v0'),'receipt name')
     target = io.regular_path(parent/receipt_name,directory=True,missing=True)
     v.require(not any(observed.reader._overlap(target,p) for p in (ROOT/'src',*(Path(r['path']).parent for r in request['inputs'].values()))),'receipt overlaps inputs/source')
-    target.mkdir();publication = target/'published';budget = budgets.FixtureBudget(target,budget_limits,publication_roots=[publication])
+    target.mkdir();publication = target/'published';budget = budgets.FixtureBudget(
+        target,budget_limits,upstream=resource_budget,publication_roots=[publication])
     result = {**CLOSED,'format':'anomaly-v03-fixture-publication-check-v1','mode':'fixture','status':'failed',
         'publication_status':'not_started','reader_status':'not_started','inference_recomputed':False,'new_evaluations':0,
         'analysis_runs':0,'audit_runs':0,'analysis_reference':request['analysis_reference'],'audit_reference':request['audit_reference']}
+    if resource_budget is not None:
+        result['shared_budget_root'] = str(resource_budget.root)
     try:
         budget.start();inputs,files = _load(request);budget.checkpoint()
         source,source_bytes,git = _git_sources(expected_revision)
