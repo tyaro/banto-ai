@@ -1,5 +1,7 @@
 # v0.3 正式評価の運用契約・受入改訂案 v1
 
+2026-10-04 追記：現在のWindows実測は **26H2/build26300/UBR9457** へ変わった。[今回の停止・確認記録](results/anomaly-multiseed-v0.3-registered-summary-runtime-change-2026-10-04.md)を参照。本v1案の25H2/build26200内でのUBR再受入案には含まれず、正式対象にするなら別版の計画・契約改訂と独立再監査が必要。本案の採択状態は変わらない。
+
 状態: **proposal / 未採択 / 正式実行許可なし**。2026-10-03 の文書保存点 `03f34908ecfb4894d45670e0359f1617c1b51b1b` を基準に、[凍結計画 §8–9](anomaly-multiseed-evaluation-plan-v0.3.md)、[単一writerのengineering採択](anomaly-v03-single-writer-evaluation-proposal.md)、[consumer入出力案](anomaly-v03-consumer-io-proposal.md)、[残件表](results/anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)の差分を判断可能な形にする。科学仕様の候補・seed・生成・分母・50,000回bootstrap・gate・選択規則は変更しない。この文書、既存のengineering成功、保存済みdev/smoke 720評価の要約完了を、S4受入やS5/S6の許可へ読み替えない。
 
 正式運用IDの候補は `anomaly-v03-single-writer-research-v1`。engineeringで採択済みの `anomaly-v03-single-writer-v1` とは別のIDで、現行validatorは受理しない。旧 `run_campaign` の無条件 `s4_acceptance_not_frozen` と正式OS pin・registry・schema・出力rootはこの案では変更しない。正式modeを開くには、別の版付き実装・計画改訂・独立再監査・対象revisionの受入を準備し、契約を採択する必要がある。
