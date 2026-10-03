@@ -1,5 +1,13 @@
 # 次のタスク用の短い引継ぎ
 
+更新: 2026-10-03 JST。**保存済み合成dev/smokeの全120区間・720評価を新要約readerから完全結合し、旧独立監査との集計照合とengineeringの記述報告・writer終了後readerまで完了した。** [全件実施結果](results/anomaly-multiseed-v0.3-real-saved-summary-report-2026-10-03.md)、[残る正式受入5まとまり](results/anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)。完全結合86,901bytes/SHA256 `0dbf7b26807803a220eb8c93445a3181027ce47543195fec2a615ea820466a08`、最終要約result 39,604bytes/SHA256 `572fe8141575638a193c4e55f5bed2054a1d377260dbc09bafd2d670a7df5256`。
+
+先行pilotの区間0・119と、新規成功57＋26＋35区間を採用した。途中の区間56・82は子の時間上限で停止したため旧失敗記録を保全し、別rootで成功した再試行だけを採用。最終試行は全120区間・720評価・欠落0、全体資源pass。追加postcheckは旧seed別90行・role別18行・paired12行・slice108行、主count1,404組と一致した。[postcheck結果](../artifacts/real-saved-summary-final-postcheck-2026-10-03/postcheck-001/result.json) 2,631bytes/SHA256 `535348b7dcd133304ad9b752ddc78990c1213f3c8aaa906f678fac4c672198e8`。engineeringの[公開済み報告](../artifacts/real-saved-report-prep-3root-2026-10-03/attempt-001/publication/published/payload/report.md)はdev8 seed/576評価とsmoke2 seed/144評価の記述値で、正式性能判定ではない。
+
+次は正式運用契約、未使用40 seedの登録入力と最終consumer、役割別source/runtime・旧UBR9168と観測9457の扱い、正式S6/公開監査、producerからreaderまでの全工程予算を版付きで確定する。今回の新評価、正式40 seed、bootstrap、gate、promotionは0。正式null欄と`formal_ready=false`、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持する。source実装は`d4d6de6`の`src` treeから変更していない。
+
+## 直前の区間0 pilot（以下は履歴）
+
 更新: 2026-10-03 JST。**保存済み合成dev/smokeの区間0・6評価を新しい要約readerで実適用し、過去の独立監査と一致した。** [今回の結果](results/anomaly-multiseed-v0.3-saved-chunk-000-pilot-2026-10-03.md)、[受入と全体範囲](results/anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)。新要約151,954bytes/SHA256 `40a5328f863f3018a4906ce049b0f1d104a896ce968ba6536c5b5eb478f5c95d`、部分結合は確認済み6/720・未確認714/720、旧生成監査との共有8入力pinも一致した。
 
 所有子は17.934秒、peak private159,682,560bytes、exit0/reaped。親の資源監視76sampleもpass。保存先は`artifacts/real-saved-chunk-000-2026-10-03`、result/pinとprocess/resource記録を保持する。次は区間119の失敗attempt履歴を限定確認する要否と、全120区間へ適用する時間・中間保存・停止予算を判断する。残る119区間を新経路で確認した扱いにせず、全120要約が揃うまで報告入口のsummaries開始は使わない。
@@ -256,7 +264,7 @@ writer終了後の通常権限reader、外部markerと2保存点pin、別確認d
 
 ## 前工程の記述表
 
-[結果表・診断表](results/anomaly-multiseed-v0.3-descriptive-report-2026-09-25.md)、[閲覧用要約](../artifacts/descriptive-report-2026-09-25/report.md)。実装e0753ba4e1518706002cb3a51f9b5a3c891a4e7c。dev/smoke別18表・234主指標・5,670診断行を元入力とschema部分形式へ照合、27試験pass。manifest7932bytes/SHA25679364b641f8f7a047298ca73d46fcdc49b1931c23394a043cb8802255392af39。gate/CI/採択なし、formal/promotion/S6=false、selected=null、performance=not_evaluated。入力のreadinessは作成時点の文脈として保持。
+[結果表・診断表](results/anomaly-multiseed-v0.3-descriptive-report-2026-09-25.md)。実装e0753ba4e1518706002cb3a51f9b5a3c891a4e7c。dev/smoke別18表・234主指標・5,670診断行を元入力とschema部分形式へ照合、27試験pass。manifest7932bytes/SHA25679364b641f8f7a047298ca73d46fcdc49b1931c23394a043cb8802255392af39。gate/CI/採択なし、formal/promotion/S6=false、selected=null、performance=not_evaluated。入力のreadinessは作成時点の文脈として保持。
 
 ## 前工程のseed集計
 

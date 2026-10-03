@@ -2,7 +2,7 @@
 
 最終更新: 2026-10-03
 
-v0.3の最新の工程状態は[短い引継ぎ](current-handoff.md)を参照。[正式評価前の受入残件と保存済みデータの作業範囲](results/anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)を更新し、[合成dev/smokeの保存済み区間0](results/anomaly-multiseed-v0.3-saved-chunk-000-pilot-2026-10-03.md)へ新要約readerを限定適用した。旧S4-Aの説明と「次はS4-B」は当時の履歴である。S4全体の受入、正式40 seed、S6、昇格は未完了。
+v0.3の最新の工程状態は[短い引継ぎ](current-handoff.md)を参照。[正式評価前の受入残件と保存済みデータの作業範囲](results/anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)を更新し、[合成dev/smoke全120区間・720評価の新要約readerと記述報告](results/anomaly-multiseed-v0.3-real-saved-summary-report-2026-10-03.md)までengineeringで実適用した。旧S4-Aの説明と「次はS4-B」は当時の履歴である。S4全体の受入、正式40 seed、S6、昇格は未完了。
 
 この索引は、文書の入口と現在状態を示すliving documentです。初稿S0 commitは
 `41decf9b6f8d6c876715729516354bf6da49422c`、そのparentはmainの
