@@ -4,6 +4,8 @@
 
 追記: 本表は基準保存点当時の計測欄である。後続の[共有予算付き５役・候補profile必須の架空１draw試行](anomaly-multiseed-v0.3-preformal-profile-and-saved-attempt-2026-10-04.md)はproducerから別readerまで連続測定済み。ただし50,000 draw、登録保存reader、完全独立S6、最終正式文書を含まないため、下表の**正式同形全工程予算はなお未閉包**である。
 
+追加追記: [保存済み所有producerの架空count→50,000 draw主算術・別算術監査](anomaly-multiseed-v0.3-preformal-profile-and-saved-attempt-2026-10-04.md)を別root・clean `cca54e9` で連続測定した。約167秒の共有監視は２算術子だけで、５役１drawのwall/bytesと合算して全工程予算にしない。登録保存reader、全payload生成、完全S6、staging/writer/readerはなお空欄である。
+
 [既存の予算証拠台帳](anomaly-multiseed-v0.3-preformal-budget-evidence-ledger-2026-10-03.md)に対し、[今回の50,000 draw測定](anomaly-multiseed-v0.3-preformal-platform-raw-budget-2026-10-04.md)で埋まった欄と、全工程の停止予算としてなお必要な欄を明示する。「保存済みデータ」は合成dev/smokeの成果物であり、実設備・顧客データではない。
 
 ## 数値を使える範囲
