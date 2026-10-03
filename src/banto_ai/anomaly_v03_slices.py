@@ -93,12 +93,26 @@ def describe(counts):
     return result
 
 
-def summarize_evaluation(result, prior_audit):
+def summarize_evaluation(result, prior_audit, *, reported_only=False):
+    """Group a complete saved ledger into slices.
+
+    The default dev/smoke path requires an authenticated score-derivation audit.
+    ``reported_only`` is a separate preformal holdout-fixture path: it checks
+    the supplied score ledger and slice grouping, never score derivation.
+    """
     identity=result['identity'];registry.validate_identity(identity)
-    need(identity['role'] in ('dev','smoke'),'dev/smoke only')
+    need(type(reported_only) is bool, 'reported-only selector')
+    need(identity['role'] == 'holdout' if reported_only else
+         identity['role'] in ('dev','smoke'), 'slice role/scope')
     exact(prior_audit['identity'],identity,'prior audit identity')
     exact(prior_audit['ledger_audit']['status'],'ledger_checks_passed','prior ledger audit')
-    exact(prior_audit['profile_and_score_audit']['score_derivation_verified'],True,'prior score audit')
+    if reported_only:
+        need('profile_and_score_audit' not in prior_audit,
+             'reported-only path cannot claim score derivation')
+        exact(prior_audit['ledger_audit']['score_derivation_verified'], False,
+              'reported-only ledger scope')
+    else:
+        exact(prior_audit['profile_and_score_audit']['score_derivation_verified'],True,'prior score audit')
     events=registry.event_inventory(identity)
     exact(result['events'],events,'registered event inventory')
     exact(result['status']['run_status'],'complete','complete evaluation required')
@@ -217,8 +231,14 @@ def summarize_evaluation(result, prior_audit):
         else:
             for cell in cells.values():exact(cell['planned'],cell['observed']+cell['unscored_target']+cell['outside_test'],'event-relative reference coverage')
     for cells in counts['incident_slices'].values():exact(sum(c['planned'] for c in cells.values()),20,'incident partition')
-    return {'identity':identity,'counts':counts,'status':'saved_slice_counts_checked',
-            'formal_permission':False,'performance_status':'not_evaluated','new_score_computations':0}
+    checked = {'identity':identity,'counts':counts,
+               'status':('reported_score_slice_counts_checked' if reported_only else
+                         'saved_slice_counts_checked'),
+               'formal_permission':False,'performance_status':'not_evaluated',
+               'new_score_computations':0}
+    if reported_only:
+        checked['score_derivation_verified'] = False
+    return checked
 
 
 class SliceAccumulator:

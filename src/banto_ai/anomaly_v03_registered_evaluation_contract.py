@@ -12,6 +12,7 @@ from . import anomaly_v03_consumer_evidence as evidence
 from . import anomaly_v03_inference_audit as arithmetic
 from . import anomaly_v03_ledger_audit as ledger
 from . import anomaly_v03_registered_saved_summary as saved
+from . import anomaly_v03_slices as slices
 
 
 FORMAT = 'anomaly-v03-registered-evaluation-contract-candidate-v1'
@@ -119,12 +120,19 @@ def audit_saved_contract_candidate(registry_raw, receipt_raw, report_raw, payloa
             raw, identity=identity, input_hashes=slot['input_hashes'],
             outcome=slot['status'], source_snapshots=source_snapshots)
         _compare_primary(row, checked['value'], checked['ledger'])
+        grouped = slices.summarize_evaluation(
+            checked['value'],
+            {'identity': identity, 'evaluation_outcome': slot['status'],
+             'ledger_audit': checked['ledger']},
+            reported_only=True)
+        evidence._same(grouped['counts'], row['slices'],
+                       'registered slices from reported score ledger')
     return {**base, 'format': FORMAT,
             'scope': 'supplied-registered-format-semantic-fixture',
             'registered_evaluation_contracts_checked': len(rows),
             'reported_score_ledger_recomputed': bool(rows),
             'reported_score_to_primary_summary_checked': bool(rows),
-            'reported_score_to_slice_summary_recomputed': False,
+            'reported_score_to_slice_summary_recomputed': bool(rows),
             'source_snapshots_caller_supplied': bool(rows),
             'observation_to_profile_recomputed': False,
             'observation_to_score_recomputed': False,

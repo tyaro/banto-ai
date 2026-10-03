@@ -62,7 +62,8 @@ def invented_complete_inconclusive(identity=None, input_hashes=None):
             mode_index = (sample % 180) // 30
             mode = frozen.MODES[mode_index]
             value['scores'].append({
-                'score_id': f'invented-score-{target.replace(".", "-")}-{sample}',
+                'score_id': (f'{identity["evaluation_id"]}-score-'
+                             f'{target.replace(".", "-")}-{sample:04d}'),
                 'dataset_id': identity['dataset_id'],
                 'candidate_id': identity['candidate_id'], 'sample': sample,
                 'timestamp_ms': frozen.START_MS + sample * 1000,
@@ -92,7 +93,7 @@ def invented_complete_inconclusive(identity=None, input_hashes=None):
     return value
 
 
-def _zero_slices(events):
+def _zero_slices(events, stratum):
     """Hand-count fixed planned denominators, with no available score or alert."""
     raw = slices.empty_counts()
     raw['evaluations'] = 1
@@ -116,18 +117,22 @@ def _zero_slices(events):
     for key, unit in zip(slices.PHASES, (1, 1, 1, 1, 3, 7, 7, 9)):
         raw['score_slices']['phase'][key].update(planned=480 * unit,
                                                  observed=480 * unit)
-    for key, seconds in (('raw-event', 200), ('grace', 35), ('clean', 3365)):
+    for key, seconds in (('raw-event', 118), ('grace', 117), ('clean', 3365)):
         raw['equipment_context'][key]['planned_seconds'] = seconds
         raw['score_slices']['context'][key].update(planned=4 * seconds,
                                                    observed=4 * seconds)
-    for dimension, key in (('quality-current', 'ok'),
-                           ('quality-previous', 'ok'),
-                           ('fault-quality-overlap', 'no'),
+    for dimension, key in (('quality-current', 'absent'),
+                           ('quality-previous', 'absent'),
                            ('profile-status', 'inconclusive')):
         raw['score_slices'][dimension][key].update(planned=14400,
                                                     observed=14400)
+    overlap = 6 if stratum == 'quality-stress' else 0
+    raw['score_slices']['fault-quality-overlap']['no'].update(
+        planned=14400 - overlap, observed=14400 - overlap)
+    raw['score_slices']['fault-quality-overlap']['yes'].update(
+        planned=overlap, observed=overlap)
     for offset, key in enumerate(slices.SCORE_KEYS['event-offset']):
-        outside = 2 if offset == 0 else 1 if offset == 1 else 0
+        outside = 1 if offset in (0, 1) else 0
         raw['score_slices']['event-offset'][key].update(
             planned=40, observed=30 - outside, unscored_target=10,
             outside_test=outside)
@@ -158,7 +163,7 @@ def invented_completed_chunk():
                           for target in frozen.FULL_TARGETS}},
                        'effective_clean_seconds': 0,
                        'delay_histogram': [0] * 5},
-                   slices=_zero_slices(value['events']))
+                   slices=_zero_slices(value['events'], identity['stratum']))
     receipt_raw = v.canonical_json(receipt)
     report['receipt_pin'] = _pin(receipt_raw)
     report['payload_pins'] = {name: _pin(raw) for name, raw in payloads.items()}
@@ -201,11 +206,25 @@ class CompletedRegisteredContractFixtureTests(unittest.TestCase):
         self.assertEqual(result['registered_evaluation_contracts_checked'], 6)
         self.assertTrue(result['reported_score_ledger_recomputed'])
         self.assertTrue(result['reported_score_to_primary_summary_checked'])
+        self.assertTrue(result['reported_score_to_slice_summary_recomputed'])
         self.assertEqual(result['campaign_evaluations_credited'], 0)
         for key in ('observation_to_profile_recomputed',
                     'observation_to_score_recomputed',
                     'real_saved_chunk_reader_used', 'formal_permission'):
             self.assertFalse(result[key], key)
+
+    def test_invented_slice_reassignment_is_rejected(self):
+        args = invented_completed_chunk()
+        report = v.strict_json(args[2])
+        cell = report['rows'][0]['slices']['score_slices']['quality-current']
+        cell['absent']['observed'] -= 1
+        cell['ok']['observed'] += 1
+        report_raw = v.canonical_json(report)
+        opts = dict(args[4])
+        opts['expected_report_pin'] = _pin(report_raw)
+        with self.assertRaises(ValueError):
+            contract.audit_saved_contract_candidate(
+                args[0], args[1], report_raw, args[3], **opts)
 
 
 if __name__ == '__main__':
