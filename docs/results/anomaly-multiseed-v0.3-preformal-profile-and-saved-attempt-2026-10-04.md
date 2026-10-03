@@ -1,6 +1,6 @@
 # v0.3 正式評価前の役割profileと架空保存attempt検証（2026-10-04）
 
-状態: **26H2向けの未採択preformal検証**。５役の初回code保存点は `09b4da2291634ee07ff1eacb74d3ca114c1d76b4`、保存済みproducer→50,000 draw算術接続の初回は `cca54e9e1083d92f4cdf85aae65fdef943929bcf`。writer事前再照合と所有materializerを含む再試行はclean `723eaf1d83ba2f1d42abee9dbe54d57da1d2959d`、別reader子のnative試行はclean `e79479077c7f55cf0398d0e5add41b989e9c936b`、５役/50,000 draw再試行はclean `94be9ed2702d2f383acb952ea1cf24b21b9754fc`。固定手作り系列の所有生成子→別reader子はclean `6ad2631c27f39720a461ad203fc5de7b86e81e5a` で実走した。旧25H2正式gateは `s4_acceptance_not_frozen` のまま。登録holdout観測の生成・読取り、正式評価credit、S5/S6、候補昇格は0である。
+状態: **26H2向けの未採択preformal検証**。５役の初回code保存点は `09b4da2291634ee07ff1eacb74d3ca114c1d76b4`、保存済みproducer→50,000 draw算術接続の初回は `cca54e9e1083d92f4cdf85aae65fdef943929bcf`。writer事前再照合と所有materializerを含む再試行はclean `723eaf1d83ba2f1d42abee9dbe54d57da1d2959d`、別reader子のnative試行はclean `e79479077c7f55cf0398d0e5add41b989e9c936b`、５役/50,000 draw再試行はclean `94be9ed2702d2f383acb952ea1cf24b21b9754fc`。固定手作り系列の所有生成子→別reader子はclean `6ad2631c27f39720a461ad203fc5de7b86e81e5a`、同じ２役の共通外側予算はclean `3be274c59ce4ffa0b5b60ba42993e2aa44a57039` で実走した。旧25H2正式gateは `s4_acceptance_not_frozen` のまま。登録holdout観測の生成・読取り、正式評価credit、S5/S6、候補昇格は0である。
 
 ## S4採択前の受入見取り図
 
@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | 26H2運用契約・公開保証 | 未採択v2案。writer子の`.complete`前再照合と失敗保全は検証済み | 旧25H2条件との差、marker残存時の扱い、旧§8の保護DACL・独立token条件を保証A/Bのどちらで扱うか版付きで決定・再監査 |
 | 登録形式の保存入力 | 固定手作り系列を所有生成子が12 dataset入力payloadへ物理保存・再読取りし、そのbytesから６架空評価を計算。４制御fileと合わせて22 fileを保存し、事前外部pin・完全在庫・生成子exit/reap後の別reader子による再導出を照合 | 実登録holdout観測と登録seedに基づく生成・読取りはS4採択後のS5まで閉じる。役割の完全source/runtime/identity閉包、正式共通予算とS4採択は未了 |
-| 数値・文書・全工程予算 | ５役の架空１drawと、保存済みproducerからの50,000 draw２算術子は別々に成功 | producer→登録reader→全表/文書→完全別監査→stage/writer→別readerを共通外側予算で連続測定し、容量２倍条件を判定 |
+| 数値・文書・全工程予算 | ５役の架空１drawと、保存済みproducerからの50,000 draw２算術子は別々に成功。架空１区間の所有生成子→別reader子は新たに１つの外側予算で完走 | 40 cluster/50,000 drawの全表/文書・完全別監査・stage/writer・公開後readerまでを同じ入力系譜・共通外側予算で連続測定し、容量２倍条件を判定 |
 | 実行環境と依存閉包 | 26H2実機で５役候補profile前後一致。選択source/Gitと観測runtimeのみ | 全役の実ロードsource/runtime/実行identity閉包、対象revisionのLinux CI 3.12/3.14・Windows native・runner digest |
 | 最終dev/smoke・S4採択 | 保存済み合成120区間/720評価はengineering参考。現行readerのraw再監査は区間0/119だけ | 改訂契約と最終clean revisionでS1登録済みdev8/smoke2を新rootに完走し、独立照合とsmoke容量見積りを結合してS4採択 |
 
@@ -101,7 +101,7 @@ trial-03の独立postcheckでも11出力file、外部producerのresult/bound/４
 
 1. [運用契約26H2案v2](../anomaly-v03-formal-operations-contract-proposal-v2.md)と旧25H2計画との差、公開marker/失敗時保証、役割別完全source/runtime閉包、実行identityを版付きで受入れる。旧§8のprotected DACL・独立read-only token/AccessCheckは、保証Aを採るなら計画改訂・独立再監査で扱いを変更し、保証Bを採るなら26H2実機で再受入れる。今回の候補profile一致を完全閉包へ昇格しない。
 2. 登録形式の架空保存attemptについて、**固定した架空入力を生成する所有子**の終了証拠・起動前外部pin・完全在庫を別readerへ渡し、最新attemptと６評価の観測導出まで確認した。実登録holdout観測のproducer証拠にはならない。今後は改訂S4の最終dev/smokeを受入れてから、S5の実登録入力へ進む。
-3. producer→登録reader→40 cluster/50,000 drawの全表・文書→別実装の完全監査→stage/writer→別readerを、最終clean revision・同一外側予算IDと監視下の工程別rootで測る。現在の５役は１draw、今回の50,000 draw接続は保存済みproducer countから２算術子のみで、時間やbytesを足して正式予算にしない。旧計画§9の空き容量２倍条件は最終smokeから判定する。
+3. producer→登録reader→40 cluster/50,000 drawの全表・文書→別実装の完全監査→stage/writer→別readerを、最終clean revision・同一外側予算IDと監視下の工程別rootで測る。現５役は１draw、50,000 draw接続は保存済みproducer countから２算術子のみ、g02の共通予算は架空生成１区間の２役のみである。別試行の時間やbytesを足して正式予算にしない。旧計画§9の空き容量２倍条件は最終smokeから判定する。
 4. 対象revisionのLinux CI 3.12/3.14、Windows native、stdlib/repository回帰と独立再監査を照合する。既存CI workflowの定義は実行結果ではない。runner image digestの採取元は未確定。
 5. 既存の保存済み合成dev/smoke 120区間・720評価はengineering参考証拠として保持する。上記をS4条件として確定後、S1登録済みdev 8 seed・smoke 2 seedを最終clean revision/26H2 exact tupleの新attempt/rootで全layout・両層・３候補について受入れる。未使用40 seed・480区間・2,880評価の登録holdoutはS4採択後のS5でのみ扱う。既存720評価をholdoutへ改名・加算しない。
 
@@ -127,19 +127,29 @@ clean `6ad2631c27f39720a461ad203fc5de7b86e81e5a` に[所有生成子](../../src/
 
 [独立postcheck](../../artifacts/anomaly-v03-preformal-generated-pinsets-g01/postcheck-result.json)は1,527 B / SHA256 `e4e790b2567d6303b4af56c9849693a1798b0a8ea0ddd95675b839b8edc0033f`、[照合script](../../artifacts/anomaly-v03-preformal-generated-pinsets-g01/postcheck.py)は18,690 B / SHA256 `97d715aa0e4a8a39ad167e612986491a6e98196e65df3b40d70f2a2a57dcb06d`。manifest SHA/sidecar、物理22 fileの完全在庫・全raw pin、選択18 sourceの作業raw/Git、generator/materializerの２ raw snapshot、２子のPID/開始token/exit/reap/監督・応答、reader意味欄を別手順で照合し、不一致0。関連回帰は28件実行、27件pass・従来のopt-in native１件skip、repository safetyもpass。実登録観測生成・読取りと正式creditは0、S4未採択・S5/S6未開始。`source_closure_complete=false`、`runtime_closure_complete=false`、`execution_authenticated=false`を維持する。
 
+### 同じ架空生成２役の共通外側予算 native 試行
+
+clean `3be274c59ce4ffa0b5b60ba42993e2aa44a57039` に[２役専用の外側監視](../../src/banto_ai/anomaly_v03_preformal_generated_chain_budget.py)と[run-budget入口](../../tools/preformal_owned_generated_trial.py)を保存した。新root `g02` の起動前に、対象root外で同じ固定レシピの[外部pinset](../../artifacts/anomaly-v03-preformal-generated-pinsets-g02/pins.json)を準備した（72,149 B / SHA256 `22ee6888d731c827162b09ef1332cb61fe6a5542372e3e499ea0088fd214f1ef`）。sidecarと呼出者指定SHAを起動前に照合した。この準備時間・別rootの容量は今回の予算に含まない。pinは事前期待値で、実登録観測の独立oracleではない。登録seedの`normal_stream(seed)`と`materialize_pair`は呼ばず、固定手作り系列の６架空評価だけを生成した。
+
+[最上位結果](../../artifacts/anomaly-v03-preformal-registered-attempt-g02/budgeted-result.json)は1,654 B / SHA256 `d1a8c738e61fd0ad48d99675ca12cb2aea937152bafca29a543398061e9ceda7`、[内側２役結果](../../artifacts/anomaly-v03-preformal-registered-attempt-g02/owned-generator/result.json)は10,528 B / SHA256 `354c8ae043486c8f5ee2a99780ea5ee5a9395ed92daaca790187e8e9ab7c1179`。[共有予算receipt](../../artifacts/anomaly-v03-preformal-registered-attempt-g02/resource-budget.json)は3,618 B / SHA256 `c1dd3e838930cd318ee8c51634d7d54faaacfcae7d70d3065f8e15a3878a72a2`、184.919秒・709標本でpass。600秒wall、親512 MiB、対象root192 MiB/256 entries/depth12、最低commit/RAM各2 GiB・空きdisk5 GiBの標本・協調停止であり、OSのhard quotaではない。最大標本rootは131,337,566 B/48 entries/depth10、親peak private50,749,440 B、最低commit余裕17,660,342,272 B、最低RAM空き15,535,783,936 B、最低disk空き411,696,873,472 B。最終receipt２件を加えたrootは33 file/50 entries/131,342,838 B。対象外のpinset容量をこれらの数字へ足していない。
+
+生成子PID 24516は136.148秒・peak private359,686,144 B、reader PID 29512は43.789秒・316,575,744 B。両者の開始tokenは別で、exit 0/回収、保存supervision・stdout・応答pinを最上位resultと突合した。生成子が物理保存・再読取りしたdataset入力12 fileと評価６・制御４の計22 file/131,144,119 Bは外部pinと一致し、別readerは最新attemptの６評価を観測→profile/score→ledger→主/sliceまで再導出した。[独立postcheck](../../artifacts/anomaly-v03-preformal-generated-pinsets-g02/postcheck-result.json)は2,229 B / SHA256 `c96ff1fd3080d009989ce6e43eb52f448222e6bd9ac874f9de597b9da895712f`、[照合script](../../artifacts/anomaly-v03-preformal-generated-pinsets-g02/postcheck.py)は28,481 B / SHA256 `2652f5d99e2ca222c88e164e714a8ede4186fb50ca21b854969a54d8d5d7fff0`。全22 raw pinと完全在庫、選択20 sourceの作業raw/Git、２ raw snapshot、各子の監督記録、予算標本/最終ツリーに不一致0。関連回帰は58件中57件pass・従来のopt-in native１件skip、repository safetyはpass。
+
+この予算のscopeは`invented-generated-two-role-only`。登録形式readerの１区間６評価を40架空cluster/50,000 drawの入力へつなぐ導出・pin契約はなく、全表/文書・完全別監査・stage/writer・公開後readerも今回の監視外である。`full_end_to_end_budget_measured=false`、`formal_50000_draw_budget_measured=false`、`formal_permission=false`、正式credit 0を維持する。全source/runtime閉包と実行identity認証も未採択のまま。
+
 ### 共通外側予算への接続順
 
-今回の所有生成２役も生成子とreaderに個別の停止上限を設けた試行であり、準備工程・後続の40 cluster/50,000 draw・全文書・完全別監査・公開を含む単一の外側予算を測っていない。131,144,119 Bの出力と別rootの起動前pinsetを、新しい共通予算でどの時点から数えるかも受入時に固定する。
+g01は生成子とreaderに個別の停止上限を設けた試行だった。g02ではこの２役に１つの外側予算を通したが、準備工程・後続の40 cluster/50,000 draw・全文書・完全別監査・公開までの共通測定にはまだ届かない。g02の131,144,119 Bの出力は監視対象rootに含め、別rootの起動前pinset準備は明示的に除外した。正式同形の全工程では外部入力の準備範囲と容量を受入契約で固定する。
 
-現行[５役予算](../../src/banto_ai/anomaly_v03_preformal_chain_budget.py)は５役・240秒・48 MiBに限定され、保存形式２役のコピー前入力と出力はそれぞれ126,317,406 B（約120.5 MiB）ある。[保存形式２役](../../src/banto_ai/anomaly_v03_preformal_owned_saved_attempt.py)、[５役](../../src/banto_ai/anomaly_v03_platform_five_role_fixture.py)、[50,000 draw接続](../../src/banto_ai/anomaly_v03_preformal_bound_draw_bridge.py)は別々のrootと外側監視を所有する。[下位予算の祖先接続](../../src/banto_ai/_anomaly_v03_fixture_budget.py)を利用できても、現公開入口を直列に呼ぶだけでは同一予算・同一入力系譜にならない。新しい版付き外側監視と各工程のcaller所有target/budget入口を作り、保存形式２役の子監督へ停止probeを伝え、終了・回収後だけ次工程を起動する。別rootの事前作成入力は外部pinで固定し、その準備時間・容量を共通測定に入れないなら明記する。
+現行[５役予算](../../src/banto_ai/anomaly_v03_preformal_chain_budget.py)は５役・240秒・48 MiBに限定され、保存形式２役のコピー前入力と出力はそれぞれ126,317,406 B（約120.5 MiB）ある。[保存形式２役](../../src/banto_ai/anomaly_v03_preformal_owned_saved_attempt.py)、[５役](../../src/banto_ai/anomaly_v03_platform_five_role_fixture.py)、[50,000 draw接続](../../src/banto_ai/anomaly_v03_preformal_bound_draw_bridge.py)は別々のrootと外側監視を所有する。[下位予算の祖先接続](../../src/banto_ai/_anomaly_v03_fixture_budget.py)と今回の２役probeを利用できても、現公開入口を直列に呼ぶだけでは同一予算・同一入力系譜にならない。全工程用の版付き外側監視と各工程のcaller所有target/budget入口を作り、子監督へ停止probeを伝え、終了・回収後だけ次工程を起動する。
 
-登録形式readerの６架空評価から40架空clusterへの導出・pin契約、50,000 draw結果から全表・文書への接続、完全な別実装監査、stage→writer→別readerがさらに必要である。現行[文書fixture](../../src/banto_ai/anomaly_v03_document_fixture.py)の最大64 drawや算術子だけのreceiptを正式同形の50,000 draw全文書・完全S6へ読み替えない。共通監視開始→架空生成→別reader→全表/文書→別監査→公開/読戻しの順に新rootで失敗・未回収・容量超過を含めて測り、監視終了後に全体receiptを固定する。
+登録形式readerの６架空評価だけでは40 clusterを作れない。別の架空40 cluster入力なら50,000 drawの数値→文書を限定測定できるが、正式同形の全工程接続には架空2,880行から40 clusterを導出するpin契約が要る。さらに50,000 draw結果から全表・文書への接続、完全な別実装監査、stage→writer→別readerが必要である。現行[文書fixture](../../src/banto_ai/anomaly_v03_document_fixture.py)の最大64 drawや算術子だけのreceiptを正式同形の50,000 draw全文書・完全S6へ読み替えない。共通監視開始→架空生成→別reader→全表/文書→別監査→公開/読戻しの順に新rootで失敗・未回収・容量超過を含めて測り、監視終了後に全体receiptを固定する。
 
 ## データ別の次の作業境界
 
 | データ・時点 | 許される次の作業と完了証拠 | この段階の境界 |
 | --- | --- | --- |
-| 固定した架空入力、S4採択前 | 登録形式の１区間は所有生成子のexit/reap、外部pin、最新attempt、別readerでの観測→profile/score→ledger→主/slice照合まで完了した。次は40架空clusterの50,000 drawから完全な表・文書・別実装監査・公開後読戻しまでを工程別rootの共通予算で通す | 架空identityや登録seedの文字列を使っても、登録holdoutの観測値は生成・読取りしない。架空試験は性能証拠ではない |
+| 固定した架空入力、S4採択前 | 登録形式の１区間は所有生成子のexit/reap、外部pin、最新attempt、別readerでの観測→profile/score→ledger→主/slice照合まで完了し、この２役を１つの外側予算でも測った。この６評価から40 clusterは導出できない。次は別の架空40 cluster入力で50,000 drawの全表・文書・監査・公開を限定測定する。正式同形の全工程接続には架空2,880行から40 clusterを導出するpin契約が別途必要 | 架空identityや登録seedの文字列を使っても、登録holdoutの観測値は生成・読取りしない。架空試験は性能証拠ではない |
 | 保存済み合成dev/smoke、S4採択前 | 既存120区間・720評価と旧独立監査、全件engineering報告は参照証拠として保持する。必要な境界だけ外部pin付きで再確認し、元attemptを上書きしない | 今回の現行reader再確認は区間0と119の各６評価だけ。他の118区間のrawを今回再監査しておらず、旧データを新revisionのnative受入や正式holdoutへ付け替えない |
 | S4の最終dev/smoke | S1登録済みdev 8 seed・smoke 2 seedの全12 layout×２層×３候補を、改訂済み契約・最終clean revision・採択したWindows tupleで新rootに実行し、全在庫、独立再監査、CI/nativeを同じ受入記録へ結ぶ。smoke全artifact実測から正式同形のproducer+analysis+audit+staging必要量を見積り、式・実測bytes・予想時間を保存し、正式開始時の対象volume空きが見積りの２倍以上と確認する | 受入に失敗したらS5を開かない。科学条件・seed数・予算を途中で緩めない |
 | S4採択後のS5/S6 | 未使用holdout 40 seedの480区間・960 dataset・2,880評価を登録順で一回実行し、次段階でread-only独立再計算、50,000 draw、全gate・選択・別readerを照合する | 途中性能で停止・修正・seed追加をしない。S5成功結果をS4開始前の前提にしない。実設備・顧客データは本計画の対象外 |
