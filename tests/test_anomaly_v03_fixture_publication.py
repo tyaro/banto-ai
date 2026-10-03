@@ -82,6 +82,13 @@ class FixturePublicationTests(unittest.TestCase):
         for n in flow.PAYLOADS:self.assertEqual((root/'published/payload'/n).read_bytes(),self.files['wrapper/'+n]+b'\n')
         writer = json.loads((root/'writer/evidence.json').read_bytes());reader = json.loads((root/'reader/evidence.json').read_bytes())
         self.assertEqual((writer['role'],reader['role']),('writer','reader'));self.assertNotEqual(writer['invocation_id'],reader['invocation_id'])
+        for role in ('writer','reader'):
+            receipt = result[role]
+            self.assertEqual(json.loads((root/role/'result.json').read_bytes()),receipt)
+            for field,name in (('dependency_pin','dependencies.json'),('stdout_pin','worker/report.json'),
+                               ('supervision_pin','supervision.json')):
+                self.assertEqual(receipt[field],flow.observed._pin((root/role/name).read_bytes()))
+            self.assertEqual(receipt['stdout_pin'],json.loads((root/role/'supervision.json').read_bytes())['output'])
         self.assertEqual(os.stat(root/'published/.complete').st_nlink,2)
         for k,v in flow.CLOSED.items():self.assertEqual(result[k],v)
         self.assertEqual(json.loads((root/'published/payload/execution.json').read_bytes())['stages']['writer'],'not_run')
@@ -153,6 +160,33 @@ class FixturePublicationTests(unittest.TestCase):
         with patch.object(flow.supervisor,'supervise',side_effect=lost) as call:result = self.run_flow()
         self.assertEqual(call.call_count,1);self.assertEqual(result['status'],'failed');self.assertEqual(result['publication_status'],'unconfirmed')
         self.assertTrue((self.receipts/'chain/published/.complete').is_file());self.assertFalse((self.receipts/'chain/reader').exists())
+
+    def test_changed_writer_observation_cannot_be_retained_as_a_successful_receipt(self):
+        for name in ('supervision.json','worker/report.json','dependencies.json'):
+            with self.subTest(name=name):
+                receipt_name = 'anchor-'+name.replace('/','-').replace('.','-')
+                target = self.receipts/receipt_name
+                if name == 'worker/report.json':
+                    original = flow.dependencies.verify_pair
+                    def changed(*args,**kwargs):
+                        result = original(*args,**kwargs)
+                        (target/'writer/worker/report.json').write_bytes(b'{}\n')
+                        return result
+                    context = patch.object(flow.dependencies,'verify_pair',side_effect=changed)
+                else:
+                    original = flow.observed._save
+                    def changed(path,value):
+                        original(path,value)
+                        if Path(path) == target/'writer'/name:Path(path).write_bytes(b'{}\n')
+                    context = patch.object(flow.observed,'_save',side_effect=changed)
+                with context:
+                    result = flow.publish_with_evidence(self.request,expected_revision=self.revision,
+                        receipt_parent=self.receipts,receipt_name=receipt_name)
+                self.assertEqual(result['status'],'failed',result)
+                self.assertIn('retained writer '+name+' changed',result['detail'])
+                self.assertEqual(result['publication_status'],'unconfirmed')
+                self.assertTrue((target/'published/.complete').is_file())
+                self.assertFalse((target/'reader').exists())
 
     def test_reader_failure_retains_completed_publication_and_writer_receipt(self):
         original = flow._run_role
