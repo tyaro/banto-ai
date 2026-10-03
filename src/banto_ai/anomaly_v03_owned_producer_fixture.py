@@ -171,6 +171,13 @@ def _save_output(root, name, raw):
     return _pin(raw)
 
 
+def _require_output_inventory(output):
+    expected_paths = ('bound.json', *(('projection/' + name)
+                                      for name in projection.analysis.INPUT_LIMITS))
+    primary.v.require(io._tree_paths(output) == tuple(sorted(expected_paths)),
+                      'producer exact output inventory')
+
+
 def worker_main(argv):
     """Produce only a pinned byte join; a failed child never claims completion."""
     try:
@@ -348,10 +355,7 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
                                        projection.analysis.INPUT_LIMITS[name])
                 primary.v.require(saved == data, 'producer projected bytes')
                 pins[name] = _pin(saved)
-            expected_paths = ('bound.json', *(('projection/' + name)
-                                              for name in projection.analysis.INPUT_LIMITS))
-            _same(io._tree_paths(output), tuple(sorted(expected_paths)),
-                  'producer exact output inventory')
+            _require_output_inventory(output)
             primary.v.require(bound_pin['bytes'] + sum(p['bytes'] for p in pins.values()) <= OUTPUT_MAX,
                               'producer saved output total')
             _same(pins, reply['projection_pins'], 'producer projected file pins')

@@ -61,6 +61,19 @@ class OwnedProducerFixtureTests(unittest.TestCase):
                     receipt_parent=parent, receipt_name='producer-attempt')
             self.assertFalse((parent / 'producer-attempt').exists())
 
+    def test_saved_projection_inventory_uses_exact_regular_file_names(self):
+        with tempfile.TemporaryDirectory(dir=owned.ROOT / 'artifacts') as temporary:
+            output = Path(temporary)
+            for name in ('bound.json', *(('projection/' + item)
+                         for item in owned.projection.analysis.INPUT_LIMITS)):
+                path = output / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(b'{}')
+            owned._require_output_inventory(output)
+            (output / 'projection' / 'unexpected.json').write_bytes(b'{}')
+            with self.assertRaisesRegex(ValueError, 'producer exact output inventory'):
+                owned._require_output_inventory(output)
+
 
 if __name__ == '__main__':
     unittest.main()
