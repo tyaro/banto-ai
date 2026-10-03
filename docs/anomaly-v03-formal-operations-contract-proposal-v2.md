@@ -2,6 +2,8 @@
 
 2026-10-04。状態: **proposal / 未採択 / 正式実行許可なし**。本案は[正式計画 §8–9](anomaly-multiseed-evaluation-plan-v0.3.md#v03-runtime-acceptance)と[運用契約案 v1](anomaly-v03-formal-operations-contract-proposal-v1.md)を置換せず、Windows 11 Pro 26H2への変更を別版で受け入れる場合の条件を提示する。科学仕様、登録済みseed、候補、分母、50,000 draw、gate、選択規則は変更しない。実設備や顧客データの収集は対象外で、登録holdoutの実観測もまだ読んでいない。
 
+同日の[架空50,000 draw算術測定](results/anomaly-multiseed-v0.3-preformal-platform-raw-budget-2026-10-04.md)は主計算と別実装監査が完走したが、登録実保存reader・完全S6・公開を含む全工程予算や5役割の全source/runtime閉包は満たさない。本案の未採択状態と下記の受入順序は変わらない。
+
 ## 変更理由と現在の境界
 
 2026-10-04の[実測・停止記録](results/anomaly-multiseed-v0.3-registered-summary-runtime-change-2026-10-04.md)では、registryが `EditionID=Professional`、`DisplayVersion=26H2`、`CurrentBuildNumber=26300`、`UBR=9457`、`sys.getwindowsversion()` もbuild 26300を返した。registryの `ProductName=Windows 10 Pro` は互換用のlegacy文字列で、edition判定には使わない。CPythonは3.14.0、MSC v.1944、64-bit AMD64。これはその時点の観測であり、S4のruntime受入ではない。clean revisionでのfixture writer/reader実process試験は、writer起動前に `unsupported engineering runtime` で止まった。新しい保存証拠pinを実processで検証した結果ではない。
