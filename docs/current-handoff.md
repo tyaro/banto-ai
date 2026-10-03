@@ -1,5 +1,21 @@
 # 次のタスク用の短い引継ぎ
 
+更新: 2026-10-03 JST。**保存済み合成dev/smokeの区間0・6評価を新しい要約readerで実適用し、過去の独立監査と一致した。** [今回の結果](results/anomaly-multiseed-v0.3-saved-chunk-000-pilot-2026-10-03.md)、[受入と全体範囲](results/anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)。新要約151,954bytes/SHA256 `40a5328f863f3018a4906ce049b0f1d104a896ce968ba6536c5b5eb478f5c95d`、部分結合は確認済み6/720・未確認714/720、旧生成監査との共有8入力pinも一致した。
+
+所有子は17.934秒、peak private159,682,560bytes、exit0/reaped。親の資源監視76sampleもpass。保存先は`artifacts/real-saved-chunk-000-2026-10-03`、result/pinとprocess/resource記録を保持する。次は区間119の失敗attempt履歴を限定確認する要否と、全120区間へ適用する時間・中間保存・停止予算を判断する。残る119区間を新経路で確認した扱いにせず、全120要約が揃うまで報告入口のsummaries開始は使わない。
+
+正式運用契約、40seed登録入力、役割別source/runtime、正式独立監査と全工程予算は未受入。正式null4欄/`formal_ready=false`、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持する。今回の6件を正式holdoutへ加算しない。旧正式OS pin UBR9168と今回の実観測UBR9457を混同しない。
+
+## 直前の受入範囲整理（以下は履歴）
+
+更新: 2026-10-03 JST。**保存点`da0f677`から、正式評価前の5まとまりの受入事項と、保存済みdev/smoke合成データへの実適用範囲を更新した。** [受入と作業範囲](results/anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)を参照。旧10月1日の受入表から進んだ架空slice独立監査、5payload公開、保存形式reader→要約→報告→再開入口を完了分として保持する。
+
+次の小さい単位は、外部pin付き完走保存点から区間0・6評価を`engineering`で1回読み、保存済みの独立監査と照合し、結果と資源/失敗を新rootへ記録する。全120区間への適用要否と予算はこの結果を見て判断する。正式運用契約、登録40seedのconsumer、最終役割別source/runtime、実結果の独立監査、全工程予算は別の受入事項である。正式null4欄、`formal_ready=false`、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持する。
+
+この追記は受入範囲の文書整理で、保存artifactの再hash、新評価、正式gate/holdout、50,000回bootstrapを実行した記録ではない。既存の実720評価は合成dev/smokeであり、正式holdoutや実設備性能に算入しない。以下は直前の保存済み報告入口の記録。
+
+## 直前の保存済み報告入口（以下は履歴）
+
 更新: 2026-10-03 JST。**完了済み工程を再利用する単一実行入口とCLI、途中再開requestまで接続済み。次は残る受入事項と実データ作業範囲の整理。**
 
 - [今回の結果](results/anomaly-multiseed-v0.3-saved-report-pipeline-2026-10-03.md)、[API](anomaly-v03-saved-report-pipeline.md)、長い引継書§200。

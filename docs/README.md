@@ -1,6 +1,8 @@
 # banto-ai 文書索引・状態台帳
 
-最終更新: 2026-09-07
+最終更新: 2026-10-03
+
+v0.3の最新の工程状態は[短い引継ぎ](current-handoff.md)を参照。[正式評価前の受入残件と保存済みデータの作業範囲](results/anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)を更新し、[合成dev/smokeの保存済み区間0](results/anomaly-multiseed-v0.3-saved-chunk-000-pilot-2026-10-03.md)へ新要約readerを限定適用した。旧S4-Aの説明と「次はS4-B」は当時の履歴である。S4全体の受入、正式40 seed、S6、昇格は未完了。
 
 この索引は、文書の入口と現在状態を示すliving documentです。初稿S0 commitは
 `41decf9b6f8d6c876715729516354bf6da49422c`、そのparentはmainの
@@ -48,7 +50,7 @@ S1の初回指摘・修正・境界は[v0.3 S1監査結果](results/anomaly-mult
 | Phase 0 研究基盤と契約 | complete | package、manifest、共通runtime、license／安全境界を実装済み |
 | Phase 1 合成データとbaseline | complete | 再現可能generator、quality、rolling-originと統計baselineを実装済み |
 | Phase 2 Forecast model benchmark | active / incomplete | TimesFM 3、Chronos-2、Toto 2.0 4Mの初期・matrix・MetroPT-3等は評価済み。条件拡大、resource分離、一般化は未完了 |
-| Phase 3 異常とドリフト | active | anomaly v0.1契約、v0.2 formal replay/analysis、failure diagnostics、v0.3 S0〜S4-A監査まで完了。S4-Aは安全なinspection/resource guardであり、S4全体・formal run・性能・promotionは未完了。次はS4-B |
+| Phase 3 異常とドリフト | active | v0.3はS4-A後にengineeringの保存結果・独立検算・報告入口を接続。正式受入5まとまりは開いたままで、S4全体・formal run・性能・promotionは未完了。[最新範囲](results/anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md) |
 | Phase 4 自前モデル研究 | not started | 専用の実装・ablationは未着手 |
 | Phase 5 Commissioning auto-tuning | not started | 設計文書のみ。profile昇格やshadow実行は未着手 |
 | Phase 6 Continual adaptation | not started | frozen model＋profile適応の実験は未着手 |

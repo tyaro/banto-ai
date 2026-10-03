@@ -1,5 +1,7 @@
 # consumerのsource/runtime固定対象と実行前の残件
 
+2026-10-03 受入再整理：[正式評価前の残件と保存済みデータの作業範囲](results/anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)で、最終役割profile、動的依存、clean revision、旧正式OS pinと現観測の差、全工程予算を未受入として明示した。以下の日付付き接続記録はその時点の履歴として保持する。
+
 2026-10-03 最新：[保存済み工程から続ける単一入口](results/anomaly-multiseed-v0.3-saved-report-pipeline-2026-10-03.md)。要約・集計表・報告書・保存完了記録の四つから開始できる単一入口とCLI、工程ごとの続行requestを追加した。23項目を確認（初回22成功、試験条件を分けた1項目のみ再確認）。前回の完了記録を0.620秒で再利用し、aggregation/report/publicationの呼出しと新しい所有processはいずれも0回。 今回の保存例は前回の架空報告書4file/3,040,268bytesの保存完了記録を再利用する。実720評価のrawを読まず、新評価・mapper・再集計・bootstrap・正式gateを起動しない。過去のwriter/reader終了記録と今回の保存bytes照合を区別し、過去PIDへアクセスしない。実際の検出性能やsource/runtime全依存の真正性を保証しない。 次は既存計画と受入記録を照合して、正式評価前の残件（運用契約、実入力への適用、版と実行環境の固定、全体の資源計画）を更新し、次に必要な実データ作業の範囲を具体化する。完成した接続工程を増設・反復せず、正式gate/holdoutや実720評価の再実行は起動しない。 最終実装6d48c39/sp02。正式契約draft、principal/full closure/全体予算は未受入。
 
 以下は各時点の履歴。現在の到達点と次工程は上記を優先する。
