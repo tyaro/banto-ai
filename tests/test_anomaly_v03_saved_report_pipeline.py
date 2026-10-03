@@ -131,7 +131,9 @@ class SavedReportPipelineTests(unittest.TestCase):
         self.assertEqual(r['status'],'failed');self.assertFalse(r['resource_budget_passed']);self.assertEqual(r['publication_runs'],0)
 
     def test_existing_and_source_overlap_are_rejected(self):
-        with self.assertRaises(FileExistsError):self.run_stage('publication','initial')
+        existing=self.root/'existing';existing.mkdir();(existing/'keep.txt').write_bytes(b'preserve')
+        with self.assertRaises(FileExistsError):self.run_stage('publication','existing')
+        self.assertEqual((existing/'keep.txt').read_bytes(),b'preserve')
         source=Path(self.checkpoints['publication']['inputs']['directory'])
         with self.assertRaises(ValueError):pipeline.run_pipeline(self.checkpoints['publication'],output_parent=source,output_name='overlap')
 
