@@ -1,9 +1,8 @@
 """Prepare five externally anchored dependency candidates from an invented run.
 
-These profiles record two child inventory observations. They do not attest
-in-memory code, complete source/runtime closure, registered data, or a formal
-campaign. A separate, clean-revision reference run must finish before this
-function is called; the next run must retain the returned candidate-set pin.
+These profiles fix two child inventory observations and the reference parent's
+crosscheck receipt. They do not independently recheck every dependency file,
+attest in-memory code, complete closure, or authorize a formal campaign.
 """
 from __future__ import annotations
 
@@ -25,8 +24,8 @@ from . import _anomaly_v03_io as io
 ROOT = Path(__file__).resolve().parents[2]
 REFERENCE_PARENT = ROOT / 'artifacts' / 'anomaly-v03-preformal-five-role-26h2'
 PROFILE_PARENT = ROOT / 'artifacts' / 'anomaly-v03-preformal-role-profiles-26h2'
-FORMAT = 'anomaly-v03-preformal-five-role-dependency-profile-v1'
-SET_FORMAT = 'anomaly-v03-preformal-five-role-profile-set-v1'
+FORMAT = 'anomaly-v03-preformal-five-role-dependency-profile-v3'
+SET_FORMAT = 'anomaly-v03-preformal-five-role-profile-set-v3'
 ROLES = ('producer', 'analysis', 'audit', 'writer', 'reader')
 ROLE_PATHS = {'producer': 'producer', 'analysis': 'analysis', 'audit': 'audit',
               'writer': 'publication/writer', 'reader': 'publication/reader'}
@@ -91,12 +90,75 @@ def _git_blob(revision):
     return git
 
 
-def _crosscheck(role, before, after, revision):
+def _verify_selected_source(role, source, revision):
+    """Recheck selected code only; never reuse this process's loaded images."""
     required = (producer.SOURCE_FILES if role == 'producer' else
                 numeric.SOURCE_FILES if role in ('analysis', 'audit') else
                 publication_platform.SOURCE_FILES)
-    return dependencies.verify_pair(before, after, root=ROOT, revision=revision,
-                                    git=_git_blob(revision), required_sources=required)
+    v.require(source['revision'] == revision,
+              role + ' selected source revision')
+    rows = source['selected_files'] if role == 'producer' else source['sources']
+    v.require(type(rows) is list and
+              {row['path'] for row in rows} == set(required) and
+              len(rows) == len(required), role + ' selected source inventory')
+    git = _git_blob(revision)
+    for row in rows:
+        name = row['path']
+        raw = observed._file(ROOT / name, 1024**2)
+        expected = (row['pin'] if role == 'producer' else
+                    {'bytes': row['byte_count'], 'sha256': row['raw_sha256']})
+        evidence._raw(raw, expected, role + ' selected working source pin')
+        v.require(raw == git('show', revision + ':' + name),
+                  role + ' selected Git source bytes')
+
+
+def _historical_crosscheck(role, check, before, after):
+    """Match the separately pinned historical parent verdict to both snapshots."""
+    fields = {'status', 'expectation_origin', 'project_files', 'files',
+              'modules', 'native_files', 'added_files_during_read',
+              'added_modules_during_read', *dependencies.SCOPE}
+    v.require(type(check) is dict and set(check) == fields and
+              check['status'] == 'observed_dependencies_disk_git_matched' and
+              check['expectation_origin'] ==
+                  'child-inventory-crosschecked-by-parent-after-exit',
+              role + ' retained historical crosscheck schema')
+    for key, value in dependencies.SCOPE.items():
+        _same(check[key], value, role + ' historical crosscheck ' + key)
+    _same(check['files'], len(after['files']), role + ' crosscheck file count')
+    _same(check['modules'], len(after['modules']), role + ' crosscheck module count')
+    _same(check['native_files'], len(after['native_files']),
+          role + ' crosscheck native count')
+    _same(check['project_files'],
+          sum(row['category'] == 'project' for row in after['files'].values()),
+          role + ' crosscheck project count')
+    _same(check['added_files_during_read'],
+          sorted(set(after['files']) - set(before['files'])),
+          role + ' crosscheck added files')
+    _same(check['added_modules_during_read'],
+          sorted(set(after['modules']) - set(before['modules'])),
+          role + ' crosscheck added modules')
+
+
+def _two_point_inventory(before, after, role):
+    """Keep both observations; only new file/module rows may appear later."""
+    fields = {'format', 'modules', 'files', 'native_files', 'scope'}
+    for phase, snapshot in (('before', before), ('after', after)):
+        v.require(type(snapshot) is dict and set(snapshot) == fields and
+                  snapshot['format'] == dependencies.FORMAT and
+                  snapshot['scope'] == dependencies.SCOPE and
+                  type(snapshot['files']) is dict and
+                  0 < len(snapshot['files']) <= dependencies.MAX_FILES and
+                  type(snapshot['modules']) is dict and
+                  len(snapshot['modules']) <= 2048 and
+                  type(snapshot['native_files']) is list and
+                  snapshot['native_files'] == sorted(set(snapshot['native_files'])),
+                  role + ' ' + phase + ' bounded dependency snapshot')
+    for section in ('files', 'modules'):
+        v.require(all(after[section].get(name) == row
+                      for name, row in before[section].items()),
+                  role + ' existing dependency changed/disappeared')
+    v.require(set(before['native_files']) <= set(after['native_files']),
+              role + ' loaded image disappeared')
 
 
 def _bind_runtime(role, child_runtime, supervisor_runtime):
@@ -131,15 +193,16 @@ def _bind_runtime(role, child_runtime, supervisor_runtime):
           role + ' child/supervisor Python DLL')
 
 
-def _reference_result(top, publication):
+def _reference_result(top, expected_role_pins):
     return {'producer': top['producer']['result_pin'],
             'analysis': top['analysis']['result_pin'],
             'audit': top['audit']['result_pin'],
-            'writer': publication['writer']['result_pin'],
-            'reader': publication['reader']['result_pin']}
+            'writer': expected_role_pins['writer']['result'],
+            'reader': expected_role_pins['reader']['result']}
 
 
-def _require_reference_top(reference, top, budget, publication):
+def _require_reference_top(reference, top, budget, publication,
+                           expected_role_pins):
     v.require(top['format'] == 'anomaly-v03-platform-five-role-fixture-v1' and
               top['mode'] == 'fixture' and top['status'] == 'verified' and
               top['stage'] == 'complete' and top['owned_producer_join_executed'] is True and
@@ -166,7 +229,12 @@ def _require_reference_top(reference, top, budget, publication):
               publication['reader_status'] == 'completed' and
               publication['mode'] == 'fixture',
               'reference writer/reader completion')
-    return _reference_result(top, publication)
+    for role in ('writer', 'reader'):
+        _, saved = _read(reference / ROLE_PATHS[role] / 'result.json',
+                         MAX_RESULT, pin=expected_role_pins[role]['result'])
+        _same(publication[role], saved,
+              role + ' publication embedded result')
+    return _reference_result(top, expected_role_pins)
 
 
 def _role_observation(reference, role, external_pins, result_pin, top,
@@ -240,15 +308,13 @@ def _role_observation(reference, role, external_pins, result_pin, top,
     _same(pair, {'before': stdout['dependencies_before'],
                  'after': stdout['dependencies_after']},
           role + ' pinned stdout/dependency pair')
-    _same(pair['before'], pair['after'], role + ' reference imports changed')
-    before = pair['before']
-    v.require(before['format'] == dependencies.FORMAT and
-              before['scope'] == dependencies.SCOPE and
-              0 < len(before['files']) <= dependencies.MAX_FILES and
-              len(before['modules']) <= 2048,
-              role + ' bounded dependency snapshot')
-    checked = _crosscheck(role, before, pair['after'], revision)
-    _same(checked, result['dependency_observation'], role + ' dependency crosscheck')
+    before, after = pair['before'], pair['after']
+    _two_point_inventory(before, after, role)
+    _, checked = _read(base / 'dependency-crosscheck.json', MAX_RESULT,
+                       pin=external_pins['crosscheck'])
+    _same(checked, result['dependency_observation'],
+          role + ' historical result/crosscheck')
+    _historical_crosscheck(role, checked, before, after)
 
     if role == 'producer':
         v.require(result['source_revision'] == revision and
@@ -260,6 +326,7 @@ def _role_observation(reference, role, external_pins, result_pin, top,
                   'producer reference identity')
         _same(stdout['source_before'], stdout['source_after'],
               'producer selected source changed')
+        _verify_selected_source(role, stdout['source_before'], revision)
         v.require(stdout['source_before']['revision'] == revision,
                   'producer reference revision')
         _same(stdout['runtime_before'], stdout['runtime_after'],
@@ -284,6 +351,7 @@ def _role_observation(reference, role, external_pins, result_pin, top,
                   role + ' reference evidence identity')
         _same(record['source_before'], record['source_after'],
               role + ' selected source changed')
+        _verify_selected_source(role, record['source_before'], revision)
         v.require(record['source_before']['revision'] == revision,
                   role + ' reference revision')
         _same(record['runtime_before'], record['runtime_after'],
@@ -301,16 +369,17 @@ def _role_observation(reference, role, external_pins, result_pin, top,
                       'supervision_pin': copy.deepcopy(external_pins['supervision']),
                       'stdout_pin': copy.deepcopy(external_pins['stdout']),
                       'dependency_pin': copy.deepcopy(external_pins['dependencies'])}
+    reference_pins['crosscheck_pin'] = copy.deepcopy(external_pins['crosscheck'])
     if evidence_pin is not None:
         reference_pins['evidence_pin'] = copy.deepcopy(evidence_pin)
-    return runtime, before, reference_pins
+    return runtime, pair, reference_pins
 
 
 def prepare_profiles(reference_root, expected_result_pin, *, output_root,
                      expected_role_pins):
     """Save five candidate files and a pin index under one new, disjoint root.
 
-    The caller must retain the top result pin and four file pins for every role
+    The caller must retain the top result pin and five file pins for every role
     before this call. Missing pins never fall back to hashes calculated from
     the current reference files.
     """
@@ -321,7 +390,8 @@ def prepare_profiles(reference_root, expected_result_pin, *, output_root,
     for role in ROLES:
         row = expected_role_pins[role]
         v.require(type(row) is dict and
-                  set(row) == {'result', 'supervision', 'stdout', 'dependencies'},
+                  set(row) == {'result', 'supervision', 'stdout',
+                               'dependencies', 'crosscheck'},
                   role + ' external observation pin inventory')
         for pin in row.values():
             evidence._pin(pin)
@@ -341,17 +411,22 @@ def prepare_profiles(reference_root, expected_result_pin, *, output_root,
                       pin=top['resource_budget_pin'])
     _, publication = _read(reference / 'publication' / 'result.json', MAX_RESULT,
                            pin=top['publication']['result_pin'])
-    result_pins = _require_reference_top(reference, top, budget, publication)
+    result_pins = _require_reference_top(reference, top, budget, publication,
+                                         expected_role_pins)
     profiles = {}
     for role in ROLES:
-        runtime, snapshot, pins = _role_observation(reference, role,
+        runtime, snapshots, pins = _role_observation(reference, role,
             expected_role_pins[role], result_pins[role], top, budget,
             revision, expected_result_pin)
         profile = {'format': FORMAT, 'mode': 'fixture', 'role': role,
                    'operation': OPERATIONS[role], 'boundary': BOUNDARIES[role],
                    'acceptance': 'candidate-not-accepted',
                    'source_revision': revision, 'root': str(ROOT),
-                   'runtime': runtime, 'snapshot': snapshot,
+                   'runtime': runtime, 'snapshots': snapshots,
+                   'observation_semantics':
+                       'two-point-before-and-after-with-additions-only',
+                   'crosscheck_scope':
+                       'historical-parent-verdict-pinned-no-current-image-allowlist',
                    'reference_root': str(reference), 'reference': pins,
                    'scope': copy.deepcopy(dependencies.SCOPE),
                    'formal_permission': False,

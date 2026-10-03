@@ -64,7 +64,8 @@ class RoleProfileTests(unittest.TestCase):
             context.start()
             self.addCleanup(context.stop)
         for name, value in (('_head_clean', lambda revision: None),
-                            ('_crosscheck', lambda role, before, after, revision: SUMMARY)):
+                            ('_verify_selected_source',
+                             lambda role, source, revision: None)):
             context = patch.object(profiles, name, value)
             context.start()
             self.addCleanup(context.stop)
@@ -74,14 +75,15 @@ class RoleProfileTests(unittest.TestCase):
         self.budget_roles = {}
         self._reference()
 
-    def _reference(self):
+    def _reference(self, *, producer_addition=False, producer_change=False):
         snapshot = {'format': dependencies.FORMAT,
                     'scope': copy.deepcopy(dependencies.SCOPE),
-                    'files': {'project/src/banto_ai/invented.py': {}},
+                    'files': {'project/src/banto_ai/invented.py':
+                              {'category': 'project'}},
                     'modules': {}, 'native_files': []}
         for index, role in enumerate(profiles.ROLES):
             path = self.reference / profiles.ROLE_PATHS[role]
-            path.mkdir(parents=True)
+            path.mkdir(parents=True, exist_ok=True)
             pid = 1000 + index
             token = format(index + 1, '064x')
             invocation = format(index + 11, '064x')
@@ -89,7 +91,31 @@ class RoleProfileTests(unittest.TestCase):
                                      'invocation_id': invocation}
             pair = {'before': copy.deepcopy(snapshot),
                     'after': copy.deepcopy(snapshot)}
+            if role == 'producer' and producer_addition:
+                pair['after']['files']['python-files/Lib/encodings/cp437.py'] = {
+                    'category': 'stdlib'}
+                pair['after']['files'][
+                    'python-files/Lib/encodings/__pycache__/cp437.cpython-314.pyc'
+                ] = {'category': 'bytecode-cache-candidate'}
+                pair['after']['modules']['encodings.cp437'] = {'kind': 'file'}
+            if role == 'producer' and producer_change:
+                pair['after']['files']['project/src/banto_ai/invented.py'] = {
+                    'category': 'project', 'pin': 'changed'}
             dependency_pin = save(path / 'dependencies.json', pair)
+            checked = {**dependencies.SCOPE,
+                       'status': 'observed_dependencies_disk_git_matched',
+                       'expectation_origin':
+                           'child-inventory-crosschecked-by-parent-after-exit',
+                       'project_files': sum(row['category'] == 'project'
+                                            for row in pair['after']['files'].values()),
+                       'files': len(pair['after']['files']),
+                       'modules': len(pair['after']['modules']),
+                       'native_files': len(pair['after']['native_files']),
+                       'added_files_during_read': sorted(
+                           set(pair['after']['files']) - set(pair['before']['files'])),
+                       'added_modules_during_read': sorted(
+                           set(pair['after']['modules']) - set(pair['before']['modules']))}
+            crosscheck_pin = save(path / 'dependency-crosscheck.json', checked)
             if role == 'producer':
                 stdout = {'format': profiles.producer.FORMAT, 'status': 'joined',
                           'process': {'pid': pid, 'start_token': token},
@@ -127,7 +153,7 @@ class RoleProfileTests(unittest.TestCase):
                        'output': stdout_pin}
             supervision_pin = save(path / 'supervision.json', monitor)
             result = {'status': 'verified', 'worker_exit_confirmed': True,
-                      'worker_pid': pid, 'dependency_observation': SUMMARY}
+                      'worker_pid': pid, 'dependency_observation': checked}
             if role in ('producer', 'analysis', 'audit'):
                 result['formal_permission'] = False
                 result['mode'] = 'fixture'
@@ -160,7 +186,8 @@ class RoleProfileTests(unittest.TestCase):
             self.expected_role_pins[role] = {'result': result_pin,
                                              'supervision': supervision_pin,
                                              'stdout': stdout_pin,
-                                             'dependencies': dependency_pin}
+                                             'dependencies': dependency_pin,
+                                             'crosscheck': crosscheck_pin}
             self.budget_roles[role] = {'result_pin': result_pin,
                                        'status': 'verified',
                                        'worker_exit_confirmed': True,
@@ -168,8 +195,10 @@ class RoleProfileTests(unittest.TestCase):
         publication = {**evidence.CLOSED, 'status': 'verified',
                        'mode': 'fixture', 'publication_status': 'completed',
                        'reader_status': 'completed',
-                       'writer': {'result_pin': self.result_pins['writer']},
-                       'reader': {'result_pin': self.result_pins['reader']}}
+                       'writer': v.strict_json((self.reference / 'publication' /
+                                                'writer' / 'result.json').read_bytes()),
+                       'reader': v.strict_json((self.reference / 'publication' /
+                                                'reader' / 'result.json').read_bytes())}
         publication_pin = save(self.reference / 'publication' / 'result.json',
                                publication)
         budget = {'root': str(self.reference), 'passed': True,
@@ -216,6 +245,12 @@ class RoleProfileTests(unittest.TestCase):
             self.assertEqual(profile['boundary'], profiles.BOUNDARIES[role])
             self.assertEqual(profile['reference']['dependency_pin'],
                              self.expected_role_pins[role]['dependencies'])
+            self.assertEqual(profile['reference']['crosscheck_pin'],
+                             self.expected_role_pins[role]['crosscheck'])
+            self.assertEqual(profile['snapshots']['before'],
+                             profile['snapshots']['after'])
+            self.assertEqual(profile['observation_semantics'],
+                             'two-point-before-and-after-with-additions-only')
             self.assertFalse(profile['runtime_closure_complete'])
         with self.assertRaises((ValueError, OSError)):
             self.prepare()
@@ -234,6 +269,16 @@ class RoleProfileTests(unittest.TestCase):
             self.prepare()
         self.assertFalse(self.output.exists())
 
+    def test_crosscheck_pin_and_role_result_must_agree(self):
+        path = self.reference / 'producer' / 'dependency-crosscheck.json'
+        check = v.strict_json(path.read_bytes())
+        check['files'] += 1
+        pins = copy.deepcopy(self.expected_role_pins)
+        pins['producer']['crosscheck'] = save(path, check)
+        with self.assertRaises(ValueError):
+            self.prepare(pins=pins)
+        self.assertFalse(self.output.exists())
+
     def test_wrong_top_or_role_pin_rejected(self):
         wrong_top = {'bytes': self.top_pin['bytes'], 'sha256': '0' * 64}
         with self.assertRaises((ValueError, OSError)):
@@ -242,6 +287,19 @@ class RoleProfileTests(unittest.TestCase):
         pins['audit']['result'] = self.result_pins['analysis']
         with self.assertRaises((ValueError, OSError)):
             self.prepare(pins=pins)
+        self.assertFalse(self.output.exists())
+
+    def test_embedded_writer_result_must_match_external_pinned_child(self):
+        publication_path = self.reference / 'publication' / 'result.json'
+        publication = v.strict_json(publication_path.read_bytes())
+        publication['writer']['status'] = 'failed'
+        publication_pin = save(publication_path, publication)
+        top_path = self.reference / 'result.json'
+        top = v.strict_json(top_path.read_bytes())
+        top['publication']['result_pin'] = publication_pin
+        self.top_pin = save(top_path, top)
+        with self.assertRaises(ValueError):
+            self.prepare()
         self.assertFalse(self.output.exists())
 
     def test_reference_output_overlap_rejected(self):
@@ -259,6 +317,25 @@ class RoleProfileTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             profiles._bind_runtime('producer', producer_runtime,
                                    runtime.EXPECTED)
+
+    def test_producer_late_import_is_saved_as_second_observation(self):
+        self._reference(producer_addition=True)
+        self.prepare()
+        producer = v.strict_json((self.output / 'producer.json').read_bytes())
+        before, after = producer['snapshots']['before'], producer['snapshots']['after']
+        self.assertEqual(len(after['files']) - len(before['files']), 2)
+        self.assertEqual(set(after['modules']) - set(before['modules']),
+                         {'encodings.cp437'})
+        for role in profiles.ROLES[1:]:
+            candidate = v.strict_json((self.output / (role + '.json')).read_bytes())
+            self.assertEqual(candidate['snapshots']['before'],
+                             candidate['snapshots']['after'])
+
+    def test_changed_existing_dependency_rejected_even_with_new_external_pins(self):
+        self._reference(producer_change=True)
+        with self.assertRaises(ValueError):
+            self.prepare()
+        self.assertFalse(self.output.exists())
 
 
 if __name__ == '__main__':
