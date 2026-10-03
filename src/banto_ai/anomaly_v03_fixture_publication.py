@@ -209,7 +209,22 @@ def worker_main(argv):
         if profile is not None:
             dependencies.match_five_role_profile(profile, deps_before,
                                                  runtime_before, phase='before')
-        if role == 'writer':io.publish_local_result(publication.parent,publication.name,files,verify_semantics=_semantic(files))
+        if role == 'writer':
+            def precommit_recheck():
+                if profile is None:return
+                source_at_commit = _source(revision)
+                evidence._same(source_at_commit,bundle['source'],'writer source before commit')
+                v.require(observed._inputs(bundle['request']['inputs']) == inputs,
+                          'writer saved inputs changed before commit')
+                evidence._raw(observed._file(path,64*1024),pin,
+                              'writer invocation changed before commit')
+                deps_at_commit = dependencies.collect(ROOT)
+                runtime_at_commit = observed._observed_runtime()
+                dependencies.match_five_role_profile(profile, deps_at_commit,
+                                                     runtime_at_commit, phase='after')
+            io.publish_local_result(publication.parent,publication.name,files,
+                                    verify_semantics=_semantic(files),
+                                    precommit_recheck=precommit_recheck if profile is not None else None)
         _verify_publication(publication,files,marker)
         if role == 'reader':io._exclusive(path.parent/'readback.json',outputs['verification/readback.json'])
         deps_after = dependencies.collect(ROOT);runtime_after = observed._observed_runtime();source_after = _source(revision)

@@ -396,14 +396,17 @@ class LocalPublication(FixturePublication):
     _marker_type = "anomaly-v03-local-complete"
 
 
-def publish_local_result(parent: Path, name: str, files: Mapping[str, bytes], *, verify_semantics):
-    """Save a small prepared result and return its externally retainable receipt."""
+def publish_local_result(parent: Path, name: str, files: Mapping[str, bytes], *, verify_semantics,
+                         precommit_recheck=None):
+    """Save a small result; the optional check runs on both sides of payload rename, before the marker."""
     require(isinstance(files, Mapping) and bool(files), "nonempty result mapping required")
     require(callable(verify_semantics), "semantic verifier required")
+    require(precommit_recheck is None or callable(precommit_recheck), "precommit recheck must be callable")
     with LocalPublication(parent, name) as store:
         for path, raw in files.items():
             store.write(path, raw)
-        return store.publish(verify_semantics, lambda: None)
+        boundary = precommit_recheck if precommit_recheck is not None else (lambda: None)
+        return store.publish(verify_semantics, boundary)
 
 
 def verify_local_publication(root: Path, *, expected_marker_sha256: str, verify_semantics):

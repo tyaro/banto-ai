@@ -1,6 +1,7 @@
 """Invented saved receipts, real owned publication/readback, and fail-closed boundaries."""
 import copy
-from contextlib import nullcontext
+from contextlib import nullcontext, redirect_stdout
+from io import StringIO
 import json
 import os
 from pathlib import Path
@@ -212,7 +213,74 @@ class FixturePublicationTests(unittest.TestCase):
         self.assertEqual(call.call_count,1);self.assertEqual(result['status'],'failed');self.assertEqual(result['publication_status'],'unconfirmed')
         self.assertTrue((self.receipts/'chain/published/.complete').is_file());self.assertFalse((self.receipts/'chain/reader').exists())
 
-    def test_profile_after_failure_keeps_marker_but_not_success_claim(self):
+    def test_child_precommit_profile_mismatch_leaves_no_marker(self):
+        target = self.receipts/'child-precommit'
+        writer = target/'writer';writer.mkdir(parents=True)
+        publication = target/'published'
+        _,files = flow._load(self.request)
+        marker = flow._marker(files)
+        raw_profile = b'{}\n'
+        flow.io._exclusive(writer/'dependency-profile.json',raw_profile)
+        bundle = {'format':flow.INVOCATION,'invocation_id':'a'*64,
+                  'source':flow._source(self.revision),'request':self.request,
+                  'role':'writer','publication':str(publication),
+                  'expected_outputs':{name:flow.observed._pin(raw) for name,raw in
+                      flow._role_outputs('writer',self.request,files,marker).items()},
+                  'dependency_profile_pin':flow.observed._pin(raw_profile)}
+        raw_invocation = flow.io.json_bytes(bundle)
+        path = writer/'invocation.json';flow.io._exclusive(path,raw_invocation)
+        pin = flow.observed._pin(raw_invocation)
+        after_calls = []
+        def compare(profile, snapshot, runtime, *, phase):
+            if phase == 'after':
+                after_calls.append(True)
+                if len(after_calls) == 2:
+                    raise ValueError('five-role profile inventory after mismatch')
+        output = StringIO()
+        with patch.object(flow.dependencies,'load_five_role_profile',return_value={'invented':'candidate'}), \
+             patch.object(flow.dependencies,'collect',return_value={'invented':'snapshot'}), \
+             patch.object(flow.dependencies,'match_five_role_profile',side_effect=compare), \
+             patch.object(flow.observed,'_observed_runtime',return_value={'invented':'runtime'}), \
+             redirect_stdout(output):
+            exit_code = flow.worker_main([str(path),str(pin['bytes']),pin['sha256']])
+        self.assertEqual(exit_code,2)
+        self.assertEqual(after_calls,[True,True])
+        rejection = json.loads(output.getvalue())
+        self.assertEqual(rejection['status'],'fixture_publication_rejected')
+        self.assertFalse(rejection['formal_permission'])
+        self.assertIn('five-role profile inventory after mismatch',rejection['detail'])
+        self.assertTrue((publication/'payload/analysis.json').is_file())
+        self.assertTrue((publication/'marker-pending.json').is_file())
+        self.assertFalse((publication/'.complete').exists())
+        self.assertFalse((target/'reader').exists())
+
+    def test_child_precommit_rejection_retains_failed_parent_receipt(self):
+        def rejected(role, request, target, publication, revision,
+                     budget, files, inputs, source_context, profile):
+            self.assertEqual(role,'writer')
+            self.assertEqual(profile,{'invented':'pinned-candidate'})
+            def mismatch():raise ValueError('writer profile before commit mismatch')
+            flow.io.publish_local_result(publication.parent,publication.name,files,
+                verify_semantics=flow._semantic(files),precommit_recheck=mismatch)
+        candidates = {'writer':{'invented':'pinned-candidate'},
+                      'reader':{'invented':'pinned-candidate'}}
+        with patch.object(flow,'_git_sources',return_value=({}, {}, object())), \
+             patch.object(flow,'_cached_git',return_value=None), \
+             patch.object(flow,'_run_role',side_effect=rejected) as launched:
+            result = self.run_flow(dependency_profiles=candidates)
+        self.assertEqual(launched.call_count,1)
+        self.assertEqual(result['status'],'failed')
+        self.assertEqual(result['publication_status'],'unconfirmed')
+        self.assertEqual(result['reader_status'],'not_started')
+        self.assertTrue(result['profile_required'])
+        self.assertFalse(result['formal_permission'])
+        self.assertIn('writer profile before commit mismatch',result['detail'])
+        target = self.receipts/'chain'
+        self.assertEqual(flow.v.strict_json((target/'result.json').read_bytes())['detail'],result['detail'])
+        self.assertFalse((target/'published/.complete').exists())
+        self.assertFalse((target/'reader').exists())
+
+    def test_parent_postflight_profile_failure_can_keep_marker_but_not_success_claim(self):
         def after_mismatch(role, request, target, publication, revision,
                            budget, files, inputs, source_context, profile):
             self.assertEqual(role, 'writer')

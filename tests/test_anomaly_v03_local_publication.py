@@ -54,6 +54,32 @@ class LocalPublicationTests(unittest.TestCase):
         with self.assertRaisesRegex(rt.IntegrityError, "s4_acceptance_not_frozen"):
             rt.require_campaign_acceptance()
 
+    def test_optional_precommit_recheck_can_stop_after_payload_rename(self):
+        calls = []
+        def recheck():
+            calls.append(len(calls) + 1)
+            if len(calls) == 2:
+                raise ValueError("candidate changed before marker")
+        with self.assertRaisesRegex(ValueError, "candidate changed before marker"):
+            out.publish_local_result(self.parent, "precommit", FILES,
+                                     verify_semantics=verify_result,
+                                     precommit_recheck=recheck)
+        root = self.parent/"precommit"
+        self.assertEqual(calls, [1, 2])
+        self.assertTrue((root/"payload/result.json").is_file())
+        self.assertTrue((root/"marker-pending.json").is_file())
+        self.assertFalse((root/".complete").exists())
+
+    def test_optional_precommit_recheck_preserves_success_path(self):
+        calls = []
+        receipt = out.publish_local_result(self.parent, "checked", FILES,
+                                           verify_semantics=verify_result,
+                                           precommit_recheck=lambda: calls.append(True))
+        self.assertEqual(calls, [True, True])
+        self.assertTrue(out.verify_local_publication(
+            Path(receipt["output_path"]), expected_marker_sha256=receipt["marker_raw_sha256"],
+            verify_semantics=verify_result)["local_verified"])
+
     def test_existing_and_incomplete_results_are_never_reclaimed(self):
         first = self.stage()
         with self.assertRaises(FileExistsError):
