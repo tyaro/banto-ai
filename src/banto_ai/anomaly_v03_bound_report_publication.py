@@ -128,7 +128,7 @@ def _role(request,target,budget):
     io._exclusive(target/'result.json',io.json_bytes(reply));return reply
 
 
-def publish_and_check(source_directory,*,expected_mode,expected_payload_pins,output_parent,output_name):
+def publish_and_check(source_directory,*,expected_mode,expected_payload_pins,output_parent,output_name,resource_budget=None):
     """One new attempt. No overwrite, restart, remapping, or numerical audit.
 
     The caller retains payload pins outside the source. Failure preserves all
@@ -142,7 +142,7 @@ def publish_and_check(source_directory,*,expected_mode,expected_payload_pins,out
     for p in (source,ROOT/'src'):
         v.require(not (target==p or target in p.parents or p in target.parents),'attempt overlaps source')
     target.mkdir();publication=target/'published'
-    budget=budgets.FixtureBudget(target,publication_roots=[publication])
+    budget=budgets.FixtureBudget(target,upstream=resource_budget,publication_roots=[publication])
     result={**CLOSED,'format':FORMAT,'mode':expected_mode,'status':'failed','payload_pins':pins,
         'publication_status':'not_started','reader_status':'not_started','writer_reaped_before_reader_start':False}
     request={'format':FORMAT,'mode':expected_mode,'payload_pins':pins,'source_directory':str(source),
