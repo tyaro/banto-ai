@@ -2,6 +2,8 @@
 
 状態: **未採択の予算閉包案**。対象はS4受入前に、producerから公開後readerまでを一つの版付き予算へ結ぶ作業である。正式holdoutの観測、S5/S6、性能gate、昇格を実行した記録ではない。基準保存点は `7f85891`。Windows 26H2向けの[運用契約案v2](../anomaly-v03-formal-operations-contract-proposal-v2.md)も未採択であり、旧[計画§8–9](../anomaly-multiseed-evaluation-plan-v0.3.md#v03-runtime-acceptance)の25H2正式pinと `s4_acceptance_not_frozen` を変更しない。
 
+追記: 本表は基準保存点当時の計測欄である。後続の[共有予算付き５役・候補profile必須の架空１draw試行](anomaly-multiseed-v0.3-preformal-profile-and-saved-attempt-2026-10-04.md)はproducerから別readerまで連続測定済み。ただし50,000 draw、登録保存reader、完全独立S6、最終正式文書を含まないため、下表の**正式同形全工程予算はなお未閉包**である。
+
 [既存の予算証拠台帳](anomaly-multiseed-v0.3-preformal-budget-evidence-ledger-2026-10-03.md)に対し、[今回の50,000 draw測定](anomaly-multiseed-v0.3-preformal-platform-raw-budget-2026-10-04.md)で埋まった欄と、全工程の停止予算としてなお必要な欄を明示する。「保存済みデータ」は合成dev/smokeの成果物であり、実設備・顧客データではない。
 
 ## 数値を使える範囲

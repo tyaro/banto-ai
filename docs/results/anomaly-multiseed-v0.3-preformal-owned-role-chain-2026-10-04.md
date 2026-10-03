@@ -1,6 +1,6 @@
 # v0.3 架空入力の5役割連続実行と共有予算（2026-10-04）
 
-状態: **26H2向けの未採択preformal fixture**。code保存点は `62e02877eaf536b11d2cfd71e96e8e54837845cc`。登録holdoutの観測は生成・読取りとも0件、正式評価creditも0件である。旧25H2正式入口は `s4_acceptance_not_frozen` のままで、S4採択・S5・S6・昇格を示さない。
+状態: **26H2向けの未採択preformal fixture**。初回のcode保存点は `62e02877eaf536b11d2cfd71e96e8e54837845cc`。その後の`07f5238`の候補・事後比較と、[作業前profile照合を含む`09b4da2`の続報](anomaly-multiseed-v0.3-preformal-profile-and-saved-attempt-2026-10-04.md)を区別する。登録holdoutの観測は生成・読取りとも0件、正式評価creditも0件である。旧25H2正式入口は `s4_acceptance_not_frozen` のままで、S4採択・S5・S6・昇格を示さない。
 
 ## 追試と役割別候補profile（2026-10-04）
 

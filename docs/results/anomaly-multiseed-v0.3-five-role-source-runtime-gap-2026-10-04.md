@@ -2,6 +2,8 @@
 
 基準保存点は `87a8034d5cb65d32a8c494313bdf9698a508574b`。これは既存の役割別観測を、正式開始前に必要な事前profileと対照した棚卸しである。新しい実process試験、正式40 seedの観測、S4受入、完全な依存閉包を示す記録ではない。[受入残件表](anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)の事項3を具体化する。
 
+追記: 下表は上記保存点当時の棚卸しである。後続の[26H2限定writer→別reader実機試験](anomaly-multiseed-v0.3-preformal-registered-contract-platform-v2-2026-10-04.md)と[５役の作業前候補profile試行](anomaly-multiseed-v0.3-preformal-profile-and-saved-attempt-2026-10-04.md)は実施済み。表中の「26H2実process未検証」は**最終正式payload・最終採択revisionに対して**残る事項として読む。限定fixtureの成功を正式source/runtime閉包とは扱わない。
+
 | 役割 | 現在保持する証拠 | 正式開始前に不足する境界 |
 | --- | --- | --- |
 | producer | 保存済みdev/smoke 720評価は過去の `c01d1c978f78bab51391392d56cdcb7aab5afaab` に属する。40 seed・2,880枠の登録metadata fixtureは実producerを起動していない | 最終producer revisionの別profile、生成・保存・再開を含む全source/runtime、各子の起動・終了と入力/出力の外部期待値。旧720評価のrevisionやOSを新campaignへ付け替えない |
