@@ -1,5 +1,27 @@
 # 次のタスク用の短い引継ぎ
 
+更新: 2026-10-03 JST。**準備済み報告書の通常ローカル保存とwriter終了後readerへの接続完了。次は完了済み各工程を単一入口へ接続。**
+
+- [今回の結果](results/anomaly-multiseed-v0.3-bound-report-publication-2026-10-03.md)、[API](anomaly-v03-bound-report-publication.md)、長い引継書§199。
+- 編集先70b0、branch codex/s4-b1-windows-engineering。最終実装8e1ab327d4302741cb0aff7c46b787707de5fc86、clean候補brp2/banto-ai。
+- OUT artifacts/bound-report-publication-2026-10-03、tests-2/retained-report-publication。最終文書revision/92code/18dataと全成果物pinはsavepoint-evidence.json。
+
+前回の準備済み報告書4file/3,040,268bytesを、通常のローカル保存とwriter終了後の別readerへ接続した。修正後11項目pass（4.545秒）。保存例は3.722秒で終了し、4ファイルのbytes/SHA256は元と一致した。
+
+初回b27c0b1/brp1は小さい保存用fixtureの10試験が通ったが、実際の保存済み報告書ではformal_readinessのキーをreadyと誤読してKeyError。writerはexit2で回収済み、publication作成前に停止、reader未起動、原本不変。formal_ready/status/formal_document_emittedを確認するよう修正し、試験も本物のschemaから生成するreadinessへ置換、昇格拒否の回帰試験を追加した。tests-1/verify.py/旧候補と全停止記録をinitial-failure.jsonのpinで保全し、修正後はtests-2/verify-fixed.py/brp2の新しい記録へ保存した。
+
+保存例は前回の「架空データ」と明示された報告書をそのまま再利用した接続確認で、実際の検出性能を示す結果ではない。mapper・再集計・全区間結合・元評価raw読取り・新評価・bootstrap・正式gateは0。数値とschemaの対応検査は過去の記録を再利用し、今回は独立数値監査を行わない。
+
+試験parent peak 34.82MiB。保存例parent peak 29.68MiB、writer peak 40.54MiB、reader peak 36.27MiB。例directory観測最大2.91MiB、commit最小余裕25.84GiB。試験21/例21sample、errorなし、全monitor/workerの終了確認済み、資源pass。 D空きは開始348.26GiB→終了348.26GiB。各worker30秒/512MiB/stdout等64KiB、全体120秒/parent512MiB/32MiB等の上限は緩和しない。短時間の確認から長期メモリリーク不存在を推定しない。
+
+次は要約・報告準備・保存読取りの完了済みの各工程を、外部pinと既存成果物を受け取る単一の資源制限付き入口へ接続する。実720評価の再実行・正式gateを起動せず、保存済み工程を反復しない。
+
+正式null4欄/formal_ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。通常のローカル保存と別processの直列実行を確認した範囲であり、principal境界・ソース全依存・実producerの認証ではない。正式40seed・生成導出・契約/役割profile/全工程予算は未受入。Phase2/3全体は未完了。
+
+実計算c01d1c9/main6f1285d/closed/既存dirty文書とbr01/旧候補を保全、banto-24 PAUSED。OS25H2/26200/9457、旧formal9168不変。別Bantoリリース申告・資源停止・D空き減少の履歴は保持し因果未断定。principal/保護root/UAC/ACL/同時書換え保留、Windows3.12必須化なし、push/mergeなし。
+
+## 直前の報告書準備（以下は履歴）
+
 更新: 2026-10-03 JST。**結合済み記述集計を報告文書と4個の保存payloadへ接続済み。次は通常のローカル保存と書込み終了後の読取り。**
 
 - [今回の結果](results/anomaly-multiseed-v0.3-bound-summary-report-2026-10-03.md)、[API](anomaly-v03-bound-summary-report.md)、長い引継書§198。

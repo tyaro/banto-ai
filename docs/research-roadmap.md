@@ -427,3 +427,9 @@ sampling/協調停止でありhard quotaではなく、正式2,880評価/50,000�
 2026-10-03 最新：[結合済み記述集計から報告payloadへの接続](results/anomaly-multiseed-v0.3-bound-summary-report-2026-10-03.md)。結合済みdev/smoke記述集計表から報告書と保存用payloadを準備する処理を追加。新10項目pass（25.650秒）。前回保存した架空集計表とschemaの2file/9,068,695bytesを一度だけ読み、1.011秒で4payload/3,040,268bytesを準備した。 保存例は前回の架空集計表を変更せず再利用した接続確認用であり、実際の検出性能を示す結果ではない。実720評価のraw payload読取り、入力再生成、再集計、全区間の再結合、score/ledger検算、新評価、bootstrap、正式gate、所有worker/公開process起動は0。外部pinで固定した過去の集計表を信頼する境界であり、現在の元payloadや実producerの認証ではない。 次は今回の4個の準備済みpayloadを、通常のローカル保存と書込み終了後の読取りへ接続する。新しい出典情報とfixture/engineeringの区別を維持し、報告書の再生成・再集計・既存720評価の反復をしない。
 
 正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。正式40seed・生成導出・契約/役割profile/全工程予算は未受入。Phase2/3全体は未完了。
+
+### 2026-10-03：準備済み報告書の保存とwriter終了後reader
+
+2026-10-03 最新：[準備済み報告書の保存・読取り](results/anomaly-multiseed-v0.3-bound-report-publication-2026-10-03.md)。前回の準備済み報告書4file/3,040,268bytesを、通常のローカル保存とwriter終了後の別readerへ接続した。修正後11項目pass（4.545秒）。保存例は3.722秒で終了し、4ファイルのbytes/SHA256は元と一致した。 保存例は前回の「架空データ」と明示された報告書をそのまま再利用した接続確認で、実際の検出性能を示す結果ではない。mapper・再集計・全区間結合・元評価raw読取り・新評価・bootstrap・正式gateは0。数値とschemaの対応検査は過去の記録を再利用し、今回は独立数値監査を行わない。 次は要約・報告準備・保存読取りの完了済みの各工程を、外部pinと既存成果物を受け取る単一の資源制限付き入口へ接続する。実720評価の再実行・正式gateを起動せず、保存済み工程を反復しない。
+
+正式null4欄/formal_ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。通常のローカル保存と別processの直列実行を確認した範囲であり、principal境界・ソース全依存・実producerの認証ではない。正式40seed・生成導出・契約/役割profile/全工程予算は未受入。Phase2/3全体は未完了。
