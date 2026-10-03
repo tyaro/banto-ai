@@ -6,6 +6,8 @@ separate 26H2 experiment never authorizes S4, S5, S6, or a formal campaign.
 """
 from __future__ import annotations
 
+import base64
+import binascii
 import copy
 import json
 import os
@@ -30,8 +32,16 @@ from . import anomaly_v03_registered_saved_summary as saved
 ROOT = Path(__file__).resolve().parents[2]
 FORMAT = 'anomaly-v03-preformal-owned-saved-attempt-materializer-v1'
 INVOCATION = 'anomaly-v03-preformal-owned-saved-attempt-invocation-v1'
+CHAIN_FORMAT = 'anomaly-v03-preformal-owned-saved-attempt-two-role-v1'
+READER_FORMAT = 'anomaly-v03-preformal-owned-saved-attempt-reader-v1'
+READER_INVOCATION = 'anomaly-v03-preformal-owned-saved-attempt-reader-invocation-v1'
 LIMITS = {'wall_seconds': 180, 'private_bytes': 512 * 1024**2,
           'output_bytes': 1024**2}
+# Per-child engineering stop bounds, not a shared end-to-end budget or S4 limit.
+READER_LIMITS = {'wall_seconds': 300, 'private_bytes': 1024**3,
+                 'output_bytes': 1024**2}
+MAX_READER_INVOCATION = 256 * 1024
+MAX_SOURCE_SNAPSHOT_BYTES = 64 * 1024
 SOURCE_FILES = (
     'src/banto_ai/anomaly_v03_preformal_owned_saved_attempt.py',
     'src/banto_ai/anomaly_v03_registered_saved_attempt_fixture.py',
@@ -47,6 +57,9 @@ SOURCE_FILES = (
 BOOTSTRAP = ('import sys;sys.path.insert(0,sys.argv.pop(1));'
              'from banto_ai.anomaly_v03_preformal_owned_saved_attempt import worker_main;'
              'raise SystemExit(worker_main(sys.argv[1:]))')
+READER_BOOTSTRAP = ('import sys;sys.path.insert(0,sys.argv.pop(1));'
+                    'from banto_ai.anomaly_v03_preformal_owned_saved_attempt import reader_worker_main;'
+                    'raise SystemExit(reader_worker_main(sys.argv[1:]))')
 SAVED = ('saved/savepoint.json', 'saved/registry.json',
          'saved/receipt.json', 'saved/report.json')
 MAX_BY_NAME = {'saved/savepoint.json': fixture.MAX_SAVEPOINT,
@@ -193,6 +206,75 @@ def _check_outputs(root, outputs, pins):
         _checked_file(root, relative, pins[logical], _maximum(logical))
 
 
+def _source_snapshots(value):
+    """Encode caller-held raw source bytes for a bounded JSON child request."""
+    v.require(type(value) is dict and len(value) <= 4,
+              'bounded caller source snapshots required')
+    encoded, total = {}, 0
+    for revision, rows in sorted(value.items()):
+        evidence._digest(revision, 40)
+        v.require(type(rows) is dict and len(rows) <= 32,
+                  'bounded source snapshot inventory')
+        encoded[revision] = {}
+        for name, raw in sorted(rows.items()):
+            v.safe_relative_path(name)
+            v.require(type(name) is str and len(name) <= 256 and
+                      type(raw) is bytes, 'source snapshot path/bytes')
+            total += len(raw)
+            v.require(total <= MAX_SOURCE_SNAPSHOT_BYTES,
+                      'source snapshot total byte bound')
+            encoded[revision][name] = base64.b64encode(raw).decode('ascii')
+    return encoded
+
+
+def _decode_source_snapshots(value):
+    v.require(type(value) is dict and len(value) <= 4,
+              'bounded encoded source snapshots required')
+    decoded = {}
+    for revision, rows in value.items():
+        evidence._digest(revision, 40)
+        v.require(type(rows) is dict and len(rows) <= 32,
+                  'bounded encoded source snapshot inventory')
+        decoded[revision] = {}
+        for name, encoded in rows.items():
+            v.safe_relative_path(name)
+            v.require(type(name) is str and len(name) <= 256 and
+                      type(encoded) is str, 'encoded source snapshot path/bytes')
+            try:
+                raw = base64.b64decode(encoded, validate=True)
+            except (ValueError, binascii.Error) as error:
+                raise ValueError('invalid source snapshot base64') from error
+            decoded[revision][name] = raw
+    _same(_source_snapshots(decoded), value, 'canonical source snapshot encoding')
+    return decoded
+
+
+def _saved_outputs(root, chunk_index, external):
+    v.require(type(chunk_index) is int and 0 <= chunk_index < 480,
+              'invented reader chunk index')
+    v.require(type(external) is dict, 'external reader pins required')
+    receipt = v.strict_json(_checked_file(
+        root, 'saved/receipt.json', external['saved/receipt.json'],
+        saved.MAX_RECEIPT))
+    v.require(type(receipt) is dict and
+              receipt.get('mode') == saved.MODE and
+              receipt.get('invented_only') is True and
+              receipt.get('chunk_index') == chunk_index,
+              'invented reader receipt required')
+    attempts = receipt.get('attempts')
+    v.require(type(attempts) is list and 1 <= len(attempts) <= 4 and
+              type(attempts[-1]) is dict and
+              attempts[-1].get('state') == 'complete' and
+              type(attempts[-1].get('attempt')) is int and
+              attempts[-1]['attempt'] == len(attempts),
+              'latest invented attempt is not complete')
+    _, physical = fixture._names(chunk_index, attempts[-1]['attempt'])
+    outputs = _output_names(physical)
+    v.require(set(external) == set(outputs),
+              'exact invented reader pin inventory')
+    return outputs, attempts[-1]['attempt']
+
+
 def worker_main(argv):
     """Child copies exact pinned bytes; no observation generation occurs."""
     try:
@@ -257,28 +339,89 @@ def worker_main(argv):
         return 2
 
 
+def reader_worker_main(argv):
+    """Read the pinned invented saved attempt in a distinct owned process."""
+    try:
+        v.require(len(argv) == 2, 'reader worker arguments')
+        path = paths.regular_path(Path(argv[0]))
+        raw = observed._file(path, MAX_READER_INVOCATION)
+        v.require(_pin(raw)['sha256'] == argv[1], 'reader invocation pin')
+        request = v.strict_json(raw)
+        v.require(raw == v.canonical_json(request),
+                  'canonical reader invocation required')
+        evidence._keys(request,
+            'format root expected_mode chunk_index output_names external_pins '
+            'source_snapshots source_revision source runtime invocation_id',
+            'reader invocation fields')
+        v.require(request['format'] == READER_INVOCATION and
+                  request['expected_mode'] == saved.MODE,
+                  'formal/unknown owned reader mode is closed')
+        root = _root(request['root'])
+        v.require(path == root / 'owned-reader' / 'invocation.json',
+                  'owned reader invocation path')
+        snapshots = _decode_source_snapshots(request['source_snapshots'])
+        outputs, _ = _saved_outputs(root, request['chunk_index'],
+                                    request['external_pins'])
+        _same(request['output_names'], outputs, 'owned reader output names')
+        source_before = _source(request['source_revision'])
+        runtime_before = runtime.probe_runtime(ROOT)
+        _same(source_before, request['source'], 'owned reader source before')
+        _same(runtime_before, request['runtime'], 'owned reader runtime before')
+        _check_outputs(root, outputs, request['external_pins'])
+        process = observed.creation_observation(os.getpid())
+        external = request['external_pins']
+        read = fixture.read_invented_registered_attempt(
+            root, expected_mode=request['expected_mode'],
+            chunk_index=request['chunk_index'],
+            expected_registry_pin=external['saved/registry.json'],
+            expected_savepoint_pin=external['saved/savepoint.json'],
+            expected_receipt_pin=external['saved/receipt.json'],
+            expected_report_pin=external['saved/report.json'],
+            expected_payload_pins={key: pin for key, pin in external.items()
+                                   if key not in SAVED},
+            source_snapshots=snapshots)
+        _check_outputs(root, outputs, external)
+        source_after = _source(request['source_revision'])
+        runtime_after = runtime.probe_runtime(ROOT)
+        _same(source_after, source_before, 'owned reader source after')
+        _same(runtime_after, runtime_before, 'owned reader runtime after')
+        reply = {'format': READER_FORMAT, 'status': 'read',
+                 'invocation_id': request['invocation_id'],
+                 'process': {'pid': os.getpid(), 'parent_pid': os.getppid(),
+                             'start_token': process['start_token']},
+                 'output_pins': external,
+                 'source_before': source_before, 'source_after': source_after,
+                 'runtime_before': runtime_before, 'runtime_after': runtime_after,
+                 'reader_result': read, 'formal_permission': False}
+        print(json.dumps(reply, sort_keys=True))
+        return 0
+    except (ValueError, OSError, KeyError, TypeError,
+            subprocess.SubprocessError) as error:
+        print(json.dumps({'format': READER_FORMAT, 'status': 'failed',
+                          'error_type': type(error).__name__,
+                          'detail': str(error), 'formal_permission': False},
+                         sort_keys=True))
+        return 2
+
+
 def materialize_and_read(root, *, expected_mode, chunk_index,
                          expected_registry_pin, expected_savepoint_pin,
                          expected_receipt_pin, expected_report_pin,
                          expected_payload_pins, source_snapshots,
                          expected_revision):
-    """Own one fixture copier, then apply the existing saved-attempt reader.
+    """Own one fixture copier, then one separate saved-attempt reader.
 
     ``expected_*`` pins and source snapshots are retained by the caller.  A
-    failed attempt leaves the materializer directory and result receipt intact.
-    The independent read runs only after output pin and owned exit checks.
+    failed attempt leaves both owned role directories and the result intact.
+    The read starts only after materializer output pin and owned exit checks.
     """
     v.require(expected_mode == saved.MODE, 'formal materializer mode is closed')
     root = _root(root)
     target = paths.regular_path(root / 'owned-materializer', directory=True,
                                 missing=True)
     target.mkdir()
-    external = {**{'saved/registry.json': expected_registry_pin,
-                   'saved/savepoint.json': expected_savepoint_pin,
-                   'saved/receipt.json': expected_receipt_pin,
-                   'saved/report.json': expected_report_pin},
-                **expected_payload_pins}
-    result = {'format': FORMAT, 'status': 'failed',
+    active_role, active_target = 'materializer', target
+    result = {'format': CHAIN_FORMAT, 'status': 'failed',
               'reason': 'materializer_not_completed',
               'input_origin': 'caller_declared_invented',
               'generation_verified': False,
@@ -289,6 +432,10 @@ def materialize_and_read(root, *, expected_mode, chunk_index,
               'owned_fixture_materializer_exit_confirmed': False,
               'owned_fixture_materializer_exit_reconciled': False,
               'owned_fixture_materializer_pid': None,
+              'owned_fixture_reader_executed': False,
+              'owned_fixture_reader_exit_confirmed': False,
+              'owned_fixture_reader_exit_reconciled': False,
+              'owned_fixture_reader_pid': None,
               'actual_worker_exit_authenticated': False,
               'campaign_completed': False, 'campaign_evaluations_credited': 0,
               'source_closure_complete': False, 'runtime_closure_complete': False,
@@ -296,8 +443,17 @@ def materialize_and_read(root, *, expected_mode, chunk_index,
               'formal_permission': False, 'analysis_authorized': False,
               'promotion_allowed': False, 'independent_s6_complete': False}
     try:
-        v.require(type(source_snapshots) is dict,
-                  'caller source snapshots required')
+        v.require(type(expected_payload_pins) is dict,
+                  'external payload pin dictionary required')
+        v.require(not set(expected_payload_pins).intersection(SAVED),
+                  'saved pin key forbidden in payload pins')
+        external = copy.deepcopy({
+            **{'saved/registry.json': expected_registry_pin,
+               'saved/savepoint.json': expected_savepoint_pin,
+               'saved/receipt.json': expected_receipt_pin,
+               'saved/report.json': expected_report_pin},
+            **expected_payload_pins})
+        encoded_snapshots = _source_snapshots(source_snapshots)
         inputs, outputs = _preflight(root, chunk_index, external)
         source = _source(expected_revision)
         observed_runtime = runtime.probe_runtime(ROOT)
@@ -370,31 +526,148 @@ def materialize_and_read(root, *, expected_mode, chunk_index,
                   'materializer child fixture scope')
         _check_outputs(root, outputs, external)
         boundary()
-        read = fixture.read_invented_registered_attempt(
-            root, expected_mode=expected_mode, chunk_index=chunk_index,
-            expected_registry_pin=expected_registry_pin,
-            expected_savepoint_pin=expected_savepoint_pin,
-            expected_receipt_pin=expected_receipt_pin,
-            expected_report_pin=expected_report_pin,
-            expected_payload_pins=expected_payload_pins,
-            source_snapshots=source_snapshots)
-        _check_outputs(root, outputs, external)
-        result.update(status='verified', reason=None,
-                      owned_fixture_materializer_start_token=launch['start_token'],
+        selected_outputs, selected_attempt = _saved_outputs(
+            root, chunk_index, external)
+        _same(selected_outputs, outputs, 'materialized reader output names')
+        result.update(owned_fixture_materializer_start_token=
+                          launch['start_token'],
                       materializer_stdout_pin=monitor['output'],
                       materializer_output_pins=copy.deepcopy(external),
-                      materializer_file_count=len(outputs),
+                      materializer_file_count=len(outputs))
+        active_role = 'reader'
+        active_target = paths.regular_path(root / 'owned-reader',
+                                           directory=True, missing=True)
+        active_target.mkdir()
+        reader_invocation = {
+            'format': READER_INVOCATION, 'root': str(root),
+            'expected_mode': expected_mode, 'chunk_index': chunk_index,
+            'output_names': outputs, 'external_pins': external,
+            'source_snapshots': encoded_snapshots,
+            'source_revision': expected_revision, 'source': source,
+            'runtime': observed_runtime,
+            'invocation_id': secrets.token_hex(32)}
+        reader_raw = v.canonical_json(reader_invocation)
+        v.require(len(reader_raw) <= MAX_READER_INVOCATION,
+                  'reader invocation byte bound')
+        reader_path = active_target / 'invocation.json'
+        io._exclusive(reader_path, reader_raw)
+        reader_pin = _pin(reader_raw)
+        result['reader_invocation_pin'] = reader_pin
+        reader_launch = {}
+
+        def reader_boundary():
+            boundary()
+            _check_outputs(root, outputs, external)
+            _same(_pin(observed._file(reader_path, MAX_READER_INVOCATION)),
+                  reader_pin, 'reader invocation changed')
+
+        def reader_started(process):
+            reader_launch.update(observed.creation_observation(
+                process.pid, process._handle))
+
+        reader_argv = [sys.executable, '-I', '-S', '-B', '-c',
+                       READER_BOOTSTRAP, str(ROOT / 'src'), str(reader_path),
+                       reader_pin['sha256']]
+        with platform._platform_scope():
+            reader_monitor = supervisor.supervise(
+                reader_argv, ROOT, active_target / 'worker', READER_LIMITS,
+                boundary=reader_boundary, on_started=reader_started)
+        io._exclusive(active_target / 'supervision.json',
+                      v.canonical_json(reader_monitor))
+        result.update(owned_fixture_reader_executed=reader_monitor['worker_started'],
+                      owned_fixture_reader_exit_confirmed=
+                          reader_monitor['worker_exit_confirmed'],
+                      owned_fixture_reader_pid=reader_monitor['worker_pid'],
+                      owned_fixture_reader_start_token=
+                          reader_launch.get('start_token'),
+                      reader_stdout_pin=reader_monitor['output'])
+        v.require(reader_monitor['status'] == 'complete' and
+                  reader_monitor['exit_code'] == 0 and
+                  reader_monitor['worker_exit_confirmed'] is True and
+                  reader_launch.get('pid') == reader_monitor['worker_pid'],
+                  'owned reader completion required')
+        reader_stdout = observed._file(active_target / 'worker' / 'report.json',
+                                       READER_LIMITS['output_bytes'])
+        _same(_pin(reader_stdout), reader_monitor['output'],
+              'owned reader stdout pin')
+        reader_reply = v.strict_json(reader_stdout)
+        v.require(reader_reply['format'] == READER_FORMAT and
+                  reader_reply['status'] == 'read' and
+                  reader_reply['invocation_id'] == reader_invocation['invocation_id'] and
+                  reader_reply['process'] == {
+                      'pid': reader_launch['pid'], 'parent_pid': os.getpid(),
+                      'start_token': reader_launch['start_token']} and
+                  reader_reply['formal_permission'] is False,
+                  'owned reader process binding')
+        for key, expected in (('output_pins', external),
+                              ('source_before', source),
+                              ('source_after', source),
+                              ('runtime_before', observed_runtime),
+                              ('runtime_after', observed_runtime)):
+            _same(reader_reply[key], expected, 'owned reader child ' + key)
+        read = reader_reply['reader_result']
+        for key, expected in {
+            'format': fixture.FORMAT,
+            'status': 'latest_chunk_saved_bytes_bound',
+            'mode': saved.MODE,
+            'chunk_index': chunk_index,
+            'latest_state': 'complete',
+            'latest_attempt': selected_attempt,
+            'latest_rows_bound': 6,
+            'scope': 'invented-registered-format-actual-attempt-layout-only',
+            'fixture_physical_layout': 'run-attempt-result-payload',
+            'fixture_saved_files_read': True,
+            'fixture_files_read': len(outputs),
+            'registered_evaluation_contracts_checked': 6,
+            'saved_payload_bytes_verified': True,
+            'external_report_bytes_verified': True,
+            'reported_score_ledger_recomputed': True,
+            'reported_score_to_primary_summary_checked': True,
+            'reported_score_to_slice_summary_recomputed': True,
+            'receipt_pin': external['saved/receipt.json'],
+            'report_pin': external['saved/report.json'],
+            'payload_pins': {key: value for key, value in external.items()
+                             if key not in SAVED},
+            'invented_registered_format_observations_read': True,
+            'invented_observation_profile_score_recomputed': True,
+            'observation_to_profile_recomputed': True,
+            'observation_to_score_recomputed': True,
+            'observation_to_summary_recomputed': True,
+            'source_savepoint_bytes_verified': True,
+            'source_snapshots_caller_supplied': True,
+            'actual_registered_observations_read': False,
+            'registered_observations_read': False,
+            'real_saved_chunk_reader_used': False,
+            'reader_result_provenance_authenticated': False,
+            'registered_input_bytes_verified': False,
+            'actual_worker_exit_authenticated': False,
+            'campaign_completed': False,
+            'campaign_evaluations_credited': 0,
+            'execution_authenticated': False,
+            'result_trusted': False,
+            'source_closure_complete': False,
+            'runtime_closure_complete': False,
+            'formal_permission': False,
+            'analysis_authorized': False,
+            'promotion_allowed': False,
+            'independent_s6_complete': False,
+        }.items():
+            _same(read[key], expected, 'owned reader result ' + key)
+        reader_boundary()
+        _check_outputs(root, outputs, external)
+        result.update(status='verified', reason=None,
                       reader_result=read)
     except supervisor.UnreapedWorker as error:
         # Keep the original handle; do not turn a supervisor's unconfirmed
         # exit into a normal completion.  A later recovery is a separate fact.
         report = error.report
-        result.update(reason='unreaped_materializer_failure',
-                      owned_fixture_materializer_executed=
-                          report.get('worker_started', False),
-                      owned_fixture_materializer_pid=report.get('worker_pid'),
-                      owned_fixture_materializer_exit_confirmed=False,
-                      owned_fixture_materializer_exit_reconciled=False)
+        field = 'owned_fixture_' + active_role
+        result.update(reason='unreaped_' + active_role + '_failure',
+                      failed_stage=active_role)
+        result[field + '_executed'] = report.get('worker_started', False)
+        result[field + '_pid'] = report.get('worker_pid')
+        result[field + '_exit_confirmed'] = False
+        result[field + '_exit_reconciled'] = False
         try:
             supervisor.retain_until_exit(error)
         except BaseException:
@@ -402,17 +675,20 @@ def materialize_and_read(root, *, expected_mode, chunk_index,
             # UnreapedWorker with its process handle.  Preserve best-effort
             # failure evidence without reading live worker output.
             try:
-                io._exclusive(target / 'supervision.json', v.canonical_json(report))
+                io._exclusive(active_target / 'supervision.json',
+                              v.canonical_json(report))
                 io._exclusive(target / 'result.json', v.canonical_json(result))
             except BaseException:
                 pass
             raise error
-        io._exclusive(target / 'supervision.json', v.canonical_json(report))
-        result.update(reason='unreaped_materializer_reconciled_failure',
-                      owned_fixture_materializer_exit_reconciled=True)
+        io._exclusive(active_target / 'supervision.json',
+                      v.canonical_json(report))
+        result.update(reason='unreaped_' + active_role + '_reconciled_failure')
+        result[field + '_exit_reconciled'] = True
     except (ValueError, OSError, KeyError, TypeError,
             subprocess.SubprocessError) as error:
         result.update(reason='materializer_or_reader_rejected',
+                      failed_stage=active_role,
                       error_type=type(error).__name__, detail=str(error))
     io._exclusive(target / 'result.json', v.canonical_json(result))
     return {**result, 'check_directory': str(target),
