@@ -58,7 +58,7 @@ trial-10の最終rootは26,702,169 B/115 entries、共有上限48 MiB/256 entrie
 | --- | --- | --- |
 | 固定した架空入力、S4採択前 | 登録形式の物理attemptを所有producerで保存し、そのexit/reap、外部pin、最新attempt、観測→profile/score→ledger→主/sliceを別readerで照合する。40架空clusterの50,000 drawから完全な表・文書・別実装監査・公開後読戻しまでを工程別rootの共通予算で通す | 架空identityや登録seedの文字列を使っても、登録holdoutの観測値は生成・読取りしない。架空試験は性能証拠ではない |
 | 保存済み合成dev/smoke、S4採択前 | 既存120区間・720評価と旧独立監査、全件engineering報告は参照証拠として保持する。必要な境界だけ外部pin付きで再確認し、元attemptを上書きしない | 今回の現行reader再確認は区間0の６評価だけ。旧データを新revisionのnative受入や正式holdoutへ付け替えない |
-| S4の最終dev/smoke | S1登録済みdev 8 seed・smoke 2 seedの全12 layout×２層×３候補を、改訂済み契約・最終clean revision・採択したWindows tupleで新rootに実行し、全在庫、独立再監査、CI/native、予算と容量２倍条件を同じ受入記録へ結ぶ | 受入に失敗したらS5を開かない。科学条件・seed数・予算を途中で緩めない |
+| S4の最終dev/smoke | S1登録済みdev 8 seed・smoke 2 seedの全12 layout×２層×３候補を、改訂済み契約・最終clean revision・採択したWindows tupleで新rootに実行し、全在庫、独立再監査、CI/nativeを同じ受入記録へ結ぶ。smoke全artifact実測から正式同形のproducer+analysis+audit+staging必要量を見積り、式・実測bytes・予想時間を保存し、正式開始時の対象volume空きが見積りの２倍以上と確認する | 受入に失敗したらS5を開かない。科学条件・seed数・予算を途中で緩めない |
 | S4採択後のS5/S6 | 未使用holdout 40 seedの480区間・960 dataset・2,880評価を登録順で一回実行し、次段階でread-only独立再計算、50,000 draw、全gate・選択・別readerを照合する | 途中性能で停止・修正・seed追加をしない。S5成功結果をS4開始前の前提にしない。実設備・顧客データは本計画の対象外 |
 
 `formal_permission=false`、`promotion_allowed=false`、`independent_s6_complete=false`、`selected_candidate=null`を維持する。本書は受入範囲と次の実データ作業を限定する記録であり、正式評価の開始許可ではない。
