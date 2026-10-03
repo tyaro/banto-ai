@@ -11,6 +11,7 @@ import statistics
 
 from . import anomaly_v03 as contract
 from . import anomaly_v03_inference_audit as inference
+from . import _anomaly_v03_contract as frozen
 
 
 def _delay(values):
@@ -133,16 +134,10 @@ def validate_fixture_packet(packet, schema):
             'formal_document_validated': False, 'source_runtime_slices_validated': False}
 
 
-def compute_fixture_packet(clusters, draws, diagnostics, schema, *, engineering_ready):
-    """Compute invented 12-layout cluster fixtures and map nine result tables.
-
-    diagnostics must supply every detected delay and effective exposure per cell.
-    Missing diagnostics are errors; medians are recomputed from the union of
-    delays, never averaged across clusters or strata. Input data is not mutated.
-    """
+def _twelve_layout_inputs(clusters, diagnostics):
+    """Check the count and diagnostic input shared by both fixture mappers."""
     inference._fixture_clusters(clusters)
     _diagnostics(clusters, diagnostics)
-    # Small fixtures use the same 12-layout count units as authenticated clusters.
     for cluster in clusters:
         for candidate in inference.CANDIDATES:
             for layer in inference.STRATA[:2]:
@@ -150,7 +145,10 @@ def compute_fixture_packet(clusters, draws, diagnostics, schema, *, engineering_
                 for kind, d in {'machine_recall': 120, 'sensor_recall': 120, 'clean_rate': 40380,
                                'false_alert_burden': 240, **dict.fromkeys(inference.AVAILABILITY, 21600)}.items():
                     inference.exact(raw[kind][1], d, 'fixture twelve-layout denominator')
-    result = inference.compute_fixture_tables(clusters, draws, engineering_ready=engineering_ready)
+
+
+def _packet_from_result(clusters, diagnostics, schema, result, *, engineering_ready):
+    """Map already computed primary tables; no draw or interval computation."""
     tables = []
     for row in result['candidate_tables']:
         candidate, layer = row['candidate_id'], row['stratum']
@@ -169,10 +167,117 @@ def compute_fixture_packet(clusters, draws, diagnostics, schema, *, engineering_
     packet = {'scope': 'hand-fixture-analysis-tables-only', 'fixture_candidate_tables': tables,
         'fixture_selected_candidate': result['fixture_selected_candidate'], 'fixture_decision': result['fixture_decision'],
         'fixture_engineering_ready': engineering_ready,
-        'fixture_draws': {'clusters': len(clusters), 'replicates': len(draws)},
+        'fixture_draws': {'clusters': len(clusters), 'replicates': result['replicate_count']},
         'selected_candidate': None, 'performance_status': 'not_evaluated', 'formal_permission': False,
         'promotion_allowed': False, 'independent_s6_complete': False, 'formal_document_emitted': False,
         'not_validated': ['registered holdout observations', 'formal bootstrap execution',
                           'source/runtime/publication evidence', 'slice inventory and derivation']}
     packet['validation'] = validate_fixture_packet(packet, schema)
     return packet
+
+
+def compute_fixture_packet(clusters, draws, diagnostics, schema, *, engineering_ready):
+    """Compute invented 12-layout cluster fixtures and map nine result tables.
+
+    diagnostics must supply every detected delay and effective exposure per cell.
+    Missing diagnostics are errors; medians are recomputed from the union of
+    delays, never averaged across clusters or strata. Input data is not mutated.
+    """
+    _twelve_layout_inputs(clusters, diagnostics)
+    result = inference.compute_fixture_tables(clusters, draws, engineering_ready=engineering_ready)
+    return _packet_from_result(clusters, diagnostics, schema, result,
+                               engineering_ready=engineering_ready)
+
+
+def map_precomputed_fixture_packet(clusters, diagnostics, schema, calculation, *, draw_sha256):
+    """Map a separately audited invented 40/50,000 primary calculation.
+
+    The caller must authenticate the saved calculation, its exact cluster input,
+    and an independent arithmetic audit with raw pins. This pure function checks
+    their semantic mapping but does not regenerate draws, intervals, or an S6
+    result. Its output retains the fixture-only permission and selection fields.
+    """
+    inference.need(type(draw_sha256) is str and draw_sha256 == frozen.BOOTSTRAP_HASH,
+                   'frozen invented draw digest')
+    inference.exact(schema, contract.schemas(contract._expected_configs())[7],
+                    'frozen precomputed analysis schema')
+    inference.need(type(clusters) is list and len(clusters) == 40,
+                   'precomputed forty invented clusters')
+    _twelve_layout_inputs(clusters, diagnostics)
+    inference.need(all(cluster['cluster_id'] == f'invented-{index:02d}'
+                       for index, cluster in enumerate(clusters)),
+                   'ordered invented cluster IDs')
+    required = {'scope', 'cluster_count', 'replicate_count', 'candidate_tables',
+                'fixture_engineering_ready', 'fixture_selected_candidate',
+                'fixture_decision', 'selected_candidate', 'formal_permission',
+                'promotion_allowed', 'independent_s6_complete',
+                'performance_status', 'campaign_evaluations_credited'}
+    inference.need(type(calculation) is dict and set(calculation) == required,
+                   'precomputed calculation fields')
+    expected = {'scope': 'hand-fixture-inference-only', 'cluster_count': 40,
+                'replicate_count': 50000, 'fixture_engineering_ready': False,
+                'fixture_selected_candidate': None, 'fixture_decision': 'inconclusive',
+                'selected_candidate': None, 'formal_permission': False,
+                'promotion_allowed': False, 'independent_s6_complete': False,
+                'performance_status': 'not_evaluated', 'campaign_evaluations_credited': 0}
+    for name, value in expected.items():
+        inference.need(type(calculation[name]) is type(value) and calculation[name] == value,
+                       'precomputed calculation ' + name)
+    source_tables = calculation['candidate_tables']
+    inference.need(type(source_tables) is list and len(source_tables) == 9,
+                   'precomputed nine table inventory')
+    inference.exact([(row.get('candidate_id'), row.get('stratum'))
+                     for row in source_tables if type(row) is dict],
+                    [(candidate, layer) for candidate in inference.CANDIDATES
+                     for layer in inference.STRATA], 'ordered precomputed tables')
+    indexed = {(row['candidate_id'], row['stratum']): row for row in source_tables}
+    for row in source_tables:
+        inference.need(set(row) == {'candidate_id', 'stratum', 'profile_status',
+                                    'metrics', 'paired_control', 'gates',
+                                    'fixture_qualified'}, 'precomputed table fields')
+        candidate, layer = row['candidate_id'], row['stratum']
+        parts = inference.STRATA[:2] if layer == 'overall' else (layer,)
+        ready = all(cluster['candidates'][candidate][part]['profile_status'] == 'calibrated'
+                    for cluster in clusters for part in parts)
+        inference.exact(row['profile_status'], 'calibrated' if ready else 'inconclusive',
+                        'precomputed profile status')
+        inference.need(row['fixture_qualified'] is False, 'precomputed qualification closed')
+        inference.need(type(row['metrics']) is dict and set(row['metrics']) == set(inference.METRICS),
+                       'precomputed metric inventory')
+        for kind in inference.METRICS:
+            metric = row['metrics'][kind]
+            inference.need(type(metric) is dict and set(metric) ==
+                           {'numerator', 'denominator', 'value', 'ci_status',
+                            'ci_lower', 'ci_upper', 'null_replicates'},
+                           'precomputed metric fields')
+            numerator = sum(cluster['candidates'][candidate][part]['counts'][kind][0]
+                            for cluster in clusters for part in parts)
+            denominator = sum(cluster['candidates'][candidate][part]['counts'][kind][1]
+                              for cluster in clusters for part in parts)
+            inference.exact((metric['numerator'], metric['denominator']),
+                            (numerator, denominator), 'precomputed input count binding')
+            inference.exact(metric['value'], inference.ratio(numerator, denominator, kind),
+                            'precomputed input point binding')
+        expected_paired = set(inference.PAIRED_METRICS) if candidate != inference.CANDIDATES[0] else set()
+        inference.need(type(row['paired_control']) is dict and
+                       set(row['paired_control']) == expected_paired,
+                       'precomputed paired metric inventory')
+        gates = [inference.gate(row['metrics'][kind], kind, layer, ready=ready)
+                 for kind in inference.ABSOLUTE_METRICS]
+        for kind in inference.PAIRED_METRICS if candidate != inference.CANDIDATES[0] else ():
+            paired = row['paired_control'][kind]
+            inference.need(type(paired) is dict and set(paired) ==
+                           {'value', 'ci_status', 'ci_lower', 'ci_upper', 'null_replicates'},
+                           'precomputed paired metric fields')
+            baseline = indexed[inference.CANDIDATES[0], layer]['metrics'][kind]
+            point = row['metrics'][kind]['value']
+            inference.exact(paired['value'], None if point is None or baseline['value'] is None
+                            else point - baseline['value'], 'precomputed paired point binding')
+            control_ready = all(cluster['candidates'][inference.CANDIDATES[0]][part][
+                                    'profile_status'] == 'calibrated'
+                                for cluster in clusters for part in parts)
+            gates.append(inference.gate(paired, kind, layer, paired=True,
+                                        ready=ready and control_ready))
+        inference.exact(row['gates'], gates, 'precomputed gate binding')
+    return _packet_from_result(clusters, diagnostics, schema, calculation,
+                               engineering_ready=False)
