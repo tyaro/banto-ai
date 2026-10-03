@@ -30,6 +30,15 @@ def _raw_shape(value, template):
         inputs.integer(value)
 
 
+def _ordered_raw(value, template):
+    # Canonical JSON serialization orders object keys alphabetically. Restore
+    # the frozen descriptive inventory before comparing ordered row arrays;
+    # retain the supplied source itself for its canonical digest.
+    if type(template) is dict:
+        return {key: _ordered_raw(value[key], template[key]) for key in template}
+    return copy.deepcopy(value)
+
+
 def _sum_cells(cells):
     total = copy.deepcopy(cells[0])
     for key in total:
@@ -88,11 +97,14 @@ def _requirements():
     return {'clusters': 40, 'replicates': 50000, 'missing_fields': list(PENDING), 'ready': False}
 
 
-def _derive(base, fixture_input, source):
-    document._input(fixture_input)
-    I._fixture_clusters(fixture_input['clusters'])
-    document.adapter._diagnostics(fixture_input['clusters'], fixture_input['diagnostics'])
-    I.exact(base['input_canonical_sha256'], document.contract.canonical_sha256(fixture_input), 'fixture input binding')
+def _derive_rows(clusters, diagnostics, tables, source):
+    """Map invented count partitions to already supplied primary tables.
+
+    The caller establishes the primary table's draw provenance. No draw list,
+    bootstrap result, registered observation or formal document enters here.
+    """
+    I._fixture_clusters(clusters)
+    document.adapter._diagnostics(clusters, diagnostics)
     document._fields(source, ('format', 'invented_only', 'clusters'), 'slice fixture input fields')
     I.exact(source['format'], INPUT_FORMAT, 'slice fixture identity')
     I.exact(source['invented_only'], True, 'invented slice assertion')
@@ -107,16 +119,17 @@ def _derive(base, fixture_input, source):
         for candidate in I.CANDIDATES:
             document._fields(entry['candidates'][candidate], I.STRATA[:2], 'slice strata')
             for layer in I.STRATA[:2]:
-                raw = entry['candidates'][candidate][layer]
-                _raw_shape(raw, template)
+                supplied = entry['candidates'][candidate][layer]
+                _raw_shape(supplied, template)
+                raw = _ordered_raw(supplied, template)
                 I.exact(raw['evaluations'], 12, 'twelve-layout diagnostic coverage')
                 # Reuse fixed inventory, denominator, omissions, histogram and
                 # partition checks. No dev/smoke IO entry is relaxed or called.
                 inputs._slice_counts(slices.describe(raw), 12)
                 _marginals(raw)
-                primary = fixture_input['clusters'][index]['candidates'][candidate][layer]
+                primary = clusters[index]['candidates'][candidate][layer]
                 _primary(raw, primary['counts'], described=False)
-                detail = fixture_input['diagnostics'][index]['candidates'][candidate][layer]
+                detail = diagnostics[index]['candidates'][candidate][layer]
                 histogram = [0]*5
                 for delay in detail['detected_delays']:
                     I.need(type(delay) is int and 1 <= delay <= 5, 'integer-second diagnostic delay')
@@ -132,7 +145,7 @@ def _derive(base, fixture_input, source):
             slices.add_counts(totals[candidate, 'overall'], totals[candidate, layer])
         for layer in I.STRATA:
             raw = totals[candidate, layer]
-            table = next(t for t in base['document_draft']['candidate_tables']
+            table = next(t for t in tables
                          if (t['candidate_id'], t['stratum']) == (candidate, layer))
             _primary(raw, table['metrics'], described=True)
             # Numeric equality permits 2 vs 2.0 from the two existing summary
@@ -153,6 +166,47 @@ def _derive(base, fixture_input, source):
             'slice_input_canonical_sha256': document.contract.canonical_sha256(source)}
 
 
+def _derive(base, fixture_input, source):
+    document._input(fixture_input)
+    I.exact(base['input_canonical_sha256'], document.contract.canonical_sha256(fixture_input), 'fixture input binding')
+    return _derive_rows(fixture_input['clusters'], fixture_input['diagnostics'],
+                        base['document_draft']['candidate_tables'], source)
+
+
+def _check_rows(expected, schema):
+    shaped = {**schema['properties']['slices'], '$defs': schema['$defs']}
+    for rows in (expected['slices'], *expected['diagnostic_series'].values()):
+        document.contract._shape(rows, shaped)
+        document.contract._reported_slices(rows, uncomputed_ci=True)
+    I.exact(len(expected['slices']), 1233, 'main slice inventory')
+    I.exact(sum(len(rows) for rows in expected['diagnostic_series'].values()), 2835,
+            'four-series inventory')
+    I.exact(len(expected['diagnostic_details']), 9, 'diagnostic table inventory')
+
+
+def derive_precomputed_slices(clusters, diagnostics, packet, source, schema):
+    """Pure slice mapping for an externally authenticated invented 50,000-draw packet.
+
+    The packet's numerical computation and raw pins must be verified by the
+    caller. This function binds counts, profiles, delays and reported primary
+    tables; it does not replay draws, validate formal evidence or perform IO.
+    Unlike the legacy fixture entry, no one-draw projection is an argument.
+    """
+    document._schema(schema)
+    I.need(type(packet) is dict and type(packet.get('fixture_draws')) is dict,
+           'precomputed packet and draw dimensions')
+    draws = packet['fixture_draws']
+    I.need(set(draws) == {'clusters', 'replicates'} and
+           type(draws['clusters']) is int and type(draws['replicates']) is int,
+           'precomputed draw dimension fields')
+    I.exact(draws, {'clusters': 40, 'replicates': 50000},
+            'precomputed fifty-thousand-draw dimensions')
+    document.adapter.validate_fixture_packet(packet, schema)
+    rows = _derive_rows(clusters, diagnostics, packet['fixture_candidate_tables'], source)
+    _check_rows(rows, schema)
+    return rows
+
+
 def _check(value, expected, schema):
     I.exact(value['format'], OUTPUT_FORMAT, 'connected fixture identity')
     I.exact(value['field_coverage'], _coverage(), 'connected field coverage')
@@ -160,12 +214,7 @@ def _check(value, expected, schema):
     I.exact(value['document_draft']['slices'], expected['slices'], 'main slice mapping')
     for key in EXTRA:
         I.exact(value[key], expected[key], 'diagnostic mapping: '+key)
-    shaped = {**schema['properties']['slices'], '$defs': schema['$defs']}
-    for rows in (value['document_draft']['slices'], *value['diagnostic_series'].values()):
-        document.contract._shape(rows, shaped)
-        document.contract._reported_slices(rows, uncomputed_ci=True)
-    I.exact(len(expected['slices']), 1233, 'main slice inventory')
-    I.exact(sum(len(rows) for rows in expected['diagnostic_series'].values()), 2835, 'four-series inventory')
+    _check_rows(expected, schema)
     return {'status': 'fixture_slices_connected', 'clusters': 40, 'candidate_tables': 9,
             'main_slice_rows': 1233, 'diagnostic_rows': 2835, 'mapped_fields': 6,
             'missing_fields': list(PENDING), 'formal_document_validated': False,

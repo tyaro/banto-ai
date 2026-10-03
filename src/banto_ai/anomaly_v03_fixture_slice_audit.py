@@ -253,3 +253,91 @@ def audit_slices(fixture, source, document):
     same(document['diagnostic_details'], details, 'diagnostic details')
     require(len(main) == 1233 and sum(map(len, series_rows.values())) == 2835 and len(details) == 9, 'derived inventory')
     return result
+
+
+def audit_precomputed_slices(clusters, diagnostics, packet, source, enriched):
+    """Independently check invented slice rows attached to saved primary tables.
+
+    The caller authenticates the raw files.  This pure check binds the supplied
+    forty-cluster counts and diagnostics to the *precomputed* primary packet,
+    then checks every main/sidecar/detail row.  It does not replay bootstrap
+    draws, verify their CIs or gates, or certify producer observations.
+    """
+    fields(packet, ('fixture_candidate_tables', 'fixture_decision', 'fixture_draws',
+                    'fixture_engineering_ready', 'fixture_selected_candidate',
+                    'formal_document_emitted', 'formal_permission',
+                    'independent_s6_complete', 'not_validated', 'performance_status',
+                    'promotion_allowed', 'scope', 'selected_candidate', 'validation'),
+           'precomputed primary packet')
+    same(packet['fixture_draws'], {'clusters': 40, 'replicates': 50000},
+         'saved primary draw dimensions')
+    for key, expected in (('scope', 'hand-fixture-analysis-tables-only'),
+                          ('fixture_decision', 'inconclusive'),
+                          ('fixture_engineering_ready', False),
+                          ('fixture_selected_candidate', None),
+                          ('formal_document_emitted', False),
+                          ('formal_permission', False),
+                          ('independent_s6_complete', False),
+                          ('performance_status', 'not_evaluated'),
+                          ('promotion_allowed', False),
+                          ('selected_candidate', None)):
+        same(packet[key], expected, 'precomputed packet '+key)
+    fields(packet['validation'], ('formal_document_validated', 'gates',
+                                  'source_runtime_slices_validated', 'status',
+                                  'tables'), 'precomputed packet validation')
+    same(packet['validation'], {
+        'formal_document_validated': False, 'gates': 180,
+        'source_runtime_slices_validated': False,
+        'status': 'fixture_table_contract_valid', 'tables': 9,
+    }, 'precomputed packet validation')
+    fields(enriched, ('slices', 'diagnostic_series', 'diagnostic_details',
+                      'primary_packet_canonical_sha256',
+                      'slice_source_canonical_sha256'), 'precomputed slices')
+    packet_digest = hashlib.sha256(canonical(packet)).hexdigest()
+    source_digest = hashlib.sha256(canonical(source)).hexdigest()
+    same(enriched['primary_packet_canonical_sha256'], packet_digest,
+         'precomputed primary packet canonical digest')
+    same(enriched['slice_source_canonical_sha256'], source_digest,
+         'precomputed slice source canonical digest')
+
+    # Reuse only this module's stdlib-only coordinate audit.  The temporary
+    # fixture carries no legacy draw list or old document digest; it supplies
+    # exactly the primary counts/diagnostics required for a slice crosscheck.
+    fixture = {'format': 'anomaly-v03-document-fixture-input-v1',
+               'invented_only': True, 'clusters': clusters,
+               'diagnostics': diagnostics}
+    document = {
+        'format': 'anomaly-v03-document-with-slices-fixture-v1',
+        'input_canonical_sha256': hashlib.sha256(canonical(fixture)).hexdigest(),
+        'slice_input_canonical_sha256': source_digest,
+        'document_draft': {
+            'candidate_tables': packet['fixture_candidate_tables'],
+            'slices': enriched['slices'],
+        },
+        'diagnostic_series': enriched['diagnostic_series'],
+        'diagnostic_details': enriched['diagnostic_details'],
+    }
+    checked = audit_slices(fixture, source, document)
+    return {
+        'format': 'anomaly-v03-precomputed-fixture-slice-audit-v1',
+        'status': 'precomputed_fixture_slices_matched',
+        'algorithm': checked['algorithm'],
+        'clusters': checked['clusters'],
+        'main_slice_rows': checked['main_slice_rows'],
+        'diagnostic_rows': checked['diagnostic_rows'],
+        'diagnostic_tables': checked['diagnostic_tables'],
+        'primary_packet_canonical_sha256': packet_digest,
+        'slice_source_canonical_sha256': source_digest,
+        'fixture_only': True,
+        'precomputed_primary_packet_used': True,
+        'fixture_slice_audit_performed': True,
+        'primary_ci_gate_recomputed': False,
+        'formal_permission': False,
+        'promotion_allowed': False,
+        'registered_data_read': False,
+        'independent_s6_complete': False,
+        'checked': checked['checked'],
+        'not_checked': [*checked['not_checked'],
+                        'saved 50000 bootstrap CI and gate recomputation',
+                        'raw file pin, source/runtime or process authentication'],
+    }
