@@ -156,7 +156,12 @@ def audit(clusters, calculation, draws):
     if type(draws) is not list or len(draws) != REPLICATES or any(
             type(row) is not bytes or len(row) != CLUSTERS for row in draws):
         raise ValueError('exactly 50,000 complete draw rows required')
-    if type(calculation) is not dict or calculation.get('scope') != 'hand-fixture-inference-only':
+    expected_fields = {'scope', 'cluster_count', 'replicate_count', 'candidate_tables',
+                       'fixture_engineering_ready', 'fixture_selected_candidate',
+                       'fixture_decision', 'selected_candidate', 'formal_permission',
+                       'promotion_allowed', 'independent_s6_complete',
+                       'performance_status', 'campaign_evaluations_credited'}
+    if type(calculation) is not dict or set(calculation) != expected_fields or calculation.get('scope') != 'hand-fixture-inference-only':
         raise ValueError('calculation scope differs')
     if calculation.get('cluster_count') != CLUSTERS or calculation.get('replicate_count') != REPLICATES:
         raise ValueError('calculation dimensions differ')

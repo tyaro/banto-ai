@@ -226,6 +226,49 @@ def _final_pins(receipt, held):
         _read(receipt/name, pin, maximum)
 
 
+def _verify_role_report(value, role, output_pin):
+    fields = {'format', 'role', 'status', 'draw_sha256', 'draw_bytes',
+              'replicates', 'output_pin', 'registered_data_read',
+              'formal_bootstrap_performed', 'formal_permission'}
+    if role == 'audit':
+        fields.add('independent_s6_complete')
+    if type(value) is not dict or set(value) != fields:
+        raise ValueError(role+'_role_report_fields')
+    expected = {'format': FORMAT+'-role', 'role': role, 'status': 'complete',
+                'draw_sha256': DRAW_HASH, 'draw_bytes': 2000000,
+                'replicates': REPLICATES, 'output_pin': output_pin,
+                'registered_data_read': False,
+                'formal_bootstrap_performed': False, 'formal_permission': False}
+    if role == 'audit':
+        expected['independent_s6_complete'] = False
+    for key, answer in expected.items():
+        if type(value[key]) is not type(answer) or value[key] != answer:
+            raise ValueError(role+'_role_report_differs_'+key)
+
+
+def _verify_audit_report(value, calculation_pin):
+    fields = {'format', 'status', 'draw_sha256', 'clusters', 'replicates',
+              'candidate_tables', 'primary_estimates', 'paired_estimates',
+              'gates', 'calculation_sha256', 'registered_data_read',
+              'formal_bootstrap_performed', 'independent_s6_complete',
+              'formal_permission', 'promotion_allowed', 'performance_status'}
+    if type(value) is not dict or set(value) != fields:
+        raise ValueError('audit_report_fields')
+    expected = {'format': 'anomaly-v03-preformal-draw-budget-audit-v1',
+                'status': 'invented_primary_numerics_matched',
+                'draw_sha256': DRAW_HASH, 'clusters': CLUSTERS,
+                'replicates': REPLICATES, 'candidate_tables': 9,
+                'primary_estimates': 117, 'paired_estimates': 72, 'gates': 180,
+                'calculation_sha256': calculation_pin['sha256'],
+                'registered_data_read': False,
+                'formal_bootstrap_performed': False,
+                'independent_s6_complete': False, 'formal_permission': False,
+                'promotion_allowed': False, 'performance_status': 'not_evaluated'}
+    for key, answer in expected.items():
+        if type(value[key]) is not type(answer) or value[key] != answer:
+            raise ValueError('audit_report_differs_'+key)
+
+
 class UnreapedMeasurement(RuntimeError):
     def __init__(self, process, role, detail):
         self.process, self.role, self.detail = process, role, detail
@@ -403,14 +446,10 @@ def run_measurement(receipt):
             held[role+'-stdout.json'] = supervision['stdout_pin']
             held[role+'-stderr.txt'] = supervision['stderr_pin']
             role_report = json.loads(_read(receipt/(role+'-stdout.json'), supervision['stdout_pin']))
-            if role_report.get('status') != 'complete' or role_report.get('role') != role or role_report.get('output_pin') != output_pin:
-                raise ValueError(role+'_report_differs')
-            if role_report.get('draw_sha256') != DRAW_HASH or role_report.get('replicates') != REPLICATES or role_report.get('draw_bytes') != 2000000:
-                raise ValueError(role+'_draw_contract_differs')
+            _verify_role_report(role_report, role, output_pin)
             result[role+'_output_pin'] = output_pin
         audit = json.loads(_read(receipt/'audit.json', result['audit_output_pin']))
-        if audit.get('status') != 'invented_primary_numerics_matched' or audit.get('calculation_sha256') != result['calculate_output_pin']['sha256']:
-            raise ValueError('independent audit binding differs')
+        _verify_audit_report(audit, result['calculate_output_pin'])
         result['source_pins_after'] = _source_pins()
         result['runtime_after'] = _runtime()
         if result['source_pins_before'] != result['source_pins_after'] or result['runtime_before'] != result['runtime_after']:

@@ -40,6 +40,37 @@ class PreformalDrawBudgetTests(unittest.TestCase):
             independent.audit(clusters, report, [bytes(range(40))])
         with self.assertRaisesRegex(ValueError, 'calculation scope'):
             independent.audit(clusters, {'scope': 'formal'}, [bytes(range(40))]*50000)
+        report['replicate_count'] = 50000
+        report['registered_data_read'] = True
+        with self.assertRaisesRegex(ValueError, 'calculation scope'):
+            independent.audit(clusters, report, [bytes(range(40))]*50000)
+
+    def test_role_and_audit_reports_reject_extra_claims(self):
+        output_pin = {'bytes': 1, 'sha256': '0'*64}
+        role = {'format': budget.FORMAT+'-role', 'role': 'calculate',
+                'status': 'complete', 'draw_sha256': budget.DRAW_HASH,
+                'draw_bytes': 2000000, 'replicates': 50000,
+                'output_pin': output_pin, 'registered_data_read': False,
+                'formal_bootstrap_performed': False, 'formal_permission': False}
+        budget._verify_role_report(role, 'calculate', output_pin)
+        with self.assertRaisesRegex(ValueError, 'fields'):
+            budget._verify_role_report({**role, 'execution_authenticated': True}, 'calculate', output_pin)
+        with self.assertRaisesRegex(ValueError, 'formal_permission'):
+            budget._verify_role_report({**role, 'formal_permission': True}, 'calculate', output_pin)
+        audit = {'format': independent.FORMAT,
+                 'status': 'invented_primary_numerics_matched',
+                 'draw_sha256': budget.DRAW_HASH, 'clusters': 40,
+                 'replicates': 50000, 'candidate_tables': 9,
+                 'primary_estimates': 117, 'paired_estimates': 72,
+                 'gates': 180, 'calculation_sha256': output_pin['sha256'],
+                 'registered_data_read': False, 'formal_bootstrap_performed': False,
+                 'independent_s6_complete': False, 'formal_permission': False,
+                 'promotion_allowed': False, 'performance_status': 'not_evaluated'}
+        budget._verify_audit_report(audit, output_pin)
+        with self.assertRaisesRegex(ValueError, 'fields'):
+            budget._verify_audit_report({**audit, 'execution_authenticated': True}, output_pin)
+        with self.assertRaisesRegex(ValueError, 'formal_bootstrap_performed'):
+            budget._verify_audit_report({**audit, 'formal_bootstrap_performed': True}, output_pin)
 
     def test_preflight_shortfall_retains_failure_without_child(self):
         with tempfile.TemporaryDirectory() as temporary:
