@@ -111,6 +111,12 @@ trial-03の独立postcheckでも11出力file、外部producerのresult/bound/４
 
 受入は、子のPID/開始token/終了・回収、source/runtime前後、保存４制御fileと18 payloadの完全在庫・全外部pin、最新attemptの選択を親が確認してから、現行の別所有readerで観測→profile/score→ledger→主/sliceを再導出すること。制御fileを親から供給する場合は入力pinと生成**出力**pinを区別し、receipt/report内のhash主張も生成物に結び直す。pin欠落・誤pin、レシピ変更、余分なfile、最新失敗attempt、子の時間超過、reader失敗を成功へ変えない焦点試験と、clean revisionの別root native１試行を要する。現行fixtureの架空source名を実際の生成・採点sourceの選択証拠へ改める一方、完全source/runtime閉包を証明した扱いにはしない。既存fixtureの総量126,317,406 Bは128 MiB上限に近いため、生成時の最大file、合計bytes、保持memoryを先に測る。
 
+### 共通外側予算への接続順
+
+現行[５役予算](../../src/banto_ai/anomaly_v03_preformal_chain_budget.py)は５役・240秒・48 MiBに限定され、保存形式２役のコピー前入力と出力はそれぞれ126,317,406 B（約120.5 MiB）ある。[保存形式２役](../../src/banto_ai/anomaly_v03_preformal_owned_saved_attempt.py)、[５役](../../src/banto_ai/anomaly_v03_platform_five_role_fixture.py)、[50,000 draw接続](../../src/banto_ai/anomaly_v03_preformal_bound_draw_bridge.py)は別々のrootと外側監視を所有する。[下位予算の祖先接続](../../src/banto_ai/_anomaly_v03_fixture_budget.py)を利用できても、現公開入口を直列に呼ぶだけでは同一予算・同一入力系譜にならない。新しい版付き外側監視と各工程のcaller所有target/budget入口を作り、保存形式２役の子監督へ停止probeを伝え、終了・回収後だけ次工程を起動する。別rootの事前作成入力は外部pinで固定し、その準備時間・容量を共通測定に入れないなら明記する。
+
+登録形式readerの６架空評価から40架空clusterへの導出・pin契約、50,000 draw結果から全表・文書への接続、完全な別実装監査、stage→writer→別readerがさらに必要である。現行[文書fixture](../../src/banto_ai/anomaly_v03_document_fixture.py)の最大64 drawや算術子だけのreceiptを正式同形の50,000 draw全文書・完全S6へ読み替えない。共通監視開始→架空生成→別reader→全表/文書→別監査→公開/読戻しの順に新rootで失敗・未回収・容量超過を含めて測り、監視終了後に全体receiptを固定する。
+
 ## データ別の次の作業境界
 
 | データ・時点 | 許される次の作業と完了証拠 | この段階の境界 |

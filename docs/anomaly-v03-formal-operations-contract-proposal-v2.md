@@ -44,6 +44,8 @@
 
 正式holdoutの2,880評価成功やS6の実結果はS5/S6**後**に照合する証拠であり、S4開始前の循環した前提にしない。S4で求めるのは、登録入力を扱う固定経路、架空/正式dev/smokeによる契約検証、50,000 drawの資源測定と、結果の欠落や失敗を成功にしない証明である。[全工程予算台帳](results/anomaly-multiseed-v0.3-preformal-budget-evidence-ledger-2026-10-03.md)の未測定欄は数値0で埋めない。
 
+CIのimage同定も未解決である。現行[試験report生成器](../tools/ci_test_report.py)は`ImageOS`/`ImageVersion`を記録するが、`runner_image_digest=null`、status `not_collected`を固定している。[workflow](../.github/workflows/ci.yml)にUbuntu 24.04×Python 3.12/3.14のjobが定義されていることは、対象最終revisionでの実行やimage digest取得の証拠ではない。段階3のdigestを文字どおり要求するなら取得可能なrunnerと取得経路を示す。jobのimage version・実行log・release manifest等のpinを代替の同定証拠とするなら、VM image自体のdigestと呼ばず、計画と受入項目を版付きで改訂・独立再監査する。どちらも未確定のままS4合格にしない。実行時には両jobのraw journal・比較結果・pass/fail/skip・job/runtime同定を外部pinで保持し、必須試験のskipを別に判定する。
+
 ## 更新・停止・再登録
 
 - 一つのattemptの開始、各役割開始・終了、公開直前にOS tuple、Python/source、外部pinを照合する。親のruntime観測を子の実観測に代用しない。途中変化、未知のロード依存、未回収ownerはintegrity failureとして停止し、部分証拠を保全して成功receipt/完了印を作らない。
