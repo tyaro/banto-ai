@@ -1,6 +1,16 @@
 # v0.3 正式評価前の役割profileと架空保存attempt検証（2026-10-04）
 
-状態: **26H2向けの未採択preformal検証**。５役の初回code保存点は `09b4da2291634ee07ff1eacb74d3ca114c1d76b4`、保存済みproducer→50,000 draw算術接続は `cca54e9e1083d92f4cdf85aae65fdef943929bcf`。後述のwriter事前再照合と所有materializerを含む再試行はclean `723eaf1d83ba2f1d42abee9dbe54d57da1d2959d`。旧25H2正式gateは `s4_acceptance_not_frozen` のまま。登録holdout観測の生成・読取り、正式評価credit、S5/S6、候補昇格は0である。
+状態: **26H2向けの未採択preformal検証**。５役の初回code保存点は `09b4da2291634ee07ff1eacb74d3ca114c1d76b4`、保存済みproducer→50,000 draw算術接続の初回は `cca54e9e1083d92f4cdf85aae65fdef943929bcf`。writer事前再照合と所有materializerを含む再試行はclean `723eaf1d83ba2f1d42abee9dbe54d57da1d2959d`、別reader子のnative試行はclean `e79479077c7f55cf0398d0e5add41b989e9c936b`、５役/50,000 draw再試行はclean `94be9ed2702d2f383acb952ea1cf24b21b9754fc`。旧25H2正式gateは `s4_acceptance_not_frozen` のまま。登録holdout観測の生成・読取り、正式評価credit、S5/S6、候補昇格は0である。
+
+## S4採択前の受入見取り図
+
+| 受入事項 | 現在の確定範囲 | 採択前に要る証拠 |
+| --- | --- | --- |
+| 26H2運用契約・公開保証 | 未採択v2案。writer子の`.complete`前再照合と失敗保全は検証済み | 旧25H2条件との差、marker残存時の扱い、旧§8の保護DACL・独立token条件を保証A/Bのどちらで扱うか版付きで決定・再監査 |
+| 登録形式の保存入力 | 外部pin付き架空22 fileを所有コピー子→別reader子で照合。６架空評価の観測導出は一致 | 固定架空入力を**生成する**所有producerから、最新attempt・完全在庫・別readerまで連続して実証。実登録観測はS5まで閉じる |
+| 数値・文書・全工程予算 | ５役の架空１drawと、保存済みproducerからの50,000 draw２算術子は別々に成功 | producer→登録reader→全表/文書→完全別監査→stage/writer→別readerを共通外側予算で連続測定し、容量２倍条件を判定 |
+| 実行環境と依存閉包 | 26H2実機で５役候補profile前後一致。選択source/Gitと観測runtimeのみ | 全役の実ロードsource/runtime/実行identity閉包、対象revisionのLinux CI 3.12/3.14・Windows native・runner digest |
+| 最終dev/smoke・S4採択 | 保存済み合成120区間/720評価はengineering参考。現行readerのraw再監査は区間0/119だけ | 改訂契約と最終clean revisionでS1登録済みdev8/smoke2を新rootに完走し、独立照合とsmoke容量見積りを結合してS4採択 |
 
 ## ５役の作業前候補profile
 
@@ -31,6 +41,16 @@ clean `723eaf1` の同一コードから参照を取り直し、別rootの外部
 | [trial-14 候補必須](../../artifacts/anomaly-v03-preformal-five-role-26h2/trial-14-precommit-enforced/result.json) | ５子の別PID/開始token/invocation、exit 0/reap。候補pinと実before/after・runtime一致。公開markerと別reader readback一致 | top 7,329 B / `c7557f1dc05fb9024f6cda90b9c8eb46d67c830a343a3a4304a01df3ac08f02d`; [予算](../../artifacts/anomaly-v03-preformal-five-role-26h2/trial-14-precommit-enforced/resource-budget.json) 4,895 B / `25f6f6f02f20df6d3914c9ad79915bc14549b7a85e25cdc2098ccb4df7c8236c` |
 
 trial-14の共有監視は74.539秒/277標本pass、最大標本root 26,690,081 B/113 entries、最低commit余裕18,207,379,456 B。最終root 26,702,305 B/115 entriesは48 MiB/256 entries内。独立postcheckは２試行の選択source 93行の作業raw/Git、各役の保存証拠・候補５件・公開payloadに不一致0件。writerの事前再照合時点に専用snapshot receiptはなく、成功receiptとコード経路の照合が証拠の範囲である。１drawの架空試行であり、正式同形の全工程予算・完全閉包・登録実観測には昇格しない。
+
+別reader子の追加後も、clean `94be9ed` で同じ５役の候補を取り直した。これは独立した架空１draw試行であり、前節の登録形式２役や50,000 drawを同じ外側予算に入れたものではない。
+
+| 保存試行 | 結果 | raw pin |
+| --- | --- | --- |
+| [trial-15 参照](../../artifacts/anomaly-v03-preformal-five-role-26h2/trial-15-two-role-reference/result.json) | ５子exit 0/reap、候補なし、65.458秒/240標本pass | top 7,212 B / `7389421cfc850222b73d55da9fdceb9be0e060903280778284d8b5bc94226a92`; [予算](../../artifacts/anomaly-v03-preformal-five-role-26h2/trial-15-two-role-reference/resource-budget.json) 4,896 B / `7c3aee2f41a328207335168ef1464fd1b885bfbea74a3d9b726ad84cf9b38573` |
+| [外部pinset](../../artifacts/anomaly-v03-preformal-profile-pinsets-26h2/trial-15-two-role-reference-pins.json)と[候補set](../../artifacts/anomaly-v03-preformal-role-profiles-26h2/trial-15-two-role-candidates/candidate-set.json) | 参照５役の保存rawを別rootに固定し、候補５件を新規作成 | pinset 3,236 B / `6dcf644aa71cfe055c54243c0737492c24a5d5c2969a776509ce9b64f65c04ed`; set 2,147 B / `4cbbf0379505f53854e6aa65c7d9773f286b4e6f4fdaa2ab7354557b4b7b2c5e` |
+| [trial-16 候補必須](../../artifacts/anomaly-v03-preformal-five-role-26h2/trial-16-two-role-enforced/result.json) | ５子exit 0/reap、作業前候補と前後依存・runtime一致、公開後reader照合、73.532秒/274標本pass | top 7,331 B / `b2f0abcc278d11a418de791e184888aeb0812f08abfd49d78eb02b466589c8c1`; [予算](../../artifacts/anomaly-v03-preformal-five-role-26h2/trial-16-two-role-enforced/resource-budget.json) 4,897 B / `42237789e1a5cc2feb6e2cf608645ef8e109f9a361340b18b91c6ca146e551c2` |
+
+独立postcheckは２試行の５つずつの別PID/開始token/invocation、参照raw pin・候補５件・役割profile、33選択source fileのGit/作業bytes、公開marker/payloadとreadbackに不一致0件。trial-16の最大標本rootは26,690,013 B/113 entries、親peak private 103,219,200 B、最低commit余裕18,150,473,728 Bで48 MiB/256 entries内。共有監視は標本・協調停止でありhard quotaではない。`source_closure_complete=false`、`runtime_closure_complete=false`、`execution_authenticated=false`、正式credit0を維持する。
 
 ## 架空保存データを読む２つの境界
 
@@ -71,8 +91,11 @@ clean `e79479077c7f55cf0398d0e5add41b989e9c936b`で、コピー子のexit/reap�
 | --- | --- | --- |
 | [trial-01 接続測定](../../artifacts/anomaly-v03-preformal-bound-draw-bridge/trial-01-owned-producer-50000/result.json) | top 6,413 B / `fb76cb56d559eb64ca89c0adcf00fc7563c16705def3ee4ac593ed959b0e688f`; input 155,179 B / `29696350e26634ab3dd53d5ec3a90412fbf22e8fe3ac9c7d5e9c60589e82b39c`; 主計算73,071 B / `0f850c0b4284fa7f44b8c631570d8c1ab36aa4f824e36db48e40b4e1d335a5be`; 別監査566 B / `07f405e5d52181ec07839b66ac75e0f7cbb4860f207ce0a09fb8db02e081eeae` | 主子PID 31708: 50.666秒/peak private 126,226,432 B、監査子PID 6440: 114.851秒/29,802,496 B。両子exit 0/reap。外側167.293秒/643標本pass、[予算receipt](../../artifacts/anomaly-v03-preformal-bound-draw-bridge/trial-01-owned-producer-50000/resource-budget.json) 3,518 B / `603adaa707e503592e603763bbaea791b42fd00fbc166b51b0c1e26b75843049`。最大標本root 230,700 B/9 entries（最後の２receiptは予約内）、最低commit余裕17,452,359,680 B。 |
 | [trial-02 誤producer pin](../../artifacts/anomaly-v03-preformal-bound-draw-bridge/trial-02-bad-producer-pin/result.json) | preflightで`measurement file pin differs`、子0。top 3,334 B / `738d629c154dcab7a31c20e1e5396c3ad76b7c77e83ffc5af7f76dacbd355054`; [予算receipt](../../artifacts/anomaly-v03-preformal-bound-draw-bridge/trial-02-bad-producer-pin/resource-budget.json) 2,799 B / `821a7e663c85695bc359cb9278cf66ef09e17e43bc182c10cd5d1f4d645cf6af` | 失敗rootを保持。外側予算のpassは入力受入のpassを意味しない。 |
+| [trial-03 現保存点から再測定](../../artifacts/anomaly-v03-preformal-bound-draw-bridge/trial-03-two-role-final-50000/result.json) | clean `94be9ed`のtrial-16所有producer result 2,927 B / `49d1d331a3d6bd7500746c791f2a8e1bcfb687c373ed526640201b28412e51d1`を外部固定。top 6,417 B / `2a932142900222f072e4568488f9a55cb79b669700c86201eeceab26d0027c92`; input 155,179 B / `97f225cdbc0286a23f9761b0d25b2279ea26b592eb781b06bc8406a24da2b211`; 主計算73,071 B / `0f850c0b4284fa7f44b8c631570d8c1ab36aa4f824e36db48e40b4e1d335a5be`; 別監査566 B / `07f405e5d52181ec07839b66ac75e0f7cbb4860f207ce0a09fb8db02e081eeae` | 主子PID 25628: 52.172秒/peak private 126,230,528 B、監査子PID 17632: 116.361秒/29,765,632 B。両子exit 0/reap。外側170.414秒/653標本pass、[予算receipt](../../artifacts/anomaly-v03-preformal-bound-draw-bridge/trial-03-two-role-final-50000/resource-budget.json) 3,519 B / `6d165825ddce2915f92ada6bc9a6cafe04e56bf62a4611916a3716ea12fbfa0c`。最大標本root 230,702 B/9 entries、最低commit余裕18,072,039,424 B。 |
 
 独立postcheckではtrial-01の11出力fileと外部producerのresult/bound/４投影pinが全一致した。50,000×40 draw bytesを別に再生成して同じhashを得て、117主推定・72対応差のpoint/countを入力から再計算して差異0。全CI/gateの一致は監査子の別実装結果に依拠する。４投影の大きさは36,607 / 252,899 / 175 / 4,336,841 B、外部producer入力の論理合計は9,778,166 B。新しい２子だけの連続監視であり、過去producerの実行時間を足さず、登録保存reader・文書・writer/reader・完全S6を含む正式同形全工程予算とはしない。`formal_50000_draw_budget_measured=false`、`full_end_to_end_budget_measured=false`、`registered_data_read=false`、全source/runtime閉包・実行認証falseを維持する。
+
+trial-03の独立postcheckでも11出力file、外部producerのresult/bound/４投影fileと10選択sourceのraw pinに不一致0件。50,000×40 draw bytesを独立再生成したhashは同じ`e375bf3feacb2f04bf5e1d40b141c1cfc5f69fa5437ea2704e323fd7523b22e5`で、117主推定のcount/point・72対応差point・180 gate参照pointは差異0。quantile区間とgate合否そのものは今回のpostcheckで別計算しておらず、保存済み別監査子の結果に依拠する。外部producer６fileの論理合計は9,778,170 B。前のtrial-16 producer実行や登録形式２役をこの170秒に加算せず、正式同形の連続予算としない。
 
 ## S4採択と実データ作業の残件
 
