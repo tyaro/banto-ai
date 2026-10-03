@@ -105,6 +105,12 @@ trial-03の独立postcheckでも11出力file、外部producerのresult/bound/４
 4. 対象revisionのLinux CI 3.12/3.14、Windows native、stdlib/repository回帰と独立再監査を照合する。既存CI workflowの定義は実行結果ではない。runner image digestの採取元は未確定。
 5. 既存の保存済み合成dev/smoke 120区間・720評価はengineering参考証拠として保持する。上記をS4条件として確定後、S1登録済みdev 8 seed・smoke 2 seedを最終clean revision/26H2 exact tupleの新attempt/rootで全layout・両層・３候補について受入れる。未使用40 seed・480区間・2,880評価の登録holdoutはS4採択後のS5でのみ扱う。既存720評価をholdoutへ改名・加算しない。
 
+### 次の限定実装単位：架空入力の所有生成
+
+既存の22 fileコピー子は試験履歴として残し、別版のengineering専用生成子を新rootで作る。親が子起動前に固定レシピID、chunk 0/attempt 1、22**出力**fileの外部pin、選択source/rawとruntime候補を宣言する。子には完成した観測・評価bytesを渡さず、固定した手作り正常系列から２層のdatasetを組み立て、保存して読み戻したbytesから６候補の評価を計算する案を検証する。`materialize_pair`と`normal_stream(seed)`は呼ばず、登録seed由来の観測生成を閉じる。登録identityと予定eventは形式検査用のmarkerに限り、`invented_only=true`と正式credit 0を維持する。この案の生成bytes・容量・評価契約への適合は未測定である。
+
+受入は、子のPID/開始token/終了・回収、source/runtime前後、保存４制御fileと18 payloadの完全在庫・全外部pin、最新attemptの選択を親が確認してから、現行の別所有readerで観測→profile/score→ledger→主/sliceを再導出すること。制御fileを親から供給する場合は入力pinと生成**出力**pinを区別し、receipt/report内のhash主張も生成物に結び直す。pin欠落・誤pin、レシピ変更、余分なfile、最新失敗attempt、子の時間超過、reader失敗を成功へ変えない焦点試験と、clean revisionの別root native１試行を要する。現行fixtureの架空source名を実際の生成・採点sourceの選択証拠へ改める一方、完全source/runtime閉包を証明した扱いにはしない。既存fixtureの総量126,317,406 Bは128 MiB上限に近いため、生成時の最大file、合計bytes、保持memoryを先に測る。
+
 ## データ別の次の作業境界
 
 | データ・時点 | 許される次の作業と完了証拠 | この段階の境界 |
