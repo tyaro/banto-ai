@@ -221,7 +221,7 @@ def _run_roles(target, files, revision, result, *, resource_budget=None,
         row = role_profiles[role]
         raw = observed._file(row['path'], numeric.analysis.dependencies.PROFILE_MAX)
         evidence._raw(raw, row['pin'], role + ' external profile changed')
-        evidence._same(raw, row['raw'], role + ' retained profile changed')
+        v.require(raw == row['raw'], role + ' retained profile changed')
         return {key: row[key] for key in ('path', 'pin', 'raw')}
     _budget_checkpoint(resource_budget, 'analysis')
     records = _retain_inputs(target, files)
