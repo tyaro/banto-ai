@@ -2,6 +2,19 @@
 
 状態: **26H2向けの未採択preformal fixture**。code保存点は `62e02877eaf536b11d2cfd71e96e8e54837845cc`。登録holdoutの観測は生成・読取りとも0件、正式評価creditも0件である。旧25H2正式入口は `s4_acceptance_not_frozen` のままで、S4採択・S5・S6・昇格を示さない。
 
+## 追試と役割別候補profile（2026-10-04）
+
+上記の初回実行後、[所有producer](../../src/banto_ai/anomaly_v03_owned_producer_fixture.py)に子自身の依存before/after採取と親からのdisk/Git照合を加えた。共有予算は外側の最終2 receiptについて128 KiBに加え2 entriesを予約した。[役割別候補生成器](../../src/banto_ai/anomaly_v03_preformal_role_profiles.py)は、同一revisionの成功試行と、別rootに保持したtop result・budget・各役のresult/supervision/stdout/dependencies/crosscheck計27個のraw pinから、5役のbefore/after依存・runtime候補を作る。候補は**事後観測からの未採択案**であり、子の作業開始前には強制していない。
+
+| 保存物 | clean code保存点 | 結果・raw pin | 証拠の範囲 |
+| --- | --- | --- | --- |
+| [trial-04-dependency-reference](../../artifacts/anomaly-v03-preformal-five-role-26h2/trial-04-dependency-reference/result.json) | `c8f7795` | top 7,148 B / `ace70c1b76fd588b5fb4e08dbf3a6eb34e6915249e8a2c21217deb9b0c8301cb`; budget 4,900 B / `1c57d77927e797a3e32288ebfb6fbf6e7004d88251a27be3f05cb30a4f0cfe44a` | 5子exit 0/reap。producer before 311 files/204 modules→after 313/205で、`encodings.cp437`と`cp437.py`等の追加を記録。既存rowの変化・消失は0。 |
+| [trial-05-profile-reference](../../artifacts/anomaly-v03-preformal-five-role-26h2/trial-05-profile-reference/result.json) | `07f5238` | top 7,148 B / `e425e93397e5f4f4b5c481a983fd83b1059b6ba3fb37e83bfbd9d24812dd8316`; budget 4,894 B / `ae0dae50ff1cab86f143a7f8dc30d3ebaaaa15e02c7265bfb392ba0711fe2e20` | 5子exit 0/reap、249標本、66.858秒、最大root 25,305,112 B/108 entries、終了後25,317,154 B/110 entries。依存と受渡しpinを独立照合。 |
+| [外部pinset](../../artifacts/anomaly-v03-preformal-profile-pinsets-26h2/trial-05-reference-pins.json) → [5候補とcandidate-set](../../artifacts/anomaly-v03-preformal-role-profiles-26h2/trial-05-candidates/candidate-set.json) | `07f5238` | pinset 3,235 B / `14cd2f3fb1601887d8dd0b4e9fbdf11d3db7260b75ac0b314b8b6742d3eefb3b`; candidate-set 2,101 B / `f19fd71ea737b7e76304ca83d238c79c9d0fe7ff8a4168613859090575a4f084` | 全5候補のraw pin・役割・revision・2点snapshot・scopeを独立照合、不一致0。候補とpinsetは試行root外に保存。 |
+| [trial-06-profile-comparison](../../artifacts/anomaly-v03-preformal-five-role-26h2/trial-06-profile-comparison/result.json) → [事後比較](../../artifacts/anomaly-v03-preformal-role-profile-comparisons-26h2/trial-06/result.json) | `07f5238` | top 7,149 B / `d5060def15cd8690169b7ffb9cb1702890af59efc744702c131dd369f6d3b24a`; budget 4,890 B / `7485f93968919593311a87bd8dfbef63a1cfd28a4180ce99a9f29c2ebdf3ddd9`; 比較 4,277 B / `41c1fcf7d31c59afad3f556205f6af40b3eb3193ba39f926489a3d9030c828b2` | 5子exit 0/reap、283標本、77.958秒。候補と5役のbefore/after依存、runtime、revisionは事後照合で一致。独立照合の不一致0。`before_work_profile_enforcement=false`。 |
+
+trial-05候補の対象は観測された役割別のdisk bytesとnative file集合であり、既に存在する`.pyc`候補の実ロード、in-memory code、探索経路全体、将来の動的ロードは証明しない。親の外部DLL集合も当時のcrosscheckを外部pinで保持した記録を照合しており、現processの集合と同一とは扱わない。5子のinvocationに候補profile/pinは渡されていない。したがって`source_closure_complete=false`、`runtime_closure_complete=false`、`execution_authenticated=false`は維持する。
+
 ## 到達した範囲
 
 前回の[保存済み架空完成6評価のreaderと役割残件](anomaly-multiseed-v0.3-preformal-completed-reader-and-role-scope-2026-10-04.md)から、次を追加した。
