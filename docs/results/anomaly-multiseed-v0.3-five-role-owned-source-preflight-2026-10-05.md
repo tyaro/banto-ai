@@ -7,3 +7,5 @@
 この所有Gitの範囲は **Job前の7呼び出しのみ**。v1 owner自身のparent preflight、監督前後、子pre/post、内側chain pre/post、four-role/producer、保存verifierのbare Gitを所有したとは扱わない。`inner_v1_git_owned=false` と `integration_pending=true` をreceiptに固定した。完全な5役source/runtime閉包、Gitのloaded code/子孫process、登録readerを含む共通campaign入力、全工程単一予算は残る。保存verifierも成功したv1 ownerの検査でread-only bare Gitを再起動する。
 
 実施した焦点確認は、新規[test](../../tests/test_anomaly_v03_preformal_five_role_owned_source_anchor_v2.py)10件（実Gitの7件順序、dirty status、誤blob、偽PATH、owner失敗、外側と内側の候補path不一致、owner verifierの範囲逸脱、未回収Git、保存物改変、root再利用）、既存owned Git/anchor関連18件、3新規ファイルのcompileall、CLI `--help`、repository safetyで、いずれもpass。テストの内側ownerは偽物であり、v2入口からのWindows native 5役Job実走・外部raw pin・独立再監査は未実施。実走時はclean full HEADと外部policyを固定して新rootを使い、失敗・成功のreceiptを別実装で再照合する必要がある。
+
+後続のclean `a5deb31` Windows実機小試行と独立raw照合は[別の結果記録](anomaly-multiseed-v0.3-five-role-owned-source-native-trial-2026-10-05.md)に固定した。上の段落は実装直後のテスト範囲を記した履歴であり、試走をその時点の試験結果へ遡って加算しない。

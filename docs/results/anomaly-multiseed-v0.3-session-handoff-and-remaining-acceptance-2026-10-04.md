@@ -2,6 +2,8 @@
 
 この文書は、架空登録形式campaignの最新保存証拠と、正式評価のS4採択からS7結果文書までの残件を引き継ぐ。正式評価の許可や受入判定ではない。科学仕様と正式手順の根拠は[凍結計画](../anomaly-multiseed-evaluation-plan-v0.3.md)、受入5群の起点は[2026-10-03の範囲整理](anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)である。
 
+2026-10-05追記: `gh` は承認済み実行で利用できる。`24c8d20`の[Ubuntu予備CI 37228978376](anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)はPython 3.12/3.14と共有fixture比較の3 jobが成功した。両minor各2,811件・fail0/error0/skip237、共有29 fixture一致、必須28試験pass。後続clean `a5deb31`の[所有Git 7件→5役Jobの架空Windows小試行](anomaly-multiseed-v0.3-five-role-owned-source-native-trial-2026-10-05.md)は保存pinと独立監査が一致したが、所有GitはJob前の7件だけで全閉包ではない。同revisionの[Ubuntu予備CI 37230362806](https://github.com/tyaro/banto-ai/actions/runs/37230362806)も両minor各2,821件・fail0/error0/skip237、共有fixture比較を含む3 jobが成功した。ただしrunner image digest/代替同定の採択、Windows正式native、最終凍結revisionのS4-4判定は残る。下のS4-1～S4-5の残件と正式gateは変わらない。
+
 2026-10-05追記: [選定source Git 7呼び出しの限定試走](anomaly-multiseed-v0.3-owned-source-git-seven-call-trial-2026-10-05.md)をclean `fdaf5eec58d110b5f048c703c740c8e10664fc07`で保存した。`owner._source`1回のHEAD/status/選定5 source blobを外部pin付きmain Gitと別process receiptへ結び、結果1,654 B / `3c68e0577385c3693a5819970e096a3b297e8c8fdf87ea9c0da97d5e9891b2cc`を独立再hashした。既存v1 Jobや保存verifierのbare Gitは未置換で、S4-3の全閉包は未完了。正式gateは変わらない。
 
 最新追記: [保存seed在庫と5役Git事前確認の保存点](anomaly-multiseed-v0.3-saved-seed-inventory-and-owned-git-preflight-2026-10-04.md)を参照。clean `8871150` の外部pin付きc001/c011在庫結果は1 seed/2 chunk/12行、欠番39 seed/478 chunk、40 cluster寄与null。clean `1869267` のGit main binary明示policyと5役`trial-02`は、前段HEAD/statusの所有receiptと内側Job終了・共有予算を結んだ。保存raw28件の別実装照合もpass。ただし前段2呼び出し以外のbare Git、共通producer、40 seed、正式同形の全工程予算は未認証。S4の採択条件と下表は変えず、正式credit0、`s4_acceptance_not_frozen`を維持する。
