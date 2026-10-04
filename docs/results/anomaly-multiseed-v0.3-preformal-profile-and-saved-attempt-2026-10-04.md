@@ -2,13 +2,15 @@
 
 状態: **26H2向けの未採択preformal検証**。５役の初回code保存点は `09b4da2291634ee07ff1eacb74d3ca114c1d76b4`、保存済みproducer→50,000 draw算術接続の初回は `cca54e9e1083d92f4cdf85aae65fdef943929bcf`。writer事前再照合と所有materializerを含む再試行はclean `723eaf1d83ba2f1d42abee9dbe54d57da1d2959d`、別reader子のnative試行はclean `e79479077c7f55cf0398d0e5add41b989e9c936b`、５役/50,000 draw再試行はclean `94be9ed2702d2f383acb952ea1cf24b21b9754fc`。固定手作り系列の所有生成子→別reader子はclean `6ad2631c27f39720a461ad203fc5de7b86e81e5a`、同じ２役の共通外側予算はclean `3be274c59ce4ffa0b5b60ba42993e2aa44a57039` で実走した。保存済み50,000 draw算術→架空文書草稿の写像はclean `6e96644b7bf28e287b458648f189247cfc6952ac` で実走した。旧25H2正式gateは `s4_acceptance_not_frozen` のまま。登録holdout観測の生成・読取り、正式評価credit、S5/S6、候補昇格は0である。
 
+最新の[保存行coverage試行](anomaly-multiseed-v0.3-preformal-saved-row-coverage-2026-10-04.md)は、g02/r01の外部pin付きcontrol rawから区間0の６行を検査し、欠落479区間を列挙した。共通producer/campaign anchorはなく、40 cluster・正式creditは閉じたままである。共有由来・所有journal・全工程予算の具体的な未採択案は[campaign anchor契約案v1](../anomaly-v03-preformal-campaign-anchor-proposal-v1.md)に分けた。
+
 ## S4採択前の受入見取り図
 
 | 受入事項 | 現在の確定範囲 | 採択前に要る証拠 |
 | --- | --- | --- |
 | 26H2運用契約・公開保証 | 未採択v2案。writer子の`.complete`前再照合と失敗保全は検証済み | 旧25H2条件との差、marker残存時の扱い、旧§8の保護DACL・独立token条件を保証A/Bのどちらで扱うか版付きで決定・再監査 |
 | 登録形式の保存入力 | 固定手作り系列を所有生成子が12 dataset入力payloadへ物理保存・再読取りし、そのbytesから６架空評価を計算。４制御fileと合わせて22 fileを保存し、事前外部pin・完全在庫・生成子exit/reap後の別reader子による再導出を照合 | 実登録holdout観測と登録seedに基づく生成・読取りはS4採択後のS5まで閉じる。役割の完全source/runtime/identity閉包、正式共通予算とS4採択は未了 |
-| 数値・文書・全工程予算 | ５役の架空１drawと、保存済みproducerからの50,000 draw２算術子は別々に成功。架空１区間の所有生成子→別reader子は１つの外側予算で完走。保存済み50,000 drawの９主表を、別試行で十項目の架空文書草稿へ写像した（正式証拠５欄は空） | 架空2,880行→40 clusterの入力系譜、50,000 drawの全文書・slice/sidecar・完全別監査・stage/writer・公開後readerまでを共通外側予算で連続測定し、容量２倍条件を判定 |
+| 数値・文書・全工程予算 | ５役の架空１drawと、保存済みproducerからの50,000 draw２算術子は別々に成功。架空１区間の所有生成子→別reader子は１つの外側予算で完走。再読取り済み区間0の６行を外部pinで部分coverageに結合した。保存済み50,000 drawの９主表を、別試行で十項目の架空文書草稿へ写像した（正式証拠５欄は空） | 共有producer/campaign anchorと所有journal、残り479区間を同一由来で得る方法、架空2,880行→40 clusterの入力系譜、50,000 drawの全文書・slice/sidecar・完全別監査・stage/writer・公開後readerまでを共通外側予算で連続測定し、容量２倍条件を判定 |
 | 実行環境と依存閉包 | 26H2実機で５役候補profile前後一致。選択source/Gitと観測runtimeのみ | 全役の実ロードsource/runtime/実行identity閉包、対象revisionのLinux CI 3.12/3.14・Windows native・runner digest |
 | 最終dev/smoke・S4採択 | 保存済み合成120区間/720評価はengineering参考。現行readerのraw再監査は区間0/119だけ | 改訂契約と最終clean revisionでS1登録済みdev8/smoke2を新rootに完走し、独立照合とsmoke容量見積りを結合してS4採択 |
 
