@@ -4,7 +4,9 @@
 
 追記: 架空campaignの最新技術保存点は[共有wall・Jobメモリ付きの `4aacbee4`](anomaly-multiseed-v0.3-slot-wall-and-job-memory-2026-10-04.md)、固定source `772ee3d6e2ea5f02c6c53a72bae6d4daf6942d29`、外部wall receipt 2,230 B / SHA-256 `91714388f56d14649db5ad700e71dc2a6d3a0be41fcc80188c7c6a5ef7d6b38e`。後日read-only verifierで保存chainを再照合済み。その前の[Windows Job所有campaign `5cd8e989`](anomaly-multiseed-v0.3-campaign-job-ownership-2026-10-04.md)は固定source `a1c8461f7ead4f9867ae2c0b48dca367618401f5`、[子anchor照合campaign `72f754b3`](anomaly-multiseed-v0.3-child-echo-campaign-2026-10-04.md)は`2e10c6723df9f00999c90416954a806329546dde`。以下の `486f28cd` のpinと再検証手順は先行campaignの履歴であり、これらを合算しない。
 
-後続追記: clean code `3f708f60cd6d8a1b571e5298effa47893c18f955` の[架空5役割Jobと50,000 draw連続予算の保存点](anomaly-multiseed-v0.3-five-role-job-and-contiguous-budget-2026-10-04.md)を追加した。同revisionの外部候補profile必須5役はJob内で全process終了・read-only再照合まで成功し、receipt 6,580 B / SHA-256 `404147a5744cd34061ab7f8af6f5990668606afcd8cf9ee1055ea57dc074bbea`。一方、主/別算術から文書・sliceまでを一つの時計で測る2試行は両方とも別算術中にsystem commit余裕下限で安全停止した。前述のcampaign、5役、算術試行は入力系譜・予算rootが別であり、合算して正式同形の全工程としない。正式gateと下表の残件は変わらない。
+後続追記: clean code `3f708f60cd6d8a1b571e5298effa47893c18f955` の[架空5役割Jobと50,000 draw連続予算の保存点](anomaly-multiseed-v0.3-five-role-job-and-contiguous-budget-2026-10-04.md)を追加した。同revisionの外部候補profile必須5役はJob内で全process終了・read-only再照合まで成功し、receipt 6,580 B / SHA-256 `404147a5744cd34061ab7f8af6f5990668606afcd8cf9ee1055ea57dc074bbea`。主/別算術から文書・sliceまでの先行2試行はsystem commit余裕下限で安全停止したが、後続のclean `51fdb5436a28115e5eeba1400187e3f0b18101d1` のtrial-03は同じ上限・同じ外部入力pinで330.364秒/1,272標本の連続予算を完走し、terminal result 8,048 B / SHA-256 `585a701be5bb0be1fa7ede71c44a8906ac1b2be18643d2be9e0cbd1ff4f23480`を保全した。前述のcampaign、5役、算術試行は入力系譜・予算rootが別であり、合算して正式同形の全工程としない。正式gateと下表の残件は変わらない。
+
+後続code保存点 `5289634b7561e535d84fe65b8b600f0cc5f49467` では、[先行`g001`のjournal・owner receipt・保存行を結ぶ読取専用bridge](../../src/banto_ai/anomaly_v03_preformal_campaign_saved_row_bridge.py)を追加した。旧sourceへHEADを切り替えず、外部固定のplan/両checkpoint pinと2件のowner receipt・22保存出力pin・10 control rawを結ぶ。現workspaceの実保存rawでも1/480区間・6/2,880評価、欠番1～479を照合したが、40 cluster・diagnostics・slice sourceはnull、過去processと131 MB payloadをこのbridgeで再認証していない。5役Jobの保存予算検査も版・root・上限・役割pin/PID・禁止状態を強化した。[CI journal検証器](../../tools/ci_verify_regression_journals.py)は外部run ID/attempt、必須28 test ID、未知skip拒否を追加し、workflow比較jobに接続した。関連統合123試験、compileall、repository safetyはPASS。ただし対象最終revisionの実Ubuntu両job、runner image digest/代替同定、Windows正式nativeは未取得である。26H2保証Aの[採択前改訂案v2](../anomaly-v03-s4-26h2-amendment-draft-v2.md)は正式契約へ反映していない。
 
 ## 先行campaign `g001` の保存点（履歴）
 
@@ -16,7 +18,7 @@
 | 完了宣言 | 480区間中1、2,880評価中6。残り479区間は未実行。40 clusterと正式50,000 drawには接続していない |
 | 外部terminal checkpoint | `artifacts/anomaly-v03-preformal-campaign-control-486f28cd/checkpoint-000002.json`、record count 2、head `57a8bd4705be06a4e4817bdb2098c2ec01b391c3ed47b32ae11582b0bb0350e1` |
 | 権限・認証 | `invented_only=true`、`actual_registered_observations_read=false`、`campaign_coherence_authenticated=false`、`launch_authorized=false`、`resume_authorized=false`、`formal_permission=false`、`campaign_evaluations_credited=0` |
-| 正式gate | `s4_acceptance_not_frozen`。26H2の[運用契約案v2](../anomaly-v03-formal-operations-contract-proposal-v2.md)は未採択 |
+| 正式gate | `s4_acceptance_not_frozen`。26H2の[運用契約案v2](../anomaly-v03-formal-operations-contract-proposal-v2.md)と[改訂案v2](../anomaly-v03-s4-26h2-amendment-draft-v2.md)は未採択 |
 
 この文書のcommitは固定source revisionより新しいHEADになる。`tools/preformal_campaign_completion_store.py verify`を含むcampaign storeは、計画のsource revisionと**現在のHEADの完全一致**、選定source raw、固定rootを検査する。したがって引き継ぎ文書のHEADで旧campaignを再検証すると拒否される。再検証が必要な場合は、まず引き継ぎcommitを記録し、同じcheckoutを使う別セッションや所有processが動いていないこととclean statusを確認する。その後、**元の `D:\develop\banto-ai` で**cleanな `e9107d7323ea6eda2bad8baf1ebd432a879ec4b5` に一時的に切り替え、保存pinを渡してread-only `verify`を実行し、元branchへ戻す。別pathのworktreeでは計画に固定した絶対pathとroot検査が合わない。source照合や正式flagを緩めて過去の成果を通さない。
 
@@ -69,4 +71,4 @@ S4前の追加技術作業として、[campaign controller案](../anomaly-v03-pr
 
 保存済みの「実データ」は合成信号を実際に生成したengineering dev 8 seed・smoke 2 seed、120区間・240 dataset・720評価であり、[新readerからの要約・記述報告](anomaly-multiseed-v0.3-real-saved-summary-report-2026-10-03.md)まで実適用済み。実設備・顧客データではない。先行`g001`と最新`l001`は架空recipeの技術試行で、ファイル名にholdout seed identityがあっても**登録holdout観測ではない**。未使用40 seedの実観測はS4採択前に読まず、正式creditは0。正式文書のnull欄を「残り4試験」と数えない。
 
-次セッションはまず `git status --short --branch`、引き継ぎcommit、冒頭の後続保存点と各source revisionを確認する。上表とpinは先行`g001`を再検証する場合だけ用いる。新しい5役割Jobのread-only verifierはclean `3f708f6` と元の絶対pathを要求し、文書commit後のHEADでは旧試行を通さない。次は26H2契約と保証A/Bの採択、登録保存readerを含む共通入力系譜、資源余裕が安定した環境での連続予算再測定、完全S6同形audit、最終revisionのLinux/Windows・dev/smoke受入を進める。旧gateと旧artifactを変更せず、S4の独立判定を得てからS5へ進む。
+次セッションはまず `git status --short --branch`、引き継ぎcommit、冒頭の後続保存点と各source revisionを確認する。上表とpinは先行`g001`を旧verifierで再検証する場合だけ用いる。新bridgeは保存rawを外部固定pinから現HEADでも読取照合できるが、当時のprocess・payloadの実行認証を再発行しない。5役割Jobのnative旧試行はclean `3f708f6` と元の絶対path、trial-03の連続予算はclean `51fdb54` へ結び、後続revisionの成果へ読み替えない。次は26H2契約と保証A/Bの採択、登録保存readerを含む共通入力系譜、**producerから別readerまで**の全工程単一予算、完全S6同形audit、最終revisionのLinux/Windows・dev/smoke受入を進める。旧gateと旧artifactを変更せず、S4の独立判定を得てからS5へ進む。
