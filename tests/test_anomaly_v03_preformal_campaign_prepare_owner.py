@@ -11,16 +11,16 @@ from banto_ai import anomaly_v03 as v
 from banto_ai import anomaly_v03_preformal_campaign_metadata as metadata
 from banto_ai import anomaly_v03_preformal_campaign_prepare_owner as owner
 from banto_ai import anomaly_v03_preformal_campaign_preflight as preflight
-from tests.test_anomaly_v03_preformal_campaign_preflight import PreflightTests
+from tests import test_anomaly_v03_preformal_campaign_preflight as preflight_cases
 
 
 class PrepareOwnerTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        PreflightTests.setUpClass()
+        preflight_cases.PreflightTests.setUpClass()
 
     def setUp(self):
-        self.case = PreflightTests()
+        self.case = preflight_cases.PreflightTests()
         self.case.setUp()
         self.state = {
             'status': 'preflight_intention_fixed',
