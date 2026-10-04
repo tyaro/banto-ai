@@ -5,7 +5,7 @@ pinned, already-started metadata journal record before each CLI launch.  A
 completed slot can be followed by the next slot; an unfinished or failed slot
 is deliberately not restarted here.  A successful direct CLI exit and its
 saved child evidence are local engineering observations, not S4 acceptance or
-whole-process-tree ownership on an abnormal CLI exit.
+individual descendant exit-code authentication.
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ from . import anomaly_v03_preformal_campaign_store as store
 from . import anomaly_v03_preformal_owned_generated_attempt as generated
 from . import anomaly_v03_preformal_owned_saved_attempt as copied
 from . import anomaly_v03_preformal_saved_row_reread as reread
-from . import anomaly_v03_process_supervisor as supervisor
+from . import anomaly_v03_preformal_job_tree_owner as job_owner
 from . import anomaly_v03_reader_evidence as observed
 
 
@@ -216,6 +216,14 @@ def _load_receipt(plan, current, phase, expected_pin):
     v.require(monitor['status'] == 'complete' and
               monitor['exit_code'] == value['cli_exit_code'] == 0 and
               monitor['worker_exit_confirmed'] is True and
+              monitor['job']['format'] ==
+              'anomaly-v03-preformal-owned-cli-job-v1' and
+              monitor['job']['assignment_confirmed'] is True and
+              monitor['job']['root_resumed'] is True and
+              monitor['job']['all_assigned_processes_exit_confirmed'] is True and
+              monitor['job']['accounting']['active_processes'] == 0 and
+              monitor['job']['individual_descendant_exit_codes_authenticated'] is False and
+              monitor['job']['whole_tree_resource_budget_measured'] is False and
               type(value['cli_process']) is dict and
               type(value['cli_process'].get('creation_time_100ns')) is int and
               value['cli_process']['creation_time_100ns'] > 0 and
@@ -672,22 +680,25 @@ def execute_owned(request_path, expected_request_pin, plan_raw, plan_pin,
 
     try:
         with platform._platform_scope():
-            report = supervisor.supervise(
+            report = job_owner.supervise_cli(
                 request['argv'], ROOT, control, LIMITS,
                 stdout_name='report.json',
                 runtime_probe=lambda: runtime.probe_runtime(ROOT),
                 boundary=boundary, on_started=on_started)
-    except supervisor.UnreapedWorker as error:
-        supervisor.retain_until_exit(error)
-        return _failed_receipt(
-            control, request, expected_request_pin, plan_pin, error.report,
-            launch, 'worker_exit', type(error).__name__, reconciled=True)
     except (ValueError, OSError, TypeError) as error:
         return _failed_receipt(
             control, request, expected_request_pin, plan_pin, None,
             launch, 'verification_failed', type(error).__name__)
     if not (report['status'] == 'complete' and report['exit_code'] == 0 and
             report['worker_exit_confirmed'] is True and
+            report['job']['format'] ==
+            'anomaly-v03-preformal-owned-cli-job-v1' and
+            report['job']['assignment_confirmed'] is True and
+            report['job']['root_resumed'] is True and
+            report['job']['all_assigned_processes_exit_confirmed'] is True and
+            report['job']['accounting']['active_processes'] == 0 and
+            report['job']['individual_descendant_exit_codes_authenticated'] is False and
+            report['job']['whole_tree_resource_budget_measured'] is False and
             report['worker_pid'] == launch.get('pid') and
             type(launch.get('start_token')) is str and
             not report['observation_errors'] and

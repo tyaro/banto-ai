@@ -33,6 +33,40 @@ class JobOwnerContractTests(unittest.TestCase):
         self.assertEqual(caught.exception.handles, {'job': 123})
         self.assertEqual(caught.exception.report['status'], 'failed')
 
+    def test_partial_spawn_retains_unreaped_native_handles(self):
+        problem = owner.UnreapedJob(11, 22, 33,
+                                   {'status': 'failed', 'phase': 'spawn'},
+                                   extra_handles={'inherited_0': 44})
+        limits = {'wall_seconds': 5, 'private_bytes': 1024**3,
+                  'output_bytes': 1024**2}
+        with tempfile.TemporaryDirectory(prefix='banto-job-failed-spawn-') as temp, \
+             patch.object(owner, '_kernel', return_value=object()), \
+             patch.object(owner, '_spawn_cli', side_effect=problem), \
+             patch.object(owner.policy, 'validate_runtime'), \
+             patch.object(owner.resources, 'require_start_resources',
+                          return_value={}), \
+             patch.object(owner.resources, 'free_resources',
+                          return_value={}):
+            with self.assertRaises(owner.UnreapedJob) as caught:
+                owner.supervise_cli(
+                    [sys.executable], owner.ROOT, Path(temp) / 'control',
+                    limits, runtime_probe=lambda: {'fixture': True},
+                    boundary=lambda: None, on_started=lambda _: None)
+            self.assertIs(caught.exception, problem)
+            self.assertEqual(caught.exception.extra_handles,
+                             {'inherited_0': 44})
+
+    def test_partial_spawn_close_failure_retains_all_handles(self):
+        created = owner._ProcessInformation()
+        close_error = owner.UnclosedHandles(
+            {'job': 11}, {'status': 'failed', 'phase': 'spawn'})
+        with patch.object(owner, '_close_owned', side_effect=close_error):
+            with self.assertRaises(owner.UnclosedHandles) as caught:
+                owner._reap_partial_spawn(
+                    object(), 11, created, False, {'inherited_0': 44})
+        self.assertEqual(caught.exception.handles,
+                         {'job': 11, 'inherited_0': 44})
+
 
 @unittest.skipUnless(os.name == 'nt' and sys.version_info[:2] == (3, 14) and
                      os.environ.get('BANTO_PREFORMAL_JOB_TREE_NATIVE') == '1',
@@ -131,6 +165,52 @@ class NativeJobOwnerTests(unittest.TestCase):
             self.assertTrue(problem.report['job_all_assigned_processes_exit_confirmed'])
         finally:
             self.assertTrue(kernel.CloseHandle(problem.handles['thread']))
+
+    def _run_cli(self, mode, wall=8):
+        argv = [sys.executable, '-B', str(owner.FIXTURE),
+                'parent', mode, str(self.root)]
+        limits = {'wall_seconds': wall, 'private_bytes': 512 * 1024**2,
+                  'output_bytes': 1024**2}
+        starts = []
+        with patch.object(owner.policy, 'validate_runtime'), \
+             patch.object(owner.resources, 'require_start_resources',
+                          return_value={}), \
+             patch.object(owner.resources, 'free_resources',
+                          return_value={}):
+            report = owner.supervise_cli(
+                argv, owner.ROOT, self.root / 'control', limits,
+                runtime_probe=lambda: {'fixture': True},
+                boundary=lambda: None,
+                on_started=lambda process: starts.append(process.pid))
+        self.assertEqual(starts, [report['worker_pid']])
+        return report
+
+    def test_pinned_cli_supervisor_waits_for_job_members(self):
+        report = self._run_cli('success')
+        self.assertEqual(report['status'], 'complete', report)
+        self.assertEqual(report['exit_code'], 0)
+        self.assertEqual(report['job']['accounting']['active_processes'], 0)
+        self.assertGreaterEqual(report['job']['accounting']['total_processes'], 2)
+        self.assertTrue(report['job']['all_assigned_processes_exit_confirmed'])
+        self.assertFalse(report['job']['individual_descendant_exit_codes_authenticated'])
+        self.assertFalse(report['job']['whole_tree_resource_budget_measured'])
+        self.assertFalse(report['formal_permission'])
+
+    def test_pinned_cli_supervisor_abnormal_root_reaps_grandchild(self):
+        report = self._run_cli('parent-fail')
+        self.assertEqual(report['status'], 'failed', report)
+        self.assertEqual(report['exit_code'], 17)
+        self.assertEqual(report['stop_reason'], 'root_exit_nonzero')
+        self.assertGreaterEqual(report['job']['accounting']['total_processes'], 2)
+        self.assertEqual(report['job']['accounting']['active_processes'], 0)
+        self.assertTrue(report['job']['all_assigned_processes_exit_confirmed'])
+
+    def test_pinned_cli_supervisor_timeout_reaps_grandchild(self):
+        report = self._run_cli('timeout', wall=1.5)
+        self.assertEqual(report['status'], 'failed', report)
+        self.assertEqual(report['stop_reason'], 'time_limit')
+        self.assertEqual(report['job']['accounting']['active_processes'], 0)
+        self.assertTrue(report['job']['all_assigned_processes_exit_confirmed'])
 
 
 if __name__ == '__main__':

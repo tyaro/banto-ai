@@ -44,7 +44,7 @@ class PrepareOwnerTests(unittest.TestCase):
             with patch.object(owner, '_store', side_effect=[
                     self.state, ValueError('target already exists')]), \
                     patch.object(owner, '_owner_root', return_value=target), \
-                    patch.object(owner.supervisor, 'supervise') as supervise:
+                    patch.object(owner.job_owner, 'supervise_cli') as supervise:
                 result, receipt_pin = owner.execute(
                     self.state['campaign_root'], self.state['control_root'],
                     expected_plan_pin=self.state['plan_pin'],
@@ -138,7 +138,7 @@ class PrepareOwnerTests(unittest.TestCase):
                         patch.object(owner, '_optional', return_value=None), \
                         patch.object(owner.platform, '_platform_scope',
                                      return_value=nullcontext()), \
-                        patch.object(owner.supervisor, 'supervise',
+                        patch.object(owner.job_owner, 'supervise_cli',
                                      return_value=report):
                     result, _ = owner.execute(
                         self.state['campaign_root'], self.state['control_root'],
@@ -193,7 +193,7 @@ class PrepareOwnerTests(unittest.TestCase):
                                  return_value=nullcontext()), \
                     patch.object(owner.observed, 'creation_observation',
                                  return_value=launch), \
-                    patch.object(owner.supervisor, 'supervise',
+                    patch.object(owner.job_owner, 'supervise_cli',
                                  side_effect=supervised):
                 result, _ = owner.execute(
                     state['campaign_root'], state['control_root'],
@@ -223,6 +223,13 @@ class PrepareOwnerTests(unittest.TestCase):
             'argv': self.state['intention']['argv'], 'limits': owner.LIMITS,
             'runtime_before': runtime, 'runtime_after': runtime,
             'observation_errors': [], 'stop_reason': None,
+            'job': {
+                'format': 'anomaly-v03-preformal-owned-cli-job-v1',
+                'assignment_confirmed': True, 'root_resumed': True,
+                'all_assigned_processes_exit_confirmed': True,
+                'accounting': {'active_processes': 0},
+                'individual_descendant_exit_codes_authenticated': False,
+                'whole_tree_resource_budget_measured': False},
         }
         owner._completed_cli(report, launch, self.state['intention'],
                              self.case.plan, b'prepared', b'', b'manifest',
@@ -232,12 +239,18 @@ class PrepareOwnerTests(unittest.TestCase):
             owner._completed_cli(changed, launch, self.state['intention'],
                                  self.case.plan, b'prepared', b'',
                                  b'manifest', b'sidecar')
+        without_job = dict(report, job={**report['job'],
+                                        'all_assigned_processes_exit_confirmed': False})
+        with self.assertRaisesRegex(ValueError, 'owned prepare CLI'):
+            owner._completed_cli(without_job, launch, self.state['intention'],
+                                 self.case.plan, b'prepared', b'',
+                                 b'manifest', b'sidecar')
 
     def test_existing_owner_root_is_not_reused_or_launched(self):
         with patch.object(owner, '_store', return_value=self.state), \
                 patch.object(owner, '_owner_root', side_effect=ValueError(
                     'new prepare-owner root required')), \
-                patch.object(owner.supervisor, 'supervise') as supervise:
+                patch.object(owner.job_owner, 'supervise_cli') as supervise:
             with self.assertRaisesRegex(ValueError, 'new prepare-owner root'):
                 owner.execute(
                     self.state['campaign_root'], self.state['control_root'],

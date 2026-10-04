@@ -1,7 +1,8 @@
 """Own one invented campaign prepare CLI after its external intention is fixed.
 
-This owns the direct prepare process only. It does not run generation, read
-registered observations, authenticate descendants, or authorize a campaign.
+This owns the prepare CLI Job tree. It does not run generation, read
+registered observations, authenticate individual descendant exit codes,
+or authorize a campaign.
 The caller must supply the three pins retained by the separate campaign store.
 """
 from __future__ import annotations
@@ -19,7 +20,7 @@ from . import anomaly_v03_platform_fixture_runtime as runtime
 from . import anomaly_v03_preformal_campaign_metadata as metadata
 from . import anomaly_v03_preformal_campaign_preflight as preflight
 from . import anomaly_v03_preformal_campaign_store as store
-from . import anomaly_v03_process_supervisor as supervisor
+from . import anomaly_v03_preformal_job_tree_owner as job_owner
 from . import anomaly_v03_reader_evidence as observed
 
 
@@ -133,6 +134,14 @@ def _completed_cli(report, launch, intention, plan, stdout_raw,
               report['runtime_after'] == plan['runtime_candidate']['tuple'] and
               report['observation_errors'] == [] and
               report['stop_reason'] is None and
+              report['job']['format'] ==
+              'anomaly-v03-preformal-owned-cli-job-v1' and
+              report['job']['assignment_confirmed'] is True and
+              report['job']['root_resumed'] is True and
+              report['job']['all_assigned_processes_exit_confirmed'] is True and
+              report['job']['accounting']['active_processes'] == 0 and
+              report['job']['individual_descendant_exit_codes_authenticated'] is False and
+              report['job']['whole_tree_resource_budget_measured'] is False and
               stdout_raw is not None and stderr_raw == b'' and
               manifest_raw is not None and sidecar_raw is not None,
               'owned prepare CLI and bounded output required')
@@ -298,16 +307,11 @@ def execute(campaign_root, control_root, *, expected_plan_pin,
 
         try:
             with platform._platform_scope():
-                report = supervisor.supervise(
+                report = job_owner.supervise_cli(
                     intention['argv'], ROOT, root / 'worker', LIMITS,
                     stdout_name='report.json',
                     runtime_probe=lambda: runtime.probe_runtime(ROOT),
                     boundary=boundary, on_started=on_started)
-        except supervisor.UnreapedWorker as error:
-            supervisor.retain_until_exit(error)
-            report = error.report
-            reconciled = True
-            reason = 'prepare_owner_unreaped'
         except KeyboardInterrupt:
             reason = 'prepare_interrupted'
         except (ValueError, OSError, KeyError, TypeError) as error:

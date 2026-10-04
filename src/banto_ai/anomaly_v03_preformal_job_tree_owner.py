@@ -1,9 +1,8 @@
-"""Own one invented Windows CLI tree with a private Job Object.
+"""Own invented Windows CLI trees with private Job Objects.
 
-This is a 26H2 engineering fixture, separate from the formal runner and the
-existing one-process supervisor.  Job accounting confirms that every process
-*in this job* has exited; it does not authenticate individual descendant exit
-codes, processes created outside the job, or an S4 resource budget.
+Job accounting confirms that every process *in this job* has exited. It does
+not authenticate individual descendant exit codes, processes created outside
+the job, or a whole-tree S4 resource budget.
 """
 from __future__ import annotations
 
@@ -19,6 +18,10 @@ import sys
 import time
 
 from . import anomaly_v03_platform_fixture_runtime as runtime
+from . import anomaly_v03_process_supervisor as direct_supervisor
+from . import anomaly_v03_engineering_contract as policy
+from . import _anomaly_v03_engineering_runtime as resources
+from . import _anomaly_v03_runtime as paths
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,6 +36,10 @@ JOB_OBJECT_BASIC_ACCOUNTING_INFORMATION = 1
 WAIT_OBJECT_0 = 0
 WAIT_TIMEOUT = 0x102
 STILL_ACTIVE = 259
+STARTF_USESTDHANDLES = 0x00000100
+EXTENDED_STARTUPINFO_PRESENT = 0x00080000
+PROC_THREAD_ATTRIBUTE_HANDLE_LIST = 0x00020002
+DUPLICATE_SAME_ACCESS = 0x00000002
 
 
 class _BasicLimit(ctypes.Structure):
@@ -91,11 +98,17 @@ class _ProcessInformation(ctypes.Structure):
                 ('dwProcessId', w.DWORD), ('dwThreadId', w.DWORD)]
 
 
+class _StartupInfoEx(ctypes.Structure):
+    _fields_ = [('StartupInfo', _StartupInfo),
+                ('lpAttributeList', ctypes.c_void_p)]
+
+
 class UnreapedJob(RuntimeError):
     """The caller retains native handles when all job members are unconfirmed."""
 
-    def __init__(self, job, process, thread, report):
+    def __init__(self, job, process, thread, report, extra_handles=None):
         self.job, self.process, self.thread, self.report = job, process, thread, report
+        self.extra_handles = dict(extra_handles or {})
         super().__init__('owned Job process exit could not be confirmed')
 
 
@@ -139,6 +152,23 @@ def _kernel():
     k.TerminateProcess.restype = w.BOOL
     k.CloseHandle.argtypes = [w.HANDLE]
     k.CloseHandle.restype = w.BOOL
+    k.GetCurrentProcess.argtypes = []
+    k.GetCurrentProcess.restype = w.HANDLE
+    k.DuplicateHandle.argtypes = [w.HANDLE, w.HANDLE, w.HANDLE,
+                                  ctypes.POINTER(w.HANDLE), w.DWORD,
+                                  w.BOOL, w.DWORD]
+    k.DuplicateHandle.restype = w.BOOL
+    k.InitializeProcThreadAttributeList.argtypes = [ctypes.c_void_p, w.DWORD,
+                                                     w.DWORD,
+                                                     ctypes.POINTER(ctypes.c_size_t)]
+    k.InitializeProcThreadAttributeList.restype = w.BOOL
+    k.UpdateProcThreadAttribute.argtypes = [ctypes.c_void_p, w.DWORD,
+                                             ctypes.c_size_t, ctypes.c_void_p,
+                                             ctypes.c_size_t, ctypes.c_void_p,
+                                             ctypes.c_void_p]
+    k.UpdateProcThreadAttribute.restype = w.BOOL
+    k.DeleteProcThreadAttributeList.argtypes = [ctypes.c_void_p]
+    k.DeleteProcThreadAttributeList.restype = None
     return k
 
 
@@ -364,4 +394,311 @@ def run_fixture(evidence_dir, *, mode, wall_seconds=5.0,
         report['observation_error_type'] = 'CloseHandle'
         report['unclosed_handles'] = sorted(unclosed)
         raise UnclosedHandles(unclosed, report)
+    return report
+
+
+def _close_owned(k, job, process, thread, report):
+    unclosed = {}
+    for name, handle in (('thread', thread), ('process', process), ('job', job)):
+        if handle is not None and not k.CloseHandle(handle):
+            unclosed[name] = handle
+    if unclosed:
+        report['status'] = 'failed'
+        report['stop_reason'] = 'handle_close'
+        report['observation_errors'] = [*report.get('observation_errors', []),
+                                        {'stage': 'handle_close',
+                                         'error_type': 'OSError'}]
+        report['unclosed_handles'] = sorted(unclosed)
+        raise UnclosedHandles(unclosed, report)
+
+
+def _reap_partial_spawn(k, job, created, assigned, extra_handles):
+    if created.hProcess:
+        try:
+            if assigned:
+                _need(k.TerminateJobObject(job, 0xE004),
+                      'TerminateJobObject failed spawn')
+            else:
+                _need(k.TerminateProcess(created.hProcess, 0xE005),
+                      'TerminateProcess failed spawn')
+            accounting, exit_code = _wait_empty(
+                k, job, created.hProcess, time.monotonic() + 30)
+            _need(accounting['active_processes'] == 0 and
+                  exit_code is not None, 'failed spawn Job empty')
+        except BaseException as error:
+            raise UnreapedJob(job, created.hProcess, created.hThread,
+                              {'status': 'failed', 'phase': 'spawn',
+                               'assignment_confirmed': assigned,
+                               'formal_permission': False},
+                              extra_handles=extra_handles) from error
+    try:
+        _close_owned(k, job, created.hProcess or None, created.hThread or None,
+                     {'status': 'failed', 'phase': 'spawn',
+                      'formal_permission': False})
+    except UnclosedHandles as error:
+        error.handles.update(extra_handles)
+        raise
+
+
+def _spawn_cli(k, argv, cwd, stdin, stdout, stderr):
+    """Create suspended, assign to a non-breakaway Job, then return handles.
+
+    Only the three duplicated standard handles are inherited. The caller owns
+    the suspended root and must resume or terminate it before closing handles.
+    """
+    import msvcrt
+
+    job = _new_job(k)
+    created = _ProcessInformation()
+    inherited = []
+    attributes = None
+    attributes_ready = False
+    assigned = False
+    result = spawn_error = None
+    try:
+        self_handle = k.GetCurrentProcess()
+        for stream in (stdin, stdout, stderr):
+            duplicate = w.HANDLE()
+            _need(k.DuplicateHandle(self_handle, msvcrt.get_osfhandle(stream.fileno()),
+                                    self_handle, ctypes.byref(duplicate), 0, True,
+                                    DUPLICATE_SAME_ACCESS), 'DuplicateHandle stdio')
+            inherited.append(duplicate.value)
+        size = ctypes.c_size_t()
+        k.InitializeProcThreadAttributeList(None, 1, 0, ctypes.byref(size))
+        _need(size.value > 0, 'InitializeProcThreadAttributeList sizing')
+        attributes = ctypes.create_string_buffer(size.value)
+        _need(k.InitializeProcThreadAttributeList(attributes, 1, 0,
+                                                  ctypes.byref(size)),
+              'InitializeProcThreadAttributeList')
+        attributes_ready = True
+        handles = (w.HANDLE * len(inherited))(*inherited)
+        _need(k.UpdateProcThreadAttribute(
+            attributes, 0, PROC_THREAD_ATTRIBUTE_HANDLE_LIST,
+            ctypes.cast(handles, ctypes.c_void_p), ctypes.sizeof(handles),
+            None, None), 'UpdateProcThreadAttribute handle list')
+        startup = _StartupInfoEx()
+        startup.StartupInfo.cb = ctypes.sizeof(startup)
+        startup.StartupInfo.dwFlags = STARTF_USESTDHANDLES
+        startup.StartupInfo.hStdInput = inherited[0]
+        startup.StartupInfo.hStdOutput = inherited[1]
+        startup.StartupInfo.hStdError = inherited[2]
+        startup.lpAttributeList = ctypes.cast(attributes, ctypes.c_void_p)
+        command_line = ctypes.create_unicode_buffer(subprocess.list2cmdline(argv))
+        _need(k.CreateProcessW(argv[0], command_line, None, None, True,
+                               CREATE_SUSPENDED | CREATE_NO_WINDOW |
+                               EXTENDED_STARTUPINFO_PRESENT,
+                               None, str(cwd),
+                               ctypes.cast(ctypes.byref(startup),
+                                           ctypes.POINTER(_StartupInfo)),
+                               ctypes.byref(created)), 'CreateProcessW')
+        _need(k.AssignProcessToJobObject(job, created.hProcess),
+              'AssignProcessToJobObject')
+        member = w.BOOL()
+        _need(k.IsProcessInJob(created.hProcess, job, ctypes.byref(member))
+              and member.value, 'IsProcessInJob')
+        assigned = True
+        result = job, created.hProcess, created.hThread, int(created.dwProcessId)
+    except BaseException as error:
+        spawn_error = error
+    finally:
+        if attributes_ready:
+            k.DeleteProcThreadAttributeList(attributes)
+        # These are parent-side duplicates only. The child inherited its own
+        # copies at CreateProcessW and can keep writing after these close.
+        unclosed_stdio = {
+            'inherited_' + str(index): handle
+            for index, handle in enumerate(inherited)
+            if not k.CloseHandle(handle)}
+    if spawn_error is not None or unclosed_stdio:
+        _reap_partial_spawn(k, job, created, assigned, unclosed_stdio)
+        if unclosed_stdio:
+            raise UnclosedHandles(unclosed_stdio, {
+                'status': 'failed', 'phase': 'spawn_stdio_close',
+                'stop_reason': 'handle_close',
+                'formal_permission': False}) from spawn_error
+        raise spawn_error
+    return result
+
+
+def supervise_cli(argv, cwd, control_root, limits, *, runtime_probe,
+                  boundary, on_started, stdout_name='report.json',
+                  cleanup_seconds=30.0):
+    """Supervise one externally pinned invented CLI and all Job members.
+
+    The caller validates argv/source and saves this report. A successful
+    report requires a zero root exit, empty Job accounting, matching runtime,
+    and bounded direct CLI observations. Descendant exit codes and a shared
+    tree memory budget remain unauthenticated.
+    """
+    direct_supervisor._limits(limits)
+    paths.require(type(argv) is list and argv and
+                  all(type(x) is str and x for x in argv), 'Job CLI argv')
+    paths.require(stdout_name in ('report.json', 'stdout.jsonl'),
+                  'Job CLI stdout name')
+    paths.require(type(cleanup_seconds) in (int, float) and
+                  math.isfinite(cleanup_seconds) and cleanup_seconds > 0,
+                  'Job cleanup seconds')
+    cwd = paths.regular_path(Path(cwd), directory=True)
+    control = Path(control_root).absolute()
+    paths.regular_path(control.parent, directory=True)
+    paths.regular_path(control, directory=True, missing=True)
+    control.mkdir()
+    stdout_path, stderr_path = control / stdout_name, control / 'stderr.json'
+    k = _kernel()
+    job = process = thread = None
+    pid = exit_code = accounting = None
+    before = after = free_before = free_after = None
+    errors, peak, reason = [], 0, None
+    started = time.monotonic()
+    resumed = assigned = False
+
+    def error(stage, value):
+        errors.append({'stage': stage, 'error_type': type(value).__name__})
+
+    def sample_memory():
+        nonlocal peak
+        peak = max(peak, resources.memory_bytes(process)['peak_private_bytes'])
+
+    def budget():
+        if time.monotonic() - started > limits['wall_seconds']:
+            return 'time_limit'
+        if peak > limits['private_bytes']:
+            return 'memory_limit'
+        total = sum(path.stat().st_size for path in (stdout_path, stderr_path)
+                    if path.exists())
+        return 'output_limit' if total > limits['output_bytes'] else None
+
+    try:
+        before = runtime_probe()
+        policy.validate_runtime(before)
+        free_before = resources.require_start_resources(cwd)
+        boundary()
+        reason = budget()
+        if reason is None:
+            with open(os.devnull, 'rb') as stdin, \
+                    stdout_path.open('xb') as stdout, \
+                    stderr_path.open('xb') as stderr:
+                job, process, thread, pid = _spawn_cli(
+                    k, argv, cwd, stdin, stdout, stderr)
+                assigned = True
+                on_started(type('OwnedCli', (), {'pid': pid,
+                                                  '_handle': process})())
+                _need(k.ResumeThread(thread) == 1, 'ResumeThread CLI')
+                resumed = True
+                while True:
+                    accounting = _accounting(k, job)
+                    exit_code = _root_exit(k, process)
+                    if exit_code is not None and exit_code != 0:
+                        reason = 'root_exit_nonzero'
+                        break
+                    if accounting['active_processes'] == 0 and exit_code is not None:
+                        break
+                    if exit_code is None:
+                        sample_memory()
+                    reason = budget()
+                    if reason is not None:
+                        break
+                    time.sleep(0.25)
+    except resources.ResourceStop as value:
+        reason = value.reason
+    except KeyboardInterrupt:
+        reason = 'interrupted'
+    except (UnreapedJob, UnclosedHandles):
+        # _spawn_cli still owns native handles in these cases. Returning a
+        # terminal report would discard the only reconciliation handle.
+        raise
+    except Exception as value:
+        error('supervision', value)
+        reason = reason or 'observation_error'
+    finally:
+        if process is not None:
+            try:
+                accounting = _accounting(k, job)
+                exit_code = _root_exit(k, process)
+                if reason is not None or exit_code is None or \
+                        accounting['active_processes'] != 0:
+                    # A success-path child may outlive the root. Give it only
+                    # the remaining wall budget, then terminate the Job.
+                    if reason is None and exit_code == 0:
+                        accounting, exit_code = _wait_empty(
+                            k, job, process, started + limits['wall_seconds'])
+                    if reason is not None or exit_code is None or \
+                            accounting['active_processes'] != 0:
+                        reason = reason or 'time_limit'
+                        _need(k.TerminateJobObject(job, 0xE006),
+                              'TerminateJobObject CLI')
+                accounting, exit_code = _wait_empty(
+                    k, job, process, time.monotonic() + cleanup_seconds)
+                if accounting['active_processes'] != 0 or exit_code is None:
+                    raise UnreapedJob(job, process, thread, {
+                        'status': 'failed', 'phase': 'reap',
+                        'root_pid': pid, 'root_exit_code': exit_code,
+                        'job_accounting': accounting,
+                        'formal_permission': False})
+            except UnreapedJob:
+                raise
+            except BaseException as value:
+                error('job_reap', value)
+                raise UnreapedJob(job, process, thread, {
+                    'status': 'failed', 'phase': 'reap',
+                    'root_pid': pid, 'root_exit_code': exit_code,
+                    'job_accounting': accounting,
+                    'formal_permission': False}) from value
+            try:
+                sample_memory()
+            except BaseException as value:
+                error('final_worker_memory', value)
+        try:
+            after = runtime_probe()
+            policy.validate_runtime(after)
+            if before is not None and after != before:
+                reason = 'runtime_changed'
+            free_after = resources.free_resources(cwd)
+            boundary()
+        except resources.ResourceStop as value:
+            reason = reason or value.reason
+        except BaseException as value:
+            error('final_context', value)
+            reason = reason or 'observation_error'
+    output = stderr = None
+    try:
+        limit_reason = budget()
+        reason = reason or limit_reason
+        if limit_reason != 'output_limit':
+            output = direct_supervisor._file_pin(stdout_path, limits['output_bytes'])
+            remaining = limits['output_bytes'] - (output['bytes'] if output else 0)
+            stderr = direct_supervisor._file_pin(stderr_path, remaining)
+    except resources.ResourceStop as value:
+        reason = value.reason
+    except BaseException as value:
+        error('output_observation', value)
+    job_confirmed = (assigned and accounting is not None and
+                     accounting['active_processes'] == 0 and exit_code is not None)
+    complete = (job_confirmed and resumed and exit_code == 0 and
+                reason is None and not errors and before is not None and
+                after == before)
+    report = {
+        'format': 'anomaly-v03-owned-process-monitor-v1',
+        'argv': list(argv), 'limits': dict(limits),
+        'status': 'complete' if complete else 'failed',
+        'exit_code': exit_code, 'worker_pid': pid,
+        'worker_started': process is not None,
+        'worker_exit_confirmed': exit_code is not None,
+        'stop_reason': reason,
+        'elapsed_seconds': time.monotonic() - started,
+        'peak_worker_private_bytes': peak,
+        'observation_errors': errors,
+        'output': output, 'stderr': stderr,
+        'runtime_before': before, 'runtime_after': after,
+        'free_before': free_before, 'free_after': free_after,
+        'job': {'format': 'anomaly-v03-preformal-owned-cli-job-v1',
+                'assignment_confirmed': assigned,
+                'root_resumed': resumed,
+                'accounting': accounting,
+                'all_assigned_processes_exit_confirmed': job_confirmed,
+                'individual_descendant_exit_codes_authenticated': False,
+                'whole_tree_resource_budget_measured': False},
+        'formal_permission': False, 'performance_status': 'not_evaluated',
+    }
+    _close_owned(k, job, process, thread, report)
     return report
