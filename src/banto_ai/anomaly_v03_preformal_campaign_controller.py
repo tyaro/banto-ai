@@ -20,6 +20,7 @@ from . import anomaly_v03 as v
 from . import anomaly_v03_platform_fixture as platform
 from . import anomaly_v03_platform_fixture_runtime as runtime
 from . import anomaly_v03_preformal_campaign_metadata as metadata
+from . import anomaly_v03_preformal_campaign_child_context as child_context
 from . import anomaly_v03_preformal_campaign_store as store
 from . import anomaly_v03_preformal_owned_generated_attempt as generated
 from . import anomaly_v03_preformal_owned_saved_attempt as copied
@@ -254,13 +255,13 @@ def _load_receipt(plan, current, phase, expected_pin):
               'saved prelaunch invocation binding')
     inner = (_verify_generated(plan, request, value['cli_process']['pid'],
                                stdout_raw) if phase == 'run-budget' else
-             _verify_reread(request, value['cli_process']['pid'], stdout_raw))
+             _verify_reread(plan, request, value['cli_process']['pid'], stdout_raw))
     _same(value['inner'], inner, 'owned saved evidence receipt changed')
     return value
 
 
 def _argv(phase, attempt, manifest, reread_root, manifest_pin,
-          outer_result_pin, revision, python_executable):
+          outer_result_pin, revision, python_executable, campaign_context):
     v.require(phase in PHASES, 'fixed native phase')
     v.require(type(python_executable) is str and
               Path(python_executable) == Path(sys.executable),
@@ -271,7 +272,8 @@ def _argv(phase, attempt, manifest, reread_root, manifest_pin,
                 str(ROOT / 'tools/preformal_owned_generated_trial.py'),
                 'run-budget', '--root', str(attempt), '--manifest',
                 str(manifest), '--manifest-sha256',
-                manifest_pin['sha256']]
+                manifest_pin['sha256'],
+                *_campaign_argv(campaign_context)]
     metadata._pin(outer_result_pin, 'prior owned result')
     return [python_executable, '-B',
             str(ROOT / 'tools/preformal_saved_row_reread_trial.py'),
@@ -280,7 +282,15 @@ def _argv(phase, attempt, manifest, reread_root, manifest_pin,
             f"{manifest_pin['bytes']}:{manifest_pin['sha256']}",
             '--outer-result-pin',
             f"{outer_result_pin['bytes']}:{outer_result_pin['sha256']}",
-            '--revision', revision]
+            '--revision', revision, *_campaign_argv(campaign_context)]
+
+
+def _campaign_argv(context):
+    return ['--campaign-plan-path', context['plan_path'],
+            '--campaign-anchor-pin',
+            f"{context['anchor_pin']['bytes']}:{context['anchor_pin']['sha256']}",
+            '--campaign-chunk-index', str(context['chunk_index']),
+            '--campaign-attempt', str(context['attempt'])]
 
 
 def fixed_request(plan_raw, plan_pin, record_raws, *, expected_record_count,
@@ -301,6 +311,11 @@ def fixed_request(plan_raw, plan_pin, record_raws, *, expected_record_count,
         v.require(phase == 'run-budget' and
                   generation_receipt_pin is None,
                   'generation has no prior owned receipt')
+    campaign_context = {
+        'plan_path': str(Path(plan['root']) / 'plan.json'),
+        'anchor_pin': copy.deepcopy(plan_pin),
+        'chunk_index': current['chunk_index'], 'attempt': current['attempt'],
+    }
     return {
         'format': REQUEST_FORMAT, 'scope': 'invented-two-slot-owned-cli-only',
         'phase': phase, 'anchor_pin': copy.deepcopy(plan_pin),
@@ -316,7 +331,8 @@ def fixed_request(plan_raw, plan_pin, record_raws, *, expected_record_count,
         'runtime_tuple_sha256': plan['runtime_candidate']['tuple_sha256'],
         'cwd': str(ROOT), 'argv': _argv(
             phase, attempt, manifest_path, reread_root, manifest_pin,
-            outer_result_pin, plan['source']['revision'], python_executable),
+            outer_result_pin, plan['source']['revision'], python_executable,
+            campaign_context),
         'invented_only': True,
         'actual_registered_observations_read': False,
         'formal_permission': False, 'campaign_evaluations_credited': 0,
@@ -378,8 +394,12 @@ def _verified_inputs(plan, request, current):
                 request['outer_result_pin'])
 
 
-def _inner_role(root, role, cli_pid, expected_pid, expected_token):
+def _inner_role(root, role, cli_pid, expected_pid, expected_token,
+                campaign_context, attempt_root, revision,
+                invocation_format, reply_format):
     directory = root / ('owned-' + role)
+    invocation_raw = _read(directory / 'invocation.json')
+    invocation = v.strict_json(invocation_raw)
     monitor_raw = _read(directory / 'supervision.json')
     monitor = v.strict_json(monitor_raw)
     stdout_raw = _read(directory / 'worker/report.json')
@@ -389,10 +409,21 @@ def _inner_role(root, role, cli_pid, expected_pid, expected_token):
               monitor['worker_exit_confirmed'] is True and
               monitor['worker_pid'] == expected_pid and
               monitor['output'] == metadata.pin(stdout_raw) and
+              invocation.get('format') == invocation_format and
+              reply.get('format') == reply_format and
+              type(invocation.get('invocation_id')) is str and
+              re.fullmatch(r'[0-9a-f]{64}',
+                           invocation['invocation_id']) is not None and
+              reply.get('invocation_id') == invocation['invocation_id'] and
               reply['process'] == {'pid': expected_pid,
                                    'parent_pid': cli_pid,
-                                   'start_token': expected_token},
+                                   'start_token': expected_token} and
+              invocation.get('campaign_context') == campaign_context and
+              reply.get('campaign_context') == campaign_context,
               'saved inner ' + role + ' process binding')
+    child_context.verify_context(
+        invocation['campaign_context'], attempt_root=attempt_root,
+        revision=revision)
     return metadata.pin(monitor_raw), metadata.pin(stdout_raw)
 
 
@@ -442,11 +473,21 @@ def _verify_generated(plan, request, cli_pid, stdout_raw):
     }
     budget_receipt = v.strict_json(_pinned(
         root / 'resource-budget.json', budget['resource_budget_pin']))
+    campaign_context = child_context.from_parts(
+        Path(plan['root']) / 'plan.json', request['anchor_pin'],
+        request['chunk_index'], request['attempt'], attempt_root=root,
+        revision=request['source_revision'])
     for role, prefix in (('generator', 'generator'),
                          ('reader', 'initial_saved_reader')):
         token = outer['owned_fixture_' + role + '_start_token']
         pid = outer['owned_fixture_' + role + '_pid']
-        supervision, output = _inner_role(root, role, cli_pid, pid, token)
+        supervision, output = _inner_role(
+            root, role, cli_pid, pid, token, campaign_context, root,
+            request['source_revision'],
+            (generated.CAMPAIGN_INVOCATION if role == 'generator' else
+             copied.CAMPAIGN_READER_INVOCATION),
+            (generated.CAMPAIGN_FORMAT if role == 'generator' else
+             copied.CAMPAIGN_READER_FORMAT))
         invocation = _pinned_pin(
             root / ('owned-' + role) / 'invocation.json')
         _same(invocation, outer[role + '_invocation_pin'],
@@ -470,7 +511,7 @@ def _pinned_pin(path):
     return metadata.pin(_read(path))
 
 
-def _verify_reread(request, cli_pid, stdout_raw):
+def _verify_reread(plan, request, cli_pid, stdout_raw):
     root = Path(request['reread_root'])
     printed = v.strict_json(stdout_raw)
     raw = _read(root / 'result.json')
@@ -499,9 +540,17 @@ def _verify_reread(request, cli_pid, stdout_raw):
               rows['actual_registered_observations_read'] is False and
               rows['formal_permission'] is False,
               'six invented saved rows from latest attempt')
-    supervision, output = _inner_role(root, 'reader', cli_pid,
-                                      result['child_pid'],
-                                      result['child_start_token'])
+    campaign_context = child_context.from_parts(
+        Path(plan['root']) / 'plan.json', request['anchor_pin'],
+        request['chunk_index'], request['attempt'],
+        attempt_root=request['attempt_root'],
+        revision=request['source_revision'])
+    supervision, output = _inner_role(
+        root, 'reader', cli_pid, result['child_pid'],
+        result['child_start_token'], campaign_context,
+        request['attempt_root'], request['source_revision'],
+        reread.CAMPAIGN_INVOCATION_FORMAT,
+        reread.CAMPAIGN_CHILD_FORMAT)
     invocation = _pinned_pin(root / 'owned-reader/invocation.json')
     _same(invocation, result['invocation_pin'],
           'fresh saved reader invocation pin')
@@ -653,7 +702,7 @@ def execute_owned(request_path, expected_request_pin, plan_raw, plan_pin,
                              LIMITS['output_bytes'])
         inner = (_verify_generated(plan, request, launch['pid'], stdout_raw)
                  if request['phase'] == 'run-budget' else
-                 _verify_reread(request, launch['pid'], stdout_raw))
+                 _verify_reread(plan, request, launch['pid'], stdout_raw))
     except (ValueError, OSError, KeyError, TypeError, IndexError) as error:
         return _failed_receipt(
             control, request, expected_request_pin, plan_pin, report, launch,

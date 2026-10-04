@@ -35,6 +35,7 @@ from banto_ai import _anomaly_v03_io as io  # noqa: E402
 from banto_ai import _anomaly_v03_runtime as paths  # noqa: E402
 from banto_ai import anomaly_v03 as v  # noqa: E402
 from banto_ai import anomaly_v03_preformal_owned_generated_attempt as generated  # noqa: E402
+from banto_ai import anomaly_v03_preformal_campaign_child_context as child_context  # noqa: E402
 from banto_ai import anomaly_v03_preformal_owned_saved_attempt as copied  # noqa: E402
 from banto_ai import anomaly_v03_reader_evidence as observed  # noqa: E402
 from banto_ai import _anomaly_v03_engineering_runtime as resources  # noqa: E402
@@ -229,7 +230,8 @@ def run(root_text: str, manifest_text: str, digest: str) -> int:
     return 0 if result['status'] == 'verified' else 2
 
 
-def run_budget(root_text: str, manifest_text: str, digest: str) -> int:
+def run_budget(root_text: str, manifest_text: str, digest: str,
+               campaign_context: dict | None = None) -> int:
     """Measure only pinned invented generation and its separate saved reader.
 
     The external ``prepare`` computation and all downstream inference,
@@ -239,6 +241,9 @@ def run_budget(root_text: str, manifest_text: str, digest: str) -> int:
 
     root, manifest_path, manifest, revision, pins, snapshots = \
         _verified_run_inputs(root_text, manifest_text, digest)
+    if campaign_context is not None:
+        campaign_context = child_context.verify_context(
+            campaign_context, attempt_root=root, revision=revision)
     _claim_empty_root(root)
     result = {
         'format': BUDGET_RESULT_FORMAT,
@@ -285,7 +290,8 @@ def run_budget(root_text: str, manifest_text: str, digest: str) -> int:
         inner = generated.generate_and_read(
             root, expected_pins=pins, source_snapshots=snapshots,
             expected_revision=revision, chunk_index=manifest['chunk_index'],
-            recipe_id=generated.RECIPE, outer_budget=budget)
+            recipe_id=generated.RECIPE, outer_budget=budget,
+            campaign_context=campaign_context)
         _checked_inner_result(root, inner)
         result.update(inner_status=inner['status'],
                       inner_reason=inner.get('reason'),
@@ -450,12 +456,35 @@ def main() -> int:
     measured.add_argument('--root', required=True)
     measured.add_argument('--manifest', required=True)
     measured.add_argument('--manifest-sha256', required=True)
+    measured.add_argument('--campaign-plan-path')
+    measured.add_argument('--campaign-anchor-pin')
+    measured.add_argument('--campaign-chunk-index', type=int)
+    measured.add_argument('--campaign-attempt', type=int)
     args = parser.parse_args()
+    context = None
+    if args.phase == 'run-budget':
+        campaign_values = (args.campaign_plan_path, args.campaign_anchor_pin,
+                           args.campaign_chunk_index, args.campaign_attempt)
+        if any(value is not None for value in campaign_values):
+            if not all(value is not None for value in campaign_values):
+                parser.error('all campaign context arguments are required together')
+            pin = re.fullmatch(r'([1-9][0-9]*):([0-9a-f]{64})',
+                               args.campaign_anchor_pin)
+            if pin is None:
+                parser.error('campaign anchor pin must be bytes:sha256')
+            context = {
+                'plan_path': str(_argument_path(args.campaign_plan_path)),
+                'anchor_pin': {'bytes': int(pin.group(1)),
+                               'sha256': pin.group(2)},
+                'chunk_index': args.campaign_chunk_index,
+                'attempt': args.campaign_attempt,
+            }
     try:
         if args.phase == 'prepare':
             return prepare(args.root, args.manifest, args.chunk_index)
         if args.phase == 'run-budget':
-            return run_budget(args.root, args.manifest, args.manifest_sha256)
+            return run_budget(args.root, args.manifest, args.manifest_sha256,
+                              campaign_context=context)
         return run(args.root, args.manifest, args.manifest_sha256)
     except (ValueError, OSError, KeyError, TypeError,
             subprocess.SubprocessError) as error:

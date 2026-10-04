@@ -27,6 +27,7 @@ from . import anomaly_v03_observation_audit as pinned
 from . import anomaly_v03_platform_fixture as platform
 from . import anomaly_v03_platform_fixture_runtime as runtime
 from . import anomaly_v03_preformal_owned_generated_attempt as generated
+from . import anomaly_v03_preformal_campaign_child_context as child_context
 from . import anomaly_v03_preformal_owned_saved_attempt as copied
 from . import anomaly_v03_process_supervisor as supervisor
 from . import anomaly_v03_reader_evidence as observed
@@ -40,6 +41,9 @@ PREFIX = 'anomaly-v03-preformal-saved-row-reread-'
 FORMAT = 'anomaly-v03-preformal-saved-row-reread-v1'
 CHILD_FORMAT = 'anomaly-v03-preformal-saved-row-reread-child-v1'
 INVOCATION_FORMAT = 'anomaly-v03-preformal-saved-row-reread-invocation-v1'
+CAMPAIGN_CHILD_FORMAT = 'anomaly-v03-preformal-saved-row-reread-child-v2'
+CAMPAIGN_INVOCATION_FORMAT = (
+    'anomaly-v03-preformal-saved-row-reread-invocation-v2')
 BOOTSTRAP = ('import sys;sys.path.insert(0,sys.argv.pop(1));'
              'from banto_ai.anomaly_v03_preformal_saved_row_reread import reader_worker_main;'
              'raise SystemExit(reader_worker_main(sys.argv[1:]))')
@@ -58,6 +62,7 @@ MANIFEST_FIELDS = {
 }
 SOURCE_FILES = (
     'src/banto_ai/anomaly_v03_preformal_saved_row_reread.py',
+    'src/banto_ai/anomaly_v03_preformal_campaign_child_context.py',
     'tools/preformal_saved_row_reread_trial.py',
     'src/banto_ai/anomaly_v03_registered_saved_row_lineage.py',
     'src/banto_ai/anomaly_v03_registered_saved_attempt_fixture.py',
@@ -169,19 +174,29 @@ def reader_worker_main(argv):
         raw = observed._file(path, MAX_INVOCATION)
         v.require(_pin(raw)['sha256'] == argv[1], 'reread child invocation pin')
         request = v.strict_json(raw)
+        campaign_mode = 'campaign_context' in request
         v.require(raw == v.canonical_json(request) and
                   type(request) is dict and set(request) == {
                       'format', 'source_root', 'output_root', 'manifest_path',
                       'manifest_pin', 'external_pins', 'source_snapshots',
                       'chunk_index', 'current_revision', 'current_source',
-                      'runtime', 'invocation_id'},
+                      'runtime', 'invocation_id'} |
+                  ({'campaign_context'} if campaign_mode else set()),
                   'exact reread child invocation')
         source, target, manifest_path = _roots_for_child(
             request['source_root'], request['output_root'])
         v.require(path == target / 'owned-reader/invocation.json' and
-                  request['format'] == INVOCATION_FORMAT and
+                  request['format'] == (CAMPAIGN_INVOCATION_FORMAT if
+                                        campaign_mode else INVOCATION_FORMAT) and
                   request['manifest_path'] == str(manifest_path),
                   'reread child controlled paths')
+        if campaign_mode:
+            child_context.verify_context(
+                request['campaign_context'], attempt_root=source,
+                revision=request['current_revision'])
+            v.require(request['campaign_context']['chunk_index'] ==
+                      request['chunk_index'],
+                      'fresh reader campaign chunk context')
         manifest_raw = pinned.read_pinned(
             manifest_path, request['manifest_pin'], MAX_MANIFEST)
         manifest, snapshots = _manifest(
@@ -216,7 +231,8 @@ def reader_worker_main(argv):
                                      MAX_MANIFEST) == manifest_raw,
                   'reread child postflight source/runtime/manifest')
         process = observed.creation_observation(os.getpid())
-        reply = {'format': CHILD_FORMAT, 'status': 'read',
+        reply = {'format': (CAMPAIGN_CHILD_FORMAT if campaign_mode else
+                            CHILD_FORMAT), 'status': 'read',
                  'invocation_id': request['invocation_id'],
                  'process': {'pid': os.getpid(), 'parent_pid': os.getppid(),
                              'start_token': process['start_token']},
@@ -226,6 +242,8 @@ def reader_worker_main(argv):
                  'reader_result': read,
                  'actual_registered_observations_read': False,
                  'formal_permission': False}
+        if campaign_mode:
+            reply['campaign_context'] = copy.deepcopy(request['campaign_context'])
         print(json.dumps(reply, sort_keys=True))
         return 0
     except (ValueError, OSError, KeyError, TypeError, IndexError,
@@ -253,9 +271,14 @@ def _roots_for_child(source_root, output_root):
 
 
 def run_reread(source_root, output_root, *, expected_manifest_pin,
-               expected_outer_result_pin, expected_revision):
+               expected_outer_result_pin, expected_revision,
+               campaign_context=None):
     """Run an invented saved reader and row projection under one new budget."""
     source, target, manifest_path = _roots(source_root, output_root)
+    if campaign_context is not None:
+        campaign_context = child_context.verify_context(
+            campaign_context, attempt_root=source,
+            revision=expected_revision)
     for pin in (expected_manifest_pin, expected_outer_result_pin):
         copied.evidence._pin(pin)
     target.mkdir()
@@ -323,7 +346,8 @@ def run_reread(source_root, output_root, *, expected_manifest_pin,
         reader_root = target / 'owned-reader'
         reader_root.mkdir()
         invocation = {
-            'format': INVOCATION_FORMAT,
+            'format': (CAMPAIGN_INVOCATION_FORMAT if campaign_context is not
+                       None else INVOCATION_FORMAT),
             'source_root': str(source), 'output_root': str(target),
             'manifest_path': str(manifest_path),
             'manifest_pin': copy.deepcopy(expected_manifest_pin),
@@ -334,6 +358,8 @@ def run_reread(source_root, output_root, *, expected_manifest_pin,
             'current_source': current_source, 'runtime': current_runtime,
             'invocation_id': secrets.token_hex(32),
         }
+        if campaign_context is not None:
+            invocation['campaign_context'] = copy.deepcopy(campaign_context)
         invocation_raw = v.canonical_json(invocation)
         v.require(len(invocation_raw) <= MAX_INVOCATION,
                   'bounded reread child invocation')
@@ -344,6 +370,10 @@ def run_reread(source_root, output_root, *, expected_manifest_pin,
         launch = {}
 
         def boundary():
+            if campaign_context is not None:
+                child_context.verify_context(
+                    campaign_context, attempt_root=source,
+                    revision=expected_revision)
             v.require(_source(expected_revision) == current_source and
                       runtime.probe_runtime(ROOT) == current_runtime and
                       pinned.read_pinned(manifest_path, expected_manifest_pin,
@@ -385,7 +415,9 @@ def run_reread(source_root, output_root, *, expected_manifest_pin,
                   'new owned reader stdout pin')
         reply = v.strict_json(stdout)
         v.require(type(reply) is dict and
-                  reply.get('format') == CHILD_FORMAT and
+                  reply.get('format') == (CAMPAIGN_CHILD_FORMAT if
+                                           campaign_context is not None else
+                                           CHILD_FORMAT) and
                   reply.get('status') == 'read' and
                   reply.get('invocation_id') == invocation['invocation_id'] and
                   reply.get('process') == {
@@ -398,6 +430,9 @@ def run_reread(source_root, output_root, *, expected_manifest_pin,
                   reply.get('actual_registered_observations_read') is False and
                   reply.get('formal_permission') is False,
                   'new owned reader child reply binding')
+        if campaign_context is not None:
+            v.require(reply.get('campaign_context') == campaign_context,
+                      'fresh reader child campaign echo')
         result['child_stdout_pin'] = monitor['output']
         result['external_saved_payloads_reopened_in_child'] = True
         result['fresh_saved_payload_bytes_rechecked_this_run'] = True

@@ -29,6 +29,7 @@ INTENTION_PIN_FORMAT = 'anomaly-v03-preformal-campaign-external-intention-pin-v1
 STARTED_CHECKPOINT_FORMAT = 'anomaly-v03-preformal-campaign-started-checkpoint-v1'
 SOURCE_EXTRA = (
     'src/banto_ai/anomaly_v03_preformal_campaign_metadata.py',
+    'src/banto_ai/anomaly_v03_preformal_campaign_child_context.py',
     'src/banto_ai/anomaly_v03_preformal_campaign_preflight.py',
     'src/banto_ai/anomaly_v03_preformal_campaign_controller.py',
     'src/banto_ai/anomaly_v03_preformal_campaign_store.py',

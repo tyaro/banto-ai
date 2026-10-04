@@ -30,6 +30,29 @@ class OwnedSavedAttemptMaterializerTests(unittest.TestCase):
     def tearDown(self):
         self.temporary.cleanup()
 
+    def test_campaign_reader_rejects_bad_plan_before_payload_read(self):
+        directory = self.root / 'owned-reader'
+        directory.mkdir()
+        invocation = {
+            'format': owned.CAMPAIGN_READER_INVOCATION,
+            'root': str(self.root), 'expected_mode': saved.MODE,
+            'chunk_index': 0, 'output_names': {}, 'external_pins': {},
+            'source_snapshots': {}, 'source_revision': 'a' * 40,
+            'source': {}, 'runtime': {}, 'invocation_id': 'test',
+            'campaign_context': {
+                'plan_path': str(self.root / 'missing-plan.json'),
+                'anchor_pin': owned._pin(b'plan'),
+                'chunk_index': 0, 'attempt': 1},
+        }
+        path = directory / 'invocation.json'
+        raw = v.canonical_json(invocation)
+        path.write_bytes(raw)
+        with patch.object(owned.fixture, 'read_invented_registered_attempt',
+                          side_effect=AssertionError('payload read started')):
+            self.assertEqual(owned.reader_worker_main(
+                [str(path), owned._pin(raw)['sha256']]), 2)
+        self.assertFalse((self.root / 'saved').exists())
+
     def _input(self, *, latest='complete'):
         receipt = {'format': saved.RECEIPT_FORMAT, 'mode': saved.MODE,
                    'invented_only': True, 'chunk_index': 0,

@@ -94,7 +94,7 @@ class SavedRowRereadTests(unittest.TestCase):
         self.current_runtime = {'runtime': 'test'}
 
     def _run(self, *, child_status='complete', changed_reader=False,
-             stop_on=None):
+             stop_on=None, campaign_context=None, tamper_echo=False):
         FakeBudget.stop_on = stop_on
 
         def supervise(argv, cwd, control, limits, *, boundary,
@@ -109,7 +109,9 @@ class SavedRowRereadTests(unittest.TestCase):
             if changed_reader:
                 reader['reported_score_ledger_recomputed'] = False
             reply = {
-                'format': reread.CHILD_FORMAT, 'status': 'read',
+                'format': (reread.CAMPAIGN_CHILD_FORMAT if campaign_context
+                           is not None else reread.CHILD_FORMAT),
+                'status': 'read',
                 'invocation_id': request['invocation_id'],
                 'process': {'pid': 42, 'parent_pid': reread.os.getpid(),
                             'start_token': 'new-owned-start'},
@@ -121,6 +123,10 @@ class SavedRowRereadTests(unittest.TestCase):
                 'actual_registered_observations_read': False,
                 'formal_permission': False,
             }
+            if campaign_context is not None:
+                reply['campaign_context'] = copy.deepcopy(campaign_context)
+                if tamper_echo:
+                    reply['campaign_context']['chunk_index'] = 1
             raw = v.canonical_json(reply)
             (control / 'report.json').write_bytes(raw)
             (control / 'stderr.json').write_bytes(b'')
@@ -147,11 +153,16 @@ class SavedRowRereadTests(unittest.TestCase):
                 return_value={'pid': 42, 'start_token': 'new-owned-start'}))
             stack.enter_context(patch.object(reread.platform, '_platform_scope',
                 return_value=nullcontext()))
+            if campaign_context is not None:
+                stack.enter_context(patch.object(
+                    reread.child_context, 'verify_context',
+                    return_value=campaign_context))
             return reread.run_reread(
                 self.source, self.target,
                 expected_manifest_pin=self.manifest_pin,
                 expected_outer_result_pin=self.outer_pin,
-                expected_revision=CURRENT_REVISION)
+                expected_revision=CURRENT_REVISION,
+                campaign_context=campaign_context)
 
     def test_success_retains_rows_and_small_bounded_receipts(self):
         result = self._run()
@@ -175,6 +186,57 @@ class SavedRowRereadTests(unittest.TestCase):
                              reread.MAX_RESULT)
         self.assertLessEqual((self.target / 'resource-budget.json').stat().st_size,
                              reread.MAX_BUDGET)
+        invocation = v.strict_json((self.target / 'owned-reader/invocation.json')
+                                   .read_bytes())
+        self.assertEqual(invocation['format'], reread.INVOCATION_FORMAT)
+        self.assertNotIn('campaign_context', invocation)
+
+    def test_campaign_context_reaches_fresh_reader_and_echo_is_required(self):
+        context = {'plan_path': 'p', 'anchor_pin': pin(b'plan'),
+                   'chunk_index': 0, 'attempt': 1}
+        result = self._run(campaign_context=context)
+        self.assertEqual(result['status'], 'verified')
+        invocation = v.strict_json((self.target / 'owned-reader/invocation.json')
+                                   .read_bytes())
+        self.assertEqual(invocation['format'],
+                         reread.CAMPAIGN_INVOCATION_FORMAT)
+        self.assertEqual(invocation['campaign_context'], context)
+
+    def test_modified_fresh_reader_echo_rejects_rows(self):
+        context = {'plan_path': 'p', 'anchor_pin': pin(b'plan'),
+                   'chunk_index': 0, 'attempt': 1}
+        result = self._run(campaign_context=context, tamper_echo=True)
+        self.assertEqual(result['status'], 'failed')
+        self.assertFalse((self.target / 'rows.json').exists())
+
+    def test_campaign_fresh_reader_rejects_bad_plan_before_payload_read(self):
+        directory = self.target / 'owned-reader'
+        directory.mkdir(parents=True)
+        invocation = {
+            'format': reread.CAMPAIGN_INVOCATION_FORMAT,
+            'source_root': str(self.source), 'output_root': str(self.target),
+            'manifest_path': str(self.manifest_path),
+            'manifest_pin': self.manifest_pin, 'external_pins': {},
+            'source_snapshots': {}, 'chunk_index': 0,
+            'current_revision': CURRENT_REVISION,
+            'current_source': {}, 'runtime': {}, 'invocation_id': 'test',
+            'campaign_context': {
+                'plan_path': str(self.target / 'missing-plan.json'),
+                'anchor_pin': pin(b'plan'),
+                'chunk_index': 0, 'attempt': 1},
+        }
+        path = directory / 'invocation.json'
+        raw = v.canonical_json(invocation)
+        path.write_bytes(raw)
+        with patch.object(reread, '_roots_for_child',
+                          return_value=(self.source, self.target,
+                                        self.manifest_path)):
+            with patch.object(reread.fixture,
+                              'read_invented_registered_attempt',
+                              side_effect=AssertionError('payload read started')):
+                self.assertEqual(reread.reader_worker_main(
+                    [str(path), reread._pin(raw)['sha256']]), 2)
+        self.assertFalse((self.target / 'rows.json').exists())
 
     def test_full_fresh_reader_mismatch_rejects_projection(self):
         result = self._run(changed_reader=True)

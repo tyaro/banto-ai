@@ -25,6 +25,7 @@ from . import anomaly_v03_ledger_audit as ledger
 from . import anomaly_v03_materializer as materializer
 from . import anomaly_v03_platform_fixture as platform
 from . import anomaly_v03_platform_fixture_runtime as runtime
+from . import anomaly_v03_preformal_campaign_child_context as child_context
 from . import anomaly_v03_preformal_owned_saved_attempt as copied
 from . import anomaly_v03_process_supervisor as supervisor
 from . import anomaly_v03_reader_evidence as observed
@@ -38,6 +39,8 @@ ROOT = Path(__file__).resolve().parents[2]
 RECIPE = 'hand-normal-v1'
 FORMAT = 'anomaly-v03-preformal-owned-generated-attempt-v1'
 INVOCATION = 'anomaly-v03-preformal-owned-generated-invocation-v1'
+CAMPAIGN_INVOCATION = 'anomaly-v03-preformal-owned-generated-invocation-v2'
+CAMPAIGN_FORMAT = 'anomaly-v03-preformal-owned-generated-attempt-v2'
 CHAIN_FORMAT = 'anomaly-v03-preformal-owned-generated-two-role-v1'
 BOOTSTRAP = ('import sys;sys.path.insert(0,sys.argv.pop(1));'
              'from banto_ai.anomaly_v03_preformal_owned_generated_attempt import worker_main;'
@@ -50,6 +53,7 @@ MAX_INVOCATION = 256 * 1024
 MAX_NATIVE_PATH = 245
 SOURCE_FILES = tuple(dict.fromkeys((
     *copied.SOURCE_FILES,
+    'src/banto_ai/anomaly_v03_preformal_campaign_child_context.py',
     'src/banto_ai/anomaly_v03_preformal_owned_generated_attempt.py',
     'src/banto_ai/anomaly_v03_preformal_generated_chain_budget.py',
     'tools/preformal_owned_generated_trial.py',
@@ -306,14 +310,24 @@ def worker_main(argv):
         request = v.strict_json(raw)
         v.require(raw == v.canonical_json(request),
                   'canonical generator invocation required')
+        campaign_mode = 'campaign_context' in request
         copied.evidence._keys(request,
             'format root chunk_index recipe_id output_names external_pins '
-            'source_snapshots source_revision source runtime invocation_id',
+            'source_snapshots source_revision source runtime invocation_id' +
+            (' campaign_context' if campaign_mode else ''),
             'generator invocation fields')
-        v.require(request['format'] == INVOCATION and
+        v.require(request['format'] == (
+                      CAMPAIGN_INVOCATION if campaign_mode else INVOCATION) and
                   request['recipe_id'] == RECIPE,
                   'invented generator invocation only')
         root = _root(request['root'])
+        if campaign_mode:
+            child_context.verify_context(
+                request['campaign_context'], attempt_root=root,
+                revision=request['source_revision'])
+            v.require(request['campaign_context']['chunk_index'] ==
+                      request['chunk_index'],
+                      'generator campaign chunk context')
         v.require(path == root / 'owned-generator' / 'invocation.json',
                   'generator invocation path')
         names = _outputs(root, request['chunk_index'])
@@ -367,7 +381,8 @@ def worker_main(argv):
         runtime_after = runtime.probe_runtime(ROOT)
         copied._same(source_after, source_before, 'generator source after')
         copied._same(runtime_after, runtime_before, 'generator runtime after')
-        reply = {'format': FORMAT, 'status': 'generated',
+        reply = {'format': (CAMPAIGN_FORMAT if campaign_mode else FORMAT),
+                 'status': 'generated',
                  'invocation_id': request['invocation_id'],
                  'process': {'pid': os.getpid(), 'parent_pid': os.getppid(),
                              'start_token': process['start_token']},
@@ -380,6 +395,8 @@ def worker_main(argv):
                  'registered_seed_consumed': False,
                  'actual_registered_observations_read': False,
                  'formal_permission': False}
+        if campaign_mode:
+            reply['campaign_context'] = copy.deepcopy(request['campaign_context'])
         print(json.dumps(reply, sort_keys=True))
         return 0
     except (ValueError, OSError, KeyError, TypeError,
@@ -393,7 +410,7 @@ def worker_main(argv):
 
 def generate_and_read(root, *, expected_pins, source_snapshots,
                       expected_revision, chunk_index=0, recipe_id=RECIPE,
-                      outer_budget=None):
+                      outer_budget=None, campaign_context=None):
     """Own a recipe generator, verify every saved byte, then own a reader.
 
     ``expected_pins`` must be retained by the caller outside ``root`` before
@@ -402,6 +419,11 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
     caller-owned engineering budget probes both child supervisors.
     """
     root = _root(root)
+    if campaign_context is not None:
+        campaign_context = child_context.verify_context(
+            campaign_context, attempt_root=root, revision=expected_revision)
+        v.require(campaign_context['chunk_index'] == chunk_index,
+                  'generator campaign chunk context')
     target = root / 'owned-generator'
     active_role, active_target = 'generator', target
     result = {'format': CHAIN_FORMAT, 'status': 'failed',
@@ -436,13 +458,17 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
         source = _source(expected_revision)
         reader_source = copied._source(expected_revision)
         observed_runtime = runtime.probe_runtime(ROOT)
-        invocation = {'format': INVOCATION, 'root': str(root),
+        invocation = {'format': (CAMPAIGN_INVOCATION if campaign_context
+                                 is not None else INVOCATION),
+                      'root': str(root),
                       'chunk_index': chunk_index, 'recipe_id': RECIPE,
                       'output_names': names, 'external_pins': external,
                       'source_snapshots': encoded_snapshots,
                       'source_revision': expected_revision,
                       'source': source, 'runtime': observed_runtime,
                       'invocation_id': secrets.token_hex(32)}
+        if campaign_context is not None:
+            invocation['campaign_context'] = copy.deepcopy(campaign_context)
         invocation_raw = v.canonical_json(invocation)
         v.require(len(invocation_raw) <= MAX_INVOCATION,
                   'generator invocation byte bound')
@@ -453,6 +479,10 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
         launch = {}
 
         def boundary():
+            if campaign_context is not None:
+                child_context.verify_context(
+                    campaign_context, attempt_root=root,
+                    revision=expected_revision)
             copied._same(_source(expected_revision), source,
                          'parent generator source changed')
             copied._same(runtime.probe_runtime(ROOT), observed_runtime,
@@ -498,7 +528,9 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
         copied._same(copied._pin(stdout), monitor['output'],
                      'generator stdout pin')
         reply = v.strict_json(stdout)
-        v.require(reply['format'] == FORMAT and reply['status'] == 'generated'
+        v.require(reply['format'] == (CAMPAIGN_FORMAT if campaign_context
+                                     is not None else FORMAT) and
+                  reply['status'] == 'generated'
                   and reply['invocation_id'] == invocation['invocation_id'] and
                   reply['process'] == {
                       'pid': launch['pid'], 'parent_pid': os.getpid(),
@@ -511,6 +543,9 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
                   reply['actual_registered_observations_read'] is False and
                   reply['formal_permission'] is False,
                   'owned generator process and fixture scope')
+        if campaign_context is not None:
+            copied._same(reply.get('campaign_context'), campaign_context,
+                         'generator child campaign echo')
         for key, expected in (('output_pins', external),
                               ('source_before', source),
                               ('source_after', source),
@@ -532,13 +567,18 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
             outer_budget.checkpoint('reader')
         active_target.mkdir()
         reader_invocation = {
-            'format': copied.READER_INVOCATION, 'root': str(root),
+            'format': (copied.CAMPAIGN_READER_INVOCATION if campaign_context
+                       is not None else copied.READER_INVOCATION),
+            'root': str(root),
             'expected_mode': saved.MODE, 'chunk_index': chunk_index,
             'output_names': names, 'external_pins': external,
             'source_snapshots': encoded_snapshots,
             'source_revision': expected_revision, 'source': reader_source,
             'runtime': observed_runtime,
             'invocation_id': secrets.token_hex(32)}
+        if campaign_context is not None:
+            reader_invocation['campaign_context'] = copy.deepcopy(
+                campaign_context)
         reader_raw = v.canonical_json(reader_invocation)
         v.require(len(reader_raw) <= copied.MAX_READER_INVOCATION,
                   'reader invocation byte bound')
@@ -598,7 +638,9 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
         copied._same(copied._pin(reader_stdout), reader_monitor['output'],
                      'reader stdout pin')
         reader_reply = v.strict_json(reader_stdout)
-        v.require(reader_reply['format'] == copied.READER_FORMAT and
+        v.require(reader_reply['format'] == (
+                      copied.CAMPAIGN_READER_FORMAT if campaign_context
+                      is not None else copied.READER_FORMAT) and
                   reader_reply['status'] == 'read' and
                   reader_reply['invocation_id'] ==
                       reader_invocation['invocation_id'] and
@@ -607,6 +649,9 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
                       'start_token': reader_launch['start_token']} and
                   reader_reply['formal_permission'] is False,
                   'owned reader process binding')
+        if campaign_context is not None:
+            copied._same(reader_reply.get('campaign_context'),
+                         campaign_context, 'initial reader campaign echo')
         for key, expected in (('output_pins', external),
                               ('source_before', reader_source),
                               ('source_after', reader_source),

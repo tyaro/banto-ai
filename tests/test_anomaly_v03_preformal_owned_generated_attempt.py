@@ -77,6 +77,35 @@ class OwnedGeneratedAttemptTests(unittest.TestCase):
                           side_effect=AssertionError('generation started')):
             self.assertEqual(generated.worker_main([]), 2)
 
+    def test_campaign_worker_rejects_bad_plan_before_generation(self):
+        root = self.root('g' + secrets.token_hex(2))
+        invocation_dir = root / 'owned-generator'
+        invocation_dir.mkdir(parents=True)
+        try:
+            invocation = {
+                'format': generated.CAMPAIGN_INVOCATION,
+                'root': str(root), 'chunk_index': 0,
+                'recipe_id': generated.RECIPE, 'output_names': {},
+                'external_pins': {}, 'source_snapshots': {},
+                'source_revision': 'a' * 40, 'source': {}, 'runtime': {},
+                'invocation_id': 'test',
+                'campaign_context': {
+                    'plan_path': str(root / 'missing-plan.json'),
+                    'anchor_pin': generated.copied._pin(b'plan'),
+                    'chunk_index': 0, 'attempt': 1},
+            }
+            path = invocation_dir / 'invocation.json'
+            raw = generated.v.canonical_json(invocation)
+            path.write_bytes(raw)
+            with patch.object(generated, 'build_invented_output_bytes',
+                              side_effect=AssertionError('generation started')):
+                self.assertEqual(generated.worker_main(
+                    [str(path), generated.copied._pin(raw)['sha256']]), 2)
+            self.assertFalse((root / 'run-root').exists())
+        finally:
+            self.assertEqual(root.parent, generated.ROOT / 'artifacts')
+            shutil.rmtree(root)
+
     def test_bad_prelaunch_pin_retains_failure_without_starting_child(self):
         root = self.root('g' + secrets.token_hex(2))
         root.mkdir()

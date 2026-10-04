@@ -11,7 +11,10 @@ from unittest.mock import patch
 from banto_ai import anomaly_v03 as v
 from banto_ai import anomaly_v03_preformal_campaign_controller as c
 from banto_ai import anomaly_v03_preformal_campaign_metadata as m
+from banto_ai import anomaly_v03_preformal_campaign_store as store
 from banto_ai import anomaly_v03_preformal_owned_generated_attempt as generated
+from banto_ai import anomaly_v03_preformal_owned_saved_attempt as copied
+from banto_ai import anomaly_v03_preformal_saved_row_reread as reread
 from tests.test_anomaly_v03_preformal_campaign_metadata import Journal
 
 
@@ -78,11 +81,113 @@ class ControllerGateTests(unittest.TestCase):
         self.assertEqual(request['attempt'], 1)
         self.assertEqual(request['manifest_pin'], m.pin(manifest))
         self.assertEqual(request['argv'][3], 'run-budget')
+        self.assertEqual(request['argv'][-8:], [
+            '--campaign-plan-path', str(Path(self.j.plan['root']) /
+                                        'plan.json'),
+            '--campaign-anchor-pin',
+            f"{self.j.plan_pin['bytes']}:{self.j.plan_pin['sha256']}",
+            '--campaign-chunk-index', '0', '--campaign-attempt', '1'])
         self.assertTrue(request['attempt_root'].endswith('-h001'))
         self.assertIsNone(request['generation_receipt_pin'])
         self.assertFalse(request['formal_permission'])
         self.assertEqual(request['campaign_evaluations_credited'], 0)
         self.assertEqual(c.encode_request(request)[-1:], b'\n')
+
+    def test_selected_sources_include_new_child_context(self):
+        name = 'src/banto_ai/anomaly_v03_preformal_campaign_child_context.py'
+        self.assertIn(name, store.SOURCE_EXTRA)
+        self.assertIn(name, generated.SOURCE_FILES)
+        self.assertIn(name, copied.SOURCE_FILES)
+        self.assertIn(name, reread.SOURCE_FILES)
+
+    def test_outer_owner_rejects_modified_child_campaign_echo(self):
+        context = {'plan_path': 'p', 'anchor_pin': m.pin(b'plan'),
+                   'chunk_index': 0, 'attempt': 1}
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            directory = root / 'owned-generator'
+            (directory / 'worker').mkdir(parents=True)
+            (directory / 'invocation.json').write_bytes(v.canonical_json({
+                'format': generated.CAMPAIGN_INVOCATION,
+                'invocation_id': 'a' * 64,
+                'campaign_context': context}))
+            reply = {'format': generated.CAMPAIGN_FORMAT,
+                     'invocation_id': 'a' * 64,
+                     'process': {'pid': 21, 'parent_pid': 20,
+                                 'start_token': 'started'},
+                     'campaign_context': {**context, 'chunk_index': 1}}
+            stdout = v.canonical_json(reply)
+            (directory / 'worker/report.json').write_bytes(stdout)
+            (directory / 'supervision.json').write_bytes(v.canonical_json({
+                'status': 'complete', 'exit_code': 0,
+                'worker_exit_confirmed': True, 'worker_pid': 21,
+                'output': m.pin(stdout)}))
+            with patch.object(c.child_context, 'verify_context',
+                              return_value=context):
+                with self.assertRaises(ValueError):
+                    c._inner_role(root, 'generator', 20, 21, 'started',
+                                  context, 'attempt', 'a' * 40,
+                                  generated.CAMPAIGN_INVOCATION,
+                                  generated.CAMPAIGN_FORMAT)
+
+    def test_outer_owner_rechecks_all_v2_child_formats_and_ids(self):
+        context = {'plan_path': 'p', 'anchor_pin': m.pin(b'plan'),
+                   'chunk_index': 0, 'attempt': 1}
+        roles = (
+            ('generator', generated.CAMPAIGN_INVOCATION,
+             generated.CAMPAIGN_FORMAT),
+            ('reader', copied.CAMPAIGN_READER_INVOCATION,
+             copied.CAMPAIGN_READER_FORMAT),
+            ('reader', reread.CAMPAIGN_INVOCATION_FORMAT,
+             reread.CAMPAIGN_CHILD_FORMAT),
+        )
+        for role, invocation_format, reply_format in roles:
+            for tamper in (None, 'invocation_format', 'reply_format',
+                           'invocation_id'):
+                with self.subTest(role=role, format=reply_format,
+                                  tamper=tamper):
+                    with tempfile.TemporaryDirectory() as folder:
+                        root = Path(folder)
+                        directory = root / ('owned-' + role)
+                        (directory / 'worker').mkdir(parents=True)
+                        invocation = {
+                            'format': invocation_format,
+                            'invocation_id': 'a' * 64,
+                            'campaign_context': context,
+                        }
+                        reply = {
+                            'format': reply_format,
+                            'invocation_id': 'a' * 64,
+                            'process': {'pid': 21, 'parent_pid': 20,
+                                        'start_token': 'started'},
+                            'campaign_context': context,
+                        }
+                        if tamper == 'invocation_format':
+                            invocation['format'] = invocation_format[:-1] + '1'
+                        elif tamper == 'reply_format':
+                            reply['format'] = reply_format[:-1] + '1'
+                        elif tamper == 'invocation_id':
+                            reply['invocation_id'] = 'b' * 64
+                        (directory / 'invocation.json').write_bytes(
+                            v.canonical_json(invocation))
+                        stdout = v.canonical_json(reply)
+                        (directory / 'worker/report.json').write_bytes(stdout)
+                        (directory / 'supervision.json').write_bytes(
+                            v.canonical_json({
+                                'status': 'complete', 'exit_code': 0,
+                                'worker_exit_confirmed': True,
+                                'worker_pid': 21, 'output': m.pin(stdout)}))
+                        with patch.object(c.child_context, 'verify_context',
+                                          return_value=context):
+                            call = lambda: c._inner_role(
+                                root, role, 20, 21, 'started', context,
+                                'attempt', 'a' * 40,
+                                invocation_format, reply_format)
+                            if tamper is None:
+                                self.assertEqual(call()[1], m.pin(stdout))
+                            else:
+                                with self.assertRaises(ValueError):
+                                    call()
 
     def test_second_slot_requires_prior_owned_receipts(self):
         self.j.complete(0)

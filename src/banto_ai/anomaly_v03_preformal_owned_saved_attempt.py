@@ -23,6 +23,7 @@ from . import anomaly_v03_consumer_evidence as evidence
 from . import anomaly_v03_observation_audit as pinned
 from . import anomaly_v03_platform_fixture as platform
 from . import anomaly_v03_platform_fixture_runtime as runtime
+from . import anomaly_v03_preformal_campaign_child_context as child_context
 from . import anomaly_v03_process_supervisor as supervisor
 from . import anomaly_v03_reader_evidence as observed
 from . import anomaly_v03_registered_saved_attempt_fixture as fixture
@@ -35,6 +36,9 @@ INVOCATION = 'anomaly-v03-preformal-owned-saved-attempt-invocation-v1'
 CHAIN_FORMAT = 'anomaly-v03-preformal-owned-saved-attempt-two-role-v1'
 READER_FORMAT = 'anomaly-v03-preformal-owned-saved-attempt-reader-v1'
 READER_INVOCATION = 'anomaly-v03-preformal-owned-saved-attempt-reader-invocation-v1'
+CAMPAIGN_READER_FORMAT = 'anomaly-v03-preformal-owned-saved-attempt-reader-v2'
+CAMPAIGN_READER_INVOCATION = (
+    'anomaly-v03-preformal-owned-saved-attempt-reader-invocation-v2')
 LIMITS = {'wall_seconds': 180, 'private_bytes': 512 * 1024**2,
           'output_bytes': 1024**2}
 # Per-child engineering stop bounds, not a shared end-to-end budget or S4 limit.
@@ -44,6 +48,7 @@ MAX_READER_INVOCATION = 256 * 1024
 MAX_SOURCE_SNAPSHOT_BYTES = 64 * 1024
 SOURCE_FILES = (
     'src/banto_ai/anomaly_v03_preformal_owned_saved_attempt.py',
+    'src/banto_ai/anomaly_v03_preformal_campaign_child_context.py',
     'src/banto_ai/anomaly_v03_registered_saved_attempt_fixture.py',
     'src/banto_ai/anomaly_v03_registered_evaluation_contract.py',
     'src/banto_ai/anomaly_v03_registered_saved_summary.py',
@@ -349,14 +354,25 @@ def reader_worker_main(argv):
         request = v.strict_json(raw)
         v.require(raw == v.canonical_json(request),
                   'canonical reader invocation required')
+        campaign_mode = 'campaign_context' in request
         evidence._keys(request,
             'format root expected_mode chunk_index output_names external_pins '
-            'source_snapshots source_revision source runtime invocation_id',
+            'source_snapshots source_revision source runtime invocation_id' +
+            (' campaign_context' if campaign_mode else ''),
             'reader invocation fields')
-        v.require(request['format'] == READER_INVOCATION and
+        v.require(request['format'] == (
+                      CAMPAIGN_READER_INVOCATION if campaign_mode else
+                      READER_INVOCATION) and
                   request['expected_mode'] == saved.MODE,
                   'formal/unknown owned reader mode is closed')
         root = _root(request['root'])
+        if campaign_mode:
+            child_context.verify_context(
+                request['campaign_context'], attempt_root=root,
+                revision=request['source_revision'])
+            v.require(request['campaign_context']['chunk_index'] ==
+                      request['chunk_index'],
+                      'initial reader campaign chunk context')
         v.require(path == root / 'owned-reader' / 'invocation.json',
                   'owned reader invocation path')
         snapshots = _decode_source_snapshots(request['source_snapshots'])
@@ -385,7 +401,8 @@ def reader_worker_main(argv):
         runtime_after = runtime.probe_runtime(ROOT)
         _same(source_after, source_before, 'owned reader source after')
         _same(runtime_after, runtime_before, 'owned reader runtime after')
-        reply = {'format': READER_FORMAT, 'status': 'read',
+        reply = {'format': (CAMPAIGN_READER_FORMAT if campaign_mode else
+                            READER_FORMAT), 'status': 'read',
                  'invocation_id': request['invocation_id'],
                  'process': {'pid': os.getpid(), 'parent_pid': os.getppid(),
                              'start_token': process['start_token']},
@@ -393,6 +410,8 @@ def reader_worker_main(argv):
                  'source_before': source_before, 'source_after': source_after,
                  'runtime_before': runtime_before, 'runtime_after': runtime_after,
                  'reader_result': read, 'formal_permission': False}
+        if campaign_mode:
+            reply['campaign_context'] = copy.deepcopy(request['campaign_context'])
         print(json.dumps(reply, sort_keys=True))
         return 0
     except (ValueError, OSError, KeyError, TypeError,
