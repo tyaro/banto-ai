@@ -390,6 +390,13 @@ def publish_with_evidence(request, *, expected_revision, receipt_parent, receipt
                            *((dependency_profiles['reader'],) if dependency_profiles is not None else ()))
         result.update(reader_status='completed',reader=reader)
         budget.checkpoint();v.require(observed._inputs(request['inputs']) == inputs,'final saved inputs changed')
+        # The reader verified publication before its receipt was retained.  A
+        # change after that read must not be promoted by the outer receipt.
+        _verify_publication(publication,files,_marker(files))
+        for role,receipt in (('writer',writer),('reader',reader)):
+            evidence._raw(observed._file(target/role/'result.json',64*1024),
+                          observed._pin(io.json_bytes(receipt)),
+                          'final retained '+role+' result changed')
         binding = {**CLOSED,'format':'anomaly-v03-fixture-publication-binding-v1','mode':'fixture','scope':'supplied-fixture-bytes-and-owned-local-processes',
             'analysis_reference':request['analysis_reference'],'audit_reference':request['audit_reference'],
             'payload_pins':{n:observed._pin(b) for n,b in files.items()},'marker_pin':observed._pin(_marker(files)),

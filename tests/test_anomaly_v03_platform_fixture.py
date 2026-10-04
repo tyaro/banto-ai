@@ -211,3 +211,22 @@ class NativePlatformFixtureTests(unittest.TestCase):
         self.assertNotEqual(result['reader_status'], 'completed')
         self.assertTrue((target / 'writer/result.json').is_file())
         self.assertEqual(json.loads((target / 'platform-result.json').read_bytes())['status'], 'failed')
+
+    def test_change_after_reader_before_outer_receipt_is_rejected(self):
+        original = publication._run_role
+        for label, relative in (('marker', 'published/.complete'),
+                                ('writer-receipt', 'writer/result.json')):
+            with self.subTest(label=label):
+                name = self.name + '-' + label
+                target = platform_fixture.OUTPUT_PARENT / name
+                def changed(role, *args):
+                    result = original(role, *args)
+                    if role == 'reader':
+                        (target / relative).write_bytes(b'{}\n')
+                    return result
+                with patch.object(publication, '_run_role', side_effect=changed):
+                    result = self.run_flow(name)
+                self.assertEqual(result['status'], 'failed', result)
+                self.assertEqual(result['reader_status'], 'completed')
+                self.assertFalse((target / 'publication-binding.json').exists())
+                self.assertEqual(json.loads((target / 'platform-result.json').read_bytes())['status'], 'failed')
