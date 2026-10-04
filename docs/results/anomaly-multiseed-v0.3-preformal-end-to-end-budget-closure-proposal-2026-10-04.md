@@ -6,6 +6,8 @@
 
 追加追記: [保存済み所有producerの架空count→50,000 draw主算術・別算術監査](anomaly-multiseed-v0.3-preformal-profile-and-saved-attempt-2026-10-04.md)を別root・clean `cca54e9` で連続測定した。約167秒の共有監視は２算術子だけで、５役１drawのwall/bytesと合算して全工程予算にしない。登録保存reader、全payload生成、完全S6、staging/writer/readerはなお空欄である。
 
+後続更新: clean `51fdb5436a28115e5eeba1400187e3f0b18101d1` の[trial-20261004-03](anomaly-multiseed-v0.3-five-role-job-and-contiguous-budget-2026-10-04.md#50000-drawから文書sliceへの連続予算)は、同じ外部producer pinと停止上限で、50,000 drawの主・別算術から文書、slice、件数監査までを**同一時計で完走**した。以下の旧表の「主算術のみ」「文書未測定」は基準保存点時点の値であり、現在の到達点は後段の「後続測定の反映」で読む。登録保存reader、完全S6、正式5 payload、公開後readerはこのtrialにも入らず、全工程予算は未閉包である。
+
 [既存の予算証拠台帳](anomaly-multiseed-v0.3-preformal-budget-evidence-ledger-2026-10-03.md)に対し、[今回の50,000 draw測定](anomaly-multiseed-v0.3-preformal-platform-raw-budget-2026-10-04.md)で埋まった欄と、全工程の停止予算としてなお必要な欄を明示する。「保存済みデータ」は合成dev/smokeの成果物であり、実設備・顧客データではない。
 
 ## 数値を使える範囲
@@ -34,6 +36,12 @@
 | 7. 統合監視と再開 | 1〜6を同じ外側予算ID・新rootで直列に通し、工程間待機も含むwall、活動時間、通常file見かけの総bytes、entry/depth、volume空き、各process private、RAM/commit最低余裕、監視errorと診断予約を記録する | 同じ上限を工程ごとにリセットしない。超過で新役割を開始せず、所有子停止・wait/reap、監視終了、partial/inconclusive保存を確認する。継続は別attempt/rootと元receipt pinで行う | 小fixtureの共有監視のみ。producerから公開後readerまでの連続測定なし |
 
 全役割はproducer、analysis、audit、writer、readerの事前source/runtime profileと、実行時/終了時の依存・OS・exit/reap照合を要する。現26H2/build26300/UBR9457は[未採択v2契約](../anomaly-v03-formal-operations-contract-proposal-v2.md)の候補値であり、旧25H2測定と同一環境として合算しない。独立token・protected DACLを採る場合はそのnative工程を行5〜6に含める。
+
+## 後続測定の反映（clean `51fdb54`）
+
+[trial-20261004-03](../../artifacts/anomaly-v03-preformal-contiguous-document-budget/trial-20261004-03/result.json) は `status=measured`、`stage=complete`。terminal result 8,048 B / SHA-256 `585a701be5bb0be1fa7ede71c44a8906ac1b2be18643d2be9e0cbd1ff4f23480`、[共有予算](../../artifacts/anomaly-v03-preformal-contiguous-document-budget/trial-20261004-03/resource-budget.json) 4,663 B / SHA-256 `22ec8c48e2040b411b7e9cf07b363a6acdd625c034a935ef32a102ee75b723c6` を保存した。共有samplerは330.364秒/1,272標本、最低system commit余裕13,183,180,800 B、最大root論理2,314,386 B、親private最大86,585,344 B。主算術子126.667秒、別算術子196.893秒で、両者の保存exit 0・reapを確認した。文書132,169 B、slice 1,950,270 B、独立件数監査1,244 Bを同rootに保全し、本文slice 1,233行・診断2,835行/9表が一致した。
+
+この実測が埋めるのは**旧producerの外部固定入力からの算術→文書・sliceと件数監査**だけである。旧producer実行と入力9,778,170 Bは同じ時計の外、登録保存readerから40 clusterへの導出、raw観測からの完全S6、正式5 payloadのstage/writer/fresh readerも外である。内側の子回収報告は `caller-reported-exit-only; no foreign-process-query`。別root・別revisionの予算や容量を加算して行7の全工程測定にしない。次の接続点は、12 layoutの保存済み72行を外部pin・latest attemptと結んで1 cluster contributionを作り、40 clusterの同一系譜へ拡張することである。
 
 ## 版付き上限を決める手順
 
