@@ -45,6 +45,30 @@ class UnreapedGit(RuntimeError):
         super().__init__(reason)
 
 
+def _owned_poll(process):
+    try:
+        return process.poll()
+    except BaseException as error:
+        raise UnreapedGit(process, 'owned Git exit observation failed') from error
+
+
+def _kill_and_reap(process):
+    """Never lose the process handle when stop or wait cannot be confirmed."""
+    if _owned_poll(process) is None:
+        try:
+            process.kill()
+        except BaseException as error:
+            if _owned_poll(process) is None:
+                raise UnreapedGit(process, 'owned Git kill failed') from error
+    try:
+        return process.wait(timeout=5)
+    except BaseException as error:
+        observed_exit = _owned_poll(process)
+        if observed_exit is None:
+            raise UnreapedGit(process, 'owned Git cleanup wait failed') from error
+        return observed_exit
+
+
 def _policy(root, policy, *, check_current=True):
     v.require(type(policy) is dict and set(policy) == {
         'executable_path', 'executable_pin', 'executable_links',
@@ -161,7 +185,7 @@ def run_owned(*, root, policy, operation, receipt_root,
                     creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
                 identity = _identity(process)
                 deadline = started + timeout_seconds
-                while process.poll() is None:
+                while _owned_poll(process) is None:
                     if (stdout_path.stat().st_size > MAX_OUTPUT[operation] or
                             stderr_path.stat().st_size > MAX_STDERR):
                         reason = 'output_limit'
@@ -170,25 +194,24 @@ def run_owned(*, root, policy, operation, receipt_root,
                         reason = 'time_limit'
                         break
                     time.sleep(0.025)
-                if reason is not None and process.poll() is None:
-                    process.kill()
-                try:
-                    exit_code = process.wait(timeout=5)
-                except subprocess.TimeoutExpired as error:
-                    raise UnreapedGit(process, 'owned Git did not exit') from error
+                if reason is not None:
+                    exit_code = _kill_and_reap(process)
+                else:
+                    try:
+                        exit_code = process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        reason = 'wait_timeout'
+                        exit_code = _kill_and_reap(process)
+                    except BaseException:
+                        exit_code = _kill_and_reap(process)
+                        raise
             except UnreapedGit:
                 raise
             except BaseException as error:
                 reason = reason or 'spawn_or_observation_error'
                 process_error_type = type(error).__name__
-                if process is not None and process.poll() is None:
-                    process.kill()
-                    try:
-                        exit_code = process.wait(timeout=5)
-                    except subprocess.TimeoutExpired as timeout:
-                        raise UnreapedGit(process, 'owned Git cleanup failed') from timeout
                 if process is not None and exit_code is None:
-                    exit_code = process.poll()
+                    exit_code = _kill_and_reap(process)
                 if type(error) not in (OSError, ValueError, TypeError):
                     raise
     finally:
@@ -328,6 +351,26 @@ def verify_retained(receipt_root, expected_receipt_pin, *, root, policy):
                   receipt['stderr_bytes'] == 0 and
                   receipt['stdout_pin'] is not None,
                   'retained owned Git successful exit')
+        identity = receipt['process_identity']
+        if os.name == 'nt':
+            v.require(set(identity) == {
+                'pid', 'creation_time_100ns', 'start_token',
+                'native_start_identity_authenticated'} and
+                type(identity['creation_time_100ns']) is int and
+                identity['creation_time_100ns'] > 0 and
+                identity['native_start_identity_authenticated'] is True and
+                type(identity['start_token']) is str and
+                re.fullmatch('[0-9a-f]{64}', identity['start_token']) is not None and
+                identity['start_token'] == v.canonical_sha256({
+                    'pid': identity['pid'],
+                    'creation_time_100ns': identity['creation_time_100ns']}),
+                'retained owned Git Windows creation identity')
+        else:
+            v.require(set(identity) == {
+                'pid', 'start_token', 'native_start_identity_authenticated'} and
+                identity['start_token'] is None and
+                identity['native_start_identity_authenticated'] is False,
+                'retained owned Git non-Windows identity scope')
         if receipt['operation'] == 'head':
             v.require((target / 'stdout.bin').read_bytes().strip() ==
                       policy['revision'].encode('ascii'),

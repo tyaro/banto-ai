@@ -1,6 +1,7 @@
 """The unintegrated Git helper rejects PATH changes and owned call failures."""
 from __future__ import annotations
 
+import copy
 import hashlib
 import os
 from pathlib import Path
@@ -194,6 +195,67 @@ class OwnedGitTests(unittest.TestCase):
         self.assertEqual(owned.verify_retained(
             receipt_root, result['receipt_pin'], root=ROOT,
             policy=policy)['call_status'], 'failed')
+
+    def test_kill_failure_preserves_live_process_handle(self):
+        _, policy = self._fake_policy('unreaped-trusted')
+        receipt_root = self.target / 'unreaped'
+
+        class Live:
+            pid = 12347
+            kill_calls = 0
+
+            def poll(self):
+                return None
+
+            def kill(self):
+                self.kill_calls += 1
+                raise OSError('fixture denied kill')
+
+        process = Live()
+        with patch.object(owned.subprocess, 'Popen', return_value=process), \
+             patch.object(owned, '_identity', return_value={
+                 'pid': process.pid, 'start_token': 'test',
+                 'native_start_identity_authenticated': False}):
+            with self.assertRaises(owned.UnreapedGit) as raised:
+                owned.run_owned(root=ROOT, policy=policy, operation='head',
+                                receipt_root=receipt_root,
+                                timeout_seconds=0.001)
+        self.assertIs(raised.exception.process, process)
+        self.assertEqual(process.kill_calls, 1)
+        self.assertFalse((receipt_root / 'receipt.json').exists())
+
+    def test_repinning_bad_saved_start_identity_cannot_make_success(self):
+        receipt_root = self.target / 'identity'
+        result = owned.run_owned(root=ROOT, policy=self.policy,
+                                 operation='head', receipt_root=receipt_root)
+        receipt_path = receipt_root / 'receipt.json'
+        original = result['receipt']
+        variants = []
+        if os.name == 'nt':
+            bad_token = copy.deepcopy(original)
+            bad_token['process_identity']['start_token'] = 'a' * 64
+            variants.append(bad_token)
+            bad_token_type = copy.deepcopy(original)
+            bad_token_type['process_identity']['start_token'] = 7
+            variants.append(bad_token_type)
+            bad_native = copy.deepcopy(original)
+            bad_native['process_identity'][
+                'native_start_identity_authenticated'] = False
+            variants.append(bad_native)
+        else:
+            bad_token = copy.deepcopy(original)
+            bad_token['process_identity']['start_token'] = 'forged'
+            variants.append(bad_token)
+            bad_native = copy.deepcopy(original)
+            bad_native['process_identity'][
+                'native_start_identity_authenticated'] = True
+            variants.append(bad_native)
+        for altered in variants:
+            raw = owned.io.json_bytes(altered)
+            receipt_path.write_bytes(raw)
+            with self.assertRaises(ValueError):
+                owned.verify_retained(receipt_root, owned.observed._pin(raw),
+                                      root=ROOT, policy=self.policy)
 
 
 if __name__ == '__main__':
