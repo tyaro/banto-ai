@@ -1,5 +1,7 @@
 # 次のタスク用の短い引継ぎ
 
+更新: 2026-10-04 JST。**clean `14f1f44` の外部pin付き２区間保存行coverageを実行した。** [今回の結果・証拠pin・残る受入](results/anomaly-multiseed-v0.3-preformal-two-slot-coverage-2026-10-04.md)。c001/c011の20 control raw計696,913 Bを再照合し、別実装postcheckも20件・12行・欠番478を確認。保存行slotは未認証の2/480区間・12/2,880行、40 cluster/診断/slice sourceはnull。pinsetはnative小試行後の収集時固定で、共通campaign由来や実行前pinの証明ではない。新しい保存payload本体の読取り、実登録観測、正式creditは０。S4未採択、旧gate `s4_acceptance_not_frozen`維持。以下は前保存点の履歴。
+
 更新: 2026-10-04 JST。**ユーザー指示で過剰な開始条件を緩め、clean `7c9be9d` の新root `c001`/`c011`で固定手作り系列の区間別native小試行を直列実行した。** [実測・主要raw pin・残る認証条件](results/anomaly-multiseed-v0.3-preformal-two-slot-native-smoke-2026-10-04.md)。各`prepare` manifest/sidecar一致、生成２役とfresh再読取りはexit0・予算PASS、各22保存raw・各６行を再照合し、別実装read-only postcheckは差異０。生成予算190.103/195.158秒、再読取り42.036/42.821秒は区間別の別測定。共通campaign由来、12/2,880集約coverage、全工程予算、40 clusterは未認証。実登録観測・正式credit０、S4未採択、旧gate `s4_acceptance_not_frozen`維持。anchor/journal永続化・子孫異常時回収・可変coverageは**共通campaign認証前の条件**として残す。以下は前保存点の履歴。
 
 更新: 2026-10-04 JST。**架空campaignの`prepare`失敗をmanifest前から記録できる純粋preflight、２区間の直下CLI所有・保存raw照合・失敗停止API、生成root/pinsetのsuffix一致を追加した。** [今回の結果・未接続の永続owner境界](results/anomaly-multiseed-v0.3-preformal-two-slot-owner-boundary-2026-10-04.md)。関連34試験とrepository safety PASS。保存済み架空g02/r01のread-only照合は通過したが、新２区間native実走、実登録観測、正式creditは０。外部anchor/intention/head/countの起動前持続保存、preflightとcontrollerの接続、子孫回収、２区間coverage入口・独立postcheckを整えてから架空小試行する。区間別予算は全工程予算に合算しない。26H2契約/５役閉包/最終dev８・smoke２等は残り、旧gate `s4_acceptance_not_frozen`維持。以下は前保存点の履歴。
