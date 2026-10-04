@@ -2,6 +2,8 @@
 
 この文書は、架空登録形式campaignの最新保存証拠と、正式評価のS4採択からS7結果文書までの残件を引き継ぐ。正式評価の許可や受入判定ではない。科学仕様と正式手順の根拠は[凍結計画](../anomaly-multiseed-evaluation-plan-v0.3.md)、受入5群の起点は[2026-10-03の範囲整理](anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)である。
 
+2026-10-05追記: [選定source Git 7呼び出しの限定試走](anomaly-multiseed-v0.3-owned-source-git-seven-call-trial-2026-10-05.md)をclean `fdaf5eec58d110b5f048c703c740c8e10664fc07`で保存した。`owner._source`1回のHEAD/status/選定5 source blobを外部pin付きmain Gitと別process receiptへ結び、結果1,654 B / `3c68e0577385c3693a5819970e096a3b297e8c8fdf87ea9c0da97d5e9891b2cc`を独立再hashした。既存v1 Jobや保存verifierのbare Gitは未置換で、S4-3の全閉包は未完了。正式gateは変わらない。
+
 最新追記: [保存seed在庫と5役Git事前確認の保存点](anomaly-multiseed-v0.3-saved-seed-inventory-and-owned-git-preflight-2026-10-04.md)を参照。clean `8871150` の外部pin付きc001/c011在庫結果は1 seed/2 chunk/12行、欠番39 seed/478 chunk、40 cluster寄与null。clean `1869267` のGit main binary明示policyと5役`trial-02`は、前段HEAD/statusの所有receiptと内側Job終了・共有予算を結んだ。保存raw28件の別実装照合もpass。ただし前段2呼び出し以外のbare Git、共通producer、40 seed、正式同形の全工程予算は未認証。S4の採択条件と下表は変えず、正式credit0、`s4_acceptance_not_frozen`を維持する。
 
 追記: 架空campaignの最新技術保存点は[共有wall・Jobメモリ付きの `4aacbee4`](anomaly-multiseed-v0.3-slot-wall-and-job-memory-2026-10-04.md)、固定source `772ee3d6e2ea5f02c6c53a72bae6d4daf6942d29`、外部wall receipt 2,230 B / SHA-256 `91714388f56d14649db5ad700e71dc2a6d3a0be41fcc80188c7c6a5ef7d6b38e`。後日read-only verifierで保存chainを再照合済み。その前の[Windows Job所有campaign `5cd8e989`](anomaly-multiseed-v0.3-campaign-job-ownership-2026-10-04.md)は固定source `a1c8461f7ead4f9867ae2c0b48dca367618401f5`、[子anchor照合campaign `72f754b3`](anomaly-multiseed-v0.3-child-echo-campaign-2026-10-04.md)は`2e10c6723df9f00999c90416954a806329546dde`。以下の `486f28cd` のpinと再検証手順は先行campaignの履歴であり、これらを合算しない。
