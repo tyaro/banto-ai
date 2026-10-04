@@ -1,5 +1,7 @@
 # v0.3 正式評価前の Ubuntu CI 診断（2026-10-05）
 
+追加run: [`ab81ddf`の37235150180](https://github.com/tyaro/banto-ai/actions/runs/37235150180)はPython 3.12/3.14各2,848件・skip237・fail0/error0と共有fixture比較jobが成功。7 rawとjournal再検証を`artifacts/ci-diagnostic-37235150180/`へ保存した。後続[`b39e595`の37237626121](https://github.com/tyaro/banto-ai/actions/runs/37237626121)は両minor各2,869件・skip237・error2で失敗、比較jobはskip。二つとも新規wall-rowテストで架空WindowsパスをUbuntuの`Path`で解釈したfixture問題。失敗logを`artifacts/ci-diagnostic-37237626121/log-failed.txt`に保存した。テストfixture修正後のUbuntu再実行を要する。
+
 `gh` 自体は利用できる。通常の制限付き実行では `GitHub CLI/config.yml` の読取りが拒否されたが、承認済み実行で `tyaro` の認証を確認した。`codex/preformal-acceptance-scope` を新規 push し、upstream を設定した。
 
 | run | source | 結果 |

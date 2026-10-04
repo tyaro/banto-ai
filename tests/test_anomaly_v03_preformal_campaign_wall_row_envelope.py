@@ -1,7 +1,7 @@
 """The opt-in six-row wall remains partial, pinned, and fail closed."""
 from __future__ import annotations
 
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -34,11 +34,11 @@ def saved_inputs():
     args, pins, _ = fixture(real_coverage=True)
     plan = v.strict_json(args[0])
     record = v.strict_json(args[1][1])
-    campaign = Path(plan['root'])
+    campaign = PureWindowsPath(plan['root'])
     controls = campaign.parent / (
         'anomaly-v03-preformal-campaign-control-' +
         campaign.name[-8:])
-    attempt = Path(record['attempt_root'])
+    attempt = PureWindowsPath(record['attempt_root'])
     code = attempt.name.removeprefix(metadata.ATTEMPT_PREFIX)
     reread = attempt.parent / ('anomaly-v03-preformal-saved-row-reread-' + code)
     manifest = attempt.parent / (
@@ -82,6 +82,15 @@ def saved_inputs():
     return campaign, controls, raw, expected, paths
 
 
+def bind_fixture(campaign, controls, **expected):
+    # The retained fixture records Windows paths even when unittest runs on
+    # Ubuntu. Keep its lexical path checks in that same flavor; all reads are
+    # supplied by the pinned-raw fake below.
+    with patch.object(row_wall, 'Path', PureWindowsPath), \
+            patch.object(row_wall, 'ROOT', campaign.parent.parent):
+        return row_wall.bind_retained(campaign, controls, **expected)
+
+
 def fake_pinned(raws):
     def read(path, expected_pin, maximum):
         raw = raws[str(path)]
@@ -120,7 +129,7 @@ def campaign_child_fixture(*, wrong_anchor=False, wrong_source=False,
     stdout = v.strict_json(entry['stdout_raw'])
     stdout['format'] = coverage.CAMPAIGN_CHILD_FORMAT
     stdout['campaign_context'] = {
-        'plan_path': str(Path(plan['root']) / 'plan.json'),
+        'plan_path': str(PureWindowsPath(plan['root']) / 'plan.json'),
         'anchor_pin': pin(b'wrong') if wrong_anchor else pins['expected_plan_pin'],
         'chunk_index': 0, 'attempt': 1,
     }
@@ -202,7 +211,7 @@ class RetainedBindingTests(unittest.TestCase):
         campaign, controls, raws, expected, paths = saved_inputs()
         with patch.object(row_wall.store, '_pinned',
                           side_effect=fake_pinned(raws)) as reader:
-            result, source_pins = row_wall.bind_retained(
+            result, source_pins = bind_fixture(
                 campaign, controls, **expected)
         self.assertEqual(result['status'],
                          'partial_saved_row_journal_link_only')
@@ -223,7 +232,7 @@ class RetainedBindingTests(unittest.TestCase):
                     patch.object(row_wall.bridge,
                                  'bind_completed_saved_rows') as binder:
                 with self.assertRaises(ValueError):
-                    row_wall.bind_retained(campaign, controls, **expected)
+                    bind_fixture(campaign, controls, **expected)
                 binder.assert_not_called()
 
     def test_completed_attempt_root_cannot_move_to_latest_attempt_two(self):
@@ -239,7 +248,7 @@ class RetainedBindingTests(unittest.TestCase):
                 patch.object(row_wall.bridge,
                              'bind_completed_saved_rows') as binder:
             with self.assertRaisesRegex(ValueError, 'latest slot-0 attempt'):
-                row_wall.bind_retained(campaign, controls, **altered)
+                bind_fixture(campaign, controls, **altered)
             binder.assert_not_called()
 
     def test_bridge_rejects_latest_attempt_and_six_identity_changes(self):

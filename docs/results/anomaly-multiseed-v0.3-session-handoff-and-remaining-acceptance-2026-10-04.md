@@ -1,10 +1,14 @@
 # v0.3 次セッション引き継ぎ・正式受入までの残件（2026-10-04）
 
+2026-10-05追記: `b39e595`の[Ubuntu CI 37237626121](https://github.com/tyaro/banto-ai/actions/runs/37237626121)は新規wall-rowテストのWindowsパスfixture解釈2件で両minor不合格。製品コードは変更せずテストfixtureを修正し、Windows対象9試験pass。Ubuntu再試験が残る。native試走の保存rawは固定revision `b39e595`の証拠であり、修正版のCIと混同しない。正式gateと下表の残件は変わらない。
+
 この文書は、架空登録形式campaignの最新保存証拠と、正式評価のS4採択からS7結果文書までの残件を引き継ぐ。正式評価の許可や受入判定ではない。科学仕様と正式手順の根拠は[凍結計画](../anomaly-multiseed-evaluation-plan-v0.3.md)、受入5群の起点は[2026-10-03の範囲整理](anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)である。
 
 2026-10-05追記: S4-1の[正式v2 wrapper純粋候補validator](../../src/banto_ai/anomaly_v03_formal_research_v2_candidate.py)とS4-4の[Ubuntu runner由来候補検証器](../../tools/ci_verify_runner_origin_candidate.py)を追加した。関連27試験・compileall・repository safetyはPASS。後者は`a5deb31`の予備run `37230362806`で、3 job生log・release/README・両journal全行を外部pinへ結び`consistent_candidate`を返した。正式wrapper実行・外部pin真正性・完全source/runtime閉包・旧25H2条項の26H2改訂採択・最終revisionの受入はまだである。[公式runner raw pinと検証境界](anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)を参照。下表と正式gateは変わらない。
 
 2026-10-05追記: S4-2の共通campaign接続を再調査した。既存の[単一wall envelope](../../src/banto_ai/anomaly_v03_preformal_campaign_wall_envelope.py)は架空区間0のprepare→生成→保存reader→completed journalまでで、[保存6行bridge](../../src/banto_ai/anomaly_v03_preformal_campaign_saved_row_bridge.py)は別工程だった。先行`g001`の6行は全て定義どおりの`inconclusive`である。新しい[wall-row入口](../../src/banto_ai/anomaly_v03_preformal_campaign_wall_row_envelope.py)は両者を一つの協調wallに接続し、journal・checkpoint・10保存raw・6行を外部pinで再読する候補とした。旧`4aacbee4`のplanはreader必須source 15件中9件しか固定していないため、新しい厳密なsource結合で拒否する。clean revisionの新rootで実測が必要。[50,000 draw bound bridge](../../src/banto_ai/anomaly_v03_preformal_bound_draw_bridge.py)と[別監査](../../src/banto_ai/anomaly_v03_preformal_draw_audit.py)は正当な`inconclusive`を保持する算術へ拡張したが、発明40 clusterの検算であり保存campaign 6行を40 clusterへ結ぶ入力系譜は未完成。一区間は1/480区間・6/2,880評価の部分由来で、S4-2全体とS4-5の全資源予算ではない。
+
+2026-10-05追記: clean `b39e595`で[新rootのwall-rowと親Git所有native試走](anomaly-multiseed-v0.3-preformal-wall-row-parent-git-native-2026-10-05.md)が限定成功した。新campaign `7aed7840` はreader source 15/15を含む48選定source、外側746.079/900秒、保存6行全て`inconclusive`、23 rawと48 sourceの独立照合がpass。別rootの親Gitは起動前7件・親直接35件を所有し5役Job active0。これらは40 seed由来、Job内Git/全source/runtime、正式同形全工程予算、S4採択を満たさず、旧gateと正式credit0を維持する。
 
 2026-10-05追記: `gh` は承認済み実行で利用できる。`24c8d20`の[Ubuntu予備CI 37228978376](anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)はPython 3.12/3.14と共有fixture比較の3 jobが成功した。両minor各2,811件・fail0/error0/skip237、共有29 fixture一致、必須28試験pass。後続clean `a5deb31`の[所有Git 7件→5役Jobの架空Windows小試行](anomaly-multiseed-v0.3-five-role-owned-source-native-trial-2026-10-05.md)は保存pinと独立監査が一致したが、所有GitはJob前の7件だけで全閉包ではない。同revisionの[Ubuntu予備CI 37230362806](https://github.com/tyaro/banto-ai/actions/runs/37230362806)も両minor各2,821件・fail0/error0/skip237、共有fixture比較を含む3 jobが成功した。ただしrunner image digest/代替同定の採択、Windows正式native、最終凍結revisionのS4-4判定は残る。下のS4-1～S4-5の残件と正式gateは変わらない。
 

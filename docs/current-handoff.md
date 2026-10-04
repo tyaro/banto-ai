@@ -1,8 +1,10 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-10-05 JST。S4-2の未採択候補として、一区間の単一wallからjournal・10保存raw・6行bridgeまでを結ぶopt-in入口と、`inconclusive`を維持する50,000 draw主計算／別監査の算術拡張を実装した。[発明40 clusterの50,000 draw検算とraw pin](results/anomaly-multiseed-v0.3-preformal-inconclusive-draw-probe-2026-10-05.md)は主計算・別監査一致。保存campaign 6行から40 clusterへの接続ではない。旧`4aacbee4`のplanはreader必須source 15件中9件しか固定しておらず、新しい厳密なsource結合ではfail closed。clean revisionの新規架空campaign試走と保存pinの照合は次工程。[範囲と残件](results/anomaly-multiseed-v0.3-session-handoff-and-remaining-acceptance-2026-10-04.md)。正式credit0。
+更新: 2026-10-05 JST。`b39e595`の[Ubuntu CI 37237626121](https://github.com/tyaro/banto-ai/actions/runs/37237626121)は両minor各2,869件中、新規wall-rowテストのWindowsパスfixture解釈2件で不合格。テストfixtureだけ修正し、Windows対象9試験pass。修正版のUbuntu再実行はこれから。[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。下記native証拠は`b39e595`固定。正式gate `s4_acceptance_not_frozen`、正式credit0。
 
-更新: 2026-10-05 JST。S4-3のopt-in親Git経路は、起動前7件とv1親の直接35件を別manifestに所有・保存する。候補profileを指定すると別のbare Git経路が残るため、この入口では実行前・CLI・保存再検証の全てで拒否する。Job内・子のGitと完全source/runtime閉包は未所有。clean revisionでのWindows native試走は次工程であり、正式credit0。
+更新: 2026-10-05 JST。**clean `b39e595989f9fbdc509a6bdbf114ec47fe65d4f4`で新規架空campaign一区間の単一wall→journal→10保存raw→6行bridgeと、別rootの親Git直接7+35件をWindows native試走した。** [両試走のraw pin・独立再hash・残るS4境界](results/anomaly-multiseed-v0.3-preformal-wall-row-parent-git-native-2026-10-05.md)。campaign外側は746.079/900秒、保存verifierと23 raw・48 source照合がpass、6行は全て正当な`inconclusive`。親Gitは42件の直接receiptと5役Job計1,080 process・active0を保存した。候補profile、Job子/各role親側Git、完全source/runtime閉包と全工程予算は未了。[発明40 clusterの50,000 draw検算](results/anomaly-multiseed-v0.3-preformal-inconclusive-draw-probe-2026-10-05.md)は算術一致だが保存campaignからの40 cluster由来ではない。旧`4aacbee4`はreader source pin不足で新bridgeにfail closed。正式credit0。
+
+更新: 2026-10-05 JST。S4-3のopt-in親Git経路は、候補profile指定時のbare Gitを避けるため実行前・CLI・保存再検証で拒否する。Job内・子のGitと完全source/runtime閉包は未所有。上記のWindows native試走も正式credit0。
 
 更新: 2026-10-05 JST。文書保存点 `5b6c79bc8d8165d8a728f2ea65f310ac0c1a4643` の[Ubuntu予備CI 37232840202](https://github.com/tyaro/banto-ai/actions/runs/37232840202)も3 job成功。両minor各2,821件・fail0/error0/skip237、共有fixture29件・必須28試験pass。7 rawのpinと別実行のjournal再検証を`artifacts/ci-diagnostic-37232840202/`へ保存した。[run別の根拠](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。このrunは下記候補validator追加前のrevisionであり、S4-4の最終凍結revision受入ではない。
 
