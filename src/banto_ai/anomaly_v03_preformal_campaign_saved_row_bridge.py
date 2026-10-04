@@ -7,10 +7,12 @@ it cannot produce a 40-cluster input or formal evaluation credit.
 from __future__ import annotations
 
 import copy
+from pathlib import PureWindowsPath
 
 from . import anomaly_v03 as v
 from . import anomaly_v03_consumer_evidence as evidence
 from . import anomaly_v03_preformal_campaign_metadata as campaign
+from . import anomaly_v03_preformal_saved_row_reread as saved_row_reread
 from . import anomaly_v03_preformal_saved_row_coverage as coverage
 
 
@@ -302,6 +304,42 @@ def bind_completed_saved_rows(plan_raw, record_raws,
     ):
         _same(row[name], value, 'plan/journal/saved row ' + name)
     rows = v.strict_json(coverage_entry['rows_raw'])['rows']
+    stdout = v.strict_json(coverage_entry['stdout_raw'])
+    if stdout['format'] == coverage.CAMPAIGN_CHILD_FORMAT:
+        _same(stdout['campaign_context'], {
+            'plan_path': str(PureWindowsPath(plan['root']) / 'plan.json'),
+            'anchor_pin': expected_plan_pin,
+            'chunk_index': 0, 'attempt': 1,
+        }, 'campaign reader child to external plan and attempt')
+        selected_rows = plan['source']['selected_files']
+        selected = {row['path']: row['pin'] for row in selected_rows}
+        v.require(len(selected) == len(selected_rows) and
+                  len({name.casefold() for name in selected}) ==
+                      len(selected_rows),
+                  'unique plan source path inventory')
+        child_source = stdout['source']
+        child_rows = child_source.get('selected_files') if type(
+            child_source) is dict else None
+        if type(child_rows) is list and all(
+                type(row) is dict and set(row) == {'path', 'pin'} and
+                type(row['path']) is str for row in child_rows):
+            child_paths = [row['path'] for row in child_rows]
+        else:
+            child_paths = []
+        v.require(type(child_source) is dict and
+                  set(child_source) == {'revision', 'selected_files', 'scope'} and
+                  child_source.get('revision') ==
+                      plan['source']['revision'] and
+                  child_source.get('scope') == plan['source']['scope'] and
+                  type(child_rows) is list and
+                  len(child_rows) == len(saved_row_reread.SOURCE_FILES) and
+                  len(set(child_paths)) == len(child_paths) and
+                  len({name.casefold() for name in child_paths}) ==
+                      len(child_paths) and
+                  set(child_paths) == set(saved_row_reread.SOURCE_FILES) and
+                  all(path in selected and selected[path] == row['pin']
+                      for path, row in zip(child_paths, child_rows)),
+                  'campaign reader child exact source pins match plan')
     v.require(type(rows) is list and len(rows) == 6,
               'six saved row identities')
     identities = [row['identity'] for row in rows]

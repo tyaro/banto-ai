@@ -19,6 +19,7 @@ from . import anomaly_v03 as v
 from . import anomaly_v03_platform_fixture_runtime as runtime
 from . import anomaly_v03_preformal_campaign_metadata as metadata
 from . import anomaly_v03_preformal_campaign_preflight as preflight
+from . import anomaly_v03_preformal_saved_row_reread as saved_row_reread
 from . import anomaly_v03_preformal_owned_generated_attempt as generated
 
 
@@ -224,7 +225,7 @@ def _selected_source(revision):
     source = generated._source(revision)
     rows = list(source['selected_files'])
     existing = {row['path'] for row in rows}
-    for name in SOURCE_EXTRA:
+    for name in (*SOURCE_EXTRA, *saved_row_reread.SOURCE_FILES):
         if name in existing:
             continue
         working = _read(ROOT / name, 1024**2)

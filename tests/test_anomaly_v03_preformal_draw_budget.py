@@ -1,5 +1,6 @@
 """Small checks for the separate 50,000-draw measurement boundary."""
 import json
+import copy
 from pathlib import Path
 import subprocess
 import tempfile
@@ -32,6 +33,58 @@ class PreformalDrawBudgetTests(unittest.TestCase):
         self.assertEqual((len(expected), sum(len(row['gates']) for row in expected)), (9, 180))
         self.assertIsNone(calculated['selected_candidate'])
         self.assertFalse(calculated['formal_permission'])
+
+    def test_inconclusive_cell_and_null_draw_preserve_independent_gate_outcomes(self):
+        clusters = budget.invented_clusters()
+        control = primary.CANDIDATES[0]
+        challenger = primary.CANDIDATES[1]
+        control_core = clusters[0]['candidates'][control]['core']
+        control_core['profile_status'] = 'inconclusive'
+        counts = control_core['counts']
+        counts['machine_recall'][0] = 0
+        counts['sensor_recall'][0] = 0
+        counts['precision'] = [0, 0]
+        counts['false_alert_burden'][0] = 0
+        counts['clean_rate'][0] = 0
+        draws = [bytes(range(40)), bytes([0] * 40), bytes([1] * 40)]
+        calculated = primary.compute_fixture_tables(
+            clusters, draws, engineering_ready=False)
+        expected = independent._expected_tables(clusters, draws)
+        self.assertEqual(budget._raw(calculated['candidate_tables']),
+                         budget._raw(expected))
+        tables = {(table['candidate_id'], table['stratum']): table for table
+                  in expected}
+        self.assertEqual(tables[control, 'core']['profile_status'], 'inconclusive')
+        self.assertEqual(tables[control, 'overall']['profile_status'], 'inconclusive')
+        self.assertEqual(tables[challenger, 'core']['profile_status'], 'calibrated')
+        precision = tables[control, 'core']['metrics']['precision']
+        self.assertIsNotNone(precision['value'])
+        self.assertEqual(precision['null_replicates'], 1)
+        self.assertEqual(precision['ci_status'], 'inconclusive')
+        self.assertIsNone(precision['ci_lower'])
+        self.assertIsNone(precision['ci_upper'])
+        self.assertEqual(tables[challenger, 'core']['metrics']['machine_recall'][
+            'ci_status'], 'complete')
+        self.assertEqual(tables[challenger, 'core']['paired_control'][
+            'machine_recall']['ci_status'], 'inconclusive')
+        self.assertEqual(tables[challenger, 'quality-stress']['paired_control'][
+            'machine_recall']['ci_status'], 'complete')
+        self.assertEqual(tables[challenger, 'overall']['paired_control'][
+            'machine_recall']['ci_status'], 'inconclusive')
+        paired_gate = next(gate for gate in tables[challenger, 'core']['gates']
+                           if gate['comparison'] == 'paired-control' and
+                           gate['name'] == 'machine_recall')
+        self.assertEqual(paired_gate['status'], 'inconclusive')
+        self.assertFalse(calculated['formal_permission'])
+        self.assertEqual(calculated['campaign_evaluations_credited'], 0)
+
+        mutated = copy.deepcopy(clusters)
+        mutated[0]['candidates'][control]['core']['profile_status'] = 'calibrated'
+        self.assertNotEqual(budget._raw(expected), budget._raw(
+            independent._expected_tables(mutated, draws)))
+        mutated[0]['candidates'][control]['core']['profile_status'] = 'failed'
+        with self.assertRaisesRegex(ValueError, 'profile state'):
+            independent._expected_tables(mutated, draws)
 
     def test_incomplete_draws_and_tampered_calculation_cannot_pass_audit(self):
         clusters = budget.invented_clusters()

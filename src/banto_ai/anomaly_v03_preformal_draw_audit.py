@@ -135,6 +135,14 @@ def _expected_tables(clusters, draws):
     tables = []
     for candidate in CANDIDATES:
         for layer in LAYERS:
+            parts = LAYERS[:2] if layer == 'overall' else (layer,)
+            statuses = (cluster['candidates'][candidate][part]['profile_status']
+                        for cluster in clusters for part in parts)
+            calibrated = True
+            for status in statuses:
+                if status not in ('calibrated', 'inconclusive'):
+                    raise ValueError('independent profile state differs')
+                calibrated = calibrated and status == 'calibrated'
             metrics = {name: _estimate(clusters, draws, candidate, layer, name)
                        for name in METRICS}
             paired = ({name: _estimate(clusters, draws, candidate, layer, name, paired=True)
@@ -143,7 +151,8 @@ def _expected_tables(clusters, draws):
             gates = [_gate(name, layer, metrics[name], False) for name in ABSOLUTE]
             gates += [_gate(name, layer, paired[name], True) for name in PAIRED] if paired else []
             tables.append({'candidate_id': candidate, 'stratum': layer,
-                           'profile_status': 'calibrated', 'metrics': metrics,
+                           'profile_status': 'calibrated' if calibrated else 'inconclusive',
+                           'metrics': metrics,
                            'paired_control': paired, 'gates': gates,
                            'fixture_qualified': False})
     return tables

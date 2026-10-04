@@ -1,9 +1,9 @@
-"""Retain explicit owned Git source calls for a future five-role v2 entry.
+"""Retain explicit owned Git source calls for opt-in five-role entries.
 
-The session is not connected to the existing five-role owner or chain.  It
+The session can supply selected source bytes to the five-role parent.  It
 attests only direct Git handles and saved bytes.  Git's loaded code and
-descendants, other processes, and complete source/runtime closure remain out
-of scope.
+descendants, inner Job Git, other processes, and complete source/runtime
+closure remain out of scope.
 """
 from __future__ import annotations
 

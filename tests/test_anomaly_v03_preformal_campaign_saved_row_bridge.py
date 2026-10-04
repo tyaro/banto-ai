@@ -45,7 +45,9 @@ def fixture(*, real_coverage=False):
             raw = (v.canonical_json({'rows': [
                 {'identity': identity}
                 for identity in v.evaluation_inventory('holdout')[:6]]})
-                if name == 'rows' else name.encode())
+                if name == 'rows' else
+                v.canonical_json({'format': bridge.coverage.CHILD_FORMAT})
+                if name == 'stdout' else name.encode())
             entry[name + '_raw'] = raw
             entry['expected_pins'][name] = campaign.pin(raw)
 

@@ -140,13 +140,8 @@ def bind_producer_counts(producer_root, expected_result_pin):
         raise ValueError('owned producer projection draw differs')
     clusters = fixture['clusters']
     primary._fixture_clusters(clusters)
-    if len(clusters) != CLUSTERS or any(
-            cell['profile_status'] != 'calibrated'
-            for cluster in clusters for candidate in cluster['candidates'].values()
-            for cell in candidate.values()):
-        # The independent arithmetic implementation presently assumes every
-        # source cell is calibrated. Do not change its scientific policy here.
-        raise ValueError('independent audit requires forty calibrated producer clusters')
+    if len(clusters) != CLUSTERS:
+        raise ValueError('independent audit requires forty producer clusters')
     return {
         'clusters': clusters, 'producer_result_pin': copy.deepcopy(expected_result_pin),
         'bound_pin': copy.deepcopy(result['bound_pin']),
@@ -177,11 +172,8 @@ def _check_input(value):
     for key in ('producer_result_pin', 'bound_pin', 'projection_input_pin'):
         projection.evidence._pin(value[key])
     primary._fixture_clusters(value['clusters'])
-    if len(value['clusters']) != CLUSTERS or any(
-            cell['profile_status'] != 'calibrated'
-            for cluster in value['clusters'] for candidate in cluster['candidates'].values()
-            for cell in candidate.values()):
-        raise ValueError('bridge input is not forty calibrated clusters')
+    if len(value['clusters']) != CLUSTERS:
+        raise ValueError('bridge input is not forty clusters')
 
 
 class BoundDrawBudget(chain_budget.PreformalChainBudget):

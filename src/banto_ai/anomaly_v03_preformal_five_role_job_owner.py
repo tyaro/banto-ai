@@ -47,15 +47,16 @@ def _pinned(path, pin, maximum):
     return raw
 
 
-def _source(revision, *, git_reader=None):
+def _source(revision, *, git_reader=None, git_call_prefix=''):
     """Check a clean HEAD and selected working raw, without claiming closure."""
-    selected = chain._git_sources(revision, git_reader=git_reader)
+    selected = chain._git_sources(revision, git_reader=git_reader,
+                                  git_call_prefix=git_call_prefix)
     raw = observed._file(ROOT / SOURCE, 1024**2)
     committed = (subprocess.check_output(
         ['git', '-C', str(ROOT), 'show', revision + ':' + SOURCE],
         stderr=subprocess.DEVNULL, timeout=10)
         if git_reader is None else git_reader.run(
-            call_id='owner-source', operation='source_blob',
+            call_id=git_call_prefix + 'owner-source', operation='source_blob',
             source_path=SOURCE, expected_output_pin=observed._pin(raw)))
     v.require(raw == committed, 'five-role Job owner source/Git bytes')
     return {'revision': revision, 'orchestrator_selected': selected,
@@ -98,9 +99,11 @@ def _invocation(path, expected_pin):
     return value
 
 
-def _boundary(path, pin, expected_source, expected_inputs):
+def _boundary(path, pin, expected_source, expected_inputs, *,
+              git_reader=None, git_call_prefix=''):
     invocation = _invocation(path, pin)
-    _same(_source(invocation['source_revision']), expected_source,
+    _same(_source(invocation['source_revision'], git_reader=git_reader,
+                  git_call_prefix=git_call_prefix), expected_source,
           'five-role Job source changed')
     inputs = _inputs(invocation['join_root'], invocation['join_receipt_pin'],
                      invocation['source_revision'],
@@ -340,7 +343,8 @@ def _job_exception_summary(error):
 
 def run_owned(*, expected_mode, join_root, expected_join_receipt_pin,
               expected_revision, receipt_parent, receipt_name,
-              candidate_set_path=None, expected_candidate_set_pin=None):
+              candidate_set_path=None, expected_candidate_set_pin=None,
+              git_reader=None):
     """Launch one invented five-role parent CLI in a new private Windows Job."""
     v.require(expected_mode == 'fixture' and type(expected_mode) is str,
               'only invented five-role mode is open')
@@ -388,8 +392,19 @@ def run_owned(*, expected_mode, join_root, expected_join_receipt_pin,
     critical = None
     report = None
     launch = {}
+    source_read_index = 0
+
+    def source_prefix():
+        nonlocal source_read_index
+        if git_reader is None:
+            return ''
+        prefix = f'parent-source-{source_read_index}-'
+        source_read_index += 1
+        return prefix
+
     try:
-        source = _source(expected_revision)
+        source = _source(expected_revision, git_reader=git_reader,
+                         git_call_prefix=source_prefix())
         inputs = _inputs(join_root, expected_join_receipt_pin,
                          expected_revision, candidate_set_path,
                          expected_candidate_set_pin)
@@ -420,7 +435,9 @@ def run_owned(*, expected_mode, join_root, expected_join_receipt_pin,
                 str(invocation_pin['bytes']), invocation_pin['sha256']]
         value.update(invocation_pin=invocation_pin, argv=argv, cwd=str(ROOT))
         def boundary():
-            _boundary(invocation_path, invocation_pin, source, inputs)
+            _boundary(invocation_path, invocation_pin, source, inputs,
+                      git_reader=git_reader,
+                      git_call_prefix=source_prefix())
 
         def on_started(process):
             launch.update(observed.creation_observation(
@@ -485,7 +502,8 @@ def run_owned(*, expected_mode, join_root, expected_join_receipt_pin,
     return saved
 
 
-def verify_retained(result_root, expected_receipt_pin):
+def verify_retained(result_root, expected_receipt_pin, *, git_reader=None,
+                    git_call_prefix=''):
     """Read saved Job and five-role bytes; never re-launch a worker."""
     root = Path(result_root)
     v.require(root.is_absolute() and root.is_relative_to(ROOT / 'artifacts'),
@@ -518,7 +536,8 @@ def verify_retained(result_root, expected_receipt_pin):
               receipt['profile_required'] is
               (invocation['candidate_set_path'] is not None),
               'retained five-role Job invocation binding')
-    source = _source(invocation['source_revision'])
+    source = _source(invocation['source_revision'], git_reader=git_reader,
+                     git_call_prefix=git_call_prefix)
     inputs = _inputs(invocation['join_root'], invocation['join_receipt_pin'],
                      invocation['source_revision'],
                      invocation['candidate_set_path'],

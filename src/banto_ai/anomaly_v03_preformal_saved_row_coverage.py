@@ -22,6 +22,7 @@ REREAD_FORMAT = 'anomaly-v03-preformal-saved-row-reread-v1'
 MANIFEST_FORMAT = 'anomaly-v03-preformal-owned-generated-external-pins-v1'
 SAVEPOINT_FORMAT = 'anomaly-v03-preformal-invented-partial-savepoint-v1'
 CHILD_FORMAT = 'anomaly-v03-preformal-saved-row-reread-child-v1'
+CAMPAIGN_CHILD_FORMAT = 'anomaly-v03-preformal-saved-row-reread-child-v2'
 BUDGET_FORMAT = 'anomaly-v03-fixture-resource-budget-v1'
 SUPERVISION_FORMAT = 'anomaly-v03-owned-process-monitor-v1'
 RAW_LIMITS = {
@@ -239,7 +240,24 @@ def _chunk(entry):
                           'output': pins['stdout'],
                           'worker_pid': result.get('child_pid')},
             'owned reader supervision')
-    _closed(stdout, {'format': CHILD_FORMAT, 'status': 'read',
+    child_format = stdout.get('format')
+    v.require(child_format in (CHILD_FORMAT, CAMPAIGN_CHILD_FORMAT),
+              'saved reader child format')
+    if child_format == CAMPAIGN_CHILD_FORMAT:
+        context = stdout.get('campaign_context')
+        v.require(type(context) is dict and set(context) ==
+                  {'plan_path', 'anchor_pin', 'chunk_index', 'attempt'} and
+                  type(context['plan_path']) is str and
+                  PureWindowsPath(context['plan_path']).is_absolute() and
+                  PureWindowsPath(context['plan_path']).name == 'plan.json' and
+                  context['chunk_index'] == index and
+                  context['attempt'] == 1,
+                  'saved reader campaign child context shape')
+        evidence._pin(context['anchor_pin'])
+    else:
+        v.require('campaign_context' not in stdout,
+                  'noncampaign reader cannot carry campaign context')
+    _closed(stdout, {'format': child_format, 'status': 'read',
                      'manifest_pin': pins['manifest'],
                      'output_pins': outputs,
                      'source': result.get('selected_current_source'),

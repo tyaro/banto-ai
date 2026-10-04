@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 from banto_ai import anomaly_v03_preformal_bound_draw_bridge as bridge
 from tests.test_anomaly_v03_bound_fixture_pipeline import example
+from tests.test_anomaly_v03_slice_fixture import invented_slices
 
 
 REVISION = 'a' * 40
@@ -79,13 +80,56 @@ class BoundDrawBridgeTests(unittest.TestCase):
             bridge.bind_producer_counts(self.producer,
                                         {'bytes': 1, 'sha256': '0' * 64})
 
-    def test_inconclusive_producer_cells_are_rejected_before_audit(self):
+    def test_inconclusive_producer_cells_preserve_state_at_child_input(self):
         value = bridge.bind_producer_counts(self.producer, self.result_pin)
         altered = copy.deepcopy(bridge._input(value))
         altered['clusters'][0]['candidates']['c0-diff-control']['core'][
             'profile_status'] = 'inconclusive'
-        with self.assertRaisesRegex(ValueError, 'calibrated'):
+        bridge._check_input(altered)
+        self.assertEqual(altered['clusters'][0]['candidates']['c0-diff-control']['core'][
+            'profile_status'], 'inconclusive')
+        altered['clusters'][0]['candidates']['c0-diff-control']['core'][
+            'profile_status'] = 'failed'
+        with self.assertRaisesRegex(ValueError, 'profile state'):
             bridge._check_input(altered)
+
+    def test_pinned_saved_inconclusive_projection_binds_and_mutation_fails(self):
+        bound = example()
+        primary = bound['primary']
+        candidate = 'c0-diff-control'
+        primary['clusters'][0]['candidates'][candidate]['core'][
+            'profile_status'] = 'inconclusive'
+        primary['wrapper_coverage']['clusters'][0]['candidates'][candidate][
+            'core'] = ['inconclusive'] * 12
+        primary['coverage']['success'] -= 12
+        primary['coverage']['inconclusive'] += 12
+        bound['slice_source'] = invented_slices({
+            'clusters': primary['clusters'], 'diagnostics': primary['diagnostics']})
+        raw = bridge.projection.v.canonical_json(bound)
+        bound_pin = bridge._pin(raw)
+        prepared = bridge.projection.prepare_inputs(
+            raw, expected_mode='fixture', expected_pin=bound_pin,
+            expected_revision=REVISION, draws=[list(range(40))])
+        output = self.producer / 'output'
+        (output / 'bound.json').write_bytes(raw)
+        for name, content in prepared['files'].items():
+            (output / 'projection' / name).write_bytes(content)
+        saved_result = json.loads((self.producer / 'result.json').read_bytes())
+        saved_result['bound_pin'] = bound_pin
+        saved_result['projection_pins'] = {
+            name: bridge._pin(content) for name, content in prepared['files'].items()}
+        result_raw = bridge._raw(saved_result)
+        (self.producer / 'result.json').write_bytes(result_raw)
+        result_pin = bridge._pin(result_raw)
+
+        binding = bridge.bind_producer_counts(self.producer, result_pin)
+        self.assertEqual(binding['clusters'][0]['candidates'][candidate]['core'][
+            'profile_status'], 'inconclusive')
+        bridge._check_input(bridge._input(binding))
+        path = output / 'projection' / 'fixture' / 'input.json'
+        path.write_bytes(path.read_bytes() + b' ')
+        with self.assertRaisesRegex(ValueError, 'pin differs'):
+            bridge.bind_producer_counts(self.producer, result_pin)
 
     def test_preflight_resource_stop_retains_receipts_and_starts_no_child(self):
         class StoppedBudget:
