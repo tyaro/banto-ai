@@ -19,7 +19,6 @@ import time
 
 from . import anomaly_v03_platform_fixture_runtime as runtime
 from . import anomaly_v03_process_supervisor as direct_supervisor
-from . import anomaly_v03_engineering_contract as policy
 from . import _anomaly_v03_engineering_runtime as resources
 from . import _anomaly_v03_runtime as paths
 
@@ -570,7 +569,7 @@ def supervise_cli(argv, cwd, control_root, limits, *, runtime_probe,
 
     try:
         before = runtime_probe()
-        policy.validate_runtime(before)
+        direct_supervisor.policy.validate_runtime(before)
         free_before = resources.require_start_resources(cwd)
         boundary()
         reason = budget()
@@ -650,7 +649,7 @@ def supervise_cli(argv, cwd, control_root, limits, *, runtime_probe,
                 error('final_worker_memory', value)
         try:
             after = runtime_probe()
-            policy.validate_runtime(after)
+            direct_supervisor.policy.validate_runtime(after)
             if before is not None and after != before:
                 reason = 'runtime_changed'
             free_after = resources.free_resources(cwd)

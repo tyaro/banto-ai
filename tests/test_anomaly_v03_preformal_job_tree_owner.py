@@ -42,7 +42,7 @@ class JobOwnerContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='banto-job-failed-spawn-') as temp, \
              patch.object(owner, '_kernel', return_value=object()), \
              patch.object(owner, '_spawn_cli', side_effect=problem), \
-             patch.object(owner.policy, 'validate_runtime'), \
+             patch.object(owner.direct_supervisor.policy, 'validate_runtime'), \
              patch.object(owner.resources, 'require_start_resources',
                           return_value={}), \
              patch.object(owner.resources, 'free_resources',
@@ -172,7 +172,7 @@ class NativeJobOwnerTests(unittest.TestCase):
         limits = {'wall_seconds': wall, 'private_bytes': 512 * 1024**2,
                   'output_bytes': 1024**2}
         starts = []
-        with patch.object(owner.policy, 'validate_runtime'), \
+        with patch.object(owner.direct_supervisor.policy, 'validate_runtime'), \
              patch.object(owner.resources, 'require_start_resources',
                           return_value={}), \
              patch.object(owner.resources, 'free_resources',

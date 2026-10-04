@@ -8,7 +8,9 @@ Example::
       --plan-pin BYTES:SHA256 --checkpoint-pin BYTES:SHA256 \
       --intention-pin BYTES:SHA256
 
-Only the direct prepare CLI is owned. A failed result stops the next stage.
+The prepare CLI and members of its private Windows Job are owned. Individual
+descendant exit codes and processes outside that Job are not authenticated.
+A failed result stops the next stage.
 """
 from __future__ import annotations
 
