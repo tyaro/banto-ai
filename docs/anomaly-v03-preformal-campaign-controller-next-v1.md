@@ -1,6 +1,6 @@
 # 架空campaign controllerの次の実装契約案 v1（未採択）
 
-状態: **proposal / 未採択**。この文書は、架空登録形式の保存行を区間間で結ぶ次の実装・native小試行の境界を定める。実登録holdout、S4採択、正式評価credit、40 clusterの完成を示さない。[共有anchor案](anomaly-v03-preformal-campaign-anchor-proposal-v1.md)と[現行の部分coverage](results/anomaly-multiseed-v0.3-preformal-saved-row-coverage-2026-10-04.md)を前提とする。
+状態: **proposal / 未採択**。この文書は、架空登録形式の保存行を区間間で結び、共通campaign由来や再開を認証するための実装契約案を定める。区間別の限定技術試行を始める条件ではない。実登録holdout、S4採択、正式評価credit、40 clusterの完成を示さない。[共有anchor案](anomaly-v03-preformal-campaign-anchor-proposal-v1.md)と[現行の部分coverage](results/anomaly-multiseed-v0.3-preformal-saved-row-coverage-2026-10-04.md)を前提とする。区間別CLIを先行実行した結果は[架空２区間native小試行](results/anomaly-multiseed-v0.3-preformal-two-slot-native-smoke-2026-10-04.md)に分けて記録した。
 
 ## 起動前に固定するもの
 
@@ -24,16 +24,16 @@ metadata journalの`started`は起動前manifest pinを要求するため、`pre
 
 ## ２区間native小試行のパスと結論
 
-試行rootはすべて`artifacts/`直下の新規directoryとし、短い共通suffixを使う。例として区間0・attempt 1を`c001`、区間1・attempt 1を`c011`とする（`c`はroot用の短いalias、続く２桁は区間indexのbase36、末尾はattempt）。完全なcampaign IDはanchorへ保持する。各組は次のとおり。
+試行rootはすべて`artifacts/`直下の新規directoryとし、短い共通suffixを使う。区間0・attempt 1を`c001`、区間1・attempt 1を`c011`とした（`c`はroot用の短いalias、続く２桁は区間indexのbase36、末尾はattempt）。完全なcampaign IDは将来の認証anchorへ保持する。各組は次のとおり。
 
 | 区間 | 生成・保存root | 起動前pinset | 再読取りroot |
 | --- | --- | --- | --- |
 | 0 | `artifacts/anomaly-v03-preformal-registered-attempt-c001` | `artifacts/anomaly-v03-preformal-generated-pinsets-c001/pins.json` | `artifacts/anomaly-v03-preformal-saved-row-reread-c001` |
 | 1 | `artifacts/anomaly-v03-preformal-registered-attempt-c011` | `artifacts/anomaly-v03-preformal-generated-pinsets-c011/pins.json` | `artifacts/anomaly-v03-preformal-saved-row-reread-c011` |
 
-既存CLIは生成rootとpinsetをこの共通suffixで対応付け、生成rootが`artifacts/`直下であることを要求する。verboseな`c01-k000`は最深payload pathが現行245文字上限を超えて拒否される。上記４文字suffixでは両区間の最深pathは244文字。試行前に全root・pinset・sidecarが不存在であることを確認し、既存成果物を再利用しない。controllerのanchor/journal rootも別の新rootを使い、外部head/countはその外側に置く。
+既存CLIは生成rootとpinsetをこの共通suffixで対応付け、生成rootが`artifacts/`直下であることを要求する。verboseな`c01-k000`は最深payload pathが現行245文字上限を超えて拒否される。上記４文字suffixでは両区間の最深pathは244文字。区間別試行では起動前に全root・pinset・sidecarが不存在であることを確認し、既存成果物を再利用しない。共通campaign由来を認証する段階ではcontrollerのanchor/journal rootも別の新rootを使い、外部head/countをその外側に置く。
 
-この小試行で到達できるのは、所有CLI・内側子の終了とraw保存を照合した**架空２区間・12/2,880評価の部分coverage**まで。残り478区間、40 cluster、診断、slice sourceは未成立で、現行collectorの`campaign_coherence_authenticated=false`、正式flag false/nullを維持する。２つの生成２役予算と２つの再読取り予算は別測定であり、値を足して単一外側予算のpassにしない。controllerの経過時間記録だけでも全工程共通の停止・子孫回収保証にはならない。
+区間別の小試行で到達したのは、各CLIの保存結果・内側子終了・raw pin・予算を個別に確認した**架空２区間の限定技術結果**である。共通campaign由来と12/2,880の集約coverageは認証していない。残り478区間、40 cluster、診断、slice sourceは未成立で、`campaign_coherence_authenticated=false`、正式flag false/nullを維持する。２つの生成２役予算と２つの再読取り予算は別測定であり、値を足して単一外側予算のpassにしない。controllerの経過時間記録だけでも全工程共通の停止・子孫回収保証にはならない。
 
 ## S4/S5への適用境界
 

@@ -1,6 +1,6 @@
 # 架空２区間のpreflight・所有境界（2026-10-04）
 
-状態: **実装済みの限定境界 / native区間未実行 / S4未採択**。対象は登録形式を使う固定手作り系列の区間0・1だけ。凍結holdoutのidentityは計画slotの照合に用いるが、登録seedを消費せず、実登録観測を生成・読取りしない。
+状態: **実装済みの限定境界 / 保存当時はnative区間未実行 / S4未採択**。その後、ユーザーの範囲変更を受けて[区間別の架空native小試行](anomaly-multiseed-v0.3-preformal-two-slot-native-smoke-2026-10-04.md)を実行した。対象は登録形式を使う固定手作り系列の区間0・1だけ。凍結holdoutのidentityは計画slotの照合に用いるが、登録seedを消費せず、実登録観測を生成・読取りしない。
 
 ## 保存した境界
 
@@ -14,6 +14,6 @@
 
 焦点試験は計画/journal、preflight、controller、生成CLIのpinset pathを含む34件がPASS。repository safetyと差分形式もPASS。保存済み架空g02/r01をread-onlyで照合し、生成13証拠pin・22保存出力pin・fresh再読取り６証拠pinを確認した。生成側invocation pinの置換を模した照合も拒否した。新規の架空区間native実走、新区間の保存payload再読取り、新しいcoverage集約は行っていない。既存g02/r01の１区間を今回のcampaignへ後付けしない。
 
-次の試行前に、同じownerが外部anchor・preflight intention/outcome・各CLI intention・journal/head/countを起動前に排他的かつ持続的に固定し、失敗時の不完全出力・未回収子孫を保全して後続を止める。保存行coverage CLIは現状g02/r01の１区間に固定されており、新２区間に対するpin付き可変入口と独立postcheckが必要。子孫停止/回収と時点固定の契約を検証してから、新規４文字suffixの区間0・1をnative小試行し、成立しても架空12/2,880評価の部分coverageに限る。２つの区間別生成予算と再読取り予算を合算して単一全工程予算passとはしない。
+共通campaign由来や再開許可を**主張する前に**、同じownerが外部anchor・preflight intention/outcome・各CLI intention・journal/head/countを起動前に排他的かつ持続的に固定し、失敗時の不完全出力・未回収子孫を保全して後続を止める必要がある。保存行coverage CLIは現状g02/r01の１区間に固定されており、新２区間に対するpin付き可変入口と独立postcheckも必要。区間別の技術試行は、新規root・一致するpinset・clean revision・内蔵予算・区間ごとの終了/保存raw確認と、失敗時の後続停止を条件に先行できる。その成功を12/2,880の集約coverageや単一全工程予算passへ昇格させない。
 
 26H2運用契約と公開保証A/B、５役source/runtime閉包、Linux両jobとrunner同定、Windows native受入、最終dev８・smoke２、容量２倍、50,000 drawを含む単一外側予算は残る。架空480区間完走を自動的にS4必須条件へ加えない。S4採択前の未使用実holdout40 seedは閉鎖を維持し、実S5/S6・正式creditは０。旧gate `s4_acceptance_not_frozen`、`formal_permission=false`を維持する。
