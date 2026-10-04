@@ -282,6 +282,7 @@ def _chunk(entry):
         'rows_pin': copy.deepcopy(pins['rows']),
         'registry_pin': copy.deepcopy(receipt['registry_pin']),
         '_source': manifest['source'],
+        '_source_snapshots': manifest['source_snapshots'],
         '_source_snapshot_pins': manifest['source_snapshot_pins'],
     }
 
@@ -314,9 +315,10 @@ def collect_saved_row_coverage(entries):
         index = row['chunk_index']
         v.require(index > previous, 'strictly increasing unique chunk index')
         previous = index
-        coherence = (row['historic_source_revision'], row['recipe_id'],
+        coherence = [row['historic_source_revision'], row['recipe_id'],
                      row['registry_pin'], row['_source'],
-                     row['_source_snapshot_pins'])
+                     row['_source_snapshots'],
+                     row['_source_snapshot_pins']]
         if baseline is None:
             baseline = coherence
         else:

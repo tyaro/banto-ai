@@ -167,6 +167,31 @@ class SavedRowCoverageTests(unittest.TestCase):
         self.assertEqual(result['bound_evaluations'], 0)
         self.assertFalse(result['campaign_coherence_authenticated'])
 
+    def test_two_consistent_chunks_are_compared_without_promotion(self):
+        entry, _ = make_entry()
+        first = coverage._chunk(entry)
+        second = copy.deepcopy(first)
+        second['chunk_index'] = 1
+        with patch.object(coverage, '_chunk', side_effect=[first, second]):
+            result = coverage.collect_saved_row_coverage(
+                [entry, copy.deepcopy(entry)])
+        self.assertEqual(result['chunk_indices'], [0, 1])
+        self.assertEqual(result['bound_evaluations'], 12)
+        self.assertEqual(result['missing_chunk_indices'], list(range(2, 480)))
+        self.assertTrue(result['cross_chunk_recipe_source_consistency_checked'])
+        self.assertFalse(result['campaign_coherence_authenticated'])
+        self.assertEqual(result['campaign_evaluations_credited'], 0)
+
+    def test_two_chunks_with_different_snapshot_values_are_rejected(self):
+        entry, _ = make_entry()
+        first = coverage._chunk(entry)
+        second = copy.deepcopy(first)
+        second['chunk_index'] = 1
+        second['_source_snapshots'][REVISION]['file'] = 'ZGlmZmVyZW50'
+        with patch.object(coverage, '_chunk', side_effect=[first, second]):
+            with self.assertRaisesRegex(ValueError, 'cross-chunk recipe/source consistency'):
+                coverage.collect_saved_row_coverage([entry, copy.deepcopy(entry)])
+
     def test_total_input_bound_precedes_semantic_decode(self):
         entry, _ = make_entry()
         total = sum(len(entry[name + '_raw']) for name in coverage.RAW_LIMITS)
