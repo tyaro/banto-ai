@@ -1,5 +1,7 @@
 # 次のタスク用の短い引継ぎ
 
+更新: 2026-10-04 JST。**clean `2e10c67` で子へのcampaign anchor echoを固定し、新しい架空campaign `72f754b3` のslot 0 `h001` をprepare→所有生成・初回reader→fresh再読取り→completedまで保存した。** [新しい結果・raw pin・S4～S7残件](results/anomaly-multiseed-v0.3-child-echo-campaign-2026-10-04.md)。terminal count2/head `ebe27668…`、完了宣言1/480区間・6/2,880評価、欠番479。生成とfresh再読取りは別予算でpass。独立Job tree fixtureはnative 8/8 passだがcampaign controller未接続。CI runner image label検査も実装したが最終Linux jobと外部log/manifestは未取得。`artifacts/` はGit管理外で、文書commit後のHEADでは固定source照合により今回のcampaign verifyは拒否される。保証A・S4は未採択、共通campaign認証false、正式credit0、旧gate `s4_acceptance_not_frozen`維持。以下は以前の保存点の履歴。
+
 更新: 2026-10-04 JST。**26H2単一writerの外側成功receipt直前に、公開raw・marker・writer/reader resultの最終再照合を追加した。** clean `7a223d6` のnative 4/4 pass。reader終了直後のmarker改変とwriter result改変は両方failedで保全し、成功bindingを作らない。[改訂案の後続試験とraw pin](anomaly-v03-s4-26h2-amendment-draft-v1.md)を参照。旧25H2 fixture suiteは現26H2で入口拒否し、後段試験は合格扱いしない。保証A・S4は未採択、正式credit0、旧gate維持。以下は以前の保存点の履歴。
 
 更新: 2026-10-04 JST。**26H2・単一writer保証Aの[S4改訂案](anomaly-v03-s4-26h2-amendment-draft-v1.md)をレビュー用に作成した。** `9aab9e0` のclean sourceで限定native 3/3 pass、通常の関連26試験は23 pass・明示起動待ち3 skip。成功1件と改変拒否4件の保存receipt pinを改訂案に記録した。保証Aは未採択で、最終revisionの5役閉包、単一外側予算、Linux両job、正式dev/smoke、独立監査は残る。S4採択なし、正式credit0、旧gate `s4_acceptance_not_frozen`を維持する。以下は以前の保存点の履歴。
