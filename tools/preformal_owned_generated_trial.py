@@ -62,10 +62,12 @@ def _argument_path(value: str) -> Path:
 def _manifest_path(value: str, root: Path, *, missing: bool) -> Path:
     path = paths.regular_path(_argument_path(value), missing=missing)
     parent = paths.regular_path(path.parent, directory=True, missing=missing)
-    v.require(parent.parent == ROOT / 'artifacts' and
-              parent.name.startswith('anomaly-v03-preformal-generated-pinsets-')
+    suffix = root.name.removeprefix(generated.fixture.PREFIX)
+    v.require(root.name.startswith(generated.fixture.PREFIX) and suffix and
+              parent.parent == ROOT / 'artifacts' and
+              parent.name == 'anomaly-v03-preformal-generated-pinsets-' + suffix
               and parent != root,
-              'separate dedicated external pinset directory required')
+              'matching separate dedicated external pinset directory required')
     v.require(path.name.endswith('.json'), 'JSON external manifest required')
     return path
 

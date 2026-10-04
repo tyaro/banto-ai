@@ -98,6 +98,14 @@ class GeneratedBudgetDriverTests(unittest.TestCase):
                     'anomaly-v03-preformal-generated-pinsets-'))
                 shutil.rmtree(resolved)
 
+    def test_manifest_pinset_suffix_must_match_generated_attempt(self):
+        self.assertEqual(driver._manifest_path(
+            str(self.manifest_path), self.root, missing=False),
+            self.manifest_path)
+        other = self.root.with_name(self.root.name + 'x')
+        with self.assertRaises(ValueError):
+            driver._manifest_path(str(self.manifest_path), other, missing=False)
+
     def fake_inner(self, root, *, expected_pins, source_snapshots,
                    expected_revision, chunk_index, recipe_id, outer_budget):
         self.assertIs(outer_budget, self.budget)
