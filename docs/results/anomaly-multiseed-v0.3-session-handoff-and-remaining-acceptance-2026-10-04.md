@@ -2,7 +2,7 @@
 
 この文書は、架空登録形式campaignの最新保存証拠と、正式評価のS4採択からS7結果文書までの残件を引き継ぐ。正式評価の許可や受入判定ではない。科学仕様と正式手順の根拠は[凍結計画](../anomaly-multiseed-evaluation-plan-v0.3.md)、受入5群の起点は[2026-10-03の範囲整理](anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)である。
 
-追記: 後続の最新技術保存点は[子anchor照合と架空campaign `72f754b3`](anomaly-multiseed-v0.3-child-echo-campaign-2026-10-04.md)、固定source `2e10c6723df9f00999c90416954a806329546dde`。以下の `486f28cd` のpinと再検証手順は先行campaignの履歴であり、両campaignを合算しない。
+追記: 後続の最新技術保存点は[Windows Job所有と架空campaign `5cd8e989`](anomaly-multiseed-v0.3-campaign-job-ownership-2026-10-04.md)、固定source `a1c8461f7ead4f9867ae2c0b48dca367618401f5`。その前の[子anchor照合campaign `72f754b3`](anomaly-multiseed-v0.3-child-echo-campaign-2026-10-04.md)は固定source `2e10c6723df9f00999c90416954a806329546dde`。以下の `486f28cd` のpinと再検証手順は先行campaignの履歴であり、これらを合算しない。
 
 ## 再開位置と保存点
 

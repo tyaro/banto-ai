@@ -22,7 +22,7 @@
 | A2 | writerの実process handle、PID/start token、exit/reapを保持し、その後に別readerを起動 | 2026-10-04 17:23–17:25 JST、`9aab9e01f06f2ac5750993a360c42a8e54394560` のnative試験がpass。下記の成功receipt参照。正式5役割には未接続 |
 | A3 | 同一attempt/rootの再利用を拒否し、保存全payload・marker・receiptのraw/意味を別readerで再照合 | 同じnative試験でpass。登録2,880枠と正式全文書の固定経路は未受入 |
 | A4 | writer監督証拠3種類・公開payloadの改変を失敗として保全。markerが残ってもverifiedにしない | 下記4失敗receiptで確認。別主体による並行改変の防止は対象保証外 |
-| A5 | producer→登録保存reader→40架空cluster/50,000 draw→完全S6同形audit→writer→別readerを単一外側予算で停止・回収 | 工程別の試行はあるが、単一外側予算、子孫停止、容量2倍の実測は未了 |
+| A5 | producer→登録保存reader→40架空cluster/50,000 draw→完全S6同形audit→writer→別readerを単一外側予算で停止・回収 | [架空一区間の外側3 CLI Job所有](results/anomaly-multiseed-v0.3-campaign-job-ownership-2026-10-04.md)は実機で確認。Job外process、個別孫exit code、全役割を通す単一外側予算・容量2倍の実測は未了 |
 | A6 | 最終clean revisionでLinux両job、Windows native、正式dev 8 seed・smoke 2 seed、独立監査を一つの受入記録へ結ぶ | 最終revision・runner同定・最終回帰・独立受入は未了 |
 
 今回のnative実行は `BANTO_PLATFORM_FIXTURE_NATIVE=1` による `tests.test_anomaly_v03_platform_fixture.NativePlatformFixtureTests` の3/3 pass（51.637秒）。通常の関連4 test moduleは26件中23 pass、native明示起動待ち3 skip（8.900秒）。両実行は現在のbranchの上記clean revisionで行った。`artifacts/` はGit管理外なので、次のraw pinはこの作業場所の保存証拠に限定される。
