@@ -23,9 +23,12 @@ def payload(row, value):
 
 def journal(minor):
     owners = sorted({owner for owner, _ in shared.EXPECTED.values()})
-    rows = [{"event": "run_started", "report_version": "ci-unittest.2", "source": dict(SOURCE),
+    rows = [{"event": "run_started", "report_version": "ci-unittest.3", "source": dict(SOURCE),
              "runtime": {"os": "ubuntu", "os_version": "24.04", "architecture": "x86_64",
-                         "python_version": minor + ".7", "soabi": "cpython-" + minor.replace(".", "") + "-x86_64-linux-gnu"},
+                         "python_version": minor + ".7", "soabi": "cpython-" + minor.replace(".", "") + "-x86_64-linux-gnu",
+                         "runner_image_os": "ubuntu24",
+                         "runner_image_version": "20261004.1.0" if minor == "3.12" else "20261005.2.0",
+                         "runner_image_digest": None, "runner_image_digest_status": "not_collected"},
              "acceptance_status": "not_completed", "formal_permission": False}]
     rows.extend({"event": "planned_test", "test_id": owner} for owner in owners)
     for owner in owners:
@@ -117,6 +120,26 @@ class SharedFixtureTests(unittest.TestCase):
         self.assertFalse(result["formal_permission"])
         self.assertFalse(result["execution_authenticated"])
         self.assertEqual(result["source"], SOURCE)
+        self.assertEqual(result["external_runner_image_log_status"], "not_collected")
+        self.assertEqual(result["external_runner_image_manifest_status"], "not_collected")
+        self.assertNotEqual(result["reports"]["3.12"]["runtime"]["runner_image_version"],
+                            result["reports"]["3.14"]["runtime"]["runner_image_version"])
+        for minor in compare.MINORS:
+            report = result["reports"][minor]
+            self.assertEqual(report["source"], SOURCE)
+            self.assertEqual(report["raw_pin"], {"bytes": report["bytes"], "sha256": report["sha256"]})
+            self.assertEqual(len(report["sha256"]), 64)
+
+    def test_missing_or_forged_runner_image_identity_is_rejected(self):
+        for key, value in (("runner_image_os", None), ("runner_image_os", "ubuntu22"),
+                           ("runner_image_version", None), ("runner_image_version", ""),
+                           ("runner_image_version", "bad image"),
+                           ("runner_image_digest", "f" * 64),
+                           ("runner_image_digest_status", "collected")):
+            rows = {minor: journal(minor) for minor in compare.MINORS}
+            rows["3.14"][0]["runtime"][key] = value
+            with self.subTest(key=key, value=value), self.assertRaises(compare.EvidenceError):
+                compare.compare_reports(self.pair(rows), SOURCE)
 
     def test_numeric_tolerance_only_applies_to_declared_float_values(self):
         for name, value, accepted in (("profile-values-C0", 1.0 + 1e-13, True), ("profile-values-C0", 1.001, False),

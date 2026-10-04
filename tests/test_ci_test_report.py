@@ -105,10 +105,28 @@ class CiTestReportTests(unittest.TestCase):
                     patch.dict(ci.os.environ, {"ImageOS": "ubuntu24", "ImageVersion": "hand-image", "DUMMY_PRIVATE": "never export"}, clear=True):
                 result = ci.runtime_metadata()
             self.assertEqual(result["python_version"], version)
+            self.assertEqual(result["runner_image_os"], "ubuntu24")
             self.assertEqual(result["runner_image_version"], "hand-image")
             self.assertIsNone(result["runner_image_digest"])
             self.assertEqual(result["runner_image_digest_status"], "not_collected")
             self.assertNotIn("DUMMY_PRIVATE", json.dumps(result))
+
+    def test_runner_image_identity_must_be_present_and_for_ubuntu24(self):
+        for image_os, image_version in ((None, "20261004.1.0"), ("", "20261004.1.0"),
+                                        ("ubuntu22", "20261004.1.0"), ("ubuntu24", None),
+                                        ("ubuntu24", ""), ("ubuntu24", "bad image")):
+            environment = {}
+            if image_os is not None: environment["ImageOS"] = image_os
+            if image_version is not None: environment["ImageVersion"] = image_version
+            with self.subTest(image_os=image_os, image_version=image_version), \
+                    patch.object(ci, "sys", SimpleNamespace(platform="linux", version_info=(3, 14, 0))), \
+                    patch.object(ci.platform, "freedesktop_os_release", return_value={"ID": "ubuntu", "VERSION_ID": "24.04"}), \
+                    patch.object(ci.platform, "machine", return_value="x86_64"), \
+                    patch.object(ci.platform, "python_implementation", return_value="CPython"), \
+                    patch.object(ci.sysconfig, "get_config_var", return_value=None), \
+                    patch.dict(ci.os.environ, environment, clear=True), \
+                    self.assertRaisesRegex(RuntimeError, "runner image identity"):
+                ci.runtime_metadata()
 
     def test_other_linux_release_architecture_minor_and_gil_are_rejected(self):
         cases = [("26.04", "x86_64", (3, 14), 0), ("24.04", "aarch64", (3, 14), 0),
@@ -128,15 +146,28 @@ class CiTestReportTests(unittest.TestCase):
             (root / ".github/workflows").mkdir(parents=True)
             (root / ".github/workflows/ci.yml").write_text("hand workflow", encoding="utf-8")
             head = "a" * 40
-            with patch.dict(ci.os.environ, {"GITHUB_SHA": head}, clear=True), \
+            with patch.dict(ci.os.environ, {"GITHUB_SHA": head, "GITHUB_RUN_ID": "12",
+                                                 "GITHUB_RUN_ATTEMPT": "2"}, clear=True), \
                     patch.object(ci.subprocess, "check_output", side_effect=[(head + "\n").encode(), b""]) as git:
                 result = ci.source_identity(root)
             self.assertEqual(result["revision"], head)
+            self.assertEqual((result["github_run_id"], result["github_run_attempt"]), ("12", "2"))
             self.assertEqual(len(result["workflow_sha256"]), 64)
             self.assertTrue(all(call.kwargs["env"]["GIT_NO_LAZY_FETCH"] == "1" for call in git.call_args_list))
             for dirty, github_sha in ((b" M changed.py\n", head), (b"", "b" * 40)):
-                with self.subTest(dirty=bool(dirty)), patch.dict(ci.os.environ, {"GITHUB_SHA": github_sha}, clear=True), \
+                with self.subTest(dirty=bool(dirty)), patch.dict(ci.os.environ, {"GITHUB_SHA": github_sha,
+                        "GITHUB_RUN_ID": "12", "GITHUB_RUN_ATTEMPT": "2"}, clear=True), \
                         patch.object(ci.subprocess, "check_output", side_effect=[head.encode(), dirty]), self.assertRaises(RuntimeError):
+                    ci.source_identity(root)
+            for run_id, attempt in ((None, "1"), ("1", None), ("0", "1"), ("1", "0"),
+                                    ("bad", "1"), ("1", "bad")):
+                environment = {"GITHUB_SHA": head}
+                if run_id is not None: environment["GITHUB_RUN_ID"] = run_id
+                if attempt is not None: environment["GITHUB_RUN_ATTEMPT"] = attempt
+                with self.subTest(run_id=run_id, attempt=attempt), \
+                        patch.dict(ci.os.environ, environment, clear=True), \
+                        patch.object(ci.subprocess, "check_output", side_effect=[head.encode(), b""]), \
+                        self.assertRaisesRegex(RuntimeError, "run and attempt"):
                     ci.source_identity(root)
 
     def invoke_main(self, root, suite, identities):

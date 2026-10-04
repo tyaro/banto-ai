@@ -23,6 +23,12 @@ from tools import ci_shared_fixtures as shared
 
 REPORT = Path("artifacts/ci-tests/unittest.jsonl")
 MAX_REPORT_BYTES = 16 * 1024 * 1024
+RUNNER_IMAGE_OS = "ubuntu24"
+
+
+def image_version(value):
+    """Accept a bounded hosted-image label; the job log must verify its value."""
+    return type(value) is str and re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", value) is not None
 
 
 def runtime_metadata():
@@ -35,10 +41,13 @@ def runtime_metadata():
     if (platform.python_implementation() != "CPython" or sys.version_info[:2] not in ((3, 12), (3, 14))
             or sysconfig.get_config_var("Py_GIL_DISABLED")):
         raise RuntimeError("CPython 3.12/3.14 with GIL required")
+    image_os, image = os.environ.get("ImageOS"), os.environ.get("ImageVersion")
+    if image_os != RUNNER_IMAGE_OS or not image_version(image):
+        raise RuntimeError("Ubuntu 24.04 hosted runner image identity required")
     return {"os": "ubuntu", "os_version": "24.04", "kernel": platform.release(), "architecture": platform.machine(),
             "python_version": platform.python_version(), "python_build": sys.version, "compiler": platform.python_compiler(),
             "soabi": sysconfig.get_config_var("SOABI"),
-            "runner_image_os": os.environ.get("ImageOS"), "runner_image_version": os.environ.get("ImageVersion"),
+            "runner_image_os": image_os, "runner_image_version": image,
             "runner_image_digest": None, "runner_image_digest_status": "not_collected"}
 
 
@@ -50,10 +59,14 @@ def source_identity(root):
     revision = git("rev-parse", "HEAD").decode("ascii").strip()
     if not re.fullmatch("[a-f0-9]{40}", revision) or git("status", "--porcelain", "--untracked-files=normal"):
         raise RuntimeError("clean source revision required")
-    if os.environ.get("GITHUB_SHA", revision) != revision:
+    if os.environ.get("GITHUB_SHA") != revision:
         raise RuntimeError("workflow and checkout revisions differ")
+    run_id, attempt = os.environ.get("GITHUB_RUN_ID"), os.environ.get("GITHUB_RUN_ATTEMPT")
+    if any(type(value) is not str or re.fullmatch(r"[1-9][0-9]{0,19}", value) is None
+           for value in (run_id, attempt)):
+        raise RuntimeError("GitHub run and attempt identity required")
     return {"revision": revision, "workflow_sha256": hashlib.sha256((root / ".github/workflows/ci.yml").read_bytes()).hexdigest(),
-            "github_run_id": os.environ.get("GITHUB_RUN_ID"), "github_run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT")}
+            "github_run_id": run_id, "github_run_attempt": attempt}
 
 
 class Journal:
@@ -161,7 +174,7 @@ def main():
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("xb") as output:
         journal = Journal(output)
-        journal.emit("run_started", report_version="ci-unittest.2", started_utc=datetime.now(timezone.utc).isoformat(),
+        journal.emit("run_started", report_version="ci-unittest.3", started_utc=datetime.now(timezone.utc).isoformat(),
                      runtime=runtime, source=source, acceptance_status="not_completed", formal_permission=False)
         # An interruption/discovery failure leaves a partial journal without run_finished.
         suite = unittest.defaultTestLoader.discover(str(ROOT / "tests"), top_level_dir=str(ROOT))

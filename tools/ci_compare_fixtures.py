@@ -17,6 +17,7 @@ from tools import ci_test_report as ci
 MINORS = ("3.12", "3.14")
 MAX_LINE_BYTES = 4 * 1024 * 1024
 REL_TOL = ABS_TOL = 1e-12
+SOURCE_FIELDS = {"revision", "workflow_sha256", "github_run_id", "github_run_attempt"}
 
 
 class EvidenceError(ValueError):
@@ -48,7 +49,20 @@ def strict_json(raw):
         raise EvidenceError("invalid_json") from error
 
 
+def source_identity(value):
+    require(type(value) is dict and set(value) == SOURCE_FIELDS, "source_identity_fields")
+    require(type(value["revision"]) is str and re.fullmatch(r"[a-f0-9]{40}", value["revision"]) is not None,
+            "source_revision")
+    require(type(value["workflow_sha256"]) is str and
+            re.fullmatch(r"[a-f0-9]{64}", value["workflow_sha256"]) is not None, "workflow_pin")
+    for key in ("github_run_id", "github_run_attempt"):
+        require(type(value[key]) is str and
+                re.fullmatch(r"[1-9][0-9]{0,19}", value[key]) is not None,
+                "run_attempt_identity")
+
+
 def read_report(path, minor, expected_source):
+    source_identity(expected_source)
     planned, started, finished, fixtures, skips = [], set(), {}, {}, []
     first = last = active = None
     active_outcomes = set()
@@ -65,13 +79,18 @@ def read_report(path, minor, expected_source):
             require(type(row) is dict and last is None, "record_after_finish_or_wrong_type")
             event = row.get("event")
             if first is None:
-                require(event == "run_started" and row.get("report_version") == "ci-unittest.2", "report_version_or_start")
+                require(event == "run_started" and row.get("report_version") == "ci-unittest.3", "report_version_or_start")
                 require(row.get("source") == expected_source, "source_mismatch")
                 require(row.get("acceptance_status") == "not_completed" and row.get("formal_permission") is False, "acceptance_claim")
                 runtime = row.get("runtime", {})
                 require((runtime.get("os"), runtime.get("os_version"), runtime.get("architecture")) == ("ubuntu", "24.04", "x86_64"), "runtime_mismatch")
                 require(re.fullmatch(re.escape(minor) + r"\.\d+", runtime.get("python_version", "")) is not None, "python_mismatch")
                 require(runtime.get("soabi") == "cpython-" + minor.replace(".", "") + "-x86_64-linux-gnu", "python_abi_mismatch")
+                require(runtime.get("runner_image_os") == ci.RUNNER_IMAGE_OS and
+                        ci.image_version(runtime.get("runner_image_version")), "runner_image_identity")
+                require(runtime.get("runner_image_digest") is None and
+                        runtime.get("runner_image_digest_status") == "not_collected",
+                        "runner_image_digest_not_collected")
                 first = row
             elif event == "planned_test":
                 name = row.get("test_id")
@@ -118,7 +137,8 @@ def read_report(path, minor, expected_source):
     require(first is not None and last is not None and fixtures.keys() == shared.EXPECTED.keys(), "incomplete_report")
     require(all(finished.get(owner) == ["pass"] for owner, _ in shared.EXPECTED.values()), "fixture_test_not_passed")
     return {"sha256": digest.hexdigest(), "bytes": total, "planned": planned, "finished": finished,
-            "skips": skips, "fixtures": fixtures, "runtime": first["runtime"], "summary": last}
+            "skips": skips, "fixtures": fixtures, "source": first["source"],
+            "runtime": first["runtime"], "summary": last}
 
 
 def numeric_equal(left, right):
@@ -146,7 +166,11 @@ def compare_reports(paths, expected_source):
                          "payload_sha256": {"3.12": a["sha256"], "3.14": b["sha256"]}})
     return {"comparison_version": shared.VERSION, "comparison_status": "matched", "source": expected_source,
             "fixtures": compared, "numeric_tolerance": {"rel_tol": REL_TOL, "abs_tol": ABS_TOL},
-            "reports": {minor: {key: report[key] for key in ("sha256", "bytes", "runtime", "summary")} for minor, report in reports.items()},
+            "reports": {minor: {**{key: report[key] for key in ("sha256", "bytes", "source", "runtime", "summary")},
+                                "raw_pin": {"bytes": report["bytes"], "sha256": report["sha256"]}}
+                        for minor, report in reports.items()},
+            "external_runner_image_log_status": "not_collected",
+            "external_runner_image_manifest_status": "not_collected",
             "acceptance_status": "not_completed", "formal_permission": False, "execution_authenticated": False,
             "scope": "selected existing hand fixtures on Linux 3.12 and 3.14; Windows and full S4 acceptance remain incomplete"}
 
