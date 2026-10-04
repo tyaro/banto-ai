@@ -8,6 +8,8 @@
 
 後続code保存点 `5289634b7561e535d84fe65b8b600f0cc5f49467` では、[先行`g001`のjournal・owner receipt・保存行を結ぶ読取専用bridge](../../src/banto_ai/anomaly_v03_preformal_campaign_saved_row_bridge.py)を追加した。旧sourceへHEADを切り替えず、外部固定のplan/両checkpoint pinと2件のowner receipt・22保存出力pin・10 control rawを結ぶ。現workspaceの実保存rawでも1/480区間・6/2,880評価、欠番1～479を照合したが、40 cluster・diagnostics・slice sourceはnull、過去processと131 MB payloadをこのbridgeで再認証していない。5役Jobの保存予算検査も版・root・上限・役割pin/PID・禁止状態を強化した。[CI journal検証器](../../tools/ci_verify_regression_journals.py)は外部run ID/attempt、必須28 test ID、未知skip拒否を追加し、workflow比較jobに接続した。関連統合123試験、compileall、repository safetyはPASS。ただし対象最終revisionの実Ubuntu両job、runner image digest/代替同定、Windows正式nativeは未取得である。26H2保証Aの[採択前改訂案v2](../anomaly-v03-s4-26h2-amendment-draft-v2.md)は正式契約へ反映していない。
 
+clean `ab6fd0469056160931b7f7468702ac7a44782f9a` の[非上書き読取専用postcheck receipt](../../artifacts/anomaly-v03-preformal-campaign-saved-row-bridge-20261004-01/result.json)は5,288 B / SHA-256 `e747697b04f40d0bf3808ed5c7e48c24af38e8b5f290ade04f7c9142b3ddb71e`。外部固定のplan 95,584 B / `88ccc0d87c773b7dd14c95f4fe4522c979824b9b1a17cc21490ace31b2fa8183`、started checkpoint 839 B / `4d6fba71c3076f12e7c81519e1bf51be968cee1e6e0adf0d5da80f52823d5d6d`、terminal checkpoint 1,190 B / `06fec99585e7721aca882f13d192dbf9e533d73336a54a348484f5cad6ad87f0`を入口に、旧保存rawを再照合した。別のread-only確認でもreceiptのraw/source pin、1/480・6/2,880、479欠番、正式flag falseが一致した。このreceipt自体も過去実行の再認証やcampaign全体の完成を示さず、`artifacts/`内でのみ保持する。
+
 ## 先行campaign `g001` の保存点（履歴）
 
 | 項目 | 引き継ぐ値 |
