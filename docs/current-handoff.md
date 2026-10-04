@@ -1,5 +1,7 @@
 # 次のタスク用の短い引継ぎ
 
+更新: 2026-10-04 JST。**26H2単一writerの外側成功receipt直前に、公開raw・marker・writer/reader resultの最終再照合を追加した。** clean `7a223d6` のnative 4/4 pass。reader終了直後のmarker改変とwriter result改変は両方failedで保全し、成功bindingを作らない。[改訂案の後続試験とraw pin](anomaly-v03-s4-26h2-amendment-draft-v1.md)を参照。旧25H2 fixture suiteは現26H2で入口拒否し、後段試験は合格扱いしない。保証A・S4は未採択、正式credit0、旧gate維持。以下は以前の保存点の履歴。
+
 更新: 2026-10-04 JST。**26H2・単一writer保証Aの[S4改訂案](anomaly-v03-s4-26h2-amendment-draft-v1.md)をレビュー用に作成した。** `9aab9e0` のclean sourceで限定native 3/3 pass、通常の関連26試験は23 pass・明示起動待ち3 skip。成功1件と改変拒否4件の保存receipt pinを改訂案に記録した。保証Aは未採択で、最終revisionの5役閉包、単一外側予算、Linux両job、正式dev/smoke、独立監査は残る。S4採択なし、正式credit0、旧gate `s4_acceptance_not_frozen`を維持する。以下は以前の保存点の履歴。
 
 更新: 2026-10-04 JST。**別セッション向けの最新引き継ぎを作成した。** [保存証拠の全pin・再検証時の固定revision・S4～S7の残件と実データ範囲](results/anomaly-multiseed-v0.3-session-handoff-and-remaining-acceptance-2026-10-04.md)。架空campaign `486f28cd` はclean source `e9107d7323ea6eda2bad8baf1ebd432a879ec4b5` でslot 0 `g001` をprepare→started→owned run-budget→fresh reread→completedまで保存。22 raw/131,144,120 B、外部checkpoint count2/head `57a8bd47…`、６行を独立read-only照合。coverageは1/480区間・6/2,880評価、共通campaign認証・全工程予算・S4採択は未成立。`resume_authorized=false`、実登録観測未読、正式credit0、旧gate `s4_acceptance_not_frozen`。この引き継ぎ文書のcommitは旧campaignのsource revisionと異なるため、旧verifyには元rootを一時的に固定revisionへ戻す必要がある。`artifacts/` はGit管理外。以下は以前の保存点の履歴。

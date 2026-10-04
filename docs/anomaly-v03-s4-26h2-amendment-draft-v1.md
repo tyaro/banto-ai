@@ -37,6 +37,18 @@
 
 この試験のscopeは未採択の26H2 platform fixtureであり、登録実観測・全source/runtime閉包・正式同形の全工程予算・S4採択を示さない。上表の失敗rootは残し、成功rootと合算しない。
 
+### 最終receipt直前の再照合（後続の限定修正）
+
+clean `7a223d62c9807c913dac15062c3ddbc7dc84e819` で、別readerの返答後、外側のverified receiptを作る前に公開全payload・markerと保存済みwriter/reader resultをもう一度照合するようにした。reader終了直後にmarkerまたはwriter resultを変更する実機試験を追加し、native 4/4 pass（102.945秒）。両変更をfailedとして保全し、`publication-binding.json`を作らなかった。成功rootとこの2失敗rootの `platform-result.json` raw pinは次のとおり。前の3/3試験とは別revision・別rootの結果である。
+
+| native attempt / `platform-result.json` | bytes | SHA-256 | 保存結果 |
+| --- | ---: | --- | --- |
+| [native-baeb15e6c0ecf04f](../artifacts/anomaly-v03-engineering-platform-v2/native-baeb15e6c0ecf04f/platform-result.json) | 1,916 | `3dcd4038441a000ae9b85336542076b48f17a45cf5980c1d2b38dac9a316b8e9` | verified。reader終了後の最終再照合を通過 |
+| [native-42ae2f5d4faba944-marker](../artifacts/anomaly-v03-engineering-platform-v2/native-42ae2f5d4faba944-marker/platform-result.json) | 1,522 | `8293fc213c40520e2b5a86d6b6d07896d021bc420a0b1f47e3d9fb921b376ad6` | failed。`external marker pin mismatch`、readerは完了済み |
+| [native-42ae2f5d4faba944-writer-receipt](../artifacts/anomaly-v03-engineering-platform-v2/native-42ae2f5d4faba944-writer-receipt/platform-result.json) | 1,530 | `ad8dc288159701d6b20f7c3da61b3ba3025f3337a3e9578fc856197ca62edbd1` | failed。`final retained writer result changed`、readerは完了済み |
+
+この再照合も、検査後の別主体による並行書換えを防止しない。旧25H2用 `test_anomaly_v03_fixture_publication` はこの26H2で `unsupported engineering runtime` として入口拒否する。該当suiteの後段を今回の26H2試験結果に合算しない。
+
 ## 採択前に閉じる事項
 
 1. 本案の保証 A と旧§8との差を版付き計画・運用契約・正式wrapperに反映し、最終clean revisionを指定する。案 B のDACL/独立token試験を実施済みと表示しない。
