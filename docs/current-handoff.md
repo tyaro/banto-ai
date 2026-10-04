@@ -1,6 +1,6 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-10-05 JST。**`gh` は承認済み実行で利用でき、作業ブランチをGitHubへpushしてUbuntu予備CIを起動した。** [初回2 runの失敗証跡・修正候補・残るS4-4](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。`c08f6fd`の二重収集は`79b2835`で解消し、後者は両minorで2,796件収集・2,784件実行、fail19/error65/skip231と同一の失敗集合を保存した。次候補のLinux fixture移植と再CI、共有fixture比較は未完了。正式credit0、gate`s4_acceptance_not_frozen`、S5未開放。以下は以前の保存点の履歴。
+更新: 2026-10-05 JST。**`gh` は承認済み実行で利用でき、作業ブランチをGitHubへpushしてUbuntu予備CIを起動した。** [4 runの診断・保存pin・残るS4-4](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。`c08f6fd`の二重収集を`79b2835`で解消し、`7042019`のLinux fixture移植後は両minorで2,811件実行・fail0/error1/skip237、同一のcheckout長例外だけが残った。該当テストを`24c8d20`で修正し、両minorの再CI `37228978376` と共有fixture比較を実行中。予備CI合格は未確認。正式credit0、gate`s4_acceptance_not_frozen`、S5未開放。以下は以前の保存点の履歴。
 
 更新: 2026-10-05 JST。**clean `fdaf5eec58d110b5f048c703c740c8e10664fc07`で、5役`owner._source` 1回のHEAD/status/選定5 source blobをmain Git実行file・別process receipt付きで結ぶ限定試走を行った。** [7件の保存pinと独立read-only照合、次のv2接続点](results/anomaly-multiseed-v0.3-owned-source-git-seven-call-trial-2026-10-05.md)。結果1,654 B / SHA-256 `3c68e0577385c3693a5819970e096a3b297e8c8fdf87ea9c0da97d5e9891b2cc`、7件は別PID・exit0、正式flag false。現v1の5役Jobへreaderを伝播しておらず、全source/runtime閉包や正式受入ではない。S5未開放、正式credit0、gate`s4_acceptance_not_frozen`。以下は以前の保存点の履歴。
 
