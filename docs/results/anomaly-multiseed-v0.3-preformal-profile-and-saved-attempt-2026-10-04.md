@@ -4,6 +4,8 @@
 
 最新の[保存行coverage試行](anomaly-multiseed-v0.3-preformal-saved-row-coverage-2026-10-04.md)は、g02/r01の外部pin付きcontrol rawから区間0の６行を検査し、欠落479区間を列挙した。共通producer/campaign anchorはなく、40 cluster・正式creditは閉じたままである。共有由来・所有journal・全工程予算の具体的な未採択案は[campaign anchor契約案v1](../anomaly-v03-preformal-campaign-anchor-proposal-v1.md)に分けた。
 
+その次の[架空campaign metadata境界](anomaly-multiseed-v0.3-preformal-campaign-metadata-2026-10-04.md)は凍結480区間の計画と外部head/count付きjournalを**宣言として**検査する。所有controller、起動前の外部固定、保存raw再読取り、実process終了はまだ接続していないため、同じcampaign由来を認証しない。次の限定native実装の条件は[controller案v1](../anomaly-v03-preformal-campaign-controller-next-v1.md)に記録した。
+
 ## S4採択前の受入見取り図
 
 | 受入事項 | 現在の確定範囲 | 採択前に要る証拠 |
