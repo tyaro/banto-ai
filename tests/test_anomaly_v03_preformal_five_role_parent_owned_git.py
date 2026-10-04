@@ -33,7 +33,7 @@ class ParentOwnedGitTests(unittest.TestCase):
             stack.enter_context(patch.object(module, 'ROOT', f.root))
         return stack
 
-    def _run(self, name='trial'):
+    def _run(self, name='trial', **options):
         f = self.fixture
         with self._roots():
             return parent_git.run_anchored(
@@ -42,7 +42,7 @@ class ParentOwnedGitTests(unittest.TestCase):
                 expected_revision=f.revision,
                 receipt_parent=f.parent, receipt_name=name,
                 git_policy_path=f.policy_path,
-                expected_git_policy_pin=f.policy_pin)
+                expected_git_policy_pin=f.policy_pin, **options)
 
     def _verify(self, result, name='trial'):
         with self._roots():
@@ -58,9 +58,90 @@ class ParentOwnedGitTests(unittest.TestCase):
                 parent_git.owner._source(
                     kwargs['expected_revision'], git_reader=kwargs['git_reader'],
                     git_call_prefix=f'parent-source-{index}-')
-            return save(**kwargs)
+            result = save(**kwargs)
+            if status == 'verified' and kwargs.get('child_git_policy_path'):
+                root = Path(result['check_directory'])
+                invocation = parent_git.v.strict_json(
+                    (root / 'invocation.json').read_bytes())
+                invocation.update(
+                    format=parent_git.owner.OWNED_GIT_INVOCATION,
+                    mode='fixture', archive_pin=f.join_pin,
+                    bound_pin=f.join_pin, profile_pins=None,
+                    result_root=str(root / 'five-role'), invocation_id='a' * 64,
+                    child_git_policy_path=str(kwargs['child_git_policy_path']),
+                    child_git_policy_pin=kwargs['expected_child_git_policy_pin'])
+                invocation_raw = parent_git.io.json_bytes(invocation)
+                (root / 'invocation.json').write_bytes(invocation_raw)
+                receipt = parent_git.v.strict_json((root / 'receipt.json').read_bytes())
+                receipt['invocation_pin'] = parent_git.observed._pin(invocation_raw)
+                raw = parent_git.io.json_bytes(receipt)
+                (root / 'receipt.json').write_bytes(raw)
+                result['receipt_pin'] = parent_git.observed._pin(raw)
+                with parent_git.source_git.OwnedSourceGitSession(
+                        policy_path=f.policy_path, expected_policy_pin=f.policy_pin,
+                        revision=f.revision, receipt_root=root / 'child-git',
+                        phase=parent_git.owner.CHILD_GIT_PHASE) as child_reader:
+                    parent_git.owner._source(f.revision, git_reader=child_reader,
+                                             git_call_prefix='child-source-')
+                    for index in range(2):
+                        parent_git.chain._git_sources(
+                            f.revision, git_reader=child_reader,
+                            git_call_prefix=f'child-chain-source-{index}-')
+                    parent_git.owner._source(f.revision, git_reader=child_reader,
+                                             git_call_prefix='child-boundary-')
+            return result
 
         return run
+
+    def test_child_opt_in_binds_all_68_calls_and_replays_without_git(self):
+        with patch.object(parent_git.owner, 'run_owned',
+                          side_effect=self._owned_fake_owner()), \
+             patch.object(parent_git.owner, 'verify_retained',
+                          side_effect=self._owned_fake_verifier), \
+             patch.object(subprocess, 'check_output',
+                          side_effect=AssertionError('bare Git invoked')):
+            result = self._run('child-owned', own_child_git=True)
+            self.assertEqual(result['status'], 'verified', result)
+            self.assertEqual(result['format'], parent_git.CHILD_FORMAT)
+            self.assertEqual((result['source_git_call_count'],
+                              result['parent_git_call_count'],
+                              result['child_git_call_count']), (7, 35, 26))
+            self.assertTrue(result['child_fixed_git_owned'])
+            self.assertFalse(result['inner_v1_git_owned'])
+            with patch.object(parent_git.source_git.owned_git, 'run_owned',
+                              side_effect=AssertionError('Git relaunched')):
+                verified = self._verify(result, 'child-owned')
+            self.assertEqual(verified['child_git_call_count'], 26)
+            self.assertFalse(verified['runtime_closure_complete'])
+
+    def test_child_opt_in_cannot_downgrade_invocation_to_unowned_child(self):
+        f = self.fixture
+        with patch.object(parent_git.owner, 'run_owned',
+                          side_effect=self._owned_fake_owner()), \
+             patch.object(parent_git.owner, 'verify_retained',
+                          side_effect=self._owned_fake_verifier):
+            result = self._run('child-downgrade', own_child_git=True)
+            self.assertEqual(result['status'], 'verified', result)
+            root = f.parent / 'child-downgrade'
+            owner_root = root / 'attempt'
+            invocation = parent_git.v.strict_json(
+                (owner_root / 'invocation.json').read_bytes())
+            invocation['format'] = parent_git.owner.INVOCATION
+            del invocation['child_git_policy_path']
+            del invocation['child_git_policy_pin']
+            raw = parent_git.io.json_bytes(invocation)
+            (owner_root / 'invocation.json').write_bytes(raw)
+            receipt = parent_git.v.strict_json((owner_root / 'receipt.json').read_bytes())
+            receipt['invocation_pin'] = parent_git.observed._pin(raw)
+            raw = parent_git.io.json_bytes(receipt)
+            (owner_root / 'receipt.json').write_bytes(raw)
+            outer = parent_git.v.strict_json((root / 'receipt.json').read_bytes())
+            outer['owner_receipt_pin'] = parent_git.observed._pin(raw)
+            raw = parent_git.io.json_bytes(outer)
+            (root / 'receipt.json').write_bytes(raw)
+            result['receipt_pin'] = parent_git.observed._pin(raw)
+            with self.assertRaisesRegex(ValueError, 'owned child invocation'):
+                self._verify(result, 'child-downgrade')
 
     def _owned_fake_verifier(self, root, pin, *, git_reader=None,
                              git_call_prefix=''):

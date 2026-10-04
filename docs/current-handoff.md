@@ -1,5 +1,7 @@
 # 次のタスク用の短い引継ぎ
 
+更新: 2026-10-05 JST。親Git入口に`--own-child-git`を追加し、v2 invocationの外部policy pinからJob子の固定source Git 26件を所有する候補を接続した。7+35+26=68件の順序・raw pin、保存再検証時のGit再起動禁止、古いinvocationへの差し替え拒否を含む関連32試験pass。新コードのWindows native試走は次。各role内Git約366件・完全source/runtime閉包は残り、`inner_v1_git_owned=false`。先行修正`51400e8`の[Ubuntu CI 37243400814](https://github.com/tyaro/banto-ai/actions/runs/37243400814)は最後の確認時点で両minor実行中。正式gate `s4_acceptance_not_frozen`、正式credit0。以下の「Ubuntu再実行はこれから」は先行保存点の履歴。
+
 更新: 2026-10-05 JST。`b39e595`の[Ubuntu CI 37237626121](https://github.com/tyaro/banto-ai/actions/runs/37237626121)は両minor各2,869件中、新規wall-rowテストのWindowsパスfixture解釈2件で不合格。テストfixtureだけ修正し、Windows対象9試験pass。修正版のUbuntu再実行はこれから。[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。下記native証拠は`b39e595`固定。正式gate `s4_acceptance_not_frozen`、正式credit0。
 
 更新: 2026-10-05 JST。**clean `b39e595989f9fbdc509a6bdbf114ec47fe65d4f4`で新規架空campaign一区間の単一wall→journal→10保存raw→6行bridgeと、別rootの親Git直接7+35件をWindows native試走した。** [両試走のraw pin・独立再hash・残るS4境界](results/anomaly-multiseed-v0.3-preformal-wall-row-parent-git-native-2026-10-05.md)。campaign外側は746.079/900秒、保存verifierと23 raw・48 source照合がpass、6行は全て正当な`inconclusive`。親Gitは42件の直接receiptと5役Job計1,080 process・active0を保存した。候補profile、Job子/各role親側Git、完全source/runtime閉包と全工程予算は未了。[発明40 clusterの50,000 draw検算](results/anomaly-multiseed-v0.3-preformal-inconclusive-draw-probe-2026-10-05.md)は算術一致だが保存campaignからの40 cluster由来ではない。旧`4aacbee4`はreader source pin不足で新bridgeにfail closed。正式credit0。

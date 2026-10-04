@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import os
+from contextlib import redirect_stdout
+import io as text_io
 from pathlib import Path
 import sys
 import tempfile
@@ -9,6 +11,8 @@ import unittest
 from unittest.mock import patch
 
 from banto_ai import anomaly_v03_preformal_five_role_job_owner as owner
+from banto_ai import anomaly_v03_preformal_five_role_parent_owned_git as parent_git
+from banto_ai import anomaly_v03_preformal_owned_source_git_session as source_git
 
 
 REVISION = 'a' * 40
@@ -427,6 +431,129 @@ class FiveRoleJobNativeProbeTests(unittest.TestCase):
         self.assertTrue(report['job']['all_assigned_processes_exit_confirmed'])
         with self.assertRaises(ValueError):
             owner._job_complete(report, argv, {'pid': report['worker_pid']})
+
+
+class ChildOwnedGitRoutingTests(unittest.TestCase):
+    def setUp(self):
+        folder = tempfile.TemporaryDirectory()
+        self.addCleanup(folder.cleanup)
+        self.root = Path(folder.name).resolve()
+        self.target = self.root / 'artifacts' / 'attempt'
+        self.target.mkdir(parents=True)
+        self.invocation = {
+            'format': owner.INVOCATION, 'source_revision': REVISION,
+            'join_root': str(self.root / 'artifacts' / 'join'),
+            'join_receipt_pin': PIN, 'archive_pin': PIN, 'bound_pin': PIN,
+            'candidate_set_path': None, 'candidate_set_pin': None,
+            'profile_pins': None, 'result_root': str(self.target / 'five-role')}
+
+    def test_child_source_and_chain_boundaries_route_exactly_26_calls(self):
+        files = {}
+        for name in (*owner.chain.SOURCES, owner.SOURCE):
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            raw = name.encode() + b'\n'
+            path.write_bytes(raw)
+            files[name] = raw
+        calls = []
+
+        class Reader:
+            def run(self, **kwargs):
+                calls.append({'index': len(calls), **kwargs,
+                              'source_path': kwargs.get('source_path'),
+                              'expected_output_pin': kwargs.get('expected_output_pin'),
+                              'call_status': 'verified', 'receipt_pin': PIN,
+                              'reason': None, 'error_type': None})
+                operation = kwargs['operation']
+                return ((REVISION + '\n').encode() if operation == 'head' else
+                        b'' if operation == 'status' else files[kwargs['source_path']])
+
+        reader = Reader()
+        response = {'status': 'verified', 'result_pin': PIN,
+                    'check_directory': str(self.target / 'five-role')}
+
+        def chain(**kwargs):
+            self.assertIs(kwargs['git_reader'], reader)
+            for index in range(2):
+                owner.chain._git_sources(
+                    REVISION, git_reader=reader,
+                    git_call_prefix=f'child-chain-source-{index}-')
+            return response
+
+        inputs = {'archive_pin': PIN, 'bound_pin': PIN, 'profile_pins': None}
+        with patch.object(owner, 'ROOT', self.root), \
+             patch.object(owner.chain, 'ROOT', self.root), \
+             patch.object(owner, '_inputs', return_value=inputs), \
+             patch.object(owner, '_invocation', return_value=self.invocation), \
+             patch.object(owner.chain, 'run_chain', side_effect=chain), \
+             patch.object(owner.subprocess, 'check_output',
+                          side_effect=AssertionError('bare Git invoked')):
+            result = owner._run_child(self.target / 'invocation.json', PIN,
+                                      self.invocation, git_reader=reader)
+        self.assertEqual(result, response)
+        source = {'orchestrator_selected': {
+            name: owner.observed._pin(files[name]) for name in owner.chain.SOURCES},
+            'owner': owner.observed._pin(files[owner.SOURCE])}
+        parent_git._child_calls(calls, source)
+        self.assertEqual(len(calls), 26)
+        calls[8]['call_id'] = 'wrong-boundary'
+        with self.assertRaisesRegex(ValueError, 'call order'):
+            parent_git._child_calls(calls, source)
+
+    def test_child_success_is_printed_only_after_manifest_completion(self):
+        invocation = {**self.invocation, 'format': owner.OWNED_GIT_INVOCATION,
+                      'child_git_policy_path': str(self.root / 'artifacts' / 'policy.json'),
+                      'child_git_policy_pin': PIN}
+        for count in (26, 25):
+            output = text_io.StringIO()
+            entered = []
+            case = self
+
+            class Session:
+                manifest_result = None
+
+                def __init__(self, **kwargs):
+                    case.assertEqual(kwargs['receipt_root'], case.target / 'child-git')
+                    case.assertEqual(kwargs['expected_policy_pin'], PIN)
+
+                def __enter__(self):
+                    entered.append(self)
+                    return self
+
+                def __exit__(self, *args):
+                    case.assertEqual(output.getvalue(), '')
+                    self.manifest_result = {'status': 'verified', 'call_count': count}
+
+            def run(path, pin, value, *, git_reader):
+                self.assertIs(git_reader, entered[0])
+                return {'status': 'verified', 'result_pin': PIN,
+                        'check_directory': invocation['result_root']}
+
+            with self.subTest(count=count), patch.object(owner, 'ROOT', self.root), \
+                 patch.object(owner, '_invocation', return_value=invocation), \
+                 patch.object(source_git, 'OwnedSourceGitSession', Session), \
+                 patch.object(owner, '_run_child', side_effect=run), \
+                 redirect_stdout(output):
+                argv = [str(self.target / 'invocation.json'), str(PIN['bytes']), PIN['sha256']]
+                if count == 26:
+                    self.assertEqual(owner.child_main(argv), 0)
+                else:
+                    with self.assertRaisesRegex(ValueError, 'calls incomplete'):
+                        owner.child_main(argv)
+            self.assertEqual(bool(output.getvalue()), count == 26)
+
+    def test_child_policy_rejects_profile_or_join_overlap_before_policy_read(self):
+        invocation = {**self.invocation,
+                      'child_git_policy_path': str(self.root / 'artifacts' / 'external' / 'policy.json'),
+                      'child_git_policy_pin': PIN}
+        for changed in (
+                {**invocation, 'candidate_set_path': 'candidate.json', 'candidate_set_pin': PIN},
+                {**invocation, 'child_git_policy_path':
+                 str(Path(invocation['join_root']) / 'policy.json')}):
+            with patch.object(source_git, '_policy',
+                              side_effect=AssertionError('policy read')):
+                with self.assertRaisesRegex(ValueError, 'excludes candidate'):
+                    owner._child_policy(changed, self.target)
 
 
 if __name__ == '__main__':

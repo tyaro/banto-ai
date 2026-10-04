@@ -165,7 +165,7 @@ def _save(target, result, started):
 def run_chain(*, expected_mode, join_root, expected_join_receipt_pin,
               expected_revision, receipt_name, receipt_parent=OUTPUT_PARENT,
               budget_limits=None, candidate_set_path=None,
-              expected_candidate_set_pin=None):
+              expected_candidate_set_pin=None, git_reader=None):
     """One new attempt with five owned children and pinned stage succession."""
     v.require(type(expected_mode) is str and expected_mode == 'fixture',
               'only invented five-role fixture is open')
@@ -221,7 +221,9 @@ def run_chain(*, expected_mode, join_root, expected_join_receipt_pin,
                 candidate_set_path, expected_candidate_set_pin,
                 revision=expected_revision)
             result['candidate_profile_set_pin'] = copy.deepcopy(expected_candidate_set_pin)
-        result['selected_source_pins'] = _git_sources(expected_revision)
+        result['selected_source_pins'] = _git_sources(
+            expected_revision, git_reader=git_reader,
+            git_call_prefix='' if git_reader is None else 'child-chain-source-0-')
         archive_path, archive_pin, bound_pin, lineage = _external_archive(
             join_root, expected_join_receipt_pin)
         result['archive_lineage'] = lineage
@@ -273,7 +275,10 @@ def run_chain(*, expected_mode, join_root, expected_join_receipt_pin,
             result['identities'] = {'producer': producer_identity, **result['identities']}
         result['stage'] = 'postflight'
         budget.checkpoint('postflight')
-        evidence._same(_git_sources(expected_revision), result['selected_source_pins'],
+        evidence._same(_git_sources(
+            expected_revision, git_reader=git_reader,
+            git_call_prefix='' if git_reader is None else 'child-chain-source-1-'),
+                       result['selected_source_pins'],
                        'five-role selected source changed')
         four._pin_file(archive_path, archive_pin, producer.ARCHIVE_MAX)
         for name in four.INPUT_NAMES:

@@ -88,6 +88,7 @@ class FiveRoleFixtureTests(unittest.TestCase):
         self.assertFalse(result['formal_permission'])
 
     def test_five_distinct_owned_identities_include_fresh_producer(self):
+        reader = object()
         verified = {'check_directory': str(self.parent / 'attempt' / 'producer'),
                     'result_pin': PIN, 'status': 'verified',
                     'worker_exit_confirmed': True,
@@ -107,7 +108,7 @@ class FiveRoleFixtureTests(unittest.TestCase):
             for name in ('analysis', 'audit', 'writer', 'reader'):
                 resource_budget.record_role(name, 'verified', result_pin=PIN,
                                             exit_confirmed=True)
-        with patch.object(chain, '_git_sources', return_value={'source': PIN}), \
+        with patch.object(chain, '_git_sources', return_value={'source': PIN}) as source, \
              patch.object(chain, '_external_archive', return_value=(self.join / 'invented-inputs.zip',
                  PIN, PIN, {'input_scope': 'invented'})), \
              patch.object(chain.chain_budget, 'PreformalChainBudget', FakeBudget), \
@@ -117,7 +118,10 @@ class FiveRoleFixtureTests(unittest.TestCase):
              patch.object(chain, '_fresh_projection', return_value=FILES), \
              patch.object(chain.four, '_run_roles', side_effect=four_roles) as consumers, \
              patch.object(chain.four, '_pin_file'):
-            result = self.call_chain()
+            result = self.call_chain(git_reader=reader)
+        self.assertEqual([call.kwargs for call in source.call_args_list], [
+            {'git_reader': reader, 'git_call_prefix': 'child-chain-source-0-'},
+            {'git_reader': reader, 'git_call_prefix': 'child-chain-source-1-'}])
         self.assertEqual((producer.call_count, consumers.call_count), (1, 1))
         self.assertEqual(result['status'], 'verified')
         self.assertEqual(result['stage'], 'complete')
