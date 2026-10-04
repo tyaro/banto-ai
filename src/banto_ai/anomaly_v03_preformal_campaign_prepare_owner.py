@@ -8,6 +8,7 @@ The caller must supply the three pins retained by the separate campaign store.
 from __future__ import annotations
 
 import copy
+import math
 from pathlib import Path
 import re
 import sys
@@ -32,6 +33,18 @@ LIMITS = {'wall_seconds': 900, 'private_bytes': 1024**3,
           'output_bytes': 1024**2}
 MAX_CONTROL = 32 * 1024
 MAX_STDOUT = 1024**2
+
+
+def effective_limits(remaining_wall_seconds=None):
+    """Bound one prepare Job by the caller's positive remaining wall time."""
+    if remaining_wall_seconds is None:
+        return dict(LIMITS)
+    v.require(type(remaining_wall_seconds) in (int, float) and
+              math.isfinite(remaining_wall_seconds) and
+              remaining_wall_seconds > 0,
+              'finite positive prepare remaining wall seconds required')
+    return {**LIMITS, 'wall_seconds': min(LIMITS['wall_seconds'],
+                                         remaining_wall_seconds)}
 
 
 def _same(actual, expected, label):
@@ -119,7 +132,13 @@ def _stdout_claim(stdout_raw, intention, manifest, manifest_raw):
 
 
 def _completed_cli(report, launch, intention, plan, stdout_raw,
-                   stderr_raw, manifest_raw, sidecar_raw):
+                   stderr_raw, manifest_raw, sidecar_raw, *,
+                   effective_job_limits=None):
+    limits = (dict(LIMITS) if effective_job_limits is None else
+              effective_job_limits)
+    v.require(type(limits) is dict and
+              limits == effective_limits(limits.get('wall_seconds')),
+              'bounded saved prepare Job limits required')
     v.require(report['status'] == 'complete' and
               report['exit_code'] == 0 and
               report['worker_exit_confirmed'] is True and
@@ -129,7 +148,7 @@ def _completed_cli(report, launch, intention, plan, stdout_raw,
               re.fullmatch(r'[0-9a-f]{64}',
                            launch.get('start_token', '')) is not None and
               report['argv'] == intention['argv'] and
-              report['limits'] == LIMITS and
+              report['limits'] == limits and
               report['runtime_before'] == plan['runtime_candidate']['tuple'] and
               report['runtime_after'] == plan['runtime_candidate']['tuple'] and
               report['observation_errors'] == [] and
@@ -140,6 +159,7 @@ def _completed_cli(report, launch, intention, plan, stdout_raw,
               report['job']['root_resumed'] is True and
               report['job']['all_assigned_processes_exit_confirmed'] is True and
               report['job']['accounting']['active_processes'] == 0 and
+              job_owner.valid_job_memory(report['job'].get('memory')) and
               report['job']['individual_descendant_exit_codes_authenticated'] is False and
               report['job']['whole_tree_resource_budget_measured'] is False and
               stdout_raw is not None and stderr_raw == b'' and
@@ -250,8 +270,10 @@ def _finish(root, state, claim_pin, launch, report, reconciled,
 
 
 def execute(campaign_root, control_root, *, expected_plan_pin,
-            expected_checkpoint_pin, expected_intention_pin):
+            expected_checkpoint_pin, expected_intention_pin,
+            remaining_wall_seconds=None):
     """Run fixed prepare once; every returned failure prohibits a later stage."""
+    limits = effective_limits(remaining_wall_seconds)
     state = _store(campaign_root, control_root, expected_plan_pin,
                    expected_checkpoint_pin, expected_intention_pin,
                    absent=True)
@@ -268,7 +290,7 @@ def execute(campaign_root, control_root, *, expected_plan_pin,
         'control_root': state['control_root'],
         'owner_root': str(root),
         'argv': intention['argv'], 'cwd': intention['cwd'],
-        'limits': dict(LIMITS), 'targets_absent_at_claim': True,
+        'limits': limits, 'targets_absent_at_claim': True,
         'invented_only': True, 'formal_permission': False,
     }
     claim_pin = _save(root, 'prelaunch-claim.json',
@@ -308,7 +330,7 @@ def execute(campaign_root, control_root, *, expected_plan_pin,
         try:
             with platform._platform_scope():
                 report = job_owner.supervise_cli(
-                    intention['argv'], ROOT, root / 'worker', LIMITS,
+                    intention['argv'], ROOT, root / 'worker', limits,
                     stdout_name='report.json',
                     runtime_probe=lambda: runtime.probe_runtime(ROOT),
                     boundary=boundary, on_started=on_started)
@@ -342,7 +364,8 @@ def execute(campaign_root, control_root, *, expected_plan_pin,
             sidecar_raw = _optional(Path(intention['sidecar_path']), 128)
             if reason is None:
                 _completed_cli(report, launch, intention, plan, stdout_raw,
-                               stderr_raw, manifest_raw, sidecar_raw)
+                               stderr_raw, manifest_raw, sidecar_raw,
+                               effective_job_limits=limits)
                 manifest = v.strict_json(manifest_raw)
                 _stdout_claim(stdout_raw, intention, manifest, manifest_raw)
                 v.require(not Path(intention['attempt_root']).exists(),

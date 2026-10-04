@@ -41,12 +41,15 @@ SOURCE_EXTRA = (
     'src/banto_ai/anomaly_v03_preformal_campaign_run_budget_owner.py',
     'src/banto_ai/anomaly_v03_preformal_campaign_reread_intent_store.py',
     'src/banto_ai/anomaly_v03_preformal_campaign_completion_store.py',
+    'src/banto_ai/anomaly_v03_preformal_campaign_wall_envelope.py',
     'tools/preformal_campaign_store_trial.py',
     'tools/preformal_campaign_prepare_owner.py',
     'tools/preformal_campaign_run_intent_store.py',
     'tools/preformal_campaign_run_budget_owner.py',
     'tools/preformal_campaign_reread_intent_store.py',
     'tools/preformal_campaign_completion_store.py',
+    'tools/preformal_campaign_wall_envelope_trial.py',
+    'tools/preformal_campaign_wall_envelope_verify.py',
 )
 CONTROL_FILES = frozenset({
     'anchor-pin.json', 'checkpoint.json', 'preflight-intention.json',
@@ -467,7 +470,9 @@ def _prepared_owner(state, expected_prepare_receipt_pin, *,
               claim['owner_root'] == str(root) and
               claim['argv'] == intention['argv'] and
               claim['cwd'] == intention['cwd'] and
-              claim['limits'] == owner.LIMITS and
+              type(claim['limits']) is dict and
+              claim['limits'] == owner.effective_limits(
+                  claim['limits'].get('wall_seconds')) and
               claim['targets_absent_at_claim'] is True and
               claim['invented_only'] is True and
               claim['formal_permission'] is False,
@@ -530,7 +535,8 @@ def _prepared_owner(state, expected_prepare_receipt_pin, *,
         v.require(not Path(intention['attempt_root']).exists(),
                   'prepare created attempt output before started record')
     owner._completed_cli(report, creation, intention, plan, stdout_raw,
-                         stderr_raw, manifest_raw, sidecar_raw)
+                         stderr_raw, manifest_raw, sidecar_raw,
+                         effective_job_limits=claim['limits'])
     manifest = v.strict_json(manifest_raw)
     owner._stdout_claim(stdout_raw, intention, manifest, manifest_raw)
 

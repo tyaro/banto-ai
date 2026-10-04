@@ -1,4 +1,5 @@
 """An explicitly enabled native test of the isolated invented Job owner."""
+import ctypes
 import os
 from pathlib import Path
 import sys
@@ -11,6 +12,21 @@ from banto_ai import anomaly_v03_preformal_job_tree_owner as owner
 
 
 class JobOwnerContractTests(unittest.TestCase):
+    def test_job_memory_observation_requires_consistent_native_peaks(self):
+        value = {'information_class': 9, 'limit_flags': 0x2000,
+                 'peak_process_memory_used_bytes': 1024,
+                 'peak_job_memory_used_bytes': 2048}
+        self.assertTrue(owner.valid_job_memory(value))
+        for changed in ({'peak_job_memory_used_bytes': 1023},
+                        {'peak_process_memory_used_bytes': 0},
+                        {'peak_job_memory_used_bytes': True},
+                        {'limit_flags': 0x2800},
+                        {'limit_flags': 0x2200},
+                        {'information_class': 1}):
+            with self.subTest(changed=changed):
+                self.assertFalse(owner.valid_job_memory({**value, **changed}))
+        self.assertFalse(owner.valid_job_memory(None))
+
     def test_fixture_modes_and_limits_reject_without_launch(self):
         with patch.object(owner, '_kernel') as kernel:
             for mode, wall in (('unknown', 1), ('success', 0),
@@ -192,9 +208,63 @@ class NativeJobOwnerTests(unittest.TestCase):
         self.assertEqual(report['job']['accounting']['active_processes'], 0)
         self.assertGreaterEqual(report['job']['accounting']['total_processes'], 2)
         self.assertTrue(report['job']['all_assigned_processes_exit_confirmed'])
+        self.assertTrue(owner.valid_job_memory(report['job']['memory']))
+        self.assertGreaterEqual(
+            report['job']['memory']['peak_job_memory_used_bytes'],
+            report['job']['memory']['peak_process_memory_used_bytes'])
         self.assertFalse(report['job']['individual_descendant_exit_codes_authenticated'])
         self.assertFalse(report['job']['whole_tree_resource_budget_measured'])
         self.assertFalse(report['formal_permission'])
+
+    def test_unavailable_job_memory_query_fails_closed_after_reap(self):
+        kernel = owner._kernel()
+
+        class QueryFailureKernel:
+            def __getattr__(self, name): return getattr(kernel, name)
+            def QueryInformationJobObject(self, job, info, value, size,
+                                          returned):
+                if info == owner.JOB_OBJECT_EXTENDED_LIMIT_INFORMATION and \
+                        returned is not None:
+                    return False
+                return kernel.QueryInformationJobObject(
+                    job, info, value, size, returned)
+
+        with patch.object(owner, '_kernel', return_value=QueryFailureKernel()):
+            report = self._run_cli('success')
+        self.assertEqual(report['status'], 'failed')
+        self.assertEqual(report['exit_code'], 0)
+        self.assertEqual(report['job']['accounting']['active_processes'], 0)
+        self.assertIsNone(report['job']['memory'])
+        self.assertEqual([entry['stage'] for entry in report['observation_errors']],
+                         ['final_job_memory'])
+        self.assertFalse(report['formal_permission'])
+
+    def test_inconsistent_job_memory_query_fails_closed_after_reap(self):
+        kernel = owner._kernel()
+
+        class InconsistentQueryKernel:
+            def __getattr__(self, name): return getattr(kernel, name)
+            def QueryInformationJobObject(self, job, info, value, size,
+                                          returned):
+                result = kernel.QueryInformationJobObject(
+                    job, info, value, size, returned)
+                if result and info == owner.JOB_OBJECT_EXTENDED_LIMIT_INFORMATION \
+                        and returned is not None:
+                    observed = ctypes.cast(
+                        value, ctypes.POINTER(owner._ExtendedLimit)).contents
+                    observed.PeakJobMemoryUsed = 0
+                return result
+
+        with patch.object(owner, '_kernel',
+                          return_value=InconsistentQueryKernel()):
+            report = self._run_cli('success')
+        self.assertEqual(report['status'], 'failed')
+        self.assertEqual(report['exit_code'], 0)
+        self.assertEqual(report['job']['accounting']['active_processes'], 0)
+        self.assertIsNone(report['job']['memory'])
+        self.assertEqual([entry['stage'] for entry in report['observation_errors']],
+                         ['final_job_memory'])
+        self.assertFalse(report['job']['whole_tree_resource_budget_measured'])
 
     def test_pinned_cli_supervisor_abnormal_root_reaps_grandchild(self):
         report = self._run_cli('parent-fail')

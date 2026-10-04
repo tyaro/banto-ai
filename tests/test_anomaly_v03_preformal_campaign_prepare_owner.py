@@ -228,6 +228,9 @@ class PrepareOwnerTests(unittest.TestCase):
                 'assignment_confirmed': True, 'root_resumed': True,
                 'all_assigned_processes_exit_confirmed': True,
                 'accounting': {'active_processes': 0},
+                'memory': {'information_class': 9, 'limit_flags': 0x2000,
+                           'peak_process_memory_used_bytes': 1024,
+                           'peak_job_memory_used_bytes': 2048},
                 'individual_descendant_exit_codes_authenticated': False,
                 'whole_tree_resource_budget_measured': False},
         }
@@ -245,6 +248,11 @@ class PrepareOwnerTests(unittest.TestCase):
             owner._completed_cli(without_job, launch, self.state['intention'],
                                  self.case.plan, b'prepared', b'',
                                  b'manifest', b'sidecar')
+        without_memory = dict(report, job={**report['job'], 'memory': None})
+        with self.assertRaisesRegex(ValueError, 'owned prepare CLI'):
+            owner._completed_cli(without_memory, launch,
+                                 self.state['intention'], self.case.plan,
+                                 b'prepared', b'', b'manifest', b'sidecar')
 
     def test_existing_owner_root_is_not_reused_or_launched(self):
         with patch.object(owner, '_store', return_value=self.state), \

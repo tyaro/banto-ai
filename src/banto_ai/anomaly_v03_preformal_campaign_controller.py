@@ -10,6 +10,7 @@ individual descendant exit-code authentication.
 from __future__ import annotations
 
 import copy
+import math
 from pathlib import Path
 import re
 import sys
@@ -38,6 +39,29 @@ LIMITS = {'wall_seconds': 900, 'private_bytes': 1024**3,
 MAX_REQUEST = 32 * 1024
 MAX_RECEIPT = 32 * 1024
 MAX_SAVED = 2 * 1024**2
+
+
+def _effective_limits(remaining_wall_seconds=None):
+    """Keep the fixed CLI caps, optionally shortening only its wall limit."""
+    if remaining_wall_seconds is None:
+        return dict(LIMITS)
+    v.require(type(remaining_wall_seconds) in (int, float) and
+              math.isfinite(remaining_wall_seconds) and
+              remaining_wall_seconds > 0,
+              'positive finite bounded remaining CLI wall seconds')
+    return {**LIMITS, 'wall_seconds': min(LIMITS['wall_seconds'],
+                                         remaining_wall_seconds)}
+
+
+def _valid_saved_limits(value):
+    return (type(value) is dict and set(value) == set(LIMITS) and
+            type(value['wall_seconds']) in (int, float) and
+            math.isfinite(value['wall_seconds']) and
+            0 < value['wall_seconds'] <= LIMITS['wall_seconds'] and
+            type(value['private_bytes']) is int and
+            value['private_bytes'] == LIMITS['private_bytes'] and
+            type(value['output_bytes']) is int and
+            value['output_bytes'] == LIMITS['output_bytes'])
 
 
 def _same(actual, expected, label):
@@ -222,6 +246,7 @@ def _load_receipt(plan, current, phase, expected_pin):
               monitor['job']['root_resumed'] is True and
               monitor['job']['all_assigned_processes_exit_confirmed'] is True and
               monitor['job']['accounting']['active_processes'] == 0 and
+              job_owner.valid_job_memory(monitor['job'].get('memory')) and
               monitor['job']['individual_descendant_exit_codes_authenticated'] is False and
               monitor['job']['whole_tree_resource_budget_measured'] is False and
               type(value['cli_process']) is dict and
@@ -250,7 +275,7 @@ def _load_receipt(plan, current, phase, expected_pin):
               request['manifest_pin'] == current['manifest_pin'] and
               request['phase'] == phase and
               monitor['argv'] == request['argv'] and
-              monitor['limits'] == LIMITS and
+              _valid_saved_limits(monitor['limits']) and
               monitor['observation_errors'] == [] and
               monitor['stop_reason'] is None and
               monitor['runtime_before'] ==
@@ -627,12 +652,13 @@ def _failed_receipt(control, request, request_pin, plan_pin, report, launch,
 
 def execute_owned(request_path, expected_request_pin, plan_raw, plan_pin,
                   record_raws, *, expected_record_count,
-                  expected_head_sha256):
+                  expected_head_sha256, remaining_wall_seconds=None):
     """Execute exactly one pinned CLI, retaining its direct owner observation.
 
     Successful return has a saved receipt in a fresh metadata control root.
     On an abnormal exit, the caller must stop; this function never retries.
     """
+    limits = _effective_limits(remaining_wall_seconds)
     plan, current = _started(plan_raw, plan_pin, record_raws,
                              expected_record_count, expected_head_sha256)
     request_path = paths.regular_path(Path(request_path))
@@ -681,7 +707,7 @@ def execute_owned(request_path, expected_request_pin, plan_raw, plan_pin,
     try:
         with platform._platform_scope():
             report = job_owner.supervise_cli(
-                request['argv'], ROOT, control, LIMITS,
+                request['argv'], ROOT, control, limits,
                 stdout_name='report.json',
                 runtime_probe=lambda: runtime.probe_runtime(ROOT),
                 boundary=boundary, on_started=on_started)
@@ -697,6 +723,7 @@ def execute_owned(request_path, expected_request_pin, plan_raw, plan_pin,
             report['job']['root_resumed'] is True and
             report['job']['all_assigned_processes_exit_confirmed'] is True and
             report['job']['accounting']['active_processes'] == 0 and
+            job_owner.valid_job_memory(report['job'].get('memory')) and
             report['job']['individual_descendant_exit_codes_authenticated'] is False and
             report['job']['whole_tree_resource_budget_measured'] is False and
             report['worker_pid'] == launch.get('pid') and

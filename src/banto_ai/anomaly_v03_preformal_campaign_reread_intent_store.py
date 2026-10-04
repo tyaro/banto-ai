@@ -7,6 +7,7 @@ Partial publication is preserved and cannot be resumed here.
 from __future__ import annotations
 
 import copy
+import math
 from pathlib import Path
 import sys
 
@@ -452,8 +453,14 @@ def execute_request(campaign_root, control_root, *, expected_plan_pin,
                     expected_prepare_receipt_pin, expected_started_record_pin,
                     expected_next_checkpoint_pin, expected_run_pin_control_pin,
                     expected_generation_receipt_pin,
-                    expected_pin_control_pin):
+                    expected_pin_control_pin,
+                    remaining_wall_seconds=None):
     """Own exactly one pinned native reread; never retry a failed attempt."""
+    if remaining_wall_seconds is not None:
+        v.require(type(remaining_wall_seconds) in (int, float) and
+                  math.isfinite(remaining_wall_seconds) and
+                  remaining_wall_seconds > 0,
+                  'finite positive saved-reread remaining wall seconds required')
     inputs = _inputs(expected_plan_pin, expected_initial_checkpoint_pin,
                      expected_intention_pin, expected_prepare_receipt_pin,
                      expected_started_record_pin, expected_next_checkpoint_pin,
@@ -468,11 +475,14 @@ def execute_request(campaign_root, control_root, *, expected_plan_pin,
               verified['journal_head_sha256'] ==
               state['checkpoint']['head_sha256'],
               'saved-reread launch boundary changed')
+    wall_option = ({} if remaining_wall_seconds is None else
+                   {'remaining_wall_seconds': remaining_wall_seconds})
     return controller.execute_owned(
         verified['request_path'], verified['request_pin'],
         state['plan_raw'], state['plan_pin'], state['record_raws'],
         expected_record_count=1,
-        expected_head_sha256=state['checkpoint']['head_sha256'])
+        expected_head_sha256=state['checkpoint']['head_sha256'],
+        **wall_option)
 
 
 def verify_postrun_stage(campaign_root, control_root, *, expected_plan_pin,

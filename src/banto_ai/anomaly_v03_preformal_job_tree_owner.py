@@ -30,6 +30,8 @@ CREATE_NO_WINDOW = 0x08000000
 JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x00002000
 JOB_OBJECT_LIMIT_BREAKAWAY_OK = 0x00000800
 JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK = 0x00001000
+JOB_OBJECT_LIMIT_PROCESS_MEMORY = 0x00000100
+JOB_OBJECT_LIMIT_JOB_MEMORY = 0x00000200
 JOB_OBJECT_EXTENDED_LIMIT_INFORMATION = 9
 JOB_OBJECT_BASIC_ACCOUNTING_INFORMATION = 1
 WAIT_OBJECT_0 = 0
@@ -212,6 +214,42 @@ def _accounting(k, job):
     return {'total_processes': int(value.TotalProcesses),
             'active_processes': int(value.ActiveProcesses),
             'limit_terminated_processes': int(value.TotalTerminatedProcesses)}
+
+
+def valid_job_memory(value):
+    """Check the bounded native Job peak observation saved in a CLI report."""
+    return (type(value) is dict and set(value) == {
+        'information_class', 'limit_flags',
+        'peak_process_memory_used_bytes', 'peak_job_memory_used_bytes'} and
+        value['information_class'] == JOB_OBJECT_EXTENDED_LIMIT_INFORMATION and
+        type(value['limit_flags']) is int and
+        value['limit_flags'] & JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE != 0 and
+        value['limit_flags'] & (JOB_OBJECT_LIMIT_BREAKAWAY_OK |
+                                JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK |
+                                JOB_OBJECT_LIMIT_PROCESS_MEMORY |
+                                JOB_OBJECT_LIMIT_JOB_MEMORY) == 0 and
+        type(value['peak_process_memory_used_bytes']) is int and
+        type(value['peak_job_memory_used_bytes']) is int and
+        0 < value['peak_process_memory_used_bytes'] <=
+        value['peak_job_memory_used_bytes'] <= ctypes.c_size_t(-1).value)
+
+
+def _job_memory(k, job):
+    value = _ExtendedLimit()
+    returned = w.DWORD()
+    _need(k.QueryInformationJobObject(
+        job, JOB_OBJECT_EXTENDED_LIMIT_INFORMATION, ctypes.byref(value),
+        ctypes.sizeof(value), ctypes.byref(returned)),
+        'QueryInformationJobObject memory')
+    _need(returned.value == ctypes.sizeof(value), 'Job memory result length')
+    observed = {
+        'information_class': JOB_OBJECT_EXTENDED_LIMIT_INFORMATION,
+        'limit_flags': int(value.BasicLimitInformation.LimitFlags),
+        'peak_process_memory_used_bytes': int(value.PeakProcessMemoryUsed),
+        'peak_job_memory_used_bytes': int(value.PeakJobMemoryUsed),
+    }
+    _need(valid_job_memory(observed), 'Job memory peaks inconsistent')
+    return observed
 
 
 def _root_exit(k, process):
@@ -526,8 +564,8 @@ def supervise_cli(argv, cwd, control_root, limits, *, runtime_probe,
 
     The caller validates argv/source and saves this report. A successful
     report requires a zero root exit, empty Job accounting, matching runtime,
-    and bounded direct CLI observations. Descendant exit codes and a shared
-    tree memory budget remain unauthenticated.
+    and bounded direct CLI observations. Native Job memory peaks are observed,
+    while descendant exit codes and a shared tree budget remain unauthenticated.
     """
     direct_supervisor._limits(limits)
     paths.require(type(argv) is list and argv and
@@ -545,7 +583,7 @@ def supervise_cli(argv, cwd, control_root, limits, *, runtime_probe,
     stdout_path, stderr_path = control / stdout_name, control / 'stderr.json'
     k = _kernel()
     job = process = thread = None
-    pid = exit_code = accounting = None
+    pid = exit_code = accounting = job_memory = None
     before = after = free_before = free_after = None
     errors, peak, reason = [], 0, None
     started = time.monotonic()
@@ -647,6 +685,10 @@ def supervise_cli(argv, cwd, control_root, limits, *, runtime_probe,
                 sample_memory()
             except BaseException as value:
                 error('final_worker_memory', value)
+            try:
+                job_memory = _job_memory(k, job)
+            except BaseException as value:
+                error('final_job_memory', value)
         try:
             after = runtime_probe()
             direct_supervisor.policy.validate_runtime(after)
@@ -674,7 +716,8 @@ def supervise_cli(argv, cwd, control_root, limits, *, runtime_probe,
     job_confirmed = (assigned and accounting is not None and
                      accounting['active_processes'] == 0 and exit_code is not None)
     complete = (job_confirmed and resumed and exit_code == 0 and
-                reason is None and not errors and before is not None and
+                reason is None and not errors and job_memory is not None and
+                before is not None and
                 after == before)
     report = {
         'format': 'anomaly-v03-owned-process-monitor-v1',
@@ -694,6 +737,7 @@ def supervise_cli(argv, cwd, control_root, limits, *, runtime_probe,
                 'assignment_confirmed': assigned,
                 'root_resumed': resumed,
                 'accounting': accounting,
+                'memory': job_memory,
                 'all_assigned_processes_exit_confirmed': job_confirmed,
                 'individual_descendant_exit_codes_authenticated': False,
                 'whole_tree_resource_budget_measured': False},

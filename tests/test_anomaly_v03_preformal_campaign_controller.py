@@ -43,6 +43,22 @@ def _manifest(journal, index):
 
 
 class ControllerGateTests(unittest.TestCase):
+    def test_shortened_owned_cli_wall_keeps_other_limits(self):
+        self.assertEqual(c._effective_limits(), c.LIMITS)
+        shortened = c._effective_limits(12.5)
+        self.assertEqual(shortened,
+                         {**c.LIMITS, 'wall_seconds': 12.5})
+        self.assertEqual(c._effective_limits(901), c.LIMITS)
+        self.assertTrue(c._valid_saved_limits(shortened))
+        for bad in (0, -1, True, float('nan'), float('inf'), '12'):
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                c._effective_limits(bad)
+        for changed in ({'wall_seconds': 0}, {'wall_seconds': 901},
+                        {'private_bytes': c.LIMITS['private_bytes'] - 1},
+                        {'output_bytes': True}):
+            with self.subTest(changed=changed):
+                self.assertFalse(c._valid_saved_limits({**shortened, **changed}))
+
     def setUp(self):
         self.j = Journal()
         original = self.j.plan

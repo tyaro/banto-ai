@@ -7,6 +7,7 @@ campaign, and a failed receipt does not permit a retry.
 """
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 from . import anomaly_v03 as v
@@ -34,13 +35,19 @@ def execute_run_budget(campaign_root, control_root, *, expected_plan_pin,
                        expected_prepare_receipt_pin,
                        expected_started_record_pin,
                        expected_next_checkpoint_pin,
-                       expected_pin_control_pin):
+                       expected_pin_control_pin,
+                       remaining_wall_seconds=None):
     """Return the retained CLI receipt and its raw pin, including on failure.
 
     Any prelaunch mismatch raises before the native CLI is called. Once the
     controller starts, its saved receipt is the only accepted result. No
     second attempt is made here.
     """
+    if remaining_wall_seconds is not None:
+        v.require(type(remaining_wall_seconds) in (int, float) and
+                  math.isfinite(remaining_wall_seconds) and
+                  remaining_wall_seconds > 0,
+                  'finite positive run-budget remaining wall seconds required')
     inputs = _inputs(
         expected_plan_pin=expected_plan_pin,
         expected_initial_checkpoint_pin=expected_initial_checkpoint_pin,
@@ -94,10 +101,13 @@ def execute_run_budget(campaign_root, control_root, *, expected_plan_pin,
     v.require(request_path == Path(plan['root']) / 'intents' /
               '0001-run-budget.json',
               'fixed saved run-budget request path required')
+    wall_option = ({} if remaining_wall_seconds is None else
+                   {'remaining_wall_seconds': remaining_wall_seconds})
     value, returned_pin = controller.execute_owned(
         request_path, latest['request_pin'], state['plan_raw'],
         expected_plan_pin, records, expected_record_count=1,
-        expected_head_sha256=expected_started_record_pin['sha256'])
+        expected_head_sha256=expected_started_record_pin['sha256'],
+        **wall_option)
     metadata._pin(returned_pin, 'owned run-budget receipt')
     receipt_path = controller._control(
         plan, v.strict_json(records[0]), 'run-budget') / 'receipt.json'
