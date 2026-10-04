@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -16,6 +17,7 @@ from banto_ai import anomaly_v03_preformal_owned_generated_attempt as generated
 from banto_ai import anomaly_v03_preformal_owned_saved_attempt as copied
 from banto_ai import anomaly_v03_preformal_saved_row_reread as reread
 from tests.test_anomaly_v03_preformal_campaign_metadata import Journal
+from tests._anomaly_v03_preformal_campaign_test_paths import PortableCampaignPaths
 
 
 def _manifest(journal, index):
@@ -42,7 +44,7 @@ def _manifest(journal, index):
     })
 
 
-class ControllerGateTests(unittest.TestCase):
+class ControllerGateTests(PortableCampaignPaths):
     def test_shortened_owned_cli_wall_keeps_other_limits(self):
         self.assertEqual(c._effective_limits(), c.LIMITS)
         shortened = c._effective_limits(12.5)
@@ -60,7 +62,10 @@ class ControllerGateTests(unittest.TestCase):
                 self.assertFalse(c._valid_saved_limits({**shortened, **changed}))
 
     def setUp(self):
-        self.j = Journal()
+        root = (str(c.ROOT / 'artifacts' /
+                    'anomaly-v03-preformal-campaign-aaaaaaaa')
+                if os.name != 'nt' else None)
+        self.j = Journal(root)
         original = self.j.plan
         source = copy.deepcopy(original['source'])
         source['selected_files'] = [

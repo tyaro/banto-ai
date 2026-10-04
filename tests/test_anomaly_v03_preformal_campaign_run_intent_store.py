@@ -10,6 +10,7 @@ from banto_ai import anomaly_v03_preformal_campaign_controller as controller
 from banto_ai import anomaly_v03_preformal_campaign_metadata as metadata
 from banto_ai import anomaly_v03_preformal_campaign_run_intent_store as intent
 from tests.test_anomaly_v03_preformal_campaign_metadata import _plan
+from tests._anomaly_v03_preformal_campaign_test_paths import PortableCampaignPaths
 
 
 def example(repo):
@@ -93,7 +94,7 @@ def example(repo):
     return state, request
 
 
-class RunIntentStoreTests(unittest.TestCase):
+class RunIntentStoreTests(PortableCampaignPaths):
     def _inputs(self, state):
         return {
             'expected_plan_pin': state['plan_pin'],

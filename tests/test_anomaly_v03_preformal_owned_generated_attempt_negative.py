@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import secrets
 import shutil
+import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -40,6 +41,19 @@ class FakeOuterBudget:
 class OwnedGeneratedAttemptNegativeTests(unittest.TestCase):
     def setUp(self):
         self.roots = []
+        if os.name != 'nt':
+            original_root = generated.ROOT
+            # Keep the adversarial fixtures inside the same native path bound.
+            short_root = tempfile.TemporaryDirectory(prefix='og', dir='/tmp')
+            self.addCleanup(short_root.cleanup)
+            test_root = Path(short_root.name).resolve()
+            (test_root / 'artifacts').mkdir()
+            registry = Path('examples/configs/anomaly-v03-freeze-registry.json')
+            (test_root / registry.parent).mkdir(parents=True)
+            shutil.copyfile(original_root / registry, test_root / registry)
+            root_patch = patch.object(generated, 'ROOT', test_root)
+            root_patch.start()
+            self.addCleanup(root_patch.stop)
 
     def tearDown(self):
         for root in self.roots:

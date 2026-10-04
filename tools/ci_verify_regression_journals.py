@@ -53,7 +53,7 @@ REQUIRED_TEST_IDS = frozenset({
     "tests.test_anomaly_v03_scoring.ProfileAndScoreTests.test_GT_not_accepted_and_pure_no_IO_environment_network",
     "tests.test_anomaly_v03_generation_audit.GenerationCaptureTests.test_full_nonregistered_pair_passes_without_producer_helpers",
     "tests.test_anomaly_v03_chunk_audit.ChunkAuditTests.test_dev_smoke_boundaries_and_retry_bind_real_files_without_generation",
-    "tests.test_anomaly_v03_consumer_reader.ConsumerReaderTests.test_separate_process_verified_and_check_root_never_reused",
+    "tests.test_anomaly_v03_consumer_reader.ConsumerReaderTests.test_wrong_sized_output_rejected_before_opening_payload",
     "tests.test_anomaly_v03_engineering_consumer.EngineeringConsumerTests.test_binding_cannot_upgrade_acceptance",
 })
 
@@ -89,6 +89,18 @@ WINDOWS_ONLY_CLASSES = {
 }
 
 WINDOWS_ONLY_TESTS = {
+    "tests.test_anomaly_v03_consumer_reader.ConsumerReaderTests.test_child_startup_excludes_site_and_environment_paths":
+        "owned reader child requires Windows runtime and process supervision",
+    "tests.test_anomaly_v03_consumer_reader.ConsumerReaderTests.test_lost_reader_reply_is_not_promoted_to_verified":
+        "owned reader child requires Windows runtime and process supervision",
+    "tests.test_anomaly_v03_consumer_reader.ConsumerReaderTests.test_lost_writer_reply_recovered_only_with_retained_marker":
+        "owned reader child requires Windows runtime and process supervision",
+    "tests.test_anomaly_v03_consumer_reader.ConsumerReaderTests.test_resealed_changed_value_rejected_against_original_source":
+        "owned reader child requires Windows runtime and process supervision",
+    "tests.test_anomaly_v03_consumer_reader.ConsumerReaderTests.test_separate_process_verified_and_check_root_never_reused":
+        "owned reader child requires Windows runtime and process supervision",
+    "tests.test_anomaly_v03_consumer_reader.ConsumerReaderTests.test_wrong_retained_anchor_is_failed_outside_unchanged_publication":
+        "owned reader child requires Windows runtime and process supervision",
     "tests.test_anomaly_matrix_runner.AnomalyMatrixRunnerTests.test_repository_containment_rejects_real_ntfs_junction":
         "NTFS junction test requires Windows",
     "tests.test_anomaly_v03_fixture_budget.FixtureBudgetTests.test_real_child_is_reaped_after_small_directory_burst":

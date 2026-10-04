@@ -103,13 +103,16 @@ def _formal_semantic_tree(tree, inventory):
 
 
 def _fixture_index_tree():
-    """Read-only staged candidate tree, also usable before the S2 commit.
+    """Read the legacy compatibility fixture from the staged source bytes.
 
-    CI has index == HEAD. Local savepoint verification stages scoped edits
-    first. This fixture never relaxes production clean-HEAD runtime checks.
-    Every historical byte/mode is still checked against the independent 88.
+    Later v0.3 modules are outside this historical 88-plus-current-only
+    contract. Keep them out of this unit fixture; the production full-tree
+    check still rejects a changed source inventory.
     """
     prefixes = diagnostics.EXPECTED_REVISION_COMPATIBILITY["artifact_source_prefixes"]
+    inventory = json.loads((ROOT / "tests/fixtures/anomaly-diagnostics-historical-88.json").read_bytes())
+    fixture_paths = ({row["path"] for row in inventory["files"]} |
+                     set(diagnostics.EXPECTED_REVISION_COMPATIBILITY["current_only_paths"]))
     entries = diagnostics._git_run(ROOT, "ls-files", "--stage", "-z", "--", *prefixes)
     tree = {}
     for entry in entries.split(b"\0"):
@@ -118,10 +121,14 @@ def _fixture_index_tree():
         header, path_raw = entry.split(b"\t", 1)
         mode, blob, stage = header.decode("ascii").split()
         path = path_raw.decode("utf-8")
+        if path not in fixture_paths:
+            continue
         if stage != "0" or path in tree:
             raise AssertionError("fixture index has unmerged/duplicate entries")
         raw = diagnostics._git_run(ROOT, "cat-file", "blob", blob)
         tree[path] = (hashlib.sha256(raw).hexdigest(), raw, mode)
+    if set(tree) != fixture_paths:
+        raise AssertionError("legacy fixture source inventory is incomplete")
     return tree
 
 

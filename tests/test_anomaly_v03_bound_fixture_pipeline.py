@@ -1,6 +1,8 @@
 """Projection and failure boundaries; real owned chain is saved separately."""
 import copy
+from contextlib import ExitStack
 import json
+import os
 from pathlib import Path
 import subprocess
 import tempfile
@@ -103,8 +105,16 @@ class BoundFixturePipelineTests(unittest.TestCase):
         with patch.object(flow.analysis,'TOTAL_INPUT_LIMIT',1),self.assertRaises(ValueError):self.prepare()
 
     def run_flow(self,root):
-        return flow.run_pipeline(self.raw,expected_mode='fixture',expected_pin=self.pin,expected_revision=REVISION,
-            draws=[list(range(40))],expected_document_pin=PIN,receipt_parent=root,receipt_name='attempt')
+        with ExitStack() as stack:
+            if os.name!='nt':
+                # These tests exercise pipeline ordering and retained receipts.
+                # The production budget samples Windows GetPerformanceInfo.
+                gib=1024**3
+                stack.enter_context(patch.object(flow.budgets,'system_snapshot',return_value={
+                    'commit_total_bytes':gib,'commit_limit_bytes':16*gib,'commit_headroom_bytes':15*gib,
+                    'free_ram_bytes':8*gib,'free_disk_bytes':30*gib,'parent_peak_private_bytes':0}))
+            return flow.run_pipeline(self.raw,expected_mode='fixture',expected_pin=self.pin,expected_revision=REVISION,
+                draws=[list(range(40))],expected_document_pin=PIN,receipt_parent=root,receipt_name='attempt')
     def git_stub(self,*args):
         if args[0]=='status':return b''
         if args[0]=='show':return (flow.ROOT/flow.SOURCE).read_bytes()

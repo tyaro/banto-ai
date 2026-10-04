@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+from pathlib import Path, PurePosixPath
 import unittest
 from unittest.mock import patch
 
@@ -24,11 +25,16 @@ def _runtime():
             'tuple_sha256': v.canonical_sha256(value), 'status': 'not_adopted'}
 
 
-def _plan():
+def _plan(root=None):
     campaign_id = 'a' * 64
+    if root is None:
+        root = (str(Path(__file__).resolve().parents[1] / 'artifacts' /
+                    'anomaly-v03-preformal-campaign-aaaaaaaa')
+                if p.PureWindowsPath is PurePosixPath else
+                r'D:\develop\banto-ai\artifacts\anomaly-v03-preformal-campaign-aaaaaaaa')
     return p.fixed_plan(
         campaign_id,
-        r'D:\develop\banto-ai\artifacts\anomaly-v03-preformal-campaign-aaaaaaaa',
+        root,
         'h', {'bytes': p.FROZEN_REGISTRY_BYTES,
               'sha256': v.REGISTRY_RAW_SHA256},
         {'revision': 'b' * 40,
@@ -48,8 +54,8 @@ def _plan():
 
 
 class Journal:
-    def __init__(self):
-        self.plan = _plan()
+    def __init__(self, root=None):
+        self.plan = _plan(root)
         self.plan_raw = p.encode_plan(self.plan)
         self.plan_pin = p.pin(self.plan_raw)
         self.raws = []

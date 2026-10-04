@@ -1,4 +1,5 @@
 """Unadopted 26H2 platform fixture contract and explicitly enabled native runs."""
+from contextlib import nullcontext
 import copy
 import json
 import os
@@ -86,7 +87,10 @@ class PlatformRuntimeContractTests(unittest.TestCase):
             target = Path(directory) / 'attempt'
             mock_result = {'status': 'verified', 'result_pin': publication.observed._pin(b'{}'),
                            'publication_status': 'completed', 'reader_status': 'completed'}
-            with patch.object(platform_fixture, '_target', return_value=target), \
+            request_check = (nullcontext() if os.name == 'nt' else
+                             patch.object(publication, '_request'))
+            with request_check, \
+                 patch.object(platform_fixture, '_target', return_value=target), \
                  patch.object(runtime, 'probe_runtime', side_effect=[dict(runtime.EXPECTED), changed]), \
                  patch.object(publication, 'publish_with_evidence', return_value=mock_result):
                 result = platform_fixture.publish_fixture(request,

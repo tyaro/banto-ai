@@ -13,11 +13,12 @@ from banto_ai import anomaly_v03_preformal_campaign_metadata as metadata
 from banto_ai import anomaly_v03_preformal_campaign_preflight as preflight
 from banto_ai import anomaly_v03_preformal_campaign_store as store
 from tests.test_anomaly_v03_preformal_campaign_metadata import _plan
+from tests._anomaly_v03_preformal_campaign_test_paths import PortableCampaignPaths
 
 REAL_LIVE_MATCHES = store._live_matches
 
 
-class StoreTests(unittest.TestCase):
+class StoreTests(PortableCampaignPaths):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(dir=store.ROOT)
         self.addCleanup(self.temp.cleanup)

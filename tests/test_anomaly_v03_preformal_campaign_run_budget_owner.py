@@ -9,9 +9,10 @@ from banto_ai import anomaly_v03_preformal_campaign_controller as controller
 from banto_ai import anomaly_v03_preformal_campaign_metadata as metadata
 from banto_ai import anomaly_v03_preformal_campaign_run_budget_owner as owner
 from tests.test_anomaly_v03_preformal_campaign_run_intent_store import example
+from tests._anomaly_v03_preformal_campaign_test_paths import PortableCampaignPaths
 
 
-class RunBudgetOwnerTests(unittest.TestCase):
+class RunBudgetOwnerTests(PortableCampaignPaths):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)

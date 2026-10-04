@@ -107,8 +107,10 @@ class GeneratedBudgetDriverTests(unittest.TestCase):
             driver._manifest_path(str(self.manifest_path), other, missing=False)
 
     def fake_inner(self, root, *, expected_pins, source_snapshots,
-                   expected_revision, chunk_index, recipe_id, outer_budget):
+                   expected_revision, chunk_index, recipe_id, outer_budget,
+                   campaign_context=None):
         self.assertIs(outer_budget, self.budget)
+        self.assertIsNone(campaign_context)
         role_stdout = {}
         for role, pid in (('generator', 4101), ('reader', 4102)):
             control = root / ('owned-' + role)

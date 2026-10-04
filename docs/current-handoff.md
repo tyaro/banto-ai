@@ -1,5 +1,7 @@
 # 次のタスク用の短い引継ぎ
 
+更新: 2026-10-05 JST。**`gh` は承認済み実行で利用でき、作業ブランチをGitHubへpushしてUbuntu予備CIを起動した。** [初回2 runの失敗証跡・修正候補・残るS4-4](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。`c08f6fd`の二重収集は`79b2835`で解消し、後者は両minorで2,796件収集・2,784件実行、fail19/error65/skip231と同一の失敗集合を保存した。次候補のLinux fixture移植と再CI、共有fixture比較は未完了。正式credit0、gate`s4_acceptance_not_frozen`、S5未開放。以下は以前の保存点の履歴。
+
 更新: 2026-10-05 JST。**clean `fdaf5eec58d110b5f048c703c740c8e10664fc07`で、5役`owner._source` 1回のHEAD/status/選定5 source blobをmain Git実行file・別process receipt付きで結ぶ限定試走を行った。** [7件の保存pinと独立read-only照合、次のv2接続点](results/anomaly-multiseed-v0.3-owned-source-git-seven-call-trial-2026-10-05.md)。結果1,654 B / SHA-256 `3c68e0577385c3693a5819970e096a3b297e8c8fdf87ea9c0da97d5e9891b2cc`、7件は別PID・exit0、正式flag false。現v1の5役Jobへreaderを伝播しておらず、全source/runtime閉包や正式受入ではない。S5未開放、正式credit0、gate`s4_acceptance_not_frozen`。以下は以前の保存点の履歴。
 
 更新: 2026-10-04 JST。**保存seed横断collectorと5役前段Git所有wrapperを実装し、clean `8871150` のc001/c011在庫trial、clean `1869267` のmain Git明示policy付き5役trial-02を保存した。** [今回のraw pin・独立監査・残るS4範囲](results/anomaly-multiseed-v0.3-saved-seed-inventory-and-owned-git-preflight-2026-10-04.md)。collectorは1/40 seed・2/480区間・12/2,880評価、40 seed寄与null。5役前段の直接Git HEAD/statusは別PID・exit0、内側Jobは1,080 process終了・共有予算69.589秒/262標本pass。ただし内側bare Gitと全source/runtime、共通campaign、全工程予算・Linux最終job・保証採択は残る。正式credit0、gate `s4_acceptance_not_frozen`、S5未開放。以下は以前の保存点の履歴。

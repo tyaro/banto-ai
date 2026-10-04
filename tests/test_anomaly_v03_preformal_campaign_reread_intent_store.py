@@ -12,6 +12,7 @@ from banto_ai import anomaly_v03_preformal_campaign_reread_intent_store as inten
 from banto_ai import anomaly_v03_preformal_campaign_run_intent_store as run_intent
 from banto_ai import anomaly_v03_preformal_campaign_store as store
 from tests.test_anomaly_v03_preformal_campaign_metadata import _plan
+from tests._anomaly_v03_preformal_campaign_test_paths import PortableCampaignPaths
 
 
 def _save(path, raw):
@@ -115,7 +116,7 @@ def example(repo):
     return campaign, controls, pins, owner, generation, run_request, reread_request
 
 
-class RereadIntentTests(unittest.TestCase):
+class RereadIntentTests(PortableCampaignPaths):
     def _mocks(self, repo, owner, generation, run_request, reread_request):
         def fixed(*_args, phase, **_kwargs):
             return run_request if phase == 'run-budget' else reread_request

@@ -1,8 +1,11 @@
 """Fast gates for the invented owned generator; full native run is explicit."""
 from __future__ import annotations
 
+import os
+from pathlib import Path
 import secrets
 import shutil
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -11,6 +14,21 @@ from banto_ai import anomaly_v03_registered_saved_summary as saved
 
 
 class OwnedGeneratedAttemptTests(unittest.TestCase):
+    def setUp(self):
+        if os.name != 'nt':
+            original_root = generated.ROOT
+            # CI's checkout path exceeds the native probe's 245-character bound.
+            short_root = tempfile.TemporaryDirectory(prefix='og', dir='/tmp')
+            self.addCleanup(short_root.cleanup)
+            test_root = Path(short_root.name).resolve()
+            (test_root / 'artifacts').mkdir()
+            registry = Path('examples/configs/anomaly-v03-freeze-registry.json')
+            (test_root / registry.parent).mkdir(parents=True)
+            shutil.copyfile(original_root / registry, test_root / registry)
+            root_patch = patch.object(generated, 'ROOT', test_root)
+            root_patch.start()
+            self.addCleanup(root_patch.stop)
+
     def root(self, suffix=None):
         if suffix is not None:
             return generated.ROOT / 'artifacts' / (generated.fixture.PREFIX + suffix)

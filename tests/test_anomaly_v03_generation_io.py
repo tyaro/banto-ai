@@ -5,7 +5,7 @@ import unittest
 from contextlib import redirect_stderr, redirect_stdout
 from unittest.mock import patch
 
-import test_anomaly_v03_observation_audit as fixtures
+from tests import test_anomaly_v03_observation_audit as fixtures
 from banto_ai import anomaly_v03_generation_io as audit
 
 

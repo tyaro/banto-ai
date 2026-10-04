@@ -8,7 +8,7 @@ import unittest
 from unittest import mock
 
 from banto_ai import anomaly_v03_descriptive_report as report
-from test_anomaly_v03_analysis_inputs import fixture
+from tests.test_anomaly_v03_analysis_inputs import fixture
 
 
 class TableParser(HTMLParser):

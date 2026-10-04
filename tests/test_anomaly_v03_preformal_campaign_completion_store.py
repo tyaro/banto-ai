@@ -10,9 +10,10 @@ from banto_ai import anomaly_v03 as v
 from banto_ai import anomaly_v03_preformal_campaign_completion_store as store
 from banto_ai import anomaly_v03_preformal_campaign_metadata as metadata
 from tests.test_anomaly_v03_preformal_campaign_metadata import _plan
+from tests._anomaly_v03_preformal_campaign_test_paths import PortableCampaignPaths
 
 
-class CompletionStoreTests(unittest.TestCase):
+class CompletionStoreTests(PortableCampaignPaths):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory(
             dir=Path(store.__file__).resolve().parents[2])

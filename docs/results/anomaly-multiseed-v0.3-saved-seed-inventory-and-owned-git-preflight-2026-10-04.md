@@ -28,6 +28,6 @@ clean source `88711500ab7b483496dca40d88b24362724ca9a2` で、[collector](../../
 - S4-5: producer→保存reader→40 cluster/50,000 draw→完全S6同形監査→writer→別readerを一つの外側予算で測る必要がある。今回の5役予算と旧join、collector試走を足し合わせない。
 - S4-1/S4-4: 26H2保証A/Bの版付き採択と独立監査、最終revisionのUbuntu 3.12/3.14両jobとrunner同定、Windows native/dev8/smoke2は残る。
 
-CI取得の観察点: 現在のlocal branchにはupstreamがなく、この環境のGitHub認証情報は利用できなかったため、remote runは未確認。`.github/workflows/ci.yml`はpush/PRで3.12/3.14と比較jobを起動し、`workflow_dispatch`はない。最終sourceを固定してから同一`head_sha`/`run_id`/`run_attempt`の3 jobとraw artifact・log・runner同定を取得する。journalの`runner_image_digest`は未収集で、[runner同定代替案](../anomaly-v03-s4-26h2-amendment-draft-v2.md)の版付き採択と独立監査が残る。
+CI取得の観察点（2026-10-04時点）: 当時のlocal branchにはupstreamがなく、制限付き実行ではGitHub CLI設定を読めずremote runは未確認だった。2026-10-05に承認済み実行で`gh`認証を確認し、branch pushと[Ubuntu予備CI初回2 run](anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)を行った。`.github/workflows/ci.yml`はpush/PRで3.12/3.14と比較jobを起動し、`workflow_dispatch`はない。最終sourceを固定してから同一`head_sha`/`run_id`/`run_attempt`の3 jobとraw artifact・log・runner同定を取得する。journalの`runner_image_digest`は未収集で、[runner同定代替案](../anomaly-v03-s4-26h2-amendment-draft-v2.md)の版付き採択と独立監査が残る。
 
 上の保存verifierはclean HEADの完全一致を要求する。後続文書commitのHEADで`trial-02`を再検証する場合、元の絶対pathでclean `18692678eda77481d1d5f2ca07a04667981d5b6e`に戻す必要がある。raw pinの独立再hashは別revisionからもできる。S5の未使用登録holdoutはS4独立受入まで開かない。

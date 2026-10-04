@@ -102,6 +102,7 @@ class PreformalDrawBudgetTests(unittest.TestCase):
                   patch.object(budget, '_source_pins', return_value={}),
                   patch.object(budget, '_runtime', return_value={'test': True}),
                   patch.object(budget.budget, 'system_snapshot', return_value=observation),
+                  patch.object(budget.subprocess, 'CREATE_NO_WINDOW', 0, create=True),
                   patch.object(budget.subprocess, 'Popen', side_effect=OSError('launch denied'))):
                 result = budget.run_measurement(receipt)
             self.assertEqual(result['status'], 'failed')
@@ -128,6 +129,7 @@ class PreformalDrawBudgetTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             receipt = Path(temporary)
             with (patch.object(budget.subprocess, 'Popen', return_value=fake),
+                  patch.object(budget.subprocess, 'CREATE_NO_WINDOW', 0, create=True),
                   patch.object(budget.resources, 'memory_bytes', return_value={'peak_private_bytes': 1}),
                   patch.object(budget.budget, 'system_snapshot', return_value={}),
                   patch.object(budget, '_check_resources', return_value='simulated_stop')):

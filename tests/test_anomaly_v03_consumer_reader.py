@@ -11,6 +11,9 @@ from banto_ai import anomaly_v03_consumer_reader as reader
 from tests import test_anomaly_v03_engineering_consumer as fixtures
 
 
+WINDOWS_READER_REASON='owned reader child requires Windows runtime and process supervision'
+
+
 class ConsumerReaderTests(unittest.TestCase):
     def setUp(self):
         self.fixture=fixtures.EngineeringConsumerTests('test_formal_rejected_before_io')
@@ -35,6 +38,7 @@ class ConsumerReaderTests(unittest.TestCase):
             'report_savepoint':str(f.report_path),'analysis_input':str(f.input_path),
             'expected_binding_pin':f.binding_pin,'expected_report_pin':f.report_pin}
 
+    @unittest.skipUnless(os.name=='nt',WINDOWS_READER_REASON)
     def test_separate_process_verified_and_check_root_never_reused(self):
         published=self.publish();root=Path(published['output_path']);before=self.saved(root)
         result=self.call(published)
@@ -46,6 +50,7 @@ class ConsumerReaderTests(unittest.TestCase):
         with patch.object(reader.supervisor,'supervise',side_effect=AssertionError('relaunch')),self.assertRaises(FileExistsError):
             self.call(published)
 
+    @unittest.skipUnless(os.name=='nt',WINDOWS_READER_REASON)
     def test_wrong_retained_anchor_is_failed_outside_unchanged_publication(self):
         published=self.publish();root=Path(published['output_path']);before=self.saved(root)
         result=self.call(published,expected_binding_pin={'bytes':1,'sha256':'0'*64})
@@ -53,6 +58,7 @@ class ConsumerReaderTests(unittest.TestCase):
         self.assertFalse(result['separate_process_verified']);self.assertEqual(before,self.saved(root))
         self.assertEqual(json.loads((Path(result['check_directory'])/'result.json').read_bytes())['status'],'failed')
 
+    @unittest.skipUnless(os.name=='nt',WINDOWS_READER_REASON)
     def test_child_startup_excludes_site_and_environment_paths(self):
         published=self.publish();root=Path(published['output_path']);before=self.saved(root)
         poison=self.root/'environment-packages';poison.mkdir()
@@ -83,6 +89,7 @@ class ConsumerReaderTests(unittest.TestCase):
         self.assertNotIn(str(poison),startup['path'])
         self.assertFalse(any({'site-packages','dist-packages'} & set(Path(p).parts) for p in startup['path']))
 
+    @unittest.skipUnless(os.name=='nt',WINDOWS_READER_REASON)
     def test_resealed_changed_value_rejected_against_original_source(self):
         files,_=self.fixture.call();value=json.loads(files['report.json'])
         value['cohorts'][0]['candidate_tables'][0]['saved_null']=True
@@ -94,6 +101,7 @@ class ConsumerReaderTests(unittest.TestCase):
         self.assertEqual(result['status'],'failed');self.assertEqual(result['worker_exit_code'],2)
         self.assertEqual(before,self.saved(root));self.assertTrue((root/'.complete').is_file())
 
+    @unittest.skipUnless(os.name=='nt',WINDOWS_READER_REASON)
     def test_lost_writer_reply_recovered_only_with_retained_marker(self):
         original=reader.io.os.link;retained={}
         def lose_reply(source,target,**kwargs):
@@ -145,6 +153,7 @@ class ConsumerReaderTests(unittest.TestCase):
         self.assertEqual(result['status'],'failed');self.assertEqual(result['reason'],'time_limit')
         self.assertTrue(result['reader_exit_confirmed']);self.assertEqual(before,self.saved(root))
 
+    @unittest.skipUnless(os.name=='nt',WINDOWS_READER_REASON)
     def test_lost_reader_reply_is_not_promoted_to_verified(self):
         published=self.publish();original=reader.supervisor.supervise
         def lose_reply(*args,**kwargs):

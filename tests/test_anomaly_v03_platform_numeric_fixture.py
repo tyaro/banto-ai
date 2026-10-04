@@ -60,7 +60,8 @@ class PlatformNumericFixtureTests(unittest.TestCase):
         sentinel = object()
         options = dict(expected_revision='a'*40, receipt_parent='receipt-parent',
                        receipt_name='attempt', budget_limits={'limit': 1},
-                       resource_budget=sentinel)
+                       resource_budget=sentinel, dependency_profile_raw=None,
+                       expected_dependency_profile_pin=None)
         for role, worker, method, entry, bootstrap in (
                 ('analysis', candidate.analysis, 'calculate_with_evidence',
                  candidate.calculate_fixture, candidate.BOOTSTRAP_ANALYSIS),

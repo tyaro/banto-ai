@@ -152,8 +152,12 @@ class PrepareOwnerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory) / 'owner'
             state = dict(self.state)
+            if sys.platform != 'win32':
+                self.enterContext(patch.object(
+                    preflight, '_python_path', return_value=sys.executable))
             intention = preflight.make_intention(
-                state['plan_raw'], state['plan_pin'], 0, 1, sys.executable)
+                state['plan_raw'], state['plan_pin'], 0, 1,
+                sys.executable)
             state.update(intention=intention,
                          intention_raw=preflight.encode_intention(intention),
                          intention_pin=metadata.pin(

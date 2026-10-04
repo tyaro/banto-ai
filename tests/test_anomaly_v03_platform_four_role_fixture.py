@@ -1,5 +1,7 @@
 """Stop-on-failure and saved-byte boundaries of the preformal four-role chain."""
+from contextlib import nullcontext
 from pathlib import Path
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -10,6 +12,20 @@ from banto_ai import anomaly_v03_platform_four_role_fixture as chain
 PIN = {'bytes': 2, 'sha256': chain.observed._pin(b'{}')['sha256']}
 REVISION = 'a' * 40
 FILES = {name: b'{}' for name in chain.INPUT_NAMES}
+
+
+def _request_boundary_on_this_platform():
+    # These two tests exercise role ordering with mocked children. The real
+    # request validator requires Windows paths and is covered separately.
+    if sys.platform == 'win32':
+        return nullcontext()
+    return patch.object(chain.analysis, '_request')
+
+
+def _audit_request_boundary_on_this_platform():
+    if sys.platform == 'win32':
+        return nullcontext()
+    return patch.object(chain.audit, '_request')
 
 
 class FourRoleFixtureTests(unittest.TestCase):
@@ -29,6 +45,7 @@ class FourRoleFixtureTests(unittest.TestCase):
                       'worker_exit_confirmed': False, 'fixture_inference_performed': False}
             with patch.object(chain, '_reference_document', return_value=b'{}'), \
                  patch.object(chain, '_saved_result'), \
+                 _request_boundary_on_this_platform(), \
                  patch.object(chain.numeric, 'calculate_fixture', return_value=failed) as analysis, \
                  patch.object(chain.numeric, 'audit_fixture', side_effect=AssertionError('audit after failed analysis')), \
                  patch.object(chain.publication, 'publish_with_evidence', side_effect=AssertionError('publication after failed analysis')):
@@ -55,6 +72,8 @@ class FourRoleFixtureTests(unittest.TestCase):
                         'evidence_pin': PIN}
             with patch.object(chain, '_reference_document', return_value=b'{}'), \
                  patch.object(chain, '_saved_result'), \
+                 _request_boundary_on_this_platform(), \
+                 _audit_request_boundary_on_this_platform(), \
                  patch.object(chain, '_role_identity', return_value=identity), \
                  patch.object(chain.numeric, 'calculate_fixture', return_value=verified) as analysis, \
                  patch.object(chain.numeric, 'audit_fixture', return_value=failed) as audit, \

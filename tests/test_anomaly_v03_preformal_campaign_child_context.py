@@ -9,9 +9,10 @@ import unittest
 from banto_ai import anomaly_v03_preformal_campaign_child_context as child
 from banto_ai import anomaly_v03_preformal_campaign_metadata as metadata
 from tests.test_anomaly_v03_preformal_campaign_metadata import _plan
+from tests._anomaly_v03_preformal_campaign_test_paths import PortableCampaignPaths
 
 
-class CampaignChildContextTests(unittest.TestCase):
+class CampaignChildContextTests(PortableCampaignPaths):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
