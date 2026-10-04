@@ -34,9 +34,15 @@ SOURCE_EXTRA = (
     'src/banto_ai/anomaly_v03_preformal_campaign_store.py',
     'src/banto_ai/anomaly_v03_preformal_campaign_prepare_owner.py',
     'src/banto_ai/anomaly_v03_preformal_campaign_run_intent_store.py',
+    'src/banto_ai/anomaly_v03_preformal_campaign_run_budget_owner.py',
+    'src/banto_ai/anomaly_v03_preformal_campaign_reread_intent_store.py',
+    'src/banto_ai/anomaly_v03_preformal_campaign_completion_store.py',
     'tools/preformal_campaign_store_trial.py',
     'tools/preformal_campaign_prepare_owner.py',
     'tools/preformal_campaign_run_intent_store.py',
+    'tools/preformal_campaign_run_budget_owner.py',
+    'tools/preformal_campaign_reread_intent_store.py',
+    'tools/preformal_campaign_completion_store.py',
 )
 CONTROL_FILES = frozenset({
     'anchor-pin.json', 'checkpoint.json', 'preflight-intention.json',
@@ -388,7 +394,8 @@ def verify_store(campaign_root, control_root, *, expected_plan_pin,
     }
 
 
-def _prepared_owner(state, expected_prepare_receipt_pin):
+def _prepared_owner(state, expected_prepare_receipt_pin, *,
+                    require_attempt_absent=True):
     """Reopen the successful direct prepare evidence before journal mutation."""
     # Late import avoids a store/owner import cycle. The owner never runs here.
     from . import anomaly_v03_preformal_campaign_prepare_owner as owner
@@ -401,8 +408,9 @@ def _prepared_owner(state, expected_prepare_receipt_pin):
     _inventory(root / 'worker', frozenset({'report.json', 'stderr.json'}))
     _inventory(Path(intention['manifest_path']).parent,
                frozenset({'pins.json', 'pins.json.sha256'}))
-    v.require(not Path(intention['attempt_root']).exists(),
-              'attempt root appeared during prepare inspection')
+    if require_attempt_absent:
+        v.require(not Path(intention['attempt_root']).exists(),
+                  'attempt root appeared during prepare inspection')
     receipt_raw = _pinned(root / 'receipt.json', expected_prepare_receipt_pin,
                           owner.MAX_CONTROL)
     receipt = v.strict_json(receipt_raw)
@@ -514,8 +522,9 @@ def _prepared_owner(state, expected_prepare_receipt_pin):
                            receipt['sidecar_pin'], 128)
     _inventory(Path(intention['manifest_path']).parent,
                frozenset({'pins.json', 'pins.json.sha256'}))
-    v.require(not Path(intention['attempt_root']).exists(),
-              'prepare created attempt output before started record')
+    if require_attempt_absent:
+        v.require(not Path(intention['attempt_root']).exists(),
+                  'prepare created attempt output before started record')
     owner._completed_cli(report, creation, intention, plan, stdout_raw,
                          stderr_raw, manifest_raw, sidecar_raw)
     manifest = v.strict_json(manifest_raw)
@@ -549,8 +558,9 @@ def _prepared_owner(state, expected_prepare_receipt_pin):
     _inventory(root / 'worker', frozenset({'report.json', 'stderr.json'}))
     _inventory(Path(intention['manifest_path']).parent,
                frozenset({'pins.json', 'pins.json.sha256'}))
-    v.require(not Path(intention['attempt_root']).exists(),
-              'attempt root appeared during prepare inspection')
+    if require_attempt_absent:
+        v.require(not Path(intention['attempt_root']).exists(),
+                  'attempt root appeared during prepare inspection')
     for path, raw, maximum in (
         (root / 'receipt.json', receipt_raw, owner.MAX_CONTROL),
         (root / 'prelaunch-claim.json', claim_raw, owner.MAX_CONTROL),
