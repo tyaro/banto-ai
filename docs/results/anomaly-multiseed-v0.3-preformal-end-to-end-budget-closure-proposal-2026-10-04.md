@@ -45,6 +45,8 @@
 
 後続code `7afb100` でこの**1 seed寄与の純粋な集約器**を追加し、合成72行の整合を確認した。clean `40235b2` の[実保存c001/c011読取trial](../../artifacts/anomaly-v03-preformal-saved-seed-contribution-c01-trial-01/result.json)は3,302 B / SHA-256 `69abe6325db344796b8014a42ce7c3a62e6d957a88971cbbfd25c8d0393f03be`、2/12 layout・12/72行、寄与null、正式flag falseである。この2区間は共通producer campaign未認証であり、残る10 layoutや40 seedのproducer・保存reader実測を代替しない。
 
+後続の[保存seed在庫と5役Git事前確認](anomaly-multiseed-v0.3-saved-seed-inventory-and-owned-git-preflight-2026-10-04.md)では、1/40 seed・2/480 chunkをcollectorに結び、候補profileなしの5役Job前段でGit HEAD/statusを所有した。clean `1869267` のJob内共有予算は69.589秒/262標本でpassしたが、先行joinと保存seed collectorはこの時計の外で、50,000 draw・完全S6・公開後readerも含まない。したがって行7の全工程予算と容量2倍検査は未成立のままである。
+
 ## 版付き上限を決める手順
 
 1. 科学条件・50,000 draw・seed登録を変えず、最終実装revision、26H2のexact runtime tuple、5役割profile、公開保証、同じvolume上の新rootと固定入力を記録する。正式holdoutを測定用入力に使わない。
