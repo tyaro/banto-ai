@@ -47,13 +47,16 @@ def _pinned(path, pin, maximum):
     return raw
 
 
-def _source(revision):
+def _source(revision, *, git_reader=None):
     """Check a clean HEAD and selected working raw, without claiming closure."""
-    selected = chain._git_sources(revision)
+    selected = chain._git_sources(revision, git_reader=git_reader)
     raw = observed._file(ROOT / SOURCE, 1024**2)
-    committed = subprocess.check_output(
+    committed = (subprocess.check_output(
         ['git', '-C', str(ROOT), 'show', revision + ':' + SOURCE],
         stderr=subprocess.DEVNULL, timeout=10)
+        if git_reader is None else git_reader.run(
+            call_id='owner-source', operation='source_blob',
+            source_path=SOURCE, expected_output_pin=observed._pin(raw)))
     v.require(raw == committed, 'five-role Job owner source/Git bytes')
     return {'revision': revision, 'orchestrator_selected': selected,
             'owner': observed._pin(raw),

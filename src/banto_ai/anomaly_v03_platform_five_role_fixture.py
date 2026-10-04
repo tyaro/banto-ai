@@ -29,20 +29,29 @@ OUTPUT_PARENT = ROOT / 'artifacts' / 'anomaly-v03-preformal-five-role-26h2'
 JOIN_FORMAT = 'anomaly-v03-preformal-join-budget-v1'
 
 
-def _git_sources(revision):
-    """Pin only selected orchestrator sources; this is not source closure."""
+def _git_sources(revision, *, git_reader=None):
+    """Pin selected orchestrator sources; an owned reader remains partial."""
     evidence._digest(revision, 40)
     def git(*args):
         return subprocess.check_output(['git', '-C', str(ROOT), *args],
                                        stderr=subprocess.DEVNULL, timeout=10)
-    v.require(git('rev-parse', 'HEAD').decode().strip() == revision,
+    head = (git('rev-parse', 'HEAD') if git_reader is None else
+            git_reader.run(call_id='head', operation='head'))
+    v.require(head.decode().strip() == revision,
               'five-role source revision changed')
-    v.require(not git('status', '--porcelain').strip(),
+    status = (git('status', '--porcelain') if git_reader is None else
+              git_reader.run(call_id='status', operation='status'))
+    v.require(not status.strip(),
               'five-role candidate must be clean')
     pins = {}
-    for name in SOURCES:
+    for index, name in enumerate(SOURCES):
         raw = observed._file(ROOT / name, 1024**2)
-        evidence._raw(raw, observed._pin(git('show', revision + ':' + name)),
+        committed = (git('show', revision + ':' + name)
+                     if git_reader is None else git_reader.run(
+                         call_id=f'selected-source-{index}',
+                         operation='source_blob', source_path=name,
+                         expected_output_pin=observed._pin(raw)))
+        evidence._raw(raw, observed._pin(committed),
                       'five-role selected source/Git bytes')
         pins[name] = observed._pin(raw)
     return pins
