@@ -44,13 +44,26 @@ class OwnedGitPolicyPrepareTests(unittest.TestCase):
                                        cwd=cwd, stderr=subprocess.DEVNULL,
                                        timeout=10)
 
-    def _prepare(self, revision=None, output=None, path=None):
+    def _prepare(self, revision=None, output=None, path=None,
+                 git_executable=None):
         with patch.object(prepare, 'ROOT', self.root), \
              patch.dict(os.environ, {'PATH': str(path or
                                                 self.executable.parent)}):
             return prepare.prepare_policy(
                 expected_revision=self.revision if revision is None else revision,
-                output_root=self.output if output is None else output)
+                output_root=self.output if output is None else output,
+                git_executable=git_executable)
+
+    def test_explicit_absolute_git_binary_ignores_caller_path_selection(self):
+        fake_dir = self.artifacts / 'unselected-path'
+        fake_dir.mkdir()
+        result = self._prepare(path=fake_dir,
+                               git_executable=self.executable)
+        self.assertEqual(result['status'], 'input_policy_prepared')
+        policy = prepare.v.strict_json((self.output / 'policy.json').read_bytes())
+        self.assertEqual(policy['executable_path'], str(self.executable))
+        self.assertEqual(policy['environment']['PATH'],
+                         str(self.executable.parent))
 
     def test_clean_checkout_saves_compatible_canonical_policy_once(self):
         result = self._prepare()
@@ -105,6 +118,9 @@ class OwnedGitPolicyPrepareTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self._prepare(output=self.root / 'wrong-place')
         self.assertFalse((self.root / 'wrong-place').exists())
+        with self.assertRaises(ValueError):
+            self._prepare(git_executable=Path('git.exe'))
+        self.assertFalse(self.output.exists())
 
 
 if __name__ == '__main__':

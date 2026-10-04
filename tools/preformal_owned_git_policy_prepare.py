@@ -51,7 +51,7 @@ def _head_clean(executable, environment, revision):
     v.require(not status, 'Git policy preparation checkout is dirty')
 
 
-def prepare_policy(*, expected_revision, output_root):
+def prepare_policy(*, expected_revision, output_root, git_executable=None):
     """Save one non-overwriting policy after two clean-HEAD observations."""
     owned_git.evidence._digest(expected_revision, 40)
     target = Path(output_root)
@@ -63,10 +63,16 @@ def prepare_policy(*, expected_revision, output_root):
     v.require(not target.exists(), 'Git policy root already exists')
 
     name = 'git.exe' if os.name == 'nt' else 'git'
-    selected = shutil.which(name, path=os.environ.get('PATH'))
-    v.require(selected is not None and Path(selected).is_absolute(),
-              'PATH Git executable unavailable')
-    executable = Path(selected)
+    if git_executable is None:
+        selected = shutil.which(name, path=os.environ.get('PATH'))
+        v.require(selected is not None and Path(selected).is_absolute(),
+                  'PATH Git executable unavailable')
+        executable = Path(selected)
+    else:
+        executable = Path(git_executable)
+        v.require(executable.is_absolute() and
+                  executable.name.casefold() == name,
+                  'absolute named Git executable required')
     links = executable.lstat().st_nlink
     v.require(type(links) is int and 1 <= links <= 16,
               'Git executable hardlink count')
@@ -117,9 +123,12 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--revision', required=True)
     parser.add_argument('--output-root', type=Path, required=True)
+    parser.add_argument('--git-executable', type=Path,
+                        help='absolute Git binary to pin; defaults to PATH Git')
     args = parser.parse_args(argv)
     result = prepare_policy(expected_revision=args.revision,
-                            output_root=args.output_root)
+                            output_root=args.output_root,
+                            git_executable=args.git_executable)
     print(json.dumps(result, sort_keys=True, separators=(',', ':')))
     return 0
 
