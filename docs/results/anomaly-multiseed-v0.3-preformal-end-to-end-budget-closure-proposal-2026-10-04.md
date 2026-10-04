@@ -43,6 +43,8 @@
 
 この実測が埋めるのは**旧producerの外部固定入力からの算術→文書・sliceと件数監査**だけである。旧producer実行と入力9,778,170 Bは同じ時計の外、登録保存readerから40 clusterへの導出、raw観測からの完全S6、正式5 payloadのstage/writer/fresh readerも外である。内側の子回収報告は `caller-reported-exit-only; no foreign-process-query`。別root・別revisionの予算や容量を加算して行7の全工程測定にしない。次の接続点は、12 layoutの保存済み72行を外部pin・latest attemptと結んで1 cluster contributionを作り、40 clusterの同一系譜へ拡張することである。
 
+後続code `7afb100` でこの**1 seed寄与の純粋な集約器**を追加し、合成72行の整合を確認した。clean `40235b2` の[実保存c001/c011読取trial](../../artifacts/anomaly-v03-preformal-saved-seed-contribution-c01-trial-01/result.json)は3,302 B / SHA-256 `69abe6325db344796b8014a42ce7c3a62e6d957a88971cbbfd25c8d0393f03be`、2/12 layout・12/72行、寄与null、正式flag falseである。この2区間は共通producer campaign未認証であり、残る10 layoutや40 seedのproducer・保存reader実測を代替しない。
+
 ## 版付き上限を決める手順
 
 1. 科学条件・50,000 draw・seed登録を変えず、最終実装revision、26H2のexact runtime tuple、5役割profile、公開保証、同じvolume上の新rootと固定入力を記録する。正式holdoutを測定用入力に使わない。

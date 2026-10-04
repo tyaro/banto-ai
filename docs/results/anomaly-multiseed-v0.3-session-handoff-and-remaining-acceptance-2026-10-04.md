@@ -10,6 +10,10 @@
 
 clean `ab6fd0469056160931b7f7468702ac7a44782f9a` の[非上書き読取専用postcheck receipt](../../artifacts/anomaly-v03-preformal-campaign-saved-row-bridge-20261004-01/result.json)は5,288 B / SHA-256 `e747697b04f40d0bf3808ed5c7e48c24af38e8b5f290ade04f7c9142b3ddb71e`。外部固定のplan 95,584 B / `88ccc0d87c773b7dd14c95f4fe4522c979824b9b1a17cc21490ace31b2fa8183`、started checkpoint 839 B / `4d6fba71c3076f12e7c81519e1bf51be968cee1e6e0adf0d5da80f52823d5d6d`、terminal checkpoint 1,190 B / `06fec99585e7721aca882f13d192dbf9e533d73336a54a348484f5cad6ad87f0`を入口に、旧保存rawを再照合した。別のread-only確認でもreceiptのraw/source pin、1/480・6/2,880、479欠番、正式flag falseが一致した。このreceipt自体も過去実行の再認証やcampaign全体の完成を示さず、`artifacts/`内でのみ保持する。
 
+後続code `7afb100d69dbdf4c3b96b666e54c83d7aaeb21dc` と直起動修正 `40235b2346dc16a6fb8c5c01457a2fc2ccfa8e07` では、[12 layoutの保存reader行を1架空seed寄与へ集約する純粋境界](../../src/banto_ai/anomaly_v03_preformal_saved_seed_contribution.py)、[所有Git起動helper](../../src/banto_ai/anomaly_v03_preformal_owned_git.py)、[c001/c011読取専用trial入口](../../tools/preformal_saved_seed_contribution_trial.py)を追加した。合成72行では1 seed寄与のcount・delay・slice整合を確認し、不完全・旧attempt・identity不一致は拒否した。所有Git helperは実Gitと偽PATH・非zero・実行ファイル変化/消失を試したが、既存5役へ未接続で `integration_pending=true`、完全閉包false。レビューで見つけた停止失敗時のhandle保持とWindows開始identity再照合も修正した。関連36試験、CI journal検証器9試験、compile、repository safetyはPASS。clean `40235b2` の[実保存c001/c011 trial結果](../../artifacts/anomaly-v03-preformal-saved-seed-contribution-c01-trial-01/result.json)は3,302 B / SHA-256 `69abe6325db344796b8014a42ce7c3a62e6d957a88971cbbfd25c8d0393f03be`。外部pinset 4,079 B / `9af50430de87c2a2e080d5b60bd74a0844a28157572221cbaee857dfcbb720b9` と20制御rawの再hash一致、2/12 layout・12/72行、`cluster_contribution=null`、正式flag false。trialのclean HEAD検査には未pinのPATH上Gitを使い、新helperによる実行handle認証は行っていない。元の2区間は共通campaign由来が未認証で、登録実観測と全40 clusterの証拠にはならない。[S4改訂案v2](../anomaly-v03-s4-26h2-amendment-draft-v2.md#linux-runner同定の代替候補)にはjob別log/releaseのrunner同定候補も追加したが、版付き採択と実CIの取得は未了である。
+
+上記Git helperの停止・identity修正はcode保存点 `a06281396b129cefe7f7ca8eb9a23ede4123179a` に固定した。先行trialは `40235b2` の実行bytesに結び、後続helper修正を当時の実走結果へ読み替えない。
+
 ## 先行campaign `g001` の保存点（履歴）
 
 | 項目 | 引き継ぐ値 |
