@@ -201,13 +201,6 @@ def _manifest(raw, expected_pin, intention):
     return manifest
 
 
-def _normalized_source(value):
-    campaign._source(value)
-    source = copy.deepcopy(value)
-    source['selected_files'].sort(key=lambda row: row['path'])
-    return source
-
-
 def check_preflight(plan_raw, expected_plan_pin, intention_raw,
                     expected_intention_pin, outcome_raw,
                     expected_outcome_pin, *, manifest_raw=None,
@@ -251,9 +244,9 @@ def check_preflight(plan_raw, expected_plan_pin, intention_raw,
                   outcome['reason'] is None,
                   'prepare success evidence declaration incomplete')
         manifest = _manifest(manifest_raw, outcome['manifest_pin'], intention)
-        v.require(_normalized_source(manifest['source']) ==
-                  _checked_plan(plan_raw, expected_plan_pin)['source'],
-                  'prepare manifest selected source mismatch')
+        campaign.require_generator_source_subset(
+            _checked_plan(plan_raw, expected_plan_pin)['source'],
+            manifest['source'], generated.SOURCE_FILES)
         expected_sidecar = (outcome['manifest_pin']['sha256'] + '\n').encode('ascii')
         v.require(sidecar_raw == expected_sidecar and
                   campaign.pin(sidecar_raw) == outcome['sidecar_pin'],

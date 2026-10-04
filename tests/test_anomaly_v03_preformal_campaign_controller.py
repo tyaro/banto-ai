@@ -11,13 +11,16 @@ from unittest.mock import patch
 from banto_ai import anomaly_v03 as v
 from banto_ai import anomaly_v03_preformal_campaign_controller as c
 from banto_ai import anomaly_v03_preformal_campaign_metadata as m
+from banto_ai import anomaly_v03_preformal_owned_generated_attempt as generated
 from tests.test_anomaly_v03_preformal_campaign_metadata import Journal
 
 
 def _manifest(journal, index):
     plan = journal.plan
     source = copy.deepcopy(plan['source'])
-    source['selected_files'].reverse()  # Existing prepare retains collection order.
+    source['selected_files'] = list(reversed([
+        row for row in source['selected_files']
+        if row['path'] in generated.SOURCE_FILES]))
     output = {name: m.pin(name.encode('ascii'))
               for name in m._output_names(index)}
     output['saved/registry.json'] = plan['registry_pin']
@@ -39,6 +42,20 @@ def _manifest(journal, index):
 class ControllerGateTests(unittest.TestCase):
     def setUp(self):
         self.j = Journal()
+        original = self.j.plan
+        source = copy.deepcopy(original['source'])
+        source['selected_files'] = [
+            {'path': name, 'pin': m.pin(name.encode('utf-8'))}
+            for name in generated.SOURCE_FILES]
+        source['selected_files'].append({
+            'path': 'src/banto_ai/another_selected.py',
+            'pin': m.pin(b'another selected source')})
+        self.j.plan = m.fixed_plan(
+            original['campaign_id'], original['root'], original['path_code'],
+            original['registry_pin'], source, original['runtime_candidate'],
+            original['budget_candidate'])
+        self.j.plan_raw = m.encode_plan(self.j.plan)
+        self.j.plan_pin = m.pin(self.j.plan_raw)
 
     def _start(self, index=0):
         manifest = _manifest(self.j, index)
@@ -138,6 +155,24 @@ class ControllerGateTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             c._manifest(self.j.plan, v.strict_json(self.j.raws[-1]), bad,
                         m.pin(bad))
+        for changed in ('missing', 'wrong_pin', 'extra', 'revision', 'scope'):
+            value = v.strict_json(manifest)
+            rows = value['source']['selected_files']
+            if changed == 'missing':
+                rows.pop()
+            elif changed == 'wrong_pin':
+                rows[0]['pin'] = m.pin(b'wrong source')
+            elif changed == 'extra':
+                rows.append(copy.deepcopy(
+                    self.j.plan['source']['selected_files'][-1]))
+            elif changed == 'revision':
+                value['source']['revision'] = 'f' * 40
+            else:
+                value['source']['scope'] = 'other'
+            bad = v.canonical_json(value)
+            with self.subTest(changed=changed), self.assertRaises(ValueError):
+                c._manifest(self.j.plan, v.strict_json(self.j.raws[-1]),
+                            bad, m.pin(bad))
 
     def test_reread_requires_preceding_owned_result_and_current_python(self):
         manifest = self._start()
@@ -238,19 +273,51 @@ class ControllerGateTests(unittest.TestCase):
             return {'status': 'verified'}
 
         with patch.object(c, '_pinned', side_effect=pinned), \
+             patch.object(c.store, '_live_matches'), \
              patch.object(c, '_read', return_value=(
                  manifest_pin['sha256'] + '\n').encode('ascii')), \
              patch.object(c.copied, '_decode_source_snapshots',
                           return_value={plan['source']['revision']: {}}), \
              patch.object(c.generated, '_validated_snapshots'), \
              patch.object(c.generated, '_source',
-                          return_value=plan['source']), \
+                          return_value=v.strict_json(manifest)['source']) as source, \
              patch.object(c.runtime, 'probe_runtime',
                           return_value=plan['runtime_candidate']['tuple']), \
              patch.object(c, '_load_receipt', side_effect=prior_receipt), \
              patch.object(Path, 'is_dir', return_value=True), \
              patch.object(Path, 'exists', return_value=False):
             c._verified_inputs(plan, request, current)
+            changed = copy.deepcopy(v.strict_json(manifest)['source'])
+            changed['selected_files'][0]['pin'] = m.pin(b'wrong live source')
+            source.return_value = changed
+            with self.assertRaises(ValueError):
+                c._verified_inputs(plan, request, current)
+
+    def test_execution_boundaries_check_full_plan_extra_and_subset(self):
+        plan = self.j.plan
+        manifest = v.strict_json(_manifest(self.j, 0))
+        request = {'manifest_path': manifest['root'] + '-manifest',
+                   'manifest_pin': m.pin(b'manifest')}
+        with patch.object(c, '_pinned', return_value=b'manifest'), \
+             patch.object(c.store, '_live_matches') as live, \
+             patch.object(c.generated, '_source',
+                          return_value=manifest['source']) as source, \
+             patch.object(c.runtime, 'probe_runtime',
+                          return_value=plan['runtime_candidate']['tuple']):
+            c._verified_inputs_before_or_after(plan, request)
+            live.assert_called_once_with(plan)
+            changed = copy.deepcopy(manifest['source'])
+            changed['selected_files'][0]['pin'] = m.pin(b'wrong source')
+            source.return_value = changed
+            with self.assertRaises(ValueError):
+                c._verified_inputs_before_or_after(plan, request)
+            live.side_effect = ValueError('plan extra source drift')
+            with self.assertRaisesRegex(ValueError, 'plan extra source drift'):
+                c._verified_inputs_before_or_after(plan, request)
+        with patch.object(c.store, '_live_matches',
+                          side_effect=ValueError('plan extra source drift')):
+            with self.assertRaisesRegex(ValueError, 'plan extra source drift'):
+                c._verified_inputs(plan, request, {'state': 'started'})
 
 
 if __name__ == '__main__':

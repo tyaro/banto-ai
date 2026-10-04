@@ -117,6 +117,36 @@ def _source(value):
               'duplicate selected source file')
 
 
+def require_generator_source_subset(plan_source, generator_source,
+                                    generator_paths):
+    """Require the generator's exact selected files with the plan's same pins.
+
+    The plan may also pin owner/store files.  This checks declarations only;
+    live raw bytes for all planned files are checked by the campaign store.
+    """
+    _source(plan_source)
+    _source(generator_source)
+    v.require(type(generator_paths) in (list, tuple) and generator_paths and
+              all(type(path) is str for path in generator_paths),
+              'generator source path contract')
+    required = set(generator_paths)
+    v.require(len(required) == len(generator_paths) and
+              all(v.safe_relative_path(path) == path for path in required),
+              'unique generator source paths')
+    v.require(generator_source['revision'] == plan_source['revision'] and
+              generator_source['scope'] == plan_source['scope'],
+              'generator source revision/scope differs from plan')
+    planned = {row['path']: row['pin']
+               for row in plan_source['selected_files']}
+    selected = {row['path']: row['pin']
+                for row in generator_source['selected_files']}
+    v.require(set(selected) == required and required <= set(planned),
+              'exact generator source subset paths required')
+    for path in required:
+        _same(selected[path], planned[path],
+              'generator source plan pin ' + path)
+
+
 def _runtime(value):
     _keys(value, {'candidate_id', 'tuple', 'tuple_sha256', 'status'},
           'runtime candidate')

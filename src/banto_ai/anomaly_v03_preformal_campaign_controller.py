@@ -20,6 +20,7 @@ from . import anomaly_v03 as v
 from . import anomaly_v03_platform_fixture as platform
 from . import anomaly_v03_platform_fixture_runtime as runtime
 from . import anomaly_v03_preformal_campaign_metadata as metadata
+from . import anomaly_v03_preformal_campaign_store as store
 from . import anomaly_v03_preformal_owned_generated_attempt as generated
 from . import anomaly_v03_preformal_owned_saved_attempt as copied
 from . import anomaly_v03_preformal_saved_row_reread as reread
@@ -40,12 +41,6 @@ MAX_SAVED = 2 * 1024**2
 
 def _same(actual, expected, label):
     v.require(v.canonical_json(actual) == v.canonical_json(expected), label)
-
-
-def _normalized_source(value):
-    result = copy.deepcopy(value)
-    result['selected_files'].sort(key=lambda row: row['path'])
-    return result
 
 
 def _source_state(plan_raw, plan_pin, record_raws, count, head):
@@ -132,12 +127,13 @@ def _manifest(plan, current, raw, expected_pin):
               manifest['root'] == current['attempt_root'] and
               manifest['chunk_index'] == current['chunk_index'] and
               manifest['revision'] == plan['source']['revision'] and
-              _normalized_source(manifest['source']) == plan['source'] and
               manifest['recipe_id'] == metadata.RECIPE and
               manifest['invented_only'] is True and
               manifest['actual_registered_observations_read'] is False and
               manifest['formal_permission'] is False,
               'manifest differs from frozen invented slot')
+    metadata.require_generator_source_subset(
+        plan['source'], manifest['source'], generated.SOURCE_FILES)
     v.require(type(manifest['output_pins']) is dict and
               set(manifest['output_pins']) == metadata._output_names(
                   current['chunk_index']) and
@@ -344,6 +340,7 @@ def _pinned(path, expected, maximum=MAX_SAVED):
 
 
 def _verified_inputs(plan, request, current):
+    store._live_matches(plan)
     attempt = Path(request['attempt_root'])
     manifest = Path(request['manifest_path'])
     expected = request['manifest_pin']
@@ -362,8 +359,8 @@ def _verified_inputs(plan, request, current):
         for name, content in snapshots[plan['source']['revision']].items()},
         'external manifest source snapshot raw pins')
     source = generated._source(plan['source']['revision'])
-    _same(_normalized_source(source), plan['source'],
-          'selected source changed')
+    metadata.require_generator_source_subset(
+        plan['source'], source, generated.SOURCE_FILES)
     actual_runtime = runtime.probe_runtime(ROOT)
     _same(actual_runtime, plan['runtime_candidate']['tuple'],
           'selected runtime changed')
@@ -736,9 +733,10 @@ def _verified_inputs_before_or_after(plan, request):
     # new-root preflight check in the supervisor's postflight boundary.
     _pinned(Path(request['manifest_path']), request['manifest_pin'],
             generated.MAX_INVOCATION)
-    _same(_normalized_source(generated._source(
-        plan['source']['revision'])), plan['source'],
-          'owned CLI selected source changed')
+    store._live_matches(plan)
+    metadata.require_generator_source_subset(
+        plan['source'], generated._source(plan['source']['revision']),
+        generated.SOURCE_FILES)
     _same(runtime.probe_runtime(ROOT), plan['runtime_candidate']['tuple'],
           'owned CLI runtime changed')
 

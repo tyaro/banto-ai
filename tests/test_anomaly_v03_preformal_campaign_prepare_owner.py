@@ -93,6 +93,15 @@ class PrepareOwnerTests(unittest.TestCase):
             self.assertIsNone(result['manifest_pin'])
             self.assertFalse(result['retry_authorized'])
 
+    def test_empty_stderr_can_be_verified_by_its_zero_byte_pin(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'stderr.json'
+            path.write_bytes(b'')
+            self.assertEqual(owner._pinned(path, metadata.pin(b''), 16,
+                                           allow_empty=True), b'')
+            with self.assertRaises(ValueError):
+                owner._pinned(path, metadata.pin(b''), 16)
+
     def test_deep_manifest_rejection_becomes_saved_integrity_failure(self):
         with tempfile.TemporaryDirectory() as directory:
             target = Path(directory)

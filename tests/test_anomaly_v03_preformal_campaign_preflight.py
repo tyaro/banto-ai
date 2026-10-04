@@ -20,6 +20,9 @@ class PreflightTests(unittest.TestCase):
     def setUpClass(cls):
         original = _plan()
         source = copy.deepcopy(original['source'])
+        source['selected_files'] = [
+            {'path': name, 'pin': campaign.pin(name.encode('utf-8'))}
+            for name in generated.SOURCE_FILES]
         source['selected_files'].append({
             'path': 'src/banto_ai/another_selected.py',
             'pin': campaign.pin(b'another selected source')})
@@ -56,8 +59,9 @@ class PreflightTests(unittest.TestCase):
             'revision': self.plan['source']['revision'],
             'chunk_index': 0, 'recipe_id': campaign.RECIPE,
             'source': {**self.plan['source'],
-                       'selected_files': list(reversed(
-                           self.plan['source']['selected_files']))},
+                       'selected_files': list(reversed([
+                           row for row in self.plan['source']['selected_files']
+                           if row['path'] in generated.SOURCE_FILES]))},
             'source_snapshots': copied._source_snapshots(snapshots),
             'source_snapshot_pins': {
                 name: campaign.pin(raw)
@@ -154,6 +158,46 @@ class PreflightTests(unittest.TestCase):
                 sidecar_pin=campaign.pin(sidecar))
             with self.assertRaises(ValueError):
                 self.check(outcome, manifest_raw=raw, sidecar_raw=sidecar)
+
+    def test_manifest_source_is_exact_generator_subset_of_full_plan(self):
+        manifest = self._manifest()
+        selected = manifest['source']['selected_files']
+        self.assertEqual({row['path'] for row in selected},
+                         set(generated.SOURCE_FILES))
+        self.assertGreater(len(self.plan['source']['selected_files']),
+                           len(selected))
+        raw = v.canonical_json(manifest)
+        sidecar = (campaign.pin(raw)['sha256'] + '\n').encode('ascii')
+        outcome = preflight.make_outcome(
+            self.intention_pin, 'prepared', exit_code=0,
+            process_observation_pin=campaign.pin(b'owned prepare'),
+            manifest_pin=campaign.pin(raw), sidecar_pin=campaign.pin(sidecar))
+        self.assertEqual(self.check(outcome, manifest_raw=raw,
+                                    sidecar_raw=sidecar)['state'], 'prepared')
+        for changed in ('missing', 'wrong_pin', 'extra', 'revision', 'scope'):
+            bad = copy.deepcopy(self._manifest())
+            rows = bad['source']['selected_files']
+            if changed == 'missing':
+                rows.pop()
+            elif changed == 'wrong_pin':
+                rows[0]['pin'] = campaign.pin(b'wrong source raw')
+            elif changed == 'extra':
+                rows.append(copy.deepcopy(
+                    self.plan['source']['selected_files'][-1]))
+            elif changed == 'revision':
+                bad['source']['revision'] = 'f' * 40
+            else:
+                bad['source']['scope'] = 'other'
+            bad_raw = v.canonical_json(bad)
+            bad_sidecar = (campaign.pin(bad_raw)['sha256'] + '\n').encode('ascii')
+            bad_outcome = preflight.make_outcome(
+                self.intention_pin, 'prepared', exit_code=0,
+                process_observation_pin=campaign.pin(b'owned prepare'),
+                manifest_pin=campaign.pin(bad_raw),
+                sidecar_pin=campaign.pin(bad_sidecar))
+            with self.subTest(changed=changed), self.assertRaises(ValueError):
+                self.check(bad_outcome, manifest_raw=bad_raw,
+                           sidecar_raw=bad_sidecar)
 
     def test_registry_pin_and_output_bounds_are_enforced(self):
         for edit in (

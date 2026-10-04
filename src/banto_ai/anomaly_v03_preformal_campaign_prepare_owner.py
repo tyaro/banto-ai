@@ -48,8 +48,8 @@ def _owner_root(plan):
     return root
 
 
-def _pinned(path, pin, maximum):
-    metadata._pin(pin, 'saved prepare-owner raw')
+def _pinned(path, pin, maximum, *, allow_empty=False):
+    metadata._pin(pin, 'saved prepare-owner raw', positive=not allow_empty)
     raw = observed._file(path, maximum)
     _same(metadata.pin(raw), pin, 'saved prepare-owner raw pin')
     return raw
@@ -329,7 +329,8 @@ def execute(campaign_root, control_root, *, expected_plan_pin,
                 stdout_raw = None
             if report.get('stderr') is not None:
                 stderr_raw = _pinned(root / 'worker/stderr.json',
-                                     report['stderr'], MAX_STDOUT)
+                                     report['stderr'], MAX_STDOUT,
+                                     allow_empty=True)
             else:
                 stderr_raw = None
             manifest_raw = _optional(Path(intention['manifest_path']),
