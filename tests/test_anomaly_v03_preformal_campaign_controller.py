@@ -398,6 +398,9 @@ class ControllerGateTests(PortableCampaignPaths):
             self.assertEqual(pin, receipt_pin)
             return {'status': 'verified'}
 
+        # POSIX CI checkout prefixes can exceed the measured Windows probe path.
+        native_path_limit = (4096 if os.name != 'nt' else
+                             c.generated.MAX_NATIVE_PATH)
         with patch.object(c, '_pinned', side_effect=pinned), \
              patch.object(c.store, '_live_matches'), \
              patch.object(c, '_read', return_value=(
@@ -409,6 +412,8 @@ class ControllerGateTests(PortableCampaignPaths):
                           return_value=v.strict_json(manifest)['source']) as source, \
              patch.object(c.runtime, 'probe_runtime',
                           return_value=plan['runtime_candidate']['tuple']), \
+             patch.object(c.generated, 'MAX_NATIVE_PATH',
+                          native_path_limit), \
              patch.object(c, '_load_receipt', side_effect=prior_receipt), \
              patch.object(Path, 'is_dir', return_value=True), \
              patch.object(Path, 'exists', return_value=False):
