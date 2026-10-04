@@ -15,9 +15,11 @@ clean source `88711500ab7b483496dca40d88b24362724ca9a2` で、[collector](../../
 | 実行 | clean source・policy | 保存結果 |
 | --- | --- | --- |
 | `trial-01` | `afb2517ced5fe0460a83b48b71ccf00155f1f2c7`; policy 581 B / `29a3f6d4273b8b69ab5bad2959aa44891c147db378c1fddcfbc1398d86e7fddf`; `C:\Program Files\Git\cmd\git.exe` 46,480 B / `54194a1af7cfb6730448ce14b8f2c1dddd9f950b7f995dc351c1ed16eb179249` | [outer receipt](../../artifacts/anomaly-v03-preformal-five-role-git-anchor-20261004/trial-01/receipt.json) 1,681 B / `4f4773634351786fe4f6f829222d76f5c8d2ac8d250aa3ab1192f917e8569f80`。read-only別実装で28 rawのpin一致 |
-| `trial-02` | `18692678eda77481d1d5f2ca07a04667981d5b6e`; [policy](../../artifacts/anomaly-v03-preformal-owned-git-policy-20261004-03/policy.json) 601 B / `f76f4c4a3897832286af2b6afc58b1f90ec00c2ebd3e0942b8f5de6af6a5d59c`; `C:\Program Files\Git\mingw64\bin\git.exe` 4,285,840 B / `6125857e3aab09c5c79b5328e7d55aedb014b3cdbd4cd60aaf47b8e13cda455b` | [outer receipt](../../artifacts/anomaly-v03-preformal-five-role-git-anchor-20261004/trial-02/receipt.json) 1,681 B / `8ca254ef04be0ace14eeffc2aa3bc7aead14cc74122efff566d9442f735420b7`。保存verifierも`verified_retained` |
+| `trial-02` | `18692678eda77481d1d5f2ca07a04667981d5b6e`; [policy](../../artifacts/anomaly-v03-preformal-owned-git-policy-20261004-03/policy.json) 601 B / `f76f4c4a3897832286af2b6afc58b1f90ec00c2ebd3e0942b8f5de6af6a5d59c`; `C:\Program Files\Git\mingw64\bin\git.exe` 4,285,840 B / `6125857e3aab09c5c79b5328e7d55aedb014b3cdbd4cd60aaf47b8e13cda455b` | [outer receipt](../../artifacts/anomaly-v03-preformal-five-role-git-anchor-20261004/trial-02/receipt.json) 1,681 B / `8ca254ef04be0ace14eeffc2aa3bc7aead14cc74122efff566d9442f735420b7`。保存verifierと、別実装による28 rawの独立pin照合がpass |
 
 `trial-02`の直接Git `HEAD` receiptは2,343 B / `73bf78461a31b53869ed95899e74c51d9817894414e38d0754a2900fd827e6b5`、`status` receiptは2,348 B / `f2200471088e4daf6b2a064a8d0d614b20737c4e3c786bbf6c8582351c803d94`。両方別PID・exit 0で、前者は指定HEAD、後者は空stdoutを保存した。内側[owner receipt](../../artifacts/anomaly-v03-preformal-five-role-git-anchor-20261004/trial-02/attempt/receipt.json)は5,900 B / `3771789d809f7bdd39c2f2165fe0a295cb2649388b9fe8ef1a7b7333cc2931bd`、Job root exit 0、合計1,080 process、終了時active 0、Job wall 71.114秒、peak Job memory 154,849,280 B。5役内の共有予算は69.589秒/262標本でpass、外側policy準備やGit事前確認はその時計に含まれない。候補profileは未指定、旧a3 joinの保存入力を再利用した。`formal_permission`、`source_closure_complete`、`runtime_closure_complete`、`execution_authenticated`はいずれもfalse。
+
+`policy-20261004-02`は実行環境がPython起動時にPATHを元に戻したため`policy-01`と同じ`cmd\git.exe`を選んだ未使用の準備結果で、main binary試行へ加算しない。明示path指定を追加した後、`policy-03`と`trial-02`を新しいclean sourceで行った。
 
 ## 受入への残距離
 
@@ -25,5 +27,7 @@ clean source `88711500ab7b483496dca40d88b24362724ca9a2` で、[collector](../../
 - S4-3: 5役前段のGit 2呼び出しだけが新たに所有された。5役内の多数のbare Git、外部program/動的load、個別孫とJob外processを最終source/runtimeで閉じる必要がある。
 - S4-5: producer→保存reader→40 cluster/50,000 draw→完全S6同形監査→writer→別readerを一つの外側予算で測る必要がある。今回の5役予算と旧join、collector試走を足し合わせない。
 - S4-1/S4-4: 26H2保証A/Bの版付き採択と独立監査、最終revisionのUbuntu 3.12/3.14両jobとrunner同定、Windows native/dev8/smoke2は残る。
+
+CI取得の観察点: 現在のlocal branchにはupstreamがなく、この環境のGitHub認証情報は利用できなかったため、remote runは未確認。`.github/workflows/ci.yml`はpush/PRで3.12/3.14と比較jobを起動し、`workflow_dispatch`はない。最終sourceを固定してから同一`head_sha`/`run_id`/`run_attempt`の3 jobとraw artifact・log・runner同定を取得する。journalの`runner_image_digest`は未収集で、[runner同定代替案](../anomaly-v03-s4-26h2-amendment-draft-v2.md)の版付き採択と独立監査が残る。
 
 上の保存verifierはclean HEADの完全一致を要求する。後続文書commitのHEADで`trial-02`を再検証する場合、元の絶対pathでclean `18692678eda77481d1d5f2ca07a04667981d5b6e`に戻す必要がある。raw pinの独立再hashは別revisionからもできる。S5の未使用登録holdoutはS4独立受入まで開かない。
