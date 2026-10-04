@@ -2,7 +2,7 @@
 
 この文書は、架空登録形式campaignの最新保存証拠と、正式評価のS4採択からS7結果文書までの残件を引き継ぐ。正式評価の許可や受入判定ではない。科学仕様と正式手順の根拠は[凍結計画](../anomaly-multiseed-evaluation-plan-v0.3.md)、受入5群の起点は[2026-10-03の範囲整理](anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)である。
 
-追記: 後続の最新技術保存点は[Windows Job所有と架空campaign `5cd8e989`](anomaly-multiseed-v0.3-campaign-job-ownership-2026-10-04.md)、固定source `a1c8461f7ead4f9867ae2c0b48dca367618401f5`。その前の[子anchor照合campaign `72f754b3`](anomaly-multiseed-v0.3-child-echo-campaign-2026-10-04.md)は固定source `2e10c6723df9f00999c90416954a806329546dde`。以下の `486f28cd` のpinと再検証手順は先行campaignの履歴であり、これらを合算しない。
+追記: 最新技術保存点は[共有wall・Jobメモリ付きの架空campaign `4aacbee4`](anomaly-multiseed-v0.3-slot-wall-and-job-memory-2026-10-04.md)、固定source `772ee3d6e2ea5f02c6c53a72bae6d4daf6942d29`、外部wall receipt 2,230 B / SHA-256 `91714388f56d14649db5ad700e71dc2a6d3a0be41fcc80188c7c6a5ef7d6b38e`。後日read-only verifierで保存chainを再照合済み。その前の[Windows Job所有campaign `5cd8e989`](anomaly-multiseed-v0.3-campaign-job-ownership-2026-10-04.md)は固定source `a1c8461f7ead4f9867ae2c0b48dca367618401f5`、[子anchor照合campaign `72f754b3`](anomaly-multiseed-v0.3-child-echo-campaign-2026-10-04.md)は`2e10c6723df9f00999c90416954a806329546dde`。以下の `486f28cd` のpinと再検証手順は先行campaignの履歴であり、これらを合算しない。
 
 ## 先行campaign `g001` の保存点（履歴）
 
@@ -61,8 +61,10 @@
 
 S4前の追加技術作業として、[campaign controller案](../anomaly-v03-preformal-campaign-controller-next-v1.md)にある子へのanchor echoと子孫の所有回収、登録行から40 clusterへの由来、全工程予算を詰める。ただし**架空480区間の完走を新たなS4必須条件に自動追加しない**。現campaignの`resume_authorized=false`は次区間の自動続行権限を意味しない。次の小試行が必要なら、範囲と固定sourceを決めた新しい非上書きrootで扱う。
 
+最新の`4aacbee4`では一区間の共有wall 503.798/900秒と3外側Jobのピークメモリを保存した。これはS4-3/S4-5の部分証拠であり、5役割閉包、正式同形の全工程予算、容量2倍はなお未了である。
+
 ## 実データの境界と次の着手
 
-保存済みの「実データ」は合成信号を実際に生成したengineering dev 8 seed・smoke 2 seed、120区間・240 dataset・720評価であり、[新readerからの要約・記述報告](anomaly-multiseed-v0.3-real-saved-summary-report-2026-10-03.md)まで実適用済み。実設備・顧客データではない。先行`g001`は架空recipeの技術試行で、ファイル名にholdout seed identityがあっても**登録holdout観測ではない**。未使用40 seedの実観測はS4採択前に読まず、正式creditは0。正式文書のnull欄を「残り4試験」と数えない。
+保存済みの「実データ」は合成信号を実際に生成したengineering dev 8 seed・smoke 2 seed、120区間・240 dataset・720評価であり、[新readerからの要約・記述報告](anomaly-multiseed-v0.3-real-saved-summary-report-2026-10-03.md)まで実適用済み。実設備・顧客データではない。先行`g001`と最新`l001`は架空recipeの技術試行で、ファイル名にholdout seed identityがあっても**登録holdout観測ではない**。未使用40 seedの実観測はS4採択前に読まず、正式creditは0。正式文書のnull欄を「残り4試験」と数えない。
 
 次セッションはまず `git status --short --branch`、引き継ぎcommit、冒頭に示した最新技術保存点のterminal checkpointとpinを確認する。上表とpinは先行`g001`を再検証する場合だけ用いる。その後、S4採択の最短経路として26H2契約と保証A/Bの決定、5役割と全工程予算の不足証拠の整備、最終revisionでの環境・dev/smoke受入を進める。旧gateと旧artifactを変更せず、S4の独立判定を得てからS5へ進む。
