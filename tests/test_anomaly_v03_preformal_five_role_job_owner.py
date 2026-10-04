@@ -128,9 +128,15 @@ class FiveRoleJobOwnerTests(unittest.TestCase):
         child = {'status': 'verified', 'result_pin': PIN,
                  'check_directory': str(inner)}
         top = {'format': owner.chain.FORMAT, 'status': 'verified',
+               'scope': 'invented-26h2-five-owned-role-trial',
+               'platform_contract_status': 'proposal-not-accepted',
                'stage': 'complete', 'source_revision': REVISION,
+               'combined_resource_budget_measured': True,
                'combined_resource_budget_passed': True,
                'five_role_budget_closure_passed': True,
+               'resource_budget_scope':
+                   'one sampled outer root plus shared cooperative child stop',
+               'owned_producer_join_executed': True,
                'source_closure_complete': False,
                'runtime_closure_complete': False,
                'formal_permission': False,
@@ -162,10 +168,16 @@ class FiveRoleJobOwnerTests(unittest.TestCase):
         publication.update(writer=role_results['writer'],
                            reader=role_results['reader'])
         budget = {'format': owner.chain.chain_budget.FORMAT,
-                  'scope': 'invented-preformal-five-role-engineering-fixture',
-                  'root': str(inner), 'sampler_exit_confirmed': True,
-                  'stop_reason': None, 'observation_error': None,
-                  'formal_permission': False, 'registered_data_read': False,
+                   'scope': 'invented-preformal-five-role-engineering-fixture',
+                   'root': str(inner),
+                   'limits': dict(owner.chain.chain_budget.DEFAULTS),
+                   'publication_roots':
+                       [str(inner / 'publication' / 'published')],
+                   'sampler_exit_confirmed': True,
+                   'stop_reason': None, 'observation_error': None,
+                   'formal_permission': False, 'registered_data_read': False,
+                   'independent_s6_complete': False,
+                   'formal_50000_draw_budget_measured': False,
                   'passed': True, 'caller_reported_all_five_exits': True,
                   'caller_reported_roles': {
                       role: {'status': 'verified',
@@ -208,6 +220,25 @@ class FiveRoleJobOwnerTests(unittest.TestCase):
             verified = owner._inner(
                 target, {'output': PIN}, {'pid': 123}, invocation)
             self.assertEqual(verified['identities'], identities)
+            for key, bad in (('format', 'wrong'), ('scope', 'wrong'),
+                             ('root', 'wrong'), ('sampler_exit_confirmed', False),
+                             ('formal_50000_draw_budget_measured', True),
+                             ('independent_s6_complete', True)):
+                original = budget[key]
+                budget[key] = bad
+                with self.subTest(budget_field=key), \
+                     self.assertRaisesRegex(ValueError,
+                                            'five-role saved shared budget'):
+                    owner._inner(target, {'output': PIN}, {'pid': 123}, invocation)
+                budget[key] = original
+            budget['limits']['wall_seconds'] += 1
+            with self.assertRaisesRegex(ValueError, 'five-role saved shared budget'):
+                owner._inner(target, {'output': PIN}, {'pid': 123}, invocation)
+            budget['limits']['wall_seconds'] -= 1
+            budget['caller_reported_roles']['audit']['worker_pid'] += 1
+            with self.assertRaisesRegex(ValueError, 'audit saved budget/result binding'):
+                owner._inner(target, {'output': PIN}, {'pid': 123}, invocation)
+            budget['caller_reported_roles']['audit']['worker_pid'] -= 1
             budget['caller_reported_roles']['analysis']['result_pin'] = \
                 owner.observed._pin(b'wrong-budget')
             with self.assertRaisesRegex(ValueError,
@@ -274,11 +305,15 @@ class FiveRoleJobOwnerTests(unittest.TestCase):
         with patch.object(owner.job_owner, 'valid_job_memory', return_value=True):
             owner._job_complete(report, argv, {'pid': 123})
             for key in ('format', 'limits', 'formal_permission',
-                        'performance_status'):
+                         'performance_status'):
                 changed = dict(report)
                 changed.pop(key)
                 with self.subTest(key=key), self.assertRaises((KeyError, ValueError)):
                     owner._job_complete(changed, argv, {'pid': 123})
+            changed = {**report, 'limits': {**report['limits'],
+                                           'wall_seconds': 301}}
+            with self.assertRaisesRegex(ValueError, 'five-role CLI or Job'):
+                owner._job_complete(changed, argv, {'pid': 123})
 
     def test_unreaped_job_keeps_original_owner_and_failure_receipt(self):
         problem = owner.job_owner.UnreapedJob(
@@ -326,8 +361,11 @@ class FiveRoleJobOwnerTests(unittest.TestCase):
     def test_unclosed_handles_keep_safe_exception_summary(self):
         problem = owner.job_owner.UnclosedHandles(
             {'job': 7}, {'status': 'failed', 'phase': 'close',
-                         'formal_permission': False,
-                         'unsafe_object': object()})
+                          'formal_permission': False,
+                          'job': {'accounting': {'total_processes': 6,
+                                                 'active_processes': 0,
+                                                 'limit_terminated_processes': 0}},
+                          'unsafe_object': object()})
         with patch.object(owner, 'ROOT', self.root), \
              patch.object(owner, '_source', return_value=self.source), \
              patch.object(owner, '_inputs', return_value=self.inputs), \
@@ -337,6 +375,8 @@ class FiveRoleJobOwnerTests(unittest.TestCase):
         self.assertIs(caught.exception, problem)
         saved = owner.v.strict_json((self.parent / 'attempt' / 'receipt.json').read_bytes())
         self.assertEqual(saved['job_exception_report']['phase'], 'close')
+        self.assertEqual(saved['job_exception_report']['job_accounting'][
+            'total_processes'], 6)
         self.assertNotIn('unsafe_object', saved['job_exception_report'])
         self.assertIsNone(saved['launch_pin'])
 

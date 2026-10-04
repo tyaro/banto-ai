@@ -187,10 +187,16 @@ def _inner(target, report, launch, invocation):
     for key, expected in chain.four.publication.CLOSED.items():
         _same(top[key], expected, 'five-role top closed scope ' + key)
     v.require(top['format'] == chain.FORMAT and top['status'] == 'verified' and
+              top['scope'] == 'invented-26h2-five-owned-role-trial' and
+              top['platform_contract_status'] == 'proposal-not-accepted' and
               top['stage'] == 'complete' and
               top['source_revision'] == invocation['source_revision'] and
+              top['combined_resource_budget_measured'] is True and
               top['combined_resource_budget_passed'] is True and
               top['five_role_budget_closure_passed'] is True and
+              top['resource_budget_scope'] ==
+              'one sampled outer root plus shared cooperative child stop' and
+              top['owned_producer_join_executed'] is True and
               top['source_closure_complete'] is False and
               top['runtime_closure_complete'] is False and
               top['formal_permission'] is False and
@@ -216,11 +222,16 @@ def _inner(target, report, launch, invocation):
     v.require(budget['format'] == chain.chain_budget.FORMAT and
               budget['scope'] == 'invented-preformal-five-role-engineering-fixture' and
               budget['root'] == str(inner) and
+              budget['limits'] == chain.chain_budget.DEFAULTS and
+              budget['publication_roots'] ==
+              [str(inner / 'publication' / 'published')] and
               budget['sampler_exit_confirmed'] is True and
               budget['stop_reason'] is None and
               budget['observation_error'] is None and
               budget['formal_permission'] is False and
               budget['registered_data_read'] is False and
+              budget['independent_s6_complete'] is False and
+              budget['formal_50000_draw_budget_measured'] is False and
               budget['passed'] is True and
               budget['caller_reported_all_five_exits'] is True and
               type(budget['caller_reported_roles']) is dict and
@@ -313,6 +324,8 @@ def _job_exception_summary(error):
                 (type(value) is str and len(value) <= 80):
             summary[key] = value
     accounting = report.get('job_accounting')
+    if accounting is None and type(report.get('job')) is dict:
+        accounting = report['job'].get('accounting')
     if type(accounting) is dict and set(accounting) == {
             'total_processes', 'active_processes',
             'limit_terminated_processes'} and all(

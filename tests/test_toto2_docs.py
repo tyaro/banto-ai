@@ -136,7 +136,7 @@ class Toto2DocumentationTests(unittest.TestCase):
 
     def test_controlled_artifacts_are_verified_when_available(self):
         if not CONTROLLED_ARTIFACT_ROOT.is_dir():
-            self.skipTest(f"controlled Toto artifact unavailable: {CONTROLLED_ARTIFACT_ROOT}")
+            self.skipTest("controlled Toto artifact unavailable")
 
         expected_hashes = {
             "m-a/result.json": "88cd3afdd25178808ddecb4b01c58e00e520bd67ab82dcf4ec6ba5b9856a16ae",
@@ -249,7 +249,7 @@ class Toto2DocumentationTests(unittest.TestCase):
         }
         missing = [name for name, path in paths.items() if not path.is_file()]
         if missing:
-            self.skipTest("local Toto event-slice artifacts unavailable: " + ", ".join(missing))
+            self.skipTest("local Toto event-slice artifacts unavailable")
 
         self.assertEqual(
             hashlib.sha256(paths["source_matrix"].read_bytes()).hexdigest(),

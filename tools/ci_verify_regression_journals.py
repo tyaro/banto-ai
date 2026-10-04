@@ -104,6 +104,52 @@ WINDOWS_ONLY_TESTS = {
 }
 
 
+# These source-checkout tests depend on retained local artifacts or an optional
+# analysis extra. Their skips are allowed only for the exact reviewed methods;
+# none is a required S4 common-contract test or evidence of native acceptance.
+OPTIONAL_SKIP_CLASSES = {
+    "tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests":
+        "optional offline-analysis extra is not installed; not native acceptance",
+    "tests.test_anomaly_v03_preformal_bound_document_bridge.SavedDocumentBridgeTests":
+        "retained invented arithmetic fixture absent",
+    "tests.test_anomaly_v03_preformal_bound_slice_bridge.SavedSliceBridgeTests":
+        "retained invented document/slice fixture absent",
+}
+
+OPTIONAL_SKIP_TESTS = {
+    "tests.test_anomaly_v03_preformal_owned_saved_attempt.OwnedSavedAttemptMaterializerTests.test_native_owned_materializer_then_registered_saved_reader":
+        "native owned materializer is an explicit post-commit run",
+    "tests.test_toto2_docs.Toto2DocumentationTests.test_controlled_artifacts_are_verified_when_available":
+        "controlled Toto artifact unavailable",
+    "tests.test_toto2_docs.Toto2DocumentationTests.test_event_slice_local_artifacts_are_checked_when_present":
+        "local Toto event-slice artifacts unavailable",
+}
+
+OPTIONAL_SKIP_IDS = frozenset("""
+tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_instruction_operands_are_not_published
+tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_two_callers_verified_and_private_values_omitted
+tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_recovered_registers_are_private_snapshots_of_accepted_frames
+tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_call_target_mismatch_does_not_accept_candidate
+tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_chain_and_unhandled_opcodes_stop
+tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_chained_saves_use_primary_entry_and_fixed_stack_base
+tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_chained_bare_ret_does_not_unwind_body_again
+tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_chain_cycle_and_non_table_parent_are_rejected
+tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_chain_rejects_stack_changes_bad_slots_and_saved_window_escape
+tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_chain_depth_is_bounded
+tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_handler_metadata_does_not_change_context_unwind
+tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_invalid_or_truncated_handler_rva_stops_before_accepting
+tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_large_allocation_cannot_leave_saved_window
+tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_potential_epilogue_and_mid_instruction_stop
+tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_non_stack_arithmetic_is_body_but_stack_aliases_still_stop
+tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_pe_range_and_stack_shape_are_checked
+tests.test_anomaly_v03_preformal_bound_document_bridge.SavedDocumentBridgeTests.test_saved_pins_and_draft_are_bound_without_arithmetic_replay
+tests.test_anomaly_v03_preformal_bound_document_bridge.SavedDocumentBridgeTests.test_wrong_external_top_pin_rejects_before_new_root
+tests.test_anomaly_v03_preformal_bound_document_bridge.SavedDocumentBridgeTests.test_run_selects_formal_schema_but_retains_fixture_draft
+tests.test_anomaly_v03_preformal_bound_slice_bridge.SavedSliceBridgeTests.test_external_document_and_slice_pins_reject_before_creating_trial
+tests.test_anomaly_v03_preformal_bound_slice_bridge.SavedSliceBridgeTests.test_slice_draft_preserves_primary_tables_and_formal_closure
+""".split())
+
+
 def _source_from_first_record(path: Path) -> dict:
     """Get the run identity through a bounded read; full parsing follows."""
     with path.open("rb") as stream:
@@ -120,25 +166,38 @@ def _source_from_first_record(path: Path) -> dict:
     return source
 
 
-def _allowed_skip_reason(test_id: str) -> str | None:
+def _allowed_skip(test_id: str) -> tuple[str, str] | None:
     if test_id in WINDOWS_ONLY_TESTS:
-        return WINDOWS_ONLY_TESTS[test_id]
+        return "windows_native", WINDOWS_ONLY_TESTS[test_id]
     if test_id in WINDOWS_ONLY_IDS:
         class_id, _, _ = test_id.rpartition(".")
-        return WINDOWS_ONLY_CLASSES.get(class_id)
+        reason = WINDOWS_ONLY_CLASSES.get(class_id)
+        return ("windows_native", reason) if reason is not None else None
+    if test_id in OPTIONAL_SKIP_TESTS:
+        return "non_s4_optional", OPTIONAL_SKIP_TESTS[test_id]
+    if test_id in OPTIONAL_SKIP_IDS:
+        class_id, _, _ = test_id.rpartition(".")
+        reason = OPTIONAL_SKIP_CLASSES.get(class_id)
+        return ("non_s4_optional", reason) if reason is not None else None
     return None
 
 
-def verify(paths: dict[str, Path], expected_head: str, expected_workflow_sha256: str) -> dict:
+def verify(paths: dict[str, Path], expected_head: str, expected_workflow_sha256: str,
+           expected_run_id: str, expected_run_attempt: str) -> dict:
     comparison.require(type(expected_head) is str and re.fullmatch(r"[a-f0-9]{40}", expected_head) is not None,
                        "expected_head_format")
     comparison.require(type(expected_workflow_sha256) is str and
                        re.fullmatch(r"[a-f0-9]{64}", expected_workflow_sha256) is not None,
                        "expected_workflow_pin_format")
+    comparison.require(all(type(value) is str and re.fullmatch(r"[1-9][0-9]{0,19}", value) is not None
+                           for value in (expected_run_id, expected_run_attempt)),
+                       "expected_run_identity_format")
     comparison.require(set(paths) == set(comparison.MINORS), "required_python_matrix")
     source = _source_from_first_record(paths["3.12"])
     comparison.require(source["revision"] == expected_head and
-                       source["workflow_sha256"] == expected_workflow_sha256,
+                       source["workflow_sha256"] == expected_workflow_sha256 and
+                       source["github_run_id"] == expected_run_id and
+                       source["github_run_attempt"] == expected_run_attempt,
                        "external_source_pin_mismatch")
 
     # Existing parser checks every record, run completion, source/run identity,
@@ -156,16 +215,17 @@ def verify(paths: dict[str, Path], expected_head: str, expected_workflow_sha256:
         comparison.require(REQUIRED_TEST_IDS <= planned, "required_test_missing")
         comparison.require(all(finished.get(test_id) == ["pass"] for test_id in REQUIRED_TEST_IDS),
                            "required_test_not_passed")
-        allowed = []
+        windows_skips, optional_skips = [], []
         for skip in report["skips"]:
             test_id = skip.get("test_id")
-            reason = _allowed_skip_reason(test_id) if type(test_id) is str else None
-            comparison.require(reason is not None and skip.get("reason") == reason and
+            policy = _allowed_skip(test_id) if type(test_id) is str else None
+            comparison.require(policy is not None and skip.get("reason") == policy[1] and
                                skip.get("subtest") is False and finished.get(test_id) == ["skip"],
                                "unexpected_linux_skip")
-            allowed.append(test_id)
+            (windows_skips if policy[0] == "windows_native" else optional_skips).append(test_id)
         checked[minor] = {"journal_sha256": report["sha256"], "required_tests_passed": len(REQUIRED_TEST_IDS),
-                          "windows_native_skips": sorted(allowed),
+                          "windows_native_skips": sorted(windows_skips),
+                          "non_s4_optional_skips": sorted(optional_skips),
                           "runner_image_version": report["runtime"]["runner_image_version"]}
 
     return {"verification_status": "passed", "source": source, "jobs": checked,
@@ -183,10 +243,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--python314", required=True, type=Path, help="saved Python 3.14 unittest.jsonl")
     parser.add_argument("--expected-head", required=True, help="externally pinned full Git SHA")
     parser.add_argument("--expected-workflow-sha256", required=True, help="externally pinned raw workflow SHA-256")
+    parser.add_argument("--expected-run-id", required=True, help="externally pinned GitHub run ID")
+    parser.add_argument("--expected-run-attempt", required=True, help="externally pinned GitHub run attempt")
     args = parser.parse_args(argv)
     try:
         result = verify({"3.12": args.python312, "3.14": args.python314},
-                        args.expected_head, args.expected_workflow_sha256)
+                        args.expected_head, args.expected_workflow_sha256,
+                        args.expected_run_id, args.expected_run_attempt)
     except (comparison.EvidenceError, OSError, ValueError, TypeError, KeyError, RecursionError) as error:
         reason = str(error) if isinstance(error, comparison.EvidenceError) else "invalid_journal"
         print("CI regression journals failed: " + reason, file=sys.stderr)

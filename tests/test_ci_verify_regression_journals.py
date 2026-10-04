@@ -21,6 +21,14 @@ NEW_WINDOWS_NATIVE = (
     "tests.test_anomaly_v03_preformal_five_role_job_owner.FiveRoleJobNativeProbeTests."
     "test_six_job_members_complete_and_owner_accepts"
 )
+OPTIONAL_CAPSTONE = (
+    "tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests."
+    "test_instruction_operands_are_not_published"
+)
+OPTIONAL_TOTO = (
+    "tests.test_toto2_docs.Toto2DocumentationTests."
+    "test_controlled_artifacts_are_verified_when_available"
+)
 
 
 def add_case(rows, test_id, status="pass", reason=None):
@@ -64,8 +72,9 @@ class RegressionJournalTests(unittest.TestCase):
             paths[minor] = path
         return paths
 
-    def check(self, rows, head=SOURCE["revision"], workflow=SOURCE["workflow_sha256"]):
-        return verify.verify(self.pair(rows), head, workflow)
+    def check(self, rows, head=SOURCE["revision"], workflow=SOURCE["workflow_sha256"],
+              run_id=SOURCE["github_run_id"], attempt=SOURCE["github_run_attempt"]):
+        return verify.verify(self.pair(rows), head, workflow, run_id, attempt)
 
     def test_matching_journals_pass_as_read_only_regression_evidence(self):
         rows = self.rows()
@@ -74,7 +83,8 @@ class RegressionJournalTests(unittest.TestCase):
             add_case(item, NEW_WINDOWS_NATIVE, "skip", "Windows native Job probe")
         paths = self.pair(rows)
         before = {path: path.read_bytes() for path in paths.values()}
-        result = verify.verify(paths, SOURCE["revision"], SOURCE["workflow_sha256"])
+        result = verify.verify(paths, SOURCE["revision"], SOURCE["workflow_sha256"],
+                               SOURCE["github_run_id"], SOURCE["github_run_attempt"])
         self.assertEqual(result["verification_status"], "passed")
         self.assertEqual(result["shared_fixture_comparison"], "matched")
         self.assertEqual(result["acceptance_status"], "not_completed")
@@ -84,6 +94,7 @@ class RegressionJournalTests(unittest.TestCase):
         self.assertIn("saved Ubuntu unittest journals only", result["scope"])
         self.assertEqual(result["jobs"]["3.12"]["windows_native_skips"],
                          sorted([WINDOWS_NATIVE, NEW_WINDOWS_NATIVE]))
+        self.assertEqual(result["jobs"]["3.12"]["non_s4_optional_skips"], [])
         self.assertEqual({path: path.read_bytes() for path in paths.values()}, before)
         self.assertEqual(set(self.root.iterdir()), set(paths.values()))
 
@@ -114,6 +125,35 @@ class RegressionJournalTests(unittest.TestCase):
                     self.assertRaisesRegex(comparison.EvidenceError, "unexpected_linux_skip"):
                 self.check(rows)
 
+    def test_known_non_s4_optional_skips_are_separate_and_exact(self):
+        rows = self.rows()
+        for item in rows.values():
+            add_case(item, OPTIONAL_CAPSTONE, "skip",
+                     "optional offline-analysis extra is not installed; not native acceptance")
+            add_case(item, OPTIONAL_TOTO, "skip", "controlled Toto artifact unavailable")
+        result = self.check(rows)
+        self.assertEqual(result["jobs"]["3.12"]["windows_native_skips"], [])
+        self.assertEqual(result["jobs"]["3.12"]["non_s4_optional_skips"],
+                         sorted([OPTIONAL_CAPSTONE, OPTIONAL_TOTO]))
+        for test_id, reason in ((OPTIONAL_CAPSTONE, "wrong optional reason"),
+                                ("tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests.test_future",
+                                 "optional offline-analysis extra is not installed; not native acceptance")):
+            rows = self.rows()
+            for item in rows.values():
+                add_case(item, test_id, "skip", reason)
+            with self.subTest(test_id=test_id), \
+                    self.assertRaisesRegex(comparison.EvidenceError, "unexpected_linux_skip"):
+                self.check(rows)
+        with patch.object(verify, "REQUIRED_TEST_IDS", frozenset({MANDATORY, OPTIONAL_TOTO})), \
+                self.assertRaisesRegex(comparison.EvidenceError, "required_test_not_passed"):
+            self.check(self.rows_with_skip(OPTIONAL_TOTO, "controlled Toto artifact unavailable"))
+
+    def rows_with_skip(self, test_id, reason):
+        rows = self.rows()
+        for item in rows.values():
+            add_case(item, test_id, "skip", reason)
+        return rows
+
     def test_required_ids_exist_as_exact_unittest_cases(self):
         def cases(suite):
             for item in suite:
@@ -123,10 +163,19 @@ class RegressionJournalTests(unittest.TestCase):
                     yield item
         suite = unittest.defaultTestLoader.loadTestsFromNames(sorted(REQUIRED_INVENTORY))
         self.assertEqual([case.id() for case in cases(suite)], sorted(REQUIRED_INVENTORY))
+        optional = verify.OPTIONAL_SKIP_IDS | verify.OPTIONAL_SKIP_TESTS.keys()
+        suite = unittest.defaultTestLoader.loadTestsFromNames(sorted(optional))
+        self.assertEqual([case.id() for case in cases(suite)], sorted(optional))
+        self.assertFalse(REQUIRED_INVENTORY & optional)
 
     def test_external_head_workflow_and_shared_fixture_mismatch_fail(self):
-        for field, value in (("head", "c" * 40), ("workflow", "d" * 64)):
+        for field, value in (("head", "c" * 40), ("workflow", "d" * 64),
+                             ("run_id", "13"), ("attempt", "2")):
             with self.subTest(field=field), self.assertRaisesRegex(comparison.EvidenceError, "external_source_pin_mismatch"):
+                self.check(self.rows(), **{field: value})
+        for field, value in (("run_id", "0"), ("attempt", "bad")):
+            with self.subTest(field=field), self.assertRaisesRegex(comparison.EvidenceError,
+                                                                   "expected_run_identity_format"):
                 self.check(self.rows(), **{field: value})
         rows = self.rows()
         fixture = next(row for row in rows["3.14"] if row.get("fixture_id") == "Q1")
@@ -153,12 +202,14 @@ class RegressionJournalTests(unittest.TestCase):
         paths = self.pair(self.rows())
         args = ["--python312", str(paths["3.12"]), "--python314", str(paths["3.14"]),
                 "--expected-head", SOURCE["revision"],
-                "--expected-workflow-sha256", SOURCE["workflow_sha256"]]
+                "--expected-workflow-sha256", SOURCE["workflow_sha256"],
+                "--expected-run-id", SOURCE["github_run_id"],
+                "--expected-run-attempt", SOURCE["github_run_attempt"]]
         with patch.object(verify.sys, "stdout", io.StringIO()) as stdout:
             self.assertEqual(verify.main(args), 0)
         self.assertEqual(json.loads(stdout.getvalue())["verification_status"], "passed")
         with patch.object(verify.sys, "stderr", io.StringIO()) as stderr:
-            self.assertEqual(verify.main(args[:-1] + ["c" * 64]), 1)
+            self.assertEqual(verify.main(args[:-1] + ["2"]), 1)
         self.assertIn("external_source_pin_mismatch", stderr.getvalue())
         self.assertEqual(set(self.root.iterdir()), set(paths.values()))
 
