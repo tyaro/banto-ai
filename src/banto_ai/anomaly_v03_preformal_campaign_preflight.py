@@ -261,7 +261,9 @@ def check_preflight(plan_raw, expected_plan_pin, intention_raw,
     else:
         v.require(type(outcome['reason']) is str and
                   outcome['reason'] in FAILURE_REASONS and
-                  outcome['exit_code'] != 0,
+                  (outcome['exit_code'] != 0 or
+                   (outcome['reason'] == 'prepare_integrity' and
+                    outcome['process_observation_pin'] is not None)),
                   'prepare failure classification/exit mismatch')
         if outcome['manifest_pin'] is None:
             v.require(manifest_raw is None, 'unexpected failed manifest raw')

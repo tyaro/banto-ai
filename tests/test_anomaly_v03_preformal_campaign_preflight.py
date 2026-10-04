@@ -199,6 +199,16 @@ class PreflightTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.check(outcome)
 
+    def test_integrity_failure_preserves_actual_zero_exit(self):
+        outcome = preflight.make_outcome(
+            self.intention_pin, 'failed', exit_code=0,
+            process_observation_pin=campaign.pin(b'observed exited process'),
+            reason='prepare_integrity')
+        result = self.check(outcome)
+        self.assertEqual(result['state'], 'failed')
+        self.assertEqual(result['campaign_evaluations_credited'], 0)
+        self.assertFalse(result['launch_authorized'])
+
 
 if __name__ == '__main__':
     unittest.main()
