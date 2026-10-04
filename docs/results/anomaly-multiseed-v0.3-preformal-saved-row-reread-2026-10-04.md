@@ -8,7 +8,20 @@
 
 ## 保存試行
 
-新しいclean code保存点とnative試行後に、result/予算receipt/所有子の終了・回収・pinと独立照合を記録する。
+clean code保存点 `a80c87b46ca32b0cb9971d3ee397a8546114ff82` から、[新しい入口](../../src/banto_ai/anomaly_v03_preformal_saved_row_reread.py)と[CLI](../../tools/preformal_saved_row_reread_trial.py)で`r01`を実行した。外部入力はg02の[起動前pinset](../../artifacts/anomaly-v03-preformal-generated-pinsets-g02/pins.json)72,149 B / SHA256 `22ee6888d731c827162b09ef1332cb61fe6a5542372e3e499ea0088fd214f1ef`、旧[２役result](../../artifacts/anomaly-v03-preformal-registered-attempt-g02/owned-generator/result.json)10,528 B / SHA256 `354c8ae043486c8f5ee2a99780ea5ee5a9395ed92daaca790187e8e9ab7c1179`。過去のg02 source revisionは`3be274c59ce4ffa0b5b60ba42993e2aa44a57039`、今回のreader/投影は上記の新しいclean revisionであり、別の実行として記録した。
+
+| 新root `artifacts/anomaly-v03-preformal-saved-row-reread-r01` | bytes | SHA256 |
+|---|---:|---|
+| [６行の部分投影](../../artifacts/anomaly-v03-preformal-saved-row-reread-r01/rows.json) | 116,085 | `134dc17e98dd5ef3ac24431e463436cbcc73a4f869b5262a5428d998d45d66d9` |
+| [最上位result](../../artifacts/anomaly-v03-preformal-saved-row-reread-r01/result.json) | 8,449 | `d676de043e22226d0fa6e547d2ad77703931056c9b7b9ad0d36ca2154c7453f4` |
+| [共有予算receipt](../../artifacts/anomaly-v03-preformal-saved-row-reread-r01/resource-budget.json) | 1,705 | `185af694e21513903563dd55e95995aef756df060bb6a2c453240142a28e3843` |
+| [別rootの独立postcheck](../../artifacts/anomaly-v03-preformal-saved-row-reread-postcheck-r01/postcheck-result.json) | 1,707 | `61fa4a220c4d4d11d6f57fa19c9e6a1bc680222d4bc096323840d9582bac2b8a` |
+
+所有reader子PID 27424は別開始tokenでexit 0/回収、92.572秒、peak private 315,613,184 B。前g02のreader resultと**全dict一致**し、保存payloadの再照合後に親が同じ予算で６行を投影した。外側の標本予算は120秒/親512 MiB/新root32 MiB/256 entries、最低commit/RAM各２GiB・disk５GiBで、97.319秒/373標本pass。親peak private最大31,948,800 B、監視中の新root最大202,627 B、commit最小余裕15,883,526,144 B、RAM最小余裕17,358,401,536 B、disk最小空き367,711,268,864 B。終了後のrootは７file/212,781 B。これは標本と子supervisorの協調停止であり、OS hard quotaではない。
+
+`rows.json`は純粋投影の再利用可能な出力で、`saved_payload_bytes_rechecked=false`と`reader_execution_authenticated_here=false`を保持する。今回の実際の再読取り・終了確認は最上位resultの`fresh_saved_payload_bytes_rechecked_this_run=true`、`fresh_owned_reader_exit_confirmed_here=true`と新しい監督・stdout pinで表す。こうして投影関数単独の主張と今回の所有processの証拠を区別した。40 cluster/診断/slice sourceは`null`、正式評価credit０、`source_closure_complete=false`、`runtime_closure_complete=false`、`execution_authenticated=false`を維持する。
+
+[４試験](../../tests/test_anomaly_v03_preformal_saved_row_reread.py)は子失敗、新旧reader不一致、予算停止時に`rows.json`を出さないことを確認。前の行境界と合わせて９試験pass。[別実装postcheck](../../tools/preformal_saved_row_reread_postcheck.py)は131 MBのpayloadを再読取りせず、保存された子invocation・監督・stdout、全reader結果、６行、予算receiptと外部pinを再照合して不一致０。repository safetyもpass。
 
 ## 次の受入事項
 

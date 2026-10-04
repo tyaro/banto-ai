@@ -177,11 +177,17 @@ g01は生成子とreaderに個別の停止上限を設けた試行だった。g0
 
 [今回の保存行由来境界](anomaly-multiseed-v0.3-preformal-saved-row-lineage-2026-10-04.md)はg02の外部pin付きreceipt/report/内側resultを再読取りし、過去の２役予算result/receiptへのpinリンクも確認した。新しい[部分由来result](../../artifacts/anomaly-v03-preformal-saved-row-lineage-01/result.json)は116,494 B / SHA256 `27fda6488b0487254a85394d7af090dcb9ff7c54903ea5436a814d1eb8a7c621`。登録identityの順で最新attemptの６評価を、報告主count・診断・sliceと入力hash/評価raw pinに結んだ。coverageは480区間中１、2,880評価中６、該当seedの12 layout中１。`invented-00`のlayout 0以外は未検証で、40 cluster/診断/slice sourceは`null`。[別実装postcheck](../../artifacts/anomaly-v03-preformal-saved-row-lineage-postcheck-01/postcheck-result.json)は1,907 B / SHA256 `79905a9495a671cc50dfff95a75da981cc2a2f64294f9e5303fc40fc502c463f`で６行・全pin・正式欄を再照合した。今回のconsumerは131 MBの保存payloadを再読取りしていないため、観測→summaryの再導出は前g02の保存reader結果への依拠である。試験５件pass。trial-16の別系譜40 cluster・50,000 drawとg02の６行を接続した扱いにしない。
 
+### g02保存rawの新reader→６行を同じ予算で実測
+
+[今回の限定試行](anomaly-multiseed-v0.3-preformal-saved-row-reread-2026-10-04.md)はclean `a80c87b` で所有reader子にg02の架空raw22件/131,144,119 Bを再読取りさせ、子exit0/回収と旧reader全結果一致の後、同じ外側予算下で最新６行を投影した。[６行](../../artifacts/anomaly-v03-preformal-saved-row-reread-r01/rows.json)116,085 B/SHA256 `134dc17e98dd5ef3ac24431e463436cbcc73a4f869b5262a5428d998d45d66d9`、[result](../../artifacts/anomaly-v03-preformal-saved-row-reread-r01/result.json)8,449 B/SHA256 `d676de043e22226d0fa6e547d2ad77703931056c9b7b9ad0d36ca2154c7453f4`、[予算receipt](../../artifacts/anomaly-v03-preformal-saved-row-reread-r01/resource-budget.json)1,705 B/SHA256 `185af694e21513903563dd55e95995aef756df060bb6a2c453240142a28e3843`。子は92.572秒/peak private315,613,184 B、外側は97.319秒/373標本pass。[別実装postcheck](../../artifacts/anomaly-v03-preformal-saved-row-reread-postcheck-r01/postcheck-result.json)1,707 B/SHA256 `61fa4a220c4d4d11d6f57fa19c9e6a1bc680222d4bc096323840d9582bac2b8a`は全pin・子監督/終了・旧readerとの一致と６行を再確認した。外部g02のraw容量は新root32 MiB標本外で、読取り時間は今回のwall内。登録holdout観測ではなく固定手作り系列で、40 clusterなし、正式credit０。
+
+全480区間の共通producer/campaign anchorはg02の１区間savepointにはない。savepointは区間番号と個別run rootを含むため、同じSHAを全件へ強制する結合もできない。次は区間別保存pin/最新attempt/凍結identityと共通の実行anchorを別契約で接続する。trial-16の40 cluster/50,000 drawへこの６行を流用せず、全工程共通予算・完全S6・正式gateは閉じたままとする。
+
 ## データ別の次の作業境界
 
 | データ・時点 | 許される次の作業と完了証拠 | この段階の境界 |
 | --- | --- | --- |
-| 固定した架空入力、S4採択前 | 登録形式の１区間は所有生成子exit/reap、外部pin、最新attempt、別readerでの観測→profile/score→ledger→主/slice照合を２役共通予算で測った。今回その保存結果の６行を部分cluster由来へ固定した。別系譜の架空40 cluster・50,000 drawから文書/slice草稿と限定公開・別readerも確認済み。次は残り479区間を含む保存raw由来のjoinと、全工程の単一外側予算を設計・測定する | 架空identityや登録seedの文字列を使っても、登録holdoutの観測値は生成・読取りしない。１区間６行を別系譜の40 clusterへ足さず、架空試験を性能証拠としない |
+| 固定した架空入力、S4採択前 | 登録形式の１区間は所有生成子exit/reap、外部pin、最新attempt、別readerでの観測→profile/score→ledger→主/slice照合を２役共通予算で測った。新試行で保存rawの再読取り→６行部分投影も１つの外側予算で測った。別系譜の架空40 cluster・50,000 drawから文書/slice草稿と限定公開・別readerも確認済み。次は残り479区間を扱える区間別pin/最新attemptのjoinと、共通producer/campaign anchor・全工程の単一外側予算を設計・測定する | 架空identityや登録seedの文字列を使っても、登録holdoutの観測値は生成・読取りしない。１区間６行を別系譜の40 clusterへ足さず、架空試験を性能証拠としない |
 | 保存済み合成dev/smoke、S4採択前 | 既存120区間・720評価と旧独立監査、全件engineering報告は参照証拠として保持する。必要な境界だけ外部pin付きで再確認し、元attemptを上書きしない | 以前の現行reader再確認は区間0と119の各６評価だけ。他の118区間のrawをその試行で再監査しておらず、旧データを新revisionのnative受入や正式holdoutへ付け替えない |
 | S4の最終dev/smoke | S1登録済みdev 8 seed・smoke 2 seedの全12 layout×２層×３候補を、改訂済み契約・最終clean revision・採択したWindows tupleで新rootに実行し、全在庫、独立再監査、CI/nativeを同じ受入記録へ結ぶ。smoke全artifact実測から正式同形のproducer+analysis+audit+staging必要量を見積り、式・実測bytes・予想時間を保存し、正式開始時の対象volume空きが見積りの２倍以上と確認する | 受入に失敗したらS5を開かない。科学条件・seed数・予算を途中で緩めない |
 | S4採択後のS5/S6 | 未使用holdout 40 seedの480区間・960 dataset・2,880評価を登録順で一回実行し、次段階でread-only独立再計算、50,000 draw、全gate・選択・別readerを照合する | 途中性能で停止・修正・seed追加をしない。S5成功結果をS4開始前の前提にしない。実設備・顧客データは本計画の対象外 |
