@@ -53,6 +53,34 @@ class StoreTests(unittest.TestCase):
         args.update(overrides)
         return store.verify_store(self.campaign, self.control, **args)
 
+    def _append(self, created):
+        return store.append_started(
+            self.campaign, self.control,
+            expected_plan_pin=created['plan_pin'],
+            expected_initial_checkpoint_pin=created['checkpoint_pin'],
+            expected_intention_pin=created['intention_pin'],
+            expected_prepare_receipt_pin=metadata.pin(b'prepared receipt'))
+
+    def _verify_started(self, created, started, **overrides):
+        args = {
+            'expected_plan_pin': created['plan_pin'],
+            'expected_initial_checkpoint_pin': created['checkpoint_pin'],
+            'expected_intention_pin': created['intention_pin'],
+            'expected_prepare_receipt_pin': metadata.pin(b'prepared receipt'),
+            'expected_started_record_pin': started['started_record_pin'],
+            'expected_next_checkpoint_pin': started['next_checkpoint_pin'],
+        }
+        args.update(overrides)
+        return store.verify_started_store(self.campaign, self.control,
+                                          **args)
+
+    @staticmethod
+    def _fake_owner():
+        return {'manifest_raw': b'invented manifest',
+                'manifest_pin': metadata.pin(b'invented manifest'),
+                'prepare_receipt_raw': b'prepared receipt',
+                'prepare_receipt_pin': metadata.pin(b'prepared receipt')}
+
     def test_fresh_store_is_pinned_empty_journal_with_fixed_slot_zero_intention(self):
         created = self._create()
         self.assertEqual(created['status'], 'preflight_intention_fixed')
@@ -201,6 +229,108 @@ class StoreTests(unittest.TestCase):
                 expected_plan_pin=metadata.pin(metadata.encode_plan(self.plan)),
                 expected_checkpoint_pin=metadata.pin(b'checkpoint'),
                 expected_intention_pin=metadata.pin(b'intention'))
+
+    def test_started_append_commits_record_then_external_immutable_checkpoint(self):
+        created = self._create()
+        original_checkpoint = (self.control / 'checkpoint.json').read_bytes()
+        with patch.object(store, '_prepared_owner',
+                          return_value=self._fake_owner()):
+            started = self._append(created)
+            reread = self._verify_started(created, started)
+            with self.assertRaises(ValueError):
+                self._append(created)
+        self.assertEqual(reread['status'], 'started_record_fixed')
+        self.assertEqual(reread['checkpoint']['record_count'], 1)
+        self.assertEqual(reread['checkpoint']['head_sha256'],
+                         started['started_record_pin']['sha256'])
+        self.assertEqual(reread['record_raws'], [
+            (self.campaign / 'journal' / '000001.json').read_bytes()])
+        self.assertEqual((self.control / 'checkpoint.json').read_bytes(),
+                         original_checkpoint)
+        self.assertEqual(list((self.campaign / 'pending').iterdir()), [])
+        self.assertEqual(list((self.campaign / 'intents').iterdir()), [])
+        self.assertFalse(started['campaign_coherence_authenticated'])
+        self.assertFalse(started['launch_authorized'])
+        self.assertFalse(started['formal_permission'])
+        self.assertEqual(started['campaign_evaluations_credited'], 0)
+
+    def test_started_checkpoint_gap_stays_partial_and_blocks_every_reader(self):
+        created = self._create()
+        original = store.io._exclusive
+
+        def fail_checkpoint(path, raw):
+            if Path(path).name == 'checkpoint-000001.json':
+                raise OSError('simulated external checkpoint failure')
+            return original(path, raw)
+
+        with patch.object(store, '_prepared_owner',
+                          return_value=self._fake_owner()), \
+             patch.object(store.io, '_exclusive', side_effect=fail_checkpoint):
+            with self.assertRaises(OSError):
+                self._append(created)
+        self.assertTrue((self.campaign / 'journal' / '000001.json').exists())
+        self.assertFalse((self.control / 'checkpoint-000001.json').exists())
+        with patch.object(store, '_prepared_owner',
+                          return_value=self._fake_owner()):
+            with self.assertRaises(ValueError):
+                self._append(created)
+            with self.assertRaises(ValueError):
+                self._verify(created)
+            with self.assertRaises(ValueError):
+                store.verify_started_store(
+                    self.campaign, self.control,
+                    expected_plan_pin=created['plan_pin'],
+                    expected_initial_checkpoint_pin=created['checkpoint_pin'],
+                    expected_intention_pin=created['intention_pin'],
+                    expected_prepare_receipt_pin=metadata.pin(b'prepared receipt'),
+                    expected_started_record_pin=metadata.pin(
+                        (self.campaign / 'journal' / '000001.json').read_bytes()),
+                    expected_next_checkpoint_pin=metadata.pin(b'missing'))
+
+    def test_started_reader_rejects_mismatched_pins_pending_and_stale_source(self):
+        created = self._create()
+        with patch.object(store, '_prepared_owner',
+                          return_value=self._fake_owner()):
+            started = self._append(created)
+            wrong = {'bytes': started['started_record_pin']['bytes'],
+                     'sha256': '0' * 64}
+            with self.assertRaises(ValueError):
+                self._verify_started(created, started,
+                                     expected_started_record_pin=wrong)
+            wrong = {'bytes': started['next_checkpoint_pin']['bytes'],
+                     'sha256': '0' * 64}
+            with self.assertRaises(ValueError):
+                self._verify_started(created, started,
+                                     expected_next_checkpoint_pin=wrong)
+            (self.campaign / 'pending' / 'orphan').write_bytes(b'x')
+            with self.assertRaises(ValueError):
+                self._verify_started(created, started)
+            (self.campaign / 'pending' / 'orphan').unlink()
+            with patch.object(store, '_live_matches',
+                              side_effect=ValueError('stale source')):
+                with self.assertRaises(ValueError):
+                    self._verify_started(created, started)
+
+    def test_run_intent_requires_exact_pinned_single_file(self):
+        created = self._create()
+        with patch.object(store, '_prepared_owner',
+                          return_value=self._fake_owner()):
+            started = self._append(created)
+            request_raw = v.canonical_json({'invented_request': True}) + b'\n'
+            (self.campaign / 'intents' / '0001-run-budget.json').write_bytes(
+                request_raw)
+            with self.assertRaises(ValueError):
+                self._verify_started(created, started)
+            result = self._verify_started(
+                created, started,
+                expected_run_intent_pin=metadata.pin(request_raw))
+            self.assertEqual(result['run_intent_pin'],
+                             metadata.pin(request_raw))
+            (self.campaign / 'intents' / 'extra.json').write_bytes(b'{}')
+            with self.assertRaises(ValueError):
+                self._verify_started(
+                    created, started,
+                    expected_run_intent_pin=metadata.pin(request_raw))
 
 
 if __name__ == '__main__':

@@ -1,4 +1,4 @@
-"""Freeze or verify one fresh invented campaign prelaunch store.
+"""Freeze or verify one invented campaign metadata boundary.
 
 ``create`` saves only metadata and the slot-0 prepare intention.  It does not
 invoke prepare, consume registered observations, or authorize a formal run.
@@ -55,6 +55,31 @@ def _summary(result):
     }
 
 
+def _started_summary(result):
+    return {
+        'status': result['status'],
+        'campaign_root': result['campaign_root'],
+        'control_root': result['control_root'],
+        'plan_pin': result['plan_pin'],
+        'initial_checkpoint_pin': result['initial_checkpoint_pin'],
+        'intention_pin': result['intention_pin'],
+        'prepare_receipt_pin': result['prepare_receipt_pin'],
+        'manifest_pin': result['manifest_pin'],
+        'started_record_pin': result['started_record_pin'],
+        'next_checkpoint_pin': result['next_checkpoint_pin'],
+        'record_count': result['checkpoint']['record_count'],
+        'head_sha256': result['checkpoint']['head_sha256'],
+        'run_intent_pin': result['run_intent_pin'],
+        'invented_only': True,
+        'actual_registered_observations_read': False,
+        'campaign_coherence_authenticated': False,
+        'launch_authorized': False,
+        'resume_authorized': False,
+        'formal_permission': False,
+        'campaign_evaluations_credited': 0,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='command', required=True)
@@ -69,6 +94,27 @@ def main():
     verify.add_argument('--plan-pin', type=_pin_arg, required=True)
     verify.add_argument('--checkpoint-pin', type=_pin_arg, required=True)
     verify.add_argument('--intention-pin', type=_pin_arg, required=True)
+    started = sub.add_parser('append-started')
+    started.add_argument('--campaign-root', type=_root_arg, required=True)
+    started.add_argument('--control-root', type=_root_arg, required=True)
+    started.add_argument('--plan-pin', type=_pin_arg, required=True)
+    started.add_argument('--initial-checkpoint-pin', type=_pin_arg,
+                         required=True)
+    started.add_argument('--intention-pin', type=_pin_arg, required=True)
+    started.add_argument('--prepare-receipt-pin', type=_pin_arg,
+                         required=True)
+    inspect = sub.add_parser('verify-started')
+    inspect.add_argument('--campaign-root', type=_root_arg, required=True)
+    inspect.add_argument('--control-root', type=_root_arg, required=True)
+    inspect.add_argument('--plan-pin', type=_pin_arg, required=True)
+    inspect.add_argument('--initial-checkpoint-pin', type=_pin_arg,
+                         required=True)
+    inspect.add_argument('--intention-pin', type=_pin_arg, required=True)
+    inspect.add_argument('--prepare-receipt-pin', type=_pin_arg,
+                         required=True)
+    inspect.add_argument('--started-record-pin', type=_pin_arg, required=True)
+    inspect.add_argument('--next-checkpoint-pin', type=_pin_arg, required=True)
+    inspect.add_argument('--run-intent-pin', type=_pin_arg)
     args = parser.parse_args()
     if args.command == 'create':
         campaign_id = args.campaign_id or secrets.token_hex(32)
@@ -76,13 +122,32 @@ def main():
         control_root = ROOT / 'artifacts' / (
             'anomaly-v03-preformal-campaign-control-' + campaign_id[:8])
         result = store.create_store(plan, control_root, sys.executable)
-    else:
+        print(json.dumps(_summary(result), sort_keys=True))
+        return 0
+    if args.command == 'verify':
         result = store.verify_store(
             args.campaign_root, args.control_root,
             expected_plan_pin=args.plan_pin,
             expected_checkpoint_pin=args.checkpoint_pin,
             expected_intention_pin=args.intention_pin)
-    print(json.dumps(_summary(result), sort_keys=True))
+        print(json.dumps(_summary(result), sort_keys=True))
+        return 0
+    shared = {
+        'expected_plan_pin': args.plan_pin,
+        'expected_initial_checkpoint_pin': args.initial_checkpoint_pin,
+        'expected_intention_pin': args.intention_pin,
+        'expected_prepare_receipt_pin': args.prepare_receipt_pin,
+    }
+    if args.command == 'append-started':
+        result = store.append_started(args.campaign_root, args.control_root,
+                                      **shared)
+    else:
+        result = store.verify_started_store(
+            args.campaign_root, args.control_root,
+            expected_started_record_pin=args.started_record_pin,
+            expected_next_checkpoint_pin=args.next_checkpoint_pin,
+            expected_run_intent_pin=args.run_intent_pin, **shared)
+    print(json.dumps(_started_summary(result), sort_keys=True))
     return 0
 
 
