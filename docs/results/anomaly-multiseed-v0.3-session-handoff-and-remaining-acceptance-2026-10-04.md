@@ -2,6 +2,8 @@
 
 この文書は、架空登録形式campaignの最新保存証拠と、正式評価のS4採択からS7結果文書までの残件を引き継ぐ。正式評価の許可や受入判定ではない。科学仕様と正式手順の根拠は[凍結計画](../anomaly-multiseed-evaluation-plan-v0.3.md)、受入5群の起点は[2026-10-03の範囲整理](anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)である。
 
+2026-10-05追記: S4-1の[正式v2 wrapper純粋候補validator](../../src/banto_ai/anomaly_v03_formal_research_v2_candidate.py)とS4-4の[Ubuntu runner由来候補検証器](../../tools/ci_verify_runner_origin_candidate.py)を追加した。関連27試験・compileall・repository safetyはPASS。後者は`a5deb31`の予備run `37230362806`で、3 job生log・release/README・両journal全行を外部pinへ結び`consistent_candidate`を返した。正式wrapper実行・外部pin真正性・完全source/runtime閉包・旧25H2条項の26H2改訂採択・最終revisionの受入はまだである。[公式runner raw pinと検証境界](anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)を参照。下表と正式gateは変わらない。
+
 2026-10-05追記: `gh` は承認済み実行で利用できる。`24c8d20`の[Ubuntu予備CI 37228978376](anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)はPython 3.12/3.14と共有fixture比較の3 jobが成功した。両minor各2,811件・fail0/error0/skip237、共有29 fixture一致、必須28試験pass。後続clean `a5deb31`の[所有Git 7件→5役Jobの架空Windows小試行](anomaly-multiseed-v0.3-five-role-owned-source-native-trial-2026-10-05.md)は保存pinと独立監査が一致したが、所有GitはJob前の7件だけで全閉包ではない。同revisionの[Ubuntu予備CI 37230362806](https://github.com/tyaro/banto-ai/actions/runs/37230362806)も両minor各2,821件・fail0/error0/skip237、共有fixture比較を含む3 jobが成功した。ただしrunner image digest/代替同定の採択、Windows正式native、最終凍結revisionのS4-4判定は残る。下のS4-1～S4-5の残件と正式gateは変わらない。
 
 2026-10-05追記: [選定source Git 7呼び出しの限定試走](anomaly-multiseed-v0.3-owned-source-git-seven-call-trial-2026-10-05.md)をclean `fdaf5eec58d110b5f048c703c740c8e10664fc07`で保存した。`owner._source`1回のHEAD/status/選定5 source blobを外部pin付きmain Gitと別process receiptへ結び、結果1,654 B / `3c68e0577385c3693a5819970e096a3b297e8c8fdf87ea9c0da97d5e9891b2cc`を独立再hashした。既存v1 Jobや保存verifierのbare Gitは未置換で、S4-3の全閉包は未完了。正式gateは変わらない。
@@ -67,10 +69,10 @@ clean `ab6fd0469056160931b7f7468702ac7a44782f9a` の[非上書き読取専用pos
 
 | 順序 | 残る受入・作業 | 完了を判定する証拠 |
 | --- | --- | --- |
-| S4-1 契約採択 | 旧25H2/build26200/UBR9168の§8–9に対し、現26H2/build26300/UBR9457のOS/Python exact tuple、root/schema、source revision、失敗・再登録、slice/sidecar mappingを版付きで決定。通常単一writer保証Aか、旧protected DACL/独立tokenを保つ保証Bかを選び、独立再監査する | 改訂した計画と運用契約、選択保証のWindows native試験、旧contractとの差分と独立監査。v2 proposalのままでは不合格 |
+| S4-1 契約採択 | 旧25H2/build26200/UBR9168の§8–9に対し、現26H2/build26300/UBR9457のOS/Python exact tuple、root/schema、source revision、失敗・再登録、slice/sidecar mappingを版付きで決定。通常単一writer保証Aか、旧protected DACL/独立tokenを保つ保証Bかを選び、独立再監査する。5 payloadの純粋候補validatorは実装済みだが、正式wrapperや実行認証ではない | 改訂した計画と運用契約、選択保証のWindows native試験、旧contractとの差分と独立監査。v2 proposalと候補validatorのままでは不合格 |
 | S4-2 登録入力・consumer | 凍結した40 seed/480区間/2,880枠の入力と実保存readerを、観測→profile/score/ledger→全slice/sidecar→50,000 draw→正式文書へ、架空の固定入力で接続する。実holdout成功receiptはこの段階で要求しない | 予定/実行identity、最新attempt、保存rawと終了、全分母・全条件別在庫、文書の固定経路と失敗拒否を照合 |
 | S4-3 5役割の閉包 | producer/analysis/audit/writer/readerの最終clean source、動的load・外部programを含むruntime依存、起動前/中/終了証拠、異常時の子孫停止・回収を固定する | 最終revisionの外部pin、各役の実process証拠と独立再照合。現campaignのselected source pinや親の子申告だけでは全閉包にならない |
-| S4-4 対象環境・最終回帰 | 最終revisionでUbuntu 24.04 x86_64のPython 3.12/3.14両job、選択保証に応じたWindows 26H2/CPython 3.14 native、正式dev 8 seed・smoke 2 seedの全layout/両層/3候補を受け入れる | CIのpass/fail/skipとrunnerの版付き同定。未取得の`runner_image_digest`は取得するか、計画で同等の同定方法に改訂する。Windows 3.12は追加必須条件ではない |
+| S4-4 対象環境・最終回帰 | 最終revisionでUbuntu 24.04 x86_64のPython 3.12/3.14両job、選択保証に応じたWindows 26H2/CPython 3.14 native、正式dev 8 seed・smoke 2 seedの全layout/両層/3候補を受け入れる。予備runの外部log/release候補照合は完了したが、代替規則の採択ではない | CIのpass/fail/skipとrunnerの版付き同定。未取得の`runner_image_digest`は取得するか、計画で同等の同定方法に改訂する。Windows 3.12は追加必須条件ではない |
 | S4-5 全工程予算・容量 | producer→登録形式保存reader→40架空cluster/50,000 draw全文書→完全S6同形audit→staging/writer→別readerを、一つの外側予算と停止・回収で測る。工程別内訳と計画所定の容量2倍検査を採択する | wall/容量/private memory/system commit、失敗停止、全process終了、公開後fresh readを含む実測。独立の部分予算を加算して代用しない |
 | S5 正式実行 | **S4採択後のみ**、未使用の登録holdout 40 seedを凍結clean revision・新rootで一度実行。性能を見た条件変更や既存root/seedの再利用をしない | 480区間・960 dataset・2,880評価の実bytes、全attempt、環境・終了・保存pin、欠落0。失敗は保全し再登録規則に従う |
 | S6–S7 独立監査・報告 | S6で保存raw観測からprofile/score/episode/ledger、全分母、50,000回CI、gate/選択とsliceをread-onlyで独立再導出し、別rootへ公開してfresh reader照合。S7で3候補×core/stress/overall、全gate、失敗・制約、producer/analysis/auditのSHA・hash、昇格なしの場合も監査に沿って結果文書へ記す | 独立数値一致、全payload/sidecar/receipt/reader一致、結果文書とS6 pinの対応 |
