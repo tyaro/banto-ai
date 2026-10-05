@@ -559,7 +559,12 @@ class ChildOwnedGitRoutingTests(unittest.TestCase):
         invocation = {**self.invocation, 'format': owner.OWNED_PRODUCER_INVOCATION,
                       'child_git_policy_path': str(self.root / 'artifacts' / 'policy.json'),
                       'child_git_policy_pin': PIN}
-        for producer_status in ('verified', 'failed'):
+        for version, failed_phase in (
+                (owner.OWNED_PRODUCER_INVOCATION, None),
+                (owner.OWNED_PRODUCER_INVOCATION, owner.PRODUCER_GIT_PHASE),
+                (owner.OWNED_ANALYSIS_INVOCATION, None),
+                (owner.OWNED_ANALYSIS_INVOCATION, owner.ANALYSIS_GIT_PHASE)):
+            invocation['format'] = version
             output = text_io.StringIO()
             readers = {}
             events = []
@@ -569,8 +574,10 @@ class ChildOwnedGitRoutingTests(unittest.TestCase):
                 def __init__(self, **kwargs):
                     self.phase = kwargs['phase']
                     self.manifest_result = None
-                    case.assertEqual(kwargs['receipt_root'], case.target /
-                                     ('child-git' if self.phase == owner.CHILD_GIT_PHASE else 'producer-git'))
+                    roots = {owner.CHILD_GIT_PHASE: 'child-git',
+                             owner.PRODUCER_GIT_PHASE: 'producer-git',
+                             owner.ANALYSIS_GIT_PHASE: 'analysis-git'}
+                    case.assertEqual(kwargs['receipt_root'], case.target / roots[self.phase])
 
                 def __enter__(self):
                     readers[self.phase] = self
@@ -580,27 +587,34 @@ class ChildOwnedGitRoutingTests(unittest.TestCase):
                     case.assertEqual(output.getvalue(), '')
                     events.append(self.phase)
                     self.manifest_result = {
-                        'status': 'verified' if self.phase == owner.CHILD_GIT_PHASE else producer_status,
+                        'status': 'failed' if self.phase == failed_phase else 'verified',
                         'call_count': 26 if self.phase == owner.CHILD_GIT_PHASE else 88}
 
-            def run(path, pin, value, *, git_reader, producer_git_reader):
+            def run(path, pin, value, *, git_reader, producer_git_reader, analysis_git_reader=None):
                 self.assertIs(git_reader, readers[owner.CHILD_GIT_PHASE])
                 self.assertIs(producer_git_reader, readers[owner.PRODUCER_GIT_PHASE])
+                if version == owner.OWNED_ANALYSIS_INVOCATION:
+                    self.assertIs(analysis_git_reader, readers[owner.ANALYSIS_GIT_PHASE])
+                else:
+                    self.assertIsNone(analysis_git_reader)
                 return {'status': 'verified', 'result_pin': PIN,
                         'check_directory': invocation['result_root']}
 
-            with self.subTest(status=producer_status), patch.object(owner, 'ROOT', self.root), \
+            with self.subTest(version=version, failed_phase=failed_phase), patch.object(owner, 'ROOT', self.root), \
                  patch.object(owner, '_invocation', return_value=invocation), \
                  patch.object(source_git, 'OwnedSourceGitSession', Session), \
                  patch.object(owner, '_run_child', side_effect=run), redirect_stdout(output):
                 argv = [str(self.target / 'invocation.json'), str(PIN['bytes']), PIN['sha256']]
-                if producer_status == 'verified':
+                if failed_phase is None:
                     self.assertEqual(owner.child_main(argv), 0)
                 else:
-                    with self.assertRaisesRegex(ValueError, 'producer Git calls incomplete'):
+                    with self.assertRaisesRegex(ValueError, 'owned .* Git calls incomplete'):
                         owner.child_main(argv)
-            self.assertEqual(events, [owner.PRODUCER_GIT_PHASE, owner.CHILD_GIT_PHASE])
-            self.assertEqual(bool(output.getvalue()), producer_status == 'verified')
+            expected_events = [owner.PRODUCER_GIT_PHASE, owner.CHILD_GIT_PHASE]
+            if version == owner.OWNED_ANALYSIS_INVOCATION:
+                expected_events.insert(0, owner.ANALYSIS_GIT_PHASE)
+            self.assertEqual(events, expected_events)
+            self.assertEqual(bool(output.getvalue()), failed_phase is None)
 
 
 if __name__ == '__main__':

@@ -89,6 +89,13 @@ class PlatformNumericFixtureTests(unittest.TestCase):
             analysis.assert_called_once_with(['one'])
             audit.assert_called_once_with(['two'])
 
+    def test_owned_analysis_reader_reaches_worker_only_when_supplied(self):
+        reader = object()
+        with patch.object(candidate.analysis, 'calculate_with_evidence', return_value={}) as run:
+            candidate.calculate_fixture({}, expected_revision='a' * 40,
+                receipt_parent='parent', receipt_name='attempt', git_reader=reader)
+        self.assertIs(run.call_args.kwargs['git_reader'], reader)
+
 
 if __name__ == '__main__':
     unittest.main()

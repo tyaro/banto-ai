@@ -98,8 +98,19 @@ def _working_source(revision):
     return {'revision': revision, 'sources': rows}
 
 
-def _git_sources(revision):
-    _, snapshots, git = observed._git_sources(revision)
+def _git_sources(revision, *, git_reader=None):
+    if git_reader is None:
+        _, snapshots, git = observed._git_sources(revision)
+    else:
+        from .anomaly_v03_preformal_analysis_git import OwnedAnalysisGit
+        git = OwnedAnalysisGit(git_reader, root=ROOT, revision=revision)
+        v.require(git('rev-parse', 'HEAD').decode().strip() == revision,
+                  'fixture revision changed')
+        snapshots = {revision: {name: git('show', revision + ':' + name)
+                               for name in observed.SOURCE_FILES}}
+        v.require(all(len(raw) <= 1024**2 and raw == observed._file(ROOT/name, 1024**2)
+                      for name, raw in snapshots[revision].items()),
+                  'selected working/Git bytes differ')
     v.require(not git('status', '--porcelain').strip(), 'fixture candidate must be clean')
     for name in EXTRA_SOURCES:
         raw = git('show', revision+':'+name)
@@ -179,7 +190,7 @@ def worker_main(argv):
 def calculate_with_evidence(request, *, expected_revision, receipt_parent, receipt_name,
                             budget_limits=None, resource_budget=None,
                             dependency_profile_raw=None,
-                            expected_dependency_profile_pin=None):
+                            expected_dependency_profile_pin=None, git_reader=None):
     """Compute a bounded known fixture, retain owned-child evidence and map five payloads.
 
     Input and expected document pins originate with the caller, before launch.
@@ -191,6 +202,8 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
     v.require((dependency_profile_raw is None) ==
               (expected_dependency_profile_pin is None),
               'analysis profile raw/pin pair')
+    v.require(git_reader is None or dependency_profile_raw is None,
+              'owned analysis Git excludes unowned profile loader')
     profile = None
     if dependency_profile_raw is not None:
         profile = dependencies.load_five_role_profile(
@@ -215,7 +228,8 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
         'worker_exit_confirmed': False, 'worker_pid': None, 'new_evaluations': 0}
     try:
         budget.start()
-        source, source_bytes, git = _git_sources(expected_revision)
+        source, source_bytes, git = (_git_sources(expected_revision)
+            if git_reader is None else _git_sources(expected_revision, git_reader=git_reader))
         observed._save(target/'source-tool.json', git.tool_record)
         budget.checkpoint()
         runtime, runtime_bytes = observed._expected_runtime()
@@ -275,6 +289,8 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
             binding = evidence.validate_execution_evidence(record, expected_mode='fixture', expected_role='analysis',
                 expected_pin=record_pin, expected=expected, source_snapshots=source_bytes,
                 runtime_snapshots=runtime_bytes, input_snapshots=raw_inputs, output_snapshots={'fixture/document.json': output})
+            if git_reader is not None:
+                git.start_dependencies()
             supplement = dependencies.verify_pair(reply['dependencies_before'], reply['dependencies_after'],
                 root=ROOT, revision=expected_revision, git=git, required_sources=SOURCE_FILES)
             if profile is not None:
@@ -309,6 +325,11 @@ def calculate_with_evidence(request, *, expected_revision, receipt_parent, recei
                 document_pin=request['expected_document_pin'], wrapper_payload_pins=mapped['payload_pins'],
                 selected_source_files=len(SOURCE_FILES), runtime_files=2, authenticated_input_files=4,
                 dependency_observation=supplement, parent_and_child_creation_matched=True)
+            if git_reader is not None:
+                result['dependency_pin'] = observed._pin(observed._file(
+                    target/'dependencies.json', LIMITS['output_bytes']))
+                result['source_tool_pin'] = observed._pin(observed._file(
+                    target/'source-tool.json', 16*1024))
             if profile is not None:
                 result['dependency_profile_pin'] = copy.deepcopy(expected_dependency_profile_pin)
                 result['before_work_profile_enforcement'] = True

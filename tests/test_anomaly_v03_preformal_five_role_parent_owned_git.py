@@ -30,7 +30,9 @@ class ParentOwnedGitTests(unittest.TestCase):
         f = self.fixture
         for module in (parent_git, parent_git.preflight, parent_git.source_git,
                        parent_git.owner, parent_git.chain,
-                       parent_git.producer_binding.producer):
+                       parent_git.producer_binding.producer,
+                       parent_git.analysis_binding.numeric.analysis,
+                       parent_git.analysis_binding.observed):
             stack.enter_context(patch.object(module, 'ROOT', f.root))
         return stack
 
@@ -65,7 +67,9 @@ class ParentOwnedGitTests(unittest.TestCase):
                 invocation = parent_git.v.strict_json(
                     (root / 'invocation.json').read_bytes())
                 invocation.update(
-                    format=(parent_git.owner.OWNED_PRODUCER_INVOCATION if
+                    format=(parent_git.owner.OWNED_ANALYSIS_INVOCATION if
+                            kwargs.get('own_analysis_git') else
+                            parent_git.owner.OWNED_PRODUCER_INVOCATION if
                             kwargs.get('own_producer_git') else
                             parent_git.owner.OWNED_GIT_INVOCATION),
                     mode='fixture', archive_pin=f.join_pin,
@@ -94,6 +98,8 @@ class ParentOwnedGitTests(unittest.TestCase):
                                              git_call_prefix='child-boundary-')
                 if kwargs.get('own_producer_git'):
                     receipt['inner_result_pin'] = self._fake_producer(root)
+                    if kwargs.get('own_analysis_git'):
+                        receipt['inner_result_pin'] = self._fake_analysis(root)
                     raw = parent_git.io.json_bytes(receipt)
                     (root / 'receipt.json').write_bytes(raw)
                     result['receipt_pin'] = parent_git.observed._pin(raw)
@@ -101,11 +107,15 @@ class ParentOwnedGitTests(unittest.TestCase):
 
         return run
 
-    def _prepare_producer_sources(self):
+    def _prepare_producer_sources(self, *, analysis=False):
         f = self.fixture
         producer = parent_git.producer_binding.producer
         (f.root / '.gitignore').write_text('artifacts/\n__pycache__/\n', encoding='utf-8')
-        for name in producer.SOURCE_FILES:
+        names = producer.SOURCE_FILES
+        if analysis:
+            names = (*names, *parent_git.analysis_binding.numeric.SOURCE_FILES,
+                     'src/banto_ai/analysis_dynamic_fixture.py')
+        for name in names:
             if name not in f.sources:
                 raw = (name + '\n').encode()
                 path = f.root / name
@@ -176,6 +186,76 @@ class ParentOwnedGitTests(unittest.TestCase):
         top = {'status': 'verified', 'source_revision': f.revision,
                'producer': {'result_pin': save(target / 'result.json', result)}}
         return save(owner_root / 'five-role' / 'result.json', top)
+
+    def _fake_analysis(self, owner_root):
+        f = self.fixture
+        binding = parent_git.analysis_binding
+        worker = binding.numeric.analysis
+        target = owner_root / 'five-role' / 'analysis'
+        (target / 'worker').mkdir(parents=True)
+
+        def save(path, value):
+            raw = parent_git.io.json_bytes(value)
+            path.write_bytes(raw)
+            return parent_git.observed._pin(raw)
+
+        with parent_git.source_git.OwnedSourceGitSession(
+                policy_path=f.policy_path, expected_policy_pin=f.policy_pin,
+                revision=f.revision, receipt_root=owner_root / 'analysis-git',
+                phase=parent_git.owner.ANALYSIS_GIT_PHASE) as reader, \
+                binding.numeric._numeric_scope('analysis'):
+            source, snapshots, git = worker._git_sources(f.revision, git_reader=reader)
+            self.assertEqual(len(snapshots[f.revision]), 27)
+            for _ in range(2):
+                git('rev-parse', 'HEAD')
+            names = (*binding.numeric.SOURCE_FILES, 'src/banto_ai/analysis_dynamic_fixture.py')
+            files = {'project/' + name: {'category': 'project', 'native': False,
+                'physical_path': str(f.root / name), 'pin': parent_git.observed._pin(f.sources[name])}
+                for name in sorted(names)}
+            pair = {'before': {'files': files}, 'after': {'files': files}}
+            git.start_dependencies()
+            for _ in range(2):
+                for name in sorted(names):
+                    self.assertEqual(git('show', f.revision + ':' + name), f.sources[name])
+        invocation = {'format': worker.INVOCATION, 'invocation_id': 'b' * 64, 'source': source}
+        record = {'role': 'analysis', 'mode': 'fixture', 'invocation_id': invocation['invocation_id'],
+                  'source_before': source, 'source_after': source}
+        reply = {'evidence': record, 'dependencies_before': pair['before'], 'dependencies_after': pair['after']}
+        result = {'format': 'anomaly-v03-fixture-worker-check-v1', 'status': 'verified',
+                  'role': 'analysis', 'mode': 'fixture', 'profile_required': False,
+                  'formal_permission': False, 'source_closure_complete': False,
+                  'runtime_closure_complete': False,
+                  'invocation_pin': save(target / 'invocation.json', invocation),
+                  'evidence_pin': save(target / 'evidence.json', record),
+                  'stdout_pin': save(target / 'worker' / 'report.json', reply),
+                  'source_tool_pin': save(target / 'source-tool.json', git.tool_record),
+                  'dependency_pin': save(target / 'dependencies.json', pair),
+                  'dependency_observation': {'project_files': len(names)}}
+        top_path = owner_root / 'five-role' / 'result.json'
+        top = parent_git.v.strict_json(top_path.read_bytes())
+        top['analysis'] = {'result_pin': save(target / 'result.json', result)}
+        return save(top_path, top)
+
+    def test_analysis_opt_in_binds_all_roles_and_replays_without_git(self):
+        self._prepare_producer_sources(analysis=True)
+        with patch.object(parent_git.owner, 'run_owned', side_effect=self._owned_fake_owner()), \
+             patch.object(parent_git.owner, 'verify_retained', side_effect=self._owned_fake_verifier), \
+             patch.object(subprocess, 'check_output', side_effect=AssertionError('bare Git')):
+            result = self._run('analysis-owned', own_analysis_git=True)
+            self.assertEqual(result['status'], 'verified', result)
+            self.assertEqual(result['format'], parent_git.ANALYSIS_FORMAT)
+            self.assertEqual(result['analysis_git_call_count'], 59)
+            self.assertTrue(result['analysis_v1_git_owned'])
+            self.assertTrue(result['producer_v1_git_owned'])
+            self.assertTrue(result['child_fixed_git_owned'])
+            self.assertFalse(result['inner_v1_git_owned'])
+            with patch.object(parent_git.source_git.owned_git, 'run_owned',
+                              side_effect=AssertionError('Git relaunched')):
+                self.assertEqual(self._verify(result, 'analysis-owned')['call_status'], 'verified')
+                root = self.fixture.parent / 'analysis-owned'
+                (root / 'attempt' / 'five-role' / 'analysis' / 'dependencies.json').write_bytes(b'{}')
+                with self.assertRaisesRegex(ValueError, 'analysis Git binding .*dependencies.json'):
+                    self._verify(result, 'analysis-owned')
 
     def test_producer_opt_in_binds_inventory_and_replays_without_git(self):
         self._prepare_producer_sources()

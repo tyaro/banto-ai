@@ -119,16 +119,16 @@ def expected_calls(owner_root, saved_owner):
     return expected
 
 
-def verify_calls(calls, expected):
+def verify_calls(calls, expected, *, label='producer'):
     v.require(type(calls) is list and len(calls) == len(expected),
-              'exact producer Git call count')
+              'exact ' + label + ' Git call count')
     for index, (row, (call_id, operation, path, pin)) in enumerate(zip(calls, expected)):
         v.require(row['index'] == index and row['call_id'] == call_id and
                   row['operation'] == operation and row['source_path'] == path and
                   row['expected_output_pin'] == pin and
                   row['call_status'] == 'verified' and row['receipt_pin'] is not None
                   and row['reason'] is None and row['error_type'] is None,
-                  'producer Git call order and pinned inventory')
+                  label + ' Git call order and pinned inventory')
 
 
 def verify_manifest(target, receipt, saved_owner, *, phase):
