@@ -1,9 +1,10 @@
 """Pinned invented reader controls -> full draws, audit, document and slices.
 
-The caller loads the control bytes before this clock. Their validation and
-projection, both owned arithmetic children and all mappings share one sampled
-budget. The optional versioned publication route adds an owned local writer
-and fresh reader. No producer or raw observation derivation is run.
+Supplied control bytes are loaded by the caller before this clock. The disk
+entry reads a fixed, externally pinned control inventory inside the clock.
+Validation, projection, owned arithmetic children and mappings share one
+sampled budget. Optional local publication adds an owned writer and fresh
+reader. No producer or raw observation derivation is run.
 """
 from __future__ import annotations
 
@@ -15,6 +16,7 @@ import time
 from . import anomaly_v03_preformal_contiguous_document_budget as chain
 from . import anomaly_v03_saved_row_fixture_projection as projection
 from . import anomaly_v03_saved_row_document_publication as publication
+from . import anomaly_v03_saved_control_file_reader as control_files
 
 
 ROOT = chain.ROOT
@@ -29,6 +31,7 @@ SOURCE_NAMES = tuple(dict.fromkeys((
     'src/banto_ai/anomaly_v03_registered_saved_row_lineage.py',
     'src/banto_ai/anomaly_v03_registered_saved_summary.py',
     *publication.SOURCE_NAMES,
+    *control_files.SOURCE_NAMES,
     *chain.SOURCE_NAMES,
 )))
 
@@ -114,12 +117,19 @@ def _recheck_controls(entries, binding):
 
 def run_saved_rows(entries, *, expected_mode, expected_input_pins,
                    expected_revision, receipt_name, receipt_parent=OUTPUT_PARENT,
-                   budget_limits=None, publish_document=False):
+                   budget_limits=None, publish_document=False,
+                   control_root=None, expected_control_pinset_pin=None):
     """Run a new invented attempt; optionally include owned local publication."""
     if type(publish_document) is not bool:
         raise ValueError('publication selection must be boolean')
     if type(expected_mode) is not str or expected_mode != 'fixture':
         raise ValueError('only invented saved-row document mode is open')
+    disk_controls = control_root is not None or expected_control_pinset_pin is not None
+    if disk_controls:
+        if entries is not None or control_root is None or expected_control_pinset_pin is None or not publish_document:
+            raise ValueError('disk control route requires no supplied entries and local publication')
+        control_root = control_files.validate_request(control_root, expected_control_pinset_pin)
+        expected_control_pinset_pin = copy.deepcopy(expected_control_pinset_pin)
     projection.evidence._digest(expected_revision, 40)
     _expected_pins(expected_input_pins)
     expected_input_pins = copy.deepcopy(expected_input_pins)
@@ -160,16 +170,38 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
                       reader_status='not_started', writer_reaped_before_reader_start=False,
                       runtime_scope='serialized-dedicated-caller-platform-fixture-v2',
                       concurrent_calls_supported=False)
+    if disk_controls:
+        result.update(format=control_files.PIPELINE_FORMAT, scope=control_files.SCOPE,
+                      input_kind='pinned invented saved-control files',
+                      saved_control_loading_inside_budget=True,
+                      saved_control_disk_reread_inside_budget=True,
+                      control_fixture_root=str(control_root),
+                      external_control_pinset_pin=expected_control_pinset_pin,
+                      external_saved_control_bytes_in_directory_budget=False,
+                      same_budget_control_disk_to_fresh_reader_measured=False,
+                      control_disk_pin_recheck_completed=False,
+                      real_saved_chunk_reader_used=False, producer_executed_here=False)
     budget = None
+    loaded = None
     critical = None
     result_pin = None
     try:
-        budget_type = publication.PublicationBudget if publish_document else SavedRowBudget
+        budget_type = (control_files.ControlFileBudget if disk_controls else
+                       publication.PublicationBudget if publish_document else SavedRowBudget)
         budget = budget_type(root, limits).start()
         budget.checkpoint('preflight')
         before = _source_pins(expected_revision)
         runtime = chain.platform_runtime.probe_runtime(ROOT)
         result.update(source_pins_before=before, runtime_before=runtime)
+        if disk_controls:
+            result['stage'] = 'control-read'
+            loaded = control_files.load_controls(control_root,
+                expected_pinset_pin=expected_control_pinset_pin, budget=budget)
+            entries = loaded['entries']
+            result['control_file_read_pin'] = chain._write_value(
+                root / 'control-files.json', loaded['summary'], chain.MAX_CONTROL)
+            result['stage'] = 'preflight'
+            budget.checkpoint('preflight')
         prepared = _prepare(entries, expected_revision, expected_input_pins)
         budget.checkpoint('preflight')
         projection_pin = chain._write_value(
@@ -200,6 +232,10 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
         chain._slices(root, binding, fixture, slices, document, schema, budget, result)
         if publish_document:
             publication.publish(root, budget, result, expected_revision, before, expected_input_pins)
+        if disk_controls:
+            result['stage'] = 'control-reread'
+            result['control_disk_recheck'] = control_files.recheck_controls(loaded, budget=budget)
+            result['control_disk_pin_recheck_completed'] = True
         result['stage'] = 'postflight'
         budget.checkpoint('postflight')
         # The deterministic projection is bound to these exact immutable raw
@@ -223,6 +259,8 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
         )
         for name, pin, maximum in outputs:
             chain.draw_bridge._read(root / name, pin, maximum)
+        if disk_controls:
+            chain.draw_bridge._read(root / 'control-files.json', result['control_file_read_pin'], chain.MAX_CONTROL)
         budget.checkpoint('postflight')
         result.update(status='measured', stage='complete',
                       source_pins_after=before, runtime_after=runtime)
@@ -272,6 +310,9 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
             result['status'] == 'measured')
         if publish_document:
             result['same_budget_saved_rows_to_fresh_reader_measured'] = result['status'] == 'measured'
+        if disk_controls:
+            result['same_budget_control_disk_to_fresh_reader_measured'] = (
+                result['status'] == 'measured' and result['control_disk_pin_recheck_completed'])
         result['wall_seconds'] = time.monotonic() - started
         try:
             result_pin = chain._write_value(root / 'result.json', result, chain.MAX_CONTROL)
@@ -280,3 +321,14 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
     if critical is not None:
         raise critical
     return {**result, 'result_pin': result_pin, 'receipt_root': str(root)}
+
+
+def run_saved_control_files(*, control_root, expected_control_pinset_pin,
+                            expected_mode, expected_input_pins, expected_revision,
+                            receipt_name, receipt_parent=OUTPUT_PARENT, budget_limits=None):
+    """Read fixed control files and finish local publication under one clock."""
+    return run_saved_rows(None, expected_mode=expected_mode,
+        expected_input_pins=expected_input_pins, expected_revision=expected_revision,
+        receipt_name=receipt_name, receipt_parent=receipt_parent, budget_limits=budget_limits,
+        publish_document=True, control_root=control_root,
+        expected_control_pinset_pin=expected_control_pinset_pin)
