@@ -87,13 +87,15 @@ def _limits(value=None):
 class ContiguousBudget(shared_budget.PreformalChainBudget):
     """Versioned scope and phases, with the existing cooperative stop probe."""
 
-    def __init__(self, root, value=None):
-        super().__init__(root)
+    phase_names = PHASES
+
+    def __init__(self, root, value=None, *, publication_roots=()):
+        super().__init__(root, publication_roots=publication_roots)
         self.limits = _limits(value)
         self.outputs = {}
 
     def checkpoint(self, phase):
-        if phase not in PHASES or self._thread is None or self._closed is not None:
+        if phase not in self.phase_names or self._thread is None or self._closed is not None:
             raise ValueError('invalid contiguous budget checkpoint')
         with self._state_lock:
             self.phase = phase

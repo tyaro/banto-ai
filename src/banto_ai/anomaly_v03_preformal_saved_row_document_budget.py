@@ -2,7 +2,8 @@
 
 The caller loads the control bytes before this clock. Their validation and
 projection, both owned arithmetic children and all mappings share one sampled
-budget. No producer, observation derivation, writer or fresh reader is run.
+budget. The optional versioned publication route adds an owned local writer
+and fresh reader. No producer or raw observation derivation is run.
 """
 from __future__ import annotations
 
@@ -13,6 +14,7 @@ import time
 
 from . import anomaly_v03_preformal_contiguous_document_budget as chain
 from . import anomaly_v03_saved_row_fixture_projection as projection
+from . import anomaly_v03_saved_row_document_publication as publication
 
 
 ROOT = chain.ROOT
@@ -26,6 +28,7 @@ SOURCE_NAMES = tuple(dict.fromkeys((
     'src/banto_ai/anomaly_v03_preformal_saved_seed_contribution.py',
     'src/banto_ai/anomaly_v03_registered_saved_row_lineage.py',
     'src/banto_ai/anomaly_v03_registered_saved_summary.py',
+    *publication.SOURCE_NAMES,
     *chain.SOURCE_NAMES,
 )))
 
@@ -111,8 +114,10 @@ def _recheck_controls(entries, binding):
 
 def run_saved_rows(entries, *, expected_mode, expected_input_pins,
                    expected_revision, receipt_name, receipt_parent=OUTPUT_PARENT,
-                   budget_limits=None):
-    """Run a new non-overwriting invented attempt, with exactly two children."""
+                   budget_limits=None, publish_document=False):
+    """Run a new invented attempt; optionally include owned local publication."""
+    if type(publish_document) is not bool:
+        raise ValueError('publication selection must be boolean')
     if type(expected_mode) is not str or expected_mode != 'fixture':
         raise ValueError('only invented saved-row document mode is open')
     projection.evidence._digest(expected_revision, 40)
@@ -148,11 +153,19 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
         'same_budget_50000_arithmetic_document_slices_measured': False,
         'both_arithmetic_children_verified': False,
     }
+    if publish_document:
+        result.update(format=publication.FORMAT, scope=publication.SCOPE,
+                      same_budget_saved_rows_to_fresh_reader_measured=False,
+                      local_publication_performed=False, publication_status='not_started',
+                      reader_status='not_started', writer_reaped_before_reader_start=False,
+                      runtime_scope='serialized-dedicated-caller-platform-fixture-v2',
+                      concurrent_calls_supported=False)
     budget = None
     critical = None
     result_pin = None
     try:
-        budget = SavedRowBudget(root, limits).start()
+        budget_type = publication.PublicationBudget if publish_document else SavedRowBudget
+        budget = budget_type(root, limits).start()
         budget.checkpoint('preflight')
         before = _source_pins(expected_revision)
         runtime = chain.platform_runtime.probe_runtime(ROOT)
@@ -185,6 +198,8 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
             root, binding, fixture, calculation, audit, budget, result)
         result['stage'] = 'slices'
         chain._slices(root, binding, fixture, slices, document, schema, budget, result)
+        if publish_document:
+            publication.publish(root, budget, result, expected_revision, before, expected_input_pins)
         result['stage'] = 'postflight'
         budget.checkpoint('postflight')
         # The deterministic projection is bound to these exact immutable raw
@@ -216,6 +231,11 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
                       unreaped_role=error.role, worker_exit_confirmed=False)
         error.receipt = root
         critical = error
+    except publication.supervisor.UnreapedWorker as error:
+        result.update(reason='owned_publication_child_exit_unconfirmed',
+                      worker_exit_confirmed=False)
+        error.receipt = root
+        critical = error
     except chain.draw_bridge.resources.ResourceStop as error:
         result['reason'] = error.reason
     except (ValueError, OSError, KeyError, TypeError, subprocess.SubprocessError) as error:
@@ -236,9 +256,12 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
                     'both_arithmetic_child_exits_reported']
                 result['all_mapping_outputs_reported'] = report[
                     'all_mapping_outputs_reported']
+                if publish_document:
+                    result['all_four_child_exits_reported'] = report['all_four_child_exits_reported']
                 if result['status'] == 'measured' and (
                         not report['passed'] or not report['both_arithmetic_child_exits_reported']
-                        or not report['all_mapping_outputs_reported']):
+                        or not report['all_mapping_outputs_reported'] or
+                        (publish_document and not report['all_four_child_exits_reported'])):
                     result.update(status='failed', reason=report['stop_reason'] or
                                   'saved_row_document_completion_incomplete')
             except BaseException as error:
@@ -247,6 +270,8 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
                 critical = critical or error
         result['same_budget_50000_arithmetic_document_slices_measured'] = (
             result['status'] == 'measured')
+        if publish_document:
+            result['same_budget_saved_rows_to_fresh_reader_measured'] = result['status'] == 'measured'
         result['wall_seconds'] = time.monotonic() - started
         try:
             result_pin = chain._write_value(root / 'result.json', result, chain.MAX_CONTROL)
