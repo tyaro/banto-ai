@@ -33,6 +33,7 @@ class ParentOwnedGitTests(unittest.TestCase):
                        parent_git.producer_binding.producer,
                        parent_git.analysis_binding.numeric.analysis,
                        parent_git.analysis_binding.numeric.audit,
+                       parent_git.writer_binding.publication,
                        parent_git.analysis_binding.observed):
             stack.enter_context(patch.object(module, 'ROOT', f.root))
         return stack
@@ -68,7 +69,9 @@ class ParentOwnedGitTests(unittest.TestCase):
                 invocation = parent_git.v.strict_json(
                     (root / 'invocation.json').read_bytes())
                 invocation.update(
-                    format=(parent_git.owner.OWNED_AUDIT_INVOCATION if
+                    format=(parent_git.owner.OWNED_WRITER_INVOCATION if
+                            kwargs.get('own_writer_git') else
+                            parent_git.owner.OWNED_AUDIT_INVOCATION if
                             kwargs.get('own_audit_git') else
                             parent_git.owner.OWNED_ANALYSIS_INVOCATION if
                             kwargs.get('own_analysis_git') else
@@ -105,6 +108,8 @@ class ParentOwnedGitTests(unittest.TestCase):
                         receipt['inner_result_pin'] = self._fake_analysis(root)
                     if kwargs.get('own_audit_git'):
                         receipt['inner_result_pin'] = self._fake_analysis(root, role='audit')
+                    if kwargs.get('own_writer_git'):
+                        receipt['inner_result_pin'] = self._fake_writer(root)
                     raw = parent_git.io.json_bytes(receipt)
                     (root / 'receipt.json').write_bytes(raw)
                     result['receipt_pin'] = parent_git.observed._pin(raw)
@@ -112,7 +117,7 @@ class ParentOwnedGitTests(unittest.TestCase):
 
         return run
 
-    def _prepare_producer_sources(self, *, analysis=False):
+    def _prepare_producer_sources(self, *, analysis=False, writer=False):
         f = self.fixture
         producer = parent_git.producer_binding.producer
         (f.root / '.gitignore').write_text('artifacts/\n__pycache__/\n', encoding='utf-8')
@@ -120,6 +125,9 @@ class ParentOwnedGitTests(unittest.TestCase):
         if analysis:
             names = (*names, *parent_git.analysis_binding.numeric.SOURCE_FILES,
                      'src/banto_ai/analysis_dynamic_fixture.py')
+        if writer:
+            names = (*names, *parent_git.writer_binding.platform.SOURCE_FILES,
+                     'src/banto_ai/writer_dynamic_fixture.py')
         for name in names:
             if name not in f.sources:
                 raw = (name + '\n').encode()
@@ -242,6 +250,80 @@ class ParentOwnedGitTests(unittest.TestCase):
         top = parent_git.v.strict_json(top_path.read_bytes())
         top[role] = {'result_pin': save(target / 'result.json', result)}
         return save(top_path, top)
+
+    def _fake_writer(self, owner_root):
+        f = self.fixture
+        binding, worker = parent_git.writer_binding, parent_git.writer_binding.publication
+        pub_root = owner_root/'five-role/publication'
+        target = pub_root/'writer'
+        (target/'worker').mkdir(parents=True)
+        def save(path,value):
+            raw = parent_git.io.json_bytes(value)
+            path.write_bytes(raw)
+            return parent_git.observed._pin(raw)
+        with parent_git.source_git.OwnedSourceGitSession(
+                policy_path=f.policy_path,expected_policy_pin=f.policy_pin,revision=f.revision,
+                receipt_root=owner_root/'writer-git',phase=parent_git.owner.WRITER_GIT_PHASE) as reader, \
+                binding.platform._platform_scope():
+            source,snapshots,git = worker._git_sources(f.revision,git_reader=reader)
+            git = worker._cached_git(git,f.revision,snapshots)
+            git('rev-parse','HEAD');git('status','--porcelain')
+            for _ in range(3):git('rev-parse','HEAD')
+            names = (*binding.platform.SOURCE_FILES,'src/banto_ai/writer_dynamic_fixture.py')
+            files = {'project/'+name:{'category':'project','native':False,
+                'physical_path':str(f.root/name),'pin':parent_git.observed._pin(f.sources[name])}
+                for name in sorted(names)}
+            pair = {'before':{'files':files},'after':{'files':files}}
+            for _ in range(2):
+                for name in sorted(names):git('show',f.revision+':'+name)
+        invocation = {'format':worker.INVOCATION,'role':'writer','invocation_id':'d'*64,'source':source}
+        record = {'role':'writer','mode':'fixture','invocation_id':invocation['invocation_id'],
+                  'source_before':source,'source_after':source}
+        reply = {'evidence':record,'dependencies_before':pair['before'],'dependencies_after':pair['after']}
+        result = {'status':'verified','role':'writer','worker_exit_confirmed':True,
+                  'source_revision':f.revision,'profile_required':False,
+                  'invocation_pin':save(target/'invocation.json',invocation),
+                  'evidence_pin':save(target/'evidence.json',record),
+                  'stdout_pin':save(target/'worker/report.json',reply),
+                  'source_tool_pin':save(target/'source-tool.json',git.tool_record),
+                  'dependency_pin':save(target/'dependencies.json',pair),
+                  'dependency_observation':{'project_files':len(names)}}
+        save(target/'result.json',result)
+        pub = {'format':'anomaly-v03-fixture-publication-check-v1','status':'verified','mode':'fixture',
+               'publication_status':'completed','reader_status':'completed','profile_required':False,
+               'formal_permission':False,'source_closure_complete':False,'runtime_closure_complete':False,
+               'selected_source_files':len(binding.platform.SOURCE_FILES),'writer':result}
+        top_path = owner_root/'five-role/result.json'
+        top = parent_git.v.strict_json(top_path.read_bytes())
+        top['publication'] = {'result_pin':save(pub_root/'result.json',pub)}
+        return save(top_path,top)
+
+    def test_writer_opt_in_binds_seeded_cache_and_replays_without_git(self):
+        self._prepare_producer_sources(analysis=True,writer=True)
+        with patch.object(parent_git.owner,'run_owned',side_effect=self._owned_fake_owner()), \
+             patch.object(parent_git.owner,'verify_retained',side_effect=self._owned_fake_verifier), \
+             patch.object(subprocess,'check_output',side_effect=AssertionError('bare Git')):
+            result = self._run('writer-owned',own_writer_git=True)
+            self.assertEqual(result['status'],'verified',result)
+            self.assertEqual(result['format'],parent_git.WRITER_FORMAT)
+            self.assertEqual(result['writer_git_call_count'],23)
+            for role in ('writer','audit','analysis','producer'):
+                self.assertTrue(result[role+'_v1_git_owned'])
+            self.assertFalse(result['inner_v1_git_owned'])
+            with patch.object(parent_git.source_git.owned_git,'run_owned',side_effect=AssertionError('Git relaunched')):
+                self.assertEqual(self._verify(result,'writer-owned')['call_status'],'verified')
+                root = self.fixture.parent/'writer-owned'
+                saved_owner = parent_git.v.strict_json((root/'attempt/receipt.json').read_bytes())
+                with self._roots():
+                    calls = parent_git.writer_binding.expected_calls(root/'attempt',saved_owner,self.fixture.policy)
+                self.assertTrue(all(row[0].startswith('writer-git-') for row in calls))
+                manifest = parent_git.v.strict_json((root/'attempt/writer-git/manifest.json').read_bytes())
+                manifest['calls'][-1]['source_path'] = parent_git.owner.SOURCE
+                with self.assertRaisesRegex(ValueError,'writer Git call order'):
+                    parent_git.producer_binding.verify_calls(manifest['calls'],calls,label='writer')
+                (root/'attempt/five-role/publication/writer/dependencies.json').write_bytes(b'{}')
+                with self.assertRaisesRegex(ValueError,'writer Git binding .*dependencies.json'):
+                    self._verify(result,'writer-owned')
 
     def test_audit_opt_in_binds_inventory_and_replays_without_git(self):
         self._prepare_producer_sources(analysis=True)

@@ -15,9 +15,9 @@ from . import anomaly_v03_preformal_owned_source_git_session as source_git
 from . import anomaly_v03_reader_evidence as observed
 
 
-class OwnedNumericGit:
+class OwnedFixtureGit:
     def __init__(self, reader, *, root, revision, role='analysis'):
-        v.require(role in ('analysis', 'audit'), 'owned numeric Git role')
+        v.require(role in ('analysis', 'audit', 'writer'), 'owned fixture Git role')
         self.role = role
         evidence._digest(revision, 40)
         v.require(reader.revision == revision, role + ' owned Git revision')
@@ -59,7 +59,8 @@ class OwnedNumericGit:
         return raw
 
 
-OwnedAnalysisGit = OwnedNumericGit
+OwnedNumericGit = OwnedFixtureGit
+OwnedAnalysisGit = OwnedFixtureGit
 
 
 def _pinned(path, pin, maximum, *, role='analysis'):

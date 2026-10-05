@@ -166,7 +166,8 @@ def run_chain(*, expected_mode, join_root, expected_join_receipt_pin,
               expected_revision, receipt_name, receipt_parent=OUTPUT_PARENT,
               budget_limits=None, candidate_set_path=None,
               expected_candidate_set_pin=None, git_reader=None,
-              producer_git_reader=None, analysis_git_reader=None, audit_git_reader=None):
+              producer_git_reader=None, analysis_git_reader=None, audit_git_reader=None,
+              writer_git_reader=None):
     """One new attempt with five owned children and pinned stage succession."""
     v.require(type(expected_mode) is str and expected_mode == 'fixture',
               'only invented five-role fixture is open')
@@ -275,7 +276,9 @@ def run_chain(*, expected_mode, join_root, expected_join_receipt_pin,
                             **({} if analysis_git_reader is None else
                                {'analysis_git_reader': analysis_git_reader}),
                             **({} if audit_git_reader is None else
-                               {'audit_git_reader': audit_git_reader}))
+                               {'audit_git_reader': audit_git_reader}),
+                            **({} if writer_git_reader is None else
+                               {'writer_git_reader': writer_git_reader}))
         finally:
             # The reusable four-role helper initializes its own identity map.
             result['identities'] = {'producer': producer_identity, **result['identities']}

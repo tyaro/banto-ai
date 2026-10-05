@@ -5,8 +5,9 @@ manifests. An explicit v2 opt-in also owns the child's 26 fixed source calls;
 v3 includes the producer parent's source and observed project dependency Git.
 v4 also includes direct Git in the numeric fixture analysis parent.
 v5 adds the numeric fixture audit parent's direct Git.
+v6 includes the publication prelude and writer parent's direct Git.
 Candidate profile sets are rejected because their loader uses bare Git in the
-parent. Writer/reader Git in the inner chain remains unowned. Neither
+parent. Reader Git in the inner chain remains unowned. Neither
 Git's loaded code nor its descendants, the complete source/runtime closure,
 or formal evaluation are authenticated here.
 """
@@ -23,6 +24,7 @@ from . import anomaly_v03_preformal_five_role_owned_source_anchor_v2 as prefligh
 from . import anomaly_v03_preformal_owned_source_git_session as source_git
 from . import anomaly_v03_preformal_producer_git_binding as producer_binding
 from . import anomaly_v03_preformal_analysis_git as analysis_binding
+from . import anomaly_v03_preformal_writer_git as writer_binding
 from . import anomaly_v03_reader_evidence as observed
 from . import _anomaly_v03_io as io
 
@@ -33,6 +35,7 @@ CHILD_FORMAT = 'anomaly-v03-preformal-five-role-parent-owned-git-v2'
 PRODUCER_FORMAT = 'anomaly-v03-preformal-five-role-parent-owned-git-v3'
 ANALYSIS_FORMAT = 'anomaly-v03-preformal-five-role-parent-owned-git-v4'
 AUDIT_FORMAT = 'anomaly-v03-preformal-five-role-parent-owned-git-v5'
+WRITER_FORMAT = 'anomaly-v03-preformal-five-role-parent-owned-git-v6'
 PREFLIGHT_PHASE = preflight.PHASE
 PARENT_PHASE = 'parent-source-boundaries'
 GIT_SCOPE = 'seven pre-Job and thirty-five parent direct Git calls only'
@@ -41,6 +44,7 @@ CHILD_GIT_SCOPE = ('seven pre-Job, thirty-five parent and '
 PRODUCER_GIT_SCOPE = CHILD_GIT_SCOPE + '; producer direct source/dependency Git included'
 ANALYSIS_GIT_SCOPE = PRODUCER_GIT_SCOPE + '; analysis direct source/dependency Git included'
 AUDIT_GIT_SCOPE = ANALYSIS_GIT_SCOPE + '; audit direct source/dependency Git included'
+WRITER_GIT_SCOPE = AUDIT_GIT_SCOPE + '; publication prelude and writer direct Git included'
 MAX_RECEIPT = 24 * 1024
 _FIELDS = preflight._FIELDS | {
     'parent_git_root', 'parent_git_manifest_pin', 'parent_git_status',
@@ -56,6 +60,8 @@ _ANALYSIS_FIELDS = {'analysis_git_root', 'analysis_git_manifest_pin',
                     'analysis_v1_git_owned'}
 _AUDIT_FIELDS = {'audit_git_root', 'audit_git_manifest_pin',
                  'audit_git_status', 'audit_git_call_count', 'audit_v1_git_owned'}
+_WRITER_FIELDS = {'writer_git_root', 'writer_git_manifest_pin',
+                  'writer_git_status', 'writer_git_call_count', 'writer_v1_git_owned'}
 
 
 def _pinned(path, pin, maximum):
@@ -127,7 +133,8 @@ def _child_calls(calls, source):
 def _child_binding(target, receipt, saved_owner):
     invocation = owner._invocation(
         target / 'attempt' / 'invocation.json', saved_owner['invocation_pin'])
-    expected = (owner.OWNED_AUDIT_INVOCATION if receipt['format'] == AUDIT_FORMAT else
+    expected = (owner.OWNED_WRITER_INVOCATION if receipt['format'] == WRITER_FORMAT else
+                owner.OWNED_AUDIT_INVOCATION if receipt['format'] == AUDIT_FORMAT else
                 owner.OWNED_ANALYSIS_INVOCATION if receipt['format'] == ANALYSIS_FORMAT else
                 owner.OWNED_PRODUCER_INVOCATION if
                 receipt['format'] == PRODUCER_FORMAT else owner.OWNED_GIT_INVOCATION)
@@ -241,7 +248,7 @@ def run_anchored(*, expected_mode, join_root, expected_join_receipt_pin,
                  git_policy_path, expected_git_policy_pin,
                  candidate_set_path=None, expected_candidate_set_pin=None,
                  own_child_git=False, own_producer_git=False, own_analysis_git=False,
-                 own_audit_git=False):
+                 own_audit_git=False, own_writer_git=False):
     """Own parent source Git, optionally including fixed child source calls."""
     v.require(type(expected_mode) is str and expected_mode == 'fixture',
               'only invented five-role mode')
@@ -249,6 +256,8 @@ def run_anchored(*, expected_mode, join_root, expected_join_receipt_pin,
     v.require(type(own_producer_git) is bool, 'owned producer Git opt-in boolean')
     v.require(type(own_analysis_git) is bool, 'owned analysis Git opt-in boolean')
     v.require(type(own_audit_git) is bool, 'owned audit Git opt-in boolean')
+    v.require(type(own_writer_git) is bool, 'owned writer Git opt-in boolean')
+    own_audit_git = own_audit_git or own_writer_git
     own_analysis_git = own_analysis_git or own_audit_git
     own_producer_git = own_producer_git or own_analysis_git
     own_child_git = own_child_git or own_producer_git
@@ -336,6 +345,12 @@ def run_anchored(*, expected_mode, join_root, expected_join_receipt_pin,
             audit_git_root=str(inner_root / 'audit-git'),
             audit_git_manifest_pin=None, audit_git_status=None,
             audit_git_call_count=None, audit_v1_git_owned=False)
+    if own_writer_git:
+        receipt.update(
+            format=WRITER_FORMAT, git_scope=WRITER_GIT_SCOPE,
+            writer_git_root=str(inner_root / 'writer-git'),
+            writer_git_manifest_pin=None, writer_git_status=None,
+            writer_git_call_count=None, writer_v1_git_owned=False)
     pre_reader = parent_reader = None
     critical = None
     try:
@@ -374,7 +389,8 @@ def run_anchored(*, expected_mode, join_root, expected_join_receipt_pin,
                        if own_child_git else {}),
                     **({'own_producer_git': True} if own_producer_git else {}),
                     **({'own_analysis_git': True} if own_analysis_git else {}),
-                    **({'own_audit_git': True} if own_audit_git else {}))
+                    **({'own_audit_git': True} if own_audit_git else {}),
+                    **({'own_writer_git': True} if own_writer_git else {}))
                 receipt['owner_receipt_pin'] = copy.deepcopy(inner['receipt_pin'])
                 receipt['owner_status'] = inner['status']
                 v.require(inner['status'] in ('verified', 'failed') and
@@ -428,6 +444,17 @@ def run_anchored(*, expected_mode, join_root, expected_join_receipt_pin,
                             analysis_binding.verify_manifest(
                                 target, receipt, saved_owner, phase=owner.AUDIT_GIT_PHASE,
                                 role='audit')
+                    if own_writer_git:
+                        manifest_path = inner_root / 'writer-git' / 'manifest.json'
+                        if manifest_path.exists():
+                            raw = observed._file(manifest_path, source_git.MAX_MANIFEST)
+                            manifest = v.strict_json(raw)
+                            receipt.update(
+                                writer_git_manifest_pin=observed._pin(raw),
+                                writer_git_status=manifest['status'],
+                                writer_git_call_count=manifest['call_count'])
+                            writer_binding.verify_manifest(
+                                target, receipt, saved_owner, phase=owner.WRITER_GIT_PHASE)
                 if inner['status'] == 'verified':
                     checked = owner.verify_retained(
                         inner_root, inner['receipt_pin'],
@@ -463,6 +490,10 @@ def run_anchored(*, expected_mode, join_root, expected_join_receipt_pin,
                 v.require(receipt['audit_git_status'] == 'verified' and
                           receipt['audit_git_manifest_pin'] is not None,
                           'owned audit Git manifest required')
+            if own_writer_git:
+                v.require(receipt['writer_git_status'] == 'verified' and
+                          receipt['writer_git_manifest_pin'] is not None,
+                          'owned writer Git manifest required')
             receipt.update(status='verified', reason=None,
                            parent_v1_git_owned=True)
             if own_child_git:
@@ -473,6 +504,8 @@ def run_anchored(*, expected_mode, join_root, expected_join_receipt_pin,
                 receipt['analysis_v1_git_owned'] = True
             if own_audit_git:
                 receipt['audit_v1_git_owned'] = True
+            if own_writer_git:
+                receipt['writer_v1_git_owned'] = True
     except (source_git.owned_git.UnreapedGit,
             owner.job_owner.UnreapedJob,
             owner.job_owner.UnclosedHandles) as error:
@@ -506,10 +539,11 @@ def verify_retained(result_root, expected_receipt_pin):
               'known parent owned Git root')
     receipt = v.strict_json(_pinned(target / 'receipt.json',
                                     expected_receipt_pin, MAX_RECEIPT))
-    own_audit_git = type(receipt) is dict and receipt.get('format') == AUDIT_FORMAT
-    own_analysis_git = type(receipt) is dict and receipt.get('format') in (ANALYSIS_FORMAT, AUDIT_FORMAT)
-    own_producer_git = type(receipt) is dict and receipt.get('format') in (PRODUCER_FORMAT, ANALYSIS_FORMAT, AUDIT_FORMAT)
-    own_child_git = type(receipt) is dict and receipt.get('format') in (CHILD_FORMAT, PRODUCER_FORMAT, ANALYSIS_FORMAT, AUDIT_FORMAT)
+    own_writer_git = type(receipt) is dict and receipt.get('format') == WRITER_FORMAT
+    own_audit_git = type(receipt) is dict and receipt.get('format') in (AUDIT_FORMAT, WRITER_FORMAT)
+    own_analysis_git = type(receipt) is dict and receipt.get('format') in (ANALYSIS_FORMAT, AUDIT_FORMAT, WRITER_FORMAT)
+    own_producer_git = type(receipt) is dict and receipt.get('format') in (PRODUCER_FORMAT, ANALYSIS_FORMAT, AUDIT_FORMAT, WRITER_FORMAT)
+    own_child_git = type(receipt) is dict and receipt.get('format') in (CHILD_FORMAT, PRODUCER_FORMAT, ANALYSIS_FORMAT, AUDIT_FORMAT, WRITER_FORMAT)
     fields = _FIELDS | _CHILD_FIELDS if own_child_git else _FIELDS
     if own_producer_git:
         fields |= _PRODUCER_FIELDS
@@ -517,12 +551,15 @@ def verify_retained(result_root, expected_receipt_pin):
         fields |= _ANALYSIS_FIELDS
     if own_audit_git:
         fields |= _AUDIT_FIELDS
-    scope = (AUDIT_GIT_SCOPE if own_audit_git else
+    if own_writer_git:
+        fields |= _WRITER_FIELDS
+    scope = (WRITER_GIT_SCOPE if own_writer_git else
+             AUDIT_GIT_SCOPE if own_audit_git else
              ANALYSIS_GIT_SCOPE if own_analysis_git else
              PRODUCER_GIT_SCOPE if own_producer_git else
              CHILD_GIT_SCOPE if own_child_git else GIT_SCOPE)
     v.require(type(receipt) is dict and set(receipt) == fields and
-              receipt['format'] in (FORMAT, CHILD_FORMAT, PRODUCER_FORMAT, ANALYSIS_FORMAT, AUDIT_FORMAT) and
+              receipt['format'] in (FORMAT, CHILD_FORMAT, PRODUCER_FORMAT, ANALYSIS_FORMAT, AUDIT_FORMAT, WRITER_FORMAT) and
               receipt['mode'] == 'fixture' and
               receipt['root'] == str(target) and
               receipt['source_git_root'] == str(target / 'git') and
@@ -652,6 +689,20 @@ def verify_retained(result_root, expected_receipt_pin):
                       'audit Git manifest requires bound owner invocation')
             analysis_binding.verify_manifest(
                 target, receipt, saved_owner, phase=owner.AUDIT_GIT_PHASE, role='audit')
+    if own_writer_git:
+        v.require(receipt['writer_git_root'] == str(target/'attempt/writer-git') and
+                  type(receipt['writer_v1_git_owned']) is bool and
+                  receipt['writer_v1_git_owned'] == (receipt['status'] == 'verified'),
+                  'retained writer owned Git scope')
+        if receipt['writer_git_manifest_pin'] is None:
+            v.require(receipt['writer_git_status'] is None and
+                      receipt['writer_git_call_count'] is None and receipt['status'] != 'verified',
+                      'absent writer Git manifest fields')
+        else:
+            v.require(owner_pin is not None and 'invocation_pin' in saved_owner,
+                      'writer Git manifest requires bound owner invocation')
+            writer_binding.verify_manifest(
+                target, receipt, saved_owner, phase=owner.WRITER_GIT_PHASE)
     if receipt['status'] == 'verified':
         v.require(receipt['reason'] is None and
                   receipt['error_type'] is None and
@@ -697,4 +748,7 @@ def verify_retained(result_root, expected_receipt_pin):
                if own_analysis_git else {}),
             **({'audit_git_call_count': receipt['audit_git_call_count'],
                 'audit_v1_git_owned': receipt['audit_v1_git_owned']}
-               if own_audit_git else {})}
+               if own_audit_git else {}),
+            **({'writer_git_call_count': receipt['writer_git_call_count'],
+                'writer_v1_git_owned': receipt['writer_v1_git_owned']}
+               if own_writer_git else {})}
