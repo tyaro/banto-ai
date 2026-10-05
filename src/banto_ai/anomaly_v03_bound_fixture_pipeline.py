@@ -95,6 +95,55 @@ def run_pipeline(raw, *, expected_mode, expected_pin, expected_revision, draws,
     An externally retained reference pin is required before either worker starts.
     The pipeline never creates its own expected document or retries a worker.
     """
+    return _run_pipeline(
+        lambda: prepare_inputs(raw, expected_mode=expected_mode, expected_pin=expected_pin,
+                               expected_revision=expected_revision, draws=draws),
+        expected_mode=expected_mode, expected_revision=expected_revision,
+        expected_document_pin=expected_document_pin, receipt_parent=receipt_parent,
+        receipt_name=receipt_name, resource_budget=resource_budget,
+        result_fields={'bound_result_pin': copy.deepcopy(expected_pin)})
+
+
+def run_saved_row_pipeline(entries, *, expected_mode, expected_revision, draws,
+                           expected_document_pin, receipt_parent, receipt_name,
+                           resource_budget=None, platform_v2=False):
+    """Run analysis and independent audit from pinned invented saved-reader rows.
+
+    The input derivation runs inside the same sampled fixture budget. No
+    registered observation, campaign authenticity, full-draw or formal claim
+    is added. Both role exits and exact projected inputs are rechecked.
+    """
+    from . import anomaly_v03_saved_row_fixture_projection as rows
+    v.require(type(platform_v2) is bool, 'candidate platform opt-in boolean')
+    calculate = run_audit = None
+    if platform_v2:
+        from . import anomaly_v03_platform_numeric_fixture as platform_numeric
+        calculate = platform_numeric.calculate_fixture
+        run_audit = platform_numeric.audit_fixture
+    source_names = (SOURCE, 'src/banto_ai/anomaly_v03_saved_row_fixture_projection.py',
+                    'src/banto_ai/anomaly_v03_preformal_saved_seed_contribution.py',
+                    'src/banto_ai/anomaly_v03_preformal_saved_row_coverage.py',
+                    'src/banto_ai/anomaly_v03_registered_saved_row_lineage.py',
+                    'src/banto_ai/anomaly_v03_registered_saved_summary.py')
+    return _run_pipeline(
+        lambda: rows.prepare_inputs(entries, expected_mode=expected_mode,
+                                    expected_revision=expected_revision, draws=draws),
+        expected_mode=expected_mode, expected_revision=expected_revision,
+        expected_document_pin=expected_document_pin, receipt_parent=receipt_parent,
+        receipt_name=receipt_name, resource_budget=resource_budget,
+        source_names=source_names, projection_limit=rows.MAX_BINDING_BYTES,
+        calculate=calculate, run_audit=run_audit,
+        result_fields={'format': 'anomaly-v03-saved-row-fixture-pipeline-v1',
+                       'input_kind': 'pinned-invented-saved-reader-controls',
+                       'platform_v2_fixture_requested': platform_v2,
+                       'historical_producer_execution_authenticated': False,
+                       'campaign_coherence_authenticated': False})
+
+
+def _run_pipeline(prepare, *, expected_mode, expected_revision, expected_document_pin,
+                  receipt_parent, receipt_name, resource_budget=None,
+                  source_names=(SOURCE,), projection_limit=64*1024, result_fields,
+                  calculate=None, run_audit=None):
     v.require(type(expected_mode) is str and expected_mode == 'fixture','only fixture pipeline is open')
     evidence._pin(expected_document_pin);evidence._digest(expected_revision,40)
     v.require(0 < expected_document_pin['bytes'] <= analysis.DOCUMENT_LIMIT,'reference document limit')
@@ -105,16 +154,25 @@ def run_pipeline(raw, *, expected_mode, expected_pin, expected_revision, draws,
     target.mkdir();budget = budgets.FixtureBudget(target,upstream=resource_budget)
     result = {**producer.primary.CLOSED,'format':FORMAT,'mode':'fixture','status':'failed','new_evaluations':0,
         'fixture_inference_performed':False,'fixture_numerical_audit_performed':False,'fixture_slice_audit_performed':False,
-        'analysis_runs':0,'audit_runs':0,'bound_result_pin':copy.deepcopy(expected_pin)}
+        'analysis_runs':0,'audit_runs':0,**result_fields}
     try:
         budget.start()
-        prepared = prepare_inputs(raw,expected_mode=expected_mode,expected_pin=expected_pin,expected_revision=expected_revision,draws=draws)
+        prepared = prepare()
         budget.checkpoint()
         _,_,git = analysis.observed._git_sources(expected_revision)
         v.require(not git('status','--porcelain').strip(),'pipeline candidate must be clean')
-        source = analysis.observed._file(ROOT/SOURCE,1024**2)
-        evidence._raw(source,producer.primary.pin(git('show',expected_revision+':'+SOURCE)),'pipeline source/Git bytes')
-        analysis.observed._save(target/'parent-source.json',{'revision':expected_revision,'path':SOURCE,'pin':producer.primary.pin(source)})
+        sources = {}
+        for name in source_names:
+            source = analysis.observed._file(ROOT/name,1024**2)
+            evidence._raw(source,producer.primary.pin(git('show',expected_revision+':'+name)),
+                          'pipeline source/Git bytes')
+            sources[name] = source
+        source_record = ({'revision':expected_revision,'path':SOURCE,
+                          'pin':producer.primary.pin(sources[SOURCE])}
+                         if source_names == (SOURCE,) else
+                         {'revision':expected_revision,'sources':{
+                             name:producer.primary.pin(value) for name,value in sources.items()}})
+        analysis.observed._save(target/'parent-source.json',source_record)
         inputs = target/'inputs';inputs.mkdir()
         records = {n:_record(inputs/Path(n).name,b) for n,b in prepared['files'].items()}
         projection_raw = io.json_bytes(prepared['binding']);_record(target/'projection.json',projection_raw)
@@ -122,7 +180,9 @@ def run_pipeline(raw, *, expected_mode, expected_pin, expected_revision, draws,
             'inputs':records,'expected_document_pin':copy.deepcopy(expected_document_pin)}
         analysis.observed._save(target/'analysis-request.json',request);budget.checkpoint()
         result['analysis_runs'] = 1
-        a = analysis.calculate_with_evidence(request,expected_revision=expected_revision,receipt_parent=target,receipt_name='analysis',resource_budget=budget)
+        a = (analysis.calculate_with_evidence if calculate is None else calculate)(
+            request,expected_revision=expected_revision,receipt_parent=target,
+            receipt_name='analysis',resource_budget=budget)
         result['analysis'] = a
         v.require(a['status'] == 'verified' and a['resource_budget_passed'],'analysis did not verify')
         result['fixture_inference_performed'] = True
@@ -137,7 +197,9 @@ def run_pipeline(raw, *, expected_mode, expected_pin, expected_revision, draws,
         audit_request = {'format':audit.FORMAT,'mode':'fixture','role':'audit','operation':audit.SLICE_OPERATION,
             'inputs':audit_inputs,'analysis_reference':reference}
         analysis.observed._save(target/'audit-request.json',audit_request);result['audit_runs'] = 1
-        b = audit.audit_with_evidence(audit_request,expected_revision=expected_revision,receipt_parent=target,receipt_name='audit',resource_budget=budget)
+        b = (audit.audit_with_evidence if run_audit is None else run_audit)(
+            audit_request,expected_revision=expected_revision,receipt_parent=target,
+            receipt_name='audit',resource_budget=budget)
         result['audit'] = b
         v.require(b['status'] == 'verified' and b['resource_budget_passed'] and b['fixture_slice_audit_performed'],'independent audit did not verify')
         result.update(fixture_numerical_audit_performed=True,fixture_slice_audit_performed=True)
@@ -149,8 +211,10 @@ def run_pipeline(raw, *, expected_mode, expected_pin, expected_revision, draws,
             record = v.strict_json(record)
             for n in ('fixture/input.json','fixture/slices.json'):
                 evidence._same(record['inputs'][n],prepared['binding']['worker_input_pins'][n],'projection/role input binding')
-        evidence._raw(analysis.observed._file(target/'projection.json',64*1024),producer.primary.pin(projection_raw),'retained projection changed')
-        evidence._raw(analysis.observed._file(ROOT/SOURCE,1024**2),producer.primary.pin(source),'pipeline source changed')
+        evidence._raw(analysis.observed._file(target/'projection.json',projection_limit),producer.primary.pin(projection_raw),'retained projection changed')
+        for name,source in sources.items():
+            evidence._raw(analysis.observed._file(ROOT/name,1024**2),producer.primary.pin(source),
+                          'pipeline source changed')
         result.update(status='verified',fixture_inference_performed=True,fixture_numerical_audit_performed=True,
             fixture_slice_audit_performed=True,projection_pin=producer.primary.pin(projection_raw),
             expected_document_pin=copy.deepcopy(expected_document_pin),worker_input_pins=prepared['binding']['worker_input_pins'],
