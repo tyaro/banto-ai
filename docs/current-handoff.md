@@ -4,10 +4,10 @@
 
 ## 現在の状態
 
-- 最新code保存点: `da454ff7fa6bd161432376ba8e39d7f581c4e205`（生成→initial reader→保存reader→50,000 draw→公開の共通外側予算、終了記録keyword修正）。初版 `feb32e5` のnativeはanalysis終了後の接続不一致でfailed。修正版の実機再試行は未実施。本書の証拠追記はcodeより後の文書commitに保存する。
+- 最新code保存点: `da454ff7fa6bd161432376ba8e39d7f581c4e205`（共通外側予算・終了記録keyword修正）。修正版を含むclean `8cac6fa`でe03 nativeを1件実行し、生成→2 reader→50,000 draw／監査→文書／sliceまで完了。writerの60秒上限でfailed、fresh reader未起動。本書の証拠追記は測定HEADより後の文書commitに保存する。
 - 正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0。登録holdout40 seedは未読。実設備・顧客データは対象外。
 - 実データ作業は保存済み合成dev8/smoke2、120区間・240 dataset・720評価のengineering読取り・記述報告まで。新native試行は架空入力のみ。
-- 容量への配慮として追加agentを起動していない。ユーザーの再指示により、今回の修正・記録保存で区切り、長い実機再試行は次の有限単位へ回した。実行中のworker・準備処理はない。
+- 容量への配慮として追加agentを起動していない。今回も実機1試行と記録保存で区切った。チームの実行中agentは本体1体だけと確認。起動した6 worker・準備処理・保存checkerはすべて終了している。
 
 ## 正式評価を始める条件
 
@@ -25,6 +25,8 @@ v3では、メモリ内コードの完全認証、conhost等の全補助process�
 
 ## 最新の実装・証拠
 
+[共通予算のe03再試行](results/anomaly-multiseed-v0.3-generation-publication-retry-native-2026-10-06.md): clean `8cac6fa`で前回のkeyword不一致を通過。generator143.352秒、initial reader50.852秒、saved reader60.060秒（local全体63.610/120秒）、analysis215.674秒、audit593.520秒はexit0・回収。4入力pin一致、40 cluster／50,000 drawと算術監査、主文書／sliceの3 mappingまで完了。writerは60.614秒で既存60秒上限により停止・exit1・回収、fresh reader未起動。外側1,290.496/1,800秒・内側1,023.189/1,200秒、resource stopなし・sampler joinedだが全工程failed。4,944 raw／57 sourceの別保存checkerは成分のcount／slice再集計・5成功子と停止writerを含む全6起動子の終了を照合してpass。未実施の公開・終了時再照合を予算内成功へ読み替えない。次は保存入力を使う限定writer時間内訳fixtureで、上限を広げて全工程を反復しない。
+
 [生成から公開までの共通予算接続](results/anomaly-multiseed-v0.3-generation-publication-budget-native-2026-10-06.md): 初版clean `feb32e5`でgenerator343.862秒、initial reader100.999秒、saved reader92.573秒（local全体99.235/120秒）、analysis109.217秒の4子はexit0・回収。22 physical file/131,144,119 B、6行、全体4入力pin一致を確認した後、終了記録のkeyword不一致でfailedを保全。外側773.987/1,800秒、resource stopなし・sampler joinedだが全工程成功ではない。46 raw／57過去Git sourceの失敗記録照合pass。初版56、identity追記後8、keyword修正後13試験は別runでpass。`da454ff`で修正済み・push済み、実機再試行未実施。e02/a2の期待pin準備だけを保存したが、文書commit後の新HEADへそのpinsetを読み替えない。
 
 [部分観測行の全体fixture接続](results/anomaly-multiseed-v0.3-observation-subset-budget-native-2026-10-05.md): clean `ebdd4b9`で先行g02の6行を区間0だけに反映し、479区間は明示的なmetadata fixtureとして両由来・旧pin・失敗履歴を保持。4入力→40 cluster／50,000 draw→監査→文書／slice→writer/fresh reader→元control再照合を271.836/1,200秒で完了。4 worker exit0・回収、4,904 raw／40 sourceの別照合pass。全体fixtureはsuccess2,874・inconclusive6。専用9／接続21／旧projection11件は別runでpass。helper事前指定ミス2件は保全して別rootで修正。観測reader・producer・期待pin準備は時計外で、共通全工程予算・全480区間の観測確認ではない。
@@ -37,11 +39,11 @@ v3では、メモリ内コードの完全認証、conhost等の全補助process�
 
 5役共有標本予算148.005秒/240秒、Job698 process・active0。この小fixtureは全工程正式同形予算ではない。Gitのloaded依存在庫、source/runtime期待値の固定、正式経路と共通予算の接続が残る。
 
-最新の保存検証済みCIは `fe20248` の [CI 37324031137](https://github.com/tyaro/banto-ai/actions/runs/37324031137)：全3job成功、両minor各2,968件・fail0/error0/skip237、共有29fixture/必須28試験pass。8rawと全journalを保存・ローカル再検証済み。[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。後続 `5431f2a`／`feb32e5`／`da454ff` のCIは確認時点で実行中。修正版や正式最終受入の成功には読み替えない。
+最新の保存検証済みCIは今回測定と同じ `8cac6fa` の [CI 37340158371](https://github.com/tyaro/banto-ai/actions/runs/37340158371)：全3job成功、両minor各2,988件・fail0/error0/skip237、共有29fixture/必須28試験pass。8rawと全journalを保存・ローカル再検証済み。[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。今回writer timeoutや後続文書commit、正式最終受入の成功には読み替えない。
 
 ## 次の着手と履歴
 
-次は修正版の実機再試行を1件だけ行う。その時点のclean HEADで新root・新pinset（例e03／trial-03／a3）を準備し、a2 helperのroot・revisionを更新する。成功時に7役終了・3 mapping・公開payload／marker・元22 payload／10 control・source/runtime前後を照合して保存する。e02 manifestは旧 `da454ff` 用の未実行証拠として保全する。
+次はe03の保存文書／sliceと期待pinを使い、writerの読取り・source検証・mapping再検証・staging／公開の時間内訳を調べる限定fixtureを用意する。新root・明示した部分scope・同じ個別上限・失敗と終了保存を維持する。原因は未確定で、時間上限の変更や長い生成／50,000 draw再試行を自動追加しない。限定writer試行を共通全工程成功へ読み替えない。旧e01・未実行e02・failed e03を保全する。
 
 受入までの残件は、共通全工程予算の成功証拠、正式同形容量2倍、26H2・保証A/B・runner代替同定の改訂契約候補、正式source/runtime在庫、最終CI/native／正式dev8/smoke2・独立受入、独立raw観測再導出。1区間の架空観測と479区間metadataを同一campaignや全観測確認へ読み替えない。架空480区間の新規生成完走を自動追加の必須にせず、旧pin・由来・上限8 drawは維持する。最終revisionと独立受入の前にS5を開始しない。
 
