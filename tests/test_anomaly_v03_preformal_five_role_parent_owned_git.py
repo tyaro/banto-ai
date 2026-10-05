@@ -104,6 +104,7 @@ class ParentOwnedGitTests(unittest.TestCase):
     def _prepare_producer_sources(self):
         f = self.fixture
         producer = parent_git.producer_binding.producer
+        (f.root / '.gitignore').write_text('artifacts/\n__pycache__/\n', encoding='utf-8')
         for name in producer.SOURCE_FILES:
             if name not in f.sources:
                 raw = (name + '\n').encode()
@@ -141,9 +142,18 @@ class ParentOwnedGitTests(unittest.TestCase):
                 'physical_path': str(f.root / name),
                 'pin': parent_git.observed._pin(f.sources[name])}
                 for name in sorted(producer.SOURCE_FILES)}
+            cache_name = 'src/banto_ai/__pycache__/fixture.cpython-314.pyc'
+            cache = f.root / cache_name
+            cache.parent.mkdir(parents=True)
+            cache.write_bytes(b'cache candidate only')
+            files['project/' + cache_name] = {
+                'category': 'bytecode-cache-candidate', 'native': False,
+                'physical_path': str(cache), 'pin': parent_git.observed._pin(cache.read_bytes())}
             pair = {'before': {'files': files}, 'after': {'files': files}}
             git = producer._dependency_git(f.revision, git_reader=reader)
             for logical in files:
+                if files[logical]['category'] != 'project':
+                    continue
                 name = logical[len('project/'):]
                 self.assertEqual(git('show', f.revision + ':' + name), f.sources[name])
                 self.assertEqual(git('show', f.revision + ':' + name), f.sources[name])
@@ -162,7 +172,7 @@ class ParentOwnedGitTests(unittest.TestCase):
                   'invocation_pin': save(target / 'invocation.json', invocation),
                   'stdout_pin': save(target / 'worker' / 'report.json', reply),
                   'dependency_pin': save(target / 'dependencies.json', pair),
-                  'dependency_observation': {'project_files': len(files)}}
+                  'dependency_observation': {'project_files': len(producer.SOURCE_FILES)}}
         top = {'status': 'verified', 'source_revision': f.revision,
                'producer': {'result_pin': save(target / 'result.json', result)}}
         return save(owner_root / 'five-role' / 'result.json', top)

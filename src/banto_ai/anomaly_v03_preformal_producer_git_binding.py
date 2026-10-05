@@ -75,8 +75,13 @@ def expected_calls(owner_root, saved_owner):
                       'producer Git dependency changed between phases')
         for logical, row in rows.items():
             if row['category'] != 'project':
-                v.require(not logical.startswith('project/'),
-                          'producer Git project category')
+                if logical.startswith('project/'):
+                    name = logical[len('project/'):]
+                    v.safe_relative_path(name)
+                    v.require(row['category'] == 'bytecode-cache-candidate' and
+                              row['native'] is False and Path(name).suffix == '.pyc' and
+                              Path(row['physical_path']) == producer.ROOT / name,
+                              'producer Git project cache category')
                 continue
             v.require(logical.startswith('project/'), 'producer Git logical path')
             name = logical[len('project/'):]
