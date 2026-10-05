@@ -1,5 +1,7 @@
 # v0.3 次セッション引き継ぎ・正式受入までの残件（2026-10-04）
 
+最新（2026-10-05）: clean `b1e4aad`の[保存行→50,000 draw文書・slice共有予算](anomaly-multiseed-v0.3-saved-row-50000-document-native-2026-10-05.md)が成功。架空480区間controls→40 cluster→全主算術／別process監査→文書／全sliceを733.393/1,200秒で完了し、4,821 raw／30 sourceの別照合がpass。初回のcommit余裕不足による安全停止はfailedとして保持。後段の重複集約をraw pin再照合へ整理した。先行`f7abbe3`の[CI 37304712937](https://github.com/tyaro/banto-ai/actions/runs/37304712937)は全3job成功、両minor各2,919件・全journal再検証pass。下表の契約・全在庫・raw観測由来・writer/fresh readerを含む全工程予算／容量2倍・最終受入は残り、正式gate／credit0・holdout未読を維持する。以下は過去保存点の履歴である。
+
 最新（2026-10-05）: clean `a9f1882`の[保存行→analysis/独立audit接続](anomaly-multiseed-v0.3-saved-row-analysis-native-2026-10-05.md)は関連24試験とWindows nativeがpass。架空480区間の保存controlから40 cluster/4入力を導出し、1 drawで別owned worker2件のexit0・回収、文書・slice監査、4,847 rawの保存後照合を確認した。helper参照欄ミス2件は保全しconsumerは再実行なし。下表S4-2/S4-5の50,000 draw・raw観測再導出・共通全工程予算、S4-1/3/4の契約・在庫・最終受入は残る。先行`52c8961`の[CI 37275249917](https://github.com/tyaro/banto-ai/actions/runs/37275249917)は3job成功・両minor各2,908件、全journal再照合pass。正式gate/credit0・holdout未読を維持する。以下は過去保存点の履歴である。
 
 2026-10-05受入範囲整理: [S4範囲整理案 v3](../anomaly-v03-s4-acceptance-scope-draft-v3.md)に、正式開始前の5条件、凍結計画の根拠、追加案の扱いを集約した。下記履歴の「次は個別子孫exit・独立権限」等を無条件の追加必須工程と読まない。業務workerの終了、子孫回収、source/runtime在庫は必要。公開保証A/Bと26H2改訂の採択は未了、S4/S5許可は変更なし。
