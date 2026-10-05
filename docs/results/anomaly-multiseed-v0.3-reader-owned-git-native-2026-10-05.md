@@ -33,7 +33,7 @@ readerは前段17回 + 開始時HEAD/status 2回 + 境界HEAD 3回 + 追加proje
 
 関連46試験、compileall、差分チェック、repository safetyがpass。新v7と既存v6を実Gitで検証し、Git再起動禁止の保存検証、readerのcall orderとdependency raw改変拒否を確認した。routing、独立cache、固定source15件、危険なpath、reader単独指定拒否、既存contextの挙動、6子manifest完了前の成功stdout拒否も確認した。実行コマンドはtrial rootの `implementation-checks.json` へ保存した。追加agentは作成していない。
 
-先行保存点 `d5283e4448a53816a3c5599ce1a92eae91164b07` の [writer Ubuntu CI 37268237350](https://github.com/tyaro/banto-ai/actions/runs/37268237350) は本記録時点でrun実行中（3.14成功、3.12継続中）。状態をtrial rootの `predecessor-ci.json` へ保存した。全3 job成功・raw再検証済みの先行runは `932b5b9` の [37260191710](https://github.com/tyaro/banto-ai/actions/runs/37260191710)、両minor各2,887件・fail0/error0/skip237・共有29 fixture/必須28試験pass、8 raw保存とローカル全journal再検証済み。[CI診断](anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。今回のreader接続はpush後の新runで確認し、trial rootの `post-push-ci.json` へ状態を別保存する。
+先行保存点 `d5283e4448a53816a3c5599ce1a92eae91164b07` の [writer Ubuntu CI 37268237350](https://github.com/tyaro/banto-ai/actions/runs/37268237350) は全3 job成功。両minor各2,892件・fail0/error0/skip237・共有29 fixture/必須28試験pass、8 raw保存とローカル全journal再検証済み。[CI診断](anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)のsummary pinへ結んだ。trial rootの `predecessor-ci.json` は終了前のsnapshot、`post-push-ci.json` はwriter成功とreader文書保存点 `bbd658d` の新run開始を記録する。今回のreader接続は新runで確認し、CI証拠追記後のpush状態を `post-ci-evidence-push.json` へ別保存する。
 
 ## 受入までの残りと実データ作業
 

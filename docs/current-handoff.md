@@ -2,7 +2,7 @@
 
 最新（2026-10-05 JST）: **clean `2ae2905fdae4d4dc02fb725b9a68750c4e6b6830` の `--own-reader-git` Windows native試走が成功。** [reader Git39件・計382件と1,244 rawの別照合、残る受入](results/anomaly-multiseed-v0.3-reader-owned-git-native-2026-10-05.md)。readerの固定15 sourceと追加17 sourceを独立context/cache・保存invocation/在庫へ結び、Git起動禁止の保存verifierもpass。Job計698 process・active0、5役共有標本予算119.518秒 / 240秒。関連46試験pass、追加agentなし。
 
-当該架空経路の各role直接Gitは接続済み。次はGit loaded code/子孫を含む完全source/runtime閉包と、独立権限・異常終了の実機証拠。共通campaignの40 seed由来、正式同形全工程予算・容量2倍、26H2契約採択・最終回帰・完全S6も残る。先行writer `d5283e4` の [CI 37268237350](https://github.com/tyaro/banto-ai/actions/runs/37268237350) は記録時点で実行中。readerのCIはpush後の新runで確認する。実データは保存済み合成dev/smokeの範囲、登録holdout未読、正式gate `s4_acceptance_not_frozen`、正式credit0。以下は先行保存点の履歴。
+当該架空経路の各role直接Gitは接続済み。次はGit loaded code/子孫を含む完全source/runtime閉包と、独立権限・異常終了の実機証拠。共通campaignの40 seed由来、正式同形全工程予算・容量2倍、26H2契約採択・最終回帰・完全S6も残る。先行writer `d5283e4` の [CI 37268237350](https://github.com/tyaro/banto-ai/actions/runs/37268237350) は全3 job成功、両minor各2,892件・共有29 fixture/必須28試験pass、8 raw保存とローカル全journal再検証済み。[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。readerのCIは新runで確認する。実データは保存済み合成dev/smokeの範囲、登録holdout未読、正式gate `s4_acceptance_not_frozen`、正式credit0。以下は先行保存点の履歴。
 
 最新（2026-10-05 JST）: **clean `0bdbfee93fa484e07de2d1f4639284776418d426` の `--own-writer-git` Windows native試走が成功。** [publication前段/writer Git39件・計343件と1,120 rawの別照合、残る受入](results/anomaly-multiseed-v0.3-writer-owned-git-native-2026-10-05.md)。起動前7 / 親35 / 子固定26 / producer88 / analysis74 / audit74 / writer39を別manifestへ結び、Git起動禁止の保存verifierもpass。readerは別の未所有contextを使う。Job計737 process・active0、5役共有標本予算102.655秒 / 240秒。関連44試験pass、追加agentなし。
 
