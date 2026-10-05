@@ -237,8 +237,12 @@ def _document(root, binding, producer_input, calculation, audit, budget, result)
             'source': 'same-budget-owned-invented-arithmetic',
         },
         'legacy_projection_draws': 1,
-        'producer_result_pin': copy.deepcopy(binding['producer_result_pin']),
-        'producer_projection_pins': copy.deepcopy(binding['projection_pins']),
+        **({'saved_row_projection_pin': copy.deepcopy(binding['saved_row_projection_pin']),
+            'saved_row_projection_input_pins': copy.deepcopy(binding['projection_pins']),
+            'saved_reader_control_inputs_used': True}
+           if 'saved_row_projection_pin' in binding else {
+            'producer_result_pin': copy.deepcopy(binding['producer_result_pin']),
+            'producer_projection_pins': copy.deepcopy(binding['projection_pins'])}),
         'input_pin': copy.deepcopy(result['input_pin']),
         'calculation_pin': copy.deepcopy(result['calculation_pin']),
         'arithmetic_audit_pin': copy.deepcopy(result['arithmetic_audit_pin']),

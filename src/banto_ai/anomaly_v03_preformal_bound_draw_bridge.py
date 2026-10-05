@@ -33,6 +33,7 @@ OUTPUT_PARENT = ROOT / 'artifacts' / 'anomaly-v03-preformal-bound-draw-bridge'
 PRODUCER_PARENT = ROOT / 'artifacts' / 'anomaly-v03-preformal-five-role-26h2'
 FORMAT = 'anomaly-v03-preformal-bound-draw-bridge-v1'
 INPUT_FORMAT = FORMAT + '-input'
+SAVED_ROW_INPUT_FORMAT = FORMAT + '-saved-row-input'
 REPLICATES = 50000
 CLUSTERS = 40
 CHILD_WALL_SECONDS = 900
@@ -164,6 +165,28 @@ def _input(binding):
 
 
 def _check_input(value):
+    if type(value) is dict and value.get('format') == SAVED_ROW_INPUT_FORMAT:
+        if (set(value) != {'format', 'invented_only', 'registered_data_read',
+                'saved_row_projection_pin', 'projection_input_pins',
+                'projection_source_revision', 'clusters'} or
+                value['invented_only'] is not True or
+                value['registered_data_read'] is not False):
+            raise ValueError('bridge invented saved-row input fields')
+        projection.evidence._pin(value['saved_row_projection_pin'])
+        if not 0 < value['saved_row_projection_pin']['bytes'] <= 8 * 1024**2:
+            raise ValueError('bridge saved-row projection binding byte limit')
+        projection.evidence._digest(value['projection_source_revision'], 40)
+        pins = value['projection_input_pins']
+        if type(pins) is not dict or set(pins) != set(projection.analysis.INPUT_LIMITS):
+            raise ValueError('bridge saved-row projection pin inventory')
+        for name, pin in pins.items():
+            projection.evidence._pin(pin)
+            if not 0 < pin['bytes'] <= projection.analysis.INPUT_LIMITS[name]:
+                raise ValueError('bridge saved-row projection input byte limit')
+        primary._fixture_clusters(value['clusters'])
+        if len(value['clusters']) != CLUSTERS:
+            raise ValueError('bridge saved-row input is not forty clusters')
+        return
     if (type(value) is not dict or set(value) != {'format', 'invented_only',
             'registered_data_read', 'producer_result_pin', 'bound_pin',
             'projection_input_pin', 'clusters'} or value['format'] != INPUT_FORMAT or
