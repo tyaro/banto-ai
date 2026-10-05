@@ -106,6 +106,9 @@ def _directory_snapshot(root, maximum_entries, maximum_depth, identity):
 class GeneratedChainBudget:
     """One new root, one joined sampler, and one shared cooperative stop."""
 
+    phase_names = PHASES
+    role_names = ROLES
+
     def __init__(self, root, value=None):
         root = paths.regular_path(Path(root), directory=True)
         if (root.parent != ROOT / 'artifacts' or
@@ -137,9 +140,7 @@ class GeneratedChainBudget:
             try:
                 current = {
                     **primitives.system_snapshot(self.root),
-                    **_directory_snapshot(
-                        self.root, self.limits['directory_entries'],
-                        self.limits['directory_depth'], self.root_identity),
+                    **self._directory_observation(),
                     'elapsed_seconds': time.monotonic() - self.started_at,
                 }
                 expected = {
@@ -212,6 +213,10 @@ class GeneratedChainBudget:
                 self.reason = self.reason or 'generated_monitor_failure'
                 self.observation_error = self.observation_error or type(error).__name__
 
+    def _directory_observation(self):
+        return _directory_snapshot(self.root, self.limits['directory_entries'],
+                                   self.limits['directory_depth'], self.root_identity)
+
     def start(self):
         if self._thread is not None or self._closed is not None:
             raise ValueError('generated outer budget already started or closed')
@@ -227,7 +232,7 @@ class GeneratedChainBudget:
             return self.reason
 
     def checkpoint(self, phase):
-        if (phase not in PHASES or self._thread is None or
+        if (phase not in self.phase_names or self._thread is None or
                 self._closed is not None or len(self.phase_log) >= 16):
             raise ValueError('invalid generated outer budget checkpoint')
         with self._state_lock:
@@ -251,7 +256,7 @@ class GeneratedChainBudget:
                       result_pin['bytes'] >= 0 and
                       type(result_pin['sha256']) is str and
                       re.fullmatch(r'[0-9a-f]{64}', result_pin['sha256'])))
-        if (role not in ROLES or type(status) is not str or not status or
+        if (role not in self.role_names or type(status) is not str or not status or
                 not valid_pin or
                 (pid is not None and (type(pid) is not int or pid <= 0)) or
                 (exit_confirmed is not None and
@@ -313,7 +318,7 @@ class GeneratedChainBudget:
                 'caller_reported_roles': {
                     key: dict(value) for key, value in self.roles.items()},
                 'both_owned_exits_reported':
-                    set(self.roles) == set(ROLES) and all(
+                    set(self.roles) == set(self.role_names) and all(
                         row['worker_exit_confirmed'] for row in self.roles.values()),
                 'stop_reason': self.reason,
                 'observation_error': self.observation_error,

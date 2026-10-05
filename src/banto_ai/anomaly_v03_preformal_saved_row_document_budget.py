@@ -18,6 +18,7 @@ from . import anomaly_v03_saved_row_fixture_projection as projection
 from . import anomaly_v03_saved_row_document_publication as publication
 from . import anomaly_v03_saved_control_file_reader as control_files
 from . import anomaly_v03_observation_subset_fixture_projection as subset_projection
+from . import _anomaly_v03_outer_budget_link as outer_link
 
 
 ROOT = chain.ROOT
@@ -32,6 +33,7 @@ SOURCE_NAMES = tuple(dict.fromkeys((
     'src/banto_ai/anomaly_v03_registered_saved_row_lineage.py',
     'src/banto_ai/anomaly_v03_registered_saved_summary.py',
     'src/banto_ai/anomaly_v03_observation_subset_fixture_projection.py',
+    'src/banto_ai/_anomaly_v03_outer_budget_link.py',
     *publication.SOURCE_NAMES,
     *control_files.SOURCE_NAMES,
     *chain.SOURCE_NAMES,
@@ -138,7 +140,8 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
                    expected_revision, receipt_name, receipt_parent=OUTPUT_PARENT,
                    budget_limits=None, publish_document=False,
                    control_root=None, expected_control_pinset_pin=None,
-                   observation_subset=None, expected_observation_subset=None):
+                   observation_subset=None, expected_observation_subset=None,
+                   outer_budget=None):
     """Run a new invented attempt; optionally include owned local publication."""
     if type(publish_document) is not bool:
         raise ValueError('publication selection must be boolean')
@@ -167,6 +170,10 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
     if parent != OUTPUT_PARENT:
         raise ValueError('saved-row document output parent differs')
     limits = chain._limits(budget_limits)
+    if outer_budget is not None:
+        if not subset_mode:
+            raise ValueError('outer composition requires the observation subset route')
+        outer_budget.require_stage('publication', parent / receipt_name)
     parent.mkdir(exist_ok=True)
     chain.draw_bridge.projection.io.regular_path(parent, directory=True)
     root = chain.draw_bridge.projection.io.regular_path(
@@ -224,7 +231,10 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
         budget_type = (ObservationSubsetBudget if subset_mode else
                        control_files.ControlFileBudget if disk_controls else
                        publication.PublicationBudget if publish_document else SavedRowBudget)
-        budget = budget_type(root, limits).start()
+        budget = budget_type(root, limits)
+        if outer_budget is not None:
+            budget = outer_link.LinkedBudget(budget, outer_budget, stage='publication')
+        budget = budget.start()
         budget.checkpoint('preflight')
         before = _source_pins(expected_revision)
         runtime = chain.platform_runtime.probe_runtime(ROOT)
@@ -392,7 +402,8 @@ def run_saved_control_files(*, control_root, expected_control_pinset_pin,
 def run_saved_control_files_with_observation_subset(*, observation_subset,
         expected_observation_subset, control_root, expected_control_pinset_pin,
         expected_mode, expected_input_pins, expected_revision,
-        receipt_name, receipt_parent=OUTPUT_PARENT, budget_limits=None):
+        receipt_name, receipt_parent=OUTPUT_PARENT, budget_limits=None,
+        outer_budget=None):
     """Full numerical fixture with explicit prior-reader subset provenance.
 
     The subset's raw observations and reader execution precede this clock.
@@ -404,4 +415,5 @@ def run_saved_control_files_with_observation_subset(*, observation_subset,
         publish_document=True, control_root=control_root,
         expected_control_pinset_pin=expected_control_pinset_pin,
         observation_subset=observation_subset,
-        expected_observation_subset=expected_observation_subset)
+        expected_observation_subset=expected_observation_subset,
+        outer_budget=outer_budget)

@@ -19,6 +19,7 @@ import subprocess
 import sys
 
 from . import _anomaly_v03_fixture_budget as budget_module
+from . import _anomaly_v03_outer_budget_link as outer_link
 from . import _anomaly_v03_io as io
 from . import _anomaly_v03_runtime as paths
 from . import _anomaly_v03_engineering_runtime as resources
@@ -76,6 +77,7 @@ SOURCE_FILES = (
     'src/banto_ai/anomaly_v03_platform_fixture_runtime.py',
     'src/banto_ai/anomaly_v03_process_supervisor.py',
     'src/banto_ai/_anomaly_v03_fixture_budget.py',
+    'src/banto_ai/_anomaly_v03_outer_budget_link.py',
 )
 
 
@@ -297,7 +299,7 @@ def _roots_for_child(source_root, output_root):
 
 def run_reread(source_root, output_root, *, expected_manifest_pin,
                expected_outer_result_pin, expected_revision,
-               campaign_context=None):
+               campaign_context=None, outer_budget=None):
     """Run an invented saved reader and row projection under one new budget."""
     source, target, manifest_path = _roots(source_root, output_root)
     if campaign_context is not None:
@@ -306,8 +308,12 @@ def run_reread(source_root, output_root, *, expected_manifest_pin,
             revision=expected_revision)
     for pin in (expected_manifest_pin, expected_outer_result_pin):
         copied.evidence._pin(pin)
+    if outer_budget is not None:
+        outer_budget.require_stage('saved-reader', target)
     target.mkdir()
     budget = budget_module.FixtureBudget(target)
+    if outer_budget is not None:
+        budget = outer_link.LinkedBudget(budget, outer_budget, stage='saved-reader')
     started = False
     critical = None
     result = {
@@ -427,6 +433,9 @@ def run_reread(source_root, output_root, *, expected_manifest_pin,
                 resource_probe=budget.probe)
         monitor_raw = v.canonical_json(monitor)
         io._exclusive(reader_root / 'supervision.json', monitor_raw)
+        if outer_budget is not None:
+            outer_budget.record_role('saved-reader', monitor['status'],
+                _pin(monitor_raw), monitor['worker_pid'], monitor['worker_exit_confirmed'])
         result.update(reader_supervision_pin=_pin(monitor_raw),
                       child_pid=monitor['worker_pid'],
                       child_start_token=launch.get('start_token'),
