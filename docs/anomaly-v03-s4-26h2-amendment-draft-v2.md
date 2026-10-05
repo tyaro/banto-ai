@@ -1,5 +1,7 @@
 # v0.3 S4 運用改訂案 v2: 26H2・単一writer保証 A
 
+2026-10-05追補: [受入範囲の整理案 v3](anomaly-v03-s4-acceptance-scope-draft-v3.md)で、凍結計画の必須条件と追加技術案を分けた。下記のメモリ内コード完全閉包などはv2時点の提案であり、自動的な採択済み条件ではない。v3も未採択で、正式gateは閉鎖中。
+
 2026-10-04。状態: **採択前のreview draft**。これは[凍結計画 §8–9](anomaly-multiseed-evaluation-plan-v0.3.md#v03-runtime-acceptance)をまだ変更しない。[運用契約案 v2](anomaly-v03-formal-operations-contract-proposal-v2.md)と[先行改訂案 v1](anomaly-v03-s4-26h2-amendment-draft-v1.md)の選択肢を、実装・独立監査に渡せる条項へ整理したもの。旧formal入口の25H2検査と `s4_acceptance_not_frozen` は維持し、登録holdout観測はS4採択まで読まない。
 
 比較基準のclean `51fdb5436a28115e5eeba1400187e3f0b18101d1` で、凍結計画のraw SHA-256は `e7c761f83d4657f39e1b5709fb022ad887a43f166327ff3258a36757d20eadec`、S1 registry raw SHA-256は `61af9100f8daa96d8200a0d2ab23aa7209cab52f0dd5543f9e35797de7332a70`。採択時は最終clean revisionで再pinし、scienceや既存registryをこの草案で書き換えない。
