@@ -1,5 +1,9 @@
 # 次のタスク用の短い引継ぎ
 
+最新（2026-10-05 JST）: **clean `49871576449be1ee8890390b93e3f63fc3073301` の `--own-audit-git` Windows native試走が成功。** [audit Git74件・計304件と995 rawの別照合、残る受入](results/anomaly-multiseed-v0.3-audit-owned-git-native-2026-10-05.md)。起動前7 / 親35 / 子固定26 / producer88 / analysis74 / audit74を別manifestへ結び、Git起動禁止の保存verifierもpass。Job計674 process・active0、5役共有標本予算138.543秒 / 240秒。関連40試験pass、追加agentなし。
+
+先行保存点 `1c008b2` の [Ubuntu CI 37258533095](https://github.com/tyaro/banto-ai/actions/runs/37258533095) は本保存時点で実行中。今回のaudit接続はpush後の新runで確認する。次は writer、続いて reader 内のGit接続。全source/runtime閉包、正式同形全工程予算・容量2倍、共通campaignと40 seed由来、26H2契約採択・最終回帰・完全S6は未了。登録holdoutは未読、正式gate `s4_acceptance_not_frozen`、正式credit0。[受入残件と実データの範囲](results/anomaly-multiseed-v0.3-session-handoff-and-remaining-acceptance-2026-10-04.md)。以下は先行保存点の履歴。
+
 最新（2026-10-05 JST）: **clean `d48349faf0ec442f7251a84da274e2c61edc2f93` の `--own-analysis-git` Windows native試走が成功。** [analysis Git74件・計230件と766 rawの別照合、残る受入](results/anomaly-multiseed-v0.3-analysis-owned-git-native-2026-10-05.md)。起動前7 / 親35 / 子固定26 / producer88 / analysis74を別manifestへ結び、Git起動禁止の保存verifierもpass。Job計877 process・active0、5役共有標本予算140.797秒 / 240秒。関連38試験pass、追加agentなし。
 
 先行保存点 `ab9751a` の [Ubuntu CI 37252632842](https://github.com/tyaro/banto-ai/actions/runs/37252632842) は全3 job成功、両minor各2,878件・fail0/error0/skip237、共有29 fixtureと必須28試験pass。8 raw保存とローカル全journal再検証を[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)へ記録した。今回のanalysis接続はpush後の新runで確認する。次は audit、続いて writer / reader 内のGit接続。全source/runtime閉包、正式同形全工程予算・容量2倍、共通campaignと40 seed由来、26H2契約採択・最終回帰・完全S6は未了。実データは保存済み合成dev/smokeの範囲で、登録holdoutは未読、正式gate `s4_acceptance_not_frozen`、正式credit0。以下は先行保存点の履歴。
