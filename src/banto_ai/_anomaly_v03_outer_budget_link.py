@@ -29,9 +29,9 @@ class LinkedBudget:
         self.inner.checkpoint(*args)
         self.outer.checkpoint(self.stage)
 
-    def record_role(self, role, status, pin=None, pid=None, exit_confirmed=None):
-        self.inner.record_role(role, status, pin, pid, exit_confirmed)
-        self.outer.record_role(self.role_map.get(role, role), status, pin, pid,
+    def record_role(self, role, status, result_pin=None, worker_pid=None, exit_confirmed=None):
+        self.inner.record_role(role, status, result_pin, worker_pid, exit_confirmed)
+        self.outer.record_role(self.role_map.get(role, role), status, result_pin, worker_pid,
                                exit_confirmed)
 
     def record_output(self, name, pin):

@@ -96,7 +96,8 @@ class EnvelopeTests(unittest.TestCase):
         inner.close.return_value = {'passed': True, 'stop_reason': None}
         relay = whole.link.LinkedBudget(inner, budget, stage='producer',
             role_map={'generator': 'producer'})
-        relay.record_role('generator', 'complete', None, 123, True)
+        relay.record_role('generator', 'complete', result_pin=None,
+                          worker_pid=123, exit_confirmed=True)
         budget.reason = 'generated_wall_limit'
         self.assertEqual(relay.probe(), 'generated_wall_limit')
         report = relay.close()
