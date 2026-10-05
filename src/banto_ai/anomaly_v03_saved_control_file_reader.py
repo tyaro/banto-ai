@@ -37,6 +37,26 @@ class ControlFileBudget(publication.PublicationBudget):
     phase_names = ('preflight', 'control-read', 'analysis', 'audit', 'document',
                    'slices', 'writer', 'reader', 'control-reread', 'postflight')
 
+    def __init__(self, root, value=None):
+        super().__init__(root, value)
+        self.control_phase_checkpoint_counts = {'control-read': 0, 'control-reread': 0}
+
+    def checkpoint(self, phase=None):
+        phase = self.phase if phase is None else phase
+        if phase in self.control_phase_checkpoint_counts:
+            if self._thread is None or self._closed is not None:
+                raise ValueError('control budget checkpoint outside live sampler')
+            self.control_phase_checkpoint_counts[phase] += 1
+            if self.phase == phase and self.phase_log:
+                # Keep all samples/stops; a row per file batch would exceed the
+                # unchanged 64 KiB receipt cap. Count repeated phase probes.
+                self._observe()
+                reason = self.probe()
+                if reason is not None:
+                    raise publication.chain.draw_bridge.resources.ResourceStop(reason)
+                return
+        super().checkpoint(phase)
+
     def close(self):
         report = super().close()
         report.update(format=PIPELINE_FORMAT + '-resource-budget', scope=SCOPE,
@@ -44,7 +64,9 @@ class ControlFileBudget(publication.PublicationBudget):
                       saved_control_disk_reread_inside_budget=True,
                       external_saved_control_bytes_in_directory_budget=False,
                       external_saved_control_input_byte_limit=MAX_INPUT_BYTES,
-                      real_saved_chunk_reader_used=False)
+                      real_saved_chunk_reader_used=False,
+                      control_phase_checkpoint_counts=dict(self.control_phase_checkpoint_counts),
+                      control_phase_history_scope='phase-transitions; every checkpoint still samples and probes')
         return report
 
 

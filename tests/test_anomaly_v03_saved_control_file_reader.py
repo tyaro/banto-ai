@@ -149,6 +149,33 @@ class FakeControlFileBudget(pub_tests.FakePublicationBudget):
     pass
 
 
+class ControlCheckpointReceiptTests(unittest.TestCase):
+    def test_all_966_control_checkpoints_sample_without_expanding_phase_receipt(self):
+        with tempfile.TemporaryDirectory(prefix='control-checkpoint-') as directory:
+            budget=reader.ControlFileBudget(Path(directory).resolve())
+            budget._thread=object()
+            with patch.object(budget,'_observe') as sample, patch.object(budget,'probe',return_value=None):
+                for phase in ('control-read','control-reread'):
+                    for _ in range(483):
+                        budget.checkpoint(phase)
+            self.assertEqual(sample.call_count,966)
+            self.assertEqual([row['phase'] for row in budget.phase_log],['control-read','control-reread'])
+            self.assertLess(len(reader.v.canonical_json(budget.phase_log)),512)
+            self.assertEqual(budget.control_phase_checkpoint_counts,{'control-read':483,'control-reread':483})
+
+    def test_repeated_phase_probe_still_raises_latched_stop(self):
+        with tempfile.TemporaryDirectory(prefix='control-stop-') as directory:
+            budget=reader.ControlFileBudget(Path(directory).resolve())
+            budget._thread=object()
+            with patch.object(budget,'_observe'), patch.object(budget,'probe',return_value=None):
+                budget.checkpoint('control-read')
+            with patch.object(budget,'_observe') as sample, patch.object(budget,'probe',return_value='pipeline_wall_limit'):
+                with self.assertRaises(saved.chain.draw_bridge.resources.ResourceStop):
+                    budget.checkpoint('control-read')
+                sample.assert_called_once()
+            self.assertEqual(len(budget.phase_log),1)
+
+
 class DiskControlPipelineTests(unittest.TestCase):
     setUpClass = classmethod(saved_tests.SavedRowDocumentBudgetTests.setUpClass.__func__)
     publish = pub_tests.PublicationOrchestrationTests.publish
