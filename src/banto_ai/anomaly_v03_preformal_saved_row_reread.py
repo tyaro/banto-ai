@@ -166,6 +166,31 @@ def _read_saved_controls(source, pins):
                                pins['saved/report.json'], saved.MAX_REPORT))
 
 
+def _recheck_saved_outputs(source, chunk_index, external, budget):
+    """Reopen the selected latest attempt using the original external pins.
+
+    Paths come from the pinned receipt and fixed saved-attempt mapping, never
+    from a report descriptor. This is a final byte check, not another score
+    derivation or a guarantee that external files remain immutable afterward.
+    Only one bounded payload is retained at a time.
+    """
+    budget.checkpoint()
+    outputs, attempt = copied._saved_outputs(source, chunk_index, external)
+    total = 0
+    for logical, relative in sorted(outputs.items()):
+        budget.checkpoint()
+        raw = copied._checked_file(source, relative, external[logical],
+                                   copied._maximum(logical))
+        total += len(raw)
+        del raw
+    budget.checkpoint()
+    return {'saved_files': len(outputs), 'saved_bytes': total,
+            'latest_attempt': attempt, 'disk_pin_recheck_completed': True,
+            'path_scope': 'fixed-selected-latest-attempt-files',
+            'raw_observations_rederived_during_recheck': False,
+            'formal_permission': False}
+
+
 def reader_worker_main(argv):
     """One owned child; the supervisor outside this function owns its exit."""
     try:
@@ -299,6 +324,9 @@ def run_reread(source_root, output_root, *, expected_manifest_pin,
         'fresh_owned_reader_exit_confirmed_here': False,
         'fresh_reader_equal_prior_reader': False,
         'row_projection_in_same_budget': False,
+        'saved_attempt_final_disk_recheck_completed': False,
+        'saved_attempt_final_disk_recheck_inside_budget': True,
+        'saved_rows_final_disk_recheck_completed': False,
         'child_exit_confirmed': False,
         'source_closure_complete': False,
         'runtime_closure_complete': False,
@@ -456,6 +484,13 @@ def run_reread(source_root, output_root, *, expected_manifest_pin,
         result['row_projection_in_same_budget'] = True
         result['verified_evaluations'] = projected['verified_evaluations']
         result['verified_chunks'] = projected['verified_chunks']
+        result['saved_attempt_final_disk_recheck'] = _recheck_saved_outputs(
+            source, manifest['chunk_index'], external, budget)
+        result['saved_attempt_final_disk_recheck_completed'] = True
+        v.require(pinned.read_pinned(target / 'rows.json',
+                  result['row_projection_pin'], MAX_ROWS) == rows_raw,
+                  'saved row projection changed before final readback')
+        result['saved_rows_final_disk_recheck_completed'] = True
         boundary()
         result['selected_current_source_after'] = _source(expected_revision)
         result['runtime_after'] = runtime.probe_runtime(ROOT)

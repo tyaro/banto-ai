@@ -94,8 +94,21 @@ class SavedRowRereadTests(unittest.TestCase):
         self.current_runtime = {'runtime': 'test'}
 
     def _run(self, *, child_status='complete', changed_reader=False,
-             stop_on=None, campaign_context=None, tamper_echo=False):
+             stop_on=None, campaign_context=None, tamper_echo=False,
+             recheck_error=False, mutate_rows=False):
         FakeBudget.stop_on = stop_on
+
+        def recheck(source, index, external, budget):
+            self.assertEqual(source, self.source)
+            self.assertEqual(index, 0)
+            self.assertEqual(external, self.output_pins)
+            self.assertTrue((self.target / 'rows.json').exists())
+            budget.checkpoint()
+            if recheck_error:
+                raise ValueError('test final saved payload pin changed')
+            if mutate_rows:
+                (self.target / 'rows.json').write_bytes(b'{}')
+            return {'saved_files': 22, 'disk_pin_recheck_completed': True}
 
         def supervise(argv, cwd, control, limits, *, boundary,
                       on_started, resource_probe):
@@ -153,6 +166,8 @@ class SavedRowRereadTests(unittest.TestCase):
                 return_value={'pid': 42, 'start_token': 'new-owned-start'}))
             stack.enter_context(patch.object(reread.platform, '_platform_scope',
                 return_value=nullcontext()))
+            stack.enter_context(patch.object(reread, '_recheck_saved_outputs',
+                side_effect=recheck))
             if campaign_context is not None:
                 stack.enter_context(patch.object(
                     reread.child_context, 'verify_context',
@@ -173,6 +188,9 @@ class SavedRowRereadTests(unittest.TestCase):
         self.assertTrue(result['fresh_owned_reader_exit_confirmed_here'])
         self.assertTrue(result['fresh_reader_equal_prior_reader'])
         self.assertTrue(result['row_projection_in_same_budget'])
+        self.assertTrue(result['saved_attempt_final_disk_recheck_completed'])
+        self.assertTrue(result['saved_attempt_final_disk_recheck_inside_budget'])
+        self.assertTrue(result['saved_rows_final_disk_recheck_completed'])
         self.assertTrue(result['child_exit_confirmed'])
         self.assertFalse(result['formal_permission'])
         rows_raw = (self.target / 'rows.json').read_bytes()
@@ -262,6 +280,83 @@ class SavedRowRereadTests(unittest.TestCase):
         self.assertFalse((self.target / 'rows.json').exists())
         self.assertFalse(result['budget_passed'])
         self.assertTrue((self.target / 'result.json').exists())
+
+
+    def test_final_saved_payload_change_retains_rows_as_failed(self):
+        result = self._run(recheck_error=True)
+        self.assertEqual(result['status'], 'failed')
+        self.assertIn('final saved payload pin changed', result['detail'])
+        self.assertTrue(result['child_exit_confirmed'])
+        self.assertFalse(result['saved_attempt_final_disk_recheck_completed'])
+        self.assertFalse(result['saved_rows_final_disk_recheck_completed'])
+        self.assertTrue((self.target / 'rows.json').exists())
+        self.assertTrue((self.target / 'result.json').exists())
+
+    def test_final_row_change_rejects_success_after_saved_pin_recheck(self):
+        result = self._run(mutate_rows=True)
+        self.assertEqual(result['status'], 'failed')
+        self.assertTrue(result['saved_attempt_final_disk_recheck_completed'])
+        self.assertFalse(result['saved_rows_final_disk_recheck_completed'])
+        self.assertTrue((self.target / 'resource-budget.json').exists())
+
+
+class SavedAttemptFinalRecheckTests(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.external = {}
+        _, physical = reread.fixture._names(0, 2)
+        self.outputs = reread.copied._output_names(physical)
+        for logical, relative in self.outputs.items():
+            raw = v.canonical_json({'invented_test_file': logical})
+            if logical == 'saved/receipt.json':
+                raw = v.canonical_json({
+                    'mode': reread.saved.MODE, 'invented_only': True,
+                    'chunk_index': 0, 'attempts': [
+                        {'attempt': 1, 'state': 'failed'},
+                        {'attempt': 2, 'state': 'complete'}]})
+            path = self.root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(raw)
+            self.external[logical] = pin(raw)
+        self.budget = FakeBudget(self.root)
+        self.budget.stop_on = None
+
+    def test_reads_exact_twenty_two_latest_attempt_files_with_live_probes(self):
+        result = reread._recheck_saved_outputs(
+            self.root, 0, self.external, self.budget)
+        self.assertEqual(result['latest_attempt'], 2)
+        self.assertEqual(result['saved_files'], 22)
+        self.assertEqual(result['saved_bytes'],
+                         sum(p['bytes'] for p in self.external.values()))
+        self.assertEqual(self.budget.checkpoints, 24)
+        self.assertFalse(result['raw_observations_rederived_during_recheck'])
+        self.assertFalse(result['formal_permission'])
+
+    def test_changed_observation_bytes_reject_original_pin(self):
+        logical = next(n for n in self.outputs if n.endswith('/observations'))
+        (self.root / self.outputs[logical]).write_bytes(b'changed')
+        with self.assertRaises(ValueError):
+            reread._recheck_saved_outputs(self.root, 0, self.external, self.budget)
+
+    def test_previous_attempt_file_cannot_replace_missing_latest_payload(self):
+        logical = next(n for n in self.outputs if n.endswith('/observations'))
+        latest = self.root / self.outputs[logical]
+        previous = self.root / self.outputs[logical].replace(
+            'attempt-0002/', 'attempt-0001/')
+        previous.parent.mkdir(parents=True, exist_ok=True)
+        latest.rename(previous)
+        with self.assertRaises((OSError, ValueError)):
+            reread._recheck_saved_outputs(self.root, 0, self.external, self.budget)
+
+    def test_latched_stop_prevents_first_saved_read(self):
+        self.budget.stop_on = 1
+        with patch.object(reread.copied, '_saved_outputs',
+                          side_effect=AssertionError('saved read started')):
+            with self.assertRaises(reread.resources.ResourceStop):
+                reread._recheck_saved_outputs(
+                    self.root, 0, self.external, self.budget)
 
 
 if __name__ == '__main__':
