@@ -4,8 +4,9 @@ The seven pre-Job calls and the parent's 35 direct calls have separate pinned
 manifests. An explicit v2 opt-in also owns the child's 26 fixed source calls;
 v3 includes the producer parent's source and observed project dependency Git.
 v4 also includes direct Git in the numeric fixture analysis parent.
+v5 adds the numeric fixture audit parent's direct Git.
 Candidate profile sets are rejected because their loader uses bare Git in the
-parent. Audit/writer/reader Git in the inner chain remains unowned. Neither
+parent. Writer/reader Git in the inner chain remains unowned. Neither
 Git's loaded code nor its descendants, the complete source/runtime closure,
 or formal evaluation are authenticated here.
 """
@@ -31,6 +32,7 @@ FORMAT = 'anomaly-v03-preformal-five-role-parent-owned-git-v1'
 CHILD_FORMAT = 'anomaly-v03-preformal-five-role-parent-owned-git-v2'
 PRODUCER_FORMAT = 'anomaly-v03-preformal-five-role-parent-owned-git-v3'
 ANALYSIS_FORMAT = 'anomaly-v03-preformal-five-role-parent-owned-git-v4'
+AUDIT_FORMAT = 'anomaly-v03-preformal-five-role-parent-owned-git-v5'
 PREFLIGHT_PHASE = preflight.PHASE
 PARENT_PHASE = 'parent-source-boundaries'
 GIT_SCOPE = 'seven pre-Job and thirty-five parent direct Git calls only'
@@ -38,6 +40,7 @@ CHILD_GIT_SCOPE = ('seven pre-Job, thirty-five parent and '
                    'twenty-six child fixed source Git calls only')
 PRODUCER_GIT_SCOPE = CHILD_GIT_SCOPE + '; producer direct source/dependency Git included'
 ANALYSIS_GIT_SCOPE = PRODUCER_GIT_SCOPE + '; analysis direct source/dependency Git included'
+AUDIT_GIT_SCOPE = ANALYSIS_GIT_SCOPE + '; audit direct source/dependency Git included'
 MAX_RECEIPT = 24 * 1024
 _FIELDS = preflight._FIELDS | {
     'parent_git_root', 'parent_git_manifest_pin', 'parent_git_status',
@@ -51,6 +54,8 @@ _PRODUCER_FIELDS = {'producer_git_root', 'producer_git_manifest_pin',
 _ANALYSIS_FIELDS = {'analysis_git_root', 'analysis_git_manifest_pin',
                     'analysis_git_status', 'analysis_git_call_count',
                     'analysis_v1_git_owned'}
+_AUDIT_FIELDS = {'audit_git_root', 'audit_git_manifest_pin',
+                 'audit_git_status', 'audit_git_call_count', 'audit_v1_git_owned'}
 
 
 def _pinned(path, pin, maximum):
@@ -122,7 +127,8 @@ def _child_calls(calls, source):
 def _child_binding(target, receipt, saved_owner):
     invocation = owner._invocation(
         target / 'attempt' / 'invocation.json', saved_owner['invocation_pin'])
-    expected = (owner.OWNED_ANALYSIS_INVOCATION if receipt['format'] == ANALYSIS_FORMAT else
+    expected = (owner.OWNED_AUDIT_INVOCATION if receipt['format'] == AUDIT_FORMAT else
+                owner.OWNED_ANALYSIS_INVOCATION if receipt['format'] == ANALYSIS_FORMAT else
                 owner.OWNED_PRODUCER_INVOCATION if
                 receipt['format'] == PRODUCER_FORMAT else owner.OWNED_GIT_INVOCATION)
     v.require(invocation['format'] == expected and
@@ -234,13 +240,16 @@ def run_anchored(*, expected_mode, join_root, expected_join_receipt_pin,
                  expected_revision, receipt_parent, receipt_name,
                  git_policy_path, expected_git_policy_pin,
                  candidate_set_path=None, expected_candidate_set_pin=None,
-                 own_child_git=False, own_producer_git=False, own_analysis_git=False):
+                 own_child_git=False, own_producer_git=False, own_analysis_git=False,
+                 own_audit_git=False):
     """Own parent source Git, optionally including fixed child source calls."""
     v.require(type(expected_mode) is str and expected_mode == 'fixture',
               'only invented five-role mode')
     v.require(type(own_child_git) is bool, 'owned child Git opt-in boolean')
     v.require(type(own_producer_git) is bool, 'owned producer Git opt-in boolean')
     v.require(type(own_analysis_git) is bool, 'owned analysis Git opt-in boolean')
+    v.require(type(own_audit_git) is bool, 'owned audit Git opt-in boolean')
+    own_analysis_git = own_analysis_git or own_audit_git
     own_producer_git = own_producer_git or own_analysis_git
     own_child_git = own_child_git or own_producer_git
     evidence._digest(expected_revision, 40)
@@ -321,6 +330,12 @@ def run_anchored(*, expected_mode, join_root, expected_join_receipt_pin,
             analysis_git_root=str(inner_root / 'analysis-git'),
             analysis_git_manifest_pin=None, analysis_git_status=None,
             analysis_git_call_count=None, analysis_v1_git_owned=False)
+    if own_audit_git:
+        receipt.update(
+            format=AUDIT_FORMAT, git_scope=AUDIT_GIT_SCOPE,
+            audit_git_root=str(inner_root / 'audit-git'),
+            audit_git_manifest_pin=None, audit_git_status=None,
+            audit_git_call_count=None, audit_v1_git_owned=False)
     pre_reader = parent_reader = None
     critical = None
     try:
@@ -358,7 +373,8 @@ def run_anchored(*, expected_mode, join_root, expected_join_receipt_pin,
                         'expected_child_git_policy_pin': expected_git_policy_pin}
                        if own_child_git else {}),
                     **({'own_producer_git': True} if own_producer_git else {}),
-                    **({'own_analysis_git': True} if own_analysis_git else {}))
+                    **({'own_analysis_git': True} if own_analysis_git else {}),
+                    **({'own_audit_git': True} if own_audit_git else {}))
                 receipt['owner_receipt_pin'] = copy.deepcopy(inner['receipt_pin'])
                 receipt['owner_status'] = inner['status']
                 v.require(inner['status'] in ('verified', 'failed') and
@@ -400,6 +416,18 @@ def run_anchored(*, expected_mode, join_root, expected_join_receipt_pin,
                                 analysis_git_call_count=manifest['call_count'])
                             analysis_binding.verify_manifest(
                                 target, receipt, saved_owner, phase=owner.ANALYSIS_GIT_PHASE)
+                    if own_audit_git:
+                        manifest_path = inner_root / 'audit-git' / 'manifest.json'
+                        if manifest_path.exists():
+                            raw = observed._file(manifest_path, source_git.MAX_MANIFEST)
+                            manifest = v.strict_json(raw)
+                            receipt.update(
+                                audit_git_manifest_pin=observed._pin(raw),
+                                audit_git_status=manifest['status'],
+                                audit_git_call_count=manifest['call_count'])
+                            analysis_binding.verify_manifest(
+                                target, receipt, saved_owner, phase=owner.AUDIT_GIT_PHASE,
+                                role='audit')
                 if inner['status'] == 'verified':
                     checked = owner.verify_retained(
                         inner_root, inner['receipt_pin'],
@@ -431,6 +459,10 @@ def run_anchored(*, expected_mode, join_root, expected_join_receipt_pin,
                 v.require(receipt['analysis_git_status'] == 'verified' and
                           receipt['analysis_git_manifest_pin'] is not None,
                           'owned analysis Git manifest required')
+            if own_audit_git:
+                v.require(receipt['audit_git_status'] == 'verified' and
+                          receipt['audit_git_manifest_pin'] is not None,
+                          'owned audit Git manifest required')
             receipt.update(status='verified', reason=None,
                            parent_v1_git_owned=True)
             if own_child_git:
@@ -439,6 +471,8 @@ def run_anchored(*, expected_mode, join_root, expected_join_receipt_pin,
                 receipt['producer_v1_git_owned'] = True
             if own_analysis_git:
                 receipt['analysis_v1_git_owned'] = True
+            if own_audit_git:
+                receipt['audit_v1_git_owned'] = True
     except (source_git.owned_git.UnreapedGit,
             owner.job_owner.UnreapedJob,
             owner.job_owner.UnclosedHandles) as error:
@@ -472,19 +506,23 @@ def verify_retained(result_root, expected_receipt_pin):
               'known parent owned Git root')
     receipt = v.strict_json(_pinned(target / 'receipt.json',
                                     expected_receipt_pin, MAX_RECEIPT))
-    own_analysis_git = type(receipt) is dict and receipt.get('format') == ANALYSIS_FORMAT
-    own_producer_git = type(receipt) is dict and receipt.get('format') in (PRODUCER_FORMAT, ANALYSIS_FORMAT)
-    own_child_git = type(receipt) is dict and receipt.get('format') in (CHILD_FORMAT, PRODUCER_FORMAT, ANALYSIS_FORMAT)
+    own_audit_git = type(receipt) is dict and receipt.get('format') == AUDIT_FORMAT
+    own_analysis_git = type(receipt) is dict and receipt.get('format') in (ANALYSIS_FORMAT, AUDIT_FORMAT)
+    own_producer_git = type(receipt) is dict and receipt.get('format') in (PRODUCER_FORMAT, ANALYSIS_FORMAT, AUDIT_FORMAT)
+    own_child_git = type(receipt) is dict and receipt.get('format') in (CHILD_FORMAT, PRODUCER_FORMAT, ANALYSIS_FORMAT, AUDIT_FORMAT)
     fields = _FIELDS | _CHILD_FIELDS if own_child_git else _FIELDS
     if own_producer_git:
         fields |= _PRODUCER_FIELDS
     if own_analysis_git:
         fields |= _ANALYSIS_FIELDS
-    scope = (ANALYSIS_GIT_SCOPE if own_analysis_git else
+    if own_audit_git:
+        fields |= _AUDIT_FIELDS
+    scope = (AUDIT_GIT_SCOPE if own_audit_git else
+             ANALYSIS_GIT_SCOPE if own_analysis_git else
              PRODUCER_GIT_SCOPE if own_producer_git else
              CHILD_GIT_SCOPE if own_child_git else GIT_SCOPE)
     v.require(type(receipt) is dict and set(receipt) == fields and
-              receipt['format'] in (FORMAT, CHILD_FORMAT, PRODUCER_FORMAT, ANALYSIS_FORMAT) and
+              receipt['format'] in (FORMAT, CHILD_FORMAT, PRODUCER_FORMAT, ANALYSIS_FORMAT, AUDIT_FORMAT) and
               receipt['mode'] == 'fixture' and
               receipt['root'] == str(target) and
               receipt['source_git_root'] == str(target / 'git') and
@@ -600,6 +638,20 @@ def verify_retained(result_root, expected_receipt_pin):
                       'analysis Git manifest requires bound owner invocation')
             analysis_binding.verify_manifest(
                 target, receipt, saved_owner, phase=owner.ANALYSIS_GIT_PHASE)
+    if own_audit_git:
+        v.require(receipt['audit_git_root'] == str(target / 'attempt' / 'audit-git') and
+                  type(receipt['audit_v1_git_owned']) is bool and
+                  receipt['audit_v1_git_owned'] == (receipt['status'] == 'verified'),
+                  'retained audit owned Git scope')
+        if receipt['audit_git_manifest_pin'] is None:
+            v.require(receipt['audit_git_status'] is None and
+                      receipt['audit_git_call_count'] is None and receipt['status'] != 'verified',
+                      'absent audit Git manifest fields')
+        else:
+            v.require(owner_pin is not None and 'invocation_pin' in saved_owner,
+                      'audit Git manifest requires bound owner invocation')
+            analysis_binding.verify_manifest(
+                target, receipt, saved_owner, phase=owner.AUDIT_GIT_PHASE, role='audit')
     if receipt['status'] == 'verified':
         v.require(receipt['reason'] is None and
                   receipt['error_type'] is None and
@@ -642,4 +694,7 @@ def verify_retained(result_root, expected_receipt_pin):
                if own_producer_git else {}),
             **({'analysis_git_call_count': receipt['analysis_git_call_count'],
                 'analysis_v1_git_owned': receipt['analysis_v1_git_owned']}
-               if own_analysis_git else {})}
+               if own_analysis_git else {}),
+            **({'audit_git_call_count': receipt['audit_git_call_count'],
+                'audit_v1_git_owned': receipt['audit_v1_git_owned']}
+               if own_audit_git else {})}

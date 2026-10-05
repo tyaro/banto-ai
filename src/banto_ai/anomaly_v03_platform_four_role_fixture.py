@@ -210,7 +210,7 @@ def _budget_role(budget, role, row):
 
 
 def _run_roles(target, files, revision, result, *, resource_budget=None,
-               role_profiles=None, analysis_git_reader=None):
+               role_profiles=None, analysis_git_reader=None, audit_git_reader=None):
     v.require(role_profiles is None or
               (type(role_profiles) is dict and
                set(role_profiles) == {'analysis', 'audit', 'writer', 'reader'}),
@@ -264,7 +264,9 @@ def _run_roles(target, files, revision, result, *, resource_budget=None,
                               dependency_profile_raw=(None if audit_profile is None else
                                                       audit_profile['raw']),
                               expected_dependency_profile_pin=(None if audit_profile is None else
-                                                               audit_profile['pin']))
+                                                               audit_profile['pin']),
+                              **({} if audit_git_reader is None else
+                                 {'git_reader': audit_git_reader}))
     _saved_result(target / 'audit', b, 'audit')
     _budget_role(resource_budget, 'audit', b)
     result['audit'] = {'status': b['status'], 'result_pin': b['result_pin'],

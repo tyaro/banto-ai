@@ -563,7 +563,10 @@ class ChildOwnedGitRoutingTests(unittest.TestCase):
                 (owner.OWNED_PRODUCER_INVOCATION, None),
                 (owner.OWNED_PRODUCER_INVOCATION, owner.PRODUCER_GIT_PHASE),
                 (owner.OWNED_ANALYSIS_INVOCATION, None),
-                (owner.OWNED_ANALYSIS_INVOCATION, owner.ANALYSIS_GIT_PHASE)):
+                (owner.OWNED_ANALYSIS_INVOCATION, owner.ANALYSIS_GIT_PHASE),
+                *((owner.OWNED_AUDIT_INVOCATION, phase) for phase in
+                  (None, owner.AUDIT_GIT_PHASE, owner.ANALYSIS_GIT_PHASE,
+                   owner.PRODUCER_GIT_PHASE, owner.CHILD_GIT_PHASE))):
             invocation['format'] = version
             output = text_io.StringIO()
             readers = {}
@@ -576,7 +579,8 @@ class ChildOwnedGitRoutingTests(unittest.TestCase):
                     self.manifest_result = None
                     roots = {owner.CHILD_GIT_PHASE: 'child-git',
                              owner.PRODUCER_GIT_PHASE: 'producer-git',
-                             owner.ANALYSIS_GIT_PHASE: 'analysis-git'}
+                             owner.ANALYSIS_GIT_PHASE: 'analysis-git',
+                             owner.AUDIT_GIT_PHASE: 'audit-git'}
                     case.assertEqual(kwargs['receipt_root'], case.target / roots[self.phase])
 
                 def __enter__(self):
@@ -590,13 +594,18 @@ class ChildOwnedGitRoutingTests(unittest.TestCase):
                         'status': 'failed' if self.phase == failed_phase else 'verified',
                         'call_count': 26 if self.phase == owner.CHILD_GIT_PHASE else 88}
 
-            def run(path, pin, value, *, git_reader, producer_git_reader, analysis_git_reader=None):
+            def run(path, pin, value, *, git_reader, producer_git_reader,
+                    analysis_git_reader=None, audit_git_reader=None):
                 self.assertIs(git_reader, readers[owner.CHILD_GIT_PHASE])
                 self.assertIs(producer_git_reader, readers[owner.PRODUCER_GIT_PHASE])
-                if version == owner.OWNED_ANALYSIS_INVOCATION:
+                if version in (owner.OWNED_ANALYSIS_INVOCATION, owner.OWNED_AUDIT_INVOCATION):
                     self.assertIs(analysis_git_reader, readers[owner.ANALYSIS_GIT_PHASE])
                 else:
                     self.assertIsNone(analysis_git_reader)
+                if version == owner.OWNED_AUDIT_INVOCATION:
+                    self.assertIs(audit_git_reader, readers[owner.AUDIT_GIT_PHASE])
+                else:
+                    self.assertIsNone(audit_git_reader)
                 return {'status': 'verified', 'result_pin': PIN,
                         'check_directory': invocation['result_root']}
 
@@ -611,8 +620,10 @@ class ChildOwnedGitRoutingTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, 'owned .* Git calls incomplete'):
                         owner.child_main(argv)
             expected_events = [owner.PRODUCER_GIT_PHASE, owner.CHILD_GIT_PHASE]
-            if version == owner.OWNED_ANALYSIS_INVOCATION:
+            if version in (owner.OWNED_ANALYSIS_INVOCATION, owner.OWNED_AUDIT_INVOCATION):
                 expected_events.insert(0, owner.ANALYSIS_GIT_PHASE)
+            if version == owner.OWNED_AUDIT_INVOCATION:
+                expected_events.insert(0, owner.AUDIT_GIT_PHASE)
             self.assertEqual(events, expected_events)
             self.assertEqual(bool(output.getvalue()), failed_phase is None)
 

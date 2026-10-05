@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from banto_ai import anomaly_v03_preformal_analysis_git as owned
 from banto_ai import anomaly_v03_fixture_worker as worker
+from banto_ai import anomaly_v03_fixture_audit_worker as audit
 
 
 REVISION = 'a' * 40
@@ -78,6 +79,36 @@ class AnalysisGitRoutingTests(unittest.TestCase):
              patch.object(worker.dependencies, 'load_five_role_profile', side_effect=AssertionError('profile loader')):
             with self.assertRaisesRegex(ValueError, 'excludes unowned profile'):
                 worker.calculate_with_evidence({}, expected_revision=REVISION,
+                    receipt_parent='unused', receipt_name='unused', git_reader=self.reader,
+                    dependency_profile_raw=b'{}', expected_dependency_profile_pin=PIN)
+
+    def test_audit_has_its_own_call_ids_and_dependency_cache(self):
+        with patch.object(audit, 'ROOT', self.root), \
+             owned.numeric._numeric_scope('audit'), \
+             patch.object(audit.observed, '_git_sources', side_effect=AssertionError('bare Git')):
+            source, snapshots, git = audit._git_sources(REVISION, git_reader=self.reader)
+        self.assertEqual(len(source['sources']), 27)
+        self.assertEqual(snapshots[REVISION], self.files)
+        self.assertEqual(len(self.calls), 29)
+        for _ in range(2):
+            git('rev-parse', 'HEAD')
+        git.start_dependencies()
+        name = next(iter(self.files))
+        for _ in range(2):
+            self.assertEqual(git('show', REVISION + ':' + name), self.files[name])
+        self.assertEqual([r['call_id'] for r in self.calls], [f'audit-git-{i}' for i in range(32)])
+        self.assertEqual(self.calls[-1]['expected_output_pin'], audit.observed._pin(self.files[name]))
+
+    def test_audit_rejects_changed_fixed_source_and_profile_before_io(self):
+        name = audit.observed.SOURCE_FILES[0]
+        (self.root / name).write_bytes(b'changed')
+        with patch.object(audit, 'ROOT', self.root), owned.numeric._numeric_scope('audit'):
+            with self.assertRaisesRegex(ValueError, 'working/Git bytes differ'):
+                audit._git_sources(REVISION, git_reader=self.reader)
+        with patch.object(audit, '_request'), \
+             patch.object(audit.dependencies, 'load_five_role_profile', side_effect=AssertionError('profile loader')):
+            with self.assertRaisesRegex(ValueError, 'excludes unowned profile'):
+                audit.audit_with_evidence({}, expected_revision=REVISION,
                     receipt_parent='unused', receipt_name='unused', git_reader=self.reader,
                     dependency_profile_raw=b'{}', expected_dependency_profile_pin=PIN)
 

@@ -32,6 +32,7 @@ class ParentOwnedGitTests(unittest.TestCase):
                        parent_git.owner, parent_git.chain,
                        parent_git.producer_binding.producer,
                        parent_git.analysis_binding.numeric.analysis,
+                       parent_git.analysis_binding.numeric.audit,
                        parent_git.analysis_binding.observed):
             stack.enter_context(patch.object(module, 'ROOT', f.root))
         return stack
@@ -67,7 +68,9 @@ class ParentOwnedGitTests(unittest.TestCase):
                 invocation = parent_git.v.strict_json(
                     (root / 'invocation.json').read_bytes())
                 invocation.update(
-                    format=(parent_git.owner.OWNED_ANALYSIS_INVOCATION if
+                    format=(parent_git.owner.OWNED_AUDIT_INVOCATION if
+                            kwargs.get('own_audit_git') else
+                            parent_git.owner.OWNED_ANALYSIS_INVOCATION if
                             kwargs.get('own_analysis_git') else
                             parent_git.owner.OWNED_PRODUCER_INVOCATION if
                             kwargs.get('own_producer_git') else
@@ -100,6 +103,8 @@ class ParentOwnedGitTests(unittest.TestCase):
                     receipt['inner_result_pin'] = self._fake_producer(root)
                     if kwargs.get('own_analysis_git'):
                         receipt['inner_result_pin'] = self._fake_analysis(root)
+                    if kwargs.get('own_audit_git'):
+                        receipt['inner_result_pin'] = self._fake_analysis(root, role='audit')
                     raw = parent_git.io.json_bytes(receipt)
                     (root / 'receipt.json').write_bytes(raw)
                     result['receipt_pin'] = parent_git.observed._pin(raw)
@@ -187,11 +192,11 @@ class ParentOwnedGitTests(unittest.TestCase):
                'producer': {'result_pin': save(target / 'result.json', result)}}
         return save(owner_root / 'five-role' / 'result.json', top)
 
-    def _fake_analysis(self, owner_root):
+    def _fake_analysis(self, owner_root, *, role='analysis'):
         f = self.fixture
         binding = parent_git.analysis_binding
-        worker = binding.numeric.analysis
-        target = owner_root / 'five-role' / 'analysis'
+        worker = binding.numeric.analysis if role == 'analysis' else binding.numeric.audit
+        target = owner_root / 'five-role' / role
         (target / 'worker').mkdir(parents=True)
 
         def save(path, value):
@@ -201,9 +206,10 @@ class ParentOwnedGitTests(unittest.TestCase):
 
         with parent_git.source_git.OwnedSourceGitSession(
                 policy_path=f.policy_path, expected_policy_pin=f.policy_pin,
-                revision=f.revision, receipt_root=owner_root / 'analysis-git',
-                phase=parent_git.owner.ANALYSIS_GIT_PHASE) as reader, \
-                binding.numeric._numeric_scope('analysis'):
+                revision=f.revision, receipt_root=owner_root / (role + '-git'),
+                phase=(parent_git.owner.ANALYSIS_GIT_PHASE if role == 'analysis' else
+                       parent_git.owner.AUDIT_GIT_PHASE)) as reader, \
+                binding.numeric._numeric_scope(role):
             source, snapshots, git = worker._git_sources(f.revision, git_reader=reader)
             self.assertEqual(len(snapshots[f.revision]), 27)
             for _ in range(2):
@@ -218,11 +224,12 @@ class ParentOwnedGitTests(unittest.TestCase):
                 for name in sorted(names):
                     self.assertEqual(git('show', f.revision + ':' + name), f.sources[name])
         invocation = {'format': worker.INVOCATION, 'invocation_id': 'b' * 64, 'source': source}
-        record = {'role': 'analysis', 'mode': 'fixture', 'invocation_id': invocation['invocation_id'],
+        record = {'role': role, 'mode': 'fixture', 'invocation_id': invocation['invocation_id'],
                   'source_before': source, 'source_after': source}
         reply = {'evidence': record, 'dependencies_before': pair['before'], 'dependencies_after': pair['after']}
-        result = {'format': 'anomaly-v03-fixture-worker-check-v1', 'status': 'verified',
-                  'role': 'analysis', 'mode': 'fixture', 'profile_required': False,
+        result = {'format': ('anomaly-v03-fixture-worker-check-v1' if role == 'analysis' else
+                             'anomaly-v03-fixture-audit-check-v1'), 'status': 'verified',
+                  'role': role, 'mode': 'fixture', 'profile_required': False,
                   'formal_permission': False, 'source_closure_complete': False,
                   'runtime_closure_complete': False,
                   'invocation_pin': save(target / 'invocation.json', invocation),
@@ -233,8 +240,48 @@ class ParentOwnedGitTests(unittest.TestCase):
                   'dependency_observation': {'project_files': len(names)}}
         top_path = owner_root / 'five-role' / 'result.json'
         top = parent_git.v.strict_json(top_path.read_bytes())
-        top['analysis'] = {'result_pin': save(target / 'result.json', result)}
+        top[role] = {'result_pin': save(target / 'result.json', result)}
         return save(top_path, top)
+
+    def test_audit_opt_in_binds_inventory_and_replays_without_git(self):
+        self._prepare_producer_sources(analysis=True)
+        with patch.object(parent_git.owner, 'run_owned', side_effect=self._owned_fake_owner()), \
+             patch.object(parent_git.owner, 'verify_retained', side_effect=self._owned_fake_verifier), \
+             patch.object(subprocess, 'check_output', side_effect=AssertionError('bare Git')):
+            result = self._run('audit-owned', own_audit_git=True)
+            self.assertEqual(result['status'], 'verified', result)
+            self.assertEqual(result['format'], parent_git.AUDIT_FORMAT)
+            self.assertEqual(result['audit_git_call_count'], 59)
+            for role in ('audit', 'analysis', 'producer'):
+                self.assertTrue(result[role + '_v1_git_owned'])
+            self.assertTrue(result['child_fixed_git_owned'])
+            self.assertFalse(result['inner_v1_git_owned'])
+            with patch.object(parent_git.source_git.owned_git, 'run_owned',
+                              side_effect=AssertionError('Git relaunched')):
+                self.assertEqual(self._verify(result, 'audit-owned')['call_status'], 'verified')
+                root = self.fixture.parent / 'audit-owned'
+                saved_owner = parent_git.v.strict_json((root / 'attempt' / 'receipt.json').read_bytes())
+                with self._roots():
+                    calls = parent_git.analysis_binding.expected_calls(
+                        root / 'attempt', saved_owner, self.fixture.policy, role='audit')
+                self.assertTrue(all(row[0].startswith('audit-git-') for row in calls))
+                top_path = root / 'attempt' / 'five-role' / 'result.json'
+                original = top_path.read_bytes()
+                top = parent_git.v.strict_json(original)
+                audit_result_path = root / 'attempt' / 'five-role' / 'audit' / 'result.json'
+                original_audit_result = audit_result_path.read_bytes()
+                audit_result_path.write_bytes((root / 'attempt' / 'five-role' / 'analysis' / 'result.json').read_bytes())
+                top['audit'] = top['analysis']
+                top_path.write_bytes(parent_git.io.json_bytes(top))
+                swapped = {**saved_owner, 'inner_result_pin': parent_git.observed._pin(top_path.read_bytes())}
+                with self._roots(), self.assertRaisesRegex(ValueError, 'Git role scope'):
+                    parent_git.analysis_binding.expected_calls(
+                        root / 'attempt', swapped, self.fixture.policy, role='audit')
+                top_path.write_bytes(original)
+                audit_result_path.write_bytes(original_audit_result)
+                (root / 'attempt' / 'five-role' / 'audit' / 'dependencies.json').write_bytes(b'{}')
+                with self.assertRaisesRegex(ValueError, 'audit Git binding .*dependencies.json'):
+                    self._verify(result, 'audit-owned')
 
     def test_analysis_opt_in_binds_all_roles_and_replays_without_git(self):
         self._prepare_producer_sources(analysis=True)

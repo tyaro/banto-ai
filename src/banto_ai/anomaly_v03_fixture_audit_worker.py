@@ -104,8 +104,20 @@ def _source(revision):
         'raw_sha256':p['sha256']} for n in SOURCE_FILES]}
 
 
-def _git_sources(revision):
-    _,snapshots,git = observed._git_sources(revision)
+def _git_sources(revision, *, git_reader=None):
+    if git_reader is None:
+        _,snapshots,git = observed._git_sources(revision)
+    else:
+        from .anomaly_v03_preformal_analysis_git import OwnedNumericGit
+        git = OwnedNumericGit(git_reader, root=ROOT, revision=revision, role='audit')
+        v.require(git('rev-parse','HEAD').decode().strip() == revision,
+                  'audit owned Git HEAD')
+        snapshots = {revision: {}}
+        for name in observed.SOURCE_FILES:
+            raw = git('show',revision+':'+name)
+            v.require(raw == observed._file(ROOT/name,1024**2),
+                      'audit working/Git bytes differ')
+            snapshots[revision][name] = raw
     v.require(not git('status','--porcelain').strip(),'audit candidate must be clean')
     for name in EXTRA_SOURCES:
         raw = git('show',revision+':'+name)
@@ -164,11 +176,13 @@ def worker_main(argv):
 def audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_name,
                         budget_limits=None, resource_budget=None,
                         dependency_profile_raw=None,
-                        expected_dependency_profile_pin=None):
+                        expected_dependency_profile_pin=None, git_reader=None):
     """Audit one pinned prior fixture output. Never rerun the analysis worker."""
     _request(request);evidence._digest(expected_revision,40);request = copy.deepcopy(request)
     v.require((dependency_profile_raw is None) ==
               (expected_dependency_profile_pin is None), 'audit profile raw/pin pair')
+    v.require(git_reader is None or dependency_profile_raw is None,
+              'owned audit Git excludes unowned profile loader')
     profile = None
     if dependency_profile_raw is not None:
         profile = dependencies.load_five_role_profile(
@@ -189,7 +203,9 @@ def audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
     if request['operation'] == SLICE_OPERATION:result['fixture_slice_audit_performed'] = False
     try:
         budget.start()
-        source,source_bytes,git = _git_sources(expected_revision);observed._save(target/'source-tool.json',git.tool_record)
+        source,source_bytes,git = _git_sources(expected_revision,
+            **({} if git_reader is None else {'git_reader':git_reader}))
+        observed._save(target/'source-tool.json',git.tool_record)
         budget.checkpoint()
         runtime,runtime_bytes = observed._expected_runtime();inputs,values = _load(request,expected_revision)
         budget.checkpoint()
@@ -239,6 +255,8 @@ def audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
             binding = evidence.validate_execution_evidence(record,expected_mode='fixture',expected_role='audit',expected_pin=record_pin,
                 expected=expected,source_snapshots=source_bytes,runtime_snapshots=runtime_bytes,input_snapshots=inputs,
                 output_snapshots={'fixture/'+output_name:actual})
+            if git_reader is not None:
+                git.start_dependencies()
             supplement = dependencies.verify_pair(reply['dependencies_before'],reply['dependencies_after'],root=ROOT,revision=expected_revision,git=git,required_sources=SOURCE_FILES)
             if profile is not None:
                 for phase in ('before', 'after'):
@@ -256,6 +274,10 @@ def audit_with_evidence(request, *, expected_revision, receipt_parent, receipt_n
             result.update(status='verified',reason=None,fixture_numerical_audit_performed=True,analysis_reference=request['analysis_reference'],
                 evidence_pin=record_pin,audit_pin=output_pin,invocation_pin=bundle_pin,selected_source_files=len(SOURCE_FILES),
                 runtime_files=2,retained_input_files=len(request['inputs']),dependency_observation=supplement,parent_and_child_creation_matched=True)
+            if git_reader is not None:
+                result.update(stdout_pin=copy.deepcopy(monitor['output']),
+                    dependency_pin=observed._pin(observed._file(target/'dependencies.json',LIMITS['output_bytes'])),
+                    source_tool_pin=observed._pin(observed._file(target/'source-tool.json',16*1024)))
             if profile is not None:
                 result['dependency_profile_pin'] = copy.deepcopy(expected_dependency_profile_pin)
                 result['before_work_profile_enforcement'] = True

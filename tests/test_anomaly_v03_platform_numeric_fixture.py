@@ -96,6 +96,13 @@ class PlatformNumericFixtureTests(unittest.TestCase):
                 receipt_parent='parent', receipt_name='attempt', git_reader=reader)
         self.assertIs(run.call_args.kwargs['git_reader'], reader)
 
+    def test_owned_audit_reader_reaches_worker_only_when_supplied(self):
+        reader = object()
+        with patch.object(candidate.audit, 'audit_with_evidence', return_value={}) as run:
+            candidate.audit_fixture({}, expected_revision='a' * 40,
+                receipt_parent='parent', receipt_name='attempt', git_reader=reader)
+        self.assertIs(run.call_args.kwargs['git_reader'], reader)
+
 
 if __name__ == '__main__':
     unittest.main()
