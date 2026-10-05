@@ -4,7 +4,7 @@
 
 ## 現在の状態
 
-- 直前のpush済み保存点: `52c896147246bfa067ddf070c2d40a3fae649e64`。Git専用Jobの実装source: `3c72f8dfc20fd4ef7f413fa6199da4ce1d1e61d3`。
+- 最新code保存点: `a9f1882dc7a7068a540dabc80a6574c4f29a8529`。範囲整理/短い引継ぎの保存点: `5b76ee80ff3817082191cc4e3aeccaa30e0b635a`。本書の証拠追記はcodeより後の文書commitに保存する。
 - 正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0。登録holdout40 seedは未読。実設備・顧客データは対象外。
 - 実データ作業は保存済み合成dev8/smoke2、120区間・240 dataset・720評価のengineering読取り・記述報告まで。新native試行は架空入力のみ。
 - 容量への配慮として追加agentを起動していない。独立した有限の作業単位で保存する。
@@ -25,14 +25,16 @@ v3では、メモリ内コードの完全認証、conhost等の全補助process�
 
 ## 最新の実装・証拠
 
+[保存行→analysis/audit native](results/anomaly-multiseed-v0.3-saved-row-analysis-native-2026-10-05.md): clean `a9f1882`で架空480区間/2,880枠の10 control rawを40 clusterと既存4入力へ導出し、別owned workerでanalysis・独立audit各1回がexit0・回収確認。1 draw、全文書とmain slice1,233行・diagnostic2,835行が一致。24試験pass、4,847 rawと33選定sourceの別helper照合pass。後処理helperの期待欄ミス2件は保全、consumer再実行なし。共通fixture予算82.461/120秒、準備は予算外。bare Git・2 workerの限定経路であり、raw観測再導出・共通campaign実行認証・50,000 draw・5役全工程予算は未了。
+
 [専用Git Job実機証拠](results/anomaly-multiseed-v0.3-git-private-job-native-2026-10-05.md): 5役を含む382 Git callの専用Jobは全てactive0。8 manifest、1,244 rawの別照合、Git起動禁止の保存verifierがpass。関連55試験、実Git・CLI子孫の正常/timeout/非zero、Unicode明示環境読戻しを確認。初回helper期待値ミス2件は失敗rawを保持し別rootで確認済み。
 
 5役共有標本予算148.005秒/240秒、Job698 process・active0。この小fixtureは全工程正式同形予算ではない。Gitのloaded依存在庫、source/runtime期待値の固定、正式経路と共通予算の接続が残る。
 
-先行reader `11244e41b5342524b583f59dac465bb03315d120` の [CI 37271402955](https://github.com/tyaro/banto-ai/actions/runs/37271402955) は全3job成功、両minor各2,895件・skip237、共有29fixture/必須28試験pass。8raw保存・ローカル全journal再検証済み。[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。Git Job保存点 `52c8961` の [CI 37275249917](https://github.com/tyaro/banto-ai/actions/runs/37275249917) は本整理時点で実行中、成功は未転記。
+Git Job保存点 `52c8961` の [CI 37275249917](https://github.com/tyaro/banto-ai/actions/runs/37275249917) は全3job成功、両minor各2,908件・fail0/error0/skip237、共有29fixture/必須28試験pass。8rawと3job logを保存しローカル全journal再検証済み。[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。新code `a9f1882` のCI成功には読み替えない。
 
 ## 次の着手と履歴
 
-v3末尾の順序に従い、26H2・保証A・runner代替同定の改訂契約候補をまとめ、正式経路に使う在庫・入力/consumerを接続し、共通予算へ進む。独立監査前の候補であり、最終revisionと独立受入の前にS5を開始しない。
+次は導出した保存行入力を50,000 draw文書候補へ結び、独立audit・writer・fresh readerとproducerを共通外側予算へ接続する。既存数値fixtureの上限8 drawは維持する。26H2・保証A・runner代替同定の改訂契約候補、正式source/runtime在庫、raw観測独立再導出も残る。最終revisionと独立受入の前にS5を開始しない。
 
 詳細な残件と保存点は[受入表](results/anomaly-multiseed-v0.3-session-handoff-and-remaining-acceptance-2026-10-04.md)、過去408行の引継ぎは[保全した旧履歴](current-handoff-history-through-git-job-2026-10-05.md)。旧履歴は各保存時点の状態であり、最新判断は本書とv3を使う。
