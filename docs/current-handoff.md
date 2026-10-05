@@ -4,7 +4,7 @@
 
 ## 現在の状態
 
-- 最新code保存点: `2d4e378a957f87690a2b908aa1272d1067a9710e`（保存attempt22ファイル・6行の終了時再照合）。前段 `d997020` はcontrol disk→50,000 draw→writer/fresh reader。本書の証拠追記はcodeより後の文書commitに保存する。
+- 最新code保存点: `ebdd4b9224ae2ed3a01edb8d410bb4e6d473fda7`（観測reader部分行と全体metadata fixtureの専用接続→50,000 draw→writer/fresh reader）。前段 `2d4e378` は保存attempt22ファイル・6行の終了時再照合。本書の証拠追記はcodeより後の文書commitに保存する。
 - 正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0。登録holdout40 seedは未読。実設備・顧客データは対象外。
 - 実データ作業は保存済み合成dev8/smoke2、120区間・240 dataset・720評価のengineering読取り・記述報告まで。新native試行は架空入力のみ。
 - 容量への配慮として追加agentを起動していない。独立した有限の作業単位で保存する。
@@ -25,6 +25,8 @@ v3では、メモリ内コードの完全認証、conhost等の全補助process�
 
 ## 最新の実装・証拠
 
+[部分観測行の全体fixture接続](results/anomaly-multiseed-v0.3-observation-subset-budget-native-2026-10-05.md): clean `ebdd4b9`で先行g02の6行を区間0だけに反映し、479区間は明示的なmetadata fixtureとして両由来・旧pin・失敗履歴を保持。4入力→40 cluster／50,000 draw→監査→文書／slice→writer/fresh reader→元control再照合を271.836/1,200秒で完了。4 worker exit0・回収、4,904 raw／40 sourceの別照合pass。全体fixtureはsuccess2,874・inconclusive6。専用9／接続21／旧projection11件は別runでpass。helper事前指定ミス2件は保全して別rootで修正。観測reader・producer・期待pin準備は時計外で、共通全工程予算・全480区間の観測確認ではない。
+
 [保存attempt終了時照合](results/anomaly-multiseed-v0.3-saved-attempt-final-readback-native-2026-10-05.md): clean `2d4e378`で既存架空g02の22 physical file/131,144,119 Bをfresh owned readerで観測→profile・score→ledger・summaryまで再計算し、6行保存→22ファイル／保存行の終了時再照合を54.576/120秒で完了。reader PID2956・exit0・回収、15 source／53 rawの別照合pass。全6行は正当なinconclusive。焦点13・既存15試験は別runでpass。後段consumer（時計外）は1/480区間・1/12 layoutのpartialを保持し、40 cluster入力への変換を拒否。今回producer未起動、全480区間の観測由来・4入力／全工程予算へはまだ接続していない。
 
 [control disk読取りを含む50,000 draw公開予算](results/anomaly-multiseed-v0.3-saved-control-budget-native-2026-10-05.md): clean `d997020`で架空480区間control4,800 files/129,026,491 Bのdisk読取り→40 cluster→全主算術／別process監査→文書／slice→5 payload公開→終了後fresh reader→disk再照合を共有280.645/1,200秒で完了。4 worker exit0・回収、4,841 raw／39 sourceの別照合pass。全966 control checkpointのsample/probeを維持し履歴を集約、budget receipt6,745 B。初版はreceipt64 KiB超過でfailedを保持。初版41試験・修正後16試験は別runでpass。外部controlは新rootのdirectory測定外・256 MiB input上限内、先行生成/期待pin準備は予算外。実producer/実保存reader、raw観測再導出・共通campaign実行認証・全工程予算・容量2倍は未了。前段[公開のみの証拠](results/anomaly-multiseed-v0.3-saved-row-publication-native-2026-10-05.md)と旧成功/failed rootは保持する。
@@ -33,10 +35,10 @@ v3では、メモリ内コードの完全認証、conhost等の全補助process�
 
 5役共有標本予算148.005秒/240秒、Job698 process・active0。この小fixtureは全工程正式同形予算ではない。Gitのloaded依存在庫、source/runtime期待値の固定、正式経路と共通予算の接続が残る。
 
-先行保存点 `d04d723` の [CI 37315729198](https://github.com/tyaro/banto-ai/actions/runs/37315729198) は全3job成功、両minor各2,946件・fail0/error0/skip237、共有29fixture/必須28試験pass。8rawと全journalを保存・ローカル再検証済み。[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。後続 `5b30755` の [CI 37320477150](https://github.com/tyaro/banto-ai/actions/runs/37320477150) は実行中。新code `2d4e378` のCI成功には読み替えない。
+先行保存点 `5b30755` の [CI 37320477150](https://github.com/tyaro/banto-ai/actions/runs/37320477150) は全3job成功、両minor各2,962件・fail0/error0/skip237、共有29fixture/必須28試験pass。8rawと全journalを保存・ローカル再検証済み。[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。後続 `fe20248` の [CI 37324031137](https://github.com/tyaro/banto-ai/actions/runs/37324031137) は確認時点で実行中。新code `ebdd4b9` のCI成功には読み替えない。
 
 ## 次の着手と履歴
 
-次はproducer／保存形式readerの部分由来を4入力へ結ぶ固定fixtureの設計・接続、共通外側予算、正式同形容量2倍へ進む。既存480 controlは架空metadataで、今回g02の実保存bytesと同じpayload pin／歴史sourceではない。混在を成功扱いするために旧pinや由来を付け替えない。control readerは観測readerの代替と扱わず、架空480区間の新規生成完走を自動追加の必須にしない。既存数値fixtureの上限8 drawは維持する。26H2・保証A・runner代替同定の改訂契約候補、正式source/runtime在庫、独立raw観測再導出も残る。最終revisionと独立受入の前にS5を開始しない。
+次はproducer／保存形式readerを同じ外側時計へ接続し、出力root・終了記録・観測由来を測定内に結ぶ。部分観測行→4入力は専用fixture入口で接続済みだが、既存480 controlの架空metadataと同一campaignや全観測確認へは読み替えない。共通全工程予算、正式同形容量2倍、26H2・保証A・runner代替同定の改訂契約候補、正式source/runtime在庫、独立raw観測再導出も残る。架空480区間の新規生成完走を自動追加の必須にせず、旧pin・由来・上限8 drawは維持する。最終revisionと独立受入の前にS5を開始しない。
 
 詳細な残件と保存点は[受入表](results/anomaly-multiseed-v0.3-session-handoff-and-remaining-acceptance-2026-10-04.md)、過去408行の引継ぎは[保全した旧履歴](current-handoff-history-through-git-job-2026-10-05.md)。旧履歴は各保存時点の状態であり、最新判断は本書とv3を使う。
