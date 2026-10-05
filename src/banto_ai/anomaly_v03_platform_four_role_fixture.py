@@ -211,7 +211,7 @@ def _budget_role(budget, role, row):
 
 def _run_roles(target, files, revision, result, *, resource_budget=None,
                role_profiles=None, analysis_git_reader=None, audit_git_reader=None,
-               writer_git_reader=None):
+               writer_git_reader=None, reader_git_reader=None):
     v.require(role_profiles is None or
               (type(role_profiles) is dict and
                set(role_profiles) == {'analysis', 'audit', 'writer', 'reader'}),
@@ -288,7 +288,8 @@ def _run_roles(target, files, revision, result, *, resource_budget=None,
             receipt_parent=target, receipt_name='publication',
             resource_budget=resource_budget,
             dependency_profiles=publication_profiles,
-            **({} if writer_git_reader is None else {'writer_git_reader':writer_git_reader}))
+            **({} if writer_git_reader is None else {'writer_git_reader':writer_git_reader}),
+            **({} if reader_git_reader is None else {'reader_git_reader':reader_git_reader}))
     _saved_result(target / 'publication', p, 'publication')
     result['publication'] = {'status': p['status'], 'result_pin': p['result_pin'],
                              'binding_pin': p.get('publication_binding_pin'),

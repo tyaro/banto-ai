@@ -569,6 +569,9 @@ class ChildOwnedGitRoutingTests(unittest.TestCase):
                    owner.PRODUCER_GIT_PHASE, owner.CHILD_GIT_PHASE)),
                 *((owner.OWNED_WRITER_INVOCATION, phase) for phase in
                   (None, owner.WRITER_GIT_PHASE, owner.AUDIT_GIT_PHASE,
+                   owner.ANALYSIS_GIT_PHASE, owner.PRODUCER_GIT_PHASE, owner.CHILD_GIT_PHASE)),
+                *((owner.OWNED_READER_INVOCATION, phase) for phase in
+                  (None, owner.READER_GIT_PHASE, owner.WRITER_GIT_PHASE, owner.AUDIT_GIT_PHASE,
                    owner.ANALYSIS_GIT_PHASE, owner.PRODUCER_GIT_PHASE, owner.CHILD_GIT_PHASE))):
             invocation['format'] = version
             output = text_io.StringIO()
@@ -584,7 +587,8 @@ class ChildOwnedGitRoutingTests(unittest.TestCase):
                              owner.PRODUCER_GIT_PHASE: 'producer-git',
                              owner.ANALYSIS_GIT_PHASE: 'analysis-git',
                              owner.AUDIT_GIT_PHASE: 'audit-git',
-                             owner.WRITER_GIT_PHASE: 'writer-git'}
+                             owner.WRITER_GIT_PHASE: 'writer-git',
+                             owner.READER_GIT_PHASE: 'reader-git'}
                     case.assertEqual(kwargs['receipt_root'], case.target / roots[self.phase])
 
                 def __enter__(self):
@@ -599,22 +603,26 @@ class ChildOwnedGitRoutingTests(unittest.TestCase):
                         'call_count': 26 if self.phase == owner.CHILD_GIT_PHASE else 88}
 
             def run(path, pin, value, *, git_reader, producer_git_reader,
-                    analysis_git_reader=None, audit_git_reader=None, writer_git_reader=None):
+                    analysis_git_reader=None, audit_git_reader=None, writer_git_reader=None, reader_git_reader=None):
                 self.assertIs(git_reader, readers[owner.CHILD_GIT_PHASE])
                 self.assertIs(producer_git_reader, readers[owner.PRODUCER_GIT_PHASE])
                 if version in (owner.OWNED_ANALYSIS_INVOCATION, owner.OWNED_AUDIT_INVOCATION,
-                               owner.OWNED_WRITER_INVOCATION):
+                               owner.OWNED_WRITER_INVOCATION, owner.OWNED_READER_INVOCATION):
                     self.assertIs(analysis_git_reader, readers[owner.ANALYSIS_GIT_PHASE])
                 else:
                     self.assertIsNone(analysis_git_reader)
-                if version in (owner.OWNED_AUDIT_INVOCATION, owner.OWNED_WRITER_INVOCATION):
+                if version in (owner.OWNED_AUDIT_INVOCATION, owner.OWNED_WRITER_INVOCATION, owner.OWNED_READER_INVOCATION):
                     self.assertIs(audit_git_reader, readers[owner.AUDIT_GIT_PHASE])
                 else:
                     self.assertIsNone(audit_git_reader)
-                if version == owner.OWNED_WRITER_INVOCATION:
+                if version in (owner.OWNED_WRITER_INVOCATION, owner.OWNED_READER_INVOCATION):
                     self.assertIs(writer_git_reader, readers[owner.WRITER_GIT_PHASE])
                 else:
                     self.assertIsNone(writer_git_reader)
+                if version == owner.OWNED_READER_INVOCATION:
+                    self.assertIs(reader_git_reader, readers[owner.READER_GIT_PHASE])
+                else:
+                    self.assertIsNone(reader_git_reader)
                 return {'status': 'verified', 'result_pin': PIN,
                         'check_directory': invocation['result_root']}
 
@@ -630,12 +638,14 @@ class ChildOwnedGitRoutingTests(unittest.TestCase):
                         owner.child_main(argv)
             expected_events = [owner.PRODUCER_GIT_PHASE, owner.CHILD_GIT_PHASE]
             if version in (owner.OWNED_ANALYSIS_INVOCATION, owner.OWNED_AUDIT_INVOCATION,
-                           owner.OWNED_WRITER_INVOCATION):
+                           owner.OWNED_WRITER_INVOCATION, owner.OWNED_READER_INVOCATION):
                 expected_events.insert(0, owner.ANALYSIS_GIT_PHASE)
-            if version in (owner.OWNED_AUDIT_INVOCATION, owner.OWNED_WRITER_INVOCATION):
+            if version in (owner.OWNED_AUDIT_INVOCATION, owner.OWNED_WRITER_INVOCATION, owner.OWNED_READER_INVOCATION):
                 expected_events.insert(0, owner.AUDIT_GIT_PHASE)
-            if version == owner.OWNED_WRITER_INVOCATION:
+            if version in (owner.OWNED_WRITER_INVOCATION, owner.OWNED_READER_INVOCATION):
                 expected_events.insert(0, owner.WRITER_GIT_PHASE)
+            if version == owner.OWNED_READER_INVOCATION:
+                expected_events.insert(0, owner.READER_GIT_PHASE)
             self.assertEqual(events, expected_events)
             self.assertEqual(bool(output.getvalue()), failed_phase is None)
 

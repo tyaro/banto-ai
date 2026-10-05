@@ -33,14 +33,16 @@ OWNED_PRODUCER_INVOCATION = 'anomaly-v03-preformal-five-role-job-invocation-v3'
 OWNED_ANALYSIS_INVOCATION = 'anomaly-v03-preformal-five-role-job-invocation-v4'
 OWNED_AUDIT_INVOCATION = 'anomaly-v03-preformal-five-role-job-invocation-v5'
 OWNED_WRITER_INVOCATION = 'anomaly-v03-preformal-five-role-job-invocation-v6'
+OWNED_READER_INVOCATION = 'anomaly-v03-preformal-five-role-job-invocation-v7'
 OWNED_INVOCATIONS = (OWNED_GIT_INVOCATION, OWNED_PRODUCER_INVOCATION,
                      OWNED_ANALYSIS_INVOCATION, OWNED_AUDIT_INVOCATION,
-                     OWNED_WRITER_INVOCATION)
+                     OWNED_WRITER_INVOCATION, OWNED_READER_INVOCATION)
 CHILD_GIT_PHASE = 'child-fixed-source-boundaries'
 PRODUCER_GIT_PHASE = 'producer-source-and-dependencies'
 ANALYSIS_GIT_PHASE = 'analysis-source-and-dependencies'
 AUDIT_GIT_PHASE = 'audit-source-and-dependencies'
 WRITER_GIT_PHASE = 'publication-source-and-writer-dependencies'
+READER_GIT_PHASE = 'reader-source-and-dependencies'
 BOOTSTRAP = ('import sys;sys.path.insert(0,sys.argv.pop(1));'
              'from banto_ai.anomaly_v03_preformal_five_role_job_owner import child_main;'
              'raise SystemExit(child_main(sys.argv[1:]))')
@@ -170,7 +172,7 @@ def child_main(argv=None):
                 phase=CHILD_GIT_PHASE))
             producer_reader = None
             if invocation['format'] in (OWNED_PRODUCER_INVOCATION, OWNED_ANALYSIS_INVOCATION,
-                                        OWNED_AUDIT_INVOCATION, OWNED_WRITER_INVOCATION):
+                                        OWNED_AUDIT_INVOCATION, OWNED_WRITER_INVOCATION, OWNED_READER_INVOCATION):
                 producer_reader = stack.enter_context(source_git.OwnedSourceGitSession(
                     policy_path=Path(invocation['child_git_policy_path']),
                     expected_policy_pin=invocation['child_git_policy_pin'],
@@ -181,7 +183,7 @@ def child_main(argv=None):
                        {'producer_git_reader': producer_reader})
             analysis_reader = None
             if invocation['format'] in (OWNED_ANALYSIS_INVOCATION, OWNED_AUDIT_INVOCATION,
-                                        OWNED_WRITER_INVOCATION):
+                                        OWNED_WRITER_INVOCATION, OWNED_READER_INVOCATION):
                 analysis_reader = stack.enter_context(source_git.OwnedSourceGitSession(
                     policy_path=Path(invocation['child_git_policy_path']),
                     expected_policy_pin=invocation['child_git_policy_pin'],
@@ -190,7 +192,7 @@ def child_main(argv=None):
                     phase=ANALYSIS_GIT_PHASE))
                 options['analysis_git_reader'] = analysis_reader
             audit_reader = None
-            if invocation['format'] in (OWNED_AUDIT_INVOCATION, OWNED_WRITER_INVOCATION):
+            if invocation['format'] in (OWNED_AUDIT_INVOCATION, OWNED_WRITER_INVOCATION, OWNED_READER_INVOCATION):
                 audit_reader = stack.enter_context(source_git.OwnedSourceGitSession(
                     policy_path=Path(invocation['child_git_policy_path']),
                     expected_policy_pin=invocation['child_git_policy_pin'],
@@ -199,7 +201,7 @@ def child_main(argv=None):
                     phase=AUDIT_GIT_PHASE))
                 options['audit_git_reader'] = audit_reader
             writer_reader = None
-            if invocation['format'] == OWNED_WRITER_INVOCATION:
+            if invocation['format'] in (OWNED_WRITER_INVOCATION, OWNED_READER_INVOCATION):
                 writer_reader = stack.enter_context(source_git.OwnedSourceGitSession(
                     policy_path=Path(invocation['child_git_policy_path']),
                     expected_policy_pin=invocation['child_git_policy_pin'],
@@ -207,6 +209,15 @@ def child_main(argv=None):
                     receipt_root=path.parent / 'writer-git',
                     phase=WRITER_GIT_PHASE))
                 options['writer_git_reader'] = writer_reader
+            publication_reader = None
+            if invocation['format'] == OWNED_READER_INVOCATION:
+                publication_reader = stack.enter_context(source_git.OwnedSourceGitSession(
+                    policy_path=Path(invocation['child_git_policy_path']),
+                    expected_policy_pin=invocation['child_git_policy_pin'],
+                    revision=invocation['source_revision'],
+                    receipt_root=path.parent / 'reader-git',
+                    phase=READER_GIT_PHASE))
+                options['reader_git_reader'] = publication_reader
             value = _run_child(path, pin, invocation, git_reader=reader, **options)
         v.require(reader.manifest_result['status'] == 'verified' and
                   reader.manifest_result['call_count'] == 26,
@@ -223,6 +234,9 @@ def child_main(argv=None):
         if writer_reader is not None:
             v.require(writer_reader.manifest_result['status'] == 'verified',
                       'owned writer Git calls incomplete')
+        if publication_reader is not None:
+            v.require(publication_reader.manifest_result['status'] == 'verified',
+                      'owned reader Git calls incomplete')
     else:
         value = _run_child(path, pin, invocation)
     print(io.json_bytes({'status': value['status'],
@@ -233,7 +247,7 @@ def child_main(argv=None):
 
 
 def _run_child(path, pin, invocation, *, git_reader=None, producer_git_reader=None,
-               analysis_git_reader=None, audit_git_reader=None, writer_git_reader=None):
+               analysis_git_reader=None, audit_git_reader=None, writer_git_reader=None, reader_git_reader=None):
     source = _source(
         invocation['source_revision'], git_reader=git_reader,
         git_call_prefix='' if git_reader is None else 'child-source-')
@@ -253,7 +267,7 @@ def _run_child(path, pin, invocation, *, git_reader=None, producer_git_reader=No
         expected_candidate_set_pin=invocation['candidate_set_pin'],
         git_reader=git_reader, producer_git_reader=producer_git_reader,
         analysis_git_reader=analysis_git_reader, audit_git_reader=audit_git_reader,
-        writer_git_reader=writer_git_reader)
+        writer_git_reader=writer_git_reader, reader_git_reader=reader_git_reader)
     _boundary(path, pin, source, inputs, git_reader=git_reader,
               git_call_prefix='' if git_reader is None else 'child-boundary-')
     return value
@@ -458,7 +472,7 @@ def run_owned(*, expected_mode, join_root, expected_join_receipt_pin,
               candidate_set_path=None, expected_candidate_set_pin=None,
               git_reader=None, child_git_policy_path=None,
               expected_child_git_policy_pin=None, own_producer_git=False,
-              own_analysis_git=False, own_audit_git=False, own_writer_git=False):
+              own_analysis_git=False, own_audit_git=False, own_writer_git=False, own_reader_git=False):
     """Launch one invented five-role parent CLI in a new private Windows Job."""
     v.require(expected_mode == 'fixture' and type(expected_mode) is str,
               'only invented five-role mode is open')
@@ -474,6 +488,8 @@ def run_owned(*, expected_mode, join_root, expected_join_receipt_pin,
               'owned audit Git requires analysis, producer and child policy')
     v.require(type(own_writer_git) is bool and (not own_writer_git or own_audit_git),
               'owned writer Git requires owned audit Git')
+    v.require(type(own_reader_git) is bool and (not own_reader_git or own_writer_git),
+              'owned reader Git requires owned writer Git')
     chain.evidence._digest(expected_revision, 40)
     chain.evidence._pin(expected_join_receipt_pin)
     v.require((candidate_set_path is None) ==
@@ -557,7 +573,8 @@ def run_owned(*, expected_mode, join_root, expected_join_receipt_pin,
                       'invocation_id': secrets.token_hex(32)}
         if child_git_policy_path is not None:
             invocation.update(
-                format=(OWNED_WRITER_INVOCATION if own_writer_git else
+                format=(OWNED_READER_INVOCATION if own_reader_git else
+                        OWNED_WRITER_INVOCATION if own_writer_git else
                         OWNED_AUDIT_INVOCATION if own_audit_git else
                         OWNED_ANALYSIS_INVOCATION if own_analysis_git else
                         OWNED_PRODUCER_INVOCATION if own_producer_git else

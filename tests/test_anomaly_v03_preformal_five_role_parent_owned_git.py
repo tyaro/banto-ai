@@ -69,7 +69,9 @@ class ParentOwnedGitTests(unittest.TestCase):
                 invocation = parent_git.v.strict_json(
                     (root / 'invocation.json').read_bytes())
                 invocation.update(
-                    format=(parent_git.owner.OWNED_WRITER_INVOCATION if
+                    format=(parent_git.owner.OWNED_READER_INVOCATION if
+                            kwargs.get('own_reader_git') else
+                            parent_git.owner.OWNED_WRITER_INVOCATION if
                             kwargs.get('own_writer_git') else
                             parent_git.owner.OWNED_AUDIT_INVOCATION if
                             kwargs.get('own_audit_git') else
@@ -110,6 +112,8 @@ class ParentOwnedGitTests(unittest.TestCase):
                         receipt['inner_result_pin'] = self._fake_analysis(root, role='audit')
                     if kwargs.get('own_writer_git'):
                         receipt['inner_result_pin'] = self._fake_writer(root)
+                    if kwargs.get('own_reader_git'):
+                        receipt['inner_result_pin'] = self._fake_writer(root,role='reader')
                     raw = parent_git.io.json_bytes(receipt)
                     (root / 'receipt.json').write_bytes(raw)
                     result['receipt_pin'] = parent_git.observed._pin(raw)
@@ -251,11 +255,11 @@ class ParentOwnedGitTests(unittest.TestCase):
         top[role] = {'result_pin': save(target / 'result.json', result)}
         return save(top_path, top)
 
-    def _fake_writer(self, owner_root):
+    def _fake_writer(self, owner_root, *, role='writer'):
         f = self.fixture
         binding, worker = parent_git.writer_binding, parent_git.writer_binding.publication
         pub_root = owner_root/'five-role/publication'
-        target = pub_root/'writer'
+        target = pub_root/role
         (target/'worker').mkdir(parents=True)
         def save(path,value):
             raw = parent_git.io.json_bytes(value)
@@ -263,9 +267,10 @@ class ParentOwnedGitTests(unittest.TestCase):
             return parent_git.observed._pin(raw)
         with parent_git.source_git.OwnedSourceGitSession(
                 policy_path=f.policy_path,expected_policy_pin=f.policy_pin,revision=f.revision,
-                receipt_root=owner_root/'writer-git',phase=parent_git.owner.WRITER_GIT_PHASE) as reader, \
+                receipt_root=owner_root/f'{role}-git',phase=(parent_git.owner.WRITER_GIT_PHASE if role == 'writer'
+                                                          else parent_git.owner.READER_GIT_PHASE)) as reader, \
                 binding.platform._platform_scope():
-            source,snapshots,git = worker._git_sources(f.revision,git_reader=reader)
+            source,snapshots,git = worker._git_sources(f.revision,git_reader=reader,role=role)
             git = worker._cached_git(git,f.revision,snapshots)
             git('rev-parse','HEAD');git('status','--porcelain')
             for _ in range(3):git('rev-parse','HEAD')
@@ -276,11 +281,11 @@ class ParentOwnedGitTests(unittest.TestCase):
             pair = {'before':{'files':files},'after':{'files':files}}
             for _ in range(2):
                 for name in sorted(names):git('show',f.revision+':'+name)
-        invocation = {'format':worker.INVOCATION,'role':'writer','invocation_id':'d'*64,'source':source}
-        record = {'role':'writer','mode':'fixture','invocation_id':invocation['invocation_id'],
+        invocation = {'format':worker.INVOCATION,'role':role,'invocation_id':'d'*64,'source':source}
+        record = {'role':role,'mode':'fixture','invocation_id':invocation['invocation_id'],
                   'source_before':source,'source_after':source}
         reply = {'evidence':record,'dependencies_before':pair['before'],'dependencies_after':pair['after']}
-        result = {'status':'verified','role':'writer','worker_exit_confirmed':True,
+        result = {'status':'verified','role':role,'worker_exit_confirmed':True,
                   'source_revision':f.revision,'profile_required':False,
                   'invocation_pin':save(target/'invocation.json',invocation),
                   'evidence_pin':save(target/'evidence.json',record),
@@ -292,7 +297,9 @@ class ParentOwnedGitTests(unittest.TestCase):
         pub = {'format':'anomaly-v03-fixture-publication-check-v1','status':'verified','mode':'fixture',
                'publication_status':'completed','reader_status':'completed','profile_required':False,
                'formal_permission':False,'source_closure_complete':False,'runtime_closure_complete':False,
-               'selected_source_files':len(binding.platform.SOURCE_FILES),'writer':result}
+               'selected_source_files':len(binding.platform.SOURCE_FILES),role:result}
+        if role == 'reader':
+            pub = {**parent_git.v.strict_json((pub_root/'result.json').read_bytes()),'reader':result}
         top_path = owner_root/'five-role/result.json'
         top = parent_git.v.strict_json(top_path.read_bytes())
         top['publication'] = {'result_pin':save(pub_root/'result.json',pub)}
@@ -324,6 +331,33 @@ class ParentOwnedGitTests(unittest.TestCase):
                 (root/'attempt/five-role/publication/writer/dependencies.json').write_bytes(b'{}')
                 with self.assertRaisesRegex(ValueError,'writer Git binding .*dependencies.json'):
                     self._verify(result,'writer-owned')
+
+    def test_reader_opt_in_binds_seeded_cache_and_replays_without_git(self):
+        self._prepare_producer_sources(analysis=True,writer=True)
+        with patch.object(parent_git.owner,'run_owned',side_effect=self._owned_fake_owner()), \
+             patch.object(parent_git.owner,'verify_retained',side_effect=self._owned_fake_verifier), \
+             patch.object(subprocess,'check_output',side_effect=AssertionError('bare Git')):
+            result = self._run('reader-owned',own_reader_git=True)
+            self.assertEqual(result['status'],'verified',result)
+            self.assertEqual(result['format'],parent_git.READER_FORMAT)
+            self.assertEqual(result['reader_git_call_count'],23)
+            for role in ('reader','writer','audit','analysis','producer'):
+                self.assertTrue(result[role+'_v1_git_owned'])
+            self.assertFalse(result['inner_v1_git_owned'])
+            with patch.object(parent_git.source_git.owned_git,'run_owned',side_effect=AssertionError('Git relaunched')):
+                self.assertEqual(self._verify(result,'reader-owned')['call_status'],'verified')
+                root = self.fixture.parent/'reader-owned'
+                saved_owner = parent_git.v.strict_json((root/'attempt/receipt.json').read_bytes())
+                with self._roots():
+                    calls = parent_git.writer_binding.expected_calls(root/'attempt',saved_owner,self.fixture.policy,role='reader')
+                self.assertTrue(all(row[0].startswith('reader-git-') for row in calls))
+                manifest = parent_git.v.strict_json((root/'attempt/reader-git/manifest.json').read_bytes())
+                manifest['calls'][-1]['source_path'] = parent_git.owner.SOURCE
+                with self.assertRaisesRegex(ValueError,'reader Git call order'):
+                    parent_git.producer_binding.verify_calls(manifest['calls'],calls,label='reader')
+                (root/'attempt/five-role/publication/reader/dependencies.json').write_bytes(b'{}')
+                with self.assertRaisesRegex(ValueError,'reader Git binding .*dependencies.json'):
+                    self._verify(result,'reader-owned')
 
     def test_audit_opt_in_binds_inventory_and_replays_without_git(self):
         self._prepare_producer_sources(analysis=True)

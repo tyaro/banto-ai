@@ -47,6 +47,23 @@ class WriterGitTests(unittest.TestCase):
         self.assertFalse(cached.tool_record['full_tool_runtime_closure'])
         with self.assertRaises(ValueError):cached('show',REVISION+':../outside.py')
 
+    def test_reader_owned_sources_seed_cache_and_preserve_boundary_calls(self):
+        with patch.object(flow,'ROOT',self.root), platform._platform_scope(), \
+             patch.object(flow.observed,'_git_sources',side_effect=AssertionError('bare Git')):
+            source, snapshots, git = flow._git_sources(REVISION,git_reader=self.reader,role='reader')
+        self.assertEqual(len(source['sources']),15)
+        self.assertEqual(len(self.calls),17)
+        cached = flow._cached_git(git,REVISION,snapshots)
+        cached('rev-parse','HEAD');cached('status','--porcelain')
+        for _ in range(3):cached('rev-parse','HEAD')
+        for _ in range(2):
+            for name, raw in self.files.items():
+                self.assertEqual(cached('show',REVISION+':'+name),raw)
+        self.assertEqual(len(self.calls),23)
+        self.assertEqual([r['call_id'] for r in self.calls],[f'reader-git-{i}' for i in range(23)])
+        self.assertFalse(cached.tool_record['full_tool_runtime_closure'])
+        with self.assertRaises(ValueError):cached('show',REVISION+':../outside.py')
+
     def test_changed_working_source_is_rejected(self):
         (self.root/flow.observed.SOURCE_FILES[0]).write_bytes(b'changed')
         with patch.object(flow,'ROOT',self.root), platform._platform_scope():
@@ -54,7 +71,7 @@ class WriterGitTests(unittest.TestCase):
                 flow._git_sources(REVISION,git_reader=self.reader)
 
     def test_reader_context_is_separate_only_for_owned_writer(self):
-        for index, reader in enumerate((None,self.reader)):
+        for index, (reader, fresh_reader) in enumerate(((None,None),(self.reader,None),(self.reader,object()))):
             source = {'revision':REVISION,'sources':[]}
             first, second = object(),object()
             contexts, options = [],[]
@@ -71,14 +88,22 @@ class WriterGitTests(unittest.TestCase):
                  patch.object(flow.budgets,'save_result'):
                 result = flow.publish_with_evidence({'analysis_reference':{},'audit_reference':{},'inputs':{}},
                     expected_revision=REVISION,receipt_parent=self.root,receipt_name=f'context-{index}',
-                    writer_git_reader=reader)
+                    writer_git_reader=reader,reader_git_reader=fresh_reader)
             self.assertEqual(result['status'],'failed')
             self.assertEqual(contexts,[first,first if reader is None else second])
-            self.assertEqual(options,[{} if reader is None else {'owned_git':True},{}])
+            self.assertEqual(options,[{} if reader is None else {'owned_git':True},
+                                      {} if fresh_reader is None else {'owned_git':True}])
             self.assertEqual(sources.call_count,1 if reader is None else 2)
             if reader is not None:
                 self.assertIs(sources.call_args_list[0].kwargs['git_reader'],reader)
-                self.assertEqual(sources.call_args_list[1].kwargs,{})
+                self.assertEqual(sources.call_args_list[1].kwargs,
+                    {} if fresh_reader is None else {'git_reader':fresh_reader,'role':'reader'})
+
+    def test_reader_requires_writer_before_io(self):
+        with patch.object(flow,'_request'), patch.object(flow.io,'_local_parent',side_effect=AssertionError('IO')):
+            with self.assertRaisesRegex(ValueError,'reader Git requires owned writer'):
+                flow.publish_with_evidence({},expected_revision=REVISION,receipt_parent='unused',
+                    receipt_name='unused',reader_git_reader=self.reader)
 
     def test_profile_guard_precedes_io(self):
         with patch.object(flow,'_request'), \

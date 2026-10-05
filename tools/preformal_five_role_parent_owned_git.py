@@ -36,6 +36,8 @@ def main(argv=None):
                      help='Also own audit source/dependency Git; includes analysis, producer and child Git')
     run.add_argument('--own-writer-git', action='store_true',
                      help='Also own publication prelude and writer Git; includes audit, analysis, producer and child Git')
+    run.add_argument('--own-reader-git', action='store_true',
+                     help='Also own fresh reader source/dependency Git; includes all earlier roles')
     run.add_argument('--candidate-set-path', type=Path)
     run.add_argument('--candidate-set-bytes', type=int)
     run.add_argument('--candidate-set-sha256')
@@ -73,7 +75,8 @@ def main(argv=None):
             own_producer_git=args.own_producer_git,
             own_analysis_git=args.own_analysis_git,
             own_audit_git=args.own_audit_git,
-            own_writer_git=args.own_writer_git)
+            own_writer_git=args.own_writer_git,
+            own_reader_git=args.own_reader_git)
         output = {'status': result['status'],
                   'reason': result['reason'],
                   'check_directory': result['check_directory'],

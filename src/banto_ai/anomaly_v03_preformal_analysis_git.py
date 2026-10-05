@@ -17,7 +17,7 @@ from . import anomaly_v03_reader_evidence as observed
 
 class OwnedFixtureGit:
     def __init__(self, reader, *, root, revision, role='analysis'):
-        v.require(role in ('analysis', 'audit', 'writer'), 'owned fixture Git role')
+        v.require(role in ('analysis', 'audit', 'writer', 'reader'), 'owned fixture Git role')
         self.role = role
         evidence._digest(revision, 40)
         v.require(reader.revision == revision, role + ' owned Git revision')

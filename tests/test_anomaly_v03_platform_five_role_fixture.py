@@ -100,10 +100,11 @@ class FiveRoleFixtureTests(unittest.TestCase):
                     'bound_pin': PIN, 'stdout_pin': PIN}
         def four_roles(target, files, revision, state, *, resource_budget=None,
                        role_profiles=None, analysis_git_reader=None, audit_git_reader=None,
-                       writer_git_reader=None):
+                       writer_git_reader=None, reader_git_reader=None):
             self.assertIs(analysis_git_reader, analysis_reader)
             self.assertIs(audit_git_reader, audit_reader)
             self.assertIs(writer_git_reader, writer_reader)
+            self.assertIs(reader_git_reader, fresh_reader)
             self.assertEqual(files, FILES)
             self.assertEqual(revision, REVISION)
             state['analysis'] = {'status': 'verified', 'result_pin': PIN}
@@ -126,9 +127,10 @@ class FiveRoleFixtureTests(unittest.TestCase):
              patch.object(chain.four, '_pin_file'):
             audit_reader = object()
             writer_reader = object()
+            fresh_reader = object()
             result = self.call_chain(git_reader=reader, producer_git_reader=producer_reader,
                                      analysis_git_reader=analysis_reader, audit_git_reader=audit_reader,
-                                     writer_git_reader=writer_reader)
+                                     writer_git_reader=writer_reader, reader_git_reader=fresh_reader)
         self.assertEqual([call.kwargs for call in source.call_args_list], [
             {'git_reader': reader, 'git_call_prefix': 'child-chain-source-0-'},
             {'git_reader': reader, 'git_call_prefix': 'child-chain-source-1-'}])

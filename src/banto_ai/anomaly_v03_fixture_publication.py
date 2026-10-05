@@ -149,19 +149,20 @@ def _source(revision):
         'raw_sha256':p['sha256']} for n in SOURCE_FILES]}
 
 
-def _git_sources(revision, *, git_reader=None):
+def _git_sources(revision, *, git_reader=None, role='writer'):
     if git_reader is None:
         _,snapshots,git = observed._git_sources(revision)
     else:
         from .anomaly_v03_preformal_analysis_git import OwnedFixtureGit
-        git = OwnedFixtureGit(git_reader, root=ROOT, revision=revision, role='writer')
+        v.require(role in ('writer', 'reader'), 'publication owned Git role')
+        git = OwnedFixtureGit(git_reader, root=ROOT, revision=revision, role=role)
         v.require(git('rev-parse','HEAD').decode().strip() == revision,
-                  'writer owned Git HEAD')
+                  role + ' owned Git HEAD')
         snapshots = {revision: {}}
         for name in observed.SOURCE_FILES:
             raw = git('show',revision+':'+name)
             v.require(raw == observed._file(ROOT/name,1024**2),
-                      'writer working/Git bytes differ')
+                      role + ' working/Git bytes differ')
             snapshots[revision][name] = raw
     v.require(not git('status','--porcelain').strip(),'publication candidate must be clean')
     for name in EXTRA_SOURCES:
@@ -273,8 +274,8 @@ def _retain_role_observation_pins(role,target,monitor,dependency_pair):
 def _run_role(role,request,target,publication,revision,budget,files,inputs,
               source_context,dependency_profile=None, *, owned_git=False):
     target.mkdir();source,source_bytes,git = source_context
-    v.require(not owned_git or (role == 'writer' and dependency_profile is None),
-              'owned writer Git excludes profiles and other roles')
+    v.require(not owned_git or (role in ('writer', 'reader') and dependency_profile is None),
+              'owned publication Git excludes profiles and other roles')
     profile = None
     if dependency_profile is not None:
         evidence._keys(dependency_profile, 'raw pin' +
@@ -372,7 +373,7 @@ def _run_role(role,request,target,publication,revision,budget,files,inputs,
 
 def publish_with_evidence(request, *, expected_revision, receipt_parent, receipt_name,
                           budget_limits=None, resource_budget=None,
-                          dependency_profiles=None, writer_git_reader=None):
+                          dependency_profiles=None, writer_git_reader=None, reader_git_reader=None):
     """Reuse pinned analysis and combined audit. Publish once, then read after reaping writer."""
     _request(request);evidence._digest(expected_revision,40);request = copy.deepcopy(request)
     v.require(dependency_profiles is None or
@@ -381,6 +382,8 @@ def publish_with_evidence(request, *, expected_revision, receipt_parent, receipt
               'writer/reader profile inventory')
     v.require(writer_git_reader is None or dependency_profiles is None,
               'owned writer Git excludes unowned profile loaders')
+    v.require(reader_git_reader is None or writer_git_reader is not None,
+              'owned reader Git requires owned writer Git')
     budget_limits = budgets.limits(budget_limits)
     parent = io._local_parent(Path(receipt_parent));v.safe_relative_path(receipt_name)
     v.require('/' not in receipt_name and not receipt_name.casefold().startswith('anomaly-multiseed-v0'),'receipt name')
@@ -408,11 +411,13 @@ def publish_with_evidence(request, *, expected_revision, receipt_parent, receipt
         result['reader_status'] = 'unconfirmed'
         if writer_git_reader is not None:
             budget.checkpoint()
-            reader_source,reader_bytes,reader_git = _git_sources(expected_revision)
+            reader_source,reader_bytes,reader_git = _git_sources(expected_revision,
+                **({} if reader_git_reader is None else {'git_reader':reader_git_reader, 'role':'reader'}))
             evidence._same(reader_source,source,'writer/reader selected source differs')
             source_context = reader_source,reader_bytes,_cached_git(reader_git,expected_revision,reader_bytes)
         reader = _run_role('reader',request,target/'reader',publication,expected_revision,budget,files,inputs,source_context,
-                           *((dependency_profiles['reader'],) if dependency_profiles is not None else ()))
+                           *((dependency_profiles['reader'],) if dependency_profiles is not None else ()),
+                           **({} if reader_git_reader is None else {'owned_git':True}))
         result.update(reader_status='completed',reader=reader)
         budget.checkpoint();v.require(observed._inputs(request['inputs']) == inputs,'final saved inputs changed')
         # The reader verified publication before its receipt was retained.  A
