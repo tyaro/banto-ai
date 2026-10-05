@@ -29,7 +29,8 @@ class ParentOwnedGitTests(unittest.TestCase):
         stack = ExitStack()
         f = self.fixture
         for module in (parent_git, parent_git.preflight, parent_git.source_git,
-                       parent_git.owner, parent_git.chain):
+                       parent_git.owner, parent_git.chain,
+                       parent_git.producer_binding.producer):
             stack.enter_context(patch.object(module, 'ROOT', f.root))
         return stack
 
@@ -64,7 +65,9 @@ class ParentOwnedGitTests(unittest.TestCase):
                 invocation = parent_git.v.strict_json(
                     (root / 'invocation.json').read_bytes())
                 invocation.update(
-                    format=parent_git.owner.OWNED_GIT_INVOCATION,
+                    format=(parent_git.owner.OWNED_PRODUCER_INVOCATION if
+                            kwargs.get('own_producer_git') else
+                            parent_git.owner.OWNED_GIT_INVOCATION),
                     mode='fixture', archive_pin=f.join_pin,
                     bound_pin=f.join_pin, profile_pins=None,
                     result_root=str(root / 'five-role'), invocation_id='a' * 64,
@@ -89,9 +92,108 @@ class ParentOwnedGitTests(unittest.TestCase):
                             git_call_prefix=f'child-chain-source-{index}-')
                     parent_git.owner._source(f.revision, git_reader=child_reader,
                                              git_call_prefix='child-boundary-')
+                if kwargs.get('own_producer_git'):
+                    receipt['inner_result_pin'] = self._fake_producer(root)
+                    raw = parent_git.io.json_bytes(receipt)
+                    (root / 'receipt.json').write_bytes(raw)
+                    result['receipt_pin'] = parent_git.observed._pin(raw)
             return result
 
         return run
+
+    def _prepare_producer_sources(self):
+        f = self.fixture
+        producer = parent_git.producer_binding.producer
+        for name in producer.SOURCE_FILES:
+            if name not in f.sources:
+                raw = (name + '\n').encode()
+                path = f.root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(raw)
+                f.sources[name] = raw
+        f._git('-C', str(f.root), 'add', '.')
+        f._git('-C', str(f.root), '-c', 'user.name=Fixture',
+               '-c', 'user.email=fixture@example.invalid', 'commit', '-q', '-m', 'producer')
+        f.revision = f._git('-C', str(f.root), 'rev-parse', 'HEAD').decode().strip()
+        f.policy['revision'] = f.revision
+        f._save_policy()
+
+    def _fake_producer(self, owner_root):
+        f = self.fixture
+        producer = parent_git.producer_binding.producer
+        target = owner_root / 'five-role' / 'producer'
+        (target / 'worker').mkdir(parents=True)
+
+        def save(path, value):
+            raw = parent_git.io.json_bytes(value)
+            path.write_bytes(raw)
+            return parent_git.observed._pin(raw)
+
+        with parent_git.source_git.OwnedSourceGitSession(
+                policy_path=f.policy_path, expected_policy_pin=f.policy_pin,
+                revision=f.revision, receipt_root=owner_root / 'producer-git',
+                phase=parent_git.owner.PRODUCER_GIT_PHASE) as reader:
+            for index in range(3):
+                source = producer._git_sources(f.revision, git_reader=reader,
+                                                git_call_prefix=f'producer-source-{index}-')
+            files = {'project/' + name: {
+                'category': 'project', 'native': False,
+                'physical_path': str(f.root / name),
+                'pin': parent_git.observed._pin(f.sources[name])}
+                for name in sorted(producer.SOURCE_FILES)}
+            pair = {'before': {'files': files}, 'after': {'files': files}}
+            git = producer._dependency_git(f.revision, git_reader=reader)
+            for logical in files:
+                name = logical[len('project/'):]
+                self.assertEqual(git('show', f.revision + ':' + name), f.sources[name])
+                self.assertEqual(git('show', f.revision + ':' + name), f.sources[name])
+            producer._git_sources(f.revision, git_reader=reader,
+                                  git_call_prefix='producer-source-3-')
+        invocation = {'format': producer.INVOCATION, 'invocation_id': 'a' * 64,
+                      'source_revision': f.revision, 'source': source}
+        reply = {'format': producer.FORMAT, 'status': 'joined',
+                 'invocation_id': invocation['invocation_id'],
+                 'source_before': source, 'source_after': source,
+                 'dependencies_before': pair['before'], 'dependencies_after': pair['after']}
+        result = {'format': producer.FORMAT, 'status': 'verified', 'mode': 'fixture',
+                  'source_revision': f.revision, 'profile_required': False,
+                  'source_closure_complete': False, 'runtime_closure_complete': False,
+                  'formal_permission': False,
+                  'invocation_pin': save(target / 'invocation.json', invocation),
+                  'stdout_pin': save(target / 'worker' / 'report.json', reply),
+                  'dependency_pin': save(target / 'dependencies.json', pair),
+                  'dependency_observation': {'project_files': len(files)}}
+        top = {'status': 'verified', 'source_revision': f.revision,
+               'producer': {'result_pin': save(target / 'result.json', result)}}
+        return save(owner_root / 'five-role' / 'result.json', top)
+
+    def test_producer_opt_in_binds_inventory_and_replays_without_git(self):
+        self._prepare_producer_sources()
+        with patch.object(parent_git.owner, 'run_owned', side_effect=self._owned_fake_owner()), \
+             patch.object(parent_git.owner, 'verify_retained', side_effect=self._owned_fake_verifier), \
+             patch.object(subprocess, 'check_output', side_effect=AssertionError('bare Git')):
+            result = self._run('producer-owned', own_producer_git=True)
+            self.assertEqual(result['status'], 'verified', result)
+            self.assertEqual(result['format'], parent_git.PRODUCER_FORMAT)
+            self.assertEqual(result['producer_git_call_count'], 49)
+            self.assertTrue(result['child_fixed_git_owned'])
+            self.assertTrue(result['producer_v1_git_owned'])
+            self.assertFalse(result['inner_v1_git_owned'])
+            with patch.object(parent_git.source_git.owned_git, 'run_owned',
+                              side_effect=AssertionError('Git relaunched')):
+                self.assertEqual(self._verify(result, 'producer-owned')['call_status'], 'verified')
+                root = self.fixture.parent / 'producer-owned'
+                saved_owner = parent_git.v.strict_json((root / 'attempt' / 'receipt.json').read_bytes())
+                with self._roots():
+                    expected = parent_git.producer_binding.expected_calls(root / 'attempt', saved_owner)
+                manifest = parent_git.v.strict_json((root / 'attempt' / 'producer-git' / 'manifest.json').read_bytes())
+                manifest['calls'][30]['source_path'] = producer_name = parent_git.owner.SOURCE
+                self.assertNotEqual(expected[30][2], producer_name)
+                with self.assertRaisesRegex(ValueError, 'call order'):
+                    parent_git.producer_binding.verify_calls(manifest['calls'], expected)
+                (root / 'attempt' / 'five-role' / 'producer' / 'dependencies.json').write_bytes(b'{}')
+                with self.assertRaisesRegex(ValueError, 'producer Git binding .*dependencies.json'):
+                    self._verify(result, 'producer-owned')
 
     def test_child_opt_in_binds_all_68_calls_and_replays_without_git(self):
         with patch.object(parent_git.owner, 'run_owned',

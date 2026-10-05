@@ -8,6 +8,7 @@ codes, in-memory code, or complete source/runtime closure.
 from __future__ import annotations
 
 import copy
+from contextlib import ExitStack
 import os
 from pathlib import Path
 import secrets
@@ -28,7 +29,10 @@ SOURCE = 'src/banto_ai/anomaly_v03_preformal_five_role_job_owner.py'
 FORMAT = 'anomaly-v03-preformal-five-role-job-owner-v1'
 INVOCATION = 'anomaly-v03-preformal-five-role-job-invocation-v1'
 OWNED_GIT_INVOCATION = 'anomaly-v03-preformal-five-role-job-invocation-v2'
+OWNED_PRODUCER_INVOCATION = 'anomaly-v03-preformal-five-role-job-invocation-v3'
+OWNED_INVOCATIONS = (OWNED_GIT_INVOCATION, OWNED_PRODUCER_INVOCATION)
 CHILD_GIT_PHASE = 'child-fixed-source-boundaries'
+PRODUCER_GIT_PHASE = 'producer-source-and-dependencies'
 BOOTSTRAP = ('import sys;sys.path.insert(0,sys.argv.pop(1));'
              'from banto_ai.anomaly_v03_preformal_five_role_job_owner import child_main;'
              'raise SystemExit(child_main(sys.argv[1:]))')
@@ -93,16 +97,16 @@ def _invocation(path, expected_pin):
                          'join_receipt_pin archive_pin bound_pin '
                          'candidate_set_path candidate_set_pin profile_pins '
                          'result_root invocation_id')
-    if type(value) is dict and value.get('format') == OWNED_GIT_INVOCATION:
+    if type(value) is dict and value.get('format') in OWNED_INVOCATIONS:
         fields += ' child_git_policy_path child_git_policy_pin'
     chain.evidence._keys(value, fields, 'five-role Job invocation')
-    v.require(value['format'] in (INVOCATION, OWNED_GIT_INVOCATION) and
+    v.require(value['format'] in (INVOCATION, *OWNED_INVOCATIONS) and
               value['mode'] == 'fixture' and
               Path(value['result_root']) == Path(path).parent / 'five-role' and
               type(value['invocation_id']) is str and
               len(value['invocation_id']) == 64,
               'five-role Job invocation identity')
-    if value['format'] == OWNED_GIT_INVOCATION:
+    if value['format'] in OWNED_INVOCATIONS:
         _child_policy(value, Path(path).parent, check_current=False)
     return value
 
@@ -123,7 +127,7 @@ def _child_policy(invocation, target, *, check_current=True):
 def _boundary(path, pin, expected_source, expected_inputs, *,
               git_reader=None, git_call_prefix=''):
     invocation = _invocation(path, pin)
-    if invocation['format'] == OWNED_GIT_INVOCATION:
+    if invocation['format'] in OWNED_INVOCATIONS:
         _child_policy(invocation, Path(path).parent)
     _same(_source(invocation['source_revision'], git_reader=git_reader,
                   git_call_prefix=git_call_prefix), expected_source,
@@ -147,18 +151,32 @@ def child_main(argv=None):
     v.require(path.name == 'invocation.json' and path.is_absolute() and
               path.parent.is_relative_to(ROOT / 'artifacts'),
               'five-role Job invocation path')
-    if invocation['format'] == OWNED_GIT_INVOCATION:
+    if invocation['format'] in OWNED_INVOCATIONS:
         from . import anomaly_v03_preformal_owned_source_git_session as source_git
-        with source_git.OwnedSourceGitSession(
+        with ExitStack() as stack:
+            reader = stack.enter_context(source_git.OwnedSourceGitSession(
                 policy_path=Path(invocation['child_git_policy_path']),
                 expected_policy_pin=invocation['child_git_policy_pin'],
                 revision=invocation['source_revision'],
                 receipt_root=path.parent / 'child-git',
-                phase=CHILD_GIT_PHASE) as reader:
-            value = _run_child(path, pin, invocation, git_reader=reader)
+                phase=CHILD_GIT_PHASE))
+            producer_reader = None
+            if invocation['format'] == OWNED_PRODUCER_INVOCATION:
+                producer_reader = stack.enter_context(source_git.OwnedSourceGitSession(
+                    policy_path=Path(invocation['child_git_policy_path']),
+                    expected_policy_pin=invocation['child_git_policy_pin'],
+                    revision=invocation['source_revision'],
+                    receipt_root=path.parent / 'producer-git',
+                    phase=PRODUCER_GIT_PHASE))
+            options = ({} if producer_reader is None else
+                       {'producer_git_reader': producer_reader})
+            value = _run_child(path, pin, invocation, git_reader=reader, **options)
         v.require(reader.manifest_result['status'] == 'verified' and
                   reader.manifest_result['call_count'] == 26,
                   'owned child fixed Git calls incomplete')
+        if producer_reader is not None:
+            v.require(producer_reader.manifest_result['status'] == 'verified',
+                      'owned producer Git calls incomplete')
     else:
         value = _run_child(path, pin, invocation)
     print(io.json_bytes({'status': value['status'],
@@ -168,7 +186,7 @@ def child_main(argv=None):
     return 0 if value['status'] == 'verified' else 2
 
 
-def _run_child(path, pin, invocation, *, git_reader=None):
+def _run_child(path, pin, invocation, *, git_reader=None, producer_git_reader=None):
     source = _source(
         invocation['source_revision'], git_reader=git_reader,
         git_call_prefix='' if git_reader is None else 'child-source-')
@@ -186,7 +204,7 @@ def _run_child(path, pin, invocation, *, git_reader=None):
         receipt_parent=path.parent, receipt_name='five-role',
         candidate_set_path=invocation['candidate_set_path'],
         expected_candidate_set_pin=invocation['candidate_set_pin'],
-        git_reader=git_reader)
+        git_reader=git_reader, producer_git_reader=producer_git_reader)
     _boundary(path, pin, source, inputs, git_reader=git_reader,
               git_call_prefix='' if git_reader is None else 'child-boundary-')
     return value
@@ -390,10 +408,13 @@ def run_owned(*, expected_mode, join_root, expected_join_receipt_pin,
               expected_revision, receipt_parent, receipt_name,
               candidate_set_path=None, expected_candidate_set_pin=None,
               git_reader=None, child_git_policy_path=None,
-              expected_child_git_policy_pin=None):
+              expected_child_git_policy_pin=None, own_producer_git=False):
     """Launch one invented five-role parent CLI in a new private Windows Job."""
     v.require(expected_mode == 'fixture' and type(expected_mode) is str,
               'only invented five-role mode is open')
+    v.require(type(own_producer_git) is bool and
+              (not own_producer_git or child_git_policy_path is not None),
+              'owned producer Git requires owned child policy')
     chain.evidence._digest(expected_revision, 40)
     chain.evidence._pin(expected_join_receipt_pin)
     v.require((candidate_set_path is None) ==
@@ -477,7 +498,8 @@ def run_owned(*, expected_mode, join_root, expected_join_receipt_pin,
                       'invocation_id': secrets.token_hex(32)}
         if child_git_policy_path is not None:
             invocation.update(
-                format=OWNED_GIT_INVOCATION,
+                format=(OWNED_PRODUCER_INVOCATION if own_producer_git else
+                        OWNED_GIT_INVOCATION),
                 child_git_policy_path=str(child_git_policy_path),
                 child_git_policy_pin=copy.deepcopy(expected_child_git_policy_pin))
         invocation_raw = v.canonical_json(invocation)

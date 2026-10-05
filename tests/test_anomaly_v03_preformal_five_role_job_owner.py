@@ -555,6 +555,53 @@ class ChildOwnedGitRoutingTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'excludes candidate'):
                     owner._child_policy(changed, self.target)
 
+    def test_producer_manifest_finishes_before_success_and_failure_has_no_stdout(self):
+        invocation = {**self.invocation, 'format': owner.OWNED_PRODUCER_INVOCATION,
+                      'child_git_policy_path': str(self.root / 'artifacts' / 'policy.json'),
+                      'child_git_policy_pin': PIN}
+        for producer_status in ('verified', 'failed'):
+            output = text_io.StringIO()
+            readers = {}
+            events = []
+            case = self
+
+            class Session:
+                def __init__(self, **kwargs):
+                    self.phase = kwargs['phase']
+                    self.manifest_result = None
+                    case.assertEqual(kwargs['receipt_root'], case.target /
+                                     ('child-git' if self.phase == owner.CHILD_GIT_PHASE else 'producer-git'))
+
+                def __enter__(self):
+                    readers[self.phase] = self
+                    return self
+
+                def __exit__(self, *args):
+                    case.assertEqual(output.getvalue(), '')
+                    events.append(self.phase)
+                    self.manifest_result = {
+                        'status': 'verified' if self.phase == owner.CHILD_GIT_PHASE else producer_status,
+                        'call_count': 26 if self.phase == owner.CHILD_GIT_PHASE else 88}
+
+            def run(path, pin, value, *, git_reader, producer_git_reader):
+                self.assertIs(git_reader, readers[owner.CHILD_GIT_PHASE])
+                self.assertIs(producer_git_reader, readers[owner.PRODUCER_GIT_PHASE])
+                return {'status': 'verified', 'result_pin': PIN,
+                        'check_directory': invocation['result_root']}
+
+            with self.subTest(status=producer_status), patch.object(owner, 'ROOT', self.root), \
+                 patch.object(owner, '_invocation', return_value=invocation), \
+                 patch.object(source_git, 'OwnedSourceGitSession', Session), \
+                 patch.object(owner, '_run_child', side_effect=run), redirect_stdout(output):
+                argv = [str(self.target / 'invocation.json'), str(PIN['bytes']), PIN['sha256']]
+                if producer_status == 'verified':
+                    self.assertEqual(owner.child_main(argv), 0)
+                else:
+                    with self.assertRaisesRegex(ValueError, 'producer Git calls incomplete'):
+                        owner.child_main(argv)
+            self.assertEqual(events, [owner.PRODUCER_GIT_PHASE, owner.CHILD_GIT_PHASE])
+            self.assertEqual(bool(output.getvalue()), producer_status == 'verified')
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -28,6 +28,44 @@ class OwnedProducerFixtureTests(unittest.TestCase):
             ('slices/files/slices/invented.json', b'{}'),
         ]
 
+    def test_owned_dependency_git_caches_and_rejects_unsafe_requests(self):
+        revision = 'a' * 40
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            name = 'src/banto_ai/fixture.py'
+            path = root / name
+            path.parent.mkdir(parents=True)
+            path.write_bytes(b'fixture\n')
+            calls = []
+
+            class Reader:
+                def run(self, **kwargs):
+                    calls.append(kwargs)
+                    return b'fixture\n'
+
+            with patch.object(owned, 'ROOT', root), \
+                 patch.object(owned.subprocess, 'check_output', side_effect=AssertionError('bare Git')):
+                git = owned._dependency_git(revision, git_reader=Reader())
+                self.assertEqual(git('show', revision + ':' + name), b'fixture\n')
+                self.assertEqual(git('show', revision + ':' + name), b'fixture\n')
+                for args in (('show', 'b' * 40 + ':' + name),
+                             ('show', revision + ':../escape'),
+                             ('show', revision + ':docs/file.md'), ('status',)):
+                    with self.assertRaises(ValueError):
+                        git(*args)
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(calls[0]['expected_output_pin'], owned._pin(b'fixture\n'))
+            self.assertEqual(calls[0]['call_id'], 'producer-dependency-0')
+
+    def test_owned_producer_rejects_profile_loader_before_disk_or_git(self):
+        with patch.object(owned.dependencies, 'load_five_role_profile',
+                          side_effect=AssertionError('profile loader')):
+            with self.assertRaisesRegex(ValueError, 'excludes unowned profile'):
+                owned.join_with_evidence('unused', owned._pin(b'archive'),
+                    expected_revision='a' * 40, receipt_parent='unused', receipt_name='unused',
+                    git_reader=object(), dependency_profile_raw=b'{}',
+                    expected_dependency_profile_pin=owned._pin(b'{}'))
+
     def test_decodes_names_without_extracting_or_granting_a_role(self):
         case = owned._decode_archive(archive(self.entries), (1, 1))
         self.assertEqual(case['expected_mode'], 'fixture')

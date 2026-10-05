@@ -28,6 +28,8 @@ def main(argv=None):
     run.add_argument('--receipt-name', required=True)
     run.add_argument('--own-child-git', action='store_true',
                      help='Own the additional 26 fixed child source Git calls')
+    run.add_argument('--own-producer-git', action='store_true',
+                     help='Also own producer source/dependency Git; includes child Git')
     run.add_argument('--candidate-set-path', type=Path)
     run.add_argument('--candidate-set-bytes', type=int)
     run.add_argument('--candidate-set-sha256')
@@ -61,7 +63,8 @@ def main(argv=None):
                 'sha256': args.git_policy_sha256},
             candidate_set_path=args.candidate_set_path,
             expected_candidate_set_pin=candidate_pin,
-            own_child_git=args.own_child_git)
+            own_child_git=args.own_child_git,
+            own_producer_git=args.own_producer_git)
         output = {'status': result['status'],
                   'reason': result['reason'],
                   'check_directory': result['check_directory'],

@@ -165,7 +165,8 @@ def _save(target, result, started):
 def run_chain(*, expected_mode, join_root, expected_join_receipt_pin,
               expected_revision, receipt_name, receipt_parent=OUTPUT_PARENT,
               budget_limits=None, candidate_set_path=None,
-              expected_candidate_set_pin=None, git_reader=None):
+              expected_candidate_set_pin=None, git_reader=None,
+              producer_git_reader=None):
     """One new attempt with five owned children and pinned stage succession."""
     v.require(type(expected_mode) is str and expected_mode == 'fixture',
               'only invented five-role fixture is open')
@@ -242,7 +243,8 @@ def run_chain(*, expected_mode, join_root, expected_join_receipt_pin,
             dependency_profile_raw=(None if producer_profile is None else
                                     producer_profile['raw']),
             expected_dependency_profile_pin=(None if producer_profile is None else
-                                             producer_profile['pin']))
+                                             producer_profile['pin']),
+            git_reader=producer_git_reader)
         four._saved_result(target / 'producer', p, 'producer')
         result['producer'] = {'status': p['status'], 'result_pin': p['result_pin'],
                               'bound_pin': p.get('bound_pin'),

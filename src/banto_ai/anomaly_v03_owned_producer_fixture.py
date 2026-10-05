@@ -71,22 +71,28 @@ def _sources(revision):
             'scope': 'selected-working-raw-only-not-source-closure'}
 
 
-def _git_sources(revision):
+def _git_sources(revision, *, git_reader=None, git_call_prefix=''):
     """Bind selected working bytes to the current local HEAD, not a full tree."""
     primary.evidence._digest(revision, 40)
-    head = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse', 'HEAD'],
-                                   stderr=subprocess.DEVNULL, timeout=10).decode().strip()
+    head_raw = (subprocess.check_output(
+        ['git', '-C', str(ROOT), 'rev-parse', 'HEAD'],
+        stderr=subprocess.DEVNULL, timeout=10) if git_reader is None else
+        git_reader.run(call_id=git_call_prefix + 'head', operation='head'))
+    head = head_raw.decode().strip()
     primary.v.require(head == revision, 'selected source revision changed')
     value = _sources(revision)
-    for row in value['selected_files']:
-        raw = subprocess.check_output(['git', '-C', str(ROOT), 'show',
-                                       revision + ':' + row['path']],
-                                      stderr=subprocess.DEVNULL, timeout=10)
+    for index, row in enumerate(value['selected_files']):
+        raw = (subprocess.check_output(
+            ['git', '-C', str(ROOT), 'show', revision + ':' + row['path']],
+            stderr=subprocess.DEVNULL, timeout=10) if git_reader is None else
+            git_reader.run(call_id=git_call_prefix + f'selected-source-{index}',
+                           operation='source_blob', source_path=row['path'],
+                           expected_output_pin=row['pin']))
         _same(_pin(raw), row['pin'], 'selected working/Git raw source')
     return value
 
 
-def _dependency_git(revision):
+def _dependency_git(revision, *, git_reader=None):
     """Read only bounded, revision-pinned project blobs for the disk crosscheck."""
     cache = {}
 
@@ -98,9 +104,14 @@ def _dependency_git(revision):
         primary.v.safe_relative_path(name)
         primary.v.require(name.startswith('src/'), 'producer dependency Git source')
         if name not in cache:
-            raw = subprocess.check_output(['git', '-C', str(ROOT), 'show',
-                                           revision + ':' + name],
-                                          stderr=subprocess.DEVNULL, timeout=10)
+            raw = (subprocess.check_output(
+                ['git', '-C', str(ROOT), 'show', revision + ':' + name],
+                stderr=subprocess.DEVNULL, timeout=10) if git_reader is None else
+                git_reader.run(
+                    call_id=f'producer-dependency-{len(cache)}',
+                    operation='source_blob', source_path=name,
+                    expected_output_pin=_pin(observed._file(
+                        ROOT / name, dependencies.MAX_FILE))))
             primary.v.require(len(raw) <= dependencies.MAX_FILE,
                               'producer dependency Git blob limit')
             cache[name] = raw
@@ -109,11 +120,12 @@ def _dependency_git(revision):
     return git
 
 
-def _retain_dependencies(target, before, after, revision):
+def _retain_dependencies(target, before, after, revision, *, git_reader=None):
     """Crosscheck a child inventory after exit, then pin both retained records."""
     crosscheck = dependencies.verify_pair(
         before, after, root=ROOT, revision=revision,
-        git=_dependency_git(revision), required_sources=SOURCE_FILES)
+        git=_dependency_git(revision, git_reader=git_reader),
+        required_sources=SOURCE_FILES)
     pair_raw = primary.v.canonical_json({'before': before, 'after': after})
     crosscheck_raw = primary.v.canonical_json(crosscheck)
     for name, raw in (('dependencies.json', pair_raw),
@@ -308,7 +320,7 @@ def worker_main(argv):
 def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
                         receipt_parent, receipt_name, expected_bound_pin=None,
                         resource_budget=None, dependency_profile_raw=None,
-                        expected_dependency_profile_pin=None):
+                        expected_dependency_profile_pin=None, git_reader=None):
     """Own, reap and verify one 26H2 invented join child in a new local root."""
     primary.evidence._digest(expected_revision, 40)
     primary.evidence._pin(expected_archive_pin)
@@ -319,6 +331,8 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
     primary.v.require((dependency_profile_raw is None) ==
                       (expected_dependency_profile_pin is None),
                       'producer profile raw/pin pair')
+    primary.v.require(git_reader is None or dependency_profile_raw is None,
+                      'owned producer Git excludes unowned profile loader')
     profile = None
     if dependency_profile_raw is not None:
         profile = dependencies.load_five_role_profile(
@@ -348,7 +362,18 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
         resource_budget.checkpoint()
     archive_raw = observed._file(archive_path, ARCHIVE_MAX)
     _same(_pin(archive_raw), expected_archive_pin, 'external invented archive pin')
-    source = _git_sources(expected_revision)
+    source_index = 0
+
+    def source_check():
+        nonlocal source_index
+        if git_reader is None:
+            return _git_sources(expected_revision)
+        prefix = f'producer-source-{source_index}-'
+        source_index += 1
+        return _git_sources(expected_revision, git_reader=git_reader,
+                            git_call_prefix=prefix)
+
+    source = source_check()
     expected_runtime = runtime.probe_runtime(ROOT)
     target.mkdir()
     output = target / 'output'
@@ -386,7 +411,7 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
                                     else None)}
 
     def boundary():
-        _same(_git_sources(expected_revision), source, 'parent selected source changed')
+        _same(source_check(), source, 'parent selected source changed')
         _same(runtime.probe_runtime(ROOT), expected_runtime, 'parent runtime changed')
         _same(_pin(observed._file(archive_path, ARCHIVE_MAX)), expected_archive_pin,
               'external invented archive changed')
@@ -436,7 +461,7 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
                               'producer child fixture scope')
             dependency_pin, dependency_observation = _retain_dependencies(
                 target, reply['dependencies_before'], reply['dependencies_after'],
-                expected_revision)
+                expected_revision, git_reader=git_reader)
             if profile is not None:
                 for phase in ('before', 'after'):
                     dependencies.match_five_role_profile(
@@ -461,7 +486,7 @@ def join_with_evidence(archive_path, expected_archive_pin, *, expected_revision,
             primary.v.require(bound_pin['bytes'] + sum(p['bytes'] for p in pins.values()) <= OUTPUT_MAX,
                               'producer saved output total')
             _same(pins, reply['projection_pins'], 'producer projected file pins')
-            _same(_git_sources(expected_revision), source, 'producer selected source postflight')
+            _same(source_check(), source, 'producer selected source postflight')
             if resource_budget is not None:
                 resource_budget.checkpoint()
             outer.update(status='verified', reason=None,

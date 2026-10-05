@@ -89,6 +89,7 @@ class FiveRoleFixtureTests(unittest.TestCase):
 
     def test_five_distinct_owned_identities_include_fresh_producer(self):
         reader = object()
+        producer_reader = object()
         verified = {'check_directory': str(self.parent / 'attempt' / 'producer'),
                     'result_pin': PIN, 'status': 'verified',
                     'worker_exit_confirmed': True,
@@ -118,11 +119,12 @@ class FiveRoleFixtureTests(unittest.TestCase):
              patch.object(chain, '_fresh_projection', return_value=FILES), \
              patch.object(chain.four, '_run_roles', side_effect=four_roles) as consumers, \
              patch.object(chain.four, '_pin_file'):
-            result = self.call_chain(git_reader=reader)
+            result = self.call_chain(git_reader=reader, producer_git_reader=producer_reader)
         self.assertEqual([call.kwargs for call in source.call_args_list], [
             {'git_reader': reader, 'git_call_prefix': 'child-chain-source-0-'},
             {'git_reader': reader, 'git_call_prefix': 'child-chain-source-1-'}])
         self.assertEqual((producer.call_count, consumers.call_count), (1, 1))
+        self.assertIs(producer.call_args.kwargs['git_reader'], producer_reader)
         self.assertEqual(result['status'], 'verified')
         self.assertEqual(result['stage'], 'complete')
         self.assertEqual(set(result['identities']),
