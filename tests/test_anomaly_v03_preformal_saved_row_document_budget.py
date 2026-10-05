@@ -25,12 +25,18 @@ class SavedRowDocumentBudgetTests(unittest.TestCase):
         prepared = saved.chain.draw_bridge.projection.prepare_inputs(
             raw, expected_mode='fixture', expected_pin=saved.chain.draw_bridge._pin(raw),
             expected_revision=REVISION, draws=[list(range(40))])
+        cls.entry = {name + '_raw': b'{"invented-control":true}'
+                     for name in saved.projection.coverage.RAW_LIMITS}
+        cls.entry['expected_pins'] = {
+            name: saved.chain.draw_bridge._pin(cls.entry[name + '_raw'])
+            for name in saved.projection.coverage.RAW_LIMITS}
         cls.prepared = {'files': prepared['files'], 'binding': {
             **saved.projection.CLOSED, 'format': saved.projection.FORMAT,
             'worker_input_pins': prepared['binding']['worker_input_pins'],
             'coverage': {'complete': True, 'counts': {'success': 2880}},
             'declared_historical_source_revision': 'a' * 40,
             'failed_attempt_history': [{'chunk_index': 479, 'attempt': 1}],
+            'source_chunks': [{'entry_pins': copy.deepcopy(cls.entry['expected_pins'])}],
         }}
 
     def setUp(self):
@@ -38,7 +44,7 @@ class SavedRowDocumentBudgetTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.parent = Path(temporary.name).resolve() / 'receipts'
         self.pins = copy.deepcopy(self.prepared['binding']['worker_input_pins'])
-        self.entries = [{'mocked-control-boundary': True}]
+        self.entries = [copy.deepcopy(self.entry)]
         helpers.FakeBudget.instances = []
         helpers.FakeBudget.stop_phase = None
         stack = ExitStack()
@@ -66,13 +72,13 @@ class SavedRowDocumentBudgetTests(unittest.TestCase):
     def test_one_clock_includes_projection_recheck_and_all_mappings(self):
         result = self.run_trial()
         self.assertEqual(result['status'], 'measured')
-        self.assertEqual(self.prepare.call_count, 2)
+        self.assertEqual(self.prepare.call_count, 1)
         self.assertEqual(self.arithmetic.call_count, 1)
         self.assertEqual(len(helpers.FakeBudget.instances), 1)
         budget = helpers.FakeBudget.instances[0]
         self.assertTrue(budget.closed)
         self.assertEqual(budget.phases, ['preflight', 'preflight', 'analysis', 'audit',
-                                      'document', 'slices', 'postflight', 'postflight'])
+                                      'document', 'document', 'slices', 'postflight', 'postflight'])
         self.assertTrue(result['saved_control_projection_inside_budget'])
         self.assertTrue(result['same_budget_50000_arithmetic_document_slices_measured'])
         self.assertEqual(result['inherited_failed_attempts'], 1)
@@ -124,14 +130,17 @@ class SavedRowDocumentBudgetTests(unittest.TestCase):
         self.assertFalse((self.parent/'trial-one/document.json').exists())
         self.assertFalse((self.parent/'trial-one/slices.json').exists())
 
-    def test_changed_caller_controls_reject_after_mapping_without_replay(self):
-        changed = copy.deepcopy(self.prepared)
-        changed['binding']['declared_historical_source_revision'] = 'c'*40
-        self.prepare.side_effect = [copy.deepcopy(self.prepared), changed]
+    def test_changed_caller_controls_block_document_without_replay(self):
+        def altered(*args):
+            value = helpers.ContiguousDocumentBudgetTests.fake_arithmetic(*args)
+            self.entries[0]['rows_raw'] += b' '
+            return value
+        self.arithmetic.side_effect = altered
         result = self.run_trial()
         self.assertEqual(result['status'], 'failed')
-        self.assertIn('controls changed', result['detail'])
+        self.assertIn('retained rows pin', result['detail'])
         self.assertEqual(self.arithmetic.call_count, 1)
+        self.assertFalse((self.parent/'trial-one/document.json').exists())
         self.assertFalse(result['same_budget_50000_arithmetic_document_slices_measured'])
 
     def test_source_change_keeps_failed_terminal(self):
@@ -142,15 +151,24 @@ class SavedRowDocumentBudgetTests(unittest.TestCase):
 
     def test_projection_output_mutation_fails_readback(self):
         def altered(*args, **kwargs):
-            value = copy.deepcopy(self.prepared)
-            if self.prepare.call_count == 2:
-                target = self.parent/'trial-one/inputs/coverage.json'
-                target.write_bytes(target.read_bytes()+b' ')
-            return value
-        self.prepare.side_effect = altered
-        result = self.run_trial()
+            helpers.ContiguousDocumentBudgetTests.fake_slices(*args, **kwargs)
+            target = self.parent/'trial-one/inputs/coverage.json'
+            target.write_bytes(target.read_bytes()+b' ')
+        with patch.object(saved.chain, '_slices', side_effect=altered):
+            result = self.run_trial()
         self.assertEqual(result['status'], 'failed')
         self.assertIn('pin differs', result['detail'])
+
+    def test_control_mutation_after_slices_keeps_failed_terminal(self):
+        def altered(*args):
+            helpers.ContiguousDocumentBudgetTests.fake_slices(*args)
+            self.entries[0]['expected_pins']['rows']['sha256'] = '0'*64
+        with patch.object(saved.chain, '_slices', side_effect=altered):
+            result = self.run_trial()
+        self.assertEqual(result['status'], 'failed')
+        self.assertEqual(result['stage'], 'postflight')
+        self.assertIn('external pins changed', result['detail'])
+        self.assertEqual(self.prepare.call_count, 1)
 
     def test_unreaped_worker_retains_owner_and_raises(self):
         owner = saved.chain.draw_bridge.draw_budget.UnreapedMeasurement(object(), 'audit', {})

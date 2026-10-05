@@ -89,6 +89,26 @@ def _draw_input(binding, revision):
     return value
 
 
+def _recheck_controls(entries, binding):
+    """Verify the identical pinned bytes; their pure projection is unchanged."""
+    chunks = binding['source_chunks']
+    projection.v.require(type(entries) is list and len(entries) == len(chunks),
+                         'saved-row control inventory changed')
+    names = set(projection.coverage.RAW_LIMITS)
+    for entry, chunk in zip(entries, chunks):
+        projection.v.require(type(entry) is dict and set(entry) ==
+                             {name + '_raw' for name in names} | {'expected_pins'},
+                             'saved-row control fields changed')
+        projection.evidence._same(entry['expected_pins'], chunk['entry_pins'],
+                                  'saved-row external pins changed')
+        for name, maximum in projection.coverage.RAW_LIMITS.items():
+            raw = entry[name + '_raw']
+            projection.v.require(type(raw) is bytes and 0 < len(raw) <= maximum,
+                                 'saved-row control byte bound changed')
+            projection.evidence._raw(raw, chunk['entry_pins'][name],
+                                     'saved-row retained ' + name + ' pin')
+
+
 def run_saved_rows(entries, *, expected_mode, expected_input_pins,
                    expected_revision, receipt_name, receipt_parent=OUTPUT_PARENT,
                    budget_limits=None):
@@ -159,17 +179,17 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
         result['input_pin'] = chain._write_value(root / 'input.json', draw_input, 512 * 1024)
         calculation, audit = chain._arithmetic(root, result['input_pin'], budget, result)
         result['stage'] = 'document'
+        budget.checkpoint('document')
+        _recheck_controls(entries, prepared['binding'])
         document, schema = chain._document(
             root, binding, fixture, calculation, audit, budget, result)
         result['stage'] = 'slices'
         chain._slices(root, binding, fixture, slices, document, schema, budget, result)
         result['stage'] = 'postflight'
         budget.checkpoint('postflight')
-        # Revalidate all pinned caller bytes and integer contributions. No
-        # consumer is replayed and no historical process claim is upgraded.
-        after = _prepare(entries, expected_revision, expected_input_pins)
-        if after != prepared:
-            raise ValueError('saved-row controls changed during document trial')
+        # The deterministic projection is bound to these exact immutable raw
+        # bytes and the unchanged source; rehash without parsing/pooling twice.
+        _recheck_controls(entries, prepared['binding'])
         if (_source_pins(expected_revision) != before or
                 chain.platform_runtime.probe_runtime(ROOT) != runtime):
             raise ValueError('saved-row document source/runtime changed')
