@@ -1,6 +1,8 @@
 # 次のタスク用の短い引継ぎ
 
-更新: 2026-10-05 JST。親Git入口に`--own-child-git`を追加し、v2 invocationの外部policy pinからJob子の固定source Git 26件を所有する候補を接続した。7+35+26=68件の順序・raw pin、保存再検証時のGit再起動禁止、古いinvocationへの差し替え拒否を含む関連32試験pass。新コードのWindows native試走は次。各role内Git約366件・完全source/runtime閉包は残り、`inner_v1_git_owned=false`。先行修正`51400e8`の[Ubuntu CI 37243400814](https://github.com/tyaro/banto-ai/actions/runs/37243400814)は最後の確認時点で両minor実行中。正式gate `s4_acceptance_not_frozen`、正式credit0。以下の「Ubuntu再実行はこれから」は先行保存点の履歴。
+更新: 2026-10-05 JST。**clean `899b37c17020e0782e63bcd8be720e6661022453`で`--own-child-git`のWindows native試走が成功。** [保存pin・220 rawの別照合・次のS4-3境界](results/anomaly-multiseed-v0.3-child-fixed-git-native-2026-10-05.md)。起動前7件・親35件・Job子の固定26件、計68件の直接Gitを所有し、Git起動禁止の保存verifierもpass。Job計1,080 process・active0、関連32試験pass。各role内Git約366件と完全source/runtime閉包は残り、`inner_v1_git_owned=false`。正式gate `s4_acceptance_not_frozen`、正式credit0。
+
+先行修正`51400e8354b8c3b202c6349c6e930898a843bbc1`の[Ubuntu CI 37243400814](https://github.com/tyaro/banto-ai/actions/runs/37243400814)は全3 job成功。両minor各2,869件・fail0/error0/skip237、共有29 fixtureと必須28試験が一致。8 rawとローカルjournal再検証を保存し[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)へ記録した。この成功は後続`899b37c`や文書保存点のCIではない。以下は先行保存点の履歴。
 
 更新: 2026-10-05 JST。`b39e595`の[Ubuntu CI 37237626121](https://github.com/tyaro/banto-ai/actions/runs/37237626121)は両minor各2,869件中、新規wall-rowテストのWindowsパスfixture解釈2件で不合格。テストfixtureだけ修正し、Windows対象9試験pass。修正版のUbuntu再実行はこれから。[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。下記native証拠は`b39e595`固定。正式gate `s4_acceptance_not_frozen`、正式credit0。
 

@@ -1,5 +1,7 @@
 # v0.3 次セッション引き継ぎ・正式受入までの残件（2026-10-04）
 
+最新（2026-10-05）: テスト移植修正`51400e8`の[Ubuntu CI 37243400814](https://github.com/tyaro/banto-ai/actions/runs/37243400814)は全3 job成功、両minor各2,869件・fail0/error0/skip237と共有fixture/必須試験の再検証pass。後続clean `899b37c`では[子の固定Git 26件を含む計68件のWindows試走](anomaly-multiseed-v0.3-child-fixed-git-native-2026-10-05.md)と220 rawの別照合、Git起動禁止の保存verifierがpass。S4-3の次は各role内Gitと全source/runtime閉包。共通campaignの40 seed由来、正式同形全工程予算・容量2倍、契約採択と最終回帰を含む下表の残件は継続する。以下は先行保存点の履歴。
+
 2026-10-05追記: `b39e595`の[Ubuntu CI 37237626121](https://github.com/tyaro/banto-ai/actions/runs/37237626121)は新規wall-rowテストのWindowsパスfixture解釈2件で両minor不合格。製品コードは変更せずテストfixtureを修正し、Windows対象9試験pass。Ubuntu再試験が残る。native試走の保存rawは固定revision `b39e595`の証拠であり、修正版のCIと混同しない。正式gateと下表の残件は変わらない。
 
 この文書は、架空登録形式campaignの最新保存証拠と、正式評価のS4採択からS7結果文書までの残件を引き継ぐ。正式評価の許可や受入判定ではない。科学仕様と正式手順の根拠は[凍結計画](../anomaly-multiseed-evaluation-plan-v0.3.md)、受入5群の起点は[2026-10-03の範囲整理](anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)である。

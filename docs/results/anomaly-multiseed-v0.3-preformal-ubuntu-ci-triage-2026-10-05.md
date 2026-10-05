@@ -1,5 +1,7 @@
 # v0.3 正式評価前の Ubuntu CI 診断（2026-10-05）
 
+最新: テストfixture修正`51400e8354b8c3b202c6349c6e930898a843bbc1`の[run 37243400814](https://github.com/tyaro/banto-ai/actions/runs/37243400814)は3 job成功。両minor各2,869件・fail0/error0/skip237、共有29 fixture・必須28試験が一致し、ローカル全journal再検証も`passed`。3.12 journalは3,240,910 B / `92ebad03069fb1e97baf6d88496246edc84a59e8c69b3d485b50a2951c969ea9`、3.14は3,240,681 B / `1f1df26420738a4423823d2eb8b13da06c4e62f986161034ddab7880f3eb59ed`。8 rawのpinを[summary.json](../../artifacts/ci-diagnostic-37243400814/summary.json) 1,246 B / `839b0b25241cc3641d8de29809c905d00c85cd6f63ffa494563fde5f2334e280`へ保存した。比較job logの初回EOFでできた空fileは保全し、別名の再取得logを採用。3 jobのimage表示は`ubuntu-24.04` / `20260927.320.1`で一致し、image digestは`not_collected`。後続`899b37c`の固定26件Git接続や最終凍結revisionへこのrunを読み替えない。
+
 追加run: [`ab81ddf`の37235150180](https://github.com/tyaro/banto-ai/actions/runs/37235150180)はPython 3.12/3.14各2,848件・skip237・fail0/error0と共有fixture比較jobが成功。7 rawとjournal再検証を`artifacts/ci-diagnostic-37235150180/`へ保存した。後続[`b39e595`の37237626121](https://github.com/tyaro/banto-ai/actions/runs/37237626121)は両minor各2,869件・skip237・error2で失敗、比較jobはskip。二つとも新規wall-rowテストで架空WindowsパスをUbuntuの`Path`で解釈したfixture問題。失敗logを`artifacts/ci-diagnostic-37237626121/log-failed.txt`に保存した。テストfixture修正後のUbuntu再実行を要する。
 
 `gh` 自体は利用できる。通常の制限付き実行では `GitHub CLI/config.yml` の読取りが拒否されたが、承認済み実行で `tyaro` の認証を確認した。`codex/preformal-acceptance-scope` を新規 push し、upstream を設定した。
