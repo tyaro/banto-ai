@@ -4,7 +4,7 @@
 
 ## 現在の状態
 
-- 最新code保存点: `b1e4aad4bc61e0d2d11b30b24c4b7166ad22ac5b`（保存行→50,000 draw文書、最終raw pin再照合）。初版 `6e2e4e8`、前段projection `a9f1882`。本書の証拠追記はcodeより後の文書commitに保存する。
+- 最新code保存点: `f06b8d1cb3a5a1149ef092d035e9d70f92bc3c66`（保存行→50,000 draw→owned writer/fresh reader共有予算）。前段文書 `b1e4aad`、projection `a9f1882`。本書の証拠追記はcodeより後の文書commitに保存する。
 - 正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0。登録holdout40 seedは未読。実設備・顧客データは対象外。
 - 実データ作業は保存済み合成dev8/smoke2、120区間・240 dataset・720評価のengineering読取り・記述報告まで。新native試行は架空入力のみ。
 - 容量への配慮として追加agentを起動していない。独立した有限の作業単位で保存する。
@@ -25,16 +25,16 @@ v3では、メモリ内コードの完全認証、conhost等の全補助process�
 
 ## 最新の実装・証拠
 
-[保存行→50,000 draw文書・slice](results/anomaly-multiseed-v0.3-saved-row-50000-document-native-2026-10-05.md): clean `b1e4aad`で架空480区間/2,880枠のcontrol→40 cluster→50,000 draw・別process算術監査・全文書候補・slice件数監査を共有733.393/1,200秒で完了。2 worker exit0・回収、4,821 raw／30 sourceの別照合pass。初版34試験、最終修正14試験pass。初回はpostflightでcommit余裕4 GiB割れにより安全停止しfailedを保全。最終確認の重複集約をraw pin再照合へ整理して新rootで成功。controlロードは予算外、bare Git・2 workerの限定経路。raw観測再導出・共通campaign実行認証・writer/fresh reader・全工程予算・容量2倍は未了。前段の[1 draw実機証拠](results/anomaly-multiseed-v0.3-saved-row-analysis-native-2026-10-05.md)も保持する。
+[保存行→50,000 draw→writer/fresh reader](results/anomaly-multiseed-v0.3-saved-row-publication-native-2026-10-05.md): clean `f06b8d1`で架空480区間/2,880枠control→40 cluster→全主算術／別process監査→文書／slice→5 payloadのowned writer→終了後fresh readerを共有277.961/1,200秒で完了。4 worker exit0・回収、marker/全payload・4,840 raw／37 sourceの別照合pass。焦点12試験＋追加identity1試験、既存27試験は別runでpass。controlロード・先行生成は予算外、bare Git・限定supervisor経路。raw観測再導出・共通campaign実行認証・producer/実保存readerを含む全工程予算・容量2倍は未了。前回[文書のみの実機証拠](results/anomaly-multiseed-v0.3-saved-row-50000-document-native-2026-10-05.md)の733秒成功・初回資源停止failedと[1 draw証拠](results/anomaly-multiseed-v0.3-saved-row-analysis-native-2026-10-05.md)も保持する。
 
 [専用Git Job実機証拠](results/anomaly-multiseed-v0.3-git-private-job-native-2026-10-05.md): 5役を含む382 Git callの専用Jobは全てactive0。8 manifest、1,244 rawの別照合、Git起動禁止の保存verifierがpass。関連55試験、実Git・CLI子孫の正常/timeout/非zero、Unicode明示環境読戻しを確認。初回helper期待値ミス2件は失敗rawを保持し別rootで確認済み。
 
 5役共有標本予算148.005秒/240秒、Job698 process・active0。この小fixtureは全工程正式同形予算ではない。Gitのloaded依存在庫、source/runtime期待値の固定、正式経路と共通予算の接続が残る。
 
-先行保存点 `f7abbe3` の [CI 37304712937](https://github.com/tyaro/banto-ai/actions/runs/37304712937) は全3job成功、両minor各2,919件・fail0/error0/skip237、共有29fixture/必須28試験pass。8rawと全journalを保存・ローカル再検証済み。[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。新code `b1e4aad` のCI成功には読み替えない。
+先行保存点 `a7fc363` の [CI 37311338257](https://github.com/tyaro/banto-ai/actions/runs/37311338257) は全3job成功、両minor各2,933件・fail0/error0/skip237、共有29fixture/必須28試験pass。8rawと全journalを保存・ローカル再検証済み。[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。新code `f06b8d1` のCI成功には読み替えない。
 
 ## 次の着手と履歴
 
-次は50,000 draw文書・sliceをwriter/fresh readerへ結び、producer/保存readerを含む共通外側予算と容量2倍を測る。既存数値fixtureの上限8 drawは維持する。26H2・保証A・runner代替同定の改訂契約候補、正式source/runtime在庫、raw観測独立再導出も残る。最終revisionと独立受入の前にS5を開始しない。
+次はproducer/実保存readerを含む共通外側予算と容量2倍へ進む。control rawのロードも予算内へ結び、実保存形式・由来検証と4入力の接続を固定fixtureで確認する。既存数値fixtureの上限8 drawは維持する。26H2・保証A・runner代替同定の改訂契約候補、正式source/runtime在庫、raw観測独立再導出も残る。最終revisionと独立受入の前にS5を開始しない。
 
 詳細な残件と保存点は[受入表](results/anomaly-multiseed-v0.3-session-handoff-and-remaining-acceptance-2026-10-04.md)、過去408行の引継ぎは[保全した旧履歴](current-handoff-history-through-git-job-2026-10-05.md)。旧履歴は各保存時点の状態であり、最新判断は本書とv3を使う。
