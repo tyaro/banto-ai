@@ -1,9 +1,8 @@
-"""Owned Git calls for a future five-role fixture integration.
+"""Owned Git calls for opt-in five-role fixture integration.
 
-This helper is intentionally unused by the existing five-role entry.  It
-attests only one direct Git executable and one owned call at a time.  Git's
-own loaded code and descendants, other subprocesses, and the five-role runtime
-remain outside this receipt.
+The original policy owns one direct handle. An explicit process-ownership
+policy also contains each call in a Windows Job. Loaded code, individual
+descendant exits, and the complete five-role source/runtime remain open.
 """
 from __future__ import annotations
 
@@ -23,6 +22,8 @@ from . import _anomaly_v03_runtime as paths
 
 
 FORMAT = 'anomaly-v03-preformal-owned-git-v1'
+JOB_FORMAT = 'anomaly-v03-preformal-owned-git-v2'
+JOB_OWNERSHIP = 'windows-private-job-v1'
 MAX_EXE = 64 * 1024**2
 MAX_STDERR = 64 * 1024
 MAX_RECEIPT = 16 * 1024
@@ -70,9 +71,14 @@ def _kill_and_reap(process):
 
 
 def _policy(root, policy, *, check_current=True):
-    v.require(type(policy) is dict and set(policy) == {
+    fields = {
         'executable_path', 'executable_pin', 'executable_links',
-        'revision', 'environment'},
+        'revision', 'environment'}
+    if type(policy) is dict and 'process_ownership' in policy:
+        fields.add('process_ownership')
+        v.require(policy['process_ownership'] == JOB_OWNERSHIP,
+                  'owned Git process ownership policy')
+    v.require(type(policy) is dict and set(policy) == fields,
         'owned Git policy fields')
     v.require(type(policy['revision']) is str and
               re.fullmatch('[0-9a-f]{40}', policy['revision']) is not None,
@@ -157,6 +163,11 @@ def run_owned(*, root, policy, operation, receipt_root,
     The executable pin and environment come from the caller.  A failed
     subprocess still gets a bounded receipt when its handle is reaped.
     """
+    if type(policy) is dict and 'process_ownership' in policy:
+        from . import anomaly_v03_preformal_owned_git_job as tree
+        return tree.run_owned(root=root, policy=policy, operation=operation,
+            receipt_root=receipt_root, source_path=source_path,
+            expected_output_pin=expected_output_pin, timeout_seconds=timeout_seconds)
     v.require(type(timeout_seconds) in (int, float) and
               0 < timeout_seconds <= 30, 'owned Git timeout')
     root, executable, environment, before = _policy(root, policy)
@@ -282,7 +293,8 @@ def verify_retained(receipt_root, expected_receipt_pin, *, root, policy):
         'executable_changed', 'executable_after_unavailable')
     root, executable, environment, current = _policy(
         root, policy, check_current=not changed_executable)
-    v.require(receipt['format'] == FORMAT and
+    expected_format = JOB_FORMAT if 'process_ownership' in policy else FORMAT
+    v.require(receipt['format'] == expected_format and
               receipt['integration_pending'] is True and
               all(receipt[key] is False for key in (
                   'formal_permission', 'source_closure_complete',
@@ -385,6 +397,9 @@ def verify_retained(receipt_root, expected_receipt_pin, *, root, policy):
         v.require(receipt['status'] == 'failed' and
                   type(receipt['reason']) is str,
                   'retained owned Git failure')
+    if expected_format == JOB_FORMAT:
+        from . import anomaly_v03_preformal_owned_git_job as tree
+        tree.verify_job(receipt)
     return {'status': 'verified_retained', 'call_status': receipt['status'],
             'reason': receipt['reason'], 'formal_permission': False,
             'integration_pending': True}

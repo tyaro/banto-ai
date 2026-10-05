@@ -27,6 +27,7 @@ ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = ROOT / 'tests' / 'fixtures' / 'anomaly_v03_job_tree_child.py'
 CREATE_SUSPENDED = 0x00000004
 CREATE_NO_WINDOW = 0x08000000
+CREATE_UNICODE_ENVIRONMENT = 0x00000400
 JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE = 0x00002000
 JOB_OBJECT_LIMIT_BREAKAWAY_OK = 0x00000800
 JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK = 0x00001000
@@ -477,7 +478,20 @@ def _reap_partial_spawn(k, job, created, assigned, extra_handles):
         raise
 
 
-def _spawn_cli(k, argv, cwd, stdin, stdout, stderr):
+def _environment_block(environment):
+    paths.require(type(environment) is dict and environment and
+                  all(type(key) is str and key and '=' not in key and
+                      type(value) is str and '\x00' not in key + value
+                      for key, value in environment.items()) and
+                  len({key.casefold() for key in environment}) == len(environment),
+                  'explicit Windows environment')
+    text = ''.join(
+        key + '=' + environment[key] + '\x00'
+        for key in sorted(environment, key=str.casefold)) + '\x00'
+    return ctypes.create_unicode_buffer(text, len(text))
+
+
+def _spawn_cli(k, argv, cwd, stdin, stdout, stderr, *, environment=None):
     """Create suspended, assign to a non-breakaway Job, then return handles.
 
     Only the three duplicated standard handles are inherited. The caller owns
@@ -485,6 +499,7 @@ def _spawn_cli(k, argv, cwd, stdin, stdout, stderr):
     """
     import msvcrt
 
+    block = None if environment is None else _environment_block(environment)
     job = _new_job(k)
     created = _ProcessInformation()
     inherited = []
@@ -523,8 +538,9 @@ def _spawn_cli(k, argv, cwd, stdin, stdout, stderr):
         command_line = ctypes.create_unicode_buffer(subprocess.list2cmdline(argv))
         _need(k.CreateProcessW(argv[0], command_line, None, None, True,
                                CREATE_SUSPENDED | CREATE_NO_WINDOW |
-                               EXTENDED_STARTUPINFO_PRESENT,
-                               None, str(cwd),
+                               EXTENDED_STARTUPINFO_PRESENT |
+                               (CREATE_UNICODE_ENVIRONMENT if block is not None else 0),
+                               None if block is None else ctypes.cast(block, ctypes.c_void_p), str(cwd),
                                ctypes.cast(ctypes.byref(startup),
                                            ctypes.POINTER(_StartupInfo)),
                                ctypes.byref(created)), 'CreateProcessW')

@@ -1,9 +1,8 @@
 """Retain explicit owned Git source calls for opt-in five-role entries.
 
-The session can supply selected source bytes to the five-role parent.  It
-attests only direct Git handles and saved bytes.  Git's loaded code and
-descendants, inner Job Git, other processes, and complete source/runtime
-closure remain out of scope.
+The session supplies selected and observed dependency bytes to fixture roles.
+An explicit policy adds private Git Job containment. Loaded code, individual
+descendant exits, and complete source/runtime closure remain out of scope.
 """
 from __future__ import annotations
 
@@ -21,6 +20,7 @@ from . import _anomaly_v03_runtime as paths
 
 ROOT = Path(__file__).resolve().parents[2]
 FORMAT = 'anomaly-v03-preformal-owned-source-git-session-v1'
+JOB_FORMAT = 'anomaly-v03-preformal-owned-source-git-session-v2'
 MAX_POLICY = 8 * 1024
 MAX_MANIFEST = 256 * 1024
 MAX_CALLS = 512
@@ -58,6 +58,19 @@ def _root(path):
     paths.regular_path(path.parent, directory=True)
     paths.regular_path(path, directory=True, missing=True)
     return path
+
+
+def _job_members_confirmed(root, calls):
+    if not calls or any(row['receipt_pin'] is None for row in calls):
+        return False
+    for row in calls:
+        raw = observed._file(root/row['call_id']/'receipt.json', owned_git.MAX_RECEIPT)
+        evidence._raw(raw, row['receipt_pin'], 'owned Git Job aggregate receipt')
+        saved = v.strict_json(raw)
+        job = saved.get('job')
+        if type(job) is not dict or job.get('all_assigned_processes_exit_confirmed') is not True:
+            return False
+    return True
 
 
 class OwnedSourceGitSession:
@@ -142,8 +155,11 @@ class OwnedSourceGitSession:
             return output
         except BaseException as error:
             self._failed = True
-            if isinstance(error, owned_git.UnreapedGit) and \
-                    self._unreaped is None:
+            critical = isinstance(error, owned_git.UnreapedGit)
+            if 'process_ownership' in self.policy:
+                from . import anomaly_v03_preformal_job_tree_owner as job_owner
+                critical |= isinstance(error, (job_owner.UnreapedJob, job_owner.UnclosedHandles))
+            if critical and self._unreaped is None:
                 self._unreaped = error
             row['error_type'] = type(error).__name__
             if row['receipt_pin'] is not None and \
@@ -177,6 +193,9 @@ class OwnedSourceGitSession:
                     'execution_authenticated': False,
                     'git_loaded_code_authenticated': False,
                     'git_descendants_authenticated': False}
+        if 'process_ownership' in self.policy:
+            manifest.update(format=JOB_FORMAT,
+                git_job_members_exit_confirmed=_job_members_confirmed(self.root, self.calls))
         raw = io.json_bytes(manifest)
         v.require(len(raw) <= MAX_MANIFEST,
                   'owned source Git manifest byte limit')
@@ -226,15 +245,19 @@ def verify_retained(receipt_root, expected_manifest_pin, *, policy_path,
     evidence._raw(raw, expected_manifest_pin,
                   'retained owned source Git manifest raw pin')
     manifest = v.strict_json(raw)
-    v.require(type(manifest) is dict and set(manifest) == {
+    job_owned = type(manifest) is dict and manifest.get('format') == JOB_FORMAT
+    fields = {
         'format', 'status', 'reason', 'root', 'checkout_root', 'phase',
         'revision', 'policy_path', 'policy_pin', 'calls', 'call_count',
         'integration_pending', 'formal_permission',
         'source_closure_complete', 'runtime_closure_complete',
         'execution_authenticated', 'git_loaded_code_authenticated',
-        'git_descendants_authenticated'},
+        'git_descendants_authenticated'}
+    if job_owned:
+        fields.add('git_job_members_exit_confirmed')
+    v.require(type(manifest) is dict and set(manifest) == fields,
         'retained owned source Git manifest fields')
-    v.require(manifest['format'] == FORMAT and
+    v.require(manifest['format'] in (FORMAT, JOB_FORMAT) and
               manifest['root'] == str(target) and
               manifest['checkout_root'] == str(ROOT) and
               manifest['phase'] == phase and
@@ -253,6 +276,8 @@ def verify_retained(receipt_root, expected_manifest_pin, *, policy_path,
               'retained owned source Git manifest scope')
     policy = _policy(policy_path, expected_policy_pin, revision, target,
                      check_current=False)
+    v.require(job_owned == ('process_ownership' in policy),
+              'owned source Git Job policy/format binding')
     seen = set()
     for index, row in enumerate(manifest['calls']):
         v.require(type(row) is dict and set(row) == {
@@ -313,6 +338,12 @@ def verify_retained(receipt_root, expected_manifest_pin, *, policy_path,
                   manifest['reason'] in
                   ('session_error', 'call_failed', 'no_calls'),
                   'retained owned source Git failure')
+    if job_owned:
+        v.require(type(manifest['git_job_members_exit_confirmed']) is bool and
+                  manifest['git_job_members_exit_confirmed'] ==
+                  _job_members_confirmed(target, manifest['calls']) and
+                  (manifest['status'] != 'verified' or manifest['git_job_members_exit_confirmed']),
+                  'retained owned Git Job aggregate')
     return {'status': 'verified_retained',
             'call_status': manifest['status'],
             'manifest_pin': expected_manifest_pin,

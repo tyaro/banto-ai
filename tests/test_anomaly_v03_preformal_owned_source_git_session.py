@@ -118,6 +118,24 @@ class OwnedSourceGitSessionTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 self._verify(saved)
 
+    def test_job_policy_keeps_unclosed_owner_even_if_caller_catches_it(self):
+        from banto_ai import anomaly_v03_preformal_job_tree_owner as job_owner
+        self.policy['process_ownership'] = session.owned_git.JOB_OWNERSHIP
+        self._save_policy()
+        problem = job_owner.UnclosedHandles({'job':123}, {'status':'failed'})
+        with patch.object(session,'ROOT',self.root), \
+             patch.object(session.owned_git,'run_owned',side_effect=problem):
+            with self.assertRaises(job_owner.UnclosedHandles) as caught:
+                with self._open() as reader:
+                    try:reader.run(call_id='head',operation='head')
+                    except job_owner.UnclosedHandles:pass
+            self.assertIs(caught.exception,problem)
+            self.assertEqual(problem.handles,{'job':123})
+            self.assertEqual(reader.manifest_result['status'],'failed')
+            raw = session.v.strict_json((self.output/'manifest.json').read_bytes())
+            self.assertEqual(raw['format'],session.JOB_FORMAT)
+            self.assertFalse(raw['git_job_members_exit_confirmed'])
+
     def test_dirty_or_bad_blob_saves_failed_manifest_and_stops(self):
         with patch.object(session, 'ROOT', self.root):
             self.source.write_bytes(b'changed\n')
