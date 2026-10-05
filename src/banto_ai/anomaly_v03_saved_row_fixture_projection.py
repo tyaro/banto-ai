@@ -53,6 +53,40 @@ def _distinct_sources(entries, chunks):
             seen[name].add(digest)
 
 
+def _pack_inputs(clusters, diagnostics, slice_clusters, coverage_clusters, *,
+                 expected_revision, draws):
+    """Canonical consumer files shared by explicitly scoped row boundaries."""
+    fixture = {
+        'format': analysis.wrapper.document.FORMAT, 'invented_only': True,
+        'clusters': clusters, 'diagnostics': diagnostics,
+        'draws': copy.deepcopy(draws), 'engineering_ready_assumption': False,
+    }
+    analysis.wrapper.document._input(fixture)
+    analysis.wrapper.document.I._fixture_clusters(clusters)
+    analysis.wrapper.document.adapter._diagnostics(clusters, diagnostics)
+    wrapper_coverage = {
+        'format': analysis.wrapper.COVERAGE_FORMAT, 'invented_only': True,
+        'layout_ids': list(range(seed.LAYOUTS)), 'clusters': coverage_clusters,
+    }
+    outcomes = analysis.wrapper._coverage(wrapper_coverage, fixture)
+    v.require(outcomes['complete'], 'saved-row worker coverage must be complete')
+    values = {
+        'fixture/input.json': fixture,
+        'fixture/slices.json': {
+            'format': analysis.wrapper.slices.INPUT_FORMAT,
+            'invented_only': True, 'clusters': slice_clusters,
+        },
+        'fixture/coverage.json': wrapper_coverage,
+        'fixture/operation.json': analysis.wrapper.operation_descriptor(expected_revision),
+    }
+    files = {name: v.canonical_json(value) for name, value in values.items()}
+    v.require(all(0 < len(raw) <= analysis.INPUT_LIMITS[name]
+                  for name, raw in files.items()) and
+              sum(map(len, files.values())) <= analysis.TOTAL_INPUT_LIMIT,
+              'saved-row projected worker input limits')
+    return files, outcomes
+
+
 def prepare_inputs(entries, *, expected_mode, expected_revision, draws):
     """Return canonical worker files and a closed, pin-bearing derivation record.
 
@@ -114,34 +148,9 @@ def prepare_inputs(entries, *, expected_mode, expected_revision, draws):
                 candidates[candidate][layer] = [row['status'] for row in rows]
         coverage_clusters.append({'cluster_id': part['cluster']['cluster_id'],
                                   'candidates': candidates})
-    fixture = {
-        'format': analysis.wrapper.document.FORMAT, 'invented_only': True,
-        'clusters': clusters, 'diagnostics': diagnostics,
-        'draws': copy.deepcopy(draws), 'engineering_ready_assumption': False,
-    }
-    analysis.wrapper.document._input(fixture)
-    analysis.wrapper.document.I._fixture_clusters(clusters)
-    analysis.wrapper.document.adapter._diagnostics(clusters, diagnostics)
-    wrapper_coverage = {
-        'format': analysis.wrapper.COVERAGE_FORMAT, 'invented_only': True,
-        'layout_ids': list(range(seed.LAYOUTS)), 'clusters': coverage_clusters,
-    }
-    outcomes = analysis.wrapper._coverage(wrapper_coverage, fixture)
-    v.require(outcomes['complete'], 'saved-row worker coverage must be complete')
-    values = {
-        'fixture/input.json': fixture,
-        'fixture/slices.json': {
-            'format': analysis.wrapper.slices.INPUT_FORMAT,
-            'invented_only': True, 'clusters': slice_clusters,
-        },
-        'fixture/coverage.json': wrapper_coverage,
-        'fixture/operation.json': analysis.wrapper.operation_descriptor(expected_revision),
-    }
-    files = {name: v.canonical_json(value) for name, value in values.items()}
-    v.require(all(0 < len(raw) <= analysis.INPUT_LIMITS[name]
-                  for name, raw in files.items()) and
-              sum(map(len, files.values())) <= analysis.TOTAL_INPUT_LIMIT,
-              'saved-row projected worker input limits')
+    files, outcomes = _pack_inputs(
+        clusters, diagnostics, slice_clusters, coverage_clusters,
+        expected_revision=expected_revision, draws=draws)
     binding = {
         **CLOSED, 'format': FORMAT, 'mode': 'fixture',
         'status': 'fixture_worker_inputs_prepared',

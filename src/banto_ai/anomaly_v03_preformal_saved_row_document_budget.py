@@ -17,6 +17,7 @@ from . import anomaly_v03_preformal_contiguous_document_budget as chain
 from . import anomaly_v03_saved_row_fixture_projection as projection
 from . import anomaly_v03_saved_row_document_publication as publication
 from . import anomaly_v03_saved_control_file_reader as control_files
+from . import anomaly_v03_observation_subset_fixture_projection as subset_projection
 
 
 ROOT = chain.ROOT
@@ -30,6 +31,7 @@ SOURCE_NAMES = tuple(dict.fromkeys((
     'src/banto_ai/anomaly_v03_preformal_saved_seed_contribution.py',
     'src/banto_ai/anomaly_v03_registered_saved_row_lineage.py',
     'src/banto_ai/anomaly_v03_registered_saved_summary.py',
+    'src/banto_ai/anomaly_v03_observation_subset_fixture_projection.py',
     *publication.SOURCE_NAMES,
     *control_files.SOURCE_NAMES,
     *chain.SOURCE_NAMES,
@@ -43,6 +45,17 @@ class SavedRowBudget(chain.ContiguousBudget):
         report['scope'] = SCOPE
         report['saved_control_loading_inside_budget'] = False
         report['saved_control_projection_inside_budget'] = True
+        return report
+
+
+class ObservationSubsetBudget(control_files.ControlFileBudget):
+    def close(self):
+        report = super().close()
+        report.update(format=subset_projection.PIPELINE_FORMAT + '-resource-budget',
+                      scope=subset_projection.SCOPE,
+                      observation_subset_control_loading_inside_budget=False,
+                      observation_payload_reader_executed_inside_budget=False,
+                      complete_observation_campaign_verified=False)
         return report
 
 
@@ -74,10 +87,16 @@ def _expected_pins(pins):
             raise ValueError('saved-row external projection input byte limit')
 
 
-def _prepare(entries, revision, expected_pins):
-    prepared = projection.prepare_inputs(
-        entries, expected_mode='fixture', expected_revision=revision,
-        draws=[list(range(40))])
+def _prepare(entries, revision, expected_pins, observation_subset=None,
+             expected_observation_subset=None):
+    if observation_subset is None:
+        prepared = projection.prepare_inputs(
+            entries, expected_mode='fixture', expected_revision=revision,
+            draws=[list(range(40))])
+    else:
+        prepared = subset_projection.prepare_inputs(entries, observation_subset,
+            expected_subset=expected_observation_subset, expected_mode='fixture',
+            expected_revision=revision, draws=[list(range(40))])
     if prepared['binding']['worker_input_pins'] != expected_pins:
         raise ValueError('saved-row external projection pins differ')
     return prepared
@@ -97,7 +116,7 @@ def _draw_input(binding, revision):
 
 def _recheck_controls(entries, binding):
     """Verify the identical pinned bytes; their pure projection is unchanged."""
-    chunks = binding['source_chunks']
+    chunks = binding.get('metadata_source_chunks', binding['source_chunks'])
     projection.v.require(type(entries) is list and len(entries) == len(chunks),
                          'saved-row control inventory changed')
     names = set(projection.coverage.RAW_LIMITS)
@@ -118,7 +137,8 @@ def _recheck_controls(entries, binding):
 def run_saved_rows(entries, *, expected_mode, expected_input_pins,
                    expected_revision, receipt_name, receipt_parent=OUTPUT_PARENT,
                    budget_limits=None, publish_document=False,
-                   control_root=None, expected_control_pinset_pin=None):
+                   control_root=None, expected_control_pinset_pin=None,
+                   observation_subset=None, expected_observation_subset=None):
     """Run a new invented attempt; optionally include owned local publication."""
     if type(publish_document) is not bool:
         raise ValueError('publication selection must be boolean')
@@ -130,6 +150,12 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
             raise ValueError('disk control route requires no supplied entries and local publication')
         control_root = control_files.validate_request(control_root, expected_control_pinset_pin)
         expected_control_pinset_pin = copy.deepcopy(expected_control_pinset_pin)
+    subset_mode = observation_subset is not None or expected_observation_subset is not None
+    if subset_mode:
+        if not disk_controls:
+            raise ValueError('observation-subset route requires pinned disk controls and publication')
+        expected_observation_subset = subset_projection.validate_subset_request(
+            observation_subset, expected_observation_subset)
     projection.evidence._digest(expected_revision, 40)
     _expected_pins(expected_input_pins)
     expected_input_pins = copy.deepcopy(expected_input_pins)
@@ -181,12 +207,22 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
                       same_budget_control_disk_to_fresh_reader_measured=False,
                       control_disk_pin_recheck_completed=False,
                       real_saved_chunk_reader_used=False, producer_executed_here=False)
+    if subset_mode:
+        result.update(format=subset_projection.PIPELINE_FORMAT, scope=subset_projection.SCOPE,
+            input_kind='invented metadata fixture plus externally retained saved-reader subset claims',
+            expected_observation_subset=expected_observation_subset,
+            observation_subset_control_loading_inside_budget=False,
+            observation_payload_reader_executed_inside_budget=False,
+            complete_observation_campaign_verified=False,
+            same_budget_subset_rows_to_fresh_reader_measured=False,
+            same_budget_observation_reader_to_fresh_reader_measured=False)
     budget = None
     loaded = None
     critical = None
     result_pin = None
     try:
-        budget_type = (control_files.ControlFileBudget if disk_controls else
+        budget_type = (ObservationSubsetBudget if subset_mode else
+                       control_files.ControlFileBudget if disk_controls else
                        publication.PublicationBudget if publish_document else SavedRowBudget)
         budget = budget_type(root, limits).start()
         budget.checkpoint('preflight')
@@ -202,7 +238,20 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
                 root / 'control-files.json', loaded['summary'], chain.MAX_CONTROL)
             result['stage'] = 'preflight'
             budget.checkpoint('preflight')
-        prepared = _prepare(entries, expected_revision, expected_input_pins)
+        if subset_mode:
+            prepared = _prepare(entries, expected_revision, expected_input_pins,
+                                observation_subset, expected_observation_subset)
+            combined_bytes = prepared['binding']['combined_control_input_bytes'] + len(loaded['index_raw'])
+            if combined_bytes > control_files.MAX_INPUT_BYTES:
+                raise ValueError('combined index, metadata and subset input byte bound')
+            result.update(subset_chunks=prepared['binding']['subset_chunks'],
+                subset_evaluations=prepared['binding']['subset_evaluations'],
+                remaining_metadata_chunks=prepared['binding']['remaining_metadata_chunks'],
+                affected_seed_indices=prepared['binding']['affected_seed_indices'],
+                combined_control_input_bytes_including_index=combined_bytes,
+                observation_subset_projected_input_pins=prepared['binding']['worker_input_pins'])
+        else:
+            prepared = _prepare(entries, expected_revision, expected_input_pins)
         budget.checkpoint('preflight')
         projection_pin = chain._write_value(
             root / 'projection.json', prepared['binding'], projection.MAX_BINDING_BYTES)
@@ -226,6 +275,8 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
         result['stage'] = 'document'
         budget.checkpoint('document')
         _recheck_controls(entries, prepared['binding'])
+        if subset_mode:
+            subset_projection.recheck_subset(observation_subset, expected_observation_subset)
         document, schema = chain._document(
             root, binding, fixture, calculation, audit, budget, result)
         result['stage'] = 'slices'
@@ -241,6 +292,8 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
         # The deterministic projection is bound to these exact immutable raw
         # bytes and the unchanged source; rehash without parsing/pooling twice.
         _recheck_controls(entries, prepared['binding'])
+        if subset_mode:
+            subset_projection.recheck_subset(observation_subset, expected_observation_subset)
         if (_source_pins(expected_revision) != before or
                 chain.platform_runtime.probe_runtime(ROOT) != runtime):
             raise ValueError('saved-row document source/runtime changed')
@@ -313,6 +366,8 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
         if disk_controls:
             result['same_budget_control_disk_to_fresh_reader_measured'] = (
                 result['status'] == 'measured' and result['control_disk_pin_recheck_completed'])
+        if subset_mode:
+            result['same_budget_subset_rows_to_fresh_reader_measured'] = result['status'] == 'measured'
         result['wall_seconds'] = time.monotonic() - started
         try:
             result_pin = chain._write_value(root / 'result.json', result, chain.MAX_CONTROL)
@@ -332,3 +387,21 @@ def run_saved_control_files(*, control_root, expected_control_pinset_pin,
         receipt_name=receipt_name, receipt_parent=receipt_parent, budget_limits=budget_limits,
         publish_document=True, control_root=control_root,
         expected_control_pinset_pin=expected_control_pinset_pin)
+
+
+def run_saved_control_files_with_observation_subset(*, observation_subset,
+        expected_observation_subset, control_root, expected_control_pinset_pin,
+        expected_mode, expected_input_pins, expected_revision,
+        receipt_name, receipt_parent=OUTPUT_PARENT, budget_limits=None):
+    """Full numerical fixture with explicit prior-reader subset provenance.
+
+    The subset's raw observations and reader execution precede this clock.
+    Its rows share the clock with control loading, projection and publication.
+    """
+    return run_saved_rows(None, expected_mode=expected_mode,
+        expected_input_pins=expected_input_pins, expected_revision=expected_revision,
+        receipt_name=receipt_name, receipt_parent=receipt_parent, budget_limits=budget_limits,
+        publish_document=True, control_root=control_root,
+        expected_control_pinset_pin=expected_control_pinset_pin,
+        observation_subset=observation_subset,
+        expected_observation_subset=expected_observation_subset)
