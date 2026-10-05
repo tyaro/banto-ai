@@ -1,5 +1,7 @@
 # v0.3 次セッション引き継ぎ・正式受入までの残件（2026-10-04）
 
+最新（2026-10-05）: clean `e7432e7` の [producer Git所有native試走](anomaly-multiseed-v0.3-producer-owned-git-native-2026-10-05.md) が成功。計156直接Git・536 rawを別照合し、Git起動禁止の保存verifierがpass、Job active0。producer88件を追加したが、analysis / audit / writer / reader 内Git、全source/runtime閉包は残る。初回a1の外側失敗も保全した。先行 `400e370` の [Ubuntu CI 37246057077](https://github.com/tyaro/banto-ai/actions/runs/37246057077) は両minor各2,874件と共有比較の全3 job成功で8 raw保存・ローカル再検証pass。今回の後続codeへ読み替えず、下表の正式同形全工程予算・容量2倍、40 seed由来、契約採択・最終回帰・S6と正式gateは継続する。
+
 最新（2026-10-05）: テスト移植修正`51400e8`の[Ubuntu CI 37243400814](https://github.com/tyaro/banto-ai/actions/runs/37243400814)は全3 job成功、両minor各2,869件・fail0/error0/skip237と共有fixture/必須試験の再検証pass。後続clean `899b37c`では[子の固定Git 26件を含む計68件のWindows試走](anomaly-multiseed-v0.3-child-fixed-git-native-2026-10-05.md)と220 rawの別照合、Git起動禁止の保存verifierがpass。S4-3の次は各role内Gitと全source/runtime閉包。共通campaignの40 seed由来、正式同形全工程予算・容量2倍、契約採択と最終回帰を含む下表の残件は継続する。以下は先行保存点の履歴。
 
 2026-10-05追記: `b39e595`の[Ubuntu CI 37237626121](https://github.com/tyaro/banto-ai/actions/runs/37237626121)は新規wall-rowテストのWindowsパスfixture解釈2件で両minor不合格。製品コードは変更せずテストfixtureを修正し、Windows対象9試験pass。Ubuntu再試験が残る。native試走の保存rawは固定revision `b39e595`の証拠であり、修正版のCIと混同しない。正式gateと下表の残件は変わらない。
