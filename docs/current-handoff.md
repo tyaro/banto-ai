@@ -1,13 +1,13 @@
 # 次のタスク用の短い引継ぎ
 
-2026-10-06 JST。branch `codex/preformal-acceptance-scope`、repository `D:\develop\banto-ai`。
+2026-10-07 JST。branch `codex/preformal-acceptance-scope`、repository `D:\develop\banto-ai`。
 
 ## 現在の状態
 
-- 最新code保存点: `b2a6065f84c916bd32191d16ef2d4003b5a9e559`（writer/fresh reader runtime実境界・共通caller接続）。clean同HEADの限定runtime02で75 source・全stdlib2,559 file・実loaded前後・元handle identity・exit0/回収・親post-exit disk照合pass、旧e04の5 payload pin維持、96.187/300秒、別checker40 raw/75 source pass。数値由来02d567fは別欄に保持。固有132件・622.398秒・対象19 pin前後一致・safety pass。旧af3e7a5の算術2役a3、旧02d567fの共通e04、容量・失敗履歴は保全。新4役/全7役native通しは未実施。
+- 最新code保存点: `799145aec0d56265e66d4bdec18bae65400c1307`（saved-reader実在庫境界・元handle identity・common caller接続）。clean同HEADの限定runtime01は103 source・全stdlib2,559 file・loaded前後・exit0/回収・親post-exit照合pass。旧e04の22 payloadと6評価再導出・行投影pin維持、77.399/120秒。別checker41 raw/103 source/旧22 payload pass。焦点60件・6.191秒・対象10 pin前後一致、safety pass。算術af3e7a5・公開b2a6065・saved-reader799145aの5役は別HEAD限定確認。producer/initial-readerと同一revision全7役nativeは未了。
 - 正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0。登録holdout40 seedは未読。実設備・顧客データは対象外。
 - 実データ作業は保存済み合成dev8/smoke2、120区間・240 dataset・720評価のengineering読取り・記述報告まで。新native試行は架空入力のみ。
-- 追加agent0。まとめ試験132件・2公開worker・sampler/checkerは終了。生成や50,000 drawの再計算は0、長い全工程は反復していない。runtime01の準備JSON型不備はworker起動0で保全、別runtime02で修正成功。checkerのpayload配置仮定も原失敗を残し別check3で修正。前保存点eebfa80のCI37436807053は全3job成功・両minor各3,026件、10 raw保存/ローカルverifier照合pass。新b2a6065のCIへ代用しない。
+- 追加agent0。焦点60試験・saved-reader1 worker・monitor・保存checkerは終了。生成/50,000 draw再計算0、登録holdout未読。長い全工程は反復していない。前保存点97370f3のCI37485069436は全3job成功・両minor各3,039件・10 raw保存/local verifier照合pass。runner版はtest2job20260927.320.1、compare20261004.327.1、digest/正式採択なし。旧版固定helper失敗は保全・別v2で修正。新saved-reader codeのCIへ代用しない。
 
 ## 正式評価を始める条件
 
@@ -15,7 +15,7 @@
 
 1. **運用契約採択**: 現26H2/build26300/UBR9457、公開保証A/B、root/schema、revision、slice/sidecar、失敗・再登録規則、runner同定を版付き改訂・独立監査へ結ぶ。旧25H2正式pinは不一致のまま。
 2. **入力/consumer接続**: 登録40 seed・480区間・960 dataset・2,880評価の保存形式、latest attempt、由来・終了を固定入力で検証し、全分母・slice/sidecar・50,000 draw・全文書へ接続する。
-3. **source/runtimeと終了**: 5役の最終clean source、stdlib/拡張/DLL/CRT/外部program inventoryと実行境界、業務workerの元handle・identity・exit/reap、異常時子孫回収を照合する。
+3. **source/runtimeと終了**: 5役＋初期/保存readerの最終clean source、stdlib/拡張/DLL/CRT/外部program inventoryと実行境界、業務workerの元handle・identity・exit/reap、異常時子孫回収を照合する。
 4. **最終受入**: 最終revisionでUbuntu24.04/Python3.12・3.14、Windows26H2/Python3.14 native、正式dev8/smoke2全layout/両層/3候補、独立受入を完了する。
 5. **共通予算と容量**: 生成→保存reader→50,000 draw全文書→独立audit→staging/writer→fresh readerを同じ外側予算で測り、smokeに基づく正式同形見積りの2倍以上の空きを確認する。
 
@@ -24,6 +24,8 @@
 v3では、メモリ内コードの完全認証、conhost等の全補助processの個別exit code、未採用prototypeの全統合、架空480区間完走を追加必須にしない案を提示した。実ロード依存在庫と業務worker終了・子孫回収は維持する。DACL/独立tokenは保証Bなら必要、保証Aへ変更するには版付き改訂・独立監査が必要。旧fixtureのfalse flagは変更しない。
 
 ## 最新の実装・証拠
+
+[saved-reader runtime native](results/anomaly-multiseed-v0.3-saved-reader-runtime-observation-native-2026-10-07.md): clean799145aで103 source・stdlib2,559 file・loaded各phase324 file/212 module/47 native、元handleと両phase、exit0/回収・親post-exitを照合。旧22 payload131,144,119 B・6評価再導出・行投影pin維持。child59.090/300秒・1 GiB上限、root呼出77.399/120秒。別checker41保存raw・103 source・旧22 payload pass。producer/initial-readerと同revision全7役native、外部program/異常子孫回収・正式受入が残る。
 
 [writer/fresh reader runtime native](results/anomaly-multiseed-v0.3-publication-runtime-observation-native-2026-10-06.md): clean b2a6065で75 source・stdlib2,559 file・loaded各phase332 file/217 module/47 nativeを外部pinへ照合。元handle identityとexit/reap、旧数値source/worker sourceの区別、5旧payload pin一致、2役45.365/19.426秒、共有96.187/300秒を確認。別保存checker40 raw/75 source pass。初回準備とcheckerの仮定違いは保全して限定修正。登録holdout未読・正式flag false。
 
