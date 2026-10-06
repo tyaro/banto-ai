@@ -1,11 +1,13 @@
 """Shared-stop, disjoint-root and exit accounting for the composed fixture."""
 from contextlib import ExitStack
+import json
 from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import Mock, patch
 
 from banto_ai import anomaly_v03_preformal_generation_publication_budget as whole
+from banto_ai import anomaly_v03_role_runtime_observation as obs
 from tests import test_anomaly_v03_preformal_generated_chain_budget as helpers
 from tests.test_anomaly_v03_arithmetic_runtime_composition import candidates
 
@@ -161,10 +163,30 @@ class EnvelopeTests(unittest.TestCase):
         self.assertFalse(self.outer.exists())
         self.assertFalse(self.producer.exists())
 
+    def test_invalid_publication_bundle_rejects_before_roots_or_generation(self):
+        with patch.object(whole.generated, 'generate_and_read') as producer, \
+             self.assertRaisesRegex(ValueError, 'role inventory'):
+            whole.run(outer_root=self.outer, producer_root=self.producer,
+                reread_root=self.reader, receipt_name='trial-one',
+                expected_manifest_pin={'bytes': 1, 'sha256': 'a' * 64},
+                expected_revision='b' * 40, control_root=self.artifacts / 'unused',
+                expected_control_pinset_pin={'bytes': 1, 'sha256': 'a' * 64},
+                expected_input_pins={}, publication_runtime_profiles={})
+        producer.assert_not_called()
+        self.assertFalse(self.outer.exists())
+        self.assertFalse(self.producer.exists())
+
     def test_outer_clock_forwards_pins_and_requires_matching_publication_evidence(self):
         bridge = whole.document.chain.draw_bridge
         pin = {'bytes': 1, 'sha256': 'a' * 64}
-        profiles = candidates(self.repo, {name: pin for name in bridge.SOURCE_NAMES})
+        sources = {name: pin for name in (*bridge.SOURCE_NAMES, *whole.document.publication.SOURCE_NAMES)}
+        profiles = candidates(self.repo, sources)
+        publication_profiles = {}
+        for role in ('writer', 'reader'):
+            value = json.loads(profiles['analysis']['raw'])
+            value.update(role=role, format=obs.PUBLICATION_FORMAT, operation=obs.OPERATIONS[role])
+            raw = obs.v.canonical_json(value)
+            publication_profiles[role] = {'raw': raw, 'expected_pin': obs._pin(raw)}
         manifest = {'revision': 'b' * 40, 'recipe_id': whole.generated.RECIPE,
                     'output_bytes': 100, 'chunk_index': 0, 'output_pins': {}}
         def generated(root, *, outer_budget, **kwargs):
@@ -174,9 +196,10 @@ class EnvelopeTests(unittest.TestCase):
         def reread(root, reader_root, *, outer_budget, **kwargs):
             outer_budget.record_role('saved-reader', 'complete', pin, 3, True)
             return {'status': 'verified', 'result_pin': pin, 'verified_evaluations': 6}
-        def publication(*, outer_budget, arithmetic_runtime_profiles, **kwargs):
+        def publication(*, outer_budget, arithmetic_runtime_profiles, publication_runtime_profiles, **kwargs):
             self.assertTrue(outer_budget._thread.is_alive())
             self.assertEqual(arithmetic_runtime_profiles, profiles)
+            self.assertEqual(publication_runtime_profiles, publication_profiles)
             for pid, role in enumerate(('analysis', 'audit', 'writer', 'reader'), 4):
                 outer_budget.record_role(role, 'complete', pin, pid, True)
             for name in whole.document.chain.OUTPUTS:
@@ -188,10 +211,17 @@ class EnvelopeTests(unittest.TestCase):
                 published['arithmetic_runtime_observation_checked'] = True
             if case == 'different':
                 published['arithmetic_runtime_profile_pins']['audit'] = pin
+            published['publication_runtime_profile_pins'] = {role: entry['expected_pin']
+                for role, entry in publication_profiles.items()}
+            if case != 'publication-missing':
+                published['publication_runtime_observation_checked'] = True
+            if case == 'publication-different':
+                published['publication_runtime_profile_pins']['reader'] = pin
             return published
         with patch.object(bridge, 'ROOT', self.repo), \
-             patch.object(whole, '_source', return_value={'invented-source': pin}), \
-             patch.object(whole.document.chain.platform_runtime, 'probe_runtime', return_value={'test': True}), \
+             patch.object(whole.document.publication, 'ROOT', self.repo), \
+             patch.object(whole, '_source', return_value=sources), \
+             patch.object(whole.document.chain.platform_runtime, 'probe_runtime', return_value=obs.runtime.EXPECTED), \
              patch.object(whole.document.control_files, 'validate_request'), \
              patch.object(whole.reread, '_manifest', return_value=(manifest, {})), \
              patch.object(whole.generated, 'generate_and_read', side_effect=generated), \
@@ -199,7 +229,7 @@ class EnvelopeTests(unittest.TestCase):
              patch.object(whole, '_subset', return_value=([], {}, {})), \
              patch.object(whole.reread, '_recheck_saved_outputs', return_value={'invented-check': True}), \
              patch.object(whole.document, 'run_saved_control_files_with_observation_subset', side_effect=publication):
-            for case in ('missing', 'different', 'matched'):
+            for case in ('missing', 'different', 'publication-missing', 'publication-different', 'matched'):
                 with self.subTest(case=case):
                     manifest_path = self.artifacts / ('anomaly-v03-preformal-generated-pinsets-' + case) / 'pins.json'
                     manifest_path.parent.mkdir()
@@ -212,17 +242,19 @@ class EnvelopeTests(unittest.TestCase):
                         control_root=self.artifacts / 'unused', expected_control_pinset_pin=pin,
                         expected_input_pins={'fixture/' + name: pin
                             for name in ('input.json', 'slices.json', 'coverage.json', 'operation.json')},
-                        arithmetic_runtime_profiles=profiles)
+                        arithmetic_runtime_profiles=profiles, publication_runtime_profiles=publication_profiles)
                     matched = case == 'matched'
                     self.assertEqual(result['status'], 'measured' if matched else 'failed')
-                    self.assertEqual(result['arithmetic_runtime_observation_checked'], matched)
+                    self.assertEqual(result['arithmetic_runtime_observation_checked'], case not in ('missing', 'different'))
+                    self.assertEqual(result['publication_runtime_observation_checked'], matched)
                     self.assertEqual(result['same_outer_budget_generation_to_fresh_reader_measured'], matched)
                     self.assertTrue((outer / 'result.json').is_file())
                     self.assertTrue(result['all_seven_child_exits_reported'])
                     self.assertFalse(result['formal_permission'])
                     self.assertFalse(result['runtime_closure_complete'])
                     if not matched:
-                        self.assertIn('not checked' if case == 'missing' else 'pins differ', result['detail'])
+                        self.assertIn('not checked' if case == 'missing' else
+                            'pins differ' if case == 'different' else 'publication runtime observations', result['detail'])
 
 
 if __name__ == '__main__':

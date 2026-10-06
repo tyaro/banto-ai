@@ -35,6 +35,9 @@ PAYLOAD_LIMITS = {
 LIMITS = {'wall_seconds': 60, 'private_bytes': 512 * 1024**2,
           'output_bytes': 64 * 1024}
 SOURCE_NAMES = (
+    'src/banto_ai/anomaly_v03_role_runtime_observation.py',
+    'src/banto_ai/_anomaly_v03_inventory.py',
+    'src/banto_ai/_anomaly_v03_reader_dependencies.py',
     'src/banto_ai/anomaly_v03_saved_row_document_publication.py',
     'src/banto_ai/anomaly_v03_process_supervisor.py',
     'src/banto_ai/anomaly_v03_reader_evidence.py',
@@ -101,6 +104,36 @@ def _source_recheck(pins):
 
 def _phase(observer, name):
     return nullcontext() if observer is None else observer(name)
+
+
+def validate_runtime_profiles(profiles, *, revision):
+    if profiles is None:
+        return None
+    from . import anomaly_v03_role_runtime_observation as observation
+    chain.contract.require(type(profiles) is dict and set(profiles) == {'writer', 'reader'},
+                           'publication runtime profile role inventory')
+    retained = {}
+    for role, entry in profiles.items():
+        chain.contract.require(type(entry) is dict and set(entry) == {'raw', 'expected_pin'},
+                               'publication runtime profile entry fields')
+        profile = observation.load_profile(entry['raw'], entry['expected_pin'], root=ROOT, role=role)
+        chain.contract.require(profile['source_revision'] == revision,
+                               'publication runtime profile revision differs')
+        retained[role] = {'raw': entry['raw'], 'expected_pin': copy.deepcopy(entry['expected_pin'])}
+    return retained
+
+
+def check_runtime_profiles(profiles, *, revision, source_pins, runtime):
+    retained = validate_runtime_profiles(profiles, revision=revision)
+    if retained is None:
+        return None
+    from . import anomaly_v03_role_runtime_observation as observation
+    for role, entry in retained.items():
+        profile = observation.load_profile(entry['raw'], entry['expected_pin'], root=ROOT, role=role)
+        chain.contract.require(profile['runtime'] == runtime, 'publication runtime profile tuple differs')
+        chain.contract.require(all(name in source_pins and profile['source_files'].get(name) == source_pins[name]
+                                   for name in SOURCE_NAMES), 'publication runtime profile selected Git source differs')
+    return retained
 
 
 def _retained(request, *, phase=None):
@@ -249,7 +282,19 @@ def worker_main(argv):
                 request['role'] not in ('writer', 'reader') or
                 request_path != Path(request['receipt_root']) / request['role'] / 'request.json'):
             raise ValueError('publication worker request ownership differs')
-        result, files = _perform(request)
+        if 'runtime_inventory_profile_pin' in request:
+            from . import anomaly_v03_role_runtime_observation as observation
+            profile_pin = request['runtime_inventory_profile_pin']
+            profile_raw = _read(request_path.parent / 'inventory-profile.json', profile_pin, observation.MAX_PROFILE)
+            profile = observation.load_profile(profile_raw, profile_pin, root=ROOT, role=request['role'])
+            if profile['source_revision'] != request.get('worker_source_revision', request['source_revision']):
+                raise ValueError('publication runtime worker revision differs')
+            (result, files), receipt = observation.run_observed(lambda: _perform(request),
+                root=request_path.parent, source_root=ROOT, role=request['role'],
+                profile_raw=profile_raw, profile_pin=profile_pin, input_pin=request_pin)
+            result['runtime_observation'] = receipt
+        else:
+            result, files = _perform(request)
         result.update(format=FORMAT, role=request['role'], status='verified',
             request_pin=request_pin, source_pins=request['source_pins'],
             payload_source_pins=request['payload_source_pins'],
@@ -265,8 +310,19 @@ def worker_main(argv):
     return 0
 
 
-def _role(request, root, budget):
+def _role(request, root, budget, *, runtime_profile=None):
     role = request['role']
+    if runtime_profile is not None:
+        from . import anomaly_v03_role_runtime_observation as observation
+        chain.contract.require(type(runtime_profile) is dict and set(runtime_profile) == {'raw', 'expected_pin'},
+                               'publication runtime profile entry fields')
+        profile_raw, profile_pin = runtime_profile['raw'], copy.deepcopy(runtime_profile['expected_pin'])
+        profile = observation.load_profile(profile_raw, profile_pin, root=ROOT, role=role)
+        if profile['source_revision'] != request.get('worker_source_revision', request['source_revision']):
+            raise ValueError('publication runtime worker revision differs')
+        request = {**request, 'runtime_inventory_profile_pin': profile_pin}
+    elif 'runtime_inventory_profile_pin' in request:
+        raise ValueError('publication runtime expectation missing')
     target = root / role
     target.mkdir()
     raw = io.json_bytes(request)
@@ -274,11 +330,15 @@ def _role(request, root, budget):
         raise ValueError('publication request byte limit')
     pin = _pin(raw)
     io._exclusive(target / 'request.json', raw)
+    if runtime_profile is not None:
+        io._exclusive(target / 'inventory-profile.json', profile_raw)
     launch = {}
     def boundary():
         budget.checkpoint(role)
         _read(target / 'request.json', pin, REQUEST_MAX)
         _source_recheck(request['source_pins'])
+        if runtime_profile is not None:
+            _read(target / 'inventory-profile.json', profile_pin, observation.MAX_PROFILE)
     def started(process):
         launch.update(observed.creation_observation(process.pid, process._handle))
         io._exclusive(target / 'launch.json', io.json_bytes(launch))
@@ -311,6 +371,12 @@ def _role(request, root, budget):
         'registered_data_read': False, 'independent_s6_complete': False,
         'process': {**launch, 'parent_pid': os.getpid()},
     }, 'owned publication reply')
+    if runtime_profile is not None:
+        observation.verify_receipt(reply.get('runtime_observation'), root=target, source_root=ROOT,
+            role=role, profile_raw=profile_raw, profile_pin=profile_pin, input_pin=pin, process=launch)
+        budget.checkpoint(role)
+    elif 'runtime_observation' in reply:
+        raise ValueError('unrequested publication runtime observation')
     chain.draw_bridge.projection.evidence._digest(reply['marker_raw_sha256'])
     if role == 'reader' and (reply.get('local_verified') is not True or
                             reply.get('payloads') != len(PAYLOAD_LIMITS) or
@@ -322,7 +388,14 @@ def _role(request, root, budget):
     return result
 
 
-def publish(root, budget, result, revision, source_pins, input_pins):
+def publish(root, budget, result, revision, source_pins, input_pins, *, publication_runtime_profiles=None):
+    profiles = None
+    if publication_runtime_profiles is not None:
+        profiles = check_runtime_profiles(publication_runtime_profiles, revision=revision,
+            source_pins=source_pins, runtime=chain.platform_runtime.probe_runtime(ROOT))
+    if profiles is not None:
+        result.update(publication_runtime_profile_pins={role: copy.deepcopy(entry['expected_pin'])
+            for role, entry in profiles.items()}, publication_runtime_observation_checked=False)
     request = {'format': FORMAT + '-request', 'role': 'writer',
         'source_revision': revision, 'source_pins': source_pins,
         'receipt_root': str(root), 'publication_root': str(root / 'published'),
@@ -336,13 +409,14 @@ def publish(root, budget, result, revision, source_pins, input_pins):
     request['payload_pins'] = {name: _pin(raw) for name, raw in files.items()}
     result.update(publication_status='unconfirmed', stage='writer')
     budget.checkpoint('writer')
-    writer = _role(request, root, budget)
+    writer = _role(request, root, budget, **({'runtime_profile': profiles['writer']} if profiles is not None else {}))
     result.update(writer=writer, publication_status='completed',
                   marker_raw_sha256=writer['marker_raw_sha256'],
                   writer_reaped_before_reader_start=True, stage='reader', reader_status='unconfirmed')
     budget.checkpoint('reader')
     reader = _role({**request, 'role': 'reader',
-                    'expected_marker_sha256': writer['marker_raw_sha256']}, root, budget)
+                    'expected_marker_sha256': writer['marker_raw_sha256']}, root, budget,
+                   **({'runtime_profile': profiles['reader']} if profiles is not None else {}))
     if (reader['process']['pid'] == writer['process']['pid'] or
             reader['process']['start_token'] == writer['process']['start_token']):
         raise ValueError('fresh reader process identity differs')
@@ -353,3 +427,19 @@ def publish(root, budget, result, revision, source_pins, input_pins):
     result.update(reader=reader, reader_status='completed', publication_performed=True,
                   local_publication_performed=True, payload_source_pins=request['payload_source_pins'],
                   payload_pins=request['payload_pins'])
+    if profiles is not None:
+        result['publication_runtime_observation_checked'] = True
+
+
+def recheck_runtime_profiles(root, result):
+    if 'publication_runtime_profile_pins' not in result:
+        return
+    from . import anomaly_v03_role_runtime_observation as observation
+    for role, profile_pin in result['publication_runtime_profile_pins'].items():
+        target = root / role
+        _read(target / 'inventory-profile.json', profile_pin, observation.MAX_PROFILE)
+        reply = chain.contract.strict_json(_read(target / 'worker/report.json',
+            result[role]['worker_reply_pin'], LIMITS['output_bytes']))
+        receipt = reply['runtime_observation']
+        for phase in ('before', 'after'):
+            _read(target / (role + '-runtime-' + phase + '.json'), receipt[phase + '_pin'], observation.MAX_RECEIPT)

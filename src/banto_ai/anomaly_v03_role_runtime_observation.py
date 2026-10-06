@@ -1,4 +1,4 @@
-"""Caller-pinned runtime observations at actual arithmetic worker boundaries.
+"""Caller-pinned runtime observations at actual fixture worker boundaries.
 
 This candidate records whole stdlib disk pins and loaded import/image snapshots.
 It authenticates neither in-memory code nor transient loads, external programs,
@@ -21,13 +21,17 @@ from . import anomaly_v03_reader_evidence as process_evidence
 
 FORMAT = 'anomaly-v03-arithmetic-runtime-profile-v1'
 RECEIPT = 'anomaly-v03-arithmetic-runtime-observation-v1'
+PUBLICATION_FORMAT = 'anomaly-v03-publication-runtime-profile-v1'
+PUBLICATION_RECEIPT = 'anomaly-v03-publication-runtime-observation-v1'
 MAX_PROFILE = 2 * 1024**2
 MAX_RECEIPT = 2 * 1024**2
 MAX_SOURCES = 4096
 MAX_STDLIB_FILES = 8192
 MAX_STDLIB_BYTES = 128 * 1024**2
 OPERATIONS = {'analysis': 'invented40-cluster-50000-primary',
-              'audit': 'invented40-cluster-50000-independent-primary-audit'}
+              'audit': 'invented40-cluster-50000-independent-primary-audit',
+              'writer': 'publish-invented-full-draw-five-payloads',
+              'reader': 'fresh-readback-invented-full-draw-five-payloads'}
 CLOSED = {'formal_permission': False, 'source_closure_complete': False,
           'runtime_closure_complete': False, 'execution_authenticated': False,
           'independent_s6_complete': False}
@@ -35,6 +39,23 @@ CLOSED = {'formal_permission': False, 'source_closure_complete': False,
 
 def _pin(raw):
     return {'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()}
+
+
+def profile_format(role):
+    v.require(role in OPERATIONS, 'runtime observation role')
+    return PUBLICATION_FORMAT if role in ('writer', 'reader') else FORMAT
+
+
+def receipt_format(role):
+    v.require(role in OPERATIONS, 'runtime observation role')
+    return PUBLICATION_RECEIPT if role in ('writer', 'reader') else RECEIPT
+
+
+def required_sources(role):
+    v.require(role in OPERATIONS, 'runtime observation role')
+    worker = ('anomaly_v03_saved_row_document_publication.py' if role in ('writer', 'reader')
+              else 'anomaly_v03_preformal_bound_draw_bridge.py')
+    return ['src/banto_ai/' + worker, 'src/banto_ai/anomaly_v03_role_runtime_observation.py']
 
 
 def _file_pin(value):
@@ -63,7 +84,7 @@ def validate_profile(profile, *, root, role):
     v.require(type(profile) is dict and set(profile) == {'format', 'mode', 'acceptance',
         'role', 'operation', 'source_root', 'source_revision', 'runtime', 'source_files',
         'stdlib_files', 'native_files', 'cache_files', 'scope'}, 'runtime profile fields')
-    v.require(profile['format'] == FORMAT and profile['mode'] == 'fixture'
+    v.require(profile['format'] == profile_format(role) and profile['mode'] == 'fixture'
               and profile['acceptance'] == 'candidate-not-accepted'
               and profile['role'] == role and profile['operation'] == OPERATIONS[role]
               and profile['source_root'] == str(Path(root).absolute())
@@ -75,8 +96,7 @@ def validate_profile(profile, *, root, role):
     _map(profile['stdlib_files'], MAX_STDLIB_FILES)
     v.require(sum(p['bytes'] for p in profile['stdlib_files'].values()) <= MAX_STDLIB_BYTES,
               'runtime profile stdlib bytes')
-    required = {'src/banto_ai/anomaly_v03_preformal_bound_draw_bridge.py',
-                'src/banto_ai/anomaly_v03_role_runtime_observation.py'}
+    required = set(required_sources(role))
     v.require(required <= set(profile['source_files']), 'runtime profile worker source missing')
     for section in ('native_files', 'cache_files'):
         values = profile[section]
@@ -141,7 +161,7 @@ def prepare_profile(*, root, revision, role, source_files):
             native[row['physical_path']] = row['pin']
         elif row['category'] == 'bytecode-cache-candidate':
             caches[row['physical_path']] = row['pin']
-    profile = {'format': FORMAT, 'mode': 'fixture', 'acceptance': 'candidate-not-accepted',
+    profile = {'format': profile_format(role), 'mode': 'fixture', 'acceptance': 'candidate-not-accepted',
         'role': role, 'operation': OPERATIONS[role], 'source_root': str(Path(root).absolute()),
         'source_revision': revision, 'runtime': observed_runtime, 'source_files': source,
         'stdlib_files': stdlib, 'native_files': native, 'cache_files': caches, 'scope': dict(CLOSED)}
@@ -176,7 +196,7 @@ def observe(profile, *, root, phase):
     v.require(stdlib == profile['stdlib_files'], 'runtime observation stdlib pins differ')
     loaded = dependencies.collect(root)
     _loaded_expected(profile, loaded, source, stdlib, root)
-    return {'format': RECEIPT, 'role': profile['role'], 'phase': phase,
+    return {'format': receipt_format(profile['role']), 'role': profile['role'], 'phase': phase,
         'source_revision': profile['source_revision'], 'runtime': observed_runtime,
         'source_files': len(source), 'source_inventory_pin': _pin(v.canonical_json(source)),
         'stdlib_files': len(stdlib), 'stdlib_bytes': sum(p['bytes'] for p in stdlib.values()),
@@ -193,7 +213,7 @@ def crosscheck_saved(profile, before, after, *, root, input_pin, process, profil
             'source_revision', 'runtime', 'source_files', 'source_inventory_pin', 'stdlib_files',
             'stdlib_bytes', 'stdlib_inventory_pin', 'loaded', 'profile_pin', 'input_pin', 'process',
             *CLOSED}, 'runtime saved observation fields')
-        expected = {'format': RECEIPT, 'role': profile['role'], 'phase': phase,
+        expected = {'format': receipt_format(profile['role']), 'role': profile['role'], 'phase': phase,
             'source_revision': profile['source_revision'], 'runtime': profile['runtime'],
             'source_files': len(source), 'source_inventory_pin': _pin(v.canonical_json(source)),
             'stdlib_files': len(stdlib), 'stdlib_bytes': sum(p['bytes'] for p in stdlib.values()),
@@ -213,12 +233,30 @@ def crosscheck_saved(profile, before, after, *, root, input_pin, process, profil
         return raw
 
     result = dependencies.verify_pair(before['loaded'], after['loaded'], root=root,
-        revision=profile['source_revision'], git=retained_source, required_sources=[
-            'src/banto_ai/anomaly_v03_preformal_bound_draw_bridge.py',
-            'src/banto_ai/anomaly_v03_role_runtime_observation.py'])
+        revision=profile['source_revision'], git=retained_source,
+        required_sources=required_sources(profile['role']))
     result.update(status='observed_dependencies_external_source_disk_matched',
                   expectation_origin='caller-pinned-source-manifest-not-fresh-git-process')
     return result
+
+
+def verify_receipt(receipt, *, root, source_root, role, profile_raw, profile_pin, input_pin, process):
+    """Bind saved phases to the caller's original-handle identity after exit."""
+    profile = load_profile(profile_raw, profile_pin, root=source_root, role=role)
+    v.require(type(receipt) is dict and set(receipt) == {'format', 'profile_pin', 'input_pin',
+        'before_pin', 'after_pin', 'process', *CLOSED}, 'runtime receipt fields')
+    expected = {'format': receipt_format(role), 'profile_pin': profile_pin,
+                'input_pin': input_pin, 'process': process, **CLOSED}
+    v.require(all(v.canonical_json(receipt[k]) == v.canonical_json(value)
+                  for k, value in expected.items()), 'runtime receipt external binding differs')
+    snapshots = {}
+    for phase in ('before', 'after'):
+        _file_pin(receipt[phase + '_pin'])
+        raw = process_evidence._file(Path(root) / (role + '-runtime-' + phase + '.json'), MAX_RECEIPT)
+        v.require(_pin(raw) == receipt[phase + '_pin'], 'runtime receipt phase pin differs')
+        snapshots[phase] = v.strict_json(raw)
+    return crosscheck_saved(profile, snapshots['before'], snapshots['after'], root=source_root,
+        input_pin=input_pin, process=process, profile_pin=profile_pin)
 
 
 def run_observed(operation, *, root, source_root, role, profile_raw, profile_pin, input_pin):
@@ -247,11 +285,11 @@ def run_observed(operation, *, root, source_root, role, profile_raw, profile_pin
                 for n, row in before['loaded'][section].items()), 'runtime observation dependency disappeared/changed')
         after.update(profile_pin=profile_pin, input_pin=input_pin, process=process)
         after_pin = save('after', after)
-        return result, {'format': RECEIPT, 'profile_pin': profile_pin, 'input_pin': input_pin,
+        return result, {'format': receipt_format(role), 'profile_pin': profile_pin, 'input_pin': input_pin,
                         'before_pin': before_pin, 'after_pin': after_pin, 'process': process, **CLOSED}
     except BaseException as error:
         try:
-            save('failure', {'format': RECEIPT, 'role': role, 'status': 'failed', 'profile_pin': profile_pin,
+            save('failure', {'format': receipt_format(role), 'role': role, 'status': 'failed', 'profile_pin': profile_pin,
                             'process': process, 'error_type': type(error).__name__, 'detail': str(error)[:1000], **CLOSED})
         except BaseException as diagnostic_error:
             error.add_note('runtime failure receipt could not be saved: ' + type(diagnostic_error).__name__)

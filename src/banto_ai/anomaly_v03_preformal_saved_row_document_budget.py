@@ -141,7 +141,8 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
                    budget_limits=None, publish_document=False,
                    control_root=None, expected_control_pinset_pin=None,
                    observation_subset=None, expected_observation_subset=None,
-                   outer_budget=None, arithmetic_runtime_profiles=None):
+                   outer_budget=None, arithmetic_runtime_profiles=None,
+                   publication_runtime_profiles=None):
     """Run a new invented attempt; optionally include owned local publication."""
     if type(publish_document) is not bool:
         raise ValueError('publication selection must be boolean')
@@ -162,6 +163,10 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
     projection.evidence._digest(expected_revision, 40)
     profiles = chain.draw_bridge.validate_runtime_profiles(arithmetic_runtime_profiles,
                                                            revision=expected_revision)
+    publication_profiles = publication.validate_runtime_profiles(publication_runtime_profiles,
+                                                                  revision=expected_revision)
+    if publication_profiles is not None and not publish_document:
+        raise ValueError('publication runtime profiles require local publication')
     _expected_pins(expected_input_pins)
     expected_input_pins = copy.deepcopy(expected_input_pins)
     projection.v.safe_relative_path(receipt_name)
@@ -205,6 +210,9 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
                       reader_status='not_started', writer_reaped_before_reader_start=False,
                       runtime_scope='serialized-dedicated-caller-platform-fixture-v2',
                       concurrent_calls_supported=False)
+    if publication_profiles is not None:
+        result.update(publication_runtime_profile_pins={role: copy.deepcopy(entry['expected_pin'])
+            for role, entry in publication_profiles.items()}, publication_runtime_observation_checked=False)
     if disk_controls:
         result.update(format=control_files.PIPELINE_FORMAT, scope=control_files.SCOPE,
                       input_kind='pinned invented saved-control files',
@@ -241,6 +249,8 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
         before = _source_pins(expected_revision)
         runtime = chain.platform_runtime.probe_runtime(ROOT)
         result.update(source_pins_before=before, runtime_before=runtime)
+        publication.check_runtime_profiles(publication_profiles, revision=expected_revision,
+            source_pins=before, runtime=runtime)
         chain.draw_bridge.stage_runtime_profiles(root, profiles, revision=expected_revision,
             budget=budget, source_pins=before, runtime=runtime, result=result)
         if disk_controls:
@@ -296,7 +306,12 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
         result['stage'] = 'slices'
         chain._slices(root, binding, fixture, slices, document, schema, budget, result)
         if publish_document:
-            publication.publish(root, budget, result, expected_revision, before, expected_input_pins)
+            options = ({'publication_runtime_profiles': publication_profiles} if publication_profiles is not None else {})
+            publication.publish(root, budget, result, expected_revision, before, expected_input_pins, **options)
+            if publication_profiles is not None and (result.get('publication_runtime_observation_checked') is not True or
+                    result.get('publication_runtime_profile_pins') != {role: entry['expected_pin']
+                        for role, entry in publication_profiles.items()}):
+                raise ValueError('publication runtime observations missing or profile pins differ')
         if disk_controls:
             result['stage'] = 'control-reread'
             result['control_disk_recheck'] = control_files.recheck_controls(loaded, budget=budget)
@@ -330,6 +345,7 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
             chain.draw_bridge._read(root / 'control-files.json', result['control_file_read_pin'], chain.MAX_CONTROL)
         budget.checkpoint('postflight')
         chain.draw_bridge.recheck_runtime_profiles(root, result)
+        publication.recheck_runtime_profiles(root, result)
         result.update(status='measured', stage='complete',
                       source_pins_after=before, runtime_after=runtime)
     except chain.draw_bridge.draw_budget.UnreapedMeasurement as error:
@@ -396,21 +412,22 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
 def run_saved_control_files(*, control_root, expected_control_pinset_pin,
                             expected_mode, expected_input_pins, expected_revision,
                             receipt_name, receipt_parent=OUTPUT_PARENT, budget_limits=None,
-                            arithmetic_runtime_profiles=None):
+                            arithmetic_runtime_profiles=None, publication_runtime_profiles=None):
     """Read fixed control files and finish local publication under one clock."""
     return run_saved_rows(None, expected_mode=expected_mode,
         expected_input_pins=expected_input_pins, expected_revision=expected_revision,
         receipt_name=receipt_name, receipt_parent=receipt_parent, budget_limits=budget_limits,
         publish_document=True, control_root=control_root,
         expected_control_pinset_pin=expected_control_pinset_pin,
-        arithmetic_runtime_profiles=arithmetic_runtime_profiles)
+        arithmetic_runtime_profiles=arithmetic_runtime_profiles,
+        publication_runtime_profiles=publication_runtime_profiles)
 
 
 def run_saved_control_files_with_observation_subset(*, observation_subset,
         expected_observation_subset, control_root, expected_control_pinset_pin,
         expected_mode, expected_input_pins, expected_revision,
         receipt_name, receipt_parent=OUTPUT_PARENT, budget_limits=None,
-        outer_budget=None, arithmetic_runtime_profiles=None):
+        outer_budget=None, arithmetic_runtime_profiles=None, publication_runtime_profiles=None):
     """Full numerical fixture with explicit prior-reader subset provenance.
 
     The subset's raw observations and reader execution precede this clock.
@@ -423,4 +440,5 @@ def run_saved_control_files_with_observation_subset(*, observation_subset,
         expected_control_pinset_pin=expected_control_pinset_pin,
         observation_subset=observation_subset,
         expected_observation_subset=expected_observation_subset,
-        outer_budget=outer_budget, arithmetic_runtime_profiles=arithmetic_runtime_profiles)
+        outer_budget=outer_budget, arithmetic_runtime_profiles=arithmetic_runtime_profiles,
+        publication_runtime_profiles=publication_runtime_profiles)

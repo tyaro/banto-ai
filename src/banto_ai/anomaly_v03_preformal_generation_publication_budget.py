@@ -227,12 +227,14 @@ def _subset(roots, manifest_path, manifest, manifest_pin, produced, read, budget
 def run(*, outer_root, producer_root, reread_root, receipt_name,
         expected_manifest_pin, expected_revision, control_root,
         expected_control_pinset_pin, expected_input_pins, budget_limits=None,
-        arithmetic_runtime_profiles=None):
+        arithmetic_runtime_profiles=None, publication_runtime_profiles=None):
     """Execute one new engineering attempt; never adopt a formal evaluation."""
     roots = _new_roots(outer_root, producer_root, reread_root, receipt_name)
     generated.copied.evidence._digest(expected_revision, 40)
     profiles = document.chain.draw_bridge.validate_runtime_profiles(arithmetic_runtime_profiles,
                                                                     revision=expected_revision)
+    publication_profiles = document.publication.validate_runtime_profiles(publication_runtime_profiles,
+                                                                           revision=expected_revision)
     generated.copied.evidence._pin(expected_manifest_pin)
     document._expected_pins(expected_input_pins)
     document.control_files.validate_request(control_root, expected_control_pinset_pin)
@@ -261,11 +263,16 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
             for role, entry in profiles.items()},
             arithmetic_runtime_profile_scope='analysis-and-audit-only-candidate',
             arithmetic_runtime_observation_checked=False)
+    if publication_profiles is not None:
+        result.update(publication_runtime_profile_pins={role: copy.deepcopy(entry['expected_pin'])
+            for role, entry in publication_profiles.items()}, publication_runtime_observation_checked=False)
     try:
         budget.start()
         budget.checkpoint('preflight')
         before = _source(expected_revision)
         runtime = document.chain.platform_runtime.probe_runtime(ROOT)
+        document.publication.check_runtime_profiles(publication_profiles, revision=expected_revision,
+            source_pins=before, runtime=runtime)
         raw = reread.pinned.read_pinned(manifest_path, expected_manifest_pin, reread.MAX_MANIFEST)
         manifest, snapshots = reread._manifest(raw, expected_manifest_pin, roots['producer'])
         if manifest['revision'] != expected_revision or manifest['recipe_id'] != generated.RECIPE:
@@ -304,6 +311,8 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
         result.update(expected_observation_subset=expected_subset, subset_sources=sources)
         result['stage'] = 'publication'
         runtime_options = ({'arithmetic_runtime_profiles': profiles} if profiles is not None else {})
+        if publication_profiles is not None:
+            runtime_options['publication_runtime_profiles'] = publication_profiles
         published = document.run_saved_control_files_with_observation_subset(
             observation_subset=entries, expected_observation_subset=expected_subset,
             control_root=control_root, expected_control_pinset_pin=expected_control_pinset_pin,
@@ -321,6 +330,12 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
             result.update(arithmetic_runtime_profile_pins=copy.deepcopy(expected_profile_pins),
                 arithmetic_runtime_profile_scope='analysis-and-audit-only-candidate',
                 arithmetic_runtime_observation_checked=True)
+        if publication_profiles is not None:
+            expected_publication_pins = {role: entry['expected_pin'] for role, entry in publication_profiles.items()}
+            if (published.get('publication_runtime_observation_checked') is not True or
+                    published.get('publication_runtime_profile_pins') != expected_publication_pins):
+                raise ValueError('publication runtime observations missing or profile pins differ')
+            result.update(publication_runtime_observation_checked=True)
         result['stage'] = 'postflight'
         budget.checkpoint('postflight')
         result['final_saved_payload_recheck'] = reread._recheck_saved_outputs(
