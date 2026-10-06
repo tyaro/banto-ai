@@ -4,10 +4,10 @@
 
 ## 現在の状態
 
-- 最新code保存点: `da454ff7fa6bd161432376ba8e39d7f581c4e205`（共通外側予算・終了記録keyword修正）。修正版を含むclean `8cac6fa`でe03 nativeを1件実行し、生成→2 reader→50,000 draw／監査→文書／sliceまで完了。writerの60秒上限でfailed、fresh reader未起動。本書の証拠追記は測定HEADより後の文書commitに保存する。
+- 最新code保存点: `a8df8656643798ece1311924ebaed1ae00ca5afa`（writer限定時間記録・runtime引数修正）。clean同HEADで保存済みe03入力のwriterだけを計測し、56.561/60秒・exit0・回収・5 payload公開まで完了。前回clean `8cac6fa`の共通全工程e03はwriter timeoutでfailedのまま。今回の証拠追記は測定HEADより後の文書commitに保存する。
 - 正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0。登録holdout40 seedは未読。実設備・顧客データは対象外。
 - 実データ作業は保存済み合成dev8/smoke2、120区間・240 dataset・720評価のengineering読取り・記述報告まで。新native試行は架空入力のみ。
-- 容量への配慮として追加agentを起動していない。今回も実機1試行と記録保存で区切った。チームの実行中agentは本体1体だけと確認。起動した6 worker・準備処理・保存checkerはすべて終了している。
+- 容量への配慮として追加agentを起動していない。今回は計測adapterの起動前失敗を保全・修正後、writer実機1件と記録保存で区切った。生成／50,000 drawの再実行なし。起動したwriter・準備処理・保存checkerは終了している。
 
 ## 正式評価を始める条件
 
@@ -25,7 +25,9 @@ v3では、メモリ内コードの完全認証、conhost等の全補助process�
 
 ## 最新の実装・証拠
 
-[共通予算のe03再試行](results/anomaly-multiseed-v0.3-generation-publication-retry-native-2026-10-06.md): clean `8cac6fa`で前回のkeyword不一致を通過。generator143.352秒、initial reader50.852秒、saved reader60.060秒（local全体63.610/120秒）、analysis215.674秒、audit593.520秒はexit0・回収。4入力pin一致、40 cluster／50,000 drawと算術監査、主文書／sliceの3 mappingまで完了。writerは60.614秒で既存60秒上限により停止・exit1・回収、fresh reader未起動。外側1,290.496/1,800秒・内側1,023.189/1,200秒、resource stopなし・sampler joinedだが全工程failed。4,944 raw／57 sourceの別保存checkerは成分のcount／slice再集計・5成功子と停止writerを含む全6起動子の終了を照合してpass。未実施の公開・終了時再照合を予算内成功へ読み替えない。次は保存入力を使う限定writer時間内訳fixtureで、上限を広げて全工程を反復しない。
+[保存済み入力のwriter限定時間計測](results/anomaly-multiseed-v0.3-writer-timing-native-2026-10-06.md): clean `a8df865`で元e03の11入力pinと数値由来`8cac6fa`を維持し、writerだけを既存60秒上限で56.561秒・exit0・回収・5 payload公開。4回のslice mapping計28.509秒、独立count監査計11.966秒、上限余裕3.439秒。171 raw／43 sourceの別保存checkerがpass。初版のruntime引数漏れはworker起動0件でfailedを保全し、23 raw／43過去sourceを照合した。焦点試験は固有22件（重複を含む28実行）pass、修正後2件は別runでpass。owned fresh reader・共通外側予算・生成／draw再計算は未実施。前回timeoutの原因は断定しない。同HEADのCI37398623472は記録時点で実行中。
+
+[共通予算のe03再試行](results/anomaly-multiseed-v0.3-generation-publication-retry-native-2026-10-06.md): clean `8cac6fa`で前回のkeyword不一致を通過。generator143.352秒、initial reader50.852秒、saved reader60.060秒（local全体63.610/120秒）、analysis215.674秒、audit593.520秒はexit0・回収。4入力pin一致、40 cluster／50,000 drawと算術監査、主文書／sliceの3 mappingまで完了。writerは60.614秒で既存60秒上限により停止・exit1・回収、fresh reader未起動。外側1,290.496/1,800秒・内側1,023.189/1,200秒、resource stopなし・sampler joinedだが全工程failed。4,944 raw／57 sourceの別保存checkerは成分のcount／slice再集計・5成功子と停止writerを含む全6起動子の終了を照合してpass。未実施の公開・終了時再照合を予算内成功へ読み替えない。writer時間内訳は上記の限定fixtureで保存した。上限を広げて全工程を反復しない。
 
 [生成から公開までの共通予算接続](results/anomaly-multiseed-v0.3-generation-publication-budget-native-2026-10-06.md): 初版clean `feb32e5`でgenerator343.862秒、initial reader100.999秒、saved reader92.573秒（local全体99.235/120秒）、analysis109.217秒の4子はexit0・回収。22 physical file/131,144,119 B、6行、全体4入力pin一致を確認した後、終了記録のkeyword不一致でfailedを保全。外側773.987/1,800秒、resource stopなし・sampler joinedだが全工程成功ではない。46 raw／57過去Git sourceの失敗記録照合pass。初版56、identity追記後8、keyword修正後13試験は別runでpass。`da454ff`で修正済み・push済み、実機再試行未実施。e02/a2の期待pin準備だけを保存したが、文書commit後の新HEADへそのpinsetを読み替えない。
 
@@ -43,7 +45,7 @@ v3では、メモリ内コードの完全認証、conhost等の全補助process�
 
 ## 次の着手と履歴
 
-次はe03の保存文書／sliceと期待pinを使い、writerの読取り・source検証・mapping再検証・staging／公開の時間内訳を調べる限定fixtureを用意する。新root・明示した部分scope・同じ個別上限・失敗と終了保存を維持する。原因は未確定で、時間上限の変更や長い生成／50,000 draw再試行を自動追加しない。限定writer試行を共通全工程成功へ読み替えない。旧e01・未実行e02・failed e03を保全する。
+次は計測で時間の多かったslice mapping／count監査の重複走査を調べ、境界の入力pin照合と同じ導出結果の検証を維持して余裕を増やす。保存済み入力・新rootによるwriter限定測定と同じ個別上限・失敗と終了保存を維持する。前回timeoutの原因は未確定で、時間上限の変更や長い生成／50,000 draw再試行を自動追加しない。限定writer成功を共通全工程成功へ読み替えない。旧e01・未実行e02・failed e03とprofile01/02を保全する。CI37398623472の完了・保存journal照合は未確認。
 
 受入までの残件は、共通全工程予算の成功証拠、正式同形容量2倍、26H2・保証A/B・runner代替同定の改訂契約候補、正式source/runtime在庫、最終CI/native／正式dev8/smoke2・独立受入、独立raw観測再導出。1区間の架空観測と479区間metadataを同一campaignや全観測確認へ読み替えない。架空480区間の新規生成完走を自動追加の必須にせず、旧pin・由来・上限8 drawは維持する。最終revisionと独立受入の前にS5を開始しない。
 
