@@ -139,6 +139,58 @@ def fixture(root: Path) -> dict:
     return pins
 
 
+def per_job_fixture(root: Path) -> dict:
+    pins = fixture(root)
+    old = pins.pop("image")
+    old["release_prerelease"] = False
+    version = "20260928.321.1"
+    new = dict(old, version=version, tag="ubuntu24/20260928.321",
+               release_id="398506735", release_prerelease=True)
+    pins.update(schema=verifier.PER_JOB_SCHEMA,
+                images={old["version"]: old, version: new},
+                job_images={"3.12": old["version"], "3.14": old["version"], "compare": version})
+
+    def save(role, raw):
+        path = role.replace(".", "_") + ".raw"
+        (root / path).write_bytes(raw)
+        pins["files"][role] = {"path": path, "bytes": len(raw),
+                               "sha256": hashlib.sha256(raw).hexdigest()}
+
+    documents = {}
+    for role in ("release", "readme_metadata", "readme"):
+        entry = pins["files"].pop(role)
+        documents[role] = (root / entry["path"]).read_bytes()
+        pins["files"][role + "_" + old["version"]] = entry
+    readme = documents["readme"].replace(old["version"].encode(), version.encode())
+    blob = hashlib.sha1(b"blob " + str(len(readme)).encode() + b"\0" + readme).hexdigest()
+    new["readme_blob_sha"] = blob
+    for role in ("release", "readme_metadata"):
+        raw = documents[role].replace(old["tag"].encode(), new["tag"].encode()).replace(
+            old["version"].encode(), version.encode()).replace(
+            old["release_id"].encode(), new["release_id"].encode())
+        row = json.loads(raw)
+        if role == "release":
+            row["prerelease"] = True
+        else:
+            row.update(sha=blob, size=len(readme), content=base64.b64encode(readme).decode())
+            row["git_url"] = "https://api.github.com/repos/actions/runner-images/git/blobs/" + blob
+        save(role + "_" + version, encoded(row))
+    save("readme_" + version, readme)
+    for key, name in verifier.JOB_NAMES.items():
+        entry = pins["files"]["log_" + key]
+        raw = (root / entry["path"]).read_bytes()
+        if key == "compare":
+            raw = raw.replace(old["version"].encode(), version.encode()).replace(
+                old["tag"].encode(), new["tag"].encode()).replace(
+                old["tag"].replace("/", "%2F").encode(),
+                new["tag"].replace("/", "%2F").encode())
+        lines = raw.decode().splitlines()
+        lines[0] = "\ufeff" + lines[0]
+        save("log_" + key, ("\n".join(name + "\tUNKNOWN STEP\t" + line for line in lines)
+                            + "\n").encode())
+    return pins
+
+
 class RunnerOriginCandidateTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temp = tempfile.TemporaryDirectory()
@@ -316,6 +368,91 @@ class RunnerOriginCandidateTests(unittest.TestCase):
             self.assertEqual(verifier.main(["--evidence-root", str(self.root), "--pins", str(pins_path),
                                             "--pins-sha256", hashlib.sha256(raw).hexdigest()]), 0)
         self.assertIn('"status":"consistent_candidate"', output.getvalue())
+
+
+class PerJobRunnerOriginTests(unittest.TestCase):
+    repin = RunnerOriginCandidateTests.repin
+    value = RunnerOriginCandidateTests.value
+    rejected = RunnerOriginCandidateTests.rejected
+
+    def setUp(self) -> None:
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.pins = per_job_fixture(self.root)
+
+    def test_mixed_images_and_prefixed_logs_remain_unadopted(self) -> None:
+        result = verifier.verify_evidence(self.root, self.pins)
+        self.assertEqual(result["schema"], "ci-runner-origin-candidate-result-v2")
+        self.assertNotEqual(result["job_images"]["compare"], result["job_images"]["3.12"])
+        self.assertIs(result["images"]["20260928.321.1"]["release_prerelease"], True)
+        self.assertIs(result["formal_permission"], False)
+        self.assertEqual(result["runner_image_digest_status"], "not_collected")
+
+    def test_wrong_job_prefix_is_rejected_even_with_repin(self) -> None:
+        path = self.root / self.pins["files"]["log_compare"]["path"]
+        self.repin("log_compare", path.read_bytes().replace(b"compare-shared-fixtures\t",
+                                                          b"test (3.12)\t", 1))
+        self.rejected("job_log_prefix:compare")
+
+    def test_compare_cannot_borrow_the_test_job_image(self) -> None:
+        role = "log_compare"
+        raw = (self.root / self.pins["files"][role]["path"]).read_bytes()
+        self.repin(role, raw.replace(b"20260928.321.1", b"20260927.320.1"))
+        self.rejected("job_log_image:compare")
+
+    def test_each_minor_journal_follows_its_own_job_image(self) -> None:
+        old, new = "20260927.320.1", "20260928.321.1"
+        self.pins["job_images"]["3.14"] = new
+        role = "log_3.14"
+        raw = (self.root / self.pins["files"][role]["path"]).read_bytes()
+        self.repin(role, raw.replace(old.encode(), new.encode()).replace(
+            b"20260927.320", b"20260928.321"))
+        role = "journal_3.14"
+        raw = (self.root / self.pins["files"][role]["path"]).read_bytes()
+        self.repin(role, raw.replace(old.encode(), new.encode()))
+        result = verifier.verify_evidence(self.root, self.pins)
+        self.assertEqual(result["full_journal_verification_status"], "passed")
+        self.assertEqual(result["job_images"]["3.14"], new)
+
+    def test_release_prerelease_state_must_match_external_pin(self) -> None:
+        role = "release_20260928.321.1"
+        value = self.value(role)
+        value["prerelease"] = False
+        self.repin(role, value)
+        self.rejected("release_identity")
+
+    def test_conflicting_release_version_declaration_rejected(self) -> None:
+        role = "release_20260928.321.1"
+        value = self.value(role)
+        value["body"] += "- Image Version: 20990101.999.1\n"
+        self.repin(role, value)
+        self.rejected("release_image_version")
+
+    def test_conflicting_readme_version_with_matching_blob_rejected(self) -> None:
+        version = "20260928.321.1"
+        role = "readme_" + version
+        raw = (self.root / self.pins["files"][role]["path"]).read_bytes()
+        raw += b"- Image Version: 20990101.999.1\n"
+        blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+        self.pins["images"][version]["readme_blob_sha"] = blob
+        metadata = self.value("readme_metadata_" + version)
+        metadata.update(sha=blob, size=len(raw), content=base64.b64encode(raw).decode())
+        metadata["git_url"] = "https://api.github.com/repos/actions/runner-images/git/blobs/" + blob
+        self.repin(role, raw)
+        self.repin("readme_metadata_" + version, metadata)
+        self.rejected("readme_image_version")
+
+    def test_duplicate_runner_group_is_rejected(self) -> None:
+        role = "log_compare"
+        raw = (self.root / self.pins["files"][role]["path"]).read_bytes()
+        header = next(line for line in raw.splitlines() if line.endswith(b"##[group]Runner Image"))
+        self.repin(role, raw.replace(header, header + b"\n" + header))
+        self.rejected("job_log_group:compare")
+
+    def test_unknown_image_mapping_rejected(self) -> None:
+        self.pins["job_images"]["compare"] = "20990101.999.1"
+        self.rejected("job_image_inventory")
 
 
 if __name__ == "__main__":

@@ -29,6 +29,7 @@ from tools import ci_test_report as ci_report
 from tools import ci_verify_regression_journals as regression
 
 SCHEMA = "ci-runner-origin-candidate-pins-v1"
+PER_JOB_SCHEMA = "ci-runner-origin-candidate-pins-v2"
 ROLES = (
     "run", "attempt_jobs", "release", "readme_metadata", "readme",
     "log_3.12", "log_3.14", "log_compare", "journal_3.12", "journal_3.14",
@@ -109,10 +110,34 @@ def _read_bounded(path: Path, maximum: int) -> bytes:
     return raw
 
 
+def _image(pins: dict, key: str) -> dict:
+    if pins["schema"] == SCHEMA:
+        return pins["image"]
+    return pins["images"][pins["job_images"][key]]
+
+
+def _roles(pins: dict) -> tuple[str, ...]:
+    if pins["schema"] == SCHEMA:
+        return ROLES
+    return tuple(role for role in ROLES if role not in
+                 ("release", "readme_metadata", "readme")) + tuple(
+        role + "_" + version for version in sorted(pins["images"])
+        for role in ("release", "readme_metadata", "readme"))
+
+
+def _maximum(role: str) -> int:
+    if role in MAX_BYTES:
+        return MAX_BYTES[role]
+    return MAX_BYTES["readme"] if role.startswith("readme_") and not role.startswith(
+        "readme_metadata_") else MAX_BYTES["release"]
+
+
 def _validated_pins(pins: dict) -> dict:
+    require(pins.get("schema") in (SCHEMA, PER_JOB_SCHEMA), "pin_version")
+    per_job = pins["schema"] == PER_JOB_SCHEMA
     require(set(pins) == {"schema", "repository", "run_id", "run_attempt", "head_sha",
-                          "workflow_sha256", "job_ids", "image", "files"}, "pin_schema")
-    require(pins["schema"] == SCHEMA, "pin_version")
+                          "workflow_sha256", "job_ids", "files"} |
+            ({"images", "job_images"} if per_job else {"image"}), "pin_schema")
     repository = pins["repository"]
     require(type(repository) is str and re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+",
                                                    repository) is not None, "repository_pin")
@@ -125,35 +150,48 @@ def _validated_pins(pins: dict) -> dict:
     for job_id in job_ids.values():
         _positive_id(job_id, "job_id_pin")
     require(len(set(job_ids.values())) == len(job_ids), "duplicate_job_pin")
-    image = pins["image"]
-    require(type(image) is dict and set(image) == {"name", "version", "tag",
+    if per_job:
+        images, job_images = pins["images"], pins["job_images"]
+        require(type(images) is dict and 1 <= len(images) <= 3 and
+                type(job_images) is dict and set(job_images) == set(JOB_NAMES) and
+                all(type(version) is str for version in job_images.values()) and
+                set(job_images.values()) == set(images), "job_image_inventory")
+    else:
+        images = {"single": pins["image"]}
+    for version, image in images.items():
+        require(type(image) is dict and set(image) == {"name", "version", "tag",
                                                    "release_id", "release_target_commitish",
-                                                   "readme_blob_sha"}, "image_pin_schema")
-    require(image["name"] == "ubuntu-24.04" and type(image["version"]) is str and
-            IMAGE_VERSION.fullmatch(image["version"]) is not None, "image_version_pin")
-    require(image["tag"] == "ubuntu24/" + image["version"].rsplit(".", 1)[0],
-            "image_tag_pin")
-    _positive_id(image["release_id"], "release_id_pin")
-    _hex(image["release_target_commitish"], HEX40, "release_commit_pin")
-    _hex(image["readme_blob_sha"], HEX40, "readme_blob_pin")
+                                                   "readme_blob_sha"} |
+                ({"release_prerelease"} if per_job else set()), "image_pin_schema")
+        require(image["name"] == "ubuntu-24.04" and type(image["version"]) is str and
+                IMAGE_VERSION.fullmatch(image["version"]) is not None, "image_version_pin")
+        require(image["tag"] == "ubuntu24/" + image["version"].rsplit(".", 1)[0],
+                "image_tag_pin")
+        _positive_id(image["release_id"], "release_id_pin")
+        _hex(image["release_target_commitish"], HEX40, "release_commit_pin")
+        _hex(image["readme_blob_sha"], HEX40, "readme_blob_pin")
+        if per_job:
+            require(version == image["version"] and
+                    type(image["release_prerelease"]) is bool, "image_release_state_pin")
+    roles = _roles(pins)
     files = pins["files"]
-    require(type(files) is dict and set(files) == set(ROLES), "file_pin_inventory")
+    require(type(files) is dict and set(files) == set(roles), "file_pin_inventory")
     for role, file_pin in files.items():
         require(type(file_pin) is dict and set(file_pin) == {"path", "bytes", "sha256"},
                 "file_pin_schema")
-        require(type(file_pin["bytes"]) is int and 0 < file_pin["bytes"] <= MAX_BYTES[role],
+        require(type(file_pin["bytes"]) is int and 0 < file_pin["bytes"] <= _maximum(role),
                 "file_pin_size")
         _hex(file_pin["sha256"], HEX64, "file_pin_sha256")
-    require(len({file_pin["path"] for file_pin in files.values()}) == len(ROLES),
+    require(len({file_pin["path"] for file_pin in files.values()}) == len(roles),
             "duplicate_file_path")
     return pins
 
 
 def _read_inputs(root: Path, pins: dict) -> dict[str, bytes]:
     result = {}
-    for role in ROLES:
+    for role in _roles(pins):
         item = pins["files"][role]
-        raw = _read_bounded(_relative_file(root, item["path"]), MAX_BYTES[role])
+        raw = _read_bounded(_relative_file(root, item["path"]), _maximum(role))
         require(len(raw) == item["bytes"] and hashlib.sha256(raw).hexdigest() == item["sha256"],
                 "raw_pin_mismatch:" + role)
         result[role] = raw
@@ -214,7 +252,7 @@ def _jobs(response: dict, run: dict, pins: dict) -> dict:
                 job.get("html_url") == run["html_url"] + f"/job/{job_id}",
                 "job_url:" + key)
         require(job.get("status") == "completed" and job.get("conclusion") == "success" and
-                job.get("labels") == [pins["image"]["name"]] and
+                job.get("labels") == [_image(pins, key)["name"]] and
                 job.get("runner_group_name") == "GitHub Actions" and
                 type(job.get("runner_name")) is str and job["runner_name"].startswith("GitHub Actions "),
                 "job_runner_or_status:" + key)
@@ -237,13 +275,14 @@ def _release_and_readme(raw: dict[str, bytes], pins: dict, run: dict) -> dict:
             release.get("url") ==
             "https://api.github.com/repos/actions/runner-images/releases/" + image["release_id"] and
             release.get("target_commitish") == image["release_target_commitish"] and
-            release.get("draft") is False and release.get("prerelease") is False,
+            release.get("draft") is False and
+            release.get("prerelease") is image.get("release_prerelease", False),
             "release_identity")
     require(timestamp(release.get("published_at")) <= timestamp(run["run_started_at"]),
             "release_after_run")
     require(type(release.get("body")) is str and
-            len(re.findall(r"^- Image Version: " + re.escape(image["version"]) + r"\s*$",
-                           release["body"], re.MULTILINE)) == 1, "release_image_version")
+            re.findall(r"^- Image Version: ([^\r\n]+)\r?$", release["body"],
+                       re.MULTILINE) == [image["version"]], "release_image_version")
     readme_path = "images/ubuntu/Ubuntu2404-Readme.md"
     readme_html = "https://github.com/actions/runner-images/blob/" + tag + "/" + readme_path
     require(metadata.get("type") == "file" and metadata.get("name") == "Ubuntu2404-Readme.md" and
@@ -272,8 +311,8 @@ def _release_and_readme(raw: dict[str, bytes], pins: dict, run: dict) -> dict:
     except UnicodeError as error:
         raise CandidateEvidenceError("readme_utf8") from error
     kernels = re.findall(r"^- Kernel Version: ([^\r\n]+)$", readme, re.MULTILINE)
-    require(len(re.findall(r"^- Image Version: " + re.escape(image["version"]) + r"\s*$",
-                           readme, re.MULTILINE)) == 1 and
+    require(re.findall(r"^- Image Version: ([^\r\n]+)\r?$", readme,
+                       re.MULTILINE) == [image["version"]] and
             "- OS Version: 24.04.5 LTS" in readme and len(kernels) == 1,
             "readme_image_version")
     return {"release_html": release_html, "log_release_html": release_html.replace("/ubuntu24/", "/ubuntu24%2F"),
@@ -288,6 +327,17 @@ def _log(raw: bytes, job: dict, head: str, repository: str, image: dict,
     except UnicodeError as error:
         raise CandidateEvidenceError("job_log_utf8:" + code) from error
     require(30 <= len(lines) <= 100000 and raw.endswith(b"\n"), "job_log_lines:" + code)
+    # gh run view --log prefixes each line with job name and step label. Keep
+    # that job attribution, including the embedded BOM at the first timestamp.
+    # Legacy API logs have bare timestamps and remain supported.
+    if "\t" in lines[0]:
+        stripped = []
+        for line in lines:
+            fields = line.split("\t", 2)
+            require(len(fields) == 3 and fields[0] == job["name"] and
+                    0 < len(fields[1]) <= 256, "job_log_prefix:" + code)
+            stripped.append(fields[2].removeprefix("\ufeff"))
+        lines = stripped
     first = TIMESTAMPED.fullmatch(lines[0])
     last = TIMESTAMPED.fullmatch(lines[-1])
     earliest = timestamp(job["started_at"]) - timedelta(seconds=2)
@@ -381,13 +431,23 @@ def verify_evidence(evidence_root: Path, pins: dict) -> dict:
     run = strict_json(raw["run"])
     _run(run, pins)
     jobs = _jobs(strict_json(raw["attempt_jobs"]), run, pins)
-    urls = _release_and_readme(raw, pins, run)
+    per_job = pins["schema"] == PER_JOB_SCHEMA
+    urls_by_image = {}
+    if per_job:
+        for version, image in pins["images"].items():
+            bundle = {role: raw[role + "_" + version]
+                      for role in ("release", "readme_metadata", "readme")}
+            urls_by_image[version] = _release_and_readme(bundle, dict(pins, image=image), run)
+    else:
+        urls_by_image[pins["image"]["version"]] = _release_and_readme(raw, pins, run)
     for key in JOB_NAMES:
         role = "log_" + key
+        image = _image(pins, key)
+        urls = urls_by_image[image["version"]]
         _log(raw[role], jobs[key], pins["head_sha"], pins["repository"],
-             pins["image"], urls, key)
-    journals = {minor: _journal(raw["journal_" + minor], minor, pins, pins["image"],
-                                jobs[minor], urls["kernel"])
+             image, urls, key)
+    journals = {minor: _journal(raw["journal_" + minor], minor, pins, _image(pins, minor),
+                                jobs[minor], urls_by_image[_image(pins, minor)["version"]]["kernel"])
                 for minor in ("3.12", "3.14")}
     require(journals["3.12"]["tests_run"] == journals["3.14"]["tests_run"] and
             journals["3.12"]["skipped"] == journals["3.14"]["skipped"],
@@ -410,17 +470,21 @@ def verify_evidence(evidence_root: Path, pins: dict) -> dict:
         require(full_journals["jobs"][minor]["journal_sha256"] ==
                 pins["files"]["journal_" + minor]["sha256"] and
                 full_journals["jobs"][minor]["runner_image_version"] ==
-                pins["image"]["version"], "full_journal_pin_mismatch:" + minor)
-    return {"schema": "ci-runner-origin-candidate-result-v1", "status": "consistent_candidate",
+                _image(pins, minor)["version"], "full_journal_pin_mismatch:" + minor)
+    result = {"schema": "ci-runner-origin-candidate-result-v2" if per_job else
+                        "ci-runner-origin-candidate-result-v1", "status": "consistent_candidate",
             "repository": pins["repository"], "run_id": pins["run_id"],
             "run_attempt": pins["run_attempt"], "head_sha": pins["head_sha"],
             "workflow_sha256": pins["workflow_sha256"], "job_ids": pins["job_ids"],
-            "image": pins["image"], "raw_pins": pins["files"], "journals": journals,
+            "raw_pins": pins["files"], "journals": journals,
             "full_journal_verification_status": "passed",
             "required_tests_per_minor": len(regression.REQUIRED_TEST_IDS),
             "runner_image_digest_status": "not_collected", "acceptance_status": "not_completed",
             "formal_permission": False,
             "scope": "saved run/attempt job API, three logs, tagged release/README, and full two-journal regression; candidate provenance only"}
+    result.update({"images": pins["images"], "job_images": pins["job_images"]} if per_job else
+                  {"image": pins["image"]})
+    return result
 
 
 def main(argv: list[str] | None = None) -> int:
