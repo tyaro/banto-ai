@@ -4,10 +4,10 @@
 
 ## 現在の状態
 
-- 最新code保存点: `fa333143ee92eecf9b436fb31320f2a0c722b65d`（raw count往復処理・監査内重複集計の削減）。これを含むclean文書保存点 `02d567f` で共通全工程e04を1回実行し、外側528.308/1,800秒・内側288.905/1,200秒、全7 worker exit0・回収・最終照合まで完了。e04保存点`7aa9bdd`から今回は旧smoke全attemptの容量をread-only計測し、未測定分とsource/runtimeの実接続箇所を保存した。旧e03 failedと初回容量collector a1も保全。
+- 最新code保存点: `af3e7a598c5fe372a5cb9a5a96ddbcefe4f54f2e`（実analysis/auditへの外部pin付きruntime在庫接続）。clean同HEADで算術runtime a3を実行し、71 source・stdlib2,559 file・loaded前後・元handle identity・終了後disk照合、旧数値pin一致、214.717/900秒・2 worker exit0/回収を確認した。別checker pass。性能改善code `fa33314`を含む旧clean `02d567f`の共通全工程e04成功、旧smoke部分容量の保存点`ba33f69`と過去失敗も保持する。
 - 正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0。登録holdout40 seedは未読。実設備・顧客データは対象外。
 - 実データ作業は保存済み合成dev8/smoke2、120区間・240 dataset・720評価のengineering読取り・記述報告まで。新native試行は架空入力のみ。
-- 容量への配慮として追加agentを起動していない。今回は新業務worker・全工程反復を行わず、12.025秒の旧smoke容量collector、別saved checker、source/終了receiptのread-only reviewで区切った。全collectorは終了。前回の7 worker・sampler／monitorも終了済み。
+- 容量への配慮として追加agentを起動していない。今回は焦点試験60件の範囲、限定2算術worker、別saved checkerで区切った。両workerとsampler・checkerは終了。全工程は反復していない。CI37431372011は同code revisionの両minor回帰が進行中で、raw保存・再検証は次に確認する。
 
 ## 正式評価を始める条件
 
@@ -24,6 +24,8 @@
 v3では、メモリ内コードの完全認証、conhost等の全補助processの個別exit code、未採用prototypeの全統合、架空480区間完走を追加必須にしない案を提示した。実ロード依存在庫と業務worker終了・子孫回収は維持する。DACL/独立tokenは保証Bなら必要、保証Aへ変更するには版付き改訂・独立監査が必要。旧fixtureのfalse flagは変更しない。
 
 ## 最新の実装・証拠
+
+[実analysis/audit runtime在庫接続](results/anomaly-multiseed-v0.3-arithmetic-runtime-observation-native-2026-10-06.md): 実入口の任意profile optionへsource/raw、全stdlib、loaded import/DLL/拡張を結び、役割・operation/root/full SHA・外部pin、親の元handle identityとchild両phase、exit0・回収・親post-exit diskを照合。clean `af3e7a5`のa3は2役67.707/127.653秒、共有214.717/900秒・819 samples・資源pass。71 source、stdlib2,559 file /51,017,552 B、各phase loaded324 file /213 modules /47 nativeで旧calculation/audit pin一致。別stdlib保存checker pass。準備a1の入力pin取り違えとa2の旧v0.1設定Git/raw不一致はworker起動0で停止し、実ロード・実入口・科学pinの71 sourceへ範囲を固定してa3を実行した。原失敗は保全。新全工程callerへのprofile伝播、producer/3 reader/writer、外部program在庫・異常子孫回収、正式契約・最終受入は残る。
 
 [旧smoke容量とruntime接続残件](results/anomaly-multiseed-v0.3-saved-smoke-capacity-and-runtime-scope-2026-10-06.md): 旧smoke24区間全attempt1,294 file /3,326,135,758 Bと共有control・独立監査48報告、計2,856 file /3,339,899,260 Bを実bytes/hash照合。2,862入力のpostflight identityを確認、別checkerもpass。区間119 failed attempt133,130,961 Bも含む。20倍換算62.210 GiB、部分2倍124.421 GiBに対しD空き329.674 GiB。正式analysis・追加audit・staging・診断予約はnullで、正式容量合格は未了。旧25H2の測定で最終26H2 smokeを代用しない。e04の57 selected sourceが現working bytesと一致、7 PID/exitを保存reviewし、実5役＋追加readerへ全stdlib/loaded/外部program在庫を結ぶ箇所を整理した。rawは`artifacts/preformal-smoke-capacity-20261006-a1`（初回hardlink仮定で停止）・`a2`（修正成功）へ保存。
 
@@ -51,7 +53,7 @@ v3では、メモリ内コードの完全認証、conhost等の全補助process�
 
 ## 次の着手と履歴
 
-次はsource/runtime全在庫helperを実5役＋追加readerへ接続し、外部期待pin・元handle identityの受入範囲・正式入力consumerと失敗拒否を固定入力で確認する。改訂運用契約／保証A・runner同定を一つの採択候補へ結び、最終revisionのLinux/Windows・正式dev8/smoke2・独立受入へ進む。今回容量は旧smokeによる部分外挿で、最終正式経路のanalysis/audit/staging/診断予約を埋めて全工程2倍を再照合する。限定共通全工程の完走は保存済みで、長い全工程を自動反復しない。旧e01・未実行e02・failed e03・成功e04、profile01/02/03、容量a1/a2を保全する。前回timeoutの原因は未確定。
+次は同code `af3e7a5`のCI37431372011完了のraw保存・journal再検証を行い、producer・初期/保存reader・writer/fresh readerの実境界へ期待runtime在庫を接続し、共通外側予算へprofileを伝播する。analysis/auditの任意optionは既存全工程callerからまだ渡していない。外部program/Git helper在庫、元handle identity・異常子孫回収の受入範囲、正式入力consumerと失敗拒否、改訂運用契約／保証A・runner同定を一つの採択候補へ結ぶ。最終revisionのLinux/Windows・正式dev8/smoke2・独立受入で、旧smoke部分外挿のanalysis/audit/staging/診断予約を埋めて全工程2倍を再照合する。限定共通全工程の完走は保全し、長い全工程を自動反復しない。旧e01/e02/e03/e04、profile01/02/03、容量a1/a2、算術runtime a1/a2/a3を保全する。前回timeoutの原因は未確定。
 
 受入までの残件は、今回scopeの共通予算証拠を正式経路へ結ぶ受入、正式同形容量2倍、26H2・保証A/B・runner代替同定の改訂契約候補、正式source/runtime在庫、最終CI/native／正式dev8/smoke2・独立受入、独立raw観測再導出。1区間の架空観測と479区間metadataを同一campaignや全観測確認へ読み替えない。架空480区間の新規生成完走を自動追加の必須にせず、旧pin・由来・上限8 drawは維持する。最終revisionと独立受入の前にS5を開始しない。
 
