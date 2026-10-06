@@ -23,6 +23,8 @@ FORMAT = 'anomaly-v03-arithmetic-runtime-profile-v1'
 RECEIPT = 'anomaly-v03-arithmetic-runtime-observation-v1'
 PUBLICATION_FORMAT = 'anomaly-v03-publication-runtime-profile-v1'
 PUBLICATION_RECEIPT = 'anomaly-v03-publication-runtime-observation-v1'
+SAVED_READER_FORMAT = 'anomaly-v03-saved-reader-runtime-profile-v1'
+SAVED_READER_RECEIPT = 'anomaly-v03-saved-reader-runtime-observation-v1'
 MAX_PROFILE = 2 * 1024**2
 MAX_RECEIPT = 2 * 1024**2
 MAX_SOURCES = 4096
@@ -31,7 +33,8 @@ MAX_STDLIB_BYTES = 128 * 1024**2
 OPERATIONS = {'analysis': 'invented40-cluster-50000-primary',
               'audit': 'invented40-cluster-50000-independent-primary-audit',
               'writer': 'publish-invented-full-draw-five-payloads',
-              'reader': 'fresh-readback-invented-full-draw-five-payloads'}
+              'reader': 'fresh-readback-invented-full-draw-five-payloads',
+              'saved-reader': 'reread-invented-saved-chunk-and-rederive-six-evaluations'}
 CLOSED = {'formal_permission': False, 'source_closure_complete': False,
           'runtime_closure_complete': False, 'execution_authenticated': False,
           'independent_s6_complete': False}
@@ -43,11 +46,15 @@ def _pin(raw):
 
 def profile_format(role):
     v.require(role in OPERATIONS, 'runtime observation role')
+    if role == 'saved-reader':
+        return SAVED_READER_FORMAT
     return PUBLICATION_FORMAT if role in ('writer', 'reader') else FORMAT
 
 
 def receipt_format(role):
     v.require(role in OPERATIONS, 'runtime observation role')
+    if role == 'saved-reader':
+        return SAVED_READER_RECEIPT
     return PUBLICATION_RECEIPT if role in ('writer', 'reader') else RECEIPT
 
 
@@ -55,6 +62,8 @@ def required_sources(role):
     v.require(role in OPERATIONS, 'runtime observation role')
     worker = ('anomaly_v03_saved_row_document_publication.py' if role in ('writer', 'reader')
               else 'anomaly_v03_preformal_bound_draw_bridge.py')
+    if role == 'saved-reader':
+        worker = 'anomaly_v03_preformal_saved_row_reread.py'
     return ['src/banto_ai/' + worker, 'src/banto_ai/anomaly_v03_role_runtime_observation.py']
 
 

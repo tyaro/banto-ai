@@ -63,6 +63,9 @@ MANIFEST_FIELDS = {
 }
 SOURCE_FILES = (
     'src/banto_ai/anomaly_v03_preformal_saved_row_reread.py',
+    'src/banto_ai/anomaly_v03_role_runtime_observation.py',
+    'src/banto_ai/_anomaly_v03_inventory.py',
+    'src/banto_ai/_anomaly_v03_reader_dependencies.py',
     'src/banto_ai/anomaly_v03_preformal_campaign_child_context.py',
     'tools/preformal_saved_row_reread_trial.py',
     'src/banto_ai/anomaly_v03_registered_saved_row_lineage.py',
@@ -83,6 +86,48 @@ SOURCE_FILES = (
 
 def _pin(raw):
     return {'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()}
+
+
+def validate_runtime_profile(entry, *, revision):
+    """Retain the caller's profile bytes and pin before creating any output."""
+    if entry is None:
+        return None
+    from . import anomaly_v03_role_runtime_observation as observation
+    v.require(type(entry) is dict and set(entry) == {'raw', 'expected_pin'},
+              'saved reader runtime profile entry fields')
+    profile = observation.load_profile(entry['raw'], entry['expected_pin'], root=ROOT, role='saved-reader')
+    v.require(profile['source_revision'] == revision, 'saved reader runtime profile revision differs')
+    return {'raw': entry['raw'], 'expected_pin': copy.deepcopy(entry['expected_pin'])}
+
+
+def check_runtime_profile(entry, *, revision, source_pins, runtime):
+    retained = validate_runtime_profile(entry, revision=revision)
+    if retained is None:
+        return None
+    from . import anomaly_v03_role_runtime_observation as observation
+    profile = observation.load_profile(retained['raw'], retained['expected_pin'], root=ROOT, role='saved-reader')
+    v.require(profile['runtime'] == runtime, 'saved reader runtime profile tuple differs')
+    v.require(all(name in source_pins and profile['source_files'].get(name) == source_pins[name]
+                  for name in SOURCE_FILES), 'saved reader runtime profile selected Git source differs')
+    return retained
+
+
+def recheck_runtime_profile(root, result):
+    """Reopen saved control/phase bytes after projection; do not repeat the read."""
+    if 'saved_reader_runtime_profile_pin' not in result:
+        return
+    from . import anomaly_v03_role_runtime_observation as observation
+    target = Path(root) / 'owned-reader'
+    pinned.read_pinned(target / 'inventory-profile.json', result['saved_reader_runtime_profile_pin'],
+                       observation.MAX_PROFILE)
+    pinned.read_pinned(target / 'invocation.json', result['invocation_pin'], MAX_INVOCATION)
+    reply = v.strict_json(pinned.read_pinned(target / 'worker/report.json', result['child_stdout_pin'],
+                                            copied.READER_LIMITS['output_bytes']))
+    v.require(reply.get('runtime_observation') == result['runtime_observation'],
+              'saved reader runtime receipt changed')
+    for phase in ('before', 'after'):
+        pinned.read_pinned(target / ('saved-reader-runtime-' + phase + '.json'),
+            result['runtime_observation'][phase + '_pin'], observation.MAX_RECEIPT)
 
 
 def _source(revision):
@@ -193,6 +238,59 @@ def _recheck_saved_outputs(source, chunk_index, external, budget):
             'formal_permission': False}
 
 
+def _read_attempt(request, source, target, manifest_path):
+    """The existing physical payload read and rederivation, without a replay."""
+    campaign_mode = 'campaign_context' in request
+    manifest_raw = pinned.read_pinned(
+        manifest_path, request['manifest_pin'], MAX_MANIFEST)
+    manifest, snapshots = _manifest(
+        manifest_raw, request['manifest_pin'], source)
+    v.require(request['external_pins'] == manifest['output_pins'] and
+              request['source_snapshots'] == manifest['source_snapshots'] and
+              request['chunk_index'] == manifest['chunk_index'],
+              'reread child pinned manifest binding')
+    current = _source(request['current_revision'])
+    current_runtime = runtime.probe_runtime(ROOT)
+    v.require(current == request['current_source'] and
+              current_runtime == request['runtime'],
+              'reread child current source/runtime changed')
+    outputs, _ = copied._saved_outputs(source, manifest['chunk_index'],
+                                       manifest['output_pins'])
+    copied._check_outputs(source, outputs, manifest['output_pins'])
+    external = manifest['output_pins']
+    read = fixture.read_invented_registered_attempt(
+        source, expected_mode=saved.MODE,
+        chunk_index=manifest['chunk_index'],
+        expected_registry_pin=external['saved/registry.json'],
+        expected_savepoint_pin=external['saved/savepoint.json'],
+        expected_receipt_pin=external['saved/receipt.json'],
+        expected_report_pin=external['saved/report.json'],
+        expected_payload_pins={key: pin for key, pin in external.items()
+                               if key not in copied.SAVED},
+        source_snapshots=snapshots)
+    copied._check_outputs(source, outputs, external)
+    v.require(_source(request['current_revision']) == current and
+              runtime.probe_runtime(ROOT) == current_runtime and
+              pinned.read_pinned(manifest_path, request['manifest_pin'],
+                                 MAX_MANIFEST) == manifest_raw,
+              'reread child postflight source/runtime/manifest')
+    process = observed.creation_observation(os.getpid())
+    reply = {'format': (CAMPAIGN_CHILD_FORMAT if campaign_mode else
+                        CHILD_FORMAT), 'status': 'read',
+             'invocation_id': request['invocation_id'],
+             'process': {'pid': os.getpid(), 'parent_pid': os.getppid(),
+                         'start_token': process['start_token']},
+             'source': current, 'runtime': current_runtime,
+             'manifest_pin': request['manifest_pin'],
+             'output_pins': copy.deepcopy(external),
+             'reader_result': read,
+             'actual_registered_observations_read': False,
+             'formal_permission': False}
+    if campaign_mode:
+        reply['campaign_context'] = copy.deepcopy(request['campaign_context'])
+    return reply
+
+
 def reader_worker_main(argv):
     """One owned child; the supervisor outside this function owns its exit."""
     try:
@@ -208,7 +306,8 @@ def reader_worker_main(argv):
                       'manifest_pin', 'external_pins', 'source_snapshots',
                       'chunk_index', 'current_revision', 'current_source',
                       'runtime', 'invocation_id'} |
-                  ({'campaign_context'} if campaign_mode else set()),
+                  ({'campaign_context'} if campaign_mode else set()) |
+                  ({'runtime_inventory_profile_pin'} if 'runtime_inventory_profile_pin' in request else set()),
                   'exact reread child invocation')
         source, target, manifest_path = _roots_for_child(
             request['source_root'], request['output_root'])
@@ -224,53 +323,21 @@ def reader_worker_main(argv):
             v.require(request['campaign_context']['chunk_index'] ==
                       request['chunk_index'],
                       'fresh reader campaign chunk context')
-        manifest_raw = pinned.read_pinned(
-            manifest_path, request['manifest_pin'], MAX_MANIFEST)
-        manifest, snapshots = _manifest(
-            manifest_raw, request['manifest_pin'], source)
-        v.require(request['external_pins'] == manifest['output_pins'] and
-                  request['source_snapshots'] == manifest['source_snapshots'] and
-                  request['chunk_index'] == manifest['chunk_index'],
-                  'reread child pinned manifest binding')
-        current = _source(request['current_revision'])
-        current_runtime = runtime.probe_runtime(ROOT)
-        v.require(current == request['current_source'] and
-                  current_runtime == request['runtime'],
-                  'reread child current source/runtime changed')
-        outputs, _ = copied._saved_outputs(source, manifest['chunk_index'],
-                                           manifest['output_pins'])
-        copied._check_outputs(source, outputs, manifest['output_pins'])
-        external = manifest['output_pins']
-        read = fixture.read_invented_registered_attempt(
-            source, expected_mode=saved.MODE,
-            chunk_index=manifest['chunk_index'],
-            expected_registry_pin=external['saved/registry.json'],
-            expected_savepoint_pin=external['saved/savepoint.json'],
-            expected_receipt_pin=external['saved/receipt.json'],
-            expected_report_pin=external['saved/report.json'],
-            expected_payload_pins={key: pin for key, pin in external.items()
-                                   if key not in copied.SAVED},
-            source_snapshots=snapshots)
-        copied._check_outputs(source, outputs, external)
-        v.require(_source(request['current_revision']) == current and
-                  runtime.probe_runtime(ROOT) == current_runtime and
-                  pinned.read_pinned(manifest_path, request['manifest_pin'],
-                                     MAX_MANIFEST) == manifest_raw,
-                  'reread child postflight source/runtime/manifest')
-        process = observed.creation_observation(os.getpid())
-        reply = {'format': (CAMPAIGN_CHILD_FORMAT if campaign_mode else
-                            CHILD_FORMAT), 'status': 'read',
-                 'invocation_id': request['invocation_id'],
-                 'process': {'pid': os.getpid(), 'parent_pid': os.getppid(),
-                             'start_token': process['start_token']},
-                 'source': current, 'runtime': current_runtime,
-                 'manifest_pin': request['manifest_pin'],
-                 'output_pins': copy.deepcopy(external),
-                 'reader_result': read,
-                 'actual_registered_observations_read': False,
-                 'formal_permission': False}
-        if campaign_mode:
-            reply['campaign_context'] = copy.deepcopy(request['campaign_context'])
+        operation = lambda: _read_attempt(request, source, target, manifest_path)
+        if 'runtime_inventory_profile_pin' in request:
+            from . import anomaly_v03_role_runtime_observation as observation
+            profile_raw = pinned.read_pinned(path.parent / 'inventory-profile.json',
+                request['runtime_inventory_profile_pin'], observation.MAX_PROFILE)
+            profile = observation.load_profile(profile_raw, request['runtime_inventory_profile_pin'],
+                root=ROOT, role='saved-reader')
+            v.require(profile['source_revision'] == request['current_revision'],
+                      'saved reader runtime profile worker revision differs')
+            reply, receipt = observation.run_observed(operation, root=path.parent,
+                source_root=ROOT, role='saved-reader', profile_raw=profile_raw,
+                profile_pin=request['runtime_inventory_profile_pin'], input_pin=_pin(raw))
+            reply['runtime_observation'] = receipt
+        else:
+            reply = operation()
         print(json.dumps(reply, sort_keys=True))
         return 0
     except (ValueError, OSError, KeyError, TypeError, IndexError,
@@ -299,9 +366,10 @@ def _roots_for_child(source_root, output_root):
 
 def run_reread(source_root, output_root, *, expected_manifest_pin,
                expected_outer_result_pin, expected_revision,
-               campaign_context=None, outer_budget=None):
+               campaign_context=None, outer_budget=None, saved_reader_runtime_profile=None):
     """Run an invented saved reader and row projection under one new budget."""
     source, target, manifest_path = _roots(source_root, output_root)
+    profile_entry = validate_runtime_profile(saved_reader_runtime_profile, revision=expected_revision)
     if campaign_context is not None:
         campaign_context = child_context.verify_context(
             campaign_context, attempt_root=source,
@@ -346,6 +414,9 @@ def run_reread(source_root, output_root, *, expected_manifest_pin,
         'formal_permission': False, 'analysis_authorized': False,
         'promotion_allowed': False, 'independent_s6_complete': False,
     }
+    if profile_entry is not None:
+        result.update(saved_reader_runtime_profile_pin=copy.deepcopy(profile_entry['expected_pin']),
+                      saved_reader_runtime_observation_checked=False)
     try:
         budget.start()
         started = True
@@ -370,6 +441,9 @@ def run_reread(source_root, output_root, *, expected_manifest_pin,
                               manifest['chunk_index'])
         current_source = _source(expected_revision)
         current_runtime = runtime.probe_runtime(ROOT)
+        check_runtime_profile(profile_entry, revision=expected_revision,
+            source_pins={row['path']: row['pin'] for row in current_source['selected_files']},
+            runtime=current_runtime)
         result['chunk_index'] = manifest['chunk_index']
         result['historic_source_revision'] = manifest['revision']
         result['external_saved_payload_bytes'] = manifest['output_bytes']
@@ -394,6 +468,9 @@ def run_reread(source_root, output_root, *, expected_manifest_pin,
         }
         if campaign_context is not None:
             invocation['campaign_context'] = copy.deepcopy(campaign_context)
+        if profile_entry is not None:
+            invocation['runtime_inventory_profile_pin'] = copy.deepcopy(profile_entry['expected_pin'])
+            io._exclusive(reader_root / 'inventory-profile.json', profile_entry['raw'])
         invocation_raw = v.canonical_json(invocation)
         v.require(len(invocation_raw) <= MAX_INVOCATION,
                   'bounded reread child invocation')
@@ -418,6 +495,10 @@ def run_reread(source_root, output_root, *, expected_manifest_pin,
                       _pin(observed._file(invocation_path, MAX_INVOCATION)) ==
                       invocation_pin,
                       'reread parent boundary changed')
+            if profile_entry is not None:
+                from . import anomaly_v03_role_runtime_observation as observation
+                pinned.read_pinned(reader_root / 'inventory-profile.json', profile_entry['expected_pin'],
+                                   observation.MAX_PROFILE)
 
         def on_started(process):
             launch.update(observed.creation_observation(
@@ -471,6 +552,17 @@ def run_reread(source_root, output_root, *, expected_manifest_pin,
             v.require(reply.get('campaign_context') == campaign_context,
                       'fresh reader child campaign echo')
         result['child_stdout_pin'] = monitor['output']
+        if profile_entry is not None:
+            from . import anomaly_v03_role_runtime_observation as observation
+            verification = observation.verify_receipt(reply.get('runtime_observation'), root=reader_root,
+                source_root=ROOT, role='saved-reader', profile_raw=profile_entry['raw'],
+                profile_pin=profile_entry['expected_pin'], input_pin=invocation_pin, process=launch)
+            result.update(runtime_observation=copy.deepcopy(reply['runtime_observation']),
+                          runtime_observation_verification=verification, child_process=copy.deepcopy(launch),
+                          saved_reader_runtime_observation_checked=True)
+            budget.checkpoint()
+        else:
+            v.require('runtime_observation' not in reply, 'unexpected saved reader runtime observation')
         result['external_saved_payloads_reopened_in_child'] = True
         result['fresh_saved_payload_bytes_rechecked_this_run'] = True
         result['fresh_owned_reader_exit_confirmed_here'] = True
@@ -506,6 +598,7 @@ def run_reread(source_root, output_root, *, expected_manifest_pin,
         v.require(result['selected_current_source_after'] == current_source and
                   result['runtime_after'] == current_runtime,
                   'reread parent final source/runtime changed')
+        recheck_runtime_profile(target, result)
         budget.checkpoint()
         result.update(status='verified', reason=None)
     except supervisor.UnreapedWorker as error:

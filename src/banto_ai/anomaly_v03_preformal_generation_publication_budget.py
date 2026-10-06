@@ -227,7 +227,8 @@ def _subset(roots, manifest_path, manifest, manifest_pin, produced, read, budget
 def run(*, outer_root, producer_root, reread_root, receipt_name,
         expected_manifest_pin, expected_revision, control_root,
         expected_control_pinset_pin, expected_input_pins, budget_limits=None,
-        arithmetic_runtime_profiles=None, publication_runtime_profiles=None):
+        arithmetic_runtime_profiles=None, publication_runtime_profiles=None,
+        saved_reader_runtime_profile=None):
     """Execute one new engineering attempt; never adopt a formal evaluation."""
     roots = _new_roots(outer_root, producer_root, reread_root, receipt_name)
     generated.copied.evidence._digest(expected_revision, 40)
@@ -235,6 +236,7 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
                                                                     revision=expected_revision)
     publication_profiles = document.publication.validate_runtime_profiles(publication_runtime_profiles,
                                                                            revision=expected_revision)
+    saved_reader_profile = reread.validate_runtime_profile(saved_reader_runtime_profile, revision=expected_revision)
     generated.copied.evidence._pin(expected_manifest_pin)
     document._expected_pins(expected_input_pins)
     document.control_files.validate_request(control_root, expected_control_pinset_pin)
@@ -266,6 +268,9 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
     if publication_profiles is not None:
         result.update(publication_runtime_profile_pins={role: copy.deepcopy(entry['expected_pin'])
             for role, entry in publication_profiles.items()}, publication_runtime_observation_checked=False)
+    if saved_reader_profile is not None:
+        result.update(saved_reader_runtime_profile_pin=copy.deepcopy(saved_reader_profile['expected_pin']),
+                      saved_reader_runtime_observation_checked=False)
     try:
         budget.start()
         budget.checkpoint('preflight')
@@ -273,6 +278,8 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
         runtime = document.chain.platform_runtime.probe_runtime(ROOT)
         document.publication.check_runtime_profiles(publication_profiles, revision=expected_revision,
             source_pins=before, runtime=runtime)
+        reread.check_runtime_profile(saved_reader_profile, revision=expected_revision,
+                                    source_pins=before, runtime=runtime)
         raw = reread.pinned.read_pinned(manifest_path, expected_manifest_pin, reread.MAX_MANIFEST)
         manifest, snapshots = reread._manifest(raw, expected_manifest_pin, roots['producer'])
         if manifest['revision'] != expected_revision or manifest['recipe_id'] != generated.RECIPE:
@@ -297,12 +304,19 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
             raise ValueError('owned generator and initial reader did not complete')
         result['observation_chunks_generated_here'] = 1
         result['stage'] = 'saved-reader'
+        saved_reader_options = ({'saved_reader_runtime_profile': saved_reader_profile}
+                                if saved_reader_profile is not None else {})
         read = reread.run_reread(roots['producer'], roots['saved-reader'],
             expected_manifest_pin=expected_manifest_pin, expected_outer_result_pin=produced['result_pin'],
-            expected_revision=expected_revision, outer_budget=budget)
+            expected_revision=expected_revision, outer_budget=budget, **saved_reader_options)
         result['saved_reader_result_pin'] = read['result_pin']
         if read['status'] != 'verified' or read['verified_evaluations'] != 6:
             raise ValueError('owned physical saved reader did not complete')
+        if saved_reader_profile is not None:
+            if (read.get('saved_reader_runtime_observation_checked') is not True or
+                    read.get('saved_reader_runtime_profile_pin') != saved_reader_profile['expected_pin']):
+                raise ValueError('saved reader runtime observations missing or profile pin differs')
+            result['saved_reader_runtime_observation_checked'] = True
         result['observation_evaluations_verified_here'] = 6
         result['observation_payload_reader_executed_inside_outer_budget'] = True
         result['stage'] = 'subset-read'
@@ -345,6 +359,7 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
             budget.checkpoint('postflight')
             reread.pinned.read_pinned(Path(source['path']), source['pin'],
                 document.projection.coverage.RAW_LIMITS[name])
+        reread.recheck_runtime_profile(roots['saved-reader'], read)
         if _source(expected_revision) != before or document.chain.platform_runtime.probe_runtime(ROOT) != runtime:
             raise ValueError('generation-publication final source/runtime changed')
         budget.checkpoint('postflight')
