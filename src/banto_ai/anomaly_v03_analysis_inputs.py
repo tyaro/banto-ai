@@ -43,24 +43,26 @@ def index(rows, names, expected):
     return dict(zip(keys,rows))
 
 
-def _slice_counts(table, n):
-    raw=slices.empty_counts();raw['evaluations']=n
-    raw['profile_inconclusive_evaluations']=integer(table['profile_inconclusive_evaluations'])
-    need(raw['profile_inconclusive_evaluations']<=n,'profile diagnostic coverage')
-    histogram=table['delay_histogram'];slices.delay_summary(histogram)
-    raw['delay_histogram']=copy.deepcopy(histogram)
+def _validate_slice_raw(raw, n):
+    """Check an established raw inventory without a descriptive round trip.
+
+    The caller checks the count field inventory: _slice_counts constructs it
+    from its template, while the fixture mapper validates its exact raw shape.
+    No values, histograms or caller objects are changed by this check.
+    """
+    exact(raw['evaluations'],n,'slice evaluation coverage')
+    need(integer(raw['profile_inconclusive_evaluations'])<=n,'profile diagnostic coverage')
+    histogram=raw['delay_histogram'];slices.delay_summary(histogram)
     for group, inventory in (('incident_slices',slices.INCIDENT_KEYS),('score_slices',slices.SCORE_KEYS)):
-        cells=index(table[group],('dimension','key'),[(d,k) for d,keys in inventory.items() for k in keys])
         for dimension,keys in inventory.items():
             for key in keys:
-                cell=cells[dimension,key];dest=raw[group][dimension][key]
+                dest=raw[group][dimension][key]
                 if group=='incident_slices':
-                    dest.update(planned=integer(cell['planned']),detected=integer(cell['detected']),
-                                delay_histogram=copy.deepcopy(cell['delay_histogram']))
+                    integer(dest['planned']);integer(dest['detected'])
                     delay=slices.delay_summary(dest['delay_histogram'])
                     need(dest['detected']==delay['count']<=dest['planned'],'incident delay coverage')
                 else:
-                    dest.update({k:integer(cell[k]) for k in SC})
+                    for name in SC:integer(dest[name])
                     need(dest['signal_onsets']<=dest['threshold_exceeded']<=dest['available']<=dest['observed'],'score decision subsets')
                     exact(dest['planned'],dest['observed']+dest['unscored_target']+dest['outside_test'],'reference accounting')
                     if dimension!='event-offset':
@@ -72,11 +74,8 @@ def _slice_counts(table, n):
                 exact([sum(c['delay_histogram'][i] for c in raw[group][dimension].values()) for i in range(5)],histogram,'incident histogram partition')
             elif dimension!='event-offset':
                 exact(sum(c['planned'] for c in raw[group][dimension].values()),14400*n,'score planned partition')
-    need(set(table['equipment_context'])==set(raw['equipment_context']),'equipment context keys')
-    for k,dest in raw['equipment_context'].items():
-        source=table['equipment_context'][k]
-        exact(sorted(source),sorted(dest),'equipment context fields')
-        dest.update({name:integer(source[name]) for name in dest})
+    for dest in raw['equipment_context'].values():
+        for name in ('planned_seconds','episodes','unmatched'):integer(dest[name])
         need(dest['unmatched']<=dest['episodes'],'unmatched episode subset')
     exact(sum(c['planned_seconds'] for c in raw['equipment_context'].values()),3600*n,'equipment exposure')
     exact(raw['equipment_context']['clean']['planned_seconds'],3365*n,'clean planned exposure')
@@ -87,6 +86,25 @@ def _slice_counts(table, n):
         for field in ('available','threshold_exceeded','signal_onsets'):
             exact(sum(c[field] for c in cells.values()),
                   sum(c[field] for c in raw['score_slices']['full-target'].values()),'score decision partition totals')
+
+
+def _slice_counts(table, n):
+    raw=slices.empty_counts();raw['evaluations']=n
+    raw['profile_inconclusive_evaluations']=table['profile_inconclusive_evaluations']
+    raw['delay_histogram']=copy.deepcopy(table['delay_histogram'])
+    for group, inventory in (('incident_slices',slices.INCIDENT_KEYS),('score_slices',slices.SCORE_KEYS)):
+        cells=index(table[group],('dimension','key'),[(d,k) for d,keys in inventory.items() for k in keys])
+        for dimension,keys in inventory.items():
+            for key in keys:
+                cell=cells[dimension,key];dest=raw[group][dimension][key]
+                dest.update({name:(copy.deepcopy(cell[name]) if name=='delay_histogram' else cell[name])
+                             for name in dest})
+    need(set(table['equipment_context'])==set(raw['equipment_context']),'equipment context keys')
+    for key,dest in raw['equipment_context'].items():
+        source=table['equipment_context'][key]
+        exact(sorted(source),sorted(dest),'equipment context fields')
+        dest.update({name:source[name] for name in dest})
+    _validate_slice_raw(raw,n)
     # Rebuild all derived fractions and null states, while retaining zero cells.
     fields(table,slices.describe(raw),'slice derived fields')
     return raw

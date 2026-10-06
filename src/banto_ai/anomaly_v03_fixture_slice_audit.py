@@ -104,7 +104,7 @@ def validate_raw(raw):
                      'delay_histogram': raw['delay_histogram']}, 'incident partition')
             elif dimension != 'event-offset':
                 total = _sum_scores(cells.values());same(total['planned'], 172800, 'score partition exposure')
-                baseline = _sum_scores(raw[group]['full-target'].values())
+                if dimension == 'full-target': baseline = total
                 for name in ('available', 'threshold_exceeded', 'signal_onsets'):
                     same(total[name], baseline[name], 'score partition decisions')
     incident = raw['incident_slices'];joint = incident['class-equipment-mode']
@@ -212,7 +212,12 @@ def success_summary(fixture, source):
 
 def audit_slices(fixture, source, document):
     """Verify all slice/detail rows against pinned invented counts, without IO."""
-    result = success_summary(fixture, source)
+    return _audit_slices(fixture, source, document, success_summary(fixture, source))
+
+
+def _audit_slices(fixture, source, document, result):
+    # Internal result was freshly derived by success_summary on these inputs.
+    # Keeping it in this call avoids hashing the same large source twice.
     same(document['format'], 'anomaly-v03-document-with-slices-fixture-v1', 'document identity')
     for key in ('input_canonical_sha256', 'slice_input_canonical_sha256'): same(document[key], result[key], key)
     tables = {}
@@ -294,7 +299,11 @@ def audit_precomputed_slices(clusters, diagnostics, packet, source, enriched):
                       'primary_packet_canonical_sha256',
                       'slice_source_canonical_sha256'), 'precomputed slices')
     packet_digest = hashlib.sha256(canonical(packet)).hexdigest()
-    source_digest = hashlib.sha256(canonical(source)).hexdigest()
+    fixture = {'format': 'anomaly-v03-document-fixture-input-v1',
+               'invented_only': True, 'clusters': clusters,
+               'diagnostics': diagnostics}
+    summary = success_summary(fixture, source)
+    source_digest = summary['slice_input_canonical_sha256']
     same(enriched['primary_packet_canonical_sha256'], packet_digest,
          'precomputed primary packet canonical digest')
     same(enriched['slice_source_canonical_sha256'], source_digest,
@@ -303,12 +312,9 @@ def audit_precomputed_slices(clusters, diagnostics, packet, source, enriched):
     # Reuse only this module's stdlib-only coordinate audit.  The temporary
     # fixture carries no legacy draw list or old document digest; it supplies
     # exactly the primary counts/diagnostics required for a slice crosscheck.
-    fixture = {'format': 'anomaly-v03-document-fixture-input-v1',
-               'invented_only': True, 'clusters': clusters,
-               'diagnostics': diagnostics}
     document = {
         'format': 'anomaly-v03-document-with-slices-fixture-v1',
-        'input_canonical_sha256': hashlib.sha256(canonical(fixture)).hexdigest(),
+        'input_canonical_sha256': summary['input_canonical_sha256'],
         'slice_input_canonical_sha256': source_digest,
         'document_draft': {
             'candidate_tables': packet['fixture_candidate_tables'],
@@ -317,7 +323,7 @@ def audit_precomputed_slices(clusters, diagnostics, packet, source, enriched):
         'diagnostic_series': enriched['diagnostic_series'],
         'diagnostic_details': enriched['diagnostic_details'],
     }
-    checked = audit_slices(fixture, source, document)
+    checked = _audit_slices(fixture, source, document, summary)
     return {
         'format': 'anomaly-v03-precomputed-fixture-slice-audit-v1',
         'status': 'precomputed_fixture_slices_matched',

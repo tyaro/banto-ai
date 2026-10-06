@@ -36,15 +36,14 @@ def _ordered_raw(value, template):
     # retain the supplied source itself for its canonical digest.
     if type(template) is dict:
         return {key: _ordered_raw(value[key], template[key]) for key in template}
-    return copy.deepcopy(value)
+    # Shape validation established immutable integer leaves and five-bin lists.
+    return value.copy() if type(template) is list else value
 
 
 def _sum_cells(cells):
-    total = copy.deepcopy(cells[0])
-    for key in total:
-        total[key] = ([sum(cell[key][j] for cell in cells) for j in range(5)]
-                      if type(total[key]) is list else sum(cell[key] for cell in cells))
-    return total
+    return {key: ([sum(cell[key][j] for cell in cells) for j in range(5)]
+                  if type(value) is list else sum(cell[key] for cell in cells))
+            for key, value in cells[0].items()}
 
 
 def _marginals(raw):
@@ -123,9 +122,9 @@ def _derive_rows(clusters, diagnostics, tables, source):
                 _raw_shape(supplied, template)
                 raw = _ordered_raw(supplied, template)
                 I.exact(raw['evaluations'], 12, 'twelve-layout diagnostic coverage')
-                # Reuse fixed inventory, denominator, omissions, histogram and
-                # partition checks. No dev/smoke IO entry is relaxed or called.
-                inputs._slice_counts(slices.describe(raw), 12)
+                # Shape is fixed above. Reuse all count/partition checks without
+                # creating a descriptive table only to reconstruct raw counts.
+                inputs._validate_slice_raw(raw, 12)
                 _marginals(raw)
                 primary = clusters[index]['candidates'][candidate][layer]
                 _primary(raw, primary['counts'], described=False)
