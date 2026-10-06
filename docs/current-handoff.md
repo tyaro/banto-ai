@@ -4,10 +4,10 @@
 
 ## 現在の状態
 
-- 最新code保存点: `799145aec0d56265e66d4bdec18bae65400c1307`（saved-reader実在庫境界・元handle identity・common caller接続）。clean同HEADの限定runtime01は103 source・全stdlib2,559 file・loaded前後・exit0/回収・親post-exit照合pass。旧e04の22 payloadと6評価再導出・行投影pin維持、77.399/120秒。別checker41 raw/103 source/旧22 payload pass。焦点60件・6.191秒・対象10 pin前後一致、safety pass。算術af3e7a5・公開b2a6065・saved-reader799145aの5役は別HEAD限定確認。producer/initial-readerと同一revision全7役nativeは未了。
+- 最新code保存点: `343c8639b0acfb2be535c02b5aaf4288b8f3d43e`（producer/initial-reader在庫・元handle・common接続）。clean同HEAD r7で全7役/14 phase、103 source/全stdlib2,559、exit0/回収・親post-exitを確認。架空1区間22 payload131,144,118 B＋479 metadataから40 cluster/50,000 draw・全文書・5 payload公開まで外側690.576/1,800秒・内側352.931/1,200秒でpass。別runtime checker57 raw/103 source、集計checker4,974 raw/60 source pass。焦点108件/14.067秒・fail0/error0/skip1・対象15 pin一致、safety pass。正式経路・全source/runtime閉包・最終受入は未了。
 - 正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0。登録holdout40 seedは未読。実設備・顧客データは対象外。
 - 実データ作業は保存済み合成dev8/smoke2、120区間・240 dataset・720評価のengineering読取り・記述報告まで。新native試行は架空入力のみ。
-- 追加agent0。焦点60試験・saved-reader1 worker・monitor・保存checkerは終了。生成/50,000 draw再計算0、登録holdout未読。長い全工程は反復していない。前保存点97370f3のCI37485069436は全3job成功・両minor各3,039件・10 raw保存/local verifier照合pass。runner版はtest2job20260927.320.1、compare20261004.327.1、digest/正式採択なし。旧版固定helper失敗は保全・別v2で修正。新saved-reader codeのCIへ代用しない。
+- 追加agent0。全7 worker・sampler/monitor・2 checker・焦点試験は終了。全工程nativeは1試行。集計checker旧rootの残存は保全・別v2で保存証跡だけ再検証。先行3d2ebfbのCI37498814612は全3job成功・両minor各3,051件・10 raw保存/local verifier照合pass、新codeへ代用しない。runner2版の公式release/READMEもpin保存したがVM digest/正式採択なし。10時JSTまでheartbeat banto-10で小さい保存単位を継続し、到達後は新規実行を開始しない。
 
 ## 正式評価を始める条件
 
@@ -24,6 +24,8 @@
 v3では、メモリ内コードの完全認証、conhost等の全補助processの個別exit code、未採用prototypeの全統合、架空480区間完走を追加必須にしない案を提示した。実ロード依存在庫と業務worker終了・子孫回収は維持する。DACL/独立tokenは保証Bなら必要、保証Aへ変更するには版付き改訂・独立監査が必要。旧fixtureのfalse flagは変更しない。
 
 ## 最新の実装・証拠
+
+[全7役runtime・共通予算native](results/anomaly-multiseed-v0.3-seven-role-runtime-common-budget-native-2026-10-07.md): 343c863で同じouter clockに7役・14phaseの在庫と元handle/exitを結び、公開後のcontrol/元22 payload/phase/source再照合までpass。正式source/runtime閉包・契約・入力経路・最終dev/smoke・独立受入・全容量2倍は残る。
 
 [saved-reader runtime native](results/anomaly-multiseed-v0.3-saved-reader-runtime-observation-native-2026-10-07.md): clean799145aで103 source・stdlib2,559 file・loaded各phase324 file/212 module/47 native、元handleと両phase、exit0/回収・親post-exitを照合。旧22 payload131,144,119 B・6評価再導出・行投影pin維持。child59.090/300秒・1 GiB上限、root呼出77.399/120秒。別checker41保存raw・103 source・旧22 payload pass。producer/initial-readerと同revision全7役native、外部program/異常子孫回収・正式受入が残る。
 
