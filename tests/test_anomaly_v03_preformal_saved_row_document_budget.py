@@ -10,6 +10,7 @@ from unittest.mock import patch
 from banto_ai import anomaly_v03_preformal_saved_row_document_budget as saved
 from tests import test_anomaly_v03_preformal_contiguous_document_budget as helpers
 from tests.test_anomaly_v03_bound_fixture_pipeline import example
+from tests.test_anomaly_v03_arithmetic_runtime_composition import candidates
 
 
 REVISION = 'b' * 40
@@ -148,6 +149,24 @@ class SavedRowDocumentBudgetTests(unittest.TestCase):
             result = self.run_trial()
         self.assertEqual(result['status'], 'failed')
         self.assertIn('source/runtime changed', result['detail'])
+
+    def test_runtime_evidence_changed_after_mapping_cannot_mark_pipeline_measured(self):
+        bridge = saved.chain.draw_bridge
+        source_root = self.parent.parent
+        sources = {name: bridge._pin(b'invented-source') for name in bridge.SOURCE_NAMES}
+        profiles = candidates(source_root, sources)
+        with patch.object(bridge, 'ROOT', source_root), \
+             patch.object(saved, '_source_pins', return_value=sources), \
+             patch.object(saved.chain.platform_runtime, 'probe_runtime',
+                          return_value=saved.chain.platform_runtime.EXPECTED), \
+             patch.object(bridge, 'recheck_runtime_profiles', side_effect=ValueError('phase bytes changed')):
+            result = self.run_trial(arithmetic_runtime_profiles=profiles)
+        self.assertEqual(result['status'], 'failed')
+        self.assertEqual(result['stage'], 'postflight')
+        self.assertIn('phase bytes changed', result['detail'])
+        self.assertFalse(result['same_budget_50000_arithmetic_document_slices_measured'])
+        self.assertTrue(result['shared_budget_passed'])
+        self.assertTrue(helpers.FakeBudget.instances[0].closed)
 
     def test_projection_output_mutation_fails_readback(self):
         def altered(*args, **kwargs):

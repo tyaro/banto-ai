@@ -226,10 +226,13 @@ def _subset(roots, manifest_path, manifest, manifest_pin, produced, read, budget
 
 def run(*, outer_root, producer_root, reread_root, receipt_name,
         expected_manifest_pin, expected_revision, control_root,
-        expected_control_pinset_pin, expected_input_pins, budget_limits=None):
+        expected_control_pinset_pin, expected_input_pins, budget_limits=None,
+        arithmetic_runtime_profiles=None):
     """Execute one new engineering attempt; never adopt a formal evaluation."""
     roots = _new_roots(outer_root, producer_root, reread_root, receipt_name)
     generated.copied.evidence._digest(expected_revision, 40)
+    profiles = document.chain.draw_bridge.validate_runtime_profiles(arithmetic_runtime_profiles,
+                                                                    revision=expected_revision)
     generated.copied.evidence._pin(expected_manifest_pin)
     document._expected_pins(expected_input_pins)
     document.control_files.validate_request(control_root, expected_control_pinset_pin)
@@ -253,6 +256,11 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
         'observation_payload_reader_executed_inside_outer_budget': False,
         'subset_pin_origin': 'caller-captured-owned-stage-output-pins-inside-outer-clock',
         'precomputed_output_and_numerical_pins_inside_clock': False}
+    if profiles is not None:
+        result.update(arithmetic_runtime_profile_pins={role: copy.deepcopy(entry['expected_pin'])
+            for role, entry in profiles.items()},
+            arithmetic_runtime_profile_scope='analysis-and-audit-only-candidate',
+            arithmetic_runtime_observation_checked=False)
     try:
         budget.start()
         budget.checkpoint('preflight')
@@ -295,14 +303,24 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
             expected_manifest_pin, produced, read, budget)
         result.update(expected_observation_subset=expected_subset, subset_sources=sources)
         result['stage'] = 'publication'
+        runtime_options = ({'arithmetic_runtime_profiles': profiles} if profiles is not None else {})
         published = document.run_saved_control_files_with_observation_subset(
             observation_subset=entries, expected_observation_subset=expected_subset,
             control_root=control_root, expected_control_pinset_pin=expected_control_pinset_pin,
             expected_mode='fixture', expected_input_pins=expected_input_pins,
-            expected_revision=expected_revision, receipt_name=receipt_name, outer_budget=budget)
+            expected_revision=expected_revision, receipt_name=receipt_name, outer_budget=budget, **runtime_options)
         result['publication_result_pin'] = published['result_pin']
         if published['status'] != 'measured':
             raise ValueError('full-draw document publication did not complete')
+        if profiles is not None:
+            if published.get('arithmetic_runtime_observation_checked') is not True:
+                raise ValueError('publication arithmetic runtime observations were not checked')
+            expected_profile_pins = {role: entry['expected_pin'] for role, entry in profiles.items()}
+            if published.get('arithmetic_runtime_profile_pins') != expected_profile_pins:
+                raise ValueError('publication arithmetic runtime profile pins differ')
+            result.update(arithmetic_runtime_profile_pins=copy.deepcopy(expected_profile_pins),
+                arithmetic_runtime_profile_scope='analysis-and-audit-only-candidate',
+                arithmetic_runtime_observation_checked=True)
         result['stage'] = 'postflight'
         budget.checkpoint('postflight')
         result['final_saved_payload_recheck'] = reread._recheck_saved_outputs(

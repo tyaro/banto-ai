@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch
 
 from banto_ai import anomaly_v03_preformal_generation_publication_budget as whole
 from tests import test_anomaly_v03_preformal_generated_chain_budget as helpers
+from tests.test_anomaly_v03_arithmetic_runtime_composition import candidates
 
 
 class EnvelopeTests(unittest.TestCase):
@@ -146,6 +147,82 @@ class EnvelopeTests(unittest.TestCase):
         self.assertTrue((self.outer / 'resource-budget.json').exists())
         self.assertTrue((self.producer / 'resource-budget.json').exists())
         self.assertFalse(result['same_outer_budget_generation_to_fresh_reader_measured'])
+
+    def test_invalid_runtime_bundle_rejects_before_roots_or_generation(self):
+        with patch.object(whole.generated, 'generate_and_read') as producer, \
+             self.assertRaisesRegex(ValueError, 'role inventory'):
+            whole.run(outer_root=self.outer, producer_root=self.producer,
+                reread_root=self.reader, receipt_name='trial-one',
+                expected_manifest_pin={'bytes': 1, 'sha256': 'a' * 64},
+                expected_revision='b' * 40, control_root=self.artifacts / 'unused',
+                expected_control_pinset_pin={'bytes': 1, 'sha256': 'a' * 64},
+                expected_input_pins={}, arithmetic_runtime_profiles={})
+        producer.assert_not_called()
+        self.assertFalse(self.outer.exists())
+        self.assertFalse(self.producer.exists())
+
+    def test_outer_clock_forwards_pins_and_requires_matching_publication_evidence(self):
+        bridge = whole.document.chain.draw_bridge
+        pin = {'bytes': 1, 'sha256': 'a' * 64}
+        profiles = candidates(self.repo, {name: pin for name in bridge.SOURCE_NAMES})
+        manifest = {'revision': 'b' * 40, 'recipe_id': whole.generated.RECIPE,
+                    'output_bytes': 100, 'chunk_index': 0, 'output_pins': {}}
+        def generated(root, *, outer_budget, **kwargs):
+            for role, pid in (('generator', 1), ('reader', 2)):
+                outer_budget.record_role(role, 'complete', pin, pid, True)
+            return {'status': 'verified', 'result_pin': pin}
+        def reread(root, reader_root, *, outer_budget, **kwargs):
+            outer_budget.record_role('saved-reader', 'complete', pin, 3, True)
+            return {'status': 'verified', 'result_pin': pin, 'verified_evaluations': 6}
+        def publication(*, outer_budget, arithmetic_runtime_profiles, **kwargs):
+            self.assertTrue(outer_budget._thread.is_alive())
+            self.assertEqual(arithmetic_runtime_profiles, profiles)
+            for pid, role in enumerate(('analysis', 'audit', 'writer', 'reader'), 4):
+                outer_budget.record_role(role, 'complete', pin, pid, True)
+            for name in whole.document.chain.OUTPUTS:
+                outer_budget.record_output(name, pin)
+            published = {'status': 'measured', 'result_pin': pin,
+                    'arithmetic_runtime_profile_pins': {role: entry['expected_pin']
+                        for role, entry in profiles.items()}}
+            if case != 'missing':
+                published['arithmetic_runtime_observation_checked'] = True
+            if case == 'different':
+                published['arithmetic_runtime_profile_pins']['audit'] = pin
+            return published
+        with patch.object(bridge, 'ROOT', self.repo), \
+             patch.object(whole, '_source', return_value={'invented-source': pin}), \
+             patch.object(whole.document.chain.platform_runtime, 'probe_runtime', return_value={'test': True}), \
+             patch.object(whole.document.control_files, 'validate_request'), \
+             patch.object(whole.reread, '_manifest', return_value=(manifest, {})), \
+             patch.object(whole.generated, 'generate_and_read', side_effect=generated), \
+             patch.object(whole.reread, 'run_reread', side_effect=reread), \
+             patch.object(whole, '_subset', return_value=([], {}, {})), \
+             patch.object(whole.reread, '_recheck_saved_outputs', return_value={'invented-check': True}), \
+             patch.object(whole.document, 'run_saved_control_files_with_observation_subset', side_effect=publication):
+            for case in ('missing', 'different', 'matched'):
+                with self.subTest(case=case):
+                    manifest_path = self.artifacts / ('anomaly-v03-preformal-generated-pinsets-' + case) / 'pins.json'
+                    manifest_path.parent.mkdir()
+                    manifest_path.write_bytes(b'{}')
+                    outer = self.artifacts / (whole.PREFIX + case)
+                    result = whole.run(outer_root=outer,
+                        producer_root=self.artifacts / (whole.generated.fixture.PREFIX + case),
+                        reread_root=self.artifacts / (whole.reread.PREFIX + case), receipt_name='trial-' + case,
+                        expected_manifest_pin=whole.generated.copied._pin(b'{}'), expected_revision='b' * 40,
+                        control_root=self.artifacts / 'unused', expected_control_pinset_pin=pin,
+                        expected_input_pins={'fixture/' + name: pin
+                            for name in ('input.json', 'slices.json', 'coverage.json', 'operation.json')},
+                        arithmetic_runtime_profiles=profiles)
+                    matched = case == 'matched'
+                    self.assertEqual(result['status'], 'measured' if matched else 'failed')
+                    self.assertEqual(result['arithmetic_runtime_observation_checked'], matched)
+                    self.assertEqual(result['same_outer_budget_generation_to_fresh_reader_measured'], matched)
+                    self.assertTrue((outer / 'result.json').is_file())
+                    self.assertTrue(result['all_seven_child_exits_reported'])
+                    self.assertFalse(result['formal_permission'])
+                    self.assertFalse(result['runtime_closure_complete'])
+                    if not matched:
+                        self.assertIn('not checked' if case == 'missing' else 'pins differ', result['detail'])
 
 
 if __name__ == '__main__':

@@ -185,8 +185,10 @@ def _arithmetic(root, input_pin, budget, result):
     for role in ('analysis', 'audit'):
         result['stage'] = role
         budget.checkpoint(role)
+        options = ({'inventory_profile_pin': result['arithmetic_runtime_profile_pins'][role]}
+                   if 'arithmetic_runtime_profile_pins' in result else {})
         supervision = draw_bridge._supervise(
-            role, root, input_pin, result.get('calculation_pin'), budget)
+            role, root, input_pin, result.get('calculation_pin'), budget, **options)
         supervision_pin = _write_value(
             root / (role + '-supervision.json'), supervision, MAX_CONTROL)
         result[role + '_supervision_pin'] = supervision_pin
@@ -200,7 +202,7 @@ def _arithmetic(root, input_pin, budget, result):
         name = 'calculation.json' if role == 'analysis' else 'audit.json'
         pin = draw_bridge._pin(draw_bridge.draw_budget._bounded_file(
             root / name, draw_bridge.OUTPUT_BYTES))
-        draw_bridge._verify_role(root, role, supervision, pin)
+        draw_bridge._verify_role(root, role, supervision, pin, **options)
         result['calculation_pin' if role == 'analysis' else 'arithmetic_audit_pin'] = pin
         budget.checkpoint(role)
     calculation = draw_bridge.projection.v.strict_json(draw_bridge._read(
@@ -211,6 +213,8 @@ def _arithmetic(root, input_pin, budget, result):
     if audit['draw_sha256'] != draw_bridge.frozen.BOOTSTRAP_HASH:
         raise ValueError('contiguous full draw digest differs')
     result['both_arithmetic_children_verified'] = True
+    if 'arithmetic_runtime_profile_pins' in result:
+        result['arithmetic_runtime_observation_checked'] = True
     return calculation, audit
 
 
@@ -326,11 +330,13 @@ def _slices(root, binding, producer_input, source, document, schema,
 
 def run_chain(*, expected_mode, producer_root, expected_producer_result_pin,
               expected_projection_pins, expected_revision, receipt_name,
-              receipt_parent=OUTPUT_PARENT, budget_limits=None):
+              receipt_parent=OUTPUT_PARENT, budget_limits=None,
+              arithmetic_runtime_profiles=None):
     """Retain one new attempt; an old arithmetic receipt is never an input."""
     if type(expected_mode) is not str or expected_mode != 'fixture':
         raise ValueError('only invented fixture mode is open')
     draw_bridge.projection.evidence._digest(expected_revision, 40)
+    profiles = draw_bridge.validate_runtime_profiles(arithmetic_runtime_profiles, revision=expected_revision)
     draw_bridge.projection.v.safe_relative_path(receipt_name)
     if ('/' in receipt_name or '\\' in receipt_name or
             not receipt_name.startswith('trial-')):
@@ -374,6 +380,8 @@ def run_chain(*, expected_mode, producer_root, expected_producer_result_pin,
     try:
         budget = ContiguousBudget(root, limits).start()
         budget.checkpoint('preflight')
+        draw_bridge.stage_runtime_profiles(root, profiles, revision=expected_revision, budget=budget,
+            source_pins=source_before, runtime=runtime_before, result=result)
         input_value = draw_bridge._input(binding)
         draw_bridge._check_input(input_value)
         result['input_pin'] = _write_value(root / 'input.json', input_value,
@@ -413,6 +421,9 @@ def run_chain(*, expected_mode, producer_root, expected_producer_result_pin,
                 ('slices.json', result['slices_pin'], slice_bridge.MAX_SLICES_BYTES),
                 ('slice-count-audit.json', result['slice_count_audit_pin'], MAX_CONTROL)):
             draw_bridge._read(root / name, pin, maximum)
+        draw_bridge.recheck_runtime_profiles(root, result)
+        if profiles is not None:
+            budget.checkpoint('postflight')
         result['status'] = 'measured'
         result['stage'] = 'complete'
     except draw_bridge.draw_budget.UnreapedMeasurement as error:

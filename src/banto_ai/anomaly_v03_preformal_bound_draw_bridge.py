@@ -420,13 +420,72 @@ def _verify_role(root, role, supervision, output_pin, *, inventory_profile_pin=N
         raise ValueError(role + ' child report differs')
 
 
+def validate_runtime_profiles(profiles, *, revision):
+    """Retain both caller-pinned candidates before any attempt is created."""
+    if profiles is None:
+        return None
+    from . import anomaly_v03_role_runtime_observation as observation
+    projection.v.require(type(profiles) is dict and set(profiles) == {'analysis', 'audit'},
+                         'arithmetic runtime profile role inventory')
+    retained = {}
+    for role in ('analysis', 'audit'):
+        entry = profiles[role]
+        projection.v.require(type(entry) is dict and set(entry) == {'raw', 'expected_pin'},
+                             'arithmetic runtime profile entry fields')
+        profile = observation.load_profile(entry['raw'], entry['expected_pin'], root=ROOT, role=role)
+        projection.v.require(profile['source_revision'] == revision,
+                             'arithmetic runtime profile revision differs')
+        retained[role] = {'raw': entry['raw'], 'expected_pin': copy.deepcopy(entry['expected_pin'])}
+    return retained
+
+
+def stage_runtime_profiles(root, profiles, *, revision, budget, source_pins, runtime, result):
+    """Save immutable candidates under the live arithmetic/common clock."""
+    if profiles is None:
+        return
+    from . import anomaly_v03_role_runtime_observation as observation
+    budget.checkpoint('preflight')
+    retained = validate_runtime_profiles(profiles, revision=revision)
+    # Check both roles before writing either profile or starting a child.
+    for role, entry in retained.items():
+        profile = observation.load_profile(entry['raw'], entry['expected_pin'], root=ROOT, role=role)
+        projection.v.require(profile['runtime'] == runtime, 'arithmetic runtime profile tuple differs')
+        projection.v.require(all(name in source_pins and
+            profile['source_files'].get(name) == source_pins[name] for name in SOURCE_NAMES),
+            'arithmetic runtime profile selected Git source differs')
+    pins = {role: copy.deepcopy(entry['expected_pin']) for role, entry in retained.items()}
+    result.update(arithmetic_runtime_profile_pins=pins,
+                  arithmetic_runtime_profile_scope='analysis-and-audit-only-candidate',
+                  arithmetic_runtime_observation_checked=False)
+    for role, entry in retained.items():
+        _write(root / (role + '-inventory-profile.json'), entry['raw'])
+        budget.checkpoint('preflight')
+
+
+def recheck_runtime_profiles(root, result):
+    """Rehash saved profiles and phase evidence without replaying any work."""
+    pins = result.get('arithmetic_runtime_profile_pins')
+    if pins is None:
+        return
+    from . import anomaly_v03_role_runtime_observation as observation
+    for role, pin in pins.items():
+        _read(root / (role + '-inventory-profile.json'), pin, observation.MAX_PROFILE)
+        report = projection.v.strict_json(_read(root / (role + '-stdout.json'),
+            result[role + '_supervision']['stdout_pin'], LOG_BYTES))
+        receipt = report['runtime_observation']
+        for phase in ('before', 'after'):
+            _read(root / (role + '-runtime-' + phase + '.json'), receipt[phase + '_pin'], observation.MAX_RECEIPT)
+
+
 def run_bridge(*, expected_mode, producer_root, expected_producer_result_pin,
-               expected_revision, receipt_name, receipt_parent=OUTPUT_PARENT):
+               expected_revision, receipt_name, receipt_parent=OUTPUT_PARENT,
+               arithmetic_runtime_profiles=None):
     """Retain a bounded two-child attempt; native 50,000 draws are explicit."""
     if type(expected_mode) is not str or expected_mode != 'fixture':
         raise ValueError('bridge accepts only invented fixture mode')
     projection.evidence._pin(expected_producer_result_pin)
     projection.evidence._digest(expected_revision, 40)
+    profiles = validate_runtime_profiles(arithmetic_runtime_profiles, revision=expected_revision)
     projection.v.safe_relative_path(receipt_name)
     if ('/' in receipt_name or '\\' in receipt_name or
             receipt_name.casefold().startswith('anomaly-multiseed-v0')):
@@ -457,6 +516,8 @@ def run_bridge(*, expected_mode, producer_root, expected_producer_result_pin,
         budget.checkpoint('preflight')
         result['source_pins_before'] = _git_pins(expected_revision)
         result['runtime_before'] = platform_runtime.probe_runtime(ROOT)
+        stage_runtime_profiles(root, profiles, revision=expected_revision, budget=budget,
+            source_pins=result['source_pins_before'], runtime=result['runtime_before'], result=result)
         binding = bind_producer_counts(producer_root, expected_producer_result_pin)
         result['producer_binding'] = {key: copy.deepcopy(value) for key, value in
             binding.items() if key != 'clusters'}
@@ -469,7 +530,9 @@ def run_bridge(*, expected_mode, producer_root, expected_producer_result_pin,
             result['stage'] = role
             budget.checkpoint(role)
             calculation_pin = result.get('calculation_pin')
-            supervision = _supervise(role, root, input_pin, calculation_pin, budget)
+            options = ({'inventory_profile_pin': result['arithmetic_runtime_profile_pins'][role]}
+                       if profiles is not None else {})
+            supervision = _supervise(role, root, input_pin, calculation_pin, budget, **options)
             supervision_raw = _raw(supervision)
             result[role + '_supervision_pin'] = _write(
                 root / (role + '-supervision.json'), supervision_raw)
@@ -484,13 +547,15 @@ def run_bridge(*, expected_mode, producer_root, expected_producer_result_pin,
             output_name = 'calculation.json' if role == 'analysis' else 'audit.json'
             output_pin = _pin(draw_budget._bounded_file(root / output_name,
                                                         OUTPUT_BYTES))
-            _verify_role(root, role, supervision, output_pin)
+            _verify_role(root, role, supervision, output_pin, **options)
             result['calculation_pin' if role == 'analysis' else 'audit_pin'] = output_pin
             if role == 'analysis':
                 result['invented_50000_primary_tables_measured'] = True
         audit = json.loads(_read(root / 'audit.json', result['audit_pin'], OUTPUT_BYTES))
         draw_budget._verify_audit_report(audit, result['calculation_pin'])
         result['invented_50000_independent_arithmetic_matched'] = True
+        if profiles is not None:
+            result['arithmetic_runtime_observation_checked'] = True
         result['stage'] = 'postflight'
         budget.checkpoint('postflight')
         if bind_producer_counts(producer_root, expected_producer_result_pin) != binding:
@@ -504,6 +569,7 @@ def run_bridge(*, expected_mode, producer_root, expected_producer_result_pin,
                           ('calculation.json', result['calculation_pin']),
                           ('audit.json', result['audit_pin'])]:
             _read(root / name, pin, 512 * 1024 if name == 'input.json' else OUTPUT_BYTES)
+        recheck_runtime_profiles(root, result)
         result['status'] = 'measured'
         result['stage'] = 'complete'
     except draw_budget.UnreapedMeasurement as error:

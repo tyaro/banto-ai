@@ -141,7 +141,7 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
                    budget_limits=None, publish_document=False,
                    control_root=None, expected_control_pinset_pin=None,
                    observation_subset=None, expected_observation_subset=None,
-                   outer_budget=None):
+                   outer_budget=None, arithmetic_runtime_profiles=None):
     """Run a new invented attempt; optionally include owned local publication."""
     if type(publish_document) is not bool:
         raise ValueError('publication selection must be boolean')
@@ -160,6 +160,8 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
         expected_observation_subset = subset_projection.validate_subset_request(
             observation_subset, expected_observation_subset)
     projection.evidence._digest(expected_revision, 40)
+    profiles = chain.draw_bridge.validate_runtime_profiles(arithmetic_runtime_profiles,
+                                                           revision=expected_revision)
     _expected_pins(expected_input_pins)
     expected_input_pins = copy.deepcopy(expected_input_pins)
     projection.v.safe_relative_path(receipt_name)
@@ -239,6 +241,8 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
         before = _source_pins(expected_revision)
         runtime = chain.platform_runtime.probe_runtime(ROOT)
         result.update(source_pins_before=before, runtime_before=runtime)
+        chain.draw_bridge.stage_runtime_profiles(root, profiles, revision=expected_revision,
+            budget=budget, source_pins=before, runtime=runtime, result=result)
         if disk_controls:
             result['stage'] = 'control-read'
             loaded = control_files.load_controls(control_root,
@@ -325,6 +329,7 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
         if disk_controls:
             chain.draw_bridge._read(root / 'control-files.json', result['control_file_read_pin'], chain.MAX_CONTROL)
         budget.checkpoint('postflight')
+        chain.draw_bridge.recheck_runtime_profiles(root, result)
         result.update(status='measured', stage='complete',
                       source_pins_after=before, runtime_after=runtime)
     except chain.draw_bridge.draw_budget.UnreapedMeasurement as error:
@@ -390,20 +395,22 @@ def run_saved_rows(entries, *, expected_mode, expected_input_pins,
 
 def run_saved_control_files(*, control_root, expected_control_pinset_pin,
                             expected_mode, expected_input_pins, expected_revision,
-                            receipt_name, receipt_parent=OUTPUT_PARENT, budget_limits=None):
+                            receipt_name, receipt_parent=OUTPUT_PARENT, budget_limits=None,
+                            arithmetic_runtime_profiles=None):
     """Read fixed control files and finish local publication under one clock."""
     return run_saved_rows(None, expected_mode=expected_mode,
         expected_input_pins=expected_input_pins, expected_revision=expected_revision,
         receipt_name=receipt_name, receipt_parent=receipt_parent, budget_limits=budget_limits,
         publish_document=True, control_root=control_root,
-        expected_control_pinset_pin=expected_control_pinset_pin)
+        expected_control_pinset_pin=expected_control_pinset_pin,
+        arithmetic_runtime_profiles=arithmetic_runtime_profiles)
 
 
 def run_saved_control_files_with_observation_subset(*, observation_subset,
         expected_observation_subset, control_root, expected_control_pinset_pin,
         expected_mode, expected_input_pins, expected_revision,
         receipt_name, receipt_parent=OUTPUT_PARENT, budget_limits=None,
-        outer_budget=None):
+        outer_budget=None, arithmetic_runtime_profiles=None):
     """Full numerical fixture with explicit prior-reader subset provenance.
 
     The subset's raw observations and reader execution precede this clock.
@@ -416,4 +423,4 @@ def run_saved_control_files_with_observation_subset(*, observation_subset,
         expected_control_pinset_pin=expected_control_pinset_pin,
         observation_subset=observation_subset,
         expected_observation_subset=expected_observation_subset,
-        outer_budget=outer_budget)
+        outer_budget=outer_budget, arithmetic_runtime_profiles=arithmetic_runtime_profiles)
