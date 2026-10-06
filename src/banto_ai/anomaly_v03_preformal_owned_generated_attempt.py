@@ -71,6 +71,66 @@ SNAPSHOT_FILES = (
 )
 
 
+def validate_runtime_profiles(profiles, *, revision):
+    if profiles is None:
+        return None
+    from . import anomaly_v03_role_runtime_observation as observation
+    v.require(type(profiles) is dict and set(profiles) == {'producer', 'initial-reader'},
+              'generation runtime profile role inventory')
+    retained = {}
+    for role, entry in profiles.items():
+        v.require(type(entry) is dict and set(entry) == {'raw', 'expected_pin'},
+                  'generation runtime profile entry fields')
+        value = observation.load_profile(entry['raw'], entry['expected_pin'], root=ROOT, role=role)
+        v.require(value['source_revision'] == revision, 'generation runtime profile revision differs')
+        retained[role] = {'raw': entry['raw'], 'expected_pin': copy.deepcopy(entry['expected_pin'])}
+    return retained
+
+
+def check_runtime_profiles(profiles, *, revision, source_pins, runtime, reader_source_pins=None):
+    retained = validate_runtime_profiles(profiles, revision=revision)
+    if retained is None:
+        return None
+    from . import anomaly_v03_role_runtime_observation as observation
+    for role, entry in retained.items():
+        value = observation.load_profile(entry['raw'], entry['expected_pin'], root=ROOT, role=role)
+        required = SOURCE_FILES if role == 'producer' else copied.SOURCE_FILES
+        selected = reader_source_pins if role == 'initial-reader' and reader_source_pins is not None else source_pins
+        v.require(value['runtime'] == runtime, 'generation runtime profile tuple differs')
+        v.require(all(name in selected and value['source_files'].get(name) == selected[name]
+                      for name in required), 'generation runtime profile selected Git source differs')
+    return retained
+
+
+def _runtime_reply(reply, *, role, target, profiles, input_pin, process):
+    if profiles is None:
+        v.require('runtime_observation' not in reply, 'unexpected generation runtime observation')
+        return None
+    from . import anomaly_v03_role_runtime_observation as observation
+    entry = profiles[role]
+    return observation.verify_receipt(reply.get('runtime_observation'), root=target, source_root=ROOT,
+        role=role, profile_raw=entry['raw'], profile_pin=entry['expected_pin'], input_pin=input_pin, process=process)
+
+
+def recheck_runtime_profiles(root, result):
+    """Reopen profile/invocation/stdout/phases after both roles, without replay."""
+    if 'generation_runtime_profile_pins' not in result:
+        return
+    from . import anomaly_v03_role_runtime_observation as observation
+    for role, profile_pin in result['generation_runtime_profile_pins'].items():
+        prefix = 'generator' if role == 'producer' else 'reader'
+        target = Path(root) / ('owned-generator' if role == 'producer' else 'owned-reader')
+        copied.pinned.read_pinned(target / 'inventory-profile.json', profile_pin, observation.MAX_PROFILE)
+        copied.pinned.read_pinned(target / 'invocation.json', result[prefix + '_invocation_pin'], MAX_INVOCATION)
+        reply = v.strict_json(copied.pinned.read_pinned(target / 'worker/report.json',
+            result[prefix + '_stdout_pin'], (LIMITS if role == 'producer' else copied.READER_LIMITS)['output_bytes']))
+        receipt = result['runtime_observations'][role]
+        v.require(reply.get('runtime_observation') == receipt, 'generation runtime receipt changed')
+        for phase in ('before', 'after'):
+            copied.pinned.read_pinned(target / (role + '-runtime-' + phase + '.json'), receipt[phase + '_pin'],
+                               observation.MAX_RECEIPT)
+
+
 def _root(root, *, missing=False):
     root = paths.regular_path(Path(root), directory=True, missing=missing)
     v.require(root.parent == ROOT / 'artifacts' and
@@ -299,6 +359,79 @@ def _preflight(root, chunk_index, expected_pins):
     return names
 
 
+def _generate_attempt(request, root):
+    """The original generation/save/readback operation, performed once."""
+    campaign_mode = 'campaign_context' in request
+    names = _outputs(root, request['chunk_index'])
+    copied._same(request['output_names'], names,
+                 'generator output names')
+    external = request['external_pins']
+    _validate_pins(names, external)
+    snapshots = copied._decode_source_snapshots(request['source_snapshots'])
+    _validated_snapshots(snapshots, request['source_revision'])
+    source_before = _source(request['source_revision'])
+    runtime_before = runtime.probe_runtime(ROOT)
+    copied._same(source_before, request['source'], 'generator source before')
+    copied._same(runtime_before, request['runtime'], 'generator runtime before')
+    for name in ('saved', 'run-root'):
+        v.require(not (root / name).exists(), 'new generator output roots')
+    process = observed.creation_observation(os.getpid())
+
+    def save_and_read_dataset_inputs(inputs):
+        v.require(len(inputs) == 12 and all(
+            name.startswith('datasets/') for name in inputs),
+            'twelve shared dataset inputs before evaluations')
+        (root / 'run-root').mkdir()
+        for logical, data in sorted(inputs.items()):
+            copied._same(copied._pin(data), external[logical],
+                         'predeclared dataset input pin')
+            target = root / names[logical]
+            target.parent.mkdir(parents=True, exist_ok=True)
+            io._exclusive(target, data)
+        copied._inventory(root / 'run-root',
+                          [names[logical].removeprefix('run-root/')
+                           for logical in inputs])
+        return {logical: copied._checked_file(
+            root, names[logical], external[logical],
+            copied._maximum(logical)) for logical in sorted(inputs)}
+
+    output = build_invented_output_bytes(
+        root, chunk_index=request['chunk_index'],
+        recipe_id=request['recipe_id'], source_snapshots=snapshots,
+        before_evaluations=save_and_read_dataset_inputs)
+    pins = {name: copied._pin(value) for name, value in output.items()}
+    copied._same(pins, external, 'externally predeclared generated bytes')
+    (root / 'saved').mkdir()
+    for logical, relative in sorted(names.items()):
+        if logical.startswith('datasets/'):
+            continue
+        target = root / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        io._exclusive(target, output[logical])
+    copied._check_outputs(root, names, external)
+    source_after = _source(request['source_revision'])
+    runtime_after = runtime.probe_runtime(ROOT)
+    copied._same(source_after, source_before, 'generator source after')
+    copied._same(runtime_after, runtime_before, 'generator runtime after')
+    reply = {'format': (CAMPAIGN_FORMAT if campaign_mode else FORMAT),
+             'status': 'generated',
+             'invocation_id': request['invocation_id'],
+             'process': {'pid': os.getpid(), 'parent_pid': os.getppid(),
+                         'start_token': process['start_token']},
+             'recipe_id': RECIPE, 'output_pins': external,
+             'output_file_count': len(names), 'output_bytes': sum(
+                 pin['bytes'] for pin in external.values()),
+             'source_before': source_before, 'source_after': source_after,
+             'runtime_before': runtime_before, 'runtime_after': runtime_after,
+             'invented_generation_executed': True,
+             'registered_seed_consumed': False,
+             'actual_registered_observations_read': False,
+             'formal_permission': False}
+    if campaign_mode:
+        reply['campaign_context'] = copy.deepcopy(request['campaign_context'])
+    return reply
+
+
 def worker_main(argv):
     """Generate bytes in an isolated owned child from recipe and prelaunch pins."""
     try:
@@ -314,7 +447,8 @@ def worker_main(argv):
         copied.evidence._keys(request,
             'format root chunk_index recipe_id output_names external_pins '
             'source_snapshots source_revision source runtime invocation_id' +
-            (' campaign_context' if campaign_mode else ''),
+            (' campaign_context' if campaign_mode else '') +
+            (' runtime_inventory_profile_pin' if 'runtime_inventory_profile_pin' in request else ''),
             'generator invocation fields')
         v.require(request['format'] == (
                       CAMPAIGN_INVOCATION if campaign_mode else INVOCATION) and
@@ -330,73 +464,18 @@ def worker_main(argv):
                       'generator campaign chunk context')
         v.require(path == root / 'owned-generator' / 'invocation.json',
                   'generator invocation path')
-        names = _outputs(root, request['chunk_index'])
-        copied._same(request['output_names'], names,
-                     'generator output names')
-        external = request['external_pins']
-        _validate_pins(names, external)
-        snapshots = copied._decode_source_snapshots(request['source_snapshots'])
-        _validated_snapshots(snapshots, request['source_revision'])
-        source_before = _source(request['source_revision'])
-        runtime_before = runtime.probe_runtime(ROOT)
-        copied._same(source_before, request['source'], 'generator source before')
-        copied._same(runtime_before, request['runtime'], 'generator runtime before')
-        for name in ('saved', 'run-root'):
-            v.require(not (root / name).exists(), 'new generator output roots')
-        process = observed.creation_observation(os.getpid())
-
-        def save_and_read_dataset_inputs(inputs):
-            v.require(len(inputs) == 12 and all(
-                name.startswith('datasets/') for name in inputs),
-                'twelve shared dataset inputs before evaluations')
-            (root / 'run-root').mkdir()
-            for logical, data in sorted(inputs.items()):
-                copied._same(copied._pin(data), external[logical],
-                             'predeclared dataset input pin')
-                target = root / names[logical]
-                target.parent.mkdir(parents=True, exist_ok=True)
-                io._exclusive(target, data)
-            copied._inventory(root / 'run-root',
-                              [names[logical].removeprefix('run-root/')
-                               for logical in inputs])
-            return {logical: copied._checked_file(
-                root, names[logical], external[logical],
-                copied._maximum(logical)) for logical in sorted(inputs)}
-
-        output = build_invented_output_bytes(
-            root, chunk_index=request['chunk_index'],
-            recipe_id=request['recipe_id'], source_snapshots=snapshots,
-            before_evaluations=save_and_read_dataset_inputs)
-        pins = {name: copied._pin(value) for name, value in output.items()}
-        copied._same(pins, external, 'externally predeclared generated bytes')
-        (root / 'saved').mkdir()
-        for logical, relative in sorted(names.items()):
-            if logical.startswith('datasets/'):
-                continue
-            target = root / relative
-            target.parent.mkdir(parents=True, exist_ok=True)
-            io._exclusive(target, output[logical])
-        copied._check_outputs(root, names, external)
-        source_after = _source(request['source_revision'])
-        runtime_after = runtime.probe_runtime(ROOT)
-        copied._same(source_after, source_before, 'generator source after')
-        copied._same(runtime_after, runtime_before, 'generator runtime after')
-        reply = {'format': (CAMPAIGN_FORMAT if campaign_mode else FORMAT),
-                 'status': 'generated',
-                 'invocation_id': request['invocation_id'],
-                 'process': {'pid': os.getpid(), 'parent_pid': os.getppid(),
-                             'start_token': process['start_token']},
-                 'recipe_id': RECIPE, 'output_pins': external,
-                 'output_file_count': len(names), 'output_bytes': sum(
-                     pin['bytes'] for pin in external.values()),
-                 'source_before': source_before, 'source_after': source_after,
-                 'runtime_before': runtime_before, 'runtime_after': runtime_after,
-                 'invented_generation_executed': True,
-                 'registered_seed_consumed': False,
-                 'actual_registered_observations_read': False,
-                 'formal_permission': False}
-        if campaign_mode:
-            reply['campaign_context'] = copy.deepcopy(request['campaign_context'])
+        operation = lambda: _generate_attempt(request, root)
+        if 'runtime_inventory_profile_pin' in request:
+            from . import anomaly_v03_role_runtime_observation as observation
+            profile_raw = observed._file(path.parent / 'inventory-profile.json', observation.MAX_PROFILE)
+            profile = observation.load_profile(profile_raw, request['runtime_inventory_profile_pin'], root=ROOT, role='producer')
+            v.require(profile['source_revision'] == request['source_revision'], 'producer runtime profile worker revision differs')
+            reply, receipt = observation.run_observed(operation, root=path.parent, source_root=ROOT,
+                role='producer', profile_raw=profile_raw, profile_pin=request['runtime_inventory_profile_pin'],
+                input_pin=copied._pin(raw))
+            reply['runtime_observation'] = receipt
+        else:
+            reply = operation()
         print(json.dumps(reply, sort_keys=True))
         return 0
     except (ValueError, OSError, KeyError, TypeError,
@@ -410,7 +489,7 @@ def worker_main(argv):
 
 def generate_and_read(root, *, expected_pins, source_snapshots,
                       expected_revision, chunk_index=0, recipe_id=RECIPE,
-                      outer_budget=None, campaign_context=None):
+                      outer_budget=None, campaign_context=None, generation_runtime_profiles=None):
     """Own a recipe generator, verify every saved byte, then own a reader.
 
     ``expected_pins`` must be retained by the caller outside ``root`` before
@@ -419,6 +498,7 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
     caller-owned engineering budget probes both child supervisors.
     """
     root = _root(root)
+    profiles = validate_runtime_profiles(generation_runtime_profiles, revision=expected_revision)
     if campaign_context is not None:
         campaign_context = child_context.verify_context(
             campaign_context, attempt_root=root, revision=expected_revision)
@@ -446,6 +526,10 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
               'execution_authenticated': False, 'result_trusted': False,
               'formal_permission': False, 'analysis_authorized': False,
               'promotion_allowed': False, 'independent_s6_complete': False}
+    if profiles is not None:
+        result.update(generation_runtime_profile_pins={role: copy.deepcopy(entry['expected_pin'])
+            for role, entry in profiles.items()}, generation_runtime_observation_checked=False,
+            runtime_observations={}, runtime_observation_verifications={}, runtime_processes={})
     try:
         if outer_budget is not None:
             outer_budget.checkpoint('preflight')
@@ -458,6 +542,10 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
         source = _source(expected_revision)
         reader_source = copied._source(expected_revision)
         observed_runtime = runtime.probe_runtime(ROOT)
+        if profiles is not None:
+            check_runtime_profiles(profiles, revision=expected_revision,
+                source_pins={row['path']: row['pin'] for row in source['selected_files']},
+                reader_source_pins={row['path']: row['pin'] for row in reader_source['selected_files']}, runtime=observed_runtime)
         invocation = {'format': (CAMPAIGN_INVOCATION if campaign_context
                                  is not None else INVOCATION),
                       'root': str(root),
@@ -469,6 +557,9 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
                       'invocation_id': secrets.token_hex(32)}
         if campaign_context is not None:
             invocation['campaign_context'] = copy.deepcopy(campaign_context)
+        if profiles is not None:
+            invocation['runtime_inventory_profile_pin'] = copy.deepcopy(profiles['producer']['expected_pin'])
+            io._exclusive(target / 'inventory-profile.json', profiles['producer']['raw'])
         invocation_raw = v.canonical_json(invocation)
         v.require(len(invocation_raw) <= MAX_INVOCATION,
                   'generator invocation byte bound')
@@ -490,6 +581,10 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
             copied._same(copied._pin(observed._file(
                 invocation_path, MAX_INVOCATION)), invocation_pin,
                 'generator invocation changed')
+            if profiles is not None:
+                from . import anomaly_v03_role_runtime_observation as observation
+                copied.pinned.read_pinned(target / 'inventory-profile.json', profiles['producer']['expected_pin'],
+                                         observation.MAX_PROFILE)
 
         def started(process):
             launch.update(observed.creation_observation(
@@ -552,6 +647,14 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
                               ('runtime_before', observed_runtime),
                               ('runtime_after', observed_runtime)):
             copied._same(reply[key], expected, 'generator child ' + key)
+        verification = _runtime_reply(reply, role='producer', target=target, profiles=profiles,
+                                      input_pin=invocation_pin, process=launch)
+        if profiles is not None:
+            result['runtime_observations']['producer'] = copy.deepcopy(reply['runtime_observation'])
+            result['runtime_observation_verifications']['producer'] = verification
+            result['runtime_processes']['producer'] = copy.deepcopy(launch)
+            if outer_budget is not None:
+                outer_budget.checkpoint('generator')
         copied._check_outputs(root, names, external)
         boundary()
         selected, attempt = copied._saved_outputs(
@@ -579,6 +682,9 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
         if campaign_context is not None:
             reader_invocation['campaign_context'] = copy.deepcopy(
                 campaign_context)
+        if profiles is not None:
+            reader_invocation['runtime_inventory_profile_pin'] = copy.deepcopy(profiles['initial-reader']['expected_pin'])
+            io._exclusive(active_target / 'inventory-profile.json', profiles['initial-reader']['raw'])
         reader_raw = v.canonical_json(reader_invocation)
         v.require(len(reader_raw) <= copied.MAX_READER_INVOCATION,
                   'reader invocation byte bound')
@@ -596,6 +702,10 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
             copied._same(copied._pin(observed._file(
                 reader_path, copied.MAX_READER_INVOCATION)), reader_pin,
                 'reader invocation changed')
+            if profiles is not None:
+                from . import anomaly_v03_role_runtime_observation as observation
+                copied.pinned.read_pinned(active_target / 'inventory-profile.json', profiles['initial-reader']['expected_pin'],
+                                         observation.MAX_PROFILE)
 
         def reader_started(process):
             reader_launch.update(observed.creation_observation(
@@ -658,6 +768,12 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
                               ('runtime_before', observed_runtime),
                               ('runtime_after', observed_runtime)):
             copied._same(reader_reply[key], expected, 'reader child ' + key)
+        verification = _runtime_reply(reader_reply, role='initial-reader', target=active_target,
+                                      profiles=profiles, input_pin=reader_pin, process=reader_launch)
+        if profiles is not None:
+            result['runtime_observations']['initial-reader'] = copy.deepcopy(reader_reply['runtime_observation'])
+            result['runtime_observation_verifications']['initial-reader'] = verification
+            result['runtime_processes']['initial-reader'] = copy.deepcopy(reader_launch)
         read = reader_reply['reader_result']
         for key, expected in {
             'format': fixture.FORMAT,
@@ -705,8 +821,11 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
         }.items():
             copied._same(read[key], expected, 'owned reader result ' + key)
         reader_boundary()
+        recheck_runtime_profiles(root, result)
         if outer_budget is not None:
             outer_budget.checkpoint('postflight')
+        if profiles is not None:
+            result['generation_runtime_observation_checked'] = True
         result.update(status='verified', reason=None, reader_result=read)
     except supervisor.UnreapedWorker as error:
         report = error.report

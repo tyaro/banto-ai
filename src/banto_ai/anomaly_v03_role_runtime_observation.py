@@ -25,6 +25,8 @@ PUBLICATION_FORMAT = 'anomaly-v03-publication-runtime-profile-v1'
 PUBLICATION_RECEIPT = 'anomaly-v03-publication-runtime-observation-v1'
 SAVED_READER_FORMAT = 'anomaly-v03-saved-reader-runtime-profile-v1'
 SAVED_READER_RECEIPT = 'anomaly-v03-saved-reader-runtime-observation-v1'
+GENERATION_FORMAT = 'anomaly-v03-generation-runtime-profile-v1'
+GENERATION_RECEIPT = 'anomaly-v03-generation-runtime-observation-v1'
 MAX_PROFILE = 2 * 1024**2
 MAX_RECEIPT = 2 * 1024**2
 MAX_SOURCES = 4096
@@ -34,7 +36,9 @@ OPERATIONS = {'analysis': 'invented40-cluster-50000-primary',
               'audit': 'invented40-cluster-50000-independent-primary-audit',
               'writer': 'publish-invented-full-draw-five-payloads',
               'reader': 'fresh-readback-invented-full-draw-five-payloads',
-              'saved-reader': 'reread-invented-saved-chunk-and-rederive-six-evaluations'}
+              'saved-reader': 'reread-invented-saved-chunk-and-rederive-six-evaluations',
+              'producer': 'generate-one-invented-hand-normal-chunk',
+              'initial-reader': 'initial-read-invented-generated-chunk-and-rederive-six-evaluations'}
 CLOSED = {'formal_permission': False, 'source_closure_complete': False,
           'runtime_closure_complete': False, 'execution_authenticated': False,
           'independent_s6_complete': False}
@@ -48,6 +52,8 @@ def profile_format(role):
     v.require(role in OPERATIONS, 'runtime observation role')
     if role == 'saved-reader':
         return SAVED_READER_FORMAT
+    if role in ('producer', 'initial-reader'):
+        return GENERATION_FORMAT
     return PUBLICATION_FORMAT if role in ('writer', 'reader') else FORMAT
 
 
@@ -55,6 +61,8 @@ def receipt_format(role):
     v.require(role in OPERATIONS, 'runtime observation role')
     if role == 'saved-reader':
         return SAVED_READER_RECEIPT
+    if role in ('producer', 'initial-reader'):
+        return GENERATION_RECEIPT
     return PUBLICATION_RECEIPT if role in ('writer', 'reader') else RECEIPT
 
 
@@ -64,6 +72,10 @@ def required_sources(role):
               else 'anomaly_v03_preformal_bound_draw_bridge.py')
     if role == 'saved-reader':
         worker = 'anomaly_v03_preformal_saved_row_reread.py'
+    if role == 'producer':
+        worker = 'anomaly_v03_preformal_owned_generated_attempt.py'
+    if role == 'initial-reader':
+        worker = 'anomaly_v03_preformal_owned_saved_attempt.py'
     return ['src/banto_ai/' + worker, 'src/banto_ai/anomaly_v03_role_runtime_observation.py']
 
 

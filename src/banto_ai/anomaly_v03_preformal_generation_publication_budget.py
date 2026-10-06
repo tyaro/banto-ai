@@ -228,7 +228,7 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
         expected_manifest_pin, expected_revision, control_root,
         expected_control_pinset_pin, expected_input_pins, budget_limits=None,
         arithmetic_runtime_profiles=None, publication_runtime_profiles=None,
-        saved_reader_runtime_profile=None):
+        saved_reader_runtime_profile=None, generation_runtime_profiles=None):
     """Execute one new engineering attempt; never adopt a formal evaluation."""
     roots = _new_roots(outer_root, producer_root, reread_root, receipt_name)
     generated.copied.evidence._digest(expected_revision, 40)
@@ -237,6 +237,7 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
     publication_profiles = document.publication.validate_runtime_profiles(publication_runtime_profiles,
                                                                            revision=expected_revision)
     saved_reader_profile = reread.validate_runtime_profile(saved_reader_runtime_profile, revision=expected_revision)
+    generation_profiles = generated.validate_runtime_profiles(generation_runtime_profiles, revision=expected_revision)
     generated.copied.evidence._pin(expected_manifest_pin)
     document._expected_pins(expected_input_pins)
     document.control_files.validate_request(control_root, expected_control_pinset_pin)
@@ -271,6 +272,9 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
     if saved_reader_profile is not None:
         result.update(saved_reader_runtime_profile_pin=copy.deepcopy(saved_reader_profile['expected_pin']),
                       saved_reader_runtime_observation_checked=False)
+    if generation_profiles is not None:
+        result.update(generation_runtime_profile_pins={role: copy.deepcopy(entry['expected_pin'])
+            for role, entry in generation_profiles.items()}, generation_runtime_observation_checked=False)
     try:
         budget.start()
         budget.checkpoint('preflight')
@@ -280,6 +284,8 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
             source_pins=before, runtime=runtime)
         reread.check_runtime_profile(saved_reader_profile, revision=expected_revision,
                                     source_pins=before, runtime=runtime)
+        generated.check_runtime_profiles(generation_profiles, revision=expected_revision,
+                                        source_pins=before, runtime=runtime)
         raw = reread.pinned.read_pinned(manifest_path, expected_manifest_pin, reread.MAX_MANIFEST)
         manifest, snapshots = reread._manifest(raw, expected_manifest_pin, roots['producer'])
         if manifest['revision'] != expected_revision or manifest['recipe_id'] != generated.RECIPE:
@@ -291,10 +297,12 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
             stage='producer', role_map={'generator': 'producer', 'reader': 'initial-reader'})
         local.start()
         try:
+            generation_options = ({'generation_runtime_profiles': generation_profiles}
+                                  if generation_profiles is not None else {})
             produced = generated.generate_and_read(roots['producer'],
                 expected_pins=manifest['output_pins'], source_snapshots=snapshots,
                 expected_revision=expected_revision, chunk_index=manifest['chunk_index'],
-                outer_budget=local)
+                outer_budget=local, **generation_options)
         finally:
             report = local.close()
             result['producer_budget_pin'] = document.chain._write_value(
@@ -302,6 +310,12 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
         result['producer_result_pin'] = produced['result_pin']
         if produced['status'] != 'verified' or report['passed'] is not True or not report['both_owned_exits_reported']:
             raise ValueError('owned generator and initial reader did not complete')
+        if generation_profiles is not None:
+            expected_generation_pins = {role: entry['expected_pin'] for role, entry in generation_profiles.items()}
+            if (produced.get('generation_runtime_observation_checked') is not True or
+                    produced.get('generation_runtime_profile_pins') != expected_generation_pins):
+                raise ValueError('generation runtime observations missing or profile pins differ')
+            result['generation_runtime_observation_checked'] = True
         result['observation_chunks_generated_here'] = 1
         result['stage'] = 'saved-reader'
         saved_reader_options = ({'saved_reader_runtime_profile': saved_reader_profile}
@@ -360,6 +374,7 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
             reread.pinned.read_pinned(Path(source['path']), source['pin'],
                 document.projection.coverage.RAW_LIMITS[name])
         reread.recheck_runtime_profile(roots['saved-reader'], read)
+        generated.recheck_runtime_profiles(roots['producer'], produced)
         if _source(expected_revision) != before or document.chain.platform_runtime.probe_runtime(ROOT) != runtime:
             raise ValueError('generation-publication final source/runtime changed')
         budget.checkpoint('postflight')

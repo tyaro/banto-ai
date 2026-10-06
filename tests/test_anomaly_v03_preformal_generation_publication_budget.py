@@ -189,11 +189,24 @@ class EnvelopeTests(unittest.TestCase):
         self.assertFalse(self.outer.exists())
         self.assertFalse(self.producer.exists())
 
+    def test_invalid_generation_bundle_rejects_before_roots_or_generation(self):
+        with patch.object(whole.generated, 'generate_and_read') as producer, \
+             self.assertRaisesRegex(ValueError, 'role inventory'):
+            whole.run(outer_root=self.outer, producer_root=self.producer,
+                reread_root=self.reader, receipt_name='trial-one',
+                expected_manifest_pin={'bytes': 1, 'sha256': 'a' * 64},
+                expected_revision='b' * 40, control_root=self.artifacts / 'unused',
+                expected_control_pinset_pin={'bytes': 1, 'sha256': 'a' * 64},
+                expected_input_pins={}, generation_runtime_profiles={})
+        producer.assert_not_called()
+        self.assertFalse(self.outer.exists())
+        self.assertFalse(self.producer.exists())
+
     def test_outer_clock_forwards_pins_and_requires_matching_publication_evidence(self):
         bridge = whole.document.chain.draw_bridge
         pin = {'bytes': 1, 'sha256': 'a' * 64}
         sources = {name: pin for name in (*bridge.SOURCE_NAMES, *whole.document.publication.SOURCE_NAMES,
-                                         *whole.reread.SOURCE_FILES)}
+                                         *whole.reread.SOURCE_FILES, *whole.generated.SOURCE_FILES)}
         profiles = candidates(self.repo, sources)
         publication_profiles = {}
         for role in ('writer', 'reader'):
@@ -204,12 +217,24 @@ class EnvelopeTests(unittest.TestCase):
         value.update(role='saved-reader', format=obs.SAVED_READER_FORMAT, operation=obs.OPERATIONS['saved-reader'])
         raw = obs.v.canonical_json(value)
         saved_reader_profile = {'raw': raw, 'expected_pin': obs._pin(raw)}
+        generation_profiles = {}
+        for role in ('producer', 'initial-reader'):
+            value.update(role=role, format=obs.GENERATION_FORMAT, operation=obs.OPERATIONS[role])
+            raw = obs.v.canonical_json(value)
+            generation_profiles[role] = {'raw': raw, 'expected_pin': obs._pin(raw)}
         manifest = {'revision': 'b' * 40, 'recipe_id': whole.generated.RECIPE,
                     'output_bytes': 100, 'chunk_index': 0, 'output_pins': {}}
-        def generated(root, *, outer_budget, **kwargs):
+        def generated(root, *, outer_budget, generation_runtime_profiles, **kwargs):
+            self.assertEqual(generation_runtime_profiles, generation_profiles)
             for role, pid in (('generator', 1), ('reader', 2)):
                 outer_budget.record_role(role, 'complete', pin, pid, True)
-            return {'status': 'verified', 'result_pin': pin}
+            result = {'status': 'verified', 'result_pin': pin,
+                      'generation_runtime_profile_pins': {k: v['expected_pin'] for k, v in generation_profiles.items()}}
+            if case != 'generation-missing':
+                result['generation_runtime_observation_checked'] = False if case == 'generation-false' else True
+            if case == 'generation-different':
+                result['generation_runtime_profile_pins']['initial-reader'] = pin
+            return result
         def reread(root, reader_root, *, outer_budget, saved_reader_runtime_profile, **kwargs):
             self.assertEqual(saved_reader_runtime_profile, saved_reader_profile)
             outer_budget.record_role('saved-reader', 'complete', pin, 3, True)
@@ -254,9 +279,11 @@ class EnvelopeTests(unittest.TestCase):
              patch.object(whole, '_subset', return_value=([], {}, {})), \
              patch.object(whole.reread, '_recheck_saved_outputs', return_value={'invented-check': True}), \
              patch.object(whole.reread, 'recheck_runtime_profile'), \
+             patch.object(whole.generated, 'recheck_runtime_profiles'), \
              patch.object(whole.document, 'run_saved_control_files_with_observation_subset', side_effect=publication):
             for case in ('missing', 'different', 'publication-missing', 'publication-different',
-                         'saved-reader-missing', 'saved-reader-different', 'matched'):
+                         'saved-reader-missing', 'saved-reader-different',
+                         'generation-missing', 'generation-different', 'generation-false', 'matched'):
                 with self.subTest(case=case):
                     manifest_path = self.artifacts / ('anomaly-v03-preformal-generated-pinsets-' + case) / 'pins.json'
                     manifest_path.parent.mkdir()
@@ -270,23 +297,26 @@ class EnvelopeTests(unittest.TestCase):
                         expected_input_pins={'fixture/' + name: pin
                             for name in ('input.json', 'slices.json', 'coverage.json', 'operation.json')},
                         arithmetic_runtime_profiles=profiles, publication_runtime_profiles=publication_profiles,
-                        saved_reader_runtime_profile=saved_reader_profile)
+                        saved_reader_runtime_profile=saved_reader_profile, generation_runtime_profiles=generation_profiles)
                     matched = case == 'matched'
                     self.assertEqual(result['status'], 'measured' if matched else 'failed')
                     saved_failed = case.startswith('saved-reader-')
+                    generation_failed = case.startswith('generation-')
                     self.assertEqual(result['arithmetic_runtime_observation_checked'],
-                                     case not in ('missing', 'different') and not saved_failed)
-                    self.assertEqual(result['saved_reader_runtime_observation_checked'], not saved_failed)
+                                     case not in ('missing', 'different') and not saved_failed and not generation_failed)
+                    self.assertEqual(result['saved_reader_runtime_observation_checked'], not saved_failed and not generation_failed)
+                    self.assertEqual(result['generation_runtime_observation_checked'], not generation_failed)
                     self.assertEqual(result['publication_runtime_observation_checked'], matched)
                     self.assertEqual(result['same_outer_budget_generation_to_fresh_reader_measured'], matched)
                     self.assertTrue((outer / 'result.json').is_file())
-                    self.assertEqual(result['all_seven_child_exits_reported'], not saved_failed)
+                    self.assertEqual(result['all_seven_child_exits_reported'], not saved_failed and not generation_failed)
                     self.assertFalse(result['formal_permission'])
                     self.assertFalse(result['runtime_closure_complete'])
                     if not matched:
                         self.assertIn('not checked' if case == 'missing' else
                             'pins differ' if case == 'different' else
                             'saved reader runtime observations' if saved_failed else
+                            'generation runtime observations' if generation_failed else
                             'publication runtime observations', result['detail'])
 
 

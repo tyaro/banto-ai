@@ -48,6 +48,9 @@ MAX_READER_INVOCATION = 256 * 1024
 MAX_SOURCE_SNAPSHOT_BYTES = 64 * 1024
 SOURCE_FILES = (
     'src/banto_ai/anomaly_v03_preformal_owned_saved_attempt.py',
+    'src/banto_ai/anomaly_v03_role_runtime_observation.py',
+    'src/banto_ai/_anomaly_v03_inventory.py',
+    'src/banto_ai/_anomaly_v03_reader_dependencies.py',
     'src/banto_ai/anomaly_v03_preformal_campaign_child_context.py',
     'src/banto_ai/anomaly_v03_registered_saved_attempt_fixture.py',
     'src/banto_ai/anomaly_v03_registered_evaluation_contract.py',
@@ -344,6 +347,49 @@ def worker_main(argv):
         return 2
 
 
+def _read_attempt(request, root):
+    """The original physical initial read and rederivation, performed once."""
+    campaign_mode = 'campaign_context' in request
+    snapshots = _decode_source_snapshots(request['source_snapshots'])
+    outputs, _ = _saved_outputs(root, request['chunk_index'],
+                                request['external_pins'])
+    _same(request['output_names'], outputs, 'owned reader output names')
+    source_before = _source(request['source_revision'])
+    runtime_before = runtime.probe_runtime(ROOT)
+    _same(source_before, request['source'], 'owned reader source before')
+    _same(runtime_before, request['runtime'], 'owned reader runtime before')
+    _check_outputs(root, outputs, request['external_pins'])
+    process = observed.creation_observation(os.getpid())
+    external = request['external_pins']
+    read = fixture.read_invented_registered_attempt(
+        root, expected_mode=request['expected_mode'],
+        chunk_index=request['chunk_index'],
+        expected_registry_pin=external['saved/registry.json'],
+        expected_savepoint_pin=external['saved/savepoint.json'],
+        expected_receipt_pin=external['saved/receipt.json'],
+        expected_report_pin=external['saved/report.json'],
+        expected_payload_pins={key: pin for key, pin in external.items()
+                               if key not in SAVED},
+        source_snapshots=snapshots)
+    _check_outputs(root, outputs, external)
+    source_after = _source(request['source_revision'])
+    runtime_after = runtime.probe_runtime(ROOT)
+    _same(source_after, source_before, 'owned reader source after')
+    _same(runtime_after, runtime_before, 'owned reader runtime after')
+    reply = {'format': (CAMPAIGN_READER_FORMAT if campaign_mode else
+                        READER_FORMAT), 'status': 'read',
+             'invocation_id': request['invocation_id'],
+             'process': {'pid': os.getpid(), 'parent_pid': os.getppid(),
+                         'start_token': process['start_token']},
+             'output_pins': external,
+             'source_before': source_before, 'source_after': source_after,
+             'runtime_before': runtime_before, 'runtime_after': runtime_after,
+             'reader_result': read, 'formal_permission': False}
+    if campaign_mode:
+        reply['campaign_context'] = copy.deepcopy(request['campaign_context'])
+    return reply
+
+
 def reader_worker_main(argv):
     """Read the pinned invented saved attempt in a distinct owned process."""
     try:
@@ -358,7 +404,8 @@ def reader_worker_main(argv):
         evidence._keys(request,
             'format root expected_mode chunk_index output_names external_pins '
             'source_snapshots source_revision source runtime invocation_id' +
-            (' campaign_context' if campaign_mode else ''),
+            (' campaign_context' if campaign_mode else '') +
+            (' runtime_inventory_profile_pin' if 'runtime_inventory_profile_pin' in request else ''),
             'reader invocation fields')
         v.require(request['format'] == (
                       CAMPAIGN_READER_INVOCATION if campaign_mode else
@@ -375,43 +422,18 @@ def reader_worker_main(argv):
                       'initial reader campaign chunk context')
         v.require(path == root / 'owned-reader' / 'invocation.json',
                   'owned reader invocation path')
-        snapshots = _decode_source_snapshots(request['source_snapshots'])
-        outputs, _ = _saved_outputs(root, request['chunk_index'],
-                                    request['external_pins'])
-        _same(request['output_names'], outputs, 'owned reader output names')
-        source_before = _source(request['source_revision'])
-        runtime_before = runtime.probe_runtime(ROOT)
-        _same(source_before, request['source'], 'owned reader source before')
-        _same(runtime_before, request['runtime'], 'owned reader runtime before')
-        _check_outputs(root, outputs, request['external_pins'])
-        process = observed.creation_observation(os.getpid())
-        external = request['external_pins']
-        read = fixture.read_invented_registered_attempt(
-            root, expected_mode=request['expected_mode'],
-            chunk_index=request['chunk_index'],
-            expected_registry_pin=external['saved/registry.json'],
-            expected_savepoint_pin=external['saved/savepoint.json'],
-            expected_receipt_pin=external['saved/receipt.json'],
-            expected_report_pin=external['saved/report.json'],
-            expected_payload_pins={key: pin for key, pin in external.items()
-                                   if key not in SAVED},
-            source_snapshots=snapshots)
-        _check_outputs(root, outputs, external)
-        source_after = _source(request['source_revision'])
-        runtime_after = runtime.probe_runtime(ROOT)
-        _same(source_after, source_before, 'owned reader source after')
-        _same(runtime_after, runtime_before, 'owned reader runtime after')
-        reply = {'format': (CAMPAIGN_READER_FORMAT if campaign_mode else
-                            READER_FORMAT), 'status': 'read',
-                 'invocation_id': request['invocation_id'],
-                 'process': {'pid': os.getpid(), 'parent_pid': os.getppid(),
-                             'start_token': process['start_token']},
-                 'output_pins': external,
-                 'source_before': source_before, 'source_after': source_after,
-                 'runtime_before': runtime_before, 'runtime_after': runtime_after,
-                 'reader_result': read, 'formal_permission': False}
-        if campaign_mode:
-            reply['campaign_context'] = copy.deepcopy(request['campaign_context'])
+        operation = lambda: _read_attempt(request, root)
+        if 'runtime_inventory_profile_pin' in request:
+            from . import anomaly_v03_role_runtime_observation as observation
+            profile_raw = observed._file(path.parent / 'inventory-profile.json', observation.MAX_PROFILE)
+            profile = observation.load_profile(profile_raw, request['runtime_inventory_profile_pin'], root=ROOT, role='initial-reader')
+            v.require(profile['source_revision'] == request['source_revision'], 'initial reader runtime profile worker revision differs')
+            reply, receipt = observation.run_observed(operation, root=path.parent, source_root=ROOT,
+                role='initial-reader', profile_raw=profile_raw, profile_pin=request['runtime_inventory_profile_pin'],
+                input_pin=_pin(raw))
+            reply['runtime_observation'] = receipt
+        else:
+            reply = operation()
         print(json.dumps(reply, sort_keys=True))
         return 0
     except (ValueError, OSError, KeyError, TypeError,
@@ -610,6 +632,7 @@ def materialize_and_read(root, *, expected_mode, chunk_index,
         _same(_pin(reader_stdout), reader_monitor['output'],
               'owned reader stdout pin')
         reader_reply = v.strict_json(reader_stdout)
+        v.require('runtime_observation' not in reader_reply, 'unexpected initial reader runtime observation')
         v.require(reader_reply['format'] == READER_FORMAT and
                   reader_reply['status'] == 'read' and
                   reader_reply['invocation_id'] == reader_invocation['invocation_id'] and
