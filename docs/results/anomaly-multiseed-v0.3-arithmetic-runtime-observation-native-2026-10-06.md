@@ -54,3 +54,7 @@ rawは [a3](../../artifacts/preformal-role-runtime-20261006-a3/) と [準備help
 同code revisionの[Ubuntu CI37431372011](https://github.com/tyaro/banto-ai/actions/runs/37431372011)は、今回保存時には両minorのunittestが進行中。job IDは3.12=`112162773216`、3.14=`112162773409`。[小さい進行snapshot](../../artifacts/ci-diagnostic-37431372011/in-progress-snapshot.json)を保存した。全job成功・raw journal再検証は未確認で、過去CIを今回codeの結果に代用しない。
 
 次は同CI完了の保存照合と、producer・初期/保存reader・writer/fresh readerの実境界に期待runtime在庫を接続し、共通外側予算へprofileを伝播する。今回の任意optionは既存全工程callerからまだ渡していない。profile wrapperそのものの採用を必須にせず、実経路での期待値・在庫・元handle・終了・異常時子孫回収を改訂契約へ結ぶ。外部Git/helperの実ロード在庫、正式入力consumer、契約・runner同定、最終dev8/smoke2・全容量2倍・独立受入は未了。e04の限定完走と旧smoke容量は保全し、全工程を自動反復しない。
+
+後続追記: `dfa61e8350c78289fca1170f82f1559a18391710`で[共通callerへの算術profile伝播](anomaly-multiseed-v0.3-arithmetic-runtime-common-budget-wiring-2026-10-06.md)を実装し、109 fixture試験pass。上記はa3保存時点の残件で、profile伝播の実装は進んだ。新接続のnative全工程、producer/3 reader/writer在庫、正式受入は残る。a3のfull HEAD・raw pinを後続codeへ読み替えない。
+
+CI完了追記: 上記同codeのCI37431372011は全3job成功、両minor各3,013件・fail0/error0/skip237、共有29 fixture/必須28試験pass。完了10 raw＋先行partial2、3job log、両journalを保存しローカルverifier・12 pin再照合pass。[complete-summary](../../artifacts/ci-diagnostic-37431372011/complete-summary.json) 2,830 B / `b254a2557a73c53880822f7b3e11a0fb5ee8382d8ea92f0936045b68a73a8014`。runner log版20260927.320.1、digest未取得・採択false。a3とCIのcode revisionは一致するが、正式受入完了ではない。
