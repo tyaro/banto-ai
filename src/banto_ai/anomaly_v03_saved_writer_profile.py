@@ -208,7 +208,7 @@ def run(*, source_root, expected_request_pin, expected_worker_revision, receipt_
             publication.io._exclusive(target / 'launch.json', publication.io.json_bytes(launch))
     def runtime():
         with parent.phase('runtime_probe'):
-            return publication.supervisor.resources.probe_runtime()
+            return publication.supervisor.resources.probe_runtime(ROOT)
     bootstrap = ('import sys;sys.path.insert(0,sys.argv.pop(1));'
                  'from banto_ai.anomaly_v03_saved_writer_profile import worker_main;'
                  'raise SystemExit(worker_main(sys.argv[1:]))')

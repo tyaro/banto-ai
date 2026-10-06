@@ -125,6 +125,32 @@ class SharedExecutionTests(unittest.TestCase):
                             expected_worker_revision='b'*40, receipt_name=target.name)
         self.assertFalse(target.exists())
 
+    def test_supervisor_runtime_adapter_passes_repository_and_saves_prelaunch_failure(self):
+        historical = {**self.request, 'format': publication.FORMAT + '-request',
+                      'role': 'writer', 'source_pins': {}, 'payload_pins': {}}
+        (self.root / 'writer').mkdir()
+        raw = publication.io.json_bytes(historical)
+        (self.root / 'writer/request.json').write_bytes(raw)
+        def supervise(*args, runtime_probe, **kwargs):
+            self.assertEqual(args[3], publication.LIMITS)
+            self.assertEqual(runtime_probe(), {'fixture': True})
+            return {'status': 'failed', 'worker_exit_confirmed': False, 'exit_code': None,
+                    'observation_errors': [], 'worker_pid': None, 'stop_reason': 'prelaunch_fixture_stop'}
+        with patch.object(profile, '_source', return_value={}), \
+             patch.object(publication.platform, '_platform_scope'), \
+             patch.object(publication.supervisor.resources, 'probe_runtime', autospec=True,
+                          return_value={'fixture': True}) as probe, \
+             patch.object(publication.supervisor, 'supervise', side_effect=supervise):
+            result = profile.run(source_root=self.root, expected_request_pin=publication._pin(raw),
+                expected_worker_revision='b'*40, receipt_name='trial-new')
+        probe.assert_called_once_with(profile.ROOT)
+        self.assertEqual(result['status'], 'failed')
+        self.assertFalse(result['worker_exit_confirmed'])
+        self.assertFalse(result['formal_permission'])
+        self.assertFalse(result['full_end_to_end_budget_measured'])
+        self.assertIsNone(result['worker_phases'])
+        self.assertTrue((self.root.parent / 'trial-new/result.json').exists())
+
 
 if __name__ == '__main__':
     unittest.main()
