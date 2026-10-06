@@ -51,6 +51,9 @@ ROOT_LIMITS = {
     'minimum_free_disk_bytes': 10 * 1024**3,
 }
 SOURCE_NAMES = (
+    'src/banto_ai/anomaly_v03_role_runtime_observation.py',
+    'src/banto_ai/_anomaly_v03_inventory.py',
+    'src/banto_ai/_anomaly_v03_reader_dependencies.py',
     'src/banto_ai/anomaly_v03_preformal_bound_draw_bridge.py',
     'src/banto_ai/anomaly_v03_preformal_draw_audit.py',
     'src/banto_ai/anomaly_v03_preformal_draw_budget.py',
@@ -234,11 +237,8 @@ def _git_pins(revision):
     return pins
 
 
-def _child(role, root, input_pin, calculation_pin=None):
-    if role not in ('analysis', 'audit'):
-        raise ValueError('bridge child role')
-    value = json.loads(_read(root / 'input.json', input_pin, 512 * 1024))
-    _check_input(value)
+def _calculate(role, root, value, calculation_pin):
+    """The existing fixed arithmetic operation; no runtime observation logic."""
     clusters = value['clusters']
     if role == 'analysis':
         indices = frozen.bootstrap_indices()
@@ -264,20 +264,40 @@ def _child(role, root, input_pin, calculation_pin=None):
         if len(raw) > OUTPUT_BYTES:
             raise ValueError('bridge independent audit output limit')
         pin = _write(root / 'audit.json', raw)
-    report = {'format': FORMAT + '-role', 'role': role, 'status': 'complete',
-              'replicates': REPLICATES, 'draw_sha256': frozen.BOOTSTRAP_HASH,
-              'output_pin': pin, 'registered_data_read': False,
-              'formal_bootstrap_performed': False, 'formal_permission': False,
-              'independent_s6_complete': False}
+    return {'format': FORMAT + '-role', 'role': role, 'status': 'complete',
+            'replicates': REPLICATES, 'draw_sha256': frozen.BOOTSTRAP_HASH,
+            'output_pin': pin, 'registered_data_read': False,
+            'formal_bootstrap_performed': False, 'formal_permission': False,
+            'independent_s6_complete': False}
+
+
+def _child(role, root, input_pin, calculation_pin=None, *, inventory_profile_pin=None):
+    if role not in ('analysis', 'audit'):
+        raise ValueError('bridge child role')
+    value = json.loads(_read(root / 'input.json', input_pin, 512 * 1024))
+    _check_input(value)
+    if inventory_profile_pin is None:
+        report = _calculate(role, root, value, calculation_pin)
+    else:
+        from . import anomaly_v03_role_runtime_observation as observation
+        profile_raw = _read(root / (role + '-inventory-profile.json'),
+                            inventory_profile_pin, observation.MAX_PROFILE)
+        report, receipt = observation.run_observed(
+            lambda: _calculate(role, root, value, calculation_pin), root=root, source_root=ROOT,
+            role=role, profile_raw=profile_raw, profile_pin=inventory_profile_pin, input_pin=input_pin)
+        report['runtime_observation'] = receipt
     print(_raw(report).decode('utf-8'), flush=True)
 
 
-def _supervise(role, root, input_pin, calculation_pin, budget):
+def _supervise(role, root, input_pin, calculation_pin, budget, *, inventory_profile_pin=None):
     argv = [sys.executable, '-B', '-m',
             'banto_ai.anomaly_v03_preformal_bound_draw_bridge', '--child', role,
             str(root), str(input_pin['bytes']), input_pin['sha256']]
     if role == 'audit':
         argv += [str(calculation_pin['bytes']), calculation_pin['sha256']]
+    if inventory_profile_pin is not None:
+        projection.evidence._pin(inventory_profile_pin)
+        argv += ['--inventory-profile', str(inventory_profile_pin['bytes']), inventory_profile_pin['sha256']]
     env = dict(os.environ)
     env['PYTHONPATH'] = str(ROOT / 'src')
     stdout_path = root / (role + '-stdout.json')
@@ -287,11 +307,15 @@ def _supervise(role, root, input_pin, calculation_pin, budget):
     peak = samples = 0
     reason = None
     errors = []
+    identity = None
     with stdout_path.open('xb') as stdout, stderr_path.open('xb') as stderr:
         process = subprocess.Popen(argv, cwd=ROOT, env=env, stdin=subprocess.DEVNULL,
                                    stdout=stdout, stderr=stderr,
                                    creationflags=subprocess.CREATE_NO_WINDOW)
         try:
+            if inventory_profile_pin is not None:
+                from . import anomaly_v03_reader_evidence as process_evidence
+                identity = process_evidence.creation_observation(process.pid, process._handle)
             while process.poll() is None:
                 peak = max(peak, resources.memory_bytes(process._handle)['peak_private_bytes'])
                 samples += 1
@@ -337,7 +361,7 @@ def _supervise(role, root, input_pin, calculation_pin, budget):
     stderr_pin = _pin(draw_budget._bounded_file(stderr_path, LOG_BYTES))
     if stdout_pin['bytes'] + stderr_pin['bytes'] > LOG_BYTES:
         reason = reason or 'bridge_child_log_limit'
-    return {'format': FORMAT + '-supervision', 'role': role,
+    result = {'format': FORMAT + '-supervision', 'role': role,
             'status': 'complete' if process.returncode == 0 and reason is None and
             not errors else 'failed', 'pid': process.pid, 'exit_code': process.returncode,
             'worker_exit_confirmed': True, 'elapsed_seconds': time.monotonic() - started,
@@ -345,9 +369,12 @@ def _supervise(role, root, input_pin, calculation_pin, budget):
             'stop_reason': reason, 'observation_errors': errors,
             'stdout_pin': stdout_pin, 'stderr_pin': stderr_pin,
             'formal_permission': False}
+    if inventory_profile_pin is not None:
+        result['process_identity'] = identity
+    return result
 
 
-def _verify_role(root, role, supervision, output_pin):
+def _verify_role(root, role, supervision, output_pin, *, inventory_profile_pin=None):
     if supervision['status'] != 'complete' or not supervision['worker_exit_confirmed']:
         raise ValueError(role + ' owned child failed')
     report = json.loads(_read(root / (role + '-stdout.json'),
@@ -357,6 +384,36 @@ def _verify_role(root, role, supervision, output_pin):
                 'output_pin': output_pin, 'registered_data_read': False,
                 'formal_bootstrap_performed': False, 'formal_permission': False,
                 'independent_s6_complete': False}
+    if inventory_profile_pin is not None:
+        from . import anomaly_v03_role_runtime_observation as observation
+        receipt = report.get('runtime_observation') if type(report) is dict else None
+        if (type(receipt) is not dict or set(receipt) != {'format', 'profile_pin', 'input_pin', 'before_pin', 'after_pin',
+                'process', *observation.CLOSED} or receipt['format'] != observation.RECEIPT or
+                receipt['profile_pin'] != inventory_profile_pin or
+                any(type(receipt[k]) is not bool or receipt[k] is not False for k in observation.CLOSED)):
+            raise ValueError(role + ' runtime observation receipt differs')
+        profile_raw = _read(root / (role + '-inventory-profile.json'), inventory_profile_pin, observation.MAX_PROFILE)
+        profile = observation.load_profile(profile_raw, inventory_profile_pin, root=ROOT, role=role)
+        input_pin = _pin(draw_budget._bounded_file(root / 'input.json', 512 * 1024))
+        if receipt['input_pin'] != input_pin:
+            raise ValueError(role + ' runtime observation input differs')
+        snapshots = {}
+        for phase in ('before', 'after'):
+            raw = _read(root / (role + '-runtime-' + phase + '.json'), receipt[phase + '_pin'], observation.MAX_RECEIPT)
+            snapshot = projection.v.strict_json(raw)
+            snapshots[phase] = snapshot
+            if (snapshot['role'] != role or snapshot['phase'] != phase or
+                    snapshot['source_revision'] != profile['source_revision'] or
+                    snapshot['profile_pin'] != inventory_profile_pin or snapshot['process'] != receipt['process'] or
+                    snapshot['input_pin'] != input_pin or
+                    snapshot['runtime'] != profile['runtime']):
+                raise ValueError(role + ' runtime observation phase differs')
+        if (receipt['process']['pid'] != supervision['pid'] or
+                receipt['process'] != supervision.get('process_identity')):
+            raise ValueError(role + ' runtime observation owned PID differs')
+        observation.crosscheck_saved(profile, snapshots['before'], snapshots['after'], root=ROOT,
+            input_pin=input_pin, process=receipt['process'], profile_pin=inventory_profile_pin)
+        expected['runtime_observation'] = receipt
     if (type(report) is not dict or set(report) != set(expected) or
             any(type(report[key]) is not type(value) or report[key] != value
                 for key, value in expected.items())):
@@ -494,12 +551,18 @@ def run_bridge(*, expected_mode, producer_root, expected_producer_result_pin,
 
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
+    inventory_profile_pin = None
+    if len(argv) >= 3 and argv[-3] == '--inventory-profile':
+        if argv[0] != '--child':
+            raise ValueError('inventory profile is an actual child option')
+        inventory_profile_pin = {'bytes': int(argv[-2]), 'sha256': argv[-1]}
+        argv = argv[:-3]
     if argv and argv[0] == '--child' and len(argv) in (5, 7):
         role, root = argv[1], Path(argv[2])
         input_pin = {'bytes': int(argv[3]), 'sha256': argv[4]}
         calculation_pin = ({'bytes': int(argv[5]), 'sha256': argv[6]}
                            if len(argv) == 7 else None)
-        _child(role, root, input_pin, calculation_pin)
+        _child(role, root, input_pin, calculation_pin, inventory_profile_pin=inventory_profile_pin)
         return 0
     if argv and argv[0] == '--measure' and len(argv) == 5:
         revision = subprocess.check_output(['git', '-C', str(ROOT), 'rev-parse',
