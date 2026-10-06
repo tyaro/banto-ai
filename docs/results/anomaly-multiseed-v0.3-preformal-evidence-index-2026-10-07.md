@@ -52,6 +52,8 @@
 
 ## 次の保存単位
 
+[外部program・異常子孫の静的source監査](anomaly-multiseed-v0.3-external-process-acceptance-gaps-2026-10-07.md)を追補。選択15 sourceのworking/6f1270f/343c863一致、実経路の裸Git・直接supervisorと未接続prototypeの範囲、次の停止/拒否試験を整理した。これは実行・外部program全在庫・子孫回収の合格証拠ではない。
+
 CI37547050883の完成後、run/attempt別jobs・2journal・comparison/regression・3job logを保存し、同HEAD/workflowを固定したlocal verifierとrunner v2を照合する。runner検証器変更後のCIは別HEADとして扱う。全7役native・既存checkerを反復しない。以降は外部program/異常終了の残件を、限定試験と保存済みsourceから小さく整理する。
 
 10:00 JST以降は新しい実行を開始せず、証拠保存・短い引継ぎとheartbeat banto-10の停止を済ませる。

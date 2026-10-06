@@ -4,6 +4,8 @@
 
 ## 現在の状態
 
+- 外部program/異常子孫の[残件source監査](results/anomaly-multiseed-v0.3-external-process-acceptance-gaps-2026-10-07.md)を追加。選択15 sourceはworking/6f1270f/343c863 raw一致。裸のGit構文16箇所、実7役は直接supervisor、既存Git Job v7はcandidate profile非接続。次の小さい実装境界と拒否/停止試験を整理し、新native0。raw監査5,938 B / `1624adfb0966372c1e9441d79ab1a625e5990f0cfbdb621f1a4cfcd2049aa3cf`。
+
 - runner由来候補検証器v2を保存: jobごとのimage版、gh log prefix、外部prerelease状態、release/READMEの単一宣言を照合。焦点47件pass・対象11 pin一致、旧CI37498814612/37485069436の保存bytesと全journalはconsistent_candidate。候補は未採択・digest未取得。[証拠索引と受入5残件](results/anomaly-multiseed-v0.3-preformal-evidence-index-2026-10-07.md)。証拠索引JSON26 file/source pinは5,449 B / `9a09fb81414bad36feb91bac6738536961e234e19edc97904178b946cf03ffd9`。
 
 - 最新業務runtime code保存点: `343c8639b0acfb2be535c02b5aaf4288b8f3d43e`（producer/initial-reader在庫・元handle・common接続）。clean同HEAD r7で全7役/14 phase、103 source/全stdlib2,559、exit0/回収・親post-exitを確認。架空1区間22 payload131,144,118 B＋479 metadataから40 cluster/50,000 draw・全文書・5 payload公開まで外側690.576/1,800秒・内側352.931/1,200秒でpass。別runtime checker57 raw/103 source、集計checker4,974 raw/60 source pass。焦点108件/14.067秒・fail0/error0/skip1・対象15 pin一致、safety pass。正式経路・全source/runtime閉包・最終受入は未了。
@@ -65,7 +67,7 @@ v3では、メモリ内コードの完全認証、conhost等の全補助process�
 
 ## 次の着手と履歴
 
-次はnative文書HEAD21d3866のCI37547050883の完成rawを保存し、外部HEAD/workflow/run/attempt・全journalとrunner v2を照合する。producer/initial/saved readerを含む同revision全7役nativeは343c863で終了済みなので反復しない。次の実装残件は外部program/Git/helper在庫・異常子孫回収、正式登録入力consumer、版付き契約・runner代替同定の採択。最終同revisionのLinux/Windows・正式dev8/smoke2・独立受入と全容量2倍は残る。旧成功/失敗rootを保全する。追加agent・旧agent再活性化0、10時以降は新規実行0。
+次はnative文書HEAD21d3866のCI37547050883とrunner v2 code HEAD6f1270fのCI37548282365の完成rawを保存し、各外部HEAD/workflow/run/attempt・全journalとrunner v2を照合する。文書のみの追補はCI起動を抑え、この2件を追跡する。producer/initial/saved readerを含む同revision全7役nativeは343c863で終了済みなので反復しない。次の実装残件は外部program/Git/helper在庫・異常子孫回収、正式登録入力consumer、版付き契約・runner代替同定の採択。最終同revisionのLinux/Windows・正式dev8/smoke2・独立受入と全容量2倍は残る。旧成功/失敗rootを保全する。追加agent・旧agent再活性化0、10時以降は新規実行0。
 
 受入までの残件は、今回scopeの共通予算証拠を正式経路へ結ぶ受入、正式同形容量2倍、26H2・保証A/B・runner代替同定の改訂契約候補、正式source/runtime在庫、最終CI/native／正式dev8/smoke2・独立受入、独立raw観測再導出。1区間の架空観測と479区間metadataを同一campaignや全観測確認へ読み替えない。架空480区間の新規生成完走を自動追加の必須にせず、旧pin・由来・上限8 drawは維持する。最終revisionと独立受入の前にS5を開始しない。
 
