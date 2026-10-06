@@ -8,6 +8,7 @@ platform fixture does not open a registered campaign or claim source closure.
 from __future__ import annotations
 
 import copy
+from contextlib import nullcontext
 import json
 import os
 from pathlib import Path
@@ -98,7 +99,11 @@ def _source_recheck(pins):
         _read(ROOT / name, pin, 1024**2)
 
 
-def _retained(request):
+def _phase(observer, name):
+    return nullcontext() if observer is None else observer(name)
+
+
+def _retained(request, *, phase=None):
     root = Path(request['receipt_root']).absolute()
     if (root.parent != OUTPUT_PARENT or not root.name.startswith('trial-') or
             request['publication_root'] != str(root / 'published')):
@@ -109,91 +114,127 @@ def _retained(request):
     inputs = request['projection_input_pins']
     if set(inputs) != set(chain.draw_bridge.projection.analysis.INPUT_LIMITS):
         raise ValueError('publication projection inventory differs')
-    _, fixture = _canonical(root / 'inputs/input.json', inputs['fixture/input.json'], 1024**2)
-    _, slice_source = _canonical(root / 'inputs/slices.json', inputs['fixture/slices.json'], 8 * 1024**2)
-    for name in ('fixture/coverage.json', 'fixture/operation.json'):
-        _canonical(root / 'inputs' / Path(name).name, inputs[name],
-                   chain.draw_bridge.projection.analysis.INPUT_LIMITS[name])
-    chain.document_bridge.document._input(fixture)
-    _, draw_input = _canonical(root / 'input.json', request['input_pin'], 512 * 1024)
-    chain.draw_bridge._check_input(draw_input)
-    if (draw_input['clusters'] != fixture['clusters'] or
-            draw_input['projection_input_pins'] != inputs or
-            draw_input['projection_source_revision'] != request['source_revision'] or
-            draw_input['saved_row_projection_pin'] != request['projection_pin']):
-        raise ValueError('publication saved-row input binding differs')
-    _, projection = _canonical(root / 'projection.json', request['projection_pin'], 8 * 1024**2)
-    if (projection['worker_input_pins'] != inputs or
-            projection['formal_permission'] is not False or
-            projection['registered_observations_read'] is not False):
-        raise ValueError('publication saved-row projection differs')
-    values, files = {}, {}
-    for name, maximum in PAYLOAD_LIMITS.items():
-        raw, values[name] = _canonical(root / name, request['payload_source_pins'][name], maximum)
-        files[name] = io.json_bytes(values[name])
-        if files[name] != raw + b'\n':
-            raise ValueError('publication payload framing differs')
-    calc, audit, document, slices, count = (values[name] for name in PAYLOAD_LIMITS)
-    chain.draw_bridge.draw_budget._verify_audit_report(audit, request['payload_source_pins']['calculation.json'])
-    if audit['draw_sha256'] != chain.draw_bridge.frozen.BOOTSTRAP_HASH:
-        raise ValueError('publication draw digest differs')
-    for value in (document, slices):
-        chain.document_bridge._same_fields(value, chain.CLOSED, 'publication closed claims')
-        if (value['saved_row_projection_pin'] != request['projection_pin'] or
-                value['saved_row_projection_input_pins'] != inputs or
-                value['input_pin'] != request['input_pin'] or
-                value['calculation_pin'] != request['payload_source_pins']['calculation.json'] or
-                value['arithmetic_audit_pin'] != request['payload_source_pins']['audit.json'] or
-                value['saved_reader_control_inputs_used'] is not True or
-                'producer_result_pin' in value):
-            raise ValueError('publication document provenance differs')
-    chain.document_bridge._same_fields(document, {
-        'format': chain.FORMAT + '-fixture-draft',
-        'scope': 'same-budget-invented-primary-to-document-draft',
-        'status': 'fixture_draft_prepared', 'invented_only': True,
-        'legacy_projection_draws': 1,
-        'numeric_draw_contract': {'clusters': 40, 'replicates': 50000,
-            'accepted_indices': 2000000,
-            'indices_raw_sha256': chain.draw_bridge.frozen.BOOTSTRAP_HASH,
-            'source': 'same-budget-owned-invented-arithmetic'},
-        'field_coverage': chain.document_bridge.document._coverage(),
-        'formal_requirements': {'clusters': 40, 'replicates': 50000,
-            'missing_fields': list(chain.document_bridge.document.PENDING), 'ready': False},
-    }, 'publication primary draft claims')
-    schema = chain.contract.schemas(chain.contract._expected_configs())[7]
-    packet = chain.document_bridge.adapter.map_precomputed_fixture_packet(
-        fixture['clusters'], fixture['diagnostics'], schema, calc,
-        draw_sha256=audit['draw_sha256'])
-    draft = chain.document_bridge.document._draft(packet)
-    if document['fixture_packet'] != packet or document['document_draft'] != draft:
-        raise ValueError('publication primary document mapping differs')
-    derived = chain.slice_bridge.slices.derive_precomputed_slices(
-        fixture['clusters'], fixture['diagnostics'], packet, slice_source, schema)
-    expected = copy.deepcopy(document)
-    expected['document_draft']['slices'] = derived['slices']
-    expected.update(format=chain.FORMAT + '-fixture-slices',
-        scope='same-budget-invented-primary-to-slices', status='fixture_slices_connected',
-        field_coverage=chain.slice_bridge.slices._coverage(),
-        formal_requirements=chain.slice_bridge.slices._requirements(),
-        primary_document_pin=request['payload_source_pins']['document.json'],
-        slice_source_pin=inputs['fixture/slices.json'],
-        primary_packet_canonical_sha256=chain.slice_bridge.contract.canonical_sha256(packet),
-        slice_source_canonical_sha256=derived['slice_input_canonical_sha256'],
-        diagnostic_series=derived['diagnostic_series'], diagnostic_details=derived['diagnostic_details'],
-        independent_count_audit_process_executed=False)
-    if slices != expected:
-        raise ValueError('publication full slice mapping differs')
-    checked = chain.slice_bridge.independent.audit_precomputed_slices(
-        fixture['clusters'], fixture['diagnostics'], packet, slice_source,
-        chain.slice_bridge._audit_input(slices))
-    if count != checked:
-        raise ValueError('publication independent count audit differs')
+    with _phase(phase, 'input_read'):
+        _, fixture = _canonical(root / 'inputs/input.json', inputs['fixture/input.json'], 1024**2)
+        _, slice_source = _canonical(root / 'inputs/slices.json', inputs['fixture/slices.json'], 8 * 1024**2)
+        for name in ('fixture/coverage.json', 'fixture/operation.json'):
+            _canonical(root / 'inputs' / Path(name).name, inputs[name],
+                       chain.draw_bridge.projection.analysis.INPUT_LIMITS[name])
+    with _phase(phase, 'input_validation'):
+        chain.document_bridge.document._input(fixture)
+        _, draw_input = _canonical(root / 'input.json', request['input_pin'], 512 * 1024)
+        chain.draw_bridge._check_input(draw_input)
+        if (draw_input['clusters'] != fixture['clusters'] or
+                draw_input['projection_input_pins'] != inputs or
+                draw_input['projection_source_revision'] != request['source_revision'] or
+                draw_input['saved_row_projection_pin'] != request['projection_pin']):
+            raise ValueError('publication saved-row input binding differs')
+        _, projection = _canonical(root / 'projection.json', request['projection_pin'], 8 * 1024**2)
+        if (projection['worker_input_pins'] != inputs or
+                projection['formal_permission'] is not False or
+                projection['registered_observations_read'] is not False):
+            raise ValueError('publication saved-row projection differs')
+    with _phase(phase, 'payload_read'):
+        values, files = {}, {}
+        for name, maximum in PAYLOAD_LIMITS.items():
+            raw, values[name] = _canonical(root / name, request['payload_source_pins'][name], maximum)
+            files[name] = io.json_bytes(values[name])
+            if files[name] != raw + b'\n':
+                raise ValueError('publication payload framing differs')
+    with _phase(phase, 'claims_validation'):
+        calc, audit, document, slices, count = (values[name] for name in PAYLOAD_LIMITS)
+        chain.draw_bridge.draw_budget._verify_audit_report(audit, request['payload_source_pins']['calculation.json'])
+        if audit['draw_sha256'] != chain.draw_bridge.frozen.BOOTSTRAP_HASH:
+            raise ValueError('publication draw digest differs')
+        for value in (document, slices):
+            chain.document_bridge._same_fields(value, chain.CLOSED, 'publication closed claims')
+            if (value['saved_row_projection_pin'] != request['projection_pin'] or
+                    value['saved_row_projection_input_pins'] != inputs or
+                    value['input_pin'] != request['input_pin'] or
+                    value['calculation_pin'] != request['payload_source_pins']['calculation.json'] or
+                    value['arithmetic_audit_pin'] != request['payload_source_pins']['audit.json'] or
+                    value['saved_reader_control_inputs_used'] is not True or
+                    'producer_result_pin' in value):
+                raise ValueError('publication document provenance differs')
+        chain.document_bridge._same_fields(document, {
+            'format': chain.FORMAT + '-fixture-draft',
+            'scope': 'same-budget-invented-primary-to-document-draft',
+            'status': 'fixture_draft_prepared', 'invented_only': True,
+            'legacy_projection_draws': 1,
+            'numeric_draw_contract': {'clusters': 40, 'replicates': 50000,
+                'accepted_indices': 2000000,
+                'indices_raw_sha256': chain.draw_bridge.frozen.BOOTSTRAP_HASH,
+                'source': 'same-budget-owned-invented-arithmetic'},
+            'field_coverage': chain.document_bridge.document._coverage(),
+            'formal_requirements': {'clusters': 40, 'replicates': 50000,
+                'missing_fields': list(chain.document_bridge.document.PENDING), 'ready': False},
+        }, 'publication primary draft claims')
+    with _phase(phase, 'primary_mapping'):
+        schema = chain.contract.schemas(chain.contract._expected_configs())[7]
+        packet = chain.document_bridge.adapter.map_precomputed_fixture_packet(
+            fixture['clusters'], fixture['diagnostics'], schema, calc,
+            draw_sha256=audit['draw_sha256'])
+        draft = chain.document_bridge.document._draft(packet)
+        if document['fixture_packet'] != packet or document['document_draft'] != draft:
+            raise ValueError('publication primary document mapping differs')
+    with _phase(phase, 'slice_mapping'):
+        derived = chain.slice_bridge.slices.derive_precomputed_slices(
+            fixture['clusters'], fixture['diagnostics'], packet, slice_source, schema)
+        expected = copy.deepcopy(document)
+        expected['document_draft']['slices'] = derived['slices']
+        expected.update(format=chain.FORMAT + '-fixture-slices',
+            scope='same-budget-invented-primary-to-slices', status='fixture_slices_connected',
+            field_coverage=chain.slice_bridge.slices._coverage(),
+            formal_requirements=chain.slice_bridge.slices._requirements(),
+            primary_document_pin=request['payload_source_pins']['document.json'],
+            slice_source_pin=inputs['fixture/slices.json'],
+            primary_packet_canonical_sha256=chain.slice_bridge.contract.canonical_sha256(packet),
+            slice_source_canonical_sha256=derived['slice_input_canonical_sha256'],
+            diagnostic_series=derived['diagnostic_series'], diagnostic_details=derived['diagnostic_details'],
+            independent_count_audit_process_executed=False)
+        if slices != expected:
+            raise ValueError('publication full slice mapping differs')
+    with _phase(phase, 'independent_count_audit'):
+        checked = chain.slice_bridge.independent.audit_precomputed_slices(
+            fixture['clusters'], fixture['diagnostics'], packet, slice_source,
+            chain.slice_bridge._audit_input(slices))
+        if count != checked:
+            raise ValueError('publication independent count audit differs')
     return files
 
 
 def _semantic(files, expected):
     if dict(files) != expected:
         raise ValueError('published payload bytes differ from pinned source')
+
+
+def _perform(request, *, phase=None):
+    """One shared execution path; optional observation never skips a check."""
+    with _phase(phase, 'initial_source'):
+        _source_recheck(request['source_pins'])
+    with _phase(phase, 'initial_retained'):
+        files = _retained(request, phase=phase)
+    publication = Path(request['publication_root'])
+    boundary_count = 0
+    def boundary():
+        nonlocal boundary_count
+        boundary_count += 1
+        with _phase(phase, 'boundary_' + str(boundary_count)):
+            with _phase(phase, 'source'):
+                _source_recheck(request['source_pins'])
+            with _phase(phase, 'retained'):
+                _semantic(_retained(request, phase=phase), files)
+    with _phase(phase, 'staging_publication' if request['role'] == 'writer' else 'publication_read'):
+        if request['role'] == 'writer':
+            result = io.publish_local_result(publication.parent, publication.name, files,
+                verify_semantics=lambda saved: _semantic(saved, files), precommit_recheck=boundary)
+        else:
+            result = io.verify_local_publication(publication,
+                expected_marker_sha256=request['expected_marker_sha256'],
+                verify_semantics=lambda saved: _semantic(saved, files))
+            result['marker_raw_sha256'] = request['expected_marker_sha256']
+    boundary()
+    return result, files
 
 
 def worker_main(argv):
@@ -208,21 +249,7 @@ def worker_main(argv):
                 request['role'] not in ('writer', 'reader') or
                 request_path != Path(request['receipt_root']) / request['role'] / 'request.json'):
             raise ValueError('publication worker request ownership differs')
-        _source_recheck(request['source_pins'])
-        files = _retained(request)
-        publication = Path(request['publication_root'])
-        def boundary():
-            _source_recheck(request['source_pins'])
-            _semantic(_retained(request), files)
-        if request['role'] == 'writer':
-            result = io.publish_local_result(publication.parent, publication.name, files,
-                verify_semantics=lambda saved: _semantic(saved, files), precommit_recheck=boundary)
-        else:
-            result = io.verify_local_publication(publication,
-                expected_marker_sha256=request['expected_marker_sha256'],
-                verify_semantics=lambda saved: _semantic(saved, files))
-            result['marker_raw_sha256'] = request['expected_marker_sha256']
-        boundary()
+        result, files = _perform(request)
         result.update(format=FORMAT, role=request['role'], status='verified',
             request_pin=request_pin, source_pins=request['source_pins'],
             payload_source_pins=request['payload_source_pins'],
