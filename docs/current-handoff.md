@@ -4,10 +4,10 @@
 
 ## 現在の状態
 
-- 最新code保存点: `fa333143ee92eecf9b436fb31320f2a0c722b65d`（raw count往復処理・監査内重複集計の削減）。これを含むclean文書保存点 `02d567f` で共通全工程e04を1回実行し、外側528.308/1,800秒・内側288.905/1,200秒、全7 worker exit0・回収・最終照合まで完了。前回clean `8cac6fa`のe03 failedは保全。今回の証拠追記は測定HEADより後の文書commitへ保存する。
+- 最新code保存点: `fa333143ee92eecf9b436fb31320f2a0c722b65d`（raw count往復処理・監査内重複集計の削減）。これを含むclean文書保存点 `02d567f` で共通全工程e04を1回実行し、外側528.308/1,800秒・内側288.905/1,200秒、全7 worker exit0・回収・最終照合まで完了。e04保存点`7aa9bdd`から今回は旧smoke全attemptの容量をread-only計測し、未測定分とsource/runtimeの実接続箇所を保存した。旧e03 failedと初回容量collector a1も保全。
 - 正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0。登録holdout40 seedは未読。実設備・顧客データは対象外。
 - 実データ作業は保存済み合成dev8/smoke2、120区間・240 dataset・720評価のengineering読取り・記述報告まで。新native試行は架空入力のみ。
-- 容量への配慮として追加agentを起動していない。今回は新しい期待pin・資源条件を固定して共通全工程を1回実行し、停止・回収と記録保存で区切った。起動した7 worker・sampler／monitor・準備処理・保存checkerは終了している。
+- 容量への配慮として追加agentを起動していない。今回は新業務worker・全工程反復を行わず、12.025秒の旧smoke容量collector、別saved checker、source/終了receiptのread-only reviewで区切った。全collectorは終了。前回の7 worker・sampler／monitorも終了済み。
 
 ## 正式評価を始める条件
 
@@ -24,6 +24,8 @@
 v3では、メモリ内コードの完全認証、conhost等の全補助processの個別exit code、未採用prototypeの全統合、架空480区間完走を追加必須にしない案を提示した。実ロード依存在庫と業務worker終了・子孫回収は維持する。DACL/独立tokenは保証Bなら必要、保証Aへ変更するには版付き改訂・独立監査が必要。旧fixtureのfalse flagは変更しない。
 
 ## 最新の実装・証拠
+
+[旧smoke容量とruntime接続残件](results/anomaly-multiseed-v0.3-saved-smoke-capacity-and-runtime-scope-2026-10-06.md): 旧smoke24区間全attempt1,294 file /3,326,135,758 Bと共有control・独立監査48報告、計2,856 file /3,339,899,260 Bを実bytes/hash照合。2,862入力のpostflight identityを確認、別checkerもpass。区間119 failed attempt133,130,961 Bも含む。20倍換算62.210 GiB、部分2倍124.421 GiBに対しD空き329.674 GiB。正式analysis・追加audit・staging・診断予約はnullで、正式容量合格は未了。旧25H2の測定で最終26H2 smokeを代用しない。e04の57 selected sourceが現working bytesと一致、7 PID/exitを保存reviewし、実5役＋追加readerへ全stdlib/loaded/外部program在庫を結ぶ箇所を整理した。rawは`artifacts/preformal-smoke-capacity-20261006-a1`（初回hardlink仮定で停止）・`a2`（修正成功）へ保存。
 
 [共通外側予算e04の完走](results/anomaly-multiseed-v0.3-generation-publication-success-native-2026-10-06.md): clean `02d567f`で架空1区間22 payload / 131,144,119 Bの生成→2 reader→479架空metadataを含むcontrol入力→40 cluster・50,000 draw→算術監査→文書／slice→writer→fresh reader→control／元22 payload／subset10 control／57 source・runtime最終照合を外側528.308/1,800秒・内側288.905/1,200秒で完了。全7 worker exit0・回収、sampler／monitor終了、資源stopなし。4,950 raw／57 sourceの別checkerもpass。初回checkerのcreation token欄の仮定違いは保全・修正し、7 PID／終了と5役のtokenを確認。analysis/auditにはtoken receipt欄がなく、正式契約でidentity証拠の受入範囲を確定する。正式容量2倍・全在庫・契約採択・最終dev/smoke／独立受入は未了。全480区間の観測確認ではない。
 
@@ -49,7 +51,7 @@ v3では、メモリ内コードの完全認証、conhost等の全補助process�
 
 ## 次の着手と履歴
 
-次は正式smokeに基づく容量2倍の根拠、source/runtime全在庫と元handle identityの受入範囲、改訂運用契約／保証A・runner同定の採択候補を整える。最終revisionのLinux/Windows・正式dev8/smoke2・独立受入へ結ぶ。限定共通全工程の完走は保存済みで、長い全工程を自動反復しない。旧e01・未実行e02・failed e03・成功e04とprofile01/02/03を保全する。前回timeoutの原因は未確定。
+次はsource/runtime全在庫helperを実5役＋追加readerへ接続し、外部期待pin・元handle identityの受入範囲・正式入力consumerと失敗拒否を固定入力で確認する。改訂運用契約／保証A・runner同定を一つの採択候補へ結び、最終revisionのLinux/Windows・正式dev8/smoke2・独立受入へ進む。今回容量は旧smokeによる部分外挿で、最終正式経路のanalysis/audit/staging/診断予約を埋めて全工程2倍を再照合する。限定共通全工程の完走は保存済みで、長い全工程を自動反復しない。旧e01・未実行e02・failed e03・成功e04、profile01/02/03、容量a1/a2を保全する。前回timeoutの原因は未確定。
 
 受入までの残件は、今回scopeの共通予算証拠を正式経路へ結ぶ受入、正式同形容量2倍、26H2・保証A/B・runner代替同定の改訂契約候補、正式source/runtime在庫、最終CI/native／正式dev8/smoke2・独立受入、独立raw観測再導出。1区間の架空観測と479区間metadataを同一campaignや全観測確認へ読み替えない。架空480区間の新規生成完走を自動追加の必須にせず、旧pin・由来・上限8 drawは維持する。最終revisionと独立受入の前にS5を開始しない。
 

@@ -10,9 +10,11 @@
 | 2. 入力・consumer | 登録40 seed / 480区間 / 960 dataset / 2,880評価の予定identity・latest attempt・保存bytes・終了証拠を扱う固定入力試験。観測→profile/score/ledger→全分母・slice/sidecar→40 cluster / 50,000 draw / 全文書を接続 | 合成dev/smoke720評価の保存読取り、限定登録形式fixture、架空40 cluster算術は各々確認済み。同一の正式経路と失敗拒否の受入は残る |
 | 3. 実行元と終了 | 最終clean source、stdlib・実ロード拡張/DLL/CRT・外部programを含むruntime inventoryを外部pinで固定。各役の実process、入出力、起動/終了、異常時の停止・回収を照合 | 5役直接Git、382 Git Jobのactive0と保存照合は部分証拠。必要なsource/runtime在庫と実行境界の結合が残る |
 | 4. 最終revisionの受入 | Ubuntu24.04/Python3.12・3.14両job、選択保証のWindows26H2/Python3.14 native、正式dev8 seed・smoke2 seed全layout/両層/3候補。試験・runtime/runner由来・独立受入を対象revisionへ結ぶ | 過去revisionの成功は保持。最終対象の回帰とdev/smoke、改訂契約の独立受入は残る |
-| 5. 資源と停止 | 生成・保存reader・50,000 draw全文書・独立audit・staging/writer・fresh readerの共通予算、停止・証拠保全を検証。smoke実測による正式同形見積りの2倍以上の空き容量 | 1 drawの5役試行と50,000 draw算術→文書は別時計。全工程接続、同じ外側予算、容量2倍の根拠が残る |
+| 5. 資源と停止 | 生成・保存reader・50,000 draw全文書・独立audit・staging/writer・fresh readerの共通予算、停止・証拠保全を検証。smoke実測による正式同形見積りの2倍以上の空き容量 | 2026-10-06の限定e04は外側528.308/1,800秒で7 worker・最終照合まで完走。旧smoke24区間の部分容量20倍62.210 GiB／部分2倍124.421 GiBも照合済み。正式経路へ結ぶ受入、最終smokeのanalysis/追加audit/staging/診断予約を含む全容量2倍は残る |
 
 S4では固定した架空入力で経路を検証する。実holdoutの成功receiptや実S6完了をS5開始前の前提にしない。S5はS4採択後、未使用登録40 seedをclean frozen revision・新rootで一度実行する。実結果のraw観測からの独立再導出はS6、全候補・全gateと制約の報告はS7で行う。
+
+2026-10-06の進捗は[共通予算e04](results/anomaly-multiseed-v0.3-generation-publication-success-native-2026-10-06.md)と[旧smoke容量・runtime残件](results/anomaly-multiseed-v0.3-saved-smoke-capacity-and-runtime-scope-2026-10-06.md)を参照する。本draftと旧gateは未採択のまま。架空1区間＋479 metadataの完走、旧25H2 smokeの部分外挿を正式全観測・最終smoke・全容量へ代用しない。
 
 ## この先の実装に使う契約候補
 
