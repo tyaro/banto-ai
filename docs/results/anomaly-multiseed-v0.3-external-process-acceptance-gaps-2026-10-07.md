@@ -1,5 +1,7 @@
 # v0.3 外部program・異常時子孫回収の受入残件（2026-10-07）
 
+最新終了境界: [worker Git terminal guard](anomaly-multiseed-v0.3-worker-git-terminal-2026-10-07.md)を13ac6a1/e1b8924へ保存。新10+追加1件pass（旧10反復0）・22pin/変更2file safety/unique11/clean code-save。原keeperをcatch/診断/IO/sleep割込みでも保持し、0-job/成功prefix途中/未登録ownerはack拒否、確認済みfailed prefixと全callのみfresh proofへ渡す。callback検証前にguardを保持する順序へ修正。実worker入口/Parent fence/Child startup/checkpointは次段階、新native0。CIba6f82eは3263/全3job success・10raw/14pin/local回帰/runner候補一致を保存、正式5残件は保持。以下は先行保存点の履歴。
+
 最新actor境界: [worker Git actor](anomaly-multiseed-v0.3-worker-git-actor-2026-10-07.md)をf0ecd89へ保存。原capture/shared stop/lease/raw/keeperとarchive readbackを接続。初回13件12pass/1fixture error→その1件訂正pass、他12反復0・20pin/safety/discovery/code-save一致。準備2失敗は各0件で保全。新native0・実worker入口/終端catch/0-job/部分ackは未接続。次は入口前のowner終端/ack範囲→実entry/new profile準備。CI9473523は3247/全3job success・10raw/14pin/local回帰/runner候補一致まで保存、digest/正式採択未完了。以下は先行保存点の履歴。
 
 最新archive境界: [worker Git archive/resolver部品](anomaly-multiseed-v0.3-worker-git-archive-resolver-2026-10-07.md)をba6f82eへ保存。新16焦点/18pin/safety/unique discovery/code-save pass、原close/recoveryとrawのbounded保存・再読取り、partial write/IO停止時pending/partial保全を固定。親形式/rootは変更0、新native0。実actor/worker/probe/0-job/部分ack/終端keeperは次段階。CI7da5aa9の同fixture2失敗を7rawで保全。正式5残件と上限は保持。以下は先行保存点の履歴。

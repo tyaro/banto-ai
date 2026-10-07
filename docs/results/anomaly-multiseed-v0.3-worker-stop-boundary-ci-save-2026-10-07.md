@@ -86,3 +86,22 @@ CI37592838738 / 外部HEAD `7da5aa92b007965b3a51fd94afb73d6add67d3c3` / attempt1
 選択CLI7は外部HEADへ固定し、6raw一致・skip一覧1fileは既知CRLF6箇所のみ（両raw pin保存）。実ロード閉包ではない。14 raw/control pinを保存後照合し、download PID26284/creation134358397765799801/token2a4e23e66338dafca994b5018ebf0e7fa190d61c12fd83d3c6805ba0058da16d、verification PID1996/creation134358398170303211/token67d7d453e71a6c27660607848354c0357cbb92aacf038dba72b73ed8e302f2f4はexit0/CIM残存なし。全helper終了・critical ownerなし・新native0。
 
 未保存対象は37598762191（HEADba6f82e/各minor3263予定）と37602415125（HEADf0ecd89/3276予定）。doc-only新CI追跡を増やさない。このCIをf0ecd89 actorのnativeや最終受入へ読み替えない。
+
+## 追補: worker archive ba6f82eのCI（37598762191）
+
+外部fullHEAD `ba6f82e01eeedb4007a402589cd459f458b4308b`、attempt1/push/workflow上記pinへ固定。job3.12=112717687460、3.14=112717687857、compare=112733955134。全3job success・両minor3263/fail0/error0/skip237/source不変。原run/attempt jobs・2journal・comparison/regression・3job log＋localの10raw、14pinを `artifacts/ci-diagnostic-37598762191/` に保存。local/remote回帰全一致・共有29fixture/必須28・runner v2 consistent_candidate。
+
+全job20260927.320.1、保存済み公式release/README metadata/Git blobと各log/minor journalを照合。digest未取得・候補未採択。選択CLI7は外部ba6f82eへ固定、6raw一致・skip一覧1fileはCRLF6差のみで両raw pin保存。runtime閉包ではない。
+
+| 保存物 | bytes | SHA-256 |
+|---|---:|---|
+| complete-summary.json | 2576 | `28478f307acb3767bcb0789cf387e589cf961a367d2f015979a08a1ec67b2f65` |
+| 37598762191-candidate-pins.json | 2567 | `d5278c9a5fabcfccd630adf4e797457877867a3e31df0f8a4c8442e500d208bf` |
+| 37598762191-result.json | 3064 | `41687f6aa8b5065d8ce950be099a037faf336643e07ef73daa0e599eab790789` |
+| ci-complete-index.json | 2783 | `331fc11cebd8d46ceb37c44708fddac50449ba1a00daecdfe9c5773c2a35acff` |
+| local-cli-source-pins.json | 2390 | `fbf345abbe3f7368ede2e105d3cc03b38e7800b4970a0973c674f5c50ab0979d` |
+| post-save-checkpoint.json | 1157 | `3ad98ac2b61062b600eb953b22eda5bb008f034d377d83c6714bf02e98263ef1` |
+
+14 raw/control pinを保存後照合。download PID5772/creation134358409216731185/token443a50f9aaa390b374027bf9d4943c0640e272814db9ce7d7f6a8effbc13cd73、verification PID41304/creation134358410288654168/token8cdfaa1a87a9983e1216da4c4d67e832ecdc98abea2c516970c6634a15755b1bはexit0/CIM残存なし。全helper終了・critical ownerなし・新native0。
+
+未保存CIは37602415125（f0ecd89/3276予定）、37604591211（13ac6a1/3286予定）、37605468456（e1b8924/3287予定）。このCIを終了guard e1b8924や最終受入のnativeへ読み替えず、doc-only新CI追跡を増やさない。
