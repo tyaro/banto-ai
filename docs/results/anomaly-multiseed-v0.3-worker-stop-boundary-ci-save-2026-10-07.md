@@ -1,5 +1,21 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## read adapter43da351のCI37634146788を保存
+
+外部fullHEAD `43da351954ccc80af5ddc2d91b53027b80786bc3`、attempt1/push/workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`、jobs3.12=112835797417/3.14=112835797900/compare=112851378097へ固定。各minor3368/fail0/error0/skip237/source不変、全3job success。専用 `artifacts/ci-diagnostic-37634146788/` にrun/attempt jobs・2journal・comparison/regression・3log＋localの10raw/14pin、local/remote一致、共有29fixture/必須28、runner v2 consistent_candidateを保存。
+
+3.12/compareは20260927.320.1、3.14は20261004.327.1、公式release/README metadata/blobと各log/journal外部pin・新版prerelease=trueを照合。digest未取得/候補未採択。選択CLI7は6raw一致/skip1file既知CRLF6差を両pinで保全。
+
+| 保存物 | bytes | SHA-256 |
+|---|---:|---|
+| complete-summary.json | 2564 | `87eb7617d195f074221b3d1aa42d3d7ac79f3d0049004db565883c55a5e922ff` |
+| 37634146788-candidate-pins.json | 3462 | `93d301f46529986707be397b01c19b70ed75f88f3cd3c406e7902e750023b444` |
+| 37634146788-result.json | 3959 | `8a2494faab3919315890b4f3aa982e23e10f48108c211db975d5540952f2bb69` |
+| ci-complete-index.json | 2783 | `4dcb29afb81401bbd9fd0ba99115a697b2ffac081b3c27d75d729a55693f92ed` |
+| local-cli-source-pins.json | 2138 | `ef0722c17169c8c86b1e1a385524d877d6d92c57fbe8534e06d583427e6be29c` |
+
+download13396/creation134358584877871179/token90d0c3d6c1160eb4f21109633a6515ad18a698a73e89f2c8a2359898af4e03a0、verification46732/creation134358585622648933/tokenc061fa254a8d19dd9e0118285b8c3241671a586703a8d6a34bfabf8e262bbe27はexit0/CIM残存なし。元identity/tokenは各live/executionへ保存しPID単独で扱わない。全helper終了・critical ownerなし、新native0・焦点反復0・追加agent0。この保存をc78dbfeの実pipe/native/容量合格/最終受入へ読み替えず、旧失敗rawも保全。未保存は37637048268（1d9d70a/3381予定）と37640186606（c78dbfe/3392予定）、進行中。以下は先行履歴。
+
 ## 追加IO owner初版66d31ee／補強ffbdc2fのCI保存
 
 | run / 外部fullHEAD / attempt1 | jobs3.12 / 3.14 / compare | 各minor実試験 | index bytes / SHA-256 |
