@@ -61,15 +61,19 @@ class ObservationSubsetBudget(control_files.ControlFileBudget):
         return report
 
 
-def _source_pins(revision):
+def _source_pins(revision, *, git_identity=None):
     projection.evidence._digest(revision, 40)
 
     def git(*args):
         return subprocess.check_output(['git', '-C', str(ROOT), *args],
                                        stderr=subprocess.DEVNULL, timeout=10)
 
-    if (git('rev-parse', 'HEAD').decode().strip() != revision or
-            git('status', '--porcelain').strip()):
+    if git_identity is None:
+        changed = git('rev-parse', 'HEAD').decode().strip() != revision or git('status', '--porcelain').strip()
+    else:
+        identity = git_identity()
+        changed = identity['head'].decode().strip() != revision or identity['status'].strip()
+    if changed:
         raise ValueError('saved-row document trial requires clean expected HEAD')
     pins = {}
     for name in SOURCE_NAMES:

@@ -163,6 +163,42 @@ class EnvelopeTests(unittest.TestCase):
         self.assertFalse(self.outer.exists())
         self.assertFalse(self.producer.exists())
 
+    def test_invalid_parent_git_policy_rejects_before_roots_or_generation(self):
+        with patch.object(whole.generated, 'generate_and_read') as producer, \
+             self.assertRaisesRegex(ValueError, 'policy entry'):
+            whole.run(outer_root=self.outer, producer_root=self.producer,
+                reread_root=self.reader, receipt_name='trial-one',
+                expected_manifest_pin={'bytes': 1, 'sha256': 'a' * 64},
+                expected_revision='b' * 40, control_root=self.artifacts / 'unused',
+                expected_control_pinset_pin={'bytes': 1, 'sha256': 'a' * 64},
+                expected_input_pins={}, parent_git_identity_policy={})
+        producer.assert_not_called()
+        self.assertFalse(self.outer.exists())
+        self.assertFalse(self.producer.exists())
+
+    def test_missing_parent_git_preflight_receipts_prevents_generation(self):
+        path = self.artifacts / 'anomaly-v03-preformal-generated-pinsets-one/pins.json'
+        path.parent.mkdir()
+        raw = b'{}'
+        path.write_bytes(raw)
+        pins = {'fixture/' + name: {'bytes': 1, 'sha256': 'a' * 64}
+                for name in ('input.json', 'slices.json', 'coverage.json', 'operation.json')}
+        policy = {'expected_pin': {'bytes': 1, 'sha256': 'a' * 64}}
+        with patch.object(whole.parent_git, 'validate', return_value=policy), \
+             patch.object(whole, '_source', return_value={'source': 'test'}), \
+             patch.object(whole.document.control_files, 'validate_request'), \
+             patch.object(whole.generated, 'generate_and_read') as producer:
+            result = whole.run(outer_root=self.outer, producer_root=self.producer,
+                reread_root=self.reader, receipt_name='trial-one',
+                expected_manifest_pin=whole.generated.copied._pin(raw),
+                expected_revision='b' * 40, control_root=self.artifacts / 'unused',
+                expected_control_pinset_pin={'bytes': 1, 'sha256': 'a' * 64},
+                expected_input_pins=pins, parent_git_identity_policy={'requested': 'mocked'})
+        self.assertEqual(result['status'], 'failed')
+        self.assertIn('four calls', result['detail'])
+        self.assertFalse(result['parent_git_identity_checked'])
+        producer.assert_not_called()
+
     def test_invalid_publication_bundle_rejects_before_roots_or_generation(self):
         with patch.object(whole.generated, 'generate_and_read') as producer, \
              self.assertRaisesRegex(ValueError, 'role inventory'):

@@ -20,7 +20,14 @@ _FIELDS = set('''format status reason prior_stop_reason operation source_path re
     source_closure_complete runtime_closure_complete execution_authenticated job'''.split())
 
 
-def _execute(argv, root, environment, target, operation, timeout_seconds):
+def _shared_stop(probe):
+    stop = probe() if probe is not None else None
+    v.require(stop is None or (type(stop) is str and 0 < len(stop) <= 128),
+              'owned Git shared stop probe result')
+    return stop
+
+
+def _execute(argv, root, environment, target, operation, timeout_seconds, *, stop_probe=None):
     """Retain native ownership until the root and its private Job are empty."""
     k = owner._kernel()
     job = process = thread = identity = exit_code = None
@@ -37,9 +44,15 @@ def _execute(argv, root, environment, target, operation, timeout_seconds):
                 k, argv, root, stdin, stdout, stderr, environment=environment)
             assigned = True
             identity = direct._identity(SimpleNamespace(pid=pid, _handle=process))
-            owner._need(k.ResumeThread(thread) == 1, 'ResumeThread Git')
-            resumed = True
-            while True:
+            if _shared_stop(stop_probe) is not None:
+                reason = 'shared_budget_stop'
+            else:
+                owner._need(k.ResumeThread(thread) == 1, 'ResumeThread Git')
+                resumed = True
+            while reason is None:
+                if _shared_stop(stop_probe) is not None:
+                    reason = 'shared_budget_stop'
+                    break
                 accounting = owner._accounting(k, job)
                 exit_code = owner._root_exit(k, process)
                 if exit_code is not None and exit_code != 0:
@@ -112,15 +125,19 @@ def _execute(argv, root, environment, target, operation, timeout_seconds):
 
 
 def run_owned(*, root, policy, operation, receipt_root, source_path=None,
-              expected_output_pin=None, timeout_seconds=10):
+              expected_output_pin=None, timeout_seconds=10, stop_probe=None):
     v.require(type(timeout_seconds) in (int, float) and 0 < timeout_seconds <= 30,
               'owned Git timeout')
+    v.require(stop_probe is None or callable(stop_probe), 'owned Git shared stop probe')
     root, executable, environment, before = direct._policy(root, policy)
     v.require(policy.get('process_ownership') == direct.JOB_OWNERSHIP,
               'owned Git Job opt-in required')
     if os.name != 'nt':
         raise OSError('owned Git private Job requires Windows')
     command = direct._command(policy, operation, source_path, expected_output_pin)
+    stop = _shared_stop(stop_probe)
+    if stop is not None:
+        raise owner.resources.ResourceStop(stop)
     argv = [str(executable), '-c', 'core.fsmonitor=false', '-c', 'core.pager=cat',
             '-c', 'safe.directory=' + str(root), '-C', str(root), *command]
     target = Path(receipt_root)
@@ -129,7 +146,8 @@ def run_owned(*, root, policy, operation, receipt_root, source_path=None,
     paths.regular_path(target, directory=True, missing=True)
     target.mkdir()
     identity, exit_code, reason, error_type, job, elapsed = _execute(
-        argv, root, environment, target, operation, timeout_seconds)
+        argv, root, environment, target, operation, timeout_seconds,
+        **({'stop_probe': stop_probe} if stop_probe is not None else {}))
     prior_stop_reason = reason
     try:
         after = dependencies.file_observation(executable, native=True, maximum=direct.MAX_EXE)

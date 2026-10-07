@@ -157,7 +157,7 @@ def _pin_output(path, maximum):
 
 
 def run_owned(*, root, policy, operation, receipt_root,
-              source_path=None, expected_output_pin=None, timeout_seconds=10):
+              source_path=None, expected_output_pin=None, timeout_seconds=10, stop_probe=None):
     """Run one allowlisted Git command; save its independent direct-handle facts.
 
     The executable pin and environment come from the caller.  A failed
@@ -167,7 +167,9 @@ def run_owned(*, root, policy, operation, receipt_root,
         from . import anomaly_v03_preformal_owned_git_job as tree
         return tree.run_owned(root=root, policy=policy, operation=operation,
             receipt_root=receipt_root, source_path=source_path,
-            expected_output_pin=expected_output_pin, timeout_seconds=timeout_seconds)
+            expected_output_pin=expected_output_pin, timeout_seconds=timeout_seconds,
+            **({'stop_probe': stop_probe} if stop_probe is not None else {}))
+    v.require(stop_probe is None, 'shared Git stop probe requires private Job ownership')
     v.require(type(timeout_seconds) in (int, float) and
               0 < timeout_seconds <= 30, 'owned Git timeout')
     root, executable, environment, before = _policy(root, policy)

@@ -12,6 +12,7 @@ from pathlib import Path
 import time
 
 from . import _anomaly_v03_outer_budget_link as link
+from . import anomaly_v03_preformal_parent_git_identity as parent_git
 from . import anomaly_v03_preformal_generated_chain_budget as monitor
 from . import anomaly_v03_preformal_owned_generated_attempt as generated
 from . import anomaly_v03_preformal_saved_row_reread as reread
@@ -39,6 +40,7 @@ LEAF_LIMITS = {
 }
 SOURCE_NAMES = tuple(dict.fromkeys((
     'src/banto_ai/anomaly_v03_preformal_generation_publication_budget.py',
+    *parent_git.SOURCE_FILES,
     *generated.SOURCE_FILES, *reread.SOURCE_FILES, *document.SOURCE_NAMES,
 )))
 
@@ -182,8 +184,9 @@ class EnvelopeBudget(monitor.GeneratedChainBudget):
         return report
 
 
-def _source(revision):
-    before = document._source_pins(revision)
+def _source(revision, *, git_identity=None):
+    before = document._source_pins(revision, **({'git_identity': git_identity}
+                                              if git_identity is not None else {}))
     for name in SOURCE_NAMES:
         raw = generated.observed._file(ROOT / name, 1024**2)
         committed = generated.subprocess.check_output(
@@ -228,7 +231,8 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
         expected_manifest_pin, expected_revision, control_root,
         expected_control_pinset_pin, expected_input_pins, budget_limits=None,
         arithmetic_runtime_profiles=None, publication_runtime_profiles=None,
-        saved_reader_runtime_profile=None, generation_runtime_profiles=None):
+        saved_reader_runtime_profile=None, generation_runtime_profiles=None,
+        parent_git_identity_policy=None):
     """Execute one new engineering attempt; never adopt a formal evaluation."""
     roots = _new_roots(outer_root, producer_root, reread_root, receipt_name)
     generated.copied.evidence._digest(expected_revision, 40)
@@ -238,6 +242,7 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
                                                                            revision=expected_revision)
     saved_reader_profile = reread.validate_runtime_profile(saved_reader_runtime_profile, revision=expected_revision)
     generation_profiles = generated.validate_runtime_profiles(generation_runtime_profiles, revision=expected_revision)
+    git_policy = parent_git.validate(parent_git_identity_policy, revision=expected_revision, roots=roots)
     generated.copied.evidence._pin(expected_manifest_pin)
     document._expected_pins(expected_input_pins)
     document.control_files.validate_request(control_root, expected_control_pinset_pin)
@@ -275,10 +280,19 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
     if generation_profiles is not None:
         result.update(generation_runtime_profile_pins={role: copy.deepcopy(entry['expected_pin'])
             for role, entry in generation_profiles.items()}, generation_runtime_observation_checked=False)
+    git_receipts = {}
+    if git_policy is not None:
+        result.update(parent_git_identity_policy_pin=copy.deepcopy(git_policy['expected_pin']),
+                      parent_git_identity_receipts=git_receipts, parent_git_identity_checked=False)
     try:
         budget.start()
         budget.checkpoint('preflight')
-        before = _source(expected_revision)
+        identity = (lambda: parent_git.check(git_policy, phase='preflight', root=roots['outer'],
+                    checkout_root=ROOT, budget=budget, receipts=git_receipts)) if git_policy is not None else None
+        before = _source(expected_revision, **({'git_identity': identity} if identity is not None else {}))
+        if git_policy is not None:
+            parent_git.verify(git_policy, root=roots['outer'], checkout_root=ROOT,
+                              budget=budget, receipts=git_receipts, phases=('preflight',))
         runtime = document.chain.platform_runtime.probe_runtime(ROOT)
         document.publication.check_runtime_profiles(publication_profiles, revision=expected_revision,
             source_pins=before, runtime=runtime)
@@ -375,8 +389,14 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
                 document.projection.coverage.RAW_LIMITS[name])
         reread.recheck_runtime_profile(roots['saved-reader'], read)
         generated.recheck_runtime_profiles(roots['producer'], produced)
-        if _source(expected_revision) != before or document.chain.platform_runtime.probe_runtime(ROOT) != runtime:
+        identity = (lambda: parent_git.check(git_policy, phase='postflight', root=roots['outer'],
+                    checkout_root=ROOT, budget=budget, receipts=git_receipts)) if git_policy is not None else None
+        if _source(expected_revision, **({'git_identity': identity} if identity is not None else {})) != before or document.chain.platform_runtime.probe_runtime(ROOT) != runtime:
             raise ValueError('generation-publication final source/runtime changed')
+        if git_policy is not None:
+            parent_git.verify(git_policy, root=roots['outer'], checkout_root=ROOT,
+                              budget=budget, receipts=git_receipts)
+            result['parent_git_identity_checked'] = True
         budget.checkpoint('postflight')
         result.update(status='measured', stage='complete', source_pins_after=before,
                       runtime_after=runtime, subset_final_disk_recheck_completed=True)

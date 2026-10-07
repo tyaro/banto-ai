@@ -15,7 +15,7 @@ ACCOUNT = {'total_processes':2, 'active_processes':0, 'limit_terminated_processe
 
 class GitJobTests(unittest.TestCase):
     def _execute(self, *, code=0, child_active=False, data=b'', failed_identity=False,
-                 empty=True, close_fail=False, spawn_error=None, account_fail=False):
+                 empty=True, close_fail=False, spawn_error=None, account_fail=False, stop_probe=None):
         class Kernel:
             stopped = False
             closed = []
@@ -54,7 +54,8 @@ class GitJobTests(unittest.TestCase):
              patch.object(direct,'_identity',side_effect=OSError('identity') if failed_identity else None,
                           return_value={'pid':44,'native_start_identity_authenticated':True}):
             try:
-                result = tree._execute(['fixture'],Path(temp),{'PATH':'explicit'},Path(temp),'head',0.001)
+                result = tree._execute(['fixture'],Path(temp),{'PATH':'explicit'},Path(temp),'head',0.001,
+                    **({'stop_probe': stop_probe} if stop_probe is not None else {}))
             except BaseException as error:
                 error.test_kernel = kernel
                 raise
@@ -97,6 +98,33 @@ class GitJobTests(unittest.TestCase):
         self.assertTrue(kernel.stopped)
         self.assertEqual(kernel.closed,[33,22,11])
 
+    def test_shared_stop_after_resume_terminates_running_tree(self):
+        responses = iter([None, 'outer_memory'])
+        result,kernel = self._execute(code=None,child_active=True,stop_probe=lambda:next(responses))
+        self.assertEqual(result[2], 'shared_budget_stop')
+        self.assertTrue(kernel.resumed)
+        self.assertTrue(kernel.stopped)
+
+    def test_shared_stop_before_spawn_creates_no_receipt_or_process(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            target = root / 'not-started'
+            policy = {'revision': 'a' * 40, 'process_ownership': direct.JOB_OWNERSHIP}
+            with patch.object(direct, '_policy', return_value=(root, root/'git.exe', {}, {})), \
+                 patch.object(tree.os, 'name', 'nt'), patch.object(owner, '_spawn_cli') as spawn, \
+                 self.assertRaises(owner.resources.ResourceStop):
+                tree.run_owned(root=root, policy=policy, operation='head', receipt_root=target,
+                               stop_probe=lambda:'outer_time')
+            spawn.assert_not_called()
+            self.assertFalse(target.exists())
+
+    def test_direct_handle_policy_cannot_ignore_a_shared_stop_probe(self):
+        with patch.object(direct, '_policy') as policy, \
+             self.assertRaisesRegex(ValueError, 'private Job ownership'):
+            direct.run_owned(root='unused', policy={}, operation='head', receipt_root='unused',
+                             stop_probe=lambda:None)
+        policy.assert_not_called()
+
     def test_unconfirmed_empty_job_retains_native_handles(self):
         with self.assertRaises(owner.UnreapedJob) as caught:
             self._execute(empty=False)
@@ -117,6 +145,25 @@ class GitJobTests(unittest.TestCase):
         self.assertIs(caught.exception,original)
         self.assertEqual(original.extra_handles,{'stdio':55})
         self.assertEqual(original.test_kernel.closed,[])
+
+    def test_shared_stop_terminates_and_confirms_the_assigned_tree(self):
+        result,kernel = self._execute(code=None,child_active=True,stop_probe=lambda:'outer_time')
+        self.assertEqual(result[2], 'shared_budget_stop')
+        self.assertTrue(result[4]['all_assigned_processes_exit_confirmed'])
+        self.assertTrue(kernel.stopped)
+        self.assertEqual(kernel.closed,[33,22,11])
+        self.assertFalse(kernel.resumed)
+
+    def test_shared_stop_with_unreaped_tree_retains_exact_handles(self):
+        with self.assertRaises(owner.UnreapedJob) as caught:
+            self._execute(code=None,empty=False,stop_probe=lambda:'outer_time')
+        self.assertEqual((caught.exception.job,caught.exception.process,caught.exception.thread),(11,22,33))
+        self.assertEqual(caught.exception.test_kernel.closed,[])
+
+    def test_invalid_shared_probe_stops_tree_as_observation_failure(self):
+        result,kernel = self._execute(code=None,stop_probe=lambda:True)
+        self.assertEqual(result[2:4],('spawn_or_observation_error','V03ValidationError'))
+        self.assertTrue(kernel.stopped)
 
     def test_unicode_environment_is_explicit_and_rejects_ambiguous_keys(self):
         block = owner._environment_block({'TEMP':'試験','PATH':'fixed'})
