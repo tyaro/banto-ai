@@ -4,7 +4,9 @@
 
 ## 現在の状態
 
-- CI37547050883（HEAD21d3866）は全3job success、両minor各3,065件・fail0/error0/skip237・source不変、共有29/必須28。10保存rawのlocal/remote回帰一致、runner v2は全job20260927.320.1でconsistent_candidate。保存index14 pinは2,886 B / `adbfb55d586d5ad0bc168d79eecdf1663e96507b350f84ba4f42dcd2fc4bbf6e`。[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。後続6f1270fのCI37548282365は進行中。
+- CI37548282365（runner v2 code HEAD6f1270f）は全3job success、両minor各3,074件・fail0/error0/skip237・source不変、共有29/必須28。10 raw保存・local/remote回帰一致。3.12/compareは20261004.327.1、3.14は20260927.320.1でrunner v2もconsistent_candidate。新しい版prerelease=trueを外部pinへ照合、digest未取得・未採択。保存index14 pinは2,821 B / `8c87a9f1df42727d594cd68d6126b8e25a88c1c765e0c565b505a4fbcb46409a`。対象CI2件の保存・照合は完了。[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。
+
+- CI37547050883（HEAD21d3866）は全3job success、両minor各3,065件・fail0/error0/skip237・source不変、共有29/必須28。10保存rawのlocal/remote回帰一致、runner v2は全job20260927.320.1でconsistent_candidate。保存index14 pinは2,886 B / `adbfb55d586d5ad0bc168d79eecdf1663e96507b350f84ba4f42dcd2fc4bbf6e`。[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。後続6f1270fのCI37548282365も保存・照合済み（上段）。
 
 - 外部program/異常子孫の[残件source監査](results/anomaly-multiseed-v0.3-external-process-acceptance-gaps-2026-10-07.md)を追加。選択15 sourceはworking/6f1270f/343c863 raw一致。裸のGit構文16箇所、実7役は直接supervisor、既存Git Job v7はcandidate profile非接続。次の小さい実装境界と拒否/停止試験を整理し、新native0。raw監査5,938 B / `1624adfb0966372c1e9441d79ab1a625e5990f0cfbdb621f1a4cfcd2049aa3cf`。
 
@@ -31,7 +33,7 @@ v3では、メモリ内コードの完全認証、conhost等の全補助process�
 
 ## 最新の実装・証拠
 
-[正式受入前の証拠索引・runner v2](results/anomaly-multiseed-v0.3-preformal-evidence-index-2026-10-07.md): 先行CI各jobの実版を公式tagへ結合。20261004.327.1は保存時prerelease=trueを明記。最終revisionのCI/nativeや契約採択を意味しない。最新native文書HEAD21d3866のCI37547050883は10 raw保存・local回帰/runner照合済み。後続runner検証器HEAD6f1270fのCI37548282365は追補時in_progress。
+[正式受入前の証拠索引・runner v2](results/anomaly-multiseed-v0.3-preformal-evidence-index-2026-10-07.md): 先行CI各jobの実版を公式tagへ結合。20261004.327.1は保存時prerelease=trueを明記。最終revisionのCI/nativeや契約採択を意味しない。最新native文書HEAD21d3866のCI37547050883は10 raw保存・local回帰/runner照合済み。後続runner検証器HEAD6f1270fのCI37548282365も10 raw保存・local回帰/runner v2照合済み。
 
 [全7役runtime・共通予算native](results/anomaly-multiseed-v0.3-seven-role-runtime-common-budget-native-2026-10-07.md): 343c863で同じouter clockに7役・14phaseの在庫と元handle/exitを結び、公開後のcontrol/元22 payload/phase/source再照合までpass。正式source/runtime閉包・契約・入力経路・最終dev/smoke・独立受入・全容量2倍は残る。
 
@@ -69,7 +71,7 @@ v3では、メモリ内コードの完全認証、conhost等の全補助process�
 
 ## 次の着手と履歴
 
-次はrunner v2 code HEAD6f1270fのCI37548282365の完成rawを保存し、外部HEAD/workflow/run/attempt・全journalとrunner v2を照合する。native文書HEAD21d3866のCI37547050883は保存・照合完了なので反復しない。文書のみの追補はCI起動を抑える。producer/initial/saved readerを含む同revision全7役nativeは343c863で終了済みなので反復しない。次の実装残件は外部program/Git/helper在庫・異常子孫回収、正式登録入力consumer、版付き契約・runner代替同定の採択。最終同revisionのLinux/Windows・正式dev8/smoke2・独立受入と全容量2倍は残る。旧成功/失敗rootを保全する。追加agent・旧agent再活性化0、10時以降は新規実行0。
+必要なCI37547050883/37548282365の保存・照合は完了。10時まで新native/code unitを開始せず、最終保存状態・既存worker終了の照合と短い引継ぎを済ませ、到達時にheartbeat banto-10を停止する。再開時の小さい実装候補は、残件source監査に記録した実Git境界の外部program policy、private Jobでの異常子孫回収、限定拒否/停止試験。文書のみの追補は追加CIを抑える。producer/initial/saved readerを含む同revision全7役nativeは343c863で終了済みなので反復しない。次の実装残件は外部program/Git/helper在庫・異常子孫回収、正式登録入力consumer、版付き契約・runner代替同定の採択。最終同revisionのLinux/Windows・正式dev8/smoke2・独立受入と全容量2倍は残る。旧成功/失敗rootを保全する。追加agent・旧agent再活性化0、10時以降は新規実行0。
 
 受入までの残件は、今回scopeの共通予算証拠を正式経路へ結ぶ受入、正式同形容量2倍、26H2・保証A/B・runner代替同定の改訂契約候補、正式source/runtime在庫、最終CI/native／正式dev8/smoke2・独立受入、独立raw観測再導出。1区間の架空観測と479区間metadataを同一campaignや全観測確認へ読み替えない。架空480区間の新規生成完走を自動追加の必須にせず、旧pin・由来・上限8 drawは維持する。最終revisionと独立受入の前にS5を開始しない。
 

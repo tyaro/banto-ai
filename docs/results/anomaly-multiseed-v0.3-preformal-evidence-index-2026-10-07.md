@@ -12,6 +12,7 @@
 | --- | --- | --- |
 | [全7役runtime・共通予算native](anomaly-multiseed-v0.3-seven-role-runtime-common-budget-native-2026-10-07.md) | `343c8639b0acfb2be535c02b5aaf4288b8f3d43e` | 7役・14phase、元handle/exit/reap、外部pin、架空1区間22 payload＋479 metadata、outer690.576/1800秒。保存checker57 raw/103 sourceと4974 raw/60 source pass。 |
 | 最新native文書保存点のCI | `21d386692398710c050fa5ab3b4a96db73b95be0` / [37547050883](https://github.com/tyaro/banto-ai/actions/runs/37547050883) | 追補時は全3job success、各minor3065件・fail/error0・skip237・source不変。10 raw保存、local回帰とrunner v2照合pass。最終受入は未了。 |
+| runner v2 codeの最新CI | `6f1270f05614e7127ecdd876da77dcc1805c1858` / [37548282365](https://github.com/tyaro/banto-ai/actions/runs/37548282365) | 全3job success、各minor3074件・fail/error0・skip237・source不変。10 raw保存、local回帰一致。3.12/compareは20261004.327.1、3.14は20260927.320.1でrunner v2照合pass。新しい版prerelease=trueは未採択。 |
 | saved-readerの保存済みCI | `3d2ebfbd62a2eb78a0d42976743b021ff78d967e` / [37498814612](https://github.com/tyaro/banto-ai/actions/runs/37498814612) | 全3job success、両minor各3051件、必須28試験/共有29fixture、外部pinと全journalの再照合。全job runner20260927.320.1。 |
 | publicationの保存済みCI | `97370f3a355a60c3e8650325a2c1559a7aff1763` / [37485069436](https://github.com/tyaro/banto-ai/actions/runs/37485069436) | 全3job success、両minor各3039件、必須28試験/共有29fixture。test2jobは20260927.320.1、compareだけ20261004.327.1。 |
 
@@ -54,6 +55,6 @@
 
 [外部program・異常子孫の静的source監査](anomaly-multiseed-v0.3-external-process-acceptance-gaps-2026-10-07.md)を追補。選択15 sourceのworking/6f1270f/343c863一致、実経路の裸Git・直接supervisorと未接続prototypeの範囲、次の停止/拒否試験を整理した。これは実行・外部program全在庫・子孫回収の合格証拠ではない。
 
-CI37547050883は保存・照合完了。[追補CI index](../../artifacts/ci-diagnostic-37547050883/ci-complete-index.json) 2,886 B / `adbfb55d586d5ad0bc168d79eecdf1663e96507b350f84ba4f42dcd2fc4bbf6e`。旧26 pinの索引JSONは作成時の状態を保全し、今回の14 pinは別indexへ保存した。次はrunner検証器code6f1270fのCI37548282365を別HEADとして保存・照合する。全7役native・既存checkerを反復しない。以降は外部program/異常終了の残件を、限定試験と保存済みsourceから小さく整理する。
+CI37547050883は保存・照合完了。[追補CI index](../../artifacts/ci-diagnostic-37547050883/ci-complete-index.json) 2,886 B / `adbfb55d586d5ad0bc168d79eecdf1663e96507b350f84ba4f42dcd2fc4bbf6e`。旧26 pinの索引JSONは作成時の状態を保全し、今回の14 pinは別indexへ保存した。runner検証器code6f1270fのCI37548282365も別HEADとして保存・照合完了。[最新CI index](../../artifacts/ci-diagnostic-37548282365/ci-complete-index.json) 2,821 B / `8c87a9f1df42727d594cd68d6126b8e25a88c1c765e0c565b505a4fbcb46409a`。現在の保存済みnative/CI/runner確認を反復せず、10時の停止・終端引継ぎへ進む。全7役native・既存checkerを反復しない。以降は外部program/異常終了の残件を、限定試験と保存済みsourceから小さく整理する。
 
 10:00 JST以降は新しい実行を開始せず、証拠保存・短い引継ぎとheartbeat banto-10の停止を済ませる。
