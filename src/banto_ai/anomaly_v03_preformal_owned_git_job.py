@@ -263,11 +263,26 @@ class GitSinkAdmission:
     def _closed_sink_size(self, name, stream, current):
         adapter = self.close_adapter
         self.close_pending = {'output':name,'stream':stream,'event':None,'raw':None}
+        completed = None if type(adapter) is not GitPipeClose else adapter.keeper.completion
+        # Successful core close deliberately freezes the keeper against replay.
+        # Reconcile that state through its original event/raw link, not a flag.
+        if completed is not None:
+            self.close_pending['completion'] = completed
+            v.require(adapter.keeper.remaining == {} and
+                adapter.keeper.closed == adapter.keeper.initial_handles and
+                adapter.keeper.close_owner is None and adapter.keeper.first_error is None and
+                completed.get('closed_handles') == adapter.keeper.closed and
+                completed.get('io_closed') == adapter.keeper.io_closed and
+                all(completed.get(k) == value for k,value in adapter.keeper.reaped.items()),
+                'Git admission original completed keeper/core close')
+            raw = self.close_pending['completed_raw'] = {n:observed._file(
+                self.paths[n],self.limits[n+'.bin']) for n in ('stdout','stderr')}
+            verify_pipe_recovery(completed,stdout_raw=raw['stdout'],stderr_raw=raw['stderr'])
         v.require(type(adapter) is GitPipeClose and adapter.output_owner is self.output_owner
             and adapter.keeper.original is self.native and adapter.keeper.io_close_adapter is adapter
             and adapter.keeper.output_owner is self.output_owner
             and adapter.keeper.native_kernel is adapter.reader.kernel is self.spawn_io.binding[0]
-            and adapter.keeper.reaped is not None and not adapter.keeper.blocked
+            and adapter.keeper.reaped is not None and (not adapter.keeper.blocked or completed is not None)
             and adapter.error is None and self.output_owner.error is None
             and adapter.reader.failure is None and self.output_owner.pending is None
             and adapter.streams[name] is stream and adapter.started,
@@ -735,6 +750,204 @@ class GitPipeClose:
             return link
         except BaseException as error:
             self._failed(error)
+
+
+class GitPipeTransport:
+    """Opt-in single-call transport; receipt publication and entry admission stay separate.
+
+    The caller keeps the original clock, child lease and stdin. A captured
+    transport observation does not finish that lease or authorize a parent ack.
+    Synchronous Peek/Read still requires a separately measured native wall gate.
+    """
+    def __init__(self, admission, *, kernel, repository, policy, stdin, child,
+                 stop_probe, clock, started_at):
+        self.admission, self.kernel, self.stdin, self.child = admission, kernel, stdin, child
+        self.original_inputs = (repository, policy, stop_probe, clock, started_at)
+        self.stop_probe, self.clock, self.started_at = stop_probe, clock, started_at
+        self.native = admission.native if type(admission) is GitSinkAdmission else owner.UnreapedJob(
+            None, None, None, {'phase':'git_pipe_transport','formal_permission':False})
+        self.owners = [self.native]
+        self.native.pipe_transport = self  # Before validation, copying, policy or clock IO.
+        self.previous_transport = getattr(admission, 'pipe_transport', None)
+        self.creator = self.spawn_io = self.output = self.reader = self.keeper = self.closer = None
+        self.pending = self.error = self.reason = self.result = self.stop_error = None
+        self.started = self.stop_started = False
+        try:
+            v.require(type(admission) is GitSinkAdmission and self.previous_transport is None,
+                      'transport original exclusive admission, no rebind')
+            admission.pipe_transport = self
+            self.policy = copy.deepcopy(policy)
+            v.require(callable(stop_probe) and callable(clock) and
+                type(started_at) in (int,float) and 0 <= started_at < float('inf') and
+                callable(getattr(child,'hold_owner',None)), 'transport original clock/stop/lease owner')
+            self.repository, self.executable, self.environment, self.executable_before = direct._policy(
+                repository, self.policy)
+            v.require(self.policy.get('process_ownership') == direct.JOB_OWNERSHIP and
+                self.policy['revision'] == admission.revision, 'transport same private Job/revision')
+            command = direct._command(self.policy, admission.call['operation'],
+                admission.call['source_path'], admission.call['expected_output_pin'])
+            self.argv = [str(self.executable), '-c','core.fsmonitor=false','-c','core.pager=cat',
+                '-c','safe.directory='+str(self.repository),'-C',str(self.repository),*command]
+        except BaseException as failure:
+            self._failed(failure)
+
+    def _retain(self, native):
+        if native not in self.owners:
+            self.owners.append(native)
+        self.native = native
+        native.pipe_transport = self
+
+    def _failed(self, failure):
+        if self.error is None:
+            self.error = failure
+        if isinstance(failure, (owner.UnreapedJob,owner.UnclosedHandles)):
+            self._retain(failure)
+        self.native.transport_error = self.error
+        if getattr(self.native,'original_error',None) is None and self.error is not self.native:
+            self.native.original_error = self.error
+        if self.error is self.native:
+            raise self.native
+        raise self.native from self.error
+
+    def _abort(self, failure):
+        # Retain the original failure and any secondary owner before stopping.
+        if self.error is None:
+            self.error = failure
+        if isinstance(failure, (owner.UnreapedJob,owner.UnclosedHandles)):
+            self._retain(failure)
+        if not self.stop_started and type(self.native) is owner.UnreapedJob and all(
+                type(h) is int and h > 0 for h in (self.native.job,self.native.process,self.native.thread)):
+            try:
+                self.stop_once()
+            except BaseException as stop_error:
+                self.stop_error = stop_error
+        self._failed(failure)
+
+    def _probe(self):
+        self.admission.checkpoint()
+        now = self.clock()
+        v.require(type(now) in (int,float) and self.started_at <= now < float('inf'),
+                  'transport original monotonic clock')
+        self.pending = {'clock':now,'stop':None}
+        self.pending['stop'] = stop = _shared_stop(self.stop_probe)
+        return 'shared_budget_stop' if stop is not None else (
+            'time_limit' if now-self.started_at >= 10 else None)
+
+    def start(self):
+        if self.error is not None:
+            raise self.native
+        try:
+            v.require(not self.started, 'transport cannot restart original call')
+            self.started = True
+            reason = self._probe()
+            if reason is not None:
+                self.reason = reason
+                raise owner.resources.ResourceStop(reason)  # Before pipe/Job creation.
+            self.admission.create()
+            self.creator = owner.NativeGitPipes(self.kernel, checkpoint=self.admission.checkpoint)
+            self._retain(self.creator.native)
+            self.creator.create()
+            self.spawn_io = self.admission.bind_spawn(self.creator)
+            self._retain(self.spawn_io.native)
+            self.pending = {'stage':'spawn','return':None}
+            self.pending['return'] = returned = owner._spawn_cli(self.kernel,self.argv,
+                self.repository,self.stdin,self.creator.writers['stdout'],
+                self.creator.writers['stderr'],environment=self.environment,spawn_io=self.spawn_io)
+            v.require(returned == (self.native.job,self.native.process,self.native.thread,returned[3]),
+                      'transport original spawn return/core')
+            self.spawn_io.close_parent_writers(checkpoint=self.admission.checkpoint)
+            self.output = self.admission.bind_output()
+            readers = {n:lambda limit,n=n:observed._file(self.admission.paths[n],limit)
+                       for n in ('stdout','stderr')}
+            self.reader = GitPipeReader(self.output,kernel=self.kernel,readback=readers)
+            reason = self._probe()
+            if reason is not None:
+                self.reason = reason
+                self.stop_once()
+                raise owner.resources.ResourceStop(reason)
+            self.pending = {'stage':'resume','return':None}
+            self.pending['return'] = resumed = self.kernel.ResumeThread(self.native.thread)
+            owner._need(resumed == 1, 'transport ResumeThread original Git root')
+            self.pending = None
+            return self
+        except BaseException as failure:
+            self._abort(failure)
+
+    def stop_once(self):
+        """Retain original keeper before its ledger/Terminate/wait; no IO release."""
+        if self.stop_started:
+            return None if self.keeper is None else copy.deepcopy(self.keeper.reaped)
+        self.stop_started = True
+        try:
+            from .anomaly_v03_preformal_child_git_keeper import ChildGitKeeper
+            self.keeper = ChildGitKeeper(self.native,child=self.child,lease=self.admission.call['lease'])
+            self.native.child_keeper = self.keeper
+            self.keeper.reconcile_once()
+            return copy.deepcopy(self.keeper.reaped)
+        except BaseException as failure:
+            self.keeper = self.keeper or getattr(self.native,'child_keeper',None)
+            self._failed(failure)
+
+    def step(self):
+        if self.error is not None:
+            raise self.native
+        try:
+            v.require(self.reader is not None and self.result is None and not self.stop_started,
+                      'transport original running reader')
+            reason = self._probe()
+            if reason is None:
+                for name in ('stdout','stderr'):
+                    if name not in self.reader.eof:
+                        self.pending = {'stage':'read','output':name,'return':None}
+                        self.pending['return'] = value = self.reader.read_once(name)
+                        if value == 'output_limit':
+                            reason = 'output_limit'
+                            break
+                self.pending = {'stage':'native_observation','accounting':None,'exit_code':None}
+                self.pending['accounting'] = accounting = owner._accounting(self.kernel,self.native.job)
+                self.pending['exit_code'] = code = owner._root_exit(self.kernel,self.native.process)
+                if code is not None and code != 0:
+                    reason = reason or 'exit_nonzero'
+                if reason is None and code is not None and accounting['active_processes'] == 0 and \
+                        set(self.reader.eof) == {'stdout','stderr'}:
+                    v.require(self.stop_once() is not None, 'transport original reap unconfirmed')
+                    return 'close_ready'  # Root exit and EOF still do not release anything.
+            if reason is not None:
+                self.reason = reason
+                self.stop_once()
+                raise owner.resources.ResourceStop(reason)
+            self.pending = None
+            return 'pending'
+        except BaseException as failure:
+            self._abort(failure)
+
+    def close_once(self):
+        if self.error is not None:
+            raise self.native
+        try:
+            v.require(self.stop_started and self.keeper is not None and self.keeper.reaped is not None
+                and self.reader is not None, 'transport confirmed original stop/reap')
+            if self.result is not None:
+                self.closer.close_once()
+                self.admission.checkpoint()
+                return copy.deepcopy(self.result)
+            self.closer = GitPipeClose(self.reader,keeper=self.keeper)
+            self.admission.bind_io_close(self.closer)
+            self.closer.close_once()
+            recovery = self.keeper.reconcile_once()
+            v.require(recovery is not None, 'transport every original IO/core close confirmed')
+            raw = {n:observed._file(self.admission.paths[n],self.admission.limits[n+'.bin'])
+                   for n in ('stdout','stderr')}
+            self.pending = {'recovery':recovery,'raw':raw}
+            verify_pipe_recovery(recovery,stdout_raw=raw['stdout'],stderr_raw=raw['stderr'])
+            self.admission.checkpoint()
+            self.result = {'recovery':recovery,'raw_pins':{n:observed._pin(b) for n,b in raw.items()},
+                'formal_permission':False,'execution_authenticated':False,
+                'lease_completed':False,'parent_ack_authorized':False}
+            self.pending = None
+            return copy.deepcopy(self.result)
+        except BaseException as failure:
+            self._failed(failure)
 
 
 def _verify_pipe_close_link(link, *, identity, exit_code, accounting, core_handles,
