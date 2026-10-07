@@ -143,7 +143,9 @@ class GitSinkAdmission:
         self.previous_native_admission = None
         self.native_bindings = []
         self.error = self.pending = self.snapshot = None
-        self.streams, self.spools, self.file_identities = {}, {}, {}
+        self.streams, self.spools, self.file_identities, self.file_descriptors = {}, {}, {}, {}
+        self.close_adapter = self.rejected_close_adapter = self.close_pending = None
+        self.closed_observations = {}
         self.started = self.ready = False
         try:
             self.call, self.identity = copy.deepcopy(call), copy.deepcopy(root_identity)
@@ -237,22 +239,84 @@ class GitSinkAdmission:
         except BaseException as failure:
             self._failed(failure)
 
+    def bind_io_close(self, adapter):
+        """Keep the original close adapter/keeper before any reconciliation IO."""
+        if self.error is not None:
+            raise self.native
+        try:
+            if self.close_adapter is not None:
+                self.rejected_close_adapter = adapter
+                v.require(False, 'Git admission close adapter cannot be rebound')
+            self.close_adapter = adapter
+            v.require(type(adapter) is GitPipeClose and adapter.output_owner is self.output_owner
+                and adapter.keeper.original is self.native and
+                adapter.keeper.output_owner is self.output_owner and
+                self.output_owner.native_owner is self.native and
+                self.output_owner.pipe_close is adapter and not adapter.started
+                and adapter.error is None and all(adapter.streams[n] is s and not s.closed
+                    for n,s in self.streams.items()), 'Git admission original close adapter/streams')
+            adapter.keeper.bind_io_close(adapter)
+            self.checkpoint()
+        except BaseException as failure:
+            self._failed(failure)
+
+    def _closed_sink_size(self, name, stream, current):
+        adapter = self.close_adapter
+        self.close_pending = {'output':name,'stream':stream,'event':None,'raw':None}
+        v.require(type(adapter) is GitPipeClose and adapter.output_owner is self.output_owner
+            and adapter.keeper.original is self.native and adapter.keeper.io_close_adapter is adapter
+            and adapter.keeper.output_owner is self.output_owner
+            and adapter.keeper.native_kernel is adapter.reader.kernel is self.spawn_io.binding[0]
+            and adapter.keeper.reaped is not None and not adapter.keeper.blocked
+            and adapter.error is None and self.output_owner.error is None
+            and adapter.reader.failure is None and self.output_owner.pending is None
+            and adapter.streams[name] is stream and adapter.started,
+            'Git admission closed sink requires original confirmed adapter/keeper')
+        event = self.close_pending['event'] = adapter.sink_events.get(name)
+        spool = self.spools[name]
+        v.require(type(event) is dict and set(event) == {'api','fd','return','file_identity','raw_pin'}
+            and event['api'] == 'FileIO.close' and event['return'] is None
+            and type(event['fd']) is int and event['fd'] == self.file_descriptors[name]
+            and event['file_identity'] == {'device':current.st_dev,'inode':current.st_ino}
+            and spool.closed and spool.stream is stream and spool.failure is None
+            and spool.pending_raw is None and not spool.stopped
+            and set(adapter.read_events) == {'stdout','stderr'} and all(
+                row == {'api':'CloseHandle','handle':adapter.read_handles[n],'return':row['return']}
+                and type(row['return']) is int and row['return'] > 0
+                for n,row in adapter.read_events.items()), 'Git admission exact original sink/read close')
+        raw = self.close_pending['raw'] = observed._file(self.paths[name], self.limits[name+'.bin'])
+        v.require(observed._pin(raw) == event['raw_pin'] and len(raw) == spool.committed_bytes
+            == current.st_size and hashlib.sha256(raw).digest() == adapter.reader.hashes[name].digest(),
+            'Git admission closed sink original full raw witness')
+        self.closed_observations[name] = self.close_pending
+        return current.st_size
+
     def checkpoint(self):
         if self.error is not None:
             raise self.native
         try:
+            if self.close_adapter is not None:
+                for failure in (self.close_adapter.error, self.output_owner.error,
+                                self.close_adapter.reader.failure):
+                    if failure is not None:
+                        self._failed(failure)
             self.shared_checkpoint()
             from . import anomaly_v03_preformal_generated_chain_budget as monitor
             self.snapshot = monitor._directory_snapshot(self.root, 32, 2, self.identity)
             stored = 0
             for name, stream in self.streams.items():
-                info = os.fstat(stream.fileno())
                 current = paths.regular_path(self.paths[name]).lstat()
-                v.require((info.st_dev,info.st_ino) == self.file_identities[name] ==
-                    (current.st_dev,current.st_ino) and info.st_size == current.st_size and
-                    0 <= info.st_size <= self.limits[name+'.bin'],
+                v.require(self.file_identities[name] == (current.st_dev,current.st_ino) and
+                    0 <= current.st_size <= self.limits[name+'.bin'],
                     'Git sink original file identity/count')
-                stored += info.st_size
+                if stream.closed:
+                    stored += self._closed_sink_size(name, stream, current)
+                else:
+                    info = os.fstat(stream.fileno())
+                    v.require(stream.fileno() == self.file_descriptors[name] and
+                        (info.st_dev,info.st_ino) == self.file_identities[name] and
+                        info.st_size == current.st_size, 'Git admission original open fd/count')
+                    stored += info.st_size
             remaining = sum(self.limits.values()) - stored
             # Keep future receipt/partial files plus the existing diagnostic reserve.
             future_entries = len(self.limits) - len(self.streams) + (0 if self.started else 1)
@@ -278,7 +342,8 @@ class GitSinkAdmission:
             for name in ('stdout','stderr'):
                 self.pending = {'operation':'FileIO','path':self.paths[name], 'stream':None}
                 self.streams[name] = self.pending['stream'] = file_io.FileIO(self.paths[name], 'xb')
-                info = os.fstat(self.streams[name].fileno())
+                self.file_descriptors[name] = self.streams[name].fileno()
+                info = os.fstat(self.file_descriptors[name])
                 self.file_identities[name] = (info.st_dev,info.st_ino)
                 v.require(info.st_size == 0 and self.streams[name].closefd is True,
                           'Git sink original exclusive empty FileIO')
