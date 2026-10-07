@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 from pathlib import Path
+from . import anomaly_v03_process_supervisor as parent_supervisor
 import time
 
 from . import anomaly_v03_preformal_worker_git_terminal as terminal
@@ -447,6 +448,97 @@ class ReaderGitParent:
             if self.error is None:self.error=failure
             failure.reader_git_parent=self
             raise
+
+
+class ParentPublicationRetention:
+    """Retain Python publication owners; never retry IO or infer native recovery."""
+    def __init__(self, parent, error, owners, caller_plan):
+        self.parent, self.original_error, self.owners = parent, error, owners
+        self.original_caller_plan = caller_plan
+        self.pending = self.errors = ()
+        self.original_inputs = parent.original_bootstrap_inputs
+        self.worker = parent.worker
+        self.endpoint = getattr(parent,'parent',None)
+        self.existing_worker_error = self.pause_error = None
+        parent.publication_retention = self
+        parent.original_publication_retention = self
+        error.parent_publication_retention = self
+        try:
+            for owner in owners:
+                if owner is None:continue
+                self.observing_owner=owner
+                self.pending += (getattr(owner,'pending',None),)  # Preserve each result before the next fallible read.
+                self.errors += (getattr(owner,'error',None),)
+        except BaseException as failure:
+            self.diagnostic_error=failure;error.reader_publication_diagnostic_error=failure
+
+    def _pause(self):
+        try:channel.time.sleep(0.25)
+        except BaseException as failure:
+            if self.pause_error is None:self.pause_error=failure
+
+    def hold(self):
+        # Unknown FileIO return/pending/raw cannot be repaired by a sleep,
+        # closed metadata, caller report or a worker kill/wait declaration.
+        while True:self._pause()
+
+    def retain_worker(self, error):
+        if hasattr(self,'original_worker_keeper_call'):
+            self.rejected_worker_keeper_call=error
+            self.hold()
+            raise self.original_error
+        held=self.original_worker_keeper_call={'error':error,'keeper':parent_supervisor.retain_until_exit,
+            'return':None,'return_observed':False}  # Original callable/owner before keeper/native/diagnostic IO.
+        try:
+            v.require(error is self.existing_worker_error,'caller same original worker exception')
+            held['return']=held['keeper'](error)
+            held['return_observed']=True
+        except BaseException as failure:self.worker_retention_error=failure
+        self.hold()
+        raise self.original_error  # Keeper return/interruption never resolves Python publication IO.
+
+
+def retain_parent_publications(error, parent=None, *, caller_plan=None):
+    """Before caller diagnostics/return, preserve the exact original IO owners.
+
+    A supervisor's existing Unreaped/UnreconciledWorker keeps its own handle
+    and fence path. Bootstrap has no process to kill, wait or close.
+    """
+    original=getattr(error,'reader_git_parent',None)
+    if not isinstance(original,ReaderGitParent):original=getattr(getattr(error,'fence_error',None),'reader_git_parent',None)
+    if not isinstance(original,ReaderGitParent):original=parent
+    if not isinstance(original,ReaderGitParent):return False
+    existing=getattr(original,'original_publication_retention',None)
+    owners=(getattr(original,'original_request_bootstrap',None),
+        getattr(original,'request_bootstrap_owner',None),getattr(original,'inventory_publication',None),
+        getattr(original,'control_publication_owner',None))
+    if all(owner is None for owner in owners) and existing is None:return False
+    rejected=(getattr(original,'rejected_request_bootstrap',None),
+        getattr(original,'rejected_inventory_publication',None))
+    error.reader_publication_owners=(original,owners,rejected,caller_plan)  # Before diagnosis/keeper entry.
+    try:
+        problem=(existing is not None or getattr(original,'error',None) is not None or
+            any(getattr(owner,'error',None) is not None or getattr(owner,'pending',None) is not None
+                for owner in owners if owner is not None) or
+            owners[0] is not owners[1] or owners[2] is not owners[3])
+    except BaseException as failure:
+        error.reader_publication_diagnostic_error=failure;problem=True
+    if not problem:return False
+    if existing is None:existing=ParentPublicationRetention(original,error,owners,caller_plan)
+    error.parent_publication_retention=existing
+    v.require(type(existing) is ParentPublicationRetention and existing.parent is original,
+              'caller original retained Python publication owner')
+    if getattr(original,'publication_retention',None) is not existing:
+        existing.rejected_retention=(existing,getattr(original,'publication_retention',None))
+    if isinstance(error,parent_supervisor.UnreapedWorker):
+        if existing.existing_worker_error is not None and existing.existing_worker_error is not error:
+            existing.rejected_worker_error=(existing.existing_worker_error,error)
+            existing.hold()
+            raise existing.original_error
+        existing.existing_worker_error=error  # Link, never replace/recreate its original handle/fence keeper.
+        return True
+    existing.hold()
+    raise existing.original_error  # An unexpected return is never a report/release authorization.
 
 
 class ReaderGitWorker:
