@@ -1,5 +1,7 @@
 # v0.3 外部program・異常時子孫回収の受入残件（2026-10-07）
 
+次の追補: [親blob読取り境界](anomaly-multiseed-v0.3-parent-source-blob-callback-boundary-2026-10-07.md)をcode9af4a96に追加し、47焦点/9 pin/safety・65 selected保存source照合がpass。production Job/compact receiptは未接続。静的在庫は218 blob call、従来receipt890 entry、unique source1,109,815 Bでouter32 entry/1 MiBを超える。上限を保持した集約保存が次の単位。CI37568898031は進行中、新native0。
+
 再開後の追補: [親HEAD/cleanの4 Git Job](anomaly-multiseed-v0.3-parent-git-identity-budget-native-2026-10-07.md)をcode9ddaed7で共通予算へ接続し、74焦点試験・clean限定native・別保存checkerがpass。親blob/worker内Git・実ロード依存・業務異常子孫は残る。以下は先行source監査時点の保存記録。
 
 ## 保存範囲
