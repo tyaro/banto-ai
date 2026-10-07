@@ -1,5 +1,23 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## bounded Git spool 3ee5dc2のCI37625071676を保存
+
+外部fullHEAD `3ee5dc2b1f3d35cb9bfc6d1cfccec94035f9a0a4`、attempt1/push、workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`、jobs3.12=112804654034/3.14=112804653733/compare=112824039641へ固定。各minor3343/fail0/error0/skip237/source不変、全3job success。専用 `artifacts/ci-diagnostic-37625071676/` にrun/attempt jobs・2journal・comparison/regression・3log＋localの10raw/14pin、local/remote一致、共有29fixture/必須28、runner v2 consistent_candidateを保存。
+
+全job20261004.327.1、公式release/README metadata/blobと各log/journal外部pinを照合。保存releaseのprerelease=true、digest未取得/候補未採択。選択CLI7は6raw一致、skip一覧1fileの既知CRLF6差は両raw pinを保全。
+
+| 保存物 | bytes | SHA-256 |
+|---|---:|---|
+| complete-summary.json | 2566 | `78379863b954a77505e0c0d2b88bdfad03485bc8e07b884830d3b26eca9aba6d` |
+| 37625071676-candidate-pins.json | 2565 | `4b9f69b23f5ceab927ed6ddf8d8c8bc1f9f9778f0947740a01894836a5fb1f94` |
+| 37625071676-result.json | 3062 | `0752493b30b71cf08b54675107f89d46ddcce1333ae78ae579b6533afcfe2640` |
+| ci-complete-index.json | 2783 | `17d71945d3766479478f3f45e7feccbdbe868dd42d626b686a34555105c036be` |
+| local-cli-source-pins.json | 2138 | `86bfc3695074a4aefd55477e95fa4e8b35c48c8bed914a5aa9977d7019318eaf` |
+
+download11976/creation134358546333730461/tokenb4ac015ced94016b7caf2542f0681f99b6bc28bc0331413c8c3b38ef1388d00d、verification34576/creation134358546607945951/token9dc5c75a3f58c8eb1f681233583c39b26cc5a376b2d0b6270fa8bc5b0f4f7333はexit0/CIM残存なし。元creation/tokenは各live/executionへ保存。新native0・焦点反復0・追加agent0、全helper終了・critical ownerなし。後続ffbdc2fの実pipe/native/容量合格や正式受入へ読み替えない。
+
+未保存は37628405639（66d31ee/3354予定）と37629470712（ffbdc2f/3355予定）、両run進行中。doc-only新CI追跡なし。正式gate=s4_acceptance_not_frozen、formal_permission=false、正式credit0、登録holdout観測未読。以下は先行保存点の履歴。
+
 ## reader上位forwarding a12c3e9のCI37617865579を保存
 
 外部fullHEAD `a12c3e91883d9e79fadbdd8f4b23b06f02add2ff`、attempt1、jobs112780500670/112780500318/112797954705。各minor3331/fail0/error0/skip237/source不変、全3job success。専用 `artifacts/ci-diagnostic-37617865579/` にrun/attempt jobs・2journal・comparison/regression・3log＋localの10raw/14pin、local/remote一致、共有29fixture/必須28、runner v2 consistent_candidateを保存。index2783B/0595d9dbb7d76a15433a2adaf39f554e9136bc1c59dbc4ffa8f5321d72f63066。
