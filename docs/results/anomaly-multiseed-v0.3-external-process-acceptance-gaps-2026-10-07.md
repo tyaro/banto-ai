@@ -1,5 +1,7 @@
 # v0.3 外部program・異常時子孫回収の受入残件（2026-10-07）
 
+最新owner境界: [親supervisor stop fence](anomaly-multiseed-v0.3-worker-stop-fence-2026-10-07.md)をcode01ab74fへ保存。17焦点/9 pin・変更2file safety pass。未確認時は元worker/Popen/handleとfenceを保持し、kill/wait/close/final contextに進まない。True後のwait未確認・close失敗もguarded ownerとして保持する。共有stop/ack・worker invocation・子Job keeper/actorは未接続、新native0。
+
 最新callback境界: [producer/initial-reader](anomaly-multiseed-v0.3-worker-source-callback-boundary-2026-10-07.md)をcode e4cb23aへ保存。24 distinct実試験・7 pin・変更3file safety pass、全repository safetyは30秒timeoutで未確認。workerへのpolicy/共有stop/keeper/actorは未接続、新native0。producer pre26/post24とinitial-reader14/14の在庫を固定し、次はinitial-reader小actorのowner終端・共有stop接続。
 
 最新native: [親blob/identity共通予算](anomaly-multiseed-v0.3-parent-git-blob-budget-native-2026-10-07.md)をclean d57326e（code9c49c4a）で一回実測。67 source・134 blob＋4 identity Jobはexit0/active0、pre/post pin一致、30.874/90秒、保存checker v2 pass、sampler/helper終了。archive520,852 Bで512 KiB残余3,436 B。CI9af/1159も保存照合済み、CI9cは未完了。worker内Git・実ロード依存・業務異常子孫・正式5残件は継続。以下の未開始表記は先行source/部品unit時点の保存履歴。
