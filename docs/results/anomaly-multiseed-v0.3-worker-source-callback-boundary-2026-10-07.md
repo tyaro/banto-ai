@@ -36,6 +36,6 @@ rawは `artifacts/preformal-worker-source-callback-20261007-prep/`。
 
 最初のactorはinitial-readerの小さい14/14境界を対象に、caller保持の外部policy/request pin、同revision source inventory、専用未使用root、実行前HEAD/cleanと正確なcall order、shared stop/clock、pending/inflight raw保全を固定する。workerがcritical ownerを持つ間はそのPython ownerを親supervisor終了で失わない終端方式を先に接続する。直接workerのkill/waitだけでGit Jobの回収を宣言しない。現在の親archive520,852 Bへ新receiptを追加せず、新しい測定rootの予算内へ保存する。
 
-runtime profileを使う場合はこの新revisionのsource raw pinへ再準備し、343c863／9c49c4a等の旧pinを読み替えない。新code CI [37576149693](https://github.com/tyaro/banto-ai/actions/runs/37576149693) はin_progress、各minor3,144件予定。親actor旧code CI37572914427はPython3.12成功・3.14進行中、全run未終端。
+runtime profileを使う場合はこの新revisionのsource raw pinへ再準備し、343c863／9c49c4a等の旧pinを読み替えない。新code CI [37576149693](https://github.com/tyaro/banto-ai/actions/runs/37576149693) はin_progress、各minor3,144件予定。親actor旧code CI37572914427は両minor各3131件・全3job success・10 raw/14 pin・回帰/runner v2保存照合まで完了。この旧CIを新e4cb23aの全repository safety合格へ読み替えない。
 
 全repository safety確認、worker内Git actor/共通stop/keeper、実ロード依存、業務異常子孫、正式5残件を継続する。正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0、登録holdout観測未読、追加agent0。旧raw/pin/失敗を保全し、完成済み親native・全7役nativeを反復しない。

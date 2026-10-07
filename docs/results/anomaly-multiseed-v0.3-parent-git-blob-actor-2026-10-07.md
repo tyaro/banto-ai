@@ -40,6 +40,6 @@ rawは `artifacts/preformal-parent-git-blobs-20261007-prep/`。
 
 この準備を終えたd57326eで専用nativeを一回実行し、正常終了・別保存照合まで完了した。元handle keeper付きlauncherと開始前のHEAD/clean/root未使用確認を保存した。worker/helper live-runに終端がなければ保存PID/creation identityへ確認を結び、既存実行に任せる。失敗時に原ownerをPython終了で失わず、inflight・partial archiveを保全し、新worker/重複trial/ tracked編集を行わない。既存の全7役nativeや旧4Jobのみのnativeを反復しない。
 
-新CI37572914427（HEAD9c49c4a）はin_progress。先行CI37568898031（HEAD9af4a96、各minor3099件）と37570913852（HEAD1159b9a、各minor3118件）は全3job success・10 raw/各14 pin・local verifier/runner v2照合まで保存した。残る新CI完了時に同HEAD/run/attempt固定の保存を行う。文書のみの追加CIは抑止する。
+新CI37572914427（HEAD9c49c4a）は全3job success・各minor3131件/fail0/error0/skip237/source不変、10 raw/14 pinとlocal verifier/runner v2まで保存済み。全job20261004.327.1、未採択。先行CI37568898031（HEAD9af4a96、各minor3099件）と37570913852（HEAD1159b9a、各minor3118件）は全3job success・10 raw/各14 pin・local verifier/runner v2照合まで保存した。後続code e4cb23aのCI37576149693は別対象で、完了時に同HEAD/run/attempt固定の保存を行う。文書のみの追加CIは抑止する。
 
 実worker内Git、Git/helperの実ロード依存、業務異常子孫、全経路same-target最終受入と[正式5残件](anomaly-multiseed-v0.3-preformal-evidence-index-2026-10-07.md)は残る。formal false、credit0、holdout観測未読。自走heartbeatはACTIVE、追加agent0。Sol容量エラー/停止指示では保存・安全な終端後PAUSEDとする。

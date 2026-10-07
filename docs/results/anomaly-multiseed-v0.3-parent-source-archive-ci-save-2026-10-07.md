@@ -33,6 +33,23 @@ runner v2は正確なjob inventory、実log prefix/image宣言、各minor journa
 
 ## 次の単位
 
-actor code9c49c4aのCI37572914427は未完了。完了時に同revision用の新専用rootで保存照合し、先行CIを新actorや最終revisionへ読み替えない。[限定親Git native](anomaly-multiseed-v0.3-parent-git-blob-budget-native-2026-10-07.md)はclean d57326e/code9c49c4aで終了済みだが、全経路最終受入は未了。
+actor code9c49c4aのCI37572914427も完了し、以下へ保存した。残るcallback code e4cb23aのCI37576149693は未完了。先行CIを新codeや最終revisionへ読み替えない。[限定親Git native](anomaly-multiseed-v0.3-parent-git-blob-budget-native-2026-10-07.md)はclean d57326e/code9c49c4aで終了済みだが、全経路最終受入は未了。
 
 正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0、登録holdout観測未読。[正式5残件](anomaly-multiseed-v0.3-preformal-evidence-index-2026-10-07.md)を維持し、doc-only追補の追加CIは抑止する。
+
+## 親blob actor CIの完了追補
+
+[CI37572914427](https://github.com/tyaro/banto-ai/actions/runs/37572914427)、HEAD `9c49c4a9c15e7f754572eb1add8b834203f1100d`、attempt1。Python3.12 job112635338844・3.14 job112635338513・compare112645834890は全success。各minor3,131件、fail0/error0/skip237/source不変。workflow pinは上記と同一、10 rawの保存と外部HEAD/run/attempt固定のlocal回帰は保存remoteと全値一致、共有29fixture/必須28試験もpass。
+
+全3jobのimageは20261004.327.1。保存済み公式release/README metadata/Git blob、外部prerelease=trueと各journal/logをrunner v2へ結び、consistent_candidate。candidate入力には使用した単一imageの公式rawだけを含めた。digest未取得・候補未採択・formal falseを保持する。
+
+rawは `artifacts/ci-diagnostic-37572914427/`。10 complete raw＋summary/candidate/result/runner summaryの14 pinを固定した。
+
+| 保存物 | bytes | SHA-256 |
+| --- | ---: | --- |
+| complete-summary.json | 2,578 | 69bcb4001e8feb6cb5e16ce0109b2d0a7a11e66be0d8e49c5f4d62d869e053f3 |
+| 37572914427-candidate-pins.json | 2,565 | 27ab352cefc0b581203616dbae7f29df02088761b76f109d77d652ada014d479 |
+| 37572914427-result.json | 3,062 | 79d608fe737facea23d7903cca91a5815208f72e9da6273c5e1fc48c84d073f5 |
+| ci-complete-index.json | 2,783 | 0f557afce46d27d5abcc758dea43e5cfec0ad9934bca4458ecc1f25a683acf94 |
+
+限定親nativeはdocs HEAD d57326e/code9c49c4aであり、このCIはcode9c49c4a。選択sourceの同code証拠で、最終凍結same-revisionの全7役・正式同形経路の受入ではない。callback code e4cb23aへのnative証明でもない。旧raw/pin/失敗を保全し、全7役と親138Jobは反復していない。
