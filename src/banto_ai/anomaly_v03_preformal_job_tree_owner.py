@@ -133,6 +133,97 @@ class NativePipeWriter:
         self.handle = handle
 
 
+class NativeGitPipes:
+    """Retain anonymous-pipe creation before a Job/process exists.
+
+    Failed CreatePipe output parameters are indeterminate, not closeable
+    handles. This owner neither closes resources nor permits a lease/ack.
+    A caller must keep its Python alive on an unresolved native exception.
+    Root/output admission and the executor transport remain separate.
+    """
+    def __init__(self, kernel, *, checkpoint):
+        self.kernel, self.checkpoint = kernel, checkpoint
+        self.native = UnreapedJob(None,None,None,{
+            'status':'pending','phase':'git_pipe_creation','formal_permission':False})
+        self.native.pipe_creator = self
+        self.pending = self.error = self.result = self.spawn_io = None
+        self.original_sinks = self.sinks = self.rejected_sinks = None
+        self.events, self.read_handles, self.writers = {}, {}, {}
+        self.started = False
+        try:
+            resources.rt.require(callable(checkpoint) and
+                callable(getattr(kernel,'CreatePipe',None)), 'Git pipe original kernel/checkpoint')
+        except BaseException as failure:
+            self._failed(failure)
+
+    def _failed(self, failure):
+        if self.error is None:
+            self.error = failure
+        retained = self.spawn_io.native if self.spawn_io is not None else self.native
+        retained.pipe_creator = self
+        retained.pipe_creation_error = self.error
+        if retained.original_error is None:
+            retained.original_error = self.error
+        raise retained from self.error
+
+    def create(self):
+        if self.error is not None:
+            self._failed(self.error)
+        if self.result is not None:
+            return {name:dict(event) for name,event in self.events.items()}
+        try:
+            resources.rt.require(not self.started, 'Git pipes cannot be rearmed')
+            self.started = True
+            handles = []
+            for name in ('stdout','stderr'):
+                read, write = w.HANDLE(), w.HANDLE()
+                self.pending = {'name':name,'read':read,'write':write,'kernel':self.kernel,
+                    'security_attributes':None,'buffer_hint':4096,'return':None,
+                    'out_parameters_indeterminate':True}
+                self.checkpoint()
+                self.pending['return'] = result = self.kernel.CreatePipe(
+                    ctypes.byref(read),ctypes.byref(write),None,4096)
+                # Keep both original output buffers even when the API fails/interrupts.
+                self.pending['observed_values'] = {'read':read.value,'write':write.value}
+                resources.rt.require(type(result) in (int,bool), 'Git CreatePipe native return')
+                if not result:
+                    self.pending['last_error'] = ctypes.get_last_error()
+                    raise OSError(self.pending['last_error'], 'Git CreatePipe')
+                self.pending['out_parameters_indeterminate'] = False
+                event={'api':'CreatePipe','return':int(result),'read':read.value,'write':write.value,
+                       'security_attributes':None,'buffer_hint':4096,'kernel_buffer_bound_proven':False}
+                self.events[name] = event  # Before validation or post-call clock/diagnostic IO.
+                handles.extend((read.value,write.value))
+                resources.rt.require(all(type(n) is int and 0 < n < 2**64 for n in handles) and
+                    len(set(handles)) == len(handles), 'Git distinct positive pipe creation handles')
+                self.read_handles[name] = read.value
+                self.writers[name] = NativePipeWriter(write.value)
+                self.checkpoint()
+            self.result = True
+            return {name:dict(event) for name,event in self.events.items()}
+        except BaseException as failure:
+            self._failed(failure)
+
+    def bind_spawn(self, sinks):
+        if self.error is not None:
+            self._failed(self.error)
+        try:
+            if self.spawn_io is not None:
+                self.rejected_sinks = sinks
+                resources.rt.require(False, 'Git pipe spawn IO cannot be rebound')
+            self.original_sinks = sinks  # Keep rejected resources before copy/validation.
+            self.sinks = dict(sinks) if type(sinks) is dict else sinks
+            resources.rt.require(self.result is True and set(self.events) == {'stdout','stderr'},
+                                 'Git pipes need original successful creation')
+            self.spawn_io = SpawnIOOwner(read_handles=self.read_handles,sinks=self.sinks,writers=self.writers)
+            self.spawn_io.pipe_creator = self
+            self.spawn_io.native.pipe_creator = self
+            self.native.pipe_successor = self.spawn_io.native
+            return self.spawn_io
+        except BaseException as failure:
+            self._failed(failure)
+
+
 class SpawnIOOwner:
     """Keep caller-owned readers/sinks/writers across opt-in spawn cleanup.
 
@@ -179,6 +270,14 @@ class SpawnIOOwner:
             paths.require(False, 'spawn IO owner cannot be rearmed')
         self.binding = binding  # Before import/environment/Job/stdio/native IO.
         self.entered = True
+        creator = getattr(self, 'pipe_creator', None)
+        if creator is not None:
+            resources.rt.require(type(creator) is NativeGitPipes and creator.spawn_io is self and
+                creator.kernel is kernel and creator.error is None and
+                self.read_handles == creator.read_handles and all(
+                    self.writers[name] is creator.writers[name] and
+                    self.writers[name].handle == creator.events[name]['write']
+                    for name in ('stdout','stderr')), 'spawn original pipe creator/kernel/handles')
         paths.require(stdout is self.writers['stdout'] and stderr is self.writers['stderr'],
                       'spawn uses the original caller write streams')
         if any(type(writer) is NativePipeWriter for writer in self.writers.values()):
@@ -299,6 +398,8 @@ def _kernel():
     k.ReadFile.argtypes = [w.HANDLE, ctypes.c_void_p, w.DWORD,
                           ctypes.POINTER(w.DWORD), ctypes.c_void_p]
     k.ReadFile.restype = w.BOOL
+    k.CreatePipe.argtypes = [ctypes.POINTER(w.HANDLE),ctypes.POINTER(w.HANDLE),ctypes.c_void_p,w.DWORD]
+    k.CreatePipe.restype = w.BOOL
     return k
 
 
