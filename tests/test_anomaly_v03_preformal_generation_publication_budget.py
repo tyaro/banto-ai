@@ -176,6 +176,41 @@ class EnvelopeTests(unittest.TestCase):
         self.assertFalse(self.outer.exists())
         self.assertFalse(self.producer.exists())
 
+    def test_blob_archive_requires_explicit_job_policy_before_roots(self):
+        for requested in (True, 'true', 1, None):
+            with self.subTest(requested=requested), self.assertRaisesRegex(ValueError, 'identity Job policy'):
+                whole.run(outer_root=self.outer, producer_root=self.producer,
+                    reread_root=self.reader, receipt_name='trial-one',
+                    expected_manifest_pin={'bytes':1,'sha256':'a'*64}, expected_revision='b'*40,
+                    control_root=self.artifacts/'unused', expected_control_pinset_pin={'bytes':1,'sha256':'a'*64},
+                    expected_input_pins={}, parent_git_blob_archive=requested)
+            self.assertFalse(self.outer.exists())
+            self.assertFalse(self.producer.exists())
+
+    def test_failed_blob_preflight_verification_prevents_generation(self):
+        path=self.artifacts/'anomaly-v03-preformal-generated-pinsets-one/pins.json'
+        path.parent.mkdir();path.write_bytes(b'{}')
+        pins={'fixture/'+name:{'bytes':1,'sha256':'a'*64}
+              for name in ('input.json','slices.json','coverage.json','operation.json')}
+        actor=Mock();actor.verify.side_effect=ValueError('blob index missing');actor.state.return_value={'failed':True}
+        with patch.object(whole.parent_git,'validate',return_value={'expected_pin':pins['fixture/input.json']}), \
+             patch.object(whole.parent_blobs,'ParentBlobActor',return_value=actor), \
+             patch.object(whole,'_source',return_value={'source':'test'}) as source, \
+             patch.object(whole.document.control_files,'validate_request'), \
+             patch.object(whole.generated,'generate_and_read') as producer:
+            result=whole.run(outer_root=self.outer,producer_root=self.producer,reread_root=self.reader,
+                receipt_name='trial-one',expected_manifest_pin=whole.generated.copied._pin(b'{}'),
+                expected_revision='b'*40,control_root=self.artifacts/'unused',
+                expected_control_pinset_pin={'bytes':1,'sha256':'a'*64},expected_input_pins=pins,
+                parent_git_identity_policy={'requested':'mocked'},parent_git_blob_archive=True)
+        actor.reader.assert_called_once_with('preflight')
+        actor.verify.assert_called_once_with(('preflight',))
+        self.assertIn('git_blob',source.call_args.kwargs)
+        producer.assert_not_called()
+        self.assertEqual(result['status'],'failed')
+        self.assertFalse(result['parent_git_blobs_checked'])
+        self.assertEqual(result['parent_git_blob_archive_state'],{'failed':True})
+
     def test_missing_parent_git_preflight_receipts_prevents_generation(self):
         path = self.artifacts / 'anomaly-v03-preformal-generated-pinsets-one/pins.json'
         path.parent.mkdir()

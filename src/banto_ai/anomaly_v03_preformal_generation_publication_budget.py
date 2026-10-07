@@ -13,6 +13,7 @@ import time
 
 from . import _anomaly_v03_outer_budget_link as link
 from . import anomaly_v03_preformal_parent_git_identity as parent_git
+from . import anomaly_v03_preformal_parent_git_blobs as parent_blobs
 from . import anomaly_v03_preformal_generated_chain_budget as monitor
 from . import anomaly_v03_preformal_owned_generated_attempt as generated
 from . import anomaly_v03_preformal_saved_row_reread as reread
@@ -41,6 +42,7 @@ LEAF_LIMITS = {
 SOURCE_NAMES = tuple(dict.fromkeys((
     'src/banto_ai/anomaly_v03_preformal_generation_publication_budget.py',
     *parent_git.SOURCE_FILES,
+    *parent_blobs.SOURCE_FILES,
     *generated.SOURCE_FILES, *reread.SOURCE_FILES, *document.SOURCE_NAMES,
 )))
 
@@ -238,7 +240,7 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
         expected_control_pinset_pin, expected_input_pins, budget_limits=None,
         arithmetic_runtime_profiles=None, publication_runtime_profiles=None,
         saved_reader_runtime_profile=None, generation_runtime_profiles=None,
-        parent_git_identity_policy=None):
+        parent_git_identity_policy=None, parent_git_blob_archive=False):
     """Execute one new engineering attempt; never adopt a formal evaluation."""
     roots = _new_roots(outer_root, producer_root, reread_root, receipt_name)
     generated.copied.evidence._digest(expected_revision, 40)
@@ -249,6 +251,8 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
     saved_reader_profile = reread.validate_runtime_profile(saved_reader_runtime_profile, revision=expected_revision)
     generation_profiles = generated.validate_runtime_profiles(generation_runtime_profiles, revision=expected_revision)
     git_policy = parent_git.validate(parent_git_identity_policy, revision=expected_revision, roots=roots)
+    if type(parent_git_blob_archive) is not bool or (parent_git_blob_archive and git_policy is None):
+        raise ValueError('parent blob archive requires explicit identity Job policy')
     generated.copied.evidence._pin(expected_manifest_pin)
     document._expected_pins(expected_input_pins)
     document.control_files.validate_request(control_root, expected_control_pinset_pin)
@@ -287,15 +291,27 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
         result.update(generation_runtime_profile_pins={role: copy.deepcopy(entry['expected_pin'])
             for role, entry in generation_profiles.items()}, generation_runtime_observation_checked=False)
     git_receipts = {}
+    blob_actor = None
+    if parent_git_blob_archive:
+        result.update(parent_git_blob_archive_enabled=True, parent_git_blobs_checked=False)
     if git_policy is not None:
         result.update(parent_git_identity_policy_pin=copy.deepcopy(git_policy['expected_pin']),
                       parent_git_identity_receipts=git_receipts, parent_git_identity_checked=False)
     try:
         budget.start()
         budget.checkpoint('preflight')
+        if parent_git_blob_archive:
+            blob_actor = parent_blobs.ParentBlobActor(git_policy, root=roots['outer'],
+                checkout_root=ROOT, budget=budget,
+                expected_requests=(*document.SOURCE_NAMES, *SOURCE_NAMES))
         identity = (lambda: parent_git.check(git_policy, phase='preflight', root=roots['outer'],
                     checkout_root=ROOT, budget=budget, receipts=git_receipts)) if git_policy is not None else None
-        before = _source(expected_revision, **({'git_identity': identity} if identity is not None else {}))
+        options = {'git_identity': identity} if identity is not None else {}
+        if blob_actor is not None:
+            options['git_blob'] = blob_actor.reader('preflight')
+        before = _source(expected_revision, **options)
+        if blob_actor is not None:
+            blob_actor.verify(('preflight',))
         if git_policy is not None:
             parent_git.verify(git_policy, root=roots['outer'], checkout_root=ROOT,
                               budget=budget, receipts=git_receipts, phases=('preflight',))
@@ -397,8 +413,14 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
         generated.recheck_runtime_profiles(roots['producer'], produced)
         identity = (lambda: parent_git.check(git_policy, phase='postflight', root=roots['outer'],
                     checkout_root=ROOT, budget=budget, receipts=git_receipts)) if git_policy is not None else None
-        if _source(expected_revision, **({'git_identity': identity} if identity is not None else {})) != before or document.chain.platform_runtime.probe_runtime(ROOT) != runtime:
+        options = {'git_identity': identity} if identity is not None else {}
+        if blob_actor is not None:
+            options['git_blob'] = blob_actor.reader('postflight')
+        if _source(expected_revision, **options) != before or document.chain.platform_runtime.probe_runtime(ROOT) != runtime:
             raise ValueError('generation-publication final source/runtime changed')
+        if blob_actor is not None:
+            blob_actor.verify(('preflight', 'postflight'))
+            result['parent_git_blobs_checked'] = True
         if git_policy is not None:
             parent_git.verify(git_policy, root=roots['outer'], checkout_root=ROOT,
                               budget=budget, receipts=git_receipts)
@@ -431,6 +453,8 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
                               budget_error_type=type(error).__name__)
                 critical = critical or error
         result['same_outer_budget_generation_to_fresh_reader_measured'] = result['status'] == 'measured'
+        if blob_actor is not None:
+            result['parent_git_blob_archive_state'] = blob_actor.state()
         result['wall_seconds'] = time.monotonic() - budget.started_at
         result_pin = document.chain._write_value(roots['outer'] / 'result.json', result,
                                                  document.chain.MAX_CONTROL)
