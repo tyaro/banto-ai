@@ -6,6 +6,7 @@ An entry point must call keep_owner before allowing its owning Python to exit.
 from __future__ import annotations
 
 import copy
+import time
 from pathlib import Path
 
 from . import anomaly_v03_preformal_worker_git_archive as archive
@@ -16,9 +17,17 @@ keepers, owner = proof.keepers, tree.owner
 
 
 class WorkerGitActor:
-    def __init__(self, *, child, inventory_raw, inventory_pin, checkpoint):
+    def __init__(self, *, child, inventory_raw, inventory_pin, checkpoint, pipe_io=None):
+        # Keep caller-owned native IO before validating any opt-in descriptor.
+        self.original_pipe_io = pipe_io
+        self.pipe_io = None if pipe_io is None else dict(pipe_io) if type(pipe_io) is dict else pipe_io
         v.require(isinstance(child, proof.channel.ChildChannel) and callable(checkpoint),
                   'worker actor original child and common checkpoint')
+        if pipe_io is not None:
+            v.require(type(self.pipe_io) is dict and set(self.pipe_io) == {
+                'kernel','stdin','clock','root_identity'} and callable(self.pipe_io['clock']),
+                'worker actor explicit original pipe IO and shared clock')
+            self.pipe_io['root_identity'] = copy.deepcopy(self.pipe_io['root_identity'])
         self.child, self.checkpoint = child, checkpoint
         self.pending = self.error = self.critical = self.keeper = self.saved = None
         self.verifier = proof.ProofVerifier(endpoint=child, inventory_raw=inventory_raw,
@@ -32,6 +41,35 @@ class WorkerGitActor:
         self.writer = archive.WorkerGitArchive(path=root/'worker-git.bin',
             verifier=self.verifier, checkpoint=checkpoint)
         self.leases = proof.VerifiedLeases(child=child, verifier=self.verifier)
+
+    def _run_pipe(self, call):
+        """Drive the retained transport; entry admission/native wall gates stay separate."""
+        pending, held = self.pending, self.pipe_io
+        pending['pipe_io'] = held
+        pending['started_at'] = held['clock']()
+        pending['admission'] = admission = tree.GitSinkAdmission(
+            root=Path(self.child.request['budget_root']), root_identity=held['root_identity'],
+            revision=self.child.request['revision'], call=call, checkpoint=self.checkpoint)
+        pending['transport'] = transport = tree.GitPipeTransport(admission,
+            kernel=held['kernel'], stdin=held['stdin'], clock=held['clock'],
+            started_at=pending['started_at'], repository=self.repository,
+            policy=self.child._policy(), child=self.child, stop_probe=self.probe,
+            normal_completion=True)
+        try:
+            transport.start()
+            while True:
+                pending['step'] = transport.step()
+                if pending['step'] == 'close_ready':
+                    break
+                v.require(pending['step'] == 'pending', 'worker actor original transport step')
+                time.sleep(0.025)
+            transport.capture_receipt_inputs()  # Original Job is still open here.
+            transport.close_once()
+            return transport.publish_receipt()
+        except (owner.UnreapedJob, owner.UnclosedHandles):
+            raise
+        except BaseException as failure:
+            transport._abort(failure)  # Keep the original native even on caller sleep/IO interruption.
 
     def probe(self):
         if self.error is not None or self.critical is not None:
@@ -101,10 +139,13 @@ class WorkerGitActor:
             v.require(not self.inflight.exists(), 'worker actor inflight remains exclusive')
             self.pending = {'lease':lease,'kind':'receipt','event':None,'finished':False}
             v.require(self.child.begin_job() == lease, 'worker actor native invocation lease')
-            result = tree.run_owned(root=self.repository, policy=self.child._policy(),
-                operation=operation, source_path=source_path, expected_output_pin=expected_output_pin,
-                receipt_root=self.inflight, timeout_seconds=10, stop_probe=self.probe,
-                capture_quiescence=True)
+            if self.pipe_io is None:
+                result = tree.run_owned(root=self.repository, policy=self.child._policy(),
+                    operation=operation, source_path=source_path, expected_output_pin=expected_output_pin,
+                    receipt_root=self.inflight, timeout_seconds=10, stop_probe=self.probe,
+                    capture_quiescence=True)
+            else:
+                result = self._run_pipe(call)
             self.pending['result'] = result  # Retain the original return before diagnostics/IO.
             self.pending['event'] = copy.deepcopy(result['quiescence'])
             packet = self._read_original(lease)
@@ -124,8 +165,16 @@ class WorkerGitActor:
             self._fail(original)
             original.worker_git_actor = self
             try:
-                self.keeper = keepers.ChildGitKeeper(original, child=self.child,
-                    lease=self.pending['lease'])
+                existing = getattr(original, 'child_keeper', None)
+                self.keeper = existing  # Preserve cached observations/pending IO before ledger checks.
+                lease = None if self.pending is None else self.pending['lease']
+                if existing is not None:
+                    v.require(isinstance(existing, keepers.ChildGitKeeper) and
+                        existing.original is original and existing.child is self.child and
+                        existing.lease == lease, 'worker actor same original pipe keeper')
+                    existing.promote()
+                else:
+                    self.keeper = keepers.ChildGitKeeper(original, child=self.child, lease=lease)
             except BaseException:
                 self.keeper = getattr(original, 'child_keeper', None)
                 raise original
@@ -141,7 +190,9 @@ class WorkerGitActor:
         rerun native close. Unknown close/Delete owners remain held forever.
         Actual worker entry must use this path before ordinary error handling.
         """
-        v.require(self.critical is not None and isinstance(self.keeper, keepers.ChildGitKeeper),
+        v.require(self.critical is not None and isinstance(self.keeper, keepers.ChildGitKeeper) and
+            self.keeper.original is self.critical and self.keeper.child is self.child and
+            self.pending is not None and self.keeper.lease == self.pending['lease'],
                   'worker actor original keeper required')
         def finish(event):
             if self.pending.get('recovery_attempted'):
