@@ -123,3 +123,11 @@ class WorkerGitTerminalTests(unittest.TestCase):
         with self.assertRaises(RuntimeError) as caught:terminal.run_guarded(a,work)
         self.assertIs(caught.exception,failure);self.assertTrue(self.fence())
         self.assertEqual(a.terminal_guard.body_error,failure);self.assertIsNone(a.terminal_guard.ack_error)
+
+    def test_invalid_callback_validation_still_retains_existing_original_keeper(self):
+        a=self.configure();original=self.fixture.critical_call();self.fixture.recovery_patches()
+        with self.assertRaises(tree.owner.UnreapedJob) as caught:terminal.run_guarded(a,None)
+        self.assertIs(caught.exception,original);self.assertIsInstance(a.terminal_guard.body_error,ValueError)
+        self.assertIs(a.terminal_guard.original_error,original);self.assertTrue(self.fence())
+        self.assertEqual(self.fixture.kernel.CloseHandle.call_count,4)
+        self.assertTrue((a.inflight/'stdout.bin').exists())

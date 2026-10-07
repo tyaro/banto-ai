@@ -112,10 +112,10 @@ class ActorTerminal:
 
 def run_guarded(actor, operation):
     """Call only from the future worker entry before its reporting/exit catch."""
-    v.require(callable(operation), 'terminal worker operation callback')
     guard = ActorTerminal(actor)
     result = None
     try:
+        v.require(callable(operation), 'terminal worker operation callback')
         result = operation()
     except BaseException as failure:
         guard.body_error = guard.original_error = failure
