@@ -44,3 +44,12 @@ CI37585092575 / 外部HEAD `301644854a9e4db7d6915ffda6c9bf8278be54dd` / attempt1
 ## 初版proof code18324bfの失敗保全
 
 CI37592461789（HEAD18324bf）/ attempt1は3.12 job112696985861と3.14 job112696985445がRun unittestでRuntimeError、compare112697079830はskipped。run/jobs/failed log/2journalを `artifacts/ci-diagnostic-37592461789/` に保存した。両journalはtest_started0、成功run_finishedなし。local module discoveryは旧TestCase importで34（新18＋旧16）になり、7da5aa9のmodule参照修正でunique新18を確認した。失敗CIをsuccessへ読み替えず、修正後37592838738を別に追跡する。failure-index842 B / `cb704b22975f573b7b8ef873216ebc2025f7dc5d092b44be8f923e96b3e43adc`、journal-diagnostic2518 B / `a525c616f926ea18cce6a41dc26fb5ff0ba9acddfa0512b5e9d81649977e1604`。正式許可false/credit0/holdout未読、新native0。
+
+
+## 子keeper code8faa921のCI追補
+
+CI37587463962 / 外部HEAD `8faa921fc5c9e33ebe1a84799b3747c22326f28c` / attempt1は全3job success。3.12 job112680825712、3.14 job112680825951、compare112695061031。各minor3220件・fail0/error0/skip237/source不変、共有29/必須28。専用 `artifacts/ci-diagnostic-37587463962/` に10rawを保存、外部fullHEAD/workflow/run/attempt/jobsを固定したlocal/remote全回帰一致とrunner v2 consistent_candidateを確認。全job20260927.320.1、保存済み公式release/README metadata/Git blobと各minor journal/logを照合した。VM digest未取得/候補未採択。index2783 B / `886f576ab4fd97397a9ac25bd5ea763144eb0b4ca0fec8cd96da4020ac24b63b`、選択CLI7 sidecar2311 B / `9528bb81aa34d0f7cca0a7f96c5b126dbf0e43442aa557fa75d28994349a845b`。skip一覧CRLF6差を両raw pinで明記、他6raw一致。
+
+全helper終了・critical ownerなし・新native0。verification helperのPID38812は先行proof焦点helperと再利用されたため、双方のcreation identity/tokenを各execution.jsonに保全して区別した。PIDだけでは同一process扱いにしない。初版proof CI37592461789の失敗rawは保持。未保存は37590543104（HEADf0b3d72/3229）と37592838738（HEAD7da5aa9/3247予定）、doc-only新CI追跡を増やさない。
+
+実worker接続に向けた選択3 sourceは7da5aa9のworking/Git raw一致。既存parent archiveはverified source_blob専用でpost-close witness、head/status、failed/recovery rawを扱わないため、親の完了部品をworker actorへ流用しない。次は専用opt-in worker archive/raw resolverと元close/recovery eventを小さく固定し、0-job/部分ackの範囲を定めてから実entryへ渡す。source3のpinと静的所見は同CI rootのnext-boundary-notes.json1162 B / `15d03bb0fb9ecc7a4ba6932352da21e00b89620240ac26de192a80d2bff47f5f`。これはruntime閉包/nativeの証明ではなく、正式5残件は変更しない。

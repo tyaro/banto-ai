@@ -1,5 +1,7 @@
 # v0.3 外部program・異常時子孫回収の受入残件（2026-10-07）
 
+最新CI追補: [子keeper8faa921のCI](anomaly-multiseed-v0.3-worker-stop-boundary-ci-save-2026-10-07.md)は両minor3220・10raw/14pin/local回帰/runner v2まで保存。新native0。実worker前の境界では旧parent archiveがverified source_blob専用でclose/identity/failed rawを扱わないことを選択source3/7da5aa9で確認。専用worker archive/resolver→0-job/部分ackと終端keeper→実entry/profile準備を小さい単位にする。旧archive/親nativeを流用せず、正式5残件と上限を保持。以下は先行保存点の履歴。
+
 最新追補: [compact Git proof/verified lease部品](anomaly-multiseed-v0.3-worker-git-compact-proof-2026-10-07.md)をcode18324bf（新18焦点）とdiscovery修正7da5aa9（unique18/実試験再実行0）へ保存。正常/failed receipt、exact keeper recoveryと原raw/closeを区別してlease/parent fenceへ渡す。未解決cleanup/Unclosed/IO/改変は原owner/raw保全。初版CI実試験前RuntimeErrorを5rawで保全、修正後CIは別run。実worker/shared probe/archive reader/entryは未接続・新native0。次は実actorと原raw reader/終端keeperを入口へ結び、新inventory/root準備に進む。以下は先行保存点の履歴。
 
 最新追補: [spawn attribute/stdio原owner保全](anomaly-multiseed-v0.3-spawn-cleanup-owner-2026-10-07.md)をcodef0b3d72へ保存。新9焦点/14 pin・変更3file safety・clean code-save pass。Delete/Close例外で元core/extra/buffer/両例外を保全し、keeperのnative root停止後も不明cleanupを再実行しない。protocol stub/native0、実entry/probe/compact proof/leaseは未接続。次はrequest/policy/root/call inventory＋raw pinのproofとlease/fence Trueを結び、unknown cleanupは保全に留める。CIe5ffは3191/全3job success・10raw/14pin・runner v2候補照合まで保存済み。以下は先行保存点の履歴。
