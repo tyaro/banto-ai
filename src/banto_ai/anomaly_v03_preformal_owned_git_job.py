@@ -118,6 +118,92 @@ class BoundedGitSpool:
             self._failed(error)
 
 
+class GitOutputOwnerFailure(RuntimeError):
+    """Retain IO inputs even when the supplied native owner is invalid."""
+    def __init__(self, output_owner, original_error):
+        self.output_owner, self.original_error = output_owner, original_error
+        super().__init__('Git output ownership is unconfirmed')
+
+
+class GitOutputOwner:
+    """Hold separate pipe readers/sinks with the original native exception.
+
+    This boundary neither creates nor reads/closes a native pipe. A future
+    adapter must retain each observed block here before fallible spool IO.
+    ChildGitKeeper stops/reaps, but keeps core handles while this IO is held.
+    No declaration on this object authorizes release, a lease or an ack.
+    """
+    def __init__(self, native_owner, *, read_handles, spools, checkpoint):
+        self.native_owner = native_owner
+        self.original_read_handles, self.original_spools = read_handles, spools
+        self.read_handles, self.spools, self.checkpoint = read_handles, spools, checkpoint
+        self.previous_owner = self.pending = self.rejected_raw = self.error = None
+        try:
+            v.require(type(native_owner) in (owner.UnreapedJob, owner.UnclosedHandles),
+                      'Git output original native owner')
+            self.previous_owner = getattr(native_owner, 'git_output_owner', None)
+            native_owner.git_output_owner = self  # Before validation/clock/read/diagnostic IO.
+            # Fix exact dict inputs even when a later validation rejects them.
+            # Retain the original mappings too, before this potentially failing copy.
+            if type(read_handles) is dict:
+                self.read_handles = dict(read_handles)
+            if type(spools) is dict:
+                self.spools = dict(spools)
+            v.require(self.previous_owner is None, 'Git output owner cannot be rebound')
+            v.require(type(read_handles) is dict and set(read_handles) == {'stdout', 'stderr'} and
+                      all(type(n) is int and 0 < n < 2**64 for n in read_handles.values()) and
+                      len(set(read_handles.values())) == 2, 'Git output separate original read handles')
+            core = (dict(native_owner.handles) if type(native_owner) is owner.UnclosedHandles else
+                    {'job':native_owner.job,'process':native_owner.process,'thread':native_owner.thread,
+                     **native_owner.extra_handles})
+            v.require(not set(read_handles.values()) & set(core.values()),
+                      'Git output read handles must not alias core/inherited handles')
+            v.require(type(spools) is dict and set(spools) == {'stdout', 'stderr'} and
+                      all(type(s) is BoundedGitSpool for s in spools.values()) and
+                      spools['stdout'] is not spools['stderr'] and
+                      spools['stdout'].stream is not spools['stderr'].stream and callable(checkpoint),
+                      'Git output original separate sinks and shared checkpoint')
+        except BaseException as error:
+            self._failed(error)
+
+    def _failed(self, error):
+        if self.error is None:
+            self.error = error
+        if type(self.native_owner) in (owner.UnreapedJob, owner.UnclosedHandles):
+            self.native_owner.git_output_error = self.error
+            raise self.native_owner from self.error
+        raise GitOutputOwnerFailure(self, self.error) from self.error
+
+    def begin_read(self, output):
+        if self.error is not None:
+            self._failed(self.error)
+        try:
+            v.require(self.pending is None and output in ('stdout', 'stderr'),
+                      'Git output no second read while original block is pending')
+            self.pending = {'output':output,'handle':self.read_handles[output],
+                            'spool':self.spools[output],'amount':None,'raw':None}
+            self.pending['amount'] = self.spools[output].next_read_size()
+            v.require(self.pending['amount'] > 0, 'Git output no read after limit/close')
+            self.checkpoint()
+            return self.pending['handle'], self.pending['amount']
+        except BaseException as error:
+            self._failed(error)
+
+    def retain_read(self, raw):
+        if self.error is not None:
+            self._failed(self.error)
+        try:
+            if self.pending is None or self.pending['raw'] is not None:
+                self.rejected_raw = raw  # Keep the new block without replacing an earlier one.
+                v.require(False, 'Git output missing/duplicate original read observation')
+            self.pending['raw'] = raw  # Before any validation or consumer IO.
+            v.require(type(raw) is bytes and len(raw) <= self.pending['amount'],
+                      'Git output observed read exceeded original allowance')
+            return self.pending
+        except BaseException as error:
+            self._failed(error)
+
+
 def _shared_stop(probe):
     stop = probe() if probe is not None else None
     v.require(stop is None or (type(stop) is str and 0 < len(stop) <= 128),

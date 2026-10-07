@@ -26,6 +26,7 @@ class ChildGitKeeper:
         self.ledger_error = None
         self.first_error = self.stop_error = self.callback_error = self.sleep_error = None
         self.close_owner = self.reaped = self.completion = None
+        self.output_owner = None
         self.closed = {}
         self.blocked = isinstance(original, owner.UnclosedHandles)
         self.valid_extra_names = True
@@ -42,6 +43,7 @@ class ChildGitKeeper:
         # Retain the original, rather than propagating a plain IO/ledger error
         # that an entry point might treat as an ordinary terminal failure.
         try:
+            self.output_owner = getattr(original, 'git_output_owner', None)
             child.stopped = True
             child.hold_owner(lease, original)
         except BaseException as failure:
@@ -103,6 +105,14 @@ class ChildGitKeeper:
                 # Stop/reap the original root, but never repeat a Delete/Close
                 # whose completion was not observed. Keep its buffer and handles.
                 self.blocked = True
+                return None
+            output_owner = getattr(self.original, 'git_output_owner', None)
+            if self.output_owner is None and output_owner is not None:
+                self.output_owner = output_owner
+            if self.output_owner is not None:
+                # Keep separate reader handles/sinks and the cached native reap.
+                # No IO release adapter is connected yet: metadata/EOF/root exit
+                # alone cannot authorize core close, completion, lease or ack.
                 return None
             attempted = dict(self.remaining)
             try:
