@@ -42,6 +42,7 @@ class SpawnCleanupOwnerTests(unittest.TestCase):
             DeleteProcThreadAttributeList=Mock(side_effect=delete),CloseHandle=Mock(side_effect=close),
             TerminateJobObject=Mock(return_value=True),TerminateProcess=Mock(return_value=True))
         self.enterContext(patch.dict(sys.modules,{'msvcrt':SimpleNamespace(get_osfhandle=lambda fd:100+fd)}))
+        self.enterContext(patch.object(ctypes,'get_last_error',return_value=5,create=True))
         self.enterContext(patch.object(owner,'_new_job',return_value=11))
         self.wait=self.enterContext(patch.object(owner,'_wait_empty',return_value=(
             {'total_processes':1,'active_processes':0,'limit_terminated_processes':0},17)))
