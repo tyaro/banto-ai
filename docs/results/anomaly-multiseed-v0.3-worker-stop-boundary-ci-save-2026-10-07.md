@@ -60,3 +60,10 @@ CI37587463962 / 外部HEAD `8faa921fc5c9e33ebe1a84799b3747c22326f28c` / attempt1
 CI37590543104 / 外部HEAD f0b3d72deea42ab984ad70a20a20cd7dcace7225 / attempt1は両minor3229件、各fail1/error1/skip237/source不変。3.12 job112690704814、3.14 job112690705168、compare112707082230はskipped。run/jobs/failed log/2full job log/2journalの7rawを専用rootに保全、failure-complete-index2863 B / `1d5a879c0cf8c98048f819cc7d8f143722bb8f066059389b210977c1baac2021`。comparison/regressionとcompare logはない。成功CIやrunner候補一致へ読み替えない。
 
 fake Win API試験のctypes.get_last_error未stubがLinuxでAttributeErrorとなり、元OSError保持を確認する2件が失敗した。code9473523でtest setUpの1行だけを修正、Linux相当の属性欠落にした2件がpass、他の試験反復0・新native0。[修正証拠](anomaly-multiseed-v0.3-spawn-cleanup-portable-ci-fix-2026-10-07.md)。修正後CI37596406096（HEAD9473523/3247予定）と先行37592838738（HEAD7da5aa9/3247予定）は進行中で、両者を別外部HEADとして保存する。旧失敗と正式flag false/credit0/holdout未読を保持する。
+
+
+## proof code7da5aa9の既知fixture失敗保全
+
+CI37592838738 / 外部HEAD `7da5aa92b007965b3a51fd94afb73d6add67d3c3` / attempt1は両minor3247・各fail1/error1/skip237/source不変、compare skipped。3.12 job112698211125、3.14 job112698211531、compare112713514280。失敗はCI37590543104と同じspawn fixtureの元OSError保持2件で、Linux ctypes.get_last_errorのstub9473523を含まないHEADであることを確認。原run/jobs/failed-step log/2full job log/2journalの7rawを専用rootへ保存、failure-complete-index2922 B / `acdd87eb92885328635389ef5d8f075bf3d58f3272d8c563dfea739eb9dd524d`。全job journal image20260927.320.1、comparison/regression/compare logはなし、成功CI/runner候補照合に読み替えない。
+
+修正fixture CI37596406096（HEAD9473523/3247予定）と新worker archive CI37598762191（HEADba6f82e/3263予定）は進行中。新archiveの[16焦点・原raw再読取り証拠](anomaly-multiseed-v0.3-worker-git-archive-resolver-2026-10-07.md)を保存、旧試験反復0・新native0。最終source/runtime閉包・契約/runner候補採択・正式受入を意味しない。

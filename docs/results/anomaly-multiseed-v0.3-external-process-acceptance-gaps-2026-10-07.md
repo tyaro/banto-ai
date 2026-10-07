@@ -1,5 +1,7 @@
 # v0.3 外部program・異常時子孫回収の受入残件（2026-10-07）
 
+最新archive境界: [worker Git archive/resolver部品](anomaly-multiseed-v0.3-worker-git-archive-resolver-2026-10-07.md)をba6f82eへ保存。新16焦点/18pin/safety/unique discovery/code-save pass、原close/recoveryとrawのbounded保存・再読取り、partial write/IO停止時pending/partial保全を固定。親形式/rootは変更0、新native0。実actor/worker/probe/0-job/部分ack/終端keeperは次段階。CI7da5aa9の同fixture2失敗を7rawで保全。正式5残件と上限は保持。以下は先行保存点の履歴。
+
 最新CI修正: [spawn cleanup portable fixture](anomaly-multiseed-v0.3-spawn-cleanup-portable-ci-fix-2026-10-07.md)を9473523へ保存。CI f0b3d72はLinuxにctypes.get_last_errorがなく各minor fail1/error1、7rawを保全。testだけ1行stub、欠落状態で失敗2件のみpass・10pin/test safety/code-save照合、先行proof16pin不変。新native0・業務source変更0。専用worker archive/resolverは失敗修正を先に行ったため未実装、次段階の境界と上限は保持。以下は先行保存点の履歴。
 
 最新CI追補: [子keeper8faa921のCI](anomaly-multiseed-v0.3-worker-stop-boundary-ci-save-2026-10-07.md)は両minor3220・10raw/14pin/local回帰/runner v2まで保存。新native0。実worker前の境界では旧parent archiveがverified source_blob専用でclose/identity/failed rawを扱わないことを選択source3/7da5aa9で確認。専用worker archive/resolver→0-job/部分ackと終端keeper→実entry/profile準備を小さい単位にする。旧archive/親nativeを流用せず、正式5残件と上限を保持。以下は先行保存点の履歴。
