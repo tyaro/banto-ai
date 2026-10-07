@@ -61,8 +61,10 @@ class ObservationSubsetBudget(control_files.ControlFileBudget):
         return report
 
 
-def _source_pins(revision, *, git_identity=None):
+def _source_pins(revision, *, git_identity=None, git_blob=None):
     projection.evidence._digest(revision, 40)
+    if git_blob is not None and not callable(git_blob):
+        raise ValueError('saved-row source Git blob callback must be callable')
 
     def git(*args):
         return subprocess.check_output(['git', '-C', str(ROOT), *args],
@@ -78,7 +80,13 @@ def _source_pins(revision, *, git_identity=None):
     pins = {}
     for name in SOURCE_NAMES:
         raw = chain.draw_bridge.draw_budget._bounded_file(ROOT / name, 1024**2)
-        if raw != git('show', revision + ':' + name):
+        # The opt-in reader receives the exact revision, path and working raw
+        # pin. It must retain its own execution evidence; this boundary only
+        # compares bytes and never falls back after a callback failure.
+        committed = (git('show', revision + ':' + name) if git_blob is None else
+                     git_blob(revision=revision, source_path=name,
+                              expected_output_pin=chain.draw_bridge._pin(raw)))
+        if type(committed) is not bytes or raw != committed:
             raise ValueError('saved-row document source differs from Git: ' + name)
         pins[name] = chain.draw_bridge._pin(raw)
     return pins

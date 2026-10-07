@@ -184,15 +184,21 @@ class EnvelopeBudget(monitor.GeneratedChainBudget):
         return report
 
 
-def _source(revision, *, git_identity=None):
-    before = document._source_pins(revision, **({'git_identity': git_identity}
-                                              if git_identity is not None else {}))
+def _source(revision, *, git_identity=None, git_blob=None):
+    options = {}
+    if git_identity is not None:
+        options['git_identity'] = git_identity
+    if git_blob is not None:
+        options['git_blob'] = git_blob
+    before = document._source_pins(revision, **options)
     for name in SOURCE_NAMES:
         raw = generated.observed._file(ROOT / name, 1024**2)
-        committed = generated.subprocess.check_output(
+        committed = (generated.subprocess.check_output(
             ['git', '-C', str(ROOT), 'show', revision + ':' + name],
-            stderr=generated.subprocess.DEVNULL, timeout=10)
-        if raw != committed:
+            stderr=generated.subprocess.DEVNULL, timeout=10) if git_blob is None else
+            git_blob(revision=revision, source_path=name,
+                     expected_output_pin=generated.copied._pin(raw)))
+        if type(committed) is not bytes or raw != committed:
             raise ValueError('generation-publication selected source changed: ' + name)
         before[name] = generated.copied._pin(raw)
     return before
