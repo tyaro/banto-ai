@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 import copy
 import hashlib
+import io as file_io
 from pathlib import Path
 from types import SimpleNamespace
 import time
@@ -338,6 +339,130 @@ class GitPipeReader:
                 self.stopped = True  # Caller must stop the original Job; no second pipe read.
             held.pending = None
             return result or 'data'
+        except BaseException as error:
+            self._failed(error)
+
+
+class GitPipeClose:
+    """Observe named read/sink closes; core/receipt/lease release is separate.
+
+    FileIO owns its file descriptor: close it through that original object,
+    never through CloseHandle as well. These observations do not authenticate
+    the Windows ABI or supply the missing receipt/IO-release link.
+    """
+    def __init__(self, reader, *, keeper):
+        self.reader, self.keeper = reader, keeper
+        self.output_owner = getattr(reader, 'output_owner', None)
+        self.previous = self.pending = self.error = self.result = None
+        self.read_handles, self.streams, self.read_events, self.sink_events = {}, {}, {}, {}
+        self.reaped = None
+        self.started = False
+        try:
+            held = self.output_owner
+            v.require(type(held) is GitOutputOwner, 'pipe close original output owner')
+            self.previous = getattr(held, 'pipe_close', None)
+            held.pipe_close = self  # Retain both owners before validation or IO.
+            self.read_handles = dict(held.read_handles)
+            self.streams = {name:spool.stream for name,spool in held.spools.items()}
+            from .anomaly_v03_preformal_child_git_keeper import ChildGitKeeper
+            v.require(type(reader) is GitPipeReader and type(keeper) is ChildGitKeeper and
+                      keeper.original is held.native_owner and self.previous is None and
+                      keeper.output_owner is held and held.pipe_reader is reader,
+                      'pipe close same original reader/native/keeper, no rebind')
+            v.require(type(getattr(held, 'spawn_io_owner', None)) is owner.SpawnIOOwner and
+                      held.spawn_io_owner.native is held.native_owner and
+                      held.spawn_io_owner.binding[0] is reader.kernel and
+                      all(type(stream) is file_io.FileIO and not stream.closed and stream.writable()
+                          for stream in self.streams.values()),
+                      'pipe close original raw FileIO sinks and spawn kernel')
+        except BaseException as error:
+            self._failed(error)
+
+    def _failed(self, error):
+        if self.error is None:
+            self.error = error
+        if type(self.reader) is GitPipeReader:
+            self.reader.stopped = True
+        if type(self.output_owner) is GitOutputOwner:
+            self.output_owner._failed(self.error)
+        raise GitOutputOwnerFailure(self, self.error) from self.error
+
+    def _readback(self):
+        for name, stream in self.streams.items():
+            spool = self.output_owner.spools[name]
+            v.require(spool.stream is stream and self.reader.streams[name] is stream,
+                      'pipe close original sink identity')
+            self.pending = {'output':name, 'stream':stream, 'spool':spool, 'stage':'readback'}
+            self.reader._disk(self.pending, self.reader.hashes[name])
+            self.output_owner.checkpoint()
+
+    def close_once(self):
+        if self.error is not None:
+            self._failed(self.error)
+        try:
+            held, reader, keeper = self.output_owner, self.reader, self.keeper
+            if self.result is not None:
+                self._readback()  # Raw may change; cached events never replay native close.
+                return copy.deepcopy(self.result)
+            v.require(not self.started and held.error is None and reader.failure is None and
+                      not reader.stopped and held.pending is None and
+                      held.read_handles == self.read_handles and
+                      set(reader.eof) == {'stdout','stderr'} and all(
+                          reader.eof[name] == {'handle':handle,'api':'PeekNamedPipe','error':109}
+                          for name,handle in self.read_handles.items()) and all(
+                          spool.failure is None and spool.pending_raw is None and
+                          not spool.stopped and not spool.closed for spool in held.spools.values()),
+                      'pipe close confirmed EOF, no pending/failed/limited output')
+            spawn = held.spawn_io_owner
+            v.require(spawn.writer_close_error is None and spawn.writer_close_result is not None and
+                      set(spawn.writer_close_events) == {'stdout','stderr'} and all(
+                          event['handle'] == spawn.native_write_handles[name] and
+                          event['api'] == 'CloseHandle' and event['return'] > 0
+                          for name,event in spawn.writer_close_events.items()),
+                      'pipe close original parent writer close events')
+            v.require(keeper.reaped is not None and keeper.native_kernel is reader.kernel and
+                      not keeper.blocked and keeper.completion is None and
+                      keeper.initial_handles == keeper.remaining and
+                      not getattr(held.native_owner, 'attribute_list_cleanup_pending', False) and
+                      not getattr(held.native_owner, 'unknown_close_handles', ()),
+                      'pipe close original cached Job/root/creation, no uncertain cleanup')
+            self.reaped = copy.deepcopy(keeper.reaped)
+            self.started = True
+            reader.stopped = True  # Freeze reads before the first close/flush/checkpoint.
+            self._readback()
+            for name, handle in self.read_handles.items():
+                self.pending = {'output':name,'handle':handle,'kernel':reader.kernel,
+                                'stage':'read_close','return':None}
+                held.checkpoint()
+                self.pending['return'] = result = reader.kernel.CloseHandle(handle)
+                v.require(type(result) in (int,bool), 'pipe read close native return')
+                if not result:
+                    self.pending['last_error'] = owner.ctypes.get_last_error()
+                    raise OSError(self.pending['last_error'], 'pipe read CloseHandle')
+                self.read_events[name] = {'api':'CloseHandle','handle':handle,'return':int(result)}
+                held.checkpoint()
+            for name, stream in self.streams.items():
+                spool = held.spools[name]
+                self.pending = {'output':name,'stream':stream,'spool':spool,
+                                'stage':'sink_close','return':'unobserved','fd':stream.fileno()}
+                held.checkpoint()
+                stream.flush()
+                spool.sync()
+                self.pending['file_stat'] = stat = os.fstat(self.pending['fd'])
+                v.require(stat.st_size == spool.committed_bytes, 'pipe sink fstat/readback count')
+                self.pending['return'] = result = stream.close()
+                v.require(result is None and stream.closed, 'pipe original FileIO close return')
+                self.sink_events[name] = {'api':'FileIO.close','fd':self.pending['fd'],
+                    'return':None,'file_identity':{'device':stat.st_dev,'inode':stat.st_ino},
+                    'raw_pin':{'bytes':spool.committed_bytes,'sha256':reader.hashes[name].hexdigest()}}
+                spool.closed = True  # Only after the original close call returned successfully.
+                held.checkpoint()
+            self._readback()
+            self.result = {'format':'anomaly-v03-git-pipe-io-close-observation-v1',
+                'reaped':copy.deepcopy(self.reaped),'read_closed':copy.deepcopy(self.read_events),
+                'sink_closed':copy.deepcopy(self.sink_events),'formal_permission':False,
+                'execution_authenticated':False,'io_released':False,'parent_ack_authorized':False}
+            return copy.deepcopy(self.result)
         except BaseException as error:
             self._failed(error)
 
