@@ -772,6 +772,10 @@ class GitPipeTransport:
         self.previous_transport = getattr(admission, 'pipe_transport', None)
         self.creator = self.spawn_io = self.output = self.reader = self.keeper = self.closer = None
         self.pending = self.error = self.reason = self.result = self.stop_error = None
+        self.spawn_return = self.resume_return = None
+        self.receipt_capture_started = self.publication_started = False
+        self.receipt_inputs = self.receipt_pending = self.published = None
+        self.publication_stream = self.publication_pending = None
         self.started = self.stop_started = False
         try:
             v.require(type(admission) is GitSinkAdmission and self.previous_transport is None,
@@ -784,6 +788,7 @@ class GitPipeTransport:
                 callable(getattr(child,'hold_owner',None)), 'transport original clock/stop/lease owner')
             self.repository, self.executable, self.environment, self.executable_before = direct._policy(
                 repository, self.policy)
+            self.executable_before = copy.deepcopy(self.executable_before)
             v.require(self.policy.get('process_ownership') == direct.JOB_OWNERSHIP and
                 self.policy['revision'] == admission.revision, 'transport same private Job/revision')
             command = direct._command(self.policy, admission.call['operation'],
@@ -860,6 +865,7 @@ class GitPipeTransport:
             self.pending['return'] = returned = owner._spawn_cli(self.kernel,self.argv,
                 self.repository,self.stdin,self.creator.writers['stdout'],
                 self.creator.writers['stderr'],environment=self.environment,spawn_io=self.spawn_io)
+            self.spawn_return = returned  # Original API return before post-spawn IO.
             v.require(returned == (self.native.job,self.native.process,self.native.thread,returned[3]),
                       'transport original spawn return/core')
             self.spawn_io.close_parent_writers(checkpoint=self.admission.checkpoint)
@@ -874,6 +880,7 @@ class GitPipeTransport:
                 raise owner.resources.ResourceStop(reason)
             self.pending = {'stage':'resume','return':None}
             self.pending['return'] = resumed = self.kernel.ResumeThread(self.native.thread)
+            self.resume_return = resumed
             owner._need(resumed == 1, 'transport ResumeThread original Git root')
             self.pending = None
             return self
@@ -973,6 +980,154 @@ class GitPipeTransport:
             return copy.deepcopy(self.result)
         except BaseException as failure:
             self._failed(failure)
+
+    def capture_receipt_inputs(self):
+        """Observe memory/executable while the original Job handles are still open."""
+        if self.error is not None:
+            raise self.native
+        try:
+            v.require(not self.receipt_capture_started and self.normal_completion and
+                self.keeper is not None and self.keeper.normal_completion and
+                not self.keeper.normal_promoted and self.keeper.reaped is not None and
+                self.keeper.completion is None and self.keeper.remaining == self.keeper.initial_handles and
+                not self.keeper.blocked and self.closer is None and self.result is None and
+                type(self.spawn_return) is tuple and self.spawn_return == (
+                    self.native.job,self.native.process,self.native.thread,
+                    self.keeper.reaped['process_identity']['pid']) and
+                type(self.resume_return) is int and self.resume_return == 1 and
+                self.native.report.get('assignment_confirmed') is True,
+                'pipe receipt original normal return/identity before core close')
+            self.receipt_capture_started = True
+            self.receipt_pending = {'memory':None,'after':None,'raw':{},'reaped':None}
+            reason = self._probe()
+            if reason is not None:
+                raise owner.resources.ResourceStop(reason)
+            self.receipt_pending['memory'] = memory = owner._job_memory(self.kernel,self.native.job)
+            v.require(owner.valid_job_memory(memory), 'pipe receipt original Job memory')
+            self.receipt_pending['after'] = after = dependencies.file_observation(
+                self.executable,native=True,maximum=direct.MAX_EXE)
+            for name in ('stdout','stderr'):
+                self.receipt_pending['raw'][name] = raw = observed._file(
+                    self.admission.paths[name],self.admission.limits[name+'.bin'])
+                v.require(len(raw) == self.output.spools[name].committed_bytes and
+                    hashlib.sha256(raw).digest() == self.reader.hashes[name].digest(),
+                    'pipe receipt original full output before close')
+            self.receipt_pending['reaped'] = copy.deepcopy(self.keeper.reaped)
+            self.admission.checkpoint()
+            self.receipt_inputs = copy.deepcopy(self.receipt_pending)
+            return copy.deepcopy(self.receipt_inputs)
+        except BaseException as failure:
+            self._abort(failure)
+
+    def publish_receipt(self):
+        """Publish one strict receipt from original observations; never finish a lease."""
+        if self.error is not None:
+            raise self.native
+        prior_owner = getattr(self.native,'pending_pipe_receipt_owner',None)
+        self.previous_publication_owner = prior_owner
+        self.native.pending_pipe_receipt_owner = self  # Retain before validation/new file IO.
+        try:
+            v.require(prior_owner is None or prior_owner is self, 'pipe receipt same original publisher owner')
+            v.require(self.receipt_inputs is not None and self.result is not None and
+                self.keeper.completion is not None and not self.keeper.normal_promoted,
+                'pipe receipt requires original pre-close inputs and complete close')
+            self.admission.checkpoint()
+            raw = {}
+            self.publication_pending = {'raw_outputs':raw,'receipt_raw':None,'stream':self.publication_stream}
+            for name in ('stdout','stderr'):
+                raw[name] = observed._file(self.admission.paths[name],self.admission.limits[name+'.bin'])
+                v.require(raw[name] == self.receipt_inputs['raw'][name],
+                          'pipe receipt original output changed after close')
+            if self.published is not None:
+                self.publication_pending['receipt_raw'] = receipt_raw = observed._file(
+                    self.admission.inflight/'receipt.json',direct.MAX_RECEIPT)
+                v.require(receipt_raw == io.json_bytes(self.published['receipt']),
+                          'pipe receipt cached original file changed')
+                verify_quiescence(receipt_raw,self.published['receipt_pin'],self.published['quiescence'],
+                    root=self.repository,policy=self.policy,stdout_raw=raw['stdout'],stderr_raw=raw['stderr'])
+                self.native.pending_pipe_receipt_owner = None  # Only after original raw/witness verification.
+                return copy.deepcopy(self.published)
+            v.require(not self.publication_started, 'pipe receipt cannot retry partial publication')
+            self.publication_started = True
+            reaped = self.receipt_inputs['reaped']
+            v.require(reaped == self.keeper.reaped and self.keeper.closed == self.keeper.initial_handles,
+                      'pipe receipt original creation/exit/accounting/core close')
+            identity = {**reaped['process_identity'],'native_start_identity_authenticated':True}
+            reason = ('executable_changed' if self.receipt_inputs['after'] != self.executable_before else
+                'job_limit_termination' if reaped['accounting']['limit_terminated_processes'] else
+                'stderr_nonempty' if raw['stderr'] else None)
+            call = self.admission.call
+            output_pin = observed._pin(raw['stdout'])
+            if reason is None:
+                if call['operation'] == 'head' and raw['stdout'].strip() != self.policy['revision'].encode():
+                    reason = 'revision_mismatch'
+                elif call['operation'] == 'status' and raw['stdout']:
+                    reason = 'dirty_checkout'
+                elif call['operation'] == 'source_blob' and output_pin != call['expected_output_pin']:
+                    reason = 'blob_pin_mismatch'
+            if reason is not None:
+                self.child.stopped = True  # A semantic failed receipt cannot rearm subsequent calls.
+            self.publication_pending['clock'] = now = self.clock()
+            v.require(type(now) in (int,float) and self.started_at <= now < self.started_at+10,
+                      'pipe receipt original elapsed clock')
+            fact = {'format':JOB,'assignment_confirmed':True,'root_resumed':True,
+                'accounting':copy.deepcopy(reaped['accounting']),
+                'memory':copy.deepcopy(self.receipt_inputs['memory']),
+                'all_assigned_processes_exit_confirmed':True,
+                'individual_descendant_exit_codes_authenticated':False,'loaded_code_authenticated':False,
+                'whole_tree_resource_budget_measured':False,'observation_errors':[]}
+            receipt = {'format':direct.JOB_FORMAT,'status':'verified' if reason is None else 'failed',
+                'reason':reason,'prior_stop_reason':None,'operation':call['operation'],
+                'source_path':call['source_path'],'revision':self.policy['revision'],
+                'executable_path':str(self.executable),'executable_expected_pin':self.policy['executable_pin'],
+                'executable_links_expected':self.policy['executable_links'],
+                'executable_before':self.executable_before,'executable_after':self.receipt_inputs['after'],
+                'argv':self.argv,'cwd':str(self.repository),'environment':self.environment,
+                'process_identity':identity,'exit_code':reaped['exit_code'],'process_error_type':None,
+                'direct_process_handle_exit_confirmed':True,'elapsed_seconds':now-self.started_at,
+                'stdout_pin':output_pin,'stdout_bytes':len(raw['stdout']),
+                'stderr_pin':observed._pin(raw['stderr']),'stderr_bytes':len(raw['stderr']),
+                'expected_output_pin':call['expected_output_pin'],'job':fact,'integration_pending':True,
+                'formal_permission':False,'source_closure_complete':False,'runtime_closure_complete':False,
+                'execution_authenticated':False}
+            receipt_raw = self.publication_pending['receipt_raw'] = io.json_bytes(receipt)
+            v.require(len(receipt_raw) <= self.admission.limits['receipt.json'], 'pipe receipt admitted bytes')
+            receipt_pin = observed._pin(receipt_raw)
+            witness = {'format':PIPE_QUIESCENCE,'receipt_pin':receipt_pin,
+                'closed':{'format':'anomaly-v03-owned-handles-closed-v1','closed_handles':dict(self.keeper.closed)},
+                'process_identity':identity,'exit_code':reaped['exit_code'],
+                'accounting':copy.deepcopy(reaped['accounting']),'formal_permission':False,
+                'io_closed':copy.deepcopy(self.keeper.io_closed)}
+            self.publication_pending['witness'] = witness
+            verify_quiescence(receipt_raw,receipt_pin,witness,root=self.repository,policy=self.policy,
+                              stdout_raw=raw['stdout'],stderr_raw=raw['stderr'])
+            target = self.admission.inflight/'receipt.json'
+            self.publication_stream = self.publication_pending['stream'] = file_io.FileIO(target,'xb')
+            self.publication_pending['fd'] = fd = self.publication_stream.fileno()
+            self.publication_pending['file_stat'] = info = os.fstat(fd)
+            v.require(info.st_size == 0 and self.publication_stream.closefd is True,
+                      'pipe receipt original exclusive empty file')
+            self.publication_pending['write_return'] = written = self.publication_stream.write(receipt_raw)
+            v.require(type(written) is int and written == len(receipt_raw), 'pipe receipt exact write')
+            self.publication_stream.flush()
+            os.fsync(fd)
+            self.admission.checkpoint()
+            current = paths.regular_path(target).lstat()
+            v.require((info.st_dev,info.st_ino) == (current.st_dev,current.st_ino) and
+                current.st_size == len(receipt_raw), 'pipe receipt original fd/path/count')
+            self.publication_pending['close_return'] = closed = self.publication_stream.close()
+            v.require(closed is None and self.publication_stream.closed, 'pipe receipt original FileIO close')
+            self.publication_pending['readback'] = readback = observed._file(target,direct.MAX_RECEIPT)
+            v.require(readback == receipt_raw, 'pipe receipt original disk readback')
+            verify_quiescence(readback,receipt_pin,witness,root=self.repository,policy=self.policy,
+                              stdout_raw=raw['stdout'],stderr_raw=raw['stderr'])
+            self.admission.checkpoint()
+            self.published = {'receipt':receipt,'receipt_pin':receipt_pin,'receipt_root':str(self.admission.inflight),
+                              'stdout':raw['stdout'],'quiescence':witness}
+            self.native.pending_pipe_receipt_owner = None
+            return copy.deepcopy(self.published)
+        except BaseException as failure:
+            self._abort(failure)
 
 
 def _verify_pipe_close_link(link, *, identity, exit_code, accounting, core_handles,

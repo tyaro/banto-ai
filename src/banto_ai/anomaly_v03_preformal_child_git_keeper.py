@@ -103,6 +103,8 @@ class ChildGitKeeper:
 
     def reconcile_once(self):
         if self.completion is not None:
+            if getattr(self.original,'pending_pipe_receipt_owner',None) is not None:
+                return None  # Additional publication IO/raw remains owned, even after core close.
             return copy.deepcopy(self.completion)
         if self.blocked:
             return None
@@ -179,6 +181,8 @@ class ChildGitKeeper:
                 # Additional read handles and original sink/write streams stay
                 # held even after stdio duplicates/Job/root have finished.
                 return None
+            if getattr(self.original,'pending_pipe_receipt_owner',None) is not None:
+                return None  # Never turn partial/unknown receipt IO into recovered lease/ack.
             attempted = dict(self.remaining)
             try:
                 event = owner._close_handles(kernel, attempted,
