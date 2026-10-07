@@ -7,9 +7,10 @@ import unittest
 from unittest.mock import Mock, patch
 
 from banto_ai import anomaly_v03_preformal_worker_git_proof as proof
-from tests.test_anomaly_v03_git_quiescence import GitQuiescenceTests, ACCOUNT
+from tests import test_anomaly_v03_git_quiescence as quiescent_fixtures
 
 channel, tree, keepers = proof.channel, proof.tree, proof.keepers
+ACCOUNT = quiescent_fixtures.ACCOUNT
 
 
 def identity(pid, created):
@@ -20,7 +21,7 @@ def identity(pid, created):
 class WorkerGitProofTests(unittest.TestCase):
     def setUp(self):
         # Only reuse fixture construction/execution helpers, never the old suite.
-        GitQuiescenceTests.setUp(self)
+        quiescent_fixtures.GitQuiescenceTests.setUp(self)
         self.enterContext(patch.object(channel,'ROOT',self.root))
         self.now = 100.0
         self.enterContext(patch.object(channel.time,'monotonic',side_effect=lambda:self.now))
@@ -61,7 +62,7 @@ class WorkerGitProofTests(unittest.TestCase):
         self.adapter = proof.VerifiedLeases(child=self.child,verifier=self.verifier)
 
     def receipt(self, lease=0, code=0):
-        result, target, _ = GitQuiescenceTests.run_call(self,code=code)
+        result, target, _ = quiescent_fixtures.GitQuiescenceTests.run_call(self,code=code)
         self.packets[lease] = {'kind':'receipt','raw':{
             name:(target/name).read_bytes() for name in ('receipt.json','stdout.bin','stderr.bin')},
             'event':result['quiescence']}
