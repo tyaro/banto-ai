@@ -1,5 +1,15 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## normal completion289cbbcのCI37667626735を保存（2026-10-08）
+
+外部fullHEAD `289cbbcb18fd4919db4f697c1a93cfc55f8e4c89`／attempt1/push／workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`、3.12 job112950810417／3.14 job112950810093／compare112969708009を固定。各minor3491/fail0/error0/skip237/source不変・全3job success。専用 `artifacts/ci-diagnostic-37667626735/` に10raw/14pin/local-remote回帰一致/共有29fixture必須28/runner v2 consistent_candidateを保存。
+
+summary2571B/aa087f75fb3d65d854f8196a72d890943c215b295eae09b34947ac74293832c4、candidate3462B/15bc8366487a6966b5d6c154c688779697762c2946fd03803ea884f70f8164c7、result3959B/8012ba6c62829ed0b78824a145def86aeb81e586df767df83226f7b2a1369b07、index2783B/7c9e7063418cf40f4fa0c4055d08cb01fc6bf00f6ae06c54804628df44cde15e。3.12 journal3710335B/d8b59ec84e17dde2492cfb1170e88da6cb0f48b2c58320132ffce67d7b3933e3、3.14 journal3710374B/d88df229f6022ff8463d39548aa9551030469014ce29f915706309c56d638146。3.12/3.14 Image20261004.327.1/prerelease=true、compare20260927.320.1/prerelease=false、公式release/README metadata/blob/log/journal外部pin一致のみ。digest未取得/候補未採択。CLI7 6raw一致/skip1file CRLF6差は両pinをlocal-cli-source-pins.json2138B/e6510a64b5c142ca1cadafb0be7cae9478afaef1f3f05b4e3ce7d900a8092b3cへ保存。
+
+元download48740/creation134358743191776268/token58b6885332dcd32104b2e86c0091e5340bf9400759c7e6d35a09da825f62e196、verification42720/134358743884099815/tokeneb8896409ebbcc0f0770cbd9247a1c3262bf8731f3b93130420709b6f1ceff67はexit0/CIM残存なし。元PIDのみで同一process扱いしない。この保存を反復せず後続reader entry f5ff80e/実native/容量/正式受入へ読み替えない。
+
+未保存37670193576（実full869b27a58c91b119d7328550efc86f017ca62045/3504予定）、37672383958（full2213c0910390129158a0bd433bff94a786df8204/3514予定）、37674558981（fullf5ff80eb1345cacf108278514161cf957fb91238/3522予定）は直近in_progress。各終端を実fullHEAD/workflow/run/attempt/jobsへ固定し新専用rootへ一度保存。doc-only新CI追跡なし、正式gate/credit/holdout未読を維持。
+
 ## pipe transport690af49のCI37666095841を保存（2026-10-08）
 
 外部fullHEAD `690af4900da6fc198ca7f389db2a61fe1374f602`／attempt1/push／workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`、3.12 job112945585908／3.14 job112945586172／compare112964502684を固定。両minor3481/fail0/error0/skip237/source不変、全3job success。専用 `artifacts/ci-diagnostic-37666095841/` にrun/attempt jobs/2journal/comparison-regression/3log＋localの10raw/14pin、local-remote回帰一致／共有29fixture・必須28／runner v2 consistent_candidateを保存。
