@@ -116,3 +116,11 @@ class GitOutputOwnerTests(unittest.TestCase):
         held=native.git_output_owner;handles.clear();spools.clear()
         self.assertEqual(held.read_handles,{'stdout':11,'stderr':55})
         self.assertIs(held.spools['stdout'],stdout);self.assertIs(held.spools['stderr'],stderr)
+
+    def test_invalid_native_metadata_cannot_leave_only_mutable_io_mapping_references(self):
+        handles={'stdout':44,'stderr':55};spools=self.spools();stdout=spools['stdout']
+        with self.assertRaises(git.GitOutputOwnerFailure) as raised:
+            git.GitOutputOwner({'closed':True},read_handles=handles,spools=spools,checkpoint=lambda:None)
+        held=raised.exception.output_owner;handles.clear();spools.clear()
+        self.assertEqual(held.read_handles,{'stdout':44,'stderr':55})
+        self.assertIs(held.spools['stdout'],stdout)

@@ -139,16 +139,17 @@ class GitOutputOwner:
         self.read_handles, self.spools, self.checkpoint = read_handles, spools, checkpoint
         self.previous_owner = self.pending = self.rejected_raw = self.error = None
         try:
-            v.require(type(native_owner) in (owner.UnreapedJob, owner.UnclosedHandles),
-                      'Git output original native owner')
-            self.previous_owner = getattr(native_owner, 'git_output_owner', None)
-            native_owner.git_output_owner = self  # Before validation/clock/read/diagnostic IO.
+            valid_native = type(native_owner) in (owner.UnreapedJob, owner.UnclosedHandles)
+            if valid_native:
+                self.previous_owner = getattr(native_owner, 'git_output_owner', None)
+                native_owner.git_output_owner = self  # Before validation/copy/clock/read/diagnostic IO.
             # Fix exact dict inputs even when a later validation rejects them.
             # Retain the original mappings too, before this potentially failing copy.
             if type(read_handles) is dict:
                 self.read_handles = dict(read_handles)
             if type(spools) is dict:
                 self.spools = dict(spools)
+            v.require(valid_native, 'Git output original native owner')
             v.require(self.previous_owner is None, 'Git output owner cannot be rebound')
             v.require(type(read_handles) is dict and set(read_handles) == {'stdout', 'stderr'} and
                       all(type(n) is int and 0 < n < 2**64 for n in read_handles.values()) and
