@@ -1,5 +1,7 @@
 # v0.3 外部program・異常時子孫回収の受入残件（2026-10-07）
 
+最新追補: [compact Git proof/verified lease部品](anomaly-multiseed-v0.3-worker-git-compact-proof-2026-10-07.md)をcode18324bf（新18焦点）とdiscovery修正7da5aa9（unique18/実試験再実行0）へ保存。正常/failed receipt、exact keeper recoveryと原raw/closeを区別してlease/parent fenceへ渡す。未解決cleanup/Unclosed/IO/改変は原owner/raw保全。初版CI実試験前RuntimeErrorを5rawで保全、修正後CIは別run。実worker/shared probe/archive reader/entryは未接続・新native0。次は実actorと原raw reader/終端keeperを入口へ結び、新inventory/root準備に進む。以下は先行保存点の履歴。
+
 最新追補: [spawn attribute/stdio原owner保全](anomaly-multiseed-v0.3-spawn-cleanup-owner-2026-10-07.md)をcodef0b3d72へ保存。新9焦点/14 pin・変更3file safety・clean code-save pass。Delete/Close例外で元core/extra/buffer/両例外を保全し、keeperのnative root停止後も不明cleanupを再実行しない。protocol stub/native0、実entry/probe/compact proof/leaseは未接続。次はrequest/policy/root/call inventory＋raw pinのproofとlease/fence Trueを結び、unknown cleanupは保全に留める。CIe5ffは3191/全3job success・10raw/14pin・runner v2候補照合まで保存済み。以下は先行保存点の履歴。
 
 最新追補: [子Git keeper/reap保全](anomaly-multiseed-v0.3-child-git-keeper-2026-10-07.md)をcode8faa921へ保存。新13焦点/14 pin・変更4file safety・clean code-save pass。元native ownerをreap/診断前に保持し、既存5秒cleanup/native creation/原named handle回収とledger/marker/sleep保全を接続。protocol stub/native0、実entry/probe/compact proof/failure raw/lease完了は未接続。次はspawn attribute/stdio cleanup例外の原owner保全、compact proof/lease、実entry/profile再準備の順。既存Unclosed/不明closeの未解決保全をackにしない。CIaacaは3178/全3job success・10raw/14pin・runner v2候補一致まで保存済み。以下は先行保存点の履歴。

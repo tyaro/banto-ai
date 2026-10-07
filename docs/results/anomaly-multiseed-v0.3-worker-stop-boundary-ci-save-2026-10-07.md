@@ -33,3 +33,14 @@ CI37581339092 / 外部HEAD `aaca57c9749fa4970919e2596f6a884b6851d2b5` / attempt1
 CI37583002436 / 外部HEAD `e5ff97567a62764048576ce10606ce72bb6ab684` / attempt1は全3job success。3.12 job112666729426、3.14 job112666729643、compare112680362863。各minor3191件・fail0/error0/skip237/source不変、共有29/必須28。専用 `artifacts/ci-diagnostic-37583002436/` に10 raw、local/remote全回帰一致、runner v2 consistent_candidate、14 pin indexを保存した。index2783 B / `604389f2c14c42650dfe46cfec933b8515bb4c5274192954411f8e032deecff4`。
 
 全job20260927.320.1。保存公式release/README metadata/Git blob・log/journalを照合、digest未取得・候補未採択。選択CLI7 sourceは外部HEAD固定、skip一覧1fileだけCRLF→LF差を両raw pinで明記し他6 raw一致。source sidecar2311 B / `41e3dce76e4785f929ad1218d5970a5a0372da9772543267e79a9504c0d56667`。後続revisionのnative/最終受入へ読み替えない。
+
+
+## post-close code3016448のCI追補
+
+CI37585092575 / 外部HEAD `301644854a9e4db7d6915ffda6c9bf8278be54dd` / attempt1は全3job success。3.12 job112673293155、3.14 job112673293337、compare112687473898。各minor3207件・fail0/error0/skip237/source不変、共有29/必須28。専用 `artifacts/ci-diagnostic-37585092575/` に10raw、local/remote回帰一致、runner v2 consistent_candidateを保存した。全job20260927.320.1、公式release/README metadata/Git blobとjournal/log照合済み。VM digest未取得/候補未採択。index2783 B / `0f3263fc3fb405c9f498b59bd88dd10a8efbabc0c0b368f5815665abc4730499`、選択CLI7 sidecar2311 B / `b17584605a44435ddb97ac6432c5244de3e3e33727bf596f04a219d978a8150d`。skip一覧のCRLF6差は両raw pinで明記、他6raw一致。
+
+未保存はCI37587463962（HEAD8faa921/3220、run成功）、37590543104（HEADf0b3d72/3229、進行中）、37592838738（HEAD7da5aa9/3247予定、進行中）。doc-only新CI追跡を増やさない。
+
+## 初版proof code18324bfの失敗保全
+
+CI37592461789（HEAD18324bf）/ attempt1は3.12 job112696985861と3.14 job112696985445がRun unittestでRuntimeError、compare112697079830はskipped。run/jobs/failed log/2journalを `artifacts/ci-diagnostic-37592461789/` に保存した。両journalはtest_started0、成功run_finishedなし。local module discoveryは旧TestCase importで34（新18＋旧16）になり、7da5aa9のmodule参照修正でunique新18を確認した。失敗CIをsuccessへ読み替えず、修正後37592838738を別に追跡する。failure-index842 B / `cb704b22975f573b7b8ef873216ebc2025f7dc5d092b44be8f923e96b3e43adc`、journal-diagnostic2518 B / `a525c616f926ea18cce6a41dc26fb5ff0ba9acddfa0512b5e9d81649977e1604`。正式許可false/credit0/holdout未読、新native0。
