@@ -1,5 +1,15 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## control publication CI37692009539の保存（2026-10-08）
+
+外部fullHEAD `11c7a9929d1d13a755756b8d2e4ac47e8c1520ea`/attempt1/push、3.12 job113034269016/3.14 job113034268575/compare113050569992を固定。全3job success、各minor3570/fail0/error0/skip237/source不変。workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`。新専用 `artifacts/ci-diagnostic-37692009539/` へ10raw14pin、local-remote回帰一致/共有29fixture必須28/runner v2 consistent_candidateを保存。
+
+summary2577B/639e448bfe1ff21d27ec284e3b6fc6f10cfc1f79f008977c4acfd285dcfb5ee9、candidate3462B/22022b845bd7dd228f0d14e3708f9e553fc8b212cc6a7b3db936a234cc076789、result3959B/f14e926a72f324b0f08d1966ec289051db1112cf26b79b96888b03a92bbafe89、index2783B/7576358e64dd77a5c8ca7b8f4e6ba0e9ae1295aaee0f21f78ca3fa6fa52eaa3e。journals3.12=3776168B/5c284c5077336e03b89630a79e69f8c51eb8e01e19e8c968b2c96bb6c9ac6f06、3.14=3776920B/9073953b8034ad7542bf585225eb874027db893b60382aa33db55c743c4cd1cf。
+
+3.12=20260927.320.1/prerelease=false、3.14/compare=20261004.327.1/true。公式release/README metadata/blob/log/journalの外部pin一致のみ、digest未取得/候補未採択。CLI7は6raw一致/skip1file既知CRLF6差両pin、sidecar2138B/bc2d5af7ad483083236236b2722ffe0c51f23ba7fa97895c3f8843a9dfe14c2b。download48224/creation134358864778850056/token9d5d6231885bc6658eb93753afc2154572341a655c50862a78c684b403cb3023、verification37580/134358865035309162/token72a80e98d131184b8be33eade36951804494b1364115539f8b2c19566943541cは原live/execution保存・exit0/CIM残存なし。
+
+完成CIを新parent inventory code `7c63923f7f87926b663c6f3b7b353eae3faca8e0` のnative/容量/正式受入へ読み替えず、反復しない。未保存は37695929528（実full6c9acf0fdb20f1d8971b24e0873fc5c7fbf09821/3583予定）と37697650188（実full7c63923f7f87926b663c6f3b7b353eae3faca8e0/3593予定）、直近in_progress。doc-only新CI追跡なし。以下は先行時点の記録。
+
 ## append forwarding CI37689828218の保存（2026-10-08）
 
 外部fullHEAD `3a910b596c079deabc1ebcfe2fedf7b3abbeee22`/attempt1/push、3.12 job113026860836/3.14 job113026861049/compare113042237813を固定。全3job success、各minor3556/fail0/error0/skip237/source不変。workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`。新専用 `artifacts/ci-diagnostic-37689828218/` へrun/attempt jobs/2journal/comparison-regression/3log/local回帰の10raw、14pinを保存しlocal-remote一致/共有29fixture必須28/runner v2 consistent_candidateを照合。
