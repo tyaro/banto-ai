@@ -1,5 +1,24 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## close/admission30d38f4のCI37660790390を保存（2026-10-08）
+
+外部fullHEAD `30d38f4485040d649fcdc7c052c06f3fa6ea642b`／attempt1/push／workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`、3.12 job112927481435／3.14 job112927481065／compare112946301486を固定。両minor3468/fail0/error0/skip237/source不変、全3job success。専用 `artifacts/ci-diagnostic-37660790390/` に10raw/14pin、local-remote回帰一致／共有29fixture・必須28／runner v2 consistent_candidateを保存。
+
+3.12/compare=20260927.320.1、3.14=20261004.327.1/prerelease=true。公式release/README metadata/blob/log/journal外部pin一致、digest未取得／候補未採択。CLI7は6raw一致／skip1file既知CRLF6差を両pin保持。後続normal completion289cbbcのnative／容量合格／正式受入へ読み替えない。
+
+| 保存物 | bytes | SHA-256 |
+|---|---:|---|
+| complete-summary.json | 2564 | `25419a9b2830d3ead8340098ae8e1d7b17a0785cf2899ca48c5398a34e53effb` |
+| 37660790390-candidate-pins.json | 3462 | `a9ccf7e59f602e9d498be1a2c28c940bb06506e24f9251530dcbff384207575c` |
+| 37660790390-result.json | 3959 | `c3a8a59a1d1e2af6ad57f70528d1bac02503099180ffad0052ddf9401f0fdcbd` |
+| ci-complete-index.json | 2783 | `73f90c7e23367bdccd75664c503aa8195adeda80a968d861192a4f456b991791` |
+| local-cli-source-pins.json | 2138 | `d7e555999cc4257ae34aef6f3118128a7ce9a1707e24a6a2ac1736525e75adfe` |
+
+- download: PID41860／creation134358711545505634／token2eb5951984f11290e7a659425d0ecbe7925d1ba51d4cb61207e3cc7ce7cc7cba。exit0/CIM残存なし、原live/execution保持。
+- verification: PID12260／creation134358711871378885／tokenb6942a1d73b4b5f67e044a5dade61ae0a10f1c7c53d9268ce4b59aa1d7b1944d。exit0/CIM残存なし、原live/execution保持。
+
+元helper終了／critical ownerなし／native0／既存試験反復0／追加agent0。保存後14CI pinと文書・現source pinを別checkpointへ照合。このCI保存を反復しない。未保存CI37666095841（full690af4900da6fc198ca7f389db2a61fe1374f602/3481予定・開始時in_progress）と新37667626735（full289cbbcb18fd4919db4f697c1a93cfc55f8e4c89/3491予定・in_progress）は各終端時に実fullHEADへ一度保存、doc-only新CI追跡なし。以下は保存済み履歴。
+
 ## sink admission／spawn handoffの2CIを保存（2026-10-08）
 
 各外部fullHEAD／attempt1／push／workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`と原job IDを固定。各専用rootにrun／attempt jobs／2journal／comparison-regression／3full log＋localの10raw/14pinを保存し、local-remote回帰一致・共有29fixture／必須28試験・runner v2 consistent_candidateまで照合した。各minor fail0/error0/skip237/source不変、全3job success。
