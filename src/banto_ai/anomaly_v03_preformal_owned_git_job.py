@@ -372,7 +372,8 @@ class GitPipeClose:
             v.require(type(getattr(held, 'spawn_io_owner', None)) is owner.SpawnIOOwner and
                       held.spawn_io_owner.native is held.native_owner and
                       held.spawn_io_owner.binding[0] is reader.kernel and
-                      all(type(stream) is file_io.FileIO and not stream.closed and stream.writable()
+                      all(type(stream) is file_io.FileIO and stream.closefd is True and
+                          not stream.closed and stream.writable()
                           for stream in self.streams.values()),
                       'pipe close original raw FileIO sinks and spawn kernel')
         except BaseException as error:

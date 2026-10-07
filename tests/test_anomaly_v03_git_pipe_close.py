@@ -140,3 +140,12 @@ class GitPipeCloseTests(unittest.TestCase):
         foreign=SimpleNamespace(original=self.held.native,reaped=self.keeper.reaped)
         with self.assertRaises(owner.UnreapedJob):git.GitPipeClose(self.reader,keeper=foreign)
         self.assertIs(self.output.pipe_close.keeper,foreign);self.assertEqual(self.closed,self.before)
+
+    def test_fileio_without_descriptor_ownership_is_rejected_before_close(self):
+        original=self.sinks['stdout']
+        borrowed=io.FileIO(original.fileno(),'wb',closefd=False);self.addCleanup(borrowed.close)
+        self.spools['stdout'].stream=borrowed
+        with self.assertRaises(owner.UnreapedJob):self.closer()
+        self.assertIs(self.output.pipe_close.streams['stdout'],borrowed)
+        self.assertFalse(original.closed);self.assertFalse(borrowed.closed)
+        self.assertEqual(self.closed,self.before)
