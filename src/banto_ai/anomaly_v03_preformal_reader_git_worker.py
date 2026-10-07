@@ -32,6 +32,13 @@ def publish_archive_ack(actor, manifest_raw, manifest_pin):
     actor.reader_publication = pending  # Before validation, readback or publication IO.
     actor.child.stopped = True
     try:
+        gate=getattr(actor,'control_publication',None)
+        pending['control_publication']=gate  # Before any publication/diagnostic IO.
+        if gate is not None:
+            v.require(type(gate) is actors.archive.ControlPublicationAdmission and
+                gate.owner is actor and gate.endpoint is actor.child and gate.checkpoint is actor.checkpoint and
+                gate.inventory_pin==actor.inventory_pin,'reader same original control publication owner')
+        options={} if gate is None else {'publication_admission':gate}
         v.require(actor.leases.error is None and not actor.child.active and not actor.child.owners and
             actor.child.finished == len(actor.leases.records) > 0, 'reader no unresolved/zero-job publication')
         actors.proof.evidence._raw(manifest_raw,manifest_pin,'reader retained manifest pin')
@@ -42,13 +49,16 @@ def publish_archive_ack(actor, manifest_raw, manifest_pin):
         pending['proof_raw'] = io.json_bytes(envelope)
         v.require(len(pending['proof_raw']) <= channel.MAX_CONTROL, 'reader linked proof byte bound')
         actor.checkpoint()
-        actual = channel._write(path,v.strict_json(manifest_raw))
+        actual = channel._write(path,v.strict_json(manifest_raw),**options)
         v.require(actual == manifest_pin, 'reader published manifest raw pin')
         actor.checkpoint()
         proof_path = actor.child.root/'git-proof.json'
-        pin = channel._write(proof_path,envelope)
+        pin = channel._write(proof_path,envelope,**options)
         actor.checkpoint()
-        return actor.child.acknowledge({'path':str(proof_path),'pin':pin})
+        ack_pin=actor.child.acknowledge({'path':str(proof_path),'pin':pin},**options)
+        if gate is not None:
+            pending['control_raw_pins']=gate.verify_publications(('git-manifest.json','git-proof.json','ack.json'))
+        return ack_pin
     except BaseException as failure:
         pending['error'] = failure
         actor.leases._failed(failure)

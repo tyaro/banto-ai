@@ -315,6 +315,36 @@ class ControlPublicationAdmission:
             return copy.deepcopy(row['pin'])
         except BaseException as error:self._failed(error)
 
+    def verify_publications(self, names):
+        """One final original close/raw check; no stream/native close or retry."""
+        if self.error is not None:raise self.error
+        try:
+            v.require(self.pending is None and not hasattr(self,'verification'),
+                      'control final verification cannot replay')
+            self.pending={'verification_names':names,'original_completed':self.completed,'raw':{}}
+            v.require(type(names) is tuple and set(names)==set(self.completed) and len(names)==len(set(names)),
+                      'control final exact completed names')
+            self._view('verify_before')
+            for name in names:
+                row=self.completed[name];original=row['original'];observation=row['observation']
+                v.require(original['owner'] is self.owner and original['close_return_observed'] is True and
+                    original['close_return'] is None and original['stream'].closed is True and
+                    original['stream'].closefd is True and original['rename_return'] is None and
+                    original['published_file_identity']==original['initial_file_identity']==observation['file_identity'],
+                    'control original owned fd close and publication returns')
+                path=self.channel_root/name;raw=observed._file(path,proof.channel.MAX_CONTROL)
+                self.pending['raw'][name]=raw
+                evidence._raw(raw,observation['pin'],'control final original published raw')
+                info=path.lstat()
+                v.require(raw==original['raw']==original['published_raw'] and
+                    (info.st_dev,info.st_ino)==original['published_file_identity'],
+                    'control final raw or original file identity changed')
+            self._view('verify_after')
+            self.verification=self.pending
+            self.pending=None
+            return {name:copy.deepcopy(self.completed[name]['observation']['pin']) for name in names}
+        except BaseException as error:self._failed(error)
+
 
 def _path(path, endpoint):
     path = Path(path)

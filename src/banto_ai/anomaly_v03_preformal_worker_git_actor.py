@@ -37,7 +37,7 @@ class WorkerGitActor:
         self.inventory_raw, self.inventory_pin = inventory_raw, copy.deepcopy(inventory_pin)
         self.repository = Path(self.verifier.inventory['repository'])
         root = Path(child.request['budget_root'])
-        self.append_admission = None
+        self.append_admission = self.control_publication = None
         if append_plan is not None:
             v.require(self.pipe_io is not None,'worker append plan requires original pipe IO')
             controls=archive.checked_append_plan(self.append_plan,request=child.request,
@@ -46,6 +46,9 @@ class WorkerGitActor:
             self.append_admission=archive.ArchiveAppendAdmission(root=root,
                 root_identity=self.pipe_io['root_identity'],revision=child.request['revision'],
                 inventory_pin=self.inventory_pin,control_limits=controls,checkpoint=checkpoint)
+            self.control_publication=archive.ControlPublicationAdmission(endpoint=child,
+                root_identity=self.pipe_io['root_identity'],inventory_pin=self.inventory_pin,
+                control_limits=controls,checkpoint=checkpoint,owner=self)
         self.inflight = root / 'worker-git-inflight'
         paths.regular_path(self.inflight, directory=True, missing=True)
         v.require(not self.inflight.exists(), 'worker actor exclusive unused inflight root')
@@ -62,6 +65,7 @@ class WorkerGitActor:
         pending['admission'] = admission = tree.GitSinkAdmission(
             root=Path(self.child.request['budget_root']), root_identity=held['root_identity'],
             revision=self.child.request['revision'], call=call, checkpoint=self.checkpoint)
+        admission.native.worker_git_actor=self  # Before keeper/transport IO, preserve this original caller.
         pending['transport'] = transport = tree.GitPipeTransport(admission,
             kernel=held['kernel'], stdin=held['stdin'], clock=held['clock'],
             started_at=pending['started_at'], repository=self.repository,
@@ -86,6 +90,10 @@ class WorkerGitActor:
     def probe(self):
         if self.error is not None or self.critical is not None:
             return 'worker_git_actor_stopped'
+        gate=self.control_publication
+        if gate is not None and (gate.pending is not None or gate.error is not None):
+            self.child.stopped=True
+            return 'worker_git_control_publication_unresolved'
         self.checkpoint()
         return self.child.probe()
 

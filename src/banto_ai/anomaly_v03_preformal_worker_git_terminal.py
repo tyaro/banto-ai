@@ -19,6 +19,9 @@ class ActorTerminal:
         self.publish_ack = publish_ack
         self.original_error = self.body_error = self.ack_error = None
         self.retention_error = self.sleep_error = self.unmatched_owner = self.unmatched_keeper = None
+        self.original_control = getattr(actor,'control_publication',None)
+        self.control_owners = []
+        self.control_latch = self.control_error = None
         actor.terminal_guard = self  # Preserve this guard before any diagnostic IO.
 
     def _remember(self, name, failure):
@@ -32,6 +35,7 @@ class ActorTerminal:
             self._remember('sleep_error', failure)
 
     def _recovery_ready(self):
+        if self._control_pending():return False
         a = self.actor; keeper = a.keeper
         if not (isinstance(keeper, keepers.ChildGitKeeper) and keeper.original is a.critical and
             keeper.child is a.child and keeper.completion is not None and not keeper.remaining and
@@ -46,6 +50,37 @@ class ActorTerminal:
             a.leases.kept.get(keeper.lease) is keeper and a.leases.error is None,
             'terminal exact original recovery and saved failure raw')
         return True
+
+    def _control_pending(self):
+        """Keep original/rejected control objects before diagnostics; latch once."""
+        if self.control_latch is not None:return True
+        gate=getattr(self.actor,'control_publication',None)
+        sidecar=getattr(self.actor,'control_publication_owner',None)
+        attached=getattr(self.original_error,'control_publication_owner',None)
+        for candidate in (self.original_control,gate,sidecar,attached):
+            if candidate is not None and not any(candidate is held for held in self.control_owners):
+                self.control_owners.append(candidate)
+        if not self.control_owners:return False
+        try:
+            v.require(gate is self.original_control and type(gate) is actors.archive.ControlPublicationAdmission and
+                gate.owner is self.actor and gate.endpoint is self.actor.child and
+                sidecar is gate and
+                gate.checkpoint is self.actor.checkpoint and gate.inventory_pin==self.actor.inventory_pin and
+                (attached is None or attached is gate),
+                'terminal original control publication owner')
+            if gate.error is None and gate.pending is None:return False
+            self.control_latch=gate
+            self.control_error=gate.error
+        except BaseException as error:
+            self.control_latch=tuple(self.control_owners)
+            self.control_error=error
+        return True
+
+    def retain_control(self):
+        """No retry or invented Job/lease for failed control IO; keep Python."""
+        if not self._control_pending():return
+        self.actor.child.stopped=True
+        while True:self._pause()
 
     def retain_owner(self):
         """Never leave this Python on keeper/diagnostic/sleep interruption."""
@@ -90,6 +125,7 @@ class ActorTerminal:
 
     def acknowledge(self):
         a = self.actor; a.child.stopped = True
+        v.require(not self._control_pending(),'terminal unresolved original control publication')
         v.require(self.unmatched_owner is None and not a.writer.failed and not a.child.active and
             not a.child.owners and a.child.finished == len(a.leases.records) == len(a.writer.rows) and
             a.child.finished > 0 and a.leases.error is None,
@@ -130,12 +166,17 @@ def run_guarded(actor, operation, *, publish_ack=None):
         guard.retain_owner()
     elif isinstance(guard.original_error, (tree.owner.UnreapedJob, tree.owner.UnclosedHandles)):
         guard.retain_unmatched_owner(guard.original_error)
+    guard.retain_control()
     try:
         guard.acknowledge()
     except BaseException as failure:
         guard.ack_error = failure
+        if guard._control_pending():
+            if guard.original_error is None:guard.original_error=failure
+            guard.retain_control()
         if guard.original_error is None:
             raise
+    guard.retain_control()  # Even swallowed publication IO cannot reach reporting/exit.
     if guard.original_error is not None:
         raise guard.original_error
     return result

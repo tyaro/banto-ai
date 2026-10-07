@@ -304,7 +304,7 @@ class ChildChannel(_Channel):
         self.owners.pop(lease, None)
         self.finished += 1
 
-    def acknowledge(self, proof):
+    def acknowledge(self, proof, *, publication_admission=None):
         self.stopped = True  # Even a failed ack publication cannot rearm work.
         self._live()
         binding_pin = self._own_binding()
@@ -313,6 +313,7 @@ class ChildChannel(_Channel):
         path = Path(proof['path'])
         v.require(_inside(path, self.root), 'channel proof in measured root')
         evidence._raw(observed._file(path, MAX_CONTROL), proof['pin'], 'channel preserved native evidence')
+        options={} if publication_admission is None else {'publication_admission':publication_admission}
         return _write(self.root / 'ack.json', {'format':FORMAT+'-ack','request_pin':self.request_pin,
             'binding_pin':binding_pin,'worker_identity':self.identity,'no_new_jobs':True,
-            'jobs_finished':self.finished,'proof':copy.deepcopy(proof)})
+            'jobs_finished':self.finished,'proof':copy.deepcopy(proof)},**options)

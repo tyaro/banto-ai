@@ -31,6 +31,10 @@ class ChildGitKeeper:
         self.spawn_io_owner = None
         self.native_kernel = None
         self.io_close_adapter = self.previous_io_adapter = self.io_closed = None
+        self.control_actor = getattr(original,'worker_git_actor',None)
+        self.control_publication = getattr(self.control_actor,'control_publication',None)
+        self.rejected_control_owner = None
+        self.control_failure = None
         self.closed = {}
         self.blocked = isinstance(original, owner.UnclosedHandles)
         self.valid_extra_names = True
@@ -101,9 +105,31 @@ class ChildGitKeeper:
             self.blocked=True
             raise self.original from failure
 
+    def _control_pending(self):
+        if self.control_failure is not None:return True
+        actor=getattr(self.original,'worker_git_actor',None)
+        gate=getattr(actor,'control_publication',None)
+        sidecar=getattr(actor,'control_publication_owner',None)
+        self.rejected_control_owner=(actor,gate,sidecar)  # Before pointer validation; keep rejected owners.
+        if gate is None and self.control_publication is None and actor is self.control_actor:
+            return False
+        try:
+            from .anomaly_v03_preformal_worker_git_archive import ControlPublicationAdmission
+            v.require(actor is self.control_actor and gate is self.control_publication and
+                type(gate) is ControlPublicationAdmission and gate.owner is actor and gate.endpoint is self.child and
+                sidecar is gate and
+                gate.checkpoint is actor.checkpoint and gate.inventory_pin==actor.inventory_pin,
+                'keeper original caller control publication owner')
+            if gate.error is not None:self.control_failure=gate.error
+            return gate.pending is not None or self.control_failure is not None
+        except BaseException as error:
+            self._remember('first_error',error)
+            self.control_failure=error
+            return True
+
     def reconcile_once(self):
         if self.completion is not None:
-            if getattr(self.original,'pending_pipe_receipt_owner',None) is not None:
+            if getattr(self.original,'pending_pipe_receipt_owner',None) is not None or self._control_pending():
                 return None  # Additional publication IO/raw remains owned, even after core close.
             return copy.deepcopy(self.completion)
         if self.blocked:
@@ -181,7 +207,7 @@ class ChildGitKeeper:
                 # Additional read handles and original sink/write streams stay
                 # held even after stdio duplicates/Job/root have finished.
                 return None
-            if getattr(self.original,'pending_pipe_receipt_owner',None) is not None:
+            if getattr(self.original,'pending_pipe_receipt_owner',None) is not None or self._control_pending():
                 return None  # Never turn partial/unknown receipt IO into recovered lease/ack.
             attempted = dict(self.remaining)
             try:
