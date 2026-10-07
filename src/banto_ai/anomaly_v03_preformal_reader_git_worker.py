@@ -19,6 +19,94 @@ SOURCE_ADDITIONS = tuple('src/banto_ai/'+name+'.py' for name in (
     'anomaly_v03_preformal_job_tree_owner','anomaly_v03_preformal_owned_source_git_session',
     'anomaly_v03_preformal_generated_chain_budget','_anomaly_v03_engineering_runtime',
     '_anomaly_v03_fixture_budget','anomaly_v03_reader_evidence','anomaly_v03_consumer_evidence'))
+PROOF_FORMAT = 'anomaly-v03-preformal-reader-git-archive-proof-v1'
+
+
+def publish_archive_ack(actor, manifest_raw, manifest_pin):
+    """Publish the proof-linked manifest once, preserving every partial write."""
+    v.require(isinstance(actor,actors.WorkerGitActor), 'reader original publication actor')
+    pending = {'manifest_raw':manifest_raw,'manifest_pin':copy.deepcopy(manifest_pin),
+               'proof_raw':None,'error':None}
+    v.require(getattr(actor,'reader_publication',None) is None, 'reader publication cannot be retried')
+    actor.reader_publication = pending  # Before validation, readback or publication IO.
+    actor.child.stopped = True
+    try:
+        v.require(actor.leases.error is None and not actor.child.active and not actor.child.owners and
+            actor.child.finished == len(actor.leases.records) > 0, 'reader no unresolved/zero-job publication')
+        actors.proof.evidence._raw(manifest_raw,manifest_pin,'reader retained manifest pin')
+        git_raw = actor.leases.verifier.proof(actor.leases.records)
+        path = actor.child.root/'git-manifest.json'
+        envelope = {'format':PROOF_FORMAT,'manifest':{'path':str(path),'pin':copy.deepcopy(manifest_pin)},
+                    'git_proof':v.strict_json(git_raw),'formal_permission':False}
+        pending['proof_raw'] = io.json_bytes(envelope)
+        v.require(len(pending['proof_raw']) <= channel.MAX_CONTROL, 'reader linked proof byte bound')
+        actor.checkpoint()
+        actual = channel._write(path,v.strict_json(manifest_raw))
+        v.require(actual == manifest_pin, 'reader published manifest raw pin')
+        actor.checkpoint()
+        proof_path = actor.child.root/'git-proof.json'
+        pin = channel._write(proof_path,envelope)
+        actor.checkpoint()
+        return actor.child.acknowledge({'path':str(proof_path),'pin':pin})
+    except BaseException as failure:
+        pending['error'] = failure
+        actor.leases._failed(failure)
+        raise
+
+
+class ReaderGitArchiveVerifier:
+    """Parent-held inventory plus proof-linked manifest and full archive raw.
+
+    The manifest pin is captured from this bound proof, not a pre-run external
+    manifest adoption. Receipt/close consistency is not native authentication.
+    """
+    def __init__(self, *, parent, inventory_raw, inventory_pin, checkpoint):
+        self.parent, self.inventory_raw = parent, inventory_raw
+        self.inventory_pin = copy.deepcopy(inventory_pin)
+        self.checkpoint, self.error, self.pending, self.saved = checkpoint, None, None, None
+        v.require(isinstance(parent,channel.ParentChannel) and callable(checkpoint),
+                  'reader original parent and shared checkpoint')
+        actors.proof.ProofVerifier(endpoint=parent,inventory_raw=inventory_raw,
+            inventory_pin=inventory_pin,read_evidence=lambda _:None)
+
+    def __call__(self, raw, jobs_finished):
+        if self.error is not None:
+            raise self.error
+        self.pending = {'proof_raw':raw,'manifest_raw':None,'manifest_pin':None}
+        try:
+            self.checkpoint(); self.parent._live()
+            v.require(type(raw) is bytes and len(raw) <= channel.MAX_CONTROL and
+                type(jobs_finished) is int and 0 < jobs_finished <= channel.MAX_JOBS,
+                'reader bounded nonzero original finished count')
+            envelope = v.strict_json(raw)
+            v.require(type(envelope) is dict and set(envelope) == {
+                'format','manifest','git_proof','formal_permission'} and
+                envelope['format'] == PROOF_FORMAT and envelope['formal_permission'] is False and
+                io.json_bytes(envelope) == raw, 'reader exact canonical linked archive proof')
+            entry = envelope['manifest']; path = self.parent.root/'git-manifest.json'
+            v.require(type(entry) is dict and set(entry) == {'path','pin'} and
+                entry['path'] == str(path), 'reader fixed measured manifest path')
+            self.pending['manifest_pin'] = copy.deepcopy(entry['pin'])
+            manifest_raw = observed._file(path,channel.MAX_CONTROL)
+            self.pending['manifest_raw'] = manifest_raw
+            inventory_path = self.parent.root/'worker-inventory.json'
+            actors.proof.evidence._raw(observed._file(inventory_path,channel.MAX_CONTROL),
+                self.inventory_pin,'reader unchanged caller inventory file')
+            saved = actors.archive.SavedWorkerGitArchive(endpoint=self.parent,
+                manifest_raw=manifest_raw,manifest_pin=entry['pin'],inventory_raw=self.inventory_raw,
+                inventory_pin=self.inventory_pin,checkpoint=self.checkpoint)
+            self.saved = saved
+            v.require(saved.verifier.verify(io.json_bytes(envelope['git_proof']),jobs_finished) is True,
+                      'reader exact original raw/call/close proof')
+            actors.proof.evidence._raw(observed._file(path,channel.MAX_CONTROL),entry['pin'],
+                                      'reader manifest changed during verification')
+            actors.proof.evidence._raw(observed._file(inventory_path,channel.MAX_CONTROL),
+                self.inventory_pin,'reader inventory changed during verification')
+            saved._current(); self.checkpoint(); self.parent._live()
+            return True
+        except BaseException as failure:
+            self.error = failure
+            raise
 
 
 def source_names(base):
@@ -109,4 +197,4 @@ class ReaderGitWorker:
             source_path=source_path,expected_output_pin=expected_output_pin)
 
     def run(self, operation):
-        return terminal.run_guarded(self.actor,operation)
+        return terminal.run_guarded(self.actor,operation,publish_ack=publish_archive_ack)

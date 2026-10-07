@@ -13,9 +13,10 @@ v, tree, keepers = actors.v, actors.tree, actors.keepers
 
 
 class ActorTerminal:
-    def __init__(self, actor):
+    def __init__(self, actor, publish_ack=None):
         v.require(isinstance(actor, actors.WorkerGitActor), 'terminal original Git actor')
         self.actor = actor
+        self.publish_ack = publish_ack
         self.original_error = self.body_error = self.ack_error = None
         self.retention_error = self.sleep_error = self.unmatched_owner = self.unmatched_keeper = None
         actor.terminal_guard = self  # Preserve this guard before any diagnostic IO.
@@ -107,12 +108,15 @@ class ActorTerminal:
         # Proof checks full inventory or the final failed prefix, never flags alone.
         saved.verifier.proof(a.leases.records)
         a.leases.verifier = saved.verifier
+        if self.publish_ack is not None:
+            v.require(callable(self.publish_ack), 'terminal bounded archive proof publisher')
+            return self.publish_ack(a, manifest, pin)
         return a.leases.acknowledge()
 
 
-def run_guarded(actor, operation):
+def run_guarded(actor, operation, *, publish_ack=None):
     """Call only from the future worker entry before its reporting/exit catch."""
-    guard = ActorTerminal(actor)
+    guard = ActorTerminal(actor, publish_ack)
     result = None
     try:
         v.require(callable(operation), 'terminal worker operation callback')
