@@ -1,5 +1,7 @@
 # initial-reader runtime候補と容量準備（2026-10-07）
 
+後続の[保持順と失敗stdoutのサイズモデル](anomaly-multiseed-v0.3-reader-git-coupled-peak-plan-2026-10-07.md)では、全pending単純加算を通常ピークとせず、正常schemaモデル786782B/31entryを整理した。失敗stdoutの既存1MiB保持はreaderだけ1704030Bとなり、capacity/native許可は未完了。以下はこの準備時点の原記録。
+
 対象clean HEADは `be0309561ad385c51bd2f865e6d8bd38a428038f`、業務codeは `a12c3e91883d9e79fadbdd8f4b23b06f02add2ff`。専用保存先は `artifacts/preformal-reader-git-runtime-20261007-01/`。native開始0、完成済み試験・全7役・旧rootの反復0、上限変更0。
 
 ## 保存した候補

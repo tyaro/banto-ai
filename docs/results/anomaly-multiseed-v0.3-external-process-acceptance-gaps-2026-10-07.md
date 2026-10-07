@@ -1,5 +1,7 @@
 # v0.3 外部program・異常時子孫回収の受入残件（2026-10-07）
 
+最新容量境界: [readerの保持順](anomaly-multiseed-v0.3-reader-git-coupled-peak-plan-2026-10-07.md)をclean463f333の9source/保存30pinから固定。正常schemaモデルは親4identity込み786782B/reserve込み31entryで、全pendingの単純加算を到達ピークにしない。実失敗stdoutの上限1MiBを保持するとreaderだけ1704030B、25ms pollのovershootもhard bound未確認。次はnative前の拒否とexact callの元root残余、原ownerを保持した実出力保存／停止IO境界、限定launcherの順。新native0・profile再観測0・完成試験反復0。CI217f0eaの3321/10raw14pin/local回帰/runner候補一致まで保存、正式5残件と上限を維持。以下は先行履歴。
+
 最新準備: [reader runtime候補と容量](anomaly-multiseed-v0.3-reader-git-runtime-capacity-preparation-2026-10-07.md)をclean be03095で保存。117sourceのGit/rawと実caller import/image、fresh profile・private policy・30source/64call・上位契約の未使用4root/planを照合。native0。単純capsは1097728B、reserve後917504Bを超え、全pending＋親4identity＋診断の保守的計上は37entryで32を超える。到達可能ピークの実証ではないが、capacity合格にはしない。限定callerの正常/失敗時の共存範囲と原owner保持を先に固定する。準備2失敗は保全し保存観測の反復0、補完v3で容量表完成。旧HEAD候補を文書後HEADへ読み替えず、新request/launcher/final HEAD準備は残件。CI0f249f6は3311/10raw14pin/local回帰/runner候補一致まで保存。正式5残件と上限は維持。以下は先行履歴。
 
 最新上位境界: [外部pin付きreader plan受渡し](anomaly-multiseed-v0.3-reader-git-plan-forwarding-2026-10-07.md)をa12c3e9へ保存。上位runでexternal plan/policy/profile/root/source照合、元clock内再読取り、元linked budget/plan forwarding、descriptor保持copyを接続。新9＋追加1pass（旧9反復0）・39pin/他37一致/safety/discovery/code-save。実native plan/profile/launcher/root容量は次準備、新native0。旧全7役/使用済みrootは反復しない。CI202b1c3は3299/全3job success/10raw14pin/local回帰/runner候補一致まで保存。正式5残件は保持。以下は先行保存点の履歴。

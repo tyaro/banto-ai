@@ -4,6 +4,10 @@
 
 ## 現在の状態
 
+- 最新容量境界: [readerの保持順と失敗stdout残件](results/anomaly-multiseed-v0.3-reader-git-coupled-peak-plan-2026-10-07.md)。clean463f333/code a12c3e9の9source working/Gitと保存30pinを照合。順次pending公開と正常inflight3file整理を計上し、正常schemaモデルは親4identity込み786782B/診断reserve込み31entry。一方、既存source stdout1MiBをfailed rawで保持するとreaderだけ1704030Bで枠外。poll overshoot/圧縮実容量未確認・native許可false。次は限定launcherの実行前拒否とexact callの元root残余への接続、原ownerを保持したまま失敗出力も枠内へ保存する実出力経路／停止IO焦点を小さく固定→限定caller/最終clean HEAD新exclusive準備。raw artifacts/preformal-reader-git-peak-plan-20261007-01/、plan12328B/615c691e0e88b0b9e5a2d6dce3ffd67e859e273e556b6338245a42ec602ef831。新native/試験反復/profile再観測/追加agent0、全helper終了・critical ownerなし。
+
+- 最新CI37614547790（外部full217f0ea66470d24bd9ecd3043a5ec428557b6fc3/各minor3321）は全3job success/fail0/error0/skip237/source不変、10raw/14pin/local-remote一致/共有29/必須28/runner v2候補一致。index2783B/0bbdfd8b423dfa31593487d560fea024bd10987cbda3b9a18f4302de18c61fb4。全job20260927.320.1、digest未取得/候補未採択。未保存は37617865579（a12c3e9/3331予定、run成功確認）のみ。以下は先行履歴で、この上段を優先。
+
 - 最新準備: [initial-reader runtime候補と容量](results/anomaly-multiseed-v0.3-reader-git-runtime-capacity-preparation-2026-10-07.md)。clean `be0309561ad385c51bd2f865e6d8bd38a428038f` / code a12c3e9で117sourceのGit/raw照合・実caller import/image・stdlib2559/native47/cache179のprofile、外部private Git policy、30source/64callと未使用4root/v2 planを保存。profile390207B/7c6bc8827c89973c446accdac4c945cacb275da758beb34b3cb0534496ae036e。初回tuple JSON失敗と補完module参照失敗を保全、保存済み観測の再実行0、補完v3で容量表のみ完成。単純caps1097728B>reserve後917504B、親4identity/診断を含む保守的37entry>32。到達可能ピーク未測定・native/launcher/request未準備。次は限定callerの正常/失敗時のcoupled peakと元owner終端を固定→最終clean HEADの新exclusive準備。文書後HEADへ旧profile/pinを読み替えない。全helper終了・critical ownerなし・新native0・追加agent0。
 
 - 最新CI37612261124（外部full0f249f63be055f0937c67a7963f541daa9e6df83/各minor3311）は全3job success/fail0/error0/skip237/source不変、10raw/14pin/local-remote一致/共有29/必須28/runner v2候補一致。index2783B/c5b3a0c4ad209a62d37846f96497ae918470d8d20deeebd038b48ea487880e40。3.12/compare20260927.320.1、3.14が20261004.327.1/prerelease=true、digest未取得/候補未採択。未保存は37614547790（217f0ea/3321予定、run成功確認）と37617865579（a12c3e9/3331予定、進行中）。以下は先行履歴で、この上段を優先。
