@@ -119,12 +119,18 @@ def _inventory(root, expected):
     v.require(actual == set(expected), 'exact invented materializer file inventory')
 
 
-def _source(expected_revision, *, git_identity=None, git_blob=None):
+def _source(expected_revision, *, git_identity=None, git_blob=None, source_files=None):
     evidence._digest(expected_revision, 40)
     v.require(git_identity is None or callable(git_identity),
               'materializer Git identity callback must be callable')
     v.require(git_blob is None or callable(git_blob),
               'materializer Git blob callback must be callable')
+    if source_files is not None:
+        v.require(type(source_files) is tuple and source_files and
+            all(type(name) is str for name in source_files) and len(set(source_files)) == len(source_files),
+            'materializer explicit source names')
+        for name in source_files:
+            v.safe_relative_path(name)
     if git_identity is None:
         head = subprocess.check_output(
             ['git', '-C', str(ROOT), 'rev-parse', 'HEAD'],
@@ -145,7 +151,7 @@ def _source(expected_revision, *, git_identity=None, git_blob=None):
     v.require(head.strip() == expected_revision.encode(), 'selected materializer revision changed')
     v.require(not dirty, 'clean materializer checkout required')
     rows = []
-    for name in SOURCE_FILES:
+    for name in SOURCE_FILES if source_files is None else source_files:
         working = observed._file(ROOT / name, 1024**2)
         committed = (subprocess.check_output(
             ['git', '-C', str(ROOT), 'show', expected_revision + ':' + name],
@@ -364,7 +370,7 @@ def worker_main(argv):
         return 2
 
 
-def _read_attempt(request, root, *, git_identity=None, git_blob=None):
+def _read_attempt(request, root, *, git_identity=None, git_blob=None, source_files=None):
     """The original physical initial read and rederivation, performed once."""
     campaign_mode = 'campaign_context' in request
     source_options = {}
@@ -372,6 +378,8 @@ def _read_attempt(request, root, *, git_identity=None, git_blob=None):
         source_options['git_identity'] = git_identity
     if git_blob is not None:
         source_options['git_blob'] = git_blob
+    if source_files is not None:
+        source_options['source_files'] = source_files
     snapshots = _decode_source_snapshots(request['source_snapshots'])
     outputs, _ = _saved_outputs(root, request['chunk_index'],
                                 request['external_pins'])
@@ -427,7 +435,8 @@ def reader_worker_main(argv):
             'format root expected_mode chunk_index output_names external_pins '
             'source_snapshots source_revision source runtime invocation_id' +
             (' campaign_context' if campaign_mode else '') +
-            (' runtime_inventory_profile_pin' if 'runtime_inventory_profile_pin' in request else ''),
+            (' runtime_inventory_profile_pin' if 'runtime_inventory_profile_pin' in request else '') +
+            (' worker_git_entry' if 'worker_git_entry' in request else ''),
             'reader invocation fields')
         v.require(request['format'] == (
                       CAMPAIGN_READER_INVOCATION if campaign_mode else
@@ -444,8 +453,17 @@ def reader_worker_main(argv):
                       'initial reader campaign chunk context')
         v.require(path == root / 'owned-reader' / 'invocation.json',
                   'owned reader invocation path')
-        operation = lambda: _read_attempt(request, root)
-        if 'runtime_inventory_profile_pin' in request:
+        worker_git = None
+        if 'worker_git_entry' in request:
+            from . import anomaly_v03_preformal_reader_git_worker as git_worker
+            v.require('runtime_inventory_profile_pin' in request, 'reader Git entry requires fresh runtime profile')
+            worker_git = git_worker.ReaderGitWorker(request['worker_git_entry'],
+                revision=request['source_revision'],repository=ROOT,names=git_worker.source_names(SOURCE_FILES))
+        operation = (lambda: _read_attempt(request,root,git_identity=worker_git.identity_bytes,
+            git_blob=worker_git.blob,source_files=worker_git.names)) if worker_git is not None else lambda: _read_attempt(request,root)
+        def observed_operation():
+            if 'runtime_inventory_profile_pin' not in request:
+                return operation()
             from . import anomaly_v03_role_runtime_observation as observation
             profile_raw = observed._file(path.parent / 'inventory-profile.json', observation.MAX_PROFILE)
             profile = observation.load_profile(profile_raw, request['runtime_inventory_profile_pin'], root=ROOT, role='initial-reader')
@@ -454,8 +472,8 @@ def reader_worker_main(argv):
                 role='initial-reader', profile_raw=profile_raw, profile_pin=request['runtime_inventory_profile_pin'],
                 input_pin=_pin(raw))
             reply['runtime_observation'] = receipt
-        else:
-            reply = operation()
+            return reply
+        reply = worker_git.run(observed_operation) if worker_git is not None else observed_operation()
         print(json.dumps(reply, sort_keys=True))
         return 0
     except (ValueError, OSError, KeyError, TypeError,
