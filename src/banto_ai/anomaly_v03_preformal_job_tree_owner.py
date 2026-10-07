@@ -127,6 +127,12 @@ class UnclosedHandles(RuntimeError):
         super().__init__('owned Job handles could not all be closed')
 
 
+class NativePipeWriter:
+    """Caller-owned raw pipe HANDLE; no file descriptor or destructor closes it."""
+    def __init__(self, handle):
+        self.handle = handle
+
+
 class SpawnIOOwner:
     """Keep caller-owned readers/sinks/writers across opt-in spawn cleanup.
 
@@ -142,6 +148,11 @@ class SpawnIOOwner:
         self.entered = False
         self.binding = self.rejected_binding = self.alias_conflict = None
         self.secondary_owner = None
+        self.native_write_handles = {}
+        self.writer_close_pending = self.writer_close_error = self.writer_close_result = None
+        self.writer_close_events = {}
+        self.writer_close_checkpoint = None
+        self.writer_close_started = False
         try:
             for name in ('read_handles','sinks','writers'):
                 value = getattr(self, name)
@@ -170,14 +181,66 @@ class SpawnIOOwner:
         self.entered = True
         paths.require(stdout is self.writers['stdout'] and stderr is self.writers['stderr'],
                       'spawn uses the original caller write streams')
+        if any(type(writer) is NativePipeWriter for writer in self.writers.values()):
+            self.native_write_handles = {name:writer.handle for name,writer in self.writers.items()
+                                         if type(writer) is NativePipeWriter}
+            paths.require(set(self.native_write_handles) == {'stdout','stderr'} and
+                          all(type(h) is int and 0 < h < 2**64 for h in self.native_write_handles.values())
+                          and len(set(self.native_write_handles.values())) == 2,
+                          'spawn original separate raw writer handles')
+            self.require_disjoint()
 
     def require_disjoint(self):
         native = self.native
-        conflict = set(self.read_handles.values()) & {
-            native.job, native.process, native.thread, *native.extra_handles.values()}
+        core = {native.job, native.process, native.thread, *native.extra_handles.values()}
+        reads, writes = set(self.read_handles.values()), set(self.native_write_handles.values())
+        conflict = (reads & core) | (writes & core) | (reads & writes)
         if conflict:
             self.alias_conflict = tuple(sorted(conflict))
             paths.require(False, 'spawn readers cannot alias core/inherited handles')
+
+    def close_parent_writers(self, *, checkpoint):
+        """Observe raw CloseHandle returns once; never grant IO/core recovery."""
+        if self.writer_close_error is not None:
+            raise self.native from self.writer_close_error
+        if self.writer_close_result is not None:
+            return {**self.writer_close_result,
+                    'closed_handles':dict(self.writer_close_result['closed_handles'])}
+        self.writer_close_checkpoint = checkpoint  # Hold original callback before validation/IO.
+        try:
+            paths.require(not self.writer_close_started, 'parent writer close cannot be rearmed')
+            self.writer_close_started = True
+            paths.require(self.entered and self.binding is not None and callable(checkpoint) and
+                          set(self.native_write_handles) == {'stdout','stderr'} and
+                          all(type(self.writers[name]) is NativePipeWriter and
+                              self.writers[name].handle == handle
+                              for name,handle in self.native_write_handles.items()),
+                          'parent writer close uses original raw handles')
+            self.require_disjoint()
+            kernel = self.binding[0]
+            for name,handle in self.native_write_handles.items():
+                self.writer_close_pending = {'name':name,'handle':handle,'writer':self.writers[name],
+                                             'kernel':kernel,'return':None}
+                checkpoint()
+                self.writer_close_pending['return'] = closed = kernel.CloseHandle(handle)
+                paths.require(type(closed) in (int,bool), 'parent writer native close return')
+                if not closed:
+                    self.writer_close_pending['last_error'] = ctypes.get_last_error()
+                    raise OSError(self.writer_close_pending['last_error'], 'parent writer CloseHandle')
+                self.writer_close_events[name] = {'api':'CloseHandle','handle':handle,'return':int(closed)}
+                checkpoint()
+            self.writer_close_result = {
+                'format':'anomaly-v03-parent-pipe-writes-closed-v1',
+                'closed_handles':dict(self.native_write_handles),'formal_permission':False,
+                'execution_authenticated':False,'io_released':False,'parent_ack_authorized':False}
+            self.writer_close_pending = None
+            return {**self.writer_close_result,'closed_handles':dict(self.native_write_handles)}
+        except BaseException as error:
+            self.writer_close_error = error
+            self.native.parent_writer_close_error = error
+            if self.native.original_error is None:
+                self.native.original_error = error
+            raise self.native from error
 
 
 def _kernel():
@@ -635,11 +698,17 @@ def _spawn_cli_inner(k, argv, cwd, stdin, stdout, stderr, *, environment=None, h
         if held_io is not None:
             held_io.require_disjoint()
         self_handle = k.GetCurrentProcess()
-        for stream in (stdin, stdout, stderr):
+        for index, stream in enumerate((stdin, stdout, stderr)):
             duplicate = w.HANDLE()
             if held_io is not None:
                 held_io.native.pending_duplicate = duplicate
-            _need(k.DuplicateHandle(self_handle, msvcrt.get_osfhandle(stream.fileno()),
+            if held_io is not None and index > 0 and type(stream) is NativePipeWriter:
+                source = held_io.native_write_handles[
+                    'stdout' if index == 1 else 'stderr']
+                paths.require(stream.handle == source, 'spawn raw writer handle cannot change')
+            else:
+                source = msvcrt.get_osfhandle(stream.fileno())
+            _need(k.DuplicateHandle(self_handle, source,
                                     self_handle, ctypes.byref(duplicate), 0, True,
                                     DUPLICATE_SAME_ACCESS), 'DuplicateHandle stdio')
             inherited.append(duplicate.value)

@@ -176,6 +176,24 @@ class GitOutputOwner:
             raise self.native_owner from self.error
         raise GitOutputOwnerFailure(self, self.error) from self.error
 
+    @classmethod
+    def from_spawn(cls, spawn_io, *, spools, checkpoint):
+        """Bind sinks/readers to the same original spawn core, without release."""
+        if type(spawn_io) is not owner.SpawnIOOwner:
+            # The normal constructor keeps rejected inputs before reporting.
+            return cls(spawn_io, read_handles={}, spools=spools, checkpoint=checkpoint)
+        held = cls(spawn_io.native, read_handles=spawn_io.read_handles,
+                   spools=spools, checkpoint=checkpoint)
+        held.spawn_io_owner = spawn_io
+        try:
+            v.require(spawn_io.entered and spawn_io.binding is not None and
+                      getattr(spawn_io.native, 'spawn_io_owner', None) is spawn_io and
+                      all(held.spools[name].stream is spawn_io.sinks[name]
+                          for name in ('stdout','stderr')), 'Git output uses original spawn sinks/core')
+            return held
+        except BaseException as error:
+            held._failed(error)
+
     def begin_read(self, output):
         if self.error is not None:
             self._failed(self.error)
