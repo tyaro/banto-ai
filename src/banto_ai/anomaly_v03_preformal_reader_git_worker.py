@@ -160,6 +160,16 @@ def selected_source(repository, revision, source_pins, names):
 class ReaderGitParent:
     """Opt-in composing caller; all sampler/clock owners remain with that caller."""
     @classmethod
+    def create_native(cls, **request):
+        """Refuse the limited native entry until its owned pipe is connected.
+
+        The byte sink alone supplies no process/pipe lifetime or failure-raw
+        guarantee. Keep this denial before channel/root/clock/worker creation.
+        Existing protocol/default callers continue to use create().
+        """
+        raise monitor.resources.ResourceStop('reader_git_native_capture_not_connected')
+
+    @classmethod
     def create(cls, *, root, revision, repository, policy, budget, source_pins, names, profile_pin):
         result=cls()
         result.budget, result.shared = budget, getattr(budget,'outer',None)

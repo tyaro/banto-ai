@@ -22,6 +22,102 @@ _FIELDS = set('''format status reason prior_stop_reason operation source_path re
     source_closure_complete runtime_closure_complete execution_authenticated job'''.split())
 
 
+class BoundedSpoolFailure(RuntimeError):
+    """Keep the original stream/block/error after uncertain output IO."""
+    def __init__(self, spool, original_error):
+        self.spool, self.original_error = spool, original_error
+        super().__init__('bounded Git output IO is unconfirmed')
+
+
+class BoundedGitSpool:
+    """A byte sink for a future owned pipe reader, not a native transport.
+
+    The last stored byte is an overflow sentinel. A caller must read at most
+    next_read_size(), stop the original Job on output_limit, and retain this
+    object with that native owner. EOF/stream close does not prove Job closure.
+    No existing file-directed executor uses this component yet.
+    """
+    READ_BLOCK = 4096
+
+    def __init__(self, stream, *, operation, output, maximum_stored_bytes,
+                 checkpoint, sync):
+        # Retain the caller's stream before validation or any fallible IO.
+        self.stream, self.checkpoint, self.sync = stream, checkpoint, sync
+        self.pending_raw = self.failure = None
+        self.committed_bytes, self.stopped, self.closed = 0, False, False
+        self.maximum_stored_bytes = maximum_stored_bytes
+        try:
+            v.require(operation in direct.MAX_OUTPUT and output in ('stdout', 'stderr'),
+                      'bounded Git output operation/name')
+            maximum = direct.MAX_OUTPUT[operation] if output == 'stdout' else direct.MAX_STDERR
+            v.require(type(maximum_stored_bytes) is int and 0 < maximum_stored_bytes <= maximum,
+                      'bounded Git output stays within existing cap')
+            v.require(callable(checkpoint) and callable(sync) and
+                      callable(getattr(stream, 'write', None)) and
+                      callable(getattr(stream, 'flush', None)) and
+                      callable(getattr(stream, 'close', None)),
+                      'bounded Git original stream and shared IO callbacks')
+        except BaseException as error:
+            self._failed(error)
+
+    def _failed(self, error):
+        if self.failure is None:
+            self.failure = BoundedSpoolFailure(self, error)
+        self.stopped = True
+        raise self.failure from self.failure.original_error
+
+    def next_read_size(self):
+        if self.failure is not None:
+            raise self.failure
+        if self.stopped or self.closed:
+            return 0
+        return min(self.READ_BLOCK, self.maximum_stored_bytes - self.committed_bytes)
+
+    def append(self, raw):
+        if self.failure is not None:
+            raise self.failure
+        # Keep even an invalid/overlong original block before diagnostics.
+        self.pending_raw = raw
+        try:
+            amount = self.next_read_size()
+            v.require(type(raw) is bytes and 0 < len(raw) <= amount,
+                      'bounded Git pipe read exceeded original allowance')
+            self.checkpoint()
+            written = self.stream.write(raw)
+            v.require(type(written) is int and written == len(raw),
+                      'bounded Git short/unknown output write')
+            self.committed_bytes += written
+            self.stream.flush()
+            self.sync()
+            self.checkpoint()
+            self.pending_raw = None
+            if self.committed_bytes == self.maximum_stored_bytes:
+                self.stopped = True
+                return 'output_limit'
+            return None
+        except BaseException as error:
+            self._failed(error)
+
+    def finish_eof(self):
+        if self.failure is not None:
+            raise self.failure
+        if self.closed:
+            return
+        try:
+            v.require(not self.stopped and self.pending_raw is None,
+                      'bounded Git stopped/uncertain stream is retained')
+            self.checkpoint()
+            self.stream.flush()
+            self.sync()
+            self.stream.close()
+            v.require(getattr(self.stream, 'closed', None) is True,
+                      'bounded Git original output close unconfirmed')
+            self.closed = True
+            self.checkpoint()
+        except BaseException as error:
+            self._failed(error)
+
+
 def _shared_stop(probe):
     stop = probe() if probe is not None else None
     v.require(stop is None or (type(stop) is str and 0 < len(stop) <= 128),
