@@ -67,3 +67,22 @@ fake Win API試験のctypes.get_last_error未stubがLinuxでAttributeErrorとな
 CI37592838738 / 外部HEAD `7da5aa92b007965b3a51fd94afb73d6add67d3c3` / attempt1は両minor3247・各fail1/error1/skip237/source不変、compare skipped。3.12 job112698211125、3.14 job112698211531、compare112713514280。失敗はCI37590543104と同じspawn fixtureの元OSError保持2件で、Linux ctypes.get_last_errorのstub9473523を含まないHEADであることを確認。原run/jobs/failed-step log/2full job log/2journalの7rawを専用rootへ保存、failure-complete-index2922 B / `acdd87eb92885328635389ef5d8f075bf3d58f3272d8c563dfea739eb9dd524d`。全job journal image20260927.320.1、comparison/regression/compare logはなし、成功CI/runner候補照合に読み替えない。
 
 修正fixture CI37596406096（HEAD9473523/3247予定）と新worker archive CI37598762191（HEADba6f82e/3263予定）は進行中。新archiveの[16焦点・原raw再読取り証拠](anomaly-multiseed-v0.3-worker-git-archive-resolver-2026-10-07.md)を保存、旧試験反復0・新native0。最終source/runtime閉包・契約/runner候補採択・正式受入を意味しない。
+
+## 追補: portable fixture修正9473523のCI（37596406096）
+
+外部fullHEAD `9473523f3d2dd04259b6b8492ea3b9a237600e69`、attempt1/push/workflow上記pinに固定。job3.12=112710022797、3.14=112710022692、compare=112725681886。全3job success、両minor各3247・fail0/error0/skip237/source不変。原run/attempt jobs/2journal/comparison-regression/3logとlocal regressionの10rawを専用 `artifacts/ci-diagnostic-37596406096/` に保存。local/remote回帰全一致、共有29fixture/必須28、runner v2 consistent_candidate。
+
+3.12は20261004.327.1、3.14/compareは20260927.320.1。保存済み公式release/README metadata/blobとjob/minorを照合、新版prerelease=trueも外部pin一致。digest未取得・候補未採択。旧f0b3d72/7da5aa9のfail1/error1は別の原7rawとして保全したまま。
+
+| 保存物 | bytes | SHA-256 |
+|---|---:|---|
+| complete-summary.json | 2569 | `111a021ba253ec8c07512cd99dbf7c16429de66f7b3f3a6cbcb5407b0b30ad03` |
+| 37596406096-candidate-pins.json | 3462 | `3e31f8f15af930bee4ee8cda19cfd890520b9c6e0640d4a7e67261715397d484` |
+| 37596406096-result.json | 3959 | `f65b97fc269314567c04844ca03db608ac90bf0e9aedd89f1372cfb12ae72fa3` |
+| ci-complete-index.json | 2783 | `657a6e17610ea73bd2ca7bb4f60ea460e2695d9ebba28da2359e0a88091d9185` |
+| local-cli-source-pins.json | 2390 | `8c1d63ba0607defc6de0288a4f236804a3071a0edf17b64847342636d781a0a0` |
+| post-save-checkpoint.json | 1157 | `b452dc11e130b262f1533e2ce9e3d276b8d5385ec10a06974ad55237b93ffd94` |
+
+選択CLI7は外部HEADへ固定し、6raw一致・skip一覧1fileは既知CRLF6箇所のみ（両raw pin保存）。実ロード閉包ではない。14 raw/control pinを保存後照合し、download PID26284/creation134358397765799801/token2a4e23e66338dafca994b5018ebf0e7fa190d61c12fd83d3c6805ba0058da16d、verification PID1996/creation134358398170303211/token67d7d453e71a6c27660607848354c0357cbb92aacf038dba72b73ed8e302f2f4はexit0/CIM残存なし。全helper終了・critical ownerなし・新native0。
+
+未保存対象は37598762191（HEADba6f82e/各minor3263予定）と37602415125（HEADf0ecd89/3276予定）。doc-only新CI追跡を増やさない。このCIをf0ecd89 actorのnativeや最終受入へ読み替えない。
