@@ -315,13 +315,18 @@ class ControlPublicationAdmission:
             return copy.deepcopy(row['pin'])
         except BaseException as error:self._failed(error)
 
-    def verify_publications(self, names):
+    def verify_publications(self, names, *, cached=False):
         """One final original close/raw check; no stream/native close or retry."""
         if self.error is not None:raise self.error
         try:
-            v.require(self.pending is None and not hasattr(self,'verification'),
-                      'control final verification cannot replay')
-            self.pending={'verification_names':names,'original_completed':self.completed,'raw':{}}
+            v.require(type(cached) is bool and self.pending is None and
+                (hasattr(self,'verification') if cached else not hasattr(self,'verification')),
+                'control original completed verification or explicit cached readback')
+            self.pending={'verification_names':names,'original_completed':self.completed,'raw':{},
+                          'original_verification':getattr(self,'verification',None)}
+            if cached:
+                v.require(self.verification['verification_names']==names,
+                          'control cached same original completed names')
             v.require(type(names) is tuple and set(names)==set(self.completed) and len(names)==len(set(names)),
                       'control final exact completed names')
             self._view('verify_before')
@@ -340,7 +345,8 @@ class ControlPublicationAdmission:
                     (info.st_dev,info.st_ino)==original['published_file_identity'],
                     'control final raw or original file identity changed')
             self._view('verify_after')
-            self.verification=self.pending
+            if cached:self.cached_verification=self.pending
+            else:self.verification=self.pending
             self.pending=None
             return {name:copy.deepcopy(self.completed[name]['observation']['pin']) for name in names}
         except BaseException as error:self._failed(error)

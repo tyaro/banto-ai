@@ -132,18 +132,28 @@ def _plan(verifier, names):
               'initial reader exact fresh source/identity inventory')
 
 
-def prepare_entry(parent, *, inventory_raw, inventory_pin, names, append_control_limits=None):
+def prepare_entry(parent, *, inventory_raw, inventory_pin, names, append_control_limits=None,
+                  publication_admission=None):
     """Publish caller-held bytes in the measured channel, no launch or new clock."""
+    held_publication=publication_admission  # Keep the original caller gate before validation/root IO.
     controls=copy.deepcopy(append_control_limits)
     if append_control_limits is not None:
         actors.archive.ArchiveAppendAdmission.validate_controls(controls)
     v.require(isinstance(parent,channel.ParentChannel), 'reader original parent endpoint')
+    if held_publication is not None:
+        v.require(type(held_publication) is actors.archive.ControlPublicationAdmission and
+            controls is not None and held_publication.endpoint is parent and
+            isinstance(held_publication.owner,ReaderGitParent) and held_publication.owner.parent is parent and
+            held_publication.owner.inventory_publication is held_publication and
+            held_publication.control_limits==controls and held_publication.inventory_pin==inventory_pin,
+            'reader original parent inventory publication context')
     parent._live()
     verifier = actors.proof.ProofVerifier(endpoint=parent, inventory_raw=inventory_raw,
         inventory_pin=inventory_pin, read_evidence=lambda _:None)
     _plan(verifier,names)
     path = parent.root/'worker-inventory.json'
-    io._exclusive(path,inventory_raw)
+    if held_publication is None:io._exclusive(path,inventory_raw)
+    else:channel._write(path,verifier.inventory,publication_admission=held_publication)
     actors.proof.evidence._raw(observed._file(path,channel.MAX_CONTROL),inventory_pin,'reader inventory readback')
     root = paths.regular_path(Path(parent.request['budget_root']),directory=True)
     stat = root.lstat()
@@ -158,6 +168,8 @@ def prepare_entry(parent, *, inventory_raw, inventory_pin, names, append_control
         raw=io.json_bytes(value)
         v.require(len(raw)<=channel.MAX_CONTROL,'reader bounded append context')
         result.update(format=APPEND_ENTRY_FORMAT,append_plan={'value':value,'pin':observed._pin(raw)})
+    if held_publication is not None:
+        held_publication.verify_publications(('worker-inventory.json',))
     return result
 
 
@@ -245,6 +257,9 @@ class ReaderGitParent:
         result.repository, result.names = Path(repository), names
         result.profile_pin = copy.deepcopy(profile_pin)
         result.worker=result.error=None
+        result.inventory_publication = result.inventory_publication_error = None
+        result.inventory_pending_owner = None
+        result.rejected_inventory_publication = None
         result.parent=channel.ParentChannel.create(root=target,revision=revision,policy=policy,
             budget=shared,verify_quiescent=lambda _raw,_count:False)
         result.clock=copy.deepcopy(result.parent.request['clock'])
@@ -266,7 +281,22 @@ class ReaderGitParent:
             inventory_pin=pin,checkpoint=result.checkpoint)
         result.parent.verify_quiescent=result.verifier
         options={} if result.append_controls is None else {'append_control_limits':result.append_controls}
-        result.entry=prepare_entry(result.parent,inventory_raw=raw,inventory_pin=pin,names=names,**options)
+        if result.append_controls is not None:
+            stat=paths.regular_path(Path(result.parent.request['budget_root']),directory=True).lstat()
+            result.inventory_root_identity=(stat.st_dev,stat.st_ino)
+            result.inventory_checkpoint=result.checkpoint  # Stable original bound callable; no new clock/sampler.
+            result.inventory_publication=actors.archive.ControlPublicationAdmission(endpoint=result.parent,
+                inventory_pin=pin,root_identity=result.inventory_root_identity,control_limits=result.append_controls,
+                checkpoint=result.inventory_checkpoint,owner=result)
+            options['publication_admission']=result.inventory_publication
+        try:
+            result.entry=prepare_entry(result.parent,inventory_raw=raw,inventory_pin=pin,names=names,**options)
+        except BaseException as failure:
+            if result.inventory_publication is not None:
+                result.error=result.inventory_publication_error=failure
+                result.inventory_pending_owner=result.inventory_publication.pending
+                failure.reader_git_parent=result  # Bootstrap Python/stream survives the failed return.
+            raise
         result.checkpoint()
         return result
 
@@ -287,25 +317,56 @@ class ReaderGitParent:
             self.parent._live()
             root=paths.regular_path(Path(self.parent.request['budget_root']),directory=True)
             stat=root.lstat()
-            v.require([stat.st_dev,stat.st_ino]==self.entry['budget_root_identity'],
+            identity=self.entry['budget_root_identity'] if hasattr(self,'entry') else list(self.inventory_root_identity)
+            v.require([stat.st_dev,stat.st_ino]==identity,
                       'reader original measured outer identity changed')
         except BaseException as failure:
             if self.error is None:self.error=failure
             raise
 
     def source(self):
+        self._inventory_ready()
         self.checkpoint()
         return selected_source(self.repository,self.parent.request['revision'],self.source_pins,self.names)
 
     def bind(self, process):
         v.require(self.worker is None, 'reader original worker bind once')
         self.worker=process  # Before checkpoint, bind or native identity IO.
+        self._inventory_ready()
         self.parent.bind(process)
         binding,_=self.parent._binding()
         return copy.deepcopy(binding['worker_identity'])
 
     def fence(self, process):
+        self._inventory_ready()
         return self.parent.fence(process)
+
+    def _inventory_ready(self):
+        if self.inventory_publication_error is not None:
+            raise self.inventory_publication_error  # Never overwrite the original rejected/pending owners.
+        gate=getattr(self,'inventory_publication',None)
+        sidecar=getattr(self,'control_publication_owner',None)
+        if self.inventory_pending_owner is None and getattr(gate,'pending',None) is not None:
+            self.inventory_pending_owner=gate.pending
+        self.rejected_inventory_publication=(gate,sidecar)  # Keep rejected IO owners before diagnostics.
+        if gate is None and sidecar is None:return
+        try:
+            if self.inventory_publication_error is not None:raise self.inventory_publication_error
+            if gate.error is not None:raise gate.error
+            v.require(type(gate) is actors.archive.ControlPublicationAdmission and sidecar is gate and
+                gate.owner is self and gate.endpoint is self.parent and gate.checkpoint is self.inventory_checkpoint and
+                gate.inventory_pin==self.entry['inventory_pin'] and gate.control_limits==self.append_controls and
+                list(gate.identity)==self.entry['budget_root_identity'],
+                'reader same original parent inventory gate, clock, context and root')
+            v.require(gate.pending is None,'reader original inventory IO remains pending')
+            gate.verify_publications(('worker-inventory.json',),cached=True)
+        except BaseException as failure:
+            if self.inventory_pending_owner is None and getattr(gate,'pending',None) is not None:
+                self.inventory_pending_owner=gate.pending
+            if self.inventory_publication_error is None:self.inventory_publication_error=failure
+            if self.error is None:self.error=failure
+            failure.reader_git_parent=self
+            raise
 
 
 class ReaderGitWorker:
