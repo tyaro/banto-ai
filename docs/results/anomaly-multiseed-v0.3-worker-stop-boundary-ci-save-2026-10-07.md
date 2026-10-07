@@ -1,5 +1,9 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## append gate/forwardingの未保存CI（2026-10-08）
+
+37685672435（実fullbff9d30fa21ff05fb94d7cf5fe734dd044810739/各minor3544予定）、37686697633（実fullf54cfa991ada7dde9be8b4cd9d67594e3740f280/3545予定）は直近3.12success/3.14in_progress、run終端未確認。新forwarding codeの37689828218は実full3a910b596c079deabc1ebcfe2fedf7b3abbeee22/3556予定/in_progress。今回は終端raw download・local回帰・runner v2保存を増やしていない。各終端を外部fullHEAD/workflow/run/attempt/jobsへ固定して一度だけ新専用rootへ保存する。doc-only追補はskip ci、未終端・空選択をsuccessへ読み替えない。
+
 ## raw allocation/forwardingのCI2件を保存（2026-10-08）
 
 CI37677397653は外部fullHEAD `37b7feb400c754c5030b3164f020390cf36572d7`/attempt1/push、3.12 job112984326517/3.14 job112984327129/compare113003057726。CI37680026029はfullHEAD `26cf5cab7cdd1a5c2eb3d45757b5d20d8010e7a1`/attempt1/push、3.12 job112993347315/3.14 job112993347461/compare113011946224。共通workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`、各minor3529/3536・fail0/error0/skip237/source不変・全3job success。各専用rootへ10raw14pin/local-remote一致/共有29fixture必須28/runner v2 consistent_candidateまで保存。
