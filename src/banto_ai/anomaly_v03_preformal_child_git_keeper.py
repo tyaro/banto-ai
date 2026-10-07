@@ -98,6 +98,12 @@ class ChildGitKeeper:
                     'keeper original native creation identity')
                 self.reaped = {'process_identity':copy.deepcopy(identity),'exit_code':code,
                                'accounting':copy.deepcopy(accounting)}
+            if (getattr(self.original, 'attribute_list_cleanup_pending', False) or
+                    getattr(self.original, 'unknown_close_handles', ())):
+                # Stop/reap the original root, but never repeat a Delete/Close
+                # whose completion was not observed. Keep its buffer and handles.
+                self.blocked = True
+                return None
             attempted = dict(self.remaining)
             try:
                 event = owner._close_handles(kernel, attempted,

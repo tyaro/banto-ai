@@ -112,6 +112,9 @@ class UnreapedJob(RuntimeError):
         self.job, self.process, self.thread, self.report = job, process, thread, report
         self.extra_handles = dict(extra_handles or {})
         self.original_error = self.stop_error = None
+        self.cleanup_error = self.attributes = None
+        self.attribute_list_cleanup_pending = False
+        self.unknown_close_handles = ()
         super().__init__('owned Job process exit could not be confirmed')
 
 
@@ -579,21 +582,38 @@ def _spawn_cli(k, argv, cwd, stdin, stdout, stderr, *, environment=None):
     except BaseException as error:
         spawn_error = error
     finally:
+        retained = UnreapedJob(job, created.hProcess or None, created.hThread or None,
+            {'status':'failed','phase':'spawn_cleanup','assignment_confirmed':assigned,
+             'formal_permission':False},
+            extra_handles={'inherited_'+str(index):handle for index,handle in enumerate(inherited)})
+        retained.original_error = spawn_error
+        retained.attributes = attributes  # Keep its Python buffer alive before Delete/diagnostics.
+        retained.attribute_list_cleanup_pending = attributes_ready
         if attributes_ready:
-            k.DeleteProcThreadAttributeList(attributes)
+            try:
+                k.DeleteProcThreadAttributeList(attributes)
+                retained.attribute_list_cleanup_pending = False
+            except BaseException as error:
+                retained.cleanup_error = error
+                raise retained from error
         # These are parent-side duplicates only. The child inherited its own
         # copies at CreateProcessW and can keep writing after these close.
-        unclosed_stdio = {
-            'inherited_' + str(index): handle
-            for index, handle in enumerate(inherited)
-            if not k.CloseHandle(handle)}
+        stdio_owner = None
+        try:
+            _close_handles(k, retained.extra_handles,
+                {'status':'failed','phase':'spawn_stdio_close','formal_permission':False})
+            unclosed_stdio = {}
+        except UnclosedHandles as error:
+            retained.cleanup_error = stdio_owner = error
+            retained.extra_handles = dict(error.handles)
+            unclosed_stdio = dict(error.handles)
+            if error.close_error is not None:
+                retained.unknown_close_handles = tuple(error.handles)
+                raise retained from error
     if spawn_error is not None or unclosed_stdio:
         _reap_partial_spawn(k, job, created, assigned, unclosed_stdio)
         if unclosed_stdio:
-            raise UnclosedHandles(unclosed_stdio, {
-                'status': 'failed', 'phase': 'spawn_stdio_close',
-                'stop_reason': 'handle_close',
-                'formal_permission': False}) from spawn_error
+            raise stdio_owner from spawn_error
         raise spawn_error
     return result
 
