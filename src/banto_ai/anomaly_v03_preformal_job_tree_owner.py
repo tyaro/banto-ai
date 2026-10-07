@@ -127,6 +127,59 @@ class UnclosedHandles(RuntimeError):
         super().__init__('owned Job handles could not all be closed')
 
 
+class SpawnIOOwner:
+    """Keep caller-owned readers/sinks/writers across opt-in spawn cleanup.
+
+    This creates no pipe and grants no output/recovery/close proof. Even before
+    a Job exists, the original exception keeps every supplied IO resource.
+    """
+    def __init__(self, *, read_handles, sinks, writers):
+        self.original_inputs = (read_handles, sinks, writers)
+        self.read_handles, self.sinks, self.writers = read_handles, sinks, writers
+        self.native = UnreapedJob(None, None, None,
+            {'status':'pending','phase':'spawn_io','formal_permission':False})
+        self.native.spawn_io_owner = self
+        self.entered = False
+        self.binding = self.rejected_binding = self.alias_conflict = None
+        self.secondary_owner = None
+        try:
+            for name in ('read_handles','sinks','writers'):
+                value = getattr(self, name)
+                if type(value) is dict:
+                    setattr(self, name, dict(value))
+            for name in ('read_handles','sinks','writers'):
+                value = getattr(self, name)
+                paths.require(type(value) is dict and set(value) == {'stdout','stderr'},
+                              'spawn original IO mapping')
+            paths.require(all(type(h) is int and 0 < h < 2**64 for h in self.read_handles.values())
+                          and len(set(self.read_handles.values())) == 2,
+                          'spawn distinct additional read handles')
+            paths.require(len({id(stream) for mapping in (self.sinks,self.writers)
+                               for stream in mapping.values()}) == 4,
+                          'spawn original separate IO streams')
+        except BaseException as error:
+            self.native.original_error = error
+            raise self.native from error
+
+    def enter(self, kernel, stdin, stdout, stderr):
+        binding = (kernel, stdin, stdout, stderr)
+        if self.entered:
+            self.rejected_binding = binding
+            paths.require(False, 'spawn IO owner cannot be rearmed')
+        self.binding = binding  # Before import/environment/Job/stdio/native IO.
+        self.entered = True
+        paths.require(stdout is self.writers['stdout'] and stderr is self.writers['stderr'],
+                      'spawn uses the original caller write streams')
+
+    def require_disjoint(self):
+        native = self.native
+        conflict = set(self.read_handles.values()) & {
+            native.job, native.process, native.thread, *native.extra_handles.values()}
+        if conflict:
+            self.alias_conflict = tuple(sorted(conflict))
+            paths.require(False, 'spawn readers cannot alias core/inherited handles')
+
+
 def _kernel():
     if os.name != 'nt':
         raise OSError('Windows Job fixture only')
@@ -526,7 +579,35 @@ def _environment_block(environment):
     return ctypes.create_unicode_buffer(text, len(text))
 
 
-def _spawn_cli(k, argv, cwd, stdin, stdout, stderr, *, environment=None):
+def _spawn_cli(k, argv, cwd, stdin, stdout, stderr, *, environment=None, spawn_io=None):
+    if spawn_io is None:
+        return _spawn_cli_inner(k, argv, cwd, stdin, stdout, stderr, environment=environment)
+    # Keep all entry inputs even when the opt-in descriptor is rejected.
+    rejected = UnreapedJob(None, None, None,
+        {'status':'failed','phase':'spawn_io_entry','formal_permission':False})
+    rejected.spawn_io_inputs = (spawn_io, k, stdin, stdout, stderr)
+    retained = rejected
+    try:
+        paths.require(type(spawn_io) is SpawnIOOwner, 'spawn original IO owner required')
+        retained = spawn_io.native
+        spawn_io.enter(k, stdin, stdout, stderr)
+        return _spawn_cli_inner(k, argv, cwd, stdin, stdout, stderr,
+                                environment=environment, held_io=spawn_io)
+    except BaseException as error:
+        if isinstance(error, (UnreapedJob, UnclosedHandles)) and error is not retained:
+            # _new_job/cleanup may already own a different exact native exception.
+            error.spawn_io_owner = spawn_io
+            if type(spawn_io) is SpawnIOOwner:
+                spawn_io.secondary_owner = error
+            raise
+        if error is retained:
+            raise
+        if retained.original_error is None:
+            retained.original_error = error
+        raise retained from error
+
+
+def _spawn_cli_inner(k, argv, cwd, stdin, stdout, stderr, *, environment=None, held_io=None):
     """Create suspended, assign to a non-breakaway Job, then return handles.
 
     Only the three duplicated standard handles are inherited. The caller owns
@@ -535,25 +616,43 @@ def _spawn_cli(k, argv, cwd, stdin, stdout, stderr, *, environment=None):
     import msvcrt
 
     block = None if environment is None else _environment_block(environment)
+    if held_io is not None:
+        held_io.native.environment_block = block
     job = _new_job(k)
+    if held_io is not None:
+        held_io.native.job = job
     created = _ProcessInformation()
+    if held_io is not None:
+        held_io.native.created_process_info = created
     inherited = []
+    if held_io is not None:
+        held_io.native.inherited_snapshot = inherited
     attributes = None
     attributes_ready = False
     assigned = False
     result = spawn_error = None
     try:
+        if held_io is not None:
+            held_io.require_disjoint()
         self_handle = k.GetCurrentProcess()
         for stream in (stdin, stdout, stderr):
             duplicate = w.HANDLE()
+            if held_io is not None:
+                held_io.native.pending_duplicate = duplicate
             _need(k.DuplicateHandle(self_handle, msvcrt.get_osfhandle(stream.fileno()),
                                     self_handle, ctypes.byref(duplicate), 0, True,
                                     DUPLICATE_SAME_ACCESS), 'DuplicateHandle stdio')
             inherited.append(duplicate.value)
+            if held_io is not None:
+                held_io.native.extra_handles = {'inherited_'+str(i):h for i,h in enumerate(inherited)}
+                held_io.native.pending_duplicate = None
+                held_io.require_disjoint()
         size = ctypes.c_size_t()
         k.InitializeProcThreadAttributeList(None, 1, 0, ctypes.byref(size))
         _need(size.value > 0, 'InitializeProcThreadAttributeList sizing')
         attributes = ctypes.create_string_buffer(size.value)
+        if held_io is not None:
+            held_io.native.attributes = attributes
         _need(k.InitializeProcThreadAttributeList(attributes, 1, 0,
                                                   ctypes.byref(size)),
               'InitializeProcThreadAttributeList')
@@ -579,6 +678,9 @@ def _spawn_cli(k, argv, cwd, stdin, stdout, stderr, *, environment=None):
                                ctypes.cast(ctypes.byref(startup),
                                            ctypes.POINTER(_StartupInfo)),
                                ctypes.byref(created)), 'CreateProcessW')
+        if held_io is not None:
+            held_io.native.process, held_io.native.thread = created.hProcess, created.hThread
+            held_io.require_disjoint()
         _need(k.AssignProcessToJobObject(job, created.hProcess),
               'AssignProcessToJobObject')
         member = w.BOOL()
@@ -589,13 +691,21 @@ def _spawn_cli(k, argv, cwd, stdin, stdout, stderr, *, environment=None):
     except BaseException as error:
         spawn_error = error
     finally:
-        retained = UnreapedJob(job, created.hProcess or None, created.hThread or None,
+        retained = (held_io.native if held_io is not None else UnreapedJob(
+            job, created.hProcess or None, created.hThread or None,
             {'status':'failed','phase':'spawn_cleanup','assignment_confirmed':assigned,
              'formal_permission':False},
-            extra_handles={'inherited_'+str(index):handle for index,handle in enumerate(inherited)})
+            extra_handles={'inherited_'+str(index):handle for index,handle in enumerate(inherited)}))
+        if held_io is not None:
+            retained.job, retained.process, retained.thread = job, created.hProcess or None, created.hThread or None
+            retained.report = {'status':'failed','phase':'spawn_cleanup',
+                               'assignment_confirmed':assigned,'formal_permission':False}
+            retained.extra_handles = {'inherited_'+str(i):h for i,h in enumerate(inherited)}
         retained.original_error = spawn_error
         retained.attributes = attributes  # Keep its Python buffer alive before Delete/diagnostics.
         retained.attribute_list_cleanup_pending = attributes_ready
+        if held_io is not None and held_io.alias_conflict is not None:
+            raise retained from spawn_error  # Never close an aliased read handle as stdio.
         if attributes_ready:
             try:
                 k.DeleteProcThreadAttributeList(attributes)
@@ -607,9 +717,12 @@ def _spawn_cli(k, argv, cwd, stdin, stdout, stderr, *, environment=None):
         # copies at CreateProcessW and can keep writing after these close.
         stdio_owner = None
         try:
-            _close_handles(k, retained.extra_handles,
+            stdio_event = _close_handles(k, retained.extra_handles,
                 {'status':'failed','phase':'spawn_stdio_close','formal_permission':False})
             unclosed_stdio = {}
+            if held_io is not None:
+                retained.stdio_close_event = stdio_event
+                retained.extra_handles = {}
         except UnclosedHandles as error:
             retained.cleanup_error = stdio_owner = error
             retained.extra_handles = dict(error.handles)
@@ -618,6 +731,10 @@ def _spawn_cli(k, argv, cwd, stdin, stdout, stderr, *, environment=None):
                 retained.unknown_close_handles = tuple(error.handles)
                 raise retained from error
     if spawn_error is not None or unclosed_stdio:
+        if held_io is not None:
+            # Preserve this exact core + additional IO. The opt-in keeper must
+            # stop/reap before a separate verified IO/core close handoff.
+            raise retained from (spawn_error if spawn_error is not None else stdio_owner)
         _reap_partial_spawn(k, job, created, assigned, unclosed_stdio)
         if unclosed_stdio:
             raise stdio_owner from spawn_error
