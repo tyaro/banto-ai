@@ -27,6 +27,10 @@ JOB_OWNERSHIP = 'windows-private-job-v1'
 MAX_EXE = 64 * 1024**2
 MAX_STDERR = 64 * 1024
 MAX_RECEIPT = 16 * 1024
+SOURCE_TOOLS = frozenset('tools/' + name + '.py' for name in (
+    'preformal_owned_generated_trial', 'preformal_saved_row_reread_trial',
+    'preformal_contiguous_document_budget_trial', 'preformal_bound_document_trial',
+    'preformal_bound_slice_trial'))
 MAX_OUTPUT = {'head': 128, 'status': 64 * 1024,
               'source_blob': 64 * 1024**2}
 FIXED_ENV = {'GIT_CONFIG_NOSYSTEM': '1',
@@ -125,7 +129,8 @@ def _command(policy, operation, source_path, expected_output_pin):
     v.require(operation in MAX_OUTPUT, 'owned Git operation allowlist')
     if operation == 'source_blob':
         v.safe_relative_path(source_path)
-        v.require(type(source_path) is str and source_path.startswith('src/'),
+        v.require(type(source_path) is str and
+                  (source_path.startswith('src/') or source_path in SOURCE_TOOLS),
                   'owned Git source path')
         evidence._pin(expected_output_pin)
         v.require(expected_output_pin['bytes'] <= MAX_OUTPUT[operation],
@@ -289,6 +294,27 @@ def verify_retained(receipt_root, expected_receipt_pin, *, root, policy):
     target = Path(receipt_root)
     v.require(target.is_absolute(), 'retained Git receipt root')
     raw = observed._file(target / 'receipt.json', MAX_RECEIPT)
+    return _verify_receipt(raw, expected_receipt_pin, root=root, policy=policy,
+        output_pin=lambda name, maximum: _pin_output(target / (name + '.bin'), maximum),
+        stdout=lambda: observed._file(target / 'stdout.bin', MAX_OUTPUT['head']))
+
+
+def verify_raw(receipt_raw, expected_receipt_pin, *, stdout_raw, stderr_raw, root, policy):
+    """Apply the retained receipt checks to bounded bytes in a saved archive."""
+    v.require(type(receipt_raw) is bytes and len(receipt_raw) <= MAX_RECEIPT and
+              type(stdout_raw) is bytes and type(stderr_raw) is bytes,
+              'retained owned Git raw byte inputs')
+    outputs = {'stdout': stdout_raw, 'stderr': stderr_raw}
+
+    def output_pin(name, maximum):
+        raw = outputs[name]
+        return (observed._pin(raw) if len(raw) <= maximum else None), len(raw)
+
+    return _verify_receipt(receipt_raw, expected_receipt_pin, root=root, policy=policy,
+                           output_pin=output_pin, stdout=lambda: stdout_raw)
+
+
+def _verify_receipt(raw, expected_receipt_pin, *, root, policy, output_pin, stdout):
     evidence._raw(raw, expected_receipt_pin, 'retained owned Git receipt')
     receipt = v.strict_json(raw)
     changed_executable = receipt['reason'] in (
@@ -329,7 +355,7 @@ def verify_retained(receipt_root, expected_receipt_pin, *, root, policy):
               'retained owned Git argv')
     for name, maximum in (('stdout', MAX_OUTPUT[receipt['operation']]),
                           ('stderr', MAX_STDERR)):
-        pin, size = _pin_output(target / (name + '.bin'), maximum)
+        pin, size = output_pin(name, maximum)
         v.require(pin == receipt[name + '_pin'] and
                   size == receipt[name + '_bytes'],
                   'retained owned Git ' + name)
@@ -366,7 +392,7 @@ def verify_retained(receipt_root, expected_receipt_pin, *, root, policy):
                   receipt['stdout_pin'] is not None,
                   'retained owned Git successful exit')
         identity = receipt['process_identity']
-        if os.name == 'nt':
+        if os.name == 'nt' or expected_format == JOB_FORMAT:
             v.require(set(identity) == {
                 'pid', 'creation_time_100ns', 'start_token',
                 'native_start_identity_authenticated'} and
@@ -386,7 +412,7 @@ def verify_retained(receipt_root, expected_receipt_pin, *, root, policy):
                 identity['native_start_identity_authenticated'] is False,
                 'retained owned Git non-Windows identity scope')
         if receipt['operation'] == 'head':
-            v.require((target / 'stdout.bin').read_bytes().strip() ==
+            v.require(stdout().strip() ==
                       policy['revision'].encode('ascii'),
                       'retained owned Git HEAD')
         elif receipt['operation'] == 'status':
