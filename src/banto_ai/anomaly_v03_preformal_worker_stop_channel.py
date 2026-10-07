@@ -46,7 +46,12 @@ def _read(path, pin=None):
     return value, observed._pin(raw)
 
 
-def _write(path, value):
+def _write(path, value, *, publication_admission=None):
+    if publication_admission is not None:
+        from .anomaly_v03_preformal_worker_git_archive import ControlPublicationAdmission
+        v.require(type(publication_admission) is ControlPublicationAdmission,
+                  'channel explicit original control publication admission')
+        return publication_admission.publish(path,value)
     raw = io.json_bytes(value)
     v.require(len(raw) <= MAX_CONTROL, 'channel frame byte bound')
     pin = observed._pin(raw)

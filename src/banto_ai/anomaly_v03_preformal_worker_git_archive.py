@@ -168,6 +168,154 @@ def checked_append_plan(entry, *, request, request_pin, inventory_pin, root_iden
     return copy.deepcopy(value['control_limits'])
 
 
+class ControlPublicationAdmission:
+    """Retained named control IO for an existing endpoint, not a shared lock.
+
+    Request bootstrap and issuing this gate to all callers remain separate.
+    Python FileIO.close evidence never substitutes for native owner recovery.
+    """
+    def __init__(self, *, endpoint, inventory_pin, root_identity, control_limits, checkpoint, owner):
+        self.original_endpoint = self.endpoint = endpoint
+        self.original_owner = self.owner = owner
+        self.original_checkpoint = self.checkpoint = checkpoint
+        self.original_identity, self.original_controls = root_identity, control_limits
+        self.original_inventory_pin = inventory_pin
+        self.pending = self.error = None
+        self.completed = {}
+        try:
+            self.identity, self.control_limits = copy.deepcopy(root_identity), copy.deepcopy(control_limits)
+            self.inventory_pin = copy.deepcopy(inventory_pin)
+            v.require(isinstance(endpoint,proof.channel._Channel) and hasattr(owner,'__dict__') and callable(checkpoint),
+                      'control original endpoint, retaining Python owner and checkpoint')
+            self.previous_publication_owner=getattr(owner,'control_publication_owner',None)
+            if self.previous_publication_owner is not None:
+                self.previous_publication_owner.rejected_publication=self
+                v.require(False,'control retaining owner cannot replace its original publication gate')
+            owner.control_publication_owner=self  # Before checkpoint/file IO; do not replace a prior owner.
+            self.request, self.request_pin = copy.deepcopy(endpoint.request), copy.deepcopy(endpoint.request_pin)
+            self.root, self.channel_root = Path(self.request['budget_root']), endpoint.root
+            v.require(type(self.identity) is tuple and len(self.identity)==2 and
+                all(type(n) is int and n>=0 for n in self.identity) and self.identity[1]>0,
+                'control original outer identity')
+            evidence._pin(self.inventory_pin)
+            ArchiveAppendAdmission.validate_controls(self.control_limits)
+            self.plan_raw = self._plan()
+        except BaseException as error:self._failed(error)
+
+    def _plan(self):
+        return io.json_bytes({'request_pin':self.request_pin,'inventory_pin':self.inventory_pin,
+            'root':str(self.root),'channel_root':str(self.channel_root),'root_identity':list(self.identity),
+            'control_limits':self.control_limits})
+
+    def _failed(self, error):
+        if self.error is None:self.error=error
+        self.error.control_publication_owner=self  # Retain raw/streams even if the caller propagates this error.
+        prior=getattr(self,'previous_publication_owner',None)
+        if type(prior) is ControlPublicationAdmission and prior.error is None:
+            prior.error=self.error  # A rejected rebind cannot leave the original publication owner armed.
+        raise self.error
+
+    def _view(self, stage):
+        self.checkpoint()
+        v.require(self._plan()==self.plan_raw and self.endpoint is self.original_endpoint and
+            self.checkpoint is self.original_checkpoint and self.owner is self.original_owner and
+            self.owner.control_publication_owner is self and self.endpoint.request==self.request and
+            self.endpoint.request_pin==self.request_pin and self.endpoint.root==self.channel_root,
+            'control held plan or original endpoint changed')
+        self.endpoint._live()
+        from . import anomaly_v03_preformal_generated_chain_budget as monitor
+        snapshot=monitor._directory_snapshot(self.root,32,2,self.identity)
+        held={'snapshot':snapshot,'controls':{}}
+        self.pending[stage]=held
+        for name,maximum in self.control_limits.items():
+            path=self.channel_root/name
+            paths.regular_path(path,missing=True)
+            info=path.lstat() if path.exists() else None
+            held['controls'][name]=None if info is None else {'bytes':info.st_size,
+                'identity':(info.st_dev,info.st_ino)}
+            v.require(info is None or info.st_size<=maximum,'control retained raw exceeds held maximum')
+        # Keep every future slot, including already observed files. No discount
+        # based on a later stat from a different publication instant.
+        future_bytes, future_entries=sum(self.control_limits.values()),len(self.control_limits)
+        held.update(future_bytes=future_bytes,future_entries=future_entries)
+        v.require(snapshot['directory_bytes']+future_bytes+128*1024<=1024**2 and
+            snapshot['directory_entries']+future_entries+2<=32,
+            'control future frames exceed original outer byte/entry reserve')
+
+    def _readback(self, path, stage):
+        raw=observed._file(path,proof.channel.MAX_CONTROL)
+        self.pending[stage]=raw
+        evidence._raw(raw,self.pending['pin'],'control original raw readback')
+        v.require(raw==self.pending['raw'],'control exact raw readback')
+        return raw
+
+    def publish(self, path, value):
+        if self.error is not None:raise self.error
+        try:
+            v.require(self.pending is None,'control original publication already pending')
+            self.pending={'path':path,'value':value,'owner':self.owner,'stream':None,'fd':None,
+                'raw':None,'write_return':None,'close_return':None,'close_return_observed':False}
+            pending=self.pending
+            path=Path(path);name=path.name
+            v.require(path==self.channel_root/name and name in self.control_limits and
+                not name.endswith('.pending') and name not in self.completed,
+                'control fixed completed name and exclusive publication')
+            raw=io.json_bytes(value);pending['raw']=raw;pending['pin']=observed._pin(raw)
+            v.require(type(value) is dict and len(raw)<=self.control_limits[name] and
+                len(raw)<=self.control_limits[name+'.pending'] and len(raw)<=proof.channel.MAX_CONTROL,
+                'control actual canonical raw within both caller slots')
+            if name=='request.json':
+                evidence._raw(raw,self.request_pin,'control original request pin')
+            elif name=='worker-inventory.json':
+                evidence._raw(raw,self.inventory_pin,'control original inventory pin')
+            elif name=='git-manifest.json':
+                v.require(value.get('inventory_pin')==self.inventory_pin,'control manifest inventory link')
+            elif name in ('binding.json','stop.json','ack.json'):
+                v.require(value.get('request_pin')==self.request_pin,'control original request link')
+            self._view('before')
+            staging=path.with_name(name+'.pending');pending['staging']=staging
+            paths.regular_path(path,missing=True);paths.regular_path(staging,missing=True)
+            v.require(not path.exists() and not staging.exists(),'control no overwrite or staging reuse')
+            pending['file_factory']=proof.tree.file_io.FileIO
+            stream=pending['stream']=pending['file_factory'](staging,'xb')
+            fd=pending['fd']=stream.fileno()
+            info=os.fstat(fd);pending['initial_file_identity']=(info.st_dev,info.st_ino)
+            v.require(info.st_ino>0 and info.st_size==0 and
+                pending['initial_file_identity']==(staging.stat().st_dev,staging.stat().st_ino),
+                'control original exclusive empty fd/path')
+            pending['write_attempted']=True
+            pending['write_return']=stream.write(raw)
+            v.require(type(pending['write_return']) is int and pending['write_return']==len(raw),
+                      'control exact original write return')
+            stream.flush();os.fsync(fd)
+            info=os.fstat(fd);pending['written_file_identity']=(info.st_dev,info.st_ino)
+            v.require(pending['written_file_identity']==pending['initial_file_identity'] and info.st_size==len(raw),
+                      'control original fd/count after sync')
+            self._readback(staging,'staging_raw')
+            self._view('written')
+            pending['close_attempted']=True
+            pending['close_return']=stream.close()
+            pending['close_return_observed']=True
+            v.require(pending['close_return'] is None and stream.closed is True and stream.closefd is True,
+                      'control observed Python owned fd close return')
+            self._readback(staging,'closed_raw')
+            pending['rename_attempted']=True
+            pending['rename_return']=io._rename_no_replace(staging,path)
+            v.require(pending['rename_return'] is None,'control observed no-replace publication return')
+            self._readback(path,'published_raw')
+            info=path.lstat();pending['published_file_identity']=(info.st_dev,info.st_ino)
+            v.require(pending['published_file_identity']==pending['initial_file_identity'],
+                      'control original file identity after publication')
+            self._view('after')
+            row={'pin':copy.deepcopy(pending['pin']),'file_identity':pending['published_file_identity'],
+                'python_close_return':pending['close_return'],'atomic_reservation':False,
+                'native_owner_recovered':False,'parent_ack_authorized':False,'execution_authenticated':False}
+            self.completed[name]={'observation':row,'original':pending}
+            self.pending=None
+            return copy.deepcopy(row['pin'])
+        except BaseException as error:self._failed(error)
+
+
 def _path(path, endpoint):
     path = Path(path)
     root = Path(endpoint.request['budget_root'])
