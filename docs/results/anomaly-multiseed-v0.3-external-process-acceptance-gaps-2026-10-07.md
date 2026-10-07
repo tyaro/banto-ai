@@ -1,5 +1,7 @@
 # v0.3 外部program・異常時子孫回収の受入残件（2026-10-07）
 
+最新追補: [子Git keeper/reap保全](anomaly-multiseed-v0.3-child-git-keeper-2026-10-07.md)をcode8faa921へ保存。新13焦点/14 pin・変更4file safety・clean code-save pass。元native ownerをreap/診断前に保持し、既存5秒cleanup/native creation/原named handle回収とledger/marker/sleep保全を接続。protocol stub/native0、実entry/probe/compact proof/failure raw/lease完了は未接続。次はspawn attribute/stdio cleanup例外の原owner保全、compact proof/lease、実entry/profile再準備の順。既存Unclosed/不明closeの未解決保全をackにしない。CIaacaは3178/全3job success・10raw/14pin・runner v2候補一致まで保存済み。以下は先行保存点の履歴。
+
 最新追補: [receipt/post-close quiescence](anomaly-multiseed-v0.3-git-quiescence-post-close-2026-10-07.md)をcode3016448へ保存。新16焦点/13 pin・変更4file safety・clean code-save pass。原handleをclose/診断前に保持し、実post-close eventをreceipt/native creation/exit/accountingへ結ぶ。公開verifierは全retained raw/output/policy＋close witnessを照合。protocol stub/native0、channel compact proof・子keeper・worker actorは未接続。次はreap fallbackの元owner保持→child keeper→shared stop/lease/compact proofを先に結び、実invocation/新inventory/profile準備へ進む。以下は先行保存点の履歴。
 
 最新追補: [channel v2部分公開/startup保全](anomaly-multiseed-v0.3-worker-stop-channel-publication-2026-10-07.md)をcodee5ff975へ保存。新13焦点/11 pin・変更2file safety・clean code-save pass、先行21/17反復0。pendingを同root内でraw照合→上書き禁止rename、bind前IO失敗でも元Popen保持、partial stop/startup割込みで無再arm。実worker/子keeper/実proof verifierは未接続・新native0。CIe4cb/01abは[10raw/14pin・runner v2照合](anomaly-multiseed-v0.3-worker-stop-boundary-ci-save-2026-10-07.md)まで完了。次は実Job receipt/close/失敗rawのproofと原owner keeperを先に結び、invocation接続後に新source/profile準備する。以下は先行各保存点の履歴。
