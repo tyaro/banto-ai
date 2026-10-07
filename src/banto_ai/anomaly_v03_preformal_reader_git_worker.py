@@ -235,6 +235,32 @@ class ReaderGitParent:
     def create(cls, *, root, revision, repository, policy, budget, source_pins, names, profile_pin,
                pipe_raw_limits=None, append_control_limits=None):
         result=cls()
+        result.error=None
+        result.original_bootstrap_inputs=(root,revision,repository,policy,budget,source_pins,names,profile_pin,
+            pipe_raw_limits,append_control_limits)
+        result.budget,result.shared=budget,getattr(budget,'outer',None)
+        result.request_bootstrap_owner=None
+        result.original_request_bootstrap=None
+        result.inventory_publication=result.inventory_publication_error=result.inventory_pending_owner=None
+        result.worker=None
+        try:
+            if append_control_limits is not None:
+                actors.archive.RequestBootstrapAdmission(root=root,revision=revision,policy=policy,budget=result.shared,
+                    control_limits=append_control_limits,checkpoint=result._bootstrap_checkpoint,owner=result)
+            return cls._create(result,root=root,revision=revision,repository=repository,policy=policy,budget=budget,
+                source_pins=source_pins,names=names,profile_pin=profile_pin,pipe_raw_limits=pipe_raw_limits,
+                append_control_limits=append_control_limits)
+        except BaseException as failure:
+            gate=result.original_request_bootstrap
+            if gate is not None:
+                if result.error is None:result.error=failure
+                failure.reader_git_parent=result
+                gate._failed(failure)
+            raise
+
+    @classmethod
+    def _create(cls, result, *, root, revision, repository, policy, budget, source_pins, names, profile_pin,
+                pipe_raw_limits=None, append_control_limits=None):
         result.original_source_pins, result.original_pipe_raw_limits = source_pins, pipe_raw_limits
         result.source_pins, result.pipe_raw_limits = copy.deepcopy(source_pins), copy.deepcopy(pipe_raw_limits)
         result.original_append_controls = append_control_limits
@@ -260,8 +286,9 @@ class ReaderGitParent:
         result.inventory_publication = result.inventory_publication_error = None
         result.inventory_pending_owner = None
         result.rejected_inventory_publication = None
+        bootstrap_options={} if result.request_bootstrap_owner is None else {'request_admission':result.request_bootstrap_owner}
         result.parent=channel.ParentChannel.create(root=target,revision=revision,policy=policy,
-            budget=shared,verify_quiescent=lambda _raw,_count:False)
+            budget=shared,verify_quiescent=lambda _raw,_count:False,**bootstrap_options)
         result.clock=copy.deepcopy(result.parent.request['clock'])
         calls=[]
         for phase in ('pre','post'):
@@ -301,9 +328,29 @@ class ReaderGitParent:
         result.checkpoint()
         return result
 
+    def _bootstrap_checkpoint(self):
+        """The original linked producer budget; no endpoint/inner phase reset."""
+        gate=self.original_request_bootstrap
+        if self.error is not None:raise self.error
+        v.require(gate is not None and self.request_bootstrap_owner is gate and gate.owner is self and self.shared is gate.budget and
+            self.budget is self.original_bootstrap_inputs[4] and Path(self.shared.roots['outer'])==gate.root and
+            self.shared.started_at==gate.clock['started_at'] and
+            self.shared.limits['wall_seconds']==gate.clock['wall_seconds'],
+            'reader original bootstrap shared root, clock and budget')
+        self.shared.require_stage('producer',self.budget.root)
+        self.shared.checkpoint('producer')
+        reason=self.budget.probe()
+        if reason is not None:raise monitor.resources.ResourceStop(reason)
+
     def checkpoint(self):
         try:
             if self.error is not None:raise self.error
+            gate=getattr(self,'original_request_bootstrap',None)
+            if gate is not None:
+                self.rejected_request_bootstrap=(gate,getattr(self,'request_bootstrap_owner',None))
+                v.require(type(gate) is actors.archive.RequestBootstrapAdmission and self.request_bootstrap_owner is gate,
+                          'reader original request bootstrap sidecar retained')
+                gate.verify_publications(('request.json',),cached=True)
             shared=self.shared
             v.require(shared.started_at==self.clock['started_at'] and
                 shared.limits['wall_seconds']==self.clock['wall_seconds'] and
@@ -363,6 +410,7 @@ class ReaderGitParent:
         failure.reader_git_parent=self
 
     def _inventory_ready(self):
+        if getattr(self,'original_request_bootstrap',None) is not None and self.error is not None:raise self.error
         if self.inventory_publication_error is not None:
             raise self.inventory_publication_error  # Never overwrite the original rejected/pending owners.
         gate=getattr(self,'inventory_publication',None)

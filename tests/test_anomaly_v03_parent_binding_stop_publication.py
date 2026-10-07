@@ -45,7 +45,7 @@ class ParentBindingStopPublicationTests(unittest.TestCase):
             p.bind(self.f.f.process);self.assertFalse(p.fence(self.f.f.process))
             held={name:row['original'] for name,row in gate.completed.items()}
             self.assertFalse(p.fence(self.f.f.process));p.source()
-            self.assertEqual(opened.call_count,3)
+            self.assertEqual(sum(Path(call.args[0]).name!='request.json.pending' for call in opened.call_args_list),3)
         self.assertEqual(set(held),{'worker-inventory.json','binding.json','stop.json'})
         self.assertIs(gate.verification,initial)
         self.assertEqual(gate.cached_verification['verification_names'],('worker-inventory.json','binding.json','stop.json'))

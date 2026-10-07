@@ -353,6 +353,127 @@ class ControlPublicationAdmission:
         except BaseException as error:self._failed(error)
 
 
+class RequestBootstrapAdmission(ControlPublicationAdmission):
+    """Original request publication before an endpoint or inventory pin exists.
+
+    Uses the same retained FileIO return/raw checks as named publications.
+    Future slots remain a conservative snapshot gate, never a shared lock.
+    """
+    def __init__(self, *, root, revision, policy, budget, control_limits, checkpoint, owner):
+        self.original_root, self.original_revision, self.original_policy = root, revision, policy
+        self.original_budget = self.budget = budget
+        self.original_owner = self.owner = owner
+        self.original_checkpoint = self.checkpoint = checkpoint
+        self.original_controls = control_limits
+        self.pending = self.error = self.endpoint = None
+        self.completed = {}
+        self.generation = {}
+        self.previous_bootstrap_owner = None
+        try:
+            v.require(hasattr(owner,'__dict__'),'request retaining Python owner')
+            self.previous_bootstrap_owner=getattr(owner,'request_bootstrap_owner',None)
+            if self.previous_bootstrap_owner is not None:
+                self.previous_bootstrap_owner.rejected_bootstrap=self
+                v.require(False,'request cannot replace original bootstrap owner')
+            owner.request_bootstrap_owner=self  # Before copying, validating or observing any native/file value.
+            owner.original_request_bootstrap=self
+            self.channel_root=Path(root).absolute()
+            self.revision, self.policy = copy.deepcopy(revision), copy.deepcopy(policy)
+            self.control_limits=copy.deepcopy(control_limits)
+            v.require(callable(checkpoint),'request original shared checkpoint')
+            evidence._digest(self.revision,40)
+            ArchiveAppendAdmission.validate_controls(self.control_limits)
+        except BaseException as error:self._failed(error)
+
+    def _failed(self, error):
+        if self.error is None:self.error=error
+        self.error.request_bootstrap_owner=self
+        prior=self.previous_bootstrap_owner
+        if type(prior) is RequestBootstrapAdmission and prior.error is None:prior.error=self.error
+        raise self.error
+
+    def arm(self, request):
+        if self.error is not None:raise self.error
+        self.rejected_request=request
+        try:
+            v.require(not hasattr(self,'request'),'request bootstrap arm once')
+            self.original_request=request  # Before canonical encoding, copying, pinning or any checkpoint.
+            self.request=copy.deepcopy(request)
+            self.root=Path(self.request['budget_root'])
+            self.clock=copy.deepcopy(self.request['clock'])
+            self.request_raw=io.json_bytes(self.request)
+            self.request_pin=observed._pin(self.request_raw)
+            v.require(self.request['root']==str(self.channel_root) and self.request['revision']==self.revision and
+                self.request['policy_path']==self.policy['path'] and self.request['policy_pin']==self.policy['expected_pin'] and
+                self.request['formal_permission'] is False,'request original bootstrap context')
+            proof.channel._identity(self.request['parent_identity'])
+            evidence._digest(self.request['nonce'],32)
+            stat=paths.regular_path(self.root,directory=True).lstat()
+            self.identity=(stat.st_dev,stat.st_ino)
+            self.plan_raw=self._plan()
+        except BaseException as error:self._failed(error)
+
+    def _plan(self):
+        return io.json_bytes({'request_pin':self.request_pin,'root':str(self.root),
+            'channel_root':str(self.channel_root),'root_identity':list(self.identity),
+            'control_limits':self.control_limits,'clock':self.clock})
+
+    def _view(self, stage):
+        self.checkpoint()
+        v.require(self.owner is self.original_owner and self.owner.request_bootstrap_owner is self and
+            self.budget is self.original_budget and self.checkpoint is self.original_checkpoint and
+            self._plan()==self.plan_raw and io.json_bytes(self.request)==self.request_raw and
+            self.budget.started_at==self.clock['started_at'] and
+            self.budget.limits['wall_seconds']==self.clock['wall_seconds'] and
+            self.request['root_identity']==proof.channel._directory_identity(self.channel_root),
+            'request original owner, clock, directory or plan changed')
+        if self.endpoint is not None:
+            v.require(self.endpoint is self.original_returned_endpoint and self.endpoint.request_bootstrap_owner is self and
+                self.endpoint.request_pin==self.request_pin and io.json_bytes(self.endpoint.request)==self.request_raw,
+                'request original returned endpoint link')
+        from . import anomaly_v03_preformal_generated_chain_budget as monitor
+        snapshot=monitor._directory_snapshot(self.root,32,2,self.identity)
+        held={'snapshot':snapshot,'controls':{}}
+        self.pending[stage]=held
+        for name,maximum in self.control_limits.items():
+            path=self.channel_root/name
+            paths.regular_path(path,missing=True)
+            info=path.lstat() if path.exists() else None
+            held['controls'][name]=None if info is None else {'bytes':info.st_size,'identity':(info.st_dev,info.st_ino)}
+            v.require(info is None or info.st_size<=maximum,'request retained control exceeds original maximum')
+            if name=='request.json.pending' and 'request.json' in self.completed:
+                v.require(info is None,'request unknown pending after original publication')
+        # No discount for bytes observed before another writer publishes.
+        held.update(future_bytes=sum(self.control_limits.values()),future_entries=len(self.control_limits))
+        v.require(snapshot['directory_bytes']+held['future_bytes']+128*1024<=1024**2 and
+            snapshot['directory_entries']+held['future_entries']+2<=32,
+            'request future control slots exceed original outer reserve')
+
+    def publish(self, path, value):
+        if self.error is not None:raise self.error
+        self.rejected_publication=(path,value)
+        try:
+            v.require(Path(path)==self.channel_root/'request.json' and value is self.original_request,
+                      'request bootstrap publishes original request only')
+            return super().publish(path,value)
+        except BaseException as error:self._failed(error)
+
+    def attach(self, endpoint):
+        if self.error is not None:raise self.error
+        self.rejected_endpoint=endpoint  # Before endpoint checks or disk readback.
+        try:
+            v.require(self.endpoint is None,'request bootstrap endpoint attach once')
+            self.original_returned_endpoint=endpoint
+            v.require(isinstance(endpoint,proof.channel.ParentChannel) and
+                endpoint.root==self.channel_root and endpoint.request_pin==self.request_pin and
+                io.json_bytes(endpoint.request)==self.request_raw,
+                'request endpoint formed from original observed publication')
+            self.endpoint=endpoint
+            endpoint.request_bootstrap_owner=self
+            self.verify_publications(('request.json',))
+        except BaseException as error:self._failed(error)
+
+
 def _path(path, endpoint):
     path = Path(path)
     root = Path(endpoint.request['budget_root'])

@@ -139,7 +139,35 @@ class _Channel:
 
 class ParentChannel(_Channel):
     @classmethod
-    def create(cls, *, root, revision, policy, budget, verify_quiescent):
+    def create(cls, *, root, revision, policy, budget, verify_quiescent, request_admission=None):
+        if request_admission is None:
+            return cls._create(root=root,revision=revision,policy=policy,budget=budget,
+                verify_quiescent=verify_quiescent)
+        held=request_admission
+        bootstrap_type=None
+        try:
+            from .anomaly_v03_preformal_worker_git_archive import RequestBootstrapAdmission
+            bootstrap_type=RequestBootstrapAdmission
+            v.require(type(held) is RequestBootstrapAdmission,'channel explicit original request bootstrap')
+            held.create_inputs=(root,revision,policy,budget,verify_quiescent)  # Before validation/native/file IO.
+            v.require(held.channel_root==Path(root).absolute() and held.revision==revision and
+                held.policy==policy and held.budget is budget and held.owner.request_bootstrap_owner is held,
+                'channel original bootstrap inputs')
+            return cls._create(root=root,revision=revision,policy=policy,budget=budget,
+                verify_quiescent=verify_quiescent,request_admission=held)
+        except BaseException as failure:
+            failure.request_bootstrap_input=held
+            if bootstrap_type is not None and type(held) is bootstrap_type:held._failed(failure)
+            # Import failed before the type was available. Retain/latch only
+            # Python state; this never authorizes IO or native recovery.
+            try:
+                state=vars(held)
+                if state.get('error') is None:state['error']=failure
+            except BaseException as retention_error:failure.bootstrap_retention_error=retention_error
+            raise
+
+    @classmethod
+    def _create(cls, *, root, revision, policy, budget, verify_quiescent, request_admission=None):
         v.require(callable(verify_quiescent), 'channel native quiescence verifier required')
         evidence._digest(revision, 40)
         target = Path(root).absolute()
@@ -156,11 +184,33 @@ class ParentChannel(_Channel):
         v.require(not target.exists(), 'channel exclusive new root')
         clock = {'started_at':budget.started_at,'wall_seconds':budget.limits['wall_seconds'],
                  'implementation':time.get_clock_info('monotonic').implementation}
+        if request_admission is not None:request_admission.generation['clock']=clock
         v.require(type(clock['started_at']) in (int,float) and math.isfinite(clock['started_at']) and
                   0 < clock['started_at'] <= time.monotonic(), 'channel already started clock')
         v.require(type(clock['wall_seconds']) in (int,float) and math.isfinite(clock['wall_seconds']) and
                   0 < clock['wall_seconds'] <= 1800, 'channel existing clock bound')
+        if request_admission is not None:request_admission.generation['mkdir_attempted']=target
         target.mkdir()
+        if request_admission is not None:
+            request_admission.generation['created_root']=target  # Keep successful mkdir before identity IO.
+            request={'format':FORMAT+'-request','role':'initial-reader','revision':revision,
+                'root':str(target),'budget_root':str(measured[0]),'formal_permission':False}
+            request_admission.generation['request']=request
+            request['root_identity']=_directory_identity(target)
+            request_admission.generation['parent_pid']=os.getpid()
+            request['parent_identity']=observed.creation_observation(request_admission.generation['parent_pid'])
+            request['policy_path'],request['policy_pin']=policy['path'],policy['expected_pin']
+            request['nonce']=secrets.token_hex(16)
+            request['clock']=clock
+            request_admission.arm(request)
+            pin=request_admission.publish(target/'request.json',request)
+            result=cls.__new__(cls)
+            request_admission.generation['endpoint']=result
+            cls.__init__(result,target,pin)
+            request_admission.attach(result)
+            result.verify_quiescent=verify_quiescent
+            result.worker=result.binding_pin=result.binding_error=None
+            return result
         request = {'format':FORMAT+'-request','role':'initial-reader','revision':revision,
             'root':str(target),'root_identity':_directory_identity(target),'budget_root':str(measured[0]),
             'parent_identity':observed.creation_observation(os.getpid()),

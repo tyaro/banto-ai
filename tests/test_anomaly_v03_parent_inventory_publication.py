@@ -39,7 +39,9 @@ class ParentInventoryPublicationTests(unittest.TestCase):
             for stream in made:
                 if not stream.raw.closed:stream.raw.close()  # This test's Python files only, never native recovery.
         self.addCleanup(cleanup)
-        return patch.object(tree.file_io,'FileIO',Wrapped),failure,made
+        def selected(path,mode):
+            return Wrapped(path,mode) if Path(path).name=='worker-inventory.json.pending' else factory(path,mode)
+        return patch.object(tree.file_io,'FileIO',side_effect=selected),failure,made
 
     def test_real_parent_sixty_four_inventory_publication_and_cached_source_bind_fence_do_not_reclose(self):
         factory=tree.file_io.FileIO
@@ -73,8 +75,9 @@ class ParentInventoryPublicationTests(unittest.TestCase):
 
     def test_inventory_too_small_cap_denies_before_new_file_and_holds_original_bootstrap_controller(self):
         self.controls['worker-inventory.json']=10
-        with patch.object(tree.file_io,'FileIO') as opened,self.assertRaises(ValueError) as caught:self.create()
-        opened.assert_not_called();failure=caught.exception;gate=failure.control_publication_owner
+        with patch.object(tree.file_io,'FileIO',wraps=tree.file_io.FileIO) as opened,self.assertRaises(ValueError) as caught:self.create()
+        self.assertEqual([Path(call.args[0]).name for call in opened.call_args_list],['request.json.pending'])
+        failure=caught.exception;gate=failure.control_publication_owner
         self.assertIs(failure.reader_git_parent,gate.owner);self.assertIs(gate.owner.inventory_pending_owner,gate.pending)
         self.assertIsNone(gate.pending['stream']);self.assertIsNone(gate.owner.worker)
         self.assertGreater(len(gate.pending['raw']),10)
@@ -134,15 +137,16 @@ class ParentInventoryPublicationTests(unittest.TestCase):
         with self.assertRaises(ValueError):p.source()
         self.assertIs(p.rejected_inventory_publication[0],gate);self.assertIs(p.rejected_inventory_publication[1],foreign)
 
-    def test_original_budget_stop_during_inventory_admission_holds_raw_before_file_or_worker(self):
+    def test_original_budget_stop_during_request_admission_holds_raw_before_file_or_worker(self):
         self.f.budget.probe.return_value='fixture_inventory_shared_stop'
         with patch.object(tree.file_io,'FileIO') as opened,self.assertRaises(reader.monitor.resources.ResourceStop) as caught:
             self.create()
         opened.assert_not_called();failure=caught.exception;p=failure.reader_git_parent
         self.assertEqual(failure.reason,'fixture_inventory_shared_stop')
-        self.assertIs(p.inventory_publication.error,failure);self.assertIsNone(p.worker)
-        self.assertIs(p.shared,self.f.shared);self.assertEqual(p.clock['started_at'],100.0)
-        self.assertIsNone(p.inventory_pending_owner['stream']);self.assertIsNotNone(p.inventory_pending_owner['raw'])
+        gate=p.original_request_bootstrap
+        self.assertIs(gate.error,failure);self.assertIsNone(p.worker)
+        self.assertIs(p.shared,self.f.shared);self.assertEqual(gate.clock['started_at'],100.0)
+        self.assertIsNone(gate.pending['stream']);self.assertIsNotNone(gate.pending['raw'])
 
     def test_rejected_parent_sidecar_stays_retained_after_metadata_restore_and_latched_source_denial(self):
         p=self.create();gate=p.inventory_publication
