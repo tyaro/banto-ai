@@ -567,7 +567,8 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
         reader_git=None
         if reader_git_plan is not None:
             fields={'channel_root','policy','source_pins'}
-            v.require(type(reader_git_plan) is dict and fields <= set(reader_git_plan) <= fields|{'pipe_raw_limits'}
+            v.require(type(reader_git_plan) is dict and fields <= set(reader_git_plan) <= fields|{
+                'pipe_raw_limits','append_control_limits'}
                 and outer_budget is not None and profiles is not None,
                 'reader Git requires caller plan, linked budget and fresh profiles')
             from . import anomaly_v03_preformal_reader_git_worker as reader_git_worker
@@ -575,6 +576,10 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
             if 'pipe_raw_limits' in reader_git_plan:
                 reader_git_worker._pipe_raw_limits(reader_git_plan['pipe_raw_limits'],
                     reader_git_plan['source_pins'],reader_names)
+            if 'append_control_limits' in reader_git_plan:
+                v.require('pipe_raw_limits' in reader_git_plan,'reader append caller requires explicit raw allocation')
+                reader_git_worker.actors.archive.ArchiveAppendAdmission.validate_controls(
+                    reader_git_plan['append_control_limits'])
         if outer_budget is not None:
             outer_budget.checkpoint('preflight')
         v.require(recipe_id == RECIPE, 'invented generator recipe only')
@@ -595,6 +600,8 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
         if reader_git_plan is not None:
             options={} if 'pipe_raw_limits' not in reader_git_plan else {
                 'pipe_raw_limits':reader_git_plan['pipe_raw_limits']}
+            if 'append_control_limits' in reader_git_plan:
+                options['append_control_limits']=reader_git_plan['append_control_limits']
             reader_git=reader_git_worker.ReaderGitParent.create(root=reader_git_plan['channel_root'],
                 revision=expected_revision,repository=ROOT,policy=reader_git_plan['policy'],
                 budget=outer_budget,source_pins=reader_git_plan['source_pins'],names=reader_names,

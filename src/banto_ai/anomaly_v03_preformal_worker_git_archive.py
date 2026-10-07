@@ -19,6 +19,7 @@ v, io, observed, evidence, paths = proof.v, proof.io, proof.observed, proof.evid
 FORMAT = 'anomaly-v03-preformal-worker-git-archive-v1'
 MAGIC = b'WGA1'
 MAX_BYTES, MAX_RECORD, MAX_RAW = bounds.MAX_BYTES, bounds.MAX_RECORD, bounds.MAX_RAW
+APPEND_PLAN_FORMAT = 'anomaly-v03-preformal-worker-git-append-plan-v1'
 
 
 class ArchiveAppendAdmission:
@@ -33,6 +34,13 @@ class ArchiveAppendAdmission:
         'git-manifest.json','git-proof.json','ack.json') for suffix in ('','.pending'))
     BYTE_LIMIT, ENTRY_LIMIT, RESERVE = 1024**2, 32, 128*1024
 
+    @classmethod
+    def validate_controls(cls, value):
+        v.require(type(value) is dict and set(value)==set(cls.CONTROL_NAMES) and
+            all(type(n) is int and 0<n<=proof.channel.MAX_CONTROL for n in value.values()),
+            'archive append all completed and pending control maxima')
+        return value
+
     def __init__(self, *, root, root_identity, revision, inventory_pin, control_limits, checkpoint):
         self.original_root, self.original_identity, self.original_controls = root, root_identity, control_limits
         self.original_inventory_pin, self.checkpoint = inventory_pin, checkpoint
@@ -46,9 +54,7 @@ class ArchiveAppendAdmission:
             all(type(n) is int and n>=0 for n in self.identity) and callable(checkpoint),
             'archive append held root identity and shared checkpoint')
         evidence._digest(revision,40); evidence._pin(self.inventory_pin)
-        v.require(type(self.control_limits) is dict and set(self.control_limits)==set(self.CONTROL_NAMES) and
-            all(type(n) is int and 0<n<=proof.channel.MAX_CONTROL for n in self.control_limits.values()),
-            'archive append all completed and pending control maxima')
+        self.validate_controls(self.control_limits)
         self.plan_raw=self._plan()
 
     def _plan(self):
@@ -144,6 +150,22 @@ class ArchiveAppendAdmission:
                 'execution_authenticated':False}
             self.completed.append(row); self.pending=None
         except BaseException as failure:self._failed(failure)
+
+
+def checked_append_plan(entry, *, request, request_pin, inventory_pin, root_identity):
+    """Only bind metadata to original caller pins; never authorize native work."""
+    v.require(type(entry) is dict and set(entry)=={'value','pin'},'archive append exact pinned context')
+    value=entry['value']; raw=io.json_bytes(value)
+    v.require(len(raw)<=proof.channel.MAX_CONTROL,'archive append context byte bound')
+    evidence._raw(raw,entry['pin'],'archive append held context pin')
+    v.require(type(value) is dict and set(value)=={'format','revision','request_pin','inventory_pin',
+        'budget_root','budget_root_identity','control_limits','formal_permission'} and
+        value['format']==APPEND_PLAN_FORMAT and value['formal_permission'] is False and
+        value['revision']==request['revision'] and value['request_pin']==request_pin and
+        value['inventory_pin']==inventory_pin and value['budget_root']==request['budget_root'] and
+        value['budget_root_identity']==list(root_identity), 'archive append original request/inventory/root link')
+    ArchiveAppendAdmission.validate_controls(value['control_limits'])
+    return copy.deepcopy(value['control_limits'])
 
 
 def _path(path, endpoint):

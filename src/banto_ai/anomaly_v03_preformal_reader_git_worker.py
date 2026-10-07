@@ -20,6 +20,7 @@ SOURCE_ADDITIONS = tuple('src/banto_ai/'+name+'.py' for name in (
     'anomaly_v03_preformal_generated_chain_budget','_anomaly_v03_engineering_runtime',
     '_anomaly_v03_fixture_budget','anomaly_v03_reader_evidence','anomaly_v03_consumer_evidence'))
 PROOF_FORMAT = 'anomaly-v03-preformal-reader-git-archive-proof-v1'
+APPEND_ENTRY_FORMAT = 'anomaly-v03-preformal-reader-git-append-entry-v2'
 
 
 def publish_archive_ack(actor, manifest_raw, manifest_pin):
@@ -121,8 +122,11 @@ def _plan(verifier, names):
               'initial reader exact fresh source/identity inventory')
 
 
-def prepare_entry(parent, *, inventory_raw, inventory_pin, names):
+def prepare_entry(parent, *, inventory_raw, inventory_pin, names, append_control_limits=None):
     """Publish caller-held bytes in the measured channel, no launch or new clock."""
+    controls=copy.deepcopy(append_control_limits)
+    if append_control_limits is not None:
+        actors.archive.ArchiveAppendAdmission.validate_controls(controls)
     v.require(isinstance(parent,channel.ParentChannel), 'reader original parent endpoint')
     parent._live()
     verifier = actors.proof.ProofVerifier(endpoint=parent, inventory_raw=inventory_raw,
@@ -133,9 +137,18 @@ def prepare_entry(parent, *, inventory_raw, inventory_pin, names):
     actors.proof.evidence._raw(observed._file(path,channel.MAX_CONTROL),inventory_pin,'reader inventory readback')
     root = paths.regular_path(Path(parent.request['budget_root']),directory=True)
     stat = root.lstat()
-    return {'channel_root':str(parent.root),'request_pin':copy.deepcopy(parent.request_pin),
+    result={'channel_root':str(parent.root),'request_pin':copy.deepcopy(parent.request_pin),
         'inventory_path':str(path),'inventory_pin':copy.deepcopy(inventory_pin),
         'budget_root_identity':[stat.st_dev,stat.st_ino]}
+    if append_control_limits is not None:
+        value={'format':actors.archive.APPEND_PLAN_FORMAT,'revision':parent.request['revision'],
+            'request_pin':copy.deepcopy(parent.request_pin),'inventory_pin':copy.deepcopy(inventory_pin),
+            'budget_root':parent.request['budget_root'],'budget_root_identity':result['budget_root_identity'].copy(),
+            'control_limits':controls,'formal_permission':False}
+        raw=io.json_bytes(value)
+        v.require(len(raw)<=channel.MAX_CONTROL,'reader bounded append context')
+        result.update(format=APPEND_ENTRY_FORMAT,append_plan={'value':value,'pin':observed._pin(raw)})
+    return result
 
 
 def selected_source(repository, revision, source_pins, names):
@@ -198,10 +211,15 @@ class ReaderGitParent:
 
     @classmethod
     def create(cls, *, root, revision, repository, policy, budget, source_pins, names, profile_pin,
-               pipe_raw_limits=None):
+               pipe_raw_limits=None, append_control_limits=None):
         result=cls()
         result.original_source_pins, result.original_pipe_raw_limits = source_pins, pipe_raw_limits
         result.source_pins, result.pipe_raw_limits = copy.deepcopy(source_pins), copy.deepcopy(pipe_raw_limits)
+        result.original_append_controls = append_control_limits
+        result.append_controls = copy.deepcopy(append_control_limits)
+        if append_control_limits is not None:
+            v.require(pipe_raw_limits is not None,'reader append allocation requires explicit pipe raw maxima')
+            actors.archive.ArchiveAppendAdmission.validate_controls(result.append_controls)
         if pipe_raw_limits is not None:
             _pipe_raw_limits(result.pipe_raw_limits,result.source_pins,names)
         result.budget, result.shared = budget, getattr(budget,'outer',None)
@@ -237,7 +255,8 @@ class ReaderGitParent:
         result.verifier=ReaderGitArchiveVerifier(parent=result.parent,inventory_raw=raw,
             inventory_pin=pin,checkpoint=result.checkpoint)
         result.parent.verify_quiescent=result.verifier
-        result.entry=prepare_entry(result.parent,inventory_raw=raw,inventory_pin=pin,names=names)
+        options={} if result.append_controls is None else {'append_control_limits':result.append_controls}
+        result.entry=prepare_entry(result.parent,inventory_raw=raw,inventory_pin=pin,names=names,**options)
         result.checkpoint()
         return result
 
@@ -284,18 +303,32 @@ class ReaderGitWorker:
         # Native objects come from the retaining caller, never the JSON entry.
         self.original_pipe_io = pipe_io
         self.pipe_io = None if pipe_io is None else dict(pipe_io) if type(pipe_io) is dict else pipe_io
+        self.original_entry = entry
+        entry=copy.deepcopy(entry)  # Before any channel/source/clock observation.
         self.clock = time.monotonic  # Same function for this checkpoint and the actor's call window.
         if pipe_io is not None:
             v.require(type(self.pipe_io) is dict and set(self.pipe_io) == {'kernel','stdin'},
                       'reader caller-held pipe kernel/stdin only')
-        v.require(type(entry) is dict and set(entry) == {'channel_root','request_pin',
-            'inventory_path','inventory_pin','budget_root_identity'}, 'reader Git entry exact fields')
+        append=type(entry) is dict and entry.get('format')==APPEND_ENTRY_FORMAT
+        fields={'channel_root','request_pin','inventory_path','inventory_pin','budget_root_identity'}
+        v.require(type(entry) is dict and set(entry)==fields|({'format','append_plan'} if append else set()),
+            'reader Git entry exact fields')
+        self.append_plan=copy.deepcopy(entry['append_plan']) if append else None
+        if append:
+            v.require(self.pipe_io is not None,'reader append entry requires caller-held pipe IO')
+            v.require(type(self.append_plan) is dict and set(self.append_plan)=={'value','pin'},
+                      'reader append entry exact context')
+            actors.proof.evidence._raw(io.json_bytes(self.append_plan['value']),self.append_plan['pin'],
+                                      'reader append context pin before channel IO')
         self.child = channel.ChildChannel(entry['channel_root'],entry['request_pin'])
         self.root = paths.regular_path(Path(self.child.request['budget_root']),directory=True)
         identity = entry['budget_root_identity']
         v.require(type(identity) is list and len(identity)==2 and all(type(n) is int and n>=0 for n in identity)
             and identity[1]>0, 'reader caller-held budget root identity')
         self.identity = tuple(identity)
+        if append:
+            actors.archive.checked_append_plan(self.append_plan,request=self.child.request,
+                request_pin=self.child.request_pin,inventory_pin=entry['inventory_pin'],root_identity=self.identity)
         self.error = None
         v.require(self.child.request['revision'] == revision, 'reader channel revision')
         path = Path(entry['inventory_path'])
@@ -312,6 +345,7 @@ class ReaderGitWorker:
             raise monitor.resources.ResourceStop(reason)
         options = {} if self.pipe_io is None else {'pipe_io':{
             **self.pipe_io,'clock':self.clock,'root_identity':self.identity}}
+        if append:options['append_plan']=copy.deepcopy(self.append_plan)
         self.actor = actors.WorkerGitActor(child=self.child,inventory_raw=raw,
             inventory_pin=entry['inventory_pin'],checkpoint=self.checkpoint,**options)
 

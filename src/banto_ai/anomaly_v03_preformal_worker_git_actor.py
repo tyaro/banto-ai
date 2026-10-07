@@ -17,10 +17,12 @@ keepers, owner = proof.keepers, tree.owner
 
 
 class WorkerGitActor:
-    def __init__(self, *, child, inventory_raw, inventory_pin, checkpoint, pipe_io=None):
+    def __init__(self, *, child, inventory_raw, inventory_pin, checkpoint, pipe_io=None, append_plan=None):
         # Keep caller-owned native IO before validating any opt-in descriptor.
         self.original_pipe_io = pipe_io
         self.pipe_io = None if pipe_io is None else dict(pipe_io) if type(pipe_io) is dict else pipe_io
+        self.original_append_plan = append_plan
+        self.append_plan = copy.deepcopy(append_plan)
         v.require(isinstance(child, proof.channel.ChildChannel) and callable(checkpoint),
                   'worker actor original child and common checkpoint')
         if pipe_io is not None:
@@ -35,11 +37,21 @@ class WorkerGitActor:
         self.inventory_raw, self.inventory_pin = inventory_raw, copy.deepcopy(inventory_pin)
         self.repository = Path(self.verifier.inventory['repository'])
         root = Path(child.request['budget_root'])
+        self.append_admission = None
+        if append_plan is not None:
+            v.require(self.pipe_io is not None,'worker append plan requires original pipe IO')
+            controls=archive.checked_append_plan(self.append_plan,request=child.request,
+                request_pin=child.request_pin,inventory_pin=self.inventory_pin,
+                root_identity=self.pipe_io['root_identity'])
+            self.append_admission=archive.ArchiveAppendAdmission(root=root,
+                root_identity=self.pipe_io['root_identity'],revision=child.request['revision'],
+                inventory_pin=self.inventory_pin,control_limits=controls,checkpoint=checkpoint)
         self.inflight = root / 'worker-git-inflight'
         paths.regular_path(self.inflight, directory=True, missing=True)
         v.require(not self.inflight.exists(), 'worker actor exclusive unused inflight root')
+        options={} if self.append_admission is None else {'append_admission':self.append_admission}
         self.writer = archive.WorkerGitArchive(path=root/'worker-git.bin',
-            verifier=self.verifier, checkpoint=checkpoint)
+            verifier=self.verifier, checkpoint=checkpoint,**options)
         self.leases = proof.VerifiedLeases(child=child, verifier=self.verifier)
 
     def _run_pipe(self, call):
