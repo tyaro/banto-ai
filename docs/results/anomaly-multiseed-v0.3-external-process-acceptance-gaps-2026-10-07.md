@@ -1,5 +1,7 @@
 # v0.3 外部program・異常時子孫回収の受入残件（2026-10-07）
 
+最新channel契約: [共有clock/stop/ack metadata](anomaly-multiseed-v0.3-worker-stop-channel-2026-10-07.md)をcodeaaca57cへ保存。21焦点/9 pin・変更2file safety pass。caller pin・root/creation identity・deadline・no-new-work・必須quiescence verifierを固定し、marker不在/単なるroot exitをTrueにしない。実worker invocation/Job probe/子keeper/native証拠verifierは未接続、新native0。
+
 最新owner境界: [親supervisor stop fence](anomaly-multiseed-v0.3-worker-stop-fence-2026-10-07.md)をcode01ab74fへ保存。17焦点/9 pin・変更2file safety pass。未確認時は元worker/Popen/handleとfenceを保持し、kill/wait/close/final contextに進まない。True後のwait未確認・close失敗もguarded ownerとして保持する。共有stop/ack・worker invocation・子Job keeper/actorは未接続、新native0。
 
 最新callback境界: [producer/initial-reader](anomaly-multiseed-v0.3-worker-source-callback-boundary-2026-10-07.md)をcode e4cb23aへ保存。24 distinct実試験・7 pin・変更3file safety pass、全repository safetyは30秒timeoutで未確認。workerへのpolicy/共有stop/keeper/actorは未接続、新native0。producer pre26/post24とinitial-reader14/14の在庫を固定し、次はinitial-reader小actorのowner終端・共有stop接続。
