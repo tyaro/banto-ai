@@ -4,7 +4,9 @@
 
 ## 現在の状態
 
-- **10時JSTの自走を終了**。heartbeat `banto-10` はPAUSED。元7役＋native helperの8 PIDは現在processなし、追加停止0、9:50以降の新native/code unit/agent0。CI2件と受入5残件は保存済み、正式評価は未許可。終端raw `artifacts/preformal-autonomous-until10-close-20261007/terminal.json` は 943 B / `4f37beafa2da4a29880344f48e246e1cf9a01643b32972af990ddb08da451e92`。元sourceの保存点はruntime343c863・runner検証器6f1270f、終端文書はこの保存点。
+- 人の「次に進んでください」で再開。最新code `9ddaed7b6aa63c0e12f036da5d4e828caddb819c` は親pre/post HEAD・cleanの4 Git Jobを外部policy pin・元handle・shared stopへ接続。焦点74件/9.465秒pass・13 pin一致。clean同HEADで限定4 Job（各3 member）exit0/active0/close、共通8.665/90秒、65 source前後一致、別15 raw/65 source checker pass。[親Git native](results/anomaly-multiseed-v0.3-parent-git-identity-budget-native-2026-10-07.md)。全7役の反復0、heartbeatはPAUSED。新CI37559835322はin_progress。blob/各worker Git・実ロード依存・業務子孫回収は残る。
+
+- **直前の自走履歴: 10時JSTで終了**。heartbeat `banto-10` はPAUSED。元7役＋native helperの8 PIDは現在processなし、追加停止0、9:50以降の新native/code unit/agent0。CI2件と受入5残件は保存済み、正式評価は未許可。終端raw `artifacts/preformal-autonomous-until10-close-20261007/terminal.json` は 943 B / `4f37beafa2da4a29880344f48e246e1cf9a01643b32972af990ddb08da451e92`。当時のsource保存点はruntime343c863・runner検証器6f1270f、終端文書保存点は7535164。
 
 - CI37548282365（runner v2 code HEAD6f1270f）は全3job success、両minor各3,074件・fail0/error0/skip237・source不変、共有29/必須28。10 raw保存・local/remote回帰一致。3.12/compareは20261004.327.1、3.14は20260927.320.1でrunner v2もconsistent_candidate。新しい版prerelease=trueを外部pinへ照合、digest未取得・未採択。保存index14 pinは2,821 B / `8c87a9f1df42727d594cd68d6126b8e25a88c1c765e0c565b505a4fbcb46409a`。対象CI2件の保存・照合は完了。[CI診断](results/anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)。
 
@@ -14,7 +16,7 @@
 
 - runner由来候補検証器v2を保存: jobごとのimage版、gh log prefix、外部prerelease状態、release/READMEの単一宣言を照合。焦点47件pass・対象11 pin一致、旧CI37498814612/37485069436の保存bytesと全journalはconsistent_candidate。候補は未採択・digest未取得。[証拠索引と受入5残件](results/anomaly-multiseed-v0.3-preformal-evidence-index-2026-10-07.md)。証拠索引JSON26 file/source pinは5,449 B / `9a09fb81414bad36feb91bac6738536961e234e19edc97904178b946cf03ffd9`。
 
-- 最新業務runtime code保存点: `343c8639b0acfb2be535c02b5aaf4288b8f3d43e`（producer/initial-reader在庫・元handle・common接続）。clean同HEAD r7で全7役/14 phase、103 source/全stdlib2,559、exit0/回収・親post-exitを確認。架空1区間22 payload131,144,118 B＋479 metadataから40 cluster/50,000 draw・全文書・5 payload公開まで外側690.576/1,800秒・内側352.931/1,200秒でpass。別runtime checker57 raw/103 source、集計checker4,974 raw/60 source pass。焦点108件/14.067秒・fail0/error0/skip1・対象15 pin一致、safety pass。正式経路・全source/runtime閉包・最終受入は未了。
+- 全7役nativeの保存点（旧revision）: `343c8639b0acfb2be535c02b5aaf4288b8f3d43e`（producer/initial-reader在庫・元handle・common接続）。clean同HEAD r7で全7役/14 phase、103 source/全stdlib2,559、exit0/回収・親post-exitを確認。架空1区間22 payload131,144,118 B＋479 metadataから40 cluster/50,000 draw・全文書・5 payload公開まで外側690.576/1,800秒・内側352.931/1,200秒でpass。別runtime checker57 raw/103 source、集計checker4,974 raw/60 source pass。焦点108件/14.067秒・fail0/error0/skip1・対象15 pin一致、safety pass。正式経路・全source/runtime閉包・最終受入は未了。
 - 正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0。登録holdout40 seedは未読。実設備・顧客データは対象外。
 - 実データ作業は保存済み合成dev8/smoke2、120区間・240 dataset・720評価のengineering読取り・記述報告まで。新native試行は架空入力のみ。
 - 追加agent0。全7 worker・sampler/monitor・2 checker・焦点試験は終了。全工程nativeは1試行。集計checker旧rootの残存は保全・別v2で保存証跡だけ再検証。先行3d2ebfbのCI37498814612は全3job成功・両minor各3,051件・10 raw保存/local verifier照合pass、新codeへ代用しない。runner2版の公式release/READMEもpin保存したがVM digest/正式採択なし。10時JSTの自走は終了し、heartbeat banto-10はPAUSED。旧raw/pin/失敗・登録holdout観測未読・正式flag falseを維持した。
@@ -73,7 +75,7 @@ v3では、メモリ内コードの完全認証、conhost等の全補助process�
 
 ## 次の着手と履歴
 
-必要なCI37547050883/37548282365の保存・照合は完了。10時の終了確認・最終証拠保存を済ませ、heartbeat banto-10はPAUSED。再開時の小さい実装候補は、残件source監査に記録した実Git境界の外部program policy、private Jobでの異常子孫回収、限定拒否/停止試験。文書のみの追補は追加CIを抑える。producer/initial/saved readerを含む同revision全7役nativeは343c863で終了済みなので反復しない。次の実装残件は外部program/Git/helper在庫・異常子孫回収、正式登録入力consumer、版付き契約・runner代替同定の採択。最終同revisionのLinux/Windows・正式dev8/smoke2・独立受入と全容量2倍は残る。旧成功/失敗rootを保全する。追加agent・旧agent再活性化0、10時以降は新規実行0。
+旧CI37547050883/37548282365の保存・照合は完了。再開後code9ddaed7のCI37559835322を確認・保存し、親の4 HEAD/clean Jobは反復しない。次の小さい実装候補は残るblob/worker内Gitのpolicyと限界内receipt保存、実ロード依存、業務workerのprivate Job・異常子孫回収。heartbeat banto-10はPAUSEDのまま。文書のみの追補は追加CIを抑える。producer/initial/saved readerを含む同revision全7役nativeは343c863で終了済みなので反復しない。次の実装残件は外部program/Git/helper在庫・異常子孫回収、正式登録入力consumer、版付き契約・runner代替同定の採択。最終同revisionのLinux/Windows・正式dev8/smoke2・独立受入と全容量2倍は残る。旧成功/失敗rootを保全する。追加agent・旧agent再活性化0、10時以降は新規実行0。
 
 受入までの残件は、今回scopeの共通予算証拠を正式経路へ結ぶ受入、正式同形容量2倍、26H2・保証A/B・runner代替同定の改訂契約候補、正式source/runtime在庫、最終CI/native／正式dev8/smoke2・独立受入、独立raw観測再導出。1区間の架空観測と479区間metadataを同一campaignや全観測確認へ読み替えない。架空480区間の新規生成完走を自動追加の必須にせず、旧pin・由来・上限8 drawは維持する。最終revisionと独立受入の前にS5を開始しない。
 

@@ -1,5 +1,7 @@
 # v0.3 外部program・異常時子孫回収の受入残件（2026-10-07）
 
+再開後の追補: [親HEAD/cleanの4 Git Job](anomaly-multiseed-v0.3-parent-git-identity-budget-native-2026-10-07.md)をcode9ddaed7で共通予算へ接続し、74焦点試験・clean限定native・別保存checkerがpass。親blob/worker内Git・実ロード依存・業務異常子孫は残る。以下は先行source監査時点の保存記録。
+
 ## 保存範囲
 
 clean `6f1270f05614e7127ecdd876da77dcc1805c1858` とnative code `343c8639b0acfb2be535c02b5aaf4288b8f3d43e` の選択15 sourceについて、working rawと両Git blobが一致することを確認した。保存した[静的source監査](../../artifacts/preformal-external-process-gap-audit-20261007/source-gap-audit.json)は5,938 B / SHA-256 `1624adfb0966372c1e9441d79ab1a625e5990f0cfbdb621f1a4cfcd2049aa3cf`。ASTで位置を記録した裸のGit呼出し構文は16箇所で、実行回数や全source閉包の数ではない。
