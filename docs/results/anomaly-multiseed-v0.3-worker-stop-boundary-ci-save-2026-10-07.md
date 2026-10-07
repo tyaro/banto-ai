@@ -1,5 +1,15 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## terminal初版13ac6a1のCI37604591211を保存
+
+外部fullHEAD `13ac6a18a7681a0d85185d7e4fdad92940ae1bc0`、attempt1、jobs112736876226/112736876291/112752961027。各minor3286/fail0/error0/skip237/source不変、全3job success。専用 `artifacts/ci-diagnostic-37604591211/` にrun/attempt jobs・2journal・comparison/regression・3log＋localの10raw/14pin、local/remote回帰一致、共有29fixture/必須28、runner v2 consistent_candidateまで保存した。index2783B/20187902a675541ab96534bcf848e240fce16db8a2515179a5f89f165ee31b14。
+
+3.12/3.14が20260927.320.1、compareが20261004.327.1。公式release/README metadata/blobの外部pin、各job log/journalを照合し新版prerelease=trueも一致。digest未取得/候補未採択。選択CLI7は6raw一致、skip一覧1fileは既知CRLF6差で両raw pinを保存。sidecar2289B/049baa238e6dcc103aef4e3e8899ff4d849b85c06fda0c01a872aa0c42ebec18。
+
+download44556/creation134358450664634211/tokena2fabbb1dbef450b15fa6efa0ea3f33f8cf00ae6920a9ea4b7f628e8509e53a2、verification18964/134358450884987789/token147faaf80f09d7517c73935dc4be88b1c810a8796c8dbefd59f83fcb105158beはexit0/CIM残存なし。新native0、focus反復0。後続e1b8924/202b1c3/0f249f6のnativeや最終受入へ読み替えない。
+
+未保存は37605468456（e1b8924/3287予定、run成功確認）、37609649219（202b1c3/3299予定、進行中）、37612261124（0f249f6/3311予定、進行中）。先行37602415125等は保存済み、反復しない。以下は先行保存点の履歴。
+
 正式許可false・正式credit0・登録holdout観測未読。CIは各外部HEADに限定した証拠で、後続revisionのnativeや最終S4受入を代用しない。
 
 | CI / 外部HEAD | 3.12 job / 3.14 job / compare job | 各minor件数 | index bytes / SHA-256 |
