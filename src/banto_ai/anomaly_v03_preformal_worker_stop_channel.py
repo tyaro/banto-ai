@@ -12,7 +12,7 @@ from . import anomaly_v03_preformal_owned_source_git_session as sessions
 
 v, observed, evidence, paths, io = sessions.v, sessions.observed, sessions.evidence, sessions.paths, sessions.io
 ROOT = Path(__file__).resolve().parents[2]
-FORMAT = 'anomaly-v03-preformal-worker-stop-channel-v1'
+FORMAT = 'anomaly-v03-preformal-worker-stop-channel-v2'
 MAX_CONTROL = 32 * 1024
 MAX_JOBS = 64
 
@@ -49,8 +49,14 @@ def _read(path, pin=None):
 def _write(path, value):
     raw = io.json_bytes(value)
     v.require(len(raw) <= MAX_CONTROL, 'channel frame byte bound')
-    io._exclusive(path, raw)
     pin = observed._pin(raw)
+    pending = path.with_name(path.name + '.pending')
+    paths.regular_path(path, missing=True)
+    # A failed staging write/readback remains in the measured root. Readers
+    # use only the completed name, never partial bytes or a presence-only ack.
+    io._exclusive(pending, raw)
+    _read(pending, pin)
+    io._rename_no_replace(pending, path)
     _read(path, pin)
     return pin
 
@@ -158,29 +164,38 @@ class ParentChannel(_Channel):
         pin = _write(target / 'request.json', request)
         result = cls(target, pin)
         result.verify_quiescent = verify_quiescent
-        result.worker = result.binding_pin = None
+        result.worker = result.binding_pin = result.binding_error = None
         return result
 
     def bind(self, process):
-        self._live()
         v.require(self.worker is None, 'channel bind original worker once')
-        identity = observed.creation_observation(process.pid, process._handle)
-        _identity(identity)
+        # Retain the original owner before the first fallible observation.
         self.worker = process
-        value = {'format':FORMAT+'-binding','request_pin':self.request_pin,'worker_identity':identity}
-        # Hold the expected pin before write/readback so an I/O failure cannot
-        # silently rebind a second worker after a partial publication.
-        self.binding_pin = observed._pin(io.json_bytes(value))
-        _write(self.root / 'binding.json', value)
+        try:
+            self._live()
+            identity = observed.creation_observation(process.pid, process._handle)
+            _identity(identity)
+            value = {'format':FORMAT+'-binding','request_pin':self.request_pin,'worker_identity':identity}
+            self.binding_pin = observed._pin(io.json_bytes(value))
+            _write(self.root / 'binding.json', value)
+        except BaseException as failure:
+            self.binding_error = failure
+            raise
 
     def fence(self, process):
+        v.require(process is self.worker, 'channel original Popen owner')
         self._live()
-        v.require(process is self.worker and self.binding_pin is not None, 'channel original Popen owner')
-        binding, pin = self._binding()
-        v.require(pin == self.binding_pin and binding['worker_identity'] ==
-                  observed.creation_observation(process.pid, process._handle), 'channel original creation/held binding')
+        # Also stop an unbound child after a failed binding publication.
         if self._stop() is None:
             _write(self.root / 'stop.json', {'format':FORMAT+'-stop','request_pin':self.request_pin,'no_new_jobs':True})
+        if self.binding_pin is None:
+            return False
+        try:
+            binding, pin = self._binding()
+        except FileNotFoundError:
+            return False
+        v.require(pin == self.binding_pin and binding['worker_identity'] ==
+                  observed.creation_observation(process.pid, process._handle), 'channel original creation/held binding')
         ack_path = self.root / 'ack.json'
         paths.regular_path(ack_path, missing=True)
         if not ack_path.exists():
@@ -226,6 +241,12 @@ class ChildChannel(_Channel):
             self._live()
             clock = self.request['clock']; now = time.monotonic()
             v.require(now >= clock['started_at'], 'channel clock moved backwards')
+            # A stop write that failed before atomic publication still denies
+            # new Jobs. This hint never authorizes a parent ack or cleanup.
+            pending_stop = self.root / 'stop.json.pending'
+            paths.regular_path(pending_stop, missing=True)
+            if pending_stop.exists():
+                self.stopped = True
             if self._stop() is not None or now - clock['started_at'] >= clock['wall_seconds']:
                 self.stopped = True
             try:
@@ -238,6 +259,25 @@ class ChildChannel(_Channel):
             if self.error is None:
                 self.error = failure
             return 'source_channel_invalid'
+
+    def wait_for_binding(self):
+        """Wait inside the existing clock; interruption permanently stops work."""
+        while True:
+            reason = self.probe()
+            if reason != 'source_channel_binding_pending':
+                return reason
+            try:
+                remaining = self.request['clock']['wall_seconds'] - (
+                    time.monotonic() - self.request['clock']['started_at'])
+                if remaining <= 0:
+                    self.stopped = True
+                    return 'source_channel_stopped'
+                time.sleep(min(0.25, remaining))
+            except BaseException as failure:
+                self.stopped = True
+                if self.error is None:
+                    self.error = failure
+                return 'source_channel_invalid'
 
     def begin_job(self):
         v.require(self.probe() is None and self.finished + len(self.active) < MAX_JOBS,

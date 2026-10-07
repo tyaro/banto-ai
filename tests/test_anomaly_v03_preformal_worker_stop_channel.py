@@ -201,3 +201,154 @@ class WorkerStopChannelTests(unittest.TestCase):
             channel.ParentChannel.create(root=target,revision=self.revision,policy=self.policy,
                 budget=self.budget,verify_quiescent=None)
         self.assertFalse(target.exists())
+
+
+class WorkerStopChannelPublicationTests(unittest.TestCase):
+    """Only new publication/startup risks; all identities and Jobs are stubs."""
+    setUp = WorkerStopChannelTests.setUp
+    child = WorkerStopChannelTests.child
+    proof = WorkerStopChannelTests.proof
+
+    def test_partial_binding_stage_is_pending_until_complete_publication(self):
+        child=self.child(bind=False);write=channel.io._exclusive;seen=[]
+        def staging(path,raw):
+            if path.name=='binding.json.pending':
+                path.write_bytes(raw[:20]);seen.append(child.probe())
+                self.assertFalse((self.parent.root/'binding.json').exists())
+                path.write_bytes(raw)
+            else:write(path,raw)
+        with patch.object(channel.io,'_exclusive',side_effect=staging):self.parent.bind(self.process)
+        self.assertEqual(seen,['source_channel_binding_pending']);self.assertIsNone(child.error)
+        self.assertIsNone(child.wait_for_binding());self.assertEqual(child.begin_job(),0)
+        self.assertFalse((self.parent.root/'binding.json.pending').exists())
+
+    def test_partial_binding_failure_keeps_original_popen_under_supervisor_fence(self):
+        from banto_ai import anomaly_v03_process_supervisor as monitor
+        from tests import test_anomaly_v03_process_supervisor as helpers
+        process=helpers.FakeProcess(running=True);process.pid=202;self.process=process
+        child=self.child(bind=False);failure=OSError('invented partial binding write');write=channel.io._exclusive
+        def staging(path,raw):
+            if path.name=='binding.json.pending':path.write_bytes(raw[:20]);raise failure
+            write(path,raw)
+        with patch.object(channel.io,'_exclusive',side_effect=staging), \
+             patch.object(monitor.subprocess,'CREATE_NO_WINDOW',0x08000000,create=True), \
+             patch.object(monitor.subprocess,'Popen',return_value=process), \
+             patch.object(monitor.resources,'memory_bytes',return_value={'peak_private_bytes':1000}), \
+             patch.object(monitor.resources,'require_start_resources',return_value={}), \
+             patch.object(monitor.resources,'free_resources',return_value={}):
+            with self.assertRaises(monitor.UnreconciledWorker) as caught:
+                monitor.supervise(['python','fixture-only'],self.root,self.measured/'control',
+                    {'wall_seconds':60,'private_bytes':1024**3,'output_bytes':1024**2},
+                    runtime_probe=lambda:helpers.fixture_context()[1],
+                    on_started=self.parent.bind,stop_fence=self.parent.fence)
+        self.assertIs(caught.exception.process,process);self.assertIs(self.parent.worker,process)
+        self.assertIs(self.parent.binding_error,failure);self.assertIsNotNone(self.parent.binding_pin)
+        self.assertEqual((process.kills,process.waits),(0,0));process._handle.Close.assert_not_called()
+        self.assertTrue((self.parent.root/'binding.json.pending').exists())
+        self.assertFalse((self.parent.root/'binding.json').exists());self.assertFalse((self.parent.root/'ack.json').exists())
+        self.assertEqual(child.probe(),'source_channel_stopped')
+        with self.assertRaises(ValueError):self.parent.bind(process)
+
+    def test_binding_stage_readback_failure_never_publishes_and_keeps_owner(self):
+        read=channel._read;failure=OSError('invented stage read failure')
+        def checked(path,pin=None):
+            if path.name=='binding.json.pending':raise failure
+            return read(path,pin)
+        with patch.object(channel,'_read',side_effect=checked):
+            with self.assertRaises(OSError):self.parent.bind(self.process)
+        self.assertIs(self.parent.binding_error,failure);self.assertIs(self.parent.worker,self.process)
+        self.assertTrue((self.parent.root/'binding.json.pending').exists())
+        self.assertFalse((self.parent.root/'binding.json').exists());self.assertFalse(self.parent.fence(self.process))
+
+    def test_binding_final_readback_failure_still_stops_published_child(self):
+        child=self.child(bind=False);read=channel._read;failure=OSError('invented final read failure')
+        def checked(path,pin=None):
+            if path.name=='binding.json':raise failure
+            return read(path,pin)
+        with patch.object(channel,'_read',side_effect=checked):
+            with self.assertRaises(OSError):self.parent.bind(self.process)
+        self.assertIs(self.parent.binding_error,failure);self.assertIsNone(child.probe())
+        self.assertFalse(self.parent.fence(self.process));self.assertEqual(child.probe(),'source_channel_stopped')
+        self.assertIs(self.parent.worker,self.process);self.verifier.assert_not_called()
+
+    def test_live_read_failure_before_binding_keeps_original_owner_and_error(self):
+        child=self.child(bind=False);failure=KeyboardInterrupt('invented request read interruption')
+        with patch.object(self.parent,'_live',side_effect=failure):
+            with self.assertRaises(KeyboardInterrupt):self.parent.bind(self.process)
+        self.assertIs(self.parent.worker,self.process);self.assertIs(self.parent.binding_error,failure)
+        self.assertFalse(self.parent.fence(self.process));self.assertEqual(child.probe(),'source_channel_stopped')
+
+    def test_partial_stop_write_latches_child_without_ack_or_new_job(self):
+        child=self.child();write=channel.io._exclusive;failure=OSError('invented stop write')
+        def staging(path,raw):
+            if path.name=='stop.json.pending':path.write_bytes(raw[:20]);raise failure
+            write(path,raw)
+        with patch.object(channel.io,'_exclusive',side_effect=staging):
+            with self.assertRaises(OSError):self.parent.fence(self.process)
+        self.assertEqual(child.probe(),'source_channel_stopped')
+        with self.assertRaises(ValueError):child.begin_job()
+        self.assertFalse((self.parent.root/'stop.json').exists());self.verifier.assert_not_called()
+        # A second fence preserves the failed staging file instead of rewriting it.
+        before=(self.parent.root/'stop.json.pending').read_bytes()
+        with self.assertRaises(FileExistsError):self.parent.fence(self.process)
+        self.assertEqual((self.parent.root/'stop.json.pending').read_bytes(),before)
+        self.assertIs(self.parent.worker,self.process)
+
+    def test_partial_ack_write_is_not_parent_cleanup_permission(self):
+        child=self.child();proof=self.proof();write=channel.io._exclusive;failure=OSError('invented ack write')
+        def staging(path,raw):
+            if path.name=='ack.json.pending':path.write_bytes(raw[:20]);raise failure
+            write(path,raw)
+        with patch.object(channel.io,'_exclusive',side_effect=staging):
+            with self.assertRaises(OSError):child.acknowledge(proof)
+        self.assertFalse(self.parent.fence(self.process));self.verifier.assert_not_called()
+        self.assertTrue(child.stopped);self.assertTrue((self.parent.root/'ack.json.pending').exists())
+
+    def test_atomic_publish_cannot_replace_existing_frame_or_discard_new_stage(self):
+        path=self.parent.root/'collision.json';old=channel.io.json_bytes({'old':True});path.write_bytes(old)
+        with self.assertRaises(OSError):channel._write(path,{'new':True})
+        self.assertEqual(path.read_bytes(),old)
+        self.assertEqual((self.parent.root/'collision.json.pending').read_bytes(),channel.io.json_bytes({'new':True}))
+
+    def test_rename_failure_keeps_completed_stage_and_no_new_work(self):
+        child=self.child();proof=self.proof();failure=KeyboardInterrupt('invented rename interruption')
+        with patch.object(channel.io,'_rename_no_replace',side_effect=failure):
+            with self.assertRaises(KeyboardInterrupt):child.acknowledge(proof)
+        self.assertTrue(child.stopped);self.assertFalse((self.parent.root/'ack.json').exists())
+        channel._read(self.parent.root/'ack.json.pending')
+        self.assertFalse(self.parent.fence(self.process));self.assertIs(self.parent.worker,self.process)
+
+    def test_binding_wait_uses_remaining_common_clock_and_finishes_when_published(self):
+        child=self.child(bind=False);sleeps=[]
+        def sleep(duration):
+            sleeps.append(duration);self.now+=duration;self.parent.bind(self.process)
+        with patch.object(channel.time,'sleep',side_effect=sleep):self.assertIsNone(child.wait_for_binding())
+        self.assertEqual(sleeps,[0.25]);self.assertEqual(child.request['clock']['started_at'],100.0)
+        self.assertEqual(child.request['clock']['wall_seconds'],90)
+
+    def test_binding_wait_deadline_has_no_new_job_or_native_proof(self):
+        child=self.child(bind=False);self.now=189.9;sleeps=[]
+        def sleep(duration):sleeps.append(duration);self.now+=duration
+        with patch.object(channel.time,'sleep',side_effect=sleep):
+            self.assertEqual(child.wait_for_binding(),'source_channel_stopped')
+        self.assertEqual(len(sleeps),1);self.assertAlmostEqual(sleeps[0],0.1)
+        with self.assertRaises(ValueError):child.begin_job()
+        self.verifier.assert_not_called()
+
+    def test_binding_wait_interruption_keeps_original_error_and_never_rearms(self):
+        child=self.child(bind=False);failure=KeyboardInterrupt('invented startup sleep interruption')
+        with patch.object(channel.time,'sleep',side_effect=failure):
+            self.assertEqual(child.wait_for_binding(),'source_channel_invalid')
+        self.assertIs(child.error,failure);self.parent.bind(self.process)
+        self.assertEqual(child.probe(),'source_channel_stopped')
+        with self.assertRaises(ValueError):child.begin_job()
+
+    def test_ack_staging_read_failure_preserves_stage_and_child_stop_latch(self):
+        child=self.child();proof=self.proof();read=channel._read;failure=OSError('invented ack stage read')
+        def checked(path,pin=None):
+            if path.name=='ack.json.pending':raise failure
+            return read(path,pin)
+        with patch.object(channel,'_read',side_effect=checked):
+            with self.assertRaises(OSError):child.acknowledge(proof)
+        self.assertTrue(child.stopped);self.assertTrue((self.parent.root/'ack.json.pending').exists())
+        self.assertFalse(self.parent.fence(self.process));self.verifier.assert_not_called()
