@@ -1,5 +1,29 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## sink admission／spawn handoffの2CIを保存（2026-10-08）
+
+各外部fullHEAD／attempt1／push／workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`と原job IDを固定。各専用rootにrun／attempt jobs／2journal／comparison-regression／3full log＋localの10raw/14pinを保存し、local-remote回帰一致・共有29fixture／必須28試験・runner v2 consistent_candidateまで照合した。各minor fail0/error0/skip237/source不変、全3job success。
+
+| CI | 外部fullHEAD | 各minor件数 | index bytes／SHA-256 |
+|---|---|---:|---|
+| 37654425831 | `8eba6cfa9dd3fcf633e314908327f7449fe8a9d0` | 3444 | 2783／`3e6364b85c371454a1d0c81fdfa64d488b6c58fb8a74448e929df1b1c962a400` |
+| 37655643970 | `27be314059e8f092b994258ada176dab3c17c717` | 3455 | 2783／`ffbfa42ec53aae76e724b3fd0a0d3e6856def7136e9f16419536d686082c3e49` |
+
+保存root: `artifacts/ci-diagnostic-37654425831/`。原job ID: compare-shared-fixtures=112921418199, test (3.12)=112905805508, test (3.14)=112905805765。
+
+保存root: `artifacts/ci-diagnostic-37655643970/`。原job ID: compare-shared-fixtures=112930448179, test (3.12)=112910842315, test (3.14)=112910842706。
+
+両runの3.12／3.14／compare imageは20260927.320.1。公式release／README metadata/blob／log／journal外部pinは一致、digest未取得／候補未採択。選択CLI7は6raw一致、skip一覧1fileの既知CRLF6差を両raw pinで保全。local数値照合の再実行は0。後続30d38f4の実pipe／worker／容量合格／正式受入へ読み替えない。
+
+- CI37654425831 download: PID34576／creation134358696299900533／token7837b61306885b23ebb4b271153261fbc9935a6a1e0b51e75f711014541d1135。exit0／CIM残存なし、元live/execution保持。
+- CI37654425831 verification: PID46284／creation134358696664931743／token439f3a7e9d7fc49bb333e4be7c851c6d4736c9ed6a713724ec068c223455c4d5。exit0／CIM残存なし、元live/execution保持。
+- CI37655643970 download: PID48480／creation134358696293747393／token5208eeda1bd3d80b5a9031f58f67e020b70d59487ea6788a0792231bc7ef47af。exit0／CIM残存なし、元live/execution保持。
+- CI37655643970 verification: PID48716／creation134358696668510452／tokenf36852eae3d4de06a70fd60c4a0de7a7c2d5e7145d6da437b435811c0dff60a2。exit0／CIM残存なし、元live/execution保持。
+
+元4helper終了・critical ownerなし・新code0・native0・完成焦点反復0・追加agent0。保存後の28CI pin／5source-science／docs2／clean HEAD-originを別checkpointへ照合する。正式gate=s4_acceptance_not_frozen、formal_permission=false、credit0、登録holdout観測未読を維持。
+
+未保存CI37660790390（full30d38f4485040d649fcdc7c052c06f3fa6ea642b／3468予定）は開始時in_progress。各終端をその外部fullHEADへ固定して一度保存する。doc-only新CI追跡なし。以下は保存済み履歴。
+
 ## pipe作成6a77b8eのCI37651176465を保存（2026-10-08）
 
 外部fullHEAD `6a77b8ef764ff97a4ed929ed2616b2ef6bca8c4a`／attempt1/push/workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`、jobs3.12=112894597233／3.14=112894597529／compare=112910071512を固定。各minor3432/fail0/error0/skip237/source不変、全3job success。専用 `artifacts/ci-diagnostic-37651176465/` にrun/attempt jobs／2journal／comparison-regression／3full log＋localの10raw/14pin、local-remote回帰一致／共有29fixture・必須28／runner v2 consistent_candidateを保存。
