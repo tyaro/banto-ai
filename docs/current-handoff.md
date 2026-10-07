@@ -4,6 +4,10 @@
 
 ## 現在の状態
 
+- 最新code `3ee5dc2b1f3d35cb9bfc6d1cfccec94035f9a0a4`: [bounded Git spool部品／限定native入口拒否](results/anomaly-multiseed-v0.3-bounded-git-spool-2026-10-07.md)。元stream/pending raw/原例外をIO前に保持し、read最大4096B/保存残余/枠内1byte sentinel、output_limit後read停止、write/flush/sync/clock/close不明で無再write・無blind closeを固定。native pipe/owner/root admissionは未接続、create_nativeはroot/channel/Job作成前拒否、通常経路互換。新12焦点一回0.0090987秒fail0/error0/skip0・33pin前後不変・変更3file safety・unique12/clean code-save33working-Git一致。新module0で名前30source/64Job維持、fresh pin/profile/requestは次準備。全helper終了・critical ownerなし・native0・追加agent0。次は原private Job/pipe read handles/sinkのIO前owner保持と停止/EOF/close/診断失敗→exact callの元root残余への実read/write接続。新nativeはこの接続・拒否焦点とexclusive準備が完成してから。
+
+- 最新CI37617865579（外部fulla12c3e91883d9e79fadbdd8f4b23b06f02add2ff/各minor3331）は全3job success/fail0/error0/skip237/source不変、10raw/14pin/local-remote一致/共有29/必須28/runner v2候補一致。index2783B/0595d9dbb7d76a15433a2adaf39f554e9136bc1c59dbc4ffa8f5321d72f63066。全job20260927.320.1、digest未取得/候補未採択。未保存CI37625071676（full3ee5dc2b1f3d35cb9bfc6d1cfccec94035f9a0a4/各minor3343予定）は進行中。doc-only新CIを追跡せず、以下は先行履歴。
+
 - 最新容量境界: [readerの保持順と失敗stdout残件](results/anomaly-multiseed-v0.3-reader-git-coupled-peak-plan-2026-10-07.md)。clean463f333/code a12c3e9の9source working/Gitと保存30pinを照合。順次pending公開と正常inflight3file整理を計上し、正常schemaモデルは親4identity込み786782B/診断reserve込み31entry。一方、既存source stdout1MiBをfailed rawで保持するとreaderだけ1704030Bで枠外。poll overshoot/圧縮実容量未確認・native許可false。次は限定launcherの実行前拒否とexact callの元root残余への接続、原ownerを保持したまま失敗出力も枠内へ保存する実出力経路／停止IO焦点を小さく固定→限定caller/最終clean HEAD新exclusive準備。raw artifacts/preformal-reader-git-peak-plan-20261007-01/、plan12328B/615c691e0e88b0b9e5a2d6dce3ffd67e859e273e556b6338245a42ec602ef831。新native/試験反復/profile再観測/追加agent0、全helper終了・critical ownerなし。
 
 - 最新CI37614547790（外部full217f0ea66470d24bd9ecd3043a5ec428557b6fc3/各minor3321）は全3job success/fail0/error0/skip237/source不変、10raw/14pin/local-remote一致/共有29/必須28/runner v2候補一致。index2783B/0bbdfd8b423dfa31593487d560fea024bd10987cbda3b9a18f4302de18c61fb4。全job20260927.320.1、digest未取得/候補未採択。未保存は37617865579（a12c3e9/3331予定、run成功確認）のみ。以下は先行履歴で、この上段を優先。

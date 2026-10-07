@@ -1,5 +1,7 @@
 # v0.3 外部program・異常時子孫回収の受入残件（2026-10-07）
 
+最新出力部品: [bounded Git spoolと限定native入口](anomaly-multiseed-v0.3-bounded-git-spool-2026-10-07.md)をcode3ee5dc2へ保存。投入bytesの残余制限/枠内sentinel/元stream-pending-error保全、IO不明で無再write/無blind close、新12焦点一回・33pin/safety/code-saveを確認。実native pipe/owner/root admissionは未接続、create_nativeはroot/Job前拒否を維持。次は追加pipe read handleとsinkを元ownerへ保持する停止/EOF/close/診断境界→exact callの元root残余への実read/write接続。新module0、名前30source/64Jobは維持するが旧pin/profileは流用しない。native0・全helper終了。CIa12c3e9は3331/10raw14pin/local回帰/runner候補一致まで保存、正式5残件と上限を維持。以下は先行履歴。
+
 最新容量境界: [readerの保持順](anomaly-multiseed-v0.3-reader-git-coupled-peak-plan-2026-10-07.md)をclean463f333の9source/保存30pinから固定。正常schemaモデルは親4identity込み786782B/reserve込み31entryで、全pendingの単純加算を到達ピークにしない。実失敗stdoutの上限1MiBを保持するとreaderだけ1704030B、25ms pollのovershootもhard bound未確認。次はnative前の拒否とexact callの元root残余、原ownerを保持した実出力保存／停止IO境界、限定launcherの順。新native0・profile再観測0・完成試験反復0。CI217f0eaの3321/10raw14pin/local回帰/runner候補一致まで保存、正式5残件と上限を維持。以下は先行履歴。
 
 最新準備: [reader runtime候補と容量](anomaly-multiseed-v0.3-reader-git-runtime-capacity-preparation-2026-10-07.md)をclean be03095で保存。117sourceのGit/rawと実caller import/image、fresh profile・private policy・30source/64call・上位契約の未使用4root/planを照合。native0。単純capsは1097728B、reserve後917504Bを超え、全pending＋親4identity＋診断の保守的計上は37entryで32を超える。到達可能ピークの実証ではないが、capacity合格にはしない。限定callerの正常/失敗時の共存範囲と原owner保持を先に固定する。準備2失敗は保全し保存観測の反復0、補完v3で容量表完成。旧HEAD候補を文書後HEADへ読み替えず、新request/launcher/final HEAD準備は残件。CI0f249f6は3311/10raw14pin/local回帰/runner候補一致まで保存。正式5残件と上限は維持。以下は先行履歴。
