@@ -1,5 +1,7 @@
 # v0.3 外部program・異常時子孫回収の受入残件（2026-10-07）
 
+最新追補: [channel v2部分公開/startup保全](anomaly-multiseed-v0.3-worker-stop-channel-publication-2026-10-07.md)をcodee5ff975へ保存。新13焦点/11 pin・変更2file safety・clean code-save pass、先行21/17反復0。pendingを同root内でraw照合→上書き禁止rename、bind前IO失敗でも元Popen保持、partial stop/startup割込みで無再arm。実worker/子keeper/実proof verifierは未接続・新native0。CIe4cb/01abは[10raw/14pin・runner v2照合](anomaly-multiseed-v0.3-worker-stop-boundary-ci-save-2026-10-07.md)まで完了。次は実Job receipt/close/失敗rawのproofと原owner keeperを先に結び、invocation接続後に新source/profile準備する。以下は先行各保存点の履歴。
+
 最新channel契約: [共有clock/stop/ack metadata](anomaly-multiseed-v0.3-worker-stop-channel-2026-10-07.md)をcodeaaca57cへ保存。21焦点/9 pin・変更2file safety pass。caller pin・root/creation identity・deadline・no-new-work・必須quiescence verifierを固定し、marker不在/単なるroot exitをTrueにしない。実worker invocation/Job probe/子keeper/native証拠verifierは未接続、新native0。
 
 最新owner境界: [親supervisor stop fence](anomaly-multiseed-v0.3-worker-stop-fence-2026-10-07.md)をcode01ab74fへ保存。17焦点/9 pin・変更2file safety pass。未確認時は元worker/Popen/handleとfenceを保持し、kill/wait/close/final contextに進まない。True後のwait未確認・close失敗もguarded ownerとして保持する。共有stop/ack・worker invocation・子Job keeper/actorは未接続、新native0。
