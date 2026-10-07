@@ -1,5 +1,15 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## spawn IO 1d9d70aのCI37637048268：両試験成功／run失敗を保存
+
+外部fullHEAD `1d9d70a20aba3a96646f5a0e1e2ff1a2391cb20c`、attempt1/push/workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8` を固定。runはcompleted/failure、存在するjobは3.12=112845899910／3.14=112845899395の2件で両方success。各minor3381/fail0/error0/skip237/source不変、unittest_success=true。check suite101957648963にも同じsuccess check2件だけ／annotation0、artifactも両journalの2件だけ。
+
+compare job/check／comparison-regression artifactが存在せず、run全体の失敗原因は未特定。比較jobの欠落をlocal回帰、共有fixture一致、runner候補一致、成功CIへ読み替えない。重複CI再実行0。
+
+専用 `artifacts/ci-diagnostic-37637048268/` にrun/attempt jobs/check-runs/artifacts一覧／外部HEAD workflow／2journal／2full job logの9原rawを保存。failure-complete-index.jsonは2027B／`2b932cf568e580e89767e280ce996d30c28b76789758fd2c0259d2cf61661811`。download helper46724/creation134358601691182985/token32441068b411777fe59b3df454afceb82901211d177252080ee37ea136bdc6e8はexit0/CIM残存なし、元identity/tokenをlive/executionへ保存。native0／追加agent0／formal_permission=false。
+
+未保存CIは37640186606（fullc78dbfe34827ae7a9bb7cb979da422cf0ceef1d1／3392予定）、37643113206（full0f9cb52e1b547ed70e0a352417b1846639afa322／3405予定）、37643762113（full0aaa12db38fe0caf03cc2d4bd4e036b10304fcc4／3406予定）、進行中。各終端をその外部HEAD/workflow/run/attempt/jobsへ固定して保存し、成功時だけlocal回帰／runner v2を照合する。doc-only新CI追跡なし。以下は先行履歴。
+
 ## read adapter43da351のCI37634146788を保存
 
 外部fullHEAD `43da351954ccc80af5ddc2d91b53027b80786bc3`、attempt1/push/workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`、jobs3.12=112835797417/3.14=112835797900/compare=112851378097へ固定。各minor3368/fail0/error0/skip237/source不変、全3job success。専用 `artifacts/ci-diagnostic-37634146788/` にrun/attempt jobs・2journal・comparison/regression・3log＋localの10raw/14pin、local/remote一致、共有29fixture/必須28、runner v2 consistent_candidateを保存。
