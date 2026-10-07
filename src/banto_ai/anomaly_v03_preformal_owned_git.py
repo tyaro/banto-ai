@@ -162,18 +162,22 @@ def _pin_output(path, maximum):
 
 
 def run_owned(*, root, policy, operation, receipt_root,
-              source_path=None, expected_output_pin=None, timeout_seconds=10, stop_probe=None):
+              source_path=None, expected_output_pin=None, timeout_seconds=10, stop_probe=None,
+              capture_quiescence=False):
     """Run one allowlisted Git command; save its independent direct-handle facts.
 
     The executable pin and environment come from the caller.  A failed
     subprocess still gets a bounded receipt when its handle is reaped.
     """
+    v.require(type(capture_quiescence) is bool, 'owned Git explicit quiescence capture option')
     if type(policy) is dict and 'process_ownership' in policy:
         from . import anomaly_v03_preformal_owned_git_job as tree
         return tree.run_owned(root=root, policy=policy, operation=operation,
             receipt_root=receipt_root, source_path=source_path,
             expected_output_pin=expected_output_pin, timeout_seconds=timeout_seconds,
-            **({'stop_probe': stop_probe} if stop_probe is not None else {}))
+            **({'stop_probe': stop_probe} if stop_probe is not None else {}),
+            **({'capture_quiescence':True} if capture_quiescence else {}))
+    v.require(not capture_quiescence, 'quiescence capture requires private Job ownership')
     v.require(stop_probe is None, 'shared Git stop probe requires private Job ownership')
     v.require(type(timeout_seconds) in (int, float) and
               0 < timeout_seconds <= 30, 'owned Git timeout')

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import copy
 from pathlib import Path
 from types import SimpleNamespace
 import time
@@ -12,6 +13,7 @@ from . import anomaly_v03_preformal_job_tree_owner as owner
 v, observed, dependencies, paths, io = (
     direct.v, direct.observed, direct.dependencies, direct.paths, direct.io)
 JOB = 'anomaly-v03-preformal-git-job-v1'
+QUIESCENCE = 'anomaly-v03-preformal-owned-git-quiescence-v1'
 _FIELDS = set('''format status reason prior_stop_reason operation source_path revision
     executable_path executable_expected_pin executable_links_expected executable_before
     executable_after argv cwd environment process_identity exit_code process_error_type
@@ -27,7 +29,8 @@ def _shared_stop(probe):
     return stop
 
 
-def _execute(argv, root, environment, target, operation, timeout_seconds, *, stop_probe=None):
+def _execute(argv, root, environment, target, operation, timeout_seconds, *, stop_probe=None,
+             capture_quiescence=False):
     """Retain native ownership until the root and its private Job are empty."""
     k = owner._kernel()
     job = process = thread = identity = exit_code = None
@@ -116,19 +119,27 @@ def _execute(argv, root, environment, target, operation, timeout_seconds, *, sto
         'individual_descendant_exit_codes_authenticated':False,
         'loaded_code_authenticated':False, 'whole_tree_resource_budget_measured':False,
         'observation_errors':errors}
-    owner._close_owned(k, job, process, thread, {
+    closed = owner._close_owned(k, job, process, thread, {
         'status':'failed' if reason is not None else 'complete',
         'stop_reason':reason, 'job':fact, 'formal_permission':False})
     if critical is not None:
         raise critical
-    return identity, exit_code, reason, error_type, fact, time.monotonic() - started
+    result = (identity, exit_code, reason, error_type, fact, time.monotonic() - started)
+    if capture_quiescence:
+        # This event exists only after the original native close path returned.
+        event = {'closed':closed, 'process_identity':copy.deepcopy(identity),
+                 'exit_code':exit_code, 'accounting':copy.deepcopy(accounting)}
+        return (*result, event)
+    return result
 
 
 def run_owned(*, root, policy, operation, receipt_root, source_path=None,
-              expected_output_pin=None, timeout_seconds=10, stop_probe=None):
+              expected_output_pin=None, timeout_seconds=10, stop_probe=None,
+              capture_quiescence=False):
     v.require(type(timeout_seconds) in (int, float) and 0 < timeout_seconds <= 30,
               'owned Git timeout')
     v.require(stop_probe is None or callable(stop_probe), 'owned Git shared stop probe')
+    v.require(type(capture_quiescence) is bool, 'owned Git explicit quiescence capture option')
     root, executable, environment, before = direct._policy(root, policy)
     v.require(policy.get('process_ownership') == direct.JOB_OWNERSHIP,
               'owned Git Job opt-in required')
@@ -145,9 +156,11 @@ def run_owned(*, root, policy, operation, receipt_root, source_path=None,
     paths.regular_path(target.parent, directory=True)
     paths.regular_path(target, directory=True, missing=True)
     target.mkdir()
-    identity, exit_code, reason, error_type, job, elapsed = _execute(
+    execution = _execute(
         argv, root, environment, target, operation, timeout_seconds,
-        **({'stop_probe': stop_probe} if stop_probe is not None else {}))
+        **({'stop_probe': stop_probe} if stop_probe is not None else {}),
+        **({'capture_quiescence':True} if capture_quiescence else {}))
+    identity, exit_code, reason, error_type, job, elapsed = execution[:6]
     prior_stop_reason = reason
     try:
         after = dependencies.file_observation(executable, native=True, maximum=direct.MAX_EXE)
@@ -189,8 +202,60 @@ def run_owned(*, root, policy, operation, receipt_root, source_path=None,
     io._exclusive(target/'receipt.json', raw)
     pin = observed._pin(raw)
     direct.verify_retained(target, pin, root=root, policy=policy)
-    return {'receipt':receipt, 'receipt_pin':pin, 'receipt_root':str(target),
-            'stdout':None if stdout_pin is None else (target/'stdout.bin').read_bytes()}
+    result = {'receipt':receipt, 'receipt_pin':pin, 'receipt_root':str(target),
+              'stdout':None if stdout_pin is None else (target/'stdout.bin').read_bytes()}
+    if capture_quiescence:
+        event = execution[6]
+        witness = {'format':QUIESCENCE, 'receipt_pin':pin, 'closed':event['closed'],
+                   'process_identity':event['process_identity'], 'exit_code':event['exit_code'],
+                   'accounting':event['accounting'], 'formal_permission':False}
+        _verify_close_link(raw, pin, witness)  # Full retained verification just passed above.
+        result['quiescence'] = witness
+    return result
+
+
+def verify_quiescence(receipt_raw, expected_receipt_pin, witness, *, root, policy,
+                      stdout_raw, stderr_raw):
+    """Verify retained receipt/output/policy and its linked post-close event.
+
+    This consistency check does not authenticate loaded code or grant S4 credit.
+    """
+    direct.verify_raw(receipt_raw, expected_receipt_pin, stdout_raw=stdout_raw,
+                      stderr_raw=stderr_raw, root=root, policy=policy)
+    return _verify_close_link(receipt_raw, expected_receipt_pin, witness)
+
+
+def _verify_close_link(receipt_raw, expected_receipt_pin, witness):
+    direct.evidence._raw(receipt_raw, expected_receipt_pin, 'quiescent Git receipt pin')
+    receipt = v.strict_json(receipt_raw)
+    v.require(io.json_bytes(receipt) == receipt_raw and receipt['format'] == direct.JOB_FORMAT,
+              'quiescent Git canonical private Job receipt')
+    verify_job(receipt)
+    v.require(type(witness) is dict and set(witness) == {
+        'format','receipt_pin','closed','process_identity','exit_code','accounting','formal_permission'} and
+        witness['format'] == QUIESCENCE and witness['receipt_pin'] == expected_receipt_pin and
+        witness['formal_permission'] is False, 'quiescent Git exact witness')
+    closed = witness['closed']
+    v.require(type(closed) is dict and set(closed) == {'format','closed_handles'} and
+        closed['format'] == 'anomaly-v03-owned-handles-closed-v1', 'quiescent Git close event')
+    handles = closed['closed_handles']
+    v.require(type(handles) is dict and set(handles) == {'thread','process','job'} and
+        all(type(n) is int and 0 < n < 2**64 for n in handles.values()) and
+        len(set(handles.values())) == 3, 'quiescent Git original distinct closed handles')
+    identity = receipt['process_identity']
+    v.require(type(identity) is dict and set(identity) == {
+        'pid','creation_time_100ns','start_token','native_start_identity_authenticated'} and
+        type(identity['pid']) is int and identity['pid'] > 0 and
+        type(identity['creation_time_100ns']) is int and identity['creation_time_100ns'] > 0 and
+        identity['native_start_identity_authenticated'] is True and
+        identity['start_token'] == v.canonical_sha256({key:identity[key] for key in ('pid','creation_time_100ns')}),
+        'quiescent Git original native identity')
+    v.require(receipt['job'] is not None and type(receipt['exit_code']) is int and
+        io.json_bytes(witness['process_identity']) == io.json_bytes(identity) and
+        type(witness['exit_code']) is int and witness['exit_code'] == receipt['exit_code'] and
+        io.json_bytes(witness['accounting']) == io.json_bytes(receipt['job']['accounting']),
+        'quiescent Git receipt/event identity and empty Job')
+    return True
 
 
 def verify_job(receipt):

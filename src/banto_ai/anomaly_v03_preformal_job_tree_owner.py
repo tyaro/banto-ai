@@ -119,6 +119,7 @@ class UnclosedHandles(RuntimeError):
 
     def __init__(self, handles, report):
         self.handles, self.report = dict(handles), report
+        self.close_error = self.diagnostic_error = None
         super().__init__('owned Job handles could not all be closed')
 
 
@@ -436,18 +437,35 @@ def run_fixture(evidence_dir, *, mode, wall_seconds=5.0,
 
 
 def _close_owned(k, job, process, thread, report):
-    unclosed = {}
-    for name, handle in (('thread', thread), ('process', process), ('job', job)):
-        if handle is not None and not k.CloseHandle(handle):
-            unclosed[name] = handle
-    if unclosed:
-        report['status'] = 'failed'
-        report['stop_reason'] = 'handle_close'
-        report['observation_errors'] = [*report.get('observation_errors', []),
-                                        {'stage': 'handle_close',
-                                         'error_type': 'OSError'}]
-        report['unclosed_handles'] = sorted(unclosed)
-        raise UnclosedHandles(unclosed, report)
+    handles = {name:handle for name,handle in
+               (('thread',thread),('process',process),('job',job)) if handle is not None}
+    retained = UnclosedHandles(handles, report)  # Own everything before CloseHandle or diagnostics.
+
+    def failed():
+        try:
+            report['status'] = 'failed'
+            report['stop_reason'] = 'handle_close'
+            report['observation_errors'] = [*report.get('observation_errors', []),
+                                            {'stage': 'handle_close', 'error_type': 'OSError'}]
+            report['unclosed_handles'] = sorted(retained.handles)
+        except BaseException as diagnostic:
+            retained.diagnostic_error = diagnostic
+
+    for name, handle in handles.items():
+        try:
+            closed = k.CloseHandle(handle)
+        except BaseException as error:
+            # Preserve the failed/unknown handle and all unattempted handles.
+            # Do not continue closing or discard the owner on an interruption.
+            retained.close_error = error
+            failed()
+            raise retained from error
+        if closed:
+            retained.handles.pop(name)
+    if retained.handles:
+        failed()
+        raise retained
+    return {'format':'anomaly-v03-owned-handles-closed-v1', 'closed_handles':handles}
 
 
 def _reap_partial_spawn(k, job, created, assigned, extra_handles):
