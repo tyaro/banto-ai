@@ -1,5 +1,7 @@
 # v0.3 外部program・異常時子孫回収の受入残件（2026-10-07）
 
+最新上位境界: [外部pin付きreader plan受渡し](anomaly-multiseed-v0.3-reader-git-plan-forwarding-2026-10-07.md)をa12c3e9へ保存。上位runでexternal plan/policy/profile/root/source照合、元clock内再読取り、元linked budget/plan forwarding、descriptor保持copyを接続。新9＋追加1pass（旧9反復0）・39pin/他37一致/safety/discovery/code-save。実native plan/profile/launcher/root容量は次準備、新native0。旧全7役/使用済みrootは反復しない。CI202b1c3は3299/全3job success/10raw14pin/local回帰/runner候補一致まで保存。正式5残件は保持。以下は先行保存点の履歴。
+
 最新実親境界: [initial-readerの実親caller接続](anomaly-multiseed-v0.3-reader-git-parent-connection-2026-10-07.md)を217f0eaへ保存。generate_and_readのopt-in plan→元linked outer clock/4root→Parent/exact64call/raw verifier/entry→on_started bind/readerだけfenceを接続。fresh profileの30source必須、元Popen保持・bind失敗keeper受渡し、新10 distinct/37pin/safety/code-save確認。fixture不足2failは保全しその2件だけ訂正pass、他8反復0、新native0。次は上位budget.run/toolへのplan forwardingと新source/runtime/profile/root/request・容量準備。CIe1b8924は3287/全3job success/10raw14pin/local回帰/runner候補一致保存、正式5残件は保持。以下は先行保存点の履歴。
 
 最新親proof境界: [reader archive proofの受渡し](anomaly-multiseed-v0.3-reader-git-parent-proof-2026-10-07.md)を0f249f6へ保存。manifest/proof pin公開と親のcaller inventory＋全archive原raw verifier、partial IO保全/再公開拒否、新12焦点/29pin/safety/code-save pass。実親generate_and_read bind/fence・新profile/exclusive rootは次単位、新native0。新manifest/pendingを既存測定root上限内へ計上する。CI13ac6a1は3286/全3job success・10raw/14pin/local回帰/runner候補一致を保存、正式5残件は保持。以下は先行保存点の履歴。
