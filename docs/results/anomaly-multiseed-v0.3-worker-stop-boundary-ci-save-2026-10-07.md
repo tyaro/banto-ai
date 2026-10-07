@@ -1,5 +1,9 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 上位caller保持codeの新CI選択（2026-10-08）
+
+Code `2e4eae8d37a4410948dc8e4cbb8a8a4387407e0b` の実fullSHA選択でCI37703472925/in_progress、各minor3632予定を確認。先行37699731250（full726217fd191886d2d6e2ed52b0cb1dbdf8f59644/3605予定・3.12job113060035748/3.14job113060035513）と37701667430（full4776152f7ace2ab0c8bbcd4d22175d096f9c2cdc/3618予定・3.12job113066311972/3.14job113066311745）は両minor/run in_progress。今回終端download/local回帰/runner候補照合追加0。3件を外部fullHEAD/workflow/run/attempt/jobs固定で新専用rootへ一度保存する。成功時のみ2journal/比較/3log/local回帰/runner v2、失敗は小さい原因確認と原raw保全。doc-only新CI追跡なし。完成37695929528/37697650188等は反復・後続native/容量/正式受入読み替えなし。以下は先行記録。
+
 ## 初回request codeと先行CI2件の保存（2026-10-08）
 
 CI37695929528は外部fullHEAD `6c9acf0fdb20f1d8971b24e0873fc5c7fbf09821`/attempt1/push、job ids `{'compare-shared-fixtures': 113061604624, 'test (3.12)': 113047520739, 'test (3.14)': 113047521045}` を固定。全3job success、各minor3583/fail0/error0/skip237/source不変。新専用 `artifacts/ci-diagnostic-37695929528/` に10raw14pin/local-remote一致/共有29fixture必須28/runner v2 consistent_candidateを保存。index2783B/76309f0e9f062a14281f860dc9515e3c915132bfbf3ceed7c5f0f4673ea33b91。image `{'3.12': '20261004.327.1', '3.14': '20260927.320.1', 'compare': '20260927.320.1'}` の公式release/README metadata/blob/log/journal外部pinとprerelease状態一致のみ、digest未取得/候補未採択。CLI7は6raw一致/skip1file既知CRLF6差の両pinを保存。download `37540/creation134358888522781538/tokencb343b430c26a550d85962ffde456a78728841246be3cf4083fdf86d4fbf1328`、verification `37060/creation134358888874731221/tokenff275faeebb16708bb9354b7d4b6a1cafce3176e73bf9b58673c8b56da1a41bd` はexit0/CIM残存なし。
