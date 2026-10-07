@@ -29,6 +29,7 @@ class ChildGitKeeper:
         self.output_owner = None
         self.spawn_io_owner = None
         self.native_kernel = None
+        self.io_close_adapter = self.previous_io_adapter = self.io_closed = None
         self.closed = {}
         self.blocked = isinstance(original, owner.UnclosedHandles)
         self.valid_extra_names = True
@@ -57,6 +58,21 @@ class ChildGitKeeper:
     def _remember(self, name, failure):
         if getattr(self, name) is None:
             setattr(self, name, failure)
+
+    def bind_io_close(self, adapter):
+        self.previous_io_adapter = self.io_close_adapter
+        self.io_close_adapter = adapter  # Original keeper retains rejected bindings before diagnostics.
+        self.original.child_keeper = self
+        try:
+            v.require(type(adapter) is tree.GitPipeClose and adapter.keeper is self and
+                adapter.output_owner is self.output_owner and
+                adapter.output_owner.native_owner is self.original and
+                self.previous_io_adapter is None and self.completion is None,
+                'keeper exact original IO close adapter, no rebind')
+        except BaseException as failure:
+            self._remember('first_error',failure)
+            self.blocked=True
+            raise self.original from failure
 
     def reconcile_once(self):
         if self.completion is not None:
@@ -117,14 +133,16 @@ class ChildGitKeeper:
             if self.output_owner is None and output_owner is not None:
                 self.output_owner = output_owner
             if self.output_owner is not None:
-                # Keep separate reader handles/sinks and the cached native reap.
-                # No IO release adapter is connected yet: metadata/EOF/root exit
-                # alone cannot authorize core close, completion, lease or ack.
-                return None
+                if self.io_close_adapter is None:
+                    return None  # Close/EOF/metadata alone cannot authorize core close.
+                v.require(type(self.io_close_adapter) is tree.GitPipeClose and
+                    self.io_close_adapter.output_owner is self.output_owner and
+                    self.io_close_adapter.keeper is self, 'keeper retained original IO adapter')
+                self.io_closed = self.io_close_adapter.for_keeper(self)
             spawn_io_owner = getattr(self.original, 'spawn_io_owner', None)
             if self.spawn_io_owner is None and spawn_io_owner is not None:
                 self.spawn_io_owner = spawn_io_owner
-            if self.spawn_io_owner is not None:
+            if self.spawn_io_owner is not None and self.io_closed is None:
                 # Additional read handles and original sink/write streams stay
                 # held even after stdio duplicates/Job/root have finished.
                 return None
@@ -147,6 +165,9 @@ class ChildGitKeeper:
                 **self.reaped,'closed_handles':dict(self.closed),
                 'call_status':'failed','formal_permission':False,'execution_authenticated':False,
                 'lease_completed':False,'failure_raw_verified':False,'parent_ack_authorized':False}
+            if self.io_closed is not None:
+                self.completion['format']=tree.PIPE_RECOVERY
+                self.completion['io_closed']=copy.deepcopy(self.io_closed)
             return copy.deepcopy(self.completion)
         except BaseException as failure:
             self._remember('first_error', failure)

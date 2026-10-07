@@ -16,6 +16,9 @@ v, observed, dependencies, paths, io = (
     direct.v, direct.observed, direct.dependencies, direct.paths, direct.io)
 JOB = 'anomaly-v03-preformal-git-job-v1'
 QUIESCENCE = 'anomaly-v03-preformal-owned-git-quiescence-v1'
+PIPE_QUIESCENCE = 'anomaly-v03-preformal-owned-git-pipe-quiescence-v1'
+PIPE_CLOSE_LINK = 'anomaly-v03-preformal-git-pipe-close-link-v1'
+PIPE_RECOVERY = 'anomaly-v03-child-git-pipe-recovery-observation-v1'
 _FIELDS = set('''format status reason prior_stop_reason operation source_path revision
     executable_path executable_expected_pin executable_links_expected executable_before
     executable_after argv cwd environment process_identity exit_code process_error_type
@@ -467,6 +470,106 @@ class GitPipeClose:
         except BaseException as error:
             self._failed(error)
 
+    def for_keeper(self, keeper):
+        """Fresh raw/event consistency for this exact retained opt-in owner."""
+        try:
+            v.require(keeper is self.keeper and keeper.original is self.output_owner.native_owner,
+                      'pipe close exact original keeper')
+            self.close_once()  # Original close returns, then raw reread; cached native IO is not replayed.
+            v.require(self.result is not None and not self.error and
+                      self.output_owner.error is None and self.output_owner.pending is None and
+                      self.reader.failure is None and
+                      set(self.read_events) == set(self.sink_events) == {'stdout','stderr'} and
+                      all(spool.closed and spool.stream.closed
+                          for spool in self.output_owner.spools.values()),
+                      'pipe close original completed events, not release flags')
+            link = {'format':PIPE_CLOSE_LINK, **copy.deepcopy(self.reaped),
+                'core_handles':dict(keeper.initial_handles),
+                'parent_write_closed':copy.deepcopy(self.output_owner.spawn_io_owner.writer_close_events),
+                'eof':copy.deepcopy(self.reader.eof), 'read_closed':copy.deepcopy(self.read_events),
+                'sink_closed':copy.deepcopy(self.sink_events),
+                'formal_permission':False,'execution_authenticated':False}
+            raw = {}
+            self.pending = {'stage':'keeper_link','raw':raw,'link':link}
+            for name in ('stdout','stderr'):
+                raw[name]=self.reader.readback[name](self.output_owner.spools[name].committed_bytes+1)
+            _verify_pipe_close_link(link, identity=keeper.reaped['process_identity'],
+                exit_code=keeper.reaped['exit_code'], accounting=keeper.reaped['accounting'],
+                core_handles=keeper.initial_handles, stdout_raw=raw['stdout'],stderr_raw=raw['stderr'])
+            self.output_owner.checkpoint()
+            return link
+        except BaseException as error:
+            self._failed(error)
+
+
+def _verify_pipe_close_link(link, *, identity, exit_code, accounting, core_handles,
+                            stdout_raw, stderr_raw):
+    """Strict saved consistency; no native API, marker or release flag authority."""
+    v.require(type(link) is dict and set(link) == {'format','process_identity','exit_code',
+        'accounting','core_handles','parent_write_closed','eof','read_closed','sink_closed',
+        'formal_permission','execution_authenticated'} and link['format'] == PIPE_CLOSE_LINK and
+        link['formal_permission'] is False and link['execution_authenticated'] is False,
+        'pipe close exact saved link')
+    v.require(io.json_bytes(link['process_identity']) == io.json_bytes(identity) and
+        link['exit_code'] == exit_code and type(link['exit_code']) is int and
+        0 <= exit_code < 2**32 and type(identity) is dict and set(identity) == {
+            'pid','creation_time_100ns','start_token'} and type(identity['pid']) is int and
+        identity['pid'] > 0 and type(identity['creation_time_100ns']) is int and
+        identity['creation_time_100ns'] > 0 and identity['start_token'] == v.canonical_sha256({
+            key:identity[key] for key in ('pid','creation_time_100ns')}) and
+        io.json_bytes(link['accounting']) == io.json_bytes(accounting) and
+        type(accounting) is dict and set(accounting) == {'total_processes','active_processes',
+            'limit_terminated_processes'} and all(type(n) is int and n >= 0 for n in accounting.values()) and
+        accounting['active_processes'] == 0 and
+        accounting['limit_terminated_processes'] <= accounting['total_processes'] and
+        type(link['core_handles']) is dict and link['core_handles'] == core_handles and
+        type(core_handles) is dict and
+        {'thread','process','job'} <= set(core_handles) <= {
+            'thread','process','job','inherited_0','inherited_1','inherited_2'} and
+        all(type(n) is int and 0 < n < 2**64 for n in core_handles.values()) and
+        len(set(core_handles.values())) == len(core_handles), 'pipe close original native link')
+    handles = list(core_handles.values())
+    for field in ('parent_write_closed','read_closed'):
+        events=link[field]
+        v.require(type(events) is dict and set(events) == {'stdout','stderr'},
+                  'pipe close exact named native events')
+        for event in events.values():
+            v.require(type(event) is dict and set(event) == {'api','handle','return'} and
+                event['api'] == 'CloseHandle' and type(event['handle']) is int and
+                0 < event['handle'] < 2**64 and type(event['return']) is int and event['return'] > 0,
+                'pipe close native return position')
+            handles.append(event['handle'])
+    v.require(len(set(handles)) == len(handles) and type(link['eof']) is dict and
+        set(link['eof']) == {'stdout','stderr'} and all(link['eof'][name] == {
+            'api':'PeekNamedPipe','handle':link['read_closed'][name]['handle'],'error':109}
+            for name in ('stdout','stderr')), 'pipe close distinct handles and observed EOF')
+    sinks=link['sink_closed']
+    v.require(type(sinks) is dict and set(sinks) == {'stdout','stderr'}, 'pipe close exact sinks')
+    for name,raw in (('stdout',stdout_raw),('stderr',stderr_raw)):
+        event=sinks[name]
+        v.require(type(event) is dict and set(event) == {'api','fd','return','file_identity','raw_pin'} and
+            event['api'] == 'FileIO.close' and type(event['fd']) is int and event['fd'] >= 0 and
+            event['return'] is None and type(event['file_identity']) is dict and
+            set(event['file_identity']) == {'device','inode'} and
+            all(type(n) is int and n >= 0 for n in event['file_identity'].values()) and
+            type(raw) is bytes, 'pipe close original FileIO close observation')
+        direct.evidence._raw(raw,event['raw_pin'],'pipe close full retained '+name)
+    v.require(sinks['stdout']['fd'] != sinks['stderr']['fd'], 'pipe close distinct sink descriptors')
+    return True
+
+
+def verify_pipe_recovery(event, *, stdout_raw, stderr_raw):
+    v.require(type(event) is dict and set(event) == {'format','process_identity','exit_code',
+        'accounting','closed_handles','io_closed','call_status','formal_permission',
+        'execution_authenticated','lease_completed','failure_raw_verified','parent_ack_authorized'} and
+        event['format'] == PIPE_RECOVERY and event['call_status'] == 'failed' and all(
+            event[name] is False for name in ('formal_permission','execution_authenticated',
+                'lease_completed','failure_raw_verified','parent_ack_authorized')),
+        'pipe recovery exact failed observation')
+    return _verify_pipe_close_link(event['io_closed'], identity=event['process_identity'],
+        exit_code=event['exit_code'], accounting=event['accounting'],
+        core_handles=event['closed_handles'],stdout_raw=stdout_raw,stderr_raw=stderr_raw)
+
 
 def _shared_stop(probe):
     stop = probe() if probe is not None else None
@@ -670,6 +773,16 @@ def verify_quiescence(receipt_raw, expected_receipt_pin, witness, *, root, polic
     """
     direct.verify_raw(receipt_raw, expected_receipt_pin, stdout_raw=stdout_raw,
                       stderr_raw=stderr_raw, root=root, policy=policy)
+    if type(witness) is dict and witness.get('format') == PIPE_QUIESCENCE:
+        v.require(set(witness) == {'format','receipt_pin','closed','process_identity',
+            'exit_code','accounting','formal_permission','io_closed'}, 'pipe quiescent exact witness')
+        base={key:value for key,value in witness.items() if key != 'io_closed'}
+        base['format']=QUIESCENCE
+        _verify_close_link(receipt_raw,expected_receipt_pin,base)
+        return _verify_pipe_close_link(witness['io_closed'], identity={
+            key:witness['process_identity'][key] for key in ('pid','creation_time_100ns','start_token')},
+            exit_code=witness['exit_code'],accounting=witness['accounting'],
+            core_handles=witness['closed']['closed_handles'],stdout_raw=stdout_raw,stderr_raw=stderr_raw)
     return _verify_close_link(receipt_raw, expected_receipt_pin, witness)
 
 

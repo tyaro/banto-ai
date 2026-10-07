@@ -102,10 +102,12 @@ class ProofVerifier:
             # A keeper result is not a successful Git receipt. All partial raw
             # remains pinned, including a partial archive if planned beforehand.
             tree.direct._policy(Path(self.inventory['repository']), self.endpoint._policy())
-            v.require(type(event) is dict and set(event) == {'format','process_identity','exit_code',
+            fields={'format','process_identity','exit_code',
                 'accounting','closed_handles','call_status','formal_permission','execution_authenticated',
-                'lease_completed','failure_raw_verified','parent_ack_authorized'} and
-                event['format'] == 'anomaly-v03-child-git-recovery-observation-v1' and
+                'lease_completed','failure_raw_verified','parent_ack_authorized'}
+            pipe = type(event) is dict and event.get('format') == tree.PIPE_RECOVERY
+            v.require(type(event) is dict and set(event) == fields | ({'io_closed'} if pipe else set()) and
+                event['format'] in ('anomaly-v03-child-git-recovery-observation-v1',tree.PIPE_RECOVERY) and
                 event['call_status'] == 'failed' and all(event[key] is False for key in
                     ('formal_permission','execution_authenticated','lease_completed',
                      'failure_raw_verified','parent_ack_authorized')),
@@ -122,6 +124,8 @@ class ProofVerifier:
                 all(type(n) is int and 0 < n < 2**64 for n in handles.values()) and
                 len(set(handles.values())) == len(handles),
                 'Git proof recovered original exit/empty/close consistency')
+            if pipe:
+                tree.verify_pipe_recovery(event,stdout_raw=raw['stdout.bin'],stderr_raw=raw['stderr.bin'])
             status = 'failed'
         summary = {'call_pin':observed._pin(io.json_bytes(call)), 'kind':packet['kind'],
                    'raw_pins':pins, 'event':event, 'call_status':status}
