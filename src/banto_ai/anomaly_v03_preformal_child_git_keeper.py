@@ -87,7 +87,7 @@ class ChildGitKeeper:
                 all(type(n) is int and 0 < n < 2**64 for n in self.initial_handles.values()) and
                 len(set(self.initial_handles.values())) == len(self.initial_handles),
                 'keeper bounded distinct original handles')
-            kernel = (self.spawn_io_owner.binding[0]
+            kernel = self.native_kernel if self.reaped is not None else (self.spawn_io_owner.binding[0]
                 if type(self.spawn_io_owner) is owner.SpawnIOOwner and
                    self.spawn_io_owner.entered and self.spawn_io_owner.binding is not None
                 else owner._kernel())

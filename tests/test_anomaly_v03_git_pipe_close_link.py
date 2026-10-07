@@ -153,3 +153,11 @@ class GitPipeCloseLinkTests(unittest.TestCase):
         self.assertIs(self.output.error,failure)
         self.assertEqual(self.output.pending['raw'],b'original pending block')
         self.assertEqual(self.closed,self.before+[74,75])
+
+    def test_cached_reap_keeps_original_kernel_even_if_spawn_binding_is_later_changed(self):
+        foreign=SimpleNamespace(CloseHandle=Mock(return_value=True))
+        self.held.binding=(foreign,*self.held.binding[1:])
+        event=self.recover()
+        self.assertEqual(event['format'],git.PIPE_RECOVERY)
+        self.assertEqual(self.closed,self.before+[74,75,33,22,11])
+        foreign.CloseHandle.assert_not_called();self.wait.assert_called_once()
