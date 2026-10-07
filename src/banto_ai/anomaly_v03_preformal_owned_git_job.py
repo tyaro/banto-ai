@@ -123,6 +123,117 @@ class BoundedGitSpool:
             self._failed(error)
 
 
+class GitSinkAdmission:
+    """Exclusive empty sinks admitted against the original measured outer leaf.
+
+    This conservatively reserves every planned raw maximum, including partial
+    archive/receipt bytes, before opening files. It creates no Job or pipe and
+    does not substitute for the caller's global/memory/clock supervision.
+    """
+    BYTE_LIMIT, ENTRY_LIMIT, RESERVE = 1024**2, 32, 128 * 1024
+
+    def __init__(self, *, root, root_identity, revision, call, checkpoint):
+        self.original_root, self.original_identity, self.original_call = root, root_identity, call
+        self.shared_checkpoint, self.revision = checkpoint, revision
+        self.native = owner.UnreapedJob(None, None, None, {
+            'status':'pending', 'phase':'git_sink_admission', 'formal_permission':False})
+        self.native.git_sink_admission = self
+        self.error = self.pending = self.snapshot = None
+        self.streams, self.spools, self.file_identities = {}, {}, {}
+        self.started = self.ready = False
+        try:
+            self.call, self.identity = copy.deepcopy(call), copy.deepcopy(root_identity)
+            self.root = Path(root)
+            v.require(self.root.is_absolute() and self.root == self.root.resolve() and
+                type(self.identity) is tuple and len(self.identity) == 2 and
+                all(type(n) is int and n >= 0 for n in self.identity) and callable(checkpoint),
+                'Git sink original canonical root/identity/checkpoint')
+            direct.evidence._digest(revision, 40)
+            v.require(type(self.call) is dict and set(self.call) == {
+                'lease','phase','operation','source_path','expected_output_pin','raw_inventory'} and
+                type(self.call['lease']) is int and 0 <= self.call['lease'] < 64 and
+                self.call['phase'] in ('pre','post'), 'Git sink exact planned call')
+            direct._command({'revision':revision}, self.call['operation'],
+                            self.call['source_path'], self.call['expected_output_pin'])
+            self.limits = self.call['raw_inventory']
+            maximum = {'receipt.json':direct.MAX_RECEIPT,
+                'stdout.bin':direct.MAX_OUTPUT[self.call['operation']],
+                'stderr.bin':direct.MAX_STDERR, 'partial-archive.bin':512 * 1024}
+            v.require(type(self.limits) is dict and {'receipt.json','stdout.bin','stderr.bin'}
+                <= set(self.limits) <= set(maximum) and all(type(n) is int and
+                0 < n <= maximum[name] for name,n in self.limits.items()),
+                'Git sink exact original raw maximums')
+            self.inflight = self.root/'worker-git-inflight'
+            self.paths = {name:self.inflight/(name+'.bin') for name in ('stdout','stderr')}
+            self.checkpoint()
+            paths.regular_path(self.inflight, directory=True, missing=True)
+            v.require(not self.inflight.exists(), 'Git sink exclusive unused inflight')
+        except BaseException as failure:
+            self._failed(failure)
+
+    def _failed(self, failure):
+        if self.error is None:
+            self.error = failure
+        self.native.sink_error = self.error
+        self.native.original_error = self.error
+        raise self.native from self.error
+
+    def checkpoint(self):
+        if self.error is not None:
+            raise self.native
+        try:
+            self.shared_checkpoint()
+            from . import anomaly_v03_preformal_generated_chain_budget as monitor
+            self.snapshot = monitor._directory_snapshot(self.root, 32, 2, self.identity)
+            stored = 0
+            for name, stream in self.streams.items():
+                info = os.fstat(stream.fileno())
+                current = paths.regular_path(self.paths[name]).lstat()
+                v.require((info.st_dev,info.st_ino) == self.file_identities[name] ==
+                    (current.st_dev,current.st_ino) and info.st_size == current.st_size and
+                    0 <= info.st_size <= self.limits[name+'.bin'],
+                    'Git sink original file identity/count')
+                stored += info.st_size
+            remaining = sum(self.limits.values()) - stored
+            # Keep future receipt/partial files plus the existing diagnostic reserve.
+            future_entries = len(self.limits) - len(self.streams) + (0 if self.started else 1)
+            v.require(self.snapshot['directory_bytes'] + remaining + self.RESERVE <= self.BYTE_LIMIT
+                and self.snapshot['directory_entries'] + future_entries + 2 <= self.ENTRY_LIMIT,
+                'Git sink raw maxima exceed original remaining outer budget')
+        except BaseException as failure:
+            self._failed(failure)
+
+    def create(self):
+        if self.error is not None:
+            raise self.native
+        if self.ready:
+            self.checkpoint()
+            return self
+        try:
+            v.require(not self.started, 'Git sink cannot rearm partial creation')
+            self.checkpoint()
+            self.pending = {'operation':'mkdir','path':self.inflight}
+            self.inflight.mkdir(exist_ok=False)
+            self.started = True
+            self.checkpoint()
+            for name in ('stdout','stderr'):
+                self.pending = {'operation':'FileIO','path':self.paths[name], 'stream':None}
+                self.streams[name] = self.pending['stream'] = file_io.FileIO(self.paths[name], 'xb')
+                info = os.fstat(self.streams[name].fileno())
+                self.file_identities[name] = (info.st_dev,info.st_ino)
+                v.require(info.st_size == 0 and self.streams[name].closefd is True,
+                          'Git sink original exclusive empty FileIO')
+                stream = self.streams[name]
+                self.spools[name] = BoundedGitSpool(stream, operation=self.call['operation'],
+                    output=name, maximum_stored_bytes=self.limits[name+'.bin'],
+                    checkpoint=self.checkpoint, sync=lambda s=stream:os.fsync(s.fileno()))
+                self.checkpoint()
+            self.ready, self.pending = True, None
+            return self
+        except BaseException as failure:
+            self._failed(failure)
+
+
 class GitOutputOwnerFailure(RuntimeError):
     """Retain IO inputs even when the supplied native owner is invalid."""
     def __init__(self, output_owner, original_error):
