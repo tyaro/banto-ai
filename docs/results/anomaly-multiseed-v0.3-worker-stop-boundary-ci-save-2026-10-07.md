@@ -1,5 +1,23 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## parent writer close c78dbfeのCI37640186606を保存
+
+外部fullHEAD `c78dbfe34827ae7a9bb7cb979da422cf0ceef1d1`、attempt1/push/workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`、jobs3.12=112856754758／3.14=112856754071／compare=112873319679へ固定。各minor3392/fail0/error0/skip237/source不変、全3job success。専用 `artifacts/ci-diagnostic-37640186606/` にrun/attempt jobs／2journal／comparison-regression／3full log＋localの10raw/14pin、local-remote回帰一致／共有29fixture・必須28／runner v2 consistent_candidateを保存。
+
+3.12=20260927.320.1、3.14/compare=20261004.327.1/prerelease=true、公式release/README metadata/blobと各log/journal外部pin一致。digest未取得／候補未採択。選択CLI7は6raw一致、skip一覧1fileの既知CRLF6差を両pinで保存。この成功を後続close link/native／容量合格／正式受入へ読み替えない。旧CI37637048268のrun failure／比較job欠落9rawも保全し、その原因は未特定のまま。
+
+| 保存物 | bytes | SHA-256 |
+|---|---:|---|
+| complete-summary.json | 2573 | `e6bf9981b00b383cfd8797b73ab4fd22f28d9594fe4e5f349ce5ebbd542eb79d` |
+| 37640186606-candidate-pins.json | 3462 | `5f8e9d152748cf39b71267e4bbc22c0ca98e3b7e2e0c289b9e720d1f354f10cd` |
+| 37640186606-result.json | 3959 | `47daa1fe1f9e8f9c4e5e881074baeac4e849fc717f956e3e66750847f72ffdd5` |
+| ci-complete-index.json | 2783 | `b131f9aaaf0a18bb873e5c0c192f2addb37a928ad0028a748136057c5e1ee73a` |
+| local-cli-source-pins.json | 2138 | `1ff09e8768d9af50db2542f27ee444fc3182f2b7b5d74997c89b5f5eff20bed5` |
+
+download49252/creation134358614407063198/token1f73cd00328cf31d20069f971114732713dade68c687036c071fe45ddbaa2b07、verification48092/creation134358615695367870/token1f51f108aa936127e665a1d2dd0a097023263f714f5726e06fa38d70ad186d5bはexit0/CIM残存なし、元identity/tokenをlive/executionへ保持。全helper終了／critical ownerなし／native0／追加agent0、焦点反復0。
+
+未保存CIは37643113206（full0f9cb52e1b547ed70e0a352417b1846639afa322/3405予定）、37643762113（full0aaa12db38fe0caf03cc2d4bd4e036b10304fcc4/3406予定）、37646190819（fulla1ca9f0b0cea4454335e520b4196ceeb29422b0f/3419予定）、37647654446（full5906eed8833d753052194699a355b2fe7f0832ae/3420予定）、進行中。各終端をその外部fullHEAD/workflow/run/attempt/jobsへ固定して原rawを一度保存する。doc-only新CI追跡なし。以下は先行履歴。
+
 ## spawn IO 1d9d70aのCI37637048268：両試験成功／run失敗を保存
 
 外部fullHEAD `1d9d70a20aba3a96646f5a0e1e2ff1a2391cb20c`、attempt1/push/workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8` を固定。runはcompleted/failure、存在するjobは3.12=112845899910／3.14=112845899395の2件で両方success。各minor3381/fail0/error0/skip237/source不変、unittest_success=true。check suite101957648963にも同じsuccess check2件だけ／annotation0、artifactも両journalの2件だけ。
