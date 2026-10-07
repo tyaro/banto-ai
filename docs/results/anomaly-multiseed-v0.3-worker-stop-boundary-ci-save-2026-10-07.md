@@ -26,3 +26,10 @@ runner v2は両方consistent_candidate。37576149693は全job20260927.320.1、37
 CI37581339092 / 外部HEAD `aaca57c9749fa4970919e2596f6a884b6851d2b5` / attempt1は全3job success。3.12 job112661473486、3.14 job112661473791、compare112674385868。各minor3178件・fail0/error0/skip237/source不変、共有29/必須28。専用 `artifacts/ci-diagnostic-37581339092/` に10 raw、local/remote全回帰一致、runner v2 consistent_candidate、14 pin indexを保存した。index2783 B / `d817666b4ca96baabbb4f6b3ee333c28c90e2a85c3f8773b774a75e2ace7f399`。
 
 3.12/compareは20260927.320.1、3.14は20261004.327.1。保存公式release/README metadata/Git blob・log/journalと照合し、後者prerelease=trueも一致。digest未取得・候補未採択。選択CLI7 sourceは外部HEAD固定、skip一覧1fileだけCRLF→LF差を両raw pinで明記し他6 raw一致。source sidecar2311 B / `37e396bc9213a44b8ca2e864e786ff3324a41b636f0fc2c3de3d0c4e75dfc1d9`。数値/native replay0、後続codeの合格へ読み替えない。
+
+
+## atomic channel code e5ff975のCI追補
+
+CI37583002436 / 外部HEAD `e5ff97567a62764048576ce10606ce72bb6ab684` / attempt1は全3job success。3.12 job112666729426、3.14 job112666729643、compare112680362863。各minor3191件・fail0/error0/skip237/source不変、共有29/必須28。専用 `artifacts/ci-diagnostic-37583002436/` に10 raw、local/remote全回帰一致、runner v2 consistent_candidate、14 pin indexを保存した。index2783 B / `604389f2c14c42650dfe46cfec933b8515bb4c5274192954411f8e032deecff4`。
+
+全job20260927.320.1。保存公式release/README metadata/Git blob・log/journalを照合、digest未取得・候補未採択。選択CLI7 sourceは外部HEAD固定、skip一覧1fileだけCRLF→LF差を両raw pinで明記し他6 raw一致。source sidecar2311 B / `41e3dce76e4785f929ad1218d5970a5a0372da9772543267e79a9504c0d56667`。後続revisionのnative/最終受入へ読み替えない。
