@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import copy
+import hashlib
 from pathlib import Path
 from types import SimpleNamespace
 import time
@@ -201,6 +202,124 @@ class GitOutputOwner:
             v.require(type(raw) is bytes and len(raw) <= self.pending['amount'],
                       'Git output observed read exceeded original allowance')
             return self.pending
+        except BaseException as error:
+            self._failed(error)
+
+
+class GitPipeReader:
+    """One serial anonymous-pipe observation, with no spawn/close/ack authority.
+
+    The caller supplies the original kernel and bounded disk readers for fresh
+    exclusive sinks. Empty availability/zero-byte success is not EOF; only an
+    observed broken pipe records EOF. This opt-in adapter is not an executor.
+    """
+    def __init__(self, output_owner, *, kernel, readback):
+        self.output_owner, self.kernel = output_owner, kernel
+        self.original_readback, self.readback = readback, readback
+        self.previous_reader = self.failure = None
+        self.stopped = False
+        self.eof = {}
+        self.hashes = {}
+        self.streams = {}
+        try:
+            v.require(type(output_owner) is GitOutputOwner, 'pipe original IO owner')
+            self.previous_reader = getattr(output_owner, 'pipe_reader', None)
+            output_owner.pipe_reader = self  # Before validation, readback or native IO.
+            self.streams = {name:spool.stream for name,spool in output_owner.spools.items()}
+            if type(readback) is dict:
+                self.readback = dict(readback)
+            v.require(self.previous_reader is None and output_owner.error is None and
+                      output_owner.pending is None, 'pipe reader cannot rebind/rearm')
+            v.require(type(readback) is dict and set(readback) == {'stdout','stderr'} and
+                      all(callable(fn) for fn in self.readback.values()) and
+                      callable(getattr(kernel, 'PeekNamedPipe', None)) and
+                      callable(getattr(kernel, 'ReadFile', None)), 'pipe original IO callbacks')
+            v.require(all(s.committed_bytes == 0 and s.pending_raw is None and
+                      s.failure is None and not s.closed and not s.stopped
+                      for s in output_owner.spools.values()), 'pipe sinks start with no writes')
+            self.hashes = {name:hashlib.sha256() for name in ('stdout','stderr')}
+        except BaseException as error:
+            self._failed(error)
+
+    def _failed(self, error):
+        if self.failure is None:
+            self.failure = error
+        self.stopped = True
+        if type(self.output_owner) is GitOutputOwner:
+            self.output_owner._failed(self.failure)
+        raise GitOutputOwnerFailure(self, self.failure) from self.failure
+
+    def _disk(self, pending, expected):
+        # The callback must bound its actual read to this size. Keep its exact
+        # return before validation, including mismatched/overlong failure raw.
+        pending['readback_limit'] = pending['spool'].committed_bytes + 1
+        pending['readback_raw'] = self.readback[pending['output']](pending['readback_limit'])
+        raw = pending['readback_raw']
+        v.require(type(raw) is bytes and len(raw) == pending['spool'].committed_bytes and
+                  hashlib.sha256(raw).digest() == expected.digest(),
+                  'pipe original disk readback differs from consumed blocks')
+
+    def read_once(self, output):
+        if self.failure is not None:
+            self._failed(self.failure)
+        held = self.output_owner
+        try:
+            v.require(not self.stopped and output not in self.eof,
+                      'pipe no read after limit/observed EOF')
+            v.require(output in self.streams and
+                      held.spools[output].stream is self.streams[output],
+                      'pipe original sink cannot be replaced')
+            handle, allowance = held.begin_read(output)
+            pending = held.pending
+            pending['kernel'] = self.kernel
+            self._disk(pending, self.hashes[output])  # Reject preexisting/changed sink before pipe IO.
+            available = owner.w.DWORD()
+            pending['available'] = available
+            pending['api'] = 'PeekNamedPipe'
+            held.checkpoint()
+            pending['peek_result'] = self.kernel.PeekNamedPipe(
+                handle, None, 0, None, owner.ctypes.byref(available), None)
+            pending['peek_error'] = (0 if pending['peek_result'] else owner.ctypes.get_last_error())
+            if not pending['peek_result']:
+                v.require(pending['peek_error'] == 109, 'pipe PeekNamedPipe failed')
+                held.retain_read(b'')
+                self._disk(pending, self.hashes[output])
+                held.checkpoint()
+                self.eof[output] = {'handle':handle,'api':'PeekNamedPipe','error':109}
+                held.pending = None
+                return 'eof'  # Sinks/read handles remain owned; no native close or lease.
+            if available.value == 0:
+                held.checkpoint()
+                held.pending = None
+                return 'pending'
+            pending['amount'] = amount = min(allowance, int(available.value))
+            pending['buffer'] = buffer = owner.ctypes.create_string_buffer(amount)
+            pending['bytes_read'] = count = owner.w.DWORD()
+            pending['api'] = 'ReadFile'
+            held.checkpoint()
+            pending['read_result'] = self.kernel.ReadFile(
+                handle, buffer, amount, owner.ctypes.byref(count), None)
+            pending['read_error'] = (0 if pending['read_result'] else owner.ctypes.get_last_error())
+            held.retain_read(buffer.raw[:count.value])  # Buffer/count survive API or copy failures too.
+            v.require(count.value <= amount and bool(pending['read_result']),
+                      'pipe ReadFile failed/returned an invalid count')
+            if count.value == 0:
+                self._disk(pending, self.hashes[output])
+                held.checkpoint()
+                held.pending = None
+                return 'pending'  # A successful zero-byte pipe read is not EOF.
+            expected = self.hashes[output].copy()
+            expected.update(pending['raw'])
+            pending['expected_digest'] = expected.hexdigest()
+            pending['spool_result'] = pending['spool'].append(pending['raw'])
+            self._disk(pending, expected)
+            held.checkpoint()
+            self.hashes[output] = expected
+            result = pending['spool_result']
+            if result == 'output_limit':
+                self.stopped = True  # Caller must stop the original Job; no second pipe read.
+            held.pending = None
+            return result or 'data'
         except BaseException as error:
             self._failed(error)
 

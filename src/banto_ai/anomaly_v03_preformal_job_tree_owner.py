@@ -176,6 +176,13 @@ def _kernel():
     k.UpdateProcThreadAttribute.restype = w.BOOL
     k.DeleteProcThreadAttributeList.argtypes = [ctypes.c_void_p]
     k.DeleteProcThreadAttributeList.restype = None
+    k.PeekNamedPipe.argtypes = [w.HANDLE, ctypes.c_void_p, w.DWORD,
+                               ctypes.POINTER(w.DWORD), ctypes.POINTER(w.DWORD),
+                               ctypes.POINTER(w.DWORD)]
+    k.PeekNamedPipe.restype = w.BOOL
+    k.ReadFile.argtypes = [w.HANDLE, ctypes.c_void_p, w.DWORD,
+                          ctypes.POINTER(w.DWORD), ctypes.c_void_p]
+    k.ReadFile.restype = w.BOOL
     return k
 
 
