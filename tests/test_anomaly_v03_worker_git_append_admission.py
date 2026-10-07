@@ -103,3 +103,25 @@ class WorkerGitAppendAdmissionTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError,'held plan'):self.writer.append(0)
         append.assert_not_called();self.assertEqual(self.admission.plan_raw,held)
         self.assertEqual(self.writer.path.read_bytes(),b'');self.assertTrue(self.admission.pending['frame'])
+
+    def test_control_publication_after_root_scan_cannot_unreserve_future_slot(self):
+        from banto_ai import anomaly_v03_preformal_generated_chain_budget as monitor
+        f=self.configure();f.receipt();snapshot=monitor._directory_snapshot;real_append=archive._append_frame
+        observations=[]
+        def scan(*args):
+            value=snapshot(*args)
+            if not observations:
+                (f.child.root/'git-proof.json').write_bytes(b'x'*archive.proof.channel.MAX_CONTROL)
+            observations.append(value)
+            return value
+        def append(path,frame):
+            held=self.admission.pending['before']
+            self.assertEqual(held['future_bytes'],sum(self.controls.values()))
+            self.assertEqual(held['future_entries'],len(self.controls))
+            real_append(path,frame)
+        with patch.object(monitor,'_directory_snapshot',side_effect=scan), \
+             patch.object(archive,'_append_frame',side_effect=append):
+            self.writer.append(0)
+        self.assertEqual(len(observations),2)
+        self.assertGreater(observations[1]['directory_entries'],observations[0]['directory_entries'])
+        self.assertFalse(self.admission.completed[0]['atomic_reservation'])

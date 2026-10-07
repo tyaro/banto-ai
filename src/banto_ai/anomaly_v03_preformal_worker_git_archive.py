@@ -94,7 +94,12 @@ class ArchiveAppendAdmission:
         snapshot=monitor._directory_snapshot(self.root,self.ENTRY_LIMIT,2,self.identity)
         held={'snapshot':snapshot,'controls':{}}
         self.pending[stage]=held  # Retain observations before subsequent IO.
-        future_bytes=future_entries=0
+        # Do not subtract a later per-control stat from an earlier root scan.
+        # A concurrent publisher could otherwise shrink the purported future
+        # reservation without its new bytes/entry appearing in the snapshot.
+        # Count all slots again until every writer joins an atomic protocol.
+        future_bytes=sum(self.control_limits.values())
+        future_entries=len(self.control_limits)
         for name,maximum in self.control_limits.items():
             path=self.writer.verifier.endpoint.root/name
             paths.regular_path(path,missing=True)
@@ -102,8 +107,6 @@ class ArchiveAppendAdmission:
             held['controls'][name]=None if info is None else {'bytes':info.st_size,'identity':(info.st_dev,info.st_ino)}
             size=0 if info is None else info.st_size
             v.require(size<=maximum,'archive append retained control exceeds held maximum')
-            future_bytes+=maximum-size
-            future_entries+=int(info is None)
         held.update(future_bytes=future_bytes,future_entries=future_entries,growth_bytes=growth)
         v.require(snapshot['directory_bytes']+future_bytes+growth+self.RESERVE<=self.BYTE_LIMIT and
             snapshot['directory_entries']+future_entries+2<=self.ENTRY_LIMIT,
