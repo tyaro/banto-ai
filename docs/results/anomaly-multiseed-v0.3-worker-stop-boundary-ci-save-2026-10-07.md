@@ -1,5 +1,13 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 初回request codeと先行CI2件の保存（2026-10-08）
+
+CI37695929528は外部fullHEAD `6c9acf0fdb20f1d8971b24e0873fc5c7fbf09821`/attempt1/push、job ids `{'compare-shared-fixtures': 113061604624, 'test (3.12)': 113047520739, 'test (3.14)': 113047521045}` を固定。全3job success、各minor3583/fail0/error0/skip237/source不変。新専用 `artifacts/ci-diagnostic-37695929528/` に10raw14pin/local-remote一致/共有29fixture必須28/runner v2 consistent_candidateを保存。index2783B/76309f0e9f062a14281f860dc9515e3c915132bfbf3ceed7c5f0f4673ea33b91。image `{'3.12': '20261004.327.1', '3.14': '20260927.320.1', 'compare': '20260927.320.1'}` の公式release/README metadata/blob/log/journal外部pinとprerelease状態一致のみ、digest未取得/候補未採択。CLI7は6raw一致/skip1file既知CRLF6差の両pinを保存。download `37540/creation134358888522781538/tokencb343b430c26a550d85962ffde456a78728841246be3cf4083fdf86d4fbf1328`、verification `37060/creation134358888874731221/tokenff275faeebb16708bb9354b7d4b6a1cafce3176e73bf9b58673c8b56da1a41bd` はexit0/CIM残存なし。
+
+CI37697650188は外部fullHEAD `7c63923f7f87926b663c6f3b7b353eae3faca8e0`/attempt1/push、job ids `{'compare-shared-fixtures': 113064174449, 'test (3.12)': 113053222361, 'test (3.14)': 113053222759}` を固定。全3job success、各minor3593/fail0/error0/skip237/source不変。新専用 `artifacts/ci-diagnostic-37697650188/` に10raw14pin/local-remote一致/共有29fixture必須28/runner v2 consistent_candidateを保存。index2783B/a6ae4d749ce4c11a536b8f00e1d1657c6ccd701ef03f2bf00be16d04af5aeaa5。image `{'3.12': '20260927.320.1', '3.14': '20261004.327.1', 'compare': '20260927.320.1'}` の公式release/README metadata/blob/log/journal外部pinとprerelease状態一致のみ、digest未取得/候補未採択。CLI7は6raw一致/skip1file既知CRLF6差の両pinを保存。download `44000/creation134358888531613273/token740b349c0a66b2861e5b2dee1f9b48653ceb8d14893c87d960bedc97fbadbb4f`、verification `33056/creation134358888878192477/token18623309664f57a8599b2c70b02945757b7ae349463b9c88f8c17e983e5d0fa2` はexit0/CIM残存なし。
+
+新code `4776152f7ace2ab0c8bbcd4d22175d096f9c2cdc` は実fullSHA選択でCI37701667430/in_progressを確認、各minor3618予定。未保存は37699731250（full726217fd191886d2d6e2ed52b0cb1dbdf8f59644/3605予定・in_progress）と37701667430。各終端を外部fullHEAD/workflow/run/attempt/jobs固定で新専用rootへ原rawを一度保存。今回保存2件はbootstrapのnative/容量/正式受入へ読み替えず反復しない。doc-only新CI追跡なし。以下は先行時点の記録。
+
 ## 親binding/stop codeの新CI選択（2026-10-08）
 
 新code `726217fd191886d2d6e2ed52b0cb1dbdf8f59644` の実fullSHA選択でCI37699731250/in_progressを確認、各minor3605予定。先行37695929528（実full6c9acf0fdb20f1d8971b24e0873fc5c7fbf09821/3583予定）は直近3.12 job113047520739 success/3.14 job113047521045 in_progress、run未終端。37697650188（実full7c63923f7f87926b663c6f3b7b353eae3faca8e0/3593予定）も未保存。今回は終端download/local回帰/runner候補照合の追加0。3件を各終端の外部fullHEAD/workflow/run/attempt/jobs固定で新専用rootへ一度保存する。doc-only新CI追跡なし。完成37692009539以下のCIは反復・新native/容量/正式受入読み替えなし。
