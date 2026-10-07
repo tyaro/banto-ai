@@ -44,3 +44,7 @@ rawは `artifacts/preformal-parent-git-identity-20261007-prep/`、native rootは
 | saved-check.json | 3431 | `5e275282100ee9acad1cf89ee535521be768b6f60fca8be713673d6427f439d4` |
 
 同codeの[CI37559835322](https://github.com/tyaro/banto-ai/actions/runs/37559835322)は文書保存時in_progress。旧CIの成功を代用しない。次はこのCIの保存・照合と、残るblob/worker内Gitの実使用境界を、元entry/depth/log上限に収める保存形式へ結ぶ。Git/helperのロード依存と業務worker異常子孫、正式契約/入力consumer/最終受入/容量2倍は残る。
+
+## 後続CIの保存
+
+code9ddaed7のCI37559835322は全3job success。両minor各3,091件・fail0/error0/skip237・source不変、共有29/必須28。10保存rawのlocal/remote回帰一致・runner v2候補照合がpass。index14 pinは2,821 B / `94bbfcaf7faaf00552f997bd0a793e96a93d3eb848741aa744504e50d5c86c1d`。詳細は[CI診断](anomaly-multiseed-v0.3-preformal-ubuntu-ci-triage-2026-10-05.md)を参照。前節の進行中表示はnative保存時点の履歴。新native0、最終受入・runner正式採択は未完了。

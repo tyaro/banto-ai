@@ -64,3 +64,7 @@ CI37547050883は保存・照合完了。[追補CI index](../../artifacts/ci-diag
 heartbeat banto-10をPAUSEDにして終了。元7役＋native helperの8 PIDは現在processなし、CI37547050883/37548282365保存・照合済み、9:50以降の新native/code unit/agent0・追加停止0。終端raw [terminal.json](../../artifacts/preformal-autonomous-until10-close-20261007/terminal.json) は 943 B / `4f37beafa2da4a29880344f48e246e1cf9a01643b32972af990ddb08da451e92`、保存状態確認は3,190 B / `b475db2ac386768ef3cca55b3d83084151684ccdc5462720b60714a0978b8990`。
 
 正式受入の残りは版付き契約採択、登録入力consumer、外部programと異常子孫回収、最終同revisionのLinux/Windows・正式dev/smoke独立受入、正式共通予算と容量2倍の5群。`s4_acceptance_not_frozen`・`formal_permission=false`・正式credit0・登録holdout観測未読を維持する。
+
+## 再開後の親Git接続CI
+
+[親4 Git Jobのcode9ddaed7](anomaly-multiseed-v0.3-parent-git-identity-budget-native-2026-10-07.md)とCI37559835322は保存済み。CI全3job success、各minor3,091件・fail0/error0/skip237・source不変、共有29/必須28、local/remote回帰一致、runner v2 consistent_candidate。外部index14 pinは2,821 B / `94bbfcaf7faaf00552f997bd0a793e96a93d3eb848741aa744504e50d5c86c1d`。既存全7役native343c863を新codeの全経路確認へ読み替えない。上記5残件・formal false・credit0・holdout観測未読は維持。
