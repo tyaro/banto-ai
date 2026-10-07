@@ -19,8 +19,45 @@ class UnreapedWorker(RuntimeError):
         super().__init__("owned worker exit could not be confirmed")
 
 
+class UnreconciledWorker(UnreapedWorker):
+    """Keep the original worker alive until its caller's stop fence confirms."""
+    def __init__(self, process, report, stop_fence, fence_error=None):
+        super().__init__(process, report)
+        self.stop_fence, self.fence_error = stop_fence, fence_error
+        self.args = ("owned worker stop fence could not be confirmed",)
+
+
+def _stop_ack(stop_fence, process):
+    value = stop_fence(process)
+    rt.require(type(value) is bool, "worker stop fence must return an explicit bool ack")
+    return value
+
+
+def _retain_guarded(error):
+    # A missing ack or a failing diagnostic must never fall through to the
+    # ordinary kill/wait keeper. The callable must also latch no-new-work.
+    while True:
+        try:
+            if _stop_ack(error.stop_fence, error.process):
+                if error.process.poll() is None:
+                    error.process.kill()
+                    error.process.wait(timeout=30)
+                if error.process.returncode is not None:
+                    error.process._handle.Close()
+                    return
+        except BaseException as failure:
+            if error.fence_error is None:
+                error.fence_error = failure
+        try:
+            time.sleep(0.25)
+        except BaseException:
+            pass
+
+
 def retain_until_exit(error):
     """Keep the original owner, even if interruption or diagnostic output fails."""
+    if isinstance(error, UnreconciledWorker):
+        return _retain_guarded(error)
     while error.process.returncode is None:
         try:
             error.process.kill()
@@ -58,7 +95,7 @@ def _file_pin(path, maximum):
 
 
 def supervise(argv, cwd, control_root, limits, *, stdout_name="report.json", runtime_probe=None, boundary=lambda: None,
-              on_started=None, resource_probe=None):
+              on_started=None, resource_probe=None, stop_fence=None):
     """Return observations after reaping the owned process; caller saves the report.
 
     control_root is newly claimed and every output is exclusive. The caller owns
@@ -68,8 +105,13 @@ def supervise(argv, cwd, control_root, limits, *, stdout_name="report.json", run
     Its failure follows the same stop/reap path; it must not transfer ownership.
     resource_probe optionally returns a latched cooperative stop reason at each
     budget sample. Its errors also stop/reap the owned child.
+    A stop_fence opts into a caller-held no-new-work/owned-Job ack. Only an
+    explicit True permits kill/wait/handle close. False or any fence error
+    preserves the original worker owner, without reading logs or final context.
+    This callback contract is not an authenticated Job or descendant report.
     """
     _limits(limits)
+    rt.require(stop_fence is None or callable(stop_fence), "worker stop fence must be callable")
     rt.require(type(argv) is list and argv and all(type(x) is str and x for x in argv), "process argv")
     rt.require(stdout_name in ("report.json", "stdout.jsonl"), "process stdout name")
     cwd = rt.regular_path(Path(cwd), directory=True)
@@ -95,6 +137,17 @@ def supervise(argv, cwd, control_root, limits, *, stdout_name="report.json", run
     def observe_memory():
         nonlocal peak
         peak = max(peak, resources.memory_bytes(process._handle)["peak_private_bytes"])
+
+    def fenced_report(confirmed):
+        return {"format": "anomaly-v03-owned-process-monitor-v1", "argv": list(argv), "limits": dict(limits),
+            "status": "failed", "exit_code": process.returncode,
+            "worker_pid": process.pid, "worker_started": True,
+            "worker_exit_confirmed": process.returncode is not None, "stop_reason": reason,
+            "elapsed_seconds": time.monotonic() - started, "peak_worker_private_bytes": peak,
+            "observation_errors": errors, "output": None, "stderr": None,
+            "runtime_before": before, "runtime_after": after, "free_before": free_before, "free_after": free_after,
+            "worker_stop_fence_confirmed": confirmed,
+            "formal_permission": False, "performance_status": "not_evaluated"}
 
     def budget():
         if resource_probe is not None:
@@ -136,6 +189,16 @@ def supervise(argv, cwd, control_root, limits, *, stdout_name="report.json", run
         reason = reason or "observation_error"
     finally:
         if process is not None:
+            if stop_fence is not None:
+                fence_error = None
+                try:
+                    acknowledged = _stop_ack(stop_fence, process)
+                except BaseException as value:
+                    acknowledged, fence_error = False, value
+                    error("worker_stop_fence", value)
+                if not acknowledged:
+                    reason = reason or "worker_stop_fence_unconfirmed"
+                    raise UnreconciledWorker(process, fenced_report(False), stop_fence, fence_error)
             try:
                 running = process.poll() is None
             except BaseException as value:
@@ -193,6 +256,9 @@ def supervise(argv, cwd, control_root, limits, *, stdout_name="report.json", run
             process._handle.Close()
         except BaseException as value:
             error("worker_handle_close", value)
+            if stop_fence is not None:
+                reason = reason or "worker_handle_close"
+                raise UnreconciledWorker(process, fenced_report(True), stop_fence, value)
     complete = exit_code == 0 and reason is None and not observation_failed and before is not None and after == before
     report = {"format": "anomaly-v03-owned-process-monitor-v1", "argv": list(argv), "limits": dict(limits),
         "status": "complete" if complete else "failed", "exit_code": exit_code,
@@ -203,5 +269,8 @@ def supervise(argv, cwd, control_root, limits, *, stdout_name="report.json", run
         "runtime_before": before, "runtime_after": after, "free_before": free_before, "free_after": free_after,
         "formal_permission": False, "performance_status": "not_evaluated"}
     if process is not None and exit_code is None:
+        if stop_fence is not None:
+            report["worker_stop_fence_confirmed"] = True
+            raise UnreconciledWorker(process, report, stop_fence)
         raise UnreapedWorker(process, report)
     return report
