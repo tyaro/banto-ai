@@ -527,6 +527,9 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
     this wrapper does not claim a shared formal end-to-end budget.  An optional
     caller-owned engineering budget probes both child supervisors.
     """
+    original_reader_git_plan = reader_git_plan
+    if reader_git_plan is not None:
+        reader_git_plan = copy.deepcopy(reader_git_plan)  # Before root/profile/runtime IO.
     root = _root(root)
     profiles = validate_runtime_profiles(generation_runtime_profiles, revision=expected_revision)
     if campaign_context is not None:
@@ -563,11 +566,15 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
     try:
         reader_git=None
         if reader_git_plan is not None:
-            v.require(type(reader_git_plan) is dict and set(reader_git_plan)=={
-                'channel_root','policy','source_pins'} and outer_budget is not None and profiles is not None,
+            fields={'channel_root','policy','source_pins'}
+            v.require(type(reader_git_plan) is dict and fields <= set(reader_git_plan) <= fields|{'pipe_raw_limits'}
+                and outer_budget is not None and profiles is not None,
                 'reader Git requires caller plan, linked budget and fresh profiles')
             from . import anomaly_v03_preformal_reader_git_worker as reader_git_worker
             reader_names=reader_git_worker.source_names(copied.SOURCE_FILES)
+            if 'pipe_raw_limits' in reader_git_plan:
+                reader_git_worker._pipe_raw_limits(reader_git_plan['pipe_raw_limits'],
+                    reader_git_plan['source_pins'],reader_names)
         if outer_budget is not None:
             outer_budget.checkpoint('preflight')
         v.require(recipe_id == RECIPE, 'invented generator recipe only')
@@ -586,10 +593,12 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
                 reader_source_pins={row['path']: row['pin'] for row in reader_source['selected_files']},
                 runtime=observed_runtime, **({'reader_source_names':reader_names} if reader_git_plan is not None else {}))
         if reader_git_plan is not None:
+            options={} if 'pipe_raw_limits' not in reader_git_plan else {
+                'pipe_raw_limits':reader_git_plan['pipe_raw_limits']}
             reader_git=reader_git_worker.ReaderGitParent.create(root=reader_git_plan['channel_root'],
                 revision=expected_revision,repository=ROOT,policy=reader_git_plan['policy'],
                 budget=outer_budget,source_pins=reader_git_plan['source_pins'],names=reader_names,
-                profile_pin=profiles['initial-reader']['expected_pin'])
+                profile_pin=profiles['initial-reader']['expected_pin'],**options)
         invocation = {'format': (CAMPAIGN_INVOCATION if campaign_context
                                  is not None else INVOCATION),
                       'root': str(root),

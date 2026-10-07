@@ -46,6 +46,7 @@ SOURCE_NAMES = tuple(dict.fromkeys((
     *generated.SOURCE_FILES, *reread.SOURCE_FILES, *document.SOURCE_NAMES,
 )))
 READER_PLAN_FORMAT = 'anomaly-v03-preformal-initial-reader-git-plan-v1'
+READER_PIPE_PLAN_FORMAT = 'anomaly-v03-preformal-initial-reader-git-pipe-plan-v2'
 
 
 def _reader_git_plan(entry, *, roots, revision, profiles):
@@ -61,15 +62,20 @@ def _reader_git_plan(entry, *, roots, revision, profiles):
         'reader Git plan must precede measured output roots')
     raw=reread.pinned.read_pinned(path,entry['expected_pin'],32*1024)
     value=v.strict_json(raw)
-    v.require(type(value) is dict and set(value)=={'format','revision','outer_root','channel_root',
-        'policy','source_pins','profile_pin','formal_permission'} and v.canonical_json(value)==raw and
-        value['format']==READER_PLAN_FORMAT and value['formal_permission'] is False,
+    pipe=type(value) is dict and value.get('format')==READER_PIPE_PLAN_FORMAT
+    fields={'format','revision','outer_root','channel_root','policy','source_pins','profile_pin','formal_permission'}
+    v.require(type(value) is dict and set(value)==fields|({'pipe_raw_limits'} if pipe else set()) and
+        v.canonical_json(value)==raw and value['format']==(READER_PIPE_PLAN_FORMAT if pipe else READER_PLAN_FORMAT)
+        and value['formal_permission'] is False,
         'reader Git exact canonical closed plan')
     v.require(value['revision']==revision and value['outer_root']==str(roots['outer']) and
         value['channel_root']==str(roots['outer']/'reader-git-channel') and
         value['profile_pin']==profiles['initial-reader']['expected_pin'],
         'reader Git caller revision/root/profile link')
     from . import anomaly_v03_preformal_reader_git_worker as reader
+    names=reader.source_names(generated.copied.SOURCE_FILES)
+    if pipe:
+        reader._pipe_raw_limits(value['pipe_raw_limits'],value['source_pins'],names)
     policy=value['policy']
     v.require(type(policy) is dict and set(policy)=={'path','expected_pin'}, 'reader Git policy entry')
     policy_path=Path(policy['path'])
@@ -81,11 +87,11 @@ def _reader_git_plan(entry, *, roots, revision, profiles):
     v.require(type(policy_value) is dict and policy_value.get('revision')==revision and
         policy_value.get('process_ownership')==reader.tree.direct.JOB_OWNERSHIP,
         'reader Git private Job policy revision')
-    names=reader.source_names(generated.copied.SOURCE_FILES)
     reader.selected_source(ROOT,revision,value['source_pins'],names)
     generated.paths.regular_path(Path(value['channel_root']),directory=True,missing=True)
     v.require(not Path(value['channel_root']).exists(), 'reader Git new exclusive channel')
-    return {key:copy.deepcopy(value[key]) for key in ('channel_root','policy','source_pins')}
+    keys=('channel_root','policy','source_pins')+(('pipe_raw_limits',) if pipe else ())
+    return {key:copy.deepcopy(value[key]) for key in keys}
 
 
 def limits(value=None):
