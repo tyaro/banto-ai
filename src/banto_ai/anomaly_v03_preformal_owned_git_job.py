@@ -760,10 +760,11 @@ class GitPipeTransport:
     Synchronous Peek/Read still requires a separately measured native wall gate.
     """
     def __init__(self, admission, *, kernel, repository, policy, stdin, child,
-                 stop_probe, clock, started_at):
+                 stop_probe, clock, started_at, normal_completion=False):
         self.admission, self.kernel, self.stdin, self.child = admission, kernel, stdin, child
         self.original_inputs = (repository, policy, stop_probe, clock, started_at)
         self.stop_probe, self.clock, self.started_at = stop_probe, clock, started_at
+        self.normal_completion = normal_completion
         self.native = admission.native if type(admission) is GitSinkAdmission else owner.UnreapedJob(
             None, None, None, {'phase':'git_pipe_transport','formal_permission':False})
         self.owners = [self.native]
@@ -776,6 +777,7 @@ class GitPipeTransport:
             v.require(type(admission) is GitSinkAdmission and self.previous_transport is None,
                       'transport original exclusive admission, no rebind')
             admission.pipe_transport = self
+            v.require(type(normal_completion) is bool, 'transport explicit normal completion option')
             self.policy = copy.deepcopy(policy)
             v.require(callable(stop_probe) and callable(clock) and
                 type(started_at) in (int,float) and 0 <= started_at < float('inf') and
@@ -805,6 +807,11 @@ class GitPipeTransport:
         self.native.transport_error = self.error
         if getattr(self.native,'original_error',None) is None and self.error is not self.native:
             self.native.original_error = self.error
+        if self.keeper is not None and self.keeper.normal_completion:
+            try:
+                self.keeper.promote()
+            except BaseException as ledger_error:
+                self.stop_error = ledger_error
         if self.error is self.native:
             raise self.native
         raise self.native from self.error
@@ -888,6 +895,23 @@ class GitPipeTransport:
             self.keeper = self.keeper or getattr(self.native,'child_keeper',None)
             self._failed(failure)
 
+    def _normal_completion_once(self):
+        """Capture actual empty/exit0/creation without stopping the child channel."""
+        self.stop_started = True
+        try:
+            from .anomaly_v03_preformal_child_git_keeper import ChildGitKeeper
+            self.keeper = ChildGitKeeper(self.native,child=self.child,
+                lease=self.admission.call['lease'],normal_completion=True)
+            self.keeper.reconcile_once()
+            if self.keeper.first_error is not None:
+                raise self.keeper.first_error
+            v.require(self.keeper.reaped is not None and not self.keeper.normal_promoted,
+                      'transport normal native completion unconfirmed')
+            return copy.deepcopy(self.keeper.reaped)
+        except BaseException as failure:
+            self.keeper = self.keeper or getattr(self.native,'child_keeper',None)
+            self._failed(failure)
+
     def step(self):
         if self.error is not None:
             raise self.native
@@ -910,7 +934,8 @@ class GitPipeTransport:
                     reason = reason or 'exit_nonzero'
                 if reason is None and code is not None and accounting['active_processes'] == 0 and \
                         set(self.reader.eof) == {'stdout','stderr'}:
-                    v.require(self.stop_once() is not None, 'transport original reap unconfirmed')
+                    captured = (self._normal_completion_once() if self.normal_completion else self.stop_once())
+                    v.require(captured is not None, 'transport original reap unconfirmed')
                     return 'close_ready'  # Root exit and EOF still do not release anything.
             if reason is not None:
                 self.reason = reason

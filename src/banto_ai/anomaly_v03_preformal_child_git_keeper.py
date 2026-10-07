@@ -19,10 +19,11 @@ def _creation(process):
 
 
 class ChildGitKeeper:
-    def __init__(self, original, *, child, lease):
+    def __init__(self, original, *, child, lease, normal_completion=False):
         v.require(isinstance(original, (owner.UnreapedJob, owner.UnclosedHandles)),
                   'keeper original native owner required')
         self.original, self.child, self.lease = original, child, lease
+        self.normal_completion, self.normal_promoted = normal_completion, False
         self.ledger_error = None
         self.first_error = self.stop_error = self.callback_error = self.sleep_error = None
         self.close_owner = self.reaped = self.completion = None
@@ -48,16 +49,42 @@ class ChildGitKeeper:
         try:
             self.output_owner = getattr(original, 'git_output_owner', None)
             self.spawn_io_owner = getattr(original, 'spawn_io_owner', None)
-            child.stopped = True
-            child.hold_owner(lease, original)
+            v.require(type(normal_completion) is bool, 'keeper explicit normal completion option')
+            if normal_completion:
+                original.child_keeper = self  # Retain before normal capture validation/IO.
+                v.require(type(original) is owner.UnreapedJob and original.original_error is None and
+                    lease in child.active and lease not in child.owners and not child.stopped and
+                    self.output_owner is not None and self.output_owner.error is None,
+                    'keeper original active normal call, no failed owner')
+            else:
+                child.stopped = True
+                child.hold_owner(lease, original)
         except BaseException as failure:
             self.ledger_error = failure
             original.child_keeper = self
+            if normal_completion is True:
+                try:
+                    self.promote()
+                except BaseException as ledger_error:
+                    self._remember('ledger_error',ledger_error)
             raise original from failure
 
     def _remember(self, name, failure):
         if getattr(self, name) is None:
             setattr(self, name, failure)
+
+    def promote(self):
+        """Latch failed normal ownership before ledger IO; never undo stop."""
+        if self.normal_completion is not True or self.normal_promoted:
+            return
+        self.normal_promoted = True
+        self.original.child_keeper = self
+        self.child.stopped = True
+        try:
+            self.child.hold_owner(self.lease,self.original)
+        except BaseException as failure:
+            self._remember('ledger_error',failure)
+            raise self.original from failure
 
     def bind_io_close(self, adapter):
         self.previous_io_adapter = self.io_close_adapter
@@ -93,20 +120,26 @@ class ChildGitKeeper:
                 else owner._kernel())
             if self.reaped is None:
                 self.native_kernel = kernel  # Keep the original observer for additional IO close.
-                try:
-                    owner._need(kernel.TerminateJobObject(self.original.job, 0xE010),
-                                'keeper TerminateJobObject')
-                except BaseException as failure:
-                    self._remember('stop_error', failure)
-                # A partial spawn can own a suspended root outside the Job.
-                if self.original.report.get('assignment_confirmed') is False:
+                if self.normal_completion and not self.normal_promoted:
+                    accounting = owner._accounting(kernel,self.original.job)
+                    code = owner._root_exit(kernel,self.original.process)
+                    v.require(accounting['active_processes'] == 0 and code == 0,
+                              'keeper normal original Job/root must already be empty/exit0')
+                else:
                     try:
-                        owner._need(kernel.TerminateProcess(self.original.process, 0xE011),
-                                    'keeper TerminateProcess unassigned root')
+                        owner._need(kernel.TerminateJobObject(self.original.job, 0xE010),
+                                    'keeper TerminateJobObject')
                     except BaseException as failure:
                         self._remember('stop_error', failure)
-                accounting, code = owner._wait_empty(
-                    kernel, self.original.job, self.original.process, time.monotonic() + 5)
+                    # A partial spawn can own a suspended root outside the Job.
+                    if self.original.report.get('assignment_confirmed') is False:
+                        try:
+                            owner._need(kernel.TerminateProcess(self.original.process, 0xE011),
+                                        'keeper TerminateProcess unassigned root')
+                        except BaseException as failure:
+                            self._remember('stop_error', failure)
+                    accounting, code = owner._wait_empty(
+                        kernel, self.original.job, self.original.process, time.monotonic() + 5)
                 v.require(type(accounting) is dict and set(accounting) == {
                     'total_processes','active_processes','limit_terminated_processes'} and
                     all(type(n) is int and n >= 0 for n in accounting.values()) and
@@ -156,6 +189,7 @@ class ChildGitKeeper:
                 self.remaining = dict(retained.handles)
                 self.closed.update({key:value for key,value in attempted.items() if key not in self.remaining})
                 self.blocked = retained.close_error is not None
+                self.promote()
                 return None
             self.blocked = True  # Native close succeeded; do not replay on bookkeeping failure.
             self.closed.update(event['closed_handles'])
@@ -171,6 +205,10 @@ class ChildGitKeeper:
             return copy.deepcopy(self.completion)
         except BaseException as failure:
             self._remember('first_error', failure)
+            try:
+                self.promote()
+            except BaseException as ledger_error:
+                self._remember('ledger_error',ledger_error)
             return None
 
     def keep(self, *, on_observation):
