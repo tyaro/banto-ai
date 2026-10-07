@@ -1,5 +1,27 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 追加IO owner初版66d31ee／補強ffbdc2fのCI保存
+
+| run / 外部fullHEAD / attempt1 | jobs3.12 / 3.14 / compare | 各minor実試験 | index bytes / SHA-256 |
+|---|---|---:|---|
+| 37628405639 / `66d31eee72d25eda0546739053f43cf47f58d976` | 112816041057 / 112816041367 / 112836643919 | 3354 | 2783 / `f1b2f0e8ff218227721021663e98ef91de282d341a6ffeecae9cc847796f4fca` |
+| 37629470712 / `ffbdc2f8c65dc9f155375330c9c194eb0b62b962` | 112819652646 / 112819652333 / 112833745727 | 3355 | 2783 / `cc0319c1c7409402dc52596ffb6a77229cf289c2b11e8ccd0947df4928aba8b4` |
+
+両runともpush/workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8` を固定し全3job success、各minor fail0/error0/skip237/source不変。各専用 `artifacts/ci-diagnostic-<run>/` にrun/attempt jobs・2journal・comparison/regression・3log＋localの10raw/14pin、local/remote一致、共有29fixture/必須28、runner v2 consistent_candidateを保存。3.12は両run20260927.320.1、3.14は両run20261004.327.1、compareは初版旧版/補強新版。公式release/README metadata/blobとlog/journal外部pin・新版prerelease=trueを照合、digest未取得/候補未採択。選択CLI7は6raw一致、skip1fileの既知CRLF6差は両pinを保全。
+
+| 保存物（run順: 初版 / 補強） | bytes | SHA-256 |
+|---|---:|---|
+| complete-summary.json / 初版 | 2587 | `76f91787e4a7914446fdc2270f050cb2baa71372dc9839e703a7bccf49bf8f47` |
+| candidate-pins.json / 初版 | 3462 | `79041d5f8703f5a6d51d12f6802d1c6528abefce5da4139835873386e71c5b30` |
+| result.json / 初版 | 3959 | `01edd8d1acf0de11e6137e782afd6bb111e26dbe44164058c82f044ddd5b4688` |
+| complete-summary.json / 補強 | 2579 | `a1f2e3b7d3e4b7c29daffca5c63500030e8e892c115b81e2e495288c7d648f33` |
+| candidate-pins.json / 補強 | 3462 | `c2108bd2fea74d61fd70ab0d9c07826e79d4e7205d089f674788d682f4491e22` |
+| result.json / 補強 | 3959 | `0f18a686d20b17db74b17f4d165810158d56af83e46e37abd0030ffa9476d3a7` |
+
+初版download30752/creation134358558596121060/token5e9310b3d8a6be0c7a2bfaabed5bc0ce2a81899599a11569cb3115fb803954fd、verification37004/134358559010729195/token22f9e3c788480f624a67dd8092195cea53acc182e45f6e5972b01f6ad63ec75aはexit0/CIM残存なし。補強download26668/134358557397171910/token55533178a479f5180b592776a2544da096d5fa913720b0e503de1f01445d8e96、verification49716/134358557776668676/token1c448ee079cf03380fb6a6dd0a349a1c3e25c63ffef1df9921c847c7a80171e5もexit0/CIM残存なし。元identity/tokenは各live/executionへ保存しPID単独で扱わない。
+
+焦点/native反復0、追加agent0、全helper終了・critical ownerなし。この保存を新read adapter43da351の実native/容量合格/最終受入へ読み替えず、旧失敗rawも保全。未保存CIは37634146788（full43da351954ccc80af5ddc2d91b53027b80786bc3/各minor3368予定）のみ。正式gate=s4_acceptance_not_frozen、formal_permission=false、正式credit0、登録holdout観測未読。以下は先行履歴。
+
 ## bounded Git spool 3ee5dc2のCI37625071676を保存
 
 外部fullHEAD `3ee5dc2b1f3d35cb9bfc6d1cfccec94035f9a0a4`、attempt1/push、workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`、jobs3.12=112804654034/3.14=112804653733/compare=112824039641へ固定。各minor3343/fail0/error0/skip237/source不変、全3job success。専用 `artifacts/ci-diagnostic-37625071676/` にrun/attempt jobs・2journal・comparison/regression・3log＋localの10raw/14pin、local/remote一致、共有29fixture/必須28、runner v2 consistent_candidateを保存。
