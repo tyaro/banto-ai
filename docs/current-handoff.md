@@ -4,6 +4,13 @@
 
 ## 現在の状態
 
+- 最新code `690af4900da6fc198ca7f389db2a61fe1374f602`: [bounded Git pipe transport／原stop-close owner](results/anomaly-multiseed-v0.3-git-pipe-transport-2026-10-08.md)。元admission/policy/call/clock/stop→pipe/spawn/writer close/reader→stop/reap/creation→named read/FileIO/core close/raw recoveryを接続。原inputs/return/buffer/error/ownerをIO前保持、output_limitやIO割込みで原Job停止・未回収を保持、失敗後read/close/restartとnative stop反復を拒否。completed keeper freezeも元named handles/全rawから容量再照合。resultはlease/ack/auth=false、一つのcallの停止・回収観測で正常64call継続やsuccess receiptを完成扱いしない。create_native拒否維持／実worker-terminal・publisher・wall/並行容量・fresh profile未接続。新module0/名前30source64Jobは未閉包。
+
+- 初回12件4pass/1fail/7error（fixture empty environment）を保全、fixture訂正後8失敗のみ7pass/1error。実completed close接続を修正して残る1件pass、新handle改変拒否1件pass。13distinct/最終unique13・pass済み11/旧suite反復0・最終source単一13success runではない。各36pin前後不変/他34全4component/先行共通34pin/safety/clean code-save36working-Git一致。元helper44536/43636/45808/42264は各live/executionのcreation/tokenで終了/CIM残存なし。全helper終了/critical ownerなし/native0/追加agent0。components2658B/2b24e095adee9a3795e2772b713c329179c8943a8e474c5e1697eebdad4f9163、code-save5535B/0f623f75fa607ff6f30f12457589a4a63e2290fa4fd5b2f7e31d1641dd30f0b1。
+
+- 次は原transport return/raw/close observation→pipe receipt publisherと正常call／failed terminalの範囲、元bootstrap/critical ownerを実actor-terminalへ保持して渡す経路を小さく固定。native前に新exclusive profile/policy/request/root/coupled容量/限定caller-launcherを準備し、旧pinや全7役を流用しない。未保存CI37660790390（実full30d38f4／3468予定）は開始時3.14success/3.12in_progress、37666095841（実full690af4900da6fc198ca7f389db2a61fe1374f602／3481予定）はin_progress。各終端を実fullHEADへ一度保存、doc-only新CI追跡なし。以下は先行保存履歴。
+
+
 - 2026-10-08 JST。CI37654425831（外部full8eba6cfa9dd3fcf633e314908327f7449fe8a9d0／各minor3444）と37655643970（full27be314059e8f092b994258ada176dab3c17c717／3455）は全3job success/fail0/error0/skip237/source不変。各専用ci-diagnostic rootへ10raw/14pin・local-remote一致・共有29必須28・runner v2 consistent_candidateを保存、両run全job image20260927.320.1／公式pin一致、digest未取得／候補未採択。index各2783B、SHA順に3e6364b85c371454a1d0c81fdfa64d488b6c58fb8a74448e929df1b1c962a400／ffbfa42ec53aae76e724b3fd0a0d3e6856def7136e9f16419536d686082c3e49。CLI7は6raw一致／skip1file CRLF6差の両pin保持。元4helperはlive/executionの各creation/tokenで終了／CIM残存なし。全helper終了／critical ownerなし／新code0／native0／完成焦点反復0／追加agent0。保存後28CI pin・5source/science・docs2・clean HEAD=originを照合し、この保存を反復しない。詳細はworker-stop-boundary-ci-save文書の上段。
 
 - 最新code30d38f4485040d649fcdc7c052c06f3fa6ea642bは変更0。次の実transport executor接続は下記close/admission原証拠から別の小さい保存単位。create_native拒否／上限／正式gate不変、fresh profile/policy/request/root／実control-packet-raw coupled容量／限定caller-launcherは未準備。未保存CIは37660790390（実full30d38f4485040d649fcdc7c052c06f3fa6ea642b／3468予定、開始時in_progress）のみ。doc-only新CI追跡なし。以下は先行履歴。
