@@ -315,18 +315,19 @@ class ControlPublicationAdmission:
             return copy.deepcopy(row['pin'])
         except BaseException as error:self._failed(error)
 
-    def verify_publications(self, names, *, cached=False):
+    def verify_publications(self, names, *, cached=False, extended=False):
         """One final original close/raw check; no stream/native close or retry."""
         if self.error is not None:raise self.error
         try:
-            v.require(type(cached) is bool and self.pending is None and
+            v.require(type(cached) is bool and type(extended) is bool and (not extended or cached) and self.pending is None and
                 (hasattr(self,'verification') if cached else not hasattr(self,'verification')),
                 'control original completed verification or explicit cached readback')
             self.pending={'verification_names':names,'original_completed':self.completed,'raw':{},
                           'original_verification':getattr(self,'verification',None)}
             if cached:
-                v.require(self.verification['verification_names']==names,
-                          'control cached same original completed names')
+                initial=self.verification['verification_names']
+                v.require(type(names) is tuple and (names[:len(initial)]==initial if extended else initial==names),
+                          'control cached original completed names or explicit extension')
             v.require(type(names) is tuple and set(names)==set(self.completed) and len(names)==len(set(names)),
                       'control final exact completed names')
             self._view('verify_before')

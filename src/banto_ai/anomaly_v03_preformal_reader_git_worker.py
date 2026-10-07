@@ -288,6 +288,7 @@ class ReaderGitParent:
             result.inventory_publication=actors.archive.ControlPublicationAdmission(endpoint=result.parent,
                 inventory_pin=pin,root_identity=result.inventory_root_identity,control_limits=result.append_controls,
                 checkpoint=result.inventory_checkpoint,owner=result)
+            result.parent.parent_publication_admission=result.inventory_publication  # Before inventory/channel IO.
             options['publication_admission']=result.inventory_publication
         try:
             result.entry=prepare_entry(result.parent,inventory_raw=raw,inventory_pin=pin,names=names,**options)
@@ -332,14 +333,34 @@ class ReaderGitParent:
     def bind(self, process):
         v.require(self.worker is None, 'reader original worker bind once')
         self.worker=process  # Before checkpoint, bind or native identity IO.
-        self._inventory_ready()
-        self.parent.bind(process)
-        binding,_=self.parent._binding()
-        return copy.deepcopy(binding['worker_identity'])
+        try:
+            self._inventory_ready()
+            options={} if self.inventory_publication is None else {'publication_admission':self.inventory_publication}
+            self.parent.bind(process,**options)
+            binding,_=self.parent._binding()
+            return copy.deepcopy(binding['worker_identity'])
+        except BaseException as failure:
+            self._remember_publication(failure)
+            raise
 
     def fence(self, process):
-        self._inventory_ready()
-        return self.parent.fence(process)
+        try:
+            self._inventory_ready()
+            options={} if self.inventory_publication is None else {'publication_admission':self.inventory_publication}
+            result=self.parent.fence(process,**options)
+            self._inventory_ready()  # No true verdict while new control IO/raw remains unverified.
+            return result
+        except BaseException as failure:
+            self._remember_publication(failure)
+            raise
+
+    def _remember_publication(self, failure):
+        gate=self.inventory_publication
+        if gate is None:return  # Existing default exception/owner behavior.
+        if self.inventory_publication_error is None:self.inventory_publication_error=failure
+        if self.error is None:self.error=failure
+        if self.inventory_pending_owner is None:self.inventory_pending_owner=gate.pending
+        failure.reader_git_parent=self
 
     def _inventory_ready(self):
         if self.inventory_publication_error is not None:
@@ -352,6 +373,8 @@ class ReaderGitParent:
         if gate is None and sidecar is None:return
         try:
             if self.inventory_publication_error is not None:raise self.inventory_publication_error
+            channel_error=getattr(self.parent,'parent_publication_error',None)
+            if channel_error is not None:raise channel_error
             if gate.error is not None:raise gate.error
             v.require(type(gate) is actors.archive.ControlPublicationAdmission and sidecar is gate and
                 gate.owner is self and gate.endpoint is self.parent and gate.checkpoint is self.inventory_checkpoint and
@@ -359,7 +382,16 @@ class ReaderGitParent:
                 list(gate.identity)==self.entry['budget_root_identity'],
                 'reader same original parent inventory gate, clock, context and root')
             v.require(gate.pending is None,'reader original inventory IO remains pending')
-            gate.verify_publications(('worker-inventory.json',),cached=True)
+            allowed=('worker-inventory.json','binding.json','stop.json')
+            names=tuple(name for name in allowed if name in gate.completed)
+            v.require(names and names[0]=='worker-inventory.json' and set(names)==set(gate.completed),
+                      'reader only its original inventory/binding/stop publications')
+            for name in allowed:
+                path=self.parent.root/name;paths.regular_path(path,missing=True)
+                pending=path.with_name(name+'.pending');paths.regular_path(pending,missing=True)
+                v.require(not pending.exists() and (name in gate.completed)==path.exists(),
+                          'reader no unknown original parent control publication or pending')
+            gate.verify_publications(names,cached=True,extended=len(names)>1)
         except BaseException as failure:
             if self.inventory_pending_owner is None and getattr(gate,'pending',None) is not None:
                 self.inventory_pending_owner=gate.pending

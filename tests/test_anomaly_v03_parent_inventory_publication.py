@@ -53,7 +53,8 @@ class ParentInventoryPublicationTests(unittest.TestCase):
             self.assertEqual(reader.observed._pin(raw),p.entry['inventory_pin'])
             self.assertEqual(p.source()['revision'],self.f.f.revision)
             p.bind(self.f.f.process);self.assertFalse(p.fence(self.f.f.process))
-            self.assertEqual(opened.call_count,1)
+            self.assertEqual(sum(Path(call.args[0]).name=='worker-inventory.json.pending'
+                                 for call in opened.call_args_list),1)
             self.assertIs(gate.verification,initial);self.assertIs(gate.cached_verification['original_verification'],initial)
             self.assertIs(gate.completed['worker-inventory.json']['original'],closed)
             self.assertTrue(closed['close_return_observed']);self.assertIsNone(closed['close_return'])

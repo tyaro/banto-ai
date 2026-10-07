@@ -172,27 +172,50 @@ class ParentChannel(_Channel):
         result.worker = result.binding_pin = result.binding_error = None
         return result
 
-    def bind(self, process):
+    def _publication(self, gate):
+        original=getattr(self,'parent_publication_admission',None)
+        if getattr(self,'parent_publication_error',None) is not None:raise self.parent_publication_error
+        self.rejected_parent_publication=(original,gate)  # Preserve both before validating a caller override.
+        if gate is None and original is None:return {}
+        try:
+            from .anomaly_v03_preformal_worker_git_archive import ControlPublicationAdmission
+            from .anomaly_v03_preformal_reader_git_worker import ReaderGitParent
+            v.require(type(gate) is ControlPublicationAdmission and gate is original and gate.endpoint is self and
+                isinstance(gate.owner,ReaderGitParent) and gate.owner.parent is self and
+                gate.owner.inventory_publication is gate and gate.owner.control_publication_owner is gate and
+                gate.owner.worker is self.worker,'channel original retained parent publication gate and Popen')
+            gate.owner._inventory_ready()
+            return {'publication_admission':gate}
+        except BaseException as failure:
+            self.parent_publication_error=failure
+            failure.parent_control_channel=self
+            raise
+
+    def bind(self, process, *, publication_admission=None):
         v.require(self.worker is None, 'channel bind original worker once')
         # Retain the original owner before the first fallible observation.
         self.worker = process
         try:
+            options=self._publication(publication_admission)
             self._live()
             identity = observed.creation_observation(process.pid, process._handle)
             _identity(identity)
             value = {'format':FORMAT+'-binding','request_pin':self.request_pin,'worker_identity':identity}
             self.binding_pin = observed._pin(io.json_bytes(value))
-            _write(self.root / 'binding.json', value)
+            _write(self.root / 'binding.json', value,**options)
+            self._publication(publication_admission)
         except BaseException as failure:
             self.binding_error = failure
             raise
 
-    def fence(self, process):
+    def fence(self, process, *, publication_admission=None):
         v.require(process is self.worker, 'channel original Popen owner')
+        options=self._publication(publication_admission)
         self._live()
         # Also stop an unbound child after a failed binding publication.
         if self._stop() is None:
-            _write(self.root / 'stop.json', {'format':FORMAT+'-stop','request_pin':self.request_pin,'no_new_jobs':True})
+            _write(self.root / 'stop.json', {'format':FORMAT+'-stop','request_pin':self.request_pin,'no_new_jobs':True},**options)
+        self._publication(publication_admission)
         if self.binding_pin is None:
             return False
         try:
@@ -226,6 +249,7 @@ class ParentChannel(_Channel):
             _, final_binding_pin = self._binding()
             v.require(final_binding_pin == self.binding_pin, 'channel binding changed during proof verification')
             evidence._raw(observed._file(path, MAX_CONTROL), proof['pin'], 'channel proof changed during verification')
+            self._publication(publication_admission)
         return result
 
 
