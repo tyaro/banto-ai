@@ -105,3 +105,22 @@ CI37592838738 / 外部HEAD `7da5aa92b007965b3a51fd94afb73d6add67d3c3` / attempt1
 14 raw/control pinを保存後照合。download PID5772/creation134358409216731185/token443a50f9aaa390b374027bf9d4943c0640e272814db9ce7d7f6a8effbc13cd73、verification PID41304/creation134358410288654168/token8cdfaa1a87a9983e1216da4c4d67e832ecdc98abea2c516970c6634a15755b1bはexit0/CIM残存なし。全helper終了・critical ownerなし・新native0。
 
 未保存CIは37602415125（f0ecd89/3276予定）、37604591211（13ac6a1/3286予定）、37605468456（e1b8924/3287予定）。このCIを終了guard e1b8924や最終受入のnativeへ読み替えず、doc-only新CI追跡を増やさない。
+
+## 追補: worker actor f0ecd89のCI（37602415125）
+
+外部fullHEAD `f0ecd8942432811120a2c82145cecf89822650ff`、attempt1/push/workflow上記pinへ固定。3.12 job112729729655、3.14 job112729729570、compare112742467485。全3job success・両minor3276/fail0/error0/skip237/source不変、10raw/14pin・local/remote回帰一致・共有29fixture/必須28・runner v2 consistent_candidate・保存後照合まで完了。rawはartifacts/ci-diagnostic-37602415125/。
+
+3.12/3.14は20261004.327.1、compareは20260927.320.1。保存済み公式release/README metadata/blobと各journal/logを照合、新版prerelease=trueも外部pin一致。digest未取得・候補未採択。選択CLI7は6raw一致・skip一覧1fileは既知CRLF6差で両raw pinを保全、完全なruntime閉包ではない。
+
+| 保存物 | bytes | SHA-256 |
+|---|---:|---|
+| complete-summary.json | 2565 | `88bb4789ec108660b0a2c75f1f81b6e150b2eb605bafd9953f3205b6a2a2ff20` |
+| 37602415125-candidate-pins.json | 3462 | `0766669952fea19159aba9036dfa37f6f2d7340c11e19fb286f39356e13b05e5` |
+| 37602415125-result.json | 3959 | `2066ee845a6758629df5b9ea74047c379ca2bbc7a1014636b40dde849e19abba` |
+| ci-complete-index.json | 2783 | `72aebacb37240c440482d0f8412b96f39a4e111c7992d47381e5429b8c502b1a` |
+| local-cli-source-pins.json | 2390 | `a49709f70b99348a7f57fc391e5e2d113c3f579c9783999e5a5b23f09d033754` |
+| post-save-checkpoint.json | 1159 | `886e9712cd1d1c59dbb4e28b333bf1179ea4a3bcab9d27ded9e33d2b5a13852d` |
+
+14 raw/control pinを保存後照合。download42160/creation134358437039117172/token74398ed30af2879bd3262e805bc9846a0a874e8da3a4c9ef4503acddddae1d7e、verification41428/creation134358438390052319/tokenec7dc239d161fde0056dcad14250d801c1d9849fc8e3d4ae0dd1b62e117c7632はexit0/CIM残存なし。全helper終了・critical ownerなし・新native0。
+
+未保存は37604591211（13ac6a1/3286予定）、37605468456（e1b8924/3287予定）、37609649219（202b1c3/3299予定）。このCIを新child入口202b1c3や最終受入のnativeへ読み替えず、doc-only新CI追跡を増やさない。
