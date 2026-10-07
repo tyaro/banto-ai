@@ -53,3 +53,10 @@ CI37587463962 / 外部HEAD `8faa921fc5c9e33ebe1a84799b3747c22326f28c` / attempt1
 全helper終了・critical ownerなし・新native0。verification helperのPID38812は先行proof焦点helperと再利用されたため、双方のcreation identity/tokenを各execution.jsonに保全して区別した。PIDだけでは同一process扱いにしない。初版proof CI37592461789の失敗rawは保持。未保存は37590543104（HEADf0b3d72/3229）と37592838738（HEAD7da5aa9/3247予定）、doc-only新CI追跡を増やさない。
 
 実worker接続に向けた選択3 sourceは7da5aa9のworking/Git raw一致。既存parent archiveはverified source_blob専用でpost-close witness、head/status、failed/recovery rawを扱わないため、親の完了部品をworker actorへ流用しない。次は専用opt-in worker archive/raw resolverと元close/recovery eventを小さく固定し、0-job/部分ackの範囲を定めてから実entryへ渡す。source3のpinと静的所見は同CI rootのnext-boundary-notes.json1162 B / `15d03bb0fb9ecc7a4ba6932352da21e00b89620240ac26de192a80d2bff47f5f`。これはruntime閉包/nativeの証明ではなく、正式5残件は変更しない。
+
+
+## spawn cleanup codef0b3d72のLinux失敗保全とfixture修正
+
+CI37590543104 / 外部HEAD f0b3d72deea42ab984ad70a20a20cd7dcace7225 / attempt1は両minor3229件、各fail1/error1/skip237/source不変。3.12 job112690704814、3.14 job112690705168、compare112707082230はskipped。run/jobs/failed log/2full job log/2journalの7rawを専用rootに保全、failure-complete-index2863 B / `1d5a879c0cf8c98048f819cc7d8f143722bb8f066059389b210977c1baac2021`。comparison/regressionとcompare logはない。成功CIやrunner候補一致へ読み替えない。
+
+fake Win API試験のctypes.get_last_error未stubがLinuxでAttributeErrorとなり、元OSError保持を確認する2件が失敗した。code9473523でtest setUpの1行だけを修正、Linux相当の属性欠落にした2件がpass、他の試験反復0・新native0。[修正証拠](anomaly-multiseed-v0.3-spawn-cleanup-portable-ci-fix-2026-10-07.md)。修正後CI37596406096（HEAD9473523/3247予定）と先行37592838738（HEAD7da5aa9/3247予定）は進行中で、両者を別外部HEADとして保存する。旧失敗と正式flag false/credit0/holdout未読を保持する。
