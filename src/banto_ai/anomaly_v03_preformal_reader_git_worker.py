@@ -138,6 +138,104 @@ def prepare_entry(parent, *, inventory_raw, inventory_pin, names):
         'budget_root_identity':[stat.st_dev,stat.st_ino]}
 
 
+def selected_source(repository, revision, source_pins, names):
+    """Check fresh caller-held selected pins; the child later compares Git raw."""
+    v.require(type(names) is tuple and len(names)==len(set(names)) and
+        2*(len(names)+2) <= channel.MAX_JOBS and type(source_pins) is dict and
+        set(source_pins)==set(names), 'reader exact bounded caller source inventory')
+    actors.proof.evidence._digest(revision,40)
+    root=paths.regular_path(Path(repository),directory=True)
+    rows=[]
+    for name in names:
+        v.safe_relative_path(name); pin=source_pins[name]
+        actors.proof.evidence._pin(pin)
+        v.require(pin['bytes'] <= tree.direct.MAX_OUTPUT['source_blob'], 'reader selected source byte bound')
+        raw=observed._file(root/name,max(1,pin['bytes']))
+        actors.proof.evidence._raw(raw,pin,'reader fresh caller source pin')
+        rows.append({'path':name,'pin':copy.deepcopy(pin)})
+    return {'revision':revision,'selected_files':rows,
+            'scope':'selected-working-git-raw-only-not-source-closure'}
+
+
+class ReaderGitParent:
+    """Opt-in composing caller; all sampler/clock owners remain with that caller."""
+    @classmethod
+    def create(cls, *, root, revision, repository, policy, budget, source_pins, names, profile_pin):
+        result=cls()
+        result.budget, result.shared = budget, getattr(budget,'outer',None)
+        shared=result.shared
+        v.require(shared is not None and getattr(budget,'stage',None)=='producer' and
+            type(getattr(shared,'roots',None)) is dict and set(shared.roots)=={
+                'outer','producer','saved-reader','publication'}, 'reader linked four-root producer budget required')
+        shared.require_stage('producer',budget.root)
+        target=Path(root).absolute()
+        v.require(target.parent==Path(shared.roots['outer']), 'reader channel under original outer leaf')
+        selected_source(repository,revision,source_pins,names)
+        actors.proof.evidence._pin(profile_pin)
+        result.repository, result.names = Path(repository), names
+        result.source_pins, result.profile_pin = copy.deepcopy(source_pins), copy.deepcopy(profile_pin)
+        result.worker=result.error=None
+        result.parent=channel.ParentChannel.create(root=target,revision=revision,policy=policy,
+            budget=shared,verify_quiescent=lambda _raw,_count:False)
+        result.clock=copy.deepcopy(result.parent.request['clock'])
+        calls=[]
+        for phase in ('pre','post'):
+            for operation,name in [('head',None),('status',None),*[('source_blob',name) for name in names]]:
+                calls.append({'lease':len(calls),'phase':phase,'operation':operation,'source_path':name,
+                    'expected_output_pin':None if name is None else copy.deepcopy(source_pins[name]),
+                    'raw_inventory':{'receipt.json':tree.direct.MAX_RECEIPT,
+                        'stdout.bin':tree.direct.MAX_OUTPUT[operation],'stderr.bin':tree.direct.MAX_STDERR,
+                        'partial-archive.bin':actors.archive.MAX_BYTES}})
+        request=result.parent.request
+        inventory={'format':actors.proof.FORMAT+'-inventory','request_pin':result.parent.request_pin,
+            **{name:copy.deepcopy(request[name]) for name in ('revision','root','root_identity','policy_pin')},
+            'repository':str(result.repository),'calls':calls,'formal_permission':False}
+        raw=io.json_bytes(inventory); pin=observed._pin(raw)
+        result.verifier=ReaderGitArchiveVerifier(parent=result.parent,inventory_raw=raw,
+            inventory_pin=pin,checkpoint=result.checkpoint)
+        result.parent.verify_quiescent=result.verifier
+        result.entry=prepare_entry(result.parent,inventory_raw=raw,inventory_pin=pin,names=names)
+        result.checkpoint()
+        return result
+
+    def checkpoint(self):
+        try:
+            if self.error is not None:raise self.error
+            shared=self.shared
+            v.require(shared.started_at==self.clock['started_at'] and
+                shared.limits['wall_seconds']==self.clock['wall_seconds'] and
+                Path(shared.roots['outer'])==Path(self.parent.request['budget_root']),
+                'reader original outer clock/root cannot be reset')
+            shared.require_stage('producer',self.budget.root)
+            # Repeated EnvelopeBudget producer checks do not append/reset the
+            # inner budget's bounded phase log or create another sampler.
+            shared.checkpoint('producer')
+            reason=self.budget.probe()
+            if reason is not None:raise monitor.resources.ResourceStop(reason)
+            self.parent._live()
+            root=paths.regular_path(Path(self.parent.request['budget_root']),directory=True)
+            stat=root.lstat()
+            v.require([stat.st_dev,stat.st_ino]==self.entry['budget_root_identity'],
+                      'reader original measured outer identity changed')
+        except BaseException as failure:
+            if self.error is None:self.error=failure
+            raise
+
+    def source(self):
+        self.checkpoint()
+        return selected_source(self.repository,self.parent.request['revision'],self.source_pins,self.names)
+
+    def bind(self, process):
+        v.require(self.worker is None, 'reader original worker bind once')
+        self.worker=process  # Before checkpoint, bind or native identity IO.
+        self.parent.bind(process)
+        binding,_=self.parent._binding()
+        return copy.deepcopy(binding['worker_identity'])
+
+    def fence(self, process):
+        return self.parent.fence(process)
+
+
 class ReaderGitWorker:
     def __init__(self, entry, *, revision, repository, names):
         v.require(type(entry) is dict and set(entry) == {'channel_root','request_pin',

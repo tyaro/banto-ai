@@ -87,14 +87,16 @@ def validate_runtime_profiles(profiles, *, revision):
     return retained
 
 
-def check_runtime_profiles(profiles, *, revision, source_pins, runtime, reader_source_pins=None):
+def check_runtime_profiles(profiles, *, revision, source_pins, runtime, reader_source_pins=None,
+                           reader_source_names=None):
     retained = validate_runtime_profiles(profiles, revision=revision)
     if retained is None:
         return None
     from . import anomaly_v03_role_runtime_observation as observation
     for role, entry in retained.items():
         value = observation.load_profile(entry['raw'], entry['expected_pin'], root=ROOT, role=role)
-        required = SOURCE_FILES if role == 'producer' else copied.SOURCE_FILES
+        required = SOURCE_FILES if role == 'producer' else (
+            copied.SOURCE_FILES if reader_source_names is None else reader_source_names)
         selected = reader_source_pins if role == 'initial-reader' and reader_source_pins is not None else source_pins
         v.require(value['runtime'] == runtime, 'generation runtime profile tuple differs')
         v.require(all(name in selected and value['source_files'].get(name) == selected[name]
@@ -516,7 +518,8 @@ def worker_main(argv):
 
 def generate_and_read(root, *, expected_pins, source_snapshots,
                       expected_revision, chunk_index=0, recipe_id=RECIPE,
-                      outer_budget=None, campaign_context=None, generation_runtime_profiles=None):
+                      outer_budget=None, campaign_context=None, generation_runtime_profiles=None,
+                      reader_git_plan=None):
     """Own a recipe generator, verify every saved byte, then own a reader.
 
     ``expected_pins`` must be retained by the caller outside ``root`` before
@@ -558,6 +561,13 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
             for role, entry in profiles.items()}, generation_runtime_observation_checked=False,
             runtime_observations={}, runtime_observation_verifications={}, runtime_processes={})
     try:
+        reader_git=None
+        if reader_git_plan is not None:
+            v.require(type(reader_git_plan) is dict and set(reader_git_plan)=={
+                'channel_root','policy','source_pins'} and outer_budget is not None and profiles is not None,
+                'reader Git requires caller plan, linked budget and fresh profiles')
+            from . import anomaly_v03_preformal_reader_git_worker as reader_git_worker
+            reader_names=reader_git_worker.source_names(copied.SOURCE_FILES)
         if outer_budget is not None:
             outer_budget.checkpoint('preflight')
         v.require(recipe_id == RECIPE, 'invented generator recipe only')
@@ -567,12 +577,19 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
         external = copy.deepcopy(expected_pins)
         target.mkdir()
         source = _source(expected_revision)
-        reader_source = copied._source(expected_revision)
+        reader_source = (copied._source(expected_revision) if reader_git_plan is None else
+            reader_git_worker.selected_source(ROOT,expected_revision,reader_git_plan['source_pins'],reader_names))
         observed_runtime = runtime.probe_runtime(ROOT)
         if profiles is not None:
             check_runtime_profiles(profiles, revision=expected_revision,
                 source_pins={row['path']: row['pin'] for row in source['selected_files']},
-                reader_source_pins={row['path']: row['pin'] for row in reader_source['selected_files']}, runtime=observed_runtime)
+                reader_source_pins={row['path']: row['pin'] for row in reader_source['selected_files']},
+                runtime=observed_runtime, **({'reader_source_names':reader_names} if reader_git_plan is not None else {}))
+        if reader_git_plan is not None:
+            reader_git=reader_git_worker.ReaderGitParent.create(root=reader_git_plan['channel_root'],
+                revision=expected_revision,repository=ROOT,policy=reader_git_plan['policy'],
+                budget=outer_budget,source_pins=reader_git_plan['source_pins'],names=reader_names,
+                profile_pin=profiles['initial-reader']['expected_pin'])
         invocation = {'format': (CAMPAIGN_INVOCATION if campaign_context
                                  is not None else INVOCATION),
                       'root': str(root),
@@ -712,6 +729,10 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
         if profiles is not None:
             reader_invocation['runtime_inventory_profile_pin'] = copy.deepcopy(profiles['initial-reader']['expected_pin'])
             io._exclusive(active_target / 'inventory-profile.json', profiles['initial-reader']['raw'])
+        if reader_git is not None:
+            copied._same(reader_git.profile_pin,profiles['initial-reader']['expected_pin'],
+                         'reader caller-held runtime profile pin')
+            reader_invocation['worker_git_entry']=copy.deepcopy(reader_git.entry)
         reader_raw = v.canonical_json(reader_invocation)
         v.require(len(reader_raw) <= copied.MAX_READER_INVOCATION,
                   'reader invocation byte bound')
@@ -723,7 +744,7 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
 
         def reader_boundary():
             boundary()
-            copied._same(copied._source(expected_revision), reader_source,
+            copied._same(copied._source(expected_revision) if reader_git is None else reader_git.source(), reader_source,
                          'parent reader source changed')
             copied._check_outputs(root, names, external)
             copied._same(copied._pin(observed._file(
@@ -735,8 +756,8 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
                                          observation.MAX_PROFILE)
 
         def reader_started(process):
-            reader_launch.update(observed.creation_observation(
-                process.pid, process._handle))
+            reader_launch.update(observed.creation_observation(process.pid,process._handle)
+                if reader_git is None else reader_git.bind(process))
 
         reader_argv = [sys.executable, '-I', '-S', '-B', '-c',
                        copied.READER_BOOTSTRAP, str(ROOT / 'src'),
@@ -746,6 +767,7 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
                 reader_argv, ROOT, active_target / 'worker',
                 copied.READER_LIMITS, boundary=reader_boundary,
                 on_started=reader_started,
+                **({'stop_fence':reader_git.fence} if reader_git is not None else {}),
                 **({'resource_probe': outer_budget.probe}
                    if outer_budget is not None else {}))
         reader_monitor_raw = v.canonical_json(reader_monitor)
