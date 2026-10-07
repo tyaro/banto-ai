@@ -1,5 +1,29 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## pipe作成6a77b8eのCI37651176465を保存（2026-10-08）
+
+外部fullHEAD `6a77b8ef764ff97a4ed929ed2616b2ef6bca8c4a`／attempt1/push/workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`、jobs3.12=112894597233／3.14=112894597529／compare=112910071512を固定。各minor3432/fail0/error0/skip237/source不変、全3job success。専用 `artifacts/ci-diagnostic-37651176465/` にrun/attempt jobs／2journal／comparison-regression／3full log＋localの10raw/14pin、local-remote回帰一致／共有29fixture・必須28／runner v2 consistent_candidateを保存。
+
+3.12/compare=20260927.320.1、3.14=20261004.327.1/prerelease=true。公式release/README metadata/blob/log/journal外部pin・prerelease状態一致、digest未取得／候補未採択。CLI7は6raw一致／skip1file既知CRLF6差を両pin保全。このCIを後続admission/原spawn受渡し27be314の実pipe／worker／容量合格／正式受入へ読み替えない。前回の状態読取りwsarecv接続断はread failureとして別rawへ保全済みで、今回の独立した完了run保存へ書き換えない。
+
+| 保存物 | bytes | SHA-256 |
+|---|---:|---|
+| complete-summary.json | 2562 | `a249f8df882fae2d13195b19dad8f08762a000ea9b88dc9b129ec4147301489f` |
+| 37651176465-candidate-pins.json | 3462 | `b240fbea087bcb15bb059673c4504567e6c4efb222eec35a183d12cddf8cb34a` |
+| 37651176465-result.json | 3959 | `d5a0d12049016b99f2b96a14146a6b1bdbe13de148196ff7ad8744fee1f654c7` |
+| ci-complete-index.json | 2783 | `2ec3c6dd1814076a55302159e306162b21ee16bd600474a21ef06d592a9430d4` |
+| local-cli-source-pins.json | 2138 | `d8cadb1724a848a8e6b54f21250cd7ad7846c9b3f0d4f00d567ef226311265e5` |
+| close-admission-next-boundary.json | 1361 | `86f012c02e715972927b8feedbd7b5f93617d5b0eb6905b26f55d652f57df93a` |
+
+download44644/creation134358666172441377/token83f3438100dd121791771bde13de31b0cbb11374170336c14b42a370db651633 はexit0/CIM残存なし。元identity/tokenをlive/executionへ保持、PID単独で過去processと同一扱いしない。
+verification44940/creation134358666805741053/token609190c969623a83a9064455042e058b8cc8d330cfe47effd6dba97a9e68f6ae はexit0/CIM残存なし。元identity/tokenをlive/executionへ保持、PID単独で過去processと同一扱いしない。
+
+全helper終了／critical ownerなし／native0／追加agent0、完成焦点・native・profile観測反復0。最新code27be314の選択3 sourceはworking/Git pin一致。原FileIO.closeのreturnが保存された後にsink_events（fd/return/file_identity/raw_pin）→spool.closed→元checkpoint→全raw readbackと完成resultの順であることを短いnext-boundaryへ固定した。これは静的対象箇所の照合で、runtime閉包やnative証明ではない。
+
+次は同じ原close adapter/output/native/keeperをadmissionへ明示bindし、元fd identityをclose前保持、closed sinkの実return/eventと全raw readbackへ結ぶ。途中close checkpointは容量再照合だけで、完成quiescence/ackへ読み替えない。metadata/marker不在/root exit/EOF/worker kill-waitだけで解除せず、元owner/失敗raw/pendingを保持しblind retryなし。実transport/stop-reap/output_limit、pipe receipt publisher、並行root予約/coupled容量、fresh profile/request/unusedrootと限定launcherは後続別単位、create_native拒否維持。
+
+未保存CI37654425831（full8eba6cfa9dd3fcf633e314908327f7449fe8a9d0/各minor3444予定）と37655643970（full27be314059e8f092b994258ada176dab3c17c717/3455予定）は進行中。各終端の原run/attempt/jobs/fullHEAD/workflowを固定し一度保存、成功時のみlocal回帰/runner v2、失敗は小さい原因確認と保全。doc-only新CI追跡なし。旧run failure/比較job欠落・fixture/discovery失敗原rawはsuccessへ読み替えず保全。正式gate/permission/credit/holdout不変。以下は先行履歴。
+
 ## close proof link5906eedのCI37647654446を保存（2026-10-08）
 
 外部fullHEAD `5906eed8833d753052194699a355b2fe7f0832ae`／attempt1/push/workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`、jobs3.12=112882514144／3.14=112882513823／compare=112901709168を固定。各minor3420/fail0/error0/skip237/source不変・全3job success。専用 `artifacts/ci-diagnostic-37647654446/` にrun/attempt jobs／2journal／comparison-regression／3full log＋localの10raw/14pin、local-remote回帰一致／共有29fixture・必須28／runner v2 consistent_candidate・保存後照合を保存。
