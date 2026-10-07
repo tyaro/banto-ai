@@ -153,34 +153,53 @@ def _outputs(root, chunk_index):
     return names
 
 
-def _source(expected_revision):
+def _source(expected_revision, *, git_identity=None, git_blob=None):
     """Selected raw working/Git source check; this is not source closure."""
     copied.evidence._digest(expected_revision, 40)
-    head = subprocess.check_output(
-        ['git', '-C', str(ROOT), 'rev-parse', 'HEAD'],
-        stderr=subprocess.DEVNULL, timeout=10).decode().strip()
-    v.require(head == expected_revision, 'selected generator revision changed')
-    dirty = subprocess.check_output(
-        ['git', '-c', 'core.fsmonitor=false', '-C', str(ROOT), 'status',
-         '--porcelain', '--untracked-files=normal'],
-        stderr=subprocess.DEVNULL, timeout=10)
+    v.require(git_identity is None or callable(git_identity),
+              'generator Git identity callback must be callable')
+    v.require(git_blob is None or callable(git_blob),
+              'generator Git blob callback must be callable')
+    if git_identity is None:
+        head = subprocess.check_output(
+            ['git', '-C', str(ROOT), 'rev-parse', 'HEAD'],
+            stderr=subprocess.DEVNULL, timeout=10)
+        v.require(type(head) is bytes and head.strip() == expected_revision.encode(),
+                  'selected generator revision changed')
+        dirty = subprocess.check_output(
+            ['git', '-c', 'core.fsmonitor=false', '-C', str(ROOT), 'status',
+             '--porcelain', '--untracked-files=normal'],
+            stderr=subprocess.DEVNULL, timeout=10)
+    else:
+        identity = git_identity()
+        v.require(type(identity) is dict and set(identity) == {'head', 'status'},
+                  'generator Git identity raw inventory')
+        head, dirty = identity['head'], identity['status']
+    v.require(type(head) is bytes and type(dirty) is bytes,
+              'generator Git identity raw bytes')
+    v.require(head.strip() == expected_revision.encode(), 'selected generator revision changed')
     v.require(not dirty, 'clean generator checkout required')
     rows = []
     for name in SOURCE_FILES:
         working = observed._file(ROOT / name, 1024**2)
-        committed = subprocess.check_output(
+        committed = (subprocess.check_output(
             ['git', '-C', str(ROOT), 'show', expected_revision + ':' + name],
-            stderr=subprocess.DEVNULL, timeout=10)
-        v.require(working == committed, 'selected generator source changed: ' + name)
+            stderr=subprocess.DEVNULL, timeout=10) if git_blob is None else
+            git_blob(revision=expected_revision, source_path=name,
+                     expected_output_pin=copied._pin(working)))
+        v.require(type(committed) is bytes and working == committed,
+                  'selected generator source changed: ' + name)
         rows.append({'path': name, 'pin': copied._pin(working)})
     return {'revision': expected_revision, 'selected_files': rows,
             'scope': 'selected-working-git-raw-only-not-source-closure'}
 
 
-def _validated_snapshots(value, expected_revision):
+def _validated_snapshots(value, expected_revision, *, git_blob=None):
     """Bind the two selected executable source bytes to working and Git bytes."""
     v.require(type(value) is dict and set(value) == {expected_revision},
               'source snapshot revision binding')
+    v.require(git_blob is None or callable(git_blob),
+              'generator snapshot Git blob callback must be callable')
     copied._source_snapshots(value)
     rows = value[expected_revision]
     v.require(type(rows) is dict and set(rows) == set(SNAPSHOT_FILES),
@@ -188,10 +207,12 @@ def _validated_snapshots(value, expected_revision):
     for name in SNAPSHOT_FILES:
         raw = rows[name]
         working = observed._file(ROOT / name, 1024**2)
-        committed = subprocess.check_output(
+        committed = (subprocess.check_output(
             ['git', '-C', str(ROOT), 'show', expected_revision + ':' + name],
-            stderr=subprocess.DEVNULL, timeout=10)
-        v.require(raw == working == committed,
+            stderr=subprocess.DEVNULL, timeout=10) if git_blob is None else
+            git_blob(revision=expected_revision, source_path=name,
+                     expected_output_pin=copied._pin(working)))
+        v.require(type(committed) is bytes and raw == working == committed,
                   'source snapshot working/Git bytes changed: ' + name)
     return paths.Checkout(ROOT, expected_revision,
                           tuple((name, rows[name]) for name in SNAPSHOT_FILES))
@@ -359,17 +380,23 @@ def _preflight(root, chunk_index, expected_pins):
     return names
 
 
-def _generate_attempt(request, root):
+def _generate_attempt(request, root, *, git_identity=None, git_blob=None):
     """The original generation/save/readback operation, performed once."""
     campaign_mode = 'campaign_context' in request
+    source_options = {}
+    if git_identity is not None:
+        source_options['git_identity'] = git_identity
+    if git_blob is not None:
+        source_options['git_blob'] = git_blob
     names = _outputs(root, request['chunk_index'])
     copied._same(request['output_names'], names,
                  'generator output names')
     external = request['external_pins']
     _validate_pins(names, external)
     snapshots = copied._decode_source_snapshots(request['source_snapshots'])
-    _validated_snapshots(snapshots, request['source_revision'])
-    source_before = _source(request['source_revision'])
+    _validated_snapshots(snapshots, request['source_revision'],
+                         **({'git_blob': git_blob} if git_blob is not None else {}))
+    source_before = _source(request['source_revision'], **source_options)
     runtime_before = runtime.probe_runtime(ROOT)
     copied._same(source_before, request['source'], 'generator source before')
     copied._same(runtime_before, request['runtime'], 'generator runtime before')
@@ -409,7 +436,7 @@ def _generate_attempt(request, root):
         target.parent.mkdir(parents=True, exist_ok=True)
         io._exclusive(target, output[logical])
     copied._check_outputs(root, names, external)
-    source_after = _source(request['source_revision'])
+    source_after = _source(request['source_revision'], **source_options)
     runtime_after = runtime.probe_runtime(ROOT)
     copied._same(source_after, source_before, 'generator source after')
     copied._same(runtime_after, runtime_before, 'generator runtime after')

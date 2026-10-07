@@ -119,24 +119,41 @@ def _inventory(root, expected):
     v.require(actual == set(expected), 'exact invented materializer file inventory')
 
 
-def _source(expected_revision):
+def _source(expected_revision, *, git_identity=None, git_blob=None):
     evidence._digest(expected_revision, 40)
-    head = subprocess.check_output(
-        ['git', '-C', str(ROOT), 'rev-parse', 'HEAD'],
-        stderr=subprocess.DEVNULL, timeout=10).decode().strip()
-    v.require(head == expected_revision, 'selected materializer revision changed')
-    dirty = subprocess.check_output(
-        ['git', '-c', 'core.fsmonitor=false', '-C', str(ROOT), 'status',
-         '--porcelain', '--untracked-files=normal'],
-        stderr=subprocess.DEVNULL, timeout=10)
+    v.require(git_identity is None or callable(git_identity),
+              'materializer Git identity callback must be callable')
+    v.require(git_blob is None or callable(git_blob),
+              'materializer Git blob callback must be callable')
+    if git_identity is None:
+        head = subprocess.check_output(
+            ['git', '-C', str(ROOT), 'rev-parse', 'HEAD'],
+            stderr=subprocess.DEVNULL, timeout=10)
+        v.require(type(head) is bytes and head.strip() == expected_revision.encode(),
+                  'selected materializer revision changed')
+        dirty = subprocess.check_output(
+            ['git', '-c', 'core.fsmonitor=false', '-C', str(ROOT), 'status',
+             '--porcelain', '--untracked-files=normal'],
+            stderr=subprocess.DEVNULL, timeout=10)
+    else:
+        identity = git_identity()
+        v.require(type(identity) is dict and set(identity) == {'head', 'status'},
+                  'materializer Git identity raw inventory')
+        head, dirty = identity['head'], identity['status']
+    v.require(type(head) is bytes and type(dirty) is bytes,
+              'materializer Git identity raw bytes')
+    v.require(head.strip() == expected_revision.encode(), 'selected materializer revision changed')
     v.require(not dirty, 'clean materializer checkout required')
     rows = []
     for name in SOURCE_FILES:
         working = observed._file(ROOT / name, 1024**2)
-        committed = subprocess.check_output(
+        committed = (subprocess.check_output(
             ['git', '-C', str(ROOT), 'show', expected_revision + ':' + name],
-            stderr=subprocess.DEVNULL, timeout=10)
-        v.require(working == committed, 'selected materializer source changed: ' + name)
+            stderr=subprocess.DEVNULL, timeout=10) if git_blob is None else
+            git_blob(revision=expected_revision, source_path=name,
+                     expected_output_pin=_pin(working)))
+        v.require(type(committed) is bytes and working == committed,
+                  'selected materializer source changed: ' + name)
         rows.append({'path': name, 'pin': _pin(working)})
     return {'revision': expected_revision, 'selected_files': rows,
             'scope': 'selected-working-git-raw-only-not-source-closure'}
@@ -347,14 +364,19 @@ def worker_main(argv):
         return 2
 
 
-def _read_attempt(request, root):
+def _read_attempt(request, root, *, git_identity=None, git_blob=None):
     """The original physical initial read and rederivation, performed once."""
     campaign_mode = 'campaign_context' in request
+    source_options = {}
+    if git_identity is not None:
+        source_options['git_identity'] = git_identity
+    if git_blob is not None:
+        source_options['git_blob'] = git_blob
     snapshots = _decode_source_snapshots(request['source_snapshots'])
     outputs, _ = _saved_outputs(root, request['chunk_index'],
                                 request['external_pins'])
     _same(request['output_names'], outputs, 'owned reader output names')
-    source_before = _source(request['source_revision'])
+    source_before = _source(request['source_revision'], **source_options)
     runtime_before = runtime.probe_runtime(ROOT)
     _same(source_before, request['source'], 'owned reader source before')
     _same(runtime_before, request['runtime'], 'owned reader runtime before')
@@ -372,7 +394,7 @@ def _read_attempt(request, root):
                                if key not in SAVED},
         source_snapshots=snapshots)
     _check_outputs(root, outputs, external)
-    source_after = _source(request['source_revision'])
+    source_after = _source(request['source_revision'], **source_options)
     runtime_after = runtime.probe_runtime(ROOT)
     _same(source_after, source_before, 'owned reader source after')
     _same(runtime_after, runtime_before, 'owned reader runtime after')
