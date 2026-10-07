@@ -111,6 +111,7 @@ class UnreapedJob(RuntimeError):
     def __init__(self, job, process, thread, report, extra_handles=None):
         self.job, self.process, self.thread, self.report = job, process, thread, report
         self.extra_handles = dict(extra_handles or {})
+        self.original_error = self.stop_error = None
         super().__init__('owned Job process exit could not be confirmed')
 
 
@@ -439,6 +440,12 @@ def run_fixture(evidence_dir, *, mode, wall_seconds=5.0,
 def _close_owned(k, job, process, thread, report):
     handles = {name:handle for name,handle in
                (('thread',thread),('process',process),('job',job)) if handle is not None}
+    return _close_handles(k, handles, report)
+
+
+def _close_handles(k, handles, report):
+    """Keep every named original, including inherited handles, before close."""
+    handles = dict(handles)
     retained = UnclosedHandles(handles, report)  # Own everything before CloseHandle or diagnostics.
 
     def failed():

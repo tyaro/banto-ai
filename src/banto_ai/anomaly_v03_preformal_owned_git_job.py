@@ -98,14 +98,16 @@ def _execute(argv, root, environment, target, operation, timeout_seconds, *, sto
             except BaseException as error:
                 # A failed accounting query must still attempt to stop the
                 # Job. Keep every handle when confirmation remains unavailable.
+                retained = owner.UnreapedJob(job, process, thread, {
+                    'status':'failed', 'phase':'git_reap',
+                    'job_accounting':accounting, 'root_exit_code':exit_code,
+                    'formal_permission':False})
+                retained.original_error = error
                 try:
                     owner._need(k.TerminateJobObject(job, 0xE008), 'TerminateJobObject Git cleanup')
                 except BaseException as stop_error:
-                    error.git_stop_error = stop_error
-                raise owner.UnreapedJob(job, process, thread, {
-                    'status':'failed', 'phase':'git_reap',
-                    'job_accounting':accounting, 'root_exit_code':exit_code,
-                    'formal_permission':False}) from error
+                    retained.stop_error = stop_error
+                raise retained from error
             try:
                 memory = owner._job_memory(k, job)
             except BaseException as error:
