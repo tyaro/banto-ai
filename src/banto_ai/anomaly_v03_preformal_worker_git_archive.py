@@ -21,6 +21,128 @@ MAGIC = b'WGA1'
 MAX_BYTES, MAX_RECORD, MAX_RAW = bounds.MAX_BYTES, bounds.MAX_RECORD, bounds.MAX_RAW
 
 
+class ArchiveAppendAdmission:
+    """Opt-in frame growth and future control snapshot gate, not atomic reservation.
+
+    Original recovery raw, including partial-archive.bin, stays in the measured
+    root. Its raw inventory cap never supplies this new archive frame's bytes.
+    Every control publisher must participate before this can authorize native.
+    """
+    CONTROL_NAMES = tuple(name+suffix for name in (
+        'request.json','binding.json','stop.json','worker-inventory.json',
+        'git-manifest.json','git-proof.json','ack.json') for suffix in ('','.pending'))
+    BYTE_LIMIT, ENTRY_LIMIT, RESERVE = 1024**2, 32, 128*1024
+
+    def __init__(self, *, root, root_identity, revision, inventory_pin, control_limits, checkpoint):
+        self.original_root, self.original_identity, self.original_controls = root, root_identity, control_limits
+        self.original_inventory_pin, self.checkpoint = inventory_pin, checkpoint
+        self.writer = self.rejected_writer = self.pending = self.error = None
+        self.completed = []
+        self.root, self.identity = Path(root), copy.deepcopy(root_identity)
+        self.revision, self.inventory_pin = revision, copy.deepcopy(inventory_pin)
+        self.control_limits = copy.deepcopy(control_limits)
+        v.require(self.root.is_absolute() and self.root == self.root.resolve() and
+            type(self.identity) is tuple and len(self.identity)==2 and
+            all(type(n) is int and n>=0 for n in self.identity) and callable(checkpoint),
+            'archive append held root identity and shared checkpoint')
+        evidence._digest(revision,40); evidence._pin(self.inventory_pin)
+        v.require(type(self.control_limits) is dict and set(self.control_limits)==set(self.CONTROL_NAMES) and
+            all(type(n) is int and 0<n<=proof.channel.MAX_CONTROL for n in self.control_limits.values()),
+            'archive append all completed and pending control maxima')
+        self.plan_raw=self._plan()
+
+    def _plan(self):
+        return io.json_bytes({'root':str(self.root),'root_identity':list(self.identity),
+            'revision':self.revision,'inventory_pin':self.inventory_pin,'control_limits':self.control_limits})
+
+    def _bound(self):
+        writer=self.writer
+        v.require(self._plan()==self.plan_raw and writer.checkpoint is self.checkpoint and
+            writer.verifier.inventory_pin==self.inventory_pin and
+            writer.verifier.endpoint.request['revision']==self.revision and
+            Path(writer.verifier.endpoint.request['budget_root'])==self.root and writer.path.parent==self.root,
+            'archive append held plan or original binding changed')
+        if self.pending is not None:
+            v.require(writer.raw is self.pending['before_raw'] and
+                self.pending['lease']==len(self.completed)==len(writer.rows),
+                'archive append original bytes or sequence changed')
+
+    def _failed(self, failure):
+        if self.error is None:self.error=failure
+        raise self.error
+
+    def bind(self, writer):
+        if self.error is not None:raise self.error
+        try:
+            if self.writer is not None:
+                self.rejected_writer=writer
+                v.require(False,'archive append cannot rebind its original writer')
+            self.writer=writer  # Before caller clock, root or verifier IO.
+            v.require(type(writer) is WorkerGitArchive and writer.checkpoint is self.checkpoint and
+                writer.verifier.inventory_pin==self.inventory_pin and
+                writer.verifier.endpoint.request['revision']==self.revision and
+                Path(writer.verifier.endpoint.request['budget_root'])==self.root and
+                writer.path.parent==self.root, 'archive append exact inventory/revision/root/writer')
+            self.checkpoint(); self._bound(); writer.verifier._live()
+            info=paths.regular_path(self.root,directory=True).lstat()
+            v.require((info.st_dev,info.st_ino)==self.identity,'archive append original root changed')
+        except BaseException as failure:self._failed(failure)
+
+    def _remaining(self, growth, stage):
+        self.checkpoint(); self._bound(); self.writer.verifier._live()
+        from . import anomaly_v03_preformal_generated_chain_budget as monitor
+        snapshot=monitor._directory_snapshot(self.root,self.ENTRY_LIMIT,2,self.identity)
+        held={'snapshot':snapshot,'controls':{}}
+        self.pending[stage]=held  # Retain observations before subsequent IO.
+        future_bytes=future_entries=0
+        for name,maximum in self.control_limits.items():
+            path=self.writer.verifier.endpoint.root/name
+            paths.regular_path(path,missing=True)
+            info=path.lstat() if path.exists() else None
+            held['controls'][name]=None if info is None else {'bytes':info.st_size,'identity':(info.st_dev,info.st_ino)}
+            size=0 if info is None else info.st_size
+            v.require(size<=maximum,'archive append retained control exceeds held maximum')
+            future_bytes+=maximum-size
+            future_entries+=int(info is None)
+        held.update(future_bytes=future_bytes,future_entries=future_entries,growth_bytes=growth)
+        v.require(snapshot['directory_bytes']+future_bytes+growth+self.RESERVE<=self.BYTE_LIMIT and
+            snapshot['directory_entries']+future_entries+2<=self.ENTRY_LIMIT,
+            'archive append frame and future controls exceed original outer remaining budget')
+
+    def reserve(self, writer, lease, frame):
+        if self.error is not None:raise self.error
+        try:
+            v.require(writer is self.writer and self.pending is None and
+                type(lease) is int and lease==len(self.completed)==len(writer.rows) and
+                type(frame) is bytes and writer.pending['frame'] is frame,
+                'archive append original ordered frame')
+            self.pending={'lease':lease,'frame':frame,'before_raw':writer.raw}
+            v.require(frame[:4]==MAGIC and len(frame)>=8 and
+                int.from_bytes(frame[4:8],'big')==len(frame)-8 and len(frame)<=MAX_RECORD+8 and
+                len(writer.raw)+len(frame)<=MAX_BYTES,'archive append unchanged frame and archive caps')
+            self._remaining(len(frame),'before')
+            v.require(observed._file(writer.path,MAX_BYTES)==writer.raw,'archive append original bytes changed')
+        except BaseException as failure:self._failed(failure)
+
+    def complete(self, writer):
+        if self.error is not None:raise self.error
+        try:
+            v.require(writer is self.writer and self.pending is not None and
+                self.pending['lease']==len(self.completed)==len(writer.rows),
+                'archive append original pending completion')
+            pending=self.pending
+            raw=observed._file(writer.path,MAX_BYTES)
+            pending['readback_raw']=raw
+            v.require(raw==pending['before_raw']+pending['frame'],'archive append exact added frame readback')
+            self._remaining(0,'after')
+            row={'lease':pending['lease'],'before_pin':observed._pin(pending['before_raw']),
+                'frame_pin':observed._pin(pending['frame']),'archive_pin':observed._pin(raw),
+                'atomic_reservation':False,'lease_completed':False,'parent_ack_authorized':False,
+                'execution_authenticated':False}
+            self.completed.append(row); self.pending=None
+        except BaseException as failure:self._failed(failure)
+
+
 def _path(path, endpoint):
     path = Path(path)
     root = Path(endpoint.request['budget_root'])
@@ -121,7 +243,8 @@ class SavedWorkerGitArchive:
 
 
 class WorkerGitArchive:
-    def __init__(self, *, path, verifier, checkpoint):
+    def __init__(self, *, path, verifier, checkpoint, append_admission=None):
+        self.original_append_admission = self.append_admission = append_admission
         v.require(callable(checkpoint), 'worker archive shared budget checkpoint required')
         self.verifier, self.checkpoint = verifier, checkpoint
         self.inventory_raw = _inventory(verifier)
@@ -129,6 +252,9 @@ class WorkerGitArchive:
         v.require(not self.path.exists(), 'worker archive exclusive unused file')
         self.rows, self.raw, self.statuses = [], b'', []
         self.pending, self.failed = None, False
+        if append_admission is not None:
+            v.require(type(append_admission) is ArchiveAppendAdmission, 'worker archive explicit append admission')
+            append_admission.bind(self)
         checkpoint(); verifier._live()
         io._exclusive(self.path, b'')
         checkpoint()
@@ -159,16 +285,23 @@ class WorkerGitArchive:
                     name:None if value is None else base64.b64encode(value).decode('ascii')
                     for name,value in packet['raw'].items()}}
             encoded = io.json_bytes(record)
+            self.pending['encoded'] = encoded
             v.require(len(encoded) <= MAX_RAW, 'worker archive decoded record byte bound')
             compressed = gzip.compress(encoded,mtime=0)
+            self.pending['compressed'] = compressed
             v.require(len(compressed) <= MAX_RECORD, 'worker archive compressed record byte bound')
             frame = MAGIC+len(compressed).to_bytes(4,'big')+compressed
+            self.pending['frame'] = frame
             candidate = self.raw+frame
+            self.pending['candidate'] = candidate
             v.require(len(candidate) <= MAX_BYTES, 'worker archive existing total byte bound')
             row = {'lease':lease,'offset':len(self.raw),**observed._pin(frame),
                    'evidence_pin':copy.deepcopy(checked['evidence_pin'])}
             rows = self.rows+[row]
             manifest = self._manifest(candidate,rows)
+            self.pending['manifest'] = manifest
+            if self.append_admission is not None:
+                self.append_admission.reserve(self,lease,frame)
             self.failed = True  # No append retry after any uncertain write/readback.
             self.checkpoint(); _append_frame(self.path,frame)
             saved = SavedWorkerGitArchive(endpoint=self.verifier.endpoint,
@@ -178,6 +311,8 @@ class WorkerGitArchive:
             v.require(saved.read(lease) == packet and self.verifier.record(lease)[0] == checked,
                       'worker archive saved/original raw readback')
             self.checkpoint()
+            if self.append_admission is not None:
+                self.append_admission.complete(self)
             self.raw, self.rows = candidate, rows
             self.statuses.append(status)
             self.failed, self.pending = False, None
