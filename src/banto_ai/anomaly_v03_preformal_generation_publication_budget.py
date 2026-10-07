@@ -45,6 +45,47 @@ SOURCE_NAMES = tuple(dict.fromkeys((
     *parent_blobs.SOURCE_FILES,
     *generated.SOURCE_FILES, *reread.SOURCE_FILES, *document.SOURCE_NAMES,
 )))
+READER_PLAN_FORMAT = 'anomaly-v03-preformal-initial-reader-git-plan-v1'
+
+
+def _reader_git_plan(entry, *, roots, revision, profiles):
+    """Resolve a caller-pinned preparation file; never launch or adopt it."""
+    if entry is None:
+        return None
+    v=generated.v
+    v.require(type(entry) is dict and set(entry)=={'path','expected_pin'} and profiles is not None,
+              'reader Git pinned plan and fresh generation profiles required')
+    path=Path(entry['path'])
+    v.require(path.is_absolute() and path==path.resolve() and path.is_relative_to(ROOT/'artifacts') and
+        not any(path.is_relative_to(root) for root in roots.values()),
+        'reader Git plan must precede measured output roots')
+    raw=reread.pinned.read_pinned(path,entry['expected_pin'],32*1024)
+    value=v.strict_json(raw)
+    v.require(type(value) is dict and set(value)=={'format','revision','outer_root','channel_root',
+        'policy','source_pins','profile_pin','formal_permission'} and v.canonical_json(value)==raw and
+        value['format']==READER_PLAN_FORMAT and value['formal_permission'] is False,
+        'reader Git exact canonical closed plan')
+    v.require(value['revision']==revision and value['outer_root']==str(roots['outer']) and
+        value['channel_root']==str(roots['outer']/'reader-git-channel') and
+        value['profile_pin']==profiles['initial-reader']['expected_pin'],
+        'reader Git caller revision/root/profile link')
+    from . import anomaly_v03_preformal_reader_git_worker as reader
+    policy=value['policy']
+    v.require(type(policy) is dict and set(policy)=={'path','expected_pin'}, 'reader Git policy entry')
+    policy_path=Path(policy['path'])
+    v.require(policy_path.is_absolute() and policy_path==policy_path.resolve() and
+        policy_path.is_relative_to(ROOT/'artifacts') and policy_path.name=='policy.json' and
+        not any(policy_path.is_relative_to(root) for root in roots.values()),
+        'reader Git separate pinned policy')
+    policy_value,_=reader.channel._read(policy_path,policy['expected_pin'])
+    v.require(type(policy_value) is dict and policy_value.get('revision')==revision and
+        policy_value.get('process_ownership')==reader.tree.direct.JOB_OWNERSHIP,
+        'reader Git private Job policy revision')
+    names=reader.source_names(generated.copied.SOURCE_FILES)
+    reader.selected_source(ROOT,revision,value['source_pins'],names)
+    generated.paths.regular_path(Path(value['channel_root']),directory=True,missing=True)
+    v.require(not Path(value['channel_root']).exists(), 'reader Git new exclusive channel')
+    return {key:copy.deepcopy(value[key]) for key in ('channel_root','policy','source_pins')}
 
 
 def limits(value=None):
@@ -240,7 +281,8 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
         expected_control_pinset_pin, expected_input_pins, budget_limits=None,
         arithmetic_runtime_profiles=None, publication_runtime_profiles=None,
         saved_reader_runtime_profile=None, generation_runtime_profiles=None,
-        parent_git_identity_policy=None, parent_git_blob_archive=False):
+        parent_git_identity_policy=None, parent_git_blob_archive=False,
+        reader_git_plan=None):
     """Execute one new engineering attempt; never adopt a formal evaluation."""
     roots = _new_roots(outer_root, producer_root, reread_root, receipt_name)
     generated.copied.evidence._digest(expected_revision, 40)
@@ -250,6 +292,10 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
                                                                            revision=expected_revision)
     saved_reader_profile = reread.validate_runtime_profile(saved_reader_runtime_profile, revision=expected_revision)
     generation_profiles = generated.validate_runtime_profiles(generation_runtime_profiles, revision=expected_revision)
+    if reader_git_plan is not None:
+        reader_git_plan = copy.deepcopy(reader_git_plan)
+    reader_plan = _reader_git_plan(reader_git_plan, roots=roots, revision=expected_revision,
+                                   profiles=generation_profiles)
     git_policy = parent_git.validate(parent_git_identity_policy, revision=expected_revision, roots=roots)
     if type(parent_git_blob_archive) is not bool or (parent_git_blob_archive and git_policy is None):
         raise ValueError('parent blob archive requires explicit identity Job policy')
@@ -321,7 +367,8 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
         reread.check_runtime_profile(saved_reader_profile, revision=expected_revision,
                                     source_pins=before, runtime=runtime)
         generated.check_runtime_profiles(generation_profiles, revision=expected_revision,
-                                        source_pins=before, runtime=runtime)
+            source_pins=before, runtime=runtime, **({'reader_source_pins':reader_plan['source_pins'],
+                'reader_source_names':tuple(reader_plan['source_pins'])} if reader_plan is not None else {}))
         raw = reread.pinned.read_pinned(manifest_path, expected_manifest_pin, reread.MAX_MANIFEST)
         manifest, snapshots = reread._manifest(raw, expected_manifest_pin, roots['producer'])
         if manifest['revision'] != expected_revision or manifest['recipe_id'] != generated.RECIPE:
@@ -335,6 +382,17 @@ def run(*, outer_root, producer_root, reread_root, receipt_name,
         try:
             generation_options = ({'generation_runtime_profiles': generation_profiles}
                                   if generation_profiles is not None else {})
+            if reader_plan is not None:
+                # Reopen pinned preparation and working raw after starting the
+                # original budget; do not reset its clock or create a sampler.
+                current=_reader_git_plan(reader_git_plan,roots=roots,revision=expected_revision,
+                                          profiles=generation_profiles)
+                if current!=reader_plan:
+                    raise ValueError('reader Git held plan changed before composing caller')
+                generation_options['reader_git_plan']=copy.deepcopy(reader_plan)
+                result.update(reader_git_plan_pin=copy.deepcopy(reader_git_plan['expected_pin']),
+                    reader_git_source_pins=copy.deepcopy(reader_plan['source_pins']),
+                    reader_git_plan_forwarded=True)
             produced = generated.generate_and_read(roots['producer'],
                 expected_pins=manifest['output_pins'], source_snapshots=snapshots,
                 expected_revision=expected_revision, chunk_index=manifest['chunk_index'],
