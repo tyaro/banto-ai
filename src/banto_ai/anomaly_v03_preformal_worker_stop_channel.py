@@ -37,8 +37,12 @@ def _directory_identity(root):
     return [info.st_dev, info.st_ino]
 
 
-def _read(path, pin=None):
+def _read(path, pin=None, *, retained=None):
+    if retained is not None:
+        v.require(type(retained) is dict,'channel original raw retention slot')
+        retained['path'],retained['external_pin']=path,pin
     raw = observed._file(path, MAX_CONTROL)
+    if retained is not None:retained['raw']=raw  # Before canonical/pin validation; keep changed raw too.
     if pin is not None:
         evidence._raw(raw, pin, 'channel externally held raw pin')
     value = v.strict_json(raw)
@@ -260,6 +264,12 @@ class ParentChannel(_Channel):
 
     def fence(self, process, *, publication_admission=None):
         v.require(process is self.worker, 'channel original Popen owner')
+        denied=getattr(self,'original_child_publication_denial',None)
+        if denied is not None:
+            self.rejected_child_publication_fence=(denied,process,publication_admission)
+            v.require(denied['process'] is process and denied['publication_admission'] is publication_admission,
+                      'channel original denied child IO owner and gate')
+            return False  # No proof/creation/file/close re-observation can turn this missing owner link into ack.
         options=self._publication(publication_admission)
         self._live()
         # Also stop an unbound child after a failed binding publication.
@@ -278,7 +288,13 @@ class ParentChannel(_Channel):
         paths.regular_path(ack_path, missing=True)
         if not ack_path.exists():
             return False
-        ack, ack_pin = _read(ack_path)
+        observation=None
+        if publication_admission is not None:
+            observation={'process':process,'publication_admission':publication_admission,'binding':binding,
+                'binding_pin':pin,'ack':{},'proof_path':None,'proof_pin':None,'proof_raw':None,'proof_verdict':None}
+            self.pending_child_publication=observation  # Before ack/proof read or verifier IO.
+        ack, ack_pin = _read(ack_path,**({} if observation is None else {'retained':observation['ack']}))
+        if observation is not None:observation['ack_pin']=ack_pin
         v.require(type(ack) is dict and set(ack) == {
             'format','request_pin','binding_pin','worker_identity','no_new_jobs','jobs_finished','proof'} and
             ack['format'] == FORMAT+'-ack' and ack['request_pin'] == self.request_pin and
@@ -288,10 +304,13 @@ class ParentChannel(_Channel):
         proof = ack['proof']
         v.require(type(proof) is dict and set(proof) == {'path','pin'}, 'channel external proof entry')
         path = Path(proof['path'])
+        if observation is not None:observation['proof_path'],observation['proof_pin']=path,proof['pin']
         v.require(_inside(path, self.root), 'channel proof inside measured root')
         raw = observed._file(path, MAX_CONTROL)
+        if observation is not None:observation['proof_raw']=raw
         evidence._raw(raw, proof['pin'], 'channel retained native proof pin')
         result = self.verify_quiescent(raw, ack['jobs_finished'])
+        if observation is not None:observation['proof_verdict']=result
         v.require(type(result) is bool, 'channel explicit native proof verdict')
         if result:
             self._live()
@@ -300,6 +319,10 @@ class ParentChannel(_Channel):
             v.require(final_binding_pin == self.binding_pin, 'channel binding changed during proof verification')
             evidence._raw(observed._file(path, MAX_CONTROL), proof['pin'], 'channel proof changed during verification')
             self._publication(publication_admission)
+            if observation is not None:
+                # A completed file/proof has no original child-local close/rename
+                # owner observation. Its native transport is not connected yet.
+                return publication_admission.owner._deny_child_publication(process,self,observation)
         return result
 
 

@@ -244,6 +244,7 @@ class ReaderGitParent:
         result.original_request_bootstrap=None
         result.inventory_publication=result.inventory_publication_error=result.inventory_pending_owner=None
         result.worker=None
+        result.original_child_publication_denial=None
         try:
             if append_control_limits is not None:
                 actors.archive.RequestBootstrapAdmission(root=root,revision=revision,policy=policy,budget=result.shared,
@@ -393,6 +394,12 @@ class ReaderGitParent:
 
     def fence(self, process):
         try:
+            denied=self.original_child_publication_denial
+            if denied is not None:
+                if self.error is not None:raise self.error
+                self.rejected_child_publication_fence=(denied,process)
+                v.require(process is denied['process'] is self.worker,'reader original denied child Popen')
+                return False
             self._inventory_ready()
             options={} if self.inventory_publication is None else {'publication_admission':self.inventory_publication}
             result=self.parent.fence(process,**options)
@@ -401,6 +408,30 @@ class ReaderGitParent:
         except BaseException as failure:
             self._remember_publication(failure)
             raise
+
+    def _deny_child_publication(self, process, endpoint, observation):
+        held={'owner':self,'process':process,'endpoint':endpoint,'observation':observation,
+            'publication_admission':self.inventory_publication,'original_request':endpoint.request,
+            'request_pin':endpoint.request_pin,'inventory_pin':self.entry['inventory_pin'],
+            'root_identity':self.entry['budget_root_identity'],'clock':self.clock,
+            'root':str(endpoint.root),'revision':endpoint.request['revision'],
+            'binding_pin':observation['binding_pin'],'worker_identity':observation['binding']['worker_identity'],
+            'child_close_rename_owner_observation':None,'parent_ack_authorized':False,
+            'execution_authenticated':False,'atomic_reservation':False}
+        self.pending_child_publication_denial=held  # Preserve all original raw/owners before context validation.
+        held['context_raw']=io.json_bytes({key:held[key] for key in ('request_pin','inventory_pin','root_identity','clock',
+            'root','revision','binding_pin','worker_identity')})
+        v.require(len(held['context_raw'])<=channel.MAX_CONTROL,'reader bounded original child IO denial context')
+        v.require(self.original_child_publication_denial is None and process is self.worker and endpoint is self.parent and
+            observation is endpoint.pending_child_publication and observation['process'] is process and
+            observation['publication_admission'] is self.inventory_publication and observation['proof_verdict'] is True and
+            observation['binding_pin']==endpoint.binding_pin and observation['binding']['worker_identity']==
+                v.strict_json(observation['ack']['raw'])['worker_identity'] and
+            self.inventory_publication.request_pin==held['request_pin'] and
+            self.inventory_publication.inventory_pin==held['inventory_pin'],
+            'reader exact original child publication denial context')
+        self.original_child_publication_denial=endpoint.original_child_publication_denial=held
+        return False  # Missing original child IO link cannot be supplied by flags/metadata or a True proof alone.
 
     def _remember_publication(self, failure):
         gate=self.inventory_publication
