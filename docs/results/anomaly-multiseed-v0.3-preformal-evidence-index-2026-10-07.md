@@ -10,6 +10,10 @@
 
 | 対象 | revision / run | 確認できた範囲 |
 | --- | --- | --- |
+| [親blob/identity限定native](anomaly-multiseed-v0.3-parent-git-blob-budget-native-2026-10-07.md) | d57326e（code9c49c4a） | 67 source・134 blob＋4 identity Job、30.874/90秒、88 cache hit、exit0/active0、保存checker pass。archive520,852 B/512 KiB、正式容量・全7役最終受入は未了。 |
+| [親source callback CI](anomaly-multiseed-v0.3-parent-source-archive-ci-save-2026-10-07.md) | 9af4a96 / [37568898031](https://github.com/tyaro/banto-ai/actions/runs/37568898031) | 全3job success、各minor3099件/skip237、10 raw/14 pin・回帰一致・runner v2 consistent_candidate。 |
+| [archive部品 CI](anomaly-multiseed-v0.3-parent-source-archive-ci-save-2026-10-07.md) | 1159b9a / [37570913852](https://github.com/tyaro/banto-ai/actions/runs/37570913852) | 全3job success、各minor3118件/skip237、10 raw/14 pin・回帰一致・runner v2 consistent_candidate。 |
+| 親blob actor CI（未完了） | 9c49c4a / [37572914427](https://github.com/tyaro/banto-ai/actions/runs/37572914427) | in_progress、完了後に同HEAD/run/attempt固定で保存する。 |
 | [全7役runtime・共通予算native](anomaly-multiseed-v0.3-seven-role-runtime-common-budget-native-2026-10-07.md) | `343c8639b0acfb2be535c02b5aaf4288b8f3d43e` | 7役・14phase、元handle/exit/reap、外部pin、架空1区間22 payload＋479 metadata、outer690.576/1800秒。保存checker57 raw/103 sourceと4974 raw/60 source pass。 |
 | 最新native文書保存点のCI | `21d386692398710c050fa5ab3b4a96db73b95be0` / [37547050883](https://github.com/tyaro/banto-ai/actions/runs/37547050883) | 追補時は全3job success、各minor3065件・fail/error0・skip237・source不変。10 raw保存、local回帰とrunner v2照合pass。最終受入は未了。 |
 | runner v2 codeの最新CI | `6f1270f05614e7127ecdd876da77dcc1805c1858` / [37548282365](https://github.com/tyaro/banto-ai/actions/runs/37548282365) | 全3job success、各minor3074件・fail/error0・skip237・source不変。10 raw保存、local回帰一致。3.12/compareは20261004.327.1、3.14は20260927.320.1でrunner v2照合pass。新しい版prerelease=trueは未採択。 |

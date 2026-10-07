@@ -1,5 +1,7 @@
 # v0.3 外部program・異常時子孫回収の受入残件（2026-10-07）
 
+最新native: [親blob/identity共通予算](anomaly-multiseed-v0.3-parent-git-blob-budget-native-2026-10-07.md)をclean d57326e（code9c49c4a）で一回実測。67 source・134 blob＋4 identity Jobはexit0/active0、pre/post pin一致、30.874/90秒、保存checker v2 pass、sampler/helper終了。archive520,852 Bで512 KiB残余3,436 B。CI9af/1159も保存照合済み、CI9cは未完了。worker内Git・実ロード依存・業務異常子孫・正式5残件は継続。以下の未開始表記は先行source/部品unit時点の保存履歴。
+
 最新: [親blob actor接続](anomaly-multiseed-v0.3-parent-git-blob-actor-2026-10-07.md)をcode9c49c4aに保存。45焦点/11 pin/safety pass、元Job/shared stop/phase cache/失敗raw保全と実callerpre/post gate、compact64 KiB indexを接続。正常時の新inflight3fileだけの整理を確認。67 source/134 blob＋4 identityの限定nativeは未開始、critical keeper付きlauncherが次の単位。
 
 最新追補: [bounded archive部品](anomaly-multiseed-v0.3-git-receipt-archive-component-2026-10-07.md)をcode1159b9aへ保存。54焦点・10 pin・safety pass、synthetic130 receipt/88 cache hit/65 stdoutの保存protocol fixtureは472,003 B。production Job/shared budget/元handle接続は次の単位、限定native未実施。srcに加えて現在実callerの5toolだけを明示許可する。正式5残件は維持。
