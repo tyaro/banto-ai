@@ -1,5 +1,9 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 親binding/stop codeの新CI選択（2026-10-08）
+
+新code `726217fd191886d2d6e2ed52b0cb1dbdf8f59644` の実fullSHA選択でCI37699731250/in_progressを確認、各minor3605予定。先行37695929528（実full6c9acf0fdb20f1d8971b24e0873fc5c7fbf09821/3583予定）は直近3.12 job113047520739 success/3.14 job113047521045 in_progress、run未終端。37697650188（実full7c63923f7f87926b663c6f3b7b353eae3faca8e0/3593予定）も未保存。今回は終端download/local回帰/runner候補照合の追加0。3件を各終端の外部fullHEAD/workflow/run/attempt/jobs固定で新専用rootへ一度保存する。doc-only新CI追跡なし。完成37692009539以下のCIは反復・新native/容量/正式受入読み替えなし。
+
 ## control publication CI37692009539の保存（2026-10-08）
 
 外部fullHEAD `11c7a9929d1d13a755756b8d2e4ac47e8c1520ea`/attempt1/push、3.12 job113034269016/3.14 job113034268575/compare113050569992を固定。全3job success、各minor3570/fail0/error0/skip237/source不変。workflow SHA-256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8`。新専用 `artifacts/ci-diagnostic-37692009539/` へ10raw14pin、local-remote回帰一致/共有29fixture必須28/runner v2 consistent_candidateを保存。
