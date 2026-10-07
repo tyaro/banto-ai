@@ -157,6 +157,33 @@ def selected_source(repository, revision, source_pins, names):
             'scope':'selected-working-git-raw-only-not-source-closure'}
 
 
+def _pipe_raw_limits(limits, source_pins, names):
+    """Validate caller-set failure maxima, independently of successful source sizes.
+
+    This is not a parallel reservation or a whole-root capacity certificate.
+    The admission later adds actual retained archive/control bytes and entries.
+    """
+    v.require(type(limits) is dict and set(limits)=={'head','status','source_blob'} and
+        len(io.json_bytes(limits)) <= channel.MAX_CONTROL, 'reader exact bounded pipe raw allocation')
+    v.require(type(source_pins) is dict and set(source_pins)==set(names),
+              'reader allocation same caller source inventory')
+    for pin in source_pins.values(): actors.proof.evidence._pin(pin)
+    for operation, raw in limits.items():
+        maximum={'receipt.json':tree.direct.MAX_RECEIPT,'stdout.bin':tree.direct.MAX_OUTPUT[operation],
+                 'stderr.bin':tree.direct.MAX_STDERR,'partial-archive.bin':actors.archive.MAX_BYTES}
+        v.require(type(raw) is dict and {'receipt.json','stdout.bin','stderr.bin'} <= set(raw) <= set(maximum)
+            and all(type(n) is int and 0<n<=maximum[name] for name,n in raw.items()),
+            'reader pipe allocation only original positive hard maxima')
+        v.require(sum(raw.values())+tree.GitSinkAdmission.RESERVE <= tree.GitSinkAdmission.BYTE_LIMIT,
+                  'reader raw allocation cannot fit even an empty original outer')
+        if operation=='head':
+            v.require(raw['stdout.bin']>41, 'reader head allocation includes its limit detection byte')
+        if operation=='source_blob':
+            v.require(all(pin['bytes']<raw['stdout.bin'] for pin in source_pins.values()),
+                      'reader independent failure stdout maximum must hold normal source plus detection byte')
+    return limits
+
+
 class ReaderGitParent:
     """Opt-in composing caller; all sampler/clock owners remain with that caller."""
     @classmethod
@@ -170,8 +197,13 @@ class ReaderGitParent:
         raise monitor.resources.ResourceStop('reader_git_native_capture_not_connected')
 
     @classmethod
-    def create(cls, *, root, revision, repository, policy, budget, source_pins, names, profile_pin):
+    def create(cls, *, root, revision, repository, policy, budget, source_pins, names, profile_pin,
+               pipe_raw_limits=None):
         result=cls()
+        result.original_source_pins, result.original_pipe_raw_limits = source_pins, pipe_raw_limits
+        result.source_pins, result.pipe_raw_limits = copy.deepcopy(source_pins), copy.deepcopy(pipe_raw_limits)
+        if pipe_raw_limits is not None:
+            _pipe_raw_limits(result.pipe_raw_limits,result.source_pins,names)
         result.budget, result.shared = budget, getattr(budget,'outer',None)
         shared=result.shared
         v.require(shared is not None and getattr(budget,'stage',None)=='producer' and
@@ -180,10 +212,10 @@ class ReaderGitParent:
         shared.require_stage('producer',budget.root)
         target=Path(root).absolute()
         v.require(target.parent==Path(shared.roots['outer']), 'reader channel under original outer leaf')
-        selected_source(repository,revision,source_pins,names)
+        selected_source(repository,revision,result.source_pins,names)
         actors.proof.evidence._pin(profile_pin)
         result.repository, result.names = Path(repository), names
-        result.source_pins, result.profile_pin = copy.deepcopy(source_pins), copy.deepcopy(profile_pin)
+        result.profile_pin = copy.deepcopy(profile_pin)
         result.worker=result.error=None
         result.parent=channel.ParentChannel.create(root=target,revision=revision,policy=policy,
             budget=shared,verify_quiescent=lambda _raw,_count:False)
@@ -192,8 +224,9 @@ class ReaderGitParent:
         for phase in ('pre','post'):
             for operation,name in [('head',None),('status',None),*[('source_blob',name) for name in names]]:
                 calls.append({'lease':len(calls),'phase':phase,'operation':operation,'source_path':name,
-                    'expected_output_pin':None if name is None else copy.deepcopy(source_pins[name]),
-                    'raw_inventory':{'receipt.json':tree.direct.MAX_RECEIPT,
+                    'expected_output_pin':None if name is None else copy.deepcopy(result.source_pins[name]),
+                    'raw_inventory':copy.deepcopy(result.pipe_raw_limits[operation])
+                        if result.pipe_raw_limits is not None else {'receipt.json':tree.direct.MAX_RECEIPT,
                         'stdout.bin':tree.direct.MAX_OUTPUT[operation],'stderr.bin':tree.direct.MAX_STDERR,
                         'partial-archive.bin':actors.archive.MAX_BYTES}})
         request=result.parent.request
