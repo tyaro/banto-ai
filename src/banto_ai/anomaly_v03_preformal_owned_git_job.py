@@ -138,6 +138,10 @@ class GitSinkAdmission:
         self.native = owner.UnreapedJob(None, None, None, {
             'status':'pending', 'phase':'git_sink_admission', 'formal_permission':False})
         self.native.git_sink_admission = self
+        self.bootstrap = self.native
+        self.creator = self.spawn_io = self.output_owner = self.rejected_creator = None
+        self.previous_native_admission = None
+        self.native_bindings = []
         self.error = self.pending = self.snapshot = None
         self.streams, self.spools, self.file_identities = {}, {}, {}
         self.started = self.ready = False
@@ -175,8 +179,63 @@ class GitSinkAdmission:
         if self.error is None:
             self.error = failure
         self.native.sink_error = self.error
-        self.native.original_error = self.error
+        if self.native.original_error is None:
+            self.native.original_error = self.error
         raise self.native from self.error
+
+    def _retain_native(self, native):
+        # Keep both bootstrap chains and the actual spawn before checkpoint IO.
+        self.native_bindings.append((native, getattr(native, 'git_sink_admission', None)))
+        v.require(type(native) is owner.UnreapedJob, 'Git sink original UnreapedJob')
+        if native is self.native and getattr(native, 'git_sink_admission', None) is self:
+            return
+        self.native = native
+        self.previous_native_admission = getattr(native, 'git_sink_admission', None)
+        native.git_sink_admission = self
+        self.bootstrap.sink_successor = native
+        v.require(self.previous_native_admission in (None,self),
+                  'Git sink original native cannot have another admission')
+
+    def bind_spawn(self, creator):
+        """Hold original pipes/sinks with one spawn descriptor, without spawning."""
+        if self.error is not None:
+            raise self.native
+        try:
+            if self.creator is not None:
+                self.rejected_creator = creator
+                v.require(False, 'Git sink pipe creator cannot be rebound')
+            self.creator = creator  # Before validation or original root/clock IO.
+            if type(creator) is owner.NativeGitPipes:
+                self._retain_native(creator.native)
+            v.require(type(creator) is owner.NativeGitPipes and creator.error is None and
+                creator.result is True and self.ready and self.pending is None,
+                'Git sink original ready pipe creator/admission')
+            self.checkpoint()
+            self.spawn_io = creator.bind_spawn(self.streams)
+            self._retain_native(self.spawn_io.native)
+            self.spawn_io.git_sink_admission = self
+            self.checkpoint()
+            return self.spawn_io
+        except BaseException as failure:
+            if type(self.creator) is owner.NativeGitPipes and self.creator.spawn_io is not None:
+                self.spawn_io = self.creator.spawn_io
+                self._retain_native(self.spawn_io.native)
+            self._failed(failure)
+
+    def bind_output(self):
+        """After the caller's spawn, keep the same core/streams/spools for IO."""
+        if self.error is not None:
+            raise self.native
+        try:
+            v.require(self.output_owner is None and type(self.spawn_io) is owner.SpawnIOOwner
+                and self.spawn_io.native is self.native,
+                'Git sink same original spawn, no output rebind')
+            self.output_owner = GitOutputOwner.from_spawn(self.spawn_io,
+                spools=self.spools, checkpoint=self.checkpoint)
+            self.checkpoint()
+            return self.output_owner
+        except BaseException as failure:
+            self._failed(failure)
 
     def checkpoint(self):
         if self.error is not None:
