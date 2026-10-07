@@ -247,7 +247,14 @@ class ReaderGitParent:
 
 
 class ReaderGitWorker:
-    def __init__(self, entry, *, revision, repository, names):
+    def __init__(self, entry, *, revision, repository, names, pipe_io=None):
+        # Native objects come from the retaining caller, never the JSON entry.
+        self.original_pipe_io = pipe_io
+        self.pipe_io = None if pipe_io is None else dict(pipe_io) if type(pipe_io) is dict else pipe_io
+        self.clock = time.monotonic  # Same function for this checkpoint and the actor's call window.
+        if pipe_io is not None:
+            v.require(type(self.pipe_io) is dict and set(self.pipe_io) == {'kernel','stdin'},
+                      'reader caller-held pipe kernel/stdin only')
         v.require(type(entry) is dict and set(entry) == {'channel_root','request_pin',
             'inventory_path','inventory_pin','budget_root_identity'}, 'reader Git entry exact fields')
         self.child = channel.ChildChannel(entry['channel_root'],entry['request_pin'])
@@ -270,8 +277,10 @@ class ReaderGitWorker:
         reason = self.child.wait_for_binding()
         if reason is not None:
             raise monitor.resources.ResourceStop(reason)
+        options = {} if self.pipe_io is None else {'pipe_io':{
+            **self.pipe_io,'clock':self.clock,'root_identity':self.identity}}
         self.actor = actors.WorkerGitActor(child=self.child,inventory_raw=raw,
-            inventory_pin=entry['inventory_pin'],checkpoint=self.checkpoint)
+            inventory_pin=entry['inventory_pin'],checkpoint=self.checkpoint,**options)
 
     def checkpoint(self):
         # The parent sampler still measures all four roots and its original
@@ -281,7 +290,7 @@ class ReaderGitWorker:
             if self.error is not None:
                 raise self.error
             self.child._live()
-            clock = self.child.request['clock']; elapsed = time.monotonic()-clock['started_at']
+            clock = self.child.request['clock']; elapsed = self.clock()-clock['started_at']
             v.require(0 <= elapsed < clock['wall_seconds'], 'reader shared clock expired/moved backwards')
             snapshot = monitor._directory_snapshot(self.root,32,2,self.identity)
             v.require(snapshot['directory_bytes']+128*1024 <= 1024**2 and

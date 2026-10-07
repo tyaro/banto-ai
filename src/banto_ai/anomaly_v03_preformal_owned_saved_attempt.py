@@ -420,9 +420,14 @@ def _read_attempt(request, root, *, git_identity=None, git_blob=None, source_fil
     return reply
 
 
-def reader_worker_main(argv):
+def reader_worker_main(argv, *, pipe_io=None):
     """Read the pinned invented saved attempt in a distinct owned process."""
+    original_pipe_io = pipe_io  # Retain caller-owned IO before parsing or diagnostics.
+    held_pipe_io = None if pipe_io is None else dict(pipe_io) if type(pipe_io) is dict else pipe_io
     try:
+        if original_pipe_io is not None:
+            v.require(type(held_pipe_io) is dict and set(held_pipe_io) == {'kernel','stdin'},
+                      'reader native IO is caller-held, not serialized or caller-clock replacement')
         v.require(len(argv) == 2, 'reader worker arguments')
         path = paths.regular_path(Path(argv[0]))
         raw = observed._file(path, MAX_READER_INVOCATION)
@@ -454,11 +459,15 @@ def reader_worker_main(argv):
         v.require(path == root / 'owned-reader' / 'invocation.json',
                   'owned reader invocation path')
         worker_git = None
+        v.require(held_pipe_io is None or 'worker_git_entry' in request,
+                  'reader pipe IO requires exact worker Git entry')
         if 'worker_git_entry' in request:
             from . import anomaly_v03_preformal_reader_git_worker as git_worker
             v.require('runtime_inventory_profile_pin' in request, 'reader Git entry requires fresh runtime profile')
+            options = {} if held_pipe_io is None else {'pipe_io':held_pipe_io}
             worker_git = git_worker.ReaderGitWorker(request['worker_git_entry'],
-                revision=request['source_revision'],repository=ROOT,names=git_worker.source_names(SOURCE_FILES))
+                revision=request['source_revision'],repository=ROOT,names=git_worker.source_names(SOURCE_FILES),
+                **options)
         operation = (lambda: _read_attempt(request,root,git_identity=worker_git.identity_bytes,
             git_blob=worker_git.blob,source_files=worker_git.names)) if worker_git is not None else lambda: _read_attempt(request,root)
         def observed_operation():
