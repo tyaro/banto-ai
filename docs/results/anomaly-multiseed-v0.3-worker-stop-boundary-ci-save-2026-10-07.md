@@ -1,5 +1,13 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## reader親proof 0f249f6のCI37612261124を保存
+
+外部fullHEAD `0f249f63be055f0937c67a7963f541daa9e6df83`、attempt1、jobs112762079973/112762080346/112771980235。各minor3311/fail0/error0/skip237/source不変、全3job success。専用 `artifacts/ci-diagnostic-37612261124/` にrun/attempt jobs・2journal・comparison/regression・3log＋localの10raw/14pin、local/remote回帰一致、共有29fixture/必須28、runner v2 consistent_candidateを保存。index2783B/c5b3a0c4ad209a62d37846f96497ae918470d8d20deeebd038b48ea487880e40。
+
+3.12/compareが20260927.320.1、3.14が20261004.327.1。公式release/README metadata/blobの外部pinと各log/journalを照合、新版prerelease=trueも一致。digest未取得/候補未採択。選択CLI7は6raw一致、skip一覧1fileの既知CRLF6差を両raw pinで保存。sidecar2138B/59a1555d4e1561a183cce6a7c2b7f6ba45dc1ccf5b8ef7f5037ef00e938986bc。
+
+download47668/creation134358497174631451/token6480a23ec2643b9c1e1b8b45852ebb539a00fd354d1d79137f17609445cc8944、verification4980/134358497432554142/tokenf30b77073053ede5c31ba6e1f4cab3d64b7d5662eade2d2f616d045901483818はexit0/CIM残存なし。新native0・焦点反復0。後続code/native/正式受入へ読み替えない。未保存は37614547790（217f0ea/3321予定、run成功確認）、37617865579（a12c3e9/3331予定、進行中）。以下は先行保存点の履歴。
+
 ## initial-reader child入口202b1c3のCI37609649219を保存
 
 外部fullHEAD `202b1c3081f34592e4a79188cda7f15cc9f4ec5f`、attempt1、jobs112753514958/112753514792/112769427609。各minor3299/fail0/error0/skip237/source不変、全3job success。専用 `artifacts/ci-diagnostic-37609649219/` にrun/attempt jobs・2journal・comparison/regression・3log＋localの10raw/14pin、local/remote回帰一致、共有29fixture/必須28、runner v2 consistent_candidateまで保存。index2783B/a31b7e6ae00e6785e9c48cfdc0d9307ebef24a42c39222e69445387c89a3f664。
