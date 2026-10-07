@@ -58,3 +58,9 @@
 CI37547050883は保存・照合完了。[追補CI index](../../artifacts/ci-diagnostic-37547050883/ci-complete-index.json) 2,886 B / `adbfb55d586d5ad0bc168d79eecdf1663e96507b350f84ba4f42dcd2fc4bbf6e`。旧26 pinの索引JSONは作成時の状態を保全し、今回の14 pinは別indexへ保存した。runner検証器code6f1270fのCI37548282365も別HEADとして保存・照合完了。[最新CI index](../../artifacts/ci-diagnostic-37548282365/ci-complete-index.json) 2,821 B / `8c87a9f1df42727d594cd68d6126b8e25a88c1c765e0c565b505a4fbcb46409a`。現在の保存済みnative/CI/runner確認を反復せず、10時の停止・終端引継ぎへ進む。全7役native・既存checkerを反復しない。以降は外部program/異常終了の残件を、限定試験と保存済みsourceから小さく整理する。
 
 10:00 JST以降は新しい実行を開始せず、証拠保存・短い引継ぎとheartbeat banto-10の停止を済ませる。
+
+## 10時JSTの自走終端
+
+heartbeat banto-10をPAUSEDにして終了。元7役＋native helperの8 PIDは現在processなし、CI37547050883/37548282365保存・照合済み、9:50以降の新native/code unit/agent0・追加停止0。終端raw [terminal.json](../../artifacts/preformal-autonomous-until10-close-20261007/terminal.json) は 943 B / `4f37beafa2da4a29880344f48e246e1cf9a01643b32972af990ddb08da451e92`、保存状態確認は3,190 B / `b475db2ac386768ef3cca55b3d83084151684ccdc5462720b60714a0978b8990`。
+
+正式受入の残りは版付き契約採択、登録入力consumer、外部programと異常子孫回収、最終同revisionのLinux/Windows・正式dev/smoke独立受入、正式共通予算と容量2倍の5群。`s4_acceptance_not_frozen`・`formal_permission=false`・正式credit0・登録holdout観測未読を維持する。
