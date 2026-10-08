@@ -97,6 +97,13 @@ class ArchiveAppendAdmission:
 
     def _remaining(self, growth, stage):
         self.checkpoint(); self._bound(); self.writer.verifier._live()
+        storage=getattr(self.writer,'original_publication_storage',None)
+        if storage is not None:
+            if getattr(self,'original_publication_storage',None) is not storage:
+                storage._failed(ValueError('archive original publication storage cannot be hidden'))
+            storage.view('archive_'+stage)
+            v.require(len(self.writer.raw)+growth<=storage.allocation['archive_bytes'],
+                'publication storage independent archive bound')
         from . import anomaly_v03_preformal_generated_chain_budget as monitor
         snapshot=monitor._directory_snapshot(self.root,self.ENTRY_LIMIT,2,self.identity)
         held={'snapshot':snapshot,'controls':{}}
@@ -211,6 +218,13 @@ class ControlPublicationAdmission:
     def _failed(self, error):
         if self.error is None:self.error=error
         self.error.control_publication_owner=self  # Retain raw/streams even if the caller propagates this error.
+        try:
+            storage=getattr(self.owner,'original_publication_storage',None)
+            if type(storage) is PublicationStorageAdmission:
+                if storage.original_error is None:storage.original_error=self.error
+                storage.error=storage.original_error
+                self.error.publication_storage=storage  # Same original error; no recursive retry/cleanup.
+        except BaseException as retention_error:self.error.publication_storage_retention_error=retention_error
         prior=getattr(self,'previous_publication_owner',None)
         if type(prior) is ControlPublicationAdmission and prior.error is None:
             prior.error=self.error  # A rejected rebind cannot leave the original publication owner armed.
@@ -224,6 +238,8 @@ class ControlPublicationAdmission:
             self.endpoint.request_pin==self.request_pin and self.endpoint.root==self.channel_root,
             'control held plan or original endpoint changed')
         self.endpoint._live()
+        storage=self._storage()
+        if storage is not None:storage.view('control_'+stage)
         from . import anomaly_v03_preformal_generated_chain_budget as monitor
         snapshot=monitor._directory_snapshot(self.root,32,2,self.identity)
         held={'snapshot':snapshot,'controls':{}}
@@ -355,6 +371,8 @@ class ControlPublicationAdmission:
 
     def capture_pending(self):
         """A local witness never hides pending IO from the original keeper."""
+        storage=self._storage()
+        if storage is not None and storage.unresolved():return True
         carrier=getattr(self,'original_publication_carrier',None)
         if carrier is not None:
             if carrier.unresolved():return True
@@ -379,7 +397,22 @@ class ControlPublicationAdmission:
 
     def arm_publication_carrier(self, creator, *, frame_limit):
         return PublicationCarrier(creator=creator,owner=self,checkpoint=self.checkpoint,
-            frame_limit=frame_limit,sending=True)
+            frame_limit=frame_limit,sending=True,
+            storage_admission=self._storage())
+
+    def _storage(self):
+        original=getattr(self.owner,'original_publication_storage',None)
+        gate=getattr(self,'original_publication_storage',None)
+        sidecar=getattr(self,'publication_storage',None)
+        if original is None and gate is None and sidecar is None:return None
+        self.rejected_storage_binding=(original,gate,sidecar)
+        try:
+            v.require(type(original) is PublicationStorageAdmission and original is gate is sidecar and
+                original.gate is self and original.owner is self.owner,'control original storage cannot be hidden')
+            return original
+        except BaseException as error:
+            if type(original) is PublicationStorageAdmission:original._failed(error)
+            self._failed(error)
 
 
 class ChildPublicationCapture:
@@ -525,6 +558,192 @@ class ChildPublicationCapture:
         except BaseException as error:self._failed(error)
 
 
+class PublicationStorageAdmission:
+    """Coupled conservative snapshot gate, not atomic/global/native admission.
+
+    Caller failure caps, future archive growth and carrier recovery are separate
+    quantities. All future controls are counted again to preserve the existing
+    refusal at concurrent publication races. Occupied roots may be refused even
+    when their current bytes fit. No successful-size-derived failure cap.
+    """
+    FORMAT='anomaly-v03-publication-storage-allocation-v1'
+    PARENT_MAX={'stdout.bin':1024**2,'stderr.bin':64*1024,'receipt.json':32*1024,
+                'partial-archive.bin':MAX_BYTES}
+
+    @classmethod
+    def validate_allocation(cls,value):
+        evidence._keys(value,'format frame_bytes archive_bytes carrier_failure_bytes resident_raw_bytes parent_raw_limits',
+            'publication storage closed allocation')
+        v.require(value['format']==cls.FORMAT and
+            all(type(value[name]) is int for name in ('frame_bytes','archive_bytes','carrier_failure_bytes','resident_raw_bytes')) and
+            40<value['frame_bytes']<=proof.channel.MAX_CONTROL and 0<value['archive_bytes']<=MAX_BYTES and
+            2*value['frame_bytes']<=value['carrier_failure_bytes']<=2*proof.channel.MAX_CONTROL,
+            'publication storage independent positive hard bounds')
+        # Byte-buffer bound only: Python objects/runtime/RSS remain unmeasured.
+        minimum=128*4096+20*proof.channel.MAX_CONTROL+8*value['frame_bytes']
+        v.require(minimum<=value['resident_raw_bytes']<=2*1024**2,'publication storage retained byte buffer bound')
+        raw=value['parent_raw_limits']
+        v.require(type(raw) is dict and {'stdout.bin','stderr.bin','receipt.json'}<=set(raw)<=set(cls.PARENT_MAX) and
+            all(type(n) is int and 0<n<=cls.PARENT_MAX[name] for name,n in raw.items()),
+            'publication storage original parent failure maxima')
+        v.require(len(io.json_bytes(value))<=proof.channel.MAX_CONTROL,'publication storage allocation byte bound')
+        return value
+
+    def __init__(self, *, endpoint, inventory_raw, inventory_pin, root_identity, allocation, checkpoint, owner):
+        self.original_inputs=(endpoint,inventory_raw,inventory_pin,root_identity,allocation,checkpoint,owner)
+        self.endpoint,self.inventory_raw,self.owner,self.checkpoint=endpoint,inventory_raw,owner,checkpoint
+        self.error=self.original_error=self.pending=self.last_observation=None
+        self.writer=self.rejected_writer=self.sink=self.rejected_sink=None
+        self.carriers=[]
+        try:
+            prior=getattr(owner,'original_publication_storage',None)
+            self.previous=prior
+            if prior is not None:
+                prior.rejected_storage=self;prior._failed(ValueError('publication storage cannot rebind original owner'))
+            owner.original_publication_storage=owner.publication_storage=self
+            self.allocation=copy.deepcopy(allocation)
+            self.identity=copy.deepcopy(root_identity);self.inventory_pin=copy.deepcopy(inventory_pin)
+            self.request=copy.deepcopy(endpoint.request);self.request_pin=copy.deepcopy(endpoint.request_pin)
+            self.root=Path(self.request['budget_root']);self.channel_root=endpoint.root
+            self.gate=getattr(owner,'control_publication',None) or getattr(owner,'inventory_publication',None)
+            self.validate_allocation(self.allocation)
+            v.require(isinstance(endpoint,proof.channel._Channel) and type(self.gate) is ControlPublicationAdmission and
+                self.gate.owner is owner and self.gate.endpoint is endpoint and self.gate.checkpoint is checkpoint and
+                self.gate.inventory_pin==self.inventory_pin and self.gate.identity==self.identity,
+                'publication storage exact original control owner/context')
+            self.gate.original_publication_storage=self.gate.publication_storage=self
+            evidence._raw(inventory_raw,self.inventory_pin,'publication storage exact caller inventory raw')
+            self.inventory=v.strict_json(inventory_raw)
+            self.verifier=proof.ProofVerifier(endpoint=endpoint,inventory_raw=inventory_raw,
+                inventory_pin=self.inventory_pin,read_evidence=lambda _:None)
+            maxima=[]
+            for call in self.inventory['calls']:
+                raw=call['raw_inventory']
+                maximum={'stdout.bin':proof.tree.direct.MAX_OUTPUT[call['operation']],
+                    'stderr.bin':proof.tree.direct.MAX_STDERR,'receipt.json':proof.tree.direct.MAX_RECEIPT,
+                    'partial-archive.bin':MAX_BYTES}
+                v.require({'stdout.bin','stderr.bin','receipt.json'}<=set(raw)<=set(maximum) and
+                    all(type(n) is int and 0<n<=maximum[name] for name,n in raw.items()),
+                    'publication storage original call failure inventory')
+                maxima.append((sum(raw.values()),len(raw)))
+            v.require(maxima,'publication storage nonempty exact inventory')
+            self.raw_bytes=max(n for n,_ in maxima);self.raw_entries=max(n for _,n in maxima)
+            self.plan_raw=io.json_bytes({'format':self.FORMAT,'request_pin':self.request_pin,
+                'inventory_pin':self.inventory_pin,'root':str(self.root),'root_identity':list(self.identity),
+                'clock':self.request['clock'],'revision':self.request['revision'],
+                'allocation':self.allocation,'control_limits':self.gate.control_limits,
+                'raw_bytes':self.raw_bytes,'raw_entries':self.raw_entries})
+            v.require(len(self.plan_raw)<=proof.channel.MAX_CONTROL,'publication storage bounded linked plan')
+            self.plan_pin=observed._pin(self.plan_raw)
+            self.view('arm')
+        except BaseException as error:self._failed(error)
+
+    def _failed(self,error):
+        if self.original_error is None:self.original_error=error
+        self.error=self.original_error;self.error.publication_storage=self
+        gate=getattr(self,'gate',None)
+        if type(gate) is ControlPublicationAdmission:gate._failed(self.error)
+        remember=getattr(self.owner,'_remember_publication',None)
+        if callable(remember):remember(self.error)
+        raise self.error
+
+    def _fixed(self):
+        if self.original_error is not None:raise self.original_error
+        if self.gate.error is not None:raise self.gate.error
+        v.require(self.endpoint is self.original_inputs[0] and self.inventory_raw is self.original_inputs[1] and
+            self.checkpoint is self.original_inputs[5] and self.owner is self.original_inputs[6] and
+            self.owner.original_publication_storage is self.owner.publication_storage is self and
+            self.gate.original_publication_storage is self.gate.publication_storage is self and
+            self.gate.owner is self.owner and self.gate.endpoint is self.endpoint and
+            self.gate.checkpoint is self.checkpoint and self.gate.inventory_pin==self.inventory_pin and
+            self.gate.identity==self.identity and self.endpoint.request==self.request and
+            self.endpoint.request_pin==self.request_pin and self.endpoint.root==self.channel_root,
+            'publication storage same original sidecar/clock/request/root')
+        raw=io.json_bytes({'format':self.FORMAT,'request_pin':self.request_pin,'inventory_pin':self.inventory_pin,
+            'root':str(self.root),'root_identity':list(self.identity),'clock':self.request['clock'],
+            'revision':self.request['revision'],'allocation':self.allocation,'control_limits':self.gate.control_limits,
+            'raw_bytes':self.raw_bytes,'raw_entries':self.raw_entries})
+        v.require(raw==self.plan_raw,'publication storage original plan cannot follow callback changes')
+        evidence._raw(raw,self.plan_pin,'publication storage original plan pin')
+        evidence._raw(self.inventory_raw,self.inventory_pin,'publication storage original inventory pin')
+        if self.writer is not None:
+            v.require(getattr(self.writer,'original_publication_storage',None) is self and
+                self.writer.append_admission.original_publication_storage is self,
+                'publication storage original writer and append gate')
+
+    def unresolved(self):
+        try:
+            if self.original_error is not None:
+                self.error=self.original_error
+                if self.gate.error is None:self.gate.error=self.error
+                return True
+            self._fixed();return self.pending is not None
+        except BaseException as error:self._failed(error)
+
+    def view(self,stage):
+        if self.original_error is not None:raise self.original_error
+        try:
+            self.pending={'stage':stage,'owner':self.owner,'endpoint':self.endpoint,'inventory_raw':self.inventory_raw}
+            self.checkpoint();self._fixed();self.endpoint._live()
+            from . import anomaly_v03_preformal_generated_chain_budget as monitor
+            held=self.pending
+            held['snapshot']=snapshot=monitor._directory_snapshot(self.root,32,2,self.identity)
+            held['controls']={}
+            for name,maximum in self.gate.control_limits.items():
+                path=self.channel_root/name;paths.regular_path(path,missing=True)
+                info=path.lstat() if path.exists() else None
+                held['controls'][name]=None if info is None else {'bytes':info.st_size,'identity':(info.st_dev,info.st_ino)}
+                v.require(info is None or info.st_size<=maximum,'publication storage original control maximum')
+            archive_path=self.root/'worker-git.bin';paths.regular_path(archive_path,missing=True)
+            held['archive_bytes']=archive_path.stat().st_size if archive_path.exists() else 0
+            v.require(held['archive_bytes']<=self.allocation['archive_bytes'],'publication storage existing archive maximum')
+            future=sum(self.gate.control_limits.values())+self.raw_bytes+self.allocation['archive_bytes']+\
+                self.allocation['carrier_failure_bytes']+sum(self.allocation['parent_raw_limits'].values())
+            future_entries=len(self.gate.control_limits)+self.raw_entries+1+1+\
+                len(self.allocation['parent_raw_limits'])+2
+            held.update(future_bytes=future,future_entries=future_entries,
+                remaining_bytes=ArchiveAppendAdmission.BYTE_LIMIT-ArchiveAppendAdmission.RESERVE-snapshot['directory_bytes']-future,
+                remaining_entries=32-2-snapshot['directory_entries']-future_entries,
+                resident_raw_bytes=self.allocation['resident_raw_bytes'],atomic_reservation=False,
+                capacity_pass=False,private_memory_measured=False,all_publishers_registered=False,
+                native_launch_authorized=False,parent_ack_authorized=False,execution_authenticated=False)
+            v.require(held['remaining_bytes']>=0 and held['remaining_entries']>=0,
+                'publication storage all future quantities exceed original outer remaining')
+            self._fixed();self.last_observation=held;self.pending=None;return held
+        except BaseException as error:self._failed(error)
+
+    def native_launch_preview(self):
+        self.launch_preview_inputs=self.original_inputs  # Hold before clock/root inspection.
+        observation=self.view('native_launch_preview')
+        self.launch_preview_return=observation
+        return {'plan_pin':copy.deepcopy(self.plan_pin),'original_owner':self.owner,'storage':self,
+            'observation':observation,'atomic_reservation':False,'fresh_runtime_closed':False,
+            'authenticated_child_owner_transport':False,'native_launch_authorized':False}
+
+    def bind_writer(self,writer):
+        self.rejected_writer=writer
+        try:
+            v.require(self.writer is None,'publication storage original writer once')
+            self.writer=writer
+            v.require(type(writer) is WorkerGitArchive and writer.checkpoint is self.checkpoint and
+                writer.verifier.inventory_pin==self.inventory_pin and writer.verifier.endpoint is self.endpoint and
+                type(writer.append_admission) is ArchiveAppendAdmission,'publication storage exact original archive writer')
+            writer.original_publication_storage=self
+            writer.append_admission.original_publication_storage=self
+            self.view('writer_bind')
+        except BaseException as error:self._failed(error)
+
+    def bind_carrier(self,carrier):
+        self.carriers.append(carrier)  # Before root/clock/native observation.
+        try:
+            v.require(type(carrier) is PublicationCarrier and carrier.frame_limit==self.allocation['frame_bytes'] and
+                carrier.checkpoint is self.checkpoint and (carrier.owner is self.owner or carrier.owner is self.gate),
+                'publication storage same original carrier owner and frame bound')
+            carrier.native.publication_storage=self
+            self.view('carrier_bind')
+        except BaseException as error:self._failed(error)
+
+
 class PublicationCarrier:
     """Bounded original pipe IO; delivered bytes never authenticate child owners.
 
@@ -537,9 +756,10 @@ class PublicationCarrier:
     HEADER=40
     MAX_READ_BLOCKS=128
 
-    def __init__(self, *, creator, owner, checkpoint, frame_limit, sending):
-        self.original_inputs=(creator,owner,checkpoint,frame_limit,sending)
+    def __init__(self, *, creator, owner, checkpoint, frame_limit, sending, storage_admission=None):
+        self.original_inputs=(creator,owner,checkpoint,frame_limit,sending,storage_admission)
         self.creator,self.owner,self.checkpoint=creator,owner,checkpoint
+        self.storage_admission=storage_admission
         self.error=self.original_error=self.pending=self.completion=None
         self.blocks=[];self.raw=b'';self.rejected=None;self.started=False
         try:
@@ -574,6 +794,9 @@ class PublicationCarrier:
             v.require(callable(self.api) and (sending or callable(self.peek)), 'carrier original APIs')
             self.binding=(creator,owner,checkpoint,self.kernel,self.native,self.event,self.handle,
                 self.writer,self.api,self.peek,frame_limit,sending)
+            if storage_admission is not None:
+                v.require(type(storage_admission) is PublicationStorageAdmission,'carrier exact storage admission')
+                storage_admission.bind_carrier(self)
             self._fixed()
         except BaseException as error:self._failed(error)
 
@@ -597,12 +820,14 @@ class PublicationCarrier:
             self.creator.result is True and self.creator.error is None and self.creator.spawn_io is None and
             self.creator.read_handles['stdout']==self.event['read'] and
             self.creator.writers['stdout'] is self.writer and self.writer.handle==self.event['write'] and
+            self.storage_admission is self.original_inputs[5] and
             getattr(self.kernel,'WriteFile' if self.sending else 'ReadFile') is self.api and
             (self.sending or self.kernel.PeekNamedPipe is self.peek),'carrier fixed original IO owner')
 
     def _checkpoint(self):
         self.checkpoint()
         self._fixed()  # A callback cannot switch a handle/API/owner after observation.
+        if self.storage_admission is not None:self.storage_admission.view('carrier_io')
 
     def _cached(self):
         self._fixed()

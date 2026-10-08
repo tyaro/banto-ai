@@ -132,8 +132,10 @@ class GitSinkAdmission:
     """
     BYTE_LIMIT, ENTRY_LIMIT, RESERVE = 1024**2, 32, 128 * 1024
 
-    def __init__(self, *, root, root_identity, revision, call, checkpoint):
+    def __init__(self, *, root, root_identity, revision, call, checkpoint, publication_storage=None):
         self.original_root, self.original_identity, self.original_call = root, root_identity, call
+        self.original_publication_storage=self.publication_storage=publication_storage
+        self.publication_storage_input=(publication_storage,root,root_identity,call,checkpoint)
         self.shared_checkpoint, self.revision = checkpoint, revision
         self.native = owner.UnreapedJob(None, None, None, {
             'status':'pending', 'phase':'git_sink_admission', 'formal_permission':False})
@@ -171,6 +173,16 @@ class GitSinkAdmission:
                 'Git sink exact original raw maximums')
             self.inflight = self.root/'worker-git-inflight'
             self.paths = {name:self.inflight/(name+'.bin') for name in ('stdout','stderr')}
+            if publication_storage is not None:
+                from .anomaly_v03_preformal_worker_git_archive import PublicationStorageAdmission
+                v.require(type(publication_storage) is PublicationStorageAdmission,'Git sink original typed publication storage')
+                publication_storage.previous_sink=publication_storage.sink
+                publication_storage.rejected_sink=self
+                publication_storage.sink=self  # Keep original bootstrap before root/clock IO.
+                v.require(publication_storage.root==self.root and publication_storage.identity==self.identity and
+                    publication_storage.checkpoint is checkpoint and self.call in publication_storage.inventory['calls'],
+                    'Git sink original same publication storage call/root')
+                self.native.publication_storage=publication_storage
             self.checkpoint()
             paths.regular_path(self.inflight, directory=True, missing=True)
             v.require(not self.inflight.exists(), 'Git sink exclusive unused inflight')
@@ -192,6 +204,8 @@ class GitSinkAdmission:
         if native is self.native and getattr(native, 'git_sink_admission', None) is self:
             return
         self.native = native
+        if self.publication_storage_input[0] is not None:
+            native.publication_storage=self.publication_storage_input[0]  # Before any post-spawn checkpoint IO.
         self.previous_native_admission = getattr(native, 'git_sink_admission', None)
         native.git_sink_admission = self
         self.bootstrap.sink_successor = native
@@ -316,6 +330,11 @@ class GitSinkAdmission:
                     if failure is not None:
                         self._failed(failure)
             self.shared_checkpoint()
+            storage=self.publication_storage_input[0]
+            if storage is not None:
+                v.require(self.original_publication_storage is self.publication_storage is storage and
+                    self.native.publication_storage is storage,'Git sink original publication storage sidecar')
+                storage.view('sink_checkpoint')
             from . import anomaly_v03_preformal_generated_chain_budget as monitor
             self.snapshot = monitor._directory_snapshot(self.root, 32, 2, self.identity)
             stored = 0

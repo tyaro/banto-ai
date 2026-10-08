@@ -64,7 +64,9 @@ class WorkerGitActor:
         pending['started_at'] = held['clock']()
         pending['admission'] = admission = tree.GitSinkAdmission(
             root=Path(self.child.request['budget_root']), root_identity=held['root_identity'],
-            revision=self.child.request['revision'], call=call, checkpoint=self.checkpoint)
+            revision=self.child.request['revision'], call=call, checkpoint=self.checkpoint,
+            **({} if getattr(self,'original_publication_storage',None) is None else
+               {'publication_storage':self.original_publication_storage}))
         admission.native.worker_git_actor=self  # Before keeper/transport IO, preserve this original caller.
         pending['transport'] = transport = tree.GitPipeTransport(admission,
             kernel=held['kernel'], stdin=held['stdin'], clock=held['clock'],
@@ -94,8 +96,20 @@ class WorkerGitActor:
         if gate is not None and (gate.pending is not None or gate.error is not None or gate.capture_pending()):
             self.child.stopped=True
             return 'worker_git_control_publication_unresolved'
+        storage=getattr(self,'original_publication_storage',None)
+        if storage is not None:storage.view('actor_probe')
         self.checkpoint()
         return self.child.probe()
+
+    def arm_publication_storage(self,allocation):
+        self.publication_storage_input=allocation  # Before validation/copy/clock IO.
+        v.require(self.control_publication is not None and self.pipe_io is not None,
+            'worker storage requires exact original pipe/control context')
+        storage=archive.PublicationStorageAdmission(endpoint=self.child,inventory_raw=self.inventory_raw,
+            inventory_pin=self.inventory_pin,root_identity=self.pipe_io['root_identity'],allocation=allocation,
+            checkpoint=self.checkpoint,owner=self)
+        storage.bind_writer(self.writer)
+        return storage
 
     def _fail(self, failure):
         self.child.stopped = True

@@ -420,7 +420,8 @@ class ReaderGitParent:
         self.publication_carrier_inputs=(creator,frame_limit,self.worker,self.parent,self.inventory_publication)
         try:
             carrier=actors.archive.PublicationCarrier(creator=creator,owner=self,
-                checkpoint=self.inventory_checkpoint,frame_limit=frame_limit,sending=False)
+                checkpoint=self.inventory_checkpoint,frame_limit=frame_limit,sending=False,
+                storage_admission=getattr(self,'original_publication_storage',None))
             held=self.publication_carrier_binding={'carrier':carrier,'process':self.worker,
                 'endpoint':self.parent,'gate':self.inventory_publication,'original_inputs':self.publication_carrier_inputs}
             v.require(self.worker is self.parent.worker and self.worker is not None and self.inventory_publication is not None,
@@ -440,6 +441,13 @@ class ReaderGitParent:
             carrier=getattr(self,'original_publication_carrier',None)
             if carrier is not None:carrier._failed(failure)
             self._remember_publication(failure);raise
+
+    def arm_publication_storage(self,allocation):
+        self.publication_storage_input=allocation
+        return actors.archive.PublicationStorageAdmission(endpoint=self.parent,
+            inventory_raw=self.verifier.inventory_raw,inventory_pin=self.entry['inventory_pin'],
+            root_identity=tuple(self.entry['budget_root_identity']),allocation=allocation,
+            checkpoint=self.inventory_checkpoint,owner=self)
 
     def observe_publication_carrier(self, process):
         self.publication_carrier_attempt=process  # Before any getter, clock or ReadFile.
@@ -532,6 +540,8 @@ class ReaderGitParent:
         failure.reader_git_parent=self
 
     def _inventory_ready(self):
+        storage=getattr(self,'original_publication_storage',None)
+        if storage is not None:v.require(not storage.unresolved(),'reader original storage observation unresolved')
         carrier=getattr(self,'original_publication_carrier',None)
         if carrier is not None:
             v.require(not carrier.unresolved(),'reader original carrier IO unresolved')
@@ -636,7 +646,8 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
     owners=(getattr(original,'original_request_bootstrap',None),
         getattr(original,'request_bootstrap_owner',None),getattr(original,'inventory_publication',None),
         getattr(original,'control_publication_owner',None),getattr(original,'original_publication_carrier',None),
-        getattr(original,'publication_carrier',None))
+        getattr(original,'publication_carrier',None),getattr(original,'original_publication_storage',None),
+        getattr(original,'publication_storage',None))
     if all(owner is None for owner in owners) and existing is None:return False
     rejected=(getattr(original,'rejected_request_bootstrap',None),
         getattr(original,'rejected_inventory_publication',None),getattr(owners[4],'rejected',None))
@@ -646,7 +657,8 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
             any(getattr(owner,'error',None) is not None or getattr(owner,'pending',None) is not None
                 for owner in owners if owner is not None) or
             owners[0] is not owners[1] or owners[2] is not owners[3] or owners[4] is not owners[5] or
-            (owners[4] is not None and owners[4].unresolved()))
+            (owners[4] is not None and owners[4].unresolved()) or owners[6] is not owners[7] or
+            (owners[6] is not None and owners[6].unresolved()))
     except BaseException as failure:
         error.reader_publication_diagnostic_error=failure;problem=True
     if not problem:return False
