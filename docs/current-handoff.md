@@ -3,6 +3,18 @@
 2026-10-08 JST。branch `codex/preformal-acceptance-scope`、repository `D:\develop\banto-ai`。
 
 
+## CI4件の原証拠を一度保存（2026-10-08 JST）
+
+production code `fa82cf720df6a428ad0c4b344b0fe100e0bd05a0` は変更なし。今回新code/test/完成focus反復/native/worker/Job/pipe/exe/追加agent/runtime-profile再観測0、doc-only skip ciへ集約。詳細 [CI保存照合](results/anomaly-multiseed-v0.3-worker-stop-boundary-ci-save-2026-10-07.md)上段、raw各 `artifacts/ci-diagnostic-37704906810/`・`37708333072/`・`37711478075/`・`37714331936/`、batch `artifacts/preformal-ci-four-save-20261008-prep/`。
+
+CI37704906810/full e3004745c83962b73ed21cf8415385a1328df4e4/3642、37708333072/full9a83455025918dbe04c8052372fee23cc37da345/3658、37711478075/full112f3cd0cf2973213ca70b1d5337e8c423468246/3679、37714331936/full0b80bf7d21f42e22a358e895ca160f1142fc6f81/3703を外部workflow/run/attempt1/push/全3jobへ固定。各両minor fail0/error0/skip237/source不変、10raw14pin/local-remote一致/共有29fixture必須28/runner v2 consistent_candidate。4件56pin/CLI7の6raw一致＋既知CRLF6差両pin・選択source3/science2 working-Git/HEAD-origin-cleanを照合。index各2783B、SHA順に71eb2e979665d7f39659b4eeb6e9ee524928505bc9d56a857759337c9cdc5311/882d084aa35a76f5d40c805935991a16d14b30800611dc0bfcc14b7e4b66f380/4f868c2353c584cf8d4aec6fa36b24f28513194ca2ea1ed7728603c17d615a1d/2fa0f145206f3ed23c499e455099310a56427fccda932bd1605b17f6164df155。元helper12件は各live/execution原creation/tokenでexit0/CIM残存なし、critical ownerなし。save-checkpoint13886B/8f2e63075a89f13aece07ad93822669f1187d8b2c5c71d2b3709e1ae4a2e1655、詳細に原PID/token/3job IDsあり。PIDだけで同一扱いせず、完成4CI/既存focus/旧rawを反復・現在code/native/容量/正式受入へ読み替えない。
+
+3.12全4件新版20261004.327.1/prerelease=true、3.14は37711478075だけ新版・他3旧20260927.320.1/false、compareは37708333072/37714331936新版・他2旧。公式release/README metadata/blob/log/journal外部pin一致のみ、digest未取得/候補未採択。旧run failure/fixture/discovery失敗raw保全。doc-only新CI追跡なし。
+
+未保存は37717924409/git実fullfa82cf720df6a428ad0c4b344b0fe100e0bd05a0/attempt1のみ。3.12job113118624742/3.14job113118624568は直近in_progress、比較job未発行/run未終端、各minor3725予定はjournal未確認。終端時に外部fullHEAD/workflow/run/attempt/jobs固定で新rootへ一度保存、成功時だけ2journal/comparison-regression/3log/local回帰/runner v2。空選択/予定数を実行・終端・成功にしない。
+
+次は原限定launcher/kernel/stdin/carrier発行と同Popen HANDLE creation/storage/caller descriptorの保持をまとめた準備unit。実child IO owner transport認証/全writer atomic予約/親任意将来失敗raw/diagnostic/原partialとnew growth別量/entry-context実bytes/coupled peak/global/memory/fresh source-runtime-profile-policy-request-unusedroot/exclusive準備は未完成。create_nativeはroot/channel/clock/Job前拒否、native入口/全7役限定実起動なし、名前30source/phase32/予定64Git Job未閉包、旧pin/profile/model非流用。formal gate=s4_acceptance_not_frozen/permission=false/credit0/登録holdout観測未読、正式5残件/正式採択/最終受入未完了、元clock/上限/stop/旧rootを維持。heartbeat ACTIVEを維持し人停止/Sol容量エラーでは保全後PAUSED。以下は先行記録。
+
 ## まとまったallocation発行・Reader/Actor接続を保存（2026-10-08 JST）
 
 人の「進めて下さい」で継続、heartbeat banto-10 ACTIVE。code `fa82cf720df6a428ad0c4b344b0fe100e0bd05a0` を6production＋新testの7file、一回commit/pushで保存。詳細 [publication storage forwarding経路](results/anomaly-multiseed-v0.3-publication-storage-forwarding-2026-10-08.md)、raw `artifacts/preformal-publication-storage-forwarding-20261008-prep/`。追加agent禁止、live worker/critical owner中の重複実行・tracked編集禁止、stop/元clock/上限/旧raw/rootを維持。

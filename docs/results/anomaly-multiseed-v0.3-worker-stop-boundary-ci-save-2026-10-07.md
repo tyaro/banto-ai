@@ -1,5 +1,56 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 未保存CI4件のまとまった一度保存（2026-10-08 JST）
+
+開始時2026-10-08T02:33:27Z、文書HEAD/origin c2740b3545dd4870792e0a0f460aedf673d52c54/clean、production codefa82cf720df6a428ad0c4b344b0fe100e0bd05a0。先行元helper6件はlive/execution creation/tokenに対応するCIM残存なし、critical ownerなし。今回新production/test/完成focus再実行/native/実worker/Job/pipe/exe/追加agent/runtime-profile再観測0。4CIのread-only証拠保存を一つの単位にまとめ、doc-only追補skip ci。
+
+3件のsuccess終端を外部実fullHEAD/Phase 1 CI/.github/workflows/ci.yml/push/attempt1/全3jobへ固定。照会した残るstorage CIもsuccess終端だったため同じ保存単位へ追加した。各run専用の新 `artifacts/ci-diagnostic-RUN/` に2journal、remote comparison/regression、3full log、run/attempt jobs原rawを9file保存し、read-only local regressionを追加して各10rawに固定。workflow rawは当該外部fullHEADのGit objectからsha256 `1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8` を照合した。
+
+| run | 外部実fullHEAD | 両minor実tests | 3.12/3.14/compare job |
+| --- | --- | ---: | --- |
+| 37704906810 | `e3004745c83962b73ed21cf8415385a1328df4e4` | 3642 | 113076841199/113076841546/113089407796 |
+| 37708333072 | `9a83455025918dbe04c8052372fee23cc37da345` | 3658 | 113087979898/113087979710/113100043128 |
+| 37711478075 | `112f3cd0cf2973213ca70b1d5337e8c423468246` | 3679 | 113098158798/113098158475/113109779199 |
+| 37714331936 | `0b80bf7d21f42e22a358e895ca160f1142fc6f81` | 3703 | 113107238887/113107238601/113118580757 |
+
+各minor fail0/error0/skip237/source_unchanged=true/unittest_success=true/formal_permission=false。local-remote regression一致、comparison matched/共有29fixture、各minor必須28pass。3.12/3.14は当該Ubuntu CI結果であり、実Win26H2/native/現在codeの全経路wall・容量合格/正式受入へ読み替えない。原数値verifier・runner candidateを各new runで一度確認し、完成済み別CI/旧focus/旧nativeを反復しない。
+
+各runner v2 resultはconsistent_candidate/full_journal_verification passed。3.12は全4件新版20261004.327.1/prerelease=true。3.14は37704906810/37708333072/37714331936が旧20260927.320.1/prerelease=false、37711478075が新版true。compareは37704906810/37711478075が旧false、37708333072/37714331936が新版true。保存された公式release/README metadata/blob、当該log/journalの外部pin一致を確認した。image digest未取得、候補未採択。CLI7は各6raw一致、tools/ci_windows_native_skip_ids.pyの既知CRLF6差1fileをworking/Git両pinとして保持し、raw完全一致へ読み替えない。
+
+### 保存pinと原helper
+
+各index2783B、14pin。4件で56pinの保存後readback一致。
+
+- `37704906810` index2783B/71eb2e979665d7f39659b4eeb6e9ee524928505bc9d56a857759337c9cdc5311。
+- `37708333072` index2783B/882d084aa35a76f5d40c805935991a16d14b30800611dc0bfcc14b7e4b66f380。
+- `37711478075` index2783B/4f868c2353c584cf8d4aec6fa36b24f28513194ca2ea1ed7728603c17d615a1d。
+- `37714331936` index2783B/2fa0f145206f3ed23c499e455099310a56427fccda932bd1605b17f6164df155。
+
+save-checkpoint.json13886B/8f2e63075a89f13aece07ad93822669f1187d8b2c5c71d2b3709e1ae4a2e1655は56CI pin/CLI両pin/選択source3＋science2（union5）working-Git/HEAD-origin-cleanと元12helperの終了をdoc編集前に照合。science hash読取りだけで登録holdout観測未読。保存後post-saveは新専用batch root `artifacts/preformal-ci-four-save-20261008-prep/` と各CI rootへ一度保存し、numerical verifier/downloadを再実行しない。
+
+- 37704906810 download: `48228/creation134359005173366110/tokend157e74aa215de9e84ebc7df77d4ed7c1a59f3f0d11b8ab366f22e2a9cd317da`。exit0・元live/execution一致・CIM残存なし。
+- 37704906810 verification: `28812/creation134359005771332082/tokenceb5a79a0eabd1d0d803e80d164548ec742aee8646256e51eb7bcd257950d3ca`。exit0・元live/execution一致・CIM残存なし。
+- 37704906810 origin: `47584/creation134359006579378069/token4197f3660ac5368fd29ed42da32a37dbf743100d2d765d1669e87c967309aafe`。exit0・元live/execution一致・CIM残存なし。
+- 37708333072 download: `31404/creation134359005187102525/token3e6f754f3054c889614e655cb8e7ec270f57c205b23bf18580a4a933e5d20380`。exit0・元live/execution一致・CIM残存なし。
+- 37708333072 verification: `30812/creation134359005789958369/tokenea593512dfbab82e27f1f07f7037a2e9119a22b2dbf1d39770b76afc10eab5da`。exit0・元live/execution一致・CIM残存なし。
+- 37708333072 origin: `47384/creation134359006600709302/token072e2d52dd803f7807b552e9b4c33aad65ec6b6800d72bcedc6a003ace34132b`。exit0・元live/execution一致・CIM残存なし。
+- 37711478075 download: `49924/creation134359005198860579/tokena09a4ea4431ba01b7d740fed060d911655abdd5d6d873db6e0b011fd1c36607f`。exit0・元live/execution一致・CIM残存なし。
+- 37711478075 verification: `42344/creation134359005793336092/token78c7ee7ace6dde30121c5cbd02e75a2ad7b3b095059d61e2871b703a68856888`。exit0・元live/execution一致・CIM残存なし。
+- 37711478075 origin: `32404/creation134359006603286556/token9b7390243f7ca369ae85446cb3d6116d72a0da86d197ac394d51d61f93305d76`。exit0・元live/execution一致・CIM残存なし。
+- 37714331936 download: `43280/creation134359007428331823/token253e05812d33ec2c445a8d560aa376e58ec40832b2acb52567cf485a951a9317`。exit0・元live/execution一致・CIM残存なし。
+- 37714331936 verification: `48992/creation134359008143815817/token243ab0f7b27cf06a17b9cec4d11ccfff751edd10b3c8256b29a6f922a989a2fa`。exit0・元live/execution一致・CIM残存なし。
+- 37714331936 origin: `46144/creation134359008541094568/tokenbdfd44374f9edcd411d1ec4ab34faf24bf6c100da00e2b1f4e71cf5265c6cb03`。exit0・元live/execution一致・CIM残存なし。
+
+各helperはIO/fixtures前に原PID/creation100ns/tokenをliveへ保存し、executionで同じidentityを記録した。PID再利用は元creation/tokenで区別し、PIDだけで同一扱いしない。全helper終了/critical ownerなし、原raw/旧失敗保全、Sol容量エラー未確認。
+
+### 未保存CIと後続
+
+最新forwarding CI37717924409/fullfa82cf720df6a428ad0c4b344b0fe100e0bd05a0/attempt1は今回in_progress。3.12job113118624742/3.14job113118624568は両in_progress、compare未発行。両minor3725は予定でjournal実数未確認。run終端や現在codeの回帰成功へ読み替えず、終端時に外部fullHEAD/workflow/run/attempt/jobsを固定して新専用rootへ原raw一度保存する。doc-only新CI追跡なし。今回完成4件と37703472925/37701667430/37699731250等完成CIを反復しない。37637048268のrun failure/比較jobなし/原因未特定9raw、旧Linux fixture/discovery失敗rawをsuccessへ読み替えない。
+
+次の機能unitは、原限定launcherのkernel/stdin/carrier発行と同Popen HANDLE creationへ同caller descriptor/request/root/clock/storage/原Python ownerを保持して接続する準備。実child close/rename owner transport認証、全writer同request/root atomic予約、親identity任意将来失敗raw/diagnostic、原partialとnew archive growth別予約、entry/context実bytes、実packet/gzip/frame/receipt/partial coupled peak/global/memory/fresh source-runtime-profile-private policy-request-unusedroot/exclusive準備は未完成。ReaderGitParent.create_nativeのroot/channel/clock/Job前拒否を維持し、準備前にnative入口を開かず全7役whole.runを限定readerとして実起動しない。
+
+formal gate=s4_acceptance_not_frozen、formal_permission=false、正式credit0、登録holdout観測未読。実データは保存済み合成dev8/smoke2のengineering読取り・記述報告のみ、正式5残件/正式採択/最終受入未完了。archive512KiB/frame128KiB/decoded1536KiB/stdout1MiB/manifest32KiB/lease64、outer1MiB32entry/depth2/reserve128KiB/global321MiB672entry、元wall/memory/output、cleanup30秒/poll0.25秒/stop保全を維持。旧root追加/整理/上限緩和/旧pin-profileの流用なし。以下は先行記録。
+
 ## 上位publication retention CI37703472925の一度保存（2026-10-08）
 
 外部full2e4eae8d37a4410948dc8e4cbb8a8a4387407e0b/attempt1/push/両minor3632、3.12job113072192495/3.14job113072192142/compare113085044357固定、全3job success/fail0/error0/skip237/source不変。専用artifacts/ci-diagnostic-37703472925/に10raw14pin/local-remote一致/共有29必須28/runner v2 consistent_candidate保存。index2783B/51b15643fcc1a651c19fb1862476541ca598f03531c9688e1ede0b776bca8a14、3.12/compare新版20261004.327.1/prerelease=true・3.14旧20260927.320.1/false、公式外部pin一致のみ/digest未取得/候補未採択。CLI7は6raw一致/既知CRLF6差両pin。元download `46364/creation134358932594696137/token5687f85feadff06fdadf14d101bd7d93e04098854bfd8094aa45425a0b865adc`、verification `5596/creation134358933020556453/token9261a234ec4aa271ba0bb6daf45437a14501490ea781758958da1bddeb3bc99a`、origin `3084/creation134358933047809397/token99b443f84585a7436a3e28acff3ae5f1a17e2d7d4447fc39e78b2b0e20f71f21` はexit0/CIM残存なし。保存後14pin照合。このCIを新local capture code/native/容量/正式受入へ読み替えず反復しない。
