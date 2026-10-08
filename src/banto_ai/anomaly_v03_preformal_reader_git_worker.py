@@ -822,6 +822,8 @@ class ReaderPublicationLaunchPreparation:
     def _fixed(self):
         if self.original_error is not None:raise self.original_error
         if self.error is not None:raise self.error
+        inheritance=getattr(self,'original_publication_inheritance',None)
+        if inheritance is not None:inheritance._fixed()
         self.rejected_binding=(getattr(self.parent,'publication_launch',None),self.parent.parent,
             getattr(self.parent,'original_publication_storage',None),self.parent.entry)
         v.require(self.parent.original_publication_launch is self.parent.publication_launch is self and
@@ -838,6 +840,28 @@ class ReaderPublicationLaunchPreparation:
                 'reader issued launch options cannot follow callback changes')
         self.storage._fixed()
 
+    def prepare_inheritance(self):
+        held=tree.owner.PublicationPipeInheritance.__new__(tree.owner.PublicationPipeInheritance)
+        self.initializing_publication_inheritance=held
+        try:
+            self._fixed()
+            v.require(self.process is None and self.options is None,'reader inheritance preparation before original Popen')
+            source=getattr(self.creator,'original_publication_resources',None)
+            held.__init__(source,owner=self)
+            self.parent._inventory_ready();self.storage.view('before_publication_inheritance')
+            self.inheritance_return=held.prepare()
+            self.parent._inventory_ready()
+            return held
+        except BaseException as error:self._failed(error)
+
+    def offer_inheritance(self):
+        try:
+            self._fixed()
+            held=self.original_publication_inheritance
+            self.inheritance_offer_return=held.offer()
+            return self.inheritance_offer_return
+        except BaseException as error:self._failed(error)
+
     def bind(self,process):
         self.rejected_process=process  # Before even Popen getters or identity IO.
         try:
@@ -846,6 +870,9 @@ class ReaderPublicationLaunchPreparation:
             self.process=process;self.pending={'process':process,'creator':self.creator,'storage':self.storage}
             held=self.pending
             held['process_handle']=process._handle
+            inheritance=getattr(self,'original_publication_inheritance',None)
+            if inheritance is not None:
+                v.require(inheritance.offered is not None,'reader original inheritance offer required before Popen bind')
             held['creation_return']=self.parent.bind(process)
             self._fixed()
             held['carrier_return']=self.parent.bind_publication_carrier(self.creator,
@@ -861,6 +888,9 @@ class ReaderPublicationLaunchPreparation:
             self.context_wrapper_raw=io.json_bytes(wrapper)
             self.options={'pipe_io':dict(self.pipe_io),'publication_io':{'creator':self.creator,'context':wrapper}}
             held['options_return']=self.options
+            if inheritance is not None:
+                held['inheritance_binding_return']=inheritance.bind_worker(process,held['process_handle'],
+                    held['creation_return'],self.context_wrapper_raw)
             self._fixed();self.pending=None
             return self.options
         except BaseException as error:self._failed(error)

@@ -172,6 +172,12 @@ class PublicationPipeResources:
 
     def _fixed(self):
         if self.original_error is not None:raise self.original_error
+        inheritance=getattr(self,'original_publication_inheritance',None)
+        if inheritance is not None:
+            resources.rt.require(self.publication_inheritance is inheritance and inheritance.resources is self and
+                inheritance.owner.original_publication_inheritance is inheritance.owner.publication_inheritance is inheritance,
+                'publication original inheritance owner cannot be hidden')
+            if inheritance.original_error is not None:raise inheritance.original_error
         resources.rt.require(self.original_inputs==(self.issuer,self.checkpoint,self.owner) and
             self.owner.original_publication_resources is self.owner.publication_resources is self,
             'publication original resource owner and issuer cannot be hidden')
@@ -298,10 +304,238 @@ class PublicationPipeResources:
         except BaseException as error:self._failed(error)
 
     def unresolved(self):
-        try:self._fixed();return self.pending is not None
+        try:
+            self._fixed()
+            inheritance=getattr(self,'original_publication_inheritance',None)
+            return self.pending is not None or (inheritance is not None and
+                (inheritance.pending is not None or inheritance.close_started))
         except BaseException as error:
             if self.original_error is None:self.original_error=error
             self.error=self.original_error;return True
+
+
+class PublicationPipeInheritance:
+    """Keep two caller-local inheritable duplicates separate from stdio.
+
+    The offer is a Python tuple, not a child transport or a launch permit.
+    Binding a Popen records the original association, never proves inheritance.
+    """
+    def __init__(self, original_resources, *, owner):
+        self.original_inputs=(original_resources,owner)
+        self.resources,self.owner=original_resources,owner
+        self.native=UnreapedJob(None,None,None,{'phase':'publication_pipe_inheritance','formal_permission':False})
+        self.native.publication_inheritance=self
+        self.original_error=self.error=self.pending=self.result=self.retention_error=None
+        self.started=self.close_started=False
+        self.events={};self.event_bindings={};self.close_events={};self.close_bindings={}
+        self.call_bindings={};self.original_call_order=()
+        self.native.duplicate_call_bindings=self.call_bindings
+        self.original_close_returns=()
+        self.offered=self.process=self.worker_binding=self.close_completion=self.rejected=None
+        try:
+            resources.rt.require(type(original_resources) is PublicationPipeResources,
+                'publication inheritance requires original resource issuance')
+            previous=getattr(original_resources,'original_publication_inheritance',None)
+            if previous is not None:
+                previous.rejected=self
+                previous._failed(ValueError('publication inheritance cannot replace original owner'))
+            original_resources.original_publication_inheritance=original_resources.publication_inheritance=self
+            owner.original_publication_inheritance=owner.publication_inheritance=self
+            original_resources.native.publication_inheritance=self
+            self.pending={'resources':original_resources,'owner':owner,'native':self.native,'stage':'APIs'}
+            original_resources._fixed()
+            resources.rt.require(type(original_resources) is PublicationPipeResources and
+                original_resources.result is not None and not original_resources.close_started and
+                original_resources.pending is None,'publication original fully issued resources')
+            self.creator=original_resources.creator;self.kernel=original_resources.kernel
+            self.checkpoint=original_resources.checkpoint
+            self.get_process_api=self.kernel.GetCurrentProcess
+            self.duplicate_api=self.kernel.DuplicateHandle;self.close_api=original_resources.close_api
+            resources.rt.require(callable(self.get_process_api) and callable(self.duplicate_api),
+                'publication original duplicate APIs')
+            self.source_handles=tuple((name,original_resources.handles[name+'_write']) for name in ('stdout','stderr'))
+            original_resources.note_share(self)
+            self._fixed();self.pending=None
+        except BaseException as error:self._failed(error)
+
+    def _failed(self,error):
+        if self.original_error is None:self.original_error=error
+        self.error=self.original_error;self.error.publication_inheritance=self
+        if self.native.original_error is None:self.native.original_error=self.error
+        if type(self.resources) is PublicationPipeResources:
+            self.resources._failed(self.error)  # Original parent retention; diagnostics cannot replace it.
+        try:
+            remember=getattr(self.owner,'_failed',None)
+            if callable(remember):remember(self.error)
+        except BaseException as diagnostic:
+            if diagnostic is not self.error:self.retention_error=diagnostic
+        raise self.error
+
+    def _fixed(self):
+        if self.original_error is not None:raise self.original_error
+        self.resources._fixed()
+        if hasattr(self,'original_process_return'):
+            resources.rt.require(self.process_handle==self.original_process_return,
+                'publication original current process return cannot change')
+        resources.rt.require(self.resources is self.original_inputs[0] and self.owner is self.original_inputs[1] and
+            self.resources.original_publication_inheritance is self.resources.publication_inheritance is self and
+            self.owner.original_publication_inheritance is self.owner.publication_inheritance is self and
+            self.creator is self.resources.creator and self.kernel is self.resources.kernel and
+            self.checkpoint is self.resources.checkpoint and not self.resources.close_started and
+            self.kernel.GetCurrentProcess is self.get_process_api and self.kernel.DuplicateHandle is self.duplicate_api and
+            self.kernel.CloseHandle is self.close_api and
+            self.source_handles==tuple((n,self.resources.handles[n+'_write']) for n in ('stdout','stderr')) and
+            self.creator.spawn_io is None and self.creator.native.job is self.creator.native.process is self.creator.native.thread is None,
+            'publication fixed original duplicate resources, APIs and sources')
+        resources.rt.require(set(self.events)==set(self.event_bindings) and all(
+            (r['source'],r['duplicate'],r['return'],r['return_observed'],r['api'],r['process'],r['output'])==self.event_bindings[n]
+            and r['output'].value==r['duplicate'] for n,r in self.events.items()),
+            'publication original duplicate returns and output buffers cannot follow callbacks')
+        resources.rt.require(tuple(self.call_bindings.values())==self.original_call_order and
+            len(self.original_call_order)<=2,'publication original duplicate call tuples cannot be hidden')
+        if hasattr(self,'original_result'):
+            resources.rt.require(self.result is self.original_result and
+                self.result['dedicated_handles']==self.original_duplicates and self.result['source_handles']==self.source_handles and
+                tuple((n,r['duplicate']) for n,r in self.events.items())==self.original_duplicates and
+                self.result['dedicated_count']==2 and self.result['stdio_slots_used']==0 and
+                all(self.result[k] is False for k in ('native_launch_authorized','inheritance_observed','parent_ack_authorized','execution_authenticated')),
+                'publication duplicate offer is separate from inherited stdio and permissions')
+        if hasattr(self,'original_offer'):
+            resources.rt.require(self.offered is self.original_offer and self.offered==self.original_duplicates,
+                'publication original offered HANDLE tuple cannot be hidden')
+        if self.worker_binding is not None:
+            resources.rt.require(self.worker_binding is self.original_worker_binding and
+                self.worker_binding['process'] is self.process is self.owner.process and
+                self.worker_binding['process_handle']==self.original_worker_inputs[1] and
+                self.worker_binding['creation'] is self.original_worker_inputs[2] and
+                tuple(sorted(self.worker_binding['creation'].items()))==self.creation_snapshot and
+                self.worker_binding['context_raw']==self.original_worker_inputs[3]==self.owner.context_wrapper_raw and
+                self.worker_binding['dedicated_handles'] is self.original_offer and
+                self.worker_binding['inheritance_observed'] is False and self.worker_binding['execution_authenticated'] is False,
+                'publication original Popen association is not authenticated inheritance')
+        resources.rt.require(set(self.close_events)==set(self.close_bindings) and all(
+            (r['handle'],r['return'],r['return_observed'],r['api'])==self.close_bindings[n]
+            for n,r in self.close_events.items()),'publication original duplicate close returns')
+        resources.rt.require(tuple((n,r['handle'],r['return'],r['return_observed'],r['api'])
+            for n,r in self.close_events.items())==self.original_close_returns,
+            'publication original close return ledger cannot be hidden')
+        if hasattr(self,'original_close_completion'):
+            resources.rt.require(self.close_completion is self.original_close_completion and
+                self.close_completion['closed_handles']==dict(self.original_duplicates) and
+                self.close_completion['original_returns']==self.close_events and
+                all(self.close_completion[k] is False for k in ('native_owner_recovered','parent_ack_authorized','execution_authenticated')),
+                'publication local duplicate close is not native recovery')
+
+    def prepare(self):
+        try:
+            self._fixed();resources.rt.require(not self.close_started,'publication closed duplicates cannot be prepared')
+            if self.result is not None:return self.result
+            resources.rt.require(not self.started and self.pending is None,'publication duplicate cannot be retried')
+            self.started=True
+            self.pending={'resources':self.resources,'owner':self.owner,'native':self.native,'stage':'current_process','api':self.get_process_api}
+            self.checkpoint();self._fixed()
+            self.pending['process_return']=self.process_handle=self.original_process_return=self.get_process_api()
+            resources.rt.require(type(self.process_handle) is int and self.process_handle!=0,
+                'publication original current process return')
+            for name,source in self.source_handles:
+                output=w.HANDLE()
+                row=self.pending={'name':name,'source':source,'api':self.duplicate_api,'process':self.process_handle,
+                    'output':output,'inheritable':True,'desired_access':0,'options':2,
+                    'return_observed':False,'output_indeterminate':True,'native':self.native,'owner':self.owner}
+                binding=self.pending_binding=(name,source,self.duplicate_api,self.process_handle,output,True,0,2)
+                self.call_bindings[name]=binding;self.original_call_order+=(binding,)
+                self.checkpoint();self._fixed()
+                row['return']=returned=binding[2](binding[3],binding[1],binding[3],
+                    ctypes.byref(binding[4]),binding[6],binding[5],binding[7])
+                row['return_observed']=True;row['observed_output']=output.value
+                if type(returned) in (int,bool) and returned:
+                    row['output_indeterminate']=False
+                    self.native.extra_handles[name]=output.value  # Before callback binding validation.
+                resources.rt.require((row['name'],row['source'],row['api'],row['process'],row['output'],
+                    row['inheritable'],row['desired_access'],row['options'])==binding==self.pending_binding,
+                    'publication original duplicate call binding changed during API')
+                resources.rt.require(type(returned) in (int,bool),'publication DuplicateHandle original BOOL')
+                if not returned:raise OSError('publication DuplicateHandle returned False')
+                row['duplicate']=output.value
+                self.events[name]=row
+                self.event_bindings[name]=(source,output.value,returned,True,self.duplicate_api,self.process_handle,output)
+                values=tuple(self.native.extra_handles.values())
+                resources.rt.require(all(type(h) is int and 0<h<2**64 for h in values) and
+                    len(set(values))==len(values) and not set(values)&set(self.resources.handles.values()),
+                    'publication distinct caller-owned duplicate handles')
+                self.checkpoint();self._fixed()
+            self.original_duplicates=tuple(self.native.extra_handles.items())
+            self.result={'dedicated_handles':self.original_duplicates,'source_handles':self.source_handles,
+                'dedicated_count':2,'stdio_slots_used':0,'native_launch_authorized':False,
+                'inheritance_observed':False,'parent_ack_authorized':False,'execution_authenticated':False}
+            self.original_result=self.result;self.pending=None;self._fixed();return self.result
+        except BaseException as error:self._failed(error)
+
+    def offer(self):
+        try:
+            self._fixed();resources.rt.require(self.result is not None and self.pending is None and
+                not self.close_started and self.offered is None,'publication original launch offer once')
+            self.offered=self.original_offer=self.original_duplicates
+            return self.offered  # No JSON, CreateProcess, attribute list or transport issuance.
+        except BaseException as error:self._failed(error)
+
+    def bind_worker(self,process,process_handle,creation,context_raw):
+        self.rejected_worker_inputs=(process,process_handle,creation,context_raw)  # Before Popen/context getters.
+        try:
+            self._fixed();resources.rt.require(self.process is None and self.offered is not None and
+                self.pending is None and not self.close_started,'publication original offered worker bind once')
+            self.original_worker_inputs=self.rejected_worker_inputs
+            self.process=process
+            self.pending={'process':process,'process_handle':process_handle,'creation':creation,
+                'context_raw':context_raw,'owner':self.owner,'dedicated_handles':self.original_offer}
+            held=self.pending;binding=self.owner.parent.publication_carrier_binding
+            held['binding']=binding
+            self.creation_snapshot=tuple(sorted(creation.items()))
+            resources.rt.require(process is self.owner.process is self.owner.parent.worker is binding['process'] and
+                process_handle==binding['process_handle'] and creation is self.owner.pending['creation_return'] and
+                creation==binding['creation'] and context_raw==self.owner.context_wrapper_raw,
+                'publication same original Popen HANDLE, creation return and caller context')
+            self.worker_binding=self.original_worker_binding={**held,'inheritance_observed':False,'execution_authenticated':False}
+            self.pending=None;self._fixed();return self.worker_binding
+        except BaseException as error:self._failed(error)
+
+    def close_before_offer(self):
+        try:
+            self._fixed()
+            if self.close_completion is not None:return self.close_completion
+            resources.rt.require(self.result is not None and self.pending is None and not self.close_started,
+                'publication original local duplicate close once')
+            self.close_started=True
+            self.close_owner=UnclosedHandles(dict(self.original_duplicates),{'phase':'publication_local_duplicate_close','formal_permission':False})
+            self.native.local_duplicate_close_owner=self.close_owner
+            self.pending={'owner':self.close_owner,'resources':self.resources,'launch_owner':self.owner}
+            self.pending['caller_process']=getattr(self.owner,'process',None)
+            resources.rt.require(self.offered is None and not hasattr(self,'original_offer') and self.process is None and
+                self.pending['caller_process'] is None,'publication duplicate close only before launch offer or Popen')
+            for name,handle in self.original_duplicates:
+                row=self.pending['call']={'name':name,'handle':handle,'api':self.close_api,'return_observed':False}
+                binding=self.pending['call_binding']=(name,handle,self.close_api)
+                self.checkpoint();self._fixed()
+                row['return']=returned=self.close_api(handle);row['return_observed']=True
+                resources.rt.require((row['name'],row['handle'],row['api'])==binding==self.pending['call_binding'],
+                    'publication original duplicate close binding changed')
+                resources.rt.require(type(returned) in (int,bool),'publication duplicate CloseHandle original BOOL')
+                if not returned:raise OSError('publication duplicate CloseHandle returned False')
+                self.close_events[name]=row;self.close_bindings[name]=(handle,returned,True,self.close_api)
+                self.original_close_returns+=(name,handle,returned,True,self.close_api),
+                self.close_owner.handles.pop(name)
+                self.checkpoint();self._fixed()
+            self.close_completion=self.original_close_completion={'closed_handles':dict(self.original_duplicates),
+                'original_returns':dict(self.close_events),'native_owner_recovered':False,
+                'parent_ack_authorized':False,'execution_authenticated':False}
+            self.pending=None;self._fixed();return self.close_completion
+        except BaseException as error:
+            held=getattr(self,'close_owner',None)
+            if held is not None:
+                if held.close_error is None:held.close_error=error
+                self.native.unknown_close_handles=tuple(held.handles)
+                self._failed(held)
+            self._failed(error)
 
 
 class NativeGitPipes:
@@ -341,7 +575,9 @@ class NativeGitPipes:
         publication=getattr(self,'original_publication_resources',None)
         if publication is not None:
             publication._fixed()
-            resources.rt.require(not publication.close_started,'closed publication pipes cannot be reused')
+            resources.rt.require(not publication.close_started and
+                (not hasattr(publication,'original_issue_result') or not publication.unresolved()),
+                'closed or unresolved publication pipes cannot be reused')
         if self.error is not None:
             self._failed(self.error)
         if self.result is not None:
@@ -383,7 +619,8 @@ class NativeGitPipes:
         publication=getattr(self,'original_publication_resources',None)
         if publication is not None:
             publication._fixed()
-            resources.rt.require(not publication.close_started,'closed publication pipes cannot be spawned')
+            resources.rt.require(not publication.close_started and not publication.unresolved(),
+                'closed or unresolved publication pipes cannot be spawned')
         if self.error is not None:
             self._failed(self.error)
         try:
