@@ -1,5 +1,13 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST 最終自走ターン：証拠保全後に停止
+
+人の終了指定により、このターンで自走を終了する。開始2026-10-08T10:45:39Z、HEADc2b161d3d111a9a8f2812cc2e0f4c733b20ebe41/origin一致・clean、production5d52f8d7f38e043295a79af00f94748edbcd6347不変。新production/test/focus/native/agent/業務worker/計算0。元post16660と今回metadata helperの元creation/start_token・live/executionを照合し、read-only CIMで全original不在/repo helper・critical ownerなし。旧prep21file100198B/continuation13file57702B/CI3864root38file10327138B不変。unknown native ownerをmetadata/EOF/kill-waitで回収trueへしない。
+
+未保存2CIはcompactを各一度だけ取得。37756831995/fullc5bffdb1e23d1563020d7fc2345fb1bfc1bad5c3はattempt1/push/Phase 1 CI/.github/workflows/ci.yml、3job113243338640・113243338368・113260296438全completed-successを原run/jobsへ固定。原run.json11679B/jobs.json9143Bを保存。artifact一覧APIはunexpected EOF/exit1、stdout0B/stderr114Bと原failed helper48532/creation134359303641475641/token7ffcd812c8e946c9c2d9c45c7ceae7393dc671bd6b3d60f4abc7c973f2a84113を保持。同API/原script再試行0、別rootへ未取得3logだけ一回保存。2journal/comparison-regression artifact未取得、journal件数3885は算術予定のまま、local回帰/runner/外部runner採択未実施。この終了保存を完成CI保存・容量/native/auth/正式受入へ読み替えない。
+
+37763660778/full5d52f8d7f38e043295a79af00f94748edbcd6347はcompact時in_progress、3.12job113265921172/3.14job113265921504両in_progress/compare未発行、attempt・終端未固定。3909は算術予定/journal未確認、待機・再照会0。詳細docs/results/anomaly-multiseed-v0.3-autonomy-final-stop-2026-10-08.md、停止metadata artifacts/preformal-autonomy-final-stop-20261008-prep/、部分原raw artifacts/ci-diagnostic-37756831995-final-stop/、3log artifacts/ci-diagnostic-37756831995-final-stop-logs/。原失敗・旧閉鎖rootへ追加なし。文書をdoc-only skip ciで保存後、heartbeat banto-10をfull fields保持でPAUSEDへ更新し、人の明示再開まで追加自走しない。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/登録holdout観測未読・正式5残件と最終受入未完了を保持する。
+
 ## 2026-10-08 JST 人の指定：次の自走ターンで終了
 
 2026-10-08T10:41:09Z、人から「次のターンで自走終了しましょう」の明示指示。次の自走ターンを最終とし、新production/test/focus/native/agentを開始しない。元owner/handle/worker/helperのidentity・安全な既存終端・証拠保全を確認し、短い最終引継ぎ保存後にheartbeat banto-10をPAUSEDへ更新する。現在は終了予約としてACTIVEを維持し、次ターン以降の機能unitへ進まない。
