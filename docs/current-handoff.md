@@ -1,5 +1,19 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST reader限定launcherの原owner/返値source監査
+
+開始HEAD98254bbcb1b24d5fe8c876e6485a810b346738dd-origin-clean/先行元4helper同creation-token不在/critical ownerなし。codea1ab304608d0d0ff486c73d84b3ba6d1612be222不変。production/test/native/完成focus/旧suite/追加agent/runtime-profile再観測0、doc-only2文書を一回skip ciへ集約。詳細docs/results/anomaly-multiseed-v0.3-reader-native-launch-audit-2026-10-08.md、raw artifacts/preformal-reader-native-launch-audit-20261008-prep/だけを対象にする。
+
+対象5production source/13AST spanと58source-science pinを保存。原native CLI返値はJob/process HANDLE/thread HANDLE/PIDの4値、reader actual supervisorはPopen/stdin DEVNULL/file-directed stdout-stderr/startupinfoなし。genericはstdio3だけ、actual generate/READER_BOOTSTRAPからpublication専用2/resource/inheritance/HANDLE_LIST実発行は未接続。原PROCESS_INFORMATIONはIO前保持だがCreateProcess/Assign BOOLは_needへ直接渡され独立原return slotなし。raw Job ownerとPopen所有権を属性形で置換せず、新限定launcher契約へ原API/output/return/Job-member/attribute lifetime/stdio3と専用2別枠/child endpointを固定する準備。実継承/child IO owner認証/native入口は未接続、create_native root-channel-clock-Job前拒否維持。
+
+初回auditのAST selectorがtuple直接形を期待してStopIteration/exit1、本体source metadata途中。原script/failure/live/execution保持、元18864/134359129386422118/token471c4fd84e2fa6bc839309b28bc634700151878e723c8a93a76c754498c65800 failed/同original不在、原stdout-stderr byte file未捕捉。別v2でenumerate tuple3選択だけ訂正し監査完了、元40284/134359132338946389/token0b48a39bf238639bde21d0212dc006267126d99a8a02a3017322727c258d1886 passed/同original不在。native/試験body0、原failed helperを書換えない。
+
+audit20137B/16ed9389e7885c9bf8ca7da050c207d62fd08f3654409069995c9ef853555617、plan1480B/bfd51f1660456fff682d57ad08d0e5efb6dcd756d8fba7f22d205224f4646563。planはengineering要件でnative contract/request/policy/profile未発行、全native/atomic/capacity/ack/auth=false。名前30合計796233B/全体最大job_tree_owner98055B、archive94908Bはarchive自身。generatedは58準備pin内/30名外、phase32/予定64をruntime閉包へしない。保存後58working-Git/span pin/docs2/原raw/helper/head-origin-cleanをmetadataだけ照合してrootを閉じる。旧raw/pin/failureへ追加なし。
+
+次は原raw Job/process/thread ownerの限定launcher契約を原CreateProcess return/Job-member/attribute lifetime/stdio3と専用2/原Python owner保持順までまとめる。実発行はfresh source-runtime-profile-private policy-request-unusedroot/実coupled容量/exclusive完成まで開かない。全writer同request-root atomic予約/親identity将来failure raw/diagnostic/partialとnew archive growth別予約/entry-context実bytes/coupled peak/global memory/child owner認証未完成。旧JSON/pin/native資源を読み替えずnative入口/全7役whole.run限定reader実起動禁止。
+
+CI37732744553/git実fulla1ab304608d0d0ff486c73d84b3ba6d1612be222は開始時両minor113165365533/113165364493 in_progress/compareなし/3812予定journal未確認、今回終端download/local回帰/runner0。終端時未保存rawだけ専用rootへ一度保存、doc-only新CI追跡なし。全完成CI/focus反復禁止、formal permission=false/credit0/holdout未読/正式5残件未完了。元caps/stop保持維持、Sol容量エラー未確認、ACTIVE。
+
 ## 2026-10-08 JST 専用HANDLE複製revision CI3790の終端保存
 
 開始時d5d05a8e5b07e99b76b512217d5a3ba5e411e547-origin-clean/元先行5helper同identity不在/critical ownerなし。今回はproduction/test/完成focus/native/worker/Job/pipe/exe/追加agent/profile再観測0、codea1ab304608d0d0ff486c73d84b3ba6d1612be222不変、doc-only3文書skip ci。詳細docs/results/anomaly-multiseed-v0.3-ci-inheritance-save-2026-10-08.md、raw artifacts/ci-diagnostic-37729884798/、batch preformal-ci-inheritance-save-20261008-prep/だけを対象にする。
