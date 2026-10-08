@@ -1,5 +1,19 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST publication CIの原run参照・未保存証拠continuation完了
+
+開始時HEAD/originb9948658b487ddcab98f96f8e03ca387afcd5c4c/clean、元helper2件同creation/token残存なし、API rate_limit接続復旧確認。今回はproduction/test/完成focus/native/実worker/Job/pipe/exe/追加agent/profile再観測0、doc-only3文書skip ci。詳細docs/results/anomaly-multiseed-v0.3-ci-terminal-continuation-save-2026-10-08.md、raw artifacts/ci-diagnostic-37721863325-continuation-20261008/・37722343194-continuation-20261008/、batch preformal-ci-terminal-continuation-save-20261008-prep/。
+
+旧partial run rawを再取得・copyせずpath/pin参照、旧2root6file15590B/13file25626B全pin不変。37721863325/fulle0f8fc4b0121bde9b1755bd7858b7ced3c01b09a/attempt1/push/Phase1CIは新jobs/両failed-step log3raw＋旧run参照1＝4raw、各log3747tests/errors4/skip237/比較skipped。原因は先行と同4件Mock factory isinstance TypeError、b436688へ既修正、追加修正/完成5再実行0。failure-summary5701B/f7fe7fe9ba12416fe9bd0f67f35aa410c336d563188d6b6cd4a4d3ba986acc34、failure continuation最終8file1938888B。元failureをsuccessへ書き換えない。
+
+37722343194/fullb4366887f9b49509ae5722b41a3e683fd1586dbb/attempt1/push/Phase1CI/全3jobsuccessへ固定。新8raw＋local1＋旧run参照1＝10raw、両journal3748/fail0/error0/skip237/source不変、local-remote一致/共有29必須28/runner v2consistent_candidate。index3433B/57019b5479e824fa54b6affca54564108a6acda6b242c99f76870f81f06a9e43・14pin。3.12/compare20261004.327.1true・3.14旧20260927.320.1false、公式release/README metadata/blob/log/journal外部pin一致だけ、digest未取得/候補未採択。CLI7の6一致/CRLF6差1fileは両pin保全。success continuation最終33file10032474B。この証拠を最新aab97b8/native/容量/正式受入へ読み替えない。
+
+元4helpers41224/134359070202595175/token45884b167185be94cdc36b1140d02ee523eaa07a639787342688c29de355b087、39560/134359070228317956/token7c87118c6e9500fcd533f976786a59e643e5b6c78e192e6a707c2d64d1616192、47192/134359071128071488/tokene3ebf7a81938968ef3a0a8e13252fb92bc87732cd9326eac1dc52b9d1842af72、22788/134359071567431487/token26708b90fbdcf93c47124b73e96a73a0bc10d770410eb8953c7e742e82bd99f1はlive-execution一致/saved_failure・passed3/同original残存なし。PID再利用はcreation/tokenで区別。batch初回PS property Count確認失敗は別原raw358B/3a60df80ff978ebed3d2df15a57bd62de40cfe6ee99a6b84358dd0a7b0670e18、数え方だけ訂正、CI verifier/download反復0。checkpoint14089B/d6ee35ceffc442c593dff83ff25680a3cf2710cfc309b32e2d1da08e4cf24f6bは旧partial/新全pin/元4helper/CLI両pin/source-science5/HEAD-origin-cleanを確認。
+
+未保存CIは37724967759/git実fullaab97b86334baafa399067ba646ff8afd51850e9だけ、今回3.12job113140946456/3.14job113140946251両in_progress/compare未発行、予定3769/journal未確認。終端時専用rootへ一度保存、doc-only新CI追跡なし。完成CI/焦点/旧失敗の反復なし。
+
+次は共有HANDLE duplicate/inheritance/元launcher owner/同Popen HANDLE creation/child原close-rename-raw witness transport認証準備の機能unit。fresh closure/profile/policy/request/unusedroot、atomic全writer予約/親failure raw/diagnostic/原partialとnew growth別予約/entry-context実bytes/coupled peak/global/memory/exclusive未完成。create_native root/channel/clock/Job前拒否維持、native/全7役whole.run限定reader起動禁止。formal s4_acceptance_not_frozen/permission=false/credit0/holdout未読。全helper終了/critical ownerなし/Sol容量未確認、ACTIVE維持。
+
 ## 2026-10-08 JST publication準備CI2件の終端観測・API接続断保全
 
 開始時HEAD/origin641d130712222839d05689706faf619030bb0d1f/clean、元helper3件の同creation/token残存なし、critical ownerなし。今回production/test/完成focus/native/実worker/Job/pipe/exe/追加agent/profile再観測0、doc-only追補skip ci。詳細docs/results/anomaly-multiseed-v0.3-ci-terminal-partial-save-2026-10-08.md、raw artifacts/ci-diagnostic-37721863325/・37722343194/、batch preformal-ci-terminal-partial-save-20261008-prep/。

@@ -1,5 +1,15 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## Launcher準備CIの未保存証拠continuation照合完了（2026-10-08 JST）
+
+API接続復旧を確認し、旧partial2root/run raw/pinを保持参照して未保存分だけを新continuation rootへ一度保存した。37721863325/fulle0f8fc4b0121bde9b1755bd7858b7ced3c01b09a/attempt1/push/Phase1CIの原jobs/両failed-step logは各3747/errors4/skip237/比較skipped、Mock factory isinstanceが元例外を覆う先行と同4件の原因。b436688へ既修正、追加code/test/完成5再実行0。新3raw＋旧run参照1＝4raw、failure-summary5701B/f7fe7fe9ba12416fe9bd0f67f35aa410c336d563188d6b6cd4a4d3ba986acc34。原failureをsuccessへ書き換えない。
+
+37722343194/fullb4366887f9b49509ae5722b41a3e683fd1586dbb/attempt1/push/Phase1CI/3jobsuccessを原jobsへ固定。新8raw＋local1＋旧run参照1＝10raw、両journal3748/fail0/error0/skip237/source不変、local-remote回帰一致/共有29必須28/runner v2consistent_candidate。complete-summary3313B/d5fd3b8b7edf7a8cf16b08c46158b80a54c719eff2d76ad46bc80ec1c8040526、index3433B/57019b5479e824fa54b6affca54564108a6acda6b242c99f76870f81f06a9e43・14pin。3.12/compare新20261004.327.1true、3.14旧20260927.320.1false、公式外部pin一致のみ/digest未取得/候補未採択。CLI6一致/CRLF6差1fileは両pin。最新aab97b8/native/容量/正式受入へ読み替えない。
+
+continuation failure root8file1938888B/success33file10032474B、旧partial2root6file15590B/13file25626B不変。元4helpersのlive/execution creation/tokenと同original不在、全raw/index/CLI/source-science5/HEAD-origin-cleanをbatch checkpoint14089B/d6ee35ceffc442c593dff83ff25680a3cf2710cfc309b32e2d1da08e4cf24f6bへ保存。PS初回property Count検査失敗の原raw358B/3a60df80ff978ebed3d2df15a57bd62de40cfe6ee99a6b84358dd0a7b0670e18は別保持、数え方だけ訂正/CI verifier-download反復0。詳細ci-terminal-continuation-save文書。
+
+未保存37724967759/fullaab97b86334baafa399067ba646ff8afd51850e9は今回両minor in_progress、job113140946456/113140946251、compare未発行、予定3769/journal未確認。doc-only新CI追跡なし。新production/test/native/完成focus/追加agent/profile再観測0、formal credit0/holdout未読、旧失敗保全。
+
 ## Launcher準備CI2件の終端観測とAPI read failure保全（2026-10-08 JST）
 
 CI37721863325/full e0f8fc4b0121bde9b1755bd7858b7ced3c01b09aはcompleted/failure、37722343194/full b4366887f9b49509ae5722b41a3e683fd1586dbbはcompleted/success。各attempt1/push/Phase 1 CI/.github/workflows/ci.ymlのrun原rawを新専用rootへ保存したが、両方のattempt jobs取得がunexpected EOF/exit1で失敗した。前者6file15590B/後者13file25626Bにrun/stderr/原error/元helper live-execution/scriptを保全し、保存処理の再実行と旧root追加を拒否。jobs pin/log/journal/local回帰/runner v2/index保存0、success CI証拠完成にしない。failure原因はfailed-step log未取得で未特定、予定3747/3748はjournal実数未確認。
