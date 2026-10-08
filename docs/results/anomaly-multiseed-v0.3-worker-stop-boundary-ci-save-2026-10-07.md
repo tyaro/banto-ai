@@ -1,5 +1,13 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 2026-10-08 JST 最新native buffer準備revision CI3844を保存
+
+production d4e5f2ec90a9c17be90af4eadebadb4b769a409b不変/production-test-native0。CI37743146137/full d4e5f2ec90a9c17be90af4eadebadb4b769a409b/attempt1/push/Phase1CI/.github/workflows/ci.yml/3job113198312223・113198312515・113210284774全successを新専用原run/jobsに固定。両journal実3844/fail0/error0/skip237/source不変、10raw14pin/local-remote一致/共有29必須28/runner v2consistent_candidate/full journal passedまで一度保存。summary2584B/9881050794a2b1059147c868389f84a35316bc9329510d8352c8a4ac12a98047、index2784B/b62bd9ff02c942df4ca86e73958d37dd79ec26fae2f5f906cdb0dea93c45e1a9。詳細docs/results/anomaly-multiseed-v0.3-ci-native-buffer-save-2026-10-08.md。
+
+3.12新20261004.327.1/prerelease=true、3.14・compare旧20260927.320.1/false、保存公式release/README metadata/blob/log/journal外部pin一致のみ、digest未取得/候補未採択。CLI7は6raw一致/既知CRLF6byte差1file両pin。実journal count取得後に期待3844を発行、実summary取得後runner/indexへ同raw pinを固定し旧summary-pin失敗反復0。checkpoint12638B/0b0f5b8481c0c633a5f1f63c0d2e0effef15bc8cdb4e83d3cc7230821caeef68で全37CIfile/14pin/元6helper exact creation-token不在/CLI両pin/選択source3＋science2/HEAD-origin-clean/旧3root不変をmetadata照合。docpush後postだけ両rootへ保存して閉じる。
+
+現production revision未保存CIなし/doc-only新CI追跡なし。旧完成CI/download/numerical/runner/focus再実行0。保存root artifacts/ci-diagnostic-37743146137/ と batch artifacts/preformal-ci-native-buffer-save-20261008-prep/以外へ追加しない。CI3844を実Win ABI/限定launcher/専用HANDLE継承/child owner認証/packet容量/正式受入へ読み替えず、工程packet拒否154696B>131072Bとその原metadata失敗も別に保全する。formal permission=false/credit0/holdout未読、正式5残件未完了、native入口拒否維持。
+
 ## 2026-10-08 JST 最新buffer revisionの未終端状態
 
 production d4e5f2ec90a9c17be90af4eadebadb4b769a409b不変。未保存CI37743146137は今回attempt1/push/Phase1CI、3.12job113198312223in_progress/3.14job113198312515success、compare未発行/run未終端。3844は算術予定/journal未確認、今回終端download/local回帰/runner追加0、doc-only新CI追跡なし。完成3829/3812/旧CIは反復しない。

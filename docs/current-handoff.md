@@ -1,5 +1,17 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST native buffer準備revision CI3844の終端保存
+
+開始2026-10-08T08:22:39Z/HEAD732fee4201f1ca09b3fd6b7f53134d4e2731466a-origin-clean、先行元4helper同creation-token不在/repo helper-critical ownerなし。production code d4e5f2ec90a9c17be90af4eadebadb4b769a409b不変、production/test0/native0/完成focus/旧suite/13AST監査/追加agent/profile再観測0。詳細docs/results/anomaly-multiseed-v0.3-ci-native-buffer-save-2026-10-08.md、raw artifacts/ci-diagnostic-37743146137/、batch artifacts/preformal-ci-native-buffer-save-20261008-prep/だけを対象にする。doc-only3文書を一回skip ciへ集約。
+
+CI37743146137/git実full d4e5f2ec90a9c17be90af4eadebadb4b769a409b/attempt1/push/Phase1CI/.github/workflows/ci.yml/3job113198312223・113198312515・113210284774全completed-successを原run/jobsへ固定。9raw取得＋local回帰1＝10raw14pin、両journal実run_finished/discovered3844/fail0/error0/skip237/source不変/local-remote一致/comparison matched/共有29必須28各minor/runner v2consistent_candidate/full journal passedまで一度保存。summary2584B/9881050794a2b1059147c868389f84a35316bc9329510d8352c8a4ac12a98047、index2784B/b62bd9ff02c942df4ca86e73958d37dd79ec26fae2f5f906cdb0dea93c45e1a9。3.12新20261004.327.1/true、3.14・compare旧20260927.320.1/false、保存公式外部pin一致のみ/digest未取得/候補未採択。CLI7は6一致/既知CRLF6byte差1file両pin。
+
+原journal実数をsave-completeへ発行しpre-journal script保持、実summary取得後runner/index両pinを同rawへ固定、旧summary-pin失敗反復0。checkpoint12638B/0b0f5b8481c0c633a5f1f63c0d2e0effef15bc8cdb4e83d3cc7230821caeef68は原37CIfile/14pin/CLI両pin/source3＋science2union5 working-Git/元6helper live-execution exact creation-token/CIM同original不在/閉じた旧3root不変をmetadataだけ照合。元identity詳細はbatch/checkpointと各live/executionに固定、PID単独判定なし。docpush後metadataだけ一度post照合してCI/batch両rootへ同raw exclusive保存後閉じる。完成download/numerical/local回帰/runner/focus反復禁止。
+
+現production revisionの未保存CIなし、doc-only新CI追跡なし。このCIは未発行native buffer admission準備scopeであり、実Win ABI/launcher/専用HANDLE継承/child IO owner認証/容量/正式受入の合格へ読み替えない。先行packet上限拒否は原14file319974Bとcontinuation14file94207Bへ閉じ、post15783B/c3a8f827bc6ae798836230944a7504eb7f700b6182efaa040339c6529f74ab9e/元4helper終了を保存済み。原失敗raw/完成packetへ追加・再実行なし。
+
+次は128KiB frame/512KiB archive上限を保つ新closed packet分割/別raw参照とsame lease-request-root-inventory/原owner/full raw readback/manifest pinの契約準備を機能unitへまとめる。原partialとnew archive growthを別量とし旧format/pinの解釈を変えない。fresh source-runtime-profile-private policy-request-unusedroot/exclusive/全writer atomic予約/親failure診断/entry-context実bytes/coupled peak-global memory/実callsite return-HANDLE owner-attribute lifetime/child transport認証未完成。create_native早期拒否/native入口/全7役whole.run限定reader実起動禁止維持。formal permission=false/credit0/holdout未読/正式5残件未完了、元caps-stop保持/Sol容量未確認/ACTIVE。
+
 ## 2026-10-08 JST 現source・工程合成packetのcompressed上限拒否
 
 開始2026-10-08T07:48:35Z/HEAD2edd91bb8a0f63d76c66575fdf95d5a2bcde78ba-origin-clean/先行元8helper同creation-token不在/repo helper-critical ownerなし。production code d4e5f2ec90a9c17be90af4eadebadb4b769a409b不変、production/test0/完成focus/旧suite/13AST監査/native/追加agent/profile再観測0。詳細docs/results/anomaly-multiseed-v0.3-worker-packet-capacity-2026-10-08.md、原 artifacts/preformal-worker-packet-capacity-20261008-prep/ と metadata continuation artifacts/preformal-worker-packet-capacity-continuation-20261008-prep/だけを対象にする。doc-only3文書を一回skip ciへ集約。
