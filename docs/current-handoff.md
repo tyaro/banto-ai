@@ -3,6 +3,16 @@
 2026-10-08 JST。branch `codex/preformal-acceptance-scope`、repository `D:\develop\banto-ai`。
 
 
+## 一回だけまとめた試行の保存（2026-10-08 JST）
+
+人の「一度すこしまとめて」の指示で、子local capture→bounded carrier送信→親Popen HANDLE creation/context/full raw→fence拒否→子terminal/原keeperと上位callerの原IO保持をまとめた。code `112f3cd0cf2973213ca70b1d5337e8c423468246` は一回commit/push済み、heartbeatはPAUSEDのまま。詳細 [publication carrier経路](results/anomaly-multiseed-v0.3-publication-carrier-path-2026-10-08.md)、raw `artifacts/preformal-publication-carrier-path-20261008-prep/`。
+
+新21distinct/unique21。初回16は15pass/fixture fail1、fixture訂正の1だけpass、新3＋新1＋上位保持新1だけpass。最終source単一21success runではなく、完成済み焦点/旧suite/native/追加agent0。各48source/science pin不変・他45全5component/先行44pin/safety0/clean code-save48working-Git一致。components3845B/2511b9055b3012071749c2dda6788c64c9a7280f2af105ee1762d44326ad5ded、code-save14335B/de8fc9e187cc51cb3baa947a54c17667ef674844b8de08fb155aeaf9311f8581。元helper5件は各live/execution tokenで終端照合し、初回失敗rawも保全。
+
+carrierは専用原creator/HANDLE/API/ownerを保持し、40B header込み最大32KiB、4096B IO、保持read128attemptで超過/partial/unknown/callback改変をlatch。親candidateと全rawが揃っても原child close/rename ownerの実transport認証は未接続なのでack/auth/atomic/io release=false。fake Win API/creation/Popen＋実小FileIOのprotocol gateで実Win ABI/pipe/exe/worker/native認証/容量合格ではない。実entry/限定launcher発行0・create_nativeのroot/channel/clock/Job前拒否、30source/phase32/予定64Git Job未閉包、fresh runtime/profile/policy/request/unusedroot/coupled容量未準備を維持する。
+
+次は実carrier保持量を同request/root容量へ計上し、同じ原launcher/Popen HANDLE creationとcross-process原child ownerの認証をまとめた別単位で準備する。人の再開指示前に自走しない。CI37704906810/full e300474・37708333072/full9a83455は今回再照会0、新full112f3cdのCI終端未照会。formal permission=false/credit0/登録holdout観測未読・旧raw/失敗/root/元clock上限/stopを維持。以下は停止と先行記録。
+
 ## 人の停止指示による一時停止（2026-10-08 09:40 JST）
 
 新規作業を停止。2026-10-08T00:40:41Z確認時、HEAD/origin `3686ccc2ecbc63718bc44559c9cd337ed78bef17`・working tree clean、production code `9a83455025918dbe04c8052372fee23cc37da345`。元focus/CI helper6件は保存creation/tokenでexit0、CIM残存なし、repository worker/critical ownerなし。停止処理で新worker/native/試験/CI再照会・再保存を開始せず、旧raw・元owner記録を保全。停止証拠は `artifacts/preformal-banto-pause-20261008-004041/stop-preservation.json`。
