@@ -1,5 +1,9 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 2026-10-08 JST HANDLE_LIST準備unitのCI選択
+
+codea1ab304608d0d0ff486c73d84b3ba6d1612be222 push後、gitが返した実fullSHAで新37732744553/Phase1CI/push/in_progressを確認。先行37729884798/full6e71c2bbdf50b65ec23ae57c9114d031b860511fは両minor113156366173/113156366395 in_progress、compare未発行/run未終端。3812/3790は算術予定でjournal未確認。artifacts/preformal-publication-handle-list-20261008-prep/ci-state.jsonにcompact原状態rawを保持し、今回terminal download/journal/local回帰/runner追加0。詳細publication-handle-list文書。完成CI/focus/旧failure/raw/pinへ追加・反復せず、doc-only新CI追跡なし。終端時のみfullHEAD/workflow/run/attempt/jobsへ固定して新専用rootへ未保存rawを一度保存、success時だけ既定journal/回帰/runner、failureは小さい原因確認と原raw保全。
+
 ## Pipe resource CI3769の一度保存と後続継承準備code（2026-10-08 JST）
 
 CI37724967759/git実fullaab97b86334baafa399067ba646ff8afd51850e9/attempt1/push/Phase 1 CI/.github/workflows/ci.yml、3.12job113140946456/3.14job113140946251/compare113151739959を全3job successへ固定。新artifacts/ci-diagnostic-37724967759/に10raw14pin/local-remote回帰一致/共有29fixture必須28/runner v2consistent_candidateを一度保存。両journal3769/fail0/error0/skip237/source不変。summary2574B/77eee1f922d251106d34463eda5de99b88cf620a9737d8d713203fa513c1bf9e、index2783B/4646c89c17a62375a243011838c5827e887a200ae1d4bb2224793c3a433bf732。全job20261004.327.1/prerelease=true、保存公式release/README metadata/blob/log/journal外部pin一致のみ、digest未取得/候補未採択。CLI7は6raw一致/既知CRLF6差1file両pin。

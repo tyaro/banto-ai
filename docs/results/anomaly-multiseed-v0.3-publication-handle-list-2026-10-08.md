@@ -1,0 +1,38 @@
+# Publication専用HANDLE_LIST・原attribute buffer保持準備
+
+2026-10-08 JST。code a1ab304608d0d0ff486c73d84b3ba6d1612be222を機能unitとして一回commit/push/origin一致。今回の範囲はstdio3と専用2の別枠、原attribute API/buffer/return、未起動Deleteと元Python owner保持。実CreateProcess/限定launcher/継承認証/正式受入ではない。
+
+## 経路
+
+既存job_tree_ownerのPublicationHandleListPreparationをReaderPublicationLaunchPreparation.prepare_handle_listへ接続。new production module0。同原inheritance/offer/owner/caller stdio/last-error callableを検証・storage・API IO前に保持する。stdioはclosed tuple3、positive int必須/bool・pseudo拒否、専用2・原source4とのalias拒否。explicit5を旧generic inherited最大3へ読み替えず、旧external v1-v4/request/entry/ack/proofへfield追加しない。
+
+原Initialize/Update/Delete/CreateProcess callableをgetter順に保持→原sizing return/size→zero時はclock/IO前に同原last-error返値→expected int122とpositive/max32768B→原opaque buffer/5HANDLE arrayをnative ownerへ保持→原Initialize/Updateのcall tuple/return→原STARTUPINFOEXのstdio3/attribute pointerを固定。原CreateProcessは保持のみで未呼出し。native_launch_authorized/inheritance_observed/parent_ack_authorized/execution_authenticated/atomic_reservationはfalse。
+
+callは保持したlocal tupleを使い、実return/known prefixをcallback改変検証前に保持する。last-error API変更・return ledger消去へ追随せず、原prefixと実Update returnを保全して拒否。unknown/clock/KI/foreign sidecar/第二準備は原第一例外・buffer/array/pending/ownerと拒否objectをlatchし、同じ原inheritance/resource/parent retentionへ渡す。新keeperへ置換しない。
+
+cleanup_unlaunchedは原ownerをPopen getter前保持、成功準備済み・Popen不在のときだけ原Deleteを一回呼ぶ。原void None return位置を記録。unknown/非None/後続clock・callback失敗ではbuffer/array/pending/原errorを保持し再Delete/Close/retry拒否。known DeleteでもHANDLE close数0、source4/duplicate2は保持、native_owner_recovered/ack/auth=false。cached prepare/cleanupはAPI/clock反復0。実CreateProcess後のattribute cleanup/Job/process/thread回収順は未接続。
+
+仕様参照：初回sizingは意図されたerror。attribute valueはDeleteまで保持が必要。HANDLE_LISTにはinheritableかつnon-pseudo HANDLEを指定し、実CreateProcessにはSTARTUPINFOEXとEXTENDED_STARTUPINFO_PRESENTが必要。構造対応の準備でありfake APIから実ABIを認証しない。[Initialize](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-initializeprocthreadattributelist)、[Update](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute)、[CreateProcessW](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-createprocessw)。
+
+## 新焦点・原失敗・保存pin
+
+専用raw artifacts/preformal-publication-handle-list-20261008-prep/。初回新18一回3.3899621秒＝17pass/1fail/error0/skip0。第二準備のcatchが原error/ownerを拒否objectへ上書きするimplementation failureを原logへ保全。修正後、失敗1＋新last-error API改変/Popen getter unknown2だけ0.0067455秒3pass。reviewでlast-error型と原return prefix消去拒否を補強し、新risk2だけ0.0034102秒2pass。
+
+新22distinct/最終unique22、取得body23/pass22/原fail1。pass済み17/20・旧suite・完成focus/native反復0、最終source単一22success runではない。各58source/science pin前後不変/他55全3component/先行共通55pin不変/changed3file safety0/clean code-save58working-Git一致。create_native method body437B/0bd7b84f0a3dc0bd22a865ac8b2b4ccedc0e71ea50a177b0e6b086df07fdcc7c不変、root/channel/clock/Job前拒否維持。fresh同revisionの名前30source/各phase32要求/予定64Git Job、phase796233B/最大archive94908Bは完全runtime閉包ではない。
+
+- focused19222B/def972bd042492ac185a06daba877ed0ec1d0339e92d02b6b6672b9423a36282、原fail log4971B/51d6ab9978511278994c996f81ec0b50f0ae261b141a30b6d0bffe4afd84b860。
+- focused-v2 18179B/1c0bfb1b00bd1b918b25feafce676bea2c331f1a05b9a8f172a50b6a00009bb7、log803B/b86de18df4dbdae37e2db50084722bde48168b61e7395612c7d7dc122b02d80a。
+- focused-v3 18091B/1618d1b5c5caab6f99a1b7f5be4a8e45b1c6c4309b16b58091ef59516e92ea3b、log547B/baa1bb586837dc822dd5a292b2d384e5939631c993aa99ec6a73ef8cefb0b969。
+- components1276B/dd39505c94edfcc5e941b54451c9acc5cfa6c694378d9e115eaff3bce4e40d7f、code-save15368B/a989e9d977583a1263038bf480d77fd3b09f7a9fee2b44cc59a2afc695a7ef4e。
+
+reference fixture setup/helpersだけを使い先行bodyは実行しない。fake kernel/API/Popen/creation＋実小FileIO/root/channel、正常snapshotは明示stub、retentionは試験専用_pause Escape。実Win ABI/kernel発行/CreateProcess/worker/Job/pipe/exe/native認証/全経路wall・容量合格ではない。runtime/profile再観測0/追加agent0/native0/holdout観測未読。
+
+元helpersのlive/execution：20564/134359107564107892/token4bac2c9c5dea7691915425a7e3c6bd569e49c073f248c5e7049f383964a99be4 failed、47208/134359108406180658/token2f9b4511f72c31924b97b77b00b71ab9825b05d68525768954434ce9c6a7fe8d passed、39852/134359109331861440/tokenbdf3d889a79d71413c99c29c76d895a1480adf52afbba74cfa158ed10e41de93 passed、components42916/134359110244008056/token83260c4cbf6be9af72ec6390514cbb57bc2b21319118eb33ec41210e0b392909 passed、code-save45956/134359111096990757/token09dd38b0b5d4af0752a3edd426a09d7f401891dcb70eda951044ca1bfcce87fe passed。保存後元creation/token/CIM終端とHEAD-origin-cleanを照合する。PID単独判定なし。
+
+## CI・次の境界
+
+開始時59067e0-origin-clean/元先行8helper同identity不在/critical ownerなし。CI37729884798/full6e71c2bbdf50b65ec23ae57c9114d031b860511fは今回両minor113156366173/113156366395 in_progress/比較未発行/run未終端。新37732744553/git実fulla1ab304608d0d0ff486c73d84b3ba6d1612be222はpush後in_progress。3790/3812は算術予定/journal未確認。ci-state原rawを保存、終端download/local回帰/runner追加0、doc-only新CI追跡なし。全完成CI/focus/旧raw/pin/failureへ追加・反復なし。
+
+次は原CreateProcess return/PROCESS_INFORMATION/原Job assignment/attribute lifetimeと、同Popen HANDLE creation→child-local close/rename/raw witness transport観測の準備。今回はopaque attribute preparationまでで実launcher未接続。原stdio3の実owner/継承性、fresh latest-clean source/runtime/profile/private policy/request/unusedroot、atomic全writer予約/親failure raw/原partialとnew archive growth独立予約/entry-context実bytes/packet-gzip-frame-receipt-partial coupled peak/global memory/exclusiveは未完成。snapshot/sidecar/context pin/attribute buffer幅をatomic/native許可にせず、準備前にnative入口を開かず全7役whole.runを限定readerとして実起動しない。
+
+formal s4_acceptance_not_frozen/permission=false/credit0。正式5残件/正式採択/最終受入未完了。archive512KiB/frame128KiB/decoded1536KiB/stdout1MiB/manifest32KiB/lease64、outer1MiB32entry depth2 reserve128KiB/global321MiB672entry、cleanup30秒/poll0.25秒/元wall-memory-output維持。unknown Close/Delete/未回収/IO・KIは原owner/Job/Popen/HANDLE/stream/buffer/pending/raw/partial archive保持、blind retry/原Python終了/後続work拒否。closed/EOF/marker不在/worker exit/kill-wait/途中capacityを回収True/lease/ackへ読み替えない。Sol容量エラー未確認、ACTIVE維持。

@@ -1,5 +1,19 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST publication専用HANDLE_LIST・原attribute owner準備のunit保存
+
+codea1ab304608d0d0ff486c73d84b3ba6d1612be222を一回commit/push/origin一致、doc-only追補skip ci。詳細docs/results/anomaly-multiseed-v0.3-publication-handle-list-2026-10-08.md、raw artifacts/preformal-publication-handle-list-20261008-prep/だけを対象にする。開始時59067e0-origin-clean/元先行8helper同creation-token不在/critical ownerなし、native0/profile再観測0/追加agent0。
+
+同原inheritance/offer/owner/stdio3/last-errorをIO前保持→専用2と別枠のexplicit5/原source4 alias拒否→原sizing return/size/clock前last-error→bounded32KiB buffer/原array→原Initialize/Update tuple/return→原STARTUPINFOEX。CreateProcess callable保持のみ未呼出し。unknown/第二準備/callback・KIは原owner/error/prefix/bufferと拒否object保持。未起動Deleteだけ原void return、unknown/非None/Popen getter失敗は保持/no replay。knownもHANDLE close0/native回収false、source4/専用2保持。native/継承/atomic/capacity/ack/auth=false、旧stdio最大3/JSON/pinへ読み替えなし。
+
+新22distinct/unique22/body23。初回18=17pass/implementation fail1/3.3899621秒→失敗1+新risk2だけ0.0067455秒3pass→新risk2だけ0.0034102秒2pass、原log保全。pass済み17/20/旧suite反復0、最終source単一22success runではない。各58pin/他55全3component/先行55不変/safety0/clean code-save58working-Git。components1276B/dd39505c94edfcc5e941b54451c9acc5cfa6c694378d9e115eaff3bce4e40d7f、code-save15368B/a989e9d977583a1263038bf480d77fd3b09f7a9fee2b44cc59a2afc695a7ef4e。create_native body不変/root-channel-clock-Job前拒否維持。fake API/Popen＋小FileIO/root、snapshot stub/retention Escape、実ABI/launcher/継承/認証/全経路wall・容量ではない。名前30source/phase32/予定64Git Job、fresh phase796233B/最大archive94908Bは未閉包。
+
+元helpers20564/134359107564107892/token4bac2c9c5dea7691915425a7e3c6bd569e49c073f248c5e7049f383964a99be4 failed、47208/134359108406180658/token2f9b4511f72c31924b97b77b00b71ab9825b05d68525768954434ce9c6a7fe8d passed、39852/134359109331861440/tokenbdf3d889a79d71413c99c29c76d895a1480adf52afbba74cfa158ed10e41de93 passed、42916/134359110244008056/token83260c4cbf6be9af72ec6390514cbb57bc2b21319118eb33ec41210e0b392909 passed、45956/134359111096990757/token09dd38b0b5d4af0752a3edd426a09d7f401891dcb70eda951044ca1bfcce87fe passed。原live/execution保持、保存後creation/token照合、PID単独判定なし。
+
+未保存CI37729884798/full6e71c2bbdf50b65ec23ae57c9114d031b860511fは今回両minor113156366173/113156366395 in_progress/compare未発行（予定3790/journal未確認）。新37732744553/git実fulla1ab304608d0d0ff486c73d84b3ba6d1612be222もin_progress（予定3812/journal未確認）。原ci-state保持、終端download/local回帰/runner追加0。完成CI/focus/旧failure反復なし、doc-only新CI追跡なし。
+
+次は原CreateProcess return/PROCESS_INFORMATION/Job assignment/attribute lifetime、同原Popen creation→child原close/rename/raw transport観測の準備unit。実launcher/stdio3実owner・継承性/fresh closure-runtime-profile-policy-request-unusedroot/atomic全writer予約/親failure raw/partialとnew growth別予約/entry-context実bytes/coupled peak/global memory/exclusive未完成。native入口/全7役whole.run限定reader起動禁止。formal permission=false/credit0/holdout未読、Sol容量未確認、ACTIVE維持。
+
 ## 2026-10-08 JST 専用HANDLE複製・offer・原Popen対応準備のunit保存
 
 code6e71c2bbdf50b65ec23ae57c9114d031b860511fは一回commit/push/origin一致。doc-only3文書追補skip ci。詳細docs/results/anomaly-multiseed-v0.3-publication-pipe-inheritance-2026-10-08.md、raw artifacts/preformal-publication-pipe-inheritance-20261008-prep/・ci-diagnostic-37724967759/だけを対象にする。開始時69cbeb2-origin-clean/元4helper同creation-token不在/critical ownerなし、追加agent0/native0/profile再観測0。
