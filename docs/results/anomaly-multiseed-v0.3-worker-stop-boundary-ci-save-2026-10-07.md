@@ -1,5 +1,9 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 2026-10-08 JST CI37732744553・HANDLE_LIST準備revision保存完了
+
+git実fulla1ab304608d0d0ff486c73d84b3ba6d1612be222/attempt1/push/Phase1CI/.github/workflows/ci.yml/3job113165365533・113165364493・113177312473successへ原run/jobsを固定。新ci-diagnostic-37732744553/に10raw14pin、両journal実3812/fail0/error0/skip237/source不変/local-remote回帰一致/共有29必須28/runner v2consistent_candidate/full journal passedまで一度保存。summary2583B/3061bed850918b27683a85ce758a87690b56e375887118453e1f7e4222b0d22f、index2783B/a30cb0cbd77fd4b687bfb245a7551a416d4d855299fdd8b4290439e70b223d38。3.12新版20261004.327.1/true、3.14・compare旧20260927.320.1/false、公式保存外部pin一致のみ/digest未取得/候補未採択。CLI6一致/CRLF6差1file両pin。実summary取得後runner/index双方へ同pinを固定して先行metadata失敗を反復しない。詳細ci-handle-list-save文書と専用batch。現production revisionの未保存CIなし/doc-only新CI追跡なし。完成CI/focus/旧raw/pin/failureへ追加・反復せず、実launcher/Win ABI/専用継承/child owner認証/容量/正式受入へ読み替えない。
+
 ## 2026-10-08 JST CI37729884798・専用HANDLE複製revision保存完了
 
 git実full6e71c2bbdf50b65ec23ae57c9114d031b860511f/attempt1/push/Phase1CI/.github/workflows/ci.yml/全3jobsuccessに原run/jobsを固定し、新ci-diagnostic-37729884798/へ10raw14pinを一度保存。両journal3790/fail0/error0/skip237/source不変、local-remote一致/共有29必須28/runner v2consistent_candidate/full journal passed、index2783B/6ff728f3b8fd269797ef7188ba92cf47afd3636ceeba5b71b56dea1a08edfd7f。全image20260927.320.1/prerelease=false/公式外部pin一致だけ/digest未取得/候補未採択、CLI6一致/CRLF6差1file両pin。origin metadataの旧summary pin失敗は原failed helper/script/failure metadata保持、原process stderr byte file未捕捉を明記。別index continuationで未保存index/CLIだけ保存、numerical/download/runner再実行0。詳細ci-inheritance-save文書と専用batchcheckpoint。現a1ab/native/容量/正式受入へ読み替えず、完成CI/focus/旧failure保全・反復禁止。未保存37732744553/fulla1ab304608d0d0ff486c73d84b3ba6d1612be222は両minorin_progress/予定3812/journal未確認、doc-only新CI追跡なし。

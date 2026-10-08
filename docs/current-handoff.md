@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST HANDLE_LIST準備revision CI3812の終端保存
+
+開始2026-10-08T06:15:32Z/HEAD2e12e221374b25d6f02ef715278ed270b47cc4d7-origin-clean/先行元4helper同creation-token不在/repo helper-critical ownerなし。codea1ab304608d0d0ff486c73d84b3ba6d1612be222不変、production/test/native/完成focus/旧suite/追加agent/profile再観測0、doc-only3文書を一回skip ciへ集約。詳細docs/results/anomaly-multiseed-v0.3-ci-handle-list-save-2026-10-08.md、raw artifacts/ci-diagnostic-37732744553/、batch preformal-ci-handle-list-save-20261008-prep/だけを対象にする。
+
+CI37732744553/git実fulla1ab304608d0d0ff486c73d84b3ba6d1612be222/attempt1/push/Phase1CI/.github/workflows/ci.yml/3job113165365533・113165364493・113177312473completed-successへ原run/jobs固定。新9raw取得後local回帰1＝10raw14pin、両journal実3812/fail0/error0/skip237/source不変/local-remote一致/comparison matched/共有29必須28各minor/runner v2consistent_candidate/full journal passedまで一度保存。summary2583B/3061bed850918b27683a85ce758a87690b56e375887118453e1f7e4222b0d22f、index2783B/a30cb0cbd77fd4b687bfb245a7551a416d4d855299fdd8b4290439e70b223d38。3.12新20261004.327.1/true、3.14・compare旧20260927.320.1/false、公式保存外部pin一致のみ/digest未取得/候補未採択。CLI7は6一致/既知CRLF6差1file両pin。このCIを実launcher/Win ABI/継承/child owner認証/容量/正式受入へ読み替えず、完成download/numerical/local回帰/runner反復禁止。
+
+原journal実countを新scriptへ固定し、実summary取得後runner/index双方へ同2583B/3061bed8…を発行、summary-script-binding保持。旧summary pin失敗反復0/旧root追加0、原失敗は保全。元prepare49192/134359138622962232/token0a760f9d2e4638a4039b6a63e5c6075a960fdc134605f603711fcf9c12bec6fd、download48912/134359138820786106/token3005334793c9b841553505550bf42b4770b5b9426989519000e93d2c581a4e4a、verification23352/134359139731544664/token6d47ff4f068d7975c1c4888fc075f259928eeae4ab92b87cc9c14a7e0b3fe7bc、origin28200/134359140176488262/token021d9c9b3434247aef35c91cbe92c3daba9f6138bc9d4e0b90b499349dec11f7はlive-execution一致/passed/同original不在、PID再利用はcreation/tokenで区別。保存後全raw/14pin/CLI両pin/source-science5 working-Git/docs3/元identity/HEAD-origin-clean/旧root不変をmetadataだけ照合してrootを閉じる。
+
+現revision未保存CIなし/doc-only新CI追跡なし。次は前回source監査を参照し、原raw Job/process/thread ownerの限定launcher契約を原CreateProcess BOOL/PROCESS_INFORMATION/Job-member output/attribute lifetime/stdio3と専用2/原Python owner保持順までまとめる。actual generate/READER_BOOTSTRAPの実発行/cross-process HANDLE受渡し/child IO owner認証未接続、create_native root-channel-clock-Job前拒否維持。fresh source-runtime-profile-policy-request-unusedroot/実coupled容量/exclusive/atomic全writer予約/親failure raw-diagnostic/partialとnew growth別予約/entry-context実bytes/coupled peak/global memory未完成。準備前native入口/全7役whole.run限定reader実起動禁止。全完成CI/focus/13AST監査反復なし、旧raw/pin/failure保全。formal permission=false/credit0/holdout未読/正式5残件未完了、元caps/stop保持維持、Sol容量未確認/ACTIVE。
+
 ## 2026-10-08 JST reader限定launcherの原owner/返値source監査
 
 開始HEAD98254bbcb1b24d5fe8c876e6485a810b346738dd-origin-clean/先行元4helper同creation-token不在/critical ownerなし。codea1ab304608d0d0ff486c73d84b3ba6d1612be222不変。production/test/native/完成focus/旧suite/追加agent/runtime-profile再観測0、doc-only2文書を一回skip ciへ集約。詳細docs/results/anomaly-multiseed-v0.3-reader-native-launch-audit-2026-10-08.md、raw artifacts/preformal-reader-native-launch-audit-20261008-prep/だけを対象にする。
