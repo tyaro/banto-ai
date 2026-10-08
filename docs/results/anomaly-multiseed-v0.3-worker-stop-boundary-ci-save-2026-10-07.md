@@ -1,5 +1,11 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 2026-10-08 JST 新packet分割準備revisionの未終端CI
+
+code21b4b4fadc1bc856b286324907b5ac5a9ea42010は新memory-only分割/manifest/full raw readback/owner保持/native早期拒否のunitとして一回commit/push/origin一致。新20distinctは15＋新risk3＋新risk2の別source/run、最終source単一20successではない。詳細docs/results/anomaly-multiseed-v0.3-worker-packet-partition-preparation-2026-10-08.md、prep artifacts/preformal-packet-partition-preparation-20261008-prep/。code-save18912B/3d2d9a2622b7d1b902f401cfdc0609b3bc5be27fcee902409b438a6ddd472116で61working-Git/science/原raw/元helper/旧3root不変照合。
+
+新CI37752779492/git実full21b4b4fadc1bc856b286324907b5ac5a9ea42010/Phase1CI/pushはin_progress観測、attempt/jobs/終端未固定、3864は算術予定/journal未確認。ci-state.jsonへcompact出力保存のみ、終端download/local回帰/runner追加0。doc-only追補はskip ci/new CI追跡なし。完成CI3844と旧CI/download/numerical/runner/focusへ追加・反復せず、先行packet上限拒否154696B/原metadata失敗も保全。このnew準備も実Win ABI/launcher/child owner transport認証/atomic/coupled容量/正式受入へ読み替えない。
+
 ## 2026-10-08 JST 最新native buffer準備revision CI3844を保存
 
 production d4e5f2ec90a9c17be90af4eadebadb4b769a409b不変/production-test-native0。CI37743146137/full d4e5f2ec90a9c17be90af4eadebadb4b769a409b/attempt1/push/Phase1CI/.github/workflows/ci.yml/3job113198312223・113198312515・113210284774全successを新専用原run/jobsに固定。両journal実3844/fail0/error0/skip237/source不変、10raw14pin/local-remote一致/共有29必須28/runner v2consistent_candidate/full journal passedまで一度保存。summary2584B/9881050794a2b1059147c868389f84a35316bc9329510d8352c8a4ac12a98047、index2784B/b62bd9ff02c942df4ca86e73958d37dd79ec26fae2f5f906cdb0dea93c45e1a9。詳細docs/results/anomaly-multiseed-v0.3-ci-native-buffer-save-2026-10-08.md。

@@ -1,5 +1,11 @@
 # 新packet分割・全raw readbackの準備（2026-10-08 JST）
 
+## code保存と新CI選択
+
+code21b4b4fadc1bc856b286324907b5ac5a9ea42010を確認済みunit一回commit/push/origin一致・cleanで保存。code-save18912B/3d2d9a2622b7d1b902f401cfdc0609b3bc5be27fcee902409b438a6ddd472116は61source-science working-Git/原focus6raw・components/元4helper/当該4file commit/docs2/旧3root不変を照合した。code-save45000/creation134359232514365607/tokenc9e612c7ba887062ea46903dbada3073aa70a661f8272312afaa944be2d1cc5aはlive-execution passed。新CI37752779492はgit実full21b4b4fadc1bc856b286324907b5ac5a9ea42010/Phase1CI/push/in_progressを一度観測し、ci-state.jsonへcompact出力を保存。tool-owned gh出力はrun/jobs/journal原rawの終端保存ではなく、元native owner回収にも読み替えない。attempt/jobs未固定/3864算術予定/journal未確認、終端download/local回帰/runner追加0。
+
+doc-only追補3文書を一回skip ciで保存後、postはmetadataだけ61working-Git/science/docs3/当該code commit docs2別pin/全原raw/元5helper exact creation-token/CIM同original不在/HEAD-origin-lsremote-clean/旧3root不変を一度照合して専用rootを閉じる。完成20focus/旧suite/native/download/verifier/runnerを再実行しない。
+
 ## 対象と保持順
 
 開始2026-10-08T08:38:03Z/HEAD1a91b3b022ae4b8d627655f2425e5c7d95baa1bb-origin-clean。先行元8helper同creation-token不在/repo helper-critical ownerなし。対象sourceは既存worker_git_archiveの新PacketPartitionPreparationと新test。追加production module0/追加agent0/native0/runtime-profile再観測0、science2はhash metadataのみ/holdout未読。原rawは専用 `artifacts/preformal-packet-partition-preparation-20261008-prep/` へ保存する。
