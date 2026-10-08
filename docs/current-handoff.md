@@ -1,5 +1,13 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST 人の指定：次の自走ターンで終了
+
+2026-10-08T10:41:09Z、人から「次のターンで自走終了しましょう」の明示指示。次の自走ターンを最終とし、新production/test/focus/native/agentを開始しない。元owner/handle/worker/helperのidentity・安全な既存終端・証拠保全を確認し、短い最終引継ぎ保存後にheartbeat banto-10をPAUSEDへ更新する。現在は終了予約としてACTIVEを維持し、次ターン以降の機能unitへ進まない。
+
+最終ターンは未保存CI37756831995/fullc5bffdb1e23d1563020d7fc2345fb1bfc1bad5c3と37763660778/full5d52f8d7f38e043295a79af00f94748edbcd6347をcompact一度ずつ確認する。終端なら既存のwall/output/root上限内で未保存原rawを一度保全、未終端なら待機・反復照会せずrun/fullHEAD/観測範囲を引継ぐ。完成CI/focus/旧rootを再実行・追加しない。unknown native ownerは原keeper/handleを保持し、metadataやkill-waitを回収証拠へしない。上限緩和・receipt移動・新worker禁止を維持する。
+
+終了予約時HEAD1a73966d263080cf8ad84d2004831ebe0fbe1be0/origin一致・clean、production5d52f8d7f38e043295a79af00f94748edbcd6347不変。元post16660/creation134359294181570968/start_token b5cd3cacd3096be69811da510f7ab797f695c476abaea0ef48992b49c3b2f56cはlive-execution一致の原closed記録を保持し、今回read-only CIMでも同original不在/repo helperなしを確認（tool observation 9a8e4d、原process全byte logではない）。原prep21file100198B/continuation13file57702Bは閉鎖済み・追加なし。正式受入未完了/formal_permission=false/credit0/holdout未読、停止を受入成功へ読み替えない。
+
 ## 2026-10-08 JST partitioned publicationの親failure/raw・payload準備unit
 
 開始2026-10-08T09:55:07Z/HEAD83279c6350c86dec7450256e40df68cfdda83d5a-origin-clean、先行CI3864元8helper exact creation/start_token同original不在/repo helper-critical ownerなし。追加agent/完成focus/旧suite/13AST監査/native/profile再観測0。新PartitionedPublicationPreparationとReaderGitParent opt-in・同親保持経路、新testを同目的unitへまとめる。詳細docs/results/anomaly-multiseed-v0.3-partitioned-publication-preparation-2026-10-08.md、専用raw artifacts/preformal-partitioned-publication-preparation-20261008-prep/だけを対象とする。
