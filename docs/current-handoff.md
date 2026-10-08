@@ -1,5 +1,17 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST 専用HANDLE複製revision CI3790の終端保存
+
+開始時d5d05a8e5b07e99b76b512217d5a3ba5e411e547-origin-clean/元先行5helper同identity不在/critical ownerなし。今回はproduction/test/完成focus/native/worker/Job/pipe/exe/追加agent/profile再観測0、codea1ab304608d0d0ff486c73d84b3ba6d1612be222不変、doc-only3文書skip ci。詳細docs/results/anomaly-multiseed-v0.3-ci-inheritance-save-2026-10-08.md、raw artifacts/ci-diagnostic-37729884798/、batch preformal-ci-inheritance-save-20261008-prep/だけを対象にする。
+
+CI37729884798/git実full6e71c2bbdf50b65ec23ae57c9114d031b860511f/attempt1/push/Phase1CI/workflow/fullHEADと3job113156366173・113156366395・113167828486successへ原run/jobs固定。両journal3790tests/fail0/error0/skip237/source不変、10raw14pin/local-remote回帰一致/共有29必須28/runner v2consistent_candidate/full journal passedまで完成。index2783B/6ff728f3b8fd269797ef7188ba92cf47afd3636ceeba5b71b56dea1a08edfd7f、summary2576B/e2260254f67703cb0d5f60e31bff6f68351786cab899f79d9f2e82add3bfedb4。全job20260927.320.1/prerelease=false、公式外部pin一致だけ/digest未取得/候補未採択。CLI7は6一致/skip file既知CRLF6差両pin。このCIを現a1ab/native/容量/正式受入へ読み替えず反復しない。
+
+origin helperはrunner候補success後、generate-indexの旧summary pinでmetadata AssertionError/exit1。原script/live/execution failedとfailure metadata保持、原process stdout/stderr byte file未捕捉も明記。別index-continuationだけsummary pin訂正→未保存index/CLI pin保存。numerical verifier/download/runner再実行0、原failed helperをsuccessへ書換えない。元43492/134359117420962987/tokenf01b88456989e7c0f3057ecbfff1283aa52be15e778b381dfbf27ae571da168f passed、35476/134359117833633867/token20b2d7df66d909427855a686676358a55d17c66ca2e6cdb2e8cae860cf8a40cb passed、48992/134359118057817341/tokeneb02d2b6f8c4b48217333f60a3114c29f71cc75dc6ce36ae3ffd47dc015af2d0 failed、13804/134359118831549180/token891f4d6da6441db4f6cb80b7c9e62d4be5637bc6f2ae91aee3fed0f8476a2d38 passed。同original不在、PID再利用はcreation/tokenで区別。
+
+checkpoint11483B/c3d86a6c813f89d06ab1c347ac734aa9393f78aaf4ae096503cf750bd3e83293は全39file10139932B/14pin/CLI両pin/source3＋science2union5 working-Git/元4helper/HEAD-origin-cleanを照合。保存後docs3/docHEAD/全pin/元identityをmetadataだけ確認してrootを閉じる。旧root追加なし、新unit完了後の追加/完成verifier-download反復禁止。
+
+未保存CIは37732744553/git実fulla1ab304608d0d0ff486c73d84b3ba6d1612be222だけ、今回両minor113165365533/113165364493 in_progress/compare未発行/予定3812/journal未確認。終端時専用rootへ一度保存、doc-only新CI追跡なし。次の機能unitは原CreateProcess return/PROCESS_INFORMATION/Job assignment/attribute lifetime/Popen creation→child原close-rename-raw transport準備。fresh closure/profile/policy/request/unusedroot/atomic全writer予約/親failure raw/partialとnew growth別予約/entry-context実bytes/coupled peak/global memory/exclusive未完成、native入口/全7役whole.run限定reader起動禁止。formal permission=false/credit0/holdout未読、Sol容量未確認、ACTIVE維持。
+
 ## 2026-10-08 JST publication専用HANDLE_LIST・原attribute owner準備のunit保存
 
 codea1ab304608d0d0ff486c73d84b3ba6d1612be222を一回commit/push/origin一致、doc-only追補skip ci。詳細docs/results/anomaly-multiseed-v0.3-publication-handle-list-2026-10-08.md、raw artifacts/preformal-publication-handle-list-20261008-prep/だけを対象にする。開始時59067e0-origin-clean/元先行8helper同creation-token不在/critical ownerなし、native0/profile再観測0/追加agent0。

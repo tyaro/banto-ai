@@ -1,5 +1,9 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 2026-10-08 JST CI37729884798・専用HANDLE複製revision保存完了
+
+git実full6e71c2bbdf50b65ec23ae57c9114d031b860511f/attempt1/push/Phase1CI/.github/workflows/ci.yml/全3jobsuccessに原run/jobsを固定し、新ci-diagnostic-37729884798/へ10raw14pinを一度保存。両journal3790/fail0/error0/skip237/source不変、local-remote一致/共有29必須28/runner v2consistent_candidate/full journal passed、index2783B/6ff728f3b8fd269797ef7188ba92cf47afd3636ceeba5b71b56dea1a08edfd7f。全image20260927.320.1/prerelease=false/公式外部pin一致だけ/digest未取得/候補未採択、CLI6一致/CRLF6差1file両pin。origin metadataの旧summary pin失敗は原failed helper/script/failure metadata保持、原process stderr byte file未捕捉を明記。別index continuationで未保存index/CLIだけ保存、numerical/download/runner再実行0。詳細ci-inheritance-save文書と専用batchcheckpoint。現a1ab/native/容量/正式受入へ読み替えず、完成CI/focus/旧failure保全・反復禁止。未保存37732744553/fulla1ab304608d0d0ff486c73d84b3ba6d1612be222は両minorin_progress/予定3812/journal未確認、doc-only新CI追跡なし。
+
 ## 2026-10-08 JST HANDLE_LIST準備unitのCI選択
 
 codea1ab304608d0d0ff486c73d84b3ba6d1612be222 push後、gitが返した実fullSHAで新37732744553/Phase1CI/push/in_progressを確認。先行37729884798/full6e71c2bbdf50b65ec23ae57c9114d031b860511fは両minor113156366173/113156366395 in_progress、compare未発行/run未終端。3812/3790は算術予定でjournal未確認。artifacts/preformal-publication-handle-list-20261008-prep/ci-state.jsonにcompact原状態rawを保持し、今回terminal download/journal/local回帰/runner追加0。詳細publication-handle-list文書。完成CI/focus/旧failure/raw/pinへ追加・反復せず、doc-only新CI追跡なし。終端時のみfullHEAD/workflow/run/attempt/jobsへ固定して新専用rootへ未保存rawを一度保存、success時だけ既定journal/回帰/runner、failureは小さい原因確認と原raw保全。

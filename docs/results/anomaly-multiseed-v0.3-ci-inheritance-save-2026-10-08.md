@@ -1,0 +1,33 @@
+# 専用HANDLE複製revisionのCI終端保存
+
+2026-10-08 JST。開始時2026-10-08T05:39:32Z、HEAD/origin d5d05a8e5b07e99b76b512217d5a3ba5e411e547/clean。production codea1ab304608d0d0ff486c73d84b3ba6d1612be222は今回変更なし。元先行5helperの同PID/creation/token残存なし、repo helper/critical ownerなし。新production/test/完成focus/native/worker/Job/pipe/exe/追加agent/runtime-profile再観測0、doc-only3文書を一回skip ciへ集約する。
+
+## 実外部revisionへの固定
+
+未保存CI37729884798の全3job successを観測し、git実full6e71c2bbdf50b65ec23ae57c9114d031b860511f/attempt1/push/Phase 1 CI/.github/workflows/ci.ymlへ原run/jobsを固定した。3.12job113156366173、3.14job113156366395、compare113167828486はcompleted/success。workflow pin3741B/1376641c6a394b2f4781bb0ceaa8acfa735f35dfa1799d8503300ba9268815e8一致。
+
+新専用artifacts/ci-diagnostic-37729884798/に原9rawを一度downloadしlocal回帰1を保存、10raw14pinまで完成。両journalの実run_finishedは3790tests/fail0/error0/skip237/source不変、local-remote回帰一致/比較matched/共有29fixture/各minor必須28pass。runner v2 consistent_candidate/full journal verification passed。これは先行6e71のengineering CI証拠で、現在a1ab304のHANDLE_LIST・native・容量・正式受入へ読み替えない。
+
+- complete-summary2576B/e2260254f67703cb0d5f60e31bff6f68351786cab899f79d9f2e82add3bfedb4。
+- index2783B/6ff728f3b8fd269797ef7188ba92cf47afd3636ceeba5b71b56dea1a08edfd7f、14saved pin。
+- 3.12journal3967385B/1dcc21f63c888b0f87759cb7c296d5308189ab18fc23ca7f7128a9c2e765c60f、3.14journal3967545B/9a671d5595efe6232dceacdfc91e3f6d9b0482978bd91c56193dc51bc2feb686。
+- candidate input2567B/5e6c47f8bae73bb15096e368ca1227d9a074aea509bb9b5aca641515819dd569、result3064B/fd84e1477c3c9f69c797761b1713eefdcefb7e85747b58b56d9c2bd2c35b7b60。
+- CLI sidecar2138B/8fe8298e6895743cb02f44ffbe6db55f4d7bce615b2e01ce15ec13443fd86215、7sourceの6raw一致/skip file既知CRLF6byte差のworking-Git両pin保持。
+
+全3job imageは20260927.320.1/prerelease=false。保存済み公式release/README metadata/blob/log/journal外部pin一致だけで、digest未取得/runner候補未採択。過去の数値verifier/download/runner候補を反復しない。
+
+## Index metadataの原失敗と限定continuation
+
+origin helperはrunner候補return0/consistent_candidateまで完了した後、generate-index.py:8の旧summary pin（2574B/77eee1f9…）が今回summary2576B/e2260254…と一致せずAssertionError/exit1。原helper source/live/execution failedとindex-original-failure.jsonを保持し、CI/数値/native failureへ読み替えない。原process stdout/stderr byte fileは捕捉しておらず、その制限もmetadataへ明記した。失敗したorigin-helper/finish-ciを再実行せず、別generate-index-continuation.pyでsummary pinだけ訂正し、未保存index/CLI pinだけを別helperで一回保存した。download/local数値verifier/runner candidate再実行0、原failed helperをpassedへ書換えない。
+
+元helpersのlive/execution identity：download43492/creation134359117420962987/tokenf01b88456989e7c0f3057ecbfff1283aa52be15e778b381dfbf27ae571da168f passed、verification35476/134359117833633867/token20b2d7df66d909427855a686676358a55d17c66ca2e6cdb2e8cae860cf8a40cb passed、origin48992/134359118057817341/tokeneb02d2b6f8c4b48217333f60a3114c29f71cc75dc6ce36ae3ffd47dc015af2d0 failed、index-continuation13804/134359118831549180/token891f4d6da6441db4f6cb80b7c9e62d4be5637bc6f2ae91aee3fed0f8476a2d38 passed。同original不在/critical ownerなしをcreation/tokenで照合し、PID再利用をPID単独で判定しない。
+
+batch artifacts/preformal-ci-inheritance-save-20261008-prep/save-checkpoint.json 11483B/c3d86a6c813f89d06ab1c347ac734aa9393f78aaf4ae096503cf750bd3e83293は全保存39file10139932B/14pin/原metadata failure/CLI両pin/選択source3＋science2 union5のworking-Git/元4helper/HEAD-origin-cleanを確認。保存後docs3とdocpush HEADをmetadataだけ照合し、各rootを閉じる。診断root16MiB/256entry/8MiB single、batch512KiB/32entry/reserve128KiBを維持、旧rootへ追加・整理・原raw再保存しない。
+
+## 未保存CI・次の機能unit
+
+37732744553/git実fulla1ab304608d0d0ff486c73d84b3ba6d1612be222は今回3.12job113165365533/3.14job113165364493 in_progress、compare未発行/run未終端。3812は算術予定/journal未確認。終端時だけ外部fullHEAD/workflow/run/attempt/jobsへ固定して新rootに一度保存。doc-only新CI追跡なし。完成CI/focus/旧失敗保全・反復なし。
+
+次の機能unitは原CreateProcess return/PROCESS_INFORMATION/Job assignment/attribute lifetimeと、同原Popen HANDLE creation→child原close/rename/raw witness transport観測の準備。原stdio3の実owner/継承性、fresh latest-clean source/runtime/profile/private policy/request/unusedroot、atomic全writer予約/親failure raw/partialとnew archive growth別予約/entry-context実bytes/packet-gzip-frame-receipt-partial coupled peak/global memory/exclusiveは未完成。snapshot/sidecar/context pin/attribute buffer幅をatomic/native許可にせず、create_nativeのroot/channel/clock/Job前拒否を維持し、準備前native入口/全7役whole.run限定reader実起動禁止。
+
+formal gate=s4_acceptance_not_frozen/permission=false/正式credit0/holdout観測未読。保存済み合成dev8/smoke2はengineering読取り・記述報告のみ、正式5残件/正式採択/最終受入未完了。archive512KiB/frame128KiB/decoded1536KiB/stdout1MiB/manifest32KiB/lease64、outer1MiB32entry depth2 reserve128KiB/global321MiB672entry、元wall-memory-output/cleanup30秒/poll0.25秒を維持。unknown Close/Delete/未回収/IO・KIは原owner/Popen/Job/handles/streams/buffers/pending/raw/partialを保持しblind retry/原Python終了/後続work拒否。Sol容量エラー未確認、ACTIVE維持。
