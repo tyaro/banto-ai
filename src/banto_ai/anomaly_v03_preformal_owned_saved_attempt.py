@@ -485,8 +485,9 @@ def reader_worker_main(argv, *, pipe_io=None):
         reply = worker_git.run(observed_operation) if worker_git is not None else observed_operation()
         print(json.dumps(reply, sort_keys=True))
         return 0
-    except (ValueError, OSError, KeyError, TypeError,
-            subprocess.SubprocessError) as error:
+    except BaseException as error:
+        if 'git_worker' in locals():git_worker.retain_reader_initialization(error)
+        if not isinstance(error,(ValueError,OSError,KeyError,TypeError,subprocess.SubprocessError)):raise
         print(json.dumps({'format': READER_FORMAT, 'status': 'failed',
                           'error_type': type(error).__name__,
                           'detail': str(error), 'formal_permission': False},

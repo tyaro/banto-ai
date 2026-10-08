@@ -17,12 +17,25 @@ keepers, owner = proof.keepers, tree.owner
 
 
 class WorkerGitActor:
-    def __init__(self, *, child, inventory_raw, inventory_pin, checkpoint, pipe_io=None, append_plan=None):
+    def __init__(self, *, child, inventory_raw, inventory_pin, checkpoint, pipe_io=None, append_plan=None, storage_plan=None):
+        self.original_constructor_inputs=(child,inventory_raw,inventory_pin,checkpoint,pipe_io,append_plan,storage_plan)
+        self.child,self.checkpoint,self.original_storage_plan=child,checkpoint,storage_plan
+        self.pending=self.error=self.critical=self.keeper=self.saved=self.control_publication=None
+        try:
+            self._initialize(child=child,inventory_raw=inventory_raw,inventory_pin=inventory_pin,
+                checkpoint=checkpoint,pipe_io=pipe_io,append_plan=append_plan,storage_plan=storage_plan)
+        except BaseException as error:
+            self.error=error;error.worker_git_actor=self
+            if self.control_publication is not None:self.control_publication._failed(error)
+            raise
+
+    def _initialize(self, *, child, inventory_raw, inventory_pin, checkpoint, pipe_io, append_plan, storage_plan):
         # Keep caller-owned native IO before validating any opt-in descriptor.
         self.original_pipe_io = pipe_io
         self.pipe_io = None if pipe_io is None else dict(pipe_io) if type(pipe_io) is dict else pipe_io
         self.original_append_plan = append_plan
         self.append_plan = copy.deepcopy(append_plan)
+        self.storage_plan=copy.deepcopy(storage_plan)
         v.require(isinstance(child, proof.channel.ChildChannel) and callable(checkpoint),
                   'worker actor original child and common checkpoint')
         if pipe_io is not None:
@@ -49,12 +62,25 @@ class WorkerGitActor:
             self.control_publication=archive.ControlPublicationAdmission(endpoint=child,
                 root_identity=self.pipe_io['root_identity'],inventory_pin=self.inventory_pin,
                 control_limits=controls,checkpoint=checkpoint,owner=self)
+        storage=None
+        if storage_plan is not None:
+            v.require(self.control_publication is not None,'worker storage entry requires original append control owner')
+            allocation=archive.checked_storage_plan(self.storage_plan,request=child.request,request_pin=child.request_pin,
+                inventory_pin=self.inventory_pin,root_identity=self.pipe_io['root_identity'])
+            storage=archive.PublicationStorageAdmission(endpoint=child,inventory_raw=inventory_raw,
+                inventory_pin=self.inventory_pin,root_identity=self.pipe_io['root_identity'],allocation=allocation,
+                checkpoint=checkpoint,owner=self,issuance_context=self.storage_plan)  # Before archive/sink creation.
         self.inflight = root / 'worker-git-inflight'
         paths.regular_path(self.inflight, directory=True, missing=True)
         v.require(not self.inflight.exists(), 'worker actor exclusive unused inflight root')
         options={} if self.append_admission is None else {'append_admission':self.append_admission}
-        self.writer = archive.WorkerGitArchive(path=root/'worker-git.bin',
-            verifier=self.verifier, checkpoint=checkpoint,**options)
+        if storage is None:
+            self.writer = archive.WorkerGitArchive(path=root/'worker-git.bin',
+                verifier=self.verifier, checkpoint=checkpoint,**options)
+        else:
+            self.writer=archive.WorkerGitArchive.__new__(archive.WorkerGitArchive)
+            self.writer.__init__(path=root/'worker-git.bin',verifier=self.verifier,checkpoint=checkpoint,
+                storage_admission=storage,**options)
         self.leases = proof.VerifiedLeases(child=child, verifier=self.verifier)
 
     def _run_pipe(self, call):

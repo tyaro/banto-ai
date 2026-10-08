@@ -48,6 +48,7 @@ SOURCE_NAMES = tuple(dict.fromkeys((
 READER_PLAN_FORMAT = 'anomaly-v03-preformal-initial-reader-git-plan-v1'
 READER_PIPE_PLAN_FORMAT = 'anomaly-v03-preformal-initial-reader-git-pipe-plan-v2'
 READER_APPEND_PLAN_FORMAT = 'anomaly-v03-preformal-initial-reader-git-append-plan-v3'
+READER_STORAGE_PLAN_FORMAT = 'anomaly-v03-preformal-initial-reader-git-storage-plan-v4'
 
 
 def _reader_git_plan(entry, *, roots, revision, profiles):
@@ -63,11 +64,13 @@ def _reader_git_plan(entry, *, roots, revision, profiles):
         'reader Git plan must precede measured output roots')
     raw=reread.pinned.read_pinned(path,entry['expected_pin'],32*1024)
     value=v.strict_json(raw)
-    append=type(value) is dict and value.get('format')==READER_APPEND_PLAN_FORMAT
-    pipe=type(value) is dict and value.get('format') in (READER_PIPE_PLAN_FORMAT,READER_APPEND_PLAN_FORMAT)
+    storage=type(value) is dict and value.get('format')==READER_STORAGE_PLAN_FORMAT
+    append=type(value) is dict and value.get('format') in (READER_APPEND_PLAN_FORMAT,READER_STORAGE_PLAN_FORMAT)
+    pipe=type(value) is dict and value.get('format') in (READER_PIPE_PLAN_FORMAT,READER_APPEND_PLAN_FORMAT,READER_STORAGE_PLAN_FORMAT)
     fields={'format','revision','outer_root','channel_root','policy','source_pins','profile_pin','formal_permission'}
-    extras=({'pipe_raw_limits'} if pipe else set())|({'append_control_limits'} if append else set())
-    expected=READER_APPEND_PLAN_FORMAT if append else READER_PIPE_PLAN_FORMAT if pipe else READER_PLAN_FORMAT
+    extras=({'pipe_raw_limits'} if pipe else set())|({'append_control_limits'} if append else set())|\
+        ({'publication_storage'} if storage else set())
+    expected=READER_STORAGE_PLAN_FORMAT if storage else READER_APPEND_PLAN_FORMAT if append else READER_PIPE_PLAN_FORMAT if pipe else READER_PLAN_FORMAT
     v.require(type(value) is dict and set(value)==fields|extras and
         v.canonical_json(value)==raw and value['format']==expected
         and value['formal_permission'] is False,
@@ -82,6 +85,7 @@ def _reader_git_plan(entry, *, roots, revision, profiles):
         reader._pipe_raw_limits(value['pipe_raw_limits'],value['source_pins'],names)
     if append:
         reader.actors.archive.ArchiveAppendAdmission.validate_controls(value['append_control_limits'])
+    if storage:reader.actors.archive.checked_storage_allocation(value['publication_storage'])
     policy=value['policy']
     v.require(type(policy) is dict and set(policy)=={'path','expected_pin'}, 'reader Git policy entry')
     policy_path=Path(policy['path'])
@@ -97,7 +101,7 @@ def _reader_git_plan(entry, *, roots, revision, profiles):
     generated.paths.regular_path(Path(value['channel_root']),directory=True,missing=True)
     v.require(not Path(value['channel_root']).exists(), 'reader Git new exclusive channel')
     keys=('channel_root','policy','source_pins')+(('pipe_raw_limits',) if pipe else ()) + \
-        (('append_control_limits',) if append else ())
+        (('append_control_limits',) if append else ()) + (('publication_storage',) if storage else ())
     return {key:copy.deepcopy(value[key]) for key in keys}
 
 

@@ -558,6 +558,163 @@ class ChildPublicationCapture:
         except BaseException as error:self._failed(error)
 
 
+STORAGE_CONTEXT_FORMAT = 'anomaly-v03-publication-storage-context-v1'
+
+
+def checked_storage_allocation(entry):
+    v.require(type(entry) is dict and set(entry)=={'value','pin'},'storage exact caller allocation pin')
+    raw=io.json_bytes(entry['value'])
+    evidence._raw(raw,entry['pin'],'storage caller allocation original pin')
+    PublicationStorageAdmission.validate_allocation(entry['value'])
+    return entry['value']
+
+
+def checked_storage_plan(entry, *, request, request_pin, inventory_pin, root_identity):
+    v.require(type(entry) is dict and set(entry)=={'value','pin'},'storage exact linked context pin')
+    value=entry['value'];raw=io.json_bytes(value)
+    v.require(len(raw)<=proof.channel.MAX_CONTROL,'storage linked context bounded')
+    evidence._raw(raw,entry['pin'],'storage linked context original pin')
+    fields={'format','revision','request_pin','inventory_pin','budget_root','budget_root_identity',
+        'clock','allocation','formal_permission'}
+    v.require(type(value) is dict and set(value)==fields and value['format']==STORAGE_CONTEXT_FORMAT and
+        value['formal_permission'] is False and value['revision']==request['revision'] and
+        value['request_pin']==request_pin and value['inventory_pin']==inventory_pin and
+        value['budget_root']==request['budget_root'] and value['budget_root_identity']==list(root_identity) and
+        value['clock']==request['clock'],'storage exact request/inventory/root/clock context')
+    return checked_storage_allocation(value['allocation'])
+
+
+class PublicationStoragePreparation:
+    """Retain the caller allocation before request/inventory publication exists.
+
+    This conservative snapshot gate issues no request, inventory or native
+    permission. Those original values are linked only after their real returns.
+    """
+    def __init__(self, *, root, revision, budget, allocation, controls, raw_limits, source_pins, names,
+                 checkpoint, owner, policy, profile_pin, repository):
+        self.original_inputs=(root,revision,budget,allocation,controls,raw_limits,source_pins,names,checkpoint,owner,
+            policy,profile_pin,repository)
+        self.owner,self.budget,self.checkpoint=owner,budget,checkpoint
+        self.error=self.original_error=self.bound_storage=self.pending=None
+        self.endpoint=self.inventory_raw=self.inventory_pin=None
+        try:
+            self.previous=getattr(owner,'original_storage_preparation',None)
+            if self.previous is not None:
+                self.previous.rejected_preparation=self
+                self.previous._failed(ValueError('storage original preparation cannot be replaced'))
+            owner.original_storage_preparation=owner.storage_preparation=self  # Before copy, getters or IO.
+            self.pending={'inputs':self.original_inputs}
+            self.allocation_entry=copy.deepcopy(allocation);checked_storage_allocation(self.allocation_entry)
+            self.allocation=self.allocation_entry['value']
+            self.controls=copy.deepcopy(controls);ArchiveAppendAdmission.validate_controls(self.controls)
+            self.raw_limits=copy.deepcopy(raw_limits);self.source_pins=copy.deepcopy(source_pins)
+            self.names=copy.deepcopy(names);self.revision=copy.deepcopy(revision)
+            self.policy=copy.deepcopy(policy);self.profile_pin=copy.deepcopy(profile_pin)
+            self.repository=copy.deepcopy(repository)
+            evidence._pin(self.profile_pin)
+            v.require(type(self.policy) is dict and set(self.policy)=={'path','expected_pin'},'storage original private policy pin')
+            evidence._pin(self.policy['expected_pin'])
+            evidence._digest(self.revision,40)
+            v.require(type(self.names) is tuple and len(set(self.names))==len(self.names) and
+                type(self.source_pins) is dict and set(self.source_pins)==set(self.names) and
+                type(self.raw_limits) is dict and set(self.raw_limits)=={'head','status','source_blob'},
+                'storage preparation exact caller source/call allocation')
+            for pin in self.source_pins.values():evidence._pin(pin)
+            for operation,raw in self.raw_limits.items():
+                maximum={'stdout.bin':proof.tree.direct.MAX_OUTPUT[operation],'stderr.bin':proof.tree.direct.MAX_STDERR,
+                    'receipt.json':proof.tree.direct.MAX_RECEIPT,'partial-archive.bin':MAX_BYTES}
+                v.require(type(raw) is dict and {'stdout.bin','stderr.bin','receipt.json'}<=set(raw)<=set(maximum) and
+                    all(type(n) is int and 0<n<=maximum[name] for name,n in raw.items()),
+                    'storage preparation independent original raw maxima')
+            self.raw_bytes=max(sum(row.values()) for row in self.raw_limits.values())
+            self.raw_entries=max(len(row) for row in self.raw_limits.values())
+            v.require(callable(checkpoint) and budget is not None,'storage original shared budget/checkpoint')
+            self.roots=copy.deepcopy(budget.roots)
+            self.pending['clock_observation']=clock_info=proof.channel.time.get_clock_info('monotonic')
+            self.clock={'started_at':budget.started_at,'wall_seconds':budget.limits['wall_seconds'],
+                'implementation':clock_info.implementation}
+            self.root=Path(self.roots['outer']);self.channel_root=Path(root).absolute()
+            v.require(self.channel_root.parent==self.root,'storage original channel under shared outer')
+            self.plan_raw=self._plan();v.require(len(self.plan_raw)<=proof.channel.MAX_CONTROL,'storage preparation bound')
+            self.plan_pin=observed._pin(self.plan_raw)
+            self.view('before_request')
+        except BaseException as error:self._failed(error)
+
+    def _plan(self):
+        return io.json_bytes({'allocation':self.allocation_entry,'controls':self.controls,'raw_limits':self.raw_limits,
+            'source_pins':self.source_pins,'names':list(self.names),'revision':self.revision,
+            'root':str(self.root),'channel_root':str(self.channel_root),'clock':self.clock,'policy':self.policy,
+            'profile_pin':self.profile_pin,'repository':str(self.repository)})
+
+    def _failed(self,error):
+        if self.original_error is None:self.original_error=error
+        self.error=self.original_error;self.error.storage_preparation=self
+        self.error.reader_git_parent=self.owner
+        if getattr(self.owner,'error',None) is None:self.owner.error=self.error
+        raise self.error
+
+    def _fixed(self):
+        if self.original_error is not None:raise self.original_error
+        v.require(self.owner is self.original_inputs[9] and self.checkpoint is self.original_inputs[8] and
+            self.budget is self.original_inputs[2] and self.owner.original_storage_preparation is self.owner.storage_preparation is self
+            and self.budget.roots==self.roots and self.budget.started_at==self.clock['started_at'] and
+            self.budget.limits['wall_seconds']==self.clock['wall_seconds'] and self._plan()==self.plan_raw,
+            'storage original preparation sidecar/clock/plan')
+        evidence._raw(self.plan_raw,self.plan_pin,'storage preparation original plan pin')
+        if self.bound_storage is not None:
+            v.require(self.owner.original_publication_storage is self.bound_storage and
+                self.bound_storage.endpoint is self.endpoint and self.bound_storage.inventory_raw is self.inventory_raw and
+                self.bound_storage.inventory_pin==self.inventory_pin and self.bound_storage.allocation==self.allocation,
+                'storage preparation original returned request/inventory/owner')
+
+    def unresolved(self):
+        if self.original_error is not None:self.error=self.original_error;return True
+        try:self._fixed();return self.pending is not None
+        except BaseException as error:self._failed(error)
+
+    def view(self,stage):
+        try:
+            self.pending={'stage':stage,'inputs':self.original_inputs}
+            self.checkpoint();self._fixed()
+            stat=paths.regular_path(self.root,directory=True).lstat()
+            self.pending['root_stat']=stat  # Original return before the snapshot/checkpoint.
+            identity=(stat.st_dev,stat.st_ino)
+            prior=getattr(self,'identity',None)
+            v.require(prior is None or prior==identity,'storage preparation original root identity')
+            self.identity=identity
+            from . import anomaly_v03_preformal_generated_chain_budget as monitor
+            self.pending['snapshot']=snapshot=monitor._directory_snapshot(self.root,32,2,identity)
+            future=sum(self.controls.values())+self.raw_bytes+self.allocation['archive_bytes']+\
+                self.allocation['carrier_failure_bytes']+sum(self.allocation['parent_raw_limits'].values())
+            entries=len(self.controls)+self.raw_entries+2+len(self.allocation['parent_raw_limits'])+2
+            # Include the not-yet-created channel; never discount observed controls.
+            channel_growth=0 if self.channel_root.exists() else 1
+            self.pending['remaining_bytes']=1024**2-128*1024-snapshot['directory_bytes']-future
+            self.pending['remaining_entries']=32-2-snapshot['directory_entries']-entries-channel_growth
+            v.require(self.pending['remaining_bytes']>=0 and self.pending['remaining_entries']>=0,
+                'storage before-request future slots exceed original outer reserve')
+            self._fixed();self.last_observation=self.pending;self.pending=None
+            return self.last_observation
+        except BaseException as error:self._failed(error)
+
+    def bind(self,endpoint,inventory_raw,inventory_pin,checkpoint):
+        self.rejected_binding=(endpoint,inventory_raw,inventory_pin,checkpoint)  # Before copy/IO.
+        try:
+            self._fixed();v.require(self.bound_storage is None,'storage preparation binds original inventory once')
+            self.endpoint,self.inventory_raw=endpoint,inventory_raw
+            self.inventory_pin=copy.deepcopy(inventory_pin)
+            v.require(endpoint.root==self.channel_root and endpoint.request['revision']==self.revision and
+                endpoint.request['budget_root']==str(self.root) and endpoint.request['clock']==self.clock and
+                self.owner.inventory_root_identity==self.identity,'storage preparation observed endpoint/root/clock')
+            storage=PublicationStorageAdmission(endpoint=endpoint,inventory_raw=inventory_raw,inventory_pin=inventory_pin,
+                root_identity=self.identity,allocation=self.allocation,checkpoint=checkpoint,owner=self.owner)
+            self.bound_storage=storage  # Original return before another observation.
+            v.require(storage.raw_bytes==self.raw_bytes and storage.raw_entries==self.raw_entries,
+                'storage issued inventory uses original call maxima')
+            self._fixed();return storage
+        except BaseException as error:self._failed(error)
+
+
 class PublicationStorageAdmission:
     """Coupled conservative snapshot gate, not atomic/global/native admission.
 
@@ -589,8 +746,9 @@ class PublicationStorageAdmission:
         v.require(len(io.json_bytes(value))<=proof.channel.MAX_CONTROL,'publication storage allocation byte bound')
         return value
 
-    def __init__(self, *, endpoint, inventory_raw, inventory_pin, root_identity, allocation, checkpoint, owner):
-        self.original_inputs=(endpoint,inventory_raw,inventory_pin,root_identity,allocation,checkpoint,owner)
+    def __init__(self, *, endpoint, inventory_raw, inventory_pin, root_identity, allocation, checkpoint, owner,
+                 issuance_context=None):
+        self.original_inputs=(endpoint,inventory_raw,inventory_pin,root_identity,allocation,checkpoint,owner,issuance_context)
         self.endpoint,self.inventory_raw,self.owner,self.checkpoint=endpoint,inventory_raw,owner,checkpoint
         self.error=self.original_error=self.pending=self.last_observation=None
         self.writer=self.rejected_writer=self.sink=self.rejected_sink=None
@@ -604,9 +762,15 @@ class PublicationStorageAdmission:
             self.allocation=copy.deepcopy(allocation)
             self.identity=copy.deepcopy(root_identity);self.inventory_pin=copy.deepcopy(inventory_pin)
             self.request=copy.deepcopy(endpoint.request);self.request_pin=copy.deepcopy(endpoint.request_pin)
+            self.issuance_context=copy.deepcopy(issuance_context)
             self.root=Path(self.request['budget_root']);self.channel_root=endpoint.root
             self.gate=getattr(owner,'control_publication',None) or getattr(owner,'inventory_publication',None)
             self.validate_allocation(self.allocation)
+            if issuance_context is not None:
+                issued=checked_storage_plan(self.issuance_context,request=self.request,request_pin=self.request_pin,
+                    inventory_pin=self.inventory_pin,root_identity=self.identity)
+                v.require(issued==self.allocation,'storage original issuance allocation')
+                self.issuance_raw=io.json_bytes(self.issuance_context)
             v.require(isinstance(endpoint,proof.channel._Channel) and type(self.gate) is ControlPublicationAdmission and
                 self.gate.owner is owner and self.gate.endpoint is endpoint and self.gate.checkpoint is checkpoint and
                 self.gate.inventory_pin==self.inventory_pin and self.gate.identity==self.identity,
@@ -650,6 +814,14 @@ class PublicationStorageAdmission:
     def _fixed(self):
         if self.original_error is not None:raise self.original_error
         if self.gate.error is not None:raise self.gate.error
+        preparation=getattr(self.owner,'original_storage_preparation',None)
+        if preparation is not None:
+            try:preparation._fixed()
+            except BaseException as error:preparation._failed(error)
+        if self.original_inputs[7] is not None:
+            self.rejected_issuance_raw=io.json_bytes(self.original_inputs[7])
+            v.require(self.rejected_issuance_raw==self.issuance_raw and
+                io.json_bytes(self.issuance_context)==self.issuance_raw,'storage original caller context cannot follow callbacks')
         v.require(self.endpoint is self.original_inputs[0] and self.inventory_raw is self.original_inputs[1] and
             self.checkpoint is self.original_inputs[5] and self.owner is self.original_inputs[6] and
             self.owner.original_publication_storage is self.owner.publication_storage is self and
@@ -986,6 +1158,8 @@ class RequestBootstrapAdmission(ControlPublicationAdmission):
         self.error.request_bootstrap_owner=self
         prior=self.previous_bootstrap_owner
         if type(prior) is RequestBootstrapAdmission and prior.error is None:prior.error=self.error
+        preparation=getattr(self.owner,'original_storage_preparation',None)
+        if preparation is not None:preparation._failed(self.error)
         raise self.error
 
     def arm(self, request):
@@ -1016,6 +1190,8 @@ class RequestBootstrapAdmission(ControlPublicationAdmission):
 
     def _view(self, stage):
         self.checkpoint()
+        preparation=getattr(self.owner,'original_storage_preparation',None)
+        if preparation is not None:preparation.view('request_'+stage)
         v.require(self.owner is self.original_owner and self.owner.request_bootstrap_owner is self and
             self.budget is self.original_budget and self.checkpoint is self.original_checkpoint and
             self._plan()==self.plan_raw and io.json_bytes(self.request)==self.request_raw and
@@ -1170,7 +1346,8 @@ class SavedWorkerGitArchive:
 
 
 class WorkerGitArchive:
-    def __init__(self, *, path, verifier, checkpoint, append_admission=None):
+    def __init__(self, *, path, verifier, checkpoint, append_admission=None, storage_admission=None):
+        self.original_storage_input=storage_admission
         self.original_append_admission = self.append_admission = append_admission
         v.require(callable(checkpoint), 'worker archive shared budget checkpoint required')
         self.verifier, self.checkpoint = verifier, checkpoint
@@ -1182,9 +1359,38 @@ class WorkerGitArchive:
         if append_admission is not None:
             v.require(type(append_admission) is ArchiveAppendAdmission, 'worker archive explicit append admission')
             append_admission.bind(self)
+        if storage_admission is not None:storage_admission.bind_writer(self)
         checkpoint(); verifier._live()
-        io._exclusive(self.path, b'')
+        if storage_admission is None:io._exclusive(self.path, b'')
+        else:self._storage_empty(storage_admission)
         checkpoint()
+
+    def _storage_empty(self,storage):
+        held=self.initial_pending={'path':self.path,'storage':storage,'raw':b'',
+            'file_factory':proof.tree.file_io.FileIO}
+        try:
+            storage.view('archive_before_create')
+            held['stream']=stream=held['file_factory'](self.path,'xb')
+            held['fd']=fd=stream.fileno()
+            held['initial_stat']=info=os.fstat(fd)
+            held['identity']=(info.st_dev,info.st_ino)
+            held['path_stat']=path_info=self.path.lstat()
+            v.require(info.st_size==0 and info.st_ino>0 and stream.closefd is True and
+                held['identity']==(path_info.st_dev,path_info.st_ino),
+                'archive original exclusive empty fd/path')
+            stream.flush();os.fsync(fd)
+            held['synced_stat']=info=os.fstat(fd)
+            v.require(info.st_size==0 and (info.st_dev,info.st_ino)==held['identity'],'archive initial original fd sync')
+            held['close_return']=stream.close();held['close_return_observed']=True
+            v.require(held['close_return'] is None and stream.closed is True,'archive original Python close return')
+            held['readback']=observed._file(self.path,MAX_BYTES)
+            held['post_stat']=path_info=self.path.lstat()
+            v.require(held['readback']==b'' and (path_info.st_dev,path_info.st_ino)==held['identity'],
+                'archive original empty full readback')
+            storage.view('archive_after_create')
+            self.initial_completion=held;self.initial_pending=None
+        except BaseException as error:
+            self.failed=True;held['error']=error;storage._failed(error)
 
     def _manifest(self, raw, rows):
         result = {'format':FORMAT+'-manifest','path':str(self.path),'archive_pin':observed._pin(raw),

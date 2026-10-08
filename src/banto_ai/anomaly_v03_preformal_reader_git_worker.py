@@ -22,6 +22,7 @@ SOURCE_ADDITIONS = tuple('src/banto_ai/'+name+'.py' for name in (
     '_anomaly_v03_fixture_budget','anomaly_v03_reader_evidence','anomaly_v03_consumer_evidence'))
 PROOF_FORMAT = 'anomaly-v03-preformal-reader-git-archive-proof-v1'
 APPEND_ENTRY_FORMAT = 'anomaly-v03-preformal-reader-git-append-entry-v2'
+STORAGE_ENTRY_FORMAT = 'anomaly-v03-preformal-reader-git-storage-entry-v3'
 
 
 def publish_archive_ack(actor, manifest_raw, manifest_pin):
@@ -140,9 +141,10 @@ def _plan(verifier, names):
 
 
 def prepare_entry(parent, *, inventory_raw, inventory_pin, names, append_control_limits=None,
-                  publication_admission=None):
+                  publication_admission=None, publication_storage=None):
     """Publish caller-held bytes in the measured channel, no launch or new clock."""
     held_publication=publication_admission  # Keep the original caller gate before validation/root IO.
+    held_storage=publication_storage
     controls=copy.deepcopy(append_control_limits)
     if append_control_limits is not None:
         actors.archive.ArchiveAppendAdmission.validate_controls(controls)
@@ -154,6 +156,12 @@ def prepare_entry(parent, *, inventory_raw, inventory_pin, names, append_control
             held_publication.owner.inventory_publication is held_publication and
             held_publication.control_limits==controls and held_publication.inventory_pin==inventory_pin,
             'reader original parent inventory publication context')
+    if held_storage is not None:
+        v.require(held_publication is not None and type(held_storage) is actors.archive.PublicationStoragePreparation and
+            held_storage.owner is held_publication.owner and held_storage.endpoint is parent and
+            held_storage.inventory_raw is inventory_raw and held_storage.inventory_pin==inventory_pin,
+            'reader original issued storage preparation')
+        held_storage._fixed()
     parent._live()
     verifier = actors.proof.ProofVerifier(endpoint=parent, inventory_raw=inventory_raw,
         inventory_pin=inventory_pin, read_evidence=lambda _:None)
@@ -175,6 +183,15 @@ def prepare_entry(parent, *, inventory_raw, inventory_pin, names, append_control
         raw=io.json_bytes(value)
         v.require(len(raw)<=channel.MAX_CONTROL,'reader bounded append context')
         result.update(format=APPEND_ENTRY_FORMAT,append_plan={'value':value,'pin':observed._pin(raw)})
+    if held_storage is not None:
+        value={'format':actors.archive.STORAGE_CONTEXT_FORMAT,'revision':parent.request['revision'],
+            'request_pin':copy.deepcopy(parent.request_pin),'inventory_pin':copy.deepcopy(inventory_pin),
+            'budget_root':parent.request['budget_root'],'budget_root_identity':result['budget_root_identity'].copy(),
+            'clock':copy.deepcopy(parent.request['clock']),'allocation':copy.deepcopy(held_storage.allocation_entry),
+            'formal_permission':False}
+        raw=io.json_bytes(value);v.require(len(raw)<=channel.MAX_CONTROL,'reader bounded storage context')
+        result.update(format=STORAGE_ENTRY_FORMAT,storage_plan={'value':value,'pin':observed._pin(raw)})
+        held_storage._fixed()
     if held_publication is not None:
         held_publication.verify_publications(('worker-inventory.json',))
     return result
@@ -240,25 +257,39 @@ class ReaderGitParent:
 
     @classmethod
     def create(cls, *, root, revision, repository, policy, budget, source_pins, names, profile_pin,
-               pipe_raw_limits=None, append_control_limits=None):
+               pipe_raw_limits=None, append_control_limits=None, publication_storage=None):
         result=cls()
         result.error=None
         result.original_bootstrap_inputs=(root,revision,repository,policy,budget,source_pins,names,profile_pin,
-            pipe_raw_limits,append_control_limits)
-        result.budget,result.shared=budget,getattr(budget,'outer',None)
+            pipe_raw_limits,append_control_limits)+(() if publication_storage is None else (publication_storage,))
+        result.original_storage_preparation=result.storage_preparation=None
+        result.budget,result.shared=budget,None
         result.request_bootstrap_owner=None
         result.original_request_bootstrap=None
         result.inventory_publication=result.inventory_publication_error=result.inventory_pending_owner=None
         result.worker=None
         result.original_child_publication_denial=None
         try:
+            result.shared=getattr(budget,'outer',None)
+            if publication_storage is not None:
+                actors.archive.PublicationStoragePreparation(root=root,revision=revision,budget=result.shared,
+                    allocation=publication_storage,controls=append_control_limits,raw_limits=pipe_raw_limits,
+                    source_pins=source_pins,names=names,checkpoint=result._storage_preparation_checkpoint,owner=result,
+                    policy=policy,profile_pin=profile_pin,repository=repository)
+                preparation=result.original_storage_preparation
+                policy=preparation.policy;append_control_limits=preparation.controls
             if append_control_limits is not None:
                 actors.archive.RequestBootstrapAdmission(root=root,revision=revision,policy=policy,budget=result.shared,
                     control_limits=append_control_limits,checkpoint=result._bootstrap_checkpoint,owner=result)
             return cls._create(result,root=root,revision=revision,repository=repository,policy=policy,budget=budget,
                 source_pins=source_pins,names=names,profile_pin=profile_pin,pipe_raw_limits=pipe_raw_limits,
-                append_control_limits=append_control_limits)
+                append_control_limits=append_control_limits,publication_storage=publication_storage)
         except BaseException as failure:
+            if publication_storage is not None:
+                if result.error is None:result.error=failure
+                failure.reader_git_parent=result
+            preparation=result.original_storage_preparation
+            if preparation is not None:preparation._failed(failure)
             gate=result.original_request_bootstrap
             if gate is not None:
                 if result.error is None:result.error=failure
@@ -268,7 +299,13 @@ class ReaderGitParent:
 
     @classmethod
     def _create(cls, result, *, root, revision, repository, policy, budget, source_pins, names, profile_pin,
-                pipe_raw_limits=None, append_control_limits=None):
+                pipe_raw_limits=None, append_control_limits=None, publication_storage=None):
+        preparation=result.original_storage_preparation
+        if preparation is not None:
+            preparation._fixed()
+            source_pins=preparation.source_pins;pipe_raw_limits=preparation.raw_limits
+            append_control_limits=preparation.controls
+            policy=preparation.policy;profile_pin=preparation.profile_pin;repository=preparation.repository
         result.original_source_pins, result.original_pipe_raw_limits = source_pins, pipe_raw_limits
         result.source_pins, result.pipe_raw_limits = copy.deepcopy(source_pins), copy.deepcopy(pipe_raw_limits)
         result.original_append_controls = append_control_limits
@@ -325,6 +362,9 @@ class ReaderGitParent:
                 checkpoint=result.inventory_checkpoint,owner=result)
             result.parent.parent_publication_admission=result.inventory_publication  # Before inventory/channel IO.
             options['publication_admission']=result.inventory_publication
+            if preparation is not None:
+                preparation.bind(result.parent,raw,pin,result.inventory_checkpoint)
+                options['publication_storage']=preparation
         try:
             result.entry=prepare_entry(result.parent,inventory_raw=raw,inventory_pin=pin,names=names,**options)
         except BaseException as failure:
@@ -335,6 +375,15 @@ class ReaderGitParent:
             raise
         result.checkpoint()
         return result
+
+    def _storage_preparation_checkpoint(self):
+        if self.error is not None:raise self.error
+        v.require(self.budget is self.original_bootstrap_inputs[4] and self.shared is self.budget.outer and
+            getattr(self.budget,'stage',None)=='producer','storage original linked producer budget')
+        self.shared.require_stage('producer',self.budget.root)
+        self.shared.checkpoint('producer')
+        reason=self.budget.probe()
+        if reason is not None:raise monitor.resources.ResourceStop(reason)
 
     def _bootstrap_checkpoint(self):
         """The original linked producer budget; no endpoint/inner phase reset."""
@@ -353,6 +402,10 @@ class ReaderGitParent:
     def checkpoint(self):
         try:
             if self.error is not None:raise self.error
+            preparation=getattr(self,'original_storage_preparation',None)
+            if preparation is not None:
+                try:preparation._fixed()
+                except BaseException as error:preparation._failed(error)
             gate=getattr(self,'original_request_bootstrap',None)
             if gate is not None:
                 self.rejected_request_bootstrap=(gate,getattr(self,'request_bootstrap_owner',None))
@@ -541,7 +594,9 @@ class ReaderGitParent:
 
     def _inventory_ready(self):
         storage=getattr(self,'original_publication_storage',None)
-        if storage is not None:v.require(not storage.unresolved(),'reader original storage observation unresolved')
+        if storage is not None:
+            if storage.original_error is not None:raise storage.original_error
+            v.require(not storage.unresolved(),'reader original storage observation unresolved')
         carrier=getattr(self,'original_publication_carrier',None)
         if carrier is not None:
             v.require(not carrier.unresolved(),'reader original carrier IO unresolved')
@@ -647,8 +702,10 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
         getattr(original,'request_bootstrap_owner',None),getattr(original,'inventory_publication',None),
         getattr(original,'control_publication_owner',None),getattr(original,'original_publication_carrier',None),
         getattr(original,'publication_carrier',None),getattr(original,'original_publication_storage',None),
-        getattr(original,'publication_storage',None))
-    if all(owner is None for owner in owners) and existing is None:return False
+        getattr(original,'publication_storage',None),getattr(original,'original_storage_preparation',None),
+        getattr(original,'storage_preparation',None))
+    storage_input=len(original.original_bootstrap_inputs)>10 and original.original_bootstrap_inputs[10] is not None
+    if all(owner is None for owner in owners) and existing is None and not storage_input:return False
     rejected=(getattr(original,'rejected_request_bootstrap',None),
         getattr(original,'rejected_inventory_publication',None),getattr(owners[4],'rejected',None))
     error.reader_publication_owners=(original,owners,rejected,caller_plan)  # Before diagnosis/keeper entry.
@@ -658,7 +715,8 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
                 for owner in owners if owner is not None) or
             owners[0] is not owners[1] or owners[2] is not owners[3] or owners[4] is not owners[5] or
             (owners[4] is not None and owners[4].unresolved()) or owners[6] is not owners[7] or
-            (owners[6] is not None and owners[6].unresolved()))
+            (owners[6] is not None and owners[6].unresolved()) or owners[8] is not owners[9] or
+            (owners[8] is not None and owners[8].unresolved()))
     except BaseException as failure:
         error.reader_publication_diagnostic_error=failure;problem=True
     if not problem:return False
@@ -679,6 +737,39 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
     raise existing.original_error  # An unexpected return is never a report/release authorization.
 
 
+class ReaderInitializationRetention:
+    def __init__(self,worker,error):
+        self.worker,self.original_error=worker,error
+        self.actor=worker.original_initializing_actor
+        self.original_entry=worker.original_entry
+        self.original_inputs=self.actor.original_constructor_inputs
+        self.control=getattr(self.actor,'control_publication',None)
+        self.storage=getattr(self.actor,'original_publication_storage',None)
+        self.pause_error=None
+        worker.original_initialization_retention=self
+        error.reader_initialization_retention=self  # Before reporting or another fallible observation.
+
+    def _pause(self):
+        try:channel.time.sleep(0.25)
+        except BaseException as error:
+            if self.pause_error is None:self.pause_error=error
+
+    def hold(self):
+        self.worker.child.stopped=True
+        while True:self._pause()
+
+
+def retain_reader_initialization(error):
+    worker=getattr(error,'reader_git_worker',None)
+    if not isinstance(worker,ReaderGitWorker) or not hasattr(worker,'original_initializing_actor'):return False
+    actor=worker.original_initializing_actor
+    if getattr(actor,'control_publication',None) is None and getattr(actor,'original_publication_storage',None) is None:return False
+    held=getattr(worker,'original_initialization_retention',None)
+    if held is None:held=ReaderInitializationRetention(worker,error)
+    held.hold()
+    raise held.original_error
+
+
 class ReaderGitWorker:
     def __init__(self, entry, *, revision, repository, names, pipe_io=None):
         # Native objects come from the retaining caller, never the JSON entry.
@@ -690,17 +781,27 @@ class ReaderGitWorker:
         if pipe_io is not None:
             v.require(type(self.pipe_io) is dict and set(self.pipe_io) == {'kernel','stdin'},
                       'reader caller-held pipe kernel/stdin only')
-        append=type(entry) is dict and entry.get('format')==APPEND_ENTRY_FORMAT
+        storage=type(entry) is dict and entry.get('format')==STORAGE_ENTRY_FORMAT
+        append=type(entry) is dict and entry.get('format') in (APPEND_ENTRY_FORMAT,STORAGE_ENTRY_FORMAT)
         fields={'channel_root','request_pin','inventory_path','inventory_pin','budget_root_identity'}
-        v.require(type(entry) is dict and set(entry)==fields|({'format','append_plan'} if append else set()),
+        v.require(type(entry) is dict and set(entry)==fields|({'format','append_plan'} if append else set())|
+            ({'storage_plan'} if storage else set()),
             'reader Git entry exact fields')
         self.append_plan=copy.deepcopy(entry['append_plan']) if append else None
+        self.storage_plan=copy.deepcopy(entry['storage_plan']) if storage else None
         if append:
             v.require(self.pipe_io is not None,'reader append entry requires caller-held pipe IO')
             v.require(type(self.append_plan) is dict and set(self.append_plan)=={'value','pin'},
                       'reader append entry exact context')
             actors.proof.evidence._raw(io.json_bytes(self.append_plan['value']),self.append_plan['pin'],
                                       'reader append context pin before channel IO')
+        if storage:
+            v.require(type(self.storage_plan) is dict and set(self.storage_plan)=={'value','pin'},
+                'reader storage exact context before channel IO')
+            raw=io.json_bytes(self.storage_plan['value'])
+            v.require(len(raw)<=channel.MAX_CONTROL,'reader storage context bound before channel IO')
+            actors.proof.evidence._raw(raw,self.storage_plan['pin'],'reader storage context pin before channel IO')
+            actors.archive.checked_storage_allocation(self.storage_plan['value']['allocation'])
         self.child = channel.ChildChannel(entry['channel_root'],entry['request_pin'])
         self.root = paths.regular_path(Path(self.child.request['budget_root']),directory=True)
         identity = entry['budget_root_identity']
@@ -710,6 +811,9 @@ class ReaderGitWorker:
         if append:
             actors.archive.checked_append_plan(self.append_plan,request=self.child.request,
                 request_pin=self.child.request_pin,inventory_pin=entry['inventory_pin'],root_identity=self.identity)
+        if storage:
+            actors.archive.checked_storage_plan(self.storage_plan,request=self.child.request,request_pin=self.child.request_pin,
+                inventory_pin=entry['inventory_pin'],root_identity=self.identity)
         self.error = None
         v.require(self.child.request['revision'] == revision, 'reader channel revision')
         path = Path(entry['inventory_path'])
@@ -727,8 +831,18 @@ class ReaderGitWorker:
         options = {} if self.pipe_io is None else {'pipe_io':{
             **self.pipe_io,'clock':self.clock,'root_identity':self.identity}}
         if append:options['append_plan']=copy.deepcopy(self.append_plan)
-        self.actor = actors.WorkerGitActor(child=self.child,inventory_raw=raw,
-            inventory_pin=entry['inventory_pin'],checkpoint=self.checkpoint,**options)
+        if storage:
+            options['storage_plan']=copy.deepcopy(self.storage_plan)
+            self.actor=actors.WorkerGitActor.__new__(actors.WorkerGitActor)  # Keep before constructor IO/return.
+            self.original_initializing_actor=self.actor
+            try:
+                self.actor.__init__(child=self.child,inventory_raw=raw,inventory_pin=entry['inventory_pin'],
+                    checkpoint=self.checkpoint,**options)
+            except BaseException as error:
+                self.error=error;error.reader_git_worker=self;raise
+        else:
+            self.actor = actors.WorkerGitActor(child=self.child,inventory_raw=raw,
+                inventory_pin=entry['inventory_pin'],checkpoint=self.checkpoint,**options)
 
     def checkpoint(self):
         # The parent sampler still measures all four roots and its original

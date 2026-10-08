@@ -568,7 +568,7 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
         if reader_git_plan is not None:
             fields={'channel_root','policy','source_pins'}
             v.require(type(reader_git_plan) is dict and fields <= set(reader_git_plan) <= fields|{
-                'pipe_raw_limits','append_control_limits'}
+                'pipe_raw_limits','append_control_limits','publication_storage'}
                 and outer_budget is not None and profiles is not None,
                 'reader Git requires caller plan, linked budget and fresh profiles')
             from . import anomaly_v03_preformal_reader_git_worker as reader_git_worker
@@ -580,6 +580,10 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
                 v.require('pipe_raw_limits' in reader_git_plan,'reader append caller requires explicit raw allocation')
                 reader_git_worker.actors.archive.ArchiveAppendAdmission.validate_controls(
                     reader_git_plan['append_control_limits'])
+            if 'publication_storage' in reader_git_plan:
+                v.require({'pipe_raw_limits','append_control_limits'}<=set(reader_git_plan),
+                    'reader storage caller requires explicit raw/control allocation')
+                reader_git_worker.actors.archive.checked_storage_allocation(reader_git_plan['publication_storage'])
         if outer_budget is not None:
             outer_budget.checkpoint('preflight')
         v.require(recipe_id == RECIPE, 'invented generator recipe only')
@@ -602,6 +606,8 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
                 'pipe_raw_limits':reader_git_plan['pipe_raw_limits']}
             if 'append_control_limits' in reader_git_plan:
                 options['append_control_limits']=reader_git_plan['append_control_limits']
+            if 'publication_storage' in reader_git_plan:
+                options['publication_storage']=reader_git_plan['publication_storage']
             reader_git=reader_git_worker.ReaderGitParent.create(root=reader_git_plan['channel_root'],
                 revision=expected_revision,repository=ROOT,policy=reader_git_plan['policy'],
                 budget=outer_budget,source_pins=reader_git_plan['source_pins'],names=reader_names,
