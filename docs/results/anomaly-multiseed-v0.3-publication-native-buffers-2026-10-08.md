@@ -1,5 +1,13 @@
 # 限定launcher準備の独立buffer allocation（2026-10-08 JST）
 
+## code保存・CI
+
+code `d4e5f2ec90a9c17be90af4eadebadb4b769a409b` を確認後の5file一回commit/push、origin一致・cleanで保存。code-save17465B/937cf7ea09e4c4dcb804e65d92b4340171e100167f2a83b5bdb0cf679653c0a7で60working-Git/science、code commitのdocs2、原focus/component/raw、元3helper、先行native-process prep23file117256B/CI3812root38file10201722B/batch13file48794B不変を照合。新CI37743146137はgit実fullSHAで選択したPhase1CI/push/in_progress観測のみ、attempt/jobs/終端未固定。3844は3829＋新15の算術予定でjournal未確認。
+
+元components44008/creation134359175847553688/token935c48cdf7124813e488d65862b4616283d9ed76138700c9c8d389005afe6cfd、code-save45844/134359178894658798/token08d6224715bc10e07b612f17d3f59003e340a051f5013e9b867c28d7865a7c37はlive/execution passed。doc追補3文書を一回skip ciへ集約する。保存後は全60working-Git/science/final docs3/原raw/元4helper exact creation-token/HEAD-origin-clean/旧3root不変をmetadataだけ一度照合し、専用rootを閉じる。完成15/旧suite/native/CI numerical/download/runner反復0を維持する。
+
+doc追補の初回apply_patchはCI文書見出しの不一致で検証前拒否・tracked変更0を確認した。対象見出しを一度参照して訂正したmetadata失敗であり、production/CI/native回収失敗ではない。tool error抜粋をmetadata-edit-failure.jsonへ保持する。原process stdout/stderr byte fileの捕捉ではない。
+
 ## 保存範囲
 
 開始HEAD `9b2cf05a8c40ef71523930e01354db7fb04b8d83` はorigin一致・clean。元先行5helperのcreation/token対応process不在、repo helper/critical ownerなしを確認した。CIMのsandbox Access deniedは許可済みread-only照合で解消し、native回収結果にはしない。CI37739862442/full1e1c900cbe8c909f28da552488c31d8dff8263b2はattempt1/push/Phase1CI、3.12job113187830209/3.14job113187830427両in_progress、compare未発行のcompact観測だけ。終端raw/journal/local回帰/runner照合は今回追加0。

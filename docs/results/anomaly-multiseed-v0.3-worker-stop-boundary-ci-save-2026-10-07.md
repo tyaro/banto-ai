@@ -1,5 +1,11 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 2026-10-08 JST 独立native buffer準備unitのCI選択
+
+新code d4e5f2ec90a9c17be90af4eadebadb4b769a409bをunit一回commit/push、git実fullSHAで37743146137/Phase1CI/push/in_progressを選択しci-state.jsonへcompact原出力を保存。attempt/jobs/終端未固定、3844は算術予定/journal未確認。先行37739862442/full1e1c900cbe8c909f28da552488c31d8dff8263b2は今回attempt1/両minor113187830209・113187830427 in_progress/compare未発行をcompact観測しただけ。今回terminal download/local回帰/runner追加0、doc-only新CI追跡なし。
+
+新15distinctは14＋review新1の別source/runで、最終source単一15successではない。60source/science pin・変更3file safety0・working-Git保存済み。新allocationは保持payload幅のみでRSS/並行予約/native/容量/ack/auth許可を発行しない。詳細publication-native-buffers文書。完成CI/focus/旧rootへ追加・反復せず、新CI終端時だけ外部fullHEAD/workflow/run/attempt/jobsへ固定し未保存rawを専用rootへ一度保存する。
+
 ## 2026-10-08 JST 未発行raw Job/process準備unitのCI選択
 
 新code1e1c900cbe8c909f28da552488c31d8dff8263b2をunit一回commit/push後、git実fullSHAで37739862442/Phase1CI/push/queuedを選択。ci-state.jsonにcompact原状態保存、jobs/attempt/終端未固定、3829は3812＋新17の算術予定でjournal未確認。今回terminal download/local回帰/runner追加0、doc-only新CI追跡なし。新17distinctは16＋review新1の別source/runで、最終source単一17successへ読み替えない。実CreateProcess/Assign/memberは未発行、create_native拒否維持。詳細publication-native-process-preparation文書。完成CI3812/旧raw-pins-failure/完成focusへ追加・反復せず、新CI終端時だけ外部fullHEAD/workflow/run/attempt/jobsへ固定して未保存rawを専用rootへ一度保存する。

@@ -2,6 +2,8 @@
 
 ## 2026-10-08 JST 限定launcher準備の独立buffer allocation unit
 
+code d4e5f2ec90a9c17be90af4eadebadb4b769a409bをunit一回commit/push/origin一致・cleanで保存。code-save17465B/937cf7ea09e4c4dcb804e65d92b4340171e100167f2a83b5bdb0cf679653c0a7は60working-Git/science/原raw/docs2/元3helper/旧3root不変照合。元components44008/134359175847553688/token935c48cdf7124813e488d65862b4616283d9ed76138700c9c8d389005afe6cfd、code-save45844/134359178894658798/token08d6224715bc10e07b612f17d3f59003e340a051f5013e9b867c28d7865a7c37はlive-execution passed。新CI37743146137/git実full d4e5f2ec90a9c17be90af4eadebadb4b769a409b/Phase1CI/pushはin_progress観測、attempt/jobs/終端未固定、3844は算術予定/journal未確認。ci-state.json保存、終端download/local回帰/runner追加0。doc追補3文書は一回skip ciへ集約、doc-only新CI追跡なし。
+
 開始HEAD9b2cf05a8c40ef71523930e01354db7fb04b8d83-origin-clean/先行元5helper同creation-token不在/critical ownerなし。詳細docs/results/anomaly-multiseed-v0.3-publication-native-buffers-2026-10-08.md、raw artifacts/preformal-publication-native-buffers-20261008-prep/だけを対象にする。変更production2＋新test1/new production module0、完成17/22/旧suite/CI/13AST監査反復0。unit確認後code commit/push一回、doc追補skip ciへ集約。
 
 新closed native-buffer-allocation-v1/value-pin→原entry/storage pin→ReaderLaunch.arm_native_buffers→HANDLE_LIST sizing実return/sizeをnative buffer前照合→原attributes/array5/startup→原invocation/command/PI/member事前幅と実buffer tupleへまとめて接続。独立caller9maxima全枠合計を先にtotal最大128KiB内へ固定、完了分割引なし。原・拒否descriptor/owner/sizes/sources/buffer/pending/第一例外保持、ledger/参照消去/第二allocation/unknown Update/IO/KIをlatch、metadata復元で解除・reclose/reap/relaunchなし。旧JSON/pinへfield追加なし、borrowed stdin close0。
