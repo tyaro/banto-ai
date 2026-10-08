@@ -2,6 +2,13 @@
 
 2026-10-08 JST。branch `codex/preformal-acceptance-scope`、repository `D:\develop\banto-ai`。
 
+
+## 人の停止指示による一時停止（2026-10-08 09:40 JST）
+
+新規作業を停止。2026-10-08T00:40:41Z確認時、HEAD/origin `3686ccc2ecbc63718bc44559c9cd337ed78bef17`・working tree clean、production code `9a83455025918dbe04c8052372fee23cc37da345`。元focus/CI helper6件は保存creation/tokenでexit0、CIM残存なし、repository worker/critical ownerなし。停止処理で新worker/native/試験/CI再照会・再保存を開始せず、旧raw・元owner記録を保全。停止証拠は `artifacts/preformal-banto-pause-20261008-004041/stop-preservation.json`。
+
+heartbeat `banto-10` をPAUSEDへ変更し、人の再開指示まで自走しない。未保存CI37704906810/full e300474/3642予定と37708333072/full 9a83455/3658予定は未再照会のまま。再開時は現在時刻・この上段・HEAD/origin/working tree・元PID/creation/tokenを確認後、local captureとworker→parent carrier/原launcher/Popen HANDLE creationの限定接続準備から継続。実carrier/native/容量/正式5残件/最終受入は未完了、formal permission=false/credit0/登録holdout観測未読を維持する。
+
 ## 現在の状態
 
 - 2026-10-08 JST。最新code `9a83455025918dbe04c8052372fee23cc37da345` はpush済み。[子publication local capture](results/anomaly-multiseed-v0.3-child-publication-capture-2026-10-08.md)。既存archiveに原child gate/actor/input tuple/3名verification返値/completed-original/stream/fd/rawをgetter/validation/copy/IO前保持するcaptureを保存。原close-observed/close return/元rename return/fd-path identity/raw-pinを同request/inventory/root/clock/revision/binding/worker identityへ結び、各raw32KiB/合計96KiB参照と別32KiB envelopeをメモリ保持。新file/carrier0。local ack/auth/atomic=false、親cachedFalse/create_native拒否維持。
