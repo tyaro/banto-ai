@@ -121,7 +121,7 @@ class ChildGitKeeper:
                 gate.checkpoint is actor.checkpoint and gate.inventory_pin==actor.inventory_pin,
                 'keeper original caller control publication owner')
             if gate.error is not None:self.control_failure=gate.error
-            return gate.pending is not None or self.control_failure is not None
+            return gate.pending is not None or self.control_failure is not None or gate.capture_pending()
         except BaseException as error:
             self._remember('first_error',error)
             self.control_failure=error

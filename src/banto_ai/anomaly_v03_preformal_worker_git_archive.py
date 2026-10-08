@@ -352,6 +352,170 @@ class ControlPublicationAdmission:
             return {name:copy.deepcopy(self.completed[name]['observation']['pin']) for name in names}
         except BaseException as error:self._failed(error)
 
+    def capture_pending(self):
+        """A local witness never hides pending IO from the original keeper."""
+        original=getattr(self,'original_child_publication_capture',None)
+        sidecar=getattr(self.owner,'child_publication_capture',None)
+        if original is None and sidecar is None:return False
+        try:
+            if original is not sidecar:
+                self.rejected_child_capture=(original,sidecar)
+            if type(original) is ChildPublicationCapture and original.error is not None:
+                if self.error is None:self.error=original.error
+                return True  # Clearing metadata cannot discard the original capture failure.
+            v.require(type(original) is ChildPublicationCapture and original is sidecar and
+                original.gate is self and original.actor is self.owner,
+                'control original local child capture owner')
+            if original.error is not None or original.pending is not None:return True
+            original._check()
+            return False
+        except BaseException as error:
+            if type(original) is ChildPublicationCapture:original._failed(error)
+            self._failed(error)
+
+
+class ChildPublicationCapture:
+    """Keep local FileIO returns/raw in memory; no parent transport or ack."""
+    NAMES=('git-manifest.json','git-proof.json','ack.json')
+
+    def __init__(self, *, gate, actor):
+        self.gate,self.actor=gate,actor
+        self.error=self.completion=self.rejected_capture=None
+        self.pending={'gate':gate,'actor':actor}
+        self.original_inputs=(gate,actor,self.pending)  # Before validation, copy or clock/readback IO.
+        try:
+            self.pending['reader_publication']=getattr(actor,'reader_publication',None)
+            self.pending['endpoint']=getattr(gate,'endpoint',None)
+            self.pending['completed']=getattr(gate,'completed',None)
+            from .anomaly_v03_preformal_worker_git_actor import WorkerGitActor
+            v.require(type(gate) is ControlPublicationAdmission and type(actor) is WorkerGitActor,
+                      'capture original child gate and actor')
+            prior=getattr(gate,'original_child_publication_capture',None)
+            self.previous_capture=prior
+            if prior is not None:
+                prior.rejected_capture=self
+                prior._failed(ValueError('capture original owner cannot be replaced'))
+            gate.original_child_publication_capture=self
+            previous=getattr(actor,'child_publication_capture',None)
+            self.previous_actor_capture=previous
+            actor.child_publication_capture=self  # Keep even rejected inputs before validation/copy.
+            v.require(previous is None and gate.owner is actor and actor.control_publication is gate and
+                actor.control_publication_owner is gate and gate.endpoint is actor.child and
+                isinstance(actor.child,proof.channel.ChildChannel) and gate.checkpoint is actor.checkpoint and
+                gate.error is None and gate.pending is None and not gate.completed and
+                not hasattr(gate,'verification'),'capture same original unpublished child owner')
+            self.endpoint=actor.child
+            self.publication=self.pending['reader_publication']
+            self.completed=self.pending['completed']
+            v.require(type(self.publication) is dict,'capture original reader publication input')
+            self.pending['core_context']=self._context()
+            self.core_raw=io.json_bytes(self.pending['core_context'])
+            v.require(len(self.core_raw)<=proof.channel.MAX_CONTROL,'capture bounded original context')
+        except BaseException as error:self._failed(error)
+
+    def _failed(self, error):
+        if self.error is None:self.error=getattr(self.gate,'error',None) or error
+        self.error.child_publication_capture=self
+        if type(self.gate) is ControlPublicationAdmission:self.gate._failed(self.error)
+        raise self.error
+
+    def _context(self):
+        gate,child=self.gate,self.endpoint
+        return {'request_pin':gate.request_pin,'inventory_pin':gate.inventory_pin,
+            'root_identity':list(gate.identity),'clock':child.request['clock'],
+            'root':str(child.root),'revision':child.request['revision'],'worker_identity':child.identity}
+
+    def _rows(self):
+        gate=self.gate;held=self.state
+        v.require(gate.original_child_publication_capture is self and self.actor.child_publication_capture is self and
+            gate.owner is self.actor and gate.original_owner is self.actor and gate.endpoint is self.endpoint and
+            gate.original_endpoint is self.endpoint and gate.checkpoint is gate.original_checkpoint is
+                self.actor.checkpoint and gate._plan()==gate.plan_raw and
+            self.endpoint.request==gate.request and self.endpoint.request_pin==gate.request_pin and
+            self.actor.control_publication is gate and
+            self.actor.control_publication_owner is gate and self.actor.reader_publication is self.publication and
+            gate.completed is self.completed and gate.verification is held['verification'] and
+            held['verification']['verification_names']==self.NAMES and set(self.completed)==set(self.NAMES) and
+            gate.inventory_pin==self.actor.inventory_pin and io.json_bytes(self._context())==self.core_raw,
+            'capture fixed original owner, context and verification')
+        rows={};total=0
+        for name in self.NAMES:
+            row=self.completed[name];original=row['original'];observation=row['observation']
+            v.require(row is held['rows'][name] and original is held['originals'][name] and
+                original['owner'] is self.actor and original['stream'] is held['streams'][name] and
+                original['close_return_observed'] is True and original['close_return'] is None and
+                'rename_return' in original and original['rename_return'] is None and
+                original['stream'].closed is True and original['stream'].closefd is True and
+                type(original['fd']) is int and original['fd']>=0 and
+                original['published_file_identity']==original['written_file_identity']==
+                    original['initial_file_identity']==observation['file_identity'],
+                'capture original Python fd close and rename returns')
+            raw=held['raw'][name]
+            v.require(type(raw) is bytes and len(raw)<=proof.channel.MAX_CONTROL and
+                raw==original['raw']==original['published_raw']==held['verification']['raw'][name] and
+                original['write_return']==len(raw),'capture original verified raw and write count')
+            evidence._raw(raw,observation['pin'],'capture original raw pin')
+            total+=len(raw)
+            rows[name]={'pin':observation['pin'],'fd':original['fd'],
+                'file_identity':list(observation['file_identity']),'python_close_return':None,'rename_return':None}
+        v.require(total<=3*proof.channel.MAX_CONTROL and held['returned_pins']==
+            {name:row['pin'] for name,row in rows.items()},'capture bounded separate raw and original verification return')
+        ack=v.strict_json(held['raw']['ack.json'])
+        evidence._keys(ack,'format request_pin binding_pin worker_identity no_new_jobs jobs_finished proof','capture ack fields')
+        v.require(ack['format']==proof.channel.FORMAT+'-ack' and ack['request_pin']==self.gate.request_pin and
+            ack['worker_identity']==self.endpoint.identity and ack['no_new_jobs'] is True and
+            type(ack['jobs_finished']) is int and ack['jobs_finished']==self.endpoint.finished>0 and
+            ack['proof']=={'path':str(self.endpoint.root/'git-proof.json'),'pin':rows['git-proof.json']['pin']} and
+            self.publication['ack_pin']==rows['ack.json']['pin'],'capture original bound ack context')
+        evidence._pin(ack['binding_pin'])
+        return {'format':'anomaly-v03-child-publication-local-capture-v1','context':self._context(),
+            'binding_pin':ack['binding_pin'],'publications':rows,'raw_bytes':total,
+            'parent_ack_authorized':False,'execution_authenticated':False,'atomic_reservation':False}
+
+    def _check(self):
+        v.require(self.completion is not None and self.error is None and self.pending is None,
+                  'capture completed original local observation')
+        raw=io.json_bytes(self._rows())
+        v.require(raw==self.payload_raw==self.completion['payload_raw'] and
+            self.completion['original_state'] is self.state and self.completion['gate'] is self.gate and
+            all(self.completion[key] is False for key in
+                ('parent_ack_authorized','execution_authenticated','atomic_reservation')),
+            'capture fixed local payload and retaining owner')
+        evidence._raw(raw,self.completion['payload_pin'],'capture original local envelope pin')
+
+    def seal(self, returned_pins):
+        if self.error is not None:raise self.error
+        if self.completion is not None:
+            self.rejected_cached_return=returned_pins  # Preserve before memory-only validation; no IO replay.
+            try:
+                v.require(returned_pins==self.state['returned_pins'],'capture original cached return')
+                self._check();return self.completion
+            except BaseException as error:self._failed(error)
+        self.original_seal_return=returned_pins  # Original return, even if the pending metadata is damaged.
+        try:
+            v.require(type(self.pending) is dict,'capture original pending state')
+            self.pending['returned_pins']=returned_pins  # Before getter/validation/clock IO.
+            gate=self.gate;held=self.state=self.pending
+            held['gate_pending']=gate.pending
+            held['verification']=getattr(gate,'verification',None)
+            held['rows']={name:self.completed.get(name) for name in self.NAMES}
+            held['originals']={name:row['original'] for name,row in held['rows'].items()}
+            held['streams']={name:row['stream'] for name,row in held['originals'].items()}
+            held['raw']={name:row['published_raw'] for name,row in held['originals'].items()}
+            v.require(gate.error is None and gate.pending is None,'capture no unresolved control IO')
+            gate.pending={'local_child_capture':self,'original_state':held}
+            payload=self._rows();held['payload']=payload
+            raw=held['payload_raw']=io.json_bytes(payload)
+            v.require(len(raw)<=proof.channel.MAX_CONTROL,'capture separate bounded envelope without raw embedding')
+            gate._view('capture')  # Original shared clock/root; every owner/raw is already held.
+            v.require(io.json_bytes(self._rows())==raw,'capture callback cannot alter original observations')
+            self.payload_raw=raw
+            self.completion={'gate':gate,'original_state':held,'payload_raw':raw,'payload_pin':observed._pin(raw),
+                'parent_ack_authorized':False,'execution_authenticated':False,'atomic_reservation':False}
+            self.pending=None;gate.pending=None
+            return self.completion
+        except BaseException as error:self._failed(error)
+
 
 class RequestBootstrapAdmission(ControlPublicationAdmission):
     """Original request publication before an endpoint or inventory pin exists.

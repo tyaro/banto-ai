@@ -91,7 +91,7 @@ class WorkerGitActor:
         if self.error is not None or self.critical is not None:
             return 'worker_git_actor_stopped'
         gate=self.control_publication
-        if gate is not None and (gate.pending is not None or gate.error is not None):
+        if gate is not None and (gate.pending is not None or gate.error is not None or gate.capture_pending()):
             self.child.stopped=True
             return 'worker_git_control_publication_unresolved'
         self.checkpoint()

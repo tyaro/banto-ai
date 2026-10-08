@@ -68,7 +68,7 @@ class ActorTerminal:
                 gate.checkpoint is self.actor.checkpoint and gate.inventory_pin==self.actor.inventory_pin and
                 (attached is None or attached is gate),
                 'terminal original control publication owner')
-            if gate.error is None and gate.pending is None:return False
+            if gate.error is None and gate.pending is None and not gate.capture_pending():return False
             self.control_latch=gate
             self.control_error=gate.error
         except BaseException as error:

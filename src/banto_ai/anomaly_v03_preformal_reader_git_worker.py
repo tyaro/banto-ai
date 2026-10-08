@@ -40,6 +40,8 @@ def publish_archive_ack(actor, manifest_raw, manifest_pin):
                 gate.owner is actor and gate.endpoint is actor.child and gate.checkpoint is actor.checkpoint and
                 gate.inventory_pin==actor.inventory_pin,'reader same original control publication owner')
         options={} if gate is None else {'publication_admission':gate}
+        capture=None if gate is None else actors.archive.ChildPublicationCapture(gate=gate,actor=actor)
+        pending['child_publication_capture']=capture
         v.require(actor.leases.error is None and not actor.child.active and not actor.child.owners and
             actor.child.finished == len(actor.leases.records) > 0, 'reader no unresolved/zero-job publication')
         actors.proof.evidence._raw(manifest_raw,manifest_pin,'reader retained manifest pin')
@@ -56,9 +58,10 @@ def publish_archive_ack(actor, manifest_raw, manifest_pin):
         proof_path = actor.child.root/'git-proof.json'
         pin = channel._write(proof_path,envelope,**options)
         actor.checkpoint()
-        ack_pin=actor.child.acknowledge({'path':str(proof_path),'pin':pin},**options)
+        ack_pin=pending['ack_pin']=actor.child.acknowledge({'path':str(proof_path),'pin':pin},**options)
         if gate is not None:
             pending['control_raw_pins']=gate.verify_publications(('git-manifest.json','git-proof.json','ack.json'))
+            pending['local_capture']=capture.seal(pending['control_raw_pins'])
         return ack_pin
     except BaseException as failure:
         pending['error'] = failure
