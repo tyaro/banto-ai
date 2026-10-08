@@ -23,6 +23,7 @@ SOURCE_ADDITIONS = tuple('src/banto_ai/'+name+'.py' for name in (
 PROOF_FORMAT = 'anomaly-v03-preformal-reader-git-archive-proof-v1'
 APPEND_ENTRY_FORMAT = 'anomaly-v03-preformal-reader-git-append-entry-v2'
 STORAGE_ENTRY_FORMAT = 'anomaly-v03-preformal-reader-git-storage-entry-v3'
+PUBLICATION_LAUNCH_FORMAT = 'anomaly-v03-reader-publication-launch-context-v1'
 
 
 def publish_archive_ack(actor, manifest_raw, manifest_pin):
@@ -502,6 +503,9 @@ class ReaderGitParent:
             root_identity=tuple(self.entry['budget_root_identity']),allocation=allocation,
             checkpoint=self.inventory_checkpoint,owner=self)
 
+    def prepare_publication_launch(self, *, pipe_io, creator):
+        return ReaderPublicationLaunchPreparation(self,pipe_io,creator)
+
     def observe_publication_carrier(self, process):
         self.publication_carrier_attempt=process  # Before any getter, clock or ReadFile.
         carrier=getattr(self,'original_publication_carrier',None)
@@ -593,6 +597,10 @@ class ReaderGitParent:
         failure.reader_git_parent=self
 
     def _inventory_ready(self):
+        launch=getattr(self,'original_publication_launch',None)
+        if launch is not None:
+            try:launch._fixed()
+            except BaseException as error:launch._failed(error)
         storage=getattr(self,'original_publication_storage',None)
         if storage is not None:
             if storage.original_error is not None:raise storage.original_error
@@ -703,7 +711,8 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
         getattr(original,'control_publication_owner',None),getattr(original,'original_publication_carrier',None),
         getattr(original,'publication_carrier',None),getattr(original,'original_publication_storage',None),
         getattr(original,'publication_storage',None),getattr(original,'original_storage_preparation',None),
-        getattr(original,'storage_preparation',None))
+        getattr(original,'storage_preparation',None),getattr(original,'original_publication_launch',None),
+        getattr(original,'publication_launch',None))
     storage_input=len(original.original_bootstrap_inputs)>10 and original.original_bootstrap_inputs[10] is not None
     if all(owner is None for owner in owners) and existing is None and not storage_input:return False
     rejected=(getattr(original,'rejected_request_bootstrap',None),
@@ -716,7 +725,8 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
             owners[0] is not owners[1] or owners[2] is not owners[3] or owners[4] is not owners[5] or
             (owners[4] is not None and owners[4].unresolved()) or owners[6] is not owners[7] or
             (owners[6] is not None and owners[6].unresolved()) or owners[8] is not owners[9] or
-            (owners[8] is not None and owners[8].unresolved()))
+            (owners[8] is not None and owners[8].unresolved()) or owners[10] is not owners[11] or
+            (owners[10] is not None and owners[10].unresolved()))
     except BaseException as failure:
         error.reader_publication_diagnostic_error=failure;problem=True
     if not problem:return False
@@ -735,6 +745,217 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
         return True
     existing.hold()
     raise existing.original_error  # An unexpected return is never a report/release authorization.
+
+
+class ReaderPublicationLaunchPreparation:
+    """Retain preissued local IO and the original Popen, without launching it.
+
+    Options contain Python resources and cannot cross a process as JSON. A
+    native issuer, explicit HANDLE inheritance and child-owner authentication
+    remain separate gates; this preparation never creates or closes a handle.
+    """
+    def __init__(self,parent,pipe_io,creator):
+        self.original_inputs=(parent,pipe_io,creator)
+        self.parent,self.creator=parent,creator
+        self.error=self.original_error=self.pending=self.process=self.options=None
+        self.rejected=None
+        try:
+            self.previous=getattr(parent,'original_publication_launch',None)
+            if self.previous is not None:
+                self.previous.rejected=self
+                self.previous._failed(ValueError('reader launch preparation cannot be replaced'))
+            parent.original_publication_launch=parent.publication_launch=self
+            self.pipe_io=dict(pipe_io) if type(pipe_io) is dict else pipe_io
+            v.require(type(parent) is ReaderGitParent and type(self.pipe_io) is dict and
+                set(self.pipe_io)=={'kernel','stdin'},'reader original local kernel/stdin')
+            self.endpoint,self.storage,self.gate=parent.parent,parent.original_publication_storage,parent.inventory_publication
+            self.checkpoint=parent.inventory_checkpoint
+            self.entry_raw=io.json_bytes(parent.entry);self.entry_pin=observed._pin(self.entry_raw)
+            v.require(parent.entry['format']==STORAGE_ENTRY_FORMAT and len(self.entry_raw)<=channel.MAX_CONTROL and
+                type(self.storage) is actors.archive.PublicationStorageAdmission and parent.worker is None and
+                type(creator) is tree.owner.NativeGitPipes and creator.kernel is self.pipe_io['kernel'] and
+                creator.checkpoint is self.checkpoint and creator.result is True and creator.error is None and
+                creator.spawn_io is None and creator.native.job is creator.native.process is creator.native.thread is None,
+                'reader fresh storage entry and preissued dedicated original pipe owner')
+            self.kernel,self.stdin=self.pipe_io['kernel'],self.pipe_io['stdin']
+            creator.native.reader_publication_launch=self  # Before shared clock/root observations.
+            self._fixed();parent._inventory_ready();self.storage.view('reader_launch_preparation')
+            self._fixed()
+        except BaseException as error:self._failed(error)
+
+    def _failed(self,error):
+        if self.original_error is None:self.original_error=error
+        self.error=self.original_error
+        self.error.reader_publication_launch=self
+        self.error.reader_git_parent=self.parent
+        remember=getattr(self.parent,'_remember_publication',None)
+        if callable(remember):remember(self.error)
+        raise self.error
+
+    def _fixed(self):
+        if self.original_error is not None:raise self.original_error
+        if self.error is not None:raise self.error
+        self.rejected_binding=(getattr(self.parent,'publication_launch',None),self.parent.parent,
+            getattr(self.parent,'original_publication_storage',None),self.parent.entry)
+        v.require(self.parent.original_publication_launch is self.parent.publication_launch is self and
+            self.parent.parent is self.endpoint and self.parent.original_publication_storage is self.storage and
+            self.parent.inventory_publication is self.gate and self.parent.inventory_checkpoint is self.checkpoint and
+            io.json_bytes(self.parent.entry)==self.entry_raw and self.pipe_io=={'kernel':self.kernel,'stdin':self.stdin} and
+            self.creator is self.original_inputs[2] and self.creator.kernel is self.kernel and
+            self.creator.checkpoint is self.checkpoint and self.creator.native.reader_publication_launch is self,
+            'reader same original launch entry/resources/storage/clock/owner')
+        if self.options is not None:
+            v.require(self.options['pipe_io']==self.pipe_io and
+                self.options['publication_io']['creator'] is self.creator and
+                io.json_bytes(self.options['publication_io']['context'])==self.context_wrapper_raw,
+                'reader issued launch options cannot follow callback changes')
+        self.storage._fixed()
+
+    def bind(self,process):
+        self.rejected_process=process  # Before even Popen getters or identity IO.
+        try:
+            self._fixed()
+            v.require(self.process is None,'reader launch original Popen bind once')
+            self.process=process;self.pending={'process':process,'creator':self.creator,'storage':self.storage}
+            held=self.pending
+            held['process_handle']=process._handle
+            held['creation_return']=self.parent.bind(process)
+            self._fixed()
+            held['carrier_return']=self.parent.bind_publication_carrier(self.creator,
+                frame_limit=self.storage.allocation['frame_bytes'])
+            binding=self.parent.publication_carrier_binding
+            v.require(binding['process'] is process and binding['process_handle']==held['process_handle'] and
+                binding['creation']==held['creation_return'],'reader original Popen HANDLE and returned creation')
+            value={'format':PUBLICATION_LAUNCH_FORMAT,**copy.deepcopy(binding['context']),
+                'binding_pin':copy.deepcopy(binding['binding_pin']),'entry_pin':copy.deepcopy(self.entry_pin),
+                'formal_permission':False}
+            raw=io.json_bytes(value);v.require(len(raw)<=channel.MAX_CONTROL,'reader bounded fresh local launch context')
+            wrapper={'value':value,'pin':observed._pin(raw)}
+            self.context_wrapper_raw=io.json_bytes(wrapper)
+            self.options={'pipe_io':dict(self.pipe_io),'publication_io':{'creator':self.creator,'context':wrapper}}
+            held['options_return']=self.options
+            self._fixed();self.pending=None
+            return self.options
+        except BaseException as error:self._failed(error)
+
+    def cached_options(self):
+        try:
+            self._fixed();v.require(self.options is not None and self.pending is None,'reader original issued local options')
+            return self.options
+        except BaseException as error:self._failed(error)
+
+    def unresolved(self):
+        try:self._fixed();return self.pending is not None
+        except BaseException as error:
+            if self.error is None:self.error=error
+            return True
+
+
+class ReaderPublicationInputs:
+    """Keep child-local borrowed resources before parse/copy/constructor IO."""
+    def __init__(self,argv,pipe_io,publication_io):
+        self.original_inputs=(argv,pipe_io,publication_io)
+        self.worker=self.actor=self.error=self.original_error=self.pause_error=None
+
+    def checked(self):
+        try:
+            if self.original_error is not None:raise self.original_error
+            v.require(not hasattr(self,'checked_return'),'reader local input copy cannot be rearmed')
+            pipe,publication=self.original_inputs[1:]
+            self.pipe_io=dict(pipe) if type(pipe) is dict else pipe
+            self.publication_io=dict(publication) if type(publication) is dict else publication
+            v.require(type(self.pipe_io) is dict and set(self.pipe_io)=={'kernel','stdin'} and
+                type(self.publication_io) is dict and set(self.publication_io)=={'creator','context'},
+                'reader publication resources are local closed inputs')
+            self.creator=self.publication_io['creator'];self.context=copy.deepcopy(self.publication_io['context'])
+            v.require(type(self.context) is dict and set(self.context)=={'value','pin'},'reader fresh launch context pin')
+            raw=io.json_bytes(self.context['value']);v.require(len(raw)<=channel.MAX_CONTROL,'reader local context bound')
+            actors.proof.evidence._raw(raw,self.context['pin'],'reader local launch context pin')
+            value=self.context['value']
+            v.require(type(value) is dict and set(value)=={'format','request_pin','inventory_pin','root_identity','clock',
+                'root','revision','worker_identity','binding_pin','entry_pin','formal_permission'} and
+                value['format']==PUBLICATION_LAUNCH_FORMAT and value['formal_permission'] is False and
+                type(self.creator) is tree.owner.NativeGitPipes and self.creator.kernel is self.pipe_io['kernel'] and
+                self.creator.result is True and self.creator.error is None and self.creator.spawn_io is None and
+                self.creator.native.job is self.creator.native.process is self.creator.native.thread is None,
+                'reader original dedicated carrier and closed fresh context')
+            self.context_raw=raw
+            self.checked_return=self
+            return self
+        except BaseException as error:self.failed(error)
+
+    def before_entry(self,pipe_io):
+        try:
+            if self.original_error is not None:raise self.original_error
+            if self.error is not None:raise self.error
+            v.require(getattr(self,'checked_return',None) is self and type(pipe_io) is dict and
+                set(pipe_io)=={'kernel','stdin'} and pipe_io['kernel'] is self.pipe_io['kernel'] is self.creator.kernel and
+                pipe_io['stdin'] is self.pipe_io['stdin'] and io.json_bytes(self.context['value'])==self.context_raw,
+                'reader exact checked local resources before entry IO')
+            actors.proof.evidence._raw(self.context_raw,self.context['pin'],'reader retained context before entry IO')
+        except BaseException as error:self.failed(error)
+
+    def attach(self,worker,entry):
+        self.worker=worker  # Before binding readback or another callback.
+        try:
+            v.require(entry.get('format')==STORAGE_ENTRY_FORMAT,'reader publication requires fresh storage entry')
+            actors.proof.evidence._raw(io.json_bytes(entry),self.context['value']['entry_pin'],
+                'reader launch exact entry before actor IO')
+            binding,pin=worker.child._binding()
+            self.binding_return=(binding,pin)
+            expected={'format':PUBLICATION_LAUNCH_FORMAT,'request_pin':worker.child.request_pin,
+                'inventory_pin':entry['inventory_pin'],'root_identity':list(worker.identity),
+                'clock':worker.child.request['clock'],'root':str(worker.child.root),'revision':worker.child.request['revision'],
+                'worker_identity':worker.child.identity,'binding_pin':pin,'entry_pin':self.context['value']['entry_pin'],
+                'formal_permission':False}
+            v.require(io.json_bytes(expected)==self.context_raw and binding['worker_identity']==worker.child.identity,
+                'reader launch original request/inventory/root/clock/binding/worker')
+        except BaseException as error:self.failed(error)
+
+    def arm(self,actor):
+        self.actor=actor  # Before sender/storage/clock IO.
+        try:
+            v.require(self.error is None and actor is self.worker.actor and
+                actor.pipe_io['kernel'] is self.pipe_io['kernel'] and actor.pipe_io['stdin'] is self.pipe_io['stdin'],
+                'reader original borrowed IO to actor')
+            self.carrier_return=actor.control_publication.arm_publication_carrier(self.creator,
+                frame_limit=actor.original_publication_storage.allocation['frame_bytes'])
+            return self.carrier_return
+        except BaseException as error:self.failed(error)
+
+    def fixed(self,actor):
+        try:
+            if self.original_error is not None:raise self.original_error
+            if self.error is not None:raise self.error
+            v.require(actor is self.actor is self.worker.actor and actor.publication_inputs is self and
+                io.json_bytes(self.context['value'])==self.context_raw and
+                actor.pipe_io['kernel'] is self.pipe_io['kernel'] is self.creator.kernel and
+                actor.pipe_io['stdin'] is self.pipe_io['stdin'] and self.worker.publication_inputs is self,
+                'reader original child launch resources/context cannot be hidden')
+            actors.proof.evidence._raw(self.context_raw,self.context['pin'],'reader fixed launch context pin')
+            self.carrier_return._fixed()
+        except BaseException as error:self.failed(error)
+
+    def failed(self,error):
+        if self.original_error is None:self.original_error=error
+        self.error=self.original_error
+        self.error.reader_publication_inputs=self
+        if self.worker is not None:self.error.reader_git_worker=self.worker
+        if self.actor is not None:
+            if self.actor.error is None:self.actor.error=self.error
+            gate=getattr(self.actor,'control_publication',None)
+            if gate is not None:gate._failed(self.error)
+        raise self.error
+
+    def _pause(self):
+        try:channel.time.sleep(0.25)
+        except BaseException as error:
+            if self.pause_error is None:self.pause_error=error
+
+    def hold(self):
+        child=getattr(self.worker,'child',None)
+        if child is not None:child.stopped=True
+        while True:self._pause()
 
 
 class ReaderInitializationRetention:
@@ -760,6 +981,10 @@ class ReaderInitializationRetention:
 
 
 def retain_reader_initialization(error):
+    inputs=getattr(error,'reader_publication_inputs',None)
+    if type(inputs) is ReaderPublicationInputs:
+        inputs.hold()
+        raise inputs.error
     worker=getattr(error,'reader_git_worker',None)
     if not isinstance(worker,ReaderGitWorker) or not hasattr(worker,'original_initializing_actor'):return False
     actor=worker.original_initializing_actor
@@ -771,7 +996,21 @@ def retain_reader_initialization(error):
 
 
 class ReaderGitWorker:
-    def __init__(self, entry, *, revision, repository, names, pipe_io=None):
+    def __init__(self, entry, *, revision, repository, names, pipe_io=None, publication_io=None):
+        self.original_publication_io=publication_io
+        self.publication_inputs=None
+        try:
+            if publication_io is not None:
+                self.publication_inputs=(publication_io if type(publication_io) is ReaderPublicationInputs else
+                    ReaderPublicationInputs(None,pipe_io,publication_io).checked())
+                self.publication_inputs.worker=self
+                self.publication_inputs.before_entry(pipe_io)
+            self._initialize(entry,revision=revision,repository=repository,names=names,pipe_io=pipe_io)
+        except BaseException as error:
+            if self.publication_inputs is not None:self.publication_inputs.failed(error)
+            raise
+
+    def _initialize(self, entry, *, revision, repository, names, pipe_io=None):
         # Native objects come from the retaining caller, never the JSON entry.
         self.original_pipe_io = pipe_io
         self.pipe_io = None if pipe_io is None else dict(pipe_io) if type(pipe_io) is dict else pipe_io
@@ -828,11 +1067,13 @@ class ReaderGitWorker:
         reason = self.child.wait_for_binding()
         if reason is not None:
             raise monitor.resources.ResourceStop(reason)
+        if self.publication_inputs is not None:self.publication_inputs.attach(self,entry)
         options = {} if self.pipe_io is None else {'pipe_io':{
             **self.pipe_io,'clock':self.clock,'root_identity':self.identity}}
         if append:options['append_plan']=copy.deepcopy(self.append_plan)
         if storage:
             options['storage_plan']=copy.deepcopy(self.storage_plan)
+            if self.publication_inputs is not None:options['publication_inputs']=self.publication_inputs
             self.actor=actors.WorkerGitActor.__new__(actors.WorkerGitActor)  # Keep before constructor IO/return.
             self.original_initializing_actor=self.actor
             try:

@@ -17,8 +17,11 @@ keepers, owner = proof.keepers, tree.owner
 
 
 class WorkerGitActor:
-    def __init__(self, *, child, inventory_raw, inventory_pin, checkpoint, pipe_io=None, append_plan=None, storage_plan=None):
+    def __init__(self, *, child, inventory_raw, inventory_pin, checkpoint, pipe_io=None, append_plan=None, storage_plan=None,
+                 publication_inputs=None):
         self.original_constructor_inputs=(child,inventory_raw,inventory_pin,checkpoint,pipe_io,append_plan,storage_plan)
+        if publication_inputs is not None:self.original_constructor_inputs+=(publication_inputs,)
+        self.publication_inputs=publication_inputs
         self.child,self.checkpoint,self.original_storage_plan=child,checkpoint,storage_plan
         self.pending=self.error=self.critical=self.keeper=self.saved=self.control_publication=None
         try:
@@ -70,6 +73,11 @@ class WorkerGitActor:
             storage=archive.PublicationStorageAdmission(endpoint=child,inventory_raw=inventory_raw,
                 inventory_pin=self.inventory_pin,root_identity=self.pipe_io['root_identity'],allocation=allocation,
                 checkpoint=checkpoint,owner=self,issuance_context=self.storage_plan)  # Before archive/sink creation.
+        if self.publication_inputs is not None:
+            from . import anomaly_v03_preformal_reader_git_worker as reader
+            v.require(type(self.publication_inputs) is reader.ReaderPublicationInputs and storage is not None,
+                'actor exact retaining local publication caller')
+            self.publication_inputs.arm(self)  # Same original gate before archive FileIO.
         self.inflight = root / 'worker-git-inflight'
         paths.regular_path(self.inflight, directory=True, missing=True)
         v.require(not self.inflight.exists(), 'worker actor exclusive unused inflight root')
@@ -116,6 +124,8 @@ class WorkerGitActor:
             transport._abort(failure)  # Keep the original native even on caller sleep/IO interruption.
 
     def probe(self):
+        if len(self.original_constructor_inputs)>7:
+            self.original_constructor_inputs[7].fixed(self)
         if self.error is not None or self.critical is not None:
             return 'worker_git_actor_stopped'
         gate=self.control_publication

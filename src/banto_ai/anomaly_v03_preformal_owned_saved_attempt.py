@@ -15,6 +15,7 @@ from pathlib import Path
 import secrets
 import subprocess
 import sys
+import time
 
 from . import _anomaly_v03_io as io
 from . import _anomaly_v03_runtime as paths
@@ -420,11 +421,35 @@ def _read_attempt(request, root, *, git_identity=None, git_blob=None, source_fil
     return reply
 
 
-def reader_worker_main(argv, *, pipe_io=None):
+class ReaderEntryPublicationRetention:
+    """Keep original caller resources even if the reader bridge import fails."""
+    def __init__(self,argv,pipe_io,publication_io):
+        self.original_inputs=(argv,pipe_io,publication_io)
+        self.error=self.pause_error=None
+
+    def _pause(self):
+        try:time.sleep(0.25)
+        except BaseException as error:
+            if self.pause_error is None:self.pause_error=error
+
+    def hold(self,error):
+        if self.error is None:self.error=error
+        error.reader_entry_publication_retention=self
+        while True:self._pause()
+
+
+def reader_worker_main(argv, *, pipe_io=None, publication_io=None):
     """Read the pinned invented saved attempt in a distinct owned process."""
     original_pipe_io = pipe_io  # Retain caller-owned IO before parsing or diagnostics.
-    held_pipe_io = None if pipe_io is None else dict(pipe_io) if type(pipe_io) is dict else pipe_io
+    original_publication_io=publication_io
+    entry_owner=None if publication_io is None else ReaderEntryPublicationRetention(argv,pipe_io,publication_io)
+    publication_inputs=None
     try:
+        if original_publication_io is not None:
+            from . import anomaly_v03_preformal_reader_git_worker as git_worker
+            publication_inputs=git_worker.ReaderPublicationInputs(argv,pipe_io,publication_io)
+            publication_inputs.checked()
+        held_pipe_io = None if pipe_io is None else dict(pipe_io) if type(pipe_io) is dict else pipe_io
         if original_pipe_io is not None:
             v.require(type(held_pipe_io) is dict and set(held_pipe_io) == {'kernel','stdin'},
                       'reader native IO is caller-held, not serialized or caller-clock replacement')
@@ -465,6 +490,7 @@ def reader_worker_main(argv, *, pipe_io=None):
             from . import anomaly_v03_preformal_reader_git_worker as git_worker
             v.require('runtime_inventory_profile_pin' in request, 'reader Git entry requires fresh runtime profile')
             options = {} if held_pipe_io is None else {'pipe_io':held_pipe_io}
+            if publication_inputs is not None:options['publication_io']=publication_inputs
             worker_git = git_worker.ReaderGitWorker(request['worker_git_entry'],
                 revision=request['source_revision'],repository=ROOT,names=git_worker.source_names(SOURCE_FILES),
                 **options)
@@ -483,10 +509,20 @@ def reader_worker_main(argv, *, pipe_io=None):
             reply['runtime_observation'] = receipt
             return reply
         reply = worker_git.run(observed_operation) if worker_git is not None else observed_operation()
+        if publication_inputs is not None:
+            publication_inputs.operation_return=reply  # Original return before terminal/diagnostic IO.
+            # Carrier delivery does not reconcile its original dedicated handles.
+            # Until the native launcher owns that close path, keep this Python.
+            raise git_worker.monitor.resources.ResourceStop('reader_publication_launcher_owner_not_reconciled')
         print(json.dumps(reply, sort_keys=True))
         return 0
     except BaseException as error:
+        if publication_inputs is not None:
+            if publication_inputs.original_error is None:publication_inputs.original_error=error
+            publication_inputs.error=publication_inputs.original_error
+            error.reader_publication_inputs=publication_inputs
         if 'git_worker' in locals():git_worker.retain_reader_initialization(error)
+        if entry_owner is not None:entry_owner.hold(error)
         if not isinstance(error,(ValueError,OSError,KeyError,TypeError,subprocess.SubprocessError)):raise
         print(json.dumps({'format': READER_FORMAT, 'status': 'failed',
                           'error_type': type(error).__name__,
