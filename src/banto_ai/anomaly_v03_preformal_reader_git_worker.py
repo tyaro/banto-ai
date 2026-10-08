@@ -986,7 +986,7 @@ def retain_reader_initialization(error):
         inputs.hold()
         raise inputs.error
     worker=getattr(error,'reader_git_worker',None)
-    if not isinstance(worker,ReaderGitWorker) or not hasattr(worker,'original_initializing_actor'):return False
+    if not isinstance(worker,_ORIGINAL_READER_WORKER_CLASS) or not hasattr(worker,'original_initializing_actor'):return False
     actor=worker.original_initializing_actor
     if getattr(actor,'control_publication',None) is None and getattr(actor,'original_publication_storage',None) is None:return False
     held=getattr(worker,'original_initialization_retention',None)
@@ -1118,3 +1118,6 @@ class ReaderGitWorker:
 
     def run(self, operation):
         return terminal.run_guarded(self.actor,operation,publish_ack=publish_archive_ack)
+
+
+_ORIGINAL_READER_WORKER_CLASS=ReaderGitWorker
