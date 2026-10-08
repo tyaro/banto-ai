@@ -1,5 +1,11 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 2026-10-08 JST 原raw Job/process準備revision CI3829の完成保存
+
+CI37739862442/full1e1c900cbe8c909f28da552488c31d8dff8263b2/attempt1/push/Phase1CI/.github/workflows/ci.yml/3job113187830209・113187830427・113201365843successへ原run/jobs固定。各実3829/fail0/error0/skip237/source不変、10raw14pin/local-remote回帰一致/comparison matched/共有29必須28/runner v2consistent_candidate/full journal passed完成。index2783B/6c90fc535b8addc1ab23553eb6577ebc13e0ce97656cae1215b70fe4c4ecbdf1、summary2584B/1f20b43a69fdf0bedfd246eaac937bb18684547488303f9fee90c7abdc341701。実journal件数・実summary両pin取得後に新scriptを発行し、旧完成script/旧summary-pin失敗反復0。詳細ci-native-process-save-2026-10-08文書、新専用CI/batch rootへ一度保存。
+
+3.12新版20261004.327.1/true、3.14・compare旧20260927.320.1/false、保存公式外部pin一致のみ/digest未取得/候補未採択。CLI7の6一致/既知CRLF6差1file両pin保存。production/test/native/完成focus/旧suite/追加agent/profile再観測0。最新d4e5f2eのbuffer/native/容量/正式受入へ読み替えず、完成3829と旧CIへ追加・反復禁止。未保存37743146137/full d4e5f2ec90a9c17be90af4eadebadb4b769a409bは今回両minor113198312223・113198312515in_progress/compare未発行/run未終端、3844算術予定/journal未確認、今回終端保存0。doc-only新CI追跡なし。
+
 ## 2026-10-08 JST 独立native buffer準備unitのCI選択
 
 新code d4e5f2ec90a9c17be90af4eadebadb4b769a409bをunit一回commit/push、git実fullSHAで37743146137/Phase1CI/push/in_progressを選択しci-state.jsonへcompact原出力を保存。attempt/jobs/終端未固定、3844は算術予定/journal未確認。先行37739862442/full1e1c900cbe8c909f28da552488c31d8dff8263b2は今回attempt1/両minor113187830209・113187830427 in_progress/compare未発行をcompact観測しただけ。今回terminal download/local回帰/runner追加0、doc-only新CI追跡なし。

@@ -1,5 +1,17 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST 原raw Job/process準備revision CI3829の終端保存
+
+開始2026-10-08T07:33:35Z/HEAD5815ef6441a0e34484d826c9775d01128b548fc3-origin-clean、先行元5helper同creation-token不在/repo helper-critical ownerなし。production/test0/native0/完成focus/旧suite/追加agent/profile再観測0。詳細docs/results/anomaly-multiseed-v0.3-ci-native-process-save-2026-10-08.md、raw artifacts/ci-diagnostic-37739862442/、batch artifacts/preformal-ci-native-process-save-20261008-prep/だけを対象にする。doc-only3文書を一回skip ciへ集約。
+
+CI37739862442/git実full1e1c900cbe8c909f28da552488c31d8dff8263b2/attempt1/push/Phase1CI/.github/workflows/ci.yml/3job113187830209・113187830427・113201365843全completed-successを原run/jobsへ固定。9raw取得＋local回帰1＝10raw14pin、両journal実run_finished/discovered3829/fail0/error0/skip237/source不変/local-remote一致/comparison matched/共有29必須28各minor/runner v2consistent_candidate/full journal passedまで一回保存。summary2584B/1f20b43a69fdf0bedfd246eaac937bb18684547488303f9fee90c7abdc341701、index2783B/6c90fc535b8addc1ab23553eb6577ebc13e0ce97656cae1215b70fe4c4ecbdf1。3.12新20261004.327.1/true、3.14・compare旧20260927.320.1/false、保存公式外部pin一致のみ/digest未取得/候補未採択。CLI7は6一致/既知CRLF6byte差1file両pin。
+
+実journal件数取得後に期待3829を発行、pre-journal script保持。実summary取得後runner/index両pinを同rawへ固定し旧pin失敗反復0。checkpoint12618B/6f48ad56b6c2e2f5c5cd10eba8ce26e05acbd77d9e2551c123eb0d650c0ba914は37CI原file/14pin/CLI両pin/source3＋science2union5 working-Git/元6helper live-execution creation-token/CIM同original不在/旧3root不変をmetadata照合。元identity詳細はbatch/checkpointとCI/batch各live/executionに固定、PID単独判定なし。docpush後metadataだけ一度post照合しCI/batch両rootへexclusive保存後閉じる。完成download/numerical/local回帰/runner/既存focusの反復なし。
+
+未保存CIは37743146137/git実full d4e5f2ec90a9c17be90af4eadebadb4b769a409bのみ。今回attempt1/push/Phase1CI、3.12job113198312223/3.14job113198312515両in_progress/compare未発行/run未終端、3844は算術予定/journal未確認。終端download/local回帰/runner追加0、doc-only新CI追跡なし。この完成3829を最新d4e5f2e/native/容量/正式受入へ読み替えず、旧rootへ追加・再実行禁止。
+
+次はfresh latest-clean closure-runtime-profile-policy-request-unusedroot/実control packet・保持raw/partial/new archive growth/新bufferとobject overheadの独立量・coupled peak/global memory/all-writer予約/exclusiveと原Create/Assign/member return/Job-process-thread owner/attribute lifetime/child transport認証の準備を機能unitへまとめる。native入口/create_native root-channel-clock-Job前拒否/全7役whole.run限定reader実起動禁止維持。formal permission=false/credit0/holdout未読/正式5残件未完了、原caps-stop/旧raw保持/Sol容量未確認/ACTIVE。
+
 ## 2026-10-08 JST 限定launcher準備の独立buffer allocation unit
 
 code d4e5f2ec90a9c17be90af4eadebadb4b769a409bをunit一回commit/push/origin一致・cleanで保存。code-save17465B/937cf7ea09e4c4dcb804e65d92b4340171e100167f2a83b5bdb0cf679653c0a7は60working-Git/science/原raw/docs2/元3helper/旧3root不変照合。元components44008/134359175847553688/token935c48cdf7124813e488d65862b4616283d9ed76138700c9c8d389005afe6cfd、code-save45844/134359178894658798/token08d6224715bc10e07b612f17d3f59003e340a051f5013e9b867c28d7865a7c37はlive-execution passed。新CI37743146137/git実full d4e5f2ec90a9c17be90af4eadebadb4b769a409b/Phase1CI/pushはin_progress観測、attempt/jobs/終端未固定、3844は算術予定/journal未確認。ci-state.json保存、終端download/local回帰/runner追加0。doc追補3文書は一回skip ciへ集約、doc-only新CI追跡なし。
