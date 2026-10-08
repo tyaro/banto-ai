@@ -374,6 +374,13 @@ class PublicationPipeInheritance:
     def _fixed(self):
         if self.original_error is not None:raise self.original_error
         self.resources._fixed()
+        attributes=getattr(self,'original_handle_list',None)
+        if attributes is not None:
+            resources.rt.require(self.handle_list is attributes and
+                self.owner.original_publication_handle_list is self.owner.publication_handle_list is attributes and
+                self.native.publication_handle_list is attributes,
+                'publication original attribute owner cannot be hidden')
+            if attributes.original_error is not None:raise attributes.original_error
         if hasattr(self,'original_process_return'):
             resources.rt.require(self.process_handle==self.original_process_return,
                 'publication original current process return cannot change')
@@ -536,6 +543,190 @@ class PublicationPipeInheritance:
                 self.native.unknown_close_handles=tuple(held.handles)
                 self._failed(held)
             self._failed(error)
+
+
+class PublicationHandleListPreparation:
+    """Hold an explicit stdio-three/dedicated-two attribute list, without launch.
+
+    The caller's stdio tuple is not a validity or inheritance observation.
+    Opaque buffers and the original API returns survive rejected cleanup.
+    """
+    def __init__(self, inheritance, stdio, *, owner, last_error):
+        self.original_inputs=(inheritance,stdio,owner,last_error)
+        self.inheritance,self.stdio_input,self.owner,self.last_error=inheritance,stdio,owner,last_error
+        self.original_error=self.error=self.pending=self.result=self.cleanup_result=None
+        self.started=self.cleanup_started=False;self.records=();self.returns=();self.rejected=None
+        self.native=self.buffer=self.handle_array=self.startup=None
+        try:
+            resources.rt.require(type(inheritance) is PublicationPipeInheritance,
+                'publication handle list requires original duplicates')
+            self.native=inheritance.native
+            previous=getattr(inheritance,'original_handle_list',None)
+            self.previous=previous
+            if previous is not None:
+                previous.rejected=self
+                previous._failed(ValueError('publication original attribute owner cannot be replaced'))
+            inheritance.original_handle_list=inheritance.handle_list=self
+            owner.original_publication_handle_list=owner.publication_handle_list=self
+            self.native.publication_handle_list=self
+            inheritance._fixed()
+            resources.rt.require(inheritance.owner is owner and inheritance.offered is inheritance.original_offer and
+                inheritance.pending is None and not inheritance.close_started and owner.process is None,
+                'publication original offered duplicates before Popen')
+            resources.rt.require(type(stdio) is tuple and len(stdio)==3 and
+                all(type(h) is int and 0<h<2**(ctypes.sizeof(w.HANDLE)*8)-2 for h in stdio),
+                'publication independent non-pseudo stdio tuple of three')
+            self.stdio=tuple(stdio);self.dedicated=inheritance.original_offer
+            self.handles=self.stdio+tuple(h for _,h in self.dedicated)
+            resources.rt.require(len(self.handles)==5 and len(set(self.handles))==5 and
+                not set(self.handles)&set(inheritance.resources.handles.values()),
+                'publication five distinct handles separate from source four')
+            self.kernel=inheritance.kernel;self.checkpoint=inheritance.checkpoint
+            self.initialize_api=self.kernel.InitializeProcThreadAttributeList
+            self.update_api=self.kernel.UpdateProcThreadAttribute
+            self.delete_api=self.kernel.DeleteProcThreadAttributeList
+            self.create_api=self.kernel.CreateProcessW
+            self.apis=self.original_apis=(self.initialize_api,self.update_api,self.delete_api,self.create_api,last_error)
+            resources.rt.require(all(callable(a) for a in self.apis),'publication original attribute APIs')
+            self._fixed()
+        except BaseException as error:self._failed(error)
+
+    def _failed(self,error):
+        previous=getattr(self,'previous',None)
+        if previous is not None:
+            self.original_error=self.error=previous.original_error or error
+            self.error.rejected_publication_handle_list=self
+            previous._failed(self.error)
+        if self.original_error is None:self.original_error=error
+        self.error=self.original_error;self.error.publication_handle_list=self
+        if self.native is not None:self.native.publication_handle_list=self
+        if type(self.inheritance) is PublicationPipeInheritance:self.inheritance._failed(self.error)
+        raise self.error
+
+    def _fixed(self):
+        if self.original_error is not None:raise self.original_error
+        self.inheritance._fixed()
+        resources.rt.require(self.original_inputs==(self.inheritance,self.stdio_input,self.owner,self.last_error) and
+            self.inheritance.original_handle_list is self.inheritance.handle_list is self and
+            self.owner.original_publication_handle_list is self.owner.publication_handle_list is self and
+            self.native is self.inheritance.native and self.native.publication_handle_list is self and
+            self.owner.process is None and self.inheritance.offered is self.dedicated and
+            self.stdio_input==self.stdio and self.handles==self.stdio+tuple(h for _,h in self.dedicated) and
+            self.kernel is self.inheritance.kernel and self.checkpoint is self.inheritance.checkpoint and
+            self.apis is self.original_apis and
+            (self.kernel.InitializeProcThreadAttributeList,self.kernel.UpdateProcThreadAttribute,
+             self.kernel.DeleteProcThreadAttributeList,self.kernel.CreateProcessW,self.last_error)==self.apis,
+            'publication same attribute owner, APIs, stdio and offered dedicated handles')
+        if hasattr(self.native,'attribute_call_records'):
+            resources.rt.require(self.native.attribute_call_records is self.records,
+                'publication original attribute call ledger cannot be erased')
+        if hasattr(self.native,'attribute_original_returns'):
+            resources.rt.require(self.native.attribute_original_returns is self.returns,
+                'publication original attribute return ledger cannot be erased')
+        for row,stage,api,args in self.records:
+            resources.rt.require(row['stage']==stage and row['api'] is api and row['args']==args and
+                row['last_error_api'] is self.original_apis[4],
+                'publication original attribute call tuple cannot follow callbacks')
+        for row,returned,last_return,last_observed in self.returns:
+            resources.rt.require(row['return'] is returned and row['return_observed'] is True and
+                row['last_error_return'] is last_return and row['last_error_observed'] is last_observed,
+                'publication original attribute returns cannot be hidden')
+        if hasattr(self,'original_pending'):
+            resources.rt.require(self.pending is self.original_pending,'publication original pending cannot be hidden')
+        if self.handle_array is not None:
+            resources.rt.require(tuple(self.handle_array)==self.handles and self.buffer is self.original_buffer and
+                self.handle_array is self.original_array and self.native.attributes is self.buffer and
+                self.native.attribute_handles is self.handle_array and len(self.buffer)==self.original_size,
+                'publication retained buffer and HANDLE array')
+        if self.startup is not None:
+            si=self.startup.StartupInfo
+            resources.rt.require(self.startup is self.original_startup and si.cb==ctypes.sizeof(self.startup) and
+                si.dwFlags==STARTF_USESTDHANDLES and (si.hStdInput,si.hStdOutput,si.hStdError)==self.stdio and
+                self.startup.lpAttributeList==ctypes.addressof(self.buffer),
+                'publication original STARTUPINFOEX keeps stdio separate from dedicated handles')
+        if self.result is not None:
+            resources.rt.require(self.result is self.original_result and self.result==self.result_snapshot,
+                'publication cached attribute result cannot grant launch or follow metadata')
+        if hasattr(self,'original_cleanup_result'):
+            resources.rt.require(self.cleanup_started is True and self.cleanup_result is self.original_cleanup_result and
+                self.cleanup_result==self.cleanup_snapshot,'publication original Delete return cannot be erased')
+
+    def _call(self,stage,api,args):
+        last_error_api=self.original_apis[4]
+        row={'stage':stage,'api':api,'args':args,'return_observed':False,
+            'last_error_api':last_error_api,'last_error_return':None,'last_error_observed':False,
+            'owner':self.owner,'buffer':self.buffer}
+        self.pending=self.original_pending=row
+        self.records+=((row,stage,api,args),);self.native.attribute_call_records=self.records
+        self.checkpoint();self._fixed()
+        prior_returns=self.returns
+        row['return']=returned=api(*args)
+        row['return_observed']=True
+        # Last-error capture precedes all clock, filesystem and binding checks.
+        last_return=None;last_observed=False
+        if stage!='delete' and type(returned) in (int,bool) and not returned:
+            row['last_error_return']=last_return=last_error_api()
+            row['last_error_observed']=last_observed=True
+        observed_returns=prior_returns+((row,returned,last_return,last_observed),)
+        self.native.attribute_original_returns=observed_returns  # Preserve known prefix before callback rejection.
+        self.rejected_returns=self.returns
+        resources.rt.require(self.returns is prior_returns,'publication callback cannot replace original return prefix')
+        self.returns=observed_returns
+        self._fixed();self.checkpoint();self._fixed()
+        return returned
+
+    def prepare(self):
+        try:
+            self._fixed();resources.rt.require(not self.cleanup_started,'publication cleaned attributes cannot be reused')
+            if self.result is not None:return self.result
+            resources.rt.require(not self.started,'publication attribute API cannot be replayed')
+            self.started=True;self.size=ctypes.c_size_t()
+            self.native.attribute_size=self.size
+            returned=self._call('sizing',self.apis[0],(None,1,0,ctypes.byref(self.size)))
+            resources.rt.require(type(returned) in (int,bool) and not returned and
+                type(self.pending['last_error_return']) is int and self.pending['last_error_return']==122 and
+                0<self.size.value<=32768,
+                'publication bounded original expected insufficient attribute buffer')
+            self.original_size=self.size.value
+            self.buffer=self.original_buffer=ctypes.create_string_buffer(self.original_size)
+            self.handle_array=self.original_array=(w.HANDLE*5)(*self.handles)
+            self.native.attributes=self.buffer;self.native.attribute_handles=self.handle_array
+            returned=self._call('initialize',self.apis[0],(self.buffer,1,0,ctypes.byref(self.size)))
+            resources.rt.require(type(returned) in (int,bool) and returned and self.size.value==self.original_size,
+                'publication original initialized attribute buffer')
+            returned=self._call('update',self.apis[1],(self.buffer,0,0x00020002,
+                ctypes.cast(self.handle_array,ctypes.c_void_p),ctypes.sizeof(self.handle_array),None,None))
+            resources.rt.require(type(returned) in (int,bool) and returned,'publication original HANDLE_LIST update')
+            self.startup=self.original_startup=_StartupInfoEx()
+            si=self.startup.StartupInfo;si.cb=ctypes.sizeof(self.startup);si.dwFlags=STARTF_USESTDHANDLES
+            si.hStdInput,si.hStdOutput,si.hStdError=self.stdio
+            self.startup.lpAttributeList=ctypes.addressof(self.buffer)
+            self.result=self.original_result={'stdio_handles':self.stdio,'dedicated_handles':self.dedicated,
+                'explicit_handle_count':5,'attribute_bytes':self.original_size,
+                'extended_startupinfo_required':True,'inherit_handles_required':True,
+                'native_launch_authorized':False,'inheritance_observed':False,'parent_ack_authorized':False,
+                'execution_authenticated':False,'atomic_reservation':False}
+            self.result_snapshot=dict(self.result);self.pending=self.original_pending=None
+            self._fixed();return self.result
+        except BaseException as error:self._failed(error)
+
+    def cleanup_unlaunched(self):
+        self.rejected_owner=self.owner  # Before the original Popen getter can fail.
+        try:
+            self.rejected_process=getattr(self.owner,'process',None)
+            self._fixed()
+            if self.cleanup_result is not None:return self.cleanup_result
+            resources.rt.require(self.result is not None and self.pending is None and not self.cleanup_started and
+                self.rejected_process is None,'publication known prepared attributes before process only')
+            self.cleanup_started=True
+            returned=self._call('delete',self.apis[2],(self.buffer,))
+            resources.rt.require(returned is None,'publication original void Delete return observed')
+            self.cleanup_result=self.original_cleanup_result={'delete_return_observed':True,'delete_return':returned,
+                'handles_closed':0,'native_owner_recovered':False,'parent_ack_authorized':False,
+                'execution_authenticated':False}
+            self.cleanup_snapshot=dict(self.cleanup_result);self.pending=self.original_pending=None
+            self._fixed();return self.cleanup_result
+        except BaseException as error:self._failed(error)
 
 
 class NativeGitPipes:

@@ -862,6 +862,19 @@ class ReaderPublicationLaunchPreparation:
             return self.inheritance_offer_return
         except BaseException as error:self._failed(error)
 
+    def prepare_handle_list(self, stdio, *, last_error):
+        held=tree.owner.PublicationHandleListPreparation.__new__(tree.owner.PublicationHandleListPreparation)
+        self.initializing_publication_handle_list=held  # Before argument validation, storage or API IO.
+        try:
+            self._fixed()
+            v.require(self.process is None and self.options is None,'reader attribute preparation before Popen')
+            held.__init__(self.original_publication_inheritance,stdio,owner=self,last_error=last_error)
+            self.parent._inventory_ready();self.storage.view('before_publication_handle_list')
+            self.handle_list_return=held.prepare()
+            self.parent._inventory_ready()
+            return held
+        except BaseException as error:self._failed(error)
+
     def bind(self,process):
         self.rejected_process=process  # Before even Popen getters or identity IO.
         try:
