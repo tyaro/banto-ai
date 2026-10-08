@@ -1,5 +1,19 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST 原raw Job/process call枠・限定launcher準備unit
+
+開始HEAD122f0a7d4d67f1b0895ddc0ec9fe97dcc0c34943-origin-clean/元先行6helper同creation-token不在/critical ownerなし。詳細docs/results/anomaly-multiseed-v0.3-publication-native-process-preparation-2026-10-08.md、raw artifacts/preformal-publication-native-process-prep-20261008-prep/だけを対象にする。既存job_tree_owner/ReaderPublicationLaunchPreparationと新testの3file、new production module0。unit確認後code commit/push一回、doc追補skip ciへ集約。
+
+PublicationNativeProcessPreparationは原HANDLE_LIST/argv/cwd/caller-held raw Job record/Python owner/entryを検証-clock-API getter前保持→bounded invocation copy→原command/PROCESS_INFORMATION/member output/STARTUPINFOEX→原CreateProcess/Assign/IsProcessInJob callable→未発行call tuple/output-source/return slotsへ結ぶ。新native keeper生成0/Job所有権・creation観測0、全native/atomic/capacity/ack/auth=false。executeはAPI getter-clock前拒否、実Create/Assign/member呼出し0。stdio3/専用2別枠、source4/Job alias拒否、旧JSON/native資源/pin読み替えなし。
+
+準備後attribute早期DeleteとPopen bind切替をgetter前拒否、marker一つ消去で未共有cleanupへ戻さない。copy/clock/getter/KI/command-output-return metadata改変/第二準備は原第一例外/原・拒否owner/outputを保持。親拒否の原例外をcached下位へ伝え、metadata復元で解除しない。same root-entry-clock-storage/原Python ownerへforwardし、準備object中unresolved=True、上位通常返却前の既存保持へ結ぶ。原return slotsは未発行でobserved=false、実return観測した部品へ読み替えない。create_native root-channel-clock-Job前拒否method不変。
+
+新17distinct/body17、初回16一回12.102302900049835秒pass＋review新1だけ6.594353299995419秒pass、pass済み16/旧suite/完成focus/13AST監査/native反復0、最終source単一17success runではない。各59pin前後不変/他57component間不変/先行56共通不変/変更3file safety0。components16559B/dc0cbd51e9b696c361c7089be6b88aa05de830e2f968101e79a504bd8be2761e。元34124/134359152803645506/token06d8e1963d6d3b86f020852394cfe21d4e09b5b991c34fffe2730d4d6af390e4、24164/134359153964103230/token0085624f38b31c8a37d044cd4b6e9a23f4f4f8fc58f747a2e19fb6907737b280、47820/134359155314467266/tokenfda352f5607c64f93c294704ab8edf0703929c91e78a728f8efa3109a0898483はlive-execution一致/passed/同original不在。fake API/Job record/Popen＋親fixture小FileIO/root、snapshot stub、実ABI/native認証/全経路wall/容量合格ではない。追加agent/profile再観測0。
+
+名前30合計808151B/最大job_tree_owner108596B/archive94908B、phase32/予定64は完全runtime閉包ではなく旧cap-profile流用禁止。次はfresh closure-profile-policy-request-unusedroot/実coupled容量/exclusiveと原callsiteでのCreateProcess BOOL/PI/Job-member return捕捉・同原owner/attribute lifetime・child認証をつなぐ準備。新command/output/raw owner保持bytesもcoupled計上。実発行・継承・回収/native入口は未接続、準備前native入口/全7役whole.run限定reader実起動禁止。全writer atomic予約/親failure raw-diagnostic/partialとnew archive growth別予約/entry-context bytes/coupled peak/global memory未完成。
+
+現旧revisionCI3812は完成/旧root追加・反復なし。新CIはcodepush後git実fullSHAだけで選択、予定件数を実journalへ読み替えず終端時専用rootへ未保存rawだけ一度保存、doc-only新CI追跡なし。formal permission=false/credit0/holdout未読/正式5残件未完了、元caps-stop保持維持/Sol容量未確認/ACTIVE。
+
 ## 2026-10-08 JST HANDLE_LIST準備revision CI3812の終端保存
 
 開始2026-10-08T06:15:32Z/HEAD2e12e221374b25d6f02ef715278ed270b47cc4d7-origin-clean/先行元4helper同creation-token不在/repo helper-critical ownerなし。codea1ab304608d0d0ff486c73d84b3ba6d1612be222不変、production/test/native/完成focus/旧suite/追加agent/profile再観測0、doc-only3文書を一回skip ciへ集約。詳細docs/results/anomaly-multiseed-v0.3-ci-handle-list-save-2026-10-08.md、raw artifacts/ci-diagnostic-37732744553/、batch preformal-ci-handle-list-save-20261008-prep/だけを対象にする。

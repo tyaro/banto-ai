@@ -1,0 +1,39 @@
+# 原raw Job/process call枠・限定launcher準備unit
+
+2026-10-08 JST。開始HEAD122f0a7d4d67f1b0895ddc0ec9fe97dcc0c34943-origin-clean/元先行6helper同creation-token不在/repo helper・critical ownerなし。既存job_tree_owner/ReaderPublicationLaunchPreparationへ準備境界をまとめて追加する。new production module0。実CreateProcess/Job assignment/member/Close/Delete/launcher/child認証は発行しない。ReaderGitParent.create_nativeのroot/channel/clock/Job前拒否は不変。
+
+## 原owner・output枠・attribute lifetime
+
+PublicationNativeProcessPreparationは原HANDLE_LIST/argv/cwd/caller-held raw Job record/元Python owner/entry bytesを検証・clock・API getter前に保持する。raw Job recordは同じUnreapedJob入力を保持し、新native keeperを生成しない。positive/non-pseudo/独立Job入力と未発行process/threadを検証するが、実Job発行・所有権・creationを観測したとはしない。
+
+bounded invocationをcopy→原command buffer/PROCESS_INFORMATION/member output/同STARTUPINFOEXを保持→捕捉済み原CreateProcess callableと原Assign/IsProcessInJob callable→CreateProcessの原call tuple、assignment/memberの原output-source tuple、各未発行return slotへ結ぶ。argv/cwdとentry bytesは各32KiB内、資源/API/HANDLE/outputは非JSON Python objectで保持する。旧external v1-v4/request/entry/context/ack/proofへfieldを加えず旧pinを読み替えない。stdio3と専用2は独立explicit5、source4とJobのaliasも拒否する。
+
+原outputは未発行・return_observed=false。既存の原return位置を観測した部品ではない。callerのsuccess metadata/PI改変/member Trueをnative return証拠へ読み替えず、原bufferと変更された値を保全して拒否する。CreateProcess/Assign/IsProcessInJob呼出し数は0。executeはAPI getter/clock前に拒否し、metadataでnative_launch_authorizedをTrueへ変えても入口を開かない。全native/ownership/creation/recovery/atomic/capacity/ack/auth=false。
+
+原attribute owner/native/launch ownerの保持slotに結び、準備後のDeleteを拒否する。attribute側marker一つを消しても早期cleanupへ戻さない。原Job owner/command/call tuple/return slot/原API/entryの変更、第二準備、getter・clock IO/KIは第一例外と原・拒否object/outputをlatchし、再発行・reap・recloseへ落とさない。準備objectが存在する間はunresolved=Trueで原Python owner保持を継続する。
+
+ReaderPublicationLaunchPreparation.prepare_native_processは初期化objectとcaller入力をentry/storage/clock getter前に保持→同root/caller entry/clock/storageへforwardする。既存Popen bindへの切替は原processを保持したうえで_handle getter前に拒否する。親が拒否した原例外もcached下位準備へ同じobjectで伝え、metadata復元で解除しない。上位通常返却前の既存retentionに同じlaunch/raw Job ownerを結び、新keeperを作らない。default/Popen経路はopt-in準備なしの場合の既存形式を維持する。
+
+## 新焦点とpin
+
+専用raw artifacts/preformal-publication-native-process-prep-20261008-prep/。初回新16を一回12.102302900049835秒pass/fail0/error0/skip0。reviewで親の拒否後にcached raw準備へ原例外を伝える境界を補強し、新1だけ6.594353299995419秒pass。新17distinct/取得body17、pass済み16/旧suite/完成focus/13AST監査/native反復0。複数source/runなので最終source単一17success runではない。
+
+各59source/science pin前後不変、component間の他57不変、先行HANDLE_LIST共通56不変、変更3file safety0。scienceはhash metadataだけで登録holdout観測を読まない。fake kernel/API/Job record/Popen/creation＋親fixtureの実小FileIO/root/channel、composing snapshotは明示stub。実Win ABI/実Job/worker/pipe/exe/限定launcher/継承・native認証/全経路wall/容量合格ではない。追加agent/runtime-profile再観測0。
+
+- focused.json: 19338B / 92d2de6107e574098a0532c8a430141fde9cfe2e6c9e46512e9a08c6bf3ea875
+- focused.log: 3953B / 54f45d5327dd606b27a5c4a67827833e47fc6c07cfdb5656927212f59385b4c9
+- focused-v2.json: 18367B / 9d6ca618f49e0190326e4d8931abbf048225af0b4fe7bddf26481cf9d395cb1d
+- focused-v2.log: 381B / fe3507d5d6e6a8efc4d0d93cd860d3d7a43a9c7c794d9124f94aabd57276c518
+- components.json: 16559B / dc0cbd51e9b696c361c7089be6b88aa05de830e2f968101e79a504bd8be2761e
+
+元focus34124/creation134359152803645506/token06d8e1963d6d3b86f020852394cfe21d4e09b5b991c34fffe2730d4d6af390e4、追加24164/134359153964103230/token0085624f38b31c8a37d044cd4b6e9a23f4f4f8fc58f747a2e19fb6907737b280、components47820/134359155314467266/tokenfda352f5607c64f93c294704ab8edf0703929c91e78a728f8efa3109a0898483は各live/execution一致/passed/同original残存なし。PID再利用はcreation/tokenで区別する。
+
+名前30source合計808151B/最大job_tree_owner108596B、archive module94908B。phase32要求/予定64Git Jobは完全runtime閉包ではない。native拒否method437B/0bd7b84f0a3dc0bd22a865ac8b2b4ccedc0e71ea50a177b0e6b086df07fdcc7c不変。新HEADへ旧profile/source capを流用しない。
+
+## 次の接続・制約
+
+このunitを一回code commit/pushし、保存後59working-Git/原focusとcomponent pin/元identity/HEAD-originを照合する。新code CIはgitが返す実fullSHAだけで選択し、終端時だけ新専用rootへ未保存原rawを一度保存する。doc-only追補はskip ciへ集約。完成CI3812/旧raw/pin/failure/完成focusへ追加・反復しない。
+
+実CreateProcessのBOOL/PROCESS_INFORMATIONを元return位置で保持するcallsite、原Job assignment/member return、原Job/process/thread/attribute/stdio/dedicated HANDLEの回収、raw ownerと既存Popenのbridge、child-local endpoint/原close-rename-raw transport認証は未接続。準備tupleは実発行・実継承の証明ではない。fresh latest-clean source/runtime/profile/private policy/request/unusedroot/実control-packet-raw coupled容量/exclusive、atomic全writer予約/親identity将来failure raw-diagnostic/原partialとnew archive growth独立予約/entry-context実保存bytes/新command-output-owner保持bytes/coupled peak/global memoryは未完成。これらが準備されるまでnative入口を開かず全7役whole.run限定reader実起動禁止。
+
+formal gate=s4_acceptance_not_frozen/permission=false/credit0/holdout未読、実データは保存済み合成dev8/smoke2 engineering記述だけ。正式5残件/採択/最終受入未完了。archive512KiB/frame128KiB/decoded1536KiB/stdout1MiB/manifest32KiB/lease64、outer1MiB32entry depth2 reserve128KiB/global321MiB672entry、元wall-memory-output/cleanup30秒/poll0.25秒維持。unknown/IO・KIは原Popen/Job/process/thread/HANDLE/Python owner/stream/buffer/pending/raw/partial保持、blind retry/原Python終了/後続work拒否。metadata/closed/EOF/exit/marker不在/kill-wait/途中capacityを回収True/lease/ackへ読み替えない。Sol容量エラー未確認、ACTIVE維持。

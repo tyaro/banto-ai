@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ctypes
 from ctypes import wintypes as w
+import json
 import math
 import os
 from pathlib import Path
@@ -717,7 +718,10 @@ class PublicationHandleListPreparation:
             self._fixed()
             if self.cleanup_result is not None:return self.cleanup_result
             resources.rt.require(self.result is not None and self.pending is None and not self.cleanup_started and
-                self.rejected_process is None,'publication known prepared attributes before process only')
+                self.rejected_process is None and not any(getattr(obj,name,None) is not None for obj,name in
+                    ((self,'original_native_process'),(self.owner,'original_publication_native_process'),
+                     (self.native,'publication_native_process'))),
+                'publication known prepared attributes without retained process call frames only')
             self.cleanup_started=True
             returned=self._call('delete',self.apis[2],(self.buffer,))
             resources.rt.require(returned is None,'publication original void Delete return observed')
@@ -727,6 +731,148 @@ class PublicationHandleListPreparation:
             self.cleanup_snapshot=dict(self.cleanup_result);self.pending=self.original_pending=None
             self._fixed();return self.cleanup_result
         except BaseException as error:self._failed(error)
+
+
+class PublicationNativeProcessPreparation:
+    """Hold raw Job/output call frames without issuing any process API.
+
+    A caller's Job record is retained input, not an ownership observation.
+    Execution remains denied until a separate native launcher is admitted.
+    """
+    def __init__(self,attributes,argv,cwd,job_owner,*,owner,binding):
+        self.original_inputs=(attributes,argv,cwd,job_owner,owner,binding)
+        self.attributes,self.argv_input,self.cwd,self.raw_owner,self.owner,self.binding= self.original_inputs
+        self.native=self.previous=None
+        self.error=self.original_error=self.result=None
+        self.pending={'stage':'prepare_inputs','original_inputs':self.original_inputs}
+        self.started=False
+        try:
+            self.previous=getattr(owner,'original_publication_native_process',None)
+            if self.previous is not None:
+                self.previous.rejected=self
+                self._failed(ValueError('publication native process owner cannot be replaced'))
+            resources.rt.require(type(attributes) is PublicationHandleListPreparation,
+                'publication original prepared HANDLE_LIST owner')
+            self.native=attributes.native
+            attributes.original_native_process=self
+            owner.original_publication_native_process=owner.publication_native_process=self
+            self.native.publication_native_process=self
+            attributes._fixed()
+            resources.rt.require(attributes.owner is owner and attributes.result is not None and
+                attributes.pending is None and not attributes.cleanup_started and owner.process is None,
+                'publication prepared live attributes before original process')
+            resources.rt.require(type(job_owner) is UnreapedJob and type(job_owner.job) is int and
+                0<job_owner.job<2**(ctypes.sizeof(w.HANDLE)*8)-2 and
+                job_owner.process is job_owner.thread is None and job_owner.original_error is None and
+                job_owner.cleanup_error is None and not job_owner.unknown_close_handles,
+                'publication caller-held raw Job input without inferred recovery')
+            self.job_snapshot=(job_owner.job,job_owner.process,job_owner.thread)
+            resources.rt.require(job_owner.job not in attributes.handles and
+                job_owner.job not in attributes.inheritance.resources.handles.values() and
+                not hasattr(job_owner,'original_publication_native_process'),
+                'publication independent raw Job owner cannot alias or be shared again')
+            job_owner.original_publication_native_process=job_owner.publication_native_process=self
+            resources.rt.require(type(argv) is tuple and 0<len(argv)<=64 and
+                all(type(a) is str and a and '\0' not in a for a in argv) and
+                type(cwd) is str and cwd and '\0' not in cwd and os.path.isabs(cwd) and
+                sum(len(a) for a in argv)+len(cwd)<=16384,
+                'publication bounded copied invocation before output buffers')
+            self.argv=tuple(argv)
+            self.invocation_raw=json.dumps((self.argv,cwd),ensure_ascii=False,separators=(',',':')).encode()
+            resources.rt.require(len(self.invocation_raw)<=32768 and type(binding) is bytes and
+                0<len(binding)<=32768 and binding is owner.entry_raw,
+                'publication original bounded local entry and invocation')
+            self.kernel=attributes.kernel;self.checkpoint=attributes.checkpoint
+            self.command=self.original_command=ctypes.create_unicode_buffer(subprocess.list2cmdline(self.argv))
+            self.command_snapshot=self.command.value
+            self.process_information=self.original_information=_ProcessInformation()
+            self.member_output=self.original_member=w.BOOL()
+            self.startup=attributes.startup
+            self.flags=CREATE_SUSPENDED|CREATE_NO_WINDOW|EXTENDED_STARTUPINFO_PRESENT
+            self.create_api=attributes.create_api  # Already captured by the original attribute owner.
+            self.assign_api=self.kernel.AssignProcessToJobObject
+            self.member_api=self.kernel.IsProcessInJob
+            resources.rt.require(all(callable(a) for a in (self.create_api,self.assign_api,self.member_api)),
+                'publication retained original process and Job APIs')
+            self.apis=(self.create_api,self.assign_api,self.member_api)
+            self.create_args=(None,self.command,None,None,True,self.flags,None,cwd,
+                ctypes.byref(self.startup),ctypes.byref(self.process_information))
+            self.assignment_source=(self.assign_api,job_owner,self.job_snapshot[0],self.process_information)
+            self.membership_source=(self.member_api,job_owner,self.job_snapshot[0],self.process_information,self.member_output)
+            self.original_frames=(self.create_args,self.assignment_source,self.membership_source)
+            self.return_slots=tuple({'stage':stage,'api':api,'return':None,'return_observed':False,
+                'output_indeterminate':True} for stage,api in zip(('create','assign','member'),self.apis))
+            self.original_slots=tuple((row,dict(row)) for row in self.return_slots)
+            self.original_return_slots=self.return_slots
+            self.native.native_process_preparation=self
+            self._fixed()
+        except BaseException as error:self._failed(error)
+
+    def _failed(self,error):
+        if self.previous is not None:
+            self.original_error=self.error=self.previous.original_error or error
+            self.error.rejected_publication_native_process=self
+            self.previous._failed(self.error)
+        if self.original_error is None:self.original_error=error
+        self.error=self.original_error;self.error.publication_native_process=self
+        if type(self.attributes) is PublicationHandleListPreparation:self.attributes._failed(self.error)
+        raise self.error
+
+    def _fixed(self):
+        if self.original_error is not None:raise self.original_error
+        owner_error=getattr(self.owner,'original_error',None)
+        if owner_error is not None:self._failed(owner_error)
+        self.attributes._fixed()
+        resources.rt.require(self.attributes is self.original_inputs[0] and self.argv_input is self.original_inputs[1] and
+            self.cwd==self.original_inputs[2] and self.raw_owner is self.original_inputs[3] and
+            self.owner is self.original_inputs[4] and self.binding is self.original_inputs[5] and
+            self.native is self.attributes.native and
+            self.owner.original_publication_native_process is self.owner.publication_native_process is self and
+            self.attributes.original_native_process is self and self.native.publication_native_process is self and
+            self.raw_owner.original_publication_native_process is self.raw_owner.publication_native_process is self and
+            (self.raw_owner.job,self.raw_owner.process,self.raw_owner.thread)==self.job_snapshot and
+            self.raw_owner.original_error is self.raw_owner.cleanup_error is None and not self.raw_owner.unknown_close_handles and
+            self.binding is self.owner.entry_raw and self.attributes.startup is self.startup and not self.attributes.cleanup_started and
+            self.command is self.original_command and self.command.value==self.command_snapshot and
+            self.process_information is self.original_information and self.member_output is self.original_member and
+            (self.process_information.hProcess,self.process_information.hThread,self.process_information.dwProcessId,
+             self.process_information.dwThreadId,self.member_output.value)==(None,None,0,0,0) and
+            self.apis==(self.kernel.CreateProcessW,self.kernel.AssignProcessToJobObject,self.kernel.IsProcessInJob) and
+            json.dumps((self.argv_input,self.cwd),ensure_ascii=False,separators=(',',':')).encode()==self.invocation_raw,
+            'publication same raw owner, unissued output buffers, APIs and copied invocation')
+        resources.rt.require(self.create_args is self.original_frames[0] and self.assignment_source is self.original_frames[1] and
+            self.membership_source is self.original_frames[2] and self.return_slots is self.original_return_slots and
+            self.flags==CREATE_SUSPENDED|CREATE_NO_WINDOW|EXTENDED_STARTUPINFO_PRESENT and
+            all(row==snapshot for row,snapshot in self.original_slots),
+            'publication caller metadata cannot invent native returns')
+        if self.result is not None:
+            resources.rt.require(self.result is self.original_result and self.result==self.result_snapshot,
+                'publication cached preparation cannot grant native permission')
+
+    def prepare(self):
+        try:
+            self._fixed()
+            if self.result is not None:return self.result
+            resources.rt.require(not self.started,'publication process preparation cannot replay')
+            self.started=True;self.checkpoint();self._fixed()
+            self.result=self.original_result={'create_args':self.create_args,'assignment_source':self.assignment_source,
+                'membership_source':self.membership_source,'raw_job_owner':self.raw_owner,'attribute_owner':self.attributes,
+                'return_slots':self.return_slots,'explicit_handle_count':5,'stdio_count':3,'dedicated_count':2,
+                'native_launch_authorized':False,'job_ownership_observed':False,'creation_observed':False,
+                'native_owner_recovered':False,'parent_ack_authorized':False,'execution_authenticated':False,
+                'atomic_reservation':False,'capacity_pass':False}
+            self.result_snapshot=dict(self.result);self.pending=None
+            self._fixed();return self.result
+        except BaseException as error:self._failed(error)
+
+    def execute(self):
+        # No API/getter/clock access: a prepared frame never opens the native entry.
+        error=ValueError('publication native launcher admission is not prepared')
+        self.rejected_execution_error=error
+        self._failed(error)
+
+    def unresolved(self):
+        return True  # The original raw owner has no native reconciliation here.
 
 
 class NativeGitPipes:

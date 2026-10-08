@@ -822,6 +822,8 @@ class ReaderPublicationLaunchPreparation:
     def _fixed(self):
         if self.original_error is not None:raise self.original_error
         if self.error is not None:raise self.error
+        native_process=getattr(self,'original_publication_native_process',None)
+        if native_process is not None:native_process._fixed()
         inheritance=getattr(self,'original_publication_inheritance',None)
         if inheritance is not None:inheritance._fixed()
         self.rejected_binding=(getattr(self.parent,'publication_launch',None),self.parent.parent,
@@ -879,6 +881,8 @@ class ReaderPublicationLaunchPreparation:
         self.rejected_process=process  # Before even Popen getters or identity IO.
         try:
             self._fixed()
+            v.require(getattr(self,'original_publication_native_process',None) is None,
+                'reader retained raw native owner cannot be replaced by a Popen bind')
             v.require(self.process is None,'reader launch original Popen bind once')
             self.process=process;self.pending={'process':process,'creator':self.creator,'storage':self.storage}
             held=self.pending
@@ -915,10 +919,26 @@ class ReaderPublicationLaunchPreparation:
         except BaseException as error:self._failed(error)
 
     def unresolved(self):
-        try:self._fixed();return self.pending is not None
+        try:self._fixed();return self.pending is not None or getattr(self,'original_publication_native_process',None) is not None
         except BaseException as error:
             if self.error is None:self.error=error
             return True
+
+
+    def prepare_native_process(self,argv,cwd,job_owner):
+        held=tree.owner.PublicationNativeProcessPreparation.__new__(tree.owner.PublicationNativeProcessPreparation)
+        held.caller_inputs=(self,argv,cwd,job_owner)  # Before entry/storage/clock getters.
+        self.initializing_publication_native_process=held
+        try:
+            self._fixed()
+            v.require(self.process is None and self.options is None and cwd==str(self.endpoint.root),
+                'reader raw native process preparation before process in the same root')
+            held.__init__(self.original_publication_handle_list,argv,cwd,job_owner,owner=self,binding=self.entry_raw)
+            self.parent._inventory_ready();self.storage.view('before_publication_native_process_preparation')
+            self.native_process_preparation_return=held.prepare()
+            self.parent._inventory_ready();held._fixed()
+            return held
+        except BaseException as error:self._failed(error)
 
 
 class ReaderPublicationInputs:
