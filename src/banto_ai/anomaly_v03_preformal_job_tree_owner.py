@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import ctypes
 from ctypes import wintypes as w
+import copy
+import hashlib
 import json
 import math
 import os
@@ -546,6 +548,136 @@ class PublicationPipeInheritance:
             self._failed(error)
 
 
+class PublicationNativeBufferAdmission:
+    """Bound retained preparation bytes; this is not an RSS/native admission.
+
+    Independent caller maxima reserve every slot before any native buffer is
+    allocated. Original buffers remain attached on an unknown or rejected step.
+    """
+    FORMAT='anomaly-v03-publication-native-buffer-allocation-v1'
+    CEILINGS={'descriptor':32768,'entry':32768,'invocation':32768,'command':131072,
+        'attributes':32768,'handle_array':ctypes.sizeof(w.HANDLE*5),
+        'startup':ctypes.sizeof(_StartupInfoEx),'process':ctypes.sizeof(_ProcessInformation),
+        'member':ctypes.sizeof(w.BOOL)}
+
+    @staticmethod
+    def _raw(value):
+        return json.dumps(value,sort_keys=True,ensure_ascii=False,separators=(',',':')).encode()
+
+    @staticmethod
+    def _pin(raw):return {'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()}
+
+    def __init__(self,allocation,*,owner):
+        self.original_inputs=(allocation,owner);self.allocation_input=allocation;self.owner=owner
+        self.original_error=self.error=self.pending=None;self.previous=None
+        self.records=self.original_records=();self.completed=self.original_completed=()
+        try:
+            self.previous=getattr(owner,'original_publication_native_buffers',None)
+            if self.previous is not None:
+                self.previous.rejected=self
+                self.previous._failed(ValueError('publication native buffer allocation cannot rebind'))
+            owner.original_publication_native_buffers=owner.publication_native_buffers=self
+            self.pending={'stage':'allocation_copy','original_inputs':self.original_inputs}
+            self.original_pending=self.pending
+            self.allocation=copy.deepcopy(allocation)
+            resources.rt.require(type(self.allocation) is dict and set(self.allocation)=={'value','pin'},
+                'publication fresh closed native buffer allocation')
+            value=self.allocation['value'];self.descriptor_raw=self._raw(self.allocation)
+            resources.rt.require(type(value) is dict and set(value)=={'format','entry_pin','storage_pin','limits',
+                'total_bytes','formal_permission'} and value['format']==self.FORMAT and
+                value['formal_permission'] is False and self.allocation['pin']==self._pin(self._raw(value)) and
+                len(self.descriptor_raw)<=32768,'publication bounded native buffer descriptor pin')
+            self.entry_raw=owner.entry_raw;self.storage=owner.storage
+            self.entry_pin=copy.deepcopy(owner.entry_pin);self.storage_pin=copy.deepcopy(self.storage.plan_pin)
+            resources.rt.require(value['entry_pin']==self.entry_pin==self._pin(self.entry_raw) and
+                value['storage_pin']==self.storage_pin,'publication exact original entry and storage pins')
+            self.limits=value['limits'];self.total=value['total_bytes']
+            resources.rt.require(type(self.limits) is dict and set(self.limits)==set(self.CEILINGS) and
+                all(type(n) is int and 0<n<=self.CEILINGS[name] for name,n in self.limits.items()) and
+                type(self.total) is int and 0<self.total<=131072 and sum(self.limits.values())<=self.total,
+                'publication all independent buffer maxima fit reserved total')
+            self.claim('entry',{'descriptor':len(self.descriptor_raw),'entry':len(self.entry_raw)},
+                (self.descriptor_raw,self.entry_raw))
+            self.complete('entry',(self.descriptor_raw,self.entry_raw))
+        except BaseException as error:self._failed(error)
+
+    def _failed(self,error):
+        if self.original_error is None:self.original_error=error
+        self.error=self.original_error
+        if self.previous is not None:
+            self.error.rejected_publication_native_buffers=self
+            self.previous._failed(self.error)
+        self.error.publication_native_buffers=self
+        failed=getattr(self.owner,'_failed',None)
+        if callable(failed):failed(self.error)
+        raise self.error
+
+    def _fixed(self):
+        if self.original_error is not None:raise self.original_error
+        error=getattr(self.owner,'original_error',None)
+        if error is not None:self._failed(error)
+        self.storage._fixed()
+        resources.rt.require(self.owner is self.original_inputs[1] and
+            self.owner.original_publication_native_buffers is self.owner.publication_native_buffers is self and
+            self._raw(self.allocation_input)==self._raw(self.allocation)==self.descriptor_raw and
+            self.entry_raw is self.owner.entry_raw and self._pin(self.entry_raw)==self.entry_pin==self.owner.entry_pin and
+            self.storage is self.owner.storage and self.storage.plan_pin==self.storage_pin and
+            self.limits is self.allocation['value']['limits'] and self.total==self.allocation['value']['total_bytes'],
+            'publication original caller buffer allocation, entry and storage cannot follow metadata')
+        resources.rt.require(self.records is self.original_records and self.completed is self.original_completed and
+            self.pending is self.original_pending,
+            'publication original buffer ledgers cannot be erased')
+        for row,stage,sizes,sources in self.records:
+            resources.rt.require(row['stage']==stage and row['sizes']==sizes and row['sources'] is sources,
+                'publication original buffer claim ledger cannot follow metadata')
+        for row,buffers in self.completed:
+            resources.rt.require(row['buffers'] is row['original_buffers'] is buffers and
+                tuple(len(b) if type(b) is bytes else ctypes.sizeof(b) for b in buffers)==
+                tuple(n for _,n in row['sizes']),'publication original retained buffer widths')
+
+    def claim(self,stage,sizes,sources):
+        row={'stage':stage,'sizes_input':sizes,'sources_input':sources}
+        previous_pending=self.pending
+        self.rejected_claim=row  # Keep refused sizes and sources without hiding original pending.
+        try:
+            self._fixed()
+            expected={'entry':{'descriptor','entry'},'attributes':{'attributes','handle_array','startup'},
+                'process':{'invocation','command','process','member'}}
+            resources.rt.require(stage in expected and type(sizes) is dict and set(sizes)==expected[stage] and
+                type(sources) is tuple and len(sources)==len(sizes) and
+                all(type(n) is int and 0<n<=self.limits[name] for name,n in sizes.items()) and
+                tuple(previous for _,previous,_,_ in self.records)==
+                    {'entry':(),'attributes':('entry',),'process':('entry','attributes')}[stage] and
+                (previous_pending is None or stage=='entry' and previous_pending['stage']=='allocation_copy'),
+                'publication exact independent unreplayed preparation buffer claim')
+            held=tuple(sizes.items());row.update(sizes=held,sources=sources)
+            self.pending=self.original_pending=row;self.records=self.original_records=self.records+((row,stage,held,sources),)
+            resources.rt.require(sum(n for _,_,used,_ in self.records for _,n in used)<=self.total,
+                'publication retained byte total within independent allocation')
+            return row
+        except BaseException as error:self._failed(error)
+
+    def complete(self,stage,buffers):
+        self.rejected_buffers=buffers  # Before even sizeof/shape observation can fail.
+        try:
+            self._fixed();row=self.pending
+            resources.rt.require(row is not None and row['stage']==stage and type(buffers) is tuple and
+                len(buffers)==len(row['sizes']) and 'buffers' not in row,'publication original buffer return once')
+            row['buffers']=row['original_buffers']=buffers
+            self.completed=self.original_completed=self.completed+((row,buffers),)
+            self._fixed();self.pending=self.original_pending=None
+            return row
+        except BaseException as error:self._failed(error)
+
+    def view(self):
+        try:
+            self._fixed();resources.rt.require(self.pending is None,'publication unresolved original buffer claim')
+            return {'descriptor_pin':dict(self.allocation['pin']),'used_bytes':sum(n for _,_,s,_ in self.records for _,n in s),
+                'reserved_maxima_bytes':sum(self.limits.values()),'total_bytes':self.total,
+                'rss_measured':False,'native_launch_authorized':False,'atomic_reservation':False,'capacity_pass':False}
+        except BaseException as error:self._failed(error)
+
+
 class PublicationHandleListPreparation:
     """Hold an explicit stdio-three/dedicated-two attribute list, without launch.
 
@@ -583,6 +715,11 @@ class PublicationHandleListPreparation:
                 not set(self.handles)&set(inheritance.resources.handles.values()),
                 'publication five distinct handles separate from source four')
             self.kernel=inheritance.kernel;self.checkpoint=inheritance.checkpoint
+            self.buffer_admission=self.original_buffer_admission=getattr(owner,'original_publication_native_buffers',None)
+            if self.buffer_admission is not None:
+                resources.rt.require(type(self.buffer_admission) is PublicationNativeBufferAdmission and
+                    self.buffer_admission.owner is owner,'publication original attribute buffer allocation')
+                self.buffer_admission._fixed()
             self.initialize_api=self.kernel.InitializeProcThreadAttributeList
             self.update_api=self.kernel.UpdateProcThreadAttribute
             self.delete_api=self.kernel.DeleteProcThreadAttributeList
@@ -600,6 +737,10 @@ class PublicationHandleListPreparation:
             previous._failed(self.error)
         if self.original_error is None:self.original_error=error
         self.error=self.original_error;self.error.publication_handle_list=self
+        buffers=getattr(self,'original_buffer_admission',None)
+        if buffers is not None:
+            if buffers.original_error is None:buffers.original_error=buffers.error=self.error
+            self.error.publication_native_buffers=buffers
         if self.native is not None:self.native.publication_handle_list=self
         if type(self.inheritance) is PublicationPipeInheritance:self.inheritance._failed(self.error)
         raise self.error
@@ -607,6 +748,11 @@ class PublicationHandleListPreparation:
     def _fixed(self):
         if self.original_error is not None:raise self.original_error
         self.inheritance._fixed()
+        if hasattr(self,'original_buffer_admission'):
+            resources.rt.require(self.buffer_admission is self.original_buffer_admission and
+                getattr(self.owner,'original_publication_native_buffers',None) is self.original_buffer_admission,
+                'publication original attribute buffer admission cannot be erased or added late')
+        if getattr(self,'buffer_admission',None) is not None:self.buffer_admission._fixed()
         resources.rt.require(self.original_inputs==(self.inheritance,self.stdio_input,self.owner,self.last_error) and
             self.inheritance.original_handle_list is self.inheritance.handle_list is self and
             self.owner.original_publication_handle_list is self.owner.publication_handle_list is self and
@@ -689,6 +835,10 @@ class PublicationHandleListPreparation:
                 0<self.size.value<=32768,
                 'publication bounded original expected insufficient attribute buffer')
             self.original_size=self.size.value
+            if self.buffer_admission is not None:
+                self.buffer_admission.claim('attributes',{'attributes':self.original_size,
+                    'handle_array':ctypes.sizeof(w.HANDLE*5),'startup':ctypes.sizeof(_StartupInfoEx)},
+                    (self.size,self.handles,self))
             self.buffer=self.original_buffer=ctypes.create_string_buffer(self.original_size)
             self.handle_array=self.original_array=(w.HANDLE*5)(*self.handles)
             self.native.attributes=self.buffer;self.native.attribute_handles=self.handle_array
@@ -702,6 +852,8 @@ class PublicationHandleListPreparation:
             si=self.startup.StartupInfo;si.cb=ctypes.sizeof(self.startup);si.dwFlags=STARTF_USESTDHANDLES
             si.hStdInput,si.hStdOutput,si.hStdError=self.stdio
             self.startup.lpAttributeList=ctypes.addressof(self.buffer)
+            if self.buffer_admission is not None:
+                self.buffer_admission.complete('attributes',(self.buffer,self.handle_array,self.startup))
             self.result=self.original_result={'stdio_handles':self.stdio,'dedicated_handles':self.dedicated,
                 'explicit_handle_count':5,'attribute_bytes':self.original_size,
                 'extended_startupinfo_required':True,'inherit_handles_required':True,
@@ -783,10 +935,23 @@ class PublicationNativeProcessPreparation:
                 0<len(binding)<=32768 and binding is owner.entry_raw,
                 'publication original bounded local entry and invocation')
             self.kernel=attributes.kernel;self.checkpoint=attributes.checkpoint
-            self.command=self.original_command=ctypes.create_unicode_buffer(subprocess.list2cmdline(self.argv))
+            self.buffer_admission=self.original_buffer_admission=attributes.original_buffer_admission
+            command_text=subprocess.list2cmdline(self.argv)
+            if self.buffer_admission is not None:
+                # Measure the local ctypes layout; no Windows ABI/RSS assertion.
+                capacity=max(len(command_text),len(command_text.encode('utf-16-le'))//2)+1
+                command_type=ctypes.c_wchar*capacity
+                self.buffer_admission.claim('process',{'invocation':len(self.invocation_raw),
+                    'command':ctypes.sizeof(command_type),'process':ctypes.sizeof(_ProcessInformation),
+                    'member':ctypes.sizeof(w.BOOL)},(self.invocation_raw,command_text,job_owner,self))
+                self.command=self.original_command=command_type()
+                self.command.value=command_text
+            else:self.command=self.original_command=ctypes.create_unicode_buffer(command_text)
             self.command_snapshot=self.command.value
             self.process_information=self.original_information=_ProcessInformation()
             self.member_output=self.original_member=w.BOOL()
+            if self.buffer_admission is not None:
+                self.buffer_admission.complete('process',(self.invocation_raw,self.command,self.process_information,self.member_output))
             self.startup=attributes.startup
             self.flags=CREATE_SUSPENDED|CREATE_NO_WINDOW|EXTENDED_STARTUPINFO_PRESENT
             self.create_api=attributes.create_api  # Already captured by the original attribute owner.
@@ -823,6 +988,8 @@ class PublicationNativeProcessPreparation:
         owner_error=getattr(self.owner,'original_error',None)
         if owner_error is not None:self._failed(owner_error)
         self.attributes._fixed()
+        resources.rt.require(self.buffer_admission is self.original_buffer_admission is self.attributes.original_buffer_admission,
+            'publication original process buffer admission cannot be erased')
         resources.rt.require(self.attributes is self.original_inputs[0] and self.argv_input is self.original_inputs[1] and
             self.cwd==self.original_inputs[2] and self.raw_owner is self.original_inputs[3] and
             self.owner is self.original_inputs[4] and self.binding is self.original_inputs[5] and

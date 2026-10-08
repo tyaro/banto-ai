@@ -822,6 +822,8 @@ class ReaderPublicationLaunchPreparation:
     def _fixed(self):
         if self.original_error is not None:raise self.original_error
         if self.error is not None:raise self.error
+        buffers=getattr(self,'original_publication_native_buffers',None)
+        if buffers is not None:buffers._fixed()
         native_process=getattr(self,'original_publication_native_process',None)
         if native_process is not None:native_process._fixed()
         inheritance=getattr(self,'original_publication_inheritance',None)
@@ -875,6 +877,21 @@ class ReaderPublicationLaunchPreparation:
             self.handle_list_return=held.prepare()
             self.parent._inventory_ready()
             return held
+        except BaseException as error:self._failed(error)
+
+    def arm_native_buffers(self,allocation):
+        held=tree.owner.PublicationNativeBufferAdmission.__new__(tree.owner.PublicationNativeBufferAdmission)
+        held.caller_inputs=(self,allocation)
+        self.initializing_publication_native_buffers=held
+        try:
+            self._fixed()
+            v.require(self.process is None and self.options is None and
+                getattr(self,'original_publication_handle_list',None) is None,
+                'reader independent native buffer allocation before attributes')
+            held.__init__(allocation,owner=self)
+            self.native_buffer_admission_return=held.view()
+            self.parent._inventory_ready();self.storage.view('before_publication_native_buffers')
+            held._fixed();return held
         except BaseException as error:self._failed(error)
 
     def bind(self,process):

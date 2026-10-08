@@ -1,5 +1,19 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST 限定launcher準備の独立buffer allocation unit
+
+開始HEAD9b2cf05a8c40ef71523930e01354db7fb04b8d83-origin-clean/先行元5helper同creation-token不在/critical ownerなし。詳細docs/results/anomaly-multiseed-v0.3-publication-native-buffers-2026-10-08.md、raw artifacts/preformal-publication-native-buffers-20261008-prep/だけを対象にする。変更production2＋新test1/new production module0、完成17/22/旧suite/CI/13AST監査反復0。unit確認後code commit/push一回、doc追補skip ciへ集約。
+
+新closed native-buffer-allocation-v1/value-pin→原entry/storage pin→ReaderLaunch.arm_native_buffers→HANDLE_LIST sizing実return/sizeをnative buffer前照合→原attributes/array5/startup→原invocation/command/PI/member事前幅と実buffer tupleへまとめて接続。独立caller9maxima全枠合計を先にtotal最大128KiB内へ固定、完了分割引なし。原・拒否descriptor/owner/sizes/sources/buffer/pending/第一例外保持、ledger/参照消去/第二allocation/unknown Update/IO/KIをlatch、metadata復元で解除・reclose/reap/relaunchなし。旧JSON/pinへfield追加なし、borrowed stdin close0。
+
+新15distinct/body15/unique15。初回14一回30.72744019998936秒pass＋review原attribute allocation参照消去の新1だけ0.0025224999990314245秒pass、pass済み14反復0、最終source単一15success runではない。各60pin前後不変/他58component間/先行57共通不変/変更3file safety0。components17007B/fe6c4abe4a4456a28a935dd6a54979b6aeb601f7c872779b62bcd3432e6b1ec3。元focus45764/134359172305077886/tokenf91dce5e8dd94a81955e7334d592301a7b2e3ef6eade44e6332c8b30afa9de99、新1の18456/134359173728788127/token2791b26431514675a106accb9c776830dda9485954a224bb445d4eafcef517f5はlive-execution passed。原PID/creation/tokenで終端を区別する。
+
+fake API/Job/Popen/creation＋小FileIO/root、snapshot stub/test Escape。実Create/Assign/member/Close/Delete/worker/Job/pipe/exe/native0、追加agent/profile再観測0。native/atomic/capacity/ack/auth=false/create_native拒否method437B/0bd7b84f0a3dc0bd22a865ac8b2b4ccedc0e71ea50a177b0e6b086df07fdcc7c不変。準備payload幅のみでobject overhead/一時copy/JSON/command text/RSSと実packet/raw/partial/archiveのcoupled peak/global memoryは未測定、OS予約/all-writer atomic予約ではない。actual generate/READER_BOOTSTRAP発行未接続。
+
+名前30合計820544B/最大job_tree_owner120035B/cc126fca55a0cfe128f90215283669b45f8589bbaca8103fb7233694dbddd5a5、phase32/予定64はruntime未閉包/旧cap-profile流用禁止。次はfresh source-runtime-profile-policy-request-unusedroot/実control packetとraw-partial-new archive growth・新buffer/object overheadの独立計上/coupled容量/exclusiveと原callsite Create/Assign/member return・同raw owner/attribute lifetime/child認証を束ねる準備。native入口/全7役whole.run限定reader実起動は禁止を維持。
+
+先行未保存CI37739862442/gitfull1e1c900cbe8c909f28da552488c31d8dff8263b2はattempt1/push/Phase1CI、今回両minor113187830209/113187830427 in_progress、compare未発行、3829は予定/journal未確認。終端download/local回帰/runner追加0。codepush後はgit実fullSHAだけ選択し予定数をjournalへ読み替えない。formal_permission=false/credit0/holdout未読/正式5残件未完了、原caps/stop/旧raw保持/Sol容量未確認/ACTIVE。
+
 ## 2026-10-08 JST 原raw Job/process call枠・限定launcher準備unit
 
 code1e1c900cbe8c909f28da552488c31d8dff8263b2をunit一回commit/push/origin一致、code-save17362B/e3edb8941843e27f41abc85e436f38c571ae5344c58da68a7640e28f110abfe5で59working-Git/science/原raw/元helper/旧root不変照合。元code-save24048/134359157767364327/token2b7e915b91577c19fe8081444dd9879da4c9a13252e034799593f70261ecbad1 passed/同original不在。新37739862442/git実full1e1c900cbe8c909f28da552488c31d8dff8263b2/Phase1CI/pushはqueued観測、jobs-attempt-終端未固定、3829は算術予定/journal未確認。compact原状態ci-state.json保存、終端download/local回帰/runner追加0。doc-only3文書追補は一回skip ci、doc-only新CI追跡なし。
