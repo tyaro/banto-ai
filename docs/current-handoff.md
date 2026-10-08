@@ -3,6 +3,16 @@
 2026-10-08 JST。branch `codex/preformal-acceptance-scope`、repository `D:\develop\banto-ai`。
 
 
+## まとまった単位で継続（2026-10-08 JST）
+
+人の「進めて下さい」で継続。code `0b80bf7d21f42e22a358e895ca160f1142fc6f81` を5file/一回commit-pushで保存。詳細 [publication storage経路](results/anomaly-multiseed-v0.3-publication-storage-path-2026-10-08.md)、raw `artifacts/preformal-publication-storage-path-20261008-prep/`。保存後heartbeatをACTIVEへ戻し、機能の経路単位で進める。追加agent禁止、live worker/critical owner中の重複実行・tracked編集禁止、stop/旧raw/root/元clock上限を維持する。
+
+原request/inventory/root/clock/ownerへclosed caller allocationをcopy/IO前保持し、control全14将来枠＋最大call raw＋独立archive追加枠＋carrier失敗raw＋親failure raw＋reserve128KiB/診断2entryを実snapshot32/depth2へ結ぶ。Actor/Parent→CP/writer/append/sink/原native/carrierへopt-in接続。unknown control closeも同じ元例外でstorage/terminal/原keeper/上位callerへ保持。metadata消去でbudget参照を外さずreplayなし。snapshotはatomic/global/memoryの代用ではなくnative preview/ack/auth/capacity=false。初回bootstrap前の上位発行/forward、実限定launcher/原child owner認証は未接続、create_nativeのroot/channel/clock/Job前拒否を維持。
+
+新24distinct/unique24。初回20は17pass/fixture期待fail1/error2、失敗3訂正＋新4の7は6pass/原unknown close伝播fail1、その1だけ補強pass。最終source単一24success runではなく完成焦点/旧suite/native/追加agent0。各49pin/他46全3component/先行44/safety0/clean code-save49working-Git一致。components3424B/dc05fed4f06d6f57a71497873e02bf461dc292304de1e73a2667c7ee39e96ee0、code-save14725B/ed63e99719a5e30d4446cc28d2497f00a8ce1a0566414805dd6977813c54dd8a。元helper28084/134358968580554824・28156/134358971626707583・36104/134358972303268447は各live/execution token保存・failed/failed/passed・CIM残存なし。fake API/creation/Popen＋実小FileIO/root、composing snapshotは明示stub。実ABI/native/全経路wall/容量合格ではない。
+
+次はfresh閉形式descriptorからallocationをParent/bootstrap IO前→entry/Reader/Actorへ同じcaller pinでforwardするまとまった単位。旧v1/v2/v3へfield追加なし。全writer atomic予約/親将来失敗raw/partialとnew frame別量/entry-context bytes/coupled peak/fresh runtime-profile-policy-request-unusedroot/限定launcher未完成、30source/phase32/予定64Git Job未閉包。CI37704906810/full e300474、37708333072/full9a83455、先行full112f3cd、新full0b80bf7は今回終端照会0。formal permission=false/credit0/登録holdout観測未読。以下は先行記録。
+
 ## 一回だけまとめた試行の保存（2026-10-08 JST）
 
 人の「一度すこしまとめて」の指示で、子local capture→bounded carrier送信→親Popen HANDLE creation/context/full raw→fence拒否→子terminal/原keeperと上位callerの原IO保持をまとめた。code `112f3cd0cf2973213ca70b1d5337e8c423468246` は一回commit/push済み、heartbeatはPAUSEDのまま。詳細 [publication carrier経路](results/anomaly-multiseed-v0.3-publication-carrier-path-2026-10-08.md)、raw `artifacts/preformal-publication-carrier-path-20261008-prep/`。
