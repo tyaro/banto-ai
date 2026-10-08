@@ -395,6 +395,9 @@ def _kernel():
                                ctypes.POINTER(w.DWORD), ctypes.POINTER(w.DWORD),
                                ctypes.POINTER(w.DWORD)]
     k.PeekNamedPipe.restype = w.BOOL
+    k.WriteFile.argtypes = [w.HANDLE, ctypes.c_void_p, w.DWORD,
+                           ctypes.POINTER(w.DWORD), ctypes.c_void_p]
+    k.WriteFile.restype = w.BOOL
     k.ReadFile.argtypes = [w.HANDLE, ctypes.c_void_p, w.DWORD,
                           ctypes.POINTER(w.DWORD), ctypes.c_void_p]
     k.ReadFile.restype = w.BOOL

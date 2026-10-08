@@ -9,6 +9,7 @@ from __future__ import annotations
 import base64
 import copy
 import gzip
+import hashlib
 import os
 from pathlib import Path
 
@@ -354,6 +355,9 @@ class ControlPublicationAdmission:
 
     def capture_pending(self):
         """A local witness never hides pending IO from the original keeper."""
+        carrier=getattr(self,'original_publication_carrier',None)
+        if carrier is not None:
+            if carrier.unresolved():return True
         original=getattr(self,'original_child_publication_capture',None)
         sidecar=getattr(self.owner,'child_publication_capture',None)
         if original is None and sidecar is None:return False
@@ -372,6 +376,10 @@ class ControlPublicationAdmission:
         except BaseException as error:
             if type(original) is ChildPublicationCapture:original._failed(error)
             self._failed(error)
+
+    def arm_publication_carrier(self, creator, *, frame_limit):
+        return PublicationCarrier(creator=creator,owner=self,checkpoint=self.checkpoint,
+            frame_limit=frame_limit,sending=True)
 
 
 class ChildPublicationCapture:
@@ -514,6 +522,205 @@ class ChildPublicationCapture:
                 'parent_ack_authorized':False,'execution_authenticated':False,'atomic_reservation':False}
             self.pending=None;gate.pending=None
             return self.completion
+        except BaseException as error:self._failed(error)
+
+
+class PublicationCarrier:
+    """Bounded original pipe IO; delivered bytes never authenticate child owners.
+
+    This opt-in owns a dedicated creator, not a Git stdout reader. No handle is
+    closed or declared released here. A native launcher and cross-process owner
+    authentication remain required before parent permission can be granted.
+    Synchronous Win IO does not supply a nonblocking or whole-wall guarantee.
+    """
+    MAGIC=b'PCR1'
+    HEADER=40
+    MAX_READ_BLOCKS=128
+
+    def __init__(self, *, creator, owner, checkpoint, frame_limit, sending):
+        self.original_inputs=(creator,owner,checkpoint,frame_limit,sending)
+        self.creator,self.owner,self.checkpoint=creator,owner,checkpoint
+        self.error=self.original_error=self.pending=self.completion=None
+        self.blocks=[];self.raw=b'';self.rejected=None;self.started=False
+        try:
+            self.previous=getattr(owner,'original_publication_carrier',None)
+            if self.previous is not None:
+                self.previous.rejected=self
+                self.previous._failed(ValueError('carrier original owner cannot be replaced'))
+            owner.original_publication_carrier=owner.publication_carrier=self
+            from . import anomaly_v03_preformal_job_tree_owner as native
+            self.native_api=native
+            self.kernel=getattr(creator,'kernel',None)
+            self.native=getattr(creator,'native',None)
+            self.event=getattr(creator,'events',{}).get('stdout')
+            v.require(type(creator) is native.NativeGitPipes and creator.result is True and
+                creator.error is None and creator.spawn_io is None and self.native.job is None and
+                self.native.process is None and self.native.thread is None and
+                type(sending) is bool and callable(checkpoint) and type(frame_limit) is int and
+                self.HEADER<frame_limit<=proof.channel.MAX_CONTROL,
+                'carrier dedicated original creator and caller frame bound')
+            self.sending,self.frame_limit=sending,frame_limit
+            self.event_raw=io.json_bytes(self.event)
+            self.handle=self.event['write' if sending else 'read']
+            self.writer=creator.writers['stdout']
+            self.api=getattr(self.kernel,'WriteFile' if sending else 'ReadFile')
+            self.peek=None if sending else self.kernel.PeekNamedPipe
+            prior=getattr(self.native,'publication_carriers',[])
+            self.native.publication_carriers=prior+[self]  # Keep rejected aliases on the original creator.
+            for previous in prior:
+                if previous.sending is sending:
+                    previous.rejected=self
+                    previous._failed(ValueError('carrier dedicated direction cannot be rebound'))
+            v.require(callable(self.api) and (sending or callable(self.peek)), 'carrier original APIs')
+            self.binding=(creator,owner,checkpoint,self.kernel,self.native,self.event,self.handle,
+                self.writer,self.api,self.peek,frame_limit,sending)
+            self._fixed()
+        except BaseException as error:self._failed(error)
+
+    def _failed(self, error):
+        if self.original_error is None:self.original_error=error
+        self.error=self.original_error
+        self.error.publication_carrier=self
+        if type(self.owner) is ControlPublicationAdmission:self.owner._failed(self.error)
+        remember=getattr(self.owner,'_remember_publication',None)
+        if callable(remember):remember(self.error)
+        raise self.error
+
+    def _fixed(self):
+        if self.original_error is not None:raise self.original_error
+        if self.error is not None:raise self.error
+        v.require(self.binding==(self.creator,self.owner,self.checkpoint,self.kernel,self.native,self.event,
+            self.handle,self.writer,self.api,self.peek,self.frame_limit,self.sending) and
+            self.owner.original_publication_carrier is self.owner.publication_carrier is self and
+            self.creator.kernel is self.kernel and self.creator.native is self.native and
+            self.creator.events['stdout'] is self.event and io.json_bytes(self.event)==self.event_raw and
+            self.creator.result is True and self.creator.error is None and self.creator.spawn_io is None and
+            self.creator.read_handles['stdout']==self.event['read'] and
+            self.creator.writers['stdout'] is self.writer and self.writer.handle==self.event['write'] and
+            getattr(self.kernel,'WriteFile' if self.sending else 'ReadFile') is self.api and
+            (self.sending or self.kernel.PeekNamedPipe is self.peek),'carrier fixed original IO owner')
+
+    def _checkpoint(self):
+        self.checkpoint()
+        self._fixed()  # A callback cannot switch a handle/API/owner after observation.
+
+    def _cached(self):
+        self._fixed()
+        v.require(self.pending is None and self.completion['frame_raw']==self.raw and
+            all(self.completion[name] is False for name in ('io_released','parent_ack_authorized',
+                'execution_authenticated','atomic_reservation')),'carrier original completed frame')
+        evidence._raw(self.raw,self.completion['frame_pin'],'carrier original frame pin')
+        if not self.sending:
+            v.require(io.json_bytes(self.completion['value'])==self.completion['payload_raw']==self.raw[self.HEADER:],
+                'carrier cached original decoded candidate')
+        else:
+            self.capture._check()
+            v.require(self.capture.payload_raw==self.raw[self.HEADER:],'carrier cached original child capture bytes')
+        return self.completion
+
+    def unresolved(self):
+        try:
+            if self.original_error is not None or self.error is not None:
+                self.error=self.original_error or self.error
+                if type(self.owner) is ControlPublicationAdmission and self.owner.error is None:
+                    self.owner.error=self.error
+                return True
+            self._fixed()
+            if self.completion is None:return self.started
+            self._cached()
+            if self.sending:self.capture._check()
+            return False
+        except BaseException as error:self._failed(error)
+
+    def send(self, capture):
+        self.original_capture_attempt=capture  # Before validation/getters or IO.
+        try:
+            if self.completion is not None:
+                v.require(capture is self.capture,'carrier same original cached capture')
+                capture._check();return self._cached()
+            self._fixed()
+            v.require(not self.started and self.pending is None and not self.blocks,
+                'carrier original send attempt cannot be replayed')
+            self.started=True
+            self.pending={'capture':capture,'creator':self.creator,'native':self.native,'handle':self.handle}
+            v.require(self.sending and type(capture) is ChildPublicationCapture and
+                capture.gate is self.owner and capture.actor is self.owner.owner,
+                'carrier exact sealed child capture')
+            self.capture=capture;capture._check()
+            payload=self.pending['payload_raw']=capture.payload_raw
+            self.raw=self.pending['frame_raw']=self.MAGIC+len(payload).to_bytes(4,'big')+hashlib.sha256(payload).digest()+payload
+            v.require(len(self.raw)<=self.frame_limit,'carrier payload plus independent framing bound')
+            offset=0;native=self.native_api
+            while offset<len(self.raw):
+                block={'offset':offset,'raw':self.raw[offset:offset+4096],'handle':self.handle,'kernel':self.kernel}
+                self.pending['block']=block;self.blocks.append(block)
+                block['buffer']=native.ctypes.create_string_buffer(block['raw'])
+                block['count']=native.w.DWORD()
+                self._checkpoint();capture._check()
+                block['return']=self.api(self.handle,block['buffer'],len(block['raw']),native.ctypes.byref(block['count']),None)
+                block['observed_count']=block['count'].value  # Original return/buffer precede checks/clock.
+                v.require(type(block['return']) in (int,bool) and bool(block['return']) and
+                    block['observed_count']==len(block['raw']),'carrier exact original WriteFile return/count')
+                self._checkpoint();capture._check()
+                offset+=block['observed_count']
+            self.completion={'frame_raw':self.raw,'frame_pin':observed._pin(self.raw),'capture':capture,
+                'io_released':False,'parent_ack_authorized':False,'execution_authenticated':False,'atomic_reservation':False}
+            self.pending=None;return self.completion
+        except BaseException as error:self._failed(error)
+
+    def read_once(self):
+        try:
+            if self.completion is not None:return self._cached()
+            self._fixed();v.require(not self.sending,'carrier original parent reader')
+            v.require(self.pending is None,'carrier unresolved original read attempt cannot be replaced')
+            self.started=True
+            native=self.native_api
+            block=self.pending={'handle':self.handle,'kernel':self.kernel,'prefix_bytes':len(self.raw)}
+            block['available']=native.w.DWORD()
+            self._checkpoint()
+            block['peek_return']=self.peek(self.handle,None,0,None,native.ctypes.byref(block['available']),None)
+            block['available_count']=block['available'].value
+            v.require(type(block['peek_return']) in (int,bool) and bool(block['peek_return']),
+                'carrier unknown Peek/EOF cannot supply a completed frame')
+            remaining=self.frame_limit-len(self.raw)
+            if len(self.raw)>=8:
+                v.require(self.raw[:4]==self.MAGIC,'carrier closed frame format')
+                size=int.from_bytes(self.raw[4:8],'big')
+                v.require(0<size<=self.frame_limit-self.HEADER,'carrier declared payload bound')
+                remaining=self.HEADER+size-len(self.raw)
+            v.require(0<=block['available_count']<=remaining,'carrier extra data exceeds original frame allowance')
+            if block['available_count']==0:
+                self._checkpoint();self.pending=None
+                if not self.raw:self.started=False
+                return None
+            amount=min(4096,block['available_count'],remaining)
+            v.require(len(self.blocks)<self.MAX_READ_BLOCKS,'carrier bounded retained read attempts')
+            block['amount']=amount;block['buffer']=native.ctypes.create_string_buffer(amount)
+            block['count']=native.w.DWORD();self.blocks.append(block)
+            self._checkpoint()
+            block['read_return']=self.api(self.handle,block['buffer'],amount,native.ctypes.byref(block['count']),None)
+            block['observed_count']=block['count'].value
+            block['read_raw']=block['buffer'].raw[:min(block['observed_count'],amount)]
+            v.require(type(block['read_return']) in (int,bool) and bool(block['read_return']) and
+                0<block['observed_count']<=amount,'carrier original ReadFile return/count')
+            self.raw+=block['read_raw'];self._checkpoint()
+            if len(self.raw)<8:self.pending=None;return None
+            v.require(self.raw[:4]==self.MAGIC,'carrier closed frame format')
+            size=int.from_bytes(self.raw[4:8],'big')
+            v.require(0<size<=self.frame_limit-self.HEADER and len(self.raw)<=self.HEADER+size,
+                'carrier exact bounded frame length')
+            if len(self.raw)<self.HEADER+size:self.pending=None;return None
+            payload=block['payload_raw']=self.raw[self.HEADER:]
+            v.require(hashlib.sha256(payload).digest()==self.raw[8:self.HEADER],'carrier full raw digest')
+            value=block['value']=v.strict_json(payload)
+            evidence._keys(value,'format context binding_pin publications raw_bytes parent_ack_authorized execution_authenticated atomic_reservation',
+                'carrier closed local candidate')
+            v.require(io.json_bytes(value)==payload and value['format']=='anomaly-v03-child-publication-local-capture-v1' and
+                all(value[key] is False for key in ('parent_ack_authorized','execution_authenticated','atomic_reservation')),
+                'carrier canonical candidate is not parent permission')
+            self.completion={'frame_raw':self.raw,'frame_pin':observed._pin(self.raw),'payload_raw':payload,'value':value,
+                'io_released':False,'parent_ack_authorized':False,'execution_authenticated':False,'atomic_reservation':False}
+            self.pending=None;return self.completion
         except BaseException as error:self._failed(error)
 
 

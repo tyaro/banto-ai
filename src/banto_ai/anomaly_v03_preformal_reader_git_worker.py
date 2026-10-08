@@ -62,6 +62,9 @@ def publish_archive_ack(actor, manifest_raw, manifest_pin):
         if gate is not None:
             pending['control_raw_pins']=gate.verify_publications(('git-manifest.json','git-proof.json','ack.json'))
             pending['local_capture']=capture.seal(pending['control_raw_pins'])
+            carrier=getattr(gate,'original_publication_carrier',None)
+            pending['publication_carrier']=carrier
+            if carrier is not None:pending['carrier_return']=carrier.send(capture)
         return ack_pin
     except BaseException as failure:
         pending['error'] = failure
@@ -412,6 +415,89 @@ class ReaderGitParent:
             self._remember_publication(failure)
             raise
 
+    def bind_publication_carrier(self, creator, *, frame_limit):
+        """Bind a dedicated original read owner; native launcher remains closed."""
+        self.publication_carrier_inputs=(creator,frame_limit,self.worker,self.parent,self.inventory_publication)
+        try:
+            carrier=actors.archive.PublicationCarrier(creator=creator,owner=self,
+                checkpoint=self.inventory_checkpoint,frame_limit=frame_limit,sending=False)
+            held=self.publication_carrier_binding={'carrier':carrier,'process':self.worker,
+                'endpoint':self.parent,'gate':self.inventory_publication,'original_inputs':self.publication_carrier_inputs}
+            v.require(self.worker is self.parent.worker and self.worker is not None and self.inventory_publication is not None,
+                'carrier exact original bound parent worker')
+            held['process_handle']=self.worker._handle
+            held['binding'],held['binding_pin']=self.parent._binding()
+            held['creation']=observed.creation_observation(self.worker.pid,held['process_handle'])
+            v.require(held['creation']==held['binding']['worker_identity'],'carrier original Popen HANDLE creation')
+            held['context']={'request_pin':self.parent.request_pin,'inventory_pin':self.entry['inventory_pin'],
+                'root_identity':self.entry['budget_root_identity'],'clock':self.clock,'root':str(self.parent.root),
+                'revision':self.parent.request['revision'],'worker_identity':held['creation']}
+            held['context_raw']=io.json_bytes(held['context'])
+            v.require(len(held['context_raw'])<=channel.MAX_CONTROL,'carrier bounded parent context')
+            self._inventory_ready()
+            return carrier
+        except BaseException as failure:
+            carrier=getattr(self,'original_publication_carrier',None)
+            if carrier is not None:carrier._failed(failure)
+            self._remember_publication(failure);raise
+
+    def observe_publication_carrier(self, process):
+        self.publication_carrier_attempt=process  # Before any getter, clock or ReadFile.
+        carrier=getattr(self,'original_publication_carrier',None)
+        try:
+            held=self.publication_carrier_binding
+            current={'request_pin':self.parent.request_pin,'inventory_pin':self.entry['inventory_pin'],
+                'root_identity':self.entry['budget_root_identity'],'clock':self.clock,'root':str(self.parent.root),
+                'revision':self.parent.request['revision'],'worker_identity':held['creation']}
+            v.require(process is self.worker is held['process'] and self.parent is held['endpoint'] and
+                self.inventory_publication is held['gate'] and carrier is held['carrier'] and
+                process._handle==held['process_handle'] and self.parent.binding_pin==held['binding_pin'] and
+                io.json_bytes(held['context'])==held['context_raw']==io.json_bytes(current),
+                'carrier fixed original parent binding')
+            result=carrier.read_once()
+            self.publication_carrier_return=result  # Actual return before candidate validation/readback.
+            if result is None:return None
+            if hasattr(self,'publication_carrier_candidate'):
+                candidate=self.publication_carrier_candidate
+                v.require(candidate['return'] is result and candidate['owner'] is self and candidate['process'] is process and
+                    candidate['binding'] is held and candidate['payload_raw']==result['payload_raw'] and
+                    all(candidate[key] is False for key in ('parent_ack_authorized','execution_authenticated','atomic_reservation')),
+                    'carrier original cached parent return')
+                actors.proof.evidence._raw(result['payload_raw'],candidate['payload_pin'],
+                    'carrier cached original parent payload')
+                return self.publication_carrier_candidate
+            candidate=self.publication_carrier_candidate={'return':result,'owner':self,'process':process,
+                'binding':held,'payload_raw':result['payload_raw'],'payload_pin':observed._pin(result['payload_raw']),
+                'raw':{},'parent_ack_authorized':False,'execution_authenticated':False,'atomic_reservation':False}
+            value=result['value']
+            v.require(value['context']==held['context'] and value['binding_pin']==held['binding_pin'] and
+                set(value['publications'])==set(actors.archive.ChildPublicationCapture.NAMES),
+                'carrier candidate exact request/inventory/root/clock/revision/worker')
+            total=0
+            for name in actors.archive.ChildPublicationCapture.NAMES:
+                row=value['publications'][name]
+                actors.proof.evidence._keys(row,'pin fd file_identity python_close_return rename_return','carrier candidate row')
+                v.require(type(row['fd']) is int and row['fd']>=0 and row['python_close_return'] is None and
+                    row['rename_return'] is None and type(row['file_identity']) is list and len(row['file_identity'])==2,
+                    'carrier candidate close fields cannot authenticate original owners')
+                raw=observed._file(self.parent.root/name,channel.MAX_CONTROL)
+                candidate['raw'][name]=raw  # Preserve mismatched/partial returned raw before pin/identity checks.
+                actors.proof.evidence._raw(raw,row['pin'],'carrier original parent full raw pin')
+                stat=paths.regular_path(self.parent.root/name).lstat()
+                v.require([stat.st_dev,stat.st_ino]==row['file_identity'],'carrier original parent file identity')
+                total+=len(raw)
+            v.require(type(value['raw_bytes']) is int and total==value['raw_bytes'],'carrier separate full raw byte count')
+            self._inventory_ready()
+            candidate['post_checkpoint_raw']={}
+            for name in actors.archive.ChildPublicationCapture.NAMES:
+                raw=observed._file(self.parent.root/name,channel.MAX_CONTROL)
+                candidate['post_checkpoint_raw'][name]=raw
+                v.require(raw==candidate['raw'][name],'carrier raw changed during original shared checkpoint')
+            return candidate  # A candidate remains false until the original child owner transport is authenticated.
+        except BaseException as failure:
+            if carrier is not None:carrier._failed(failure)
+            self._remember_publication(failure);raise
+
     def _deny_child_publication(self, process, endpoint, observation):
         held={'owner':self,'process':process,'endpoint':endpoint,'observation':observation,
             'publication_admission':self.inventory_publication,'original_request':endpoint.request,
@@ -420,6 +506,7 @@ class ReaderGitParent:
             'root':str(endpoint.root),'revision':endpoint.request['revision'],
             'binding_pin':observation['binding_pin'],'worker_identity':observation['binding']['worker_identity'],
             'child_close_rename_owner_observation':None,'parent_ack_authorized':False,
+            'carrier_candidate':getattr(self,'publication_carrier_candidate',None),
             'execution_authenticated':False,'atomic_reservation':False}
         self.pending_child_publication_denial=held  # Preserve all original raw/owners before context validation.
         held['context_raw']=io.json_bytes({key:held[key] for key in ('request_pin','inventory_pin','root_identity','clock',
@@ -445,6 +532,9 @@ class ReaderGitParent:
         failure.reader_git_parent=self
 
     def _inventory_ready(self):
+        carrier=getattr(self,'original_publication_carrier',None)
+        if carrier is not None:
+            v.require(not carrier.unresolved(),'reader original carrier IO unresolved')
         if getattr(self,'original_request_bootstrap',None) is not None and self.error is not None:raise self.error
         if self.inventory_publication_error is not None:
             raise self.inventory_publication_error  # Never overwrite the original rejected/pending owners.
@@ -545,16 +635,18 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
     existing=getattr(original,'original_publication_retention',None)
     owners=(getattr(original,'original_request_bootstrap',None),
         getattr(original,'request_bootstrap_owner',None),getattr(original,'inventory_publication',None),
-        getattr(original,'control_publication_owner',None))
+        getattr(original,'control_publication_owner',None),getattr(original,'original_publication_carrier',None),
+        getattr(original,'publication_carrier',None))
     if all(owner is None for owner in owners) and existing is None:return False
     rejected=(getattr(original,'rejected_request_bootstrap',None),
-        getattr(original,'rejected_inventory_publication',None))
+        getattr(original,'rejected_inventory_publication',None),getattr(owners[4],'rejected',None))
     error.reader_publication_owners=(original,owners,rejected,caller_plan)  # Before diagnosis/keeper entry.
     try:
         problem=(existing is not None or getattr(original,'error',None) is not None or
             any(getattr(owner,'error',None) is not None or getattr(owner,'pending',None) is not None
                 for owner in owners if owner is not None) or
-            owners[0] is not owners[1] or owners[2] is not owners[3])
+            owners[0] is not owners[1] or owners[2] is not owners[3] or owners[4] is not owners[5] or
+            (owners[4] is not None and owners[4].unresolved()))
     except BaseException as failure:
         error.reader_publication_diagnostic_error=failure;problem=True
     if not problem:return False
