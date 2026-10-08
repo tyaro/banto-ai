@@ -2,6 +2,8 @@
 
 ## 2026-10-08 JST 原raw Job/process call枠・限定launcher準備unit
 
+code1e1c900cbe8c909f28da552488c31d8dff8263b2をunit一回commit/push/origin一致、code-save17362B/e3edb8941843e27f41abc85e436f38c571ae5344c58da68a7640e28f110abfe5で59working-Git/science/原raw/元helper/旧root不変照合。元code-save24048/134359157767364327/token2b7e915b91577c19fe8081444dd9879da4c9a13252e034799593f70261ecbad1 passed/同original不在。新37739862442/git実full1e1c900cbe8c909f28da552488c31d8dff8263b2/Phase1CI/pushはqueued観測、jobs-attempt-終端未固定、3829は算術予定/journal未確認。compact原状態ci-state.json保存、終端download/local回帰/runner追加0。doc-only3文書追補は一回skip ci、doc-only新CI追跡なし。
+
 開始HEAD122f0a7d4d67f1b0895ddc0ec9fe97dcc0c34943-origin-clean/元先行6helper同creation-token不在/critical ownerなし。詳細docs/results/anomaly-multiseed-v0.3-publication-native-process-preparation-2026-10-08.md、raw artifacts/preformal-publication-native-process-prep-20261008-prep/だけを対象にする。既存job_tree_owner/ReaderPublicationLaunchPreparationと新testの3file、new production module0。unit確認後code commit/push一回、doc追補skip ciへ集約。
 
 PublicationNativeProcessPreparationは原HANDLE_LIST/argv/cwd/caller-held raw Job record/Python owner/entryを検証-clock-API getter前保持→bounded invocation copy→原command/PROCESS_INFORMATION/member output/STARTUPINFOEX→原CreateProcess/Assign/IsProcessInJob callable→未発行call tuple/output-source/return slotsへ結ぶ。新native keeper生成0/Job所有権・creation観測0、全native/atomic/capacity/ack/auth=false。executeはAPI getter-clock前拒否、実Create/Assign/member呼出し0。stdio3/専用2別枠、source4/Job alias拒否、旧JSON/native資源/pin読み替えなし。

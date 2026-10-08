@@ -1,5 +1,9 @@
 # 原raw Job/process call枠・限定launcher準備unit
 
+code1e1c900cbe8c909f28da552488c31d8dff8263b2をunit一回commit/push、origin一致。code-save17362B/e3edb8941843e27f41abc85e436f38c571ae5344c58da68a7640e28f110abfe5は59working-Git/science/当該code commitのdocs2/原raw/元helper/旧root不変を照合。元code-save24048/creation134359157767364327/token2b7e915b91577c19fe8081444dd9879da4c9a13252e034799593f70261ecbad1はlive-execution一致/passed/同original不在。doc-only追補は一回skip ciへ集約する。
+
+新CI37739862442/git実full1e1c900cbe8c909f28da552488c31d8dff8263b2/Phase1CI/pushはcodepush後queued観測、jobs/attempt/終端未固定。3829は3812＋新17の算術予定でjournal未確認。ci-state.jsonにcompact状態を保存し、terminal download/journal/local回帰/runner追加0。doc-only新CI追跡なし。
+
 2026-10-08 JST。開始HEAD122f0a7d4d67f1b0895ddc0ec9fe97dcc0c34943-origin-clean/元先行6helper同creation-token不在/repo helper・critical ownerなし。既存job_tree_owner/ReaderPublicationLaunchPreparationへ準備境界をまとめて追加する。new production module0。実CreateProcess/Job assignment/member/Close/Delete/launcher/child認証は発行しない。ReaderGitParent.create_nativeのroot/channel/clock/Job前拒否は不変。
 
 ## 原owner・output枠・attribute lifetime

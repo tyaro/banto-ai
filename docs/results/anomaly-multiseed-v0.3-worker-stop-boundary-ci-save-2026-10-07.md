@@ -1,5 +1,9 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 2026-10-08 JST 未発行raw Job/process準備unitのCI選択
+
+新code1e1c900cbe8c909f28da552488c31d8dff8263b2をunit一回commit/push後、git実fullSHAで37739862442/Phase1CI/push/queuedを選択。ci-state.jsonにcompact原状態保存、jobs/attempt/終端未固定、3829は3812＋新17の算術予定でjournal未確認。今回terminal download/local回帰/runner追加0、doc-only新CI追跡なし。新17distinctは16＋review新1の別source/runで、最終source単一17successへ読み替えない。実CreateProcess/Assign/memberは未発行、create_native拒否維持。詳細publication-native-process-preparation文書。完成CI3812/旧raw-pins-failure/完成focusへ追加・反復せず、新CI終端時だけ外部fullHEAD/workflow/run/attempt/jobsへ固定して未保存rawを専用rootへ一度保存する。
+
 ## 2026-10-08 JST CI37732744553・HANDLE_LIST準備revision保存完了
 
 git実fulla1ab304608d0d0ff486c73d84b3ba6d1612be222/attempt1/push/Phase1CI/.github/workflows/ci.yml/3job113165365533・113165364493・113177312473successへ原run/jobsを固定。新ci-diagnostic-37732744553/に10raw14pin、両journal実3812/fail0/error0/skip237/source不変/local-remote回帰一致/共有29必須28/runner v2consistent_candidate/full journal passedまで一度保存。summary2583B/3061bed850918b27683a85ce758a87690b56e375887118453e1f7e4222b0d22f、index2783B/a30cb0cbd77fd4b687bfb245a7551a416d4d855299fdd8b4290439e70b223d38。3.12新版20261004.327.1/true、3.14・compare旧20260927.320.1/false、公式保存外部pin一致のみ/digest未取得/候補未採択。CLI6一致/CRLF6差1file両pin。実summary取得後runner/index双方へ同pinを固定して先行metadata失敗を反復しない。詳細ci-handle-list-save文書と専用batch。現production revisionの未保存CIなし/doc-only新CI追跡なし。完成CI/focus/旧raw/pin/failureへ追加・反復せず、実launcher/Win ABI/専用継承/child owner認証/容量/正式受入へ読み替えない。
