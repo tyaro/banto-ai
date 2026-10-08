@@ -1,5 +1,13 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 2026-10-08 JST 全planned-call新archive準備revisionの未終端CI
+
+新code c5bffdb1e23d1563020d7fc2345fb1bfc1bad5c3は独立全call最大値事前合計/同owner-clock-context/順番lease/full packet readback/全bundle manifest/第一例外保持/native早期拒否のmemory-only unit。一回commit/push/origin一致、21distinctは20＋review新1の別source/runで最終source単一21successではない。新37756831995/git実full同code/workflowName原値Phase 1 CI/push/in_progress、attempt/jobs/終端未固定、3885算術予定/journal未確認。stdout164B/6e71021275732d7901088501171613e60b28266549c1d1ce99cb8b6a4009a79dを専用ci-state.jsonへ保持した。
+
+先行37752779492/full21b4b4fadc1bc856b286324907b5ac5a9ea42010は開始時一度attempt1/push/Phase1CI/in_progress、3864算術予定/journal未確認、状態不変の再照会0。両CI終端download/local回帰/runner追加0、doc-only新CI追跡なし。終端時だけ実fullHEAD/workflow/run/attempt/jobsへ固定し未保存原rawを新専用rootへ一度保存、successのみ2journal/comparison-regression/3log/local回帰/runner v2、failure小原因/原raw保全。実journal countと実summary両pinを取得後にscriptへ発行する。
+
+原code-save helper11428は2文書CRLF workingとLF Gitのraw equality AssertionError/exit1、原script/failure/両pinを保持。別continuation47552だけ未保存metadataを同30秒Git batchで完了、21392B/b2e178ad840b9b3aee2e8d25dbc0cd9d5aec162e631ce276fd4929d0cbc767fa。原failedを書換えず原helper/codec/試験再実行0、Git文書正規化差をnative回収/CI/Sol容量へしない。詳細partitioned-archive-preparation-2026-10-08文書、raw artifacts/preformal-partitioned-archive-preparation-20261008-prep/。完成CI3844/先行packet20/原post timeout/154696B encoder拒否を反復・読み替えない。実Win ABI/launcher/child owner transport/原native owner/auth/atomic/coupled容量/formal credit未確認、native入口早期拒否/holdout未読/正式5残件未完了を維持。
+
 ## 2026-10-08 JST 新packet分割準備revisionの未終端CI
 
 code21b4b4fadc1bc856b286324907b5ac5a9ea42010は新memory-only分割/manifest/full raw readback/owner保持/native早期拒否のunitとして一回commit/push/origin一致。新20distinctは15＋新risk3＋新risk2の別source/run、最終source単一20successではない。詳細docs/results/anomaly-multiseed-v0.3-worker-packet-partition-preparation-2026-10-08.md、prep artifacts/preformal-packet-partition-preparation-20261008-prep/。code-save18912B/3d2d9a2622b7d1b902f401cfdc0609b3bc5be27fcee902409b438a6ddd472116で61working-Git/science/原raw/元helper/旧3root不変照合。
