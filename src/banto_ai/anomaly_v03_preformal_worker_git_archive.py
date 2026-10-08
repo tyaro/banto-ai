@@ -246,6 +246,196 @@ class PacketPartitionPreparation:
         raise ValueError('partition native/archive IO admission not prepared')
 
 
+_PARTITION_PREPARATION_TYPE = PacketPartitionPreparation
+
+
+class PartitionedArchivePreparation:
+    """All planned packet payload maxima and original readback, with no IO.
+
+    This is not an atomic reservation, native owner observation, whole runtime
+    capacity proof or lease/ack authority. All failure raw remains caller-held.
+    """
+    FORMAT = 'anomaly-v03-partitioned-archive-preparation-v1'
+
+    def __init__(self, *, owner, checkpoint, allocation):
+        self.original_owner,self.original_checkpoint,self.original_allocation=owner,checkpoint,allocation
+        self._inputs=(owner,checkpoint,allocation);self._prepared=None;self._failure=None
+        self.pending,self.error=None,None;self.completed=[];self._ledger=self._ledger_anchor=();self._pending=None;self._pending_input=None
+        self.rejected=[];self._owners=();self._returns=();self._return_bindings=()
+        self._prepared_anchor=None;self._bundle=None;self._bundle_anchor=None
+        self.incoming=[];self._incoming=()
+
+    @staticmethod
+    def _packet_raw(packet):
+        return io.json_bytes({'kind':packet['kind'],'event':packet['event'],'raw_pins':{
+            name:None if raw is None else observed._pin(raw) for name,raw in packet['raw'].items()}})
+
+    def _failed(self,error):
+        if self._failure is None:self._failure=error
+        self.error=self._failure;raise self._failure
+
+    def _fixed(self):
+        owner,checkpoint,allocation=self._inputs
+        v.require(self.original_owner is owner and self.original_checkpoint is checkpoint and
+            self.original_allocation is allocation and self.FORMAT=='anomaly-v03-partitioned-archive-preparation-v1',
+            'partition archive original owner/allocation changed')
+        if self._prepared is not None:
+            v.require(self._prepared is self._prepared_anchor[0] and
+                io.json_bytes(allocation)==self._prepared[0] and
+                io.json_bytes(self._prepared[4])==self._prepared_anchor[1], 'partition archive caller allocation changed')
+        v.require(self._ledger is self._ledger_anchor and type(self.completed) is list and len(self.completed)==len(self._ledger) and
+            all(row is held[0] and io.json_bytes(row)==held[1] for row,held in zip(self.completed,self._ledger)),
+            'partition archive completed prefix changed')
+        v.require(type(self.rejected) is list and len(self.rejected)==len(self._owners) and
+            all(row is held[0] and row.get('preparation') is held[1] for row,held in zip(self.rejected,self._owners)),
+            'partition archive original incoming owner hidden')
+        v.require(self.pending is self._pending,'partition archive pending owner hidden')
+        if self._pending_input is not None:
+            key,value=self._pending_input
+            v.require(self._pending.get(key) is value,'partition archive pending input hidden')
+        for held,original_view,frames,raw,pin_raw,packet,packet_raw in self._return_bindings:
+            view=held['view']
+            v.require(view is original_view and view['frames'] is frames and view['manifest_raw'] is raw and
+                io.json_bytes(view['manifest_pin'])==pin_raw and
+                (packet is None or held['readback'] is packet and self._packet_raw(packet)==packet_raw),
+                'partition archive original returned view/readback changed')
+        for held in self._ledger:
+            view=held[2].view()
+            v.require(view['manifest_raw'] is held[3] and view['frames'] is held[4],
+                'partition archive original registered bytes changed')
+        if self._bundle_anchor is not None:
+            bundle,pin_raw=self._bundle_anchor
+            v.require(self._bundle is bundle and io.json_bytes(bundle[2])==pin_raw,
+                'partition archive original bundle changed')
+        v.require(type(self.incoming) is list and len(self.incoming)==len(self._incoming) and
+            all(row is held[0] and row.get('archive_raw') is held[1] and row.get('manifest_raw') is held[2] and
+                row.get('manifest_pin') is held[3] for row,held in zip(self.incoming,self._incoming)),
+            'partition archive original incoming bytes hidden')
+
+    def _clock(self):
+        self._fixed();self.original_checkpoint();self._fixed()
+
+    def prepare(self):
+        if self._failure is not None:raise self._failure
+        try:
+            self._fixed()
+            if self._prepared is not None:return self.plan()
+            self.pending=self._pending={'allocation':self.original_allocation}
+            self._pending_input=('allocation',self.original_allocation)
+            v.require(self.original_owner is not None and callable(self.original_checkpoint),
+                'partition archive caller owner/shared clock')
+            value=self.original_allocation
+            v.require(type(value) is dict and set(value)=={'format','context','call_growth_maxima','archive_max_bytes','formal_permission'} and
+                value['format']==self.FORMAT and value['formal_permission'] is False,
+                'partition archive exact closed allocation')
+            context=value['context'];maxima=value['call_growth_maxima'];maximum=value['archive_max_bytes']
+            v.require(type(context) is dict and set(context)==PacketPartitionPreparation.CONTEXT_FIELDS-{'lease'} and
+                type(maxima) is list and 0<len(maxima)<=proof.channel.MAX_JOBS and
+                all(type(n) is int and 0<n<=MAX_BYTES for n in maxima) and
+                type(maximum) is int and 0<maximum<=MAX_BYTES and sum(maxima)<=maximum,
+                'partition archive all future call maxima before codec')
+            evidence._digest(context['revision'],40);evidence._pin(context['request_pin']);evidence._pin(context['inventory_pin'])
+            v.require(type(context['root_identity']) is list and len(context['root_identity'])==2 and
+                all(type(n) is int and n>=0 for n in context['root_identity']), 'partition archive original root identity')
+            root=Path(context['root']);v.require(root.is_absolute() and str(root)==str(root.resolve()),'partition archive canonical root')
+            raw=io.json_bytes(value);self.pending['allocation_raw']=raw
+            v.require(len(raw)<=proof.channel.MAX_CONTROL,'partition archive allocation bytes')
+            self._prepared=(raw,io.json_bytes(context),tuple(maxima),maximum,observed._pin(raw))
+            self._prepared_anchor=(self._prepared,io.json_bytes(self._prepared[4]))
+            self._clock();self.pending=self._pending=self._pending_input=None;return self.plan()
+        except BaseException as error:self._failed(error)
+
+    def plan(self):
+        if self._failure is not None:raise self._failure
+        try:
+            self._fixed();v.require(self._prepared is not None,'partition archive original allocation required')
+            return {'allocation_pin':copy.deepcopy(self._prepared[4]),'planned_calls':len(self._prepared[2]),
+                'reserved_maxima_bytes':sum(self._prepared[2]),'actual_growth_bytes':sum(row['growth_bytes'] for row in self.completed),
+                'atomic_reservation':False,'capacity_pass':False,'native_authorized':False,'lease_completed':False,
+                'parent_ack_authorized':False,'execution_authenticated':False}
+        except BaseException as error:self._failed(error)
+
+    def register(self,preparation):
+        if self._failure is not None:raise self._failure
+        held={'preparation':preparation};self.rejected.append(held);self._owners+=((held,preparation),)
+        try:
+            v.require(self._pending is None,'partition archive original pending cannot be replaced')
+            self.pending=self._pending=held;self._pending_input=('preparation',preparation);self._clock()
+            v.require(self._prepared is not None and self._bundle is None and
+                len(self.completed)<len(self._prepared[2]) and type(preparation) is _PARTITION_PREPARATION_TYPE,
+                'partition archive ordered original packet preparation')
+            lease=len(self.completed);context={**v.strict_json(self._prepared[1]),'lease':lease}
+            v.require(preparation.original_owner is self.original_owner and
+                preparation.original_checkpoint is self.original_checkpoint and preparation.original_context==context,
+                'partition archive same original owner/clock/request/root/inventory/lease')
+            if self._ledger:
+                v.require(self._ledger[-1][5]['kind']!='recovery','partition archive no packet after recovery prefix')
+            held['view']=view=preparation.view();self._returns+=(view,)
+            binding=(held,view,view['frames'],view['manifest_raw'],io.json_bytes(view['manifest_pin']),None,None)
+            self._return_bindings+=(binding,)
+            held['readback']=packet=preparation.readback(frames=view['frames'],manifest_raw=view['manifest_raw'],manifest_pin=view['manifest_pin'])
+            self._returns+=(packet,)
+            packet_raw=self._packet_raw(packet)
+            self._return_bindings=self._return_bindings[:-1]+(binding[:5]+(packet,packet_raw),)
+            self._fixed()
+            v.require(packet==preparation.original_packet,'partition archive original full readback packet')
+            growth=sum(len(f) for f in view['frames']);held['growth_bytes']=growth
+            v.require(growth<=self._prepared[2][lease] and sum(row['growth_bytes'] for row in self.completed)+growth<=self._prepared[3],
+                'partition archive original call and total growth maxima')
+            row={'lease':lease,'offset':sum(row['growth_bytes'] for row in self.completed),'growth_bytes':growth,
+                'packet_manifest_pin':copy.deepcopy(view['manifest_pin'])}
+            self._clock();self.completed.append(row)
+            self._ledger+=((row,io.json_bytes(row),preparation,view['manifest_raw'],view['frames'],packet),)
+            self._ledger_anchor=self._ledger
+            self.pending=self._pending=self._pending_input=None;return self.plan()
+        except BaseException as error:self._failed(error)
+
+    def bundle(self):
+        if self._failure is not None:raise self._failure
+        try:
+            self._fixed();v.require(self._prepared is not None and len(self._ledger)==len(self._prepared[2])>0,
+                'partition archive full planned-call coverage before bundle')
+            if self._bundle is None:
+                raw=b''.join(frame for held in self._ledger for frame in held[4]);self._returns+=(raw,)
+                manifest={'format':self.FORMAT+'-manifest','allocation_pin':self._prepared[4],
+                    'archive_pin':observed._pin(raw),'packets':copy.deepcopy(self.completed),'formal_permission':False}
+                encoded=io.json_bytes(manifest);self._returns+=(encoded,)
+                v.require(len(raw)<=self._prepared[3] and len(encoded)<=proof.channel.MAX_CONTROL,
+                    'partition archive complete payload/manifest bounds')
+                self._bundle=(raw,encoded,observed._pin(encoded))
+                self._bundle_anchor=(self._bundle,io.json_bytes(self._bundle[2]))
+            return {'archive_raw':self._bundle[0],'manifest_raw':self._bundle[1],'manifest_pin':copy.deepcopy(self._bundle[2]),
+                'native_authorized':False,'atomic_reservation':False,'capacity_pass':False,'lease_completed':False,
+                'parent_ack_authorized':False,'execution_authenticated':False}
+        except BaseException as error:self._failed(error)
+
+    def readback(self, *, archive_raw, manifest_raw, manifest_pin):
+        if self._failure is not None:raise self._failure
+        held={'archive_raw':archive_raw,'manifest_raw':manifest_raw,'manifest_pin':manifest_pin}
+        self.incoming.append(held);self._incoming+=((held,archive_raw,manifest_raw,manifest_pin),)
+        try:
+            self._clock();view=self.bundle()
+            v.require(type(archive_raw) is bytes and type(manifest_raw) is bytes and
+                archive_raw==view['archive_raw'] and manifest_raw==view['manifest_raw'] and
+                manifest_pin==view['manifest_pin'],'partition archive external full raw/manifest pin')
+            evidence._raw(manifest_raw,manifest_pin,'partition archive original manifest readback')
+            manifest=v.strict_json(manifest_raw)
+            evidence._raw(archive_raw,manifest['archive_pin'],'partition archive full original raw pin')
+            offset=0
+            for row,original in zip(manifest['packets'],self._ledger):
+                v.require(row['offset']==offset and row['lease']==original[0]['lease'] and
+                    archive_raw[offset:offset+row['growth_bytes']]==b''.join(original[4]),
+                    'partition archive ordered full packet coverage')
+                offset+=row['growth_bytes']
+            v.require(offset==len(archive_raw),'partition archive no trailing or partial prefix')
+            self._clock();return tuple(original[5] for original in self._ledger)
+        except BaseException as error:self._failed(error)
+
+    def execute(self):
+        if self._failure is not None:raise self._failure
+        raise ValueError('partition archive native/publication admission not prepared')
+
+
 class ArchiveAppendAdmission:
     """Opt-in frame growth and future control snapshot gate, not atomic reservation.
 
