@@ -1,5 +1,19 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST 現source・工程合成packetのcompressed上限拒否
+
+開始2026-10-08T07:48:35Z/HEAD2edd91bb8a0f63d76c66575fdf95d5a2bcde78ba-origin-clean/先行元8helper同creation-token不在/repo helper-critical ownerなし。production code d4e5f2ec90a9c17be90af4eadebadb4b769a409b不変、production/test0/完成focus/旧suite/13AST監査/native/追加agent/profile再観測0。詳細docs/results/anomaly-multiseed-v0.3-worker-packet-capacity-2026-10-08.md、原 artifacts/preformal-worker-packet-capacity-20261008-prep/ と metadata continuation artifacts/preformal-worker-packet-capacity-continuation-20261008-prep/だけを対象にする。doc-only3文書を一回skip ciへ集約。
+
+現60source-science working-Git/名前30合計820544B/最大job_tree_owner120035Bを固定、予定64callはmetadataのみ。原fixture1callで原FileIOのsource_blob失敗stdout131072/stderr16384/receipt2544と元post-close eventを実ProofVerifier→実WorkerGitArchive encoderへ結び、compressed154696B>MAX_RECORD131072B（超23624B）でappend前拒否。原raw150000B/encoded200873B、frame-candidate未生成/_append_frame0/原archive0B/partialNone。旧event空/receiptNone probe・旧幅/profileを流用せず、合成API/identity/exe/Job/exit/closeを実native認証にしない。source60/名前30/予定64はruntime未閉包。fake原call return個別ledgerはmetadata保存前失敗で未保存、成功flagsから補わない。
+
+原helper49300/134359199561702246/token6fbec55b2c513c0457ddce1d8df47e6215335094a019b540338892958b1e3088はtupleのcanonical JSON metadata失敗/exit1でfailed保持。原protocol確認・上限拒否・gzip2part正常保存後の失敗、実native0criticalfalse/未知native-stream IOなし。原14file319974Bを閉じ、同script/encoder/protocol再実行0。continuation47100/134359202381141235/token4bc43d03b55afd2c95756140fdb6137b6b6b9efd8fcd72c0b50ebfb1d2616072はgzipのbounded readbackだけで原encoded/event/raw/inventory/request/0archiveを照合して未保存metadataを保存。receipt移動・原root追加・原failed書換えなし。tool traceを原process log全体へしない。
+
+原raw150000＋raw_b64 ASCII payload200004＋encoded200873＋compressed154696からsourceに結ぶgzip return時payload下限705573Bを算出。object/RSS/一時copy/caller追加保持/他writer/native/carrier/partial/new archive growth/親failureのcoupled peak/global memoryは未測定、capacity/atomic/native/ack/auth=false。packet readback2885B/98aeac6858714e9af70e9c6509535a7ed623aab6f27895f9d45c9af4e3127433、preparation37338B/54a9c9c929b674cb8a373bbb389c1ce8fd7112c88e71465edadfe26987494c25、checkpoint13141B/3376e13195ba49cf430047edc477531962e4e4fd0022b06ced4bd4a34fa2e8ce。元failed/passed同creation-token不在/旧3root不変照合済み。docpush後metadataだけpost照合しcontinuation閉鎖。完成focus反復なし。
+
+次はcompressed上限を緩和せず新closed形式の分割/別raw参照とsame lease-request-root-inventory/原owner/full readback/manifest pinを結ぶ契約準備。旧v1/request/entry/context/ack/proof/pinの解釈変更なし。fresh source-runtime-profile-policy-request-unusedroot/exclusive/実coupled peak/global memory/all-writer予約/原Create-Assign-member return/HANDLE owner/attribute lifetime/child transport認証は未完成。create_native早期拒否/native入口/全7役whole.run限定reader実起動禁止維持。
+
+未保存CI37743146137/gitfull d4e5f2ec90a9c17be90af4eadebadb4b769a409bは今回attempt1/push/Phase1CI、3.12job113198312223in_progress/3.14job113198312515success、compare未発行/run未終端。3844予定/journal未確認、今回終端保存0、doc-only新CI追跡なし。完成3829と旧CI/focus/rawへ追加・反復なし。formal permission=false/credit0/holdout未読/正式5残件未完了、原caps/stop保持/Sol容量未確認/ACTIVE。
+
 ## 2026-10-08 JST 原raw Job/process準備revision CI3829の終端保存
 
 開始2026-10-08T07:33:35Z/HEAD5815ef6441a0e34484d826c9775d01128b548fc3-origin-clean、先行元5helper同creation-token不在/repo helper-critical ownerなし。production/test0/native0/完成focus/旧suite/追加agent/profile再観測0。詳細docs/results/anomaly-multiseed-v0.3-ci-native-process-save-2026-10-08.md、raw artifacts/ci-diagnostic-37739862442/、batch artifacts/preformal-ci-native-process-save-20261008-prep/だけを対象にする。doc-only3文書を一回skip ciへ集約。

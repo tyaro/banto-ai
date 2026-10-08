@@ -1,5 +1,11 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 2026-10-08 JST 最新buffer revisionの未終端状態
+
+production d4e5f2ec90a9c17be90af4eadebadb4b769a409b不変。未保存CI37743146137は今回attempt1/push/Phase1CI、3.12job113198312223in_progress/3.14job113198312515success、compare未発行/run未終端。3844は算術予定/journal未確認、今回終端download/local回帰/runner追加0、doc-only新CI追跡なし。完成3829/3812/旧CIは反復しない。
+
+今回はproduction/test0の容量準備unitで、現sourceと原工程合成失敗receipt/eventを実encoderへ結んだcompressed154696B>131072B拒否を保全した。fake native factsを現CI/Win ABI/容量/正式受入へ読み替えず、metadata JSON失敗後は原gzip readbackだけで未保存metadataを別rootへ保存。詳細worker-packet-capacity-2026-10-08文書。元raw/失敗/旧root保持、native入口拒否維持。
+
 ## 2026-10-08 JST 原raw Job/process準備revision CI3829の完成保存
 
 CI37739862442/full1e1c900cbe8c909f28da552488c31d8dff8263b2/attempt1/push/Phase1CI/.github/workflows/ci.yml/3job113187830209・113187830427・113201365843successへ原run/jobs固定。各実3829/fail0/error0/skip237/source不変、10raw14pin/local-remote回帰一致/comparison matched/共有29必須28/runner v2consistent_candidate/full journal passed完成。index2783B/6c90fc535b8addc1ab23553eb6577ebc13e0ce97656cae1215b70fe4c4ecbdf1、summary2584B/1f20b43a69fdf0bedfd246eaac937bb18684547488303f9fee90c7abdc341701。実journal件数・実summary両pin取得後に新scriptを発行し、旧完成script/旧summary-pin失敗反復0。詳細ci-native-process-save-2026-10-08文書、新専用CI/batch rootへ一度保存。
