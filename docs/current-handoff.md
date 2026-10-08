@@ -1,5 +1,19 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST publication原issuer・専用pipe・未共有closeの経路保存
+
+code aab97b86334baafa399067ba646ff8afd51850e9はunit一回commit/push/origin一致、doc追補skip ci。詳細docs/results/anomaly-multiseed-v0.3-publication-pipe-resources-2026-10-08.md、raw artifacts/preformal-publication-pipe-resources-20261008-prep/だけを対象にする。
+
+PublicationPipeResourcesは元issuer/checkpoint/Python/bootstrap ownerをIO前保持→元kernel返値をgetter/clock前保持→元creator/原CreatePipe return/event/全4HANDLE保持→同じParent request/inventory/storage/root/clockから既存launch preparationへ接続。cached issueのissuer/CreatePipe/clock反復なし。close_unlaunchedはPopen/launch準備/carrier共有/spawn/Job/process/thread前の原専用4HANDLEだけに限定、原CloseHandle named call/return/return_observed/known成功prefixとremaining/元UnclosedHandlesを保持。False/unknown/clock/割込み/callback改変/診断IOは原errorを覆わず原owner/raw/pending/未回収HANDLEを保持しreclose/reissue/後続work拒否。原share tupleでmarker消去後の未共有closeも拒否。全4known returnでもnative_owner_recovered/ack/auth=false。FileIO.closeとWin CloseHandleを区別し、専用4をstdio inherited最大3へ読み替えない。
+
+新21distinct/unique21、初回19一回22.4814086秒pass＋新risk2だけ0.0040203秒pass、旧焦点/19反復0、最終source単一21success runではない。各56source/science pin前後不変/補強以外54両component/先行共通52pin不変/変更4file safety0/clean code-save56working-Git。focused 17395B/f58fc94909a72238fa41f6f025d84a968bf8d15a3cb1fe7604d77813948a9fdd、v2 17396B/55171ae604d61dda67c9f3066f8a7c8921150fa7da312574a87fe2ccc8dcd1d0、components 948B/62d25515d47f2b823cf4c10fdca74e817d416b8d7ea10d6d54f5beedfdf386d8、code-save 8768B/6b93af1cfad565f00f3061d74cfdae7509d53326d8c3161240b5302816ecac4d。元helper49692/134359048777680729/tokenff994d580cfb381001b574814fc75b63177af48f8eae33dabe249d4cc06960d4、43992/134359050869021044/token8d254149c67f03cf84544efdd18acfd2c91f3a096caf252a67f85a8268aa3016、metadata49872/134359053452083864/token567d802c4bd330d813c1b695530e9b283e30050735622b9cab562fd1ff77e83aは各live/execution/passed、保存後creation/CIM照合へまとめる。
+
+fake kernel/CreatePipe/CloseHandle/Popen/creation＋実小FileIO/root/channel gate、snapshot明示stub。実worker/Job/pipe/exe/native0、追加agent0/profile再観測0。native/atomic/capacity/ack/auth=false。実launcher/kernel発行、共有後close/明示HANDLE複製・inheritance、原child IO owner transport認証は未接続。上位generate/supervisor/READER_BOOTSTRAPから新発行を呼ばず、create_nativeのroot/channel/clock/Job前拒否維持。名前30source/phase32/予定64Job・最新phase762433B/最大archive94908Bは未閉包。同期issuer/CloseHandle/Peek/Read/Write/caller間wall・停止保証は未実証。
+
+次は共有後HANDLE/原launcher owner/元Popen HANDLE creation/child-local close-rename-raw witness transport認証を対象sourceから機能unitで準備。fresh最終clean source/runtime/profile/private policy/request/unusedroot、全writer同request/root atomic予約/親failure raw/diagnostic/partialとnew growth別予約/entry-context実bytes/coupled peak/global/memory/exclusive未完成。準備前native/全7役whole.run限定reader起動禁止、旧pin/model/producer pre26post24流用なし。formal s4_acceptance_not_frozen/permission=false/credit0/holdout未読。
+
+未保存CI37721863325/fulle0f8fc4b0121bde9b1755bd7858b7ced3c01b09aは開始時in_progress、後のreadがtool session6296 unexpected EOF/exit1、原readfailure 494B/09fb0e128e317167454876ec006d39efb5bde7d0d31b023a063815b20b4c89dcを保存・今回再照会0・終端未確認。37722343194/fullb4366887f9b49509ae5722b41a3e683fd1586dbbは3.12job113132652418 success/3.14job113132652615 in_progress/run未終端。新37724967759/fullaab97b86334baafa399067ba646ff8afd51850e9はin_progress、各minor3769予定/journal未確認。実fullSHA/workflow/run/attempt/jobsに終端固定→専用root一度保存、success時のみjournal/local回帰/runner候補、failure小原因/原raw。doc-only新CI追跡なし。旧377179 failure/完成CI/focus/旧raw保全、反復なし。Sol容量エラー未確認、ACTIVE維持。
+
 ## 2026-10-08 JST reader publication launcher準備＋CI失敗修正の保存
 
 code e0f8fc4b0121bde9b1755bd7858b7ced3c01b09a（launcher準備）、最終code b4366887f9b49509ae5722b41a3e683fd1586dbb（原worker型保持）は各unit一回commit/push/origin一致。doc追補はまとめてskip ci。詳細docs/results/anomaly-multiseed-v0.3-reader-publication-launch-preparation-2026-10-08.md、raw artifacts/preformal-reader-publication-launch-preparation-20261008-prep/・artifacts/preformal-reader-initialization-type-20261008-prep/。

@@ -1,5 +1,11 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## Publication pipe resources unit後の未終端CI状態（2026-10-08 JST）
+
+37721863325/full e0f8fc4b0121bde9b1755bd7858b7ced3c01b09aは開始時in_progress、後の状態readでtool-owned session6296/unexpected EOF/exit1を保存、今回再照会0。run結論/jobs固定/terminal raw保存には読み替えない。原readfailure artifacts/preformal-publication-pipe-resources-20261008-prep/ci-377218-read-failure.json 494B/09fb0e128e317167454876ec006d39efb5bde7d0d31b023a063815b20b4c89dc。
+
+37722343194/full b4366887f9b49509ae5722b41a3e683fd1586dbbは3.12job113132652418 success、3.14job113132652615 in_progressでrun未終端。新37724967759/full aab97b86334baafa399067ba646ff8afd51850e9はpush後in_progress、各minor3769予定はjournal未確認。今回新terminal保存/local回帰/runner採択0。詳細publication-pipe-resources文書。先行37717924409 failure4raw/両log3725/errors4/skip237/比較skippedは維持し、最新部品passをCI success/native/容量/正式受入へ読み替えない。
+
 ## 先行storage CI failure保存と原worker型保持修正（2026-10-08 JST）
 
 CI37717924409/fullfa82cf720df6a428ad0c4b344b0fe100e0bd05a0/attempt1/push/Phase 1 CIを元workflow/fullHEAD/全3jobへ固定。3.12job113118624742/3.14job113118624568がfailure、compare113130017845がskipped。専用artifacts/ci-diagnostic-37717924409/にrun/jobs/両failed-step logの4rawを一度保存、各log3725tests/errors4/skip237。原因はReaderGitWorker factoryをMockへ置換した試験でisinstanceの第2引数が型でなくTypeErrorとなり元例外を覆ったこと。元failureを成功へ書き換えない。failure-summary 4184B/ffe55f52a42611b6139a66894257abcfe54c8b058e64bf944c9c456b4b642497。
