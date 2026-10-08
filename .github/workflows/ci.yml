@@ -9,16 +9,13 @@ permissions:
 
 jobs:
   test:
+    name: test (3.14)
     runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.12", "3.14"]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: "3.14"
       - name: Compile Python sources
         run: python -m compileall -q src tests tools
       - name: Run unittest
@@ -38,12 +35,12 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: unittest-ubuntu24-python${{ matrix.python-version }}-${{ github.run_id }}-${{ github.run_attempt }}
+          name: unittest-ubuntu24-python3.14-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/ci-tests/unittest.jsonl
           if-no-files-found: error
           retention-days: 14
 
-  compare-shared-fixtures:
+  verify-python314-journal:
     needs: test
     runs-on: ubuntu-24.04
     steps:
@@ -53,25 +50,17 @@ jobs:
           python-version: "3.14"
       - uses: actions/download-artifact@v8
         with:
-          name: unittest-ubuntu24-python3.12-${{ github.run_id }}-${{ github.run_attempt }}
-          path: artifacts/ci-fixtures/python3.12
-          digest-mismatch: error
-      - uses: actions/download-artifact@v8
-        with:
           name: unittest-ubuntu24-python3.14-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/ci-fixtures/python3.14
           digest-mismatch: error
-      - name: Compare shared hand fixtures
-        run: python -B tools/ci_compare_fixtures.py
-      - name: Verify required regression journals
+      - name: Verify Python 3.14 regression journal and shared fixture inventory
         env:
           EXPECTED_HEAD: ${{ github.sha }}
           EXPECTED_RUN_ID: ${{ github.run_id }}
           EXPECTED_RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
           workflow_sha256="$(git show HEAD:.github/workflows/ci.yml | sha256sum | awk '{print $1}')"
-          python -B tools/ci_verify_regression_journals.py \
-            --python312 artifacts/ci-fixtures/python3.12/unittest.jsonl \
+          python -B tools/ci_verify_python314_journal.py \
             --python314 artifacts/ci-fixtures/python3.14/unittest.jsonl \
             --expected-head "$EXPECTED_HEAD" \
             --expected-workflow-sha256 "$workflow_sha256" \
@@ -82,13 +71,11 @@ jobs:
       - name: Repository safety guard
         if: always()
         run: python tools/safety_check.py
-      - name: Preserve shared fixture comparison
+      - name: Preserve Python 3.14 journal verification
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: shared-fixtures-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            artifacts/ci-fixtures/comparison.json
-            artifacts/ci-fixtures/regression.json
+          name: python314-journal-verification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/ci-fixtures/regression.json
           if-no-files-found: error
           retention-days: 14

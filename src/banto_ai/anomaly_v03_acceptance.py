@@ -15,15 +15,18 @@ from . import anomaly_v03 as v
 from . import _anomaly_v03_contract as c
 from .manifest import ManifestValidationError, validate
 
-SCHEMA_PATH = "schemas/anomaly-v03-engineering-inspection-v1.schema.json"
-RECEIPT_VERSION = "s4-a.2"
+LEGACY_SCHEMA_PATH = "schemas/anomaly-v03-engineering-inspection-v1.schema.json"
+LEGACY_RECEIPT_VERSION = "s4-a.2"
+SCHEMA_PATH = "schemas/anomaly-v03-engineering-inspection-v2.schema.json"
+RECEIPT_VERSION = "s4-a.3"
 WORKFLOW = ".github/workflows/ci.yml"
 ROLES = ("producer", "analysis", "audit", "worker", "workflow")
-REQUIREMENTS = (
+LEGACY_REQUIREMENTS = (
     "native-publisher", "protected-dacl", "independent-token",
     "windows-3.14.0", "linux-3.12", "linux-3.14", "linux-image-identity",
     "consumer-freeze", "runtime-closure", "dev-smoke-capacity",
 )
+REQUIREMENTS = tuple(name for name in LEGACY_REQUIREMENTS if name != "linux-3.12")
 LIMITATIONS = (
     "observation-not-runtime-closure", "environment-values-not-captured",
     "search-policy-observed-not-enforced", "no-image-attestation",
@@ -41,8 +44,13 @@ REQUIRED_PRODUCER_PATHS = (*c.CONFIG_PATHS, *c.SCHEMA_PATHS, c.PLAN_PATH, "src/b
         "anomaly_v03_runner", "_anomaly_v03_runtime", "_anomaly_v03_io")), "tools/evaluator/run_anomaly_v03.py")
 
 
-def receipt_schema():
+def receipt_schema(*, version=RECEIPT_VERSION):
     """Fresh closed schema; no I/O, runtime probing or scientific configuration."""
+    if version not in (RECEIPT_VERSION, LEGACY_RECEIPT_VERSION):
+        raise ValueError("unknown inspection receipt version")
+    legacy = version == LEGACY_RECEIPT_VERSION
+    requirements = LEGACY_REQUIREMENTS if legacy else REQUIREMENTS
+    schema_path = LEGACY_SCHEMA_PATH if legacy else SCHEMA_PATH
     def obj(properties):
         return {"type": "object", "properties": properties, "required": list(properties), "additionalProperties": False}
     def arr(items, minimum=0):
@@ -79,9 +87,9 @@ def receipt_schema():
             "native_method": enum("EnumProcessModulesEx", "proc-self-maps"),
             "limitations": {"const": list(LIMITATIONS), "type": "array", "items": text}}),
     })
-    schema = obj({"receipt_version": {"const": RECEIPT_VERSION, "type": "string"},
+    schema = obj({"receipt_version": {"const": version, "type": "string"},
         "acceptance_status": {"const": "not_completed", "type": "string"},
-        "requirements": obj({name: {"const": "not_completed", "type": "string"} for name in REQUIREMENTS}),
+        "requirements": obj({name: {"const": "not_completed", "type": "string"} for name in requirements}),
         "stable": stable,
         "observation": obj({"pid": count, "observed_utc": text, "elapsed_seconds": number,
             "free_bytes": count, "peak_process_bytes": nullable(count),
@@ -91,7 +99,7 @@ def receipt_schema():
                 "trust_status": {"const": "not_accepted", "type": "string"}}), 1),
             "native_load_order": arr(text, 1)})})
     return {"$schema": "https://json-schema.org/draft/2020-12/schema",
-        "$id": "https://banto-ai.local/"+SCHEMA_PATH,
+        "$id": "https://banto-ai.local/"+schema_path,
         "description": "S4-A inspection only; all acceptance remains incomplete; no run authority.", **schema}
 
 
@@ -114,7 +122,8 @@ def validate_receipt(receipt, *, expected_stable_sha256: str, source_snapshots: 
     stable pin. Volatile observations are shape-checked but not equivalence-pinned.
     """
     v.require(type(expected_stable_sha256) is str and re.fullmatch("[a-f0-9]{64}", expected_stable_sha256), "external stable pin required")
-    schema = receipt_schema()
+    legacy = type(receipt) is dict and receipt.get("receipt_version") == LEGACY_RECEIPT_VERSION
+    schema = receipt_schema(version=LEGACY_RECEIPT_VERSION if legacy else RECEIPT_VERSION)
     v.json_value(receipt)
     try:
         validate(receipt, schema)
@@ -141,7 +150,8 @@ def validate_receipt(receipt, *, expected_stable_sha256: str, source_snapshots: 
     loaded_exe, executable = native[executable_native_path], py["executable"]
     v.require((loaded_exe["raw_sha256"], loaded_exe["byte_count"]) ==
               (executable["raw_sha256"], executable["byte_count"]), "executing Python image bytes mismatch")
-    v.require(re.fullmatch(r"3\.(12|14)\.[0-9]+", py["version"]), "unsupported runtime version")
+    version_pattern = r"3\.(12|14)\.[0-9]+" if legacy else r"3\.14\.[0-9]+"
+    v.require(re.fullmatch(version_pattern, py["version"]), "unsupported runtime version")
     v.require(not py["gil_disabled"] and host["local_fixed"], "unsupported runtime mode/filesystem")
     v.require(stable["cpu"]["architecture"] == host["architecture"], "CPU architecture mismatch")
     if host["system"] == "Windows":
@@ -182,7 +192,11 @@ def validate_receipt(receipt, *, expected_stable_sha256: str, source_snapshots: 
                 v.require([r["path"] for r in source["files"]] == [WORKFLOW], "workflow source missing/extra")
             collected[source["role"]] = source
     v.require("producer" in collected and "workflow" in collected, "producer/workflow required")
-    v.require(set(REQUIRED_PRODUCER_PATHS) <= {r["path"] for r in collected["producer"]["files"]}, "required producer source missing")
+    required_paths = set(REQUIRED_PRODUCER_PATHS)
+    if legacy:
+        required_paths.remove(SCHEMA_PATH)
+        required_paths.add(LEGACY_SCHEMA_PATH)
+    v.require(required_paths <= {r["path"] for r in collected["producer"]["files"]}, "required producer source missing")
     v.require(_workflow_count(collected) == 1, "workflow must be separately captured")
     v.require(collected["producer"]["revision"] == collected["workflow"]["revision"], "workflow revision mismatch")
     if source_snapshots is not None:

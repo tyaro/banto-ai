@@ -93,7 +93,7 @@ class CiTestReportTests(unittest.TestCase):
             ci.main()
 
     def test_linux_runtime_metadata_keeps_actual_patch_and_missing_image_digest(self):
-        for minor in (12, 14):
+        for minor in (14,):
             version = f"3.{minor}.7"
             with self.subTest(minor=minor), patch.object(ci, "sys", SimpleNamespace(
                     platform="linux", version_info=(3, minor, 7), version="CPython build details")), \
@@ -130,7 +130,8 @@ class CiTestReportTests(unittest.TestCase):
 
     def test_other_linux_release_architecture_minor_and_gil_are_rejected(self):
         cases = [("26.04", "x86_64", (3, 14), 0), ("24.04", "aarch64", (3, 14), 0),
-                 ("24.04", "x86_64", (3, 13), 0), ("24.04", "x86_64", (3, 14), 1)]
+                 ("24.04", "x86_64", (3, 12), 0), ("24.04", "x86_64", (3, 13), 0),
+                 ("24.04", "x86_64", (3, 15), 0), ("24.04", "x86_64", (3, 14), 1)]
         for release, arch, version, gil in cases:
             with self.subTest(release=release, arch=arch, version=version, gil=gil), \
                     patch.object(ci, "sys", SimpleNamespace(platform="linux", version_info=version)), \

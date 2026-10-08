@@ -1,5 +1,13 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST 人の指定：Python 3.14へ一本化（自走PAUSED維持）
+
+人の「了解です。3.14固定で構いません」により、Python版の固定だけを今回の限定作業として実施。対応宣言は>=3.14,<3.15、Ubuntu 24.04 CIは3.14 test一つと独立journal検証jobへ変更。3.12 job・版間比較を外し、新ci-python314-journal.1で共有29fixture inventory/必須28ID/完了・skip理由/外部source-workflow-run-attempt pinを維持。新しい成功を版間comparison matchedへ読み替えない。Windows正式runtimeの3.14.0/build/hash、native早期拒否・科学仕様・seed・正式permissionは変更しない。
+
+新inspection s4-a.3/v2 schemaはlinux-3.12要件を持たず、3.14のみ受ける。旧s4-a.2/v1 schemaと旧2journal検証器は履歴読取り用に保存し、旧schema bytesを変更しない。collector/reportの新3.12実行はpath/discovery/native IO前に拒否。対象13試験一回＋review新1だけ一回がpass、別source/runで最終source単一14successではない。全suite/旧CI raw/完成focus/native/追加agent/profile再観測0。詳細docs/results/anomaly-multiseed-v0.3-python314-unification-2026-10-08.md、専用artifacts/python314-unification-20261008-prep/へ保存。変更後CI終端結果は未確認で、過去の3.14成功を新revisionへ自動転用しない。
+
+heartbeat banto-10はPAUSEDを維持し、自走の再開指示ではない。過去CI37756831995のartifact EOF・部分保存、37763660778の未終端最終観測、旧原failed helper/rawは前節の終了記録として保全・再照会なし。元wall/output/root capsとstop/owner保持を維持。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/登録holdout観測未読、Windows実機検証・正式5残件・最終受入は未完了。
+
 ## 2026-10-08 JST 最終自走ターン：証拠保全後に停止
 
 人の終了指定により、このターンで自走を終了する。開始2026-10-08T10:45:39Z、HEADc2b161d3d111a9a8f2812cc2e0f4c733b20ebe41/origin一致・clean、production5d52f8d7f38e043295a79af00f94748edbcd6347不変。新production/test/focus/native/agent/業務worker/計算0。元post16660と今回metadata helperの元creation/start_token・live/executionを照合し、read-only CIMで全original不在/repo helper・critical ownerなし。旧prep21file100198B/continuation13file57702B/CI3864root38file10327138B不変。unknown native ownerをmetadata/EOF/kill-waitで回収trueへしない。

@@ -251,7 +251,7 @@ def _linux_cpu():
 def probe_host(root):
     """Compatibility observation; this cannot open the formal runtime guard."""
     rt.require(sys.dont_write_bytecode, "inspection requires disabled bytecode writes")
-    rt.require(platform.python_implementation() == "CPython" and sys.version_info[:2] in ((3, 12), (3, 14))
+    rt.require(platform.python_implementation() == "CPython" and sys.version_info[:2] == (3, 14)
                and struct.calcsize("P") == 8 and not sysconfig.get_config_var("Py_GIL_DISABLED"), "unsupported_runtime")
     rt.require(os.name != "nt" or sys.version_info[:3] == (3, 14, 0), "unsupported_runtime")
     root = rt.regular_path(root, directory=True)

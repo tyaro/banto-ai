@@ -37,11 +37,11 @@ def fixture():
     sources = [{"role": role, "state": "not_collected", "revision": None, "files": []} for role in a.ROLES]
     sources[0].update(state="collected", revision="a"*40, files=[entry(p) for p in sorted(a.REQUIRED_PRODUCER_PATHS)])
     sources[4].update(state="collected", revision="a"*40, files=[entry(a.WORKFLOW)])
-    return {"receipt_version": "s4-a.2", "acceptance_status": "not_completed",
+    return {"receipt_version": a.RECEIPT_VERSION, "acceptance_status": "not_completed",
         "requirements": dict.fromkeys(a.REQUIREMENTS, "not_completed"),
         "stable": {"platform": {"system": "Linux", "release": "24.04", "version": "hand-kernel", "build": None,
             "ubr": None, "edition": "ubuntu", "architecture": "x86_64", "filesystem": "ext4", "local_fixed": True},
-            "python": {"implementation": "CPython", "version": "3.12.8", "compiler": "hand-compiler", "gil_disabled": False,
+            "python": {"implementation": "CPython", "version": "3.14.8", "compiler": "hand-compiler", "gil_disabled": False,
                 "source_tag": "hand-tag", "pointer_bits": 64, "executable": entry("python/python", b"hand executable"),
                 "executable_native_path": "native/python", "loaded_python_dll": None,
                 "basic_pin": "compatibility-only"},
@@ -112,11 +112,31 @@ class AcceptanceContractTests(unittest.TestCase):
     def test_both_linux_minors_remain_compatibility_only_and_unaccepted(self):
         for version in ("3.12.8", "3.14.0"):
             value = fixture()
+            value["receipt_version"] = a.LEGACY_RECEIPT_VERSION
+            value["requirements"] = dict.fromkeys(a.LEGACY_REQUIREMENTS, "not_completed")
+            for row in value["stable"]["sources"][0]["files"]:
+                if row["path"] == a.SCHEMA_PATH:
+                    row["path"] = a.LEGACY_SCHEMA_PATH
+            value["stable"]["sources"][0]["files"].sort(key=lambda row: row["path"])
             value["stable"]["python"]["version"] = version
             with self.subTest(version=version):
                 report = check(value)
                 self.assertEqual(report["acceptance_status"], "not_completed")
                 self.assertFalse(report["formal_permission"])
+
+    def test_python314_scope_requires_one_minor_and_rejects_old_requirements(self):
+        value = fixture()
+        self.assertNotIn("linux-3.12", a.REQUIREMENTS)
+        self.assertEqual(value["receipt_version"], "s4-a.3")
+        self.assertFalse(check(value)["formal_permission"])
+        for version in ("3.12.8", "3.13.0", "3.15.0"):
+            bad = copy.deepcopy(value)
+            bad["stable"]["python"]["version"] = version
+            with self.subTest(version=version), self.assertRaisesRegex(v.V03ValidationError, "unsupported runtime version"):
+                check(bad)
+        value["requirements"]["linux-3.12"] = "not_completed"
+        with self.assertRaisesRegex(v.V03ValidationError, "engineering schema violation"):
+            check(value)
 
     def test_external_pin_required_no_self_pin_or_circular_envelope(self):
         value = fixture()
@@ -383,7 +403,7 @@ class ReadOnlyCollectorTests(unittest.TestCase):
                 stack.enter_context(patch.object(inv, name, return_value=value))
             stack.enter_context(patch.object(inv, "native_paths", side_effect=[native, []] if attack == "native" else None, return_value=native))
             stack.enter_context(patch.object(inv, "hash_file", side_effect=hash_row))
-            stack.enter_context(patch.object(inv.platform, "python_version", return_value="3.12.8"))
+            stack.enter_context(patch.object(inv.platform, "python_version", return_value="3.14.8"))
             stack.enter_context(patch.object(Path, "write_bytes", side_effect=AssertionError("collector writes")))
             return inv.collect_receipt(self.root, "a"*40)
 

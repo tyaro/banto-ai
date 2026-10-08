@@ -38,9 +38,9 @@ def runtime_metadata():
     distro = platform.freedesktop_os_release()
     if (distro.get("ID"), distro.get("VERSION_ID"), platform.machine()) != ("ubuntu", "24.04", "x86_64"):
         raise RuntimeError("Ubuntu 24.04 x86_64 required")
-    if (platform.python_implementation() != "CPython" or sys.version_info[:2] not in ((3, 12), (3, 14))
+    if (platform.python_implementation() != "CPython" or sys.version_info[:2] != (3, 14)
             or sysconfig.get_config_var("Py_GIL_DISABLED")):
-        raise RuntimeError("CPython 3.12/3.14 with GIL required")
+        raise RuntimeError("CPython 3.14 with GIL required")
     image_os, image = os.environ.get("ImageOS"), os.environ.get("ImageVersion")
     if image_os != RUNNER_IMAGE_OS or not image_version(image):
         raise RuntimeError("Ubuntu 24.04 hosted runner image identity required")

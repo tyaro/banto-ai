@@ -15,6 +15,12 @@ CPython3.14.0に一本化した。Linux3.12/3.14の互換性試験は継続す�
 [変更・検証記録](results/anomaly-multiseed-v0.3-s4-b1-acceptance-readiness-2026-09-10.md)を参照。
 このplatform受入範囲の改訂は、科学仕様の履歴pinや正式runtime pinを変更せず、S4受入完了を意味しない。
 
+2026-10-08追記: 人の「3.14固定で構いません」により、現在の対応Pythonを3.14系へ一本化する。
+Linux CIの3.12 jobと版間比較を必須条件から外し、3.14 journalの完了・共有fixture inventory・必須試験・skip理由・source/run pin検証を維持する。
+Windows正式runtimeの3.14.0/build/hashと科学仕様・seedは変更しない。過去の3.12/3.14結果は元source/runtime/runの証拠として保存し、
+新revisionの合格へ読み替えない。新inspection receiptはs4-a.3と別schemaを使い、旧s4-a.2/v1 schemaは履歴読取り専用として保持する。
+[改訂記録](results/anomaly-multiseed-v0.3-python314-unification-2026-10-08.md)を参照。正式受入未完了・formal_permission=false・holdout観測未読を維持する。
+
 v0.3のconfig、schema、validator、scorer、runner、test、run、結果artifactは**まだ作成・実施していない**。候補の勝者、性能達成、製品昇格も未決定である。本書は、それらの実装を承認する前に、仮説・データ・算法・母数・判定・停止条件を固定する文書であり、run結果ではない。以下の新しい数値、seed数、候補、閾値、実験規模、gateは、既存の実測値と明記したものを除き、すべて**v0.3の設計上の決定**である。
 
 ## 1. 根拠と研究の境界
@@ -372,13 +378,16 @@ Windows運用を既存の3.14.0に限定し、同じPCで別projectの連続稼�
 追加runtimeの導入・保守・実機試験を省くユーザー判断による。正式な性能結果に基づく選択ではない。
 Windowsで必要なpublisher・DACL・独立token/process・競合・失敗証跡の各検査はすべて維持する。
 
+2026-10-08の追加改訂では、3.12利用者への提供を受入目的に含めず、Linux側も3.14系へ固定した。
+対応宣言は`>=3.14,<3.15`とし、CIは3.14系の実patch/buildを記録する。正式Windowsの3.14.0 exact pinをCIのminor指定で代替しない。
+
 | 境界 | 必須platform/runtime | S4までに通す条件 |
 | --- | --- | --- |
-| 共通契約のLinux CI | Ubuntu 24.04 x86_64、CPython 3.12系と3.14系の2 jobs | 同じstrict/pure validator、Q1〜Q5、M1〜M9、profile/score/merge/母数、seed hash、bootstrap golden、fake runner・独立consumer試験を両minorでpass |
+| 共通契約のLinux CI | Ubuntu 24.04 x86_64、CPython 3.14系の1 test jobと独立journal検証job | strict/pure validator、Q1〜Q5、M1〜M9、profile/score/merge/母数、seed hash、bootstrap golden、fake runner・独立consumer試験を3.14でpassし、全journal完了・必須ID・共有fixture inventory・skip理由・外部source/run pinを照合 |
 | Windows native受入 | 下記Windows 11 AMD64/NTFS、正式pinのCPython 3.14.0 | 共通試験に加えて実Win32 publisher、protected DACL、別process/tokenのAccessCheck、競合・非上書き・失敗時証跡保持をこのruntimeでpass |
 | S4 smokeとS5/S6 formal | 下記の唯一のWindows/CPython組合せ | Windowsで生成する同じ保存観測を全候補へ渡し、producer/analysis/auditの厳密な再計算・hash照合を実施 |
 
-Linux jobsのPython 3.12/3.14のpatch/build・CI image digestと、Windows 3.14.0の実build/hash、
+Linux jobのPython 3.14のpatch/build・CI image digestと、Windows 3.14.0の実build/hash、
 OS/kernel、architecture、実行source SHA、各testのpass/fail/skipをS4の受入証跡へ保存する。
 各jobでは既存stdlib回帰suiteとrepository safetyも必須とし、v0.3専用fixtureだけのpassで代用しない。
 既存CIの`ubuntu-latest`やminor labelだけをformal runtime pinの代わりにしない。
@@ -398,7 +407,7 @@ seed/整数bootstrap goldenは全platformでexact一致を要求する。
 
 S1 registryはこの選定値を保存し、S4ではstdlib・ロードした拡張/DLL・CRT・CPU/OS情報を含む
 完全なruntime inventoryを追加でhash pinする。配置pathそのものは同一性の代用にしない。
-S4の承認対象revisionでLinux 2 jobsとWindows native 1 runtime（3.14.0）の受入を完了してから、
+S4の承認対象revisionでLinux 3.14 test/journal検証とWindows native 1 runtime（3.14.0）の受入を完了してから、
 正式pin上のdev/smokeを検証し、全inventoryをcommitして初めてS5へ進む。
 S2/S3時点でも同じ共通試験を継続し、Windows受入をS5実行後まで延期しない。
 
@@ -425,7 +434,7 @@ S5開始後のruntime/OS更新やsource変化はglobal integrity failureとし�
 | --- | --- | --- |
 | S0 plan freeze | 本書、最小限のREADME/roadmap link。式・件数・seed hash・scope・local links・diff/safetyを検査 | 科学的選択が未定、因果support/母数/閾値が曖昧ならdraftのまま停止。採択されたplan commitを次工程へ渡す |
 | S1 config/schema/pure validator | 新identity、全seed表、layout/overlap/件数、候補式、strict schemas、I/Oなしsemantic validator、bootstrap goldenをcommit。validationはnot_run/not_evaluated | 登録値と不一致ならrunしない。科学的仕様変更が必要なら新plan/versionへ。既存schemaを緩めて通さない |
-| S2 scoring + unit/adversarial | 3候補、観測allowlist、phase state、support/merge/matching。Q1〜Q5/M1〜M9、中央値/MAD/共分散、未来値不変、GT非依存をLinux 3.12/3.14等の共通試験で検証 | pre-event support、候補再探索、profile跨ぎ、丸め順序差、未知phase fallback、event漏洩があれば停止。dev性能に合わせる変更は再登録 |
+| S2 scoring + unit/adversarial | 3候補、観測allowlist、phase state、support/merge/matching。Q1〜Q5/M1〜M9、中央値/MAD/共分散、未来値不変、GT非依存をLinux 3.14等の共通試験で検証 | pre-event support、候補再探索、profile跨ぎ、丸め順序差、未知phase fallback、event漏洩があれば停止。dev性能に合わせる変更は再登録 |
 | S3 deterministic runner | 共通paired materialization、960 datasets/2,880 slots、失敗完全ledger、provenance、nonoverwrite/atomic publisher。fake攻撃試験とWindows native受入を準備 | count欠落、partialをsuccess化、hashだけ偽装したledger、summary+marker改竄、root/ACL越境、candidate間で別入力なら停止 |
 | S4 dry/smoke + consumer freeze | §8のLinux/Windows必須受入を完了。正式pin上の新8 dev/2 smoke seedsで全layout/層、独立consumerを検証し、全source/runtimeをcommit | 必須job/実機試験の未実施・失敗、正式pin不一致、再現/golden不一致、source dirty、容量不足で停止。条件削減は新登録 |
 | S5 formal holdout | clean frozen revisionから新40 clustersを一回実行。進捗は完了数/工程状態のみ、途中性能による停止・変更はしない | integrity failure、holdoutを見た設計変更、欠けたcellだけの都合よい再抽選で昇格不可。失敗証跡を保全し、repair/replayは別version/root/未使用seedsで再登録 |
