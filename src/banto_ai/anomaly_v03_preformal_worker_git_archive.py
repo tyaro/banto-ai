@@ -23,6 +23,229 @@ MAX_BYTES, MAX_RECORD, MAX_RAW = bounds.MAX_BYTES, bounds.MAX_RECORD, bounds.MAX
 APPEND_PLAN_FORMAT = 'anomaly-v03-preformal-worker-git-append-plan-v1'
 
 
+class PacketPartitionPreparation:
+    """Memory-only new-format codec contract, never native or lease admission.
+
+    The caller keeps this object and its original owner before prepare/readback.
+    No legacy archive, raw path, stream, HANDLE or receipt is written or closed.
+    Payload bounds exclude object/transient/RSS and other writers' memory.
+    """
+    FORMAT = 'anomaly-v03-worker-git-packet-partition-preparation-v1'
+    MAGIC, CHUNK_BYTES, ENCODED_BYTES, FRAME_COUNT = b'WGP2', 32768, 65536, 64
+    CONTEXT_FIELDS = {'request_pin','inventory_pin','revision','root','root_identity','lease'}
+
+    def __init__(self, *, owner, checkpoint, context, packet, raw_limits):
+        self.original_owner, self.original_checkpoint = owner, checkpoint
+        self.original_context, self.original_packet, self.original_limits = context, packet, raw_limits
+        self.pending, self.error, self.result = None, None, None
+        self._inputs = (owner, checkpoint, context, packet, raw_limits)
+        self._failure, self._completed, self._started = None, None, False
+        self.retained, self.rejected = [], []
+        self._codec=(gzip.compress,base64.b64encode,bounds._gunzip,bounds._decode)
+        self._pending_anchor=None;self._completion_anchor=None
+        self._records=();self._raw_returns=()
+        self._record_bindings=();self._readback_owners=()
+
+    def _failed(self, error):
+        if self._failure is None:self._failure = error
+        self.error = self._failure
+        raise self._failure
+
+    def _fixed(self):
+        owner, checkpoint, context, packet, limits = self._inputs
+        v.require(self.original_owner is owner and self.original_checkpoint is checkpoint and
+            self.original_context is context and self.original_packet is packet and
+            self.original_limits is limits, 'partition original owner/input reference changed')
+        v.require((gzip.compress,base64.b64encode,bounds._gunzip,bounds._decode)==self._codec and
+            (self.FORMAT,self.MAGIC,self.CHUNK_BYTES,self.ENCODED_BYTES,self.FRAME_COUNT)==(
+                'anomaly-v03-worker-git-packet-partition-preparation-v1',b'WGP2',32768,65536,64) and
+            type(self.retained) is list and tuple(self.retained)==self._records,
+            'partition original codec/closed bounds/retention changed')
+        v.require(all(set(row)=={n for n,_ in pairs} and all(row[n] is value for n,value in pairs)
+            for row,pairs in self._record_bindings) and type(self.rejected) is list and
+            len(self.rejected)==len(self._readback_owners) and
+            all(row is held[0] and row.get('frames') is held[1] and row.get('manifest_raw') is held[2] and
+                row.get('manifest_pin') is held[3] for row,held in zip(self.rejected,self._readback_owners)) and
+            all('encoded' not in row or io.json_bytes(row['record'])==row['encoded'] for row in self._records),
+            'partition original returned buffer/incoming owner metadata changed')
+        if self._started and self._completed is None:
+            v.require(self.pending is self._pending_anchor and
+                self.pending.get('context') is context and self.pending.get('packet') is packet and
+                self.pending.get('limits') is limits,'partition original pending owner changed')
+        if self._completed is not None:
+            held = self._completed
+            context_raw,limits_raw,frames,manifest_raw,manifest_pin_raw,frame_pins,identity_raw=self._completion_anchor
+            v.require(self.result is held and self.pending is None and
+                held['context_raw'] is context_raw and held['limits_raw'] is limits_raw and
+                io.json_bytes(context)==context_raw and io.json_bytes(limits)==limits_raw and
+                packet==held['packet'] and held['frames'] is frames and held['frame_objects'] is frames and
+                held['manifest_raw'] is manifest_raw and io.json_bytes(held['manifest_pin'])==manifest_pin_raw and
+                held['frame_pins']==frame_pins and
+                io.json_bytes({'kind':held['packet']['kind'],'event':held['packet']['event'],'raw_pins':{
+                    n:None if r is None else observed._pin(r) for n,r in held['packet']['raw'].items()}})==identity_raw,
+                'partition original completion changed')
+            evidence._raw(held['manifest_raw'],held['manifest_pin'],'partition original manifest changed')
+            v.require(tuple(observed._pin(frame) for frame in held['frames'])==held['frame_pins'],
+                'partition original frame bytes changed')
+
+    def _clock(self):
+        self._fixed(); self.original_checkpoint(); self._fixed()
+
+    def _frame(self, record):
+        held={'record':record};self.retained.append(held);self._records+=(held,)
+        self._record_bindings+=((held,(('record',record),)),)
+        held['encoded']=encoded=io.json_bytes(record)
+        self._raw_returns+=(encoded,)
+        self._record_bindings=self._record_bindings[:-1]+((held,self._record_bindings[-1][1]+(('encoded',encoded),)),)
+        v.require(len(encoded)<=self.ENCODED_BYTES,'partition decoded chunk byte bound')
+        self._clock()
+        held['compressed']=compressed=self._codec[0](encoded,mtime=0)
+        self._raw_returns+=(compressed,)
+        self._record_bindings=self._record_bindings[:-1]+((held,self._record_bindings[-1][1]+(('compressed',compressed),)),)
+        v.require(type(compressed) is bytes and len(compressed)<=MAX_RECORD,
+            'partition compressed chunk byte bound')
+        held['frame']=frame=self.MAGIC+len(compressed).to_bytes(4,'big')+compressed
+        self._raw_returns+=(frame,)
+        self._record_bindings=self._record_bindings[:-1]+((held,self._record_bindings[-1][1]+(('frame',frame),)),)
+        self._clock();return frame
+
+    def prepare(self):
+        if self._failure is not None:raise self._failure
+        if self._completed is not None:return self.view()
+        try:
+            v.require(not self._started,'partition preparation cannot replay')
+            self._started=True
+            self.pending=self._pending_anchor={'context':self.original_context,'packet':self.original_packet,'limits':self.original_limits}
+            self._fixed()
+            v.require(self.original_owner is not None and callable(self.original_checkpoint),
+                'partition caller-held owner and shared checkpoint')
+            context,packet,limits=self.original_context,self.original_packet,self.original_limits
+            v.require(type(context) is dict and set(context)==self.CONTEXT_FIELDS and
+                type(context['lease']) is int and 0<=context['lease']<proof.channel.MAX_JOBS and
+                type(context['root_identity']) is list and len(context['root_identity'])==2 and
+                all(type(n) is int and n>=0 for n in context['root_identity']), 'partition exact context')
+            evidence._digest(context['revision'],40)
+            evidence._pin(context['request_pin']);evidence._pin(context['inventory_pin'])
+            root=Path(context['root'])
+            v.require(root.is_absolute() and str(root)==str(root.resolve()),'partition canonical held root')
+            context_raw=io.json_bytes(context);context_pin=observed._pin(context_raw)
+            self.pending.update(context_raw=context_raw,context_pin=context_pin)
+            v.require(len(context_raw)<=proof.channel.MAX_CONTROL,'partition context bytes')
+            v.require(type(packet) is dict and set(packet)=={'kind','event','raw'} and
+                packet['kind'] in ('receipt','recovery') and type(packet['raw']) is dict and
+                type(limits) is dict and set(packet['raw'])==set(limits) and
+                {'receipt.json','stdout.bin','stderr.bin'}<=set(limits)<=set(proof.RAW_LIMITS),
+                'partition full original raw names')
+            v.require(all(type(n) is int and 0<n<=proof.RAW_LIMITS[name] for name,n in limits.items()),
+                'partition independent original raw maxima')
+            limits_raw=io.json_bytes(limits);snapshot=copy.deepcopy(packet)
+            self.pending.update(limits_raw=limits_raw,packet_snapshot=snapshot)
+            event_raw=io.json_bytes(snapshot['event'])
+            v.require(len(event_raw)<=proof.channel.MAX_CONTROL,'partition event bytes')
+            raw_pins={}
+            for name,value in snapshot['raw'].items():
+                v.require(value is None or (type(value) is bytes and len(value)<=limits[name]),
+                    'partition original raw cap')
+                v.require(value is not None or name in ('receipt.json','partial-archive.bin'),
+                    'partition stdout/stderr original raw required')
+                raw_pins[name]=None if value is None else observed._pin(value)
+            identity={'kind':snapshot['kind'],'event':snapshot['event'],'raw_pins':raw_pins}
+            identity_raw=io.json_bytes(identity);packet_pin=observed._pin(identity_raw);frames=[];rows=[];growth=0
+            self.pending.update(packet_pin=packet_pin,frames=frames,rows=rows)
+            self._clock()
+            for name in sorted(snapshot['raw']):
+                value=snapshot['raw'][name]
+                if value is None:continue
+                offsets=range(0,len(value),self.CHUNK_BYTES) if value else (0,)
+                for offset in offsets:
+                    v.require(len(frames)<self.FRAME_COUNT,'partition chunk count bound')
+                    chunk=value[offset:offset+self.CHUNK_BYTES]
+                    record={'format':self.FORMAT,'context_pin':context_pin,'packet_pin':packet_pin,
+                        'name':name,'offset':offset,'total_bytes':len(value),'raw_b64':self._codec[1](chunk).decode('ascii')}
+                    frame=self._frame(record);frames.append(frame);growth+=len(frame)
+                    v.require(growth<=MAX_BYTES,'partition independent new archive growth bound')
+                    rows.append({'name':name,'offset':offset,'raw_bytes':len(chunk),'frame_pin':observed._pin(frame)})
+            manifest={'format':self.FORMAT+'-manifest','context':copy.deepcopy(context),'context_pin':context_pin,
+                'packet':identity,'packet_pin':packet_pin,'raw_limits':copy.deepcopy(limits),'rows':rows,
+                'archive_growth_bytes':growth,'formal_permission':False}
+            self.pending['manifest_raw']=manifest_raw=io.json_bytes(manifest)
+            v.require(len(manifest_raw)<=proof.channel.MAX_CONTROL,'partition manifest byte bound')
+            self._clock()
+            v.require(packet==snapshot and io.json_bytes(context)==context_raw and io.json_bytes(limits)==limits_raw,
+                'partition caller input changed during codec')
+            frame_tuple=tuple(frames)
+            held={'packet':snapshot,'context_raw':context_raw,'limits_raw':limits_raw,'frames':frame_tuple,
+                'frame_objects':frame_tuple,'frame_pins':tuple(observed._pin(f) for f in frames),
+                'manifest_raw':manifest_raw,'manifest_pin':observed._pin(manifest_raw)}
+            self._completion_anchor=(context_raw,limits_raw,frame_tuple,manifest_raw,
+                io.json_bytes(held['manifest_pin']),held['frame_pins'],identity_raw)
+            self._completed=self.result=held;self.pending=None
+            return self.view()
+        except BaseException as error:self._failed(error)
+
+    def view(self):
+        if self._failure is not None:raise self._failure
+        try:
+            self._fixed();v.require(self._completed is not None,'partition completed preparation required')
+            held=self._completed
+            return {'frames':held['frames'],'manifest_raw':held['manifest_raw'],
+                'manifest_pin':copy.deepcopy(held['manifest_pin']),'native_authorized':False,
+                'atomic_reservation':False,'capacity_pass':False,'lease_completed':False,
+                'parent_ack_authorized':False,'execution_authenticated':False}
+        except BaseException as error:self._failed(error)
+
+    def readback(self, *, frames, manifest_raw, manifest_pin):
+        if self._failure is not None:raise self._failure
+        held={'frames':frames,'manifest_raw':manifest_raw,'manifest_pin':manifest_pin}
+        self._readback_owners+=((held,frames,manifest_raw,manifest_pin),)
+        self.rejected.append(held)  # Incoming original bytes before clock/decode/validation.
+        try:
+            self._clock();view=self.view()
+            v.require(type(frames) is tuple and type(manifest_raw) is bytes and
+                len(manifest_raw)<=proof.channel.MAX_CONTROL and manifest_pin==view['manifest_pin'] and
+                manifest_raw==view['manifest_raw'],'partition external original manifest pin')
+            evidence._raw(manifest_raw,manifest_pin,'partition full manifest raw')
+            manifest=v.strict_json(manifest_raw);rows=manifest['rows']
+            v.require(len(frames)==len(rows)<=self.FRAME_COUNT and
+                sum(len(f) for f in frames)==manifest['archive_growth_bytes']<=MAX_BYTES,
+                'partition complete frame coverage and archive growth')
+            values={name:None if p is None else bytearray() for name,p in manifest['packet']['raw_pins'].items()}
+            held['raw_buffers']=values
+            for frame,row in zip(frames,rows):
+                self._clock()
+                v.require(type(frame) is bytes and 8<=len(frame)<=MAX_RECORD+8 and frame[:4]==self.MAGIC and
+                    int.from_bytes(frame[4:8],'big')==len(frame)-8,'partition exact new frame header')
+                evidence._raw(frame,row['frame_pin'],'partition original frame pin')
+                decoded=self._codec[2](frame[8:],self.ENCODED_BYTES);held['decoded']=decoded
+                record=v.strict_json(decoded)
+                v.require(io.json_bytes(record)==decoded and type(record) is dict and set(record)=={
+                    'format','context_pin','packet_pin','name','offset','total_bytes','raw_b64'} and
+                    record['format']==self.FORMAT and record['context_pin']==manifest['context_pin'] and
+                    record['packet_pin']==manifest['packet_pin'] and record['name']==row['name'] and
+                    type(record['offset']) is int and record['offset']==row['offset'], 'partition exact bound chunk')
+                target=values[row['name']]
+                v.require(target is not None and len(target)==row['offset'],'partition original ordered raw coverage')
+                chunk=self._codec[3](record['raw_b64'],self.CHUNK_BYTES);held['chunk']=chunk
+                raw_pin=manifest['packet']['raw_pins'][row['name']]
+                v.require(len(chunk)==row['raw_bytes'] and type(record['total_bytes']) is int and
+                    record['total_bytes']==raw_pin['bytes'] and len(target)+len(chunk)<=raw_pin['bytes'],
+                    'partition no duplicated or overlapping raw chunk')
+                target.extend(chunk)
+            raw={name:None if value is None else bytes(value) for name,value in values.items()};held['readback_raw']=raw
+            for name,value in raw.items():
+                expected=manifest['packet']['raw_pins'][name]
+                v.require(value is None if expected is None else observed._pin(value)==expected,
+                    'partition full original raw readback pin')
+            packet={'kind':manifest['packet']['kind'],'event':copy.deepcopy(manifest['packet']['event']),'raw':raw}
+            v.require(packet==self._completed['packet'],'partition readback original packet')
+            self._clock();return packet
+        except BaseException as error:self._failed(error)
+
+    def execute(self):
+        if self._failure is not None:raise self._failure
+        raise ValueError('partition native/archive IO admission not prepared')
+
+
 class ArchiveAppendAdmission:
     """Opt-in frame growth and future control snapshot gate, not atomic reservation.
 

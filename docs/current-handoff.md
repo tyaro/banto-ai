@@ -1,5 +1,17 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST 新packet分割・全raw readbackの準備unit
+
+開始2026-10-08T08:38:03Z/HEAD1a91b3b022ae4b8d627655f2425e5c7d95baa1bb-origin-clean、先行元8helper同creation-token不在/repo helper-critical ownerなし。対象はsrc/banto_ai/anomaly_v03_preformal_worker_git_archive.pyの新PacketPartitionPreparationと新test、詳細docs/results/anomaly-multiseed-v0.3-worker-packet-partition-preparation-2026-10-08.md、raw artifacts/preformal-packet-partition-preparation-20261008-prep/。同目的の保持→新closed codec→manifest pin→全raw readback→native拒否をunitにまとめ、確認後code commit/push一回、doc追補skip ciへ集約。
+
+原caller owner/checkpoint/context/packet/raw maximaをvalidation-clock前保持。新partition-preparation-v1/WGP2はrawを32768Bずつcanonical record/gzip frameへ分割、各decoded chunk65536B/compressed131072B、最大64frame/独立new archive growth524288B/manifest32768Bを維持。same caller request-inventory pin/revision/root identity/lease＋packet kind/event/raw pinsを全chunkへ結ぶ。manifest外部pin/全frame順序・範囲・pin/header/全raw readbackを一致させる。原partial rawは別inventory slotでnew growthへ流用しない。旧v1 packet/request/entry/context/ack/proof/pin解釈変更なし、旧archive5span/native create_native拒否method437B/0bd7b84f0a3dc0bd22a865ac8b2b4ccedc0e71ea50a177b0e6b086df07fdcc7c不変。
+
+unknown圧縮return/上限超過/clock-KI/欠落・改変・row消去は元第一例外/原packet-owner/pending/途中encoded-compressed-frame/拒否incoming bytesを保持しreplay拒否。公開metadataの消去・両snapshot改変で原参照/pinを書換えず、cached prepare/viewはgzip/clock反復0、executeは未準備IO/native拒否。Pythonメモリだけの契約で実root/native owner認証・同request全writer atomic予約・Object/RSS/coupled peak容量は未確認、capacity/atomic/native/lease/ack/auth=false。actual generate/reader/archive v1 IOへの接続なし、完成154696B packet/旧focus/旧suite/native/13AST監査/追加agent/profile再観測0。
+
+新20distinct/body20/unique20。新15一回0.09793280001031235秒pass→review保持row/incoming owner/packet消去の新3だけ0.012656799983233213秒pass→incoming row field/record value改変の新2だけ0.016516100033186376秒pass。pass済み15/3反復0、別source/runで最終source単一20successではない。各61source-science pin前後不変/他59全3component/先行59共通不変/変更2file safety0/new production module0。components18598B/38334cf84a0b21b4cd2a25b70f4550da41c5bdbab0eabdd85e6187bc9aafcdac、名前30合計836299B/最大job_tree_owner120035B/cc126fca55a0cfe128f90215283669b45f8589bbaca8103fb7233694dbddd5a5。61準備pin/名前30/予定64Git Jobはruntime未閉包、旧cap-profile流用禁止。
+
+次は新形式の全planned-call archive累積/親identity将来failure診断/partialとnew growth別予約/entry-context実bytes/coupled peak-global memory/all-writer same request-root atomic予約/exclusiveと同原owner保持を結ぶ準備。現メモリ契約を実publication/child transport認証へ読み替えず、fresh latest-clean runtime/profile/private policy/native request/unusedroot未準備、実callsite Create/Assign/member return-HANDLE owner-attribute lifetime/stdio継承/child owner transport未接続。準備前native入口/create_native早期拒否/全7役whole.run限定reader実起動禁止維持。正式5残件未完了/formal permission=false/credit0/holdout未読/元caps-stop保持/Sol容量未確認/ACTIVE。
+
 ## 2026-10-08 JST native buffer準備revision CI3844の終端保存
 
 開始2026-10-08T08:22:39Z/HEAD732fee4201f1ca09b3fd6b7f53134d4e2731466a-origin-clean、先行元4helper同creation-token不在/repo helper-critical ownerなし。production code d4e5f2ec90a9c17be90af4eadebadb4b769a409b不変、production/test0/native0/完成focus/旧suite/13AST監査/追加agent/profile再観測0。詳細docs/results/anomaly-multiseed-v0.3-ci-native-buffer-save-2026-10-08.md、raw artifacts/ci-diagnostic-37743146137/、batch artifacts/preformal-ci-native-buffer-save-20261008-prep/だけを対象にする。doc-only3文書を一回skip ciへ集約。
