@@ -1,5 +1,17 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 2026-10-08 JST 新packet分割準備revision CI3864の終端保存
+
+開始2026-10-08T09:40:01Z/HEAD0bbaa10cfd5c8d42aacb63657536bf9503cf6391-origin-clean、先行元5helper/foregroundCI/postの7creation-token同original不在/repo helper-critical ownerなし。production codec5bffdb1e23d1563020d7fc2345fb1bfc1bad5c3不変/production-test-native0/完成focus/旧suite/13AST監査/追加agent/profile再観測0。詳細docs/results/anomaly-multiseed-v0.3-ci-packet-partition-save-2026-10-08.md、raw artifacts/ci-diagnostic-37752779492/、batch artifacts/preformal-ci-packet-partition-save-20261008-prep/だけを対象にする。doc-only3文書を一回skip ciへ集約。
+
+CI37752779492/git実full21b4b4fadc1bc856b286324907b5ac5a9ea42010/attempt1/push/Phase 1 CI/.github/workflows/ci.yml/3job113229808890・113229809213・113246502341completed-successへ原run/jobsを固定。新9raw＋local回帰1＝10raw14pin、両journal原run_finished/discovered3864/fail0/error0/skip237/source不変/local-remote一致/comparison matched/共有29必須28各minor/runner v2consistent_candidate/full journal passedまで一度保存。summary2582B/9e542e52f6c2e1198f54dd16d8c4704ceaef039af110ebdf7e3f63ab2ff56d23、index2785B/4a89b2242a1a4f0509b5b6e2326b5def05d1b67a3864d9a827a4bc92ebcffd07。3.12旧image20260927.320.1/false、3.14・compare新20261004.327.1/true、保存公式外部pin一致だけ/digest未取得/候補未採択。CLI6一致/既知CRLF6差1file working-Git両pin保全。このCIを最新c5b全bundle/実native/Win ABI/child IO owner認証/容量/正式受入へ読み替えない。
+
+実journal count取得後だけ期待3864を発行してpre-journal保持、実summary取得後runner/index両pinを同rawへ固定/旧pin失敗反復0。checkpoint12863B/8ee01d0f47e7c3a36f05149406c8162201b602460de0d4a090d6d3e3eb85bc61で37原CIfile10312829B/14pin/CLI両pin/source3＋science2union5 working-Git/元6helper exact live-execution・CIM同original不在/旧3root不変をmetadata照合。元prepare26392/download11844/count49148/verification48176/summary4776/origin25756/checkpoint38396の元creation-tokenは各live-execution/checkpointに固定、PID単独判定なし。template path miss2件は元tool trace excerptを別metadata保全しinventory選択後に新script発行、native/production/CI/Sol容量失敗へしない。docpush後postだけ両rootへ同raw exclusive保存して閉じる。numerical/download/runner/完成focus再実行禁止。
+
+未保存CIは37756831995/git実fullc5bffdb1e23d1563020d7fc2345fb1bfc1bad5c3のみ。今回compact一回で3.14job113243338368/3.12job113243338640両in_progress/compare未発行/run未終端/attempt未固定、3885算術予定/journal未確認、終端download/local回帰/runner0/状態不変再照会0/doc-only新CI追跡なし。元最新prep30file168009B/旧packet28file147369B/CI3844root38file10282900B不変、原metadata失敗/旧raw/rootへ追加・反復なし。
+
+次は未保存CIcompact一度・終端raw一度保存。その後はsame request-rootの親identity将来failure raw/diagnostic/entry-context実bytes/原partial-new growth-codec/native buffer-object overhead別量/coupled peak-global memory/all-writer atomic予約/exclusive/原owner保持を結ぶ準備。fresh runtime-profile-policy-request-unusedroot/実callsite return-HANDLE/Job-process-thread owner/attribute lifetime/stdio継承/child transport認証未準備。create_native早期拒否/native入口/全7役whole.run限定reader実起動禁止維持、正式5残件未完了/formal permission=false/credit0/holdout未読/元caps-stop保持/Sol容量未確認/ACTIVE。
+
 ## 2026-10-08 JST 全planned-call新archive準備revisionの未終端CI
 
 新code c5bffdb1e23d1563020d7fc2345fb1bfc1bad5c3は独立全call最大値事前合計/同owner-clock-context/順番lease/full packet readback/全bundle manifest/第一例外保持/native早期拒否のmemory-only unit。一回commit/push/origin一致、21distinctは20＋review新1の別source/runで最終source単一21successではない。新37756831995/git実full同code/workflowName原値Phase 1 CI/push/in_progress、attempt/jobs/終端未固定、3885算術予定/journal未確認。stdout164B/6e71021275732d7901088501171613e60b28266549c1d1ce99cb8b6a4009a79dを専用ci-state.jsonへ保持した。
