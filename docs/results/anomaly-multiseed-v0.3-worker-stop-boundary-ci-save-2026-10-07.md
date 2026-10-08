@@ -1,5 +1,11 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 先行storage CI failure保存と原worker型保持修正（2026-10-08 JST）
+
+CI37717924409/fullfa82cf720df6a428ad0c4b344b0fe100e0bd05a0/attempt1/push/Phase 1 CIを元workflow/fullHEAD/全3jobへ固定。3.12job113118624742/3.14job113118624568がfailure、compare113130017845がskipped。専用artifacts/ci-diagnostic-37717924409/にrun/jobs/両failed-step logの4rawを一度保存、各log3725tests/errors4/skip237。原因はReaderGitWorker factoryをMockへ置換した試験でisinstanceの第2引数が型でなくTypeErrorとなり元例外を覆ったこと。元failureを成功へ書き換えない。failure-summary 4184B/ffe55f52a42611b6139a66894257abcfe54c8b058e64bf944c9c456b4b642497。
+
+原worker型を固定referenceへ結ぶ別code unit b4366887f9b49509ae5722b41a3e683fd1586dbbを一回commit/push。外部failure4件だけ＋新原owner保持1件が一回1.3084639000007883秒pass、55source/science前後不変/safety0/working-Git/origin-clean。元helperのbody0 filename誤りを別raw保全。completed22/旧suite/native反復0。新CI37721863325/fulle0f8fc4b0121bde9b1755bd7858b7ced3c01b09a、37722343194/fullb4366887f9b49509ae5722b41a3e683fd1586dbbはin_progress。failure runのlocal回帰/runner候補/journal数値成功照合0。詳細reader-publication-launch-preparation文書、型保持raw artifacts/preformal-reader-initialization-type-20261008-prep/。
+
 ## 未保存CI4件のまとまった一度保存（2026-10-08 JST）
 
 開始時2026-10-08T02:33:27Z、文書HEAD/origin c2740b3545dd4870792e0a0f460aedf673d52c54/clean、production codefa82cf720df6a428ad0c4b344b0fe100e0bd05a0。先行元helper6件はlive/execution creation/tokenに対応するCIM残存なし、critical ownerなし。今回新production/test/完成focus再実行/native/実worker/Job/pipe/exe/追加agent/runtime-profile再観測0。4CIのread-only証拠保存を一つの単位にまとめ、doc-only追補skip ci。

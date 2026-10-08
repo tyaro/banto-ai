@@ -1,5 +1,23 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST reader publication launcher準備＋CI失敗修正の保存
+
+code e0f8fc4b0121bde9b1755bd7858b7ced3c01b09a（launcher準備）、最終code b4366887f9b49509ae5722b41a3e683fd1586dbb（原worker型保持）は各unit一回commit/push/origin一致。doc追補はまとめてskip ci。詳細docs/results/anomaly-multiseed-v0.3-reader-publication-launch-preparation-2026-10-08.md、raw artifacts/preformal-reader-publication-launch-preparation-20261008-prep/・artifacts/preformal-reader-initialization-type-20261008-prep/。
+
+caller-held preissued kernel/stdin/専用creator/同storage/root/clock→原Popenをgetter/IO前保持→原binding/creation/HANDLE/返値→新closed memory context/value pin→非JSON reader_worker_main/Reader/Actor→原senderをarchive FileIO前にarm。旧JSON/external/entry/ack/proofへfield追加なし。copy/clock/import/unknown FileIO close/context改変/再bind/error metadata消去は原・拒否owner/raw/pending/最初の例外を保持して後続拒否。正常operation返値も原return位置で保持し、専用creatorのclose未接続のため通常print/return前に同じ原Python保持loopへ渡す。stdin借用closeなし、FileIO.closeはWin HANDLE CloseHandle/native回収ではない。
+
+新22distinct。初回helper timeoutでbody/verdict未取得、原因main1error後、未確定16pass/新4pass/新2pass（取得body23）。初回未確定prefixの再入可能性を明記し反復0とはしない。先行完成focus/旧suite反復なし、16確定後は新riskだけ。最終source単一22success runではない。各54pin/他50/先行50不変/safety0/clean code-save working-Git。components 2041B/66f67211d5e873664cb1defd04658018023e937225d2b6d40e1a9c7e94693c07、code-save 12775B/70b8e0dd8b780402c11605edba79b685700140012af2d32a6525245949182635。初回stdin import失敗body0、git由来でないSHA空選択も原失敗として保存、以後実git fullSHA。
+
+先行CI37717924409/fullfa82cf720df6a428ad0c4b344b0fe100e0bd05a0は両minor failure（各log3725/errors4/skip237）、compare skipped。元fullHEAD/workflow/attempt1/push/3jobと4rawをartifacts/ci-diagnostic-37717924409/へ一度保存。Mock factoryへのisinstance TypeErrorが元例外を覆った原因を原class固定へ修正。失敗4＋新1だけ1.3084639秒pass、55source/science working-Git/origin-clean/safety0。filename誤りhelper本体0も保全。完成22を再実行せず新最終source単一successへ読み替えない。CI failure-summary 4184B/ffe55f52a42611b6139a66894257abcfe54c8b058e64bf944c9c456b4b642497、型保持code-save 8485B/8984202ca93dca9d53b9a72723a9b8810a08b487e251ccf7e5e5790b21570a21。
+
+fake kernel/creation/Popen＋実小FileIO/channel/archive、snapshot/operationは明示stub/spy。実worker/Job/pipe/exe/native0、runtime/profile再観測0/追加agent0。親ack/atomic/capacity/native/auth=false、create_nativeのroot/channel/clock/Job前拒否維持。名前30source/phase32/予定64Job、最新phase747843B/最大archive94523Bは未閉包。実kernel発行/限定launcher/cross-process明示HANDLE受渡し/原close/child IO owner transport認証は未接続。別HANDLE群をstdio inherited最大3へ読み替えない。
+
+元helperのcreation/tokenは各live/executionに保存。初回47372/134359022572275102/token7d64dceca781d938e6b46b84dcc969db5d6848b6ff53a6ff2d587da8f80d13e4は専用script/critical_owner=false/実native0を照合してtimeout原raw保存後停止、自身finallyなし・回収成功にしない。他元helperの終端とHEAD/origin/clean/docs/全rawは保存後照合へまとめる。
+
+次は実限定launcherの元kernel/creator/HANDLE発行とclose/返値を保持する準備を機能経路unitで確認する。fresh latest clean source-runtime-profile-private policy-request-unusedroot、実control/raw/packet coupled容量と全writer同request/root atomic予約/global/memory/exclusive準備未完成。同期Peek/Read/Write/caller間wall・停止は未実証。準備前にnativeを開かず全7役whole.runを限定readerとして起動しない。旧pin/容量model/producer pre26post24を流用しない。formal s4_acceptance_not_frozen/permission=false/credit0/holdout未読。
+
+未保存CI37721863325/fulle0f8fc4b0121bde9b1755bd7858b7ced3c01b09a、37722343194/fullb4366887f9b49509ae5722b41a3e683fd1586dbbはin_progress観測。各終端を実fullHEAD/workflow/run/attempt/jobsへ固定し専用rootへ一度保存、failureは小原因/原raw、success時だけjournal/local回帰/runner候補。doc-only新CI追跡なし。完成CI4件/既存失敗/全旧rawは保全・反復なし。Sol容量エラー未確認、ACTIVE維持。
+
 2026-10-08 JST。branch `codex/preformal-acceptance-scope`、repository `D:\develop\banto-ai`。
 
 
