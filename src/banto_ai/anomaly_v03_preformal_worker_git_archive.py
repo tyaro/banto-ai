@@ -942,6 +942,8 @@ class PublicationCarrier:
             owner.original_publication_carrier=owner.publication_carrier=self
             from . import anomaly_v03_preformal_job_tree_owner as native
             self.native_api=native
+            resources=getattr(creator,'original_publication_resources',None)
+            if resources is not None:resources.note_share(self)
             self.kernel=getattr(creator,'kernel',None)
             self.native=getattr(creator,'native',None)
             self.event=getattr(creator,'events',{}).get('stdout')
@@ -984,6 +986,10 @@ class PublicationCarrier:
     def _fixed(self):
         if self.original_error is not None:raise self.original_error
         if self.error is not None:raise self.error
+        resources=getattr(self.creator,'original_publication_resources',None)
+        if resources is not None:
+            resources._fixed()
+            v.require(not resources.close_started,'carrier cannot use closed publication resources')
         v.require(self.binding==(self.creator,self.owner,self.checkpoint,self.kernel,self.native,self.event,
             self.handle,self.writer,self.api,self.peek,self.frame_limit,self.sending) and
             self.owner.original_publication_carrier is self.owner.publication_carrier is self and

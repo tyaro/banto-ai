@@ -133,6 +133,177 @@ class NativePipeWriter:
         self.handle = handle
 
 
+class PublicationPipeResources:
+    """Retain one issuer and four dedicated handles before worker launch.
+
+    Only unshared, never-spawned resources can be closed here. This is not a
+    child transport, a process launcher or an authenticated recovery proof.
+    """
+    def __init__(self, issuer, *, checkpoint, owner):
+        self.original_inputs=(issuer,checkpoint,owner)
+        self.issuer,self.checkpoint,self.owner=issuer,checkpoint,owner
+        self.native=UnreapedJob(None,None,None,{'phase':'publication_pipe_resources','formal_permission':False})
+        self.native.publication_resources=self
+        self.original_error=self.error=self.pending=self.result=self.creator=self.retention_error=None
+        self.issue_started=self.close_started=False
+        self.close_completion=None;self.close_events={};self.close_return_bindings={}
+        self.rejected=None;self.original_shares=()
+        try:
+            self.previous=getattr(owner,'original_publication_resources',None)
+            if self.previous is not None:
+                self.previous.rejected=self
+                self.previous._failed(ValueError('publication resources cannot replace original owner'))
+            owner.original_publication_resources=owner.publication_resources=self
+            resources.rt.require(callable(issuer) and callable(checkpoint),'publication original issuer/checkpoint')
+            self._fixed()
+        except BaseException as error:self._failed(error)
+
+    def _failed(self,error):
+        if self.original_error is None:self.original_error=error
+        self.error=self.original_error
+        self.error.publication_resources=self
+        self.native.original_error=self.error
+        try:
+            remember=getattr(self.owner,'_remember_publication',None)
+            if callable(remember):remember(self.error)
+        except BaseException as diagnostic:
+            if self.retention_error is None:self.retention_error=diagnostic
+        raise self.error
+
+    def _fixed(self):
+        if self.original_error is not None:raise self.original_error
+        resources.rt.require(self.original_inputs==(self.issuer,self.checkpoint,self.owner) and
+            self.owner.original_publication_resources is self.owner.publication_resources is self,
+            'publication original resource owner and issuer cannot be hidden')
+        if hasattr(self,'original_issue_result'):
+            resources.rt.require(self.result is self.original_issue_result,'publication original issued return cannot be hidden')
+        if hasattr(self,'original_close_owner'):
+            resources.rt.require(self.close_owner is self.original_close_owner and self.close_started is True,
+                'publication original close owner cannot be hidden or reset')
+            resources.rt.require(set(self.close_events)==set(self.close_return_bindings) and
+                all((r['handle'],r['return'],r['return_observed'],r['api'])==self.close_return_bindings[n]
+                    for n,r in self.close_events.items()),'publication original named close events cannot follow callbacks')
+        if self.result is not None:
+            resources.rt.require(self.creator is self.result['creator'] and self.kernel is self.result['kernel'] and
+                self.creator.original_publication_resources is self and self.creator.kernel is self.kernel and
+                self.creator.checkpoint is self.checkpoint and self.creator.native is self.original_creator_native and
+                self.creator.result is True and self.creator.error is None and self.creator.spawn_io is None and
+                self.creator.native.job is self.creator.native.process is self.creator.native.thread is None and
+                self.kernel.CreatePipe is self.create_api and self.kernel.CloseHandle is self.close_api and
+                self.creator.events==self.original_events and self.creator.read_handles==self.original_reads and
+                all(self.creator.writers[n] is writer and writer.handle==self.handles[n+'_write']
+                    for n,writer in self.original_writers.items()) and
+                self.result['creation_return'] is self.creation_return and
+                self.creation_return==self.original_events and tuple(self.handles.items())==self.original_handles and
+                tuple((n,tuple(sorted(row.items()))) for n,row in self.creation_return.items())==self.creation_snapshot and
+                all(self.result[n] is False for n in ('native_launch_authorized','parent_ack_authorized')),
+                'publication fixed original APIs, creation returns and dedicated handles')
+        if hasattr(self,'original_close_completion'):
+            resources.rt.require(self.close_completion is self.original_close_completion and
+                self.close_completion['closed_handles']==dict(self.original_handles) and
+                self.close_completion['original_returns']==self.close_events and
+                tuple((n,r['handle'],r['return'],r['return_observed'],r['api']) for n,r in self.close_events.items())==self.close_snapshot and
+                all(self.close_completion[n] is False for n in ('native_owner_recovered','parent_ack_authorized','execution_authenticated')),
+                'publication original cached close returns cannot be changed')
+
+    def issue(self):
+        try:
+            self._fixed();resources.rt.require(not self.close_started,'publication closed resources cannot be issued')
+            if self.result is not None:return self.result
+            resources.rt.require(self.pending is None and not self.issue_started,'publication issuer cannot be retried')
+            self.issue_started=True
+            self.pending={'issuer':self.issuer,'owner':self.owner,'native':self.native,'stage':'issuer'}
+            self.checkpoint();self._fixed()
+            self.pending['issuer_return']=self.kernel=self.issuer()  # Before getter/copy/clock IO.
+            self.create_api=self.kernel.CreatePipe;self.close_api=self.kernel.CloseHandle
+            resources.rt.require(callable(self.create_api) and callable(self.close_api),'publication original kernel APIs')
+            self.creator=NativeGitPipes.__new__(NativeGitPipes)  # Hold before its constructor and CreatePipe.
+            self.pending['creator']=self.creator
+            self.creator.__init__(self.kernel,checkpoint=self.checkpoint)
+            self.creator.original_publication_resources=self
+            self.original_creator_native=self.creator.native;self.native.pipe_successor=self.creator.native
+            self.creation_return=self.pending['creation_return']=self.creator.create()
+            self.original_events={n:dict(row) for n,row in self.creator.events.items()}
+            self.original_reads=dict(self.creator.read_handles);self.original_writers=dict(self.creator.writers)
+            self.handles={key:row[direction] for name,row in self.original_events.items()
+                for direction,key in [('read',name+'_read'),('write',name+'_write')]}
+            self.original_handles=tuple(self.handles.items())
+            self.creation_snapshot=tuple((n,tuple(sorted(row.items()))) for n,row in self.creation_return.items())
+            resources.rt.require(len(self.handles)==len(set(self.handles.values()))==4,
+                'publication original four distinct handles, separate from inherited stdio')
+            self.native.extra_handles=dict(self.handles)  # Keep original names even after known close returns.
+            self.result={'creator':self.creator,'kernel':self.kernel,'creation_return':self.creation_return,
+                'native_launch_authorized':False,'parent_ack_authorized':False}
+            self.original_issue_result=self.result
+            self.checkpoint();self._fixed();self.pending=None
+            return self.result
+        except BaseException as error:self._failed(error)
+
+    def close_unlaunched(self):
+        self.rejected_close_attempt=(self.creator,self.owner)
+        if not hasattr(self,'original_close_attempt'):self.original_close_attempt=self.rejected_close_attempt
+        try:
+            self._fixed()
+            if self.close_completion is not None:return self.close_completion
+            resources.rt.require(self.result is not None and not self.close_started and self.pending is None,
+                'publication original close starts once after complete issue')
+            self.close_started=True
+            self.close_owner=UnclosedHandles(self.handles,{'phase':'unlaunched_publication_pipe_close','formal_permission':False})
+            self.original_close_owner=self.close_owner
+            self.close_owner.publication_resources=self
+            self.pending={'owner':self.close_owner,'creator':self.creator,'handles':dict(self.handles)}
+            self.pending['caller_worker']=getattr(self.owner,'worker',None)
+            self.pending['endpoint']=endpoint=getattr(self.owner,'parent',None)
+            self.pending['endpoint_worker']=getattr(endpoint,'worker',None)
+            resources.rt.require(self.pending['caller_worker'] is None and self.pending['endpoint_worker'] is None and
+                not self.original_shares and
+                not getattr(self.creator.native,'publication_carriers',[]) and
+                not hasattr(self.creator.native,'reader_publication_launch'),
+                'publication close only before any Popen, launch preparation or carrier sharing')
+            for name,handle in self.handles.items():
+                self.checkpoint();self._fixed()
+                row=self.pending['call']={'name':name,'handle':handle,'api':self.close_api,'return_observed':False}
+                binding=self.pending['call_binding']=(name,handle,self.close_api)
+                row['return']=closed=self.close_api(handle)  # Original return before count/clock/diagnostics.
+                row['return_observed']=True
+                resources.rt.require((row['name'],row['handle'],row['api'])==binding==self.pending['call_binding'],
+                    'publication original close call binding changed during API')
+                resources.rt.require(type(closed) in (int,bool),'publication CloseHandle original BOOL return')
+                if not closed:raise OSError('publication CloseHandle returned False')
+                self.close_events[name]=row
+                self.close_return_bindings[name]=(handle,closed,True,self.close_api)
+                self.close_owner.handles.pop(name)
+                self.checkpoint();self._fixed()
+            self.close_completion={'closed_handles':dict(self.handles),'original_returns':dict(self.close_events),
+                'native_owner_recovered':False,'parent_ack_authorized':False,'execution_authenticated':False}
+            self.original_close_completion=self.close_completion
+            self.close_snapshot=tuple((n,r['handle'],r['return'],r['return_observed'],r['api']) for n,r in self.close_events.items())
+            self.pending=None
+            return self.close_completion
+        except BaseException as error:
+            held=getattr(self,'close_owner',None)
+            if held is not None:
+                if held.close_error is None:held.close_error=error
+                self.native.unknown_close_handles=tuple(held.handles)
+                self._failed(held)
+            self._failed(error)
+
+    def note_share(self,owner):
+        self.rejected_share=owner  # Keep rejected resources before validation.
+        try:
+            self._fixed();resources.rt.require(not self.close_started,'publication closed resources cannot be shared')
+            if not any(value is owner for value in self.original_shares):
+                resources.rt.require(len(self.original_shares)<4,'publication original share bound')
+                self.original_shares+= (owner,)
+        except BaseException as error:self._failed(error)
+
+    def unresolved(self):
+        try:self._fixed();return self.pending is not None
+        except BaseException as error:
+            if self.original_error is None:self.original_error=error
+            self.error=self.original_error;return True
+
+
 class NativeGitPipes:
     """Retain anonymous-pipe creation before a Job/process exists.
 
@@ -167,6 +338,10 @@ class NativeGitPipes:
         raise retained from self.error
 
     def create(self):
+        publication=getattr(self,'original_publication_resources',None)
+        if publication is not None:
+            publication._fixed()
+            resources.rt.require(not publication.close_started,'closed publication pipes cannot be reused')
         if self.error is not None:
             self._failed(self.error)
         if self.result is not None:
@@ -205,6 +380,10 @@ class NativeGitPipes:
             self._failed(failure)
 
     def bind_spawn(self, sinks):
+        publication=getattr(self,'original_publication_resources',None)
+        if publication is not None:
+            publication._fixed()
+            resources.rt.require(not publication.close_started,'closed publication pipes cannot be spawned')
         if self.error is not None:
             self._failed(self.error)
         try:

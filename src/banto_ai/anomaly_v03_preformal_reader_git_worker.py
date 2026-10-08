@@ -506,6 +506,22 @@ class ReaderGitParent:
     def prepare_publication_launch(self, *, pipe_io, creator):
         return ReaderPublicationLaunchPreparation(self,pipe_io,creator)
 
+    def issue_publication_resources(self, issuer):
+        self.original_publication_resource_input=issuer  # Before validation or storage/root IO.
+        held=tree.owner.PublicationPipeResources.__new__(tree.owner.PublicationPipeResources)
+        self.initializing_publication_resources=held
+        try:
+            held.__init__(issuer,checkpoint=self.inventory_checkpoint,owner=self)
+            self._inventory_ready()
+            v.require(self.entry['format']==STORAGE_ENTRY_FORMAT,'publication resources require fresh storage entry')
+            self.original_publication_storage.view('before_publication_kernel_issue')
+            self.publication_resource_return=held.issue()  # Original return before shared post-observation.
+            self._inventory_ready()
+            return held
+        except BaseException as error:
+            self._remember_publication(error)
+            raise
+
     def observe_publication_carrier(self, process):
         self.publication_carrier_attempt=process  # Before any getter, clock or ReadFile.
         carrier=getattr(self,'original_publication_carrier',None)
@@ -597,6 +613,13 @@ class ReaderGitParent:
         failure.reader_git_parent=self
 
     def _inventory_ready(self):
+        resources=getattr(self,'original_publication_resources',None)
+        if resources is not None:
+            try:
+                resources._fixed()
+                v.require(not resources.unresolved() and not resources.close_started,
+                    'reader publication resources pending or permanently closed')
+            except BaseException as error:resources._failed(error)
         launch=getattr(self,'original_publication_launch',None)
         if launch is not None:
             try:launch._fixed()
@@ -712,7 +735,8 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
         getattr(original,'publication_carrier',None),getattr(original,'original_publication_storage',None),
         getattr(original,'publication_storage',None),getattr(original,'original_storage_preparation',None),
         getattr(original,'storage_preparation',None),getattr(original,'original_publication_launch',None),
-        getattr(original,'publication_launch',None))
+        getattr(original,'publication_launch',None),getattr(original,'original_publication_resources',None),
+        getattr(original,'publication_resources',None))
     storage_input=len(original.original_bootstrap_inputs)>10 and original.original_bootstrap_inputs[10] is not None
     if all(owner is None for owner in owners) and existing is None and not storage_input:return False
     rejected=(getattr(original,'rejected_request_bootstrap',None),
@@ -726,7 +750,8 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
             (owners[4] is not None and owners[4].unresolved()) or owners[6] is not owners[7] or
             (owners[6] is not None and owners[6].unresolved()) or owners[8] is not owners[9] or
             (owners[8] is not None and owners[8].unresolved()) or owners[10] is not owners[11] or
-            (owners[10] is not None and owners[10].unresolved()))
+            (owners[10] is not None and owners[10].unresolved()) or owners[12] is not owners[13] or
+            (owners[12] is not None and owners[12].unresolved()))
     except BaseException as failure:
         error.reader_publication_diagnostic_error=failure;problem=True
     if not problem:return False
@@ -779,6 +804,8 @@ class ReaderPublicationLaunchPreparation:
                 'reader fresh storage entry and preissued dedicated original pipe owner')
             self.kernel,self.stdin=self.pipe_io['kernel'],self.pipe_io['stdin']
             creator.native.reader_publication_launch=self  # Before shared clock/root observations.
+            resources=getattr(creator,'original_publication_resources',None)
+            if resources is not None:resources.note_share(self)
             self._fixed();parent._inventory_ready();self.storage.view('reader_launch_preparation')
             self._fixed()
         except BaseException as error:self._failed(error)
