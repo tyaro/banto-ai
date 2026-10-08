@@ -1,5 +1,10 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## 2026-10-08 JST publication親failure/payload準備の新CI待ち
+
+code5d52f8d7f38e043295a79af00f94748edbcd6347は一回commit/push/origin-clean、新24distinct=22＋review2は別source/runで最終source単一24successではない。未保存CI37756831995/fullc5bffdb1e23d1563020d7fc2345fb1bfc1bad5c3と新37763660778/full5d52f8d7f38e043295a79af00f94748edbcd6347は各一回compact/in_progress、3885/3909は算術予定/journal未確認/終端保存0。原GH metadata helper exit1を原21file100198Bへ保持、別continuation19938B/e6cc29a282511310f0bc32461761c6ab6b39836681e89c16fbebb6e61fccf974だけ未保存metadata完成、原failed書換え/完成focus反復0。詳細partitioned-publication-preparation-2026-10-08文書参照。実root snapshot/選択payload幅はnative/atomic/exclusive/global memory/RSS/capacity/ack/auth/正式受入の合格ではない。旧完成CI/raw root追加・反復なし、次は終端時のみ新raw一度保存。
+
+
 ## 2026-10-08 JST 新packet分割準備revision CI3864の終端保存
 
 開始2026-10-08T09:40:01Z/HEAD0bbaa10cfd5c8d42aacb63657536bf9503cf6391-origin-clean、先行元5helper/foregroundCI/postの7creation-token同original不在/repo helper-critical ownerなし。production codec5bffdb1e23d1563020d7fc2345fb1bfc1bad5c3不変/production-test-native0/完成focus/旧suite/13AST監査/追加agent/profile再観測0。詳細docs/results/anomaly-multiseed-v0.3-ci-packet-partition-save-2026-10-08.md、raw artifacts/ci-diagnostic-37752779492/、batch artifacts/preformal-ci-packet-partition-save-20261008-prep/だけを対象にする。doc-only3文書を一回skip ciへ集約。
