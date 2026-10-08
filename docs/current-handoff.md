@@ -1,5 +1,17 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-08 JST publication準備CI2件の終端観測・API接続断保全
+
+開始時HEAD/origin641d130712222839d05689706faf619030bb0d1f/clean、元helper3件の同creation/token残存なし、critical ownerなし。今回production/test/完成focus/native/実worker/Job/pipe/exe/追加agent/profile再観測0、doc-only追補skip ci。詳細docs/results/anomaly-multiseed-v0.3-ci-terminal-partial-save-2026-10-08.md、raw artifacts/ci-diagnostic-37721863325/・37722343194/、batch preformal-ci-terminal-partial-save-20261008-prep/。
+
+37721863325/git実fulle0f8fc4b0121bde9b1755bd7858b7ced3c01b09aはcompleted/failure、37722343194/fullb4366887f9b49509ae5722b41a3e683fd1586dbbはcompleted/success。各attempt1/push/Phase 1 CI/.github/workflows/ci.yml/run rawへ固定。ただし両方のattempt jobs readがunexpected EOF/exit1。前者6file15590B/後者13file25626Bにrun raw/stderr/原error/元live-executionとscriptを保持し再実行せずroot閉鎖。jobs原raw/logs/journals/local回帰/runner候補/index保存0、CI証拠完成にしない。failure原因未特定、予定3747/3748をjournal実数へ読み替えない。前者初回approval review deadlineはprocess未起動、一回だけ同起動retry、その後のAPI失敗と別保存。
+
+元failure helper35864/creation134359062042342629/token13c17abc2d2ab9ac9efd70dd228f0aae89b5378337d90ee473c32ff326bc43bb、success-download47804/134359061023655906/tokenf3c5d484b4cc4bc59d7078e6f30371b6d29653b58ed6f4960d5c0753fda70b23はfailed/元identity残存なし。batch checkpoint5219B/d5745d767cb5b3d5e23ca7a960ea2c446f44fd3741e3c4db7d8000302d35cb36はpartial全pin/元2helper/選択source3＋science2union5/HEAD-origin-clean照合。PID再利用は元creation/tokenで区別。Git/API接続失敗をnative回収失敗やSol容量へ読み替えない。
+
+次のCI保存は接続確認後、旧run raw/pinを参照して未保存jobs/logsまたはjournals/comparison/regression/3logだけを新continuation rootへ保存、旧script/run rawの反復なし。37724967759/fullaab97b86334baafa399067ba646ff8afd51850e9は開始時in_progress（3.12job113140946456/3.14job113140946251、予定3769/journal未確認）。完成CI/focus/旧失敗保全・反復なし。doc-only新CI追跡なし。
+
+次の機能unitは共有HANDLE duplicate/inheritance/元launcher owner/同Popen HANDLE creation/child-local close-rename-raw witness transport認証準備。fresh closure/profile/policy/request/unusedroot、atomic全writer予約/親failure raw/diagnostic/原partialとnew growth別予約/entry-context実bytes/coupled peak/global/memory/exclusive未完成。create_nativeはroot/channel/clock/Job前拒否維持、native/全7役whole.run限定reader起動禁止。formal s4_acceptance_not_frozen/permission=false/credit0/holdout未読。Sol容量エラー未確認、ACTIVE維持。
+
 ## 2026-10-08 JST publication原issuer・専用pipe・未共有closeの経路保存
 
 code aab97b86334baafa399067ba646ff8afd51850e9はunit一回commit/push/origin一致、doc追補skip ci。詳細docs/results/anomaly-multiseed-v0.3-publication-pipe-resources-2026-10-08.md、raw artifacts/preformal-publication-pipe-resources-20261008-prep/だけを対象にする。

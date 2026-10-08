@@ -1,5 +1,13 @@
 # v0.3 worker source callback／stop fence CIの保存照合（2026-10-07）
 
+## Launcher準備CI2件の終端観測とAPI read failure保全（2026-10-08 JST）
+
+CI37721863325/full e0f8fc4b0121bde9b1755bd7858b7ced3c01b09aはcompleted/failure、37722343194/full b4366887f9b49509ae5722b41a3e683fd1586dbbはcompleted/success。各attempt1/push/Phase 1 CI/.github/workflows/ci.ymlのrun原rawを新専用rootへ保存したが、両方のattempt jobs取得がunexpected EOF/exit1で失敗した。前者6file15590B/後者13file25626Bにrun/stderr/原error/元helper live-execution/scriptを保全し、保存処理の再実行と旧root追加を拒否。jobs pin/log/journal/local回帰/runner v2/index保存0、success CI証拠完成にしない。failure原因はfailed-step log未取得で未特定、予定3747/3748はjournal実数未確認。
+
+failure起動の初回automatic approval review deadlineはprocess作成前、一回だけ同起動retryを行いAPI read失敗を別保存。元helpers35864/134359062042342629/token13c17abc2d2ab9ac9efd70dd228f0aae89b5378337d90ee473c32ff326bc43bb、47804/134359061023655906/tokenf3c5d484b4cc4bc59d7078e6f30371b6d29653b58ed6f4960d5c0753fda70b23はfailed/同original残存なし。batch save-checkpoint5219B/d5745d767cb5b3d5e23ca7a960ea2c446f44fd3741e3c4db7d8000302d35cb36はpartial全pin/選択source-science5/元helper/Git照合済み。詳細ci-terminal-partial-save文書。
+
+次の保存は旧run raw/pinを参照し、未保存attempt jobs/failed logsまたはsuccess journal/comparison/regression/3logだけを新continuation rootへ取得する。完成原raw・旧scriptは反復せず、原failureを成功へ書き換えない。新37724967759/fullaab97b86334baafa399067ba646ff8afd51850e9は開始時in_progress、3.12job113140946456/3.14job113140946251、予定3769/journal未確認。今回production/test/native/完成focus/追加agent/profile再観測0、doc-onlyskip ci、正式credit0/holdout未読。
+
 ## Publication pipe resources unit後の未終端CI状態（2026-10-08 JST）
 
 37721863325/full e0f8fc4b0121bde9b1755bd7858b7ced3c01b09aは開始時in_progress、後の状態readでtool-owned session6296/unexpected EOF/exit1を保存、今回再照会0。run結論/jobs固定/terminal raw保存には読み替えない。原readfailure artifacts/preformal-publication-pipe-resources-20261008-prep/ci-377218-read-failure.json 494B/09fb0e128e317167454876ec006d39efb5bde7d0d31b023a063815b20b4c89dc。
