@@ -503,6 +503,22 @@ class ReaderGitParent:
             root_identity=tuple(self.entry['budget_root_identity']),allocation=allocation,
             checkpoint=self.inventory_checkpoint,owner=self)
 
+    def prepare_partitioned_publication(self, *, archive_preparation, allocation, entry_raw, context_raw, parent_identity_raw):
+        held=monitor.PartitionedPublicationPreparation.__new__(monitor.PartitionedPublicationPreparation)
+        held._retain_inputs(owner=self,checkpoint=None,archive_preparation=archive_preparation,
+            allocation=allocation,entry_raw=entry_raw,context_raw=context_raw,parent_identity_raw=parent_identity_raw)
+        previous=getattr(self,'_partitioned_publication_owner',None)
+        if previous is not None:
+            previous.rejected=held;previous._failed(ValueError('reader original partitioned publication cannot be replaced'))
+        self.partitioned_publication_inputs=(archive_preparation,allocation,entry_raw,context_raw,parent_identity_raw)
+        self._partitioned_publication_owner=held
+        try:
+            held.__init__(owner=self,checkpoint=self.inventory_checkpoint,archive_preparation=archive_preparation,
+                allocation=allocation,entry_raw=entry_raw,context_raw=context_raw,parent_identity_raw=parent_identity_raw)
+            return held
+        except BaseException as error:
+            self._remember_publication(error);held._failed(error)
+
     def prepare_publication_launch(self, *, pipe_io, creator):
         return ReaderPublicationLaunchPreparation(self,pipe_io,creator)
 
@@ -613,6 +629,11 @@ class ReaderGitParent:
         failure.reader_git_parent=self
 
     def _inventory_ready(self):
+        partition=getattr(self,'_partitioned_publication_owner',None)
+        if partition is not None:
+            try:
+                partition._fixed();v.require(not partition.unresolved(),'reader partitioned publication admission unresolved')
+            except BaseException as error:partition._failed(error)
         resources=getattr(self,'original_publication_resources',None)
         if resources is not None:
             try:
@@ -737,6 +758,8 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
         getattr(original,'storage_preparation',None),getattr(original,'original_publication_launch',None),
         getattr(original,'publication_launch',None),getattr(original,'original_publication_resources',None),
         getattr(original,'publication_resources',None))
+    partition=(getattr(original,'_partitioned_publication_owner',None),getattr(original,'partitioned_publication',None))
+    if any(owner is not None for owner in partition):owners+=partition
     storage_input=len(original.original_bootstrap_inputs)>10 and original.original_bootstrap_inputs[10] is not None
     if all(owner is None for owner in owners) and existing is None and not storage_input:return False
     rejected=(getattr(original,'rejected_request_bootstrap',None),
@@ -751,7 +774,8 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
             (owners[6] is not None and owners[6].unresolved()) or owners[8] is not owners[9] or
             (owners[8] is not None and owners[8].unresolved()) or owners[10] is not owners[11] or
             (owners[10] is not None and owners[10].unresolved()) or owners[12] is not owners[13] or
-            (owners[12] is not None and owners[12].unresolved()))
+            (owners[12] is not None and owners[12].unresolved()) or
+            (len(owners)>14 and (owners[14] is not owners[15] or owners[14].unresolved())))
     except BaseException as failure:
         error.reader_publication_diagnostic_error=failure;problem=True
     if not problem:return False
