@@ -9,6 +9,7 @@ import time
 
 from . import anomaly_v03_preformal_worker_git_terminal as terminal
 from . import anomaly_v03_preformal_generated_chain_budget as monitor
+from . import _anomaly_v03_reader_dependencies as dependencies
 
 actors, tree, v = terminal.actors, terminal.tree, terminal.v
 channel, observed, paths, io = actors.proof.channel, actors.observed, actors.paths, actors.io
@@ -569,6 +570,25 @@ class ReaderGitParent:
     def prepare_publication_launch(self, *, pipe_io, creator):
         return ReaderPublicationLaunchPreparation(self,pipe_io,creator)
 
+    def prepare_source_batch_contract(self, *, request_raw, expected_sources, raw_maxima, storage_maxima):
+        held=dependencies.SourceBatchContractPreparation.__new__(dependencies.SourceBatchContractPreparation)
+        held._retain_inputs(owner=self,checkpoint=None,request_raw=request_raw,
+            expected_sources=expected_sources,raw_maxima=raw_maxima,storage_maxima=storage_maxima)
+        previous=getattr(self,'_ReaderGitParent__source_batch_owner',None)
+        if previous is not None:
+            previous.rejected_preparation=held
+            previous._failed(ValueError('reader original source batch cannot be replaced'))
+        self.__source_batch_owner=self.source_batch_owner=held
+        try:
+            checkpoint=self.inventory_checkpoint  # Original holder is attached before this getter.
+            held._SourceBatchContractPreparation__inputs=(self,checkpoint,request_raw,expected_sources,raw_maxima,storage_maxima)
+            held.original_inputs=held._SourceBatchContractPreparation__inputs
+            held.checkpoint=checkpoint
+            held.__init__(owner=self,checkpoint=checkpoint,request_raw=request_raw,
+                expected_sources=expected_sources,raw_maxima=raw_maxima,storage_maxima=storage_maxima)
+            return held
+        except BaseException as error:held._failed(error)
+
     def connect_auxiliary_writer(self, role, writer):
         incoming=(role,writer)  # Original candidate before dependency getters.
         previous=getattr(self,'_ReaderGitParent__auxiliary_writer_inputs',())
@@ -697,6 +717,10 @@ class ReaderGitParent:
         failure.reader_git_parent=self
 
     def _inventory_ready(self):
+        batch=getattr(self,'_ReaderGitParent__source_batch_owner',None)
+        if batch is not None:
+            batch._fixed()
+            batch._failed(ValueError('reader source batch contract remains preparation only'))
         auxiliary=getattr(self,'_ReaderGitParent__auxiliary_writer_inputs',None)
         if auxiliary is not None:
             failure=getattr(self,'_ReaderGitParent__auxiliary_writer_failure',None)
@@ -1179,6 +1203,8 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None, caller_d
         getattr(original,'_request_writers_owner',None),getattr(original,'request_writers',None),
         getattr(original,'original_request_writers',None))
     if any(owner is not None for owner in writers):owners+=writers
+    batch=getattr(original,'_ReaderGitParent__source_batch_owner',None)
+    if batch is not None:owners+=(batch,getattr(original,'source_batch_owner',None))
     connection=getattr(original,'_ReaderGitParent__request_writer_storage_inputs',None)
     if connection is not None:owners+=(connection,getattr(original,'request_writer_storage_input',None))
     auxiliary=getattr(original,'_ReaderGitParent__auxiliary_writer_inputs',None)
@@ -1190,7 +1216,7 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None, caller_d
         getattr(original,'rejected_inventory_publication',None),getattr(owners[4],'rejected',None))
     error.reader_publication_owners=(original,owners,rejected,caller_plan)  # Before diagnosis/keeper entry.
     try:
-        problem=(existing is not None or connection is not None or auxiliary is not None or registry is not None or
+        problem=(existing is not None or batch is not None or connection is not None or auxiliary is not None or registry is not None or
             getattr(original,'error',None) is not None or
             any(getattr(owner,'error',None) is not None or getattr(owner,'pending',None) is not None
                 for owner in owners if owner is not None) or

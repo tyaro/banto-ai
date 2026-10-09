@@ -1,5 +1,17 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-10 JST source batch別version・literal packed raw/failure契約準備（ACTIVE）
+
+開始15:07:58Z/HEAD ad4693ceebff560ce0e4917a48c9dffaeb8bf847-origin/upstream-clean、前code e060。先行元7helper full creation-start_token一致/CIM同original不在/critical ownerなし。新production2/test1、追加module0。既存dependenciesへSourceBatchContractPreparation/新closed request-proof-packed raw candidate-v1、reader hook/同原ParentPublicationRetentionへ保持。source_blob_batchはsource全対応/独立pin/blob OID/sha1 header-body順序/fullstdout、pre/post全plan/16source128KiBgroup/64call/候補32KiBを閉じる。旧v1 schema不変、create_native437B/0bd7...不変。
+
+元owner/checkpoint/raw/maximaをgetter前保持、全future原raw最大値＋別partial/newgrowth/control/failure/diagnostic/reserve/snapshotを割引せず算定。SBR1 memory-only literal raw packの原full byte readback、原failure prefix/第一error/private参照保持/alias消去・再初期化・再packing拒否。receipt/exitはcaller opaque Python、実native/worker raw捕捉/FileIO公開/OS排他/全writer参加/transport認証ではない。全native-auth-capacity-formal false/unresolved=true/親readiness早期拒否。
+
+新16distinct/body16＝14一回pass＋新risk2だけpass、fail0error0skip0。途中test source変更の別runで最終source単一16successではない、完成14/旧focus-suite/collector/basic OS probe/profile/native/追加agent反復0。109pins前後/他106不変・changed3 safety0/科学hash metadataだけ/holdout未読。
+
+現working union68別候補raw18316B/5d6a87ba82fa6c1d5318bf83d89df50000f85ede950d88a9ba2d98dd9603a105、15group/phase34call/source stdout二phase3023048B。全future failure最大値packed10584752Bでconstructor一回V03ValidationError=packed future raw byte bound、raw返値/pack/gzip/native0。entry29はsnapshot0の宣言算術、実root予約ではない。旧loaded66をfresh runtime観測へ補わず、ad469 revision/rootはunissued engineering宣言で変更後issued requestではない。容量不足を解消した結果ではない。
+
+詳細docs/results/anomaly-multiseed-v0.3-source-batch-contract-2026-10-09.md。新raw/mainpost各512KiB32/reserve128/single128を終端照合後閉鎖。完成CI4027の3root不変・再照会/download/verifier0。過去failed/foreground未保存を補わない。次は実new request/proof/worker raw-failure transportとcompression-growth/global peak/all32entry、fresh完全runtime閉包-profile-policy-native request-unused exclusive root/OS排他-all-writer/診断専用公開/child nativeowner認証。正式5残件・受入未完了/formal_permission=false/credit0/holdout未読/create_native早期拒否/全7役起動禁止/元caps-stop/追加agent禁止/ACTIVE維持。
+
 ## 2026-10-09 JST 最新code Python3.14単一CI4027の原証拠保存（ACTIVE）
 
 開始HEAD 1d1127c464d93793f54dac15861a3bbe33a80ec0-origin/upstream-clean、production/test e0601d3edff7c7a7415cd28ebb70f47382a5c835不変・body0。元先行6helper full identity/live-execution一致・CIM同original不在/critical ownerなし、過去inventory/Git2failed・旧focus失敗保持。37942157019/full e060/attempt1/push/Phase1CI/workflow349172377をcompact一回completed-successへ固定。原2job113859012846 test(3.14)/113877002239 verify-python314-journal全success、jobs/artifacts/2logs/2ZIP各一回取得・digest/単一member/fullHEAD-run一致。
