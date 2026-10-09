@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-10 JST source object容量test訂正CI4081 原journal保存（ACTIVE）
+
+開始17:52:06Z/HEAD 4ce3391811e2d49b4444ca26e671bd116841e2cb-origin/upstream-clean/production-test091916不変、元11helper full saved creation-start_token/live-execution一致/CIM同original不在/helper-critical ownerなし。379634/full2d66 compact一回はAPI unexpected EOF/stdout0/stderr91B/a6bbe26d.../原gh exit個別未保存None/原Python helper exit1 failedを保持、同API/原script再試行0。最後有効17:27 in_progress/attempt1だけ継承、終端・jobs・count未固定。
+
+未実行379656/fullf9 compactと091916 selectionだけ別continuation一回。379656/attempt1/push/Phase1CI/workflow349172377 completed-success、2job113939182357・113949443327をfullHEAD-run-attemptへ結びjobs/artifacts/2logs/2ZIP各一回。原journal4206635B/3f0f19e7...、remote37192B/6a1dfc20...、両artifact digest一致。独立3.14 verifier一回passed、実summary4081/f0e0skip237/source不変/shared29 complete/必須28passed/crossPythonfalse。local37193対remote37192のCRLF1byte差と全JSON一致を両raw保持。4081はf9容量test訂正・2d66 productionで、最新091916 read-wall/原4062failure/旧4043以下/local複数source-runへ読み替えない。
+
+新091916実fullSHA selection一回37968546318/in_progress/原156B/3d94b1e3.../stderr0/exit0、attempt/jobs/終端/count未固定、待機反復download verifier0。113source-science working unchanged/verified091916親tree/prior37 raw継承/holdout未読/credit0。production/test/body0、文書2path一回skip ciへ集約。旧focus/新16・19/容量訂正1case/metadata5/容量拒否/26gzip/collector/basic probe/native image/profile/37Git/追加agent反復0。
+
+詳細docs/results/anomaly-multiseed-v0.3-ci-source-object-refusal-journal-save-2026-10-10.md。原API failedと元keeper保持、CI/main/postをcaps内閉鎖。次heartbeatは379685/full091916 compact一回・終端のみ新raw一度/実summary後count固定。379634原API EOFは終端未観測の未保存runとして保持し、同failed APIの無条件再試行0、必要なら未実行attempt1専用endpointの限定証拠unitを明示して扱う。完成379656/4081・379582failure/4043以下を再照会-download-verifierへしない。実read/stdio/receipt-partial/native認証/全future容量/全runtime閉包/正式5残件・最終受入未完了/formal_permission=false/全7役reader起動禁止/元caps-owner-stop/ACTIVE維持。
+
 ## 2026-10-10 JST source object 原clock/read返値・絶対期限保持（ACTIVE）
 
 最新code 0919168683de1bdeafaea73bd5e2b44da77f7459 を4path一回commit/push、origin/upstream/lsremote-clean。新fullSHA CI選択一回空配列/原3B/37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570/stderr0、run/count未固定。原raw・compact・components各rootをcaps内閉鎖。次heartbeatは379634/full2d66・379656/fullf9 compact各一回＋新091916実fullSHA selection一回。文書追補2path一回skip ci。完成16/旧19等/容量訂正1case/native反復0。
