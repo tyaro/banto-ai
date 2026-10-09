@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-10 JST source object CI4062 failure・容量拒否保存（ACTIVE）
+
+開始17:09:05Z/HEAD 58a91a3963bef3af90b3a73fb764917ec8f833a0-origin/upstream-clean、先行元10helper full identity一致/CIM同original不在/原focus1failed保持/helper-critical ownerなし。379582/full fe518 compact一回completed-failure/attempt1/push/Phase1CI/workflow349172377、原2job113914011957 failure/113931336297 verify skippedを固定、jobs/artifacts/失敗log/ZIP/journal各一度保存。原summary4062/f0e1skip237/source不変、full success verifier0。旧4043以下反復0。
+
+唯一のerrorは旧phase_cached全現source fixtureの512KiB常時fit期待。全source名/二phase plan/元capsを保持し、complete又は特定byte guard拒否で原disk-held raw/rows/calls不変・poison・snapshot拒否を確認するtest1だけへ訂正。production0/新testmodule0、新1method一回1pass。元local126synthetic callの523790B prefixと拒否stdout24949/receipt2566/stderr0をliteral保存、prefix4parts full join readback。収容成功/native容量へしない。112pins/既存111不変/safety0/holdout未読。
+
+現2d66 fullSHA selection一回37963486811/push/Phase1CI/in_progress、原156B/82e3cc05.../stderr0/exit0、attempt/jobs/終端/count未固定、待機反復0。新test/doc unit fullSHA初selection一回だけ、次heartbeatは379634 compact一回＋新fullSHA selection一回。終端のみ新raw一度/実summary後count固定。原379582failure/verify skipped/完成4043以下/旧failureを再照会-download-verifierへしない。
+
+詳細docs/results/anomaly-multiseed-v0.3-ci-source-object-capacity-refusal-2026-10-10.md。code/test unit一回commit/push/doc追補skip ci。CI/main/prefix-a/b/postをcaps内閉鎖。全production/reader/archive/create_native早期拒否不変、新native/Job/全7役reader0/追加agent0。fullruntime/profile-policy-native request-unused exclusive root/実原transport/wall/global peak/全32entry/正式5残件・最終受入未完了/formal_permission=false/credit0/元owner-stop/ACTIVE維持。
+
 ## 2026-10-10 JST source object 原stream/read返値保持（ACTIVE）
 
 最新code 2d66f40e0fbf0ec1e0ec251996399c59bbd2c314 を4path一回commit/push、origin/upstream/lsremote-clean。新fullSHA CI選択一回は空配列/原3B/37517e.../stderr0、run/件数未固定。追補文書2path一回skip ci。raw23file197148B/compact8file22754B閉鎖、原focus failedを保持。次は379582/full fe518 compact一回＋新2d66実fullSHA selection一回、未終端・空は待機反復なし。

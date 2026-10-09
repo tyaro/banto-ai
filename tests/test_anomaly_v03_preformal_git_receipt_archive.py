@@ -189,25 +189,44 @@ class GitReceiptArchiveTests(unittest.TestCase):
             archive.ReceiptArchive(folder/'git-blobs.bin',root=self.root,policy={})
         self.assertFalse((folder/'git-blobs.bin').exists())
 
-    def test_phase_cached_parent_inventory_fits_as_synthetic_receipt_fixture(self):
+    def test_phase_cached_parent_inventory_fits_or_preserves_byte_bound_refusal(self):
         from banto_ai import anomaly_v03_preformal_generation_publication_budget as whole
         writer=self.writer()
         names=whole.document.SOURCE_NAMES+whole.SOURCE_NAMES
-        for phase in ('preflight','postflight'):
-            for name in names:
-                data=(whole.ROOT/name).read_bytes()
-                cached=writer.lookup(revision=self.policy['revision'],phase=phase,source_path=name,
-                                     expected_output_pin=owned.observed._pin(data))
-                if cached is None:
+        plan=[(phase,name,(whole.ROOT/name).read_bytes())
+              for phase in ('preflight','postflight') for name in names]
+        rejected=None
+        for phase,name,data in plan:
+            cached=writer.lookup(revision=self.policy['revision'],phase=phase,source_path=name,
+                                 expected_output_pin=owned.observed._pin(data))
+            if cached is None:
+                original=self.path.read_bytes()
+                rows,calls=copy.deepcopy(writer.rows),copy.deepcopy(writer.calls)
+                try:
                     writer.append(**self.arguments(len(writer.rows),data=data,phase=phase,source_path=name))
-                else:
-                    self.assertEqual(cached,data)
-        result=writer.snapshot()
-        self.assertEqual(result['call_count'],2*len(set(names)))
-        self.assertLessEqual(result['unique_stdout_records'],len(set(names)))
+                except archive.v.V03ValidationError as error:
+                    self.assertEqual(str(error),'blob archive file byte limit')
+                    self.assertEqual(self.path.read_bytes(),original)
+                    self.assertEqual(writer._raw,original)
+                    self.assertEqual((writer.rows,writer.calls),(rows,calls))
+                    self.assertTrue(writer._failed)
+                    rejected=(phase,name)
+                    with self.assertRaisesRegex(ValueError,'failed writer cannot finish'):
+                        writer.snapshot()
+                    break
+            else:
+                self.assertEqual(cached,data)
+        if rejected is None:
+            result=writer.snapshot()
+            self.assertEqual(result['call_count'],2*len(set(names)))
+            self.assertLessEqual(result['unique_stdout_records'],len(set(names)))
+        else:
+            self.assertLess(len(writer.calls),2*len(set(names)))
+            self.assertIn(rejected,[(phase,name) for phase,name,_ in plan])
         self.assertLessEqual(self.path.stat().st_size,archive.MAX_BYTES)
-        # The process facts are synthetic protocol fixtures. This is not a
-        # native peak measurement or formal capacity acceptance.
+        # Current source growth may stop this bounded archive. Keep the full
+        # plan and original prefix; the synthetic process facts do not prove
+        # native peak capacity or formal acceptance in either terminal path.
         self.spawn.assert_not_called(); self.kernel.assert_not_called()
 
     def test_only_explicit_parent_tool_sources_are_allowed(self):
