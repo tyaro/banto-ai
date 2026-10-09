@@ -8,7 +8,7 @@ generate_and_readの4catchから元error-role-target-result/caller_planを診断
 
 新12distinct/body12=9＋new2＋new1各一回pass/fail0error0skip0、最終source単一12successへしない。actual generate catchはcreate失敗位置のfixtureで実Popen/native0、原UnreconciledWorker keeperもfake、upstream publication/archive constructorだけstub・Mock clock・retention Escape。69source-science/他66不変、旧5AST/create_native437B不変、変更3code-test safety0/new production module0。fresh名前30合計903892B/最大archive130691B/source capとの差381Bはruntime容量保証ではない。
 
-詳細docs/results/anomaly-multiseed-v0.3-generate-auxiliary-callsite-2026-10-09.md。原artifacts/preformal-generate-auxiliary-callsite-20261009-prep/、別metadata artifacts/preformal-ci-auxiliary-journal-save-20261009-prep/。code/test/docs5path一回commit/push、doc-only追補skip ciへ集約してpostで原pins/full identity/HEAD-origin-cleanを固定する。
+詳細docs/results/anomaly-multiseed-v0.3-generate-auxiliary-callsite-2026-10-09.md。原artifacts/preformal-generate-auxiliary-callsite-20261009-prep/、別metadata artifacts/preformal-ci-auxiliary-journal-save-20261009-prep/。code/test/docs5path一回commit/push fullHEAD fcaece08b3acf5584a75ea566a05dc9270bfd2e2/origin-clean・435674B5entry。新code CI選択一回は空配列・件数未固定。原raw23file124833B/manifest2643B/3654a919e39bbae8ae3fd65bfe6d983fc0d8e0f0004126aa0a0dcd91b8114e6f閉鎖。doc-only追補skip ciへ集約しpostで原pins/full identity/HEAD-origin-cleanを固定する。
 
 次heartbeatは前CI379291 compact一回＋新code実fullSHA run選択一回、未終端なら待機/反復なし。次はdiagnostic bytesの実callsite/child bootstrap/同原owner OS排他-all-writer atomic/fresh loaded runtime closure-profile-private policy-request-unusedroot。formal_permission=false/credit0/holdout未読/正式5残件・受入未完了/create_native早期拒否/全7役限定reader実起動禁止/元caps-stop/追加agent禁止/ACTIVE維持。
 

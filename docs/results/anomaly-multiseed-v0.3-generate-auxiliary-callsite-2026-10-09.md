@@ -43,3 +43,13 @@ formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未�
 ## Tool provenance
 
 tools/repository_safety.pyのselector missはselected tool excerptだけでinstrumented helper/production/CI/native/Sol失敗へしない。正しいsrc/banto_ai/safety.pyの変更path検査を一度実施した。元foreground tool identity/full stdout-stderrは未保存として扱う。
+
+## code保存と原root閉鎖
+
+code/test/docs5pathを一回commit/pushした実fullHEAD fcaece08b3acf5584a75ea566a05dc9270bfd2e2、origin/upstream/ls-remote一致・clean。Git batch435674B5entry/512KiB16entry/output1MiB/累積30秒。新code実fullSHAのCI選択一回は空配列、原stdout3B/37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570/stderr0B。空選択を実行/終端/成功へしない。前CI37929197138の同状態再照会0、doc-only新CI追跡0。
+
+原raw最終23file124833B、manifest2643B/3654a919e39bbae8ae3fd65bfe6d983fc0d8e0f0004126aa0a0dcd91b8114e6fで閉鎖。追加/同保存/完成12再実行禁止。今回metadata rootは残りpost/Git/doc-only保存だけを収容し、最終manifestで閉鎖する。
+
+元Git wrapperのPowerShell Char*Int組立てInvalidOperationの後、Python -cは空引数のusage exit1。Git helper source評価0/live発行0/Git処理0/tracked mutation0。selected tool excerptをgit-wrapper-tool-error.jsonへ保存し、original foreground process creation/start_token/full stdout-stderrは未保存None。Git処理は別の保存script git-code.pyで初めて一回実行成功。原tool errorをinstrumented helper passed/production/CI/native/Sol容量失敗へ読み替えない。
+
+最後のdoc-only追補後postで69working/source verified code unit親tree非交差継承/docs2 LF working-Git exact/原22rawとmanifest/metadata prefix/元instrumented helpers/旧3root/HEAD-origin-lsremote-cleanをmetadataだけ一回照合する。CIM creation microsecondはdecimal truncation/full saved creation-start_token照合、PIDだけ/native回収claimなし。原CLI bytes/pinsはhelper process全stdout-stderr捕捉ではない。
