@@ -1,5 +1,17 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST Python3.14単一CI4003の原証拠保存（ACTIVE）
+
+開始2026-10-09T13:27:47Z/HEAD 40252e285cce3e7f996d8338c271dff00420cb81-origin/upstream-clean。元先行7helper full saved creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなし。今回production/test/body0、完成focus/旧suite/基本probe/native/追加agent/profile反復0。原focus failedとforeground未保存identityを保全する。
+
+未保存CI37932021035/full fcaece08b3acf5584a75ea566a05dc9270bfd2e2/attempt1/push/Phase 1 CI/.github/workflows/ci.yml/workflow349172377をcompact一回completed-successへ固定。2jobs全success/原2logs・2ZIP・1journal+remote verificationを各一度保存、artifact digest/1member/decoded8MiB/fullHEAD-runを照合。現独立verifier一回exit0/passed、実4003/failure0/error0/skip237（native213/optional24）/source_unchanged/shared29complete/必須28passed/cross_python=false。local/remote JSON全field一致、原rawは末尾CRLF/LF差1byteを両保持。Ubuntu3.14.8単一CIでWin ABI/OS排他/child transport/容量/正式受入ではない。
+
+70source-science working/検証済み32ecode親doc-only非交差継承/旧3991の3closed roots不変/原CI21prefixをmetadataだけ照合。最新code32e6c9c36a27ffaed87a741ef1ae9dee52d8a424不変。4003を最新32e/旧3991・3972・3954・3930/failure379079/複数run local焦点/旧2minorへ読み替えない。source幅910751B/最大archive130691B/capとの差381Bはruntime/global容量保証ではない。
+
+詳細docs/results/anomaly-multiseed-v0.3-ci-callsite-journal-save-2026-10-09.md。新raw artifacts/ci-diagnostic-37932021035/、metadata artifacts/preformal-ci-callsite-current-save-20261009-prep/、post artifacts/preformal-ci-callsite-current-post-20261009-prep/。文書2pathを一回skip ci commit/push、post/manifestへ原pins/full identity/HEAD-origin-cleanを固定する。完成4003再照会-download-verifier反復禁止。
+
+現在未保存は37934224516/full32eだけ。compact一回in_progress/attempt1/push/Phase 1 CI/.github/workflows/ci.yml/workflow349172377、jobs/終端/件数未固定・待機反復なし。次heartbeatはcompact一回、終端だけ未保存rawを一度保存。次機能は原diagnostic公開IO/child bootstrap/同owner OS排他-all-writer atomic/fresh loaded runtime closure-profile-private policy-request-unusedroot。formal_permission=false/credit0/holdout未読/正式5残件・受入未完了/create_native早期拒否/全7役限定reader起動禁止/元caps・unknown原owner-stop/追加agent禁止/ACTIVE維持。
+
 ## 2026-10-09 JST Python3.14単一CI3991の原証拠保存（ACTIVE）
 
 開始2026-10-09T13:09:55Z/HEAD f0817e96f55f084322acdcb046511962da67239f-origin/upstream-clean。元先行12helper full saved creation-start_token/live-execution一致・CIM同original不在/repository helper-critical ownerなし。今回production/test/body0、完成focus/旧suite/基本probe/native/追加agent/profile反復0。元focus failedとforeground未保存identityを保全する。
