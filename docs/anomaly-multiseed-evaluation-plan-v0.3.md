@@ -21,6 +21,14 @@ Windows正式runtimeの3.14.0/build/hashと科学仕様・seedは変更しない
 新revisionの合格へ読み替えない。新inspection receiptはs4-a.3と別schemaを使い、旧s4-a.2/v1 schemaは履歴読取り専用として保持する。
 [改訂記録](results/anomaly-multiseed-v0.3-python314-unification-2026-10-08.md)を参照。正式受入未完了・formal_permission=false・holdout観測未読を維持する。
 
+2026-10-09追記: 人の承認により、現在のWindows OS条件は必要機能を中心とするwindows-runtime-policy.1へ改訂する。
+Windows 11のx64 workstation、local NTFS、persistent ACL flag、Job/process/HANDLE継承・ACL・publication APIの可用性を要求する。
+release/build/UBR/editionは各runの実観測として保存し、特定値への完全一致を実行条件にしない。通常GIL CPython3.14.0の実build/hash固定は維持する。
+同じrun内のOS・runtime変化は元snapshot bytesとの一致検査で拒否し、collectorでも開始/終了時のhost全観測を照合する。
+API exportの存在は実動作の受入ではなく、native Job/ACL/transportとS4の未完了状態を維持する。新inspectionはs4-a.4/v3 schema、
+旧s4-a.2/v1とs4-a.3/v2は元のOS条件を持つ履歴として読む。固定registryのruntime値は当初の参照環境の記録で、現在のOS許可条件ではない。
+[改訂記録](results/anomaly-multiseed-v0.3-windows-runtime-policy-2026-10-09.md)を参照。
+
 v0.3のconfig、schema、validator、scorer、runner、test、run、結果artifactは**まだ作成・実施していない**。候補の勝者、性能達成、製品昇格も未決定である。本書は、それらの実装を承認する前に、仮説・データ・算法・母数・判定・停止条件を固定する文書であり、run結果ではない。以下の新しい数値、seed数、候補、閾値、実験規模、gateは、既存の実測値と明記したものを除き、すべて**v0.3の設計上の決定**である。
 
 ## 1. 根拠と研究の境界
@@ -385,7 +393,7 @@ Windowsで必要なpublisher・DACL・独立token/process・競合・失敗証�
 | --- | --- | --- |
 | 共通契約のLinux CI | Ubuntu 24.04 x86_64、CPython 3.14系の1 test jobと独立journal検証job | strict/pure validator、Q1〜Q5、M1〜M9、profile/score/merge/母数、seed hash、bootstrap golden、fake runner・独立consumer試験を3.14でpassし、全journal完了・必須ID・共有fixture inventory・skip理由・外部source/run pinを照合 |
 | Windows native受入 | 下記Windows 11 AMD64/NTFS、正式pinのCPython 3.14.0 | 共通試験に加えて実Win32 publisher、protected DACL、別process/tokenのAccessCheck、競合・非上書き・失敗時証跡保持をこのruntimeでpass |
-| S4 smokeとS5/S6 formal | 下記の唯一のWindows/CPython組合せ | Windowsで生成する同じ保存観測を全候補へ渡し、producer/analysis/auditの厳密な再計算・hash照合を実施 |
+| S4 smokeとS5/S6 formal | Windows OS機能要件とCPython3.14.0 exact pinを満たす環境をrun開始時に固定 | Windowsで生成する同じ保存観測を全候補へ渡し、producer/analysis/auditの厳密な再計算・hash照合を実施。同じrun中の環境変更は拒否 |
 
 Linux jobのPython 3.14のpatch/build・CI image digestと、Windows 3.14.0の実build/hash、
 OS/kernel、architecture、実行source SHA、各testのpass/fail/skipをS4の受入証跡へ保存する。
@@ -396,11 +404,15 @@ seed/整数bootstrap goldenは全platformでexact一致を要求する。
 手計算の非整数profile/Cholesky/score値の近似照合だけは`rel_tol=1e-12, abs_tol=1e-12`を固定し、
 判定やhashの不一致にこの許容差を使わない。正式producer/consumer間のcanonical exact比較も緩めない。
 
-正式runは**Windows 11 Pro 25H2 / AMD64 / OS build `10.0.26200.9168` / local NTFS**と、
-**通常GIL buildのCPython `3.14.0`、64-bit AMD64、MSC v.1944、source tag
-`v3.14.0:ebf955d`**の1組だけを許可する。選定根拠は本修正時に確認したローカルruntimeであり、
-新seedや候補の性能を比較した選択ではない。OS照合にはmajor/minor、CurrentBuildNumber、UBRを使い、
-互換用の`ProductName`文字列だけには依存しない。
+現在のOS許可条件は**Windows 11 x64 workstation / local NTFS / persistent ACL対応 / 必要Win32 API exportあり**。
+Windowsのbuildは22000以上、major/minorは10.0、product typeはworkstation(1)を要求する。
+edition/release/build/UBRは正確な実観測を記録し、sys.getwindowsversionとCurrentBuildNumberの整合性を確認する。
+特定のrelease/更新番号への完全一致は要求しない。API可用性の観測は実Job/ACL/child transport受入を合格にしない。
+**通常GIL buildのCPython `3.14.0`、64-bit AMD64、MSC v.1944、source tag `v3.14.0:ebf955d`**と下記hashは維持する。
+
+旧固定registryの**Windows 11 Pro 25H2 / build `10.0.26200.9168`**は当初の参照環境としてbytesを保持する。
+選定根拠は当時のローカルruntime観測であり、特定OSでしか正しく動かない検証結果ではない。
+実runのruntime.jsonは実観測を保存し、旧registry値を観測したOS版として代用しない。
 
 - `python.exe` raw SHA-256: `467014615a5255aca450ae88100dd2caf887da87657f00e3c2171ec44a685aec`
 - `python314.dll` raw SHA-256: `f1722bd369d79fecbc85f3ed2790c30c330b9413fd74332f95b086e60dfacc2a`
@@ -419,12 +431,13 @@ Windows 3.14.0の受入はこのfixture用publisher部品に限定し、この�
 Linux CIでWindows専用項目を明示skipすることは許すが、Windows受入で必要項目がskip・未実行・失敗なら
 S4不合格とする。CIからformal holdoutの生成・採用判定は行わない。
 
-非Windows（WSLを含む）、非NTFS、Windowsのbuild/architecture差、Python patch/build/hash差では
-formal run/publishを`unsupported_runtime`として、生成・staging・output claim・ACL操作より前に拒否する。
+非Windows（WSLを含む）、Windows 11 x64 workstation範囲外、非local NTFS、persistent ACL非対応、必要API欠落、Python patch/build/hash差では
+formal run/publishを拒否する。S4受入未完了の実campaign/native入口の早期拒否も維持する。
 Linuxのvalidate-only、pure/独立read-only再計算、fake publisherの試験は互換性検証として利用できるが、
 Windows native受入や正式campaignに読み替えない。CPython 3.12をformalのfallbackにしない。
 正式pinが利用できない場合は停止し、変更理由を記した計画改訂・独立再監査・受入試験を先に行う。
-S5開始後のruntime/OS更新やsource変化はglobal integrity failureとして扱い、既定の再登録規則に従う。
+同じS5 runの開始後にruntime/OS/sourceが変化した場合はglobal integrity failureとして扱い、既定の再登録規則に従う。
+別runでのOS更新は新しい実環境証跡を取得し、必要機能と影響するnative受入を確認する。旧検証を更新後環境の合格へ自動転用しない。
 
 ## 9. 小さなsavepointと停止・再登録条件
 

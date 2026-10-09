@@ -125,8 +125,53 @@ def capture_checkout(root: Path, expected_head: str) -> Checkout:
     return Checkout(root, expected_head, tuple(sorted(entries)))
 
 
-def probe_runtime(parent: Path) -> dict:
+WINDOWS_POLICY_VERSION = "windows-runtime-policy.1"
+FILE_PERSISTENT_ACLS = 0x00000008
+WINDOWS_REQUIRED_EXPORTS = {
+    "kernel32": ("CreateJobObjectW", "SetInformationJobObject", "AssignProcessToJobObject",
+                 "IsProcessInJob", "QueryInformationJobObject", "TerminateJobObject", "CloseHandle",
+                 "CreateProcessW", "InitializeProcThreadAttributeList", "UpdateProcThreadAttribute",
+                 "DeleteProcThreadAttributeList", "MoveFileExW", "GetVolumePathNameW",
+                 "GetVolumeInformationW", "GetDriveTypeW"),
+    "advapi32": ("GetNamedSecurityInfoW", "SetNamedSecurityInfoW", "AccessCheck"),
+}
+WINDOWS_EXPORT_IDS = tuple(library + "." + name for library, names in WINDOWS_REQUIRED_EXPORTS.items() for name in names)
+
+
+def validate_windows_host(*, major, minor, build, ubr, product_type, architecture, edition, release):
+    """OS support boundary; exact release/build/UBR remain observations."""
+    require(all(type(value) is int and 0 <= value <= 0xffffffff
+                for value in (major, minor, build, ubr, product_type)), "invalid Windows version observation")
+    require((major, minor, product_type, architecture) == (10, 0, 1, "AMD64") and build >= 22000,
+            "unsupported Windows runtime")
+    require(all(type(value) is str and 0 < len(value) <= 128 for value in (edition, release)),
+            "invalid Windows release observation")
+
+
+def windows_capabilities(libraries, filesystem_flags):
+    """Export/volume availability only; never exercise Job, ACL or publication."""
+    require(type(filesystem_flags) is int and 0 <= filesystem_flags <= 0xffffffff
+            and filesystem_flags & FILE_PERSISTENT_ACLS, "persistent ACL support required")
+    exports = []
+    for library, names in WINDOWS_REQUIRED_EXPORTS.items():
+        for name in names:
+            require(callable(getattr(libraries[library], name, None)), "required Windows API unavailable")
+            exports.append(library + "." + name)
+    return {"policy_version": WINDOWS_POLICY_VERSION, "filesystem_flags": filesystem_flags,
+            "api_exports": exports, "behavior_verified": False}
+
+
+def require_same_runtime(expected: bytes, observed: dict):
+    """An OS update may start a new run, but cannot replace a bound run snapshot."""
+    require(type(expected) is bytes and 0 < len(expected) <= 32768, "runtime snapshot required")
+    require(v.canonical_json(observed) == expected, "runtime changed during run")
+
+
+def probe_runtime(parent: Path, *, expected_snapshot: dict | None = None) -> dict:
     """Read only. No output claim, data generation, native write or ACL mutation."""
+    expected = v.canonical_json(expected_snapshot) if expected_snapshot is not None else None
+    if expected is not None:
+        require(0 < len(expected) <= 32768, "runtime snapshot byte limit")
     require(os.name == "nt" and platform.system() == "Windows", "unsupported_runtime")
     require(platform.machine() == "AMD64" and platform.python_implementation() == "CPython"
             and platform.python_version() == "3.14.0" and struct.calcsize("P") == 8
@@ -143,12 +188,15 @@ def probe_runtime(parent: Path) -> dict:
         edition = winreg.QueryValueEx(key, "EditionID")[0]
         release = winreg.QueryValueEx(key, "DisplayVersion")[0]
     version = sys.getwindowsversion()
-    require((version.major, version.minor, build, ubr, edition, release) ==
-            (10, 0, 26200, 9168, "Professional", "25H2"), "unsupported_runtime")
+    require(version.build == build, "Windows version sources disagree")
+    validate_windows_host(major=version.major, minor=version.minor, build=build, ubr=ubr,
+                          product_type=version.product_type, architecture=platform.machine(),
+                          edition=edition, release=release)
     executable = regular_path(Path(sys.executable))
     dll = regular_path(Path(sys.base_prefix)/"python314.dll")
     parent = regular_path(parent, directory=True)
     kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    security = ctypes.WinDLL("advapi32", use_last_error=True)
     kernel.GetVolumePathNameW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD]
     kernel.GetVolumePathNameW.restype = wintypes.BOOL
     kernel.GetVolumeInformationW.argtypes = [wintypes.LPCWSTR, wintypes.LPWSTR, wintypes.DWORD,
@@ -158,8 +206,12 @@ def probe_runtime(parent: Path) -> dict:
     volume, filesystem = ctypes.create_unicode_buffer(32768), ctypes.create_unicode_buffer(128)
     require(kernel.GetVolumePathNameW(str(parent), volume, len(volume)), "unsupported_runtime")
     require(kernel.GetDriveTypeW(volume.value) == 3, "unsupported_runtime")
-    require(kernel.GetVolumeInformationW(volume.value, None, 0, None, None, None, filesystem, len(filesystem)), "unsupported_runtime")
-    observed = {"os": "Windows 11 Pro" if edition == "Professional" and build >= 22000 else edition,
+    flags = wintypes.DWORD()
+    require(kernel.GetVolumeInformationW(volume.value, None, 0, None, None, ctypes.byref(flags), filesystem, len(filesystem)), "unsupported_runtime")
+    require(filesystem.value == "NTFS", "local NTFS required")
+    capabilities = windows_capabilities({"kernel32": kernel, "advapi32": security}, flags.value)
+    observed = {"os": "Windows 11", "os_edition": edition, "product_type": version.product_type,
+        "runtime_policy": capabilities,
         "release": release, "architecture": platform.machine(), "os_major": version.major, "os_minor": version.minor,
         "os_build": build, "os_ubr": ubr, "filesystem": "local-"+filesystem.value,
         "implementation": platform.python_implementation(), "python_version": platform.python_version(),
@@ -167,7 +219,12 @@ def probe_runtime(parent: Path) -> dict:
         "compiler": "MSC v.1944", "source_tag": "v3.14.0:ebf955d",
         "python_exe_raw_sha256": hashlib.sha256(executable.read_bytes()).hexdigest(),
         "python_dll_raw_sha256": hashlib.sha256(dll.read_bytes()).hexdigest()}
-    require(v.canonical_json(observed) == v.canonical_json(c.formal_runtime()), "unsupported_runtime")
+    python_fields = ("implementation", "python_version", "pointer_bits", "gil_disabled", "compiler", "source_tag",
+                     "python_exe_raw_sha256", "python_dll_raw_sha256")
+    pin = c.formal_runtime()
+    require(all(observed[field] == pin[field] for field in python_fields), "unsupported Python basic pin")
+    if expected is not None:
+        require_same_runtime(expected, observed)
     # This is a basic pin probe, NOT S4's full loaded-DLL/CRT/stdlib inventory.
     return observed
 
@@ -182,7 +239,7 @@ def require_campaign_acceptance() -> None:
 
 
 def acceptance_requirements() -> dict:
-    return {"status": "not_completed", "linux_python": ["3.12", "3.14"],
+    return {"status": "not_completed", "linux_python": ["3.14"],
             "windows_python": ["3.14.0"], "native_publisher": "not_accepted",
             "protected_dacl": "not_accepted", "independent_token_access_check": "not_accepted",
             "full_runtime_inventory": "not_frozen", "consumer_revision": "not_frozen"}

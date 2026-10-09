@@ -37,6 +37,8 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 現在の対応Pythonは**3.14系（`>=3.14,<3.15`）**です。2026-10-08のユーザー判断によりLinux CIも3.14へ一本化しました。Windows正式評価は登録済みCPython 3.14.0のbuild/hashへ固定します。過去の3.12/3.14検証は履歴として保持します。[改訂記録](docs/results/anomaly-multiseed-v0.3-python314-unification-2026-10-08.md)を参照してください。
 
+Windows OS条件は**Windows 11 x64 workstation・local NTFS・ACL対応・必要API可用性**です。正確なrelease/build/更新番号は各runに記録し、特定番号への完全一致を実行条件にしません。同じrun中の環境変化は検出して停止します。実Job/ACL/child transportの受入は別途必要です。[OS条件改訂](docs/results/anomaly-multiseed-v0.3-windows-runtime-policy-2026-10-09.md)
+
 ## ライセンス
 
 このリポジトリのソースコードと文書は [MIT License](LICENSE) です。

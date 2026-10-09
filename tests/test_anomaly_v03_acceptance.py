@@ -40,7 +40,8 @@ def fixture():
     return {"receipt_version": a.RECEIPT_VERSION, "acceptance_status": "not_completed",
         "requirements": dict.fromkeys(a.REQUIREMENTS, "not_completed"),
         "stable": {"platform": {"system": "Linux", "release": "24.04", "version": "hand-kernel", "build": None,
-            "ubr": None, "edition": "ubuntu", "architecture": "x86_64", "filesystem": "ext4", "local_fixed": True},
+            "ubr": None, "edition": "ubuntu", "product_type": None, "native_capabilities": None,
+            "architecture": "x86_64", "filesystem": "ext4", "local_fixed": True},
             "python": {"implementation": "CPython", "version": "3.14.8", "compiler": "hand-compiler", "gil_disabled": False,
                 "source_tag": "hand-tag", "pointer_bits": 64, "executable": entry("python/python", b"hand executable"),
                 "executable_native_path": "native/python", "loaded_python_dll": None,
@@ -114,6 +115,8 @@ class AcceptanceContractTests(unittest.TestCase):
             value = fixture()
             value["receipt_version"] = a.LEGACY_RECEIPT_VERSION
             value["requirements"] = dict.fromkeys(a.LEGACY_REQUIREMENTS, "not_completed")
+            value["stable"]["platform"].pop("product_type")
+            value["stable"]["platform"].pop("native_capabilities")
             for row in value["stable"]["sources"][0]["files"]:
                 if row["path"] == a.SCHEMA_PATH:
                     row["path"] = a.LEGACY_SCHEMA_PATH
@@ -127,7 +130,7 @@ class AcceptanceContractTests(unittest.TestCase):
     def test_python314_scope_requires_one_minor_and_rejects_old_requirements(self):
         value = fixture()
         self.assertNotIn("linux-3.12", a.REQUIREMENTS)
-        self.assertEqual(value["receipt_version"], "s4-a.3")
+        self.assertEqual(value["receipt_version"], a.RECEIPT_VERSION)
         self.assertFalse(check(value)["formal_permission"])
         for version in ("3.12.8", "3.13.0", "3.15.0"):
             bad = copy.deepcopy(value)
@@ -217,11 +220,13 @@ class AcceptanceContractTests(unittest.TestCase):
         from banto_ai import _anomaly_v03_contract as c
         value = fixture(); stable = value["stable"]; pin = c.formal_runtime()
         stable["platform"].update(system="Windows", release="25H2", version="10.0.26200.9168", build=26200,
-            ubr=9168, edition="Professional", architecture="AMD64", filesystem="NTFS")
+            ubr=9168, edition="Professional", product_type=1, architecture="AMD64", filesystem="NTFS",
+            native_capabilities={"policy_version": rt.WINDOWS_POLICY_VERSION, "filesystem_flags": rt.FILE_PERSISTENT_ACLS,
+                                 "api_exports": list(rt.WINDOWS_EXPORT_IDS), "behavior_verified": False})
         stable["cpu"].update(architecture="AMD64", feature_scope="win32-processor-feature-api")
         stable["scope"]["native_method"] = "EnumProcessModulesEx"
         stable["python"].update(version="3.14.0", compiler="MSC v.1944 64 bit (AMD64)", source_tag="v3.14.0:ebf955d",
-            executable_native_path="native/python.exe", loaded_python_dll="native/python314.dll", basic_pin="matches-formal-basic-pin")
+            executable_native_path="native/python.exe", loaded_python_dll="native/python314.dll", basic_pin="matches-python-basic-pin")
         stable["python"]["executable"]["path"] = "python/python.exe"
         stable["python"]["executable"]["raw_sha256"] = pin["python_exe_raw_sha256"]
         stable["loaded_native"] = [{**stable["python"]["executable"], "path": "native/python.exe"},
@@ -241,7 +246,7 @@ class AcceptanceContractTests(unittest.TestCase):
     def test_windows_312_compatibility_receipt_is_no_longer_supported(self):
         value = self._windows_fixture()
         value["stable"]["python"].update(version="3.12.10", basic_pin="compatibility-only")
-        with self.assertRaisesRegex(v.V03ValidationError, "formal basic pin mismatch"):
+        with self.assertRaisesRegex(v.V03ValidationError, "unsupported runtime version"):
             check(value)
 
     def test_executable_native_reference_is_required_unique_and_byte_equal(self):

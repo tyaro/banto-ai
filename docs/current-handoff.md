@@ -1,5 +1,17 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST 人の指定：OS条件を必要機能中心へ改訂（自走PAUSED維持）
+
+人のOS固定見直しへの「進めてください」に従う限定作業。開始2026-10-09T08:28:35Z/HEAD6182cce4e00ea63e866cab3ffe48f852770a2b36-origin-clean、先行元5helper creation/start_token同original不在/repo helper・critical ownerなし。現在のOS条件はwindows-runtime-policy.1：Windows11 x64 workstation/build>=22000、local NTFS、FILE_PERSISTENT_ACLS、必要Job/process/HANDLE継承・ACL・publication API export可用性。特定release/build/UBR/editionの完全一致を外し、実値を記録。Python正式3.14.0/build/hashは維持。必要APIがあることは実動作・native owner認証の合格ではない。
+
+probe_runtimeは元expected_snapshotをIO前にcanonical bytesへ固定し、同runのOS/runtime差分を拒否。collectorは開始/終了時host全観測を照合。実campaign/S4/native入口/create_native早期拒否は維持。新inspection s4-a.4/v3 schemaはOS実観測とAPI/volume可用性を保持しbehavior_verified=false、旧s4-a.2/v1・s4-a.3/v2は旧OS条件の履歴として読む。旧registry/runtime値と科学9schema/config/seedは変更せず当初の参照環境として保持し、実OS証跡へ読み替えない。
+
+新OS unitの16distinct/body17：初回15は14pass＋試験入力dict.update重複keywordの1error（3subcase）、原helper/log/failed記録を保全。入力だけ修正して失敗1を一回再確認pass、reviewで旧TestCaseの重複discoveryを避けるmodule参照へ修正し新1だけpass。pass済み14は反復0、別source/runで最終source単一16successではない。fake WinDLL/winreg/BOOL/volume flagと小FileIO/純粋schemaであり、実Win ABI/Job/ACL/child owner認証/全経路wall/容量合格ではない。native/追加agent/業務worker/旧CI回収/旧focus/profile再観測0。詳細docs/results/anomaly-multiseed-v0.3-windows-runtime-policy-2026-10-09.md、原raw artifacts/windows-runtime-policy-20261009-prep/。
+
+変更11path safety違反0、科学config5/schema9/旧inspection schema2の16path working-Git原bytes一致、先行Python314 root27file32705B不変。原prepare/初回failed focus/v2/v3/componentsの5helperはlive-execution full creation-start_token一致、CIM同original不在/repo helper・critical ownerなし。原failed focusを書換えない。post-saveで実fullHEAD-origin-working treeと新CI一度の観測だけを保存する。
+
+heartbeat banto-10はPAUSEDを維持し、通常自走の再開指示ではない。旧未保存CIの原最後観測/失敗raw/閉鎖rootへ追加・反復なし。新revisionのCI終端は未確認、旧環境の成功を新環境の合格へしない。formal_permission=false/credit0/登録holdout観測未読、実native受入・正式5残件・最終受入未完了と元caps/owner-stop保持を維持する。
+
 ## 2026-10-08 JST 人の指定：Python 3.14へ一本化（自走PAUSED維持）
 
 人の「了解です。3.14固定で構いません」により、Python版の固定だけを今回の限定作業として実施。対応宣言は>=3.14,<3.15、Ubuntu 24.04 CIは3.14 test一つと独立journal検証jobへ変更。3.12 job・版間比較を外し、新ci-python314-journal.1で共有29fixture inventory/必須28ID/完了・skip理由/外部source-workflow-run-attempt pinを維持。新しい成功を版間comparison matchedへ読み替えない。Windows正式runtimeの3.14.0/build/hash、native早期拒否・科学仕様・seed・正式permissionは変更しない。
