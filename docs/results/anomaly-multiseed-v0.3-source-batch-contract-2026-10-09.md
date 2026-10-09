@@ -37,3 +37,11 @@ SBR1はmemory-only literal raw pack。8B headerとcallごと20B length/index hea
 完成CI4027 raw23file5692670B/main21file87837B/post15file117998B不変。今後完成4027以下/原collector/Git37/新16/旧focus/旧suite再実行禁止。code/doc unit一回commit/push、追補はdoc-only skip ciへ集約。
 
 次は新batch operationの実request/proof/原worker raw-failure captureと同原owner transport、compression実growth・全future raw/global peak・全32entryを合わせた契約。fresh loaded source/runtime全閉包-profile/private policy/native request/unused exclusive root、診断専用公開/parent_failure原raw/child bootstrap/OS排他-all-writer atomic/native call-return-HANDLE-stdio-child close-rename認証は未完了。create_native早期拒否/全7役whole.run限定reader起動禁止/正式5残件・最終受入未完了/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/元caps-unknown原owner-stop/追加agent禁止/ACTIVE維持。
+
+## code保存後の追補
+
+code/test/doc5pathを一回commit/push、実fullHEAD cf3f1866e20c63e8eaa06a4e0d6b0d36757ae5e0 / origin/upstream/ls-remote一致・clean。Git batch460794B5entry/512KiB16entry/output1MiB/累積30秒。変更production2/test1はworking-Git exact、他106は検証済み親tree＋既存37Git原pinから非交差継承。全Git batch stdout/stderrは取得時に照合し大stdoutはpinだけを保存、helper process全byte logではない。
+
+実fullSHA gh run list一回は空配列、原stdout3B/37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570/stderr0B。新CI run/attempt/jobs/終端/実件数未特定、空選択をsuccessへしない。待機/再照会/download/verifier0。次heartbeatは当該実code fullSHAの新run選択一回、未終端・空は反復なしで未完成機能へ進む。完成4027以下/旧failure/旧2minorへ照会0。
+
+原root最終23file157862B、manifest2660B/ffcf8a5759cd2e8f810a6578052b63f78c82f68e90e5d80f7a0a9119112bf664、閉鎖。追加/同保存/新16/現source constructor拒否再実行禁止。別postへdoc-only追補HEAD/109working/最新docs2 LF exact/閉鎖root/prefix/元helper終了 metadataだけ保存して閉鎖する。原postのforeground closure identity/full process logsはNoneとして記録し、native回収claimなし。ACTIVE維持。

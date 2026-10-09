@@ -2,6 +2,8 @@
 
 ## 2026-10-10 JST source batch別version・literal packed raw/failure契約準備（ACTIVE）
 
+code/test/doc5path一回commit/push HEAD cf3f1866e20c63e8eaa06a4e0d6b0d36757ae5e0-origin/upstream/lsremote-clean。原main23file157862B/manifest2660B/ffcf8a5759cd2e8f810a6578052b63f78c82f68e90e5d80f7a0a9119112bf664閉鎖。実fullSHA新CI選択一回空配列原stdout3B/37517e.../stderr0、attempt/jobs/終端/件数未特定。待機/再照会/download/verifier0。次は実code cf3f... fullSHA新run選択一回だけ、完成4027以下再照会0。以下未完成契約とgateを維持。
+
 開始15:07:58Z/HEAD ad4693ceebff560ce0e4917a48c9dffaeb8bf847-origin/upstream-clean、前code e060。先行元7helper full creation-start_token一致/CIM同original不在/critical ownerなし。新production2/test1、追加module0。既存dependenciesへSourceBatchContractPreparation/新closed request-proof-packed raw candidate-v1、reader hook/同原ParentPublicationRetentionへ保持。source_blob_batchはsource全対応/独立pin/blob OID/sha1 header-body順序/fullstdout、pre/post全plan/16source128KiBgroup/64call/候補32KiBを閉じる。旧v1 schema不変、create_native437B/0bd7...不変。
 
 元owner/checkpoint/raw/maximaをgetter前保持、全future原raw最大値＋別partial/newgrowth/control/failure/diagnostic/reserve/snapshotを割引せず算定。SBR1 memory-only literal raw packの原full byte readback、原failure prefix/第一error/private参照保持/alias消去・再初期化・再packing拒否。receipt/exitはcaller opaque Python、実native/worker raw捕捉/FileIO公開/OS排他/全writer参加/transport認証ではない。全native-auth-capacity-formal false/unresolved=true/親readiness早期拒否。
