@@ -12,6 +12,7 @@ from . import anomaly_v03_preformal_generated_chain_budget as monitor
 
 actors, tree, v = terminal.actors, terminal.tree, terminal.v
 channel, observed, paths, io = actors.proof.channel, actors.observed, actors.paths, actors.io
+DIAGNOSTIC_JSON_ENCODER = v.json.JSONEncoder
 SOURCE_ADDITIONS = tuple('src/banto_ai/'+name+'.py' for name in (
     'anomaly_v03_preformal_reader_git_worker',
     'anomaly_v03_preformal_worker_git_actor','anomaly_v03_preformal_worker_git_terminal',
@@ -787,6 +788,11 @@ class RequestAuxiliaryWriter:
         self.__pending=self.pending=None
         self.__operations=();self.__completed=self.completed=()
         self.__callsite_inputs=None
+        self.__callsite_binding=None
+        self.__diagnostic_candidate=None
+        self.__diagnostic_parts=();self.__diagnostic_graph=()
+        self.__diagnostic_codec=self.__diagnostic_raw_returns=self.__diagnostic_owner=None
+        self.__diagnostic_state=None
         self.owner,self.checkpoint,self.storage,self.role=incoming
         self.__anchor=None
         try:
@@ -880,6 +886,85 @@ class RequestAuxiliaryWriter:
                 'auxiliary same original caller error role target and result inputs')
             self._failed(callsite[0])  # A caller failure never authorizes a fresh diagnostic publication.
         except BaseException as error:self._failed(error)
+
+    def prepare_callsite_diagnostic(self, retention, callsite):
+        """Retain a bounded diagnostic candidate; a failure fence stays closed."""
+        incoming=(retention,callsite)
+        if self.__diagnostic_candidate is not None:
+            self.rejected_diagnostic_candidate=incoming
+            held=self.__diagnostic_candidate;state=self.__diagnostic_state
+            if state is not None and not (held.get('raw') is state[2] and held.get('raw_pin') is state[3] and
+                held.get('decoded_return') is state[4] and held.get('parts') is self.__diagnostic_parts and
+                held.get('graph') is self.__diagnostic_graph and held.get('encoded') is state[0] and
+                held.get('error') is state[1] and all(held.get(key) is False
+                    for key in ('published','native_authorized','formal_permission'))):
+                self.rejected_diagnostic_state=(incoming,held.get('raw'),held.get('parts'),held.get('error'),
+                    held.get('encoded'),held.get('published'),held.get('native_authorized'),held.get('formal_permission'))
+                held['encoded']=False;held['error']=state[1] or ValueError('diagnostic original candidate fields changed')
+                held['published']=held['native_authorized']=held['formal_permission']=False
+            return self.__diagnostic_candidate  # No encoder/iterator replay, including failed prefixes.
+        held=self.__diagnostic_candidate=self.diagnostic_candidate={
+            'incoming':incoming,'binding':self.__callsite_binding,'raw':None,'raw_pin':None,
+            'parts':(),'graph':(),'encoded':False,'error':None,'published':False,
+            'native_authorized':False,'formal_permission':False}
+        self.__diagnostic_owner=(incoming,self.__callsite_binding,held)
+        try:
+            a=self.__anchor
+            v.require(self.__inputs[3]=='diagnostic' and self.__callsite_inputs[0] is retention and
+                self.__callsite_inputs[1] is callsite and self.__failure is callsite[0] is retention.original_error and
+                retention.parent is self.__inputs[0] and io.json_bytes(a[5])==a[6]==io.json_bytes(self.limits),
+                'diagnostic original failure fence caller binding and independent maxima')
+            limit=held['limit']=self.limits['diagnostic.json']
+            envelope=held['envelope']={'format':'anomaly-v03-caller-diagnostic-candidate-v1',
+                'active_role':callsite[1],'error_type':type(callsite[0]).__name__,
+                'result':callsite[3],'formal_permission':False}
+            stack=[(envelope,0)];seen=set();count=characters=0
+            while stack:
+                item,depth=stack.pop();held['observing_value']=item;count+=1
+                v.require(count<=4096 and depth<=64,'diagnostic bounded original JSON graph')
+                kind=type(item)
+                if kind is str:
+                    characters+=len(item);v.require(characters<=limit,'diagnostic original text exceeds independent maximum')
+                    v.json_value(item)
+                elif kind in (bool,int,float,type(None)):v.json_value(item)
+                else:
+                    v.require(kind in (dict,list),'diagnostic only original JSON values')
+                    if id(item) in seen:continue
+                    seen.add(id(item));v.require(len(item)+count+len(stack)<=4096,'diagnostic bounded original container')
+                    entries=tuple(item.items()) if kind is dict else tuple(item)
+                    self.__diagnostic_graph=held['graph']=(*self.__diagnostic_graph,(item,kind,entries))
+                    if kind is dict:
+                        v.require(all(type(k) is str for k,_ in entries),'diagnostic original string keys')
+                        stack.extend((value,depth+1) for pair in entries for value in pair)
+                    else:stack.extend((value,depth+1) for value in entries)
+            held['encoder_factory']=DIAGNOSTIC_JSON_ENCODER
+            held['encoder']=held['encoder_factory'](sort_keys=True,separators=(',',':'),ensure_ascii=False,allow_nan=False)
+            self.__diagnostic_codec=(held['encoder_factory'],held['encoder'])
+            held['iterator_return']=held['encoder'].iterencode(envelope)
+            self.__diagnostic_codec=(*self.__diagnostic_codec,held['iterator_return'])
+            held['iterator']=iter(held['iterator_return'])
+            self.__diagnostic_codec=(*self.__diagnostic_codec,held['iterator']);size=0
+            for index,chunk in enumerate(held['iterator']):
+                held['last_chunk']=chunk
+                v.require(index<8192 and type(chunk) is str and len(chunk)<=limit-size,
+                    'diagnostic bounded original encoder token')
+                held['last_encoded_chunk']=raw=chunk.encode('utf-8')
+                v.require(len(raw)<=limit-size,'diagnostic UTF-8 token exceeds independent maximum')
+                self.__diagnostic_parts=held['parts']=(*self.__diagnostic_parts,raw);size+=len(raw)
+            held['raw']=b''.join(self.__diagnostic_parts);held['raw_pin']=observed._pin(held['raw'])
+            self.__diagnostic_raw_returns=(held['raw'],held['raw_pin'])
+            held['decoded_return']=v.strict_json(held['raw'])
+            self.__diagnostic_raw_returns=(*self.__diagnostic_raw_returns,held['decoded_return'])
+            for item,kind,entries in self.__diagnostic_graph:
+                now=tuple(item.items()) if kind is dict else tuple(item)
+                v.require(len(now)==len(entries) and (all(k==oldk and value is oldvalue for (k,value),(oldk,oldvalue)
+                    in zip(now,entries)) if kind is dict else all(value is oldvalue for value,oldvalue in zip(now,entries))),
+                    'diagnostic original input graph changed during codec')
+            v.require(held['decoded_return']==envelope,'diagnostic full candidate raw readback differs from original input')
+            held['encoded']=True
+        except BaseException as failure:held['error']=failure
+        self.__diagnostic_state=(held['encoded'],held['error'],held['raw'],held['raw_pin'],held.get('decoded_return'))
+        return held  # Partial/raw candidates never clear the first error or publish IO.
 
     def publish(self, name, raw):
         incoming=(name,raw)  # Keep the exact raw object before any callback/IO.
@@ -980,6 +1065,10 @@ class ParentPublicationRetention:
                 except BaseException as failure:row['error']=failure
                 if row['error'] is not self.original_error and held['diagnostic_error'] is None:
                     held['diagnostic_error']=row['error']
+                if role=='diagnostic' and row['error'] is self.original_error:
+                    row['diagnostic_prepare_callback']=writer.prepare_callsite_diagnostic
+                    row['diagnostic_candidate']=row['diagnostic_prepare_callback'](self,callsite)
+                    row['diagnostic_candidate_return_observed']=True
         except BaseException as failure:
             if held['diagnostic_error'] is None:held['diagnostic_error']=failure
 

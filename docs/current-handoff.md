@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST 元generate診断bytes候補のbounded codec保持（ACTIVE）
+
+開始HEAD f8f3741628e5055102318ee14fa9f7e2b64ce2e1-origin-clean。先行元11instrumented helper full identity/live-execution/CIM同original不在・repo helper-critical ownerなし。未保存379291/fullcf8をcompact一回in_progress、実fullfca選択一回で新37932021035/in_progress（fullSHA fcaece08b3acf5584a75ea566a05dc9270bfd2e2）。両jobs/終端/実件数未固定、待機/反復/download/verifier0。完成CI3972/3954/3930反復0/追加agent禁止。
+
+既存generate catchの元error-role-target-resultと同原keeperを使い、原diagnostic writer第一error fence後だけ独立maximaと原contextへ候補bytes codecを結ぶ。JSON graph4096/depth64/最大8192token/累積独立bytes上限、元encoder/iterator/chunk/UTF-8 prefix/full raw/strict decoded returnと入力graphを保持・照合。private原parts/codec/raw-returnを保持しcached metadata消去/authority flip/再入/失敗prefixでもcodec・IO反復を拒否する。新internal候補envelopeで旧protocol不変。FileIO公開/child bootstrap/native transport/global capacityは未完了。
+
+新14distinct/body19＝初回9は4pass/fail2error3を原保存、global JSONEncoder patchがfixture準備に及んだため専用codec参照へ限定。失敗5＋new1のv2 body6pass、新risk3のv3 body3pass、review新1のv4 body1pass。完成focus反復0/最終source単一14successではない。actual generate catchはcreate失敗位置のfake工程でnative0、実Python codec/raw decode候補のみ。70source-science/他68不変、旧5AST/create_native437B不変、変更2code-test safety0/new production module0。fresh名前30合計910751B/最大archive130691B/source cap381B差はruntime容量保証ではない。
+
+詳細docs/results/anomaly-multiseed-v0.3-generate-diagnostic-bytes-2026-10-09.md。原artifacts/preformal-generate-diagnostic-bytes-20261009-prep/、別metadata artifacts/preformal-ci-auxiliary-current-save-20261009-prep/。code/test/docs4path一回commit/push、doc-only追補skip ciへ集約しpostでpins/full saved identities/HEAD-origin-cleanを固定する。次は未保存run compact各一回＋新code実fullSHA選択一回、未終端は待機反復なし。原diagnostic公開IO/child bootstrap/同owner OS排他-all-writer atomic/fresh runtime closure-profile-private policy-request-unusedrootを継続、formal_permission=false/credit0/holdout未読/正式5残件・受入未完了/create_native早期拒否/全7役限定reader起動禁止/元caps-stop/追加agent禁止/ACTIVE維持。
+
 ## 2026-10-09 JST generate例外callsiteと元auxiliary writer保持接続（ACTIVE）
 
 開始HEAD b85c8055f63cf5695935a00572d3be1999975bae-origin-clean。前元8helper full identity/CIM同original不在・repo helper-critical ownerなし。前code cf8実fullSHA CI37929197138を一回in_progress選択、attempt/jobs/終端/件数未固定・待機/反復/download/verifier0。完成3972/3954/3930反復0。追加agent禁止。
