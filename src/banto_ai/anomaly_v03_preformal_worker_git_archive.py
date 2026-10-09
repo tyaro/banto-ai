@@ -1166,6 +1166,10 @@ class PublicationStorageAdmission:
         self.error=self.original_error=self.pending=self.last_observation=None
         self.writer=self.rejected_writer=self.sink=self.rejected_sink=None
         self.carriers=[]
+        self.__request_writer_inputs=self.__request_writer_anchor=None
+        self.__request_writer_pending=self.__request_writer_refused=None
+        self.__request_writer_claims=()
+        self.request_writer_binding=None
         try:
             prior=getattr(owner,'original_publication_storage',None)
             self.previous=prior
@@ -1262,12 +1266,104 @@ class PublicationStorageAdmission:
                 self.error=self.original_error
                 if self.gate.error is None:self.gate.error=self.error
                 return True
-            self._fixed();return self.pending is not None
+            self._request_writers_fixed();self._fixed()
+            return self.pending is not None or self.__request_writer_inputs is not None
+        except BaseException as error:self._failed(error)
+
+    def bind_request_writers(self,preparation):
+        incoming=(self,preparation)  # Retain before type/dependency getters or any claim callback.
+        if self.__request_writer_inputs is not None:
+            if self.__request_writer_refused is None:self.__request_writer_refused=incoming
+            self.rejected_request_writers=incoming
+            self._failed(ValueError('storage original request writer connection cannot be replaced'))
+        self.__request_writer_inputs=incoming
+        self.__request_writer_pending=held={'incoming':incoming}
+        try:
+            from . import anomaly_v03_preformal_generated_chain_budget as monitor
+            self._fixed()
+            v.require(self.writer is None and not self.carriers and not (self.root/'worker-git.bin').exists(),
+                'storage request writers must connect before archive or carrier publication')
+            v.require(type(preparation) is monitor.RequestWriterPreparation and
+                preparation.owner is self.owner and preparation.checkpoint is self.checkpoint,
+                'storage request writers require same original Python owner and clock')
+            preparation._fixed()
+            held['context_raw']=raw=io.json_bytes({'request_pin':self.request_pin,'inventory_pin':self.inventory_pin,
+                'revision':self.request['revision'],'root':str(self.root),'root_identity':list(self.identity)})
+            v.require(raw==preparation.context_raw,'storage exact original request inventory revision root context')
+            self.__request_writer_anchor=(incoming,self.owner,self.checkpoint,self.endpoint,self.gate,self.plan_raw,
+                preparation.context_raw)
+            self.request_writer_binding={'inputs':incoming,'claims':self.__request_writer_claims}
+            self.__request_writer_pending=None
+            self._claim_request_writer('parent_control',self.gate)
+            return self.request_writer_view()
+        except BaseException as error:self._failed(error)
+
+    def _request_writers_fixed(self, *, bound=True):
+        if self.original_error is not None:raise self.original_error
+        incoming=self.__request_writer_inputs
+        if incoming is None:
+            v.require(self.request_writer_binding is None and self.__request_writer_anchor is None and
+                self.__request_writer_pending is None and not self.__request_writer_claims,
+                'storage undeclared connection alias or erased original input')
+            return None
+        a=self.__request_writer_anchor;binding=self.request_writer_binding
+        v.require(a is not None and a[0] is incoming and incoming[0] is self and
+            self.owner is a[1] and self.checkpoint is a[2] and self.endpoint is a[3] and self.gate is a[4] and
+            self.plan_raw is a[5] and type(binding) is dict and binding.get('inputs') is incoming and
+            binding.get('claims') is self.__request_writer_claims,
+            'storage original request writer connection and private claim ledger')
+        preparation=incoming[1];preparation._fixed()
+        v.require(preparation.owner is self.owner and preparation.checkpoint is self.checkpoint and
+            preparation.context_raw is a[6] and io.json_bytes({'request_pin':self.request_pin,
+                'inventory_pin':self.inventory_pin,'revision':self.request['revision'],'root':str(self.root),
+                'root_identity':list(self.identity)})==a[6] and
+            all(io.json_bytes(row[2])==row[3] for row in self.__request_writer_claims),
+            'storage fixed request context and original claim returns')
+        if bound:
+            v.require(self.__request_writer_pending is None,'storage unresolved original writer claim')
+            expected=[('parent_control',self.gate)]
+            if self.writer is not None:expected.append(('worker_archive',self.writer))
+            expected.extend(('worker_carrier',carrier) for carrier in self.carriers)
+            v.require(all(any(row[0]==role and row[1] is participant for row in self.__request_writer_claims)
+                for role,participant in expected),'storage IO requires original declared participant claim')
+        return preparation
+
+    def _claim_request_writer(self,role,participant):
+        if self.__request_writer_inputs is None:return
+        incoming=(role,participant)
+        try:
+            preparation=self._request_writers_fixed(bound=False)
+            v.require(self.__request_writer_pending is None and not any(row[0]==role for row in self.__request_writer_claims),
+                'storage original writer claim once without pending return')
+            self.__request_writer_pending=held={'incoming':incoming,'preparation':preparation}
+            held['result']=result=preparation.claim(role,participant,self.__request_writer_anchor[6])
+            # Original return is retained privately before serialization or further callbacks.
+            self._request_writers_fixed(bound=False)
+            held['raw']=raw=io.json_bytes(result)
+            self.__request_writer_claims=(*self.__request_writer_claims,(role,participant,result,raw))
+            self.request_writer_binding['claims']=self.__request_writer_claims
+            self._request_writers_fixed(bound=False);self.__request_writer_pending=None
+        except BaseException as error:
+            if self.__request_writer_refused is None:self.__request_writer_refused=incoming
+            self._failed(error)
+
+    def request_writer_view(self):
+        try:
+            preparation=self._request_writers_fixed()
+            v.require(preparation is not None,'storage request writer connection required')
+            self._fixed()
+            return {'format':'anomaly-v03-request-writer-storage-connection-v1',
+                'context_pin':observed._pin(self.__request_writer_anchor[6]),'storage_plan_pin':copy.deepcopy(self.plan_pin),
+                'claimed_io_roles':[row[0] for row in self.__request_writer_claims],
+                'all_writers_registered':False,'exclusive_root':False,'atomic_reservation':False,
+                'capacity_pass':False,'native_authorized':False,'execution_authenticated':False,
+                'parent_ack_authorized':False,'formal_permission':False}
         except BaseException as error:self._failed(error)
 
     def view(self,stage):
         if self.original_error is not None:raise self.original_error
         try:
+            self._request_writers_fixed()  # Before storage clock, metadata and writer IO.
             self.pending={'stage':stage,'owner':self.owner,'endpoint':self.endpoint,'inventory_raw':self.inventory_raw}
             self.checkpoint();self._fixed();self.endpoint._live()
             from . import anomaly_v03_preformal_generated_chain_budget as monitor
@@ -1315,6 +1411,7 @@ class PublicationStorageAdmission:
                 type(writer.append_admission) is ArchiveAppendAdmission,'publication storage exact original archive writer')
             writer.original_publication_storage=self
             writer.append_admission.original_publication_storage=self
+            self._claim_request_writer('worker_archive',writer)
             self.view('writer_bind')
         except BaseException as error:self._failed(error)
 
@@ -1325,6 +1422,7 @@ class PublicationStorageAdmission:
                 carrier.checkpoint is self.checkpoint and (carrier.owner is self.owner or carrier.owner is self.gate),
                 'publication storage same original carrier owner and frame bound')
             carrier.native.publication_storage=self
+            self._claim_request_writer('worker_carrier',carrier)
             self.view('carrier_bind')
         except BaseException as error:self._failed(error)
 

@@ -536,6 +536,34 @@ class ReaderGitParent:
             return held
         except BaseException as error:held._failed(error)
 
+    def connect_request_writers_to_storage(self,storage):
+        incoming=(storage,)  # Original candidate before owner/clock getters.
+        previous=getattr(self,'_ReaderGitParent__request_writer_storage_inputs',None)
+        if previous is not None:
+            self.rejected_request_writer_storage=incoming
+            error=getattr(self,'_ReaderGitParent__request_writer_storage_failure',None) or \
+                ValueError('reader original writer storage connection cannot be replaced')
+            if getattr(self,'_ReaderGitParent__request_writer_storage_failure',None) is None:
+                self.__request_writer_storage_failure=error
+            if getattr(self,'error',None) is None:self.error=error
+            error.reader_git_parent=self;raise error
+        self.__request_writer_storage_inputs=self.request_writer_storage_input=incoming
+        try:
+            preparation=getattr(self,'_ReaderGitParent__request_writers_owner',None)
+            self.request_writer_storage_preparation=preparation
+            v.require(type(storage) is actors.archive.PublicationStorageAdmission and storage.owner is self and
+                storage.checkpoint is self.inventory_checkpoint,
+                'reader request writer storage requires same original parent and clock')
+            self.request_writer_storage_return=storage.bind_request_writers(preparation)
+            return self.request_writer_storage_return
+        except BaseException as error:
+            self.__request_writer_storage_failure=error
+            if getattr(self,'error',None) is None:self.error=error
+            error.reader_git_parent=self
+            try:self._remember_publication(error)
+            except BaseException as failure:self.request_writer_storage_remember_error=failure
+            raise self.__request_writer_storage_failure
+
     def prepare_publication_launch(self, *, pipe_io, creator):
         return ReaderPublicationLaunchPreparation(self,pipe_io,creator)
 
@@ -786,13 +814,15 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
         getattr(original,'_request_writers_owner',None),getattr(original,'request_writers',None),
         getattr(original,'original_request_writers',None))
     if any(owner is not None for owner in writers):owners+=writers
+    connection=getattr(original,'_ReaderGitParent__request_writer_storage_inputs',None)
+    if connection is not None:owners+=(connection,getattr(original,'request_writer_storage_input',None))
     storage_input=len(original.original_bootstrap_inputs)>10 and original.original_bootstrap_inputs[10] is not None
     if all(owner is None for owner in owners) and existing is None and not storage_input:return False
     rejected=(getattr(original,'rejected_request_bootstrap',None),
         getattr(original,'rejected_inventory_publication',None),getattr(owners[4],'rejected',None))
     error.reader_publication_owners=(original,owners,rejected,caller_plan)  # Before diagnosis/keeper entry.
     try:
-        problem=(existing is not None or getattr(original,'error',None) is not None or
+        problem=(existing is not None or connection is not None or getattr(original,'error',None) is not None or
             any(getattr(owner,'error',None) is not None or getattr(owner,'pending',None) is not None
                 for owner in owners if owner is not None) or
             owners[0] is not owners[1] or owners[2] is not owners[3] or owners[4] is not owners[5] or

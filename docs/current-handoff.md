@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST 宣言writerとstorage実IO前の原owner接続準備（ACTIVE）
+
+開始10:56:53Z/HEAD eebbded081c0d5ce2cea47e41785bfc44baeeec5-origin-clean、元先行7helper full creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなし。新PublicationStorageAdmission.bind_request_writers→same owner-clock-request/inventory/revision/root/context→元control claim一回→実bind_writer/carrier claim→view IO前拒否を同unitへまとめた。原candidate/未知return/private ledger/第一errorを保持し、後付けarchive/第二claim/metadata消去/再入でも再公開を拒否。親wrapperはforeign child storageを拒否し原inputと第一errorを既存ParentPublicationRetentionへ保持。前3roleのみ接続、全writers/exclusive/atomic/capacity/native/auth/ack/formal false/storage unresolved=true、実child原owner transport未認証。
+
+新18distinct/scheduled54/body28（setup error26、初回/v2各13body0）。非空request-root全entry容量は元32entryで拒否し原ログ保全。接続単体ではupstream publication._fixedとfixture先行archive constructorだけ明示stub、storage snapshot/新writer空archive初回FileIO-close-return-fullreadbackは実経路。v3 5pass/error8→失敗8＋新3のv4 9pass/fail1error1→失敗2＋新親retention1のv5 3pass→review新1 v6 pass。別source/runを最終source単一18successへせず、完成focus反復0/native0/追加agent0/profile0。67source-science/他64/元5AST source/create_native437B不変、変更3path safety0/new prodmodule0。名前30合計888692B/最大archive130691B/e5ab8de3cc7f02f6ccc9f5eb08feeb5e283a64782c2e16bc78ac8f25c6f36337はruntime未閉包、source capとの差381Bで容量合格ではない。
+
+CI37918180709/full4f20c013a64dfc86b01d70e86f08f626a99c60c1/attempt1をcompact一回in_progress、run11712B/e404b02c6a449e547a049d934d79b44f06cd138bb07714c67484bf6156838066保存。jobs/終端/件数未固定、再照会/待機/download/verifier0。旧3930/旧failure/2minor比較へ読み替えない。
+
+詳細docs/results/anomaly-multiseed-v0.3-request-writer-storage-connection-2026-10-09.md、原preformal-writer-storage-connection-20261009-prep/と別preformal-writer-storage-post-continuation-20261009-prep/。原components import miss/failedを保持、別metadata continuationのみguard完成。次は未保存CI各compact一回、未接続parent_failure/diagnostic/child bootstrap/同原owner OS排他/all-writer atomic/fresh loaded runtime closure-profile-private policy-request-unusedroot。全planned32entry/global coupled peak/native HANDLE-stdio-child IOは未完了。create_native早期拒否/全7役限定reader起動禁止/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/元caps-stop/追加agent禁止/ACTIVEを維持。
+
 ## 2026-10-09 JST Python3.14単一CI3930の原証拠保存（ACTIVE）
 
 開始10:39:32Z/HEADc25813db605cbafc31a0ef98b4eba79e726c7216-origin-clean、先行元8helper full creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなし。production/test/body0/worker-native-完成focus-基本probe-追加agent-profile再観測0。

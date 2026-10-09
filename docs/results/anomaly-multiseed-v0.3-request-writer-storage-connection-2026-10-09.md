@@ -1,0 +1,41 @@
+# v0.3 request writer / storage IO接続の準備（2026-10-09）
+
+## 範囲と元owner
+
+開始2026-10-09T10:56:53Z、HEAD eebbded081c0d5ce2cea47e41785bfc44baeeec5/origin/upstream-clean。開始時に先行7helperの保存full creation-start_token/live-executionを照合し、read-only CIMで同original不在・repository helper/critical ownerなしを確認した。
+
+PublicationStorageAdmission.bind_request_writersを追加した。原storage/preparation incomingをgetter前に保持し、同Python owner・clock・request pin・inventory pin・revision・root identity・元context bytes・storage plan bytesを照合する。既にwriter/carrierがbound、又はarchiveが存在する場合は後付けclaimを拒否する。既存controlの過去の公開を今回のclaimへ読み替えない。
+
+controlの元gateを一回claimし、既存bind_writer/bind_carrierから宣言した元participantを一回claimする。control/storage viewはIO/clock/root観測前に同原claimを確認する。原returnはprivate pendingへ判定・serialization前に保持する。alias/ledger消去、callback再入・割込み、途中return改変、第二接続、callbackが再bind例外を飲み込む場合も元第一error/participant/途中view/context/private ledgerを保全し再claimを拒否する。cached接続viewのclock/snapshot反復は0。
+
+ReaderGitParent.connect_request_writers_to_storageは原candidateをowner/clock getter前にprivate保持する。第一例外をcontrol gateがない場合も保持し、foreign child storageを拒否する。新接続inputsを既存ParentPublicationRetentionへforwardし、display aliasが消えても元親keeperを保つ。新keeper/kill-wait/native回収は発行しない。
+
+roleは既存宣言のparent_control/worker_archive/worker_carrier/parent_failure/diagnostic。今回のIO hookは前3roleのみで、parent_failure/diagnostic、actual generate/child側bootstrap/全writer参加/OS root排他/cross-process/all-writer atomic予約は未接続。宣言Python ownerの一致は実native child owner/Job/HANDLE/stdio認証ではない。成功viewでもexclusive/atomic/capacity/native/ack/auth/formalは全false、storage unresolved=trueを維持する。
+
+## 新ケースと原失敗
+
+18 distinct、scheduled test records54、test body28、setup error26。初回13とv2の13は既存非空rootのPartitionedPublicationPreparation全将来entry projectionでsetup拒否しbody0。最初はoptional partialを含む4raw、v2は独立3raw宣言だが原32entry保守的モデルへ同じ拒否。原ログ・source/runを保存し、上限緩和・旧原raw整理・receipt移動はしていない。失敗時projectionの個別JSONは保存されておらず、原selected tracebackを保存している。
+
+この未完成全経路容量を成功へしないため、新接続単体fixtureのupstream publication._fixedと、fixture actorの先行archive constructorを明示stubにした。storageの根metadata snapshotと新writerの実constructor・空archive初回FileIO/close-return/readbackは実経路で確認した。工程上の小temp root/Mock clock/宣言Python ownerで、実Win ABI/全経路wall/容量合格ではない。
+
+v3は13body=5pass/error8（既にboundされたfixture writerの後付け拒否と親fixture属性不足を保存）。v4は失敗8＋新risk3だけ11body=9pass/failure1/error1。親gateなし時の第一例外保持を実装で訂正し、control._view用の原pending holderを試験で用意した。v5は失敗2＋新親retention risk1だけ3pass、reviewの例外を飲み込むcallback新1だけv6 pass。完成5/9/3や旧focusは再実行していない。複数source/runを最終source単一18successへしない。
+
+原focus/focus-v2/focus-v3/focus-v4 helper status=failedを保持（helper CLI自体はexit0、unittest結果がfailed）。selected unittest logsはhelper processのstdout/stderr全byte logではない。元test-created Python FileIOのcleanupはnative HANDLE回収ではない。
+
+## Source・保全
+
+67 source/science working前後pin、変更2production＋新test以外の64不変。元PartitionedPublicationPreparation/RequestWriterPreparation/GeneratedChainBudget/_directory_snapshot AST sourceとcreate_native 437B/0bd7b84f0a3dc0bd22a865ac8b2b4ccedc0e71ea50a177b0e6b086df07fdcc7cは開始bytes不変。変更3path safety違反0/new production module0。名前30 source合計888692B、最大archive130691B/e5ab8de3cc7f02f6ccc9f5eb08feeb5e283a64782c2e16bc78ac8f25c6f36337、既存source_blob上限131072Bとの差381B。これはruntime閉包/private policy/profile/global coupled peakの確認ではなく、将来増分には現source幅とinventoryの新しい固定が必要である。
+
+原raw artifacts/preformal-writer-storage-connection-20261009-prep/、別metadata artifacts/preformal-writer-storage-post-continuation-20261009-prep/、双方512KiB32entry/reserve128KiB/single128KiB。原rootはmanifestで閉鎖して追加しない。components-cont21586B/7b24c707acccc40e5236dc0d77cc2b54cb94cc3e14a19a29bf077c5a49610ab3、原manifest3327B/2d2585c1a3db08991c8d4185f6cc6917a5afea4e0194fdce7e02157e4c66c4c7。
+
+原components helperは誤ったimport名でImportError/exit1。原script/live-execution/failure/tool traceを保持し、別metadata continuationで未保存guard/source/width/root metadataだけ完成した。試験/verifier/encoder/nativeの反復0。toolによるtests path missは抜粋metadataのみで原process全byte logへしない。
+
+旧writer30file109608B/CI3930 root21file5494573B/CI3930 metadata32file90968Bは不変。科学データはhash metadataだけ、holdout観測未読。runtime基本probe/旧CI保存/旧focus/業務worker/native/追加agent/profile再観測0。
+
+## CIと次の未完成経路
+
+CI37918180709/gitfull4f20c013a64dfc86b01d70e86f08f626a99c60c1/attempt1/push/Phase 1 CI/.github/workflows/ci.yml/workflow349172377を今回一度だけin_progress観測。run11712B/e404b02c6a449e547a049d934d79b44f06cd138bb07714c67484bf6156838066、stderr0B保存。jobs/終端/journal未固定、再照会/待機/download/verifier0。既存3930成功をこのwriter codeへ読み替えない。
+
+次は未保存CI compact一回と、実IO未接続のparent_failure/diagnostic/child bootstrap、同原owner OS排他/all-writer atomic、fresh latest-clean loaded runtime closure-profile-private policy-request-unusedroot。全planned32entry、原partial/new growth/codec/native buffer/object overhead/global coupled peak、実native return/HANDLE/stdio/child endpoint-close-rename transportは未完了。
+
+create_native早期拒否/全7役whole.run限定reader実起動禁止/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/登録holdout観測未読/正式5残件・最終受入未完了/元caps・unknown原owner-stopを維持。人の明示再開によるACTIVEを継続し、Sol容量エラー/人の停止割込みでは保全後PAUSEDに戻す。
