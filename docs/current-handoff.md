@@ -2,6 +2,8 @@
 
 ## 2026-10-10 JST source object 原stream/read返値保持（ACTIVE）
 
+最新code 2d66f40e0fbf0ec1e0ec251996399c59bbd2c314 を4path一回commit/push、origin/upstream/lsremote-clean。新fullSHA CI選択一回は空配列/原3B/37517e.../stderr0、run/件数未固定。追補文書2path一回skip ci。raw23file197148B/compact8file22754B閉鎖、原focus failedを保持。次は379582/full fe518 compact一回＋新2d66実fullSHA selection一回、未終端・空は待機反復なし。
+
 開始16:46:53Z/HEAD 01aa06df44d0ea3617a160970e073c3bf93b6724-origin/upstream-clean、元7helper full identity一致/CIM同original不在/helper-critical ownerなし。新production1/newtest1、新production module0。原stream/read callable/invocation/原return/途中prefix/opaque receipt・partial別量を同SourceObjectBatchContractPreparationに保持し、既存metadata proofとSOM1 memory readbackへ結ぶ。unknown/割込み/再入/alias消去/別raw挿入は第一error固定、同原親keeper/close-reap-newkeeper0。実worker/native transportとwall/global容量は未完了、create_native/旧source batch AST/reader/archive不変。
 
 新19distinct/body20=初回16の15pass/fail1（Noneの期待誤り）＋失敗1/具体的新3だけ4pass。原focus failed保持、複数source-runを最終source単一19successへしない。111pins/他109不変/safety0、named30 965635B/最大archive130691B不変。旧19/metadata5/容量拒否/26gzip/collector/37Git/profile/旧focus-suite/native反復0。

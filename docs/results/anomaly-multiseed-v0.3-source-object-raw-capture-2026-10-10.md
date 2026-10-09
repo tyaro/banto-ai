@@ -35,3 +35,13 @@ SourceObjectBatchContractPreparation.capture_raw と SourceObjectBatchRawCapture
 原evidence artifacts/preformal-source-object-raw-capture-20261010-prep/、別metadata artifacts/preformal-source-object-raw-capture-post-20261010-prep/、compact artifacts/preformal-ci-source-object-current-save-20261010-prep/。各512KiB32entry/reserve128KiB/single128KiB、元failed・selected selector missを保全する。foreground focused.py missは正しいfocus.py参照前のtool excerptで、creation/full process logsNone、production/CI/native/Sol失敗へしない。
 
 次は実同原owner worker transport/readのwall・stdio・receipt/partial認証、全future検出/一時raw/全32entry/global peak、OS排他-allwriter atomic、fresh loaded source/runtime全閉包-profile-private policy-native request-unused exclusive root。これらは未完了。create_native早期拒否/全7役whole.run限定reader起動禁止/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/正式5残件・最終受入未完了/元caps-unknown原owner-stop/追加agent禁止/ACTIVE維持。
+
+## Git保存と閉鎖
+
+code full SHA 2d66f40e0fbf0ec1e0ec251996399c59bbd2c314 をproduction1/newtest1/docs2の4path一回commit/push、HEAD-origin/upstream/ls-remote-working tree clean。Git batch388233B/4entry、512KiB16entry/output1MiB/累積30秒。取得時full stdout-stderr照合とpin保存でありhelper全byte logではない。新code実fullSHA gh run list一回は空配列。原stdout3B/37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570/stderr0を保存し、run/attempt/jobs/終端/journal/count未固定。空選択をsuccessへしない。旧379582は同heartbeat内再照会せず、次heartbeatで旧run compact一回と新code実fullSHA selection一回だけ行う。
+
+原raw root最終23file197148B、manifest2653B/7b11b9a7a2f36cd6f34265cbadb480018c426999389ac995198d6fe0dcc82137。compact root最終8file22754B、manifest1019B/39e608e64bc800ba9cf38cea7d0984666e3129e4b0ba42129cee7abcc4523f8a。両閉鎖・追加/同保存/完成19/前19/metadata5/容量拒否/26gzip再実行禁止。別post metadataは最終照合・元helper終了確認後root-closed.jsonで閉鎖する。foreground閉鎖creation/full process logsNone、CIM full saved identityは元helper単位で保存する。原focus failedはそのまま保持する。
+
+components26186B/d46867dfe99995ebca17c9df7ce9000bbe7f86ba195c4a337445c9ee64c27824。初回focused.json37875B/971f986608958bf972700c47b61f53a75b969d3f01249f25aca7cc7f783061ad、reviewed.json32383B/159c8d10d9861d4c7a168ece24d42e98c81dd91ac4cad11bcb8b5a924484b93f。原baseline Git stdout58512B/bfa0e129f2644c969bc021d8a5e8b4ad5215c9194451c8965a9ffaf511e9e603/stderr0/exit0。旧4043 CI3rootsと旧sourceobject4rootsはcount/bytes/manifest pin不変、再download/verifier0。
+
+文書2path追補は一回[skip ci]へ集約。production/test/body再実行0。正式許可・容量・native認証を補わず、同原owner-stop/ACTIVEを維持する。
