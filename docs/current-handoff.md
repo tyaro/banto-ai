@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-10 JST source object 原stream/read返値保持（ACTIVE）
+
+開始16:46:53Z/HEAD 01aa06df44d0ea3617a160970e073c3bf93b6724-origin/upstream-clean、元7helper full identity一致/CIM同original不在/helper-critical ownerなし。新production1/newtest1、新production module0。原stream/read callable/invocation/原return/途中prefix/opaque receipt・partial別量を同SourceObjectBatchContractPreparationに保持し、既存metadata proofとSOM1 memory readbackへ結ぶ。unknown/割込み/再入/alias消去/別raw挿入は第一error固定、同原親keeper/close-reap-newkeeper0。実worker/native transportとwall/global容量は未完了、create_native/旧source batch AST/reader/archive不変。
+
+新19distinct/body20=初回16の15pass/fail1（Noneの期待誤り）＋失敗1/具体的新3だけ4pass。原focus failed保持、複数source-runを最終source単一19successへしない。111pins/他109不変/safety0、named30 965635B/最大archive130691B不変。旧19/metadata5/容量拒否/26gzip/collector/37Git/profile/旧focus-suite/native反復0。
+
+旧code CI37958200991/full fe518 compact一回attempt1/push/Phase1CI/workflow349172377/in_progress。原11712B/cf91dc19.../stderr0/exit0、jobs/終端/件数未固定、待機/反復/download/verifier0。次heartbeatは旧run compact一回と新code実fullSHA selection一回、終端のみ新raw一度/実summary後count固定、未終端・空は反復待機なし。doc-only新CI追跡0。
+
+詳細docs/results/anomaly-multiseed-v0.3-source-object-raw-capture-2026-10-10.md。fresh full runtime/profile-policy-native request-unused exclusive root/原worker transport/全future byte-entry-global peak/OS排他-allwriter/正式5残件・受入未完了/formal_permission=false/credit0/holdout未読/全7役reader起動禁止/元caps-stop/追加agent禁止/ACTIVE維持。
+
 ## 2026-10-10 JST source batch codeの単一CI4043証拠保存（ACTIVE）
 
 開始16:31:36Z/HEAD05c78e4b51234aacd76a7bbd4800e3e86cc6aa87-origin/upstream-clean、現在production/test fe518101411f7af7ba3689298625f85502f4fbce不変/body変更0。先行元14helper full identity一致/CIM同original不在、原metadata failed2保持/critical ownerなし。旧focus-suite/新19/5metadata/容量拒否/26gzip/collector/完成37Git/native/追加agent反復0。

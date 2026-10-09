@@ -744,6 +744,9 @@ class SourceObjectBatchContractPreparation:
         self.__records = (); self.records = ()
         self.__raw_attempts = (); self.__rejected_preparations = ()
         self.__record_bindings = (); self.__metadata_bindings = ()
+        self.__captures = (); self.raw_captures = self.__captures
+        self.__capture_attempt = None
+        self.__active_capture = None
         self.__pending = self.pending = None
         self.__packing = False
         self.__pack = None
@@ -843,14 +846,39 @@ class SourceObjectBatchContractPreparation:
                 v.require(held['incoming'] is incoming and held['proof_raw'] is proof_raw and
                           held['error'] is None and held['native_authorized'] is False and
                           held['formal_permission'] is False, 'batch original private raw/proof bindings')
+            v.require(self.raw_captures is self.__captures, 'object batch original capture ledger')
+            for capture in self.__captures:capture._fixed()
         except BaseException as error:self._failed(error)
 
     def unresolved(self):
         return True  # Candidate readback never authorizes native execution or recovery.
 
-    def retain_raw(self, call_index, stdout, stderr, receipt, *, exit_code, partial=b''):
+    def capture_raw(self, call_index, stdout, stderr, receipt, *, exit_code, partial=b''):
+        """Read caller streams once; retain opaque receipt/partial independently."""
+        if self.__error is not None:raise self.__error
+        incoming = (self, call_index, stdout, stderr, receipt, exit_code, partial)
+        if self.__captures and self.__captures[-1]._SourceObjectBatchRawCapture__inputs[1] == call_index:
+            return self.__captures[-1].capture(incoming)
+        held = SourceObjectBatchRawCapture.__new__(SourceObjectBatchRawCapture)
+        held._retain(incoming)
+        self.__capture_attempt = held
+        try:
+            self._fixed()
+            v.require(type(call_index) is int and call_index == len(self.__records) < len(self.__maxima),
+                      'object capture exact next call')
+            self.__captures = (*self.__captures, held); self.raw_captures = self.__captures
+            held._bind(self.__maxima[call_index], _batch_pin(self.__request_raw))
+            self.__active_capture = held
+            result = held.capture(incoming)
+            self.__active_capture = None
+            return result
+        except BaseException as error:held._failed(error)
+
+    def retain_raw(self, call_index, stdout, stderr, receipt, *, exit_code, partial=b'', _capture=None):
         incoming = (call_index, stdout, stderr, receipt, exit_code, partial)
         if self.__error is None:self.__raw_attempts = (*self.__raw_attempts, incoming)
+        if self.__active_capture is not None and _capture is not self.__active_capture:
+            self._failed(ValueError('object capture original raw forward cannot be replaced'))
         # Independent private prefix survives validation, alias erasure and failures.
         if self.__pending is not None:
             self.rejected_raw = incoming
@@ -940,3 +968,114 @@ class SourceObjectBatchContractPreparation:
 
     def execute(self):
         self._failed(ValueError('batch candidate has no native operation or transport authority'))
+
+
+class SourceObjectBatchRawCapture:
+    """Original stream/read-return ledger; no close, exit or native authentication.
+
+    Blocking reads and the caller's receipt/exit are engineering inputs. Bounded
+    read requests do not establish native wall limits or global memory capacity.
+    """
+    def _retain(self, incoming):
+        if hasattr(self, '_SourceObjectBatchRawCapture__inputs'):
+            self._failed(ValueError('object capture original inputs initialize once'))
+        self.__inputs = self.original_inputs = incoming
+        self.__error = self.error = None
+        self.__operations = self.operations = ()
+        self.__prefixes = self.prefixes = ((), ())
+        self.__pending = self.pending = None
+        self.__running = False
+        self.__result = self.__result_anchor = None
+        self.__limits = None
+        self.__descriptor = self.descriptor_raw = None
+        self.__proof = None
+        self.__rejected_inputs = None
+
+    def _bind(self, limits, request_pin):
+        v.require(self.__limits is None, 'object capture limits bind once')
+        self.__limits = _batch_json(limits)
+        self.__descriptor = self.descriptor_raw = _batch_json({
+            'format':'anomaly-v03-source-object-raw-capture-candidate-v1',
+            'request_pin':request_pin,'call_index':self.__inputs[1],
+            'raw_maxima':limits,'read_chunk_bytes':4096,'read_attempts_per_stream':128,
+            'detection_bytes_per_stream':1,'scope':_batch_scope()})
+
+    def _failed(self, error):
+        if self.__error is None:self.__error = error
+        self.error = self.__error
+        self.__error.source_object_raw_capture = self
+        try:self.__inputs[0]._failed(self.__error)
+        except BaseException as first:
+            self.__error = self.error = first
+            first.source_object_raw_capture = self
+            raise
+
+    def _fixed(self):
+        if self.__error is not None:raise self.__error
+        v.require(self.original_inputs is self.__inputs and self.operations is self.__operations and
+                  self.prefixes is self.__prefixes and self.pending is self.__pending and
+                  self.descriptor_raw is self.__descriptor and self.__result is self.__result_anchor,
+                  'object capture original private return bindings')
+
+    def _read(self, position, stream, cap):
+        self.__pending = self.pending = ('read-getter', stream)
+        read = stream.read
+        self.__pending = self.pending = ('read-callable', stream, read)
+        v.require(callable(read), 'object capture original read callable')
+        size = 0
+        for _ in range(128):
+            self.__inputs[0]._fixed()
+            requested = min(4096, cap + 1 - size)
+            v.require(requested > 0, 'object capture original read detection bound')
+            invocation = (position, stream, read, requested)
+            self.__pending = self.pending = invocation
+            old_operations, old_prefixes = self.__operations, self.__prefixes
+            try:raw = read(requested)
+            except BaseException as error:
+                self.__operations = (*self.__operations, (invocation, False, None, error))
+                if self.operations is old_operations:self.operations = self.__operations
+                raise
+            # Preserve the literal return before type/size checks or owner callbacks.
+            self.__operations = (*self.__operations, (invocation, True, raw, None))
+            if self.operations is old_operations:self.operations = self.__operations
+            if type(raw) is bytes:
+                parts = (*self.__prefixes[position], raw)
+                self.__prefixes = (parts, self.__prefixes[1]) if position == 0 else (self.__prefixes[0], parts)
+                if self.prefixes is old_prefixes:self.prefixes = self.__prefixes
+            self.__inputs[0]._fixed()
+            v.require(type(raw) is bytes and len(raw) <= requested, 'object capture bounded literal read return')
+            size += len(raw)
+            v.require(size <= cap, 'object capture raw exceeds independent maximum')
+            if not raw:
+                self.__pending = self.pending = None
+                return b''.join(self.__prefixes[position])
+        raise ValueError('object capture read attempt bound retains prefix')
+
+    def capture(self, incoming):
+        if self.__error is None and self.__rejected_inputs is None and (
+                len(incoming) != len(self.__inputs) or not all(a is b for a, b in zip(incoming, self.__inputs))):
+            self.__rejected_inputs = incoming
+        try:
+            self.__inputs[0]._fixed()
+            self._fixed()
+            v.require(len(incoming) == len(self.__inputs) and
+                      all(a is b for a, b in zip(incoming, self.__inputs)), 'object capture same original inputs')
+            if self.__result is not None:return self.__result
+            v.require(not self.__running and self.__limits is not None, 'object capture cannot reenter')
+            self.__running = True
+            limits = v.strict_json(self.__limits)
+            owner, index, stdout, stderr, receipt, exit_code, partial = self.__inputs
+            for name, raw in (('receipt',receipt), ('partial',partial)):
+                v.require(type(raw) is bytes and len(raw) <= limits[name], 'object capture independent opaque raw bound')
+            v.require(receipt and type(exit_code) is int and -2147483648 <= exit_code <= 2147483647,
+                      'object capture opaque receipt and declared exit')
+            out = self._read(0, stdout, limits['stdout'])
+            err = self._read(1, stderr, limits['stderr'])
+            self.__raw = (index, out, err, receipt, exit_code, partial)
+            self.__proof = owner.retain_raw(index, out, err, receipt, exit_code=exit_code, partial=partial,
+                                           _capture=self)
+            self.__result = self.__result_anchor = (self.__raw, self.__proof)
+            return self.__result
+        except BaseException as error:self._failed(error)
+
+    def unresolved(self):return True
