@@ -39,3 +39,13 @@ components20763B/fcc99a3483988c09f90dc7294dbaa0ed75d0337deb3f89065ba14d66ac29215
 両jobs/終端/件数未固定、新runのattempt未固定。待機/反復/download/verifier0、完成3972/3954/3930/旧failure/旧2minor比較反復0、doc-only新CI追跡0。終端未確認/空選択/算術予定を実run-successへしない。次heartbeatは未保存run compact各一回、新code実fullSHA run選択一回。終端のみ新専用rootへ未保存原raw一度保存、3.14単一journal/独立verification/2logsをfullHEAD-workflow-run-attempt-jobsへ結ぶ。未終端は反復・待機なし。
 
 次機能は原diagnostic bytesの公開IOとchild bootstrap/同原owner OS排他-all-writer atomic/fresh latest-clean loaded runtime closure-profile-private policy-request-unusedroot。基本snapshot/宣言roster/局所IO claim/candidate bytes/pin/manifest/cached completionをnative許可へせず、create_native早期拒否/全7役whole.run限定reader実起動禁止/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/元caps-unknown原owner-stop/追加agent禁止を維持。Sol容量エラー/人の停止割込みでは保全後PAUSED・重複再試行なし。
+
+## code保存・原root閉鎖
+
+code/test/docs4path一回commit/push fullHEAD 32e6c9c36a27ffaed87a741ef1ae9dee52d8a424/origin/upstream/ls-remote一致・clean。Git batch392271B4entry/512KiB16entry/output1MiB/累積30秒。新code実fullSHA run選択一回は空配列、原stdout3B/37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570/stderr0B保存。CI run/attempt/jobs/終端/件数未特定、待機・再照会0。先行379291/379320の同状態反復0/doc-only新CI追跡0。
+
+原raw最終28file167324B、manifest3194B/b9d541fc0ea51cd02c85d1c71e8770b687d2bdaa58edfe440cc95981124d9045閉鎖。追加/同保存/完成14再実行禁止。初回focus status failed/CLI exit0を保持し、後続helper passedで書換えない。別metadataは残りdoc-only/post終了確認だけを保存して最終manifestで閉鎖する。
+
+保存後postで70working/source verified code unit親tree非交差継承/docs2 LF working-Git exact/元27rawと閉鎖manifest/metadata prefix/元instrumented helpers/旧3root/HEAD-origin-lsremote-cleanをmetadataだけ一回照合する。CIMはfull saved creation-start_token/live-execution一致とmicrosecond decimal truncationで同original不在を照合、PIDだけ/native回収claimなし。selected codec byte observations/CLI pins/unittest logは元process全stdout-stderr捕捉ではない。
+
+次heartbeatは379291/379320 compact各一回＋新code 32e6c9c36a27ffaed87a741ef1ae9dee52d8a424実fullSHA run選択一回。未終端・空選択は反復/待機なし、終端時だけ未保存原rawを新専用rootへ一度保存する。
