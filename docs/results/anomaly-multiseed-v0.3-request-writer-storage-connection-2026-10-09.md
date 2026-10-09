@@ -1,5 +1,9 @@
 # v0.3 request writer / storage IO接続の準備（2026-10-09）
 
+## 追補：同revisionのCI3972保存
+
+CI37923042206/gitfull e541e27b874a3c177336bbef527f613ab4c14447/attempt1のPython3.14単一journalを一回保存し、現独立verifierで実3972/fail0error0skip237/source不変/shared29 complete/必須28passedを確認した。詳細docs/results/anomaly-multiseed-v0.3-ci-storage-journal-save-2026-10-09.md。原focus/v2/v3/v4 failed・複数source/runの履歴はそのまま保持し、単一CIsuccessをローカル最終source単一18successへしない。native/OS排他/all-writer atomic/容量/正式S4は未完了。現codeの未保存CIなし、doc-only新CI追跡なし。
+
 ## 範囲と元owner
 
 開始2026-10-09T10:56:53Z、HEAD eebbded081c0d5ce2cea47e41785bfc44baeeec5/origin/upstream-clean。開始時に先行7helperの保存full creation-start_token/live-executionを照合し、read-only CIMで同original不在・repository helper/critical ownerなしを確認した。

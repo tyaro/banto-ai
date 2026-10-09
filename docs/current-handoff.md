@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST Python3.14単一CI3972の原証拠保存（ACTIVE）
+
+開始11:42:48Z/HEAD fe8635f0b3861fefbf33ec6e9a6a85b4d8974ba5-origin-clean、先行元6helper full saved creation-start_token/live-execution一致・read-only CIM同original不在/repo helper-critical ownerなし。production/test/body0/旧focus-旧suite-基本probe-native-追加agent-profile再観測0。
+
+CI37923042206/gitfull e541e27b874a3c177336bbef527f613ab4c14447/attempt1/push/Phase 1 CI/.github/workflows/ci.yml/workflow349172377をcompact一回completed-successへ固定。原run11699B/e663790356c3bd5e49f1d0d5e8f3ba31ca65cff88e09b372975b9d00f400c28e、2job113795323234・113803493060全success。各jobs/artifacts/2log/2ZIP/1journal/remote検証JSONを一回保存し両ZIP digest/1member/decoded8MiB照合。journal4116331B/227237b0543d9da47842588a72010811ed71caeb53bfa8aa30a0dfc6d3fac889。独立3.14単一verifier一回exit0/passed、実3972/discovered3972/fail0error0skip237/source不変/shared29 complete/必須28passed/crossPython比較false。CLI7実行前working-Git pin/原Git batch保存、6exact＋skipIDs既知CRLF両pin。local37193B/remote37192Bは末尾差1byte/JSON全field一致/raw_equal=false/CRLF-only=trueの両raw保持。Ubuntu24.04/CPython3.14.8/runner20261004.327.1/image digest未取得・候補未採択。Windows/native/容量/正式受入へしない。
+
+詳細docs/results/anomaly-multiseed-v0.3-ci-storage-journal-save-2026-10-09.md、原artifacts/ci-diagnostic-37923042206/、metadata artifacts/preformal-request-remaining-writers-20261009-prep/。最新production/test code e541は不変。現在codeの未保存CIはなし、doc-only新CI追跡0/反復照会・待機0。原local focus failed/旧3954・3930/原failure/2minor/複数source-run最終単一successへ読み替えない。
+
+次はparent_failure/diagnostic/child bootstrap実IO/同原owner OS排他-all-writer atomic/fresh latest-clean loaded runtime closure-profile-private policy-request-unusedroot。今回新IO接続body0。全planned32entry/global coupled peak/実native HANDLE-stdio-child transport未完了。archive130691B/source capとの差381Bはruntime/容量保証ではなく、将来増分はfresh inventory固定。create_native早期拒否/全7役限定reader起動禁止/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/元caps-stop/追加agent禁止/ACTIVEを維持。
+
 ## 2026-10-09 JST Python3.14単一CI3954の原証拠保存（ACTIVE）
 
 開始11:27:29Z/HEAD cb5eacf937eb0c9ae22640f42b3ef94214e9ba04-origin-clean、先行元12helper full creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなし。production/test/body0/旧focus-旧suite-基本probe-native-追加agent-profile再観測0。
