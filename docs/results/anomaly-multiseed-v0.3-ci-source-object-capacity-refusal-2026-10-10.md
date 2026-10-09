@@ -37,3 +37,13 @@ failure-analysis18664B/839dca4ecd01a94983f12ac62bc35cf9e8aa66eab1ab7cbb179d2e1e9
 先行raw capture3rootsのcount/bytes/manifest保持、旧focus1failed/過去failed保持。不存在parent_inventory.py selectorはtool excerpt記述だけ/foreground identity/full logsNoneでproduction/CI/native/Sol failureへしない。実source容量拒否をSol容量エラーへしない。
 
 fresh loaded source/runtime全閉包-profile-private policy-native request-unused exclusive root、実同原owner worker read wall・stdio・receipt/partial transport認証、全future検出/一時raw/全32entry/global coupled peak、OS排他-allwriter atomic、診断専用公開/parent_failure実raw/child bootstrap/native return-close-rename認証は未完了。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/正式5残件・最終受入未完了/元caps-stop/追加agent禁止/ACTIVEを維持する。
+
+## Git保存完了
+
+test/doc unit fullSHA f9a78a68a99407cc63b94c293f6dee8811311bef をtest1/docs2の3path一回commit/push、HEAD-origin/upstream/ls-remote-working tree clean。productionは2d66から変更0。Git batch326224B3entry/512KiB16entry/output1MiB/累積30秒。新fullSHA gh run list一回空配列、原stdout3B/37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570/stderr0を保存。run/attempt/jobs/終端/count未固定、待機/反復/download/verifier0。doc-only新CI追跡0。
+
+main最終28file139519B/manifest3318B/83ee18e45ab213c56f5ca402882558db9bd8c88681814ec5e71c08e6ca3286d4を閉鎖、追加/同保存/当該1case再実行禁止。prefix-a/bも閉鎖済み。原CI/postは最終metadata照合後caps内でroot-closed.jsonへ閉鎖し、原failure/verification skipped/local容量拒否/旧focus failedを保持する。foreground closure creation/full process logsNone、CLI/unittest bytesはhelper全byte logsではない。
+
+次heartbeatは37963486811/full 2d66 compact一回、新f9a78a68a99407cc63b94c293f6dee8811311bef実fullSHA selection一回。終端のみ新原raw一度/実summary後count固定。379634が同旧fixture failureなら原rawと小cause保存だけ、今回訂正済み1case/旧suite/完成focusを再実行しない。未終端・空なら待機反復なし。3795824062/f0e1skip237原failure/verify skippedと完成4043以下/旧failureへ再照会・download・verifier0。
+
+文書追補2pathは一回[skip ci]へ集約。全production/原caps/native拒否/unknown元owner/全7役起動禁止/formal_permission=false/credit0/holdout未読/追加agent禁止/ACTIVEを維持する。

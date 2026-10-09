@@ -2,6 +2,8 @@
 
 ## 2026-10-10 JST source object CI4062 failure・容量拒否保存（ACTIVE）
 
+最新test/doc unit f9a78a68a99407cc63b94c293f6dee8811311bef を3path一回commit/push、production2d66不変/origin/upstream/lsremote-clean。新fullSHA CI選択一回空配列/原3B/37517e.../stderr0、run/count未固定。main28file139519B/prefix-a・b各3file閉鎖、原4062failure/verify skipped/旧focusfailed保持。次heartbeatは379634/full2d66 compact一回＋新f9実fullSHA selection一回。既知fixture failureでも今回1case再実行0。追補文書2path一回skip ci。
+
 開始17:09:05Z/HEAD 58a91a3963bef3af90b3a73fb764917ec8f833a0-origin/upstream-clean、先行元10helper full identity一致/CIM同original不在/原focus1failed保持/helper-critical ownerなし。379582/full fe518 compact一回completed-failure/attempt1/push/Phase1CI/workflow349172377、原2job113914011957 failure/113931336297 verify skippedを固定、jobs/artifacts/失敗log/ZIP/journal各一度保存。原summary4062/f0e1skip237/source不変、full success verifier0。旧4043以下反復0。
 
 唯一のerrorは旧phase_cached全現source fixtureの512KiB常時fit期待。全source名/二phase plan/元capsを保持し、complete又は特定byte guard拒否で原disk-held raw/rows/calls不変・poison・snapshot拒否を確認するtest1だけへ訂正。production0/新testmodule0、新1method一回1pass。元local126synthetic callの523790B prefixと拒否stdout24949/receipt2566/stderr0をliteral保存、prefix4parts full join readback。収容成功/native容量へしない。112pins/既存111不変/safety0/holdout未読。
