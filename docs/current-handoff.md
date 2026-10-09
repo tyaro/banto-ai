@@ -1,5 +1,17 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST Python3.14単一CI3930の原証拠保存（ACTIVE）
+
+開始10:39:32Z/HEADc25813db605cbafc31a0ef98b4eba79e726c7216-origin-clean、先行元8helper full creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなし。production/test/body0/worker-native-完成focus-基本probe-追加agent-profile再観測0。
+
+CI37913386221/gitfullb4a0401680b0d938598c71ff890948f208eee2b5/attempt1/push/Phase 1 CI/.github/workflows/ci.yml/2job113763626515・113772270721completed-successへ固定。run11699B/5526a9653cdbd3eb9516ea91b1a59c7f810ee280430e527b25d5e1a8e913d503、jobs/artifacts/2logs/2zip/1journal/remote検証JSON/local verifier出力を新専用rootへ保存。journal4082414B/e612acc2758ed8654cfcf15167bb2a488cf9b46628e56ee10477243aa04f9422/remote37192B/7f78471bd9098c5fa1a84ddd01cd4bd4170bee2fabe78724804d6a789c4ae3a4。現3.14単一verifier一回はexit0/passed、実run_finished3930/discovered3930/fail0error0skip237/source不変/shared29 complete/必須28passed、cross_python比較false/image digest未取得。Ubuntu24.04/GCC13.3.0/CPython3.14.8/runner20261004.327.1の互換性保存でWindows/native/capacity/正式受入へしない。
+
+原verify metadata helperはraw一致assertでexit1。local末尾CRLFとremote LFの差1byte、strict JSON全field一致。原failed script/live-execution/failure/local rawを保全、別metadata continuationで保存2rawのpin/JSON/CRLF-only/外部source/実summaryだけ照合。raw_equal=false/json_equal=true、原helper/verifier/旧suite/focus再実行0/原failed書換え0。現7CLI working前後-Gitは6exact＋skip-IDsだけ既知CRLF両pin、原失敗前の個別precommand pin未保存を明記。全helper process logsではなくselected CLI bytes/tool traceを保存。
+
+新code4f20c013a64dfc86b01d70e86f08f626a99c60c1のrun選択一回で37918180709/push/Phase 1 CI/in_progress、attempt/jobs/終端/件数未固定。再照会/待機/download/verifier0/doc-only新CI追跡0。この3930を最新writer準備のsuccessや旧failure379079の訂正へ読み替えない。
+
+詳細docs/results/anomaly-multiseed-v0.3-ci-python314-current-save-2026-10-09.md、原CI artifacts/ci-diagnostic-37913386221/、metadata artifacts/preformal-ci-python314-current-save-20261009-prep/。今回3文書を一回doc-only skip ciで保存し、post-saveで原raw/元helper full identity/HEAD-origin-clean/旧root不変をmetadataだけ照合。次は37918180709 compact一回、それから実IO writer同request-root参加/原owner OS排他・all-writer atomic/fresh loaded runtime closure-profile-private policy-request-unusedroot。全planned32entry/global coupled peak/実native owner-stdio-child IOは未完了。create_native早期拒否/全7役whole.run限定reader起動禁止/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/元caps-stop/追加agent禁止/ACTIVE継続を保持。
+
 ## 2026-10-09 JST 同request writer宣言・元親ownerの準備（ACTIVE）
 
 code/test unitを一回commit/pushしたfullHEAD 4f20c013a64dfc86b01d70e86f08f626a99c60c1、origin/ls-remote一致。code-save13847B/d400346c550da4e96a91ccb42f52f71756620d4d498400430d8ee15a065f92b6にGit/gh原stdout-stderr bytesをbase64とpinで保存。新code fullSHAのgh run list一回は空配列でCI run未特定、空選択を実行/成功へしない。先行CI37913386221は今回の開始compact一回in_progressだけ、再照会0。

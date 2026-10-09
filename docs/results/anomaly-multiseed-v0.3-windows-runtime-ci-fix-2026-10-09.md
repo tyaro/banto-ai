@@ -1,5 +1,9 @@
 # OS条件改訂CIの失敗保存とPython期待値の訂正
 
+## 2026-10-09 後続CI保存
+
+訂正revision b4a0401680b0d938598c71ff890948f208eee2b5のCI37913386221/attempt1は2job success、単一3.14journalの実3930/fail0/error0/skip237/source不変/29fixture/28必須IDを保存・検証。原CI37907938074のfailure/verification skippedは保持。この後続CIは最新writer準備4f20c01/Win native/容量/正式受入の合格ではない。local/remote出力は末尾CRLF 1byte差でJSON全field一致、元metadata helper failedと別readback追補を分けて保存。詳細はanomaly-multiseed-v0.3-ci-python314-current-save-2026-10-09.md。
+
 2026-10-09、人の「続けてください」に従い、OS条件改訂revisionの未保存CIを確認した。開始09:37:49Z、HEAD694eff5e6da14b17af3e3f83f263d84c7cbde726/origin一致・clean。前回元6helperのcreation/start_tokenと保存済みlive/executionを照合し、CIM同original不在・repo helper/critical ownerなしを確認した。自走heartbeatはPAUSEDを維持する。
 
 ## 原CIの失敗
