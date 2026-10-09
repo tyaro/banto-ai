@@ -45,3 +45,7 @@ formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout観�
 code/test unitを一回commit/pushしたfullHEAD 4f20c013a64dfc86b01d70e86f08f626a99c60c1、origin/ls-remote一致。code-save13847B/d400346c550da4e96a91ccb42f52f71756620d4d498400430d8ee15a065f92b6にGit/gh原stdout-stderr bytesをbase64とpinで保存。新code fullSHAのgh run list一回は空配列でCI run未特定、空選択を実行/成功へしない。先行CI37913386221は今回の開始compact一回in_progressだけ、再照会0。
 
 後続doc-only追補はskip ciへ集約し、post-saveで66working-Git/原raw/元helper identity/旧root不変をmetadataだけ照合する。新CIの終端/実件数/runner検証、独立journal検証は未確認。
+
+## 対応sourceのCI原証拠保存（2026-10-09追補）
+
+4f20c013a64dfc86b01d70e86f08f626a99c60c1のCI37918180709/attempt1はcompleted-success。原2jobs/2logs/2artifact ZIP/1journalと3.14独立verifier一回を別rootへ保存し、実3954/fail0error0skip237/共有29complete/必須28passed/source不変を確認した。詳細ci-writer-journal-save-2026-10-09文書。local/remote JSON全field一致、原末尾CRLF/LF差1byteを両rawで保持。これを最新e541のIO接続/native-owner/容量/正式受入、前3930/原失敗/旧2minor比較へ読み替えない。新CI37923042206/e541はrun選択一回in_progressだけ、反復/待機なし。

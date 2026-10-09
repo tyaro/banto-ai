@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST Python3.14単一CI3954の原証拠保存（ACTIVE）
+
+開始11:27:29Z/HEAD cb5eacf937eb0c9ae22640f42b3ef94214e9ba04-origin-clean、先行元12helper full creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなし。production/test/body0/旧focus-旧suite-基本probe-native-追加agent-profile再観測0。
+
+CI37918180709/gitfull4f20c013a64dfc86b01d70e86f08f626a99c60c1/attempt1/push/Phase 1 CI/.github/workflows/ci.yml/2job113779387245・113793430024全successへ原run/jobs固定。run11715B/768f8f944a1245a373e70d775a4f71a65b524c02afa9041e454ddeae0cefb199、各jobs/artifacts/2log/2ZIP/1journal/remote検証JSONを一回保存。journal4100293B/c3b6a10ec71b16c927a31c558f74d2477b118127369aedb4677ba9d39c7bc570。独立3.14単一verifier一回exit0/passed、実3954/discovered3954/fail0error0skip237/source不変/shared29 complete/必須28passed/crossPython比較false。CLI7実行前working-Git pin/原Git batch bytes保存、6exact＋skipIDs既知CRLF両pin。local37193B/remote37192Bの末尾差1byteは両raw保存、JSON全field一致/raw_equal=false/CRLF-only=true。原Ubuntu24.04/GCC13.3.0/CPython3.14.8/runner20261004.327.1/image digest未取得/候補未採択、Windows/native/capacity/正式受入へしない。
+
+最新e541e27b874a3c177336bbef527f613ab4c14447の新CI37923042206はrun選択一回in_progress、原stdout156B/d05b76ab843c7ffb328fa9eaf84c66b476abb90b584fcce596107e4f1f47b4bc保存。attempt/jobs/終端/件数未固定、再照会/待機/download/verifier0/doc-only新CI追跡0。旧3954/3930/原failure/2minor比較を最新e541や複数source-run最終単一successへ読み替えない。
+
+詳細docs/results/anomaly-multiseed-v0.3-ci-writer-journal-save-2026-10-09.md、原artifacts/ci-diagnostic-37918180709/、metadata artifacts/preformal-ci-writer-pending-save-20261009-prep/。次は379230 compact一回、その後未接続parent_failure/diagnostic/child bootstrap IO/同原owner OS排他-all-writer atomic/fresh loaded runtime closure-profile-private policy-request-unusedroot。全planned32entry/global coupled peak/実native HANDLE-stdio-child IOは未完了。create_native早期拒否/全7役限定reader起動禁止/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/元caps-stop/追加agent禁止/ACTIVEを維持。
+
 ## 2026-10-09 JST 宣言writerとstorage実IO前の原owner接続準備（ACTIVE）
 
 code/test/doc5pathを一回commit/pushしたfullHEAD e541e27b874a3c177336bbef527f613ab4c14447、origin/upstream/ls-remote一致・working tree clean。変更5path working-Git exactを488812B/5entry batchで照合。新実fullSHAのgh run list一回は空配列、CI run未特定（空選択を実行/成功へしない）。原prep最終29file239710B閉鎖、追加禁止。doc-only追補2文書を一回skip ciへ集約し、その後post metadataと元helper identityだけ確認する。次heartbeatで旧379181 compact一回、新e541e27b874a3c177336bbef527f613ab4c14447 run選択一回、状態不変反復/待機なし。
