@@ -1,0 +1,43 @@
+# loaded source拡張と現行lease・inventory・raw entry容量の不足保存
+
+## 保存範囲（ACTIVE）
+
+開始2026-10-09T14:32:56Z/HEAD 1c0a2f4b2cb9961484aa2435d8dd63e76bf95005-origin/upstream-clean。production/test e0601d3edff7c7a7415cd28ebb70f47382a5c835不変。元先行8helper full saved creation-start_token/live-execution一致・CIM同original不在/repository helper-critical ownerなし。先行inventory/Gitの原2failedを保持。追加agent・完成focus/旧suite/basic OS-runtime probe/collector/native image/profile反復0。今回production/test変更0、具体的な新2拒否ケースだけを一回確認し、文書2pathを一回skip ci commit/push。
+
+## sourceを単純追加できない理由
+
+前回保存した原collector return163697B/5d7f771cd0fd81903c80e69d358d4969deb227d98ec18a4a0834dc05ee86c2d4から、原loaded project66sourceのdisk pinを既存108source-science pinsへ結んだ。collector/Git37/原failed helper/旧profileは再実行せず、現在working108pins一致・検証済みcode unit親treeと前回37Git raw継承を使った。元no-file/cache/native/in-memory範囲を完全閉包へ補わない。
+
+現reader._planはpre/post各phaseでhead/statusとsourceごとのsource_blobを一つずつ要求する。原named30は32call/phase・64call合計、原loaded66だけでは68call/phase・136call合計（64lease超過72）、namedとloadedのunion68では70call/phase・140call合計（超過76）。loaded66のsource payload1449201B/phase、union68は1487416B/phase。名前30の幅915649B/最大archive130691B/cap差381Bをloaded rosterや容量合格へしない。
+
+既存PartitionedPublicationPreparationの全future raw枠モデルでは、callごとの必須stdout/stderr/receipt3entryに固定control14・parent failure3・diagnostic2・entry/context/identity3・archive1・reserve2を加える。empty-root下限はnamed30が217entry、loaded66が433entry、union68が445entryで、32entryに収まらない。optional partialや既存snapshot分はこの下限に含めない。source stdoutだけの二phase合計は1831298/2898402/2974832Bで、現全rawを同時保持するモデルではouter1MiBも超える。この算術は全call実行/実partial/codec-compressed growth/global peak/RSS測定ではない。
+
+WGP2の32768B raw chunkではsource stdoutだけの二phase下限88/164/168chunks、最大sourceは各packet4chunks。64frame上限はper packetであり、この合計へ誤ってglobal64frame上限を適用しない。codec/gzip/base64/raw source再生成0、原partialとnew archive growthは別量を維持する。
+
+## 新2ケースの実拒否
+
+同source pinsと現v1 call shapeから新loaded66/union68候補を一回ずつcanonical JSON化し、現ProofVerifier constructorへ渡した。候補headerのrevision/identity/root/request-policy pinsとendpointは明示engineering Python fixtureで、発行request・原native owner認証ではない。
+
+原候補rawはloaded66 41968B/ff6c5acf9d9936563880dec3fa331dc235c255542e0b8ed898cb71d459e1382b、union68 43198B/a2a732115efde2e753108d4597e746d8d092c1cd60ffbb90e0c24c49bfcf4963。両原V03ValidationErrorはGit proof inventory byte bound、現32768B上限による最初の拒否。endpoint._live/policy/raw-reader callbackはいずれも0。実lease guardまで進んだと主張せず、136/140のlease不足はsource-plan算術として別記する。
+
+新2distinct/body2単一source一回0.0006608000257983804秒2pass/fail0/error0/skip0、focused logと原candidate raw/error reasonを保存。新capacity.json 28984B/099fcf003d80733c35cc17504c4c54b8d76f88a9cd46cd0f4f31f5bfbf60c2c3。旧完成focus/旧suite/旧CI/body/native・Job/child/stdio操作0。fixture原return/candidate拒否を実worker stdout-stderr捕捉やhelper process全logへしない。
+
+## 次契約に必要な変更の算術
+
+Git object formatの新metadata読取り一回はsha1、原stdout/stderr/exitを保存。元source順＋loaded追加順で、sha1 cat-file --batch header（48＋size decimal桁数）を含むstdout最大131072B・source最大16件でgroupingしたengineering hypothesisは15groups/phase、head/statusを含め合計34callで64lease内。ただし同3raw/callモデルでは127entryが必要で32entryに収まらない。batch operation/schema/raw transport・将来failure最大値/同原owner排他/atomicは未実装・未発行で、現v1 inventoryと互換にしない。この仮説をrequest/profile/private policy/native許可へしない。
+
+必要な次unitは、全sourceを覆う新batch operation/request/proofの閉じた別versionと、call rawを同原ownerのbounded packed transportへ結ぶ全writer・failure契約。sourceを追加するだけ、source名を削るだけ、rawを別未測定rootへ移すだけ、上限緩和では容量不足を解消した扱いにしない。
+
+## CIと保存
+
+37942157019/full e0601d3edff7c7a7415cd28ebb70f47382a5c835をcompact一回、attempt1/push/Phase 1 CI/.github/workflows/ci.yml/workflow349172377/in_progress。原run11708B/1381818bb71d39885e0167259d9a7b9becac894dee592a7983bb8855d8bb0070/stderr0B。jobs/終端/journal/実件数未固定、待機/反復/download/verifier0、doc-only新CI追跡0、完成4017以下/旧failure/旧2minorへ照会0。
+
+原artifacts/preformal-loaded-source-capacity-20261009-prep/最終10file134251B、manifest1313B/492de7d95dbccfb385653b477e71205534f9cde182dfa1aa82faa992f49e49f0。main artifacts/preformal-ci-publication-current-save-20261009-prep/最終15file70748B、manifest1912B/860455209dfaac22f1dd15ddfcfdfc6d1e1d2cdf715a544a486e976941e9d49b。components18355B/c1c3cb877d47a3d42c66fcc745c72906f587d1543226cae0c87e47837e6a094e。両512KiB32entry/reserve128KiB/single128KiB閉鎖、追加/同保存/完成新2再実行禁止。postは別rootへdocs Git・108pins・閉鎖root metadata・元helper full identity終了照合だけを保存し閉じる。
+
+foregroundのdict numeric-index KeyErrorと不存在components.py selectorはselected tool excerptのみをmainへ保存。原foreground creation/full process stdout-stderrは未保存None、production/CI/native/Sol容量failureへしない。今回instrumented helperは別live/execution full identityを保持、CIM creationをdecimal microsecond truncationで照合しPIDだけ/native回収claimなし。先行2failedを書換えない。
+
+## 継続条件
+
+次heartbeatは379421 compact一回、終端のみ新rootへ未保存raw一度、3.14単一journal/独立verification/2logsをfullHEAD-workflow-run-attempt-jobsへ結ぶ。実summary前に件数を補わず、未終端は待機反復しない。
+
+fresh runtime profile/private policy/native request/unused exclusive rootはNone。診断専用公開/parent_failure原raw/child bootstrap/同原owner OS排他-all-writer atomic/実native return-HANDLE-stdio-child endpoint-close-rename transport認証/global coupled peakは未完了。create_native早期拒否/全7役whole.run限定reader起動禁止/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout観測未読/正式5残件・最終受入未完了/元caps-unknown原owner-stop/追加agent禁止/ACTIVEを維持。Sol容量エラー/人の停止割込みでは保全後PAUSED・重複再試行なし。

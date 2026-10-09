@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST loaded sourceと現行容量契約の不足保存（ACTIVE）
+
+開始HEAD 1c0a2f4b2cb9961484aa2435d8dd63e76bf95005-origin/upstream-clean、production/test e060不変。元先行8helper full identity/live-execution一致・CIM同original不在/critical ownerなし、原2failed保持。保存済みloaded66/union68を現sourceごとpre/post計画へ結ぶと136/140callで64lease超過72/76。全3raw/call＋fixed/reserveのempty-root下限433/445entryで32entry不足。source stdout二phase2898402/2974832Bも同全raw保持モデルのouter1MiB超過。
+
+新2ケース一回2pass/fail0error0skip0、現ProofVerifierがv1 inventory raw41968/43198Bを32768B上限で最初に拒否。endpoint/policy/raw reader0/native0、header/endpointは明示engineering fixture。lease不足は算術で、実lease guard通過としない。source stdout下限164/168chunkはglobal64frame boundではなくper-packet64（最大各4）を維持。完成旧focus/collector/Git37/旧suite/CI/profile/native/追加agent反復0。108source-science pins現在working一致、Git証拠は検証済み親tree＋前回新37raw継承。
+
+sha1 batch header込みstdout128KiB・最大16sourceの仮説は15groups/phase・34callで64lease内だが127entryでなお32entry不足。新batch operation/proof/request/schemaと同原owner packed raw/failure transport契約は未発行、現v1/旧source-profileへ読み替えない。新raw10file134251B/main15file70748Bは閉鎖。詳細docs/results/anomaly-multiseed-v0.3-loaded-source-capacity-2026-10-09.md。今回production/test変更0・文書2path一回skip ci、post別rootで保存終了する。
+
+37942157019/full e060 compact一回attempt1/Phase1CI/push/workflow349172377/in_progress、原run11708B/1381818bb71d39885e0167259d9a7b9becac894dee592a7983bb8855d8bb0070/stderr0B。jobs/終端/件数未固定・待機反復/download/verifier0。次heartbeat compact一回、終端のみ原raw保存、完成4017以下再照会0。fresh profile/private policy/request/unused exclusive rootはNone、正式5残件/受入未完了/formal_permission=false/credit0/holdout未読/create_native早期拒否/全7役限定reader起動禁止/元caps-stop/追加agent禁止/ACTIVE維持。
+
 ## 2026-10-09 JST 最新loaded inventoryとGit source不足の保存（ACTIVE）
 
 開始HEAD 42cc0ba9feb34cb284a79de3264f90732f9ab698-origin/upstream-clean、production/test e0601d3edff7c7a7415cd28ebb70f47382a5c835不変・新body0。元先行8helpers full identity/live-execution一致・CIM同original不在/repo helper-critical ownerなし。新code実fullSHA選択一回で37942157019/push/Phase 1 CI/in_progress（原stdout156B/a0d3f3218cbe8f9efe99d8d844bf3cfcaec1019e1a901f642a15e9492a2bd01f/stderr0B）。attempt/jobs/終端/実件数未固定・待機反復0。
