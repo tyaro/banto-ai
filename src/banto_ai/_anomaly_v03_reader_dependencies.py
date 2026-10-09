@@ -853,14 +853,14 @@ class SourceObjectBatchContractPreparation:
     def unresolved(self):
         return True  # Candidate readback never authorizes native execution or recovery.
 
-    def capture_raw(self, call_index, stdout, stderr, receipt, *, exit_code, partial=b''):
+    def capture_raw(self, call_index, stdout, stderr, receipt, *, exit_code, partial=b'', read_wall=None):
         """Read caller streams once; retain opaque receipt/partial independently."""
         if self.__error is not None:raise self.__error
         incoming = (self, call_index, stdout, stderr, receipt, exit_code, partial)
         if self.__captures and self.__captures[-1]._SourceObjectBatchRawCapture__inputs[1] == call_index:
-            return self.__captures[-1].capture(incoming)
+            return self.__captures[-1].capture(incoming, read_wall)
         held = SourceObjectBatchRawCapture.__new__(SourceObjectBatchRawCapture)
-        held._retain(incoming)
+        held._retain(incoming, read_wall)
         self.__capture_attempt = held
         try:
             self._fixed()
@@ -869,7 +869,7 @@ class SourceObjectBatchContractPreparation:
             self.__captures = (*self.__captures, held); self.raw_captures = self.__captures
             held._bind(self.__maxima[call_index], _batch_pin(self.__request_raw))
             self.__active_capture = held
-            result = held.capture(incoming)
+            result = held.capture(incoming, read_wall)
             self.__active_capture = None
             return result
         except BaseException as error:held._failed(error)
@@ -976,10 +976,17 @@ class SourceObjectBatchRawCapture:
     Blocking reads and the caller's receipt/exit are engineering inputs. Bounded
     read requests do not establish native wall limits or global memory capacity.
     """
-    def _retain(self, incoming):
+    def _retain(self, incoming, read_wall=None):
         if hasattr(self, '_SourceObjectBatchRawCapture__inputs'):
             self._failed(ValueError('object capture original inputs initialize once'))
         self.__inputs = self.original_inputs = incoming
+        self.__wall_inputs = self.read_wall_inputs = read_wall
+        self.__wall_operations = self.wall_operations = ()
+        self.__wall_pending = self.wall_pending = None
+        self.__wall_binding = None
+        self.__wall_binding_anchor = None
+        self.__last_wall = None
+        self.__last_wall_anchor = None
         self.__error = self.error = None
         self.__operations = self.operations = ()
         self.__prefixes = self.prefixes = ((), ())
@@ -990,15 +997,30 @@ class SourceObjectBatchRawCapture:
         self.__descriptor = self.descriptor_raw = None
         self.__proof = None
         self.__rejected_inputs = None
+        self.__rejected_wall_inputs = None
 
     def _bind(self, limits, request_pin):
         v.require(self.__limits is None, 'object capture limits bind once')
         self.__limits = _batch_json(limits)
-        self.__descriptor = self.descriptor_raw = _batch_json({
+        descriptor = {
             'format':'anomaly-v03-source-object-raw-capture-candidate-v1',
             'request_pin':request_pin,'call_index':self.__inputs[1],
             'raw_maxima':limits,'read_chunk_bytes':4096,'read_attempts_per_stream':128,
-            'detection_bytes_per_stream':1,'scope':_batch_scope()})
+            'detection_bytes_per_stream':1,'scope':_batch_scope()}
+        if self.__wall_inputs is not None:
+            wall = self.__wall_inputs
+            v.require(type(wall) is tuple and len(wall) == 3, 'object capture closed read wall inputs')
+            clock, started, deadline = wall
+            checkpoint = self.__inputs[0]._SourceObjectBatchContractPreparation__inputs[1]
+            self.__wall_binding = self.__wall_binding_anchor = (clock, started, deadline, checkpoint)
+            v.require(callable(clock) and callable(checkpoint) and type(started) is int and
+                      type(deadline) is int and 0 <= started < deadline <= 9223372036854775807 and
+                      deadline-started <= 30000000000, 'object capture original read wall window')
+            descriptor['format'] = 'anomaly-v03-source-object-raw-capture-candidate-v2'
+            descriptor['read_wall'] = {'started_ns':started,'deadline_ns':deadline,
+                'clock_return':'literal-monotonic-nanoseconds','maximum_observation_returns':1028,
+                'blocking_read_interrupted':False,'clock_authenticated':False}
+        self.__descriptor = self.descriptor_raw = _batch_json(descriptor)
 
     def _failed(self, error):
         if self.__error is None:self.__error = error
@@ -1014,10 +1036,42 @@ class SourceObjectBatchRawCapture:
         if self.__error is not None:raise self.__error
         v.require(self.original_inputs is self.__inputs and self.operations is self.__operations and
                   self.prefixes is self.__prefixes and self.pending is self.__pending and
-                  self.descriptor_raw is self.__descriptor and self.__result is self.__result_anchor,
+                  self.descriptor_raw is self.__descriptor and self.__result is self.__result_anchor and
+                  self.read_wall_inputs is self.__wall_inputs and self.wall_operations is self.__wall_operations and
+                  self.wall_pending is self.__wall_pending and
+                  self.__wall_binding is self.__wall_binding_anchor and self.__last_wall == self.__last_wall_anchor,
                   'object capture original private return bindings')
 
+    def _wall_check(self, boundary, related):
+        if self.__wall_binding is None:return
+        owner = self.__inputs[0]
+        owner._fixed()
+        clock, started, deadline, checkpoint = self.__wall_binding
+        for kind, callback in (('checkpoint',checkpoint), ('clock',clock)):
+            invocation = (boundary, kind, callback, related)
+            self.__wall_pending = self.wall_pending = invocation
+            old_operations = self.__wall_operations
+            try:returned = callback()
+            except BaseException as error:
+                self.__wall_operations = (*self.__wall_operations, (invocation, False, None, error))
+                if self.wall_operations is old_operations:self.wall_operations = self.__wall_operations
+                raise
+            self.__wall_operations = (*self.__wall_operations, (invocation, True, returned, None))
+            if self.wall_operations is old_operations:self.wall_operations = self.__wall_operations
+            owner._fixed()  # Never restore a callback-erased public alias before this check.
+            v.require(len(self.__wall_operations) <= 1028, 'object capture read wall observation bound')
+            if kind == 'checkpoint':
+                v.require(returned is None, 'object capture original checkpoint literal return')
+            else:
+                v.require(type(returned) is int and started <= returned <= 9223372036854775807 and
+                          (self.__last_wall is None or returned >= self.__last_wall),
+                          'object capture original monotonic clock return')
+                self.__last_wall = self.__last_wall_anchor = returned
+                v.require(returned < deadline, 'object capture read wall deadline retains original prefix')
+        self.__wall_pending = self.wall_pending = None
+
     def _read(self, position, stream, cap):
+        self._wall_check('before-stream-getter', (position,stream))
         self.__pending = self.pending = ('read-getter', stream)
         read = stream.read
         self.__pending = self.pending = ('read-callable', stream, read)
@@ -1029,6 +1083,7 @@ class SourceObjectBatchRawCapture:
             v.require(requested > 0, 'object capture original read detection bound')
             invocation = (position, stream, read, requested)
             self.__pending = self.pending = invocation
+            self._wall_check('before-read', invocation)
             old_operations, old_prefixes = self.__operations, self.__prefixes
             try:raw = read(requested)
             except BaseException as error:
@@ -1042,6 +1097,7 @@ class SourceObjectBatchRawCapture:
                 parts = (*self.__prefixes[position], raw)
                 self.__prefixes = (parts, self.__prefixes[1]) if position == 0 else (self.__prefixes[0], parts)
                 if self.prefixes is old_prefixes:self.prefixes = self.__prefixes
+            self._wall_check('after-read', invocation)
             self.__inputs[0]._fixed()
             v.require(type(raw) is bytes and len(raw) <= requested, 'object capture bounded literal read return')
             size += len(raw)
@@ -1051,15 +1107,18 @@ class SourceObjectBatchRawCapture:
                 return b''.join(self.__prefixes[position])
         raise ValueError('object capture read attempt bound retains prefix')
 
-    def capture(self, incoming):
+    def capture(self, incoming, read_wall=None):
         if self.__error is None and self.__rejected_inputs is None and (
-                len(incoming) != len(self.__inputs) or not all(a is b for a, b in zip(incoming, self.__inputs))):
+                len(incoming) != len(self.__inputs) or not all(a is b for a, b in zip(incoming, self.__inputs)) or
+                read_wall is not self.__wall_inputs):
             self.__rejected_inputs = incoming
+            self.__rejected_wall_inputs = read_wall
         try:
             self.__inputs[0]._fixed()
             self._fixed()
             v.require(len(incoming) == len(self.__inputs) and
-                      all(a is b for a, b in zip(incoming, self.__inputs)), 'object capture same original inputs')
+                      all(a is b for a, b in zip(incoming, self.__inputs)) and
+                      read_wall is self.__wall_inputs, 'object capture same original inputs')
             if self.__result is not None:return self.__result
             v.require(not self.__running and self.__limits is not None, 'object capture cannot reenter')
             self.__running = True

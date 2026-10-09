@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-10 JST source object 原clock/read返値・絶対期限保持（ACTIVE）
+
+開始17:27:04Z/HEAD f11aa6e9f94540f979fb74ee564579e1f4bb24ae-origin/upstream-clean、先行元10helper full identity一致/CIM同original不在/helper-critical ownerなし。379634/full2d66 compact一回in_progress/attempt1、f9実fullSHA selection一回37965644173/in_progress、両原stdout/stderr保存。jobs/終端/journal/count未固定/待機反復download verifier0。原4062failure/verify skipped/旧4043以下/旧failure反復0。
+
+既存dependency production1＋newtest1/newproduction module0へopt-in read_wallの原clock/checkpointとread前後原return ledgerを接続。元絶対開始・期限/同原checkpoint/同原clockを保持し、期限超過・逆行・型違反・unknown/再入/alias消去後は原read返値-prefixを保持して次read/stderr/raw登録を拒否。原7field rejected tupleとwall候補を別保持、cached clock/read反復0。新v2/scope全false、旧v1/create_native437B/reader/archive保持。blocking read自体の中断・実native transport/global capacity合格ではない。
+
+新16distinct/body17=初回15一回pass＋参照位置互換性訂正に関係する2caseだけpass。複数source-runで最終source単一16successではない。113source-science/開始112の他111不変/safety0/holdout未読/credit0。旧19・前19・前16/容量訂正1case/metadata5/容量拒否/26gzip/collector/37Git/profile/native/追加agent反復0。原各run/helper metadataをcaps内保存、文書追補skip ciへ集約。
+
+詳細docs/results/anomaly-multiseed-v0.3-source-object-read-wall-2026-10-10.md。次heartbeatは379634/full2d66・379656/fullf9 compact各一回＋新unit実fullSHA selection一回。終端時のみ新raw一度/実summary後count固定、既知fixture failureは小cause/rawだけ。全future検出/一時raw/32entry/global peak・actual same-owner bounded read/stdio/receipt-partial・OS排他-allwriter atomic/fresh loaded runtime-profile-private policy-native request-unused exclusive root/正式5残件・最終受入未完了。全7役reader実起動禁止/元caps-unknown owner-stop/formal_permission=false/追加agent禁止/ACTIVE維持。
+
 ## 2026-10-10 JST source object CI4062 failure・容量拒否保存（ACTIVE）
 
 最新test/doc unit f9a78a68a99407cc63b94c293f6dee8811311bef を3path一回commit/push、production2d66不変/origin/upstream/lsremote-clean。新fullSHA CI選択一回空配列/原3B/37517e.../stderr0、run/count未固定。main28file139519B/prefix-a・b各3file閉鎖、原4062failure/verify skipped/旧focusfailed保持。次heartbeatは379634/full2d66 compact一回＋新f9実fullSHA selection一回。既知fixture failureでも今回1case再実行0。追補文書2path一回skip ci。
