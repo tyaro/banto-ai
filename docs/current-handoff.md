@@ -2,6 +2,8 @@
 
 ## 2026-10-10 JST source object 原clock/read返値・絶対期限保持（ACTIVE）
 
+最新code 0919168683de1bdeafaea73bd5e2b44da77f7459 を4path一回commit/push、origin/upstream/lsremote-clean。新fullSHA CI選択一回空配列/原3B/37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570/stderr0、run/count未固定。原raw・compact・components各rootをcaps内閉鎖。次heartbeatは379634/full2d66・379656/fullf9 compact各一回＋新091916実fullSHA selection一回。文書追補2path一回skip ci。完成16/旧19等/容量訂正1case/native反復0。
+
 開始17:27:04Z/HEAD f11aa6e9f94540f979fb74ee564579e1f4bb24ae-origin/upstream-clean、先行元10helper full identity一致/CIM同original不在/helper-critical ownerなし。379634/full2d66 compact一回in_progress/attempt1、f9実fullSHA selection一回37965644173/in_progress、両原stdout/stderr保存。jobs/終端/journal/count未固定/待機反復download verifier0。原4062failure/verify skipped/旧4043以下/旧failure反復0。
 
 既存dependency production1＋newtest1/newproduction module0へopt-in read_wallの原clock/checkpointとread前後原return ledgerを接続。元絶対開始・期限/同原checkpoint/同原clockを保持し、期限超過・逆行・型違反・unknown/再入/alias消去後は原read返値-prefixを保持して次read/stderr/raw登録を拒否。原7field rejected tupleとwall候補を別保持、cached clock/read反復0。新v2/scope全false、旧v1/create_native437B/reader/archive保持。blocking read自体の中断・実native transport/global capacity合格ではない。

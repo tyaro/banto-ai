@@ -45,3 +45,15 @@ invented source/opaque receiptとexit/BytesIO・注入read/clock/checkpoint call
 original components27603B/b7854b289670a5185b91e62e22526a0a43d4b785481da9156631c3eb00d3a96dとcontinuation28823B/1af13f061bff61987a646c7e7c7749ffcc57bceb858716dc137eb0c41890ff01は別に保持し、訂正前source metadataを書換えない。原foreground positional Windows wildcard rg missはtool excerpt記述だけ/creation-full process logsNone、production/CI/native/Sol failureへしない。
 
 fresh loaded source/runtime全閉包-profile-private policy-native request-unused exclusive root、実worker read wall・stdio・receipt/partial transport、診断専用公開/parent_failure実raw/child bootstrap、OS排他-allwriter atomic/native call-return-HANDLE-child endpoint-close-rename認証は未完了。caller EOF/期限内原返値/readback/body-Git pins/manifest/cached completionをnative許可へしない。create_native早期拒否/全7役whole.run限定reader起動禁止/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/正式5残件・最終受入未完了/元unknown原owner-stop/追加agent禁止/ACTIVE維持。code unit一回commit/push、Git後文書2path追補は一回skip ciへ集約する。
+
+## Git保存・閉鎖の追補
+
+code full SHA 0919168683de1bdeafaea73bd5e2b44da77f7459 を4path一回commit/push、origin/upstream/ls-remote一致・working tree clean。Git batch397870B/4entry、512KiB16entry/output1MiB/累積30秒内。大stdoutは取得時全文照合・pin保存でhelper全process bytesではない。新code実fullSHA selection一回は空配列、原3B/37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570/stderr0/exit0。run/attempt/jobs/終端/journal/count未固定。空選択をsuccessへしない。既存379634/379656は同heartbeat内再照会せず、次heartbeatでcompact各一回と新091916実fullSHA selection一回だけ行う。
+
+閉鎖済み各rootは以下。各metadata512KiB32entry/reserve128KiB/single128KiB、追加/同保存/完成16・旧focus・原helperの再実行禁止。code保存を含む元8helper full creation-start_token/live-execution一致・CIM同original不在/helper-critical ownerなし。過去failedは別履歴へ保持する。foreground閉鎖creation/full process logsNone、native回収claimなし。
+
+- preformal-source-object-read-wall-20261010-prep: 16file/107816B、manifest1855B/f569071380d1a8401f13af8f8686ff057517693498e76deba7eee7964a9d0809
+- preformal-ci-object-capacity-current-save-20261010-prep: 10file/26402B、manifest1326B/3b6d0fe348c93a4894de5cd43730b33ea030a52fb9e1d4b535e6867c6d9949a9
+- preformal-source-object-read-wall-post-20261010-prep: 22file/176289B、manifest2690B/7af6443e5430a684216140de7a750b03d1d19152c69569aa330bd5c1935fac9e
+
+Git後save rootは最後のdoc-only保存・post照合・原helper終了確認後に同capsで閉鎖する。113working/sourceGit changed2 exact＋未変更111のverified親tree/prior37raw継承、旧SourceBatch segment/create_native/全元caps保持、scope全false。read wallの追加ledger・transient/raw/native/global peak/全future32entry・blocking readの実中断・stdio/receipt/partial transportは未完了。文書2path追補は一回[skip ci]へ集約し、production/test/完成body再実行0。formal_permission=false/credit0/holdout未読/ACTIVEを維持。
