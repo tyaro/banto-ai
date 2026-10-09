@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-10 JST source batch codeの単一CI4043証拠保存（ACTIVE）
+
+開始16:31:36Z/HEAD05c78e4b51234aacd76a7bbd4800e3e86cc6aa87-origin/upstream-clean、現在production/test fe518101411f7af7ba3689298625f85502f4fbce不変/body変更0。先行元14helper full identity一致/CIM同original不在、原metadata failed2保持/critical ownerなし。旧focus-suite/新19/5metadata/容量拒否/26gzip/collector/完成37Git/native/追加agent反復0。
+
+37952030611/full cf3f1866e20c63e8eaa06a4e0d6b0d36757ae5e0/attempt1/push/Phase1CI/workflow349172377をcompact一回completed-success。原2job113892989129/113910942531全success、jobs/artifacts/2logs/2ZIP各一度、両artifact digest一致・1member/fullHEAD-run固定。原journal4174184B/fa222807...とremote verificationを現3.14独立verifierへ一回結び、実summary4043/f0e0skip237/source不変/shared29必須28passed/crossPython=false。local/remoteはCRLF1B差rawfalse/JSON全field一致。原4027以下/旧failure/旧2minor反復0。4043はcf3f source-runで最新fe518/native/容量/正式受入へしない。
+
+新fe518 fullSHA selection一回37958200991/push/Phase1CI/in_progress、原stdout156B/96c12b978efd4da7186deab3cf723591fc6bb08e3a284c3a6a26aa94e3a0bb8b/stderr0/exit0、attempt/jobs/終端/件数未固定、compact/待機/反復/download/verifier0。次heartbeatは当該run compact一回、終端のみ新raw一度/実summary後count固定、未終端は反復待機なしで未完成機能へ進む。doc-only新CI追跡0。
+
+詳細docs/results/anomaly-multiseed-v0.3-ci-source-batch-journal-save-2026-10-10.md。110working/sourceGit実code親tree-doc-only非交差/先行37raw継承、旧sourceobject4roots不変/科学hash metadataだけ/holdout未読。新CI16MiB256/single8MiB・metadata512KiB32/reserve128/single128を終端照合後閉鎖。fresh runtime全閉包-profile-policy-native request-unused exclusive root/閉じたworker raw-failure receipt-partial/OS排他-allwriter/native child owner/global peak/全32entry/正式5残件・受入未完了/formal_permission=false/credit0/create_native早期拒否/全7役起動禁止/元caps-stop/追加agent禁止/ACTIVE維持。
+
 ## 2026-10-10 JST source object metadata batch別version・元owner保持（ACTIVE）
 
 code unit5path一回commit/push HEAD fe518101411f7af7ba3689298625f85502f4fbce-origin/upstream/lsremote-clean。新CI fullSHA一回空配列/stdout3B/37517e.../stderr0、run/件数未固定。原Git diff-check末尾空行失敗を保全し、1byte/AST同一修正の別continuationで保存完了。production/test再実行0、最終named30source957840B/最大archive130691B不変。
