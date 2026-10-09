@@ -1,5 +1,17 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST Python3.14単一CI4017の原証拠保存（ACTIVE）
+
+開始2026-10-09T13:42:48Z/HEAD f2313abfbe69ab3b77b11490948bba2536cee85a-origin/upstream-clean。元先行7helper full saved creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなし。今回production/test/body0、完成focus/旧suite/基本probe/native/追加agent/profile反復0。原focus failedとforeground未保存identityを保全する。
+
+未保存CI37934224516/full 32e6c9c36a27ffaed87a741ef1ae9dee52d8a424/attempt1/push/Phase 1 CI/.github/workflows/ci.yml/workflow349172377をcompact一回completed-successへ固定。2jobs全success/原2logs・2ZIP・1journal+remote verificationを各一度保存、artifact digest/1member/decoded8MiB/fullHEAD-runを照合。現独立verifier一回exit0/passed、実4017/failure0/error0/skip237（native213/optional24）/source_unchanged/shared29complete/必須28passed/cross_python=false。local/remote JSON全field一致、原rawは末尾CRLF/LF差1byteを両保持。Ubuntu3.14.8単一CIでWin ABI/OS排他/child transport/容量/正式受入ではない。
+
+70source-science working/検証済み32ecode親doc-only非交差継承/旧4003の3closed roots不変/原CI21prefixをmetadataだけ照合。最新code32e6c9c36a27ffaed87a741ef1ae9dee52d8a424不変。4017を旧4003・3991・3972・3954・3930/failure379079/複数run local焦点/旧2minorへ読み替えない。source幅910751B/最大archive130691B/capとの差381Bはruntime/global容量保証ではない。
+
+詳細docs/results/anomaly-multiseed-v0.3-ci-diagnostic-journal-save-2026-10-09.md。新raw artifacts/ci-diagnostic-37934224516/、metadata artifacts/preformal-ci-diagnostic-current-save-20261009-prep/、post artifacts/preformal-ci-diagnostic-current-post-20261009-prep/。文書2pathを一回skip ci commit/push、post/manifestへ原pins/full identity/HEAD-origin-cleanを固定する。完成4017再照会-download-verifier反復禁止。
+
+現在最新32eの未保存CIなし。新run選択/待機/反復照会/doc-only新CI追跡0、完成379342/379320/379291/379230/379181/379133を再照会-download-verifierしない。次は原diagnostic公開IO/child bootstrap/同owner OS排他-all-writer atomic/fresh loaded runtime closure-profile-private policy-request-unusedroot。formal_permission=false/credit0/holdout未読/正式5残件・受入未完了/create_native早期拒否/全7役限定reader起動禁止/元caps・unknown原owner-stop/追加agent禁止/ACTIVE維持。
+
 ## 2026-10-09 JST Python3.14単一CI4003の原証拠保存（ACTIVE）
 
 開始2026-10-09T13:27:47Z/HEAD 40252e285cce3e7f996d8338c271dff00420cb81-origin/upstream-clean。元先行7helper full saved creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなし。今回production/test/body0、完成focus/旧suite/基本probe/native/追加agent/profile反復0。原focus failedとforeground未保存identityを保全する。
