@@ -2,6 +2,8 @@
 
 ## 2026-10-09 JST 同request writer宣言・元親ownerの準備（ACTIVE）
 
+code/test unitを一回commit/pushしたfullHEAD 4f20c013a64dfc86b01d70e86f08f626a99c60c1、origin/ls-remote一致。code-save13847B/d400346c550da4e96a91ccb42f52f71756620d4d498400430d8ee15a065f92b6にGit/gh原stdout-stderr bytesをbase64とpinで保存。新code fullSHAのgh run list一回は空配列でCI run未特定、空選択を実行/成功へしない。先行CI37913386221は今回の開始compact一回in_progressだけ、再照会0。
+
 開始10:08:15Z/HEADd8cada08527b4ce10045736a400898d779e253f7-origin-clean、先行3helper full creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなし。最新CI37913386221/fullb4a0401680b0d938598c71ff890948f208eee2b5はcompact一回attempt1/push/Phase 1 CI/in_progress、原run11696B/c9d10cc5b73b9890c060c9b028a0c6f1c0ba5f08f06e0a445b49f3acb97a9084保存。jobs/終端/journal未固定、同状態再照会/待機/download/runner0。
 
 RequestWriterPreparation/ReaderGitParent opt-inを同unitへまとめ、caller inputs/getter前保持→private元親owner→same partition owner-clock-context bytes/pin→closed固定5role/宣言した元participantのidentity→role一回local claim→inventory早期拒否/既存原ParentPublicationRetentionへ結ぶ。原return/途中pending/view/拒否incoming/第一例外/private owner-Lock-ledgerを保持、reentry/KI/marker消去/両ledger消去/第二constructor/局所release例外でもmetadata復元/replay/新keeperへ落とさない。borrowed stdin close0。実IO writer hook/OS排他/cross-process/all-writer atomic/native authは未接続で、全declared claims成功でもunresolved=true、native-atomic-exclusive-capacity-ack-auth-formalはfalse。

@@ -39,3 +39,9 @@ components18786B/014fbd3a463f24f3f7276904dea48df9fae89778ed32b09b036aa1ba32095e8
 次は実IO writerの同request/root参加、同original ownerのnative/exclusive/all-writer原子予約、fresh latest-clean loaded runtime/source closure/profile/private policy/request/unusedrootへの接続が必要。全planned raw32entry/原partialとnew growth/codec-native buffer-object overhead/global coupled peak、実callsite/stdio/child transportは未完了。旧raw/閉鎖rootへ追加・receipt移動・cap緩和なし。
 
 formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout観測未読/正式5残件・最終受入未完了。create_native早期拒否/全7役whole.run限定reader実起動禁止/元caps・unknown原owner-stop保持。人の明示再開により自走ACTIVE、停止割込みやSol容量エラーでは保全後PAUSED。
+
+## Git保存
+
+code/test unitを一回commit/pushしたfullHEAD 4f20c013a64dfc86b01d70e86f08f626a99c60c1、origin/ls-remote一致。code-save13847B/d400346c550da4e96a91ccb42f52f71756620d4d498400430d8ee15a065f92b6にGit/gh原stdout-stderr bytesをbase64とpinで保存。新code fullSHAのgh run list一回は空配列でCI run未特定、空選択を実行/成功へしない。先行CI37913386221は今回の開始compact一回in_progressだけ、再照会0。
+
+後続doc-only追補はskip ciへ集約し、post-saveで66working-Git/原raw/元helper identity/旧root不変をmetadataだけ照合する。新CIの終端/実件数/runner検証、独立journal検証は未確認。
