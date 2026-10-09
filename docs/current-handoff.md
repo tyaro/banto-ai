@@ -1,5 +1,17 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST 同requestのparent failure・diagnostic writer IO準備（ACTIVE）
+
+開始11:57:33Z/HEAD 43f8ef7fd41152c6eef4d56c3fc435ffc99f20f8-origin-clean、先行元6helper full creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなし。現在code CI3972は保存済みで完成CI再照会・verifier0。追加agent/旧focus/旧suite/基本probe/native/profile再観測0。
+
+新RequestAuxiliaryWriter/ReaderGitParent.connect_auxiliary_writer/原ParentPublicationRetention保持を既存reader moduleへ同unit化。原owner-clock-storage-role/context/maximaをgetter前保持→元declared participant claim一回→原storage future snapshot＋実新raw len/1entry事前拒否→同root固定名FileIO xb→原write/flush/sync/close-return/full raw readback/identityを保持。unknown/再入/alias消去/第二接続でも第一error・原stream/raw/private operationsを保持して再公開・再close・新keeperを拒否。親readinessの第一拒否もprivateに固定する。成功でも全all-writer/exclusive/atomic/capacity/native/auth/ack/formal false。
+
+新19distinct/body19は16＋新risk2＋review新1各一回pass/fail0error0skip0、最終source単一19successへしない。上流publication._fixed/fixture先行archive constructorだけstub、storage snapshot・新FileIO/fstat/close/readbackは小実IO。ReaderGitParent.__new__/工程ChildChannel/Mock clock/retention Escapeで実native親child認証ではない。selected原raw9＋2＋0をfocused JSON base64で保持、helper全process logsではない。
+
+詳細docs/results/anomaly-multiseed-v0.3-parent-auxiliary-writer-io-2026-10-09.md。原artifacts/preformal-parent-auxiliary-io-20261009-prep/、別metadata artifacts/preformal-parent-auxiliary-post-20261009-prep/。68source-science/他66不変・旧5AST/create_native437B pin不変/new production module0/変更2code-test safety0。fresh名前30合計899882B/最大archive130691B/source capとの差381Bはruntime閉包・容量保証ではない。code/test/docs4pathを一回commit/push、文書追補はskip ciへ集約しpost metadataで実HEAD-origin-cleanを固定する。
+
+次はactual generate/child bootstrapの実callsiteへ原writer接続/同原owner OS排他-all-writer atomic/fresh latest-clean loaded runtime closure-profile-private policy-request-unusedroot。現在はcaller提供rawのPython IO準備で全planned32entry/global coupled peak/実native HANDLE-stdio-child transport/正式5残件・最終受入未完了。create_native早期拒否/全7役限定reader実起動禁止/formal_permission=false/credit0/holdout未読/元caps-stop/追加agent禁止/ACTIVEを維持。旧3972を新code成功へ読み替えない。
+
 ## 2026-10-09 JST Python3.14単一CI3972の原証拠保存（ACTIVE）
 
 開始11:42:48Z/HEAD fe8635f0b3861fefbf33ec6e9a6a85b4d8974ba5-origin-clean、先行元6helper full saved creation-start_token/live-execution一致・read-only CIM同original不在/repo helper-critical ownerなし。production/test/body0/旧focus-旧suite-基本probe-native-追加agent-profile再観測0。

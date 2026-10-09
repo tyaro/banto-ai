@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import os
 from pathlib import Path
 from . import anomaly_v03_process_supervisor as parent_supervisor
 import time
@@ -567,6 +568,27 @@ class ReaderGitParent:
     def prepare_publication_launch(self, *, pipe_io, creator):
         return ReaderPublicationLaunchPreparation(self,pipe_io,creator)
 
+    def connect_auxiliary_writer(self, role, writer):
+        incoming=(role,writer)  # Original candidate before dependency getters.
+        previous=getattr(self,'_ReaderGitParent__auxiliary_writer_inputs',())
+        failure=getattr(self,'_ReaderGitParent__auxiliary_writer_failure',None)
+        self.__auxiliary_writer_inputs=(*previous,incoming)
+        self.auxiliary_writer_inputs=self.__auxiliary_writer_inputs
+        try:
+            if failure is not None:raise failure
+            v.require(not any(row[0]==role for row in previous), 'reader auxiliary writer role connects once')
+            v.require(type(writer) is RequestAuxiliaryWriter, 'reader original auxiliary Python writer')
+            writer.__init__(owner=self,checkpoint=self.inventory_checkpoint,
+                storage=self.original_publication_storage,role=role)
+            return writer.view()
+        except BaseException as error:
+            if failure is None:self.__auxiliary_writer_failure=error
+            if getattr(self,'error',None) is None:self.error=error
+            error.reader_git_parent=self
+            try:self._remember_publication(error)
+            except BaseException as secondary:self.auxiliary_writer_remember_error=secondary
+            raise self.__auxiliary_writer_failure
+
     def issue_publication_resources(self, issuer):
         self.original_publication_resource_input=issuer  # Before validation or storage/root IO.
         held=tree.owner.PublicationPipeResources.__new__(tree.owner.PublicationPipeResources)
@@ -674,6 +696,13 @@ class ReaderGitParent:
         failure.reader_git_parent=self
 
     def _inventory_ready(self):
+        auxiliary=getattr(self,'_ReaderGitParent__auxiliary_writer_inputs',None)
+        if auxiliary is not None:
+            failure=getattr(self,'_ReaderGitParent__auxiliary_writer_failure',None)
+            if failure is None:
+                failure=self.__auxiliary_writer_failure=ValueError('reader auxiliary writers are preparation only')
+            if getattr(self,'error',None) is None:self.error=failure
+            failure.reader_git_parent=self;raise failure
         writers=getattr(self,'_ReaderGitParent__request_writers_owner',None)
         if writers is not None:
             try:
@@ -739,6 +768,136 @@ class ReaderGitParent:
             if self.error is None:self.error=failure
             failure.reader_git_parent=self
             raise
+
+
+class RequestAuxiliaryWriter:
+    """One declared failure/diagnostic writer; Python IO grants no native rights.
+
+    Fixed raw names use the original root and independent caller maxima. The
+    conservative storage snapshot remains in force; no new staging entry,
+    rename, completed-slot discount or cross-process reservation is introduced.
+    """
+    def __init__(self, *, owner, checkpoint, storage, role):
+        incoming=(owner,checkpoint,storage,role)
+        if hasattr(self,'_RequestAuxiliaryWriter__inputs'):
+            self.rejected_constructor=incoming
+            self._failed(ValueError('auxiliary original writer cannot be initialized again'))
+        self.__inputs=self.original_inputs=incoming
+        self.__failure=self.error=None
+        self.__pending=self.pending=None
+        self.__operations=();self.__completed=self.completed=()
+        self.owner,self.checkpoint,self.storage,self.role=incoming
+        self.__anchor=None
+        try:
+            registry=getattr(owner,'_ReaderGitParent__auxiliary_writer_owners',())
+            self.__registry=(*registry,(role,self))
+            v.require(not any(row[0]==role for row in registry),'auxiliary original role owner cannot be replaced')
+            owner._ReaderGitParent__auxiliary_writer_owners=self.__registry
+            v.require(role in ('parent_failure','diagnostic') and
+                type(storage) is actors.archive.PublicationStorageAdmission and storage.owner is owner and
+                storage.checkpoint is checkpoint,'auxiliary same original storage owner clock and role')
+            preparation=storage._request_writers_fixed();storage._fixed()
+            v.require(preparation is not None,'auxiliary original declared request writers required')
+            allocation=preparation.publication.original_inputs[3]
+            limits=(allocation['parent_raw_maxima'] if role=='parent_failure' else allocation['diagnostic_maxima'])
+            expected=storage.allocation['parent_raw_limits']
+            v.require(type(limits) is dict and
+                (limits==expected if role=='parent_failure' else set(limits)=={'diagnostic.json','diagnostic.log'} and
+                    all(type(n) is int and 0<n<=monitor.REPORT_MAX_BYTES for n in limits.values())),
+                'auxiliary independent original failure or diagnostic maxima')
+            self.limits=copy.deepcopy(limits);self.__limits_raw=io.json_bytes(limits)
+            self.__anchor=(incoming,preparation,preparation.context_raw,storage.plan_raw,storage.root,
+                limits,self.__limits_raw,self.__registry)
+            storage._claim_request_writer(role,self)  # Before snapshot or first FileIO.
+            self._fixed()
+        except BaseException as error:self._failed(error)
+
+    def _failed(self,error):
+        if self.__failure is None:self.__failure=error
+        self.error=self.__failure;self.error.auxiliary_writer=self;self.error.reader_git_parent=self.__inputs[0]
+        try:
+            if getattr(self.__inputs[0],'error',None) is None:self.__inputs[0].error=self.error
+        except BaseException as secondary:self.owner_failure=secondary
+        try:
+            storage=self.__inputs[2]
+            if type(storage) is actors.archive.PublicationStorageAdmission:storage._failed(self.error)
+        except BaseException as secondary:
+            if secondary is not self.error:self.storage_failure=secondary
+        raise self.__failure
+
+    def _fixed(self, held=None):
+        if self.__failure is not None:raise self.__failure
+        a=self.__anchor;s=self.__inputs[2]
+        v.require(a is not None and self.original_inputs is self.__inputs is a[0] and
+            self.owner is self.__inputs[0] and self.checkpoint is self.__inputs[1] and self.storage is s and
+            self.role==self.__inputs[3] and self.pending is self.__pending and self.completed is self.__completed and
+            len(self.__operations)==len(self.__completed)+(self.__pending is not None) and
+            (self.__pending is None or self.__operations[-1] is self.__pending) and
+            (held is None or self.__pending is held),'auxiliary original IO owners and private return ledger')
+        registry=getattr(self.owner,'_ReaderGitParent__auxiliary_writer_owners',None)
+        v.require(type(registry) is tuple and len(registry)>=len(a[7]) and
+            all(row[0]==prior[0] and row[1] is prior[1] for row,prior in zip(registry,a[7])),
+            'auxiliary original role registry remains attached')
+        preparation=s._request_writers_fixed();s._fixed()
+        v.require(preparation is a[1] and preparation.context_raw is a[2] and s.plan_raw is a[3] and
+            s.root==a[4] and io.json_bytes(a[5])==a[6]==io.json_bytes(self.limits) and
+            any(row[0]==self.role and row[1] is self for row in s._PublicationStorageAdmission__request_writer_claims),
+            'auxiliary exact original context maxima and participant claim')
+        for row in self.__completed:
+            v.require(row['close_return_observed'] and row['close_return'] is None and row['readback']==row['raw'] and
+                row['final_identity']==row['file_identity'],'auxiliary original close and full raw returns')
+
+    def view(self):
+        try:
+            self._fixed()
+            return {'format':'anomaly-v03-request-auxiliary-writer-v1','role':self.role,
+                'context_pin':observed._pin(self.__anchor[2]),'storage_plan_pin':copy.deepcopy(self.storage.plan_pin),
+                'published_names':[row['name'] for row in self.__completed],
+                'all_writers_registered':False,'exclusive_root':False,'atomic_reservation':False,
+                'capacity_pass':False,'native_authorized':False,'native_owner_recovered':False,
+                'execution_authenticated':False,'parent_ack_authorized':False,'formal_permission':False}
+        except BaseException as error:self._failed(error)
+
+    def publish(self, name, raw):
+        incoming=(name,raw)  # Keep the exact raw object before any callback/IO.
+        try:
+            self._fixed()
+            v.require(self.__pending is None,'auxiliary unknown publication cannot be replayed')
+            held={'incoming':incoming,'name':name,'raw':raw,'owner':self.owner,'stream':None,
+                'close_return':None,'close_return_observed':False,'readback':None}
+            self.__operations=(*self.__operations,held);self.__pending=self.pending=held
+            v.require(type(name) is str and name in self.limits and type(raw) is bytes and
+                len(raw)<=self.limits[name] and not any(row['name']==name for row in self.__completed),
+                'auxiliary fixed unused raw name and independent maximum')
+            path=held['path']=self.__anchor[4]/name
+            held['pin']=observed._pin(raw);held['factory']=actors.archive.proof.tree.file_io.FileIO
+            held['before']=self.storage.view('auxiliary_before');self._fixed(held)
+            v.require(held['before']['remaining_entries']>=1 and held['before']['remaining_bytes']>=len(raw),
+                'auxiliary actual new raw growth exceeds conservative remaining')
+            paths.regular_path(path,missing=True);v.require(not path.exists(),'auxiliary no existing raw replacement')
+            held['open_attempted']=True;held['stream']=stream=held['factory'](path,'xb');self._fixed(held)
+            held['fd']=fd=stream.fileno();info=os.fstat(fd)
+            held['file_identity']=(info.st_dev,info.st_ino)
+            v.require(info.st_ino>0 and info.st_size==0 and held['file_identity']==
+                (path.stat().st_dev,path.stat().st_ino),'auxiliary original exclusive empty fd/path')
+            held['write_attempted']=True;held['write_return']=stream.write(raw);self._fixed(held)
+            v.require(type(held['write_return']) is int and held['write_return']==len(raw),'auxiliary exact original write return')
+            held['flush_return']=stream.flush();self._fixed(held)
+            held['sync_return']=os.fsync(fd);self._fixed(held)
+            held['close_attempted']=True;held['close_return']=stream.close();held['close_return_observed']=True
+            self._fixed(held)
+            v.require(held['close_return'] is None and stream.closed is True and stream.closefd is True,
+                'auxiliary actual Python owned fd close return')
+            held['readback']=observed._file(path,self.limits[name]);self._fixed(held)
+            evidence=actors.archive.evidence;evidence._raw(held['readback'],held['pin'],'auxiliary original full raw pin')
+            info=path.lstat();held['final_identity']=(info.st_dev,info.st_ino)
+            v.require(held['readback']==raw and held['final_identity']==held['file_identity'],
+                'auxiliary original raw and fd/path after close')
+            held['after']=self.storage.view('auxiliary_after');self._fixed(held)
+            self.__completed=self.completed=(*self.__completed,held);self.__pending=self.pending=None
+            self._fixed();return copy.deepcopy(held['pin'])
+        except BaseException as error:
+            self.rejected_publication=incoming;self._failed(error)
 
 
 class ParentPublicationRetention:
@@ -816,13 +975,17 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
     if any(owner is not None for owner in writers):owners+=writers
     connection=getattr(original,'_ReaderGitParent__request_writer_storage_inputs',None)
     if connection is not None:owners+=(connection,getattr(original,'request_writer_storage_input',None))
+    auxiliary=getattr(original,'_ReaderGitParent__auxiliary_writer_inputs',None)
+    registry=getattr(original,'_ReaderGitParent__auxiliary_writer_owners',None)
+    if auxiliary is not None or registry is not None:owners+=(auxiliary,registry)
     storage_input=len(original.original_bootstrap_inputs)>10 and original.original_bootstrap_inputs[10] is not None
     if all(owner is None for owner in owners) and existing is None and not storage_input:return False
     rejected=(getattr(original,'rejected_request_bootstrap',None),
         getattr(original,'rejected_inventory_publication',None),getattr(owners[4],'rejected',None))
     error.reader_publication_owners=(original,owners,rejected,caller_plan)  # Before diagnosis/keeper entry.
     try:
-        problem=(existing is not None or connection is not None or getattr(original,'error',None) is not None or
+        problem=(existing is not None or connection is not None or auxiliary is not None or registry is not None or
+            getattr(original,'error',None) is not None or
             any(getattr(owner,'error',None) is not None or getattr(owner,'pending',None) is not None
                 for owner in owners if owner is not None) or
             owners[0] is not owners[1] or owners[2] is not owners[3] or owners[4] is not owners[5] or

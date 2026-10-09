@@ -1,0 +1,37 @@
+# v0.3 同requestのparent failure・diagnostic writer IO準備（2026-10-09）
+
+## 対象と範囲
+
+開始2026-10-09T11:57:33Z/HEAD 43f8ef7fd41152c6eef4d56c3fc435ffc99f20f8-origin-clean。先行元6helper full saved creation-start_token/live-execution一致、read-only CIM同original不在・repository helper/critical ownerなし。現在code e541のCI3972は完成済みで、今回CI再照会/download/verifier/旧focus/旧suite/基本probe/native/追加agent/profile再観測0。
+
+既存reader moduleだけへRequestAuxiliaryWriter/ReaderGitParent.connect_auxiliary_writer/親早期拒否・原ParentPublicationRetentionへの保持を同unitにまとめた。新production module0、archive130691Bは不変。code/test/docs4pathをunit確認後一回commit/pushし、保存HEADの文書追補はskip ciへ集約する。
+
+## 原writerを実IOへ結ぶ経路
+
+callerの原owner/checkpoint/storage/roleをgetter前に保持し、private原role registryへ候補を保持する。同original PublicationStorageAdmission owner-clock-context・RequestWriterPreparation participant・実request/inventory/revision/root identity-context bytes-storage plan rawを照合する。parent_failureは上流parent_raw_maximaとstorage parent_raw_limitsの完全一致、diagnosticは固定diagnostic.json/diagnostic.log独立最大値を保持し各64KiB以内とする。
+
+元storageのgeneric claimをroleごと一回通した後、fixed raw name・元bytes object・最大値・unused filenameを照合。原storage snapshotの全future量を維持し、さらに実新rawのlen/1entryをconservative remainingへ照合してから、同原rootのFileIO xbを一回開く。原factory/stream/fd・fstat/path identity/write/flush/sync/closeのreturn-prefixを保持し、実Python close None returnとowned closefd、全raw readback/pin/identityを照合後だけ当該private pendingを完了ledgerへ移す。完了枠の割引・staging entry追加・rename・receipt移動・上限緩和はない。原stream/raw/返値は完了後も保持する。
+
+例外/unknown return/第二constructor/同role再接続/再入・例外を飲み込むcallback/public alias消去・registry改変/maxima変更でも原第一例外・incoming・途中FileIO/未観測close-return・private operationsを保持し、再公開/reclose/reap/新keeperへ落とさない。cached viewはclock/snapshot/IOを反復しない。親wrapperは原candidateをgetter前にprivate tupleへ保持し、foreign child storageを拒否する。親readinessの第一拒否例外もprivateに固定し、error/display消去で解除しない。既存original ParentPublicationRetentionへ原auxiliary candidates/registryをforwardする。
+
+これはcaller提供rawのPython IO準備であり、actual generateのfailure/diagnostic callsite・supervisor stdout/stderr・child bootstrapへの自動接続は未完了。宣言したPython object/局所claim/FileIO close/full rawを実Win Job/HANDLE/stdio継承/child IO owner transportへしない。成功viewでもall_writers_registered/exclusive_root/atomic_reservation/capacity_pass/native_authorized/native_owner_recovered/execution_authenticated/parent_ack_authorized/formal_permissionは全false。ReaderGitParentの実起動readinessとcreate_nativeは拒否を維持する。
+
+## 新規確認と原raw
+
+新19distinct/body19は初回16一回2.4169366999994963秒pass、具体的新risk2だけ2.6816985000041313秒pass、review第一例外保持の新1だけ0.5396975000039674秒pass。fail0/error0/skip0。初回16・完成focus・旧suiteは反復しない。新raw-growth早期拒否と親第一例外保持を各run間で追加したため、最終source単一19success runではない。
+
+fixtureは上流PartitionedPublicationPreparation._fixedとfixture先行archive constructorだけ明示stub。Mock clock/工程Channel/original opaque Python owner、小temp rootの実storage snapshot・新FileIO・fstat/readbackを使用した。新親wrapper試験のReaderGitParent.__new__と工程ChildChannel endpointはPython接続試験であり、実native ParentChannel/Popen/child owner認証ではない。親retentionは試験専用_pause Escapeで保持を確認し、新native keeperを起動していない。
+
+selected原raw観測は初回9/v2 2/v3 0。input/actual file/readbackの元bytesをbase64でfocused JSONへ保持した。部分writeは原prefix、unknown closeは実基底FileIO.close後の注入例外でclose_return_observed=false/stream.closed=trueを別保存し、closedから原returnを補わない。原test-created Python streamのcleanupはnative回収・production保全root整理ではない。selected unittest log/JSON観測はhelper process全stdout-stderr byte logではない。
+
+artifacts/preformal-parent-auxiliary-io-20261009-prep/へ原focus/source/metadataを保存し閉鎖、別artifacts/preformal-parent-auxiliary-post-20261009-prep/へGit/post metadataだけ保存する。各512KiB32entry/reserve128KiB/single128KiB、raw-root追加/同保存/完成19反復は禁止。
+
+## Source・容量・次工程
+
+現68source-science working各run前後不変、他66は開始pinと不変。旧PartitionedPublicationPreparation/RequestWriterPreparation/GeneratedChainBudget/_directory_snapshot AST sourceとcreate_native437B/0bd7b84f0a3dc0bd22a865ac8b2b4ccedc0e71ea50a177b0e6b086df07fdcc7cは不変。変更2code-test path safety違反0。
+
+fresh named source30の合計899882B、最大archive130691B/e5ab8de3cc7f02f6ccc9f5eb08feeb5e283a64782c2e16bc78ac8f25c6f36337でsource cap131072Bとの差381Bは不変。全named fileがsource cap内という幅metadataだけでfull loaded runtime closure/native/global capacityを意味しない。予定32call/phase・64callの完全runtime閉包/profile/private policy/request/exclusive-unusedrootは未発行。科学hash metadataだけ、登録holdout観測未読。旧閉鎖CI3972root23file5617342B/metadata28file89547B/旧writer-storage raw29file239710Bへ追加・整理していない。
+
+全planned32entry、原partial/new archive growth/codec/native buffer/object overhead/global coupled peak、実native return-HANDLE-stdio-child endpoint-close-rename原transport認証は未完了。次はactual generate/child bootstrapへの原writer機能接続、同原owner OS排他-all-writer atomic、fresh latest-clean loaded runtime-source closure-profile-private policy-request-unusedrootの準備。新code CIは保存後に実Git fullSHAでrun選択を一度行い、空選択/未終端/予定件数をsuccessへしない。旧3972を新code・旧failure・2minor比較へ読み替えない。
+
+formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/正式5残件・最終受入未完了/create_native早期拒否/全7役whole.run限定reader実起動禁止/元caps・unknown原owner-stop/追加agent禁止を維持。人の明示再開でACTIVE継続、Sol容量エラー/人の停止割込み時は保全後PAUSED・重複再試行なし。selector path missはselected tool excerptだけ保存し、helper process全log/native/production/Sol失敗へしない。
