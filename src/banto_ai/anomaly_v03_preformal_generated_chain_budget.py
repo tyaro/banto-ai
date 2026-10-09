@@ -289,6 +289,146 @@ class PartitionedPublicationPreparation:
         raise ValueError('partitioned publication native/all-writer admission not prepared')
 
 
+class RequestWriterPreparation:
+    """Link a declared Python writer roster to one original request preparation.
+
+    Claims serialize only this object's callers. Unregistered writers, processes,
+    native handles and filesystem publication remain outside this contract.
+    """
+    FORMAT='anomaly-v03-request-writer-preparation-v1'
+    ROLES=('parent_control','worker_archive','worker_carrier','parent_failure','diagnostic')
+
+    def _retain_inputs(self, *, owner, checkpoint, publication, declaration, participants):
+        self.original_inputs=(owner,checkpoint,publication,declaration,participants)
+        self._caller_inputs=self.original_inputs
+        self.owner,self.checkpoint,self.publication=owner,checkpoint,publication
+        self.pending=self.error=self._failure=self.rejected=None
+        self._pending=self._anchor=None;self._claims=self._claims_anchor=()
+        self._returns=self._returns_anchor=();self._return_bindings=()
+        self.__claims=self._claims;self.__returns=self._returns;self.__bindings=self._return_bindings
+        self._refused=self._release_error=None
+        self._claiming=False;self._lock=threading.Lock()
+
+    def __init__(self, *, owner, checkpoint, publication, declaration, participants):
+        if not hasattr(self,'original_inputs'):
+            self._retain_inputs(owner=owner,checkpoint=checkpoint,publication=publication,
+                declaration=declaration,participants=participants)
+        incoming=(owner,checkpoint,publication,declaration,participants)
+        try:
+            original=getattr(owner,'_ReaderGitParent__request_writers_owner',None)
+            if original is not None and original is not self:
+                original.rejected=self;original._failed(ValueError('private original request writers cannot be replaced'))
+            owner._ReaderGitParent__request_writers_owner=owner._request_writers_owner=self
+            previous=getattr(owner,'original_request_writers',None)
+            if previous is not None and previous is not self:
+                previous.rejected=self;previous._failed(ValueError('original request writer preparation cannot be replaced'))
+            owner.original_request_writers=owner.request_writers=self
+            self.pending=self._pending={'inputs':self.original_inputs,'incoming':incoming}
+            from . import anomaly_v03_preformal_worker_git_archive as component
+            self.component=component
+            component.v.require(all(a is b for a,b in zip(self.original_inputs,incoming)),
+                'request writer original inputs retained before getters')
+            component.v.require(type(publication) is PartitionedPublicationPreparation and
+                publication.owner is owner and publication.checkpoint is checkpoint and callable(checkpoint),
+                'request writer same original parent/checkpoint/publication')
+            publication._fixed()
+            self.context_raw=publication.original_inputs[5]
+            component.evidence._keys(declaration,'format context_pin roles formal_permission','request writer closed declaration')
+            component.v.require(declaration['format']==self.FORMAT and declaration['formal_permission'] is False and
+                declaration['roles']==list(self.ROLES) and declaration['context_pin']==component.observed._pin(self.context_raw),
+                'request writer exact declared roles and original context pin')
+            component.v.require(type(participants) is tuple and len(participants)==len(self.ROLES) and
+                all(type(row) is tuple and len(row)==2 and row[0]==role and row[1] is not None
+                    for row,role in zip(participants,self.ROLES)), 'request writer original participant slots')
+            self.declaration_raw=component.io.json_bytes(declaration)
+            component.v.require(len(self.declaration_raw)<=component.proof.channel.MAX_CONTROL,
+                'request writer bounded declaration')
+            self._anchor=(*self.original_inputs,self._lock,self.context_raw,self.declaration_raw,tuple(participants),self._caller_inputs)
+            held=self._pending
+            held['clock_return']=checkpoint()  # Local original holder survives callback marker erasure.
+            self._fixed();self.pending=self._pending=None
+        except BaseException as error:self._failed(error)
+
+    def _failed(self,error):
+        if self._failure is None:self._failure=error
+        self.error=self._failure;self.error.request_writers=self;self.error.reader_git_parent=self.owner
+        if getattr(self.owner,'error',None) is None:self.owner.error=self.error
+        raise self.error
+
+    def _fixed(self):
+        if self._failure is not None:raise self._failure
+        c=self.component;a=self._anchor
+        c.v.require(a is not None and all(x is y for x,y in zip(self.original_inputs,a[:5])) and
+            self.owner is a[0] and self.checkpoint is a[1] and self.publication is a[2] and self._lock is a[5] and
+            self.context_raw is a[6] and self.declaration_raw is a[7] and
+            self.owner._ReaderGitParent__request_writers_owner is self.owner._request_writers_owner is self and
+            self.owner.original_request_writers is self.owner.request_writers is self and
+            self.pending is self._pending and self._claims is self._claims_anchor is self.__claims and
+            self._returns is self._returns_anchor is self.__returns and self._return_bindings is self.__bindings and
+            self._caller_inputs is a[9],
+            'request writer original owner/lock/ledger bindings')
+        c.v.require(c.io.json_bytes(a[3])==self.declaration_raw and a[3]['format']==self.FORMAT and
+            a[3]['roles']==list(self.ROLES) and self.publication.original_inputs[5] is self.context_raw and
+            self.publication.owner is self.owner and self.publication.checkpoint is self.checkpoint and
+            type(a[4]) is tuple and len(a[4])==len(a[8]) and
+            all(row is prior and row[1] is prior[1] for row,prior in zip(a[4],a[8])),
+            'request writer unchanged original declaration/participants/context')
+        c.v.require(len(self._returns)==len(self._return_bindings) and
+            all(c.io.json_bytes(row)==raw for row,raw in zip(self._returns,self._return_bindings)),
+            'request writer original returned views')
+        self.publication._fixed()
+
+    def _view(self):
+        return {'format':self.FORMAT,'context_pin':self.component.observed._pin(self.context_raw),
+            'declared_roles':list(self.ROLES),'claimed_roles':[row[0] for row in self._claims],
+            'declared_python_owners_linked':True,'all_writers_registered':False,'exclusive_root':False,
+            'atomic_reservation':False,'capacity_pass':False,'native_authorized':False,
+            'execution_authenticated':False,'parent_ack_authorized':False,'formal_permission':False}
+
+    def claim(self, role, participant, context_raw):
+        incoming=(role,participant,context_raw)  # Before validation, lock or callback.
+        acquired=False;lock=self._lock
+        try:
+            self._fixed();c=self.component
+            c.v.require(not self._claiming,'request writer reentrant claim refused')
+            acquired=lock.acquire(blocking=False)
+            c.v.require(acquired,'request writer concurrent claim refused')
+            self._claiming=True;self.pending=self._pending=held={'incoming':incoming,'lock_return':acquired}
+            c.v.require(type(role) is str and role in self.ROLES,'request writer unlisted role')
+            expected=self._anchor[8][self.ROLES.index(role)][1]
+            c.v.require(participant is expected and type(context_raw) is bytes and context_raw==self.context_raw and
+                not any(row[0]==role for row in self._claims),'request writer original participant/context claimed once')
+            held['clock_return']=self.checkpoint();self._fixed()
+            self._claims=self._claims_anchor=self.__claims=(*self._claims,incoming)
+            held['result']=result=self._view()  # Original return before the post-callback.
+            self._returns=self._returns_anchor=self.__returns=(*self._returns,result)
+            self._return_bindings=self.__bindings=(*self._return_bindings,c.io.json_bytes(result))
+            held['post_clock_return']=self.checkpoint();self._fixed()
+            self.pending=self._pending=None
+            return result
+        except BaseException as error:
+            if self._refused is None:self._refused=incoming
+            if self.rejected is None:self.rejected=incoming
+            self._failed(error)
+        finally:
+            if acquired:
+                self._claiming=False
+                try:lock.release()  # Process-local lock only; no HANDLE/stream recovery.
+                except BaseException as error:
+                    if self._release_error is None:self._release_error=error
+                    if self._pending is not None:self._pending['lock_release_error']=error
+                    self._failed(error)
+
+    def view(self):
+        try:self._fixed();return self._view()
+        except BaseException as error:self._failed(error)
+
+    def unresolved(self):return True  # No native/all-writer publication contract is issued.
+
+    def execute(self,*args,**kwargs):
+        raise ValueError('request writer native/exclusive publication admission not prepared')
+
+
 class GeneratedChainBudget:
     """One new root, one joined sampler, and one shared cooperative stop."""
 

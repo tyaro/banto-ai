@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST 同request writer宣言・元親ownerの準備（ACTIVE）
+
+開始10:08:15Z/HEADd8cada08527b4ce10045736a400898d779e253f7-origin-clean、先行3helper full creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなし。最新CI37913386221/fullb4a0401680b0d938598c71ff890948f208eee2b5はcompact一回attempt1/push/Phase 1 CI/in_progress、原run11696B/c9d10cc5b73b9890c060c9b028a0c6f1c0ba5f08f06e0a445b49f3acb97a9084保存。jobs/終端/journal未固定、同状態再照会/待機/download/runner0。
+
+RequestWriterPreparation/ReaderGitParent opt-inを同unitへまとめ、caller inputs/getter前保持→private元親owner→same partition owner-clock-context bytes/pin→closed固定5role/宣言した元participantのidentity→role一回local claim→inventory早期拒否/既存原ParentPublicationRetentionへ結ぶ。原return/途中pending/view/拒否incoming/第一例外/private owner-Lock-ledgerを保持、reentry/KI/marker消去/両ledger消去/第二constructor/局所release例外でもmetadata復元/replay/新keeperへ落とさない。borrowed stdin close0。実IO writer hook/OS排他/cross-process/all-writer atomic/native authは未接続で、全declared claims成功でもunresolved=true、native-atomic-exclusive-capacity-ack-auth-formalはfalse。
+
+24distinct/body26＝初回20の18pass/error2＋失敗2とnew2だけ4pass＋new2だけ2pass。原failed helper/script/logを保持し、最終source単一24successへしない。66source-science working前後/他64/開始65working-Git不変、変更3file safety0/new production module0。旧partition/snapshot/budget spansとnative拒否method437B/0bd7b84f0a3dc0bd22a865ac8b2b4ccedc0e71ea50a177b0e6b086df07fdcc7c不変。工程memory/opaque宣言owner/temp metadata/Mock clock/local Lock/retention Escapeだけ。完成focus/基本probe/native/旧suite/追加agent/profile再観測0。
+
+詳細docs/results/anomaly-multiseed-v0.3-request-writer-preparation-2026-10-09.md、原raw artifacts/preformal-same-request-writer-preparation-20261009-prep/。原5helper live-execution exact/CIM同original不在/repo helperなし、初回focus failedを保持/native回収claimなし。次は実writer IOへの同request-root参加/fresh loaded runtime closure-profile-private policy-request-unusedroot/全planned32entry容量/global coupled peak/実native owner-stdio-child IO認証。準備成功をnative許可へせず、create_native早期拒否/全7役whole.run限定reader起動禁止/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/元caps-stopを維持。自走ACTIVE、追加agent禁止、停止割込み/Sol容量エラーでは保全後PAUSED。
+
 ## 2026-10-09 JST 人の明示再開：自走ACTIVE・現在の最優先
 
 人の「ポーズ解除して走ってください」に従い、開始09:50:36Z/HEADb4a0401680b0d938598c71ff890948f208eee2b5-origin-clean、元先行5helper full creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなしを確認し、heartbeat banto-10をfull fields保持でACTIVEへ更新・保存metadataでも確認。以下の履歴の終了予約/PAUSED維持は今回の明示再開で解除。追加agent禁止/元caps-stop/unknown原owner保持は維持する。

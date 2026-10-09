@@ -519,6 +519,23 @@ class ReaderGitParent:
         except BaseException as error:
             self._remember_publication(error);held._failed(error)
 
+    def prepare_request_writers(self, *, publication, declaration, participants):
+        held=monitor.RequestWriterPreparation.__new__(monitor.RequestWriterPreparation)
+        held._retain_inputs(owner=self,checkpoint=None,publication=publication,
+            declaration=declaration,participants=participants)
+        previous=getattr(self,'_ReaderGitParent__request_writers_owner',None)
+        if previous is not None:
+            previous.rejected=held;previous._failed(ValueError('reader original request writers cannot be replaced'))
+        self.__request_writers_owner=self._request_writers_owner=held
+        try:
+            checkpoint=self.inventory_checkpoint  # Original holder is attached before this getter.
+            held.original_inputs=(self,checkpoint,publication,declaration,participants)
+            held.checkpoint=checkpoint
+            held.__init__(owner=self,checkpoint=checkpoint,publication=publication,
+                declaration=declaration,participants=participants)
+            return held
+        except BaseException as error:held._failed(error)
+
     def prepare_publication_launch(self, *, pipe_io, creator):
         return ReaderPublicationLaunchPreparation(self,pipe_io,creator)
 
@@ -629,6 +646,11 @@ class ReaderGitParent:
         failure.reader_git_parent=self
 
     def _inventory_ready(self):
+        writers=getattr(self,'_ReaderGitParent__request_writers_owner',None)
+        if writers is not None:
+            try:
+                writers._fixed();v.require(not writers.unresolved(),'reader request writer admission unresolved')
+            except BaseException as error:writers._failed(error)
         partition=getattr(self,'_partitioned_publication_owner',None)
         if partition is not None:
             try:
@@ -760,6 +782,10 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
         getattr(original,'publication_resources',None))
     partition=(getattr(original,'_partitioned_publication_owner',None),getattr(original,'partitioned_publication',None))
     if any(owner is not None for owner in partition):owners+=partition
+    writers=(getattr(original,'_ReaderGitParent__request_writers_owner',None),
+        getattr(original,'_request_writers_owner',None),getattr(original,'request_writers',None),
+        getattr(original,'original_request_writers',None))
+    if any(owner is not None for owner in writers):owners+=writers
     storage_input=len(original.original_bootstrap_inputs)>10 and original.original_bootstrap_inputs[10] is not None
     if all(owner is None for owner in owners) and existing is None and not storage_input:return False
     rejected=(getattr(original,'rejected_request_bootstrap',None),
@@ -775,7 +801,10 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
             (owners[8] is not None and owners[8].unresolved()) or owners[10] is not owners[11] or
             (owners[10] is not None and owners[10].unresolved()) or owners[12] is not owners[13] or
             (owners[12] is not None and owners[12].unresolved()) or
-            (len(owners)>14 and (owners[14] is not owners[15] or owners[14].unresolved())))
+            (any(owner is not None for owner in partition) and
+                (partition[0] is not partition[1] or partition[0].unresolved())) or
+            (any(owner is not None for owner in writers) and
+                (any(owner is not writers[0] for owner in writers[1:]) or writers[0].unresolved())))
     except BaseException as failure:
         error.reader_publication_diagnostic_error=failure;problem=True
     if not problem:return False
