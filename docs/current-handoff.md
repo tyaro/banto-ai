@@ -2,6 +2,12 @@
 
 ## 2026-10-10 JST source object metadata batch別version・元owner保持（ACTIVE）
 
+code unit5path一回commit/push HEAD fe518101411f7af7ba3689298625f85502f4fbce-origin/upstream/lsremote-clean。新CI fullSHA一回空配列/stdout3B/37517e.../stderr0、run/件数未固定。原Git diff-check末尾空行失敗を保全し、1byte/AST同一修正の別continuationで保存完了。production/test再実行0、最終named30source957840B/最大archive130691B不変。
+
+fresh実HEAD request17023B/8e3015648848e4cffd58ff59bc82b050308c46b12e698d7c2598fb464c002458/union68名前順＋現body/OID。未取得read-only Git metadata5group原stdin/stdout/stderr/exitを保持/full68行OID-type-size順序照合、stdout一phase3523B/二phase7046Bは算術/実postphase0。Git body返却0/worker raw capture未接続/pack-gzip-native0。全14call原failure最大値packed4358432Bのconstructor一回早期拒否、entry29はsnapshot0宣言、全32entry/global容量未解決。metadata measurement34719B/33e2b944...、110pins前後不変。
+
+原metadata failed2（components集計/Git末尾空行）を維持、新19/5metadata/当該拒否は完成焦点として再実行禁止。次heartbeatは379520/full cf3f compact一回、新fe518 fullSHA run選択一回、終端のみ新raw一度/実summary後count固定、未終端・空は反復待機なし。doc-only新CI追跡0。正式未完了/holdout未読/native早期拒否/追加agent禁止/ACTIVE維持。
+
 開始15:59:24Z/HEAD dd4cf7c246d34b08764f2d65dd6a4b7fa41ba8c8-origin/upstream-clean。元7helper full identity一致/CIM同original不在、原failed1保持/critical ownerなし。37952030611/full cf3f compact一回attempt1/push/Phase1CI/in_progress、原run11708B/dd99ec84.../stderr0/exit0。jobs/終端/件数未固定・待機/反復/download/verifier0、完成4027以下照会0。
 
 新closed source-object-batch request/proof/packed-raw-candidate-v1・固定cat-file --batch-check metadata operation、全revision:name stdin/OID/type/size/順序/fullstdoutを独立全body SHA256/SHA1へ結ぶ。既存module2＋newtest1、元owner/body/request/maxima/原raw/第一error/private proofを保持、SOM1 literal memory pack/full readback、全future最大値/partial-newgrowth別量/全32entryを割引せず算定。新親hook/readiness拒否/同原keeper保持、scope全false/unresolved=true/create_native437B不変/native起動0。実worker raw/native receipt/exit/OS予約ではない。

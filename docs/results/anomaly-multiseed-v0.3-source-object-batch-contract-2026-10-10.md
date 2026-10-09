@@ -31,3 +31,22 @@ CI37952030611をcompact一回、実fullSHA cf3f / attempt1 / push / Phase1CI / w
 code unit commit/push後、実fullSHAと現working body/OIDへfresh candidateを発行し、未取得のmetadata batchだけ一度保存する。旧request/profileを流用しない。全future最大値の容量拒否と成功metadata幅は別に保存する。元source全bodyのactualGit再取得/collector/旧gzip26callの再実行はしない。
 
 fresh loaded runtime完全閉包-profile/private policy/native request/unused exclusive runtime root、全future failure/全planned32entry/global coupled peak、診断専用公開/parent failure実raw/child bootstrap/同原owner OS排他-all-writer atomic/native Job-HANDLE-stdio-child endpoint-close-rename transport認証は未完了。metadata tree lookupと独立disk body pinはin-memory code/runtime閉包/実worker authenticationではない。正式5残件・最終受入未完了/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/create_native早期拒否/全7役whole.run限定reader起動禁止/元caps-unknown owner-stop/追加agent禁止/ACTIVE維持。
+
+
+## 実fullSHA後の未取得metadataと最終保存
+
+code unit5pathを一回commit/pushし、実HEAD fe518101411f7af7ba3689298625f85502f4fbce / origin-upstream-lsremote-clean。新CI fullSHA selection一回は空配列、原stdout3B/37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570/stderr0。新run/attempt/jobs/終端/件数未固定、空選択をsuccessへしない。原379520のin_progress compactは反復しない。
+
+原Git helperはcommit前diff --checkでmodule末尾空行1行をexit2拒否。原stdout71B/stderr0とfull saved helper identity/failedを保全。末尾1byteだけを削除しAST同一を独立比較、source58460B/a647a78c...から58459B/0f523389a6723147f68384efef9fa05c13a44bb4bdb42ce4f14d3446e5f08755。別Git continuationで未完了commit/pushだけ完了、原script再実行0/新19body再実行0。code Git batch488293B5entry/512KiB16entry/output1MiB/累積30秒。大stdoutは取得時全文照合・pin保存でhelper全process byte logではない。最終named30source957840B、最大archive130691B不変。
+
+実code fullSHAと現在の独立disk body/OIDへfresh candidate raw17023B/8e3015648848e4cffd58ff59bc82b050308c46b12e698d7c2598fb464c002458を一回発行。継承はunion68の名前順だけ、原source request/profileの再使用0。rootはunissued-object-metadata-engineering-rootで、formal native request/OS reserved runtime rootではない。source本体は原Python body dictionaryへ保持しpayload 1529607B、loaded in-memory codeの同一性/native owner認証ではない。
+
+固定argv/cwd/各revision:name stdinを保存し、Git cat-file --batch-check 5groupの実stdout/stderr/exit tupleを判定前にprivate保持。各原stdin/rawをliteral保存し、68全行のOID/blob/decimal-size/順序/newline/全stdout coverageを独立body SHA256/SHA1へ一回結んだ。metadata stdout一phase3523B、二phase7046Bは算術でactual postphase0/head-status0。これらは普通のread-only Git metadata CLI returnで、formal worker Job/process/stdio/child receipt認証ではない。実Git body返却0/worker raw capture接続0/pack0/archive append0/gzip0。
+
+現14全planned callに独立stdout131072/stderr16384/receipt32768/partial131072最大値を与えたconstructorは一回4358432BでV03ValidationError=batch packed future raw byte boundを最初に拒否。元raw record/pack0、失敗原inputs/第一errorを保持。旧34call10584752B拒否の反復0。宣言entry29はsnapshot0仮説、実全writer予約ではない。metadata stdoutが小さいことを任意失敗raw/receipt/partial/all-future/global容量許可へしない。全planned32entry・親任意将来failure・control/diagnostic・独立newgrowth/global RSS/coupled peak/全経路wallは未解決。
+
+metadata-measurement34719B/33e2b944ee66eb19f353f6d0f4f1738aa407d280d30cf7e4ed573203848731e8。110working pins前後/sourceGit exact新3変更＋verified親tree非交差/先行37raw継承、科学hash metadataだけ/holdout未読。helper区間時間は保存metadataだけでnative全経路wallではない。
+
+新原 artifacts/preformal-source-object-batch-contract-20261009-prep/ と新actualmetadata artifacts/preformal-source-object-batch-observed-20261009-prep/、compact artifacts/preformal-ci-source-batch-current-save-20261009-prep/、post artifacts/preformal-source-object-batch-post-20261009-prep/を終端metadata照合後閉鎖。各512KiB32entry/reserve128KiB/single128KiB、追加/同保存/新19/5metadata/容量拒否再実行禁止。原components/Git metadata helper failed2を維持、過去failed/未保存foreground logsを補わない。
+
+次heartbeatは379520/full cf3f compact一回と新実code fe518のfullSHA run選択一回。終端時だけ未保存rawを新専用rootへ一度保存し、3.14単一journal/独立verification/2logsをfullHEAD-workflow-run-attempt-jobsへ結ぶ。未終端/空は待機・反復せず具体的未完成機能へ進む。実summary前に件数を推定しない。次機能は新operationの閉じたworker raw/failure capture・receipt/partial別量・同原owner transportと全future容量/native owner契約。現在の早期native拒否/正式5残件・受入未完了/formal_permission=false/credit0/holdout未読/追加agent禁止/ACTIVEを維持する。
