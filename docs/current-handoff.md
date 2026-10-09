@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST 人の明示再開：自走ACTIVE・現在の最優先
+
+人の「ポーズ解除して走ってください」に従い、開始09:50:36Z/HEADb4a0401680b0d938598c71ff890948f208eee2b5-origin-clean、元先行5helper full creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなしを確認し、heartbeat banto-10をfull fields保持でACTIVEへ更新・保存metadataでも確認。以下の履歴の終了予約/PAUSED維持は今回の明示再開で解除。追加agent禁止/元caps-stop/unknown原owner保持は維持する。
+
+現在のPCで改訂probe_runtimeを一度だけ読み取り確認。Windows11 Professional/26H2/AMD64/build26300/UBR9457/product_type1、local NTFS/volume flags65482495/persistent ACL/必要18API export、通常GIL CPython3.14.0/build-tag/exe-DLL hashが基本条件へ一致。snapshot1214B/4792020c208422c33e60d5bbdf3c50d05825549ddbc51889d685ecf28d85422b、観測1414B/90c65ecd1df3d29ab33fd0f34e5d92c8bef2f64fca6613d6ce678c231384b8d8。実Job生成/ACL変更/launcher/child transportを呼ばずbehavior_verified=false。対象4source working前後-Git一致、full runtime closure/profile/private policy/native request/exclusive/unusedrootは未準備、容量/native owner/auth受入ではない。
+
+CI37913386221/fullb4a0401680b0d938598c71ff890948f208eee2b5/attempt1/push/Phase 1 CI/.github/workflows/ci.ymlは一度観測でin_progress、原run11696B/c9d10cc5b73b9890c060c9b028a0c6f1c0ba5f08f06e0a445b49f3acb97a9084保存。jobs/終端/journal未固定、同状態の反復照会/待機/download/local全回帰/runner0。旧failure CI37907938074をsuccessへ書換えない。原observer33320/134360133339530308/token6d50a3caaa8bd7faf04ee1c1d4e3fd39d174518dc7ee80ee4b27644246839997はpassed/live-execution一致/CIM同original不在、repo helperなし/native回収claimなし。
+
+詳細docs/results/anomaly-multiseed-v0.3-autonomy-resume-2026-10-09.md、新metadata artifacts/preformal-autonomy-resume-20261009-prep/。次は未完成same request-root/all-writer原owner/exclusive・fresh runtime/profile/private policy/request/unusedrootへの機能接続準備。全planned rawの32entry容量/global coupled peak/実Win callsite・stdio・child IO owner認証は未完成。create_native早期拒否/native入口/全7役whole.run限定reader起動禁止、formal_permission=false/credit0/holdout観測未読/正式5残件・最終受入未完了を維持。状態不変通知なし、意味のある完了/失敗/必要操作だけ報告。人の停止やSol容量エラーでは保全後PAUSED。
+
 ## 2026-10-09 JST OS条件改訂CIの失敗保存と期待値訂正（自走PAUSED維持）
 
 人の「続けてください」に従い開始09:37:49Z/HEAD694eff5e6da14b17af3e3f83f263d84c7cbde726-origin-clean、元6helper creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなし。CI37907938074/full694eff5/attempt1/push/Phase 1 CI/.github/workflows/ci.ymlはcompleted-failure、test(3.14)113745838473failure/verify-python314-journal113760488820skipped。原run/jobs/artifacts/log/zip/journalを新専用rootへ一度保存。原journal4081707B/c496f93a8f6f003752182c4c7c1085262d2e1ef7bde10a09c62be17f0be9b2ae、原terminalは実3930/failure1/error0/skip237/source不変/shared29 completeの宣言、full journal success検証は未実施。
