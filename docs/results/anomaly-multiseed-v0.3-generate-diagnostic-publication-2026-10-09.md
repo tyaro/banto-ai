@@ -33,3 +33,13 @@ fresh名前30合計915649B/最大archive130691B/e5ab8de3cc7f02f6ccc9f5eb08feeb5e
 新codepush後に実Git fullSHA run選択一回のみ行う。空又は未終端は待機/反復せず、終端時のみ新専用rootへ未保存原raw一回保存、3.14単一journal/独立verification/2logsをfullHEAD-workflow-run-attempt-jobsへ結ぶ。実summary前に予定件数を実行件数へしない。doc-only新CI追跡0、完成4017以下の再照会/download/verifier0。
 
 次は原診断専用公開契約/parent_failure実raw捕捉/child bootstrap、同原owner OS排他-all-writer atomic、fresh latest-clean loaded runtime closure-profile-private policy-request-unusedroot。基本snapshot/宣言roster/局所IO claim/候補raw-pin/manifest/cached completionをnative許可にしない。create_native早期拒否/全7役whole.run限定reader実起動禁止/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/元caps-unknown原owner-stop/追加agent禁止を維持。Sol容量エラー/人の停止割込みでは保全後PAUSED・重複再試行なし。
+
+## code保存・原root閉鎖
+
+code/test/docs4path一回commit/push fullHEAD e0601d3edff7c7a7415cd28ebb70f47382a5c835/origin/upstream/ls-remote一致・clean。Git batch404647B4entry/512KiB16entry/output1MiB/累積30秒。新code実fullSHA run選択一回は空配列、原stdout3B/37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570/stderr0B保存。CI run/attempt/jobs/終端/件数未特定、待機/再照会0、空選択をsuccessへしない。doc-only新CI追跡0。
+
+原raw最終13file78857B、manifest1547B/eb7dbe5ff8597841db079832fee6a575881f6f117551dd017c3a07add24823c1閉鎖。追加/同保存/完成10再実行禁止。別metadataにdoc-only/post/元helper終了確認だけを保存し最終manifestで閉鎖する。原prepareはinline実行、同exact sourceを別metadataへ保存したがfile実行へ読み替えない。foreground root closure creation identity/full stdout-stderrは未保存None、instrumented helperへ補わない。
+
+postは71working/source verified code unit親tree-doc-only非交差継承/docs2 LF working-Git exact/元12raw+閉鎖manifest/metadata prefix/元instrumented helpers/旧最新CI4017の3root/HEAD-origin-lsremote-clean/新CI空選択rawをmetadataだけ一回照合する。CIMはfull saved creation-start_token/live-execution一致とmicrosecond decimal truncation、PIDだけ/native回収claimなし。全CLI bytes/pinsはhelper process全stdout-stderr捕捉ではない。
+
+次heartbeatは新code e0601d3edff7c7a7415cd28ebb70f47382a5c835実fullSHA run選択一回、未終端・空は待機/反復なし。完成379342/379320/379291/379230/379181/379133のCI4017/4003/3991/3972/3954/3930、旧failure/旧2minorの再照会/download/verifier0。
