@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST 最新loaded inventoryとGit source不足の保存（ACTIVE）
+
+開始HEAD 42cc0ba9feb34cb284a79de3264f90732f9ab698-origin/upstream-clean、production/test e0601d3edff7c7a7415cd28ebb70f47382a5c835不変・新body0。元先行8helpers full identity/live-execution一致・CIM同original不在/repo helper-critical ownerなし。新code実fullSHA選択一回で37942157019/push/Phase 1 CI/in_progress（原stdout156B/a0d3f3218cbe8f9efe99d8d844bf3cfcaec1019e1a901f642a15e9492a2bd01f/stderr0B）。attempt/jobs/終端/実件数未固定・待機反復0。
+
+reader/generated実import後のmetadata helperで既存collector一回、原217modules/330files/38loaded images/66project sourcesを2part原raw163697B/5d7f771cd0fd81903c80e69d358d4969deb227d98ec18a4a0834dc05ee86c2d4へ保存。名前30に含まれないloaded project38を具体化。既存71pinsの29sourceはverified親tree継承、残37source518979Bを未取得cat-file3batch16/16/5で一回pin・原fullstdout-stderr保存し、全66project disk/Git一致・union108pin固定。新Job/worker/child/role操作/basic OS probe/profile再観測0。full loaded runtime/in-memory/全経路閉包・native許可ではない。
+
+元inventory/Git準備helperは原raw/HEADstdout保存後にPath subscript TypeErrorで各failed、原script/collector/原HEADを反復せず保持。別metadata readbackと未取得37Gitだけ継続。旧source/profile流用0、fresh profile/private policy/native request/unused exclusive rootは未発行。全caps維持・閉鎖root追加禁止。詳細docs/results/anomaly-multiseed-v0.3-loaded-runtime-inventory-2026-10-09.md、main最終20file97721B/manifest2597B/7b8fa6b00f3e0b132fb0b1087bf8a717355e41ca259e485f0cb78c505bb055c6。原inventory6file169608B/a6file6296B/b-c各1file387B/d8file218054B/e5file260767B/f4file76268Bを閉鎖。post別rootでdoc-only2path一回skip ci/pins/full helper終了照合を保存する。
+
+次heartbeatは379421 compact一回、終端のみ未保存原raw保存・実summaryまで実件数を補わない。未終端は待機反復なし、完成CI4017以下/旧suite/focus/collector/Git37/native/追加agent反復0。原loaded66source/runtime範囲を現32entry/64lease/codec-object-global peak容量へ結ぶfresh契約、診断専用公開/child bootstrap/同原owner OS排他-all-writer atomicを継続。formal_permission=false/credit0/holdout未読/正式5残件・受入未完了/create_native早期拒否/全7役限定reader起動禁止/元caps-stop/追加agent禁止/ACTIVE維持。
+
 ## 2026-10-09 JST 元generate診断bytesの公開IO入口・原拒否保持（ACTIVE）
 
 開始HEAD bc94eb6c3e5bd28b963896eda440f43b65b4072e-origin/upstream-clean、元先行7instrumented helpers full identity/live-execution一致・CIM同original不在/repository helper-critical ownerなし。完成CI4017以下/旧focus/suite/基本probe/native/profile/追加agent反復0。現在code32eの未保存CIなし、旧run照会0。
