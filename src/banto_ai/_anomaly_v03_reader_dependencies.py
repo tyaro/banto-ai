@@ -634,3 +634,309 @@ class SourceBatchContractPreparation:
 
     def execute(self):
         self._failed(ValueError('batch candidate has no native operation or transport authority'))
+
+
+SOURCE_OBJECT_REQUEST = 'anomaly-v03-source-object-batch-request-candidate-v1'
+SOURCE_OBJECT_PROOF = 'anomaly-v03-source-object-batch-proof-candidate-v1'
+SOURCE_OBJECT_TRANSPORT = 'anomaly-v03-source-object-batch-packed-raw-candidate-v1'
+SOURCE_OBJECT_ARGV = ('git', 'cat-file', '--batch-check=%(objectname) %(objecttype) %(objectsize)')
+
+
+def source_object_batch_stdin(request, group_index):
+    group = request['groups'][group_index]
+    return ''.join(request['revision'] + ':' + request['sources'][i]['name'] + '\n'
+                   for i in group['members']).encode('ascii')
+
+
+def source_object_batch_request_candidate(*, revision, root, sources):
+    """Declare tree lookup metadata, with source bodies retained independently."""
+    _batch_digest(revision, 40)
+    v.require(type(root) is str and 0 < len(root) <= 4096, 'object batch declared root')
+    _batch_sources(sources)
+    source_raw = _batch_json(list(sources))
+    v.require(len(source_raw) <= 32768, 'object batch declared source byte bound')
+    frozen = v.strict_json(source_raw)
+    groups = []
+    for start in range(0, len(frozen), BATCH_MEMBERS_MAX):
+        members = list(range(start, min(start+BATCH_MEMBERS_MAX, len(frozen))))
+        width = sum(47 + len(str(frozen[i]['pin']['bytes'])) for i in members)
+        groups.append({'members': members, 'stdout_bytes': width})
+    calls = []
+    for phase in ('pre', 'post'):
+        for operation in ('head', 'status'):
+            calls.append({'phase': phase, 'operation': operation, 'group': None, 'stdout_bytes': None})
+        for index, group in enumerate(groups):
+            calls.append({'phase': phase, 'operation': 'source_blob_metadata_batch', 'group': index,
+                          'stdout_bytes': group['stdout_bytes']})
+    v.require(len(calls) <= BATCH_CALLS_MAX, 'object batch all planned call bound')
+    value = {'format': SOURCE_OBJECT_REQUEST, 'revision': revision, 'root': root,
+             'object_format': 'sha1', 'batch_argv': list(SOURCE_OBJECT_ARGV),
+             'sources': frozen, 'groups': groups, 'calls': calls, 'scope': _batch_scope()}
+    for index, group in enumerate(groups):
+        group['stdin_pin'] = _batch_pin(source_object_batch_stdin(value, index))
+    raw = _batch_json(value)
+    v.require(len(raw) <= 32768, 'object batch request candidate byte bound')
+    return raw
+
+
+def _source_object_bodies(sources, bodies):
+    v.require(type(bodies) is dict and set(bodies) == {s['name'] for s in sources},
+              'object batch independent complete body roster')
+    for row in sources:
+        body = bodies[row['name']]
+        v.require(type(body) is bytes and len(body) == row['pin']['bytes'] <= BATCH_STDOUT_MAX and
+                  _batch_pin(body) == row['pin'] and
+                  hashlib.sha1(b'blob '+str(len(body)).encode()+b'\0'+body).hexdigest() == row['git_blob_oid'],
+                  'object batch independent SHA256 body and SHA1 blob pin')
+
+
+def source_object_batch_stdout_candidate(*, request_raw, expected_sources, source_bodies,
+                                        group_index, stdout):
+    """Verify literal metadata against independently held bodies; no native authority."""
+    v.require(type(request_raw) is bytes and 0 < len(request_raw) <= 32768,
+              'object batch request raw bound')
+    request = v.strict_json(request_raw)
+    _batch_keys(request, 'format revision root object_format batch_argv sources groups calls scope',
+                'object batch closed request fields')
+    _batch_sources(expected_sources)
+    _source_object_bodies(expected_sources, source_bodies)
+    v.require(request['sources'] == list(expected_sources) and
+              source_object_batch_request_candidate(revision=request['revision'], root=request['root'],
+                  sources=expected_sources) == request_raw, 'object batch canonical independent request')
+    v.require(type(group_index) is int and 0 <= group_index < len(request['groups']) and
+              type(stdout) is bytes, 'object batch literal group return')
+    group = request['groups'][group_index]
+    v.require(_batch_pin(source_object_batch_stdin(request, group_index)) == group['stdin_pin'],
+              'object batch exact tree pathname stdin')
+    offset = 0; spans = []
+    for index in group['members']:
+        row = expected_sources[index]
+        header = (row['git_blob_oid']+' blob '+str(row['pin']['bytes'])+'\n').encode('ascii')
+        end = offset + len(header)
+        v.require(stdout[offset:end] == header, 'object batch exact OID type size order newline')
+        spans.append({'source': index, 'start': offset, 'end': end,
+                      'source_pin': row['pin'], 'git_blob_oid': row['git_blob_oid']})
+        offset = end
+    v.require(offset == len(stdout) == group['stdout_bytes'], 'object batch full metadata stdout coverage')
+    return _batch_json({'format': SOURCE_OBJECT_PROOF, 'request_pin': _batch_pin(request_raw),
+                       'group': group_index, 'stdin_pin': group['stdin_pin'], 'stdout_pin': _batch_pin(stdout),
+                       'source_spans': spans, 'git_body_returned': False, 'scope': _batch_scope()})
+
+
+class SourceObjectBatchContractPreparation:
+    """Same-owner memory candidates with full future raw/failure accounting.
+
+    Metadata identifies tree blobs through independently held source bodies.
+    Packing reduces file entry arithmetic. Literal raw bytes and original partial
+    bytes remain separate from future archive growth; no compression is assumed.
+    This class does not issue operations or publish/recover any native resource.
+    """
+    def _retain_inputs(self, *, owner, checkpoint, request_raw, expected_sources, source_bodies, raw_maxima,
+                       storage_maxima):
+        incoming = (owner, checkpoint, request_raw, expected_sources, source_bodies, raw_maxima, storage_maxima)
+        if hasattr(self, '_SourceObjectBatchContractPreparation__inputs'):
+            self.__rejected_inputs = self.rejected_inputs = incoming
+            self._failed(ValueError('batch original preparation cannot be replaced'))
+        self.__inputs = incoming
+        self.original_inputs = incoming
+        self.owner, self.checkpoint = owner, checkpoint
+        self.__error = self.error = None
+        self.__records = (); self.records = ()
+        self.__raw_attempts = (); self.__rejected_preparations = ()
+        self.__record_bindings = (); self.__metadata_bindings = ()
+        self.__pending = self.pending = None
+        self.__packing = False
+        self.__pack = None
+        self.__pack_anchor = None
+        self.__proof_raw = None
+        self.__initialized = False
+
+    def __init__(self, *, owner, checkpoint, request_raw, expected_sources, source_bodies, raw_maxima, storage_maxima):
+        if not hasattr(self, '_SourceObjectBatchContractPreparation__inputs'):
+            self._retain_inputs(owner=owner, checkpoint=checkpoint, request_raw=request_raw,
+                                expected_sources=expected_sources, source_bodies=source_bodies, raw_maxima=raw_maxima,
+                                storage_maxima=storage_maxima)
+        if self.__initialized:self._failed(ValueError('batch original preparation initializes once'))
+        self.__initialized = True
+        try:
+            v.require(all(a is b for a, b in zip(self.__inputs,
+                (owner, checkpoint, request_raw, expected_sources, source_bodies, raw_maxima, storage_maxima))),
+                'batch original inputs')
+            v.require(type(request_raw) is bytes and 0 < len(request_raw) <= 32768,
+                      'batch request raw bound')
+            request = self.__request = v.strict_json(request_raw)
+            _batch_keys(request, 'format revision root object_format batch_argv sources groups calls scope',
+                        'batch closed request fields')
+            v.require(request['format'] == SOURCE_OBJECT_REQUEST and request['object_format'] == 'sha1'
+                      and request['scope'] == _batch_scope(), 'batch candidate format/scope')
+            _batch_sources(expected_sources)
+            _source_object_bodies(expected_sources, source_bodies)
+            v.require(request['sources'] == list(expected_sources), 'batch independent exact source coverage')
+            v.require(source_object_batch_request_candidate(revision=request['revision'], root=request['root'],
+                sources=expected_sources) == request_raw, 'batch canonical complete ordered plan')
+            self.__request_raw = request_raw
+            v.require(type(raw_maxima) in (list, tuple) and len(raw_maxima) == len(request['calls']),
+                      'batch all planned raw maxima')
+            self.__maxima_raw = _batch_json(list(raw_maxima))
+            self.__maxima = v.strict_json(self.__maxima_raw)
+            maximum = 8 + 20 * len(raw_maxima)
+            for call, limits in zip(request['calls'], self.__maxima):
+                _batch_keys(limits, 'stdout stderr receipt partial', 'batch per-call failure maxima')
+                for name, cap in (('stdout',131072), ('stderr',16384), ('receipt',32768), ('partial',131072)):
+                    v.require(type(limits[name]) is int and 0 <= limits[name] <= cap, 'batch raw maximum bound')
+                v.require(limits['receipt'] > 0 and (call['stdout_bytes'] is None or
+                    limits['stdout'] >= call['stdout_bytes']), 'batch success and failure raw maxima')
+                maximum += sum(limits.values())  # Includes every planned call, even completed calls.
+            self.maximum_packed_raw_bytes = maximum
+            self.__storage_raw = _batch_json(storage_maxima)
+            _batch_keys(storage_maxima, 'control parent_failure diagnostic entry_context_identity '
+                        'carrier_failure archive_new_growth partial_raw reserve snapshot', 'batch storage maxima')
+            entries = {'control':14,'parent_failure':3,'diagnostic':2,'entry_context_identity':3,
+                       'carrier_failure':2,'archive_new_growth':1,'partial_raw':1,'reserve':2}
+            total_entries = 1; total_bytes = maximum  # One future literal call raw pack.
+            for name, row in storage_maxima.items():
+                _batch_keys(row, 'bytes entries', 'batch storage row')
+                v.require(type(row['bytes']) is int and row['bytes'] >= 0 and
+                          type(row['entries']) is int and row['entries'] >= 0, 'batch storage amounts')
+                v.require(row['entries'] == entries[name] if name != 'snapshot' else row['entries'] <= 32,
+                          'batch no completed entry discount')
+                if name == 'reserve':
+                    v.require(row['bytes'] == 131072, 'batch fixed reserve bytes')
+                if name == 'archive_new_growth':
+                    v.require(row['bytes'] <= 524288, 'batch independent archive growth cap')
+                total_entries += row['entries']; total_bytes += row['bytes']
+            self.projection = {'entries':total_entries,'bytes':total_bytes,
+                               'packed_raw_bytes':maximum,'scope':_batch_scope()}
+            v.require(maximum <= BATCH_PACK_MAX, 'batch packed future raw byte bound')
+            v.require(total_entries <= 32 and total_bytes <= 1048576, 'batch full future storage bound')
+        except BaseException as error:self._failed(error)
+
+    def retain_rejected_preparation(self, held):
+        if not self.__rejected_preparations:
+            self.__rejected_preparations = (held,)
+            self.rejected_preparation = held
+        self._failed(ValueError('object batch original preparation cannot be replaced'))
+
+    def _failed(self, error):
+        if self.__error is None:self.__error = error
+        self.error = self.__error
+        self.__error.source_object_batch_preparation = self
+        self.__error.reader_git_parent = self.__inputs[0]
+        raise self.__error
+
+    def _fixed(self):
+        if self.__error is not None:raise self.__error
+        try:
+            v.require(self.original_inputs is self.__inputs and self.owner is self.__inputs[0] and
+                      self.checkpoint is self.__inputs[1] and
+                      self.__inputs[2] == self.__request_raw and
+                      _batch_json(self.__request) == self.__request_raw and
+                      _batch_json(list(self.__inputs[3])) == _batch_json(self.__request['sources']) and
+                      _batch_json(list(self.__inputs[5])) == self.__maxima_raw and
+                      _batch_json(self.__inputs[6]) == self.__storage_raw and
+                      self.records is self.__records and self.pending is self.__pending,
+                      'batch original private input/return bindings')
+            _source_object_bodies(self.__request['sources'], self.__inputs[4])
+            for held, metadata in self.__metadata_bindings:
+                v.require(held['metadata_proof_raw'] is metadata, 'object batch original metadata proof return')
+            for held, incoming, proof_raw in self.__record_bindings:
+                v.require(held['incoming'] is incoming and held['proof_raw'] is proof_raw and
+                          held['error'] is None and held['native_authorized'] is False and
+                          held['formal_permission'] is False, 'batch original private raw/proof bindings')
+        except BaseException as error:self._failed(error)
+
+    def unresolved(self):
+        return True  # Candidate readback never authorizes native execution or recovery.
+
+    def retain_raw(self, call_index, stdout, stderr, receipt, *, exit_code, partial=b''):
+        incoming = (call_index, stdout, stderr, receipt, exit_code, partial)
+        if self.__error is None:self.__raw_attempts = (*self.__raw_attempts, incoming)
+        # Independent private prefix survives validation, alias erasure and failures.
+        if self.__pending is not None:
+            self.rejected_raw = incoming
+            self._failed(ValueError('batch original pending raw cannot be replaced'))
+        self._fixed()
+        held = {'incoming':incoming,'spans':None,'proof_raw':None,'error':None,
+                'native_authorized':False,'formal_permission':False}
+        self.__pending = self.pending = held
+        self.__records = (*self.__records, held); self.records = self.__records
+        self.__record_bindings = (*self.__record_bindings, (held,incoming,None))
+        try:
+            v.require(not self.__packing and self.__pack is None and type(call_index) is int and
+                      call_index == len(self.__records)-1 < len(self.__maxima), 'batch raw exact next call')
+            call = self.__request['calls'][call_index]; limits = self.__maxima[call_index]
+            for name, raw in (('stdout',stdout), ('stderr',stderr), ('receipt',receipt), ('partial',partial)):
+                v.require(type(raw) is bytes and len(raw) <= limits[name], 'batch original raw byte bound')
+            v.require(type(exit_code) is int and -2147483648 <= exit_code <= 2147483647 and
+                      len(receipt) > 0, 'batch literal receipt and declared exit')
+            spans = []
+            if exit_code == 0 and call['operation'] == 'head':
+                v.require(stdout == (self.__request['revision']+'\n').encode('ascii'), 'batch exact head raw')
+            if exit_code == 0 and call['operation'] == 'status':
+                v.require(stdout == b'', 'batch clean status raw')
+            if exit_code == 0 and call['operation'] == 'source_blob_metadata_batch':
+                metadata = source_object_batch_stdout_candidate(request_raw=self.__request_raw,
+                    expected_sources=self.__request['sources'],source_bodies=self.__inputs[4],
+                    group_index=call['group'],stdout=stdout)
+                held['metadata_proof_raw'] = metadata
+                self.__metadata_bindings = (*self.__metadata_bindings, (held,metadata))
+                spans = v.strict_json(metadata)['source_spans']
+            held['spans'] = spans
+            proof = {'format':SOURCE_OBJECT_PROOF,'request_pin':_batch_pin(self.__request_raw),
+                     'call_index':call_index,'call':call,'exit_code':exit_code,
+                     'raw_pins':{n:_batch_pin(r) for n,r in
+                                 (('stdout',stdout),('stderr',stderr),('receipt',receipt),('partial',partial))},
+                     'source_spans':spans,'scope':_batch_scope()}
+            held['proof_raw'] = _batch_json(proof)  # Literal receipt is opaque, not native authentication.
+            self.__record_bindings = (*self.__record_bindings[:-1], (held,incoming,held['proof_raw']))
+            v.require(len(held['proof_raw']) <= 32768, 'batch proof candidate byte bound')
+            if exit_code != 0:self._failed(ValueError('batch declared failure retains original raw prefix'))
+            self.__pending = self.pending = None
+            return held['proof_raw']
+        except BaseException as error:
+            held['error'] = error; self._failed(error)
+
+    def prepare_pack(self):
+        self._fixed()
+        if self.__pack is not None:
+            if self.__pack is not self.__pack_anchor:
+                self._failed(ValueError('batch original cached packed return'))
+            return self.__pack
+        if self.__packing:self._failed(ValueError('batch packing cannot reenter'))
+        self.__packing = True
+        self.__pack_parts = ()
+        try:
+            v.require(self.__pending is None and len(self.__records) == len(self.__maxima),
+                      'batch packed complete all-call raw coverage')
+            header = b'SOM1'+len(self.__records).to_bytes(4,'little')
+            self.__pack_parts = (header,); width = len(header)
+            for held in self.__records:
+                index, stdout, stderr, receipt, _, partial = held['incoming']
+                parts = (index.to_bytes(4,'little') + b''.join(len(r).to_bytes(4,'little')
+                         for r in (stdout,stderr,receipt,partial)), stdout,stderr,receipt,partial)
+                width += sum(len(r) for r in parts)
+                v.require(width <= self.maximum_packed_raw_bytes <= BATCH_PACK_MAX,
+                          'batch original literal packed width')
+                self.__pack_parts += parts
+            self.__pack_raw = b''.join(self.__pack_parts)
+            offset = 8
+            for held in self.__records:
+                index = int.from_bytes(self.__pack_raw[offset:offset+4],'little'); offset += 4
+                lengths = [int.from_bytes(self.__pack_raw[offset+i:offset+i+4],'little') for i in range(0,16,4)]
+                offset += 16
+                v.require(index == held['incoming'][0], 'batch packed call order readback')
+                for size, original in zip(lengths, (held['incoming'][1],held['incoming'][2],
+                                                    held['incoming'][3],held['incoming'][5])):
+                    returned = self.__pack_raw[offset:offset+size]; offset += size
+                    v.require(returned == original, 'batch packed full literal raw readback')
+            v.require(offset == len(self.__pack_raw), 'batch packed no trailing raw')
+            self.__proof_raw = _batch_json({'format':SOURCE_OBJECT_TRANSPORT,
+                'request_pin':_batch_pin(self.__request_raw),'pack_pin':_batch_pin(self.__pack_raw),
+                'call_proof_pins':[_batch_pin(h['proof_raw']) for h in self.__records],
+                'raw_format':'SOM1-literal-no-compression','scope':_batch_scope()})
+            self.__pack = self.__pack_anchor = (self.__pack_raw,self.__proof_raw)
+            return self.__pack
+        except BaseException as error:self._failed(error)
+
+    def execute(self):
+        self._failed(ValueError('batch candidate has no native operation or transport authority'))

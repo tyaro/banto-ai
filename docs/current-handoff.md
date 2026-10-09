@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-10 JST source object metadata batch別version・元owner保持（ACTIVE）
+
+開始15:59:24Z/HEAD dd4cf7c246d34b08764f2d65dd6a4b7fa41ba8c8-origin/upstream-clean。元7helper full identity一致/CIM同original不在、原failed1保持/critical ownerなし。37952030611/full cf3f compact一回attempt1/push/Phase1CI/in_progress、原run11708B/dd99ec84.../stderr0/exit0。jobs/終端/件数未固定・待機/反復/download/verifier0、完成4027以下照会0。
+
+新closed source-object-batch request/proof/packed-raw-candidate-v1・固定cat-file --batch-check metadata operation、全revision:name stdin/OID/type/size/順序/fullstdoutを独立全body SHA256/SHA1へ結ぶ。既存module2＋newtest1、元owner/body/request/maxima/原raw/第一error/private proofを保持、SOM1 literal memory pack/full readback、全future最大値/partial-newgrowth別量/全32entryを割引せず算定。新親hook/readiness拒否/同原keeper保持、scope全false/unresolved=true/create_native437B不変/native起動0。実worker raw/native receipt/exit/OS予約ではない。
+
+新19distinct/body19=15一回pass＋新risk3だけpass＋新risk1だけpass、複数source/runで最終source単一19successではない。110pins前後/他107不変、changed3 safety0、holdout未読/credit0。components metadata helperは旧flat15集計とnested cache込み16集計のAssertionErrorでfailed保全、別continuationのみ未保存metadata完了。旧compression main flat15/44094Bは不変、実nested cache20560Bを含む16/64654Bも元caps内、先行manifestの全file inventory不足を補ってnative認証へしない。原failed/26gzip/前16/旧focus反復0。
+
+詳細docs/results/anomaly-multiseed-v0.3-source-object-batch-contract-2026-10-10.md。code一回commit/push後にfresh実HEAD metadata batchの未取得原rawと全future容量拒否を保存する。旧source/profile再使用0。runtime完全閉包-profile-policy-native request-unused exclusive root/実failure raw/OS排他-allwriter/native child owner/global peak/正式5残件・最終受入未完了/formal_permission=false/全7役起動禁止/元caps-stop/追加agent禁止/ACTIVE維持。
+
 ## 2026-10-10 JST source gzip幅・失敗raw候補の容量保存（ACTIVE）
 
 開始15:35:22Z/HEAD da7934ef560014102a50ee403fcc57168691f463-origin/upstream-clean、production/test cf3f1866e20c63e8eaa06a4e0d6b0d36757ae5e0不変/body0。先行元9helper full identity/CIM同original不在・critical ownerなし。新CI実fullSHA選択一回37952030611/push/Phase1CI/in_progress、原stdout156B/ce643f20088f712f89e04a83df7421b70c859adc2bbc4a3029ee5cf64c0a9d6a/stderr0/exit0。attempt/jobs/終端/journal/件数未固定、待機/反復/download/verifier0。次は当該run compact一回、終端のみ未保存rawを新rootへ一度。完成4027以下/旧failure/旧2minor再照会0。
