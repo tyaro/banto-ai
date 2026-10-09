@@ -1,5 +1,17 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-10 JST source gzip幅・失敗raw候補の容量保存（ACTIVE）
+
+開始15:35:22Z/HEAD da7934ef560014102a50ee403fcc57168691f463-origin/upstream-clean、production/test cf3f1866e20c63e8eaa06a4e0d6b0d36757ae5e0不変/body0。先行元9helper full identity/CIM同original不在・critical ownerなし。新CI実fullSHA選択一回37952030611/push/Phase1CI/in_progress、原stdout156B/ce643f20088f712f89e04a83df7421b70c859adc2bbc4a3029ee5cf64c0a9d6a/stderr0/exit0。attempt/jobs/終端/journal/件数未固定、待機/反復/download/verifier0。次は当該run compact一回、終端のみ未保存rawを新rootへ一度。完成4027以下/旧failure/旧2minor再照会0。
+
+原compression.pyが3.14標準compression packageを隠し、module import side effectでsource候補1を準備後、初gzip属性取得AttributeError/gzip call-return0。原helper live-execution failed/full saved identity保持、外側/foreground identity/full logsNone。原stdout候補未保存を補わず、原main15file44094B/manifest1949B/3731abc...＋空11rawrootを閉鎖、追加/原script再実行0。別source-codec-measure.pyでartifact searchを除外し、保存新request/pin/現在workingを照合して未実行codecだけ完了。functions.exec probe.index TypeErrorもselected trace保持・continuation開始前0/tracked0、原failedを書換えない。
+
+新gzipはsource15＋failurewhole1＋failurechunk10=26call一回保存/full bounded decode readback、unittest body0/完成新16反復0。source stdout一phase1511524B/gzip360611B/CSG1一phase360731B。二phaseは同frameを二回数えた721462Bの算術（実postphase0）、sourceだけでもarchive512KiB超過197174B。発明SHA256 counter raw311296B/opaque receipt/declared exit17、whole gzip frame311445Bは128KiB超過、10chunk311682B＋二phasesource算術1033144B/archive超過508856B。CSG1/CSF1は選択memory候補でWGP2/v1/native transportではない。全future failure/terminal path/runtime容量合格ではない、archive append/Job-child-native0。
+
+109working before-after/source Git verified cf3f親tree＋doc-only非交差＋先行37raw継承、create_native437B不変/科学hash metadataだけ/holdout未読。selected Python traced peak6895490Bは開始前source body/runtime/native allocator/他writerを含まず、global RSS/全経路wall未測定。詳細docs/results/anomaly-multiseed-v0.3-source-compression-capacity-2026-10-09.md、新閉鎖raw23roots＋新continuation/post各512KiB32/reserve128/single128を終端保存して閉鎖。旧sourcebatch23file157862B/post27file181358B不変。
+
+次は新batch実request/proof/worker raw-failure/同原owner transport、別codec構成/実growth/全futurefailure/全32entry/global peak。fresh runtime完全閉包-profile-policy-native request-unused exclusive root、診断専用公開/child bootstrap/OS排他-allwriter/native HANDLE-stdio-close-rename原owner認証未完了。正式5残件・最終受入未完了/formal_permission=false/credit0/holdout未読/create_native早期拒否/全7役限定reader起動禁止/元caps-stop/追加agent禁止/ACTIVE維持。
+
 ## 2026-10-10 JST source batch別version・literal packed raw/failure契約準備（ACTIVE）
 
 code/test/doc5path一回commit/push HEAD cf3f1866e20c63e8eaa06a4e0d6b0d36757ae5e0-origin/upstream/lsremote-clean。原main23file157862B/manifest2660B/ffcf8a5759cd2e8f810a6578052b63f78c82f68e90e5d80f7a0a9119112bf664閉鎖。実fullSHA新CI選択一回空配列原stdout3B/37517e.../stderr0、attempt/jobs/終端/件数未特定。待機/再照会/download/verifier0。次は実code cf3f... fullSHA新run選択一回だけ、完成4027以下再照会0。以下未完成契約とgateを維持。
