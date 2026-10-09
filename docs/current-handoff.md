@@ -2,6 +2,8 @@
 
 ## 2026-10-09 JST 宣言writerとstorage実IO前の原owner接続準備（ACTIVE）
 
+code/test/doc5pathを一回commit/pushしたfullHEAD e541e27b874a3c177336bbef527f613ab4c14447、origin/upstream/ls-remote一致・working tree clean。変更5path working-Git exactを488812B/5entry batchで照合。新実fullSHAのgh run list一回は空配列、CI run未特定（空選択を実行/成功へしない）。原prep最終29file239710B閉鎖、追加禁止。doc-only追補2文書を一回skip ciへ集約し、その後post metadataと元helper identityだけ確認する。次heartbeatで旧379181 compact一回、新e541e27b874a3c177336bbef527f613ab4c14447 run選択一回、状態不変反復/待機なし。
+
 開始10:56:53Z/HEAD eebbded081c0d5ce2cea47e41785bfc44baeeec5-origin-clean、元先行7helper full creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなし。新PublicationStorageAdmission.bind_request_writers→same owner-clock-request/inventory/revision/root/context→元control claim一回→実bind_writer/carrier claim→view IO前拒否を同unitへまとめた。原candidate/未知return/private ledger/第一errorを保持し、後付けarchive/第二claim/metadata消去/再入でも再公開を拒否。親wrapperはforeign child storageを拒否し原inputと第一errorを既存ParentPublicationRetentionへ保持。前3roleのみ接続、全writers/exclusive/atomic/capacity/native/auth/ack/formal false/storage unresolved=true、実child原owner transport未認証。
 
 新18distinct/scheduled54/body28（setup error26、初回/v2各13body0）。非空request-root全entry容量は元32entryで拒否し原ログ保全。接続単体ではupstream publication._fixedとfixture先行archive constructorだけ明示stub、storage snapshot/新writer空archive初回FileIO-close-return-fullreadbackは実経路。v3 5pass/error8→失敗8＋新3のv4 9pass/fail1error1→失敗2＋新親retention1のv5 3pass→review新1 v6 pass。別source/runを最終source単一18successへせず、完成focus反復0/native0/追加agent0/profile0。67source-science/他64/元5AST source/create_native437B不変、変更3path safety0/new prodmodule0。名前30合計888692B/最大archive130691B/e5ab8de3cc7f02f6ccc9f5eb08feeb5e283a64782c2e16bc78ac8f25c6f36337はruntime未閉包、source capとの差381Bで容量合格ではない。

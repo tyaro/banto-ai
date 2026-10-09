@@ -39,3 +39,11 @@ CI37918180709/gitfull4f20c013a64dfc86b01d70e86f08f626a99c60c1/attempt1/push/Phas
 次は未保存CI compact一回と、実IO未接続のparent_failure/diagnostic/child bootstrap、同原owner OS排他/all-writer atomic、fresh latest-clean loaded runtime closure-profile-private policy-request-unusedroot。全planned32entry、原partial/new growth/codec/native buffer/object overhead/global coupled peak、実native return/HANDLE/stdio/child endpoint-close-rename transportは未完了。
 
 create_native早期拒否/全7役whole.run限定reader実起動禁止/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/登録holdout観測未読/正式5残件・最終受入未完了/元caps・unknown原owner-stopを維持。人の明示再開によるACTIVEを継続し、Sol容量エラー/人の停止割込みでは保全後PAUSEDに戻す。
+
+## code unit保存後の追補
+
+code/test/doc5pathを一回commit/pushしたfullHEAD e541e27b874a3c177336bbef527f613ab4c14447、HEAD-origin-upstream-lsremote一致・working tree clean。488812B/5entryのGit batch内で変更5path working-Git exactを確認し、未変更64sourceは開始時の検証済みtreeとの非交差から継承する。原Git/gh CLI metadata/pinと小stdout-stderr bytesはcode-save.jsonへ保存、全helper processログではない。
+
+新code fullSHAのgh run list一回は空配列（stdout2B）、CI run未特定。空選択を実行/終端/成功へしない。旧379181の最後観測in_progress/attempt1は今回一回だけで、両CIへの待機・反復照会0。次heartbeatで旧379181 compact一回、新code e541e27b874a3c177336bbef527f613ab4c14447 のrun選択一回。終端なら新rootへ未保存raw一回/3.14単一journal・独立verification・2log、未終端なら待機を延長しない。
+
+原prepは最終29file239710Bで閉鎖済み。別metadata continuationへ最終post metadataのみ保存し、原rootには追加しない。doc-only追補2文書は一回skip ciへ集約する。UTF-8指定漏れのdoc read失敗はtracked変更前のtool excerptとして別保存し、encodingを明示して未保存追補だけ完了した。
