@@ -1,0 +1,24 @@
+# OS条件改訂CIの失敗保存とPython期待値の訂正
+
+2026-10-09、人の「続けてください」に従い、OS条件改訂revisionの未保存CIを確認した。開始09:37:49Z、HEAD694eff5e6da14b17af3e3f83f263d84c7cbde726/origin一致・clean。前回元6helperのcreation/start_tokenと保存済みlive/executionを照合し、CIM同original不在・repo helper/critical ownerなしを確認した。自走heartbeatはPAUSEDを維持する。
+
+## 原CIの失敗
+
+CI37907938074/full694eff5e6da14b17af3e3f83f263d84c7cbde726/attempt1/push/Phase 1 CI/.github/workflows/ci.ymlはcompleted-failure。test (3.14) job113745838473はRun unittestでfailure、verify-python314-journal job113760488820はskipped。原run/jobs/artifacts/failed job log/unittest zip/journalと各gh stderr bytesを新artifacts/ci-diagnostic-37907938074/へ一度保存した。旧完成CI/raw rootへ追加・再取得しない。
+
+- 原journal4081707B/c496f93a8f6f003752182c4c7c1085262d2e1ef7bde10a09c62be17f0be9b2ae。
+- 原job log912899B/155cb26821789ffa85dc276f12e072937bef8db13ebdd717379b183705bf650a。
+- 原run11703B/330365d903d2680f51bde1edb52666740493bbfee58be32c0b49515e4910f32e。
+- artifact11607431966、zip348029B/6b71501d0e2c4d82afbe53bcb62262df31389307191fa77f3e177c9ce69a6de8。保存artifact metadataのdigestはこのzipの実hashと一致。これはrunner image digestではない。
+
+原run_startedはfullHEAD/run/attempt/workflow hashへ一致。原run_finishedはdiscovered/tests_run3930/failure1/error0/skip237/source_unchanged=true/shared29 completeを宣言している。journalの唯一のfailureはPublicationTests.test_native_readonly_preparation_has_all_denied_rights_and_never_accepts。原ログの原因はlinux_python実値[3.14]に対し、試験が旧[3.12,3.14]を期待したAssertionError。full journalのsuccess検証や独立verification jobのpassedにはしない。
+
+## 訂正と確認
+
+実装は変更せず、tests/test_anomaly_v03_publication.pyの期待値一箇所を[3.14]へ訂正。失敗したmethodだけ一回、0.24762469995766878秒で1pass/failure0/error0/skip0。log304B/f164594cfbede6db54363d3df745e36c755f63eb8719fe72b2f0c8a6bf6cfa05。元CI failureや前回OS unitの初回fixture errorを成功へ書換えず、別source/runを最終source単一successへ読み替えない。
+
+このmethodは権利宣言と未受入状態を読み、access-check入口をposixへpatchして拒否を確認する。小temp rootだけで、実Win ABI/Job/DACL/token/child transport/native回収を実行していない。全suite・完成focus・旧CI・業務worker・追加agent・runtime profile再観測0。formal_permission=false/credit0/holdout観測未読、正式5残件・最終受入未完了を維持する。
+
+metadata原rawはartifacts/preformal-ci-windows-runtime-save-20261009-prep/へ保存。CI rawは16MiB256entry/single8MiB、metadataは512KiB32entry/reserve128KiB/single128KiB、各helper30秒を維持。初回rg filename列挙のAccess deniedはtool observationだけを開始metadataへ保存し、原process全byte logやproduction/native失敗へ読み替えない。旧OS prep30file57845BとPython314 prep27file32705Bは閉鎖済みのまま保全する。
+
+test/docを一つの訂正unitへまとめて保存し、新revision CIの最初の状態だけ記録する。新CI終端・全journal成功は未確認で、原3930件failureを新revisionの成功として再利用しない。自走PAUSEDと元caps/unknown原owner-stop保持を維持する。

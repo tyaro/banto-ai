@@ -1,5 +1,7 @@
 # Windows OS条件の見直し
 
+2026-10-09追補: 変更revisionのCI37907938074は旧Python対応版を期待する既存試験一箇所でfailure。原rawを保存し、失敗methodだけ訂正・確認した。[CI失敗保存と訂正](anomaly-multiseed-v0.3-windows-runtime-ci-fix-2026-10-09.md)。OS実装を変更せず、当該CIをsuccessへ書換えない。
+
 2026-10-09、人の「進めてください」に従い、OS完全一致条件を必要機能中心へ改訂した。開始08:28:35Z、HEAD6182cce4e00ea63e866cab3ffe48f852770a2b36/origin一致・clean。先行元5helperのlive/execution creation/start_token一致・CIM同original不在/repo helper・critical ownerなしを確認。自走heartbeat banto-10はPAUSEDを維持する。
 
 ## 現在の条件と証跡

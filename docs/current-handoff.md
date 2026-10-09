@@ -1,5 +1,13 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST OS条件改訂CIの失敗保存と期待値訂正（自走PAUSED維持）
+
+人の「続けてください」に従い開始09:37:49Z/HEAD694eff5e6da14b17af3e3f83f263d84c7cbde726-origin-clean、元6helper creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなし。CI37907938074/full694eff5/attempt1/push/Phase 1 CI/.github/workflows/ci.ymlはcompleted-failure、test(3.14)113745838473failure/verify-python314-journal113760488820skipped。原run/jobs/artifacts/log/zip/journalを新専用rootへ一度保存。原journal4081707B/c496f93a8f6f003752182c4c7c1085262d2e1ef7bde10a09c62be17f0be9b2ae、原terminalは実3930/failure1/error0/skip237/source不変/shared29 completeの宣言、full journal success検証は未実施。
+
+唯一の失敗はPublicationTests.test_native_readonly_preparation_has_all_denied_rights_and_never_acceptsの旧linux_python期待[3.12,3.14]。実装の3.14だけという現方針に合わせ、test一行を[3.14]へ訂正。失敗methodだけ一回0.24762469995766878秒1pass、log304B/f164594cfbede6db54363d3df745e36c755f63eb8719fe72b2f0c8a6bf6cfa05。原CI failure/前回fixture errorを書換えず、別source-runを最終source単一successへしない。production0/全suite・完成focus・native・業務worker・追加agent・profile再観測0。
+
+詳細docs/results/anomaly-multiseed-v0.3-windows-runtime-ci-fix-2026-10-09.md、原CI artifacts/ci-diagnostic-37907938074/、metadata artifacts/preformal-ci-windows-runtime-save-20261009-prep/。旧OS prep30file57845B/Python314 prep27file32705Bへ追加・再実行なし。新訂正revision CIの最初の観測だけ保存し終端は未確認。自走PAUSED、Windows実native受入/正式5残件・最終受入未完了、formal_permission=false/credit0/holdout観測未読と元caps/owner-stop保持を維持する。
+
 ## 2026-10-09 JST 人の指定：OS条件を必要機能中心へ改訂（自走PAUSED維持）
 
 人のOS固定見直しへの「進めてください」に従う限定作業。開始2026-10-09T08:28:35Z/HEAD6182cce4e00ea63e866cab3ffe48f852770a2b36-origin-clean、先行元5helper creation/start_token同original不在/repo helper・critical ownerなし。現在のOS条件はwindows-runtime-policy.1：Windows11 x64 workstation/build>=22000、local NTFS、FILE_PERSISTENT_ACLS、必要Job/process/HANDLE継承・ACL・publication API export可用性。特定release/build/UBR/editionの完全一致を外し、実値を記録。Python正式3.14.0/build/hashは維持。必要APIがあることは実動作・native owner認証の合格ではない。
