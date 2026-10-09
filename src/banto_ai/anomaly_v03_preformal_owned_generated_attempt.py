@@ -902,7 +902,8 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
         retained_publication=False
         if reader_git_plan is not None and 'reader_git_worker' in locals():
             retained_publication=reader_git_worker.retain_parent_publications(
-                error,reader_git,caller_plan=original_reader_git_plan)
+                error,reader_git,caller_plan=original_reader_git_plan,
+                caller_diagnostics=(error,active_role,active_target,result))
         if retained_publication:
             error.parent_publication_retention.retain_worker(error)  # Same original handle/fence, before diagnostics.
             raise error  # Keeper return/interruption never resolves unknown Python publication IO.
@@ -930,19 +931,22 @@ def generate_and_read(root, *, expected_pins, source_snapshots,
         result[field + '_exit_reconciled'] = True
     except resources.ResourceStop as error:
         if reader_git_plan is not None and 'reader_git_worker' in locals():
-            reader_git_worker.retain_parent_publications(error,reader_git,caller_plan=original_reader_git_plan)
+            reader_git_worker.retain_parent_publications(error,reader_git,caller_plan=original_reader_git_plan,
+                caller_diagnostics=(error,active_role,active_target,result))
         result.update(reason=error.reason, failed_stage=active_role,
                       error_type=type(error).__name__)
     except (ValueError, OSError, KeyError, TypeError,
             subprocess.SubprocessError) as error:
         if reader_git_plan is not None and 'reader_git_worker' in locals():
-            reader_git_worker.retain_parent_publications(error,reader_git,caller_plan=original_reader_git_plan)
+            reader_git_worker.retain_parent_publications(error,reader_git,caller_plan=original_reader_git_plan,
+                caller_diagnostics=(error,active_role,active_target,result))
         result.update(reason='generator_or_reader_rejected',
                       failed_stage=active_role,
                       error_type=type(error).__name__, detail=str(error))
     except BaseException as error:
         if reader_git_plan is not None and 'reader_git_worker' in locals():
-            reader_git_worker.retain_parent_publications(error,reader_git,caller_plan=original_reader_git_plan)
+            reader_git_worker.retain_parent_publications(error,reader_git,caller_plan=original_reader_git_plan,
+                caller_diagnostics=(error,active_role,active_target,result))
         raise
     if not target.exists():
         target.mkdir()

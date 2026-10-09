@@ -1,5 +1,17 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST generate例外callsiteと元auxiliary writer保持接続（ACTIVE）
+
+開始HEAD b85c8055f63cf5695935a00572d3be1999975bae-origin-clean。前元8helper full identity/CIM同original不在・repo helper-critical ownerなし。前code cf8実fullSHA CI37929197138を一回in_progress選択、attempt/jobs/終端/件数未固定・待機/反復/download/verifier0。完成3972/3954/3930反復0。追加agent禁止。
+
+generate_and_readの4catchから元error-role-target-result/caller_planを診断IO前に渡し、既存原ParentPublicationRetention private holderへ元role registry/report return/callback prefixを保持する。元RequestAuxiliaryWriterは原callsite/anchor/pending/operationsを_fixed前保持し第一errorを固定、追加publish/close/claim/snapshotを拒否。getter割込みでも両writerへforward、再入/unknown callback return/alias消去/第二callsite/foreign候補でも原holder・第一errorを維持する。caller result/reportは原Python objectでencoded diagnostic bytes/実child transport認証ではない。
+
+新12distinct/body12=9＋new2＋new1各一回pass/fail0error0skip0、最終source単一12successへしない。actual generate catchはcreate失敗位置のfixtureで実Popen/native0、原UnreconciledWorker keeperもfake、upstream publication/archive constructorだけstub・Mock clock・retention Escape。69source-science/他66不変、旧5AST/create_native437B不変、変更3code-test safety0/new production module0。fresh名前30合計903892B/最大archive130691B/source capとの差381Bはruntime容量保証ではない。
+
+詳細docs/results/anomaly-multiseed-v0.3-generate-auxiliary-callsite-2026-10-09.md。原artifacts/preformal-generate-auxiliary-callsite-20261009-prep/、別metadata artifacts/preformal-ci-auxiliary-journal-save-20261009-prep/。code/test/docs5path一回commit/push、doc-only追補skip ciへ集約してpostで原pins/full identity/HEAD-origin-cleanを固定する。
+
+次heartbeatは前CI379291 compact一回＋新code実fullSHA run選択一回、未終端なら待機/反復なし。次はdiagnostic bytesの実callsite/child bootstrap/同原owner OS排他-all-writer atomic/fresh loaded runtime closure-profile-private policy-request-unusedroot。formal_permission=false/credit0/holdout未読/正式5残件・受入未完了/create_native早期拒否/全7役限定reader実起動禁止/元caps-stop/追加agent禁止/ACTIVE維持。
+
 ## 2026-10-09 JST 同requestのparent failure・diagnostic writer IO準備（ACTIVE）
 
 code/test/docs4pathを一回commit/pushしたfullHEAD cf8ab9cf9b3a1aa8010244d9dfe25a228c03c1d4、origin/upstream/ls-remote一致・clean、382011B/4entry working-Git exact。新code fullSHAのCI選択一回は空配列、run/attempt/jobs/終端/件数未固定・待機/反復0。原raw最終23file118026B/manifest2654B/17931ddb1e5d5b50b4bd6ddcc614e0369e170ee5aeba4619339a49ad35375c7d閉鎖。文書2path追補をskip ciへ集約しpost metadataのみ保存する。次heartbeatは新code実fullSHA run選択一回、完成3972再照会0。

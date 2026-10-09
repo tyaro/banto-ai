@@ -1,0 +1,45 @@
+# generate例外callsiteと元auxiliary writerの保持接続
+
+## 保存範囲（ACTIVE）
+
+開始2026-10-09T12:28:56Z/HEAD b85c8055f63cf5695935a00572d3be1999975bae-origin-clean。前回元8instrumented helper full saved creation-start_token/live-execution一致・read-only CIM同original不在/repo helper-critical ownerなし。foreground toolの未保存identityを8helperへ補わない。追加agent/旧focus/旧suite/完成CI/基本OS probe/native/profile再観測0。現在の人の明示再開を維持する。
+
+新code/test3pathと本書/current-handoffを同unitへまとめ、一回commit/push後にdoc-only追補をskip ciへ集約する。原artifacts/preformal-generate-auxiliary-callsite-20261009-prep/、別metadata artifacts/preformal-ci-auxiliary-journal-save-20261009-prep/。後者root名はCI保存準備名だが今回CIは未終端でdownload/verifier0、機能unitのmetadataを保存する。両512KiB32entry/reserve128KiB/single128KiB、旧閉鎖rootへ追加しない。
+
+## 原callsite入力とwriter・keeper
+
+実generate_and_readのUnreapedWorker/ResourceStop/通常拒否/BaseExceptionの4catchから、元(error,active_role,active_target,result) tupleと元caller_planを診断のstr/canonical JSON/IO/通常return前に渡す。原errorへ候補をgetter前保持し、既存same original ParentPublicationRetentionがprivate初回holderへ元tuple・元role registry・親を保持する。
+
+同holderは元supervisor report getterの原returnを観測位置で保持する。getter割込みはsecondaryへ残し両writerへのforwardを続ける。原participantをrole/型/元Python親ownerへ結び、元callback/return/未観測return/第一errorを保存する。RequestAuxiliaryWriterは元callsiteと元inputs/anchor/pending/operationsを_fixed前に保持し、既存private第一errorを維持して追加公開・close・snapshot・claimを拒否する。callbackが第一例外を飲み込んでreturnした場合も原unknown returnを保持する。
+
+cached holder/public alias消去/registry消去/再入/foreign候補/第二callsiteでも初回bindingを保持し、writer callback再実行・新keeper・再closeをしない。UnreconciledWorkerは原process/handle/fence/error/reportと元retain_until_exit一回の既存経路へ結ぶ。返値やmetadataで未解決Python ownerを解除しない。
+
+今回保持したcaller result/reportは原Python objectで、診断encoded bytes、実stdout-stderr捕捉、source幅/raw pin、child close-rename transport認証ではない。targetは元callerの予定位置を保持するだけで、元writer rootへ移動・公開しない。actual generateのautomatic diagnostic byte発行/child bootstrap/実native owner transport/all-writer OS排他・atomic予約は未完了。
+
+## 新しいケースだけの確認
+
+新12distinct/body12＝初回9一回2.6865759000065736秒pass、report getter割込み後の両writer保持とcallback再入の新2だけ0.8355199000216089秒pass、既存unknown pending接続の新1だけ0.5130396999884397秒pass。全fail0error0skip0。途中sourceへgetter継続を追加したため最終source単一12success runではない。完成9/旧19/旧focus/旧suite反復0。
+
+actual generate関数のcatchを呼ぶが、ReaderGitParent.__new__/工程ChildChannel/opaque Python participants/Mock clockとupstream publication._fixed・fixture先行archive constructorを明示stub。caller fixtureはcreate失敗位置で止まり、実Popen/Job/HANDLE/child/native0。UnreconciledWorkerのreport/process/fence/keeperは明示fake。pending新ケースもopaque stream・元raw candidateを試験fixtureへ置く保持試験で実close結果を観測しない。旧closeケースを反復していない。retention試験専用_pause Escapeで、新keeper/native回収を認証しない。
+
+selected caller observation6＋1＋0、unittest log/source pinsを保存した。これらはhelper process全stdout-stderr logではない。科学hash metadataのみ/holdout観測未読。
+
+## sourceと容量の限界
+
+69source-scienceを各run前後照合、開始68の他66不変。変更2production＋新test1、変更3path safety0/new production module0。元PartitionedPublicationPreparation/RequestWriterPreparation/GeneratedChainBudget/_directory_snapshot ASTとcreate_native437B/0bd7b84f0a3dc0bd22a865ac8b2b4ccedc0e71ea50a177b0e6b086df07fdcc7c不変。
+
+fresh名前30合計903892B/最大archive130691B/e5ab8de3cc7f02f6ccc9f5eb08feeb5e283a64782c2e16bc78ac8f25c6f36337、131072Bとの差381B。source幅metadataでfull loaded runtime閉包/global coupled peak/全planned32entry/native buffer-object overhead/容量保証ではない。fresh runtime-profile/private policy/native request/unused exclusive rootは未発行、旧profile/source cap流用禁止。
+
+components19911B/2980903df067768cd18e659606c2f78d0ee59641b5f6f7bd5547db9c8dc5b459。旧aux raw23file118026B/meta21file115002B/CI3972raw23file5617342B不変。
+
+## 未保存CIと次工程
+
+前code実fullSHA cf8ab9cf9b3a1aa8010244d9dfe25a228c03c1d4のgh run list一回で37929197138/push/Phase 1 CI/in_progressを選択。原stdout156B/c53b72ae15f156e9d68c30015a8d1db8485c2db5d872112b3c6e7336b5312dcd/stderr0B保持。attempt/jobs/終端/件数未固定、compact API/待機/反復/download/verifier0。旧3972/3954/3930/旧failure379079/旧2minorへ読み替えない。doc-only新CIは追跡しない。
+
+次heartbeatは379291 compact一回と新code実fullSHA run選択一回。終端なら新専用rootへ未保存原raw一度、3.14単一journal/独立verification/2logsをfullHEAD-workflow-run-attempt-jobsへ結ぶ。未終端なら反復・待機なし。次の機能工程は原diagnostic bytesの実callsite・child bootstrap/same owner OS排他-all-writer atomic/fresh runtime closure-profile-private policy-request-unusedrootへの接続。
+
+formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件と最終受入未完了、create_native早期拒否/全7役whole.run限定reader実起動禁止/元caps-unknown原owner-stop/追加agent禁止を維持。Sol容量エラー/人の停止割込みでは保全後PAUSED・重複再試行なし。
+
+## Tool provenance
+
+tools/repository_safety.pyのselector missはselected tool excerptだけでinstrumented helper/production/CI/native/Sol失敗へしない。正しいsrc/banto_ai/safety.pyの変更path検査を一度実施した。元foreground tool identity/full stdout-stderrは未保存として扱う。

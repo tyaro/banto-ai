@@ -786,6 +786,7 @@ class RequestAuxiliaryWriter:
         self.__failure=self.error=None
         self.__pending=self.pending=None
         self.__operations=();self.__completed=self.completed=()
+        self.__callsite_inputs=None
         self.owner,self.checkpoint,self.storage,self.role=incoming
         self.__anchor=None
         try:
@@ -858,6 +859,28 @@ class RequestAuxiliaryWriter:
                 'execution_authenticated':False,'parent_ack_authorized':False,'formal_permission':False}
         except BaseException as error:self._failed(error)
 
+    def retain_callsite_inputs(self, retention, callsite):
+        """Fence the original writer before caller error formatting or IO.
+
+        Caller objects are retained as inputs, not encoded raw or child transport
+        evidence. No claim, snapshot, publication or close is retried here.
+        """
+        incoming=(retention,callsite)
+        if self.__callsite_inputs is not None:
+            self.rejected_callsite_inputs=incoming
+            self._failed(ValueError('auxiliary original callsite cannot be replaced'))
+        self.__callsite_inputs=self.callsite_inputs=incoming
+        self.__callsite_binding=(self.__inputs,self.__anchor,self.__pending,self.__operations)
+        try:
+            self._fixed()
+            v.require(type(retention) is ParentPublicationRetention and retention.parent is self.__inputs[0] and
+                type(callsite) is tuple and len(callsite)==4 and callsite[0] is retention.original_error and
+                isinstance(callsite[0],BaseException) and callsite[1] in ('generator','reader') and
+                isinstance(callsite[2],Path) and type(callsite[3]) is dict,
+                'auxiliary same original caller error role target and result inputs')
+            self._failed(callsite[0])  # A caller failure never authorizes a fresh diagnostic publication.
+        except BaseException as error:self._failed(error)
+
     def publish(self, name, raw):
         incoming=(name,raw)  # Keep the exact raw object before any callback/IO.
         try:
@@ -910,6 +933,7 @@ class ParentPublicationRetention:
         self.worker = parent.worker
         self.endpoint = getattr(parent,'parent',None)
         self.existing_worker_error = self.pause_error = None
+        self.__auxiliary_callsite=None
         parent.publication_retention = self
         parent.original_publication_retention = self
         error.parent_publication_retention = self
@@ -926,6 +950,38 @@ class ParentPublicationRetention:
         try:channel.time.sleep(0.25)
         except BaseException as failure:
             if self.pause_error is None:self.pause_error=failure
+
+    def connect_auxiliary_callsite(self, callsite, registry):
+        incoming=(callsite,registry)
+        if self.__auxiliary_callsite is not None:
+            self.rejected_auxiliary_callsite=incoming
+            return  # Keep the first original binding; no writer callback replay.
+        held=self.__auxiliary_callsite=self.auxiliary_callsite={
+            'incoming':incoming,'parent':self.parent,'original_error':self.original_error,
+            'observations':(),'report':None,'report_return_observed':False,'diagnostic_error':None}
+        try:
+            v.require(type(callsite) is tuple and len(callsite)==4 and callsite[0] is self.original_error and
+                type(registry) is tuple and 0<len(registry)<=2 and
+                len({row[0] for row in registry})==len(registry),'caller original auxiliary callsite and role registry')
+            # Save the original supervisor report return before checking its shape.
+            try:
+                held['report']=getattr(callsite[0],'report',None);held['report_return_observed']=True
+            except BaseException as failure:held['diagnostic_error']=failure
+            for role,writer in registry:
+                row={'role':role,'writer':writer,'return':None,'return_observed':False,'error':None}
+                held['observations']=(*held['observations'],row)
+                v.require(role in ('parent_failure','diagnostic') and type(writer) is RequestAuxiliaryWriter and
+                    writer._RequestAuxiliaryWriter__inputs[0] is self.parent and
+                    writer._RequestAuxiliaryWriter__inputs[3]==role,'caller same original auxiliary role owner')
+                row['callback']=writer.retain_callsite_inputs
+                try:
+                    row['return']=row['callback'](self,callsite);row['return_observed']=True
+                    row['error']=ValueError('auxiliary callsite callback returned without a failure fence')
+                except BaseException as failure:row['error']=failure
+                if row['error'] is not self.original_error and held['diagnostic_error'] is None:
+                    held['diagnostic_error']=row['error']
+        except BaseException as failure:
+            if held['diagnostic_error'] is None:held['diagnostic_error']=failure
 
     def hold(self):
         # Unknown FileIO return/pending/raw cannot be repaired by a sleep,
@@ -948,12 +1004,13 @@ class ParentPublicationRetention:
         raise self.original_error  # Keeper return/interruption never resolves Python publication IO.
 
 
-def retain_parent_publications(error, parent=None, *, caller_plan=None):
+def retain_parent_publications(error, parent=None, *, caller_plan=None, caller_diagnostics=None):
     """Before caller diagnostics/return, preserve the exact original IO owners.
 
     A supervisor's existing Unreaped/UnreconciledWorker keeps its own handle
     and fence path. Bootstrap has no process to kill, wait or close.
     """
+    if caller_diagnostics is not None:error.reader_auxiliary_callsite_inputs=caller_diagnostics
     original=getattr(error,'reader_git_parent',None)
     if not isinstance(original,ReaderGitParent):original=getattr(getattr(error,'fence_error',None),'reader_git_parent',None)
     if not isinstance(original,ReaderGitParent):original=parent
@@ -1007,6 +1064,8 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None):
               'caller original retained Python publication owner')
     if getattr(original,'publication_retention',None) is not existing:
         existing.rejected_retention=(existing,getattr(original,'publication_retention',None))
+    if caller_diagnostics is not None and (auxiliary is not None or registry is not None):
+        existing.connect_auxiliary_callsite(caller_diagnostics,registry)
     if isinstance(error,parent_supervisor.UnreapedWorker):
         if existing.existing_worker_error is not None and existing.existing_worker_error is not error:
             existing.rejected_worker_error=(existing.existing_worker_error,error)
