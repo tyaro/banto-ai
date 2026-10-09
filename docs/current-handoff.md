@@ -2,6 +2,8 @@
 
 ## 2026-10-09 JST 同requestのparent failure・diagnostic writer IO準備（ACTIVE）
 
+code/test/docs4pathを一回commit/pushしたfullHEAD cf8ab9cf9b3a1aa8010244d9dfe25a228c03c1d4、origin/upstream/ls-remote一致・clean、382011B/4entry working-Git exact。新code fullSHAのCI選択一回は空配列、run/attempt/jobs/終端/件数未固定・待機/反復0。原raw最終23file118026B/manifest2654B/17931ddb1e5d5b50b4bd6ddcc614e0369e170ee5aeba4619339a49ad35375c7d閉鎖。文書2path追補をskip ciへ集約しpost metadataのみ保存する。次heartbeatは新code実fullSHA run選択一回、完成3972再照会0。
+
 開始11:57:33Z/HEAD 43f8ef7fd41152c6eef4d56c3fc435ffc99f20f8-origin-clean、先行元6helper full creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなし。現在code CI3972は保存済みで完成CI再照会・verifier0。追加agent/旧focus/旧suite/基本probe/native/profile再観測0。
 
 新RequestAuxiliaryWriter/ReaderGitParent.connect_auxiliary_writer/原ParentPublicationRetention保持を既存reader moduleへ同unit化。原owner-clock-storage-role/context/maximaをgetter前保持→元declared participant claim一回→原storage future snapshot＋実新raw len/1entry事前拒否→同root固定名FileIO xb→原write/flush/sync/close-return/full raw readback/identityを保持。unknown/再入/alias消去/第二接続でも第一error・原stream/raw/private operationsを保持して再公開・再close・新keeperを拒否。親readinessの第一拒否もprivateに固定する。成功でも全all-writer/exclusive/atomic/capacity/native/auth/ack/formal false。

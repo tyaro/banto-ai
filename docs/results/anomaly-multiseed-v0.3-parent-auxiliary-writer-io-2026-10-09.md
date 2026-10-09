@@ -35,3 +35,11 @@ fresh named source30の合計899882B、最大archive130691B/e5ab8de3cc7f02f6ccc9
 全planned32entry、原partial/new archive growth/codec/native buffer/object overhead/global coupled peak、実native return-HANDLE-stdio-child endpoint-close-rename原transport認証は未完了。次はactual generate/child bootstrapへの原writer機能接続、同原owner OS排他-all-writer atomic、fresh latest-clean loaded runtime-source closure-profile-private policy-request-unusedrootの準備。新code CIは保存後に実Git fullSHAでrun選択を一度行い、空選択/未終端/予定件数をsuccessへしない。旧3972を新code・旧failure・2minor比較へ読み替えない。
 
 formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/正式5残件・最終受入未完了/create_native早期拒否/全7役whole.run限定reader実起動禁止/元caps・unknown原owner-stop/追加agent禁止を維持。人の明示再開でACTIVE継続、Sol容量エラー/人の停止割込み時は保全後PAUSED・重複再試行なし。selector path missはselected tool excerptだけ保存し、helper process全log/native/production/Sol失敗へしない。
+
+## code保存とCI選択の追補
+
+code/test/docs4pathを一回commit/pushした実fullHEAD cf8ab9cf9b3a1aa8010244d9dfe25a228c03c1d4/origin/upstream/ls-remote一致・working tree clean。変更4path working-Git exactを382011B/4entry batchで照合した。新実fullSHAのgh run list一回は空配列（原stdout3B/37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570、stderr0B）。新CI run/attempt/jobs/終端/実件数未特定、待機・反復照会0。空選択を実行・終端・成功へしない。次heartbeatでこの実code fullSHAのrun選択を一度行い、完成3972を再照会しない。
+
+原raw rootは最終23file118026B、manifest2654B/17931ddb1e5d5b50b4bd6ddcc614e0369e170ee5aeba4619339a49ad35375c7dで閉鎖。components19858B/f6ac3c07886f4b1f9868871284ecc74b37349e33bd9c6b9048c676f7317a6ab3。原19のtest/verifier/IO反復なしで別metadata rootへ文書追補・postだけ保存する。
+
+文書編集toolはsource-path追加なしのforeground importでModuleNotFoundError後にexit1となった。文書2pathは既に保存され、tracked破損/production/native/Sol容量失敗ではない。元tool trace excerptをdoc-edit-tool-failure.jsonへ保持し、原編集scriptを再実行せず未完了safety/source metadataだけ別に照合した。元process全stdout-stderr byte file捕捉ではない。
