@@ -793,6 +793,8 @@ class RequestAuxiliaryWriter:
         self.__diagnostic_parts=();self.__diagnostic_graph=()
         self.__diagnostic_codec=self.__diagnostic_raw_returns=self.__diagnostic_owner=None
         self.__diagnostic_state=None
+        self.__diagnostic_publication=None
+        self.__diagnostic_publication_owner=self.__diagnostic_publication_state=None
         self.owner,self.checkpoint,self.storage,self.role=incoming
         self.__anchor=None
         try:
@@ -966,6 +968,61 @@ class RequestAuxiliaryWriter:
         self.__diagnostic_state=(held['encoded'],held['error'],held['raw'],held['raw_pin'],held.get('decoded_return'))
         return held  # Partial/raw candidates never clear the first error or publish IO.
 
+    def prepare_callsite_diagnostic_publication(self, retention, callsite, candidate):
+        """Connect original candidate bytes to the fenced IO ingress once.
+
+        The existing publish/storage refusal remains authoritative. Its original
+        error, or an unknown callback return, stays with the same Python owner.
+        This preparation cannot grant publication or native rights.
+        """
+        incoming=(retention,callsite,candidate)
+        if self.__diagnostic_publication is not None:
+            self.rejected_diagnostic_publication=incoming
+            held=self.__diagnostic_publication;state=self.__diagnostic_publication_state
+            if state is not None and not (held.get('raw') is state[0] and held.get('callback') is state[1] and
+                held.get('return') is state[2] and held.get('return_observed') is state[3] and
+                held.get('error') is state[4] and all(held.get(key) is False
+                    for key in ('published','native_authorized','formal_permission'))):
+                self.rejected_diagnostic_publication_state=(incoming,held.get('raw'),held.get('return'),
+                    held.get('error'),held.get('published'),held.get('native_authorized'),held.get('formal_permission'))
+                held['error']=ValueError('diagnostic original publication fields changed')
+                held['published']=held['native_authorized']=held['formal_permission']=False
+            return self.__diagnostic_publication  # No callback, codec, snapshot or close replay.
+        held=self.__diagnostic_publication=self.diagnostic_publication={
+            'incoming':incoming,'name':'diagnostic.json','raw':None,'callback':None,
+            'return':None,'return_observed':False,'error':None,'published':False,
+            'native_authorized':False,'formal_permission':False}
+        self.__diagnostic_publication_owner=(incoming,self.__inputs,self.__anchor,
+            self.__pending,self.__operations,self.__failure,held)
+        raw=callback=returned=None;return_observed=False
+        try:
+            state=self.__diagnostic_state;a=self.__anchor;b=self.__callsite_binding
+            held['raw']=raw=state[2] if state is not None else None
+            v.require(self.__inputs[3]=='diagnostic' and candidate is self.__diagnostic_candidate and
+                self.__callsite_inputs[0] is retention and self.__callsite_inputs[1] is callsite and
+                self.__failure is callsite[0] is retention.original_error and retention.parent is self.__inputs[0] and
+                b[0] is self.__inputs and b[1] is a and b[2] is self.__pending and b[3] is self.__operations and
+                self.__pending is None,'diagnostic publication original caller owner and unresolved IO fence')
+            v.require(state is not None and state[0] is True and state[1] is None and type(raw) is bytes and
+                candidate.get('incoming')[0] is retention and candidate.get('incoming')[1] is callsite and
+                candidate.get('binding') is b and candidate.get('encoded') is True and candidate.get('error') is None and
+                candidate.get('raw') is raw and candidate.get('raw_pin') is state[3] and
+                candidate.get('decoded_return') is state[4] and candidate.get('parts') is self.__diagnostic_parts and
+                candidate.get('graph') is self.__diagnostic_graph and all(candidate.get(key) is False
+                    for key in ('published','native_authorized','formal_permission')),
+                'diagnostic publication only original complete unmodified candidate')
+            v.require(io.json_bytes(a[5])==a[6]==io.json_bytes(self.limits) and
+                len(raw)<=self.limits['diagnostic.json'],'diagnostic publication original independent maximum')
+            held['path']=a[4]/'diagnostic.json'
+            held['callback']=callback=self.publish
+            self.__diagnostic_publication_owner=(*self.__diagnostic_publication_owner,raw,callback)
+            held['return']=returned=callback('diagnostic.json',raw);held['return_observed']=return_observed=True
+            held['error']=ValueError('diagnostic publication callback return cannot clear the original failure fence')
+        except BaseException as failure:held['error']=failure
+        held['published']=held['native_authorized']=held['formal_permission']=False
+        self.__diagnostic_publication_state=(raw,callback,returned,return_observed,held['error'])
+        return held
+
     def publish(self, name, raw):
         incoming=(name,raw)  # Keep the exact raw object before any callback/IO.
         try:
@@ -1069,6 +1126,9 @@ class ParentPublicationRetention:
                     row['diagnostic_prepare_callback']=writer.prepare_callsite_diagnostic
                     row['diagnostic_candidate']=row['diagnostic_prepare_callback'](self,callsite)
                     row['diagnostic_candidate_return_observed']=True
+                    row['diagnostic_publication_callback']=writer.prepare_callsite_diagnostic_publication
+                    row['diagnostic_publication']=row['diagnostic_publication_callback'](self,callsite,row['diagnostic_candidate'])
+                    row['diagnostic_publication_return_observed']=True
         except BaseException as failure:
             if held['diagnostic_error'] is None:held['diagnostic_error']=failure
 

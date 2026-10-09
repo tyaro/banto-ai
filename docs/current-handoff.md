@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST 元generate診断bytesの公開IO入口・原拒否保持（ACTIVE）
+
+開始HEAD bc94eb6c3e5bd28b963896eda440f43b65b4072e-origin/upstream-clean、元先行7instrumented helpers full identity/live-execution一致・CIM同original不在/repository helper-critical ownerなし。完成CI4017以下/旧focus/suite/基本probe/native/profile/追加agent反復0。現在code32eの未保存CIなし、旧run照会0。
+
+原候補bytesをsame original keeperから既存publish('diagnostic.json',raw)入口へ一回結ぶ。原caller-candidate/writer inputs-anchor-pending-operations-firsterrorをprivate保持し、独立maxima/complete原rawとfield不変を照合。実publishは元第一errorフェンスでFileIO/clock/snapshot前拒否、raw/callback/unknown return/原拒否を独立privateへ保持する。cached表示消去/authority flip/再入でもIO-codec-close反復0。実診断公開/child transport/native許可は未完了、別owner/storage/フェンス解除/容量上限緩和なし。
+
+新10distinct/body10単一source一回1.4524932999629527秒10pass/fail0/error0/skip0。actual generate catchはcreate失敗fixture、upstream publicationと先行archive constructorだけ明示stub/native0。先行原failed/別source複数runを今回successへ書換えない。71source-science/他69不変、旧5AST/create_native437B不変、変更2code-test safety0/new production module0。名前30合計915649B/最大archive130691B/cap差381Bはfull runtime閉包・global coupled容量ではない。
+
+詳細docs/results/anomaly-multiseed-v0.3-generate-diagnostic-publication-2026-10-09.md。原artifacts/preformal-generate-diagnostic-publication-20261009-prep/、別metadata artifacts/preformal-generate-diagnostic-publication-post-20261009-prep/。code/test/docs4path一回commit/push、doc-only追補skip ciへ集約しpostで原pins/full identities/HEAD-origin-cleanを固定する。新codefullSHA run選択一回、未終端・空は待機反復なし。次は診断専用公開契約/child bootstrap/同原owner OS排他-all-writer atomic/fresh latest-clean loaded runtime closure-profile-private policy-request-unusedroot。formal_permission=false/credit0/holdout未読/正式5残件・受入未完了/create_native早期拒否/全7役限定reader起動禁止/元caps-stop/追加agent禁止/ACTIVEを維持。
+
 ## 2026-10-09 JST Python3.14単一CI4017の原証拠保存（ACTIVE）
 
 開始2026-10-09T13:42:48Z/HEAD f2313abfbe69ab3b77b11490948bba2536cee85a-origin/upstream-clean。元先行7helper full saved creation-start_token/live-execution一致・CIM同original不在/repo helper-critical ownerなし。今回production/test/body0、完成focus/旧suite/基本probe/native/追加agent/profile反復0。原focus failedとforeground未保存identityを保全する。
