@@ -1,5 +1,15 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-10 JST 人の明示停止（PAUSED）
+
+人の「止まりましょう」に従い、自走を停止し heartbeat banto-10 をPAUSEDへ更新した。停止保存開始 2026-10-09T18:14:10.478156+00:00、開始HEAD 49d6950230f732dfac83fc260022ac5855992636、production/test code 0919168683de1bdeafaea73bd5e2b44da77f7459 は不変。人の明示再開まで、新worker/native/focus/agent/CI追跡・待機・反復照会・機能変更を開始しない。以下のACTIVE・次heartbeat手順は履歴として保持し、この停止指示を優先する。
+
+停止時、保存済み8helperの元full creation-start_token/live-execution一致とCIM同original不在を確認。原compact1failed/他7passedと過去failedを保持、repository helper・critical ownerなし。PIDだけやEOF/closedからnative回収を補わない。元CI/main/postの3閉鎖rootはcount・bytes・manifest pin不変、追加・整理・旧焦点再実行なし。
+
+完成CI37965644173/fullf9/attempt1の4081件（failure0/error0/skip237）と独立verifier保存は維持。これは容量test訂正・production2d66のsource/runで、最新091916 read-wall CIの成功ではない。37968546318/full091916は停止前の最終観測がin_progress、attempt/jobs/終端/count未固定。37963486811/full2d66のAPI EOFと原failed helper/未保存gh exit Noneを維持、最後の有効観測は17:27 in_progress/attempt1。停止のため両runを再照会せず、終端・件数・successを補わない。
+
+今回production/test/body変更0、停止文書2pathだけ一回[skip ci] commit/push。正式S4・正式5残件・最終受入未完了、formal_permission=false/credit0/holdout観測未読、create_native早期拒否・全7役whole.run限定reader起動禁止・元caps・unknown原owner-stop保持を維持。詳細 docs/results/anomaly-multiseed-v0.3-autonomy-stop-2026-10-10.md、停止metadata artifacts/preformal-autonomy-stop-20261010-prep/。
+
 ## 2026-10-10 JST source object容量test訂正CI4081 原journal保存（ACTIVE）
 
 開始17:52:06Z/HEAD 4ce3391811e2d49b4444ca26e671bd116841e2cb-origin/upstream-clean/production-test091916不変、元11helper full saved creation-start_token/live-execution一致/CIM同original不在/helper-critical ownerなし。379634/full2d66 compact一回はAPI unexpected EOF/stdout0/stderr91B/a6bbe26d.../原gh exit個別未保存None/原Python helper exit1 failedを保持、同API/原script再試行0。最後有効17:27 in_progress/attempt1だけ継承、終端・jobs・count未固定。
