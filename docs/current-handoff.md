@@ -1,5 +1,17 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-09 JST 最新code Python3.14単一CI4027の原証拠保存（ACTIVE）
+
+開始HEAD 1d1127c464d93793f54dac15861a3bbe33a80ec0-origin/upstream-clean、production/test e0601d3edff7c7a7415cd28ebb70f47382a5c835不変・body0。元先行6helper full identity/live-execution一致・CIM同original不在/critical ownerなし、過去inventory/Git2failed・旧focus失敗保持。37942157019/full e060/attempt1/push/Phase1CI/workflow349172377をcompact一回completed-successへ固定。原2job113859012846 test(3.14)/113877002239 verify-python314-journal全success、jobs/artifacts/2logs/2ZIP各一回取得・digest/単一member/fullHEAD-run一致。
+
+原journal4161529B/1b5860f5d6984b0bc87331d23a32401dde00bad5a85bb477256009a9c7bf092aを現独立verifier一回、external fullHEAD/workflow71f0e56eb9b0bb11a6e181e860a64ba45a6a4004cde7d4a5bf35d2b42cbf65a7/run/attemptへ固定しexit0/passed。実summary/discovered/tests_run4027/fail0error0skip237（native213/optional24）/source不変/shared29 complete/必須28passed/crossPython=false。local37193B/remote37192Bは末尾CRLF/LF1byte差、JSON全field一致・両原raw保持。CLI7 before-working/Git/after一致・既知CRLF1path両pin、full runtime認証ではない。
+
+原Ubuntu24.04/x86_64/GCC13.3/kernel6.17.0-1022-azure/CPython3.14.8/runner20261004.327.1/digest未取得・候補未採択。4027はe060の原診断bytes公開入口の第一error拒否source/runで、実診断公開/native/Windows受入へしない。旧CI/32e失敗local/複数runを書換えず、完成focus/旧suite/basic OS probe/collector/Git37/profile/追加agent反復0。108working pins/source Git親tree＋前回37raw継承、名前30幅915649B/最大archive130691B/margin381Bはruntime容量ではない。
+
+main最終21file87837B/manifest2574B/2f306478ba7876bda6d8614e5417f8f3af151e56cfa3c7cde2211d003a477221閉鎖。新CI原21file prefixはpost同rawを追加後閉鎖する。文書2path一回skip ci、専用postへ最新HEAD/docs108pins/原CI21raw/元helper終了/旧root不変metadataだけ保存し閉鎖する。詳細docs/results/anomaly-multiseed-v0.3-ci-publication-journal-save-2026-10-09.md。今回current code未保存CIなし、次heartbeatは完成379421/4017以下/旧failure/旧2minor再照会-download-verifier0、doc-only新CI追跡0。
+
+次はsource union68を覆う新batch operation/request/proof別version＋同原owner bounded packed raw/failure transport・全32entry/global peak契約。仮説34callでも127entry不足、原partial-new growth/native-object/実child transport/OS排他-all-writer atomic/診断専用公開は未完了。fresh profile/private policy/native request/unused exclusive root=None、正式5残件・受入未完了/formal_permission=false/credit0/holdout未読/create_native早期拒否/全7役限定reader起動禁止/元caps-stop/追加agent禁止/ACTIVE維持。
+
 ## 2026-10-09 JST loaded sourceと現行容量契約の不足保存（ACTIVE）
 
 開始HEAD 1c0a2f4b2cb9961484aa2435d8dd63e76bf95005-origin/upstream-clean、production/test e060不変。元先行8helper full identity/live-execution一致・CIM同original不在/critical ownerなし、原2failed保持。保存済みloaded66/union68を現sourceごとpre/post計画へ結ぶと136/140callで64lease超過72/76。全3raw/call＋fixed/reserveのempty-root下限433/445entryで32entry不足。source stdout二phase2898402/2974832Bも同全raw保持モデルのouter1MiB超過。
