@@ -1,3 +1,18 @@
+## 最新 — ACTIVE / layout5 C2 quality実評価・peer不能120行原波及保存（2026-10-12 JST）
+
+同保存chunk005/seed2486912926863618161/layout5 quality-stress C2、新IDdev-layout5-quality-c2-20261012で1cell実compute_evaluation。manifest765d/75699B/input10→新snapshot→fresh fit/calibration→原結果保存。元生成C0/実評価C2別field、元payload書込み/生成/replay/production-test変更/追加agent0、actual文書checkout938cebd32670f44c9b2733889b03ce409fb69f2e/計算661b不変。
+機械10/10・sensor9/10・precision19/19・clean誤警報0/未対応0。48calibrated/fit600/cal290/C2state48/14400scores、利用可能13760/不能640（primary phase480/peer120/current30/previous10）、重複tags非合算/overlap0/null-thresholdfalse。18000mask-observation対応/温度missing30、他3target各40peer不能=120原rows保存。source38/equipment19/incidents20/events40、19target対応/support2/delay全1秒・未検出null補完forbidden。
+唯一未検出cycle09 sensor start8984/end8987/window8990。score147.99270049039734/streak1→8985–8987current欠測/8988previous不能reset→8989score0.7129796682140745/0・8990score0.7088258167107027/0、threshold6/persistence2不成立/candidate0/no_candidate_in_window/causalfalse/matchednull/support[]/delaynull。対象窓phase全0。peer3×4=12原rowsもnull/streak0。全20event-incident/19matched onset/57episode/5選択motor4target窓/missing30/proof原target12+peer12rows保存。GT/config/science変更0/実入力保存分類不具合観測なし。elapsed29.815738399978727秒/privatepeak206581760B/Python3.14.0 Windows AMD64。処理successを性能合格採択へしない。
+
+同core C2・quality C1と旧layout0–4quality C2はmanifest/configだけ8cell比較/旧7本文再展開再compute0/宣言16calculator-candidate-compiledconfig一致/同quality10pins一致。core差160/C1差120の利用可能減、C1source29対C2source38別保持。旧layout0C2機械4・layout2availability差・layout4machine2秒保持。同seed6layout+同layout比較で8独立seed-dataset0/旧30cell-core3候補保持/quality全候補未完了/bootCI勝者採択0。
+DATA{'bytes': 38239366, 'files': 19, 'manifest_pin': {'bytes': 2264, 'sha256': '1c6ca91215eed1dc7d3440d3e565095c6e05e711aab99a508e2006357f354aae'}}/EXTRACT{'bytes': 286842, 'files': 9, 'manifest_pin': {'bytes': 1344, 'sha256': '30a6e882ad6cf5c4c38096415e6904e4a69dc2e6f68e00af38b27490073ec03a'}}閉鎖。MAIN representative-layout5-quality-c2-20261012-prep/POST representative-layout5-quality-c2-post-20261012-prep最終post-save/owners/root-closed優先。117source/旧140root/frozen35capfalse/cache補足/全failed未知返値continuations不変。前qualityC1 false13/raw12・前C2docs準備0対最終foreground4保持。今回foreground0/172helpers11failed161passed/fullidentity一致/CIM同original不在/repohelpercritical0/model-analysis2passed。foreground creation-stdioNone/selectedCLI≠全stdio/PID単独0/native回収claim0。
+metadata512KiB32entry/reserve128KiB/single128KiB/recursive/Python-B/新書込み前script-failure-closure件数bytes/限定置換・closed-frozen追記整理移動上限緩和0。同GitHub同種dev結果/ユーザー名PC pathリスク通知後継続承認内、docs2一回[skip ci]・Git原返値HEAD-upstream-ref-cleanはPOST保存/Git512KiB16entry stdout1MiB累積30秒維持/automation詳細転記設定変更0/ACTIVE。
+次unitは同chunk005/layout5 quality C0、新IDdev-layout5-quality-c0-20261012/同manifest765d/quality10pins/次model未開始生成0。完成評価試験replayCI反復0。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/create_native早期拒否/全7役reader禁止/元caps-unknown原owner-stop/追加agent禁止。未完了formal/nativeをdev開始条件に戻さない。engineering900秒2GiB/output1GiB/single32MiB/files32 checkpoint限界保持。Sol容量/人の停止では原保全後PAUSED・重複再試行0。
+
+詳細 [layout5 C2 quality実評価](results/anomaly-multiseed-v0.3-layout5-c2-quality-evaluation-2026-10-12.md)。
+
+---
+
 ## 最新 — ACTIVE / layout5 C1 quality実評価・欠測によるsensor未検出1件保存（2026-10-12 JST）
 
 同保存chunk005/seed2486912926863618161/layout5 quality-stressをC1、新IDdev-layout5-quality-c1-20261012で1cell実compute_evaluation。manifest765d/75699B/input10→新snapshot→fresh fit/calibration→原結果保存。元生成C0と実評価C1別field、元payload書込み/生成/replay/production-test変更/追加agent0、actual文書checkout39ecf084105123de90602f59ef075c31d66fc4df/計算661b不変。
