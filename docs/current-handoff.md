@@ -1,3 +1,23 @@
+## 最新 — ACTIVE / dev layout1 C2 quality-stress実評価・peer入力欠測波及120score（2026-10-12 JST）
+
+同保存chunk001 manifest75699B/72e5a34c662f77c4728583b9e61cc9d2977edd2ecc9e5286194aae0d2c055dbf/dev seed2486912926863618161/layout1/quality-stressを既存CLI C2 c2-phase-conditionalで新ID dev-layout1-quality-c2-20261012へ1cell実compute_evaluation。actual文書checkoutHEAD01498f4fdbc9d2a2734a1aa98dbfdcdc21b22695/計算code661b27511826fcc87cb4a02930f276afbb8f95d9不変。10input pins→新snapshot→fresh fit/calibration→原result。元payload書込み/生成/replay/production-test変更/類似owner/追加agent/holdout観測読取り0。
+
+CLI exit0/complete/1cell success、機械10/10・sensor9/10・precision19/19・clean誤警報0・全未対応equipment0。48calibrated/fit_samples各600/calibration各290/14400scores、利用可能13760・不能640。排他的primary phase480/peer120/current quality30/previous quality10、nonexclusive quality/nonfinite/previous tagsは重複して加算0。原mask-observations18000行対応、温度missing30観測だけ。温度自身40不能と同motor current/conveyor_speed/vibration各40peer不能=120、C2core480との差160/C1quality520との差120。全不能score-residualnull/thresholdfalse。38source/19equipment/20incident/40events、19検出delay全原1秒/中央値平均minmax各1秒、未検出1原delaynull/補完0。actualPython3.14.0 Windows AMD64、elapsed27.0898576999316秒/OSpeak private207319040B。処理successを正式性能合格/勝者/採択へしない。
+
+唯一未検出はcycle09 motor温度sensor/start8864/end8867/windowend8870。8864原score167.45746264075765/streak1、8865–8867 current欠測reset、8868 previous品質不良reset、8869score1.6808862665066906/streak0、固定persistence2不成立。原candidate0/no_candidate_in_window/causalfalse/matchednull/source null/delaynull/support[]。同motor他3targetも8865–8868peer不能/null/resetを保存。全20event/incident ledger/未検出4target window/cycle00 selected source-equipment4target windows/全30非ok input records保存。閾値6/persistence2/GT/matching/science変更0、実入力対応・保存・状態分類不具合観測なし。
+
+同quality C1とinput10全pin一致、宣言16source/candidate・compiled config全比較一致。C1qualityと集計値同じでもsource29対38/利用可能13880対13760、原score/episode同一へしない。C2core保存10/10・sensor10/10・precision20/20・clean0、旧layout0 C2quality保存4/10・sensor9/10・precision13/19・clean0との比較はmanifest/config指標のみ・旧compute0。原旧未検出7を書換え0。同seed別stratum/layout、新独立seedではない。bootstrap/統計CI/勝者/採択0。
+
+data dev-layout1-quality-c2-20261012閉鎖19file38238009B/root-closed2246B/a19e889658e432997f23793cd5e86d6741687fb870fb1da819732ec38be37bd2。EXTRACT representative-layout1-quality-c2-extract-20261012-prep閉鎖4file103821B/root-closed703B/81bd5ee11cd40518e0a3bbf4a6502cf5be26c3bf983e85b3d7f817b3e4b0aaff。MAIN representative-layout1-quality-c2-20261012-prepとPOST representative-layout1-quality-c2-post-20261012-prepのpost-save/owners/root-closedを最終Git保存状態として優先。prepare stdout旧roster表示33対実prepared/assert37、EXTRACT scope旧C1表記対実C2result pin/candidateは原文字列と限界保全・POST補足優先、閉鎖scope再発行/改変0、helper/model失敗へしない。117science-source/旧37root count-byte-closure pin/外部固定C1 MAIN35file226520B/旧C2 cache補足pin不変。前回failed/capacityfalse/closure coverage制限保持、元root追加・原helper再実行・raw削除移動・上限緩和0。python -B/recursive count-byte-pin/書込み前reserveでmetadata512KiB32entry/reserve128KiB/single128KiB維持。
+
+96helper原9failed87passed/full saved creation-start_token/live-execution一致/CIM同original不在/repo helper-criticalownerなし。今回モデル/解析2passed、原failed書換え0。foreground fullidentity/stdioNone、selectedCLIを全helperstdioにしない、CIMdecimal100ns→microsecondtrunc/full token/PID単独0/native回収claim0。Gitは人のリスク通知後「承認します」による同GitHub送信先への同種合成dev結果・PC内path報告の継続承認でreport/handoff2文書を一回[skip ci] commit/pushする。先行拒否/元Githelper未起動保全、heartbeat詳細payload再送/更新0/ACTIVE維持。
+
+次は同manifest/devseed/layout1/quality-stressのC0 c0-diff-control、新ID dev-layout1-quality-c0-20261012へ1cell実評価しlayout1の3候補×2strata比較を完成する。表示は実candidate/roster値から作り旧文字列流用をしない。完成core3cell/C1-C2quality/layout0全6cell/replay/旧risk-owner/native/probe/collector/Git37/CI反復0。CI381385/4130完成保存維持/新query-download-verifier0、旧381365in_progress履歴/doc-onlyCI追跡0。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/create_native早期拒否/全7役reader起動禁止/元caps-unknown原owner-stop/追加agent禁止維持。未完成formal/native全証明を少量dev開始条件に戻さない。engineering900秒2GiB/output1GiB/single32MiB/files32 checkpointはblocking中断/fullruntime/allwriterglobalnative容量証明ではない。Sol容量/人の停止時だけ保全後PAUSED。
+
+詳細 [layout1 C2 quality-stress実評価](results/anomaly-multiseed-v0.3-layout1-c2-quality-evaluation-2026-10-12.md)。
+
+---
+
 ## 最新 — ACTIVE / dev layout1 C1 quality-stress実評価・欠測によるsensor未検出1件（2026-10-12 JST）
 
 同保存chunk001 manifest75699B/72e5a34c662f77c4728583b9e61cc9d2977edd2ecc9e5286194aae0d2c055dbf/dev seed2486912926863618161/layout1/quality-stressを既存CLI C1 c1-phase-levelで新ID dev-layout1-quality-c1-20261011へ1cell実compute_evaluation。actual文書checkoutHEADf4bef749ce52e808fcab006a0ffdc86e5bdf063e/計算code661b27511826fcc87cb4a02930f276afbb8f95d9不変。10input pins→新snapshot→fresh fit/calibration→原result。元payload書込み/生成/replay/production-test変更/類似owner/追加agent/holdout観測読取り0。実計算UTC2026-10-11/作業日JST2026-10-12、runIDは前工程予定名を使用。
