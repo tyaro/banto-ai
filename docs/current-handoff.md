@@ -1,3 +1,25 @@
+## 最新 — ACTIVE / C0 quality実評価・3候補×2条件比較完了（2026-10-11）
+
+次の保存済みdev pairをmetadataだけで特定済み。元chunk000 manifestには完成first pairの2datasetだけがあり、別pairも含むと仮定したforeground selectorはAssertionError/exit1、model/観測body読取り/Git変更0。原script/selected tool traceを保持し再実行しない。未読のsibling chunk001 manifestを一度だけ読んだ別metadata continuationで、同dev seed2486912926863618161/layout1のcore・quality pairを選択した。manifest75699B/72e5a34c662f77c4728583b9e61cc9d2977edd2ecc9e5286194aae0d2c055dbf、次dataset anomaly-v03-dev-seed-2486912926863618161-layout-01-core/candidate C0。新seedではなくlayout差、観測body未読/新評価0/生成0/元payload書込み0/holdout観測未読。Git送信の明示承認が得られた後に、新metadata rootでまず文書保存し、clean checkoutからこのC0 core一件へ進む。
+
+**送信リスク通知後の明示承認を受領。** 2026-10-11、人が具体的なC0合成dev評価結果・ユーザー名を含むPC内入力path・2文書・ https://github.com/tyaro/banto-ai.git への送信、および今後の同送信先への同種の合成dev報告の送信を明記した依頼へ「承認します」と回答した。今回の承認待ちは解除した。先行の自動承認審査2回拒否と元Git helper未起動は閉鎖root representative-c0-quality-approved-save-20261011-prep に保持する。新専用 representative-c0-quality-export-approved-save-20261011-prep で指定2文書を一回[skip ci] commit/pushする。保存前の現在時点はGit未実行、保存後の原Git返値・doc-save・owner照合を同新rootで優先する。
+
+先行C2文書2pathは人の「承認します」を受領して一回[skip ci] commit/push済み。HEAD6549c0ee424cb7df028a6b6af5915907d57799b2/upstream/lsremote一致・当時clean、計算code661b275不変。原Git保存root representative-c2-quality-approved-save-20261011-prep は閉鎖12file123892B/root-closed1394B/343e0b527b5c9c9ab4a70ee2a6f4c27063c40cc0ac7c14235acc7ac01a5683b7。先行自動審査2拒否/元Githelper未起動の履歴は保持、承認後新Githelper1passed。
+
+既存CLIで同保存first dev seed2486912926863618161/layout0 quality-stressをC0一件実compute_evaluationし保存した。CLI exit0/complete/1cell success、機械0/10・sensor0/10・precision0/3・clean誤警報3。48calibrated/calibration各290/14400score、利用可能13880・不能520（排他的phase480/current quality30/previous quality10）。元10input pin→新snapshot→fresh fit/calibration→原result、元payload書込み/新dataset生成/replay/production-test変更/類似owner/追加agent0。actualPython3.14.0 Windows AMD64、elapsed17.779066500021145秒/OSpeak private146161664B。
+
+全20未検出は原no_candidate_in_window/candidate0/causalfalse/delaynull、全3equipment episodeはclean/null matched。cycle09温度8827score143.3797607427507/streak1→8828–8831欠測reset→8832score0.29384988466414763。欠測のないcycle01 sensor原score/streakも保存し、欠測1件で全20未検出を説明しない。全不能score/residualnull・thresholdfalse、重複tagsを加算しない。GT/threshold/persistence/matching/science変更0、実入力対応・保存・状態分類不具合観測なし。
+
+保存済みcore C0/C1/C2・quality C1/C2と今回C0で3候補×2strataの比較完成。旧5cell再計算0。同quality10input/全6宣言16source・candidate/compiled config一致。このpairではC1機械10/10、C2 4/10、C0 0/10。sensor coreはC1/C2 10/10、quality各9/10、C0両0/10。C0両clean3、C1/C2両clean0。合成dev1seed/layout2strataの比較で6独立dataset/正式採択/統計CI/勝者へしない。
+
+data dev-quality-c0-20261011閉鎖19file27383348B/root-closed2228B/d64c4e7ac55e2e90bcf9cf3b134bf75dc1f73db7d40733495286fc3c3b292edd。metadata representative-c0-quality-20261011-prep と post専用rootの最終post-save/owners-after-save/root-closed優先、旧16root count-byte-closure pinと117science-source不変。78helper full saved identity一致/CIM同original不在、原7failed71passed、新C0/解析2passed。foreground fullidentity/processlogsNone、selectedCLI/rawをhelper全stdioにしない。現在CI381385/4130完成保存を保持し今回query/download/verifier0、旧381365は最後inprogress履歴、doc-only CI追跡0。
+
+**今後のGit操作・pushと同種の合成dev報告のGitHub送信を承認済み。** 先行の「gitへの操作は今後も承認します」「pushも承認します」に加え、今回の送信リスク通知後の「承認します」を記録した。同じ送信先 https://github.com/tyaro/banto-ai.git への合成dev評価結果・PC内入力pathを含む同種報告について、毎回の確認は求めない。自動審査拒否・過去の閉鎖rootは履歴として保全する。
+
+詳細 [C0 qualityと6cell比較](results/anomaly-multiseed-v0.3-c0-quality-and-six-cell-comparison-2026-10-11.md)。次機能unitは次の保存済みdev pairをmanifest metadataで特定しC0 coreを新ID/1cell実評価、完成5cell/今回C0/明示replay/旧risk-owner/native/probe/collector/Git37/CI反復0。正式証明の全完了をengineering小評価の開始条件に戻さない。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout観測未読/正式5残件・最終受入未完了/create_native早期拒否/全7役reader起動禁止/元caps-unknown原owner-stop/追加agent禁止を維持。ACTIVE継続、Sol容量/人の停止時だけ保全後PAUSED。
+
+---
+
 ## 最新 — ACTIVE / C2 quality-stress実評価・peer欠測波及とCI4130保存（2026-10-11）
 
 **文書commit/pushの明示承認を受領。** 2026-10-11、人の「承認します」により、docs/current-handoff.md と docs/results/anomaly-multiseed-v0.3-c2-quality-evaluation-2026-10-11.md の評価結果・ローカル入力pathを `https://github.com/tyaro/banto-ai.git` へ [skip ci] でcommit/pushする承認待ちは解除した。先行の自動承認審査2回拒否とGit helper未起動は履歴として保持する。承認後の保存は新専用 `artifacts/representative-c2-quality-approved-save-20261011-prep` を使用し、今回の原Git返値・doc-save・owner照合を保存する。過去の閉鎖rootへの追加・元helper/CI/モデル再実行は行わない。Git保存の結果は新専用rootを優先する。
