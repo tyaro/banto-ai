@@ -1,5 +1,19 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-11 JST 旧source-object CI4081 failure原保存（ACTIVE）
+
+開始10:48:19Z/clean HEAD c25cc5356587033b43f556240e5881186017a8f5/upstream一致、production/test code 0919168683de1bdeafaea73bd5e2b44da77f7459 不変。元先行17helper full saved creation-start_token/live-execution一致・CIM同original不在、原2failed/過去failed保持、repository helper-critical ownerなし。人の明示再開を維持、追加agent起動・再活性化禁止。
+
+未実行37963486811/full2d66/attempt1専用endpointを別unitへ限定一回。実completed-failure/push/Phase1CI/workflow349172377、原run11727B/963f0f99.../stderr0/exit0、2job113931906023 test(3.14) failure・113949032012 verify-python314-journal skippedを固定。未保存jobs/artifacts/failed log/ZIP/journal各一回、skipped log0/verification artifact0/full success verifier0。同failed run API/元script再試行0、原API EOF/gh exit別保存None/元failedはそのまま保持。
+
+原journal4205837B/7c624cb4.../log952113B/6a881173...、artifact11634278396/ZIP359271B/5c34fccc.../単一member/decoded8MiB/artifact digest一致。原run_startedのfullHEAD-workflow-run-attempt一致、実summary4081/failure0/error1/skip237/source不変/shared29complete/unittest_success=falseをmetadataだけ読む。必須28passed判定/full success verifier/native採択は未実施。件数は実summary後に固定。
+
+唯一のerrorは旧GitReceiptArchiveTests.test_phase_cached_parent_inventory_fits_as_synthetic_receipt_fixtureの全source二phase常時512KiB fit期待。原V03ValidationError=blob archive file byte limitを小causeと原log excerptへ保存。既にf9で訂正済みで今回1case/旧suite/完成focusを再実行しない。今回CIのtemp archive原prefixは保存されておらず、旧local523790B prefixをこのrunの原rawへ補わない。原2d66/4081failureをf9/4081success・091916/4097successへ書換えない。
+
+113source-science working不変/verified091916/prior37/doc-only親tree継承/create_native437B旧pin保持。今回production/test/body0、文書2pathだけ一回[skip ci] commit/push。raw artifacts/ci-diagnostic-37963486811-attempt1/、metadata artifacts/preformal-ci-source-object-attempt-terminal-20261011-prep/・artifacts/preformal-ci-source-object-attempt-post-20261011-prep/を元caps内閉鎖。詳細 docs/results/anomaly-multiseed-v0.3-ci-source-object-attempt-failure-save-2026-10-11.md。
+
+現在追跡していた未保存CI終端は今回でなし。最新4097と今回4081failureを含む完成CI/旧failure/旧2minorの再照会-download-verifier・doc-only新CI追跡を開始しない。次は未接続source-object captureと実supervisorの元stdout/stderr・絶対期限・原owner保持を結ぶcallsite境界を具体的機能unitとして扱う。全future検出/ledger/一時raw/32entry/global peak、OS排他-allwriter atomic、fresh runtime完全閉包-profile-policy-native request-unused exclusive root、診断専用公開/parent_failure/child bootstrap/native transport/正式5残件・最終受入は未完了。create_native早期拒否/全7役reader起動禁止/formal_permission=false/credit0/holdout未読/元caps-unknown原owner-stop/追加agent禁止/ACTIVEを維持。
+
 ## 2026-10-11 JST 人の明示再開・read-wall CI4097原保存（ACTIVE）
 
 人の「再開して下さい」に従いheartbeat banto-10をACTIVEへ再開。以下のPAUSED・停止記録は履歴で、今回の明示再開とこの上段を優先し、新たな停止割込みまで継続する。追加agent起動・再活性化は禁止を維持。開始2026-10-11T10:31:43Z/clean HEAD 8d47f1d3143f33105017b3dbbcfefe5ee1a8a877/upstream一致、production/test code 0919168683de1bdeafaea73bd5e2b44da77f7459 不変。元10helper full saved creation-start_token/live-execution一致・CIM同original不在、原2failed/過去failed保持、repository helper-critical ownerなし。
