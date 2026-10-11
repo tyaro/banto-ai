@@ -16,7 +16,7 @@ CLI exit0/run complete/1cell success。機械10/10、sensor9/10、precision19/19
 
 8947 score128.11372973003026>threshold6/streak1。その後8948–8950 current target missing、8951 previous target quality不能でstreak0へreset。8952はscore1.2064712737455632/streak0、8953は0.9110746840746275/0でthreshold6未満。固定persistence2のsecond exceedanceが成立しない。このsensor窓phase不能は0、旧layout3のsensor start phase不能を流用しない。
 
-全20incident/event、19matched target-source-equipment、cycle00/01 machine-sensorとcycle09 sensorの5選択motor4target窓、全48source/equipment episode及びmissing30原入力を新EXTRACTへ保存。proofは19対象onsetと唯一未検出の原target13rowsをresult pinに結ぶ。GT/config/threshold6/persistence2/first-equipment-onset-no-retry-v1/science変更0。入力対応・保存・状態分類の実経路不具合は観測なし。今回の未検出を設定変更や形式的成功へ補わない。
+全20incident/event、19matched target-source-equipment、cycle00/01 machine-sensorとcycle09 sensorの5選択motor4target窓、全48source/equipment episode及びmissing30原入力を新EXTRACTへ保存。proofは19対象onsetと唯一未検出の原target12rowsをresult pinに結ぶ。GT/config/threshold6/persistence2/first-equipment-onset-no-retry-v1/science変更0。入力対応・保存・状態分類の実経路不具合は観測なし。今回の未検出を設定変更や形式的成功へ補わない。
 
 ## 保存済み6cell C1比較
 
@@ -64,7 +64,7 @@ CLI exit0/run complete/1cell success。機械10/10、sensor9/10、precision19/19
 
 DATA閉鎖{'bytes': 27555357, 'files': 19, 'manifest_pin': {'bytes': 2258, 'sha256': 'd04f459e5d3b2ee14691e64ec4dc5ff310d59ebe3d3ce238273a2a540c36d498'}}、EXTRACT閉鎖{'bytes': 236641, 'files': 7, 'manifest_pin': {'bytes': 1084, 'sha256': '2cee77816b93132c6b08c31860ebb21d25c5aa67164bf58944f21795745cac84'}}。MAIN representative-layout4-quality-c1-20261012-prep/POST representative-layout4-quality-c1-post-20261012-prepの最終post-save/owners/root-closedを優先する。
 
-117science-source/旧110root count-byte-closurepins不変。外部固定layout1 C1 MAIN35file容量false/旧C2 cache補足保持。過去failed、Git commit timeout/unknown return、lsremote128、別metadata continuation、前layout4 C0 foreground4/C1 doc-builder/C2 selector失敗を保持・元script再実行0/failed書換え0。今回newforeground failure0。元150helpers原11failed139passed/fullsaved creation-start token一致/CIM同original不在/repo helpercriticalなし、今回model/analysis2passed。foreground docs/closure fullcreation/fullstdioNone、selectedCLIをhelper全stdioへしない/PID単独0/native回収claim0。
+117science-source/旧110root count-byte-closurepins不変。外部固定layout1 C1 MAIN35file容量false/旧C2 cache補足保持。過去failed、Git commit timeout/unknown return、lsremote128、別metadata continuation、前layout4 C0 foreground4/C1 doc-builder/C2 selector失敗を保持・元script再実行0/failed書換え0。今回foreground1失敗は最終metadata閉鎖のtarget行数期待13対原12のAssertionError/exit1。元close-post.py/selectedtraceをPOSTへ保全し、元script再実行0/model-Git反復0。原保存12行(sample8945–8956)を確認し、報告行数と未完了metadataを新専用continuationへ訂正。原model/analysis/Gitはpassedのまま、instrumented-helper/model/CI/native/Sol失敗へしない。最終保存はrepresentative-layout4-quality-c1-metadata-continuation-20261012-prep/post-save・owners・root-closedを優先。元150helpers原11failed139passed/fullsaved creation-start token一致/CIM同original不在/repo helpercriticalなし、今回model/analysis2passed。foreground docs/closure fullcreation/fullstdioNone、selectedCLIをhelper全stdioへしない/PID単独0/native回収claim0。
 
 新書込み前script/failure/closure件数bytes確認、metadata512KiB32entry/reserve128KiB/single128KiB/recursive/Python-B/限定文字列/hash-seed無限定置換0。元payload・閉鎖/外部固定root追記・旧raw整理削除移動・上限緩和0。CIMdecimal100ns→microsecondtrunc/fullsavedtoken照合。
 
