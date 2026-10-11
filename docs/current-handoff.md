@@ -1,3 +1,25 @@
+## 最新保存状態：ACTIVE／同じdev coreのC2実評価・機械未検出6件の対応確認（2026-10-11）
+
+人の「進めてください」に従い、保存済みfirst dev seed2486912926863618161/layout0/coreをC2で1件実compute_evaluation。production/test/科学式/config/schema変更0、新生成0/元payload書込み0/追加replay0/類似ownerテスト0/追加agent起動・再活性化禁止。詳細 [C2 core実評価](results/anomaly-multiseed-v0.3-c2-core-evaluation-2026-10-11.md)。
+
+CLI exit0/run complete/1cell success、機械4/10・sensor10/10・precision14/20・clean誤警報0・未対応equipment episode6。48profile calibrated/fit600/calibration290/C2stateあり48、14400scoreの利用可能13920/不能480。C0/C1の保存manifest指標と比較（再計算0）、同じcoreでC0機械0/10・sensor0/10・precision0/3・clean3、C1機械10/10・sensor10/10・precision20/20・clean0。処理successを性能合格/採択へしない。検出14件だけdelay中央値1秒/平均1.2857142857142858秒、未検出6delay null。合成dev1seed/layout/core、bootstrap/CI推定/勝者0。
+
+未検出machine cycle01/03/05/06/08/09は全first_candidate_no_target_onset、motor_current onsetなし/vibration_feature sourceだけのcandidate episode。cycle01 current score7381=5.256894981711751、7382=6.003541081762852、7383=2.9396637855330074、persistence2不成立。vibration7381=68.71491266202072/7382=68.77839859506021でepisode成立するが対象onsetなしとしてcausal_detected=false/matched=None/delay null。6window/event/incident/選択episode/sourceを保存し、GT/閾値/persistence/matchingを変更して成功へ補わない。未対応6episodeはmachine窓内、clean0とprecision14/20・false_alert_burden6/20は別指標の原値。入力対応・保存・状態分類の不具合は観測なし。
+
+実checkout03f846a9184c703b2c032e2982f3dad11c1f93e3、宣言16sourceと固定config/compiled config、10input file pinsが前回C0/C1 core保存runと一致。科学117working pins不変、計算code661b275不変。Python3.14.0/Windows/AMD64 actual。elapsed34.01857670000754秒/OSpeak private205426688B。観測9600623B/3bc5708c1650ac975ea7c4bf66eddf660474d3214325b8c76eb5e434a328d091、manifest8015B/d70767ce2d8f174804565838011b709b0adced933787124cd5e02ee4285a96c9、原evaluation24748345B/57faebe906f88c0784ec1e7e8ecd572dd33b0ee687bfd3d923af44cd3e52ffa0。
+
+data artifacts/representative-anomaly-evaluation/dev-core-c2-20261011閉鎖19file37788928B/root-closed2224B/7ca662f9956ec1f6382742cac9f5e05e23868a73982dc21c4f45b657e9a2278c。旧core/replay/C1quality/metadata7root count-byte-closure pin不変。metadata artifacts/representative-c2-core-20261011-prep と representative-c2-core-post-20261011-prep の最終post-save/owners-after-save/root-closedを優先。各512KiB32entry/reserve128KiB/single128KiB、閉鎖後追加/同保存/完成C2core/元helper反復禁止。
+
+開始64helper full saved creation-start_token/live-execution一致/CIM同original不在（原7failed57passed保持）、モデル評価/CIcompact後66helper一致・repo helper-critical ownerなし。最終人数はpost-save/owners-after-save優先。foreground初期Git ignore警告はexit0 tool excerpt/full identity・stdioNone、selected CLI outputをhelper全process stdioへしない。
+
+現在code661b275 CI38138556456 compact一回はattempt1/push/Phase1CI/.github/workflows/ci.yml/workflow349172377/in_progress。原run/ghstdout-stderr/exit0保存、jobs/終端/journal/count未観測。待機・反復/完成旧CI/doc-only CI再照会0。前38136585791/fulla54961の最後in_progressは履歴のまま今回query0。
+
+次は同保存dev/layout0のquality-stressをC2で1件実評価し、peer入力依存下の欠測・利用不能行と検出への波及を確認。今回C2coreとC1qualityの保存指標だけ比較し、旧完成C0/C1/C2core・C1quality・明示replay・4risk/類似owner/旧native/probe/collector/Git37を反復しない。CI381385 compact次heartbeat一回、未終端なら待機・反復なしでモデル評価へ。必要な改善は実経路で観測した不具合だけ。
+
+engineering900秒/2GiB/output1GiB/single32MiB/files32 checkpoint上限維持、blocking中断/full loaded runtime closure/全writer-global-coupled/native容量証明ではない。create_native早期拒否/全7役whole.run限定reader実起動禁止/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout観測未読/正式5残件・最終受入未完了/元caps-unknown原owner-stop保持。Sol容量エラー/人の停止割込みでは保全後PAUSED・重複再試行なし。ACTIVE継続、意味ある完了/失敗/必要操作だけ報告。
+
+## 以下は保存済み先行状態（今回上段を優先）
+
 ## 最新保存状態：ACTIVE／dev quality-stress C1実評価・欠測によるsensor未検出1件を保存（2026-10-11）
 
 人の「進めてください」を継続し、保存済みfirst dev seed2486912926863618161/layout0/quality-stressをC1で1件実compute_evaluation。追加agent起動・再活性化禁止、類似ownerテスト追加0。production/test/科学式/config/schema変更0。詳細 [quality-stress実評価](results/anomaly-multiseed-v0.3-quality-stress-evaluation-2026-10-11.md)。
