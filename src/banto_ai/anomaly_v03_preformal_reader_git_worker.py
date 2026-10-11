@@ -630,6 +630,24 @@ class ReaderGitParent:
             except BaseException as secondary:self.auxiliary_writer_remember_error=secondary
             raise self.__auxiliary_writer_failure
 
+    def prepare_supervisor_source_object_output_pair(self, call_index, stdout_path, stderr_path, receipt, *,
+                                                     exit_code, partial=b'', read_wall):
+        incoming=(self,call_index,stdout_path,stderr_path,receipt,exit_code,partial,read_wall)
+        previous=getattr(self,'_ReaderGitParent__source_object_output_pairs',())
+        if previous:
+            try:
+                v.require(self.source_object_output_pairs is previous,'reader original supervisor output pair ledger')
+                v.require(len(previous)<64 and not any(row.original_inputs[1]==call_index for row in previous),
+                          'reader supervisor output pair call issues once')
+                for row in previous:row._fixed()
+            except BaseException as error:
+                previous[-1].rejected_pair_inputs=incoming
+                previous[-1]._failed(error)
+        held=parent_supervisor.SourceObjectOutputPairPreparation.__new__(parent_supervisor.SourceObjectOutputPairPreparation)
+        held._retain(incoming)
+        self.__source_object_output_pairs=self.source_object_output_pairs=(*previous,held)
+        return held.prepare()
+
     def capture_supervisor_source_object(self, call_index, stdout, stderr, receipt, *,
                                          exit_code, partial=b'', read_wall):
         incoming=(self,call_index,stdout,stderr,receipt,exit_code,partial,read_wall)
@@ -1255,6 +1273,8 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None, caller_d
     if objects is not None:owners+=(objects,getattr(original,'source_object_batch_owner',None))
     callsites=getattr(original,'_ReaderGitParent__source_object_supervisor_callsites',None)
     if callsites is not None:owners+=(callsites,getattr(original,'source_object_supervisor_callsites',None))
+    output_pairs=getattr(original,'_ReaderGitParent__source_object_output_pairs',None)
+    if output_pairs is not None:owners+=(output_pairs,getattr(original,'source_object_output_pairs',None))
     connection=getattr(original,'_ReaderGitParent__request_writer_storage_inputs',None)
     if connection is not None:owners+=(connection,getattr(original,'request_writer_storage_input',None))
     auxiliary=getattr(original,'_ReaderGitParent__auxiliary_writer_inputs',None)
@@ -1266,7 +1286,7 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None, caller_d
         getattr(original,'rejected_inventory_publication',None),getattr(owners[4],'rejected',None))
     error.reader_publication_owners=(original,owners,rejected,caller_plan)  # Before diagnosis/keeper entry.
     try:
-        problem=(existing is not None or batch is not None or objects is not None or callsites is not None or connection is not None or auxiliary is not None or registry is not None or
+        problem=(existing is not None or batch is not None or objects is not None or callsites is not None or output_pairs is not None or connection is not None or auxiliary is not None or registry is not None or
             getattr(original,'error',None) is not None or
             any(getattr(owner,'error',None) is not None or getattr(owner,'pending',None) is not None
                 for owner in owners if owner is not None) or

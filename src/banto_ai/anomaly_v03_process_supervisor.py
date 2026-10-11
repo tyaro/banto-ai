@@ -2,8 +2,11 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import math
+import os
 from pathlib import Path
+import stat
 import subprocess
 import time
 
@@ -94,6 +97,213 @@ def _file_pin(path, maximum):
     return {"bytes": size, "sha256": digest.hexdigest()}
 
 
+SOURCE_OBJECT_OUTPUT_FILEIO = io.FileIO
+
+
+class SourceObjectOutputPairPreparation:
+    """Issue Python FileIO owners and preserve their literal close/read handoff.
+
+    This preparation does not launch a worker or authenticate native stdio,
+    receipt, exit or partial transport. Read owners remain held after capture.
+    """
+    def _retain(self, incoming):
+        if hasattr(self, '_SourceObjectOutputPairPreparation__inputs'):
+            self.rejected_initialization_inputs = incoming
+            self._failed(ValueError('supervisor output pair initializes once'))
+        self.__inputs = self.__anchor = self.original_inputs = incoming
+        self.__operations = self.operations = ()
+        self.__writers = self.writers = ()
+        self.__readers = self.readers = ()
+        self.__identities = self.identities = ()
+        self.__closed = self.close_returns = ()
+        self.__pending = self.pending = None
+        self.__error = self.error = None
+        self.__returned = self.capture_return = None
+        self.__observed = self.capture_return_observed = False
+        self.__clock_last = None
+        self.__issued = False
+        self.__prepared = False
+        self.__preparation = self.__worker = self.__callback = None
+        self.__factory = SOURCE_OBJECT_OUTPUT_FILEIO
+
+    def _failed(self, error):
+        if self.__error is None:self.__error = error
+        self.error = self.__error
+        self.__error.supervisor_source_object_output_pair = self
+        self.__error.reader_git_parent = self.__anchor[0]
+        if self.__preparation is not None:
+            try:self.__preparation._failed(self.__error)
+            except BaseException as first:
+                self.__error = self.error = first
+                first.supervisor_source_object_output_pair = self
+                raise
+        raise self.__error
+
+    def prepare(self):
+        try:
+            rt.require(not self.__prepared, 'supervisor output pair prepares once')
+            self.__prepared = True
+            parent,index,out,err,receipt,code,partial,wall = self.__inputs
+            self.__preparation = self.preparation_getter_return = getattr(parent,'_ReaderGitParent__source_object_batch_owner',None)
+            self.__worker = self.worker_getter_return = parent.worker
+            self.__callback = self.capture_callback = parent.capture_supervisor_source_object
+            from . import _anomaly_v03_reader_dependencies as dependencies
+            rt.require(type(self.__preparation) is dependencies.SourceObjectBatchContractPreparation,
+                       'supervisor output pair original preparation')
+            rt.require(type(index) is int and 0 <= index < len(self.__preparation.original_inputs[5]),
+                       'supervisor output pair call index')
+            rt.require(isinstance(out,Path) and isinstance(err,Path) and out.is_absolute() and err.is_absolute() and
+                       out.parent == err.parent and out.name in ('report.json','stdout.jsonl') and err.name == 'stderr.json',
+                       'supervisor output pair original absolute paths')
+            rt.require(type(wall) is tuple and len(wall) == 3 and callable(wall[0]) and
+                       type(wall[1]) is int and type(wall[2]) is int and
+                       0 <= wall[1] < wall[2] <= 9223372036854775807 and wall[2]-wall[1] <= 30000000000,
+                       'supervisor output pair original absolute window')
+            rt.require(self.__worker is not None, 'supervisor output pair original Python worker')
+            self._fixed()
+            return self
+        except BaseException as error:self._failed(error)
+
+    def _bindings(self):
+        if self.__error is not None:raise self.__error
+        parent = self.__anchor[0]
+        rows = parent._ReaderGitParent__source_object_output_pairs
+        rt.require(self.__inputs is self.__anchor and self.original_inputs is self.__anchor and
+                   self.operations is self.__operations and self.writers is self.__writers and
+                   self.readers is self.__readers and self.identities is self.__identities and
+                   self.close_returns is self.__closed and self.pending is self.__pending and
+                   self.capture_return is self.__returned and self.capture_return_observed is self.__observed and
+                   self.capture_callback is self.__callback and self.preparation_getter_return is self.__preparation and
+                   self.worker_getter_return is self.__worker and parent.worker is self.__worker and
+                   parent.source_object_output_pairs is rows and any(row is self for row in rows) and
+                   parent._ReaderGitParent__source_object_batch_owner is self.__preparation,
+                   'supervisor output pair private original bindings')
+    def _fixed(self):
+        self._bindings()
+        self.__preparation._fixed()
+
+    def _record(self, previous, row):
+        self.__operations = (*previous[:-1],row)
+        if self.operations is previous:self.operations = self.__operations
+
+    def _invoke(self, stage, owner, argument, callback):
+        observed = False
+        try:
+            self._fixed()
+            rt.require(self.__pending is None, 'supervisor output pair cannot reenter')
+            rt.require(len(self.__operations) < 128, 'supervisor output pair operation bound')
+            row = (stage,owner,argument,False,None,None)
+            self.__operations = self.operations = (*self.__operations,row)
+            previous = self.__operations
+            self.__pending = self.pending = row
+            returned = callback()
+            observed = True
+            self._record(previous,(stage,owner,argument,True,returned,None))
+            self._fixed()  # A swallowed rejection cannot erase the literal return.
+            self.__pending = self.pending = None
+            return returned
+        except BaseException as error:
+            if not observed and 'previous' in locals():self._record(previous,(stage,owner,argument,False,None,error))
+            self._failed(error)
+
+    def _tick(self):
+        clock,start,deadline = self.__anchor[-1]
+        returned = self._invoke('checkpoint',self.__preparation,None,self.__preparation.checkpoint)
+        rt.require(returned is None, 'supervisor output pair checkpoint literal return')
+        value = self._invoke('clock',clock,None,clock)
+        rt.require(type(value) is int and value >= start and
+                   (self.__clock_last is None or value >= self.__clock_last) and value < deadline,
+                   'supervisor output pair original deadline')
+        self.__clock_last = value
+
+    def _method(self, stream, name):
+        returned = self._invoke('getter',stream,name,lambda:getattr(stream,name))
+        rt.require(callable(returned), 'supervisor output pair original stream method')
+        return returned
+
+    def _identity(self, stream, path):
+        method = self._method(stream,'fileno')
+        fd = self._invoke('fileno',stream,None,method)
+        info = self._invoke('fstat',stream,fd,lambda:os.fstat(fd))
+        disk = self._invoke('lstat',path,None,path.lstat)
+        rt.require(stat.S_ISREG(info.st_mode) and stat.S_ISREG(disk.st_mode) and
+                   not getattr(disk,'st_file_attributes',0) & 0x400 and info.st_nlink == disk.st_nlink == 1 and
+                   (info.st_dev,info.st_ino) == (disk.st_dev,disk.st_ino),
+                   'supervisor output pair fd path identity')
+        return (info.st_dev,info.st_ino)
+
+    def issue_writers(self):
+        try:
+            self._fixed()
+            rt.require(self.__pending is None, 'supervisor output pair cannot reenter')
+            if self.__issued:return self.__writers
+            rt.require(not self.__writers, 'supervisor output pair does not replay partial issue')
+            for path in self.__anchor[2:4]:
+                self._tick()
+                stream = self._invoke('open_xb',self.__factory,path,lambda:self.__factory(path,'xb'))
+                previous = self.__writers
+                self.__writers = (*previous,stream)
+                if self.writers is previous:self.writers = self.__writers
+                rt.require(isinstance(stream,io.FileIO) and stream.closefd and stream.mode == 'xb',
+                           'supervisor output pair owned FileIO write return')
+                identity = self._identity(stream,path)
+                self.__identities = self.identities = (*self.__identities,identity)
+                self._tick()
+            self.__issued = True
+            return self.__writers
+        except BaseException as error:self._failed(error)
+
+    def close_writers(self):
+        try:
+            self._fixed()
+            rt.require(self.__pending is None, 'supervisor output pair cannot reenter')
+            rt.require(self.__issued, 'supervisor output pair issued original writers')
+            if len(self.__closed) == 2:return self.__closed
+            rt.require(not self.__closed, 'supervisor output pair does not replay partial close')
+            for stream,path,identity in zip(self.__writers,self.__anchor[2:4],self.__identities):
+                self._tick()
+                rt.require(self._identity(stream,path) == identity, 'supervisor output pair original write identity')
+                method = self._method(stream,'close')
+                returned = self._invoke('close',stream,None,method)
+                previous = self.__closed
+                self.__closed = (*previous,returned)
+                if self.close_returns is previous:self.close_returns = self.__closed
+                rt.require(returned is None, 'supervisor output pair literal close return')
+                self._tick()
+            return self.__closed
+        except BaseException as error:self._failed(error)
+
+    def capture(self):
+        try:
+            self._fixed()
+            rt.require(self.__pending is None, 'supervisor output pair cannot reenter')
+            if self.__observed:return self.__returned
+            rt.require(self.__issued and len(self.__closed) == 2 and all(x is None for x in self.__closed),
+                       'supervisor output pair original close returns before read')
+            rt.require(not self.__readers, 'supervisor output pair does not replay partial read issue')
+            parent,index,out,err,receipt,code,partial,wall = self.__anchor
+            for i,(path,identity) in enumerate(zip((out,err),self.__identities)):
+                self._tick()
+                stream = self._invoke('open_rb',self.__factory,path,lambda:self.__factory(path,'rb'))
+                previous = self.__readers
+                self.__readers = (*previous,stream)
+                if self.readers is previous:self.readers = self.__readers
+                rt.require(isinstance(stream,io.FileIO) and stream.closefd and stream.mode == 'rb',
+                           'supervisor output pair owned FileIO read return')
+                rt.require(self._identity(stream,path) == identity, 'supervisor output pair original read identity')
+                maximum = self.__preparation.original_inputs[5][index]['stdout' if i == 0 else 'stderr']
+                info = self._invoke('fstat_read',stream,None,lambda:os.fstat(stream.fileno()))
+                rt.require(info.st_size <= maximum, 'supervisor output pair independent raw byte bound')
+                self._tick()
+            returned = self._invoke('capture',self.__callback,(index,*self.__readers,receipt,code,partial,wall),
+                lambda:self.__callback(index,*self.__readers,receipt,exit_code=code,partial=partial,read_wall=wall))
+            self.__returned = self.capture_return = returned
+            self.__observed = self.capture_return_observed = True
+            self._fixed()
+            return returned
+        except BaseException as error:self._failed(error)
+
+
 class SourceObjectOutputCallsite:
     """Retain a caller's original worker/streams; never authorize supervision.
 
@@ -107,6 +317,7 @@ class SourceObjectOutputCallsite:
         self.__inputs = self.__inputs_anchor = self.original_inputs = incoming
         self.__binding = self.__binding_anchor = self.original_binding = None
         self.__preparation = None
+        self.__output_pair = self.original_output_pair = None
         self.__callback = self.capture_callback = None
         self.__error = self.error = None
         self.__running = False
@@ -139,6 +350,16 @@ class SourceObjectOutputCallsite:
             rt.require(type(preparation) is dependencies.SourceObjectBatchContractPreparation,
                        "supervisor original source object preparation")
             self.__preparation = preparation
+            parent = self.__inputs_anchor[0]
+            for pair in getattr(parent,'_ReaderGitParent__source_object_output_pairs',()):
+                streams = pair._SourceObjectOutputPairPreparation__readers
+                if len(streams) == 2 and self.__inputs_anchor[2] is streams[0] and self.__inputs_anchor[3] is streams[1]:
+                    self.__output_pair = self.original_output_pair = pair
+                    pair._bindings()
+                    original = pair.original_inputs
+                    rt.require(all(a is b for a,b in zip(self.__inputs_anchor[:2]+self.__inputs_anchor[4:],
+                                original[:2]+original[4:])), 'supervisor original issued pair capture inputs')
+                    break
             self.__callback = self.capture_callback = preparation.capture_raw
             preparation.bind_supervisor_callsite(self)
         except BaseException as error:self._failed(error)
@@ -158,6 +379,8 @@ class SourceObjectOutputCallsite:
                    preparation._SourceObjectBatchContractPreparation__inputs[0] is parent and
                    worker is not None and parent.worker is worker,
                    "supervisor same original parent worker streams and private bindings")
+        rt.require(self.original_output_pair is self.__output_pair, 'supervisor original issued output pair binding')
+        if self.__output_pair is not None:self.__output_pair._bindings()
 
     def capture(self, incoming):
         if self.__error is not None:raise self.__error
