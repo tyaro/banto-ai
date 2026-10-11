@@ -94,8 +94,107 @@ def _file_pin(path, maximum):
     return {"bytes": size, "sha256": digest.hexdigest()}
 
 
+class SourceObjectOutputCallsite:
+    """Retain a caller's original worker/streams; never authorize supervision.
+
+    The worker and receipt are Python inputs, without native authentication.
+    Borrowed streams stay with their original owner on success or failure.
+    """
+    def _retain(self, incoming):
+        if hasattr(self,'_SourceObjectOutputCallsite__inputs'):
+            self.rejected_initialization_inputs = incoming
+            self._failed(ValueError("supervisor original callsite initializes once"))
+        self.__inputs = self.__inputs_anchor = self.original_inputs = incoming
+        self.__binding = self.__binding_anchor = self.original_binding = None
+        self.__preparation = None
+        self.__callback = self.capture_callback = None
+        self.__error = self.error = None
+        self.__running = False
+        self.__returned = self.capture_return = None
+        self.__observed = self.capture_return_observed = False
+        self.__rejected = self.rejected_inputs = None
+        self.__supervision = self.supervision_inputs = None
+        self.pending = incoming
+
+    def _failed(self, error):
+        if self.__error is None:self.__error = error
+        self.error = self.__error
+        self.__error.source_object_supervisor_callsite = self
+        self.__error.reader_git_parent = self.__inputs_anchor[0]
+        if self.__preparation is not None:
+            try:self.__preparation._failed(self.__error)
+            except BaseException as first:
+                self.__error = self.error = first
+                first.source_object_supervisor_callsite = self
+                raise
+        raise self.__error
+
+    def bind_originals(self, preparation, worker):
+        if self.__binding_anchor is not None:
+            self.rejected_original_binding = (preparation,worker)
+            self._failed(ValueError("supervisor original worker binding cannot be replaced"))
+        self.__binding = self.__binding_anchor = self.original_binding = (preparation, worker)
+        try:
+            from . import _anomaly_v03_reader_dependencies as dependencies
+            rt.require(type(preparation) is dependencies.SourceObjectBatchContractPreparation,
+                       "supervisor original source object preparation")
+            self.__preparation = preparation
+            self.__callback = self.capture_callback = preparation.capture_raw
+            preparation.bind_supervisor_callsite(self)
+        except BaseException as error:self._failed(error)
+
+    def _bindings(self):
+        if self.__error is not None:raise self.__error
+        parent = self.__inputs[0]
+        preparation, worker = self.__binding
+        rows = parent._ReaderGitParent__source_object_supervisor_callsites
+        rt.require(self.__inputs is self.__inputs_anchor and self.__binding is self.__binding_anchor and
+                   self.original_inputs is self.__inputs and self.original_binding is self.__binding and
+                   self.capture_callback is self.__callback and self.capture_return is self.__returned and
+                   self.capture_return_observed is self.__observed and self.rejected_inputs is self.__rejected and
+                   self.supervision_inputs is self.__supervision and
+                   parent.source_object_supervisor_callsites is rows and any(row is self for row in rows) and
+                   parent._ReaderGitParent__source_object_batch_owner is preparation and
+                   preparation._SourceObjectBatchContractPreparation__inputs[0] is parent and
+                   worker is not None and parent.worker is worker,
+                   "supervisor same original parent worker streams and private bindings")
+
+    def capture(self, incoming):
+        if self.__error is not None:raise self.__error
+        try:
+            if len(incoming) != len(self.__inputs) or not all(a is b for a,b in zip(incoming,self.__inputs)):
+                self.__rejected = self.rejected_inputs = incoming
+                raise ValueError("supervisor original capture inputs cannot be replaced")
+            self._bindings()
+            preparation = self.__binding[0]
+            preparation._fixed()
+            if self.__observed:return self.__returned
+            rt.require(not self.__running, "supervisor original capture cannot reenter")
+            self.__running = True
+            _, index, stdout, stderr, receipt, code, partial, wall = self.__inputs
+            rt.require(type(wall) is tuple and len(wall) == 3,
+                       "supervisor original absolute read window required")
+            self.pending = self.__inputs
+            returned = self.__callback(index,stdout,stderr,receipt,exit_code=code,partial=partial,read_wall=wall)
+            self.__returned = returned  # Save the literal return before checking callback changes.
+            self.__observed = True
+            if self.capture_return is None:self.capture_return = returned
+            if self.capture_return_observed is False:self.capture_return_observed = True
+            self._bindings();preparation._fixed()
+            self.pending = None
+            return returned
+        except BaseException as error:self._failed(error)
+
+    def refuse_supervision(self, incoming):
+        # The actual supervisor entrance retains its original arguments before
+        # clock, path, runtime probe, output FileIO or process creation.
+        if self.__supervision is None:self.__supervision = self.supervision_inputs = incoming
+        else:self.rejected_supervision_inputs = incoming
+        self._failed(ValueError("source object supervisor callsite remains preparation only"))
+
+
 def supervise(argv, cwd, control_root, limits, *, stdout_name="report.json", runtime_probe=None, boundary=lambda: None,
-              on_started=None, resource_probe=None, stop_fence=None):
+              on_started=None, resource_probe=None, stop_fence=None, source_object_callsite=None):
     """Return observations after reaping the owned process; caller saves the report.
 
     control_root is newly claimed and every output is exclusive. The caller owns
@@ -110,6 +209,11 @@ def supervise(argv, cwd, control_root, limits, *, stdout_name="report.json", run
     preserves the original worker owner, without reading logs or final context.
     This callback contract is not an authenticated Job or descendant report.
     """
+    if source_object_callsite is not None:
+        rt.require(type(source_object_callsite) is SourceObjectOutputCallsite,
+                   "supervisor exact original source object callsite")
+        source_object_callsite.refuse_supervision((argv,cwd,control_root,limits,stdout_name,runtime_probe,
+                                                boundary,on_started,resource_probe,stop_fence))
     _limits(limits)
     rt.require(stop_fence is None or callable(stop_fence), "worker stop fence must be callable")
     rt.require(type(argv) is list and argv and all(type(x) is str and x for x in argv), "process argv")

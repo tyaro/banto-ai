@@ -630,6 +630,28 @@ class ReaderGitParent:
             except BaseException as secondary:self.auxiliary_writer_remember_error=secondary
             raise self.__auxiliary_writer_failure
 
+    def capture_supervisor_source_object(self, call_index, stdout, stderr, receipt, *,
+                                         exit_code, partial=b'', read_wall):
+        incoming=(self,call_index,stdout,stderr,receipt,exit_code,partial,read_wall)
+        previous=getattr(self,'_ReaderGitParent__source_object_supervisor_callsites',())
+        if previous:
+            try:
+                v.require(self.source_object_supervisor_callsites is previous,
+                          'reader original supervisor callsite ledger')
+                if previous[-1].original_inputs[1]==call_index:return previous[-1].capture(incoming)
+            except BaseException as error:previous[-1]._failed(error)
+        held=parent_supervisor.SourceObjectOutputCallsite.__new__(parent_supervisor.SourceObjectOutputCallsite)
+        held._retain(incoming)
+        self.__source_object_supervisor_callsites=self.source_object_supervisor_callsites=(*previous,held)
+        try:
+            preparation=getattr(self,'_ReaderGitParent__source_object_batch_owner',None)
+            held.preparation_getter_return=preparation
+            worker=self.worker
+            held.worker_getter_return=worker  # Same original worker before callback/stream getters.
+            held.bind_originals(preparation,worker)
+            return held.capture(incoming)
+        except BaseException as error:held._failed(error)
+
     def issue_publication_resources(self, issuer):
         self.original_publication_resource_input=issuer  # Before validation or storage/root IO.
         held=tree.owner.PublicationPipeResources.__new__(tree.owner.PublicationPipeResources)
@@ -1231,6 +1253,8 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None, caller_d
     if batch is not None:owners+=(batch,getattr(original,'source_batch_owner',None))
     objects=getattr(original,'_ReaderGitParent__source_object_batch_owner',None)
     if objects is not None:owners+=(objects,getattr(original,'source_object_batch_owner',None))
+    callsites=getattr(original,'_ReaderGitParent__source_object_supervisor_callsites',None)
+    if callsites is not None:owners+=(callsites,getattr(original,'source_object_supervisor_callsites',None))
     connection=getattr(original,'_ReaderGitParent__request_writer_storage_inputs',None)
     if connection is not None:owners+=(connection,getattr(original,'request_writer_storage_input',None))
     auxiliary=getattr(original,'_ReaderGitParent__auxiliary_writer_inputs',None)
@@ -1242,7 +1266,7 @@ def retain_parent_publications(error, parent=None, *, caller_plan=None, caller_d
         getattr(original,'rejected_inventory_publication',None),getattr(owners[4],'rejected',None))
     error.reader_publication_owners=(original,owners,rejected,caller_plan)  # Before diagnosis/keeper entry.
     try:
-        problem=(existing is not None or batch is not None or objects is not None or connection is not None or auxiliary is not None or registry is not None or
+        problem=(existing is not None or batch is not None or objects is not None or callsites is not None or connection is not None or auxiliary is not None or registry is not None or
             getattr(original,'error',None) is not None or
             any(getattr(owner,'error',None) is not None or getattr(owner,'pending',None) is not None
                 for owner in owners if owner is not None) or

@@ -745,6 +745,8 @@ class SourceObjectBatchContractPreparation:
         self.__raw_attempts = (); self.__rejected_preparations = ()
         self.__record_bindings = (); self.__metadata_bindings = ()
         self.__captures = (); self.raw_captures = self.__captures
+        self.__supervisor_callsites = (); self.supervisor_callsites = self.__supervisor_callsites
+        self.__supervisor_attempt = None
         self.__capture_attempt = None
         self.__active_capture = None
         self.__pending = self.pending = None
@@ -847,11 +849,28 @@ class SourceObjectBatchContractPreparation:
                           held['error'] is None and held['native_authorized'] is False and
                           held['formal_permission'] is False, 'batch original private raw/proof bindings')
             v.require(self.raw_captures is self.__captures, 'object batch original capture ledger')
+            v.require(self.supervisor_callsites is self.__supervisor_callsites,
+                      'object batch original supervisor callsite ledger')
+            for callsite in self.__supervisor_callsites:callsite._bindings()
             for capture in self.__captures:capture._fixed()
         except BaseException as error:self._failed(error)
 
     def unresolved(self):
         return True  # Candidate readback never authorizes native execution or recovery.
+
+    def bind_supervisor_callsite(self, callsite):
+        if self.__error is not None:raise self.__error
+        self.__supervisor_attempt = callsite  # Original candidate before getters or validation.
+        try:
+            from . import anomaly_v03_process_supervisor as supervisor
+            self._fixed()
+            v.require(type(callsite) is supervisor.SourceObjectOutputCallsite and
+                      len(self.__supervisor_callsites) < len(self.__maxima) <= 64,
+                      'object batch bounded original supervisor callsites')
+            callsite._bindings()
+            self.__supervisor_callsites = (*self.__supervisor_callsites, callsite)
+            self.supervisor_callsites = self.__supervisor_callsites
+        except BaseException as error:self._failed(error)
 
     def capture_raw(self, call_index, stdout, stderr, receipt, *, exit_code, partial=b'', read_wall=None):
         """Read caller streams once; retain opaque receipt/partial independently."""
