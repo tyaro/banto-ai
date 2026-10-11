@@ -1,3 +1,23 @@
+## 最新 — ACTIVE / dev layout1 C1 quality-stress実評価・欠測によるsensor未検出1件（2026-10-12 JST）
+
+同保存chunk001 manifest75699B/72e5a34c662f77c4728583b9e61cc9d2977edd2ecc9e5286194aae0d2c055dbf/dev seed2486912926863618161/layout1/quality-stressを既存CLI C1 c1-phase-levelで新ID dev-layout1-quality-c1-20261011へ1cell実compute_evaluation。actual文書checkoutHEADf4bef749ce52e808fcab006a0ffdc86e5bdf063e/計算code661b27511826fcc87cb4a02930f276afbb8f95d9不変。10input pins→新snapshot→fresh fit/calibration→原result。元payload書込み/生成/replay/production-test変更/類似owner/追加agent/holdout観測読取り0。実計算UTC2026-10-11/作業日JST2026-10-12、runIDは前工程予定名を使用。
+
+CLI exit0/complete/1cell success、機械10/10・sensor9/10・precision19/19・clean誤警報0・全未対応equipment0。48calibrated/fit_samples各600/calibration各290/14400scores、利用可能13880・不能520。primary phase480/current quality30/previous quality10、nonexclusive current quality30/current nonfinite30/previous quality30は重複して90独立不能へしない。全不能score-residualnull/thresholdfalse。原quality-mask/observations18000行対応、motor temperature missing30観測をextract保存。29source/19equipment/20incident/40events。19検出delay全原1秒/中央値平均minmax各1秒、未検出1原delaynull/補完0。actualPython3.14.0 Windows AMD64、elapsed18.798073199926876秒/OSpeak private148037632B。処理successを正式性能合格/採択へしない。
+
+唯一未検出はcycle09 motor-01.motor_temperature sensor spike/start8864/end8867/windowend8870。8864score183.1363688464011/streak1、8865–8867 current欠測reset、8868 previous品質不良reset、8869score1.8487126384105506/streak0。固定threshold6/persistence2/second-exceedance不成立、原candidate0/no_candidate_in_window/causalfalse/matchednull/source null/delaynull/support[]。同layout1 core保存対応incidentは同start8864・同targetでcausaltrue/delay1秒/support2件、旧モデル再compute0。原全20event/incident ledger/未検出window/cycle00 selected source-equipment windows/全30非ok input recordsを保存。閾値/persistence/GT/matching/science変更0、実入力対応・保存・状態分類不具合観測なし。
+
+core C1保存10/10・sensor10/10・precision20/20・clean0・利用可能13920/不能480と、quality追加不能40/未検出1の対応を確認。旧layout0 quality C1保存機械10/10・sensor9/10・precision19/19・clean0との比較はmanifest/config指標のみ。宣言16source/candidate・compiled config一致、core/qualityのraw input pin差を保持。同seed別stratum/layout、新独立seedではない。bootstrap/統計CI/勝者/採択0。
+
+data dev-layout1-quality-c1-20261011閉鎖19file27557408B/root-closed2246B/aa01cbb68f077097dcc610da2009519d1b650e1d83ab409acd6f2161b3f5cd11。EXTRACT representative-layout1-quality-c1-extract-20261012-prep閉鎖4file74841B/root-closed702B/6fa954ff7ba74e5aae087c17e3bdaca783ffc52c21600f09cfd29fefe7a85584。MAIN representative-layout1-quality-c1-20261012-prepとPOST representative-layout1-quality-c1-post-20261012-prepのpost-save/owners/root-closedを最終Git保存状態として優先。117science-source/旧33root count-byte-closure pin/外部固定C1 MAIN35file226520B/C2 cache補足pin不変。前回failed・capacityfalse・closure coverage制限維持、元root追加・原helper再実行・raw削除移動・上限緩和0。今回はpython -B/recursive file count-byte-pin/書込み前script・失敗・終端・closure reserve確認でmetadata512KiB32entry/reserve128KiB/single128KiB維持。
+
+93helper原9failed84passed/full saved creation-start_token/live-execution一致/CIM同original不在/repo helper-criticalownerなし。今回モデル/解析2passed、原failed書換え0。foreground旧解析path selector missはsource/旧helper未起動・selected tool trace保存、model/CI/native/Sol失敗へしない。foreground fullidentity/stdioNone、selectedCLIを全helperstdioにしない、CIMdecimal100ns→microsecondtrunc/full token/PID単独0/native回収claim0。Gitはリスク通知後「承認します」による同GitHub送信先への同種合成dev結果・PC内path報告の継続送信承認でreport/handoff2文書を一回[skip ci] commit/pushする。先行拒否/元Githelper未起動保全、heartbeat詳細payload再送/更新0/ACTIVE維持。
+
+次は同manifest/devseed/layout1/quality-stressのC2 c2-phase-conditional、新ID dev-layout1-quality-c2-20261012へ1cell実評価。完成core3cell/今回C1quality/layout0全6cell/replay/旧risk-owner/native/probe/collector/Git37/CI反復0。CI381385/4130完成保存維持/新query-download-verifier0、旧381365in_progress履歴/doc-onlyCI追跡0。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout観測未読/正式5残件・最終受入未完了/create_native早期拒否/全7役reader起動禁止/元caps-unknown原owner-stop/追加agent禁止維持。未完成formal/native全証明を少量dev開始条件に戻さない。engineering900秒2GiB/output1GiB/single32MiB/files32 checkpointはblocking中断/fullruntime/allwriterglobalnative容量証明ではない。Sol容量/人の停止時だけ保全後PAUSED。
+
+詳細 [layout1 C1 quality-stress実評価](results/anomaly-multiseed-v0.3-layout1-c1-quality-evaluation-2026-10-12.md)。
+
+---
+
 ## 最新 — ACTIVE / dev layout1 C2 core実評価・同条件3候補比較完成（2026-10-11）
 
 同保存chunk001 manifest75699B/72e5a34c662f77c4728583b9e61cc9d2977edd2ecc9e5286194aae0d2c055dbf/dev seed2486912926863618161/layout1/coreを既存CLI C2 c2-phase-conditionalで新ID dev-layout1-core-c2-20261011へ1cell実compute_evaluation。actual文書checkoutHEAD390d77e7d8910a0784b6e556147c737153e39558/計算code661b27511826fcc87cb4a02930f276afbb8f95d9不変。10input pins→新snapshot→fresh fit/calibration→原result。元payload書込み/生成/replay/production-test変更/類似owner/追加agent/holdout観測読取り0。
