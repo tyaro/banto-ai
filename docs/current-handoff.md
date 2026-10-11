@@ -1,3 +1,21 @@
+## 最新 — ACTIVE / dev layout1 C2 core実評価・同条件3候補比較完成（2026-10-11）
+
+同保存chunk001 manifest75699B/72e5a34c662f77c4728583b9e61cc9d2977edd2ecc9e5286194aae0d2c055dbf/dev seed2486912926863618161/layout1/coreを既存CLI C2 c2-phase-conditionalで新ID dev-layout1-core-c2-20261011へ1cell実compute_evaluation。actual文書checkoutHEAD390d77e7d8910a0784b6e556147c737153e39558/計算code661b27511826fcc87cb4a02930f276afbb8f95d9不変。10input pins→新snapshot→fresh fit/calibration→原result。元payload書込み/生成/replay/production-test変更/類似owner/追加agent/holdout観測読取り0。
+
+CLI exit0/complete/1cell success、機械10/10・sensor10/10・precision20/20・clean誤警報0・全未対応equipment0。48calibrated/fit_samples各600/calibration各290/14400scores、利用可能13920・不能480（全mode_recipe_or_phase/null score-residual/thresholdfalse）。40source/20equipment/20incident/40events。全20causal_detected/各candidate1/対象sourceと原support2件・matched equipment対応、delay全原1秒/中央値平均minmax各1秒/未検出補完0。actualPython3.14.0 Windows AMD64、elapsed35.68787640007213秒/OSpeak private205942784B。処理successを正式性能合格/勝者/採択へしない。
+
+cycle00machine対象current onset7238、sensor対象temperature onset7245。全20target source full_target・onset=event start+1000ms・support一致を原resultから確認。原全20event/incident ledgerとcycle00 selected source/equipment/target-vibration windowを保存。実入力対応・原保存・状態分類不具合観測なし。同layout1 C0は0/10・0/10・precision0/3・clean2、C1は10/10・10/10・precision20/20・clean0・delay全1秒。全3同input10/宣言16source/candidate・compiled config一致。C1 source30対C2 source40で集計一致をscore/episode一致へしない。固定C0threshold4/C1-C2threshold6/persistence2/GT/matching/science変更0、旧モデル再compute0。旧layout0 C2保存機械4/10・sensor10/10・precision14/20・clean0と今回layout差、原旧6未検出を書換え0。同seed別layout、新独立seedではない。bootstrap/統計CI/勝者/採択0。
+
+data dev-layout1-core-c2-20261011閉鎖19file37791014B/root-closed2235B/1292bff382cb849efcece7c46260d55f60b4f9c671c1f9144355095cbb298aa2。EXTRACT representative-layout1-core-c2-extract-20261011-prep閉鎖3file51074B/root-closed565B/4daa9936469110286170e0edd6f29dee03b083dbc68f7f17814e7c0332f70a09。MAIN representative-layout1-core-c2-20261011-prepとPOST representative-layout1-core-c2-post-20261011-prepのpost-save/owners/root-closedを最終Git保存状態として優先。117science-source・旧29root count-byte-closure pin・前回C1 MAIN外部35file226520B固定不変。前回pin拒否/解析failed/foregrounderrors/metadata3entry超過の原failed/capacityfalse保持、元MAIN追加・内部root-closed発行・原helper再実行0。今回新metadata書込み前にscript/失敗/終端/closure含むentry/byte reserve確認、extract64KiB以下partで512KiB32entry/reserve128KiB/single128KiB維持。
+
+90helper原9failed81passed/full saved creation-start_token/live-execution一致/CIM同original不在/repo helper-criticalownerなし。今回モデル/解析2helper passed、原failed書換え0。foreground fullidentity/stdioNone、selectedCLIを全helperstdioにしない、CIMdecimal100ns→microsecondtrunc/full token/PID単独0/native回収claim0。Git送信は人のリスク通知後「承認します」による同送信先 https://github.com/tyaro/banto-ai.git への同種合成dev結果・PC内path報告の継続承認でreport/current-handoff2文書を一回[skip ci] commit/pushする。原先行拒否/元Githelper未起動保全。heartbeatは詳細payloadを含まない文書参照短指示のACTIVE維持、今回automation詳細payload再送/更新0。
+
+同layout1/core3候補比較完成、次は同manifest/devseed/layout1/quality-stressのC1 c1-phase-level、新ID dev-layout1-quality-c1-20261011へ1cell実評価。dataset anomaly-v03-dev-seed-2486912926863618161-layout-01-quality-stress。quality identity/file pinsは既存選択metadataのみ確認、本文未読/新モデル未開始。完成core3cell/layout0全6cell/replay/旧risk-owner/native/probe/collector/Git37/CI反復0。CI381385/4130完成保存維持/新query-download-verifier0、旧381365in_progress履歴/doc-onlyCI追跡0。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout観測未読/正式5残件・最終受入未完了/create_native早期拒否/全7役reader起動禁止/元caps-unknown原owner-stop/追加agent禁止維持。未完成formal/native全証明を少量dev開始条件に戻さない。engineering900秒2GiB/output1GiB/single32MiB/files32 checkpointはblocking中断/fullruntime/allwriterglobalnative容量証明ではない。Sol容量/人の停止時だけ保全後PAUSED。
+
+詳細 [layout1 C2 core実評価・3候補比較](results/anomaly-multiseed-v0.3-layout1-c2-core-evaluation-2026-10-11.md)。
+
+---
+
 ## 最新 — ACTIVE / dev layout1 C1 core実評価・初回pin拒否とmetadata失敗保全（2026-10-11）
 
 同chunk001 manifest75699B/72e5a34c662f77c4728583b9e61cc9d2977edd2ecc9e5286194aae0d2c055dbf/dev seed2486912926863618161/layout1/coreを既存CLI C1 c1-phase-levelで1cell実compute_evaluation。新ID dev-layout1-core-c1-20261011-input-pin-correction、actual checkout文書HEADd2ba11da7e286a361bda867bc63644d6ad7509ea/計算code661b27511826fcc87cb4a02930f276afbb8f95d9不変。10input pins→新snapshot→fresh fit/calibration→原result。元payload書込み/生成/replay/production-test変更/類似owner/追加agent/holdout観測読取り0。
