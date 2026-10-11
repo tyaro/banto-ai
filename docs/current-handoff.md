@@ -1,3 +1,25 @@
+## 最新保存状態：ACTIVE／少量devデータのC0/C1実評価・同条件replay完了（2026-10-11）
+
+人の「進めてください」に従い、入力・モデル・設定と結果の対応、失敗の区別、再実行を小さな実評価で確認した。追加agent起動・再活性化禁止。類似ownerケース追加0。新CLI/test2pathをcode **661b27511826fcc87cb4a02930f276afbb8f95d9**へ一回commit/push。詳細 [代表評価と再実行](results/anomaly-multiseed-v0.3-representative-evaluation-2026-10-11.md)。
+
+保存済みfirst dev seed2486912926863618161/layout0/core、18,000観測行の同一入力でC0/C1を実compute_evaluation。各48profile/14,400score、利用可能13,920/不能480を区別。C0機械0/10・sensor0/10・precision0/3・clean誤警報3、C1機械10/10・sensor10/10・precision20/20・clean0・検出遅延中央値1.5秒。C0の処理successは性能合格ではない。合成dev 1条件で候補採択・bootstrap/CI・正式性能評価をしない。
+
+初回40.0236526秒/OSpeak private146644992B、同条件新run IDへの明示replay37.6347623秒/147546112B、両exit0/complete/2cell success。入力hash/モデルID/設定/seed/計算source/code revision/runtime→結果pinをmanifestへ結び、原profile-score-episode-incident-metricsを保存。再実行で全数値hashと2evaluation raw bytesのhash一致。2unique評価＋明示replay2で、4独立データ評価と数えない。完成core/replayを次turn再実行しない。
+
+新4distinct/5bodyは初回3pass0.228秒＋資源返値形の訂正影響1/新completion-journal failure1の2pass0.679秒。複数source/run、最終source単一4successではない。計算失敗・done保存失敗はfailed/metrics除外/未着手保持、入力改変replayとholdoutは早期拒否、重複runは上書き拒否。旧完成焦点・類似owner追加・native/collector/probe/Git37/CI照会0。
+
+新data roots artifacts/representative-anomaly-evaluation/dev-core-20261011 と dev-core-20261011-replay は各閉鎖22file41016279B/41016106B。各manifest11019B/0898a0ee0eb0a5a15af8e52d320832abe06220e30cb8cad0d02f7f774a01e094、10929B/7896da1027c74e8b435328b4bcde9d47b6fc7f0ba716795f72249db1d42db5de。closure2540B/b6304bbb81d7b0fbe5f009a41965c543842c1df0db79f1a3215855160103be6d、2540B/a28904b8f8ae8e9f8b4d890ce06c7a8a50d67086c04055d2226e7e0bcb373491。元入力root不変、閉鎖後追加/同保存禁止。metadata artifacts/representative-evaluation-20261011-prep/のcomponents/post-save/owners-after-save/root-closedを優先。metadata512KiB32entry/reserve128KiB/single128KiB。
+
+117source-science（前115不変＋newCLI/test2）working pin、変更2Git exact、元科学式/config/schema/create_native437B拒否不変。declared計算source16/Gitworking原bytes又は明示CRLF一致はfull loaded runtime closure/native認証ではない。既存engineering900秒/2GiB/output1GiBはcheckpoint確認、blocking計算中断/全writer/global容量は証明していない。入力対応・実計算・failure・replayの確認を進め、類似owner追加を少量評価の開始条件に戻さない。
+
+初回CIM sandbox Access deniedは許可済みread-onlyで51元helper full creation/start_token一致・同original不在へ照合。元6failed/45passed・過去failed保持。広いrg inventoryの保護root拒否/holdout path名と不存在source selectorはforeground tool excerpts、holdout観測本文未読・helper/native失敗へ補わない。実評価/replay後55helper一致・同original不在、repo helper-critical ownerなし。最終人数はpost-save/owners-after-saveを優先。
+
+次は同じ保存済みfirst dev/layout0のquality-stressをC1で1件実行し、欠測による利用不能行・sensor検出の変化を見る。core/replay/完成4riskテスト/旧owner焦点を反復しない。必要な改善は観測した問題から進める。新code661b275の実fullSHA CI selectionは次heartbeat一回、前38136585791/fulla54961は最後in_progress・終端未確認を保持（必要ならcompact一回）。CIの待機・反復を新評価の条件にしない。完成381349/4112・379685/4097・旧4081failure/success・旧CI等の再照会/download/verifier0。
+
+create_native早期拒否/全7役whole.run限定reader実起動禁止、formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout観測未読/正式5残件・最終受入未完了、元caps-unknown原owner-stopを維持。Sol容量エラー/人の停止割込みでは保全後PAUSED・重複再試行なし。ACTIVE継続、状態不変通知なし。
+
+## 以下は保存済み先行状態（今回上段を優先）
+
 ## 最新保存状態：ACTIVE／source object callsite CI4112保存・少量代表評価への工程見直し（2026-10-11）
 
 人の明示再開を維持。追加agent起動・再活性化禁止。production/test code a54961c025fc7c9023c3a53a57993be99626240f不変、今回production/test/body/focus/類似ownerケース/モデル評価/native0。文書2path一回[skip ci]。詳細 [anomaly-multiseed-v0.3-ci-callsite-journal-and-evaluation-direction-2026-10-11.md](results/anomaly-multiseed-v0.3-ci-callsite-journal-and-evaluation-direction-2026-10-11.md) と今回post-save/owners-after-save/root-closedを優先。

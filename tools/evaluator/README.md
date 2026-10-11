@@ -1,5 +1,10 @@
 # benchmark runner
 
+2026-10-11：[少量の代表データによる実評価と再実行](../../docs/results/anomaly-multiseed-v0.3-representative-evaluation-2026-10-11.md)。
+`run_representative_anomaly.py` は保存済みdev/smokeの1 dataset・1〜2候補を実計算し、入力/設定/source/結果/成否を新run IDへ保存します。
+`--replay` は保存入力と計算sourceを照合して別runへ再計算します。C0/C1の1条件と明示replayで全結果一致を確認しました。
+失敗・未着手・判定不能を成功へ補完せず、holdoutと正式campaignの許可条件は変更しません。
+
 2026-09-25：[engineering結果の別process reader](../../docs/anomaly-v03-consumer-reader.md)を追加。writer終了後に外部marker/保存点pinを使って確認し、結果を別directoryへ記録します。13接続試験と実公開物の読取りが通過。通常権限で、元payload/markerは変更しません。
 
 2026-09-25：[engineering consumer API/CLI](../../docs/anomaly-v03-engineering-consumer.md)を追加。明示入力・2保存点pinから同じ入力の記述結果を選び、新規保存・読み戻しまで接続します。16試験通過、全120区間720評価の既存記述値を保持。集計/scoreの再計算・正式評価の起動なし。
