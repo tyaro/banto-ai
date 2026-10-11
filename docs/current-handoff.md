@@ -1,5 +1,19 @@
 # 次のタスク用の短い引継ぎ
 
+## 2026-10-11 JST 人の明示再開・read-wall CI4097原保存（ACTIVE）
+
+人の「再開して下さい」に従いheartbeat banto-10をACTIVEへ再開。以下のPAUSED・停止記録は履歴で、今回の明示再開とこの上段を優先し、新たな停止割込みまで継続する。追加agent起動・再活性化は禁止を維持。開始2026-10-11T10:31:43Z/clean HEAD 8d47f1d3143f33105017b3dbbcfefe5ee1a8a877/upstream一致、production/test code 0919168683de1bdeafaea73bd5e2b44da77f7459 不変。元10helper full saved creation-start_token/live-execution一致・CIM同original不在、原2failed/過去failed保持、repository helper-critical ownerなし。
+
+未保存37968546318/full091916をcompact一回completed-success/attempt1/push/Phase1CI/workflow349172377へ固定。2job113948965724 test(3.14)・113963171041 verify-python314-journal全success、jobs/artifacts/2logs/2ZIP各一回。原journal4219173B/0f748b5f...、remote37192B/4c8d276b...、両artifact digest一致。現独立3.14 verifier一回passed、実summary4097/failure0/error0/skip237/source不変/shared29 complete/必須28passed/crossPythonfalse。local37193対remote37192はCRLF1byte差・JSON全field一致、両原raw保持。4097は実summary後に固定、算術予定を実件数へしない。
+
+これは091916 read-wall codeの単一CI保存。local16distinct/body17の複数source-run/原4062failure/旧4081以下/旧2minorをこの成功へ書換えない。Ubuntu24.04/CPython3.14.8/runner20261004.327.1、image digest未取得・候補未採択。Windows正式3.14.0/実Win ABI/Job/ACL/stdio/child owner/容量/正式S4成功ではない。113source-science working不変/verified091916親tree・prior37継承、create_native437B旧pin不変。holdout観測未読/credit0。
+
+今回production/test/body変更0、再開引継ぎ・保存記録2pathだけ一回[skip ci] commit/push。新raw artifacts/ci-diagnostic-37968546318/、metadata artifacts/preformal-autonomy-resume-20261011-prep/ と artifacts/preformal-autonomy-resume-ci-post-20261011-prep/を元caps内で閉鎖。詳細 docs/results/anomaly-multiseed-v0.3-autonomy-resume-ci-read-wall-save-2026-10-11.md。旧CI/main/post/停止rootのcount-bytes-manifest pin不変、旧root追加・整理・完成focus/native/collector/probe/37Git反復0。
+
+37963486811/full2d66/attempt1は原API EOF・元failed helper・最後有効17:27 in_progressの未保存終端を保持し、今回再照会0。次heartbeatで必要なら未実行attempt1専用endpointの別unitを限定一回扱い、同failed API/原scriptの無条件再試行をしない。終端実証後だけ新専用rootへ未保存raw一度、小cause保存、訂正済み容量1caseを再実行しない。完成379685/4097・379656/4081・原4062failure/旧CIを再照会-download-verifierへしない。
+
+次は実同原owner worker bounded read wall・stdio・receipt/partial transport認証、全future検出/追加wall ledger/一時raw/32entry/global peak、OS排他-allwriter atomic、fresh runtime完全閉包-profile-policy-native request-unused exclusive root。診断専用公開/parent_failure実raw/child bootstrap/native call-return-HANDLE-child close-rename原transport/正式5残件・最終受入も未完了。create_native早期拒否/全7役whole.run限定reader起動禁止/formal_permission=false/元caps-unknown原owner-stop/ACTIVEを維持する。
+
 ## 2026-10-10 JST 人の明示停止（PAUSED）
 
 人の「止まりましょう」に従い、自走を停止し heartbeat banto-10 をPAUSEDへ更新した。停止保存開始 2026-10-09T18:14:10.478156+00:00、開始HEAD 49d6950230f732dfac83fc260022ac5855992636、production/test code 0919168683de1bdeafaea73bd5e2b44da77f7459 は不変。人の明示再開まで、新worker/native/focus/agent/CI追跡・待機・反復照会・機能変更を開始しない。以下のACTIVE・次heartbeat手順は履歴として保持し、この停止指示を優先する。
