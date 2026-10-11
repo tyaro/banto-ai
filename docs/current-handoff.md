@@ -1,3 +1,19 @@
+## 最新 — ACTIVE / dev layout1 C0 core実評価・継続GitHub送信承認（2026-10-11）
+
+リスク通知後の人の「承認します」により、C0合成dev評価結果・ユーザー名を含むPC内入力path・指定2文書の https://github.com/tyaro/banto-ai.git への送信と、今後同送信先への同種の合成dev報告の送信を承認済み。C0 quality比較文書2pathを一回[skip ci] commit/push、HEAD bfe07a2566fa56c7534262c2161b21383dd333b8/upstream/lsremote一致・当時clean。計算code661b275不変。先行審査拒否2回/元helper未起動保持、新専用 representative-c0-quality-export-approved-save-20261011-prep 閉鎖15file139242B/root-closed1725B/14282d6609fdadee84ccfcbb3d2ff32476c4ac165fecf11d91fdc073566c19dc、post-save4872B/1484971aedecff60ec5d538b59da896fd13a0c861a8f5af7636180bf734cebe5。新Githelper1passed、80helper原7failed73passed。
+
+同保存dev seed2486912926863618161/layout1/coreを既存CLI C0一件実評価。chunk001 manifest75699B/72e5a34c662f77c4728583b9e61cc9d2977edd2ecc9e5286194aae0d2c055dbf、10input pins→新snapshot→fresh fit/calibration→原result。元payload書込み/生成/replay/production-test変更/類似owner/追加agent0。CLI exit0/complete/1cell success、機械0/10・sensor0/10・precision0/3・clean誤警報2、全未対応equipment3。48calibrated/原fit_samples各0/calibration各290/14400score/利用可能13920・不能480（mode_recipe_or_phase）、不能score-residualnull/thresholdfalse。actualPython3.14.0 Windows AMD64、elapsed17.74478760000784秒/OSpeak private145911808B。
+
+19未検出はno_candidate_in_window、cycle00machine1件はfirst_candidate_no_target_onset/candidate1/vibration-only。7240/7241vibrationでepisode成立しても対象current onsetなし/causalfalse/matchednull/delaynull。grace7241episode1＋clean7712/8517episode2で原clean2と全未対応3の対応を確認。原clean_rate2/3365/value17.11738484398217、effective3255/17.695852534562214、burden3/20/value15.0。全20delaynull/検出delaycount0。cycle00motor4target window・原selected event/incident/episodeとcycle01machine/sensor targetwindow保存。固定persistence2/threshold6/matching/GT/science変更0、入力対応・保存・状態分類実経路不具合観測なし。
+
+旧layout0 C0は保存manifest指標だけ参照、旧モデル再計算0。宣言16calculator source/candidate・compiled config一致。同seed別layoutで新独立seedではない。完成firstpair6cell/replay/旧risk-owner/native/probe/collector/Git37/CI反復0。data dev-layout1-core-c0-20261011閉鎖19file26940117B/root-closed2235B/3fd4ad1a2a538df6b68cdff9b90bd4838e2e870820f364b1813d4f2d8566067b。MAIN representative-layout1-core-c0-20261011-prep と POST representative-layout1-core-c0-post-20261011-prep の原Git返値/post-save/owners-after-save/root-closedを最終保存状態として優先。117science-source・旧21root count-byte-closure pin不変。82helper原7failed75passed/full saved creation-start_token一致/CIM同original不在/repo helper-critical ownerなし。foreground fullidentity/stdioNone、selectedCLIrawをhelper全stdioにしない。文書functions.exec初回SyntaxErrorはisolate評価前/tools-process-tracked mutation0でselected原error保持、helper/model/CI/native/Sol失敗へしない。
+
+新報告とhandoffは同種合成dev報告の継続送信承認範囲で一回[skip ci] commit/pushする。Git保存後の原返値はPOST優先。次機能unitは同chunk001manifest/devseed/layout1/coreをC1 c1-phase-levelで新ID/1cell実評価。正式証明全完了を少量engineering評価開始の新条件に戻さない。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout観測未読/正式5残件・最終受入未完了/create_native早期拒否/全7役reader起動禁止/元caps-unknown原owner-stop/追加agent禁止保持。CI381385/4130完成保存維持、今回query/download/verifier0、旧381365in_progress履歴/doc-only CI追跡0。ACTIVE継続、Sol容量/人の停止時だけ保全後PAUSED。
+
+詳細 [layout1 C0 core実評価](results/anomaly-multiseed-v0.3-layout1-c0-core-evaluation-2026-10-11.md)。
+
+---
+
 ## 最新 — ACTIVE / C0 quality実評価・3候補×2条件比較完了（2026-10-11）
 
 次の保存済みdev pairをmetadataだけで特定済み。元chunk000 manifestには完成first pairの2datasetだけがあり、別pairも含むと仮定したforeground selectorはAssertionError/exit1、model/観測body読取り/Git変更0。原script/selected tool traceを保持し再実行しない。未読のsibling chunk001 manifestを一度だけ読んだ別metadata continuationで、同dev seed2486912926863618161/layout1のcore・quality pairを選択した。manifest75699B/72e5a34c662f77c4728583b9e61cc9d2977edd2ecc9e5286194aae0d2c055dbf、次dataset anomaly-v03-dev-seed-2486912926863618161-layout-01-core/candidate C0。新seedではなくlayout差、観測body未読/新評価0/生成0/元payload書込み0/holdout観測未読。Git送信の明示承認が得られた後に、新metadata rootでまず文書保存し、clean checkoutからこのC0 core一件へ進む。
