@@ -1,3 +1,27 @@
+## 最新保存状態：ACTIVE／source object callsite CI4112保存・少量代表評価への工程見直し（2026-10-11）
+
+人の明示再開を維持。追加agent起動・再活性化禁止。production/test code a54961c025fc7c9023c3a53a57993be99626240f不変、今回production/test/body/focus/類似ownerケース/モデル評価/native0。文書2path一回[skip ci]。詳細 [anomaly-multiseed-v0.3-ci-callsite-journal-and-evaluation-direction-2026-10-11.md](results/anomaly-multiseed-v0.3-ci-callsite-journal-and-evaluation-direction-2026-10-11.md) と今回post-save/owners-after-save/root-closedを優先。
+
+開始2026-10-11T11:51:14Z/HEAD3d29d68d84e228d857c7bece849282020ad2a75c-upstream-clean、元43helper full saved creation-start_token/live-execution一致/CIM同original不在、原5failed/38passed・過去failed保持/helper-critical ownerなし。
+
+38134980431/full55c3f86e3751b3049529a11f5a122246d624a3e4をcompact一回completed-success/attempt1/push/Phase1CI/.github/workflows/ci.yml/workflow349172377へ固定。原run11711B/ebd5fa09dce6951036a7b52d9a2bb4cd3c6bb95f84f55a77a946f63eb6f3de93/stderr0/exit0。2job114456896366 test(3.14)・114462685054 verify-python314-journal全success。未保存jobs/artifacts/2logs/2ZIP各一回、原gh stdout-stderr/exitを判定前保存、単一member/decoded8MiB/fullHEAD-run/artifact digest一致。ZIPdigestはrunner image digestではない。
+
+原journal4232438B/5b69cb20cb8e05726cc74dcc295de3234addf6c54e5c323d5e8012463a140a61、remote regression37192B/577d5ade7b7344baf594f03ca266d831b97af5f6c25870327881b3d27dcd9a7c。現3.14 verifierをexternal fullHEAD/workflow hash71f0e56eb9b0bb11a6e181e860a64ba45a6a4004cde7d4a5bf35d2b42cbf65a7/run-attemptへ一回結びexit0/passed。実summary後4112/fail0error0skip237（Windows native213/non-S4 optional24）/source_unchanged/shared29complete/必須28passed/cross_python_comparison=false固定。CLI7の実行前working-Git原pins/exit0保存、6exact/1knownCRLF、before-after不変。local37193対remote37192は末尾CRLF/LF差1byte、raw_equal=false/json_equal=true/CRLF-only=true・両raw保持。verification-save4055B/64f1ef2b2d61459ed3efb7b6c0eccbd9839adc7f4872539b837fd9009ccf7fc2。helper全process logs/full loaded runtime/native認証ではない。
+
+実Ubuntu24.04/x86_64/GCC13.3/kernel6.17.0-1022-azure/Python3.14.8/SOABIcpython-314-x86_64-linux-gnu/runner20261004.327.1、image digest未取得/候補未採択。4112は55c3 callsite source/runの単一CI保存、最新a54961 output pair/旧local15・14複数source-runs/過去failed/旧CI/Win ABI/Job/ACL/stdio/child/native/容量/正式S4へ読み替えない。完成旧CI/焦点/容量1case/元全14call4358432B拒否/collector/probe/profile/37Git反復0。
+
+新code a54961c025fc7c9023c3a53a57993be99626240fの実fullSHA selection一回=38136585791/push/Phase1CI/in_progress、原stdout156B/fa6ed77bcb058c397674ebb72f8c050bde28721aebd19a6ddce1f4d7f113cffc/stderr0/原exit0。attempt/jobs/終端/journal/count未固定、compact/download/待機/反復0/doc-only新CI追跡0。
+
+ユーザーは入力・モデル・設定と結果の対応、失敗の区別、再実行可能性を土台に少量代表評価を回し、観測した問題を補強する進め方への意見を求めた。その方針を推奨する。既存owner差替えテストは保持し、類似ケース追加を評価開始条件にしない。次工程は実行IDへinput hash/model ID-version/config/seed/code revisionを結び、原予測・指標・failed/incompleteを別statusで保存、同manifestを新run IDへ再実行する最小経路の確認と具体化。既存dev/smoke1〜2代表ケースから進める。今回は意見要求のため取得済みCI保存だけ、実モデル評価開始0/正式holdout観測0/native入口解除0。
+
+115source-science不変、検証済みa54961親tree/prior37/doc-only非交差継承/科学hash metadataだけ/holdout未読/credit0。旧SourceBatch14301B/0903a855f665499d9e3eba5248ceaca09387b948a7051d42704d792db18c0b17/create_native437B/0bd7b84f0a3dc0bd22a865ac8b2b4ccedc0e71ea50a177b0e6b086df07fdcc7c/元caps-v1schemas保持。named30source992758B/最大archive130691B/source差381Bはruntime-global容量ではない。
+
+原CI artifacts/ci-diagnostic-38134980431/、metadata artifacts/preformal-ci-output-pair-current-20261011-prep/ と artifacts/preformal-ci-callsite-terminal-post-20261011-prep/。最終post-save/owners-after-save/root-closedをpins/count/bytesの優先根拠にする。原run rawはmetadataへ一度保存したbytesで、CIへ再取得-copy0。CI16MiB256entry/single8MiB、metadata各512KiB32entry/reserve128KiB/single128KiB。閉鎖後追加/同保存/4112/download/verifier/元helper反復禁止。先行pair15/103844・selection9/19515・post31/313577のroot pins/count/bytes不変。
+
+次heartbeatは38136585791/fulla54961 compact一回、終端のみ未保存rawを新専用rootへ一度、現3.14単一journal/独立verifier/2logsをfullHEAD-workflow-run-attempt-jobsへ結び実summary後count固定。未終端は待機反復なし。少量代表評価の最小実行経路を整理する。停止保存済み古い部分CIは履歴のまま保持。全future transport/OS排他-allwriter atomic/fresh loaded全閉包/全32entry-global peakの未完了は記録するが、類似ownerテスト追加を少量評価開始の新条件にしない。create_native早期拒否/全7役whole.run限定reader実起動禁止/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/元caps-unknown原owner-stop保持。Sol容量エラー/人の停止割込みでは保全後PAUSED・重複再試行なし。状態不変通知なし、意味ある完了/失敗/必要操作だけ報告する。
+
+## 以下は保存済み先行状態（上段と最新結果を優先）
+
 ## 最新保存状態：ACTIVE／supervisor module発行FileIO pair・元close/read owner保持（2026-10-11）
 
 人の明示再開を維持、追加agent起動・再活性化禁止。production2＋新test1/3pathをcode `a54961c025fc7c9023c3a53a57993be99626240f`へ一回commit/push。文書2path一回[skip ci]。詳細 [anomaly-multiseed-v0.3-supervisor-output-pair-2026-10-11.md](results/anomaly-multiseed-v0.3-supervisor-output-pair-2026-10-11.md) と最終post-save/root-closedを優先。開始HEAD0c7084771f2111b7a41cc73a5a60c0d7e90b9588/upstream-clean、元34helper full creation-start_token/live-execution一致/CIM同original不在、原5failed・過去failed保持/helper-critical ownerなし。
