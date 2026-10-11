@@ -1,3 +1,25 @@
+## 最新保存状態：source object–supervisor callsite同原owner保持（ACTIVE・2026-10-11）
+
+人の明示再開を維持。開始clean HEAD767a90c1c27faf9956ba7ccc1d58b4790058faf1、先行24helper full saved creation-start_token/live-execution一致/CIM同original不在/helper-critical ownerなし。追加agent起動・再活性化禁止。
+
+production3＋新test1/4pathをcode HEAD **55c3f86e3751b3049529a11f5a122246d624a3e4** へ一回commit/push。文書2path追補は一回[skip ci]。詳細 [同原ownerとsupervisor callsite](results/anomaly-multiseed-v0.3-source-object-supervisor-callsite-2026-10-11.md)。今回完成379634/2d66/4081failure・379685/091916/4097・379656/f9/4081・379582/fe518/4062failure/旧failure/旧2minorの照会-download-verifier0。過去source/run/failedを書換えない。
+
+reader capture_supervisor_source_object→同supervisor SourceObjectOutputCallsite→同原SourceObjectBatchContractPreparation.capture_raw→RawCaptureを接続。元(parent,index,stdout,stderr,opaque receipt,exit,partial,read_wall)をgetter前private保持→元preparation/worker getter return→原callback/worker/binding/ledger→同原絶対(clock,started_ns,deadline_ns) tupleを渡す。worker差替え/alias-ledger消去/再入/第二初期化-binding/foreign cached inputsは原第一error保持。readが拒否を飲んでreturnしても元bytes/prefixを保持し後続read/stderr/raw登録を止める。cachedは無clock/無read、failed再入ledger増分0。既存同原ParentPublicationRetentionへprivate callsite tupleを保持、新keeper/close/reclose/reap0/借用stream close0。
+
+実superviseの新opt-in source_object_callsiteは元argv/cwd/control_root/limits/全callbackを保持しclock/path/probe/FileIO/Popen前にpreparation-only拒否。default supervisor/actual generateから実outputを発行する接続は未完了。worker/streams/window/receipt/exit/partialはcaller Python工程入力で、実supervisorの書込み専用xb pair/Popen creation/HANDLE/Job/stdio/child/native owner認証ではない。blocking read中断/全経路wall/全future追加ledger・検出byte・一時raw/native buffer/全32entry/global coupled peak未証明。原14call4358432B容量拒否再実行・解除0。
+
+新15distinct/body18。初回12一回0.02880550001282245秒10pass/fail1error1skip0、tuple返値をdict/recordと取り違えたtest期待値をfailed保存。失敗2＋第二初期化/第二binding/worker getter割込みの新3だけv2一回0.017540000029839575秒4pass/fail1error0。tuple identity期待の残failure1だけ訂正しv3一回0.004191000014543533秒1pass。完成初回10/v2完成4/旧16・19/容量1case/旧suite反復0。複数source/runで最終source単一15successではない。小FileIO/実monotonic_ns/Mock/read注入/opaque worker/ReaderGitParent.__new__/retention Escape、実native0。
+
+元components helperはreader.SOURCE_NAMES名誤参照AttributeError/exit1を保存。別continuationで未保存metadataだけ完成、元helper/試験反復0。今回focus2failed/components1failedと過去failedを保持。rg selector2path missと文書builder functions.exec SyntaxErrorはtool excerptのみ、後者はisolate評価前/tools0/process開始0/tracked mutation0、foreground creation/full process logsNone。114source-science前後/未変更110 verified親tree-prior37-doc-only非交差継承/変更production3＋新test1 Git exact/safety0。科学hash metadataだけ/holdout観測未読/credit0。named30source978466B/最大archive130691B/e5ab8de3cc7f02f6ccc9f5eb08feeb5e283a64782c2e16bc78ac8f25c6f36337/source cap差381Bはfull runtime/global容量ではない。旧SourceBatch14301B/create_native437B/元caps/v1 schemas不変。
+
+code Git batch221167B4entry/実累積4.267719199997373秒、512KiB16entry/output1MiB/累積30秒。原root artifacts/preformal-source-object-supervisor-callsite-20261011-prep/ 最終21file158358B/root-closed2415B/4717ba766d3799f0430f28db16849a0785264cb52a1963d2a17a56868c2c7f84閉鎖。post artifacts/preformal-source-object-supervisor-callsite-post-20261011-prep/も保存後閉鎖、最終count/bytes/manifest/full helpersはpost-save/owners-after-save/root-closedを優先。両metadata512KiB32entry/reserve128KiB/single128KiB、追加/同保存/完成15/元failed helper再実行禁止。
+
+新code fullSHA55c3f86e3751b3049529a11f5a122246d624a3e4のgh run list一回は空配列、stdout3B/37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570/stderr0/exit0。新run/attempt/jobs/終端/journal/count未固定、待機/反復0/doc-only新CI追跡0。次heartbeatで実fullSHA選択一回、未終端/空は反復・待機なし、終端のみ新rootへ未保存raw一度/実summary後count。完成379634/4081failure・379685/4097・379656/4081・379582/4062failure・旧CI/focusを照会-download-verifier-reexecute0。
+
+次は実supervisor発行write/read stdio ownerと元絶対期限の受渡し、receipt/partial実transport、診断専用公開/parent_failure実raw/child bootstrap、OS排他-all-writer atomic、fresh loaded全閉包-profile-private policy-native request-unused exclusive root、全32entry/global coupled peak。今回caller holder/入口拒否を実native認証/容量許可へ補わない。create_native早期拒否/全7役whole.run限定reader起動禁止/元caps-unknown原owner-stop/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout観測未読/正式5残件・最終受入未完了/追加agent禁止を維持。Sol容量エラー/人の停止割込みでは保全後PAUSED・重複再試行なし。ACTIVE継続・状態不変通知なし。
+
+---
+
 # 次のタスク用の短い引継ぎ
 
 ## 2026-10-11 JST 旧source-object CI4081 failure原保存（ACTIVE）
