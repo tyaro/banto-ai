@@ -1,3 +1,23 @@
+## 最新 — ACTIVE / dev layout3 C0 core実評価・C0 core4layout保存比較（2026-10-12 JST）
+
+保存済みchunk003 manifest75699B/40be5e90bb27173cf9d21252940f13beb86a17187ea0fb25afa77315c516056d/dev seed2486912926863618161/layout3/coreを既存CLI C0 c0-diff-control、新ID dev-layout3-core-c0-20261012で1cell実compute_evaluation。input10pins→新snapshot→fresh calibration→原profiles/scores/episodes/events/incidents/metrics。元payload書込み/生成/replay/production-test変更/類似owner/追加agent/holdout読取り0。生成identityと実評価candidate別field。actual文書checkout151a1dbe670b54985efba0fbbcdfdfeee19bf12d/計算code661b27511826fcc87cb4a02930f276afbb8f95d9不変。
+
+CLI exit0/complete/1cell success、機械0/10・sensor0/10・precision0/3・clean誤警報3・全未対応equipment3（全clean）。48calibrated/fit_samples各0/cal290各/14400scores、利用可能13920・不能480（全mode_recipe_or_phase/null score-residual/thresholdfalse）。input mask/observation18000行対応/non-ok0/欠測0。source3/equipment3/incidents20/events40。全20no_candidate_in_window/candidate0/causalfalse/matched-source-equipment null/support[]/delaynull、検出delaycount0/summary原null。固定C0threshold4/persistence2不成立、全20event-incident/全20motor4target窓/全6episode原EXTRACT保存、対象窓原maxstreak分布{1: 20}。GT/threshold/persistence/matching/science変更0、実入力対応・保存・分類不具合観測なし。原rates/burden単位保持/確率変換0。actualPython3.14.0 Windows AMD64、elapsed37.086205600062385秒/OScheckpointpeak private145674240B。処理success≠性能合格/採択。
+
+旧layout0/1/2 C0 coreの保存manifest/configだけと4layout比較。宣言16calculator source・candidate/compiled config一致、入力10file名同じ/各layout原pin差保持。旧3cell本文再展開/再compute0。layout1 clean2と全未対応3は原差保持。同seed4layout/C0coreで新独立seed/bootCI/勝者/採択0。前3layout×2strata×3候補18cell比較完成を保全、今回を旧18cellの再評価へしない。
+
+DATA閉鎖{'files': 19, 'bytes': 26939466, 'manifest_pin': {'bytes': 2249, 'sha256': '18119b25d23a8de6bc1983e5ee93d08778ca2a3655b7cd2fa48c18c934aa72d9'}}、EXTRACT閉鎖{'bytes': 277909, 'files': 7, 'manifest_pin': {'bytes': 1066, 'sha256': '17a8319b9249c07d1260a7a0524561e943d0ed8e95730013bab6a44ebde999bf'}}。MAIN representative-layout3-core-c0-20261012-prep/POST representative-layout3-core-c0-post-20261012-prepの最終post-save/owners/root-closed優先。4layout比較metadata pin{'bytes': 14914, 'sha256': '48b3495d718c31b6d12a249bdf0eb19027204d483f4731aff3d901e0d81fb7a6'}。117science-source/旧73root count-byte-closurepin/外部固定C1 MAIN35file226520B容量false/旧C2 cache補足不変。原root追記/原raw整理/削除移動/上限緩和0、Python-B/recursive/metadata512KiB32entry/reserve128KiB/single128KiB/新script-failure-closure事前計上/対象文字列限定/hash-seed無限定置換0。
+
+元123helper原11failed112passed/full saved creation-start_token/live-execution一致/CIM同original不在/repo helpercriticalなし、今回model/analysis2passed/newfailed0。前layout2 C0のGit commit待機Timeout原helperfailed/commit返値None/6calls exit0/elapsed145.8506676000543秒を保全。別read-only unitで既存commit151a1db/clean/Gitprocessなし確認、新push-only unit一回でAPI/upstream/clean一致。元commit/helper再実行/failed書換え0、foreground inspect名衝突import failure（helper/Git開始0）保持。前C2 Git lsremote128/Connection resetと別continuation保持。今回functions.exec文書builder SyntaxError Unexpected identifier toolsはisolate評価前/nestedtools-process-trackedmutation0、原toolerrorMAIN保存/初process builderだけ完成、model-helper-CI-native-Sol failureへしない。foreground fullcreation/stdioNone、選択CLIを全helperstdioにしない。CIMdecimal100ns→microsecondtrunc/fulltoken/PID単独0/native回収claim0。
+
+同送信先GitHubへの同種dev結果/ユーザー名PC内pathはリスク通知後の人の継続承認内。準備済みhandoff/report2を一回[skip ci] commit/pushし、Git/API返値・HEAD-upstream-remote ref-clean/docpinsはPOSTへ保存。今回新commitの累積Git上限30秒/512KiB16entry/stdout1MiBを維持、既存timeoutをblocking wall保証へ補わない。automation詳細転記/更新0/ACTIVE維持。
+
+次unitは同manifest/dev seed/layout3/coreをC1 c1-phase-level、新ID dev-layout3-core-c1-20261012で1cell実評価。input10pins/manifest40be不変、元生成candidateC0と実評価C1別field/新生成0/旧完成model反復0。qualityは保存metadata10pinsだけ/観測本文未読。CI381385/4130保存維持/新query-download-verifier0/旧381365inprogress歴史/doc-onlyCI追跡0。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/create_native早期拒否/全7役reader起動禁止/元caps-unknown原owner-stop/追加agent禁止。未完了formal/nativeを少量dev開始条件に戻さず、engineering900秒2GiB/output1GiB/single32MiB/files32 checkpoint≠blocking/fullruntime/allwriter-global-native容量証明。Sol容量/人の停止で保全後PAUSED。
+
+詳細 [layout3 C0 core実評価](results/anomaly-multiseed-v0.3-layout3-c0-core-evaluation-2026-10-12.md)。
+
+---
+
 ## 最新 — ACTIVE / dev layout2 C0 quality実評価・3候補×2strata×3layout保存比較完成（2026-10-12 JST）
 
 同保存chunk002 manifest75699B/c97c3564c28b679668c2f7425b33aaedadec0c90c45e5705e929131826797783/dev seed2486912926863618161/layout2/quality-stressを既存CLI C0 c0-diff-control、新ID dev-layout2-quality-c0-20261012で1cell実compute_evaluation。生成identityと実評価cell別field。actual文書checkout3841646cc950bd713c502ed7aa3a4c60de0b0feb/計算code661b27511826fcc87cb4a02930f276afbb8f95d9不変。input10pins→新snapshot→fresh calibration→原result、元payload書込み/生成/replay/production-test変更/類似owner/追加agent/holdout読取り0。
