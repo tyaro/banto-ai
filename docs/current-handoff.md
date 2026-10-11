@@ -1,3 +1,25 @@
+## 最新保存状態：ACTIVE／supervisor module発行FileIO pair・元close/read owner保持（2026-10-11）
+
+人の明示再開を維持、追加agent起動・再活性化禁止。production2＋新test1/3pathをcode `a54961c025fc7c9023c3a53a57993be99626240f`へ一回commit/push。文書2path一回[skip ci]。詳細 [anomaly-multiseed-v0.3-supervisor-output-pair-2026-10-11.md](results/anomaly-multiseed-v0.3-supervisor-output-pair-2026-10-11.md) と最終post-save/root-closedを優先。開始HEAD0c7084771f2111b7a41cc73a5a60c0d7e90b9588/upstream-clean、元34helper full creation-start_token/live-execution一致/CIM同original不在、原5failed・過去failed保持/helper-critical ownerなし。
+
+元(parent,index,stdout path,stderr path,opaque receipt,declared exit,partial,read_wall)をgetter/validation前private保持→同supervisor module SourceObjectOutputPairPreparation FileIO xb pair→原factory/getter/fileno/fstat/lstat/clock/checkpoint/close返値を判定前operationsへ保持→元2stream literal None close returnだけrb pair→元write/read file identity・独立raw maxima→同原SourceObjectOutputCallsite/RawCaptureへ元read pair/receipt/exit/partial/同絶対windowを接続。期限リセット0。unknown close/None以外close返値/部分open/read-open/期限超過/path差替え/alias消去/再入/第二初期化・prepareは第一error固定、原stream/返値/bytes-prefix保持、次read/stderr/close/raw登録・replay0。cached無clock/無IO。既存ParentPublicationRetentionへprivate pair ledger追加、新keeper/reclose/reap0/production read stream close0。
+
+今回はsupervisor **module内のPython FileIO準備**で、実supervise default with/Popen/on_started/stop_fenceへ接続0・同opt-in入口拒否/actual generate新keyword未発行を維持。worker/receipt/exit/partial/windowはcaller Python入力、実Popen creation/HANDLE/Job/stdio継承/child/native transport認証ではない。blocking IO中断/全経路wall、外側caller writeのbounded transport、他writer同inode排除/OS排他-allwriter atomic、全future ledger/一時raw/buffer/decoded/native保持/全32entry/global coupled peak/RSS未証明。全14call4358432B容量拒否の再実行・解除0。fresh loaded全閉包/profile/private policy/native request/unused exclusive root未発行。
+
+新14distinct/body14=新12一回0.09847760002594441秒pass＋第二初期化/第二read-open失敗の新risk2だけ一回0.01494350004941225秒pass、fail0error0skip0。複数test source/runで最終source単一14successではない。完成12/旧15・16・19/容量訂正1case/旧suite/native/collector/probe/37Git/CI/verifier再実行0。小実FileIO/実monotonic_ns/注入factory-close-read-clock/Mock checkpoint/opaque worker-receipt/ReaderGitParent.__new__/retention Escapeだけ、実Job/HANDLE/ACL/stdio/child/native0/test cleanupはproduction-native回収ではない。selected operations件数/prefixはhelper全processログではない。apply_patch期待quote不一致はmutation前tool excerptだけ保全、foreground creation/full process logsNone。
+
+115source-science前後一致、changed3 Git exact＋未変更112 verified55c3親tree/prior37/doc-only非交差継承、safety0/科学hash metadataだけ/holdout未読/credit0。named30source992758B/最大archive130691B/e5ab8de3cc7f02f6ccc9f5eb08feeb5e283a64782c2e16bc78ac8f25c6f36337/容量差381Bはruntime-global容量ではない。旧SourceBatch14301B/0903a855f665499d9e3eba5248ceaca09387b948a7051d42704d792db18c0b17/create_native437B/0bd7b84f0a3dc0bd22a865ac8b2b4ccedc0e71ea50a177b0e6b086df07fdcc7c/旧caps-v1schemas不変。code Git batch163160B3entry/実累積4.291871100082062秒、512KiB16entry/output1MiB/累積30秒維持。
+
+先行55c3実fullSHA selection一回=38134980431/push/Phase1CI/in_progress、原stdout156B/2ecac7f6b6bab508221d8573f4fab60f5bf2e3fb770ad4fdccca7d4775da4117/stderr0/原exit0。attempt/jobs/終端/journal/count未固定、待機反復0。新a54961実fullSHA selection一回は空配列、原stdout3B/37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570/stderr0/原exit0。空をsuccessへしない。完成379634/2d66/4081failure・379685/091916/4097・379656/f9/4081success・379582/fe518/4062failure・旧CI再照会/download/verifier0/doc-only新CI追跡0。
+
+原 artifacts/preformal-supervisor-output-pair-20261011-prep/閉鎖15file103844B/root-closed1750B/fe6474965e33a238e9281c2be481785dbb8c19da2aeeec9817bc3fa1dc978fdf。post artifacts/preformal-supervisor-output-pair-post-20261011-prep/、CI selection artifacts/preformal-ci-supervisor-callsite-current-save-20261011-prep/、各metadata512KiB32entry/reserve128KiB/single128KiB、最終post-save/owners-after-save/root-closedのpins/count/bytesを優先。閉鎖後追加/同保存/完成14/元helper反復禁止。先行21/158358・post32/279783のroot pins/count/bytes不変。
+
+次heartbeatは38134980431/full55c3 compact一回と新a54961実fullSHA selection一回。終端のみ未保存rawを新専用rootへ一度、現3.14単一journal/独立verifier/2logsをfullHEAD-workflow-run-attempt-jobsへ固定し実summary後count確定。未終端/空は待機反復なしで未完成機能unitへ。停止保存済みの古い部分CIは履歴のまま保持。
+
+次機能はpairを実supervise元write stdio/Popen/on_started/stop fence/元絶対期限へ結ぶ経路、全future receipt/exit/partial実transport認証、診断公開/parent_failure原raw/child bootstrap、OS排他-allwriter atomic、fresh loaded全閉包、全32entry/global coupled peak。caller holder/Python close-read identityをnative許可へせずcreate_native早期拒否/全7役whole.run限定reader起動禁止/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout観測未読/正式5残件・最終受入未完了を維持。Sol容量エラー/人の停止割込みでは保全後PAUSED・重複再試行なし。状態不変通知なし、意味ある完了/失敗/必要操作だけ報告する。
+
+## 以下は保存済み先行状態（上段と最新結果を優先）
+
 ## 最新保存状態：source object–supervisor callsite同原owner保持（ACTIVE・2026-10-11）
 
 人の明示再開を維持。開始clean HEAD767a90c1c27faf9956ba7ccc1d58b4790058faf1、先行24helper full saved creation-start_token/live-execution一致/CIM同original不在/helper-critical ownerなし。追加agent起動・再活性化禁止。
