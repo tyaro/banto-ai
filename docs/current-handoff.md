@@ -1,3 +1,23 @@
+## 最新保存状態：ACTIVE／dev quality-stress C1実評価・欠測によるsensor未検出1件を保存（2026-10-11）
+
+人の「進めてください」を継続し、保存済みfirst dev seed2486912926863618161/layout0/quality-stressをC1で1件実compute_evaluation。追加agent起動・再活性化禁止、類似ownerテスト追加0。production/test/科学式/config/schema変更0。詳細 [quality-stress実評価](results/anomaly-multiseed-v0.3-quality-stress-evaluation-2026-10-11.md)。
+
+CLI exit0/complete/1cell success、機械10/10・sensor9/10・precision19/19・clean誤警報0。48profile calibrated/14400scoreの利用可能13880・不能520。core保存結果ではsensor10/10・利用可能13920・不能480だった。quality-mask欠測30観測行、primary unavailableはphase等480/current quality30/previous quality10。非排他的tag重複を別行として加算しない。不能score/residual=null・threshold_exceeded=falseを確認。
+
+唯一の未検出cycle09/motor-01.motor_temperature/spikeはsample8827でscore192.62635987390755>6、8828–8830欠測/8831previous欠測、8832score0.05515233491377427。固定persistence2/quality resetでepisode成立せず、原matching=no_candidate_in_window/candidate0/causal_detected=false/delay=null。検出19件だけの中央値2秒/平均1.5263157894736843秒。処理successを性能合格へせず、未検出を遅延補完・閾値変更で成功へしない。
+
+当該実checkoutは5ddbc5dd36c83c66e38fa5fa16ea9e0cff576902。宣言計算16sourceはcode661b275から不変/working-Git literal又は明示CRLF一致、input10file/外部manifest05efpin/モデル設定/seed/code/runtime→原結果対応を新runへ保存。runtime Python3.14.0/Windows/AMD64。elapsed32.100969000020996秒/OSpeak private148582400B。観測9600624B/7965d24417c902ba23565227b3b57adec0704ea456a458c0a380630dcb83057e、run manifest8042B/3042be397642799af8c5ac6d0d2fb82c8f92f0a3d66a8fe983f8cc1b8e4431d3。new生成0/replay0/完成core-replay-4risk tests反復0。
+
+data artifacts/representative-anomaly-evaluation/dev-quality-c1-20261011 は閉鎖19file27555137B/root-closed2224B/72b5589455351a4b40ee564d522cae92a0d714c5cd62061e2402abee5c2b1f21。元payload不変、旧4rootのcount-byte-closure pin不変、全117source-science working pin不変。metadataは artifacts/representative-quality-stress-20261011-prep と representative-quality-stress-post-20261011-prep の最終post-save/owners-after-save/root-closedを優先。各512KiB32entry/reserve128KiB/single128KiB、閉鎖後追加・同保存・元helper反復禁止。
+
+新code661b275 fullSHA CI selection一回は38138556456/push/Phase1CI/in_progress、原stdout-stderr/exit0保存。attempt/jobs/終端/journal/count未観測。前38136585791/fulla54961は最後in_progressを保持・今回再照会0。完成旧CI/旧焦点/native/collector/probe/Git37/doc-only CI照会0。開始59helper full saved creation-start_token/live-execution一致/CIM同original不在（7failed52passed保持）、評価とCI選択後61helper一致・repo helper-critical ownerなし。最終人数はpost-saveを優先。開始foreground Gitのignore警告はexit0 tool excerpt/full identity・process logsNoneとして保存。
+
+次機能は同じ元payloadの保存済みcoreをC2で1件実評価する。元manifest metadataには当該pairだけ、別seed生成を今回追加していない。完成C1 quality/core/明示replay・類似owner反例を反復せず、実評価で困った経路だけ補強。CI38138556456 compact次heartbeat一回、未終端なら待機・反復なしでモデル評価へ。候補採択/bootstrap/CI推定0。
+
+既存engineering900秒/2GiB/output1GiB/single32MiB/files32 checkpoint上限維持、blocking中断/full runtime closure/全writer-global-coupled/native容量証明ではない。create_native早期拒否/全7役whole.run限定reader実起動禁止/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout観測未読/正式5残件・最終受入未完了/元caps-unknown原owner-stopを維持。Sol容量エラー/人の停止割込みでは保全後PAUSED・重複再試行なし。ACTIVE維持、意味ある完了/失敗/必要操作だけ報告。
+
+## 以下は保存済み先行状態（今回上段を優先）
+
 ## 最新保存状態：ACTIVE／少量devデータのC0/C1実評価・同条件replay完了（2026-10-11）
 
 人の「進めてください」に従い、入力・モデル・設定と結果の対応、失敗の区別、再実行を小さな実評価で確認した。追加agent起動・再活性化禁止。類似ownerケース追加0。新CLI/test2pathをcode **661b27511826fcc87cb4a02930f276afbb8f95d9**へ一回commit/push。詳細 [代表評価と再実行](results/anomaly-multiseed-v0.3-representative-evaluation-2026-10-11.md)。
