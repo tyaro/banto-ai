@@ -1,3 +1,25 @@
+## 最新 — ACTIVE / dev layout1 C0 quality実評価・3候補×2strata比較完成（2026-10-12 JST）
+
+同保存chunk001 manifest75699B/72e5a34c662f77c4728583b9e61cc9d2977edd2ecc9e5286194aae0d2c055dbf/dev seed2486912926863618161/layout1/quality-stressを既存CLI C0 c0-diff-control、新ID dev-layout1-quality-c0-20261012で1cell実compute_evaluation。actual文書checkoutHEAD155ff984554cd2d66dfdc4522852feb19f6c0304/計算code661b27511826fcc87cb4a02930f276afbb8f95d9不変。10input pins→新snapshot→fresh calibration→原result、元payload書込み/生成/replay/production-test変更/類似owner/追加agent/holdout読取り0。
+
+CLI exit0/complete/1cell success、機械0/10・sensor0/10・precision0/3・clean誤警報2、全未対応equipment3（grace1+clean2）。48calibrated/fit_samples各0/calibration各290/score14400、利用可能13880・不能520（phase480/current quality30/previous quality10）。nonexclusive tagsは加算せず、全不能score-residualnull/thresholdfalse。原mask-observation18000行対応/温度missing30観測。全20未検出delaynull/検出delaycount0、19no_candidate_in_window/candidate0、cycle00machine1first_candidate_no_target_onset/candidate1/vibration-only。source3/equipment3/incidents20/events40。actualPython3.14.0 Windows AMD64、elapsed22.988368000020273秒/OSpeak private146255872B。処理successを性能合格/勝者/採択へしない。
+
+cycle00current7237score24.13687965714981/1→7238 .22323097384624419/0、7240score25.687805712066133/1→7241 1.6416314938890728/0、固定persistence2不成立。vibration7240/7241episode成立でもcurrent対象onsetなし/causalfalse/delaynull。cycle01sensor7424/7427大score各1→翌available行0、event/matching窓7424–7430に欠測なし。cycle09sensor8864score138.82544532259593/1→8865–8868欠測reset→8869 .10410432585740122/0。欠測一件で全20missを説明しない。全20event/incident・5selected4target windows・全source/equipment・30nonok input原extract保存。C0threshold4/C1-C2threshold6/persistence2/GT/matching/science変更0、入力対応・保存・状態分類実経路不具合観測なし。clean_rate2/3365原17.11738484398217/effective3255/17.695852534562214・burden3/20原15.0を確率へしない。
+
+layout1 core/qualityの3候補×2strata比較完成。C0両0/10・0/10・precision0/3・clean2、C1/C2両machine10/10・core sensor10/10 precision20/20、quality sensor9/10 precision19/19、clean0。同stratum input10全pin/全6宣言16source・candidate/compiled config一致。旧layout0全6も保存manifest/config指標だけ比較（C2machine4/10等の原未検出保持）。新compute今回1だけ/旧11cell再compute0。同seed2layout2strata12cellで12独立dataset/新独立seed/bootCI/勝者/採択へしない。
+
+data dev-layout1-quality-c0-20261012閉鎖{'bytes': 27383727, 'files': 19, 'manifest_pin': {'bytes': 2259, 'sha256': '1ccdc511bd60ba0b7cf500fb2673017639c8d974d637a68f4214c049571ce5a3'}}、EXTRACT representative-layout1-quality-c0-extract-20261012-prep閉鎖{'bytes': 113661, 'files': 6, 'manifest_pin': {'bytes': 953, 'sha256': 'd45ea35a578ae83c50c643adba5b6e31d2c9f973b1393bbc2405d3fe87f94834'}}。MAIN representative-layout1-quality-c0-20261012-prep/POST representative-layout1-quality-c0-post-20261012-prepのpost-save/owners/root-closedを最終Git状態として優先。117science-source・旧41root/外部固定C1 MAIN35file226520B/旧C2 cache補足pin不変。原capacityfalse/failed/closure coverage制限/前回C2quality旧scope-roster表示及びforeground TypeErrorを保持、原root追記/再実行/削除移動/上限緩和0。新metadata python-B/recursive count-byte-pin/事前script-failure-closure reserveで512KiB32entry/reserve128KiB/single128KiB。
+
+元99helper原9failed90passed/full saved creation-start_token/live-execution一致/CIM同original不在/repo helpercriticalなし、今回model/analysis2passed。新foreground初回script配置は相対root照合AssertionErrorでmutation前拒否、続く2未存在path起動はsource評価/モデル開始0、原selected chunks保存。絶対rootの別continuation後だけ今回実compute。foreground fullidentity/stdioNone、helper/model/CI/native/Sol失敗へしない。CIMdecimal100ns→microsecondtrunc/full token/PID単独0/native回収claim0。
+
+同GitHub送信先への同種合成dev結果・PC内path報告の人のリスク通知後継続承認で2文書を一回[skip ci] commit/pushする。保存後原Git返値/HEAD-upstream-lsremote-clean/docpinsはPOST優先。automation詳細payload転記/更新0、ACTIVE維持。CI381385/4130完成保存維持/新query-download-verifier0、旧381365in_progress履歴/doc-onlyCI追跡0。
+
+次pairはchunk002 manifestmetadataのみで選択済み、75699B/c97c3564c28b679668c2f7425b33aaedadec0c90c45e5705e929131826797783。core anomaly-v03-dev-seed-2486912926863618161-layout-02-core、same seed2486912926863618161/layout2、quality pair10pinsも保存。次観測本文未読/モデル未開始/生成0/元payload書込み0。次unitはC0 c0-diff-control、新ID dev-next-core-c0-20261012へ1cell実評価。今回manifest72eと次c97c pinを混同0。完成12cell/replay/旧risk-owner/native/probe/collector/Git37/CI反復0・追加agent禁止。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/create_native早期拒否/全7役reader起動禁止/元caps-unknown原owner-stop維持。未完了formal/native全証明を少量dev開始条件に戻さない。engineering900秒2GiB/output1GiB/single32MiB/files32 checkpointはblocking中断/fullruntime/allwriterglobalnative容量証明ではない。Sol容量/人の停止だけ保全後PAUSED。
+
+詳細 [layout1 C0 qualityと6cell比較](results/anomaly-multiseed-v0.3-layout1-c0-quality-and-six-cell-comparison-2026-10-12.md)。
+
+---
+
 ## 最新 — ACTIVE / dev layout1 C2 quality-stress実評価・peer入力欠測波及120score（2026-10-12 JST）
 
 同保存chunk001 manifest75699B/72e5a34c662f77c4728583b9e61cc9d2977edd2ecc9e5286194aae0d2c055dbf/dev seed2486912926863618161/layout1/quality-stressを既存CLI C2 c2-phase-conditionalで新ID dev-layout1-quality-c2-20261012へ1cell実compute_evaluation。actual文書checkoutHEAD01498f4fdbc9d2a2734a1aa98dbfdcdc21b22695/計算code661b27511826fcc87cb4a02930f276afbb8f95d9不変。10input pins→新snapshot→fresh fit/calibration→原result。元payload書込み/生成/replay/production-test変更/類似owner/追加agent/holdout観測読取り0。
