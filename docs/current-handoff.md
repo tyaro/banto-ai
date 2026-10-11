@@ -1,3 +1,23 @@
+## 最新 — ACTIVE / dev layout1 C1 core実評価・初回pin拒否とmetadata失敗保全（2026-10-11）
+
+同chunk001 manifest75699B/72e5a34c662f77c4728583b9e61cc9d2977edd2ecc9e5286194aae0d2c055dbf/dev seed2486912926863618161/layout1/coreを既存CLI C1 c1-phase-levelで1cell実compute_evaluation。新ID dev-layout1-core-c1-20261011-input-pin-correction、actual checkout文書HEADd2ba11da7e286a361bda867bc63644d6ad7509ea/計算code661b27511826fcc87cb4a02930f276afbb8f95d9不変。10input pins→新snapshot→fresh fit/calibration→原result。元payload書込み/生成/replay/production-test変更/類似owner/追加agent/holdout観測読取り0。
+
+CLI exit0/complete/1cell success、機械10/10・sensor10/10・precision20/20・clean誤警報0・全未対応equipment0。48calibrated/fit_samples各600/calibration各290/14400scores、利用可能13920・不能480（全mode_recipe_or_phase、null score-residual/thresholdfalse）。30source/20equipment/20incident/40events。20incident全causal_detected、各candidate1/対象source/support/matchedあり、delay全原1秒/中央値平均minmax各1秒、未検出補完0。actualPython3.14.0 Windows AMD64、elapsed34.645599599927664秒/OSpeak private147738624B。処理successを正式性能合格/採択へしない。
+
+cycle00machine current7237score35.70714299208755/streak1→7238score35.137715849328224/streak2で対象onset7238。sensor温度7244score178.8190609788078/1→7245score179.51564700885191/2で対象onset7245。原selected source/equipment/support・event/incident/window保存。同layout1 C0保存0/10・0/10・precision0/3・clean2とinput10/宣言16source/設定一致、固定C0threshold4/C1threshold6/persistence2/matching/science変更0。旧layout0 C1は保存manifest指標のみ、同seed別layoutを独立seedへしない。旧モデル再compute0、bootstrap/CI/勝者/採択0。
+
+初回evaluate-c1.pyの無限定c0→c1置換がSHA256d2c055dbfをd2c155dbfへ誤変更し、CLIがIntegrityError/manifest SHA256 mismatchで入力照合拒否。原dev-layout1-core-c1-20261011はfailed/cells[]/success0/実compute0で保全、原helperAssertionError/failed保持、原script再実行0。元pinを固定した別script・新IDだけで上記実計算を行った。解析helperの不存在onset_sample参照KeyErrorもfailedで保持、別metadata-only continuationは原incident.selected_source_episode_idで原sourceを抽出し未完了保存だけ完成、モデル再計算0。foregroundquote SyntaxError/不存在script起動はsource評価前tool failuresとして別保存、instrumented/model/CI/native/Sol失敗へ補わない。
+
+MAIN representative-layout1-core-c1-20261011-prepは35file/226520Bでmetadata32entryを3超過、容量成功へしない。raw削除移動/上限変更0、別metadata continuationのmain-frozen-manifest.jsonへ全35file pinを外部固定しMAIN追記停止。内部root-closed未発行。以後新metadata rootは事前32entry/byte cap確認。完成data19file27112678B/root-closed2235B/a3de22f0107407c4d37994bc555c3c55b42eb492e6bebf45ad37f4198a74a060、failed data3file951B/root-closed401B/b5489524b06bbbaee496fbab2966274dbc90be0f17d501ed520a3426f9bcfeab、両追加再実行0。117science-source/旧24root不変。87helper原9failed78passed/full saved creation-start_token一致/CIM同original不在/repo helper-criticalなし、foreground fullidentity/stdioNone/native回収claim0。
+
+metadata continuation representative-layout1-core-c1-metadata-continuation-20261011-prep とPOST representative-layout1-core-c1-post-20261011-prepのpost-save/owners/root-closedを最終Git保存状態として優先。人のリスク通知後「承認します」による今後同GitHub送信先への同種合成dev結果・PC内path報告の継続送信承認で、report/current-handoff2文書を一回[skip ci] commit/pushする。先行拒否2回/元Githelper未起動保全。次は同manifest/devseed/layout1/coreのC2 c2-phase-conditionalを新ID/1cell実評価。完成C0/C1・layout0全6cell/replay/旧risk-owner/native/probe/collector/Git37/CI反復0。CI381385/4130完成保存維持/新query-download-verifier0、旧381365in_progress履歴/doc-onlyCI追跡0。
+
+formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/create_native早期拒否/全7役reader起動禁止/元caps-unknown原owner-stop/追加agent禁止維持。未完成formal/native全証明を少量dev開始条件に戻さない。engineering900秒2GiB/output1GiB/single32MiB/files32 checkpointはblocking中断/fullruntime/allwriterglobalnative容量証明ではない。ACTIVE継続、Sol容量/人の停止時だけ保全後PAUSED。
+
+詳細 [layout1 C1 core実評価](results/anomaly-multiseed-v0.3-layout1-c1-core-evaluation-2026-10-11.md)。
+
+---
+
 ## 最新 — ACTIVE / dev layout1 C0 core実評価・継続GitHub送信承認（2026-10-11）
 
 リスク通知後の人の「承認します」により、C0合成dev評価結果・ユーザー名を含むPC内入力path・指定2文書の https://github.com/tyaro/banto-ai.git への送信と、今後同送信先への同種の合成dev報告の送信を承認済み。C0 quality比較文書2pathを一回[skip ci] commit/push、HEAD bfe07a2566fa56c7534262c2161b21383dd333b8/upstream/lsremote一致・当時clean。計算code661b275不変。先行審査拒否2回/元helper未起動保持、新専用 representative-c0-quality-export-approved-save-20261011-prep 閉鎖15file139242B/root-closed1725B/14282d6609fdadee84ccfcbb3d2ff32476c4ac165fecf11d91fdc073566c19dc、post-save4872B/1484971aedecff60ec5d538b59da896fd13a0c861a8f5af7636180bf734cebe5。新Githelper1passed、80helper原7failed73passed。
