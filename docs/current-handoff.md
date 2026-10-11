@@ -1,3 +1,21 @@
+## 最新 — ACTIVE / C2 quality-stress実評価・peer欠測波及とCI4130保存（2026-10-11）
+
+**文書commit/pushの明示承認を受領。** 2026-10-11、人の「承認します」により、docs/current-handoff.md と docs/results/anomaly-multiseed-v0.3-c2-quality-evaluation-2026-10-11.md の評価結果・ローカル入力pathを `https://github.com/tyaro/banto-ai.git` へ [skip ci] でcommit/pushする承認待ちは解除した。先行の自動承認審査2回拒否とGit helper未起動は履歴として保持する。承認後の保存は新専用 `artifacts/representative-c2-quality-approved-save-20261011-prep` を使用し、今回の原Git返値・doc-save・owner照合を保存する。過去の閉鎖rootへの追加・元helper/CI/モデル再実行は行わない。Git保存の結果は新専用rootを優先する。
+
+人の「進めてください」を継続し、保存first dev seed2486912926863618161/layout0/quality-stressを既存CLIのC2で1件実評価した。CLI exit0 / complete / 1cell success。元10input pin照合、新snapshot、fresh fit/calibration、原score/episode/matching/metrics保存。元payload書込み・新dataset生成・追加replay・production/test変更・類似owner追加は0。計算code661b27511826fcc87cb4a02930f276afbb8f95d9不変、実checkoutは文書版c7a3cb6df57bdd5c46b042087de2a917ea21d05d。処理successを性能合格・採択へしない。
+
+今回機械4/10、sensor9/10、precision13/19、clean誤警報0。48profile calibrated / calibration各290 / 14400score、利用可能13760・不能640。C2core13920/480から不能160増、温度current30/previous10に加え他3motor-01信号各40のpeer不能120。C1quality13880/520との差も120。不能score/residualは原null・閾値超過false、重複tagsを独立行へ加算しない。機械未検出6（cycle01/03/05/06/08/09）は原first_candidate_no_target_onset/vibration-only、sensor未検出cycle09は8827温度score195.37278851156927のstreak1後に8828–8831欠測/peer除外でresetされepisode0/no_candidate_in_window。未検出7delay nullのまま、検出13だけ中央値1秒/平均1.3076923076923077秒。unmatched equipment6 / burden6/20原value30.0はmachine窓内でclean0と別指標。閾値/persistence/matching/GT/science変更0、実入力対応・保存・状態分類不具合は観測なし。C2coreとC1qualityは保存manifest指標だけ比較、元モデル再計算0。同seed/layout2strataの候補比較で、bootstrap/統計CI推定/勝者0。
+
+elapsed41.15029919997323秒/OSpeak private207228928B、actual Python3.14.0 Windows AMD64。input/model/config/seed/code/currentPython対応を保存、宣言16sourceと117working science-source不変はfull loaded runtime/native証明ではない。data dev-quality-c2-20261011閉鎖19file38234488B/root-closed2224B/7e9a42390e962f9e9dc3b47de2fc0692bed087f16ca7d84f48a08b50d79702ab。新metadata MAIN/CIprep/POST・CI rawは最終post-save/owners-after-save/root-closedを優先、旧10閉鎖rootは不変。
+
+現在code661bの38138556456をcompact一回completed-success/attempt1/push/Phase1CI/workflow349172377へ固定。原runはMAINに保存し再取得-copy0、未保存jobs/artifacts/2logs/2ZIP各一度、原exit/stdout-stderrを判定前保存。2job114467417613 test(3.14)/114473705188 verify-python314-journal全success。現独立verifier一回exit0/passed、実summary後discovered/tests_run4130/failure0/error0/skip237（Win native213/optional24）/source unchanged/shared29complete/必須28passed、cross_python_comparison=false。原journal4246566B/916a859779381766be7ab06aa6b5bc6b7387b0882cfda05b12a4a51ed258e645、remote37192B/8072d8a9cef61dcc07c0cfe110eaa0355d87613d75c95ec7ae82ea17f143fd59。local37193Bとremoteは末尾CRLF/LF差1byte/rawfalse/JSON全field一致、両raw保持。Ubuntu24.04/Python3.14.8/runner20261004.327.1、image digest未取得/候補未採択。CLI7 pin・原CIrawはhelper全process stdio/full native閉包ではない。旧381365/a54961は最後in_progress/今回query0を保持、旧CI再照会0、doc-only新CI追跡0。
+
+次heartbeatは完成381385/4130と今回モデル・元helperを反復しない。次機能unitは同保存manifest05ef05b07193af83eea6946051628fb910b6c02ee8bf386a84957d2a3cf5e1bf/first dev seed/layout0 quality-stressをC0で1件実CLI評価し、保存済みcore/qualityの3候補比較を完成する。新output ID一回、元payload保持、類似owner/native全証明を開始条件にしない。完成C0/C1/C2core・C1/C2quality・明示replay・旧4risk tests/native/probe/collector/Git37の反復0。
+
+詳細: [C2 quality-stress実評価](results/anomaly-multiseed-v0.3-c2-quality-evaluation-2026-10-11.md)。formal gate=s4_acceptance_not_frozen / formal_permission=false / credit0 / holdout観測未読 / 正式5残件・最終受入未完了。create_native早期拒否/全7役reader起動禁止/元caps-unknown原owner-stop/追加agent起動・再活性化禁止を保持。ACTIVE維持、Sol容量エラー/人の停止割込みでは保全後PAUSED・重複再試行なし。
+
+---
+
 ## 最新保存状態：ACTIVE／同じdev coreのC2実評価・機械未検出6件の対応確認（2026-10-11）
 
 人の「進めてください」に従い、保存済みfirst dev seed2486912926863618161/layout0/coreをC2で1件実compute_evaluation。production/test/科学式/config/schema変更0、新生成0/元payload書込み0/追加replay0/類似ownerテスト0/追加agent起動・再活性化禁止。詳細 [C2 core実評価](results/anomaly-multiseed-v0.3-c2-core-evaluation-2026-10-11.md)。
