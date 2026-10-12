@@ -33,7 +33,9 @@
 - [Toto 2.0 4M 小規模matrix実測結果](toto2-matrix-2026-09-04.md)
 - [Toto 2.0 4M MetroPT-3公開実データ評価結果（2026-09-04）](toto2-metropt3-evaluation-2026-09-04.md)
 
-## v0.3の少量devモデル評価（66件）
+## v0.3の少量devモデル評価（67件）
+
+- [layout11 C0 quality実評価・12 layouts比較（2026-10-12）](anomaly-multiseed-v0.3-layout11-c0-quality-and-twelve-layout-comparison-2026-10-12.md)
 
 - [layout11 C2 quality-stress実評価・欠測のpeer波及（2026-10-12）](anomaly-multiseed-v0.3-layout11-c2-quality-evaluation-and-peer-availability-2026-10-12.md)
 
