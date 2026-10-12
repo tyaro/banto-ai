@@ -70,9 +70,9 @@ class TimesFM3DocumentationTests(unittest.TestCase):
     def test_plans_and_chronos_report_no_longer_leave_timesfm_comparison_pending(self):
         paths = (
             ROOT / "README.md",
-            ROOT / "docs" / "timesfm-notes.md",
-            ROOT / "docs" / "chronos2-notes.md",
-            ROOT / "docs" / "research-roadmap.md",
+            ROOT / "docs" / "models/timesfm-notes.md",
+            ROOT / "docs" / "models/chronos2-notes.md",
+            ROOT / "docs" / "research/research-roadmap.md",
             ROOT / "docs" / "research-implementation-plan.md",
             ROOT / "docs" / "results" / "chronos2-metropt3-evaluation-2026-09-04.md",
         )

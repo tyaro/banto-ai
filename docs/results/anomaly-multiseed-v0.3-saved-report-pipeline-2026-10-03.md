@@ -2,7 +2,7 @@
 
 **要約・集計表・報告書・保存完了記録の四つから開始できる単一入口とCLI、工程ごとの続行requestを追加した。23項目を確認（初回22成功、試験条件を分けた1項目のみ再確認）。前回の完了記録を0.620秒で再利用し、aggregation/report/publicationの呼出しと新しい所有processはいずれも0回。**
 
-起点17d6029b189ee53f43fae2f35001e96ea970550b、前保存点38,659bytes/SHA3f20f27fff28dcd02f98f6cb692c399938ab1c465dec5cbc855ef3bf85c23e58。最終実装6d48c39cdafdb883ce63fdd991ba063169e58cb7、clean候補sp02/banto-ai。新module/test2本、既存publicationに共有budgetを渡す2行変更。旧92codeのうち91不変、計94code/18data。[APIとCLI](../anomaly-v03-saved-report-pipeline.md)。
+起点17d6029b189ee53f43fae2f35001e96ea970550b、前保存点38,659bytes/SHA3f20f27fff28dcd02f98f6cb692c399938ab1c465dec5cbc855ef3bf85c23e58。最終実装6d48c39cdafdb883ce63fdd991ba063169e58cb7、clean候補sp02/banto-ai。新module/test2本、既存publicationに共有budgetを渡す2行変更。旧92codeのうち91不変、計94code/18data。[APIとCLI](../anomaly/execution/anomaly-v03-saved-report-pipeline.md)。
 
 ## 確認結果
 

@@ -1,7 +1,7 @@
 # 固定campaign計画と進捗記録の復元
 
 2026-09-16。実装commit **9c9975294fe4c22c1cc8dbffbcc140cf00c687e1**。
-固定plan/validatorとjournal reader/reducerを実装した。[使い方と境界](../anomaly-v03-independent-audit-and-checkpoints.md#実装済みのmetadata-cli)。実行controller・追記writer・保存済み成果物の再照合は未接続で、データ生成や評価計算は行っていない。
+固定plan/validatorとjournal reader/reducerを実装した。[使い方と境界](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#実装済みのmetadata-cli)。実行controller・追記writer・保存済み成果物の再照合は未接続で、データ生成や評価計算は行っていない。
 
 ## 実装と検証
 

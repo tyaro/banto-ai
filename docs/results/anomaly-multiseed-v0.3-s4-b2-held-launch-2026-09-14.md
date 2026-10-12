@@ -1,7 +1,7 @@
 # S4-B2 保持consumerの専用worker・限定実機結果
 
 2026-09-14、基準840e351。実装savepoint **9cc926f3c2c6cadff10c041ec0d0521c32016d3e**。
-[専用worker仕様](../anomaly-v03-held-launch-design.md)を実装し、独立P0〜P3所見0件、377件pass/0.508秒を確認後、新規max1の限定実機試験を行った。
+[専用worker仕様](../anomaly/native/runtime/anomaly-v03-held-launch-design.md)を実装し、独立P0〜P3所見0件、377件pass/0.508秒を確認後、新規max1の限定実機試験を行った。
 **新規2fileの準備・同handle読取・照合・証拠保存・全closeが完了し、worker exit0/終了確認、外側監視stopなし。**
 実機は0.860秒、UTC14:43:21.2087356〜14:43:22.0892657。最大1回枠は閉鎖し、fixtureを保存して残す。
 外部consumer bytes返却はisolation_unresolvedのまま。隔離・将来不変性・B2/S4全受入の完了ではない。

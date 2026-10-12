@@ -1,6 +1,6 @@
 # S4-B2 専用principal環境の準備成功
 
-2026-09-16 JST、実装revision **1f253cc4fa984462a3d0bf7d4e66d23d230eaf56**。[準備j仕様](../anomaly-v03-principal-setup-j-design.md)により、初期D:Pを維持し、最終DACLの要求状態だけD:PAIへ変更した。両protected、owner/group/全ACE bytes、S:PAIのmedium/no-write-upを維持し、全SDDLの厳密比較を通過した。
+2026-09-16 JST、実装revision **1f253cc4fa984462a3d0bf7d4e66d23d230eaf56**。[準備j仕様](../anomaly/native/principals/anomaly-v03-principal-setup-j-design.md)により、初期D:Pを維持し、最終DACLの要求状態だけD:PAIへ変更した。両protected、owner/group/全ACE bytes、S:PAIのmedium/no-write-upを維持し、全SDDLの厳密比較を通過した。
 **専用環境の準備は完了。P/Uの独立起動・干渉試験や正式B2/S4受入は未完了。** BantoS4Publisherは既存の無効accountを維持し、今回のaccount作成/変更/reset/enable/logonはない。
 
 ## 検証と管理者実行
@@ -28,4 +28,4 @@ receipt UTC15:44:15.3372168Z/elapsed148ms、precloseまでの観測peak private6
 終了後RAM6247051264/C149730881536/D198225158144 bytes、D約184.61GiB。OS26200.9445/boot2026-09-15T14:30:24.5000000+09:00。Windows Update engineering緩和/正式pin不変、長期リーク不在やPC全体の容量変動原因を主張しない。
 success-verification.json953 bytes/hash1d70cd4dd4ab95a2be7a472a4506a51554548920357185ff4d6eb521826a6eb2。最終savepoint-evidence.json **26606 bytes/hash03a60920912a2157ea3183f2645829a2f0211dbc4a42c736c37cd2b11c4b3afe**。自身除外13 artifacts/論理93657 bytes。107 sourceと入力artifact不変、本流889cfc3/clean、既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621保全。
 
-次は[principal境界案](../anomaly-v03-principal-boundary-design.md)の残件を具体化する。保護code/runtime、B/P/U process/thread/tokenの初期SD・起動経路、IPCと所有台帳、単回有効化/ログオン/再無効化と全process終了を設計・故障試験する。準備成功からP/U隔離やmarker方式、全期間/frozen契約を認定しない。全許可flags=false、acceptance_status=not_completed。
+次は[principal境界案](../anomaly/native/principals/anomaly-v03-principal-boundary-design.md)の残件を具体化する。保護code/runtime、B/P/U process/thread/tokenの初期SD・起動経路、IPCと所有台帳、単回有効化/ログオン/再無効化と全process終了を設計・故障試験する。準備成功からP/U隔離やmarker方式、全期間/frozen契約を認定しない。全許可flags=false、acceptance_status=not_completed。

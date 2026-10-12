@@ -1,6 +1,6 @@
 # S4-B2 新規準備fの通常側準備・画面操作回答待ち
 
-2026-09-15。実装 **d2bdb66a88a51ee7cdc25afc9605c9a11097ae46**、[仕様](../anomaly-v03-principal-setup-f-design.md)。root定数とlauncherの記録先/attempt.rootだけを新しいfへ変更し、初期保護、disabled account、特権の存在確認/有効化/復元、上限、失敗停止を維持した。34＋15件pass/独立所見0。
+2026-09-15。実装 **d2bdb66a88a51ee7cdc25afc9605c9a11097ae46**、[仕様](../anomaly/native/principals/anomaly-v03-principal-setup-f-design.md)。root定数とlauncherの記録先/attempt.rootだけを新しいfへ変更し、初期保護、disabled account、特権の存在確認/有効化/復元、上限、失敗停止を維持した。34＋15件pass/独立所見0。
 新公開DLL25088 bytes/SHA256 **3d236d9b2b920a4bbbf0550839bac94abd551f7debee73c02ec531a086d6f1bf**。通常load-only PID33568/exit0、command16727文字。作成Entry/SAM/root APIなし。
 **新規Runは未開始、直前の対象SAM/f不存在照会も未実施。** 今回の管理者画面操作の都合への回答を待っている。以前の「今なら操作できます」は以前の確認枠の回答であり、今回の未回答を操作可能と扱わない。方式自体の許可は継続している。
 

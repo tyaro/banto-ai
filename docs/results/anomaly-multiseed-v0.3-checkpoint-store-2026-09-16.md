@@ -1,7 +1,7 @@
 # 進捗metadataの追記保存と受付結果の回復
 
 2026-09-16。実装commit **d8ceed423e9ccd36540e88aa2bf559351366ad2e**。
-通常の単一writerでplan/journalを上書きせず保存するAPIと `store-*` CLIを追加した。[使い方](../anomaly-v03-independent-audit-and-checkpoints.md#metadataを上書きせず保存追記する)。中断前の履歴を保持し、確定後にreceiptだけ失われた場合は読取りだけで再取得できる。
+通常の単一writerでplan/journalを上書きせず保存するAPIと `store-*` CLIを追加した。[使い方](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#metadataを上書きせず保存追記する)。中断前の履歴を保持し、確定後にreceiptだけ失われた場合は読取りだけで再取得できる。
 
 ## 実装と確認
 

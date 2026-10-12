@@ -2,7 +2,7 @@
 
 2026-09-16 JST「次に進めてください」で、準備済みjの次段階を進めた。
 実装savepointは **cbd3df9a61348562019a2c4ae9113e17e122dd96**。
-[設計](../anomaly-v03-principal-worker-lifecycle-design.md)の純粋modelと通常Uからの読み取り診断を追加した。
+[設計](../anomaly/native/principals/anomaly-v03-principal-worker-lifecycle-design.md)の純粋modelと通常Uからの読み取り診断を追加した。
 Pのreset/enable/logon、rootアクセス、privilege調整、UAC、実worker起動は行っていない。
 
 ## 実装・試験

@@ -282,7 +282,7 @@ git -C 'C:\Users\TKent\.codex\worktrees\70b0\banto-ai' log -8 --oneline
 
 ## 11. 2026-09-07 再開checkpoint: cleanup記録契約
 
-`0d917d9`から、[cleanup evidence設計とpure prototype](../anomaly-v03-cleanup-evidence-design.md)
+`0d917d9`から、[cleanup evidence設計とpure prototype](../anomaly/native/files/anomaly-v03-cleanup-evidence-design.md)
 を追加した。変更前のimmutable snapshot、ACL/deletion/close/absenceの別状態、
 部分清掃のcaptured byte/object下限・上限、解除不能なresource stopを実装した。
 新規15＋既存55 pure/faultの計70 test methodsがpassした。
@@ -297,7 +297,7 @@ result容器、native cleanupへの接続、same-parent native再検証は未実
 
 `068e45b`から、native snapshot capture、元ledgerを変更しないcleanup、disposition/close/absenceの
 別記録、private evidenceを所有するdict互換resultを実装した。81 pure/fault、same-parent native1件、
-D2 inventory1件がpass。詳細・制約は[設計書の最新節](../anomaly-v03-cleanup-evidence-design.md)を参照。
+D2 inventory1件がpass。詳細・制約は[設計書の最新節](../anomaly/native/files/anomaly-v03-cleanup-evidence-design.md)を参照。
 
 清掃開始後の部分失敗とcontrol結果の保持は接続したが、置換操作の途中identity traceは未接続である。
 独立レビューも未実施で、cleanup/evidence P2全体の解消とは判定しない。
@@ -308,7 +308,7 @@ restricted-child再実行、追加DLL probe、B2、正式試験、main merge/pus
 `8cc67c6`から、source/置換先の操作前snapshotと6段階のbounded JSONL traceを追加した。
 native追記、child/parent protocol `b1.2`、private raw evidence保持、resource exit後の回収抑止まで接続した。
 93 pure/fault＋same-parent native2件＋D2 inventory1件がpass。
-既存成果物・6 failure roots・formal領域は不変。詳細は[設計書の最新節](../anomaly-v03-cleanup-evidence-design.md)を参照。
+既存成果物・6 failure roots・formal領域は不変。詳細は[設計書の最新節](../anomaly/native/files/anomaly-v03-cleanup-evidence-design.md)を参照。
 
 §12で未接続だった置換traceは候補実装済みになった。ただし独立レビューとrestricted-child E2Eは未実施で、
 cleanup/evidence P2の監査済み解消とは扱わない。起動障害の追加probe、main統合、正式試験は未実施。
@@ -2248,7 +2248,7 @@ runtime closure/consumer凍結が残る。別projectや既存失敗fixtureは操
 
 ユーザー「続けてください」を受け、基準f9f3ea5からB2の実機接続前の契約モデルを具体化した。
 実装savepoint e42a8e55768278ad10388b8f4017a308aa74ebd8。
-[結果](anomaly-multiseed-v0.3-s4-b2-model-2026-09-11.md)と[設計](../anomaly-v03-publication-model-design.md)を参照。
+[結果](anomaly-multiseed-v0.3-s4-b2-model-2026-09-11.md)と[設計](../anomaly/native/files/anomaly-v03-publication-model-design.md)を参照。
 tests/fixtures/anomaly_v03_publication_model.pyはI/Oなしの単一attempt journalとtoy marker部品。
 prepare/verify_prepared/seal_payload/rename_payload/verify_final/commit_markerを固定順序で扱い、
 別のteardown成功までcompleteにしない。操作を実行したことは証明せず、trusted callerの観測をモデル化する。
@@ -2282,7 +2282,7 @@ C空きは今回開始前から前回107.67GiBより減少。原因は未調査�
 
 ユーザー「続けてください」を受け、基準be61da8から2つの固定renameの接続面を具体化した。
 実装savepoint dd318aec56f8e43909ff6df6192d62e11aa914bd。
-[結果](anomaly-multiseed-v0.3-s4-b2-rename-adapter-2026-09-11.md)と[設計](../anomaly-v03-rename-adapter-design.md)を参照。
+[結果](anomaly-multiseed-v0.3-s4-b2-rename-adapter-2026-09-11.md)と[設計](../anomaly/native/files/anomaly-v03-rename-adapter-design.md)を参照。
 tests/fixturesにのみ実装し、DLLロード/実Win32 backend/production入口は追加していない。
 
 stage→payload、marker-pending.json→.completeは借用source handleからno-replace renameを要求する案。
@@ -2317,7 +2317,7 @@ payload子handleとdirectory renameの両立、flush/close失敗時のprivate by
 
 ユーザー「続けてください」を受け、基準e3317f9から最大32の所有handleの終端解放を実装した。
 実装savepoint 8f96f3d12b9ec2d2ec01460a28d9730b0ab80bc1。
-[結果](anomaly-multiseed-v0.3-s4-b2-handle-owner-2026-09-11.md)と[設計](../anomaly-v03-handle-lifecycle-design.md)を参照。
+[結果](anomaly-multiseed-v0.3-s4-b2-handle-owner-2026-09-11.md)と[設計](../anomaly/native/runtime/anomaly-v03-handle-lifecycle-design.md)を参照。
 tests/fixtures/anomaly_v03_handle_owner.pyは注入CloseHandle backendのみ。実取得/ACL/flush/native操作なし。
 
 構築成功までcaller所有。親indexの順序・同volume・同handle/identity重複なしを検証して管理slotを確保する。
@@ -2357,7 +2357,7 @@ B1終了済み試行枠を流用しない。native全受入、正式OS整合、V
 B1の終了済み試行枠や正式受入条件を更新・再開する通知とは扱わない。
 
 基準5c76c58、実装savepoint b9b7fb168641cf078dcb5fa5692f13e709fabedf。
-[結果](anomaly-multiseed-v0.3-s4-b2-prepublication-2026-09-14.md)と[設計](../anomaly-v03-prepublication-design.md)を参照。
+[結果](anomaly-multiseed-v0.3-s4-b2-prepublication-2026-09-14.md)と[設計](../anomaly/native/files/anomaly-v03-prepublication-design.md)を参照。
 ownerへ同期borrow排他とprepare/seal_payload/verify_final中の各1回の選択解放を追加した。
 終端finishはclosed/unknownを再closeせず、残るownedのみを解放する。
 証跡barrierはmarkerと全payload bytes、pin/descriptor観測を固定し、journalの期待marker hashと全owner pinへ
@@ -2387,7 +2387,7 @@ native全受入、正式OS整合、VM digest、runtime closure/consumer、S4受�
 
 ユーザー「続けてください」を受け、基準af97323から取得途中の追跡と実private保存を追加した。
 実装・実行savepoint **847de63d63e3ec0cdc9b2063401c19be63533241**。
-[結果](anomaly-multiseed-v0.3-s4-b2-private-sink-2026-09-14.md)と[設計](../anomaly-v03-private-sink-design.md)を参照。
+[結果](anomaly-multiseed-v0.3-s4-b2-private-sink-2026-09-14.md)と[設計](../anomaly/native/files/anomaly-v03-private-sink-design.md)を参照。
 別project連続稼働の追加負荷制約は解除済み、通常のRAM/disk確認とsavepointを継続する。
 
 TrackedOpenはraw handleを観測前に記録し、取得後失敗を一度だけcloseする。
@@ -2439,7 +2439,7 @@ native全受入、正式OS整合、VM digest、runtime closure/consumer凍結、
 
 ユーザー「続けてください」を受け、基準19e474bから取得済みハンドル管理と実観測保存を接続した。
 実装・実行savepoint **9172afb13d1d2b2afc9034c6d352639d47d7c3ec**。
-[結果](anomaly-multiseed-v0.3-s4-b2-observed-evidence-2026-09-14.md)と[設計](../anomaly-v03-observed-evidence-design.md)を参照。
+[結果](anomaly-multiseed-v0.3-s4-b2-observed-evidence-2026-09-14.md)と[設計](../anomaly/native/runtime/anomaly-v03-observed-evidence-design.md)を参照。
 
 AcquiredOwnerはcaller保持receiverに全状態を確保し、単一active切替で固定batchを管理移管する。
 切替前の失敗はcaller所有、切替後の返却喪失も保持receiverで終了できる。
@@ -2486,7 +2486,7 @@ push/merge/CI起動、新runtime/共有環境/別project/旧failure roots操作�
 
 ユーザー「続けてください」を受け、基準c50aabcから読取り専用の再取得と実権限観測を接続した。
 実装・実行savepoint **cbb5a8263eef1be110ab86333a986dca9f4e87ba**。
-[結果](anomaly-multiseed-v0.3-s4-b2-reader-reacquisition-2026-09-14.md)と[設計](../anomaly-v03-reader-reacquisition-design.md)を参照。
+[結果](anomaly-multiseed-v0.3-s4-b2-reader-reacquisition-2026-09-14.md)と[設計](../anomaly/native/runtime/anomaly-v03-reader-reacquisition-design.md)を参照。
 
 ReacquiredReadersは元writerの確定closeを条件に別世代のTrackedOpenを取得し、
 元identity/bytes/private SDと照合する。親root借用中に新readerを全終了する。
@@ -2528,7 +2528,7 @@ push/merge/CI起動、新runtime/共有環境/別project/旧failure roots操作�
 
 ユーザー「続けてください」を受け、基準c73a602からfileのDACL固定と保持handleでの継続処理を接続した。
 実装・実行savepoint **48f701f51fdf3d8e4312dc097b9a6d8bc18066f8**。
-[結果](anomaly-multiseed-v0.3-s4-b2-file-sealing-2026-09-14.md)と[設計](../anomaly-v03-file-sealing-design.md)を参照。
+[結果](anomaly-multiseed-v0.3-s4-b2-file-sealing-2026-09-14.md)と[設計](../anomaly/native/files/anomaly-v03-file-sealing-design.md)を参照。
 
 SealedFilesはwriter確定close後、payload0x160081/marker0x170081を別世代で取得する。
 全対象の元ID/bytes/private SD・実権限を検査してから、各対象再検査→同handleでfrozen DACL設定→読戻し。
@@ -2572,7 +2572,7 @@ push/merge/CI起動、新runtime/共有環境/別project/旧failure roots操作�
 
 ユーザー「続けてください」を受け、基準9375b3eからstage/rootのDACL固定と保持親からの相対renameを接続した。
 初回実装・実行 **a20988688e65d829a6619c399813da2a319d22a2**、修正実装・実行 **91cd5acfc29b9186739d3e99831f6f19ede08502**。
-[結果](anomaly-multiseed-v0.3-s4-b2-directory-rename-2026-09-14.md)と[設計](../anomaly-v03-directory-rename-design.md)を参照。
+[結果](anomaly-multiseed-v0.3-s4-b2-directory-rename-2026-09-14.md)と[設計](../anomaly/native/files/anomaly-v03-directory-rename-design.md)を参照。
 
 新規root0x1600a7/stage0x1700a1を初回から保持し、stage内facts.json45 bytesだけを作成。
 prepare保存→writer close→payload-only SealedFiles0x160081でfile固定/読戻し→証跡保存→全子close→
@@ -2626,7 +2626,7 @@ push/merge/CI起動、新runtime/共有環境/別project/旧failure roots操作�
 
 ユーザー「続けてください」を受け、基準594bf1dから親DACLの条件差を比較した。
 実装・2条件の実行savepoint **a31ae9b5119ed28c5271502d252ce2425c4b448e**。
-[結果](anomaly-multiseed-v0.3-s4-b2-parent-policy-rename-2026-09-14.md)と[設計](../anomaly-v03-parent-policy-rename-design.md)を参照。
+[結果](anomaly-multiseed-v0.3-s4-b2-parent-policy-rename-2026-09-14.md)と[設計](../anomaly/native/files/anomaly-v03-parent-policy-rename-design.md)を参照。
 
 DirectoryRenameの既定frozenは維持し、privateを明示する比較modeを追加した。
 親DACL設定だけを省き、stage/file固定、全子close、親元ID/private SD完全一致、実権限、証跡後再検査を残す。
@@ -2672,8 +2672,8 @@ push/merge/CI、新runtime、共有環境、別project、旧failure rootsへの�
 
 ユーザー「続けてください」を受け、基準7aa4d30から親frozenを維持する別adapterを実装した。
 実装・native savepoint **685d670499cdc42e72d3f3ab948349fea2f4281c**。
-[結果](anomaly-multiseed-v0.3-s4-b2-same-parent-rename-2026-09-14.md)、[設計](../anomaly-v03-same-parent-rename-design.md)、
-[次の未採用順序案](../anomaly-v03-publication-order-options.md)を参照。
+[結果](anomaly-multiseed-v0.3-s4-b2-same-parent-rename-2026-09-14.md)、[設計](../anomaly/native/files/anomaly-v03-same-parent-rename-design.md)、
+[次の未採用順序案](../anomaly/native/files/anomaly-v03-publication-order-options.md)を参照。
 
 SameParentDirectoryRenameは親/source/全子の結合、全子close、stage/root固定・実権限・元ID/SD、証跡後再検査を継承する。
 parent_policy=frozen固定、wireだけNULL RootDirectory＋固定payload leaf、直接NtSetInformationFile/class10/40 bytesへ渡す。
@@ -2721,8 +2721,8 @@ push/merge/CI、新runtime/サービス/account、別project、旧failure roots�
 
 ユーザー「続けてください」を受け、基準5826995からIOしない別modelを実装した。
 実装savepoint **39cac0d947bbb51cd2079af416edce1c01fc23b9**。
-[結果](anomaly-multiseed-v0.3-s4-b2-publication-order-model-2026-09-14.md)、[設計](../anomaly-v03-publication-order-model-design.md)、
-[未採用の順序案](../anomaly-v03-publication-order-options.md)を参照。
+[結果](anomaly-multiseed-v0.3-s4-b2-publication-order-model-2026-09-14.md)、[設計](../anomaly/native/files/anomaly-v03-publication-order-model-design.md)、
+[未採用の順序案](../anomaly/native/files/anomaly-v03-publication-order-options.md)を参照。
 
 最大8 peer handleのadd_child/delete_childを親固定で消さず、発見/外部変更を合計32件まで追跡する。
 epochと最終照合を結び、検査後・停止後・仮想公開後の変更を記録して現在の照合を失効させる。
@@ -2759,7 +2759,7 @@ protected_commit_allowed/future_immutability_proven/formal_permission/execution_
 
 ユーザー「続けてください」を受け、基準1f70faaから実際の隔離の必要条件を具体化した。
 設計savepoint **5b81bf032768d0ac486aff48143b77268ab36158**。
-[設計](../anomaly-v03-isolation-basis-design.md)と[結果](anomaly-multiseed-v0.3-s4-b2-isolation-basis-2026-09-14.md)を参照。
+[設計](../anomaly/acceptance/anomaly-v03-isolation-basis-design.md)と[結果](anomaly-multiseed-v0.3-s4-b2-isolation-basis-2026-09-14.md)を参照。
 
 現行private DACL/作成後の別openを確認し、次の部品にCreateDirectory2Wの作成＋初回handle取得を選んだ。
 既存SDK10.0.26100.0とMicrosoft headerの5引数HANDLE宣言、redirect拒否flag=1、ローカルkernel32 export存在を確認した。
@@ -2790,7 +2790,7 @@ formal_permission/execution_authenticated/protected_commit_allowed=false、accep
 
 ユーザー「続けてください」を受け、基準46b8d35から独立した取得部品を実装した。
 実装savepoint **7f9332289494f9b24e9e5e786737864ac88b0ae3**。
-[設計](../anomaly-v03-directory-acquisition-design.md)と[結果](anomaly-multiseed-v0.3-s4-b2-directory-acquisition-2026-09-14.md)を参照。
+[設計](../anomaly/native/files/anomaly-v03-directory-acquisition-design.md)と[結果](anomaly-multiseed-v0.3-s4-b2-directory-acquisition-2026-09-14.md)を参照。
 
 DirectoryAcquisitionは予約TrackedOpenへCreateDirectory2Wの原handleを先行記録する。API/descriptor/SA/引数は事前準備。
 5引数HANDLE/root0x1600a7/share READ=1/redirect拒否=1/private SD/非継承。0/NULL/-1等を成功にしない。
@@ -2827,7 +2827,7 @@ isolation_certified/protected_commit_allowed/formal_permission/execution_authent
 
 ユーザー「許可するのでセーブポイント作りながら暫く自走してください」を受け、実装・独立レビュー・固定した新規1回の実機確認まで進めた。
 実装savepoint **3a719347e736e7770036b6b7882f0f4614774424**。
-[局所driver設計](../anomaly-v03-directory-driver-design.md)と[結果](anomaly-multiseed-v0.3-s4-b2-directory-driver-2026-09-14.md)を参照。
+[局所driver設計](../anomaly/native/files/anomaly-v03-directory-driver-design.md)と[結果](anomaly-multiseed-v0.3-s4-b2-directory-driver-2026-09-14.md)を参照。
 
 callerがdriver/contextを先行保持し、private sinkの全祖先leaseをsource.parentsへexact結合する。
 既存祖先の元ID/type/pathとowner/group/DACL/labelの自己相対SDを読取り比較し、継承ACLへ新規private root専用制約を誤適用しない。
@@ -2870,7 +2870,7 @@ isolation_certified/protected_commit_allowed/formal_permission/execution_authent
 
 ユーザー「進めて下さい」と継続中の自走/セーブポイント許可を受け、private期間の別handle権限取得を実装・レビュー・実機確認した。
 実装savepoint **13ad057c2662cd0bf67a19853602c43eeac7d42e**。
-[peer設計](../anomaly-v03-directory-peer-design.md)と[結果](anomaly-multiseed-v0.3-s4-b2-directory-peer-2026-09-14.md)を参照。
+[peer設計](../anomaly/native/files/anomaly-v03-directory-peer-design.md)と[結果](anomaly-multiseed-v0.3-s4-b2-directory-peer-2026-09-14.md)を参照。
 
 新規rootをCreateDirectory2W/root0x1600a7/share READ/private SD/redirect拒否/非継承で取得し、原handleを保持。
 同じprocess/primary tokenのpeerでOPEN_EXISTINGを4件。全requestedにREAD_ATTRIBUTES/READ_CONTROL/SYNCHRONIZEを含める。
@@ -2919,7 +2919,7 @@ isolation_certified/protected_commit_allowed/formal_permission/execution_authent
 
 ユーザー「次に進めて下さい」と継続中の自走/セーブポイント許可で、新規4ケースのDeleteFileW行列を実装・レビュー・実機確認した。
 実装savepoint **26bc403836a2b191e7e8344716c50cf49be50f47**。
-[設計](../anomaly-v03-delete-matrix-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-delete-matrix-2026-09-14.md)を参照。
+[設計](../anomaly/native/files/anomaly-v03-delete-matrix-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-delete-matrix-2026-09-14.md)を参照。
 
 各新規case親はCreateDirectory2W/access0x1600a7/share READ/非継承。新規空子はCREATE_NEW/access0x120081/非継承、作成後ACL変更なし。
 file-permission（親DELETE_CHILD拒否/子DELETE許可/share7）は受理、parent-permission（親許可/子拒否/share7）も受理。
@@ -2956,7 +2956,7 @@ worker/監視終了、常駐なし。caseのclose後/失敗後列挙・open・ha
 
 ユーザー「次に進めて下さい」により、前回削除条件をpureな保持期間modelへ接続した。
 実装savepoint **1c03cfece1464f8231b7d223c7f91828a639bd97**。
-[設計](../anomaly-v03-retention-window-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-retention-window-2026-09-14.md)を参照。
+[設計](../anomaly/native/runtime/anomaly-v03-retention-window-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-retention-window-2026-09-14.md)を参照。
 
 2〜8fileの初期pin、24世代slot/128events。DELETE共有拒否とdata WRITE共有拒否を別追跡し、公開開始から観測完了までとconsumer全fileの共通期間を分離。
 open確認前はguardでなく、close intent以降は依存しない。再取得の同ID/同bytesで欠落履歴を消さず、観測済fileも完了まで保持する。
@@ -2991,7 +2991,7 @@ isolation_certified/protected_commit_allowed/future_immutability_proven/formal_p
 
 ユーザー「次に進めて下さい」により、元root/全sealed fileを保持中の実読取adapterを具体化した。
 実装savepoint **8c35fce85ced37c8d3edf2d9bde9b4f5487ecae1**。
-[設計](../anomaly-v03-held-consumer-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-held-consumer-2026-09-14.md)を参照。
+[設計](../anomaly/native/runtime/anomaly-v03-held-consumer-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-held-consumer-2026-09-14.md)を参照。
 
 開始前に元root Observation、plans/marker/source revisionを照合しbufferを確保する。
 既存SealedFiles continuation内で全子を保持し、全metadata/実権限の先行照合、同handle単回read、全子/元rootの再照合を行う。
@@ -3026,7 +3026,7 @@ isolation_certified/protected_commit_allowed/future_immutability_proven/formal_p
 
 ユーザー「次に進めて下さい」により、新規fixtureの準備とheld consumer、証拠保存、親/祖先保持を有界driverへ接続した。
 実装savepoint **fe6f7a8cce80476396ba8eea573a9b1812fc1747**。
-[設計](../anomaly-v03-held-driver-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-held-driver-2026-09-14.md)を参照。
+[設計](../anomaly/native/runtime/anomaly-v03-held-driver-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-held-driver-2026-09-14.md)を参照。
 
 元root/新規facts.json/marker-pending.jsonのObservationを固定し、prepare証拠保存後にwriterをreleaseして既存HeldConsumerを1回実行する。
 収集状態・byte count・hashをprivate-evidenceのseal_payload.jsonへ保存するが、publication journalの同名工程は進めない。
@@ -3062,7 +3062,7 @@ isolation_certified/protected_commit_allowed/future_immutability_proven/formal_p
 
 ユーザー「次に進めて下さい」により専用起動と外側監視を接続し、新規max1限定実機を完了した。
 実装savepoint **9cc926f3c2c6cadff10c041ec0d0521c32016d3e**。
-[設計](../anomaly-v03-held-launch-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-held-launch-2026-09-14.md)を参照。
+[設計](../anomaly/native/runtime/anomaly-v03-held-launch-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-held-launch-2026-09-14.md)を参照。
 
 HEAD/入力pin SHA/追跡py・ps1全inventory/bytes/hash照合後だけ取得。排他claim/attempt、module参照で終了までcontext保持、stdout単回と80/81維持を接続。
 既存driver変更はsnapshotへのreader metadata追加のみ。report/出力MemoryErrorは80へ昇格し、一次例外/保持を保つ。出力失敗後の再試行なし。
@@ -3098,7 +3098,7 @@ ADD_FILE用handle取得拒否だけでpath追加も拒否されると推定せ�
 ## 102. 2026-09-15 B2 親共有とpath新規作成の比較準備・実機停止
 
 ユーザーは適度なsavepointを伴う自走を許可。実装savepoint **2ec193adf8f81bed5685de0ff0cc09276e2741f7**。
-[設計](../anomaly-v03-namespace-create-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-namespace-create-2026-09-15.md)を参照。
+[設計](../anomaly/native/files/anomaly-v03-namespace-create-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-namespace-create-2026-09-15.md)を参照。
 新規20＋既存377＝397件pass/0.727秒、独立P0〜P3所見0件、read-only/進捗ポーリングなし。構文/safety/diff検査pass。
 親share3/1下のpeer取得とpath CREATE_NEWを独立比較する実装だが、新規max1は最初の親CreateDirectory2Wでdirectory_create_failed。
 peer/child/第2root未開始、名前追加の比較結果なし。root close=unavailable、入力descriptor freed、祖先/evidence root11 leaseはworker終了まで保持、query token closed。
@@ -3120,7 +3120,7 @@ build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineeri
 ## 103. 2026-09-15 B2 親作成エラー87の新規診断
 
 実装savepoint **c0f17d8e4dd8b9835215869633bd55c6c2536402**。
-[診断仕様](../anomaly-v03-namespace-diagnostic-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-namespace-diagnostic-2026-09-15.md)を参照。
+[診断仕様](../anomaly/native/files/anomaly-v03-namespace-diagnostic-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-namespace-diagnostic-2026-09-15.md)を参照。
 親作成例外の数値をreportへ伝える修正後、新規max1でshare3最初の親がWinError87/ERROR_INVALID_PARAMETER。具体的不適合引数は未確定。
 peer/child/第2root未開始。11 lease保持、query token closed、worker PID25756/exit81/0.661秒/終了確認、stopなし、stdout10432/stderr0。
 前回失敗の数値を復元したとは扱わない。両旧枠閉鎖、失敗sourceへ再アクセスなし。
@@ -3135,7 +3135,7 @@ namespace/全期間/独立token/全publisher/B2/S4未完了、全許可flags=fal
 ## 104. 2026-09-15 B2 親share READ中のpath追加を確認
 
 ユーザーのsavepoint付き自走許可の範囲で、比較準備2ec193a→失敗保存2b865dc→エラー記録c0f17d8→診断保存37ec1c9→単独case実装 **674d1193711334fefd21bc56c11ffa8000943e6a** まで進めた。
-[単独case仕様](../anomaly-v03-namespace-readonly-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-namespace-readonly-2026-09-15.md)を参照。
+[単独case仕様](../anomaly/native/files/anomaly-v03-namespace-readonly-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-namespace-readonly-2026-09-15.md)を参照。
 親share3の作成停止（初回数値なし、別新規診断87）を反復せず、実績あるshare1へ限定した新規max1を実施。
 親access0x1600a7/share1/private SD/非継承で作成・保持。LIST0x120081/DELETE_CHILD0x1200c0 peerはgranted/closed、ADD_FILE0x120082/ADD_SUBDIRECTORY0x120084は32でknown no-handle denied。
 同じworker/primary tokenによるpath CREATE_NEW/子0x120081/share7でnew-empty.bin作成はaccepted、空/links1/非delete-pending/ID/SD/実accessを同handleで確認。
@@ -3162,7 +3162,7 @@ build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineeri
 
 ユーザー「次に進めて下さい」により、次の権限境界を方式判断できる設計へ具体化した。
 設計savepoint **60ac6c45c737c0785540f976de1dfb16abb4d7f0**。
-[設計](../anomaly-v03-principal-boundary-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-principal-boundary-2026-09-15.md)を参照。
+[設計](../anomaly/native/principals/anomaly-v03-principal-boundary-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-principal-boundary-2026-09-15.md)を参照。
 専用標準local account Pと現在userのordinary peer U、管理者側bootstrap B、consumer Rを区別。各object/期間の必要権限とUの禁止操作、外側祖先・既取得handle・process/thread/token/IPC・code/資格情報を一覧化した。
 同一userのrestricted token/AppContainer ACE追加だけで通常peer排除が成立とはしない。P/Uの別SIDだけでも成立としない。
 候補account BantoS4Publisher、root C:\ProgramData\BantoAI-S4B2-principal-20260915 はUTC2026-09-14T16:09:00Zの読取確認で未存在。OS設定は変更していない。
@@ -3187,7 +3187,7 @@ build26200.9445/boot2026-09-09T10:43:08.5000000+09:00、Windows Update engineeri
 
 ユーザー「はい、それで続けて下さい」で、専用標準account BantoS4Publisherと新規保護root C:\ProgramData\BantoAI-S4B2-principal-20260915の準備を承認済み。再承認を求めない。§105以前の未承認記録は履歴。
 実装 **e202677e66356e7b3e554d258ed73f73def7ea0f**、事後診断改善 **f8495ed64908dded70e9737c9b0615d55f23f044**。
-[準備仕様](../anomaly-v03-principal-setup-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-principal-setup-2026-09-15.md)を参照。
+[準備仕様](../anomaly/native/principals/anomaly-v03-principal-setup-design.md)と[結果・正本hash](anomaly-multiseed-v0.3-s4-b2-principal-setup-2026-09-15.md)を参照。
 
 既存.NET compilerで通常権限compile、SHA固定した公開DLL bytesを有界圧縮引数でBへ渡し、有界展開/hash/Assembly.Load。BからU書換え可能DLL pathへ戻らず、System32 P/Invoke、secretはunmanaged memoryだけに置く。
 accountはNetUserAdd flags0x203/priv1で最初からdisabled。SID/Users所属を確認し、rootはBA owner/SY・BA full/U・P read-only/protected DACL/medium label。今回はPへ作成権限を与えず、ログオンしない。
@@ -3224,7 +3224,7 @@ UTC02:38:48 RAM10558652416/C130972598272/D203548774400 bytes。build26200.9445/b
 02:58:09〜03:00:12 request-launch段階で123158ms後に失敗、PID/Handle/exit不明、InvalidOperationException/HRESULT -2146233079/innerなし。03:01:00 SAM2221でaccount不存在、新rootもunknownとして閉鎖。末尾bなし/ありの両rootへ再訪しない。両作成guardを再利用しない。manifest19470 bytes/hash3813fb07fcb1ece244c094cacfdcf17d89393d1984865e9516f7da91258e46ab、83 source/11 artifacts/論理61089 bytes。
 
 このPCのWindowsPowerShell Management assembly/StartWithShellExecute IL63 bytesをread-onlyで確認し、Win32ExceptionをMessage-only InvalidOperationExceptionへ置き換えることを特定。起動原因は未確定のまま。
-新しい[Shell診断仕様](../anomaly-v03-shell-launch-diagnostic-design.md)と[通常control結果・正本hash](anomaly-multiseed-v0.3-s4-b2-shell-launch-diagnostic-2026-09-15.md)、実装558b118a378d0819f0776e727e9a78cb125f289a。
+新しい[Shell診断仕様](../anomaly/native/runtime/anomaly-v03-shell-launch-diagnostic-design.md)と[通常control結果・正本hash](anomaly-multiseed-v0.3-s4-b2-shell-launch-diagnostic-2026-09-15.md)、実装558b118a378d0819f0776e727e9a78cb125f289a。
 Process.Start(ProcessStartInfo)を直接呼び、UseShellExecute=true/Runだけrunas/Hiddenを維持。OS変更なしの固定SID/admin自己照会をASCII Command＋commentで15331文字へ固定。DLL/準備Entry/旧rootを含まない。
 新規3ケースpass（非Shellの実missing-exe error2保持含む）/独立0。通常ControlはUTC03:08:52〜53/PID43368/exit41/532ms、Handle・終了・解放確認、例外なし。Control枠閉鎖、Run枠は未使用。
 ユーザーへ「直前のアカウント準備でWindowsの確認画面が表示されたか」をasync質問中。返答まで新診断Runを保留し、未回答を承認/画面なしと扱わない。専用環境準備の許可は継続、方式再承認を求めない。
@@ -3271,7 +3271,7 @@ d025f4bbd83a9e928c3b93ecdae373605c47459bで5 phase限定のPreflight診断を追
 管理者画面を操作できる都合を質問し、ユーザー「今なら操作できます」と回答。方式の再承認ではない。57904679ef4b11c401fa176f04012f6c513a8e52で記録先一行だけを新規principal-identification-confirmation枠へ変更、公開DLL/commandは同一。既存Controlを参照し再実行せず、新規Runのみ実施、差分独立0。
 [成功結果](anomaly-multiseed-v0.3-s4-b2-principal-identification-confirmation-2026-09-15.md)。UTC05:16:32.0030613Z〜05:16:40.5498031Z、PID43308/exit0、起動4715ms/待機3754ms/合計8541ms、Handle・終了・observer解放成功、例外なし。修正Preflightと3 token close/StopWatchdog完了を確認した。SAM/root/作成Entryなし、当該guard閉鎖。manifest18985 bytes/hash92de13846a4f7208994ee1a2b9606f84333a3bdca3f6a2497d92d8e29be21d76、98 source/6 artifacts/論理22240 bytes。
 
-f5ad7c21389e7ae26eb48858b6017691fecedb22で承認済みの[新規準備d](../anomaly-v03-principal-setup-d-design.md)を保存。新規root C:\ProgramData\BantoAI-S4B2-principal-20260915d、artifacts/principal-setup-d-2026-09-15。root/記録固定値のみ変更、34件pass/独立0、通常load-only PID20872/exit0。DLL22528 bytes/hashfc88778d472098160f81302b8058b4b8cabcfa015119098b585fd03cce57007e。
+f5ad7c21389e7ae26eb48858b6017691fecedb22で承認済みの[新規準備d](../anomaly/native/principals/anomaly-v03-principal-setup-d-design.md)を保存。新規root C:\ProgramData\BantoAI-S4B2-principal-20260915d、artifacts/principal-setup-d-2026-09-15。root/記録固定値のみ変更、34件pass/独立0、通常load-only PID20872/exit0。DLL22528 bytes/hashfc88778d472098160f81302b8058b4b8cabcfa015119098b585fd03cce57007e。
 UTC05:20:34 SAM2221/root attributes0xffffffff/error2で新規対象不存在を確認。[実行結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-d-2026-09-15.md)。05:21:30.6208593Z〜05:23:38.6962403Z、PID22336/exit263458（phase4 CreateRoot/native1314）、起動124066ms/待機3952ms/合計128068ms。Handle・終了・observer解放成功、観測例外なし、release_failed=false。
 固定codeではPreflight/祖先保持とpeer AccessCheck/不存在確認を通過し、root作成phaseで停止。個別API名の記録ではない。account作成phaseへ未到達、05:25:12のSAMは2221/free0でaccount不存在。**root dは再確認せずunknown、末尾なし/b/c/dの4 rootを閉鎖。存在確認/再open/列挙/hash/copy/deleteしない。** 作成guardを再利用せず、account不存在からroot不存在を推定しない。
 準備d input19396 bytes/hash45bc965885a1335787546854b06d077ece3f72172bc1f17ca43a4e885de8c725、99 source、前回96 source/6 artifacts不変・2変更/新規1。最終manifest20341 bytes/hashd009f150c6cfbeb3796517ca6dda2390669884b7a870766bcae817a18059a989、9 artifacts/論理62344 bytes。
@@ -3282,15 +3282,15 @@ UTC05:20:34 SAM2221/root attributes0xffffffff/error2で新規対象不存在を�
 
 ## 112. 2026-09-15 既存特権の復元成功・準備e取消・f通常側準備済み
 
-ec94a5920f08a824cbf35bb1433f61b0e9b68c30でB processの既存SeSecurityPrivilege一件のscopeを実装。[仕様](../anomaly-v03-principal-security-privilege-design.md)/[結果](anomaly-multiseed-v0.3-s4-b2-security-privilege-2026-09-15.md)。4096-byte上限で存在と初期有効ビットを読み、必要時だけenableし再照会。CloseAdminTokenでは元の有効ビットへ復元・再照会してから閉じる。TRUE+ERROR_NOT_ALL_ASSIGNEDも失敗、同一backendへ固定、失敗時は後続/再試行なしでprocess終了。新たなOS特権付与や他の特権変更はない。34＋9＋15＋10の68件pass/独立0。
+ec94a5920f08a824cbf35bb1433f61b0e9b68c30でB processの既存SeSecurityPrivilege一件のscopeを実装。[仕様](../anomaly/native/principals/anomaly-v03-principal-security-privilege-design.md)/[結果](anomaly-multiseed-v0.3-s4-b2-security-privilege-2026-09-15.md)。4096-byte上限で存在と初期有効ビットを読み、必要時だけenableし再照会。CloseAdminTokenでは元の有効ビットへ復元・再照会してから閉じる。TRUE+ERROR_NOT_ALL_ASSIGNEDも失敗、同一backendへ固定、失敗時は後続/再試行なしでprocess終了。新たなOS特権付与や他の特権変更はない。34＋9＋15＋10の68件pass/独立0。
 DLL25600 bytes/hashcc7a3d42b26ea79015955cb76047d90ced4bd7dc109e74b1bec5898548b6ac1d、同command17566文字/hash82e9b02eee0c24ced40b6c087e2c9506dba9337ca01e76af23df39dab0bb26a3。通常Control PID9756/exit41/8855ms、管理者Run UTC08:27:17.4000397Z〜08:27:25.3555877Z/PID33600/exit0/7950ms。Handle・終了・observer解放成功、例外なし。特権の存在/有効/復元確認と3 token close/StopWatchdog完了を確認した。初期enabledbitの値は未記録なので、元から有効か今回enableしたかを断定しない。作成Entry/SAM/rootなし、両guard閉鎖。
 診断input20660 bytes/hash7f478085abb6b7063d720aa14e553b11e931c4ded2001aed3792e6a40c7b4782、101 source、前回96不変/3変更/新規2。最終manifest21910 bytes/hash4ebea15097d1a5d1e5a53461875412bc99e41f7ff62aa6e8a337a15eb7bd10ef、16 artifacts/論理87900 bytes。
 
-e23564c43e7a3c50101c07e38b9c4da052be4c38で[準備e](../anomaly-v03-principal-setup-e-design.md)を保存。root/記録をeへ固定しBuildが特権15件も必ず実行するよう変更、34＋15件pass/独立0。DLL25088 bytes/hash734e654339aa46e4f66cd86e98be1a3ba5585a0ebda4b4bea45d0ce04e09e88b、通常load-only PID33788/exit0。08:31:35 SAM2221/root error2で新規対象不存在を確認。
+e23564c43e7a3c50101c07e38b9c4da052be4c38で[準備e](../anomaly/native/principals/anomaly-v03-principal-setup-e-design.md)を保存。root/記録をeへ固定しBuildが特権15件も必ず実行するよう変更、34＋15件pass/独立0。DLL25088 bytes/hash734e654339aa46e4f66cd86e98be1a3ba5585a0ebda4b4bea45d0ce04e09e88b、通常load-only PID33788/exit0。08:31:35 SAM2221/root error2で新規対象不存在を確認。
 [停止結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-e-2026-09-15.md)。Run UTC08:32:27.5162967Z〜08:34:30.9979697Z、request-launchで123472ms/合計123474ms後に内側Win32 error1223、PID/Handle/exit未取得。Windowsの取消扱いを記録し、手動操作/時間経過を区別しない。helper開始・終了/作成phaseは未確認。08:35:30 SAM2221/free0でaccount不存在、**e rootは再確認せずunknown・閉鎖。旧末尾なし/b/c/d/eの5 rootへ存在確認/再open/列挙/hash/copy/deleteしない。** 今回guardも再使用せず、account不存在からroot不存在を推定しない。
 準備e input20101 bytes/hash6d03fa689ea51fa3db02bdcdab79d6ecc077179e510fec16017f9cd935e9efb4、102 source、最終manifest21481 bytes/hash24a21c73c965c3b489b85b042fa2d650d371ad4329048f072bfa7b9633765c60、10 artifacts/論理78182 bytes。
 
-今回の管理者画面操作の都合をasync質問し、**回答待ち**。既存方式への再承認ではない。以前の「今なら操作できます」は以前の枠の回答なので、今回の未回答を操作可能と扱わない。d2bdb66a88a51ee7cdc25afc9605c9a11097ae46で[新規f仕様](../anomaly-v03-principal-setup-f-design.md)と実装を保存し、[通常側準備結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-f-ready-2026-09-15.md)を別途記録した。新root C:\ProgramData\BantoAI-S4B2-principal-20260915f、artifacts/principal-setup-f-2026-09-15。C#とlauncherは固定値だけ変更、34＋15件pass/通常load-only PID33568/exit0/独立0。新DLL25088 bytes/hash3d236d9b2b920a4bbbf0550839bac94abd551f7debee73c02ec531a086d6f1bf、command16727文字。
+今回の管理者画面操作の都合をasync質問し、**回答待ち**。既存方式への再承認ではない。以前の「今なら操作できます」は以前の枠の回答なので、今回の未回答を操作可能と扱わない。d2bdb66a88a51ee7cdc25afc9605c9a11097ae46で[新規f仕様](../anomaly/native/principals/anomaly-v03-principal-setup-f-design.md)と実装を保存し、[通常側準備結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-f-ready-2026-09-15.md)を別途記録した。新root C:\ProgramData\BantoAI-S4B2-principal-20260915f、artifacts/principal-setup-f-2026-09-15。C#とlauncherは固定値だけ変更、34＋15件pass/通常load-only PID33568/exit0/独立0。新DLL25088 bytes/hash3d236d9b2b920a4bbbf0550839bac94abd551f7debee73c02ec531a086d6f1bf、command16727文字。
 新規Runも直前のSAM/f不存在照会も未実施。ready-evidence.json20120 bytes/hash4e77c062459bcd2b9e0d646afd7b0f3492732092fcc2eb09bb8e71d00c07688b、103 source、前回100不変/2変更/新規1、旧e10 artifacts不変。6 artifacts/論理55047 bytes。これは実行前savepointで、Runの成功や閉鎖を示さない。
 再開時は回答を確認後、ready/source/DLL/旧e証拠の不変と直前資源を確認し、対象SAM・新規f不存在を照会して新しいinputを保存する。ready記録を上書きせず新規guardでRun一度。成功時のみfの既知receipt/SAM確認、失敗時はfも閉鎖する。
 
@@ -3302,9 +3302,9 @@ e23564c43e7a3c50101c07e38b9c4da052be4c38で[準備e](../anomaly-v03-principal-se
 
 2026-09-16 JSTの「次に進めてください」で再開した。管理者画面操作への回答待ちは今回の再開指示と実際の起動成功で解消。c8c4a36の準備fはsource103/ready6/旧e公開artifact10の不変と不存在を確認後、一度実行。PID12448/exit393215、phase5/detail65535、終了・observer解放確認。後続SAM2221/free0、f rootへ再訪せず閉鎖。[f結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-f-2026-09-16.md)。最終manifest22508 bytes/hash541dfa7c139626693e011668f2ea32f52a1a73f83c687815c952c1866abd0553、12 artifacts/論理97805 bytes。
 
-5fe02878bd75911a56878406f081db8c28bc08a6で[固定診断g](../anomaly-v03-principal-setup-g-design.md)を保存。phase5のunknownのみbit29で細分化し、事前確保step/SD差を返す。保護条件・厳密比較・失敗停止を維持。build01でGetSddlForm(Audit)のlabel省略を試験検出、raw ACL比較を加えたbuild02で43＋15＋launcher12件pass/独立0。[g結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-g-2026-09-16.md)はPID10092/exit537209480、phase5/kind1/step10/差136=8+128。初期policyのSACL部分とauto flags差を観測したが、AI/ARやlabel自体の差まで特定せず、fの原因にも遡及しない。後続SAM2221/free0、g閉鎖。最終manifest23630 bytes/hash753f2f440a0f8edfb4b9f43668ca2de736fbb634e25c10dce2f8cf20cda95912、14 artifacts/論理135727 bytes。
+5fe02878bd75911a56878406f081db8c28bc08a6で[固定診断g](../anomaly/native/principals/anomaly-v03-principal-setup-g-design.md)を保存。phase5のunknownのみbit29で細分化し、事前確保step/SD差を返す。保護条件・厳密比較・失敗停止を維持。build01でGetSddlForm(Audit)のlabel省略を試験検出、raw ACL比較を加えたbuild02で43＋15＋launcher12件pass/独立0。[g結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-g-2026-09-16.md)はPID10092/exit537209480、phase5/kind1/step10/差136=8+128。初期policyのSACL部分とauto flags差を観測したが、AI/ARやlabel自体の差まで特定せず、fの原因にも遡及しない。後続SAM2221/free0、g閉鎖。最終manifest23630 bytes/hash753f2f440a0f8edfb4b9f43668ca2de736fbb634e25c10dce2f8cf20cda95912、14 artifacts/論理135727 bytes。
 
-aa0bc5e16010e8fd3a61239359ed1f67f41df5faで[新規h](../anomaly-v03-principal-setup-h-design.md)を保存。要求SDDLをS:PAIへ限定変更し、旧descriptorとのbinary差が0x0800だけである試験を追加。owner/group/全ACL bytes、両protectedとmedium/no-write-upを維持し、差の無視はしない。44＋15＋launcher12の71件pass、独立0、safety/diff pass、通常load-only PID11952/exit0/command17859文字。
+aa0bc5e16010e8fd3a61239359ed1f67f41df5faで[新規h](../anomaly/native/principals/anomaly-v03-principal-setup-h-design.md)を保存。要求SDDLをS:PAIへ限定変更し、旧descriptorとのbinary差が0x0800だけである試験を追加。owner/group/全ACL bytes、両protectedとmedium/no-write-upを維持し、差の無視はしない。44＋15＋launcher12の71件pass、独立0、safety/diff pass、通常load-only PID11952/exit0/command17859文字。
 採用DLL26624 bytes/hash4b04ed4b32a6e1713cc806804c8532fca22a7e9f32685bf087b4c345b7e93c0f。105 source（前回101不変/3変更/新規1）と旧g14 artifacts不変。直前SAM2221/root error2、input20709 bytes/hash1784e62199d216d66551e0fa7240a44cc2a055f4997507d41b5a31705685bc19。
 [h実行結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-h-2026-09-16.md)。UTC2026-09-15T15:25:59.3588285Z〜15:26:07.5741839Z、PID26248/exit786431=phase11/detail65535、launch3842/wait4330/total8215ms。Handle/終了/observer解放確認、例外なし。初期root厳密検査、disabled account作成、Users確認、最終DACL設定を通過。phase11はBudget/祖先/root identity/policy/account/groupを含むため具体的停止条件は未特定。失敗後の特権復元や通常teardown完了は認定しない。
 
@@ -3317,10 +3317,10 @@ h最終manifest23372 bytes/hash0540df3b7945f65f7e6a641af7c0f96bb79f4694d7f31a138
 
 ## 114. 2026-09-16 既存P維持経路・専用環境準備j成功
 
-092fb4b7b83e2467b2f26b4258a30ecd94c8b682で[既存P専用i](../anomaly-v03-principal-setup-i-design.md)を実装。ExistingEntryはphase6/8を省く20phase、作成/所属変更/RNGの実装とimportを削除。phase3でP name/SID末尾1010/flags0x203/Usersを固定照会し、新規root不存在だけ確認して進む。phase7/9/11でも再検査。phase11へ固定step診断を拡張し、77件pass/独立0。
+092fb4b7b83e2467b2f26b4258a30ecd94c8b682で[既存P専用i](../anomaly/native/principals/anomaly-v03-principal-setup-i-design.md)を実装。ExistingEntryはphase6/8を省く20phase、作成/所属変更/RNGの実装とimportを削除。phase3でP name/SID末尾1010/flags0x203/Usersを固定照会し、新規root不存在だけ確認して進む。phase7/9/11でも再検査。phase11へ固定step診断を拡張し、77件pass/独立0。
 [i結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-i-2026-09-16.md)はPID31244/exit537602628/phase11 kind1 step10差68(DACL4+auto64)。終了/observer解放確認、SAMのP無効/Users不変。iへ再訪せず閉鎖した。最終manifest24200 bytes/hash3bde24e28de4a1c0076c0ebf0e5826577179fe3217ac4864f4f82ad3a47b2524、11 artifacts/論理90815 bytes。iの差からAI/ARや実ACEの一致を遡って断定しない。
 
-1f253cc4fa984462a3d0bf7d4e66d23d230eaf56で[新規j](../anomaly-v03-principal-setup-j-design.md)の最終要求をD:PAIへ限定変更。初期D:P/S:PAIは不変、最終descriptor binary差は0x0400のみで全権限/両protectedを維持。50＋15＋launcher13の78件pass、独立指摘0、safety/diff pass。通常load-only PID20772/exit0/command17271文字。DLL26112 bytes/hash4d6b2fa835176986faa4791a62865144451fd4a6b6823dc95a711a5b9a34be25。
+1f253cc4fa984462a3d0bf7d4e66d23d230eaf56で[新規j](../anomaly/native/principals/anomaly-v03-principal-setup-j-design.md)の最終要求をD:PAIへ限定変更。初期D:P/S:PAIは不変、最終descriptor binary差は0x0400のみで全権限/両protectedを維持。50＋15＋launcher13の78件pass、独立指摘0、safety/diff pass。通常load-only PID20772/exit0/command17271文字。DLL26112 bytes/hash4d6b2fa835176986faa4791a62865144451fd4a6b6823dc95a711a5b9a34be25。
 107 source（前回103不変/3変更/新規1）と旧i11 artifacts不変。直前SAM固定条件/root error2確認、input21338 bytes/hash5fe087c324fa68b2882908c3d3bced0b4d01f7c780a9dbadd466850e4ee92b17。
 [j成功結果](anomaly-multiseed-v0.3-s4-b2-principal-setup-j-2026-09-16.md)。UTC2026-09-15T15:44:08.8914053Z〜15:44:17.7382677Z、PID3284/exit0、launch4125/wait4680/total8841ms。Handle/終了/observer解放確認、例外なし。初期/最終の厳密policy、receipt write/flush、child/root/ancestor/token close、元の特権有効bit復元・再照会、watchdog終了まで完了。
 
@@ -3335,7 +3335,7 @@ preclose記録elapsed148ms、観測peak private63029248/working73957376 bytes、
 
 ## 115. 2026-09-16 worker lifecycle model・起動特権の読み取り診断
 
-「次に進めてください」で再開し、**cbd3df9a61348562019a2c4ae9113e17e122dd96** に[起動・終了modelと読み取り診断](../anomaly-v03-principal-worker-lifecycle-design.md)を保存。[結果書](anomaly-multiseed-v0.3-s4-b2-worker-lifecycle-2026-09-16.md)。setup jのsource/guardを変更せず、新規6 sourceを追加した。
+「次に進めてください」で再開し、**cbd3df9a61348562019a2c4ae9113e17e122dd96** に[起動・終了modelと読み取り診断](../anomaly/native/principals/anomaly-v03-principal-worker-lifecycle-design.md)を保存。[結果書](anomaly-multiseed-v0.3-s4-b2-worker-lifecycle-2026-09-16.md)。setup jのsource/guardを変更せず、新規6 sourceを追加した。
 26操作の純粋modelはenable応答前にriskを記録、logonの成否に関わらずDisable→Verify、既知secretのゼロ化/解放後だけlaunch。未知取得は推測closeせず、job停止要求と所有process終了/job空確認を区別し、外側code/祖先を保持する。primary/secondary障害を別保存、同じ操作は再試行しない。実handle台帳・時間/メモリ制限・ACL/jobを強制するnative backendは未実装。
 レビューでmodelの動的HashSet記録のOOM時工程飛ばしP2 1件を固定bitset/配列へ修正。診断の未確定out handle closeとclose例外によるprimary/他方close喪失P2 2件をQueryHandleLeaseへ修正。既存Maxwell 1体、進捗poll0、最終残存P0〜P3所見0。
 採用build-03は**65 model＋8 query lease＋15 privilege/parser＝88件pass**、safety/diff pass。最初の手動csc相対path解決失敗は出力生成前に停止、固定launcherは絶対pathを使用。中間build-01/02は未採用として証跡だけ保存。
@@ -3365,7 +3365,7 @@ environment_preparation_complete=trueは前回j結果のみ。native_launch_auth
 
 ## 117. 2026-09-16 通常保存API・実ファイルの順次保存/読取り成功
 
-§116の単一writer方針で再開し、**75a245ac190b944426371118ebda3fe820391f5c** に通常保存APIを実装。[使い方](../anomaly-v03-local-publication.md) / [結果](anomaly-multiseed-v0.3-local-publication-2026-09-16.md)。既存 `_anomaly_v03_io` の排他作成/非上書き/完了印/readbackを共用するLocalPublication・publish_local_result・verify_local_publicationを追加。新しい `anomaly-v03-local-complete` markerでfixtureと区別する。通常権限だけで動作し、temp外の明示した既存親の新規実行名へ保存可能。
+§116の単一writer方針で再開し、**75a245ac190b944426371118ebda3fe820391f5c** に通常保存APIを実装。[使い方](../anomaly/execution/anomaly-v03-local-publication.md) / [結果](anomaly-multiseed-v0.3-local-publication-2026-09-16.md)。既存 `_anomaly_v03_io` の排他作成/非上書き/完了印/readbackを共用するLocalPublication・publish_local_result・verify_local_publicationを追加。新しい `anomaly-v03-local-complete` markerでfixtureと区別する。通常権限だけで動作し、temp外の明示した既存親の新規実行名へ保存可能。
 writeが作成前に失敗した後やclose後でも再使用できる穴をfailed/closedで修正。commit試行を先に記録し、応答喪失後の失敗記録追記を拒否。独立レビューのcallback内失敗握りつぶしP2 1件はcommit前のfailed再確認・回帰で修正し、残存P0〜P3=0。既存1体、進捗poll0。
 最終 **12 local＋15既存PublicationTests＝27件pass / failure・error・skip0 / 3.715秒**、safety/diff pass。実際の通常Python子processを保存途中で終了させ、完了印なし、reader拒否、同じroot再使用拒否を確認した。
 最初の修正途中の4 module回帰は重い評価データ生成を含み、対象PID23824のcommand/start時刻照合後UTC16:34:06に停止。CPU320.8125秒/private104050688/working115589120。**中断でありpassに数えない。TemporaryDirectory cleanup完了は未確認で、個別path記録がなかったため古いfixtureと混同する探索/削除は行わない。** 最終変更は上記27件で検証済み。次回も必要な試験を選び、広い評価moduleを無条件に回さない。
@@ -3381,7 +3381,7 @@ local_publication_performed=true。native_launch_authorized/isolation_certified/
 
 ## 118. 2026-09-16 保存済み観測のローカル計算CLI・順次再計算検証成功
 
-§116を継続し、**8f42c9e18e533e85afb5e2be0b7b5aede17dcc9f** に結果生成側と通常保存APIの接続を実装。[使い方](../anomaly-v03-local-preview.md) / [結果](anomaly-multiseed-v0.3-local-preview-2026-09-16.md)。`preview_anomaly_v03.py run/verify` が入力snapshot→既存S2計算→4 payload保存→保存済み入力から再計算照合を行う。C0/C1/C2を1候補ずつ扱い、campaign identityを作らない。重複実行名を計算前に拒否し、部分入力の不足理由をinconclusiveとして残す。
+§116を継続し、**8f42c9e18e533e85afb5e2be0b7b5aede17dcc9f** に結果生成側と通常保存APIの接続を実装。[使い方](../anomaly/execution/anomaly-v03-local-preview.md) / [結果](anomaly-multiseed-v0.3-local-preview-2026-09-16.md)。`preview_anomaly_v03.py run/verify` が入力snapshot→既存S2計算→4 payload保存→保存済み入力から再計算照合を行う。C0/C1/C2を1候補ずつ扱い、campaign identityを作らない。重複実行名を計算前に拒否し、部分入力の不足理由をinconclusiveとして残す。
 
 新規8件＋通常保存12件＋既存QuantizationAndCaptureTests 10件＝**30件pass**（4.406＋1.562秒）、独立P0〜P3所見0/進捗poll0、safety/diff-check pass。変更前2f5a147のscorerと、代数的14,410行で3候補すべての48 profile全ledger・40行の全score dictionary・ローカル射影が一致（32.230秒）。広い評価module回帰は再実行しない。
 
@@ -3396,7 +3396,7 @@ local_publication_performed/local_preview_computed=true。native_launch_authoriz
 
 ## 119. 2026-09-16 保存済み候補の比較CLI・実3候補比較成功
 
-**204e8e8e9397e3276441a682a3283ff78bf3a0a8** に `preview_anomaly_v03.py compare` を追加。[使い方](../anomaly-v03-local-preview.md#保存済み候補の比較) / [結果](anomaly-multiseed-v0.3-local-comparison-2026-09-16.md)。同一入力bytesの異なる2〜3候補をmarker hash付きで指定し、順番に再計算検証してMarkdown/JSON表示する。比較は結果ファイルを書き換えず、既存保存API・数式も変更なし。
+**204e8e8e9397e3276441a682a3283ff78bf3a0a8** に `preview_anomaly_v03.py compare` を追加。[使い方](../anomaly/execution/anomaly-v03-local-preview.md#保存済み候補の比較) / [結果](anomaly-multiseed-v0.3-local-comparison-2026-09-16.md)。同一入力bytesの異なる2〜3候補をmarker hash付きで指定し、順番に再計算検証してMarkdown/JSON表示する。比較は結果ファイルを書き換えず、既存保存API・数式も変更なし。
 候補別/target別件数・不足理由を表示し、判定一致/不一致は両側利用可能な行だけ。片側のみ可能・両側不能を別集計し、不能を「異常なし」に含めない。生スコアの大小や超過件数で性能順位を付けない。
 新規比較7＋既存preview8＝**15件pass/6.929秒/failure・error・skip0**、独立P0〜P3所見0/進捗poll0、safety/diff-check pass。初回7件の1 errorはテスト側の引数切出しミスで修正済み。広い評価module・principal試験は追加しない。
 
@@ -3412,7 +3412,7 @@ local_publication_performed/local_comparison_computed=true。native_launch_autho
 
 ## 120. 2026-09-16 判定差の時点・対象別詳細表示
 
-**47f5367b64ef41ef0ef263dbcf0a628fcbd164a0** にcompareの詳細表示を追加。[使い方](../anomaly-v03-local-preview.md#判定差の詳細) / [結果](anomaly-multiseed-v0.3-local-comparison-details-2026-09-16.md)。判定/利用可否が分かれたsample/targetごとにUTC時刻・候補別score/residual/phase/mode/recipe/除外理由を表示。既定20組/max100、details-offset、全体組数/表示数/前後省略数を追加。同じ組をペア間で重複計上せず、unavailableを陰性に含めない。全体集計と旧detailsなしJSONの描画を維持。保存API・数式変更なし。
+**47f5367b64ef41ef0ef263dbcf0a628fcbd164a0** にcompareの詳細表示を追加。[使い方](../anomaly/execution/anomaly-v03-local-preview.md#判定差の詳細) / [結果](anomaly-multiseed-v0.3-local-comparison-details-2026-09-16.md)。判定/利用可否が分かれたsample/targetごとにUTC時刻・候補別score/residual/phase/mode/recipe/除外理由を表示。既定20組/max100、details-offset、全体組数/表示数/前後省略数を追加。同じ組をペア間で重複計上せず、unavailableを陰性に含めない。全体集計と旧detailsなしJSONの描画を維持。保存API・数式変更なし。
 **関連19件pass/11.572秒/failure・error・skip0**、独立P0〜P3所見0/進捗poll0、safety/diff-check pass。重複・全availability組合せ・値の一致・順序・ページ境界/非表示・上限・旧JSON・CLIを確認した。広い評価moduleやprincipal試験は実施しない。
 
 保存済みC0/C1/C2を再利用したcompare PID25968、UTC00:42:56.153678〜00:43:10.371583、14.218秒/exit0。入力・候補payloadの新規生成0。前回比較からdetails以外の全項目不変、各詳細値・判定・理由は保存済みscores.jsonlに一致。
@@ -3427,7 +3427,7 @@ local_comparison_computed=true、今回local publication0。native_launch_author
 
 ## 121. 2026-09-16 判定差と保存済み観測値の対応表示
 
-**a013ec2c4175725b091702ad9d6e0fa7804bac31** に観測contextを追加。[使い方](../anomaly-v03-local-preview.md#判定差の詳細) / [結果](anomaly-multiseed-v0.3-local-observation-context-2026-09-16.md)。各詳細の同一設備・t-1/t/t+1で4 targetの値/unit/quality/mode/recipeを表示。正確な時点の欠測は補間せずpresent=falseとし、null値と区別する。t+1は計算後の閲覧専用。最初の検証済み入力bytesだけ保持し、展開済み観測は表示対象の時点に限定、詳細0件なら解析を省く。自由文字列をMarkdownでescapeし、旧observationsなしJSONも描画可能。scorer/storage/CLI引数変更なし。
+**a013ec2c4175725b091702ad9d6e0fa7804bac31** に観測contextを追加。[使い方](../anomaly/execution/anomaly-v03-local-preview.md#判定差の詳細) / [結果](anomaly-multiseed-v0.3-local-observation-context-2026-09-16.md)。各詳細の同一設備・t-1/t/t+1で4 targetの値/unit/quality/mode/recipeを表示。正確な時点の欠測は補間せずpresent=falseとし、null値と区別する。t+1は計算後の閲覧専用。最初の検証済み入力bytesだけ保持し、展開済み観測は表示対象の時点に限定、詳細0件なら解析を省く。自由文字列をMarkdownでescapeし、旧observationsなしJSONも描画可能。scorer/storage/CLI引数変更なし。
 **関連22件pass/9.334秒/failure・error・skip0**、独立P0〜P3所見0/進捗poll0、safety/diff-check pass。初回22件/10.146秒の1 errorは、gapでphaseがリセットされた後にも詳細行があると仮定したfixtureの誤りで、通常phaseの統合確認と欠測表示を分けて修正した。初回をpassには数えない。
 
 保存済み3候補を再利用したcompare PID26676、UTC01:32:17.597939〜01:32:30.144467、12.547秒/exit0。入力・候補payload新規生成0。observationsを除く前回比較/詳細の全項目不変、2組×3時点×4信号＝24セルが保存済み値・単位・品質に一致。重複除外で設備/時点4組。
@@ -3441,7 +3441,7 @@ sample7202/vibration_featureの130.03→130.28、差0.25とC0 residual一致。s
 local_comparison_computed=true、今回local publication0。native_launch_authorized/isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated/native_publication_performed/raw_consumer_payload_release_enabled=false、acceptance_status=not_completed。正式campaign entry/科学的評価条件/受入gateは未変更。
 ## 122. 2026-09-16 単一writer評価経路の接続案・運用改訂の判断
 
-**7f1708a7450857517f28fe3b23dd05404088b73b** に[移行案](../anomaly-v03-single-writer-evaluation-proposal.md)とREADME案内を保存。[照合結果](anomaly-multiseed-v0.3-single-writer-route-2026-09-16.md)。現行公開runnerはruntime/受入gate後も未接続。既存計算には完全18,000行と全metadata/events・登録identityが必要で、部分previewを性能評価へ読み替えない。別clean作業コピーと、新scopeのcontroller/manifest/runtime captureが必要。
+**7f1708a7450857517f28fe3b23dd05404088b73b** に[移行案](../anomaly/evaluation/anomaly-v03-single-writer-evaluation-proposal.md)とREADME案内を保存。[照合結果](anomaly-multiseed-v0.3-single-writer-route-2026-09-16.md)。現行公開runnerはruntime/受入gate後も未接続。既存計算には完全18,000行と全metadata/events・登録identityが必要で、部分previewを性能評価へ読み替えない。別clean作業コピーと、新scopeのcontroller/manifest/runtime captureが必要。
 
 提案 `anomaly-v03-single-writer-v1` / engineering-dev は、最初のdev seed・layout 0・2層×3候補＝固定6件（2 dataset/288 profile/86400 score行）。科学的な式・seed・閾値等を維持し、保存とOS更新の扱いを運用改訂する。15分/所有worker private 2GiB/新出力1GiB、開始時空きRAM4GiB/volume20GiBを上限案とした。旧gateを解除せず、全dev/smokeやholdoutの代替にしない。
 独立レビュー所見0/進捗poll0。既存CLIのvalidate-onlyはdev576/smoke144枠でexit0/configuration_valid、両方not_run/output_created=false。今回は文書のみで登録データ生成0/evaluation0。重い評価moduleやprincipal試験なし。
@@ -3453,7 +3453,7 @@ native_launch_authorized/isolation_certified/protected_commit_allowed/future_imm
 
 ## 123. 2026-09-16 運用改訂採択・固定6件の計算保存と両再計算成功
 
-提案確認後の「次に進めてください」を受け `anomaly-v03-single-writer-v1` を採択し、**0086ffe226ed58c618f6bc001ebd0c99a90e66e9** に実装。[ガイド](../anomaly-v03-engineering-evaluation.md) / [結果と概算](anomaly-multiseed-v0.3-engineering-trial-2026-09-16.md)。固定plan/manifest、Windows更新実値記録、1 worker/15分/2GiB/出力1GiB監視、全pair保存後の順次計算・公開前再計算・writer終了後readerを追加した。新規25＋通常保存12＝37件pass/7.941秒。独立P2/P3各1件是正・再レビュー0/進捗poll0。safety/diff-check pass。既存科学計画/config/schema/数式/旧gate/保存API変更なし。
+提案確認後の「次に進めてください」を受け `anomaly-v03-single-writer-v1` を採択し、**0086ffe226ed58c618f6bc001ebd0c99a90e66e9** に実装。[ガイド](../anomaly/evaluation/anomaly-v03-engineering-evaluation.md) / [結果と概算](anomaly-multiseed-v0.3-engineering-trial-2026-09-16.md)。固定plan/manifest、Windows更新実値記録、1 worker/15分/2GiB/出力1GiB監視、全pair保存後の順次計算・公開前再計算・writer終了後readerを追加した。新規25＋通常保存12＝37件pass/7.941秒。独立P2/P3各1件是正・再レビュー0/進捗poll0。safety/diff-check pass。既存科学計画/config/schema/数式/旧gate/保存API変更なし。
 
 同commitのclean detached worktree **C:/Users/TKent/.codex/worktrees/engineering-v03-20260916** を新設。実行と生成物はこのコピーの `artifacts/anomaly-v03-engineering-dev/trial-01` と `trial-01-control`。**同名を再使用せず、削除・cleanup対象にも自動追加しない。** 1回の実試行は最初のdev seed/layout 0/core・quality-stress/全候補の6件成功、0 inconclusive/failed/not_started。360 source Git/作業コピー一致、2 dataset/288 profile/86400 score行、payload41件。両再計算・local_verified=true。marker hash ebe96bacce7ec85bf032fc196c383efa3a5a01a09a99f0d23521e9a60b615106。
 PID31828/exit0/終了確認済み、全体572.048秒、peak private337215488 bytes（321.59MiB）、出力46 files/132553275 bytes（126.41MiB）、stop_reasonなし/観測エラー0。manifestのresourcesは計算保存段階まで（189.136秒）であり、全体実測はsupervision.jsonを使う。公開後の異常では既存markerを撤回せずsupervision failedとして判定する。
@@ -3468,7 +3468,7 @@ engineering_trial_completed=true。native_launch_authorized/isolation_certified/
 
 ## 124. 2026-09-16 保存済み6件の独立ledger検算成功・checkpoint設計
 
-**0c8377d0d55fc2813f2c18fa618c33646bc6666c** に保存scoreからepisode/matching/metricsを別実装で再構成するconsumerを追加。[範囲・使い方・進行記録設計](../anomaly-v03-independent-audit-and-checkpoints.md) / [結果](anomaly-multiseed-v0.3-independent-ledger-audit-2026-09-16.md)。数式側はstdlibのみ。JSON/schema・登録event・保存hash・source検査は共用する。18件pass/1.516秒、計算・設計の独立レビュー各0/進捗poll0、safety/diff-check pass。
+**0c8377d0d55fc2813f2c18fa618c33646bc6666c** に保存scoreからepisode/matching/metricsを別実装で再構成するconsumerを追加。[範囲・使い方・進行記録設計](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md) / [結果](anomaly-multiseed-v0.3-independent-ledger-audit-2026-09-16.md)。数式側はstdlibのみ。JSON/schema・登録event・保存hash・source検査は共用する。18件pass/1.516秒、計算・設計の独立レビュー各0/進捗poll0、safety/diff-check pass。
 
 新clean detached worktree **C:/Users/TKent/.codex/worktrees/engineering-audit-20260916** / 0c8377dから、既存producer **C:/Users/TKent/.codex/worktrees/engineering-v03-20260916** / 0086ffeのtrial-01を読取り。producer360/consumer365 sourceを個別に固定revisionへ照合した。全6件の保存score計86400行から再構成し、全source/equipment episode・incident・metrics一致。source episode件数はcore C0/C1/C2=3/30/42、stress=3/29/39。equipment episode=3/20/20、3/19/19。incidentは各20行で、候補間共有イベントを独立母数として3倍にしない。
 PID30824、UTC04:18:09.387366〜04:19:42.422194、92.828秒/peak private186466304 bytes（177.83MiB）/exit0/終了確認済み。CLI内の資源検査は終了時なので、今回の所有processへ別監視helperで10分/1GiB/ログ8MiB上限を付与。stop_reasonなし/観測エラー0。入力46 filesの実行前後pin一致、登録dataset生成0、producer score再計算0。
@@ -3484,7 +3484,7 @@ independent_ledger_audit_completed=true。native_launch_authorized/isolation_cer
 
 ## 125. 2026-09-16 固定campaign planとjournal状態復元を実装
 
-**9c9975294fe4c22c1cc8dbffbcc140cf00c687e1** にmetadata-onlyのplan builder/validator、hash-linked journal reader/reducerを追加。[使い方](../anomaly-v03-independent-audit-and-checkpoints.md#実装済みのmetadata-cli) / [結果](anomaly-multiseed-v0.3-checkpoint-metadata-2026-09-16.md)。dev96 chunks/576 evaluations→smoke24/144の固定120/720。planのsource参照revision・runtime方針・identity/order/hashを検査し、予算未確定/実行未許可を維持する。
+**9c9975294fe4c22c1cc8dbffbcc140cf00c687e1** にmetadata-onlyのplan builder/validator、hash-linked journal reader/reducerを追加。[使い方](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#実装済みのmetadata-cli) / [結果](anomaly-multiseed-v0.3-checkpoint-metadata-2026-09-16.md)。dev96 chunks/576 evaluations→smoke24/144の固定120/720。planのsource参照revision・runtime方針・identity/order/hashを検査し、予算未確定/実行未許可を維持する。
 
 外部plan hash・record件数・head hashを必須にし、欠落/重複/順序違反/途中JSON/source差分/markerだけの偽完了を拒否。失敗・中断後は新attempt、integrity失敗後は停止。失敗時の監視hash/context/理由を復元結果にも残す。120 chunksがverifiedと宣言されても、成果物はまだ照合せずevidence_revalidated/resume_authorized/campaign_completed/independent_s6_complete=false。全範囲のwriter/controllerを実行できる状態ではない。
 
@@ -3498,7 +3498,7 @@ checkpoint_metadata_implemented=true。native_launch_authorized/isolation_certif
 
 ## 126. 2026-09-16 参照journalと保存済み6件の実証拠照合に成功
 
-**6b77db9bf603aceb09f73a72241a57992c64716d** に `checkpoint_anomaly_v03.py preflight-trial` を追加。[使い方](../anomaly-v03-independent-audit-and-checkpoints.md#保存済み6件とのpreflight証拠照合) / [結果](anomaly-multiseed-v0.3-checkpoint-evidence-binding-2026-09-16.md)。外部reference hashから固定plan/3-record参照journal、旧trialのmarker/supervision/audit/audit-monitorを結び付け、6件ledgerを再検算して保存auditと照合する。旧consumerと新verifierを個別に固定し、長い読取りの後にjournal/reference/証拠を再読取りする。
+**6b77db9bf603aceb09f73a72241a57992c64716d** に `checkpoint_anomaly_v03.py preflight-trial` を追加。[使い方](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#保存済み6件とのpreflight証拠照合) / [結果](anomaly-multiseed-v0.3-checkpoint-evidence-binding-2026-09-16.md)。外部reference hashから固定plan/3-record参照journal、旧trialのmarker/supervision/audit/audit-monitorを結び付け、6件ledgerを再検算して保存auditと照合する。旧consumerと新verifierを個別に固定し、長い読取りの後にjournal/reference/証拠を再読取りする。
 
 新規12＋既存checkpoint21＋saved-audit6＝**39件pass/5.393秒/failure・error・skip0**。初回33件/7.166秒の1 failureはfixtureの比較元/先object共有によるテスト不備で、独立copyへ修正後pass。独立P0〜P3所見0/進捗poll0、safety/diff-check pass。広い重い評価moduleは実行していない。
 新clean detached worktree **C:/Users/TKent/.codex/worktrees/engineering-binding-20260916** / 6b77db9から、既存producer0086ffe/旧consumer0c8377d/trial-01と保存auditを読取り。PID16484、UTC10:45:38.194649〜10:47:34.778884、116.420秒/peak private195002368 bytes（185.97MiB）/exit0/終了確認。所有processを10分/1GiB/ログ8MiBで監視し、停止理由なし・観測エラー0。binding.resourcesの96.628秒は既存audit部分で、全体はbinding-process.jsonを参照する。
@@ -3512,7 +3512,7 @@ native_launch_authorized/isolation_certified/protected_commit_allowed/future_imm
 
 ## 127. 2026-09-16 metadataの追記保存とreceipt回復を実装
 
-**d8ceed423e9ccd36540e88aa2bf559351366ad2e** にmetadata専用store APIと `store-init/append/inspect/recover-init/recover-append` を追加。[使い方と次の契約案](../anomaly-v03-independent-audit-and-checkpoints.md#metadataを上書きせず保存追記する) / [結果](anomaly-multiseed-v0.3-checkpoint-store-2026-09-16.md)。通常単一writer、既存exclusive/flush/読戻し/no-replace renameを再利用し、旧recordを上書きしない。外部receipt/intent pinsを必須にし、全prefix・次状態・上限を検査後に1件を確定。確定後のreceipt喪失は旧prefix＋厳密1件を読取り回復する。partial pending/初期化失敗は残して拒否し、自動cleanupや自動公開を行わない。
+**d8ceed423e9ccd36540e88aa2bf559351366ad2e** にmetadata専用store APIと `store-init/append/inspect/recover-init/recover-append` を追加。[使い方と次の契約案](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#metadataを上書きせず保存追記する) / [結果](anomaly-multiseed-v0.3-checkpoint-store-2026-09-16.md)。通常単一writer、既存exclusive/flush/読戻し/no-replace renameを再利用し、旧recordを上書きしない。外部receipt/intent pinsを必須にし、全prefix・次状態・上限を検査後に1件を確定。確定後のreceipt喪失は旧prefix＋厳密1件を読取り回復する。partial pending/初期化失敗は残して拒否し、自動cleanupや自動公開を行わない。
 
 新規store16＋既存checkpoint21＋evidence12＝**49件pass/11.620秒/failure・error・skip0**、独立P0〜P3所見0/進捗poll0、safety/diff-check pass。reader共通化の回帰、中断/flush/rename境界・二重追記・余分な末尾・誤intent/receipt・上限を小規模fixtureで確認。専用principal/同時writerの追加試験なし。
 実CLIは候補のcommit済み実装から `artifacts/checkpoint-store-2026-09-16/store-demo` を新設。新worktreeなし、metadata fixture4 recordsだけ。9 process合計3.004秒、1回0.208〜0.412秒、peak private21671936 bytes（20.67MiB）、通常8回exit0/二重追記拒否1回expected exit2。各60秒/256MiB/ログ2MiB監視で全終了確認・停止理由なし。receipt回復/二重追記拒否時はstore bytes不変、各追記でも既存prefix不変。最終attempts2/interrupted履歴1/saved_pending_verification1/not_started119。markerは架空値で、実評価完了の主張ではない。
@@ -3525,7 +3525,7 @@ checkpoint_metadata_writer_implemented=true。execution_authorized/resume_author
 
 ## 128. 2026-09-17 attempt保存先と証拠metadataのvalidatorを実装
 
-**92772268ce968d9a4c74cb5d1811fddffb709c83** にpure descriptor builder/validatorと `attempt-layout/attempt-validate` CLIを追加。[使い方](../anomaly-v03-independent-audit-and-checkpoints.md#attemptの保存先と証拠metadataを検査する) / [結果](anomaly-multiseed-v0.3-attempt-descriptor-2026-09-17.md)。外部plan/head hashと件数から最後のrecordを選び、固定chunk/attempt path、6件identity、source/runtime/outcome、marker/producer監視/audit/その監視の宣言を結び付ける。descriptorは外部raw hash/64KiB上限で読み、journalとともに読戻し確認。3証拠hashはjournalと一致必須。verifiedには4証拠とaudit前後runtime一致を要求し、失敗時の欠落や監視のみの証拠は保持する。
+**92772268ce968d9a4c74cb5d1811fddffb709c83** にpure descriptor builder/validatorと `attempt-layout/attempt-validate` CLIを追加。[使い方](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#attemptの保存先と証拠metadataを検査する) / [結果](anomaly-multiseed-v0.3-attempt-descriptor-2026-09-17.md)。外部plan/head hashと件数から最後のrecordを選び、固定chunk/attempt path、6件identity、source/runtime/outcome、marker/producer監視/audit/その監視の宣言を結び付ける。descriptorは外部raw hash/64KiB上限で読み、journalとともに読戻し確認。3証拠hashはjournalと一致必須。verifiedには4証拠とaudit前後runtime一致を要求し、失敗時の欠落や監視のみの証拠は保持する。
 
 新規descriptor15＋既存store16＋checkpoint21＝**52件pass/11.693秒/failure・error・skip0**、独立P0〜P3所見0/進捗poll0、safety/diff-check pass。4回の実CLIはmetadata fixtureだけで合計0.934秒/peak private22265856 bytes（21.23MiB）。正常2回exit0、別attempt path/audit監視欠落の拒否2回expected exit2。各60秒/256MiB/出力2MiB監視で全終了確認・停止理由なし。新worktreeなし、attempt directory作成0、dataset/evaluation/ledger再検算0。入力7 files不変、前回checkpoint-store証拠31 files不変。
 
@@ -3537,7 +3537,7 @@ attempt_descriptor_metadata_implemented=true。artifact_bytes_verified/filesyste
 
 ## 129. 2026-09-21 attempt実ファイル読取りと先頭chunk検算を接続
 
-**072773e181a17135a34de5c662b377281352f568** に `attempt-files/attempt-audit` を追加。[使い方](../anomaly-v03-independent-audit-and-checkpoints.md#attemptの実ファイルを読取り照合する) / [結果](anomaly-multiseed-v0.3-attempt-files-2026-09-21.md)。固定位置のdescriptorを外部hashで読み、宣言した証拠サイズ/hash・不在と、markerのpayload inventoryを照合する。reparse/通常file hardlink別名・上限超過・未記録の証拠を拒否。directory保持と処理後のcontrol/payload/journal再照合を行う。file検査のbody/numeric/source検証flagはfalseのまま。
+**072773e181a17135a34de5c662b377281352f568** に `attempt-files/attempt-audit` を追加。[使い方](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#attemptの実ファイルを読取り照合する) / [結果](anomaly-multiseed-v0.3-attempt-files-2026-09-21.md)。固定位置のdescriptorを外部hashで読み、宣言した証拠サイズ/hash・不在と、markerのpayload inventoryを照合する。reparse/通常file hardlink別名・上限超過・未記録の証拠を拒否。directory保持と処理後のcontrol/payload/journal再照合を行う。file検査のbody/numeric/source検証flagはfalseのまま。
 
 auditはverifiedのchunk 0だけ、既存 `audit_saved` を再実行して旧preflightと共用の本文照合へ接続。producer/過去consumer/今回verifier、manifest/journal outcome、保存audit、両監視、runtimeを結び付ける。明示supervision引数はresultの兄弟producer-control/supervision.jsonだけで、旧既定位置は不変。全120へ旧6件契約を緩和しない。旧trialのコピー/再ラベル化や新campaign加算はしない。
 
@@ -3551,7 +3551,7 @@ attempt_file_reader_implemented=true。実演artifact_bytes_verified/payload_inv
 
 ## 130. 2026-09-21 全dev/smoke区切りの結果契約とpayload検算APIを実装
 
-**60b2bdb3d2556b280b10991a2fd1d47d4566714d** に `anomaly_v03_chunk_contract.py` を追加。[結果](anomaly-multiseed-v0.3-chunk-contract-2026-09-21.md) / [API仕様](../anomaly-v03-independent-audit-and-checkpoints.md#全120区切りの結果形式とpayload検算api)。外部campaign・chunk index・attempt番号から登録6件を選び、campaign/identity hash、producer source、runtime、dataset/slot、入力共有、順序、failure/判定保留、coverage/resourcesを固定する。新format/scopeとし、旧engineering-devの6件用public APIを変えず、新旧形式はchunk 0でも相互拒否する。
+**60b2bdb3d2556b280b10991a2fd1d47d4566714d** に `anomaly_v03_chunk_contract.py` を追加。[結果](anomaly-multiseed-v0.3-chunk-contract-2026-09-21.md) / [API仕様](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#全120区切りの結果形式とpayload検算api)。外部campaign・chunk index・attempt番号から登録6件を選び、campaign/identity hash、producer source、runtime、dataset/slot、入力共有、順序、failure/判定保留、coverage/resourcesを固定する。新format/scopeとし、旧engineering-devの6件用public APIを変えず、新旧形式はchunk 0でも相互拒否する。
 
 新 `audit_chunk_payloads` は保存bytesのmappingから既存独立ledger検算へ6件を渡す。planned/context、dataset/evaluation hash、identity/input/events/source、profile状態、開始/終了journal、exact inventoryを照合。IO/公開marker/source capture/consumer pin/監視/campaign journalは呼出側責務。**現行attempt-audit CLIは旧形式のchunk 0専用のまま**。profile/score導出の独立性や完全S6は追加しない。旧上限はprovisional validation capsで、campaign実行予算は未確定。
 
@@ -3567,7 +3567,7 @@ attempt_file_reader_implemented=true。実演artifact_bytes_verified/payload_inv
 
 ## 131. 2026-09-21 新形式の実ファイル・終了監視・journal照合を接続
 
-**04630e436d7b99a97005944fe7cf7b8ec4687701** に専用 `audit_anomaly_v03_chunk.py` と `checkpoint_anomaly_v03.py attempt-chunk-audit` を追加。[結果](anomaly-multiseed-v0.3-chunk-audit-2026-09-21.md) / [CLI仕様](../anomaly-v03-independent-audit-and-checkpoints.md#新形式の区切りを実ファイルから検算する)。外部plan/hash/chunk/attemptから新形式の保存6件を選び、固定位置・公開hash/inventory・source・producer監視・保存audit・新検算・audit監視・journal outcomeを結合する。全120区切りに対応し、旧attempt-auditは旧形式chunk 0専用を維持する。
+**04630e436d7b99a97005944fe7cf7b8ec4687701** に専用 `audit_anomaly_v03_chunk.py` と `checkpoint_anomaly_v03.py attempt-chunk-audit` を追加。[結果](anomaly-multiseed-v0.3-chunk-audit-2026-09-21.md) / [CLI仕様](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#新形式の区切りを実ファイルから検算する)。外部plan/hash/chunk/attemptから新形式の保存6件を選び、固定位置・公開hash/inventory・source・producer監視・保存audit・新検算・audit監視・journal outcomeを結合する。全120区切りに対応し、旧attempt-auditは旧形式chunk 0専用を維持する。
 
 producer監視はmanifestと同じbindingとruntime_after、audit監視は保存report出力hash/サイズ・正常終了・600秒/1GiB/8MiB上限と実測・専用CLI exact argv・runtime_before/afterが必須。過去consumerと今回verifierはsource/runtimeを別々に固定する。終了前にcontrol/payload/source/plan/journalを再照合。新status=attempt_chunk_ledgers_verified、evaluations_checked=6。profile/score導出の独立性は追加しない。監視process起動と実行controllerはまだない。
 
@@ -3581,7 +3581,7 @@ producer監視はmanifestと同じbindingとruntime_after、audit監視は保存
 
 ## 132. 2026-09-21 producer・実行管理・所有process監視を連続実装
 
-ユーザーの連続自走依頼に基づき、producerを **8a38a134653d237c2cdbffdd1d6dbf59caa6f3e6**、controller/監視を **bc5f18bb3347fe5f14e60b5381c98d63d5fa6072** へ保存した。[詳細結果](anomaly-multiseed-v0.3-attempt-controller-2026-09-21.md) / [API仕様](../anomaly-v03-independent-audit-and-checkpoints.md#producer単一writer-controller所有process監視)。既存逐次producerと公開前再計算を新chunk契約へ適用し、旧固定6件の入口は維持する。
+ユーザーの連続自走依頼に基づき、producerを **8a38a134653d237c2cdbffdd1d6dbf59caa6f3e6**、controller/監視を **bc5f18bb3347fe5f14e60b5381c98d63d5fa6072** へ保存した。[詳細結果](anomaly-multiseed-v0.3-attempt-controller-2026-09-21.md) / [API仕様](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#producer単一writer-controller所有process監視)。既存逐次producerと公開前再計算を新chunk契約へ適用し、旧固定6件の入口は維持する。
 
 controllerは新attempt確保→running→producer保存→saved_pending_verification→audit→fresh照合→verifiedの順で処理する。遷移ごとに排他的intent/descriptor/receiptを残し、失敗attemptを上書きしない。外部保持のverified descriptor mapを必須とし、再起動後に証拠を再照合する。同じsessionでは検証済み区切りの再計算を省く。確定後のreceipt喪失は外部intent hashを使う読取り回復のみ。未確定intentは保持して止める。
 
@@ -3597,7 +3597,7 @@ producer/旧engineering **31件pass/20.300秒**、controller/store/監視の最�
 
 ## 133. 2026-09-21 native接続と新しい実6評価を完走
 
-ユーザーからこのPCで他作業なし・大きめ作業OKの許可を受領。native callbacks/接続試行CLIを **8b343873e052103fb78fd304551eba09c8015bfc**、実試行で判明したpath長の事前検査を **25d1084ecf8f24f17fe6f8f5b253c317bc80daa7** へ保存した。[結果と実測](anomaly-multiseed-v0.3-chunk-execution-2026-09-21.md) / [実行方法](../anomaly-v03-independent-audit-and-checkpoints.md#新しい6評価を別processの監査まで通す)。
+ユーザーからこのPCで他作業なし・大きめ作業OKの許可を受領。native callbacks/接続試行CLIを **8b343873e052103fb78fd304551eba09c8015bfc**、実試行で判明したpath長の事前検査を **25d1084ecf8f24f17fe6f8f5b253c317bc80daa7** へ保存した。[結果と実測](anomaly-multiseed-v0.3-chunk-execution-2026-09-21.md) / [実行方法](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#新しい6評価を別processの監査まで通す)。
 
 producer worker→保存確定→別processのledger audit→controllerのfresh照合→journal確定を接続し、各監視を対象/argv/source/runtimeと結合した。外部receiptを3遷移それぞれ保存する。未終了workerは元ownerを保持し、失敗・再試行可能なjournalへ進めない。監視記録や診断出力が書けない場合も元の停止理由・ownerを失わない。controller内fresh検算の資源検査は開始/終了時で、全controllerの強制停止予算は未整備。
 
@@ -3944,7 +3944,7 @@ freeze前は(1)単一writer/OS方針の正式運用契約、(2)consumer正式入
 
 ## 163. consumer入出力と保存の具体契約案（2026-09-25）
 
-[契約案](../anomaly-v03-consumer-io-proposal.md)、[確認記録](anomaly-multiseed-v0.3-consumer-io-contract-2026-09-25.md)。起点0b75c1ea89a15e04dbde0963ae2b634648a10201、OUT artifacts/consumer-io-contract-2026-09-25、最終revision/pinはsavepoint-evidence.json。入力7項目・8工程・保存payloadと失敗状態を具体化、10consumer/22関数/schema必須10欄とT01〜T12の接続確認群を対応づけた。既存算術/保存の試験を再利用し、新入口の境界へ確認を絞る。
+[契約案](../anomaly/execution/anomaly-v03-consumer-io-proposal.md)、[確認記録](anomaly-multiseed-v0.3-consumer-io-contract-2026-09-25.md)。起点0b75c1ea89a15e04dbde0963ae2b634648a10201、OUT artifacts/consumer-io-contract-2026-09-25、最終revision/pinはsavepoint-evidence.json。入力7項目・8工程・保存payloadと失敗状態を具体化、10consumer/22関数/schema必須10欄とT01〜T12の接続確認群を対応づけた。既存算術/保存の試験を再利用し、新入口の境界へ確認を絞る。
 
 主analysisのsliceはincident recall＋score availability、sidecarは全4系列とする案。主1,233/sidecar2,835行は予定在庫、実行結果ではない。補助sliceは記述値でCI/gate未計算。formal mapping/新運用契約未採択、旧科学schema/registry/正式gate不変。23ファイルpinとAST/schema参照の整合確認を実施、試験実行/観測読取/評価/bootstrapは0。
 
@@ -3952,7 +3952,7 @@ freeze前は(1)単一writer/OS方針の正式運用契約、(2)consumer正式入
 
 ## 164. consumer入力宣言のI/Oなし検査（2026-09-25）
 
-[API](../anomaly-v03-consumer-input.md)、[結果](anomaly-multiseed-v0.3-consumer-input-validator-2026-09-25.md)。実装3fb988292e433311cfd86f00c773b8f17384a750、OUT artifacts/consumer-input-validator-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。fixture1区間6評価/engineering120区間720評価のplanned_inputとvalidate_inputを実装。formal modeを対象展開前で拒否し、canonical metadataの外部digest、固定identity/order/coverage、6種input pinと失敗履歴を検査。
+[API](../anomaly/execution/anomaly-v03-consumer-input.md)、[結果](anomaly-multiseed-v0.3-consumer-input-validator-2026-09-25.md)。実装3fb988292e433311cfd86f00c773b8f17384a750、OUT artifacts/consumer-input-validator-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。fixture1区間6評価/engineering120区間720評価のplanned_inputとvalidate_inputを実装。formal modeを対象展開前で拒否し、canonical metadataの外部digest、固定identity/order/coverage、6種input pinと失敗履歴を検査。
 
 既知入力pinを候補間/attempt間で固定。過去failed記録を残し最新attemptのみcoverageへ加算、成功後/連番欠落/integrity後のretryを拒否。profile inconclusiveをsuccessやsoftware failureへ変換しない。全chunkが完了してもproducer失敗ならdeclared_complete=false、公開済みmarkerは保持。検査成功でもデータ・source/runtime認証やexecution/analysis/formal/promotion/S6許可は全false。
 
@@ -3962,7 +3962,7 @@ freeze前は(1)単一writer/OS方針の正式運用契約、(2)consumer正式入
 
 ## 165. checkpoint記録からconsumerへの変換（2026-09-25）
 
-[API](../anomaly-v03-consumer-checkpoints.md)、[結果](anomaly-multiseed-v0.3-consumer-checkpoint-adapter-2026-09-25.md)。実装1a88d33d3dc4953e239a536f2bd5ea183904f02f、OUT artifacts/consumer-checkpoint-adapter-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。decoded plan/journal/全attempt manifestと外部4pin/countを既存reducer/manifest契約/consumer slot検査へ接続。最終attemptと過去失敗記録を保持し、既知6種hashを候補/再試行間で固定する。
+[API](../anomaly/execution/anomaly-v03-consumer-checkpoints.md)、[結果](anomaly-multiseed-v0.3-consumer-checkpoint-adapter-2026-09-25.md)。実装1a88d33d3dc4953e239a536f2bd5ea183904f02f、OUT artifacts/consumer-checkpoint-adapter-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。decoded plan/journal/全attempt manifestと外部4pin/countを既存reducer/manifest契約/consumer slot検査へ接続。最終attemptと過去失敗記録を保持し、既知6種hashを候補/再試行間で固定する。
 
 区間別markerと全体producer markerは別なので、既存入力v1を緩和せず別checkpoint envelopeを返す。失敗manifest欠落はunreported/evaluations=null。profile_statusもslot宣言からの対応づけで、profile bytesの確認ではない。37試験（15新規＋22関連既存）pass、failure/error/skip0、35.876秒。
 
@@ -3972,7 +3972,7 @@ peak73.05MiB、最小空きRAM12.57GiB/commit余裕20.16GiB、C/D124.22/298.67Gi
 
 ## 166. 公開・終了記録のconsumer reader（2026-09-25）
 
-[API](../anomaly-v03-consumer-publication.md)、[結果](anomaly-multiseed-v0.3-consumer-publication-reader-2026-09-25.md)。実装1b3021f8debbd4edb78b8d75efcf73cd6de88a7c、OUT artifacts/consumer-publication-reader-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。外部anchorのadapter/closedを使い、固定8管理file/区間（上限1,040KiB）で公開印・manifest・worker終了記録を照合する。hardlinkの同一identity、path/role/hash/attempt/runtime/outcomeの対応を確認。
+[API](../anomaly/execution/anomaly-v03-consumer-publication.md)、[結果](anomaly-multiseed-v0.3-consumer-publication-reader-2026-09-25.md)。実装1b3021f8debbd4edb78b8d75efcf73cd6de88a7c、OUT artifacts/consumer-publication-reader-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。外部anchorのadapter/closedを使い、固定8管理file/区間（上限1,040KiB）で公開印・manifest・worker終了記録を照合する。hardlinkの同一identity、path/role/hash/attempt/runtime/outcomeの対応を確認。
 
 14新規試験pass、failure/error/skip0、62.046秒。実記録4境界区間→残116区間を確認し、4区間の再読取なしで全120区間/720評価の報告を併合。960読取14,663,483bytes（closedは区間ごと）、unique841file/13,518,584bytes。所要0.867＋18.140秒。観測/evaluation本文/score/監査本文の読取・再計算・追加評価0。
 
@@ -3982,7 +3982,7 @@ peak44.61MiB、最小RAM10.71GiB/commit余裕17.57GiB、C/D122.85/270.18GiB。�
 
 ## 167. 集計入力と公開metadataの導出結合（2026-09-25）
 
-[API](../anomaly-v03-consumer-analysis-binding.md)、[結果](anomaly-multiseed-v0.3-consumer-analysis-binding-2026-09-25.md)。実装c4f04121764c882e1cb885f9fea173e4bc2d6cc3、OUT artifacts/consumer-analysis-binding-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。外部publication/analysis保存点と明示5rootから固定10artifactを各1回認証。hash連鎖をcheckpoint adapter・counts・完走evidenceへつなぎ、任意の記録内pathを開かない。
+[API](../anomaly/execution/anomaly-v03-consumer-analysis-binding.md)、[結果](anomaly-multiseed-v0.3-consumer-analysis-binding-2026-09-25.md)。実装c4f04121764c882e1cb885f9fea173e4bc2d6cc3、OUT artifacts/consumer-analysis-binding-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。外部publication/analysis保存点と明示5rootから固定10artifactを各1回認証。hash連鎖をcheckpoint adapter・counts・完走evidenceへつなぎ、任意の記録内pathを開かない。
 
 14新規試験pass（failure/error/skip0、11.189秒）。実記録10artifact/9,785,474bytes、0.542秒で全120区間/720評価を結合。公開管理記録960参照、input hash4,320件、evaluation hash720件が一致。10seed cluster/90seed表/18role表の元集計値・nullを維持。区間119 attempt2、過去失敗1件、判定不能46指標を保全。観測/score payload読取・score/集計再計算・新評価・bootstrap0。
 
@@ -3992,7 +3992,7 @@ peak47.41MiB、最小RAM12.38GiB/commit余裕19.72GiB、C/D122.79/268.83GiB。�
 
 ## 168. engineering consumerの入力選択・記述結果保存（2026-09-25）
 
-[API/CLI](../anomaly-v03-engineering-consumer.md)、[結果](anomaly-multiseed-v0.3-engineering-consumer-entry-2026-09-25.md)。実装6567a857455847baf225f552abf5ff9df6644c08、OUT artifacts/engineering-consumer-entry-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。結合receiptと記述結果の2保存点を外部pinで固定し、明示analysis-inputs.jsonを含む7fileを各1回認証。同じclosed/input anchor/hashを照合し、LocalPublicationへ4payloadを保存、writer終了後にreaderで確認した。
+[API/CLI](../anomaly/execution/anomaly-v03-engineering-consumer.md)、[結果](anomaly-multiseed-v0.3-engineering-consumer-entry-2026-09-25.md)。実装6567a857455847baf225f552abf5ff9df6644c08、OUT artifacts/engineering-consumer-entry-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。結合receiptと記述結果の2保存点を外部pinで固定し、明示analysis-inputs.jsonを含む7fileを各1回認証。同じclosed/input anchor/hashを照合し、LocalPublicationへ4payloadを保存、writer終了後にreaderで確認した。
 
 16新規試験pass（failure/error/skip0、0.560秒）。実保存7,896,608bytes、約2.055秒で入口から出力・読取を確認。全120区間720評価、dev8/smoke2、18表234主指標5,670診断行、chunk119 attempt2、過去失敗1件、判定不能46指標を保持。JSONのcanonical化は値を変えず、MD raw一致、HTMLは末尾LFだけ補った。観測/score読取・集計/比率/score再計算・追加評価/bootstrap0。
 
@@ -4012,7 +4012,7 @@ peak37.25MiB、最小RAM12.53GiB/commit余裕19.81GiB、C/D122.78/268.83GiB。OS
 
 ## 170. 別process readerと外側receipt（2026-09-25）
 
-[API](../anomaly-v03-consumer-reader.md)、[結果](anomaly-multiseed-v0.3-consumer-separate-reader-2026-09-25.md)。実装35842261a90b1efe475056dc9ef962c56773f1f1、OUT artifacts/consumer-separate-reader-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。writerを閉じた後の読取専用子processを既存supervisorへ接続し、外部marker/2保存点pinを新規requestに固定。旧source/結果からの対応を確認し、成功/不一致/応答消失を外側のresultへ保存。元結果/markerは不変。
+[API](../anomaly/execution/anomaly-v03-consumer-reader.md)、[結果](anomaly-multiseed-v0.3-consumer-separate-reader-2026-09-25.md)。実装35842261a90b1efe475056dc9ef962c56773f1f1、OUT artifacts/consumer-separate-reader-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。writerを閉じた後の読取専用子processを既存supervisorへ接続し、外部marker/2保存点pinを新規requestに固定。旧source/結果からの対応を確認し、成功/不一致/応答消失を外側のresultへ保存。元結果/markerは不変。
 
 13新規試験pass、failure/error/skip0、3.291秒。実確認は親35884/子27688、exit0/終了確認、監視error0。7file/7,896,608bytesから4payload/2,755,533bytesを確認し、元4payload＋2marker名の6pin不変。reader0.826秒、外側1.055秒。親peak33.34MiB/子35.91MiB、最小RAM12.30GiB/commit余裕20.24GiB、C/D130.25/329.72GiB。監視側OS26200.9457/Python3.14.0前後一致、全runtime/dependency受入ではない。
 
@@ -4021,7 +4021,7 @@ T11/T12 engineering部分を接続。再封印不整合は元保存点とのbyte
 
 ## 171. 架空40clusterから結果文書草稿への接続（2026-09-25）
 
-[API](../anomaly-v03-document-fixture.md)、[結果](anomaly-multiseed-v0.3-consumer-document-fixture-2026-09-25.md)。実装e2abbdce00719db482253c140a200d0776288284、OUT artifacts/consumer-document-fixture-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。既存推論・表adapter・固定schemaを使い、40cluster/1〜64drawの純粋関数を追加。9表180gate、10文書項目の対応、入力canonical hashと実drawを保持する。
+[API](../anomaly/evaluation/anomaly-v03-document-fixture.md)、[結果](anomaly-multiseed-v0.3-consumer-document-fixture-2026-09-25.md)。実装e2abbdce00719db482253c140a200d0776288284、OUT artifacts/consumer-document-fixture-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。既存推論・表adapter・固定schemaを使い、40cluster/1〜64drawの純粋関数を追加。9表180gate、10文書項目の対応、入力canonical hashと実drawを保持する。
 
 12新規試験pass、failure/error/skip0、1.085秒。旧suite再実行なし。初回1失敗はcontrol precision nullに関する試験側想定の修正、既存科学条件は不変。test-attempt-1保全。保存例40cluster/4draw/160indexは0.089秒、入力279174bytes・出力220078bytes。正式validatorの草稿拒否も確認。
 
@@ -4032,7 +4032,7 @@ T11/T12 engineering部分を接続。再封印不整合は元保存点とのbyte
 
 ## 172. 架空診断のsliceを文書へ接続（2026-09-25）
 
-[API](../anomaly-v03-slice-fixture.md)、[結果](anomaly-multiseed-v0.3-consumer-slice-fixture-2026-09-25.md)。実装52a032bf8bb22a1eee301ba0cb6d4bbb77a35bed、OUT artifacts/consumer-slice-fixture-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。40clusterの診断countsから本文1233行・補助4系列2835行・詳細9表を接続。個別clusterと主表への件数/delay/profile対応、incident結合・周辺表、target/modeを検査する。既存v1と実入口は不変。
+[API](../anomaly/evaluation/anomaly-v03-slice-fixture.md)、[結果](anomaly-multiseed-v0.3-consumer-slice-fixture-2026-09-25.md)。実装52a032bf8bb22a1eee301ba0cb6d4bbb77a35bed、OUT artifacts/consumer-slice-fixture-2026-09-25、最終文書revision/pinはsavepoint-evidence.json。40clusterの診断countsから本文1233行・補助4系列2835行・詳細9表を接続。個別clusterと主表への件数/delay/profile対応、incident結合・周辺表、target/modeを検査する。既存v1と実入口は不変。
 
 13新規試験pass、failure/error/skip0、16.694秒。旧suite再実行なし。保存例は前工程の主CIを再利用し、接続1.831秒、入力4337681bytes・出力3162172bytes。正式validatorの拒否を確認。測定processの最大private 70.88MiB、最小空きRAM 9.98GiB / commit余裕 18.87GiB、例の保存後C/D 125.54/370.16GiB。 OS26200.9457/Python3.14.0。旧境界・dirty guard不変、banto-24 PAUSED。
 
@@ -4041,7 +4041,7 @@ T11/T12 engineering部分を接続。再封印不整合は元保存点とのbyte
 
 ## 173. 最新consumerのsource/runtime候補と固定方法（2026-09-25）
 
-[計画](../anomaly-v03-consumer-source-runtime-plan.md)、[結果](anomaly-multiseed-v0.3-consumer-source-runtime-review-2026-09-25.md)。対象e9826bd0245cf26cf540e1ff470528c001f3cd5f、OUT artifacts/consumer-source-runtime-review-2026-09-25。source変更なし、最終文書revision/pinはsavepoint-evidence.json。5役割union41source/566551bytes、設定等18file・CLI2fileを照合。39source raw一致、generator.py/manifest.pyは改行差のみ。33stdlib候補、dynamic/native/subprocess15箇所、13method参照を記録。closure/freezeではない。
+[計画](../anomaly/execution/anomaly-v03-consumer-source-runtime-plan.md)、[結果](anomaly-multiseed-v0.3-consumer-source-runtime-review-2026-09-25.md)。対象e9826bd0245cf26cf540e1ff470528c001f3cd5f、OUT artifacts/consumer-source-runtime-review-2026-09-25。source変更なし、最終文書revision/pinはsavepoint-evidence.json。5役割union41source/566551bytes、設定等18file・CLI2fileを照合。39source raw一致、generator.py/manifest.pyは改行差のみ。33stdlib候補、dynamic/native/subprocess15箇所、13method参照を記録。closure/freezeではない。
 
 直近4保存点の54試験記録とsource pinを照合し、unit test0。起動probe2件では-I -Bにsystem siteが残り、-I -S -Bで除外。project import0、OS26200.9457/CPython3.14.0一致。Python exe/DLLとGit2.51.2.windows.1のpinを観測、全DLL/stdlib/外部tool閉包は未確認。主確認7.670秒、最大private 52.37MiB、最小空きRAM 10.26GiB / commit余裕 18.97GiB、主確認後C/D 124.43/370.49GiB。
 
@@ -4050,7 +4050,7 @@ T11/T12 engineering部分を接続。再封印不整合は元保存点とのbyte
 
 ## 174. engineering readerのsite初期化除外（2026-09-25）
 
-[結果](anomaly-multiseed-v0.3-consumer-reader-no-site-2026-09-25.md)、[API](../anomaly-v03-consumer-reader.md)。実装863af36c74aad1bc63ff42bd5b2b469c748882df、OUT artifacts/consumer-reader-no-site-2026-09-25。最終文書revision/pinはsavepoint-evidence.json。-I -S -Bで起動し、reader＋testsの2fileだけを変更。旧pinは保全。
+[結果](anomaly-multiseed-v0.3-consumer-reader-no-site-2026-09-25.md)、[API](../anomaly/execution/anomaly-v03-consumer-reader.md)。実装863af36c74aad1bc63ff42bd5b2b469c748882df、OUT artifacts/consumer-reader-no-site-2026-09-25。最終文書revision/pinはsavepoint-evidence.json。-I -S -Bで起動し、reader＋testsの2fileだけを変更。旧pinは保全。
 
 14接続試験pass、failure/error/skip0、3.963秒。実子の起動flag/site除外と架空公開結果の読取を確認。-Sだけを外した対照1件はno_site=0で期待どおり失敗し、sourceは変更していない。timeout/終了未確認は既存模擬試験、7子processの実監視は終了確定。試験processの最大private 32.27MiB、監視した子の最大private 21.44MiB。試験前後の最小空きRAM 11.15GiB / commit余裕 19.45GiB、試験後C/D空き 124.34/365.97GiB。
 
@@ -4059,7 +4059,7 @@ OS26200.9457/Python3.14.0。旧境界・dirty guard不変、banto-24 PAUSED。�
 
 ## 175. consumerの実行証拠と供給bytesの結合（2026-09-25）
 
-[API](../anomaly-v03-consumer-evidence.md)、[結果](anomaly-multiseed-v0.3-consumer-execution-evidence-2026-09-25.md)。実装c79fc9e5db7d486a22c2ed4b5f5e75ca0027f7a0、OUT artifacts/consumer-execution-evidence-2026-09-25。新規module/test2本。analysis/audit/readerの外部期待値に前後source/runtime、process、全入出力bytesを結ぶ。16架空試験pass、failure/error/skip0、0.081秒。自己申告pass・役割/PID生成token違い・bytes差・未終了・前後OS差を拒否。
+[API](../anomaly/execution/anomaly-v03-consumer-evidence.md)、[結果](anomaly-multiseed-v0.3-consumer-execution-evidence-2026-09-25.md)。実装c79fc9e5db7d486a22c2ed4b5f5e75ca0027f7a0、OUT artifacts/consumer-execution-evidence-2026-09-25。新規module/test2本。analysis/audit/readerの外部期待値に前後source/runtime、process、全入出力bytesを結ぶ。16架空試験pass、failure/error/skip0、0.081秒。自己申告pass・役割/PID生成token違い・bytes差・未終了・前後OS差を拒否。
 
 試験processの最大private 27.20MiB、試験前後の最小空きRAM 11.20GiB / commit余裕 19.57GiB、試験後C/D空き 124.34/365.97GiB。 前工程47code/18data pin・旧境界/dirty guard不変、banto-24 PAUSED。実process採取・評価・登録データ・bootstrap0。成功はsupplied-bytes-only、正式受入/全closure/実行真正性/S6ではない。
 
@@ -4068,7 +4068,7 @@ OS26200.9457/Python3.14.0。旧境界・dirty guard不変、banto-24 PAUSED。�
 
 ## 176. 実reader観測と外部期待値の結合（2026-09-25）
 
-[API](../anomaly-v03-reader-evidence.md)、[結果](anomaly-multiseed-v0.3-reader-observed-evidence-2026-09-25.md)。実装0ee336e72ca52849e6725415a3d7f8e4ff75aeeb、OUT artifacts/reader-observed-evidence-2026-09-25、成功attempt-3/。新APIはselected source10/Python2file、元handle・子selfのPID/生成FILETIME、前後環境、入力15fileを結合。新規13試験pass＋同工程の不変な既存回帰27種類を再利用。初回Git hardlinkによる失敗とattempt-2中間成功を保全。
+[API](../anomaly/execution/anomaly-v03-reader-evidence.md)、[結果](anomaly-multiseed-v0.3-reader-observed-evidence-2026-09-25.md)。実装0ee336e72ca52849e6725415a3d7f8e4ff75aeeb、OUT artifacts/reader-observed-evidence-2026-09-25、成功attempt-3/。新APIはselected source10/Python2file、元handle・子selfのPID/生成FILETIME、前後環境、入力15fileを結合。新規13試験pass＋同工程の不変な既存回帰27種類を再利用。初回Git hardlinkによる失敗とattempt-2中間成功を保全。
 
 保存例child 38824 exit0/reaped、監視0.809秒、OS26200.9457/CPython3.14.0。今回processの最大private 50.43MiB、保存例の子は36.34MiB。観測時の最小空きRAM 10.21GiB / commit余裕 17.88GiB、保存例後C/D空き 124.38/365.97GiB。 旧境界/dirty guard/banto-24 PAUSED不変。新評価・登録データ・bootstrap0。parentの期待値はメモリ保持し、保存記録から再採用しない。未終了ownerは保存失敗時も保持。
 
@@ -4076,7 +4076,7 @@ OS26200.9457/Python3.14.0。旧境界・dirty guard不変、banto-24 PAUSED。�
 
 ## 177. reader依存source/runtimeの観測拡張（2026-09-25）
 
-[API](../anomaly-v03-reader-evidence.md)、[結果](anomaly-multiseed-v0.3-reader-dependency-observation-2026-09-25.md)。実装0b03b91a59c7359e4eb05e3585242b88aa8c8cab、OUT artifacts/reader-dependency-observation-2026-09-25、成功attempt-2/。source28/stdlib79/cache候補77/extension8/その他native40、計232file/47,574,229bytes。177modules/loaded48images。前後差分0。親がdisk/Gitを照合し、外部nativeは親にもloadした同一pathに限定。完全closure/独立runtime事前期待値ではない。
+[API](../anomaly/execution/anomaly-v03-reader-evidence.md)、[結果](anomaly-multiseed-v0.3-reader-dependency-observation-2026-09-25.md)。実装0b03b91a59c7359e4eb05e3585242b88aa8c8cab、OUT artifacts/reader-dependency-observation-2026-09-25、成功attempt-2/。source28/stdlib79/cache候補77/extension8/その他native40、計232file/47,574,229bytes。177modules/loaded48images。前後差分0。親がdisk/Gitを照合し、外部nativeは親にもloadした同一pathに限定。完全closure/独立runtime事前期待値ではない。
 
 新規13pass＋同工程の不変な既存29種類を再利用、unique42。初期ctime差とESET DLLによる失敗を記録。sample PID20520 exit0/reaped、監視1.566秒、private36.30MiB。資料生成後RAM11.08GiB/commit余裕19.47GiB、C124.35/D365.94GiB。候補rd01はclean0b03b91a59c7359e4eb05e3585242b88aa8c8cab、743file/8,430,967bytes、raw/Git一致。元70b0のCRLF差は変更しない。旧境界/dirty guard/PAUSED維持、新評価/実データ/実bootstrap0。
 
@@ -4084,7 +4084,7 @@ OS26200.9457/Python3.14.0。旧境界・dirty guard不変、banto-24 PAUSED。�
 
 ## 178. readerの事前保持依存候補への接続（2026-09-25）
 
-[API](../anomaly-v03-reader-profile.md)、[結果](anomaly-multiseed-v0.3-reader-dependency-profile-2026-09-25.md)。実装0b2da336d90bcc60e97798d83d17d9f6f7421a34、OUT artifacts/reader-dependency-profile-2026-09-25、最終final/。prepare_profileは別の未profile化referenceの保持result pinから候補を新規保存。後続readerは保持candidateへ232files/177modules/48images、runtime/role/revision/root/境界を前後比較。candidateは16番目の入力。原本・copy差し替え、追加/欠落も拒否。
+[API](../anomaly/execution/anomaly-v03-reader-profile.md)、[結果](anomaly-multiseed-v0.3-reader-dependency-profile-2026-09-25.md)。実装0b2da336d90bcc60e97798d83d17d9f6f7421a34、OUT artifacts/reader-dependency-profile-2026-09-25、最終final/。prepare_profileは別の未profile化referenceの保持result pinから候補を新規保存。後続readerは保持candidateへ232files/177modules/48images、runtime/role/revision/root/境界を前後比較。candidateは16番目の入力。原本・copy差し替え、追加/欠落も拒否。
 
 新規16pass、failure/error/skip0、53.083秒。初回41passのうち不変26種類を再利用、unique42。sample reference40904→reader29764、両者exit0/reaped、reader1.846秒。profile110646bytes/SHAa682eb680def9a61227696de7f76c6d6259d99705403cb150e41933ebb66a0ab。最終試験harnessのpeak private 52.46MiB、保存例readerのpeak 36.85MiB。資料作成前は空きRAM 10.35GiB / commit余裕 18.89GiB、C/D空き 126.00/326.57GiB。
 
@@ -4092,7 +4092,7 @@ rp01はclean0b2da336d90bcc60e97798d83d17d9f6f7421a34、746file/8,461,710bytes、
 
 ## 179. analysis役割の保存結果準備を実process証拠へ接続（2026-09-26）
 
-[API](../anomaly-v03-analysis-evidence.md)、[結果](anomaly-multiseed-v0.3-analysis-observed-evidence-2026-09-26.md)。実装2db441e44a65857f288f800a104ba436339358b9、OUT artifacts/analysis-observed-evidence-2026-09-25（開始日維持）、成功observed-example/。新module/test2本のみ。operation=prepare-saved-descriptive-resultに限定、7保存file/6622bytes、request/invocation込9入力/11272bytes→4payload/5237bytes。selected source12/Python2fileを親保持期待へ結ぶ。補助source29/全233file/178modules/48images、前後差分0。
+[API](../anomaly/execution/anomaly-v03-analysis-evidence.md)、[結果](anomaly-multiseed-v0.3-analysis-observed-evidence-2026-09-26.md)。実装2db441e44a65857f288f800a104ba436339358b9、OUT artifacts/analysis-observed-evidence-2026-09-25（開始日維持）、成功observed-example/。新module/test2本のみ。operation=prepare-saved-descriptive-resultに限定、7保存file/6622bytes、request/invocation込9入力/11272bytes→4payload/5237bytes。selected source12/Python2fileを親保持期待へ結ぶ。補助source29/全233file/178modules/48images、前後差分0。
 
 全47pass（新15＋既存consumer16＋pure evidence16）、failure/error/skip0、36.157秒。sample child17940 exit0/reaped、監視1.546秒。試験harnessのpeak private 50.52MiB、保存例childのpeak 36.24MiB。資料作成前の空きRAM 10.59GiB、commit余裕 19.29GiB、C/D空き 125.95/326.57GiB。 ao01はclean2db441e44a65857f288f800a104ba436339358b9、750file/8,498,798bytes Git/raw一致。旧56code/18data・rp01/元CRLF差/dirty guard/closed/PAUSED維持。原本fixtureはcleanup済み、payloadと証拠は保持。
 
@@ -4100,7 +4100,7 @@ rp01はclean0b2da336d90bcc60e97798d83d17d9f6f7421a34、746file/8,461,710bytes、
 
 ## 180. analysis専用の事前保持依存候補（2026-09-26）
 
-[API](../anomaly-v03-analysis-evidence.md)、[結果](anomaly-multiseed-v0.3-analysis-dependency-profile-2026-09-26.md)。実装140e91de93e2cc43c45fab9efb9a7cbc6ece43c7、OUT artifacts/analysis-dependency-profile-2026-09-26。analysis専用のprepare_profileを追加し、別の成功した未profile化referenceと外部result pinから新規候補を保存する。format/role/operation/採取境界を固定し、reader候補の流用を拒否する。後続analysisは親が起動前から保持した候補のraw bytes/pinと依存集合へ前後一致を要求する。
+[API](../anomaly/execution/anomaly-v03-analysis-evidence.md)、[結果](anomaly-multiseed-v0.3-analysis-dependency-profile-2026-09-26.md)。実装140e91de93e2cc43c45fab9efb9a7cbc6ece43c7、OUT artifacts/analysis-dependency-profile-2026-09-26。analysis専用のprepare_profileを追加し、別の成功した未profile化referenceと外部result pinから新規候補を保存する。format/role/operation/採取境界を固定し、reader候補の流用を拒否する。後続analysisは親が起動前から保持した候補のraw bytes/pinと依存集合へ前後一致を要求する。
 
 全43試験pass（新規20＋既存analysis15＋reader候補の純粋検査8）、failure/error/skip0、145.715秒。誤pin、file hash改変、module欠落、子の再封印、保存copy差し替え、reference payload改変、候補の自動更新を拒否。source13/Python2file、候補を含む10入力を証拠へ結ぶ。依存source30/全234file/179modules/48images、47,606,116bytesが前後一致した。
 
@@ -4112,7 +4112,7 @@ candidate-not-acceptedであり、正式source/runtime固定やmemory codeの証
 
 ## 181. 解析証拠から通常公開・別readerへ（2026-09-26）
 
-[API](../anomaly-v03-analysis-publication.md)、[結果](anomaly-multiseed-v0.3-analysis-publication-chain-2026-09-26.md)。実装f8f20bcf4ac7ade2f20e96f37bc1567328d88a48、OUT artifacts/analysis-publication-chain-2026-09-26。新module/test2本のみ追加し、既存analysis/profile/reader/collector/consumer/LocalPublicationを変更しない。外部result pinで選択したprofile付きanalysisの成功記録・4payloadを再認証し、保存原本との意味・bytes一致を確認して既存single-writer公開へ渡す。writerを閉じた後だけ、別のobserved readerを起動する。
+[API](../anomaly/execution/anomaly-v03-analysis-publication.md)、[結果](anomaly-multiseed-v0.3-analysis-publication-chain-2026-09-26.md)。実装f8f20bcf4ac7ade2f20e96f37bc1567328d88a48、OUT artifacts/analysis-publication-chain-2026-09-26。新module/test2本のみ追加し、既存analysis/profile/reader/collector/consumer/LocalPublicationを変更しない。外部result pinで選択したprofile付きanalysisの成功記録・4payloadを再認証し、保存原本との意味・bytes一致を確認して既存single-writer公開へ渡す。writerを閉じた後だけ、別のobserved readerを起動する。
 
 公開物は従来どおり4payload。別directoryのpublication-binding.jsonが解析result/evidence/profile/binding pin、payload pin、公開root/marker、revisionと接続module pinを結ぶ。そのpinとreader result/evidence pinを最終chain resultへ保存し、呼出し側がresult_pinを保持する。公開marker単体は解析証拠の結合を証明しない。
 
@@ -4150,7 +4150,7 @@ analysis PID14244、writer PID22020、reader PID21668。両子ともexit0/reaped
 
 ## 184. 架空5payloadと供給実行記録を結合（2026-09-30）
 
-[結果](anomaly-multiseed-v0.3-wrapper-fixture-2026-09-30.md)、[API](../anomaly-v03-wrapper-fixture.md)。開始536c66721878c04fb8c781ffcb86c4e868407033、OUT artifacts/wrapper-fixture-2026-09-30、tests-2/。新module/testの2本、旧62code/18data不変。mode/role/operation/revision/入力/出力pinを外部期待値へ結び、全2880の架空宣言枠と文書/sliceを5payloadへ対応付けた。
+[結果](anomaly-multiseed-v0.3-wrapper-fixture-2026-09-30.md)、[API](../anomaly/evaluation/anomaly-v03-wrapper-fixture.md)。開始536c66721878c04fb8c781ffcb86c4e868407033、OUT artifacts/wrapper-fixture-2026-09-30、tests-2/。新module/testの2本、旧62code/18data不変。mode/role/operation/revision/入力/出力pinを外部期待値へ結び、全2880の架空宣言枠と文書/sliceを5payloadへ対応付けた。
 
 新16試験pass、failure/error/skip0、58.729秒。保存例5file/1,973,806bytes。未完了coverageの完成文書を拒否、None文書は失敗/未開始枠を保持。inconclusiveは処理済みの科学的判定不能として残す。本文null4欄、正式ready=false、writer/reader/audit not_run。架空PID/source/runtime bytesであり、実worker起動や正式解析の証明ではない。
 
@@ -4160,7 +4160,7 @@ analysis PID14244、writer PID22020、reader PID21668。両子ともexit0/reaped
 
 ## 185. 架空入力の数値workerと所有実行記録を接続（2026-10-01）
 
-[結果](anomaly-multiseed-v0.3-fixture-worker-2026-10-01.md)、[API](../anomaly-v03-fixture-worker.md)。開始045bea45964585b003ac0fdf41b1dcde264230e8、実装4d3c08b4eb5e235e681ed0f0cafdde3c4f9ddde7。新module/testの2本、旧64code/18data不変。clean候補fw01/banto-aiを作成し旧候補を保全。OUT artifacts/fixture-numerical-worker-2026-10-01、tests-1/。
+[結果](anomaly-multiseed-v0.3-fixture-worker-2026-10-01.md)、[API](../anomaly/evaluation/anomaly-v03-fixture-worker.md)。開始045bea45964585b003ac0fdf41b1dcde264230e8、実装4d3c08b4eb5e235e681ed0f0cafdde3c4f9ddde7。新module/testの2本、旧64code/18data不変。clean候補fw01/banto-aiを作成し旧候補を保全。OUT artifacts/fixture-numerical-worker-2026-10-01、tests-1/。
 
 新15試験pass、failure/error/skip0、54.015秒。所有子が40個の架空cluster・4drawを計算し、前工程の既知文書pinと一致。親保持4入力・source/runtime・元Popen handleのPID/生成時刻・固定argvを照合し、5payload/1,976,761bytesを保存。selected source21/Python2/input4、補助依存project37/全245files/188modules/native48を終了後disk/Git照合。保存例14.678秒、子監視4.056秒、exit0/reaped/error0。
 
@@ -4172,7 +4172,7 @@ analysis PID14244、writer PID22020、reader PID21668。両子ともexit0/reaped
 
 ## 186. 架空主集計の別実装auditと所有process証拠（2026-10-01）
 
-[結果](anomaly-multiseed-v0.3-fixture-numerical-audit-2026-10-01.md)、[API](../anomaly-v03-fixture-numerical-audit.md)。開始362cb7544879c2e044423c5a84b13f6c185ca2b3、実装8bd4b67eac5ecaaa72fb139bc12a0bff484448b8、clean候補fa01/banto-ai。新算術/worker/test4本、旧66code/18data不変。OUT artifacts/fixture-numerical-audit-2026-10-01、tests-1/observed-audit/。
+[結果](anomaly-multiseed-v0.3-fixture-numerical-audit-2026-10-01.md)、[API](../anomaly/evaluation/anomaly-v03-fixture-numerical-audit.md)。開始362cb7544879c2e044423c5a84b13f6c185ca2b3、実装8bd4b67eac5ecaaa72fb139bc12a0bff484448b8、clean候補fa01/banto-ai。新算術/worker/test4本、旧66code/18data不変。OUT artifacts/fixture-numerical-audit-2026-10-01、tests-1/observed-audit/。
 
 標準ライブラリのみの別算術でdraw番号を順に展開し、9主表の117絶対推定・72対応差・180gate、effective exposure/検出済みdelay/候補判断を検算。元analysisの4ファイルを前savepoint pinで保持し、元analysis/720評価は再実行なし。新22試験pass、27.521秒、failure/error/skip0。CI改変を保持receiptごと再封印しても実子が数値不一致としてexit2で拒否した。
 
@@ -4186,7 +4186,7 @@ slice/sidecar導出・coverage/producer・登録データは対象外と明示�
 
 ## 187. 限定fixture工程の共有資源停止（2026-10-01）
 
-[結果](anomaly-multiseed-v0.3-fixture-resource-budget-2026-10-01.md)、[API](../anomaly-v03-fixture-resource-budget.md)。開始a47b4ba1af372c8159413f0d8f2a8ce5cc5fbd3b、初回f4c1918、修正後cf4d9c42c11c202984aacdd71ac5efb0368f22d0、成功候補fb02。新module/test2本＋既存5本の変更、旧65code/18data不変、旧pinを保存。OUT artifacts/fixture-resource-budget-2026-10-01、成功tests-2/shared-example/。
+[結果](anomaly-multiseed-v0.3-fixture-resource-budget-2026-10-01.md)、[API](../anomaly/evaluation/anomaly-v03-fixture-resource-budget.md)。開始a47b4ba1af372c8159413f0d8f2a8ce5cc5fbd3b、初回f4c1918、修正後cf4d9c42c11c202984aacdd71ac5efb0368f22d0、成功候補fb02。新module/test2本＋既存5本の変更、旧65code/18data不変、旧pinを保存。OUT artifacts/fixture-resource-budget-2026-10-01、成功tests-2/shared-example/。
 
 新budget16＋supervisor13＋analysis15＋audit9の53pass、83.808秒、failure/error/skip0。初回52試験の19failure/2errorはWindows DirEntryのst_nlink=0による過剰拒否で、path.lstatへ修正し、monitor異常も失敗にする試験を追加。初回記録/fb01を保全した。実子の小容量超過・模擬commit低下・終了直後超過・未終了owner/保存失敗を検査。
 
@@ -4208,7 +4208,7 @@ slice/sidecar導出・coverage/producer・登録データは対象外と明示�
 
 ## 189. 2026-10-01 架空slice/補助表の独立検算と所有audit接続
 
-[結果](anomaly-multiseed-v0.3-fixture-slice-audit-2026-10-01.md)、[利用方法](../anomaly-v03-fixture-slice-audit.md)。実装b6d578e7c577470ecb2fbef228413d6b2abf85bf/fs02、初回ced27e3895b00e6fadcbc21157b74d38112364de/fs01を保全。OUT artifacts/fixture-slice-audit-2026-10-01、最終文書revisionと74code/18data pinはsavepoint-evidence.json。
+[結果](anomaly-multiseed-v0.3-fixture-slice-audit-2026-10-01.md)、[利用方法](../anomaly/evaluation/anomaly-v03-fixture-slice-audit.md)。実装b6d578e7c577470ecb2fbef228413d6b2abf85bf/fs02、初回ced27e3895b00e6fadcbc21157b74d38112364de/fs01を保全。OUT artifacts/fixture-slice-audit-2026-10-01、最終文書revisionと74code/18data pinはsavepoint-evidence.json。
 
 計算側関数を使わず、fixed coordinate sums/literal delay multisetで本文1,233行・補助4系列2,835行・詳細9表を検算。新operation audit-invented-primary-and-slices-v1はslice pinを元analysisへ結び、6入力/14MiB、新出力primary-and-slices-audit.json。旧primary-only形式と5入力/6MiBは維持。
 
@@ -4222,7 +4222,7 @@ pure14＋owned14＋budget16の44項目。tests-1は43pass/1error・74.090秒、�
 
 ## 190. 2026-10-02 検算済み5payloadの通常公開・writer証跡・別reader
 
-[結果](anomaly-multiseed-v0.3-fixture-publication-2026-10-02.md)、[API](../anomaly-v03-fixture-publication.md)。開始596d31b、初回0c6dbae/fp01、実装a9de2f500020bb951dfd08d66b56e368859236b9/fp02。OUT artifacts/fixture-publication-2026-10-01、成功tests-4/saved-fixture-publication。新2＋既存4本変更、旧70code/18data不変、現在76code。文書revisionと全pinはsavepoint-evidence.json。
+[結果](anomaly-multiseed-v0.3-fixture-publication-2026-10-02.md)、[API](../anomaly/evaluation/anomaly-v03-fixture-publication.md)。開始596d31b、初回0c6dbae/fp01、実装a9de2f500020bb951dfd08d66b56e368859236b9/fp02。OUT artifacts/fixture-publication-2026-10-01、成功tests-4/saved-fixture-publication。新2＋既存4本変更、旧70code/18data不変、現在76code。文書revisionと全pinはsavepoint-evidence.json。
 
 新しい公開経路16項目が90.902秒で全pass（failure/error/skip0）。共通evidence16＋budget19の35passは初回からcode不変を照合して再利用し、関連51項目を確認。最終revisionで51項目すべてを再実行したとはしない。 初回tests-1は50項目中46pass/4failure、275.503秒。正常経路は120秒の共有上限で停止。tests-2は再確認ハーネスのテスト名重複により4件ともロードエラーで、本体未実行。修正したtests-3は同じ実装の失敗4項目だけを再確認し、3pass/1failure。正常経路146.192秒（writer45.034/reader99.862秒）で時間停止した。同revisionのGit blobを工程内で再利用する修正を加え、作業bytesと環境の前後検査は保持した。ほかの初回3失敗の原因を断定せず、記録を保全する。fp01/全失敗ログ/旧harnessを削除しない。
 
@@ -4234,7 +4234,7 @@ pure14＋owned14＋budget16の44項目。tests-1は43pass/1error・74.090秒、�
 
 ## 191. 2026-10-02 架空producer記録とconsumer主集計の結合
 
-[結果](anomaly-multiseed-v0.3-producer-input-boundary-2026-10-02.md)、[API](../anomaly-v03-producer-input-fixture.md)。開始a0aee2ff732c45173cab1da4b3e5d804e1e5d65c、実装35032159133aa4d3866863b555bd23a3718f07be、clean候補pi01/banto-ai。OUT artifacts/producer-input-boundary-2026-10-02、tests-1/full-invented-example。新module/test2本、旧76code/18data不変、現在78code。文書revisionと全pinはsavepoint-evidence.json。
+[結果](anomaly-multiseed-v0.3-producer-input-boundary-2026-10-02.md)、[API](../anomaly/evaluation/anomaly-v03-producer-input-fixture.md)。開始a0aee2ff732c45173cab1da4b3e5d804e1e5d65c、実装35032159133aa4d3866863b555bd23a3718f07be、clean候補pi01/banto-ai。OUT artifacts/producer-input-boundary-2026-10-02、tests-1/full-invented-example。新module/test2本、旧76code/18data不変、現在78code。文書revisionと全pinはsavepoint-evidence.json。
 
 新23項目pass、failure/error/skip0、2.584秒。外部manifest/登録pin、全予定枠とidentity/順序、候補間入力、latest attempt、入力/結果bytes、分母/precision/delay、終了/failureの整合性を検査。最新失敗や全体未完了は集計を返さず、全予定枠と旧失敗を保持する。判定不能とprecision0/0を補正しない。
 
@@ -4248,7 +4248,7 @@ pure14＋owned14＋budget16の44項目。tests-1は43pass/1error・74.090秒、�
 
 ## 192. 2026-10-02 架空producerの補助内訳を主入力と最新試行へ結合
 
-[結果](anomaly-multiseed-v0.3-producer-slice-boundary-2026-10-02.md)、[API](../anomaly-v03-producer-slice-fixture.md)。開始c60f86747339f5d9011b1936adc7ce844499ce01、実装bde59a7a98bd2ed1f5c263458a1ddf1e28211268、clean候補ps01/banto-ai。OUT artifacts/producer-slice-boundary-2026-10-02、tests-1/full-invented-example。文書revisionと全pinはsavepoint-evidence.json。
+[結果](anomaly-multiseed-v0.3-producer-slice-boundary-2026-10-02.md)、[API](../anomaly/evaluation/anomaly-v03-producer-slice-fixture.md)。開始c60f86747339f5d9011b1936adc7ce844499ce01、実装bde59a7a98bd2ed1f5c263458a1ddf1e28211268、clean候補ps01/banto-ai。OUT artifacts/producer-slice-boundary-2026-10-02、tests-1/full-invented-example。文書revisionと全pinはsavepoint-evidence.json。
 
 新21項目はfailure/error/skip0、82.665秒で全pass。ただし同じ試験実行の資源監視はpipeline_commit_headroomで失敗。システムcommit余裕の最小値5.20MiBが2GiB下限を割った。試験processのpeak privateは86.71MiBであり、他processの内訳や因果は確認していない。ユーザーから別Bantoリリース処理の同時稼働が報告された。 元harness/停止診断を保全し、回復時のguardとcode不変を照合して機能passを再利用、再試験0。最後のcheckpointで停止理由を確定したもので、試験実行のresource_budget_passed=falseは維持。別release処理は変更/停止していない。
 
@@ -4262,7 +4262,7 @@ pure14＋owned14＋budget16の44項目。tests-1は43pass/1error・74.090秒、�
 
 ## 193. 2026-10-02 producer結合入力を所有解析・独立主表/slice auditへ接続
 
-[結果](anomaly-multiseed-v0.3-bound-fixture-pipeline-2026-10-02.md)、[API](../anomaly-v03-bound-fixture-pipeline.md)。開始627ddc5f89980335ea20f1bc8cf912e383f0276f、初回568562f/bp01、最終9705b7355cdabca189a60bd63a380fc3062b8ec0/bp03。OUT artifacts/bound-fixture-pipeline-2026-10-02、tests-3/owned-example。新module/test2本、旧80code/18data不変、現在82code。文書revision/pinはsavepoint-evidence.json。
+[結果](anomaly-multiseed-v0.3-bound-fixture-pipeline-2026-10-02.md)、[API](../anomaly/evaluation/anomaly-v03-bound-fixture-pipeline.md)。開始627ddc5f89980335ea20f1bc8cf912e383f0276f、初回568562f/bp01、最終9705b7355cdabca189a60bd63a380fc3062b8ec0/bp03。OUT artifacts/bound-fixture-pipeline-2026-10-02、tests-3/owned-example。新module/test2本、旧80code/18data不変、現在82code。文書revision/pinはsavepoint-evidence.json。
 
 最終tests-3は13項目すべてpass、10.390秒、failure/error/skip0。初回tests-1は12pass/1failure（9.254秒）。元から0のdelayセルを0へ置換していた試験を0→1へ直し、tests-2の修正1件でpassした。その後、後段失敗でも前段の完了実績を残す実装修正を加えたため、最終候補で13件と接続例を再確認した。 初回/harness/candidateを保全。保存済み40架空cluster/2,880枠の主・補助結合結果を4drawへ接続。参照文書の同一実装による事前作成1回、所有analysis1回、別実装audit1回で、全体26.370秒。主9表/117絶対推定/72対応差/180gate、本文1,233行・補助2,835行・詳細9表が一致した。
 
@@ -4294,7 +4294,7 @@ source-anchor.jsonとbound-publication-binding.jsonに前保存点、producer結
 
 ## 196. 保存済み要約と全予定枠の結合（2026-10-02）
 
-[結果](anomaly-multiseed-v0.3-summary-coverage-2026-10-02.md)、[API](../anomaly-v03-summary-coverage.md)。起点8faf7a8、最終3e596bb0c8eafbc94c09f65ef114e54d6098ecf8/sc02、OUT summary-coverage-2026-10-02/tests-2/invented-full-coverage。旧84code/18data不変、新module/test2本で86code。文書revision/全pinはsavepoint-evidence.json。
+[結果](anomaly-multiseed-v0.3-summary-coverage-2026-10-02.md)、[API](../anomaly/evaluation/anomaly-v03-summary-coverage.md)。起点8faf7a8、最終3e596bb0c8eafbc94c09f65ef114e54d6098ecf8/sc02、OUT summary-coverage-2026-10-02/tests-2/invented-full-coverage。旧84code/18data不変、新module/test2本で86code。文書revision/全pinはsavepoint-evidence.json。
 
 保存済み要約を登録・最新attempt・評価/入力hash・全120区間へ結ぶ純粋関数を追加した。新16項目pass（30.515秒）。供給が1区間なら119区間/714評価を未確認として残し、全件宣言から補わない。120区間/720枠の架空要約例は13.504秒で結合成功。719 success/1 inconclusive、旧失敗1件、precision分母ゼロ720件を保持した。
 
@@ -4310,7 +4310,7 @@ source-anchor.jsonとbound-publication-binding.jsonに前保存点、producer結
 
 ## 197. 結合済み要約からdev/smoke比較表への接続（2026-10-03）
 
-[結果](anomaly-multiseed-v0.3-bound-summary-tables-2026-10-03.md)、[API](../anomaly-v03-bound-summary-tables.md)。起点16af80f、実装e70d55e6ebe84a6171ccdf2c53abbaf8a85d5fee/bt01、OUT bound-summary-tables-2026-10-03/tests-1/retained-summary-tables。旧86code/18data不変、新module/test2本で88code。文書revision/全pinはsavepoint-evidence.json。
+[結果](anomaly-multiseed-v0.3-bound-summary-tables-2026-10-03.md)、[API](../anomaly/evaluation/anomaly-v03-bound-summary-tables.md)。起点16af80f、実装e70d55e6ebe84a6171ccdf2c53abbaf8a85d5fee/bt01、OUT bound-summary-tables-2026-10-03/tests-1/retained-summary-tables。旧86code/18data不変、新module/test2本で88code。文書revision/全pinはsavepoint-evidence.json。
 
 全120区間の結合済み要約からdev/smoke記述集計を作る処理を追加。新12項目pass（17.589秒）。前回の結合記録＋架空要約121file/17,877,645bytesを再利用し、4.894秒で90seed別表・18role別表・12比較・10seed群へ接続した。
 
@@ -4326,7 +4326,7 @@ source-anchor.jsonとbound-publication-binding.jsonに前保存点、producer結
 
 ## 198. 結合済み記述集計から報告payloadへの接続（2026-10-03）
 
-[結果](anomaly-multiseed-v0.3-bound-summary-report-2026-10-03.md)、[API](../anomaly-v03-bound-summary-report.md)。起点2b052a3、実装c9556345cd16d7df3f762e8f50b95ec0a3d7887e/br01、OUT bound-summary-report-2026-10-03/tests-1/retained-tables-report。旧88code/18data不変、新module/test2本で90code。文書revision/全pinはsavepoint-evidence.json。
+[結果](anomaly-multiseed-v0.3-bound-summary-report-2026-10-03.md)、[API](../anomaly/evaluation/anomaly-v03-bound-summary-report.md)。起点2b052a3、実装c9556345cd16d7df3f762e8f50b95ec0a3d7887e/br01、OUT bound-summary-report-2026-10-03/tests-1/retained-tables-report。旧88code/18data不変、新module/test2本で90code。文書revision/全pinはsavepoint-evidence.json。
 
 結合済みdev/smoke記述集計表から報告書と保存用payloadを準備する処理を追加。新10項目pass（25.650秒）。前回保存した架空集計表とschemaの2file/9,068,695bytesを一度だけ読み、1.011秒で4payload/3,040,268bytesを準備した。
 
@@ -4342,7 +4342,7 @@ source-anchor.jsonとbound-publication-binding.jsonに前保存点、producer結
 
 ## 199. 準備済み報告書のローカル保存・終了後読取り（2026-10-03）
 
-[結果](anomaly-multiseed-v0.3-bound-report-publication-2026-10-03.md)、[API](../anomaly-v03-bound-report-publication.md)。起点8f77c54、最終実装8e1ab327d4302741cb0aff7c46b787707de5fc86/brp2、OUT bound-report-publication-2026-10-03/tests-2/retained-report-publication。旧90code/18data不変、新2本で92code。文書revision/全pinはsavepoint-evidence.json。
+[結果](anomaly-multiseed-v0.3-bound-report-publication-2026-10-03.md)、[API](../anomaly/execution/anomaly-v03-bound-report-publication.md)。起点8f77c54、最終実装8e1ab327d4302741cb0aff7c46b787707de5fc86/brp2、OUT bound-report-publication-2026-10-03/tests-2/retained-report-publication。旧90code/18data不変、新2本で92code。文書revision/全pinはsavepoint-evidence.json。
 
 前回の準備済み報告書4file/3,040,268bytesを、通常のローカル保存とwriter終了後の別readerへ接続した。修正後11項目pass（4.545秒）。保存例は3.722秒で終了し、4ファイルのbytes/SHA256は元と一致した。
 
@@ -4358,7 +4358,7 @@ source-anchor.jsonとbound-publication-binding.jsonに前保存点、producer結
 
 ## 200. 保存済み工程から続ける単一の報告実行入口（2026-10-03）
 
-[結果](anomaly-multiseed-v0.3-saved-report-pipeline-2026-10-03.md)、[API](../anomaly-v03-saved-report-pipeline.md)。起点17d6029、最終実装6d48c39cdafdb883ce63fdd991ba063169e58cb7/sp02、OUT saved-report-pipeline-2026-10-03/tests-2/reused-completed-publication。旧91code不変、publication共有budget引渡し2行変更、2本追加で94code/18data。文書revision/全pinはsavepoint-evidence.json。
+[結果](anomaly-multiseed-v0.3-saved-report-pipeline-2026-10-03.md)、[API](../anomaly/execution/anomaly-v03-saved-report-pipeline.md)。起点17d6029、最終実装6d48c39cdafdb883ce63fdd991ba063169e58cb7/sp02、OUT saved-report-pipeline-2026-10-03/tests-2/reused-completed-publication。旧91code不変、publication共有budget引渡し2行変更、2本追加で94code/18data。文書revision/全pinはsavepoint-evidence.json。
 
 要約・集計表・報告書・保存完了記録の四つから開始できる単一入口とCLI、工程ごとの続行requestを追加した。23項目を確認（初回22成功、試験条件を分けた1項目のみ再確認）。前回の完了記録を0.620秒で再利用し、aggregation/report/publicationの呼出しと新しい所有processはいずれも0回。
 

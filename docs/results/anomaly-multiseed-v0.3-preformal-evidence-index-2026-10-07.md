@@ -53,7 +53,7 @@
 | 4. 最終同revision受入 | Ubuntu24.04/Python3.12・3.14、Windows26H2/Python3.14 native、正式dev8/smoke2全layout/両層/3候補、独立受入。保存済み過去CIを代用しない。 |
 | 5. 共通予算・容量 | 正式同形の生成→初期/保存reader→主算術/別audit→staging/writer→fresh readerを同じouter clockで測り、診断等も含むsmoke基準見積りの2倍以上の空きを確認。限定nativeの余裕だけでは満たさない。 |
 
-採択後はS5未使用holdout40 seedを新rootで一回、S6独立raw再導出、S7文書化。S5成功/実S6完了をS4開始前の循環条件にはしない。[範囲整理案v3](../anomaly-v03-s4-acceptance-scope-draft-v3.md)と既存改訂契約案は未採択のまま。
+採択後はS5未使用holdout40 seedを新rootで一回、S6独立raw再導出、S7文書化。S5成功/実S6完了をS4開始前の循環条件にはしない。[範囲整理案v3](../anomaly/acceptance/anomaly-v03-s4-acceptance-scope-draft-v3.md)と既存改訂契約案は未採択のまま。
 
 ## 次の保存単位
 

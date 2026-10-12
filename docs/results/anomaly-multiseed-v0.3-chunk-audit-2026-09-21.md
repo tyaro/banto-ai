@@ -1,7 +1,7 @@
 # 新形式の区切り結果と実ファイル・監視・journalの接続
 
 2026-09-21 JST。実装savepoint **04630e436d7b99a97005944fe7cf7b8ec4687701**。
-[仕様とCLI](../anomaly-v03-independent-audit-and-checkpoints.md#新形式の区切りを実ファイルから検算する) / [再開用引継ぎ](../current-handoff.md)。
+[仕様とCLI](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#新形式の区切りを実ファイルから検算する) / [再開用引継ぎ](../current-handoff.md)。
 
 ## 到達範囲
 

@@ -1,6 +1,6 @@
 # consumer集計入力の公開記録への結合（2026-09-25）
 
-[結合API](../anomaly-v03-consumer-analysis-binding.md)を追加し、既存の独立監査済み集計入力が、公開metadataを確認した全120区間/720評価と同じデータ・最終attemptを参照することを確認した。実装revision `c4f04121764c882e1cb885f9fea173e4bc2d6cc3`、OUT `artifacts/consumer-analysis-binding-2026-09-25`。最終文書revisionと証跡pinはsavepoint-evidence.json。
+[結合API](../anomaly/execution/anomaly-v03-consumer-analysis-binding.md)を追加し、既存の独立監査済み集計入力が、公開metadataを確認した全120区間/720評価と同じデータ・最終attemptを参照することを確認した。実装revision `c4f04121764c882e1cb885f9fea173e4bc2d6cc3`、OUT `artifacts/consumer-analysis-binding-2026-09-25`。最終文書revisionと証跡pinはsavepoint-evidence.json。
 
 ## 確認結果
 

@@ -41,7 +41,7 @@ D側は確認済み部分の2倍を両境界で満たす。C側は部分条件�
 
 ## 保存検査と失敗保全
 
-新rootは [a2](../../artifacts/preformal-smoke-capacity-20261006-a2/)。別stdlib checkerは2,856 descriptorを外部起点のpinへ照合し、欠落・重複、attempt別bytes、20倍・2倍、未測定null、正式flagを再検算してpass。checkerは3.3 GBを再hashせず、数値計算・役割再実行・S6も行っていない。
+新rootは [a2](../../artifacts/preformal-smoke-capacity-20261006-a2)。別stdlib checkerは2,856 descriptorを外部起点のpinへ照合し、欠落・重複、attempt別bytes、20倍・2倍、未測定null、正式flagを再検算してpass。checkerは3.3 GBを再hashせず、数値計算・役割再実行・S6も行っていない。
 
 | 保存file | bytes | SHA256 |
 | --- | ---: | --- |
@@ -51,7 +51,7 @@ D側は確認済み部分の2倍を両境界で満たす。C側は部分条件�
 | [saved checker](../../artifacts/preformal-smoke-capacity-20261006-a2/check.json) | 1,787 | `91144454e556ac94a15e5a676b8b308660b491972fd34d62518abe4cf89ccc6f` |
 | [runtime scope review](../../artifacts/preformal-smoke-capacity-20261006-a2/runtime-scope-review.json) | 17,926 | `48be345590a06504f79d922657599625c62113625bbed0efd815c28d13ef3504` |
 
-初回[a1](../../artifacts/preformal-smoke-capacity-20261006-a1/)は`.complete`をnlink1に限定したcollectorの仮定により0.5秒以内に停止した。`.complete`と`marker-pending.json`は既存の同一inode/nlink2で、同一bytesを持つ。a1のscript・failureを保持し、a2ではreadonly計測としてnlink≥1と前後identity/links一致を要求した。失敗receipt278 B / `49c1fcd3d5e95d2d9753bfa33d4796a01799ce7971655a5d5bab41914ff4a071`。旧source、marker、失敗attemptは変更していない。この観測はhardlink別主体への改変防止を証明しない。
+初回[a1](../../artifacts/preformal-smoke-capacity-20261006-a1)は`.complete`をnlink1に限定したcollectorの仮定により0.5秒以内に停止した。`.complete`と`marker-pending.json`は既存の同一inode/nlink2で、同一bytesを持つ。a1のscript・failureを保持し、a2ではreadonly計測としてnlink≥1と前後identity/links一致を要求した。失敗receipt278 B / `49c1fcd3d5e95d2d9753bfa33d4796a01799ce7971655a5d5bab41914ff4a071`。旧source、marker、失敗attemptは変更していない。この観測はhardlink別主体への改変防止を証明しない。
 
 ## source/runtimeの具体的な残り
 

@@ -1,7 +1,7 @@
 # S4-B2 専用principal環境の準備記録
 
 2026-09-15、engineering限定。ユーザー「はい、それで続けて下さい」により、専用標準accountと保護rootの準備を承認済み。[前回の方式案](anomaly-multiseed-v0.3-s4-b2-principal-boundary-2026-09-15.md)の未承認状態は履歴として保持する。
-実装savepoint **e202677e66356e7b3e554d258ed73f73def7ea0f**、[準備仕様](../anomaly-v03-principal-setup-design.md)。
+実装savepoint **e202677e66356e7b3e554d258ed73f73def7ea0f**、[準備仕様](../anomaly/native/principals/anomaly-v03-principal-setup-design.md)。
 
 ## 実装・確認
 

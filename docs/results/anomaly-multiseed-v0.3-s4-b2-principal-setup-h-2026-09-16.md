@@ -1,6 +1,6 @@
 # S4-B2 準備hの初期検査通過・最終検査停止
 
-2026-09-16 JST。revision aa0bc5e16010e8fd3a61239359ed1f67f41df5fa、[仕様](../anomaly-v03-principal-setup-h-design.md)。SACLの要求状態をS:PAIへ限定変更し、全SDDLの厳密一致を維持した。旧とのbinary差がcontrol0x0800だけである追加試験を含め44＋15＋launcher12件pass、独立レビュー指摘0、safety/diff pass。通常load-only PID11952/exit0、command17859文字。
+2026-09-16 JST。revision aa0bc5e16010e8fd3a61239359ed1f67f41df5fa、[仕様](../anomaly/native/principals/anomaly-v03-principal-setup-h-design.md)。SACLの要求状態をS:PAIへ限定変更し、全SDDLの厳密一致を維持した。旧とのbinary差がcontrol0x0800だけである追加試験を含め44＋15＋launcher12件pass、独立レビュー指摘0、safety/diff pass。通常load-only PID11952/exit0、command17859文字。
 DLL26624 bytes/hash4b04ed4b32a6e1713cc806804c8532fca22a7e9f32685bf087b4c345b7e93c0f。105 sourceをGit/raw照合、前回101不変/3変更/新規1、旧g14公開artifacts不変。UTC15:25:14.4459618ZのSAM2221/free0・新規h root error2を確認した。input20709 bytes/hash1784e62199d216d66551e0fa7240a44cc2a055f4997507d41b5a31705685bc19。
 
 Run UTC2026-09-15T15:25:59.3588285Z〜15:26:07.5741839Z、PID26248/Handle/終了確認、exit786431=phase11/detail65535。launch3842/wait4330/total8215ms、観測/解放例外なし、process object解放済み。

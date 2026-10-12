@@ -1,6 +1,6 @@
 # v0.3 架空campaignのWindows Job所有・新規一区間（2026-10-04）
 
-作業branch `codex/preformal-acceptance-scope`。このnative試行のclean source revisionは `a1c8461f7ead4f9867ae2c0b48dca367618401f5`。固定手作り系列だけを使い、登録holdout観測は読んでいない。26H2単一writer[S4改訂案](../anomaly-v03-s4-26h2-amendment-draft-v1.md)は未採択、旧gate `s4_acceptance_not_frozen`、正式credit 0を維持する。
+作業branch `codex/preformal-acceptance-scope`。このnative試行のclean source revisionは `a1c8461f7ead4f9867ae2c0b48dca367618401f5`。固定手作り系列だけを使い、登録holdout観測は読んでいない。26H2単一writer[S4改訂案](../anomaly/acceptance/anomaly-v03-s4-26h2-amendment-draft-v1.md)は未採択、旧gate `s4_acceptance_not_frozen`、正式credit 0を維持する。
 
 ## 変更と失敗保全
 

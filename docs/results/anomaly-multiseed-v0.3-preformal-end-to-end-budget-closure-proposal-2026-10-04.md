@@ -1,6 +1,6 @@
 # v0.3 全工程予算の測定済み範囲と閉包案 v2（2026-10-04）
 
-状態: **未採択の予算閉包案**。対象はS4受入前に、producerから公開後readerまでを一つの版付き予算へ結ぶ作業である。正式holdoutの観測、S5/S6、性能gate、昇格を実行した記録ではない。基準保存点は `7f85891`。Windows 26H2向けの[運用契約案v2](../anomaly-v03-formal-operations-contract-proposal-v2.md)も未採択であり、旧[計画§8–9](../anomaly-multiseed-evaluation-plan-v0.3.md#v03-runtime-acceptance)の25H2正式pinと `s4_acceptance_not_frozen` を変更しない。
+状態: **未採択の予算閉包案**。対象はS4受入前に、producerから公開後readerまでを一つの版付き予算へ結ぶ作業である。正式holdoutの観測、S5/S6、性能gate、昇格を実行した記録ではない。基準保存点は `7f85891`。Windows 26H2向けの[運用契約案v2](../anomaly/acceptance/anomaly-v03-formal-operations-contract-proposal-v2.md)も未採択であり、旧[計画§8–9](../anomaly-multiseed-evaluation-plan-v0.3.md#v03-runtime-acceptance)の25H2正式pinと `s4_acceptance_not_frozen` を変更しない。
 
 追記: 本表は基準保存点当時の計測欄である。後続の[共有予算付き５役・候補profile必須の架空１draw試行](anomaly-multiseed-v0.3-preformal-profile-and-saved-attempt-2026-10-04.md)はproducerから別readerまで連続測定済み。ただし50,000 draw、登録保存reader、完全独立S6、最終正式文書を含まないため、下表の**正式同形全工程予算はなお未閉包**である。
 
@@ -35,7 +35,7 @@
 | 6. 公開後reader | writerとは別のfresh processで全inventoryのhash/schema/意味・差分を再読取りし、読取bytes・時間・private・commit余裕とexit/reapを測る | markerだけで成功にしない。read失敗は公開済みbytesを修正せず、外側失敗receiptへ残す | 架空5payload・記述報告4payloadの通常reader実績のみ。正式全payload、必要なら独立tokenの受入なし |
 | 7. 統合監視と再開 | 1〜6を同じ外側予算ID・新rootで直列に通し、工程間待機も含むwall、活動時間、通常file見かけの総bytes、entry/depth、volume空き、各process private、RAM/commit最低余裕、監視errorと診断予約を記録する | 同じ上限を工程ごとにリセットしない。超過で新役割を開始せず、所有子停止・wait/reap、監視終了、partial/inconclusive保存を確認する。継続は別attempt/rootと元receipt pinで行う | 小fixtureの共有監視のみ。producerから公開後readerまでの連続測定なし |
 
-全役割はproducer、analysis、audit、writer、readerの事前source/runtime profileと、実行時/終了時の依存・OS・exit/reap照合を要する。現26H2/build26300/UBR9457は[未採択v2契約](../anomaly-v03-formal-operations-contract-proposal-v2.md)の候補値であり、旧25H2測定と同一環境として合算しない。独立token・protected DACLを採る場合はそのnative工程を行5〜6に含める。
+全役割はproducer、analysis、audit、writer、readerの事前source/runtime profileと、実行時/終了時の依存・OS・exit/reap照合を要する。現26H2/build26300/UBR9457は[未採択v2契約](../anomaly/acceptance/anomaly-v03-formal-operations-contract-proposal-v2.md)の候補値であり、旧25H2測定と同一環境として合算しない。独立token・protected DACLを採る場合はそのnative工程を行5〜6に含める。
 
 ## 後続測定の反映（clean `51fdb54`）
 

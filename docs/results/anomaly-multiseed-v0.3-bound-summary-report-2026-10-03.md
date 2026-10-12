@@ -2,7 +2,7 @@
 
 **結合済みdev/smoke記述集計表から報告書と保存用payloadを準備する処理を追加。新10項目pass（25.650秒）。前回保存した架空集計表とschemaの2file/9,068,695bytesを一度だけ読み、1.011秒で4payload/3,040,268bytesを準備した。**
 
-起点2b052a39c21111f9b4f5d787a959d3ff15a38c07。前保存点25,396bytes/SHA0d766f23c23ea0e20d76b1a5227684d0b4b6cea9c6622f8f1aa9b32389fb00d9。実装c9556345cd16d7df3f762e8f50b95ec0a3d7887e、clean候補br01/banto-ai。新module/test2本のみ、旧88code/18data不変、計90code。[API](../anomaly-v03-bound-summary-report.md)。
+起点2b052a39c21111f9b4f5d787a959d3ff15a38c07。前保存点25,396bytes/SHA0d766f23c23ea0e20d76b1a5227684d0b4b6cea9c6622f8f1aa9b32389fb00d9。実装c9556345cd16d7df3f762e8f50b95ec0a3d7887e、clean候補br01/banto-ai。新module/test2本のみ、旧88code/18data不変、計90code。[API](../anomaly/evaluation/anomaly-v03-bound-summary-report.md)。
 
 ## 確認内容
 

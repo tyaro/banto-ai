@@ -1,6 +1,6 @@
 # S4-B2 権限情報照会の長さ不具合と修正
 
-2026-09-15。[準備c](anomaly-multiseed-v0.3-s4-b2-principal-setup-c-2026-09-15.md)は管理者起動後のPreflightでerror24となった。[読取診断](../anomaly-v03-token-length-diagnostic-design.md)を **79a8ef302016ace8514cce03767aa10419204396** で保存し、通常権限の自process tokenだけを4条件で照会した。
+2026-09-15。[準備c](anomaly-multiseed-v0.3-s4-b2-principal-setup-c-2026-09-15.md)は管理者起動後のPreflightでerror24となった。[読取診断](../anomaly/native/runtime/anomaly-v03-token-length-diagnostic-design.md)を **79a8ef302016ace8514cce03767aa10419204396** で保存し、通常権限の自process tokenだけを4条件で照会した。
 
 | 情報class | 渡した長さ | BOOL | error | 必要長 |
 | --- | ---: | --- | ---: | ---: |

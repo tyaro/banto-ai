@@ -87,4 +87,4 @@ retry 0、canonical seed-list SHA-256
 
 この結果文書は監査対象科学仕様の改訂ではない。監査対象`4b02201...`をS0の科学仕様revisionとして
 採択し、後続のstatus/result同期commitはprovenanceとしてS1 registryへ併記する。
-現在状態の入口は[文書索引](../README.md)と[研究roadmap](../research-roadmap.md)を参照する。
+現在状態の入口は[文書索引](../README.md)と[研究roadmap](../research/research-roadmap.md)を参照する。

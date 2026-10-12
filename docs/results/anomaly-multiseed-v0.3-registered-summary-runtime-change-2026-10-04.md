@@ -18,7 +18,7 @@ OS非依存の[pin回帰](../../tests/test_anomaly_v03_fixture_publication.py)3�
 
 試験直前の読取資源標本は空きRAM 10.98 GiB、system commit余裕17.29 GiB、対象volume空き369.19 GiBだった。停止理由は資源ではなくplatform契約差である。Windows registryの実値はProfessional / **26H2 / build 26300 / UBR 9457**、`sys.getwindowsversion()`もbuild 26300。CPythonは3.14.0、MSC v.1944、64-bit AMD64。以前の保存済みdev/smoke実行時に記録した25H2/build26200/UBR9457を現在値へ書き換えない。
 
-旧[正式計画§8](../anomaly-multiseed-evaluation-plan-v0.3.md#v03-runtime-acceptance)とfreeze registryは25H2/build26200/UBR9168を固定する。[採択済みengineering契約](../anomaly-v03-single-writer-evaluation-proposal.md)は25H2のままbuild/UBRをattemptごとに観測・照合する設計であり、26H2を許可しない。未採択の[正式運用改訂案v1](../anomaly-v03-formal-operations-contract-proposal-v1.md)が示したUBR9457の例も、build26200・25H2の範囲だった。今回のreleaseとbuildの変更はその範囲外である。形式だけを検査するconsumer evidence validatorが新値を受け得ても、実行許可やS4受入にはならない。
+旧[正式計画§8](../anomaly-multiseed-evaluation-plan-v0.3.md#v03-runtime-acceptance)とfreeze registryは25H2/build26200/UBR9168を固定する。[採択済みengineering契約](../anomaly/evaluation/anomaly-v03-single-writer-evaluation-proposal.md)は25H2のままbuild/UBRをattemptごとに観測・照合する設計であり、26H2を許可しない。未採択の[正式運用改訂案v1](../anomaly/acceptance/anomaly-v03-formal-operations-contract-proposal-v1.md)が示したUBR9457の例も、build26200・25H2の範囲だった。今回のreleaseとbuildの変更はその範囲外である。形式だけを検査するconsumer evidence validatorが新値を受け得ても、実行許可やS4受入にはならない。
 
 ## 次の受入境界
 

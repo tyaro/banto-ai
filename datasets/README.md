@@ -1,6 +1,6 @@
 # データポリシーと配置
 
-顧客データを扱わず、合成データと利用条件を確認した公開データで研究する。公開データの選定理由と取得・変換境界は [`docs/public-dataset-survey.md`](../docs/public-dataset-survey.md) と [`docs/adr-0005-public-dataset-boundary.md`](../docs/adr-0005-public-dataset-boundary.md) を正本とする。
+顧客データを扱わず、合成データと利用条件を確認した公開データで研究する。公開データの選定理由と取得・変換境界は [`docs/public-dataset-survey.md`](../docs/research/public-dataset-survey.md) と [`docs/adr-0005-public-dataset-boundary.md`](../docs/decisions/adr-0005-public-dataset-boundary.md) を正本とする。
 
 ## Git に置いてよいもの
 

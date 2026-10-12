@@ -43,7 +43,7 @@ trial-05候補の対象は観測された役割別のdisk bytesとnative file集
 
 | 受入のまとまり | 現在の使える証拠 | なお必要な作業 |
 | --- | --- | --- |
-| 運用契約・platform | [26H2案v2](../anomaly-v03-formal-operations-contract-proposal-v2.md)と限定Windows fixture実測。既存CI workflowにはUbuntu 24.04 × CPython 3.12/3.14の両jobと比較jobがある | 旧25H2計画との差とwriter保証を版付きで採択。対象最終clean revisionで既存CIのpass/skip証拠、Windows native/stdlib/repository回帰、独立再監査を照合。現CI reporterのrunner image digestは`not_collected`で、信頼できる採取元も未決定。 |
+| 運用契約・platform | [26H2案v2](../anomaly/acceptance/anomaly-v03-formal-operations-contract-proposal-v2.md)と限定Windows fixture実測。既存CI workflowにはUbuntu 24.04 × CPython 3.12/3.14の両jobと比較jobがある | 旧25H2計画との差とwriter保証を版付きで採択。対象最終clean revisionで既存CIのpass/skip証拠、Windows native/stdlib/repository回帰、独立再監査を照合。現CI reporterのrunner image digestは`not_collected`で、信頼できる採取元も未決定。 |
 | 登録入力・consumer | 架空登録形式の完成6評価をbyte→schema→報告score/ledger/主・sliceへ照合。devの発明1区間は既存実保存readerで観測→主/sliceまで再導出。旧dev/smokeの保存済み720評価はengineeringで全件要約済み | 登録用の**実保存attempt layout**を固定架空入力で読込み、外部に保持した終了/pin、元観測→profile/score→ledger→主/sliceを検証。今回のdev経路の架空120区間anchor・補助file placeholderは正式終了証拠や生成監査に使わない。その後S4の最終dev/smokeで全登録条件を確認。holdoutを事前測定に使わない。 |
 | 5役割source/runtime・公開・監査 | 今回の5子と選択source、終了/reap、通常writer→別reader、失敗停止 | 実producerと完全な依存inventory/外部期待値、正式同形の全payloadと公開失敗・reader不一致、完全独立S6相当の架空入力検証。 |
 | 全工程予算 | 架空1 drawの5役割共通wall/root正常値と二つの停止例。別保存点には架空50,000 drawの**算術のみ**の主・別監査値 | 登録reader、50,000 draw全表・slice・文書、完全独立監査、stage・公開・reader、失敗保全を一つの版付き予算で測る。旧正式計画§9の容量2倍条件を最終smoke実績から判定。 |

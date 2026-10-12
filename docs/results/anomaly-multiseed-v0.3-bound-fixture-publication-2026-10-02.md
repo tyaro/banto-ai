@@ -23,7 +23,7 @@
 
 1. 前保存点に保持されたpipeline result、projection、analysis/audit result/evidence、文書、新5payloadのpinを照合した。結合済みproducer結果13,277,817bytesも保存済みpinと一致し、再集計していない。
 2. projectionの4入力pinを元analysisに、主/補助入力pinを元auditに照合した。pipeline/projectionのbound_result_pin、登録/主manifest/補助manifest pin、元失敗履歴1件と判定不能1枠を保持した。登録元の真正性やraw観測導出を新しく認証したわけではない。
-3. 既存[公開API](../anomaly-v03-fixture-publication.md)へ12入力を渡し、writer終了後だけreaderを起動した。入力・公開物・各process証跡・markerを既存処理で照合した。
+3. 既存[公開API](../anomaly/evaluation/anomaly-v03-fixture-publication.md)へ12入力を渡し、writer終了後だけreaderを起動した。入力・公開物・各process証跡・markerを既存処理で照合した。
 4. 新しい外部結合記録へ、元producer/projection/pipelineのpinと今回のpublication result/binding/marker/writer/reader pinを対応付けた。元科学payload内の過去のpublished=false等は書き換えず、今回の保存実績を外側へ記録した。
 
 - [入力起点の記録](../../artifacts/bound-fixture-publication-2026-10-02/source-anchor.json)

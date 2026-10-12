@@ -1,7 +1,7 @@
 # S4-B2 親作成失敗のエラー記録
 
 2026-09-15 JST、基準2b865dc、実装 **c0f17d8e4dd8b9835215869633bd55c6c2536402**。
-[診断仕様](../anomaly-v03-namespace-diagnostic-design.md)の新規max1で、最初のshare3親CreateDirectory2Wが**WinError87**で失敗した。
+[診断仕様](../anomaly/native/files/anomaly-v03-namespace-diagnostic-design.md)の新規max1で、最初のshare3親CreateDirectory2Wが**WinError87**で失敗した。
 87はERROR_INVALID_PARAMETER。[Microsoftの定義](https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-)。
 具体的にどの引数の組合せが不適合かは未確定で、share3全般の禁止やACL原因を断定しない。[前回](anomaly-multiseed-v0.3-s4-b2-namespace-create-2026-09-15.md)の失われた数値を復元した結果でもない。
 

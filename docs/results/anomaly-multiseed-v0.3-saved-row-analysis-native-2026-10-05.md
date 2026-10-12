@@ -1,6 +1,6 @@
 # v0.3 保存reader行からanalysis・独立auditへの接続（2026-10-05）
 
-状態: **架空固定入力の接続試験が成功 / S4未採択 / 正式許可なし**。clean source `a9f1882dc7a7068a540dabc80a6574c4f29a8529`、branch `codex/preformal-acceptance-scope`、Windows 11 Pro 26H2/build26300/UBR9457・CPython3.14.0・local NTFSで実施した。追加agentは起動していない。[S4受入範囲案 v3](../anomaly-v03-s4-acceptance-scope-draft-v3.md)の条件2に対する部分証拠であり、正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0を維持する。登録holdout40 seedは未読である。
+状態: **架空固定入力の接続試験が成功 / S4未採択 / 正式許可なし**。clean source `a9f1882dc7a7068a540dabc80a6574c4f29a8529`、branch `codex/preformal-acceptance-scope`、Windows 11 Pro 26H2/build26300/UBR9457・CPython3.14.0・local NTFSで実施した。追加agentは起動していない。[S4受入範囲案 v3](../anomaly/acceptance/anomaly-v03-s4-acceptance-scope-draft-v3.md)の条件2に対する部分証拠であり、正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0を維持する。登録holdout40 seedは未読である。
 
 ## 実装と確認した範囲
 

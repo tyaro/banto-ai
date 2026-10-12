@@ -1,6 +1,6 @@
 # 限定fixture工程の資源停止・共有予算（2026-10-01）
 
-親処理から所有子の計算/検算・終了後照合・保存までに、容量/system commit余裕を含む停止条件を接続した。新規16＋影響範囲の既存37、計53試験が成功。共有予算で小さいanalysis→auditを一度通し、全体・両役割ともverified/resource_budget_passed=trueとなった。[APIと限界](../anomaly-v03-fixture-resource-budget.md)、[現在の引継ぎ](../current-handoff.md)。
+親処理から所有子の計算/検算・終了後照合・保存までに、容量/system commit余裕を含む停止条件を接続した。新規16＋影響範囲の既存37、計53試験が成功。共有予算で小さいanalysis→auditを一度通し、全体・両役割ともverified/resource_budget_passed=trueとなった。[APIと限界](../anomaly/evaluation/anomaly-v03-fixture-resource-budget.md)、[現在の引継ぎ](../current-handoff.md)。
 
 ## 実装と保存点
 

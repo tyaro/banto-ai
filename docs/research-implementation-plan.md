@@ -25,7 +25,7 @@ Banto ecosystem向けの時系列AIについて、次の価値を再現可能な
 - formatter／linterはPhase 0では導入せず、標準ライブラリの`compileall`を使う。最初のdevelopment dependency導入時にformatter／linterをversion pinし、lockへ固定する。
 - ドキュメントは日本語を基本とし、API名、model名、schema fieldは英語を使う。
 - Gitで管理するのは、source manifest、transform config、schema、code、tests、docs、結果要約などの再現情報とし、生成されたobservations、split／dataset manifest、quality report、fingerprintはGit管理外とする。
-- 公開データは、公式URL／DOI／licenseの確認、利用条件の受入れ、取得サイズ／SHA-256／archive member hashの固定を通ったものだけを研究入力候補とする。第一候補はUCI MetroPT-3、次候補はUCI hydraulic systemsとし、raw archiveはrepository外のexternal cache、標準化dataset本体はgitignoredな`artifacts/public-datasets/<dataset-id>/`へ置く。MetroPT-3はsource pin、変換、Public-only quality gate、5 baseline、Chronos-2、TimesFM 3.0の公開実データ評価まで完了した。詳細な境界は[`docs/public-dataset-survey.md`](public-dataset-survey.md)と[`docs/adr-0005-public-dataset-boundary.md`](adr-0005-public-dataset-boundary.md)へ記録する。
+- 公開データは、公式URL／DOI／licenseの確認、利用条件の受入れ、取得サイズ／SHA-256／archive member hashの固定を通ったものだけを研究入力候補とする。第一候補はUCI MetroPT-3、次候補はUCI hydraulic systemsとし、raw archiveはrepository外のexternal cache、標準化dataset本体はgitignoredな`artifacts/public-datasets/<dataset-id>/`へ置く。MetroPT-3はsource pin、変換、Public-only quality gate、5 baseline、Chronos-2、TimesFM 3.0の公開実データ評価まで完了した。詳細な境界は[`docs/public-dataset-survey.md`](research/public-dataset-survey.md)と[`docs/adr-0005-public-dataset-boundary.md`](decisions/adr-0005-public-dataset-boundary.md)へ記録する。
 - MetroPT-3取込はone compressor、14 signals（`Caudal_impulses`除外）、60秒 `[start,end)`、output timestamp=bin end、analog mean／digital last、補間なしfail closed、`mode=unknown`、864/288/288 chronological splitを契約とする。Public-only quality gateは既存synthetic gateと分離する。
 - 最初のruntimeはPython sidecarとし、Banto Hubとはoffline exportから接続する。
 - forecastとanomaly detectionは共通interfaceの背後でmodelを交換できるようにする。
@@ -348,7 +348,7 @@ runtime:
 
 ## 8. 最初の5 Issue
 
-詳細は [`initial-issues.md`](initial-issues.md) に記載します。作成順は次のとおりです。
+詳細は [`initial-issues.md`](history/initial-issues.md) に記載します。作成順は次のとおりです。
 
 1. 研究環境、manifest、license gate、共通interfaceを確立する。
 2. seed再現可能なsynthetic industrial data generatorを作る。
@@ -392,7 +392,7 @@ Issue 5は実装開始時に「異常検知」「commissioning profile」「Bant
 - 顧客データ、credential、大型checkpointがGit履歴に含まれない。
 - 次phaseへ進める商用利用可能候補を少なくとも1つ選ぶか、選べない理由を記録する。
 
-技術候補の根拠と詳細は [`time-series-model-survey.md`](time-series-model-survey.md)、Banto Hubとの責務境界は [`architecture.md`](architecture.md) を参照してください。
+技術候補の根拠と詳細は [`time-series-model-survey.md`](research/time-series-model-survey.md)、Banto Hubとの責務境界は [`architecture.md`](overview/architecture.md) を参照してください。
 
 ## Savepoint 2 実装状況
 
@@ -406,7 +406,7 @@ forecast benchmarkとは分離したstdlib-only anomaly evaluator v0.1を追加�
 
 generator configのschema後semantic（version、equipment、regime、event、disabled event、quality-changing overlap）はgeneratorとqualityが共有するI/Oなしvalidatorで検査する。
 
-Savepoint 3直後の正式な次工程は、実験開始前に固定する [`anomaly-multiseed-evaluation-plan.md`](anomaly-multiseed-evaluation-plan.md) である。10 seed `[11,17,23,29,37,42,53,67,79,97]`、6 mode × 2 equipmentの12 layout、120 cells、30秒mode内へ収めるexpanded accounting window、固定detector parameter、event／signalとequipmentの別集計、seed-cluster block bootstrap、8個の完全修飾target signal availability、engineering gate、performance promotion gateを同文書へ登録する。stopped／cooldown faultはsynthetic stress testとして扱い、実設備の故障頻度や物理妥当性は主張しない。
+Savepoint 3直後の正式な次工程は、実験開始前に固定する [`anomaly-multiseed-evaluation-plan.md`](anomaly/plans/anomaly-multiseed-evaluation-plan.md) である。10 seed `[11,17,23,29,37,42,53,67,79,97]`、6 mode × 2 equipmentの12 layout、120 cells、30秒mode内へ収めるexpanded accounting window、固定detector parameter、event／signalとequipmentの別集計、seed-cluster block bootstrap、8個の完全修飾target signal availability、engineering gate、performance promotion gateを同文書へ登録する。stopped／cooldown faultはsynthetic stress testとして扱い、実設備の故障頻度や物理妥当性は主張しない。
 
 この段階では120-cell run、結果artifact生成、性能達成を完了したとは扱わない。Savepoint Aのschema/config/layout validator、Bのdeterministic matrix runner、Cのfake/unit tests、Dのclean run、Eの独立監査・結果docを順に実施する。Savepoint Bのrunnerとfake/unit testsは実装済みであり、各cellの初期captured observations／events／splitと固定configからのevaluator semantics純粋再計算、canonical exact比較、cell完了時のreplay context破棄も実装済みだが、実120-cell runと結果artifact生成は未実施である。検証の追加計算量・時間は概ね評価1回分相当である。再実行または計画変更は新version・新preregistrationとし、TimesFM／Chronos／Toto／TSPulseのmodel比較、customer data、control／Banto Hub writeは別工程・別計画とする。
 

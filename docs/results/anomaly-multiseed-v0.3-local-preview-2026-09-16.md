@@ -2,7 +2,7 @@
 
 2026-09-16 JST。引継書§116の単一writer方針を継続し、通常保存APIに既存S2計算を接続した。
 実装savepoint **8f42c9e18e533e85afb5e2be0b7b5aede17dcc9f**。
-[CLIの使い方](../anomaly-v03-local-preview.md) / [通常保存API](../anomaly-v03-local-publication.md)。
+[CLIの使い方](../anomaly/execution/anomaly-v03-local-preview.md) / [通常保存API](../anomaly/execution/anomaly-v03-local-publication.md)。
 
 ## 実装と確認
 

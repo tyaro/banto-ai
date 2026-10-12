@@ -1,6 +1,6 @@
 # consumer公開・終了記録readerの確認（2026-09-25）
 
-[読取API](../anomaly-v03-consumer-publication.md)を追加し、全120区間の公開印・結果目録・終了記録を外部hashへ照合した。実装revision `1b3021f8debbd4edb78b8d75efcf73cd6de88a7c`、OUT `artifacts/consumer-publication-reader-2026-09-25`。最終文書revisionと証跡pinはsavepoint-evidence.json。
+[読取API](../anomaly/execution/anomaly-v03-consumer-publication.md)を追加し、全120区間の公開印・結果目録・終了記録を外部hashへ照合した。実装revision `1b3021f8debbd4edb78b8d75efcf73cd6de88a7c`、OUT `artifacts/consumer-publication-reader-2026-09-25`。最終文書revisionと証跡pinはsavepoint-evidence.json。
 
 ## 試験と実記録
 

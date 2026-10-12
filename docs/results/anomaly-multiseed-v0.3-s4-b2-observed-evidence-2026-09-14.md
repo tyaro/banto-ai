@@ -5,7 +5,7 @@
 
 **新規18＋既存90＝108 testsがpass。実Windows上の識別情報・private権限情報・実bytesから
 prepare証跡を保存し、その後にsource fileを選択解放する接続が成功した。**
-[設計・限定試行仕様](../anomaly-v03-observed-evidence-design.md)を参照。
+[設計・限定試行仕様](../anomaly/native/runtime/anomaly-v03-observed-evidence-design.md)を参照。
 native publisher、権限移行、S4受入は未完了のまま。
 
 ## 実装と検証

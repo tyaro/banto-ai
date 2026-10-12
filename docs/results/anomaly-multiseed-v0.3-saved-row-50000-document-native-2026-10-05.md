@@ -1,6 +1,6 @@
 # v0.3 保存行→50,000 draw・文書・sliceの共有予算（2026-10-05）
 
-状態: **架空保存controlの接続試行が成功 / S4未採択 / 正式許可なし**。成功時のclean sourceは `b1e4aad4bc61e0d2d11b30b24c4b7166ad22ac5b`、初版は `6e2e4e8e5e9aa6ab91b10b76fc3cd869633181fa`。Windows 11 Pro 26H2/build26300/UBR9457・CPython3.14.0・local NTFSの候補環境で実測した。追加agentなし。正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0、登録holdout40 seed未読を維持する。[S4範囲案 v3](../anomaly-v03-s4-acceptance-scope-draft-v3.md)の条件2/5に対する部分証拠である。
+状態: **架空保存controlの接続試行が成功 / S4未採択 / 正式許可なし**。成功時のclean sourceは `b1e4aad4bc61e0d2d11b30b24c4b7166ad22ac5b`、初版は `6e2e4e8e5e9aa6ab91b10b76fc3cd869633181fa`。Windows 11 Pro 26H2/build26300/UBR9457・CPython3.14.0・local NTFSの候補環境で実測した。追加agentなし。正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0、登録holdout40 seed未読を維持する。[S4範囲案 v3](../anomaly/acceptance/anomaly-v03-s4-acceptance-scope-draft-v3.md)の条件2/5に対する部分証拠である。
 
 ## 実装と検証
 

@@ -2,8 +2,8 @@
 
 2026-09-14、基準5826995638f79757db7e630a46d427bc6d9d1c66。
 実装savepoint **39cac0d947bbb51cd2079af416edce1c01fc23b9**。
-[未採用の順序案](../anomaly-v03-publication-order-options.md)に対応する、IOをしない別modelを実装した。
-[設計](../anomaly-v03-publication-order-model-design.md)と[前回の実機結果](anomaly-multiseed-v0.3-s4-b2-same-parent-rename-2026-09-14.md)を参照。
+[未採用の順序案](../anomaly/native/files/anomaly-v03-publication-order-options.md)に対応する、IOをしない別modelを実装した。
+[設計](../anomaly/native/files/anomaly-v03-publication-order-model-design.md)と[前回の実機結果](anomaly-multiseed-v0.3-s4-b2-same-parent-rename-2026-09-14.md)を参照。
 
 隔離の根拠が不明なら、既知の別actorが0で最終照合が全て一致していても、完了印の書込み開始を拒否する。
 新規20件＋既存182件＝**202件pass/0.205秒**、failure/error/skip/expected failure/unexpected successは全て0。

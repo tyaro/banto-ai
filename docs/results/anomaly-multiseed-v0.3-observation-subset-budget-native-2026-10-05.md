@@ -62,4 +62,4 @@ helper a1の誤revision指定とa2のWindows pin key／区切り文字不一致�
 
 ## 次の作業
 
-producerと保存形式readerを同じ外側時計へ接続し、出力root・終了記録・観測由来をその時計で結ぶ。正式同形のsmoke由来容量2倍、運用契約改訂の採択、source/runtime全在庫、最終両OS・正式dev8/smoke2・独立受入は残る。架空480区間の実生成完走を追加必須にしない。[受入範囲案v3](../anomaly-v03-s4-acceptance-scope-draft-v3.md)は引き続き未採択。
+producerと保存形式readerを同じ外側時計へ接続し、出力root・終了記録・観測由来をその時計で結ぶ。正式同形のsmoke由来容量2倍、運用契約改訂の採択、source/runtime全在庫、最終両OS・正式dev8/smoke2・独立受入は残る。架空480区間の実生成完走を追加必須にしない。[受入範囲案v3](../anomaly/acceptance/anomaly-v03-s4-acceptance-scope-draft-v3.md)は引き続き未採択。

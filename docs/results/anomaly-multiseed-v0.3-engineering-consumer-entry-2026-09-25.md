@@ -1,6 +1,6 @@
 # engineering consumer入口の接続結果（2026-09-25）
 
-認証済み集計入力の選択から記述レポートの保存・読み戻しまでを1つの[API/CLI](../anomaly-v03-engineering-consumer.md)へ接続した。実装 `6567a857455847baf225f552abf5ff9df6644c08`、OUT `artifacts/engineering-consumer-entry-2026-09-25`。最終文書revisionとartifact pinはOUTのsavepoint-evidence.json。
+認証済み集計入力の選択から記述レポートの保存・読み戻しまでを1つの[API/CLI](../anomaly/execution/anomaly-v03-engineering-consumer.md)へ接続した。実装 `6567a857455847baf225f552abf5ff9df6644c08`、OUT `artifacts/engineering-consumer-entry-2026-09-25`。最終文書revisionとartifact pinはOUTのsavepoint-evidence.json。
 
 - 16新規試験pass、failure/error/skip 0、0.560秒。2つの外部anchor、入力改変/取り違え、campaign違い、formalへの格上げ、サイズ上限、上書き拒否、途中書込失敗の保全、CLIを検証。
 - 実保存7ファイル/7,896,608bytesを認証し、約2.055秒で出力・読み戻しを確認。実接続は同一processでCLI mainを呼び、資源計測に含めた。

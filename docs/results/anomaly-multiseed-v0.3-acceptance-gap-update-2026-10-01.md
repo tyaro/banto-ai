@@ -66,7 +66,7 @@
 
 ## 資源と契約の境界
 
-fixtureの既定は共有時間120秒、親private512MiB、directory32MiB/256entries/深さ8、commit/RAM余裕各2GiB、disk余裕5GiB。子は60秒/256MiB/stdout+stderr合計1MiB、従来の起動前RAM4GiB/disk20GiBも残る。親と子のprivate上限は別で、合計512MiBではない。共通monitorを渡したrootと呼出しだけが共有対象。sampling/協調checkpointであり、hard quotaや任意のnative処理の即時停止ではない。[詳しい限界](../anomaly-v03-fixture-resource-budget.md)を維持する。
+fixtureの既定は共有時間120秒、親private512MiB、directory32MiB/256entries/深さ8、commit/RAM余裕各2GiB、disk余裕5GiB。子は60秒/256MiB/stdout+stderr合計1MiB、従来の起動前RAM4GiB/disk20GiBも残る。親と子のprivate上限は別で、合計512MiBではない。共通monitorを渡したrootと呼出しだけが共有対象。sampling/協調checkpointであり、hard quotaや任意のnative処理の即時停止ではない。[詳しい限界](../anomaly/evaluation/anomaly-v03-fixture-resource-budget.md)を維持する。
 
 今回の開始時はRAM空き約7.62GiB、commit余裕約12.29GiB、C/D空き約126.13/387.12GiB、確認processのpeak private約20.37MiB。OS Professional25H2/26200/UBR9457を観測した。旧正式pin9168を更新したものではない。終了時の資源は`save-checks.json`に保存する。
 

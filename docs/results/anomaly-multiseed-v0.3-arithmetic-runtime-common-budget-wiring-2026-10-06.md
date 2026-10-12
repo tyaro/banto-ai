@@ -40,4 +40,4 @@ analysis/audit の外部pin付きruntime候補を、2役bridge・連続文書・
 
 次は残るproducer/3 reader/writerの実境界への期待runtime inventory接続と、今回保存点のCI確認を進める。全役を接続した後、最終clean full HEADの候補を準備し、必要な限定native共通工程を一回測る。旧e04/a3や失敗rootは保全し、長い全工程を自動反復しない。
 
-正式開始までの残りは [受入範囲案v3](../anomaly-v03-s4-acceptance-scope-draft-v3.md)の5群：運用契約採択、正式入力/consumer受入、全使用source/runtime・終了/回収、最終revisionのLinux/Windows・dev8/smoke2と独立受入、全工程予算・smoke全容量の2倍。今回の候補実装を正式受入に読み替えない。
+正式開始までの残りは [受入範囲案v3](../anomaly/acceptance/anomaly-v03-s4-acceptance-scope-draft-v3.md)の5群：運用契約採択、正式入力/consumer受入、全使用source/runtime・終了/回収、最終revisionのLinux/Windows・dev8/smoke2と独立受入、全工程予算・smoke全容量の2倍。今回の候補実装を正式受入に読み替えない。

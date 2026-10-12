@@ -6,7 +6,7 @@
 **最終167 tests pass。file/stage/rootのDACL固定・読戻しと証跡3個保存は両試行で成功したが、
 相対renameは初回WinError87、修正後WinError5で失敗した。各28 tracked handlesとtoken2個をcloseし、worker終了を確認した。**
 今回の最大2回枠は終了。directory rename成功・B2/S4受入は未達である。
-[接続仕様・公式API資料・静的解析](../anomaly-v03-directory-rename-design.md)を参照。
+[接続仕様・公式API資料・静的解析](../anomaly/native/files/anomaly-v03-directory-rename-design.md)を参照。
 
 ## 接続・修正・検証
 

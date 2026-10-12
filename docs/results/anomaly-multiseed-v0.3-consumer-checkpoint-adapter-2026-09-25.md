@@ -1,6 +1,6 @@
 # consumer checkpoint adapterの確認（2026-09-25）
 
-完了記録から、最終attempt・失敗履歴・6種input hashを落とさずconsumerのslot検査へ渡す処理を実装した。[API](../anomaly-v03-consumer-checkpoints.md)。実装revision `1a88d33d3dc4953e239a536f2bd5ea183904f02f`。OUT `artifacts/consumer-checkpoint-adapter-2026-09-25`、最終文書revisionと全証跡pinはsavepoint-evidence.json。
+完了記録から、最終attempt・失敗履歴・6種input hashを落とさずconsumerのslot検査へ渡す処理を実装した。[API](../anomaly/execution/anomaly-v03-consumer-checkpoints.md)。実装revision `1a88d33d3dc4953e239a536f2bd5ea183904f02f`。OUT `artifacts/consumer-checkpoint-adapter-2026-09-25`、最終文書revisionと全証跡pinはsavepoint-evidence.json。
 
 ## 検証結果
 

@@ -60,6 +60,6 @@ pipeline `artifacts/anomaly-v03-preformal-saved-row-document-budget/trial-202610
 
 ## 次に残るもの
 
-実producerと実保存readerの観測payload・latest attempt・由来検証を共通予算へ結ぶ工程、raw観測の独立再導出、正式同形のsmoke容量2倍が残る。全480区間の新規架空生成完走を自動追加の必須条件にはしない。[S4範囲案 v3](../anomaly-v03-s4-acceptance-scope-draft-v3.md)に沿って固定入力で経路と失敗拒否を結び、最終dev8/smoke2と独立受入へ進める。
+実producerと実保存readerの観測payload・latest attempt・由来検証を共通予算へ結ぶ工程、raw観測の独立再導出、正式同形のsmoke容量2倍が残る。全480区間の新規架空生成完走を自動追加の必須条件にはしない。[S4範囲案 v3](../anomaly/acceptance/anomaly-v03-s4-acceptance-scope-draft-v3.md)に沿って固定入力で経路と失敗拒否を結び、最終dev8/smoke2と独立受入へ進める。
 
 bare PATH Git・限定supervisorのままで、専用Git Job、業務worker/子孫回収、stdlib・拡張/DLL/CRT・外部programの実ロード在庫と最終source/runtime closureは未接続。26H2・保証A/B・runner同定等の改訂契約採択、最終revisionのLinux/Windows・独立受入も未了。先行 `d04d723` の [CI 37315729198](https://github.com/tyaro/banto-ai/actions/runs/37315729198) は本証拠記録時に両minorが実行中。最新で保存・再検証済みの全job成功は `a7fc363` の [CI 37311338257](https://github.com/tyaro/banto-ai/actions/runs/37311338257)。今回codeのCI成功へ読み替えず、S4採択・最終受入前にS5を開始しない。

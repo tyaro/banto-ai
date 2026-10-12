@@ -1,7 +1,7 @@
 # 保存済み6件の独立ledger検算とcheckpoint設計
 
 2026-09-16 JST。実装savepoint **0c8377d0d55fc2813f2c18fa618c33646bc6666c**。
-[検算範囲・使い方・長時間実行設計](../anomaly-v03-independent-audit-and-checkpoints.md)。
+[検算範囲・使い方・長時間実行設計](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md)。
 
 ## 完了した範囲
 

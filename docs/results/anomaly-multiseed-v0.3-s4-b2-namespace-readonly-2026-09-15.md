@@ -1,7 +1,7 @@
 # S4-B2 親share READ保持中のpath新規作成
 
 2026-09-15 JST、基準37ec1c9。実装savepoint **674d1193711334fefd21bc56c11ffa8000943e6a**。
-[単独case仕様](../anomaly-v03-namespace-readonly-design.md)の新規max1で、**親ADD_FILE/ADD_SUBDIRECTORY用handleは共有違反で拒否された一方、path指定CREATE_NEWで空fileの追加が成功した。**
+[単独case仕様](../anomaly/native/files/anomaly-v03-namespace-readonly-design.md)の新規max1で、**親ADD_FILE/ADD_SUBDIRECTORY用handleは共有違反で拒否された一方、path指定CREATE_NEWで空fileの追加が成功した。**
 今回の同一process/token/private DACL条件では、親をshare READで保持するだけでは新しい名前の追加を防げない。
 401件pass/2.278秒、独立P0〜P3所見0件。実機0.770秒、証拠保存・全既知handle close・worker exit0/終了確認まで完了。
 独立process/tokenの干渉、全namespace・全期間不変、B2/S4受入の完了ではない。生consumer bytes返却は拒否を維持する。
@@ -64,7 +64,7 @@ savepoint-evidence.json47676 bytes/hash4b26123e10ba815ea10e8f1e809991609e669a2c3
 ## 次の境界
 
 親share READだけをnamespace隔離の根拠として採用する経路は、この実例により進めない。
-次は[権限境界の設計](../anomaly-v03-isolation-basis-design.md)に戻り、publisherに必要な追加/renameと通常peerへ与えない権限を一覧化する。
+次は[権限境界の設計](../anomaly/acceptance/anomaly-v03-isolation-basis-design.md)に戻り、publisherに必要な追加/renameと通常peerへ与えない権限を一覧化する。
 同じSIDの通常tokenへ同じDACLを適用するだけではpublisher/peerを区別できる根拠にならない。保持handle・取得前の権限、外側親、processからのhandle移管も残る。
 専用principalが必要となる場合は、local account/隔離VMの配置、起動・資格情報・consumer読取の運用差を具体化してからユーザー判断へ出す。現時点でaccount/サービス作成を行わない。
 isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated=false、acceptance_status=not_completed。

@@ -14,6 +14,6 @@ journal reducerは**外部に保持した計画raw pin、record count、head SHA
 
 ## 次の受入境界
 
-[次のcontroller契約案](../anomaly-v03-preformal-campaign-controller-next-v1.md)に従い、最初の`prepare`より前のanchor外部固定、起動前intentionの外部固定、CLIと内側子の所有・終了回収、22 fileと再読取り６行の実raw照合、head/countの別場所保管、失敗保全を実装する。現metadata schemaではmanifestがまだない`prepare`失敗を表せず、失敗recordの存在だけで子が回収済みか判定できない。どちらもnative再試行を許す前に解決する。inner子のinvocationにはまだanchor pin欄がないため、次の小試行でもechoを追加・検証するまで共通producer由来認証をtrueにしない。
+[次のcontroller契約案](../anomaly/execution/anomaly-v03-preformal-campaign-controller-next-v1.md)に従い、最初の`prepare`より前のanchor外部固定、起動前intentionの外部固定、CLIと内側子の所有・終了回収、22 fileと再読取り６行の実raw照合、head/countの別場所保管、失敗保全を実装する。現metadata schemaではmanifestがまだない`prepare`失敗を表せず、失敗recordの存在だけで子が回収済みか判定できない。どちらもnative再試行を許す前に解決する。inner子のinvocationにはまだanchor pin欄がないため、次の小試行でもechoを追加・検証するまで共通producer由来認証をtrueにしない。
 
 これはS4の正式採択や、架空480区間完走を新たなS4必須条件にする記録ではない。26H2運用契約、５役source/runtime閉包、Linux両jobとrunner同定、Windows native、最終dev８・smoke２、容量２倍条件、50,000 drawを含む単一外側予算は残る。S4採択後にだけ未使用holdout40 seedをS5で一回実行し、S6で実結果の全件独立再監査を行う。旧gate `s4_acceptance_not_frozen`、実登録観測読取り０、正式評価credit０を維持する。

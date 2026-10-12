@@ -1,6 +1,6 @@
 # consumer実行証拠validatorの架空接続確認
 
-2026-09-25。実装 `c79fc9e5db7d486a22c2ed4b5f5e75ca0027f7a0`、基準 `86fc575480da0549e2f6e9ecaf0c2b3cce87b181`。OUT `artifacts/consumer-execution-evidence-2026-09-25`、最終文書revisionとartifact pinは同directoryのsavepoint-evidence.json。[API](../anomaly-v03-consumer-evidence.md)。
+2026-09-25。実装 `c79fc9e5db7d486a22c2ed4b5f5e75ca0027f7a0`、基準 `86fc575480da0549e2f6e9ecaf0c2b3cce87b181`。OUT `artifacts/consumer-execution-evidence-2026-09-25`、最終文書revisionとartifact pinは同directoryのsavepoint-evidence.json。[API](../anomaly/execution/anomaly-v03-consumer-evidence.md)。
 
 ## 変更と試験
 

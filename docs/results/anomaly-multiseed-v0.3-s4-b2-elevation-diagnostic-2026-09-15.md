@@ -1,6 +1,6 @@
 # S4-B2 管理者起動の独立診断結果
 
-2026-09-15、容量整理後に再開。実装savepoint **d7253c8dd16ece6c128656e716371863d4e5bc2f**、[診断仕様](../anomaly-v03-elevation-diagnostic-design.md)。OS設定を変更しない固定SID/admin自己照会を通常権限とRunAsで各max1実行した。
+2026-09-15、容量整理後に再開。実装savepoint **d7253c8dd16ece6c128656e716371863d4e5bc2f**、[診断仕様](../anomaly/native/runtime/anomaly-v03-elevation-diagnostic-design.md)。OS設定を変更しない固定SID/admin自己照会を通常権限とRunAsで各max1実行した。
 
 | 観測 | 通常Control | 管理者Run |
 | --- | --- | --- |

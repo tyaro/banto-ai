@@ -1,7 +1,7 @@
 # attempt実ファイル照合と最初の6件の検算接続
 
 2026-09-21 JST。実装savepoint **072773e181a17135a34de5c662b377281352f568**。
-[仕様・CLI手順](../anomaly-v03-independent-audit-and-checkpoints.md#attemptの実ファイルを読取り照合する)。
+[仕様・CLI手順](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#attemptの実ファイルを読取り照合する)。
 
 ## 結果
 

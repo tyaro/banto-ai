@@ -1,7 +1,7 @@
 # S4-B2 保持consumerの準備・保存・終了接続
 
 2026-09-14、基準687e563。実装savepoint **fe6f7a8cce80476396ba8eea573a9b1812fc1747**。
-[設計](../anomaly-v03-held-driver-design.md)に従い、元handleの読取部品へ新規fixture準備、資源guard、証拠保存、親/祖先の終了を接続した。
+[設計](../anomaly/native/runtime/anomaly-v03-held-driver-design.md)に従い、元handleの読取部品へ新規fixture準備、資源guard、証拠保存、親/祖先の終了を接続した。
 新規29＋既存331＝360件pass/0.416秒。初回・最終差分の独立レビューP0〜P3所見0件。
 **子の終了が不明なら元root/祖先を保持し、専用worker終了を要求する。**
 今回の実行はfake APIだけ。新規実機試行0回、native入口/外側監視は未追加。

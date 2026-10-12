@@ -1,6 +1,6 @@
 # readerの依存候補を事前保持して別実行と照合
 
-2026-09-25 JST。実装 `0b2da336d90bcc60e97798d83d17d9f6f7421a34`。[API](../anomaly-v03-reader-profile.md)。OUT `artifacts/reader-dependency-profile-2026-09-25`、最終成功 `final/`。文書保存revision/pinは最上位savepoint-evidence.json。
+2026-09-25 JST。実装 `0b2da336d90bcc60e97798d83d17d9f6f7421a34`。[API](../anomaly/execution/anomaly-v03-reader-profile.md)。OUT `artifacts/reader-dependency-profile-2026-09-25`、最終成功 `final/`。文書保存revision/pinは最上位savepoint-evidence.json。
 
 ## 結果
 

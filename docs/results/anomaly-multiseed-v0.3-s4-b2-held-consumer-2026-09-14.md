@@ -1,7 +1,7 @@
 # S4-B2 保持handle内の有界consumer読取
 
 2026-09-14、基準4976bb3。実装savepoint **8c35fce85ced37c8d3edf2d9bde9b4f5487ecae1**。
-[設計](../anomaly-v03-held-consumer-design.md)に従い、元rootと全sealed fileを保持したcontinuation内から、同じhandleで直接読む部品を追加した。
+[設計](../anomaly/native/runtime/anomaly-v03-held-consumer-design.md)に従い、元rootと全sealed fileを保持したcontinuation内から、同じhandleで直接読む部品を追加した。
 新規25＋既存306＝331件pass/0.286秒。独立レビューのP2計2件を修正し、最終P0〜P3残件0。
 今回はfake Win32 APIと既存所有部品の接続まで。新規実機試行0回、native入口は変更していない。
 

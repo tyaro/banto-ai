@@ -1,6 +1,6 @@
 # v0.3 保存行→50,000 draw→writer・fresh readerの共有予算（2026-10-05）
 
-状態: **架空保存controlの接続成功 / S4未採択 / 正式許可なし**。clean code `f06b8d1cb3a5a1149ef092d035e9d70f92bc3c66`、Windows 11 Pro 26H2/build26300/UBR9457・CPython3.14.0・local NTFSで実測した。追加agentなし。正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0、登録holdout40 seed未読を維持する。[受入範囲案 v3](../anomaly-v03-s4-acceptance-scope-draft-v3.md)の条件2/5に対する部分証拠である。
+状態: **架空保存controlの接続成功 / S4未採択 / 正式許可なし**。clean code `f06b8d1cb3a5a1149ef092d035e9d70f92bc3c66`、Windows 11 Pro 26H2/build26300/UBR9457・CPython3.14.0・local NTFSで実測した。追加agentなし。正式gate `s4_acceptance_not_frozen`、`formal_permission=false`、正式credit0、登録holdout40 seed未読を維持する。[受入範囲案 v3](../anomaly/acceptance/anomaly-v03-s4-acceptance-scope-draft-v3.md)の条件2/5に対する部分証拠である。
 
 ## 接続した範囲
 

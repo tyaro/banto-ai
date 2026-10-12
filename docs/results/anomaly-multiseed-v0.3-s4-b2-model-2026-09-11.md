@@ -7,7 +7,7 @@
 
 ## 今回確認したこと
 
-[設計書](../anomaly-v03-publication-model-design.md)に、prepare / verify_prepared / seal_payload /
+[設計書](../anomaly/native/files/anomaly-v03-publication-model-design.md)に、prepare / verify_prepared / seal_payload /
 rename_payload / verify_final / commit_markerの6境界と、別扱いのteardownを固定した。
 native adapterが操作を始める前にintentを記録するためのpure journalであり、操作自体は実行しない。
 

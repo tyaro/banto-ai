@@ -1,7 +1,7 @@
 # 単一writer評価経路と現行契約の照合
 
 2026-09-16 JST。提案savepoint **7f1708a7450857517f28fe3b23dd05404088b73b**。
-[具体的な移行案](../anomaly-v03-single-writer-evaluation-proposal.md)。今回は文書とREADMEのみ変更し、実行処理・科学計画・registry・旧gateは変更していない。
+[具体的な移行案](../anomaly/evaluation/anomaly-v03-single-writer-evaluation-proposal.md)。今回は文書とREADMEのみ変更し、実行処理・科学計画・registry・旧gateは変更していない。
 
 ## 到達点
 

@@ -1,0 +1,170 @@
+# consumerのsource/runtime固定対象と実行前の残件
+
+2026-10-03 受入再整理：[正式評価前の残件と保存済みデータの作業範囲](../../results/anomaly-multiseed-v0.3-preformal-acceptance-scope-2026-10-03.md)で、最終役割profile、動的依存、clean revision、旧正式OS pinと現観測の差、全工程予算を未受入として明示した。以下の日付付き接続記録はその時点の履歴として保持する。
+
+2026-10-03 最新：[保存済み工程から続ける単一入口](../../results/anomaly-multiseed-v0.3-saved-report-pipeline-2026-10-03.md)。要約・集計表・報告書・保存完了記録の四つから開始できる単一入口とCLI、工程ごとの続行requestを追加した。23項目を確認（初回22成功、試験条件を分けた1項目のみ再確認）。前回の完了記録を0.620秒で再利用し、aggregation/report/publicationの呼出しと新しい所有processはいずれも0回。 今回の保存例は前回の架空報告書4file/3,040,268bytesの保存完了記録を再利用する。実720評価のrawを読まず、新評価・mapper・再集計・bootstrap・正式gateを起動しない。過去のwriter/reader終了記録と今回の保存bytes照合を区別し、過去PIDへアクセスしない。実際の検出性能やsource/runtime全依存の真正性を保証しない。 次は既存計画と受入記録を照合して、正式評価前の残件（運用契約、実入力への適用、版と実行環境の固定、全体の資源計画）を更新し、次に必要な実データ作業の範囲を具体化する。完成した接続工程を増設・反復せず、正式gate/holdoutや実720評価の再実行は起動しない。 最終実装6d48c39/sp02。正式契約draft、principal/full closure/全体予算は未受入。
+
+以下は各時点の履歴。現在の到達点と次工程は上記を優先する。
+
+2026-10-03 最新：[準備済み報告書の保存・読取り](../../results/anomaly-multiseed-v0.3-bound-report-publication-2026-10-03.md)。前回の準備済み報告書4file/3,040,268bytesを、通常のローカル保存とwriter終了後の別readerへ接続した。修正後11項目pass（4.545秒）。保存例は3.722秒で終了し、4ファイルのbytes/SHA256は元と一致した。 保存例は前回の「架空データ」と明示された報告書をそのまま再利用した接続確認で、実際の検出性能を示す結果ではない。mapper・再集計・全区間結合・元評価raw読取り・新評価・bootstrap・正式gateは0。数値とschemaの対応検査は過去の記録を再利用し、今回は独立数値監査を行わない。 次は要約・報告準備・保存読取りの完了済みの各工程を、外部pinと既存成果物を受け取る単一の資源制限付き入口へ接続する。実720評価の再実行・正式gateを起動せず、保存済み工程を反復しない。 最終実装8e1ab32/brp2。初回項目名不一致の停止記録を保全。正式契約draft、principal/full closure/全工程予算は未受入。
+
+以下は各時点の履歴。現在の到達点と次工程は上記を優先する。
+
+2026-10-03 最新：[結合済み記述集計から報告payloadへの接続](../../results/anomaly-multiseed-v0.3-bound-summary-report-2026-10-03.md)。結合済みdev/smoke記述集計表から報告書と保存用payloadを準備する処理を追加。新10項目pass（25.650秒）。前回保存した架空集計表とschemaの2file/9,068,695bytesを一度だけ読み、1.011秒で4payload/3,040,268bytesを準備した。 保存例は前回の架空集計表を変更せず再利用した接続確認用であり、実際の検出性能を示す結果ではない。実720評価のraw payload読取り、入力再生成、再集計、全区間の再結合、score/ledger検算、新評価、bootstrap、正式gate、所有worker/公開process起動は0。外部pinで固定した過去の集計表を信頼する境界であり、現在の元payloadや実producerの認証ではない。 次は今回の4個の準備済みpayloadを、通常のローカル保存と書込み終了後の読取りへ接続する。新しい出典情報とfixture/engineeringの区別を維持し、報告書の再生成・再集計・既存720評価の反復をしない。 実装c9556345cd16d7df3f762e8f50b95ec0a3d7887e/br01、旧88code/18data不変、新2本で90code。新しい正式役割profileやfull closureの受入ではない。
+
+以下は各時点の履歴。現在の到達点と次工程は上記を優先する。
+
+2026-10-03 最新：[結合済み要約からdev/smoke比較表への接続](../../results/anomaly-multiseed-v0.3-bound-summary-tables-2026-10-03.md)。全120区間の結合済み要約からdev/smoke記述集計を作る処理を追加。新12項目pass（17.589秒）。前回の結合記録＋架空要約121file/17,877,645bytesを再利用し、4.894秒で90seed別表・18role別表・12比較・10seed群へ接続した。 保存例は前回の架空メタデータ/count要約をそのまま使い、入力生成・全区間結合を再実行しない。実720評価のraw payloadは読まず、観測→score/ledger検算・新評価・bootstrap・正式gate・所有worker/公開processは0。期待pinで固定した過去の記録を信頼する境界であり、現在の元payloadや実producerの認証ではない。 次は今回の結合済み記述集計表を、既存の報告文書・保存payload準備へ接続する。元binding/summaryへの参照と正式欄の未充足を保ち、今回の集計や既存720評価を反復しない。 実装e70d55e6ebe84a6171ccdf2c53abbaf8a85d5fee/bt01、旧86code/18data不変、新2本で88code。新しい正式役割profileやfull closureの受入ではない。
+
+以下は各時点の履歴。現在の到達点と次工程は上記を優先する。
+
+2026-10-02 最新：[保存済み要約と全予定枠の結合](../../results/anomaly-multiseed-v0.3-summary-coverage-2026-10-02.md)。保存済み要約を登録・最新attempt・評価/入力hash・全120区間へ結ぶ純粋関数を追加した。新16項目pass（30.515秒）。供給が1区間なら119区間/714評価を未確認として残し、全件宣言から補わない。120区間/720枠の架空要約例は13.504秒で結合成功。719 success/1 inconclusive、旧失敗1件、precision分母ゼロ720件を保持した。 今回の全件例は1つの手計算テンプレートのcountを複写したメタデータ結合試験で、720種類のlayoutを数値検算した結果ではない。summary内の過去監査を外部pinで固定して照合するだけで、生の観測→score/ledgerの再検算や現在のpayload認証は行わない。実720評価の再読込み/再実行0、新評価0、所有worker/公開process0。 次は結合済みのdev/smoke主count・条件別countを、role/seed/candidate/stratum別の記述集計へ接続する。登録IDを正式40seedや架空40clusterへ変換せず、欠落した要約から全体集計を返さない。固定入力で進め、既存720評価のpayloadは読み直さない。 最終実装3e596bb0c8eafbc94c09f65ef114e54d6098ecf8/sc02、旧84code/18data不変、新2本で86code。正式役割profile/full closureの受入を追加しない。
+
+以下は各時点の履歴。現在の到達点と次工程は上記を優先する。
+
+2026-10-02 最新：[保存済み1区間の要約接続](../../results/anomaly-multiseed-v0.3-saved-chunk-summary-2026-10-02.md)を実装。新12＋既存reader13の25項目pass。外部pinで確認した最新6評価を独立検算し、その場で主count/条件別countへ写す。登録identityを保持し、評価payloadの二度読みを避ける。別の手式1評価で18,000観測/14,400score/48profileの実検算→要約が成功し、全profile判定不能とprecision0/0を保持。実720評価は再読込み・再実行せず、正式入口は閉じたまま。 実装c8e3bd1cbc9a672096f4f4dac57bc09d0d64ef1e/sr01。既存reader1本更新、新module/test2本、現在84code/18data。旧bp03は保全。新しい役割profileやsource/runtime受入を認定せず、今回の検算は親process内の別実装で確認した。次は今回の1区間分の小さい要約を、呼出し側が保持する登録・attempt・入力pin・全予定枠へ結ぶ。dev/smokeの識別子を40seedの正式集団や架空登録へ付け替えず、欠落・重複・異なる試行の混入を拒否する。固定データで接続を進め、既存720評価や公開/readerを反復しない。
+
+以下は各時点の履歴。現在の到達点と次工程は上記を優先する。
+
+2026-10-02 最新：実装9705b7355cdabca189a60bd63a380fc3062b8ec0/bp03を再利用。[今回の保存・別reader接続](../../results/anomaly-multiseed-v0.3-bound-fixture-publication-2026-10-02.md)で、producer結合結果/projectionから生成・独立検算済みの新5payloadを既存経路へ渡し、10.801秒で成功した。元1,987,587bytes→公開1,987,592bytesは各末尾LFのみ。元analysis/audit再実行0、writer/reader各1回、両子exit0/reaped/error0、資源pass。本体コード変更0、82code/18data不変、既存16公開試験を再利用しsuite再実行0。 writer/reader各selected13/Python2/入力12＋invocation。補助依存は各233file/179module/47native/30project、終了後照合・追加0。旧観測値は保持し、正式profile/full closureの受入とはしない。次は実producerの保存形式と現在の架空入力契約の差分を具体化し、観測・score・ledgerから主/補助要約へ渡す読取り境界を実装する。小さい固定入力で既存の独立監査部品を接続し、登録・coverage・最新attempt・入力pinの食い違いを拒否する。今回の公開/readerや既存720評価を反復せず、正式契約の採択・holdout・50,000反復はまだ開かない。
+
+以下の日付付き記録は履歴。現在の到達点と次工程は上記を優先する。
+
+2026-10-02 最新：実装9705b7355cdabca189a60bd63a380fc3062b8ec0/bp03、旧80code/18data不変、現在82code。[結合入力の解析/audit接続](../evaluation/anomaly-v03-bound-fixture-pipeline.md)で親接続moduleのGit/raw前後、analysis selected22/Python2/入力4、audit selected15/Python2/入力6を確認。補助依存はanalysis245file/audit235fileの終了後照合、追加0。正式役割profile/full closureの受入とはしない。次は今回の結合入力から生成・独立検算した新しい5payloadを、既存の通常writer/別readerへ接続する。元producer結合結果とprojectionのpinを維持し、今回のanalysis/auditを再実行しない。
+
+以下の日付付き記録は履歴。現在の次工程は上記を優先する。
+
+2026-10-02 最新：実装bde59a7a98bd2ed1f5c263458a1ddf1e28211268/ps01。[補助入力adapter](../evaluation/anomaly-v03-producer-slice-fixture.md)の新module/test2本を追加し、旧78code/18data不変、現在80code。供給bytesの結合・純粋集計までで、実process/source/runtime認証や承認済みprofile/full closureを追加したとはしない。機能21passと資源停止記録を分け、回復後の例1回は予算内で成功。次は外部pinで結んだ主入力と補助入力を、既存の限定fixture解析/audit経路へ接続する。供給記録から文書・別検算までの対応を確認し、旧720評価や正式holdout・50,000反復は起動しない。
+
+以下の日付付き記録は各時点の履歴。現在の次工程は上記を優先する。
+
+2026-10-02 最新：実装35032159133aa4d3866863b555bd23a3718f07be/pi01。[架空producer入力境界](../evaluation/anomaly-v03-producer-input-fixture.md)の新module/test2本を追加し、旧76code/18data不変、現在78code。23試験と全予定枠の架空保存例を確認した。純粋関数のsupplied bytes照合であり、producerの実process/source/runtime認証や受入済み役割profileを追加したとはしない。旧fp02の公開/reader観測は保全。次は架空producerのslice/sidecar用要約を同じ登録・入力pin・最新attemptへ結合する。主集計と補助集計の対応を検査し、既存720評価や保存済み解析・公開を再実行しない。
+
+以下の日付付き追記は、その時点の履歴。現在の次工程は上記を優先する。
+
+2026-10-02現在：最新実装a9de2f500020bb951dfd08d66b56e368859236b9/fp02。[5payload公開](../evaluation/anomaly-v03-fixture-publication.md)のwriter/readerを別所有子で観測し、selected source13/Python2/入力12＋invocationを親期待へ結合した。同revisionのGit blobは1工程内で再利用するが作業ファイルは前後照合する。依存は終了後観測で、承認済み事前profileやfull closureではない。次は登録入力とcoverageのconsumer境界へ進み、最終役割profile/正式固定の不足を残す。
+
+2026-10-01現在：最新候補はb6d578e7c577470ecb2fbef228413d6b2abf85bf/fs02。架空sliceの別実装をowned auditへ追加し、選択source15本/Python2file/入力6file、全236依存file（project32/module181/native48）の終了後照合が成功。旧primary-onlyは保持し、新operationはslice入力を元analysisのpinへ結ぶ。[結果](../../results/anomaly-multiseed-v0.3-fixture-slice-audit-2026-10-01.md)。次は既存5payloadの通常公開・別readerにaudit scopeとwriterの実行記録を接続する。完全closure・正式役割仕様の受入は未完了。正式実行後の成功証拠を開始前に循環要求しない。以下の静的候補表や日付付き追記は履歴。
+
+2026-09-25接続追記：[実観測reader](anomaly-v03-reader-evidence.md)がsource10本・Python2file・実process identity・15入力を外部期待値へ結合。新規13＋既存回帰27種類がpass。source/runtime全閉包は未完了。次は依存source/stdlib/extension/loaded DLLの採取範囲を広げる。[結果](../../results/anomaly-multiseed-v0.3-reader-observed-evidence-2026-09-25.md)。
+
+2026-09-25実装追記：[役割別実行証拠validator](anomaly-v03-consumer-evidence.md)を追加。16架空試験pass、外部期待値・前後source/runtime・process・全入出力bytesの対応を検査する。実processの採取・正式受入・closureは未完了。次は通常権限readerの実観測との接続。[結果](../../results/anomaly-multiseed-v0.3-consumer-execution-evidence-2026-09-25.md)。以下の41source候補表はe9826bd時点の記録。
+
+2026-09-25、状態 **proposal / 未freeze**。対象revision `e9826bd0245cf26cf540e1ff470528c001f3cd5f`。[実確認](../../results/anomaly-multiseed-v0.3-consumer-source-runtime-review-2026-09-25.md)、[運用契約案](anomaly-v03-consumer-io-proposal.md)。現在の実装と保存証拠を整理したもので、正式実行を許可する文書ではない。
+
+## 固定対象の候補
+
+| 役割 | 静的なproject依存候補 | 現在の入口 |
+| --- | ---: | --- |
+| engineering writer | 23モジュール | 保存済みdev/smokeの記述結果を公開 |
+| engineering reader | 25モジュール | writer終了後の別process確認 |
+| 架空の推論・文書・slice | 17モジュール | 純粋関数、実IOなし |
+| 独立検算の計算部品 | 15モジュール | 生成/score/ledger/seed/sliceの既存部品 |
+| 既存inspection inventory候補 | 19モジュール | 実行processの正式受入には未接続 |
+
+重複を除き41本、working source合計566,551bytes。33個の外部top-level importは当該Pythonのstdlib名で、候補位置も解決できた。第三者packageを必要とする静的importは見つからなかった。設定・schema・registry metadata・計画・build/workflow等18fileと、補助CLI2fileも記録した。登録holdoutの観測を読んだものではない。
+
+これは条件付き・未使用importを含む候補一覧。15箇所のnative呼出し・subprocess生成を記録し、readerの文字列bootstrapも手動参照に含めた。完全な呼出し関係、動的依存、DLL/CRT、stdlib内部の全依存を確定したものではない。
+
+### source bytes
+
+41本中39本はworking bytesとGit blobが一致。`generator.py`と`manifest.py`の2本はCRLF/LF差だけで、改行正規化後には一致する。raw一致とは扱わない。元作業コピーは変更しない。
+
+最終実装が決まった段階で、full commitを指定した別clean checkoutを固定元にする。`.gitattributes`は`* text=auto eol=lf`だが、既存working fileの一致を保証するものではない。既存capture_checkout等の全tracked clean・source/configのraw/Git一致・untracked source拒否を利用し、不一致をその場で正規化して受理しない。現在の既存dirty文書も保全する。
+
+producerの過去実行revision `c01d1c978f78bab51391392d56cdcb7aab5afaab`と新consumerのrevisionは別に持つ。今回の41本を過去producerの実行sourceとして登録し直さない。
+
+### 起動と検索経路
+
+変更前のreaderは`-I -B`。実際のinterpreter-only probeではisolated=1、user site無効、**no_site=0**で、`C:/Python314/Lib/site-packages`が検索対象に残った。今回観測したsitecustomize/usercustomize moduleは0。
+
+提案の`-I -S -B`ではno_site=1、site未import、同site-packages pathが消えた。明示したcheckoutのsrcだけをproject検索先へ追加する方針と組み合わせる。候補レビュー時点では起動probeのみだった。その後readerへ`-S`を適用し、14接続試験と旧条件を検出する対照試験で確認した（[結果](../../results/anomaly-multiseed-v0.3-consumer-reader-no-site-2026-09-25.md)）。この変更はengineering readerに限り、正式runtime受入ではない。
+
+ここで使うruntimeはCPython3.14.0（v3.14.0:ebf955d、MSC v.1944、64bit）。Python3.12をWindowsの追加必須条件にはしない。repositoryの>=3.12宣言やLinux CIの3.12/3.14 matrixは別の互換性範囲として保持する。
+
+## runtimeの受入方法
+
+1. producer・analysis・audit・readerごとに、full revision、command、PID/終了、CWD、検索経路、起動flag、input anchorとoutputを対応づける。親のruntime値を子の観測値として代用しない。
+2. Python exe/DLL・build、stdlib/zip、実際にloadしたextension・Windows DLL/CRT、CPU、実OS build/UBRを開始/終了時に記録する。動的loadとエラー経路を含め、対象fileとidentity・bytesの対応を確認する。
+3. 外部programも対象に含める。source確認は現コードで`git`をPATHから解決しているため、実行Gitの絶対path/version/bytesを固定する案とし、helper/DLLの範囲も確認する。今回のGit観測は2.51.2.windows.1で、完全なGit runtime閉包ではない。
+4. 既存inspection collectorはproducer/workflowを必須にする設計で、`full_runtime_inventory_complete=false`のinspection scopeを持つ。analysis/audit/readerの正式受入へそのまま転用せず、役割ごとの必要sourceとprocessへの結合を追加する。
+5. source snapshotsは信頼した呼出し側が指定revisionから取得する。自己申告のpass、scope/role違い、source不足、process終了未確認、前後runtime差を受入にしない。既存`validate_result_contract`は供給bytesの一致を検査する部品であり、これだけで実行証明にはならない。
+
+ユーザーのWindows更新許容方針を維持し、attemptごとに実値を記録する。実attempt内の変化は停止対象。今回観測はProfessional25H2/build26200/UBR9457。過去の記録と旧正式pin9168は保持し、新しい正式運用契約に更新方針を明記する。OS設定を変更しない。
+
+## 次に行う作業と判断点
+
+| 順序 | 作業 | 完了の根拠 |
+| --- | --- | --- |
+| 完了（engineering） | readerへ-Sを追加 | 14接続試験pass、起動flag/検索経路と旧条件の検出を確認 |
+| 続く実装 | 正式consumerとsource/runtime証拠validatorを接続 | 間違ったrole/source/process・自己申告pass等を拒否、既存入口の制限を維持 |
+| 候補確定後 | 別clean checkoutでsource固定、役割別runtime採取 | 全raw bytes、実process前後、正式contractとの対応 |
+| 必要な回帰 | 最終revisionで関連純粋・通常権限Windows試験、必要なplatform確認 | 現候補に結び付く試験証拠。保留principal試験を混ぜない |
+| 実行前の判断 | 運用契約と完全な資源予算を採択 | 下記2件の未充足を解消してから判断 |
+
+**将来の採択事項は2まとまり。今は採択待ちで作業を止める段階ではない。**
+
+- 正式運用契約：通常権限の単一writer、OS実値記録、本文slice＋補助記録、解析と監査の別出力、正式失敗時のversion/root/未使用seedでの再登録。完全consumer・証拠結合・最終audit接続を仕上げてから対象revisionとともに提示する。科学的な閾値は維持する。
+- 正式実行予算：旧案のproducer240時間・出力96GiB・空き32GiB（開始時1copy128GiB、同volume2copy224GiB）は未適用。正式推論と最終独立auditの時間・メモリ枠が未確定のため、現時点で全体予算を確定しない。既存上限を変更しない。
+
+候補レビュー時の54試験は当時のsource pin一致を確認した過去の合格記録。その後readerとその試験の2fileを変更し、reader14試験を新たに実行した。他suiteは再実行していない。旧CI revisionからselected source28本が変わっているため、旧CIを最新全体の回帰合格には用いない。現在のworkflowはLinux3.12/3.14の試験で、今回実行/再検証はしていない。
+
+正式gate/holdout、実データ50,000回bootstrap、principal/UAC/ACL、同時書換え試験、push/mergeは起動していない。banto-24はPAUSED。正式source/runtime受入・S4/S6・Phase2/3全体は未完了。
+
+## reader依存の実観測を拡張（2026-09-25）
+
+実装0b03b91a59c7359e4eb05e3585242b88aa8c8cab、[結果](../../results/anomaly-multiseed-v0.3-reader-dependency-observation-2026-09-25.md)。opt-inの子processでsource28/stdlib79/cache候補77/extension8/その他native40の232fileを採取し、前後一致と親のdisk/Git照合を確認。別候補checkout743fileのraw/Git一致を確認し、元copyの既知CRLF差を維持した。
+
+新規13試験pass、同工程の不変な既存回帰29種類のpassを再利用。現在の一覧はchild-inventory-crosschecked-by-parent-after-exitであり、独立した事前runtime期待値や全closureではない。既存cache候補を実loadしたbytecodeとは断定しない。reader用の依存一覧を実行結果とは別に保持する期待profileへ落とし込み、import準備の境界と照合手順を定義する。今回の観測一覧をそのまま正式な期待値やfreezeとして採択しない。 正式source/runtime受入・全体予算・analysis/auditへの展開は残る。
+
+## readerの候補を別に保持して照合（2026-09-25）
+
+実装0b2da336d90bcc60e97798d83d17d9f6f7421a34、[API](anomaly-v03-reader-profile.md)、[結果](../../results/anomaly-multiseed-v0.3-reader-dependency-profile-2026-09-25.md)。prepare_profileで別の成功した依存観測を候補化し、後続readerが起動前から保持するpin/全一覧へ一致するかを検査。採取境界・role/revision/root/runtimeも固定。新規16pass＋同工程の不変な既存26種類を再利用。232fileを別PIDで照合した。
+
+候補は観測由来で、正式承認された完全依存定義ではない。OS更新を記録して新候補を作ることは許容し、旧候補を自動更新しない。解析側（engineering consumer）の実行観測と、別に保持した役割別期待値の接続を、小さな架空入力で具体化する。reader候補をanalysis/auditへ使い回さない。 準備processの観測・正式source/runtime受入・全体予算は残る。
+
+## 保存結果準備のanalysis実観測を接続（2026-09-26）
+
+実装2db441e44a65857f288f800a104ba436339358b9、[API](anomaly-v03-analysis-evidence.md)、[結果](../../results/anomaly-multiseed-v0.3-analysis-observed-evidence-2026-09-26.md)。既存consumerの7入力認証・4payload準備をanalysis専用の実processへ分離。selected source12/Python2file・元handle・前後入出力を外部期待へ結び、source29/全233fileの補助観測をdisk/Gitと比較した。新規15＋既存32の47試験pass。
+
+数値再計算や公開完了ではない。依存の補助一覧は終了後の観測照合で、事前固定したanalysis依存集合ではない。analysis専用の依存候補profileを別に準備し、後続の小さな保存結果準備が、起動前から保持した全依存一覧に一致するかを検査する。reader profileは使い回さない。 正式consumer・文書provenance・公開/独立auditと全体予算は残る。
+
+## analysis専用の事前保持依存候補（2026-09-26）
+
+[API](anomaly-v03-analysis-evidence.md)、[結果](../../results/anomaly-multiseed-v0.3-analysis-dependency-profile-2026-09-26.md)。実装140e91de93e2cc43c45fab9efb9a7cbc6ece43c7、OUT artifacts/analysis-dependency-profile-2026-09-26。analysis専用のprepare_profileを追加し、別の成功した未profile化referenceと外部result pinから新規候補を保存する。format/role/operation/採取境界を固定し、reader候補の流用を拒否する。後続analysisは親が起動前から保持した候補のraw bytes/pinと依存集合へ前後一致を要求する。
+
+全43試験pass（新規20＋既存analysis15＋reader候補の純粋検査8）、failure/error/skip0、145.715秒。誤pin、file hash改変、module欠落、子の再封印、保存copy差し替え、reference payload改変、候補の自動更新を拒否。source13/Python2file、候補を含む10入力を証拠へ結ぶ。依存source30/全234file/179modules/48images、47,606,116bytesが前後一致した。
+
+保存例reference PID24184→後続PID8184は別process、双方exit0/reaped。後続監視2.123秒。候補111843bytes/SHA6502078885a3f42c7a356f0057a23f45ad24c384719380980cc4c4b0302b78ab。4payload/5237bytesはreferenceと後続で一致。原本の架空入力はcleanup済み、両実行のpayload/期待値/観測/監視と候補を保持する。試験harnessのpeak private 52.97MiB、保存例childのpeak 37.61MiB。資料作成前の空きRAM 9.77GiB、commit余裕 17.74GiB、C/D空き 125.89/346.17GiB。最終値はsave-checks.json。
+
+ap01候補はclean 140e91de93e2cc43c45fab9efb9a7cbc6ece43c7、754tracked files/8,535,094bytesのGit/raw一致を検査。旧ao01/rp01/rd01、実計算checkout/本流/closed、元70b0の既知CRLF差と既存dirty文書を保全。banto-24 PAUSED。数値再計算・新評価・登録データ読取・実bootstrap・正式gate/holdout/freeze・principal/UAC/ACL・push/mergeなし。
+
+candidate-not-acceptedであり、正式source/runtime固定やmemory codeの証明ではない。analysisの対象は保存済み記述結果の認証・準備だけ。numerical_analysis_performed/published/formal/promotion/S6/trust/execution_authenticated/full closure=false、document_draft.analysis_consumer=nullを維持。次は、照合済みの4payloadを既存のsingle-writer公開処理へ接続し、writer終了後の別readerまでを小さな架空入力で通す。公開時に解析証拠と保持pinを結合し、数値再計算や正式採択へ範囲を広げない。 正式consumer/文書provenance/独立数値audit/完全資源予算は残る。
+
+## 解析証拠から通常公開・別readerへ（2026-09-26）
+
+[API](anomaly-v03-analysis-publication.md)、[結果](../../results/anomaly-multiseed-v0.3-analysis-publication-chain-2026-09-26.md)。実装f8f20bcf4ac7ade2f20e96f37bc1567328d88a48、OUT artifacts/analysis-publication-chain-2026-09-26。新module/test2本のみ追加し、既存analysis/profile/reader/collector/consumer/LocalPublicationを変更しない。外部result pinで選択したprofile付きanalysisの成功記録・4payloadを再認証し、保存原本との意味・bytes一致を確認して既存single-writer公開へ渡す。writerを閉じた後だけ、別のobserved readerを起動する。
+
+公開物は従来どおり4payload。別directoryのpublication-binding.jsonが解析result/evidence/profile/binding pin、payload pin、公開root/marker、revisionと接続module pinを結ぶ。そのpinとreader result/evidence pinを最終chain resultへ保存し、呼出し側がresult_pinを保持する。公開marker単体は解析証拠の結合を証明しない。
+
+全43試験pass（新14＋既存consumer16＋observed reader13）、failure/error/skip0、75.509秒。誤anchor・payload/evidence改変・reader role・未profile化・入力/出力重複・部分書き込み・writer応答喪失・reader失敗・結合記録改変・未終了ownerの保持を検査。正常時は二度目の公開を拒否し、元入力/公開物を保持する。
+
+保存例reference PID11136→profile付きanalysis PID10040→通常writer PID39840→reader PID16652。全ての子はexit0/reaped。analysisはsource13/Python2file/10入力と依存234fileの事前候補一致、readerはsource10/Python2file/15入力と依存232fileの終了後照合。readerへanalysis候補は流用しない。4payload/5237bytes、marker SHA3837efdce90f6c7070ad0da8b1befa4c306ced1d6afcdebe2d976793e6fa997b。reader監視2.409秒。公開物/両analysis証拠/reader証拠/chain記録を保存し、架空原本だけtemp cleanup済み。
+
+試験harness peak private 53.32MiB、保存例analysis child 37.66MiB、reader child 36.26MiB。資料作成前の空きRAM 10.13GiB、commit余裕 18.56GiB、C/D空き 133.21/345.91GiB。最終値はsave-checks.json。
+
+pc01候補はclean f8f20bcf4ac7ade2f20e96f37bc1567328d88a48、757tracked files/8,567,147bytesのGit/raw一致。旧60code/18data pinとap01/旧候補、実計算checkout/本流/closed、既知CRLF差/既存dirty文書は不変、banto-24 PAUSED。新評価/数値再計算/登録データ読取/実bootstrap/正式gate/holdout/freeze/principal/UAC/ACL/push/mergeなし。
+
+公開成功は架空engineering記述結果の通常公開で、正式文書や独立数値auditではない。formal/promotion/S6/trust/execution_authenticated/full closure=false、document_draft.analysis_consumer=nullを維持。接続moduleのGit/raw一致は確認したが、writer全processの実行証拠や全依存固定を完了したとは扱わない。次は、既存dev/smokeの保存済み記述レポートへこの一連の処理を適用し、外部anchor・解析証拠・公開marker・別reader結果を保存する。720評価は再実行せず、数値の正式受入やholdoutへ範囲を広げない。 正式consumer/文書provenance/独立数値audit/完全資源予算は残る。
+
+## 既存dev/smoke記述結果への適用（2026-09-26）
+
+実装f8f20bcf4ac7ade2f20e96f37bc1567328d88a48のpc01と事前保持analysis候補を再利用し、原本7file/7,896,608bytes→4payload/2,755,533bytesの通常公開と別reader確認に成功した。原本7file/旧公開6fileは不変、新公開は旧公開とbytes一致。[結果](../../results/anomaly-multiseed-v0.3-saved-report-publication-2026-09-26.md)。今回source変更0、suite再実行0、旧43試験の合格記録をcode pin不変で再利用。analysis依存234fileの事前一致とreader依存232fileの終了後照合を確認した。
+
+engineeringの保存結果接続は実レポートまで進んだ。正式数値consumer/document_draft/独立audit、writer全実行証拠、source/runtime正式受入と全体予算は未完了。次は受入残件表を現在の実装・保存結果に合わせて更新し、正式consumer/本文provenance、独立数値audit、writer実行証拠、完全資源予算の未充足を具体化する。既存720評価は再実行しない。
+
+## 残件の再整理（2026-09-26）
+
+[更新表](../../results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)で工程ごとの開始前/実行後を分離した。analysis準備の234file、readerの232fileは役割限定の記録であり、数値analysis・独立audit・writer全実行の正式証拠ではない。writer PIDと接続sourceのpinだけでwriter全processを認証しない。報告値のschema検査だけで正式50,000反復の実行を認定しない。
+
+正式候補のsource/runtime期待値・起動条件・検査範囲・必要な回帰は開始前に準備し、実processの前後/入力/出力/終了証拠は実行時に採取する。system commit診断は停止制御と別で、現行supervisorは時間/private/stdout・stderr容量を制限する。全成果物の連続容量監視やcommit不足の強制停止は未接続。数値解析/独立auditを含む予算と停止処理を具体化してから正式採択資料を揃える。今回sourceや上限設定を変更していない。

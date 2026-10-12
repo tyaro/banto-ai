@@ -110,4 +110,4 @@ C2は4信号がそろうことを条件にするため、温度の欠損が他�
 C:/Python314/python.exe -B tools/evaluator/summarize_anomaly_v03_audits.py --savepoint artifacts/chunk-119-retry-2026-09-24/savepoint-evidence.json --sha256 ca976322e0bb9e7b033b94948497a41acc79900668d01edbeebfc3fea8b22c8d --output artifacts/dev-smoke-comparison-reproduction/data
 ```
 
-計画上の根拠：[v0.3登録計画](../anomaly-multiseed-evaluation-plan-v0.3.md)、[単一writer運用改訂](../anomaly-v03-single-writer-evaluation-proposal.md)、[研究ロードマップ](../research-roadmap.md)、[研究・実装計画](../research-implementation-plan.md)。
+計画上の根拠：[v0.3登録計画](../anomaly-multiseed-evaluation-plan-v0.3.md)、[単一writer運用改訂](../anomaly/evaluation/anomaly-v03-single-writer-evaluation-proposal.md)、[研究ロードマップ](../research/research-roadmap.md)、[研究・実装計画](../research-implementation-plan.md)。

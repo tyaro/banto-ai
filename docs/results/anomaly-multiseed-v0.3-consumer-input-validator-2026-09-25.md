@@ -1,6 +1,6 @@
 # consumer入力宣言の純検査
 
-2026-09-25 JST。[APIと構造](../anomaly-v03-consumer-input.md)。実装savepoint `3fb988292e433311cfd86f00c773b8f17384a750`、起点 `befff6bc81a6c20c628594b2fce07bb8987fa5f5`。
+2026-09-25 JST。[APIと構造](../anomaly/execution/anomaly-v03-consumer-input.md)。実装savepoint `3fb988292e433311cfd86f00c773b8f17384a750`、起点 `befff6bc81a6c20c628594b2fce07bb8987fa5f5`。
 
 `anomaly_v03_consumer_input.planned_input` / `validate_input` を追加した。fixture専用の1区間6評価、または登録済みdev/smoke全120区間720評価のmetadataを扱う。formal/未知mode、権限を主張する余分な欄、identity/order/coverage不整合、入力6種のpin不一致、不正なretry履歴を拒否する。正式API・旧720固定consumer・科学config/schema/registryは変更していない。
 

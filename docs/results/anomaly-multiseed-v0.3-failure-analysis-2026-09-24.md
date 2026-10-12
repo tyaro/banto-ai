@@ -80,4 +80,4 @@
 
 `formal_permission=false`、`promotion_allowed=false`、`independent_s6_complete=false`を維持する。
 
-関連：[全720評価の比較](anomaly-multiseed-v0.3-dev-smoke-comparison-2026-09-24.md)、[登録計画](../anomaly-multiseed-evaluation-plan-v0.3.md)、[独立検算の到達範囲](../anomaly-v03-independent-audit-and-checkpoints.md)。
+関連：[全720評価の比較](anomaly-multiseed-v0.3-dev-smoke-comparison-2026-09-24.md)、[登録計画](../anomaly-multiseed-evaluation-plan-v0.3.md)、[独立検算の到達範囲](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md)。

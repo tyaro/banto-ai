@@ -1,6 +1,6 @@
 # reader実観測を外部期待値へ接続した確認
 
-2026-09-25、最終実装 `0ee336e72ca52849e6725415a3d7f8e4ff75aeeb`。OUT `artifacts/reader-observed-evidence-2026-09-25`、成功記録はattempt-3/、文書revision/artifact pinは最上位savepoint-evidence.json。[API](../anomaly-v03-reader-evidence.md)。
+2026-09-25、最終実装 `0ee336e72ca52849e6725415a3d7f8e4ff75aeeb`。OUT `artifacts/reader-observed-evidence-2026-09-25`、成功記録はattempt-3/、文書revision/artifact pinは最上位savepoint-evidence.json。[API](../anomaly/execution/anomaly-v03-reader-evidence.md)。
 
 新module/testを追加し、既存supervisorにはon_startedの任意hookを追加。親の元handleと子のself handleの生成時刻/PID、前後の実runtime/source、外部anchorで選んだ入力15fileと出力1fileを結合した。旧reader API・元publication・正式schemaは維持。
 

@@ -41,7 +41,7 @@ child上限は元の `copied.READER_LIMITS`（300秒/1 GiB/log1 MiB）、root上
 
 ## 保存証跡
 
-rawは [実機root](../../artifacts/anomaly-v03-preformal-saved-row-reread-20261007-runtime01/) と [準備・試験・checker](../../artifacts/preformal-saved-reader-runtime-20261007-prep/) にignoredのローカル保存。Git pushにはrawを含めない。
+rawは [実機root](../../artifacts/anomaly-v03-preformal-saved-row-reread-20261007-runtime01) と [準備・試験・checker](../../artifacts/preformal-saved-reader-runtime-20261007-prep) にignoredのローカル保存。Git pushにはrawを含めない。
 
 | ファイル | bytes | SHA-256 |
 | --- | ---: | --- |

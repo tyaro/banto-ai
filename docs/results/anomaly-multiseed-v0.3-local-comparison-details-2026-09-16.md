@@ -1,7 +1,7 @@
 # ローカル比較の判定差を時点・対象別に表示
 
 2026-09-16 JST。実装savepoint **47f5367b64ef41ef0ef263dbcf0a628fcbd164a0**。
-[使い方](../anomaly-v03-local-preview.md#判定差の詳細)。§116の通常権限・単一writer運用を継続。
+[使い方](../anomaly/execution/anomaly-v03-local-preview.md#判定差の詳細)。§116の通常権限・単一writer運用を継続。
 
 ## 変更と確認
 

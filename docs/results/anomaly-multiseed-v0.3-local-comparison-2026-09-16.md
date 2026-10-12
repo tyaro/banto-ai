@@ -2,7 +2,7 @@
 
 2026-09-16 JST。§116の単一writer運用を継続し、保存済みスコアの比較・表示へ進めた。
 実装savepoint **204e8e8e9397e3276441a682a3283ff78bf3a0a8**。
-[使い方](../anomaly-v03-local-preview.md#保存済み候補の比較)。
+[使い方](../anomaly/execution/anomaly-v03-local-preview.md#保存済み候補の比較)。
 
 ## 変更したこと
 

@@ -56,4 +56,4 @@ input manifestは `artifacts/anomaly-v03-preformal-generated-pinsets-g02/pins.js
 
 ## 残る受入事項
 
-観測再導出は今回の架空1区間について確認した。実producer／保存形式readerから全分母・slice・4入力・50,000 draw・writer/fresh readerへの接続、共通外側予算、smokeに基づく正式同形容量2倍は未了。[受入範囲案v3](../anomaly-v03-s4-acceptance-scope-draft-v3.md)の契約採択、最終source/runtime全在庫、正式dev8/smoke2・両OS・独立受入も残る。先行control-onlyの[280.645秒の証拠](anomaly-multiseed-v0.3-saved-control-budget-native-2026-10-05.md)とは別試行で、両者を連続した全工程実測へ読み替えない。
+観測再導出は今回の架空1区間について確認した。実producer／保存形式readerから全分母・slice・4入力・50,000 draw・writer/fresh readerへの接続、共通外側予算、smokeに基づく正式同形容量2倍は未了。[受入範囲案v3](../anomaly/acceptance/anomaly-v03-s4-acceptance-scope-draft-v3.md)の契約採択、最終source/runtime全在庫、正式dev8/smoke2・両OS・独立受入も残る。先行control-onlyの[280.645秒の証拠](anomaly-multiseed-v0.3-saved-control-budget-native-2026-10-05.md)とは別試行で、両者を連続した全工程実測へ読み替えない。

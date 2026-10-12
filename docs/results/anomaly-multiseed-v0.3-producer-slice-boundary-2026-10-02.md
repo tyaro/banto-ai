@@ -1,6 +1,6 @@
 # 架空producerの補助集計入力を最新試行へ結合
 
-2026-10-02 JST。[API](../anomaly-v03-producer-slice-fixture.md)。各評価のincident/score/context内訳を主入力と同じ登録・試行receipt・入力hash・要約pinへ結合した。最新attemptだけを集計し、未完了なら主coverage/失敗を保持して補助集計を返さない。
+2026-10-02 JST。[API](../anomaly/evaluation/anomaly-v03-producer-slice-fixture.md)。各評価のincident/score/context内訳を主入力と同じ登録・試行receipt・入力hash・要約pinへ結合した。最新attemptだけを集計し、未完了なら主coverage/失敗を保持して補助集計を返さない。
 
 開始c60f86747339f5d9011b1936adc7ce844499ce01、実装bde59a7a98bd2ed1f5c263458a1ddf1e28211268、clean候補ps01/banto-ai。OUT artifacts/producer-slice-boundary-2026-10-02、tests-1/full-invented-example。最終文書revisionと80code/18data/成果物pinはsavepoint-evidence.jsonへ保存する。
 

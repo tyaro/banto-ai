@@ -1,6 +1,6 @@
 # 解析証拠から通常公開・別readerまでの接続
 
-2026-09-26 JST。[API](../anomaly-v03-analysis-publication.md)、[source/runtime計画](../anomaly-v03-consumer-source-runtime-plan.md)。
+2026-09-26 JST。[API](../anomaly/execution/anomaly-v03-analysis-publication.md)、[source/runtime計画](../anomaly/execution/anomaly-v03-consumer-source-runtime-plan.md)。
 
 実装f8f20bcf4ac7ade2f20e96f37bc1567328d88a48、OUT artifacts/analysis-publication-chain-2026-09-26。新module/test2本のみ追加し、既存analysis/profile/reader/collector/consumer/LocalPublicationを変更しない。外部result pinで選択したprofile付きanalysisの成功記録・4payloadを再認証し、保存原本との意味・bytes一致を確認して既存single-writer公開へ渡す。writerを閉じた後だけ、別のobserved readerを起動する。
 

@@ -36,7 +36,7 @@ loaded fileの内訳は各phaseでproject55、stdlib85、native39、extension8�
 
 焦点試験は2回で31件/25.236秒と39件/20.900秒、合計範囲は重複を除く60件。新規12件は外部pin/role/root/revision/scope不一致、source/stdlib drift、未登録DLL、処理途中失敗、処理後source変更、二次保存失敗、保存metadata/native pin改変、更新したstdout pinによる他processへの差替え、CLI誤用を拒否した。fixture試験をnative受入へ読み替えない。
 
-rawは [a3](../../artifacts/preformal-role-runtime-20261006-a3/) と [準備helper/checker](../../artifacts/preformal-role-runtime-20261006-prep/) に保存。別stdlib checkerは71 sourceを再hashし、保存file pin、2役の元handle由来identity/token、4 phaseの外部profile/input/全stdlib概要とloaded在庫を再検算してpass。stdlib/DLLのraw再hashや50,000 drawの再実行はchecker自身では行っていない。
+rawは [a3](../../artifacts/preformal-role-runtime-20261006-a3) と [準備helper/checker](../../artifacts/preformal-role-runtime-20261006-prep) に保存。別stdlib checkerは71 sourceを再hashし、保存file pin、2役の元handle由来identity/token、4 phaseの外部profile/input/全stdlib概要とloaded在庫を再検算してpass。stdlib/DLLのraw再hashや50,000 drawの再実行はchecker自身では行っていない。
 
 | raw | bytes | SHA256 |
 | --- | ---: | --- |
@@ -47,7 +47,7 @@ rawは [a3](../../artifacts/preformal-role-runtime-20261006-a3/) と [準備help
 | [launcher](../../artifacts/preformal-role-runtime-20261006-prep/trial3.py) | 8,857 | `a4ee5f9d0356877a1869a638001610a5b13d8bb625f5c122cb64bcc2641feabd` |
 | [checker](../../artifacts/preformal-role-runtime-20261006-prep/check.py) | 6,279 | `47be30070b55bbb4bb2942e76989bbdbad5b8893d376743525ab4848b877f588` |
 
-初回[a1](../../artifacts/preformal-role-runtime-20261006-a1/)はfixture inputのpinを算術inputへ取り違えて準備停止。a2はrepo全`_source_path`を走査して旧 `examples/configs/anomaly-evaluation-v0.1.json` のGit/raw不一致を検出し準備停止。両方ともworker起動0、原result/launcherを保全した。a3ではsource範囲を実ロード依存・実入口・科学pinに明示して71件を固定した。旧v0.1設定の不一致自体は修理・消去していない。使うrole/source範囲の独立受入は残る。
+初回[a1](../../artifacts/preformal-role-runtime-20261006-a1)はfixture inputのpinを算術inputへ取り違えて準備停止。a2はrepo全`_source_path`を走査して旧 `examples/configs/anomaly-evaluation-v0.1.json` のGit/raw不一致を検出し準備停止。両方ともworker起動0、原result/launcherを保全した。a3ではsource範囲を実ロード依存・実入口・科学pinに明示して71件を固定した。旧v0.1設定の不一致自体は修理・消去していない。使うrole/source範囲の独立受入は残る。
 
 ## CIと残件
 

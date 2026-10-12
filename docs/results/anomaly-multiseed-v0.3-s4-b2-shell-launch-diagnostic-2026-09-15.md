@@ -1,6 +1,6 @@
 # S4-B2 直接Shell起動診断の準備・通常control
 
-2026-09-15、実装savepoint **558b118a378d0819f0776e727e9a78cb125f289a**、[仕様](../anomaly-v03-shell-launch-diagnostic-design.md)。[準備b停止](anomaly-multiseed-v0.3-s4-b2-principal-setup-b-2026-09-15.md)後、元Win32 errorを保存するProcess.Start経路と、15331文字のASCII Command形式を新しい読取専用probeで確認した。
+2026-09-15、実装savepoint **558b118a378d0819f0776e727e9a78cb125f289a**、[仕様](../anomaly/native/runtime/anomaly-v03-shell-launch-diagnostic-design.md)。[準備b停止](anomaly-multiseed-v0.3-s4-b2-principal-setup-b-2026-09-15.md)後、元Win32 errorを保存するProcess.Start経路と、15331文字のASCII Command形式を新しい読取専用probeで確認した。
 
 新規3ケースpass（引数同一性、Shell設定、実際のmissing-exe code2保持）。code2確認は非Shell経路で子process/UACなし、Shell/runas自体の実証とは区別する。独立P0〜P3所見0、レビューはread-only、繰り返し進捗確認なし。
 このPCのWindows PowerShell Management assembly version3.0.0.0/StartWithShellExecute IL63 bytesを実行せず調べ、Win32Exception catchからInvalidOperationException(string)への置換を確認した。全文ILは保存せず、観測要約をinputへ記録した。番号欠落の理由を準備失敗の原因確定としない。

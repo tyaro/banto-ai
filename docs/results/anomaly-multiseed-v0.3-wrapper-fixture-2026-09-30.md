@@ -1,6 +1,6 @@
 # 架空入力の5出力・実行記録を結合（2026-09-30）
 
-**5種類の予定結果ファイルを、草稿・全予定枠・外部に保持した架空の実行記録へ対応付けた。新規16試験pass。** [API](../anomaly-v03-wrapper-fixture.md)、[前回残件](anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)。
+**5種類の予定結果ファイルを、草稿・全予定枠・外部に保持した架空の実行記録へ対応付けた。新規16試験pass。** [API](../anomaly/evaluation/anomaly-v03-wrapper-fixture.md)、[前回残件](anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)。
 
 作業開始revisionは536c66721878c04fb8c781ffcb86c4e868407033。追加はanomaly_v03_wrapper_fixture.pyと対応testの2fileのみ。既存62code/18dataは変更していない。JSON objectの並び順に依存する既存slice処理に対し、新adapter境界で固定template順へ整える。値・配列順・canonical input pinは変えない。OUT artifacts/wrapper-fixture-2026-09-30、最終検証はtests-2/、実装・文書の保存revisionとpinは最上位savepoint-evidence.json。
 

@@ -1,7 +1,7 @@
 # S4-B2 単一呼出しdirectory取得の実装・故障確認
 
 2026-09-14、基準46b8d35、実装savepoint **7f9332289494f9b24e9e5e786737864ac88b0ae3**。
-[設計](../anomaly-v03-directory-acquisition-design.md)に従い、作成と初回handle取得を1回のCreateDirectory2W呼出しにする部品を追加した。
+[設計](../anomaly/native/files/anomaly-v03-directory-acquisition-design.md)に従い、作成と初回handle取得を1回のCreateDirectory2W呼出しにする部品を追加した。
 今回の試験は全てfake API。実機entry/監視/試行枠は追加せず、CreateDirectory2W本体は呼んでいない。
 既存private sink・6工程・S3/D2・productionへの接続はない。
 

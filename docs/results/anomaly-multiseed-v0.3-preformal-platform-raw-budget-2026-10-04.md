@@ -4,7 +4,7 @@
 
 ## 26H2と5役割
 
-[運用契約改訂案v2](../anomaly-v03-formal-operations-contract-proposal-v2.md)は現実測のProfessional / 26H2 / build26300 / UBR9457を、旧25H2/build26200/UBR9168とは別版で受け入れる場合の条件として記した。現engineering v1もrelease=25H2を固定するため、26H2での旧writer/reader実process試験は起動前に拒否される。案v2は未採択で、旧runtime pin・registry・正式gateを変更しない。Windows native、Linux 2 jobs、最終clean revisionでの正式dev/smoke、独立再監査を受入条件に残す。
+[運用契約改訂案v2](../anomaly/acceptance/anomaly-v03-formal-operations-contract-proposal-v2.md)は現実測のProfessional / 26H2 / build26300 / UBR9457を、旧25H2/build26200/UBR9168とは別版で受け入れる場合の条件として記した。現engineering v1もrelease=25H2を固定するため、26H2での旧writer/reader実process試験は起動前に拒否される。案v2は未採択で、旧runtime pin・registry・正式gateを変更しない。Windows native、Linux 2 jobs、最終clean revisionでの正式dev/smoke、独立再監査を受入条件に残す。
 
 [5役割の棚卸し](anomaly-multiseed-v0.3-five-role-source-runtime-gap-2026-10-04.md)では、過去producer、記述analysisとreaderの候補profile、架空数値analysis/audit/writer/readerの選択source・終了後依存観測を分けた。最終producer / 数値analysis / 独立audit / writer / readerの事前profileと動的依存・外部programの完全閉包、各子の開始/終了runtimeとexit/reapは未受入である。
 

@@ -1,6 +1,6 @@
 # consumer入出力・保存契約の具体化
 
-2026-09-25 JST。[契約案](../anomaly-v03-consumer-io-proposal.md)を作成した。提案ID `anomaly-v03-consumer-io-proposal-v1`、状態draft。正式運用方針の採択、実装の接続、S4/S6受入、正式評価の実行はまだ行っていない。
+2026-09-25 JST。[契約案](../anomaly/execution/anomaly-v03-consumer-io-proposal.md)を作成した。提案ID `anomaly-v03-consumer-io-proposal-v1`、状態draft。正式運用方針の採択、実装の接続、S4/S6受入、正式評価の実行はまだ行っていない。
 
 入力mode/契約/外部anchor/source/runtime/出力/予算、順次読取りから独立auditまでの8工程、予定payload、完了前後の失敗処理を具体化した。旧formal gateや科学config/schema/registryは変更していない。単一writerと更新時の実値記録を維持し、保留principalは再開しない。
 

@@ -2,7 +2,7 @@
 
 **全120区間の結合済み要約からdev/smoke記述集計を作る処理を追加。新12項目pass（17.589秒）。前回の結合記録＋架空要約121file/17,877,645bytesを再利用し、4.894秒で90seed別表・18role別表・12比較・10seed群へ接続した。**
 
-起点16af80f87c190e9a6bb0170bdd8a0c49f41b4729。前保存点46,454bytes/SHA0fb33d405ea6b7a564cba4db7a70e511cd3fbf7216823536baeaf606186965f5。実装e70d55e6ebe84a6171ccdf2c53abbaf8a85d5fee、clean候補bt01/banto-ai。新module/test2本のみ、旧86code/18data不変、計88code。[API](../anomaly-v03-bound-summary-tables.md)。
+起点16af80f87c190e9a6bb0170bdd8a0c49f41b4729。前保存点46,454bytes/SHA0fb33d405ea6b7a564cba4db7a70e511cd3fbf7216823536baeaf606186965f5。実装e70d55e6ebe84a6171ccdf2c53abbaf8a85d5fee、clean候補bt01/banto-ai。新module/test2本のみ、旧86code/18data不変、計88code。[API](../anomaly/evaluation/anomaly-v03-bound-summary-tables.md)。
 
 ## 確認内容
 

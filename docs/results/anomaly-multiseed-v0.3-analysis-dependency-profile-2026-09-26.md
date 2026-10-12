@@ -1,6 +1,6 @@
 # analysis専用の事前保持依存候補への接続
 
-2026-09-26 JST。[API](../anomaly-v03-analysis-evidence.md)、[source/runtime計画](../anomaly-v03-consumer-source-runtime-plan.md)。
+2026-09-26 JST。[API](../anomaly/execution/anomaly-v03-analysis-evidence.md)、[source/runtime計画](../anomaly/execution/anomaly-v03-consumer-source-runtime-plan.md)。
 
 実装140e91de93e2cc43c45fab9efb9a7cbc6ece43c7、OUT artifacts/analysis-dependency-profile-2026-09-26。analysis専用のprepare_profileを追加し、別の成功した未profile化referenceと外部result pinから新規候補を保存する。format/role/operation/採取境界を固定し、reader候補の流用を拒否する。後続analysisは親が起動前から保持した候補のraw bytes/pinと依存集合へ前後一致を要求する。
 

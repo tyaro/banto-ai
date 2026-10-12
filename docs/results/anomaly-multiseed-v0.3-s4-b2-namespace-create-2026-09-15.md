@@ -1,7 +1,7 @@
 # S4-B2 親共有とpath新規作成の比較準備・実機停止
 
 2026-09-15 JST、基準4e9bc81。実装savepoint **2ec193adf8f81bed5685de0ff0cc09276e2741f7**。
-[比較仕様](../anomaly-v03-namespace-create-design.md)を実装し、397件pass/0.727秒、独立P0〜P3所見0件を確認後、新規max1を実施した。
+[比較仕様](../anomaly/native/files/anomaly-v03-namespace-create-design.md)を実装し、397件pass/0.727秒、独立P0〜P3所見0件を確認後、新規max1を実施した。
 **最初のshare3親directoryのCreateDirectory2Wが失敗し、peer openと子file作成には到達していない。比較結果は未取得。**
 worker exit81/終了確認、監視stopなし。失敗枠は閉鎖し、存在確認・列挙・再open・hash/copy/delete・再試行を行わない。
 

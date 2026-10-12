@@ -1,6 +1,6 @@
 # v0.3 架空slot 0の共有wallとWindows Jobメモリ（2026-10-04）
 
-状態: **正式S4受入前の限定技術証拠**。作業branchは`codex/preformal-acceptance-scope`、実走時のclean sourceは`772ee3d6e2ea5f02c6c53a72bae6d4daf6942d29`。固定した手作り系列のslot 0だけを新rootで実行した。登録holdout観測は読まず、正式評価creditは0、`formal_permission=false`、gateは`s4_acceptance_not_frozen`のままである。使用tupleはWindows 11 Pro 26H2/build 26300/UBR 9457、CPython 3.14.0 AMD64、local NTFS。26H2の[運用契約案v2](../anomaly-v03-formal-operations-contract-proposal-v2.md)と[改訂案v1](../anomaly-v03-s4-26h2-amendment-draft-v1.md)は未採択。
+状態: **正式S4受入前の限定技術証拠**。作業branchは`codex/preformal-acceptance-scope`、実走時のclean sourceは`772ee3d6e2ea5f02c6c53a72bae6d4daf6942d29`。固定した手作り系列のslot 0だけを新rootで実行した。登録holdout観測は読まず、正式評価creditは0、`formal_permission=false`、gateは`s4_acceptance_not_frozen`のままである。使用tupleはWindows 11 Pro 26H2/build 26300/UBR 9457、CPython 3.14.0 AMD64、local NTFS。26H2の[運用契約案v2](../anomaly/acceptance/anomaly-v03-formal-operations-contract-proposal-v2.md)と[改訂案v1](../anomaly/acceptance/anomaly-v03-s4-26h2-amendment-draft-v1.md)は未採択。
 
 ## 固定rootと結果
 

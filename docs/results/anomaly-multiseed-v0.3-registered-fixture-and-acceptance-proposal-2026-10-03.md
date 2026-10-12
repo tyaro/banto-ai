@@ -14,7 +14,7 @@
 
 ## 運用契約と全工程予算
 
-[正式運用契約・受入改訂案 v1](../anomaly-v03-formal-operations-contract-proposal-v1.md)に、旧§8のprotected DACL・独立token保証を維持する案と、通常権限の単一writerへ版付きで改訂する推奨案を並べた。旧Windows正式pinはbuild 26200 / UBR 9168、後続の観測はUBR 9457。観測値だけで旧pinを通過させず、attempt内の変化停止、S5前の新UBRをexact tupleとして再受入する条件、S5後の環境変化時の再登録を提案した。ID `anomaly-v03-single-writer-research-v1` は予約案で採択していない。
+[正式運用契約・受入改訂案 v1](../anomaly/acceptance/anomaly-v03-formal-operations-contract-proposal-v1.md)に、旧§8のprotected DACL・独立token保証を維持する案と、通常権限の単一writerへ版付きで改訂する推奨案を並べた。旧Windows正式pinはbuild 26200 / UBR 9168、後続の観測はUBR 9457。観測値だけで旧pinを通過させず、attempt内の変化停止、S5前の新UBRをexact tupleとして再受入する条件、S5後の環境変化時の再登録を提案した。ID `anomaly-v03-single-writer-research-v1` は予約案で採択していない。
 
 [全工程予算の証拠台帳](anomaly-multiseed-v0.3-preformal-budget-evidence-ledger-2026-10-03.md)では、producerの実績14.98 GiB・44.54活動時間、正式規模への単純外挿約59.91 GiB・178.17時間、旧240時間/96 GiB/空き32 GiB案を分けた。登録入力/要約、50,000 draw、独立S6、staging/公開、別reader、統合監視の時間・容量・private memory・system commitと停止証拠は不足している。旧案を正式全工程の採択上限にはしない。
 

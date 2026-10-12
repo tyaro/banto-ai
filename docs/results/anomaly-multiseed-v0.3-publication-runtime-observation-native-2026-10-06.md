@@ -34,7 +34,7 @@ loaded内訳は各phase project59、stdlib85、native39、extension8、cache候�
 
 焦点11 module・固有132件は**622.398秒、fail0/error0/skip0、対象19 source/test/scientific pin前後一致**でpass。新13件とouterへの両候補伝播/checked・pin拒否を含む。先行70件/45.141秒、接続23件/1.846秒はこの132件へ重複するため加算しない。repository safety pass。実機試行中のtracked file編集は0。
 
-rawは [runtime02](../../artifacts/anomaly-v03-preformal-saved-row-document-budget/trial-20261006-runtime02/)・[helper/checker](../../artifacts/preformal-publication-runtime-20261006-prep/)へ保存。別stdlib checkerは40保存raw pin、75 source raw、2役元handle identity/token、4 phaseのprofile/request/stdlib概要とloaded metadata、5公開payload/markerを照合してpass。stdlib/DLL raw再hashや算術再実行はchecker自身では行っていない。
+rawは [runtime02](../../artifacts/anomaly-v03-preformal-saved-row-document-budget/trial-20261006-runtime02)・[helper/checker](../../artifacts/preformal-publication-runtime-20261006-prep)へ保存。別stdlib checkerは40保存raw pin、75 source raw、2役元handle identity/token、4 phaseのprofile/request/stdlib概要とloaded metadata、5公開payload/markerを照合してpass。stdlib/DLL raw再hashや算術再実行はchecker自身では行っていない。
 
 初回runtime01はhelperのretained入力tupleをJSONへ渡して準備停止し、worker起動0。終端記録も同じ型で停止したため、旧helper・13保存pinとlauncher-failureを保全し、JSON listへ直した別trial2/root02で実行した。checker初版は`published/`直下を仮定して停止。実形式`published/payload/`とmarkerへ合わせた別check3で再照合し、旧check2とsaved-check-failureを保全した。product code・上限を変えてnativeを反復していない。
 
@@ -52,4 +52,4 @@ rawは [runtime02](../../artifacts/anomaly-v03-preformal-saved-row-document-budg
 
 前保存点 `eebfa8095698f10366563eed9f4f6ba388b81131` の [CI37436807053](https://github.com/tyaro/banto-ai/actions/runs/37436807053) は全3job成功。両minor各3,026件・fail0/error0/skip237、共有29 fixture/必須28試験pass。10 rawを保存しローカルverifierとremote回帰結果が一致。[complete-summary](../../artifacts/ci-diagnostic-37436807053/complete-summary.json) 2,591 B / `f8be9f42573013dc5d2ede205700ee08ef8e78f9073323f07a79ed7458d3aabe`。3jobのrunner logはUbuntu24.04 /20260927.320.1、digest未取得・採択false。新b2a6065の結果へ代用しない。
 
-次はproducer・初期reader・保存readerのruntime実境界、外部program/Git在庫と異常子孫回収を接続する。analysis/audit＋writer/fresh readerの任意profileは共通callerまで実装済みで、新4役/全7役のnative通しは未実施。正式consumer、版付き運用契約・runner同定、最終同revisionのLinux/Windows・正式dev8/smoke2・独立受入、全容量2倍は残る。[受入案v3](../anomaly-v03-s4-acceptance-scope-draft-v3.md)の5条件を維持し、旧成功/失敗rootを保全する。
+次はproducer・初期reader・保存readerのruntime実境界、外部program/Git在庫と異常子孫回収を接続する。analysis/audit＋writer/fresh readerの任意profileは共通callerまで実装済みで、新4役/全7役のnative通しは未実施。正式consumer、版付き運用契約・runner同定、最終同revisionのLinux/Windows・正式dev8/smoke2・独立受入、全容量2倍は残る。[受入案v3](../anomaly/acceptance/anomaly-v03-s4-acceptance-scope-draft-v3.md)の5条件を維持し、旧成功/失敗rootを保全する。

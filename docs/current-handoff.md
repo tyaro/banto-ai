@@ -1,3 +1,26 @@
+## 最新 — 人の明示再開 / docs整理のcommit・pushと自走再開（2026-10-12 JST）
+
+人の「コミットプッシュして再開ください」を受領。今回のdocsフォルダ整理差分のGitHub送信と自走再開を明示承認した。以下の過去PAUSED・停止予定は履歴として保持し、今回の再開指示を優先する。追加agentの起動・再活性化は禁止のまま。
+整理済み105文書の移動、16目次、リンク更新と既存文書テスト4ファイルのパス参照を一つの[skip ci] commitへまとめる。送信先は https://github.com/tyaro/banto-ai.git、branch codex/preformal-acceptance-scope。実commit/push返値・HEAD/upstream/remote一致・cleanは artifacts/docs-folder-organization-resume-final-save-20261012-prep/git-summary.json を参照。heartbeat banto-10はGit保存後にACTIVEへ更新し、実更新と設定保持は artifacts/docs-folder-organization-resume-final-save-20261012-prep/automation-resume-check.json を参照する。
+前回保存した540文書到達、local link2572件missing0、文書テストliteral path20件の静的確認を継承。完成済みの評価・試験・CI・検証の反復0。v0.3固定計画とscience117は不変。原失敗・閉鎖root・評価結果・seed・threshold・正式gateを保持し、文書整理を性能合格や正式受入へしない。
+
+次の未完成unitは、最後の representative-layout6-quality-c2-final-save-20261012-prep/post-save.json が保持する同保存seed/layout6/quality-stressを、既存CLIのC0 c0-diff-controlで新ID dev-layout6-quality-c0-20261012へ1cell実評価すること。入力manifestと10pinを原保存へ照合し、新snapshotとfresh fit/calibrationから評価する。原payload変更・新dataset生成・replay0。完成core3候補とquality C1/C2は保存manifest/configだけと比較する。今回のGit・再開工程では新モデル0、再開後の次unitとして進める。
+formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読、正式5残件・最終受入未完了、create_native早期拒否・全7役reader禁止を維持。既存wall/memory/output/metadata上限を維持。Sol容量または人の停止では原証拠を保全してPAUSED、重複再試行なし。詳細結果やPC内入力pathをautomation設定へ転記しない。
+
+---
+
+## 最新 — PAUSED / docsフォルダ整理をローカル保存（2026-10-12 JST）
+
+人の文書整理依頼を限定作業として実施。自走/heartbeat banto-10はPAUSEDを維持し、モデル評価・試験・CI追跡・追加agentの再開ではない。
+docs直下110文書を6文書へ整理。105文書（旧索引を含む）をoverview/research/models/decisions/anomaly/historyへ移動し、16の入口・分野別目次を整備。anomalyはplans/evaluation/execution/acceptance/native、nativeはfiles/principals/runtimeに分けた。
+入口は [docs/README.md](README.md)、結果報告は [results/README.md](results/README.md)。v0.3凍結計画と本文が参照するv0.2計画・診断計画・実装計画は固定パスを維持。v0.3計画bytesと計算・科学仕様の117pins不変。
+移動先に合わせてMarkdownリンクと既存文書テストのパス参照だけを更新。performance値/hash/seed/過去の失敗・受入状態の書換え0。閉鎖済みartifactへの追記・raw整理移動削除0。540文書の入口到達を確認し、local link2572件のmissing0、文書テストliteral path20件を静的確認。250文書はGit原文と比較し、相対ナビゲーション以外の本文を保持した。旧索引への過去時点bannerと新README/目次は別範囲。
+今回Git commit/push0、文書整理差分はローカル保存。科学的評価/正式受入ではない。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読、正式5残件・最終受入未完了を維持。
+詳細metadata artifacts/docs-folder-organization-20261012-continuation/organization-plan.json・verification.json・final-save.json・root-closed.jsonを優先。元metadata一覧のsingle-file上限拒否、JS builder SyntaxError、入口README件数Assertion、巨大履歴の512KiB batch拒否は原source/traceへ保存。原script再実行0、限定訂正したcontinuationsで保存完了、上限緩和0。これらをモデル/CI/native失敗や原helperの失敗件数へ追加しない。
+人の明示再開時はこの文書と最後のC2 quality FINALを確認する。未実施layout6 quality C0はその時の次候補であり、停止中は開始しない。
+
+---
+
 ## 人の明示停止 — 最後のC2 quality unit終了・一時停止保存（2026-10-12 JST）
 
 人の「つぎで一時停止します」に従い、このC2 quality 1cellを最後のunitとして実評価を終了した。原証拠・この2文書のGit保存後にheartbeat banto-10をPAUSEDへ更新する。実更新結果と保持した設定の照合はFINAL/automation-pause-check.jsonを優先する。人の明示再開まで追加自走・新モデル/試験/CI追跡/追加agentを開始しない。停止を正式受入完了や性能合格へしない。automationのpromptへ詳細結果やPC内pathは転記しない。

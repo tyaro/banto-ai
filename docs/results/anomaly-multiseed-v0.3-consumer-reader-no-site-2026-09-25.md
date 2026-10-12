@@ -1,6 +1,6 @@
 # engineering readerのsite初期化を除外
 
-2026-09-25。実装 `863af36c74aad1bc63ff42bd5b2b469c748882df`、基準 `6da417ce05d80d73c5f16ec8ee7e5ed14ff47be3`。OUT `artifacts/consumer-reader-no-site-2026-09-25`、最終文書revision・artifact pinは同directoryのsavepoint-evidence.json。[API](../anomaly-v03-consumer-reader.md)、[source/runtime計画](../anomaly-v03-consumer-source-runtime-plan.md)。
+2026-09-25。実装 `863af36c74aad1bc63ff42bd5b2b469c748882df`、基準 `6da417ce05d80d73c5f16ec8ee7e5ed14ff47be3`。OUT `artifacts/consumer-reader-no-site-2026-09-25`、最終文書revision・artifact pinは同directoryのsavepoint-evidence.json。[API](../anomaly/execution/anomaly-v03-consumer-reader.md)、[source/runtime計画](../anomaly/execution/anomaly-v03-consumer-source-runtime-plan.md)。
 
 ## 変更
 

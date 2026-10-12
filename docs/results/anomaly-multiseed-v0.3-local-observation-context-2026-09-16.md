@@ -1,7 +1,7 @@
 # 判定差と保存済み観測値の対応表示
 
 2026-09-16 JST。実装savepoint **a013ec2c4175725b091702ad9d6e0fa7804bac31**。
-[使い方](../anomaly-v03-local-preview.md#判定差の詳細)。§116の通常権限・単一writer運用を継続した。
+[使い方](../anomaly/execution/anomaly-v03-local-preview.md#判定差の詳細)。§116の通常権限・単一writer運用を継続した。
 
 ## 実装と検証
 

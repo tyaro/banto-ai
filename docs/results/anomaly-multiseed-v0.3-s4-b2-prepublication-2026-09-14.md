@@ -5,7 +5,7 @@
 
 **証跡保存成功後に選択handleを解放する接続部品を追加し、最終72 testsがpass。**
 独立レビューと追加integration testの確認で新規P0〜P3は0件。
-[設計書](../anomaly-v03-prepublication-design.md)を参照。tests/fixturesの注入backend部品である。
+[設計書](../anomaly/native/files/anomaly-v03-prepublication-design.md)を参照。tests/fixturesの注入backend部品である。
 
 ## 到達した範囲
 

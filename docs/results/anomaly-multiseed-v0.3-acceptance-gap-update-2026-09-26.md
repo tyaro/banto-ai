@@ -68,7 +68,7 @@
 
 ## 次に実装する単位
 
-**I/Oを持たない、架空入力専用の5出力wrapper/証拠結合adapterを1単位として実装する。** 既存の文書・slice・証拠validatorを再利用し、正式入口は閉じたままにする。[契約案§4](../anomaly-v03-consumer-io-proposal.md#4-保存物と正式schemaへの対応)を以下まで具体化する。
+**I/Oを持たない、架空入力専用の5出力wrapper/証拠結合adapterを1単位として実装する。** 既存の文書・slice・証拠validatorを再利用し、正式入口は閉じたままにする。[契約案§4](../anomaly/execution/anomaly-v03-consumer-io-proposal.md#4-保存物と正式schemaへの対応)を以下まで具体化する。
 
 1. 入力は架空文書/診断、予定coverageと段階状態、役割別の供給証拠、呼出し側が保持する期待pin。証拠自身から期待値を作らず、role/mode/operation/revision/入出力の対応を検査する。
 2. 戻り値は5つの予定payloadと不足一覧。fixture専用formatを使い、正式schemaや正式identityへ昇格しない。本文のnullと未充足を保つ。将来の公開markerはpayloadの外、marker pinを保持するreceiptはさらに外へ置き、循環参照を作らない。

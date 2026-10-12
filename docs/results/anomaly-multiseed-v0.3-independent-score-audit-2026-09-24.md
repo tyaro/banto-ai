@@ -63,4 +63,4 @@ report = audit_score_derivation(
 
 次は判定不能profileの扱いと、外部pin・登録identity・既存ledger監査を結ぶconsumerの入口を整える。その後、既存720評価への必要な適用範囲を確定する。正常生成・overlay・丸め、bootstrap/CI/gate、単一writer受入・runtime inventory・資源見積りも残る。新しいデータ生成や正式holdoutは今回の作業に含まない。
 
-関連：[登録計画](../anomaly-multiseed-evaluation-plan-v0.3.md)、[前段の原因調査](anomaly-multiseed-v0.3-failure-analysis-2026-09-24.md)、[独立監査と進行記録](../anomaly-v03-independent-audit-and-checkpoints.md)。
+関連：[登録計画](../anomaly-multiseed-evaluation-plan-v0.3.md)、[前段の原因調査](anomaly-multiseed-v0.3-failure-analysis-2026-09-24.md)、[独立監査と進行記録](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md)。

@@ -51,20 +51,17 @@ Windows OS条件は**Windows 11 x64 workstation・local NTFS・ACL対応・必�
 
 ```text
 docs/
-  architecture.md                 Banto Hubとの責務境界と成果物フロー
-  time-series-model-survey.md     時系列モデル候補、ライセンス、実現可能性の調査
-  research-implementation-plan.md 段階的な研究・実装計画と判断gate
-  research-roadmap.md             長期的な研究フェーズと完了条件
-  timesfm-notes.md                TimesFM 3.0評価プロトコル
-  chronos2-notes.md               Chronos-2の隔離・評価契約
-  toto2-notes.md                  Toto 2.0 4Mの隔離・評価契約
-  public-dataset-survey.md        公開産業時系列データの選定と取得境界
-  results/                        実測結果（合成／研究専用）
-  adr-0003-timesfm3-isolation.md  TimesFM 3.0の依存・実行隔離
-  adr-0004-chronos2-isolation.md  Chronos-2の依存・実行隔離
-  adr-0005-public-dataset-boundary.md 公開データのsource pinと変換境界
-  commissioning-learning.md       試運転・校正・昇格の設計
-  initial-issues.md                最初に作成するIssue 5件の案
+  README.md                     文書の入口
+  current-handoff.md            最新状態・停止・引継ぎ
+  overview/                     全体構成・試運転方針
+  research/                     研究roadmap・調査
+  models/                       モデル別の評価契約
+  decisions/                    設計判断（ADR）
+  anomaly/                      計画・評価・実行・受入・Windows設計
+  results/                      実測・監査報告
+  history/                      過去の引継ぎ・索引
+  anomaly-*.md                  固定パスを保持する凍結計画
+  research-implementation-plan.md 凍結計画が参照する実装計画
 schemas/                       manifestを検証するJSON Schema
 examples/                     安全な合成fixtureとsample manifest
 src/banto_ai/                  外部依存なしのPhase 0共通runtime
@@ -109,7 +106,7 @@ tools/
 
 Chronos-2は固定checkpointのsize／SHA-256検証、公式API direct CPU smoke、Banto tool smoke、past-only／known-futureの初期rolling benchmarkまで完了しました。provenance拡張後のBanto tool smoke正本は`artifacts/chronos2/cpu-smoke-provenance-2026-09-04.json`で、`verification_status=verified`、cold elapsed `12.057009100011783`秒です。known-future 7 modelsではaggregate MAE `0.1691488806622826`、WIS `0.15937026919725228`で1位でしたが、単一seed・少数origin・合成データの結果です。known-futureはorigin時点で確定済みの計画値を模した条件に限り、実績値の先読みを認めません。詳細は[`docs/results/chronos2-initial-evaluation-2026-09-04.md`](docs/results/chronos2-initial-evaluation-2026-09-04.md)を参照してください。
 
-公開実データの第一候補は[UCI MetroPT-3](https://archive.ics.uci.edu/dataset/791/metropt%2B3%2Bdataset)、次候補は[UCI hydraulic systems](https://archive.ics.uci.edu/dataset/447/condition%2Bmonitoring%2Bof%2Bhydraulic%2Bsystems)です。MetroPT-3はsource pin toolで実archive検証済みで、`status=cached_verified`、`verification_status=verified`です。正本manifestは[`datasets/manifests/metropt3-source.json`](datasets/manifests/metropt3-source.json)、手順は[`tools/public-data/README.md`](tools/public-data/README.md)、CLIは[`tools/public-data/prepare_metropt3.py`](tools/public-data/prepare_metropt3.py)です。SHA-256・member hash・license・source revision・verified_atを固定し、raw dataはGitへ置きません。標準化datasetの取込、Public-only quality gate、統計baseline、Chronos-2、TimesFM 3.0の限定forecast評価が完了し、実測結果は[`docs/results/metropt3-import-2026-09-04.md`](docs/results/metropt3-import-2026-09-04.md)、[`docs/results/chronos2-metropt3-evaluation-2026-09-04.md`](docs/results/chronos2-metropt3-evaluation-2026-09-04.md)、[`docs/results/timesfm3-metropt3-evaluation-2026-09-04.md`](docs/results/timesfm3-metropt3-evaluation-2026-09-04.md)に記録しました。詳細は[`docs/public-dataset-survey.md`](docs/public-dataset-survey.md)と[`docs/adr-0005-public-dataset-boundary.md`](docs/adr-0005-public-dataset-boundary.md)を参照してください。
+公開実データの第一候補は[UCI MetroPT-3](https://archive.ics.uci.edu/dataset/791/metropt%2B3%2Bdataset)、次候補は[UCI hydraulic systems](https://archive.ics.uci.edu/dataset/447/condition%2Bmonitoring%2Bof%2Bhydraulic%2Bsystems)です。MetroPT-3はsource pin toolで実archive検証済みで、`status=cached_verified`、`verification_status=verified`です。正本manifestは[`datasets/manifests/metropt3-source.json`](datasets/manifests/metropt3-source.json)、手順は[`tools/public-data/README.md`](tools/public-data/README.md)、CLIは[`tools/public-data/prepare_metropt3.py`](tools/public-data/prepare_metropt3.py)です。SHA-256・member hash・license・source revision・verified_atを固定し、raw dataはGitへ置きません。標準化datasetの取込、Public-only quality gate、統計baseline、Chronos-2、TimesFM 3.0の限定forecast評価が完了し、実測結果は[`docs/results/metropt3-import-2026-09-04.md`](docs/results/metropt3-import-2026-09-04.md)、[`docs/results/chronos2-metropt3-evaluation-2026-09-04.md`](docs/results/chronos2-metropt3-evaluation-2026-09-04.md)、[`docs/results/timesfm3-metropt3-evaluation-2026-09-04.md`](docs/results/timesfm3-metropt3-evaluation-2026-09-04.md)に記録しました。詳細は[`docs/public-dataset-survey.md`](docs/research/public-dataset-survey.md)と[`docs/adr-0005-public-dataset-boundary.md`](docs/decisions/adr-0005-public-dataset-boundary.md)を参照してください。
 
 Python 3.14専用venvとrepository外cacheで再現します。各runは既存出力を上書きしないため、cleanなartifact pathで実行してください。
 
@@ -144,7 +141,7 @@ rolling-origin benchmarkの実測値は [`docs/results/timesfm3-rolling-benchmar
 
 Toto 2.0 4M は [`tools/toto2/README.md`](tools/toto2/README.md) の専用環境・外部cacheから実行します。MetroPT-3のcontext=120、horizon=15、target 3、past-only covariate 11は変更せず、adapter内の先頭8点paddingだけでpatch_size=32のeffective input length=128へ揃えます。実smokeと数値benchmarkは完了し、結果を [`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](docs/results/toto2-metropt3-evaluation-2026-09-04.md) に記録しました。Totoのknown-future／exogenous requestは拒否します。さらに、2 seeds×2 horizons×2 context lengthsのToto 4M matrixも8/8 cells successで完了し、正本とtarget別metrics、runtime、制約を [`docs/results/toto2-matrix-2026-09-04.md`](docs/results/toto2-matrix-2026-09-04.md) に記録しました。次はseed／origin拡大、missing／stale／fault／regime slice、model-only resource測定、22M、公開／実設備一般化です。
 
-controlled evaluation の受入境界は [`docs/toto2-controlled-scenarios.md`](docs/toto2-controlled-scenarios.md) に定義しています。2026-09-05にcontrol、target fault、target quality、covariate qualityの4 trackを、seed 17／29／42／73／101、horizon 15／30、context 64／120、test origin 384で実行し、4 matrix各20/20 success、acceptance `pass`となりました。各matrix 10,800 predictions、計43,200、cross-model rankingは禁止です。正式なhash、paired delta、runtime、制約は [`docs/results/toto2-controlled-evaluation-2026-09-05.md`](docs/results/toto2-controlled-evaluation-2026-09-05.md) に記録しています。これはsynthetic／4M／CPUの受入結果であり、実設備性能やPhase 2完了、製品採用を示しません。実行順は4 matrix → analyzerで、コマンドは [`tools/toto2/README.md`](tools/toto2/README.md) に記載しています。
+controlled evaluation の受入境界は [`docs/toto2-controlled-scenarios.md`](docs/models/toto2-controlled-scenarios.md) に定義しています。2026-09-05にcontrol、target fault、target quality、covariate qualityの4 trackを、seed 17／29／42／73／101、horizon 15／30、context 64／120、test origin 384で実行し、4 matrix各20/20 success、acceptance `pass`となりました。各matrix 10,800 predictions、計43,200、cross-model rankingは禁止です。正式なhash、paired delta、runtime、制約は [`docs/results/toto2-controlled-evaluation-2026-09-05.md`](docs/results/toto2-controlled-evaluation-2026-09-05.md) に記録しています。これはsynthetic／4M／CPUの受入結果であり、実設備性能やPhase 2完了、製品採用を示しません。実行順は4 matrix → analyzerで、コマンドは [`tools/toto2/README.md`](tools/toto2/README.md) に記載しています。
 
 Phase 0の実行確認は、外部依存を導入せず `python tools/smoke.py` と `python tools/safety_check.py` で行えます。Phase 1の最小generatorは次で実行できます。
 
@@ -185,7 +182,7 @@ python tools/evaluator/run_benchmark.py --config examples/configs/benchmark-smal
 
 Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUTING.md`](CONTRIBUTING.md) に記載しています。
 
-調査結果は [`docs/time-series-model-survey.md`](docs/time-series-model-survey.md)、具体的な作業計画は [`docs/research-implementation-plan.md`](docs/research-implementation-plan.md)、Issue案は [`docs/initial-issues.md`](docs/initial-issues.md) を参照してください。
+調査結果は [`docs/time-series-model-survey.md`](docs/research/time-series-model-survey.md)、具体的な作業計画は [`docs/research-implementation-plan.md`](docs/research-implementation-plan.md)、Issue案は [`docs/initial-issues.md`](docs/history/initial-issues.md) を参照してください。
 
 ### Toto event slice post-hoc解析
 

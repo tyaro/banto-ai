@@ -1,7 +1,7 @@
 # 新campaignのattempt保存先・証拠metadata検証
 
 2026-09-17 JST。実装savepoint **92772268ce968d9a4c74cb5d1811fddffb709c83**。
-[仕様・CLI手順](../anomaly-v03-independent-audit-and-checkpoints.md#attemptの保存先と証拠metadataを検査する)。
+[仕様・CLI手順](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#attemptの保存先と証拠metadataを検査する)。
 
 ## 結果と範囲
 

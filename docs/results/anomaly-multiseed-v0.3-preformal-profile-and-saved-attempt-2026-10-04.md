@@ -2,9 +2,9 @@
 
 状態: **26H2向けの未採択preformal検証**。５役の初回code保存点は `09b4da2291634ee07ff1eacb74d3ca114c1d76b4`、保存済みproducer→50,000 draw算術接続の初回は `cca54e9e1083d92f4cdf85aae65fdef943929bcf`。writer事前再照合と所有materializerを含む再試行はclean `723eaf1d83ba2f1d42abee9dbe54d57da1d2959d`、別reader子のnative試行はclean `e79479077c7f55cf0398d0e5add41b989e9c936b`、５役/50,000 draw再試行はclean `94be9ed2702d2f383acb952ea1cf24b21b9754fc`。固定手作り系列の所有生成子→別reader子はclean `6ad2631c27f39720a461ad203fc5de7b86e81e5a`、同じ２役の共通外側予算はclean `3be274c59ce4ffa0b5b60ba42993e2aa44a57039` で実走した。保存済み50,000 draw算術→架空文書草稿の写像はclean `6e96644b7bf28e287b458648f189247cfc6952ac` で実走した。旧25H2正式gateは `s4_acceptance_not_frozen` のまま。登録holdout観測の生成・読取り、正式評価credit、S5/S6、候補昇格は0である。
 
-最新の[保存行coverage試行](anomaly-multiseed-v0.3-preformal-saved-row-coverage-2026-10-04.md)は、g02/r01の外部pin付きcontrol rawから区間0の６行を検査し、欠落479区間を列挙した。共通producer/campaign anchorはなく、40 cluster・正式creditは閉じたままである。共有由来・所有journal・全工程予算の具体的な未採択案は[campaign anchor契約案v1](../anomaly-v03-preformal-campaign-anchor-proposal-v1.md)に分けた。
+最新の[保存行coverage試行](anomaly-multiseed-v0.3-preformal-saved-row-coverage-2026-10-04.md)は、g02/r01の外部pin付きcontrol rawから区間0の６行を検査し、欠落479区間を列挙した。共通producer/campaign anchorはなく、40 cluster・正式creditは閉じたままである。共有由来・所有journal・全工程予算の具体的な未採択案は[campaign anchor契約案v1](../anomaly/execution/anomaly-v03-preformal-campaign-anchor-proposal-v1.md)に分けた。
 
-その次の[架空campaign metadata境界](anomaly-multiseed-v0.3-preformal-campaign-metadata-2026-10-04.md)は凍結480区間の計画と外部head/count付きjournalを**宣言として**検査する。所有controller、起動前の外部固定、保存raw再読取り、実process終了はまだ接続していないため、同じcampaign由来を認証しない。次の限定native実装の条件は[controller案v1](../anomaly-v03-preformal-campaign-controller-next-v1.md)に記録した。
+その次の[架空campaign metadata境界](anomaly-multiseed-v0.3-preformal-campaign-metadata-2026-10-04.md)は凍結480区間の計画と外部head/count付きjournalを**宣言として**検査する。所有controller、起動前の外部固定、保存raw再読取り、実process終了はまだ接続していないため、同じcampaign由来を認証しない。次の限定native実装の条件は[controller案v1](../anomaly/execution/anomaly-v03-preformal-campaign-controller-next-v1.md)に記録した。
 
 ## S4採択前の受入見取り図
 
@@ -131,7 +131,7 @@ clean `0549e00f455cc3194845f953f15fc30223813c46` に[架空専用の公開入口
 
 ## S4採択と実データ作業の残件
 
-1. [運用契約26H2案v2](../anomaly-v03-formal-operations-contract-proposal-v2.md)と旧25H2計画との差、公開marker/失敗時保証、役割別完全source/runtime閉包、実行identityを版付きで受入れる。旧§8のprotected DACL・独立read-only token/AccessCheckは、保証Aを採るなら計画改訂・独立再監査で扱いを変更し、保証Bを採るなら26H2実機で再受入れる。今回の候補profile一致を完全閉包へ昇格しない。
+1. [運用契約26H2案v2](../anomaly/acceptance/anomaly-v03-formal-operations-contract-proposal-v2.md)と旧25H2計画との差、公開marker/失敗時保証、役割別完全source/runtime閉包、実行identityを版付きで受入れる。旧§8のprotected DACL・独立read-only token/AccessCheckは、保証Aを採るなら計画改訂・独立再監査で扱いを変更し、保証Bを採るなら26H2実機で再受入れる。今回の候補profile一致を完全閉包へ昇格しない。
 2. 登録形式の架空保存attemptについて、**固定した架空入力を生成する所有子**の終了証拠・起動前外部pin・完全在庫を別readerへ渡し、最新attemptと６評価の観測導出まで確認した。実登録holdout観測のproducer証拠にはならない。今後は改訂S4の最終dev/smokeを受入れてから、S5の実登録入力へ進む。
 3. producer→登録reader→40 cluster/50,000 drawの全表・文書→別実装の完全監査→stage/writer→別readerを、最終clean revision・同一外側予算IDと監視下の工程別rootで測る。現５役は１draw、50,000 drawの主算術と文書・slice接続は保存済みproducer countから**別試行**で進めた。件数監査も同processであり、正式同形の完全S6/公開ではない。g02の共通予算は架空生成１区間の２役のみ。別試行の時間やbytesを足して正式予算にしない。旧計画§9の空き容量２倍条件は最終smokeから判定する。
 4. 対象revisionのLinux CI 3.12/3.14、Windows native、stdlib/repository回帰と独立再監査を照合する。既存CI workflowの定義は実行結果ではない。runner image digestの採取元は未確定。

@@ -1,6 +1,6 @@
 # v0.3 登録評価契約・26H2限定fixtureの事前検証（2026-10-04）
 
-基準保存点 `7f85891` から、code保存点 `32ec6e8` で[登録評価契約の候補境界](../../src/banto_ai/anomaly_v03_registered_evaluation_contract.py)、[26H2専用の限定fixture](../../src/banto_ai/anomaly_v03_platform_fixture.py)、[全工程予算の閉包案](anomaly-multiseed-v0.3-preformal-end-to-end-budget-closure-proposal-2026-10-04.md)を追加した。運用契約の[26H2改訂案v2](../anomaly-v03-formal-operations-contract-proposal-v2.md)は未採択であり、旧25H2正式pin、旧engineering判定器、`s4_acceptance_not_frozen` は変更しない。正式holdout観測、新評価、bootstrap、S5/S6は実行していない。
+基準保存点 `7f85891` から、code保存点 `32ec6e8` で[登録評価契約の候補境界](../../src/banto_ai/anomaly_v03_registered_evaluation_contract.py)、[26H2専用の限定fixture](../../src/banto_ai/anomaly_v03_platform_fixture.py)、[全工程予算の閉包案](anomaly-multiseed-v0.3-preformal-end-to-end-budget-closure-proposal-2026-10-04.md)を追加した。運用契約の[26H2改訂案v2](../anomaly/acceptance/anomaly-v03-formal-operations-contract-proposal-v2.md)は未採択であり、旧25H2正式pin、旧engineering判定器、`s4_acceptance_not_frozen` は変更しない。正式holdout観測、新評価、bootstrap、S5/S6は実行していない。
 
 ## 登録評価契約で実証した範囲
 

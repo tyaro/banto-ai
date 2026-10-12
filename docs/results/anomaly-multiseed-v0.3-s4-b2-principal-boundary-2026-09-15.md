@@ -1,7 +1,7 @@
 # S4-B2 公開側と通常peerの権限分離案
 
 2026-09-15 JST、基準1185287。設計savepoint **60ac6c45c737c0785540f976de1dfb16abb4d7f0**。
-[権限境界案](../anomaly-v03-principal-boundary-design.md)を作成し、独立P0〜P3所見0件で保存した。
+[権限境界案](../anomaly/native/principals/anomaly-v03-principal-boundary-design.md)を作成し、独立P0〜P3所見0件で保存した。
 **専用の標準local accountと保護された新規rootを使う案を、環境準備の判断対象とする。OS変更・native試行・新workerは今回0。**
 
 ## 設計で具体化した点

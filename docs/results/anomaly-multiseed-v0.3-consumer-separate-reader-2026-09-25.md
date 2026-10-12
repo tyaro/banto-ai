@@ -1,6 +1,6 @@
 # engineering結果の別process reader接続（2026-09-25）
 
-[API/CLI](../anomaly-v03-consumer-reader.md)を追加し、writer終了後に別processで保存結果を確認、その成功/失敗を外側へ記録する経路を接続した。実装 `35842261a90b1efe475056dc9ef962c56773f1f1`、OUT `artifacts/consumer-separate-reader-2026-09-25`。最終文書revisionとartifact pinはsavepoint-evidence.json。
+[API/CLI](../anomaly/execution/anomaly-v03-consumer-reader.md)を追加し、writer終了後に別processで保存結果を確認、その成功/失敗を外側へ記録する経路を接続した。実装 `35842261a90b1efe475056dc9ef962c56773f1f1`、OUT `artifacts/consumer-separate-reader-2026-09-25`。最終文書revisionとartifact pinはsavepoint-evidence.json。
 
 ## 確認結果
 

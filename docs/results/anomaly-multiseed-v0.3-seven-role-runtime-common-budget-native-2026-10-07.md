@@ -44,7 +44,7 @@ producer/initial-reader に専用 `anomaly-v03-generation-runtime-profile-v1` / 
 
 checker自身はstdlib/DLL raw再hashやprofile/score/bootstrapの再実行をしていない。集計checker初版は旧e04 root名の残存で停止した。原scriptと失敗を保全し、別v2でroot名を修正して保存証跡だけを再検証した。nativeを再試行していない。
 
-rawは [準備・実行・checker](../../artifacts/preformal-generation-runtime-20261007-prep/)、[outer](../../artifacts/anomaly-v03-preformal-generation-publication-20261007-r7/)、[producer](../../artifacts/anomaly-v03-preformal-registered-attempt-r7/)、[saved-reader](../../artifacts/anomaly-v03-preformal-saved-row-reread-20261007-r7/)、[publication](../../artifacts/anomaly-v03-preformal-saved-row-document-budget/trial-20261007-r7/) にローカル保存。
+rawは [準備・実行・checker](../../artifacts/preformal-generation-runtime-20261007-prep)、[outer](../../artifacts/anomaly-v03-preformal-generation-publication-20261007-r7)、[producer](../../artifacts/anomaly-v03-preformal-registered-attempt-r7)、[saved-reader](../../artifacts/anomaly-v03-preformal-saved-row-reread-20261007-r7)、[publication](../../artifacts/anomaly-v03-preformal-saved-row-document-budget/trial-20261007-r7) にローカル保存。
 
 | 証跡 | bytes | SHA-256 |
 | --- | ---: | --- |

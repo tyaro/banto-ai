@@ -2,7 +2,7 @@
 
 **保存済み要約を登録・最新attempt・評価/入力hash・全120区間へ結ぶ純粋関数を追加した。新16項目pass（30.515秒）。供給が1区間なら119区間/714評価を未確認として残し、全件宣言から補わない。120区間/720枠の架空要約例は13.504秒で結合成功。719 success/1 inconclusive、旧失敗1件、precision分母ゼロ720件を保持した。**
 
-起点8faf7a8068384a35b397564ebed9e391fff5cb93。前保存点24,801bytes/SHA33af07cbd335dbbb94c8a68e20a5d440055b40e5d6911a4f95aeda349a300c06。最終実装3e596bb0c8eafbc94c09f65ef114e54d6098ecf8、clean候補sc02/banto-ai。新module/test2本のみ、旧84code/18data不変、計86code。[API](../anomaly-v03-summary-coverage.md)。
+起点8faf7a8068384a35b397564ebed9e391fff5cb93。前保存点24,801bytes/SHA33af07cbd335dbbb94c8a68e20a5d440055b40e5d6911a4f95aeda349a300c06。最終実装3e596bb0c8eafbc94c09f65ef114e54d6098ecf8、clean候補sc02/banto-ai。新module/test2本のみ、旧84code/18data不変、計86code。[API](../anomaly/evaluation/anomaly-v03-summary-coverage.md)。
 
 ## 確認したこと
 

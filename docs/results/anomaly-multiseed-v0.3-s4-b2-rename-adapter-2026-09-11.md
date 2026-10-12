@@ -9,7 +9,7 @@
 
 ## 実装と確認した範囲
 
-[具体設計](../anomaly-v03-rename-adapter-design.md)とtests/fixtures/anomaly_v03_rename_adapter.pyに、
+[具体設計](../anomaly/native/files/anomaly-v03-rename-adapter-design.md)とtests/fixtures/anomaly_v03_rename_adapter.pyに、
 stage→payloadとmarker-pending.json→.completeだけを扱うsingle-use部品を追加した。
 親/sourceの保持handle、volume/file ID、種別、markerの期待hashを束ねて、
 前回のjournalのbegin→再検査→rename要求→succeedへ接続する。

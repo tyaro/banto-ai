@@ -5,7 +5,7 @@
 
 **新規16＋既存108＝124 testsがpass。実Windowsでwriterを閉じた後にreader2個を再取得し、
 元ID・bytes・SDと、Windowsが実際に与えた読取り権限を照合できた。**
-[設計・試行仕様・公式API資料](../anomaly-v03-reader-reacquisition-design.md)を参照。
+[設計・試行仕様・公式API資料](../anomaly/native/runtime/anomaly-v03-reader-reacquisition-design.md)を参照。
 native publisher、DACL seal、S4受入の完了ではない。
 
 ## 実装と検証

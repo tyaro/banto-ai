@@ -2,7 +2,7 @@
 
 2026-09-16 JST、ユーザーの「次に進めてください」により、引継書§116の方針で再開。
 実装savepoint **75a245ac190b944426371118ebda3fe820391f5c**。
-[保存APIの使い方と範囲](../anomaly-v03-local-publication.md)を追加した。
+[保存APIの使い方と範囲](../anomaly/execution/anomaly-v03-local-publication.md)を追加した。
 
 ## 実装したこと
 

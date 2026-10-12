@@ -1,7 +1,7 @@
 # 区切りproducer・単一writer実行管理・所有process監視
 
 2026-09-21 JST。producer保存点 **8a38a134653d237c2cdbffdd1d6dbf59caa6f3e6**、controller/監視保存点 **bc5f18bb3347fe5f14e60b5381c98d63d5fa6072**。
-[API仕様](../anomaly-v03-independent-audit-and-checkpoints.md#producer単一writer-controller所有process監視) / [短い引継ぎ](../current-handoff.md)。
+[API仕様](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#producer単一writer-controller所有process監視) / [短い引継ぎ](../current-handoff.md)。
 
 ## 今回できるようになったこと
 

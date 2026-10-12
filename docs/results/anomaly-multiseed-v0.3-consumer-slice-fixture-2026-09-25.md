@@ -1,6 +1,6 @@
 # 架空40clusterのslice文書接続（2026-09-25）
 
-[API](../anomaly-v03-slice-fixture.md)を追加し、架空診断から本文1,233行と4系列の補助表2,835行を作成した。実装`52a032bf8bb22a1eee301ba0cb6d4bbb77a35bed`、OUT `artifacts/consumer-slice-fixture-2026-09-25`。最終文書revision・artifact pinはsavepoint-evidence.json。
+[API](../anomaly/evaluation/anomaly-v03-slice-fixture.md)を追加し、架空診断から本文1,233行と4系列の補助表2,835行を作成した。実装`52a032bf8bb22a1eee301ba0cb6d4bbb77a35bed`、OUT `artifacts/consumer-slice-fixture-2026-09-25`。最終文書revision・artifact pinはsavepoint-evidence.json。
 
 ## 確認結果
 

@@ -1,6 +1,6 @@
 # consumer source/runtime候補と固定方法の整理（2026-09-25）
 
-[固定方法と判断資料](../anomaly-v03-consumer-source-runtime-plan.md)。対象`e9826bd0245cf26cf540e1ff470528c001f3cd5f`、OUT `artifacts/consumer-source-runtime-review-2026-09-25`。今回はsource変更・実freezeを行わず、静的候補と起動条件を記録した。最終文書revision/pinはsavepoint-evidence.json。
+[固定方法と判断資料](../anomaly/execution/anomaly-v03-consumer-source-runtime-plan.md)。対象`e9826bd0245cf26cf540e1ff470528c001f3cd5f`、OUT `artifacts/consumer-source-runtime-review-2026-09-25`。今回はsource変更・実freezeを行わず、静的候補と起動条件を記録した。最終文書revision/pinはsavepoint-evidence.json。
 
 ## 確認内容
 

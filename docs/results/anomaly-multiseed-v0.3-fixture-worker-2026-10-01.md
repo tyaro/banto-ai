@@ -1,6 +1,6 @@
 # 架空入力の数値workerと所有実行記録（2026-10-01）
 
-小さい架空入力を実際に数値計算する別processを実装し、起動前の親保持期待値・元process handle・source/runtime・4入力・計算出力を結合した。既存の5payload adapterまで接続し、新規15試験と保存例が成功した。[API](../anomaly-v03-fixture-worker.md)、[現在の引継ぎ](../current-handoff.md)。
+小さい架空入力を実際に数値計算する別processを実装し、起動前の親保持期待値・元process handle・source/runtime・4入力・計算出力を結合した。既存の5payload adapterまで接続し、新規15試験と保存例が成功した。[API](../anomaly/evaluation/anomaly-v03-fixture-worker.md)、[現在の引継ぎ](../current-handoff.md)。
 
 ## 実装と保存先
 

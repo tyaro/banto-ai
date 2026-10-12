@@ -1,6 +1,6 @@
 # 40-cluster推論から文書草稿への接続（2026-09-25）
 
-[API](../anomaly-v03-document-fixture.md)を追加。非登録の架空40clusterを既存算術へ渡し、9表・180gateと結果文書10項目の草稿を組み立てた。実装`e2abbdce00719db482253c140a200d0776288284`、OUT `artifacts/consumer-document-fixture-2026-09-25`。最終文書revision・全artifact pinはsavepoint-evidence.json。
+[API](../anomaly/evaluation/anomaly-v03-document-fixture.md)を追加。非登録の架空40clusterを既存算術へ渡し、9表・180gateと結果文書10項目の草稿を組み立てた。実装`e2abbdce00719db482253c140a200d0776288284`、OUT `artifacts/consumer-document-fixture-2026-09-25`。最終文書revision・全artifact pinはsavepoint-evidence.json。
 
 ## 試験・保存例
 

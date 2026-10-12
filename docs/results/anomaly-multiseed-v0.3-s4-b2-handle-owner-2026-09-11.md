@@ -5,7 +5,7 @@
 
 **最大32個の所有handleの終端解放を模擬backendで実装し、最終52 testsがpass。**
 初回独立レビューのP2を修正し、再レビューの新規P0〜P3は0件。
-[設計書](../anomaly-v03-handle-lifecycle-design.md)にnative接続時の権限と寿命の候補をまとめた。
+[設計書](../anomaly/native/runtime/anomaly-v03-handle-lifecycle-design.md)にnative接続時の権限と寿命の候補をまとめた。
 native handleの取得・ACL変更・flush・公開操作は今回実行していない。
 
 ## 実装した境界

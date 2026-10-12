@@ -21,7 +21,7 @@
 ## 最小読取順
 
 1. [引継書](anomaly-multiseed-v0.3-s4-b1-handoff-2026-09-07.md) §6〜7と§11以降。
-2. [記録契約](../anomaly-v03-cleanup-evidence-design.md)。冒頭の最新状態と各checkpointを区別する。
+2. [記録契約](../anomaly/native/files/anomaly-v03-cleanup-evidence-design.md)。冒頭の最新状態と各checkpointを区別する。
 3. `git diff 16a037f f2f2d95 -- src/banto_ai/_anomaly_v03_windows.py tests/fixtures/anomaly_v03_native_child.py`
 4. 下表に対応する実装・試験。必要な既存calleeだけ追加で読む。
 

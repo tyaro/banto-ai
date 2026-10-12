@@ -1,6 +1,6 @@
 # readerの依存source・実行環境観測の拡張
 
-2026-09-25 JST。実装 `0b03b91a59c7359e4eb05e3585242b88aa8c8cab`。[API](../anomaly-v03-reader-evidence.md)、[計画](../anomaly-v03-consumer-source-runtime-plan.md)。OUT `artifacts/reader-dependency-observation-2026-09-25`、成功は `attempt-2/`。保存revisionと各pinは最上位savepoint-evidence.json。
+2026-09-25 JST。実装 `0b03b91a59c7359e4eb05e3585242b88aa8c8cab`。[API](../anomaly/execution/anomaly-v03-reader-evidence.md)、[計画](../anomaly/execution/anomaly-v03-consumer-source-runtime-plan.md)。OUT `artifacts/reader-dependency-observation-2026-09-25`、成功は `attempt-2/`。保存revisionと各pinは最上位savepoint-evidence.json。
 
 ## 結果
 

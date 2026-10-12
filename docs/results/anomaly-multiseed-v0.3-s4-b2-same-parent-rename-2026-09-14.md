@@ -6,7 +6,7 @@
 **新規10＋既存172＝182 tests pass。親/子のDACL固定・証跡保存は成功したが、
 NULL RootDirectory＋単一leafの同一親内renameもNTSTATUS0xc0000022/WinError5で拒否された。**
 28 tracked handles/token2個close、worker終了を確認した。1回枠は終了し、追加試行は行わない。
-[設計・公式API資料](../anomaly-v03-same-parent-rename-design.md)と[前回の親policy比較](anomaly-multiseed-v0.3-s4-b2-parent-policy-rename-2026-09-14.md)を参照。
+[設計・公式API資料](../anomaly/native/files/anomaly-v03-same-parent-rename-design.md)と[前回の親policy比較](anomaly-multiseed-v0.3-s4-b2-parent-policy-rename-2026-09-14.md)を参照。
 
 ## 実装・検証と作業領域の分離
 
@@ -80,7 +80,7 @@ worker・検証processは終了、常駐処理なし。資源上限での停止�
 
 ## 次の設計作業
 
-[未採用の順序案](../anomaly-v03-publication-order-options.md)に、親private中のpayload rename→親固定→最終検査→
+[未採用の順序案](../anomaly/native/files/anomaly-v03-publication-order-options.md)に、親private中のpayload rename→親固定→最終検査→
 予約した空markerへ保持writerでwrite/flush/closeする候補と、consumer/故障条件をまとめた。
 独立レビューP2で別actorが固定前に取得した親の追加/DELETE_CHILD等の残存権限が指摘され、
 sealでその権限を消去しないmodel、検査後/公開後の変更、隔離根拠不明なら保護済みcommit不可を追記した。

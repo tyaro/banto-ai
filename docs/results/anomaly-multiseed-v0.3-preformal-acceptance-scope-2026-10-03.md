@@ -22,7 +22,7 @@
 | 4. 公開・読取り・独立監査 | 架空入力の主表・slice別算術監査→5payload保存→writer終了後reader、保存済みdev/smoke全件の記述報告4payload公開・別reader、旧独立監査との集計照合 | 登録入力由来の同一結果を別analysis/audit root、公開receipt、別reader、独立数値監査へ結ぶ正式経路と失敗状態を検証 | S5/S6で実結果の全payload、全inference/gate/slice、独立再計算、別readerを照合 |
 | 5. 全工程予算 | 小さいfixtureの共有監視・資源停止・所有worker回収。旧720評価の保存量・時間と、後続の全区間要約3試行・記述報告の実績 | producer、50,000 draw、独立監査、staging/公開/readerを含む時間・容量・private memory・system commitの上限と停止・再登録を採択。smoke実測から計画所定の容量検査を行う | 実消費量、停止条件、証拠保全、全process終了を確認 |
 
-正式運用ID `anomaly-v03-single-writer-research-v1` は[契約案](../anomaly-v03-consumer-io-proposal.md)の予約名で、採択済みではない。旧計画の正式Windows pinは build `10.0.26200.9168` / CPython `3.14.0`、後続の観測OSは `10.0.26200.9457`。旧pinやDACL・独立tokenの受入を観測値だけで通過扱いせず、運用差分、計画改訂、独立再監査と対象revisionの受入を先に確定する。Windows 3.12を追加の正式必須条件にはしない。
+正式運用ID `anomaly-v03-single-writer-research-v1` は[契約案](../anomaly/execution/anomaly-v03-consumer-io-proposal.md)の予約名で、採択済みではない。旧計画の正式Windows pinは build `10.0.26200.9168` / CPython `3.14.0`、後続の観測OSは `10.0.26200.9457`。旧pinやDACL・独立tokenの受入を観測値だけで通過扱いせず、運用差分、計画改訂、独立再監査と対象revisionの受入を先に確定する。Windows 3.12を追加の正式必須条件にはしない。
 
 旧formal入口は `require_campaign_acceptance()` で `s4_acceptance_not_frozen` を返し、保存済み報告入口もformal modeを拒否する。正式文書草稿の `status / provenance / analysis_consumer / bootstrap` はnull、`formal_ready=false`を維持する。この4欄は「残り4試験」という意味ではない。`formal_permission`、`promotion_allowed`、`independent_s6_complete`、`trust`、`execution_authenticated`、`full_runtime_inventory_complete`、`analysis_authorized`を本書でtrueにしない。
 
@@ -42,7 +42,7 @@
 
 `read_chunk_summaries(..., chunk_index=0, expected_mode="engineering")` は現行契約どおり1区間の22 fileを検証し、観測→score→ledgerから主・条件別countを導出する。照合対象は6 identity、入力/評価hash、最新attempt、生成・score/ledgerの既存監査pin、整数の分子/分母、判定不能と分母ゼロ、条件別在庫とする。既存の生成監査pinとの突合せと全体の資源監視はAPI単体の保証ではなく、pilotの呼出し側で別に行う。過去の報告を新計算の正解として無条件に信頼せず、不一致は停止して両記録を保全する。`run_campaign`、新producer評価、bootstrap、正式gate、公開済みrootの変更はこの単位に含めない。
 
-当時は1区間の資源・結果を確認してから全120区間の範囲と予算を判断することにした。後続作業では小要約を外部pin付きで保存し、[coverage結合](../anomaly-v03-summary-coverage.md)の欠落0を確認してから[保存済み報告入口](../anomaly-v03-saved-report-pipeline.md)に渡した。旧720評価を再生成・再評価せず、保存済みpayloadの新readerによる再読取りと過去監査の再利用を分けて[実施結果](anomaly-multiseed-v0.3-real-saved-summary-report-2026-10-03.md)に記録した。
+当時は1区間の資源・結果を確認してから全120区間の範囲と予算を判断することにした。後続作業では小要約を外部pin付きで保存し、[coverage結合](../anomaly/evaluation/anomaly-v03-summary-coverage.md)の欠落0を確認してから[保存済み報告入口](../anomaly/execution/anomaly-v03-saved-report-pipeline.md)に渡した。旧720評価を再生成・再評価せず、保存済みpayloadの新readerによる再読取りと過去監査の再利用を分けて[実施結果](anomaly-multiseed-v0.3-real-saved-summary-report-2026-10-03.md)に記録した。
 
 正式規模の単純外挿は旧720評価の約14.98GiB・累積44.54時間から約59.91GiB・178.17時間で、[予算調査](anomaly-multiseed-v0.3-consumer-coverage-budget-2026-09-25.md)に記録された**未採択シナリオ**である。240時間/96GiB/空き32GiB案も未採択。50,000 drawと最終独立監査の時間・メモリがないため全工程予算に代用しない。pilotも既存の時間・private・RAM/commit/disk余裕を超える場合は停止し、上限を自動で上げない。
 

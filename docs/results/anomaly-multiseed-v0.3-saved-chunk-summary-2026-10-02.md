@@ -2,7 +2,7 @@
 
 **既存の保存済み区間readerへ、独立検算直後に主集計・条件別集計を取り出す経路を追加した。新規12＋既存13の25項目がすべてpass。** 実際の120区間/720評価は読み直していない。
 
-起点はd96344803a97e3dafec69f2a0eb5f15d36edfb8b。前保存点33,823bytes/SHA256 27634dfcccca272ec4409f9130f1a0db7e64c8531a1807b58dd7c19a8979f80b。実装c8e3bd1cbc9a672096f4f4dac57bc09d0d64ef1e、clean候補sr01/banto-ai。既存82codeのうちreader1本を変更、81本は不変、新module/test2本で84code。18dataは不変。[API](../anomaly-v03-saved-chunk-summary.md)。
+起点はd96344803a97e3dafec69f2a0eb5f15d36edfb8b。前保存点33,823bytes/SHA256 27634dfcccca272ec4409f9130f1a0db7e64c8531a1807b58dd7c19a8979f80b。実装c8e3bd1cbc9a672096f4f4dac57bc09d0d64ef1e、clean候補sr01/banto-ai。既存82codeのうちreader1本を変更、81本は不変、新module/test2本で84code。18dataは不変。[API](../anomaly/evaluation/anomaly-v03-saved-chunk-summary.md)。
 
 ## 確認したこと
 

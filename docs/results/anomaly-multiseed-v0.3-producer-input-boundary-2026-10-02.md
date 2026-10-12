@@ -1,6 +1,6 @@
 # 架空producerからconsumer主集計への入力境界
 
-2026-10-02 JST。[API](../anomaly-v03-producer-input-fixture.md)。登録、全予定枠、最新試行、供給入力bytes、要約count、全体終了記録を結ぶadapterを追加した。実観測を読む前の、I/Oなし・fixture専用の実装である。
+2026-10-02 JST。[API](../anomaly/evaluation/anomaly-v03-producer-input-fixture.md)。登録、全予定枠、最新試行、供給入力bytes、要約count、全体終了記録を結ぶadapterを追加した。実観測を読む前の、I/Oなし・fixture専用の実装である。
 
 開始文書revision a0aee2ff732c45173cab1da4b3e5d804e1e5d65c、実装35032159133aa4d3866863b555bd23a3718f07be、clean候補pi01/banto-ai。新module/testの2本だけを追加し、旧76code/18dataはraw pin不変。今回78codeとなる。最終文書revision/pinはOUTのsavepoint-evidence.jsonへ保存する。
 

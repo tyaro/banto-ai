@@ -10,16 +10,16 @@ class PublicDataDocumentationTests(unittest.TestCase):
     def setUpClass(cls):
         cls.readme = (ROOT / "README.md").read_text(encoding="utf-8")
         cls.datasets = (ROOT / "datasets" / "README.md").read_text(encoding="utf-8")
-        cls.survey = (ROOT / "docs" / "public-dataset-survey.md").read_text(encoding="utf-8")
-        cls.adr = (ROOT / "docs" / "adr-0005-public-dataset-boundary.md").read_text(encoding="utf-8")
-        cls.roadmap = (ROOT / "docs" / "research-roadmap.md").read_text(encoding="utf-8")
+        cls.survey = (ROOT / "docs" / "research/public-dataset-survey.md").read_text(encoding="utf-8")
+        cls.adr = (ROOT / "docs" / "decisions/adr-0005-public-dataset-boundary.md").read_text(encoding="utf-8")
+        cls.roadmap = (ROOT / "docs" / "research/research-roadmap.md").read_text(encoding="utf-8")
         cls.plan = (ROOT / "docs" / "research-implementation-plan.md").read_text(encoding="utf-8")
         cls.baseline_result = (ROOT / "docs" / "results" / "metropt3-baseline-evaluation-2026-09-04.md").read_text(encoding="utf-8")
 
     def test_required_documents_exist(self):
         for relative in (
-            "docs/public-dataset-survey.md",
-            "docs/adr-0005-public-dataset-boundary.md",
+            "docs/research/public-dataset-survey.md",
+            "docs/decisions/adr-0005-public-dataset-boundary.md",
             "datasets/README.md",
             "docs/results/metropt3-baseline-evaluation-2026-09-04.md",
         ):
@@ -107,8 +107,8 @@ class PublicDataDocumentationTests(unittest.TestCase):
         self.assertIn("download／verify", self.adr)
 
     def test_readme_points_to_public_data_documents(self):
-        self.assertIn("docs/public-dataset-survey.md", self.readme)
-        self.assertIn("docs/adr-0005-public-dataset-boundary.md", self.readme)
+        self.assertIn("docs/research/public-dataset-survey.md", self.readme)
+        self.assertIn("docs/decisions/adr-0005-public-dataset-boundary.md", self.readme)
         self.assertIn("MetroPT-3", self.readme)
 
     def test_verified_manifest_and_tool_are_linked(self):

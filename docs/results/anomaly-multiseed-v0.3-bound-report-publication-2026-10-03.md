@@ -2,7 +2,7 @@
 
 **前回の準備済み報告書4file/3,040,268bytesを、通常のローカル保存とwriter終了後の別readerへ接続した。修正後11項目pass（4.545秒）。保存例は3.722秒で終了し、4ファイルのbytes/SHA256は元と一致した。**
 
-起点8f77c54c4d300b11cb8f8d585b684f8b6e467612、前保存点27,135bytes/SHAed8fe302b63a4f3f5bbee020288013381bc529f5215c582a188ac431f82b0c1a。最終実装8e1ab327d4302741cb0aff7c46b787707de5fc86、clean候補brp2/banto-ai。新module/test2本、旧90code/18data不変、計92code。[API](../anomaly-v03-bound-report-publication.md)。
+起点8f77c54c4d300b11cb8f8d585b684f8b6e467612、前保存点27,135bytes/SHAed8fe302b63a4f3f5bbee020288013381bc529f5215c582a188ac431f82b0c1a。最終実装8e1ab327d4302741cb0aff7c46b787707de5fc86、clean候補brp2/banto-ai。新module/test2本、旧90code/18data不変、計92code。[API](../anomaly/execution/anomaly-v03-bound-report-publication.md)。
 
 ## 確認結果
 

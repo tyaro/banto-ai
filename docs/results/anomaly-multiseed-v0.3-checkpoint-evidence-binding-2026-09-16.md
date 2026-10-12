@@ -1,7 +1,7 @@
 # 進捗記録と保存済み6件の証拠照合
 
 2026-09-16。実装commit **6b77db9bf603aceb09f73a72241a57992c64716d**。
-`checkpoint_anomaly_v03.py preflight-trial` を追加し、参照journalと既存trialの実ファイル・終了監視・保存auditを結び付けた。[使い方](../anomaly-v03-independent-audit-and-checkpoints.md#保存済み6件とのpreflight証拠照合)。保存済み全6件への実適用で一致を確認した。
+`checkpoint_anomaly_v03.py preflight-trial` を追加し、参照journalと既存trialの実ファイル・終了監視・保存auditを結び付けた。[使い方](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#保存済み6件とのpreflight証拠照合)。保存済み全6件への実適用で一致を確認した。
 
 ## 確認した範囲
 

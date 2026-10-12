@@ -1,6 +1,6 @@
 # S4-B2 識別用token修正と管理者起動取消
 
-2026-09-15。実装 **35c46670f560bff054af63ffe0ac7c346404b01a**、[仕様・根拠・次の確認枠](../anomaly-v03-principal-identification-diagnostic-design.md)。AccessCheck専用tokenの複製要求をlevel2から1へ下げた一行の変更で、SID/非昇格/危険権限mask/所有・解放/資源上限は維持。OSの権限設定は追加していない。既存34件＋診断9件＋loader10件pass、独立所見0。
+2026-09-15。実装 **35c46670f560bff054af63ffe0ac7c346404b01a**、[仕様・根拠・次の確認枠](../anomaly/native/principals/anomaly-v03-principal-identification-diagnostic-design.md)。AccessCheck専用tokenの複製要求をlevel2から1へ下げた一行の変更で、SID/非昇格/危険権限mask/所有・解放/資源上限は維持。OSの権限設定は追加していない。既存34件＋診断9件＋loader10件pass、独立所見0。
 新規公開DLL24576 bytes/SHA256 **05a77ce8bfe3c16d166eabd14c614ce85040f2f0089cdfc673c611ae161d6e6f**、command16754文字/SHA256 **9694e60e2c6fcac316aeaeab5c862176e0d77711d93f7cff18fbd4d24826876c**。
 
 通常ControlはUTC05:09:31.1403070〜05:09:33.7452769、PID18720/exit41、起動97ms/待機2479ms/合計2603ms。Handle取得・終了・解放成功、例外なし。

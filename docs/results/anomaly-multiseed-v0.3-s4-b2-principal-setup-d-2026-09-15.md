@@ -1,6 +1,6 @@
 # S4-B2 新規準備dの保護root作成での停止
 
-2026-09-15。実装 **f5ad7c21389e7ae26eb48858b6017691fecedb22**、[仕様](../anomaly-v03-principal-setup-d-design.md)。修正後のPreflight単独成功から進み、root定数/記録先だけを新規dへ変更した。C#34件pass、独立所見0、通常load-onlyはPID20872/exit0。公開DLL22528 bytes/SHA256 **fc88778d472098160f81302b8058b4b8cabcfa015119098b585fd03cce57007e**、command15335文字。
+2026-09-15。実装 **f5ad7c21389e7ae26eb48858b6017691fecedb22**、[仕様](../anomaly/native/principals/anomaly-v03-principal-setup-d-design.md)。修正後のPreflight単独成功から進み、root定数/記録先だけを新規dへ変更した。C#34件pass、独立所見0、通常load-onlyはPID20872/exit0。公開DLL22528 bytes/SHA256 **fc88778d472098160f81302b8058b4b8cabcfa015119098b585fd03cce57007e**、command15335文字。
 UTC05:20:34の通常事前照会でSAM2221/free0、account不存在と新規dのattributes0xffffffff/error2による不存在を確認した。末尾なし/b/cの3旧rootへ再訪なし。
 
 新規RunはUTC **05:21:30.6208593Z〜05:23:38.6962403Z**、PID **22336**、**exit263458 = phase4 CreateRoot + native1314**。起動要求124066ms、待機3952ms、合計128068ms。Handle取得・終了観測・observer解放成功、観測例外なし、release_failed=false。起動要求待ちをnative40秒の経過として扱わない。

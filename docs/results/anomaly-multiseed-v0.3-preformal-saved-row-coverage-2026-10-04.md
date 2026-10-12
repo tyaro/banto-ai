@@ -20,7 +20,7 @@ g02の架空登録形式保存attemptと、r01で所有reader子が保存rawを�
 
 | 時点 | 必要な受入証拠・作業 | 今回の結果で扱えた範囲 |
 | --- | --- | --- |
-| S4採択前、架空固定入力 | [未採択campaign anchor案](../anomaly-v03-preformal-campaign-anchor-proposal-v1.md)に沿う480計画hash・外部pin・所有controller/journal・区間別最新attemptを固定し、同一由来の2,880行から40 clusterを導く。その後、50,000 draw→全文書/slice→完全別監査→公開後readerまでの単一外側予算を測る | 区間別のcontrol raw/pinと最新６行を検査する入口、および欠番一覧だけ。実producer campaignは未着手 |
+| S4採択前、架空固定入力 | [未採択campaign anchor案](../anomaly/execution/anomaly-v03-preformal-campaign-anchor-proposal-v1.md)に沿う480計画hash・外部pin・所有controller/journal・区間別最新attemptを固定し、同一由来の2,880行から40 clusterを導く。その後、50,000 draw→全文書/slice→完全別監査→公開後readerまでの単一外側予算を測る | 区間別のcontrol raw/pinと最新６行を検査する入口、および欠番一覧だけ。実producer campaignは未着手 |
 | S4採択前、運用・環境 | 26H2運用契約、公開保証、５役の完全source/runtime/identity閉包、最終revisionのLinux必須jobとrunner image、Windows nativeを受入れる | g02/r01の選定source・観測runtimeへの保存リンクを照合。完全閉包の証明ではない |
 | S4の最終dev/smoke | S1登録済みdev８・smoke２ seedを改訂契約と最終clean revisionで新rootに完走し、独立再監査とsmoke実測から容量２倍条件を判定する | 保存済み合成720評価はengineering参考のまま。今回、dev/smokeを再実行していない |
 | S4採択後のS5/S6 | 未使用holdout 40 seedの480区間・2,880評価を登録順で一回実行し、S6で全件を独立再監査する | 実登録観測の生成・読取り０。S5/S6開始権限、性能値、正式評価creditを与えない |

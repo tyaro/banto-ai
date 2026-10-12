@@ -1,7 +1,7 @@
 # S4-B2 局所directory取得driverの実装と実機確認
 
 2026-09-14、基準982c1318。実装savepoint **3a719347e736e7770036b6b7882f0f4614774424**。
-ユーザーの自走・セーブポイント作成許可を受け、[局所driverの設計](../anomaly-v03-directory-driver-design.md)を実装・レビューし、
+ユーザーの自走・セーブポイント作成許可を受け、[局所driverの設計](../anomaly/native/files/anomaly-v03-directory-driver-design.md)を実装・レビューし、
 別のclean checkoutから新規枠directory-driver-2026-09-14のattempt-1を1回実行した。
 
 **240件pass/0.210秒、実機の局所取得はpass/0.540秒、worker exit0を確認**。

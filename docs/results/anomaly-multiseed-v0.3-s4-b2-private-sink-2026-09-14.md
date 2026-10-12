@@ -5,7 +5,7 @@
 
 **新規18＋既存72＝90 testsがpassし、新規private領域への3ファイル保存をWindows実機で確認した。**
 独立レビューのP2計5件を是正し、最終再確認の新規P0〜P3は0。
-[設計と試行範囲](../anomaly-v03-private-sink-design.md)を参照。
+[設計と試行範囲](../anomaly/native/files/anomaly-v03-private-sink-design.md)を参照。
 tests/fixturesのengineering部品であり、native publisherやS4受入の完了ではない。
 
 ## 実装と検証

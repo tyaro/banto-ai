@@ -1,6 +1,6 @@
 # analysis役割の保存結果準備と実行証拠の接続
 
-2026-09-26 JST（9月25日開始）。実装 `2db441e44a65857f288f800a104ba436339358b9`。[API](../anomaly-v03-analysis-evidence.md)。OUTは開始時の `artifacts/analysis-observed-evidence-2026-09-25` を維持。成功例はobserved-example/。文書保存revisionと各pinは最上位savepoint-evidence.json。
+2026-09-26 JST（9月25日開始）。実装 `2db441e44a65857f288f800a104ba436339358b9`。[API](../anomaly/execution/anomaly-v03-analysis-evidence.md)。OUTは開始時の `artifacts/analysis-observed-evidence-2026-09-25` を維持。成功例はobserved-example/。文書保存revisionと各pinは最上位savepoint-evidence.json。
 
 ## 完了した接続
 

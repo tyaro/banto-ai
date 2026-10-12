@@ -1,7 +1,7 @@
 # S4-B2 公開前後の保持とconsumer観測期間
 
 2026-09-14、基準86efa66。実装savepoint **1c03cfece1464f8231b7d223c7f91828a639bd97**。
-[保持期間model仕様](../anomaly-v03-retention-window-design.md)を実装・検証し、初回独立P2 1件を修正、再レビューP0〜P3残件0。
+[保持期間model仕様](../anomaly/native/runtime/anomaly-v03-retention-window-design.md)を実装・検証し、初回独立P2 1件を修正、再レビューP0〜P3残件0。
 **子handleのclose/reopenの間隙と、全fileを同時に保護できるconsumer期間を区別した。**
 新規23＋既存283＝306件pass/0.219秒。今回はpure modelとfake backendの契約確認だけで、新規実機試行は0回。
 全isolation/protected commit/future immutability/formal permission/execution authenticated flagsはfalse、B2/S4受入は未完了。

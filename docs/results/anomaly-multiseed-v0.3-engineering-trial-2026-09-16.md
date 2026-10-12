@@ -1,7 +1,7 @@
 # 単一writer方式の固定6件評価・保存後再計算
 
 2026-09-16 JST。運用改訂確認後の「次に進めてください」を受け、`anomaly-v03-single-writer-v1` を採択。
-実装savepoint **0086ffe226ed58c618f6bc001ebd0c99a90e66e9**。[実行ガイド](../anomaly-v03-engineering-evaluation.md)。
+実装savepoint **0086ffe226ed58c618f6bc001ebd0c99a90e66e9**。[実行ガイド](../anomaly/evaluation/anomaly-v03-engineering-evaluation.md)。
 
 ## 実装と検証
 

@@ -1,6 +1,6 @@
 # 検算済みfixtureの通常公開・writer証跡・別reader接続（2026-10-02）
 
-**生成済み5ファイルを、通常writerと終了後の別readerへ接続した。保存済み解析と主表＋slice検算の記録も外部bindingで結合し、数値再計算なしで公開・読取りを確認した。** [利用方法](../anomaly-v03-fixture-publication.md)。
+**生成済み5ファイルを、通常writerと終了後の別readerへ接続した。保存済み解析と主表＋slice検算の記録も外部bindingで結合し、数値再計算なしで公開・読取りを確認した。** [利用方法](../anomaly/evaluation/anomaly-v03-fixture-publication.md)。
 
 開始revision596d31b298a649f50f5246e917889b51e1cc7f88、初回0c6dbae63254920e6320e0e4c0d9187d21f6e007/fp01、修正後a9de2f500020bb951dfd08d66b56e368859236b9/fp02。新module/test2本、既存evidence/budgetと試験4本を変更。旧74code中70本と18data不変、現在76code。編集先70b0、本流・実計算checkoutは変更しない。
 

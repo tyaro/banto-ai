@@ -1,6 +1,6 @@
 # S4-B2 準備DLLの管理者読込み成功
 
-2026-09-15、実装 **64307e50aef7d48902e3a5db76a78d1bec7d377e**、[仕様](../anomaly-v03-principal-loader-diagnostic-design.md)。公開build-01 DLL22528 bytes/SHA2564ea7c99167a71c9ba6e26f2d6d3a74ad16226d8209dc3535d19660696440a88aの有界展開/hash/Assembly.Loadだけを通常/管理者で各max1確認した。準備Entry.Runは呼んでいない。
+2026-09-15、実装 **64307e50aef7d48902e3a5db76a78d1bec7d377e**、[仕様](../anomaly/native/principals/anomaly-v03-principal-loader-diagnostic-design.md)。公開build-01 DLL22528 bytes/SHA2564ea7c99167a71c9ba6e26f2d6d3a74ad16226d8209dc3535d19660696440a88aの有界展開/hash/Assembly.Loadだけを通常/管理者で各max1確認した。準備Entry.Runは呼んでいない。
 
 | 観測 | 通常Control | 管理者Run |
 | --- | --- | --- |

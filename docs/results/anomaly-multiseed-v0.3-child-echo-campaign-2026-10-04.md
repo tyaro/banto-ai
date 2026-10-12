@@ -1,6 +1,6 @@
 # v0.3 架空campaignの子anchor照合と受入残件（2026-10-04）
 
-正式評価前の技術保存点。作業branchは `codex/preformal-acceptance-scope`、この試行のclean source revisionは `2e10c6723df9f00999c90416954a806329546dde`。入力は固定手作り系列で、登録holdout観測を読んでいない。26H2の[S4改訂案](../anomaly-v03-s4-26h2-amendment-draft-v1.md)はreview draftのまま、旧gate `s4_acceptance_not_frozen`、正式credit 0を維持する。
+正式評価前の技術保存点。作業branchは `codex/preformal-acceptance-scope`、この試行のclean source revisionは `2e10c6723df9f00999c90416954a806329546dde`。入力は固定手作り系列で、登録holdout観測を読んでいない。26H2の[S4改訂案](../anomaly/acceptance/anomaly-v03-s4-26h2-amendment-draft-v1.md)はreview draftのまま、旧gate `s4_acceptance_not_frozen`、正式credit 0を維持する。
 
 ## この保存点で進んだ境界
 

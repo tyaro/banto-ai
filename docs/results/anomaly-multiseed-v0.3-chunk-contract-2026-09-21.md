@@ -1,7 +1,7 @@
 # 登録dev/smoke区切りの結果形式と保存ledger検算
 
 2026-09-21 JST。実装savepoint **60b2bdb3d2556b280b10991a2fd1d47d4566714d**。
-[API仕様](../anomaly-v03-independent-audit-and-checkpoints.md#全120区切りの結果形式とpayload検算api) / [短い再開用引継ぎ](../current-handoff.md)。
+[API仕様](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#全120区切りの結果形式とpayload検算api) / [短い再開用引継ぎ](../current-handoff.md)。
 
 `anomaly_v03_chunk_contract.py` を追加し、外部campaign plan・chunk index・attempt番号から登録6件を選び、結果のsource/runtime、dataset/slot順序、共通input hash、coverage、失敗・判定保留を検査できるようにした。dev96区切りとsmoke24区切りの計720件を対象とする結果形式であり、この件数の実データを今回処理したものではない。
 

@@ -1,6 +1,6 @@
 # 架空主集計の別実装検算と実行記録（2026-10-01）
 
-前回の数値workerが保存した架空文書を、別の算術実装と所有audit processで検算した。9主表の117絶対推定・72対応差・180gateが一致し、新規22試験も成功した。[APIと範囲](../anomaly-v03-fixture-numerical-audit.md)、[現在の引継ぎ](../current-handoff.md)。
+前回の数値workerが保存した架空文書を、別の算術実装と所有audit processで検算した。9主表の117絶対推定・72対応差・180gateが一致し、新規22試験も成功した。[APIと範囲](../anomaly/evaluation/anomaly-v03-fixture-numerical-audit.md)、[現在の引継ぎ](../current-handoff.md)。
 
 ## 保存点と実装
 

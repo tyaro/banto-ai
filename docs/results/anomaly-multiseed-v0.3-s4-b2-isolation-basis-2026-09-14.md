@@ -1,7 +1,7 @@
 # S4-B2 隔離条件の具体化とAPI存在確認
 
 2026-09-14、基準1f70faa、設計savepoint **5b81bf032768d0ac486aff48143b77268ab36158**。
-[設計書](../anomaly-v03-isolation-basis-design.md)に、生成時の取得競合・既取得parent権限・handle移管・consumer整合の条件を記録した。
+[設計書](../anomaly/acceptance/anomaly-v03-isolation-basis-design.md)に、生成時の取得競合・既取得parent権限・handle移管・consumer整合の条件を記録した。
 次の候補はCreateDirectory2Wで作成と初回handle取得を1回の呼出しにする限定部品。隔離成立や方式採用を認定したものではない。
 **新規設計1ファイルの独立レビューはP0〜P3=0**。read-only、進捗ポーリングなし。レビュー担当によるAPI資料再照合・実機実行はない。
 

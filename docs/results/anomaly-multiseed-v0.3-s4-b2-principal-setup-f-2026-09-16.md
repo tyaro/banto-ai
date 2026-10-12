@@ -9,4 +9,4 @@ UTC15:11:03.1958922Z、終了後SAM2221/free0でaccount不存在。**fへ再訪�
 
 最終savepoint-evidence.json22508 bytes/SHA256 541dfa7c139626693e011668f2ea32f52a1a73f83c687815c952c1866abd0553。自身を除く12 artifacts/論理97805 bytes。保存済みDLL25088 bytes/hash3d236d9b2b920a4bbbf0550839bac94abd551f7debee73c02ec531a086d6f1bf、source不変。
 終了後RAM3706265600/C145987731456/D199164497920 bytes、D約185.49GiB。PC全体の変動原因と長期リーク有無は未確認。build26200.9445/boot2026-09-15T14:30:24.5000000+09:00、Windows Update engineering緩和/正式pin不変。
-既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全。独立レビューで確定欠陥0、停止条件を固定診断で識別する[新規g](../anomaly-v03-principal-setup-g-design.md)へ進む。全許可flags=false、acceptance_status=not_completed。環境準備/全publisher/正式B2-S4は未完了。
+既存親policy結果書8461 bytes/hash443a78357625903a44e98d31cc592176a1dfed0497dfdc42a252200f8a2f3621を保全。独立レビューで確定欠陥0、停止条件を固定診断で識別する[新規g](../anomaly/native/principals/anomaly-v03-principal-setup-g-design.md)へ進む。全許可flags=false、acceptance_status=not_completed。環境準備/全publisher/正式B2-S4は未完了。

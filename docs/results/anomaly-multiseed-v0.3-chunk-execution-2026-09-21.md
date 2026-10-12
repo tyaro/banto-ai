@@ -1,7 +1,7 @@
 # 新しい6評価の生成から別process監査・journal確定まで
 
 2026-09-21 JST。接続実装 **8b343873e052103fb78fd304551eba09c8015bfc**、path長の事前検査 **25d1084ecf8f24f17fe6f8f5b253c317bc80daa7**。
-[実行方法](../anomaly-v03-independent-audit-and-checkpoints.md#新しい6評価を別processの監査まで通す) / [短い引継ぎ](../current-handoff.md)。
+[実行方法](../anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#新しい6評価を別processの監査まで通す) / [短い引継ぎ](../current-handoff.md)。
 
 ## 実装と選抜検証
 

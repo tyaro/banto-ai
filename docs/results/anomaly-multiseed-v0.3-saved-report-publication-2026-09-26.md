@@ -1,6 +1,6 @@
 # 保存済みdev/smoke記述レポートへの解析・公開・別reader適用
 
-2026-09-26 JST。[公開接続API](../anomaly-v03-analysis-publication.md)、[前工程の43試験](anomaly-multiseed-v0.3-analysis-publication-chain-2026-09-26.md)、[source/runtime計画](../anomaly-v03-consumer-source-runtime-plan.md)。
+2026-09-26 JST。[公開接続API](../anomaly/execution/anomaly-v03-analysis-publication.md)、[前工程の43試験](anomaly-multiseed-v0.3-analysis-publication-chain-2026-09-26.md)、[source/runtime計画](../anomaly/execution/anomaly-v03-consumer-source-runtime-plan.md)。
 
 既存dev/smokeの保存済み記述レポートに、profile付きanalysis→通常公開→別observed readerを適用して成功。実装f8f20bcf4ac7ade2f20e96f37bc1567328d88a48のpc01と前工程の依存候補を再利用し、source変更・新checkout・新reference起動・試験suite再実行は0。前回43試験の合格記録はcode pin不変を確認して再利用した。
 

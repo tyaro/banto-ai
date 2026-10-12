@@ -5,7 +5,7 @@
 
 **新規19＋既存124＝143 tests pass。実Windowsの新規2 filesにfrozen DACLを設定し、
 同一ID/bytes・固定後SD・保持権限を読み戻して、全tracked handleとworkerの終了を確認した。**
-[設計・試行仕様・公式API資料](../anomaly-v03-file-sealing-design.md)を参照。
+[設計・試行仕様・公式API資料](../anomaly/native/files/anomaly-v03-file-sealing-design.md)を参照。
 
 ## 接続と試験
 

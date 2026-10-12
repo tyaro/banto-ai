@@ -6,7 +6,7 @@
 **新規5＋既存167＝172 tests pass。親privateでは相対renameと終了後3 objectsの一致確認が成功し、
 親frozenではNTSTATUS0xc0000022/WinError5の拒否が再現した。両workerと全tracked handlesの終了を確認した。**
 同じ実装・NT要求で親policyによる差が観測された。内部拒否箇所の特定や全publisher受入ではない。
-[設計・公式API資料](../anomaly-v03-parent-policy-rename-design.md)と[前回の失敗結果](anomaly-multiseed-v0.3-s4-b2-directory-rename-2026-09-14.md)を参照。
+[設計・公式API資料](../anomaly/native/files/anomaly-v03-parent-policy-rename-design.md)と[前回の失敗結果](anomaly-multiseed-v0.3-s4-b2-directory-rename-2026-09-14.md)を参照。
 
 ## 変更・検証
 

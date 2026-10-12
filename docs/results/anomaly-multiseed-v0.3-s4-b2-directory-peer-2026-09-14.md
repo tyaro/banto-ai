@@ -1,7 +1,7 @@
 # S4-B2 private rootの同一token peer権限取得
 
 2026-09-14、基準8290039。実装savepoint **13ad057c2662cd0bf67a19853602c43eeac7d42e**。
-[peer取得仕様](../anomaly-v03-directory-peer-design.md)を実装・レビューし、新規max1枠directory-peer-2026-09-14で1回確認した。
+[peer取得仕様](../anomaly/native/files/anomaly-v03-directory-peer-design.md)を実装・レビューし、新規max1枠directory-peer-2026-09-14で1回確認した。
 **FILE_ADD_FILE/FILE_ADD_SUBDIRECTORYは共有違反で拒否されたが、FILE_DELETE_CHILDを含む別handleは取得できた。**
 原rootをshare READで保持しても、この条件ではpeerの全変更権限を排除できない。実際の子作成・削除・renameはまだ検証していない。
 

@@ -1,6 +1,6 @@
 # 結合済み架空入力を所有解析・独立検算へ接続
 
-2026-10-02 JST。[API](../anomaly-v03-bound-fixture-pipeline.md)。producer主/補助結合結果の外部pinから4worker入力へ写し、所有analysisと主表/sliceの独立auditを順に実行した。
+2026-10-02 JST。[API](../anomaly/evaluation/anomaly-v03-bound-fixture-pipeline.md)。producer主/補助結合結果の外部pinから4worker入力へ写し、所有analysisと主表/sliceの独立auditを順に実行した。
 
 開始627ddc5f89980335ea20f1bc8cf912e383f0276f、初回568562f65889d7afa3e1d4909fc1033901a23cbf/bp01、最終実装9705b7355cdabca189a60bd63a380fc3062b8ec0/bp03。新module/test2本、旧80code/18data不変、現在82code。旧workerや独立算術は変更しない。新pipelineはanalysis成功後にauditが失敗してもfixture_inference_performed=trueを保持し、pipeline全体はfailedとする。OUT artifacts/bound-fixture-pipeline-2026-10-02、tests-3/owned-example。文書revision/全pinはsavepoint-evidence.json。
 

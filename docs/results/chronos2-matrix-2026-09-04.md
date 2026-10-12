@@ -87,5 +87,5 @@ Chronos-2は固定package／checkpoint／provenanceとApache-2.0の記録を維�
 ## 参照
 
 - [Chronos-2初期rolling benchmark](chronos2-initial-evaluation-2026-09-04.md)
-- [Chronos-2評価ノート](../chronos2-notes.md)
+- [Chronos-2評価ノート](../models/chronos2-notes.md)
 - ローカル生成物: `artifacts/chronos2/matrix/benchmark-matrix-chronos2-small/result.json`（Git管理対象外）

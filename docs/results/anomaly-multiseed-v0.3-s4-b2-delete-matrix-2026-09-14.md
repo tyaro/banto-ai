@@ -1,7 +1,7 @@
 # S4-B2 空ファイルの削除権限・共有条件
 
 2026-09-14、基準d275ff0。実装savepoint **26bc403836a2b191e7e8344716c50cf49be50f47**。
-[削除行列仕様](../anomaly-v03-delete-matrix-design.md)を実装・独立レビューし、新規max1枠delete-matrix-2026-09-14で1回確認した。
+[削除行列仕様](../anomaly/native/files/anomaly-v03-delete-matrix-design.md)を実装・独立レビューし、新規max1枠delete-matrix-2026-09-14で1回確認した。
 **子のDELETEが明示拒否でも、親のDELETE_CHILDが許可され、子handleがDELETEを共有していれば削除要求は通った。**
 親をshare READで保持するだけでは、この条件の子削除を防げない。一方、子handleがDELETEを共有しない場合は共有違反で拒否された。
 
