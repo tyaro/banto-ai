@@ -6,6 +6,7 @@ consumer、reader、入力対応、実行記録、報告保存とcampaign。
 
 ## 文書
 
+- [検証記録の自動分割と失敗時の証拠保存](verification-records.md)
 - [保存済み記述結果を準備するanalysis役割の実観測](anomaly-v03-analysis-evidence.md)
 - [解析の保存出力を通常公開し、別readerで確認する](anomaly-v03-analysis-publication.md)
 - [準備済み報告書のローカル保存と終了後の読取り](anomaly-v03-bound-report-publication.md)

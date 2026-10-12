@@ -4,6 +4,10 @@
 
 各報告は実施時点の記録です。数値、失敗、実行範囲、原artifactのidentityはその報告の条件に従って読みます。現在状態は引継ぎを参照してください。
 
+## 検証記録の保存改善
+
+- [検証記録の容量・自動分割・失敗保存の改善（2026-10-12）](verification-recording-policy-2026-10-12.md)
+
 ## モデル・baseline評価（18件）
 
 - [Anomaly multi-seed v0.1 integrity audit — 2026-09-05](anomaly-multiseed-v01-integrity-audit-2026-09-05.md)

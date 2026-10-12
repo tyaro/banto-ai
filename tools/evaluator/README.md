@@ -1,5 +1,8 @@
 # benchmark runner
 
+検証記録の保存は [共通保存APIと失敗保全](../../docs/anomaly/execution/verification-records.md) を参照してください。
+新しいhelperでは tools/verification_records.py を使い、raw/JSONを自動分割します。実行・評価側の資源制限は維持します。
+
 2026-10-11：[少量の代表データによる実評価と再実行](../../docs/results/anomaly-multiseed-v0.3-representative-evaluation-2026-10-11.md)。
 `run_representative_anomaly.py` は保存済みdev/smokeの1 dataset・1〜2候補を実計算し、入力/設定/source/結果/成否を新run IDへ保存します。
 `--replay` は保存入力と計算sourceを照合して別runへ再計算します。C0/C1の1条件と明示replayで全結果一致を確認しました。

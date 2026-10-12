@@ -1,3 +1,18 @@
+## 最新 — ACTIVE / 検証記録の上限見直し・自動分割・失敗保全（2026-10-12 JST）
+
+人の「実行側の制限は維持し、検証記録の容量制限を見直して、ログの自動分割と失敗時の証拠保存を改善」に従い、今回の工程を優先した。
+今後の新規engineering検証rootは tools/verification_records.py の共通保存APIを使う。総量16MiB/files512、part256KiB。うち2MiB/16filesを失敗用、さらに512KiB/4filesを終了manifest用に残す。raw/JSONの順序・part/stream pin・complete/partialを保存し、元の例外・終了コード・未観測null・途中fileを保持する。
+write_terminalをfinallyで使い、終了記録の保存失敗が元例外を隠すことを防ぐ。通常終了でも記録保存が失敗すれば記録全体をfailedにする。閉鎖前に未終了operationがあればincomplete。読取りCLIのrecord_integrityとrecorded_statusを分け、failed/incompleteをsuccessへ補わない。
+この新しい上限は検証記録だけに適用する。評価側900秒/2GiB/output1GiB/single32MiB/files32、Git累積30秒/batch16entry・512KiB/stdout1MiB・stderr128KiB、固定archive/transport/schema/native容量契約は不変。過去の固定上限とscriptは原証拠として保持し、閉鎖/外部固定rootへ追記・整理移動削除しない。
+
+新17distinct test methods/実body18。初回12は11pass/error1（欠落file fixtureの期待型不一致）、原failed/rootを保存。失敗1と具体的新risk2だけ3pass、終了記録の新risk2だけ2pass、長い例外messageの省略表示の新risk1だけ1pass。複数source/runであり最終source単一17successではない。新reader CLI二件は原failed記録をfailedのまま確認。完成旧評価/試験/CI反復・新モデル・追加agent0。既存117science/calculator16とv0.3固定計画bytes不変。
+詳細は [保存方法と制限](anomaly/execution/verification-records.md) と [実装・確認報告](results/verification-recording-policy-2026-10-12.md)。原test/CLI記録は報告内の5新root参照。Git保存と次工程への最終記録は artifacts/verification-recording-policy-20261012-save/root-closed.json と artifacts/verification-recording-policy-20261012-final/root-closed.json を優先する。新formatは python -B tools/check_verification_record.py <root> で読み取れる。
+
+次の未完成機能unitは、従来のC2 quality FINALが保持する同保存seed/layout6 quality-stressのC0 c0-diff-controlを新ID dev-layout6-quality-c0-20261012へ1cell実評価すること。既存CLI・元入力manifest/10pin・fresh fit/calibration・元payload不変を維持し、その補助記録を新共通APIで保存する。完成候補は保存manifest/configだけと比較する。
+自走/heartbeat banto-10はACTIVEを維持。promptへ詳細結果・PC内入力pathを転記しない。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読・正式5残件/最終受入未完了、create_native早期拒否/全7役reader禁止、追加agent禁止、元caps-unknown owner保持を維持。Sol容量又は人の停止時は原証拠を保全してPAUSED、重複再試行なし。
+
+---
+
 ## 最新 — 人の明示再開 / docs整理のcommit・pushと自走再開（2026-10-12 JST）
 
 人の「コミットプッシュして再開ください」を受領。今回のdocsフォルダ整理差分のGitHub送信と自走再開を明示承認した。以下の過去PAUSED・停止予定は履歴として保持し、今回の再開指示を優先する。追加agentの起動・再活性化は禁止のまま。
