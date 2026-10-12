@@ -11,7 +11,7 @@
 - actual checkout 9c65a467f5f282424d2f9bf59cdb870300c0509f、計算code661b27511826fcc87cb4a02930f276afbb8f95d9から不変。declared16/candidate config/compiled config一致はfull loaded runtime/native認証ではない。
 - runtime {"executable": "C:\\Python314\\python.exe", "machine": "AMD64", "python": "3.14.0 (tags/v3.14.0:ebf955d, Oct  7 2025, 10:15:03) [MSC v.1944 64 bit (AMD64)]", "system": "Windows"}、elapsed 27.445918999961577秒/OS sampled privatepeak 148811776B。
 - observations {"bytes": 9600604, "sha256": "9f812738c1fd9805d257a10ca30ded867afc56bc4642437914451a34b5a25d61"}、config {"bytes": 5513, "sha256": "206780a1de33bc4a85d1a77025326e9dd3924741ca201cb5ba61398c12c33281"}、manifest {"bytes": 8065, "sha256": "2782d09a5416e7b3f46f0c29cbe4e71c2da12cb2fc628cf183f9514c6649ac72"}、evaluation {"bytes": 14336630, "sha256": "043c2132f97971d9b045d606abaf585c94b2e3232244e268816f6c9001ad4701"}。
-- 48calibrated、原fit samples各0/calibration各290、14400scores。GT/threshold6/persistence2/matching/config/science変更0。
+- 48calibrated、原fit samples各0/calibration各290、14400scores。GT/C0 threshold4.0/persistence2/matching/config/science変更0。
 
 ## 原指標
 
@@ -26,6 +26,8 @@
 | detection delay | count0、min/max/mean/median原null |
 
 clean_rateとburdenの原valueを単純確率へしない。全20未検出のdelay nullを保持。3source/3equipmentは全clean・matched_event_id nullで、全未対応3とclean3を別fieldで保持する。
+
+2026-10-12の設定metadata照合で、この報告のC0閾値6表記を4.0へ訂正した。保存済みcandidate/compiled configのC0は4.0、C1/C2は6.0。実計算設定・score・episode・指標は変更せず、旧計算の再実行0。元報告bytesとGit commit35e523bは原保存として保持。照合記録はlayout9 core C0の-save内threshold-declaration-correction labelを参照。
 
 ## 未検出20件と利用不能行
 

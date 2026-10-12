@@ -1,3 +1,17 @@
+## 最新 — ACTIVE / layout9 C0 core実評価・C0閾値表記を原設定へ訂正（2026-10-12 JST）
+
+同chunk009/seed2486912926863618161/layout9 coreをC0 c0-diff-control、新IDdev-layout9-core-c0-20261012へ一回実compute。manifest7a71/75699B/input10→新snapshot/fresh fit-calibration。元payload書込み生成replay計算source変更agent0。actual checkout35e523bb2e17a1d88c5a6b6c9f380d3beb1b7c94/計算661b不変、Python3.14.0 Windows AMD64/elapsed34.972124799969606秒/privatepeak148664320B。
+機械0/10・sensor0/10・precision0/3・clean3/未対応3、source3/equipment3/events40/incidents20。全20no_candidate_in_window/candidate0/causalfalse/matchednull/delaynull。対象全20窓は7rows全利用可/phase不能0/maxstreak1、固定persistence2不成立。全20event-incident/四target窓/全episodes/不能480原保存。48calibrated/fit samples各0/cal290/14400scores/13920利用可480phase不能null-thresholdfalse。18000observations-mask対応欠測0。clean_rate3/3365原25.676077265973255/effective3255/26.543778801843317、burden3/20原15.0を単純確率へしない。検出delaycount0原null保持。
+保存candidate/compiledconfigから今回C0閾値4.0/operator>/persistence2、C1/C2閾値6.0を照合。全14400score threshold_exceeded原fieldを実4.0へ照合。直前layout8 C0quality報告threshold6表記は誤りで一文を4.0へ訂正し注記。元report bytes/35e523b/Git/raw保持、旧計算再実行0/設定scores指標変更0。旧handoff節の6表記は当時の誤記としてこの訂正を優先。今後文書閾値は現在candidateの保存configurationから取得。GT/matching/config/science変更0、入力保存分類不具合観測なし/処理success≠性能合格採択正式受入。
+旧9layouts C0core＋新を10比較、旧54board+新1=55完了。同seed1/55独立datasetではない。layout0–8の54cell完成を保持、layout9はC0core1件だけ。declared16/candidate/compiledconfig一致/入力layoutpin差保持、旧modelreplay試験CI反復0/bootstrap統計CI勝者採択0。
+model artifacts/representative-layout9-core-c0-20261012-records、analysis ...-analysis、docs/Git ...-save、最終 ...-final/root-closed.json post-save label優先。DATA artifacts/representative-anomaly-evaluation/dev-layout9-core-c0-20261012/root-closed.json、19file26940319B/closure2225B/8246905de12be6d101d867c965f2b845f5366fd68c81fb1d17db63e5c396c2bb。原窓/不能streamは新EvidenceStore分割保存。
+prepare_result_indexを実使用、旧件数/前回リンクsource置換0。指定4docsを継続承認内一回[skip ci] commit/push。原Git返値/HEAD-upstream-remote-clean/docpinsは-save/-final保存、追加質問0。旧266helper/failed19/passed247/missingexecution1保持、新状態は原execution/final参照。
+次unit同chunk009/同devseed/layout9 core C1 c1-phase-level、新IDdev-layout9-core-c1-20261012。同manifest7a71/input10、本文は今回C0読取済み/次model未実行。元生成C0/次評価C1別field、元payload保持生成0。完成55cell反復0。
+実行900秒2GiBoutput1GiBsingle32MiBfiles32/Git30秒16entry512KiBstdout1MiBstderr128KiB/protocol/native不変。新検証16MiB512files/part256KiB・失敗予備枠維持、閉鎖/外部固定root追記整理0/fullstdio-native回収-PID単独claim0。ACTIVE/automation詳細転記0。CI381385/4130保存querydownloadverifier0。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/create_native早期拒否/7役reader禁止/追加agent禁止/caps-unknown原owner保持。未完了formal/nativeをdev開始条件へ戻さない。Sol容量/人停止は原保全後PAUSED・重複再試行なし。
+
+詳細 [layout9 C0 core実評価](results/anomaly-multiseed-v0.3-layout9-c0-core-evaluation-2026-10-12.md)。
+
+---
 ## 最新 — ACTIVE / layout8 C0 quality実評価・9 layouts全54cell保存比較（2026-10-12 JST）
 
 同chunk008/seed2486912926863618161/layout8 quality-stressをC0 c0-diff-control、新IDdev-layout8-quality-c0-20261012へ一回実compute。manifestc4df/75698B/input10→新snapshot/fresh fit-calibration。元payload書込み生成replay計算source変更agent0。actual checkout9c65a467f5f282424d2f9bf59cdb870300c0509f/計算661b不変、Python3.14.0 Windows AMD64/elapsed27.445918999961577秒/privatepeak148811776B。
