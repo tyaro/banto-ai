@@ -1,3 +1,17 @@
+## 最新 — ACTIVE / layout8 C0 core実評価・phase窓と20未検出の原保存（2026-10-12 JST）
+
+同保存chunk008/seed2486912926863618161/layout8/coreをC0 c0-diff-control、新IDdev-layout8-core-c0-20261012へ1cell実compute。元manifestc4df/75698B/input10→新snapshot/fresh fit-calibration。元生成C0/実評価C0別field、元payload書込み生成replay計算source変更追加agent0。actual checkout8bb5403e7883892cd9d50060623747a007753db9/計算661b不変、Python3.14.0 Windows AMD64/elapsed30.171495700022206秒/privatepeak147345408B。
+機械0/10・sensor0/10・precision0/3・clean3、未対応source/equipment3、events40/incidents20。48calibrated/fit0/cal290/14400scores/13920available480不能phaseのみ/null-thresholdfalse、mask18000対応欠測0。全20processed/no_candidate_in_window/candidate0/causalfalse/matchednull/delaynull、検出delaycount0。
+機械10speed窓は開始7260+180*k phase不能/6available/maxstreak1、最大score80.07506644738844–82.04061090947918。cycle00 7260null/0→7261 .12267601921717763/0→7262 .6104700644959261/0→7263score80.07506644738844/1→7264 1.521855583098382/0。sensor10温度窓7available/phase0/maxstreak1、cycle00 7267score216.98763375414546/1→7268 1.515764244981574/0、7270score215.6408479931459/1→7271 .014407967311507841/0。固定threshold4/persistence2不成立/欠測0とphase別保持。全20event-incident/四target窓/全episodes/不能480原保存。GT/matching/science変更0、入力保存分類不具合観測なし/処理success≠性能合格採択正式受入。
+過去8layouts C0coreとmanifest/configだけ9セル比較、declared16/candidate/compiledconfig一致/input10pin差保持。旧48board＋新1で完了49cell。同seed1/独立seed-datasetへしない/旧modelreplay試験CI反復0/bootstrap統計CI勝者採択0。layout8他候補quality未実施。
+共通EvidenceStoreで対象窓946989B4parts/不能463420B2parts/analysis340768B2parts保存。新検証16MiB512files/part256KiB/失敗reserve2MiB16files内閉鎖512KiB4files、評価900秒2GiB/output1GiB/single32MiB/files32・Git30秒16entry512KiB/stdout1MiBstderr128KiB・固定protocol/native上限不変。今回helper/model失敗0、全旧failed16/missingexecution1保持。
+model artifacts/representative-layout8-core-c0-20261012-records、analysis/extract ...-analysis、docs/Git ...-save、最終 ...-final/root-closed.json post-save labelを優先。DATA artifacts/representative-anomaly-evaluation/dev-layout8-core-c0-20261012/root-closed.json（19file26940845B/closure2225B/fa9531f4d076da4d3a94308e9511598a73e1437487fc5c58446827c3a415ad96）。閉鎖/外部固定root追記・raw整理移動削除0/fullstdio-native回収-PID単独claim0。
+継続承認内でhandoff/report/results index3を同 https://github.com/tyaro/banto-ai.git へ一回[skip ci] commit/push。原返値/HEAD-upstream-remote-clean/docpinsはGit原保存。結果とPC内inputpath送信承認保持/追加質問0。
+次unit同chunk008/同devseed/layout8/core C1 c1-phase-level、新IDdev-layout8-core-c1-20261012/同manifestc4df/input10、観測本文は今回C0読取済み/次model未実行。元生成C0/次実評価C1別field/元payload保持生成0/1cellずつ。ACTIVE/automation詳細転記0。CI381385/4130保存、新CIquerydownloadverifier0。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/create_native早期拒否/全7役reader禁止/追加agent禁止/caps-unknown原owner保持。未完了formal/nativeをdev開始条件へ戻さない。Sol容量/人停止では原保全後PAUSED・重複再試行なし。
+
+詳細 [layout8 C0 core実評価](results/anomaly-multiseed-v0.3-layout8-c0-core-evaluation-2026-10-12.md)。
+
+---
 ## 最新 — ACTIVE / layout7 C0 quality実評価・8 layouts 48セル比較保存（2026-10-12 JST）
 
 同保存chunk007/seed2486912926863618161/layout7 qualityをC0 c0-diff-control、新IDdev-layout7-quality-c0-20261012へ1cell実compute。元manifest0963/75699B/input10→新snapshot/fresh fit-calibration。元生成C0/実評価C0別field、元payload書込み生成replay計算source変更追加agent0。actual checkoutc989b412a3d84c1f8f99e668609763f03ecf90a4/計算661b不変、Python3.14.0 Windows AMD64/elapsed15.628475499921478秒/privatepeak147701760B。
