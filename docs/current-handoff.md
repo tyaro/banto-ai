@@ -1,3 +1,27 @@
+## 最新の停止予定 — 次のC2 quality 1unit完了後にPAUSED（2026-10-12 JST）
+
+人の「つぎで一時停止します」を受領。次のlayout6 quality C2 1cell（dev-layout6-quality-c2-20261012）を完了し、原証拠・文書・Git保存後に自走/heartbeat banto-10をPAUSEDへ戻す。現在のC1 quality保存は完了させ、C2後の新規モデル/試験/CI追跡/追加agentを開始しない。停止予定は今回の許可済み少量dev評価と正式受入を同一視する理由にしない。
+
+次の実行開始前と終了時はこの停止予定を優先。最新C1 qualityの保存は下記MAIN/POST/FINAL参照。元owner/caps/holdout未読/formal_permission=false/credit0を維持。
+
+---
+
+## 最新 — ACTIVE / layout6 C1 quality実評価・phase品質重複9行とsensor miss保存（2026-10-12 JST）
+
+同chunk006/seed2486912926863618161/layout6 quality C1、新IDdev-layout6-quality-c1-20261012/manifest5422/75698B/input10→新snapshot→fresh fit/calibration→原結果。元生成C0/実評価C1別field/元payload書込み生成replayproduction-test変更追加agent0。actual文書checkout3a47025254f81c600efffc294bf08c84eeb6882b/計算661b不変/Python3.14.0 Windows AMD64/elapsed22.149012199952267秒/privatepeak148267008B。
+機械0/10・sensor9/10・precision9/19・clean0/未対応10全machine窓raw-event-vibration-only。48calibrated/fit600/cal290/14400scores/13889available511不能null-thresholdfalse。primaryphase471/current30/previous10、非排他的phase480/current30nonfinite30previous30は重複非合算。missing30/mask18000対応、phase-current重複9rows7200+180*k(k0–8)/対象窓phase全0、core比availability減31・不能480+40-9=511を原rowsで保持。
+source19equipment19events40incidents20、sensor9原target/support2/onset1秒/detected9delay全1秒、miss11delaynull補完forbidden/burden10/20原value50.0とclean0別保持。machine10は原targetspeed全窓score<6/streak0/onsetなし、first candidate1 vibration-only/support2/onset1秒→first_candidate_no_target_onset/causalfalse。唯一sensorcycle09start8841score158.8607970309951/1→8842–44current欠測/8845previousreset→8846score1.8317889086429056/0・8847score1.1248429289957294/0、candidate0/no_candidate_in_window/causalfalse/delaynull。8850phaseは窓外。全machine10/target70rows/vib20support/9sensor/2cycle00四targetproof、sensor9原target12四target窓/missing30/overlap9別proof保存。GT/config/science変更0/実入力保存分類不具合観測なし/処理success≠性能合格採択。
+同coreC1+旧layout0–5qualityC1はmanifest/configだけ8比較/旧7本文再展開再compute0/declared16config一致/input10pin差保持。同seed7layout+coreで8独立seed0/旧36board-core3候補不変/quality残候補未完了/bootstrapCI勝者採択0。
+MAIN representative-layout6-quality-c1-20261012-prep/POST representative-layout6-quality-c1-post-20261012-prep原docs/proof/Git、FINAL representative-layout6-quality-c1-final-save-20261012-prep/post-save.json・owners-after-save.json・root-closed.jsonを最終保存として優先。DATA {'files': 19, 'bytes': 27542166, 'manifest_pin': {'bytes': 2258, 'sha256': '473f0c7d43eb3c1e72f9c1a8fa52dc60e7658bdb78bab0ae883b05918241ef85'}}・EXTRACT {'bytes': 305744, 'files': 9, 'manifest_pin': {'bytes': 1324, 'sha256': '1d68c09edee62a8e04da80caad0d4895d3c480a97df80f4c2d638f4a6f2176e9'}}閉鎖。117science/旧166root count-byte-closurepin/frozen35capfalse/C2cache補足不変。前layout6 C0foreground2/C1foreground3/pending-read表示1/審査2拒否/別approved-save29be、全原failed/Git未知返値/閉鎖を保持。今回foreground0、元188helpers11failed177passed/fullidentity一致/CIM同original不在/repohelpercritical0/model-analysis2passed。foreground creation/fullstdioNone/selectedCLI≠全stdio/PID単独0/native回収claim0。
+metadata512KiB32entry/reserve128KiB/single128KiB/recursive/Python-B/限定置換、新script失敗閉鎖分も書込み前件数bytes確認。before/after-ownerは計画済みFINALへ初保存、docs/proofはPOSTへ初保存、MAINコピー増分0。閉鎖/外部固定root追記・原raw整理移動削除・上限緩和0。
+具体的な同種合成dev結果・ユーザー名PC path・同GitHub送信先と今後の同種送信のリスク通知後、人の「進めてください」を受領した継続承認内で、今回handoff/C1 quality report2を https://github.com/tyaro/banto-ai.git へ直接一回[skip ci] commit/push。原Git返値・HEAD-upstream-GitHub ref-clean/docpinsはPOST、最終FINAL。Git512KiB16entry/stdout1MiB/累積30秒/preflight別量。automation詳細転記/設定更新0/ACTIVE。
+CI381385/4130保存、新query-download-verifier0/旧381365inprogress履歴/doc-onlyCI追跡0。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/create_native早期拒否/全7役reader禁止/元caps-unknown原owner-stop/追加agent禁止。未完了formal/nativeをdev開始条件へ戻さない。engineering900秒2GiB/output1GiB/single32MiB/files32 checkpoint≠blocking中断/full runtime/native/global容量証明。Sol容量/人の停止では原保全後PAUSED・重複再試行0。
+次unit同chunk006/layout6 quality C2、新IDdev-layout6-quality-c2-20261012/同manifest5422/input10、次model未開始生成0/完成評価試験CI反復0。
+
+詳細 [layout6 C1 quality実評価](results/anomaly-multiseed-v0.3-layout6-c1-quality-evaluation-2026-10-12.md)。
+
+---
+
 ## 最新 — ACTIVE / layout6 C2 core実評価・core3候補比較完成（2026-10-12 JST）
 
 同chunk006/seed2486912926863618161/layout6 core C2、新IDdev-layout6-core-c2-20261012、manifest5422/75698B/input10→新snapshot→fresh fit/calibration→原結果。元生成C0/実評価C2別field/元payload書込み生成replayproduction-test変更追加agent0。actual文書checkout29be46ad7ceba6af6a9048a51a5a042b18bf1a7f/計算661b不変/Python3.14.0 Windows AMD64/elapsed29.309303400106728秒/privatepeak206123008B。
