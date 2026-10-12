@@ -1,3 +1,17 @@
+## 最新 — ACTIVE / layout6 C0 quality実評価・7 layouts比較と新ログ分割保存（2026-10-12 JST）
+
+同保存chunk006/seed2486912926863618161/layout6 quality-stressをC0 c0-diff-control、新IDdev-layout6-quality-c0-20261012へ1cell実compute。元manifest5422/75698B/10input pin→新snapshot/fresh fit-calibration。元payload書込み・生成・replay・計算source変更・追加agent0。actual checkout2ac7c45b73aa7b3e12a98a1cca069b7bcd81f972/計算661b不変、Python3.14.0 Windows AMD64/elapsed17.202453500009142秒/privatepeak148463616B。
+機械0/10・sensor0/10・precision0/3・clean3、未対応source/equipment3、events40/incidents20。48calibrated/fit0/cal290/14400scores/13889available511不能null-thresholdfalse。primaryphase471/current30/previous10、非排他的phase480/current30nonfinite30previous30、phase-current重複9。欠測30/mask18000対応。全20 no_candidate_in_window/candidate0/causalfalse/delaynull、検出delaycount0。機械10speed窓利用可能7・score最大3.2024364338284195<固定4/streak0、sensor全maxstreak1。cycle00非欠測窓とcycle09欠測reset窓の原四targetを全20件保存。欠測だけで全missを説明しない。GT/threshold4/persistence2/matching/science変更0、実入力保存分類不具合観測なし。処理successは性能合格・採択ではない。
+同seed7layouts×2strata×3候補の42セル保存比較完成、既存41cellのmanifest/configだけ比較・oldモデル再compute0。全宣言16calculator/candidate/compiledconfig一致。42独立seed-datasetではない。bootstrap/統計CI/勝者/採択0。
+新共通EvidenceStoreで補助ログを保存。対象窓972080Bは4part/利用不能511226Bは2part、順序・part/stream pin・原状態を保持。新検証root16MiB512files/part256KiB・失敗reserve2MiB16files/内閉鎖512KiB4files、評価900秒2GiB/output1GiB/single32MiB/files32・Git30秒16entry512KiB/stdout1MiBstderr128KiB・固定protocol/native上限は不変。
+原analysisは過去failed runのidentity要求でKeyError、原source/trace/終了identity/failedを閉鎖保存。別continuationの対象箇所だけ訂正し未完了分析を完成、原script/model反復0。過去failed runは集計外/原failure保持。foreground次path existsチェックの親階層違いは別metadataへ保存し、正しいchunk007 metadataだけ選択。これらをモデル/CI/native/Sol容量失敗へしない。
+原model/analysis failure/analysis continuationは artifacts/representative-layout6-quality-c0-20261012-records、...-analysis-records、...-analysis-continuation のroot-closed.json。DATAは artifacts/representative-anomaly-evaluation/dev-layout6-quality-c0-20261012/root-closed.json（19file27383988B/closure2228B/c13f047441108742a573a9cb74a9a2c4b288b11d16062177bebfacdd6dddd21a）。docs/Git原返値は artifacts/representative-layout6-quality-c0-20261012-save、最終は artifacts/representative-layout6-quality-c0-20261012-final/root-closed.json のpost-save labelを優先。新formatは tools/check_verification_record.py で読取可。原missing execution1と全failedを保持、full stdio/native回収/PID単独claim0。
+継続承認範囲でhandoff/report/results index3を同 https://github.com/tyaro/banto-ai.git へ一回[skip ci] commit/push。実HEAD/upstream/remote/clean/docpinsはGit原保存を参照。同種dev結果/PC内path送信承認を保持、追加質問0。
+次unitは保存済み同seed/layout7/core C0、新IDdev-layout7-core-c0-20261012。chunk007 manifest0963/75699B・10input metadata選択のみ、次観測本文/model未着手。元payload保持・新dataset生成0・1cellずつ。ACTIVE/automation詳細転記0。CI381385/4130保存、新CIquery/download/verifier0。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/create_native早期拒否/全7役reader禁止/追加agent禁止/caps-unknown原owner保持。未完了formal/nativeをdev開始条件へ戻さない。Sol容量/人停止では原保全後PAUSED・重複再試行なし。
+
+詳細 [layout6 C0 qualityと7 layouts保存比較](results/anomaly-multiseed-v0.3-layout6-c0-quality-and-seven-layout-comparison-2026-10-12.md)。
+
+---
 ## 最新 — ACTIVE / 検証記録の上限見直し・自動分割・失敗保全（2026-10-12 JST）
 
 人の「実行側の制限は維持し、検証記録の容量制限を見直して、ログの自動分割と失敗時の証拠保存を改善」に従い、今回の工程を優先した。
