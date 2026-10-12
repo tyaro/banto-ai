@@ -25,9 +25,11 @@ helperは候補bytesを返す。CLIはdiff/読取り確認だけを行い、書�
 
 修正報告のJS source構築でもMarkdown backtickがtemplate literalを閉じるSyntaxErrorが一回発生。isolate評価前/nested tools-process-tracked mutation0、元sourceのFS保存なし/selected error保持。instrumented helper failureへ追加せず、別source構築で未実行の文書保存だけ継続した。
 
+保存後metadataの初回-finalは旧cache補足の参照rootをlayout6qualityへ取り違えFileNotFoundError/exit1で停止。元script/失敗/creation/閉鎖状態を保持。元保存sourceの正しいlayout1coreC2参照へ別continuationを作り、未完了metadataだけ保存。元Git/helper/モデル/試験/CI再実行0。Git code修正6b69a82の成功を変更しない。初回-post-saveはhandoff全履歴の同文字列14件を一件と誤要求し書込み/Git前AssertionError、原failed保持。最新sectionだけへ対象を限定した別-post-save-continuationで未保存doc追補だけ完了。最終-final-continuationを優先。
+
 ## 保存と次の作業
 
-新記録 artifacts/docs-helper-repair-20261012-prep、-tests（failed）、-tests-continuation（passed）、-save、-git、-final。各閉鎖manifestと順序付きpartを優先。新記録16MiB/512files/part256KiBと失敗予備枠を維持。Git原stdout/stderr/exitと対象pinは-git、保存後metadataは-final。保存整合性をモデル性能や正式受入へしない。
+新記録 artifacts/docs-helper-repair-20261012-prep、-tests（failed）、-tests-continuation（passed）、-save、-git、-final（failed）、-post-save（failed）、-post-save-continuation、-final-continuation。各閉鎖manifestと順序付きpartを優先。新記録16MiB/512files/part256KiBと失敗予備枠を維持。Git原stdout/stderr/exitと対象pinは-git、保存後metadataは-final。保存整合性をモデル性能や正式受入へしない。
 
 次dev unitはlayout8 quality C0、新ID dev-layout8-quality-c0-20261012。今回未実行。入力と原保存状態は[直前C2報告](anomaly-multiseed-v0.3-layout8-c2-quality-evaluation-2026-10-12.md)とcurrent-handoffを参照。新文書生成からprepare_result_indexを使い、件数/前回リンクを含むsource置換を再利用しない。
 
