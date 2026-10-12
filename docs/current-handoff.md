@@ -1,3 +1,15 @@
+## 最新 — PAUSED / 人の停止指定・C1 quality保存後で区切り（2026-10-13 JST）
+
+人の「切りの良いところで繰り返し作業停止しましょうか」に従い、直前の第2dev seed layout2 C1 quality評価の保存・push・閉鎖照合完了を区切りとして繰り返し実行banto-10をPAUSEDへ変更。人の明示再開まで新しい評価・試験・CI追跡・worker・agentを開始しない。停止を性能合格・正式受入完了へしない。
+
+最新評価は下段のC1 quality報告と artifacts/representative-seed2-layout2-quality-c1-20261013-final/post-save・root-closedを優先。完成88cellを保持。次は同保存入力のlayout2 quality-stress C2、新ID dev-seed7466813550306735603-layout2-quality-c2-20261013で未開始。入力manifest・identity・10file pins・送信承認・実行上限は最新評価の保存metadataから引き継ぐ。停止turnの新model/test/CI query/download/verifier/replay/追加agentは0。
+
+停止証拠 artifacts/representative-autonomy-pause-20261013-records のpost-save・root-closedを優先。旧442rootのcount-byte-closurepin不変、元406helper（22failed384passed、元execution欠落1）のfull保存identityを保持し同元process生存なしを照合。PID単独/native回収claim0、未知native原owner/capsは保持。automationはstatusとupdated_at以外の設定不変、詳細評価・PC内pathの設定転記0。引継ぎ1文書を既存Git継続承認内で一回[skip ci] commit/pushし、原Git出力は停止rootへ保存。
+
+formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout本文未読/正式5残件・最終受入未完了/create_native早期拒否/全7役reader禁止を維持。実行・Git・native protocol制限とEvidenceStoreの全write事前容量確認・失敗閉鎖予備を維持。閉鎖root追記・完成unit反復なし。以下のACTIVE記述は過去履歴として保持し、この停止指定を優先する。
+
+---
+
 ## 最新 — ACTIVE / 第2dev seed layout2 C1 quality・欠測とphase重複保存（2026-10-13 JST）
 
 同保存chunk014/seed7466813550306735603/layout2 quality-stressをC1で新ID dev-seed7466813550306735603-layout2-quality-c1-20261013へ一回fresh compute。manifest C:\Users\TKent\.codex\worktrees\v03p\banto-ai\artifacts\v03-runs\r1\run\attempts\chunks\014\attempt-0001\result\payload\manifest.json / {"bytes": 75700, "sha256": "13a1f0848235ab785ddc31036c819927a40d5a62e7ff55adb91afe465275998a"}、input10pin→新snapshot/fit-calibration。元生成C0/実評価C1別field、元payload書込み生成replayagent0。checkout eea7642de3804a130b8ed84e11c3f8c1cdc5692b/計算661b不変、Python3.14.0 Windows AMD64/elapsed 16.68219650001265秒/privatepeak 152334336B。
