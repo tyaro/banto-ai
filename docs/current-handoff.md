@@ -1,3 +1,17 @@
+## 最新 — ACTIVE / layout8 C0 quality実評価・9 layouts全54cell保存比較（2026-10-12 JST）
+
+同chunk008/seed2486912926863618161/layout8 quality-stressをC0 c0-diff-control、新IDdev-layout8-quality-c0-20261012へ一回実compute。manifestc4df/75698B/input10→新snapshot/fresh fit-calibration。元payload書込み生成replay計算source変更agent0。actual checkout9c65a467f5f282424d2f9bf59cdb870300c0509f/計算661b不変、Python3.14.0 Windows AMD64/elapsed27.445918999961577秒/privatepeak148811776B。
+機械0/10・sensor0/10・precision0/3・clean3/未対応3、source3/equipment3/events40/incidents20。全20no_candidate_in_window/candidate0/causalfalse/matchednull/delaynull。対象全20窓maxstreak1、固定persistence2不成立。全20event-incident/四target窓/全episodes/欠測30/不能520原保存。GT/threshold6/persistence2/matching/science変更0、入力保存分類不具合観測なし/処理success≠性能合格採択正式受入。
+48calibrated/原fit samples各0/cal290/14400scores/13880利用可520不能null-thresholdfalse。primary phase480/current quality30/previous quality10、非排他的tags重複非合算/phase品質重複0、18000observations-mask対応欠測30。clean_rate3/3365原25.676077265973255/effective3255/26.543778801843317、burden3/20原15.0を単純確率へしない。検出delaycount0/原null補完0。
+同coreC0・同qualityC1/C2・過去8layouts qualityC0・新1を12比較、旧model再compute0。declared16/candidate/compiledconfig一致/input10同quality一致・layout/stratum差保持。C0quality9layouts。旧53board+新1=54完了、9layouts×2strata×3候補/同合成dev seed1、54独立datasetではない/bootstrap統計CI勝者採択0。layout8 C1/C2はcore各20検出・quality各19検出、C0両20miss。
+model artifacts/representative-layout8-quality-c0-20261012-records、analysis ...-analysis、docs/Git ...-save、最終 ...-final/root-closed.json post-save label優先。DATA artifacts\representative-anomaly-evaluation\dev-layout8-quality-c0-20261012/root-closed.json、19file27384462B/closure2228B/7cecaebbc585ff44f32c1c713d35abc13b478b20af8c9ae3b090a4d746b08728。対象窓/不能/全episode原streamは新EvidenceStore分割保存。
+修正済みprepare_result_indexで索引候補を作り、旧件数/前回リンクsource置換0。指定3docsを継続承認内一回[skip ci] commit/push。原Git結果/HEAD-upstream-remote-clean/docpinsは-save/-final保存、追加質問0。旧262helper/failed19/passed243/missingexecution1保持、今回helper状態は原execution/final参照。
+次はchunk009同seed/layout9 core C0、新IDdev-layout9-core-c0-20261012。manifestmetadata/input10だけ選択、次観測body未読/newmodel0/元payload保持。manifest7a71c5434cc8f526ada42d7a3f885bf711cabc256a7ff891c95a8969c6c58e5c/75699B。別layoutで新seedではない。完成54cell/旧モデルreplay試験CI反復0。
+実行900秒2GiBoutput1GiBsingle32MiBfiles32/Git30秒16entry512KiBstdout1MiBstderr128KiB/protocol/native不変。新検証16MiB512files/part256KiB・失敗予備枠維持、閉鎖/外部固定root追記整理0/fullstdio-native回収-PID単独claim0。ACTIVE/automation詳細転記0。CI381385/4130保存済みquerydownloadverifier0。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/create_native早期拒否/7役reader禁止/追加agent禁止/caps-unknown原owner保持。未完了formal/nativeをdev開始条件へ戻さない。Sol容量/人停止は原保全後PAUSED・重複再試行なし。
+
+詳細 [layout8 C0 qualityと9 layouts比較](results/anomaly-multiseed-v0.3-layout8-c0-quality-and-nine-layout-comparison-2026-10-12.md)。
+
+---
 ## 最新 — ACTIVE / 文書helperの索引更新を修正（2026-10-12 JST）
 
 人のScript修正指示に対応。元索引置換失敗はdocs移動先不在ではなく、前回リンクsource文字列にURL開始括弧を含めず一致0になったこと。原selected error/閉鎖script保持、元helper・完成モデル/試験/CI反復0。
