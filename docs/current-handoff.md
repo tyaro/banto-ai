@@ -1,3 +1,18 @@
+## 最新 — ACTIVE / layout9 C1 core実評価・全20target onset1秒保存（2026-10-12 JST）
+
+同chunk009/seed2486912926863618161/layout9 coreをC1 c1-phase-level、新IDdev-layout9-core-c1-20261012へ一回実compute。manifest7a71/75699B/input10→新snapshot/fresh fit-calibration。同C0 input10 pins一致、元生成C0/実評価C1別field。元payload書込み生成replay計算source変更agent0。actual checkout4f227b25eb81f466a31d67c45f585266ca1fac08/計算661b不変、Python3.14.0 Windows AMD64/elapsed16.29790290002711秒/privatepeak149180416B。
+機械10/10・sensor10/10・precision20/20・clean0/未対応0、source30/equipment20/events40/incidents20。全20causal_detected/candidate1、target source-equipment-event原対応。machine10/sensor10ともonset start+1000ms/target support2、検出20delay min/max/mean/median全1秒。全20対象窓は7rows全利用可/phase不能0/maxstreak3。原全20event-incident/20target links/四target窓/全episodes/不能480保存。処理success≠性能保証採択正式受入。
+48calibrated/fit samples各600/cal290/14400scores/13920利用可480phase不能null-thresholdfalse。18000observations-mask対応欠測0。保存candidate/compiledconfigからC1閾値6.0/operator>/persistence2（C0 4.0/C2 6.0）を全score原fieldへ照合。GT/matching/config/science変更0、入力保存分類不具合観測なし。
+原source内訳 {"conveyor-01.conveyor_speed": 10, "conveyor-01.vibration_feature": 10, "conveyor-01.motor_temperature": 10}、matched equipment所属 {"machine": {"conveyor-01.conveyor_speed": 10, "conveyor-01.vibration_feature": 10}, "sensor": {"conveyor-01.motor_temperature": 10}}。source30をequipment30/誤警報30へしない。全equipment20 matched/clean0/未対応0、precision母数20を保持。
+同layout9 C0・過去9layouts C1core・新1を11比較、C1core10layouts。同C0は0/20検出clean3、C1は20/20clean0。declared16/candidate/compiledconfig一致/同core input10一致・別layout差保持。旧55board+新1=56完了、同seed1/56独立datasetではない。layout0–8全54保持、layout9core C0/C1だけ。旧modelreplay試験CI反復0/bootstrap統計CI勝者採択0。
+model artifacts/representative-layout9-core-c1-20261012-records、analysis ...-analysis、docs/Git ...-save、最終 ...-final/root-closed.json post-save label優先。DATA artifacts/representative-anomaly-evaluation/dev-layout9-core-c1-20261012/root-closed.json、19file27114677B/closure2225B/65568fedac52dd56a999dd3e148f8620b233209079eea5009a9ddce390b77d0e。原窓/targetlinks/不能streamは新EvidenceStore分割保存。
+prepare_result_indexを実使用、旧件数/前回リンクsource置換0。指定3docsを継続承認内一回[skip ci] commit/push。原Git返値/HEAD-upstream-remote-clean/docpinsは-save/-final保存、追加質問0。旧270helper/failed19/passed251/missingexecution1保持、新状態は原execution/final参照。C0閾値誤記訂正/旧failed/source変換失敗は原保存を保持。
+次unit同chunk009/同devseed/layout9 core C2 c2-phase-conditional、新IDdev-layout9-core-c2-20261012。同manifest7a71/input10、本文C0/C1読取済み/次model未実行。元生成C0/次評価C2別field、元payload保持生成0。完成56cell反復0。
+実行900秒2GiBoutput1GiBsingle32MiBfiles32/Git30秒16entry512KiBstdout1MiBstderr128KiB/protocol/native不変。新検証16MiB512files/part256KiB・失敗予備枠維持、閉鎖/外部固定root追記整理0/fullstdio-native回収-PID単独claim0。ACTIVE/automation詳細転記0。CI381385/4130保存querydownloadverifier0。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/create_native早期拒否/7役reader禁止/追加agent禁止/caps-unknown原owner保持。未完了formal/nativeをdev開始条件へ戻さない。Sol容量/人停止は原保全後PAUSED・重複再試行なし。
+
+詳細 [layout9 C1 core実評価](results/anomaly-multiseed-v0.3-layout9-c1-core-evaluation-2026-10-12.md)。
+
+---
 ## 最新 — ACTIVE / layout9 C0 core実評価・C0閾値表記を原設定へ訂正（2026-10-12 JST）
 
 同chunk009/seed2486912926863618161/layout9 coreをC0 c0-diff-control、新IDdev-layout9-core-c0-20261012へ一回実compute。manifest7a71/75699B/input10→新snapshot/fresh fit-calibration。元payload書込み生成replay計算source変更agent0。actual checkout35e523bb2e17a1d88c5a6b6c9f380d3beb1b7c94/計算661b不変、Python3.14.0 Windows AMD64/elapsed34.972124799969606秒/privatepeak148664320B。
