@@ -1,3 +1,21 @@
+## 最新 — ACTIVE / layout10 C0 core実評価・人の質問に合わせ差分/persistence設計確認（2026-10-12 JST）
+
+同chunk010/seed2486912926863618161/layout10 coreをC0 c0-diff-control、新IDdev-layout10-core-c0-20261012へ一回実compute。manifest1ede/75715B/input10→新snapshot/fresh fit-calibration。元生成C0/実評価C0別field、元payload書込み生成replay計算source変更agent0。actual checkout76b68e690c38bc73e0494bd8803dff46f396391f/計算661b不変、Python3.14.0 Windows AMD64/elapsed16.05946290004067秒/privatepeak149454848B。
+機械0/10・sensor0/10・precision0/3・clean3/未対応3、source3/equipment3/events40/incidents20。全20no_candidate_in_window/candidate0/causalfalse/matchednull/delaynull、検出delaycount0 min-max-mean-median原null。全20対象窓7rows利用可/phase不能0/maxstreak1、固定persistence2不成立。全20event-incident/四target窓/全episodes/不能480原保存。処理success≠性能合格採択正式受入。
+48calibrated/原fit samples各0/cal290/14400scores/13920利用可480phase不能、不能score-residualnull/thresholdfalse。18000observations-mask対応/欠測0。C0閾値4.0/operator>/persistence2を原configurationから全score照合（C1/C2 6.0）。GT/matching/config/science変更0、入力保存分類不具合観測なし。clean_rate3/3365原25.676077265973255/effective3254原26.551936078672405、burden3/20原15.0は単純確率へしない。
+人の「C0全然ダメか」「組み方がおかしいか」への設計確認：no-op fit/差分x(t)-x(t-1)→calibration median/1.4826MAD→abs residual-centered/scale→threshold4/second-exceedance。今回利用可13920行の原dependencies/profileから差分とscoreを独立算術照合して全一致、fit0は定義上no-op。scoring/episodeAPI再起動0/旧モデル再compute0。実装式不一致観測なし（全calibration/一般無欠陥の証明ではない）。
+sensor生成は一定加算を[start_sample,end_sample)の3観測へ付与。一次差分では異常内加算分が相殺し開始・終了超過が3秒離れるため、連続2点条件と構造的に相性が悪い。machine乗算も今回窓maxstreak1、欠測原因ではない。C0は固定baseline保持、単発超過/短窓蓄積/C1型水準残差は将来別候補として検討（未実装/未評価/閾値変更0）。
+analysis-continuation/C0-design-reviewのfour-sample fieldは誤記。overlay_sample原end-exclusive条件とevent end-start=3を照合し-save/C0-design-reviewで3点へ訂正、旧raw/pinを-save別labelへ保持。閉鎖root書換え/モデル残差score指標変更0。設計確認は-save訂正版を優先。
+旧60board+新1=61完了、C0core11layouts。同seed1/61独立datasetではない。layout0–9全60完成を保持/layout10はC0coreだけ。保存manifest指標11比較/declared16/candidate/compiledconfig一致・layout入力差保持。旧modelreplay試験CI反復0/bootstrap統計CI勝者採択0。
+初回analysis helperは未定義factsを設計要約に参照しNameError/failed、原script/live/execution/failure-tracebackを閉鎖保持。別-continuationで参照先を後続analysis labelへ限定訂正し未保存分析を完成。原helper/model再実行0/failed書換え0、model/CI/native/Sol容量failureへしない。
+model artifacts/representative-layout10-core-c0-20261012-records、原failed ...-analysis、分析 ...-analysis-continuation、docs/Git ...-save、最終 ...-final/root-closed.json post-save label優先。DATA artifacts/representative-anomaly-evaluation/dev-layout10-core-c0-20261012/root-closed.json、19file26940796B/closure2226B/3dea06812394dc4220bea65af92329cdea3092b9ba49bfdafb9285e4c6a61257。新EvidenceStore分割保存・失敗予備枠維持。
+prepare_result_index実使用、指定3docs継続承認内一回[skip ci] commit/push。原Git返値/HEAD-upstream-remote-clean/docpinsは-save/-final。旧291helper/failed20/passed271/missingexecution1保持、今回analysis1failed・新状態原execution/final参照。
+次unit同chunk010/同devseed/layout10 core C1 c1-phase-level、新IDdev-layout10-core-c1-20261012。同manifest1ede/input10、本文C0読取済み/次model未実行。元生成C0/次評価C1別field、元payload保持生成0。完成61cell反復0。
+実行900秒2GiBoutput1GiBsingle32MiBfiles32/Git30秒16entry512KiBstdout1MiBstderr128KiB/protocol/native不変。新検証16MiB512files/part256KiB・失敗予備枠維持、閉鎖/外部固定root追記整理0/fullstdio-native回収-PID単独claim0。ACTIVE/automation詳細転記0。CI381385/4130保存querydownloadverifier0。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/create_native早期拒否/7役reader禁止/追加agent禁止/caps-unknown原owner保持。未完了formal/nativeをdev開始条件へ戻さない。Sol容量/人停止は原保全後PAUSED・重複再試行なし。
+
+詳細 [layout10 C0 coreと設計確認](results/anomaly-multiseed-v0.3-layout10-c0-core-and-difference-persistence-review-2026-10-12.md)。
+
+---
 ## 最新 — ACTIVE / layout9 C0 quality-stress実評価・10layouts×3候補×2条件60cell保存（2026-10-12 JST）
 
 同chunk009/seed2486912926863618161/layout9 quality-stressをC0 c0-diff-control、新IDdev-layout9-quality-c0-20261012へ一回実compute。manifest7a71/75699B/input10→新snapshot/fresh fit-calibration。同C1/C2 quality input10一致。元生成C0/実評価C0別field、元payload書込み生成replay計算source変更agent0。actual checkout3cab343ae6198783fdc46d0c33b2306a25245255/計算661b不変、Python3.14.0 Windows AMD64/elapsed16.316574200056493秒/privatepeak148717568B。
