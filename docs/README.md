@@ -4,9 +4,9 @@
 
 ## 現在の状態
 
-- 人の明示指示で自走を再開します。heartbeat banto-10は文書Git保存後に **ACTIVE** へ更新します。
+- 人の明示指示で自走を再開済みです。heartbeat banto-10は **ACTIVE** です。
 - 最新成果、停止状態、正式受入の残件は [current-handoff.md](current-handoff.md) を参照してください。
-- 最新評価は [layout6 C2 quality評価と一時停止](results/anomaly-multiseed-v0.3-layout6-c2-quality-evaluation-and-pause-2026-10-12.md) です。
+- 評価報告は [結果の索引](results/README.md) から参照できます。最新状態はcurrent-handoff.mdを優先します。
 - 正式gateは s4_acceptance_not_frozen、formal_permission=false、credit=0。正式受入と候補採択は未完了です。
 
 ## 分野別の入口

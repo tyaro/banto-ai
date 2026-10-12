@@ -1,3 +1,17 @@
+## 最新 — ACTIVE / 文書helperの索引更新を修正（2026-10-12 JST）
+
+人のScript修正指示に対応。元索引置換失敗はdocs移動先不在ではなく、前回リンクsource文字列にURL開始括弧を含めず一致0になったこと。原selected error/閉鎖script保持、元helper・完成モデル/試験/CI反復0。
+新 tools/update_results_index.pyは現在sectionを件数なしで探し、実リンク数を件数にし、現在の索引/報告pathから相対URLを作る。pending UTF-8報告、同登録idempotence、重複/衝突/不在・壊れた項目を文書書込み前に検査。CLIは読取りdiff/checkだけ。新文書helperからprepare_result_indexを呼ぶ。
+新6methods初回はsandbox既定temp fixtureのsetup/cleanup権限error12/body0、原failed helper/logを保持。fixture保存先だけworkspace内へ訂正し未完了6methodsを一回6pass/fail0error0skip0。現在dev索引48linksはAPI/CLI --checkでbytes不変/exit0。review新2（UTF-8 CLI差分/空section空行）だけ一回2pass、6+2別source/runを最終source単一8successへしない。文書helper確認を性能/native/正式受入へしない。
+新記録 artifacts/docs-helper-repair-20261012-prep、-tests(failed)、-tests-continuation(passed)、-save、-git、-final/root-closed.jsonを優先。旧252helpers/failed16/passed236/missingexecution1を保全、新状態は各原execution/finalから読む。closed/frozen root追記・元raw再生成整理0。共通helperを呼ぶ新参考template保存/旧runの全template再実行0。
+修正文書のJS構築SyntaxError一回はisolate評価前/tools-process-trackedmutation0、元FSsourceなし/selected error保持/原helper failureへ追加0。別source構築で未実行文書保存だけ継続。
+docs入口をACTIVEと結果索引/current-handoffへ更新。Git対象は新tool/testと文書、原返値/HEAD-upstream-remote-clean/pinsは-git/-finalへ保存。継続Git/push/同種dev報告送信承認内、追加質問0。
+次unitは下段保存済み同chunk008/layout8 quality C0 c0-diff-control、新IDdev-layout8-quality-c0-20261012。今回newmodel0/元payload保持。新docs helperを使い、旧件数/前回リンクsource置換を反復しない。直前C2完了53cell/同seed1・旧結果不変。
+実行900秒2GiBoutput1GiBsingle32MiBfiles32、Git30秒16entry512KiBstdout1MiBstderr128KiB、protocol/native不変。新検証16MiB512files/part256KiB・失敗予備枠維持。ACTIVE/automation詳細転記0。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/create_native早期拒否/7役reader禁止/追加agent禁止/caps-unknown原owner保持。未完了formal/nativeをdev開始条件へ戻さない。Sol容量/人停止は原保全後PAUSED・重複再試行なし。
+
+詳細 [文書helper修正](results/documentation-helper-index-repair-2026-10-12.md)、[新手順](anomaly/execution/documentation-helpers.md)。
+
+---
 ## 最新 — ACTIVE / layout8 C2 quality実評価・peer120不能とsensor miss保存（2026-10-12 JST）
 
 同chunk008/seed2486912926863618161/layout8 qualityをC2 c2-phase-conditional、新IDdev-layout8-quality-c2-20261012へ1cell実compute。manifestc4df/75698B/input10→新snapshot/fresh fit-calibration。元生成C0/評価C2別field/元payload書込み生成replay計算source変更agent0。actual checkoutc7471bfbe4b8af3704d236b50f7bc6b210517016/計算661b不変、Python3.14.0 Windows AMD64/elapsed38.659413000103086秒/privatepeak209678336B。
