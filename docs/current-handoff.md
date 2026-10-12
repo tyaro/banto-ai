@@ -1,3 +1,34 @@
+## 最新保存 — ACTIVE / layout6 C1文書の具体的送信依頼へ人の「進めてください」を受領（2026-10-12 JST）
+
+具体的なC1合成dev評価結果・ユーザー名を含むPC内入力path・指定2文書・https://github.com/tyaro/banto-ai.git への送信と今後の同種送信のリスク通知後、人の「進めてください」を受領。承認待ち解除。この文書とC1報告を新専用 representative-layout6-core-c1-approved-save-20261012-prep で直接1回[skip ci] Git保存する。最終HEAD/upstream/GitHub ref/clean/docpinsと原Git返値は同root/post-save.json・doc-save.json・doc-git-save.json・owners-after-save.json・root-closed.jsonを優先。本文の下段にある承認待ちは先行保存履歴で、元自動審査2拒否/原Git script未起動/foreground3と別pending-read表示エラー1は閉鎖rootのまま保持。原script再実行・別経路bypass0。
+
+C1実評価は完成のまま再計算0。機械0/10・sensor10/10・precision10/20・clean0、machine10はvibration-only候補/対象conveyor_speed onsetなし、delaynull。117science/計算661b不変、旧160root closure-count-bytepin不変、元182helper11failed171passedのfullidentity/CIM照合済み。今回のGit保存完了後、次unitは同chunk006/layout6 core C2/dev-layout6-core-c2-20261012/manifest5422/input10の新1cell。次model未開始/生成0/quality観測未読。完成評価/試験/replay/CI/追加agent反復0。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/create_native早期拒否/全7役reader禁止/元caps-unknown原owner-stop保持。metadata512KiB32entry/reserve128KiB/single128KiB/新書込み前recursive容量確認/限定置換/閉鎖root追記0、Git512KiB16entry/stdout1MiB/累積30秒。automation詳細転記/設定更新0/ACTIVE維持。
+
+---
+
+## 最新保存 — ACTIVE / layout6 C1実評価完了・Git送信は具体的承認待ち（2026-10-12 JST）
+
+C1モデル実評価と原machine10未検出/sensor10検出の対応保存は完了。文書2pathはローカル差分を保持、Git helperは自動審査2拒否により未起動。具体的リスク通知後の新しい人の返答は未着、heartbeat/経過時間を承認にしない。現在HEAD/upstream a37366f6784b65eebde6f6d17a1f59e982b4b311、計算661b不変。最新FINAL representative-layout6-core-c1-final-save-20261012-prep/post-save.json・owners-after-save.json・root-closed.jsonを優先。承認後は新専用Git保存rootで未保存送信のみ実施、今回閉鎖rootへの追記/原helper/完成model/CI反復0。次samecoreC2はGit保存後のclean checkoutから実行する。
+
+---
+
+## 最新 — ACTIVE / layout6 C1 core実評価・machine10のvibration候補とtarget onset欠如（2026-10-12 JST）
+
+同chunk006/seed2486912926863618161/layout6/core/C1、新IDdev-layout6-core-c1-20261012で1cell実compute_evaluation。manifest5422/75698B/input10→新snapshot→fresh fit/calibration→原結果。元生成C0/実評価C1別field、元payload書込み/生成/replay/production-test変更/追加agent0。actual文書checkouta37366f6784b65eebde6f6d17a1f59e982b4b311/計算661b不変/Python3.14.0 Windows AMD64/elapsed19.074605999980122秒/privatepeak147554304B。
+機械0/10・sensor10/10・precision10/20・clean誤警報0/未対応10全machine窓raw-event/vibration-only。48calibrated/fit600/cal290/14400scores/利用可能13920不能480全phase-null-thresholdfalse/18000mask対応欠測non-ok0/source20equipment20incident20event40。10sensor原target source/equipment/support2/start+1000ms/detected-only delay全1秒、10machine delaynull補完forbidden/burden10/20原value50.0をclean0/単純確率と混同しない。
+全10machine conveyor_speed/stopped/stop窓7rows各score<6/streak0/target onsetなし。最初のcandidate1件はvibrationだけ/support2/start+1000ms、first_candidate_no_target_onset/causalfalse/sourcenull/matchednull/support[]/delaynull。対象窓phase全0。cycle00 speed start7214 score0.261294540272591/0→次0.08876261601917787/0、窓max2.7210242357026293<6。vibration scores[77.95145538078287, 76.83207340274976]/streak1→2。sensor start7221scores[158.85603150463174, 158.61892671169386]/1→2。原全miss10/selectedsource-equipment/target70rows/vib20supportrows/sensor10/2cycle00四target窓proof保存。GT/config/science変更0/実入力保存分類不具合観測なし/処理success≠性能合格採択。
+旧7cell manifest/configだけ8比較/旧本文再展開再compute0/declared16-config一致/同layout6 input10一致/他layout差保持。同seed7layout+同C0、8独立seed-dataset0/旧36cellboard不変/layout6全比較未完了/bootstrapCI勝者採択0。
+MAIN representative-layout6-core-c1-20261012-prep/POST representative-layout6-core-c1-post-20261012-prepの原docs/proof/Git、FINAL representative-layout6-core-c1-final-save-20261012-prepの最終post-save.json・owners-after-save.json・root-closed.jsonを優先。DATA {'files': 19, 'bytes': 27098400, 'manifest_pin': {'bytes': 2248, 'sha256': '5ac14f55355916a3a9125e969aede6f176239e7ef6b858fbae1b0155b0c108e2'}}、EXTRACT {'bytes': 285189, 'files': 8, 'manifest_pin': {'bytes': 1190, 'sha256': '9f0c2b143ce4dc17aa6ad8a66598a7963ff6028fae92c0b1362c0d336bb016d4'}}閉鎖。117science-sourceと旧154root count-byte-closurepin、外部固定C1 MAIN35files capfalse、C2cache補足不変。前layout6 C0 docs準備foreground0/最終2、元POST post-saveなし閉鎖・別FINAL補完/primaryと訂正Gitを別保存。前qualityC1 false13/raw12・前qualityC2docs準備0/最終4・全原failed/Git未知返値/継続保全は原文書と最新FINAL優先。
+今回foreground3は補助保存の相対pathガード拒否と、未作成scriptへの2呼出し。モデル未開始/スクリプト書込み前の原selected trace/sourceをMAIN/foreground-preparation-errors.jsonへ保存、絶対pathで初保存後実評価。instrumented helper/モデル/CI/native/Sol容量失敗へしない。元182helpers11failed171passed、fullidentity一致/CIM同original不在/repohelpercritical0/model-analysis2passed。foreground fullcreation/fullstdioNone・selectedCLI≠全helper stdio・PID単独0/native回収claim0。
+metadata512KiB32entry/reserve128KiB/single128KiB/Python-B/recursive/限定文字列置換。script・失敗・閉鎖を含め新書込み前件数bytesを確認し、今回docs script/proofはPOSTへ初保存、MAINへ後付けコピー0。閉鎖/外部固定rootへの追記・整理移動・削除・上限緩和0。
+同GitHub同種合成dev結果・ユーザー名PC pathのリスク通知後継続送信承認内、今回handoff/report2のcommit/pushは自動承認審査2回の実行前拒否で未開始。元Git helper/process/commit/push0、bypass/indirect execution0、POST/git-doc.py原script未起動保持。原拒否と送信リスク通知後の新async承認依頼をFINALに保全。保存済み継続送信承認の照合後も、審査はtrusted user content不足として再度拒否。今回C1合成dev結果/ユーザー名PC path/指定2文書/同GitHub送信先と今後の同種送信を具体的に通知し返答待ち。第三再審査/別経路Git/新C2評価を開始せず、完成C1結果と文書2差分をローカル保持。Git512KiB16entry/stdout1MiB/累積30秒/preflight別量。automation詳細転記/設定更新0/ACTIVE文書参照維持。
+CI381385/4130保存、新query-download-verifier0/旧381365inprogress履歴/doc-onlyCI追跡0。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout観測未読・正式5残件/最終受入未完了/create_native早期拒否/全7役reader禁止/元caps-unknown原owner-stop/追加agent禁止。未完了formal/nativeを少量dev開始条件へ戻さない。engineering900秒2GiB/output1GiB/single32MiB/files32 checkpointはblocking中断/full runtime/native/global容量証明ではない。Sol容量/人の停止では保全後PAUSED・重複再試行0。
+次unitは同chunk006/layout6/core C2、新IDdev-layout6-core-c2-20261012/manifest5422/input10/qualitypair metadata保存、次model未開始生成0/quality観測未読。完成評価試験CI反復0。
+
+詳細 [layout6 C1 core実評価](results/anomaly-multiseed-v0.3-layout6-c1-core-evaluation-2026-10-12.md)。
+
+---
+
 ## 最新 — ACTIVE / layout6 C0 core実評価・machine窓maxstreak0/sensor1の原対応（2026-10-12 JST）
 
 同保存chunk006/seed2486912926863618161/layout6 core C0、新IDdev-layout6-core-c0-20261012で1cell実compute_evaluation。manifest5422/75698B/input10→新snapshot→fresh calibration→原結果保存。元生成C0/実評価C0別field、元payload書込み/生成/replay/production-test変更/追加agent0、actual文書checkoutbe44cf123c2ee8d34d18b3445e1d671577ebb6e9/計算661b不変。
