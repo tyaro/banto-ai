@@ -1,3 +1,14 @@
+## 最新 — ACTIVE / C2 quality最終metadata KeyError保全・別root継続（2026-10-12 JST）
+
+C2実評価と報告3文書のcommit/pushは完了、元HEAD5b5665c8c7c2bfc80a1ea0efde9304523cf70cd4/source117・計算661b不変。機械10/10・sensor9/10・precision19/19・clean0・検出19全delay1秒/未検出1delaynull/13760利用可640不能の原値を保持。完成モデル・原Git・原final script再実行0。
+元 artifacts/representative-seed2-layout1-quality-c2-20261012-final はpost-save構築時にKeyError current_foreground_metadata_readoutでfailed。前回quality C1にはprior_foreground_metadata_readoutという名称で保存されていた。元script/traceback/failure/fullcreation/helper failedとCIM原観測を閉鎖して保持、追加0。モデル/CI/native/Sol容量失敗へしない。
+元failed final16file216787B、閉鎖pin {"bytes": 415, "sha256": "c7312e23fd368987345b14c9b159997be87d9da6b6b2bf1d151967d950b268a7"}。別docs補正-saveへ原失敗referenceと限定文書補正を保存、今後の最上段優先は artifacts/representative-seed2-layout1-quality-c2-20261012-final-metadata-continuation/post-save・root-closed.json。新continuationは未保存postmetadataだけを組立て、原owners観測・失敗書換え・モデル再compute0。
+次unit同seed/layout1 quality-stress C0 c0-diff-control、新ID dev-seed7466813550306735603-layout1-quality-c0-20261012。元manifest/input10/本文C1C2読取済み、次model未開始。新独立seedではない。完成83cell反復0/追加agent0。
+同種合成dev結果・PC内pathのGitHub継続送信承認で補正2文書を一回[skip ci] commit/push。ACTIVE/automation詳細転記0。実行/nativeprotocol caps維持、EvidenceStore全writepreflight/失敗閉鎖予備維持。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件最終受入未完了/create_native早期拒否/7役reader禁止/capsunknown原owner保持。Sol容量人停止は保全後PAUSED/重複再試行なし。
+
+詳細 [C2 quality報告とmetadata失敗保全](results/anomaly-multiseed-v0.3-second-dev-seed-layout1-c2-quality-evaluation-2026-10-12.md)。
+
+---
 ## 最新 — ACTIVE / 第2dev seed layout1 C2 quality・peer不能と未検出保存（2026-10-12 JST）
 
 同保存chunk013/seed7466813550306735603/layout1 quality-stressをC2で新ID dev-seed7466813550306735603-layout1-quality-c2-20261012へ一回fresh compute。manifest C:\Users\TKent\.codex\worktrees\v03p\banto-ai\artifacts\v03-runs\r1\run\attempts\chunks\013\attempt-0001\result\payload\manifest.json / {"bytes": 75699, "sha256": "d4743f431240dee56e5ead1d0709a998e502b6a7e8a4aecd3f00468dced8bd81"}、同C1 input10pin→新snapshot/fit-calibration。元生成C0/実評価C2別field、元payload書込み生成replayagent0。checkout 279ff2083a3de54f17d3bfbc8d02dae538a06599/計算661b不変、Python3.14.0 Windows AMD64/elapsed 29.328248500009067秒/privatepeak 211423232B。

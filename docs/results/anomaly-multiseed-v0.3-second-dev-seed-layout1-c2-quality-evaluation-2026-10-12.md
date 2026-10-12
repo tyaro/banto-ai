@@ -85,3 +85,9 @@ C1qualityとC2qualityは同input10。C2coreとqualityは同seed/layoutの別stra
 - prepare_result_index実使用/report-handoff-index3docsを同種合成dev結果・PC内path継続送信承認内で一回[skip ci] commit/push。原Git/HEAD-upstream-lsremote-clean/docpins-save/-final。追加承認質問・bypass0。
 - 次unit同seed/layout1/quality-stress C0 c0-diff-control、新ID dev-seed7466813550306735603-layout1-quality-c0-20261012。同manifest/input10、本文C1C2読取済み・次model未開始。元生成C0/次評価C0別field、新独立seedではない。完成83cellを反復しない。
 - ACTIVE/automation詳細転記0。CI381385/4130保持/querydownloadverifiertests0。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了。create_native早期拒否/全7役reader禁止/caps-unknown原owner保持/追加agent禁止。未完了formal/nativeをdev開始条件へ戻さない。Sol容量・人停止は原保全後PAUSED、重複再試行なし。
+
+## 最終metadata失敗の保全と継続
+
+実評価と報告push後、元-final helperはpost-save生成中のKeyError current_foreground_metadata_readoutでfailed。前回の保存field名はprior_foreground_metadata_readout。元script/traceback/failure/creation-live-execution failedと原CIM観測を閉鎖して保持し、原helper/script/model/Git再実行0。元root16file216787B/closure {"bytes": 415, "sha256": "c7312e23fd368987345b14c9b159997be87d9da6b6b2bf1d151967d950b268a7"}。
+補正文書の原Gitと失敗referenceは artifacts/representative-seed2-layout1-quality-c2-20261012-final-metadata-correction-save。最新post-save/閉鎖は同-final-metadata-continuationを優先。新metadata組立てでは旧field参照一箇所だけをprior_foreground_metadata_readoutへ訂正。原failedを書換えず、モデル/CI/native/Sol容量失敗へしない。全writepreflight・新専用rootを維持。
+この追補2文書も継続送信承認内で一回[skip ci]。正式未完了、次C0未開始、同kind結果/PCpath承認範囲と実行caps不変。
