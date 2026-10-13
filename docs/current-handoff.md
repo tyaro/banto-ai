@@ -1,3 +1,16 @@
+## 最新 — ACTIVE / 第2dev seed layout2 C0 quality・6cell比較完成（2026-10-13 JST）
+
+保存chunk014/seed7466813550306735603/layout2 quality-stress C0、新ID dev-seed7466813550306735603-layout2-quality-c0-20261013へ一回fresh compute。同C1C2quality input10一致→新snapshot/calibration。manifest C:\Users\TKent\.codex\worktrees\v03p\banto-ai\artifacts\v03-runs\r1\run\attempts\chunks\014\attempt-0001\result\payload\manifest.json / {"bytes": 75700, "sha256": "13a1f0848235ab785ddc31036c819927a40d5a62e7ff55adb91afe465275998a"}、元payload書込み生成replayagent0/元生成C0評価C0別field。
+機械0/10・sensor0/10・precision0/1・clean1/unmatched1/source1/equipment1。全20no_candidate_in_window/candidate0/causalfalse/matchednull/delaynull、delaycount0原minmaxmeanmediannull/補完0。全20target窓maxstreak1、19窓7全利用可、cycle09温度8901score198.63391744987058/streak1→8902–04currentquality/8905previousquality不能reset→8906/07score<4。欠測1窓で全未検出を説明しない。唯一clean source conveyor-01.motor_temperature原support対応保存。
+14400scores13889利用可511不能、primaryphase471/current30/previous10・phaseタグ480とquality重複9/core比不能増31、重複加算0。48calibrated/fit0各/cal290/noC2state48/nonok30。C0threshold4/C1C2 6/persistence2/GTmatching/source117/calculator16/candidatecompiled科学不変。計算661b/Python3.14.0 Windows AMD64/elapsed 20.239910900010727秒/privatepeak 151724032B。
+同seed/layout2全6比較完成/旧5cell再compute0、C0両条件全20missclean1、C1C2core20/quality19検出clean0、C2peer不能増93とscoreepisode差保持。第1seed72＋第2seed layouts0/1/2各6＝90completed boardcells/使用seed2、90独立datasetではない/bootstrapCI勝者採択0。
+新 artifacts/representative-seed2-layout2-quality-c0-20261013-* の-final/post-save/root-closed優先。DATA {"bytes": 27380366, "files": 19, "manifest_pin": {"bytes": 2235, "sha256": "0446d72a5afd880f13cb9d2b127f2f53b26c1dfb4d833232807a5ca5f0921142"}}。旧449root/412helper23failed389passedmissingexecution1不変。先行C2解析FileNotFound原failed・continuation/停止再開/旧誤記保持。新モデル/元helper反復0。
+prepare_result_index実使用/report-handoff-index3docsを継続送信承認内で一回[skip ci] commit/push、原Git-save。次unit同seed/layout3 core C0、新ID dev-seed7466813550306735603-layout3-core-c0-20261013。chunk015manifest C:\Users\TKent\.codex\worktrees\v03p\banto-ai\artifacts\v03-runs\r1\run\attempts\chunks\015\attempt-0001\result\payload\manifest.json / {"bytes": 75700, "sha256": "479787c83a7c7af9934171a66b6c3fd684689c2b908f79b483a768acf8c278cf"}、identity/input10metadataのみ選択/次本文未読/次model0/新独立seed0。
+ACTIVE/automation詳細転記0/CIquerydownloadverifiertests0。EvidenceStore全writepreflight/失敗閉鎖予備、実行/Git/nativeprotocol caps維持。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件最終受入未完了/create_native早期拒否/全7役reader禁止/追加agent禁止/capsunknown原owner保持。Sol容量人停止は保全後PAUSED。
+
+詳細 [第2seed layout2 C0 qualityと6cell比較](results/anomaly-multiseed-v0.3-second-dev-seed-layout2-c0-quality-and-six-cell-comparison-2026-10-13.md)。
+
+---
 ## 最新 — ACTIVE / 人の再開・第2dev seed layout2 C2 quality保存（2026-10-13 JST）
 
 人の「再開しましょう」で停止解除、banto-10 ACTIVEへ変更。停止rootは保全。layout2 quality-stress C2を新ID dev-seed7466813550306735603-layout2-quality-c2-20261013へ一回fresh compute。manifest C:\Users\TKent\.codex\worktrees\v03p\banto-ai\artifacts\v03-runs\r1\run\attempts\chunks\014\attempt-0001\result\payload\manifest.json / {"bytes": 75700, "sha256": "13a1f0848235ab785ddc31036c819927a40d5a62e7ff55adb91afe465275998a"}。同C1quality input10一致、元生成C0実評価C2別field/元payload書込み生成replayagent0。
