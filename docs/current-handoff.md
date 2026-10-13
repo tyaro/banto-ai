@@ -1,3 +1,19 @@
+## 最新 — ACTIVE / 小型独自モデルの最小実装・新10確認完了（2026-10-13 JST）
+
+optional small_model.py/check_model.pyを追加。新10確認は一度10passed/0failed、登録parameter実測109024。context-only forward、full接続/self-only隔離、mask/loss手計算、逆正規化、有限勾配を確認。optimizer step0/観測本文読取り0/TimesFM weights・teacher出力0/完成評価・試験・CI反復0。Astraの読取り批評を初回前に反映。
+実CPython3.14.0/Torch2.14.0+cpuを既存隔離環境でimport。checks0.283秒/親11.404秒、OS peak pagefile1021829120B。各check後checkpointでblocking/global/native容量証明ではない。実行制限不変。
+
+次の未完成unitは探索用MetroPT候補のpin/時刻/quality/split照合とdataset adapter・共通batch列・train-only scale/trainerの学習前準備。まず準備を保存し、学習はその確認後判断。登録holdout未読、24h public testは過去評価済み探索用。
+人が「しばらく自走、進めなくなった場合止める」と指示。進行不能になれば原証拠・未完成地点を保存してautomationをPAUSEDにする。一般heartbeatで再開せず、解消/人の再開を待つ。
+
+実確認原保存: artifacts/representative-small-model-focus-20261013-records の result/root-closed（閉鎖）。
+文書保存: artifacts/representative-small-model-implementation-20261013-doc-records。
+Git後は artifacts/representative-small-model-implementation-20261013-git-records の post-save/root-closed を優先。
+今回と今後の同GitHubへの同種研究報告送信承認有効。同じ確認を繰り返さない。旧144cell/元失敗/閉鎖root保全。
+ACTIVE / formal gate=s4_acceptance_not_frozen / formal_permission=false / credit0 / 正式受入・方式採択未完了 / native reader禁止。
+[最小実装の詳細](research/timesfm3-small-model-implementation-2026-10-13.md)。
+
+---
 ## 最新 — ACTIVE / 小型独自モデルの構造・学習・データ・資源仕様を設計（2026-10-13 JST）
 
 TimesFM 3の公開構造を参考に、独立初期化の小型モデルを設計。人が明示許可したAstraの独立批評を反映した。3連続値target/60秒/C128/H32/P32/D64/L2/head4/FF128/Q3/context-only正規化。系列attentionはfull対diagonal self-onlyの2構成だけで、登録parameter/初期state/batch列を共通化する。109024parameterは机上計数で、性能・容量・公式学習の再現合格ではない。

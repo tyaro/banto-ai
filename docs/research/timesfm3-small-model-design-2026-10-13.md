@@ -181,3 +181,7 @@ Astraは独立して設計を批評し、3target/context-only正規化、同じb
 
 formal gate=s4_acceptance_not_frozen、formal_permission=false、credit0、登録holdout未読、正式受入未完了、native reader禁止を維持する。
 元の144cell・失敗・閉鎖rootは保全する。今回新モデル・学習・テスト・CIは未実施。研究の進捗と正式受入を別に記録する。
+
+## 最小実装の保存（2026-10-13）
+
+上記の次unitは [実装記録](timesfm3-small-model-implementation-2026-10-13.md) で10新確認を一度完了。学習は未開始。次はdataset adapterとtrainerの学習前準備。設計時の次unit記述は履歴として保持する。
