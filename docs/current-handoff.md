@@ -1,3 +1,16 @@
+## 最新 — ACTIVE / 第2dev seed layout3 C1 core・20検出とsensor開始phase除外保存（2026-10-13 JST）
+
+保存chunk015/seed7466813550306735603/layout3 core C1、新ID dev-seed7466813550306735603-layout3-core-c1-20261013へ一回fresh compute。同C0 input10一致→新snapshot/fitcalibration。manifest C:\Users\TKent\.codex\worktrees\v03p\banto-ai\artifacts\v03-runs\r1\run\attempts\chunks\015\attempt-0001\result\payload\manifest.json / {"bytes": 75700, "sha256": "479787c83a7c7af9934171a66b6c3fd684689c2b908f79b483a768acf8c278cf"}、元生成C0評価C1別field/元payload書込み生成replayagent0。
+機械10/10・sensor10/10・precision20/20・clean0/unmatched0/source30/equipment20。全20causal_detected/candidate1/event-target-source-equipment-support40原対応。機械onsetstart+1秒/各delay1秒、sensorstart+2秒/各delay2秒。delay20/min1max2meanmedian1.5、未検出補完0。
+機械10窓7全利用可/phase不能0/maxstreak3、sensor10窓6利用可/開始phase不能1/maxstreak2。sensor先頭nullscore-streak0→次score>6streak1→さらに次score>6streak2を原保存/除外なし反実仮想再compute0。14400scores13920利用可480phase不能全nullscore-residual-thresholdfalse、48calibrated/fit600/cal290/noC2state48/nonok0。
+source117/calculator16/candidatecompiled/thresholdGTmatching科学不変、計算661b/Python3.14.0 Windows AMD64/elapsed 16.96857040002942秒/privatepeak 152158208B。同C0保存all20miss/clean1との比較のみ旧再compute0。C1core保存16cells、92boardcells/使用seed2/92独立datasetではない/bootstrapCI勝者採択0。
+新 artifacts/representative-seed2-layout3-core-c1-20261013-* の-final/post-save/root-closed優先。DATA {"bytes": 27110749, "files": 19, "manifest_pin": {"bytes": 2232, "sha256": "603b22d40e7fb4bd9d825dca1877934f9dee9138c2c15caf1c7d6ae813b52e9b"}}。旧459root/420helpers23failed397passedmissingexecution1不変。全旧失敗/停止再開/原誤記保持、新sourcebuilder/helperfailure0。
+prepare_result_index実使用/report-handoff-index3docs一回[skip ci] commit/push、原Git-save/最終countbyteclosure/helperfullcreation-final。次同seed/layout3 core C2、新ID dev-seed7466813550306735603-layout3-core-c2-20261013。同manifest/input10/本文C0C1読取済み・次model0。
+ACTIVE/automation詳細転記0/CIquerydownloadverifiertests0。EvidenceStore全writepreflight/失敗閉鎖予備・実行/Git/nativeprotocol caps維持。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件最終受入未完了/create_native早期拒否/全7役reader禁止/追加agent禁止/capsunknown原owner保持。未完了formal/nativeをdev開始条件へ戻さない。Sol容量人停止は保全後PAUSED。
+
+詳細 [第2seed layout3 C1 core](results/anomaly-multiseed-v0.3-second-dev-seed-layout3-c1-core-evaluation-2026-10-13.md)。
+
+---
 ## 最新 — ACTIVE / 第2dev seed layout3 C0 core・sensor開始phase除外と全20未検出保存（2026-10-13 JST）
 
 同保存chunk015/seed7466813550306735603/layout3 coreをC0で新ID dev-seed7466813550306735603-layout3-core-c0-20261013へ一回fresh compute。manifest C:\Users\TKent\.codex\worktrees\v03p\banto-ai\artifacts\v03-runs\r1\run\attempts\chunks\015\attempt-0001\result\payload\manifest.json / {"bytes": 75700, "sha256": "479787c83a7c7af9934171a66b6c3fd684689c2b908f79b483a768acf8c278cf"}、input10pin→新snapshot/fresh calibration。元生成C0/実評価C0別field、元payload書込み生成replayagent0。checkout 7ab5f4b51bd51dd896bf01fe5e12f83799856da7/計算661b不変、Python3.14.0 Windows AMD64/elapsed 20.530790899996646秒/privatepeak 150568960B。
