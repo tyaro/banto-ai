@@ -1,3 +1,17 @@
+## 最新 — ACTIVE / 公開データだけの需要研究再開・直近曜日平均の少量検証完了（2026-10-14 JST）
+
+人が「販促計画履歴はないので今ある公開データだけで需要研究を続ける」と明示し、予定履歴待ちの自走停止から直接研究を再開。販促予定の効果検証条件を需要研究全体の開始条件にしない。既存automation PAUSED維持/更新0。
+
+[最近の水準と曜日の結果](results/store-sales-recent-level-2026-10-14.md)優先。新候補weekday_mean_28一つを出力前固定、3店舗・14日。既結果確認済み2016/2017年2/5/8月の開発比較252日で元naive18窓予測再利用。追加2017年3/6/7月1日126日で新naive9窓/候補9窓を一度計算。追加期間も旧fit履歴に含まれた回顧比較で、未見holdoutclaim0。全paired378日、旧ridge/naive再評価0、grid/AI学習0。
+
+開発WAPE naive12.203776→候補10.311483%、Bias-1.463425→+1.200367%。追加WAPE15.300949→8.723541%、Bias-5.211468→-0.427171%。追加9窓8日次改善、14日合計7改善。追加14日累積WAPE7.154263→3.299142%。7月店舗2は日次改善でも合計悪化、店舗3同窓は両悪化。一般性能/採択/販促因果/PSI/統計CI0。
+
+新代表5件一回5passed/0failed。元5/6/7確認・完成CI反復0。原snapshotだけ利用、原ZIP再読取り0、元root追記0。原結果recent-level-records（28file269387B/complete閉鎖）、全stdout/stderr/exit0はlaunch-records。保存済み予測の新lead/cumulative解析はrecent-analysis-records/analysis-launch-records、新fit/forward0。旧forecast f707pin不変、基点HEAD66d6de3/new3source workingpin原保存。
+
+本文 artifacts/representative-store-sales-recent-doc-20261014-records。Git後同recent-git-20261014-records post-save/root-closed優先。新source/docsとhandoffを別batch、各512KiB16entry/累積30秒。次unitは過去側店舗間変動と残差の対応を保存データで確認し、関連系列追加の問いを絞る。販促予定を必須条件にせず将来実施値は使わない。CARE手動完了報告待ち・自動確認/取得0。実行/記録上限維持、追加agent0、formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。同GitHub Git継続承認有効、原本/生予測/fit送信0。
+
+---
+
 ## 最新 — PAUSED / 需要二方式評価・予定入力機構完了、実予定履歴待ちで自走停止（2026-10-14 JST）
 
 人の「しばらく自走、進めなくなったら停止」に従い、固定2017評価→保存結果診断→販促予定as-of最小部品→必要データ契約まで完了した。実際の予定版/利用可能日時履歴が未所持のため、実績での販促予定追加価値を評価できず自走停止。既存automation PAUSED維持/更新0、一般heartbeatで同評価や新AI学習を開始しない。
