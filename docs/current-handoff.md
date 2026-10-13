@@ -1,3 +1,19 @@
+## 最新 — ACTIVE / 公開需要の名目月日補正一方式・日次と総量の分離（2026-10-14 JST）
+
+人の自走指示を継続。[月日補正の結果](results/store-sales-anniversary-2026-10-14.md)と[出力前設計](research/store-sales-anniversary-design-2026-10-14.md)を優先。直接研究ACTIVE、既存automation PAUSED維持/更新0。
+
+2013〜2015名目月日8候補から店舗別ratio、支持2年以上・n/(n+3)固定縮小/unknown倍率1。未来Event/Transfer/販促/営業予定0、元日観測0とChristmas未記録を区別。新2016Jan1/Nov1/Dec18・2017Jan1、3店舗14日、168対象/165paired/Christmas3欠測/元日6zero。新baseline12/補正12窓各一度、旧評価/試験/CI反復0。
+
+日次WAPE16.757171→15.088881%、Bias-1.256400→-2.998889%。日次7改善/2悪化/3同値。全14日観測9窓累積WAPE3.694340→5.015669%、合計3/9改善。欠測13日和を14日へしない。休日補正採択/需要移動因果/一般性能/メーカーPSIclaim0。
+
+新代表5件一回allpassed、baselinecore不変。launcher準備件数AssertionErrorと未作成file呼出しはforeground選択errorのみfailure-recordsへ保全、model/tests未起動。新cont-prepで対象path/件数だけ訂正、実評価一度。原結果anniversary-records complete閉鎖19file143002B、全stdout/stderr/exit0はlaunch-records。保存予測解析/本文doc-records、Git後anniversary-git-20261014-records post-save/root-closed優先。
+
+次unitは14日総量を維持し日別の暦配分だけ変える一機構を先に設計し、総量/日別課題を分ける。総量改善は構成上claimしない、実際の休日需要移動や営業日確定へしない。閉鎖root追記/完成unit反復0。
+
+CARE手動完了報告待ち/自動確認取得0、追加agent0、実行900秒2GiB/output1GiB/single32MiB/files32・記録16MiB512files/256KiBparts/reserve2MiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。同GitHub Git継続承認有効、原本/CSV/生予測/fit送信0。
+
+---
+
 ## 最新 — ACTIVE / 公開需要の休日・営業日可用性と過去月日記述完了（2026-10-14 JST）
 
 人の自走指示を継続。[カレンダー・営業日研究](results/store-sales-calendar-availability-2026-10-14.md)と[自己対関連履歴比較](results/store-sales-related-comparison-2026-10-14.md)を優先。直接研究ACTIVE、既存automation PAUSED維持/更新0。
