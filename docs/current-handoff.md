@@ -1,3 +1,17 @@
+## 最新 — ACTIVE / 第2dev seed layout3 C1 quality・phaseと欠測の未検出保存（2026-10-13 JST）
+
+保存chunk015/seed7466813550306735603/layout3 quality-stress C1、新ID dev-seed7466813550306735603-layout3-quality-c1-20261013へ一回fresh compute。manifest C:\Users\TKent\.codex\worktrees\v03p\banto-ai\artifacts\v03-runs\r1\run\attempts\chunks\015\attempt-0001\result\payload\manifest.json / {"bytes": 75700, "sha256": "479787c83a7c7af9934171a66b6c3fd684689c2b908f79b483a768acf8c278cf"}。input10pin→新snapshot/fitcalibration、元生成C0/実評価C1別field・元payload書込み生成replayagent0。checkout f067d5bd6a4966707dde69f715cf60c8220c9c87/計算661b不変、Python3.14.0 Windows AMD64/elapsed 38.64196399995126秒/privatepeak 152977408B。
+機械10/10・sensor9/10・precision19/19・clean0/unmatched0/source29/equipment19。全19causal_detected/event-target-source-equipment-support38原対応。機械10delay1秒・sensor9delay2秒、delay19/min1max2mean1.4736842105263157median1秒、未検出delaynull補完0。機械10窓7全利用可/maxstreak3、sensor検出9窓6利用可/開始phase不能1/maxstreak2。
+唯一未検出cycle09 motor-01.motor_temperature/sensor spike[8910,8913)/window8910–8916。8910phase不能nullscore-streak0→8911–13current quality不能→8914previous quality不能、8915score0.7119662554614771/8916score1.0714004008988312<6/streak0。対象窓閾値超過0/2利用可5不能phase1/maxstreak0/persistence2不成立/no_candidate_in_window/candidate0/causalfalse/matchednull/delaynull。
+48calibrated/fit600各/cal290/noC2state48、18000inputmask対応nonok30/14400scores13880利用可520不能。排他的phase480/currentquality30/previousquality10、phasequality重複0/core比不能増40。非排他的tagsは重複加算しない。全不能nullscore-residual/thresholdfalse。thresholdC0 4/C1C2 6/operator>/persistence2/GTmatching科学不変。clean_rate0/3365/effective3255rate0/burden0/20原0。
+同seed/layout3 C1core保存machine10sensor10precision20/20clean0/13920利用可480不能とmetadata比較。input10共通3/観測quality等は異なる、旧再compute0/欠測だけの反実仮想全差証明へしない。C1quality保存16cells/source117calculator16candidatecompiled一致。94boardcells/使用seed2/94独立datasetではない/bootstrapCI勝者採択0。
+新 artifacts/representative-seed2-layout3-quality-c1-20261013-* の-final/post-save/root-closed優先。DATA {"bytes": 27555580, "files": 19, "manifest_pin": {"bytes": 2235, "sha256": "62fe13d1462deaff5136721ae0f48b016f79ed8c152d989f56d627ec03a51aaf"}}。旧471root/428helpers23failed405passedmissingexecution1と容量審査失敗保全。今回foreground path日付誤指定/KeyError seedを選択tool証拠へ保存、instrumentedhelperfailure0/modelCI失敗ではない。全旧失敗原誤記保持/閉鎖root追記0。
+prepare_result_index実使用/report-handoff-index3docs一回[skip ci] commit/push、原Git-save/最終countbyteclosure/helperfullcreation-final。次同seed/layout3 quality-stress C2、新ID dev-seed7466813550306735603-layout3-quality-c2-20261013。同manifest/input10/本文C1読取済み/次model0・元生成C0次評価C2別field。
+ACTIVE/automation詳細転記0/CIquerydownloadverifiertests0。EvidenceStore全writepreflight・実行/Git/nativeprotocol caps維持。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件最終受入未完了/create_native早期拒否/全7役reader禁止/追加agent禁止/capsunknown原owner保持。未完了formal/nativeをdev開始条件へ戻さない。Sol容量人停止は保全後PAUSED。
+
+詳細 [第2seed layout3 C1 quality](results/anomaly-multiseed-v0.3-second-dev-seed-layout3-c1-quality-evaluation-2026-10-13.md)。
+
+---
 ## 最新 — ACTIVE / 第2dev seed layout3 C2 core・3候補core比較完成（2026-10-13 JST）
 
 人の2026-10-13「再開ください」でACTIVEへ再開。前回自動審査のSelected model is at capacityは審査未完了の原証拠として-capacity-stopに保持し、helper/model/CI失敗へしない。停止prefixは以下の履歴に保持。今回は未保存C2文書のみ完成、C2モデル・解析再実行0。schedulerは実観測ACTIVE、設定変更0。新記録は-resume-preparation/-resume-save/-resume-finalを優先。
