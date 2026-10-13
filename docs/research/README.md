@@ -11,6 +11,8 @@
 ## 文書
 
 - [研究方針に合わせたデータの保管と整理](data-retention-and-cleanup-2026-10-14.md)
+- [最近14日の総量候補の結果](../results/store-sales-total-2026-10-14.md)
+- [総量候補の出力前設計](store-sales-total-design-2026-10-14.md)
 - [固定暦配分の別3都市検証](../results/store-sales-cross-city-2026-10-14.md)
 - [別都市検証の出力前設計](store-sales-cross-city-design-2026-10-14.md)
 - [総量を維持する暦配分の検証](../results/store-sales-allocation-2026-10-14.md)
