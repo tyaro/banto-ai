@@ -1,3 +1,17 @@
+## 最新 — ACTIVE / 公開需要の休日・営業日可用性と過去月日記述完了（2026-10-14 JST）
+
+人の自走指示を継続。[カレンダー・営業日研究](results/store-sales-calendar-availability-2026-10-14.md)と[自己対関連履歴比較](results/store-sales-related-comparison-2026-10-14.md)を優先。直接研究ACTIVE、既存automation PAUSED維持/更新0。
+
+既原ZIPpin照合後stores/holidaysだけ読取り、原train/test/sales読取り0。選定3店舗は全Quito/Pichincha、Holiday221/Additional51/Bridge5/Event56/Transfer12/WorkDay5、transferredTrue12。公表/改訂日時・店舗営業カレンダーなし。全イベントを未来既知へしない。
+
+2013〜2015の同名・同月日National/Holiday8件を名目記念月日候補に限定。保存prefixだけで過去28日同曜日平均対実績を記述、営業/因果/将来holiday確定0。元日9件観測0/比較6、Christmas9件未記録/倍率null。欠測→0変換0、新fit/forward/元評価・確認・CI反復0。
+
+calendar-records及びprefix-records complete閉鎖、全stdout/stderr/exit0は各launch-records。本文doc-records、Git後calendar-git-20261014-records post-save/root-closed優先。次unitは過去から固定した名目月日補正一方式の支持数/shrinkage/unknown規則・少数新イベント窓・時系列境界を先に設計し、元日観測0/Christmas欠測を分ける新代表確認へ。将来Transfer/Event実施値を使わず、倍率/モデル採択・メーカーPSI/一般性能claim0。
+
+CARE手動完了報告待ち/自動確認取得0、追加agent0、閉鎖root追記0。実行900秒2GiB/output1GiB/single32MiB/files32・記録16MiB512files/256KiBparts/reserve2MiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git継続承認有効、原本/CSV/生予測/fit送信0。
+
+---
+
 ## 最新 — ACTIVE / 公開需要の自己・関連履歴の固定比較完了（2026-10-14 JST）
 
 人の「進めて、しばらく自走」を継続。[自己対3店舗過去履歴の比較](results/store-sales-related-comparison-2026-10-14.md)と[出力前の設計](research/store-sales-related-comparison-design-2026-10-14.md)を優先。直接研究ACTIVE、既存automation PAUSED維持/更新0。
