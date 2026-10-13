@@ -11,6 +11,8 @@
 ## 文書
 
 - [研究方針に合わせたデータの保管と整理](data-retention-and-cleanup-2026-10-14.md)
+- [固定月日補正の日次と期間総量の結果](../results/store-sales-anniversary-2026-10-14.md)
+- [固定月日補正の出力前設計](store-sales-anniversary-design-2026-10-14.md)
 - [公開需要カレンダーの予測時点可用性](../results/store-sales-calendar-availability-2026-10-14.md)
 - [自己対3店舗過去履歴の固定比較](../results/store-sales-related-comparison-2026-10-14.md)
 - [関連店舗比較の出力前設計](store-sales-related-comparison-design-2026-10-14.md)
