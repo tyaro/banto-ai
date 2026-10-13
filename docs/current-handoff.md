@@ -1,3 +1,17 @@
+## 最新 — ACTIVE / 最近14日総量の一候補完了・固定16区間確認へ（2026-10-14 JST）
+
+人の自走指示を継続。[総量候補結果](results/store-sales-total-2026-10-14.md)と[出力前設計](research/store-sales-total-design-2026-10-14.md)優先。直接研究ACTIVE、既存automation PAUSED/更新0。
+
+別都市5/11/12・2017Jan/May/Aug1・全126paired。保存配分形を固定し過去14日観測平均×14/支持12以上一候補、新総量9/新rescale9窓。原ZIP/CSV/基準/倍率再計算0、未来量使用0、新fit0。新代表5件一回allpassed。日次WAPE16.067958→15.919026%、9窓累積6.833090→6.683522%、Bias-1.232658→-4.654596%。1/5月悪化、8月改善、店舗12悪化。方式採択/未見性能/PSIclaim0。
+
+原total-records complete閉鎖、全stdout/stderr/exit0はlaunch-records。本文doc-records、Git後total-git-20261014-records post-save優先。元失敗/閉鎖root不変・旧確認/CI反復0。
+
+次unitは同店舗/同方式/支持数を固定し2017Jan1から14日stride16非重複区間（最終Aug12）の安定性を確認。Jan1の元3窓は保存結果を再利用、他15起点×3だけ新予測。672対象の連続時系列で独立標本/新holdout0。成績後のgrid/モデル追加0。
+
+CARE手動完了報告待ち/自動確認取得0、追加agent0、実行900秒2GiB/output1GiB/single32MiB/files32・記録16MiB512files/256KiBparts/reserve2MiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。同GitHub Git継続承認有効、原本/CSV/生予測/fit送信0。
+
+---
+
 ## 最新 — ACTIVE / 固定暦配分の別3都市検証完了・総量側へ（2026-10-14 JST）
 
 人の自走指示を継続。[別都市の結果](results/store-sales-cross-city-2026-10-14.md)と[出力前設計](research/store-sales-cross-city-design-2026-10-14.md)優先。直接研究ACTIVE、既存automation PAUSED/更新0。
