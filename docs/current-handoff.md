@@ -1,3 +1,29 @@
+## 最新 — ACTIVE / 第2dev seed layout3 C2 core・3候補core比較完成（2026-10-13 JST）
+
+人の2026-10-13「再開ください」でACTIVEへ再開。前回自動審査のSelected model is at capacityは審査未完了の原証拠として-capacity-stopに保持し、helper/model/CI失敗へしない。停止prefixは以下の履歴に保持。今回は未保存C2文書のみ完成、C2モデル・解析再実行0。schedulerは実観測ACTIVE、設定変更0。新記録は-resume-preparation/-resume-save/-resume-finalを優先。
+保存chunk015/seed7466813550306735603/layout3 core C2、新ID dev-seed7466813550306735603-layout3-core-c2-20261013へ一回fresh compute。同C0C1 input10一致→新snapshot/fitcalibration。manifest C:\Users\TKent\.codex\worktrees\v03p\banto-ai\artifacts\v03-runs\r1\run\attempts\chunks\015\attempt-0001\result\payload\manifest.json / {"bytes": 75700, "sha256": "479787c83a7c7af9934171a66b6c3fd684689c2b908f79b483a768acf8c278cf"}、元生成C0評価C2別field/元payload書込み生成replayagent0。
+機械10/10・sensor10/10・precision20/20・clean0/unmatched0/source50/equipment20。全20causal_detected/candidate1/event-target-source-equipment-support40原対応。機械onsetstart+1秒/各delay1秒、sensorstart+2秒/各delay2秒。delay20/min1max2meanmedian1.5、未検出補完0。
+機械10窓7全利用可/phase不能0/maxstreak3、sensor10窓6利用可/開始phase不能1/maxstreak2。sensor先頭nullscore-streak0→次score>6streak1→さらに次score>6streak2原保存/除外なし反実仮想再compute0。14400scores13920利用可480phase不能全nullscore-residual-thresholdfalse、48calibrated/fit600/cal290/C2state48/nonok0。
+source117/calculator16/candidatecompiled/thresholdGTmatching科学不変、計算661b/Python3.14.0 Windows AMD64/elapsed 29.373155900044367秒/privatepeak 209248256B。同C0C1旧再compute0・3候補core比較完成。C1C2metrics一致/source30対50は全scoreepisode一致や勝者ではない。C2core保存16cells、93boardcells/使用seed2/93独立datasetではない/bootstrapCI勝者採択0。
+新 artifacts/representative-seed2-layout3-core-c2-20261013-* の-final/post-save/root-closed優先。DATA {"bytes": 37798308, "files": 19, "manifest_pin": {"bytes": 2232, "sha256": "a124e50ba1072b008d51e23deacd1f636a984bb0a4fe83f05c3503180f4325a4"}}。旧464root/424helpers23failed401passedmissingexecution1不変。全旧失敗/停止再開/原誤記保持、新sourcebuilder/helperfailure0。
+prepare_result_index実使用/report-handoff-index3docs一回[skip ci] commit/push、原Git-save/最終countbyteclosure/helperfullcreation-final。次同seed/layout3 quality-stress C1、新ID dev-seed7466813550306735603-layout3-quality-c1-20261013。同manifest/pin・quality identity/input10metadataのみ選択/次本文未読・model0。
+ACTIVE/automation詳細転記0/CIquerydownloadverifiertests0。EvidenceStore全writepreflight/失敗閉鎖予備・実行/Git/nativeprotocol caps維持。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件最終受入未完了/create_native早期拒否/全7役reader禁止/追加agent禁止/capsunknown原owner保持。未完了formal/nativeをdev開始条件へ戻さない。Sol容量人停止は保全後PAUSED。
+
+詳細 [第2seed layout3 C2 core比較](results/anomaly-multiseed-v0.3-second-dev-seed-layout3-c2-core-evaluation-2026-10-13.md)。
+
+---
+## 最新 — PAUSED / C2実評価完了・自動審査容量エラー保全（2026-10-13 JST）
+
+文書保存・push前の自動承認審査が「Selected model is at capacity」で失敗し操作未実行。安全性拒否ではなく審査未完了。docs helper未起動/Git0/旧完成評価反復0/bypass0。容量エラー時の指示に従い作業状態をPAUSEDとし、明示再開まで新評価・試験・CI・Git再試行を開始しない。
+
+layout3 core C2のモデルと解析は完了。機械10/10・sensor10/10・precision20/20・clean0、delay機械1秒/sensor2秒/meanmedian1.5秒、source50/equipment20、13920利用可480不能。core3候補の同入力対応を保持、完成93boardcells/seed2。正式受入未完了/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了。実行・Git・native caps/全7役reader禁止/元unknown owner保持/追加agent禁止を維持。
+
+原証拠 artifacts/representative-seed2-layout3-core-c2-20261013-records と -analysis は閉鎖保持。未実行文書sourceとselected審査失敗は artifacts/representative-seed2-layout3-core-c2-20261013-capacity-stop の閉鎖記録へ保全。旧root追記0。C2報告・索引・Git保存は未実行、現引継ぎ停止追補のみローカル差分で保持。次quality-stress C1は文書sourceの予定でmetadata選択未実行・観測本文未読・model0。再開時は未保存C2文書unitを先に完成し、C2モデル・解析は再実行しない。
+
+banto-10をPAUSEDへ変更するapp toolも同じ容量エラーで実行前失敗した。schedulerのPAUSEDは確認できていない。現在automation観測statusは停止metadataを参照する。設定ファイル直接変更・別経路で審査回避・同操作retry0。必要なら人がアプリの定期実行カードで一時停止する。以下ACTIVEは過去履歴、この作業停止を優先する。
+
+---
+
 ## 最新 — ACTIVE / 第2dev seed layout3 C1 core・20検出とsensor開始phase除外保存（2026-10-13 JST）
 
 保存chunk015/seed7466813550306735603/layout3 core C1、新ID dev-seed7466813550306735603-layout3-core-c1-20261013へ一回fresh compute。同C0 input10一致→新snapshot/fitcalibration。manifest C:\Users\TKent\.codex\worktrees\v03p\banto-ai\artifacts\v03-runs\r1\run\attempts\chunks\015\attempt-0001\result\payload\manifest.json / {"bytes": 75700, "sha256": "479787c83a7c7af9934171a66b6c3fd684689c2b908f79b483a768acf8c278cf"}、元生成C0評価C1別field/元payload書込み生成replayagent0。
