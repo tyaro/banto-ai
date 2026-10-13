@@ -1,3 +1,19 @@
+## 最新 — ACTIVE / 第2dev seed layout6 quality C0/C1/C2・全6cell比較完成（2026-10-13 JST）
+
+初saveはJSON falseのPython式誤投入NameError/failed、文書wb/Git前停止。原script/trace/live-execution/prefix閉鎖保持、新save-continuation/final優先。原helper/model/解析再実行0、原failedを成功へしない。source準備scopeエラー2件はisolate内/nestedtools0で別保存。
+人の3候補集約許可に従い同quality input10一致のC0+C1、次C2を順次fresh compute、2CLI/3cellの解析・文書Gitを1単位に集約。CLI2候補上限・実行caps維持。処理success≠性能保証採択正式受入。checkout 2d76fadb522c75ded24c122fd5505a179a12544e/計算661b/source117calculator16configs不変、Python3.14.0 Windows AMD64。元payload書込み生成replay0。
+c0-diff-control machine0/10sensor0/10precision0/1clean1unmatched1source1eq1。原reasons {"no_candidate_in_window": 20} / delay {"conditioned_on": "causal-detected-only", "count": 0, "max": null, "mean": null, "median": null, "min": null, "undetected_fill": "forbidden", "unit": "seconds"} / class別 {"machine": {}, "sensor": {}}。全未検出delaynull補完0。
+c1-phase-level machine0/10sensor9/10precision9/19clean0unmatched10source19eq19。原reasons {"causal_detected": 9, "first_candidate_no_target_onset": 10, "no_candidate_in_window": 1} / delay {"conditioned_on": "causal-detected-only", "count": 9, "max": 1.0, "mean": 1.0, "median": 1.0, "min": 1.0, "undetected_fill": "forbidden", "unit": "seconds"} / class別 {"machine": {}, "sensor": {"1.0": 9}}。全未検出delaynull補完0。
+c2-phase-conditional machine0/10sensor9/10precision9/19clean0unmatched10source28eq19。原reasons {"causal_detected": 9, "first_candidate_no_target_onset": 10, "no_candidate_in_window": 1} / delay {"conditioned_on": "causal-detected-only", "count": 9, "max": 1.0, "mean": 1.0, "median": 1.0, "min": 1.0, "undetected_fill": "forbidden", "unit": "seconds"} / class別 {"machine": {}, "sensor": {"1.0": 9}}。全未検出delaynull補完0。
+cycle09sensor原spike[8841,8844)：先頭閾値超過streak1→currentquality不能3行→previous不能1行→最後2行閾値未満。3利用可4不能/phase0/candidate0/causalfalse/matchednull/delaynullを全候補で原保存。
+全14400scores、C0C1 available13889/unavailable511＝primary phase471current30prev10、C2 available13796/unavailable604＝追加primary peer93。phase tag480/温度quality40は9行重複、C2 peer tag120はphaseと27行重複（3target各9）。peer各31primary/9phaseで温度quality40sample集合へ一致。core比不能増31/31/124、全不能nullscore-residualthresholdfalse/inputnonok30/48calibrated/cal各290。thresholdC0 4/C1C2 6/persistence2/GTmatching不変、原非排他的tagsを加算0。
+114boardcells＝第1seed72＋第2seed42/使用seed2/114独立datasetではない。第2seed layouts0–6各6cell比較完成、旧111再compute0/bootstrap統計CI勝者採択0。最新 artifacts/representative-seed2-layout6-quality-three-candidates-20261013-final/post-save/root-closed優先、DATA2閉鎖/旧523root463helper24failed439passedmissingexecution1全旧失敗審査誤記保全。
+report/handoff/index3docs一回[skip ci] commit/push、prepare_result_index実使用。具体的通知後の同送信先同種合成dev報告PC内path継続承認保持。次unit同seed/layout7 core groups [["c0-diff-control", "c1-phase-level"], ["c2-phase-conditional"]] / IDs ["dev-seed7466813550306735603-layout7-core-c0-c1-20261013", "dev-seed7466813550306735603-layout7-core-c2-20261013"]。chunk019 manifest C:\Users\TKent\.codex\worktrees\v03p\banto-ai\artifacts\v03-runs\r1\run\attempts\chunks\019\attempt-0001\result\payload\manifest.json / {"bytes": 75700, "sha256": "9dc8513ebff4fa25510a5f3fab4ea2531c48dfa0ee800dc5b7c095475c7fc6f8"}、identity/input10metadataのみ選択/本文未読/次model0。
+ACTIVE/automation詳細転記0/新testCIagent0。EvidenceStore全writepreflight/分割失敗予備・実行Gitnativeprotocol caps維持。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件最終受入未完了/create_native早期拒否/全7役reader禁止/元capsunknown owner保持。Sol容量人停止は保全後PAUSED。
+
+詳細 [第2dev seed・layout6 quality-stressの3候補とcore比較（2026-10-13）](results/anomaly-multiseed-v0.3-second-dev-seed-layout6-quality-three-candidate-comparison-2026-10-13.md)。
+
+---
 ## 最新 — ACTIVE / 第2dev seed layout6 core C0/C1/C2比較（2026-10-13 JST）
 
 人の3候補集約許可に従い同core input10一致のC0+C1、次C2を順次fresh compute、2CLI/3cellの解析・文書Gitを1単位に集約。CLI2候補上限・実行caps維持。処理success≠性能保証採択正式受入。checkout d70cb71dcaefbe5c7c4d58fe26437661afa50df0/計算661b/source117calculator16configs不変、Python3.14.0 Windows AMD64。元payload書込み生成replay0。
