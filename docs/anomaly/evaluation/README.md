@@ -6,6 +6,7 @@ fixture、数値検算、資源上限、要約・条件別の結果表。
 
 ## 文書
 
+- [方式の理論検討と最小の実装確認（2026-10-13）](anomaly-v03-minimal-validation-policy-2026-10-13.md)
 - [結合済み架空producer入力から解析・独立検算への接続](anomaly-v03-bound-fixture-pipeline.md)
 - [結合済み記述集計表から報告payloadを準備するAPI](anomaly-v03-bound-summary-report.md)
 - [結合済み要約からdev/smokeの比較表を作る](anomaly-v03-bound-summary-tables.md)

@@ -1,3 +1,22 @@
+## 最新 — ACTIVE / 理論検討とC1の最小実装確認へ方針変更（2026-10-13 JST）
+
+人の最新指示に従い、固定パターン合成devのC0/C1/C2大量比較・layout sweepの拡張を終了する。
+第2dev seed layout11 qualityまで144cell完了の最新finalを保全し、次seed/layoutの比較指示を失効させる。未着手入力の本文を読まず、新モデル・dataset生成・replay・CI・テスト実行0。原失敗・閉鎖artifactを保全する。
+
+C0の一次差分と2点連続条件の弱点は式と数点の説明で確認する。理論検討を方式選択の根拠、実装の代表ケースを仕様通りの動作確認として分ける。
+C1は段差・正常運転切替・欠測を中心に、既存テストと保存証拠で確認済み範囲を整理し、不足する接続だけを小さく確認する。完成テスト・モデルの反復を次工程にしない。
+C2はC1で拾えない「実際に検知したい異常」が具体化してから必要性を判断する。追加C2比較・方式採択は未着手。
+固定パターン合成データの件数増加を実設備誤警報率の保証へしない。C0の検出不能を普遍命題にせず、直前layout11 coreのsensor2検出も原記録として保持。
+
+次の未完成unitはC1代表ケースの既存確認範囲と不足の整理。元scorerからepisodeまでの段差・正常切替・欠測の接続が未確認の場合に限り、その少数ケースを用意する。
+最新の方針記録は artifacts/representative-minimal-validation-policy-20261013-continuation の post-policy / root-closed を優先。直前の数値結果は閉鎖済みlayout11 quality finalの原保存を保持。
+
+実行上限・記録の分割と失敗予備・Git上限・閉鎖root追記禁止を維持。追加agent0、元payload変更0。
+ACTIVE。formal gate=s4_acceptance_not_frozen / formal_permission=false / credit=0 / holdout観測未読 / 正式受入・採択未完了 / native reader禁止を維持する。
+
+詳細 [方式の理論検討と最小の実装確認](anomaly/evaluation/anomaly-v03-minimal-validation-policy-2026-10-13.md)。
+
+---
 ## 最新 — ACTIVE / 第2dev seed layout11 quality C0/C1/C2・全6cell比較完成（2026-10-13 JST）
 
 人の3候補集約許可に従い同quality input10一致のC0+C1、次C2を順次fresh compute、2CLI/3cellの解析・文書Gitを1単位に集約。CLI2候補上限・実行caps維持。処理success≠性能保証採択正式受入。checkout 359e3c6a552e2313f7e352b764ac574fe34a5498/計算661b/source117calculator16configs不変、Python3.14.0 Windows AMD64。元payload書込み生成replay0。
