@@ -1,3 +1,17 @@
+## 最新 — ACTIVE / 公開需要の過去側関連系列・lead可用性を確認（2026-10-14 JST）
+
+人の公開データだけで需要研究を続ける指示を継続。[過去の関連店舗系列](results/store-sales-related-history-2026-10-14.md)と[最近の水準の検証](results/store-sales-recent-level-2026-10-14.md)を優先。予定履歴を需要研究全体の開始条件にしない。既存automation PAUSED維持/更新0、直接研究ACTIVE。
+
+保存済み2013〜2015年BREAD/BAKERY3店舗のprefixだけで週差分sales_t-sales_t-7を記述解析、lag0/1/7/14を出力前固定。全方向/自己のrと有効組数・4観測非ゼロ感応度を原保存。店舗3→2同時点r0.636510/1083組、非ゼロr0.613922/1080組。14日lagの例は小さい値。関連は予測追加価値・因果の証明ではなく、共有暦・差分演算の依存も含み得る。p値/CI/採択0。
+
+発行時点までの量として利用できるleadはlag0なし/lag1はlead1のみ/lag7は1〜7/lag14は1〜14。将来の他店舗実績を入力しない。2016/2017新入力読取り0、新fit/forecast0、元ZIP読取り0、旧評価/テスト/CI反復0、閉鎖root追記0。
+
+原保存 artifacts/representative-store-sales-related-history-20261014-records（complete閉鎖）、全stdout/stderr/exit0はlaunch-records。本文related-doc-records、Git後related-git-20261014-records post-save/root-closed優先。次unitは発行時点までの自己系列のみ対3店舗過去系列の小さな比較を、入力窓・時系列境界・同初期条件・直近同曜日基準とともに先に設計する。大規模grid/先読み未来値0、既研究期間を未見testへしない。
+
+CARE手動完了報告待ち・自動確認/取得0。実行/記録上限維持、追加agent0、formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git継続承認有効、原本/生観測/予測/fit送信0。
+
+---
+
 ## 最新 — ACTIVE / 公開データだけの需要研究再開・直近曜日平均の少量検証完了（2026-10-14 JST）
 
 人が「販促計画履歴はないので今ある公開データだけで需要研究を続ける」と明示し、予定履歴待ちの自走停止から直接研究を再開。販促予定の効果検証条件を需要研究全体の開始条件にしない。既存automation PAUSED維持/更新0。
