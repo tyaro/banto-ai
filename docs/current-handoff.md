@@ -1,3 +1,19 @@
+## 最新 — ACTIVE / 固定暦配分の別3都市検証完了・総量側へ（2026-10-14 JST）
+
+人の自走指示を継続。[別都市の結果](results/store-sales-cross-city-2026-10-14.md)と[出力前設計](research/store-sales-cross-city-design-2026-10-14.md)優先。直接研究ACTIVE、既存automation PAUSED/更新0。
+
+店舗属性だけで非Quitoの異なる3都市、5SantoDomingo/11Cayambe/12Latacungaを固定。BREAD/BAKERY、学習2013〜2015、支持2/shrink3/mean28/14日総量維持配分不変。fitの実storeID引数追加だけ新2確認allpassed。原ZIP/member/hash/identity照合、train一度stream、新選定3系列salesだけ数値変換。各1687暦/1683観測/Christmas4欠測。0は5/11各5・12は65、12の2015Mar30–May28の60連続0は原観測/原因未確定、削除補完0。
+
+新2017Jan/May/Aug1×3×14=126allpaired、WAPE17.842986→16.067958%、3店舗集計改善、7/9窓改善。誤差減少の90.114761%はJan起点。全9窓累積6.833090%同じ/総量delta最大4.547473508864641e-13、総量改善claim0。未見一般性能/潜在需要/PSI/休日因果0。
+
+原cross-city-records complete閉鎖、新snapshot/学習/予測対応、全stdout/stderr/exit0はlaunch-records。保存寄与/zero記述analysis-records/analysis-launch-records。本文doc-records、Git後cross-city-git-20261014-records post-save優先。旧Quito評価/元5確認/CI反復0、閉鎖root追記0。
+
+次unitは総量側の過去14日平均×14一候補を出力前固定し、保存済みの配分形を維持した比較を設計する。支持数/欠測/ゼロ/総量0と形0の規則を先に固定、grid/基準再計算0、既研究期間の探索と明記。
+
+CARE手動完了報告待ち/自動確認取得0、追加agent0、実行900秒2GiB/output1GiB/single32MiB/files32・記録16MiB512files/256KiBparts/reserve2MiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git継続承認有効、原本/CSV/生予測/fit送信0。
+
+---
+
 ## 最新 — ACTIVE / 総量維持の暦配分完了・別都市で固定方式検証へ（2026-10-14 JST）
 
 人の「しばらく自走」を継続。[総量維持配分](results/store-sales-allocation-2026-10-14.md)と[出力前設計](research/store-sales-allocation-design-2026-10-14.md)を優先。直接研究ACTIVE、既存automation PAUSED/更新0。
