@@ -1,3 +1,16 @@
+## 最新 — 公開データ2件取得完了 / 追加取得は通信障害で停止（2026-10-14 JST）
+
+人の「使えそうなデータセットを取得」に従い、CC BY 4.0のUCI油圧設備とOnline Retail II原本を取得。原本合計122224122B、Git管理外data/public/research-20261014-uci。各32MiB以下のparts（3/2）、原ZIP/parts/全member byte-SHA/CRCを保存しdataset rootを閉鎖。展開・変換・学習0、既存MetroPT/完成評価・試験・CI反復0。
+
+初回Python urllibはUCI証明書期限切れでexit1/本体0bytes、failed record閉鎖。Windows curl Schannelの検証付きHEAD成功を確認し、新rootでUCI2件だけ取得exit0。元失敗を書換えずTLS検証解除0。GETの未捕捉HTTP status/headerを補わない。FreshRetail公式メタデータGETは新rootで一度curl exit35/connection reset、本体0bytes/版未固定、failed閉鎖。通信不成立のため追加取得を停止し重複再試行0。
+
+[公開研究データの取得状況](research/public-dataset-acquisition-2026-10-14.md)に保存先・帰属・pin・未取得候補を記載。取得済み小売には販促予定がなく、食品メーカー実用性とは区別。油圧は状態診断用で自然劣化/RULにしない。次は人の指示または通信障害の解消後、新unitで必要な少数ケースの入力契約を定義する。旧閉鎖root追記・元helper再実行0。
+
+原保存: artifacts/representative-public-dataset-acquisition-20261014-records（failed）、同continuation-records（complete）、artifacts/representative-freshretail-acquisition-20261014-records（failed）。全閉鎖。本文保存は同doc-records。Git後は同git-recordsのpost-save/root-closedを優先。
+既存automation PAUSEDを維持/更新0。同GitHubへの同種研究報告の継続送信承認有効、Git対象は文書のみ。実行側・記録分割・失敗予備不変。formal_permission=false/credit0/登録holdout未読/native reader禁止/正式受入・モデル採択未完了。
+
+---
+
 ## 最新 — 研究設計完了 / 菓子の需要予測・PSIへ用途を具体化（2026-10-14 JST）
 
 人は「用途を決めて実用性を検証する」を選択し、菓子メーカーの季節・販促を加味した需要予測と統計分析の併用を研究対象に指定した。現在利用可能なのはモック用データのみ。「モックに合わせなくてよい」に従い、既存画面の粒度・予測期間・配布方式を研究条件から外す。

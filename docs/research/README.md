@@ -10,6 +10,7 @@
 
 ## 文書
 
+- [公開研究データの取得状況](public-dataset-acquisition-2026-10-14.md)
 - [菓子の季節・販促を加味した需要予測とPSIの研究計画](confectionery-demand-psi-research-plan-2026-10-14.md)
 
 - [小型独自モデルの一回探索と研究上の結論](timesfm3-small-model-pilot-2026-10-14.md)
