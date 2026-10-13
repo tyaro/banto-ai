@@ -1,3 +1,17 @@
+## 最新 — ACTIVE / 第2dev seed layout5 core C0/C1/C2比較（2026-10-13 JST）
+
+人の3候補集約許可に従い同core input10一致のC0+C1、次C2を順次fresh compute、2CLI/3cellの解析・文書Gitを1単位に集約。CLI2候補上限・実行caps維持。処理success≠性能保証採択正式受入。checkout 301a70fb5ee9b9bcf140c4c51e28b01a3089238d/計算661b/source117calculator16configs不変、Python3.14.0 Windows AMD64。元payload書込み生成replay0。
+c0-diff-control machine0/10sensor0/10precision0/1clean1unmatched1source1eq1。原reasons {"no_candidate_in_window": 20} / delay {"conditioned_on": "causal-detected-only", "count": 0, "max": null, "mean": null, "median": null, "min": null, "undetected_fill": "forbidden", "unit": "seconds"} / class別 {"machine": {}, "sensor": {}}。全未検出delaynull補完0。
+c1-phase-level machine10/10sensor10/10precision20/20clean0unmatched0source30eq20。原reasons {"causal_detected": 20} / delay {"conditioned_on": "causal-detected-only", "count": 20, "max": 1.0, "mean": 1.0, "median": 1.0, "min": 1.0, "undetected_fill": "forbidden", "unit": "seconds"} / class別 {"machine": {"1.0": 10}, "sensor": {"1.0": 10}}。全未検出delaynull補完0。
+c2-phase-conditional machine10/10sensor10/10precision20/20clean0unmatched0source40eq20。原reasons {"causal_detected": 20} / delay {"conditioned_on": "causal-detected-only", "count": 20, "max": 1.0, "mean": 1.0, "median": 1.0, "min": 1.0, "undetected_fill": "forbidden", "unit": "seconds"} / class別 {"machine": {"1.0": 10}, "sensor": {"1.0": 10}}。全未検出delaynull補完0。
+全14400scores13920利用可480phase不能nullscore-residualthresholdfalse、18000inputmask対応nonok0/48calibrated/cal各290。thresholdC0 4/C1C2 6/persistence2/GTmatching不変。全原ledger/targetwindow/source-support保存。
+105boardcells＝第1seed72＋第2seed33/使用seed2/105独立datasetではない。旧102再compute0/bootstrap統計CI勝者採択0。最新 artifacts/representative-seed2-layout5-core-three-candidates-20261013-final/post-save/root-closed優先、DATA2閉鎖/旧504root451helper24failed427passedmissingexecution1全旧失敗審査誤記保全。
+report/handoff/index3docs一回[skip ci] commit/push、prepare_result_index実使用。具体的通知後の同送信先同種合成dev報告PC内path継続承認保持。次unit同seed/layout5 quality-stress groups [["c0-diff-control", "c1-phase-level"], ["c2-phase-conditional"]] / IDs ["dev-seed7466813550306735603-layout5-quality-c0-c1-20261013", "dev-seed7466813550306735603-layout5-quality-c2-20261013"]。chunk017 manifest C:\Users\TKent\.codex\worktrees\v03p\banto-ai\artifacts\v03-runs\r1\run\attempts\chunks\017\attempt-0001\result\payload\manifest.json / {"bytes": 75699, "sha256": "16c4319322e2e6ecc5228c513240d1a935cb1047e2bf15c78c3f83741e501746"}、identity/input10metadataのみ選択/本文未読/次model0。
+ACTIVE/automation詳細転記0/新testCIagent0。EvidenceStore全writepreflight/分割失敗予備・実行Gitnativeprotocol caps維持。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件最終受入未完了/create_native早期拒否/全7役reader禁止/元capsunknown owner保持。Sol容量人停止は保全後PAUSED。
+
+詳細 [第2dev seed・layout5 coreのC0/C1/C2比較（2026-10-13）](results/anomaly-multiseed-v0.3-second-dev-seed-layout5-core-three-candidate-comparison-2026-10-13.md)。
+
+---
 ## 最新 — ACTIVE / 第2dev seed layout4 quality C0/C1/C2・全6cell比較完成（2026-10-13 JST）
 
 人の3候補集約許可に従い同quality入力C0+C1、次C2を順次fresh compute、解析・文書Git1単位保存。2CLI exit0/complete/3cell処理success≠性能保証採択正式受入。checkout bb7c1be15641eacef2b8a76827591867cf60d388/計算661b/source117calculator16configs不変、Python3.14.0 Windows AMD64。元payload書込み生成replay0。
