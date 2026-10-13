@@ -4,7 +4,7 @@
 人の最新方針により、主課題を「TimesFM 3が産業用途で使い物になるか」と「公開情報から独自モデルで必要な価値をどこまで再現できるか」へ戻す。
 詳細は [実用性の未回答と独自モデル構築の調査](timesfm3-utility-and-reproduction-2026-10-13.md) を参照する。
 既存の限定予測結果を再利用し、構造の実装・独自学習・同等性能を別の到達点として扱う。
-公開sourceと構造・学習仕様は [設計文書](timesfm3-small-model-design-2026-10-13.md)、小型独自モデルの最小実装と新10確認は [実装記録](timesfm3-small-model-implementation-2026-10-13.md) に保存済み。[データ・trainer準備](timesfm3-small-model-preparation-2026-10-14.md) を保存。次は固定128step pairを一度実行する。学習・性能評価はこの記録時点で未開始。
+公開sourceと構造・学習仕様は [設計文書](timesfm3-small-model-design-2026-10-13.md)、小型独自モデルの最小実装と新10確認は [実装記録](timesfm3-small-model-implementation-2026-10-13.md) に保存済み。[一回探索](timesfm3-small-model-pilot-2026-10-14.md) を完了。独立初期化から128共通step・選択・探索予測まで成立。次の実用性研究の対象/先読み時間/判断が未確定のため自走をPAUSEDで保存。
 C0/C1/C2は対象別の既存監視方式として扱い、固定合成patternの大量比較を主課題にしない。保存済み144cellは保全する。C1少数接続確認は必要な実装作業として残すが、この研究設計の前提にはしない。
 下記の2026-09-06のphase表と従来順序は履歴であり、現在の着手順は本節を優先する。過去の結果・正式計画・gateは遡及変更しない。
 
@@ -24,7 +24,7 @@ C0/C1/C2は対象別の既存監視方式として扱い、固定合成pattern�
 | 1 | 合成データとbaseline | complete | 運転状態、fault、欠損、labelを持つgeneratorと、naive／古典baselineの再現性 |
 | 2 | Forecast model benchmark | active / incomplete | TimesFM 3.0の評価済み結果を基準に、Chronos-2とTotoを同一契約へ追加し、Granite TTMは別sensitivity条件、自前／学習型baselineは別評価 |
 | 3 | 異常とドリフト | active | 統計方式、forecast residual、TSPulse、Riverのevent単位比較 |
-| 4 | 自前モデル研究 | minimal implementation checked; training not started | 点予測・分位点予測を備えた小型multivariate Transformerとablation |
+| 4 | 自前モデル研究 | small independent pilot complete; practical scope pending | 点予測・分位点予測を備えた小型multivariate Transformerとablation |
 | 5 | Commissioning auto-tuning | not started | レシピ駆動のprofile candidate、shadow評価、人手承認gate |
 | 6 | Continual adaptation | not started | 本番mode固定、rollback、汚染testを含むfrozen model + profile適応 |
 | 7 | Banto Hub pilot境界 | not started | read-only export／sidecarの試作と、制御を変更しないend-to-end demo |

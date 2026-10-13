@@ -1,3 +1,21 @@
+## 最新 — PAUSED / 小型独自モデルの一回探索完了、次の実用性研究の定義待ち（2026-10-14 JST）
+
+人の「しばらく自走、進めなくなったら止める」に従い、設計→最小実装→データ/trainer→固定一回探索→保存予測の内訳まで完了。次のBanto実用性研究に必要な対象信号/先読み時間/予測で変える判断が未確定のため、保存後に自走を停止する。一般heartbeatで再開・追加grid/seed/学習延長/完成モデル再実行をしない。既存automation設定のPAUSEDを読取り確認、今回更新0。
+
+計算checkout9490b5c4f0c32f9db5dc377dda441b1f891369b2/開始時clean。full/self-only各128step、同初期state・共通batch列、4validation候補からfull128/self64を個別選択後、探索test各一度。
+固定尺度pinball full0.2267646790/self0.2326977849。fullのMAEはtp3/電流が小さいが、油温はselfが僅かに小さく移動平均15が両者より良い。油温coverage80はfull約58%/self約54%、下限側外れが多い。1seed/1設備1日/過去評価済み公開testで勝者・方式採択・TimesFM3同等性能・汎化の主張0。
+保存済み9origin×3target内訳だけを一度抽出。新forward/学習/本文再読取り0。Astraのread-only批評を反映。
+実行10.138秒/親11.307秒、OS peak pagefile1033314304B。output23file4409682B閉鎖、原23pin・source4pin・closure・summary照合。工程failure0。実行・記録上限不変、checkpointはblocking/global/native容量証明ではない。
+
+output: artifacts/representative-small-model-training-20261014（閉鎖）。
+原実行/内訳: 同execution-records / analysis-records（閉鎖）。
+本文: 同doc-records。Git後は同git-recordsのpost-save/root-closedを優先。
+元準備failure/closed roots/旧144cellを保持。完成モデル・確認・CI再実行0、CI照会0、登録holdout未読。
+同GitHubへの同種研究報告送信の継続承認は有効。人の入力後、用途または別期間の機構研究という次の主問を固定して再開する。
+PAUSED / formal gate=s4_acceptance_not_frozen / formal_permission=false / credit0 / 正式受入・方式採択未完了 / native reader禁止。
+[一回探索と研究結論](research/timesfm3-small-model-pilot-2026-10-14.md)。
+
+---
 ## 最新 — ACTIVE / 小型モデルのdataset・trainer準備完了、固定pair学習へ（2026-10-14 JST）
 
 指定MetroPT探索日の実pin/60秒連続時刻/target単位/splitを照合。有効origin train705/validation9/test9、品質除外0。train-only尺度と共通128×8 origin列を準備。登録holdout未読、過去評価済み公開日で探索用。

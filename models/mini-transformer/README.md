@@ -28,3 +28,7 @@ small_model.pyはCPU float32専用。check_model.pyはWindows current-process co
 
 data.pyは指定探索日だけをpin/時刻/quality/splitへ照合する。train.pyの実行は実データ学習を開始するため、一回の新output rootでだけ使用する。未更新の初期state、共通128×8 batch列、step別checkpoint/prefix、選択後testを保存する。
 [9新確認・元失敗・資源・次の一回](../../docs/research/timesfm3-small-model-preparation-2026-10-14.md)。閉鎖outputへ再実行・追記しない。
+
+## 一回探索完了（2026-10-14）
+
+[研究結果](../../docs/research/timesfm3-small-model-pilot-2026-10-14.md)。両構成128step、validation選択後test各一度まで完了。単日探索でTimesFM3再現・同等性能・用途適合とはしない。閉鎖outputへ再実行しない。次の実用性研究の用途定義待ちで自走停止。
