@@ -1,3 +1,16 @@
+## 最新 — ACTIVE / 第2dev seed layout4 core C0/C1/C2比較・1単位保存（2026-10-13 JST）
+
+人の3候補を合わせる許可に従い、同入力C0+C1とC2の2CLIを順次実compute、解析と文書Gitを1単位へ集約。CLI2候補上限・全実行caps維持。3cell処理successを性能保証/採択/正式受入へしない。checkout 4b7cd931fd60179df1d2d2ea7756eb9a50188d0d/計算661b/source117calculator16configs不変。
+C0 machine0/10sensor0/10precision0/2clean1/unmatched2/source2equipment2。全20対象maxstreak1、19candidate0/no_candidate_in_window、cycle09machine candidate1/vibration-only/first_candidate_no_target_onset。全delaynull/count0。clean温度7712とgrace振動8944を別に保持。
+C1/C2 machine10/10sensor10/10precision20/20clean0/unmatched0。機械各2秒sensor各1秒/delay20meanmedian1.5秒/source30対45。全candidate14400scores13920利用可480phase不能/48calibrated/cal各290/inputnonok0。閾値C0 4/C1C2 6/persistence2/GTmatching不変。
+99boardcells＝第1seed72＋第2seed27/使用seed2/99独立datasetではない。旧96モデル再compute0・bootstrap統計CI勝者採択0。元model-summary one_independent_datasetは同入力条件の共有を指し統計的独立性の証明ではない。
+最新 artifacts/representative-seed2-layout4-core-three-candidates-20261013-final/post-save、records/analysis/save/root-closedを優先。DATA2閉鎖・旧492root/443helper24failed419passedmissingexecution1全失敗審査原誤記保全。元payload書込み生成replay0/閉鎖root追記0。
+report/handoff/index3docs一回[skip ci] commit/push、prepare_result_index実使用・原Git-summary。2026-10-13具体的通知後の承認と今後同送信先同種合成dev報告承認を保持、追加確認なし。次unit同seed/layout4 quality-stress、候補groups [["c0-diff-control", "c1-phase-level"], ["c2-phase-conditional"]] / IDs ["dev-seed7466813550306735603-layout4-quality-c0-c1-20261013", "dev-seed7466813550306735603-layout4-quality-c2-20261013"]。保存chunk016 manifest C:\Users\TKent\.codex\worktrees\v03p\banto-ai\artifacts\v03-runs\r1\run\attempts\chunks\016\attempt-0001\result\payload\manifest.json / {"bytes": 75699, "sha256": "45d694bc6600878955dad80cb3ae87fb8333647a839758c7c10ea87af8052c24"}、次identity/input10metadataのみ選択/観測本文未読/次model0。
+ACTIVE/automation詳細転記0、新testCIagent0。EvidenceStore全writepreflight/分割/失敗予備・実行Gitnativeprotocol上限維持。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件最終受入未完了/create_native早期拒否/全7役reader禁止/元capsunknown owner保持。Sol容量人停止は保全後PAUSED。
+
+詳細 [第2dev seed・layout4 coreのC0/C1/C2比較（2026-10-13）](results/anomaly-multiseed-v0.3-second-dev-seed-layout4-core-three-candidate-comparison-2026-10-13.md)。
+
+---
 ## 最新 — ACTIVE / 第2dev seed layout3 C0 quality・人の送信承認後保存（2026-10-13 JST）
 
 人の2026-10-13「承認します」は、直前の具体的リスク通知（今回layout3 C0合成dev結果・ユーザー名を含むPC内入力path・指定3文書・https://github.com/tyaro/banto-ai.git・今後同送信先の同種報告）への回答。承認待ち解除、今回3文書を一回[skip ci] commit/push。原2自動審査拒否/Git helper未起動・SyntaxError isolate前・launcher206未起動は閉鎖rootに保持し、モデル/CI/helper失敗へしない。完成C0モデル・解析再実行0。 初human-approved-saveは既存報告へpending_reportを渡しFileExistsError/failed、tracked編集commitpush前停止。原失敗保持・existing-report modeに限定訂正、新human-approved-save-continuationとhuman-approved-finalを優先。補助source準備のscope誤指定（元-localと原-local）はisolate内/nestedtools-process-trackedmutation0で原selected errorを保持、helper/model/CI失敗へしない。
