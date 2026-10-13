@@ -10,6 +10,7 @@
 
 ## 文書
 
+- [TimesFM 3の実用性と公開情報からの独自モデル構築](timesfm3-utility-and-reproduction-2026-10-13.md)
 - [公開産業時系列データ調査・選定](public-dataset-survey.md)
 - [研究ロードマップ](research-roadmap.md)
 - [Banto向け時系列モデル技術調査](time-series-model-survey.md)

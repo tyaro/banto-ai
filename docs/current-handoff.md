@@ -1,3 +1,20 @@
+## 最新 — ACTIVE / TimesFM 3の実用性・独自モデル構築へ研究目的を整理（2026-10-13 JST）
+
+2026-10-13、人が具体的な送信内容・5文書・https://github.com/tyaro/banto-ai.git・ユーザー名を含むPC内path履歴の通知後、今回と今後の同送信先への同種研究報告の送信承認依頼へ「承認します」と回答。承認待ち解除。元の自動審査拒否・Git process未開始は artifacts/representative-timesfm-research-reset-20261013-send-review-records に履歴保全し、元Git script再実行・別経路回避0。新専用rootで一回[skip ci]保存する。Git保存後の確認は artifacts/representative-timesfm-research-approved-save-20261013-git-records の post-save/root-closed を優先。
+
+人が原目的を「TimesFM 3が使い物になるか、利用条件の問題を踏まえ関連情報から自作で再現できるか」と明確化。C0/C1/C2は通常監視でも対象別に使い分ける方式であり、特定の合成段差の結果を方式全体の否定へしない。
+人の明示依頼によるAstraの独立読取り調査を反映。既存TimesFM評価の未回答と、構造実装・独立学習・同等性能の再現範囲を文書化した。公開sourceは推論実装であり、公式trainer/loss/data混合/computeの完全再現は今回未確認。独自学習だけで権利適合や同等性能を保証しない。
+
+次の未完成unitは、外部sourceの採用revision/利用条件を固定し、独自小型multivariateモデルのmask・shape・正規化・head、学習recipe、データ候補/split、資源見積りと終了判断を一枚にする設計。新学習・TimesFM評価・登録holdout本文読取りは開始しない。
+C1の少数接続確認は必要な実装作業として残し、今回研究設計の開始条件にはしない。C0/C1/C2追加sweep、完成評価・試験・CIの反復は禁止を継続。144cell・元失敗・閉鎖rootは保全。
+
+今回保存root: artifacts/representative-timesfm-research-reset-20261013-records。外部閲覧の観測要約はraw-byte外部source保存と区別する。foregroundのCIM権限拒否/rg path誤り/文書準備isolateのReferenceErrorは選択tool観測として保存し、モデル・学習・native・CI失敗へしない。読取り専用CIMの許可後照会ではrepo worker/helperを観測せず、照会自身だけを観測した。
+実行上限900秒/2GiB/output1GiB/single32MiB/files32・EvidenceStore分割/失敗予備・Git上限を維持。旧TimesFM測定の約2.77GiBを現上限内の再実行許可にしない。automation更新0、閉鎖root追記0。
+ACTIVE / formal gate=s4_acceptance_not_frozen / formal_permission=false / credit=0 / holdout未読 / 正式受入・方式採択未完了 / native reader禁止。
+
+詳細 [TimesFM 3の実用性と公開情報からの独自モデル構築](research/timesfm3-utility-and-reproduction-2026-10-13.md)。
+
+---
 ## 最新 — ACTIVE / C1代表ケースの既存確認範囲と不足を整理（2026-10-13 JST）
 
 大量のC0/C1/C2比較とlayout sweepの拡張を終了する最新方針を継続。第3dev seedの本文読取り・新評価は開始していない。
