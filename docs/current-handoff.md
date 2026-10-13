@@ -1,3 +1,17 @@
+## 最新 — ACTIVE / 公開需要の自己・関連履歴の固定比較完了（2026-10-14 JST）
+
+人の「進めて、しばらく自走」を継続。[自己対3店舗過去履歴の比較](results/store-sales-related-comparison-2026-10-14.md)と[出力前の設計](research/store-sales-related-comparison-design-2026-10-14.md)を優先。直接研究ACTIVE、既存automation PAUSED維持/更新0。
+
+新二経路は同じridge penalty1/自己4特徴対関連10特徴、過去28暦日水準/未来値0。2013〜2015固定prefixから共通各1061教師行、6新fit。既研究2016/2017の9起点・3店舗・14日/全378paired。旧naive/mean各27窓は原保存再利用、新旧評価混同/未見claim0。新代表5件一回allpassed、旧試験/CI反復0。
+
+全WAPE mean9.771809/self9.698099/related9.920248%、関連追加は日次改善13/27窓。2016self11.374266/related11.359389%、2017self8.881104/related9.218784%。14日累積mean3.556303/self4.037125/related4.093770%。同時相関を共同予測の追加価値へしない。方式採択/一般性能/販促因果/メーカーPSI実証0。
+
+原related-compare-records complete閉鎖26file1044954B、全stdout/stderr/exit0はlaunch-records。保存結果だけの解析はdoc-records。原文書helperはfloat表示書式で書込み前exit1、原失敗/解析/全stderr保全。本文だけdoc-cont-recordsで続行、評価/解析反復0。Git後related-compare-git-20261014-records post-save/root-closed優先。次unitは既取得Store Salesの祝日/営業カレンダーの意味・予測時点可用性を確認し、新しい評価の問いを固定する。今回学習/評価/5確認の再実行・閉鎖root追記0。
+
+CARE手動完了報告待ち/自動確認取得0、追加agent0。実行900秒2GiB/output1GiB/single32MiB/files32・記録16MiB512files/256KiBparts/reserve2MiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。同GitHub Git継続承認有効、原本/CSV/生予測/fit送信0。
+
+---
+
 ## 最新 — ACTIVE / 公開需要の過去側関連系列・lead可用性を確認（2026-10-14 JST）
 
 人の公開データだけで需要研究を続ける指示を継続。[過去の関連店舗系列](results/store-sales-related-history-2026-10-14.md)と[最近の水準の検証](results/store-sales-recent-level-2026-10-14.md)を優先。予定履歴を需要研究全体の開始条件にしない。既存automation PAUSED維持/更新0、直接研究ACTIVE。
