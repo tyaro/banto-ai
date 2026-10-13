@@ -4,10 +4,12 @@ import math
 from demand_forecasting import finite_quantity
 
 
-def fit_anniversaries(anniversaries, cutoff=dt.date(2016, 1, 1)):
+def fit_anniversaries(anniversaries, cutoff=dt.date(2016, 1, 1), *, stores=(1, 2, 3)):
     if cutoff != dt.date(2016, 1, 1):
         raise ValueError('fixed prefix cutoff required')
-    result = {s: {} for s in (1, 2, 3)}
+    if not stores or len(stores) != len(set(stores)) or any(type(s) is not int or s <= 0 for s in stores):
+        raise ValueError('unique positive store identifiers required')
+    result = {s: {} for s in stores}
     for anniversary in anniversaries:
         month_day = anniversary['month_day']
         # Month/day keys were extracted from the 2013-2015 holiday prefix.

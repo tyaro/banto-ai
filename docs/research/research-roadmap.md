@@ -4,7 +4,7 @@
 
 人の明示指示で予定履歴待ちの停止を解除し、現在あるStore Salesの過去数量・既知の曜日から研究を再開した。過去の停止判断は以下と元文書に履歴として残す。予定履歴は未来販促の実績検証には必要だが、需要予測研究全体の条件ではない。
 
-[直近28日の同曜日平均](../results/store-sales-recent-level-2026-10-14.md)を一候補として確認し、保存済みnaive予測を開発比較に再利用。追加3起点の回顧比較と7/14日累積を保存。少数代表・既知期間の比較で正式採択/メーカーPSIを補わない。[過去側の関連店舗系列とlead可用性](../results/store-sales-related-history-2026-10-14.md)を確認した。同時点の共通変動は未来既知入力ではない。[固定した自己対3店舗履歴の比較](../results/store-sales-related-comparison-2026-10-14.md)は関連追加の改善を得られず、14日合計は単純平均が小さい。[休日・営業日の可用性](../results/store-sales-calendar-availability-2026-10-14.md)を確認。[固定月日補正](../results/store-sales-anniversary-2026-10-14.md)は日次改善でも14日総量悪化。[総量維持配分](../results/store-sales-allocation-2026-10-14.md)は日次改善/総量維持を確認。次は店舗属性だけで別3都市を先に選び、固定方式の少量検証を行う。将来のTransfer/Eventラベルは既知予定にしない。大規模比較、未来販促実施値の先読み、旧評価反復を行わない。
+[直近28日の同曜日平均](../results/store-sales-recent-level-2026-10-14.md)を一候補として確認し、保存済みnaive予測を開発比較に再利用。追加3起点の回顧比較と7/14日累積を保存。少数代表・既知期間の比較で正式採択/メーカーPSIを補わない。[過去側の関連店舗系列とlead可用性](../results/store-sales-related-history-2026-10-14.md)を確認した。同時点の共通変動は未来既知入力ではない。[固定した自己対3店舗履歴の比較](../results/store-sales-related-comparison-2026-10-14.md)は関連追加の改善を得られず、14日合計は単純平均が小さい。[休日・営業日の可用性](../results/store-sales-calendar-availability-2026-10-14.md)を確認。[固定月日補正](../results/store-sales-anniversary-2026-10-14.md)は日次改善でも14日総量悪化。[総量維持配分](../results/store-sales-allocation-2026-10-14.md)は日次改善/総量維持を確認。[別3都市検証](../results/store-sales-cross-city-2026-10-14.md)で日次改善を確認したが寄与は元日中心。次は配分形を固定し、過去14日平均×14の総量一候補を出力前固定して確認する。将来のTransfer/Eventラベルは既知予定にしない。大規模比較、未来販促実施値の先読み、旧評価反復を行わない。
 
 ## 菓子の需要予測・PSIを対象にした実用性研究（2026-10-14）
 
