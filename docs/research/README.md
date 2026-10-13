@@ -11,6 +11,8 @@
 ## 文書
 
 - [研究方針に合わせたデータの保管と整理](data-retention-and-cleanup-2026-10-14.md)
+- [総量を維持する暦配分の検証](../results/store-sales-allocation-2026-10-14.md)
+- [総量維持配分の出力前設計](store-sales-allocation-design-2026-10-14.md)
 - [固定月日補正の日次と期間総量の結果](../results/store-sales-anniversary-2026-10-14.md)
 - [固定月日補正の出力前設計](store-sales-anniversary-design-2026-10-14.md)
 - [公開需要カレンダーの予測時点可用性](../results/store-sales-calendar-availability-2026-10-14.md)
