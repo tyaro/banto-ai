@@ -1,3 +1,17 @@
+## 最新 — ACTIVE / 小型モデルのdataset・trainer準備完了、固定pair学習へ（2026-10-14 JST）
+
+指定MetroPT探索日の実pin/60秒連続時刻/target単位/splitを照合。有効origin train705/validation9/test9、品質除外0。train-only尺度と共通128×8 origin列を準備。登録holdout未読、過去評価済み公開日で探索用。
+新9distinct/10bodyの準備確認は初回6passed/出力fixture1failedを原保存し、workspaceへ修正して失敗1だけpassed、metrics/原例外保持各新1passed。最終source単一9successとしない。旧10構造確認/144cell/CIは反復0。
+Astraが結果保存経路をreview、閉鎖前completeと保存側二次例外を修正。summary候補＋閉鎖記録で完了判断、元例外保持/stderr保全、32stepごとのprefix、学習/推論時間分離を追加。
+原保存は artifacts/representative-small-model-preparation-20261014-{check,continuation,metrics,first-error,doc}-records。Git後の最新保存は同git-recordsのpost-save/root-closed。fixture2rootも閉鎖保全。
+
+次の未完成unitは固定recipe128共通stepのfull/self-only pairを一度実行、4validation候補で各選択後、探索test各一度。testでrecipe変更/grid/追加seed/旧TimesFM比較流用0。工程不成立なら保全してPAUSED、重複再試行なし。
+人の「しばらく自走、進めなくなったら止める」を継続。実行900秒/private2GiB/output1GiB/single32MiB/files32/記録上限不変。checkpointはblocking/global/native容量証明ではない。
+同GitHubへの同種研究報告継続送信承認有効。元失敗/閉鎖root追記0。
+ACTIVE / formal gate=s4_acceptance_not_frozen / formal_permission=false / credit0 / 正式受入・方式採択未完了 / native reader禁止 / 実データ学習はこの保存時点で0step。
+[データ・学習前準備](research/timesfm3-small-model-preparation-2026-10-14.md)。
+
+---
 ## 最新 — ACTIVE / 小型独自モデルの最小実装・新10確認完了（2026-10-13 JST）
 
 optional small_model.py/check_model.pyを追加。新10確認は一度10passed/0failed、登録parameter実測109024。context-only forward、full接続/self-only隔離、mask/loss手計算、逆正規化、有限勾配を確認。optimizer step0/観測本文読取り0/TimesFM weights・teacher出力0/完成評価・試験・CI反復0。Astraの読取り批評を初回前に反映。

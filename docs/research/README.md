@@ -10,6 +10,7 @@
 
 ## 文書
 
+- [小型独自モデルのデータ・学習前準備](timesfm3-small-model-preparation-2026-10-14.md)
 - [小型独自モデルの最小実装確認](timesfm3-small-model-implementation-2026-10-13.md)
 - [TimesFM構造を参考にした小型独自モデルの設計](timesfm3-small-model-design-2026-10-13.md)
 - [TimesFM 3の実用性と公開情報からの独自モデル構築](timesfm3-utility-and-reproduction-2026-10-13.md)

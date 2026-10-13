@@ -23,3 +23,8 @@ small_model.pyはCPU float32専用。check_model.pyはWindows current-process co
 確認環境CPython3.14.0/Torch2.14.0+cpu。requirements.txtはversion宣言でwheel hash全固定ではない。
 新規未確認caseだけ、既存隔離Pythonからcheck_model.py --checks case名で実行する。完成10件を定期反復しない。
 [原結果と次工程](../../docs/research/timesfm3-small-model-implementation-2026-10-13.md)。
+
+## データ・trainer準備（2026-10-14）
+
+data.pyは指定探索日だけをpin/時刻/quality/splitへ照合する。train.pyの実行は実データ学習を開始するため、一回の新output rootでだけ使用する。未更新の初期state、共通128×8 batch列、step別checkpoint/prefix、選択後testを保存する。
+[9新確認・元失敗・資源・次の一回](../../docs/research/timesfm3-small-model-preparation-2026-10-14.md)。閉鎖outputへ再実行・追記しない。
