@@ -1,3 +1,17 @@
+## 最新 — ACTIVE / 総量維持の暦配分完了・別都市で固定方式検証へ（2026-10-14 JST）
+
+人の「しばらく自走」を継続。[総量維持配分](results/store-sales-allocation-2026-10-14.md)と[出力前設計](research/store-sales-allocation-design-2026-10-14.md)を優先。直接研究ACTIVE、既存automation PAUSED/更新0。
+
+保存baseline/倍率のみからT*b_i*f_i/Σbfの新12窓配分。新fit/元倍率再推定/元forecast/原ZIP・CSV読取り0。新代表5件一回allpassed、旧試験・評価・CI反復0。168対象/165paired/Christmas未記録3。日次WAPE基準16.757171/未正規化15.088881/総量維持14.678410%。全14日観測9窓累積3.694340/5.015669/3.694340%、最大totaldelta1.8189894035458565e-12。総量改善は構成上claim0。
+
+元日2起点で改善、11月は未正規化より悪化、Christmas倍率支持なし不変。実需要移動/休業確定/一般性能/メーカーPSI実証0。原allocation-records complete閉鎖、全stdout/stderr/exit0はlaunch-records。保存解析/本文doc-records、Git後allocation-git-20261014-records post-save優先。
+
+次unitは店舗属性だけでQuito以外の異なる3都市を選び、成績を見る前に系列/2013〜2015学習/2017少数起点を固定。同曜日平均28対総量維持配分一方式のみ、support2/shrink3/14day固定。原trainは新選定系列だけ数値変換し、旧系列/評価/元helperを反復しない。閉鎖root追記0、未見claimを数値確認前に適切に限定する。
+
+CARE手動完了報告待ち/自動確認取得0、追加agent0、実行900秒2GiB/output1GiB/single32MiB/files32・記録16MiB512files/256KiBparts/reserve2MiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。同GitHub Git継続承認有効、原本/CSV/生予測/fit送信0。
+
+---
+
 ## 最新 — ACTIVE / 公開需要の名目月日補正一方式・日次と総量の分離（2026-10-14 JST）
 
 人の自走指示を継続。[月日補正の結果](results/store-sales-anniversary-2026-10-14.md)と[出力前設計](research/store-sales-anniversary-design-2026-10-14.md)を優先。直接研究ACTIVE、既存automation PAUSED維持/更新0。
