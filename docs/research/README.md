@@ -11,6 +11,7 @@
 ## 文書
 
 - [研究方針に合わせたデータの保管と整理](data-retention-and-cleanup-2026-10-14.md)
+- [販促予定の入力機構と研究再開条件](demand-plans-input-mechanism-2026-10-14.md)
 - [Store Sales固定2017年評価と次段階](../results/store-sales-small-final-2026-10-14.md)
 - [Store Sales二方式の少量過去検証](../results/store-sales-small-validation-2026-10-14.md)
 - [Store Sales少数食品系列の入力・評価契約](store-sales-input-contract-2026-10-14.md)

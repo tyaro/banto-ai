@@ -1,3 +1,17 @@
+## 最新 — PAUSED / 需要二方式評価・予定入力機構完了、実予定履歴待ちで自走停止（2026-10-14 JST）
+
+人の「しばらく自走、進めなくなったら停止」に従い、固定2017評価→保存結果診断→販促予定as-of最小部品→必要データ契約まで完了した。実際の予定版/利用可能日時履歴が未所持のため、実績での販促予定追加価値を評価できず自走停止。既存automation PAUSED維持/更新0、一般heartbeatで同評価や新AI学習を開始しない。
+
+[販促予定の入力機構と再開条件](research/demand-plans-input-mechanism-2026-10-14.md)と[2017年結果](results/store-sales-small-final-2026-10-14.md)を優先。2017全126日WAPE naive10.628773/ridge14.904699%、Bias-1.695071/+11.670060%。ridge8月42/42過大、2016改善は再現せず。保存済みfit/予測/input診断のみ、新再fit/forward/原ZIP再読取り0。原因分離/因果販促/採択/メーカーPSI実証0。
+
+新tools/demand_plans.pyが利用可能時刻までの最新family_total予定snapshotを選択、取消は明示既知0、未定/版なしは未知null。新未定版で古い確定へ戻さず、realized入力・部分scope・同公表時刻競合を拒否。新架空代表7件一回7passed/0failed、予測module f707pin不変、forecast接続/学習/実績販促効果検証0。caller宣言は真の原予定/時計証明ではない。
+
+原新source/確認全stdout-stderr/exit0/sourcepinは artifacts/representative-demand-plans-20261014-records（complete閉鎖）。本文demand-plans-doc-records、Git後demand-plans-git-20261014-records post-save/root-closed優先。旧6確認/完成2016・2017/CI再実行0、原失敗保全、全閉鎖root追記0。
+
+再開には対応する実績と版付き販促予定、数量・営業日・欠品の意味、支援する判断/leadが必要。予定がない場合は別の研究主問を固定する人の指示を待つ。CARE手動download完了報告待ち、自動取得/確認/再試行0。実行/記録上限維持、追加agent0、formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。同GitHubへの研究source/docs Git継続承認有効、原本/CSV/生予測/fit/顧客情報送信0。
+
+---
+
 ## 最新 — Store Sales固定2017年評価・保存結果診断完了 / 自走継続（2026-10-14 JST）
 
 人の「しばらく自走」に従い、既固定2017年2/5/8月1日・3店舗・14日を一度実評価。予測core f70717704ddf1bcbb1536be1098c6a1235f953d6dccc73b1030d6cde86d553cc/7347Bが2016原pinと一致、penalty1/K3/履歴/店舗不変。新final入口は日付/contract final起点/path/state label/core照合の対象literalだけ変更。
