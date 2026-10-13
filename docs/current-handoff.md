@@ -1,3 +1,16 @@
+## 最新 — ACTIVE / 第2dev seed layout4 quality C0/C1/C2・全6cell比較完成（2026-10-13 JST）
+
+人の3候補集約許可に従い同quality入力C0+C1、次C2を順次fresh compute、解析・文書Git1単位保存。2CLI exit0/complete/3cell処理success≠性能保証採択正式受入。checkout bb7c1be15641eacef2b8a76827591867cf60d388/計算661b/source117calculator16configs不変、Python3.14.0 Windows AMD64。元payload書込み生成replay0。
+C0 machine0/10sensor0/10precision0/2clean1unmatched2/source2eq2。全20対象maxstreak1/19candidate0・cycle09machine candidate1/vibration-only/対象onsetなし。全delaynull。clean温度7712とgrace振動8944を別保持。
+C1/C2 machine10/10sensor9/10precision19/19clean0unmatched0/source29対43。検出19delay機械2秒/sensor1秒/mean1.5263157894736843median2。唯一cycle09sensor spike[8947,8950)/window8947–8953：8947score閾値超過streak1→8948–50currentquality不能reset→8951previous不能→8952–53閾値未満。候補0/causalfalse/matchednull/delaynull。
+全inputmask18000対応nonok30、14400scores。C0C1 available13880/unavailable520＝phase480current30prev10、C2 available13760/unavailable640＝さらにpeer120（motor-01温度quality40sample→current/speed/vibration各40）。phasequality overlap0/全不能nullscore-residualthresholdfalse。48calibrated/cal各290/C0fit0/C1C2fit600/C2state48。thresholdC0 4/C1C2 6/persistence2/GTmatching不変。
+layout4全6cell比較完成/102boardcells＝第1seed72＋第2seed30/使用seed2/102独立datasetではない。旧core3と残旧96再compute0、bootstrap統計CI勝者採択0。新 representative-seed2-layout4-quality-three-candidates-20261013-final/post-save/root-closed優先、DATA2閉鎖/旧498root447helper24failed423passedmissingexecution1全旧失敗審査誤記保全。
+report/handoff/index3docs一回[skip ci] commit/push、prepare_result_index実使用。具体的通知後の同送信先同種合成dev報告/PC内path継続承認保持。次unit同seed/layout5 core groups [["c0-diff-control", "c1-phase-level"], ["c2-phase-conditional"]] / IDs ["dev-seed7466813550306735603-layout5-core-c0-c1-20261013", "dev-seed7466813550306735603-layout5-core-c2-20261013"]。chunk017 manifest C:\Users\TKent\.codex\worktrees\v03p\banto-ai\artifacts\v03-runs\r1\run\attempts\chunks\017\attempt-0001\result\payload\manifest.json / {"bytes": 75699, "sha256": "16c4319322e2e6ecc5228c513240d1a935cb1047e2bf15c78c3f83741e501746"}、identity/input10metadataのみ選択/本文未読/次model0。
+ACTIVE/automation詳細転記0、新testCIagent0。EvidenceStore全writepreflight/分割失敗予備と実行Gitnativeprotocol上限維持。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件最終受入未完了/create_native早期拒否/全7役reader禁止/元capsunknown owner保持。Sol容量人停止は保全後PAUSED。
+
+詳細 [第2dev seed・layout4 quality-stressの3候補とcore比較（2026-10-13）](results/anomaly-multiseed-v0.3-second-dev-seed-layout4-quality-three-candidate-comparison-2026-10-13.md)。
+
+---
 ## 最新 — ACTIVE / 第2dev seed layout4 core C0/C1/C2比較・1単位保存（2026-10-13 JST）
 
 人の3候補を合わせる許可に従い、同入力C0+C1とC2の2CLIを順次実compute、解析と文書Gitを1単位へ集約。CLI2候補上限・全実行caps維持。3cell処理successを性能保証/採択/正式受入へしない。checkout 4b7cd931fd60179df1d2d2ea7756eb9a50188d0d/計算661b/source117calculator16configs不変。
