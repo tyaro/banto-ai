@@ -1,3 +1,29 @@
+## 最新 — 旧C0/C1/C2の圧縮保管・承認対象元root削除完了（2026-10-14 JST）
+
+人が具体確認へ「圧縮アーカイブを残して元フォルダを削除する（推奨）」と回答し、元保全指示の例外としてD:/develop/banto-ai/artifacts/representative-anomaly-evaluationの元129閉鎖dev rootsだけの削除を明示承認した。
+事前にarchive8parts/full SHAと元2489file bytes/SHA/directory-file集合を照合し、指定target絶対pathをworkspace内へ検証したPowerShell Remove-Itemを一度実行。元root不存在/exit0、削除元4259850154B。archive242871553B/8parts、manifest-closure込み243369377B保持。整理前から純4016480777B（約4.02GB）削減。その他artifact/公開原本/現行環境/登録holdout削除0。
+
+[データの保管と整理](research/data-retention-and-cleanup-2026-10-14.md)を現在の配置・復元先の入口とする。元document/raw pathsは履歴参照であり、必要な旧結果は新通常directoryへarchiveから復元する。旧rootへ再展開・元helper/完成評価/試験/CI再実行0。
+archive作成時manifestのsource_deleted=falseは当時の履歴として不変。現在の削除状態は artifacts/representative-retired-anomaly-delete-20261014-records のresult/root-closedを優先（complete閉鎖）。初回圧縮/読戻しは同archive-records（complete閉鎖）、承認質問/回答を削除recordへ保存。全新root追記0。
+
+初回本文は artifacts/representative-data-retention-20261014-doc-records、完了追記は artifacts/representative-data-retention-delete-20261014-doc-records。Git後は artifacts/representative-data-retention-20261014-git-records のpost-save/root-closedを優先する。
+次unitはStore Sales少数食品系列の入力契約。現行公開データ・小型独自モデル成果/Torch環境を保持、Online Retail IIは保留候補。その他原証拠の処分承認は含まれない。既存automation PAUSED維持/更新0、実行側・記録側上限不変、追加agent/model/CI0、formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入・採択未完了。同GitHub同種研究報告の継続送信承認有効、原本/archive送信0。
+
+---
+
+## 最新 — 旧合成異常評価の圧縮保管完了 / 元root削除の具体確認待ち（2026-10-14 JST）
+
+人の「方向転換したので不要データを整理」に従い、workspace metadataを集計。artifacts約10.447GBのうち旧representative-anomaly-evaluationが4259850154B/129閉鎖dev roots/2489files。Store Sales・UCI油圧・MetroPT・独自小型モデル成果・現行Torch環境を継続保管対象とし、Online Retail IIは主入力から外した保留候補。その他native/formal/失敗証拠の処分は未判断。
+
+指定旧dev rootだけを、新data/archives/retired-anomaly-evaluation-20261014へtar.gz 242871553B/8partsで保存。manifest/closure込み243369377B。全2489fileの元bytes/SHAとarchive一回読戻し一致、元size/mtime/inode不変。元root書込み/削除0、モデル・試験・CI反復0、登録holdout元観測未読。source-deleted=false。処理38.18秒、実行側・新出力/記録上限維持。
+
+[データの保管と整理](research/data-retention-and-cleanup-2026-10-14.md)に現行/過去資料・保存先・具体削除範囲を記載。元保全指示と閉鎖/旧raw root整理禁止があるため、D:/develop/banto-ai/artifacts/representative-anomaly-evaluationの元129dev rootsだけを、検証済みarchiveを残して削除することの確認を依頼する。確認前の原本削除0。その他artifacts/公開原本/現行環境は今回削除範囲外。承認後は新削除recordへ、元inventory対manifestと絶対target照合後に処理。archive/完成評価再実行0。
+
+原保存 artifacts/representative-retired-anomaly-archive-20261014-records（complete閉鎖）。archive manifest/root-closedを優先。本文同data-retention doc-records、Git後は同git-recordsのpost-save/root-closed優先。
+既存automation PAUSED維持/更新0。同GitHubへの同種研究報告継続送信承認有効、原本/archive送信0。formal_permission=false/credit0/正式受入・採択未完了/native reader禁止/登録holdout未読。
+
+---
+
 ## 最新 — Store Salesユーザー提供原本の受領・保存完了（2026-10-14 JST）
 
 人がbanto-aiトップに配置したstore-sales-time-series-forecasting.zipを確認。ZIP22416355B/SHA12e9c1dc4833cc804b3ff1515bd7b688f45fd8216fb2b340525036b006d625be、7CSVの全CRC/member byte-SHA・schema・row width・rows・日付ラベルを一回stream確認。train3000888行/2013-01-01～2017-08-15/54店舗33商品群、test28512行/2017-08-16～31/16日・salesなし。oil空欄行43。元ファイル不変のstat確認後、両絶対pathをworkspace内へ照合したMove-ItemでGit管理外data/public/store-sales-user-provided-20261014へ移動。原本1fileは32MiB以下、展開・変換・モデル0。

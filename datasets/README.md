@@ -2,6 +2,12 @@
 
 顧客データを扱わず、合成データと利用条件を確認した公開データで研究する。公開データの選定理由と取得・変換境界は [`docs/public-dataset-survey.md`](../docs/research/public-dataset-survey.md) と [`docs/adr-0005-public-dataset-boundary.md`](../docs/decisions/adr-0005-public-dataset-boundary.md) を正本とする。
 
+## 現在の研究入力と過去資料 2026-10-14
+
+[データの保管と整理](../docs/research/data-retention-and-cleanup-2026-10-14.md)を現在の配置・保存対象の入口とする。需要予測の主候補は `data/public/store-sales-user-provided-20261014/`、設備用途の候補はUCI油圧と既存MetroPT。ユーザー提供原本と今回取得したUCI原本はGit管理外の `data/public/` に保存した。既存MetroPT toolの外部cache契約はそのまま参照する。
+
+旧C0/C1/C2評価の保存用copyは `data/archives/retired-anomaly-evaluation-20261014/`。元129dev rootsは具体承認後に削除済みで、検証済みarchiveから必要な過去資料を復元する。復元・読戻し用の原manifestとbytesを保持し、過去成果を現行学習データへ自動投入しない。Online Retail IIは主入力から外した保留候補。データ本文・archiveはGit管理外、source/利用条件・保存状態の文書だけを追跡する。
+
 ## Git に置いてよいもの
 
 - リポジトリの tools で生成した synthetic data。
