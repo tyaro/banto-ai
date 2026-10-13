@@ -1,3 +1,17 @@
+## 最新 — Store Sales少数食品系列の入力・評価契約完了（2026-10-14 JST）
+
+人の「需要予測から進める」に従い、BREAD/BAKERY×店舗1/2/3を数値確認前に固定。2013〜2015年の各1095暦日/1092観測日、各年12月25日の未記録、原ゼロ4/3/3を確認。人の指摘を踏まえてクリスマス休業の可能性が高いと記載し、未確認の休業calendarから原量0を補わない。原数量に小数が多く個数/箱数へしない。
+
+[入力・評価契約](research/store-sales-input-contract-2026-10-14.md)を正本とする。14日先、validation2016年2/5/8月1日・将来側2017年同3起点、各前日までexpanding fit。週周期naiveと暦ridge一つ、未来販促/油価/取引実績0。今回は後期sales/onpromotion数値解析・評価・学習0。欠測はnull/原ゼロ保持、paired日次MAE/WAPE/Biasと全日有効時だけ14日合計。
+
+初回inspect.pyの標準lib名衝突ImportError/exit1はデータ本文確認前。失敗tool excerpt・元script・元prepにruntime追加されたpycacheをstart-failure-recordsへ保全、全stdioclaim0/元script再実行0。新contract.pyと保存先literal1箇所の変更で新unitを一度実行、python -B。新原stdout/stderr/exit0はlaunch-records、新入力契約/quality/CSVはcontinuation-records（いずれもcomplete閉鎖）。全閉鎖root追記0。
+
+本文は artifacts/representative-store-sales-contract-doc-20261014-records、Git後は同contract-git-recordsのpost-save/root-closed優先。次unitは固定二方式の最小実装と時点/欠測/週2先読み代表確認、その後validation3起点で一回。将来側はその後、登録holdoutと別の公開train内探索。大規模比較/AI学習/旧評価/CI反復0。
+
+CAREは人の手動download完了報告待ち、自動取得・状態照会・再試行0。既存automation PAUSED維持/更新0、実行側/記録側上限維持、formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。追加agent0。同GitHubへの同種研究報告の継続送信承認有効、原本/派生CSV送信0。
+
+---
+
 ## 最新 — 旧C0/C1/C2の圧縮保管・承認対象元root削除完了（2026-10-14 JST）
 
 人が具体確認へ「圧縮アーカイブを残して元フォルダを削除する（推奨）」と回答し、元保全指示の例外としてD:/develop/banto-ai/artifacts/representative-anomaly-evaluationの元129閉鎖dev rootsだけの削除を明示承認した。
