@@ -1,3 +1,16 @@
+## 最新 — ACTIVE / 人の再開・第2dev seed layout2 C2 quality保存（2026-10-13 JST）
+
+人の「再開しましょう」で停止解除、banto-10 ACTIVEへ変更。停止rootは保全。layout2 quality-stress C2を新ID dev-seed7466813550306735603-layout2-quality-c2-20261013へ一回fresh compute。manifest C:\Users\TKent\.codex\worktrees\v03p\banto-ai\artifacts\v03-runs\r1\run\attempts\chunks\014\attempt-0001\result\payload\manifest.json / {"bytes": 75700, "sha256": "13a1f0848235ab785ddc31036c819927a40d5a62e7ff55adb91afe465275998a"}。同C1quality input10一致、元生成C0実評価C2別field/元payload書込み生成replayagent0。
+機械10/10・sensor9/10・precision19/19・clean0/unmatched0/source44/equipment19。19検出delay全1秒/未検出1delaynull保持、cycle09温度8901firstscore167.15318248307418/streak1後8902–04currentquality/8905previousquality不能でreset、candidate0/no_candidate_in_window。19target-onset/support38原対応確認。
+14400scores13796利用可604不能、primaryphase471/current30/previous10/peer93。peerタグ120とphase重複27、currentqualityとphase重複9を原保存。C1quality比不能増93・C2core比124、重複tags加算0。48calibrated/fit600/cal290/C2state48/nonok30。source117/calculator16/candidatecompiled/thresholdGTmatching科学不変、計算661b/Python3.14.0 Windows AMD64/elapsed 48.04372910002712秒/privatepeak 212271104B。
+元 -analysis は計算証拠閉鎖前開始のFileNotFoundErrorでfailed/原scripttracebackidentity保存。完成モデル再compute0、別 -analysis-continuation で未保存解析だけ完成。原failed書換え・閉鎖root追記0。モデル/CI/native/Sol容量failureへしない。
+89completed boardcells/使用seed2/C2quality比較15、旧モデル再compute0/bootstrapCI勝者採択0。新 artifacts/representative-seed2-layout2-quality-c2-20261013-* の -final/post-save/root-closed優先。DATA {"bytes": 38244764, "files": 19, "manifest_pin": {"bytes": 2235, "sha256": "9dbf4d1cc413eddf7f4eac501bd97ede4a02c162de64f04825b6a1ec439a862f"}}。元停止root・旧failed・原metadata誤記保全。
+prepare_result_index実使用・report/handoff/index3docs一回[skip ci] commit/push。Git原証拠-save、最終原helperfullcreation/CIM同original・全priorroot count-byte-closurepin照合-final。実行/Git/nativeprotocol上限、EvidenceStore全writepreflightと失敗閉鎖予備維持。automation詳細転記0。
+次unit同seed/layout2 quality-stress C0 c0-diff-control、新ID dev-seed7466813550306735603-layout2-quality-c0-20261013。同manifest/input10/本文C1C2読取済み・次model未開始。formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件最終受入未完了/create_native早期拒否/7役reader禁止/追加agent禁止/capsunknown原owner保持。未完了formal/nativeを少量dev開始条件へ戻さない。Sol容量人停止は原保全後PAUSED。
+
+詳細 [第2seed layout2 C2 qualityと再開](results/anomaly-multiseed-v0.3-second-dev-seed-layout2-c2-quality-evaluation-2026-10-13.md)。
+
+---
 ## 最新 — PAUSED / 人の停止指定・C1 quality保存後で区切り（2026-10-13 JST）
 
 人の「切りの良いところで繰り返し作業停止しましょうか」に従い、直前の第2dev seed layout2 C1 quality評価の保存・push・閉鎖照合完了を区切りとして繰り返し実行banto-10をPAUSEDへ変更。人の明示再開まで新しい評価・試験・CI追跡・worker・agentを開始しない。停止を性能合格・正式受入完了へしない。
