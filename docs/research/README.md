@@ -11,6 +11,7 @@
 ## 文書
 
 - [研究方針に合わせたデータの保管と整理](data-retention-and-cleanup-2026-10-14.md)
+- [Store Sales固定2017年評価と次段階](../results/store-sales-small-final-2026-10-14.md)
 - [Store Sales二方式の少量過去検証](../results/store-sales-small-validation-2026-10-14.md)
 - [Store Sales少数食品系列の入力・評価契約](store-sales-input-contract-2026-10-14.md)
 - [Store Sales原本の受領と研究入力](store-sales-source-intake-2026-10-14.md)

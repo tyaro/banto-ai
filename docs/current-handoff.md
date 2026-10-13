@@ -1,3 +1,15 @@
+## 最新 — Store Sales固定2017年評価・保存結果診断完了 / 自走継続（2026-10-14 JST）
+
+人の「しばらく自走」に従い、既固定2017年2/5/8月1日・3店舗・14日を一度実評価。予測core f70717704ddf1bcbb1536be1098c6a1235f953d6dccc73b1030d6cde86d553cc/7347Bが2016原pinと一致、penalty1/K3/履歴/店舗不変。新final入口は日付/contract final起点/path/state label/core照合の対象literalだけ変更。
+
+[2017年結果と次段階](results/store-sales-small-final-2026-10-14.md)優先。paired126、MAE naive85.149786/ridge119.405309（ridge約40.23%大）、WAPE10.628773/14.904699%、Bias-1.695071/+11.670060%。9窓ridge2改善/7悪化、全店舗集計naive優位。8月ridge42/42過大。採択/統計CI/因果販促/メーカーPSI実証0。
+
+保存結果/fit/input snapshotだけの新事後解析を完了、原ZIP再読取り/freshfit/forward0。最近28日平均より高い8月予測と正の長期傾向係数を保存、追随不足は仮説で原因分離0。2016完成評価・6確認反復0、原失敗/閉鎖root不変。新原結果final-records（29file226333B/complete閉鎖）、全stdout/stderr/exit0はfinal-launch-records、解析analysis-records/analysis-launch-records。本文final-doc-records、Git後final-git-20261014-records優先。
+
+次unitは予定のas-of版選択・取消・未知/既知0を扱う最小部品を少数架空ケースで確認し、必要データ契約を保存。その後、実販促予定履歴が未所持なら実績評価の自走停止。性能追加比較/AI再学習で入力不足を埋めない。予測module変更0。CARE手動download完了報告待ち・自動確認/取得0。既存automation PAUSED維持、自走は今回の直接許可範囲。実行/記録上限維持、formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git継続承認有効、原本/生予測/fit送信0。
+
+---
+
 ## 最新 — Store Sales二方式の固定2016年少量検証完了（2026-10-14 JST）
 
 新dependency-free tools/demand_forecasting.pyと固定2016入口tools/store_sales_validation.pyを実装。新代表確認6件一回6passed/0failed（手計算ridge・未来poison不変・週2先読み拒否・欠測fallback/null・原ゼロ・指標null）。旧完成suite/CI/評価反復0。
