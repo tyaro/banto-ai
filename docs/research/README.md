@@ -10,6 +10,8 @@
 
 ## 文書
 
+- [菓子の季節・販促を加味した需要予測とPSIの研究計画](confectionery-demand-psi-research-plan-2026-10-14.md)
+
 - [小型独自モデルの一回探索と研究上の結論](timesfm3-small-model-pilot-2026-10-14.md)
 - [小型独自モデルのデータ・学習前準備](timesfm3-small-model-preparation-2026-10-14.md)
 - [小型独自モデルの最小実装確認](timesfm3-small-model-implementation-2026-10-13.md)

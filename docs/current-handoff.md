@@ -1,3 +1,20 @@
+## 最新 — 研究設計完了 / 菓子の需要予測・PSIへ用途を具体化（2026-10-14 JST）
+
+人は「用途を決めて実用性を検証する」を選択し、菓子メーカーの季節・販促を加味した需要予測と統計分析の併用を研究対象に指定した。現在利用可能なのはモック用データのみ。「モックに合わせなくてよい」に従い、既存画面の粒度・予測期間・配布方式を研究条件から外す。
+
+[菓子の季節・販促とPSIの研究計画](research/confectionery-demand-psi-research-plan-2026-10-14.md)に、判断から選ぶ予測粒度/期間、出荷・受注・POS・潜在需要の区別、時点付き予定入力、統計＋AIの併用条件、少数ケース、予測とPSIの評価を整理した。既存Astraの明示許可されたread-only批評を反映。別repoは読取りのみ、顧客固有数量・原資料の文書転記/送信0。今回モデル実行/データ本体取得/完成評価・試験・CI反復0。公開データカードの表示例は閲覧、評価用取込0。
+
+次の未完成unitは公開食品小売データの適格性確認。複数年季節・販促の可用性・欠品・単位・利用条件を確認して候補を一つに絞る。FreshRetailNetは公式カード上90日/正規化数量で、年間季節やメーカーの実数量PSIの代替にしない。利用条件/可用性不明なら保全して止める。実用精度・因果販促効果・メーカーPSI採択は実データ待ち。
+
+原保存: artifacts/representative-confectionery-demand-research-20261014-doc-records。初回git-recordsは新計画書の日付末尾空白をcached diff --checkで拒否しfailed閉鎖。原stdout/stderr/exit2保持、commit/push未開始。該当一行を修正し、新doc-continuation-recordsへ保全。Git保存後は同git-continuation-recordsのpost-save/root-closedを優先。元helper/閉鎖rootの再実行・追記0。
+functions.execの文書byte計数でTextEncoder未定義のisolate errorが一回発生。nested tool/外部process/tracked mutation0、原選択errorをdoc-recordsへ保全。モデル/helper/CI/native/Sol容量失敗へしない。
+
+研究設計の作成は完了。既存automationのPAUSEDを維持し更新0。一般heartbeatで既存モデルを再実行しない。小型工業モデル・旧144cell・全閉鎖root・元失敗を保持。
+同GitHubへの同種研究報告の継続送信承認を保持。本unitのGit対象は一般化した研究文書のみ。
+formal gate=s4_acceptance_not_frozen / formal_permission=false / credit0 / 登録holdout未読 / native reader禁止 / 正式受入・モデル採択未完了。実行側上限と記録分割/失敗予備不変。
+
+---
+
 ## 最新 — PAUSED / 小型独自モデルの一回探索完了、次の実用性研究の定義待ち（2026-10-14 JST）
 
 人の「しばらく自走、進めなくなったら止める」に従い、設計→最小実装→データ/trainer→固定一回探索→保存予測の内訳まで完了。次のBanto実用性研究に必要な対象信号/先読み時間/予測で変える判断が未確定のため、保存後に自走を停止する。一般heartbeatで再開・追加grid/seed/学習延長/完成モデル再実行をしない。既存automation設定のPAUSEDを読取り確認、今回更新0。

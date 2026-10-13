@@ -1,10 +1,10 @@
 # Banto AI 文書の入口
 
-最終更新: 2026-10-12
+最終更新: 2026-10-14
 
 ## 現在の状態
 
-- 人の明示指示で自走を再開済みです。heartbeat banto-10は **ACTIVE** です。
+- 菓子の需要予測・PSIの研究設計を作成しました。自動実行のheartbeat banto-10は **PAUSED** を維持しています。
 - 最新成果、停止状態、正式受入の残件は [current-handoff.md](current-handoff.md) を参照してください。
 - 評価報告は [結果の索引](results/README.md) から参照できます。最新状態はcurrent-handoff.mdを優先します。
 - 正式gateは s4_acceptance_not_frozen、formal_permission=false、credit=0。正式受入と候補採択は未完了です。
