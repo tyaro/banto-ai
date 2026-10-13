@@ -10,6 +10,7 @@
 
 ## 文書
 
+- [Store Sales原本の受領と研究入力](store-sales-source-intake-2026-10-14.md)
 - [公開研究データの取得状況](public-dataset-acquisition-2026-10-14.md)
 - [菓子の季節・販促を加味した需要予測とPSIの研究計画](confectionery-demand-psi-research-plan-2026-10-14.md)
 

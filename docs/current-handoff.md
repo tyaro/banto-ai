@@ -1,3 +1,15 @@
+## 最新 — Store Salesユーザー提供原本の受領・保存完了（2026-10-14 JST）
+
+人がbanto-aiトップに配置したstore-sales-time-series-forecasting.zipを確認。ZIP22416355B/SHA12e9c1dc4833cc804b3ff1515bd7b688f45fd8216fb2b340525036b006d625be、7CSVの全CRC/member byte-SHA・schema・row width・rows・日付ラベルを一回stream確認。train3000888行/2013-01-01～2017-08-15/54店舗33商品群、test28512行/2017-08-16～31/16日・salesなし。oil空欄行43。元ファイル不変のstat確認後、両絶対pathをworkspace内へ照合したMove-ItemでGit管理外data/public/store-sales-user-provided-20261014へ移動。原本1fileは32MiB以下、展開・変換・モデル0。
+
+[Store Sales原本の受領と研究入力](research/store-sales-source-intake-2026-10-14.md)を優先。ユーザー提供原本の実pinで、外部期待hash照合ではない。利用条件はSubject to Competition Rules、agentの規約同意代行0。onpromotionは商品群の販促対象品目数で、過去の予定版/as-of可用性は未確定。sample_submissionを正解salesへしない。完全品質gate/メーカー精度/PSI/方式採択は未完了。
+
+次unitは少数の食品商品群×店舗を選び、暦・単位・欠測/ゼロ・future入力の可用性・時系列splitを固定する入力契約。train内の過去/将来で少量評価を設計する。今回受領で大規模比較・学習・旧評価反復を開始しない。
+
+原保存 artifacts/representative-store-sales-intake-20261014-records（complete閉鎖）、data source-manifest/root-closed。本文同doc-records、Git後は同git-recordsのpost-save/root-closed優先。元helper/閉鎖root追記0。FreshRetail接続失敗は保持、CARE/XJTU本体は未取得。既存automation PAUSED維持/更新0、実行側・記録分割/失敗予備不変。formal_permission=false/credit0/登録holdout未読/native reader禁止/正式受入・採択未完了。同GitHubへの同種研究報告の継続送信承認有効、原本送信0。
+
+---
+
 ## 最新 — 公開データ2件取得完了 / 追加取得は通信障害で停止（2026-10-14 JST）
 
 人の「使えそうなデータセットを取得」に従い、CC BY 4.0のUCI油圧設備とOnline Retail II原本を取得。原本合計122224122B、Git管理外data/public/research-20261014-uci。各32MiB以下のparts（3/2）、原ZIP/parts/全member byte-SHA/CRCを保存しdataset rootを閉鎖。展開・変換・学習0、既存MetroPT/完成評価・試験・CI反復0。
