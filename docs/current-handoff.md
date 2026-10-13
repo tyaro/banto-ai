@@ -1,3 +1,19 @@
+## 最新 — ACTIVE / 小型独自モデルの構造・学習・データ・資源仕様を設計（2026-10-13 JST）
+
+TimesFM 3の公開構造を参考に、独立初期化の小型モデルを設計。人が明示許可したAstraの独立批評を反映した。3連続値target/60秒/C128/H32/P32/D64/L2/head4/FF128/Q3/context-only正規化。系列attentionはfull対diagonal self-onlyの2構成だけで、登録parameter/初期state/batch列を共通化する。109024parameterは机上計数で、性能・容量・公式学習の再現合格ではない。
+Google公式source commit e51928e27119cb17bebc005be2696b75e0a9e688、LICENSEを含む8fileのraw/byte/SHAを新source rootへ固定。source実行・重み取得・PyTorch import0。既存MetroPT候補はmetadata6fileと観測fileサイズだけを読み、本文読取り・再変換・新dataset生成0。24hの過去評価済みtestは探索用で、新規未使用holdout・zero-shot実証とはしない。
+
+次の未完成unitは、optional環境を固定し、forward/mask/順序付きquantile head/lossの最小実装と、future label不変・self-only系列分離・出力対応・gradient/parameter数の未確認部分だけを確認する。学習・完成モデル評価・旧テスト/CIの反復は開始しない。公式trainer/loss/同等性能は未確認を維持する。
+設計詳細 [小型独自モデル設計](research/timesfm3-small-model-design-2026-10-13.md)。
+
+新source保存: artifacts/representative-timesfm-small-design-20261013-source-records (閉鎖43file119890B)。
+設計保存: artifacts/representative-timesfm-small-design-20261013-design-records。
+Git保存後の確認: artifacts/representative-timesfm-small-design-20261013-git-records の post-save/root-closed を優先。
+今回と今後の同送信先 https://github.com/tyaro/banto-ai.git への同種研究報告・既存PC内path履歴送信は、人の具体的リスク通知後の「承認します」で承認済み。同じ承認を再依頼しない。元自動審査拒否・原証拠・144cell・閉鎖rootを保全。
+実行900秒/private2GiB/output1GiB/single32MiB/files32、EvidenceStore分割/失敗予備、Git上限を維持。payload計数をfull runtime/coupled peak/native容量へしない。
+ACTIVE / formal gate=s4_acceptance_not_frozen / formal_permission=false / credit0 / holdout未読 / 正式受入・方式採択未完了 / native reader禁止。今回モデル/学習/テスト/CI/automation更新0。
+
+---
 ## 最新 — ACTIVE / TimesFM 3の実用性・独自モデル構築へ研究目的を整理（2026-10-13 JST）
 
 2026-10-13、人が具体的な送信内容・5文書・https://github.com/tyaro/banto-ai.git・ユーザー名を含むPC内path履歴の通知後、今回と今後の同送信先への同種研究報告の送信承認依頼へ「承認します」と回答。承認待ち解除。元の自動審査拒否・Git process未開始は artifacts/representative-timesfm-research-reset-20261013-send-review-records に履歴保全し、元Git script再実行・別経路回避0。新専用rootで一回[skip ci]保存する。Git保存後の確認は artifacts/representative-timesfm-research-approved-save-20261013-git-records の post-save/root-closed を優先。
