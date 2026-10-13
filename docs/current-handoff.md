@@ -1,3 +1,21 @@
+## 最新 — ACTIVE / C1代表ケースの既存確認範囲と不足を整理（2026-10-13 JST）
+
+大量のC0/C1/C2比較とlayout sweepの拡張を終了する最新方針を継続。第3dev seedの本文読取り・新評価は開始していない。
+保存済みlayout11 quality3cellを含む144cellを原記録として保持。直前方針文書の141cell記述は参照時点の値で、144cellを未実行へ戻さない。
+
+C1の水準残差、phase入口、品質除外とepisode resetの既存テストsourceを対応整理。既存coreのmatched target/supportと正常切替7259–7262、qualityのcycle09欠測窓の原証拠を保存した。新モデル・テスト・CI・replay0。実設備誤警報率や任意段差の包括的保証へしない。
+
+次の未完成unitは、手計算の期待値を固定した少数のC1 scorer→episode接続ケース（段差、正常切替、欠測）。完成済み単体テストの反復ではなく、未確認の組合せだけを確認する。C0/C2追加評価・dataset生成・layout sweep禁止。方式採択は未完了。
+
+直前方針の元HEAD参照不一致failedは保全され、representative-minimal-validation-policy-20261013-continuationで保存済み（ae7472e）。今回coverage文書準備は、最新方針文書が既に144cellへ更新済みだったため旧141cell対象文字列が一致せず、tracked変更・Git開始前にfailed。元原証拠prefixと失敗を閉鎖保全し、別metadata continuationで文書だけ保存する。
+最新保存は artifacts/representative-c1-minimal-coverage-20261013-continuation の post-policy / root-closed を優先。今回foregroundの欠落post-policy読取りKeyErrorはhelper/model/CI失敗へしない。
+
+実行上限・EvidenceStore分割/失敗予備・Git上限不変。追加agent0、閉鎖root追記0、automation更新0。
+ACTIVE / formal gate=s4_acceptance_not_frozen / formal_permission=false / credit0 / holdout未読 / 正式受入未完了 / native reader禁止。
+
+詳細 [C1代表ケースの既存確認範囲と不足](anomaly/evaluation/anomaly-v03-c1-minimal-coverage-2026-10-13.md)。
+
+---
 ## 最新 — ACTIVE / 理論検討とC1の最小実装確認へ方針変更（2026-10-13 JST）
 
 人の最新指示に従い、固定パターン合成devのC0/C1/C2大量比較・layout sweepの拡張を終了する。

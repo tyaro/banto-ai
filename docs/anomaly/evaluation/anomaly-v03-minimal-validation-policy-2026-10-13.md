@@ -82,3 +82,7 @@ formal gate=s4_acceptance_not_frozen / formal_permission=false / credit=0。
 正式受入、native許可、C1/C2採択を補わない。
 
 [最新の引継ぎ](../../current-handoff.md) · [評価・検算の入口](README.md)
+
+## 既存確認範囲の整理を完了
+
+[代表ケースの対応表と不足](anomaly-v03-c1-minimal-coverage-2026-10-13.md)を参照。今回新モデル・テスト実行0。次は未確認の少数のC1 scorer→episode接続ケースだけ。
