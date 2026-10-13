@@ -1,3 +1,19 @@
+## 最新 — ACTIVE / 固定16区間確認完了・点予測基準を保存（2026-10-14 JST）
+
+人の自走指示を継続。[16区間結果と研究判断](results/store-sales-rolling-2026-10-14.md)と[出力前設計](research/store-sales-rolling-design-2026-10-14.md)を優先。直接研究ACTIVE、既存automation PAUSED/更新0。
+
+5/11/12 BREAD/BAKERY、2017Jan1+14*k/k0..15、最終Aug12・672allpaired/48窓。Jan1完成3窓の原予測再利用、15新起点45窓だけ新compute。過去model/source全pin一致、新fit/原ZIP・CSV/旧同起点・試験/CI反復0。calculator全sourceは一itemJSON復元可能保存/32files内、上限緩和0。
+
+日次WAPE mean28 14.770136/暦配分14.424314/total14 14.913158%、48窓累積7.307154/7.307154/7.784618%。Bias-0.839908/-0.839908/-0.699107%。total14は3店舗とも暦配分より日次悪化、採択/再探索0。暦配分の日次改善は元日寄与中心、総量改善は構成上0。未見一般性能/潜在需要/PSI/TimesFM3同等claim0。
+
+原rolling-records complete閉鎖、全stdout/stderr/exit0はlaunch-records。保存寄与解析/本文doc-records、Git後rolling-git-20261014-records post-save/root-closed優先。元失敗/全閉鎖root不変、追加agent0。
+
+研究基準はmean28総量+必要な暦配分の別構成を残す。次unitは2016過去側での総量80%区間校正/固定2017区間のcoverage・幅・外れ方向確認の設計を先に固定する。2017を使って幅調整0、非交換性/少数例を保証へしない、PSI安全在庫claim0。
+
+CARE手動完了報告待ち/自動確認取得0、実行900秒2GiB/output1GiB/single32MiB/files32・記録16MiB512files/256KiBparts/reserve2MiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git継続承認有効、原本/CSV/生予測/fit送信0。
+
+---
+
 ## 最新 — ACTIVE / 最近14日総量の一候補完了・固定16区間確認へ（2026-10-14 JST）
 
 人の自走指示を継続。[総量候補結果](results/store-sales-total-2026-10-14.md)と[出力前設計](research/store-sales-total-design-2026-10-14.md)優先。直接研究ACTIVE、既存automation PAUSED/更新0。
