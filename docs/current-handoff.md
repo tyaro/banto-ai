@@ -1,3 +1,17 @@
+## 最新 — Store Sales二方式の固定2016年少量検証完了（2026-10-14 JST）
+
+新dependency-free tools/demand_forecasting.pyと固定2016入口tools/store_sales_validation.pyを実装。新代表確認6件一回6passed/0failed（手計算ridge・未来poison不変・週2先読み拒否・欠測fallback/null・原ゼロ・指標null）。旧完成suite/CI/評価反復0。
+
+[少量過去検証結果](results/store-sales-small-validation-2026-10-14.md)を優先。BREAD/BAKERY×店舗1/2/3×固定2016年2/5/8月1日から14日、各前日までexpanding fit。paired126/対象欠測0/null予測0。全体MAE naive108.987314→ridge93.456345、約14.25%低下。WAPE13.801627→11.834860%、Bias-1.228419→+4.500477%と過大偏り増加。9窓5改善/4悪化、店舗2と8月集計はnaive優位。勝者/採択/CI統計/因果販促/メーカーPSI実証0。
+
+2013〜2015保存prefixを利用、2016年1/1〜8/14各227日だけ新数値入力。2017年sales/onpromotion数値解析0、future販促/油価/取引入力0、元ZIPpin/identity不変。各fit source日付/尺度/係数/入力SHA、126予測/実績対応、9窓14日累積を新recordへ保存。工程failure0、原inspect.py failure保全。
+
+原結果 artifacts/representative-store-sales-validation-20261014-records（28file199888B/complete閉鎖）、新確認/実行全stdout-stderr-exit0は同validation-launch-records。計算基点HEAD16d39fc、新3source workingpinを原保存（当時未commit）。本文同validation-doc-records、Git後同validation-git-20261014-records post-save/root-closed優先。全閉鎖root追記0。
+
+次unitは同予測module pin/penalty1/K3/horizon14/店舗を固定し、契約済み2017年2/5/8月1日を新入口・新rootで一度評価。2016再評価/設定探索/AI学習/追加agent0。CAREは人の手動download完了報告待ち、自動取得/確認/再試行0。既存automation PAUSED維持。実行/記録上限維持、checkpoint≠blocking/global/native容量証明。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入・採択未完了。Git継続承認有効、新source・研究docsだけ送信、原本/CSV/予測/fit送信0。
+
+---
+
 ## 最新 — Store Sales少数食品系列の入力・評価契約完了（2026-10-14 JST）
 
 人の「需要予測から進める」に従い、BREAD/BAKERY×店舗1/2/3を数値確認前に固定。2013〜2015年の各1095暦日/1092観測日、各年12月25日の未記録、原ゼロ4/3/3を確認。人の指摘を踏まえてクリスマス休業の可能性が高いと記載し、未確認の休業calendarから原量0を補わない。原数量に小数が多く個数/箱数へしない。
