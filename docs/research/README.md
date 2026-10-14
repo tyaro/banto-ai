@@ -10,6 +10,10 @@
 
 ## 文書
 
+- [過去販促の記述と2016検証](../results/store-sales-past-promotion-2026-10-14.md)
+- [過去販促の抽出前設計](store-sales-past-promotion-design-2026-10-14.md)
+- [過去販促回帰の検証前設計](store-sales-past-promotion-validation-design-2026-10-14.md)
+- [共有学習と未使用系列の次設計案](demand-shared-series-next-design-2026-10-14.md)
 - [mean出力の実装・一回評価](../results/store-sales-mean-pilot-2026-10-14.md)
 - [mean一回評価の固定条件](store-sales-mean-pilot-design-2026-10-14.md)
 - [需要数量の平均・中央値・意思決定分位点](../results/store-sales-quantity-objectives-2026-10-14.md)

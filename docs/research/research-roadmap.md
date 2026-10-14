@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 過去販促の追加情報と次の学習対象（2026-10-14・最新）
+
+[新抽出と固定ridge検証](../results/store-sales-past-promotion-2026-10-14.md)を完了。過去記録の年内関係は不安定、2016主尺度化MSEは基準.004027/販促.008900で基準未達。不採択、現3系列の販促NN/係数探索/2017再評価を増やさない。次は[共有学習を未使用系列へ移す主問](demand-shared-series-next-design-2026-10-14.md)のmetadata選定と入力/支持契約を数量読取り前に準備する。新群・性能・学習は未観測。直接研究ACTIVE/automation PAUSED、旧closedroot/完成計算不変。
+
 ## 期待数量headの評価と次の情報確認（2026-10-14・最新）
 
 [mean実装と一回評価](../results/store-sales-mean-pilot-2026-10-14.md)を完了。新4機構確認後、固定予算256step/validation mean MSEで64選択、2017回顧比較。meanは総量RMSE/Biasで単純基準に届かず不採択。保存2016基準の同validation目的も新候補より小さいことを事後記述した。モデル延長へ進まず、次はorigin前の公開onpromotion列が過去入力として利用でき、train残差に追加情報を持つかの設計/小抽出/記述。未来実施を既知予定にしない。原失敗と旧source/closedroot不変、直接研究ACTIVE/automation PAUSED。
