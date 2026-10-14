@@ -6,6 +6,7 @@
 
 ## 独自モデルの需要用途
 
+- [σ/EMA/等重み併用・条件未達（2026-10-14）](demand-statistical-overlay-2026-10-14.md)
 - [当日/前後の小型模型比較・自走停止（2026-10-14）](demand-calendar-model-pair-2026-10-14.md)
 - [名目暦60の入力確認・fit支持（2026-10-14）](demand-public-calendar-input-2026-10-14.md)
 - [営業日水準と確定休業0・新6確認（2026-10-14）](demand-operating-sales-2026-10-14.md)

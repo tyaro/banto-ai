@@ -10,6 +10,8 @@
 
 ## 文書
 
+- [σ・EMA・予測平均の固定案](demand-statistical-overlay-design-2026-10-14.md)
+- [統計併用6確認と回顧結果](../results/demand-statistical-overlay-2026-10-14.md)
 - [休日当日対前後の小型模型比較・条件未達で停止](../results/demand-calendar-model-pair-2026-10-14.md)
 - [公開暦の共通入力6確認とfit支持](../results/demand-public-calendar-input-2026-10-14.md)
 - [公開暦と営業予定を分ける小型模型接続条件](demand-calendar-model-connection-design-2026-10-14.md)

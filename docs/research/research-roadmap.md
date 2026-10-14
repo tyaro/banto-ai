@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## σ・EMA・予測平均を分ける新研究（2026-10-14・最新）
+
+[固定案](demand-statistical-overlay-design-2026-10-14.md)で[新6確認と450窓](../results/demand-statistical-overlay-2026-10-14.md)完了。σは過去一歩先の散らばり、EMAは最近の誤差level。等重み候補joint約5.0%悪化/3of15で不採用・direct PAUSED。旧point/採点/NN/CI反復0、σのh別/総量/区間校正は未実施、automation PAUSED。
+
 ## 休日当日対前後の固定比較で区切り（2026-10-14・最新）
 
 [二件比較](../results/demand-calendar-model-pair-2026-10-14.md)を完了。global微改善だが前後の当日比約0.019%/改善9of15で固定10of15未達、採択せずdirect PAUSED/自走停止。元日/Christmasのfit支持なし、実営業表/実連休長も未確認。次は不足する入力又は別支持契約の判断。原失敗/固定630key保全、同仮説grid/延長/再試行/旧評価/CI0、automation PAUSED。
