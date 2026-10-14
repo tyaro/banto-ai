@@ -11,6 +11,9 @@
 ## 文書
 
 - [研究方針に合わせたデータの保管と整理](data-retention-and-cleanup-2026-10-14.md)
+- [総量区間の固定・直近校正の結果](../results/store-sales-interval-2026-10-14.md)
+- [総量区間の固定設計](store-sales-interval-design-2026-10-14.md)
+- [直近校正の設計](store-sales-interval-recent-design-2026-10-14.md)
 - [固定16区間の結果と研究判断](../results/store-sales-rolling-2026-10-14.md)
 - [16区間確認の出力前設計](store-sales-rolling-design-2026-10-14.md)
 - [最近14日の総量候補の結果](../results/store-sales-total-2026-10-14.md)
