@@ -1,3 +1,19 @@
+## 最新 — ACTIVE / 休業状態・休日の前後入力へ優先変更、新6確認完了（2026-10-14 JST）
+
+人の「休日の0は事前処理が必要」「休日をイベントとして前後特性」に従い、入力支持通知より営業状態・event処理を優先。[新設計](research/demand-holiday-event-input-design-2026-10-14.md)、[入力経路と6確認](results/demand-holiday-event-input-2026-10-14.md)を優先。direct ACTIVE/automation PAUSED不変。
+
+新demand_event_calendar.py/testはsales/label/forecast引数なし、event種別×相対日−3..+3別channel、重複維持、known_at<=起点の同ID最新版/cancel/store scope、時点不明除外/完全性別、operating open/closed/unknownを祝日flagから分離。新6確認一回allpassed、parent経過0.182345秒/child全stdioexit0保存、fixtureの予定で実店舗効果claim0。
+
+現行はmissing対実0のみで休業0対営業実0を通常水準から分離していなかった。nominal event当日one-hotだけ/softplus平滑化配分で厳密な日次0表現制約。新優先は営業日から基準水準→確定休業ならsales0の構造→営業日前後event学習を分ける。新水準/出力mask/loss/モデル接続・学習は未実装/未実行、旧性能を改良済みにしない。
+
+元日観測0/Christmas欠測・個別営業表/予定公表訂正時刻が原public資料にないことを保持。祝日≠全店休業、欠測を実測0へ変更0、営業不明0/長期ゼロを欠品/導入前と断定0。予定時刻不明をnormal確定へ補わず、名目月日policyと実予定版を区別。FPP3回帰/欠測休日の一次資料参照は読取りだけ/raw revision全保存なし。
+
+次unitは営業日からの過去同曜日水準・確定closed sales0・unknown/missing/実0・支持不足・全休業期間・日次総量整合の新pure処理/少数確認。前後入力の模型接続は別出力前設計。旧input支持通知は後段で未実装。新data/fit/forecast/旧確認/CI0、旧8週候補不採用/研究基準比較用維持。
+
+新source/設計/pins/新scope/全stdioexit0をfresh閉鎖保存、旧weekly/mean/cal文書bytes不変。本文representative-demand-holiday-input-records、Git後同-holiday-input-git-records post-save優先。追加agent0/CARE手動待ち・自動確認0、全実行/記録/prep上限不変、formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git独自code/集約docsのみ、原quantity/予定実績/ledger/係数/予測送信0。
+
+---
+
 ## 最新 — ACTIVE / 保存補正の誤差分解・入力支持監査完成（2026-10-14 JST）
 
 人の「進めていきましょう」で直接研究を再開。[新診断結果](results/store-sales-weekly-correction-diagnosis-2026-10-14.md)、[誤差診断条件](research/store-sales-weekly-correction-diagnosis-design-2026-10-14.md)、[範囲監査条件](research/store-sales-weekly-feature-support-design-2026-10-14.md)を優先。automation PAUSED不変、旧8週補正不採用/原条件未達は不変。
