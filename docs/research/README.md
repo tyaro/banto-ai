@@ -10,6 +10,8 @@
 
 ## 文書
 
+- [保存済み予測の補正誤差分解・実行前契約](demand-correction-decomposition-design-2026-10-14.md)
+- [補正二乗量と実績方向の整合・診断結果](../results/demand-correction-decomposition-2026-10-14.md)
 - [Astraによる評価方法の深いレビューと改善案](demand-evaluation-methodology-astra-review-2026-10-14.md)
 - [内部選択済み模型の未学習店舗への評価契約](demand-selected-series-evaluation-design-2026-10-14.md)
 - [未学習店舗の結果・mean28基準未達](../results/demand-selected-series-evaluation-2026-10-14.md)
