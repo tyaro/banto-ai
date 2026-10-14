@@ -1,3 +1,19 @@
+## 最新 — ACTIVE / 共有数量残差一候補・新6店舗検証完了、事前条件未達（2026-10-14 JST）
+
+声掛けまで直接自走承認を継続。[結果](results/store-sales-shared-residual-2026-10-14.md)、[元固定設計](research/store-sales-shared-residual-design-2026-10-14.md)を優先。直接研究ACTIVE/automation PAUSED更新0。
+
+新pure input/label分離/宣言store-time fit/等store重み/ridge1/fallbackと5少数確認一回allpassed。元18train/6fit未使用検証・prefix・尺度・71適格窓対応、x完全支持69/store計1242行を新fit。各store重み69/総1242、ゼロcontext174/ゼロtarget174保持。x中心0.008391991815/尺度0.316741493962/切片0.023982191423/傾き0.184392771397、係数保存後だけ新2016 quantity読取り。
+
+新6store2016Jan1–Dec15の原ID付き2100quantity、archive/member SHA/bytes/行数不変、予約/oldstore/train2016/2017/onpromotion数値解析0。固定Jan1+14*k(k0..24)150/150available、x支持144/不能6は切片fallback、past56正値あり150/なし0/null保持。基準/切片/共有の主尺度化MSE.017249834/.017506118/.020508816、総量RMSE538.161442/551.505006/559.336306、Bias-.436950/1.456110/1.182175。両対照より小2/6（4・8）、事前4/6＋全体条件未達/不採択、基準維持。同数量差NN/grid/別seed/2017追試開始0。
+
+新fit/検証5.275921秒/OSpeak24932352B、計算77094親＋未commit新source/clean計算claim0。新records/prep/launch閉鎖、script/source/元inputpin/使用除外行/fit前宣言/係数/新quantity/予測/metrics/原stdio/exit0local保存、原失敗・旧closedroot不変。本文shared-residual-doc-records、Git後shared-residual-git-records post-save優先。
+
+次unitは[14日総量の不確実性の設計案](research/store-sales-shared-total-interval-design-2026-10-14.md)の新weighted residual quantile・総量復元・labelで条件を選ばない少数確認。新閉鎖train残差1242行を再利用し、無条件/過去56正値ありpoolの支持/元store重みを分位点前保存→Q10/Q90→保存150ledgerのcoverage/幅/scoreを一回記述。新point fit/forecast/archive抽出0、2016は回顧で未見に戻さず、2017/予約群0。区間実装/評価未開始、NN/メーカーPSI/TimesFM同等/正式採択0。
+
+追加agent0/CARE手動報告待ち・自動確認0。900秒2GiB/output1GiB/single32MiB/files32・通常24file768MiB/失敗8file256MiB、記録16MiB512files/256KiBparts/reserve2MiB16files、prep128KiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git独自code/集約docsのみ、原quantity/ledger/尺度/fit/予測送信0。
+
+---
+
 ## 最新 — ACTIVE / 共有学習の店舗群固定・train側支持診断完成（2026-10-14 JST）
 
 声掛けまで直接自走承認を継続。[metadataと数量支持](results/store-sales-shared-series-support-2026-10-14.md)、[入力契約](research/store-sales-shared-series-input-contract-2026-10-14.md)、[共有残差一候補の未実行設計](research/store-sales-shared-residual-design-2026-10-14.md)を優先。直接研究ACTIVE/automation PAUSED更新0。
