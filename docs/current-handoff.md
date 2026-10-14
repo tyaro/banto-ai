@@ -1,3 +1,15 @@
+## 最新 — ACTIVE / σ・EMAを学習入力へ修正、新6接続確認完了（2026-10-14 JST）
+
+人の「前処理/一緒に入力する情報」を優先し、[新設計](research/demand-statistical-feature-input-design-2026-10-14.md)、[追加入力/接続6確認](results/demand-statistical-features-2026-10-14.md)を保存。旧固定EMA/等重み悪化は学習入力の否定ではない。新public量/fit/評価/旧確認/CI0、旧sigma/base source/結果bytes不変。
+
+新8次元＝残差mean/u・EMA7/u・EMA28/u・σ/u・support/28・staleness/28・valid/age-known。未来profileをheader先拒否、統計実0と未知mask/尺度0を分ける。原系列要約で外部新情報ではない。新8→32学習branch0初期化/288追加/30,369params、固定point加算やσ方向制約なし。新pure4/模型2の6確認一回passed・全子stdioexit0。
+
+次は同shapeのbranch0 control対有効入力候補の別学習unit。原630key/u/2013–14→既知2015、保存2015profile再利用、同initial/sampler/256step・joint両対照/10of15条件。normalize/loss/期間長を一緒に替えず、旧weights/forward反復0。新学習未開始、実精度改善/σ区間校正claim0。
+
+本文statistical-features-records/Git後features-git-records優先。OpenReview本体/PDFはverificationでfull未読、著者project参照metadata/コピー0。direct ACTIVE/automation PAUSED/CARE待ち/追加agent0、全上限/formal_permission=false/credit0/native禁止/登録holdout未読/正式受入未完了。Git独自code/架空確認/集約docsのみ、原quantity/profile/尺度/ledger/予測/weights送信0。
+
+---
+
 ## 最新 — PAUSED / σ・EMA・等重み併用の新比較完了、条件未達で区切り（2026-10-14 JST）
 
 人の次step/σ等の併用提案で新仮説を実行。[固定案](research/demand-statistical-overlay-design-2026-10-14.md)、[新6確認/比較](results/demand-statistical-overlay-2026-10-14.md)を優先。pure新6確認一回passed、最新28日の完了一歩先weekday誤差からμ/sampleσ/RMSE/EMA7/28を分離。future getter/欠測対実0/σ0対Biasを確認、σでpoint方向/区間を変更0。
