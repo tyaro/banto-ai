@@ -1,5 +1,9 @@
 # 研究方針に合わせたデータの保管と整理
 
+## 後続の方針変更・現在状態
+
+人の明示承認により、ここで保管した旧C0 archiveを含む指定旧証拠約3.46GBをbackupなしで削除した。[最新の削除結果と保管範囲](workspace-retention-2026-10-14.md)を優先。以下は圧縮保管/元129root削除当時の履歴であり、archiveが現在も存在するという状態ではない。削除したraw証拠はこのworkspaceから復元不可。現在の需要研究・公開原本は保持した。
+
 整理日: 2026-10-14 JST
 
 現在使う公開データと、終了した合成異常検知研究の保存データを分けた。旧C0/C1/C2評価の原本約4.26GBを約243MBの復元可能なアーカイブへまとめ、全2,489fileを読戻して元bytes/SHA-256との一致を確認した。人の具体的な承認後、元129dev rootsを削除済み。整理前からの純削減は約4.02GB。
@@ -41,7 +45,7 @@ workspace内の通常fileをmetadataだけで集計した。外部cache・顧客
 - 内容: 129個の `dev-*` root、2,489files
 - 元file合計: **4,259,850,154 bytes**
 - 保存先: `data/archives/retired-anomaly-evaluation-20261014/`
-- [archive manifest](../../data/archives/retired-anomaly-evaluation-20261014/archive-manifest.json)
+- `data/archives/retired-anomaly-evaluation-20261014/archive-manifest.json`（当時のpath、現在削除済み）
 - gzip済みtar: **242,871,553 bytes**、32MiB以下の8parts
 - manifestとclosureを含む保存先全体: **243,369,377 bytes**
 - 元rootを削除した場合の整理前からの純削減見込み: **4,016,480,777 bytes**

@@ -1,5 +1,9 @@
 # Macへの作業引継ぎ（2026-10-14）
 
+## 最新のファイル整理
+
+[承認済み旧証拠の削除結果と現在の保管範囲](workspace-retention-2026-10-14.md)を優先する。旧異常検知/Windows受入/旧CI/旧C0archiveの指定3.46GBはbackupなしで削除済み。最新需要研究と公開原本は保持し、Macには以下の需要最小セットを移す。旧証拠やWindowsvenvのコピーは不要。未分類/登録保護rootはWindows側で保持する。
+
 人の「別のPCで作業を継続します」「マックで作業をする予定」に従い、Macへ引き継ぐ。このWindows PCでは研究を停止する。direct/automationはPAUSED。`banto-10` の保存設定もPAUSEDであることを確認した。別PCの人の再開指示まで新実験を開始しない。
 
 ## 最初に読むもの
@@ -27,12 +31,13 @@ git clone --branch codex/preformal-acceptance-scope https://github.com/tyaro/ban
 
 ## 別途コピーするもの
 
-元PCの `D:/develop/banto-ai` から、選んだ媒体で次のdirectoryを同じrepository相対位置へコピーする。移動・削除は行わず、元PCの原証拠を残す。宛先に同名rootが既にある場合はmerge/上書きせず、既存状態を保全して衝突を確認する。
+元PCの `D:/develop/banto-ai` から、選んだ媒体で必要なdirectoryを同じrepository相対位置へコピーする。現在の研究の原証拠は元PCに残す。宛先に同名rootがあればmerge/上書きせず衝突を確認する。
 
-|範囲|内容と扱い|
+|範囲|Macへの優先度|
 |---|---|
-|`data/`|公開原本、Store Salesの原本manifest/parts、旧C0/C1/C2を保全する圧縮archive。manifestとclosureも一緒にコピーする|
-|`artifacts/`|学習結果・入力対応・原失敗・全ログ・過去の証拠。全履歴を継続する場合はdirectory全体をコピーする|
+|`data/public/store-sales-user-provided-20261014/`|需要研究の主入力。manifest/parts/closureを一緒にコピー|
+|以下の最新需要artifact26root|約8.66MB。入力/モデル/結果/失敗対応をwhole rootでコピー|
+|その他の公開原本、未分類/登録保護artifact|Windows側に保持。今回の需要最小移行から外す|
 
 最新需要研究だけの小さな引継ぎでは、少なくとも以下の**全root**が必要。ファイルだけを抜いてclosureのあるrootを未完成にしない。この小範囲では他の過去研究の証拠一式を移したことにはならない。
 

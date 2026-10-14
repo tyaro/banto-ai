@@ -10,6 +10,7 @@
 
 ## 文書
 
+- [現在の保管範囲・旧証拠3.46GBの承認済み削除](workspace-retention-2026-10-14.md)
 - [Macへの引継ぎ・Git外の証拠と移植箇所](pc-handoff-2026-10-14.md)
 - [店舗分離による終了点選択・一軌跡比較の契約](demand-group-selection-design-2026-10-14.md)
 - [時間選択対移行選択の一回結果](../results/demand-group-selection-2026-10-14.md)
