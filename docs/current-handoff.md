@@ -1,3 +1,19 @@
+## 最新 — ACTIVE / 保存補正の誤差分解・入力支持監査完成（2026-10-14 JST）
+
+人の「進めていきましょう」で直接研究を再開。[新診断結果](results/store-sales-weekly-correction-diagnosis-2026-10-14.md)、[誤差診断条件](research/store-sales-weekly-correction-diagnosis-design-2026-10-14.md)、[範囲監査条件](research/store-sales-weekly-feature-support-design-2026-10-14.md)を優先。automation PAUSED不変、旧8週補正不採用/原条件未達は不変。
+
+保存fit630行/2015ledgerの新事後診断だけ。新fit/forecast/原score集計/確認/CI0。e=(A−B)/(14u), c=(P−B)/(14u), MSE差=c²−2ce。15店macroE[c²].007055421/2E[ce].001442742/差.005612679が原差と一致。採点360=c0 45/非ゼロ315、方向一致167/逆148・2倍超57。店13/25で補正二乗量大/整合負だが除去・縮小再採点0。fit42対feature支持dev21の全8相関/残差mean/stdを記述し、因果/有意/ドリフト検定claim0。
+
+target/予測を使わない保存input監査330窓（最後target欠測も含む）、missing45/尺度0群75別。全fit座標範囲外6（13=4/25=2）、自己範囲外69、fit std最近傍距離median/max保存。共通範囲内でも悪化/自己範囲外でも改善があり、単純rangeで方式選択成功にしない。範囲内≠joint支持/精度保証、距離≠失敗確率。
+
+次unitは[入力支持を予測と分ける新pure機構](research/demand-input-support-monitor-design-2026-10-14.md)のprofile/store/cutoff・missing/実0/zero-scale・範囲境界/定数列/未来label非アクセスの少数確認。code未実装/予測切替未接続。支持状態通知だけで旧係数/予測/quantile/選択を変更しない。閾値/店/補正率を既知2015に合わせず、改善の検証は別出力前契約が必要。
+
+新診断0.079163秒/OSpeak20656128B、範囲監査0.485932秒/private20029440B。全新root/prep閉鎖・原inputpins/stdioexit0保全、新helper失敗0/旧failed不変。本文weekly-diagnosis-doc-records、Git後weekly-diagnosis-git-records post-save優先。基準mean28総量＋限定暦配分維持/区間不採択、メーカーPSI/TimesFM同等/正式採択0。
+
+追加agent0/CARE手動待ち・自動確認0、archive/2016/2017/予約数量0、全実行/記録/prep上限不変。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Gitは集約docsのみ、原quantity/feature/ledger/係数/予測送信0。進めなくなった場合は保全後PAUSED・blind retry0。
+
+---
+
 ## 最新 — PAUSED / 群別8週回帰一回完了、進捗未達で区切り（2026-10-14 JST）
 
 人の「進めてください」で新[群別契約](research/store-sales-weekly-ridge-cohort-design-2026-10-14.md)を固定し、[一回の結果](results/store-sales-weekly-ridge-cohort-2026-10-14.md)まで完了。direct PAUSED（新一候補を保存して区切り）/automation PAUSED不変。原固定18店の学習前条件未達は不変。
