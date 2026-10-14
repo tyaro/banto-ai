@@ -1,3 +1,21 @@
+## 最新 — ACTIVE / 独自小型需要モデルの設計・一回探索完了（2026-10-14 JST）
+
+人の需要適用設計と自走指示を継続。[設計](research/store-sales-small-model-design-2026-10-14.md)と[結果・判断](results/store-sales-small-model-2026-10-14.md)を優先。直接研究ACTIVE、既存automation PAUSED/更新0。
+
+保存5/11/12 BREAD/BAKERY、C56/H14/P7/V3/D64/L2、110916parameter。過去maskと暦5/未来は日付暦のみ。独立init20261014/sampler20261015、train2013–15 991origin/validation2016 25/test2017固定16、256×8 step。validation64/128/192/256から64（.0693295431）選択後16forwardだけ。総量非負orderedQ10/50/90を直接学習、日次pointはmedian×配分、日次分位点合算0。新需要6機構確認一回allpassed、旧MetroPT/旧確認/CI/基準forecast反復0。
+
+2017回顧672日/48窓、日次WAPE model14.729793/mean28 14.770136/暦配分14.424314、総量model7.295235/基準7.307154、Biasmodel-1.214088/基準-.839908。小さな差を優位性へしない。モデル区間41/48=85.42%/below2above5/幅1819.699715/score2301.566831。固定幅917.801727/score2092.694240・直近幅1147.818659/score2080.379115より幅大・score悪化、実務校正/採択0。店12coverage68.75%。
+
+保存予測だけの診断：総量補正比平均.996254、元日日次model24.013416/暦18.713429%、他45窓14.148067/14.155551%微差。保存量/形の代数分解は因果ablation/候補選択ではない。elapsed14.247秒/OSpeak1033379840B、model閉鎖18file2766445B。計算はd3bb親＋未commit新source、clean計算claim0。source全文pin/入力/日付batch/initial/4checkpoint/prefix/選択/原予測/対応をlocal保存。
+
+small-model checks/pilot/analysis各records全閉鎖、stdio/exit0はlaunch対応root。本文doc-records、Git後small-model-git-20261014-records post-save優先。初期foreground読取りpath/wildcard/既存restricted列挙警告は選択excerpt、fullidentity/stdioなし、モデルfailureへしない。全原失敗/旧閉鎖root不変。
+
+研究基準mean28総量＋限定暦配分を維持。次unitはtrain2013–15側だけで基準残差/暦配分の支持例/店舗12連続ゼロの目的への影響を診断し、情報または系列拡大の必要を判断する。新grid/学習延長/別seed/2017再fit/旧forward反復0。TimesFM公式重み・教師出力/同等再現/一般性能/メーカーPSI採択0。
+
+CARE手動完了待ち/自動確認0、追加agent0。900秒2GiB/output1GiB/single32MiB/files32、記録16MiB512files/256KiBparts/reserve2MiB16files、prep128KiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git継続承認内で独自codeと集約文書だけ、原本/CSV/生予測/fit/重み送信0。
+
+---
+
 ## 最新 — ACTIVE / 総量区間の固定・直近校正確認完了（2026-10-14 JST）
 
 人の「進めて」を継続。[区間結果と研究判断](results/store-sales-interval-2026-10-14.md)、[固定設計](research/store-sales-interval-design-2026-10-14.md)、[直近設計](research/store-sales-interval-recent-design-2026-10-14.md)を優先。直接研究ACTIVE、既存automation PAUSED/更新0。
