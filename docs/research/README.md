@@ -10,6 +10,10 @@
 
 ## 文書
 
+- [保存補正の誤差分解と入力支持監査](../results/store-sales-weekly-correction-diagnosis-2026-10-14.md)
+- [補正診断の固定条件](store-sales-weekly-correction-diagnosis-design-2026-10-14.md)
+- [学習入力範囲監査の条件](store-sales-weekly-feature-support-design-2026-10-14.md)
+- [支持通知を予測と分ける次機構](demand-input-support-monitor-design-2026-10-14.md)
 - [群別8週共有回帰の一回結果](../results/store-sales-weekly-ridge-cohort-2026-10-14.md)
 - [正尺度群とゼロ尺度群を分ける新契約](store-sales-weekly-ridge-cohort-design-2026-10-14.md)
 - [8週回帰の学習前支持未達と区切り](../results/store-sales-weekly-ridge-readiness-2026-10-14.md)

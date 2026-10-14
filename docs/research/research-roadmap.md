@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 保存補正の診断と入力支持の次機構（2026-10-14・最新）
+
+[誤差の恒等式分解とinput範囲監査](../results/store-sales-weekly-correction-diagnosis-2026-10-14.md)を完了、新fit/forecast/旧score再集計0。方向167一致/148逆、補正二乗量が整合を上回る。範囲外6/330は13/25だがinsideの悪化もあり、gate成功へしない。次は[予測を変更しない支持情報のpure機構](demand-input-support-monitor-design-2026-10-14.md)を少数確認する。既知2015に閾値/店を合わせず、旧8週候補不採用/基準維持。direct ACTIVEへ再開/automation PAUSED不変。
+
 ## 群別8週回帰の一回結果で区切り（2026-10-14・最新）
 
 人の再開指示で[15店fit/3店baseline-onlyの別契約](store-sales-weekly-ridge-cohort-design-2026-10-14.md)を固定し、[新5確認・630行fit・450窓要求の一回評価](../results/store-sales-weekly-ridge-cohort-2026-10-14.md)を完了。全18対応を保持、432採点/18欠測、15店主macroMSE.023675→.029288/約23.71%悪化・改善5/15で条件未達。8週特徴のNN/gridへ進まず採択0、原18店条件未達は不変。次の情報/共有条件/zero履歴の問いは別仮説が必要。現在はdirect PAUSED/automation PAUSED、基準維持、旧確認/評価/CI/予約群0。

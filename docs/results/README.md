@@ -6,6 +6,7 @@
 
 ## 独自モデルの需要用途
 
+- [8週補正の保存誤差分解・入力支持監査（2026-10-14）](store-sales-weekly-correction-diagnosis-2026-10-14.md)
 - [数量支持15店の8週回帰・全18店評価（2026-10-14）](store-sales-weekly-ridge-cohort-2026-10-14.md)
 - [8週共有回帰の学習前支持・停止（2026-10-14）](store-sales-weekly-ridge-readiness-2026-10-14.md)
 - [8週間の自己履歴入力と新5確認（2026-10-14）](store-sales-weekly-history-input-2026-10-14.md)
