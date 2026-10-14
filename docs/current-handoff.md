@@ -1,3 +1,15 @@
+## 最新 — ACTIVE / 統計8入力の同条件学習比較完了、進捗条件達成（2026-10-14 JST）
+
+[比較結果](results/demand-statistical-feature-pair-2026-10-14.md)、[出力前設計](research/demand-statistical-feature-input-design-2026-10-14.md)を優先。人の「お願いします」で新同shape2件を各256step一回、同initial/sampler/暦/u/loss、相違は統計8入力だけ。旧weights/forward/確認/採点/CI反復0。原fit selection/key/u再利用、fit profile630新規、保存2015profile450再集計0、両final weights保存後のみ2015数量解釈。
+
+positive15 macro joint mean28 0.071036585129/入力なし 0.070825974123/あり 0.070815970862。control比0.014124%/baseline比0.310564%小幅改善、12of15で固定10of15達成。progress=true/adopted=false、有意差/未知優位/σ単独効果/区間校正claim0。局所z-score/σloss重み/期間長変更0。
+
+450要求/NN375/zero-scale baseline75/完全label432・欠測18、30369params/11.624473秒/private1160040448B。模型23file4796038B閉鎖、launch全stdioexit0、doc-records/Git後git-records post-save優先。foreground誤filename2/文書isolate TextEncoder未定義（nested tool/process/mutation0）はmetadata保全、模型/helper失敗0、原failed/閉鎖root不変。
+
+次は二件固定で独立期間/系列の検証契約。2015回顧、過去2016既読範囲を未見へ補わず、同仮説seed/半減期/幅/step grid/再学習0。元日/Christmas fit支持不足・営業表unknown維持。未知検証未実施。direct ACTIVE/automation PAUSED、CARE待ち/追加agent0、全実行/記録/prep/Git上限/formal_permission=false/credit0/native禁止/登録holdout未読/正式受入未完了。Git独自runner/集約docsのみ、原quantity/profile/尺度/ledger/予測/weights送信0。
+
+---
+
 ## 最新 — ACTIVE / σ・EMAを学習入力へ修正、新6接続確認完了（2026-10-14 JST）
 
 人の「前処理/一緒に入力する情報」を優先し、[新設計](research/demand-statistical-feature-input-design-2026-10-14.md)、[追加入力/接続6確認](results/demand-statistical-features-2026-10-14.md)を保存。旧固定EMA/等重み悪化は学習入力の否定ではない。新public量/fit/評価/旧確認/CI0、旧sigma/base source/結果bytes不変。
