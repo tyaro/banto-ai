@@ -10,6 +10,7 @@
 
 ## 文書
 
+- [休暇期間のイベント表現・Astraの検討](demand-holiday-duration-design-2026-10-14.md)
 - [休業ゼロと休日前後を分ける新入力設計](demand-holiday-event-input-design-2026-10-14.md)
 - [休日予定版と前後channelの新6確認](../results/demand-holiday-event-input-2026-10-14.md)
 - [保存補正の誤差分解と入力支持監査](../results/store-sales-weekly-correction-diagnosis-2026-10-14.md)

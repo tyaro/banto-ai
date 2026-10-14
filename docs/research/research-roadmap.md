@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 休暇期間のイベント表現とAstraの検討（2026-10-14・最新）
+
+[期間入力設計](demand-holiday-duration-design-2026-10-14.md)を保存。人の明示依頼でAstra一件を検討、顧客行事と店舗休業を別intervalにする。既知全長/開始終了・前中後、未確定endと有効範囲、起点後延長の非遡及を採用する方向。次は数量非アクセスの区間機構/新代表確認、その後に営業日水準/closed0を扱う。期間長の精度効果・販促係数は未実証、新fit/forecast/旧確認/CI0、direct ACTIVE/automation PAUSED。
+
 ## 人の指摘による休業ゼロ・休日前後の優先変更（2026-10-14・最新）
 
 [休業の構造処理と前後eventを分ける設計](demand-holiday-event-input-design-2026-10-14.md)、[新入力6確認](../results/demand-holiday-event-input-2026-10-14.md)を完了。旧方式はmissing/実0のみ・当日one-hot/厳密日次0制約で、営業水準分離は未実装。次は営業日水準と既知closed0・unknown/missing/支持不足/全休業を純粋処理で確認し、前後入力の模型接続を別設計する。新学習/原予測変更0、祝日から営業状態を補わず、入力支持通知は後段へ。direct ACTIVE/automation PAUSED、旧結果保全。
