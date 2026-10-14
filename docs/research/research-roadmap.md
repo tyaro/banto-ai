@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 8週履歴の入力機構と次のfit準備（2026-10-14・最新）
+
+[自己8週間の新入力と5確認](../results/store-sales-weekly-history-input-2026-10-14.md)を完了。future/同B同xでの推移差/zero-missing/単位/fit cutoff guard成立、予測改善は未検証。次は8特徴ridge1のsolver・等店重み・fit尺度/中心・定数列・非負復元・fallbackと、2013–14 fit→2015回顧開発の支持・日付を係数前に固定。新fit未開始、旧2016再選択/2017/予約群0、基準維持、direct ACTIVE/automation PAUSED。
+
 ## 研究主問の中間整理と次の入力境界（2026-10-14・最新）
 
 [保存結果とsourceの中間整理](demand-research-checkpoint-2026-10-14.md)を完了。独立実装の成立と追加価値未達を分け、一変数回帰未達から共有NN全般を否定しない。V3入力の既存NNは未知店舗の移行未検証。次は[8週間の推移を残す新入力](store-sales-weekly-history-design-2026-10-14.md)の未来guard/同B同xでの情報差/zero-missing/単位/fit尺度cutoffを少数確認する。新学習はまだ開始せず、機構後に18店の2013–14 fit→2015回顧開発の一候補を別保存。旧2016再選択/2017追試/予約数量読取り0、direct ACTIVEへ再開/automation PAUSED不変。

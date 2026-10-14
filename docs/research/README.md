@@ -10,6 +10,7 @@
 
 ## 文書
 
+- [8週間の入力境界・新5確認](../results/store-sales-weekly-history-input-2026-10-14.md)
 - [需要研究の中間整理と追加学習の主問](demand-research-checkpoint-2026-10-14.md)
 - [8週間の履歴を残す次入力の固定案](store-sales-weekly-history-design-2026-10-14.md)
 - [完了誤差で更新する総量区間と中間判断](../results/store-sales-sequential-interval-2026-10-14.md)
