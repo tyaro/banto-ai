@@ -1,3 +1,13 @@
+## 最新 — PAUSED / 承認済み旧証拠3.46GBをbackupなし削除（2026-10-14 JST）
+
+人の旧研究証拠不要方針→具体範囲確認への「この対象をバックアップなしで削除する」で、旧異常/C0-C2/Windows受入/旧CIの913folder＋26単独log・41450file/3462579416Bを指定一覧だけ一回削除。旧C0保管archiveも削除・復元不可、Git集約docs/sourceは保持。[現在の保管/移行範囲](research/workspace-retention-2026-10-14.md)と[Mac引継ぎ](research/pc-handoff-2026-10-14.md)を優先。
+
+PS全939entryのabsolute scope/種類/件数bytes/reparseなしを全削除前に照合、指定target不存在。需要/store-sales/引継ぎ成果とdata/public全file metadata前後一致、ACL変更0、新model/確認/CI0/native回収claim0。28.875194秒/sampledprivate90435584B、全stdioexit0/承認/各削除ledgerをold-evidence-delete-recordsへ保存。元scan Access denied/初planの単独file-kind assertはselected原失敗を保持・型区分v2で計画完成。原失敗を書換え0、新閉鎖root追記0。
+
+MacにはGit code/docs＋Store Sales原本＋最新需要26root約8.66MBを優先、旧証拠とWindowsvenv移転不要。未分類/登録保護領域28pathは除外保持・容量未集計。retention-doc-records/Git後retention-git-records post-save優先。今回の保全方針変更は指定一覧だけ。direct/automation PAUSED・全上限・formal_permission=false/credit0/native7役禁止/登録holdout未読/CARE待ち/追加agent0維持、Git原data/予測/weights送信0。
+
+---
+
 ## 最新 — PAUSED / Macへ引継ぎ（2026-10-14 JST）
 
 人の別PC/Macへの作業移転に従い、このWindows PCの研究を停止。[Mac向け引継ぎ](research/pc-handoff-2026-10-14.md)にGit branch/読取り順/非Git data・artifactのコピー範囲/Mac専用venv/Windows計測・launcherの移植/転送照合/再開境界を保存。最新研究は直下の一軌跡比較完了・暫定条件未達。新模型/確認/CI/データ抽出/原root変更0、転送/archive作成・宛先受領確認0。automation banto-10の保存設定PAUSEDを確認、更新0。初foreground CODEX_HOME未設定のJoin-Path警告は別の既知config path読取りで状態確認したmetadataだけ。
