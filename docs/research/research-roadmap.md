@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 共有学習の店舗と支持、次の固定一候補（2026-10-14・最新）
+
+[metadata選定とtrain側数量支持](../results/store-sales-shared-series-support-2026-10-14.md)を完了。既使用6店を除外、学習18/fit未使用検証6/予約24をmetadata IDだけで固定。2013–15のみ新26280暦行、各71適格窓/最低支持pass、長いゼロの原因不明を保持。次は[共有残差一候補の設計](store-sales-shared-residual-design-2026-10-14.md)に対応した少数機構確認。係数保存後だけ新検証2016を読む。旧model/確認/CI反復0、新fit/2016label/NN未実行、direct ACTIVE/automation PAUSED。
+
 ## 過去販促の追加情報と次の学習対象（2026-10-14・最新）
 
 [新抽出と固定ridge検証](../results/store-sales-past-promotion-2026-10-14.md)を完了。過去記録の年内関係は不安定、2016主尺度化MSEは基準.004027/販促.008900で基準未達。不採択、現3系列の販促NN/係数探索/2017再評価を増やさない。次は[共有学習を未使用系列へ移す主問](demand-shared-series-next-design-2026-10-14.md)のmetadata選定と入力/支持契約を数量読取り前に準備する。新群・性能・学習は未観測。直接研究ACTIVE/automation PAUSED、旧closedroot/完成計算不変。

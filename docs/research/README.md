@@ -10,6 +10,9 @@
 
 ## 文書
 
+- [共有学習の店舗固定と支持診断](../results/store-sales-shared-series-support-2026-10-14.md)
+- [共有系列の入力契約](store-sales-shared-series-input-contract-2026-10-14.md)
+- [共有数量残差一候補の未実行設計](store-sales-shared-residual-design-2026-10-14.md)
 - [過去販促の記述と2016検証](../results/store-sales-past-promotion-2026-10-14.md)
 - [過去販促の抽出前設計](store-sales-past-promotion-design-2026-10-14.md)
 - [過去販促回帰の検証前設計](store-sales-past-promotion-validation-design-2026-10-14.md)

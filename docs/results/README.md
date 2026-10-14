@@ -6,6 +6,7 @@
 
 ## 独自モデルの需要用途
 
+- [共有学習の店舗選定・数量支持（2026-10-14）](store-sales-shared-series-support-2026-10-14.md)
 - [過去販促の支持・残差記述と一回2016検証（2026-10-14）](store-sales-past-promotion-2026-10-14.md)
 - [独立mean出力の実装・一回評価（2026-10-14）](store-sales-mean-pilot-2026-10-14.md)
 - [平均・中央値・意思決定分位点と学習目的の整理（2026-10-14）](store-sales-quantity-objectives-2026-10-14.md)
