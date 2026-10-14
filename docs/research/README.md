@@ -10,6 +10,8 @@
 
 ## 文書
 
+- [水準・相対変動とイベント入力の確認・一回接続結果](../results/store-sales-small-model-inputs-2026-10-14.md)
+- [追加入力のモデル接続・評価設計](store-sales-small-model-input-pilot-design-2026-10-14.md)
 - [小型需要モデルのtrain側診断](../results/store-sales-training-diagnosis-2026-10-14.md)
 - [train側診断の計算前設計](store-sales-training-diagnosis-design-2026-10-14.md)
 - [水準・変動・イベント入力設計](store-sales-small-model-input-design-2026-10-14.md)

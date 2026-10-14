@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 需要入力の確認と数量目的の整理（2026-10-14・最新）
+
+[追加入力の新7機構確認・新3接続確認・一回評価](../results/store-sales-small-model-inputs-2026-10-14.md)を完了。[設計](store-sales-small-model-input-pilot-design-2026-10-14.md)を固定後、保存日付列・同予算256stepを別候補で実行。総量WAPEは微改善、過小Bias増・日次は暦配分基準未達、区間scoreも基準未達。基準を維持し採択0。次は点予測の平均対中央値とlossの目的を式・train側で整理し、meanとquantileを分ける設計を先に固定する。第三候補や2017bias補正を今開始しない。旧学習/評価/確認/CI反復0、直接研究ACTIVE/automation PAUSED。
+
 ## 需要モデルの入力情報と学習材料（2026-10-14・最新）
 
 [train側診断](../results/store-sales-training-diagnosis-2026-10-14.md)を完了。元日label事例は2年分、Christmas0。店12の連続ゼロ接触13%が初期設計loss約25%だが、非接触にも残差がある。反復は独立した年の支持を増やさない。次は[水準・変動・イベント入力](store-sales-small-model-input-design-2026-10-14.md)の少数機構確認を先に行う。正規化で落ちる平均/相対変動を補い、eventを明示して分ける案で、まだ性能改善は未検証。新学習・系列拡大・2017再fitは今開始せず、基準を保持。直接研究ACTIVE/automation PAUSED。
