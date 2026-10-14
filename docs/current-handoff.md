@@ -1,3 +1,19 @@
+## 最新 — ACTIVE / 完了誤差による時点別区間完成、小改善・店舗悪化を保全（2026-10-14 JST）
+
+声掛けまで直接自走承認継続。[新結果と研究判断](results/store-sales-sequential-interval-2026-10-14.md)、[固定設計](research/store-sales-sequential-interval-design-2026-10-14.md)、Git後sequential-interval-git-records post-save優先。direct ACTIVE/automation PAUSED更新0。
+
+新5確認一回allpassed：current/future flags/residual前の日付guard、最新26/最小20、原同一pool Q再利用、異store拒否、missingと実0。固定6店舗/150窓で同store target終端<各origin、過去支持/正値条件、重み1/Q10Q90/local scale不変。pool/支持をQ前保存。新集合149・原店20初回21窓Qreuse1、再計算0/fallback0/n0null。店20支持21〜26、他5店26。
+
+保存point変更0。固定自身122/150=81.33%・幅1559.877767/score1909.937034→更新124=82.67%・幅1472.267796/score1897.620559。幅5.62%減/score0.64%改善に留まり、改善store8/28だけ、4/16/20/24score悪化。24coverage64→72%でも幅/score増、16=76%不変。採択/coverage保証/統計有意/メーカーPSI/TimesFM同等0。2016既知回顧、前日締め後label利用の研究仮定/実公開遅延訂正未検証、as-of証明0。
+
+新計算0.232198秒/OSpeak21266432B、CPython3.14Win。計算bd006親＋未commit新source/clean計算claim0。new sources/元input pins/時点別支持Q日付/150interval/原stdioexit0local閉鎖保存。新model/helper失敗0。foreground doc生成は三重引用符SyntaxError/exit1・作成/変更前、原tool選択metadataを別root保全/fullstdin-stdio保存なし。別v2文書保存だけ完了、原5確認/評価反復0/先行2失敗・旧root不変。
+
+次unitは研究主問の中間整理：保存済み小型モデル・平均出力・共有残差・区間の設計/結果を読取り、否定できた仮説と未検証仮説、次に独自モデルを学習する追加情報・群・評価契約を文章で固定する。同2016の区間grid、同数量差NN、2017追試は自動開始しない。未来販促予定なしを研究全体の停止条件へ戻さない。基準mean28総量＋限定暦配分維持/区間研究用・不採択。
+
+追加agent0/CARE手動報告待ち・自動確認0。900秒2GiB/output1GiB/single32MiB/files32・通常24file768MiB/失敗8file256MiB、記録16MiB512files/256KiBparts/reserve2MiB16files、prep128KiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git独自code/集約docsのみ、原quantity/ledger/fit/予測送信0。
+
+---
+
 ## 最新 — ACTIVE / 自身の残差区間・期間診断完成、全体改善/店舗不足保持（2026-10-14 JST）
 
 声掛けまで直接自走承認継続。[結果と診断](results/store-sales-own-history-interval-2026-10-14.md)、[元固定設計](research/store-sales-own-history-interval-design-2026-10-14.md)、[診断前条件](research/store-sales-own-interval-diagnosis-design-2026-10-14.md)を優先。direct ACTIVE/automation PAUSED更新0。
