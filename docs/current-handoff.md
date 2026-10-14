@@ -1,3 +1,19 @@
+## 最新 — ACTIVE / 過去販促の記述・2016残差回帰完成、追加価値未確認（2026-10-14 JST）
+
+声掛けまで直接自走承認を継続。[結果](results/store-sales-past-promotion-2026-10-14.md)、[抽出前設計](research/store-sales-past-promotion-design-2026-10-14.md)、[検証前固定](research/store-sales-past-promotion-validation-design-2026-10-14.md)を優先。直接研究ACTIVE/automation PAUSED更新0。
+
+新販促4確認・ridge3確認各一回passed。保存ZIP/member pinと同日数量を照合、新2013–15販促snapshot/2973残差行、固定非重複71窓/store。2013全記録ゼロ、2014途中に正値開始、記録の完全性/販促なし/予定版/前日利用時刻は未検証。年別相関や支持の変化を因果や実用性にしない。
+
+共通2014Jul1以降・元grid・完全支持35窓/storeで新固定ridge1、切片無罰/店舗別標準化。fit/日付/pinを検証読取り前保存。保存2016の元25起点75窓と新origin前28日列だけ一回結合。主尺度化MSE基準.004026577/切片.004171312/販促.008899908、総量RMSE338.842483/341.785908/416.888114。基準より良い店舗0、progress未達/不採択、未来販促や2017数値を使わず、追加NN/係数grid/clip再fit/2017追試0。基準mean28総量＋限定暦配分維持。
+
+支持69/不足6は切片fallback。保存fit/検証行のtrain差範囲と外挿の事後記述のみ、新予測0。抽出9.067993秒/OSpeak26857472B、fit検証14.860274秒/OSpeak24027136B。新records/prep/launch全閉鎖、script/source/CSV/ledger/fit/予測/stdio/exit0local保存。原foreground path/glob誤りのselected tool excerptとPython exit0警告保持、fullprocess/native証明へしない。
+
+次unitは[共有学習と未使用系列の設計案](research/demand-shared-series-next-design-2026-10-14.md)：既存stores.csv metadataだけで同familyの学習/新検証群と期間を固定し、数量を読む前に入力契約と支持診断を準備。既存5/11/12の学習/評価反復0、新群の数値/学習/性能未観測、案を実験採択へ補わない。TimesFM同等/メーカーPSI/正式採択0。
+
+本文promotion-report-records、Git後promotion-git-records post-save優先。旧closedroot/原失敗不変、追加agent0/CARE手動報告待ち・確認0。900秒2GiB/output1GiB/single32MiB/files32、記録16MiB512files/256KiBparts/reserve2MiB16files、prep128KiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git独自code/集約docsだけ、生CSV/ledger/fit/予測送信0。
+
+---
+
 ## 最新 — ACTIVE / mean出力の新実装・一回評価完了、基準未達（2026-10-14 JST）
 
 人の声掛けまで直接自走の承認を継続。[mean一回結果](results/store-sales-mean-pilot-2026-10-14.md)、[出力前設計](research/store-sales-mean-pilot-design-2026-10-14.md)を優先。直接研究ACTIVE/既存automation PAUSED更新0。
