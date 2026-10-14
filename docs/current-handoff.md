@@ -1,3 +1,19 @@
+## 最新 — ACTIVE / 研究中間整理完成、次は8週履歴の新入力境界（2026-10-14 JST）
+
+人の「進めましょう」で直接研究を再開。automation PAUSED不変。Git復旧ab6935aa92b84fad06d5725b2a8a755a8eaabf6aの保存後状態を優先し、旧ネットワーク停止は履歴。新[主問・根拠と未回答の整理](research/demand-research-checkpoint-2026-10-14.md)、[次の入力固定案](research/store-sales-weekly-history-design-2026-10-14.md)を保存。
+
+保存小型モデル/mean/共有回帰/区間の設計とsourceを読取り、旧fit/forward/数値集計/確認/CI反復0。一変数共有回帰未達は8週形状や共有NN全般を否定しない。旧NNはhead等共有だがV3shape/尺度3固定・学習店5/11/12で、未知店舗への移行未検証。meanの厳密0表現制約はsourceから確認、悪化の因果claim0。小型NNと共有回帰の別結果を一つの共有NN評価へしない。
+
+次unitは新pure inputの少数確認だけ：自己56日を8週に分けr=(week total−B/2)/(7u)、未来getter拒否、同B/xで古い推移差、missing/実0、単位変換、fit cutoff前u numeric guard。code未実装/新fit未開始。機構後の案は既保存18trainの2013–14 fit→2015回顧開発の固定ridge8特徴一つ、fit尺度は2013–14だけ、支持を係数前保存。進捗条件全体macroMSE両対照より小＋12/18店。未達なら同特徴NN/grid/seed/2017開始0。
+
+旧検証6の2016を再選択へ使わず、予約31〜54数量未読。次の未知系列確認は群/規則/重みを数量読取り前に固定する別unit。基準mean28総量＋限定暦配分維持/区間不採択、平均/典型値/区間/意思決定量を分ける。未来販促予定なしを研究全体の開始条件へ戻さず、メーカーPSI/TimesFM同等/採択0。
+
+foreground読取りで旧mean sourceをtools/へ誤指定したGet-Content errorを選択tool metadataとして保存し、実models/mini-transformer/パスへ訂正した。script/モデル失敗ではなくfull process stdio保存ではない。全新prep/records閉鎖、原failed/closedroot変更0。本文representative-demand-research-checkpoint-20261014-records、Git後同-checkpoint-git-records post-save優先。
+
+追加agent0/CARE手動報告待ち・自動確認0。900秒2GiB/output1GiB/single32MiB/files32・通常24file768MiB/失敗8file256MiB、記録16MiB512files/256KiBparts/reserve2MiB16files、prep128KiB16files不変。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git独自code/集約docsのみ、原quantity/ledger/fit/予測送信0。進めなくなった場合は保全後PAUSED・blind retry0。
+
+---
+
 ## 最新 — Git保存復旧 / 研究作業は待機（2026-10-14 JST）
 
 人の「再度ためしてください」で通信確認と未送信commitの再送を実施。新専用sequential-interval-git-retry-20261014-recordsにremote観測→未反映確認→同承認済みHEAD一回push→HEAD/upstream/lsremote一致cleanを保存。保存HEAD37460fb61205fb74c304f6e3418db9905759fd8c、独自code/集約docsだけ送信、原quantity/ledger/尺度/予測送信0。
