@@ -1,3 +1,15 @@
+## 最新 — ACTIVE / 公開暦と営業条件付き経路を分離、模型接続案固定（2026-10-14 JST）
+
+[公開暦/営業予定と模型比較の新条件](research/demand-calendar-model-connection-design-2026-10-14.md)を優先。source/保存報告読取りのみ、新quantity/支持集計/模型実装/fit/forecast/旧確認/CI0。publicには店営業表/公表版がなくstrict営業日水準や実連休長を補わない。名目8日付の前後を季節指標として扱い、休日一律closed/Christmas0label化0。
+
+公開sales meanと、実営業表を使う営業時mean→closed0/unknown条件付きの経路を分離。公開模型meanをoperating composerへ渡して意味を変えない。次pure adapterは単store自己56/14・u/量mask/2統計/mean28・曜日年位相4＋8kind×±3=60暦、当日controlも同shapeで前後だけ0。支持なしchannelのmaskとdistinct event年を別metadataへ。
+
+次unitは新pure adapter/少数確認とfit date-mask支持metadata（quantity未解釈）。その後の別模型案はV1/D32/L1・共有日次baseline＋u*gの非負mean/総量和・quantileなし。旧source/weights不変。正尺度15fit13–14の保存630key/u→既知2015の18店25起点を回顧開発、当日control/前後候補だけ同initial/sampler/256step。event-day主指標・全日非悪化/10of15条件固定、未達は同仮説grid/2016/2017/予約群0。学習未開始/未見性能claim0。
+
+本文representative-demand-calendar-connection-records、Git後同-connection-git-records post-save優先。foreground rgのWindows wildcard誤指定は選択tool metadataを保存し正しいdirectory＋globへ訂正；helper/模型失敗ではない。全新prep/records閉鎖・原failed不変。direct ACTIVE/automation PAUSED、追加agent0/CARE手動待ち・自動確認0、全実行/記録/prep上限維持、formal_permission=false/credit0/native禁止/登録holdout未読/正式受入未完了。Git設計/集約docsのみ、原quantity/予定実績/ledger/尺度/係数/予測/重み送信0。
+
+---
+
 ## 最新 — ACTIVE / 営業日水準と休業販売0、新6確認完了（2026-10-14 JST）
 
 [新処理の結果](results/demand-operating-sales-2026-10-14.md)、[固定条件](research/demand-operating-sales-design-2026-10-14.md)を優先。新demand_operating_sales.py/testの6確認一回allpassed、全childstdio/exit0保存。架空量のみ/public quantity/fit/実forecast/旧確認/CI0、calendar/区間/weekly sourceと原区間結果bytes不変。
