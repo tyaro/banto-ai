@@ -10,6 +10,9 @@
 
 ## 文書
 
+- [小型需要モデルのtrain側診断](../results/store-sales-training-diagnosis-2026-10-14.md)
+- [train側診断の計算前設計](store-sales-training-diagnosis-design-2026-10-14.md)
+- [水準・変動・イベント入力設計](store-sales-small-model-input-design-2026-10-14.md)
 - [独自小型モデルの需要用途設計](store-sales-small-model-design-2026-10-14.md)
 - [需要モデルの一回探索と判断](../results/store-sales-small-model-2026-10-14.md)
 - [研究方針に合わせたデータの保管と整理](data-retention-and-cleanup-2026-10-14.md)
