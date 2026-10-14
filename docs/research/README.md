@@ -10,6 +10,8 @@
 
 ## 文書
 
+- [群別8週共有回帰の一回結果](../results/store-sales-weekly-ridge-cohort-2026-10-14.md)
+- [正尺度群とゼロ尺度群を分ける新契約](store-sales-weekly-ridge-cohort-design-2026-10-14.md)
 - [8週回帰の学習前支持未達と区切り](../results/store-sales-weekly-ridge-readiness-2026-10-14.md)
 - [8週間の入力境界・新5確認](../results/store-sales-weekly-history-input-2026-10-14.md)
 - [需要研究の中間整理と追加学習の主問](demand-research-checkpoint-2026-10-14.md)
