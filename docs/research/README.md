@@ -10,6 +10,7 @@
 
 ## 文書
 
+- [固定統計入力モデルの2016時間順検証契約](demand-statistical-feature-validation-design-2026-10-14.md)
 - [統計8入力の同条件学習比較・小幅改善](../results/demand-statistical-feature-pair-2026-10-14.md)
 - [σ・EMAの学習入力への修正設計](demand-statistical-feature-input-design-2026-10-14.md)
 - [統計branchの新6接続確認](../results/demand-statistical-features-2026-10-14.md)
