@@ -10,6 +10,7 @@
 
 ## 文書
 
+- [完了誤差で更新する総量区間と中間判断](../results/store-sales-sequential-interval-2026-10-14.md)
 - [自身の総量残差区間と期間診断](../results/store-sales-own-history-interval-2026-10-14.md)
 - [自身区間の保存残差診断条件](store-sales-own-interval-diagnosis-design-2026-10-14.md)
 - [完了誤差だけで更新する次設計](store-sales-sequential-interval-design-2026-10-14.md)

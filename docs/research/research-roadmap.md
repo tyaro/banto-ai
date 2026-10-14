@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 時点別区間の一回結果と研究主問への整理（2026-10-14・最新）
+
+[完了窓だけの時点別区間](../results/store-sales-sequential-interval-2026-10-14.md)を完了。新5確認pass、原Qreuse1/新集合149、point変更0。coverage81.33→82.67%、幅5.62%減、score0.64%改善だが4/6店舗score悪化・店24coverage72/16=76、採択しない。同2016で区間gridを追加せず、次は保存小型モデル/mean/共有残差/区間の設計と結果を読取り、否定できた仮説・未検証仮説・次学習の追加情報/群/評価契約を整理する。旧数値/確認/CI反復0、同数量差NN/2017追試0、基準維持、direct ACTIVE/automation PAUSED。
+
 ## 自身の残差分布と時点別更新の次条件（2026-10-14・最新）
 
 [自身区間と年/四半期診断](../results/store-sales-own-history-interval-2026-10-14.md)を完了。新4確認pass、共有local score2198.42→自身1909.94/幅減/coverage81.33%、ただし店24=64%等の不足を保持し不採択。自己calibrationをzero-shotへしない。次は[完了した過去誤差のみ最新26窓で更新する手順](store-sales-sequential-interval-design-2026-10-14.md)の少数確認、同窓の原Q再利用とfuture label読取り拒否。旧point/区間/原失敗/root反復0、2016回顧/direct ACTIVE/automation PAUSED。
