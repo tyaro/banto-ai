@@ -1,3 +1,23 @@
+## 最新 — ACTIVE / 水準・相対変動・event入力確認と一回接続評価完了（2026-10-14 JST）
+
+人の入力確認・自走指示を継続。[入力確認と接続結果](results/store-sales-small-model-inputs-2026-10-14.md)、[純粋入力設計](research/store-sales-small-model-input-design-2026-10-14.md)、[接続前評価設計](research/store-sales-small-model-input-pilot-design-2026-10-14.md)を優先。直接研究ACTIVE/既存automation PAUSED更新0。
+
+pure input新7確認一回allpassed：mean/train mean・std/max(mean,floor)、欠測/実ゼロ/全欠測、未来quantity lookupなし、event8onehot/閏年/支持ledger。trainのみ3contextの組立、Christmas支持0/quantity effect未検証/営業状態不明を保持。newadapter/model/trainer namespace、旧source変更0、統計queryとevent配分・metadataの3新接続確認一回allpassed/勾配有限非zero。10distinct確認、旧確認/CI反復0。
+
+C56/H14/P7/V3/D64/L2、120740parameter、未来暦12/店舗別統計2をqueryへ。保存旧train991/val25/test16・256×8 batch列/尺度完全対応、sampler再生成0。独立init20261014/AdamW予算不変、新候補256step一回、val64 .0693210/128 .0703478/192 .0690743/256 .0690161を選択後test16forward一度。旧重み/モデル/replay0、旧baseline/interval/predictionを保存再利用。
+
+2017回顧672日48窓、日次WAPE new14.614032/旧14.729793/暦14.424314、総量new7.163771/旧7.295235/基準7.307154。Biasnew-3.028263/旧-1.214088/基準-.839908で過小増。旧より総量絶対誤差小は21/48窓、店12総量基準超。new区間38/48=79.17%/below2above8/幅1450.955859/score2202.258746、旧score2301.566831より小さいが基準固定2092.694240/直近2080.379115より大。店coverage87.5/81.25/68.75%。採択/校正保証0、基準mean28総量＋限定暦配分維持。
+
+保存新旧予測の内訳のみ：元日日次new23.859811/旧24.013416/暦18.713429%、他45 new14.034677/旧14.148067/暦14.155551%。補正倍率全.961644–.996274/平均.978224、係数fit0。statsとeventと形状を同時追加/因果ablation0、2017未見claim0。
+
+新model14.076793秒/OSpeak1031708672B、閉鎖18file3217857B、source全文pin/input/support/日付列/initial/4checkpoint/prefix/選択/原予測・eventmetadata/比較をlocal保存。計算は518668親＋未commit新source、clean計算claim0。pure/check/pilot/analysis各recordsとprep全閉鎖。stdio/exit0を対応launch/記録に保存、本文input-model-doc-records、Git後input-model-git-20261014-records post-save優先。旧閉鎖root/原失敗不変。
+
+次unitは数量pointの平均対中央値と損失目的を式・train側で整理する。Q50/MAE最小化と平均Bias0は別。今回の負Bias原因は未確定で、2017bias係数補正/第三候補/延長/seedgridを始めない。公開数量研究のmeanとquantileを分けた設計を先に固定。TimesFM重み/教師出力/同等再現/メーカーPSI採択0。
+
+CARE手動報告待ち/自動確認0、追加agent0。実行900秒2GiB/output1GiB/single32MiB/files32・記録16MiB512files/256KiBparts/reserve2MiB16files・prep128KiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git継続承認内の独自code/集約文書のみ、原数量/CSV/生予測/fit/重み送信0。
+
+---
+
 ## 最新 — ACTIVE / train側の支持例・連続ゼロ・入力情報診断完了（2026-10-14 JST）
 
 人の「進めて」を継続。[train診断結果](results/store-sales-training-diagnosis-2026-10-14.md)、[計算前設計](research/store-sales-training-diagnosis-design-2026-10-14.md)、[次の入力設計](research/store-sales-small-model-input-design-2026-10-14.md)を優先。直接研究ACTIVE/既存automation PAUSED更新0。
