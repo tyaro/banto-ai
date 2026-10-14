@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 統計入力の後期検証で区切り（2026-10-14・最新）
+
+[固定契約](demand-statistical-feature-validation-design-2026-10-14.md)の[2016結果](../results/demand-statistical-feature-validation-2026-10-14.md)を保存。control比約0.0161%小幅改善だが9of15で10of15未達、支持pass・処理exit0/進捗falseを分離。direct PAUSED/自走停止、旧2015合格/原失敗保全。同統計のgrid/再学習/2017/予約群追試0。再開は価値のある効果の大きさと利用可能な営業/外部event情報から次の問いを判断。automation PAUSED/正式gate不変。
+
 ## 固定二模型の後期検証契約（2026-10-14・最新）
 
 [2016検証契約](demand-statistical-feature-validation-design-2026-10-14.md)を保存。旧2016の検証6店を避け、保存scope上数量未解釈の学習18店/2016Jan13+14*k・25起点。原final2weights/u/42channel/8統計固定、再学習0。joint両対照/10of15、各店入力/complete-label20of25最低支持。方向の再確認で実務効果/完全盲検を保証しない。次は小抽出→固定推論、現在新数量/forward未実施。direct ACTIVE/automation PAUSED、原失敗/上限/formal維持。
