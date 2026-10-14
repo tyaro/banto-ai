@@ -4,6 +4,10 @@
 
 各報告は実施時点の記録です。数値、失敗、実行範囲、原artifactのidentityはその報告の条件に従って読みます。現在状態は引継ぎを参照してください。
 
+## 独自モデルの需要用途
+
+- [小型モデルの需要設計・一回探索（2026-10-14）](store-sales-small-model-2026-10-14.md)
+
 ## 文書helperの保守（1件）
 
 - [文書helperの索引更新修正（2026-10-12）](documentation-helper-index-repair-2026-10-12.md)

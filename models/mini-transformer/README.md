@@ -1,5 +1,9 @@
 # Mini Transformer
 
+## 需要用途の最新実装（2026-10-14）
+
+[設計](../../docs/research/store-sales-small-model-design-2026-10-14.md)と[一回探索の結果](../../docs/results/store-sales-small-model-2026-10-14.md)。demand_data.py/demand_model.py/demand_train.pyは保存済み公開数量・mask・既知の暦から14日総量分位点と日次配分を出す。独立初期化110916parameter/一構成256step。新check_demand.pyの6機構確認と一回学習は完了、定期反復しない。学習開始は明示的な新outputを指定したdemand_train.py実行だけ。旧固定MetroPT実装は保持し、公式TimesFM重み・教師出力を使わない。今回は単純基準の置換根拠を得ていない。以下は先行工程の記録。
+
 予測研究のための、小さく内部を検証しやすい多変量時系列 Transformer baseline です。
 
 初期目標:
