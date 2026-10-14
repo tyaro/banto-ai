@@ -10,6 +10,8 @@
 
 ## 文書
 
+- [営業日水準と休業0の設計](demand-operating-sales-design-2026-10-14.md)
+- [営業日水準/休業0の新6確認](../results/demand-operating-sales-2026-10-14.md)
 - [休暇区間/休業長の新6確認](../results/demand-event-interval-input-2026-10-14.md)
 - [休暇期間のイベント表現・Astraの検討](demand-holiday-duration-design-2026-10-14.md)
 - [休業ゼロと休日前後を分ける新入力設計](demand-holiday-event-input-design-2026-10-14.md)

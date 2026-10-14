@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 営業日水準と休業0の新機構確認完了（2026-10-14・最新）
+
+[固定条件](demand-operating-sales-design-2026-10-14.md)で[新6確認](../results/demand-operating-sales-2026-10-14.md)allpassed。open-only平均/実0/欠測/unknown参考を分け、明示contractのclosed0、営業仮定付きunknown、全休業/日次総量整合を確認。次は公開暦の利用可能性/営業calendar仮定と模型接続の出力前契約。原営業表欠如/strict支持不足を補わず、新学習/実forecast/旧確認/CI0、direct ACTIVE/automation PAUSED。
+
 ## 休暇区間入力の機構確認完了（2026-10-14・最新）
 
 [期間/営業予定adapterの新6確認](../results/demand-event-interval-input-2026-10-14.md)一回allpassed。全長/境界/未確定範囲・未来版非アクセス・途中営業/休業下限を保持。次は営業日水準/確定closed0/unknown-missing/日次総量整合のpure処理。期間長tensor集約/模型接続/学習は別設計、架空予定確認は精度効果の実証ではない。数量/fit/forecast/旧確認/CI0、direct ACTIVE/automation PAUSED。
