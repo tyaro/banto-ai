@@ -1,3 +1,15 @@
+## 最新 — PAUSED / 当日対前後小型モデル比較完了、進捗条件未達で自走停止（2026-10-14 JST）
+
+[二件比較の結果](results/demand-calendar-model-pair-2026-10-14.md)、[固定条件](research/demand-calendar-model-connection-design-2026-10-14.md)を優先。人の自走指示で新pure6確認/模型3確認・同initial/sampler二件256stepを完了。原入力6確認後の文書TypeErrorはfailed保全、新doc-only continuationで限定修正/確認反復0。モデル計算/新接続には失敗0。
+
+正尺度15fit630key13–14→既知2015の18店25起点、30,081params/V1/D32/L1/60暦。原固定窓では元日/Christmas±3支持0の14channel無効、42channelに2013/14支持。営業calendar/実連休長を補わずpublic sales mean、nominal closedmask0。両重み保存後2015数値を読取り、450要求/NN375/zero-scale baseline75・全14label432/18欠測。
+
+休日周辺macro MSE基準0.143306677/当日0.143221827/前後0.143194516、前後の当日比改善0.019069%と小さい。全日日次/総量も微改善だが、両対照より小9/15で固定10/15未達。progressfalse/採択0、同仮説grid/延長/別seed/2016/2017/予約群反復0。結果保存でdirect PAUSED/自走停止、automation PAUSED不変。元日/Christmasの効果や実用性を検証済みにしない。
+
+次の再開は実営業予定/販売対象と期間支持、又は元日/Christmasの別支持契約の判断から。今回630keyを遡及変更しない。本文calendar-pairモデルroot22files/closurepin、launch全stdioexit0、post-doc-records/Git後pair-git-records優先。11.351秒/private1150619648B、全上限維持/formal_permission=false/credit0/native禁止/登録holdout未読/正式受入未完了。CARE待ち/追加agent0、Git独自code/架空確認/集約docsのみ、原quantity/ledger/尺度/予測/重み送信0。
+
+---
+
 ## 最新 — ACTIVE / 公開暦の共通入力6確認・fit支持保存（2026-10-14 JST）
 
 [共通入力と支持](results/demand-public-calendar-input-2026-10-14.md)、[接続条件](research/demand-calendar-model-connection-design-2026-10-14.md)を優先。新pure adapter/test6一回allpassed。単store56/14・暦60/当日と前後同shape/量mask/u/2統計/mean28・公開sales意味維持。名目closed化0。630fitkey各15店42、原maskのみ新解釈/quantity float0、enabled42/56/unsupported14は別mask・event年保存。
