@@ -1,3 +1,15 @@
+## 最新 — PAUSED / 店舗分離による一軌跡二選択点の比較完了（2026-10-14 JST）
+
+[新結果](results/demand-group-selection-2026-10-14.md)、[実行前契約](research/demand-group-selection-design-2026-10-14.md)を優先。人の次stepでAstra案Bを一件実施。A+B10店fit300/同店時間val120/C5店移行val60、C前期150はfit外、自己前期u/統計profile再利用、fit暦42channel。新統計入力あり一軌跡、Cだけの停止3840・時間best3328/移行best3072。clone固定後に既読6店2015へ新二state各一回、旧model/学習/確認/CI反復0。
+
+joint mean280.030097998779/時間0.030805492171/移行0.030277811781。移行は時間より小・全5店同方向だがmean28比0.597425%悪化、日次/総量悪化あり、出力前暫定2%・副条件未達/採択false。基準改善3of5、後半2四半期悪化。単一seed/split/既読開発で未知性能claim0、旧15店fitとの差を選択方法だけの効果へしない。
+
+150要求/NN125/fallback20の25/完全label144・Christmas欠測保持。新pure政策6確認passed、初launchは確認後記録label33>32で学習未起動failedを原stdio/failure/closureと保全、新continuationで未実行模型だけ一回実施。全模型child stdio/exit0保存、20file2701174B閉鎖、34.437926秒/private1093439488B、source/原root inventory不変。main/modelroot、原failedlaunch、continuation、doc-records/Git後git-records post-save優先。
+
+契約どおりdirect/automation PAUSED、同対象grid/seed/split/refit自動追加0。次は実用途の主問とmean28へ追加したい能力を判断。全実行/記録/prep/Git上限、formal_permission=false/credit0/native7役禁止/登録holdout未読/正式受入未完了/CARE待ち/追加agent0維持。Git独自source/架空fixture/集約docsだけ、原quantity/profile/尺度/ledger/予測/weights送信0、閉鎖root追記0。
+
+---
+
 ## 最新 — PAUSED / 保存予測の補正誤差分解完了（2026-10-14 JST）
 
 [新診断](results/demand-correction-decomposition-2026-10-14.md)、[実行前契約](research/demand-correction-decomposition-design-2026-10-14.md)を優先。人の改善案への再開でAstra案Aだけ実施。原6店150要求/positive5の125窓/zero20の25fallback/日次349・総量24各支持を固定、label前後全対応/原4pin照合、保存予測のみ。新fit/forward/quantity/profile/weights読取り0。
