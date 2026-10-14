@@ -1,3 +1,23 @@
+## 最新 — ACTIVE / mean出力の新実装・一回評価完了、基準未達（2026-10-14 JST）
+
+人の声掛けまで直接自走の承認を継続。[mean一回結果](results/store-sales-mean-pilot-2026-10-14.md)、[出力前設計](research/store-sales-mean-pilot-design-2026-10-14.md)を優先。直接研究ACTIVE/既存automation PAUSED更新0。
+
+新namespace mean head64→1追加、120805parameter/C56/H14/P7/V3/D64/L2/暦12統計2。daily_mean/total_mean整合、Q10/50/90別head、decision=null。新4機構確認一回allpassed：独立/合計/quantile範囲拘束0/mean二乗目的と勾配/ゼロfloor有限。旧source・weights・確認反復0。
+
+保存991/25/16origin・固定256×8batch列/尺度/support、独立seed20261014/同AdamW予算で新一候補256step。Lmean=.5日次MSE+.5総量MSE、trainに.25pinball補助。validation64 .0151407862/128 .0156849833/192 .0159009032/256 .0154100118、64選択保存後新test16forward一度。旧モデル/基準は保存予測再利用でRMSEを新集計。
+
+2017回顧672日/48窓、mean日次RMSE100.673815/暦94.532393、総量RMSE583.664729/基準575.452895、Bias-1.833382/基準-.839908。3店舗とも総量RMSE基準未達。mean倍率.984203–.993778/平均.989921、meanがownQ50より低い42/48は拘束なしの設計で、正しい分布推定の証明ではない。新quantile41/48=85.42%/幅1715.318611/score2216.030535、基準score未達/校正保証0。候補不採択、基準mean28総量＋限定暦配分維持。
+
+保存validation mean28 ledgerの同25起点75行から同目的をfloat64記述、基準Lmean .0150464114<選択.0151407862（約.62%差）。元Torch bitwise0、事後診断/元選択変更0/forward0。今後はbaseline validation目的も出力前比較へ含める。元日3窓の日次RMSE186.760861/暦130.198637、他45も92.117263/91.662529で追加価値未確認。延長/seedgrid/2017bias補正0。
+
+新学習15.279266秒/OSpeak1032085504B、閉鎖model18file3339898B、日次合計差max.0009765625。計算803665親＋未commit新source/clean計算claim0。source全文pin/input/support/日付列/initial/4checkpoint/prefix/選択/mean・quantile予測/比較保存。mean-checks/pilot/analysis/各launch/prep全閉鎖、stdio/exit0保存。本文mean-doc-records、Git後mean-git-20261014-records post-save優先。
+
+次unitは公開Store Salesのorigin前onpromotion列の意味/支持/可用性と、train2013–15の基準残差への追加情報を設計・小抽出・記述する。将来実施値を既知予定にしない。関係を因果/実用性にしない。情報の根拠がなければ新モデルを増やさず、旧学習反復しない。メーカーPSI/TimesFM同等claim0。
+
+原ラベル/encoding失敗/全旧閉鎖root不変、追加agent0/CARE手動報告待ち・自動確認0。900秒2GiB/output1GiB/single32MiB/files32・記録16MiB512files/256KiBparts/reserve2MiB16files・prep128KiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git継続承認内の独自code/集約文書のみ、原数量/生予測/fit/重み送信0。
+
+---
+
 ## 最新 — ACTIVE / mean・median・decision quantileの目的整理完了（2026-10-14 JST）
 
 人の需要予測の平均/中央値整理・自走指示を継続。[用途とtrain記述](results/store-sales-quantity-objectives-2026-10-14.md)、[診断前設計](research/demand-quantity-objective-design-2026-10-14.md)、[meanとquantileを分ける次設計](research/demand-mean-and-quantile-model-design-2026-10-14.md)を優先。直接研究ACTIVE/automation PAUSED更新0。
