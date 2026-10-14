@@ -1,3 +1,13 @@
+## 最新 — ACTIVE / 固定二模型の2016時間順検証契約を保存、新数量未読（2026-10-14 JST）
+
+[検証契約](research/demand-statistical-feature-validation-design-2026-10-14.md)を新数量前に保存。人の「お願いします」で旧scope metadataとweight/source pinsだけ照合。今回18店の2016は保存記録上数量未解釈、旧2016検証6（4/8/16/20/24/28）・旧6（1/2/3/5/11/12）とは分離。同公開dataset/暦は既知で、完全盲検/別チェーン/正式holdoutclaim0。
+
+前回30369paramのfinal2weightを固定、再学習/選択/seed/半減期/step変更0。原fit13–14 u/42channel/8統計維持。2016Jan13+14*k/k0..24、18店450要求、context2015Nov18〜/target終端2016Dec27。positive15とzero-scale baseline3維持、日付/店置換0。入力/complete-label各20of25最低支持、joint両対照/10of15方向再確認、最小実務効果や有意差の基準ではない。未達/支持不足/容量/停止は保全後PAUSED・grid/2017/予約群切替0。
+
+次unitは契約pin→既存prefixと原archiveの2016対象小抽出→固定二件の新推論一回。現在新quantity/profile/fit/forward/採点/旧確認/CI0。contract-records/Git後contract-git-records post-save優先。foreground literal glob/誤filenameはselected metadata保存、helper/model失敗0・原閉鎖root不変。direct ACTIVE/automation PAUSED、CARE待ち/追加agent0、全実行/記録/prep/Git上限/formal_permission=false/credit0/native禁止/登録holdout未読/正式受入未完了。Git契約/集約docsのみ、原quantity/profile/尺度/ledger/予測/weights送信0。
+
+---
+
 ## 最新 — ACTIVE / 統計8入力の同条件学習比較完了、進捗条件達成（2026-10-14 JST）
 
 [比較結果](results/demand-statistical-feature-pair-2026-10-14.md)、[出力前設計](research/demand-statistical-feature-input-design-2026-10-14.md)を優先。人の「お願いします」で新同shape2件を各256step一回、同initial/sampler/暦/u/loss、相違は統計8入力だけ。旧weights/forward/確認/採点/CI反復0。原fit selection/key/u再利用、fit profile630新規、保存2015profile450再集計0、両final weights保存後のみ2015数量解釈。
