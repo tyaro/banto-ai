@@ -29,6 +29,48 @@ git clone --branch codex/preformal-acceptance-scope https://github.com/tyaro/ban
 
 コード、架空fixture、設計、集約結果、依存lockはGitから取得できる。原データ・profile・尺度・入力/予測ledger・weightsはGitへ送信していないため、cloneだけではローカルの研究証拠は揃わない。
 
+## データセットの公式ダウンロードURL（2026-10-15追加）
+
+### 現在の需要研究に必要：Store Sales
+
+- [Kaggle Store Sales — Time Series Forecasting：データ取得ページ](https://www.kaggle.com/competitions/store-sales-time-series-forecasting/data)
+- [同competitionの利用規約](https://www.kaggle.com/competitions/store-sales-time-series-forecasting/rules)
+
+Macのブラウザでデータ取得ページを開き、必要なKaggleログイン・規約確認を人が行って、全ファイルのZIPを取得する。対象は **Store Sales — Time Series Forecasting**。別competitionの **Corporación Favorita Grocery Sales Forecasting** と取り違えない。認証・同意・Mac上のdownloadは今回代行していない。リンク到達は確認したが、Kaggleの認証後画面とMacでの取得成功は未確認。
+
+必要な構成は `train.csv`、`test.csv`、`holidays_events.csv`、`stores.csv`、`transactions.csv`、`oil.csv`、`sample_submission.csv` の7CSV。[受領済み原本の構成と利用条件](store-sales-source-intake-2026-10-14.md)を参照する。販促計画の履歴はこのデータから追加取得できず、将来の販促実施値を過去時点の既知計画にしない。
+
+既存のWindows受領ZIPとの照合値：
+
+- ファイル名：`store-sales-time-series-forecasting.zip`
+- サイズ：**22,416,355 bytes**
+- SHA-256：`12e9c1dc4833cc804b3ff1515bd7b688f45fd8216fb2b340525036b006d625be`
+
+新downloadは新しい一時取得directoryへ保存し、既存の閉鎖原本rootを上書きしない。Macでの照合例（取得先directoryで実行）：
+
+```bash
+wc -c < store-sales-time-series-forecasting.zip
+shasum -a 256 store-sales-time-series-forecasting.zip
+```
+
+このSHAは受領済みZIPの実測値で、配布元が保証した期待hashではない。再取得ZIPが異なる場合は新原本として別に保持し、ZIP内memberを元source manifestと照合してから利用を判断する。過去入力のhashを新ZIPのhashへ置換しない。大きいCSVは既存のstream読取り・分割保存を使い、全CSVを一括展開して既存のsingle-file上限を超えない。
+
+**公開原本の再downloadで戻るのは配布データだけ。** 元のsource manifest/closure、学習済みweights、入力/profile/予測ledger、最新需要26rootは元PCから別途コピーする。以下の転送範囲と照合方法は引き続き必要。
+
+### 別用途の任意データ
+
+現在の需要研究の再開には追加取得不要。設備研究などを再開するときの公式取得入口として残す。
+
+| データセット | 公式ダウンロード入口 | 用途・現在の扱い |
+| --- | --- | --- |
+| Online Retail II | [UCI：Download](https://archive.ics.uci.edu/dataset/502/online%2Bretail%2Bii) | 別の需要・取引研究用。現在のStore Sales入力とは別 |
+| Condition monitoring of hydraulic systems | [UCI：Download](https://archive.ics.uci.edu/dataset/447/condition%2Bmonitoring%2Bof%2Bhydraulic%2Bsystems) | 油圧試験装置の部品状態・多要素センサー。自然な寿命履歴とは区別 |
+| MetroPT-3 | [UCI：Download](https://archive.ics.uci.edu/dataset/791/metropt%2B3%2Bdataset) | 実運用の空気圧縮機の予防保全研究用 |
+| CARE to Compare | [Zenodo：Files（record 15846963 / v6）](https://zenodo.org/records/15846963) | 風車SCADAの早期故障検知。人の手動download待ちを維持。自動取得・進捗確認はしない |
+| XJTU-SY | [公開者GitHub READMEの取得案内](https://github.com/WangBiaoXJTU/xjtu-sy-bearing-datasets) | 軸受の寿命・振動研究用。リンク先配布条件・再配布条件は利用前に確認 |
+
+UCIの3件は各ページのDownloadから取得でき、各ページにCC BY 4.0が表示されている。CARE/XJTU-SYにはその条件を流用しない。任意データの原本pin・既存保存状況は[公開データ調査](public-dataset-survey.md)など各取得記録を参照し、新取得で閉鎖rootを変更しない。今回はリンク掲載だけでデータ本文のdownloadは0。
+
 ## 別途コピーするもの
 
 元PCの `D:/develop/banto-ai` から、選んだ媒体で必要なdirectoryを同じrepository相対位置へコピーする。現在の研究の原証拠は元PCに残す。宛先に同名rootがあればmerge/上書きせず衝突を確認する。
@@ -53,7 +95,7 @@ git clone --branch codex/preformal-acceptance-scope https://github.com/tyaro/ban
 
 ## Macでの準備順序
 
-1. **cloneと証拠コピー**。branchの最新を取得し、上記data/artifactsを相対位置ごとコピー。Macで受領したfileのbytes/SHAを元closureへ照合する。原model/評価は再実行しない。
+1. **clone・原本取得・証拠コピー**。branchの最新を取得し、主入力は元原本rootのコピーを優先する。再downloadする場合は上記公式URLから新取得directoryへ保存して照合する。最新需要artifactsは別途相対位置ごとコピー。Macで受領したfileのbytes/SHAを元closureへ照合する。原model/評価は再実行しない。
 2. **環境記録**。Apple Silicon/Intel、macOS、Python、利用するTorchのversion/build/architectureを新記録へ残す。
 3. **Mac専用venv**。Windowsの `.venv` と `requirements-windows-cpu-py314.lock` をMacの完成環境として流用しない。通常のCPython3.14でMacのarchitectureに合うwheelを解決し、新exact-versionの依存記録を作る。
 4. **Windows固有箇所の移植**。需要runnerが呼ぶ `tools/store_sales_final.py` の `private_memory()` はWindowsのWinDLL/GetProcessMemoryInfoを使い、非Windowsでは明示拒否する。旧artifactのlauncherも `C:/Python314/python.exe` や `.venv/Scripts/python.exe` を保存している。旧scriptを書き換えて再実行せず、新しいMac用launcher/資源計測を別unitで用意する。MacのRSS/footprintをWindows private bytesと同一の指標に見せず、計測の定義と上限対応を記録する。
