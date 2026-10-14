@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 人の指摘による休業ゼロ・休日前後の優先変更（2026-10-14・最新）
+
+[休業の構造処理と前後eventを分ける設計](demand-holiday-event-input-design-2026-10-14.md)、[新入力6確認](../results/demand-holiday-event-input-2026-10-14.md)を完了。旧方式はmissing/実0のみ・当日one-hot/厳密日次0制約で、営業水準分離は未実装。次は営業日水準と既知closed0・unknown/missing/支持不足/全休業を純粋処理で確認し、前後入力の模型接続を別設計する。新学習/原予測変更0、祝日から営業状態を補わず、入力支持通知は後段へ。direct ACTIVE/automation PAUSED、旧結果保全。
+
 ## 保存補正の診断と入力支持の次機構（2026-10-14・最新）
 
 [誤差の恒等式分解とinput範囲監査](../results/store-sales-weekly-correction-diagnosis-2026-10-14.md)を完了、新fit/forecast/旧score再集計0。方向167一致/148逆、補正二乗量が整合を上回る。範囲外6/330は13/25だがinsideの悪化もあり、gate成功へしない。次は[予測を変更しない支持情報のpure機構](demand-input-support-monitor-design-2026-10-14.md)を少数確認する。既知2015に閾値/店を合わせず、旧8週候補不採用/基準維持。direct ACTIVEへ再開/automation PAUSED不変。

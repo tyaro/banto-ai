@@ -10,6 +10,8 @@
 
 ## 文書
 
+- [休業ゼロと休日前後を分ける新入力設計](demand-holiday-event-input-design-2026-10-14.md)
+- [休日予定版と前後channelの新6確認](../results/demand-holiday-event-input-2026-10-14.md)
 - [保存補正の誤差分解と入力支持監査](../results/store-sales-weekly-correction-diagnosis-2026-10-14.md)
 - [補正診断の固定条件](store-sales-weekly-correction-diagnosis-design-2026-10-14.md)
 - [学習入力範囲監査の条件](store-sales-weekly-feature-support-design-2026-10-14.md)
