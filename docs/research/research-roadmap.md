@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 共有数量差の一回検証と総量不確実性（2026-10-14・最新）
+
+[新5確認・等store重み共有fit・新6店2016検証](../results/store-sales-shared-residual-2026-10-14.md)を完了。1242train行、係数保存後150検証。主MSE基準.017250/共有.020509、改善2/6で事前条件未達、同数量差NN/grid/2017追試は開始しない。基準維持。次は[総量残差の分布共有](store-sales-shared-total-interval-design-2026-10-14.md)を保存新ledgerから確認する設計/少数確認。点予測/fit/抽出の反復0、区間未実行、2016は回顧。direct ACTIVE/automation PAUSED、正式gate不変。
+
 ## 共有学習の店舗と支持、次の固定一候補（2026-10-14・最新）
 
 [metadata選定とtrain側数量支持](../results/store-sales-shared-series-support-2026-10-14.md)を完了。既使用6店を除外、学習18/fit未使用検証6/予約24をmetadata IDだけで固定。2013–15のみ新26280暦行、各71適格窓/最低支持pass、長いゼロの原因不明を保持。次は[共有残差一候補の設計](store-sales-shared-residual-design-2026-10-14.md)に対応した少数機構確認。係数保存後だけ新検証2016を読む。旧model/確認/CI反復0、新fit/2016label/NN未実行、direct ACTIVE/automation PAUSED。

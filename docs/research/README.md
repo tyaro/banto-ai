@@ -10,6 +10,8 @@
 
 ## 文書
 
+- [共有数量残差の一回検証](../results/store-sales-shared-residual-2026-10-14.md)
+- [総量不確実性の次設計案](store-sales-shared-total-interval-design-2026-10-14.md)
 - [共有学習の店舗固定と支持診断](../results/store-sales-shared-series-support-2026-10-14.md)
 - [共有系列の入力契約](store-sales-shared-series-input-contract-2026-10-14.md)
 - [共有数量残差一候補の未実行設計](store-sales-shared-residual-design-2026-10-14.md)
