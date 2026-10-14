@@ -1,3 +1,11 @@
+## 最新 — PAUSED / 人の明示委任によるAstra評価方法レビューを保存（2026-10-14 JST）
+
+[Astraの深い方法論レビュー](research/demand-evaluation-methodology-astra-review-2026-10-14.md)を優先。人の具体的な委任によりAstra一名だけへレビュー/新文書を依頼。既存の学習・選択・未学習店舗評価をsource/保存metadataから点検し、目的と指標、選択分離、尺度/zero群、判定・不確実性、最小の次手順を提案した。レビュー/提案であり新実験の実行・採用ではない。
+
+原結果/失敗/closed rootsは保全、新fit/forward/原quantity/予約群/登録holdout/CI反復0、研究/automation PAUSED維持。Astraレビュー文書以外の新model/code変更0。本文astra-methodology-review-records、Git後同-git-records post-save優先。次の実験は主問/用途と評価方法を人と決めてから。全上限/formal_permission=false/credit0/native禁止/正式受入未完了、CARE手動待ち。Gitレビュー/索引/引継ぎのみ、raw quantity/profile/尺度/ledger/予測/weights送信0。
+
+---
+
 ## 最新 — PAUSED / 内部選択済み模型の未学習店舗評価完了、基準未達（2026-10-14 JST）
 
 [評価結果](results/demand-selected-series-evaluation-2026-10-14.md)、[事前契約](research/demand-selected-series-evaluation-design-2026-10-14.md)を優先。人の「進んで」でbest2weightを固定し、fit/終了選択未使用の6店4/8/16/20/24/28へ一回適用。原系列は過去支持診断の既読で完全盲検claim0、追加学習/checkpoint選択0。前期2013Jan〜2014Junの自己u、positive5/zero-scale20を事前どおり確認、42channel維持。
