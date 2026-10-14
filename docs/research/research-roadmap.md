@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 期待数量headの評価と次の情報確認（2026-10-14・最新）
+
+[mean実装と一回評価](../results/store-sales-mean-pilot-2026-10-14.md)を完了。新4機構確認後、固定予算256step/validation mean MSEで64選択、2017回顧比較。meanは総量RMSE/Biasで単純基準に届かず不採択。保存2016基準の同validation目的も新候補より小さいことを事後記述した。モデル延長へ進まず、次はorigin前の公開onpromotion列が過去入力として利用でき、train残差に追加情報を持つかの設計/小抽出/記述。未来実施を既知予定にしない。原失敗と旧source/closedroot不変、直接研究ACTIVE/automation PAUSED。
+
 ## 需要の期待数量と代表値・意思決定（2026-10-14・最新）
 
 [mean/median/decision quantileの整理](../results/store-sales-quantity-objectives-2026-10-14.md)と保存train記述を完了。期待数量はmean/MSE、代表Q50はMAE、PSIdecision量は費用等と別契約。Q3からmeanを補わない。次は[meanとquantileの独立出力設計](demand-mean-and-quantile-model-design-2026-10-14.md)の新実装・少数確認。mean選択の主指標をvalidation MSEへ揃える。今回新学習/2017補正0、旧計算不採択と基準を維持。6新確認pass、元scriptの記録label上限エラーはfailed保全・別continuationで未開始集計のみ完成、旧確認反復0。直接研究ACTIVE/automation PAUSED。

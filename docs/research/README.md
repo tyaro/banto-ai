@@ -10,6 +10,8 @@
 
 ## 文書
 
+- [mean出力の実装・一回評価](../results/store-sales-mean-pilot-2026-10-14.md)
+- [mean一回評価の固定条件](store-sales-mean-pilot-design-2026-10-14.md)
 - [需要数量の平均・中央値・意思決定分位点](../results/store-sales-quantity-objectives-2026-10-14.md)
 - [数量目的の診断前設計](demand-quantity-objective-design-2026-10-14.md)
 - [meanとquantileを分ける次候補設計](demand-mean-and-quantile-model-design-2026-10-14.md)

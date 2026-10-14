@@ -1,5 +1,9 @@
 # Mini Transformer
 
+## 平均出力の別候補（2026-10-14）
+
+[mean結果](../../docs/results/store-sales-mean-pilot-2026-10-14.md)と[固定設計](../../docs/research/store-sales-mean-pilot-design-2026-10-14.md)。demand_model_mean.py / demand_train_mean.py / check_demand_mean.pyがdaily_mean/total_meanと総量quantileを区別する。新4確認、一候補256stepは完了。期待数量用MSEで選択したが単純基準への追加価値は未確認。旧code/完成確認・学習は反復しない。生state/予測はlocalのみ。
+
 ## 水準・相対変動とイベント別入力の別候補（2026-10-14）
 
 [結果](../../docs/results/store-sales-small-model-inputs-2026-10-14.md)と[接続設計](../../docs/research/store-sales-small-model-input-pilot-design-2026-10-14.md)。tools/demand_input_features.pyでorigin-pastのみの2統計と暦12要素を組み立て、demand_data_inputs.py / demand_model_inputs.py / demand_train_inputs.pyへ接続。支持例不足はmetadataに保持。新7純粋入力＋3接続確認、一候補256stepは完了。旧sourceは変更せず、完成チェック/学習を反復しない。生データ・stateはlocalのみ。性能改善や実務採択とは別の経路確認で、今回は基準を置換しない。
