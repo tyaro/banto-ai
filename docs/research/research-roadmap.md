@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 研究主問の中間整理と次の入力境界（2026-10-14・最新）
+
+[保存結果とsourceの中間整理](demand-research-checkpoint-2026-10-14.md)を完了。独立実装の成立と追加価値未達を分け、一変数回帰未達から共有NN全般を否定しない。V3入力の既存NNは未知店舗の移行未検証。次は[8週間の推移を残す新入力](store-sales-weekly-history-design-2026-10-14.md)の未来guard/同B同xでの情報差/zero-missing/単位/fit尺度cutoffを少数確認する。新学習はまだ開始せず、機構後に18店の2013–14 fit→2015回顧開発の一候補を別保存。旧2016再選択/2017追試/予約数量読取り0、direct ACTIVEへ再開/automation PAUSED不変。
+
 ## 時点別区間の一回結果と研究主問への整理（2026-10-14・最新）
 
 [完了窓だけの時点別区間](../results/store-sales-sequential-interval-2026-10-14.md)を完了。新5確認pass、原Qreuse1/新集合149、point変更0。coverage81.33→82.67%、幅5.62%減、score0.64%改善だが4/6店舗score悪化・店24coverage72/16=76、採択しない。同2016で区間gridを追加せず、次は保存小型モデル/mean/共有残差/区間の設計と結果を読取り、否定できた仮説・未検証仮説・次学習の追加情報/群/評価契約を整理する。旧数値/確認/CI反復0、同数量差NN/2017追試0、基準維持、direct ACTIVE/automation PAUSED。
