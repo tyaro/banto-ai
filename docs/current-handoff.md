@@ -1,3 +1,15 @@
+## 最新 — PAUSED / 固定二模型の2016時間順検証完了、9of15で条件未達（2026-10-14 JST）
+
+[検証結果](results/demand-statistical-feature-validation-2026-10-14.md)、[読取り前契約](research/demand-statistical-feature-validation-design-2026-10-14.md)を優先。人の「お願いします」で対象18店の新2016数量小抽出→固定2weightの新推論一回、再学習/選択/seed/半減期/幅変更0。原ZIP/member全stream pins/identity、source13/frozen weight前後一致、各origin前56日getter制限、全予測保存後にlabel添付。
+
+positive15 joint mean28 0.065109980310/入力なし 0.064853674095/あり 0.064843250927。control比0.016072%/baseline比0.409660%小幅改善だが両対照より小9of15、固定10of15未達。全店入力25/25・complete-label24/25で支持pass、処理complete/exit0とprogress=false/adopted=falseを分ける。旧2015の12of15は原保存、有意差/実用性/σ単独効果/区間校正claim0。
+
+450要求/NN375/zero-scale baseline75/完全label432・Christmas欠測18保持。新6498観測行/profile450、12.692220秒/private1107787776B、模型10file3290158B閉鎖、launch全stdioexit0。zero-scale3は後期349正値target各・欠測1、NNへ尺度再作成0。今回18店2016は以後既読、同公開暦既知/完全盲検claim0。
+
+doc-records/Git後git-records post-save優先、新helper失敗0/旧評価・確認・CI反復0/原閉鎖root不変。事前契約でdirect PAUSED・自走停止、同統計grid/再学習/2017/予約群追試0。再開は実務最小差と利用可能な営業/外部event情報を整理し次の問いを判断。automation PAUSED不変/CARE待ち/追加agent0、全実行/記録/prep/Git上限/formal_permission=false/credit0/native禁止/登録holdout未読/正式受入未完了。Git独自source/集約docsのみ、原quantity/profile/尺度/ledger/予測/weights送信0。
+
+---
+
 ## 最新 — ACTIVE / 固定二模型の2016時間順検証契約を保存、新数量未読（2026-10-14 JST）
 
 [検証契約](research/demand-statistical-feature-validation-design-2026-10-14.md)を新数量前に保存。人の「お願いします」で旧scope metadataとweight/source pinsだけ照合。今回18店の2016は保存記録上数量未解釈、旧2016検証6（4/8/16/20/24/28）・旧6（1/2/3/5/11/12）とは分離。同公開dataset/暦は既知で、完全盲検/別チェーン/正式holdoutclaim0。
