@@ -10,6 +10,7 @@
 
 ## 文書
 
+- [休日当日対前後の小型模型比較・条件未達で停止](../results/demand-calendar-model-pair-2026-10-14.md)
 - [公開暦の共通入力6確認とfit支持](../results/demand-public-calendar-input-2026-10-14.md)
 - [公開暦と営業予定を分ける小型模型接続条件](demand-calendar-model-connection-design-2026-10-14.md)
 - [営業日水準と休業0の設計](demand-operating-sales-design-2026-10-14.md)

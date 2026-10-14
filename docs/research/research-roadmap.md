@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 休日当日対前後の固定比較で区切り（2026-10-14・最新）
+
+[二件比較](../results/demand-calendar-model-pair-2026-10-14.md)を完了。global微改善だが前後の当日比約0.019%/改善9of15で固定10of15未達、採択せずdirect PAUSED/自走停止。元日/Christmasのfit支持なし、実営業表/実連休長も未確認。次は不足する入力又は別支持契約の判断。原失敗/固定630key保全、同仮説grid/延長/再試行/旧評価/CI0、automation PAUSED。
+
 ## 公開暦の共通入力とfit支持（2026-10-14・最新）
 
 [新6確認/630key支持](../results/demand-public-calendar-input-2026-10-14.md)完了。enabled42/56、数値解釈なし。次は固定新模型の接続確認→当日/前後二件の固定学習。旧反復0/direct ACTIVE/automation PAUSED。
