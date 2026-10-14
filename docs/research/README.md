@@ -10,6 +10,9 @@
 
 ## 文書
 
+- [共有総量区間・尺度案と原失敗](../results/store-sales-shared-interval-results-2026-10-14.md)
+- [総量区間の局所尺度案](store-sales-shared-local-interval-design-2026-10-14.md)
+- [自身の過去残差区間の次設計](store-sales-own-history-interval-design-2026-10-14.md)
 - [共有数量残差の一回検証](../results/store-sales-shared-residual-2026-10-14.md)
 - [総量不確実性の次設計案](store-sales-shared-total-interval-design-2026-10-14.md)
 - [共有学習の店舗固定と支持診断](../results/store-sales-shared-series-support-2026-10-14.md)

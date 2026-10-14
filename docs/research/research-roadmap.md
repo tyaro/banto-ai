@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 総量区間の共有限界と自身の過去残差（2026-10-14・最新）
+
+[共有区間と一尺度案](../results/store-sales-shared-interval-results-2026-10-14.md)を完了。fixed全体79.33/正値82%でも店20は32/36%、localは76%へ改善するが全体幅増/score微悪化、不採択。新7確認pass、原2helper失敗と完成Q/150区間prefixを保全、別summary-onlyで未保存要約のみ完成。次は[自身の過去残差の支持/区間](store-sales-own-history-interval-design-2026-10-14.md)を共有分布から分ける。新自身calibration未開始、point/旧確認/計算反復0、2016回顧、direct ACTIVE/automation PAUSED。
+
 ## 共有数量差の一回検証と総量不確実性（2026-10-14・最新）
 
 [新5確認・等store重み共有fit・新6店2016検証](../results/store-sales-shared-residual-2026-10-14.md)を完了。1242train行、係数保存後150検証。主MSE基準.017250/共有.020509、改善2/6で事前条件未達、同数量差NN/grid/2017追試は開始しない。基準維持。次は[総量残差の分布共有](store-sales-shared-total-interval-design-2026-10-14.md)を保存新ledgerから確認する設計/少数確認。点予測/fit/抽出の反復0、区間未実行、2016は回顧。direct ACTIVE/automation PAUSED、正式gate不変。
