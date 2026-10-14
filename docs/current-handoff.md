@@ -1,3 +1,11 @@
+## 最新 — ACTIVE / 公開暦の共通入力6確認・fit支持保存（2026-10-14 JST）
+
+[共通入力と支持](results/demand-public-calendar-input-2026-10-14.md)、[接続条件](research/demand-calendar-model-connection-design-2026-10-14.md)を優先。新pure adapter/test6一回allpassed。単store56/14・暦60/当日と前後同shape/量mask/u/2統計/mean28・公開sales意味維持。名目closed化0。630fitkey各15店42、原maskのみ新解釈/quantity float0、enabled42/56/unsupported14は別mask・event年保存。
+
+次は新V1/D32/L1模型/接続確認、その後固定二件比較。モデル/fit/forecast未開始。本文representative-demand-public-calendar-input-records優先。foreground artifacts広域列挙の旧拒否root warningは選択tool metadataだけ保存；旧root変更/再試行0。direct ACTIVE/automation PAUSED/全上限/formal_permission=false/credit0/native禁止/登録holdout未読/CARE待ち/追加agent0。Git独自code/架空確認/集約docsのみ、原quantity/ledger/尺度/予測/重み送信0。
+
+---
+
 ## 最新 — ACTIVE / 公開暦と営業条件付き経路を分離、模型接続案固定（2026-10-14 JST）
 
 [公開暦/営業予定と模型比較の新条件](research/demand-calendar-model-connection-design-2026-10-14.md)を優先。source/保存報告読取りのみ、新quantity/支持集計/模型実装/fit/forecast/旧確認/CI0。publicには店営業表/公表版がなくstrict営業日水準や実連休長を補わない。名目8日付の前後を季節指標として扱い、休日一律closed/Christmas0label化0。
