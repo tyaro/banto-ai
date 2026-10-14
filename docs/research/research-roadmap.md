@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 自身の残差分布と時点別更新の次条件（2026-10-14・最新）
+
+[自身区間と年/四半期診断](../results/store-sales-own-history-interval-2026-10-14.md)を完了。新4確認pass、共有local score2198.42→自身1909.94/幅減/coverage81.33%、ただし店24=64%等の不足を保持し不採択。自己calibrationをzero-shotへしない。次は[完了した過去誤差のみ最新26窓で更新する手順](store-sales-sequential-interval-design-2026-10-14.md)の少数確認、同窓の原Q再利用とfuture label読取り拒否。旧point/区間/原失敗/root反復0、2016回顧/direct ACTIVE/automation PAUSED。
+
 ## 総量区間の共有限界と自身の過去残差（2026-10-14・最新）
 
 [共有区間と一尺度案](../results/store-sales-shared-interval-results-2026-10-14.md)を完了。fixed全体79.33/正値82%でも店20は32/36%、localは76%へ改善するが全体幅増/score微悪化、不採択。新7確認pass、原2helper失敗と完成Q/150区間prefixを保全、別summary-onlyで未保存要約のみ完成。次は[自身の過去残差の支持/区間](store-sales-own-history-interval-design-2026-10-14.md)を共有分布から分ける。新自身calibration未開始、point/旧確認/計算反復0、2016回顧、direct ACTIVE/automation PAUSED。

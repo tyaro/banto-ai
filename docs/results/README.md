@@ -6,6 +6,7 @@
 
 ## 独自モデルの需要用途
 
+- [自身の過去総量区間・期間診断（2026-10-14）](store-sales-own-history-interval-2026-10-14.md)
 - [共有総量区間と一尺度案の結果・失敗保全（2026-10-14）](store-sales-shared-interval-results-2026-10-14.md)
 - [新6店舗への共有数量残差の一回検証（2026-10-14）](store-sales-shared-residual-2026-10-14.md)
 - [共有学習の店舗選定・数量支持（2026-10-14）](store-sales-shared-series-support-2026-10-14.md)

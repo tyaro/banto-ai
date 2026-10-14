@@ -10,6 +10,9 @@
 
 ## 文書
 
+- [自身の総量残差区間と期間診断](../results/store-sales-own-history-interval-2026-10-14.md)
+- [自身区間の保存残差診断条件](store-sales-own-interval-diagnosis-design-2026-10-14.md)
+- [完了誤差だけで更新する次設計](store-sales-sequential-interval-design-2026-10-14.md)
 - [共有総量区間・尺度案と原失敗](../results/store-sales-shared-interval-results-2026-10-14.md)
 - [総量区間の局所尺度案](store-sales-shared-local-interval-design-2026-10-14.md)
 - [自身の過去残差区間の次設計](store-sales-own-history-interval-design-2026-10-14.md)
