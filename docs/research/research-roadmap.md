@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 休暇区間入力の機構確認完了（2026-10-14・最新）
+
+[期間/営業予定adapterの新6確認](../results/demand-event-interval-input-2026-10-14.md)一回allpassed。全長/境界/未確定範囲・未来版非アクセス・途中営業/休業下限を保持。次は営業日水準/確定closed0/unknown-missing/日次総量整合のpure処理。期間長tensor集約/模型接続/学習は別設計、架空予定確認は精度効果の実証ではない。数量/fit/forecast/旧確認/CI0、direct ACTIVE/automation PAUSED。
+
 ## 休暇期間のイベント表現とAstraの検討（2026-10-14・最新）
 
 [期間入力設計](demand-holiday-duration-design-2026-10-14.md)を保存。人の明示依頼でAstra一件を検討、顧客行事と店舗休業を別intervalにする。既知全長/開始終了・前中後、未確定endと有効範囲、起点後延長の非遡及を採用する方向。次は数量非アクセスの区間機構/新代表確認、その後に営業日水準/closed0を扱う。期間長の精度効果・販促係数は未実証、新fit/forecast/旧確認/CI0、direct ACTIVE/automation PAUSED。

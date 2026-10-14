@@ -6,6 +6,7 @@
 
 ## 独自モデルの需要用途
 
+- [休暇区間と営業予定の分離・新6確認（2026-10-14）](demand-event-interval-input-2026-10-14.md)
 - [営業状態と休日の前後入力・新6確認（2026-10-14）](demand-holiday-event-input-2026-10-14.md)
 - [8週補正の保存誤差分解・入力支持監査（2026-10-14）](store-sales-weekly-correction-diagnosis-2026-10-14.md)
 - [数量支持15店の8週回帰・全18店評価（2026-10-14）](store-sales-weekly-ridge-cohort-2026-10-14.md)
