@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 統計8入力の同条件比較完了（2026-10-14・最新）
+
+[固定設計](demand-statistical-feature-input-design-2026-10-14.md)で[新二件比較](../results/demand-statistical-feature-pair-2026-10-14.md)完了。control比約0.0141%/mean28比約0.3106%改善、12of15で進捗条件達成。回顧2015・小幅差、採択/σ単独効果/未知優位なし。次は二件固定で独立検証の期間/系列・停止条件の契約。既読2016を未見へ補わず、同仮説grid/再学習/旧反復0、direct ACTIVE/automation PAUSED。
+
 ## σ・EMAを学習入力とする修正（2026-10-14・最新）
 
 [新設計](demand-statistical-feature-input-design-2026-10-14.md)で[新6確認](../results/demand-statistical-features-2026-10-14.md)完了。固定point併用の失敗と入力表現の問いを分け、8次元統計/支持mask→学習branchを追加。normalize/元入力維持、未来非アクセス、σ方向固定0。次は同shapeの0入力対有効入力の別学習契約。新fit/精度評価未実施、direct ACTIVE/automation PAUSED。
