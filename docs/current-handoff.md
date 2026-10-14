@@ -1,3 +1,13 @@
+## 最新 — PAUSED / 保存予測の補正誤差分解完了（2026-10-14 JST）
+
+[新診断](results/demand-correction-decomposition-2026-10-14.md)、[実行前契約](research/demand-correction-decomposition-design-2026-10-14.md)を優先。人の改善案への再開でAstra案Aだけ実施。原6店150要求/positive5の125窓/zero20の25fallback/日次349・総量24各支持を固定、label前後全対応/原4pin照合、保存予測のみ。新fit/forward/quantity/profile/weights読取り0。
+
+入力ありjoint補正二乗量0.009952325410/整合0.002774160516/差+0.007178164894、店24とQ2は整合負。入力なし比差-0.000988928288を分離、旧mean28未達/不採用維持・原因未同定/倍率最適化0。原summary差66照合成立、新pure架空6確認passed、全child stdio/exit0保存。元root inventory/closure/source不変。初準備compile括弧SyntaxErrorのselected証拠をv2へ保全（元stdin/fullforegroundstdio未捕捉）、原失敗を書換えず模型/CI/native失敗へしない。
+
+diagnostic-root representative-demand-correction-decomposition-20261014-records、launch/新v2prep/doc-records/Git後git-records post-save優先。全新閉鎖root追記/旧評価・確認・CI反復0。契約どおりdirect/automation PAUSED、次は店舗移行の選択方法を一軌跡二cloneで比較する案Bを別契約で判断、暫定2%未採用/新学習自動開始0。全実行/記録/prep/Git上限、formal_permission=false/credit0/native7役禁止/登録holdout未読/正式受入未完了/CARE手動待ち/追加agent0維持。Git独自source/架空fixture/集約docsのみ、原quantity/ledger/予測/尺度/profile/weights送信0。
+
+---
+
 ## 最新 — PAUSED / 人の明示委任によるAstra評価方法レビューを保存（2026-10-14 JST）
 
 [Astraの深い方法論レビュー](research/demand-evaluation-methodology-astra-review-2026-10-14.md)を優先。人の具体的な委任によりAstra一名だけへレビュー/新文書を依頼。既存の学習・選択・未学習店舗評価をsource/保存metadataから点検し、目的と指標、選択分離、尺度/zero群、判定・不確実性、最小の次手順を提案した。レビュー/提案であり新実験の実行・採用ではない。
