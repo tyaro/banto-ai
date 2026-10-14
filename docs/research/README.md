@@ -10,6 +10,7 @@
 
 ## 文書
 
+- [公開暦と営業予定を分ける小型模型接続条件](demand-calendar-model-connection-design-2026-10-14.md)
 - [営業日水準と休業0の設計](demand-operating-sales-design-2026-10-14.md)
 - [営業日水準/休業0の新6確認](../results/demand-operating-sales-2026-10-14.md)
 - [休暇区間/休業長の新6確認](../results/demand-event-interval-input-2026-10-14.md)

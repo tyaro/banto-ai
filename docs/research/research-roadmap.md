@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 公開暦と営業予定を分ける接続条件（2026-10-14・最新）
+
+[入力/模型/比較の新条件](demand-calendar-model-connection-design-2026-10-14.md)を保存。公開は名目8日付前後のsales平均、営業表経路は営業時meanとclosed0で意味を分ける。次は単store56/14・暦60のpure入力とdate-mask支持metadata。その後だけ当日control対前後候補の同shape/同initial二件、正尺度15fit13–14→既知2015回顧の固定案。支持/学習/新予測未開始、実連休長/営業calendar捏造0、旧確認/評価/CI0、direct ACTIVE/automation PAUSED。
+
 ## 営業日水準と休業0の新機構確認完了（2026-10-14・最新）
 
 [固定条件](demand-operating-sales-design-2026-10-14.md)で[新6確認](../results/demand-operating-sales-2026-10-14.md)allpassed。open-only平均/実0/欠測/unknown参考を分け、明示contractのclosed0、営業仮定付きunknown、全休業/日次総量整合を確認。次は公開暦の利用可能性/営業calendar仮定と模型接続の出力前契約。原営業表欠如/strict支持不足を補わず、新学習/実forecast/旧確認/CI0、direct ACTIVE/automation PAUSED。
