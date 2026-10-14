@@ -1,3 +1,19 @@
+## 最新 — ACTIVE / 共有学習の店舗群固定・train側支持診断完成（2026-10-14 JST）
+
+声掛けまで直接自走承認を継続。[metadataと数量支持](results/store-sales-shared-series-support-2026-10-14.md)、[入力契約](research/store-sales-shared-series-input-contract-2026-10-14.md)、[共有残差一候補の未実行設計](research/store-sales-shared-residual-design-2026-10-14.md)を優先。直接研究ACTIVE/automation PAUSED更新0。
+
+metadata54店から既使用1/2/3/5/11/12を除外、IDだけで学習18（6,7,9,10,13,14,15,17,18,19,21,22,23,25,26,27,29,30）、fit未使用検証6（4,8,16,20,24,28）、予約24（31–54）を固定。同family BREAD/BAKERY、共通都市あり/便宜標本、新都市/メーカー適合claim0。
+
+新24store2013–15数量snapshot26280暦行/観測26208/欠落72、原ID/観測mask/SHA対応、ZIP/member bytes/SHA/行数と原archive不変を照合。2016/17、販促、予約/旧storeの数量数値解析0。各71適格窓、学習18最低支持pass。ただし店21/22/29等の長いゼロ履歴は保持/原因不明、休業/未開店/欠品へ補わない。検証6の過去prefixは支持/尺度だけ、model fit0。snapshot776915B/診断5.055342秒/OSpeak22024192B。
+
+次unitは共有数量残差一候補の新純粋入力/店舗等重みfit/検証分離の少数確認。自己の過去14対28日差だけ/尺度2013–15観測平均、train18の71候補・x全支持だけで固定ridge1共有係数。ゼロ行除去0/店舗等重み/不十分xは切片fallback。係数保存後だけ新検証6の2016固定Jan1+14*k(k0..24) quantityを小抽出し一回比較。主MSE両対照より小＋4/6店舗以上なら次NN設計の根拠、未達なら同特徴NN/grid/2017追試を開始しない。今回新fit/2016label/NN0、採択0。
+
+metadata/shared-prefix/prep/各launch全閉鎖、原script/source/snapshot/window支持/stdio/exit0local保存。literalglob原foreground誤りselectedexcerpt保持/fullstdio-native証明0。本文shared-series-doc-records、Git後shared-series-git-records post-save優先。先行販促候補不採択/旧閉鎖root・原失敗不変。
+
+追加agent0/CARE手動報告待ち・自動確認0。900秒2GiB/output1GiB/single32MiB/files32、記録16MiB512files/256KiBparts/reserve2MiB16files、prep128KiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git集約docsのみ、新生CSV/ledger/尺度/fit送信0。
+
+---
+
 ## 最新 — ACTIVE / 過去販促の記述・2016残差回帰完成、追加価値未確認（2026-10-14 JST）
 
 声掛けまで直接自走承認を継続。[結果](results/store-sales-past-promotion-2026-10-14.md)、[抽出前設計](research/store-sales-past-promotion-design-2026-10-14.md)、[検証前固定](research/store-sales-past-promotion-validation-design-2026-10-14.md)を優先。直接研究ACTIVE/automation PAUSED更新0。
