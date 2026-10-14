@@ -1,3 +1,21 @@
+## 最新 — ACTIVE / 総量区間の固定・直近校正確認完了（2026-10-14 JST）
+
+人の「進めて」を継続。[区間結果と研究判断](results/store-sales-interval-2026-10-14.md)、[固定設計](research/store-sales-interval-design-2026-10-14.md)、[直近設計](research/store-sales-interval-recent-design-2026-10-14.md)を優先。直接研究ACTIVE、既存automation PAUSED/更新0。
+
+5/11/12 BREAD/BAKERY・mean28 14日総量。新2016校正78窓、Christmas3窓actualnull除外で各25有効、score|y-T|/T/rank21/名目80%。固定q5 .07998181080241373/11 .06920152091254753/12 .1386723364044413。2017point/実績48窓は元rolling保存再利用、原ZIP/CSV/2017forecast再compute0。新代表5一回allpassed。
+
+固定32/48=66.7%/below7above9/平均幅917.8017269303805。起点前にtarget期間終了の最新25有効窓一設定、未来値校正0/clockは前日実績利用可能仮定。直近34/48=70.8%/below5above9/平均幅1147.8186585054973（約25%増）。初3区間は元固定再利用/新幅45だけ、point/校正forecast反復0。直近新5確認一回allpassed。店舗別75→81.25/56.25→62.5/68.75→68.75%。両方式とも実務校正済80%として採択0/幅grid0/保証0/PSI安全在庫claim0。
+
+保存snapshotだけの過去context記述：2016中央値でroughness高32/低16、直近coverage65.625/81.25%だが平均相対誤差高群が大きくはなく、r rough .283826/週水準 .153785各48。因果/幅rule/有意性0、新forecast/区間/fit0。
+
+interval/interval-recent/context-records全complete閉鎖、全stdio/exit0は各launch-records。本文interval-doc-records、Git後interval-git-20261014-records post-save優先。旧確認/CI/元学習反復0、原失敗/全閉鎖root不変。
+
+次unitは既存独立小型モデルの需要用途への入力/split/量・配分・区間評価/学習予算を先に固定する読取り設計。完成MetroPT学習/確認を反復せず、TimesFM3同等性/公式重み・教師出力0。設計成立前の新学習0。研究基準mean28総量＋限定暦配分は保持。
+
+CARE手動完了報告待ち/自動確認取得0、追加agent0、実行900秒2GiB/output1GiB/single32MiB/files32・記録16MiB512files/256KiBparts/reserve2MiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。同GitHub Git継続承認有効、原本/CSV/生予測/fit送信0。
+
+---
+
 ## 最新 — ACTIVE / 固定16区間確認完了・点予測基準を保存（2026-10-14 JST）
 
 人の自走指示を継続。[16区間結果と研究判断](results/store-sales-rolling-2026-10-14.md)と[出力前設計](research/store-sales-rolling-design-2026-10-14.md)を優先。直接研究ACTIVE、既存automation PAUSED/更新0。
