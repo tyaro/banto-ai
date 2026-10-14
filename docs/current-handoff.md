@@ -1,3 +1,23 @@
+## 最新 — ACTIVE / mean・median・decision quantileの目的整理完了（2026-10-14 JST）
+
+人の需要予測の平均/中央値整理・自走指示を継続。[用途とtrain記述](results/store-sales-quantity-objectives-2026-10-14.md)、[診断前設計](research/demand-quantity-objective-design-2026-10-14.md)、[meanとquantileを分ける次設計](research/demand-mean-and-quantile-model-design-2026-10-14.md)を優先。直接研究ACTIVE/automation PAUSED更新0。
+
+期待数量meanは原単位MSE/RMSE、代表Q50はMAE/pinball、補充decision量は費用/在庫/納期/期限と別契約。平均は同じ情報・単位で加算、median/quantileは一般非加算、Q10/50/90だけからmeanは特定不能。原論文Gneiting/FPP3/Olivares等を参照、code/weights転載0。費用不明decision=null、PSI最適/校正保証0。
+
+新6少数例一回allpassed：20/.8・100/.2 mean36/median20、MAE25.6/16・MSE1024/1280・median期待Bias-16。mean加算、median/Q90非加算、同Q20/40/60でもmean46/82、Cu=Co→Q50/Cu9Co1→Q90仮例、未知費用/実ゼロ/invalidを確認。実企業の費用や生産量の決め打ち0。
+
+保存train2973行/固定尺度のみで残差A−Tのmean/medianを記述。重複991窓店5 .030/-67.006・11 -9.494/-55・12 -2.805/-34。固定2013Feb26+14*k eligible非重複71窓では-4.513/-90.300・-6.026/-53.5・1.998/0。時系列依存/無条件記述、補正係数fitや条件付きモデルの証明0。2016/17 quantity/prediction/新forward/旧model/weights/CI反復0。
+
+原集計script label38文字>32でValueError unsafe operation label、数値集計前停止。原failed root/launcher fullstdio/exit1/script保持、passed6再実行0。別continuationはoperation labelとfresh record rootの2文字列限定変更で未開始集計だけexit0。原failedを書換え0。MIT URL web Internal Errorは著者原論文へ切替、モデル/helper失敗とは別。continuation.070380秒/OSpeak26816512B、全prep/records閉鎖。
+
+次unitは独立mean headと原単位二乗誤差を持つ別namespaceの少数機構確認。daily_meanとtotal_meanを整合、総量Q10/50/90別head、meanを区間内clip/分位点平均/log逆変換中央値へしない。予定parameter120805/実装未確認、Lmean=.5日次MSE+.5総量MSE、Ltrain=Lmean+.25pinball補助、validation選択はLmean主。新学習は実装/確認と実行設計を固定した後、現unit新学習0/2017bias補正0。基準mean28総量＋限定暦配分維持/候補採択0。
+
+元quantity-objectives-records/launcherはfailed不変、continuation-records/launchercomplete。本文quantity-objectives-doc-records、Git後quantity-objectives-git-20261014-records post-save優先。全旧閉鎖root・原失敗不変、追加agent0/CARE手動報告待ち・自動確認0。
+
+900秒2GiB/output1GiB/single32MiB/files32・記録16MiB512files/256KiBparts/reserve2MiB16files・prep128KiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git継続承認で独自code/集約文書だけ、原数量/ledger/予測/fit/重み送信0。
+
+---
+
 ## 最新 — ACTIVE / 水準・相対変動・event入力確認と一回接続評価完了（2026-10-14 JST）
 
 人の入力確認・自走指示を継続。[入力確認と接続結果](results/store-sales-small-model-inputs-2026-10-14.md)、[純粋入力設計](research/store-sales-small-model-input-design-2026-10-14.md)、[接続前評価設計](research/store-sales-small-model-input-pilot-design-2026-10-14.md)を優先。直接研究ACTIVE/既存automation PAUSED更新0。
