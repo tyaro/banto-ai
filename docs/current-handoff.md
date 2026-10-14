@@ -1,3 +1,15 @@
+## 最新 — PAUSED / 学習量の新時間順診断完了、256以降約9%改善・1664best（2026-10-14 JST）
+
+[新診断結果](results/demand-training-adequacy-2026-10-14.md)、[出力前手順](research/demand-training-adequacy-design-2026-10-14.md)を優先。人の「次のstepへ」で旧grid禁止を学習量確認の新手順の範囲で更新。旧weights延長/outer再評価0、旧256/2015/2016未達を保全。元630keyをtrain450/内部val180へ2014Jul1境界分離、uは2013Jan1〜2014Jun30のみ再計算、profile630再利用/再集計0、train支持42channel。
+
+新同initial/sampler2件、128stepごと固定全件測定、max4096/warmup512/patience6/相対0.01%超。両best1664・2432earlystop。256から内部val改善 off8.877577%/on8.947989%、bestjoint off0.074455309859/on0.074388331514。入力追加差0.089958%と分離し、σで9%claim0。この新分離条件では256は改善途中、旧630/uの最適step1664証明ではない。trainのみ減少/val悪化を保存、収束/未知性能/複数seed/採択claim0。
+
+新政策4確認一回passed、模型22file3655002B閉鎖、37.708865秒/private1141428224B、launch全checkpoint/stdout-stderrexit0。doc-records/Git後git-records post-save優先、source15/原closedroots不変、新helper失敗0。2015/16/17新数量・予測/旧確認/CI/追加agent0。
+
+事前手順どおり診断保存でdirect PAUSED、次は内部選択手順を固定した性能評価対象/期間の別契約を人と判断。1664を他期間へ無条件流用0、既読2015/16を未見へ補わず、追加学習/seed/LR/半減期grid/2017/予約群へ自動進行0。automation PAUSED/CARE待ち、全実行/記録/prep/Git上限/formal_permission=false/credit0/native禁止/登録holdout未読/正式受入未完了。Git独自source/架空確認/集約docsのみ、原quantity/profile/尺度/ledger/予測/weights送信0。
+
+---
+
 ## 最新 — PAUSED / 固定二模型の2016時間順検証完了、9of15で条件未達（2026-10-14 JST）
 
 [検証結果](results/demand-statistical-feature-validation-2026-10-14.md)、[読取り前契約](research/demand-statistical-feature-validation-design-2026-10-14.md)を優先。人の「お願いします」で対象18店の新2016数量小抽出→固定2weightの新推論一回、再学習/選択/seed/半減期/幅変更0。原ZIP/member全stream pins/identity、source13/frozen weight前後一致、各origin前56日getter制限、全予測保存後にlabel添付。
