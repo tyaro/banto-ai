@@ -1,3 +1,13 @@
+## 最新 — PAUSED / σ・EMA・等重み併用の新比較完了、条件未達で区切り（2026-10-14 JST）
+
+人の次step/σ等の併用提案で新仮説を実行。[固定案](research/demand-statistical-overlay-design-2026-10-14.md)、[新6確認/比較](results/demand-statistical-overlay-2026-10-14.md)を優先。pure新6確認一回passed、最新28日の完了一歩先weekday誤差からμ/sampleσ/RMSE/EMA7/28を分離。future getter/欠測対実0/σ0対Biasを確認、σでpoint方向/区間を変更0。
+
+保存2015の18店450入力/point/原baseline指標をpin再利用、旧NNforward/fit/旧採点/確認/CI/新archive0。新成分max(0,B+EMA7)/等重み.5、support450/fallback0。15店macro joint MSE基準0.071036585/EMA0.085032004/併用0.074617738、約5.041%悪化/改善3of15で条件未達。採択0、半減期/重みgrid/NN追加0、保存後direct PAUSED。σは過去一歩先の記述で未来h別/95%/総量σ校正未実施。
+
+次は予測誤差σのh別/総量校正か変化成分の別根拠を判断する。元日/Christmasの旧支持不足・旧NN未達不変。本文statistical-overlay-records/post-doc-records/Git後overlay-git-records優先、原failed/閉鎖root不変。automation PAUSED/CARE待ち/追加agent0、全上限/formal_permission=false/credit0/native禁止/登録holdout未読/正式受入未完了。Git独自code/架空確認/集約docsのみ、原quantity/ledger/尺度/予測送信0。
+
+---
+
 ## 最新 — PAUSED / 当日対前後小型モデル比較完了、進捗条件未達で自走停止（2026-10-14 JST）
 
 [二件比較の結果](results/demand-calendar-model-pair-2026-10-14.md)、[固定条件](research/demand-calendar-model-connection-design-2026-10-14.md)を優先。人の自走指示で新pure6確認/模型3確認・同initial/sampler二件256stepを完了。原入力6確認後の文書TypeErrorはfailed保全、新doc-only continuationで限定修正/確認反復0。モデル計算/新接続には失敗0。
