@@ -1,3 +1,15 @@
+## 最新 — ACTIVE / 営業日水準と休業販売0、新6確認完了（2026-10-14 JST）
+
+[新処理の結果](results/demand-operating-sales-2026-10-14.md)、[固定条件](research/demand-operating-sales-design-2026-10-14.md)を優先。新demand_operating_sales.py/testの6確認一回allpassed、全childstdio/exit0保存。架空量のみ/public quantity/fit/実forecast/旧確認/CI0、calendar/区間/weekly sourceと原区間結果bytes不変。
+
+起点前28暦・同曜日open観測3以上のstrict平均、営業実0は有効/closed0別/欠測はnull。unknown観測はopen+unknown参考平均に保持しstrictへの自動fallback0。不整合closed正値は拒否。future数量/後日営業payload非アクセス。確定closedは対象salesの明示0contract時だけ0、unknownは営業仮定付き、全休業14日は模型/支持不要で0。全日point meanの和のみ/欠ければ総量null/quantile加算なし/原label不変。
+
+次unitは公開データの利用可能な暦情報と営業calendar仮定・模型接続の出力前契約整理。原営業表/公表履歴欠如を補わず、strict支持不足を参考値へ黙って切替えない。休業構造とevent効果を別比較、長さ実証に必要な同種変動/独立年を確認する方向。模型接続/新学習/実データ精度改善は未実施。
+
+本文representative-demand-operating-sales-records、Git後同-operating-sales-git-records post-save優先。全新prep/records閉鎖・原failed不変。direct ACTIVE/automation PAUSED、追加agent0/CARE手動待ち・自動確認0、全実行/記録/prep上限維持、formal_permission=false/credit0/native禁止/登録holdout未読/正式受入未完了。Git独自code/架空確認/集約docsのみ、原quantity/予定実績/ledger/係数/予測送信0。
+
+---
+
 ## 最新 — ACTIVE / 休暇の区間入力と休業長の分離、新6確認完了（2026-10-14 JST）
 
 [区間入力の実装と確認](results/demand-event-interval-input-2026-10-14.md)、[Astraと検討した設計](research/demand-holiday-duration-design-2026-10-14.md)を優先。新demand_event_intervals.py/testの6代表確認一回allpassed、全childstdio/exit0保存。数量/fit/forecast/旧確認/CI0、既存一点event source/test/完了記録不変。
