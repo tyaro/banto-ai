@@ -1,3 +1,19 @@
+## 最新 — PAUSED / 群別8週回帰一回完了、進捗未達で区切り（2026-10-14 JST）
+
+人の「進めてください」で新[群別契約](research/store-sales-weekly-ridge-cohort-design-2026-10-14.md)を固定し、[一回の結果](results/store-sales-weekly-ridge-cohort-2026-10-14.md)まで完了。direct PAUSED（新一候補を保存して区切り）/automation PAUSED不変。原固定18店の学習前条件未達は不変。
+
+正尺度15店をfit、店21/22/29をzero-fit-scale/baseline-onlyと宣言して全18店評価。保存630行・各42/等店重み・fit uを再利用、旧窓組立/尺度fit反復0。新8特徴ridge1/Cholesky/無罰切片、係数保存後だけ2015選別quantityを読取り。新5確認一回passed、新fit1/評価1、normal equation residual4.55e-15。原source/旧確認/CI/旧6検証2016/2017/予約群/新archive反復0。
+
+450要求/432採点/18label欠測、正尺度15店375/360・特徴315/fallback45、尺度0群75/72・全baseline。主macroMSE基準.023675085/切片.023763433/8週.029287764、基準比約23.71%悪化、両対照より小5/15（6/7/10/14/17）で新10/15＋全体条件未達。旧12/18条件通過にしない。原単位全18RMSE基準1004.701942→候補1019.628786、WAPE9.515056→10.022012。尺度0群MSEnull・raw誤差を残す。
+
+zero-fit-scale3店の選別2015正値日21=157/22=80/29=283、fit期間全0を将来全0と仮定せず評価後記述。開店/稼働/欠品原因・既知予定入力へ補わない。この8週特徴でのNN/grid/seed/2017開始0、採択/メーカーPSI/TimesFM同等0。基準mean28総量＋限定暦配分維持/区間不採択。
+
+新計算0.410567秒/OSpeak28073984B、parentf4651f＋未commit新source/clean計算claim0。原input/役割/係数/選別quantity/450ledger/不足fallback/全stdioexit0を新閉鎖root保全、新helper失敗0/旧failed不変。本文weekly-ridge-cohort-doc-records、Git後weekly-ridge-cohort-git-records post-save優先。
+
+次には予測時点で使える追加情報・共通係数が成り立つ条件・zero履歴から量が出る場面の入力を別仮説で設計する必要がある。新仮説/学習は今回未開始、同結果へ合う試行を増やさずGit保存後待機。追加agent0/CARE手動待ち・自動確認0、全実行/記録/prep上限不変、formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git独自code/集約docsのみ、原quantity/ledger/尺度/係数/予測送信0。
+
+---
+
 ## 最新 — PAUSED / 8週回帰は学習前支持未達、保存して区切り（2026-10-14 JST）
 
 人の「きりがつくまで自走」に従い固定契約の前提確認を一回実施。[結果と停止理由](results/store-sales-weekly-ridge-readiness-2026-10-14.md)、[元案](research/store-sales-weekly-history-design-2026-10-14.md)を優先。direct PAUSED/automation PAUSED不変、同条件の再試行0。
