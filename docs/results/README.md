@@ -6,6 +6,7 @@
 
 ## 独自モデルの需要用途
 
+- [店舗分離による終了点選択・一軌跡比較（2026-10-14）](demand-group-selection-2026-10-14.md)
 - [保存済み予測の補正誤差分解（2026-10-14）](demand-correction-decomposition-2026-10-14.md)
 - [内部選択済み模型の未学習店舗評価・基準未達（2026-10-14）](demand-selected-series-evaluation-2026-10-14.md)
 - [学習量の時系列分離診断・256以降改善（2026-10-14）](demand-training-adequacy-2026-10-14.md)

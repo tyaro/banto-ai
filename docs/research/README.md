@@ -10,6 +10,8 @@
 
 ## 文書
 
+- [店舗分離による終了点選択・一軌跡比較の契約](demand-group-selection-design-2026-10-14.md)
+- [時間選択対移行選択の一回結果](../results/demand-group-selection-2026-10-14.md)
 - [保存済み予測の補正誤差分解・実行前契約](demand-correction-decomposition-design-2026-10-14.md)
 - [補正二乗量と実績方向の整合・診断結果](../results/demand-correction-decomposition-2026-10-14.md)
 - [Astraによる評価方法の深いレビューと改善案](demand-evaluation-methodology-astra-review-2026-10-14.md)
