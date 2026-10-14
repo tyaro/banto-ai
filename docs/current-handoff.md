@@ -1,3 +1,21 @@
+## 最新 — ACTIVE / 自身の残差区間・期間診断完成、全体改善/店舗不足保持（2026-10-14 JST）
+
+声掛けまで直接自走承認継続。[結果と診断](results/store-sales-own-history-interval-2026-10-14.md)、[元固定設計](research/store-sales-own-history-interval-design-2026-10-14.md)、[診断前条件](research/store-sales-own-interval-diagnosis-design-2026-10-14.md)を優先。direct ACTIVE/automation PAUSED更新0。
+
+新prefix store-date numeric guard/own input-label/最小20/null/shared fallback/roleの4確認一回allpassed。新対象6store自身の2013–15/元69日付でcalibration、Q前支持保存→Q保存→原2016ledger再利用。正値支持4/8/16/28各69、20は2015のみ21、24は66/floor2。全最低20pass、実fallback0/n0null。自身cal使用なのでzero-shot/cal未使用storeclaim0。
+
+保存150point変更0、共通local原137/150=91.33%/幅2070.600570/score2198.416510→自身122=81.33%/幅1559.877767/score1909.937034。幅約24.7%減/score約13.1%改善だが自身coverage store24=64/16=76、20=84/support21。採択/校正保証/メーカーPSI/TimesFM同等0。原共通区間・point・archive・2017/予約・NN反復0。
+
+保存Q/区間の年/四半期診断だけ追加。店20Q10origin2015Aug11/Q90Nov3（21行の3/19番目）、店24Q10origin2014Feb25/Q902015May19。24の2014std1.271183はfloor2含むので通常変動へしない。2016の24covered Q1=4/7・Q2=4/6・Q3=4/7・Q4=4/5、単一時期で全不足説明0。Q/区間再fit0、outlier/zero除去0、因果/CI0。2016既知回顧を未見へ戻さない。
+
+自身cal/150interval0.229414秒/OSpeak22122496B、診断0.017184秒/private16506880B。計算38e400親＋未commit新source/clean計算claim0。新records/prep/launch全閉鎖、source/input/date/Q/ledger/stdio/exit0local保全、今回新helper失敗0/原2失敗・旧closedroot不変。本文own-interval-doc-records、Git後own-interval-git-records post-save優先。
+
+次unitは[完了した誤差だけで更新する固定案](research/store-sales-sequential-interval-design-2026-10-14.md)：target終端<各origin、同store/context支持/過去正値だけ、最新26完了窓・最小20/fallback固定。future数値を触ると失敗するselector、新窓集合だけQ計算、同日付・残差・重みは原ownQ再利用を新少数確認。保存150point/旧intervalを反復せず新時点別区間一回。label前日確定の研究仮定/実as-of遅延未検証を保持。新手順未実装/未実行、grid/2017/予約0。
+
+追加agent0/CARE手動報告待ち・自動確認0。900秒2GiB/output1GiB/single32MiB/files32・通常24file768MiB/失敗8file256MiB、記録16MiB512files/256KiBparts/reserve2MiB16files、prep128KiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git独自code/集約docsのみ、原quantity/ledger/fit/予測送信0。
+
+---
+
 ## 最新 — ACTIVE / 共有総量区間と一尺度案完了、原2helper失敗を保全（2026-10-14 JST）
 
 声掛けまで直接自走承認継続。[区間結果](results/store-sales-shared-interval-results-2026-10-14.md)、[元区間設計](research/store-sales-shared-total-interval-design-2026-10-14.md)、[尺度案](research/store-sales-shared-local-interval-design-2026-10-14.md)を優先。direct ACTIVE/automation PAUSED更新0。
