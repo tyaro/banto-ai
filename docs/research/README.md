@@ -10,6 +10,8 @@
 
 ## 文書
 
+- [σ・EMAの学習入力への修正設計](demand-statistical-feature-input-design-2026-10-14.md)
+- [統計branchの新6接続確認](../results/demand-statistical-features-2026-10-14.md)
 - [σ・EMA・予測平均の固定案](demand-statistical-overlay-design-2026-10-14.md)
 - [統計併用6確認と回顧結果](../results/demand-statistical-overlay-2026-10-14.md)
 - [休日当日対前後の小型模型比較・条件未達で停止](../results/demand-calendar-model-pair-2026-10-14.md)

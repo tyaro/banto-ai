@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## σ・EMAを学習入力とする修正（2026-10-14・最新）
+
+[新設計](demand-statistical-feature-input-design-2026-10-14.md)で[新6確認](../results/demand-statistical-features-2026-10-14.md)完了。固定point併用の失敗と入力表現の問いを分け、8次元統計/支持mask→学習branchを追加。normalize/元入力維持、未来非アクセス、σ方向固定0。次は同shapeの0入力対有効入力の別学習契約。新fit/精度評価未実施、direct ACTIVE/automation PAUSED。
+
 ## σ・EMA・予測平均を分ける新研究（2026-10-14・最新）
 
 [固定案](demand-statistical-overlay-design-2026-10-14.md)で[新6確認と450窓](../results/demand-statistical-overlay-2026-10-14.md)完了。σは過去一歩先の散らばり、EMAは最近の誤差level。等重み候補joint約5.0%悪化/3of15で不採用・direct PAUSED。旧point/採点/NN/CI反復0、σのh別/総量/区間校正は未実施、automation PAUSED。
