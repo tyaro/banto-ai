@@ -1,3 +1,21 @@
+## 最新 — ACTIVE / 共有総量区間と一尺度案完了、原2helper失敗を保全（2026-10-14 JST）
+
+声掛けまで直接自走承認継続。[区間結果](results/store-sales-shared-interval-results-2026-10-14.md)、[元区間設計](research/store-sales-shared-total-interval-design-2026-10-14.md)、[尺度案](research/store-sales-shared-local-interval-design-2026-10-14.md)を優先。direct ACTIVE/automation PAUSED更新0。
+
+新weighted total residual/復元/mean変更なし/labelで条件選別0の5確認一回passed、新local単位不変/zero floor2確認一回passed。元1242残差・等store重みを引継ぎ、過去56正値pool1068（店21=10/22=4/29=19、他15店69）。支持をQ前保存、Q10/Q90 fixed全-.131799/.119959、fixed正値-.146550/.132069、local正値-.132406/.136755。条件分け後store再等重み0。point・旧fit・archive抽出・2017/予約・NN0。
+
+保存150窓で全fixed119/150=79.33%/幅1535.484876/score2132.646885、正値fixed123=82%/幅1699.310090/score2190.071778、local137=91.33%/幅2070.600570/score2198.416510。全体coverageだけで採択0。店20 fixed32/36→local76%、B/(14u)median2.942784、店8/24local100%・幅増の対価保持。mean点全変更0、coverage保証/メーカーPSI/TimesFM同等/正式採択0。尺度案不採択、基準mean28維持。2016回顧、zero context/floor検証n0null。
+
+local初helperはQ保存後integer store-key対JSON string-key AssertionError、原failed12file62426B/launch15file11959B保全。saved JSON全field一致。未起動continuation-v1/prepはpin表示訂正前の閉鎖保全、v2で原script pin参照→150interval/assessment保存後にratios未継承NameError、原failed14file176576B/launch10file8823B保全。別summary-onlyで保存assessmentから未保存要約だけcomplete、通過7確認/Q/150復元-score/原helpers反復0、failed書換え0。
+
+shared .074118秒/OSpeak18427904B、local元cal/restore全peak未保存をsummary-only .112237秒/private16584704Bで補わない。新records/prep/launch全閉鎖、原source/input/支持/Q/ledger/stdio/exit/failure保持。計算ed88親＋未commitsource/clean計算claim0。本文interval-result-doc-records、Git後interval-result-git-records post-save優先。
+
+次unitは[自身の過去残差の区間設計](research/store-sales-own-history-interval-design-2026-10-14.md)：固定検証6storeの2013–15prefix、元69日付、同pool条件/局所尺度で新自身calibrationの支持をQ前保存。最小20過去窓、不足null/fallback理由、係数・2016既知結果で確率/倍率を変えない。保存150pointを再計算せず一回記述。自身calibration使用ならzero-shot/cal未使用storeclaim0。新自身fit/intervalは未開始、旧評価/失敗/root反復0。
+
+追加agent0/CARE手動報告待ち・自動確認0。900秒2GiB/output1GiB/single32MiB/files32・通常24file768MiB/失敗8file256MiB、記録16MiB512files/256KiBparts/reserve2MiB16files、prep128KiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git独自code/集約docsのみ、原quantity/ledger/fit/予測送信0。
+
+---
+
 ## 最新 — ACTIVE / 共有数量残差一候補・新6店舗検証完了、事前条件未達（2026-10-14 JST）
 
 声掛けまで直接自走承認を継続。[結果](results/store-sales-shared-residual-2026-10-14.md)、[元固定設計](research/store-sales-shared-residual-design-2026-10-14.md)を優先。直接研究ACTIVE/automation PAUSED更新0。
