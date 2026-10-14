@@ -10,6 +10,8 @@
 
 ## 文書
 
+- [内部選択済み模型の未学習店舗への評価契約](demand-selected-series-evaluation-design-2026-10-14.md)
+- [未学習店舗の結果・mean28基準未達](../results/demand-selected-series-evaluation-2026-10-14.md)
 - [学習量・固定全件曲線・早期停止の新手順](demand-training-adequacy-design-2026-10-14.md)
 - [学習量診断の結果・1664best](../results/demand-training-adequacy-2026-10-14.md)
 - [固定二模型の2016時間順検証・条件未達で停止](../results/demand-statistical-feature-validation-2026-10-14.md)

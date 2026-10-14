@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 内部選択から離した未学習店舗の確認（2026-10-14・最新）
+
+[固定契約](demand-selected-series-evaluation-design-2026-10-14.md)の[一回評価](../results/demand-selected-series-evaluation-2026-10-14.md)を保存。best1664の二件を6店へ、positive5/zero-scale20保持。onはmean28比約23.85%悪化/改善1of5、off比約2.58%改善/5of5を分離。主副問とも基準未達、direct PAUSED。次は保存予測の補正誤差分解から原因候補を確認、新学習/forward/抽出/旧反復0。automation PAUSED/正式gate/原失敗維持。
+
 ## 学習終了の妥当性を測る新手順（2026-10-14・最新）
 
 [時間順分離/尺度/早期停止手順](demand-training-adequacy-design-2026-10-14.md)で[新4確認と二件曲線](../results/demand-training-adequacy-2026-10-14.md)完了。train450/内部val180、uはtrain期間のみ。両best1664/2432停止、256から内部val約9%改善、入力追加自体は約0.09%。この新条件で256は改善途中だった。旧256/u/2016失敗保全、旧最適stepや未知性能の証明ではない。次は内部選択手順を固定した性能評価の別契約、診断一回保存でdirect PAUSED/automation PAUSED。
