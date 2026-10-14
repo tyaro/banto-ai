@@ -6,6 +6,7 @@
 
 ## 独自モデルの需要用途
 
+- [学習量の時系列分離診断・256以降改善（2026-10-14）](demand-training-adequacy-2026-10-14.md)
 - [統計8入力の2016時間順検証・9of15/停止（2026-10-14）](demand-statistical-feature-validation-2026-10-14.md)
 - [統計8入力あり/なしの同条件学習比較（2026-10-14）](demand-statistical-feature-pair-2026-10-14.md)
 - [σ/EMAの追加学習入力・6確認（2026-10-14）](demand-statistical-features-2026-10-14.md)

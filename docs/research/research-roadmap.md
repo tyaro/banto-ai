@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 学習終了の妥当性を測る新手順（2026-10-14・最新）
+
+[時間順分離/尺度/早期停止手順](demand-training-adequacy-design-2026-10-14.md)で[新4確認と二件曲線](../results/demand-training-adequacy-2026-10-14.md)完了。train450/内部val180、uはtrain期間のみ。両best1664/2432停止、256から内部val約9%改善、入力追加自体は約0.09%。この新条件で256は改善途中だった。旧256/u/2016失敗保全、旧最適stepや未知性能の証明ではない。次は内部選択手順を固定した性能評価の別契約、診断一回保存でdirect PAUSED/automation PAUSED。
+
 ## 統計入力の後期検証で区切り（2026-10-14・最新）
 
 [固定契約](demand-statistical-feature-validation-design-2026-10-14.md)の[2016結果](../results/demand-statistical-feature-validation-2026-10-14.md)を保存。control比約0.0161%小幅改善だが9of15で10of15未達、支持pass・処理exit0/進捗falseを分離。direct PAUSED/自走停止、旧2015合格/原失敗保全。同統計のgrid/再学習/2017/予約群追試0。再開は価値のある効果の大きさと利用可能な営業/外部event情報から次の問いを判断。automation PAUSED/正式gate不変。

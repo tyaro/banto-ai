@@ -10,6 +10,8 @@
 
 ## 文書
 
+- [学習量・固定全件曲線・早期停止の新手順](demand-training-adequacy-design-2026-10-14.md)
+- [学習量診断の結果・1664best](../results/demand-training-adequacy-2026-10-14.md)
 - [固定二模型の2016時間順検証・条件未達で停止](../results/demand-statistical-feature-validation-2026-10-14.md)
 - [固定統計入力モデルの2016時間順検証契約](demand-statistical-feature-validation-design-2026-10-14.md)
 - [統計8入力の同条件学習比較・小幅改善](../results/demand-statistical-feature-pair-2026-10-14.md)
