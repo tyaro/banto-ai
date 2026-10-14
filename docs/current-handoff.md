@@ -1,3 +1,15 @@
+## 最新 — PAUSED / 内部選択済み模型の未学習店舗評価完了、基準未達（2026-10-14 JST）
+
+[評価結果](results/demand-selected-series-evaluation-2026-10-14.md)、[事前契約](research/demand-selected-series-evaluation-design-2026-10-14.md)を優先。人の「進んで」でbest2weightを固定し、fit/終了選択未使用の6店4/8/16/20/24/28へ一回適用。原系列は過去支持診断の既読で完全盲検claim0、追加学習/checkpoint選択0。前期2013Jan〜2014Junの自己u、positive5/zero-scale20を事前どおり確認、42channel維持。
+
+positive5 joint mean280.030097998779/off0.038265091961/on0.037276163673。基準比off27.135004%/on23.849310%悪化、各1of5で固定4of5未達。onはoff比2.584414%改善/全5店で小さいが、両対照基準副問は1of5未達。主模型転移/統計追加差を分離、支持pass/処理exit0/adopted=false、旧内部9%改善と旧失敗保全。
+
+150要求/NN125/baseline-only25/完全label144・Christmas欠測6保持、new profile150、全予測保存後label添付。店20正値318/実0 31/欠測1の原単位診断、u補完0。41.480635秒/private1059745792B、模型10file1238026B閉鎖、launch全stdioexit0、doc-records/Git後git-records post-save優先。source17/old bestweight不変、新helper失敗0/旧確認・評価・CI反復0。
+
+契約どおりdirect PAUSEDで区切り。次は保存予測だけのbaseline補正誤差分解を人と判断、新fit/forward/抽出を反復せず原因候補の支持を確認する。原因を内部過適合/分布差/尺度差へ断定0、seed/step/店舗/期間/尺度grid/2017/予約群へ自動進行0。automation PAUSED/CARE待ち/追加agent0、全実行/記録/prep/Git上限/formal_permission=false/credit0/native禁止/登録holdout未読/正式受入未完了。Git独自code/集約docsのみ、原quantity/profile/尺度/ledger/予測/weights送信0。
+
+---
+
 ## 最新 — PAUSED / 学習量の新時間順診断完了、256以降約9%改善・1664best（2026-10-14 JST）
 
 [新診断結果](results/demand-training-adequacy-2026-10-14.md)、[出力前手順](research/demand-training-adequacy-design-2026-10-14.md)を優先。人の「次のstepへ」で旧grid禁止を学習量確認の新手順の範囲で更新。旧weights延長/outer再評価0、旧256/2015/2016未達を保全。元630keyをtrain450/内部val180へ2014Jul1境界分離、uは2013Jan1〜2014Jun30のみ再計算、profile630再利用/再集計0、train支持42channel。
