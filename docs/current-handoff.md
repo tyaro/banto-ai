@@ -1,3 +1,15 @@
+## 最新 — ACTIVE / 休暇の長さをAstraと検討、区間入力の設計保存（2026-10-14 JST）
+
+人の明示依頼でAstra一件の独立検討を実施。[期間入力の判断と次の機構](research/demand-holiday-duration-design-2026-10-14.md)を優先。休暇長をevent属性として保持する案を採用、効果の方向/販促との共通係数/長いほど増加は採用しない。顧客行事・店の連続休業・販促・メーカー物流休業を分ける。5日event内に営業日があれば5連休へ補わない。
+
+既知版start/end/全length・前中後、営業open/closed/unknownを別にする。終了未定はnull/有効範囲、隣接営業不明の連続closed長は下限。起点後延長は過去へ戻さず、予測窓で全長を切らない。Store Salesの営業表/公表履歴欠如・年数支持/種別交絡を維持。将来の精度改善は未検証。
+
+次unitは数量非アクセスの区間adapterと新少数確認（単日/連日・途中営業/全営業・終了不明/未来延長・窓越え・重複/scope）。現一点event source/完了6確認は不変、今回source変更/新確認/fit/forecast/旧確認/CI0。機構後に営業日水準/確定closed0/unknown-missing/総量整合へ進み、模型接続は別出力前設計。
+
+本文representative-demand-holiday-duration-review-records、Git後同-review-git-records post-save優先。Astra要約/一次資料URL保存、全対話/Web全raw保存claim0。foreground roadmap読取りの誤path失敗は選択tool metadataだけ保存し、正pathへ訂正；helper/モデル失敗にしない。direct ACTIVE/automation PAUSED、CARE手動待ち/追加agent0、全実行/記録/prep上限維持、formal_permission=false/credit0/native禁止/登録holdout未読/正式受入未完了。Git設計と集約docsのみ、原quantity/予定実績/ledger/係数/予測送信0。
+
+---
+
 ## 最新 — ACTIVE / 休業状態・休日の前後入力へ優先変更、新6確認完了（2026-10-14 JST）
 
 人の「休日の0は事前処理が必要」「休日をイベントとして前後特性」に従い、入力支持通知より営業状態・event処理を優先。[新設計](research/demand-holiday-event-input-design-2026-10-14.md)、[入力経路と6確認](results/demand-holiday-event-input-2026-10-14.md)を優先。direct ACTIVE/automation PAUSED不変。
