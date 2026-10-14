@@ -1,3 +1,19 @@
+## 最新 — PAUSED / 8週回帰は学習前支持未達、保存して区切り（2026-10-14 JST）
+
+人の「きりがつくまで自走」に従い固定契約の前提確認を一回実施。[結果と停止理由](results/store-sales-weekly-ridge-readiness-2026-10-14.md)、[元案](research/store-sales-weekly-history-design-2026-10-14.md)を優先。direct PAUSED/automation PAUSED不変、同条件の再試行0。
+
+固定18trainの2013–14だけ数量・mask読取り。各730暦/728観測/欠測2、新uはfit期間だけ。店21/22/29は正値0・実0日728/u0・fit支持0で事前条件未達。他15店各42窓/計630、実0target店14=2/30=1保持。48fit起点/25dev日付header/境界2014Dec30除外1。dev2015/旧6検証/2016/2017/予約群quantity numeric0。
+
+rawの0とmissing・原label・理由を864候補ledgerに保持。尺度0を開店前/休業/欠品/需要0と解釈しない。2013–15支持通過をfit期間2013–14へ継承0。条件不成立は研究結果で、helper/model failureではない。summary support-insufficient-stop-before-fit、CLIexit0/record complete。solver作成/新確認/fit/2015評価/NN開始0、15店への黙った置換/尺度floor/期間変更0。
+
+新診断0.541222秒/OSpeak27602944B、計算parent3ee578/source bytes不変。元input pin/fit尺度/日付・支持/ledger/原stdioexit0local保存、原failed/旧closedroot不変。本文weekly-ridge-readiness-doc-records、Git後weekly-ridge-readiness-git-records post-save優先。
+
+次には数量支持のある既存系列と全ゼロ履歴の系列を分ける新しい学習/適用契約が必要。今回の固定条件未達は遡及変更せず保持。新群/期間/尺度/情報の設計は今回未開始、Git保存後待機。基準mean28総量＋限定暦配分維持/区間不採択、メーカーPSI/TimesFM同等/正式採択0。
+
+追加agent0/CARE手動待ち・自動確認0、全実行/記録/prep上限不変。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Gitは集約docsのみ、原quantity/ledger/尺度/fit送信0。
+
+---
+
 ## 最新 — ACTIVE / 8週履歴の新入力・5確認完了、ridge準備へ（2026-10-14 JST）
 
 [新入力の確認](results/store-sales-weekly-history-input-2026-10-14.md)、[主問の中間整理](research/demand-research-checkpoint-2026-10-14.md)、[固定案](research/store-sales-weekly-history-design-2026-10-14.md)を優先。人の直接自走承認ACTIVE、automation PAUSED不変。
