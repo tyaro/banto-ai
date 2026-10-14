@@ -10,6 +10,7 @@
 
 ## 文書
 
+- [8週回帰の学習前支持未達と区切り](../results/store-sales-weekly-ridge-readiness-2026-10-14.md)
 - [8週間の入力境界・新5確認](../results/store-sales-weekly-history-input-2026-10-14.md)
 - [需要研究の中間整理と追加学習の主問](demand-research-checkpoint-2026-10-14.md)
 - [8週間の履歴を残す次入力の固定案](store-sales-weekly-history-design-2026-10-14.md)

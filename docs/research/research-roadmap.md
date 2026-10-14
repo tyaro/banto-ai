@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 8週回帰の学習前条件未達で区切り（2026-10-14・最新）
+
+[固定18店の2013–14支持確認](../results/store-sales-weekly-ridge-readiness-2026-10-14.md)を一回実施。店21/22/29は観測728日全0/u0、前提未達でsolver/fit/2015評価前に停止。他15店各42窓を確保したが群を黙って変えない。2013–15の支持通過と今回の時間分離は別。0原因を営業状態へ補わず、新しい適用契約で既存数量系列とゼロ履歴系列の扱いを整理する必要を保存。現在はdirect PAUSED/automation PAUSED、旧確認/評価/CI/予約群読取り0、基準維持。
+
 ## 8週履歴の入力機構と次のfit準備（2026-10-14・最新）
 
 [自己8週間の新入力と5確認](../results/store-sales-weekly-history-input-2026-10-14.md)を完了。future/同B同xでの推移差/zero-missing/単位/fit cutoff guard成立、予測改善は未検証。次は8特徴ridge1のsolver・等店重み・fit尺度/中心・定数列・非負復元・fallbackと、2013–14 fit→2015回顧開発の支持・日付を係数前に固定。新fit未開始、旧2016再選択/2017/予約群0、基準維持、direct ACTIVE/automation PAUSED。
