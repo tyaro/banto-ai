@@ -1,3 +1,17 @@
+## 最新 — PAUSED / 研究結果は保存、GitHub通信失敗で自走停止（2026-10-14 JST）
+
+人の「進めなくなった場合自走を止める」方針に従いdirect PAUSED。automationは既にPAUSED/変更0。時点別区間の[結果](results/store-sales-sequential-interval-2026-10-14.md)と新5確認は完了。次の研究主問の中間整理は未開始。新評価/旧確認/CI/追加agent/原payload変更0。
+
+自身区間と診断の先行保存はHEAD bd006f5220932b7a53e1343b6a146ef3112c9b82/upstream/lsremote一致cleanを原own-interval-git-recordsに保存。続く時点別区間のcode/docsはローカル2commit ff2ce89962c96ccfc942f8c8846d4dba8ca140ea、a2bf20b5d52661fcac874f49b7d2295087917fbbを作成後、push exit128/Recv failure: Connection was reset。原sequential-interval-git-records failed/95file66551B閉鎖・変更0。
+
+別continuationは同HEAD/clean/remote URL照合後、ls-remote一回がexit128で失敗。remote反映不明、再push条件未成立なのでpush追加0/commit追加0、原failed継承を書換えない。continuation原stdout/stderr/return/traceを閉鎖保存。通信失敗をモデル/確認/CI/native/Sol容量へしない。最後に確認できたremote HEADはbd006、現在remoteをそれと断定しない。
+
+今回停止metadataとlocal停止文書commitはartifacts/representative-store-sales-sequential-interval-pause-20261014-recordsを優先。元未送信2commitに加えて停止文書だけlocal commitし、送信の反復なし。localのみの停止保存をremote保存成功へ補わない。通信が利用可能になった後の明示再開では新rootでremoteを一度確認し、HEAD/必要な送信を確定してから次研究へ進む。旧Git/helper/評価のblind retry0、送信の継続承認は有効。
+
+採択0、mean28総量＋限定暦配分基準維持、区間は研究用。実行900秒2GiB/output1GiB/single32MiB/files32、通常24file768MiB/失敗8file256MiB、記録16MiB512files/256KiBparts/reserve2MiB16files、prep128KiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。CARE手動報告待ち・自動確認0。Gitは独自code/集約docsのみ、原quantity/ledger/尺度/予測送信0。
+
+---
+
 ## 最新 — ACTIVE / 完了誤差による時点別区間完成、小改善・店舗悪化を保全（2026-10-14 JST）
 
 声掛けまで直接自走承認継続。[新結果と研究判断](results/store-sales-sequential-interval-2026-10-14.md)、[固定設計](research/store-sales-sequential-interval-design-2026-10-14.md)、Git後sequential-interval-git-records post-save優先。direct ACTIVE/automation PAUSED更新0。

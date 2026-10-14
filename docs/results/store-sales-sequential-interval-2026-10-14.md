@@ -53,7 +53,7 @@ score改善は店8/28だけ、4/16/20/24は悪化。店24は64→72%と包含率
 
 文書用scriptを生成するforeground Python stdinが、外側と内側の三重引用符の衝突でSyntaxError/exit1。isolate/モデル失敗ではなくforeground parserの失敗で、doc helper/root作成・tracked変更前だった。tool chunk d46f61の選択エラーmetadataを別rootへ保存。原stdin全体・元process全stdioの保存ではない。原未起動rootを再実行せず、このv2文書helperだけで保存数値を文章化した。旧評価・新5確認の反復0。
 
-new script/source全文/固定設計/元input pins/時点別pool日付・支持/Q/原Q reuse/新150区間・assessment/全6店舗・四半期/原stdio・exit0を新閉鎖rootへ保存。本文sequential-interval-doc-v2-records、Git後sequential-interval-git-records post-save優先。Gitは独自codeと集約docsだけ、原数量/ledger/尺度/予測を送信しない。
+new script/source全文/固定設計/元input pins/時点別pool日付・支持/Q/原Q reuse/新150区間・assessment/全6店舗・四半期/原stdio・exit0を新閉鎖rootへ保存。本文sequential-interval-doc-v2-records。原Git保存はcommit2完了後push通信切断でfailed、別continuationもremote読取りexit128でfailed/追加push0。停止保存はsequential-interval-pause-recordsを優先し、原failedは変更しない。Gitは独自codeと集約docsだけ、原数量/ledger/尺度/予測を送信しない。
 
 ## 研究上の判断と次
 
@@ -62,3 +62,7 @@ new script/source全文/固定設計/元input pins/時点別pool日付・支持/
 次unitは研究ロードマップの主問へ戻り、保存済み小型モデル・平均出力・共有残差・区間の設計と結果を読取りで整理する。どの仮説を否定でき、どの仮説は未検証かを分け、独自モデルを次に学習するために必要な追加情報・群・評価契約を文章で固定する。既存scoreを再計算せず、同じ数量差NN/区間grid/2017追試を自動で始めない。未来販促予定がないことを研究全体の停止条件には戻さない。
 
 direct ACTIVE/automation PAUSED、CARE手動報告待ち・自動確認0、追加agent0。900秒2GiB/output1GiB/single32MiB/files32、通常24file768MiB/失敗8file256MiB、記録16MiB512files/256KiBparts/reserve2MiB16files、prep128KiB16files不変。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。
+
+## 保存後の通信停止
+
+時点別区間の独自code/集約docsはローカル2commitを作成したが、GitHubへのpushはexit128/Recv failure: Connection was reset。別rootでremoteを一度読取る操作もexit128になり、反映を確認できなかった。新commitや評価を繰り返さず、追加push0。元full stdout/stderr/return/traceとfailed状態を各閉鎖rootへ保存した。人の自走停止方針に従いdirect PAUSED、automation PAUSED不変。停止文書をlocalだけcommitして保全する。remote反映不明、送信完了とはしない。
