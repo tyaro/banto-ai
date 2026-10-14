@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 公開暦の共通入力とfit支持（2026-10-14・最新）
+
+[新6確認/630key支持](../results/demand-public-calendar-input-2026-10-14.md)完了。enabled42/56、数値解釈なし。次は固定新模型の接続確認→当日/前後二件の固定学習。旧反復0/direct ACTIVE/automation PAUSED。
+
 ## 公開暦と営業予定を分ける接続条件（2026-10-14・最新）
 
 [入力/模型/比較の新条件](demand-calendar-model-connection-design-2026-10-14.md)を保存。公開は名目8日付前後のsales平均、営業表経路は営業時meanとclosed0で意味を分ける。次は単store56/14・暦60のpure入力とdate-mask支持metadata。その後だけ当日control対前後候補の同shape/同initial二件、正尺度15fit13–14→既知2015回顧の固定案。支持/学習/新予測未開始、実連休長/営業calendar捏造0、旧確認/評価/CI0、direct ACTIVE/automation PAUSED。

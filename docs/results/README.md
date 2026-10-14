@@ -6,6 +6,7 @@
 
 ## 独自モデルの需要用途
 
+- [名目暦60の入力確認・fit支持（2026-10-14）](demand-public-calendar-input-2026-10-14.md)
 - [営業日水準と確定休業0・新6確認（2026-10-14）](demand-operating-sales-2026-10-14.md)
 - [休暇区間と営業予定の分離・新6確認（2026-10-14）](demand-event-interval-input-2026-10-14.md)
 - [営業状態と休日の前後入力・新6確認（2026-10-14）](demand-holiday-event-input-2026-10-14.md)
