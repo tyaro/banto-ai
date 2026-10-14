@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## 需要の期待数量と代表値・意思決定（2026-10-14・最新）
+
+[mean/median/decision quantileの整理](../results/store-sales-quantity-objectives-2026-10-14.md)と保存train記述を完了。期待数量はmean/MSE、代表Q50はMAE、PSIdecision量は費用等と別契約。Q3からmeanを補わない。次は[meanとquantileの独立出力設計](demand-mean-and-quantile-model-design-2026-10-14.md)の新実装・少数確認。mean選択の主指標をvalidation MSEへ揃える。今回新学習/2017補正0、旧計算不採択と基準を維持。6新確認pass、元scriptの記録label上限エラーはfailed保全・別continuationで未開始集計のみ完成、旧確認反復0。直接研究ACTIVE/automation PAUSED。
+
 ## 需要入力の確認と数量目的の整理（2026-10-14・最新）
 
 [追加入力の新7機構確認・新3接続確認・一回評価](../results/store-sales-small-model-inputs-2026-10-14.md)を完了。[設計](store-sales-small-model-input-pilot-design-2026-10-14.md)を固定後、保存日付列・同予算256stepを別候補で実行。総量WAPEは微改善、過小Bias増・日次は暦配分基準未達、区間scoreも基準未達。基準を維持し採択0。次は点予測の平均対中央値とlossの目的を式・train側で整理し、meanとquantileを分ける設計を先に固定する。第三候補や2017bias補正を今開始しない。旧学習/評価/確認/CI反復0、直接研究ACTIVE/automation PAUSED。

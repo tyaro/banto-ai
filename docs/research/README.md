@@ -10,6 +10,9 @@
 
 ## 文書
 
+- [需要数量の平均・中央値・意思決定分位点](../results/store-sales-quantity-objectives-2026-10-14.md)
+- [数量目的の診断前設計](demand-quantity-objective-design-2026-10-14.md)
+- [meanとquantileを分ける次候補設計](demand-mean-and-quantile-model-design-2026-10-14.md)
 - [水準・相対変動とイベント入力の確認・一回接続結果](../results/store-sales-small-model-inputs-2026-10-14.md)
 - [追加入力のモデル接続・評価設計](store-sales-small-model-input-pilot-design-2026-10-14.md)
 - [小型需要モデルのtrain側診断](../results/store-sales-training-diagnosis-2026-10-14.md)
