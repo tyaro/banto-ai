@@ -1,3 +1,15 @@
+## 最新 — ACTIVE / 8週履歴の新入力・5確認完了、ridge準備へ（2026-10-14 JST）
+
+[新入力の確認](results/store-sales-weekly-history-input-2026-10-14.md)、[主問の中間整理](research/demand-research-checkpoint-2026-10-14.md)、[固定案](research/store-sales-weekly-history-design-2026-10-14.md)を優先。人の直接自走承認ACTIVE、automation PAUSED不変。
+
+新demand_weekly_history.py/testの5確認一回allpassed、親経過0.202589秒・全childstdio/exit0保存。自己origin前56日8×7週、r=(W−B/2)/(7u)・過去28日同曜日B、全週支持/理由付きnull/baseline fallback。future getter拒否、同B/xで古い推移差、実0対missing、単位変換、fit cutoff前u numeric guard成立。新quantity/fit/forecast/旧確認/CI0、予測性能改善claim0。原shared residual/mean source/設計bytes不変、原failed/closedroot変更0。
+
+次unitは8特徴共有ridge1のsolver/等店重み/fit尺度と中心/定数列/非負復元/fallbackの新機構確認、保存18train snapshotの2013–14 fit→2015回顧開発の日付・支持・新uを係数前に固定する準備。solver/新fit/2015評価未実装・未実行。全体macroMSE両対照より小＋12/18店が次設計の進捗条件、未達なら同特徴NN/grid/seed/2017開始0。予約31〜54数量未読/旧6店2016再選択0。
+
+基準mean28総量＋限定暦配分/区間研究用不採択、平均・Q50・区間・意思決定量別、メーカーPSI/TimesFM同等/正式採択0。本文weekly-history-checks-records、Git後weekly-history-git-records post-save優先。追加agent0/CARE手動待ち・自動確認0、全実行/記録/prep上限不変、formal_permission=false/credit0/native reader禁止/登録holdout未読。Git独自code/集約docsのみ、原quantity/ledger/尺度/fit/予測送信0。
+
+---
+
 ## 最新 — ACTIVE / 研究中間整理完成、次は8週履歴の新入力境界（2026-10-14 JST）
 
 人の「進めましょう」で直接研究を再開。automation PAUSED不変。Git復旧ab6935aa92b84fad06d5725b2a8a755a8eaabf6aの保存後状態を優先し、旧ネットワーク停止は履歴。新[主問・根拠と未回答の整理](research/demand-research-checkpoint-2026-10-14.md)、[次の入力固定案](research/store-sales-weekly-history-design-2026-10-14.md)を保存。
