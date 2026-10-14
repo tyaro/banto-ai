@@ -1,3 +1,9 @@
+## 最新 — PAUSED / Mac向けデータセット取得URLを追記（2026-10-15 JST）
+
+[Mac引継ぎの取得URL](research/pc-handoff-2026-10-14.md#データセットの公式ダウンロードurl2026-10-15追加)を追加。現在必要なStore Salesの公式data/rules、既存ZIP照合値、別用途のUCI/CARE/XJTU-SY取得入口を記載。再取得原本と保存weights/入力/結果のコピーを区別し、既存閉鎖rootを上書きしない。新download/模型/確認/CI0、direct/automation PAUSED・CARE手動待ち・全上限/formal_permission=false/credit0維持。mac-dataset-links-records及びGit後mac-dataset-links-git-recordsの保存を参照。
+
+---
+
 ## 最新 — PAUSED / 承認済み旧証拠3.46GBをbackupなし削除（2026-10-14 JST）
 
 人の旧研究証拠不要方針→具体範囲確認への「この対象をバックアップなしで削除する」で、旧異常/C0-C2/Windows受入/旧CIの913folder＋26単独log・41450file/3462579416Bを指定一覧だけ一回削除。旧C0保管archiveも削除・復元不可、Git集約docs/sourceは保持。[現在の保管/移行範囲](research/workspace-retention-2026-10-14.md)と[Mac引継ぎ](research/pc-handoff-2026-10-14.md)を優先。
