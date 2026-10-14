@@ -1,3 +1,11 @@
+## 最新 — PAUSED / Macへ引継ぎ（2026-10-14 JST）
+
+人の別PC/Macへの作業移転に従い、このWindows PCの研究を停止。[Mac向け引継ぎ](research/pc-handoff-2026-10-14.md)にGit branch/読取り順/非Git data・artifactのコピー範囲/Mac専用venv/Windows計測・launcherの移植/転送照合/再開境界を保存。最新研究は直下の一軌跡比較完了・暫定条件未達。新模型/確認/CI/データ抽出/原root変更0、転送/archive作成・宛先受領確認0。automation banto-10の保存設定PAUSEDを確認、更新0。初foreground CODEX_HOME未設定のJoin-Path警告は別の既知config path読取りで状態確認したmetadataだけ。
+
+このPCではdirect/automation PAUSED、別PCで人の再開指示まで新実験開始0。Git独自source/集約docs承認範囲・全上限・formal_permission=false/credit0/native7役禁止/登録holdout未読/CARE手動待ちを保持。pc-handoff-doc-records/Git後pc-handoff-git-records post-save優先、閉鎖root追記0。
+
+---
+
 ## 最新 — PAUSED / 店舗分離による一軌跡二選択点の比較完了（2026-10-14 JST）
 
 [新結果](results/demand-group-selection-2026-10-14.md)、[実行前契約](research/demand-group-selection-design-2026-10-14.md)を優先。人の次stepでAstra案Bを一件実施。A+B10店fit300/同店時間val120/C5店移行val60、C前期150はfit外、自己前期u/統計profile再利用、fit暦42channel。新統計入力あり一軌跡、Cだけの停止3840・時間best3328/移行best3072。clone固定後に既読6店2015へ新二state各一回、旧model/学習/確認/CI反復0。
