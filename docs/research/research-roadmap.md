@@ -1,5 +1,9 @@
 # 研究ロードマップ
 
+## Astraの評価方法レビュー（2026-10-14・最新）
+
+[独立レビューと改善案](demand-evaluation-methodology-astra-review-2026-10-14.md)を人の明示委任で保存。現在の学習/選択/評価の目的整合、尺度/zero群、指標/判定、選択過適合と最小の次手順を点検。提案の実装や新実験は行わず、元結果/失敗を保全、研究/automation PAUSED。次はレビューに基づき主問と評価契約を人と判断する。
+
 ## 内部選択から離した未学習店舗の確認（2026-10-14・最新）
 
 [固定契約](demand-selected-series-evaluation-design-2026-10-14.md)の[一回評価](../results/demand-selected-series-evaluation-2026-10-14.md)を保存。best1664の二件を6店へ、positive5/zero-scale20保持。onはmean28比約23.85%悪化/改善1of5、off比約2.58%改善/5of5を分離。主副問とも基準未達、direct PAUSED。次は保存予測の補正誤差分解から原因候補を確認、新学習/forward/抽出/旧反復0。automation PAUSED/正式gate/原失敗維持。

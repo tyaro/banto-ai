@@ -10,6 +10,7 @@
 
 ## 文書
 
+- [Astraによる評価方法の深いレビューと改善案](demand-evaluation-methodology-astra-review-2026-10-14.md)
 - [内部選択済み模型の未学習店舗への評価契約](demand-selected-series-evaluation-design-2026-10-14.md)
 - [未学習店舗の結果・mean28基準未達](../results/demand-selected-series-evaluation-2026-10-14.md)
 - [学習量・固定全件曲線・早期停止の新手順](demand-training-adequacy-design-2026-10-14.md)
