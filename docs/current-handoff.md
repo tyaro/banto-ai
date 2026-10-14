@@ -1,3 +1,15 @@
+## 最新 — ACTIVE / 休暇の区間入力と休業長の分離、新6確認完了（2026-10-14 JST）
+
+[区間入力の実装と確認](results/demand-event-interval-input-2026-10-14.md)、[Astraと検討した設計](research/demand-holiday-duration-design-2026-10-14.md)を優先。新demand_event_intervals.py/testの6代表確認一回allpassed、全childstdio/exit0保存。数量/fit/forecast/旧確認/CI0、既存一点event source/test/完了記録不変。
+
+既知版inclusive start/end/全length、前中後・境界±3・未確定8channel/kind、重複binary＋ID別length保持。end nullはongoing/予定未取得の理由とconfirmed_through、範囲外はundetermined；未来延長/営業予定payloadは起点前非アクセス。窓越え全長を切らず、5日eventの途中営業で2日休業二つを分ける。営業calendarは窓外も使い、両隣openだけ全休業長、unknown境界は下限/null。日別open/closed/unknownとevent別。
+
+次unitは営業日同曜日水準/確定closed sales0/営業実0・unknown/missing・支持不足/全休業/日次総量整合の新pure処理。原label変更0、period長tensor集約/模型接続/学習は未実装・別出力前設計。新6確認は架空予定の機構で、休暇長の実需要効果/精度改善/販促効果の実証0。Store Sales営業表/公表履歴不明・元日0/Christmas欠測を保持。
+
+本文representative-demand-event-intervals-records、Git後同-intervals-git-records post-save優先。全新prep/records閉鎖・原failed不変。direct ACTIVE/automation PAUSED、追加agent0/CARE手動待ち・自動確認0、全実行/記録/prep上限不変、formal_permission=false/credit0/native禁止/登録holdout未読/正式受入未完了。Git独自code/架空確認/集約docsのみ、原quantity/予定実績/ledger/係数/予測送信0。
+
+---
+
 ## 最新 — ACTIVE / 休暇の長さをAstraと検討、区間入力の設計保存（2026-10-14 JST）
 
 人の明示依頼でAstra一件の独立検討を実施。[期間入力の判断と次の機構](research/demand-holiday-duration-design-2026-10-14.md)を優先。休暇長をevent属性として保持する案を採用、効果の方向/販促との共通係数/長いほど増加は採用しない。顧客行事・店の連続休業・販促・メーカー物流休業を分ける。5日event内に営業日があれば5連休へ補わない。
