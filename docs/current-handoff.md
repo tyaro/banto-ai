@@ -1,3 +1,21 @@
+## 最新 — ACTIVE / train側の支持例・連続ゼロ・入力情報診断完了（2026-10-14 JST）
+
+人の「進めて」を継続。[train診断結果](results/store-sales-training-diagnosis-2026-10-14.md)、[計算前設計](research/store-sales-training-diagnosis-design-2026-10-14.md)、[次の入力設計](research/store-sales-small-model-input-design-2026-10-14.md)を優先。直接研究ACTIVE/既存automation PAUSED更新0。
+
+保存snapshotのquantity数値読取りを2013–15に限定、2016/17はdate判定後skip。元991train origin/元batch日付列から新診断、旧model/weight/forward/fit/選択/旧評価/CI反復0。新parser・zero run境界・初期lossの3確認一回allpassed。2973train行/72event支持行、snapshot/input/source pins保存、全新records/各prep閉鎖。
+
+train基準総量WAPE店5 5.470893/11 5.495896/12 14.763040%。店12ゼロ60日2015Mar30–May28、label接触73/contextだけ56/非接触862。129/991=13.02%が初期設計loss24.53%、非接触もWAPE10.27%。初期lossはfloat64の設計式で、原Torch logや学習後原因ではない。ゼロ原因不明/除去0/欠測をゼロにしない。
+
+元日distinct label日2/store-day6（42重複出現）、他6event各3/store-day9（126重複）、Christmas0。元日2014/15の3店舗実ゼロ。May1店5/11の6例1.13–1.39倍、店12の2015May1/24は0/0null。元schedule step64 512draw/unique401、256 2048/856、distinctevent日20不変。反復数を新年事例へ増やさない。
+
+sourceと式：floor非作動ならx→a*x+cでnormalized token不変、head倍率同一/T0復元だけでは相対変動s/mを識別できない。これは性能失敗の因果証明ではない。次は新namespaceの純粋入力関数でcontext mean/train mean・std/max(mean,floor)と名目event8one-hotを少数確認。新学習は接続/評価設計の固定後、学習量増加・系列拡大・旧train反復を今開始しない。2017は回顧/採択0。基準mean28総量＋限定暦配分を維持。
+
+診断6.006506秒/OSpeak20766720B、fullstdio/exit0はtraining-diagnosis-launch-records。本文doc-records、Git後training-diagnosis-git-20261014-records post-save優先。原失敗/全旧閉鎖root不変、CARE手動報告待ち/自動確認0、追加agent0。
+
+900秒2GiB/output1GiB/single32MiB/files32、記録16MiB512files/256KiBparts/reserve2MiB16files、prep128KiB16files維持。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。Git継続承認で独自code/集約文書だけ、CSV/生ledger/fit/重み送信0。
+
+---
+
 ## 最新 — ACTIVE / 独自小型需要モデルの設計・一回探索完了（2026-10-14 JST）
 
 人の需要適用設計と自走指示を継続。[設計](research/store-sales-small-model-design-2026-10-14.md)と[結果・判断](results/store-sales-small-model-2026-10-14.md)を優先。直接研究ACTIVE、既存automation PAUSED/更新0。
