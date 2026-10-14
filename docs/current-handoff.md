@@ -1,3 +1,15 @@
+## 最新 — Git保存復旧 / 研究作業は待機（2026-10-14 JST）
+
+人の「再度ためしてください」で通信確認と未送信commitの再送を実施。新専用sequential-interval-git-retry-20261014-recordsにremote観測→未反映確認→同承認済みHEAD一回push→HEAD/upstream/lsremote一致cleanを保存。保存HEAD37460fb61205fb74c304f6e3418db9905759fd8c、独自code/集約docsだけ送信、原quantity/ledger/尺度/予測送信0。
+
+先行push/remote照会のfailed2root・原stdout/stderr/return/traceは不変。原失敗を成功へ変更せず、新retry rootのpost-saveが復旧証拠。今回の復旧文書保存後はartifacts/representative-store-sales-sequential-interval-git-retry-save-20261014-recordsを優先する。下の通信未確認・停止記録は実施時点の履歴。
+
+今回指示の対象はGit再試行で、新研究・評価・確認・CI再実行0。研究は待機、automation PAUSED不変。次の研究unitは保存済み小型モデル/平均出力/共有残差/区間の設計・結果から未検証仮説と追加学習の条件を整理するもの。同2016区間grid/同数量差NN/2017追試は未開始。基準mean28総量＋限定暦配分/区間不採択を維持。
+
+追加agent0/CARE手動待ち・自動確認0、実行・記録・prep上限不変。formal_permission=false/credit0/native reader禁止/登録holdout未読/正式受入未完了。
+
+---
+
 ## 最新 — PAUSED / 研究結果は保存、GitHub通信失敗で自走停止（2026-10-14 JST）
 
 人の「進めなくなった場合自走を止める」方針に従いdirect PAUSED。automationは既にPAUSED/変更0。時点別区間の[結果](results/store-sales-sequential-interval-2026-10-14.md)と新5確認は完了。次の研究主問の中間整理は未開始。新評価/旧確認/CI/追加agent/原payload変更0。

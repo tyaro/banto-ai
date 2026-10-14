@@ -66,3 +66,7 @@ direct ACTIVE/automation PAUSED、CARE手動報告待ち・自動確認0、追�
 ## 保存後の通信停止
 
 時点別区間の独自code/集約docsはローカル2commitを作成したが、GitHubへのpushはexit128/Recv failure: Connection was reset。別rootでremoteを一度読取る操作もexit128になり、反映を確認できなかった。新commitや評価を繰り返さず、追加push0。元full stdout/stderr/return/traceとfailed状態を各閉鎖rootへ保存した。人の自走停止方針に従いdirect PAUSED、automation PAUSED不変。停止文書をlocalだけcommitして保全する。remote反映不明、送信完了とはしない。
+
+## 通信再試行後の保存復旧
+
+人の再試行指示で新rootからremoteを確認し、未反映だった承認済み3commitを一回push。HEAD37460fb61205fb74c304f6e3418db9905759fd8c/upstream/lsremote一致cleanを確認した。原failed2rootは変更しない。復旧の原証拠はsequential-interval-git-retry-records、今回文書保存後はsequential-interval-git-retry-save-recordsを優先。新評価/旧確認/CI反復0、研究作業は待機・automation PAUSED不変。
