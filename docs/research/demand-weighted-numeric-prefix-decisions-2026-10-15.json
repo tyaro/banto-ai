@@ -1,0 +1,78 @@
+{
+  "2015_stop": true,
+  "actual_arrival_timestamps_verified": false,
+  "adopted": false,
+  "all_beta0_feasible": true,
+  "can_launch_learning": false,
+  "canonical_daily_residue_primary_rows": 87,
+  "compile_calls": 25,
+  "consumer_compile_executed": true,
+  "execution_scope": "authorized_real2013_compile_only",
+  "fit_ready": false,
+  "heartbeat": "PAUSED",
+  "historical_selection_bias_removed": false,
+  "independent_comparisons": 54191,
+  "intentional_failure_roots_preserved": 2,
+  "interruption_test": "direct_parent_sealer_simulation_not_subprocess_timeout",
+  "label_complete": true,
+  "label_imputation": false,
+  "label_observations": 2940,
+  "legacy_artificial_ready_field_preserved": true,
+  "mac_resources": "passed",
+  "max_bits": 933,
+  "new2014_quantity_decode": false,
+  "new2014_scores": false,
+  "new2015": false,
+  "new_fit": false,
+  "new_predictions": false,
+  "next_step": "Keep learning/2015 stopped. Compile-only ready; actual fit requires explicit human restart plus existing AND entry conditions; no automatic solve/2014 score.",
+  "nonzero_beta_computed": false,
+  "observed_assumed_separate": true,
+  "os_dependent_suite": "not_run",
+  "primary_counts": [
+    30,
+    60,
+    70,
+    50
+  ],
+  "problem_rows": 1190,
+  "quantity_payload_materialized": true,
+  "quarter_support": {
+    "Q1": {
+      "old_E": 30,
+      "r_positive": 10,
+      "r_zero": 20,
+      "rows": 30
+    },
+    "Q2": {
+      "old_E": 60,
+      "r_positive": 24,
+      "r_zero": 36,
+      "rows": 60
+    },
+    "Q3": {
+      "old_E": 70,
+      "r_positive": 30,
+      "r_zero": 40,
+      "rows": 70
+    },
+    "Q4": {
+      "old_E": 50,
+      "r_positive": 19,
+      "r_zero": 31,
+      "rows": 50
+    }
+  },
+  "raw_label_zeros": 0,
+  "real2013_compile_verified": true,
+  "same_closure_mean28_maintained": true,
+  "seasonal_performance_gate_evaluated": false,
+  "seasonal_under_over_nonincrease_maintained": true,
+  "solve_calls": 0,
+  "source_row_json_decodes_per_execution_stage": 630,
+  "source_transform_decodes_per_stage": 1,
+  "status": "real2013_numeric_prefix_compile_and_beta0_verified",
+  "tuning_last_year": 2014,
+  "unique_selected_label_rows": 210,
+  "windows_native": "not_run"
+}

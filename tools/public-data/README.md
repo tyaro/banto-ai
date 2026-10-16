@@ -1,3 +1,16 @@
+## Macの産業データ準備（2026-10-16）
+
+[取得・準備結果](../../docs/results/industrial-data-macos-intake-2026-10-16.md)と[原本index](../../datasets/manifests/industrial-macos-source-index-20261016.json)が現在の入口。原本は同workspaceのrepository外cache、新入力はartifacts/public-datasetsに保管。既存closed rootへの再実行・上書きは禁止。
+
+- MetroPTは既存importerとmodels/mini-transformer/data.py::load_fixed_dayへ接続済み。
+- 油圧はindustrial_data.py::hydraulic_window(root, cycle, origin, context=128, horizon=32, split=...)を使う。rootはartifacts/public-datasets/hydraulic-macos-20261016。cycle境界・splitを検査し、条件labelを入力へ入れない。
+- XJTUの完成rootはartifacts/public-datasets/xjtu-sy-macos-20261016-7zip。全原本・member一覧と、3軸受の8特徴量JSONLがある。raw波形は連続結合しない。macos_industrial_prepare.pyのlibarchive版XJTUモードは失敗を保持した履歴で、今後はmacos_xjtu_7zip_prepare.pyの公式7-Zip経路を参照する。
+- macos_industrial_fetch.pyはHTTPS取得/source pin、macos_industrial_run.pyとv2はfresh stdio/exit記録、macos_industrial_readback.pyは保存値の確認用。これらの完了済み処理を同じrootへ反復しない。
+
+この準備は学習・予測・性能採点を実行しない。以下は従来MetroPT取込仕様。
+
+---
+
 # MetroPT-3 公開データ取込
 
 MetroPT-3の取得元と再配布可能性を固定し、取得済みarchiveを検証するための最小ツールです。sourceのraw archiveはGitへ追加せず、repository外のcacheで管理します。core importは標準ライブラリだけで、外部通信は明示的な準備コマンドを実行した場合に限ります。

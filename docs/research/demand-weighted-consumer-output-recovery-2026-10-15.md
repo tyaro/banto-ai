@@ -1,0 +1,7 @@
+# 人工consumerの出力復元
+
+2026-10-15 JST。初回execution-recordsはchild exit0・全人工passの完全stdoutを保存したが、capture_process既定stdout上限1MiB超過でOutputLimitErrorとなった。失敗root/source/全stdioを保持する。
+
+上限とconsumerを変更せず、同じ試験も再実行しない。fresh recovery-recordsへ、保存済みstdoutの各case_completeと最後のcompleteを読み出して完全case archiveを再構築する。元root closure/source pins/exit0/空stderr/27case/5replay/人工onlyを確認してから独立readerへ渡す。外部pathの実データやラベルは読まない。新記録は大きいJSONをEvidenceStoreの既定256KiB分割itemへ直接保存し、stdio上限は拡張しない。元rootのfailedはcompleteへ変更しない。
+
+β0人工検証は一度だけ。独立readerは旧consumer等をimportせず、新しいreadback-v2-recordsへstdio/exit/resource/closureを保存する。parent900/child870・各2GiB・8192bit・EvidenceStore16MiB/512file等、事前契約の上限と学習/2015停止は維持する。

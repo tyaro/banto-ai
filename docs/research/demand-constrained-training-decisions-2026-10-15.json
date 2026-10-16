@@ -1,0 +1,22 @@
+{
+  "adopted": false,
+  "fit_execution_contract_ready": false,
+  "formal_permission": false,
+  "heartbeat": "PAUSED",
+  "new_2015_content": false,
+  "new_evaluation": false,
+  "new_feasibility_solve": false,
+  "new_fit": false,
+  "new_predictions": false,
+  "status": "analysis_and_single_design_complete",
+  "training_proposal": {
+    "constraints": "all_past_quarter_under_over_and_training_nonnegative",
+    "features": "existing_common_3",
+    "outer_three_conditions_preserved": true,
+    "postfit_alpha": false,
+    "ridge_lambda": 1,
+    "risk_rows": "all_observed_complete_including_input_fallback",
+    "training_missing_zero": false,
+    "training_q_mse_hard_constraint": false
+  }
+}

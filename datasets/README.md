@@ -1,3 +1,9 @@
+## 最新のMac取得状態（2026-10-16）
+
+MetroPT-3・Condition monitoring of hydraulic systems・XJTU-SYをWindowsコピーではなく公式配布元から新規取得した。[取得結果と入力の入口](../docs/results/industrial-data-macos-intake-2026-10-16.md)、[原本index](manifests/industrial-macos-source-index-20261016.json)を参照。repository外の原本cacheと、artifacts/public-datasets内の新準備済み入力を分ける。XJTUは全15軸受の原本を保持し、特徴量は3軸受の完全系列だけ生成済み。CAREは別途受領済みで未取込。モデル学習・性能評価・2015再評価は再開していない。以下は従来の方針と履歴。
+
+---
+
 # データポリシーと配置
 
 顧客データを扱わず、合成データと利用条件を確認した公開データで研究する。公開データの選定理由と取得・変換境界は [`docs/public-dataset-survey.md`](../docs/research/public-dataset-survey.md) と [`docs/adr-0005-public-dataset-boundary.md`](../docs/decisions/adr-0005-public-dataset-boundary.md) を正本とする。

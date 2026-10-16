@@ -1,3 +1,1023 @@
+## 最新 — 全層診断完了、局所差は全通過・累積1点未達（2026-10-16）
+
+将来候補メモ: [linfaとsmartcore・Astraレビュー](research/rust-classical-ml-linfa-smartcore-note-2026-10-16.md)を保存。古典MLの比較基準/保全先行の候補、現在のR1未達と実行順は不変。
+
+[結果と固定条件](results/banto-ai-rust-r1-all-layer-audit-2026-10-16.md)。固定55箇所×7case/953,694要素で、同一入力の局所差超過0、上流累積の超過1。PP/RRの既存anchor各161箇所bytes一致、有限948,654要素でtotal=local+propagatedが厳密成立。 残るtrain-last blocks.1 index3450は局所差0、差2.741813660e-6が全て上流入力の差。元の限界2.567622185e-6を超えR1未合格のまま。core/weight/許容差の変更0、候補探索0、R2未開始。
+
+初回Python診断再生がzeroのstrict anchorに失敗し保持。元のnn module/Parameter/no_grad条件へ診断だけをそろえ、fresh rootで全161anchor再現。候補モデルの再評価ではない。全source/stdio/exit/state/closureと集計/文書前後はartifacts/rust-r1-layer-results-20261016-evidence。
+
+全層診断は閉鎖。同じ再生・1点向け修正を反復しない。追加の一般方式が必要なら、全入力/全層への適用根拠と有限比較・全体採否条件を先に設計する。現時点で方式未選択、R1未達を局所passで覆さない。各2GiB/build1.5GiB/時間・保存枠、保全第一/Rust学習目的、需要条件/2015停止、heartbeat PAUSED維持。Windows/OS suite未実行、CARE test再評価/下流編集/push0。以下は旧記録。
+
+---
+
+## 最新 — 正規化の演算順を修正、元7ケースで別の1点が未達（2026-10-16）
+
+[結果と次工程](results/banto-ai-rust-r1-upstream-order-2026-10-16.md)。同一入力norm6組/attention28段階は固定許容差内。参照CPUと同じ逆標準偏差の乗算へ全LayerNormを一度修正、局所SSE23%減。3テストpass、元の7case全体比較は389,214要素中別の1点超過でR1未合格。 元のtrain-first index4359は通過、新しいtrain-last blocks.1 index3450=[3,1,3,58]で差2.741813660e-6>限界2.567622185e-6。正規化/元単位の最終出力各6,048要素は全pass。許容差変更なし、追加算術探索なし。
+
+初回exampleはgeneric shape Serializeでcompile失敗（演算0）、Vec化後fresh実行。compile成功前に起動した比較器のclosure未生成失敗も保持。判定は成功kernel後のcomparison2だけ。全証跡/文書前後はartifacts/rust-r1-upstream-results-20261016-evidence。
+
+次は両train batchと人工入力の全層で単体丸め/累積差を共通指標で分ける有限診断条件を先に固定し、1点ごとのcandidate探索やfull forward反復をしない。R1未達・R2未開始。メモリ各2GiB/build1.5GiB/時間・保存枠、保全第一/Rust学習目的、需要条件/2015停止・heartbeat PAUSEDを維持。Windows/OS suite未実行、CARE test再評価/下流編集/push0。以下は旧記録。
+
+---
+
+## 最新 — Rust R1の1点を共通入力で分解、上流累積差と確認（2026-10-16）
+
+[診断結果と次工程](results/banto-ai-rust-r1-intermediate-diagnosis-2026-10-16.md)。残る1点は上流残差1.370906830e-6＋FF入力伝播9.238719940e-7の合計。共通入力ff.2の対象点差0、同一operandsの加算差0。全linear各7,680要素も固定許容差内。 保存Rust block1の局所再構成はbytes一致。0.368と−0.373の相殺で出力が小さくなり、累積差2.294778824e-6が元の限界2.112383962e-6を超える。R1全体未達は不変、許容差変更なし。
+
+full forward/学習0、Python/Flex各2局所linearだけ。core/Cargo.lock不変、診断exampleをbuild実行。最初の診断集計はJSON f32最短表現をf64のまま比較して失敗、f32読戻しへ修正し保存値だけfresh集計。失敗を保持、kernel再実行0。次は第2blockのnorm/attention等を同一入力で比較し、一般的な演算順の差を特定。根拠なしの修正やfull forward反復をしない。
+
+R1a/既存3テストpass、R1b未達・R2未開始。メモリ各2GiB/build1.5GiB/時間・保存枠維持、Windows/OS suite未実行。CARE test/需要2015再評価0、下流編集/push0。保全第一・Rust学習目的と需要条件・heartbeat PAUSED維持。全証跡/文書前後はartifacts/rust-r1-ff-results-20261016-evidence。以下は旧記録。
+
+---
+
+## 最新 — Rust R1a通過、R1bは中間値1点が残る（2026-10-16）
+
+[結果と次工程](results/banto-ai-rust-r1-tests-parity-2026-10-16.md)。Rust CPU build・3テストpass。固定7ケース/389,214要素の比較は修正前114超過→修正後1超過、R1b/R1全体は未合格。正規化/元単位の最終予測各6,048要素は全pass。 人の指示でbuild cache+targetだけ768MiB→1.5GiBへ変更を事前保存、最終約879MiB。メモリ各2GiB/時間/成果物保存上限は維持。旧失敗・参照・closed roots不変。
+
+保存値診断でscalar逐次加算のmoment誤差を確認し、context/LayerNormの加算をbalanced f32へ一度修正。残るtrain-first blocks.1 index4359=[4,1,3,7]は絶対差2.294778824e-6>限界2.112383962e-6。許容差を変えず負の結果で閉鎖。次は同一第2block入力でff.2と残差和を分ける有限診断を先に固定し、追加full forward/算術探索をしない。
+
+R1a済み/R1未完・R2学習0。CARE test/需要2015再評価0、下流編集/push0、Windows/OS依存suite未実行。AI本体banto-ai、保全第一・学習Rustの目的、需要条件、heartbeat PAUSED維持。全source/stdio/exit/state/closure/文書前後はartifacts/rust-r1-results-20261016-evidence。以下は旧記録。
+
+---
+
+## 最新 — Rust R1、Xcode解消・ビルド容量上限で停止（2026-10-16）
+
+[結果と再開条件](results/banto-ai-rust-r1-build-stop-2026-10-16.md)。Xcode確認通過。R1 CPU buildがcache+target合計768MiB上限で停止、テスト/数値比較未確認。 274.302秒、監視disk805,979,625B>805,306,368BによりSIGTERM/-15、失敗source/stdio/exit/state/closureを保持。監視込みfootprint922,044,888B/RSS690,470,912Bは各2GiB内。容量枠の見直しが次の前提。同条件retry、cache削除/移動、上限引上げは行わない。
+
+固定7ケース/Python参照/R0許容差は不変。R1未完・R2学習0、CARE test/需要2015再評価0、下流編集/push0、Windows native/OS依存suite未実行。AIはbanto-ai、保全第一/学習を含むRustの目的と需要条件・heartbeat PAUSED維持。文書前後/全記録/容量内訳はartifacts/rust-r1-build-stop-20261016-evidence。以下は旧記録。
+
+---
+
+## 最新 — Rust R1のソースと参照準備、Xcode設定待ち（2026-10-16）
+
+人の計画実行指示に従い、[R1準備結果と再開手順](results/banto-ai-rust-r1-preparation-2026-10-16.md)を保存。banto-aiのcrates/banto-aiにinput/neutral checkpoint/model/比較用predict exampleと試験コードを実装、root Cargo workspace/lockとlocal Rust1.95.0 pinを追加。前処理→full SmallForecaster分位点推論のソースを作成、rustfmt exit0。**Rustの型検査/build/テスト/数値一致は未確認、R1は未完**。学習は未着手。
+
+新規lockはBurn任意LibTorch枝のyanked zip0.6でexit101。公式v0.22 lockをseedにローカル解決し、effective Cargo treeで154有効package/Flex stdのみ、rayon/SIMD/tch/CubeCLなしを確認。license一覧/本文保存。無効zip0.6等はlockに残り、下流のlockなし解決は配布課題。registry編集/stub/backend切替なし。
+
+固定fold0のtrain先頭/末尾2batchと人工zero/constant/floor3caseのPython forward計7回、全finite/順序/floor境界pass。target数量skip、test/validation/calibration/truth open拒否。artifacts/rust-r1-python-reference-20261016はcompleteで入力/中間値/manifestを保存。これを再生成せずRust比較へ使う。
+
+**現在の阻害要因はclang --versionのexit69、Xcode/Apple SDK利用規約未同意**。人へ非同期に確認・同意の完了連絡を依頼中。自動同意/回避なし。完了後はfresh compiler preflight→R1のcargo test（reference-tests、BANTO_R1_REPO）→predict example→固定R0許容差の比較器の順。具体commandは結果報告にある。既存rootsを再利用しない。
+
+macOS process groupでcompiler/linker子孫を監視するwrapperを実装。非同期disk走査版の人工親子2process smoke exit0、92sample/最大23.55ms。hard capではなく捕捉限界も保存。親900/子870・2GiB・旧保存上限、cache+target768MiBを維持。全source/記録/文書前後/状態はartifacts/rust-r1-prepared-20261016-evidence。宣言path/lock/metadata保存・active誤分類の失敗も保持。
+
+R2 backward/学習0、CARE test/需要2015再評価0、banto-industrial/denroku変更0。需要2014以前調整/同休業mean28/四季過小過大非増加/観測欠測0分離、Windows別検証・heartbeat PAUSED維持。以下は旧記録。
+
+---
+
+## 最新 — 需要・PSI側の既存AI実装を計画へ反映（2026-10-16）
+
+人のdenroku-psi-demoの実装紹介に対応し、[現状確認と引継ぎ](research/denroku-psi-ai-integration-2026-10-16.md)・[実装計画](research/banto-ai-rust-implementation-plan-2026-10-16.md)へ反映。private repo main816fbdaec722008193b3945db7f4599d1a8a64b7の13 source/仕様をGit blob照合。PythonでLightGBM学習、Rust probeで木JSON推論/特徴量/再帰/丸めを照合し、一致後に静的画面JSONを出す既存経路。アプリ内学習や定期再学習は未実装、LightGBM C APIを使う別計画がある。
+
+AI本体はbanto-ai、利用側はbanto-industrialと需要/PSIアプリ。R1/R2は自作SmallForecasterを先に進め、LightGBMとの共通化はmodel版/来歴/進捗/数量意味等の境界から。18列の木モデルと3系列tensorモデル、需要26週/産業32step、点予測/平均/分位点を混同しない。PSIと受注採用判断は利用側へ残し、現行モデルを自動置換しない。
+
+今回はsource/仕様読取りと計画更新だけ。source原文/tree/hashはgitignore対象の artifacts/denroku-psi-ai-intake2-20261016 にのみ保存し、データ/学習済みmodel/予測値payloadは取得なし。相手repo変更、build/依存追加/学習/forward/2015再評価0。旧R0.1/CARE契約・成果、需要2015停止/2014以前調整/同休業mean28/四季両側非増加/観測欠測0分離、OS分離・heartbeat PAUSED維持。全source/stdio/exit/phase/closureと文書前後は同名records/EvidenceStoreへ保存。次は既定のR1a/R1b。以下は旧記録。
+
+---
+
+## 最新 — banto-aiのRustクレート実装計画を保存（2026-10-16）
+
+人の計画依頼に対応し、[実装計画](research/banto-ai-rust-implementation-plan-2026-10-16.md)を現在の工程順とする。AI本体はbanto-aiの `crates/banto-ai`、banto-industrialはpinしたcrateを利用する。依存方向は利用側→AI側。前処理/forwardに加え、loss/backward/AdamW/保存再開までAI側の範囲。
+
+順序はR1a CPU build/依存・子孫資源監視→R1b固定2batchの推論比較→R2有限1/8更新と4+4再開→R3 CAREの保存modelと全5fold有限学習比較→R4 adapter/製品job接続→OS/配布検証。各段階の成果物・合格/停止条件を明記し、通過後に同種確認を無目的に増やさない。R3の長期数値条件は実行前に別固定する。業務の先行時間/誤警報許容は製品採用の別条件とし、未定でもcoreは進められる。
+
+今回plan/docsのみ、crate作成/build/依存導入/学習/forward/CARE採点/2015再評価0。R0.1数値条件と旧closed roots不変、需要調整2014以前/同休業mean28/四季両側非増加/観測と欠測0分離、Windows別検証・heartbeat PAUSED維持。次の実装範囲はR1a/R1b。文書前後・source/stdio/exit/closureは `artifacts/banto-ai-rust-implementation-plan-20261016-evidence` と実行recordsへ保存。以下は旧記録。
+
+---
+
+## 最新 — AIクレートはbanto-ai、banto-industrialは利用側（2026-10-16・人の訂正）
+
+AI本体のRustクレートは tyaro/banto-ai 側に置き、tyaro/banto-industrial は利用・接続先とする。前回の「移植先」は接続先の意味であり、AI実装の配置先に読み替えない。 前の回答で配置先と接続先を混同したため訂正。[R0契約](research/rust-small-forecaster-r0-2026-10-16.md)と[現行設定r0.1](../examples/configs/rust-small-forecaster-r0-20261016-r0.1.json)を優先する。
+
+banto-aiに前処理/model/forward/loss/backward/AdamW/学習・保存再開/共通Rust APIを置く。R1作成予定はこのcheckoutの `crates/banto-ai`。banto-industrialは製品DTO・履歴/タグ取得adapterとjobのhost/UI/利用切替を持ち、pinしたbanto-ai crateを使う。共通AI側を製品repo/Tauri/PLCへ逆依存させない。両repoにAI本体を重複実装しない。
+
+今回は配置/責務/依存方向だけを文書と派生設定へ反映。旧r0/closed roots/数値/参照/許容差/CARE結果は不変。新crate/build/fit/forward/2015再評価0。既存の次工程R1と資源/OS/需要条件、heartbeat PAUSED維持。文書前後と変更理由を `artifacts/rust-crate-ownership-correction-20261016-evidence` に保存。以下は旧記録で、旧「移植先」の表現より本訂正を優先する。
+
+---
+
+## 最新 — CARE未検知分析とRust R0、移植先banto-industrial確認（2026-10-16 JST）
+
+[結果](results/care-saved-diagnostics-rust-r0-2026-10-16.md)・[Rust R0契約](research/rust-small-forecaster-r0-2026-10-16.md)・[機械設定](../examples/configs/rust-small-forecaster-r0-20261016.json)を保存。計画に沿い、全12異常/10正常fileの保存予測だけを分析。NN未検知9件は8件が超過3連続未達、event22がcommon内超過なし。検知3/12不変、正常NN false3（A:21の2回は同file baseline1より悪化）。NN OPEN時の絶対予測誤差が小さくてもmethod別閾値が小さくfalseになることを保存し、物理因果や連続条件緩和の根拠にはしない。event22のnative OPEN2点はgap後NN履歴復帰待ち/commonなしだが、common内NN最大も閾値0.95倍でありgapだけを全原因としない。
+
+人の回答で移植先は**tyaro/banto-industrial**。main commit93d99efa06e8eda8c623567c5d117409fb2a3c8b、19+4 source Git blob一致。ScadaProjectは除外（先行未確認candidate auditは履歴保持）。外部repo編集/cloneなし。実DTOはValueEntry/ValuesSnapshot、bindingは外部名。画面min/max履歴を学習値へ使わずrawを候補とするが、rawだけではquality/source時点/availabilityを復元できないため明示契約かsidecarなしに正常と補わない。
+
+R1候補Burn=0.22.0/Flex CPU+autodiff、公式MSRV1.95/上流MIT OR Apache-2.0を確認。Mac標準Intel rustup shimは起動不可、既存native1.95.0は直接起動可。製品repo pin1.98.1での統合は別工程。共通model/AdamW/中立package/短期保存再開/許容差/API・job境界を固定。compile/Cargo.lock/全依存license inventory/数値同等/Rust実学習/banto統合は未確認。
+
+上記4unit全exit0、親最長7.885秒、子peak RSS最大80,592,896B、self/親観測footprint最大68,190,760B、各900/870秒・2GiB内。全source/stdio/exit/phase/resource/closureと元成果/失敗を保持。publication2で別方式run集計/参照pin/契約/文書45linkを検査し、旧文書全文・新文書/設定/保存物を `artifacts/care-rust-r0-final2-20261016-evidence` にcomplete保存。初回linkの行番号suffix誤判定と2回目readbackのpart field名誤記のexit1を保持し、fresh publication4で全part/hashと元root不変を確認。最終状態/文書前後は `artifacts/care-rust-r0-final4-20261016-evidence`。既知failed記録を成功専用validatorに渡した3回目の拒否も保存し、失敗3件を明示した。モデル実験のretryは0。
+
+**次はR1**: 研究repo内の孤立Rust crateでexact backend/lock/license/featureとcompile、固定fold0 neutral model＋先頭/末尾train2batchと人工zero/floor/mask等のforward比較。Cargo/compiler/linker子孫の資源計測を先に用意、jobs1/旧上限維持。許容差は機械設定で事前固定、差をtest調整で隠さない。R2は別fixture宣言で8更新/4+4再開、成熟AdamW import。実験R3/製品接続R4は自動開始しない。
+
+主目的は自作モデルの産業/需要実用性、保全・点検第一優先、学習を含むRust/banto最終目的。今回は新fit/forward/CARE性能再評価/2015参照0、正式holdout/本番採用を認定しない。需要2015停止・2014以前調整・同休業mean28・四季過小/過大非増加・観測/欠測0分離・heartbeat PAUSED維持。Mac共通保存値分析pass、Windows native/OS依存包括suite未実行。新データ/依存install/研究data外部送信/push/追加agent0、公開source GETのみ実施。以下は旧本文。
+
+---
+
+## 最新 — CARE5fold実学習・評価完了、比較改善と未検知9件を固定（2026-10-16 JST）
+
+人の「次に進みましょう」をr1の5fold実学習への指示として[新phase](../artifacts/care-learning-campaign-launch2-20261016/permit.json)へ記録。[結果](results/care-macos-learning-evaluation-2026-10-16.md)を保存。固定A22file/3信号/5asset留一5fold、各4,096更新、4val選択点、全fold init20261016/sampler20262016、train尺度/MAD/負荷binと全抽出列を維持。全選択step4096。全5foldのstate/閾値/予測score/警報を閉じてfreeze後にevaluator採点、最終foldの同870秒枠内で完了。train/選択/校正/推論のevent truth bytes0。
+
+asset macro NN/共通baseline/native baselineは、検知率20.00%/6.67%/13.33%、正常1000記録hあたり誤警報0.846560/1.071044/1.259778、正常警報時間割合0.064965%/0.165809%/0.181823%、miss込みearliness0.105462/0.045134/0.062379。共通支持の事前4条件すべて通過。ただしpooled検知3/12対1/12/native2/12、NN9未検知、A:11/13/21検知0、A:21正常false NN2対baseline1を保存。製品/業務合格、統計有意、正式blind holdoutや公式CARE-scoreとはしない。
+
+nativeだけがevent22を検知。OPEN ordinal52632/52659はいずれもflags12でNN発行/commonなし、過去128点内のgap52619による履歴復帰待ち。NNのcommon47,834点にnativeを制限するとこの検知を隠すためnative50,560点も併記。全22file/異常12区間/正常5assetの支持床は維持。leadは注釈区間終端proxyで物理故障期限と保証しない。
+
+全5unit exit0、計167.616秒、最大sampled footprint413,238,304B/peak RSS413,696,000Bで各親900/子870・2GiB内。別の保存値検算2.698秒/exit0、全20val選択/校正閾値/22fileのepisodeと支持/assetとpooled指標/判定一致。全5選択model+AdamW moments/step/RNG/schedule位置をneutral exportしcheckpointと全tensor一致。Rust実装/学習再開成功は未認定。
+
+実行rootsは`artifacts/care-learning-fold-0-20261016`〜`fold-4`、`care-learning-scores-20261016`、`care-learning-independent-20261016`。全source/stdio/exit/journal/state/partial対応/closureを保存。起動前の相対Pythonパス失敗でhelper修正が未適用だったため旧未起動campaignを保持し、修正後fresh launch2宣言から開始（実学習retryなし、科学r1不変）。EvidenceStoreは`care-learning-final-20261016-evidence`、旧上限/part/失敗reserve維持。
+
+r1の有限比較は完了・固定。既読testに追加seed/延長/閾値変更を足さない。次は保存予測による未検知/asset差/可用性の仮説整理と、保存したmodel/optimizer/batchを使うRust R0契約/backend・配布条件を整理する工程。主目的は自作モデルの産業/需要実用性、保全・点検第一優先、学習を含むRust/banto最終目的のまま。需要2015停止/2014以前調整/同休業mean28/四季非悪化/観測欠測0分離・heartbeat PAUSED維持。Mac共通学習評価/資源観測pass、Windows native/OS依存包括suite未実行。新取得/依存変更/外部送信/push/本番採用/追加agent0。以下は旧本文。
+
+---
+
+## 最新 — CARE train尺度とbaseline profile・全学習schedule固定（2026-10-16 JST）
+
+人の「進めて」に対応し、[結果](results/care-training-preparation-2026-10-16.md)を保存。固定r1のtrain anchorだけでasset等重みのT/context floorと共通温度MAD、負荷bin温度中央値を推定。全15尺度/10R有限正、全5fold/20非空binがpair>=128を通過（最少30,440）。尺度の母集団は各有効status0 bin一度、baseline pairは各適格学習origin一度で重複の意味を分けた。validation/testやevent truthでprofileを調整しない。
+
+sampler20262016のasset→適格origin抽出を5fold各4,096×8、全163,840例でfreeze。`artifacts/care-train-profile-schedule-20261016`（21file/2,888,634B）のmanifest・fold profile・<III asset/event/origin schedule・anchor origin集合を次のtrainerが使う。Python RNGをRustでも同seedだけで再現できるとはせず、実列を参照とする。
+
+別のinteger binary-rational CDFで分位点75値、分散の別分解で尺度を照合。全scheduleはgetrandbits+棄却抽出でbytes再現。最終`FrozenPreparation` loaderは契約/dataset/profile/schedule/origin hashと実consumer適格集合を検査し、全5foldの先頭/末尾10batch [8,3,128]と別target[8,3,32]を取得。範囲外step拒否とprefix外row tripwire、bin内でも元のasset pair massを保持する人工対照もpass。全label bytes0。`artifacts/care-train-preparation-verify-20261016`に独立結果とRust比較用batch参照を保存。
+
+2unit exit0、4.177/5.420秒、最大sampled footprint207,290,992B/child peak RSS214,827,008B、親900/子870・各2GiB内。全source/stdio/exit/phase/state/closureと旧closed rootsを保存。最終EvidenceStore `care-train-preparation-final-20261016-evidence`に旧文書全文・新source/成果/資源/状態をpart256KiB等の旧上限内で保存。
+
+次は固定profile/scheduleをconsumeするCARE trainerを接続し、r1の5fold有限実学習・校正・予測freeze後評価へ進む。今回はbaseline profile推定を実施したがニューラル学習/model forward/閾値校正/test予測/性能採点0、固定JSON不変。準備を保全性能やRust成功に読み替えない。保全・点検第一優先、学習を含むRust/banto最終目的、需要2015停止/2014以前調整/同休業mean28/四季非悪化/観測欠測0分離、heartbeat PAUSEDを維持。Mac共通準備/資源観測pass、Windows native/OS依存包括suite未実行。新取得/外部送信/push/本番採用/追加agent0。以下は旧本文。
+
+---
+
+## 最新 — CARE数値入力と実consumerの支持確認完了（2026-10-16 JST）
+
+人の22file/3信号準備指示に従い、[結果](results/care-numeric-consumer-2026-10-16.md)を保存。固定r1のA22/3 Avg・1,196,747行/3,590,241値を32byte recordへ変換し、quality mask全finite、電力の観測0を170点保持。全体/member SHA・時刻/ID/asset/prefix照合、欠測/非有限/overflowの人工経路も確認。補完/差替え/条件緩和なし。数値rootは`artifacts/care-numeric-input-20261016`、24file/38,356,619B、closure SHA3c5fc289fdafda0792acd9b5cdec6fcd8e91d7a93cb2a70a5df0b735eae8a352。
+
+実consumer `models/mini-transformer/care_input.py`で過去128点/利用時刻・独立現在温度/学習target・fold/roleを分離。test status保存/gateなし、offline status0はanchor prefix bitsetだけ。13境界確認、label open拒否/label bytes0、実batch[8,3,128]と別target[8,3,32]を確認。初回後にmanifest provenance/path/clock/fold検査を強め、新rootで同じ支持bytesを再確認。旧成功/source/closed roots保持、独立に9不正注入拒否・全record読戻し/逐次run-length支持/原token286点一致。
+
+fit各38,664〜48,025>=4,096、選択746〜1,020>=256、校正12,348〜15,561>=512。全22 prediction file支持pass、共通47,834/50,593・最小event22 77.7003%。native baselineは50,560点（+2,726）で別報告。閉鎖済み支持とeligibility hashを先保存した別evaluatorで異常12区間支持pass（最小event84 81.9900%）、正常5asset記録597.167〜1,131.667h>=24h。unique物理hourや検知性能とは呼ばない。
+
+全5unit exit0、最長11.457秒、最大self checkpoint footprint186,975,024B/child peak RSS240,435,200Bで900/870秒・各2GiB内。全source/stdio/exit/phase/closureを保存。phase snapshotのartifact形式とEvidenceStore命名の相違を記録し、元closed rootを残し正式EvidenceStoreへ256KiB partで再保存。最終`care-numeric-final-20261016-evidence`は旧EvidenceStore上限とfailure reserve内。
+
+次は同じtrain anchorの尺度/MAD、負荷bin pair支持とsampling scheduleを固定し、明示された次工程として有限CARE実学習へ接続する。今回学習/model forward/予測/校正/性能採点0、固定JSONのfalse flags不変。数値/時点/窓支持準備完了でありbaseline-bin/学習/予兆性能までreadyとはしない。同じmetadataや境界試験を無目的に反復しない。
+
+保全・点検支援第一優先、学習を含むRust移植とbanto統合の最終目的を維持。需要2015停止・2014以前だけ調整・同休業mean28・四季非悪化・観測/欠測0分離、heartbeat PAUSED、正式holdout等の境界は不変。Mac共通入力/資源観測pass、Windows native/OS依存包括suite未実行。新取得/依存変更/外部研究data送信/push/本番採用/追加agent0。旧本文を以下に保持。
+
+---
+
+## 最新 — CARE v6原本確認・入力/label分離・有限評価契約r1固定（2026-10-16 JST）
+
+人の確認/条件固定指示に対応。[結果](results/care-metadata-contract-2026-10-16.md)、[固定契約](research/care-a-maintenance-contract-2026-10-16.md)、[機械設定](../examples/configs/care-a-maintenance-20261016-r1.json)。ローカル5,503,439,673B ZIPは公式record15846963/v6のMD5 2547b58c21ac8c242d13232860cf500cと一致、旧SHA ca61379e…も不変。公式API license CC-BY-SA-4.0とlegalcode/FAQを保存。帰属/変更/license/ShareAlikeをデータ来歴に保持し、Rustコードやmodelのlicenseを一律認定しない。
+
+95CSVの構造5列だけをstream解釈し、5,242,948行、A22file/5asset・B15/9・C58/22を確認。各file内id/time重複・逆行0、600秒超gap587。assetは(farm,id)名前空間。同一asset別fileの匿名時刻を結合/同一物理観測へdedupしない。実labelは45anomaly/50normal（A12/10,B6/9,C27/31）、README44/51は古い。A22件の開始/終了IDと時刻44点一致。Aのstatusは故障log由来なのでtest入力/gateに使わず、Avgだけを採用。
+
+ラベル内容前にFarm A/3信号/asset split・anchor規則を保存。sensor_13_avg(generator DE bearing温度)、sensor_12_avg(gearbox oil温度)、power_30_avg(負荷)。温度の原unit �Cは原文保持/native数値、powerは匿名scaleで定格と混同しない。5foldのtest→validationは0→10,10→11,11→13,13→21,21→0、残3train。anchorは0:0,10:3,11:25,13:14,21:13。train各anchor prefixだけ、val anchor prefix70%選択/30%校正、test各asset全predictionで全22file一度ずつ。
+
+入力/学習roleとevaluator/label roleを別rootへ分離し、truth field5注入拒否、入力bytes先保存とlabel非依存cohortを確認。modelは独立初期化の既存full V3/C128/H32、10分cadence、5fold各4096更新/4val時点、各fold init20261016/sampler20262016、baselineはtrain負荷bin thermal中央値。alarmはlead1 p50残差/共通trainMAD、val後半q.995、3連続超過/解除。row可用性をtimestamp+600sとし警報を遡らせない。推定anomaly区間内OPENを主hit、終端leadはproxy、正常record-hour/警報時間/earlinessも固定。baseline native支持も必須。
+
+構造監査の最小共通可用性77.7003%（event22）を踏まえ、数量decode前に床70%/各file・各anomaly期間を固定。数値finite支持は未知。all22保持・不足はincompleteで差替えなし。普通のunique物理equipment-hourや元論文CARE-score完全再現とは呼ばない。metadata labelは監査既読で正式unknown holdoutではない。将来のconsumerには全5fold予測freeze前にtruthを渡さない。
+
+今回はsensor float decode/CARE fit/推論/性能採点0、Rust実装0。metadata監査122.569s/RSS51,134,464B、他の支持/固定検証もexit0、900/870秒・各2GiB/旧保存上限内。全source/stdio/exit/closureと旧変更/失敗を保存。次は固定22file/3信号の数値32byte record/quality maskと実consumer時点・label境界。metadata反復や追加候補/閾値gridは不要。CARE学習はまだ開始しない。Rustの学習・推論・banto API/job/model管理の最終目的、需要2014以前/同休業mean28/四季非悪化/評価分離、2015停止・正式holdout等の境界、heartbeat PAUSEDを維持。Windows native/OS依存suite未実行、新model取得/依存変更/外部研究data送信/push/本番採用/追加agent0。旧本文を以下に保持。
+
+---
+
+## 最新 — M1の3seed実学習・評価完了、CARE保全評価へ（2026-10-16 JST）
+
+人の明示指示に従い[結果](results/metropt-macos-m1-2026-10-16.md)を保存。固定r2/13日/3target/8,967-123-123窓、3seed×full/self各4096更新・4val時点・共有初期state/schedule・全test予測freeze後の一括採点を変更せず実行。全6選択checkpointは4096。全stdio/exit/source/state/journal/selection/labels/freeze/closureを保存、独立保存値検算もpass。
+
+主結果：full fixed-scale pinball0.212568215、self0.217139182、2.105%改善/2of3一致。full p50 MAEはTP3 0.300551646bar（固定MA15 0.560787849、46.41%改善）、油温2.774300227℃（4.618036215、39.92%）、電流1.066700340A（1.843128782、42.13%）、各3/3seed改善。負の結果はseed20261018のfull悪化、圧力pinball約0.365%悪化、full coverage80は圧力76.71%/油温69.44%/電流79.18%。区間校正・異常予兆・正式holdout・製品採用は未認定。予算末端選択を収束保証とせず追加seed/延長/test校正はしない。
+
+3実学習slotは60.159/59.545/60.789秒、計180.494秒。第3slot採点も同子870秒内、最大親観測footprint272,303,064B/child peak RSS315,441,152B、各2GiB/旧保存上限内。記録生成の構文ミスで許可fileなしの事前起動がexit1（Torch/学習0）、失敗rootを保持後fresh記録で開始した。実学習unitは全3件exit0。Mac共通経路の実学習・評価pass、Windows native/OS依存suiteは未実行。
+
+[CARE設計](research/care-maintenance-evaluation-design-2026-10-16.md)は第一優先の保全・点検支援に向けevent検知/誤警報equipment-hour/先行時間を分離。残差警報を実績利用時刻より前へ遡らせない。次は公式版/条件・sensor/asset/時点metadataを照合し、限定対象/分割/profile/警報/支持/予算を固定する。今回はCARE原本payload追加読取り/CARE学習0。油圧/XJTU全実験を待たない。
+
+Rust最終目的は学習・推論・banto API/job/model管理のまま。全6選択stateをmodel parameter/buffer＋AdamW step/moments＋RNG bytes/schedule位置付きneutral形式へ書出し、全tensor unpack一致。PyTorch RNGはbackend固有、Rust互換/学習再開の成功ではない。中立書出しと独立検算は保存物処理で追加fit/推論0。
+
+M1有限実行は完了・閉鎖、旧M0等の停止文は履歴。需要2014以前/同休業mean28/四季非悪化/観測のみと休業相当欠測0分離、2015停止・正式holdout等の境界、heartbeat PAUSEDを維持。今の結果を既読testとして凍結し、既存変更/失敗/closed roots保護、新取得/依存変更/外部送信/commit-push/本番採用/追加agent0。旧本文を以下に全文保持。
+
+---
+
+## 最新 — MetroPT Mac M0完了、保全・点検支援を第一優先へ（2026-10-16 JST）
+
+人の「計画に沿って進める」に従い[実装結果](results/metropt-macos-m0-2026-10-16.md)を保存。固定13日/3targetの厳格converterと日内adapterを新規実装し、113,311 raw行/339,933数量→各target18,720bin、欠測nonfinite/補間/差替え0、8,967/123/123共通窓を全保持。train各10,080binの尺度を一度ずつ集計、独立統計/原本境界12点照合pass。
+
+Mac3.14.8/Torch既存でfull/self各1回の未学習forward[1,3,128]→[1,3,32,3]、有限/順序/境界10項目pass。新しい起動/採点guard・日等重み等6試験pass。paired trainer/分離scorer/3slot入口を実装。M1再開時は第3slotの全seed凍結後採点も同じ子870秒に含め、3親unit上限を維持。実データの学習/backward/optimizer/再開の成功は未確認、未学習接続と区別する。
+
+Rust用neutral初期state/layoutと共通contextのforward参照を保存し全値unpack一致。Rust実装・backend選定・banto受入は未実施。原本/旧source/旧closed roots/失敗を保全し、全新stdio/exit/source/state/closureを保存。4実行exit0、最長5.709秒、最大親観測footprint248,677,192B/peak RSS305,741,824Bで900/870秒・各2GiB内。Mac共通経路pass、Windows native/OS依存suite未実行。
+
+人の用途回答で第一優先は**保全・点検支援（異常の予兆）**。MetroPT予測は基礎確認で、予兆はCAREのevent検知率/誤警報/先行時間として別評価する。次の用途契約はCAREを優先し、油圧/XJTU全実験を待たない。M0完了、M1実学習は再開待ち。現在のconfig/manifest/recipeは不変、JSON statusは凍結時の履歴。今回validation-testのモデル予測/実性能採点/2015参照再評価0、実学習・2015停止/heartbeat PAUSED、需要の調整2014以前・同休業mean28・四季非悪化・観測/休業相当欠測0分離を維持。新取得/外部送信/依存変更/commit-push/製品採用/追加agent0。旧本文を以下に保持。
+
+---
+
+## 最新 — 学習を含むRust移植とbanto統合を最終目的に追加（2026-10-16 JST）
+
+人の「最終的にbanto側で使いやすいようにrustに移植（学習も含めて）」を受け、[上位目的](research/timesfm-inspired-dual-domain-plan-2026-10-16.md)と[具体計画§7/R0〜R4](research/timesfm-inspired-practical-evaluation-plan-2026-10-16.md#7-最終実装--学習も含めたrust移植とbanto統合)へ明記。産業・需要/PSIの実用性検証に加え、Pythonを必須にしないRustの前処理・forward・loss/backward・optimizer・checkpoint/学習再開・推論、banto向けlibrary API/CLI・version付きモデル・job進捗/取消/再開を最終成果とする。推論の書出しだけで達成とはしない。
+
+R0契約/計算backendと配布確認→R1共通重みで前処理/推論比較→R2同じbatch列でgradient/更新/保存再開→R3有限実データ比較→R4banto接続。離散的な時点/欠測/支持は一致、浮動小数の許容差は比較結果を見る前に固定。同seedだけで異言語の同値を認めない。初回は固定産業SmallForecasterを起点とし、需要平均モデルの契約は別に維持する。実用性と移植成立と統合受入は別判定。
+
+現在のMetroPT r2/JSON/日時manifest・学習/2015停止・heartbeat PAUSED・旧資源/保存/評価境界は不変。M0のsource/state/recipeを移植に使える形に分離し、Rust契約整理のために全領域の実験完了を待たない。今回は目的/工程の文書追補のみ、原本decode/モデル実行/学習/採点/Rust実装/依存導入0。以前のAstraレビューを今回のRust追補まで確認済みとしない。旧文書全文を新しい記録rootへ保存してから更新し、以下も旧本文を保持。
+
+---
+
+## 最新 — 計画遵守とMetroPT詳細仕様r2を固定、実学習・2015停止（2026-10-16 JST）
+
+人の「計画に沿って行うことを明記し、計画の詳細を詰める」に対応。[上位計画](research/timesfm-inspired-practical-evaluation-plan-2026-10-16.md)へ遵守・実行前変更記録を明記し、[詳細仕様MPT-MAC-20261016-r2](research/metropt-macos-multiday-protocol-2026-10-16.md)と[設定JSON](../examples/configs/metropt-macos-multiday-20261016.json)を固定。目的はTimesFM3参考自作モデルの産業/需要・PSI実用性。baselineや人工試験の完成へ置換しない。
+
+数量を読まない日時監査で元43日連続案に空bin9,275があり品質条件不成立と判明。旧監査を保持し、全原本のtimestamp条件だけで完全な最初13日（既読02-21除外）を7train/3val/3testに確定。train02-03/04/15/16/18/22/25、val03-08/18/22、test03-23/25/26（全2020年）。日を跨がず候補8,967/123/123、日ごと下限1,153/1,281と37/41を分母固定。raw3target数量欠測/nonfiniteは変換失敗、後の日付差替えや補間なし。取得可用性で選ぶ回顧的標本の限界を明記。
+
+尺度演算/3初期seedと独立samplerseed/日等確率sampling/AdamW/4096更新/4val時点/日target等重み/全seed test予測freeze後採点/不成立終了を固定。Astra read-only確認、数量不良後の差替え禁止・完全日の意味・尺度有限正検査を反映しレビュー終了。source/stdout/exit/resource/closureを保存。旧文書全文は改訂前snapshotへ保存後に更新し、旧本文を以下にも保持。
+
+今回は詳細仕様とtimestamp-only監査2件、quantity decode/モデル実行/学習/性能採点/2015参照再評価0。次の未完はM0の新Mac converter/adapter/trainer/scorer実装と数量品質・最小接続。実学習再開の指示なしにM1へ進まない。需要2014以前/同休業mean28/四季非悪化/観測と休業相当欠測0分離、実学習・2015停止、heartbeat PAUSEDを維持。Mac日時準備のみ、Windows native/OS依存suite未実行。Git statusはXcode規約未同意でexit69、同意や設定変更なし。
+
+---
+
+## 最新 — 自作モデル実用性の具体計画をAstra確認、実行は未開始（2026-10-16 JST）
+
+人の「計画を立てましょう」に対応。[具体計画](research/timesfm-inspired-practical-evaluation-plan-2026-10-16.md)を保存し、Astraの批評と最終read-only確認を反映。上位目的はTimesFM3参考の自作モデルが産業と需要で有用か、のまま。最初の一件はMetroPT複数日比較のMac実行前パッケージM0（Mac差分/source、固定設定、timestamp候補窓、有限終了条件）。数値結果を見ず期間を固定し、timestamp候補窓と後の数量読取りで確定する実共通支持を分ける。
+
+M1候補は3固定seed×full/self-only、共通4096更新/4val時点、全seedの選択state・test予測freeze後に一括採点。系列間機構、単純baselineへの予測価値、業務適合を別判定。各seed900/870秒・各2GiB/旧保存上限、計最大3unit。公式TimesFMとの異条件旧報告は参考のみ。油圧はcycle内予測と状態診断を分離、XJTUは短寿命を落とさないV2/C16/H4のRMS案、CAREはevent評価。需要も本線に残し、2014以前/同休業mean28/四季非悪化/観測と休業相当欠測0の分離を維持。
+
+産業用途の最初の判断はoptional照会中（保全点検/運転先読み/試運転調整）。未回答でもMetroの一件を暫定先頭とし、用途の数値基準を捏造しない。今回は文書・source・既存metadata読取りと計画保存のみ、新timestamp走査/数量decode/モデル実行/学習/採点なし。実学習・2015再評価停止とheartbeat PAUSEDは解除しない。旧本文を以下に全文保持。
+
+---
+
+## 最新 — MetroPT・油圧・XJTUを公式からMac新規取得、産業入力の準備完了（2026-10-16 JST）
+
+人の新規取得指示により、Windowsからコピーせず公式配布元から3件を取得。[結果・入口](results/industrial-data-macos-intake-2026-10-16.md)、[原本index](../datasets/manifests/industrial-macos-source-index-20261016.json)、[取得契約](research/industrial-data-macos-intake-contract-2026-10-16.md)。原本計4,739,584,139Bは同workspace outputs/industrial-source-cache-20261016に保管。UCI2件は旧pin一致/全ZIP CRC/hash確認。XJTUは全6RAR/15軸受/9,216波形を保管し、7-Zipで全member CRC検査exit0（末尾追加bytes警告は保持）。
+
+Metroは既読2020-02-21/14信号/1440分の既存fingerprintを再構成し、旧入力adapterの[1,3,128]→[1,3,32]と705/9/9 originを確認。油圧は全2,205cycle、PS1/PS2/EPS1を100→10Hzへ平均化し、cycle内loader・別profile labelを準備。XJTUは3条件のordinal1軸受の完全123/491/2538波形について8特徴量を準備。他12軸受は原本保持で特徴量未生成。8特徴量を旧V3モデルへ自動接続せず、用途/入力/評価を次に固定する。
+
+Mac標準libarchiveはRAR互換性エラーでfailedのまま保全し、公式7-Zip26.04を作業用cacheに追加して別rootで成功。既存Python依存/lock/Windows nativeを変更しない。独立読戻し28root164file pass、旧失敗2rootのstatus維持。原本と大きいarchiveは実験output上限と区別し、新生成artifact/Evidence記録は旧上限内。
+
+モデル学習/新予測/性能採点/2015再評価0、実学習・2015停止とheartbeat PAUSED維持。今回許可された新取得3件に限定し、需要の禁止年度/予約店/正式holdoutを解除しない。Mac共通データ準備は成功、Windows固有/native/OS依存suite未実行。旧変更・原失敗・closed rootsを保持、Git push/外部研究データ送信/本番採用/追加agentなし。
+
+---
+
+## 最新 — 元の主目的へ復帰、産業・需要の自作モデル実用性をAstraと再整理（2026-10-16 JST）
+
+人の「TimesFM3を参考にした自作モデルの実用性検証へ戻す、需要予測・PSIに加え元々の産業利用も確認」に対応。[統合計画・Astra最終確認](research/timesfm-inspired-dual-domain-plan-2026-10-16.md)。用途の具体化を目的の廃止と扱った前回の解釈を訂正する。産業設備forecastと需要平均数量を本線に戻し、正常範囲・残差異常検知・試運転校正・drift・read-only Hub連携を応用先として保持。産業SmallForecaster/需要Block派生/StatisticalFeatureMeanは別系統、QPは比較・評価資産とする。同種の人工境界反復は区切る。
+
+人のCARE配置報告を受け、DesktopのCare_to_compare.zipを確認。[原本metadata](research/care-local-archive-metadata-2026-10-16.json)。5,503,439,673B、110entry、宣言展開19,987,485,991B、SHA256 ca61379e98956d891041ad45c885109bd8a14199fde0688d0184a11c2d4194f1。原本stream hash/中央directory/READMEのみ、展開・観測CSV・event_info・feature_description payload読取り0。手動取得待ちからローカル候補あり・未取込へ更新。公式版/digest/利用条件の照合は未完了。CAREは産業異常予兆の候補で、予測精度と別に評価する。
+
+次は資産と現行契約の対応、CAREの版/センサー情報・分割とlabel分離の設計、産業旧資産の必要受領一覧/Mac接続差分、二領域の有限評価計画。今回は文書・sourceとmetadataの整理のみ。新fit/solve/モデル推論/再採点0、実学習・2015再評価停止とheartbeat PAUSEDを維持。2014以前の需要調整・四季非悪化・同休業mean28・観測/休業相当欠測0仮定の分離不変。主問復帰を実行や禁止対象解除へ広げない。Windows固有/native・OS依存suiteの新実行0、旧Windows成果/既存Mac成果/今回整理を分ける。過去本文・失敗・closed rootsは保持。
+
+---
+
+## 最新 — Astra目的監査、人工境界系列を区切る・実学習と2015停止（2026-10-16 JST）
+
+人の「今の検証がrepoの目的に合うか」を既存Astra agentが独立監査。[監査結果](research/demand-purpose-alignment-astra-review-2026-10-16.md)。現在の既存10店・14日平均数量/同休業mean28比較への方向は合うが、直近は数値実装保証に比重が寄りすぎている。rank3・週項・厳密ゼロまでの人工接続系列はここで区切り、新しい不具合/仕様変更/必須契約の具体的差分がなければ反復しない。予測改善・将来非悪化・PSI価値を確認したとはしない。
+
+残るのはQ4少数発行日集中、自店信号なしの共有適用、既読2014への適応、PSI条件未定。次の優先候補は証拠と現行契約の対応整理、一候補の問い/終了判断固定、有限実行枠の接続差分監査まで。今回は提案のみで新実験/実学習/2014採点/2015参照再評価なし。実学習・2015停止、heartbeat PAUSED、既存制約/評価分離を維持し、再開許可としない。過去本文を以下へ全文保持。
+
+---
+
+## 最新 — rank3・週係数非ゼロ解のrawP厳密ゼロ境界完了、実学習・2015停止（2026-10-16 JST）
+
+人の「rank3/週係数非ゼロの制約付き解でrawP厳密0/前後/Astra検証」に対応。[事前契約](research/demand-rank3-zero-boundary-artificial-contract-2026-10-16.md)→Q2人工60行/A-D-W固定・smallW c0=2^-10/残9店各3profile c1/全観測label0→罰則なしGram/large minor rank3・Cramer元非負射影/2×2縮約一致/全β負/正dual/Ju<Jc<J0をsolve前保存→人工compile/solve各1・active/gap0→W Apr2×FIT10×c0(1±2^-20)/c0の30予測freeze→90scenario両mode/19拒否/独立照合→[結果](results/demand-rank3-zero-boundary-artificial-2026-10-16.md)・[Astra](research/demand-rank3-zero-boundary-artificial-astra-review-2026-10-16.md)・[決定表](research/demand-rank3-zero-boundary-artificial-decisions-2026-10-16.json)保存。
+
+rawP=140*rW*β0*(1-c/c0)、下10負/flag true、中央10厳密0/flag false（共にfloor_zero）、上10正/比例。週項全30厳密負・中央0の相殺へ寄与、without_weekly全30正。upper10で週項→exact日次の式一致、floor後線形寄与は主張しない。下上raw対称、和P/表示差保存。固定3点/Q2/全open/B=E限定、一般連続性/実性能/未来非悪化は未認定。
+
+90scenarioはbaseline/zero/open_missing×30、観測/休業Noneだけ0仮定を別保存（今回は全open同値）、営業Noneは補完せず観測0を休業へ再分類しない。baseline真値under悪化60cells保存。rank3_zero_boundary_artificial_ready=trueのみ、旧rank2/旧rank3/休業/丸め差source-roots保持。実quantity/problem/labelsはhash保護のみ、実fit/solve/予測/2014採点/2015参照再評価0、fit_ready=false/can_launch_learning=false・heartbeat PAUSED・採用なし。
+
+調整2014以前・四季all-normal元日両mode under-over-MSE非増加/annualMSE改善・同休業mean28/元支持/評価分離・実開始AND不変、今回実四季性能未評価。実行2.082960s/footprint28934648B/RSS41435136B、独立1.035460s/33505784B/45301760B、最大実行601/独立453bit。各900/870秒・各2GiB/8192bit/旧保存上限内。全source/stdioexit/prefix/rank/presolve/cert/pivot/state/raw/週項/日次/label/freeze/triples/partialfailure/resourceclosure保存、旧変更/failed/closed roots/source/handoff-index全文保護。
+
+Mac3.14.8共通人工/独立/資源観測pass、Windowsnative/OS依存包括suite未実行。新取得/外部研究データ送信/commit-push/依存lock/Xcode変更/追加agent0。
+
+---
+
+## 最新 — rawP厳密ゼロ境界・両側人工接続完了、実学習・2015停止（2026-10-16 JST）
+
+人の「rawPちょうど0と前後を制約付き非ゼロ解→日次でAstra検証」に対応。[事前契約](research/demand-zero-boundary-artificial-contract-2026-10-16.md)→Q2人工60行・store6c0=2^-10/他c1・4block10/12.5/15/17.5各14日c倍/全観測label0→元nonnegative正dual/閉形式+Cramer/非制約違反/Ju<Jc<J0のsolve前保存→人工compile/solve各1・active非ゼロ/gap0→Apr2×FIT10×c0(1±2^-20)/c0の30予測freeze→90人工label両mode/15拒否/独立2×2照合→[結果](results/demand-zero-boundary-artificial-2026-10-16.md)・[Astra](research/demand-zero-boundary-artificial-astra-review-2026-10-16.md)・[決定表](research/demand-zero-boundary-artificial-decisions-2026-10-16.json)保存。
+
+rawP=227.5*(c-c0)/Hをexact確認。下10負/floor_applied true、中央10厳密0/floor_applied falseで両方branchfloor_zero、上10正/比例配分。下上raw厳密対称・日次0/上正比例・和P確認。rank2/週β0/Q2全open/B=Eの人工境界fixtureで旧rank3/休業/丸め差成果と実開始AND条件不変。3点から一般連続性/実性能/未来非悪化を認定しない。
+
+90scenarioはbaseline/zero/open_missing×全30、営業Noneを補完しない。観測/休業Noneだけ0仮定は別保存だが今回は全openなので同値。観測ゼロを休業へ再分類なし。baseline真値under悪化60cells保存。zero_boundary_artificial_ready=trueだけ追加、実quantity/problem/labelsはhash保護のみ、実fit/solve/予測/2014採点/2015参照再評価0、fit_ready=false/can_launch_learning=false・heartbeat PAUSED・採用なし。
+
+調整2014以前・四季all-normal元日両mode under-over-MSE非増加/annualMSE改善・同休業mean28/元支持/評価分離不変、今回実四季性能未評価。実行1.986161s/footprint28262904B/RSS40763392B、独立0.968175s/31867384B/44171264B、最大実行367/独立301bit。各900/870秒・各2GiB/8192bit/旧保存上限内。全source/stdioexit/prefix/presolve/cert/pivot/state/raw/日次/label/freeze/triples/partialfailure/resourceclosure保存、旧変更/failed/closed roots/source/handoff-index全文保護。
+
+Mac3.14.8共通人工/独立/資源観測pass、Windowsnative/OS依存包括suite未実行。新取得/外部研究データ送信/commit-push/依存lock/Xcode変更/追加agent0。
+
+---
+
+## 最新 — 丸め差付き比例配分・floor人工接続完了、実学習・2015停止（2026-10-16 JST）
+
+人の「丸め差付き比例配分/floorを制約付き非ゼロ解→日次でAstra検証」に対応。[事前契約](research/demand-roundfloor-pipeline-artificial-contract-2026-10-16.md)→前回8active cert再利用・新compile/solve/fit0→R .025/.05/.075/.125・S(10/12/14/16)×2^-20/各14日、weekday/1024→400予測freeze→152人工label両mode→独立旧8state再証明/新日次/scale-r200/15拒否→[結果](results/demand-roundfloor-pipeline-artificial-2026-10-16.md)・[Astra](research/demand-roundfloor-pipeline-artificial-astra-review-2026-10-16.md)・[決定表](research/demand-roundfloor-pipeline-artificial-decisions-2026-10-16.json)保存。
+
+Rは全200 B≠Eうち160 changed比例（uniform80/weekday80）、exact分母E/和P・誤B差・表示差を確認。Sはpositive全Q80 strict負raw→floor全日0、negative80正総量対照。元日unsupported80 copy、branches={"baseline_copy": 80, "changed_proportional": 240, "floor_zero": 80}。rawP=0境界は未検証、issue floorを学習raw非負の将来保証にしない。原transforms/scale10/λ/r/E-I-w-v保持。旧8stateはrank3/全β非ゼロ/active正dual/gap0を独立再確認、実開始AND条件不変。
+
+152scenarioは観測/休業Noneだけ0仮定を分離、営業None/0・休業正値保持。baseline真値悪化64cells保存。実10店四季性能/将来非悪化/PSI採用は未認定。raw週項・制約差は保存するがfloor後に線形寄与を主張しない。今回週特徴0、週係数非ゼロは旧state由来。
+
+rounding_floor_pipeline_artificial_ready=trueのみ。実quantity/problem/labelsはhash保護だけ、実fit/solve/予測/2014採点/2015参照再評価0。fit_ready=false/can_launch_learning=false・heartbeat PAUSED・採用なし。調整2014以前・四季all-normal元日両mode under-over-MSE非増加/annualMSE改善・同休業mean28/元支持/評価分離維持、明示解除なしに実学習を起動しない。
+
+実行15.208307s/footprint47579688B/RSS60260352B、独立12.102172s/89997864B/112558080B、最大新日次924/独立旧証明含む924bit。各900/870秒・各2GiB/8192bit/旧保存上限内。全source/reuse/input/raw/配分/日次/label/stdioexit/freeze/state/partialfailure/resourceclosure保存、旧変更/failed/closed roots/source/handoff-index全文保護。
+
+Mac3.14.8共通人工/独立・Mac資源観測pass、Windowsnative/OS依存包括suite未実行。新取得/外部研究データ送信/commit-push/依存lock/Xcode変更0。
+
+---
+
+## 最新 — 制約が非ゼロ解を変える人工pipeline完了、実学習・2015停止（2026-10-16 JST）
+
+人の「制約で非ゼロ最適解が変わる人工prefix→consumer→solver→日次/Astra検証」に対応。[事前契約](research/demand-active-pipeline-artificial-contract-2026-10-16.md)→A target0/B-C±1/10、元rank3 histories/λ/E-I-w-v/r保持→四季正負8prefix/420行出現/210context→solve前の非制約違反・元all-A facet正dual・Ju<Jc<J0保存→8active hinge/KKT/gap0→640予測freeze→380人工label両mode→独立2×2縮約/全日次/期待拒否17→[結果](results/demand-active-pipeline-artificial-2026-10-16.md)・[Astra](research/demand-active-pipeline-artificial-astra-review-2026-10-16.md)・[決定表](research/demand-active-pipeline-artificial-decisions-2026-10-16.json)保存。
+
+全8でu不可行、制約解は別の非ゼロ全3係数（週も非ゼロ）。A補正0/B-C厳密B-Y間、full hinge/非負可行・正dual。日次は証明書betaのみ。制約効果488件、B=E/両raw非負で日次差488件を全Q両signで確認、u差替え追加予測はしない。週寄与168=persistent160+open_zero8、weekday/C非均一80。branches={"baseline_copy": 272, "changed_proportional": 368}、floorFalse、B≠E10件/changed0件。
+
+380scenarioは人工atom、観測/休業Noneだけ0を分離し営業None/0・休業正値保持。matching_truthは営業baseline±1 stress規則でA学習labelとは別。baseline真値悪化88cells保存。実四季性能/将来非悪化は未認定。
+
+active_constraint_pipeline_artificial_ready=trueのみ。実quantity/problem/labelsはhash保護だけ、実fit/solve/予測/2014採点/2015参照再評価0。fit_ready=false/can_launch_learning=false・heartbeat PAUSED・採用なし。調整2014以前・四季all-normal元日両mode under-over-MSE非増加/annualMSE改善・同休業mean28/元支持/評価分離維持。実開始AND条件不変、明示解除なしに実学習を起動しない。
+
+実行28.030997s/footprint60490256B/RSS70402048B、独立15.268773s/117490264B/128385024B、最大実行995/独立829bit。各900/870秒・各2GiB/8192bit/旧保存上限内。全source/stdioexit/input/rank/元facet/presolve/cert/pivot/state/分解/日次/label/freeze/partialfailure/resourceclosure保存。旧変更/failed/closed roots/source/handoff-index全文保護。
+
+Mac3.14.8共通人工/独立・Mac資源観測pass、Windowsnative/OS依存包括suite未実行。新取得/外部研究データ送信/commit-push/依存lock/Xcode変更0。
+
+---
+
+## 最新 — rank3・週β非ゼロの人工pipeline完了、実学習・2015停止（2026-10-16 JST）
+
+人の「rank3/週変化係数非ゼロprefix→consumer→solver→日次/Astra検証」に対応。[事前契約](research/demand-rank3-pipeline-artificial-contract-2026-10-16.md)→A/B/C固定・正負4Q8prefix/420行出現（210context共有）→罰則なしGram/minor rank3・全β非ゼロCramer/norm恒等式・J-KKT/gap0→640日次freeze→380人工label両mode→独立全件一致・拒否16→[結果](results/demand-rank3-pipeline-artificial-2026-10-16.md)・[Astra](research/demand-rank3-pipeline-artificial-astra-review-2026-10-16.md)・[決定表](research/demand-rank3-pipeline-artificial-decisions-2026-10-16.json)保存。
+
+FIT位置mod3でA10/12/14/16・B8/10/12/16(各14日)・C10/12/14(各14日)+15/17(各7日)。同mean28±1完全label、λ1/元E-I-w-v/τ/p32保持。binary64旧x・Q1元日r差を保持、全z非負/各列正support/||z||²<4とnorm恒等式から全β同sign/全PがB-Y厳密間を保証。人工rank3で実rank/集中/AND条件を緩和しない。
+
+全8解は非制約ridge解が既に可行でactive一覧空。制約で解が変わる接続経路は今回未検証。週寄与168=persistent160+open_zero8。B≠E10件は全copy、比例488は全B=Eでcanonical差付き配分も今回未検証。
+
+640=3history×2profile×10店×5issue×正負600+fallback40。証明書由来βのみinput-only旧bridgeへ、外側synthetic fit true/real false・nested falseはbridge内だけ。全pin/phasefreeze一致。週寄与168件（weekday/C非均一80件）、全Q両signでraw総量とexact日次への週項伝達を確認。β除去予測はせず同一予測の3成分分解。rank1/週列0/drop週/二重rの直接canary4+接続改変12拒否。IO追加1は640保存予測と別。
+
+branches={"baseline_copy": 152, "changed_proportional": 488}、canonical差10件うちchanged0、floor到達False。380scenarioは予測後の人工atomで営業None/0・休業正値を保持、休業Noneだけ0仮定/観測分離。baseline真値のunder/over悪化112cells保存。実四季全10店ゲートは今回未評価。
+
+rank_three_pipeline_artificial_ready=trueのみ。実problem/実quantityはhash保護だけ、実fit/solve/予測/2014score/2015内容参照再評価0、fit_ready=false/can_launch_learning=false/heartbeat PAUSED/採用なし。調整2014以前・四季all-normal元日両mode under-over-MSE非増加/annualMSE改善・同休業mean28/元支持を維持。次は既存AND条件と人の明示実学習再開が必要で自動適用しない。
+
+実行26.746691s/footprint60506640B/RSS69566464B、独立14.768375s/122798680B/129499136B、最大実行842/独立842bit。各900/870秒・各2GiB/8192bit/旧保存上限内。全source/input/rank/解析/問題/証明/solver-pivot/週分解/日次/label/stdioexit/phasefreeze/partialfailure/resourceclosure保存、今回各一巡complete/新予期せぬfailedなし、旧変更/failed/closed roots/handoff-index全文保護。
+
+Mac3.14.8共通人工接続/独立pass・Mac資源観測pass、Windowsnative/OS依存包括suite未実行。新取得/外部研究データ送信/commit-push/依存lock/Xcode変更0。
+
+---
+
+## 最新 — 非ゼロ人工prefix→consumer→solver→日次接続完了、実学習・2015停止（2026-10-16 JST）
+
+人の「非ゼロ最適の人工prefix・consumer→solver→日次/Astra検証」に対応。[事前契約](research/demand-nonzero-pipeline-artificial-contract-2026-10-16.md)→正負4Qの8人工prefix/420行→8非ゼロ解析β・J-KKT/gap0→240予測freeze→228人工label/両mode→独立全件一致・期待拒否12→[結果](results/demand-nonzero-pipeline-artificial-2026-10-16.md)・[Astra](research/demand-nonzero-pipeline-artificial-astra-review-2026-10-16.md)・[決定表](research/demand-nonzero-pipeline-artificial-decisions-2026-10-16.json)保存。
+
+全store同past10/12/14/16、mean28±1完全label、λ1・元E/I/w-v。420は8問題の行出現数でinput context210を正負で共有。Q1初発行のclosure差を残すR1/R2解析式、binary64 old .1とexact target±.1を区別。rank1/weeklyβ0の人工fixtureで実rank3条件不変。fresh connectorは証明書由来βのみ、独立proof→同Qcutoff→input-only旧bridge。外側synthetic fit true/real false、旧nested fitfalseはbridge内計算だけ、全consumer/problem/cert/proof/legacy/input pin保存。
+
+240=5発行日×2shape×10店×正負200＋4fallback×同5日×store6×正負40。statesとpredictionsを各次段階前pin freeze、別Q/未来/任意β/label・各証明等改変12拒否。全case名→実inputの生成式/strict型/長さ/支持、全encoder数値state/解析/日次exactを独立再構築（runtime max_bits値そのもの除外）。非均一配分正負全Q・元日/Christmas mask・unknown・03-26跨Qを確認。branches={"baseline_copy": 72, "changed_proportional": 168}、floor今回False。IOcanary追加1は240予測と別、OSsandbox/実timeout試験ではない。
+
+B≠日次exact和の10件は全missing/baseline_copyで、非ゼロsolver解→その丸め差付き比例配分も今回未検証（旧固定係数bridge試験と別）。
+
+228scenarioは予測後の人工label atom検査で実全10店四季scoreではない。営業None/0・休業正値維持、休業Noneだけ0仮定と観測のみ分離、baseline真値で補正のunder/over悪化48cellsも保存。調整2014以前・四季all-normal元日両mode under-over-MSE非増加/annualMSE改善・同休業mean28/元支持維持。今回実性能未評価。
+
+nonzero_pipeline_artificial_ready=trueのみ。実problem/実quantityはhash保護だけ、実fit/solve/予測/2014score/2015内容参照再評価0、fit_ready=false/can_launch_learning=false/heartbeat PAUSED、採用なし。次は既存AND条件と人の明示実学習再開が必要で自動適用しない。
+
+実行10.841174s/footprint38093328B/RSS51625984B、独立6.319110s/64274984B/76382208B、最大実行366/独立366bit。各900/870秒・各2GiB/8192bit/既定保存上限内、全source/stdioexit/人工prefix/全solver-pivot/解析/証明/240日次/228atom/phasefreeze/partialfailure/resources/closure保存。独立初版はopen_zero名のsplit誤りでexit1/failedを全保存、fresh reader v2でsplit上限3のみ修正し同じ保存rootを照合（追加solve/予測なし）。[補記](research/demand-nonzero-pipeline-readback-amendment-2026-10-16.md)。旧変更/failed/closed roots/handoff-index全文保護。
+
+Mac3.14.8共通人工接続/独立pass・Mac資源観測pass、Windowsnative/OS依存包括suite未実行。新取得/外部研究データ送信/commit-push/依存lock/Xcode変更0。
+
+---
+
+## 最新 — 重み付きsolver人工41case・独立最適性完了、実学習・2015停止（2026-10-16 JST）
+
+人の「実学習/2015停止のままsolver設計・人工/Astra検証」に対応。[契約](research/demand-weighted-solver-artificial-contract-2026-10-15.md)→新tools/demand_weighted_solver.py→人工72check/期待拒否35→41保存case/成功API43（replay・IO追加2）→独立41 fullhinge/非負/J-KKT/gap0、tiny5全facet/Cramer・kernel5/gap0・改ざん16拒否・mode10→[結果](results/demand-weighted-solver-artificial-2026-10-16.md)・[Astra](research/demand-weighted-solver-artificial-astra-review-2026-10-16.md)・[決定表](research/demand-weighted-solver-artificial-decisions-2026-10-16.json)保存。
+
+41=14micro+人工consumer25（1190行）+逆順2、kernel5別。singleQ/λ1/xは既にz=r*oldx/元E-I-w-v/全r0の正wと定数を保持。checked active-set/cuts、normal独立最大3・index tie、J/2内部dualをJ証明へ2倍。全元hingeとvalid cut上KKT/dual gap0により人工符号化問題の一意最適を確認。巡回/特異/上限は未判定failureで救済0なし。報告max_bits同値再現は診断として対象外、宣言bitsは独立演算へ適用。
+
+consumer25は全β0最適、非ゼロ解は別micro/逆順13件。consumer非ゼロ解→日次bridge一貫検証ではない。固定人工caseの最大round3/pivots8/cuts3を一般収束や実problemへ拡張しない。
+
+零長step/負dual除去・1/2/3面・比例反対zero normals/別dual・zero最適でもnonzero可行のwitness・総量変更を確認。完全case名/Q-exclude/行数固定、r0重み移動sum1も拒否。拒否35=API31+helper直接4で、成功呼出へ数えない。mode10はβ0人工replayで営業None/0・休業正値/None・元日年末/観測と休業欠測0だけの分離を確認し、学習済み係数の日次bridge/実四季scoreではない。
+
+solver_artificial_ready=trueのみ更新。実problem/実quantityはhash保護だけで内容decode0、実fit/solve/予測/2014採点/2015参照再評価0。fit_ready=false/can_launch_learning=false/heartbeat PAUSED。調整2014以前・四季all-normal元日両mode under-over-MSE非増加/annualMSE厳密改善・同休業mean28/観測と休業欠測0仮定分離維持、今回実性能未評価。次は既存AND条件と人の明示実学習再開が必要で自動適用しない。PSI採用なし。
+
+solver最大939/独立320bit、実行6.002784秒/footprint38355496B/RSS50364416B、独立.990496秒/91570752B/103792640B。親900/子870秒・各2GiB/8192bit/既定保存上限内、artifact15files/13000546B。全source/人工入力/全pivot-round/cert/stdioexit/partialfailure/resourceclosure保存、予期しないfailedなし・旧変更/失敗/closed roots/handoff-index全文保護。I/O canaryは1人工関数経路のみ、OSsandbox/実timeout試験ではない。
+
+Mac Python3.14.8共通人工solver/consumer/独立pass・Mac資源観測pass、Windowsnative/OS依存包括suite未実行。新取得/外部研究データ送信/commit-push/依存lock/Xcode変更0。
+
+---
+
+## 最新 — 実2013数量prefix/25問題・β0検証完了、学習・2015停止継続（2026-10-15 JST）
+
+人の「学習/2015停止のまま実ラベルpin・完全性・数量prefix/問題生成・β0/Astra確認」に対応。[事前契約](research/demand-weighted-numeric-prefix-contract-2026-10-15.md)→人工41/期待拒否26→全metadata/4file/630span pin→許可2013自Q210完全label/2940観測→4primary+21削除=25compile/1190行→独立54191比較/933bit一致→[結果](results/demand-weighted-numeric-prefix-2026-10-15.md)・[Astra](research/demand-weighted-numeric-prefix-astra-review-2026-10-15.md)・[決定表](research/demand-weighted-numeric-prefix-decisions-2026-10-15.json)保存。
+
+元E/I30/60/70/50、各店3/6/7/5、r正10/24/30/19・r0計127を元分母に保持。label全raw14finite非負/observedtrue、None/raw0とも0件、補完/dropなし。input/history/mean28/旧x/r/z/fullencoderstate照合（記録max_bits値そのもの以外）。全25のG/rhs/C/h/e/非負/hingeとβ0 P=B・paired under/over0・J=Cを独立再構築。日次exact/displaycopy、canonicalとの差primary87行を保持。β0は最適解/学習済み係数ではない。
+
+quantity_payload_materialized=true/consumer_compile_executed=true/real2013_compile_verified=trueのみ更新。fit_ready=false/can_launch_learning=false、fit/solve/非ゼロβ/新予測/2014数量decode・score/2015内容参照・再評価0。調整2014以前・四季all-normal元日両mode under-over-MSE非増加/annualMSE改善・同休業mean28/観測と休業欠測だけ0仮定分離は維持、性能ゲート今回未評価。次は既存AND条件と人の明示学習再開が必要で自動solveしない。heartbeat PAUSED/採用なし。
+
+各stageは同じ2013selected210だけdecode（input/encoded/label計630+transform1）、2014入りfullsourceはbytes pinだけ。consumerにはfresh必要行JSONのみ、solver/fileIO/旧LabelReader各到達0。legacy consumer_artificial_ready_onlyは旧field保持、外側scopeが実2013 compile-only。Astra指摘の独立strict型/配列/header/key/support/全計画はfresh reader v2へ反映、旧source保持。actual到着時刻/選択履歴/既読2014適応性は未解消。
+
+実行10.369998秒/footprint84017728B/RSS93847552B、独立1.732823秒/79790728B/91979776B。各900/870秒・各2GiB/8192bit・既定保存上限内、model11file/9781493B。全source/stdio/exit/pin/数量state/全問題/β0/partial/failure/resources/closure保存。意図的人工failed2rootは保持、模擬中断は親sealer直接試験で実timeout経路試験ではない。実行/独立の新予期せぬ失敗なし、旧変更/failed/closed roots/handoff-index全文保全。
+
+Mac Python3.14.8共通人工/実prefix/独立pass・Mac資源観測pass、Windowsnative/OS依存包括suite未実行。新取得/外部研究データ送信/commit-push/依存lock/Xcode変更0。
+
+---
+
+## 最新 — 実prefix接続条件固定・時点来歴metadata監査完了、数量/学習/2015停止（2026-10-15 JST）
+
+人の「学習/2015停止のまま実prefix接続条件固定・時点来歴・Astra確認」に対応。[事前契約/将来接続AND条件](research/demand-weighted-prefix-preflight-contract-2026-10-15.md)→人工14/期待拒否37→旧closure外部hash・single-read pin→数量skip lexerで470 metadata freeze→4primary210/全21削除metadataをbatch_meta25回→別lexer元bytes独立15698比較→[結果](results/demand-weighted-prefix-preflight-2026-10-15.md)・[Astra](research/demand-weighted-prefix-preflight-astra-review-2026-10-15.md)・[決定表](research/demand-weighted-prefix-preflight-decisions-2026-10-15.json)保存。
+
+input/index/保存encodedの470 key・past56/翌日可用性・target14/label origin+14・fixedmask/unknown/2013変換-2014開始を照合。2013固定21日×10店、2014固定26日×10店・全16groupも一致。旧accepted I継承で自Q2013 30/60/70/50件、各店E/I3/6/7/5、元1/(10n)保持。r0選別/再正規化なし。targetがQ境界をまたいでも発行Q。21削除は残存母数へ再重みするmetadata計画のみ。
+
+新tools/demand_prefix_metadata_json.pyは数量subtreeをjson.loadsへ渡さずraw span pinだけ、tools/demand_weighted_prefix_preflight.pyはopaque数値入りmetadata専用payloadでbatch_metaのみ。compile/row_numbers/encoder/fixed_features/Arithmetic.value/LabelReader._decode/Path.open/builtins.open各0。Iは旧完全所属の継承でraw完全性再decodeではなく、state pinは旧bytes来歴で新r-z数量一致ではない。actual timestamp/timezone/選択履歴・既読2014適応性は未解消。I/O canaryは対象経路検査でOS全隔離ではない。
+
+metadata_preflight_complete=trueのみ、quantity_payload_materialized=false/consumer_compile_executed=false/real_numeric_prefix_ready=false/fit_ready=false/can_launch_learning=false。次は別の明示範囲でraw row-pin確認/完全label decode/数量fresh prefix/実compileのみを準備できるが自動起動しない。fit/solve/予測/score/2015内容参照・再評価0、heartbeat PAUSED/採用なし。調整2014以前・四季all-normal元日両mode under-over-MSE条件/annualMSE改善・同休業mean28・観測/休業欠測だけ0仮定分離維持、実性能未評価。
+
+child.231185秒/footprint55689744B/RSS68075520B、独立1.291022秒/samplepeak179389040B/RSS204701696B、metadata重み算術8bit。各900/870秒・各2GiB・8192bit・旧保存/stdio上限内（stdout460069B）。全source/stdio/exit/metadata/state/partial/resource/closure保存、今回各一巡complete/新failedなし、旧変更/失敗/closed roots/handoff-index全文保全。Mac3.14.8共通metadata人工/独立pass・Mac資源観測pass、Windowsnative/OS依存包括suite未実行。新取得/外部送信/commit-push/依存lock/Xcode変更0。
+
+---
+
+## 最新 — 非ゼロ係数の日次bridge人工完了、学習・2015停止継続（2026-10-15 JST）
+
+人の「学習/2015停止のまま非ゼロ係数の日次接続を人工検証・Astra確認」に対応。[事前契約](research/demand-weighted-daily-bridge-contract-2026-10-15.md)・[fixture補記](research/demand-weighted-daily-bridge-fixture-amendment-2026-10-15.md)→39予測/82人工label例/189check/期待拒否30→独立4553比較→[結果](results/demand-weighted-daily-bridge-2026-10-15.md)・[Astra](research/demand-weighted-daily-bridge-astra-review-2026-10-15.md)・[決定表](research/demand-weighted-daily-bridge-decisions-2026-10-15.json)保存。
+
+新pure tools/demand_weighted_daily_bridge.py、人工input/transforms/weighted/手指定stateのみ（label/path/readerなし）。metadata→fallback前β検査→旧x/past56固定r-z-pin→rawP=B+14u*zβ/P=max(rawP,0)。変更29はdaily=b*P/Eでexact和P、copy8はdelta0/None/B0/r0/β0/非ゼロ2積相殺でbaselineexactコピー、floor2は丁度0/負rawPを区別。issueQで14日全体、元日/年末mask・unknown/営業0・None維持。非均一8caseで正負配分のcross-productも確認、12case B!=E/微小補正の枝切替差を保存し連続性/改善を主張しない。
+
+初版はfractional平均がexact1.5で丸め差fixtureにならずassert exit1。39予測/全stdio/source/partial/失敗closure保持。v2はblock .025/.05/.075/.125→baseline .1へ修正し同条件でpass、core/閾値/上限不変。forecast222bit/独立全loss333bit、child.291756秒/footprint25641464B/RSS38060032B、reader.587695秒/18612728B/30801920B。stdout819047B<1MiB、各親900/子870秒・各2GiB・旧保存上限内。全source/state/stdio/exit/partial/failure/resource/closureと旧handoff-index全文保全。
+
+各Q人工label=baselineで正補正over増/負補正under増を両mode16セル保存。各case反例であり全10店四季平均ゲート実施ではない。調整2014以前・元E/I/自Qλ1/四季all-normal元日両mode MSE-under-over非増加/annualMSE改善条件・同休業mean28・観測/休業欠測のみ0仮定分離は維持し、実性能未評価。
+
+daily_bridge_artificial_ready=trueのみ更新、fit_ready=false/can_launch_learning=false。実weighted-label prefix統合/solver/実学習済みβ接続/25solve/2014性能は未検証、学習/2015停止。次の必要工程は別依頼で実prefix統合の時点・来歴契約固定などだが自動接続・fitしない。heartbeat PAUSED/PSI採用なし。
+
+Mac3.14.8共通人工/独立pass・Mac資源観測pass、Windowsnative/OS依存包括suite未実行。旧変更/failed/closed roots/source保持、新実データ/実ラベル/2015内容参照・再評価/取得/外部送信/commit-push/依存lock/Xcode変更0。
+
+---
+
+## 最新 — consumer問題生成・β0人工検証完了、学習・2015停止継続（2026-10-15 JST）
+
+人の「学習/2015停止のまま問題生成とβ0 baseline再現を人工検証・Astra確認」に対応。[事前契約](research/demand-weighted-consumer-artificial-contract-2026-10-15.md)→4primary+21削除+全r0+binary64=27問題/5replay/107check/期待拒否27→独立1270行/28809比較→[結果](results/demand-weighted-consumer-artificial-2026-10-15.md)・[Astra](research/demand-weighted-consumer-artificial-astra-review-2026-10-15.md)・[決定表](research/demand-weighted-consumer-artificial-decisions-2026-10-15.json)保存。
+
+新pure compiler tools/demand_weighted_problem_consumer.py、各Q元E/Iとw=1/(10nE)/v=1/(10nI)、r0適格の目的定数・正w、None/B0のrisk保持、λ1・同休業mean28を確認。全metadata前検査→past56だけのr/z/state pin照合→G/rhs/C/h/e/非負・hinge/facet問題生成→β0実代入でP=B/paired under-over0/J=C。日次baselineexactコピー、canonical総量との差26行を明示し再配分なし。encoder全stateの独立再現とは呼ばない。
+
+人工child一度exit0だがstdout既定1MiB超で初回rootはfailed、全source/state/stdio/exit/closure保持。[補記](research/demand-weighted-consumer-output-recovery-2026-10-15.md)に従い上限変更・再実行なしで保存済みstdoutをfresh recoveryへ復元、独立readback-v3 complete。Astra指摘の全配列長/27case名/5replay名/2+6facetチェックはfresh reader v2で補強し旧source保持。最大179bit、人工6.001588秒/footprint35586552B/RSS48005120B、reader14.011644秒/37159416B/49348608B。各900/870秒・各2GiB・旧保存上限内。
+
+consumer_artificial_ready=trueだけを更新、fit_ready=false/can_launch_learning=false。実weighted-label prefix接続、solve、非ゼロβの日次予測bridge、25solve/2014性能は未検証・未実行。次は必要なら別契約で非ゼロ人工点の日次bridge検証が可能だが、この依頼で自動接続・学習しない。調整2014以前・四季平均under-over非増加/MSE条件・同休業mean28・観測/休業欠測のみ0仮定分離を維持。2015停止・heartbeat PAUSED・採用なし。
+
+Mac3.14.8共通人工/独立pass、Mac資源観測のみ、Windowsnative/OS依存包括suite未実行。旧変更/source/失敗/closed roots/旧handoff-index全文保持。新実データ/実ラベル/2015内容参照・再評価/取得/外部送信/commit-push/依存lock/Xcode変更0。
+
+---
+
+## 最新 — Q4集中/自店信号0を分析、学習開始条件固定、学習・2015停止継続（2026-10-15 JST）
+
+人の「学習/2015停止のままQ4集中とr0店舗影響をAstra分析・開始条件固定」に対応。[事前契約/AND開始条件](research/demand-weight-learning-entry-contract-2026-10-15.md)、[projection対応補記](research/demand-weight-learning-projection-amendment-2026-10-15.md)→人工22→保存x/z/r/w/vだけの全21固定w日除外+全40自店span→独立1754比較/90rank→[結果](results/demand-weight-learning-entry-2026-10-15.md)・[Astra](research/demand-weight-learning-entry-astra-review-2026-10-15.md)・[決定表/40セル](research/demand-weight-learning-entry-decisions-2026-10-15.json)保存。
+
+全21除外後new rank3だがQ4 2013-10-08除外でenergy70.7072%を失い、列別r70.2788%/水準89.4373%/週変化84.5267%、Gram行列式残存0.3133%。rank維持は代数的な幅だけで、幾何集中/少数単一年支持は解消しない。固定元wの診断で再fit/再重み/予測変化ではない。元E/Iやprimaryは変更なし。
+
+自店学習z0は15/Q1・17/Q1・19/Q4。前2組の2014各7行はNone2/z0五で非ゼロ共有適用候補なし。19/Q4の学習5行z0でも2014の10-22/11-05/12-03に非ゼロ共有適用候補3行。z0行の目的はβ非依存、pairedrisk差0、各元w/v質量.1保持は情報を増やさない。自店rank0から他店βが適用され得るがβ/P/誤差は未計算（数値0でない）。全40組診断、固定分類/店19停止/救済なし。
+
+開始ANDは境界/pins/元E-I-w-v/β0baseline可行性/全Qpool+全21日除外rank3/全40集中共有開示/単一仕様有限実装/人工独立証跡/資源/人の明示学習再開。構造条件met=trueだが新consumer/problem schemaとβ0人工独立試験未実装/未実施、人の停止有効でcan_launch_learning=false/fit_ready=false。新r/旧x生成/fit/β/候補予測/label数量decode/採点/2015参照・再評価0。
+
+未来の枠は最大primary4+削除21=25solve、削除再fitは残存E/Iで各store1/(10n')へ再重み（今回固定wと別）。4state/260予測+21state/1360probeを2014採点前に凍結、一度だけ採点。旧削除非採点契約から未来削除版も採点する変更を明記し旧契約保持。primary改善は従来の四季all-normal/元日両mode under-over-MSE非増加＋annualMSE厳密改善。指定全削除版の2014非悪化、自店z0の各storeQで2014非悪化は別主張・個別判定、将来頑健/安全性/PSI認定なし。全て今回未評価、追加主張失敗でprimary差替え/再探索しない。
+
+分析.568384秒/footprint16,351,760B/RSS28,459,008B、reader.924772秒/50,086,416B/62,308,352B、両449bit。各900/870秒/各2GiB/旧保存上限内、全stdio/exit/source/projection/state/partial/resource/closure保存。初版人工19とv2補強22は両complete、旧source/失敗/closed roots/変更を保持。Mac3.14.8共通分析/人工/独立照合pass、Windowsnative/OS依存包括suite未実行（Mac資源測定のみ）。
+
+調整2014以前、自Q共有λ1、四季平均under/over非増加・MSE/同休業mean28/観測と休業欠測だけ0仮定分離/元日年末/旧Q1不適格判定を維持。heartbeat PAUSED、学習/2015停止、未commit/push/削除/新取得/外部研究データ送信/依存lock/Xcode変更/採用。次は人の明示再開前でも学習consumerの人工問題生成を設計できるが、本依頼は開始条件固定で終了し自動実装/solveへ進まない。
+
+---
+
+## 最新 — 固定重みを実入力へ接続、集中/rank監査完了、学習・2015停止（2026-10-15 JST）
+
+人の「2015停止・発行前入力接続・非ゼロ重みの店/日集中とrankをAstra監査・学習なし」に対応。[事前契約](research/demand-ordered-weight-input-audit-contract-2026-10-15.md)・[人工補強](research/demand-ordered-weight-input-audit-preparation-amendment-2026-10-15.md)・[算術/失敗保存補強](research/demand-ordered-weight-input-audit-runtime-amendment-2026-10-15.md)→人工36+runtime144→実470入力/16群→独立81665比較/652rank証跡→[結果](results/demand-ordered-weight-input-audit-2026-10-15.md)・[Astra](research/demand-ordered-weight-input-audit-astra-review-2026-10-15.md)・[決定表](research/demand-ordered-weight-input-audit-decisions-2026-10-15.json)保存。
+
+固定τ1/20/p32nearest-even/encoder v2不変。input-boundary v2のinputs/transforms/cutoff-availabilityだけ意味decode、旧labels/mixed CSV/state/予測は未decode。trusted accepted keysから自Q Iを継承し、過去56だけのfresh packet+oldxをencoderへ渡す。旧2013尺度は2014cutoff遡及前処理、新rの特性は各origin前56だけ。元E/I/w=1/(10nE)/v=1/(10nI)、r0と旧不支持を維持。issue Iはunknown。
+
+候補学習Q I/E30/60/70/50・3/6/7/5発行日（全2013）でr正10/24/30/19、非ゼロ店8/10/10/9。Q1店15/17とQ4店19は全r0だが行分母保持。pool old/new exact rank全3、new=old r正subset rank一致。energy=w*r²||x||²の日最大shareQ3 2013-07-30が55.65%、Q4 2013-10-08が70.71%、Q4top3日96.20%。質量相当日数Q4約1.836は独立標本数ではない。rank3で薄さ/集中が解消したとしない。
+
+2014全260の旧E240/全r正101/usable正92（10店24発行日）、通常250全r正93/usable92。元日10はraw正8でも旧E0でNone/rank0/energy0、zero-total shares等null。issueQ3 09-24のenergy73.12%、Q4 11-05が68.61%、Q2店27が55.75%。ラベル未参照の特徴分布で正誤/性能ではない。店13/特定日/固定分類の特例や再調整なし。
+
+input_integration_audited=true、fit_ready=false。新fit/係数/候補予測/採点/label数量decode/2015内容参照・再評価0。この監査で終了し、次の学習は集中/薄い単一年支持を扱う別契約が必要。τ/λ/閾値/期間探索や店舗除外/救済fitへ接続しない。調整2014以前、自Q共有λ1、四季平均under/over非増加・MSE/同休業mean28/観測と休業欠測0仮定分離/元日年末all-normal/旧Q1不適格判定を維持。2015停止・heartbeat PAUSED・採用なし。
+
+最大encoder109/監査454/独立453bit（8192内）。child6.734790秒/footprint51,773,944B/RSS59,424,768B、reader4.412287秒/58,655,272B/71,254,016B。各900/870秒・各2GiB/旧保存上限内。全stdio/exit/source/input-pin/state/partial journal/resource/closure保存、旧source/state/260予測/failed/closed roots不変。人工近共線期待値とtemp /var canonical pathの失敗2rootも保持。
+
+実装監査v3・実行/readback v2、独立算術/比較8192bit、完了行/群journal fsync、resource/timeout failed closure/freshroot検査を起動前に補強。共通Mac3.14.8の接続/人工/独立照合pass、Mac資源測定のみ、Windowsnative/OS依存包括suite未実行。旧変更/handoff/index全bytes保持、未commit/push/削除/新取得/依存lock/Xcode変更/外部研究データ送信。
+
+---
+
+## 最新 — 重みτ/数値実装固定、人工37例・独立5159比較完了、実r/fit/2015停止（2026-10-15 JST）
+
+人の「2015停止・Astraと定数/数値実装固定・人工時点/0/欠測検証」に対応。[数値契約](research/demand-ordered-weight-numeric-contract-2026-10-15.md)、[検証補強](research/demand-ordered-weight-numeric-test-amendment-2026-10-15.md)、[結果](results/demand-ordered-weight-numeric-2026-10-15.md)、[Astra確認](research/demand-ordered-weight-numeric-astra-review-2026-10-15.md)、[決定表](research/demand-ordered-weight-numeric-decisions-2026-10-15.json)保存。
+
+唯一D1のτ=Fraction(1,20)、z/r絶対2^-32最近接偶数丸め、他中間/特徴積はchecked exact Fraction（8192bit）。τはpast56平均μ単位の工学規約で最適/閾値/前block比5%/確率ではない。raw域で保存r≤sを証明＋assert、clampなし。店13/特定日/実r分布に合わせず、定数/λ探索なし。完成実装tools/demand_ordered_weight_v2.py、初版sourceも保持。
+
+人工37packet/107assert/期待拒否30、既存label処理4人工calendar、独立readerはencoder/core/solver未importで5159比較一致。真open0を平均/Jに残す、Noneは特徴0補完せず、01-01/12-25休業相当とunknown維持。ラベルの欠測0仮定はclosure Noneだけ0、open None保持、closure正値消さず、quantity母数から休業除外、同mask旧weekday mean28比較。時点/未来・labelフィールド参照canary、J1..14、正負tie/最大finite/subnormal/途中bit停止確認。関数境界であり実prefix/OS sandbox未証明。
+
+実行初版はpassしたが手計算label/ledger検証が弱く統合完了扱いせず保持。v2の非ゼロr期待値混同とv3のfixture float文字列をそれぞれfailed root/source/exit1ごと保持、v4で試験だけ訂正し完了。E3/I4と元1/3・1/4、r0適格2行を残す。旧不支持はr>0でもNone、全r正2と旧適格r正1を区別。数値式/τ/core v2を試験のため変更していない。
+
+weight_encoder_artificial_ready=true、fit_ready=false。新実r/係数/予測/2014採点/2015decode・再評価0。次は別契約で実prefixへの新past56具体payload接続/時点canaryと支持・集中・rank/fallback監査。今回自動接続しない、薄い支持をτ/λ/閾値再探索で救済しない。旧Q1不適格/自Q共有λ1/元E/I/四季平均under-over非増加とMSE/同休業mean28/観測と欠測0仮定分離/調整2014以前を維持。2015停止・heartbeat PAUSED・採用なし。
+
+Mac Python3.14.8共通人工pass。child .124333秒/footprint17,662,456B/RSS29,802,496B、reader .022157秒/14,172,664B/26,247,168B、親900/子870秒/各2GiB・旧EvidenceStore上限内。Mac資源API測定のみ、Windowsnative/OS依存包括suite未実行。既存source/state/予測/失敗/closed roots不変、旧handoff/index全bytes保持、commit/push/取得/依存lock/Xcode変更/外部研究データ送信なし。
+
+---
+
+## 最新 — 店舗特性×順序付き持続性の第一案/人工13例保存、実r・新fitなし（2026-10-15 JST）
+
+人の「2015停止・店13/3月26日特化を避け店舗特性と持続性から誤方向抑制をAstraと検討」により[範囲](research/demand-continuous-persistence-scope-2026-10-15.md)→Astra相談→[第一設計D1](research/demand-ordered-persistence-design-2026-10-15.md)・[説明限定](research/demand-ordered-persistence-amendment-2026-10-15.md)→人工13例/独立58scalar→[結果](results/demand-ordered-persistence-design-2026-10-15.md)・[Astra確認](research/demand-ordered-persistence-astra-result-review-2026-10-15.md)・[決定表](research/demand-ordered-persistence-decisions-2026-10-15.json)保存完了。
+
+旧persistenceハード条件の支持消失/少数再校正/全Bへ戻さず、過去56日の曜日調整/4×14block共通位置J/残差energyV/支持sを連続重みへ。D0=sum変化整合度案は順序不変かつ原点不連続とAstraが指摘し、人工/実データ実行前に棄却して保持。唯一の第一案D1は最新a=d3・過去平均b=(d1+d2)/2、r=s*2max(ab,0)/(a²+b²+V+τ²),τ>0。0≤r≤s、固定τのscalar式は原点連続。最新vs以前は区別するがd1/d2交換は区別せず、raw encoder全体の連続性は未証明。
+
+rは信頼確率でなく整合度と強度の合成。不揃いが増すほど常に小さくなるとは言わずenergy固定時に限定（持続/加速例は双方2/3）。設計本文凍結bytesを保持し補記で限定した。βの符号は未制限でr>0も最終補正とaの同符号保証なし。µ/曜日/Vは各origin過去56だけ、2013全年profileを2013originへ遡及しない。ID/固定分類/特定日除外/新年季節型なし。
+
+学習前固定rで切片含むz=r*x、P=B+14u*zβ、自Q10店共有3coefλ1/under-over≤同maskB+training非負という凸仕様案。r0は旧E/I分母へ残し、非ゼロrだけへ再重みしない。切片/正則化の意味が変わる別モデル、refit後旧幅以下や未来条件は保証しない。後段row別縮小がMSE/過大量をBより悪化させる人工反例と、同履歴から相反する未来を保存した。
+
+fit_ready=false。τ実値・production encoder/丸め/bit/prefix統合未固定。人工はd/τ,V/τ²座標で、τ実値1採用ではない。今回実r/新feature/fit/候補予測/2014再評価/2015内容参照・再評価/削除fit0。次は別数値実装契約/時点canary/0-null-closure人工統合で、実データsupport/fitへ自動接続しない。支持3/6/7/5日や既読2014の適応性は解消なし。
+
+人工13例+不正入力/上限拒否4件pass、別reader実装/solver未importで58scalar一致。child.001576秒/footprint9,568,712B/RSS23,461,888B、reader.000683秒/footprint8,749,512B/RSS21,086,208B、各親900/子870/各2GiB/旧EvidenceStore上限内、全stdio-exit-source-人工-result-resource-closure保存。旧source/state/260予測/失敗/closed roots不変。
+
+四季平均under/over非増加・既存MSE条件・同休業mean28・観測/欠測0仮定分離・調整2014以前維持、旧Q1不適格を変更しない。2015停止・heartbeat PAUSED、PSI採用なし。Mac3.14.8人工確認pass、Windowsnative/OS依存包括suite未実行（Mac測定のみ）。既存変更保持、未commit/push/削除/依存lock/Xcode変更/外部研究データ送信、2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得なし、Astra既存2名read-only。
+
+---
+
+## 最新 — 発行前10店特性表/Q1集中分析完了：店13・3/26が大きい、固定分類なし（2026-10-15 JST）
+
+人の「発行前実績だけの10店特性表・Q1悪化店集中/Astra/2015停止」により[事前契約](research/demand-store-characteristics-contract-2026-10-15.md)→人工11件→profile/snapshot freeze→保存Q1記述分解→独立reader→[結果と10店表](results/demand-store-characteristics-Q1-2026-10-15.md)・[Astra確認](research/demand-store-characteristics-astra-result-review-2026-10-15.md)・[決定表](research/demand-store-characteristics-decisions-2026-10-15.json)保存完了。
+
+baselineは2013FIT10のみ、asof2014Jan1。CSVはmetadata選別後qtydecode、3650日で各店raw364観測/実0一/欠測一、休業相当Jan1/Dec25を除く営業相当363観測。曜日説明率/週末比/相対ばらつき/暦日lag7/月Q差/直近28平均比を記述し、安定年季節性は単年未識別。Q1各origin前56日だけ70snapshotを保存、profile APIへlabel/path/readerなし。freeze後に保存2014全260labeldecode→Q170だけ診断（Q1だけdecodeとはしない）。既読2014で盲検ではない。
+
+Q1all gross＋総量MSEの店13 58.4656%、13/10/19 81.5030%、3/26発行62.0931%。gross＋overは店13 46.5887%、13/19/15 69.7227%、3/26 52.5151%。net比でなく悪化側正寄与が分母、店/日切り口は重なるので加算/独立化しない。各窓の元指標重みδからgross＋/gross−/net、top1/top3区間順位/shareを固定p192で保存。Q1all netMSE+1.191372492e-5、under−.015326969、over+.100553629で原指標と一致、Q1normal/両mode別にも保存した。
+
+店13 3/26はB2476.5/実績2133/P2483.516643、Δ+7.016643で既存過大拡大。発行前28平均比+19.2058%、週変化feature1.014611でも持続を保証せず、原因/警戒閾値とは認定しない。店13も3悪化2改善2fallback同値。Q1MSE悪化32は全てeBΔ≥0、overshoot0、改善18/無変更20。特性差/集中から固定店舗型・除外/停止/閾値ルールへ接続なし。
+
+別readerはprofile/attribution実装/solver未import、10profile/70snapshotの時点と6390記述scalar、370寄与component/原atom/支持/区間/net包含/gross/top境界一致。float記述照合1e-12は損失条件に不使用。旧source/state/260予測/失敗/closed roots不変。v1人工10保持、checked share中点v2で11件pass。診断2.220621秒/footprint32,031,176B/RSS50,888,704B/max2122bit、reader1.672344秒/footprint27,197,920B/RSS48,381,952B、各900/870秒/各2GiB/旧保存上限内、全stdio-exit-source-pins-payload-profile-freeze-contribution-resource-closure保存。
+
+本依頼の記述診断完了。四季平均under/over非増加・同休業mean28・観測/欠測0仮定分離・調整2014以前を維持し、元Q1MSE/over違反でmandatoryfalseのまま。固定分類/新fit/新予測/削除fit/2015再開なし。少数日実測削除感度は未評価、次仮説は別事前契約。heartbeat PAUSED、PSI採用なし。
+
+共通Mac3.14.8の人工/診断/独立照合pass、Windowsnative/OS依存包括suite未実行（Mac測定のみ）。全旧変更/失敗/closed roots保持、依存lock/Xcode変更なし、未commit/push/削除/外部送信。2015新decode-fit-予測-再評価0、2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得なし、Astra既存2名read-only。
+
+---
+
+## 最新 — 保存260予測の2014採点完了：annual MSE低下、Q1条件違反で不適格（2026-10-15 JST）
+
+人の「2015停止・桁数内集計/Astra・保存260窓で2014完了」により、[固定p192区間契約](research/demand-bounded-scoring-contract-2026-10-15.md)→人工11fixture→新v2採点→独立reader→[結果](results/demand-bounded-scoring-2014-2026-10-15.md)・[Astra実装/結果確認](research/demand-bounded-scoring-astra-result-review-2026-10-15.md)・[決定表](research/demand-bounded-scoring-decisions-2026-10-15.json)を保存した。
+
+保存済み季節内10店共有4state/260予測は不変、新fit/予測/2015評価なし。各exact loss/paired項に1/(10*n_store_metric)を掛け、固定binary192bitのfloor/ceil境界整数を足す。巨大macro通分をせず、最大算術2134bit、8192上限内。upper≤0非増加/upper<0厳密減/lower>0増加/残り未判定、EPS救済なし。全12group×2mode×5macroの符号解決、未判定0。
+
+annual observed総量MSE .023472177931→.023401459518（0.3013%減）、欠測0仮定 .024679842358→.024611533629（0.2768%減）。annual/通常250のunder-over/営業相当数量MSEも低下。ただしQ1all MSE+1.191372492e-5/over+.100553629/under-.015326969、Q1normal MSE+1.389934574e-5で両modeともMSE/over違反。Q2–Q4は三指標減少、元日10は厳密同値。8違反セルはQ1のall-normal/mode/指標の重複で独立8失敗ではない。mandatory_pass=false、契約上strict_total_improvement=false、PSI採用なし。Q1事後B差替えなし。
+
+独立readerは集計実装/solver未importで3960scalar/388440weighted項のloss・支持・重み・境界・符号を再構築して一致。観測rawnull10/休業相当欠測0仮定10/元日真0十店を分離。観測のみ全260は3630日250完全総量、仮定3640日260総量、営業相当は両mode3620日。2014以前調整・同maskmean28・raw0/null/unknown・01-01/12-25休業相当・mode分離・欠測0学習0維持。
+
+旧primary/execution failedと欠けた旧resourceを保持し、新採点だけcompleteと区別。新採点child12.9460秒/footprint23,609,800B/RSS38,928,384B、reader4.5514秒/footprint24,641,992B/RSS40,894,464B。各工程900/870秒/各2GiB/旧保存上限、全stdio-exit-source-pins-interval-summary-resource-closure保存。v1/準備を保持しv2で部分modeと最終resource失敗の保存を補強した。
+
+本依頼の保存予測採点完了、21削除fit0で少数日実測依存性は未評価。本工程から次候補/削除fit/2015へ自動接続なし、heartbeat PAUSED。2015新decode-fit-予測-再評価0、再学習/新予測0、既読2014探索的で独立性能認定なし。共通Mac3.14.8の人工/採点/独立照合pass、Windowsnative/OS依存包括suite未実行（Mac測定のみ）。全旧変更/失敗/closed roots保持、依存lock/Xcode変更なし、未commit/push/削除/外部送信。2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/本番採用なし、Astra既存2名read-only。
+
+---
+
+## 最新 — 季節内10店共有：4非ゼロ解/260予測検証、採点bit上限停止・条件未判定（2026-10-15 JST）
+
+人の「適用条件固定→2014検証/Astra/少数発行日分析/2015停止」により[契約](research/demand-seasonal-shared-2014-contract-2026-10-15.md)を先に固定し、単一仕様を一巡した。[結果](results/demand-seasonal-shared-2014-2026-10-15.md)・[Astra実装/結果確認](research/demand-seasonal-shared-astra-result-review-2026-10-15.md)・[決定表](research/demand-seasonal-shared-decisions-2026-10-15.json)を保存。
+
+同Qだけのpast payload/10店共有3coef/λ1/w=1/(10nE)/v=1/(10nI)、自Q under-over≤同休業mean28+training非負。4state全て非ゼロexactKKT/gap0、260予測凍結・2014label別取扱いまで保存。score_groupの店平均macro 5指標一括検査で8192bit超過、primary/executionはfailed閉鎖。指標名/候補対照は未特定。評価完了/性能悪化/条件失敗としない。四季両側非増加・MSE・annual厳密改善は未判定、2014metricなし。
+
+契約通り採点/21削除fit停止、結果後救済・再fit・上限緩和・再採点なし。少数日依存は構造だけ：2013支持30/60/70/50窓、3/6/7/5発行日、同日10店を除く元目的/risk質量1/3,1/6,1/7,1/5を別確認。再正規化後の予測差ではない。削除実測感度未実施、安定/不安定/CI認定なし。
+
+solver未importの独立readerで4問題再構築/4cert/260予測とlabel区別/元日真0十店/欠測10と休業相当0仮定10/source-root不変pass、metric再集計0。v2準備のprimary8fixtureがv1入口だった点を訂正し、元recordを保持して事後v2入口8+influence4=12passを別保存。Primary最終resource snapshot未保存の限界があり、実行全体の資源遵守は断定しない。readback資源は記録/上限内。
+
+次は別の採点数値契約→固定精度上下界/巨大通分を避ける人工stress確認→保存260予測だけの別再採点。今回未実装/未実行、元failedを成功に書換えず、再fit/2015へ接続しない。Primary完成まで21削除fitは起動不可。本一巡終了、heartbeat PAUSED。
+
+2014以前だけの調整・同maskmean28・raw0/null/unknown・01-01/12-25休業相当・観測/欠測0仮定分離・欠測0学習0を維持。2015新内容decode-fit-予測-再評価0、PSI採用なし。共通Mac3.14.8の推定/予測照合・人工確認pass、採点は計算上未解決。Windowsnative/OS依存包括suite未実行。全旧変更/失敗/closed roots保持、全stdio-exit-source-state-freeze-failure-closure保存、依存lock/Xcode変更なし、未commit/push/削除/外部送信。2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得なし、Astra既存2名read-only。
+
+---
+
+## 最新 — Astra四季干渉診断・自Q内tradeoffも確認、季節別案/統計計画保存（2026-10-15 JST）
+
+人の「共通係数×四季制約衝突/Astra/季節別学習検討/統計分析有効か/2015停止」により[診断事前範囲](research/demand-seasonal-conflict-scope-2026-10-15.md)→保存4問題の記述診断→独立readback→[結果](results/demand-seasonal-conflict-2026-10-15.md)・[Astra双方確認](research/demand-seasonal-conflict-astra-review-2026-10-15.md)・[季節別第一設計/統計計画](research/demand-seasonal-coefficients-plan-2026-10-15.md)・[決定表](research/demand-seasonal-conflict-decisions-2026-10-15.json)保存完了。
+
+各cutoffで和1の自Q目的gradient gqと事前固定d=−gqのみ16方向を診断。Q1/Q4勾配cosは−.997803〜−.989917（固定特徴尺度の記述で有意差/販売相関ではない）。全16方向ともown under/overの一方が増え、他Qだけが阻むwitness0。currentQ方向はQ1 over+119.719379、Q2 over+11.772199、Q3 under+10.216748、Q4 under+76.727074。共通係数だけが原因とは断定せず、全方向にwitnessがない/季節別無効という証明でもない。別方向探索/制約除去後solveへ救済しない。
+
+currentQ過去支持は全て2013のみQ1 30窓3発行日/Q2 60窓6日/Q3 70窓7日/Q4 50窓5日、各店3/6/7/5。Q1の絶対正規化残差寄与は1発行日50.565%。店・日別残差/勾配寄与保存、窓も発行日も独立Nとしない。季節別化は12係数の柔軟性と少数支持を併記。
+
+第一案は同3features/λ1、自Q過去だけをQ内10店共有βqへ、w=1/(10nE)、全complete risk v=1/(10nI)、自Q両側+非負、QMSEhard/後alphaなし。全体(1/4)Σ[Lq+||βq||²]で罰則4倍化を防ぐ。各係数の目的データ・制約対応も変わり、共有解除だけの効果と呼ばない。発行Q係数を14日全体へ、部分共有は別仮説保留。自Qadapter/支持・失敗/倍率/独立readerは別事前契約が必要でfit起動readyとはしない。
+
+統計分析は季節・店・日別残差/寄与集中の診断に有効。将来paired差を日付block/同日店舗集合で扱う計画を保存するが、3〜7日・単一年では区間も不安定、依存/季節/局所定常性が必要。単純独立t/ANOVAやpによる候補選択をせず、既読2014をCIで独立化しない。現候補=Bのpaired0bootstrapは情報増なし。今回p/CI/bootstrap実行0。
+
+独立readerは16方向/128risk微分/支持と寄与再合成/gradient pair、人工4境界、旧source-state-失敗-closed roots不変pass。新fit/候補予測/2014再評価/2015内容decode再評価0。同休業mean28/raw0-null-unknown/観測と欠測0仮定分離/欠測0学習0を維持。全stdio-exit-source-旧statepin-closureをfresh recordsへ保存、900/870秒/各2GiB/旧保存上限内。
+
+本診断・設計工程終了、heartbeat PAUSED、PSI採用なし。共通Mac/Python3.14.8 pass、Windowsnative/OS依存包括suite未実行、Mac測定のみ。既存変更/失敗/closed roots保持、依存lock/Xcode変更なし、未commit/push/削除/研究データ外部送信。2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/本番採用なし。依頼Astra2名read-only、formal_permission=false。
+
+---
+
+## 最新 — 制約付き共通残差2014一巡・全4betaゼロ最適/追加改善0（2026-10-15 JST）
+
+人の「実データ適用条件固定→2014検証/Astra/2015停止/四季両側非増加/同休業mean28/label分離」に基づき、[事前契約v2](research/demand-constrained-2014-contract-v2-2026-10-15.md)→[Astra事前確認](research/demand-constrained-2014-astra-review-2026-10-15.md)→統合8fixture→実2014一巡→独立readback→[結果](results/demand-constrained-2014-2026-10-15.md)・[実装/結果レビュー](research/demand-constrained-2014-astra-result-review-2026-10-15.md)・[決定表](research/demand-constrained-2014-decisions-2026-10-15.json)保存完了。
+
+旧exact core/v2入口/verifier不変、3coef/λ1/正規化MSE/全pastQ under-over+training非負、QMSEhard/後alphaなし。許可prefix210/270/330/400、feature210/250/310/380だけ具体row freshcopyで4fit、full inputs/reader/pathは学習へ渡さない。各Q自身の開始stateのみ、全4state/260予測pin凍結後に2014label別採点。日次Δ0はBcopyのcanonical端数例外、変更時exact比例/P0全0、主総量はcanonical B/Y/P・厳密符号。旧floatEPS救済なし、候補/B同条件。
+
+全4state beta=(0,0,0)、exact KKT/gap0で制約付き目的のゼロ最適を確認。以前の非ゼロβの後段alpha停止と違う。round3/4/3/4、pivot14/24/9/25、cuts7/8/7/9。共有βの過去Q制約を同時に課した本固定符号化問題だけの結論で、非ゼロ可行解不存在・平均予測一般不可能とは言わない。入力fallback20、適格240も最適β0で全260同maskB同値、変更0・改善0。全必須Qall/Qnormal/元日両mode三条件は同値passで採用成功でない。
+
+2014全260 observed3630日250総量MSE.023472177931/under205.258387253/over132.322898507、欠測0仮定3640日260総量.024679842358/under203.551222359/over147.345141122。通常250 observed3490日240総量.023185127311、仮定3500日250総量.024452580340。元日10は140日10総量.030361392809、元日真0全10店。営業相当数量MSEも同値、観測/仮定分離/raw0-null-unknown/休業相当01-01・12-25維持、欠測0学習0。旧2015の250とは別。
+
+Astra起動前指摘（モデル支持不足停止・途中予測実体保存）を新統合v2で補強し旧v1/準備6fixture rootを保持。新8fixture pass後実一巡一度。独立readerはsolver未importで4問題再構築/4証明/260予測/2014label/2760scalarとpaired/全source-state-失敗-closed roots不変pass。model3.235461秒/footprint28,869,064B/RSS49,152,000B、全stdio-exit-source-state-pred-freeze-metric-closure保存。900/870秒/各2GiB/従来保存上限は各工程別。
+
+本一巡終了・heartbeat PAUSED。2014既読/探索的で独立性回復なし、PSI採用0。結果後救済/新候補/2015確認へ接続なし。2015新内容decode-fit-予測-再評価0。共通Mac/Python3.14.8 pass、Windowsnative/OS依存包括suite未実行、Mac測定のみ。旧変更/失敗/closed roots保持、依存lock/Xcode変更なし、未commit/push/削除/研究データ外部送信。2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/本番採用なし。依頼Astra2名read-only、formal_permission=false。
+
+---
+
+## 最新 — 制約付き数値実装・人工21fixture/8証明pass、v2総量統一、実データfitなし（2026-10-15 JST）
+
+人の「進めてください」で[数値契約](research/demand-constrained-numerics-contract-2026-10-15.md)→新stdlib exact QP/独立verifier→人工14fixture/7証明→別プロセスreadback＋縮退2fixture→Astra発見の総量不一致→[v2補記](research/demand-constrained-numerics-v2-amendment-2026-10-15.md)→新入口追加5fixture/人工prefix証明→別プロセス8番目readbackを完了。[結果](results/demand-constrained-numerics-2026-10-15.md)、[Astra双方レビュー](research/demand-constrained-numerics-astra-review-2026-10-15.md)。
+
+共通3coef/λ1/全pastQ under-overと学習非負/MSE目的/Q別MSEhardなしを維持。Fraction exact primal active-set＋hinge facet追加、元全hinge/非負/全cut/dual符号/相補性/stationarity/gap0をsolver未importの別verifierで照合。5小問題は全facet/active subset別Cramer解一致、非ゼロ/ゼロ/Q衝突/折点/負λ除去/zero-step/従属同率/fallback分母/改ざん拒否を確認。ゼロ最適は非ゼロ不可行と別。
+
+本体14+縮退2+v2追加5=人工21fixture pass。v1予測helperのΣFraction(日次)と学習Fraction(math.fsum(日次))の端数不一致をAstraが静的発見、旧コードとcomplete記録を不変で保持。新推奨入口tools/demand_constrained_qp_v2.pyでquantity_totalをB/Y/予測Bへ共有、core QP/verifier不変。v1証明は学習問題のみで予測集計一致を含まなかった。次元検査は補正経路、B0/xNoneは早期B fallback。
+
+固定row512/64round/512cuts/4096pivot全65536/bit8192/cert512KiB、上限/cycle/特異系はfailureでβ0成功へ置換なし。bit検査は一部累積後、KKTは反復/資源履歴の全証明でなく、Fraction基盤共通。任意問題収束・実データ資源内完走・非ゼロ解・性能改善は未検証。
+
+今回のreal data fit/可行性solve/候補予測/2014再評価/2015内容decode再評価0。次は実データ適用の別事前契約、今回から自動起動なし。同休業mean28/raw0-null-unknown/観測と欠測0仮定分離/欠測0学習0/outer三条件・原予測保持を維持。人工数値工程完了のみでfit-ready/独立性能/PSI採用認定なし、heartbeat PAUSED。
+
+全stdio-exit-source-fixture-certificate-resource-旧statepin-closure保存、旧変更/失敗/closed roots不変、親900/子870秒/各2GiB/既存保存上限内。共通Mac/Python3.14.8人工確認pass、Windows固有/native/OS依存包括suite未実行、Mac測定のみ。依存/lock/Xcode変更なし、未commit/push/削除/外部研究データ送信、2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/本番採用なし。Astra2名read-only、formal_permission=false。
+
+---
+
+## 最新 — Astra全alpha0原因分析・両側制約付き学習を設計、新fit/2015なし（2026-10-15 JST）
+
+人の「2015停止のまま全季節0の原因/Astra/学習時under-over非増加」を受け、[検討範囲](research/demand-constrained-training-scope-2026-10-15.md)を先に保存し、[原因診断](results/demand-alpha-zero-diagnosis-2026-10-15.md)・[Astra双方レビュー](research/demand-constrained-training-astra-review-2026-10-15.md)・[第一設計](research/demand-constrained-training-design-2026-10-15.md)・[決定表](research/demand-constrained-training-decisions-2026-10-15.json)を保存した。
+
+旧非ゼロbeta/全40cell支持あり。Q1 over微分+2.191879、Q2 under+2.269348、Q3 under+1.195607、Q4 over+10.008184かつC<0でMSEも停止。固定Dに沿う凸riskなので幅縮小だけで厳密条件回復不可。新記述監査は同Q過去30/60/70/50の端点floor全0、誤方向10/32/30/33、跨ぎ0/0/1/2を確認。件数を独立Nやrisk重みに代用しない。支持不足・floor・outer後差替えではなく、MSEで方向を先決して後段は回転できないことが主因。全係数空間の不可能性/λの因果は証明していない。
+
+第一案は既存3coef/λ1/尺度/入力支持/重みのままP=B+14u*xβへ、全pastQの平均under-over≤Bと学習row非負を直接課す凸QP。目的は既存正規化MSE、Q別MSE hard制約は加えずouter三条件を保持。後段alpha再fit/currentQ限定/soft penalty/特徴λ探索なし。年まとめ発行Q別、入力不支持B固定も制約分母。総量固定なし。学習floor非凸化を避け、未知入力だけfloor/B比例、B0/不支持はB。学習条件は過去経験的平均だけで未知/年度/店/窓保証なし。
+
+β0は可行だが、非ゼロ可行/目的改善/ゼロ最適/数値失敗を区別する。共通βの四季条件が衝突して再0になる可能性あり。数値backend・終了/許容・元数量制約と最適性の別証明は未固定。次の具体工程は実装契約と人工fixtureでありfit起動契約ではない。Q-MSE追加/可行方向solveは今回候補化も実行もしない。
+
+今回は保存済2013–14 journal記述のみ。前独立reader微分一致/端点差0/分類数照合/人工Fraction例pass、新fit/可行性solve/候補予測/2014再評価/2015内容decode再評価0。同maskmean28/raw0-null-unknown/休業相当/観測のみと欠測0仮定の分離、欠測0学習0維持。2014既読の適応的再利用で独立性回復なし。旧source/state/失敗/closed roots前後不変、全stdio-exit-source-statepin-closureをfresh recordsへ保存、900/870秒/各2GiB/保存上限内。
+
+本分析設計完了、heartbeat PAUSED。2015再開/新実験へ自動接続なし、性能改善・PSI採用認定0。Mac/Python3.14.8記述監査pass、Windowsnative/OS依存包括suite未実行、新solver未導入未検証。旧変更保持・未commit/push/削除、Xcode変更なし。2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/研究データ外部送信なし。依頼済Astra2名read-only、formal_permission=false。
+
+---
+
+## 最新 — Astra確認・prefix受渡しと2014共通残差一巡、過去同Q制約で全alpha0（2026-10-15 JST）
+
+人の「続けてください」で[adapter契約](research/demand-prefix-adapter-design-2026-10-15.md)→具体row受渡し/入力支持監査/10fixture/独立reader→[単一モデル事前契約](research/demand-common-residual-design-2026-10-15.md)→[2014一巡結果](results/demand-common-residual-2026-10-15.md)→[Astra双方確認](research/demand-common-residual-astra-review-2026-10-15.md)を完了。
+
+学習関数へacceptedkeysだけでなく具体的な過去入力/確定label/cutoff変換をfresh copyし、全470input/reader/index/sourcepathを渡さない。非許可future row改変4canaryでpayload不変、別consumerでprefix以外のPath.open禁止pass。API境界でありPython sandboxではない。完全prefix210/270/330/400、固定特徴eligible210/250/310/380、全40Q店cell支持あり。2014featureeligible240/260、Jan1/Jan15の20はinputfallback。支持数を独立N/安定保証としない。
+
+単一仕様は共通3coef/年・成功gate・店季節偏差なし、x=(1,(latest7の未来mask反復T7−B)/(14u),2*週差/(14u))。直前14真観測・非休業のみ/真0有効/B0fallback。full2013uでr=(Y−B)/(14u)、w=1/(40*n_qs)和1のMSE＋λ1全coef罰則(切片含む)。各Q開始prefixのみで4betaをfit、同Q過去全complete（D0fallback含む）から自身のunder-over-MSE区間へC/Aをclip。R=max(B+14u*xβ,0)→D→alpha→B比例、同fitlabel内部最適化で独立校正なし。前Q確定labelの次cutoff利用可、同origin未来target利用不可、全260予測は採点前保存。
+
+betaは非ゼロ推定/構造支持ありだがcurrent alpha全Q0。Q1過去D非ゼロ30・C>0でもover上限0(初期over微分+2.191879)、Q2 D60/C>0でもunder上限0(+2.269348)、Q3 D70/C>0でもunder上限0(+1.195607)、Q4 D50/C<0でMSE上限0とover0(+10.008184)。固定Dの幅縮小だけでは厳密条件回復不可。支持消失/outer事後B差替えではなく発行前の過去制約停止。入力fallback20と適格240のalpha停止を区別する。
+
+2014全260観測3630日250総量MSE.023472177931/under205.258387253/over132.322898507、欠測0仮定3640日260総量MSE.024679842358/under203.551222359/over147.345141122。通常250観測3490日240総量MSE.023185127311対欠測0の3500日250総量.024452580340、元日別140日10総量.030361392809。全候補=同maskB、全Q/normal/newyear/年末・quantity同値、変更予測0/追加改善0。eligible同値を予測力/安全性の実証としない。旧2015の250とは別の2014評価で、raw0/null/unknown/休業相当/両label分離維持、欠測0学習0、outer差替え0。
+
+prefix10+model8新fixture/別solve4beta・有理数別算法16alpha・260予測・48群scalar/paired/全source状態失敗不変readback pass。beta最大差8.67e-19/上限-alpha-予測差0。prefix 14files/2,753,845B、model 13files/2,987,556B complete。model child2.747268秒/footprint169,984,768B/RSS210,829,312B、親900/子870秒/各2GiB/従来保存上限/全stdio-exit-source-旧state-新4state-closure保存。
+
+本事前一巡完了/heartbeat PAUSED。λ・特徴・期間・cap/grid救済や新候補/2015確認へ接続せず、別研究には別仮説/契約が必要。2014既読で独立性回復なし。共有推定一般/平均予測の不可能性とは言わず、本固定仕様の負結果として保存。採用/置換/B安全性認定なし。共通Mac/Python3.14.8 pass、Windows固有/native/OS依存包括suite未実行（Mac計測のみ）。同梱Git2.53明示/Xcode同意変更なし。旧変更/失敗/closed roots保持・未commit、2015新内容fit/予測/評価0、2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/外部送信/push/削除なし。Astra2名read-only、formal_permission=false。
+
+---
+
+## 最新 — Astra確認・入力/ラベル分離と仮定時点契約pass、新fit/予測/score/2015なし（2026-10-15 JST）
+
+人の「2015停止のまま入力/ラベル分離・時点整合/Astra/2014以前/四季両側非増加/同休業mean28/label分離」により[事前契約](research/demand-input-boundary-design-2026-10-15.md)→[Astra実装前確認](research/demand-input-boundary-astra-review-2026-10-15.md)→[結果](results/demand-input-boundary-2026-10-15.md)→[双方結果確認](research/demand-input-boundary-astra-result-review-2026-10-15.md)を完了。
+
+stdlib demand_input_boundary_v2.pyを新入口として入力/変換/label/index/bindingを分離。v1はimmutableに保持。Astra指摘でhash照合とparse別readの競合を、同一bounded bytesの一回read/hash/strictparseへv2補強、元20+追加3fixture=23pass。混在470packetはmigrationだけ、input専用経路はmixed/label/index openとlabeldecodeを禁止するspy下でpass。5label canary（全0/全None/大値/欄欠落/逆順＋派生予測profile毒）でinput bytes/pin/groups/readiness不変。JSON重複key/余剰/入れ子/NaN/Infinity/bool数量/日付/長さ/identity/mask/pins/対応/未来availabilityを拒否。
+
+2013archive210は元選別履歴保持、2014の260/26発行groupはJan1+14*k×FIT10をinput側から独立定義。inputからactual/complete/rawpred/profile/encoded/scale値排除。full2013尺度・休業仮定は別transformでperiodendDec31/usable_fromJan1を検査、2013当時prediction readinessは拒否/2014cutoff歴史fitは許可。past56<origin/target14連続、raw0/null/営業unknown/assumed_open_mask01-01・12-25維持。新特徴支持はFalse。
+
+labelはjsonl+byteindex、target_last<cutoff/仮定available_at<=cutoffを確認してからpastrowだけdecode。Q開始完全prefix210/270/330/400、label未来decodeなし。available==cutoff許可/targetlast==cutoff拒否fixture。全payloadhashはbytes読出し、全inputs470もプロセスに存在するため物理sandboxではない。後続学習はacceptedkeysのみ使用必須。context翌日/labelorigin+14/transformJan1可用は日単位の仮定で、実arrival/timezoneは不明未検証。
+
+独立readerは契約module未importでraw FIT10 7300→past入力470/targetlabel470/2013尺度/mask/既定B/identity-pins-offset/group/cutoff/シナリオを照合pass。2014真観測3630/欠測10、観測完全250対休業相当だけ欠測0仮定260、元日真0全10店保持。rawnullを観測0へ昇格せず、未来欠測でinputgroup/readinessを変えない。policyとして2014以前調整/各Q総量MSE・平均under-over非増加/同maskB/両label別/outer事後差替え禁止を保存するだけで、新成績0。
+
+v2 16files/3,208,422B complete、child5.674524秒/footprint224,609,072B/RSS264,126,464B。親900/子870秒/各2GiB/従来保存上限/全stdio-exit-source-旧state-closure保存。v1 complete+execution/readback/旧変更/失敗/closed roots保持。共通Mac/Python3.14.8契約23fixture・migration・独立原照合・文書検査pass、Windows固有/native/OS依存包括suite未実行（Mac測定のみ）。
+
+本有限工程完了、heartbeat PAUSED。新fit/候補予測/score/2015内容参照・再評価0、2014既読独立性回復なし。実着荷/新特徴支持/モデル挙動/性能は未検証、特徴式・量変換・λ・過去校正/支持不足規則が未固定なので学習準備完了とも言わない。次はそれらの単一仕様を成績前に固定する検討が必要だが新実験未起動。2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/外部送信/commit/push/削除/採用なし。Astra2名read-only、formal_permission=false。
+
+
+文書閉鎖初回のみ既定Git起動がXcodeライセンス未同意exit69でfailed保存。Xcode変更/同意なし、同梱runtime Git2.53.0で同じdiff検査を別doc-records-v2へ保存し閉鎖。[OS補記](research/demand-input-boundary-os-check-2026-10-15.md)。契約/モデルの再実行0、旧failed保持。
+---
+
+## 最新 — Astra少数支持対策と評価設計を保存、2015停止・新fit/予測/scoreなし（2026-10-15 JST）
+
+人の「2015再評価停止のまま/少数窓依存減/今後の評価設計/Astra/2014以前/四季平均under-over非増加/同休業mean28/label分離」に基づき、[統合計画](research/demand-support-evaluation-plan-2026-10-15.md)、[Astra方法・評価監査](research/demand-support-evaluation-astra-review-2026-10-15.md)、[決定表](research/demand-support-evaluation-decisions-2026-10-15.json)を保存。検討のみ完了で、新実験起動契約ではない。
+
+第一候補は前年特徴/成功gateを使わず、入力支持のある全適格・観測完全窓から低次元signed総量残差(Y−B)/(14u)を二乗誤差＋固定罰則で学ぶ一つの共通モデル。店/季節の偏差・交互作用・別の方向分類器/幅モデルは保留。現在2点からλ/閾値を最適化しない。入力適格性とラベル完全性を分け、将来欠測で予測を止めない。共通モデルでも独立情報・平均改善が増える保証はなく、潜在需要/各日平均を識別したとは言わない。
+
+metadataだけ棚卸し：2013packet210/21発行日、2014は260/26日（観測完全250）。2014Q開始前の14日完結候補210/270/330/400、21/27/33/40発行日。新特徴支持/信号量ではない。旧年参照42日span暦上最早Jan28、2hindcast420日spanFeb25で、2013多数窓を前年端点支持に数えられない。数量の大きさ/成績は新計算0。
+
+将来の内部診断名は「既読2014の時系列再現診断」。Q開始cutoff以前完結ラベルだけで係数固定しQ中contextのみ更新、全10店同発行日を分割単位、一候補＋B/初回hyper選択なし。全2013uを2013内側cutoffへ流用禁止。各Qpaired MSE/under/overを両label別、通常と元日等を別表示、重複合算0。outerの違反Qを事後Bへ差替えず予測/違反を保存、cutoff前のB選択と区別。全2014は既読で独立性回復せず。hash保存も盲検化ではない。
+
+次の具体工程は入力/ラベル分離schema、cutoff可用性台帳・fixture整備だけ。正確な特徴/尺度/量変換/λ/過去校正/支持不足方策/支持・影響度規則を実行前に固定するまでfit不可。今回は新fit/予測/候補score/2015内容参照・再評価0、旧成果を不変hash確認。今後も一事前仕様の診断後は結果によらず終了、同outer救済/2015へ接続なし。独立性能評価には完全凍結後の未使用範囲と別の許可が必要だが、新取得/開封は今回許可せず実施0。2014末までの調整限定を維持。
+
+既存変更・model/state・失敗・closed roots保持。共通Macはmetadata/文書整合検査のみ、モデルテスト新実行0。Windows固有/native/OS依存包括suite未実行。900/870秒/footprint-RSS各2GiB/既存保存上限/全stdio-exit-source-state-closure維持。heartbeat PAUSED、採用/commit/push/削除/研究データ外部送信なし。公開一次文献の原則閲覧のみ。Astra既存方法/評価担当2名read-only、formal_permission=false。
+
+---
+
+## 最新 — Astra共有縮小と別担当監査・2014のみ有限診断、Q3over残存で全B（2026-10-15 JST）
+
+人の「少数窓係数増の原因/店・季節共有で安定化/Astra/別に進め方監査/2014以前調整/四季平均両側非増加/同maskB/label分離」で[設計確認](research/demand-shared-shrink-astra-review-2026-10-15.md)と[別担当プロセス監査](research/demand-shared-shrink-process-audit-2026-10-15.md)→[事前契約](research/demand-shared-shrink-design-2026-10-15.md)→[結果](results/demand-shared-shrink-2026-10-15.md)→[双方結果確認](research/demand-shared-shrink-astra-result-review-2026-10-15.md)完了。
+
+監査は系列の2015失敗→設計変更→再評価を適応的再利用と指摘。今回、新2015内容参照/予測/成績再計算0、旧閉鎖成果は不変hash照合のみ。現gateには過去2015設計履歴あり、2015未使用とは言わない。2014も既読/回顧交互/contextと店舗相関あり独立性回復せず。数値passと一般化を区別し、系列停止を採用、heartbeat PAUSED保持。
+
+校正完全120中D非ゼロ2：Aug27店6 e−1828.775/D+1185.850219（全A89.187759%/C98.886828%）、Nov19店26 e+26.7585/D−186.860676。一例C/A=−e/Dで大係数は信頼性でない。各Q/店等重み、店Q内等重み、窓/店/発行日energy Kish=1.238948（独立Nではない）。既定persistent端点/gate固定、B/pooled_shrink/partial_poolの有限3候補。g=ng/(ng+1)*clip(Cg/Ag,0,1)=.553361754、partial=(nq*local+g)/(nq+2)、定数1固定/最適化なし。Q自身Uでclip、A0Qは0、年間共通最小Uなし。
+
+Q3 alpha旧約1→pooled.553361754/partial.517787251。通常120各Q30でpartial総量MSE.040074978588→.039991162156（0.209149%改善）でもover93.699199→95.442124増で棄却。Sep10店6 e−296.575へ+348.862772→+52.287772の跨ぎ残存。Q4両alpha.143200274（自身U）、通常gate0/tieB、Q1Q2支持0。最終全Q同mask mean28、採用改善0。選択側救済なし、2014ラベルcandidate/selected_methodは選択前B、最終はfrozen-policy-2014-only.selection/2014-evaluation.selected_policy。
+
+23除去を影響度診断（検証23例でない）として固定再重み/再校正。店6除去の通常固定D最大感度673.756975→partial348.862772だが支持消失/元幅縮小を含む。店26除去は旧Q3影響0→partial11.984285へ波及、校正非ゼロD RMS18.921117→24.092869悪化。C/Aはclip後1のまま集中度ペナルティ変化でg=.5へ。店/対応日除去は同情報で二重独立計数0、Dec17除去は完全支持0の無情報。安定性の一貫した改善は未達。
+
+2014通常観測/欠測0とも1680日120総量MSE.021380831284/under171.956495375/over126.603912042、元日別140日10総量MSE.030361392809で全B同値。校正観測1810日120対欠測0仮定1820日130を分離・感度のみ、raw0/null/営業unknown/休業相当01-01・12-25維持。既存2015の観測のみ/欠測0/元日/250窓結果は旧root保持し新係数で置換せず。
+
+新10fixture/独立raw7300・420日/全2014予測/有理数別算法U・係数・集中度・86群scalar/23除去/全source状態失敗不変readback pass。18files/7,534,667B complete、child7.131972秒/footprint198,542,128B/RSS221,626,368B、全stdio/exit/source/state/closure、900/870秒/各2GiB/保存上限維持。
+
+本有限工程完了。結果後の規則/定数/grid追加や2015確認へ接続せず、新実験未起動/PAUSED維持。次の性能研究に独立支持と評価設計が必要だが、新取得/正式holdout/追加探索は今回起動しない。全B/支持消失を成功・予測不可能の証明とせずPSI採用0。既存変更/失敗/closed roots保持・未commit。共通Mac pass、Windows固有/native未実行、OS依存包括suite新実行0。2016–17/予約31–54/販促/CARE/課金API/外部送信/push/削除/本番採用なし。明示依頼Astra2名read-only、formal_permission=false。
+
+---
+
+## 最新 — Astra店7診断・週持続/非減速の支持消失、全Qmean28で追加改善0（2026-10-15 JST）
+
+人の「6/2店7をAstraと分析/持続性・反転兆候を発行前実績で判定/2014以前/四季平均under-over非増加/同maskB/label分離」で[診断・レビュー](research/demand-persistence-astra-review-2026-10-15.md)→[契約](research/demand-persistence-design-2026-10-15.md)→[結果](results/demand-persistence-2026-10-15.md)→[Astra結果確認](research/demand-persistence-astra-result-review-2026-10-15.md)を完了。旧4週4793.058→4620.009→4814.129→4923.27497、最新5曜増2曜減、中央値+16.56897。週差194.12→109.14597/中央値54.793→16.56897は上昇持続と減速で、明確な全体反転/単独外れ値とは言えない。新性能前に旧診断保存。
+
+新3候補B/persistent_anchor/nonweakening_anchor。旧aligned維持、直前21真観測・非休業7組で直近2回の週差/各7曜中央値が年方向と全一致なら持続、さらにs*Δ_recent>=s*Δ_old−EPSなら非減速。新alphaと独立の同じ未校正年端点/B比例、既定7日周期/EPS1e-8固定、cap/別期間/閾値grid追加0。非減速は二階差・中央週の揺れを二倍受け、反転確認/現在非跨ぎ保証ではない。原0/null/営業unknown/休業相当01-01・12-25/年2013–14FIT10raw7300行・最古o−420保持。
+
+2014cal130/完全30,30,40,20で8alpha一度、通常120各Q30三guard/元日10別。校正旧aligned6→持続2/非減速0、通常3→持続1/非減速0。Q1Q2全0、Q3persistent校正Aug27店6の1窓でalphaほぼ1（旧aligned .893432）、選択Sep10同店B誤差−296.575へ+673.75697で+377.18197に跨ぎ、MSE0.133283%悪化/over93.699199→106.271931で棄却。旧同窓補正+601.95630から再校正で幅増。Q4persistentalpha.143200だが通常作動0でtieB。nonweak全Q0。最終全Q B。2014ラベルselected_methodは選択前B、最終方式は凍結policyとselected_policy。
+
+2015前全B凍結、新ridge/NN0、旧最終250窓last label2014Dec16状態/27state検証継承。2015条件通過persistent3/nonweak1でも最終変更0、追加改善0。旧6/2店7persistent=True/nonweak=Falseだが、最終0はQ2支持0/alpha0/B選択で非減速による改善実証ではない。通常観測3490日240総量MSE.020878675703/under162.484107236/over166.248529576、欠測0真3490/採点3500日250総量MSE.021120844073/under160.301623947/over176.761292453、元日10窓140日総量MSE.038582955907等全B同値、20店日重複合算0。設計着想には既知2015診断使用、係数学習2015未使用でも独立検証には戻らない。2015後救済/差替え0。
+
+新10fixture/独立raw7300・420日/2block/21日7組/2週差・中央値・二階差/厳密有理数8alpha/128群scalar/260予測/全source状態失敗不変readback pass。doc-recordsへ旧ケースgateと支持消失、Q3跨ぎ/alpha増、四季支持、Q4校正欠測0感度を保存。24files/19,977,292B complete、child3.438082秒/footprint229,917,488B/RSS282,804,224B、全stdio/exit/source/state/closure、900/870秒/各2GiB/保存上限維持。
+
+有限工程完了/heartbeat PAUSED保持。非減速は2014校正/通常選択作動0で未学習、持続方式も少数校正で残存窓の幅が増えた。支持消失/全Bを安定性証拠にせず、別閾値・期間・候補の追加探索なし、PSI採用0。旧成果/変更/失敗/closed roots保持・未commit、共通Mac pass、Windows固有/native/OS依存包括suite新実行0。2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/外部送信/push/削除/本番採用なし。agentは依頼Astra read-only1名、formal_permission=false。
+
+---
+
+## 最新 — Astra直前水準/変化と前年整合・2014Q2微改善、2015新1窓誤上方で未達（2026-10-15 JST）
+
+人の「店17/27をAstraと分析/発行直前水準・変化と前年整合時だけ補正/2014以前/四季平均under-over非増加/同maskB/label分離」で[レビュー](research/demand-immediate-alignment-astra-review-2026-10-15.md)→[事前契約](research/demand-immediate-alignment-design-2026-10-15.md)→[結果](results/demand-immediate-alignment-2026-10-15.md)→[Astra結果確認](research/demand-immediate-alignment-astra-result-review-2026-10-15.md)を完了。旧店17 11/17はT7−B−139.5/週差−338/前年差−56.350488、店27 10/6は−736.29/−405.066/−368.719022で全下向き・年幅小。単純整合で既知2例を救済できないと性能計算前に診断保存。
+
+新3候補B/aligned_anchor/aligned_cap。旧no_cross2blockgateを維持し、最新/前7日の全7真観測・非休業同曜日ペアを要求、T7は現在14日maskへ写す。年総量差・T7−B・週差が全同符号のみ許可、capは未校正年幅をabs(T7−B)まで制限しB比例。gate/capへ新alpha不使用、週期間/符号tol1e-8固定。原0/null/営業unknown/休業相当01-01・12-25維持、年情報は2013–14FIT10raw7300行/最古o−420、不足B、新取得0。
+
+2014cal130/完全30,30,40,20で8alpha一度、通常select120各Q30三guard/元日10別。旧no_cross校正15→整合6、通常9→3。Q2両候補alpha.417387177645、校正非ゼロ2窓2店、選択May21店17の1窓のみ改善でMSE0.393231%/under184.831099→184.504615/over同値、同成績ORDERでanchor採用。Q3anchor過大増で棄却/cap0、Q4通常整合0/tie B、Q1alpha0。Q4capは端点縮小とalpha増で校正後同じ−26.7585、旧2例の未採用cap補正はむしろ増える。2014ラベルselected_methodは選択前B、最終方式は凍結policyとselected_policy。
+
+2015前Q1/3/4B・Q2aligned_anchor凍結、旧最終250窓last label2014Dec16状態/27state検証継承、新ridge/NN0。旧店17/27はaligned=True/cap_reduced=False、最終0はQ4季節停止でgate検知ではない。2015整合7/250・cap縮小2、最終変更1は6/2店7：B誤差+233.863485へ+181.839130、過大+415.702615へ拡大。最新水準差+271.314455/週差+109.14597/前年差+435.660556の一致でも次期誤方向。通常観測3490日240総量MSE.020889096185対B.020878675703（0.049909689%悪化）、under162.484107236同値/over167.006192617対166.248529576増。欠測0真3490/採点3500日250総量MSE.021130847735対.021120844073（0.047363935%悪化）、under160.301623947同値/over177.488648972増。元日10窓140日同値/20店日重複合算0。2015後cap差替え/alpha救済0。
+
+新10fixture/独立全420日・2block/最新7組mask/符号・cap/厳密有理数境界・8alpha/128群scalar/260予測/全source状態失敗不変readback pass。doc-recordsへ旧2窓の季節停止と新1窓誤方向、全四季支持、Q4校正欠測0感度保存。24files/18,370,506B complete、child3.529392秒/footprint229,294,896B/RSS273,907,712B、全stdio/exit/source/state/closure、900/870秒/各2GiB/保存上限維持。
+
+有限工程完了/heartbeat PAUSED保持。直前整合は次期持続/非跨ぎ保証ではなく、2014の1窓改善→2015の別1窓悪化で安定な局面識別未達。既読2015へ条件追加/同探索反復/結果後差替えなし、PSI採用0。旧成果/変更/失敗/closed roots保持・未commit、共通Mac pass、Windows固有/native/OS依存包括suite新実行0。2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/外部送信/push/削除/本番採用なし。agentは依頼Astra read-only1名、formal_permission=false。
+
+---
+
+## 最新 — Astra2015原因分析・発行前2block信頼gate、Q4採用も2015過小/MSE微増（2026-10-15 JST）
+
+人の「2015悪化をAstraと分析/前年信頼性を発行前実績で判定/2014以前調整/四季平均両側非増加/同休業mean28/label分離」で[診断・設計レビュー](research/demand-annual-reliability-astra-review-2026-10-15.md)→[契約](research/demand-annual-reliability-design-2026-10-15.md)→[数値補記](research/demand-annual-reliability-numerics-2026-10-15.md)→[結果](results/demand-annual-reliability-2026-10-15.md)→[Astra結果確認](research/demand-annual-reliability-astra-result-review-2026-10-15.md)を完了。旧2015変更74=誤方向32/跨ぎ16/実績方向26、純MSE+.000935521157/over+9.367099909。最大6/2店13 e+616.5へd+442.259963、9/8店10/15誤上方等。新gate性能を見ず旧診断rootを先に保存。
+
+新3候補B/validated_anchor/no_cross_anchor。o−14/28の非重複確定14日を当時mean28と未校正前年anchorで反実仮想再構築、両block strictMSE改善でvalidated、さらに各under/over非増加でno_cross。gateへ新alpha不使用。currentpast56+前年42日×2/最古o−420、2013–14FIT10raw7300行のみ、2012/欠測/休業対応不一致/支持不足はB、同点fallbackを成功と数えない。原0/null/営業unknown/01-01・12-25休業相当を維持。独立2例/現在非跨ぎ保証とは呼ばない。
+
+2014cal130/完全30,30,40,20で8alpha、通常select120各Q30三guard、元日10別/label別。v1 Decimal80平坦under境界がQ4no_cross上限を0へ誤縮小し、complete模型/実行とfailed readback保持。厳密有理数の新v2で同条件上限.14320027392270804へ修正、旧sourceは触らず。Q1Q2alpha0、Q3no_crossは両側減でもMSE悪化で棄却、Q4validatedはover増で棄却、Q4no_cross alpha.143200273923のみ採用。Q4select MSE1.100857%改善/under147.333084→144.797740/over231.673084→231.455657。支持はcal非ゼロ4窓2日/select3窓で薄い。2014ラベルselected_methodは選択前B、最終方式は凍結policy/2014-evaluation.selected_policy。
+
+2015前Q1–3B/Q4no_cross凍結、新ridge/NN0、旧最終250窓last label2014Dec16状態/27state検証継承。2015gate通過validated31/no_cross17だが最終変更2/250だけ。11/17店17 e−191.5へd−8.069405は誤方向/MSE悪化、10/6店27 e+49.236へd−52.800665は誤差−3.564665でMSE改善だが過小新発生。両窓とも過小増、合計MSEも微増。通常観測3490日240総量MSE.020880328980対B.020878675703（0.007918495%悪化）、under162.532582529対162.484107236増/over166.043379576対166.248529576減。欠測0真3490/採点3500日250総量MSE.021122431218対.021120844073（0.007514595%悪化）、under160.348160227増/over176.564348453減。元日10窓140日同値/20店日重複合算0。旧4.48%悪化から縮小しても多数B戻しの効果で、同Bの厳密改善/両側非増加は未達。2015後再調整/差替え0。
+
+v2数値回帰含む11fixture、独立有理数二分探索境界/8alpha/420日全入力・2blockactual・strict/no_cross/128群scalar/260予測/全source状態失敗不変readback pass（上限差1.11e-16/alpha2.78e-17/予測0）。doc-recordsへ旧悪化例のgateと季節停止の区別、全四季支持、現2窓の過去誤差、Q4校正欠測0感度を保存。24files/17,678,779B complete、child3.287763秒/footprint225,592,088B/RSS262,553,600B、全stdio/exit/source/state/closure、900/870秒/各2GiB/保存上限維持。
+
+有限工程完了/heartbeat PAUSED維持。過去局面の信頼性は現在方向を保証せず、安定な有効局面識別は未達。新仮説/独立支持なく同探索反復・2015救済なし、PSI採用0。旧成果/変更/失敗/closed roots保持・未commit、共通Mac pass、Windows固有/native/OS依存包括suite新実行0。2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/外部送信/push/削除/本番採用なし。agentは依頼Astra read-only1名のみ、formal_permission=false。
+
+---
+
+## 最新 — Astra店舗/発行日診断・前年アンカーで2014Q2/Q3改善、2015総量/過大は未再現（2026-10-15 JST）
+
+人の「Q2過大/Q4過小を店・発行日別にAstraと分析、誤方向/行き過ぎ抑制、四季平均under/over非増加/2014以前/同休業mean28/label分離」で[診断・Astra](research/demand-annual-anchor-astra-review-2026-10-15.md)→[事前契約](research/demand-annual-anchor-design-2026-10-15.md)→[結果](results/demand-annual-anchor-2026-10-15.md)→[Astra結果確認](research/demand-annual-anchor-astra-result-review-2026-10-15.md)を完了。旧quarter-consensusの2014診断220行を独立照合。Q2raw過大は4/23店10+7.634330と6/18店13+3.691015、Q4raw過小は11/5店6+87.117948/店17+41.035625/店15+3.240467。全て誤方向/行き過ぎ0で、同方向一律縮小だけでは正alphaで非増加を回復できない。
+
+新3候補B/annual_anchor/anchor_cap。前年364=52週の対応14日実績÷直前28日非休業観測weekday期待の比率で現在Bを比例補正、前年欠測/休業対応不一致/曜日支持不足/0分母は窓全体B、2012へ拡張0。capは旧未校正raw方向と前年方向一致時のみ小さい幅をB比例に配分（旧日次shape保持ではない）。現年mask/unknown/raw0/null保持、参照は2013–2014FIT10の7300calendar行のみ。6/18店13・11/5店6/15はveto、11/5店17は残存。Q4cap過小増4.379801351→1.367854174（68.769036%抑制）でも未達。Q2cap店10は再校正alpha増により最終幅7.634330→10.244664へ増える点も保存。
+
+2014cal奇数130/完全30,30,40,20で8alpha一度固定、select通常120各Q30で両label3guard。Q2anchor alpha.341436463613はMSE15.258518%改善・under184.831099→143.094624/over55.360733→48.191294、Q3cap alphaほぼ1はMSE0.048984%改善/under同値/over減で採用。Q1B、Q4両候補MSE/under悪化でB。Q3anchorもunder悪化棄却。2014ラベルartifactのcandidate/selected_methodは選択前B、最終方式はfrozen-policy.selectionと2014-evaluation.selected_policyを参照。Q4欠測0校正感度は報告のみ。
+
+2015前Q1B/Q2anchor/Q3cap/Q4B凍結、旧最終250窓last label2014Dec16状態再利用、新ridge/NN0。原250観測3490日240総量MSE.021814196860対B.020878675703（4.480749%悪化）、under160.592992300対162.484107236減/over175.615629486対166.248529576増。欠測0仮定真3490/採点3500日250総量MSE.022018944383対.021120844073（4.252199%悪化）、under158.486153608/over185.753708366。元日10窓140日総量MSE.038582955907等同値、20店日重複合算0。通常数量MSE0.133950703314は小幅改善でも主総量/両側非増加は未達。全74通常窓変更/元日0、2015後B差替えや再校正0。
+
+初回は2013旧学習packetへの年特徴付与をmetadata拒否しcal/2015前failed、source/model/execution保持。新evaluator_v2の変更は事前2014_keysへの限定のみ。v2新10fixture/全前年input・7300raw・Decimal境界/8係数/128群scalar/260予測/既存source状態失敗不変readback pass、別診断220行/新cap作用の全stdio/exit0保存。doc監査初回はoperation名32文字上限でchild/文書前失敗を保持し、fresh doc-records-v2の短ラベルで完了（模型/係数/readback再実行0）。24files/12,674,297B complete、child2.621447秒/footprint216,711,960B/RSS260,030,464B、900/870秒/各2GiB/保存上限維持。
+
+有限工程完了/heartbeat PAUSED保持。2014改善は2015へ再現せず、前年1回を安定季節性/将来保証と認定しない。新仮説/独立支持なく同探索を反復・2015調整しない。旧shape成果/変更/失敗/closed roots保持・未commit、共通Mac pass、Windows固有/native/OS依存包括suite新実行0。2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/外部送信/push/削除/本番採用なし。agentは明示依頼Astra read-only1名のみ、formal_permission=false。
+
+---
+
+## 最新 — Astra確認/季節別採用停止を実装、Q2過大・Q4過小/MSEで検証未達（2026-10-15 JST）
+
+人の「年間共通係数で全季節を止めず季節別採用/停止をAstraと検討、四季平均under/over非増加、2014以前、同休業mean28、label分離」で[レビュー](research/demand-quarter-consensus-astra-review-2026-10-15.md)→[事前契約](research/demand-quarter-consensus-design-2026-10-15.md)→[結果](results/demand-quarter-consensus-2026-10-15.md)→[Astra結果確認](research/demand-quarter-consensus-astra-result-review-2026-10-15.md)を完了。特徴/gate/端点/期間/尺度/窓/許容差は旧adaptive-consensusのまま、年間共有2alphaだけを季節別8alphaへ分離。旧2014校正pinから各QのC/Aを各Q自身のUへ一度clipし、Q1/Q3全0、Q2bias .149709468289/raw .091692080647、Q4raw .247557876743（bias0）。他Q停止が係数/採用へ波及しないfixture・独立照合pass。
+
+校正130/完全30,30,40,20、通常選択120各Q30、元日10別。非ゼロ校正支持Q2raw3窓=6/4の3店、Q4raw3窓=2店と薄い。Q2選択MSEはbias1.218464%/raw0.619175%改善するが、平均over55.360733333→58.779356527/55.738244833で両候補棄却。Q4rawはMSE.034253483186→.034363745379、under147.333084→151.712885351悪化で棄却。Q1/Q3/Q4biasは0/tie。今回は年間couplingでなく各Q自身の条件違反による全Qmean28。選択後alpha縮小/2015後差替え0。Q4校正欠測0感度20→30完全は報告のみ、全不作動窓も分母維持。
+
+2015原250観測3490日240総量MSE.020878675703/under162.484107236/over166.248529576、欠測0仮定真3490/採点3500日250総量MSE.021120844073/under160.301623947/over176.761292453。元日10窓140日10総量MSE.038582955907/under613.433209/over64.906833333。全対照同値・改善0、原0/null/unknown/休業相当01-01・12-25/20店日重複合算0維持。2015前policy/方式凍結、最終250窓last label2014Dec16state再利用、新ridge/NN0、2015過去contextのみ。旧shape数量0.556694%改善は別root保持。
+
+初回人工境界fixture1失敗は実データ前に停止・execution failed保存、人工値修正のfresh execution-v2で8fixture pass後、実験は一度。24files/10,868,169B complete、独立80桁Decimal境界/季節scalar係数/端点gate不変/128群scalar/最終state・祖先27state検証継承/全source失敗不変pass。最大上限/alpha差1.44e-15・予測差1.14e-13。doc-recordsへ発行日別under/over差・校正Q4label感度・支持を保存。child3.672097秒/footprint215,204,656B/RSS258,031,616B、全stdio/exit/source/state/closure、900/870秒/各2GiB/保存上限維持。
+
+有限工程完了/heartbeat PAUSED保持。2014は既読探索的/交互context依存、将来・個店・個窓の保証なし、PSI採用0。年間coupling解消後も少数校正から別発行日の再現未達。新仮説/独立支持なく同grid再反復・選択側再調整しない。旧変更/失敗/closed roots保持・未commit、共通Mac pass、Windows固有/native/OS依存包括suite新実行0。2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/外部送信/push/削除/本番採用なし。agentは依頼Astra read-only1名のみ、formal_permission=false。
+
+---
+
+## 最新 — Astra原因分析/過去方向一致の別補正も共有係数0・改善未達（2026-10-15 JST）
+
+人の「Q2/Q4原因をAstraと分析/季節内変化へ別補正/四季平均under-over非増加/2014以前/同休業mean28/label分離」で[原因・Astra確認](research/demand-adaptive-consensus-astra-review-2026-10-15.md)→[契約](research/demand-adaptive-consensus-design-2026-10-15.md)→[結果](results/demand-adaptive-consensus-2026-10-15.md)を完了。独立原因診断root complete。旧Q2 4/23は基準誤差−18.018に補正+159.730でover+84.185、6/18下方でunder+73.166。旧Q4 11/5は基準−78.494に−63.303補正でunder+49.800。Q4+1.151655は店/日間の相殺で丸めではない。
+
+新3候補mean28/consensus_bias/consensus_raw。過去56日から2非重複14日hindcast残差と直近7対前7日の同曜日7ペア差を作り3符号一致でのみ作動。欠測/曜日支持不足/反転兆候はB。bias幅は小さい絶対残差・総量0floor/B比例、rawはraw総量方向も一致時のみ。反転予知とは呼ばない（Nov5店6 h14−1302.41552/h28−1208.6445/trend−400.56402でも未来基準誤差−304.30399の反例）。旧27state/最終250窓/last label2014Dec16再利用・新ridge/NN0。
+
+校正奇数130/完全総量30/30/40/20で各Qunder/over凸区間+各Q MSE上限、4Q等重みMSE解析解から年間共通alpha2個を固定。bias制約なし最適.545444004968/raw.515759654252だがQ1等の上限0で両方alpha0。Q2両方式/Q4rawには正の校正上限が残るが、共有設計が全Qを停止させたと明記。通常選択120（各Q30）で全同点・全Qmean28。方向一致の候補作動はcal32/130（raw16）、normal34/120（raw18）、元日0。入力の作動と最終alpha0による変更0を区別。
+
+2015主は通常250観測3490日240総量MSE0.020878675703/under162.484107236/over166.248529576、欠測0仮定真3490/採点3500日250総量MSE0.021120844073/under160.301623947/over176.761292453。元日10窓140日10総量MSE0.038582955907/under613.433209/over64.906833333、全対照同値・改善0。2015過去実績は発行前contextだけ、係数/方式fit0、raw0/null/unknown/休業01-01・12-25維持、20重複合算0。旧shape0.556694%数量改善成果は保持。
+
+24files/10,792,516B complete、新10fixture。初回readbackはfloat等価式の平坦境界で独立比較失敗しfailed保存。新v2 readerを80桁Decimalへ変え、全過去境界/gate/共有alpha/128群scalar/旧source/state/失敗不変をpass（上限差1.44e-15、alpha/予測差0）。模型再実行0。doc-recordsへ作動率・校正Q別・理由/店別照合も保存。child2.671807秒/footprint214,516,504B/RSS249,511,936B、全stdio/exit/source/レビュー/state/closure保存、900/870秒/各2GiB/保存上限保持。
+
+本有限工程は全係数0という事前停止条件で完了/heartbeat PAUSED維持。季節内適応一般が不可能という証明ではなく、反転遅れと共有係数の保守性が未解決。新仮説/独立支持なく同じ探索を反復しない。旧変更/失敗/closed roots保持・未commit、共通Mac pass/Windows固有・OS依存包括suite新実行0、2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/外部送信/push/削除/本番採用なし、agentは明示依頼Astra read-only1名のみ、formal_permission=false。
+
+---
+
+## 最新 — Astra確認・四季平均両側制約で総量改善支持なし/全Q対照（2026-10-15 JST）
+
+人の直接指示「総量固定を外す/2014四季の平均過小・過大非増加/14日総量MSE改善/2014以前/同mask mean28/label分離/Astra確認」で[レビュー](research/demand-seasonal-risk-astra-review-2026-10-15.md)→[契約](research/demand-seasonal-risk-design-2026-10-15.md)→[結果](results/demand-seasonal-risk-2026-10-15.md)を完了。旧全窓保証を明示許可された期間平均条件へ変更。新基点はmean28、旧選択shapeは組み込まず保持。符号付きrawとrecent14（過去14日非休業観測weekday>=2/不足Bfallback）の有限3候補、新ridge/NN0、旧27state/最終250窓/last label2014Dec16再利用。
+
+2014奇数130校正の完全実観測支持30/30/40/20でunder/overの凸折点区間と総量MSE解析解から係数一回固定。raw alpha Q1 0/Q2 .924280921097/Q3 0/Q4 .843932137239、recent14 .564405552058/.585329220951/0/.954066867297。通常選択120各Q30の両labelで総量MSE/平均under/over非悪化をgate、全Qmean28。Q1 raw/Q3両候補は校正上限0。Q2候補は選択MSE/over等悪化。Q4 rawは総量MSE26.823139%改善でもunder147.333084→148.484739で不適格、recent14もunder増。全normal120集計rawはMSE10.130470%改善/両側平均減でも四季違反を隠すため採用0。選択側係数縮小/2015再選択0。
+
+2015主は全Q対照一致、通常250観測3490日240総量MSE0.020878675703/under162.484107236/over166.248529576、欠測0仮定は真3490/採点3500日250総量MSE0.021120844073/under160.301623947/over176.761292453。元日別10窓140日10総量MSE0.038582955907/under613.433209/over64.906833333、両label同値。改善0/総量変更0は構造固定ではなく不適格fallback。元日選択利用0/20重複合算0/raw0/null/unknown/休業相当維持。旧shape数量改善0.556694%成果も保持。
+
+23files/9,914,093B complete、新9fixture/独立等価MAE条件+90二分探索（alpha/上限差2.22e-16）/128群scalar数量・総量・under/over・raw/fallback・全source/state/失敗不変readback pass。doc-recordsへ校正Q4の観測only20総量/欠測0仮定30総量の感度も保存（fit/追加guardに不使用）。child7.339277秒/footprint214,434,608B/RSS231,047,168B、全stdio/exit0/source/レビュー/state/closure保存、900/870秒/各2GiB/保存上限保持。
+
+有限工程完了/全baselineという事前停止条件で同候補探索を終了、heartbeat PAUSED保持。平均制約下の総量改善一般の不可能証明ではない。次の新仮説/独立支持なしに同じ探索を反復しない。制約を結果後に緩めず/旧変更・失敗・closed roots保持/未commit。共通Mac研究pass、Windows固有/OS依存包括suite新実行0、2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/外部送信/push/削除/本番採用なし、agentは人の依頼Astra1名read-onlyのみ、formal_permission=false。
+
+---
+
+## 最新 — Astraレビュー/四季総量保存・通常数量0.556694%改善/総量両側非悪化（2026-10-15 JST）
+
+人の直接委任「過小非増加維持/通常14日総量MSE・過大非悪化/2014四季/2014以前/同mask mean28/label分離/Astra別agent確認」で[レビュー](research/demand-total-preserving-astra-review-2026-10-15.md)→[事前契約](research/demand-total-preserving-design-2026-10-15.md)→[結果](results/demand-total-preserving-2026-10-15.md)を完了。Astra gpt-6-astra 1名read-only、編集/実験なし。未知Y全窓で過小/過大両側非悪化には総量P=Bが必要と確認。日次p>=bを総量等式へ置換し、14日過小保証を維持、日次過小非増加は保証しない。
+
+4候補mean28/ridge_shape/weekly_ridge_shape/level_shapeを非休業simplexへ射影。2014奇数130の観測非休業数量/10店等重みだけで各候補quarteralpha固定、偶数130を通常120（各Q30）と元日10へ分離し四季数量MSE非悪化と総量MSE/under/over一致をgate、Q1は元日別gateも。Q1 level_shape（alpha.922267899264389）、Q2 weekly_ridge_shape（.708445545733132）、Q3/Q4 mean28。元日悪化ridgeを除外、2015後方式差替え0。旧27state/最終250窓/last label2014Dec16を再利用・新ridge/NN0。
+
+2014通常数量MSE1.054443%改善（Q1 4.466615%/Q2 1.478335%/Q3Q4同値）、元日/年末同値。2015通常250観測3490日240総量: 数量MSE0.133307684219 vs同mask mean280.134053954571、0.556694%改善、joint0.077093179961 vs0.077466315137。欠測0仮定は真3490/採点3500日250総量、joint0.077023824597 vs0.077395893672、数量改善同じ。元日別10窓140日/130数量/10総量: joint0.150788772064・数量/総量とも対照同値（前上方主の元日総量改善は維持しない）。2015四季数量Q1 .855139%/Q2 .208296%改善、Q3Q4同値。全完全窓総量MSE/過小/過大同値、最大総量差1.818989403545856e-12<=1e-8。真の0/null/営業unknown/休業相当01-01・12-25維持、20重複合算0/製品採用0。
+
+23files/10,178,242B complete、新9fixture/独立二分探索+KKT射影/四季alpha/別gate/160群scalar数量・総量・under/over/旧27state・失敗不変readback pass。child2.232237秒/footprint206,897,944B/RSS267,501,568B、全stdio/exit0/source/レビュー/state/closure保存、900/870秒/各2GiB/保存上限保持。
+
+文書監査初回failed（契約数式のリンク解釈）も保存し、原pin維持/表記補記/doc-records-v2で閉鎖。模型再実行0。direct unit完了、heartbeat PAUSED保持。同普遍保証下の総量自体の厳密改善は不可能で、通常日次配分改善のみ。元日前後の厳密改善は残る。次に総量を動かすなら保証対象/許容損失の別条件が必要で、今回勝手に平均制約へ緩めない。同探索を反復しない。旧変更/失敗/closed roots保持、未commit。共通Mac研究pass、Windows固有/OS依存包括suite新実行0、2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/外部送信/push/削除/本番採用なし、追加agentは明示依頼Astra1名のみ、formal_permission=false。
+
+---
+
+## 最新 — 過小非増加制約で元日数量/総量改善・通常総量MSEは未達（2026-10-15 JST）
+
+人の直接委任「14日総量の過小非増加/元日前後数量改善/2014以前調整/同仮定mean28/観測と欠測0分離」で[契約](research/demand-shortfall-quantity-design-2026-10-15.md)→[結果](results/demand-shortfall-quantity-2026-10-15.md)を完了。各日p>=同mask mean28をlabel前に保証し、全店全完全14日窓で過小量非増加。休業相当01-01/12-25・営業unknown・raw0/null維持。元の2013尺度/全27過去state/最終250窓/last label2014Dec16を閉鎖sourceから再利用、新ridge/NN0。
+
+2014交互cal130（観測1810日120総量）/select130（元日含む1820日130総量）だけでupward alpha=0.344265049564768。四半期deltaは前2014校正値保持、newyear限定はイベント専用係数fit0。4候補とも全select及び元日で数量MSE/総量MSE/過小非増加を通り、joint最小seasonal_upliftを2015前固定。2014select joint2.090521%改善、元日6.963994%改善。四半期個別MSE条件は課しておらずQ1総量MSE悪化を明記。
+
+2015元日別10窓/140観測/130非休業数量/10総量: 主joint0.144616352014 vs同mean280.150788772064（4.093422%改善）、数量MSE2.433901%・総量MSE15.405279%改善、平均過小613.433209→541.712513（11.691688%減）。通常250観測3490日240総量: joint0.077504960539 vs0.077466315137（0.049887%悪化）、数量MSE0.234152%改善/総量MSE1.873591%悪化、過小162.484107→128.402644（20.975260%減）/過大量増。欠測0仮定は真3490/採点3500日250総量: joint0.077427163868 vs0.077395893672（0.040403%悪化）、過小160.301624→127.583419（20.410402%減）。全窓過小増加0/元日0維持/20重複合算0/原null保持。年末主変化なし。upward_ridgeの良い2015副結果を主へ昇格0/PSI採用0。
+
+21files/9,607,166B complete、新8fixture/独立alpha・適格性・全2014/2015scalar数量MSE/総量/過小・過大・rawlabel・pointwise bound・全source/失敗不変readback pass。child2.247764秒/footprint208,995,144B/RSS257,818,624B、全stdio/exit0/source/state/closure保存、900/870秒/各2GiB/保存上限保持。
+
+本direct unit完了/heartbeat PAUSED保持。残課題は通常窓の過大量/総量MSEと元日前年末。次候補は2014四季個別の数量/総量MSE非悪化を加えた適格性（新契約未起動、2015副の主差替えなし）。旧変更/失敗/closed roots保持、未commit。共通Mac研究pass、Windows固有/OS依存包括suite新実行0、2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/外部送信/Git push/削除/追加agent/本番採用なし、formal_permission=false。
+
+---
+
+## 最新 — 2014元日/全季節を含む数量検証・2015通常改善/元日と過小量未達（2026-10-15 JST）
+
+人の直接委任で[契約](research/demand-seasonal-quantity-design-2026-10-15.md)→[結果](results/demand-seasonal-quantity-2026-10-15.md)を完了。2013のみ初期210窓/尺度、2014Jan1+14*k/k0..25の260窓で全四半期を含む交互130校正/130選択（元日は選択）。3630観測/欠測10、cal1810日120総量/select1820日130総量。休業相当01-01/12-25・営業unknown・raw0/null維持。暦56構造/過去active標準化/72列/lambda.01。2014過去365日完全packetで26fit、最後2015Jan1前250窓/last label2014Dec16で1fit、全2015のstate/2013尺度を固定。2015採点は旧u維持。
+
+cal alpha=0.524524713364765、quarter delta Q1 .022550461045/Q2 .002153593068/Q3 .042568045830/Q4 0。主recent_gated_ridge。2014selection joint0.048959469006/同mask mean280.050320782185（Q3悪化）、2014元日小幅改善。2014末回顧の交互分割/context依存/2014online対2015fixedの差を明記。
+
+2015原250観測3490日240総量: 主joint0.075227187972 vs同mask mean280.077466315137、2.890453%改善。欠測0仮定は真の3490/採点3500日250総量: joint0.075093233345 vs0.077395893672、2.975171%改善。元日別10窓140日10総量: joint0.158877397508 vs0.150788772064、5.364209%悪化。元日0全10件予測0維持/20重複合算0。元日後数量MAEと総量biasは改善するがMSE悪化。通常窓総量MSE/MAE改善でも過小量増加（保存MAE/bias分解をdoc-recordsに保存）。過小一貫改善/製品採用0。seasonal副を2015後主昇格0/旧strong rolling成績保持。
+
+21files/14,412,533B complete、8新fixture/全27pool正規方程式・raw値mask・校正・選択・全保存forward・scalar quantity/MSE/MAE/bias・元source/失敗不変readback pass、fullstdio/exit0/source/state/closure保存。child7.444641秒/footprint285,868,872B/RSS340,279,296B。親900/子870秒/各2GiB/保存上限内。
+
+直接unit完了・heartbeat PAUSED保持。残課題は元日前後/Q3の数量水準とMSE改善に反する過小量。次は2014以前のみでイベント前後/曜日支持を分け、過小量制約付き選択を先に契約化する論点（未起動、2015倍率選び直し0）。旧変更/失敗/closed roots保持・未commit。共通Mac研究pass、Windows固有/OS依存包括suite新実行0、2016–17/予約31–54/販促/正式holdout/CARE/課金API/新取得/外部送信/push/削除/追加agent/本番採用なし、formal_permission=false。
+
+---
+
+## 最新 — 営業日数量/総量の二比較完了・2014で新補正は支持されず（2026-10-15 JST）
+
+人の「休業相当日維持/営業日数量・14日総量過小改善/2014以前調整/同仮定mean28比較/観測と欠測0仮定分離」で[static契約](research/demand-open-quantity-design-2026-10-15.md)→[負の結果](results/demand-open-quantity-2026-10-15.md)、[最近fit凍結契約](research/demand-frozen-recent-quantity-design-2026-10-15.md)→[統合結果](results/demand-frozen-recent-quantity-2026-10-15.md)まで完了。
+
+休業相当01-01/12-25・営業unknown・raw0/null維持。数量meanは過去28日から休業相当日/欠測を除き最低2観測（不足は原mean28の理由付きfallback）。原fit300+2014Jan1の10窓=310fit、closed target10保持/非休業4330dayで標準化、暦支持45/72列/lambda0.01/u固定。学習lossへ日次と14日総量の両gateを導入。2014内部のmaskは2013証拠だけでも支持。2015fit/calibration/NN0。
+
+static inner60のridge alpha0、delta0.08934665666291555*uはouter50でjoint0.085838010719に悪化（対照0.070886932612）。新主はtie順でmatched_mean28。次のrecent法は2014内に過去365日/全label完了/全店均等poolを12fit、同inner alpha0、outer全3方式同点。最終2015Jan1前220窓/last label2014Dec15で1fitし全2015でstateを凍結、成功13solve。最終主もmatched_mean28、追加改善0。
+
+主結果は同仮定mean28と一致：元日10窓joint0.150788772064/旧rolling mask比6.242177%改善、原250窓観測joint0.077466315137/旧rolling比1.845212%悪化、欠測0仮定joint0.077395893672/旧rolling比1.828297%悪化。原250観測3490日240総量/side3500採点日250総量（実測3490）、元日140日10総量/20重複合算0。事前副open_mean28は通常250観測0.645018%改善だが元日変化なし、global上方補正は元日改善/通常悪化で不採用。2015結果後の主昇格0/採用0、旧rolling成績・state保持。
+
+static21files12,923,513B complete、新8fixture/execution/readback pass。recent初回callback引数TypeErrorは最初2014fit後/2015評価前にfailed、最初一時betaは未保存と明記。失敗root保持、guard.check/保存順修正のfresh v2は19files4,995,287B complete、新7fixture/fullstdio/exit0/全13pool・正規化・正規方程式/inneralpha/260主固定・休業0・null支持/scalarMSE/元source・roots不変readback pass。成功child2.610132秒/親5.092324秒/footprint286,983,008B/RSS323,682,304B。両doc-recordsを参照。
+
+今回の二比較を完了・heartbeat PAUSED保持。次の設計論点は2014内の複数季節で補正の符号が再現するか、元日後の正値数量の学習/検証支持をどう分けるか。現在のQ3/Q4内検証で元日限定の補正を認定しない。2015で倍率・期間を選び直さず、同grid反復0。原変更・失敗・closed roots保持/Mac未commit、Windows固有/OS依存包括suite新実行0、2016–17/予約31–54/販促/holdout/CARE/新取得/外部送信/push/削除/追加agent対象外、formal_permission=false/製品採用0。
+
+---
+
+## 最新 — 過去反復から休業相当日推定・観測/欠測0仮定を分離して評価完了（2026-10-15 JST）
+
+人の「0/欠測を休業扱い」と説明に対する「進めてください」で[固定契約](research/demand-recurring-closure-design-2026-10-15.md)→[結果](results/demand-recurring-closure-2026-10-15.md)を完了。2013/2014のFIT10店7300calendar行だけから365月日を調べ、両年・全店の0又は欠測というruleで01-01（観測0支持20）/12-25（欠測支持20）を凍結。年は2/同暦10店、独立20例や確認済み休業/P=1とは認定0。2015labelを推定に使わず、operating_status unknown/別assumed_closureを保持。
+
+元日追加10窓で全10店予測0/観測0、日次ゼロ誤差0。candidate joint0.160827936393、raw mean280.174454395615比7.810900%改善/原主比11.821010%改善。同仮定mean28は0.150788772064でcandidate6.657766%悪化。元日補正は他13日の過小と相殺していた過大を取り除き、総量MSE原主0.029979994730→0.047972107418悪化/bias−598.160325。模型固有の成功/採用認定0。
+
+原250窓の観測評価は3490日240完全総量/1.811781%改善のまま。別sideのChristmas10欠測0仮定は3500採点日250総量（真の観測は3490）。candidate joint0.076006272923、raw mean28比3.685734%改善だが同仮定mean28比1.795471%で2%未達。raw_actual null/元mask保持、非pattern欠測は0にせず、推定日に正値なら実績を保持して矛盾として採点。今回の矛盾0。元日10窓と原250窓は20店日重複・合算0、原閉鎖成績を変更0。
+
+新model fit/forward/alpha選択0、新8fixture/原7300値とmask/独立pattern rule/全260予測同mask対照/observedとscenario支持/scalarMSE・MAE/20重複/原source・closed roots不変readback pass。macos-demand-recurring-closure-20261015は15files3,175,989B/complete、execution/readback/doc-records。child2.358506秒/親3.273581秒/Mac footprint154,469,120B/RSS201,588,736B。
+
+直接委任完了・heartbeat PAUSED保持。次の論点は営業日の数量水準と休業相当日0の両立。2015labelで倍率を合わせ直さず、過去だけの数量branch/期間評価契約を別に固定する必要がある。確定休業にはas-of予定/販売チャネルが必要で仮定付きlabelを実測へ昇格0。原変更・失敗・closed roots保持/Mac未commit、Windows固有/OS依存包括suite新実行0、2016–17/予約31–54/販促/holdout/CARE/新取得/外部送信/push/削除/追加agent対象外、formal_permission=false/製品採用0。
+
+---
+
+## 最新 — 元日を含む別10窓評価完了 / 主4.547693%悪化・unknown_zero10件（2026-10-15 JST）
+
+人の「元日の販売ゼロも含める」「不明ゼロを休業と決めつけない」「旧250窓と別報告」で[固定追加契約](research/demand-newyear-evaluation-design-2026-10-15.md)→[結果](results/demand-newyear-evaluation-2026-10-15.md)を完了。10店/Jan1発行/Jan1〜14の10窓140観測日10完全総量、unknown_zero10/unknown_positive130/欠測0。全140日営業unknown、営業予定/休日mask捏造0/元日targetの入力混入0。
+
+元日より前の完了210窓（各21、2014Feb25〜Dec2、最後labelDec15）だけで原365日/72列/lambda0.01/u/暦支持の共有ridgeを1fit。原inner alpha0.2063357718495031/主rolling_calibratedとunsupported occurrence-stateを固定、NNfit/forward/新p学習/再選択0。2015target数量は全予測保存後にだけmetadata選択で読み、原Jan13 state流用0。
+
+追加10窓joint mean280.174454395615/主0.182388045823、主4.547692925345472%悪化/改善3of10、日次/総量MSE・MAE悪化。元日主平均259.23172513101326対actual0、全10件過大・点0予測0。zero-only WAPEは分母0でnull。unknown_zeroをclosed_zero/open_zeroと認定0。旧250窓の1.811781%改善/3490日240総量は閉鎖結果を引用のみ、再計算/合算0。Jan13〜14の20店日重複を明記。
+
+初fixtureは欠測None joint比較のTypeErrorでfailed execution root保持（実データ評価開始0）。総量支持欠如時の改善数/率をnullに修正し同8fixturefresh v2 pass、科学条件不変。macos-demand-newyear-2015-20261015-v2は13files1,488,311B/complete、execution/readback/doc-records。210過去pool/label/標準化/正規方程式/10forward読戻し/scalarMSE/全140分類/旧250窓・原6root/source・失敗不変pass。child2.279545秒/親4.415487秒/Mac footprint265,569,120B/RSS344,473,600B。
+
+直接委任完了、heartbeat PAUSED保持。現行の元日ゼロ対応は不十分。次の改善検証には2013/2014元日unknown_zeroを含める発生確率の別学習契約/数量branch整合が候補だが未実行。2年/同暦10店の支持・独立性を水増しせず、2015labelでp/営業予定を作らない。確定休業精度にはas-of営業予定が必要。既存変更・失敗・closed roots保持/Mac未commit、Windows固有/OS依存包括suite新実行0、2016–17/予約31–54/販促/正式holdout/CARE/新取得/外部送信/push/削除/追加agent対象外、formal_permission=false/製品採用0。
+
+---
+
+## 最新 — 人の直接委任完了 / 休業0・営業0・欠測を分離、固定2015結果維持（2026-10-15 JST）
+
+人の「休業日のゼロと営業日の販売ゼロを分ける設計に変更して既存10店2015評価」「不明日は祝日だけで0にせず欠測区別」で[契約](research/demand-sales-state-design-2026-10-15.md)→新合成器/支持/固定250窓評価→[結果](results/demand-sales-state-2026-10-15.md)を完了。heartbeatはPAUSEDを保持、前の頑健性診断は未開始で本工程へ置換。新direct評価の実行委任は完了し、継続自走を勝手に再開しない。
+
+known_at<=issueの営業予定・最新版・store/取消/競合を検査。確定closedの販売0契約なら通常blendの後に0（正の基準79.4%下限を回避）、営業0/不明0/休業0/欠測を別分類。closed正値は矛盾として拒否。openとmixedのP(販売>0)を別支持で扱い、missing/closedを分母から除外、14以上かつ両classある場合のみp×正値数量平均。支持不足p=null/理由で原観測販売平均fallback。休日や実0から営業状態を推定しない。
+
+実在営業予定なしで3500予測日すべてunknown。fit300の4200target全正値、negative class0/open支持0、pを推定済み1と表示0。2015targetは3490正値/0観測ゼロ/10欠測、休業0/営業0の実測精度は測定不能。元日の実0は元snapshotにはあるが原fit窓/1月13日以降250評価には入らず、評価追加0。新予測250すべて前主と完全一致、joint0.076062795150/mean280.077466315137、1.811781%改善/10of10/2%未達/採用0。今回の追加改善0、新NN/ridgefit/stateforward/alpha再選択0、原欠測/240完全総量保持。
+
+新境界10/既存営業6test pass、full stdio/exit0/原5root/source不変/scalarMSE/全3500分類/null確率/250label前後一致readback pass。macos-demand-sales-state-20261015は12files3,197,373B/complete、同execution/readback/doc-records。child1.577773秒/親2.183206秒/Mac footprint151,520,000B/peakRSS219,889,664B。
+
+次の実在ゼロ評価にはas-of営業予定と営業確認済みの0/正値/欠測、又は元日を含む別固定評価契約が必要。今回の営業unknownを捏造しない。人の追加指示を待つ（routineな再承認待ちではなく、この直接unitを完了した状態）。Windows固有/OS依存包括suite新実行0・未検証、既存変更・原失敗・closed roots保持、未commit、2016–17/予約31–54/販促/holdout/CARE/新取得/外部送信/push/削除/追加agent対象外。formal_permission=false/製品採用0。
+
+---
+
+## 最新 — 人の声かけでPAUSED / 休日・休業と販売ゼロの設計を見直す（2026-10-15 JST）
+
+人の「通常の365日ローリング回帰ですと休日祝日など実績が0になる部分が吸収できないと思われます」を受領。継続委任の停止条件に従いheartbeat banto-ai-macをapp toolでPAUSEDへ更新、toml読取りでPAUSED照合。予定した保存250予測の頑健性診断は契約/実装/実験とも未開始。今回は既存コードとsummaryの読取り及び停止・引継ぎ記録のみ、新模型/fit/forward/評価0。
+
+現状は固定8月日±3日の暦特徴を入れるが、operating_status=unknown/nominal_closure_mask_applied=falseで確定休業の入力はない。rolling rawはreluで非負、主はalpha0.2063357718495031を用いるB+alpha*(raw−B)。従ってB>0なら下限(1−alpha)*B=0.7936642281504969*B>0であり、暦でrawを0にしても主予測は0にできない。改善1.811781%/暫定2%未達/採用0の原記録は保持。
+
+次の設計論点は、予測発行時に確定する休業予定を別入力で扱い、その日の観測販売数量の平均を0とするか、営業日にも起きる販売ゼロをP(販売>0)*E(販売|販売>0)として扱うか。休日=休業とは仮定しない。欠測(null、Christmasの未観測など)を真の観測0に変えない。開店状態や販促・新年度・新データの追加解釈は未許可で未実施。営業/休業の因果原因を売上0だけから同定しない。人への応答を優先し、このPAUSED中は新しい自走実験を起動しない。
+
+macos-demand-holiday-review-20261015-recordsに人の発言/PAUSED設定/現状source pin/固定alphaと下限/引継ぎ/原closure照合を保存。原変更・失敗・closed rootsを保持、Git push/外部送信/Windows native/OS依存包括suite/CARE/追加agent0。
+
+---
+
+## 最新 — 継続自走ACTIVE / 分離選択主rolling1.811781%改善・10/10店・2%未達（2026-10-15 JST）
+
+heartbeat banto-ai-macで[2014時系列分離契約](research/demand-temporal-selection-design-2026-10-15.md)から[結果](results/demand-temporal-selection-2026-10-15.md)まで保存。time120→inner60/outer50/crossing10、跨ぎは選択外。原fit300/30369parameter/seed/sampler/optimizer/u/暦支持を固定、新NN一軌跡1408更新でinner停止・最良640。inner alpha NN1/rolling0.2063357718495031、outer joint baseline0.070886932612/NN0.068983464026/rolling0.067470840300から主rollingを2015前に固定。旧NN3328はouter選択に使わない。
+
+2015主joint0.076062795150/mean280.077466315137、1.8117810108507548%改善/10of10、日次/総量MSE・MAE/WAPE改善、全四半期改善。暫定2%未達・不採用。新NN副1.172562%/7of10、旧NN0.758848%/7of10。全time120校正の旧rolling副2.357761%へ差し戻し0、後付けalpha/grid0。既読探索的検証/未知性能claim0。
+
+macos-demand-temporal-selection-20261015は20files4,972,087B/complete。execution/readback complete、7新fixture/stdout/stderr/exit0、innerstate strict load+inner60 forward/scalaralpha/outer50選択/原initial・sampler一致/37pool過去境界/250予測前後/3490日240総量/原4root/source不変pass。新ridgefit0、閉鎖stateから旧rolling再構成差0。child9.703434秒/親15.313981秒/Mac footprint325,501,864B/RSS356,794,368B。doc-recordsを参照。
+
+次は保存250予測の頑健性診断。新fit/模型/alpha選択を増やさず、固定10店を同期originでまとめ、leave-one-store/leave-one-origin/56日4origin block paired resamplingを先に契約保存して一回だけ計算・検証・閉鎖する。単一店/発行窓依存と欠測支持を診断し、既読開発内の記述的範囲を越えない。PSI業務条件未確定、採用を認定しない。
+
+heartbeat ACTIVE/継続委任有効。人の新直接発言でPAUSED、scheduler起動は声かけではない。全900/870秒/2GiB/保存上限保持。2016–17/予約31–54/販促/正式holdout/Windows native/CARE/課金API/新取得/外部送信/push/削除/追加agent対象外。共通Mac研究pass、Windows固有・OS依存包括suite新実行0、formal_permission=false/製品採用0/既存変更・失敗・closed roots保持/Mac未commit。
+
+---
+
+## 最新 — 継続自走ACTIVE / rolling副評価2.357761%改善・主選択は元NN（2026-10-15 JST）
+
+heartbeat banto-ai-macにより[固定365日契約](research/demand-rolling-ridge-design-2026-10-15.md)と[結果](results/demand-rolling-ridge-2026-10-15.md)を保存。72列/lambda0.01、原u/暦42を保持し、packet origin>=発行日−365かつlabel末日<発行日をmetadataで選択。210–240窓/各店21–24窓均等、12内部+25開発=37fit、fallback0、active52–55。
+
+内部time120のrolling alpha0.5934170450546611、joint mean280.073746839261/NN0.067966034751/rolling0.071668911358で主方式は元NN。方式/alpha固定後2015へ一回。主は旧0.758848%改善/2%未達を維持。事前固定のrolling副評価joint0.075639844770、mean28比2.357761%改善/9of10、日次総量悪化なし/支持不変で参考gate通過。MAE/WAPEも改善、biasは過小側へ移動。副方式を結果後に主へ昇格0/製品採用0。Q2は3.266319%悪化、Q1/Q3/Q4改善。既読開発/未知性能claim0。
+
+macos-demand-rolling-ridge-20261015は15files4,481,051B/complete。全child stdio/exit0は同execution-records、新架空7確認pass。readbackで670headerから全37poolの適格集合を独立照合、全末日<origin、72state/標準化/等重み/固定主副/250予測前後/原3root/source不変pass。doc-recordsを参照。child5.758337秒/親9.045070秒/Mac footprint310,035,320B/peakRSS351,731,712B。
+
+次は2014年内の時系列分離選択。境界2014-10-01、全label終了前inner60、origin>=境界outer50、跨ぎ10は選択外（metadata確認済み）。旧NN3328はtime120全体で選択したのでouter比較にそのまま使わず、同fit300/architecture/seed/optimizer/最大4096の新一軌跡をinner60だけで停止・選択。rolling alphaもinner60、outer50で方式を固定してから2015へ一回。跨ぎpacketは選択外、rollingfitには末日が過ぎた後のみ利用。別契約/未来境界fixtureを先に保存して実装→検証→評価→closure/docsまで自走する。未読年度/データ追加はしない。
+
+heartbeat ACTIVE、継続委任有効、routine質問不要。人の新しい直接発言でheartbeatをPAUSEDにして応答、scheduler起動は人の声かけではない。全900/870秒/2GiB/保存上限、2016–17/予約31–54/販促/正式holdout/Windows native/CARE/課金API/新データ/外部送信/Git push/削除/追加agent対象外、formal_permission=false/製品採用0。既存変更・closed roots保持、Mac未commit。
+
+---
+
+## 最新 — 継続自走ACTIVE / 完了誤差更新は内部でalpha0、次は過去poolのローリングfit（2026-10-15 JST）
+
+人の最新指示「こちらから声かけるまで自走して進めて」で[継続方針](research/autonomous-continuation-2026-10-15.md)を保存。Macのこのチャットheartbeat banto-ai-mac/15分/ACTIVEを作成・toml読取り照合。旧Windows automationは再開していない。人から次の直接発言が来たら新実験より先にこのheartbeatをPAUSEDにして応答する。schedulerの起動promptは人の発言と扱わない。
+
+[過去完了誤差の更新契約](research/demand-prequential-bias-design-2026-10-15.md)と[一回結果](results/demand-prequential-bias-2026-10-15.md)を保存。mean28/NNの自己誤差をorigin前56日・全14日末日経過・14観測日以上で更新。2014time120だけで校正したalphaは両0、積Cは両負。tie順で元NNを選択し、2015は原予測を維持。新性能改善0、joint0.076878463656/旧0.758848%改善/2%目安未達/不採用を保持。
+
+新架空7確認pass、current/future label poison/56日/全窓完了/他店拒否/実0/欠測を検査。250要求/3490日/240完全総量保持。内部cold fallback10/開発fallback0。macos-demand-prequential-bias-20261015は12files1,183,160B/complete、同execution/readback/doc-recordsで全child stdio/exit0/原3root/source/予測前後/過去境界照合pass。補助inspection一行のSyntaxErrorは表示だけ修正、模型/評価反復0。child3.130403秒/Mac footprint161,596,160B/peakRSS197,656,576B。
+
+次の具体工程は固定365日/72列/lambda0.01のローリング共有ridge。各originで前365日内・全label窓完了をmetadata選択後にtargetを使う。最低140窓/全10店支持、なければmean28。過去poolだけで標準化/係数を再fit、2014time120で方式とalpha固定、2015で再選択しない。別契約とfuture-poison確認を先に作り、実装→一回評価→closure/readback/docsまで自走する。同一実験反復/後付けλ/gridなし。
+
+継続委任は有効、routine確認質問不要。各実験900/870秒/Mac各2GiB/全保存上限を維持、2016–17/予約31–54/販促/正式holdout/Windows native/CARE/課金API/新データ/外部送信/Git push/削除/追加agent対象外。formal_permission=false/製品採用0、既存変更・closed roots保持、Mac未commit。新仮説がなく有益な作業を進められない場合は理由を残しheartbeatをPAUSEDにして空回りしない。
+
+---
+
+## 最新 — 自走の有限比較完了 / リッジは翌年悪化、不採用（2026-10-15 JST）
+
+人の「自走して進めてください」を現在の委任として保持。routineな実装/確認ごとの再開質問は不要。今回[固定有限campaign](research/demand-autonomous-mean-design-2026-10-15.md)から[新fit/内部選択/2015評価/保存](results/demand-autonomous-mean-2026-10-15.md)まで実施。原300fit/120timeで72係数（54active）のlambda0.01 ridgeを新solve、元NN3328へのalphaも内部だけで校正。両alpha1.0、選択用time joint mean280.073746839261/NN0.067966034751/ridge0.066768897892、ridge9.462021%改善で固定選択。
+
+2015の250要求/3490日/240総量を保持。joint mean280.077466315137/元NN0.076878463656/ridge0.078912045087、ridge1.866269%悪化、2/10店改善、日次/総量MSEとMAE/WAPE悪化。主候補を結果後に差替えず不採用、元NNも暫定2%未達維持。2015は既読・この診断起点の探索的評価で未知性能claim0。
+
+macos-demand-autonomous-mean-20261015は16files4,185,865B/complete、全child stdio/exit0は同execution-records、新架空7確認pass。初readbackはoperation名32超過で確認未開始failedを保持、名前だけ修正したfresh readback-v2で係数/alpha/選択/250予測前後/元実績/原2root/source不変pass、fit/forward反復0。doc-recordsを参照。child4.242421秒/親7.908135秒/Mac footprint310,051,680B/peakRSS391,593,984B。
+
+この有限campaign完了で区切り、λ/grid/年度を後付け0。次の検討点は時間変化に対する検証/更新方法（有効性未検証）。automation PAUSED、2016–17・予約31–54/販促/正式holdout未解釈、Windows native/OS依存包括suite新実行0、formal_permission=false/製品採用0/CARE待ち/追加agent0。既存変更・closed roots保持、Mac未commit、原quantity/profile/予測/weightsのGit送信0。
+
+---
+
+## 最新 — PAUSED / 既存10店の保存誤差診断・MSE/MAEの寄与差を確認（2026-10-15 JST）
+
+人の「進めていきましょう」で[固定診断](research/demand-existing-store-diagnosis-design-2026-10-15.md)と[結果](results/demand-existing-store-diagnosis-2026-10-15.md)を保存。主time_selected3328を維持。joint差−0.000587851481=補正二乗量0.003682312899−整合0.004270164380。日次絶対誤差1709改善/1781悪化、完全総量113改善/127悪化。MAE差日次+0.137984/総量+12.781381、MSEでは改善寄与が上回り絶対誤差では悪化寄与が上回る。0.758848%改善/暫定2%未達/不採用維持。
+
+Q4の総量過小差+77.346313/過大差−17.071297、店26の総量過大差+106.900599/過小差−47.580204。向きが異なり一律の補正強化を支持しない。原因未同定/倍率最適化0、PSI実損失は未計測。平均から中央値へ対象を変更するMAE目的化を自動で行わない。
+
+250要求/3490日/240完全総量保持、summary差1485照合最大1.56e-13、新架空6確認pass、原root/source不変。macos-demand-existing-stores-diagnosis-20261015-records complete、全tests/child stdio/exit0。新fit/forward/原ZIP・profile数値読取り/weights deserialize0、closureのhash照合のみ。文書は同doc-recordsを参照。
+
+一件保存で停止、automation再開0/追加grid・年延長0/正式holdout0/2016–17・予約31–54・販促数量未解釈/Windows native・OS依存包括suite新実行0/formal_permission=false/製品採用0/CARE待ち/追加agent0。次の学習前に予測targetとPSI業務条件を固定する。既存変更・closed roots保持、Mac未commit、原data/profile/予測/weightsのGit送信0。
+
+---
+
+## 最新 — PAUSED / 既存10店2015評価完了・主模型0.758848%改善、暫定目安未達（2026-10-15 JST）
+
+人の「その設計で既存10店の2015年評価を進めて」により、[実行契約](research/demand-existing-store-evaluation-design-2026-10-15.md)と[結果](results/demand-existing-stores-2015-2026-10-15.md)を保存。固定time_selected3328を主、transfer_selected3072を参考、mean28対照として一回適用。既存fit10店/2015の250要求を保持、新fit/選択変更0。
+
+joint mean280.077466315137/時間0.076878463656/移行0.077107200332。主模型0.758848%改善・7/10店改善、日次/総量MSE改善・支持不変だが事前2%目安未達。MAE/WAPEは日次/総量とも悪化、PSI採用false。店舗10/15/26、Q2/Q4はjoint悪化。主副役割を結果後に変更0、因果/未知性能/有意性claim0。
+
+新対象quantity4040行をfilter後に解釈、250profile/全250予測をlabelなし保存後に付与。各店349観測日/24完全総量、全3490日/240完全label、Christmas null保持。新境界7確認pass、全child stdio/exit0/元root・source不変・保存値読戻し/3closure pass。評価root macos-demand-existing-stores-2015-20261015（12file1,928,965B）、同execution/readback/doc-recordsを優先。child6.425729秒/Mac footprint287,949,664B/peakRSS308,445,184B。
+
+一回保存で停止、automation再開0、追加学習/grid/年度延長0、2016–17・予約31–54/販促数量未解釈、Windows native/OS依存包括suite新実行0、formal_permission=false/製品採用0/CARE待ち/追加agent0。既存変更と原root保護、Mac変更未commit、原quantity/profile/予測/weightsのGit送信0。
+
+---
+
+## 最新 — PAUSED / Mac補正診断完了・既存店舗の将来予測を主用途に確定（2026-10-15 JST）
+
+人の「次のステップ」と主用途回答「既存店舗の将来需要予測・PSI」を受け、[保存予測診断](results/demand-macos-diagnosis-2026-10-15.md)と[主用途/次評価設計](research/demand-existing-store-purpose-2026-10-15.md)を保存。移行選択のmean28差+0.000179835557を補正二乗量0.002610957853−整合0.002431122296として照合。3/5店改善、店16とQ3の整合負、Q4は二乗量が整合を上回る。原因未同定、倍率/店舗/四半期選択0。
+
+150要求/positive125/zero20の25/完全label144を維持、旧summary差90照合の最大誤差1.47e-17。新adapter架空6確認pass、元root/source前後不変。macos-demand-diagnosis-20261015-records complete closure、全tests/child stdio/exit0。新fit/forward/原ZIP抽出/profile/weight deserialize0、閉鎖root hash照合のみ。
+
+次は既存fit10店の2015、時間validation固定3328stepを主模型として一回評価する設計（未実行）。転用は副問、PSI業務条件は未確定。一件保存で停止、automation再開0/正式holdout0/2016–17・予約31–54数量未読/formal_permission=false/製品採用0/CARE待ち/追加agent0。Mac変更未commit、既存変更保護、原quantity/profile/予測/weightsのGit送信0。
+
+---
+
+## 最新 — PAUSED / Macで原本から入力・profile・模型を新生成（2026-10-15 JST）
+
+人の「WindowsからコピーせずMacで新しく作り直したい」に従い、[新契約](research/demand-macos-rebuild-design-2026-10-15.md)と[結果](results/demand-macos-rebuild-2026-10-15.md)を保存。公式ZIPは旧取得記録とsize/SHA一致。CPython3.14.8/Torch2.14.0 Mac arm64/CPUfloat32で新snapshot・尺度・内部480/開発150profile・一軌跡・二選択stateを生成。Git基準6690531、Mac用source/環境追加と本記録は未commit。
+
+3840更新で停止、時間最良3328/移行最良3072。移行joint0.030277834336、mean28比0.597500%悪化、日次/総量も悪化し暫定2%条件未達。150要求/NN125/baseline25/完全label144を保持、製品採用0。新境界5確認、模型/EvidenceStore closure、state strict load、label前後の保存値照合pass。旧weights同一性は未検証。
+
+模型は `artifacts/macos-demand-rebuild-20261015`、全childstdio/exit0は同execution-records、読戻しは同readback-records。閉鎖root追記0、原data/profile/予測/weightsのGit送信0。一回保存で研究を停止、automation再開0、追加grid/年/seed0、2016/2017/予約31–54の数量未解釈、formal_permission=false/CARE手動待ち。現在はこのMac新rootから継続でき、旧26rootのコピーは新生成の必須条件ではない。
+
+---
+
 ## 最新 — PAUSED / Mac向けデータセット取得URLを追記（2026-10-15 JST）
 
 [Mac引継ぎの取得URL](research/pc-handoff-2026-10-14.md#データセットの公式ダウンロードurl2026-10-15追加)を追加。現在必要なStore Salesの公式data/rules、既存ZIP照合値、別用途のUCI/CARE/XJTU-SY取得入口を記載。再取得原本と保存weights/入力/結果のコピーを区別し、既存閉鎖rootを上書きしない。新download/模型/確認/CI0、direct/automation PAUSED・CARE手動待ち・全上限/formal_permission=false/credit0維持。mac-dataset-links-records及びGit後mac-dataset-links-git-recordsの保存を参照。

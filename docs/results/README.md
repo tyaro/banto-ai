@@ -4,6 +4,28 @@
 
 各報告は実施時点の記録です。数値、失敗、実行範囲、原artifactのidentityはその報告の条件に従って読みます。現在状態は引継ぎを参照してください。
 
+## Rustクレートの移植
+
+- [Rust R1全55箇所・7ケースの局所/累積差診断](banto-ai-rust-r1-all-layer-audit-2026-10-16.md) — 局所超過0、上流累積1点未達、モデル変更0。
+
+- [Rust R1の正規化・attention演算順診断](banto-ai-rust-r1-upstream-order-2026-10-16.md) — 一般LN修正の根拠確認、7case再確認で別の1点未達。
+
+- [Rust R1の中間値1点の切り分け](banto-ai-rust-r1-intermediate-diagnosis-2026-10-16.md) — 共通入力線形/加算を確認、上流2枝の累積差。R1未達は維持。
+
+- [Rust R1 CPUテストと数値比較](banto-ai-rust-r1-tests-parity-2026-10-16.md) — 3テストpass、最終予測pass、中間値1点超過でR1未合格。
+
+- [Rust R1のビルド容量上限停止](banto-ai-rust-r1-build-stop-2026-10-16.md) — Xcode確認通過。R1 CPU buildがcache+target合計768MiB上限で停止、テスト/数値比較未確認。
+
+- [banto-ai Rust R1の準備と再開手順](banto-ai-rust-r1-preparation-2026-10-16.md) — ソース/参照準備まで。Xcode設定待ち、build/数値一致は未確認。
+
+## 産業設備の保全と点検支援
+
+- [CARE保存予測の未検知分析とRust R0（2026-10-16）](care-saved-diagnostics-rust-r0-2026-10-16.md) — 元結果固定、未検知8+1の内訳とbanto-industrial接続契約。
+
+- [CARE5fold実学習とイベント評価（2026-10-16）](care-macos-learning-evaluation-2026-10-16.md) — 固定比較4条件通過、検知3/12・未検知9件とnative可用性差を保存。
+- [CARE train尺度とbaseline profile・全学習schedule固定（2026-10-16）](care-training-preparation-2026-10-16.md) — 5fold支持pass、全抽出列独立照合。
+- [CARE数値入力と実consumerの支持確認（2026-10-16）](care-numeric-consumer-2026-10-16.md) — 固定22file/3信号とquality mask、全支持床pass。
+
 ## 独自モデルの需要用途
 
 - [店舗分離による終了点選択・一軌跡比較（2026-10-14）](demand-group-selection-2026-10-14.md)

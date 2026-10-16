@@ -1,0 +1,19 @@
+# Astra：実prefix接続条件・時点来歴metadata監査
+
+2026-10-15 JST。ユーザー指定の既存gpt-6-astra担当を再利用しread-onlyで設計/保存結果を確認。追加agent・実数量/実ラベル/新r/fit/2015なし。
+
+metadataだけを許可する工程でinputs/encoded/transformsを全JSON decodeしてから数量を捨てないよう指摘した。固定path lexerで数量subtreeを意味decodeせず読み飛ばし、独立readerでも元bytesから別lexerで抽出する方針を支持した。
+
+旧accepted台帳のIを継承し、index可用日だけで完全観測を推定しないこと、元E/I/w-v、2013自Q暦・全店・cutoff/usable_fromを保存することを確認した。新consumerにはopaque数量入りmetadata検査専用payloadを渡し、batch_metaのみ、取り込まれたnumeric関数別名もcanary禁止する案を支持した。
+
+2013のexact暦210件だけでなく2014の固定26日×10店と全12issue groupも突合するよう指摘した。実行前に補強し、Jan15→Jan16を全sourceに一貫反映しても拒否する人工例を加えた。外部protected closure hash→各source bytes pin→metadata projectionをrunnerで確認し、数量decodeなしのsingle-read境界、独立regex抽出と25call数にも新blockingなしとした。
+
+限定はIの完全性継承と再検証の違い、state raw-span pinの来歴とr/z再計算の違い、I/O canaryとOS隔離の違い。完了をmetadata事前監査に限り、数量prefix/compile/fit/2015停止を維持するよう確認した。
+
+## 保存結果の最終確認
+
+Astraがpreparation/execution/readbackの3工程をcomplete・integrity passedとして確認した。人工14check・期待拒否37、全470metadata、primary210・21削除案、batch_meta25回、禁止8経路0、独立15698比較・metadata重み算術8bitを確認した。preparation/executionのprojectionとpinも一致した。
+
+保護closure161件・既存source248件・新source10件のhash一致、元sourceの外部closure anchorと規定内の出力・資源を確認した。追加blockingなし。最終確認は新metadata記録とhashだけに限定し、実数量をdecodeしていない。
+
+完了はmetadata preflightに限定する。実label数量完全性、保存r/zの数値整合、実numeric prefix/compile/学習の準備完了を意味しない。quantity_payload_materialized=false/consumer_compile_executed=false/real_numeric_prefix_ready=false/fit_ready=false/can_launch_learning=false、学習・2015停止を維持する結論を支持した。

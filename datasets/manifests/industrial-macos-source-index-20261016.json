@@ -1,0 +1,291 @@
+{
+  "date_jst": "2026-10-16",
+  "acquisition": "fresh from official distribution; no Windows copy",
+  "cache_from_repository_root": "../industrial-source-cache-20261016",
+  "dataset_count": 3,
+  "dataset_original_bytes": 4739584139,
+  "sources": [
+    {
+      "dataset_id": "metropt3",
+      "source_url": "https://archive.ics.uci.edu/static/public/791/metropt+3+dataset.zip",
+      "landing_url": "https://archive.ics.uci.edu/dataset/791/metropt+3+dataset",
+      "archive": {
+        "name": "metropt+3+dataset.zip",
+        "bytes": 218381995,
+        "sha256": "aab991a970e58210de853bb8078ce0e63abb4d9412fdc5c79792dae3d8e1721a"
+      },
+      "expected_pin_matched": true,
+      "members": [
+        {
+          "name": "Data Description_Metro.pdf",
+          "bytes": 81208,
+          "sha256": "b00fac0e8899854078309bef4adaa480d82ecf14dc81c5097c3646973e824127",
+          "crc32": "66e2f03d"
+        },
+        {
+          "name": "MetroPT3(AirCompressor).csv",
+          "bytes": 218300507,
+          "sha256": "db30ccb4ea402e3c8bf2c99db06e288d4f2a772f6928f9dbe26a920d69793e24",
+          "crc32": "a58d0c9f"
+        }
+      ],
+      "zip_all_members_crc_verified": true,
+      "rar_multivolume_crc_verified": null,
+      "license": "CC-BY-4.0",
+      "purpose": "research intake only; no training or evaluation",
+      "raw_source_input_is_not_experiment_output": true,
+      "cache_subdirectory": "metropt3"
+    },
+    {
+      "dataset_id": "hydraulic",
+      "source_url": "https://archive.ics.uci.edu/static/public/447/condition+monitoring+of+hydraulic+systems.zip",
+      "landing_url": "https://archive.ics.uci.edu/dataset/447/condition+monitoring+of+hydraulic+systems",
+      "archive": {
+        "name": "hydraulic.zip",
+        "bytes": 76601704,
+        "sha256": "24128aad2ee45eea7e6b63ebbd9992cdf25d0483a2cebefbfc13bc69079af1f2"
+      },
+      "expected_pin_matched": true,
+      "members": [
+        {
+          "name": "CE.txt",
+          "bytes": 911516,
+          "sha256": "2adc6e258be8e3b7a303b7962f485a7984099cea21248c3bf9f18c7d87283c09",
+          "crc32": "7a58d188"
+        },
+        {
+          "name": "CP.txt",
+          "bytes": 779343,
+          "sha256": "63f60132cb5a30879c6f5c73640a39c69e416013195fe62dafe5133b0747baf4",
+          "crc32": "96870479"
+        },
+        {
+          "name": "description.txt",
+          "bytes": 4044,
+          "sha256": "a115e362976a4532bc7d28c471caa257514584bb3f4f6f06f760ca1236761a63",
+          "crc32": "26bd1a01"
+        },
+        {
+          "name": "EPS1.txt",
+          "bytes": 87411594,
+          "sha256": "2a8d13ca793bb36c0ec4afd27b0103b97b3c1b5a176677be5e7a2ae98c277ab9",
+          "crc32": "7df374f4"
+        },
+        {
+          "name": "FS1.txt",
+          "bytes": 7581926,
+          "sha256": "7ff09b17047f776befc136b7902bc7bd4419f96dc107a7ae94d8c412effe0375",
+          "crc32": "419ba2e5"
+        },
+        {
+          "name": "FS2.txt",
+          "bytes": 8271923,
+          "sha256": "5ee983f88e15ee054846b183224ebcab568b07e3bbe70a4f7f838e603cf1177f",
+          "crc32": "e131ba00"
+        },
+        {
+          "name": "profile.txt",
+          "bytes": 31196,
+          "sha256": "867987ca884b2f0fd607ad3918329eba887d095af2befa21122cea518eaa584a",
+          "crc32": "f6d1e285"
+        },
+        {
+          "name": "PS1.txt",
+          "bytes": 91391892,
+          "sha256": "168e2e663bb511043a15a9c978b93a6e0280b27b113133d0a26f738170af39c0",
+          "crc32": "0d5d1c64"
+        },
+        {
+          "name": "PS2.txt",
+          "bytes": 82373611,
+          "sha256": "2c283dac9a874828ac98badd172a136d52b1de580afb05311c47dc02e5e420c5",
+          "crc32": "e12742d7"
+        },
+        {
+          "name": "PS3.txt",
+          "bytes": 69916801,
+          "sha256": "e671e83d99f37bcfe001fed22cb429002a9da8cad026f8abe4c1b7b284c8637f",
+          "crc32": "439ce40f"
+        },
+        {
+          "name": "PS4.txt",
+          "bytes": 46698180,
+          "sha256": "fb58417e4a2c4f11d5614b31813b6942eb97f50690688d045090e3e4db2b252f",
+          "crc32": "e710efb6"
+        },
+        {
+          "name": "PS5.txt",
+          "bytes": 77776429,
+          "sha256": "42b08cddc1fda06ae0b1c665e208680deb7ad1fff9b9cd9b9879a5820fdf4eca",
+          "crc32": "2dd6cb89"
+        },
+        {
+          "name": "PS6.txt",
+          "bytes": 77875407,
+          "sha256": "9588d363210ab250cf179d930b6b8831643b55bfd8460e54374df18f37456573",
+          "crc32": "6b029331"
+        },
+        {
+          "name": "SE.txt",
+          "bytes": 824838,
+          "sha256": "4c04994cb28b82c001b4931acecf8099e9fe5c864f361c0a7435fbf8745361a1",
+          "crc32": "035cfaf2"
+        },
+        {
+          "name": "TS1.txt",
+          "bytes": 904586,
+          "sha256": "49cae5e9013d8e230698d95f53a98bb77fedfe3c86985b812cf701dcc9ef06d8",
+          "crc32": "b0cbaf13"
+        },
+        {
+          "name": "TS2.txt",
+          "bytes": 910594,
+          "sha256": "34115a5b86886d83c0592c1ed259605634a8c83d3a051e97bf3e5790f1db58fa",
+          "crc32": "bf0b5f54"
+        },
+        {
+          "name": "TS3.txt",
+          "bytes": 908805,
+          "sha256": "cc271852b4caad39a3b8f5c36d948b57f6cab761dad8b4c7bdd7cb7e99c0b980",
+          "crc32": "8219ef36"
+        },
+        {
+          "name": "TS4.txt",
+          "bytes": 910127,
+          "sha256": "548b903f7cd4ea7f2497c0063bdda4bdf8793d55ff43a7d694b8cb835eaf2f55",
+          "crc32": "10518e19"
+        },
+        {
+          "name": "VS1.txt",
+          "bytes": 778499,
+          "sha256": "a6227d9bcb807ee9835c32e73834d3eb9262f0f5cad1b176ca10c473ced25e99",
+          "crc32": "42874b00"
+        },
+        {
+          "name": "documentation.txt",
+          "bytes": 4719,
+          "sha256": "9fe5ce23d5b850df9bf38335588aa98601475b42b7551d10e84b1d075f7b62b4",
+          "crc32": "02359f89"
+        }
+      ],
+      "zip_all_members_crc_verified": true,
+      "rar_multivolume_crc_verified": null,
+      "license": "CC-BY-4.0",
+      "purpose": "research intake only; no training or evaluation",
+      "raw_source_input_is_not_experiment_output": true,
+      "cache_subdirectory": "hydraulic"
+    },
+    {
+      "dataset_id": "xjtu-part01",
+      "source_url": "https://drive.usercontent.google.com/download?id=1ATvZuD6j3bPxhyR07Zm-PURmOC4b4uRn&export=download&confirm=t",
+      "landing_url": "https://github.com/WangBiaoXJTU/xjtu-sy-bearing-datasets",
+      "archive": {
+        "name": "XJTU-SY_Bearing_Datasets.part01.rar",
+        "bytes": 744488960,
+        "sha256": "c500657353f089a4ab50212ff4ddfc7b982729e92e2b127440c8ad881d80b968"
+      },
+      "expected_pin_matched": false,
+      "members": [],
+      "zip_all_members_crc_verified": false,
+      "rar_multivolume_crc_verified": false,
+      "license": "publisher-research-algorithm-validation-and-citation-notice; commercial-and-redistribution-not-verified",
+      "purpose": "research intake only; no training or evaluation",
+      "raw_source_input_is_not_experiment_output": true,
+      "cache_subdirectory": "xjtu-part01"
+    },
+    {
+      "dataset_id": "xjtu-part02",
+      "source_url": "https://drive.usercontent.google.com/download?id=162KvWNIpBGtd7EDWo4yP1j5XsaoNHOYU&export=download&confirm=t",
+      "landing_url": "https://github.com/WangBiaoXJTU/xjtu-sy-bearing-datasets",
+      "archive": {
+        "name": "XJTU-SY_Bearing_Datasets.part02.rar",
+        "bytes": 744488960,
+        "sha256": "4dfa6286a8e9c7cec1e925b347642349f36e27ab3f703c90d1d08977b7b4f61f"
+      },
+      "expected_pin_matched": false,
+      "members": [],
+      "zip_all_members_crc_verified": false,
+      "rar_multivolume_crc_verified": false,
+      "license": "publisher-research-algorithm-validation-and-citation-notice; commercial-and-redistribution-not-verified",
+      "purpose": "research intake only; no training or evaluation",
+      "raw_source_input_is_not_experiment_output": true,
+      "cache_subdirectory": "xjtu-part02"
+    },
+    {
+      "dataset_id": "xjtu-part03",
+      "source_url": "https://drive.usercontent.google.com/download?id=1NvzrGW-KOSy48OZmiFxlE3TPV4CKAcw0&export=download&confirm=t",
+      "landing_url": "https://github.com/WangBiaoXJTU/xjtu-sy-bearing-datasets",
+      "archive": {
+        "name": "XJTU-SY_Bearing_Datasets.part03.rar",
+        "bytes": 744488960,
+        "sha256": "6929f531284f79e0209246b4ee23b23dd8d4faac1c0c3ff8fb131cda4a18bd3a"
+      },
+      "expected_pin_matched": false,
+      "members": [],
+      "zip_all_members_crc_verified": false,
+      "rar_multivolume_crc_verified": false,
+      "license": "publisher-research-algorithm-validation-and-citation-notice; commercial-and-redistribution-not-verified",
+      "purpose": "research intake only; no training or evaluation",
+      "raw_source_input_is_not_experiment_output": true,
+      "cache_subdirectory": "xjtu-part03"
+    },
+    {
+      "dataset_id": "xjtu-part04",
+      "source_url": "https://drive.usercontent.google.com/download?id=1VuQ5-mK11p1S2pTxUZaH_IxOwUlsmN0S&export=download&confirm=t",
+      "landing_url": "https://github.com/WangBiaoXJTU/xjtu-sy-bearing-datasets",
+      "archive": {
+        "name": "XJTU-SY_Bearing_Datasets.part04.rar",
+        "bytes": 744488960,
+        "sha256": "2245825acd29bed3b95e7a77879a3fbadf20f4ad4f99486384c714174621597d"
+      },
+      "expected_pin_matched": false,
+      "members": [],
+      "zip_all_members_crc_verified": false,
+      "rar_multivolume_crc_verified": false,
+      "license": "publisher-research-algorithm-validation-and-citation-notice; commercial-and-redistribution-not-verified",
+      "purpose": "research intake only; no training or evaluation",
+      "raw_source_input_is_not_experiment_output": true,
+      "cache_subdirectory": "xjtu-part04"
+    },
+    {
+      "dataset_id": "xjtu-part05",
+      "source_url": "https://drive.usercontent.google.com/download?id=1WH4OU4MLaMGQkbh6DghxPA5Dwvsq8tEf&export=download&confirm=t",
+      "landing_url": "https://github.com/WangBiaoXJTU/xjtu-sy-bearing-datasets",
+      "archive": {
+        "name": "XJTU-SY_Bearing_Datasets.part05.rar",
+        "bytes": 744488960,
+        "sha256": "e1b0a41a32b865e48ea7981c56f952a960d94335f3496b72eb4a65932f1671bd"
+      },
+      "expected_pin_matched": false,
+      "members": [],
+      "zip_all_members_crc_verified": false,
+      "rar_multivolume_crc_verified": false,
+      "license": "publisher-research-algorithm-validation-and-citation-notice; commercial-and-redistribution-not-verified",
+      "purpose": "research intake only; no training or evaluation",
+      "raw_source_input_is_not_experiment_output": true,
+      "cache_subdirectory": "xjtu-part05"
+    },
+    {
+      "dataset_id": "xjtu-part06",
+      "source_url": "https://drive.usercontent.google.com/download?id=1wzQzQUx6-J8DuGczT81OkrkTgOUwL-I_&export=download&confirm=t",
+      "landing_url": "https://github.com/WangBiaoXJTU/xjtu-sy-bearing-datasets",
+      "archive": {
+        "name": "XJTU-SY_Bearing_Datasets.part06.rar",
+        "bytes": 722155640,
+        "sha256": "df1854821a9d481104476379f7bc045ea1e101427c6e36145cd7677dc7c4a684"
+      },
+      "expected_pin_matched": false,
+      "members": [],
+      "zip_all_members_crc_verified": false,
+      "rar_multivolume_crc_verified": false,
+      "license": "publisher-research-algorithm-validation-and-citation-notice; commercial-and-redistribution-not-verified",
+      "purpose": "research intake only; no training or evaluation",
+      "raw_source_input_is_not_experiment_output": true,
+      "cache_subdirectory": "xjtu-part06"
+    }
+  ],
+  "xjtu_full_archive_integrity": "7-Zip 26.04 test exit0, 6 volumes/9217 files; warning about trailing data preserved",
+  "xjtu_redistribution_commercial_status": "not inferred; publisher allows prognostics-algorithm validation and requests paper citation",
+  "model_training_inference_scoring": false,
+  "raw_data_in_git": false
+}

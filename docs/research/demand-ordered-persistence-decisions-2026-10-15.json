@@ -1,0 +1,23 @@
+{
+  "adopted": false,
+  "artificial_cases": 13,
+  "deletion_fits": 0,
+  "draft_D0_rejected_before_artificial_execution": true,
+  "fit_ready": false,
+  "fixed_classification": false,
+  "formal_permission": false,
+  "future_direction_or_risk_guaranteed": false,
+  "heartbeat": "PAUSED",
+  "independent_scalar_checks": 58,
+  "new2015": false,
+  "new_2014_evaluation": false,
+  "new_fit": false,
+  "new_predictions": false,
+  "old_mandatory_pass_unchanged": false,
+  "production_encoder_implemented": false,
+  "production_tau_fixed": false,
+  "real_data_r_or_feature_transformation": false,
+  "recommended_formula": "D1_latest_vs_previous_average",
+  "specific_store_or_date_rule": false,
+  "status": "ordered_persistence_design_and_artificial_algebra_complete"
+}

@@ -1,3 +1,127 @@
+## 現在 — R1全層診断を閉鎖、局所passで全体未達を覆さない（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-all-layer-audit-2026-10-16.md)。固定55箇所×7case/953,694要素で、同一入力の局所差超過0、上流累積の超過1。PP/RRの既存anchor各161箇所bytes一致、有限948,654要素でtotal=local+propagatedが厳密成立。 追加方式は未選択、1点への修正探索をせずR1未達・R2停止を維持。以下は旧記録。
+
+---
+
+## 現在 — R1一般修正を全ケースで確認、1点未達を保存（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-upstream-order-2026-10-16.md)。同一入力norm6組/attention28段階は固定許容差内。参照CPUと同じ逆標準偏差の乗算へ全LayerNormを一度修正、局所SSE23%減。3テストpass、元の7case全体比較は389,214要素中別の1点超過でR1未合格。 次は全層の単体/累積差を分ける有限設計の固定、1点への算術探索は停止。以下は旧記録。
+
+---
+
+## 現在 — R1の局所診断完了、上流累積差の演算順を確認する（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-intermediate-diagnosis-2026-10-16.md)。残る1点は上流残差1.370906830e-6＋FF入力伝播9.238719940e-7の合計。共通入力ff.2の対象点差0、同一operandsの加算差0。全linear各7,680要素も固定許容差内。 元の全体gateは未達、R2未開始。以下は旧記録。
+
+---
+
+## 現在 — Rust R1a通過、残る中間値1点を切り分け（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-tests-parity-2026-10-16.md)。Rust CPU build・3テストpass。固定7ケース/389,214要素の比較は修正前114超過→修正後1超過、R1b/R1全体は未合格。正規化/元単位の最終予測各6,048要素は全pass。 R1bの残差原因を切り分けるまでR2は開始しない。build専用枠1.5GiB、各メモリ2GiB・保存枠・R0許容差は維持。以下は旧記録。
+
+---
+
+## 現在 — Rust R1のビルド容量条件見直し（2026-10-16）
+
+[停止結果と再開条件](../results/banto-ai-rust-r1-build-stop-2026-10-16.md)。Xcode確認通過。R1 CPU buildがcache+target合計768MiB上限で停止、テスト/数値比較未確認。 固定参照/R0許容差は維持、R2は未開始。同条件retryや容量拡張は未実施。以下は旧記録。
+
+---
+
+## 現在 — banto-ai Rust R1準備、compiler設定待ち（2026-10-16）
+
+[R1準備/再開手順](../results/banto-ai-rust-r1-preparation-2026-10-16.md)。crates/banto-aiに前処理/モデル/neutral読込/CLIと試験コード、154依存のCPU lockと7固定Python参照を保存。build/テスト/一致は未確認。clang exit69のXcode規約未同意を人へ連絡中。設定後は固定参照でR1を完了し、R2学習へはまだ進まない。下流のlockなし依存解決は別課題。以下は旧記録。
+
+---
+
+## 需要とPSIの既存実装を接続例に加える（2026-10-16）
+
+[denroku-psi-demoの現状と引継ぎ](denroku-psi-ai-integration-2026-10-16.md)を確認した。現状はPython LightGBM学習→Rust推論/照合→静的JSON→画面/PSIで、Python不要の再学習は公式C APIを使う別の未実装計画がある。共通AIの配置はbanto-ai、利用側は産業のbanto-industrialと需要・PSIアプリ。各利用側→banto-aiの依存方向を守る。
+
+R1/R2は自作SmallForecasterを先行する。既存LightGBMの特徴量・木推論・Python不要学習を同一engineへ押し込まず、共通化はmodel版/来歴/数量の意味/進捗・保存等の境界から行う。需要26週の出荷点予測と産業32stepの分位点を区別し、PSI/受注採用判断は利用側へ残す。R0.1の数値契約は不変。需要側のfixture利用・LightGBM移行・平均モデル比較は別工程で仕様と範囲を固定する。
+
+---
+
+## 現在の着手順 — banto-aiのRust実装計画（2026-10-16）
+
+[計画](banto-ai-rust-implementation-plan-2026-10-16.md)を現在の実装順とする。R1a単独CPU build/依存/子孫資源観測、R1b固定forward、R2学習・保存再開、R3 CARE有限移植比較、R4製品接続/OS/配布、用途受入。AI本体はbanto-ai、banto-industrialは利用側。今回は計画のみで新build/学習/予測0。R0数値条件/既読評価/需要停止条件と旧証跡を維持。以下は旧記録。
+
+---
+
+## 配置方針の訂正 — AIクレートはbanto-ai（2026-10-16）
+
+AI本体のRustクレートは tyaro/banto-ai 側に置き、tyaro/banto-industrial は利用・接続先とする。前回の「移植先」は接続先の意味であり、AI実装の配置先に読み替えない。 共通AI crateの配置案は `crates/banto-ai`、製品型/取得処理/jobのhost/UIはbanto-industrial側のadapterに置く。依存方向はbanto-industrial → banto-ai。学習・保存再開もAI側の範囲であり、推論だけに縮小しない。[現行R0契約](rust-small-forecaster-r0-2026-10-16.md)と[機械設定r0.1](../../examples/configs/rust-small-forecaster-r0-20261016-r0.1.json)へ反映。数値/評価条件は不変、Rust実装・buildはまだ開始していない。以下の移植先という旧表現は接続先を指す履歴として読む。
+
+---
+
+## 現在 — CARE事後分析とRust R0、次はR1（2026-10-16）
+
+[CARE分析/R0結果](../results/care-saved-diagnostics-rust-r0-2026-10-16.md)、[契約](rust-small-forecaster-r0-2026-10-16.md)、[機械設定](../../examples/configs/rust-small-forecaster-r0-20261016.json)。既存予測の未検知8件は3連続未達、1件は超過なし。CARE r1は固定し再調整しない。人の指定したbanto-industrialのmainをpin、外部名binding/品質/履歴境界を確認。Burn0.22/Flex CPUを初回候補に、forwardだけでなくAdamW/中立checkpoint/学習再開とbanto job/model管理まで契約化した。次は孤立Rust coreのcompile/固定参照の数値確認。現在はRust実装・製品接続未確認。旧成果/失敗、需要2015停止/評価条件/heartbeat PAUSEDを維持。以下は旧記録。
+
+---
+
+## 現在 — CARE5fold実学習と評価完了（2026-10-16）
+
+[CARE5fold実学習・イベント評価を完了](../results/care-macos-learning-evaluation-2026-10-16.md)。固定r1の各4,096更新/4val選択、既存train profile/scheduleを維持し全5fold freeze後に採点。共通支持で事前4条件を通過（macro検知20%対baseline6.67%、false0.84656対1.07104/1000記録h、警報割合/earlinessも改善）。ただしpooled3/12、9未検知、3asset検知0、nativeだけがevent22を検知した可用性差を保持する。全5unitと独立保存値検算pass、model/AdamW/RNG/sampler位置のneutral参照も保存。r1は完了・固定しtest再調整を追加しない。次は保存値での未検知/asset/可用性の仮説整理とRust R0契約/backend・配布条件の整理。保全・点検第一優先、産業/需要の自作モデル実用性、学習を含むRust移植とbanto統合を維持し、製品採用や未知holdout成功とはしない。需要2015停止、既存調整/評価分離、OS境界、heartbeat PAUSEDを維持。
+
+---
+
+## 現在 — CARE train profileと全batch列の固定完了（2026-10-16）
+
+[train尺度・baseline profileと全batch列を固定](../results/care-training-preparation-2026-10-16.md)。先の[数値入力とconsumer支持](../results/care-numeric-consumer-2026-10-16.md)に続き、train anchorだけのasset等重み尺度/MAD、負荷quartile/温度中央値を推定。全20binのpair床128を通過（最少30,440）。5fold各4,096×batch8の全163,840例とorigin集合を保存し、独立CDF/分散照合・全抽出列再現・実consumerの先頭/末尾10batchを確認した。次は固定profile/scheduleを使うCARE trainerと有限5fold実学習へ接続する。今回ニューラル学習/forward/閾値校正/予測/性能採点0、固定r1/JSON不変。保全・点検を第一優先に、学習を含むRust移植とbanto統合、需要2015停止と調整/評価分離、OS境界を維持する。
+
+---
+
+## 現在 — CARE数値入力と実consumerの支持確認完了（2026-10-16）
+
+[数値入力と実consumerの支持確認を完了](../results/care-numeric-consumer-2026-10-16.md)。固定22file/3信号・119万6,747行を32byte recordとquality maskへ変換し、電力の観測ゼロ170点を保持した。有限値不良0、時点/入力とラベルの分離13確認とprovenance9拒否、全record独立検算一致。全anchorのfit/選択/校正、22file共通支持（最低77.7003%）、異常12区間（最低81.9900%）、正常5asset記録時間の固定床を通過。baseline native支持の追加2,726点を別保存。次はtrain-only尺度/MADと負荷bin pair支持、固定scheduleを保存して有限CARE学習へ接続する。今回CARE学習/forward/予測/性能採点0、固定JSONは不変。保全・点検を最優先に、学習を含むRust移植とbanto統合、需要/2015/OS境界を維持する。
+
+---
+
+## 現在 — CARE原本/asset確認と入力・label分離/契約r1固定（2026-10-16）
+
+[確認結果](../results/care-metadata-contract-2026-10-16.md)と[固定契約r1](care-a-maintenance-contract-2026-10-16.md)を保存。v6 MD5一致・CC BY-SA 4.0、95file/36assetの構造と実label45/50を確認。Farm A/5asset/22file/3 Avgの留一5fold・prefix anchor・校正/警報/指標を固定し、入力/学習とevaluator/labelを分離した。現時点はsensor数値decode/CARE学習/採点0。次は固定数値入力/maskと実consumer境界。保全・点検第一優先、Rust学習・banto統合の目的と需要/2015/OS境界を維持。以下は過去の経過。
+
+---
+
+## 現在 — MetroPT M1完了、保全・点検のCARE設計へ（2026-10-16）
+
+[3seed実学習・評価](../results/metropt-macos-m1-2026-10-16.md)を固定r2条件で完了。full/self各4096更新・全予測freeze後採点。fullのpinballは2.105%改善/2of3、3target点MAEは固定MA15改善。一方1seed/圧力pinball悪化と油温coverage不足を保持し、追加seed/延長/test校正なし。全6選択stateのmodel/AdamW中立書出しと独立数値照合を保存。次は[CARE保全・点検イベント設計](care-maintenance-evaluation-design-2026-10-16.md)をmetadata/用途条件へ具体化。Rust学習とbanto統合も最終目的。CARE学習/2015/Windows native未実行、heartbeat PAUSED。以下は過去の経過。
+
+---
+
+## 現在 — MetroPT M0完了、用途第一優先は保全・点検支援（2026-10-16）
+
+[実装・結果](../results/metropt-macos-m0-2026-10-16.md)。固定13日/3targetと8,967/123/123窓を保持、数量品質/未学習full-self接続/境界10項目/新guard6件/独立読戻しpass。trainer/3slot/scorerとRust向けneutral参照を用意した。M0は完了、実学習/実性能採点/2015停止、M1は再開待ち。保全・点検（異常予兆）を産業の第一優先にし、次の用途契約はCAREのevent評価を優先する。予測接続を予兆性能と同一視せず、油圧/XJTU全実験を待たない。Rust学習・banto統合の最終目的と需要の評価条件を維持。以下は過去の記録。
+
+---
+
+## 最終実装の追加 — Rustで学習・推論、bantoから利用（2026-10-16）
+
+人の明示指示により、[上位計画§7/R0〜R4](timesfm-inspired-practical-evaluation-plan-2026-10-16.md#7-最終実装--学習も含めたrust移植とbanto統合)を最終目的へ追加する。実用性検証に加え、Rustの前処理/forward/backward/optimizer/保存再開/推論、banto向けAPI/CLI・モデルと学習job管理を段階実装する。Pythonを最終の必須runtimeにせず、参照版との共通重み・batch列で数値比較。現在のMetroPT r2の科学的条件と実学習/2015停止は維持。今回は文書更新のみ、Rust実装未着手。以下は過去の記録。
+
+---
+
+## 現行契約 — 計画に沿う実行・MetroPT日時案r2（2026-10-16）
+
+[上位計画](timesfm-inspired-practical-evaluation-plan-2026-10-16.md)と[詳細仕様r2](metropt-macos-multiday-protocol-2026-10-16.md)に従い、条件変更は実行前に記録する。元連続期間はtimestamp品質不成立、数量を見ず独立13日・7/3/3・8,967/123/123窓へ固定。raw不良時は別日へ差し替えない。現在はM0の実装/数量品質/接続が未完、実学習/2015停止とheartbeat PAUSEDを維持。Astraの設計確認は終了し、同種監査を反復しない。以下は過去の状態を含む。
+
+---
+
+## 現在の次工程 — 自作モデルの二領域実用性、まずMetroPTの有限比較（2026-10-16）
+
+[具体計画・Astra確認](timesfm-inspired-practical-evaluation-plan-2026-10-16.md)を現在の着手順とする。TimesFM3参考自作モデルの実用性という上位目的は不変。産業と需要を本線に残し、取得済みMetroPTのMac実行前パッケージを最初の一件にする。機構の追加価値と単純baselineを超える価値、業務適合を分ける。油圧cycle予測・XJTU短期RMS・CARE異常予兆は役割を分離。需要の同休業mean28比較と評価分離を維持。今回は計画のみで、実学習・2015再評価停止/heartbeat PAUSED。以下の記載は過去の状態を含む。
+
+---
+
+## 現在の上位目的 — TimesFM3参考の自作モデル、産業と需要の二領域（2026-10-16・人の明示による訂正）
+
+[統合計画とAstra確認](timesfm-inspired-dual-domain-plan-2026-10-16.md)を現在の着手順とする。TimesFM3の公開構造を参考にした自作モデルの実用性が主問。需要予測・PSIは検証用途の一つで、元の産業設備forecast・予測範囲・残差異常検知・試運転校正・drift/read-only連携も残す。需要のmean28補正やQPの完成へ目的を置換しない。以下の需要限定の「最新」節は当時の経過で、上位目的の廃止を意味しない。
+
+既存モデル3系統・比較基準・失敗・時点分離を再利用する。人工境界検証は一旦終了、次は資産/データ契約と二領域の有限評価設計。人のCARE ZIP配置報告から[原本metadata](care-local-archive-metadata-2026-10-16.json)を保存し、ローカル候補あり・未取込とした。全展開/観測・イベントlabel読取り/新学習・採点はしない。実学習・2015再評価停止、heartbeat PAUSED、旧制約/正式holdout/native境界を維持。旧固定文書・原証拠は改変せず履歴として以下に保持する。
+
+---
+
 # 研究ロードマップ
 
 ## 店舗移行に合わせた選択比較（2026-10-14・最新）

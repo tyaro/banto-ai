@@ -1,0 +1,78 @@
+{
+  "absolute_precision": 32,
+  "adopted": false,
+  "artificial_checks": 36,
+  "concentration_not_independent_n": true,
+  "denominators_preserved": true,
+  "fit_ready": false,
+  "fixed_classification": false,
+  "groups": 16,
+  "heartbeat": "PAUSED",
+  "historical_I_E": [
+    30,
+    60,
+    70,
+    50
+  ],
+  "historical_all_zero_stores": {
+    "Q1": [
+      15,
+      17
+    ],
+    "Q2": [],
+    "Q3": [],
+    "Q4": [
+      19
+    ]
+  },
+  "historical_old_new_ranks": [
+    [
+      3,
+      3
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      3,
+      3
+    ]
+  ],
+  "historical_usable_positive_rows": [
+    10,
+    24,
+    30,
+    19
+  ],
+  "independent_comparisons": 81665,
+  "input_integration_audited": true,
+  "issue_I": "unknown_not_decoded",
+  "issue_all_stored_positive": 101,
+  "issue_old_E": 240,
+  "issue_rows": 260,
+  "issue_usable_positive": 92,
+  "new2015": false,
+  "new_fit": false,
+  "new_label_quantity_decode": false,
+  "new_performance_score": false,
+  "new_prediction": false,
+  "no_retuning_after_audit": true,
+  "observed_assumed_separation_maintained": true,
+  "os_dependent_full_suite_tested": false,
+  "preserved_failed_preparations": true,
+  "rank_certificates_checked": 652,
+  "rows": 470,
+  "runtime_artificial_checks": 144,
+  "same_closure_mean28_unchanged": true,
+  "seasonal_under_over_nonincrease_maintained_not_evaluated": true,
+  "status": "input_integration_and_support_audit_complete",
+  "tau": "1/20",
+  "tuning_last_year": 2014,
+  "weight_formula": "unchanged_D1",
+  "windows_native_tested": false
+}
