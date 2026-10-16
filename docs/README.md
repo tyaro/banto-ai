@@ -1,13 +1,17 @@
 # Banto AI 文書の入口
 
-最終更新: 2026-10-14
+最終更新: 2026-10-17
 
 ## 現在の状態
 
-- 菓子の需要予測・PSIの研究設計を作成しました。自動実行のheartbeat banto-10は **PAUSED** を維持しています。
-- 最新成果、停止状態、正式受入の残件は [current-handoff.md](current-handoff.md) を参照してください。
-- 評価報告は [結果の索引](results/README.md) から参照できます。最新状態はcurrent-handoff.mdを優先します。
-- 正式gateは s4_acceptance_not_frozen、formal_permission=false、credit=0。正式受入と候補採択は未完了です。
+主目的はTimesFM3を参考にした自作モデルの実用性検証です。保全・点検支援を第一優先とし、需要予測・PSIも扱います。学習を含むRust移植のAI本体はbanto-ai、利用側はbanto-industrialとdenroku-psi-demoです。
+
+- 現在の結果・停止条件・次工程は [短い引継ぎ](current-handoff.md) を優先します。
+- [Rust実装計画](research/banto-ai-rust-implementation-plan-2026-10-16.md)に沿い、人工R2Pの学習・保存再開部品へ進みます。R1の中間値1点は未達で、正式R2実データ学習は停止しています。
+- [整理結果](results/research-consolidation-2026-10-17.md)と[停止済み調査資料](../experiments/archive/rust-r1-20261016/README.md)を区別し、閉鎖済み証跡・原許容差を保護します。
+- Windows nativeの既存修正は保持し、CI互換試験は共通Python試験と別jobにします。main取り込み時点の[状態記録](history/main-document-status-20260925.md)は過去時点の記録です。CIの成功だけで正式Windows受入を認定しません。
+- anomalyの正式gateは s4_acceptance_not_frozen、formal_permission=false、credit=0。heartbeatはPAUSEDです。
+- 評価報告は [結果の索引](results/README.md)、過去の長い引継ぎは [履歴](history/current-handoff-through-20261016.md) を参照してください。
 
 ## 分野別の入口
 

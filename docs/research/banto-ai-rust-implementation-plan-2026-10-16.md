@@ -1,6 +1,6 @@
 # banto AIのRustクレート実装と製品利用の計画
 
-状態: 隔離lock最小案と人工Python参照を保存、107独立照合pass。元lockは未適用、Rust人工学習/保存再開は未実行。[結果](../results/rust-r2p-lock-and-python-reference-2026-10-16.md)。ポインタ追跡停止、原R1は1点未達/正式R2停止。2026-10-16 JST。
+状態: 2026-10-17の整理でmainのWindows修正を取り込み、検証済みlock最小案を適用。人工Python参照は保存済み、Rust人工学習/保存再開は未実装。停止済み拡張と単発調査は履歴へ退避。[整理結果](../results/research-consolidation-2026-10-17.md)。R1は1点未達/正式R2停止、許容差不変。
 計画ID: BANTO-AI-RUST-PLAN-20261016-v2。旧v1全文は今回の文書前後証跡へ保存。
 
 **今後の作業はこの計画と[R0の数値契約](rust-small-forecaster-r0-2026-10-16.md)に沿って進める。** 各工程の開始前に対象・固定入力・成果物・合格条件・資源上限を保存し、変更理由を記録する。主目的はTimesFM3を参考にした自作モデルの産業・需要での実用性検証であり、保全・点検支援を第一優先にする。Rustで学習から推論まで動かし、bantoから利用できる状態を目指す。
@@ -9,7 +9,7 @@
 
 [実用性とRust学習へ戻る計画](banto-ai-practical-training-return-plan-2026-10-16.md)を現在の作業順として優先する。OSの初期化・転送stub・pointer追跡は停止し、保存済み8byte slot条件は実行しない。原R0.1の許容差・正式R1条件は変えない。
 
-R1未達の間は、人工入力/label/parameterだけのloss・gradient・clip・AdamW・保存再開を独立したR2Pとして準備できる。正式R2や実データ学習への移行とは区別する。棚卸しと人工fixture仕様固定は完了し、隔離lock最小案とPython人工参照の生成も完了した。次は検証済みlock案の適用と固定小型Rust学習部品の実装。R1の追加候補は一般的根拠がある場合だけ最大1方式、局所一巡/通過後の全7case一回に限る。根拠がなければ実験0で未達保留とする。
+R1未達の間は、人工入力/label/parameterだけのloss・gradient・clip・AdamW・保存再開を独立したR2Pとして準備できる。正式R2や実データ学習への移行とは区別する。棚卸しと人工fixture仕様固定は完了し、隔離lock最小案とPython人工参照の生成も完了した。次は固定小型Rust学習部品の実装。R1の追加候補は一般的根拠がある場合だけ最大1方式、局所一巡/通過後の全7case一回に限る。根拠がなければ実験0で未達保留とする。
 
 ## 配置と責務
 
@@ -50,7 +50,7 @@ banto-ai/
   docs/results/                 実行結果
 ~~~
 
-crates/banto-aiの推論/loader/CLIは実装され、過去のCPU build結果を保存済み。train moduleや完全な学習checkpointは未実装。現manifestとの整合は隔離lock案で確認済みだが元lockへ未適用で、CLIの外部公開や追加crate、ネットワークAPIは含めない。
+crates/banto-aiの推論/loader/CLIは実装され、過去のCPU build結果を保存済み。train moduleや完全な学習checkpointは未実装。現manifestとの整合は隔離lock案で確認済みだが元lockへ2026-10-17に適用済みで、CLIの外部公開や追加crate、ネットワークAPIは含めない。
 
 ## 需要とPSIの既存実装を接続例に加える（2026-10-16）
 
@@ -165,6 +165,6 @@ normal artifactは24file/768MiB、単一32MiB、失敗込み32file/1GiB。Eviden
 
 ## 次に着手する内容
 
-[固定R2P条件](rust-r2p-synthetic-training-contract-2026-10-16.md)に沿い、[隔離lock案と人工Python参照](../results/rust-r2p-lock-and-python-reference-2026-10-16.md)を保存済み。元lockからgemmの直接edge1行だけを削除する案を明示適用し、feature-gated小型loss/gradient/clip/互換AdamW/checkpointを実装する。固定fixtureから開始し、閉鎖済みPython参照を再生成しない。
+[固定R2P条件](rust-r2p-synthetic-training-contract-2026-10-16.md)に沿い、[隔離lock案と人工Python参照](../results/rust-r2p-lock-and-python-reference-2026-10-16.md)を保存済み。元lockのgemm直接edge1行削除は適用済み。次に、feature-gated小型loss/gradient/clip/互換AdamW/checkpointを実装する。固定fixtureから開始し、閉鎖済みPython参照を再生成しない。
 
 その後の有限Rust受入は連続8対4+復元4、人工AdamW6、拒否6/8、writer途中停止3。元R0.1の許容差を守り、不一致を保存して依存工程を止める。今回Rust実装・build・test・保存再開は未実行。原R1未達/正式R2実データ停止、ポインタ追跡停止、CARE/需要の停止、各資源枠とheartbeat PAUSEDを維持する。

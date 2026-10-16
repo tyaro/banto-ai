@@ -57,3 +57,6 @@ environments/rust-cpu/cargo-home/
 
 # Local source-audit snapshot of an external repository
 /examples/configs/banto-industrial-tree-20261016.json
+
+# Local isolated resolution/source workspaces
+/outputs/

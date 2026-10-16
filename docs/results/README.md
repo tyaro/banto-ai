@@ -6,6 +6,8 @@
 
 ## Rustクレートの移植
 
+- [研究ブランチの整理とmain取り込み](research-consolidation-2026-10-17.md) — 停止済みsourceの保存、lock整合、現在の確認結果。
+
 - [R2P lock最小整合案と人工Python参照](rust-r2p-lock-and-python-reference-2026-10-16.md) — 隔離案通過、107照合pass、元lock未適用/Rust学習未実行。
 
 - [Rust R2P棚卸しと仕様固定](rust-r2p-inventory-and-specification-2026-10-16.md) — readonly依存確認と人工条件、学習は未実行。

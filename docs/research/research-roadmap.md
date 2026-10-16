@@ -1,3 +1,9 @@
+## 現在 — 研究ブランチ整理（2026-10-17）
+
+[整理結果](../results/research-consolidation-2026-10-17.md)と[短い引継ぎ](../current-handoff.md)を優先する。main側のWindows修正を取り込み、停止済みRust調査を履歴へ保存し、検証済みlock最小案を適用。固定人工Python参照は再利用し、次は小型Rust学習・保存再開の実装。R1未達/正式R2停止/ポインタ停止/許容差を維持する。以下は過去時点の記録。
+
+---
+
 ## 現在 — R2P人工参照を閉鎖（2026-10-16）
 
 [lock案と人工参照](../results/rust-r2p-lock-and-python-reference-2026-10-16.md)。隔離Cargo.lockの最小案と人工Python参照を保存済み。gemm直接edge1行削除のみ、lock662記録/version・有効154package/feature不変。loss7/clip4/AdamW6/小型8更新、独立照合107件すべて原許容差内。 元lockは未適用。次は最小案の適用と人工Rust学習部品の実装。ポインタ追跡・実データ再評価は停止継続。以下は旧記録。

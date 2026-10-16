@@ -10,6 +10,8 @@
 
 ## 文書
 
+- [2026-10-17の研究整理](../results/research-consolidation-2026-10-17.md) — 現役coreと履歴を分離し、小型Rust学習部品へ進む。
+
 - [R2P lock案・人工Python参照と次工程](../results/rust-r2p-lock-and-python-reference-2026-10-16.md) — 凍結参照を使う小型Rust実装へ。
 
 - [Rust現実装棚卸しと人工学習の固定条件](rust-r2p-synthetic-training-contract-2026-10-16.md) — 小型loss/gradient/AdamW/保存再開、manifest/lock未整合を保持。

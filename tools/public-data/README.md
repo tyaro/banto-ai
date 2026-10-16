@@ -1,3 +1,13 @@
+## 現在の実行範囲（2026-10-17）
+
+[現在の引継ぎ](../../docs/current-handoff.md)と[整理結果](../../docs/results/research-consolidation-2026-10-17.md)を優先する。停止したRust内部調査・不採用拡張・単発の報告生成は[テキスト資料](../../experiments/archive/rust-r1-20261016/README.md)へ退避した。ポインタ追跡を再開しない。
+
+rust_r1_compare.py / rust_r1_python_reference.py / rust_r1_metadata.py / rust_r1_publish_preparation.pyは既存比較とR2Pから使うため残している。後者のvalidate_rootは閉鎖検証の共通helperであり、旧publicationのmainを再走する指示ではない。旧R1/R2Pのphase toolは当時のsource pinsとfresh rootを前提とし、現在のlockや退避後の構成で同じrunを再生成しない。固定Python参照は保存済みbytesを使う。
+
+以下の取得・準備は完了済みの手順記録である。新取得や既存closed rootへの反復実行は現在の整理作業に含めない。
+
+---
+
 ## Macの産業データ準備（2026-10-16）
 
 [取得・準備結果](../../docs/results/industrial-data-macos-intake-2026-10-16.md)と[原本index](../../datasets/manifests/industrial-macos-source-index-20261016.json)が現在の入口。原本は同workspaceのrepository外cache、新入力はartifacts/public-datasetsに保管。既存closed rootへの再実行・上書きは禁止。

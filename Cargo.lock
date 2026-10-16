@@ -383,7 +383,6 @@ name = "banto-ai"
 version = "0.1.0"
 dependencies = [
  "burn",
- "gemm",
  "serde",
  "serde_json",
  "sha2",

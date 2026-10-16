@@ -6,6 +6,14 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 現在の研究基盤には、外部依存ゼロの共通benchmark runner、統計baseline、モデル別の隔離実行環境があります。TimesFM 3.0は研究比較専用、Chronos-2は`commercial-evaluation`として、専用環境でCPU smoke、合成データ、MetroPT-3限定rolling-origin benchmarkを実行済みです。Toto 2.0 4Mも同じForecaster／MetroPT契約でCPU smokeとMetroPT-3 rolling-origin benchmarkを実行済みです。core runtimeへML依存は混入させていません。今回の結果は実設備一般の性能を示しません。
 
+## 現在の重点（2026-10-17）
+
+TimesFM3を参考にした自作モデルの実用性検証を進めています。保全・点検支援を第一優先とし、需要予測・PSIも扱います。AI本体はbanto-aiに置き、Rustで学習・推論・optimizer保存再開まで対応することを目指します。banto-industrialとdenroku-psi-demoは利用側です。
+
+現在の順序は[短い引継ぎ](docs/current-handoff.md)と[復帰計画](docs/research/banto-ai-practical-training-return-plan-2026-10-16.md)を参照してください。人工Python参照は生成済み、Rust学習部品は未実装です。R1の中間値1点は未達で、正式R2実データ学習は停止しています。[停止済み調査](experiments/archive/rust-r1-20261016/README.md)は履歴として保存し、通常の実行対象から外しました。
+
+以下のモデル比較・異常評価はこれまでの研究基盤と履歴です。過去時点の「次」は現在の工程を上書きしません。
+
 ## 研究テーマ
 
 | テーマ | 最初に検証する問い |
@@ -98,9 +106,7 @@ tools/
 
 ## 次の一歩
 
-最初の実装マイルストーンは、合成産業データ上で naive／古典的 baseline と複数の時系列モデルを同条件で比較できる、再現可能なベンチマークです。
-
-現時点では TimesFM 3.0 の学習済み重みは非商用・非本番用途に限定されるため、研究比較専用とします。商用利用可能候補として Chronos-2、Toto 2.0、Granite TTM／TSPulseなどを同時に評価します。
+固定済みの人工入力とPython参照を使い、Rustのloss/autodiff/gradient/clip/互換AdamWと保存再開を実装・検証します。連続8更新対4+復元4、入力・checkpoint拒否、途中保存の条件は[固定契約](docs/research/rust-r2p-synthetic-training-contract-2026-10-16.md)に従います。実データの追加評価や本番採用は別の判定です。
 
 ### Chronos-2初期評価
 
