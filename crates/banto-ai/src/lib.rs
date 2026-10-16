@@ -2,7 +2,13 @@
 //! R1 implements fixed SmallForecaster inference. Training is a later R2 gate.
 
 pub mod checkpoint;
+#[cfg(feature = "reference-normalization")]
+pub mod context;
 pub mod error;
+#[cfg(feature = "fma-extension")]
+pub mod fma;
+#[cfg(feature = "fused-linear-extension")]
+pub mod fused_linear;
 pub mod input;
 pub mod model;
 pub use error::{Error, Result};

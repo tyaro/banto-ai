@@ -26,3 +26,4 @@ path = "examples/predict.rs"
 name = "neutral_integrity"
 path = "tests/neutral_integrity.rs"
 required-features = ["reference-tests"]
+

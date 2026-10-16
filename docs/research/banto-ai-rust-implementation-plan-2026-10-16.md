@@ -1,9 +1,15 @@
 # banto AIのRustクレート実装と製品利用の計画
 
-状態: R1a/既存3テストpass。全55箇所×7caseの診断完了、局所超過0・上流累積1点未達でR1未合格。モデル変更/候補探索0、R2未着手。[全層診断結果](../results/banto-ai-rust-r1-all-layer-audit-2026-10-16.md)。2026-10-16 JST。
-計画ID: BANTO-AI-RUST-PLAN-20261016-v1。
+状態: 隔離lock最小案と人工Python参照を保存、107独立照合pass。元lockは未適用、Rust人工学習/保存再開は未実行。[結果](../results/rust-r2p-lock-and-python-reference-2026-10-16.md)。ポインタ追跡停止、原R1は1点未達/正式R2停止。2026-10-16 JST。
+計画ID: BANTO-AI-RUST-PLAN-20261016-v2。旧v1全文は今回の文書前後証跡へ保存。
 
 **今後の作業はこの計画と[R0の数値契約](rust-small-forecaster-r0-2026-10-16.md)に沿って進める。** 各工程の開始前に対象・固定入力・成果物・合格条件・資源上限を保存し、変更理由を記録する。主目的はTimesFM3を参考にした自作モデルの産業・需要での実用性検証であり、保全・点検支援を第一優先にする。Rustで学習から推論まで動かし、bantoから利用できる状態を目指す。
+
+## 改訂2の優先事項
+
+[実用性とRust学習へ戻る計画](banto-ai-practical-training-return-plan-2026-10-16.md)を現在の作業順として優先する。OSの初期化・転送stub・pointer追跡は停止し、保存済み8byte slot条件は実行しない。原R0.1の許容差・正式R1条件は変えない。
+
+R1未達の間は、人工入力/label/parameterだけのloss・gradient・clip・AdamW・保存再開を独立したR2Pとして準備できる。正式R2や実データ学習への移行とは区別する。棚卸しと人工fixture仕様固定は完了し、隔離lock最小案とPython人工参照の生成も完了した。次は検証済みlock案の適用と固定小型Rust学習部品の実装。R1の追加候補は一般的根拠がある場合だけ最大1方式、局所一巡/通過後の全7case一回に限る。根拠がなければ実験0で未達保留とする。
 
 ## 配置と責務
 
@@ -44,7 +50,7 @@ banto-ai/
   docs/results/                 実行結果
 ~~~
 
-この構成は作成予定である。CLIの外部公開や追加crate、ネットワークAPIは最初のbuildには含めない。
+crates/banto-aiの推論/loader/CLIは実装され、過去のCPU build結果を保存済み。train moduleや完全な学習checkpointは未実装。現manifestとの整合は隔離lock案で確認済みだが元lockへ未適用で、CLIの外部公開や追加crate、ネットワークAPIは含めない。
 
 ## 需要とPSIの既存実装を接続例に加える（2026-10-16）
 
@@ -72,13 +78,14 @@ CAREは検知3/12、未検知9件、正常false3という限界も固定する�
 | --- | --- | --- | --- |
 | 1 | R1a クレートとCPU build | Cargo構成、lock、feature/依存license一覧、子孫を含む資源記録 | banto-ai内で単独buildでき、製品repoへの逆依存がない |
 | 2 | R1b 前処理と推論 | model実装、neutral loader、予測API、Python比較結果 | 固定2batchと必要な人工ケースがR0許容差内、時点・shape・mask・信号順が一致 |
-| 3 | R2 学習と保存再開 | loss/gradient/clip/AdamW、checkpoint、短いtrain例 | 1更新と8更新が数値条件内、連続8対4+復元+4が同一Rust環境でbytes一致 |
+| 3a | R2P 人工学習基盤の独立準備 | 人工fixture、loss/gradient/clip/AdamW、8対4+復元+4 | 元の数値条件で部品/再開を検証。R1合格や実データ学習とは数えない |
+| 3b | R2 学習と保存再開 | loss/gradient/clip/AdamW、checkpoint、短いtrain例 | 1更新と8更新が数値条件内、連続8対4+復元+4が同一Rust環境でbytes一致 |
 | 4 | R3 CAREの有限移植比較 | 保存モデル推論比較、全5fold有限学習の結果 | 固定条件・全予測freeze後採点を守り、精度・警報・支持・資源の差と失敗を説明できる |
 | 5 | R4a 産業/需要の製品adapter | 共通型との変換、学習job管理、モデル利用例 | banto-industrialからAIクレートを呼び、品質/時刻/取消/切替の契約を満たす |
 | 6 | R4b 対象OSと配布 | toolchain別検証、license/配布物、運用手順 | 共通coreとWindows固有機能を別に検証し、Pythonなしで学習・再開・推論できる |
 | 7 | 業務利用の判断 | 用途別の受入条件、評価報告、採否 | 点検の先行時間・誤警報の許容値と対象設備に照らし、実用性を判定する |
 
-順序1〜3を最初の実装範囲とする。R3/R4は入口条件と実行仕様を整えてから進め、計画の保存だけを実データ再学習や製品変更の開始記録にしない。
+次の着手はR2Pの現状整理と人工fixture仕様固定。正式R2は原R1とR2Pの完了後に限る。R3/R4は入口条件と実行仕様を整えてから進め、計画の保存だけを実データ再学習や製品変更の開始記録にしない。
 
 ### R1aで実行環境を確立する
 
@@ -96,9 +103,11 @@ neutral tensorを検査して読み込み、context正規化、patch、attention
 
 人工ケースは、定数系列・観測0・scale floorの下/境界/上・非有限/shape不正・mask・分位点順序を対象とする。時間と欠測の境界はRustへ移す部分を確認し、既存Python側の試験群を無目的に再実行しない。欠測の0埋めやCARE statusの入力利用は追加しない。
 
-R0で固定した許容差に達したらR1を終了する。高速化・GPU・量子化・モデル拡張は後回しにする。
+R0で固定した全条件に達した場合だけR1を合格とする。追加修正は改訂2の最大1方式/一巡条件を守り、根拠がなければ未達保留。OS内部追跡や点ごとの調整はしない。高速化・GPU・量子化・モデル拡張は後回しにする。
 
 ### R2で学習と再開を移す
+
+下記は正式R2の条件であり、原R1通過前の実データ学習は停止したまま。先行するR2Pは人工state/label/scheduleだけで同じ学習部品と再開を検証し、実行前に別fixtureを固定する。R2Pの実行も今回の計画改訂では開始していない。
 
 context-normalized pinball loss、backward、全parameterのglobal norm clip、互換AdamWを実装する。weightと同じ規則でgradient/momentsを配置し、bias/LayerNormを含む更新対象をPythonに合わせる。
 
@@ -154,8 +163,8 @@ normal artifactは24file/768MiB、単一32MiB、失敗込み32file/1GiB。Eviden
 
 上限超過、入力/来歴不一致、時点漏洩、数値不一致、保存不完全は失敗として残す。原因を直せる場合は変更点を明示したfresh rootだけで再開する。同じ条件の再試行を繰り返さない。新しい目的や修正理由がなければ、その工程を終了または停止する。
 
-## 最初に着手する内容
+## 次に着手する内容
 
-次の実装では **R1aとR1b** を行う。banto-ai内のCargo構成と最小crateを作り、CPU依存・資源監視・中立model読込・前処理/forwardまで接続する。固定fold0の2batchが数値条件を満たしたところで結果を保存し、R2の有限fixtureへ進む。
+[固定R2P条件](rust-r2p-synthetic-training-contract-2026-10-16.md)に沿い、[隔離lock案と人工Python参照](../results/rust-r2p-lock-and-python-reference-2026-10-16.md)を保存済み。元lockからgemmの直接edge1行だけを削除する案を明示適用し、feature-gated小型loss/gradient/clip/互換AdamW/checkpointを実装する。固定fixtureから開始し、閉鎖済みPython参照を再生成しない。
 
-この計画によってRustクレートを作成済み、CAREを再学習済み、製品導入済みとはしない。heartbeatはPAUSEDを維持し、計画の保存を自動実行の再開へ読み替えない。
+その後の有限Rust受入は連続8対4+復元4、人工AdamW6、拒否6/8、writer途中停止3。元R0.1の許容差を守り、不一致を保存して依存工程を止める。今回Rust実装・build・test・保存再開は未実行。原R1未達/正式R2実データ停止、ポインタ追跡停止、CARE/需要の停止、各資源枠とheartbeat PAUSEDを維持する。

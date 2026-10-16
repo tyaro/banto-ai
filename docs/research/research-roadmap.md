@@ -1,3 +1,87 @@
+## 現在 — R2P人工参照を閉鎖（2026-10-16）
+
+[lock案と人工参照](../results/rust-r2p-lock-and-python-reference-2026-10-16.md)。隔離Cargo.lockの最小案と人工Python参照を保存済み。gemm直接edge1行削除のみ、lock662記録/version・有効154package/feature不変。loss7/clip4/AdamW6/小型8更新、独立照合107件すべて原許容差内。 元lockは未適用。次は最小案の適用と人工Rust学習部品の実装。ポインタ追跡・実データ再評価は停止継続。以下は旧記録。
+
+---
+
+## 現在 — 人工Rust学習の条件を固定（2026-10-16）
+
+[固定条件](rust-r2p-synthetic-training-contract-2026-10-16.md)。現実装を棚卸し、人工loss7/clip4/AdamW6と9parameterの8対4+復元4、拒否/途中保存条件を固定。source上は62tensor/59trainable/109,024値。学習・参照数値生成は未実行。locked offline treeはexit101でmanifest/lock整合が次の入口。 次は保護した最小lock整合案→人工参照生成→限定Rust実装。pointer追跡/実データ/既読test再評価は停止したまま。以下は旧記録。
+
+---
+
+## 現在 — 実用性とRust学習へ復帰（2026-10-16）
+
+[改訂2](banto-ai-practical-training-return-plan-2026-10-16.md)。人の指示でpointer/once/TLS/PAC/vendor内部追跡を停止。既存成果を整理し、原許容差/R1の1点未達を維持。人工データだけのRust学習部品・保存再開をR2Pとして独立準備する。正式R2実データ学習は停止を維持。 次は現実装の整合整理と人工fixture仕様固定。R1追加対応は一般候補最大1/局所一巡/全7case一回、根拠なしなら実験0で未達保留。CARE/MetroPT testは凍結し、需要条件・Windows分離・heartbeat PAUSEDを維持。以下のpointer追跡予定は旧記録であり実行しない。
+
+---
+
+## 現在 — call target64bytesはtransfer stub（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-once-target-2026-10-16.md)。固定call targetをown-task mapping/SDK型確認後に64bytes読取り、再照合一致。先頭16bytesはADRP/ADD/LDR/BRAA transfer stub、slot0x1e7ff0db8を導出。slot/分岐先は未読、数値演算/target実行0。 R1未達/R2停止。次はSDK/pointer表現条件を守った単一slot工程。以下は旧記録。
+
+---
+
+## 現在 — once仕様を確認、call target未同定を保持（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-once-contract-2026-10-16.md)。SDKのonce fast pathと公開APIの同期保証を区別。独立metadata照合では保存BL targetがpublic dispatch_onceと直接一致せず、dladdr0で停止。内部predicate/query/train経路は未確定。数値演算/新code読取り0。 R1未達/R2停止。次はmapping確認後の単一target64byte上限の独立工程。以下は旧記録。
+
+---
+
+## 現在 — patch一致、once契約確認へ（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-sgemm-warm-binding-2026-10-16.md)。保存済みtrain-first patchを一度だけ実行、元6,144値と全bit一致。88byte設定は前後で変化・実行後二度同一だが、once値52638546は固定条件-1を満たさずfailed閉鎖。query/train経路は未確定、追加実行/命令読取り0。 R1未達/R2停止。次はsourceだけでonce条件の意味を確認し、新演算/命令読取りはしない。以下は旧記録。
+
+---
+
+## 現在 — SGEMM小行列の演算順を確認（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-sgemm-readonly-2026-10-16.md)。実load済みSGEMMの6関数/5,064bytesを上限内で監査。小形状T,NのFMA→lane合算→bias後入れを特定し、別の保存値再現で人工5caseのmm/patch各3,840値が全bit一致。cold設定未初期化のためtrain runtime経路は未確定。 R1未達/R2停止。次は固定した一度のpatchで初期化後設定をbind、推測による新候補はしない。以下は旧記録。
+
+---
+
+## 現在 — fused linearは改善なしで不採用（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-fused-linear-2026-10-16.md)。公開extensionでpure-Rust GEMM bias初期化を実装。人工8case/74値・graph・13拒否はpassだが、全154linear/465,696値が現行baselineとbytes一致しSSE減少0で不採用。model/default不変、full forward0。 R1未達/R2停止。次は参照SGEMMを読取り監査する条件の固定、根拠なしの丸め順探索はしない。以下は旧記録。
+
+---
+
+## 現在 — patchの差を分解、fused linearの条件を固定（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-linear-boundary-2026-10-16.md)。patchの固定7case/16,128値を分解。両train batchのraw matmulはbit一致、単独bias加算は全case一致。trainの差はPython fused/別加算差7,241値で説明でき、floor人工3caseのraw matmul差各540値とは別。 モデル不変/R1未達/R2停止。次は既存pure-Rust gemmのbias融合を1候補として公開extensionへ設計、固定人工/154局所gate後だけ全体。以下は旧記録。
+
+---
+
+## 現在 — context差を解明、全体は未達（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-context-normalization-2026-10-16.md)。初期contextのmean/raw std/scale各63値とnormalized8,064値が参照bits一致。Rust plain/Autodiffを含む84局所比較もbytes一致。contextと既知LayerNormを合わせた一律候補は全体389,214要素中1点未達で不採用、model元bytes復元。 R1未合格/R2停止。次はpatchのlinear境界のソース確認、同一評価は反復しない。以下は旧記録。
+
+---
+
+## 現在 — FMA拡張を保持、全体候補は復元（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-fma-extension-2026-10-16.md)。公開backend extensionのFMA人工forward/graph参加と全49 LayerNormの局所bit一致はpass。一律hookの全体固定7case/389,214要素は中間3点超過で不採用。model.rsを元bytesへ復元、FMAはopt-inの研究APIとして保持。安定版は従来の累積1点未達、R1未合格/R2停止。 次は初期contextモーメントの差のソース確認、無目的な再評価はしない。以下は旧記録。
+
+---
+
+## 現在 — 参照の丸め順を実命令で確定（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-binary-moments-2026-10-16.md)。実際にロードされたMac PyTorchの3関数をpinし、scalar lane mergeの平均更新とm2補正のFMAを命令から確定。命令どおりの一度の保存値再現で、49入力/1,953行のmean/rstd・124,992出力が全bit一致。 次はgraphを保つFMA方式と人工forward。core不変・R1未達/R2停止。以下は旧記録。
+
+---
+
+## 現在 — モーメントとaffineの差を分離（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-moments-audit-2026-10-16.md)。全49入力/1,953行のnative PP・balanced RP・serial Flexを各bytes再現。参照モーメント＋参照affineは全124,992要素一致。4lane/FMAのソース再現はSSE約94.5%減だがmean260/rstd21行・出力5,827要素が非一致。 参照build/binaryの根拠とgraphを保つFMA設計へ。core不変・R1未達/R2停止。以下は旧記録。
+
+---
+
+## 現在 — 標準LayerNorm候補は不採用（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-native-norm-2026-10-16.md)。標準Flex LayerNormを全7case×7moduleの同一入力49組/124,992要素で検証。現行RPのbytes再現49/49、候補の許容差超過0だがSSEは現行の約2.804倍、全7caseで増加し事前条件を不通過。 core不変・R1未達/R2停止。追加方式の根拠と有限条件を定めるまで再実行しない。以下は旧記録。
+
+---
+
 ## 現在 — R1全層診断を閉鎖、局所passで全体未達を覆さない（2026-10-16）
 
 [結果](../results/banto-ai-rust-r1-all-layer-audit-2026-10-16.md)。固定55箇所×7case/953,694要素で、同一入力の局所差超過0、上流累積の超過1。PP/RRの既存anchor各161箇所bytes一致、有限948,654要素でtotal=local+propagatedが厳密成立。 追加方式は未選択、1点への修正探索をせずR1未達・R2停止を維持。以下は旧記録。

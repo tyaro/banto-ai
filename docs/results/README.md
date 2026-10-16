@@ -6,6 +6,34 @@
 
 ## Rustクレートの移植
 
+- [R2P lock最小整合案と人工Python参照](rust-r2p-lock-and-python-reference-2026-10-16.md) — 隔離案通過、107照合pass、元lock未適用/Rust学習未実行。
+
+- [Rust R2P棚卸しと仕様固定](rust-r2p-inventory-and-specification-2026-10-16.md) — readonly依存確認と人工条件、学習は未実行。
+
+- [実用性とRust学習への計画改訂結果](banto-ai-rust-practical-training-replan-2026-10-16.md) — 保存成果だけを整理、許容差不変・学習未実行。
+
+- [Rust R1 固定64byte呼出先と間接転送stub](banto-ai-rust-r1-once-target-2026-10-16.md) — SDK配置とVM境界を確認、単一slot導出までで閉鎖。
+
+- [Rust R1 once公開契約とAPI呼出先照合](banto-ai-rust-r1-once-contract-2026-10-16.md) — SDK確認、targetの直接同一性未達を保存、次は単一targetのmapping。
+
+- [Rust R1 patch一致とonce gate未達](banto-ai-rust-r1-sgemm-warm-binding-2026-10-16.md) — 一度の実行6,144値一致、warm-binding失敗保持、次はonce source契約。
+
+- [Rust R1 SGEMM読取り監査と小行列の再現](banto-ai-rust-r1-sgemm-readonly-2026-10-16.md) — 6関数閉鎖、人工5case一致、train初期化bindingは次unit。
+
+- [Rust R1 pure-Rust fused linearの実装と不採用](banto-ai-rust-r1-fused-linear-2026-10-16.md) — 人工pass、154組がbaseline bytes同一で改善なし。
+
+- [Rust R1 patchのbias融合/行列積差](banto-ai-rust-r1-linear-boundary-2026-10-16.md) — trainのraw mm一致、単独add一致、一般fused候補の条件を固定。
+
+- [Rust R1 初期contextのbit一致と全体候補の採否](banto-ai-rust-r1-context-normalization-2026-10-16.md) — 局所84組一致、全体1点未達でmodel復元。
+
+- [Rust R1 FMA拡張と全体候補の不採用](banto-ai-rust-r1-fma-extension-2026-10-16.md) — 人工/局所pass、全体3点未達でmodel復元。
+
+- [Rust R1バイナリの丸め順と局所全bit再現](banto-ai-rust-r1-binary-moments-2026-10-16.md) — 49入力、124,992出力一致、core不変。
+
+- [Rust R1モーメント計算・丸め位置の照合](banto-ai-rust-r1-moments-audit-2026-10-16.md) — 3系統のanchor再現、成分分離、core不変。
+
+- [Rust R1標準LayerNorm候補の不採用](banto-ai-rust-r1-native-norm-2026-10-16.md) — 全7caseでSSE増加、core不変。
+
 - [Rust R1全55箇所・7ケースの局所/累積差診断](banto-ai-rust-r1-all-layer-audit-2026-10-16.md) — 局所超過0、上流累積1点未達、モデル変更0。
 
 - [Rust R1の正規化・attention演算順診断](banto-ai-rust-r1-upstream-order-2026-10-16.md) — 一般LN修正の根拠確認、7case再確認で別の1点未達。

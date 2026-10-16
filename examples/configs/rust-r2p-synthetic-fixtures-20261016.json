@@ -1,0 +1,62 @@
+{
+  "schema":"banto.r2p-synthetic-fixtures.v1",
+  "status":"fixed_inputs_and_expected_rules; numerical_oracles_not_yet_generated; no_Rust_learning_executed",
+  "dtype":"all tensor literals convert once to CPU float32; recipe scalar semantics follow pinned installed torch source",
+  "quantiles":[0.1,0.5,0.9],
+  "loss_rule":"r=(actual-context_center)/context_scale-prediction; mean(max(tau*r,(tau-1)*r)) over B*C*H*3; no mask, all entries finite; center/scale/constants are not trainable",
+  "analytic_gradient_rule":"dL/dprediction=-tau/N if r>0; (1-tau)/N if r<0; (0.5-tau)/N at exact tie; N=B*C*H*3. Rational analytical expectations are independent cross-checks; installed Torch must agree under original tolerances before Rust is run.",
+  "loss_cases":[
+    {"id":"L0_centered","shape":[1,1,1,3],"prediction":[-1,0,1],"actual":[0],"center":[0],"scale":[1],"expected_loss_rational":"1/15","expected_gradient_rational":["-1/30","0","1/30"]},
+    {"id":"L1_all_ties_zero_is_valid","shape":[1,1,1,3],"prediction":[0,0,0],"actual":[0],"center":[0],"scale":[1],"expected_loss_rational":"0","expected_gradient_rational":["2/15","0","-2/15"]},
+    {"id":"L2_above","shape":[1,1,1,3],"prediction":[-1,0,1],"actual":[2],"center":[0],"scale":[1],"expected_loss_rational":"11/15","expected_gradient_rational":["-1/30","-1/6","-3/10"]},
+    {"id":"L3_below","shape":[1,1,1,3],"prediction":[-1,0,1],"actual":[-2],"center":[0],"scale":[1],"expected_loss_rational":"11/15","expected_gradient_rational":["3/10","1/6","1/30"]},
+    {"id":"L4_label_normalization","shape":[1,1,1,3],"prediction":[-1,0,1],"actual":[12],"center":[10],"scale":[2],"expected_loss_rational":"7/30","expected_gradient_rational":["-1/30","-1/6","-2/15"]},
+    {"id":"L5_batch_horizon_reduction","shape":[2,1,2,3],"prediction":[-1,0,1,-1,0,1,-1,0,1,-1,0,1],"actual":[0,2,-2,0],"center":[0,0],"scale":[1,1],"expected_loss_rational":"2/5"},
+    {"id":"L6_batch_channel_broadcast","shape":[2,2,1,3],"prediction":[-1,0,1,-1,0,1,-1,0,1,-1,0,1],"actual":[10,-3,2,108],"center":[10,-4,6,100],"scale":[2,0.5,4,8],"expected_loss_rational":"19/60"}
+  ],
+  "clip_rule":"global norm=sqrt(sum_i ||g_i||_2^2) in fixed parameter order; coefficient=min(1,1/(norm+1e-6)); apply one coefficient to all gradients before moments/updates. Diagnostic norm/coefficient are recorded; clipped gradients must meet the existing gradient gates.",
+  "clip_cases":[
+    {"id":"C0_zero","ordered_names":["a","b"],"shapes":[[2],[1]],"gradients":[[0,0],[0]],"expected_norm":"0","expected_coefficient":"1"},
+    {"id":"C1_below","ordered_names":["a","b"],"shapes":[[2],[1]],"gradients":[[0.5,0],[0]],"expected_norm":"1/2","expected_coefficient":"1"},
+    {"id":"C2_boundary","ordered_names":["a","b"],"shapes":[[2],[1]],"gradients":[[1,0],[0]],"expected_norm":"1","expected_coefficient":"1/(1+1e-6)"},
+    {"id":"C3_cross_parameter","ordered_names":["a","b"],"shapes":[[2],[1]],"gradients":[[3,0],[4]],"expected_norm":"5","expected_coefficient":"1/(5+1e-6)"}
+  ],
+  "optimizer_recipe":{"name":"named_compatible_AdamW_on_Burn_tensor","lr":0.0003,"betas":[0.9,0.999],"eps":1e-8,"weight_decay":0.01,"amsgrad":false,"cautious_decay":false,"maximize":false,"foreach":false,"fused":false,"all_parameters_decay":true,"clip_global_norm":1,"clip_denominator_epsilon":1e-6,"gradient_missing":"error; never silently treat None as zero or skip a parameter"},
+  "optimizer_parameter_order":["p.weight","p.bias"],
+  "optimizer_initial_parameters":{"p.weight":{"shape":[2],"values":[1,-2]},"p.bias":{"shape":[1],"values":[0.5]}},
+  "optimizer_cases":[
+    {"id":"O0_zero_fresh_decay","step_before":0,"gradients":[[0,0],[0]],"m_before":[[0,0],[0]],"v_before":[[0,0],[0]],"analytic_check":"moments remain0; all parameters multiply by(1-lr*decay); integer step becomes1 even for explicit zero gradients"},
+    {"id":"O1_signed_fresh","step_before":0,"gradients":[[0.25,-0.5],[1]],"m_before":[[0,0],[0]],"v_before":[[0,0],[0]]},
+    {"id":"O2_epsilon_sensitive","step_before":0,"gradients":[[1e-8,-1e-8],[0]],"m_before":[[0,0],[0]],"v_before":[[0,0],[0]]},
+    {"id":"O3_global_clip","step_before":0,"gradients":[[3,0],[4]],"m_before":[[0,0],[0]],"v_before":[[0,0],[0]]},
+    {"id":"O4_artificial_mature_state","step_before":4096,"gradients":[[0.125,-0.25],[0.5]],"m_before":[[0.01,-0.02],[0.03]],"v_before":[[0.001,0.002],[0.003]]},
+    {"id":"O5_zero_gradient_retains_momentum","step_before":4096,"gradients":[[0,0],[0]],"m_before":[[0.01,-0.02],[0.03]],"v_before":[[0.001,0.002],[0.003]]}
+  ],
+  "optimizer_mathematical_oracle":"First clip g globally. t=step_before+1; p_decay=p*(1-lr*wd); m=beta1*m+(1-beta1)*g; v=beta2*v+(1-beta2)*g*g; p_next=p_decay-lr*(m/(1-beta1**t))/(sqrt(v/(1-beta2**t))+eps). High-precision scalar computation is an independent mathematical check, not a replacement for the pinned Torch float32 operation-order reference.",
+  "toy_training":{"id":"T0_named_affine_pinball","scope":"miniature artificial train engine; not SmallForecaster or CARE","parameter_order":["toy.weight","toy.bias"],"parameters":{"toy.weight":{"shape":[3,2],"values":[0.125,-0.25,0.375,0.125,-0.125,0.25]},"toy.bias":{"shape":[3],"values":[-1,0,1]}},"buffers":{"center":{"shape":[1,1,1],"values":[0]},"scale":{"shape":[1,1,1],"values":[1]}},"forward":"q=x@weight.T+bias; x row-major[1,1,2,2], q[1,1,2,3], target[1,1,2]; toy raw q is a pinball component, not an ordered production forecast API","batch_table":[{"id":"A","x":[1,0,0,1],"target":[0.25,-0.5]},{"id":"B","x":[-1,0,0,-1],"target":[0.5,-0.25]},{"id":"C","x":[1,1,-1,1],"target":[0.75,-0.75]},{"id":"D","x":[0.5,-0.5,-0.5,0.5],"target":[0.125,-0.125]}],"schedule":["A","B","C","D","A","C","B","D"],"initial_integer_step":0,"initial_moments":"all float32 zeros","RNG":"none; no draws or seed-based parameter initialization","probe_x":[0.5,0.25,-0.25,0.5],"compare_each_update":["preupdate prediction and normalized loss","all named gradients before/after clip","all parameters/m/v after update","integer global/per-parameter step and schedule_next"],"Python_reference":"one continuous8 trajectory; nine fixed probe outputs at steps0..8","Rust_trajectories":[{"id":"A_continuous","updates":8,"process":"one fresh process"},{"id":"B_cancel_after4","updates":4,"process":"second fresh process; commit step4; observe cancellation before step5; no partial update5"},{"id":"C_restore_and_finish","updates":4,"process":"third fresh process; read B checkpoint; verify step4/probe before update5, then finish8"}],"Rust_total_toy_updates":16,"Rust_probe_forwards":19,"same_backend_resume_comparison":"A versus B/C at every common step; exact parameter/m/v/counter/schedule_next/probe bytes; restore does not import Python values or reference outputs"},
+  "invalid_component_cases":["I0_wrong_prediction_target_shape","I1_nonfinite_prediction","I2_nonfinite_target","I3_nonpositive_scale","I4_missing_named_gradient","I5_duplicate_or_unknown_parameter_name"],
+  "invalid_checkpoint_cases":["K0_truncated_payload","K1_payload_bit_mismatch","K2_missing_moment","K3_duplicate_tensor_name","K4_negative_second_moment","K5_noninteger_step","K6_schedule_hash_mismatch","K7_missing_commit_marker"],
+  "checkpoint_fault_points":["F0_before_payload_complete","F1_payload_fsynced_before_manifest","F2_manifest_fsynced_before_commit_marker"],
+  "negative_mutations":{
+    "I0_wrong_prediction_target_shape":"L0 actual becomes[0,0] with shape[1,1,2], prediction remains[1,1,1,3]",
+    "I1_nonfinite_prediction":"L0 prediction[0] becomes NaN, represented by an explicit mutation instruction rather than invalid JSON numeric syntax",
+    "I2_nonfinite_target":"L0 actual[0] becomes positive infinity via explicit mutation instruction",
+    "I3_nonpositive_scale":"L0 scale[0] becomes0",
+    "I4_missing_named_gradient":"O1 omits p.bias gradient entirely; do not replace with0 or partially update p.weight",
+    "I5_duplicate_or_unknown_parameter_name":"O1 inserts a second p.weight entry in the ordered input list; reject before conversion to a name map",
+    "K0_truncated_payload":"fresh copy of Rust B step4 checkpoint drops the last payload byte, retaining original checkpoint payload hash",
+    "K1_payload_bit_mismatch":"fresh copy XORs bit0 of payload byte0, retaining original checkpoint payload hash",
+    "K2_missing_moment":"fresh checkpoint omits toy.bias first-moment entry; rebuild hashes/commit for this otherwise well-formed malformed state so identity/completeness must reject it",
+    "K3_duplicate_tensor_name":"fresh checkpoint lists toy.weight twice; rebuild manifest/commit hashes; never allow map overwrite",
+    "K4_negative_second_moment":"fresh checkpoint sets first toy.weight second-moment value to-1 and recomputes payload/manifest/commit hashes; reject semantic state",
+    "K5_noninteger_step":"fresh checkpoint global step is JSON4.5 rather than integer4; recompute manifest/commit hashes; no float-to-integer truncation",
+    "K6_schedule_hash_mismatch":"fresh checkpoint schedule hash is64zero hex digits rather than fixed schedule hash; recompute manifest/commit hashes; external expected fixture pin remains unchanged",
+    "K7_missing_commit_marker":"fresh copy has valid payload/manifest but no checkpoint commit marker",
+    "F0_before_payload_complete":"writer is stopped after half of the intended payload bytes, no commit marker",
+    "F1_payload_fsynced_before_manifest":"writer stops after payload fsync, before manifest creation, no commit marker",
+    "F2_manifest_fsynced_before_commit_marker":"writer stops after manifest fsync, before exclusive commit marker creation"
+  },
+  "negative_case_rule":"Each invalid/fault case uses fresh files derived before closure. Never mutate old valid or closed checkpoints. Loader must reject and old known-good checkpoint hashes remain unchanged. No additional training updates for negative cases.",
+  "finite_counts":{"loss_numeric_cases":7,"clip_numeric_cases":4,"optimizer_one_step_cases":6,"toy_problem_variants":1,"toy_schedule_updates":8,"Rust_toy_trajectories":3,"Rust_optimizer_updates_total":22,"component_rejections":6,"checkpoint_rejections":8,"writer_cutpoints":3,"cancel_boundary":4,"full_SmallForecaster_or_real_data_training":0},
+  "reference_freeze_rule":"Generate the single pinned-Torch reference and independent analytical/scalar cross-checks before implementing/running Rust acceptance. Save sources, input/recipe/schedule hashes, all expected numeric bytes and closure. Any disagreement stops reference generation; do not loosen tolerances or select a different toy based on Rust results. This specification fixes inputs/rules now, not a successful numerical result."
+}

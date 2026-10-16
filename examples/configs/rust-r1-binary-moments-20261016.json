@@ -1,0 +1,19 @@
+{
+  "schema": "banto.r1-binary-moments.v1",
+  "scope": "One source/binary-supported scalar diagnostic replay on saved inputs; no Torch kernels, full model forward, model adoption, training, tolerance change or R2 start",
+  "binary_audit": "artifacts/rust-r1-binary-audit2-20261016",
+  "prior_moments": "artifacts/rust-r1-moments-audit-20261016",
+  "fixture": "artifacts/rust-r1-layer-fixture2-20261016",
+  "hypothesis": "The two scalar AddMoments contractions observed in the loaded binary explain the prior mean260/rstd21-row discrepancies. Reproduce exactly those instructions, without searching alternatives.",
+  "instructions": {
+    "vector_mean": {"address": "1f82028", "operation": "fmla.4s v1, v5, v4"},
+    "vector_m2": {"address": "1f82030", "operation": "fmla.4s v2, v3, v5"},
+    "scalar_m2_first_lane": {"address": "1f822f4", "operation": "fmadd s20, s20, s21, s1"},
+    "scalar_m2_add_first_lane": {"address": "1f822f8", "operation": "fadd s3, s3, s20"},
+    "scalar_mean_first_lane": {"address": "1f82300", "operation": "fmadd s2, s4, s7, s2"}
+  },
+  "fixed_merge": "delta=round32(lane_mean-mean); c=round32(16/(n+16)); mean=fmaf(c,delta,mean); cross=round32(round32(delta*delta)*c); m2=round32(m2+fmaf(cross,float32(n),lane_m2)); n+=16. Repeat lanes0..3 then var=round32(m2/64). Keep prior four-lane explicit vector FMA and initial stack merge unchanged.",
+  "affine": "Use the previously confirmed reference affine association; do not introduce affine contraction.",
+  "measurement": "All 49 inputs/1953 rows; bit compare mean/rstd with saved native moments and normalized/affine output with saved PP. Save all discrepancies, including signed zero; no rounding-order retry on mismatch.",
+  "limits": {"parent_seconds": 900, "child_seconds": 870, "memory_each_bytes": 2147483648, "build_cache_bytes": 1610612736, "artifact_files": 24, "artifact_bytes": 805306368, "single_file_bytes": 33554432, "evidence_files": 512, "evidence_bytes": 16777216, "evidence_part_bytes": 262144, "stdout_bytes": 1048576, "stderr_bytes": 131072, "jobs": 1, "threads": 1}
+}

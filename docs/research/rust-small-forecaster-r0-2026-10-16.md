@@ -2,14 +2,14 @@
 
 [現在の実装計画](banto-ai-rust-implementation-plan-2026-10-16.md)を工程順・成果物・終了条件の入口とする。本R0はモデル/数値/配置の契約として継承する。
 
-状態: R1a/既存3テストpass。全55箇所×7caseの診断完了、局所超過0・上流累積1点未達でR1未合格。モデル変更/候補探索0、R2未着手。[全層診断結果](../results/banto-ai-rust-r1-all-layer-audit-2026-10-16.md)。2026-10-16 JST。
+状態: 原数値条件不変、R1は1点未達/正式R2停止。pointer追跡停止。[R2P棚卸しと人工仕様](rust-r2p-synthetic-training-contract-2026-10-16.md)を固定、実行はまだ。2026-10-16 JST。
 [上位計画](timesfm-inspired-practical-evaluation-plan-2026-10-16.md)に沿う。[機械設定r0.1](../../examples/configs/rust-small-forecaster-r0-20261016-r0.1.json)を次工程の入口とする。
 
 ## 実装の所属と依存方向 — 人の訂正（2026-10-16）
 
 AI本体のRustクレートは tyaro/banto-ai 側に置き、tyaro/banto-industrial は利用・接続先とする。前回の「移植先」は接続先の意味であり、AI実装の配置先に読み替えない。
 
-- **banto-ai**: 前処理、モデル、学習/loss/backward/AdamW、推論、モデル・optimizer checkpointと再開、共通Rust API/参照CLIを持つ。R1で作成するクレートの配置案はこのrepositoryの `crates/banto-ai`。当面一つのクレート内でmoduleを分け、必要が生じた段階で分割する。今回はクレート未作成。
+- **banto-ai**: 前処理、モデル、学習/loss/backward/AdamW、推論、モデル・optimizer checkpointと再開、共通Rust API/参照CLIを持つ。R1で作成するクレートの配置案はこのrepositoryの `crates/banto-ai`。当面一つのクレート内でmoduleを分け、必要が生じた段階で分割する。推論クレートは実装済み、学習部品は未実装。
 - **banto-industrial**: タグ・履歴の取得と型変換、quality/time/unit policyの適用、学習jobのhost、UI、モデルの利用/切替を持つ。AI本体の実装をここへ移さない。
 - **依存方向**: banto-industrial → banto-ai。利用時のversion/tag/commitを固定し、共通AI crateは製品DTO、banto-tagclient/tsquery、Tauri/PLC/Windows機能へ依存させない。実機固有の対応はadapterで処理する。
 
@@ -104,6 +104,8 @@ R2の短い8更新は移植fixtureとして先に入力/初期state/stepを固�
 
 ## 次の順序と停止条件
 
+改訂2では原R1→正式R2の合格順を維持し、人工入力/label/parameterのみのR2P準備を独立して先行する。これは数値条件の変更や実データ学習停止の解除ではない。OS/vendor pointer追跡は停止。具体的な次工程は[復帰計画](banto-ai-practical-training-return-plan-2026-10-16.md)の0/1とする。以下は正式認定の条件。
+
 1. **R1**: banto-ai内の `crates/banto-ai` を最初は単独buildし、exact dependencyをlock、license/feature/CPU/toolchainを確認しcompile。固定fold0 weightと2 train batch、人工constant/zero/floor/nonfinite/mask/quantile入力でforwardと中間値を照合。
 2. **R2**: 別の実行前fixture契約を保存してloss/gradient/clip/AdamW・8更新/保存再開と成熟moment importを確認。
 3. **R3**: R1/R2通過後に別の有限実データ移植比較を固定。元の科学条件を保ち、既読testであることを明記。
@@ -111,4 +113,4 @@ R2の短い8更新は移植fixtureとして先に入力/初期state/stepを固�
 
 R1以降の実行前に親900秒/子870秒、physical footprint/peak RSS各2GiB、既存artifact/EvidenceStore/stdio上限を維持する。Cargoはjobs1とし、**compiler/linker等の子孫プロセスも計測**する。現在のPython用main PID観測だけをCargo全体の2GiB保証にしない。超過・compile/link失敗・数値不一致は保存して停止。OSライセンスの同意やグローバルtoolchain変更を自動実施しない。R3/R4の本実行は本契約の存在だけでは開始しない。
 
-現在の次工程はR1の実装と有限数値確認。今回で移植成功/学習再開/banto統合/保全業務合格は認定しない。需要2015再評価停止、2014以前調整・同休業mean28・四季平均の過小/過大非増加・観測のみ/欠測0分離、heartbeat PAUSEDを維持する。
+現在の次工程は現実装の整合整理とR2P人工fixtureの仕様固定。今回で移植成功/学習再開/banto統合/保全業務合格は認定しない。需要2015再評価停止、2014以前調整・同休業mean28・四季平均の過小/過大非増加・観測のみ/欠測0分離、heartbeat PAUSEDを維持する。

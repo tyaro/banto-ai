@@ -1,5 +1,9 @@
 # TimesFM3参考の自作モデル — 実用性検証の具体計画
 
+## 現在の優先順位
+
+[実用性検証とRust学習へ戻る改訂2](banto-ai-practical-training-return-plan-2026-10-16.md)を優先する。ポインタ追跡は停止。MetroPT/CAREの既存成果と負の結果を再利用し、保全・点検支援を第一優先に、人工データのRust学習部品/保存再開を独立準備する。R1の1点未達と原許容差を維持し、正式R2実データ学習・CARE test/需要2015再評価は停止したまま。以下の各実行時点の記録は履歴として保持する。
+
 ## 需要とPSIの既存実装を接続例に加える（2026-10-16）
 
 [denroku-psi-demoの現状と引継ぎ](denroku-psi-ai-integration-2026-10-16.md)を確認した。現状はPython LightGBM学習→Rust推論/照合→静的JSON→画面/PSIで、Python不要の再学習は公式C APIを使う別の未実装計画がある。共通AIの配置はbanto-ai、利用側は産業のbanto-industrialと需要・PSIアプリ。各利用側→banto-aiの依存方向を守る。
@@ -8,7 +12,7 @@ R1/R2は自作SmallForecasterを先行する。既存LightGBMの特徴量・木�
 
 ## Rust実装の現在の計画（2026-10-16）
 
-[AIクレート実装と製品利用の計画](banto-ai-rust-implementation-plan-2026-10-16.md)に従い、banto-ai内のR1a/R1bから学習・保存再開、有限CARE比較、banto-industrial接続へ段階的に進める。各段階の合格/停止条件と責務を固定した。今回実装/学習は開始せず、[R0.1数値契約](rust-small-forecaster-r0-2026-10-16.md)は不変。
+[AIクレート実装と製品利用の計画](banto-ai-rust-implementation-plan-2026-10-16.md)に従い、banto-ai内のR1a/R1bから学習・保存再開、有限CARE比較、banto-industrial接続へ段階的に進める。各段階の合格/停止条件と責務を固定した。Rust推論の実装と固定比較は保存済みでR1は1点未達。今回の改訂では新実装/学習を開始せず、[R0.1数値契約](rust-small-forecaster-r0-2026-10-16.md)は不変。
 
 ## 配置方針の訂正 — AIクレートはbanto-ai（2026-10-16）
 

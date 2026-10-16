@@ -1,0 +1,13 @@
+{
+  "schema":"banto.r1-sgemm-followup.v1",
+  "declaration_root":"artifacts/rust-r1-sgemm-query-declaration-20261016",
+  "output_root":"artifacts/rust-r1-sgemm-query-20261016",
+  "source_root":"artifacts/rust-r1-sgemm-dispatch-20261016",
+  "source_instruction_virtual":"0x18189a0f0",
+  "target_virtual":"0x18123cd78",
+  "instruction_kind":"BL",
+  "expected_image_UUID":"31104d4f4a7e3fa79e1855937b2011f2",
+  "prior_region_roots":["artifacts/rust-r1-sgemm-entry-20261016","artifacts/rust-r1-sgemm-forwarder-20261016","artifacts/rust-r1-sgemm-dispatch-20261016","artifacts/rust-r1-sgemm-core-20261016","artifacts/rust-r1-sgemm-small-tn-20261016"],
+  "selection_evidence":"For non-GEMV dimensions the normal dispatcher calls this query before beta checks. Its returned w0 is selected bycsinc at0x18189a0fc (internal flagw26 is0 for this ABI path), then sign-extended and forwarded as the core's last argument. Inspect only this query to identify the meaning/initialization of that runtime-dependent value; do not execute it or follow further callees.",
+  "scope":"Sixth and final unique region under the original scope. Stop further executable reads at six regardless of unresolved train kernel. No numerical operator or initializer call."
+}

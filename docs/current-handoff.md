@@ -1,3 +1,149 @@
+## 最新 — R2Pのlock最小案と人工Python参照を保存（2026-10-16）
+
+[結果と次工程](results/rust-r2p-lock-and-python-reference-2026-10-16.md)。隔離Cargo.lockの最小案と人工Python参照を保存済み。gemm直接edge1行削除のみ、lock662記録/version・有効154package/feature不変。loss7/clip4/AdamW6/小型8更新、独立照合107件すべて原許容差内。 参照427tensor/1,152値/4,608bytesを閉鎖。参照SHA256 `29ded0bc284c239326ddceb06e9ed7650f87789d7611a94291913824f9e70900`。元workspaceのlock/manifest/model・41 source pinsと固定契約/fixture/許容差は不変。
+
+lock案は隔離copyでlocked offline通過したが、元workspaceへ未適用。次はこの1行案の明示適用と、固定feature-gated人工consumer/互換AdamW/checkpoint実装。保存済み参照を使い、Rust連続8対4+復元4・拒否/途中保存条件を検証する。今回Rust実装/build/test/学習/保存再開は未実行。参照生成を再走しない。旧固定契約の未実行statusは凍結時点の記録として残す。
+
+ポインタ追跡は再開しない。原R1残1点/正式R2実データ停止、CARE/MetroPT test凍結・需要2015停止/2014以前/同休業mean28/四季両側非増加/観測欠測0分離、各2GiB/build1.5GiB/時間・保存枠/既存失敗とclosed roots保護、Windows/OS試験別で未実行、heartbeat PAUSED、下流編集/push/製品採用0を維持。保全第一・Rustで学習も扱う目的を維持。証跡`artifacts/rust-r2p-reference-20261016-evidence`。以下は旧記録。
+
+---
+
+## 最新 — R2P棚卸しと人工検証条件を固定（2026-10-16）
+
+[現状と契約](research/rust-r2p-synthetic-training-contract-2026-10-16.md)・[機械仕様](../examples/configs/rust-r2p-synthetic-protocol-20261016.json)・[全fixture](../examples/configs/rust-r2p-synthetic-fixtures-20261016.json)・[結果](results/rust-r2p-inventory-and-specification-2026-10-16.md)。現実装を棚卸し、人工loss7/clip4/AdamW6と9parameterの8対4+復元4、拒否/途中保存条件を固定。source上は62tensor/59trainable/109,024値。学習・参照数値生成は未実行。locked offline treeはexit101でmanifest/lock整合が次の入口。
+
+次は元snapshotを保護した隔離copyで最小offline lock整合案（未使用gemm root edge、package/version不変）を作る。既存研究featureを自動復活しない。入口整合後、固定人工入力のTorch参照と独立期待値を一度生成・閉鎖してから、feature-gated小型学習/AdamW/checkpointを実装する。計画0/1の棚卸し/入力と判定規則は固定済みだが、数値参照bytesはまだない。受入commandのtraining-tests/r2p_synthetic targetは未追加。
+
+初版inventoryのcfg抽出regex不備はclosed snapshotの再抽出で訂正、元rootは保持。corrected-dependency-inventory.jsonを優先。現loaderはmomentsを検査しても保持せず再開不能、model葉も未追跡。原許容差/R1の残1点/正式R2実データ停止を維持。人工小型問題の通過をfull modelや保全性能の成立にしない。
+
+ポインタ/once/TLS/PAC/vendor追跡は人の指示で停止。8byte slot条件は実行せず、通常の「進めて」で再開しない。各2GiB/build1.5GiB/時間/保存枠、既存変更/失敗/closed roots保護、CARE/MetroPT test凍結・需要2015停止/2014以前/同休業mean28/四季両側非増加/観測欠測0分離、Windows別検証、heartbeat PAUSED、下流編集/push/製品採用0。証跡はartifacts/rust-r2p-specification-20261016-evidence。以下は旧記録。
+
+---
+
+## 最新 — ポインタ追跡停止、実用性とRust学習へ戻る改訂2（2026-10-16）
+
+[復帰計画](research/banto-ai-practical-training-return-plan-2026-10-16.md)・[機械条件](../examples/configs/banto-ai-practical-training-return-20261016.json)・[整理結果](results/banto-ai-rust-practical-training-replan-2026-10-16.md)。人の指示でpointer/once/TLS/PAC/vendor内部追跡を停止。既存成果を整理し、原許容差/R1の1点未達を維持。人工データだけのRust学習部品・保存再開をR2Pとして独立準備する。正式R2実データ学習は停止を維持。 旧8byte slot条件は履歴として保存し実行しない。通常の「進めて」で再開しない。
+
+次は計画0/1：現source/manifest/lock/featureと学習graphの不足整理→人工fixture/期待値/元許容差/有限回数を固定。コード/学習は今回未実行。一般的根拠のある追加R1候補は最大1方式、局所一巡/通過後全7case一回。現在候補なし、根拠がなければ実験0で未達保留。R1を通過扱いにせず、人工R2Pと正式R2を混同しない。
+
+安定版残差はtrain-last blocks.1 index3450、差2.7418136597e-6/限界2.5676221848e-6（限界比6.784%超）。最終出力各6,048値pass、同一入力局所385比較超過0だがgradient/更新の影響は未確認。context候補index183は別で、不採用。CARE3/12・9未検知/正常false3、MetroPTの改善と悪化を凍結再利用する。
+
+各2GiB/build1.5GiB/時間/保存枠、既存変更/失敗/closed roots保護。CARE test/需要2015停止、2014以前調整/同休業mean28/四季両側非増加/観測欠測0分離、Windows別検証、heartbeat PAUSED、下流編集/push/製品採用0を維持。以下のpointer系「次工程」は旧記録で、本改訂により停止。証跡はartifacts/rust-practical-training-replan-20261016-evidence。
+
+---
+
+## 最新 — 固定64bytesで間接転送stubを確認（2026-10-16）
+
+[結果と次条件](results/banto-ai-rust-r1-once-target-2026-10-16.md)。固定call targetをown-task mapping/SDK型確認後に64bytes読取り、再照合一致。先頭16bytesはADRP/ADD/LDR/BRAA transfer stub、slot0x1e7ff0db8を導出。slot/分岐先は未読、数値演算/target実行0。 SDK struct84bytes/23field/count21をCとctypesで照合、mapping2queryでREAD+EXECUTE leaf内64bytesを確認。元warm/once/API失敗を保持、query/train/private once値は未確定。model/lock/許容差/開始時manifest不変、R1安定版累積1点未達/R2停止。
+
+次は[固定した単一8byte slot条件](../examples/configs/rust-r1-once-slot-admission-20261016.json)。保存命令からのslot0x1e7ff0db8だけ、SDKに基づくpointer表現の扱いとmapping/boundsを先に固定。bit mask推測/認証/実行/callee code追跡はしない。元六関数やfailed scopesを再開せず、この次unitはまだ未実行。全証跡/文書前後はartifacts/rust-r1-once-target-results-20261016-evidence。
+
+各2GiB/build1.5GiB/時間/保存枠、既存成果/失敗/closed roots保護、保全第一/Rust学習目的、需要2015停止/2014以前調整/同休業mean28/四季両側非増加/観測欠測0分離、CARE test停止、Windows別検証、heartbeat PAUSED維持。Cargo末尾空行の全体diff --check exit2は開始時からの変更として保護、docs限定exit0。以下は旧記録。
+
+---
+
+## 最新 — once仕様確認、呼出先の直接API照合は未達（2026-10-16）
+
+[結果と次条件](results/banto-ai-rust-r1-once-contract-2026-10-16.md)。SDKのonce fast pathと公開APIの同期保証を区別。独立metadata照合では保存BL targetがpublic dispatch_onceと直接一致せず、dladdr0で停止。内部predicate/query/train経路は未確定。数値演算/新code読取り0。 元warmの-1 gate失敗/6,144値bit一致を保持。SDK27.0とruntime27.0.1を混同せず、52638546のprivate意味を推測しない。元sourceと型形式のpreflight失敗、修正後のidentity未達を全保持。model/lock/許容差不変、本工程のCargo/default編集0、R1安定版累積1点未達/R2停止。
+
+最終確認: 証跡/pins/モデルは通過。作業中に本工程が編集していないCargo.tomlが開始snapshotから変化し、全体diff --checkは末尾空行でexit2。変更を保護し編集せず、docs限定exit0を記録。詳細とfinal-check2証跡は上の結果の最終注記。
+
+次は[正確なcall targetの独立条件](../examples/configs/rust-r1-once-call-target-admission-20261016.json)。saved BL target0x1880e1a60だけ、先にown-task mappingとSDK宣言を確認できる場合に最大64bytesを非実行で読む。dladdr0をstubと断定しない。元六関数/failed scopesを再開せず、他target/pointer追跡は別事前条件が必要。新数値演算・full model・学習は含めない。この次unitはまだ未実行。全証跡/文書前後はartifacts/rust-r1-once-results-20261016-evidence。
+
+各2GiB/build1.5GiB/時間/保存枠、既存成果/失敗/closed roots保護、保全第一/Rust学習目的、需要2015停止/2014以前調整/同休業mean28/四季両側非増加/観測欠測0分離、CARE test停止、Windows別検証、heartbeat PAUSED維持。以下は旧記録。
+
+---
+
+## 最新 — patch一致、once条件未達でwarm-binding停止（2026-10-16）
+
+[結果と次条件](results/banto-ai-rust-r1-sgemm-warm-binding-2026-10-16.md)。保存済みtrain-first patchを一度だけ実行、元6,144値と全bit一致。88byte設定は前後で変化・実行後二度同一だが、once値52638546は固定条件-1を満たさずfailed閉鎖。query/train経路は未確定、追加実行/命令読取り0。 実際の初期化未完了と断定せず、-1 gate未達として保持。model/Cargo/default/許容差不変、R1安定版累積1点未達/R2停止。
+
+次は[固定したonce source/design工程](../examples/configs/rust-r1-sgemm-once-semantics-admission-20261016.json)。installed SDKのonce公開契約/inline/版を確認し、保存predicateの意味を根拠から整理する。新しい数値演算・live memory/code読取り・full model比較はこの工程に含めない。失敗root/元-1条件を上書きせず、global@940=1からのquery断定もしない。source工程まだ未実行。全証跡/文書前後はartifacts/rust-r1-sgemm-warm-results-20261016-evidence。
+
+各2GiB/build1.5GiB/時間/保存枠、既存成果/失敗/closed roots保護、保全第一/Rust学習目的、需要2015停止/2014以前調整/同休業mean28/四季両側非増加/観測欠測0分離、CARE test停止、Windows別検証、heartbeat PAUSED維持。以下は旧記録。
+
+---
+
+## 最新 — SGEMM6関数監査、小行列を全bit再現（2026-10-16）
+
+[結果と次条件](results/banto-ai-rust-r1-sgemm-readonly-2026-10-16.md)。実load済みSGEMMの6関数/5,064bytesを上限内で監査。小形状T,NのFMA→lane合算→bias後入れを特定し、別の保存値再現で人工5caseのmm/patch各3,840値が全bit一致。cold設定未初期化のためtrain runtime経路は未確定。 model/Cargo/default/許容差不変、SGEMM/torch演算/新Rust候補/full forward/学習0。R1安定版累積1点未達/R2停止。
+
+六関数scopeは閉鎖。次は[固定したwarm-binding条件](../examples/configs/rust-r1-sgemm-warm-binding-admission-20261016.json)に沿い、保存済みtrain-first patchだけを一度実行し元6,144値bytes一致、同image設定88byteの前後・once完了を確認する独立診断。まだ未実行。global@940が1ならTLSの両枝からquery=1、違えば不明として止める。次unitに追加code読取り/full model/R1再評価は含めない。根拠なしのbias-first候補やvendor FFIへ進まない。全証跡/文書前後はartifacts/rust-r1-sgemm-results-20261016-evidence。
+
+各2GiB/build1.5GiB/時間/保存枠、既存成果/失敗/closed roots保護、保全第一/Rust学習目的、需要2015停止/2014以前調整/同休業mean28/四季両側非増加/観測欠測0分離、Windows別検証、heartbeat PAUSED維持。以下は旧記録。
+
+---
+
+## 最新 — fused linearは人工pass・改善なしで不採用（2026-10-16）
+
+[結果と採否](results/banto-ai-rust-r1-fused-linear-2026-10-16.md)。公開extensionでpure-Rust GEMM bias初期化を実装。人工8case/74値・graph・13拒否はpassだが、全154linear/465,696値が現行baselineとbytes一致しSSE減少0で不採用。model/default不変、full forward0。 R1は安定版累積1点未達/R2停止、許容差/参照/weights維持。Cargo.lockは既存gemmへのroot edge1本だけ追加、package154/有効feature集合は不変。primitiveは非default研究API、backwardはcompileのみで未検証。
+
+GEMM sourceは積をゼロaccumulatorで計算後にdestinationをepilogueで統合し、API上のbias初期化だけでは参照の丸め順を変えられない。実際のmicrokernel命令経路は未証明。次は参照SGEMMのbias統合位置/サイズ依存経路を読取り監査する条件を固定する。対象symbol/byte上限を決め、根拠が得られるまで新kernel/full forward/別のbias-first算術候補を起動しない。同候補・全55node・baseline再生を反復しない。全証跡/文書前後はartifacts/rust-r1-fused-linear-results-20261016-evidence。
+
+各2GiB/build1.5GiB/時間/保存枠、既存成果/失敗/closed roots保護、保全第一/Rust学習目的、需要2015停止/2014以前調整/同休業mean28/四季両側非増加/観測欠測0分離、Windows別検証、heartbeat PAUSED維持。以下は旧記録。
+
+---
+
+## 最新 — patchのbias融合と行列積差を分離（2026-10-16）
+
+[結果](results/banto-ai-rust-r1-linear-boundary-2026-10-16.md)。patchの固定7case/16,128値を分解。両train batchのraw matmulはbit一致、単独bias加算は全case一致。trainの差はPython fused/別加算差7,241値で説明でき、floor人工3caseのraw matmul差各540値とは別。 model/Cargo/default/許容差/参照不変、追加full forward/学習0。安定版の累積1点未達/R1未合格/R2停止を維持。
+
+次は[固定したpure-Rust fused linear受入条件](../examples/configs/rust-r1-fused-linear-admission-20261016.json)に従う。公開extension+既存gemmでbiasを出力初期値にする1方式。安全なstorage/stride/bounds証明とgraph、必要ならroot依存edgeだけのoffline lock変更を先に固定し、固定8人工→新候補だけ全154linear局所比較。全局所gate後だけ全体7caseを1回。まだ候補実装/演算0、Accelerate FFI導入0。単独加算修正、同じ全層再生、case/点ごとの丸め探索をしない。全証跡/文書前後はartifacts/rust-r1-linear-results-20261016-evidence。
+
+各2GiB/build1.5GiB/時間/保存枠、既存成果/失敗/closed roots保護、保全第一/Rust学習目的、需要2015停止/2014以前調整/同休業mean28/四季両側非増加/観測欠測0分離、Windows別検証、heartbeat PAUSED維持。以下は旧記録。
+
+---
+
+## 最新 — 初期context差を解明、全体候補は1点未達・復元（2026-10-16）
+
+[結果と採否](results/banto-ai-rust-r1-context-normalization-2026-10-16.md)。初期contextのmean/raw std/scale各63値とnormalized8,064値が参照bits一致。Rust plain/Autodiffを含む84局所比較もbytes一致。contextと既知LayerNormを合わせた一律候補は全体389,214要素中1点未達で不採用、model元bytes復元。 安定版は旧index3450の1点未達、候補はindex183であり区別。R1未合格/R2未開始、許容差/参照/weights/default/Cargo.lock不変、有効package154も同一。
+
+次は保存済みで初期3anchor一致後に最初のbit差が出るpatchのlinear（matmul/bias/layout）のソースを確認し、一般方式の根拠を判断。閉鎖した全層再生・同候補のfull比較を繰り返さず、同一operandの有限条件が固定できるまで新kernel/full forwardをしない。float64 Welfordのbinary縮約やbackwardは今回未認定。全証跡/文書前後はartifacts/rust-r1-context-results-20261016-evidence。
+
+各2GiB/build1.5GiB/時間/保存枠、旧成果/失敗/closed roots保護、保全第一/Rust学習目的、需要2015停止/2014以前調整/同休業mean28/四季両側非増加/観測欠測0分離、Windows別検証、heartbeat PAUSEDを維持。以下は旧記録。
+
+---
+
+## 最新 — FMA拡張を実装、全体候補は不採用・model復元（2026-10-16）
+
+[結果と採否](results/banto-ai-rust-r1-fma-extension-2026-10-16.md)。公開backend extensionのFMA人工forward/graph参加と全49 LayerNormの局所bit一致はpass。一律hookの全体固定7case/389,214要素は中間3点超過で不採用。model.rsを元bytesへ復元、FMAはopt-inの研究APIとして保持。安定版は従来の累積1点未達、R1未合格/R2停止。 許容差/参照/weights/Cargo.lockとdefaultは不変、Cargo treeのpackage集合154も同一。
+
+初回compile・graph判定API・混在context拒否の3技術的失敗を保持し、probe4だけで人工forward採否。backward実装はcompileしたが実行0・未検証。接続条件を事前固定し、候補は1方式/49局所+7fullのみ。既存3テストpass。prefix5node×7caseは候補/安定版bytes一致で、局所一致だけでは上流誤差を消せない。全source/stdio/exit/state/closureと文書前後はartifacts/rust-r1-fma-results-20261016-evidence。
+
+次は初期context平均/尺度の差をソースと演算順から整理し、一般方式の根拠があるか判断する。同候補やLayerNorm局所確認を反復せず、有限条件を固定するまで追加model forwardをしない。各2GiB/build1.5GiB/時間/保存枠、旧成果/失敗/closed roots、保全第一/Rust学習目的、需要2015停止/2014以前調整/同休業mean28/四季両側非増加/観測欠測0分離、Windows別検証、heartbeat PAUSED維持。以下は旧記録。
+
+---
+
+## 最新 — 参照バイナリの丸め順を確定、局所全bit再現（2026-10-16）
+
+[結果](results/banto-ai-rust-r1-binary-moments-2026-10-16.md)・[FMA実装条件](research/rust-fma-primitive-contract-2026-10-16.md)。実際にロードされたMac PyTorchの3関数をpinし、scalar lane mergeの平均更新とm2補正のFMAを命令から確定。命令どおりの一度の保存値再現で、49入力/1,953行のmean/rstd・124,992出力が全bit一致。 model core/全体forward/学習0、元の累積1点未達・R1未合格/R2停止を維持。
+
+次はgraphを保つ最小FMA方式の設計と人工forward条件を固定する。host診断の貼付け、private bridgeのunsafe変換、未証明のf64代用、丸め順探索を行わない。最初の12関数selectorの上限停止を保持し、ソースの幅64分岐で3関数へ絞ったfresh読取りだけ成功。全source/stdio/exit/state/closure・命令/文書前後はartifacts/rust-r1-binary-results-20261016-evidence。
+
+旧成果/失敗/closed roots、許容差、各2GiB/build1.5GiB/時間/保存枠、保全第一/Rust学習目的、需要2015停止/2014以前調整/同休業mean28/四季両側非増加/観測欠測0分離、Windows別検証、heartbeat PAUSED維持。以下は旧記録。
+
+---
+
+## 最新 — モーメント・affineの差を分離、参照の丸め順は未確定（2026-10-16）
+
+[結果](results/banto-ai-rust-r1-moments-audit-2026-10-16.md)・[次工程の受入条件](research/rust-r1-moments-admission-2026-10-16.md)。全49入力/1,953行のnative PP・balanced RP・serial Flexを各bytes再現。参照モーメント＋参照affineは全124,992要素一致。4lane/FMAのソース再現はSSE約94.5%減だがmean260/rstd21行・出力5,827要素が非一致。 元のR1累積1点未達/未合格とR2停止を維持。model候補/変更/full forward/学習0。
+
+次はwheel/build/binaryの証拠でscalar lane mergeの積和縮約などを確認し、graphを保つFMA表現を設計する。数値一致だけで丸め順を選ばず、実装方式/有限条件を先に固定する。host診断ループや未証明のf64 FMA代用をmodelへ接続しない。全source/stdio/exit/state/closureと文書前後はartifacts/rust-r1-moments-results-20261016-evidence。
+
+許容差・旧成果/失敗/closed roots・各2GiB/build1.5GiB/時間/保存枠、保全第一/Rust学習目的、需要2015停止/2014以前調整/同休業mean28/四季両側非増加/観測欠測0分離、Windows別検証、heartbeat PAUSEDを維持。以下は旧記録。
+
+---
+
+## 最新 — 標準LayerNorm候補を不採用、core不変（2026-10-16）
+
+[結果と固定条件](results/banto-ai-rust-r1-native-norm-2026-10-16.md)。標準Flex LayerNormを全7case×7moduleの同一入力49組/124,992要素で検証。現行RPのbytes再現49/49、候補の許容差超過0だがSSEは現行の約2.804倍、全7caseで増加し事前条件を不通過。 候補1方式で停止、full forward/モデル変更/学習0。元の累積1点未達とR1未合格・R2停止を維持。
+
+次はモーメント計算とfloat32丸め位置のソース上の差を整理し、学習へ接続できる共通方式の根拠を判断する設計工程。方式と有限比較・全体採否条件を固定するまで新kernelを起動せず、同じ候補や1点向け探索を反復しない。許容差・旧成果/失敗/closed roots・各2GiB/build1.5GiB/時間・保存枠を保持。全source/stdio/exit/state/closureと文書前後はartifacts/rust-r1-native-norm-results-20261016-evidence。
+
+保全第一・Rust学習目的と需要条件/2015停止、Windows別検証、heartbeat PAUSEDを維持。以下は旧記録。
+
+---
+
 ## 最新 — 全層診断完了、局所差は全通過・累積1点未達（2026-10-16）
 
 将来候補メモ: [linfaとsmartcore・Astraレビュー](research/rust-classical-ml-linfa-smartcore-note-2026-10-16.md)を保存。古典MLの比較基準/保全先行の候補、現在のR1未達と実行順は不変。

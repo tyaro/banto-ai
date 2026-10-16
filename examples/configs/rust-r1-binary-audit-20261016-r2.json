@@ -1,0 +1,33 @@
+{
+  "schema": "banto.r1-binary-audit.v1",
+  "scope": "Read-only source/binary evidence of the installed Mac PyTorch float32 LayerNorm; no numerical-order search, model forward, training, model change or R2 start",
+  "binary": "environments/demand-macos/.venv/lib/python3.14/site-packages/torch/lib/libtorch_cpu.dylib",
+  "hypothesis": "The compiled scalar AddMoments lane merge may contract multiply/add even when the header expresses ordinary operations. Establish this from machine instructions and operand flow before choosing any numerical reconstruction.",
+  "symbol_rule": "Preserve all original float LayerNorm and RowwiseMoments symbols in __text. Disassemble only non-cold LayerNormKernelImplInternalIf entry/lambda/OMP callers and RowwiseMomentsImplIfLx4E. Width64 / four lanes gives n16, one chunk, depth0 <=4 by the installed header. Exclude larger-depth specializations and cold error handlers by source branch, not numerical results. Keep the original six-region/16KiB limits.",
+  "region_limit_bytes": 16384,
+  "disassembly": "Use installed Xcode llvm-objdump with explicit start/stop addresses. Record commands, stdout, stderr, exits, tool version, binary SHA/UUID, region bytes/hash and truncation. Pin the binary before and after inspection. Confirm torch loads this exact dylib through dyld image inventory.",
+  "interpretation": "Identify 4-lane Welford vector FMA separately from scalar lane-merge FMA through register/dataflow. FMA instruction presence alone does not prove a particular source expression. No result-driven FMA toggles. A bounded follow-up reconstruction requires source/binary-supported fixed instructions and separate prior declaration.",
+  "limits": {
+    "parent_seconds": 900,
+    "child_seconds": 870,
+    "memory_each_bytes": 2147483648,
+    "build_cache_bytes": 1610612736,
+    "artifact_files": 24,
+    "artifact_bytes": 805306368,
+    "single_file_bytes": 33554432,
+    "evidence_files": 512,
+    "evidence_bytes": 16777216,
+    "evidence_part_bytes": 262144,
+    "stdout_bytes": 1048576,
+    "stderr_bytes": 131072,
+    "jobs": 1,
+    "threads": 1
+  },
+  "harness_revision": {
+    "prior_inspection": "artifacts/rust-r1-binary-audit-20261016",
+    "reason": "12 functions exceeded original six-region cap before disassembly; restrict by the width64 source branch after retaining the symbol inventory",
+    "inventory": "artifacts/rust-r1-binary-symbols-20261016",
+    "original_script_sha256": "767611e567d1c2a7737225eb269fd4f11a7e59ca23c057ae7a32c32ca898f09d",
+    "new_numerical_experiments": 0
+  }
+}

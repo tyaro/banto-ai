@@ -1,0 +1,19 @@
+{
+  "schema": "banto.r1-moments-source-audit.v1",
+  "scope": "Component attribution of three existing algorithms on frozen Python-path inputs; no model candidate adoption, full forward, reference replacement, training or R2 start",
+  "hypothesis": "The installed Mac PyTorch header's four-lane Welford with explicit f32 FMA and scalar lane merging explains mean/rstd differences. Flex scalar Welford also changes affine association. The source reconstruction may fail to reproduce the installed binary; retain that negative outcome without selecting alternate rounding orders.",
+  "fixture": "artifacts/rust-r1-layer-fixture2-20261016",
+  "balanced_outputs": "artifacts/rust-r1-layer-kernel-20261016",
+  "serial_outputs": "artifacts/rust-r1-native-norm-kernel-20261016",
+  "cases": ["train-first", "train-last", "zero", "constant", "floor-below", "floor-equal", "floor-above"],
+  "modules": ["blocks.0.norms.0", "blocks.0.norms.1", "blocks.0.norms.2", "blocks.1.norms.0", "blocks.1.norms.1", "blocks.1.norms.2", "final_norm"],
+  "source_reconstruction": "Fixed width 64, four lanes, sixteen vector Welford updates with f32 fused multiply-add, the source's zero-count vector merge, then four scalar AddMoments merges in lane order and division by 64. Explicit f32 round after ordinary arithmetic; no implicit scalar FMA contraction. Width is from the installed aarch64 NEON header, not fitted to outputs.",
+  "affine_reference": "round(round(round(x-mean)*rstd)*gamma)+beta",
+  "affine_flex": "round(round(x-mean)*round(rstd*gamma))+beta",
+  "fixed_paths": ["balanced_reference_affine", "serial_flex_affine", "source_ordered_reference_affine", "native_moments_reference_affine", "native_moments_flex_affine"],
+  "anchors": "For every input, native_layer_norm output must reproduce saved PP, balanced reconstruction must reproduce saved RP, and serial reconstruction must reproduce the rejected standard Flex output. If anchors fail, do not interpret component attribution.",
+  "measurements": ["exact f32 bits for mean and rstd versus native_layer_norm", "mean/rstd SSE and max absolute error", "output SSE, bit mismatches and unchanged tolerance failures for all fixed paths", "native moments with the two affine orders isolates association effects", "f32 FMA cancellation witness distinguishes fused from separate operations"],
+  "finite_work": {"native_layer_norm_calls": 49, "inputs": 49, "rows": 1953, "elements_per_output_path": 124992, "full_forward_calls": 0, "model_candidates": 0, "retries_after_attribution_failure": 0},
+  "stop": "Save results once. Do not implement host scalar replay in the model because that would detach the future training graph. Any portable FMA primitive needs a separately fixed forward/backward contract and artificial checks before model integration. A diagnostic match is not R1 success.",
+  "limits": {"parent_seconds": 900, "child_seconds": 870, "memory_each_bytes": 2147483648, "build_cache_bytes": 1610612736, "artifact_files": 24, "artifact_bytes": 805306368, "single_file_bytes": 33554432, "evidence_files": 512, "evidence_bytes": 16777216, "evidence_part_bytes": 262144, "stdout_bytes": 1048576, "stderr_bytes": 131072, "jobs": 1, "threads": 1}
+}
