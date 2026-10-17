@@ -4,7 +4,7 @@ import sys
 import unittest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 import demand_persistence as q
-from test_demand_immediate_alignment import row
+from tests.test_demand_immediate_alignment import row
 
 class PersistenceChecks(unittest.TestCase):
     def test_broad_persistence_with_strengthening(self):

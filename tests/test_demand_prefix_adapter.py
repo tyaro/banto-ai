@@ -3,7 +3,7 @@ from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 import demand_prefix_adapter as a
 import demand_input_boundary_v2 as b
-from test_demand_input_boundary import legacy,transform
+from tests.test_demand_input_boundary import legacy,transform
 
 
 def sample_batch(origin='2013-12-03',store=6):

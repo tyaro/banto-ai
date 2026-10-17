@@ -6,7 +6,7 @@ import demand_constrained_qp as old
 import demand_constrained_qp_v2 as m
 from demand_constrained_qp_verify import verify
 from demand_prefix_adapter import fixed_features
-from test_demand_common_residual import full_batch
+from tests.test_demand_common_residual import full_batch
 
 class ConsistentTotalTests(unittest.TestCase):
     def test_fractional_binary64_regression(self):

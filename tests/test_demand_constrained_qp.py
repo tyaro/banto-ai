@@ -10,8 +10,8 @@ from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 import demand_constrained_qp as m
 from demand_constrained_qp_verify import verify
-from test_demand_common_residual import full_batch
-from test_demand_prefix_adapter import sample_batch
+from tests.test_demand_common_residual import full_batch
+from tests.test_demand_prefix_adapter import sample_batch
 from demand_prefix_adapter import fixed_features
 
 

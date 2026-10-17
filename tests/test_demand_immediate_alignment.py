@@ -5,7 +5,7 @@ import sys
 import unittest
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 import demand_immediate_alignment as q
-from test_demand_annual_reliability_v2 import row as previous_row
+from tests.test_demand_annual_reliability_v2 import row as previous_row
 
 def row(origin='2014-06-18',store=6):
     r=previous_row(origin,store);r['past_original_quantity'][-14:]=[13.]*7+[15.]*7

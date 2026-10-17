@@ -2,7 +2,7 @@ import copy,math,sys,unittest
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 import demand_common_residual as m
-from test_demand_prefix_adapter import sample_batch
+from tests.test_demand_prefix_adapter import sample_batch
 from demand_prefix_adapter import fixed_features
 
 

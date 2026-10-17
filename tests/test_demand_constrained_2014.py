@@ -5,8 +5,8 @@ from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 import demand_constrained_2014 as m
 from demand_input_boundary_v2 import project_input
-from test_demand_input_boundary import legacy,transform
-from test_demand_common_residual import full_batch
+from tests.test_demand_input_boundary import legacy,transform
+from tests.test_demand_common_residual import full_batch
 
 class ReplayIntegrationTests(unittest.TestCase):
     def row(self):return project_input(legacy('2014-02-15'))

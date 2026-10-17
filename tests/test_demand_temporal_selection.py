@@ -1,4 +1,5 @@
 import datetime as dt
+import importlib.util
 from pathlib import Path
 import sys
 import unittest
@@ -6,6 +7,8 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'tools'))
 import demand_temporal_selection as temporal
 from demand_training_adequacy import EarlyStopper
+
+requires_torch = unittest.skipUnless(importlib.util.find_spec('torch'), 'torch is not installed')
 
 
 class ForbiddenLabel(dict):
@@ -41,6 +44,7 @@ class TemporalSelectionChecks(unittest.TestCase):
         with self.assertRaises(ValueError):
             temporal.selected_targets([selected, selected], [(6, '2014-07-01')])
 
+    @requires_torch
     def test_inner_calibration_changes_only_with_selected_labels(self):
         import torch
         rows = [{'store': 6, 'origin': '2014-07-01', 'actual': [11.]*14},

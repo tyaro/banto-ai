@@ -1,10 +1,13 @@
 import datetime as dt
+import importlib.util
 from pathlib import Path
 import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'tools'))
 import demand_open_quantity as quantity
+
+requires_torch = unittest.skipUnless(importlib.util.find_spec('torch'), 'torch is not installed')
 
 
 class OpenQuantityChecks(unittest.TestCase):
@@ -43,6 +46,7 @@ class OpenQuantityChecks(unittest.TestCase):
         self.assertIn(origin.weekday(), x['fallback_weekdays'])
         self.assertEqual(x['open_mean28'][0], x['matched_mean28'][0])
 
+    @requires_torch
     def test_gate_in_fit_and_total_and_normalization_excludes_closed_feature_poison(self):
         import torch
         raw = torch.zeros((2, 14, 72), dtype=torch.float64); raw[:, :, 0] = 1.
@@ -58,6 +62,7 @@ class OpenQuantityChecks(unittest.TestCase):
         self.assertTrue(torch.equal(p[:, 0], torch.zeros(2, dtype=torch.float64)))
         self.assertTrue(torch.allclose(p.sum(1), torch.full((2,), 156., dtype=torch.float64)))
 
+    @requires_torch
     def test_level_delta_uses_joint_objective_and_never_increases_closed_days(self):
         import torch
         mask = torch.ones((1, 14), dtype=torch.bool); mask[0, 0] = False

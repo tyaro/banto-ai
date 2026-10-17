@@ -1,6 +1,7 @@
 """Invented-data boundaries and algebra for the finite mean comparison."""
 import csv
 import datetime as dt
+import importlib.util
 from pathlib import Path
 import sys
 import tempfile
@@ -8,6 +9,8 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'tools'))
 import demand_autonomous_mean as experiment
+
+requires_torch = unittest.skipUnless(importlib.util.find_spec('torch'), 'torch is not installed')
 
 
 class AutonomousMeanChecks(unittest.TestCase):
@@ -42,6 +45,7 @@ class AutonomousMeanChecks(unittest.TestCase):
         self.assertEqual(raw[0][0][-1], 0.)
         self.assertEqual(raw[0][-1][-1], 1.)
 
+    @requires_torch
     def test_ridge_normal_equation_and_fit_only_inactive_column(self):
         import torch
         raw = torch.zeros((4, 14, 72), dtype=torch.float64)
@@ -61,6 +65,7 @@ class AutonomousMeanChecks(unittest.TestCase):
         low = raw.clone(); low[:, :, 1] = -100.
         self.assertTrue(bool((experiment.ridge_predict(low, baseline, scales, state) >= 0).all()))
 
+    @requires_torch
     def test_analytic_calibration_finds_half_and_keeps_mean_target(self):
         import torch
         baseline = torch.full((2, 14), 10., dtype=torch.float64)
@@ -71,6 +76,7 @@ class AutonomousMeanChecks(unittest.TestCase):
         self.assertEqual(experiment.score(prediction, baseline+1, scales)['joint'], 0.)
         self.assertEqual(experiment.calibrate(baseline, baseline, baseline+1, scales)['alpha'], 0.)
 
+    @requires_torch
     def test_component_constraint_can_reject_positive_joint_direction(self):
         import torch
         baseline = torch.full((1, 14), 10., dtype=torch.float64)

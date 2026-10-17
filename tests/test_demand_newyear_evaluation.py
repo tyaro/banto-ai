@@ -1,4 +1,5 @@
 import datetime as dt
+import importlib.util
 from pathlib import Path
 import sys
 import unittest
@@ -6,6 +7,8 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'tools'))
 import demand_newyear_evaluation as january
 from demand_autonomous_mean import ORIGINS
+
+requires_torch = unittest.skipUnless(importlib.util.find_spec('torch'), 'torch is not installed')
 
 
 def rows():
@@ -31,6 +34,7 @@ class JanuaryEvaluationChecks(unittest.TestCase):
                    Forbidden(store=31, origin='INVALID')]
         self.assertEqual(january.select_pool(headers, january.ORIGIN), [])
 
+    @requires_torch
     def test_current_label_poison_does_not_change_ridge_or_forecast(self):
         origin = january.ORIGIN
         training = [{'store': s, 'origin': str(origin-dt.timedelta(days=200-14*k)), 'scale': 1.,

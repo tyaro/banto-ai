@@ -1,11 +1,14 @@
 import copy
 import datetime as dt
+import importlib.util
 from pathlib import Path
 import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'tools'))
 import demand_rolling_ridge as rolling
+
+requires_torch = unittest.skipUnless(importlib.util.find_spec('torch'), 'torch is not installed')
 
 
 def packet(store, origin, x=1.):
@@ -42,6 +45,7 @@ class RollingRidgeChecks(unittest.TestCase):
         selected = rolling.select_pool([first, latest, incomplete], origin)
         self.assertEqual(selected, [first, latest])
 
+    @requires_torch
     def test_current_and_other_store_future_poison_does_not_change_fit(self):
         origin = dt.date(2014, 7, 1)
         training = pool(origin)
@@ -58,6 +62,7 @@ class RollingRidgeChecks(unittest.TestCase):
         self.assertAlmostEqual(journal[0]['state']['mean'][1], 6.5)
         self.assertLess(journal[0]['last_label_day'], str(origin))
 
+    @requires_torch
     def test_current_features_do_not_change_training_normalization(self):
         origin = dt.date(2014, 7, 1)
         current = [packet(s, origin, 2.) for s in rolling.FIT]
@@ -66,6 +71,7 @@ class RollingRidgeChecks(unittest.TestCase):
         _, other, _ = rolling.roll_period(pool(origin), changed)
         self.assertEqual(journal[0]['state'], other[0]['state'])
 
+    @requires_torch
     def test_cold_pool_falls_back_and_does_not_mutate_input_pool(self):
         origin = dt.date(2014, 7, 1)
         initial = []
@@ -77,6 +83,7 @@ class RollingRidgeChecks(unittest.TestCase):
         self.assertIsNone(journal[0]['state'])
         self.assertTrue(all(r['rolling_raw'] == r['baseline'] for r in forecasts))
 
+    @requires_torch
     def test_unequal_fixed_store_support_and_duplicate_packets_rejected(self):
         origin = dt.date(2014, 7, 1)
         training = pool(origin)+[packet(6, origin-dt.timedelta(days=320))]

@@ -1,11 +1,14 @@
 import copy
 import datetime as dt
+import importlib.util
 from pathlib import Path
 import sys
 import unittest
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 import demand_frozen_recent_quantity as recent
+
+requires_torch = unittest.skipUnless(importlib.util.find_spec('torch'), 'torch is not installed')
 
 
 def packet(s, day, value=12.):
@@ -31,6 +34,7 @@ class RecentQuantityChecks(unittest.TestCase):
         rows=[Forbidden(store=6,origin='2015-01-01'),Forbidden(store=6,origin='2015-01-13'),Forbidden(store=31,origin='INVALID')]
         self.assertEqual(recent.select_recent(rows,dt.date(2015,1,1)),[])
 
+    @requires_torch
     def test_current_target_poison_cannot_change_past_state(self):
         origin=dt.date(2014,10,7); training=pool(origin)
         current=[packet(s,origin,0.) for s in recent.FIT]
@@ -40,6 +44,7 @@ class RecentQuantityChecks(unittest.TestCase):
         self.assertEqual(before,after); self.assertEqual(state,other)
         self.assertLess(state['last_label_day'],str(origin))
 
+    @requires_torch
     def test_equal_store_support_and_minimum_required(self):
         origin=dt.date(2014,10,7); training=pool(origin);current=[packet(s,origin) for s in recent.FIT]
         with self.assertRaises(ValueError):recent.fit_forecast(training[:-1],current)
@@ -56,6 +61,7 @@ class RecentQuantityChecks(unittest.TestCase):
         self.assertEqual(recent.choose(scores),'recent_gated_ridge')
         with self.assertRaises(ValueError):recent.choose({'recent_gated_ridge':{'joint':.9}})
 
+    @requires_torch
     def test_final_state_prediction_does_not_modify_coefficients(self):
         import torch
         origin=dt.date(2015,1,1); current=[packet(s,origin) for s in recent.FIT]

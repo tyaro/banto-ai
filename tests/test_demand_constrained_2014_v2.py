@@ -1,10 +1,12 @@
-import json,sys,tempfile,unittest
+import importlib.util,json,sys,tempfile,unittest
 from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 import demand_constrained_2014_v2 as m
-import test_demand_constrained_2014 as original
-from test_demand_common_residual import full_batch
+from tests.test_demand_common_residual import full_batch
+# Private copy: rebinding m must not redirect the discovered v1 tests to v2.
+_spec=importlib.util.spec_from_file_location('_demand_constrained_2014_for_v2',Path(__file__).with_name('test_demand_constrained_2014.py'))
+original=importlib.util.module_from_spec(_spec);_spec.loader.exec_module(original)
 original.m=m
 ReplayIntegrationTests=original.ReplayIntegrationTests
 

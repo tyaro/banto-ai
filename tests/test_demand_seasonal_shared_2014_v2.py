@@ -4,9 +4,9 @@ from pathlib import Path
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'tools'))
 import demand_seasonal_shared_2014 as m
-from test_demand_common_residual import full_batch
-from test_demand_prefix_adapter import sample_batch
-from test_demand_input_boundary import legacy,transform
+from tests.test_demand_common_residual import full_batch
+from tests.test_demand_prefix_adapter import sample_batch
+from tests.test_demand_input_boundary import legacy,transform
 from demand_input_boundary_v2 import project_input
 from demand_prefix_adapter import fixed_features
 
