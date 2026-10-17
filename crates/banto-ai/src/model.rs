@@ -45,6 +45,13 @@ pub struct SmallForecaster {
     device: Device,
     state: BTreeMap<String, Tensor<1>>,
 }
+/// Tensor outputs of one forward pass; `normalized` is what the training loss uses.
+pub struct ForwardTensors {
+    pub normalized: Tensor<4>,
+    pub physical: Tensor<4>,
+    pub center: Tensor<3>,
+    pub scale: Tensor<3>,
+}
 fn read<const D: usize>(x: &Tensor<D>) -> Result<Vec<f32>> {
     x.to_data()
         .to_vec::<f32>()
@@ -111,6 +118,35 @@ impl SmallForecaster {
             .collect();
         Self { device, state }
     }
+    /// Builds the model from flat named tensors, e.g. autodiff leaves for
+    /// training. Names and lengths must match `checkpoint::expected_shapes()`,
+    /// and all tensors must share one device, which the model then uses (without
+    /// autodiff) for its own constants such as the causal mask.
+    pub fn from_named(state: BTreeMap<String, Tensor<1>>) -> Result<Self> {
+        let expected = crate::checkpoint::expected_shapes();
+        if state.len() != expected.len() {
+            return Err(Error::Model(
+                "model tensor set differs from the expected names".into(),
+            ));
+        }
+        let device = state
+            .get("horizon")
+            .ok_or_else(|| Error::Model("missing tensor horizon".into()))?
+            .device()
+            .without_autodiff();
+        for (name, shape) in &expected {
+            let t = state
+                .get(name)
+                .ok_or_else(|| Error::Model(format!("missing tensor {name}")))?;
+            if t.dims() != [shape.iter().product::<usize>()] {
+                return Err(Error::Model(format!("{name} has the wrong length")));
+            }
+            if t.device() != device {
+                return Err(Error::Model(format!("{name} is on a different device")));
+            }
+        }
+        Ok(Self { device, state })
+    }
     fn p<const D: usize>(&self, name: &str, shape: [usize; D]) -> Tensor<D> {
         self.state[name].clone().reshape(shape)
     }
@@ -164,55 +200,63 @@ impl SmallForecaster {
     pub fn predict_traced(&self, input: &ForecastInput) -> Result<(Forecast, Vec<TraceTensor>)> {
         self.run(input, true)
     }
-    fn run(&self, input: &ForecastInput, traced: bool) -> Result<(Forecast, Vec<TraceTensor>)> {
-        let b = input.batch();
-        let mut trace = traced.then(Vec::new);
-        let x = Tensor::<3>::from_data(
-            TensorData::new(input.values().to_vec(), [b, 3, 128]),
-            &self.device,
-        );
+    /// The forward pass shared by inference and training: context [B,3,128] to
+    /// normalized and physical quantiles plus the context center and scale, all
+    /// as tensors so a training loss can use them without host readback.
+    pub fn forward(&self, context: Tensor<3>) -> Result<ForwardTensors> {
+        self.forward_inner(context, &mut None)
+    }
+    fn forward_inner(
+        &self,
+        x: Tensor<3>,
+        trace: &mut Option<Vec<TraceTensor>>,
+    ) -> Result<ForwardTensors> {
+        let [b, channels, width] = x.dims();
+        if channels != 3 || width != 128 || b == 0 {
+            return Err(Error::Input("context must be [batch,3,128]".into()));
+        }
         let mu = mean_last(x.clone());
         let centered = x - mu.clone();
         let scale = mean_last(centered.clone().square())
             .sqrt()
             .max_pair(self.p("scale_floor", [1, 3, 1]));
         let normalized = centered / scale.clone();
-        capture(&mut trace, "context_center", &mu)?;
-        capture(&mut trace, "context_scale", &scale)?;
-        capture(&mut trace, "normalized_context", &normalized)?;
+        capture(trace, "context_center", &mu)?;
+        capture(trace, "context_scale", &scale)?;
+        capture(trace, "normalized_context", &normalized)?;
         let patch = self.linear(normalized.reshape([b, 3, 4, 32]), "patch", 64);
-        capture(&mut trace, "patch", &patch)?;
+        capture(trace, "patch", &patch)?;
         let query = self.p("horizon", [1, 1, 1, 64]).expand([b, 3, 1, 64]);
         let mut tokens = Tensor::cat(vec![patch, query], 2) + self.p("position", [1, 1, 5, 64]);
-        capture(&mut trace, "tokens", &tokens)?;
+        capture(trace, "tokens", &tokens)?;
         for i in 0..2 {
             let key = format!("blocks.{i}");
             let z = self.norm(tokens.clone(), &format!("{key}.norms.0"));
-            capture(&mut trace, &format!("{key}.norms.0"), &z)?;
+            capture(trace, &format!("{key}.norms.0"), &z)?;
             let t = self.attention(z.reshape([b * 3, 5, 64]), &format!("{key}.temporal"), true);
-            capture(&mut trace, &format!("{key}.temporal"), &t)?;
+            capture(trace, &format!("{key}.temporal"), &t)?;
             tokens = tokens + t.reshape([b, 3, 5, 64]);
             let z = self.norm(tokens.clone(), &format!("{key}.norms.1"));
-            capture(&mut trace, &format!("{key}.norms.1"), &z)?;
+            capture(trace, &format!("{key}.norms.1"), &z)?;
             let v = self.attention(
                 z.swap_dims(1, 2).reshape([b * 5, 3, 64]),
                 &format!("{key}.variate"),
                 false,
             );
-            capture(&mut trace, &format!("{key}.variate"), &v)?;
+            capture(trace, &format!("{key}.variate"), &v)?;
             tokens = tokens + v.reshape([b, 5, 3, 64]).swap_dims(1, 2);
             let z = self.norm(tokens.clone(), &format!("{key}.norms.2"));
-            capture(&mut trace, &format!("{key}.norms.2"), &z)?;
+            capture(trace, &format!("{key}.norms.2"), &z)?;
             let hidden = gelu(self.linear(z, &format!("{key}.ff.0"), 128));
-            capture(&mut trace, &format!("{key}.ff.1"), &hidden)?;
+            capture(trace, &format!("{key}.ff.1"), &hidden)?;
             tokens = tokens + self.linear(hidden, &format!("{key}.ff.2"), 64);
-            capture(&mut trace, &key, &tokens)?;
+            capture(trace, &key, &tokens)?;
         }
         let last = tokens.slice([0..b, 0..3, 4..5, 0..64]).reshape([b, 3, 64]);
         let last = self.norm(last, "final_norm");
-        capture(&mut trace, "final_norm", &last)?;
+        capture(trace, "final_norm", &last)?;
         let head = self.linear(last, "head", 96);
-        capture(&mut trace, "head", &head)?;
+        capture(trace, "head", &head)?;
         let raw = head.reshape([b, 3, 32, 3]);
         let mid: Tensor<3> = raw.clone().slice([0..b, 0..3, 0..32, 0..1]).squeeze_dim(3);
         let low: Tensor<3> = raw.clone().slice([0..b, 0..3, 0..32, 1..2]).squeeze_dim(3);
@@ -227,8 +271,28 @@ impl SmallForecaster {
         );
         let physical =
             q.clone() * scale.clone().reshape([b, 3, 1, 1]) + mu.clone().reshape([b, 3, 1, 1]);
-        capture(&mut trace, "normalized_quantiles", &q)?;
-        capture(&mut trace, "quantiles", &physical)?;
+        capture(trace, "normalized_quantiles", &q)?;
+        capture(trace, "quantiles", &physical)?;
+        Ok(ForwardTensors {
+            normalized: q,
+            physical,
+            center: mu,
+            scale,
+        })
+    }
+    fn run(&self, input: &ForecastInput, traced: bool) -> Result<(Forecast, Vec<TraceTensor>)> {
+        let b = input.batch();
+        let mut trace = traced.then(Vec::new);
+        let x = Tensor::<3>::from_data(
+            TensorData::new(input.values().to_vec(), [b, 3, 128]),
+            &self.device,
+        );
+        let ForwardTensors {
+            physical,
+            center: mu,
+            scale,
+            ..
+        } = self.forward_inner(x, &mut trace)?;
         let quantiles = read(&physical)?;
         if quantiles.iter().any(|v| !v.is_finite())
             || quantiles

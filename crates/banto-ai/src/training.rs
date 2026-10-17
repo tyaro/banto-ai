@@ -2,8 +2,9 @@
 //! pinball loss, ordered named gradients, global-norm clip and an AdamW that
 //! follows the single-tensor Torch update (foreach/fused off).
 //!
-//! These parts are verified only against the fixed artificial R2P reference.
-//! They do not make SmallForecaster trainable and do not satisfy R1 or R2.
+//! These parts are verified only against the fixed artificial R2P references,
+//! including `loss_and_gradients` over the full `SmallForecaster::forward`
+//! (step 4). Passing them does not satisfy R1 or formal R2.
 
 use crate::{Error, Result};
 use burn::tensor::{Device, Tensor, TensorData};
@@ -302,10 +303,34 @@ pub struct StepRecord {
     pub clipped: Clipped,
 }
 
-/// One training update. Every parameter becomes a fresh autodiff leaf, so no
-/// graph survives between updates; `loss` maps the leaves (in parameter order)
-/// to a scalar. Gradients are collected by name, a missing one is an error,
-/// and the optimizer updates the plain (non-autodiff) parameter values.
+/// Loss and named gradients without an update. Every parameter becomes a
+/// fresh autodiff leaf, so no graph survives the call; `loss` maps the leaves
+/// (in parameter order) to a scalar. A missing or nonfinite gradient is an error.
+pub fn loss_and_gradients(
+    parameters: &[Parameter],
+    loss: impl FnOnce(&[Tensor<1>]) -> Result<Tensor<1>>,
+) -> Result<(Tensor<1>, Vec<Tensor<1>>)> {
+    let leaves: Vec<Tensor<1>> = parameters
+        .iter()
+        .map(|p| p.value.clone().autodiff().require_grad())
+        .collect();
+    let value = loss(&leaves)?;
+    finite("loss", &read(&value)?)?;
+    let grads = value.backward();
+    let named = parameters
+        .iter()
+        .zip(&leaves)
+        .filter_map(|(p, leaf)| leaf.grad(&grads).map(|g| (p.name.clone(), g)))
+        .collect();
+    let gradients = ordered_gradients(parameters, named)?;
+    for (p, g) in parameters.iter().zip(&gradients) {
+        finite(&format!("{} gradient", p.name), &read(g)?)?;
+    }
+    Ok((value.without_autodiff(), gradients))
+}
+
+/// One training update: loss and gradients on fresh leaves, global clip, then
+/// AdamW on the plain (non-autodiff) parameter values.
 pub fn train_step(
     parameters: &mut [Parameter],
     state: &mut AdamWState,
@@ -313,25 +338,11 @@ pub fn train_step(
     max_norm: f32,
     loss: impl FnOnce(&[Tensor<1>]) -> Tensor<1>,
 ) -> Result<StepRecord> {
-    let leaves: Vec<Tensor<1>> = parameters
-        .iter()
-        .map(|p| p.value.clone().autodiff().require_grad())
-        .collect();
-    let value = loss(&leaves);
-    let grads = value.backward();
-    let named = parameters
-        .iter()
-        .zip(&leaves)
-        .filter_map(|(p, leaf)| leaf.grad(&grads).map(|g| (p.name.clone(), g)))
-        .collect();
-    let raw_gradients = ordered_gradients(parameters, named)?;
-    for (p, g) in parameters.iter().zip(&raw_gradients) {
-        finite(&format!("{} gradient", p.name), &read(g)?)?;
-    }
+    let (loss, raw_gradients) = loss_and_gradients(parameters, |leaves| Ok(loss(leaves)))?;
     let clipped = clip_global_norm(raw_gradients.clone(), max_norm)?;
     optimizer.step(parameters, &clipped.gradients, state)?;
     Ok(StepRecord {
-        loss: value.without_autodiff(),
+        loss,
         raw_gradients,
         clipped,
     })

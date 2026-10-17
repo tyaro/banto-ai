@@ -12,11 +12,16 @@ and a Torch-compatible AdamW. `cargo test -p banto-ai --features training-tests
 `tests/fixtures/r2p` under the unchanged R0.1 tolerances. `training::train_step`
 and `synthetic_checkpoint` (schema `banto.synthetic-training-checkpoint.v1`)
 cover the artificial toy model's eight updates and its save/resume in separate
-processes. Training the full SmallForecaster and formal R2 are not implemented yet. The output contains quantiles and context diagnostics; its p50
+processes. `SmallForecaster::forward` returns tensors and is shared by
+inference and training; `SmallForecaster::from_named` builds the model from
+named tensors such as autodiff leaves. The `r2p_full_model` test compares the
+full model's loss and the gradients of all 59 trainable tensors on fixed
+artificial data (`tests/fixtures/r2p-full`). Training on real data and formal
+R2 are not implemented yet. The output contains quantiles and context diagnostics; its p50
 and context_center are not expected future demand.
 
-Current verification: locked offline CPU build and all three tests pass on
-native Rust 1.95.0/macOS. Same-input normalization and attention diagnostics pass.
+R1 verification (2026-10-16): locked offline CPU build and the three tests of
+that time passed on native Rust 1.95.0/macOS. Same-input normalization and attention diagnostics pass.
 LayerNorm now multiplies by one row inverse standard deviation, matching the
 reference CPU evaluation order; fixed seven-case confirmation resolves the old
 mismatch but reveals one different intermediate element beyond the unchanged

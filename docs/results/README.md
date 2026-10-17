@@ -6,6 +6,7 @@
 
 ## Rustクレートの移植
 
+- [R2P工程4: SmallForecaster全体の人工学習接続（2026-10-17）](rust-r2p-full-model-2026-10-17.md)
 - [R2P工程3: 人工学習の連続8更新と保存再開（2026-10-17）](rust-r2p-resume-2026-10-17.md)
 - [R2P工程2: Rustの学習部品（2026-10-17）](rust-r2p-training-parts-2026-10-17.md)
 - [R2P: Cloud環境でのTorch参照の再生成（2026-10-17）](rust-r2p-cloud-reference-2026-10-17.md)
