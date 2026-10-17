@@ -7,7 +7,7 @@ TimesFM3を参考にした自作モデルの実用性を検証する。保全・
 ## 現在地
 
 - [復帰計画](research/banto-ai-practical-training-return-plan-2026-10-16.md)と[実装計画](research/banto-ai-rust-implementation-plan-2026-10-16.md)に沿って進める。
-- Rust推論R1は中間値1点未達。許容差を変えず、正式R2の実データ学習は停止中。最終出力の通過を正式合格へ読み替えない。
+- Rust推論R1は中間値1点未達のまま（合格と扱わない）。R0.2により、正式R2の入口はR1の最終出力と同一入力局所比較になり、中間値は記録する診断になった。
 - [R2P固定契約](research/rust-r2p-synthetic-training-contract-2026-10-16.md)と[人工Python参照](results/rust-r2p-lock-and-python-reference-2026-10-16.md)は保存済み。loss7/clip4/AdamW6/小型8更新、独立照合107件pass。2026-10-17にCloud移行のため参照をLinux/Torch2.14.1で作り直し、[`crates/banto-ai/tests/fixtures/r2p`](../crates/banto-ai/tests/fixtures/r2p/runtime.json)へコミットした（[記録](results/rust-r2p-cloud-reference-2026-10-17.md)、107照合pass）。
 - 検証済みのCargo.lock案を本整理で適用。gemmの不要な直接edgeだけを除いた。非採用のRust拡張・診断と単発調査（SGEMM/once/FMA/fused等）は削除済みで、保存tagから参照する。R2P工程2（loss/勾配・global clip・互換AdamW）は`crates/banto-ai/src/training.rs`に実装し、CIでCloud参照と照合する（[記録](results/rust-r2p-training-parts-2026-10-17.md)）。工程3（人工affineの連続8更新、checkpoint、別process再開、拒否8・停止3）も通過（[記録](results/rust-r2p-resume-2026-10-17.md)）。
 - CIはPython unittest・smoke・safetyとRust fmt/testだけ。旧異常検知トラック（v0.1〜v0.3、Windows native受入、文書を含む）は削除し、保存tag `archive/preformal-research-20261017` から参照する。
@@ -16,13 +16,17 @@ TimesFM3を参考にした自作モデルの実用性を検証する。保全・
 
 ## 次に行うこと
 
-1. 正式R2の比較方法を人が決める（全モデル1更新はR0.1では成り立たない。[固定条件](research/rust-r2p-full-model-contract-2026-10-17.md)を参照）。R2P（工程2〜4）は通過済み（[工程4の記録](results/rust-r2p-full-model-2026-10-17.md)）。R1の残1点が未達の間は正式R2実データ学習へ移らない。
+[R0.2](research/rust-r0.2-comparison-amendment-2026-10-17.md)（2026-10-17承認）に沿って進める。R2P工程2〜4は通過済み（[工程4の記録](results/rust-r2p-full-model-2026-10-17.md)）。
+
+1. 正式R2を1回だけ行う（CARE fold0の1更新・8更新・成熟step4096 import）。更新比較はR0.2（parameterはclip後|勾配|≥10·epsの要素で判定し除外を記録、loss・勾配・momentは全要素）。入口はR1の最終出力と同一入力局所比較385件、数値以外のR1条件の確認。これ以外の実データ学習は停止のまま。学習済みstateはMacにあるため、実行場所を先に決める。
+2. 並行して、保全の実用性評価の契約（必要な先行時間、許容する誤警報、event集計）を固定し、既存adapterでTimesFM・Chronos・Totoと比較する。
+3. R3とbanto接続は1・2の後。
 
 ## 維持する条件
 
 ポインタ/once/TLS/PAC/vendor内部追跡は停止。CARE/MetroPTの既読testは凍結し、需要2015の再評価も停止。需要の調整は2014以前だけ、同じ休業仮定のmean28比較、四季平均の過小量・過大量非増加、観測のみ・欠測0仮定の分離を維持する。
 
-各unitは親900秒/子870秒、physical footprint・peak RSS各2GiB、cache+target1.5GiB/jobs1。artifact/EvidenceStore/stdioの元上限、既存変更・失敗・closed rootsの保護を維持。許容差は原R0.1のまま。heartbeatはPAUSED。下流編集・本番採用・自動mergeは行わない。
+各unitは親900秒/子870秒、physical footprint・peak RSS各2GiB、cache+target1.5GiB/jobs1。artifact/EvidenceStore/stdioの元上限、既存変更・失敗・closed rootsの保護を維持。許容差の値は原R0.1のままで、R0.2の追加規則を適用する。heartbeatはPAUSED。下流編集・本番採用・自動mergeは行わない。
 
 ## 保存した研究結果
 
