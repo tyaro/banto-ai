@@ -1,13 +1,27 @@
-//! R2P step 2: Rust loss/gradient, global clip and AdamW against the committed
-//! artificial Torch reference under the unchanged R0.1 tolerances, plus the six
-//! fixed invalid-component rejections. Toy training and resume are step 3.
+//! R2P against the committed artificial Torch reference under the unchanged
+//! R0.1 tolerances. Step 2: loss/gradient, global clip, AdamW and the six
+//! invalid-component rejections. Step 3: the toy affine model's continuous
+//! eight updates, and a checkpoint resumed in separate processes.
 
-use banto_ai::training::{
-    AdamW, AdamWState, LossInput, Parameter, clip_global_norm, ordered_gradients, read,
+use banto_ai::{
+    synthetic_checkpoint::{
+        Binding, COMMIT, MANIFEST, PAYLOAD, TrainingState, WriterStop, commit, encode,
+        read_checkpoint, sha256, write,
+    },
+    training::{
+        AdamW, AdamWState, LossInput, Parameter, clip_global_norm, ordered_gradients, pinball_loss,
+        read, train_step,
+    },
 };
 use burn::tensor::{Device, Tensor, TensorData};
 use serde_json::Value;
-use std::{collections::BTreeMap, fs, path::PathBuf};
+use std::{
+    collections::BTreeMap,
+    env, fs,
+    path::{Path, PathBuf},
+    process::Command,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 fn root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -23,6 +37,13 @@ fn floats(v: &Value) -> Vec<f32> {
         .unwrap()
         .iter()
         .map(|x| x.as_f64().unwrap() as f32)
+        .collect()
+}
+fn shape(v: &Value) -> Vec<usize> {
+    v.as_array()
+        .unwrap()
+        .iter()
+        .map(|x| x.as_u64().unwrap() as usize)
         .collect()
 }
 fn dims<const N: usize>(v: &Value) -> [usize; N] {
@@ -348,4 +369,422 @@ fn invalid_components_are_rejected() {
         ordered_gradients(&parameters, unknown).is_err(),
         "I5 unknown"
     );
+}
+
+// ---- Step 3: toy training, checkpoint and resume ----
+
+const FIXTURES: &str = "../../examples/configs/rust-r2p-synthetic-fixtures-20261016.json";
+const CHILD_DIR: &str = "BANTO_R2P_CHILD_DIR";
+
+struct Toy {
+    fx: Value,
+    optimizer: AdamW,
+    binding: Binding,
+}
+impl Toy {
+    fn new() -> Self {
+        let fx = fixtures();
+        let toy = &fx["toy_training"];
+        let parameter_order = toy["parameter_order"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|n| {
+                let n = n.as_str().unwrap();
+                (n.to_string(), shape(&toy["parameters"][n]["shape"]))
+            })
+            .collect();
+        let buffers = ["center", "scale"]
+            .map(|b| {
+                let t = &toy["buffers"][b];
+                (
+                    b.to_string(),
+                    dims::<3>(&t["shape"]).to_vec(),
+                    floats(&t["values"]),
+                )
+            })
+            .to_vec();
+        let schedule = toy["schedule"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x.as_str().unwrap().to_string())
+            .collect();
+        let binding = Binding {
+            parameter_order,
+            buffers,
+            schedule,
+            fixture_sha256: sha256(&fs::read(root().join(FIXTURES)).unwrap()),
+            recipe: fx["optimizer_recipe"].clone(),
+        };
+        Self {
+            optimizer: recipe(&fx),
+            fx,
+            binding,
+        }
+    }
+    fn initial(&self, device: &Device) -> TrainingState {
+        let toy = &self.fx["toy_training"];
+        let parameters: Vec<Parameter> = self
+            .binding
+            .parameter_order
+            .iter()
+            .map(|(n, shape)| {
+                Parameter::new(
+                    n,
+                    shape.clone(),
+                    floats(&toy["parameters"][n]["values"]),
+                    device,
+                )
+                .unwrap()
+            })
+            .collect();
+        let optimizer = AdamWState::zeros(&parameters);
+        TrainingState {
+            parameters,
+            optimizer,
+            next_position: 0,
+        }
+    }
+    /// q = x @ weight.T + bias for x [1,1,2,2], giving q [1,1,2,3].
+    fn forward(weight: Tensor<1>, bias: Tensor<1>, x: &[f32]) -> Tensor<4> {
+        let device = weight.device();
+        let x = Tensor::<4>::from_data(TensorData::new(x.to_vec(), [1, 1, 2, 2]), &device);
+        let w = weight.reshape([3, 2]).transpose().reshape([1, 1, 2, 3]);
+        x.matmul(w) + bias.reshape([1, 1, 1, 3])
+    }
+    fn probe(&self, state: &TrainingState) -> Vec<f32> {
+        let p = &state.parameters;
+        let x = floats(&self.fx["toy_training"]["probe_x"]);
+        read(&Self::forward(p[0].value.clone(), p[1].value.clone(), &x)).unwrap()
+    }
+    fn batch(&self, position: usize) -> (Vec<f32>, Vec<f32>) {
+        let id = &self.binding.schedule[position];
+        let b = self.fx["toy_training"]["batch_table"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|b| b["id"] == *id.as_str())
+            .unwrap();
+        (floats(&b["x"]), floats(&b["target"]))
+    }
+    /// One scheduled update; returns the pre-update prediction and the record.
+    fn update(&self, state: &mut TrainingState) -> (Vec<f32>, banto_ai::training::StepRecord) {
+        let (x, target) = self.batch(state.next_position);
+        let p = &state.parameters;
+        let prediction = read(&Self::forward(p[0].value.clone(), p[1].value.clone(), &x)).unwrap();
+        let buffer = |i: usize| self.binding.buffers[i].2.clone();
+        let record = train_step(
+            &mut state.parameters,
+            &mut state.optimizer,
+            &self.optimizer,
+            1.0,
+            |leaves| {
+                let device = leaves[0].device();
+                let q = Self::forward(leaves[0].clone(), leaves[1].clone(), &x);
+                let t = |v: Vec<f32>, d: [usize; 3]| {
+                    Tensor::<3>::from_data(TensorData::new(v, d), &device)
+                };
+                pinball_loss(
+                    q,
+                    t(target, [1, 1, 2]),
+                    t(buffer(0), [1, 1, 1]),
+                    t(buffer(1), [1, 1, 1]),
+                )
+            },
+        )
+        .unwrap();
+        state.next_position += 1;
+        assert_eq!(state.optimizer.step as usize, state.next_position);
+        (prediction, record)
+    }
+    fn payload(&self, state: &TrainingState) -> Vec<u8> {
+        encode(state, &self.binding).unwrap().0
+    }
+}
+
+fn fresh_dir(label: &str) -> PathBuf {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let dir = env::temp_dir().join(format!("banto-r2p-{label}-{}-{nanos}", std::process::id()));
+    fs::create_dir(&dir).unwrap();
+    dir
+}
+fn floats_bytes(values: &[f32]) -> Vec<u8> {
+    values.iter().flat_map(|v| v.to_le_bytes()).collect()
+}
+fn run_child(test: &str, dir: &Path) {
+    let output = Command::new(env::current_exe().unwrap())
+        .args(["--exact", test, "--nocapture", "--test-threads=1"])
+        .env(CHILD_DIR, dir)
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{test} failed:\n{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+fn dir_hashes(dir: &Path) -> BTreeMap<String, String> {
+    fs::read_dir(dir)
+        .unwrap()
+        .map(|e| e.unwrap().path())
+        .map(|p| {
+            (
+                p.file_name().unwrap().to_string_lossy().into(),
+                sha256(&fs::read(&p).unwrap()),
+            )
+        })
+        .collect()
+}
+
+/// Trajectory B in its own process: four updates, commit step 4, then observe
+/// the cancellation at the next update boundary without starting update 5.
+#[test]
+fn child_b_cancel_after_four() {
+    let Some(dir) = env::var_os(CHILD_DIR) else {
+        return;
+    };
+    let (toy, device) = (Toy::new(), device());
+    let mut state = toy.initial(&device);
+    let mut cancelled = false;
+    while state.next_position < toy.binding.schedule.len() {
+        if cancelled {
+            break;
+        }
+        toy.update(&mut state);
+        if state.next_position == 4 {
+            write(&Path::new(&dir).join("b-step4"), &state, &toy.binding, None).unwrap();
+            cancelled = true;
+        }
+    }
+    assert_eq!((state.optimizer.step, state.next_position), (4, 4));
+}
+
+/// Trajectory C in its own process: restore B's checkpoint, record the probe
+/// before update 5, finish the schedule and commit step 8.
+#[test]
+fn child_c_restore_and_finish() {
+    let Some(dir) = env::var_os(CHILD_DIR) else {
+        return;
+    };
+    let (toy, device, dir) = (Toy::new(), device(), PathBuf::from(dir));
+    let mut state = read_checkpoint(&dir.join("b-step4"), &toy.binding, &device).unwrap();
+    assert_eq!((state.optimizer.step, state.next_position), (4, 4));
+    let mut probes = toy.probe(&state);
+    while state.next_position < toy.binding.schedule.len() {
+        toy.update(&mut state);
+        probes.extend(toy.probe(&state));
+    }
+    fs::write(dir.join("c-probes.f32"), floats_bytes(&probes)).unwrap();
+    write(&dir.join("c-step8"), &state, &toy.binding, None).unwrap();
+}
+
+#[test]
+fn toy_training_resumes_exactly_and_matches_reference() {
+    let (toy, reference, device) = (Toy::new(), Reference::load(), device());
+    // A: the continuous eight updates, each compared with the Torch reference.
+    let mut a = toy.initial(&device);
+    let mut probes = vec![toy.probe(&a)];
+    reference.gate("toy/probe/0", &probes[0], "normalized_activation");
+    let mut at_four = None;
+    while a.next_position < toy.binding.schedule.len() {
+        let (prediction, record) = toy.update(&mut a);
+        let k = a.next_position;
+        let label = format!("toy/update{k}");
+        let (loss_kind, parameter_kind) = match k {
+            1 => ("normalized_loss", "one_step_parameter"),
+            _ => ("eight_step_loss", "eight_step_parameter"),
+        };
+        reference.gate(
+            &format!("{label}/prediction"),
+            &prediction,
+            "normalized_activation",
+        );
+        reference.gate(
+            &format!("{label}/loss"),
+            &read(&record.loss).unwrap(),
+            loss_kind,
+        );
+        for i in 0..a.parameters.len() {
+            let raw = read(&record.raw_gradients[i]).unwrap();
+            let clipped = read(&record.clipped.gradients[i]).unwrap();
+            reference.gate(&format!("{label}/raw-gradient/{i}"), &raw, "gradient");
+            reference.gate(
+                &format!("{label}/clipped-gradient/{i}"),
+                &clipped,
+                "gradient",
+            );
+            let after = format!("{label}/after");
+            let value = read(&a.parameters[i].value).unwrap();
+            reference.gate(&format!("{after}/parameter/{i}"), &value, parameter_kind);
+            reference.gate(
+                &format!("{after}/moment1/{i}"),
+                &read(&a.optimizer.m[i]).unwrap(),
+                "first_moment",
+            );
+            reference.gate(
+                &format!("{after}/moment2/{i}"),
+                &read(&a.optimizer.v[i]).unwrap(),
+                "second_moment",
+            );
+            assert_eq!(
+                reference.values[&format!("{after}/step-tensor/{i}")],
+                vec![k as f32]
+            );
+        }
+        probes.push(toy.probe(&a));
+        reference.gate(
+            &format!("toy/probe/{k}"),
+            &probes[k],
+            "normalized_activation",
+        );
+        if k == 4 {
+            at_four = Some(toy.payload(&a));
+        }
+    }
+
+    // B and C in fresh processes; same-backend state must match A byte for byte.
+    let dir = fresh_dir("resume");
+    run_child("child_b_cancel_after_four", &dir);
+    let b = dir.join("b-step4");
+    assert_eq!(
+        fs::read(b.join(PAYLOAD)).unwrap(),
+        at_four.unwrap(),
+        "B step 4 state"
+    );
+    let manifest: Value = serde_json::from_slice(&fs::read(b.join(MANIFEST)).unwrap()).unwrap();
+    assert_eq!(
+        (
+            manifest["global_step"].as_u64(),
+            manifest["next_position"].as_u64()
+        ),
+        (Some(4), Some(4))
+    );
+    let committed = dir_hashes(&b);
+    run_child("child_c_restore_and_finish", &dir);
+    assert_eq!(
+        fs::read(dir.join("c-step8").join(PAYLOAD)).unwrap(),
+        toy.payload(&a),
+        "C step 8 state"
+    );
+    let a_probes: Vec<f32> = probes[4..].concat();
+    assert_eq!(
+        fs::read(dir.join("c-probes.f32")).unwrap(),
+        floats_bytes(&a_probes),
+        "probes 4..8"
+    );
+
+    // Eight invalid checkpoints, each a fresh copy of B; none may load.
+    let copy = |name: &str| {
+        let target = dir.join(name);
+        fs::create_dir(&target).unwrap();
+        for f in [PAYLOAD, MANIFEST, COMMIT] {
+            fs::copy(b.join(f), target.join(f)).unwrap();
+        }
+        target
+    };
+    let remanifest = |dir: &Path, edit: &dyn Fn(&mut Value, &mut Vec<u8>)| {
+        let mut manifest: Value =
+            serde_json::from_slice(&fs::read(dir.join(MANIFEST)).unwrap()).unwrap();
+        let mut payload = fs::read(dir.join(PAYLOAD)).unwrap();
+        edit(&mut manifest, &mut payload);
+        manifest["payload_sha256"] = sha256(&payload).into();
+        fs::write(dir.join(PAYLOAD), &payload).unwrap();
+        let bytes = serde_json::to_vec_pretty(&manifest).unwrap();
+        fs::write(dir.join(MANIFEST), &bytes).unwrap();
+        fs::remove_file(dir.join(COMMIT)).unwrap();
+        commit(dir, &bytes).unwrap();
+    };
+    let entry = |m: &Value, role: &str, name: &str| {
+        m["entries"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .position(|e| e["role"] == role && e["name"] == name)
+            .unwrap()
+    };
+    let mut rejected = Vec::new();
+    let k0 = copy("k0");
+    let mut payload = fs::read(k0.join(PAYLOAD)).unwrap();
+    payload.pop();
+    fs::write(k0.join(PAYLOAD), payload).unwrap();
+    rejected.push(k0);
+    let k1 = copy("k1");
+    let mut payload = fs::read(k1.join(PAYLOAD)).unwrap();
+    payload[0] ^= 1;
+    fs::write(k1.join(PAYLOAD), payload).unwrap();
+    rejected.push(k1);
+    let k2 = copy("k2");
+    remanifest(&k2, &|m, _| {
+        let i = entry(m, "moment1", "toy.bias");
+        m["entries"].as_array_mut().unwrap().remove(i);
+    });
+    rejected.push(k2);
+    let k3 = copy("k3");
+    remanifest(&k3, &|m, _| {
+        let i = entry(m, "parameter", "toy.weight");
+        let duplicate = m["entries"][i].clone();
+        m["entries"]
+            .as_array_mut()
+            .unwrap()
+            .insert(i + 1, duplicate);
+    });
+    rejected.push(k3);
+    let k4 = copy("k4");
+    remanifest(&k4, &|m, payload| {
+        let i = entry(m, "moment2", "toy.weight");
+        let offset = m["entries"][i]["offset"].as_u64().unwrap() as usize;
+        payload[offset..offset + 4].copy_from_slice(&(-1.0f32).to_le_bytes());
+        let bytes = m["entries"][i]["bytes"].as_u64().unwrap() as usize;
+        m["entries"][i]["sha256"] = sha256(&payload[offset..offset + bytes]).into();
+    });
+    rejected.push(k4);
+    let k5 = copy("k5");
+    remanifest(&k5, &|m, _| m["global_step"] = serde_json::json!(4.5));
+    rejected.push(k5);
+    let k6 = copy("k6");
+    remanifest(&k6, &|m, _| m["schedule_sha256"] = "0".repeat(64).into());
+    rejected.push(k6);
+    let k7 = copy("k7");
+    fs::remove_file(k7.join(COMMIT)).unwrap();
+    rejected.push(k7);
+    for (i, root) in rejected.iter().enumerate() {
+        assert!(
+            read_checkpoint(root, &toy.binding, &device).is_err(),
+            "K{i} accepted"
+        );
+    }
+
+    // Three writer stops: nothing before the commit marker is ever accepted.
+    let mut four = toy.initial(&device);
+    for _ in 0..4 {
+        toy.update(&mut four);
+    }
+    for (i, stop) in [
+        WriterStop::HalfPayload,
+        WriterStop::AfterPayloadSync,
+        WriterStop::AfterManifestSync,
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let root = dir.join(format!("f{i}"));
+        write(&root, &four, &toy.binding, Some(stop)).unwrap();
+        assert!(!root.join(COMMIT).exists(), "F{i} committed");
+        assert!(
+            read_checkpoint(&root, &toy.binding, &device).is_err(),
+            "F{i} accepted"
+        );
+    }
+    assert!(
+        write(&b, &four, &toy.binding, None).is_err(),
+        "existing checkpoint replaced"
+    );
+    assert_eq!(dir_hashes(&b), committed, "valid checkpoint changed");
+    assert!(read_checkpoint(&b, &toy.binding, &device).is_ok());
+    fs::remove_dir_all(&dir).unwrap();
 }

@@ -280,3 +280,51 @@ impl AdamW {
         Ok(())
     }
 }
+
+/// Host values of one parameter, for checkpoints and comparisons.
+pub fn values(parameter: &Parameter) -> Result<Vec<f32>> {
+    read(&parameter.value)
+}
+
+/// What one update saw: the loss on fresh leaves and the gradients before and
+/// after the global clip, in parameter order.
+pub struct StepRecord {
+    pub loss: Tensor<1>,
+    pub raw_gradients: Vec<Tensor<1>>,
+    pub clipped: Clipped,
+}
+
+/// One training update. Every parameter becomes a fresh autodiff leaf, so no
+/// graph survives between updates; `loss` maps the leaves (in parameter order)
+/// to a scalar. Gradients are collected by name, a missing one is an error,
+/// and the optimizer updates the plain (non-autodiff) parameter values.
+pub fn train_step(
+    parameters: &mut [Parameter],
+    state: &mut AdamWState,
+    optimizer: &AdamW,
+    max_norm: f32,
+    loss: impl FnOnce(&[Tensor<1>]) -> Tensor<1>,
+) -> Result<StepRecord> {
+    let leaves: Vec<Tensor<1>> = parameters
+        .iter()
+        .map(|p| p.value.clone().autodiff().require_grad())
+        .collect();
+    let value = loss(&leaves);
+    let grads = value.backward();
+    let named = parameters
+        .iter()
+        .zip(&leaves)
+        .filter_map(|(p, leaf)| leaf.grad(&grads).map(|g| (p.name.clone(), g)))
+        .collect();
+    let raw_gradients = ordered_gradients(parameters, named)?;
+    for (p, g) in parameters.iter().zip(&raw_gradients) {
+        finite(&format!("{} gradient", p.name), &read(g)?)?;
+    }
+    let clipped = clip_global_norm(raw_gradients.clone(), max_norm)?;
+    optimizer.step(parameters, &clipped.gradients, state)?;
+    Ok(StepRecord {
+        loss: value.without_autodiff(),
+        raw_gradients,
+        clipped,
+    })
+}

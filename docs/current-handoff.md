@@ -9,15 +9,14 @@ TimesFM3を参考にした自作モデルの実用性を検証する。保全・
 - [復帰計画](research/banto-ai-practical-training-return-plan-2026-10-16.md)と[実装計画](research/banto-ai-rust-implementation-plan-2026-10-16.md)に沿って進める。
 - Rust推論R1は中間値1点未達。許容差を変えず、正式R2の実データ学習は停止中。最終出力の通過を正式合格へ読み替えない。
 - [R2P固定契約](research/rust-r2p-synthetic-training-contract-2026-10-16.md)と[人工Python参照](results/rust-r2p-lock-and-python-reference-2026-10-16.md)は保存済み。loss7/clip4/AdamW6/小型8更新、独立照合107件pass。2026-10-17にCloud移行のため参照をLinux/Torch2.14.1で作り直し、[`crates/banto-ai/tests/fixtures/r2p`](../crates/banto-ai/tests/fixtures/r2p/runtime.json)へコミットした（[記録](results/rust-r2p-cloud-reference-2026-10-17.md)、107照合pass）。
-- 検証済みのCargo.lock案を本整理で適用。gemmの不要な直接edgeだけを除いた。非採用のRust拡張・診断と単発調査（SGEMM/once/FMA/fused等）は削除済みで、保存tagから参照する。R2P工程2（loss/勾配・global clip・互換AdamW）は`crates/banto-ai/src/training.rs`に実装し、CIでCloud参照と照合する（[記録](results/rust-r2p-training-parts-2026-10-17.md)）。保存再開（工程3）は未着手。
+- 検証済みのCargo.lock案を本整理で適用。gemmの不要な直接edgeだけを除いた。非採用のRust拡張・診断と単発調査（SGEMM/once/FMA/fused等）は削除済みで、保存tagから参照する。R2P工程2（loss/勾配・global clip・互換AdamW）は`crates/banto-ai/src/training.rs`に実装し、CIでCloud参照と照合する（[記録](results/rust-r2p-training-parts-2026-10-17.md)）。工程3（人工affineの連続8更新、checkpoint、別process再開、拒否8・停止3）も通過（[記録](results/rust-r2p-resume-2026-10-17.md)）。
 - CIはPython unittest・smoke・safetyとRust fmt/testだけ。旧異常検知トラック（v0.1〜v0.3、Windows native受入、文書を含む）は削除し、保存tag `archive/preformal-research-20261017` から参照する。
 - 需要は現役経路（固定重み制約QP系列、StatisticalFeatureMeanのMac再構築とmean28比較、営業状態・定休日）だけを残し、置き換わった過去実験のtool/test/文書は削除した。保存tagから参照する。
 - [今回の整理と確認結果](results/research-consolidation-2026-10-17.md)を参照。整理PRでmainへ提案し、mainの自動mergeはしない。
 
 ## 次に行うこと
 
-1. 工程3: 人工affineの連続8更新と、checkpoint writer/readerによる4更新→別process復元→4更新を実装・検証する。checkpoint拒否8、writer途中停止3を維持する。
-2. 部品通過後、全モデルの人工接続条件を別途固定する。R1とR2Pが通るまで正式R2実データ学習へ移らない。
+1. 工程4: SmallForecaster全体を人工データで学習graphへ接続する条件（state/context/label、比較対象、許容差の割当て）を実装前に別fixtureとして固定する。R1とR2Pが通るまで正式R2実データ学習へ移らない。
 
 ## 維持する条件
 

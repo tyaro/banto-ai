@@ -6,6 +6,7 @@ pub mod checkpoint;
 pub mod error;
 pub mod input;
 pub mod model;
+pub mod synthetic_checkpoint;
 pub mod training;
 pub use error::{Error, Result};
 pub use input::{Forecast, ForecastInput};

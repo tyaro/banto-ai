@@ -9,8 +9,10 @@ R1 implements the fixed full SmallForecaster inference path on explicit Burn
 normalized pinball loss with autodiff, ordered named gradients, global-norm clip
 and a Torch-compatible AdamW. `cargo test -p banto-ai --features training-tests
 --test r2p_synthetic` checks them against the committed Torch reference in
-`tests/fixtures/r2p` under the unchanged R0.1 tolerances. Training the full
-SmallForecaster, checkpoint save/resume and formal R2 are not implemented yet. The output contains quantiles and context diagnostics; its p50
+`tests/fixtures/r2p` under the unchanged R0.1 tolerances. `training::train_step`
+and `synthetic_checkpoint` (schema `banto.synthetic-training-checkpoint.v1`)
+cover the artificial toy model's eight updates and its save/resume in separate
+processes. Training the full SmallForecaster and formal R2 are not implemented yet. The output contains quantiles and context diagnostics; its p50
 and context_center are not expected future demand.
 
 Current verification: locked offline CPU build and all three tests pass on
