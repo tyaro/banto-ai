@@ -10,7 +10,7 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 TimesFM3を参考にした自作モデルの実用性検証を進めています。保全・点検支援を第一優先とし、需要予測・PSIも扱います。AI本体はbanto-aiに置き、Rustで学習・推論・optimizer保存再開まで対応することを目指します。banto-industrialとdenroku-psi-demoは利用側です。
 
-現在の順序は[短い引継ぎ](docs/current-handoff.md)と[復帰計画](docs/research/banto-ai-practical-training-return-plan-2026-10-16.md)を参照してください。人工Python参照は生成済み、Rust学習部品は未実装です。R1の中間値1点は未達で、正式R2実データ学習は停止しています。停止済み調査は履歴として保存し、通常の実行対象から外しました。
+現在の順序は[短い引継ぎ](docs/current-handoff.md)と[復帰計画](docs/research/banto-ai-practical-training-return-plan-2026-10-16.md)を参照してください。Rustの学習部品（R2P）は実装済みで、正式R2（CARE fold0の学習移植）は2026-10-17に1回だけ実行し全ケース合格しました。R1の中間値は未達のまま（診断として記録）で、これ以外の実データ学習は停止しています。停止済み調査は履歴として保存し、通常の実行対象から外しました。
 
 以下のモデル比較・異常評価はこれまでの研究基盤と履歴です。過去時点の「次」は現在の工程を上書きしません。
 

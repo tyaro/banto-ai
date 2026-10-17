@@ -390,7 +390,10 @@ def main(output, synthetic, expected):
                 close(d)
         summary.update({'result': 'harness_failure', 'error': repr(error), 'traceback': traceback.format_exc(),
                         'parent_seconds': time.monotonic()-started})
-        write_new(out/'summary.json', summary); close(out)
+        if not (out/'summary.json').exists():  # a failure after the summary keeps the original error visible
+            write_new(out/'summary.json', summary)
+        if not (out/'root-closed.json').exists():
+            close(out)
         raise
 
 
@@ -441,7 +444,9 @@ def run(torch, small_model, ref64, out, cfg, contract, tol, src, synthetic, expe
     close(out/'rust-cases')
     expect('cases', digest(out/'rust-cases'/'records.f32'), expected.get('cases'))
     processes.append(child('resume-first', out/'fixture', fixture_sha, out/'rust-checkpoint'))
+    expect('checkpoint', digest(out/'rust-checkpoint'/'payload.f32'), expected.get('checkpoint'))
     processes.append(child('resume-second', out/'fixture', fixture_sha, out/'rust-checkpoint', out/'rust-resume'))
+    expect('resume', digest(out/'rust-resume'/'records.f32'), expected.get('resume'))
     for d in ('rust-checkpoint', 'rust-resume'):
         close(out/d)
     _, rust = load_records(torch, out/'rust-cases'); resume_layout, resume = load_records(torch, out/'rust-resume')
@@ -489,7 +494,7 @@ def run(torch, small_model, ref64, out, cfg, contract, tol, src, synthetic, expe
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(); p.add_argument('--output', required=True); p.add_argument('--synthetic', action='store_true')
-    for k in ('fixture', 'reference', 'cases'):  # for a harness re-run: hashes the failed run already produced
+    for k in ('fixture', 'reference', 'cases', 'checkpoint', 'resume'):  # harness re-run: hashes the failed run produced
         p.add_argument(f'--expect-{k}')
     a = p.parse_args()
-    sys.exit(main(a.output, a.synthetic, {k: getattr(a, f'expect_{k}') for k in ('fixture', 'reference', 'cases')}))
+    sys.exit(main(a.output, a.synthetic, {k: getattr(a, f'expect_{k}') for k in ('fixture', 'reference', 'cases', 'checkpoint', 'resume')}))

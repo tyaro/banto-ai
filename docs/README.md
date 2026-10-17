@@ -7,7 +7,7 @@
 主目的はTimesFM3を参考にした自作モデルの実用性検証です。保全・点検支援を第一優先とし、需要予測・PSIも扱います。学習を含むRust移植のAI本体はbanto-ai、利用側はbanto-industrialとdenroku-psi-demoです。
 
 - 現在の結果・停止条件・次工程は [短い引継ぎ](current-handoff.md) を優先します。
-- [Rust実装計画](research/banto-ai-rust-implementation-plan-2026-10-16.md)に沿い、人工R2Pの学習・保存再開部品へ進みます。R1の中間値1点は未達で、正式R2実データ学習は停止しています。
+- [Rust実装計画](research/banto-ai-rust-implementation-plan-2026-10-16.md)に沿って進めます。学習・保存再開部品はR2Pと正式R2（[記録](results/rust-r2-formal-2026-10-17.md)、1回だけ実行し全ケース合格）を通過しました。R1の中間値は未達のまま（診断として記録）で、これ以外の実データ学習は停止しています。
 - [整理結果](results/research-consolidation-2026-10-17.md)を参照。停止済みのRust R1調査（SGEMM/once/FMA/fused等）は削除済みで、保存tagから参照できます。
 - 旧異常検知トラック（v0.1〜v0.3、Windows native受入）はコード・文書とも削除しました。保存tag `archive/preformal-research-20261017` から参照できます。main取り込み時点の[状態記録](history/main-document-status-20260925.md)は過去時点の記録です。
 - 評価報告は [結果の索引](results/README.md)、過去の長い引継ぎは [履歴](history/current-handoff-through-20261016.md) を参照してください。

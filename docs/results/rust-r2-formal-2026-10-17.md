@@ -6,7 +6,8 @@
 
 - commit 7efe839（clean tree）から[`tools/r2_formal.py`](../../tools/r2_formal.py)を1回起動した。Rust側は[`r2_formal`例](../../crates/banto-ai/examples/r2_formal.rs)。
 - 環境：x86_64 Linux、Rust 1.95.0、Burn 0.22 Flex CPU、Torch 2.14.1+cpu、1 thread。
-- 本実行の前に、実行ツールをFableがレビューした。指摘は記録と失敗時の扱いに関するもので、すべて直した。
+- 本実行の前に、実行ツールをFableがレビューした。誤って合格になる問題はなかった。指摘（親processの資源記録、失敗要素の全件記録、参照固定前のbuild、失敗時の記録と再実行の照合、4更新後checkpointの照合など）はすべて直した。
+- 実行したbinaryは、同じcrateのsourceから実行の前にbuild済みだった（7efe839で変えたのは実行ツールのPythonだけ）。そのため実行時のbuildは何もせずに終わった（記録0.4秒）。binaryのhashは記録してあり、作り直しても同じhashになることをレビューで確認した。
 - 人工入力モード（`--synthetic`）で、全体の流れ、失敗の記録、再実行時の照合、比較の検出力（値を変えると不合格になること）を確認した。この確認では実データを使っていない。
 - 入力：固定7件のhashとR0.1の5参照が一致した。step 0・4095のbatchはMacのbatch参照とbytes一致した。学習recipeは固定した学習契約と一致した。
 - Torch参照はfloat64確認（全ケースのloss・勾配・norm・係数）を通過してから固定した（閉包hash `551306ed…`）。Rustの実行はその後に行った。
@@ -15,9 +16,9 @@
 
 | 判定 | 結果 |
 | --- | --- |
-| loss（全11回） | 超過0。許容差比 最大0.019 |
-| clip前・clip後の勾配（全59 tensor、全11回） | 超過0。要素の許容差比 最大0.0011、全体の相対L2 最大7.7e−7（上限2e−4） |
-| global norm・clip係数 | 超過0。許容差比 最大0.002。normは0.32〜0.98で、係数はすべて1 |
+| loss（全11回） | 超過0。許容差比 最大0.015（floorのtie。更新を伴う10回では最大0.0094） |
+| clip前・clip後の勾配（全59 tensor、全11回） | 超過0。要素の許容差比 最大0.0011、全体の相対L2 最大7.6e−7（上限2e−4） |
+| global norm・clip係数 | 超過0。許容差比 最大0.002。normは0.31〜0.98で、係数はすべて1 |
 | parameter（10回の更新後） | 超過0。許容差比 最大0.027 |
 | 判定から外したparameter要素 | 1回目の後0.28%、8回目の後0.65%（停止条件10%）。key biasの4 tensor（各64要素）は勾配が理論上0のため常に外れる。残りは各層に散らばる少数 |
 | 1次・2次moment（全要素、10回の更新後） | 超過0。許容差比 最大0.017 |
@@ -27,7 +28,7 @@
 
 成熟state import（step 4096のmomentで1更新）は、新しいoptimizerの1更新と同じparameter・batchで、parameterの許容差比が0.027から0.0063に下がった。成熟したmomentでは更新量が勾配の丸め差に左右されにくいことと合う。
 
-資源：Rustの各processは0.4秒以下・42MB以下。Torch側の親processはbuildを除いて4.7秒・651MB（上限900秒・2GiB）。
+資源：Rustの各processは0.4秒以下・ピーク43MB以下。Torch側の親processはbuildを除いて4.7秒・651MB（上限900秒・2GiB）。
 
 ## 範囲と次
 
