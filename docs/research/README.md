@@ -15,6 +15,7 @@
 - [R2P lock案・人工Python参照と次工程](../results/rust-r2p-lock-and-python-reference-2026-10-16.md) — 凍結参照を使う小型Rust実装へ。
 
 - [Rust現実装棚卸しと人工学習の固定条件](rust-r2p-synthetic-training-contract-2026-10-16.md) — 小型loss/gradient/AdamW/保存再開、manifest/lock未整合を保持。
+- [R2P工程4: SmallForecaster全体の人工学習接続の固定条件](rust-r2p-full-model-contract-2026-10-17.md) — lossと全59 tensorの勾配。全モデル1更新の比較はR0.1で成り立たないため除外。
 
 - [実用性検証とRust学習へ戻る改訂2](banto-ai-practical-training-return-plan-2026-10-16.md) — pointer追跡停止、残1点の対応上限、人工R2Pと正式R2を分離。
 

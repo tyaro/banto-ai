@@ -1,0 +1,77 @@
+{
+  "schema": "banto.r2p-full-model-fixtures.v1",
+  "id": "R2P4_full_small_forecaster_artificial",
+  "status": "fixed before any Rust full-model training run",
+  "scope": "R2P step 4: connect the full SmallForecaster (C128/H32/V3/D64/L2, full series attention) to the training graph on artificial data only. Not CARE/MetroPT/demand data, not formal R2, not R1.",
+  "dtype": "CPU float32; every literal below is an integer divided by a power of two, so Python and Rust build bit-identical inputs",
+  "parameter_names": "the 59 trainable tensors of crates/banto-ai/src/checkpoint.rs expected_shapes() except the buffers scale_floor, position and time_mask; 109024 values",
+  "name_salt": "s(name) = (sum of the UTF-8 bytes of the tensor name) mod 257",
+  "initialization": {
+    "rule": "value of flat row-major element i of tensor name with salt s; no RNG",
+    "linear_weight": "((i*7919 + s) mod 257 - 128) / 128 * a, a = 1/8 when the input width (shape[1]) <= 64, else 1/16; applies to patch, head, blocks.*.temporal|variate.{q,k,v,out}.weight and blocks.*.ff.{0,2}.weight",
+    "linear_bias": "((i*31 + s) mod 17 - 8) / 256; applies to every *.bias of a linear layer",
+    "norm_weight": "1 + ((i*13 + s) mod 9 - 4) / 64; applies to blocks.*.norms.*.weight and final_norm.weight",
+    "norm_bias": "((i*11 + s) mod 7 - 3) / 64; applies to blocks.*.norms.*.bias and final_norm.bias",
+    "horizon": "((i*29 + s) mod 33 - 16) / 1024"
+  },
+  "buffers": {
+    "scale_floor": [
+      0.5,
+      0.25,
+      0.125
+    ],
+    "position": "the float32 sin/cos table of small_model.py, saved in the reference as buffer/position and loaded by Rust; not trained",
+    "time_mask": "lower-triangular 5x5 (causal temporal attention)",
+    "series_mask": "all-true 3x3 (full series attention): variate attention applies no mask; in small_model.py it is a non-persistent buffer"
+  },
+  "batches": {
+    "shape": {
+      "context": [
+        2,
+        3,
+        128
+      ],
+      "actual": [
+        2,
+        3,
+        32
+      ]
+    },
+    "context": "x[b,c,t] = ((t*(c+3) + 5*b + k) mod 16 - 8) / 4 + c for channels c=0,1; channel 2 is x = 2 + ((t + b + k) mod 2) / 16 so that its standard deviation (1/32) is below scale_floor[2] and the floor binds",
+    "actual": "y[b,c,h] = ((h*5 + 3*c + b + k) mod 11 - 5) / 2 + c",
+    "k": {
+      "A": 0,
+      "B": 3
+    }
+  },
+  "procedure": [
+    "build parameters and buffers from the rules above",
+    "forward batch A; loss = training_loss of small_model.py: pinball on normalized quantiles against (actual - context_center) / context_scale, mean over B*C*H*3",
+    "backward; gradients of all 59 tensors (none may be missing)",
+    "global norm clip, max_norm 1, coefficient min(1, 1/(norm+1e-6)); no optimizer update",
+    "independently, forward batch B with the initial parameters and report its loss"
+  ],
+  "compare": {
+    "batch A and batch B normalized quantiles [2,3,32,3], context center and scale": "normalized_activation",
+    "batch A and batch B loss": "normalized_loss",
+    "raw and clipped gradients per tensor": "gradient elementwise atol/rtol",
+    "raw and clipped gradients over all 59 tensors together": "gradient global relative L2 (or the zero-reference L2 rule)",
+    "global norm and clip coefficient": "gradient"
+  },
+  "tolerance": "examples/configs/rust-small-forecaster-r0-20261016-r0.1.json tolerance, unchanged",
+  "reference": {
+    "generator": "tools/r2p_full_model_reference.py",
+    "output": "crates/banto-ai/tests/fixtures/r2p-full/",
+    "independent_check": "the same model and procedure in float64 from the same float32 inputs; the float32 Torch values must meet the comparison tolerances against it, or generation stops"
+  },
+  "rules": [
+    "the Rust forward used for training must be the same code path as inference (SmallForecaster), returning tensors to the loss without host readback",
+    "do not inject host-computed reference values into the Rust graph; buffers and initial parameters are inputs, not outputs",
+    "a failure is recorded and stops; do not change this fixture, the tolerances or the toy to fit Rust results",
+    "passing this step is not R1 or formal R2; R1's one unmet intermediate value stays unmet"
+  ],
+  "not_compared": {
+    "parameters and moments after an AdamW update": "excluded before freezing. One AdamW update of the full model is ill-conditioned under the one-step tolerance: AdamW divides by sqrt(v)+eps, so where |gradient| is near or below eps the update depends on rounding. tools/r2p_full_model_adamw_probe.py reproduces it: 5 of 177 parameter/moment tensors differ between float32 and float64 beyond the tolerance, at most 1.1e-5 (atol 1e-6). The largest come from an element with |gradient| about eps (blocks.1.temporal.v.weight, 1.05e-8 vs 1.22e-8) and from head.bias elements whose float64 gradient is exactly 0 at a pinball tie (float32 2.3e-10); the attention key biases, whose gradient is structurally zero because softmax is invariant to a shift shared by all keys, differ by up to 2e-6. The return plan defines step 4 as loss and all-parameter gradients; AdamW itself is verified in steps 2-3."
+  },
+  "clip_note": "At this fixture the global gradient norm is about 0.958 < 1, so the clip coefficient is exactly 1 and the clipped gradients equal the raw ones. The full-model comparison therefore checks the norm and that clipping leaves gradients unchanged below max_norm; the scaling branch (norm > max_norm) is covered by R2P step 2 (cases C2/C3 and O3)."
+}

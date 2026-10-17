@@ -16,7 +16,7 @@ TimesFM3を参考にした自作モデルの実用性を検証する。保全・
 
 ## 次に行うこと
 
-1. 工程4: SmallForecaster全体を人工データで学習graphへ接続する条件（state/context/label、比較対象、許容差の割当て）を実装前に別fixtureとして固定する。R1とR2Pが通るまで正式R2実データ学習へ移らない。
+1. 工程4: 固定済みの[全モデル接続条件](research/rust-r2p-full-model-contract-2026-10-17.md)に沿い、SmallForecasterの推論forwardをtensorのままlossへ渡せるようにし、lossと全59 tensorの勾配をTorch参照と照合する。全モデル1更新の比較はR0.1では成り立たないことが分かったため、正式R2の比較方法は先に人が決め直す。R1とR2Pが通るまで正式R2実データ学習へ移らない。
 
 ## 維持する条件
 
