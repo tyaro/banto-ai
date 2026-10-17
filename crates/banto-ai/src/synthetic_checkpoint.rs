@@ -23,6 +23,9 @@ pub const SCHEMA: &str = "banto.synthetic-training-checkpoint.v1";
 pub const PAYLOAD: &str = "payload.f32";
 pub const MANIFEST: &str = "manifest.json";
 pub const COMMIT: &str = "COMMIT";
+pub const BACKEND: &str = "burn 0.22.0 flex cpu float32";
+pub const THREADS: u64 = 1;
+pub const RNG: &str = "none";
 
 pub fn sha256(bytes: &[u8]) -> String {
     Sha256::digest(bytes)
@@ -76,6 +79,10 @@ fn write_new(path: &Path, bytes: &[u8]) -> Result<()> {
 /// Deterministic manifest for a state; the payload is returned alongside.
 pub fn encode(state: &TrainingState, binding: &Binding) -> Result<(Vec<u8>, Value)> {
     check_order(&state.parameters, binding)?;
+    let n = state.parameters.len();
+    if state.optimizer.m.len() != n || state.optimizer.v.len() != n {
+        return Err(Error::Input("moments do not match parameters".into()));
+    }
     let mut payload = Vec::new();
     let mut entries = Vec::new();
     let roles = [
@@ -118,15 +125,16 @@ pub fn encode(state: &TrainingState, binding: &Binding) -> Result<(Vec<u8>, Valu
         "schedule_sha256": binding.schedule_sha256(),
         "fixture_sha256": binding.fixture_sha256,
         "recipe": binding.recipe,
-        "backend": "burn 0.22.0 flex cpu float32",
-        "threads": 1,
-        "rng": "none",
+        "backend": BACKEND,
+        "threads": THREADS,
+        "rng": RNG,
     });
     Ok((payload, manifest))
 }
 
-/// Writes a new checkpoint directory: payload, then manifest, then the commit
-/// marker, each synced before the next. `stop` ends the writer early.
+/// Writes a new checkpoint directory: payload, then manifest, each synced and
+/// read back to confirm the bytes, then the commit marker last. `stop` ends the
+/// writer early.
 pub fn write(
     root: &Path,
     state: &TrainingState,
@@ -149,7 +157,16 @@ pub fn write(
     if stop == Some(WriterStop::AfterManifestSync) {
         return Ok(());
     }
-    commit(root, &manifest)
+    if fs::read(root.join(PAYLOAD))? != payload || fs::read(root.join(MANIFEST))? != manifest {
+        return Err(Error::Integrity(
+            "written checkpoint differs from its bytes".into(),
+        ));
+    }
+    commit(root, &manifest)?;
+    match root.parent() {
+        Some(parent) if !parent.as_os_str().is_empty() => sync_dir(parent),
+        _ => Ok(()),
+    }
 }
 
 /// The exclusive commit marker binds the exact manifest bytes.
@@ -207,6 +224,9 @@ pub fn read_checkpoint(root: &Path, binding: &Binding, device: &Device) -> Resul
         || manifest["recipe"] != binding.recipe
     {
         return Err(bad("schedule, fixture or recipe binding mismatch"));
+    }
+    if manifest["backend"] != BACKEND || manifest["threads"] != THREADS || manifest["rng"] != RNG {
+        return Err(bad("backend, thread or RNG identity mismatch"));
     }
     let step = integer(&manifest, "global_step")?;
     let next_position = integer(&manifest, "next_position")? as usize;
@@ -295,7 +315,10 @@ pub fn read_checkpoint(root: &Path, binding: &Binding, device: &Device) -> Resul
         let saved = offset
             .checked_add(len)
             .and_then(|end| payload.get(offset..end));
-        if e["shape"] != json!(shape) || saved != Some(bytes.as_slice()) {
+        if e["shape"] != json!(shape)
+            || e["dtype"] != "float32-le"
+            || saved != Some(bytes.as_slice())
+        {
             return Err(bad(format!("buffer {name} differs from the bound value")));
         }
     }

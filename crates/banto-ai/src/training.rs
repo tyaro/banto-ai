@@ -86,13 +86,18 @@ impl LossInput {
             device,
         )
     }
-    pub fn loss(&self, prediction: Tensor<4>) -> Tensor<1> {
+    pub fn loss(&self, prediction: Tensor<4>) -> Result<Tensor<1>> {
         let [b, c, h] = self.dims;
+        if prediction.dims() != [b, c, h, QUANTILES.len()] {
+            return Err(Error::Input(
+                "prediction tensor does not match the loss input".into(),
+            ));
+        }
         let device = prediction.device();
         let actual = Tensor::from_data(TensorData::new(self.actual.clone(), [b, c, h]), &device);
         let center = Tensor::from_data(TensorData::new(self.center.clone(), [b, c, 1]), &device);
         let scale = Tensor::from_data(TensorData::new(self.scale.clone(), [b, c, 1]), &device);
-        pinball_loss(prediction, actual, center, scale)
+        Ok(pinball_loss(prediction, actual, center, scale))
     }
 }
 
@@ -185,6 +190,9 @@ pub struct Clipped {
 pub fn clip_global_norm(gradients: Vec<Tensor<1>>, max_norm: f32) -> Result<Clipped> {
     if gradients.is_empty() {
         return Err(Error::Input("no gradients to clip".into()));
+    }
+    if !(max_norm.is_finite() && max_norm > 0.0) {
+        return Err(Error::Input("max_norm must be positive and finite".into()));
     }
     let per: Vec<Tensor<1>> = gradients
         .iter()

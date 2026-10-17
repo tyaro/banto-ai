@@ -14,7 +14,7 @@ use banto_ai::{
     },
 };
 use burn::tensor::{Device, Tensor, TensorData};
-use serde_json::Value;
+use serde_json::{Value, json};
 use std::{
     collections::BTreeMap,
     env, fs,
@@ -194,7 +194,7 @@ fn loss_and_prediction_gradient_match_reference() {
         let id = case["id"].as_str().unwrap();
         let input = loss_input(case);
         let prediction = input.prediction(&device).require_grad();
-        let loss = input.loss(prediction.clone());
+        let loss = input.loss(prediction.clone()).unwrap();
         let grads = loss.backward();
         let gradient = prediction.grad(&grads).expect("prediction gradient");
         reference.gate(
@@ -517,7 +517,13 @@ fn floats_bytes(values: &[f32]) -> Vec<u8> {
 }
 fn run_child(test: &str, dir: &Path) {
     let output = Command::new(env::current_exe().unwrap())
-        .args(["--exact", test, "--nocapture", "--test-threads=1"])
+        .args([
+            "--ignored",
+            "--exact",
+            test,
+            "--nocapture",
+            "--test-threads=1",
+        ])
         .env(CHILD_DIR, dir)
         .output()
         .unwrap();
@@ -526,6 +532,11 @@ fn run_child(test: &str, dir: &Path) {
         "{test} failed:\n{}\n{}",
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
+    );
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(
+        stdout.contains("test result: ok. 1 passed"),
+        "{test} did not run:\n{stdout}"
     );
 }
 fn dir_hashes(dir: &Path) -> BTreeMap<String, String> {
@@ -541,9 +552,11 @@ fn dir_hashes(dir: &Path) -> BTreeMap<String, String> {
         .collect()
 }
 
-/// Trajectory B in its own process: four updates, commit step 4, then observe
-/// the cancellation at the next update boundary without starting update 5.
+/// Trajectory B in its own process (launched by the resume test): four updates,
+/// commit step 4, then observe the cancellation at the next update boundary
+/// without starting update 5. Saves the state bytes after every update.
 #[test]
+#[ignore = "child process of toy_training_resumes_exactly_and_matches_reference"]
 fn child_b_cancel_after_four() {
     let Some(dir) = env::var_os(CHILD_DIR) else {
         return;
@@ -556,7 +569,13 @@ fn child_b_cancel_after_four() {
             break;
         }
         toy.update(&mut state);
-        if state.next_position == 4 {
+        let k = state.next_position;
+        fs::write(
+            Path::new(&dir).join(format!("b-payload-{k}.f32")),
+            toy.payload(&state),
+        )
+        .unwrap();
+        if k == 4 {
             write(&Path::new(&dir).join("b-step4"), &state, &toy.binding, None).unwrap();
             cancelled = true;
         }
@@ -564,9 +583,11 @@ fn child_b_cancel_after_four() {
     assert_eq!((state.optimizer.step, state.next_position), (4, 4));
 }
 
-/// Trajectory C in its own process: restore B's checkpoint, record the probe
-/// before update 5, finish the schedule and commit step 8.
+/// Trajectory C in its own process (launched by the resume test): restore B's
+/// checkpoint, record the probe before update 5, finish the schedule and commit
+/// step 8. Saves the state bytes at the restore and after every update.
 #[test]
+#[ignore = "child process of toy_training_resumes_exactly_and_matches_reference"]
 fn child_c_restore_and_finish() {
     let Some(dir) = env::var_os(CHILD_DIR) else {
         return;
@@ -575,9 +596,15 @@ fn child_c_restore_and_finish() {
     let mut state = read_checkpoint(&dir.join("b-step4"), &toy.binding, &device).unwrap();
     assert_eq!((state.optimizer.step, state.next_position), (4, 4));
     let mut probes = toy.probe(&state);
+    let save = |state: &TrainingState| {
+        let k = state.next_position;
+        fs::write(dir.join(format!("c-payload-{k}.f32")), toy.payload(state)).unwrap();
+    };
+    save(&state);
     while state.next_position < toy.binding.schedule.len() {
         toy.update(&mut state);
         probes.extend(toy.probe(&state));
+        save(&state);
     }
     fs::write(dir.join("c-probes.f32"), floats_bytes(&probes)).unwrap();
     write(&dir.join("c-step8"), &state, &toy.binding, None).unwrap();
@@ -590,7 +617,7 @@ fn toy_training_resumes_exactly_and_matches_reference() {
     let mut a = toy.initial(&device);
     let mut probes = vec![toy.probe(&a)];
     reference.gate("toy/probe/0", &probes[0], "normalized_activation");
-    let mut at_four = None;
+    let mut payloads = vec![toy.payload(&a)];
     while a.next_position < toy.binding.schedule.len() {
         let (prediction, record) = toy.update(&mut a);
         let k = a.next_position;
@@ -642,9 +669,7 @@ fn toy_training_resumes_exactly_and_matches_reference() {
             &probes[k],
             "normalized_activation",
         );
-        if k == 4 {
-            at_four = Some(toy.payload(&a));
-        }
+        payloads.push(toy.payload(&a));
     }
 
     // B and C in fresh processes; same-backend state must match A byte for byte.
@@ -653,9 +678,14 @@ fn toy_training_resumes_exactly_and_matches_reference() {
     let b = dir.join("b-step4");
     assert_eq!(
         fs::read(b.join(PAYLOAD)).unwrap(),
-        at_four.unwrap(),
+        payloads[4],
         "B step 4 state"
     );
+    for k in 1..=4 {
+        let saved = fs::read(dir.join(format!("b-payload-{k}.f32"))).unwrap();
+        assert_eq!(saved, payloads[k], "B state after update {k}");
+    }
+    assert!(!dir.join("b-payload-5.f32").exists(), "B started update 5");
     let manifest: Value = serde_json::from_slice(&fs::read(b.join(MANIFEST)).unwrap()).unwrap();
     assert_eq!(
         (
@@ -671,6 +701,10 @@ fn toy_training_resumes_exactly_and_matches_reference() {
         toy.payload(&a),
         "C step 8 state"
     );
+    for k in 4..=8 {
+        let saved = fs::read(dir.join(format!("c-payload-{k}.f32"))).unwrap();
+        assert_eq!(saved, payloads[k], "C state at step {k}");
+    }
     let a_probes: Vec<f32> = probes[4..].concat();
     assert_eq!(
         fs::read(dir.join("c-probes.f32")).unwrap(),
@@ -758,12 +792,26 @@ fn toy_training_resumes_exactly_and_matches_reference() {
             "K{i} accepted"
         );
     }
+    // Not one of K0-K7: the recorded backend/thread/RNG identity must also match.
+    for (i, (key, value)) in [
+        ("rng", json!("xorshift")),
+        ("backend", json!("cuda")),
+        ("threads", json!(2)),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let root = copy(&format!("identity{i}"));
+        remanifest(&root, &|m, _| m[key] = value.clone());
+        assert!(
+            read_checkpoint(&root, &toy.binding, &device).is_err(),
+            "{key} accepted"
+        );
+    }
 
     // Three writer stops: nothing before the commit marker is ever accepted.
-    let mut four = toy.initial(&device);
-    for _ in 0..4 {
-        toy.update(&mut four);
-    }
+    // The input is B's committed state, so no extra optimizer update is run.
+    let four = read_checkpoint(&b, &toy.binding, &device).unwrap();
     for (i, stop) in [
         WriterStop::HalfPayload,
         WriterStop::AfterPayloadSync,
