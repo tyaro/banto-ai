@@ -66,6 +66,32 @@ class AlarmAcrossChunksTest(unittest.TestCase):
         self.assertEqual(rows[4][12], 2.5)
         self.assertEqual(rows[0][12], 0.)
         self.assertEqual(len(rows[0]), len(PREDICTION.unpack(PREDICTION.pack(*rows[0]))))
+        self.assertEqual(rows[4][8:10], (15., 20.))  # the method's own p50 in the model slots
+        self.assertTrue(all(math.isnan(x) for x in rows[4][14:23]))
+
+
+class PracticalScoreTest(unittest.TestCase):
+    """Lead-time detection, attainability and per-asset-month false alarms on a synthetic cohort."""
+
+    def test_lead_times_attainability_and_month_rate(self):
+        from tools import care_practical_score as ps
+        # rows n=1..9 are available at 600*n s; the anomaly interval covers them: start 600, end 5400
+        rows = {e: [saved(e, n, 600*n) for n in range(10)] for e in (1, 2)}
+        first = '2020-01-01T00:00:00'
+        truth = [{'event_id': 1, 'asset_key': 'A:0', 'event_label': 'anomaly', 'event_start': first,
+                  'event_end': '2020-01-01T01:20:00', 'event_start_id': 1, 'event_end_id': 9},
+                 {'event_id': 2, 'asset_key': 'A:0', 'event_label': 'normal', 'event_start': first,
+                  'event_end': '2020-01-01T01:20:00', 'event_start_id': 1, 'event_end_id': 9}]
+        meta = {1: {'first_timestamp': first}, 2: {'first_timestamp': first}}
+        alarms = {1: [{'open': 1200, 'close': 1800}], 2: [{'open': 600, 'close': 1200}]}
+        methods = ('neural-common', 'timesfm3')
+        results, per_event = ps.score(truth, meta, {m: rows for m in methods}, {m: alarms for m in methods})
+        pooled = results['timesfm3']['pooled']
+        self.assertEqual(pooled['hits_at'], {'0': 1, '24': 0, '72': 0, '168': 0})  # an 80-minute interval
+        self.assertEqual(per_event[0]['attainable'], {'0': True, '24': False, '72': False, '168': False})
+        self.assertEqual(per_event[0]['methods']['timesfm3']['lead_proxy_hours'], (5400-1200)/3600)
+        self.assertEqual(pooled['false_episodes'], 1)
+        self.assertAlmostEqual(pooled['false_episodes_per_asset_30_days'], pooled['false_episodes_per_1000_record_hours']*720/1000)
 
 
 if __name__ == '__main__':

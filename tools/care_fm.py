@@ -234,13 +234,16 @@ def score(row, p50, R):
 
 
 def method_rows(saved, predictions, R):
-    """Saved test rows with this method's score in the model-score slot; COMMON only where the
-    method forecast the row, so an unsupported row is the inherited gap."""
+    """Saved test rows in the r1 layout with this method's p50 and score in the model slots
+    (the own model's quantile slots become NaN); COMMON only where the method forecast the row,
+    so an unsupported row is the inherited gap. Observations and baseline slots are kept."""
     rows = []
     for r in saved:
         p = predictions.get((r[0], r[1]))
         ok = bool(r[5] & COMMON) and p is not None and all(math.isfinite(x) for x in p)
-        rows.append((*r[:5], COMMON if ok else 0, *r[6:12], score(r, p, R) if ok else math.nan, *r[13:]))
+        p50 = p if ok else (math.nan, math.nan)
+        rows.append((*r[:5], COMMON if ok else 0, r[6], r[7], *p50, r[10], r[11],
+                     score(r, p, R) if ok else math.nan, r[13], *[math.nan]*9))
     return rows
 
 
