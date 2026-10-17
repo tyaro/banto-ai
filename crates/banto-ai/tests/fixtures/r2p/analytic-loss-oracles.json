@@ -1,0 +1,83 @@
+[
+ {
+  "id": "L0_centered",
+  "loss_rational": "1/15",
+  "prediction_gradient_rational": [
+   "-1/30",
+   "0",
+   "1/30"
+  ]
+ },
+ {
+  "id": "L1_all_ties_zero_is_valid",
+  "loss_rational": "0",
+  "prediction_gradient_rational": [
+   "2/15",
+   "0",
+   "-2/15"
+  ]
+ },
+ {
+  "id": "L2_above",
+  "loss_rational": "11/15",
+  "prediction_gradient_rational": [
+   "-1/30",
+   "-1/6",
+   "-3/10"
+  ]
+ },
+ {
+  "id": "L3_below",
+  "loss_rational": "11/15",
+  "prediction_gradient_rational": [
+   "3/10",
+   "1/6",
+   "1/30"
+  ]
+ },
+ {
+  "id": "L4_label_normalization",
+  "loss_rational": "7/30",
+  "prediction_gradient_rational": [
+   "-1/30",
+   "-1/6",
+   "-2/15"
+  ]
+ },
+ {
+  "id": "L5_batch_horizon_reduction",
+  "loss_rational": "2/5",
+  "prediction_gradient_rational": [
+   "-1/120",
+   "0",
+   "1/120",
+   "-1/120",
+   "-1/24",
+   "-3/40",
+   "3/40",
+   "1/24",
+   "1/120",
+   "-1/120",
+   "0",
+   "1/120"
+  ]
+ },
+ {
+  "id": "L6_batch_channel_broadcast",
+  "loss_rational": "19/60",
+  "prediction_gradient_rational": [
+   "-1/120",
+   "0",
+   "1/120",
+   "-1/120",
+   "-1/24",
+   "-3/40",
+   "1/30",
+   "1/24",
+   "1/120",
+   "-1/120",
+   "-1/24",
+   "-1/30"
+  ]
+ }
+]

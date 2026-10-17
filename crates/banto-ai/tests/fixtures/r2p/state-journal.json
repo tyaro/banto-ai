@@ -1,0 +1,136 @@
+[
+ {
+  "case": "O0_zero_fresh_decay",
+  "ordered_names": [
+   "p.weight",
+   "p.bias"
+  ],
+  "step_before": 0,
+  "step_after": 1
+ },
+ {
+  "case": "O1_signed_fresh",
+  "ordered_names": [
+   "p.weight",
+   "p.bias"
+  ],
+  "step_before": 0,
+  "step_after": 1
+ },
+ {
+  "case": "O2_epsilon_sensitive",
+  "ordered_names": [
+   "p.weight",
+   "p.bias"
+  ],
+  "step_before": 0,
+  "step_after": 1
+ },
+ {
+  "case": "O3_global_clip",
+  "ordered_names": [
+   "p.weight",
+   "p.bias"
+  ],
+  "step_before": 0,
+  "step_after": 1
+ },
+ {
+  "case": "O4_artificial_mature_state",
+  "ordered_names": [
+   "p.weight",
+   "p.bias"
+  ],
+  "step_before": 4096,
+  "step_after": 4097
+ },
+ {
+  "case": "O5_zero_gradient_retains_momentum",
+  "ordered_names": [
+   "p.weight",
+   "p.bias"
+  ],
+  "step_before": 4096,
+  "step_after": 4097
+ },
+ {
+  "case": "toy",
+  "batch": "A",
+  "ordered_names": [
+   "toy.weight",
+   "toy.bias"
+  ],
+  "global_step": 1,
+  "schedule_next": 1
+ },
+ {
+  "case": "toy",
+  "batch": "B",
+  "ordered_names": [
+   "toy.weight",
+   "toy.bias"
+  ],
+  "global_step": 2,
+  "schedule_next": 2
+ },
+ {
+  "case": "toy",
+  "batch": "C",
+  "ordered_names": [
+   "toy.weight",
+   "toy.bias"
+  ],
+  "global_step": 3,
+  "schedule_next": 3
+ },
+ {
+  "case": "toy",
+  "batch": "D",
+  "ordered_names": [
+   "toy.weight",
+   "toy.bias"
+  ],
+  "global_step": 4,
+  "schedule_next": 4
+ },
+ {
+  "case": "toy",
+  "batch": "A",
+  "ordered_names": [
+   "toy.weight",
+   "toy.bias"
+  ],
+  "global_step": 5,
+  "schedule_next": 5
+ },
+ {
+  "case": "toy",
+  "batch": "C",
+  "ordered_names": [
+   "toy.weight",
+   "toy.bias"
+  ],
+  "global_step": 6,
+  "schedule_next": 6
+ },
+ {
+  "case": "toy",
+  "batch": "B",
+  "ordered_names": [
+   "toy.weight",
+   "toy.bias"
+  ],
+  "global_step": 7,
+  "schedule_next": 7
+ },
+ {
+  "case": "toy",
+  "batch": "D",
+  "ordered_names": [
+   "toy.weight",
+   "toy.bias"
+  ],
+  "global_step": 8,
+  "schedule_next": 8
+ }
+]
