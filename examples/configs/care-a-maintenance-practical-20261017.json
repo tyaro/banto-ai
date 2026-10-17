@@ -1,0 +1,116 @@
+{
+  "schema": "banto.care-maintenance-practical-contract.v1",
+  "id": "CARE-A-MAINT-PRACTICAL-20261017",
+  "status": "fixed before any foundation-model inference on CARE; owner decisions of 2026-10-17",
+  "inherits": {
+    "contract": "examples/configs/care-a-maintenance-20261016-r1.json",
+    "contract_sha256": "f199f0f4932a9f419d9aa2a9ee7432793a607ffc2acc654d14467f1727a40cf1",
+    "prose": "docs/research/care-a-maintenance-contract-2026-10-16.md",
+    "prose_sha256": "6aca0b81fdf7df523051916ad21ca2ff167fb78d875b92144a9f1fcb0fa3743d",
+    "unchanged": "split and folds; availability = record time + 600 s; common-support definition (status0 in calibration); calibration floor of 512 scores and the 70%/30% prefix split; score max(abs(y - p50)/R) over the two temperatures; per-method 99.5% calibration threshold with strict >; OPEN/CLOSE after 3 consecutive; gap/file-end reset; primary hit; false-alarm counting; primary metrics; native-support baseline"
+  },
+  "data_status": "the CARE test has been read and the own model's per-event outcomes are saved: development material, not an unknown holdout; no business pass/fail or production decision. The foundation-model settings (128 context, p50, 99.5%, adapter defaults) are taken verbatim from the inherited contract and the existing adapters, not chosen from the saved outcomes",
+  "training_statement": "zero-shot inference and per-method threshold calibration update no parameters and are not training; R0.2's stop on other real-data training stays",
+  "methods": {
+    "own_model": "saved SmallForecaster 5-fold predictions, thresholds and alarms; no retraining, re-inference or retuning",
+    "baselines": "saved load-bin temperature medians, common and native support",
+    "foundation_models": [
+      {
+        "name": "TimesFM 3",
+        "checkpoint": "google/timesfm-3.0-pytorch",
+        "revision": "43046b85ec22d584a13f8098c2ed39c889e129c2",
+        "package": "timesfm[torch]==3.0.0",
+        "license_use": "non-commercial research only",
+        "memory_limit_bytes": 4294967296,
+        "use_restriction": "the weights licence excludes commercial decision-making: TimesFM results are a research reference only and do not feed the owner's later thresholds or adoption decision"
+      },
+      {
+        "name": "Chronos-2",
+        "checkpoint": "amazon/chronos-2",
+        "revision": "29ec3766d36d6f73f0696f85560a422f50e8498c",
+        "package": "chronos-forecasting==2.3.1",
+        "license_use": "Apache-2.0",
+        "memory_limit_bytes": 2147483648
+      },
+      {
+        "name": "Toto 2.0 4M",
+        "checkpoint": "Datadog/Toto-2.0-4m",
+        "revision": "8306a9801cf98c0f5ffe4b2dcc8f496e616d84d9",
+        "package": "toto-2==2.0.0",
+        "license_use": "Apache-2.0",
+        "memory_limit_bytes": 2147483648
+      }
+    ]
+  },
+  "foundation_model_protocol": {
+    "training": "none (zero-shot), existing adapters in src/banto_ai/adapters/, pinned packages and checkpoint revisions",
+    "input_boundary": "CARE contexts through care_input.Consumer (past-only context, no_truth guard); 128 past rows [n-128, n) of the 3 signals in native units; adapter timestamps = 2000-01-01T00:00:00Z + file-local offset seconds, 600 s interval; no backend uses calendar features",
+    "roles": "TimesFM and Chronos: the two temperatures are targets and power is a past-only covariate, no known-future covariates; Toto: all three signals are variates and only the two temperatures are used",
+    "adapter_defaults": "TimesFM use_znorm=False, padding_mode='none', univariate=False; Chronos cross_learning=False; Toto: 128 rows = 4 patches, no padding or MISSING mask",
+    "request": "horizon 1, quantiles [0.5] only; alarms use the lead-1 p50 as in the inherited contract",
+    "support": "the own model's common-support rows only",
+    "score_scale": "R = the fold's train-only MAD x 1.4826 read from <fold root>/input.json profile.alarm_scales[v].R64 of the closed fold root, not recomputed, identical for every method",
+    "calibration": "per fold, the inherited calibration segment (last 30% of the validation anchor prefix), same score, per-method 99.5% threshold, same alarm rules; fewer than 512 calibration scores is a stop, not a threshold"
+  },
+  "failures": {
+    "row_unsupported": "a row-level ValueError from an adapter (e.g. nonfinite output) makes that row unsupported for that method, recorded and never filled; in the alarm it acts as the inherited gap (closes an open episode, resets counters) and leaves the false-alarm denominator; unsupported counts reported per method and fold; more than 1% unsupported in any method/fold stops for investigation before acceptance",
+    "stop": "any other failure (model load, process crash, memory or time overrun) stops; only the harness may be fixed and the unit re-run; no change of inputs, context length, thresholds or support after results exist"
+  },
+  "metrics": {
+    "inherited": "asset-macro recall, false episodes per 1000 normal record-hours, normal alarm-time fraction, earliness with misses counted; counts, pooled, per event, per asset, support",
+    "lead_time_hours": [
+      0,
+      24,
+      72,
+      168
+    ],
+    "lead_time_rule": "W in hours converted to W*3600 s on the file-local availability clock; an event is detected at W if its primary hit (the first episode newly OPENed inside the shifted [event_start, event_end]) OPENs at or before shifted event_end - W; W = 0 is the inherited primary hit; episodes active before the start never count at any W (reported separately as inherited) and later OPENs inside the window never count; event_end is not guaranteed to be the failure time, so the lead time is a proxy",
+    "false_alarm_units": [
+      "per 1000 normal record-hours",
+      "per asset per 30 days (720 record-hours), a linear rescale of the rate, per asset and pooled; some normal assets have fewer than 720 eligible record-hours"
+    ],
+    "per_event_table": "detection, OPEN time, lead proxy and attainability at every W, for every method and anomaly event",
+    "significance": "12 anomaly events only: no significance claims",
+    "attainable": "events whose shifted annotated duration (end - start) is shorter than W cannot be detected at W; the per-event table flags attainability at every W"
+  },
+  "acceptance": "none in this run; the required lead time and the allowed false-alarm rate are set by the owner after seeing the comparison",
+  "execution": {
+    "environment": "separate Python environment per foundation model; record package versions and downloaded checkpoint revisions and hashes",
+    "units": "per fold, segment (calibration/test) and method, in fixed chunks of 1000 origins; each chunk closed and resumable; adapters infer one row per call, no batching",
+    "parallel": "independent units may run concurrently, at most 3 processes (4 cores)",
+    "limits": {
+      "child_seconds": 870,
+      "parent_seconds": 900,
+      "memory_bytes": {
+        "TimesFM 3": 4294967296,
+        "Chronos-2": 2147483648,
+        "Toto 2.0 4M": 2147483648
+      },
+      "campaign_wall_hours": 24
+    },
+    "measured_per_row_seconds": {
+      "Toto 2.0 4M": 0.02,
+      "Chronos-2": 0.12,
+      "TimesFM 3": 0.37
+    },
+    "rows": "about 118,841 per method (71,007 calibration + 47,834 test common-support)",
+    "freeze_then_score": "save, hash and freeze predictions, scores, thresholds and alarms of every method and fold; only then the evaluator reads the labels; scoring first checks that the saved own-model and baseline metrics reproduce",
+    "storage": "CARE-derived inputs, predictions and labels stay in the gitignored artifacts/; only hashes and summaries are committed"
+  },
+  "out_of_scope": "longer contexts, other covariate treatments, fine-tuning, the official CARE score",
+  "received_inputs": {
+    "freeze_record": "care-learning-scores-20261016/freeze-before-truth.json",
+    "fold_roots_match_freeze": true,
+    "root_closed_sha256": {
+      "care-learning-fold-0-20261016": "34aa0c8aedcc6bc3a2e10da3a56bb72446e4ba56987ecf395d810b43a64a6703",
+      "care-learning-fold-1-20261016": "0acd55beb0a3dbca2b235403016acd11d91f9dd9e84a58790b7064938f7c3166",
+      "care-learning-fold-2-20261016": "32a60dcf4f6330783231f78ca3dc6f2b4ff3188e4466b3fbaffffc79e9265603",
+      "care-learning-fold-3-20261016": "c493ce0644e6b17e0850af238c3931b43ead8fa9dcc42c79058ddf778808cc85",
+      "care-learning-fold-4-20261016": "80f222b46b53c6ebc332270d73574b6c2f0116e5dc37147f9ba639ca10803119",
+      "care-evaluator-contract-20261016": "6ef8690d97df8892ba5d5bd662b8882c859495055e221e8d52ba43c7d6b760b4",
+      "care-learning-scores-20261016": "21fc3b60bf022c5fa13f3062d4ce71b9994714e87536d3a4af76a9572468ce61",
+      "care-metadata-inventory-20261016": "2607c07b6163afe3a37aa129251271851566c8d2814a89e94714beb837a45a21",
+      "care-learning-campaign-launch2-20261016": "bfc9893a2de710e1fcf80d707f7c7a69a19a66a68f52523c22957955a595db05"
+    }
+  }
+}

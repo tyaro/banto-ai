@@ -113,7 +113,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="prepare_checkpoint.py")
     parser.add_argument("--cache-dir", required=True)
     parser.add_argument("--manifest", default=str(MANIFEST_PATH))
-    parser.add_argument("--accept-apache-2.0", action="store_true", required=True)
+    parser.add_argument("--accept-apache-2.0", dest="accept_apache_2_0", action="store_true", required=True)
     args = parser.parse_args(argv)
     try:
         result = prepare_checkpoint(Path(args.cache_dir), Path(args.manifest), accepted=args.accept_apache_2_0)
