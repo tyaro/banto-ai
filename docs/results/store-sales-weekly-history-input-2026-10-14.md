@@ -1,6 +1,6 @@
 # 自己の8週間を残す入力境界の確認（2026-10-14）
 
-[研究中間整理](../research/demand-research-checkpoint-2026-10-14.md)と[固定設計](../research/store-sales-weekly-history-design-2026-10-14.md)に従い、新しい純粋入力関数を実装し、新5確認を一回実行した。全件passed。これは新情報を入力に保持する機構の確認であり、予測性能の改善・共有学習の成功ではない。fit・新データ読取り・新forecast・旧確認・CIは0。
+研究中間整理と[固定設計](../research/store-sales-weekly-history-design-2026-10-14.md)に従い、新しい純粋入力関数を実装し、新5確認を一回実行した。全件passed。これは新情報を入力に保持する機構の確認であり、予測性能の改善・共有学習の成功ではない。fit・新データ読取り・新forecast・旧確認・CIは0。
 
 ## 実装の契約
 

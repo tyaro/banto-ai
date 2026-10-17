@@ -1,16 +1,8 @@
 # Mini Transformer
 
-## 平均出力の別候補（2026-10-14）
+## 需要用途
 
-[mean結果](../../docs/results/store-sales-mean-pilot-2026-10-14.md)と[固定設計](../../docs/research/store-sales-mean-pilot-design-2026-10-14.md)。demand_model_mean.py / demand_train_mean.py / check_demand_mean.pyがdaily_mean/total_meanと総量quantileを区別する。新4確認、一候補256stepは完了。期待数量用MSEで選択したが単純基準への追加価値は未確認。旧code/完成確認・学習は反復しない。生state/予測はlocalのみ。
-
-## 水準・相対変動とイベント別入力の別候補（2026-10-14）
-
-[結果](../../docs/results/store-sales-small-model-inputs-2026-10-14.md)と[接続設計](../../docs/research/store-sales-small-model-input-pilot-design-2026-10-14.md)。tools/demand_input_features.pyでorigin-pastのみの2統計と暦12要素を組み立て、demand_data_inputs.py / demand_model_inputs.py / demand_train_inputs.pyへ接続。支持例不足はmetadataに保持。新7純粋入力＋3接続確認、一候補256stepは完了。旧sourceは変更せず、完成チェック/学習を反復しない。生データ・stateはlocalのみ。性能改善や実務採択とは別の経路確認で、今回は基準を置換しない。
-
-## 需要用途の最新実装（2026-10-14）
-
-[設計](../../docs/research/store-sales-small-model-design-2026-10-14.md)と[一回探索の結果](../../docs/results/store-sales-small-model-2026-10-14.md)。demand_data.py/demand_model.py/demand_train.pyは保存済み公開数量・mask・既知の暦から14日総量分位点と日次配分を出す。独立初期化110916parameter/一構成256step。新check_demand.pyの6機構確認と一回学習は完了、定期反復しない。学習開始は明示的な新outputを指定したdemand_train.py実行だけ。旧固定MetroPT実装は保持し、公式TimesFM重み・教師出力を使わない。今回は単純基準の置換根拠を得ていない。以下は先行工程の記録。
+現役の需要モデルは`demand_statistical_feature_model.py`（StatisticalFeatureMean）と、その基底の`demand_calendar_model.py`。Macでの再構築・学習は`tools/demand_macos_rebuild.py`、mean28との比較は`tools/demand_existing_store_evaluation.py`。2026-10-14の旧Block再利用型の需要モデル・学習器は削除済みで、保存tag `archive/preformal-research-20261017` から参照できる。
 
 予測研究のための、小さく内部を検証しやすい多変量時系列 Transformer baseline です。
 

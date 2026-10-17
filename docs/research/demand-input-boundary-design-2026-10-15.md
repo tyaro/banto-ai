@@ -1,6 +1,6 @@
 # 入力・ラベル分離と時点整合の事前実装契約
 
-2026-10-15 JST。人の依頼と[前計画](demand-support-evaluation-plan-2026-10-15.md)、[Astra実装前確認](demand-input-boundary-astra-review-2026-10-15.md)に基づく。今回は分離schema・可用性台帳・契約fixture・独立readbackのみ。新fit/候補予測/score/2015内容参照・再評価を起動しない。
+2026-10-15 JST。人の依頼と前計画、[Astra実装前確認](demand-input-boundary-astra-review-2026-10-15.md)に基づく。今回は分離schema・可用性台帳・契約fixture・独立readbackのみ。新fit/候補予測/score/2015内容参照・再評価を起動しない。
 
 ## 固定するデータ境界
 

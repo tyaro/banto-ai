@@ -31,7 +31,7 @@
 | 候補 | 今回の状態 | 再開前に確認すること |
 | --- | --- | --- |
 | [FreshRetailNet-50K](https://huggingface.co/datasets/Dingdong-Inc/FreshRetailNet-50K) | 公式メタデータGETが接続reset/curl exit35。データ本体0bytes、採用revision未固定 | ネットワーク障害の解消後に新unitで版・CC BY 4.0・公開LFS pinを確認。90日・正規化数量という研究境界を維持 |
-| [Favorita Store Sales](https://www.kaggle.com/competitions/store-sales-time-series-forecasting/data) | 後続unitでユーザー提供原本を取得・保存済み | [原本受領と研究入力](store-sales-source-intake-2026-10-14.md)。Subject to Competition Rules。過去の予定版/as-ofは未確定 |
+| [Favorita Store Sales](https://www.kaggle.com/competitions/store-sales-time-series-forecasting/data) | 後続unitでユーザー提供原本を取得・保存済み | 原本受領と研究入力。Subject to Competition Rules。過去の予定版/as-ofは未確定 |
 | [CARE to Compare](https://zenodo.org/records/15846963) | 未取得 | 修正済み版・利用条件・必要fileの容量。先行版の約6.1GB archiveは現在の取得上限内へ入れない |
 | [XJTU-SY](https://github.com/WangBiaoXJTU/xjtu-sy-bearing-datasets) | 未取得 | 公開元の研究利用案内と再配布/商用条件、必要な軸受trajectoryの容量 |
 | [Paderborn](https://mb.uni-paderborn.de/en/kat/forschung/bearing-datacenter) | 未取得 | CC BY-NC 4.0の非商用範囲と対象archiveの選択 |
