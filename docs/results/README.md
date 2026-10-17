@@ -6,6 +6,8 @@
 
 ## Rustクレートの移植
 
+- [R2P工程3: 人工学習の連続8更新と保存再開（2026-10-17）](rust-r2p-resume-2026-10-17.md)
+- [R2P工程2: Rustの学習部品（2026-10-17）](rust-r2p-training-parts-2026-10-17.md)
 - [R2P: Cloud環境でのTorch参照の再生成（2026-10-17）](rust-r2p-cloud-reference-2026-10-17.md)
 - [研究ブランチの整理とmain取り込み](research-consolidation-2026-10-17.md) — 停止済みsourceの保存、lock整合、現在の確認結果。
 

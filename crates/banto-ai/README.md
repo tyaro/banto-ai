@@ -5,8 +5,14 @@ banto-industrial and demand/PSI consumers own data acquisition, application DTOs
 job hosting and model activation.
 
 R1 implements the fixed full SmallForecaster inference path on explicit Burn
-0.22 Flex CPU. Training, optimizer updates and restart belong to R2 and are not
-implemented yet. The output contains quantiles and context diagnostics; its p50
+0.22 Flex CPU. The `training` module holds the R2P artificial training parts:
+normalized pinball loss with autodiff, ordered named gradients, global-norm clip
+and a Torch-compatible AdamW. `cargo test -p banto-ai --features training-tests
+--test r2p_synthetic` checks them against the committed Torch reference in
+`tests/fixtures/r2p` under the unchanged R0.1 tolerances. `training::train_step`
+and `synthetic_checkpoint` (schema `banto.synthetic-training-checkpoint.v1`)
+cover the artificial toy model's eight updates and its save/resume in separate
+processes. Training the full SmallForecaster and formal R2 are not implemented yet. The output contains quantiles and context diagnostics; its p50
 and context_center are not expected future demand.
 
 Current verification: locked offline CPU build and all three tests pass on
