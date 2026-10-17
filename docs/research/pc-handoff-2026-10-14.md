@@ -9,8 +9,8 @@
 ## 最初に読むもの
 
 1. [current-handoff最上段](../current-handoff.md)。下段の古いACTIVEは現在の指示ではない。
-2. [研究roadmap](research-roadmap.md)、[Astraの評価方法レビュー](demand-evaluation-methodology-astra-review-2026-10-14.md)。
-3. [保存補正の誤差分解](../results/demand-correction-decomposition-2026-10-14.md)。
+2. [研究roadmap](research-roadmap.md)、Astraの評価方法レビュー。
+3. 保存補正の誤差分解。
 4. [最新の一軌跡・二選択点の結果](../results/demand-group-selection-2026-10-14.md)と[その契約](demand-group-selection-design-2026-10-14.md)。
 
 最新の研究は一候補・一split・一seedで完了。店舗移行validationで選んだ3072更新は同店時間validationの3328更新よりjointが1.712943%良いが、mean28比0.597425%悪化。日次・総量も悪化し、暫定2%改善条件は未達。製品採用0。旧15店fitとの差には学習店舗数の違いがあり、選択方法だけの効果ではない。次は既存店舗の将来予測と未学習店舗への移行のどちらが実用途の主問か、mean28へ追加したい能力を整理する。seed/split/LR/幅/gridを自動追加しない。
@@ -38,7 +38,7 @@ git clone --branch codex/preformal-acceptance-scope https://github.com/tyaro/ban
 
 Macのブラウザでデータ取得ページを開き、必要なKaggleログイン・規約確認を人が行って、全ファイルのZIPを取得する。対象は **Store Sales — Time Series Forecasting**。別competitionの **Corporación Favorita Grocery Sales Forecasting** と取り違えない。認証・同意・Mac上のdownloadは今回代行していない。リンク到達は確認したが、Kaggleの認証後画面とMacでの取得成功は未確認。
 
-必要な構成は `train.csv`、`test.csv`、`holidays_events.csv`、`stores.csv`、`transactions.csv`、`oil.csv`、`sample_submission.csv` の7CSV。[受領済み原本の構成と利用条件](store-sales-source-intake-2026-10-14.md)を参照する。販促計画の履歴はこのデータから追加取得できず、将来の販促実施値を過去時点の既知計画にしない。
+必要な構成は `train.csv`、`test.csv`、`holidays_events.csv`、`stores.csv`、`transactions.csv`、`oil.csv`、`sample_submission.csv` の7CSV。受領済み原本の構成と利用条件を参照する。販促計画の履歴はこのデータから追加取得できず、将来の販促実施値を過去時点の既知計画にしない。
 
 既存のWindows受領ZIPとの照合値：
 

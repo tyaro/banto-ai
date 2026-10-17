@@ -15,7 +15,7 @@
 | binding.json | 各ファイルの独立pinとkeyの一対一対応。label hashや混在source pinはinput bytesへ混ぜない |
 | issue-schedule.json | 2014Jan1+14*k、k0..25×FIT10をinput側で定義。label存在・完全性から発行対象を作らない |
 
-新しいconsumer入口は[単一readのv2 loader](../../tools/demand_input_boundary_v2.py)。[v1共通schema/時点契約](../../tools/demand_input_boundary.py)を継承し、[migration/checker v2](../../tools/demand_input_boundary_check_v2.py)が旧混在packetを読む一回の移行を担当する。input-only consumerは入力と変換だけを受け取り、検査中は混在source/label/indexのopenとlabel decodeをspyで禁止した。
+新しいconsumer入口は[単一readのv2 loader](../../tools/demand_input_boundary_v2.py)。[v1共通schema/時点契約](../../tools/demand_input_boundary.py)を継承し、migration/checker v2が旧混在packetを読む一回の移行を担当する。input-only consumerは入力と変換だけを受け取り、検査中は混在source/label/indexのopenとlabel decodeをspyで禁止した。
 
 470=保存済み2013学習資料210＋独立定義の2014発行対象260。2013の元選別履歴は残り、分離によって母集団の選択バイアスが消えたとは扱わない。2013資料を将来の発行母集団へ転用しない。
 

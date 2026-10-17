@@ -10,7 +10,7 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 TimesFM3を参考にした自作モデルの実用性検証を進めています。保全・点検支援を第一優先とし、需要予測・PSIも扱います。AI本体はbanto-aiに置き、Rustで学習・推論・optimizer保存再開まで対応することを目指します。banto-industrialとdenroku-psi-demoは利用側です。
 
-現在の順序は[短い引継ぎ](docs/current-handoff.md)と[復帰計画](docs/research/banto-ai-practical-training-return-plan-2026-10-16.md)を参照してください。人工Python参照は生成済み、Rust学習部品は未実装です。R1の中間値1点は未達で、正式R2実データ学習は停止しています。[停止済み調査](experiments/archive/rust-r1-20261016/README.md)は履歴として保存し、通常の実行対象から外しました。
+現在の順序は[短い引継ぎ](docs/current-handoff.md)と[復帰計画](docs/research/banto-ai-practical-training-return-plan-2026-10-16.md)を参照してください。人工Python参照は生成済み、Rust学習部品は未実装です。R1の中間値1点は未達で、正式R2実データ学習は停止しています。停止済み調査は履歴として保存し、通常の実行対象から外しました。
 
 以下のモデル比較・異常評価はこれまでの研究基盤と履歴です。過去時点の「次」は現在の工程を上書きしません。
 
@@ -192,4 +192,4 @@ Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能
 
 ## Rust AIクレートの研究実装
 
-AI本体は [crates/banto-ai](crates/banto-ai/README.md) に置き、学習・推論・保存再開を共通化する。[実装計画](docs/research/banto-ai-rust-implementation-plan-2026-10-16.md)に沿ってCPU buildと3テストが通過した。同一入力の正規化・attention診断を根拠にLayerNormの演算順をそろえ、固定7ケースを確認。最終予測は許容差内だが、別の中間値1点超過でR1全体は未合格。Rust学習は未開始。[結果と次工程](docs/results/banto-ai-rust-r1-upstream-order-2026-10-16.md)を参照。
+AI本体は [crates/banto-ai](crates/banto-ai/README.md) に置き、学習・推論・保存再開を共通化する。[実装計画](docs/research/banto-ai-rust-implementation-plan-2026-10-16.md)に沿ってCPU buildと3テストが通過した。同一入力の正規化・attention診断を根拠にLayerNormの演算順をそろえ、固定7ケースを確認。最終予測は許容差内だが、別の中間値1点超過でR1全体は未合格。Rust学習は未開始。結果と次工程を参照。

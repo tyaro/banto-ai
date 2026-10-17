@@ -18,7 +18,7 @@
 | 小型独自モデルのsource・学習結果・選択予測 | 継続保管 | TimesFM公開構造を参考にした独立モデル研究の成果 |
 | environments/timesfm3/.venv | 約735.6MB | 現在の小型独自モデルでもTorch依存に使う隔離環境 |
 
-Store Salesは[受領記録](store-sales-source-intake-2026-10-14.md)、工業公開データは[取得状況](public-dataset-acquisition-2026-10-14.md)、小型モデルは[一回探索](timesfm3-small-model-pilot-2026-10-14.md)を参照する。TimesFM用という環境名だけで現在不要とは判定しない。
+Store Salesは受領記録、工業公開データは[取得状況](public-dataset-acquisition-2026-10-14.md)、小型モデルは[一回探索](timesfm3-small-model-pilot-2026-10-14.md)を参照する。TimesFM用という環境名だけで現在不要とは判定しない。
 
 Online Retail II原本約45.6MBは、より直接的な季節・販促入力を含むStore Salesを取得したため、当面の主入力から外して保留候補とする。閉鎖済みUCI取得rootの中にあるため、今回そのfileを個別削除してinventoryを壊さない。CARE/XJTU/FreshRetail本体は未取得で、削除対象となる原本はない。
 

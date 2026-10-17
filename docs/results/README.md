@@ -14,39 +14,24 @@
 
 - [実用性とRust学習への計画改訂結果](banto-ai-rust-practical-training-replan-2026-10-16.md) — 保存成果だけを整理、許容差不変・学習未実行。
 
-- [Rust R1 固定64byte呼出先と間接転送stub](banto-ai-rust-r1-once-target-2026-10-16.md) — SDK配置とVM境界を確認、単一slot導出までで閉鎖。
 
-- [Rust R1 once公開契約とAPI呼出先照合](banto-ai-rust-r1-once-contract-2026-10-16.md) — SDK確認、targetの直接同一性未達を保存、次は単一targetのmapping。
 
-- [Rust R1 patch一致とonce gate未達](banto-ai-rust-r1-sgemm-warm-binding-2026-10-16.md) — 一度の実行6,144値一致、warm-binding失敗保持、次はonce source契約。
 
-- [Rust R1 SGEMM読取り監査と小行列の再現](banto-ai-rust-r1-sgemm-readonly-2026-10-16.md) — 6関数閉鎖、人工5case一致、train初期化bindingは次unit。
 
-- [Rust R1 pure-Rust fused linearの実装と不採用](banto-ai-rust-r1-fused-linear-2026-10-16.md) — 人工pass、154組がbaseline bytes同一で改善なし。
 
-- [Rust R1 patchのbias融合/行列積差](banto-ai-rust-r1-linear-boundary-2026-10-16.md) — trainのraw mm一致、単独add一致、一般fused候補の条件を固定。
 
-- [Rust R1 初期contextのbit一致と全体候補の採否](banto-ai-rust-r1-context-normalization-2026-10-16.md) — 局所84組一致、全体1点未達でmodel復元。
 
-- [Rust R1 FMA拡張と全体候補の不採用](banto-ai-rust-r1-fma-extension-2026-10-16.md) — 人工/局所pass、全体3点未達でmodel復元。
 
-- [Rust R1バイナリの丸め順と局所全bit再現](banto-ai-rust-r1-binary-moments-2026-10-16.md) — 49入力、124,992出力一致、core不変。
 
-- [Rust R1モーメント計算・丸め位置の照合](banto-ai-rust-r1-moments-audit-2026-10-16.md) — 3系統のanchor再現、成分分離、core不変。
 
-- [Rust R1標準LayerNorm候補の不採用](banto-ai-rust-r1-native-norm-2026-10-16.md) — 全7caseでSSE増加、core不変。
 
 - [Rust R1全55箇所・7ケースの局所/累積差診断](banto-ai-rust-r1-all-layer-audit-2026-10-16.md) — 局所超過0、上流累積1点未達、モデル変更0。
 
-- [Rust R1の正規化・attention演算順診断](banto-ai-rust-r1-upstream-order-2026-10-16.md) — 一般LN修正の根拠確認、7case再確認で別の1点未達。
 
-- [Rust R1の中間値1点の切り分け](banto-ai-rust-r1-intermediate-diagnosis-2026-10-16.md) — 共通入力線形/加算を確認、上流2枝の累積差。R1未達は維持。
 
-- [Rust R1 CPUテストと数値比較](banto-ai-rust-r1-tests-parity-2026-10-16.md) — 3テストpass、最終予測pass、中間値1点超過でR1未合格。
 
-- [Rust R1のビルド容量上限停止](banto-ai-rust-r1-build-stop-2026-10-16.md) — Xcode確認通過。R1 CPU buildがcache+target合計768MiB上限で停止、テスト/数値比較未確認。
+- Rust R1のビルド容量上限停止 — Xcode確認通過。R1 CPU buildがcache+target合計768MiB上限で停止、テスト/数値比較未確認。
 
-- [banto-ai Rust R1の準備と再開手順](banto-ai-rust-r1-preparation-2026-10-16.md) — ソース/参照準備まで。Xcode設定待ち、build/数値一致は未確認。
 
 ## 産業設備の保全と点検支援
 
@@ -58,33 +43,41 @@
 
 ## 独自モデルの需要用途
 
+- [rawP厳密ゼロ境界と両側：人工接続検証](demand-zero-boundary-artificial-2026-10-16.md)
+- [自Qの重み付き制約solver：人工検証完了](demand-weighted-solver-artificial-2026-10-16.md)
+- [丸め差付き比例配分・floor到達の人工接続検証](demand-roundfloor-pipeline-artificial-2026-10-16.md)
+- [rank3・週係数非ゼロ解のrawP厳密ゼロ境界と両側](demand-rank3-zero-boundary-artificial-2026-10-16.md)
+- [rank3・週変化係数非ゼロの人工pipeline検証](demand-rank3-pipeline-artificial-2026-10-16.md)
+- [非ゼロ人工prefixから日次予測までの接続検証](demand-nonzero-pipeline-artificial-2026-10-16.md)
+- [制約が非ゼロ解を変える人工pipeline検証](demand-active-pipeline-artificial-2026-10-16.md)
+- [実学習prefixの接続条件固定・時点来歴metadata監査](demand-weighted-prefix-preflight-2026-10-15.md)
+- [実2013数量prefixのpin・完全性・問題生成とβ0確認](demand-weighted-numeric-prefix-2026-10-15.md)
+- [非ゼロ係数から日次予測への接続：人工検証完了](demand-weighted-daily-bridge-2026-10-15.md)
+- [学習consumerの問題生成・β0 baseline再現：人工検証完了](demand-weighted-consumer-artificial-2026-10-15.md)
+- [Q4集中・自店学習信号0の分析と、学習開始条件](demand-weight-learning-entry-2026-10-15.md)
+- [Astraレビューに基づく総量保存・四季別日次配分の評価](demand-total-preserving-2026-10-15.md)
+- [総量過小非増加を課した元日前後数量の検証](demand-shortfall-quantity-2026-10-15.md)
+- [四季平均の両側制約付き総量補正・改善支持なし](demand-seasonal-risk-2026-10-15.md)
+- [休業ゼロ・営業中の販売ゼロ・欠測の分離と固定2015評価](demand-sales-state-2026-10-15.md)
+- [過去からの休業相当推定・観測評価と欠測0仮定の評価](demand-recurring-closure-2026-10-15.md)
+- [順序付き重みの数値仕様固定・人工統合確認](demand-ordered-weight-numeric-2026-10-15.md)
+- [固定重みの発行前入力接続・集中とrankの監査](demand-ordered-weight-input-audit-2026-10-15.md)
+- [店舗特性×短期持続性：順序付き重みの第一案を保存](demand-ordered-persistence-design-2026-10-15.md)
+- [Macでの需要入力・profile・模型の新規生成](demand-macos-rebuild-2026-10-15.md)
+- [入力・ラベル分離と仮定に基づく時点契約の検証完了](demand-input-boundary-2026-10-15.md)
+- [既存10店の2015年評価 — 小幅改善、暫定条件未達](demand-existing-stores-2015-2026-10-15.md)
+- [保存260予測の2014採点完了：年間は改善、Q1条件違反で不適格](demand-bounded-scoring-2014-2026-10-15.md)
 - [店舗分離による終了点選択・一軌跡比較（2026-10-14）](demand-group-selection-2026-10-14.md)
-- [保存済み予測の補正誤差分解（2026-10-14）](demand-correction-decomposition-2026-10-14.md)
-- [内部選択済み模型の未学習店舗評価・基準未達（2026-10-14）](demand-selected-series-evaluation-2026-10-14.md)
 - [学習量の時系列分離診断・256以降改善（2026-10-14）](demand-training-adequacy-2026-10-14.md)
-- [統計8入力の2016時間順検証・9of15/停止（2026-10-14）](demand-statistical-feature-validation-2026-10-14.md)
 - [統計8入力あり/なしの同条件学習比較（2026-10-14）](demand-statistical-feature-pair-2026-10-14.md)
 - [σ/EMAの追加学習入力・6確認（2026-10-14）](demand-statistical-features-2026-10-14.md)
 - [σ/EMA/等重み併用・条件未達（2026-10-14）](demand-statistical-overlay-2026-10-14.md)
 - [当日/前後の小型模型比較・自走停止（2026-10-14）](demand-calendar-model-pair-2026-10-14.md)
 - [名目暦60の入力確認・fit支持（2026-10-14）](demand-public-calendar-input-2026-10-14.md)
-- [営業日水準と確定休業0・新6確認（2026-10-14）](demand-operating-sales-2026-10-14.md)
 - [休暇区間と営業予定の分離・新6確認（2026-10-14）](demand-event-interval-input-2026-10-14.md)
 - [営業状態と休日の前後入力・新6確認（2026-10-14）](demand-holiday-event-input-2026-10-14.md)
-- [8週補正の保存誤差分解・入力支持監査（2026-10-14）](store-sales-weekly-correction-diagnosis-2026-10-14.md)
-- [数量支持15店の8週回帰・全18店評価（2026-10-14）](store-sales-weekly-ridge-cohort-2026-10-14.md)
-- [8週共有回帰の学習前支持・停止（2026-10-14）](store-sales-weekly-ridge-readiness-2026-10-14.md)
 - [8週間の自己履歴入力と新5確認（2026-10-14）](store-sales-weekly-history-input-2026-10-14.md)
-- [完了した過去誤差による時点別総量区間（2026-10-14）](store-sales-sequential-interval-2026-10-14.md)
-- [自身の過去総量区間・期間診断（2026-10-14）](store-sales-own-history-interval-2026-10-14.md)
-- [共有総量区間と一尺度案の結果・失敗保全（2026-10-14）](store-sales-shared-interval-results-2026-10-14.md)
-- [新6店舗への共有数量残差の一回検証（2026-10-14）](store-sales-shared-residual-2026-10-14.md)
-- [共有学習の店舗選定・数量支持（2026-10-14）](store-sales-shared-series-support-2026-10-14.md)
-- [過去販促の支持・残差記述と一回2016検証（2026-10-14）](store-sales-past-promotion-2026-10-14.md)
 - [独立mean出力の実装・一回評価（2026-10-14）](store-sales-mean-pilot-2026-10-14.md)
-- [平均・中央値・意思決定分位点と学習目的の整理（2026-10-14）](store-sales-quantity-objectives-2026-10-14.md)
-- [水準・相対変動とイベント別入力の確認・一回接続（2026-10-14）](store-sales-small-model-inputs-2026-10-14.md)
-- [学習支持例・連続ゼロ・入力情報の診断（2026-10-14）](store-sales-training-diagnosis-2026-10-14.md)
 - [小型モデルの需要設計・一回探索（2026-10-14）](store-sales-small-model-2026-10-14.md)
 
 ## 検証記録の保存改善

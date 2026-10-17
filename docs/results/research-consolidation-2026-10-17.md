@@ -11,7 +11,7 @@
 
 ## 現役と履歴
 
-停止済みRust拡張3module、診断example、単発調査・報告toolの計67ファイルを[テキスト資料](../../experiments/archive/rust-r1-20261016/README.md)へ退避し、全byteとSHA256を[catalog](../../experiments/archive/rust-r1-20261016/catalog.json)で保存した。拡張子に.txtを付け、Cargoのtarget探索とPython import/compile対象から外した。ポインタ/once/TLS/PAC/SGEMM調査は実行していない。
+停止済みRust拡張3module、診断example、単発調査・報告toolの計67ファイルをテキスト資料へ退避し、全byteとSHA256をcatalogで保存した。拡張子に.txtを付け、Cargoのtarget探索とPython import/compile対象から外した。ポインタ/once/TLS/PAC/SGEMM調査は実行していない。
 
 model/input/checkpoint/error、predict example、既存の比較器・参照producer・metadata・閉鎖検証helperは残した。未定義featureのexportを削除し、暗黙のCargo example探索を無効化。旧JSON/過去結果/frozen planは元パスを保持する。履歴sourceを実行する場合の入口にはしない。
 

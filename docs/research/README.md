@@ -18,41 +18,27 @@
 
 - [実用性検証とRust学習へ戻る改訂2](banto-ai-practical-training-return-plan-2026-10-16.md) — pointer追跡停止、残1点の対応上限、人工R2Pと正式R2を分離。
 
-- [Rust R1 固定call target64bytesの結果](../results/banto-ai-rust-r1-once-target-2026-10-16.md) — transfer stubを確認、slot読取りは次の独立条件。
 
-- [Rust R1 初期化判定と未同定のcall target](../results/banto-ai-rust-r1-once-contract-2026-10-16.md) — 公開API保証とprivate状態を分離、数値演算0。
 
-- [Rust R1 once条件未達と次のsource工程](../results/banto-ai-rust-r1-sgemm-warm-binding-2026-10-16.md) — 出力一致とdispatch未確定を区別。
 
-- [Rust R1 SGEMMの命令/shape分岐監査](../results/banto-ai-rust-r1-sgemm-readonly-2026-10-16.md) — own-process読取り、初期化不明を保持し次条件を固定。
 
-- [Rust fused linearの安全性](rust-fused-linear-safety-2026-10-16.md)・[局所比較と不採用](../results/banto-ai-rust-r1-fused-linear-2026-10-16.md) — 公開extension、stride/bounds証明とgraphを確認。
 
-- [Rust R1 linear境界の診断と次候補条件](../results/banto-ai-rust-r1-linear-boundary-2026-10-16.md) — pure-Rust/graph/有限比較/安全性を実装前に固定。
 
-- [Rust R1 context差のソース診断と有限候補](../results/banto-ai-rust-r1-context-normalization-2026-10-16.md) — 独立f64 stdとf32 mean、全体gateは未通過。
 
-- [Rust R1 FMA拡張の実装・採否](../results/banto-ai-rust-r1-fma-extension-2026-10-16.md) — 公開拡張API、独立oracleとgraph、R2未開始。
 
-- [f32 FMAのRust実装・人工forward条件](rust-fma-primitive-contract-2026-10-16.md) — graph保持と独立oracle、R1全体通過前の学習停止。
 
-- [Rust R1モーメント計算・次工程の受入条件](rust-r1-moments-admission-2026-10-16.md) — 参照build/binaryとgraphを保つFMAの境界。
 
-- [Rust R1標準LayerNormの固定比較と負の結果](../results/banto-ai-rust-r1-native-norm-2026-10-16.md) — 全49組、候補不採用。
 
 - [linfaとsmartcoreの将来研究候補とAstraレビュー](rust-classical-ml-linfa-smartcore-note-2026-10-16.md) — 古典MLの比較基準、保全先行の有限比較、保存再開・版・OSの確認。
 
 - [Rust R1全層診断と固定条件](../results/banto-ai-rust-r1-all-layer-audit-2026-10-16.md) — 385比較、各161anchor厳密再現、局所と累積の差を分離。
 
-- [Rust R1の上流演算順と一般修正](../results/banto-ai-rust-r1-upstream-order-2026-10-16.md) — 同一入力pass、修正後3テストpass/全体gateは別点で未達。
 
-- [Rust R1の共通入力診断](../results/banto-ai-rust-r1-intermediate-diagnosis-2026-10-16.md) — 局所演算差と上流伝播を分離。次は上流演算順。
 
-- [Rust R1の実行結果と残差切り分け](../results/banto-ai-rust-r1-tests-parity-2026-10-16.md) — build枠1.5GiB、CPUテストpass、数値一致gateは1点未達。
 
-- [Rust R1の現状と再開条件](../results/banto-ai-rust-r1-build-stop-2026-10-16.md) — Xcode確認通過。R1 CPU buildがcache+target合計768MiB上限で停止、テスト/数値比較未確認。
+- Rust R1の現状と再開条件 — Xcode確認通過。R1 CPU buildがcache+target合計768MiB上限で停止、テスト/数値比較未確認。
 
-- [banto-ai Rust R1の準備と再開手順](../results/banto-ai-rust-r1-preparation-2026-10-16.md) — crateソース/lock/154有効依存と7参照forwardを保存。Xcode規約未同意でbuild/テスト/数値一致は待機、R1未完。
+- banto-ai Rust R1の準備と再開手順 — crateソース/lock/154有効依存と7参照forwardを保存。Xcode規約未同意でbuild/テスト/数値一致は待機、R1未完。
 
 - [denroku-psi-demoの需要AIとPSI接続の現状](denroku-psi-ai-integration-2026-10-16.md) — Python LightGBM学習/Rust推論/静的PSIと、未実装のC API再学習計画。AI crate共通化の境界を整理。
 
@@ -136,39 +122,19 @@
 - [順序/単調性/連続性の説明補記](demand-ordered-persistence-amendment-2026-10-15.md)
 - [Astra順序付き案の結果確認](demand-ordered-persistence-astra-result-review-2026-10-15.md)
 
-- [10店の発行前特性表とQ1悪化集中](../results/demand-store-characteristics-Q1-2026-10-15.md)
-- [特性/Q1記述診断の事前契約](demand-store-characteristics-contract-2026-10-15.md)
-- [Astra特性/Q1実装・結果確認](demand-store-characteristics-astra-result-review-2026-10-15.md)
 
 - [保存260予測の2014採点：年間改善/Q1不適格](../results/demand-bounded-scoring-2014-2026-10-15.md)
 - [桁数内の固定精度区間集計契約](demand-bounded-scoring-contract-2026-10-15.md)
 - [Astra有界集計の実装/結果確認](demand-bounded-scoring-astra-result-review-2026-10-15.md)
 
-- [季節内10店共有2014：採点上限停止・未判定](../results/demand-seasonal-shared-2014-2026-10-15.md)
-- [季節内10店共有の適用契約](demand-seasonal-shared-2014-contract-2026-10-15.md)
-- [Astra季節共有の実装/結果確認](demand-seasonal-shared-astra-result-review-2026-10-15.md)
 
-- [四季制約の干渉診断と統計分析](../results/demand-seasonal-conflict-2026-10-15.md)
-- [季節別係数の第一設計と統計計画](demand-seasonal-coefficients-plan-2026-10-15.md)
-- [Astra干渉診断レビュー](demand-seasonal-conflict-astra-review-2026-10-15.md)
 
-- [制約付き共通残差2014一巡・全beta0最適/改善0](../results/demand-constrained-2014-2026-10-15.md)
-- [2014単一適用契約v2](demand-constrained-2014-contract-v2-2026-10-15.md)
-- [Astra2014実装・結果確認](demand-constrained-2014-astra-result-review-2026-10-15.md)
 
-- [制約付き数値実装・人工21fixtureと8証明](../results/demand-constrained-numerics-2026-10-15.md)
-- [数値実装契約（人工のみ）](demand-constrained-numerics-contract-2026-10-15.md)
-- [v2総量集計の修正](demand-constrained-numerics-v2-amendment-2026-10-15.md)
-- [Astra数値レビュー](demand-constrained-numerics-astra-review-2026-10-15.md)
 
-- [全alpha0原因と両側制約付き学習の検討](../results/demand-alpha-zero-diagnosis-2026-10-15.md)
 - [制約付き学習の第一設計（新fitなし）](demand-constrained-training-design-2026-10-15.md)
 - [Astra方法・進め方監査](demand-constrained-training-astra-review-2026-10-15.md)
 
-- [prefix受渡しと2014共通残差一巡・追加改善0](../results/demand-common-residual-2026-10-15.md)
 - [許可prefixと固定2特徴の監査契約](demand-prefix-adapter-design-2026-10-15.md)
-- [共通残差モデル単一事前契約](demand-common-residual-design-2026-10-15.md)
-- [Astra設計・一巡結果確認](demand-common-residual-astra-review-2026-10-15.md)
 
 - [入力境界検証のGit環境・初回文書失敗の保存](demand-input-boundary-os-check-2026-10-15.md)
 
@@ -178,45 +144,13 @@
 - [Astra loader指摘とv2補強](demand-input-boundary-loader-review-2026-10-15.md)
 - [Astra境界契約の結果確認](demand-input-boundary-astra-result-review-2026-10-15.md)
 
-- [少数支持対策と今後の評価設計（新実験なし）](demand-support-evaluation-plan-2026-10-15.md)
-- [Astra方法・評価監査の検討](demand-support-evaluation-astra-review-2026-10-15.md)
-- [評価設計の機械可読決定表](demand-support-evaluation-decisions-2026-10-15.json)
 
-- [店舗・季節の共有縮小、2014限定の負結果](../results/demand-shared-shrink-2026-10-15.md)
-- [共有縮小の事前契約](demand-shared-shrink-design-2026-10-15.md)
-- [Astra共有縮小の設計確認](demand-shared-shrink-astra-review-2026-10-15.md)
-- [別担当Astraの独立プロセス監査](demand-shared-shrink-process-audit-2026-10-15.md)
-- [Astra双方の結果・監査反映確認](demand-shared-shrink-astra-result-review-2026-10-15.md)
 
-- [週持続・非減速の検証、支持消失と追加改善0](../results/demand-persistence-2026-10-15.md)
-- [持続性/非減速の事前契約](demand-persistence-design-2026-10-15.md)
-- [Astra診断・週単位の持続確認](demand-persistence-astra-review-2026-10-15.md)
-- [Astra結果確認・支持消失と幅増大](demand-persistence-astra-result-review-2026-10-15.md)
 
-- [直前水準・変化と前年の整合確認・2015未達](../results/demand-immediate-alignment-2026-10-15.md)
-- [発行直前整合と端点capの事前契約](demand-immediate-alignment-design-2026-10-15.md)
-- [Astra診断・直前整合の設計確認](demand-immediate-alignment-astra-review-2026-10-15.md)
-- [Astra結果確認・旧2窓の季節停止と新誤方向](demand-immediate-alignment-astra-result-review-2026-10-15.md)
 
-- [前年情報の発行前信頼性判定・Q4採用も2015未達](../results/demand-annual-reliability-2026-10-15.md)
-- [発行前2block信頼gateの事前契約](demand-annual-reliability-design-2026-10-15.md)
-- [Astra診断・信頼gate設計確認](demand-annual-reliability-astra-review-2026-10-15.md)
-- [平坦境界の数値修正](demand-annual-reliability-numerics-2026-10-15.md)
-- [Astra結果確認・現在窓への非保証](demand-annual-reliability-astra-result-review-2026-10-15.md)
 
-- [店舗/発行日別誤方向と前年アンカーの2014改善・2015未達](../results/demand-annual-anchor-2026-10-15.md)
-- [前年アンカー・方向確認/幅制限の事前契約](demand-annual-anchor-design-2026-10-15.md)
-- [Astra診断と前年アンカー設計確認](demand-annual-anchor-astra-review-2026-10-15.md)
-- [Astra結果確認・2015再現未達](demand-annual-anchor-astra-result-review-2026-10-15.md)
 
-- [季節別補正の採用・停止を検証、Q2/Q4条件未達](../results/demand-quarter-consensus-2026-10-15.md)
-- [季節別係数の事前契約](demand-quarter-consensus-design-2026-10-15.md)
-- [Astra確認・季節別化と薄い支持](demand-quarter-consensus-astra-review-2026-10-15.md)
-- [Astra結果確認・Q2/Q4の棄却判断](demand-quarter-consensus-astra-result-review-2026-10-15.md)
 
-- [Q2/Q4原因分析と方向持続補正・共有係数0の負の結果](../results/demand-adaptive-consensus-2026-10-15.md)
-- [季節内の過去方向一致補正の事前契約](demand-adaptive-consensus-design-2026-10-15.md)
-- [Astra確認・方向不一致/相殺/反転遅れ](demand-adaptive-consensus-astra-review-2026-10-15.md)
 
 - [四季平均両側制約・総量補正は全Q対照へfallback](../results/demand-seasonal-risk-2026-10-15.md)
 - [四季平均制約付きsigned総量補正の事前契約](demand-seasonal-risk-design-2026-10-15.md)
@@ -229,50 +163,23 @@
 - [総量過小非増加・元日数量改善と通常総量MSEの残課題](../results/demand-shortfall-quantity-2026-10-15.md)
 - [過小非増加と元日前後数量の実行前契約](demand-shortfall-quantity-design-2026-10-15.md)
 
-- [元日/全季節の2014数量検証・2015通常改善と元日未達](../results/demand-seasonal-quantity-2026-10-15.md)
-- [2013尺度/2014四季校正・方式選択の実行前契約](demand-seasonal-quantity-design-2026-10-15.md)
 
-- [営業日数量/総量の二比較・2014内部で補正支持なし](../results/demand-frozen-recent-quantity-2026-10-15.md)
-- [2014の最近の数量係数を2015前に凍結する契約](demand-frozen-recent-quantity-design-2026-10-15.md)
-- [休業gate付き静的数量モデルの負の結果](../results/demand-open-quantity-2026-10-15.md)
-- [営業日数量/総量の有限比較契約](demand-open-quantity-design-2026-10-15.md)
 - [過去反復の休業相当推定・観測と欠測0仮定の別評価](../results/demand-recurring-closure-2026-10-15.md)
 - [2013/2014から推定する休業相当仮説の実行前契約](demand-recurring-closure-design-2026-10-15.md)
-- [元日ゼロを含む追加10窓評価・主4.547693%悪化/営業unknown維持](../results/demand-newyear-evaluation-2026-10-15.md)
-- [元日発行/過去365日fit/旧250窓と分離の実行前契約](demand-newyear-evaluation-design-2026-10-15.md)
 - [休業0・営業中販売0・欠測の分離と固定2015評価](../results/demand-sales-state-2026-10-15.md)
 - [営業状態/販売発生確率/欠測の分離・実行前契約](demand-sales-state-design-2026-10-15.md)
-- [2014分離選択・主rolling1.811781%改善/10店・目安未達](../results/demand-temporal-selection-2026-10-15.md)
-- [2014前半校正/後半選択/固定2015の実行前契約](demand-temporal-selection-design-2026-10-15.md)
-- [365日ローリング回帰・副評価2.357761%改善と固定主選択](../results/demand-rolling-ridge-2026-10-15.md)
-- [発行日前の完了窓だけによるローリング回帰契約](demand-rolling-ridge-design-2026-10-15.md)
 - [声かけまで継続するMac自走・heartbeatと境界](autonomous-continuation-2026-10-15.md)
-- [完了自己誤差の店舗bias更新・内部alpha0で元模型維持](../results/demand-prequential-bias-2026-10-15.md)
-- [発行日前の誤差だけを使う更新契約](demand-prequential-bias-design-2026-10-15.md)
-- [自走の平均予測比較・リッジ翌年悪化と不採用](../results/demand-autonomous-mean-2026-10-15.md)
-- [自走の二候補/内部選択/固定2015評価の契約](demand-autonomous-mean-design-2026-10-15.md)
-- [既存10店のMSE改善・MAE悪化／過小過大の保存診断](../results/demand-existing-store-diagnosis-2026-10-15.md)
-- [既存10店の保存誤差診断・実行前契約](demand-existing-store-diagnosis-design-2026-10-15.md)
 - [既存10店2015の一回評価・小幅改善と暫定目安未達](../results/demand-existing-stores-2015-2026-10-15.md)
 - [既存10店2015評価の実行契約](demand-existing-store-evaluation-design-2026-10-15.md)
 - [主用途は既存店舗の将来予測・PSI／次評価の設計](demand-existing-store-purpose-2026-10-15.md)
-- [Mac保存予測の補正誤差分解・結果](../results/demand-macos-diagnosis-2026-10-15.md)
-- [Mac保存予測診断の実行前契約](demand-macos-diagnosis-design-2026-10-15.md)
 - [Mac原本からの新規生成契約](demand-macos-rebuild-design-2026-10-15.md)
 - [Macでの入力・profile・模型生成結果](../results/demand-macos-rebuild-2026-10-15.md)
 - [現在の保管範囲・旧証拠3.46GBの承認済み削除](workspace-retention-2026-10-14.md)
 - [Macへの引継ぎ・Git外の証拠と移植箇所](pc-handoff-2026-10-14.md)
 - [店舗分離による終了点選択・一軌跡比較の契約](demand-group-selection-design-2026-10-14.md)
 - [時間選択対移行選択の一回結果](../results/demand-group-selection-2026-10-14.md)
-- [保存済み予測の補正誤差分解・実行前契約](demand-correction-decomposition-design-2026-10-14.md)
-- [補正二乗量と実績方向の整合・診断結果](../results/demand-correction-decomposition-2026-10-14.md)
-- [Astraによる評価方法の深いレビューと改善案](demand-evaluation-methodology-astra-review-2026-10-14.md)
-- [内部選択済み模型の未学習店舗への評価契約](demand-selected-series-evaluation-design-2026-10-14.md)
-- [未学習店舗の結果・mean28基準未達](../results/demand-selected-series-evaluation-2026-10-14.md)
 - [学習量・固定全件曲線・早期停止の新手順](demand-training-adequacy-design-2026-10-14.md)
 - [学習量診断の結果・1664best](../results/demand-training-adequacy-2026-10-14.md)
-- [固定二模型の2016時間順検証・条件未達で停止](../results/demand-statistical-feature-validation-2026-10-14.md)
-- [固定統計入力モデルの2016時間順検証契約](demand-statistical-feature-validation-design-2026-10-14.md)
 - [統計8入力の同条件学習比較・小幅改善](../results/demand-statistical-feature-pair-2026-10-14.md)
 - [σ・EMAの学習入力への修正設計](demand-statistical-feature-input-design-2026-10-14.md)
 - [統計branchの新6接続確認](../results/demand-statistical-features-2026-10-14.md)
@@ -281,74 +188,16 @@
 - [休日当日対前後の小型模型比較・条件未達で停止](../results/demand-calendar-model-pair-2026-10-14.md)
 - [公開暦の共通入力6確認とfit支持](../results/demand-public-calendar-input-2026-10-14.md)
 - [公開暦と営業予定を分ける小型模型接続条件](demand-calendar-model-connection-design-2026-10-14.md)
-- [営業日水準と休業0の設計](demand-operating-sales-design-2026-10-14.md)
-- [営業日水準/休業0の新6確認](../results/demand-operating-sales-2026-10-14.md)
 - [休暇区間/休業長の新6確認](../results/demand-event-interval-input-2026-10-14.md)
 - [休暇期間のイベント表現・Astraの検討](demand-holiday-duration-design-2026-10-14.md)
 - [休業ゼロと休日前後を分ける新入力設計](demand-holiday-event-input-design-2026-10-14.md)
 - [休日予定版と前後channelの新6確認](../results/demand-holiday-event-input-2026-10-14.md)
-- [保存補正の誤差分解と入力支持監査](../results/store-sales-weekly-correction-diagnosis-2026-10-14.md)
-- [補正診断の固定条件](store-sales-weekly-correction-diagnosis-design-2026-10-14.md)
-- [学習入力範囲監査の条件](store-sales-weekly-feature-support-design-2026-10-14.md)
-- [支持通知を予測と分ける次機構](demand-input-support-monitor-design-2026-10-14.md)
-- [群別8週共有回帰の一回結果](../results/store-sales-weekly-ridge-cohort-2026-10-14.md)
-- [正尺度群とゼロ尺度群を分ける新契約](store-sales-weekly-ridge-cohort-design-2026-10-14.md)
-- [8週回帰の学習前支持未達と区切り](../results/store-sales-weekly-ridge-readiness-2026-10-14.md)
 - [8週間の入力境界・新5確認](../results/store-sales-weekly-history-input-2026-10-14.md)
-- [需要研究の中間整理と追加学習の主問](demand-research-checkpoint-2026-10-14.md)
 - [8週間の履歴を残す次入力の固定案](store-sales-weekly-history-design-2026-10-14.md)
-- [完了誤差で更新する総量区間と中間判断](../results/store-sales-sequential-interval-2026-10-14.md)
-- [自身の総量残差区間と期間診断](../results/store-sales-own-history-interval-2026-10-14.md)
-- [自身区間の保存残差診断条件](store-sales-own-interval-diagnosis-design-2026-10-14.md)
-- [完了誤差だけで更新する次設計](store-sales-sequential-interval-design-2026-10-14.md)
-- [共有総量区間・尺度案と原失敗](../results/store-sales-shared-interval-results-2026-10-14.md)
-- [総量区間の局所尺度案](store-sales-shared-local-interval-design-2026-10-14.md)
-- [自身の過去残差区間の次設計](store-sales-own-history-interval-design-2026-10-14.md)
-- [共有数量残差の一回検証](../results/store-sales-shared-residual-2026-10-14.md)
-- [総量不確実性の次設計案](store-sales-shared-total-interval-design-2026-10-14.md)
-- [共有学習の店舗固定と支持診断](../results/store-sales-shared-series-support-2026-10-14.md)
-- [共有系列の入力契約](store-sales-shared-series-input-contract-2026-10-14.md)
-- [共有数量残差一候補の未実行設計](store-sales-shared-residual-design-2026-10-14.md)
-- [過去販促の記述と2016検証](../results/store-sales-past-promotion-2026-10-14.md)
-- [過去販促の抽出前設計](store-sales-past-promotion-design-2026-10-14.md)
-- [過去販促回帰の検証前設計](store-sales-past-promotion-validation-design-2026-10-14.md)
-- [共有学習と未使用系列の次設計案](demand-shared-series-next-design-2026-10-14.md)
 - [mean出力の実装・一回評価](../results/store-sales-mean-pilot-2026-10-14.md)
-- [mean一回評価の固定条件](store-sales-mean-pilot-design-2026-10-14.md)
-- [需要数量の平均・中央値・意思決定分位点](../results/store-sales-quantity-objectives-2026-10-14.md)
-- [数量目的の診断前設計](demand-quantity-objective-design-2026-10-14.md)
 - [meanとquantileを分ける次候補設計](demand-mean-and-quantile-model-design-2026-10-14.md)
-- [水準・相対変動とイベント入力の確認・一回接続結果](../results/store-sales-small-model-inputs-2026-10-14.md)
-- [追加入力のモデル接続・評価設計](store-sales-small-model-input-pilot-design-2026-10-14.md)
-- [小型需要モデルのtrain側診断](../results/store-sales-training-diagnosis-2026-10-14.md)
-- [train側診断の計算前設計](store-sales-training-diagnosis-design-2026-10-14.md)
-- [水準・変動・イベント入力設計](store-sales-small-model-input-design-2026-10-14.md)
-- [独自小型モデルの需要用途設計](store-sales-small-model-design-2026-10-14.md)
 - [需要モデルの一回探索と判断](../results/store-sales-small-model-2026-10-14.md)
 - [研究方針に合わせたデータの保管と整理](data-retention-and-cleanup-2026-10-14.md)
-- [総量区間の固定・直近校正の結果](../results/store-sales-interval-2026-10-14.md)
-- [総量区間の固定設計](store-sales-interval-design-2026-10-14.md)
-- [直近校正の設計](store-sales-interval-recent-design-2026-10-14.md)
-- [固定16区間の結果と研究判断](../results/store-sales-rolling-2026-10-14.md)
-- [16区間確認の出力前設計](store-sales-rolling-design-2026-10-14.md)
-- [最近14日の総量候補の結果](../results/store-sales-total-2026-10-14.md)
-- [総量候補の出力前設計](store-sales-total-design-2026-10-14.md)
-- [固定暦配分の別3都市検証](../results/store-sales-cross-city-2026-10-14.md)
-- [別都市検証の出力前設計](store-sales-cross-city-design-2026-10-14.md)
-- [総量を維持する暦配分の検証](../results/store-sales-allocation-2026-10-14.md)
-- [総量維持配分の出力前設計](store-sales-allocation-design-2026-10-14.md)
-- [固定月日補正の日次と期間総量の結果](../results/store-sales-anniversary-2026-10-14.md)
-- [固定月日補正の出力前設計](store-sales-anniversary-design-2026-10-14.md)
-- [公開需要カレンダーの予測時点可用性](../results/store-sales-calendar-availability-2026-10-14.md)
-- [自己対3店舗過去履歴の固定比較](../results/store-sales-related-comparison-2026-10-14.md)
-- [関連店舗比較の出力前設計](store-sales-related-comparison-design-2026-10-14.md)
-- [過去の関連店舗系列と予測時点の可用性](../results/store-sales-related-history-2026-10-14.md)
-- [公開データだけの需要研究: 最近の水準と曜日](../results/store-sales-recent-level-2026-10-14.md)
-- [販促予定の入力機構と研究再開条件](demand-plans-input-mechanism-2026-10-14.md)
-- [Store Sales固定2017年評価と次段階](../results/store-sales-small-final-2026-10-14.md)
-- [Store Sales二方式の少量過去検証](../results/store-sales-small-validation-2026-10-14.md)
-- [Store Sales少数食品系列の入力・評価契約](store-sales-input-contract-2026-10-14.md)
-- [Store Sales原本の受領と研究入力](store-sales-source-intake-2026-10-14.md)
 - [公開研究データの取得状況](public-dataset-acquisition-2026-10-14.md)
 - [菓子の季節・販促を加味した需要予測とPSIの研究計画](confectionery-demand-psi-research-plan-2026-10-14.md)
 

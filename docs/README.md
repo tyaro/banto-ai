@@ -8,7 +8,7 @@
 
 - 現在の結果・停止条件・次工程は [短い引継ぎ](current-handoff.md) を優先します。
 - [Rust実装計画](research/banto-ai-rust-implementation-plan-2026-10-16.md)に沿い、人工R2Pの学習・保存再開部品へ進みます。R1の中間値1点は未達で、正式R2実データ学習は停止しています。
-- [整理結果](results/research-consolidation-2026-10-17.md)と[停止済み調査資料](../experiments/archive/rust-r1-20261016/README.md)を区別し、閉鎖済み証跡・原許容差を保護します。
+- [整理結果](results/research-consolidation-2026-10-17.md)を参照。停止済みのRust R1調査（SGEMM/once/FMA/fused等）は削除済みで、保存tagから参照できます。
 - 旧異常検知トラック（v0.1〜v0.3、Windows native受入）はコード・文書とも削除しました。保存tag `archive/preformal-research-20261017` から参照できます。main取り込み時点の[状態記録](history/main-document-status-20260925.md)は過去時点の記録です。
 - 評価報告は [結果の索引](results/README.md)、過去の長い引継ぎは [履歴](history/current-handoff-through-20261016.md) を参照してください。
 

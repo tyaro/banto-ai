@@ -24,67 +24,67 @@
 
 ## 現在 — call target64bytesはtransfer stub（2026-10-16）
 
-[結果](../results/banto-ai-rust-r1-once-target-2026-10-16.md)。固定call targetをown-task mapping/SDK型確認後に64bytes読取り、再照合一致。先頭16bytesはADRP/ADD/LDR/BRAA transfer stub、slot0x1e7ff0db8を導出。slot/分岐先は未読、数値演算/target実行0。 R1未達/R2停止。次はSDK/pointer表現条件を守った単一slot工程。以下は旧記録。
+結果。固定call targetをown-task mapping/SDK型確認後に64bytes読取り、再照合一致。先頭16bytesはADRP/ADD/LDR/BRAA transfer stub、slot0x1e7ff0db8を導出。slot/分岐先は未読、数値演算/target実行0。 R1未達/R2停止。次はSDK/pointer表現条件を守った単一slot工程。以下は旧記録。
 
 ---
 
 ## 現在 — once仕様を確認、call target未同定を保持（2026-10-16）
 
-[結果](../results/banto-ai-rust-r1-once-contract-2026-10-16.md)。SDKのonce fast pathと公開APIの同期保証を区別。独立metadata照合では保存BL targetがpublic dispatch_onceと直接一致せず、dladdr0で停止。内部predicate/query/train経路は未確定。数値演算/新code読取り0。 R1未達/R2停止。次はmapping確認後の単一target64byte上限の独立工程。以下は旧記録。
+結果。SDKのonce fast pathと公開APIの同期保証を区別。独立metadata照合では保存BL targetがpublic dispatch_onceと直接一致せず、dladdr0で停止。内部predicate/query/train経路は未確定。数値演算/新code読取り0。 R1未達/R2停止。次はmapping確認後の単一target64byte上限の独立工程。以下は旧記録。
 
 ---
 
 ## 現在 — patch一致、once契約確認へ（2026-10-16）
 
-[結果](../results/banto-ai-rust-r1-sgemm-warm-binding-2026-10-16.md)。保存済みtrain-first patchを一度だけ実行、元6,144値と全bit一致。88byte設定は前後で変化・実行後二度同一だが、once値52638546は固定条件-1を満たさずfailed閉鎖。query/train経路は未確定、追加実行/命令読取り0。 R1未達/R2停止。次はsourceだけでonce条件の意味を確認し、新演算/命令読取りはしない。以下は旧記録。
+結果。保存済みtrain-first patchを一度だけ実行、元6,144値と全bit一致。88byte設定は前後で変化・実行後二度同一だが、once値52638546は固定条件-1を満たさずfailed閉鎖。query/train経路は未確定、追加実行/命令読取り0。 R1未達/R2停止。次はsourceだけでonce条件の意味を確認し、新演算/命令読取りはしない。以下は旧記録。
 
 ---
 
 ## 現在 — SGEMM小行列の演算順を確認（2026-10-16）
 
-[結果](../results/banto-ai-rust-r1-sgemm-readonly-2026-10-16.md)。実load済みSGEMMの6関数/5,064bytesを上限内で監査。小形状T,NのFMA→lane合算→bias後入れを特定し、別の保存値再現で人工5caseのmm/patch各3,840値が全bit一致。cold設定未初期化のためtrain runtime経路は未確定。 R1未達/R2停止。次は固定した一度のpatchで初期化後設定をbind、推測による新候補はしない。以下は旧記録。
+結果。実load済みSGEMMの6関数/5,064bytesを上限内で監査。小形状T,NのFMA→lane合算→bias後入れを特定し、別の保存値再現で人工5caseのmm/patch各3,840値が全bit一致。cold設定未初期化のためtrain runtime経路は未確定。 R1未達/R2停止。次は固定した一度のpatchで初期化後設定をbind、推測による新候補はしない。以下は旧記録。
 
 ---
 
 ## 現在 — fused linearは改善なしで不採用（2026-10-16）
 
-[結果](../results/banto-ai-rust-r1-fused-linear-2026-10-16.md)。公開extensionでpure-Rust GEMM bias初期化を実装。人工8case/74値・graph・13拒否はpassだが、全154linear/465,696値が現行baselineとbytes一致しSSE減少0で不採用。model/default不変、full forward0。 R1未達/R2停止。次は参照SGEMMを読取り監査する条件の固定、根拠なしの丸め順探索はしない。以下は旧記録。
+結果。公開extensionでpure-Rust GEMM bias初期化を実装。人工8case/74値・graph・13拒否はpassだが、全154linear/465,696値が現行baselineとbytes一致しSSE減少0で不採用。model/default不変、full forward0。 R1未達/R2停止。次は参照SGEMMを読取り監査する条件の固定、根拠なしの丸め順探索はしない。以下は旧記録。
 
 ---
 
 ## 現在 — patchの差を分解、fused linearの条件を固定（2026-10-16）
 
-[結果](../results/banto-ai-rust-r1-linear-boundary-2026-10-16.md)。patchの固定7case/16,128値を分解。両train batchのraw matmulはbit一致、単独bias加算は全case一致。trainの差はPython fused/別加算差7,241値で説明でき、floor人工3caseのraw matmul差各540値とは別。 モデル不変/R1未達/R2停止。次は既存pure-Rust gemmのbias融合を1候補として公開extensionへ設計、固定人工/154局所gate後だけ全体。以下は旧記録。
+結果。patchの固定7case/16,128値を分解。両train batchのraw matmulはbit一致、単独bias加算は全case一致。trainの差はPython fused/別加算差7,241値で説明でき、floor人工3caseのraw matmul差各540値とは別。 モデル不変/R1未達/R2停止。次は既存pure-Rust gemmのbias融合を1候補として公開extensionへ設計、固定人工/154局所gate後だけ全体。以下は旧記録。
 
 ---
 
 ## 現在 — context差を解明、全体は未達（2026-10-16）
 
-[結果](../results/banto-ai-rust-r1-context-normalization-2026-10-16.md)。初期contextのmean/raw std/scale各63値とnormalized8,064値が参照bits一致。Rust plain/Autodiffを含む84局所比較もbytes一致。contextと既知LayerNormを合わせた一律候補は全体389,214要素中1点未達で不採用、model元bytes復元。 R1未合格/R2停止。次はpatchのlinear境界のソース確認、同一評価は反復しない。以下は旧記録。
+結果。初期contextのmean/raw std/scale各63値とnormalized8,064値が参照bits一致。Rust plain/Autodiffを含む84局所比較もbytes一致。contextと既知LayerNormを合わせた一律候補は全体389,214要素中1点未達で不採用、model元bytes復元。 R1未合格/R2停止。次はpatchのlinear境界のソース確認、同一評価は反復しない。以下は旧記録。
 
 ---
 
 ## 現在 — FMA拡張を保持、全体候補は復元（2026-10-16）
 
-[結果](../results/banto-ai-rust-r1-fma-extension-2026-10-16.md)。公開backend extensionのFMA人工forward/graph参加と全49 LayerNormの局所bit一致はpass。一律hookの全体固定7case/389,214要素は中間3点超過で不採用。model.rsを元bytesへ復元、FMAはopt-inの研究APIとして保持。安定版は従来の累積1点未達、R1未合格/R2停止。 次は初期contextモーメントの差のソース確認、無目的な再評価はしない。以下は旧記録。
+結果。公開backend extensionのFMA人工forward/graph参加と全49 LayerNormの局所bit一致はpass。一律hookの全体固定7case/389,214要素は中間3点超過で不採用。model.rsを元bytesへ復元、FMAはopt-inの研究APIとして保持。安定版は従来の累積1点未達、R1未合格/R2停止。 次は初期contextモーメントの差のソース確認、無目的な再評価はしない。以下は旧記録。
 
 ---
 
 ## 現在 — 参照の丸め順を実命令で確定（2026-10-16）
 
-[結果](../results/banto-ai-rust-r1-binary-moments-2026-10-16.md)。実際にロードされたMac PyTorchの3関数をpinし、scalar lane mergeの平均更新とm2補正のFMAを命令から確定。命令どおりの一度の保存値再現で、49入力/1,953行のmean/rstd・124,992出力が全bit一致。 次はgraphを保つFMA方式と人工forward。core不変・R1未達/R2停止。以下は旧記録。
+結果。実際にロードされたMac PyTorchの3関数をpinし、scalar lane mergeの平均更新とm2補正のFMAを命令から確定。命令どおりの一度の保存値再現で、49入力/1,953行のmean/rstd・124,992出力が全bit一致。 次はgraphを保つFMA方式と人工forward。core不変・R1未達/R2停止。以下は旧記録。
 
 ---
 
 ## 現在 — モーメントとaffineの差を分離（2026-10-16）
 
-[結果](../results/banto-ai-rust-r1-moments-audit-2026-10-16.md)。全49入力/1,953行のnative PP・balanced RP・serial Flexを各bytes再現。参照モーメント＋参照affineは全124,992要素一致。4lane/FMAのソース再現はSSE約94.5%減だがmean260/rstd21行・出力5,827要素が非一致。 参照build/binaryの根拠とgraphを保つFMA設計へ。core不変・R1未達/R2停止。以下は旧記録。
+結果。全49入力/1,953行のnative PP・balanced RP・serial Flexを各bytes再現。参照モーメント＋参照affineは全124,992要素一致。4lane/FMAのソース再現はSSE約94.5%減だがmean260/rstd21行・出力5,827要素が非一致。 参照build/binaryの根拠とgraphを保つFMA設計へ。core不変・R1未達/R2停止。以下は旧記録。
 
 ---
 
 ## 現在 — 標準LayerNorm候補は不採用（2026-10-16）
 
-[結果](../results/banto-ai-rust-r1-native-norm-2026-10-16.md)。標準Flex LayerNormを全7case×7moduleの同一入力49組/124,992要素で検証。現行RPのbytes再現49/49、候補の許容差超過0だがSSEは現行の約2.804倍、全7caseで増加し事前条件を不通過。 core不変・R1未達/R2停止。追加方式の根拠と有限条件を定めるまで再実行しない。以下は旧記録。
+結果。標準Flex LayerNormを全7case×7moduleの同一入力49組/124,992要素で検証。現行RPのbytes再現49/49、候補の許容差超過0だがSSEは現行の約2.804倍、全7caseで増加し事前条件を不通過。 core不変・R1未達/R2停止。追加方式の根拠と有限条件を定めるまで再実行しない。以下は旧記録。
 
 ---
 
@@ -96,31 +96,31 @@
 
 ## 現在 — R1一般修正を全ケースで確認、1点未達を保存（2026-10-16）
 
-[結果](../results/banto-ai-rust-r1-upstream-order-2026-10-16.md)。同一入力norm6組/attention28段階は固定許容差内。参照CPUと同じ逆標準偏差の乗算へ全LayerNormを一度修正、局所SSE23%減。3テストpass、元の7case全体比較は389,214要素中別の1点超過でR1未合格。 次は全層の単体/累積差を分ける有限設計の固定、1点への算術探索は停止。以下は旧記録。
+結果。同一入力norm6組/attention28段階は固定許容差内。参照CPUと同じ逆標準偏差の乗算へ全LayerNormを一度修正、局所SSE23%減。3テストpass、元の7case全体比較は389,214要素中別の1点超過でR1未合格。 次は全層の単体/累積差を分ける有限設計の固定、1点への算術探索は停止。以下は旧記録。
 
 ---
 
 ## 現在 — R1の局所診断完了、上流累積差の演算順を確認する（2026-10-16）
 
-[結果](../results/banto-ai-rust-r1-intermediate-diagnosis-2026-10-16.md)。残る1点は上流残差1.370906830e-6＋FF入力伝播9.238719940e-7の合計。共通入力ff.2の対象点差0、同一operandsの加算差0。全linear各7,680要素も固定許容差内。 元の全体gateは未達、R2未開始。以下は旧記録。
+結果。残る1点は上流残差1.370906830e-6＋FF入力伝播9.238719940e-7の合計。共通入力ff.2の対象点差0、同一operandsの加算差0。全linear各7,680要素も固定許容差内。 元の全体gateは未達、R2未開始。以下は旧記録。
 
 ---
 
 ## 現在 — Rust R1a通過、残る中間値1点を切り分け（2026-10-16）
 
-[結果](../results/banto-ai-rust-r1-tests-parity-2026-10-16.md)。Rust CPU build・3テストpass。固定7ケース/389,214要素の比較は修正前114超過→修正後1超過、R1b/R1全体は未合格。正規化/元単位の最終予測各6,048要素は全pass。 R1bの残差原因を切り分けるまでR2は開始しない。build専用枠1.5GiB、各メモリ2GiB・保存枠・R0許容差は維持。以下は旧記録。
+結果。Rust CPU build・3テストpass。固定7ケース/389,214要素の比較は修正前114超過→修正後1超過、R1b/R1全体は未合格。正規化/元単位の最終予測各6,048要素は全pass。 R1bの残差原因を切り分けるまでR2は開始しない。build専用枠1.5GiB、各メモリ2GiB・保存枠・R0許容差は維持。以下は旧記録。
 
 ---
 
 ## 現在 — Rust R1のビルド容量条件見直し（2026-10-16）
 
-[停止結果と再開条件](../results/banto-ai-rust-r1-build-stop-2026-10-16.md)。Xcode確認通過。R1 CPU buildがcache+target合計768MiB上限で停止、テスト/数値比較未確認。 固定参照/R0許容差は維持、R2は未開始。同条件retryや容量拡張は未実施。以下は旧記録。
+停止結果と再開条件。Xcode確認通過。R1 CPU buildがcache+target合計768MiB上限で停止、テスト/数値比較未確認。 固定参照/R0許容差は維持、R2は未開始。同条件retryや容量拡張は未実施。以下は旧記録。
 
 ---
 
 ## 現在 — banto-ai Rust R1準備、compiler設定待ち（2026-10-16）
 
-[R1準備/再開手順](../results/banto-ai-rust-r1-preparation-2026-10-16.md)。crates/banto-aiに前処理/モデル/neutral読込/CLIと試験コード、154依存のCPU lockと7固定Python参照を保存。build/テスト/一致は未確認。clang exit69のXcode規約未同意を人へ連絡中。設定後は固定参照でR1を完了し、R2学習へはまだ進まない。下流のlockなし依存解決は別課題。以下は旧記録。
+R1準備/再開手順。crates/banto-aiに前処理/モデル/neutral読込/CLIと試験コード、154依存のCPU lockと7固定Python参照を保存。build/テスト/一致は未確認。clang exit69のXcode規約未同意を人へ連絡中。設定後は固定参照でR1を完了し、R2学習へはまだ進まない。下流のlockなし依存解決は別課題。以下は旧記録。
 
 ---
 
@@ -220,15 +220,15 @@ AI本体のRustクレートは tyaro/banto-ai 側に置き、tyaro/banto-industr
 
 ## Astra改善案Aの診断完了（2026-10-14・最新）
 
-[保存予測の補正誤差分解](../results/demand-correction-decomposition-2026-10-14.md)を一回実施。補正二乗量に対して実績方向の整合が不足し、店24/Q2では整合も負。旧不採用を維持し原因は未同定。統計入力あり対なしの改善を基準置換と分離。新学習/forward/quantity0、研究/automation PAUSED。次は店舗移行に合わせた内部選択の一軌跡比較案を別契約で判断、暫定2%を自動採用しない。
+保存予測の補正誤差分解を一回実施。補正二乗量に対して実績方向の整合が不足し、店24/Q2では整合も負。旧不採用を維持し原因は未同定。統計入力あり対なしの改善を基準置換と分離。新学習/forward/quantity0、研究/automation PAUSED。次は店舗移行に合わせた内部選択の一軌跡比較案を別契約で判断、暫定2%を自動採用しない。
 
 ## Astraの評価方法レビュー（2026-10-14・最新）
 
-[独立レビューと改善案](demand-evaluation-methodology-astra-review-2026-10-14.md)を人の明示委任で保存。現在の学習/選択/評価の目的整合、尺度/zero群、指標/判定、選択過適合と最小の次手順を点検。提案の実装や新実験は行わず、元結果/失敗を保全、研究/automation PAUSED。次はレビューに基づき主問と評価契約を人と判断する。
+独立レビューと改善案を人の明示委任で保存。現在の学習/選択/評価の目的整合、尺度/zero群、指標/判定、選択過適合と最小の次手順を点検。提案の実装や新実験は行わず、元結果/失敗を保全、研究/automation PAUSED。次はレビューに基づき主問と評価契約を人と判断する。
 
 ## 内部選択から離した未学習店舗の確認（2026-10-14・最新）
 
-[固定契約](demand-selected-series-evaluation-design-2026-10-14.md)の[一回評価](../results/demand-selected-series-evaluation-2026-10-14.md)を保存。best1664の二件を6店へ、positive5/zero-scale20保持。onはmean28比約23.85%悪化/改善1of5、off比約2.58%改善/5of5を分離。主副問とも基準未達、direct PAUSED。次は保存予測の補正誤差分解から原因候補を確認、新学習/forward/抽出/旧反復0。automation PAUSED/正式gate/原失敗維持。
+固定契約の一回評価を保存。best1664の二件を6店へ、positive5/zero-scale20保持。onはmean28比約23.85%悪化/改善1of5、off比約2.58%改善/5of5を分離。主副問とも基準未達、direct PAUSED。次は保存予測の補正誤差分解から原因候補を確認、新学習/forward/抽出/旧反復0。automation PAUSED/正式gate/原失敗維持。
 
 ## 学習終了の妥当性を測る新手順（2026-10-14・最新）
 
@@ -236,11 +236,11 @@ AI本体のRustクレートは tyaro/banto-ai 側に置き、tyaro/banto-industr
 
 ## 統計入力の後期検証で区切り（2026-10-14・最新）
 
-[固定契約](demand-statistical-feature-validation-design-2026-10-14.md)の[2016結果](../results/demand-statistical-feature-validation-2026-10-14.md)を保存。control比約0.0161%小幅改善だが9of15で10of15未達、支持pass・処理exit0/進捗falseを分離。direct PAUSED/自走停止、旧2015合格/原失敗保全。同統計のgrid/再学習/2017/予約群追試0。再開は価値のある効果の大きさと利用可能な営業/外部event情報から次の問いを判断。automation PAUSED/正式gate不変。
+固定契約の2016結果を保存。control比約0.0161%小幅改善だが9of15で10of15未達、支持pass・処理exit0/進捗falseを分離。direct PAUSED/自走停止、旧2015合格/原失敗保全。同統計のgrid/再学習/2017/予約群追試0。再開は価値のある効果の大きさと利用可能な営業/外部event情報から次の問いを判断。automation PAUSED/正式gate不変。
 
 ## 固定二模型の後期検証契約（2026-10-14・最新）
 
-[2016検証契約](demand-statistical-feature-validation-design-2026-10-14.md)を保存。旧2016の検証6店を避け、保存scope上数量未解釈の学習18店/2016Jan13+14*k・25起点。原final2weights/u/42channel/8統計固定、再学習0。joint両対照/10of15、各店入力/complete-label20of25最低支持。方向の再確認で実務効果/完全盲検を保証しない。次は小抽出→固定推論、現在新数量/forward未実施。direct ACTIVE/automation PAUSED、原失敗/上限/formal維持。
+2016検証契約を保存。旧2016の検証6店を避け、保存scope上数量未解釈の学習18店/2016Jan13+14*k・25起点。原final2weights/u/42channel/8統計固定、再学習0。joint両対照/10of15、各店入力/complete-label20of25最低支持。方向の再確認で実務効果/完全盲検を保証しない。次は小抽出→固定推論、現在新数量/forward未実施。direct ACTIVE/automation PAUSED、原失敗/上限/formal維持。
 
 ## 統計8入力の同条件比較完了（2026-10-14・最新）
 
@@ -268,7 +268,7 @@ AI本体のRustクレートは tyaro/banto-ai 側に置き、tyaro/banto-industr
 
 ## 営業日水準と休業0の新機構確認完了（2026-10-14・最新）
 
-[固定条件](demand-operating-sales-design-2026-10-14.md)で[新6確認](../results/demand-operating-sales-2026-10-14.md)allpassed。open-only平均/実0/欠測/unknown参考を分け、明示contractのclosed0、営業仮定付きunknown、全休業/日次総量整合を確認。次は公開暦の利用可能性/営業calendar仮定と模型接続の出力前契約。原営業表欠如/strict支持不足を補わず、新学習/実forecast/旧確認/CI0、direct ACTIVE/automation PAUSED。
+固定条件で新6確認allpassed。open-only平均/実0/欠測/unknown参考を分け、明示contractのclosed0、営業仮定付きunknown、全休業/日次総量整合を確認。次は公開暦の利用可能性/営業calendar仮定と模型接続の出力前契約。原営業表欠如/strict支持不足を補わず、新学習/実forecast/旧確認/CI0、direct ACTIVE/automation PAUSED。
 
 ## 休暇区間入力の機構確認完了（2026-10-14・最新）
 
@@ -284,15 +284,15 @@ AI本体のRustクレートは tyaro/banto-ai 側に置き、tyaro/banto-industr
 
 ## 保存補正の診断と入力支持の次機構（2026-10-14・最新）
 
-[誤差の恒等式分解とinput範囲監査](../results/store-sales-weekly-correction-diagnosis-2026-10-14.md)を完了、新fit/forecast/旧score再集計0。方向167一致/148逆、補正二乗量が整合を上回る。範囲外6/330は13/25だがinsideの悪化もあり、gate成功へしない。次は[予測を変更しない支持情報のpure機構](demand-input-support-monitor-design-2026-10-14.md)を少数確認する。既知2015に閾値/店を合わせず、旧8週候補不採用/基準維持。direct ACTIVEへ再開/automation PAUSED不変。
+誤差の恒等式分解とinput範囲監査を完了、新fit/forecast/旧score再集計0。方向167一致/148逆、補正二乗量が整合を上回る。範囲外6/330は13/25だがinsideの悪化もあり、gate成功へしない。次は予測を変更しない支持情報のpure機構を少数確認する。既知2015に閾値/店を合わせず、旧8週候補不採用/基準維持。direct ACTIVEへ再開/automation PAUSED不変。
 
 ## 群別8週回帰の一回結果で区切り（2026-10-14・最新）
 
-人の再開指示で[15店fit/3店baseline-onlyの別契約](store-sales-weekly-ridge-cohort-design-2026-10-14.md)を固定し、[新5確認・630行fit・450窓要求の一回評価](../results/store-sales-weekly-ridge-cohort-2026-10-14.md)を完了。全18対応を保持、432採点/18欠測、15店主macroMSE.023675→.029288/約23.71%悪化・改善5/15で条件未達。8週特徴のNN/gridへ進まず採択0、原18店条件未達は不変。次の情報/共有条件/zero履歴の問いは別仮説が必要。現在はdirect PAUSED/automation PAUSED、基準維持、旧確認/評価/CI/予約群0。
+人の再開指示で15店fit/3店baseline-onlyの別契約を固定し、新5確認・630行fit・450窓要求の一回評価を完了。全18対応を保持、432採点/18欠測、15店主macroMSE.023675→.029288/約23.71%悪化・改善5/15で条件未達。8週特徴のNN/gridへ進まず採択0、原18店条件未達は不変。次の情報/共有条件/zero履歴の問いは別仮説が必要。現在はdirect PAUSED/automation PAUSED、基準維持、旧確認/評価/CI/予約群0。
 
 ## 8週回帰の学習前条件未達で区切り（2026-10-14・最新）
 
-[固定18店の2013–14支持確認](../results/store-sales-weekly-ridge-readiness-2026-10-14.md)を一回実施。店21/22/29は観測728日全0/u0、前提未達でsolver/fit/2015評価前に停止。他15店各42窓を確保したが群を黙って変えない。2013–15の支持通過と今回の時間分離は別。0原因を営業状態へ補わず、新しい適用契約で既存数量系列とゼロ履歴系列の扱いを整理する必要を保存。現在はdirect PAUSED/automation PAUSED、旧確認/評価/CI/予約群読取り0、基準維持。
+固定18店の2013–14支持確認を一回実施。店21/22/29は観測728日全0/u0、前提未達でsolver/fit/2015評価前に停止。他15店各42窓を確保したが群を黙って変えない。2013–15の支持通過と今回の時間分離は別。0原因を営業状態へ補わず、新しい適用契約で既存数量系列とゼロ履歴系列の扱いを整理する必要を保存。現在はdirect PAUSED/automation PAUSED、旧確認/評価/CI/予約群読取り0、基準維持。
 
 ## 8週履歴の入力機構と次のfit準備（2026-10-14・最新）
 
@@ -300,31 +300,31 @@ AI本体のRustクレートは tyaro/banto-ai 側に置き、tyaro/banto-industr
 
 ## 研究主問の中間整理と次の入力境界（2026-10-14・最新）
 
-[保存結果とsourceの中間整理](demand-research-checkpoint-2026-10-14.md)を完了。独立実装の成立と追加価値未達を分け、一変数回帰未達から共有NN全般を否定しない。V3入力の既存NNは未知店舗の移行未検証。次は[8週間の推移を残す新入力](store-sales-weekly-history-design-2026-10-14.md)の未来guard/同B同xでの情報差/zero-missing/単位/fit尺度cutoffを少数確認する。新学習はまだ開始せず、機構後に18店の2013–14 fit→2015回顧開発の一候補を別保存。旧2016再選択/2017追試/予約数量読取り0、direct ACTIVEへ再開/automation PAUSED不変。
+保存結果とsourceの中間整理を完了。独立実装の成立と追加価値未達を分け、一変数回帰未達から共有NN全般を否定しない。V3入力の既存NNは未知店舗の移行未検証。次は[8週間の推移を残す新入力](store-sales-weekly-history-design-2026-10-14.md)の未来guard/同B同xでの情報差/zero-missing/単位/fit尺度cutoffを少数確認する。新学習はまだ開始せず、機構後に18店の2013–14 fit→2015回顧開発の一候補を別保存。旧2016再選択/2017追試/予約数量読取り0、direct ACTIVEへ再開/automation PAUSED不変。
 
 ## 時点別区間の一回結果と研究主問への整理（2026-10-14・最新）
 
-[完了窓だけの時点別区間](../results/store-sales-sequential-interval-2026-10-14.md)を完了。新5確認pass、原Qreuse1/新集合149、point変更0。coverage81.33→82.67%、幅5.62%減、score0.64%改善だが4/6店舗score悪化・店24coverage72/16=76、採択しない。同2016で区間gridを追加せず、次は保存小型モデル/mean/共有残差/区間の設計と結果を読取り、否定できた仮説・未検証仮説・次学習の追加情報/群/評価契約を整理する。旧数値/確認/CI反復0、同数量差NN/2017追試0、基準維持、direct ACTIVE/automation PAUSED。
+完了窓だけの時点別区間を完了。新5確認pass、原Qreuse1/新集合149、point変更0。coverage81.33→82.67%、幅5.62%減、score0.64%改善だが4/6店舗score悪化・店24coverage72/16=76、採択しない。同2016で区間gridを追加せず、次は保存小型モデル/mean/共有残差/区間の設計と結果を読取り、否定できた仮説・未検証仮説・次学習の追加情報/群/評価契約を整理する。旧数値/確認/CI反復0、同数量差NN/2017追試0、基準維持、direct ACTIVE/automation PAUSED。
 
 ## 自身の残差分布と時点別更新の次条件（2026-10-14・最新）
 
-[自身区間と年/四半期診断](../results/store-sales-own-history-interval-2026-10-14.md)を完了。新4確認pass、共有local score2198.42→自身1909.94/幅減/coverage81.33%、ただし店24=64%等の不足を保持し不採択。自己calibrationをzero-shotへしない。次は[完了した過去誤差のみ最新26窓で更新する手順](store-sales-sequential-interval-design-2026-10-14.md)の少数確認、同窓の原Q再利用とfuture label読取り拒否。旧point/区間/原失敗/root反復0、2016回顧/direct ACTIVE/automation PAUSED。
+自身区間と年/四半期診断を完了。新4確認pass、共有local score2198.42→自身1909.94/幅減/coverage81.33%、ただし店24=64%等の不足を保持し不採択。自己calibrationをzero-shotへしない。次は完了した過去誤差のみ最新26窓で更新する手順の少数確認、同窓の原Q再利用とfuture label読取り拒否。旧point/区間/原失敗/root反復0、2016回顧/direct ACTIVE/automation PAUSED。
 
 ## 総量区間の共有限界と自身の過去残差（2026-10-14・最新）
 
-[共有区間と一尺度案](../results/store-sales-shared-interval-results-2026-10-14.md)を完了。fixed全体79.33/正値82%でも店20は32/36%、localは76%へ改善するが全体幅増/score微悪化、不採択。新7確認pass、原2helper失敗と完成Q/150区間prefixを保全、別summary-onlyで未保存要約のみ完成。次は[自身の過去残差の支持/区間](store-sales-own-history-interval-design-2026-10-14.md)を共有分布から分ける。新自身calibration未開始、point/旧確認/計算反復0、2016回顧、direct ACTIVE/automation PAUSED。
+共有区間と一尺度案を完了。fixed全体79.33/正値82%でも店20は32/36%、localは76%へ改善するが全体幅増/score微悪化、不採択。新7確認pass、原2helper失敗と完成Q/150区間prefixを保全、別summary-onlyで未保存要約のみ完成。次は自身の過去残差の支持/区間を共有分布から分ける。新自身calibration未開始、point/旧確認/計算反復0、2016回顧、direct ACTIVE/automation PAUSED。
 
 ## 共有数量差の一回検証と総量不確実性（2026-10-14・最新）
 
-[新5確認・等store重み共有fit・新6店2016検証](../results/store-sales-shared-residual-2026-10-14.md)を完了。1242train行、係数保存後150検証。主MSE基準.017250/共有.020509、改善2/6で事前条件未達、同数量差NN/grid/2017追試は開始しない。基準維持。次は[総量残差の分布共有](store-sales-shared-total-interval-design-2026-10-14.md)を保存新ledgerから確認する設計/少数確認。点予測/fit/抽出の反復0、区間未実行、2016は回顧。direct ACTIVE/automation PAUSED、正式gate不変。
+新5確認・等store重み共有fit・新6店2016検証を完了。1242train行、係数保存後150検証。主MSE基準.017250/共有.020509、改善2/6で事前条件未達、同数量差NN/grid/2017追試は開始しない。基準維持。次は総量残差の分布共有を保存新ledgerから確認する設計/少数確認。点予測/fit/抽出の反復0、区間未実行、2016は回顧。direct ACTIVE/automation PAUSED、正式gate不変。
 
 ## 共有学習の店舗と支持、次の固定一候補（2026-10-14・最新）
 
-[metadata選定とtrain側数量支持](../results/store-sales-shared-series-support-2026-10-14.md)を完了。既使用6店を除外、学習18/fit未使用検証6/予約24をmetadata IDだけで固定。2013–15のみ新26280暦行、各71適格窓/最低支持pass、長いゼロの原因不明を保持。次は[共有残差一候補の設計](store-sales-shared-residual-design-2026-10-14.md)に対応した少数機構確認。係数保存後だけ新検証2016を読む。旧model/確認/CI反復0、新fit/2016label/NN未実行、direct ACTIVE/automation PAUSED。
+metadata選定とtrain側数量支持を完了。既使用6店を除外、学習18/fit未使用検証6/予約24をmetadata IDだけで固定。2013–15のみ新26280暦行、各71適格窓/最低支持pass、長いゼロの原因不明を保持。次は共有残差一候補の設計に対応した少数機構確認。係数保存後だけ新検証2016を読む。旧model/確認/CI反復0、新fit/2016label/NN未実行、direct ACTIVE/automation PAUSED。
 
 ## 過去販促の追加情報と次の学習対象（2026-10-14・最新）
 
-[新抽出と固定ridge検証](../results/store-sales-past-promotion-2026-10-14.md)を完了。過去記録の年内関係は不安定、2016主尺度化MSEは基準.004027/販促.008900で基準未達。不採択、現3系列の販促NN/係数探索/2017再評価を増やさない。次は[共有学習を未使用系列へ移す主問](demand-shared-series-next-design-2026-10-14.md)のmetadata選定と入力/支持契約を数量読取り前に準備する。新群・性能・学習は未観測。直接研究ACTIVE/automation PAUSED、旧closedroot/完成計算不変。
+新抽出と固定ridge検証を完了。過去記録の年内関係は不安定、2016主尺度化MSEは基準.004027/販促.008900で基準未達。不採択、現3系列の販促NN/係数探索/2017再評価を増やさない。次は共有学習を未使用系列へ移す主問のmetadata選定と入力/支持契約を数量読取り前に準備する。新群・性能・学習は未観測。直接研究ACTIVE/automation PAUSED、旧closedroot/完成計算不変。
 
 ## 期待数量headの評価と次の情報確認（2026-10-14・最新）
 
@@ -332,25 +332,25 @@ AI本体のRustクレートは tyaro/banto-ai 側に置き、tyaro/banto-industr
 
 ## 需要の期待数量と代表値・意思決定（2026-10-14・最新）
 
-[mean/median/decision quantileの整理](../results/store-sales-quantity-objectives-2026-10-14.md)と保存train記述を完了。期待数量はmean/MSE、代表Q50はMAE、PSIdecision量は費用等と別契約。Q3からmeanを補わない。次は[meanとquantileの独立出力設計](demand-mean-and-quantile-model-design-2026-10-14.md)の新実装・少数確認。mean選択の主指標をvalidation MSEへ揃える。今回新学習/2017補正0、旧計算不採択と基準を維持。6新確認pass、元scriptの記録label上限エラーはfailed保全・別continuationで未開始集計のみ完成、旧確認反復0。直接研究ACTIVE/automation PAUSED。
+mean/median/decision quantileの整理と保存train記述を完了。期待数量はmean/MSE、代表Q50はMAE、PSIdecision量は費用等と別契約。Q3からmeanを補わない。次は[meanとquantileの独立出力設計](demand-mean-and-quantile-model-design-2026-10-14.md)の新実装・少数確認。mean選択の主指標をvalidation MSEへ揃える。今回新学習/2017補正0、旧計算不採択と基準を維持。6新確認pass、元scriptの記録label上限エラーはfailed保全・別continuationで未開始集計のみ完成、旧確認反復0。直接研究ACTIVE/automation PAUSED。
 
 ## 需要入力の確認と数量目的の整理（2026-10-14・最新）
 
-[追加入力の新7機構確認・新3接続確認・一回評価](../results/store-sales-small-model-inputs-2026-10-14.md)を完了。[設計](store-sales-small-model-input-pilot-design-2026-10-14.md)を固定後、保存日付列・同予算256stepを別候補で実行。総量WAPEは微改善、過小Bias増・日次は暦配分基準未達、区間scoreも基準未達。基準を維持し採択0。次は点予測の平均対中央値とlossの目的を式・train側で整理し、meanとquantileを分ける設計を先に固定する。第三候補や2017bias補正を今開始しない。旧学習/評価/確認/CI反復0、直接研究ACTIVE/automation PAUSED。
+追加入力の新7機構確認・新3接続確認・一回評価を完了。設計を固定後、保存日付列・同予算256stepを別候補で実行。総量WAPEは微改善、過小Bias増・日次は暦配分基準未達、区間scoreも基準未達。基準を維持し採択0。次は点予測の平均対中央値とlossの目的を式・train側で整理し、meanとquantileを分ける設計を先に固定する。第三候補や2017bias補正を今開始しない。旧学習/評価/確認/CI反復0、直接研究ACTIVE/automation PAUSED。
 
 ## 需要モデルの入力情報と学習材料（2026-10-14・最新）
 
-[train側診断](../results/store-sales-training-diagnosis-2026-10-14.md)を完了。元日label事例は2年分、Christmas0。店12の連続ゼロ接触13%が初期設計loss約25%だが、非接触にも残差がある。反復は独立した年の支持を増やさない。次は[水準・変動・イベント入力](store-sales-small-model-input-design-2026-10-14.md)の少数機構確認を先に行う。正規化で落ちる平均/相対変動を補い、eventを明示して分ける案で、まだ性能改善は未検証。新学習・系列拡大・2017再fitは今開始せず、基準を保持。直接研究ACTIVE/automation PAUSED。
+train側診断を完了。元日label事例は2年分、Christmas0。店12の連続ゼロ接触13%が初期設計loss約25%だが、非接触にも残差がある。反復は独立した年の支持を増やさない。次は水準・変動・イベント入力の少数機構確認を先に行う。正規化で落ちる平均/相対変動を補い、eventを明示して分ける案で、まだ性能改善は未検証。新学習・系列拡大・2017再fitは今開始せず、基準を保持。直接研究ACTIVE/automation PAUSED。
 
 ## 独自小型モデルの需要用途（2026-10-14・最新）
 
-[固定設計](store-sales-small-model-design-2026-10-14.md)から独立初期化・一構成256step・2016選択・2017回顧予測を完了。[結果と判断](../results/store-sales-small-model-2026-10-14.md)では日次の既存暦配分基準に届かず、総量改善は微差、直接総量区間は幅大・interval score悪化。研究基準mean28総量＋限定暦配分を維持し、ニューラル採択・2017での再調整はしない。次はtrain2013–15側の残差・暦支持例・連続ゼロの影響を診断し、追加情報や系列拡大の必要を設計判断する。完成学習/旧評価反復・公式重み/教師出力0、直接研究ACTIVE/automation PAUSED。以下の先行停止・phase記録は履歴。
+固定設計から独立初期化・一構成256step・2016選択・2017回顧予測を完了。[結果と判断](../results/store-sales-small-model-2026-10-14.md)では日次の既存暦配分基準に届かず、総量改善は微差、直接総量区間は幅大・interval score悪化。研究基準mean28総量＋限定暦配分を維持し、ニューラル採択・2017での再調整はしない。次はtrain2013–15側の残差・暦支持例・連続ゼロの影響を診断し、追加情報や系列拡大の必要を設計判断する。完成学習/旧評価反復・公式重み/教師出力0、直接研究ACTIVE/automation PAUSED。以下の先行停止・phase記録は履歴。
 
 ## 公開データだけで続ける需要予測研究（2026-10-14・最新）
 
 人の明示指示で予定履歴待ちの停止を解除し、現在あるStore Salesの過去数量・既知の曜日から研究を再開した。過去の停止判断は以下と元文書に履歴として残す。予定履歴は未来販促の実績検証には必要だが、需要予測研究全体の条件ではない。
 
-[直近28日の同曜日平均](../results/store-sales-recent-level-2026-10-14.md)を一候補として確認し、保存済みnaive予測を開発比較に再利用。追加3起点の回顧比較と7/14日累積を保存。少数代表・既知期間の比較で正式採択/メーカーPSIを補わない。[過去側の関連店舗系列とlead可用性](../results/store-sales-related-history-2026-10-14.md)を確認した。同時点の共通変動は未来既知入力ではない。[固定した自己対3店舗履歴の比較](../results/store-sales-related-comparison-2026-10-14.md)は関連追加の改善を得られず、14日合計は単純平均が小さい。[休日・営業日の可用性](../results/store-sales-calendar-availability-2026-10-14.md)を確認。[固定月日補正](../results/store-sales-anniversary-2026-10-14.md)は日次改善でも14日総量悪化。[総量維持配分](../results/store-sales-allocation-2026-10-14.md)は日次改善/総量維持を確認。[別3都市検証](../results/store-sales-cross-city-2026-10-14.md)で日次改善を確認したが寄与は元日中心。[総量一候補](../results/store-sales-total-2026-10-14.md)の3定点は微差/過小偏り増加。[固定16区間](../results/store-sales-rolling-2026-10-14.md)では最近14日総量が悪化したため採択しない。同曜日平均28の総量と限定的な暦配分を研究基準として残す。[総量区間の確認](../results/store-sales-interval-2026-10-14.md)は固定66.7%/直近70.8%で名目80%未達、実務校正として不採択。次は既存独立小型モデルの需要入力・split・量/配分/区間評価・予算を先に固定する読取り設計を行い、公式重み/教師出力や完成学習反復は使わない。将来のTransfer/Eventラベルは既知予定にしない。大規模比較、未来販促実施値の先読み、旧評価反復を行わない。
+直近28日の同曜日平均を一候補として確認し、保存済みnaive予測を開発比較に再利用。追加3起点の回顧比較と7/14日累積を保存。少数代表・既知期間の比較で正式採択/メーカーPSIを補わない。過去側の関連店舗系列とlead可用性を確認した。同時点の共通変動は未来既知入力ではない。固定した自己対3店舗履歴の比較は関連追加の改善を得られず、14日合計は単純平均が小さい。休日・営業日の可用性を確認。固定月日補正は日次改善でも14日総量悪化。総量維持配分は日次改善/総量維持を確認。別3都市検証で日次改善を確認したが寄与は元日中心。総量一候補の3定点は微差/過小偏り増加。固定16区間では最近14日総量が悪化したため採択しない。同曜日平均28の総量と限定的な暦配分を研究基準として残す。総量区間の確認は固定66.7%/直近70.8%で名目80%未達、実務校正として不採択。次は既存独立小型モデルの需要入力・split・量/配分/区間評価・予算を先に固定する読取り設計を行い、公式重み/教師出力や完成学習反復は使わない。将来のTransfer/Eventラベルは既知予定にしない。大規模比較、未来販促実施値の先読み、旧評価反復を行わない。
 
 ## 菓子の需要予測・PSIを対象にした実用性研究（2026-10-14）
 
@@ -358,7 +358,7 @@ AI本体のRustクレートは tyaro/banto-ai 側に置き、tyaro/banto-industr
 
 支援する判断、リードタイムと賞味期限から予測粒度・期間を決める。実績と起点で既知の予定版を分け、統計で説明できる季節・イベントを先に確認する。初回は季節基準＋統計モデル一つ、必要ならGBM一つ。独自多要素モデル・残差補正・平均は追加価値の根拠ができてから選ぶ。
 
-Store Salesの入力契約・二方式の2016年検証・固定2017年評価を完了。[2017年結果](../results/store-sales-small-final-2026-10-14.md)では週周期基準が全体で優位、暦回帰の過大偏りを確認。[販促予定の入力機構](demand-plans-input-mechanism-2026-10-14.md)の新7確認を完了。予測moduleへ未接続で、実際の予定履歴がないため実績での追加価値検証の自走を停止した。実施値だけのonpromotionから未来予定を補わない。再開には予定版・利用可能日時、数量/営業日/欠品の意味、判断とlead、または別の研究主問の指定が必要。[データの保管と整理](data-retention-and-cleanup-2026-10-14.md)に従い、旧C0/C1/C2のdev評価は検証済み圧縮archiveへ保管し、具体承認後に元rootを削除した。架空例は少数の機構確認に用い、メーカー精度・販促因果効果・PSI採択は実データで別に評価する。旧工業探索・144cell反復0、正式gate不変。自動実行のPAUSEDを維持。
+Store Salesの入力契約・二方式の2016年検証・固定2017年評価を完了。2017年結果では週周期基準が全体で優位、暦回帰の過大偏りを確認。販促予定の入力機構の新7確認を完了。予測moduleへ未接続で、実際の予定履歴がないため実績での追加価値検証の自走を停止した。実施値だけのonpromotionから未来予定を補わない。再開には予定版・利用可能日時、数量/営業日/欠品の意味、判断とlead、または別の研究主問の指定が必要。[データの保管と整理](data-retention-and-cleanup-2026-10-14.md)に従い、旧C0/C1/C2のdev評価は検証済み圧縮archiveへ保管し、具体承認後に元rootを削除した。架空例は少数の機構確認に用い、メーカー精度・販促因果効果・PSI採択は実データで別に評価する。旧工業探索・144cell反復0、正式gate不変。自動実行のPAUSEDを維持。
 
 ## 現在の主課題と優先順（2026-10-13）
 人の最新方針により、主課題を「TimesFM 3が産業用途で使い物になるか」と「公開情報から独自モデルで必要な価値をどこまで再現できるか」へ戻す。

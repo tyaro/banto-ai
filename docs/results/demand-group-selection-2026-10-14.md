@@ -2,7 +2,7 @@
 
 ## 判断
 
-[実行前契約](../research/demand-group-selection-design-2026-10-14.md)を固定し、[Astra案B](../research/demand-evaluation-methodology-astra-review-2026-10-14.md)の一候補・一学習軌跡を実施した。parameter fitは10店、時間validationは同10店、移行validationはfitに使わない5店。二つの選択点を保存してから、既読の別6店舗2015へ各一回適用した。
+[実行前契約](../research/demand-group-selection-design-2026-10-14.md)を固定し、Astra案Bの一候補・一学習軌跡を実施した。parameter fitは10店、時間validationは同10店、移行validationはfitに使わない5店。二つの選択点を保存してから、既読の別6店舗2015へ各一回適用した。
 
 時間選択は **3328更新**、移行選択は **3072更新**。移行選択のjointは時間選択より **1.712943%改善**したが、mean28比は **0.597425%悪化**。日次・総量もともに基準より悪く、事前の2%改善・両副指標悪化なしという追加研究の目安を満たさない。処理successと研究条件未達を分け、今回の主候補は不採用とする。
 

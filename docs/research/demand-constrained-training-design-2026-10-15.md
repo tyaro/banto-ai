@@ -1,6 +1,6 @@
 # 四季の両側非増加を学習へ組み込む第一設計
 
-2026-10-15 JST。[事前の検討範囲](demand-constrained-training-scope-2026-10-15.md)に従う設計検討であり、fit・solver・候補評価の起動契約ではない。[原因診断](../results/demand-alpha-zero-diagnosis-2026-10-15.md)と[Astra方法・評価監査](demand-constrained-training-astra-review-2026-10-15.md)を踏まえる。2015再評価は停止したまま。
+2026-10-15 JST。[事前の検討範囲](demand-constrained-training-scope-2026-10-15.md)に従う設計検討であり、fit・solver・候補評価の起動契約ではない。原因診断と[Astra方法・評価監査](demand-constrained-training-astra-review-2026-10-15.md)を踏まえる。2015再評価は停止したまま。
 
 ## 問いと第一仕様
 
