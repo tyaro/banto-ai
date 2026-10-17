@@ -1,0 +1,71 @@
+{
+  "schema": "banto.rust-formal-r2-contract.v1",
+  "id": "R2_formal_CARE_fold0",
+  "status": "fixed before the Torch reference and before any Rust training run on CARE data; runs once (R0.2)",
+  "rules": [
+    "examples/configs/rust-small-forecaster-r0-20261016-r0.1.json (tolerances, unchanged)",
+    "examples/configs/rust-small-forecaster-r0.2-amendment-20261017.json (update comparison, entry, run once)"
+  ],
+  "entry": {
+    "record": "docs/results/rust-r2-entry-check-2026-10-17.md",
+    "numeric": "final outputs 0 of 12096 failing, 385 same-input local comparisons 0 of 953694 failing, on this platform",
+    "non_numeric": "isolated build/CPU compile, locked backend, dependency license inventory, nonfinite/mask/ordering cases: confirmed and recorded",
+    "diagnostic": "cumulative intermediate: 3 of 389214 failing at train-last/blocks.1, recorded, not a gate"
+  },
+  "platform": {
+    "machine": "x86_64 Linux cloud container",
+    "rust": "1.95.0, Burn =0.22.0 Flex CPU, Cargo.lock --locked",
+    "torch": "2.14.1+cpu, Python 3.14.6",
+    "threads": 1,
+    "note": "the original CARE training used 2 Torch threads on macOS; the reference here is regenerated on this platform with 1 thread and deterministic algorithms"
+  },
+  "inputs": {
+    "location": "artifacts/ (gitignored; CARE-derived data and trained state are not committed to the public repository)",
+    "pins": [
+      {"path": "artifacts/care-learning-fold-0-20261016/selected-neutral.bin", "sha256": "0d741fab378e07acc5cb43f8998ddddd4db8681880d3d81eb2a4523baaa824ba"},
+      {"path": "artifacts/care-learning-fold-0-20261016/selected-neutral-layout.json", "sha256": "8a8d01ca0ab5b4d6632a5113023583097f229364ad7b88a7a88a12c72b8cd6cf"},
+      {"path": "artifacts/care-train-profile-schedule-20261016/fold-0-schedule.bin", "sha256": "8832d06efe5735296fcd35e7c168a52679373aa03c0dff392a9a02b06775a390"},
+      {"path": "artifacts/care-train-profile-schedule-20261016/fold-0-profile.json", "sha256": "94b147e33546d8b4e87e49458d5b88c561755049d0ec48ddbf3edd7f7132b14f"},
+      {"path": "artifacts/care-train-preparation-verify-20261016/fold-0-batch-reference.bin", "sha256": "93301ee3fc76c241f32265257880fbafb6bf3fca721fb35386f614685d85eb8c"},
+      {"path": "artifacts/care-numeric-input-20261016/root-closed.json", "sha256": "3c5fc289fdafda0792acd9b5cdec6fcd8e91d7a93cb2a70a5df0b735eae8a352"},
+      {"path": "artifacts/care-input-contract-20261016/root-closed.json", "sha256": "9802650b1d545c8d4d9577ab1d123a3d505e6d24058fcbffee50b2e1084d5d6b"}
+    ],
+    "batches": "FrozenPreparation(prepared=care-train-profile-schedule-20261016, dataset=care-numeric-input-20261016, fold=0).batch(step): 8 train-prefix examples, context [8,3,128], actual [8,3,32]; steps 0 and 4095 must equal fold-0-batch-reference.bin byte for byte",
+    "state": "the selected fold0 state (step 4096): 59 trainable tensors and the buffers scale_floor, position, time_mask; AdamW step and first/second moments for the mature case"
+  },
+  "recipe": {
+    "loss": "small_model.training_loss: pinball on normalized quantiles against (actual - context_center) / context_scale, mean over B*C*H*3",
+    "clip_global_norm": 1.0,
+    "optimizer": "AdamW lr 3e-4, betas [0.9, 0.999], eps 1e-8, weight_decay 0.01, decoupled, no amsgrad, foreach/fused off, constant lr (no scheduler)"
+  },
+  "cases": {
+    "one_update": "selected parameters, fresh AdamW (step 0, zero moments), one update on batch step 0",
+    "eight_updates": "selected parameters, fresh AdamW, eight updates on batch steps 0..7 in order",
+    "resume": "Rust only, same backend and threads: continuous eight_updates versus 4 updates, checkpoint write, separate-process restore, 4 updates; byte-exact parameters, moments, counters and the final loss",
+    "mature_import": "selected parameters with the saved AdamW step 4096 and moments, one update on batch step 0 (the 4096-step schedule ends at step 4096, so the import update uses the first schedule batch, fixed here before any run)"
+  },
+  "compare": {
+    "loss": "every update: normalized_loss for update 1, eight_step_loss for later updates",
+    "gradients": "every update, all 59 tensors: raw and clipped under the R0.1 gradient rule, plus global norm and clip coefficient",
+    "parameters": "after update 1 (one_step_parameter) and after update 8 (eight_step_parameter) of eight_updates, after one_update and after mature_import (one_step_parameter); judged only on elements whose reference clipped |gradient| >= 1e-7 (K=10, eps 1e-8) at every update of that run up to the compared one; mature_import uses only its own update",
+    "moments": "first_moment and second_moment on all elements after each compared update",
+    "forward": "recorded after each compared update (normalized quantiles of the next batch, or of the last batch after the last update), judged only through the next update's loss",
+    "resume": "byte-exact (R0.1)"
+  },
+  "reference": {
+    "generator": "Torch float32 on this platform, run and hashed before any Rust run; saved under artifacts/, only hashes and summaries are committed",
+    "independent_check": "the same procedure in float64; the float32 reference is kept only if loss and gradients agree with float64 within R0.1 (parameters and moments are recorded, not gated, in this check)"
+  },
+  "records": [
+    "per compared update: excluded parameter elements as a fraction of 109024, with tensor names and indices",
+    "every failing element with reference and Rust values",
+    "resources: wall time and peak memory per process"
+  ],
+  "stop": {
+    "exclusion": "if more than 10% of parameter elements are excluded at any compared update, stop and investigate before accepting the result",
+    "failure": "any numeric failure is recorded and stops formal R2; no fixture, tolerance or reference change after Rust results exist",
+    "harness": "a failure before any numeric comparison exists (build, I/O, missing file) may be fixed and the run repeated; once Rust numeric results exist they are final",
+    "limits": "parent 900 s, child 870 s, peak memory 2 GiB per process, jobs 1"
+  },
+  "not_in_scope": "validation selection, calibration, CARE test prediction or evaluation, further training, other folds, R3"
+}
