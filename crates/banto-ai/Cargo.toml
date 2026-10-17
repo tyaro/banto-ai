@@ -12,6 +12,7 @@ publish = false
 
 [features]
 reference-tests = []
+training-tests = []
 
 [dependencies]
 burn = { version = "=0.22.0", default-features = false, features = ["std", "optim", "flex"] }
@@ -27,3 +28,8 @@ path = "examples/predict.rs"
 name = "neutral_integrity"
 path = "tests/neutral_integrity.rs"
 required-features = ["reference-tests"]
+
+[[test]]
+name = "r2p_synthetic"
+path = "tests/r2p_synthetic.rs"
+required-features = ["training-tests"]
