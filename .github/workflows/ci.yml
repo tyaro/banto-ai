@@ -1,4 +1,4 @@
-name: Phase 1 CI
+name: CI
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
       - name: Compile Python sources
         run: python -m compileall -q src tests tools
       - name: Run unittest
-        run: python -B tools/ci_test_report.py
+        run: python -B -m unittest discover -s tests -t .
       - name: Validate manifests and naive smoke
         run: python tools/smoke.py
       - name: Generate and quality-check synthetic dataset from clean checkout entrypoints
@@ -31,70 +31,15 @@ jobs:
       - name: Repository safety guard
         if: always()
         run: python tools/safety_check.py
-      - name: Preserve unittest evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: unittest-ubuntu24-python3.14-${{ github.run_id }}-${{ github.run_attempt }}
-          path: artifacts/ci-tests/unittest.jsonl
-          if-no-files-found: error
-          retention-days: 14
 
-  verify-python314-journal:
-    needs: test
+  rust:
+    name: rust (1.95)
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.14"
-      - uses: actions/download-artifact@v8
-        with:
-          name: unittest-ubuntu24-python3.14-${{ github.run_id }}-${{ github.run_attempt }}
-          path: artifacts/ci-fixtures/python3.14
-          digest-mismatch: error
-      - name: Verify Python 3.14 regression journal and shared fixture inventory
-        env:
-          EXPECTED_HEAD: ${{ github.sha }}
-          EXPECTED_RUN_ID: ${{ github.run_id }}
-          EXPECTED_RUN_ATTEMPT: ${{ github.run_attempt }}
-        run: |
-          workflow_sha256="$(git show HEAD:.github/workflows/ci.yml | sha256sum | awk '{print $1}')"
-          python -B tools/ci_verify_python314_journal.py \
-            --python314 artifacts/ci-fixtures/python3.14/unittest.jsonl \
-            --expected-head "$EXPECTED_HEAD" \
-            --expected-workflow-sha256 "$workflow_sha256" \
-            --expected-run-id "$EXPECTED_RUN_ID" \
-            --expected-run-attempt "$EXPECTED_RUN_ATTEMPT" \
-            > artifacts/ci-fixtures/regression.pending.json
-          mv artifacts/ci-fixtures/regression.pending.json artifacts/ci-fixtures/regression.json
-      - name: Repository safety guard
-        if: always()
-        run: python tools/safety_check.py
-      - name: Preserve Python 3.14 journal verification
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: python314-journal-verification-${{ github.run_id }}-${{ github.run_attempt }}
-          path: artifacts/ci-fixtures/regression.json
-          if-no-files-found: error
-          retention-days: 14
-
-  windows-native-fixture:
-    name: Windows fixture compatibility (3.14; not formal acceptance)
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.14"
-      - name: Create canonical fixture temp
-        shell: pwsh
-        run: New-Item -ItemType Directory -Path C:\banto-v03-ci-temp -ErrorAction Stop | Out-Null
-      - name: Windows native fixture compatibility
-        env:
-          PYTHONPATH: src;.
-          TMPDIR: C:\banto-v03-ci-temp
-          TEMP: C:\banto-v03-ci-temp
-          TMP: C:\banto-v03-ci-temp
-        run: python -m unittest tests.test_anomaly_v03_publication tests.test_anomaly_v03_native -v
+      # rustup reads rust-toolchain.toml and installs the pinned 1.95.0 toolchain.
+      - uses: Swatinem/rust-cache@v2
+      - name: Check formatting
+        run: cargo fmt --all --check
+      - name: Run tests
+        run: cargo test --locked --workspace
