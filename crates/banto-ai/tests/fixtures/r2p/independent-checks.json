@@ -1,0 +1,965 @@
+[
+ {
+  "name": "L0_centered/loss",
+  "category": "normalized_loss",
+  "elements": 1,
+  "max_abs": 3.4769376128229723e-09,
+  "element_failures": 0,
+  "relative_L2": 5.2154064192344585e-08,
+  "pass": true
+ },
+ {
+  "name": "L0_centered/gradient",
+  "category": "gradient",
+  "elements": 3,
+  "max_abs": 9.189049403335314e-09,
+  "element_failures": 0,
+  "relative_L2": 1.9838701123690355e-07,
+  "pass": true
+ },
+ {
+  "name": "L1_all_ties_zero_is_valid/loss",
+  "category": "normalized_loss",
+  "elements": 1,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": null,
+  "pass": true
+ },
+ {
+  "name": "L1_all_ties_zero_is_valid/gradient",
+  "category": "gradient",
+  "elements": 3,
+  "max_abs": 6.953875225645945e-09,
+  "element_failures": 0,
+  "relative_L2": 5.2154064192344585e-08,
+  "pass": true
+ },
+ {
+  "name": "L2_above/loss",
+  "category": "normalized_loss",
+  "elements": 1,
+  "max_abs": 4.371007278347605e-08,
+  "element_failures": 0,
+  "relative_L2": 5.960464470474007e-08,
+  "pass": true
+ },
+ {
+  "name": "L2_above/gradient",
+  "category": "gradient",
+  "elements": 3,
+  "max_abs": 1.1920928966180355e-08,
+  "element_failures": 0,
+  "relative_L2": 3.7792126913613104e-08,
+  "pass": true
+ },
+ {
+  "name": "L3_below/loss",
+  "category": "normalized_loss",
+  "elements": 1,
+  "max_abs": 1.5894571991914574e-08,
+  "element_failures": 0,
+  "relative_L2": 2.1674416352610786e-08,
+  "pass": true
+ },
+ {
+  "name": "L3_below/gradient",
+  "category": "gradient",
+  "elements": 3,
+  "max_abs": 1.1920928966180355e-08,
+  "element_failures": 0,
+  "relative_L2": 4.596798147080313e-08,
+  "pass": true
+ },
+ {
+  "name": "L4_label_normalization/loss",
+  "category": "normalized_loss",
+  "elements": 1,
+  "max_abs": 9.93410742555767e-10,
+  "element_failures": 0,
+  "relative_L2": 4.257474610953287e-09,
+  "pass": true
+ },
+ {
+  "name": "L4_label_normalization/gradient",
+  "category": "gradient",
+  "elements": 3,
+  "max_abs": 6.953875225645945e-09,
+  "element_failures": 0,
+  "relative_L2": 4.036890882121902e-08,
+  "pass": true
+ },
+ {
+  "name": "L5_batch_horizon_reduction/loss",
+  "category": "normalized_loss",
+  "elements": 1,
+  "max_abs": 5.960464455334602e-09,
+  "element_failures": 0,
+  "relative_L2": 1.4901161138336505e-08,
+  "pass": true
+ },
+ {
+  "name": "L5_batch_horizon_reduction/gradient",
+  "category": "gradient",
+  "elements": 12,
+  "max_abs": 2.980232241545089e-09,
+  "element_failures": 0,
+  "relative_L2": 4.960156589093774e-08,
+  "pass": true
+ },
+ {
+  "name": "L6_batch_channel_broadcast/loss",
+  "category": "normalized_loss",
+  "elements": 1,
+  "max_abs": 2.5828679417472244e-08,
+  "element_failures": 0,
+  "relative_L2": 8.156425079201762e-08,
+  "pass": true
+ },
+ {
+  "name": "L6_batch_channel_broadcast/gradient",
+  "category": "gradient",
+  "elements": 12,
+  "max_abs": 2.980232241545089e-09,
+  "element_failures": 0,
+  "relative_L2": 4.7839446018260216e-08,
+  "pass": true
+ },
+ {
+  "name": "C0_zero/clip",
+  "category": "gradient",
+  "elements": 3,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": null,
+  "pass": true
+ },
+ {
+  "name": "C1_below/clip",
+  "category": "gradient",
+  "elements": 3,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": 0.0,
+  "pass": true
+ },
+ {
+  "name": "C2_boundary/clip",
+  "category": "gradient",
+  "elements": 3,
+  "max_abs": 4.632468353360508e-08,
+  "element_failures": 0,
+  "relative_L2": 4.6324729858288615e-08,
+  "pass": true
+ },
+ {
+  "name": "C3_cross_parameter/clip",
+  "category": "gradient",
+  "elements": 3,
+  "max_abs": 2.4632544337599427e-08,
+  "element_failures": 0,
+  "relative_L2": 2.557882847871817e-08,
+  "pass": true
+ },
+ {
+  "name": "O0_zero_fresh_decay/clip",
+  "category": "gradient",
+  "elements": 3,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": null,
+  "pass": true
+ },
+ {
+  "name": "O0_zero_fresh_decay/one_step_parameter",
+  "category": "one_step_parameter",
+  "elements": 3,
+  "max_abs": 3.953552241142688e-08,
+  "element_failures": 0,
+  "relative_L2": 1.976782050917497e-08,
+  "pass": true
+ },
+ {
+  "name": "O0_zero_fresh_decay/first_moment",
+  "category": "first_moment",
+  "elements": 3,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": null,
+  "pass": true
+ },
+ {
+  "name": "O0_zero_fresh_decay/second_moment",
+  "category": "second_moment",
+  "elements": 3,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": null,
+  "pass": true
+ },
+ {
+  "name": "O1_signed_fresh/clip",
+  "category": "gradient",
+  "elements": 3,
+  "max_abs": 3.839460749333057e-09,
+  "element_failures": 0,
+  "relative_L2": 4.3986587173684e-09,
+  "pass": true
+ },
+ {
+  "name": "O1_signed_fresh/one_step_parameter",
+  "category": "one_step_parameter",
+  "elements": 3,
+  "max_abs": 2.957685896198825e-08,
+  "element_failures": 0,
+  "relative_L2": 1.614631260215919e-08,
+  "pass": true
+ },
+ {
+  "name": "O1_signed_fresh/first_moment",
+  "category": "first_moment",
+  "elements": 3,
+  "max_abs": 3.364178338682855e-09,
+  "element_failures": 0,
+  "relative_L2": 3.8541538362645814e-08,
+  "pass": true
+ },
+ {
+  "name": "O1_signed_fresh/second_moment",
+  "category": "second_moment",
+  "elements": 3,
+  "max_abs": 4.135955553735693e-11,
+  "element_failures": 0,
+  "relative_L2": 5.428451140946926e-08,
+  "pass": true
+ },
+ {
+  "name": "O2_epsilon_sensitive/clip",
+  "category": "gradient",
+  "elements": 3,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": 0.0,
+  "pass": true
+ },
+ {
+  "name": "O2_epsilon_sensitive/one_step_parameter",
+  "category": "one_step_parameter",
+  "elements": 3,
+  "max_abs": 7.424881176554265e-08,
+  "element_failures": 0,
+  "relative_L2": 3.2769988077517475e-08,
+  "pass": true
+ },
+ {
+  "name": "O2_epsilon_sensitive/first_moment",
+  "category": "first_moment",
+  "elements": 3,
+  "max_abs": 2.2204460202989916e-17,
+  "element_failures": 0,
+  "relative_L2": 2.2204460337936886e-08,
+  "pass": true
+ },
+ {
+  "name": "O2_epsilon_sensitive/second_moment",
+  "category": "second_moment",
+  "elements": 3,
+  "max_abs": 1.0966743425676969e-26,
+  "element_failures": 0,
+  "relative_L2": 1.0966743558977091e-07,
+  "pass": true
+ },
+ {
+  "name": "O3_global_clip/clip",
+  "category": "gradient",
+  "elements": 3,
+  "max_abs": 2.4632544337599427e-08,
+  "element_failures": 0,
+  "relative_L2": 2.557882847871817e-08,
+  "pass": true
+ },
+ {
+  "name": "O3_global_clip/one_step_parameter",
+  "category": "one_step_parameter",
+  "elements": 3,
+  "max_abs": 3.953552241142688e-08,
+  "element_failures": 0,
+  "relative_L2": 2.320539520194233e-08,
+  "pass": true
+ },
+ {
+  "name": "O3_global_clip/first_moment",
+  "category": "first_moment",
+  "elements": 3,
+  "max_abs": 3.2083125045545557e-09,
+  "element_failures": 0,
+  "relative_L2": 3.2815260260789013e-08,
+  "pass": true
+ },
+ {
+  "name": "O3_global_clip/second_moment",
+  "category": "second_moment",
+  "elements": 3,
+  "max_abs": 3.304218487362731e-11,
+  "element_failures": 0,
+  "relative_L2": 4.59971971384033e-08,
+  "pass": true
+ },
+ {
+  "name": "O4_artificial_mature_state/clip",
+  "category": "gradient",
+  "elements": 3,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": 0.0,
+  "pass": true
+ },
+ {
+  "name": "O4_artificial_mature_state/one_step_parameter",
+  "category": "one_step_parameter",
+  "elements": 3,
+  "max_abs": 4.82158655223941e-08,
+  "element_failures": 0,
+  "relative_L2": 2.3587355071906396e-08,
+  "pass": true
+ },
+ {
+  "name": "O4_artificial_mature_state/first_moment",
+  "category": "first_moment",
+  "elements": 3,
+  "max_abs": 1.862645149230957e-09,
+  "element_failures": 0,
+  "relative_L2": 2.303271894843622e-08,
+  "pass": true
+ },
+ {
+  "name": "O4_artificial_mature_state/second_moment",
+  "category": "second_moment",
+  "elements": 3,
+  "max_abs": 1.2130476527774658e-10,
+  "element_failures": 0,
+  "relative_L2": 3.142950701703484e-08,
+  "pass": true
+ },
+ {
+  "name": "O5_zero_gradient_retains_momentum/clip",
+  "category": "gradient",
+  "elements": 3,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": null,
+  "pass": true
+ },
+ {
+  "name": "O5_zero_gradient_retains_momentum/one_step_parameter",
+  "category": "one_step_parameter",
+  "elements": 3,
+  "max_abs": 3.605887810564923e-08,
+  "element_failures": 0,
+  "relative_L2": 2.3364045305201245e-08,
+  "pass": true
+ },
+ {
+  "name": "O5_zero_gradient_retains_momentum/first_moment",
+  "category": "first_moment",
+  "elements": 3,
+  "max_abs": 5.587935461570659e-10,
+  "element_failures": 0,
+  "relative_L2": 2.069605775061553e-08,
+  "pass": true
+ },
+ {
+  "name": "O5_zero_gradient_retains_momentum/second_moment",
+  "category": "second_moment",
+  "elements": 3,
+  "max_abs": 2.2817402915015217e-11,
+  "element_failures": 0,
+  "relative_L2": 7.599564164832481e-09,
+  "pass": true
+ },
+ {
+  "name": "toy/probe/0",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": 0.0,
+  "pass": true
+ },
+ {
+  "name": "toy/update1/prediction",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": 0.0,
+  "pass": true
+ },
+ {
+  "name": "toy/update1/loss",
+  "category": "normalized_loss",
+  "elements": 1,
+  "max_abs": 6.953875225645945e-09,
+  "element_failures": 0,
+  "relative_L2": 5.2154064192344585e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update1/clip",
+  "category": "gradient",
+  "elements": 9,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": 0.0,
+  "pass": true
+ },
+ {
+  "name": "toy/update1/analytic-gradient",
+  "category": "gradient",
+  "elements": 9,
+  "max_abs": 9.189049410274208e-09,
+  "element_failures": 0,
+  "relative_L2": 6.113714793170173e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update1/one_step_parameter",
+  "category": "one_step_parameter",
+  "elements": 9,
+  "max_abs": 2.9500606735233248e-08,
+  "element_failures": 0,
+  "relative_L2": 2.858847576676718e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update1/first_moment",
+  "category": "first_moment",
+  "elements": 9,
+  "max_abs": 1.0120371992695942e-09,
+  "element_failures": 0,
+  "relative_L2": 7.912223415256142e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update1/second_moment",
+  "category": "second_moment",
+  "elements": 9,
+  "max_abs": 2.1278133606212474e-12,
+  "element_failures": 0,
+  "relative_L2": 8.088362026994209e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/probe/1",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 6.705522537231445e-08,
+  "element_failures": 0,
+  "relative_L2": 4.372833345147094e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update2/prediction",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 1.4901161193847656e-08,
+  "element_failures": 0,
+  "relative_L2": 1.1957740738362981e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update2/loss",
+  "category": "eight_step_loss",
+  "elements": 1,
+  "max_abs": 4.594524705137104e-09,
+  "element_failures": 0,
+  "relative_L2": 3.150536583663557e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update2/clip",
+  "category": "gradient",
+  "elements": 9,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": 0.0,
+  "pass": true
+ },
+ {
+  "name": "toy/update2/analytic-gradient",
+  "category": "gradient",
+  "elements": 9,
+  "max_abs": 9.189049410274208e-09,
+  "element_failures": 0,
+  "relative_L2": 9.128984296478757e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update2/eight_step_parameter",
+  "category": "eight_step_parameter",
+  "elements": 9,
+  "max_abs": 3.119921826444383e-08,
+  "element_failures": 0,
+  "relative_L2": 3.490407104683743e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update2/first_moment",
+  "category": "first_moment",
+  "elements": 9,
+  "max_abs": 1.272807519103747e-09,
+  "element_failures": 0,
+  "relative_L2": 7.833350673448978e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update2/second_moment",
+  "category": "second_moment",
+  "elements": 9,
+  "max_abs": 9.848817013400745e-13,
+  "element_failures": 0,
+  "relative_L2": 4.6576529766269004e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/probe/2",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 1.862645149230957e-08,
+  "element_failures": 0,
+  "relative_L2": 1.4752376647775227e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update3/prediction",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 5.960464477539063e-08,
+  "element_failures": 0,
+  "relative_L2": 3.792121070517955e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update3/loss",
+  "category": "eight_step_loss",
+  "elements": 1,
+  "max_abs": 1.6887982706714766e-08,
+  "element_failures": 0,
+  "relative_L2": 1.157708201697196e-07,
+  "pass": true
+ },
+ {
+  "name": "toy/update3/clip",
+  "category": "gradient",
+  "elements": 9,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": 0.0,
+  "pass": true
+ },
+ {
+  "name": "toy/update3/analytic-gradient",
+  "category": "gradient",
+  "elements": 9,
+  "max_abs": 9.189049410274208e-09,
+  "element_failures": 0,
+  "relative_L2": 7.870374081167955e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update3/eight_step_parameter",
+  "category": "eight_step_parameter",
+  "elements": 9,
+  "max_abs": 3.509425899883567e-08,
+  "element_failures": 0,
+  "relative_L2": 3.4985796613570174e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update3/first_moment",
+  "category": "first_moment",
+  "elements": 9,
+  "max_abs": 1.1983017147998432e-09,
+  "element_failures": 0,
+  "relative_L2": 8.576797522421501e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update3/second_moment",
+  "category": "second_moment",
+  "elements": 9,
+  "max_abs": 4.2751303528081736e-12,
+  "element_failures": 0,
+  "relative_L2": 8.534532956902381e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/probe/3",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 2.60770320892334e-08,
+  "element_failures": 0,
+  "relative_L2": 2.007765576012866e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update4/prediction",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 3.725290298461914e-08,
+  "element_failures": 0,
+  "relative_L2": 3.652520248062598e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update4/loss",
+  "category": "eight_step_loss",
+  "elements": 1,
+  "max_abs": 1.3414925600918615e-08,
+  "element_failures": 0,
+  "relative_L2": 2.010766769867775e-07,
+  "pass": true
+ },
+ {
+  "name": "toy/update4/clip",
+  "category": "gradient",
+  "elements": 9,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": 0.0,
+  "pass": true
+ },
+ {
+  "name": "toy/update4/analytic-gradient",
+  "category": "gradient",
+  "elements": 9,
+  "max_abs": 9.189049410274208e-09,
+  "element_failures": 0,
+  "relative_L2": 6.113714793170173e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update4/eight_step_parameter",
+  "category": "eight_step_parameter",
+  "elements": 9,
+  "max_abs": 2.703363666256564e-08,
+  "element_failures": 0,
+  "relative_L2": 3.076224544715193e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update4/first_moment",
+  "category": "first_moment",
+  "elements": 9,
+  "max_abs": 1.3348956939829293e-09,
+  "element_failures": 0,
+  "relative_L2": 8.891052882228277e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update4/second_moment",
+  "category": "second_moment",
+  "elements": 9,
+  "max_abs": 4.799908795351682e-12,
+  "element_failures": 0,
+  "relative_L2": 7.423452646541846e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/probe/4",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 3.3527612686157227e-08,
+  "element_failures": 0,
+  "relative_L2": 2.802267217252828e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update5/prediction",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 1.4901161193847656e-08,
+  "element_failures": 0,
+  "relative_L2": 1.4280782945073355e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update5/loss",
+  "category": "eight_step_loss",
+  "elements": 1,
+  "max_abs": 1.96819504305612e-08,
+  "element_failures": 0,
+  "relative_L2": 1.4792618864154547e-07,
+  "pass": true
+ },
+ {
+  "name": "toy/update5/clip",
+  "category": "gradient",
+  "elements": 9,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": 0.0,
+  "pass": true
+ },
+ {
+  "name": "toy/update5/analytic-gradient",
+  "category": "gradient",
+  "elements": 9,
+  "max_abs": 9.189049410274208e-09,
+  "element_failures": 0,
+  "relative_L2": 6.113714793170173e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update5/eight_step_parameter",
+  "category": "eight_step_parameter",
+  "elements": 9,
+  "max_abs": 2.5860559360602053e-08,
+  "element_failures": 0,
+  "relative_L2": 2.5166541580131117e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update5/first_moment",
+  "category": "first_moment",
+  "elements": 9,
+  "max_abs": 9.189049417213102e-10,
+  "element_failures": 0,
+  "relative_L2": 5.256931975032709e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update5/second_moment",
+  "category": "second_moment",
+  "elements": 9,
+  "max_abs": 6.1768837657585896e-12,
+  "element_failures": 0,
+  "relative_L2": 6.964398202079245e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/probe/5",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 3.3527612686157227e-08,
+  "element_failures": 0,
+  "relative_L2": 2.7718135308077553e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update6/prediction",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 2.9802322387695312e-08,
+  "element_failures": 0,
+  "relative_L2": 1.8950929001172382e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update6/loss",
+  "category": "eight_step_loss",
+  "elements": 1,
+  "max_abs": 9.934107453313246e-09,
+  "element_failures": 0,
+  "relative_L2": 6.814150544882833e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update6/clip",
+  "category": "gradient",
+  "elements": 9,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": 0.0,
+  "pass": true
+ },
+ {
+  "name": "toy/update6/analytic-gradient",
+  "category": "gradient",
+  "elements": 9,
+  "max_abs": 9.189049410274208e-09,
+  "element_failures": 0,
+  "relative_L2": 7.870374081167955e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update6/eight_step_parameter",
+  "category": "eight_step_parameter",
+  "elements": 9,
+  "max_abs": 2.4941305576398065e-08,
+  "element_failures": 0,
+  "relative_L2": 2.48032353891266e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update6/first_moment",
+  "category": "first_moment",
+  "elements": 9,
+  "max_abs": 1.2914339701797228e-09,
+  "element_failures": 0,
+  "relative_L2": 6.205414221723693e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update6/second_moment",
+  "category": "second_moment",
+  "elements": 9,
+  "max_abs": 4.001372448441884e-12,
+  "element_failures": 0,
+  "relative_L2": 3.949710296394575e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/probe/6",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 2.9802322387695312e-08,
+  "element_failures": 0,
+  "relative_L2": 2.329755344042195e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update7/prediction",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 2.9802322387695312e-08,
+  "element_failures": 0,
+  "relative_L2": 2.4311998453893817e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update7/loss",
+  "category": "eight_step_loss",
+  "elements": 1,
+  "max_abs": 4.842877404653834e-09,
+  "element_failures": 0,
+  "relative_L2": 3.322804425532648e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update7/clip",
+  "category": "gradient",
+  "elements": 9,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": 0.0,
+  "pass": true
+ },
+ {
+  "name": "toy/update7/analytic-gradient",
+  "category": "gradient",
+  "elements": 9,
+  "max_abs": 9.189049410274208e-09,
+  "element_failures": 0,
+  "relative_L2": 9.128984296478757e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update7/eight_step_parameter",
+  "category": "eight_step_parameter",
+  "elements": 9,
+  "max_abs": 3.176709884034068e-08,
+  "element_failures": 0,
+  "relative_L2": 3.081698511217277e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update7/first_moment",
+  "category": "first_moment",
+  "elements": 9,
+  "max_abs": 1.9433597751861154e-09,
+  "element_failures": 0,
+  "relative_L2": 7.665460098399747e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update7/second_moment",
+  "category": "second_moment",
+  "elements": 9,
+  "max_abs": 2.4511892895203585e-12,
+  "element_failures": 0,
+  "relative_L2": 2.778745868980047e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/probe/7",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 3.3527612686157227e-08,
+  "element_failures": 0,
+  "relative_L2": 2.2005612317409663e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update8/prediction",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 4.470348358154297e-08,
+  "element_failures": 0,
+  "relative_L2": 3.269514960625947e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update8/loss",
+  "category": "eight_step_loss",
+  "elements": 1,
+  "max_abs": 7.421476780344882e-09,
+  "element_failures": 0,
+  "relative_L2": 1.1133284632715559e-07,
+  "pass": true
+ },
+ {
+  "name": "toy/update8/clip",
+  "category": "gradient",
+  "elements": 9,
+  "max_abs": 0.0,
+  "element_failures": 0,
+  "relative_L2": 0.0,
+  "pass": true
+ },
+ {
+  "name": "toy/update8/analytic-gradient",
+  "category": "gradient",
+  "elements": 9,
+  "max_abs": 9.189049410274208e-09,
+  "element_failures": 0,
+  "relative_L2": 6.113714793170173e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update8/eight_step_parameter",
+  "category": "eight_step_parameter",
+  "elements": 9,
+  "max_abs": 2.3128088777468747e-08,
+  "element_failures": 0,
+  "relative_L2": 2.5055275670641804e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update8/first_moment",
+  "category": "first_moment",
+  "elements": 9,
+  "max_abs": 1.521160209946859e-09,
+  "element_failures": 0,
+  "relative_L2": 7.446647625268625e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/update8/second_moment",
+  "category": "second_moment",
+  "elements": 9,
+  "max_abs": 4.49249957980985e-12,
+  "element_failures": 0,
+  "relative_L2": 3.424210483016112e-08,
+  "pass": true
+ },
+ {
+  "name": "toy/probe/8",
+  "category": "normalized_activation",
+  "elements": 6,
+  "max_abs": 4.842877388000488e-08,
+  "element_failures": 0,
+  "relative_L2": 3.246500868162788e-08,
+  "pass": true
+ }
+]

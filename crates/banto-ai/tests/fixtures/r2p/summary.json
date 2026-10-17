@@ -1,0 +1,7 @@
+{
+ "checks": 107,
+ "all_checks_pass": true,
+ "saved_tensors": 427,
+ "float32_values": 1152,
+ "reference_sha256": "a7a4914367b84859e631d6537a67f8a658f28183b9eab8ebf944916452d9b13e"
+}
