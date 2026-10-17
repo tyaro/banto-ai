@@ -1,0 +1,11 @@
+{
+ "checks": 130,
+ "all_checks_pass": true,
+ "saved_tensors": 129,
+ "float32_values": 219548,
+ "reference_sha256": "c3c0d599274834be20c6d40fb3170ff2718970a03d2179820025f9ef3eb27298",
+ "trainable_tensors": 59,
+ "trainable_values": 109024,
+ "batchA_loss": 2.1282856464385986,
+ "batchB_loss": 2.1700401306152344
+}

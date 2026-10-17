@@ -1,0 +1,1222 @@
+[
+ {
+  "name": "buffer/position",
+  "shape": [
+   5,
+   64
+  ],
+  "offset": 0,
+  "bytes": 1280,
+  "sha256": "80c0d73ac95980025d74f6ab460ac4864c09b6987b69feb3b22dd80bd4499d13"
+ },
+ {
+  "name": "batchA/normalized-quantiles",
+  "shape": [
+   2,
+   3,
+   32,
+   3
+  ],
+  "offset": 1280,
+  "bytes": 2304,
+  "sha256": "154fd63e6a5feb6d215c3c6e8c23b7375b6d39a417932adf1adc4022c5e51f47"
+ },
+ {
+  "name": "batchA/context-center",
+  "shape": [
+   2,
+   3,
+   1
+  ],
+  "offset": 3584,
+  "bytes": 24,
+  "sha256": "91038946e5db399b380c5161402b915241b3a456da6f21ebb150027213f10328"
+ },
+ {
+  "name": "batchA/context-scale",
+  "shape": [
+   2,
+   3,
+   1
+  ],
+  "offset": 3608,
+  "bytes": 24,
+  "sha256": "38659b023af4be3a129d9ee8030cd9f243cc72ba531619d93ccac4bd9322c0f4"
+ },
+ {
+  "name": "batchA/loss",
+  "shape": [
+   1
+  ],
+  "offset": 3632,
+  "bytes": 4,
+  "sha256": "05bc39889abaf865a6a8dd69333780bf36b21b0f16be6739f59157fb24759e78"
+ },
+ {
+  "name": "gradient/horizon",
+  "shape": [
+   64
+  ],
+  "offset": 3636,
+  "bytes": 256,
+  "sha256": "168010757575acd4f62efcc14f5889068841898994c357c6a31da80e0579abfd"
+ },
+ {
+  "name": "gradient/patch.weight",
+  "shape": [
+   64,
+   32
+  ],
+  "offset": 3892,
+  "bytes": 8192,
+  "sha256": "0712a780960321d1a8fc996ae49d73d55074275f345e90688d909c4b8edf5733"
+ },
+ {
+  "name": "gradient/patch.bias",
+  "shape": [
+   64
+  ],
+  "offset": 12084,
+  "bytes": 256,
+  "sha256": "319bd91fc04ac64f21c9d7c9f664ba27c679d5aabf2dbaaf331b0b15002d5f52"
+ },
+ {
+  "name": "gradient/blocks.0.temporal.q.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 12340,
+  "bytes": 16384,
+  "sha256": "0cd12529cb7566377ee074099c6f2c289df9fb9811e9f052ea1bf82093a7cbf1"
+ },
+ {
+  "name": "gradient/blocks.0.temporal.q.bias",
+  "shape": [
+   64
+  ],
+  "offset": 28724,
+  "bytes": 256,
+  "sha256": "b577e286165263ecfb419fc7c828ac255663e629e46e06c5c692bdf3eb688121"
+ },
+ {
+  "name": "gradient/blocks.0.temporal.k.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 28980,
+  "bytes": 16384,
+  "sha256": "c56af5dd97b31bdda44a1344e687c08858d0251eb38b0835e44e79e92a7891a3"
+ },
+ {
+  "name": "gradient/blocks.0.temporal.k.bias",
+  "shape": [
+   64
+  ],
+  "offset": 45364,
+  "bytes": 256,
+  "sha256": "64d51a17338d92f4d806b26beb273ef21080b43b34108743a0b20721e2dd1093"
+ },
+ {
+  "name": "gradient/blocks.0.temporal.v.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 45620,
+  "bytes": 16384,
+  "sha256": "6cebe6c74398b45482624deae81903dbf8d109a59493dbfd97215f79cb52eadb"
+ },
+ {
+  "name": "gradient/blocks.0.temporal.v.bias",
+  "shape": [
+   64
+  ],
+  "offset": 62004,
+  "bytes": 256,
+  "sha256": "5a6c1480462feb1221633caa9ee2d89364cbcbdfea39120b70a2030a5689ea4f"
+ },
+ {
+  "name": "gradient/blocks.0.temporal.out.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 62260,
+  "bytes": 16384,
+  "sha256": "b0a72d6142d156f4e63618f0079768ed94ea156a0461370aed11d8321fea8525"
+ },
+ {
+  "name": "gradient/blocks.0.temporal.out.bias",
+  "shape": [
+   64
+  ],
+  "offset": 78644,
+  "bytes": 256,
+  "sha256": "543ec215b5aea55f599a126092bd9cb95f465fc879bac9cb249c95ca2aaf117e"
+ },
+ {
+  "name": "gradient/blocks.0.variate.q.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 78900,
+  "bytes": 16384,
+  "sha256": "c68dbabfd142d4729ae6fd7e0d36c7bf7f6569c244cc0f9cf73c8b313065bdc4"
+ },
+ {
+  "name": "gradient/blocks.0.variate.q.bias",
+  "shape": [
+   64
+  ],
+  "offset": 95284,
+  "bytes": 256,
+  "sha256": "205e77a1c7dcf615e2192fe2ca9fa498043530ed1f8f3523a2d55ae0d05747b2"
+ },
+ {
+  "name": "gradient/blocks.0.variate.k.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 95540,
+  "bytes": 16384,
+  "sha256": "5d42738b5b44f98e7d9f123f214f2b66218c1f58045c4de28d8ed9652016f6d7"
+ },
+ {
+  "name": "gradient/blocks.0.variate.k.bias",
+  "shape": [
+   64
+  ],
+  "offset": 111924,
+  "bytes": 256,
+  "sha256": "4512d8c1e5df5fa17e5cc395fb75e76adba724d61893f83ca31dfe5ad6368ad9"
+ },
+ {
+  "name": "gradient/blocks.0.variate.v.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 112180,
+  "bytes": 16384,
+  "sha256": "71ca3b2b8b0b32d92b25aa46a63e96e23cbbfa7abb60bcc8eed98f4852d43693"
+ },
+ {
+  "name": "gradient/blocks.0.variate.v.bias",
+  "shape": [
+   64
+  ],
+  "offset": 128564,
+  "bytes": 256,
+  "sha256": "5ddd6806385e1003b85f7abc7f2d7df9b943a8be331f6827b5783dcfc0b17a76"
+ },
+ {
+  "name": "gradient/blocks.0.variate.out.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 128820,
+  "bytes": 16384,
+  "sha256": "a4139ba304c698a08c314891784c062487b1fab046f4f66062082a2a65af9779"
+ },
+ {
+  "name": "gradient/blocks.0.variate.out.bias",
+  "shape": [
+   64
+  ],
+  "offset": 145204,
+  "bytes": 256,
+  "sha256": "859a1ff4ace8a508e767811c6181910a1cac6057cad134d9856a708cf40f4cf3"
+ },
+ {
+  "name": "gradient/blocks.0.norms.0.weight",
+  "shape": [
+   64
+  ],
+  "offset": 145460,
+  "bytes": 256,
+  "sha256": "d58ce3b76471f6180f73ad7acc77cfc6163908a007be26ca88f39ccc5f03784f"
+ },
+ {
+  "name": "gradient/blocks.0.norms.0.bias",
+  "shape": [
+   64
+  ],
+  "offset": 145716,
+  "bytes": 256,
+  "sha256": "e4c8e5e54e5e8cc7b1d1d3ddcff9d6a135f7b10efa219344947a239cc4fb8fee"
+ },
+ {
+  "name": "gradient/blocks.0.norms.1.weight",
+  "shape": [
+   64
+  ],
+  "offset": 145972,
+  "bytes": 256,
+  "sha256": "3094f46edcd73b69d608086989093a5e69949070aed87cb10a300607615ceccb"
+ },
+ {
+  "name": "gradient/blocks.0.norms.1.bias",
+  "shape": [
+   64
+  ],
+  "offset": 146228,
+  "bytes": 256,
+  "sha256": "c97eb832338b58081266fb0999b2b0a43045f54b86923f43911fa923c908f711"
+ },
+ {
+  "name": "gradient/blocks.0.norms.2.weight",
+  "shape": [
+   64
+  ],
+  "offset": 146484,
+  "bytes": 256,
+  "sha256": "5f827651f3dfca534af704faeb5362ce6e0c68578d19dd9348d88e3bffb0f994"
+ },
+ {
+  "name": "gradient/blocks.0.norms.2.bias",
+  "shape": [
+   64
+  ],
+  "offset": 146740,
+  "bytes": 256,
+  "sha256": "0d8c441fba2fded92d69f2cbcdc0da692184c0e30b8204e3cf3801c8f3ffc1e7"
+ },
+ {
+  "name": "gradient/blocks.0.ff.0.weight",
+  "shape": [
+   128,
+   64
+  ],
+  "offset": 146996,
+  "bytes": 32768,
+  "sha256": "b887e9f9633dd7e4e0254bb4ff0c5827882e7e32ef0fde86894d20c5fdb6cfe7"
+ },
+ {
+  "name": "gradient/blocks.0.ff.0.bias",
+  "shape": [
+   128
+  ],
+  "offset": 179764,
+  "bytes": 512,
+  "sha256": "0eeba68a982b1e56923a9ad500b5d44dc569880ce827fdebb7ddfb840ceae182"
+ },
+ {
+  "name": "gradient/blocks.0.ff.2.weight",
+  "shape": [
+   64,
+   128
+  ],
+  "offset": 180276,
+  "bytes": 32768,
+  "sha256": "e3cfca448ae87ea0c20d2be23f7dc38f42f301f85099df4f381c86aa3d80f306"
+ },
+ {
+  "name": "gradient/blocks.0.ff.2.bias",
+  "shape": [
+   64
+  ],
+  "offset": 213044,
+  "bytes": 256,
+  "sha256": "4d50d817d07a200cea36a82f34e63e6a729a4d4248e05598b704787519e4ebb2"
+ },
+ {
+  "name": "gradient/blocks.1.temporal.q.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 213300,
+  "bytes": 16384,
+  "sha256": "885d86febf7fdd786ddd003bc05c190bd252a36e7fe7beb17d6fbd7c4e2a6733"
+ },
+ {
+  "name": "gradient/blocks.1.temporal.q.bias",
+  "shape": [
+   64
+  ],
+  "offset": 229684,
+  "bytes": 256,
+  "sha256": "83f24115b0a925686a419d5a7df08eaa06a4c69e97d5b9936e2b139741c7b3c8"
+ },
+ {
+  "name": "gradient/blocks.1.temporal.k.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 229940,
+  "bytes": 16384,
+  "sha256": "2c769935f87dc28a5eefc891eb02dd3af7199b58192849f7c6da0cf074c814ba"
+ },
+ {
+  "name": "gradient/blocks.1.temporal.k.bias",
+  "shape": [
+   64
+  ],
+  "offset": 246324,
+  "bytes": 256,
+  "sha256": "dbae748eab4885ad2fc2f95f66b379386df66b07edf67fc60ae011a5b60138ad"
+ },
+ {
+  "name": "gradient/blocks.1.temporal.v.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 246580,
+  "bytes": 16384,
+  "sha256": "477b7be50b7911394015620f3982b034a307099a444a3914e3a020e0444fd502"
+ },
+ {
+  "name": "gradient/blocks.1.temporal.v.bias",
+  "shape": [
+   64
+  ],
+  "offset": 262964,
+  "bytes": 256,
+  "sha256": "99152e056287de344055f6ca097b9e60040e1b48cdff4202c20f84406b923e53"
+ },
+ {
+  "name": "gradient/blocks.1.temporal.out.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 263220,
+  "bytes": 16384,
+  "sha256": "0d91783c066423c69676e6dce3909039164eee827662b3e5e132a277cfeb46bd"
+ },
+ {
+  "name": "gradient/blocks.1.temporal.out.bias",
+  "shape": [
+   64
+  ],
+  "offset": 279604,
+  "bytes": 256,
+  "sha256": "bc5c8fc6a90e931f807138e930dcdeaecb7ef235adc17365e3af136bb0c8563e"
+ },
+ {
+  "name": "gradient/blocks.1.variate.q.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 279860,
+  "bytes": 16384,
+  "sha256": "2c3f819db65052d5d2f083541b38171e5da3585fa15e4c21c1f3064b6fcd6f5a"
+ },
+ {
+  "name": "gradient/blocks.1.variate.q.bias",
+  "shape": [
+   64
+  ],
+  "offset": 296244,
+  "bytes": 256,
+  "sha256": "06fff22bba33a34068fb44ed245f3f02d7cbc818340199159662814e7e64a894"
+ },
+ {
+  "name": "gradient/blocks.1.variate.k.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 296500,
+  "bytes": 16384,
+  "sha256": "ba99efb140dd9c75fe7a4239d31828ac90de72209318373b8c03bdceea797aa6"
+ },
+ {
+  "name": "gradient/blocks.1.variate.k.bias",
+  "shape": [
+   64
+  ],
+  "offset": 312884,
+  "bytes": 256,
+  "sha256": "c10bd8e0ff47de8fef7425964f311deab2783c57f27188b7856d58dd80c61edb"
+ },
+ {
+  "name": "gradient/blocks.1.variate.v.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 313140,
+  "bytes": 16384,
+  "sha256": "0c82d8824e228ee74cf6dbb8698783cced5a56bb219807fc40462a5f099e5edb"
+ },
+ {
+  "name": "gradient/blocks.1.variate.v.bias",
+  "shape": [
+   64
+  ],
+  "offset": 329524,
+  "bytes": 256,
+  "sha256": "740f66574dde5c8ef5d3ec73884042053db895c137887e1edac950c8f8691b70"
+ },
+ {
+  "name": "gradient/blocks.1.variate.out.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 329780,
+  "bytes": 16384,
+  "sha256": "2ebea906b03a7ae81cb99c6fa83fdf1cf4eb4b9a58f40252c76450a85e52f98b"
+ },
+ {
+  "name": "gradient/blocks.1.variate.out.bias",
+  "shape": [
+   64
+  ],
+  "offset": 346164,
+  "bytes": 256,
+  "sha256": "c6ae3806f5fa137994079a46c6933c34af17a6a91f95b192ca1a252c079669ca"
+ },
+ {
+  "name": "gradient/blocks.1.norms.0.weight",
+  "shape": [
+   64
+  ],
+  "offset": 346420,
+  "bytes": 256,
+  "sha256": "58320240ca38c8044a8790a93f13bccbf96c3f6a0d5cee2e7222a62e97c78a46"
+ },
+ {
+  "name": "gradient/blocks.1.norms.0.bias",
+  "shape": [
+   64
+  ],
+  "offset": 346676,
+  "bytes": 256,
+  "sha256": "4ef4ca4870a21f3182268beed53496cde3c4ff2429712e50d7491761310497d8"
+ },
+ {
+  "name": "gradient/blocks.1.norms.1.weight",
+  "shape": [
+   64
+  ],
+  "offset": 346932,
+  "bytes": 256,
+  "sha256": "4ac030f6f2233e4fe51778c8c8fdc5f1b1b6b42d85c0f3488c3faa41e6b3f6cc"
+ },
+ {
+  "name": "gradient/blocks.1.norms.1.bias",
+  "shape": [
+   64
+  ],
+  "offset": 347188,
+  "bytes": 256,
+  "sha256": "14469398e15d6ea5b2e9bfe5694f2593cdeedf597fa0d2030463d37f07996505"
+ },
+ {
+  "name": "gradient/blocks.1.norms.2.weight",
+  "shape": [
+   64
+  ],
+  "offset": 347444,
+  "bytes": 256,
+  "sha256": "d4d7ac01b20f5956778e773b4014f6ce67485180a402be4bd11586d63b34a409"
+ },
+ {
+  "name": "gradient/blocks.1.norms.2.bias",
+  "shape": [
+   64
+  ],
+  "offset": 347700,
+  "bytes": 256,
+  "sha256": "815a5956000d2303c95534cf9ab444ec809893744028a67e9afecfdc8f657f79"
+ },
+ {
+  "name": "gradient/blocks.1.ff.0.weight",
+  "shape": [
+   128,
+   64
+  ],
+  "offset": 347956,
+  "bytes": 32768,
+  "sha256": "28ff89b76f575cd13bbcd793cfaa70f4b4b62eda1ff23c035b3f5ab61c435353"
+ },
+ {
+  "name": "gradient/blocks.1.ff.0.bias",
+  "shape": [
+   128
+  ],
+  "offset": 380724,
+  "bytes": 512,
+  "sha256": "ecdc9726c4f65d0a69118de64ae7213495df9c89ac69f7c0afe321a5fb8851c9"
+ },
+ {
+  "name": "gradient/blocks.1.ff.2.weight",
+  "shape": [
+   64,
+   128
+  ],
+  "offset": 381236,
+  "bytes": 32768,
+  "sha256": "ba4e6fbf1827740c54e0005831543907f94d9f6e016db8eb6cbd44baeda0e1a7"
+ },
+ {
+  "name": "gradient/blocks.1.ff.2.bias",
+  "shape": [
+   64
+  ],
+  "offset": 414004,
+  "bytes": 256,
+  "sha256": "bf1a98efc0f1955dd624b2eb422c818a95aa7768cb491d34f2612d0629b33346"
+ },
+ {
+  "name": "gradient/final_norm.weight",
+  "shape": [
+   64
+  ],
+  "offset": 414260,
+  "bytes": 256,
+  "sha256": "30d0a32e110a69fd5d85ff09cc923f888fa73dccc5e11db13ae9fb86ee999eba"
+ },
+ {
+  "name": "gradient/final_norm.bias",
+  "shape": [
+   64
+  ],
+  "offset": 414516,
+  "bytes": 256,
+  "sha256": "5712efdc31ed0f6f82c136f7d11ad6388da65c05ad589c164752469aeb28e657"
+ },
+ {
+  "name": "gradient/head.weight",
+  "shape": [
+   96,
+   64
+  ],
+  "offset": 414772,
+  "bytes": 24576,
+  "sha256": "c28979800cebbd943a4023f8de418570dde689e3c4bcb14d6af3d94fad75f521"
+ },
+ {
+  "name": "gradient/head.bias",
+  "shape": [
+   96
+  ],
+  "offset": 439348,
+  "bytes": 384,
+  "sha256": "6ac827ffe879ed728db5919c1289e63c32b411776e86220c7fba769923586e48"
+ },
+ {
+  "name": "clip/global-norm",
+  "shape": [
+   1
+  ],
+  "offset": 439732,
+  "bytes": 4,
+  "sha256": "8c87a796924e823aecd5fdececf86b1df9b6e553e26cb3e581a779becfa9dbe0"
+ },
+ {
+  "name": "clip/coefficient",
+  "shape": [
+   1
+  ],
+  "offset": 439736,
+  "bytes": 4,
+  "sha256": "e00e5eb9444182f352323374ef4e08ebcb784725fdd4fd612d7730540b3e0c8c"
+ },
+ {
+  "name": "clipped-gradient/horizon",
+  "shape": [
+   64
+  ],
+  "offset": 439740,
+  "bytes": 256,
+  "sha256": "168010757575acd4f62efcc14f5889068841898994c357c6a31da80e0579abfd"
+ },
+ {
+  "name": "clipped-gradient/patch.weight",
+  "shape": [
+   64,
+   32
+  ],
+  "offset": 439996,
+  "bytes": 8192,
+  "sha256": "0712a780960321d1a8fc996ae49d73d55074275f345e90688d909c4b8edf5733"
+ },
+ {
+  "name": "clipped-gradient/patch.bias",
+  "shape": [
+   64
+  ],
+  "offset": 448188,
+  "bytes": 256,
+  "sha256": "319bd91fc04ac64f21c9d7c9f664ba27c679d5aabf2dbaaf331b0b15002d5f52"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.temporal.q.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 448444,
+  "bytes": 16384,
+  "sha256": "0cd12529cb7566377ee074099c6f2c289df9fb9811e9f052ea1bf82093a7cbf1"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.temporal.q.bias",
+  "shape": [
+   64
+  ],
+  "offset": 464828,
+  "bytes": 256,
+  "sha256": "b577e286165263ecfb419fc7c828ac255663e629e46e06c5c692bdf3eb688121"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.temporal.k.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 465084,
+  "bytes": 16384,
+  "sha256": "c56af5dd97b31bdda44a1344e687c08858d0251eb38b0835e44e79e92a7891a3"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.temporal.k.bias",
+  "shape": [
+   64
+  ],
+  "offset": 481468,
+  "bytes": 256,
+  "sha256": "64d51a17338d92f4d806b26beb273ef21080b43b34108743a0b20721e2dd1093"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.temporal.v.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 481724,
+  "bytes": 16384,
+  "sha256": "6cebe6c74398b45482624deae81903dbf8d109a59493dbfd97215f79cb52eadb"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.temporal.v.bias",
+  "shape": [
+   64
+  ],
+  "offset": 498108,
+  "bytes": 256,
+  "sha256": "5a6c1480462feb1221633caa9ee2d89364cbcbdfea39120b70a2030a5689ea4f"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.temporal.out.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 498364,
+  "bytes": 16384,
+  "sha256": "b0a72d6142d156f4e63618f0079768ed94ea156a0461370aed11d8321fea8525"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.temporal.out.bias",
+  "shape": [
+   64
+  ],
+  "offset": 514748,
+  "bytes": 256,
+  "sha256": "543ec215b5aea55f599a126092bd9cb95f465fc879bac9cb249c95ca2aaf117e"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.variate.q.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 515004,
+  "bytes": 16384,
+  "sha256": "c68dbabfd142d4729ae6fd7e0d36c7bf7f6569c244cc0f9cf73c8b313065bdc4"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.variate.q.bias",
+  "shape": [
+   64
+  ],
+  "offset": 531388,
+  "bytes": 256,
+  "sha256": "205e77a1c7dcf615e2192fe2ca9fa498043530ed1f8f3523a2d55ae0d05747b2"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.variate.k.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 531644,
+  "bytes": 16384,
+  "sha256": "5d42738b5b44f98e7d9f123f214f2b66218c1f58045c4de28d8ed9652016f6d7"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.variate.k.bias",
+  "shape": [
+   64
+  ],
+  "offset": 548028,
+  "bytes": 256,
+  "sha256": "4512d8c1e5df5fa17e5cc395fb75e76adba724d61893f83ca31dfe5ad6368ad9"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.variate.v.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 548284,
+  "bytes": 16384,
+  "sha256": "71ca3b2b8b0b32d92b25aa46a63e96e23cbbfa7abb60bcc8eed98f4852d43693"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.variate.v.bias",
+  "shape": [
+   64
+  ],
+  "offset": 564668,
+  "bytes": 256,
+  "sha256": "5ddd6806385e1003b85f7abc7f2d7df9b943a8be331f6827b5783dcfc0b17a76"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.variate.out.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 564924,
+  "bytes": 16384,
+  "sha256": "a4139ba304c698a08c314891784c062487b1fab046f4f66062082a2a65af9779"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.variate.out.bias",
+  "shape": [
+   64
+  ],
+  "offset": 581308,
+  "bytes": 256,
+  "sha256": "859a1ff4ace8a508e767811c6181910a1cac6057cad134d9856a708cf40f4cf3"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.norms.0.weight",
+  "shape": [
+   64
+  ],
+  "offset": 581564,
+  "bytes": 256,
+  "sha256": "d58ce3b76471f6180f73ad7acc77cfc6163908a007be26ca88f39ccc5f03784f"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.norms.0.bias",
+  "shape": [
+   64
+  ],
+  "offset": 581820,
+  "bytes": 256,
+  "sha256": "e4c8e5e54e5e8cc7b1d1d3ddcff9d6a135f7b10efa219344947a239cc4fb8fee"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.norms.1.weight",
+  "shape": [
+   64
+  ],
+  "offset": 582076,
+  "bytes": 256,
+  "sha256": "3094f46edcd73b69d608086989093a5e69949070aed87cb10a300607615ceccb"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.norms.1.bias",
+  "shape": [
+   64
+  ],
+  "offset": 582332,
+  "bytes": 256,
+  "sha256": "c97eb832338b58081266fb0999b2b0a43045f54b86923f43911fa923c908f711"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.norms.2.weight",
+  "shape": [
+   64
+  ],
+  "offset": 582588,
+  "bytes": 256,
+  "sha256": "5f827651f3dfca534af704faeb5362ce6e0c68578d19dd9348d88e3bffb0f994"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.norms.2.bias",
+  "shape": [
+   64
+  ],
+  "offset": 582844,
+  "bytes": 256,
+  "sha256": "0d8c441fba2fded92d69f2cbcdc0da692184c0e30b8204e3cf3801c8f3ffc1e7"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.ff.0.weight",
+  "shape": [
+   128,
+   64
+  ],
+  "offset": 583100,
+  "bytes": 32768,
+  "sha256": "b887e9f9633dd7e4e0254bb4ff0c5827882e7e32ef0fde86894d20c5fdb6cfe7"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.ff.0.bias",
+  "shape": [
+   128
+  ],
+  "offset": 615868,
+  "bytes": 512,
+  "sha256": "0eeba68a982b1e56923a9ad500b5d44dc569880ce827fdebb7ddfb840ceae182"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.ff.2.weight",
+  "shape": [
+   64,
+   128
+  ],
+  "offset": 616380,
+  "bytes": 32768,
+  "sha256": "e3cfca448ae87ea0c20d2be23f7dc38f42f301f85099df4f381c86aa3d80f306"
+ },
+ {
+  "name": "clipped-gradient/blocks.0.ff.2.bias",
+  "shape": [
+   64
+  ],
+  "offset": 649148,
+  "bytes": 256,
+  "sha256": "4d50d817d07a200cea36a82f34e63e6a729a4d4248e05598b704787519e4ebb2"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.temporal.q.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 649404,
+  "bytes": 16384,
+  "sha256": "885d86febf7fdd786ddd003bc05c190bd252a36e7fe7beb17d6fbd7c4e2a6733"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.temporal.q.bias",
+  "shape": [
+   64
+  ],
+  "offset": 665788,
+  "bytes": 256,
+  "sha256": "83f24115b0a925686a419d5a7df08eaa06a4c69e97d5b9936e2b139741c7b3c8"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.temporal.k.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 666044,
+  "bytes": 16384,
+  "sha256": "2c769935f87dc28a5eefc891eb02dd3af7199b58192849f7c6da0cf074c814ba"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.temporal.k.bias",
+  "shape": [
+   64
+  ],
+  "offset": 682428,
+  "bytes": 256,
+  "sha256": "dbae748eab4885ad2fc2f95f66b379386df66b07edf67fc60ae011a5b60138ad"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.temporal.v.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 682684,
+  "bytes": 16384,
+  "sha256": "477b7be50b7911394015620f3982b034a307099a444a3914e3a020e0444fd502"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.temporal.v.bias",
+  "shape": [
+   64
+  ],
+  "offset": 699068,
+  "bytes": 256,
+  "sha256": "99152e056287de344055f6ca097b9e60040e1b48cdff4202c20f84406b923e53"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.temporal.out.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 699324,
+  "bytes": 16384,
+  "sha256": "0d91783c066423c69676e6dce3909039164eee827662b3e5e132a277cfeb46bd"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.temporal.out.bias",
+  "shape": [
+   64
+  ],
+  "offset": 715708,
+  "bytes": 256,
+  "sha256": "bc5c8fc6a90e931f807138e930dcdeaecb7ef235adc17365e3af136bb0c8563e"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.variate.q.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 715964,
+  "bytes": 16384,
+  "sha256": "2c3f819db65052d5d2f083541b38171e5da3585fa15e4c21c1f3064b6fcd6f5a"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.variate.q.bias",
+  "shape": [
+   64
+  ],
+  "offset": 732348,
+  "bytes": 256,
+  "sha256": "06fff22bba33a34068fb44ed245f3f02d7cbc818340199159662814e7e64a894"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.variate.k.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 732604,
+  "bytes": 16384,
+  "sha256": "ba99efb140dd9c75fe7a4239d31828ac90de72209318373b8c03bdceea797aa6"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.variate.k.bias",
+  "shape": [
+   64
+  ],
+  "offset": 748988,
+  "bytes": 256,
+  "sha256": "c10bd8e0ff47de8fef7425964f311deab2783c57f27188b7856d58dd80c61edb"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.variate.v.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 749244,
+  "bytes": 16384,
+  "sha256": "0c82d8824e228ee74cf6dbb8698783cced5a56bb219807fc40462a5f099e5edb"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.variate.v.bias",
+  "shape": [
+   64
+  ],
+  "offset": 765628,
+  "bytes": 256,
+  "sha256": "740f66574dde5c8ef5d3ec73884042053db895c137887e1edac950c8f8691b70"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.variate.out.weight",
+  "shape": [
+   64,
+   64
+  ],
+  "offset": 765884,
+  "bytes": 16384,
+  "sha256": "2ebea906b03a7ae81cb99c6fa83fdf1cf4eb4b9a58f40252c76450a85e52f98b"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.variate.out.bias",
+  "shape": [
+   64
+  ],
+  "offset": 782268,
+  "bytes": 256,
+  "sha256": "c6ae3806f5fa137994079a46c6933c34af17a6a91f95b192ca1a252c079669ca"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.norms.0.weight",
+  "shape": [
+   64
+  ],
+  "offset": 782524,
+  "bytes": 256,
+  "sha256": "58320240ca38c8044a8790a93f13bccbf96c3f6a0d5cee2e7222a62e97c78a46"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.norms.0.bias",
+  "shape": [
+   64
+  ],
+  "offset": 782780,
+  "bytes": 256,
+  "sha256": "4ef4ca4870a21f3182268beed53496cde3c4ff2429712e50d7491761310497d8"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.norms.1.weight",
+  "shape": [
+   64
+  ],
+  "offset": 783036,
+  "bytes": 256,
+  "sha256": "4ac030f6f2233e4fe51778c8c8fdc5f1b1b6b42d85c0f3488c3faa41e6b3f6cc"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.norms.1.bias",
+  "shape": [
+   64
+  ],
+  "offset": 783292,
+  "bytes": 256,
+  "sha256": "14469398e15d6ea5b2e9bfe5694f2593cdeedf597fa0d2030463d37f07996505"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.norms.2.weight",
+  "shape": [
+   64
+  ],
+  "offset": 783548,
+  "bytes": 256,
+  "sha256": "d4d7ac01b20f5956778e773b4014f6ce67485180a402be4bd11586d63b34a409"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.norms.2.bias",
+  "shape": [
+   64
+  ],
+  "offset": 783804,
+  "bytes": 256,
+  "sha256": "815a5956000d2303c95534cf9ab444ec809893744028a67e9afecfdc8f657f79"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.ff.0.weight",
+  "shape": [
+   128,
+   64
+  ],
+  "offset": 784060,
+  "bytes": 32768,
+  "sha256": "28ff89b76f575cd13bbcd793cfaa70f4b4b62eda1ff23c035b3f5ab61c435353"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.ff.0.bias",
+  "shape": [
+   128
+  ],
+  "offset": 816828,
+  "bytes": 512,
+  "sha256": "ecdc9726c4f65d0a69118de64ae7213495df9c89ac69f7c0afe321a5fb8851c9"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.ff.2.weight",
+  "shape": [
+   64,
+   128
+  ],
+  "offset": 817340,
+  "bytes": 32768,
+  "sha256": "ba4e6fbf1827740c54e0005831543907f94d9f6e016db8eb6cbd44baeda0e1a7"
+ },
+ {
+  "name": "clipped-gradient/blocks.1.ff.2.bias",
+  "shape": [
+   64
+  ],
+  "offset": 850108,
+  "bytes": 256,
+  "sha256": "bf1a98efc0f1955dd624b2eb422c818a95aa7768cb491d34f2612d0629b33346"
+ },
+ {
+  "name": "clipped-gradient/final_norm.weight",
+  "shape": [
+   64
+  ],
+  "offset": 850364,
+  "bytes": 256,
+  "sha256": "30d0a32e110a69fd5d85ff09cc923f888fa73dccc5e11db13ae9fb86ee999eba"
+ },
+ {
+  "name": "clipped-gradient/final_norm.bias",
+  "shape": [
+   64
+  ],
+  "offset": 850620,
+  "bytes": 256,
+  "sha256": "5712efdc31ed0f6f82c136f7d11ad6388da65c05ad589c164752469aeb28e657"
+ },
+ {
+  "name": "clipped-gradient/head.weight",
+  "shape": [
+   96,
+   64
+  ],
+  "offset": 850876,
+  "bytes": 24576,
+  "sha256": "c28979800cebbd943a4023f8de418570dde689e3c4bcb14d6af3d94fad75f521"
+ },
+ {
+  "name": "clipped-gradient/head.bias",
+  "shape": [
+   96
+  ],
+  "offset": 875452,
+  "bytes": 384,
+  "sha256": "6ac827ffe879ed728db5919c1289e63c32b411776e86220c7fba769923586e48"
+ },
+ {
+  "name": "batchB/normalized-quantiles",
+  "shape": [
+   2,
+   3,
+   32,
+   3
+  ],
+  "offset": 875836,
+  "bytes": 2304,
+  "sha256": "8001341236eaf70f2b2de6a1827cd9050b4804136dcf931696e4660f96ad70a5"
+ },
+ {
+  "name": "batchB/context-center",
+  "shape": [
+   2,
+   3,
+   1
+  ],
+  "offset": 878140,
+  "bytes": 24,
+  "sha256": "dcc031b34917e67af3fb60f1bfa4198fe82b4e587356a87b2844b4fd69801533"
+ },
+ {
+  "name": "batchB/context-scale",
+  "shape": [
+   2,
+   3,
+   1
+  ],
+  "offset": 878164,
+  "bytes": 24,
+  "sha256": "38659b023af4be3a129d9ee8030cd9f243cc72ba531619d93ccac4bd9322c0f4"
+ },
+ {
+  "name": "batchB/loss",
+  "shape": [
+   1
+  ],
+  "offset": 878188,
+  "bytes": 4,
+  "sha256": "2b0cfd505667817aa986547e0a5f01891b54de7548a2f18d5c169df0ede7c0d4"
+ }
+]

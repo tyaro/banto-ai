@@ -1,0 +1,17 @@
+{
+ "generated_by": "tools/r2p_full_model_reference.py",
+ "generated": "2026-10-17 cloud",
+ "python": "3.14.6 (main, Jul 18 2026, 17:01:31) [Clang 22.1.3 ]",
+ "platform": "Linux-6.18.44-fc-v139-x86_64-with-glibc2.39",
+ "torch": "2.14.1+cpu",
+ "torch_git": "5c4886908584029761b579af026dcfb627c84070",
+ "threads": 1,
+ "interop_threads": 1,
+ "dtype": "float32-le CPU",
+ "independent_check": "float64 run of the same model and procedure",
+ "RNG_draws": 0,
+ "fixtures_sha256": "a0859c20810a71b10c977ea3a1f4fc92e86e37889a01f678f43c38a698ddd279",
+ "recipe_fixtures_sha256": "114e56301719c33e1a339a045190e9eb2717c5cfcbc4b3cf37dae42774ad6fcb",
+ "tolerance_sha256": "bd5c962c711decbad2e590af71ed9474d1f6256351571d3b16a8e3ada047c57a",
+ "model_source_sha256": "eb0e92990f34cea46cb4f824beb2328767c1de1ae9c110f6501e838c18a0ab99"
+}
