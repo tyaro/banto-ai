@@ -119,20 +119,30 @@ impl SmallForecaster {
         Self { device, state }
     }
     /// Builds the model from flat named tensors, e.g. autodiff leaves for
-    /// training. Names and lengths must match `checkpoint::expected_shapes()`.
-    pub fn from_named(device: Device, state: BTreeMap<String, Tensor<1>>) -> Result<Self> {
+    /// training. Names and lengths must match `checkpoint::expected_shapes()`,
+    /// and all tensors must share one device, which the model then uses (without
+    /// autodiff) for its own constants such as the causal mask.
+    pub fn from_named(state: BTreeMap<String, Tensor<1>>) -> Result<Self> {
         let expected = crate::checkpoint::expected_shapes();
         if state.len() != expected.len() {
             return Err(Error::Model(
                 "model tensor set differs from the expected names".into(),
             ));
         }
+        let device = state
+            .get("horizon")
+            .ok_or_else(|| Error::Model("missing tensor horizon".into()))?
+            .device()
+            .without_autodiff();
         for (name, shape) in &expected {
             let t = state
                 .get(name)
                 .ok_or_else(|| Error::Model(format!("missing tensor {name}")))?;
             if t.dims() != [shape.iter().product::<usize>()] {
                 return Err(Error::Model(format!("{name} has the wrong length")));
+            }
+            if t.device() != device {
+                return Err(Error::Model(format!("{name} is on a different device")));
             }
         }
         Ok(Self { device, state })

@@ -12,7 +12,12 @@ use banto_ai::{
 };
 use burn::tensor::{Device, Tensor, TensorData};
 use serde_json::Value;
-use std::{collections::BTreeMap, fs, path::PathBuf};
+use std::{
+    cell::RefCell,
+    collections::{BTreeMap, BTreeSet},
+    fs,
+    path::PathBuf,
+};
 
 const BUFFERS: [&str; 3] = ["scale_floor", "position", "time_mask"];
 
@@ -27,6 +32,7 @@ fn json(path: PathBuf) -> Value {
 struct Reference {
     values: BTreeMap<String, Vec<f32>>,
     tolerance: Value,
+    used: RefCell<BTreeSet<String>>,
 }
 impl Reference {
     fn load() -> Self {
@@ -52,12 +58,22 @@ impl Reference {
             json(root().join("../../examples/configs/rust-small-forecaster-r0-20261016-r0.1.json"))
                 ["tolerance"]
                 .clone();
-        Self { values, tolerance }
+        Self {
+            values,
+            tolerance,
+            used: RefCell::new(BTreeSet::new()),
+        }
     }
     fn get(&self, name: &str) -> &[f32] {
+        self.used.borrow_mut().insert(name.to_string());
         self.values
             .get(name)
             .unwrap_or_else(|| panic!("no reference {name}"))
+    }
+    /// Every saved reference entry must have been compared or used as input.
+    fn assert_all_used(&self) {
+        let all: BTreeSet<String> = self.values.keys().cloned().collect();
+        assert_eq!(*self.used.borrow(), all, "reference entries not compared");
     }
     /// Elementwise abs(rust-ref) <= atol + rtol*abs(ref).
     fn elementwise(&self, name: &str, rust: &[f32], kind: &str) {
@@ -86,8 +102,11 @@ impl Reference {
     fn global_gradient_l2(&self, label: &str, names: &[String], prefix: &str, rust: &[Vec<f32>]) {
         let tol = &self.tolerance["gradient"];
         let (mut norm, mut delta, mut candidate) = (0f64, 0f64, 0f64);
+        assert_eq!(names.len(), rust.len(), "{label} tensor count");
         for (name, values) in names.iter().zip(rust) {
-            for (&a, &b) in values.iter().zip(self.get(&format!("{prefix}{name}"))) {
+            let reference = self.get(&format!("{prefix}{name}"));
+            assert_eq!(values.len(), reference.len(), "{label} {name} length");
+            for (&a, &b) in values.iter().zip(reference) {
                 norm += (b as f64).powi(2);
                 delta += (a as f64 - b as f64).powi(2);
                 candidate += (a as f64).powi(2);
@@ -224,7 +243,7 @@ impl Fixture {
         for (p, t) in self.parameters.iter().zip(tensors) {
             state.insert(p.name.clone(), t.clone());
         }
-        SmallForecaster::from_named(self.device.clone(), state).unwrap()
+        SmallForecaster::from_named(state).unwrap()
     }
     fn tensors(&self, k: usize) -> (Tensor<3>, Tensor<3>) {
         let (context, actual) = batch(k);
@@ -305,6 +324,7 @@ fn full_model_loss_and_all_gradients_match_reference() {
     // Batch B with the initial (plain) parameters: no optimizer update in step 4.
     let plain: Vec<Tensor<1>> = fx.parameters.iter().map(|p| p.value.clone()).collect();
     fx.check_forward("batchB", &fx.model(&plain), k("B"));
+    fx.reference.assert_all_used();
 }
 
 #[test]
@@ -314,5 +334,5 @@ fn model_rejects_an_incomplete_tensor_set() {
     for p in &fx.parameters[1..] {
         state.insert(p.name.clone(), p.value.clone());
     }
-    assert!(SmallForecaster::from_named(fx.device.clone(), state).is_err());
+    assert!(SmallForecaster::from_named(state).is_err());
 }

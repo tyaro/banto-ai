@@ -2,8 +2,9 @@
 //! pinball loss, ordered named gradients, global-norm clip and an AdamW that
 //! follows the single-tensor Torch update (foreach/fused off).
 //!
-//! These parts are verified only against the fixed artificial R2P reference.
-//! They do not make SmallForecaster trainable and do not satisfy R1 or R2.
+//! These parts are verified only against the fixed artificial R2P references,
+//! including `loss_and_gradients` over the full `SmallForecaster::forward`
+//! (step 4). Passing them does not satisfy R1 or formal R2.
 
 use crate::{Error, Result};
 use burn::tensor::{Device, Tensor, TensorData};

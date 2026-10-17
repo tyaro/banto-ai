@@ -20,8 +20,8 @@ artificial data (`tests/fixtures/r2p-full`). Training on real data and formal
 R2 are not implemented yet. The output contains quantiles and context diagnostics; its p50
 and context_center are not expected future demand.
 
-Current verification: locked offline CPU build and all three tests pass on
-native Rust 1.95.0/macOS. Same-input normalization and attention diagnostics pass.
+R1 verification (2026-10-16): locked offline CPU build and the three tests of
+that time passed on native Rust 1.95.0/macOS. Same-input normalization and attention diagnostics pass.
 LayerNorm now multiplies by one row inverse standard deviation, matching the
 reference CPU evaluation order; fixed seven-case confirmation resolves the old
 mismatch but reveals one different intermediate element beyond the unchanged
