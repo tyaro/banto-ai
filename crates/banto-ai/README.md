@@ -50,7 +50,7 @@ downstream integration remains a distribution issue to resolve before release.
 
 ## 現在の研究順序
 
-[現在の引継ぎ](../../docs/current-handoff.md)と[復帰計画](../../docs/research/banto-ai-practical-training-return-plan-2026-10-16.md)に沿って進める。Rust推論R1は中間値1点未達で、正式R2実データ学習は停止中。人工データだけのR2P loss/gradient/AdamW/checkpoint実装が次工程である。Python参照は生成済みだが、Rust学習・保存再開は未実装。
+[現在の引継ぎ](../../docs/current-handoff.md)と[復帰計画](../../docs/research/banto-ai-practical-training-return-plan-2026-10-16.md)に沿って進める。Rust推論R1は中間値が未達のまま（診断として記録）。学習部品（loss/gradient/clip/AdamW、checkpoint、保存再開）は実装済みで、人工データのR2Pと、CARE fold0での正式R2（[記録](../../docs/results/rust-r2-formal-2026-10-17.md)、1回だけ実行し全ケース合格）を通過した。これ以外の実データ学習は停止中。
 
 現在の公開moduleはcheckpoint/error/input/model。default testは合成入力のunit testだけで、CARE参照のintegration testはreference-testsで明示opt-inする。暗黙のexample探索は無効、公開exampleはpredictのみ。不採用FMA/context/fused-linear拡張と診断exampleは履歴資料へ退避した。旧featureは再定義しない。閉鎖済み証跡と原許容差を維持する。
 
