@@ -6,6 +6,8 @@
 
 工程0/1の追補: [固定条件](rust-r2p-synthetic-training-contract-2026-10-16.md)と[lock最小案/Python参照](../results/rust-r2p-lock-and-python-reference-2026-10-16.md)を保存済み。隔離案はpackage/feature不変で通過、107独立照合pass。元lockへ未適用。次は案の適用と固定小型Rust部品実装、Rust学習/保存再開は未実行。
 
+2026-10-17追補2: 人の承認で[R0.2](rust-r0.2-comparison-amendment-2026-10-17.md)を定めた。正式R2の更新比較は|勾配|≥10·epsの要素で判定し、正式R2の入口はR1の最終出力と同一入力局所比較385件とする（中間値は診断として記録）。R1の合格条件と本計画の許容差は変えない。
+
 2026-10-17追補: [整理結果](../results/research-consolidation-2026-10-17.md)。検証済みlock最小案を適用し、停止済みの実装/調査を履歴へ退避した。工程0/1の凍結仕様とPython参照は保持。次は工程2/3の小型Rust実装であり、以前の未適用表記は当時の状態。
 
 ## 主目的と継続する境界
