@@ -33,7 +33,7 @@ Toto 2.0 4M向けに、合成motor／conveyorデータを使う小規模matrix�
 
 以下の controlled commands は、この README 冒頭で setup した `$totoPython` を使います。
 
-generator → quality gate → benchmark → Toto adapter の受入契約を固定する4 track（control、target fault、target quality、covariate quality）を [`docs/toto2-controlled-scenarios.md`](../../docs/toto2-controlled-scenarios.md) に定義しています。2026-09-05にreal modelのcontrolled runを完了し、4 matrix各20/20 success、acceptance `pass`となりました。各 matrix は seed 17／29／42／73／101、horizon 15／30、context 64／120、test origin 384、5 baselines＋Toto native を共有します。
+generator → quality gate → benchmark → Toto adapter の受入契約を固定する4 track（control、target fault、target quality、covariate quality）を [`docs/toto2-controlled-scenarios.md`](../../docs/models/toto2-controlled-scenarios.md) に定義しています。2026-09-05にreal modelのcontrolled runを完了し、4 matrix各20/20 success、acceptance `pass`となりました。各 matrix は seed 17／29／42／73／101、horizon 15／30、context 64／120、test origin 384、5 baselines＋Toto native を共有します。
 
 ```powershell
 & $totoPython tools\toto2\run_matrix.py --config examples\configs\benchmark-matrix-toto2-controlled-control.json --cache-dir C:\banto-cache\toto2

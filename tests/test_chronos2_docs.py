@@ -130,10 +130,10 @@ class Chronos2DocumentationTests(unittest.TestCase):
             (ROOT / path).read_text(encoding="utf-8")
             for path in (
                 "README.md",
-                "docs/chronos2-notes.md",
-                "docs/research-roadmap.md",
+                "docs/models/chronos2-notes.md",
+                "docs/research/research-roadmap.md",
                 "docs/research-implementation-plan.md",
-                "docs/architecture.md",
+                "docs/overview/architecture.md",
             )
         )
         for obsolete in (
@@ -147,17 +147,17 @@ class Chronos2DocumentationTests(unittest.TestCase):
         config = load_json(ROOT / "examples" / "configs" / "benchmark-chronos2-known-load.json")
         self.assertEqual(config["past_only_covariate_ids"], [])
         self.assertEqual(config["known_future_covariate_ids"], ["load_proxy"])
-        text = (ROOT / "docs" / "chronos2-notes.md").read_text(encoding="utf-8")
+        text = (ROOT / "docs" / "models/chronos2-notes.md").read_text(encoding="utf-8")
         self.assertIn("oracle leakage", text)
         self.assertIn("originの時点で計画システムから確定して取得できた", text)
 
     def test_documents_fix_isolation_license_p50_missing_and_promotion_boundary(self) -> None:
-        notes = (ROOT / "docs" / "chronos2-notes.md").read_text(encoding="utf-8")
-        adr = (ROOT / "docs" / "adr-0004-chronos2-isolation.md").read_text(encoding="utf-8")
-        architecture = (ROOT / "docs" / "architecture.md").read_text(encoding="utf-8")
-        roadmap = (ROOT / "docs" / "research-roadmap.md").read_text(encoding="utf-8")
+        notes = (ROOT / "docs" / "models/chronos2-notes.md").read_text(encoding="utf-8")
+        adr = (ROOT / "docs" / "decisions/adr-0004-chronos2-isolation.md").read_text(encoding="utf-8")
+        architecture = (ROOT / "docs" / "overview/architecture.md").read_text(encoding="utf-8")
+        roadmap = (ROOT / "docs" / "research/research-roadmap.md").read_text(encoding="utf-8")
         plan = (ROOT / "docs" / "research-implementation-plan.md").read_text(encoding="utf-8")
-        survey = (ROOT / "docs" / "time-series-model-survey.md").read_text(encoding="utf-8")
+        survey = (ROOT / "docs" / "research/time-series-model-survey.md").read_text(encoding="utf-8")
         combined = "\n".join((notes, adr, architecture, roadmap, plan, survey))
         for required in (
             "chronos-forecasting==2.3.1",
@@ -178,8 +178,8 @@ class Chronos2DocumentationTests(unittest.TestCase):
                 self.assertIn(required, combined)
 
     def test_documents_use_computed_checkpoint_evidence_and_distinguish_smoke_scope(self) -> None:
-        notes = (ROOT / "docs" / "chronos2-notes.md").read_text(encoding="utf-8")
-        adr = (ROOT / "docs" / "adr-0004-chronos2-isolation.md").read_text(encoding="utf-8")
+        notes = (ROOT / "docs" / "models/chronos2-notes.md").read_text(encoding="utf-8")
+        adr = (ROOT / "docs" / "decisions/adr-0004-chronos2-isolation.md").read_text(encoding="utf-8")
         for name, text in (("notes", notes), ("adr", adr)):
             with self.subTest(document=name):
                 self.assertIn(MODEL_SIZE, text)
@@ -276,8 +276,8 @@ class Chronos2DocumentationTests(unittest.TestCase):
     def test_readme_and_plans_record_completed_initial_run_and_completed_matrix(self) -> None:
         paths = (
             ROOT / "README.md",
-            ROOT / "docs" / "chronos2-notes.md",
-            ROOT / "docs" / "research-roadmap.md",
+            ROOT / "docs" / "models/chronos2-notes.md",
+            ROOT / "docs" / "research/research-roadmap.md",
             ROOT / "docs" / "research-implementation-plan.md",
         )
         for path in paths:

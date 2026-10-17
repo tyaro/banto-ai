@@ -1,0 +1,544 @@
+{
+  "adopted": false,
+  "beta_computed": false,
+  "can_launch_learning": false,
+  "claims_not_evaluated": [
+    "primary_2014_improvement",
+    "specified_deletions_2014_nonworsening",
+    "zero_own_signal_cells_2014_nonworsening"
+  ],
+  "concentration_cutoff_added": false,
+  "date_deletions": 21,
+  "fit_ready": false,
+  "fixed_original_weights_for_geometry": true,
+  "future_deletion_predictions_scored_after_freeze": true,
+  "future_deletion_probes": 1360,
+  "future_deletion_refits_reweight_remaining_E_I": true,
+  "future_max_deletion_refits": 21,
+  "future_max_primary_fits": 4,
+  "future_primary_predictions": 260,
+  "heartbeat": "PAUSED",
+  "independent_comparisons": 1754,
+  "independent_rank_certificates": 90,
+  "max_bits_analysis": 449,
+  "max_bits_reader": 449,
+  "new2015": false,
+  "new_fit": false,
+  "new_label_quantity_decode": false,
+  "new_performance_scores": false,
+  "new_predictions": false,
+  "observed_assumed_separate": true,
+  "posthoc_store_date_mask_added": false,
+  "previous_deletion_nonscoring_contract_retained": true,
+  "same_closure_mean28_maintained": true,
+  "seasonal_under_over_nonincrease_maintained": true,
+  "source_r_or_x_regenerated": false,
+  "start_conditions": {
+    "2015_stop": true,
+    "all_four_full_and_all_21_remaining_rank3": true,
+    "concentration_and_all_40_cells_disclosed": true,
+    "current_can_launch_learning": false,
+    "explicit_human_learning_restart_authorized": false,
+    "fit_ready": false,
+    "future_single_finite_experiment_framework_fixed": true,
+    "input_integrity_and_frozen_membership_verified": true,
+    "new_training_consumer_zero_beta_artificial_and_independent_checks_passed": false,
+    "original_E_I_weights_preserved": true,
+    "training_consumer_and_problem_schema_implemented": false
+  },
+  "status": "frozen_feature_geometry_and_learning_entry_conditions_complete",
+  "store_quarter_coverage": {
+    "10/Q1": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 1,
+        "nonzero_outside_own_span": 4,
+        "old_unsupported": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 1,
+      "train_rank": 1,
+      "train_rows": 3,
+      "zero_own_signal": false
+    },
+    "10/Q2": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 5,
+        "nonzero_outside_own_span": 1
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 1,
+      "train_rank": 1,
+      "train_rows": 6,
+      "zero_own_signal": false
+    },
+    "10/Q3": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 4,
+        "nonzero_outside_own_span": 3
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 2,
+      "train_rank": 2,
+      "train_rows": 7,
+      "zero_own_signal": false
+    },
+    "10/Q4": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 4,
+        "nonzero_outside_own_span": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 2,
+      "train_rank": 2,
+      "train_rows": 5,
+      "zero_own_signal": false
+    },
+    "13/Q1": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 4,
+        "nonzero_outside_own_span": 1,
+        "old_unsupported": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 1,
+      "train_rank": 1,
+      "train_rows": 3,
+      "zero_own_signal": false
+    },
+    "13/Q2": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 3,
+        "nonzero_in_own_span": 3
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 4,
+      "train_rank": 3,
+      "train_rows": 6,
+      "zero_own_signal": false
+    },
+    "13/Q3": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 4,
+        "nonzero_in_own_span": 3
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 4,
+      "train_rank": 3,
+      "train_rows": 7,
+      "zero_own_signal": false
+    },
+    "13/Q4": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 4,
+        "nonzero_in_own_span": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 3,
+      "train_rank": 3,
+      "train_rows": 5,
+      "zero_own_signal": false
+    },
+    "15/Q1": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 5,
+        "old_unsupported": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 0,
+      "train_rank": 0,
+      "train_rows": 3,
+      "zero_own_signal": true
+    },
+    "15/Q2": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 3,
+        "nonzero_outside_own_span": 3
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 1,
+      "train_rank": 1,
+      "train_rows": 6,
+      "zero_own_signal": false
+    },
+    "15/Q3": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 1,
+        "nonzero_in_own_span": 6
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 3,
+      "train_rank": 3,
+      "train_rows": 7,
+      "zero_own_signal": false
+    },
+    "15/Q4": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 4,
+        "nonzero_outside_own_span": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 1,
+      "train_rank": 1,
+      "train_rows": 5,
+      "zero_own_signal": false
+    },
+    "17/Q1": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 5,
+        "old_unsupported": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 0,
+      "train_rank": 0,
+      "train_rows": 3,
+      "zero_own_signal": true
+    },
+    "17/Q2": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 5,
+        "nonzero_outside_own_span": 1
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 1,
+      "train_rank": 1,
+      "train_rows": 6,
+      "zero_own_signal": false
+    },
+    "17/Q3": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 5,
+        "nonzero_in_own_span": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 4,
+      "train_rank": 3,
+      "train_rows": 7,
+      "zero_own_signal": false
+    },
+    "17/Q4": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 4,
+        "nonzero_outside_own_span": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 2,
+      "train_rank": 2,
+      "train_rows": 5,
+      "zero_own_signal": false
+    },
+    "19/Q1": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 4,
+        "nonzero_outside_own_span": 1,
+        "old_unsupported": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 2,
+      "train_rank": 2,
+      "train_rows": 3,
+      "zero_own_signal": false
+    },
+    "19/Q2": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 5,
+        "nonzero_in_own_span": 1
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 4,
+      "train_rank": 3,
+      "train_rows": 6,
+      "zero_own_signal": false
+    },
+    "19/Q3": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 4,
+        "nonzero_in_own_span": 3
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 3,
+      "train_rank": 3,
+      "train_rows": 7,
+      "zero_own_signal": false
+    },
+    "19/Q4": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 3,
+        "nonzero_outside_own_span": 3
+      },
+      "potential_shared_application_without_own_signal": [
+        "5ae219a8fb65cdae831b945bdb41f45ad323ebc04464f263ac7228f0a4a9484e",
+        "4affba36b08d13990e474b9a2fd4b2d6840340b5540eb42fd5e6476dfa6fecce",
+        "383cfaff7f7935bfe95836c34c4c7429e485c01d244b27fea1dddc9e16be9d31"
+      ],
+      "train_nonzero_rows": 0,
+      "train_rank": 0,
+      "train_rows": 5,
+      "zero_own_signal": true
+    },
+    "23/Q1": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 5,
+        "old_unsupported": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 1,
+      "train_rank": 1,
+      "train_rows": 3,
+      "zero_own_signal": false
+    },
+    "23/Q2": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 3,
+        "nonzero_outside_own_span": 3
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 1,
+      "train_rank": 1,
+      "train_rows": 6,
+      "zero_own_signal": false
+    },
+    "23/Q3": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 5,
+        "nonzero_outside_own_span": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 2,
+      "train_rank": 2,
+      "train_rows": 7,
+      "zero_own_signal": false
+    },
+    "23/Q4": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 6
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 4,
+      "train_rank": 3,
+      "train_rows": 5,
+      "zero_own_signal": false
+    },
+    "26/Q1": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 2,
+        "nonzero_outside_own_span": 3,
+        "old_unsupported": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 2,
+      "train_rank": 2,
+      "train_rows": 3,
+      "zero_own_signal": false
+    },
+    "26/Q2": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 4,
+        "nonzero_in_own_span": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 4,
+      "train_rank": 3,
+      "train_rows": 6,
+      "zero_own_signal": false
+    },
+    "26/Q3": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 4,
+        "nonzero_in_own_span": 3
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 4,
+      "train_rank": 3,
+      "train_rows": 7,
+      "zero_own_signal": false
+    },
+    "26/Q4": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 5,
+        "nonzero_outside_own_span": 1
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 2,
+      "train_rank": 2,
+      "train_rows": 5,
+      "zero_own_signal": false
+    },
+    "27/Q1": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 2,
+        "nonzero_outside_own_span": 3,
+        "old_unsupported": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 1,
+      "train_rank": 1,
+      "train_rows": 3,
+      "zero_own_signal": false
+    },
+    "27/Q2": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 2,
+        "nonzero_in_own_span": 4
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 3,
+      "train_rank": 3,
+      "train_rows": 6,
+      "zero_own_signal": false
+    },
+    "27/Q3": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 3,
+        "nonzero_outside_own_span": 4
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 2,
+      "train_rank": 2,
+      "train_rows": 7,
+      "zero_own_signal": false
+    },
+    "27/Q4": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 2,
+        "nonzero_outside_own_span": 4
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 2,
+      "train_rank": 2,
+      "train_rows": 5,
+      "zero_own_signal": false
+    },
+    "6/Q1": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 5,
+        "old_unsupported": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 1,
+      "train_rank": 1,
+      "train_rows": 3,
+      "zero_own_signal": false
+    },
+    "6/Q2": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 4,
+        "nonzero_outside_own_span": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 2,
+      "train_rank": 2,
+      "train_rows": 6,
+      "zero_own_signal": false
+    },
+    "6/Q3": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 4,
+        "nonzero_outside_own_span": 3
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 2,
+      "train_rank": 2,
+      "train_rows": 7,
+      "zero_own_signal": false
+    },
+    "6/Q4": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 3,
+        "nonzero_outside_own_span": 3
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 1,
+      "train_rank": 1,
+      "train_rows": 5,
+      "zero_own_signal": false
+    },
+    "7/Q1": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 3,
+        "nonzero_outside_own_span": 2,
+        "old_unsupported": 2
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 1,
+      "train_rank": 1,
+      "train_rows": 3,
+      "zero_own_signal": false
+    },
+    "7/Q2": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 3,
+        "nonzero_in_own_span": 3
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 3,
+      "train_rank": 3,
+      "train_rows": 6,
+      "zero_own_signal": false
+    },
+    "7/Q3": {
+      "issue_rows": 7,
+      "issue_status_counts": {
+        "eligible_zero": 3,
+        "nonzero_in_own_span": 4
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 4,
+      "train_rank": 3,
+      "train_rows": 7,
+      "zero_own_signal": false
+    },
+    "7/Q4": {
+      "issue_rows": 6,
+      "issue_status_counts": {
+        "eligible_zero": 3,
+        "nonzero_outside_own_span": 3
+      },
+      "potential_shared_application_without_own_signal": [],
+      "train_nonzero_rows": 2,
+      "train_rank": 2,
+      "train_rows": 5,
+      "zero_own_signal": false
+    }
+  },
+  "store_quarters": 40,
+  "structural_rank_gate_met": true,
+  "tuning_last_year": 2014
+}

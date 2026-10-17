@@ -1,0 +1,41 @@
+# v0.3 Python3.14単一CI4003の原証拠保存（2026-10-09）
+
+## 対象
+
+開始2026-10-09T13:27:47Z/HEAD 40252e285cce3e7f996d8338c271dff00420cb81-origin/upstream-clean。元先行7instrumented helpersのfull creation-start_token/live-executionをread-only CIMへ照合し、同original不在・repository helper/critical ownerなしを確認した。今回production/test/body0、完成focus/旧suite/基本probe/native/追加agent/profile反復0。
+
+未保存37932021035をcompact一回completed-successへ固定した。最新code32e6c9c36a27ffaed87a741ef1ae9dee52d8a424の37934224516はcompact一回in_progress/attempt1/push/Phase 1 CI/.github/workflows/ci.yml/workflow349172377、原run11702B/92392550961955ba81388efa8642cd0982ca6c13724a22658aa162c75d125798/stderr0B。jobs/終端/実件数未固定、待機・反復照会なし。doc-only新CI追跡なし。
+
+## 原run/jobs/artifacts
+
+CI37932021035/gitfull fcaece08b3acf5584a75ea566a05dc9270bfd2e2/attempt1/push/Phase 1 CI/.github/workflows/ci.yml/workflow349172377。原run11713B/7eab0cd3cccd74c87350a68deaf178e60bdf43b2492fb221518fcb7f2d48fc9d、2job 113824810793 test (3.14)/113841034227 verify-python314-journal 全completed-success。jobs/artifacts/2logs/2ZIPを各一度取得し、原gh stdout/stderrを保存した。両artifact digest一致、各1member・decoded上限8MiBを照合。ZIP digestはrunner image digestではない。
+
+unittest-ubuntu24-python3.14-37932021035-1: artifact11618433318/ZIP352964B/655165f9a24252061ce04981ad0d0221a1cf3eea2be3d5fcdc31e8f65a1526c5、member unittest.jsonl/4141283B/60855b3ca45edff21e8c751bde7441533a97d4d8d6e15270901e0b21d5e169e3。
+
+python314-journal-verification-37932021035-1: artifact11618885628/ZIP7998B/da1f8d60fdbb568b9f82d71c4a681fb4d8091d44cfb2e40006d8adf0bc6a9162、member regression.json/37192B/edc2db1fb56b79528f1a6622b308535aae5a364b99bc4883ff37199633f8e48b。
+
+原2logsは933255B/5ab0ede073e10103d0a56a53351682fe5093fa610b4fa8bcc1d9b6ccc1284270と22343B/accd4c3f15f16590b683d3fcd3c47e4acd067fce3d9d365e3629e4fde0ffe442。journal 4141283B/60855b3ca45edff21e8c751bde7441533a97d4d8d6e15270901e0b21d5e169e3、remote verification 37192B/edc2db1fb56b79528f1a6622b308535aae5a364b99bc4883ff37199633f8e48b。
+
+## 独立検証一回
+
+現tools/ci_verify_python314_journal.pyをexternal fullHEAD/workflow SHA25671f0e56eb9b0bb11a6e181e860a64ba45a6a4004cde7d4a5bf35d2b42cbf65a7/run37932021035/attempt1へ結び一回実行、exit0/verification_status=passed。実summary/discovered/tests_run4003/failure0/error0/skip237（Windows native213/non-S4 optional24）/source_unchanged=true/shared29 complete/必須28passed/cross_python_comparison_performed=false。4003は実journal summary取得後に記録し、算術予定を実件数へしない。
+
+7CLIの実行前working-Git pinと原Git batch stdout/stderrを個別保存し、6exact/ci_windows_native_skip_ids.pyだけ既知CRLF両pinを保持した。working前後不変はfull loaded runtime閉包ではない。local verification 37193B/101874517df581c5d425f74393b96f4316f7eaf116ecc02f39f53979c9f44901とremote37192Bは末尾CRLF/LF差1byte、JSON全field一致/raw_equal=false/json_equal=true/CRLF-only=trueを両原rawで保持。verification-save 4052B/701c7c14b1f70b1b9bd6c095894310c59bfa2333ed083085ef1b1ca15eea9e9e。旧CI3930 raw-equality failed helperを保全し、元helper/verifierを反復しない。
+
+原runtimeはUbuntu24.04/x86_64/GCC13.3.0/kernel6.17.0-1022-azure/CPython3.14.8/SOABI cpython-314-x86_64-linux-gnu/runner20261004.327.1。image digest未取得・候補未採択。Windows正式3.14.0/実Win ABI/Job/ACL/stdio/child owner/OS排他/容量/正式S4ではない。
+
+## 保存とsource
+
+原raw artifacts/ci-diagnostic-37932021035/は21fileの原prefixを固定し、post-saveと最終manifestを追加して閉鎖する（16MiB256entry/single8MiB）。metadata artifacts/preformal-ci-callsite-current-save-20261009-prep/は22file72148B/manifest2574B/bc75eff3f75467c8ca7262e67113b722fbda14b5aef520315622ced19b048bdfで閉鎖。別post artifacts/preformal-ci-callsite-current-post-20261009-prep/へ文書/Git/終了証拠を保存し、最終manifestで閉鎖する。両metadata512KiB32entry/reserve128KiB/single128KiB、閉鎖後追加/同保存/download/完成CI・verifier・focus反復は禁止。
+
+components 22971B/4b65c2a6a6041949d97e459d9c72f5aca84f7f994dec904be866252f9895bc32は現70working source-science/検証済み32e code-unitから40252doc-only親tree非交差継承/原CI21prefix/原未終端bytes/旧3991の3closed roots不変をmetadataだけ照合した。fresh名前30合計910751B/最大archive130691B/source cap131072Bとの差381Bはfull loaded runtime closure/全planned32entry/global coupled capacityではない。科学hash metadataだけ/holdout観測未読。
+
+4003はfca generate例外callsiteと原auxiliary writer保持接続source/runの単一CI保存。最新32e diagnostic bytes code/旧3991・3972・3954・3930/旧failure379079/旧2minor/複数source-run local focusをこの成功へ読み替えない。最新production/test code32eは不変。先行原focus failed・foreground未保存identity/full logsは保全し補わない。今回foreground tool errorなし。保存CLI bytes/pinsはhelper process全stdout-stderr捕捉ではない。
+
+## 継続する未完成経路
+
+次heartbeatは37934224516/full32eをcompact一回、終端時だけ新専用rootへ未保存原raw一度と3.14単一journal/独立verification/2logsをfullHEAD-workflow-run-attempt-jobsへ結ぶ。未終端は待機反復なしで未完成経路へ進む。完成379320/379291/379230/379181/379133を再照会-download-verifierしない。
+
+原diagnostic bytesの公開IO/child bootstrap、同原owner OS排他-all-writer atomic、fresh latest-clean loaded runtime closure-profile-private policy-request-unusedrootを継続。全planned32entry/原partial-new growth-codec/native buffer-object overhead/global coupled peak/実native return-HANDLE-stdio-child endpoint-close-rename原transport認証は未完了。候補raw-pin/manifest/cached completionをnative許可へしない。
+
+人の明示再開によりACTIVE、追加agent禁止。create_native早期拒否/全7役whole.run限定reader実起動禁止/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/元caps・unknown原owner-stopを維持。Sol容量エラー/人の停止割込みでは保全後PAUSED・重複再試行なし。

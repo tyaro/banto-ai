@@ -1,0 +1,244 @@
+{
+  "schema": "banto-ai.metropt.exploratory-protocol.v1",
+  "plan_id": "MPT-MAC-20261016-r2",
+  "status": "contract-fixed-runtime-not-implemented",
+  "purpose": "Independent TimesFM3-inspired model: industrial forecasting usefulness; demand/PSI remains a separate main track",
+  "authorization": {
+    "can_launch_learning": false,
+    "can_run_inference": false,
+    "can_score": false,
+    "can_reevaluate_2015": false,
+    "heartbeat": "PAUSED"
+  },
+  "source": {
+    "archive_sha256": "aab991a970e58210de853bb8078ce0e63abb4d9412fdc5c79792dae3d8e1721a",
+    "timestamp_timezone": "source-naive interpreted as UTC for this study; not verified equipment timezone",
+    "timestamp_closure_sha256": "00a1ef196402640d4d98ce55eaf88c6249a7f56613fa277879116091ba21a56e",
+    "calendar_manifest": "artifacts/metropt-complete-days-timestamp-20261016/calendar-windows.jsonl",
+    "calendar_sha256": "e219fee0717e7b07059df7b2e4eabc138831f11b2ade725651d89c89b4798e6b",
+    "model_source_sha256": "eb0e92990f34cea46cb4f824beb2328767c1de1ae9c110f6501e838c18a0ab99"
+  },
+  "calendar": {
+    "selected_days": {
+      "train": [
+        "2020-02-03",
+        "2020-02-04",
+        "2020-02-15",
+        "2020-02-16",
+        "2020-02-18",
+        "2020-02-22",
+        "2020-02-25"
+      ],
+      "validation": [
+        "2020-03-08",
+        "2020-03-18",
+        "2020-03-22"
+      ],
+      "test": [
+        "2020-03-23",
+        "2020-03-25",
+        "2020-03-26"
+      ]
+    },
+    "selection": "first 13 timestamp-complete days excluding 2020-02-21; no quantity-based replacements",
+    "day_is_independent_segment": true,
+    "cross_day_windows": false,
+    "minutes_per_day": 1440,
+    "context": 128,
+    "horizon": 32,
+    "origin_minute_inclusive": [
+      128,
+      1408
+    ],
+    "stride": {
+      "train": 1,
+      "validation": 32,
+      "test": 32
+    },
+    "candidate_windows": {
+      "train": 8967,
+      "validation": 123,
+      "test": 123
+    },
+    "minimum_common_support_per_day": {
+      "train": 1153,
+      "validation": 37,
+      "test": 37
+    },
+    "denominator": "calendar candidates fixed before exclusions",
+    "reselect_after_quantity_failure": false
+  },
+  "targets": [
+    {
+      "name": "tp3",
+      "raw_column": "TP3",
+      "unit": "bar"
+    },
+    {
+      "name": "oil_temperature",
+      "raw_column": "Oil_temperature",
+      "unit": "degC"
+    },
+    {
+      "name": "motor_current",
+      "raw_column": "Motor_current",
+      "unit": "A"
+    }
+  ],
+  "conversion": {
+    "minute_bin": "[start,start+60s), published at end",
+    "availability": "all selected readings available at bin end; actual delivery latency not validated",
+    "aggregate": "math.fsum of all selected raw readings / count, float64 then float32",
+    "timestamp_complete": "1440 occupied bins and max within-day consecutive raw gap <=60s; not quantity/normal-operation completeness",
+    "selected_raw_missing_nonfinite": "fail entire conversion; do not omit bad readings",
+    "empty_bin_nonfinite_aggregate_float32_overflow": "fail entire conversion",
+    "interpolate": false,
+    "quality_window_guard": "reject full common candidate on invalid context or target in any of 3 targets; apply fixed daily 90 percent floor",
+    "note": "quality guard cannot rescue a converter failure"
+  },
+  "scale": {
+    "population": "each stored float32 training bin once, all 7 days, chronological order",
+    "arithmetic": "cast to float64; math.fsum / N mean; math.fsum squared deviations / N variance; sqrt",
+    "train_scale": "max(population_sigma,1e-5)",
+    "context_floor": "max(0.01*population_sigma,1e-5)",
+    "tensor_dtype": "float32; exact rounded values pinned and promoted to float64 for metric arithmetic",
+    "finite_positive_checks": "mean/variance/sigma finite, T/floor finite and positive before and after float32 rounding",
+    "context_normalization": "existing forward CPU float32 mean/std(correction=0), using only 128 context bins"
+  },
+  "model": {
+    "class": "SmallForecaster",
+    "variants": [
+      "full",
+      "self-only"
+    ],
+    "parameters_each": 109024,
+    "V": 3,
+    "C": 128,
+    "H": 32,
+    "P": 32,
+    "width": 64,
+    "blocks": 2,
+    "heads": 4,
+    "ff_width": 128,
+    "layer_norm_eps": 1e-05,
+    "dropout": 0,
+    "quantiles": [
+      0.1,
+      0.5,
+      0.9
+    ],
+    "dtype": "float32",
+    "device": "cpu",
+    "official_weights": false,
+    "equal_effective_capacity_claim": false
+  },
+  "training": {
+    "init_seeds": [
+      20261016,
+      20261017,
+      20261018
+    ],
+    "sampler_seeds": [
+      20262016,
+      20262017,
+      20262018
+    ],
+    "updates": 4096,
+    "batch_size": 8,
+    "loss": "existing training_loss: context-normalized mean quantile pinball, float32",
+    "sampler": "local random.Random(seed): randrange(7) day, then randrange(len(common ordered day origins)), with replacement for each of 32768 samples",
+    "paired": "one initial state and complete sampling schedule per seed shared between variants; separate fresh optimizer state",
+    "optimizer": {
+      "name": "AdamW",
+      "lr": 0.0003,
+      "betas": [
+        0.9,
+        0.999
+      ],
+      "eps": 1e-08,
+      "weight_decay": 0.01,
+      "foreach": false,
+      "fused": false
+    },
+    "grad_clip_global_norm": 1.0,
+    "nonfinite_gradient": "stop before step",
+    "scheduler": null,
+    "early_stopping": false,
+    "threads": 2,
+    "interop_threads": 1,
+    "deterministic_algorithms": true
+  },
+  "selection": {
+    "steps": [
+      512,
+      1024,
+      2048,
+      4096
+    ],
+    "score": "day-equal, target-equal train-scale pinball",
+    "ties": "earlier step, exact numeric equality, no epsilon",
+    "baselines": [
+      "last-value",
+      "moving-average-15"
+    ],
+    "baseline_selector": "per target validation day-equal MAE; exact tie last-value",
+    "test_score_gate": "all 3 seed pairs selected and every test prediction plus baseline predictions pinned before any test scoring",
+    "best_seed_selection": false,
+    "moving_average_15_arithmetic": "math.fsum last 15 stored float32 values cast to float64 / 15; round forecast once to float32"
+  },
+  "metrics": {
+    "quantile_loss": "rho_tau(e)=max(tau*e,(tau-1)*e); e=(y-q)/T",
+    "aggregation_order": "float64 math.fsum: q, lead, origin within day, target, day; seeds equally after per-seed scores",
+    "wis": "2 * mean pinball across three quantiles (same day/target weights)",
+    "point_score": "p50 MAE per target in original units; do not average native units",
+    "reports": [
+      "all seeds",
+      "all days",
+      "all targets",
+      "all leads",
+      "coverage80",
+      "width80",
+      "lower_miss_rate",
+      "upper_miss_rate",
+      "support/exclusions",
+      "inference latency",
+      "memory"
+    ],
+    "mechanism_rule": "mean-seed full pinball < self-only and at least 2/3 paired seeds improve; exploratory only",
+    "point_rule": "per-target mean-seed full MAE < validation-fixed baseline and at least 2/3 seeds improve; report all targets",
+    "ratio_zero_denominator": "null plus absolute difference; never silently substitute epsilon",
+    "significance_claim": false,
+    "business_adoption": false,
+    "coverage_and_miss": "coverage includes both endpoints; lower/upper miss use strict inequalities"
+  },
+  "budget": {
+    "seed_units": 3,
+    "parent_seconds_per_unit": 900,
+    "child_seconds_per_unit": 870,
+    "physical_footprint_bytes": 2147483648,
+    "peak_rss_bytes": 2147483648,
+    "artifact_normal_files": 24,
+    "artifact_normal_bytes": 805306368,
+    "artifact_total_files": 32,
+    "artifact_total_bytes": 1073741824,
+    "single_file_bytes": 33554432,
+    "failure_reserve_files": 8,
+    "failure_reserve_bytes": 268435456,
+    "evidence_bytes": 16777216,
+    "evidence_files": 512,
+    "evidence_part_bytes": 262144,
+    "evidence_failure_reserve_bytes": 2097152,
+    "evidence_failure_reserve_files": 16,
+    "stdout_bytes": 1048576,
+    "stderr_bytes": 131072
+  },
+  "failure": "close incomplete with all prefix/source/stdio/exit/state retained; stop remaining units, no reseed/replacement/extension",
+  "scope_limitations": [
+    "retrospective timestamp-complete day sample",
+    "one compressor",
+    "3 validation and 3 test days",
+    "previous usage not certified unseen",
+    "quantities not checked yet",
+    "no business loss threshold"
+  ]
+}

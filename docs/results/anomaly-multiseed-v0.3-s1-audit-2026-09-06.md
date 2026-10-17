@@ -140,7 +140,7 @@ S1完了後も次は未実施である。
 
 S1は研究契約を実装・固定したsavepointである。製品利用、PLC／control write、Banto Hub write、
 顧客データ利用、model採用、性能保証を許可しない。現在状態の入口は[文書索引](../README.md)、
-[研究roadmap](../research-roadmap.md)、再現手順は[evaluator README](../../tools/evaluator/README.md)を参照する。
+[研究roadmap](../research/research-roadmap.md)、再現手順は[evaluator README](../../tools/evaluator/README.md)を参照する。
 
 ## 統合後のliving status
 

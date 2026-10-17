@@ -1,6 +1,18 @@
+## 最新のMac取得状態（2026-10-16）
+
+MetroPT-3・Condition monitoring of hydraulic systems・XJTU-SYをWindowsコピーではなく公式配布元から新規取得した。[取得結果と入力の入口](../docs/results/industrial-data-macos-intake-2026-10-16.md)、[原本index](manifests/industrial-macos-source-index-20261016.json)を参照。repository外の原本cacheと、artifacts/public-datasets内の新準備済み入力を分ける。XJTUは全15軸受の原本を保持し、特徴量は3軸受の完全系列だけ生成済み。CAREは別途受領済みで未取込。モデル学習・性能評価・2015再評価は再開していない。以下は従来の方針と履歴。
+
+---
+
 # データポリシーと配置
 
-顧客データを扱わず、合成データと利用条件を確認した公開データで研究する。公開データの選定理由と取得・変換境界は [`docs/public-dataset-survey.md`](../docs/public-dataset-survey.md) と [`docs/adr-0005-public-dataset-boundary.md`](../docs/adr-0005-public-dataset-boundary.md) を正本とする。
+顧客データを扱わず、合成データと利用条件を確認した公開データで研究する。公開データの選定理由と取得・変換境界は [`docs/public-dataset-survey.md`](../docs/research/public-dataset-survey.md) と [`docs/adr-0005-public-dataset-boundary.md`](../docs/decisions/adr-0005-public-dataset-boundary.md) を正本とする。
+
+## 現在の研究入力と過去資料 2026-10-14
+
+[データの保管と整理](../docs/research/data-retention-and-cleanup-2026-10-14.md)を現在の配置・保存対象の入口とする。需要予測の主候補は `data/public/store-sales-user-provided-20261014/`、設備用途の候補はUCI油圧と既存MetroPT。ユーザー提供原本と今回取得したUCI原本はGit管理外の `data/public/` に保存した。既存MetroPT toolの外部cache契約はそのまま参照する。
+
+旧C0/C1/C2評価の保存用copyは `data/archives/retired-anomaly-evaluation-20261014/`。元129dev rootsは具体承認後に削除済みで、検証済みarchiveから必要な過去資料を復元する。復元・読戻し用の原manifestとbytesを保持し、過去成果を現行学習データへ自動投入しない。Online Retail IIは主入力から外した保留候補。データ本文・archiveはGit管理外、source/利用条件・保存状態の文書だけを追跡する。
 
 ## Git に置いてよいもの
 

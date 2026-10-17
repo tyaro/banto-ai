@@ -1,0 +1,39 @@
+# 最新clean sourceのloaded import/image inventoryとGit pin不足保存
+
+## 保存範囲（ACTIVE）
+
+開始2026-10-09T14:15:03Z/HEAD 42cc0ba9feb34cb284a79de3264f90732f9ab698/origin/upstream-clean。production/test code e0601d3edff7c7a7415cd28ebb70f47382a5c835不変。元先行8instrumented helpers full saved creation-start_token/live-execution一致/read-only CIM同original不在/repository helper-critical ownerなし。追加agent・完成focus/旧suite/旧CI/basic OS-runtime probe/profile反復0。今回production/test/body0・doc-only2path一回skip ci commit/push。
+
+新code実fullSHA run選択一回で37942157019/push/Phase 1 CI/in_progress。原stdout156B/a0d3f3218cbe8f9efe99d8d844bf3cfcaec1019e1a901f642a15e9492a2bd01f/stderr0B。attempt/jobs/終端/journal/実件数未固定、compact/待機/反復/download/verifier0。完成4017以下・旧failure・旧2minorへ照会0、doc-only新CI追跡0。
+
+## 新しい境界観測
+
+現在clean HEADでreader/generatedを実importしたmetadata helperから、既存_reader_dependencies.collectを一回だけ呼んだ。原sys.modules spec origin/cache candidateとEnumProcessModulesEx/GetModuleFileNameWの現在loaded imagesを有界inventoryへ結び、各実pathの同file identity/fstat/lstatとbounded hash、collector内部の始終inventory一致を観測した。Job/child/worker/ACL変更・正式role operation0。これは新しいloaded inventory観測であり、完成basic OS-runtime probeや旧profileを反復しない。
+
+原collector returnを元JSON serialization raw163697B/5d7f771cd0fd81903c80e69d358d4969deb227d98ec18a4a0834dc05ee86c2d4へ保存。元rawを131072B+32625Bの2partへそのまま分け、各single128KiB/同原raw別量を維持。script/live/executionに原helper creation/start_tokenを保持した。元return以外からmodule/image/native所有権を補わない。
+
+原modules217/files330/loaded native images38/project sources66。名前30のsource rosterに含まれないloaded project sourcesは38。既存71source-science pinsでworking確認・検証済みcode unit親tree継承できるproject sourcesは29、残り37は518979Bで、single metadata root実393216Bへ収まらない。上限を緩めず、新専用a/b/c→未取得分専用d/e/fの各bounded rootへ分けた。元名前30合計915649B/最大archive130691B/cap差381Bは66sourceのloaded閉包ではない。名前30/phase32/total64の旧requestへ66sourceをそのまま追加する許可を発行しない。
+
+## 原失敗と未完成部分だけの継続
+
+原inventory helperはcollectorと2part保存後、readback式BASE[p['name']]のPath subscript TypeError/exit1。原failed live/execution/failure/selected traceを保全して原root6file169608B/manifest939B/3b77b7f0fe1b58b7870fe809fe12be3dd195406182c576363c1bb33e145766c7を閉鎖。原collector/native image観測/原script再実行0。別continuationは保存2partをjoin/strict JSON decodeし、原全文・scope false・原source pinsと未保存metadataだけ照合。runtime-continuation29727B/b10a19f2fb2db3a51dd3a9075829ef460ddd8590de1ec14e16d5639b9035f0ad。元helper失敗をpassedへ変更しない。
+
+原Git準備helperもcommand内base[p['name']]の同TypeError、HEAD原stdout41B/stderr0B保存後に失敗。cat-file0・statusコマンド0、原HEAD exit returnは未保存None（stdoutから補わない）。原helper/live/execution/選択traceを保全し、a6file6296B/b1file387B/c1file387Bを閉鎖。原script/原HEADコマンド反復0。未取得37sourceのcat-fileだけ新helperで一回実行し、16/16/5entry・186227/257773/74979Bの3batch、各512KiB16entry/output1MiB/累積30秒0.21592549997149035秒内。原full Git stdout/stderrをliteral part/full pin/requestへ保存し、blob header-size/原全body/readbackを原loaded file pin・現在workingへ一致させた。
+
+新37Git exact＋既存29verified inherited＝原loaded project66のdisk/Git整合性。既存71source-scienceとのunion108pinを固定。原compiled inline helper/no-file/built-in/frozen/cache candidate/一時load/unload/実in-memory code/native execution原return/authentication/全役全経路を完全に閉じた証拠ではない。原scope source_closure_complete/runtime_closure_complete/execution_authenticated/formal_permission false。fresh runtime profile/private policy/native request/unused exclusive rootは未発行。旧profile/source/policyを新HEADへ流用しない。
+
+新d8file218054B/manifest1115B/13e89fa4f31d37a681cf954f10e30dbb045c5456496ee563371ef36fba7a9c3d、e5file260767B/manifest772B/3a50f6eda53ec4d3a0999531c8f04d5c8a8b0434f50e141b30d5c0c0c89e1f64、f4file76268B/manifest647B/615c4bdd222cab96545f133fcd11da5b34a868db6551e8991528fc69d7f1b945は閉鎖、追加/同保存/全37Git・collector反復禁止。両原failedはPython metadata readback式の失敗であり、production/CI/native/Sol容量failureへしない。
+
+## metadata保存と限界
+
+main artifacts/preformal-runtime-closure-20261009-prep/最終20file97721B、manifest2597B/7b8fa6b00f3e0b132fb0b1087bf8a717355e41ca259e485f0cb78c505bb055c6閉鎖。components17532B/83c0e2955ee9144948596c82b00b6e1250bbbf76fd8f70145dc88e8a288d42a5。post artifacts/preformal-runtime-closure-post-20261009-prep/へ文書Git/pins/source union108/原閉鎖roots/full helper終了照合だけ保存し最後閉鎖。全root512KiB32entry/reserve128KiB/single128KiB。旧diagnostic publication raw13file78857B/meta29file164015B不変。
+
+selector wildcard3missはselected tool excerptのみを保存、原foreground creation/full process stdout-stderrは未保存None。Git原3batch fullstdout/stderrは保存したが、helper process全logは未捕捉。元2failed/statusを保全、read-only CIMはfull saved creation-start_token/live-execution一致とmicrosecond decimal truncationで元originalを識別、PIDだけ/native回収claimなし。
+
+科学hash metadataのみ/holdout観測未読/credit0。parts/graph copy/UTF-8/decoded objects/native buffers/object overhead/原partial-new growth/全writer同時peak/global memory/RSS/全経路wall・全planned32entry容量は未測定。局所current loaded file disk/Git一致やmanifestをnative許可へしない。
+
+## 次工程
+
+次heartbeatは37942157019 compact一回。終端時のみ新専用rootへ未保存原raw一度保存し、3.14単一journal/独立verification/2logsを実fullHEAD/workflow/run/attempt/jobsへ結ぶ。未終端は待機/反復なし。実summary前に件数を補わない。完成4017以下再照会/download/verifier0。
+
+原66sourceのloaded rosterとstdlib/native/cache/no-file範囲から、全planned/codec/partial-new growth/native-object/global peakの容量内へつなぐfresh契約が残る。診断専用公開/parent_failure原raw/child bootstrap/同原owner OS排他-all-writer atomicも未完了。create_native早期拒否/全7役whole.run限定reader実起動禁止/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/holdout未読/正式5残件・最終受入未完了/元caps-unknown原owner-stop/追加agent禁止/ACTIVEを維持。Sol容量エラー/人の停止割込みでは保全後PAUSED・重複再試行なし。

@@ -7,10 +7,13 @@ name = "banto-ai"
 version = "0.1.0"
 description = "Industrial AI research foundations for the Banto ecosystem"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.14,<3.15"
 license = { file = "LICENSE" }
 authors = [{ name = "tyaro" }]
 dependencies = []
+
+[project.optional-dependencies]
+offline-analysis = ["capstone==5.0.7"]
 
 [project.scripts]
 banto-ai = "banto_ai.cli:main"

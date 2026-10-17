@@ -1,0 +1,11 @@
+# 実r起動前：独立算術と失敗閉鎖の補強を固定
+
+2026-10-15 JST。実データのr計算前にAstraの実装確認を反映する。数値式/τ/丸め/encoder/入力/目的risk分母は変えない。
+
+独立readerに別実装のchecked Fraction（8192bit、約分前積/和、交差約分、整数nearest、比較のcross productも検査）を設け、独立max_bitsを保存する。監査本体の質量sortもchecked cross productにして同量時だけ固定key順で並べる。旧数値core/encoderを独立readerへimportしない。演算中間・比較超過の拒否を人工確認する。
+
+childは完了した各encoded row/各group監査をappend-only progress.jsonlへflush/fsyncし、通常/failureのclosureへ最終pinを含める。resource guardが最後にも例外になってもfailed closureを保存する。supervisorは実行前に新artifact rootが存在しないことを確認し、timeout/nonzero時は今回の新未閉鎖rootだけを途中journalごとfailed閉鎖する。閉鎖済み/別rootへ書き込まない。強制停止中のjournal最終行は不完全な可能性があるためbytesを修復しない。
+
+人工入力/支持/rank36check、独立算術/比較/途中閉鎖144checkを別記録でpass。初版runtime人工fixtureは/var symlinkのcanonical pathをresolveせず既存verifyに拒否されたため、failed source/stdio/exit/closureを保持しfixtureだけ訂正した。初版Gram fixture誤りも別failed rootのまま保持する。これらは実データの失敗/性能結果ではない。
+
+実行版はtools/demand_ordered_weight_audit_v3.py、work/execute_ordered_weight_input_audit_v2.py、work/readback_ordered_weight_input_audit_v2.pyと独立numbers_v2。旧版全source/closed roots保持。契約の一巡監査だけを行い、2015停止・fit_ready=false・新学習/予測/採点なしを維持する。

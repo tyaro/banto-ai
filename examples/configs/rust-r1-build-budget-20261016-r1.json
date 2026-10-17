@@ -1,0 +1,24 @@
+{
+  "schema": "banto.rust-r1-build-budget.v1",
+  "id": "R1-BUILD-DISK-20261016-r1",
+  "authorization": "human: ビルド用の容量上限を必要な範囲で見直して、計画に沿ってRustのテストとPythonとの数値比較を進めてください。既存成果の保護とメモリ上限は維持してください。",
+  "previous_cache_disk_cap_bytes": 805306368,
+  "cache_disk_cap_bytes": 1610612736,
+  "reason": "prior 805979625B stop comprises 479959378B dependency cache and 326020247B unfinished build; allow remaining dependencies, test/example linking and transient compiler outputs without deleting existing data; finite 1.5GiB ceiling, not a claim of required final size",
+  "applies_to": [
+    "environments/rust-cpu/cargo-home",
+    "target"
+  ],
+  "memory_cap_bytes": 2147483648,
+  "child_seconds": 870,
+  "parent_seconds": 900,
+  "artifact_and_evidence_limits_unchanged": true,
+  "scientific_tolerances_unchanged": true,
+  "scope": [
+    "R1 CPU tests",
+    "R1 fixed seven-case inference comparison"
+  ],
+  "no_training_or_test_reevaluation": true,
+  "jobs": 1,
+  "threads": 1
+}

@@ -11,7 +11,7 @@ CONTROLLED_ARTIFACT_ROOT = ROOT / "artifacts" / "toto2" / "ctl"
 
 class Toto2DocumentationTests(unittest.TestCase):
     def test_docs_record_fixed_artifacts_and_boundaries(self):
-        combined = "\n".join(path.read_text(encoding="utf-8") for path in (ROOT / "docs/toto2-notes.md", ROOT / "tools/toto2/README.md", ROOT / "README.md"))
+        combined = "\n".join(path.read_text(encoding="utf-8") for path in (ROOT / "docs/models/toto2-notes.md", ROOT / "tools/toto2/README.md", ROOT / "README.md"))
         for required in ("toto-2==2.0.0", "toto-models==1.0.0", "8306a9801cf98c0f5ffe4b2dcc8f496e616d84d9", "16582848", "316660d5afb47943e531f39242e0b02ca0b8bb73be5709dfe07ca80dfce9805e", "commercial-evaluation", "decode_block_size=None", "padding", "known-future", "Git", "missingは`value=null`", "staleは有限値＋quality flag", "target_mask=false", "has_missing_values=true", "`stale_value`はsource ageやtransport freshnessの証拠ではありません"):
             with self.subTest(required=required): self.assertIn(required, combined)
 
@@ -52,7 +52,7 @@ class Toto2DocumentationTests(unittest.TestCase):
 
     def test_controlled_scenario_definition_and_results_are_referenced(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        notes = (ROOT / "docs/toto2-notes.md").read_text(encoding="utf-8")
+        notes = (ROOT / "docs/models/toto2-notes.md").read_text(encoding="utf-8")
         tool_readme = (ROOT / "tools/toto2/README.md").read_text(encoding="utf-8")
         for text in (readme, notes, tool_readme):
             self.assertIn("toto2-controlled-scenarios.md", text)
@@ -64,7 +64,7 @@ class Toto2DocumentationTests(unittest.TestCase):
             "benchmark-matrix-toto2-controlled-covariate-quality.json",
         ):
             self.assertIn(matrix_name, tool_readme)
-        controlled = (ROOT / "docs/toto2-controlled-scenarios.md").read_text(encoding="utf-8")
+        controlled = (ROOT / "docs/models/toto2-controlled-scenarios.md").read_text(encoding="utf-8")
         for required in (
             "test origin は `384`",
             "truth が unavailable",
@@ -136,7 +136,7 @@ class Toto2DocumentationTests(unittest.TestCase):
 
     def test_controlled_artifacts_are_verified_when_available(self):
         if not CONTROLLED_ARTIFACT_ROOT.is_dir():
-            self.skipTest(f"controlled Toto artifact unavailable: {CONTROLLED_ARTIFACT_ROOT}")
+            self.skipTest("controlled Toto artifact unavailable")
 
         expected_hashes = {
             "m-a/result.json": "88cd3afdd25178808ddecb4b01c58e00e520bd67ab82dcf4ec6ba5b9856a16ae",
@@ -249,7 +249,7 @@ class Toto2DocumentationTests(unittest.TestCase):
         }
         missing = [name for name, path in paths.items() if not path.is_file()]
         if missing:
-            self.skipTest("local Toto event-slice artifacts unavailable: " + ", ".join(missing))
+            self.skipTest("local Toto event-slice artifacts unavailable")
 
         self.assertEqual(
             hashlib.sha256(paths["source_matrix"].read_bytes()).hexdigest(),
@@ -354,8 +354,8 @@ class Toto2DocumentationTests(unittest.TestCase):
 
         for path in (
             ROOT / "README.md",
-            ROOT / "docs/toto2-notes.md",
-            ROOT / "docs/research-roadmap.md",
+            ROOT / "docs/models/toto2-notes.md",
+            ROOT / "docs/research/research-roadmap.md",
             ROOT / "docs/research-implementation-plan.md",
             ROOT / "tools/toto2/README.md",
         ):
@@ -426,8 +426,8 @@ class Toto2DocumentationTests(unittest.TestCase):
 
         for path in (
             ROOT / "README.md",
-            ROOT / "docs/toto2-notes.md",
-            ROOT / "docs/research-roadmap.md",
+            ROOT / "docs/models/toto2-notes.md",
+            ROOT / "docs/research/research-roadmap.md",
             ROOT / "docs/research-implementation-plan.md",
             ROOT / "tools/toto2/README.md",
         ):

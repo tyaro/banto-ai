@@ -251,31 +251,19 @@ def _linux_cpu():
 def probe_host(root):
     """Compatibility observation; this cannot open the formal runtime guard."""
     rt.require(sys.dont_write_bytecode, "inspection requires disabled bytecode writes")
-    rt.require(platform.python_implementation() == "CPython" and sys.version_info[:2] in ((3, 12), (3, 14))
+    rt.require(platform.python_implementation() == "CPython" and sys.version_info[:2] == (3, 14)
                and struct.calcsize("P") == 8 and not sysconfig.get_config_var("Py_GIL_DISABLED"), "unsupported_runtime")
+    rt.require(os.name != "nt" or sys.version_info[:3] == (3, 14, 0), "unsupported_runtime")
     root = rt.regular_path(root, directory=True)
     basic = "compatibility-only"
     if os.name == "nt":
-        import winreg
-        from ctypes import wintypes as w
-        with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows NT\CurrentVersion") as key:
-            release, edition, build, ubr = (winreg.QueryValueEx(key, name)[0] for name in ("DisplayVersion", "EditionID", "CurrentBuildNumber", "UBR"))
-        version = sys.getwindowsversion()
-        rt.require((version.major, version.minor, int(build), ubr, edition, release, platform.machine()) ==
-                   (10, 0, 26200, 9168, "Professional", "25H2", "AMD64"), "unsupported_runtime")
-        kernel = ctypes.WinDLL("kernel32", use_last_error=True)
-        kernel.GetVolumePathNameW.argtypes, kernel.GetVolumePathNameW.restype = [w.LPCWSTR, w.LPWSTR, w.DWORD], w.BOOL
-        kernel.GetVolumeInformationW.argtypes = [w.LPCWSTR, w.LPWSTR, w.DWORD, w.LPVOID, w.LPVOID, w.LPVOID, w.LPWSTR, w.DWORD]
-        kernel.GetVolumeInformationW.restype = w.BOOL
-        kernel.GetDriveTypeW.argtypes, kernel.GetDriveTypeW.restype = [w.LPCWSTR], w.UINT
-        volume, filesystem = ctypes.create_unicode_buffer(32768), ctypes.create_unicode_buffer(128)
-        rt.require(kernel.GetVolumePathNameW(str(root), volume, len(volume)) and kernel.GetDriveTypeW(volume.value) == 3
-            and kernel.GetVolumeInformationW(volume.value, None, 0, None, None, None, filesystem, len(filesystem)) and filesystem.value == "NTFS", "unsupported_runtime")
-        if sys.version_info[:2] == (3, 14):
-            rt.probe_runtime(root)
-            basic = "matches-formal-basic-pin"
-        host = dict(system="Windows", release=release, version=f"{version.major}.{version.minor}.{build}.{ubr}",
-            build=int(build), ubr=ubr, edition=edition, architecture="AMD64", filesystem="NTFS", local_fixed=True)
+        observed = rt.probe_runtime(root)
+        basic = "matches-python-basic-pin"
+        host = dict(system="Windows", release=observed["release"],
+            version=f"{observed['os_major']}.{observed['os_minor']}.{observed['os_build']}.{observed['os_ubr']}",
+            build=observed["os_build"], ubr=observed["os_ubr"], edition=observed["os_edition"],
+            product_type=observed["product_type"], native_capabilities=observed["runtime_policy"],
+            architecture="AMD64", filesystem="NTFS", local_fixed=True)
         cpu, features = _windows_cpu()
         method = "win32-processor-feature-api"
         executable = rt.regular_path(Path(sys.executable))
@@ -293,7 +281,8 @@ def probe_host(root):
         filesystem = max(mounts)[1] if mounts else "unknown"
         rt.require(filesystem in ("ext4", "xfs", "btrfs"), "unsupported filesystem observation")
         host = dict(system="Linux", release="24.04", version=platform.release(), build=None, ubr=None,
-                    edition="ubuntu", architecture="x86_64", filesystem=filesystem, local_fixed=True)
+                    edition="ubuntu", product_type=None, native_capabilities=None,
+                    architecture="x86_64", filesystem=filesystem, local_fixed=True)
         cpu, features = _linux_cpu()
         method = "linux-all-processors-intersection"
         # Kernel-reported executing object, not a followed user-controlled alias.
@@ -376,7 +365,7 @@ def collect_receipt(root: Path, expected_head: str):
     rt.require(probe_host(root) == (host, cpu, executable, basic), "host/CPU changed")
     rt.require(stdlib_paths() == stdlib and set(native_paths()) == set(native)
                and extension_paths() == extensions, "final runtime inventory changed")
-    receipt = {"receipt_version": "s4-a.1", "acceptance_status": "not_completed",
+    receipt = {"receipt_version": a.RECEIPT_VERSION, "acceptance_status": "not_completed",
         "requirements": dict.fromkeys(a.REQUIREMENTS, "not_completed"), "stable": stable,
         "observation": {"pid": os.getpid(), "observed_utc": datetime.now(timezone.utc).isoformat(),
             "elapsed_seconds": time.monotonic()-started, "free_bytes": shutil.disk_usage(root).free,

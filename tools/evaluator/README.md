@@ -1,5 +1,55 @@
 # benchmark runner
 
+検証記録の保存は [共通保存APIと失敗保全](../../docs/anomaly/execution/verification-records.md) を参照してください。
+新しいhelperでは tools/verification_records.py を使い、raw/JSONを自動分割します。実行・評価側の資源制限は維持します。
+
+2026-10-11：[少量の代表データによる実評価と再実行](../../docs/results/anomaly-multiseed-v0.3-representative-evaluation-2026-10-11.md)。
+`run_representative_anomaly.py` は保存済みdev/smokeの1 dataset・1〜2候補を実計算し、入力/設定/source/結果/成否を新run IDへ保存します。
+`--replay` は保存入力と計算sourceを照合して別runへ再計算します。C0/C1の1条件と明示replayで全結果一致を確認しました。
+失敗・未着手・判定不能を成功へ補完せず、holdoutと正式campaignの許可条件は変更しません。
+
+2026-09-25：[engineering結果の別process reader](../../docs/anomaly/execution/anomaly-v03-consumer-reader.md)を追加。writer終了後に外部marker/保存点pinを使って確認し、結果を別directoryへ記録します。13接続試験と実公開物の読取りが通過。通常権限で、元payload/markerは変更しません。
+
+2026-09-25：[engineering consumer API/CLI](../../docs/anomaly/execution/anomaly-v03-engineering-consumer.md)を追加。明示入力・2保存点pinから同じ入力の記述結果を選び、新規保存・読み戻しまで接続します。16試験通過、全120区間720評価の既存記述値を保持。集計/scoreの再計算・正式評価の起動なし。
+
+2026-09-25：[集計入力の公開metadataへの結合API](../../docs/anomaly/execution/anomaly-v03-consumer-analysis-binding.md)を追加。10保存artifactを認証し、全120区間の最終attempt・input/evaluation hash・元集計値を照合します。14試験通過。旧検証履歴を再利用し、観測/score再計算やCLI/正式評価の起動はありません。
+
+通常権限・単一writerで計算済みの小さな結果を保存するAPIは、[通常権限での結果保存](../../docs/anomaly/execution/anomaly-v03-local-publication.md)を参照してください。実行ごとに新しい保存先を使い、上書き・重複使用を拒否し、完了印と内容を確認してから読み取ります。専用アカウントは使わず、正式v0.3 campaignの受入gateは変更しません。
+
+保存済みv0.3形式の観測から候補1つのスコアを計算して保存するコマンドは、[ローカルスコア計算](../../docs/anomaly/execution/anomaly-v03-local-preview.md)を参照してください。`preview_anomaly_v03.py run` と `verify` で計算・保存・再計算確認を行い、入力不足や利用不能な値も結果へ残します。
+同一入力の保存済み2〜3候補は `compare` で検証して比較できます。候補別・target別件数と、両側で利用可能な行の判定一致をMarkdown/JSONへ表示します。
+判定・利用可否が分かれたsample/targetには各候補のスコアと除外理由を表示します。`--details-limit` / `--details-offset` で表示量と続きを指定できます。
+詳細には前後1秒の保存済み観測値・単位・品質も併記します。直後の値は閲覧専用で、判定計算には使用しません。
+
+採択済みの[単一writer運用改訂](../../docs/anomaly/evaluation/anomaly-v03-single-writer-evaluation-proposal.md)による固定6件のengineering-dev試行は、[実行ガイド](../../docs/anomaly/evaluation/anomaly-v03-engineering-evaluation.md)を参照してください。`run_anomaly_v03_engineering.py plan` は計画だけを表示し、`run` はclean作業コピーから15分/2GiB/出力1GiBの上限で順次計算・保存・再計算を行います。正式S4受入やholdoutを開くものではありません。
+
+保存済み6件のscoreから警報・matching・集計を別実装で確かめる `audit_anomaly_v03_saved.py` は、[独立検算と進行記録の設計](../../docs/anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md)を参照してください。この既存CLIはprofile/score導出や完全S6監査を検証しません。
+
+2026-09-24追記：dev/smokeの120区間/720評価は完走済みです。元観測から正常profile・残差・scoreを再構成する検算器に、数値的な判定不能の理由・状態の確認を追加しました。`audit_anomaly_v03_observations.py`は外部pin付き完走保存点から指定1区間を読み、profile/score→警報・matching・集計まで照合します。[対応範囲と使用例](../../docs/results/anomaly-multiseed-v0.3-connected-observation-audit-2026-09-24.md)を参照してください。正常prefix健全・完全なdev/smokeに限定します。旧controller/監査CLIは変更していません。
+
+同日続報：[全120区間/720評価の接続検算が完了](../../docs/results/anomaly-multiseed-v0.3-full-connected-audit-2026-09-24.md)しました。正常profile 34,560件、score 10,368,000行、検出結果・集計が一致し、前回比較表とも全720件で整合しました。区間0の6評価をpin確認後に再利用し、残り714評価を約20分で検算しました。元観測からのユニーク検算数は720です。正常生成・overlay・丸め前の値、bootstrap/CI・正式gate・完全S6は残ります。
+
+同日続報：[全240datasetsの正常生成・overlay・丸め検算](../../docs/results/anomaly-multiseed-v0.3-independent-generation-audit-2026-09-24.md)も完了しました。`audit_anomaly_v03_generation.py`は外部pin付き完走保存点から指定pairの既存seedをメモリ内で再構成し、観測/mask/eventの保存bytesを厳密照合します。必須引数は`--savepoint`、`--savepoint-sha256`、`--run-root`、`--chunk-index`。新規datasetは書きません。先行するscore/ledger検算と全720評価で入力pinが一致しました。bootstrap/CI・正式gate・完全S6は引き続き残ります。
+
+同日続報：[bootstrap/CI/候補比較の独立算術](../../docs/results/anomaly-multiseed-v0.3-independent-inference-math-2026-09-24.md)を追加しました。`anomaly_v03_inference_audit.py`の手計算21試験と固定200万indexのhash/golden照合が通過しています。現段階は計算部品と手例のみで、実データを読むanalysis CLIは未接続です。既存の宣言検証と区別し、実性能CIや採択を完了扱いしません。
+
+同日続報：[保存済み監査報告のseed集計](../../docs/results/anomaly-multiseed-v0.3-independent-seed-aggregation-2026-09-24.md)を追加しました。`anomaly_v03_seed_aggregate.authenticate_seed_counts(savepoints, root_sha256, run_root)`は外部SHAを起点に5保存点と小さな報告を認証します。`savepoints`のキーは`inference/generation/score/connected/completed`。全720評価・登録順・12 layouts×2層×3候補を確認し、dev/smoke別の整数countsと記述点を返します。呼出し例と実行記録は`artifacts/independent-seed-aggregation-2026-09-24/verify.py`。観測/score再計算や実CIは行わず、純集計の`aggregate_evaluations`単独呼出しには入力認証機能がありません。
+
+同日続報：[analysis結果表への接続](../../docs/results/anomaly-multiseed-v0.3-analysis-table-adapter-2026-09-24.md)。`anomaly_v03_analysis_adapter.compute_fixture_packet`は12-layout単位の架空clusterとdraw、全検出delay/effective exposureから9表を作り、凍結schemaの部分形式を検証します。実行例は`artifacts/independent-analysis-adapter-2026-09-24/verify.py`。出力はfixture packetで、正式analysis documentや実CIではありません。実dev/smokeの直接入力は想定せず、欠けたdelay/slice/source証拠を補完しません。
+
+2026-09-25追記：[保存済み720評価の遅延・条件別集計](../../docs/results/anomaly-multiseed-v0.3-independent-slice-audit-2026-09-25.md)。`anomaly_v03_slice_io.read_saved_evaluation`は認証済みpin/identity/旧監査を受け取り、`anomaly_v03_slices`が保存判定の母数・分類・遅延度数を独立集計します。呼出し側の認証連結は`artifacts/independent-slice-audit-2026-09-25/verify.py`に保存。32試験、全seed90/用途18表の旧counts照合が通過しました。event-offsetは対象外/試験外参照を分け、scoreの排他的分割としません。正式full analysis/slice schema・実CI・候補採択は未実施です。
+
+同日続報：[認証済み解析入力への統合](../../docs/results/anomaly-multiseed-v0.3-analysis-inputs-2026-09-25.md)。`anomaly_v03_analysis_inputs.authenticate_analysis_inputs(savepoints, root_sha256, schema_path)`は`slices/seeds/adapter`の三保存点を明示指定し、compact counts/slicesを結合します。登録順・全108表・48組の加算を確認し、delay/exposure/診断を保持。実行例は`artifacts/independent-analysis-inputs-2026-09-25/verify.py`。39試験通過、元payload読取りなし。`join_inputs`は純関数で認証機能を持ちません。出力はdev/smoke記述用の独自formatで、正式analysis文書ではありません。
+
+同日続報：[用途別の記述結果表・診断表](../../docs/results/anomaly-multiseed-v0.3-descriptive-report-2026-09-25.md)。`anomaly_v03_descriptive_report.authenticate_report(input_savepoint, root_sha256, schema_path)`は認証済み解析入力から各用途9表を出力します。4系列の5,670診断行と234主指標を元入力に照合し、schema部分形式を検証。`summary_markdown`/`detailed_html`で閲覧用を生成します。実行例と成果物は`artifacts/descriptive-report-2026-09-25`。27試験通過。純関数build_reportにbytes認証はなく、正式full analysis/CI/gateは出力しません。
+
+固定120区切り・720評価の計画表示と進捗記録の読取り検査には `checkpoint_anomaly_v03.py plan/inspect` を使います。[metadata CLIの説明](../../docs/anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#実装済みのmetadata-cli)にある外部plan/head hashと件数を必須にし、途中終了・記録欠落・順序違反・未検証の保存状態を区別します。metadataの宣言を復元する段階で、実データ生成・実行再開・全campaign完了には接続していません。
+同CLIの `preflight-trial` は、[保存済み6件との証拠照合](../../docs/anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#保存済み6件とのpreflight証拠照合)を行います。参照journal・旧trial・終了監視・旧独立検算のhash/来歴を結び付け、6件のledgerを再検算します。旧trialを新campaignの完了件数に加えず、実行再開や全体の完了印は作りません。
+metadataの保存には同CLIの `store-init/store-append/store-inspect` を使います。[追記と中断時の回復](../../docs/anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#metadataを上書きせず保存追記する)では、外部receipt/record hashを保持し、既存記録を上書きせず追記します。確定後のreceipt喪失は読取りだけで回復し、部分pendingは残して拒否します。実campaignの開始・再開には接続していません。
+同CLIの `attempt-layout/attempt-validate` は、[attemptの保存先と証拠metadata](../../docs/anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#attemptの保存先と証拠metadataを検査する)を検査します。外部journal/descriptor hashから固定path・4役割の証拠宣言・source/runtime・6件のidentityを照合し、試行の取り違えや検証済み宣言の証拠不足を拒否します。実ファイル本文の検証や実行許可は含みません。
+`attempt-files` は[固定保存先の実ファイル照合](../../docs/anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#attemptの実ファイルを読取り照合する)、`attempt-audit` は最初のdev chunkの独立ledger再検算と監視/保存audit本文の照合を行います。前者は計算内容の検証を主張せず、後者もchunk 1以降を拒否します。campaignの開始・再開・完了加算は行いません。
+新しいchunk結果形式には `audit_anomaly_v03_chunk.py` と `checkpoint_anomaly_v03.py attempt-chunk-audit` を使います。[新形式の実ファイル検算](../../docs/anomaly/acceptance/anomaly-v03-independent-audit-and-checkpoints.md#新形式の区切りを実ファイルから検算する)では、外部plan/chunk/attempt指定・保存結果・producer/audit終了監視・過去consumerと現在verifierを照合します。全120区切りから選んだ6件を扱えますが、実行controllerや再開許可は含みません。
+
 `tools/data-generator/generate.py`で合成データを作成し、`check_quality.py`で品質gateを通した後、次の順で評価します。
 
 ```text
@@ -259,7 +309,7 @@ consumerは外部marker pin、全payload inventory、意味再計算、再読込
 source inventory／Git blobとworking bytes／正常generator基準を照合します。CRLF差も黙認しません。
 Windows基本pinのread-only probe、独立reader token用AccessCheckのread-only部品、拒否すべきfile／
 directory権限集合を準備しました。protected DACLの実際の設置、別process/tokenの出所証明、
-Windows 3.12／3.14 native受入、Linux CI image受入、完全なstdlib／loaded DLL／CRT inventoryと
+Windows 3.14.0 native受入、Linux CI image受入、完全なstdlib／loaded DLL／CRT inventoryと
 consumer freezeはS4に残ります。これらの完了や正式受入をS3のfake試験で代用しません。
 
 `run_campaign`／CLI `--run`は非対応runtimeを`unsupported_runtime`として、対応する基本pinでも
@@ -273,6 +323,61 @@ S1/S2 semantics、凍結planと過去resultは変更していません。
 
 ### S4-A engineering inspection（受入未完了・実行許可なし）
 
+Linux共通CIはUbuntu24.04 x86_64 / Python3.12・3.14の2試験jobsと、両者の成功後に動く比較jobを使います。
+`tools/ci_test_report.py`が従来と同じtests全体のunittest discoveryを行い、実patch/build、
+kernel/architecture、clean source SHA、workflow hash、各testの予定ID・開始・結果・終了を
+`artifacts/ci-tests/unittest.jsonl`（`ci-unittest.3`）へ逐次保存します。Windowsではdiscoveryより前に拒否します。
+失敗・skip理由・fixture error・subtest失敗・expected failure・unexpected success・停止状態を区別し、
+途中停止やsource変化を成功にしません。`run_finished`がない記録は未完了です。
+記録は16MiBまで、新規作成のみ。これは保存量の上限で、unittest全体のメモリ上限ではありません。
+CIは失敗後もsafetyを試行し、単一のJSONLだけを各minor/run/attempt別に14日間保存します。
+全工程の成否はCI jobログも照合してください。このファイルはunittest工程の記録です。
+`ImageOS=ubuntu24`、非空の`ImageVersion`、GitHub run ID/attemptが欠ければ記録開始前に拒否します。
+image digestは`null/not_collected`で、外部jobログとrelease manifestは未収集です。保存されたimage版だけを
+VM image digestやS4受入の代わりにはしません。
+
+既存の19手計算fixture試験中に29 payloadを採取します。Q1〜Q5、M1〜M9、seed registry、
+bootstrap hash/slices、accounting、C0〜C2のprofile/scoreを対象に、追加のfixture計算runを行いません。
+ID・判定・丸め済み値・保存JSON等の23 payloadはcanonical bytes完全一致、profile/scoreの未丸め数値6 payloadは
+同じ型・構造を要求した上でfloatだけを計画書の相対/絶対許容差`1e-12`で比較します。
+captureが無効な通常試験では記録用factoryを評価しません。payloadは各512KiB、合計4MiBまでです。
+この上限は保存bytesの制限であり、factoryやJSON構築を含むprocess全体のメモリ制限ではありません。
+
+`tools/ci_compare_fixtures.py`は同じworkflow/run/attempt/sourceの2 JSONLのみを比較し、
+各reportのraw pinとsource、runner image版を結果に保持します。image同定の欠落、
+重複・別owner・hash不一致・異なる予定ID/結果/skip・未完了・旧形式を拒否します。
+2 jobのimage版が異なっても同じrun/attempt内の別VMとして照合し、同一版を強制しません。
+fixture所有試験は全pass必須です。予定methodを未開始にするclass/module単位skipも保守的に拒否します。
+比較結果は`artifacts/ci-fixtures/comparison.json`へ新規保存し、単独artifactとして14日保持します。
+`matched`は選択したLinux手計算fixtureの照合結果で、Windowsとの比較・全S4受入・実行者認証ではありません。
+`acceptance_status=not_completed`、`formal_permission=false`、`execution_authenticated=false`を維持します。
+候補036ecb4の実CIは3 jobs成功、各1112 methods中1045 pass/67 skip。選択29 payloadはLinux両minorと
+Windows3.14.0選抜採取の間ですべてraw bytes一致しました。[検証記録](../../docs/results/anomaly-multiseed-v0.3-s4-b1-shared-fixtures-2026-09-11.md)を参照。
+VM image identity、選択範囲外のplatform間検査、runtime closure、正式受入は別の残件です。
+
+B2公開部品は[状態・完了印のpureモデル](../../docs/anomaly/native/files/anomaly-v03-publication-model-design.md)を
+tests/fixturesへ追加した段階です。実機接続前の順序・失敗/不明・teardownの設計検証で、production APIはありません。
+16 pure/fault＋関連3件の[検証結果](../../docs/results/anomaly-multiseed-v0.3-s4-b2-model-2026-09-11.md)を保存しています。
+続く[保持handleのrename部品](../../docs/anomaly/native/files/anomaly-v03-rename-adapter-design.md)もtests/fixturesの注入backend用です。
+同名競合・応答喪失・停止後の呼出し抑止・資源エラーを模擬表で確認し、新規18＋既存16の
+[34件がpass](../../docs/results/anomaly-multiseed-v0.3-s4-b2-rename-adapter-2026-09-11.md)。実Win32 backendと受入は未完了です。
+さらに[終端handle解放と権限の設計](../../docs/anomaly/native/runtime/anomaly-v03-handle-lifecycle-design.md)を追加し、
+閉鎖応答喪失・二重閉鎖防止・記録の二重故障を含む[新規18＋既存34＝52件](../../docs/results/anomaly-multiseed-v0.3-s4-b2-handle-owner-2026-09-11.md)がpass。
+続く[公開前の証跡保存・選択解放](../../docs/anomaly/native/files/anomaly-v03-prepublication-design.md)は、同じownerで3段階の保存と両renameを通す
+[新規20＋既存52＝72件](../../docs/results/anomaly-multiseed-v0.3-s4-b2-prepublication-2026-09-14.md)がpass。
+続く[取得追跡とprivate保存](../../docs/anomaly/native/files/anomaly-v03-private-sink-design.md)は、
+[新規18＋既存72＝90件pass、実Windows上の合成JSON3個478 bytes保存成功](../../docs/results/anomaly-multiseed-v0.3-s4-b2-private-sink-2026-09-14.md)。
+全追跡handle/tokenのcloseとworker終了を確認し、今回の限定枠は1回目成功で終了しました。
+[実観測証跡の接続](../../docs/anomaly/native/runtime/anomaly-v03-observed-evidence-design.md)は、新規18＋既存90＝108件pass。
+[取得済み3 slotsを一括移管し、実観測を含むprepare証跡2880 bytesの保存・選択解放が実機で成功](../../docs/results/anomaly-multiseed-v0.3-s4-b2-observed-evidence-2026-09-14.md)しました。
+続く[reader再取得](../../docs/anomaly/native/runtime/anomaly-v03-reader-reacquisition-design.md)は、
+[新規16＋既存108＝124件pass、writer解放後のread権限・元ID/bytes/SD照合が実機成功](../../docs/results/anomaly-multiseed-v0.3-s4-b2-reader-reacquisition-2026-09-14.md)。
+一時readerは親borrow内で閉じます。seal/rename用のlive handle移管・動的slot追加、native publisher/全受入は未完了です。
+
+[file権限固定](../../docs/anomaly/native/files/anomaly-v03-file-sealing-design.md)では、
+[新規19＋既存124＝143件pass、2 filesのfrozen DACL設定・保持権限と同一物読戻しが実機成功](../../docs/results/anomaly-multiseed-v0.3-s4-b2-file-sealing-2026-09-14.md)。
+親borrow内の継続処理と全handle終了を確認しました。directory/root固定・相対rename・全受入は残ります。
+
 `inspect_anomaly_v03.py`は新規のengineering schemaとpure validatorを使うread-only collectorです。
 9つの科学schemaと5 configは変更しません。cleanなfull-SHA checkoutを指定します。
 
@@ -283,7 +388,7 @@ python -B tools/evaluator/inspect_anomaly_v03.py --root . --expected-head <full-
 出力はstdoutのinspection envelopeのみで、output root、観測生成、ACL/token変更、campaignはありません。
 source/producerと`.github/workflows/ci.yml`のGit blob・実bytesを照合し、浅いcloneで歴史objectが
 欠ける場合はfetchせず拒否します。dirty、missing、extra source、link/reparse、途中の変化も拒否します。
-Windows基本pinまたは限定したWindows 3.12／Ubuntu 24.04 CPython 3.12/3.14互換環境を対象とし、
+Windows CPython 3.14.0の基本pinまたはUbuntu 24.04 CPython 3.12/3.14互換環境を対象とし、
 OS/build/UBR/fs、Python version/compiler/GIL/tag/exe、CPU/features、stdlib tree、実loaded native
 modules（Windows module API／Linux executable mappings）、Python extension/DLL/CRTのraw hashとbyte数を
 収集・再読します。stdlibのsite-packagesは対象外です。`sys.modules`はextensionの照合だけに使い、
@@ -302,6 +407,9 @@ stable部だけをequivalence digestへ含め、PID/時刻/load order/free/peak/
 独立token、Windows/Linux各版の受入、Linux image identity、runtime closure、dev/smoke容量確認は
 未完了として明記します。自己申告accepted receiptは拒否し、`require_campaign_acceptance()`の
 無条件拒否とformal entryの閉鎖は維持します。S4 B–Eの実装・正式受入・実campaignは含みません。
+2026-09-10の要件改訂でWindows 3.12を対象から外し、receipt revisionを`s4-a.2`へ更新しました。
+engineering schemaのpathは維持し、旧`s4-a.1`や旧`windows-3.12`要件を含むreceiptは拒否します。
+過去の検査記録は履歴として保持し、今回の形式や受入結果へ自動変換しません。
 wrapped candidate `MemoryError`はglobal stopへ分類し、全ledgerと未来slotのnot_startedを保持して
 stop後IOを禁止します。過去の実機MemoryErrorの根本原因解決を意味しません。
 
@@ -317,7 +425,7 @@ python tools/evaluator/validate_anomaly_matrix.py --root . --config examples/con
 python tools/evaluator/validate_anomaly_matrix.py --root . --config examples/configs/anomaly-multiseed-v0.1.json --format text
 ```
 
-正本schemaは [`schemas/anomaly-multiseed-matrix-config.schema.json`](../../schemas/anomaly-multiseed-matrix-config.schema.json)、固定configは [`examples/configs/anomaly-multiseed-v0.1.json`](../../examples/configs/anomaly-multiseed-v0.1.json)、preregistration本文は [`docs/anomaly-multiseed-evaluation-plan.md`](../../docs/anomaly-multiseed-evaluation-plan.md) です。Savepoint B runnerのresult schemaは [`schemas/anomaly-multiseed-matrix-result.schema.json`](../../schemas/anomaly-multiseed-matrix-result.schema.json) です。
+正本schemaは [`schemas/anomaly-multiseed-matrix-config.schema.json`](../../schemas/anomaly-multiseed-matrix-config.schema.json)、固定configは [`examples/configs/anomaly-multiseed-v0.1.json`](../../examples/configs/anomaly-multiseed-v0.1.json)、preregistration本文は [`docs/anomaly-multiseed-evaluation-plan.md`](../../docs/anomaly/plans/anomaly-multiseed-evaluation-plan.md) です。Savepoint B runnerのresult schemaは [`schemas/anomaly-multiseed-matrix-result.schema.json`](../../schemas/anomaly-multiseed-matrix-result.schema.json) です。
 
 summary integrity fix後の次versionとして固定した [`v0.2 preregistration`](../../docs/anomaly-multiseed-evaluation-plan-v0.2.md) に基づく formal replay を完了した。v0.2 validatorは [`schemas/anomaly-multiseed-matrix-config-v0.2.schema.json`](../../schemas/anomaly-multiseed-matrix-config-v0.2.schema.json) と [`examples/configs/anomaly-multiseed-v0.2.json`](../../examples/configs/anomaly-multiseed-v0.2.json) を使い、matrix id `anomaly-multiseed-v02`、output root `artifacts/anomaly-multiseed-v02`、v0.2 result schema [`schemas/anomaly-multiseed-matrix-result-v0.2.schema.json`](../../schemas/anomaly-multiseed-matrix-result-v0.2.schema.json) を選択する。120/120 cells success、engineering gate `pass`、analysis performance gate `fail` で、baselineは昇格しない。v0.1のREJECT artifactは変更していない。結果は[`v0.2 evaluation`](../../docs/results/anomaly-multiseed-v02-evaluation-2026-09-05.md)に記録する。
 
@@ -370,4 +478,4 @@ python tools/evaluator/evaluate_anomalies.py --root . --config examples/configs/
 python tools/evaluator/evaluate_anomalies.py --root . --config examples/configs/anomaly-evaluation-v0.1.json --recover-incomplete
 ```
 
-詳細なboundary、precisionのsignal-level／equipment-level区別、strict provenance、atomic publish、解釈上の制約は [`docs/anomaly-evaluation-contract.md`](../../docs/anomaly-evaluation-contract.md) を参照してください。
+詳細なboundary、precisionのsignal-level／equipment-level区別、strict provenance、atomic publish、解釈上の制約は [`docs/anomaly-evaluation-contract.md`](../../docs/anomaly/plans/anomaly-evaluation-contract.md) を参照してください。

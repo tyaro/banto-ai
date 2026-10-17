@@ -1,0 +1,45 @@
+# Publication専用pipe資源の原issuer・生成・未共有close保持
+
+2026-10-08 JST。formal gate=s4_acceptance_not_frozen、formal_permission=false、正式credit0、登録holdout観測未読。実データは保存済み合成dev8/smoke2のengineering読取り・記述報告だけ。追加agent0、新production module0、実worker/Job/pipe/exe/native起動0、runtime/profile再観測0。
+
+開始時2026-10-08T03:31:28Z、文書HEAD/origin61bac468a7fdd1efaad92769d6c3c2335cd592cd/clean。先行元10helperのcreation/tokenと現在creationを照合し、同じ元identity残存なし、critical ownerなし。
+
+## まとめた経路
+
+code aab97b86334baafa399067ba646ff8afd51850e9。3productionと新testの4fileを一つのunitとして一回commit/push。既存job_tree_ownerへPublicationPipeResourcesを追加した。
+
+- 元issuer/checkpoint/Python owner/入力tuple/bootstrap native ownerを検証・IO前に保持する。Parent側は同じrequest/inventory/storage/元bound checkpoint/root identity/clockのstorage観測をissuer前へ結ぶ。返った元kernel objectをgetter/copy/clock IO前保持し、原CreatePipe/CloseHandle callableと元creatorをconstructor・API呼出し前保持する。原create return/event/read/write全4HANDLEを同期照合し、元successor nativeへ結ぶ。cached issueはissuer/CreatePipe/clockを反復しない。
+- 発行した元creator/kernelを既存ReaderPublicationLaunchPreparation→原Popen/binding/creation/context→reader入口/Actor/carrierへ渡す準備に接続。上位generate/supervisor/READER_BOOTSTRAPからの実kernel発行・実限定launcherは未接続。Python objectをcross-processへ渡したとはしない。旧external/request/entry/ack/proof JSONへの追加field、新carrier disk publisher0。
+- close_unlaunchedは、原issue完了・Popen不在・launch準備不在・carrier共有不在・spawn/Job/process/thread不在の場合だけ、原4HANDLEを一回closeする。元close owner/全元HANDLE/各named call binding/API/return/return_observedをIO前保持する。原CloseHandle returnは返った位置だけで保持し、known nonzero BOOL後にその元HANDLEだけをremainingから外す。後続clock/診断/固定context照合の失敗も、既知成功prefixと未回収remainingを区別して保持する。
+- False/未知BOOL/unknown API return/割込み/clock IO/callback改変で原UnclosedHandles/原error/未回収と未試行HANDLE/raw event/pending/Python ownerを保持し、その原例外を再送出。第二close・issuer retry・CreatePipe再利用・spawn・carrier共有を拒否する。API callbackによるrowとpending bindingの同時改変も元local tupleへ再照合して拒否する。診断callbackの第二例外はretention_errorへ保持し原例外を覆わない。
+- 原share tupleを先に保持し、launch/carrier markerを後から消しても未共有closeへ戻さない。Parentの原・拒否resource sidecarと元nativeを上位ParentPublicationRetentionへ結ぶ。元Popenは次のfallible endpoint観測前にpendingへ保持する。cached closeは元completion/各API return/4元HANDLE/false permission fieldsを確認し、close/clock/issuerを反復しない。
+
+CloseHandle returnの部品観測でありFileIO.closeとは別。全4known returnでもnative_owner_recovered/parent_ack_authorized/execution_authenticated=false、元HANDLE名・値とnative ownerを履歴から消さない。実workerやchild所有HANDLEをこのclose方法で回収しない。共有後のclose、HANDLE複製/明示inheritance、同Popen HANDLE creationとchild-local close/rename IO owner transport認証は未接続。専用4HANDLEをstdio inherited最大3へ読み替えない。ReaderGitParent.create_nativeはroot/channel/clock/Job前拒否維持。issuer/CloseHandleは同期callで、全経路wall/停止保証の実証ではない。
+
+## 確認
+
+新21distinct/最終AST unique21。初回19一回22.48140859999694秒pass/fail0/error0/skip0、確認後レビューの具体的残リスク（診断callbackによる原例外置換、close row/binding同時改変）新2件だけ0.004020299995318055秒pass。pass済み19/完成focus/旧suite/native反復0。二つのsource/runであり、最終source単一21success runにはしない。
+
+各56source/science pin前後不変、補強変更2file以外の54は両component一致、先行型保持scope共通52pin不変、変更4file safety0、clean code-save56working-Git一致。元helpers49692/creation134359048777680729/tokenff994d580cfb381001b574814fc75b63177af48f8eae33dabe249d4cc06960d4、43992/134359050869021044/token8d254149c67f03cf84544efdd18acfd2c91f3a096caf252a67f85a8268aa3016は元live/execution保存・passed。metadata helper49872/134359053452083864/token567d802c4bd330d813c1b695530e9b283e30050735622b9cab562fd1ff77e83aもpassed。PID単独で同一process扱いしない。
+
+fake kernel/CreatePipe/CloseHandle/Popen/creation＋実小FileIO/root/channelのprotocol gate。正常composing snapshotは明示stub。実Win ABI/worker/pipe/exe/native認証/容量合格ではない。最新名前30source/各phase32要求/予定64Git Job、phase762433B/最大archive94908Bは完全runtime閉包ではない。古いsource bytes/profile/pin/modelを新cap/request/proof/容量合格へ流用しない。
+
+## 保存raw
+
+artifacts/preformal-publication-pipe-resources-20261008-prep/。
+
+- focused.json 17395B/f58fc94909a72238fa41f6f025d84a968bf8d15a3cb1fe7604d77813948a9fdd、log 4566B/abc94d6c73606bfb95c20ef8aac56841424616af82ac75e5a94b777c376bf415
+- focused-v2.json 17396B/55171ae604d61dda67c9f3066f8a7c8921150fa7da312574a87fe2ccc8dcd1d0、log 583B/2419b537efc9368efa89f779b7cb79a95a2aef63feabea11c24669701a4ec055
+- components.json 948B/62d25515d47f2b823cf4c10fdca74e817d416b8d7ea10d6d54f5beedfdf386d8
+- code-save.json 8768B/6b93af1cfad565f00f3061d74cfdae7509d53326d8c3161240b5302816ecac4d
+- CI377218 read failure 494B/09fb0e128e317167454876ec006d39efb5bde7d0d31b023a063815b20b4c89dc
+
+保存後は56source/science/docs3/raw/HEAD=origin/clean、元3helperのcreation/tokenと現在creationを独立照合する。science2は既定pinへのhash読取りだけ、holdout観測未読。
+
+## CIと次の境界
+
+37721863325/git実fulle0f8fc4b0121bde9b1755bd7858b7ced3c01b09aは開始時in_progress。その後の状態readはtool-owned session6296/unexpected EOF/exit1で原raw保存、今回再照会0、終端へ読み替えない。37722343194/fullb4366887f9b49509ae5722b41a3e683fd1586dbbは3.12job113132652418 success/3.14job113132652615 in_progress、run未終端。新37724967759/fullaab97b86334baafa399067ba646ff8afd51850e9はpush後in_progress。予定各minor3769は算術でjournal未確認。doc-only新CI追跡なし。各終端を実fullHEAD/workflow/run/attempt/jobsへ固定し新専用rootへ一度保存、success時だけjournal/local回帰/runner v2、failureは小原因/原raw保全。
+
+先行37717924409/fullfa82 failure/両log3725/errors4/skip237/compare skippedの4raw、原型修正5pass、その他全完成CI/focus/失敗rawは保全し反復しない。今回この失敗をsuccessへ書き換えない。
+
+次は共有後の元HANDLE複製/明示inheritance/launcher ownerと、child-local原close/rename/raw witness・元Popen HANDLE creationのtransport認証を対象sourceだけで準備する。fresh最終clean source/runtime/profile/private policy/request/unusedroot、全writer同request/root atomic予約、親将来failure raw/diagnostic、原partial rawとnew archive growth独立予約、entry/context実bytes、packet/gzip/frame/receipt/partial coupled peak/global/memory/exclusive準備は未完了。snapshot/sidecar/context pinをatomic/native許可にしない。準備前にnativeを開かず全7役whole.runを限定readerとして起動しない。元wall/memory/output/cleanup30秒/poll0.25秒と全hard capsを維持する。

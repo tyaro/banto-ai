@@ -1,0 +1,307 @@
+{
+  "schema": "banto.rust-small-forecaster-r0.v1",
+  "id": "RUST-SF-20261016-r0.1",
+  "status": "contract-fixed; R1 compile and parity not started",
+  "purpose": [
+    "self-built TimesFM-inspired model practicality",
+    "maintenance and inspection first",
+    "Rust training and inference",
+    "banto-industrial integration"
+  ],
+  "target": {
+    "repository": "tyaro/banto-industrial",
+    "commit": "93d99efa06e8eda8c623567c5d117409fb2a3c8b",
+    "user_confirmed": true,
+    "excluded_repository": "ScadaProject",
+    "external_repository_edits": false,
+    "toolchain_pin": "1.98.1",
+    "adapter_status": "source-audited; no implementation",
+    "role": "downstream consumer/integration target; not AI crate implementation repository"
+  },
+  "backend": {
+    "crate": "burn",
+    "version": "=0.22.0",
+    "default_features": false,
+    "features": [
+      "std",
+      "optim",
+      "flex"
+    ],
+    "device": "explicit Flex CPU with first-order autodiff",
+    "msrv": "1.95",
+    "upstream_license": "MIT OR Apache-2.0",
+    "reference_toolchain": "1.95.0 aarch64-apple-darwin direct native binaries",
+    "production_toolchain": "AI crate toolchain and MSRV declared in banto-ai; downstream integration additionally verifies banto-industrial pinned 1.98.1",
+    "dependency_lock_generated": false,
+    "compile_verified": false,
+    "transitive_license_inventory_complete": false,
+    "effective_feature_graph_verified": false,
+    "first_parity_threads": 1
+  },
+  "model": {
+    "source": "models/mini-transformer/small_model.py",
+    "sha256": "eb0e92990f34cea46cb4f824beb2328767c1de1ae9c110f6501e838c18a0ab99",
+    "parameters": 109024,
+    "series": 3,
+    "context": 128,
+    "horizon": 32,
+    "patch": 32,
+    "width": 64,
+    "blocks": 2,
+    "heads": 4,
+    "ff": 128,
+    "series_attention": "full",
+    "dropout": 0,
+    "quantiles": [
+      0.1,
+      0.5,
+      0.9
+    ],
+    "input": "float32-le row-major [B,3,128], B=1..8, all finite",
+    "output": "float32-le [B,3,32,3], physical ordered quantiles",
+    "target": "separate float32-le [B,3,32]; never part of inference request",
+    "context_scale": "population std (correction=0), max(std, profile context_floor32), past context only",
+    "layernorm_eps": 1e-05,
+    "gelu": "exact erf",
+    "softplus": {
+      "beta": 1,
+      "threshold": 20
+    },
+    "attention_mask": "causal time mask, -infinity logits; full series mask",
+    "mean_head_supported": false,
+    "python_Forecast_mean": "context center, not expected future quantity",
+    "nondifferentiable_boundary": "R2 must compare reference maximum/pinball tie gradients, not assume identical subgradient"
+  },
+  "references": [
+    {
+      "path": "artifacts/care-learning-fold-0-20261016/selected-neutral.bin",
+      "bytes": 1314900,
+      "sha256": "0d741fab378e07acc5cb43f8998ddddd4db8681880d3d81eb2a4523baaa824ba"
+    },
+    {
+      "path": "artifacts/care-learning-fold-0-20261016/selected-neutral-layout.json",
+      "bytes": 33517,
+      "sha256": "8a8d01ca0ab5b4d6632a5113023583097f229364ad7b88a7a88a12c72b8cd6cf"
+    },
+    {
+      "path": "artifacts/care-train-preparation-verify-20261016/fold-0-batch-reference.bin",
+      "bytes": 30720,
+      "sha256": "93301ee3fc76c241f32265257880fbafb6bf3fca721fb35386f614685d85eb8c"
+    },
+    {
+      "path": "artifacts/care-train-profile-schedule-20261016/fold-0-profile.json",
+      "bytes": 4541,
+      "sha256": "94b147e33546d8b4e87e49458d5b88c561755049d0ec48ddbf3edd7f7132b14f"
+    },
+    {
+      "path": "artifacts/care-train-profile-schedule-20261016/fold-0-schedule.bin",
+      "bytes": 393216,
+      "sha256": "8832d06efe5735296fcd35e7c168a52679373aa03c0dff392a9a02b06775a390"
+    }
+  ],
+  "reference_selection": "lowest fixed fold 0, not selected by performance; first and last saved train batches only for R1; no test re-evaluation",
+  "optimizer": {
+    "kind": "AdamW",
+    "lr": 0.0003,
+    "betas": [
+      0.9,
+      0.999
+    ],
+    "eps": 1e-08,
+    "weight_decay": 0.01,
+    "amsgrad": false,
+    "cautious_weight_decay": false,
+    "global_gradient_clip_norm": 1,
+    "clip_denominator_eps": 1e-06,
+    "reference_foreach": false,
+    "reference_fused": false,
+    "compatible_implementation_required": true,
+    "weight_decay_parameters": "all named parameters including biases and layernorm; buffers excluded",
+    "state": "named first/second moments and per-parameter update counters; bias correction and decoupled decay"
+  },
+  "package": {
+    "id": "banto.small-forecaster.package.v1",
+    "manifest": "JSON UTF-8 plus immutable SHA256 closure",
+    "tensors": "named little-endian row-major bytes, shape/dtype/offset/length/SHA256; checked arithmetic, no overlap/out-of-range/duplicate/unlisted tensor",
+    "linear_layout": "canonical PyTorch [out,in]; transpose model/gradient/moments together if backend [in,out]",
+    "buffers": [
+      "scale_floor",
+      "position",
+      "time_mask"
+    ],
+    "reconstructed_buffer": "series_mask from explicit full/self-only architecture",
+    "required_manifest": [
+      "format_version",
+      "architecture",
+      "tensor_layout",
+      "preprocessing_and_signal_order",
+      "signal_units_and_calibration",
+      "clock_and_availability",
+      "quality_policy",
+      "profile_hash",
+      "training_recipe_and_ranges",
+      "source_hashes",
+      "provenance_and_license",
+      "backend_version",
+      "tensor_payload_hashes",
+      "purpose_reference_or_deployment"
+    ],
+    "training_checkpoint_extra": [
+      "optimizer_recipe_and_named_moments",
+      "integer_step_counters",
+      "immutable_sampler_schedule_and_next_position",
+      "RNG_algorithm_version_and_state",
+      "selection_history_and_best_state",
+      "training_data_and_profile_pins"
+    ],
+    "python_rng": "opaque reference bytes, not a portable Rust generator; replay actual saved schedule; no dropout draws",
+    "inference_excludes_optimizer": true,
+    "untrusted_pickle_required": false,
+    "CARE_package_deployment": "reference_only; no production activation"
+  },
+  "tolerance": {
+    "rule": "each element abs(Rust-ref)<=atol+rtol*abs(ref), unless specified; fixed before Rust outputs; failure stops and records, no post hoc widening",
+    "discrete": "exact masks, indices, shape, support, time, identity, serialization roundtrip, alarm state on identical score stream",
+    "normalized_activation": {
+      "atol": 2e-06,
+      "rtol": 2e-05
+    },
+    "physical_quantile": "abs(diff)<=1e-4*T32[channel]+2e-5*abs(reference_q-context_center)",
+    "normalized_loss": {
+      "atol": 1e-06,
+      "rtol": 2e-05
+    },
+    "gradient": {
+      "atol": 2e-05,
+      "rtol": 0.0002,
+      "relative_L2_max": 0.0002,
+      "zero_reference_L2": "require candidate global L2<=2e-5"
+    },
+    "one_step_parameter": {
+      "atol": 1e-06,
+      "rtol": 1e-05
+    },
+    "first_moment": {
+      "atol": 1e-07,
+      "rtol": 0.0002
+    },
+    "second_moment": {
+      "atol": 1e-10,
+      "rtol": 0.0003
+    },
+    "eight_step_parameter": {
+      "atol": 3e-06,
+      "rtol": 0.0003
+    },
+    "eight_step_loss": {
+      "atol": 1e-05,
+      "rtol": 0.0005
+    },
+    "same_backend_resume": "continuous 8 versus 4+restore+4: byte-exact parameters/moments/counters/outputs with fixed backend/threads/schedule",
+    "alarm_boundary": "report numeric threshold crossing disagreements; do not add epsilon or change eligibility"
+  },
+  "adapter": {
+    "source_types": [
+      "banto_tagclient::CatalogTag",
+      "banto_tagclient::ValueEntry",
+      "banto_tagclient::ValuesSnapshot",
+      "banto_tagclient::BindingRequest",
+      "banto_tsquery::RawRange"
+    ],
+    "identity": "application binding_key -> external_name; StableTagId is audit metadata, not binding identity",
+    "quality": "Good plus finite Some(v) required; Stale/Bad/Unknown/null/unresolved invalid; never missing->0",
+    "value_source": "first production adapter admits Real with Configured only; simulation/derived/internal/db/computed require separately versioned model/data policy, not silent mixing",
+    "history": "raw samples only; chart min/max envelopes are not training quantities; historical quality/source availability not reconstructible from RawRow alone",
+    "historical_admission": "unknown quality/availability remains unknown; training blocked until a separate explicit accepted-input contract or quality+availability sidecar exists",
+    "time": "source t and receiver-observed available_at distinct; only both <= issuance; clock domains explicit; history ptime_ms not assumed source t; CARE file-local timestamps not UTC",
+    "freshness": "same unchanged snapshot is not a new observation; explicit cadence/aggregation/freshness contract required before live buffering; no forward fill by watch polling",
+    "lifecycle": "catalog unit/scaling/name or run_id generation changes split/reset context; no cross-asset or cross-file interpolation",
+    "job_api": [
+      "validate/load package",
+      "predict prepared context",
+      "submit/status/cancel/resume training job",
+      "save/load checkpoint",
+      "list/register/activate/rollback model explicitly"
+    ],
+    "boundary": "training bounded worker/sidecar, independent from PLC collection/real-time paths and UI thread; no control writes",
+    "integration_verified": false,
+    "ownership": "application DTO conversion, acquisition/history and job hosting/activation policy belong to banto-industrial; portable AI training/inference/checkpoint belong to banto-ai"
+  },
+  "gates": [
+    {
+      "id": "R1",
+      "scope": "crate at tyaro/banto-ai:crates/banto-ai (isolated build first), resolve exact backend, lock and dependency license inventory, compile CPU; saved fold0 weights and two train batches, artificial constant/zero/floor/nonfinite/mask/quantile cases",
+      "stop": "resource overrun, compile/link/toolchain failures or any parity gate fail; no model tuning"
+    },
+    {
+      "id": "R2",
+      "scope": "loss/backward/clip/AdamW, artificial tie/clip/decay fixtures and train-prefix only 8 updates; continuous8 vs4+restore4; include importing mature step4096 moments",
+      "stop": "no CARE test forward/evaluation; freeze fixture before new training"
+    },
+    {
+      "id": "R3",
+      "scope": "separately fixed finite Rust training+evaluation comparison after R1/R2, preserve original scientific conditions; port numerical differences reported",
+      "automatic_authorization": false
+    },
+    {
+      "id": "R4",
+      "scope": "banto-industrial consumes pinned banto-ai crate; adapter and job/model integration compile with downstream pinned toolchain; Windows OS-specific checks separately",
+      "automatic_authorization": false
+    }
+  ],
+  "execution_limits": {
+    "parent_seconds": 900,
+    "child_seconds": 870,
+    "physical_footprint_bytes": 2147483648,
+    "peak_rss_bytes": 2147483648,
+    "artifact_files_normal": 24,
+    "artifact_bytes_normal": 805306368,
+    "single_file_bytes": 33554432,
+    "evidence_bytes": 16777216,
+    "evidence_files": 512,
+    "evidence_part_bytes": 262144,
+    "evidence_failure_reserve_bytes": 2097152,
+    "evidence_failure_reserve_files": 16,
+    "stdout_bytes": 1048576,
+    "stderr_bytes": 131072,
+    "cargo_build_jobs": 1,
+    "cargo_descendant_resource_accounting_required": true
+  },
+  "current_execution": {
+    "real_training": false,
+    "model_forward": false,
+    "cargo_build": false,
+    "dependency_install": false,
+    "target_repo_writes": false,
+    "demand_2015_evaluation": false,
+    "test_threshold_changes": false
+  },
+  "supersedes": {
+    "id": "RUST-SF-20261016-r0",
+    "path": "examples/configs/rust-small-forecaster-r0-20261016.json",
+    "sha256": "a026dd4e9bc72c655ca4a30bcfc6c467af2d6356090e5e4704aa896d1df8f4b1",
+    "change": "repository ownership and dependency direction only; scientific/numerical contract unchanged"
+  },
+  "implementation": {
+    "repository": "tyaro/banto-ai",
+    "local_checkout": "/Users/tyaromax/Documents/Codex/2026-10-14/yaro-banto-ai-mac-python-3/outputs/banto-ai-research",
+    "crate_path_proposed": "crates/banto-ai",
+    "crate_status": "planned; not yet created",
+    "responsibility": [
+      "preprocessing and portable input validation",
+      "model and quantile heads",
+      "loss/backward/AdamW training",
+      "model and optimizer checkpoint/resume",
+      "portable library API and reference CLI"
+    ],
+    "forbidden_dependencies": [
+      "banto-industrial workspace or application DTOs",
+      "banto-tagclient",
+      "banto-tsquery",
+      "Tauri",
+      "Windows service or PLC APIs"
+    ],
+    "boundary": "application converts its types to portable AI input; core must not import application types"
+  },
+  "dependency_direction": "tyaro/banto-industrial -> version/commit-pinned Rust crate from tyaro/banto-ai; never reverse"
+}

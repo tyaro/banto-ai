@@ -1,0 +1,72 @@
+{
+  "adopted": false,
+  "annual_MSE_decreased_both_modes": true,
+  "confirmed_violation_cells": [
+    {
+      "decision": "increased",
+      "group": "Q1_all",
+      "metric": "total_MSE",
+      "mode": "observed"
+    },
+    {
+      "decision": "increased",
+      "group": "Q1_all",
+      "metric": "over",
+      "mode": "observed"
+    },
+    {
+      "decision": "increased",
+      "group": "Q1_all",
+      "metric": "total_MSE",
+      "mode": "assumed_missing_zero"
+    },
+    {
+      "decision": "increased",
+      "group": "Q1_all",
+      "metric": "over",
+      "mode": "assumed_missing_zero"
+    },
+    {
+      "decision": "increased",
+      "group": "Q1_normal",
+      "metric": "total_MSE",
+      "mode": "observed"
+    },
+    {
+      "decision": "increased",
+      "group": "Q1_normal",
+      "metric": "over",
+      "mode": "observed"
+    },
+    {
+      "decision": "increased",
+      "group": "Q1_normal",
+      "metric": "total_MSE",
+      "mode": "assumed_missing_zero"
+    },
+    {
+      "decision": "increased",
+      "group": "Q1_normal",
+      "metric": "over",
+      "mode": "assumed_missing_zero"
+    }
+  ],
+  "deletion_fits": 0,
+  "formal_permission": false,
+  "groups": 12,
+  "heartbeat": "PAUSED",
+  "independent_scalar_checks": 3960,
+  "independent_weighted_atom_checks": 388440,
+  "mandatory_pass": false,
+  "max_arithmetic_bits": 2134,
+  "new2015": false,
+  "new_fit": false,
+  "new_predictions": false,
+  "p": 192,
+  "posthoc_Q1_baseline_replacement": false,
+  "source_primary_status": "failed_preserved",
+  "status": "saved_2014_scoring_complete",
+  "strict_total_improvement": false,
+  "unresolved": [],
+  "windows": 260
+}

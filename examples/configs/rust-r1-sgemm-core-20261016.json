@@ -1,0 +1,13 @@
+{
+  "schema":"banto.r1-sgemm-followup.v1",
+  "declaration_root":"artifacts/rust-r1-sgemm-core-declaration-20261016",
+  "output_root":"artifacts/rust-r1-sgemm-core-20261016",
+  "source_root":"artifacts/rust-r1-sgemm-dispatch-20261016",
+  "source_instruction_virtual":"0x18189a2c4",
+  "target_virtual":"0x181392264",
+  "instruction_kind":"B",
+  "expected_image_UUID":"31104d4f4a7e3fa79e1855937b2011f2",
+  "prior_region_roots":["artifacts/rust-r1-sgemm-entry-20261016","artifacts/rust-r1-sgemm-forwarder-20261016","artifacts/rust-r1-sgemm-dispatch-20261016"],
+  "selection_evidence":"Patch maps through pinned PyTorch row-major-output handling to column-major SGEMM(T,N,m64,n96-or12,k32,lda32,ldb32,ldc64,alpha1,beta1). Neither dimension is1, so GEMV tails at0x18189a0e0/0x18189a224 are excluded. beta1 fails the beta0 symmetry shortcut. Column-major reorders args at0x18189a238 and forwards alpha/beta in v0/v1 to the normal tail B at0x18189a2c4. Saved separate-mm beta0 is also nonsymmetric with distinct inputs; its selection is not claimed dynamically traced.",
+  "scope":"Fourth unique region only, unchanged six-region/16KiB-each/96KiB-total and resource limits. Reading only, no tensor arithmetic or reconstruction."
+}

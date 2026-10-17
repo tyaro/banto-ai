@@ -62,6 +62,6 @@ preregistrationの順序はA〜C（validator、deterministic runner、fake/unit 
 ## 関連証跡
 
 - v0.1 integrity audit: [`docs/results/anomaly-multiseed-v01-integrity-audit-2026-09-05.md`](results/anomaly-multiseed-v01-integrity-audit-2026-09-05.md)
-- v0.1 preregistration: [`docs/anomaly-multiseed-evaluation-plan.md`](anomaly-multiseed-evaluation-plan.md)
+- v0.1 preregistration: [`docs/anomaly-multiseed-evaluation-plan.md`](anomaly/plans/anomaly-multiseed-evaluation-plan.md)
 - v0.2 config: [`examples/configs/anomaly-multiseed-v0.2.json`](../examples/configs/anomaly-multiseed-v0.2.json)
 - v0.2 config schema: [`schemas/anomaly-multiseed-matrix-config-v0.2.schema.json`](../schemas/anomaly-multiseed-matrix-config-v0.2.schema.json)

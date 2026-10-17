@@ -123,6 +123,7 @@ def counts(role: str) -> dict:
 
 
 def formal_runtime() -> dict:
+    """Original registry reference bytes; current OS eligibility is in runtime policy."""
     return {"os": "Windows 11 Pro", "release": "25H2", "architecture": "AMD64",
             "os_major": 10, "os_minor": 0, "os_build": 26200, "os_ubr": 9168,
             "filesystem": "local-NTFS", "implementation": "CPython", "python_version": "3.14.0",

@@ -1,0 +1,45 @@
+# source object容量test訂正CI4081の原journal保存（2026-10-10 JST）
+
+## 開始と保存対象
+
+開始2026-10-09T17:52:06Z/HEAD 4ce3391811e2d49b4444ca26e671bd116841e2cb-origin/upstream-clean、production/test code 0919168683de1bdeafaea73bd5e2b44da77f7459。先行元11helper full saved creation-start_token/live-execution一致・read-only CIM同original不在/全11passed/過去failed保持/helper-critical ownerなし。人の明示再開を維持してACTIVE、追加agent起動・再活性化0。
+
+今回production/test/body変更0、文書2pathを一回skip ci commit/pushする。完成旧focus/新16・19・前19・前16/容量訂正1case/metadata5/容量拒否/26gzip/collector/basic OS-runtime probe/native image/profile/37Gitの再実行0。旧CI4043以下と379582原4062failure/verification skippedへ再照会-download-verifier0。
+
+## 原run API EOFと未実行continuation
+
+37963486811/full2d66f40e0fbf0ec1e0ec251996399c59bbd2c314のcompact一回はgh API unexpected EOF。原stdout0B、stderr91B/a6bbe26d78db48a2e48dde50a0b9546d9f001c1ad8013a29ba9945275c959427を新mainへliteral保存、AssertionError/failed compact helper/Python exit1を保持する。原gh exit返値は元helperが個別保存していないためNone。Python exitから補わない。run/attempt/jobs/終端/journal/countを新たに固定せず、前heartbeat17:27のin_progress/attempt1/fullHEAD-run pinを最後の有効観測として保持する。
+
+同API/元scriptの再試行0。元compactのfull creation-start_token/live-execution一致・CIM同original不在/critical_owner=falseを確認し、未実行379656 compactと091916 fullSHA selectionだけを別continuationで各一回行った。原failed helperをpassedへ変更しない。API EOFはproduction/CI/native/Sol容量failureではない。原traceはselected tool excerptで、helper全process stdout-stderr file捕捉ではない。
+
+foreground開始Git statusのuser-global .config/git/ignore読取りPermission deniedはtool stderr excerptのみ。working stdout空を確認し、後の許可済みGit保存でcleanを照合する。元foreground creation/full process logsNoneを保持し、native失敗やhelper原logへしない。
+
+## CI4081の終端と原raw
+
+37965644173/fullf9a78a68a99407cc63b94c293f6dee8811311befをcompact一回completed-success/attempt1/push/Phase 1 CI/.github/workflows/ci.yml/workflow349172377へ固定。原run11703B/0a200c8c1eefd72c03621792e59f4be94d513f2c792d8db1e773b3f80e601bbf/stderr0/exit0。
+
+原2job113939182357 test(3.14)と113949443327 verify-python314-journalはfullHEAD-run-attemptと全completed-successを原jobsへ固定。jobs/artifacts/2logs/2ZIP各一度取得、原gh exit0とstdout-stderr pinsを判定前に保存。単一member/decoded8MiB/fullHEAD-run/両artifact digest一致。unittest artifact11634114023/ZIP358941B/e711b2187cfe4a28249166deee8a9d3fa5da5fe3ffed9271c8464b520654f808、verification artifact11634661121/ZIP7998B/5423748f3f825c121efd95b3227ab63c50924b03d039b5b5396fe329ead9f4dc。ZIP digestをrunner image digestへしない。
+
+原journal4206635B/3f0f19e718dc1733e1239766341ef6bf6aaed6895313193e50df3fb337c4c2dc、remote regression37192B/6a1dfc205417a6a923091231e30128baa0985363867d59437ae9c6aff17b0772。現ci_verify_python314_journalをexternal fullHEAD/workflow SHA25671f0e56eb9b0bb11a6e181e860a64ba45a6a4004cde7d4a5bf35d2b42cbf65a7/run37965644173/attempt1へ結び一回実行、exit0/verification_status=passed。
+
+実summary/discovered/tests_run4081/failure0/error0/skip237（Windows native213/non-S4 optional24）/source_unchanged=true/shared29 complete/必須28passed/cross_python_comparison_performed=false。4081は実summary取得後に固定し、予定数を実件数へしない。local full suite0、完成focus再実行0。
+
+CLI7実行前working-Git pinと原Git batch stdout-stderr/原exit0を保存。6exact/ci_windows_native_skip_ids.pyだけ既知CRLF両pin、working before-after不変。local verification37193B/f1b1f30020bd3307f11f93c3ebb9c1dad07671b194f80d82473e71d185e58f94とremote37192Bは末尾CRLF/LF差1byte、raw_equal=false/json_equal=true/CRLF-only=true/JSON全field一致を両原rawで保持。verification-save4054B/9a4658e35ae05e7871743732948bf36d9f881f1cd8119e79d09506722696d6da。旧3930のraw-equality failed helperを変更・再実行しない。
+
+実Ubuntu24.04/x86_64/GCC13.3.0/kernel6.17.0-1022-azure/CPython3.14.8/SOABIcpython-314-x86_64-linux-gnu/runner20261004.327.1/image digest未取得・候補未採択。Windows正式3.14.0/Win ABI/Job/ACL/stdio/child owner/OS排他/容量/正式S4合格ではない。CLI/Git body pin・原logはfull loaded runtime/native認証ではない。
+
+## sourceと未終端
+
+4081はf9の容量fixture訂正とproduction2d66 source/runの単一CI保存。最新091916 read-wall code、local16distinct/body17の複数source-run、先行4062failure/4043以下/旧2minor比較へ読み替えない。原fe518 CI4062error1/verify skippedや容量testの原prefix523790Bの拒否をsuccessへ書換えない。
+
+113working source-science unchanged。verified091916 code Git changed2 exact＋親tree-doc-only非交差/先行37rawを継承、Git body37/collector/native image/profile再観測0。source本文変更0/scientific hash metadataだけ/holdout観測未読/credit0。旧SourceBatchContractPreparation14301B/0903a855f665499d9e3eba5248ceaca09387b948a7051d42704d792db18c0b17/create_native437B/0bd7b84f0a3dc0bd22a865ac8b2b4ccedc0e71ea50a177b0e6b086df07fdcc7c保持。named30source969644B/最大archive130691B/e5ab8de3cc7f02f6ccc9f5eb08feeb5e283a64782c2e16bc78ac8f25c6f36337/source cap差381Bはruntime/global容量ではない。
+
+新code0919168683de1bdeafaea73bd5e2b44da77f7459実fullSHA selection一回は37968546318/push/Phase1CI/in_progress、原stdout156B/3d94b1e352c2947be4f9ae001bd180f55278760300a2cc3455f3de72bd3c4fa2/stderr0/exit0。attempt/jobs/終端/journal/count未固定、待機/反復/download/verifier0。doc-only新CI追跡0。
+
+379634はAPI EOFで終端未観測・原fullHEAD/attempt1の未保存runとして残す。同failed run API/原helperの無条件再試行をしない。必要なら未実行attempt1の専用endpointを別unitへ明示して限定原証拠一度を扱う。原失敗stdout-stderr/最後有効pendingは閉鎖rootから継承し、終端やsuccessを補わない。次heartbeatは379685/full091916 compact一回、終端時のみ新専用rootへ未保存raw一度/実summary後count固定。完成379656/4081と379582failure/4043以下を再照会-download-verifierせず、未終端は待機反復なしで具体的未完了unitへ進む。
+
+## 保存と未完了条件
+
+原CI artifacts/ci-diagnostic-37965644173/（16MiB256entry/single8MiB）、main artifacts/preformal-ci-read-wall-current-save-20261010-prep/、post artifacts/preformal-ci-source-object-refusal-journal-save-20261010-prep/（metadata各512KiB32entry/reserve128KiB/single128KiB）へ原rawと元helper metadataを保存し、最後post/原helper終了確認後に閉鎖する。先行read-wall4rootsのcount/bytes/manifest/原pin不変、追加/整理/receipt移動0。components30316B/98e6b698ae0652454dc9b863350a13a780e64115ce996aeded4c65fc9bfad2e9。
+
+fresh loaded source/runtime全閉包-profile-private policy-native request-unused exclusive root、実同原owner worker bounded read wall/stdio/receipt-partial transport、追加wall ledger/一時raw/全future32entry/global coupled peak、OS排他-allwriter atomic、診断専用公開/parent_failure実raw/child bootstrap/実native return-HANDLE-child close-rename認証は未完了。全14call4358432B容量拒否解除0。期限内read返値/EOF/原fullraw readback/body-Git pins/manifest/cached completion/CI4081をnative許可へしない。create_native早期拒否/全7役whole.run限定reader実起動禁止/formal gate=s4_acceptance_not_frozen/formal_permission=false/credit0/正式5残件・最終受入未完了/元caps-unknown原owner-stop/追加agent禁止/ACTIVE維持。

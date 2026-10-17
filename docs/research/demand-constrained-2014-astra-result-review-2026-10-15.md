@@ -1,0 +1,21 @@
+# Astra：制約付き共通残差の2014実装・結果確認
+
+2026-10-15 JST。既存gpt-6-astra方法担当と進め方監査担当、read-onlyで新fit/採点/編集/2015内容参照なし。事前の方法/工程確認は[事前レビュー](demand-constrained-2014-astra-review-2026-10-15.md)へ保存。
+
+## 実装前の補強
+
+方法担当は統合v1を読み、予期しないモデル全体の40店Qcell不足でもBへ戻して続ける点と、途中予測を件数だけでなく実体として保存する必要を指摘した。親agentは旧コードと人工6fixtureのcomplete準備rootを保持し、新v2入口・契約v2へ、支持不足をsolve前の例外にする処理とfailure-predictions.json保存を加えた。
+
+新入口に旧6統合fixtureを適用し、停止・部分保存の2fixtureを追加した8fixtureがpass後、一巡を実行した。方法担当もv2コードを読み、2点の解消と追加fixtureの直接検査を確認し、新たなblocking指摘なしと回答した。実装/fixtureをagent自身が実行したとは言わない。
+
+## 結果の確認
+
+進め方監査担当は保存summaryのmandatory_pass=true、strict_total_improvement=false、adopted=false、2015新利用なしを読んで確認した。以前の「非ゼロbetaをalphaで停止」と異なり、今回「制約付き目的そのものにbeta=0が最適と証明された」という区別を明記するよう指摘した。
+
+結論は固定特徴・重み・λ・制約・符号化済み学習問題に限定し、非ゼロ可行解の不存在や平均販売数量の改善一般の不可能性には広げない。必須passは全B同値の条件充足で、改善・採用成功ではない。一巡終了・救済なし・2015停止を維持する方針を支持した。
+
+監査回答時点では親agentの独立readbackは実行中だった。その後に親agentが、別問題再構築/4certificate/260予測/2014label/2760scalarとpaired判定/旧source-state-失敗-closed roots不変のreadback completeを確認した。agentが証明を再計算したとは主張しない。
+
+方法担当も保存4stateと集計を読み、全stateがexact_optimality_verified/gap0/beta0、全群両modeのpaired差0であると確認した。固定3特徴・重み・全pastQ制約の下で正則化目的の一意な最適解であり、複数Qの制約が共同で支えるため単一季節だけの原因としない。L2勾配はbeta0で0なので、同じKKTは同じ可行集合の訓練MSE最適性も支持し、λだけを弱めれば改善するという解釈にはならないと指摘した。これは数学的含意で、λを変えた再fitは行っていない。
+
+方法回答時点でも独立readbackは進行中と伝えていた。親agentがその後completeを確認して閉鎖した。双方とも証明の再計算・fixture再実行・実データ新採点は行っていない。負結果を保存し、追加仮説・λ/特徴救済・2015確認へ接続しない。

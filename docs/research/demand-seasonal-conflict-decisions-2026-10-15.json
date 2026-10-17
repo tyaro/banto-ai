@@ -1,0 +1,23 @@
+{
+  "adopted": false,
+  "all_fixed_directions_also_blocked_by_own_quarter": true,
+  "current_quarter_distinct_origins": [
+    3,
+    6,
+    7,
+    5
+  ],
+  "current_quarter_years": [
+    "2013"
+  ],
+  "fixed_directions": 16,
+  "formal_permission": false,
+  "heartbeat": "PAUSED",
+  "interference_witnesses": 0,
+  "new2015": false,
+  "new_candidate_predictions_or_scores": false,
+  "no_general_infeasibility_claim": true,
+  "p_values_bootstrap": false,
+  "seasonal_fit_started": false,
+  "status": "diagnosis_and_seasonal_design_complete"
+}

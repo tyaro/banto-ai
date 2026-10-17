@@ -1,0 +1,410 @@
+{
+  "schema": "banto.research-source-archive.v1",
+  "source_commit": "50d69b684acd8af6db6c045e372ce9d564d855f4",
+  "status": "historical_not_active_or_runnable",
+  "entries": [
+    {
+      "old": "crates/banto-ai/examples/diagnose_context.rs",
+      "new": "experiments/archive/rust-r1-20261016/sources/crates/banto-ai/examples/diagnose_context.rs.txt",
+      "sha256": "516410a22678365676c04b3774e95db737367309870d9ff9ec76aeb63160f4f5",
+      "bytes": 5772
+    },
+    {
+      "old": "crates/banto-ai/examples/diagnose_ff.rs",
+      "new": "experiments/archive/rust-r1-20261016/sources/crates/banto-ai/examples/diagnose_ff.rs.txt",
+      "sha256": "10de6464f9958a471c9147e62f12768e0ed116c67583e811e48e73126f2cee11",
+      "bytes": 3690
+    },
+    {
+      "old": "crates/banto-ai/examples/diagnose_fma_norm.rs",
+      "new": "experiments/archive/rust-r1-20261016/sources/crates/banto-ai/examples/diagnose_fma_norm.rs.txt",
+      "sha256": "c702df2f381cc331e71b108f22d2e681c9167819bf56d62baa662986681c109b",
+      "bytes": 5634
+    },
+    {
+      "old": "crates/banto-ai/examples/diagnose_fused_linear.rs",
+      "new": "experiments/archive/rust-r1-20261016/sources/crates/banto-ai/examples/diagnose_fused_linear.rs.txt",
+      "sha256": "4965fe9757edb43a17299f4b41e3c37624e49552e6ce32fc6afde7186889a32d",
+      "bytes": 5992
+    },
+    {
+      "old": "crates/banto-ai/examples/diagnose_layers.rs",
+      "new": "experiments/archive/rust-r1-20261016/sources/crates/banto-ai/examples/diagnose_layers.rs.txt",
+      "sha256": "f1c6840c399f686f474bad0d0dcf6a383066e665d446fa3c0399e09b43a92163",
+      "bytes": 16501
+    },
+    {
+      "old": "crates/banto-ai/examples/diagnose_linear_boundary.rs",
+      "new": "experiments/archive/rust-r1-20261016/sources/crates/banto-ai/examples/diagnose_linear_boundary.rs.txt",
+      "sha256": "5b7a349b0f23f15b01fdf0e33ece096304e5e04c07f3b18726697ebb9b6e0d34",
+      "bytes": 4164
+    },
+    {
+      "old": "crates/banto-ai/examples/diagnose_native_norm.rs",
+      "new": "experiments/archive/rust-r1-20261016/sources/crates/banto-ai/examples/diagnose_native_norm.rs.txt",
+      "sha256": "bd697a237aa15debf1e70378ff3796a4a6118e90d69ae1d69eeae80af2fe90da",
+      "bytes": 5623
+    },
+    {
+      "old": "crates/banto-ai/examples/diagnose_upstream.rs",
+      "new": "experiments/archive/rust-r1-20261016/sources/crates/banto-ai/examples/diagnose_upstream.rs.txt",
+      "sha256": "319323ca8b87e4f4cefbe8a93e4b3ab1a64708e6fc994ec8b01238df57f0f596",
+      "bytes": 7123
+    },
+    {
+      "old": "crates/banto-ai/examples/probe_fma.rs",
+      "new": "experiments/archive/rust-r1-20261016/sources/crates/banto-ai/examples/probe_fma.rs.txt",
+      "sha256": "26aeb1a654078edb65c7c5204275873c6f086995ff6a060daa14b4b3bb0e94b1",
+      "bytes": 5391
+    },
+    {
+      "old": "crates/banto-ai/examples/probe_fused_linear.rs",
+      "new": "experiments/archive/rust-r1-20261016/sources/crates/banto-ai/examples/probe_fused_linear.rs.txt",
+      "sha256": "ffb7ee6ad8ce0915085f588ec7e7e8ad1813390ec4b694e30ed8d4b476e9ef87",
+      "bytes": 6816
+    },
+    {
+      "old": "crates/banto-ai/src/context.rs",
+      "new": "experiments/archive/rust-r1-20261016/sources/crates/banto-ai/src/context.rs.txt",
+      "sha256": "ab35a42ada7a4fcfd74dea694d34ddf7955ee97276a867289ab4d0ed3ae71e2e",
+      "bytes": 2449
+    },
+    {
+      "old": "crates/banto-ai/src/fma.rs",
+      "new": "experiments/archive/rust-r1-20261016/sources/crates/banto-ai/src/fma.rs.txt",
+      "sha256": "3851f1a31e1a16f5607f556361562c43d5bef9fe86166bfaf70d8a162625ff75",
+      "bytes": 7654
+    },
+    {
+      "old": "crates/banto-ai/src/fused_linear.rs",
+      "new": "experiments/archive/rust-r1-20261016/sources/crates/banto-ai/src/fused_linear.rs.txt",
+      "sha256": "d62c2e399153b32ac044b0992d04e3372db394c6c9e6b093be56be2e6e0c41eb",
+      "bytes": 8888
+    },
+    {
+      "old": "tools/public-data/rust_r1_binary_audit.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_binary_audit.py.txt",
+      "sha256": "767611e567d1c2a7737225eb269fd4f11a7e59ca23c057ae7a32c32ca898f09d",
+      "bytes": 9075
+    },
+    {
+      "old": "tools/public-data/rust_r1_binary_audit_r2.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_binary_audit_r2.py.txt",
+      "sha256": "5be23e19958faf940cb7fce4e8458b4b54117f6b711cf3e74ac2dd210fbfa263",
+      "bytes": 9496
+    },
+    {
+      "old": "tools/public-data/rust_r1_binary_moments.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_binary_moments.py.txt",
+      "sha256": "c7eb055cf0698ad4ae515061ff60dd1a79d618787e266efeec15a00e02e557f6",
+      "bytes": 6946
+    },
+    {
+      "old": "tools/public-data/rust_r1_binary_publish.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_binary_publish.py.txt",
+      "sha256": "aa655014e4fc5ad6ae0241ced95269f77e09261ac9ba5282ea285d50f6151535",
+      "bytes": 18941
+    },
+    {
+      "old": "tools/public-data/rust_r1_budget_revision.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_budget_revision.py.txt",
+      "sha256": "e047610acfbeca6cb13d90a4ffd859d96835f4ed71a5493974cdc0d93a284295",
+      "bytes": 2778
+    },
+    {
+      "old": "tools/public-data/rust_r1_build_stop_publish.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_build_stop_publish.py.txt",
+      "sha256": "172208b67efaae2990f09f1784454a492e4711926bf553fe7fd903c05e0ad3f9",
+      "bytes": 12882
+    },
+    {
+      "old": "tools/public-data/rust_r1_context_audit.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_context_audit.py.txt",
+      "sha256": "6c07c8c53f121e29985c6ce490a9c9e3ef14200994618a30cae9d6f55baf9792",
+      "bytes": 8735
+    },
+    {
+      "old": "tools/public-data/rust_r1_context_decision.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_context_decision.py.txt",
+      "sha256": "dd6523e833a542c32e9998eb8428a587eea23599f0f51d27229322f2277e88a3",
+      "bytes": 4970
+    },
+    {
+      "old": "tools/public-data/rust_r1_context_final_check.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_context_final_check.py.txt",
+      "sha256": "cd67ea00f9d2f014ce7f4abef345939e319bc38a41032165b0eacb6557a769c3",
+      "bytes": 6206
+    },
+    {
+      "old": "tools/public-data/rust_r1_context_model.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_context_model.py.txt",
+      "sha256": "83bf2637165b7ea0ba3f82c6fa8910c026f87a328be45f45aed890e44566d174",
+      "bytes": 4561
+    },
+    {
+      "old": "tools/public-data/rust_r1_context_publish.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_context_publish.py.txt",
+      "sha256": "2936f7610b3147d66423b1641cab9b5a8f406267c77a713ef77cec81ec794fc2",
+      "bytes": 20891
+    },
+    {
+      "old": "tools/public-data/rust_r1_ff_compare.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_ff_compare.py.txt",
+      "sha256": "d9b4bfa0ed86e231710bf1017dd4da2b03842f3b73b930bf0cc96929a5cbc6a5",
+      "bytes": 4554
+    },
+    {
+      "old": "tools/public-data/rust_r1_ff_fixture.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_ff_fixture.py.txt",
+      "sha256": "a538454938f47574b2e3dd54e507d5ef5ea953afa586b6a198857d10e7ca2819",
+      "bytes": 5264
+    },
+    {
+      "old": "tools/public-data/rust_r1_ff_publish.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_ff_publish.py.txt",
+      "sha256": "5a24a2503c2162b207b6a0b46ef09ab1b763825230555df3ea46097ce0fc4fa2",
+      "bytes": 16974
+    },
+    {
+      "old": "tools/public-data/rust_r1_fma_fixture.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_fma_fixture.py.txt",
+      "sha256": "40c8605e77f0f432f76828307a6507524a0c02573d2e350a9834a072b0658601",
+      "bytes": 4062
+    },
+    {
+      "old": "tools/public-data/rust_r1_fma_harness_repair.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_fma_harness_repair.py.txt",
+      "sha256": "7131101dfb93f2cb06a26dfdcc575b0868249ac178334d8163aaa56278fecdec",
+      "bytes": 2137
+    },
+    {
+      "old": "tools/public-data/rust_r1_fma_model.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_fma_model.py.txt",
+      "sha256": "ec41439c2fd79f8e90e47006588b4d6a90ac0b42c2ffd80a2a3289adef725524",
+      "bytes": 4798
+    },
+    {
+      "old": "tools/public-data/rust_r1_fma_publish.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_fma_publish.py.txt",
+      "sha256": "03133a6e33c5b338201cb93ea1758718b666f85ce2b5e9f858c7b5149c516375",
+      "bytes": 21527
+    },
+    {
+      "old": "tools/public-data/rust_r1_fma_restore.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_fma_restore.py.txt",
+      "sha256": "94fef629fb239a60f71aa97ddcbfc7a7e52d4e4af8a9d4a5c4d39b30b1309b06",
+      "bytes": 2272
+    },
+    {
+      "old": "tools/public-data/rust_r1_fused_linear_compare.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_fused_linear_compare.py.txt",
+      "sha256": "b6cb090c39f210f69f51cc2f98c67448ac85e833c68a729fc7bf4dee94c42030",
+      "bytes": 4442
+    },
+    {
+      "old": "tools/public-data/rust_r1_fused_linear_dependencies.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_fused_linear_dependencies.py.txt",
+      "sha256": "640e87a45bdc9d760bea0562f1a2c3a47619dc79b6750823fe4831d95402ad00",
+      "bytes": 2888
+    },
+    {
+      "old": "tools/public-data/rust_r1_fused_linear_fixture.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_fused_linear_fixture.py.txt",
+      "sha256": "2b533ef4a22270f46474335336aef9143f28b49c94ea2e43a2d142d72d119aec",
+      "bytes": 3728
+    },
+    {
+      "old": "tools/public-data/rust_r1_fused_linear_publish.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_fused_linear_publish.py.txt",
+      "sha256": "48e31977b533e187ecfc2ea4a48ff91525123dfc06167cc1278fbadd2e524bee",
+      "bytes": 20601
+    },
+    {
+      "old": "tools/public-data/rust_r1_layer_compare.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_layer_compare.py.txt",
+      "sha256": "cf9c82b7ba824834a4e534dba2770724fd6ee05bb6da16e727062bd3ea4dcac1",
+      "bytes": 7946
+    },
+    {
+      "old": "tools/public-data/rust_r1_layer_fixture.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_layer_fixture.py.txt",
+      "sha256": "b76ef475c2ba898daf91ef0f6b3d4fdda6cfd4870ea3e4e59965454e57b43130",
+      "bytes": 10006
+    },
+    {
+      "old": "tools/public-data/rust_r1_layer_publish.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_layer_publish.py.txt",
+      "sha256": "5559cc692871710ba6ef7c66ddf105b73ea3d00a5c4328642dbfe3341293bd42",
+      "bytes": 18690
+    },
+    {
+      "old": "tools/public-data/rust_r1_linear_boundary.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_linear_boundary.py.txt",
+      "sha256": "9ec6a6f9f64f57377f2b95f6528ea60373f44d94e9ef00fb71fdc665dd266a76",
+      "bytes": 9852
+    },
+    {
+      "old": "tools/public-data/rust_r1_linear_publish.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_linear_publish.py.txt",
+      "sha256": "994ec98d3e10deb5448ceba1638086c7a3535bffe4ac1f3591b8273d7aaf41a8",
+      "bytes": 18742
+    },
+    {
+      "old": "tools/public-data/rust_r1_linear_source.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_linear_source.py.txt",
+      "sha256": "b4fd9830dbd9100235503cf758da5e4aa00d9de6633521b7973976ca7a66aa4e",
+      "bytes": 2398
+    },
+    {
+      "old": "tools/public-data/rust_r1_moments_audit.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_moments_audit.py.txt",
+      "sha256": "9146ceb836f8f56abeab336fd13b32c9be5cc1b95fecd5f8905dcafa8fa0cd0a",
+      "bytes": 11429
+    },
+    {
+      "old": "tools/public-data/rust_r1_moments_publish.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_moments_publish.py.txt",
+      "sha256": "b3b7369daf1332187cf0dfcd1fe82e33fef28060c7653341fc7f78dd22173a82",
+      "bytes": 18761
+    },
+    {
+      "old": "tools/public-data/rust_r1_native_norm.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_native_norm.py.txt",
+      "sha256": "ab2570bd43cd0061640d85fc79c057abb5a8c85edad7028256e8b0c7853a0b10",
+      "bytes": 6970
+    },
+    {
+      "old": "tools/public-data/rust_r1_native_norm_publish.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_native_norm_publish.py.txt",
+      "sha256": "e6b316c33f908cb5d3aadd9f0071c68bc6786a8c4f3120a2d778becad47eaedb",
+      "bytes": 13940
+    },
+    {
+      "old": "tools/public-data/rust_r1_norm_repair_declare.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_norm_repair_declare.py.txt",
+      "sha256": "43b89a0f5fdaa584299e9d43351b2db249843d6e7bc0318253e110612cec5847",
+      "bytes": 1804
+    },
+    {
+      "old": "tools/public-data/rust_r1_once_contract.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_once_contract.py.txt",
+      "sha256": "2d9b90b401d702422d2ad53666769306a3ba22cb182b967090eb5f325a16d0ad",
+      "bytes": 14004
+    },
+    {
+      "old": "tools/public-data/rust_r1_once_contract_repair.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_once_contract_repair.py.txt",
+      "sha256": "0776fa882cb84784b4500c3847bc3393fd213e84d1f40eb3cb5d6abf95cc8d20",
+      "bytes": 14161
+    },
+    {
+      "old": "tools/public-data/rust_r1_once_final_check.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_once_final_check.py.txt",
+      "sha256": "7fbc62dd88ee3ae60ff33a354702fda867b0fedcc993461d0c75a490a8c8afd2",
+      "bytes": 6954
+    },
+    {
+      "old": "tools/public-data/rust_r1_once_publish.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_once_publish.py.txt",
+      "sha256": "133a6257dc42c1f67f1f7a114c3047a1420b5680f5a2c646607acabaa64b99e9",
+      "bytes": 18716
+    },
+    {
+      "old": "tools/public-data/rust_r1_once_target.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_once_target.py.txt",
+      "sha256": "51d47a753ed603bbfd0c960f2b8f169c2410e77e51a90b80ff5f56318e7ef38f",
+      "bytes": 13511
+    },
+    {
+      "old": "tools/public-data/rust_r1_once_target_publish.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_once_target_publish.py.txt",
+      "sha256": "1bad601fc66361bc2e7676ea1c7695be3e71247f834e04a02443905956329a2f",
+      "bytes": 18562
+    },
+    {
+      "old": "tools/public-data/rust_r1_once_vm_abi.c",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_once_vm_abi.c.txt",
+      "sha256": "3842512818c274ac77f307a797fdb407cf348cc3ac476047037c69ba358ed629",
+      "bytes": 1633
+    },
+    {
+      "old": "tools/public-data/rust_r1_pairwise_declare.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_pairwise_declare.py.txt",
+      "sha256": "c222bfc29900a527af07d9248ed0b2a83b913fde90b913f2a1eef86951e0b9a1",
+      "bytes": 2039
+    },
+    {
+      "old": "tools/public-data/rust_r1_result_publish.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_result_publish.py.txt",
+      "sha256": "0471bf82337bea28cd6aaa8c87b4c252439feca1309a0447303faffd4ca5e2c6",
+      "bytes": 20048
+    },
+    {
+      "old": "tools/public-data/rust_r1_saved_diagnosis.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_saved_diagnosis.py.txt",
+      "sha256": "3baf53065c4a55f9e776eabce98002c17b680b83fe785f6ad63efe28e549fa2a",
+      "bytes": 4439
+    },
+    {
+      "old": "tools/public-data/rust_r1_sgemm_config_read.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_sgemm_config_read.py.txt",
+      "sha256": "ab93a0f0effbd6b54addd0592b9bf3bfd469e3d4c17b9fe5cf3e9143bd544848",
+      "bytes": 3271
+    },
+    {
+      "old": "tools/public-data/rust_r1_sgemm_follow.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_sgemm_follow.py.txt",
+      "sha256": "b752991ae1662fcd2f8a9a6efe12a8cbf92de23fd76586f6d3a79b569465c1ee",
+      "bytes": 5299
+    },
+    {
+      "old": "tools/public-data/rust_r1_sgemm_publish.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_sgemm_publish.py.txt",
+      "sha256": "17dc53037aab96b7c78fa34d171338eedb22cbefe086aaa9faa0c8a00c2dffd6",
+      "bytes": 19589
+    },
+    {
+      "old": "tools/public-data/rust_r1_sgemm_readonly.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_sgemm_readonly.py.txt",
+      "sha256": "87eff2f4899a395dd9259a4d043e05be8b0d6b99f78f236257373c0adb936c8d",
+      "bytes": 11675
+    },
+    {
+      "old": "tools/public-data/rust_r1_sgemm_small_replay.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_sgemm_small_replay.py.txt",
+      "sha256": "93a5b569a8b7f10a9cbecdfeaf89855d890f08b3d3bd2906317da981d80f55f7",
+      "bytes": 5332
+    },
+    {
+      "old": "tools/public-data/rust_r1_sgemm_warm_binding.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_sgemm_warm_binding.py.txt",
+      "sha256": "58320de8880aa8d83de4649c402d9d625026c9a3e1a3b533b7c0cb75f2a77a99",
+      "bytes": 8771
+    },
+    {
+      "old": "tools/public-data/rust_r1_sgemm_warm_publish.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_sgemm_warm_publish.py.txt",
+      "sha256": "45104459711f01dfbf0f31a816745636e806b18624fd9de728b465f136ebf804",
+      "bytes": 15522
+    },
+    {
+      "old": "tools/public-data/rust_r1_upstream_compare.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_upstream_compare.py.txt",
+      "sha256": "9eb486e4128a0a2ca57e6bd970a016e65f4e046dddd9fb65b5b32ce80e40432a",
+      "bytes": 4637
+    },
+    {
+      "old": "tools/public-data/rust_r1_upstream_fixture.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_upstream_fixture.py.txt",
+      "sha256": "9bb6aefdd58a0da7a86f1a05f7e07cc86e8bef7658477331a21bc7d9508f5da0",
+      "bytes": 6353
+    },
+    {
+      "old": "tools/public-data/rust_r1_upstream_publish.py",
+      "new": "experiments/archive/rust-r1-20261016/sources/tools/public-data/rust_r1_upstream_publish.py.txt",
+      "sha256": "592ee81c804647ecbabcb4b243e0aa249a3d9258b5a971926ce7a690acdd0dd1",
+      "bytes": 22462
+    }
+  ],
+  "runtime_configs": "fixed historical configs stay at their original paths so reports and frozen evidence keep their identities"
+}

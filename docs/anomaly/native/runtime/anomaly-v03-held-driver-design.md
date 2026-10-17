@@ -1,0 +1,52 @@
+# S4-B2 保持consumerの準備・保存・終了driver
+
+2026-09-14、基準687e563。[保持読取部品](anomaly-v03-held-consumer-design.md)へ、新規fixtureの準備、資源guard、証拠保存、親/祖先の終了順序を接続する。
+追加はtests/fixtures/anomaly_v03_held_driver.pyとfake試験。既存native入口やpublisherを変更せず、新規CLI/監視process/実機枠は今回追加しない。
+
+## 正常経路
+
+HeldDriverとWindowsHeldContextをnative取得より前に生成し、callerが終了まで保持する。callbackはtrusted synchronous。
+attemptは将来のlauncherが排他的に新規作成する既存parentとし、既存/衝突/失敗sourceを調べたり再利用したりしない。
+
+1. 既存WindowsAcquisitionContextの接続によりprivate-evidenceと元ancestor chainのID/SDを固定する。
+2. source-fixtureを既存private sinkの取得方式で新規準備する。facts.jsonとmarker-pending.jsonをCREATE_NEWで各1回write/flushし、元rootとwriterのObservationを取得する。
+3. 元root/2writerを既存AcquiredOwnerに渡し、SealedFiles/HeldConsumerを開始前に構成する。markerは固定source revisionから生成する。
+4. prepare証拠を保存・照合し、既存EvidenceBarrierでwriter2本をreleaseする。元rootはprotectedで保持する。
+5. HeldConsumerを1回実行する。全sealed file保持中の単回直接read・前後照合・子close確認は既存部品の責任。
+6. 収集状態・byte count・hash等をprivate-evidenceのseal_payload.jsonへ保存する。これは保存slot名であり、PublicationJournalのseal_payload工程や公開成功へ進める操作ではない。
+7. 最終guardと停止状態を確認し、子→元root→source側祖先→evidence側の順で終了する。全応答確認後だけdriver complete。
+
+生のconsumer bytesは出力しない。consumer_payloadはisolation_unresolvedのまま。収集証拠の保存はB2/S4受入・隔離・将来不変性の認定を与えない。
+準備中の元writer/path確認、sealerの再open、evidence sinkのreadbackは従来通り。consumer内の直接読取と区別する。
+この新規source rootは既存WindowsPrivateSinkのCreateDirectoryW/再open方式であり、単一呼出しdirectory取得部品の保証を合成していない。
+bootstrapの同一user競合、owner/adminの権限行使、descriptor等の内部割当全体の保証は従来の制限を継承する。
+
+## 終了と不明状態
+
+RetainedSinkはbootstrap失敗時の自動finishを保留し、保持中の祖先を含めた終了権限をこのdriverへ集約する。
+子closeが不明、descriptorの返却/解放が不明、token未終了、bootstrap未接続なら元rootと関連祖先を保持する。
+adoption後のwriter releaseが確認できなければ、既存HandleOwner.finishを呼ばずwriterを含むtree全体を保持する。
+既存HandleOwner.finishは子close不明でも親のcloseを試すため、この経路では先に全writerと新readerの終了を確認する。
+adoption前の既知子は逆順に単回closeし、不明応答で打ち切る。rootclose不明なら祖先を閉じず、祖先close不明でもそれより上へ進めない。
+状態queryの例外やbool以外の応答は安全な終了の証拠にせず、保持してworker終了を要求する。
+
+一次例外はcallback/status取得から独立した記録処理で保持する。後発MemoryErrorやgeneration/lease側のresource停止も終了コード80へ反映する。
+終了コードは記録済み状態だけから80(resource)、81(保持してworker終了が必要)、1(失敗)、0(局所driver完了)を選び、報告生成を呼び出さない。
+driver.finishの再呼出しはnative closeを増やさない。再入をcallbackが握りつぶしても失敗をラッチする。
+通常reportも単回callback内の再入・停止を検査し、古いcomplete判定を出さない。resource停止では通常reportを要求しない。
+
+将来のlauncherは80/81を含む全経路で専用worker終了を確認し、その間contextを保持する必要がある。現時点ではこのlauncher/外側監視への接続は未実装。
+成功/失敗後ともsourceの列挙、再open、hash読取、copy、cleanupを行わず、報告はmetadataのbytesを返すだけ。stdout書込は将来のlauncher側で一度だけ行う。
+
+## 上限と今回の検証範囲
+
+新規sourceは2file固定、各write最大4096 bytes。consumerの既存64KiB/file等の上限は変更しない。
+prepare証拠はこのdriverで64KiBに制限する（既存EvidenceBarrier/private sink自体は512KiB）。収集証拠16KiB、通常report256KiB。
+資源記録は既存budget処理を継承し最大1024点。40秒、private256MiB、working384MiB、空きRAM/disk各2GiBを適用する。
+prepareの段階間とconsumerのguardで元ancestor ID/SDと資源を照合する。既存connect/sealing内部の各native呼出しを全て中断・監視できるわけではない。
+同期native呼出しが固まる場合を含め、将来の実機試験には別processの時間/メモリ監視が必要。今回のfake試験だけでは実時間内の完了を保証しない。
+
+fake Win32 surfaceでprepare→writer release→同handle consumer→収集証拠→終了を通す。
+子/root/祖先のclose喪失、writer未release、保存失敗、状態query障害、最初の例外と後発resource、再入、異常callback応答、report障害、point/memory/disk/time上限を検証する。
+親/祖先/全inventoryの共通期間、独立process/token/競合、marker write/renameと全publisher、正式OS/VM digestは未完了。
+isolation_certified/protected_commit_allowed/future_immutability_proven/formal_permission/execution_authenticated=false、acceptance_status=not_completedを維持する。

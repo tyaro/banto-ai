@@ -6,6 +6,14 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 現在の研究基盤には、外部依存ゼロの共通benchmark runner、統計baseline、モデル別の隔離実行環境があります。TimesFM 3.0は研究比較専用、Chronos-2は`commercial-evaluation`として、専用環境でCPU smoke、合成データ、MetroPT-3限定rolling-origin benchmarkを実行済みです。Toto 2.0 4Mも同じForecaster／MetroPT契約でCPU smokeとMetroPT-3 rolling-origin benchmarkを実行済みです。core runtimeへML依存は混入させていません。今回の結果は実設備一般の性能を示しません。
 
+## 現在の重点（2026-10-17）
+
+TimesFM3を参考にした自作モデルの実用性検証を進めています。保全・点検支援を第一優先とし、需要予測・PSIも扱います。AI本体はbanto-aiに置き、Rustで学習・推論・optimizer保存再開まで対応することを目指します。banto-industrialとdenroku-psi-demoは利用側です。
+
+現在の順序は[短い引継ぎ](docs/current-handoff.md)と[復帰計画](docs/research/banto-ai-practical-training-return-plan-2026-10-16.md)を参照してください。人工Python参照は生成済み、Rust学習部品は未実装です。R1の中間値1点は未達で、正式R2実データ学習は停止しています。[停止済み調査](experiments/archive/rust-r1-20261016/README.md)は履歴として保存し、通常の実行対象から外しました。
+
+以下のモデル比較・異常評価はこれまでの研究基盤と履歴です。過去時点の「次」は現在の工程を上書きしません。
+
 ## 研究テーマ
 
 | テーマ | 最初に検証する問い |
@@ -35,6 +43,10 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 次のstdlib detector比較は[`v0.3実装前preregistration`](docs/anomaly-multiseed-evaluation-plan-v0.3.md)のS0監査に合格し、計画を凍結しました。S1の独立再監査はP0〜P3 0件で合格し、S1は完了しました。S2では3候補の純粋scoring、phase/profile、episode merge、causal matchingとadversarial testsを実装し、[S2監査](docs/results/anomaly-multiseed-v0.3-s2-audit-2026-09-06.md)もP0〜P3 0件で合格しました。S3 deterministic runnerも固定inventory、paired materialization、完全ledger、安全停止、provenance、non-overwrite publisherを実装し、[S3監査](docs/results/anomaly-multiseed-v0.3-s3-audit-2026-09-07.md)はP0〜P3 0件、`S3_READY=yes`、`INTEGRATION_READY=yes`です。CI [run 34044283016](https://github.com/tyaro/banto-ai/actions/runs/34044283016)はPython 3.12/3.14の全工程greenでした。S3は安全な再現実行の土台であり、性能結果・本番利用許可ではありません。次はS4 platform/runtime/native Windows acceptanceとdry/smoke consumer freezeで、formal run、性能評価、promotion、formal output rootはS4受入まで閉鎖します。利用境界は[評価toolの説明](tools/evaluator/README.md)を参照してください。
 
+現在の対応Pythonは**3.14系（`>=3.14,<3.15`）**です。2026-10-08のユーザー判断によりLinux CIも3.14へ一本化しました。Windows正式評価は登録済みCPython 3.14.0のbuild/hashへ固定します。過去の3.12/3.14検証は履歴として保持します。[改訂記録](docs/results/anomaly-multiseed-v0.3-python314-unification-2026-10-08.md)を参照してください。
+
+Windows OS条件は**Windows 11 x64 workstation・local NTFS・ACL対応・必要API可用性**です。正確なrelease/build/更新番号は各runに記録し、特定番号への完全一致を実行条件にしません。同じrun中の環境変化は検出して停止します。実Job/ACL/child transportの受入は別途必要です。[OS条件改訂](docs/results/anomaly-multiseed-v0.3-windows-runtime-policy-2026-10-09.md)
+
 ## ライセンス
 
 このリポジトリのソースコードと文書は [MIT License](LICENSE) です。
@@ -47,20 +59,17 @@ Banto ecosystem における、予測・異常検知・適応型試運転・予�
 
 ```text
 docs/
-  architecture.md                 Banto Hubとの責務境界と成果物フロー
-  time-series-model-survey.md     時系列モデル候補、ライセンス、実現可能性の調査
-  research-implementation-plan.md 段階的な研究・実装計画と判断gate
-  research-roadmap.md             長期的な研究フェーズと完了条件
-  timesfm-notes.md                TimesFM 3.0評価プロトコル
-  chronos2-notes.md               Chronos-2の隔離・評価契約
-  toto2-notes.md                  Toto 2.0 4Mの隔離・評価契約
-  public-dataset-survey.md        公開産業時系列データの選定と取得境界
-  results/                        実測結果（合成／研究専用）
-  adr-0003-timesfm3-isolation.md  TimesFM 3.0の依存・実行隔離
-  adr-0004-chronos2-isolation.md  Chronos-2の依存・実行隔離
-  adr-0005-public-dataset-boundary.md 公開データのsource pinと変換境界
-  commissioning-learning.md       試運転・校正・昇格の設計
-  initial-issues.md                最初に作成するIssue 5件の案
+  README.md                     文書の入口
+  current-handoff.md            最新状態・停止・引継ぎ
+  overview/                     全体構成・試運転方針
+  research/                     研究roadmap・調査
+  models/                       モデル別の評価契約
+  decisions/                    設計判断（ADR）
+  anomaly/                      計画・評価・実行・受入・Windows設計
+  results/                      実測・監査報告
+  history/                      過去の引継ぎ・索引
+  anomaly-*.md                  固定パスを保持する凍結計画
+  research-implementation-plan.md 凍結計画が参照する実装計画
 schemas/                       manifestを検証するJSON Schema
 examples/                     安全な合成fixtureとsample manifest
 src/banto_ai/                  外部依存なしのPhase 0共通runtime
@@ -97,15 +106,13 @@ tools/
 
 ## 次の一歩
 
-最初の実装マイルストーンは、合成産業データ上で naive／古典的 baseline と複数の時系列モデルを同条件で比較できる、再現可能なベンチマークです。
-
-現時点では TimesFM 3.0 の学習済み重みは非商用・非本番用途に限定されるため、研究比較専用とします。商用利用可能候補として Chronos-2、Toto 2.0、Granite TTM／TSPulseなどを同時に評価します。
+固定済みの人工入力とPython参照を使い、Rustのloss/autodiff/gradient/clip/互換AdamWと保存再開を実装・検証します。連続8更新対4+復元4、入力・checkpoint拒否、途中保存の条件は[固定契約](docs/research/rust-r2p-synthetic-training-contract-2026-10-16.md)に従います。実データの追加評価や本番採用は別の判定です。
 
 ### Chronos-2初期評価
 
 Chronos-2は固定checkpointのsize／SHA-256検証、公式API direct CPU smoke、Banto tool smoke、past-only／known-futureの初期rolling benchmarkまで完了しました。provenance拡張後のBanto tool smoke正本は`artifacts/chronos2/cpu-smoke-provenance-2026-09-04.json`で、`verification_status=verified`、cold elapsed `12.057009100011783`秒です。known-future 7 modelsではaggregate MAE `0.1691488806622826`、WIS `0.15937026919725228`で1位でしたが、単一seed・少数origin・合成データの結果です。known-futureはorigin時点で確定済みの計画値を模した条件に限り、実績値の先読みを認めません。詳細は[`docs/results/chronos2-initial-evaluation-2026-09-04.md`](docs/results/chronos2-initial-evaluation-2026-09-04.md)を参照してください。
 
-公開実データの第一候補は[UCI MetroPT-3](https://archive.ics.uci.edu/dataset/791/metropt%2B3%2Bdataset)、次候補は[UCI hydraulic systems](https://archive.ics.uci.edu/dataset/447/condition%2Bmonitoring%2Bof%2Bhydraulic%2Bsystems)です。MetroPT-3はsource pin toolで実archive検証済みで、`status=cached_verified`、`verification_status=verified`です。正本manifestは[`datasets/manifests/metropt3-source.json`](datasets/manifests/metropt3-source.json)、手順は[`tools/public-data/README.md`](tools/public-data/README.md)、CLIは[`tools/public-data/prepare_metropt3.py`](tools/public-data/prepare_metropt3.py)です。SHA-256・member hash・license・source revision・verified_atを固定し、raw dataはGitへ置きません。標準化datasetの取込、Public-only quality gate、統計baseline、Chronos-2、TimesFM 3.0の限定forecast評価が完了し、実測結果は[`docs/results/metropt3-import-2026-09-04.md`](docs/results/metropt3-import-2026-09-04.md)、[`docs/results/chronos2-metropt3-evaluation-2026-09-04.md`](docs/results/chronos2-metropt3-evaluation-2026-09-04.md)、[`docs/results/timesfm3-metropt3-evaluation-2026-09-04.md`](docs/results/timesfm3-metropt3-evaluation-2026-09-04.md)に記録しました。詳細は[`docs/public-dataset-survey.md`](docs/public-dataset-survey.md)と[`docs/adr-0005-public-dataset-boundary.md`](docs/adr-0005-public-dataset-boundary.md)を参照してください。
+公開実データの第一候補は[UCI MetroPT-3](https://archive.ics.uci.edu/dataset/791/metropt%2B3%2Bdataset)、次候補は[UCI hydraulic systems](https://archive.ics.uci.edu/dataset/447/condition%2Bmonitoring%2Bof%2Bhydraulic%2Bsystems)です。MetroPT-3はsource pin toolで実archive検証済みで、`status=cached_verified`、`verification_status=verified`です。正本manifestは[`datasets/manifests/metropt3-source.json`](datasets/manifests/metropt3-source.json)、手順は[`tools/public-data/README.md`](tools/public-data/README.md)、CLIは[`tools/public-data/prepare_metropt3.py`](tools/public-data/prepare_metropt3.py)です。SHA-256・member hash・license・source revision・verified_atを固定し、raw dataはGitへ置きません。標準化datasetの取込、Public-only quality gate、統計baseline、Chronos-2、TimesFM 3.0の限定forecast評価が完了し、実測結果は[`docs/results/metropt3-import-2026-09-04.md`](docs/results/metropt3-import-2026-09-04.md)、[`docs/results/chronos2-metropt3-evaluation-2026-09-04.md`](docs/results/chronos2-metropt3-evaluation-2026-09-04.md)、[`docs/results/timesfm3-metropt3-evaluation-2026-09-04.md`](docs/results/timesfm3-metropt3-evaluation-2026-09-04.md)に記録しました。詳細は[`docs/public-dataset-survey.md`](docs/research/public-dataset-survey.md)と[`docs/adr-0005-public-dataset-boundary.md`](docs/decisions/adr-0005-public-dataset-boundary.md)を参照してください。
 
 Python 3.14専用venvとrepository外cacheで再現します。各runは既存出力を上書きしないため、cleanなartifact pathで実行してください。
 
@@ -140,7 +147,7 @@ rolling-origin benchmarkの実測値は [`docs/results/timesfm3-rolling-benchmar
 
 Toto 2.0 4M は [`tools/toto2/README.md`](tools/toto2/README.md) の専用環境・外部cacheから実行します。MetroPT-3のcontext=120、horizon=15、target 3、past-only covariate 11は変更せず、adapter内の先頭8点paddingだけでpatch_size=32のeffective input length=128へ揃えます。実smokeと数値benchmarkは完了し、結果を [`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](docs/results/toto2-metropt3-evaluation-2026-09-04.md) に記録しました。Totoのknown-future／exogenous requestは拒否します。さらに、2 seeds×2 horizons×2 context lengthsのToto 4M matrixも8/8 cells successで完了し、正本とtarget別metrics、runtime、制約を [`docs/results/toto2-matrix-2026-09-04.md`](docs/results/toto2-matrix-2026-09-04.md) に記録しました。次はseed／origin拡大、missing／stale／fault／regime slice、model-only resource測定、22M、公開／実設備一般化です。
 
-controlled evaluation の受入境界は [`docs/toto2-controlled-scenarios.md`](docs/toto2-controlled-scenarios.md) に定義しています。2026-09-05にcontrol、target fault、target quality、covariate qualityの4 trackを、seed 17／29／42／73／101、horizon 15／30、context 64／120、test origin 384で実行し、4 matrix各20/20 success、acceptance `pass`となりました。各matrix 10,800 predictions、計43,200、cross-model rankingは禁止です。正式なhash、paired delta、runtime、制約は [`docs/results/toto2-controlled-evaluation-2026-09-05.md`](docs/results/toto2-controlled-evaluation-2026-09-05.md) に記録しています。これはsynthetic／4M／CPUの受入結果であり、実設備性能やPhase 2完了、製品採用を示しません。実行順は4 matrix → analyzerで、コマンドは [`tools/toto2/README.md`](tools/toto2/README.md) に記載しています。
+controlled evaluation の受入境界は [`docs/toto2-controlled-scenarios.md`](docs/models/toto2-controlled-scenarios.md) に定義しています。2026-09-05にcontrol、target fault、target quality、covariate qualityの4 trackを、seed 17／29／42／73／101、horizon 15／30、context 64／120、test origin 384で実行し、4 matrix各20/20 success、acceptance `pass`となりました。各matrix 10,800 predictions、計43,200、cross-model rankingは禁止です。正式なhash、paired delta、runtime、制約は [`docs/results/toto2-controlled-evaluation-2026-09-05.md`](docs/results/toto2-controlled-evaluation-2026-09-05.md) に記録しています。これはsynthetic／4M／CPUの受入結果であり、実設備性能やPhase 2完了、製品採用を示しません。実行順は4 matrix → analyzerで、コマンドは [`tools/toto2/README.md`](tools/toto2/README.md) に記載しています。
 
 Phase 0の実行確認は、外部依存を導入せず `python tools/smoke.py` と `python tools/safety_check.py` で行えます。Phase 1の最小generatorは次で実行できます。
 
@@ -181,7 +188,7 @@ python tools/evaluator/run_benchmark.py --config examples/configs/benchmark-smal
 
 Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUTING.md`](CONTRIBUTING.md) に記載しています。
 
-調査結果は [`docs/time-series-model-survey.md`](docs/time-series-model-survey.md)、具体的な作業計画は [`docs/research-implementation-plan.md`](docs/research-implementation-plan.md)、Issue案は [`docs/initial-issues.md`](docs/initial-issues.md) を参照してください。
+調査結果は [`docs/time-series-model-survey.md`](docs/research/time-series-model-survey.md)、具体的な作業計画は [`docs/research-implementation-plan.md`](docs/research-implementation-plan.md)、Issue案は [`docs/initial-issues.md`](docs/history/initial-issues.md) を参照してください。
 
 ### Toto event slice post-hoc解析
 
@@ -192,3 +199,7 @@ Windowsを含む開発手順とモデル別のplanned environmentは [`CONTRIBUT
 Phase 0 research foundation implemented。Phase 1 savepoint 1（seed再現可能synthetic industrial data generator）とSavepoint 2（共通benchmark runner／統計baseline）を実装済みです。TimesFM 3.0はCPU smoke、小規模rolling-origin benchmark、8-cell matrix、MetroPT-3同一契約比較を実行済みです。Chronos-2は固定snapshot検証、公式API／Banto tool CPU smoke、past-only 6 models／known-future 7 modelsの初期rolling benchmark、実model 8-cell matrix、MetroPT-3公開実データのnative／point-calibrated評価を実行済みです。Toto 2.0 4Mは固定snapshot検証、CPU smoke、MetroPT-3公開実データの6 model／3 target評価、2 seeds×2 horizons×2 context lengthsの8-cell matrix、formal controlled 4-track acceptanceを実行済みです。MetroPT-3評価は24時間・1設備・16 test origins・単一CPU・forecast-onlyの限定条件で、Chronos nativeはpartial、Chronos point-calibrated、TimesFM 3.0、Toto 2.0 4Mはsuccessでした。Toto controlledは4 matrix各20/20 success、80/80 cells、acceptance `pass`ですが、synthetic／4M／CPUの契約受入であり、実設備性能やmodel採用判断を示しません。詳細は[`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](docs/results/toto2-metropt3-evaluation-2026-09-04.md)、[`docs/results/toto2-matrix-2026-09-04.md`](docs/results/toto2-matrix-2026-09-04.md)、[`docs/results/toto2-controlled-evaluation-2026-09-05.md`](docs/results/toto2-controlled-evaluation-2026-09-05.md)、[`docs/results/timesfm3-metropt3-evaluation-2026-09-04.md`](docs/results/timesfm3-metropt3-evaluation-2026-09-04.md)、[`docs/results/chronos2-metropt3-evaluation-2026-09-04.md`](docs/results/chronos2-metropt3-evaluation-2026-09-04.md)を参照してください。origin／日／設備拡大、model単独resourceの分離評価、欠損・regime・fault slice、known-future対past-onlyの追加比較、Chronos再実行の再現性は次工程です。Phase 2は完了していません。本番デプロイ経路も未実装です。
 
 合成データは研究用の制御されたfixtureであり、実設備の挙動を代表すると主張しません。顧客データ、raw設備データ、秘密情報は生成物・設定・Git履歴へ入れません。大量生成データはGit無視領域へ置き、commit対象は小さいconfig／fixtureだけにします。
+
+## Rust AIクレートの研究実装
+
+AI本体は [crates/banto-ai](crates/banto-ai/README.md) に置き、学習・推論・保存再開を共通化する。[実装計画](docs/research/banto-ai-rust-implementation-plan-2026-10-16.md)に沿ってCPU buildと3テストが通過した。同一入力の正規化・attention診断を根拠にLayerNormの演算順をそろえ、固定7ケースを確認。最終予測は許容差内だが、別の中間値1点超過でR1全体は未合格。Rust学習は未開始。[結果と次工程](docs/results/banto-ai-rust-r1-upstream-order-2026-10-16.md)を参照。

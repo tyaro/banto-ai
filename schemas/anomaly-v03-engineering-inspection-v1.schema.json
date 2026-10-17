@@ -5,7 +5,7 @@
   "type": "object",
   "properties": {
     "receipt_version": {
-      "const": "s4-a.1",
+      "const": "s4-a.2",
       "type": "string"
     },
     "acceptance_status": {
@@ -24,10 +24,6 @@
           "type": "string"
         },
         "independent-token": {
-          "const": "not_completed",
-          "type": "string"
-        },
-        "windows-3.12": {
           "const": "not_completed",
           "type": "string"
         },
@@ -64,7 +60,6 @@
         "native-publisher",
         "protected-dacl",
         "independent-token",
-        "windows-3.12",
         "windows-3.14.0",
         "linux-3.12",
         "linux-3.14",

@@ -1,0 +1,92 @@
+{
+  "schema": "banto.care-fixed-contract.v1",
+  "contract_id": "CARE-A-MAINT-20261016-r1",
+  "source": {
+    "record_id": 15846963,
+    "doi": "10.5281/zenodo.15846963",
+    "publication_date": "2025-07-09",
+    "record_updated": "2026-10-12T07:52:59.518171+00:00",
+    "license": {
+      "id": "cc-by-sa-4.0"
+    },
+    "access_right": "open",
+    "record_json_sha256": "d373232a047a41665749c204a5c274e04294ba94c3d25d4f0a9948b08b821329",
+    "source_bytes": 5503439673,
+    "sha256": "ca61379e98956d891041ad45c885109bd8a14199fde0688d0184a11c2d4194f1",
+    "md5": "2547b58c21ac8c242d13232860cf500c",
+    "official_md5_matched": true,
+    "official_sha256_published": false,
+    "local_source": "/Users/tyaromax/Desktop/Care_to_compare.zip"
+  },
+  "signals": [
+    {
+      "column": "sensor_13_avg",
+      "description": "Temperature in generator bearing 2 (Drive End)",
+      "source_unit_literal": "�C",
+      "numerical_unit_conversion": null,
+      "unit_note": "literal corrupted temperature symbol retained; numeric native units, no engineering threshold",
+      "statistic": "10-minute average",
+      "alarm_target": true
+    },
+    {
+      "column": "sensor_12_avg",
+      "description": "Temperature oil in gearbox",
+      "source_unit_literal": "�C",
+      "numerical_unit_conversion": null,
+      "unit_note": "literal corrupted temperature symbol retained; numeric native units, no engineering threshold",
+      "statistic": "10-minute average",
+      "alarm_target": true
+    },
+    {
+      "column": "power_30_avg",
+      "description": "Grid power",
+      "source_unit_literal": "kW",
+      "numerical_unit_conversion": null,
+      "unit_note": "power anonymization/scaling retained; not true rated capacity",
+      "statistic": "10-minute average",
+      "alarm_target": false
+    }
+  ],
+  "input_root": "/Users/tyaromax/Documents/Codex/2026-10-14/yaro-banto-ai-mac-python-3/outputs/banto-ai-research/artifacts/care-input-contract-20261016",
+  "input_manifest_sha256": "5cddf48d2399695c49dde59a2370f10351b816f5217d363477a0eb361b31aac8",
+  "learning_recipe_sha256": "b238248f4b5055311f562bb099f26c446448d2c1e4b113fd453fd86825f566f3",
+  "evaluator_root": "/Users/tyaromax/Documents/Codex/2026-10-14/yaro-banto-ai-mac-python-3/outputs/banto-ai-research/artifacts/care-evaluator-contract-20261016",
+  "evaluation_sha256": "a075209d77145540dcb1a535475c369820c507c206b5d99307a32d410d1cb361",
+  "metadata_split_manifest_sha256": "143c32ea792abbd8a14d6c9b0db3ec5b5ebccd64bcb28e6474d6ca42a9851895",
+  "budget": {
+    "seed_units": null,
+    "parent_seconds_per_unit": 900,
+    "child_seconds_per_unit": 870,
+    "physical_footprint_bytes": 2147483648,
+    "peak_rss_bytes": 2147483648,
+    "artifact_normal_files": 24,
+    "artifact_normal_bytes": 805306368,
+    "artifact_total_files": 32,
+    "artifact_total_bytes": 1073741824,
+    "single_file_bytes": 33554432,
+    "failure_reserve_files": 8,
+    "failure_reserve_bytes": 268435456,
+    "evidence_bytes": 16777216,
+    "evidence_files": 512,
+    "evidence_part_bytes": 262144,
+    "evidence_failure_reserve_bytes": 2097152,
+    "evidence_failure_reserve_files": 16,
+    "stdout_bytes": 1048576,
+    "stderr_bytes": 131072,
+    "fold_units": 5,
+    "maximum_parent_campaign_seconds": 4500,
+    "last_fold_includes_scoring_in_same_child_seconds": 870,
+    "additional_fit_or_grid": false
+  },
+  "stages": {
+    "metadata_and_contract_fixed": true,
+    "sensor_numeric_preparation": false,
+    "learner_implemented_for_care": false,
+    "training": false,
+    "scoring": false,
+    "rust_port": false
+  },
+  "2015_reevaluation": false,
+  "heartbeat": "PAUSED",
+  "care_score_reproduction_claim": false
+}

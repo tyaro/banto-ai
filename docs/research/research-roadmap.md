@@ -1,0 +1,809 @@
+## 現在 — 研究ブランチ整理（2026-10-17）
+
+[整理結果](../results/research-consolidation-2026-10-17.md)と[短い引継ぎ](../current-handoff.md)を優先する。main側のWindows修正を取り込み、停止済みRust調査を履歴へ保存し、検証済みlock最小案を適用。固定人工Python参照は再利用し、次は小型Rust学習・保存再開の実装。R1未達/正式R2停止/ポインタ停止/許容差を維持する。以下は過去時点の記録。
+
+---
+
+## 現在 — R2P人工参照を閉鎖（2026-10-16）
+
+[lock案と人工参照](../results/rust-r2p-lock-and-python-reference-2026-10-16.md)。隔離Cargo.lockの最小案と人工Python参照を保存済み。gemm直接edge1行削除のみ、lock662記録/version・有効154package/feature不変。loss7/clip4/AdamW6/小型8更新、独立照合107件すべて原許容差内。 元lockは未適用。次は最小案の適用と人工Rust学習部品の実装。ポインタ追跡・実データ再評価は停止継続。以下は旧記録。
+
+---
+
+## 現在 — 人工Rust学習の条件を固定（2026-10-16）
+
+[固定条件](rust-r2p-synthetic-training-contract-2026-10-16.md)。現実装を棚卸し、人工loss7/clip4/AdamW6と9parameterの8対4+復元4、拒否/途中保存条件を固定。source上は62tensor/59trainable/109,024値。学習・参照数値生成は未実行。locked offline treeはexit101でmanifest/lock整合が次の入口。 次は保護した最小lock整合案→人工参照生成→限定Rust実装。pointer追跡/実データ/既読test再評価は停止したまま。以下は旧記録。
+
+---
+
+## 現在 — 実用性とRust学習へ復帰（2026-10-16）
+
+[改訂2](banto-ai-practical-training-return-plan-2026-10-16.md)。人の指示でpointer/once/TLS/PAC/vendor内部追跡を停止。既存成果を整理し、原許容差/R1の1点未達を維持。人工データだけのRust学習部品・保存再開をR2Pとして独立準備する。正式R2実データ学習は停止を維持。 次は現実装の整合整理と人工fixture仕様固定。R1追加対応は一般候補最大1/局所一巡/全7case一回、根拠なしなら実験0で未達保留。CARE/MetroPT testは凍結し、需要条件・Windows分離・heartbeat PAUSEDを維持。以下のpointer追跡予定は旧記録であり実行しない。
+
+---
+
+## 現在 — call target64bytesはtransfer stub（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-once-target-2026-10-16.md)。固定call targetをown-task mapping/SDK型確認後に64bytes読取り、再照合一致。先頭16bytesはADRP/ADD/LDR/BRAA transfer stub、slot0x1e7ff0db8を導出。slot/分岐先は未読、数値演算/target実行0。 R1未達/R2停止。次はSDK/pointer表現条件を守った単一slot工程。以下は旧記録。
+
+---
+
+## 現在 — once仕様を確認、call target未同定を保持（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-once-contract-2026-10-16.md)。SDKのonce fast pathと公開APIの同期保証を区別。独立metadata照合では保存BL targetがpublic dispatch_onceと直接一致せず、dladdr0で停止。内部predicate/query/train経路は未確定。数値演算/新code読取り0。 R1未達/R2停止。次はmapping確認後の単一target64byte上限の独立工程。以下は旧記録。
+
+---
+
+## 現在 — patch一致、once契約確認へ（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-sgemm-warm-binding-2026-10-16.md)。保存済みtrain-first patchを一度だけ実行、元6,144値と全bit一致。88byte設定は前後で変化・実行後二度同一だが、once値52638546は固定条件-1を満たさずfailed閉鎖。query/train経路は未確定、追加実行/命令読取り0。 R1未達/R2停止。次はsourceだけでonce条件の意味を確認し、新演算/命令読取りはしない。以下は旧記録。
+
+---
+
+## 現在 — SGEMM小行列の演算順を確認（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-sgemm-readonly-2026-10-16.md)。実load済みSGEMMの6関数/5,064bytesを上限内で監査。小形状T,NのFMA→lane合算→bias後入れを特定し、別の保存値再現で人工5caseのmm/patch各3,840値が全bit一致。cold設定未初期化のためtrain runtime経路は未確定。 R1未達/R2停止。次は固定した一度のpatchで初期化後設定をbind、推測による新候補はしない。以下は旧記録。
+
+---
+
+## 現在 — fused linearは改善なしで不採用（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-fused-linear-2026-10-16.md)。公開extensionでpure-Rust GEMM bias初期化を実装。人工8case/74値・graph・13拒否はpassだが、全154linear/465,696値が現行baselineとbytes一致しSSE減少0で不採用。model/default不変、full forward0。 R1未達/R2停止。次は参照SGEMMを読取り監査する条件の固定、根拠なしの丸め順探索はしない。以下は旧記録。
+
+---
+
+## 現在 — patchの差を分解、fused linearの条件を固定（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-linear-boundary-2026-10-16.md)。patchの固定7case/16,128値を分解。両train batchのraw matmulはbit一致、単独bias加算は全case一致。trainの差はPython fused/別加算差7,241値で説明でき、floor人工3caseのraw matmul差各540値とは別。 モデル不変/R1未達/R2停止。次は既存pure-Rust gemmのbias融合を1候補として公開extensionへ設計、固定人工/154局所gate後だけ全体。以下は旧記録。
+
+---
+
+## 現在 — context差を解明、全体は未達（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-context-normalization-2026-10-16.md)。初期contextのmean/raw std/scale各63値とnormalized8,064値が参照bits一致。Rust plain/Autodiffを含む84局所比較もbytes一致。contextと既知LayerNormを合わせた一律候補は全体389,214要素中1点未達で不採用、model元bytes復元。 R1未合格/R2停止。次はpatchのlinear境界のソース確認、同一評価は反復しない。以下は旧記録。
+
+---
+
+## 現在 — FMA拡張を保持、全体候補は復元（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-fma-extension-2026-10-16.md)。公開backend extensionのFMA人工forward/graph参加と全49 LayerNormの局所bit一致はpass。一律hookの全体固定7case/389,214要素は中間3点超過で不採用。model.rsを元bytesへ復元、FMAはopt-inの研究APIとして保持。安定版は従来の累積1点未達、R1未合格/R2停止。 次は初期contextモーメントの差のソース確認、無目的な再評価はしない。以下は旧記録。
+
+---
+
+## 現在 — 参照の丸め順を実命令で確定（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-binary-moments-2026-10-16.md)。実際にロードされたMac PyTorchの3関数をpinし、scalar lane mergeの平均更新とm2補正のFMAを命令から確定。命令どおりの一度の保存値再現で、49入力/1,953行のmean/rstd・124,992出力が全bit一致。 次はgraphを保つFMA方式と人工forward。core不変・R1未達/R2停止。以下は旧記録。
+
+---
+
+## 現在 — モーメントとaffineの差を分離（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-moments-audit-2026-10-16.md)。全49入力/1,953行のnative PP・balanced RP・serial Flexを各bytes再現。参照モーメント＋参照affineは全124,992要素一致。4lane/FMAのソース再現はSSE約94.5%減だがmean260/rstd21行・出力5,827要素が非一致。 参照build/binaryの根拠とgraphを保つFMA設計へ。core不変・R1未達/R2停止。以下は旧記録。
+
+---
+
+## 現在 — 標準LayerNorm候補は不採用（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-native-norm-2026-10-16.md)。標準Flex LayerNormを全7case×7moduleの同一入力49組/124,992要素で検証。現行RPのbytes再現49/49、候補の許容差超過0だがSSEは現行の約2.804倍、全7caseで増加し事前条件を不通過。 core不変・R1未達/R2停止。追加方式の根拠と有限条件を定めるまで再実行しない。以下は旧記録。
+
+---
+
+## 現在 — R1全層診断を閉鎖、局所passで全体未達を覆さない（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-all-layer-audit-2026-10-16.md)。固定55箇所×7case/953,694要素で、同一入力の局所差超過0、上流累積の超過1。PP/RRの既存anchor各161箇所bytes一致、有限948,654要素でtotal=local+propagatedが厳密成立。 追加方式は未選択、1点への修正探索をせずR1未達・R2停止を維持。以下は旧記録。
+
+---
+
+## 現在 — R1一般修正を全ケースで確認、1点未達を保存（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-upstream-order-2026-10-16.md)。同一入力norm6組/attention28段階は固定許容差内。参照CPUと同じ逆標準偏差の乗算へ全LayerNormを一度修正、局所SSE23%減。3テストpass、元の7case全体比較は389,214要素中別の1点超過でR1未合格。 次は全層の単体/累積差を分ける有限設計の固定、1点への算術探索は停止。以下は旧記録。
+
+---
+
+## 現在 — R1の局所診断完了、上流累積差の演算順を確認する（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-intermediate-diagnosis-2026-10-16.md)。残る1点は上流残差1.370906830e-6＋FF入力伝播9.238719940e-7の合計。共通入力ff.2の対象点差0、同一operandsの加算差0。全linear各7,680要素も固定許容差内。 元の全体gateは未達、R2未開始。以下は旧記録。
+
+---
+
+## 現在 — Rust R1a通過、残る中間値1点を切り分け（2026-10-16）
+
+[結果](../results/banto-ai-rust-r1-tests-parity-2026-10-16.md)。Rust CPU build・3テストpass。固定7ケース/389,214要素の比較は修正前114超過→修正後1超過、R1b/R1全体は未合格。正規化/元単位の最終予測各6,048要素は全pass。 R1bの残差原因を切り分けるまでR2は開始しない。build専用枠1.5GiB、各メモリ2GiB・保存枠・R0許容差は維持。以下は旧記録。
+
+---
+
+## 現在 — Rust R1のビルド容量条件見直し（2026-10-16）
+
+[停止結果と再開条件](../results/banto-ai-rust-r1-build-stop-2026-10-16.md)。Xcode確認通過。R1 CPU buildがcache+target合計768MiB上限で停止、テスト/数値比較未確認。 固定参照/R0許容差は維持、R2は未開始。同条件retryや容量拡張は未実施。以下は旧記録。
+
+---
+
+## 現在 — banto-ai Rust R1準備、compiler設定待ち（2026-10-16）
+
+[R1準備/再開手順](../results/banto-ai-rust-r1-preparation-2026-10-16.md)。crates/banto-aiに前処理/モデル/neutral読込/CLIと試験コード、154依存のCPU lockと7固定Python参照を保存。build/テスト/一致は未確認。clang exit69のXcode規約未同意を人へ連絡中。設定後は固定参照でR1を完了し、R2学習へはまだ進まない。下流のlockなし依存解決は別課題。以下は旧記録。
+
+---
+
+## 需要とPSIの既存実装を接続例に加える（2026-10-16）
+
+[denroku-psi-demoの現状と引継ぎ](denroku-psi-ai-integration-2026-10-16.md)を確認した。現状はPython LightGBM学習→Rust推論/照合→静的JSON→画面/PSIで、Python不要の再学習は公式C APIを使う別の未実装計画がある。共通AIの配置はbanto-ai、利用側は産業のbanto-industrialと需要・PSIアプリ。各利用側→banto-aiの依存方向を守る。
+
+R1/R2は自作SmallForecasterを先行する。既存LightGBMの特徴量・木推論・Python不要学習を同一engineへ押し込まず、共通化はmodel版/来歴/数量の意味/進捗・保存等の境界から行う。需要26週の出荷点予測と産業32stepの分位点を区別し、PSI/受注採用判断は利用側へ残す。R0.1の数値契約は不変。需要側のfixture利用・LightGBM移行・平均モデル比較は別工程で仕様と範囲を固定する。
+
+---
+
+## 現在の着手順 — banto-aiのRust実装計画（2026-10-16）
+
+[計画](banto-ai-rust-implementation-plan-2026-10-16.md)を現在の実装順とする。R1a単独CPU build/依存/子孫資源観測、R1b固定forward、R2学習・保存再開、R3 CARE有限移植比較、R4製品接続/OS/配布、用途受入。AI本体はbanto-ai、banto-industrialは利用側。今回は計画のみで新build/学習/予測0。R0数値条件/既読評価/需要停止条件と旧証跡を維持。以下は旧記録。
+
+---
+
+## 配置方針の訂正 — AIクレートはbanto-ai（2026-10-16）
+
+AI本体のRustクレートは tyaro/banto-ai 側に置き、tyaro/banto-industrial は利用・接続先とする。前回の「移植先」は接続先の意味であり、AI実装の配置先に読み替えない。 共通AI crateの配置案は `crates/banto-ai`、製品型/取得処理/jobのhost/UIはbanto-industrial側のadapterに置く。依存方向はbanto-industrial → banto-ai。学習・保存再開もAI側の範囲であり、推論だけに縮小しない。[現行R0契約](rust-small-forecaster-r0-2026-10-16.md)と[機械設定r0.1](../../examples/configs/rust-small-forecaster-r0-20261016-r0.1.json)へ反映。数値/評価条件は不変、Rust実装・buildはまだ開始していない。以下の移植先という旧表現は接続先を指す履歴として読む。
+
+---
+
+## 現在 — CARE事後分析とRust R0、次はR1（2026-10-16）
+
+[CARE分析/R0結果](../results/care-saved-diagnostics-rust-r0-2026-10-16.md)、[契約](rust-small-forecaster-r0-2026-10-16.md)、[機械設定](../../examples/configs/rust-small-forecaster-r0-20261016.json)。既存予測の未検知8件は3連続未達、1件は超過なし。CARE r1は固定し再調整しない。人の指定したbanto-industrialのmainをpin、外部名binding/品質/履歴境界を確認。Burn0.22/Flex CPUを初回候補に、forwardだけでなくAdamW/中立checkpoint/学習再開とbanto job/model管理まで契約化した。次は孤立Rust coreのcompile/固定参照の数値確認。現在はRust実装・製品接続未確認。旧成果/失敗、需要2015停止/評価条件/heartbeat PAUSEDを維持。以下は旧記録。
+
+---
+
+## 現在 — CARE5fold実学習と評価完了（2026-10-16）
+
+[CARE5fold実学習・イベント評価を完了](../results/care-macos-learning-evaluation-2026-10-16.md)。固定r1の各4,096更新/4val選択、既存train profile/scheduleを維持し全5fold freeze後に採点。共通支持で事前4条件を通過（macro検知20%対baseline6.67%、false0.84656対1.07104/1000記録h、警報割合/earlinessも改善）。ただしpooled3/12、9未検知、3asset検知0、nativeだけがevent22を検知した可用性差を保持する。全5unitと独立保存値検算pass、model/AdamW/RNG/sampler位置のneutral参照も保存。r1は完了・固定しtest再調整を追加しない。次は保存値での未検知/asset/可用性の仮説整理とRust R0契約/backend・配布条件の整理。保全・点検第一優先、産業/需要の自作モデル実用性、学習を含むRust移植とbanto統合を維持し、製品採用や未知holdout成功とはしない。需要2015停止、既存調整/評価分離、OS境界、heartbeat PAUSEDを維持。
+
+---
+
+## 現在 — CARE train profileと全batch列の固定完了（2026-10-16）
+
+[train尺度・baseline profileと全batch列を固定](../results/care-training-preparation-2026-10-16.md)。先の[数値入力とconsumer支持](../results/care-numeric-consumer-2026-10-16.md)に続き、train anchorだけのasset等重み尺度/MAD、負荷quartile/温度中央値を推定。全20binのpair床128を通過（最少30,440）。5fold各4,096×batch8の全163,840例とorigin集合を保存し、独立CDF/分散照合・全抽出列再現・実consumerの先頭/末尾10batchを確認した。次は固定profile/scheduleを使うCARE trainerと有限5fold実学習へ接続する。今回ニューラル学習/forward/閾値校正/予測/性能採点0、固定r1/JSON不変。保全・点検を第一優先に、学習を含むRust移植とbanto統合、需要2015停止と調整/評価分離、OS境界を維持する。
+
+---
+
+## 現在 — CARE数値入力と実consumerの支持確認完了（2026-10-16）
+
+[数値入力と実consumerの支持確認を完了](../results/care-numeric-consumer-2026-10-16.md)。固定22file/3信号・119万6,747行を32byte recordとquality maskへ変換し、電力の観測ゼロ170点を保持した。有限値不良0、時点/入力とラベルの分離13確認とprovenance9拒否、全record独立検算一致。全anchorのfit/選択/校正、22file共通支持（最低77.7003%）、異常12区間（最低81.9900%）、正常5asset記録時間の固定床を通過。baseline native支持の追加2,726点を別保存。次はtrain-only尺度/MADと負荷bin pair支持、固定scheduleを保存して有限CARE学習へ接続する。今回CARE学習/forward/予測/性能採点0、固定JSONは不変。保全・点検を最優先に、学習を含むRust移植とbanto統合、需要/2015/OS境界を維持する。
+
+---
+
+## 現在 — CARE原本/asset確認と入力・label分離/契約r1固定（2026-10-16）
+
+[確認結果](../results/care-metadata-contract-2026-10-16.md)と[固定契約r1](care-a-maintenance-contract-2026-10-16.md)を保存。v6 MD5一致・CC BY-SA 4.0、95file/36assetの構造と実label45/50を確認。Farm A/5asset/22file/3 Avgの留一5fold・prefix anchor・校正/警報/指標を固定し、入力/学習とevaluator/labelを分離した。現時点はsensor数値decode/CARE学習/採点0。次は固定数値入力/maskと実consumer境界。保全・点検第一優先、Rust学習・banto統合の目的と需要/2015/OS境界を維持。以下は過去の経過。
+
+---
+
+## 現在 — MetroPT M1完了、保全・点検のCARE設計へ（2026-10-16）
+
+[3seed実学習・評価](../results/metropt-macos-m1-2026-10-16.md)を固定r2条件で完了。full/self各4096更新・全予測freeze後採点。fullのpinballは2.105%改善/2of3、3target点MAEは固定MA15改善。一方1seed/圧力pinball悪化と油温coverage不足を保持し、追加seed/延長/test校正なし。全6選択stateのmodel/AdamW中立書出しと独立数値照合を保存。次は[CARE保全・点検イベント設計](care-maintenance-evaluation-design-2026-10-16.md)をmetadata/用途条件へ具体化。Rust学習とbanto統合も最終目的。CARE学習/2015/Windows native未実行、heartbeat PAUSED。以下は過去の経過。
+
+---
+
+## 現在 — MetroPT M0完了、用途第一優先は保全・点検支援（2026-10-16）
+
+[実装・結果](../results/metropt-macos-m0-2026-10-16.md)。固定13日/3targetと8,967/123/123窓を保持、数量品質/未学習full-self接続/境界10項目/新guard6件/独立読戻しpass。trainer/3slot/scorerとRust向けneutral参照を用意した。M0は完了、実学習/実性能採点/2015停止、M1は再開待ち。保全・点検（異常予兆）を産業の第一優先にし、次の用途契約はCAREのevent評価を優先する。予測接続を予兆性能と同一視せず、油圧/XJTU全実験を待たない。Rust学習・banto統合の最終目的と需要の評価条件を維持。以下は過去の記録。
+
+---
+
+## 最終実装の追加 — Rustで学習・推論、bantoから利用（2026-10-16）
+
+人の明示指示により、[上位計画§7/R0〜R4](timesfm-inspired-practical-evaluation-plan-2026-10-16.md#7-最終実装--学習も含めたrust移植とbanto統合)を最終目的へ追加する。実用性検証に加え、Rustの前処理/forward/backward/optimizer/保存再開/推論、banto向けAPI/CLI・モデルと学習job管理を段階実装する。Pythonを最終の必須runtimeにせず、参照版との共通重み・batch列で数値比較。現在のMetroPT r2の科学的条件と実学習/2015停止は維持。今回は文書更新のみ、Rust実装未着手。以下は過去の記録。
+
+---
+
+## 現行契約 — 計画に沿う実行・MetroPT日時案r2（2026-10-16）
+
+[上位計画](timesfm-inspired-practical-evaluation-plan-2026-10-16.md)と[詳細仕様r2](metropt-macos-multiday-protocol-2026-10-16.md)に従い、条件変更は実行前に記録する。元連続期間はtimestamp品質不成立、数量を見ず独立13日・7/3/3・8,967/123/123窓へ固定。raw不良時は別日へ差し替えない。現在はM0の実装/数量品質/接続が未完、実学習/2015停止とheartbeat PAUSEDを維持。Astraの設計確認は終了し、同種監査を反復しない。以下は過去の状態を含む。
+
+---
+
+## 現在の次工程 — 自作モデルの二領域実用性、まずMetroPTの有限比較（2026-10-16）
+
+[具体計画・Astra確認](timesfm-inspired-practical-evaluation-plan-2026-10-16.md)を現在の着手順とする。TimesFM3参考自作モデルの実用性という上位目的は不変。産業と需要を本線に残し、取得済みMetroPTのMac実行前パッケージを最初の一件にする。機構の追加価値と単純baselineを超える価値、業務適合を分ける。油圧cycle予測・XJTU短期RMS・CARE異常予兆は役割を分離。需要の同休業mean28比較と評価分離を維持。今回は計画のみで、実学習・2015再評価停止/heartbeat PAUSED。以下の記載は過去の状態を含む。
+
+---
+
+## 現在の上位目的 — TimesFM3参考の自作モデル、産業と需要の二領域（2026-10-16・人の明示による訂正）
+
+[統合計画とAstra確認](timesfm-inspired-dual-domain-plan-2026-10-16.md)を現在の着手順とする。TimesFM3の公開構造を参考にした自作モデルの実用性が主問。需要予測・PSIは検証用途の一つで、元の産業設備forecast・予測範囲・残差異常検知・試運転校正・drift/read-only連携も残す。需要のmean28補正やQPの完成へ目的を置換しない。以下の需要限定の「最新」節は当時の経過で、上位目的の廃止を意味しない。
+
+既存モデル3系統・比較基準・失敗・時点分離を再利用する。人工境界検証は一旦終了、次は資産/データ契約と二領域の有限評価設計。人のCARE ZIP配置報告から[原本metadata](care-local-archive-metadata-2026-10-16.json)を保存し、ローカル候補あり・未取込とした。全展開/観測・イベントlabel読取り/新学習・採点はしない。実学習・2015再評価停止、heartbeat PAUSED、旧制約/正式holdout/native境界を維持。旧固定文書・原証拠は改変せず履歴として以下に保持する。
+
+---
+
+# 研究ロードマップ
+
+## 店舗移行に合わせた選択比較（2026-10-14・最新）
+
+[一軌跡二選択点の結果](../results/demand-group-selection-2026-10-14.md)を保存。C5店で選んだ3072stepは同店時間選択3328stepより良いが、mean28比0.597425%悪化/日次・総量も悪化、出力前の暫定2%改善条件未達。旧15店fitの結果との改善全体を選択方法だけの効果へしない。single seed/split/既読の開発評価、研究/automation PAUSED、grid/refit自動追加なし。
+
+## Astra改善案Aの診断完了（2026-10-14・最新）
+
+[保存予測の補正誤差分解](../results/demand-correction-decomposition-2026-10-14.md)を一回実施。補正二乗量に対して実績方向の整合が不足し、店24/Q2では整合も負。旧不採用を維持し原因は未同定。統計入力あり対なしの改善を基準置換と分離。新学習/forward/quantity0、研究/automation PAUSED。次は店舗移行に合わせた内部選択の一軌跡比較案を別契約で判断、暫定2%を自動採用しない。
+
+## Astraの評価方法レビュー（2026-10-14・最新）
+
+[独立レビューと改善案](demand-evaluation-methodology-astra-review-2026-10-14.md)を人の明示委任で保存。現在の学習/選択/評価の目的整合、尺度/zero群、指標/判定、選択過適合と最小の次手順を点検。提案の実装や新実験は行わず、元結果/失敗を保全、研究/automation PAUSED。次はレビューに基づき主問と評価契約を人と判断する。
+
+## 内部選択から離した未学習店舗の確認（2026-10-14・最新）
+
+[固定契約](demand-selected-series-evaluation-design-2026-10-14.md)の[一回評価](../results/demand-selected-series-evaluation-2026-10-14.md)を保存。best1664の二件を6店へ、positive5/zero-scale20保持。onはmean28比約23.85%悪化/改善1of5、off比約2.58%改善/5of5を分離。主副問とも基準未達、direct PAUSED。次は保存予測の補正誤差分解から原因候補を確認、新学習/forward/抽出/旧反復0。automation PAUSED/正式gate/原失敗維持。
+
+## 学習終了の妥当性を測る新手順（2026-10-14・最新）
+
+[時間順分離/尺度/早期停止手順](demand-training-adequacy-design-2026-10-14.md)で[新4確認と二件曲線](../results/demand-training-adequacy-2026-10-14.md)完了。train450/内部val180、uはtrain期間のみ。両best1664/2432停止、256から内部val約9%改善、入力追加自体は約0.09%。この新条件で256は改善途中だった。旧256/u/2016失敗保全、旧最適stepや未知性能の証明ではない。次は内部選択手順を固定した性能評価の別契約、診断一回保存でdirect PAUSED/automation PAUSED。
+
+## 統計入力の後期検証で区切り（2026-10-14・最新）
+
+[固定契約](demand-statistical-feature-validation-design-2026-10-14.md)の[2016結果](../results/demand-statistical-feature-validation-2026-10-14.md)を保存。control比約0.0161%小幅改善だが9of15で10of15未達、支持pass・処理exit0/進捗falseを分離。direct PAUSED/自走停止、旧2015合格/原失敗保全。同統計のgrid/再学習/2017/予約群追試0。再開は価値のある効果の大きさと利用可能な営業/外部event情報から次の問いを判断。automation PAUSED/正式gate不変。
+
+## 固定二模型の後期検証契約（2026-10-14・最新）
+
+[2016検証契約](demand-statistical-feature-validation-design-2026-10-14.md)を保存。旧2016の検証6店を避け、保存scope上数量未解釈の学習18店/2016Jan13+14*k・25起点。原final2weights/u/42channel/8統計固定、再学習0。joint両対照/10of15、各店入力/complete-label20of25最低支持。方向の再確認で実務効果/完全盲検を保証しない。次は小抽出→固定推論、現在新数量/forward未実施。direct ACTIVE/automation PAUSED、原失敗/上限/formal維持。
+
+## 統計8入力の同条件比較完了（2026-10-14・最新）
+
+[固定設計](demand-statistical-feature-input-design-2026-10-14.md)で[新二件比較](../results/demand-statistical-feature-pair-2026-10-14.md)完了。control比約0.0141%/mean28比約0.3106%改善、12of15で進捗条件達成。回顧2015・小幅差、採択/σ単独効果/未知優位なし。次は二件固定で独立検証の期間/系列・停止条件の契約。既読2016を未見へ補わず、同仮説grid/再学習/旧反復0、direct ACTIVE/automation PAUSED。
+
+## σ・EMAを学習入力とする修正（2026-10-14・最新）
+
+[新設計](demand-statistical-feature-input-design-2026-10-14.md)で[新6確認](../results/demand-statistical-features-2026-10-14.md)完了。固定point併用の失敗と入力表現の問いを分け、8次元統計/支持mask→学習branchを追加。normalize/元入力維持、未来非アクセス、σ方向固定0。次は同shapeの0入力対有効入力の別学習契約。新fit/精度評価未実施、direct ACTIVE/automation PAUSED。
+
+## σ・EMA・予測平均を分ける新研究（2026-10-14・最新）
+
+[固定案](demand-statistical-overlay-design-2026-10-14.md)で[新6確認と450窓](../results/demand-statistical-overlay-2026-10-14.md)完了。σは過去一歩先の散らばり、EMAは最近の誤差level。等重み候補joint約5.0%悪化/3of15で不採用・direct PAUSED。旧point/採点/NN/CI反復0、σのh別/総量/区間校正は未実施、automation PAUSED。
+
+## 休日当日対前後の固定比較で区切り（2026-10-14・最新）
+
+[二件比較](../results/demand-calendar-model-pair-2026-10-14.md)を完了。global微改善だが前後の当日比約0.019%/改善9of15で固定10of15未達、採択せずdirect PAUSED/自走停止。元日/Christmasのfit支持なし、実営業表/実連休長も未確認。次は不足する入力又は別支持契約の判断。原失敗/固定630key保全、同仮説grid/延長/再試行/旧評価/CI0、automation PAUSED。
+
+## 公開暦の共通入力とfit支持（2026-10-14・最新）
+
+[新6確認/630key支持](../results/demand-public-calendar-input-2026-10-14.md)完了。enabled42/56、数値解釈なし。次は固定新模型の接続確認→当日/前後二件の固定学習。旧反復0/direct ACTIVE/automation PAUSED。
+
+## 公開暦と営業予定を分ける接続条件（2026-10-14・最新）
+
+[入力/模型/比較の新条件](demand-calendar-model-connection-design-2026-10-14.md)を保存。公開は名目8日付前後のsales平均、営業表経路は営業時meanとclosed0で意味を分ける。次は単store56/14・暦60のpure入力とdate-mask支持metadata。その後だけ当日control対前後候補の同shape/同initial二件、正尺度15fit13–14→既知2015回顧の固定案。支持/学習/新予測未開始、実連休長/営業calendar捏造0、旧確認/評価/CI0、direct ACTIVE/automation PAUSED。
+
+## 営業日水準と休業0の新機構確認完了（2026-10-14・最新）
+
+[固定条件](demand-operating-sales-design-2026-10-14.md)で[新6確認](../results/demand-operating-sales-2026-10-14.md)allpassed。open-only平均/実0/欠測/unknown参考を分け、明示contractのclosed0、営業仮定付きunknown、全休業/日次総量整合を確認。次は公開暦の利用可能性/営業calendar仮定と模型接続の出力前契約。原営業表欠如/strict支持不足を補わず、新学習/実forecast/旧確認/CI0、direct ACTIVE/automation PAUSED。
+
+## 休暇区間入力の機構確認完了（2026-10-14・最新）
+
+[期間/営業予定adapterの新6確認](../results/demand-event-interval-input-2026-10-14.md)一回allpassed。全長/境界/未確定範囲・未来版非アクセス・途中営業/休業下限を保持。次は営業日水準/確定closed0/unknown-missing/日次総量整合のpure処理。期間長tensor集約/模型接続/学習は別設計、架空予定確認は精度効果の実証ではない。数量/fit/forecast/旧確認/CI0、direct ACTIVE/automation PAUSED。
+
+## 休暇期間のイベント表現とAstraの検討（2026-10-14・最新）
+
+[期間入力設計](demand-holiday-duration-design-2026-10-14.md)を保存。人の明示依頼でAstra一件を検討、顧客行事と店舗休業を別intervalにする。既知全長/開始終了・前中後、未確定endと有効範囲、起点後延長の非遡及を採用する方向。次は数量非アクセスの区間機構/新代表確認、その後に営業日水準/closed0を扱う。期間長の精度効果・販促係数は未実証、新fit/forecast/旧確認/CI0、direct ACTIVE/automation PAUSED。
+
+## 人の指摘による休業ゼロ・休日前後の優先変更（2026-10-14・最新）
+
+[休業の構造処理と前後eventを分ける設計](demand-holiday-event-input-design-2026-10-14.md)、[新入力6確認](../results/demand-holiday-event-input-2026-10-14.md)を完了。旧方式はmissing/実0のみ・当日one-hot/厳密日次0制約で、営業水準分離は未実装。次は営業日水準と既知closed0・unknown/missing/支持不足/全休業を純粋処理で確認し、前後入力の模型接続を別設計する。新学習/原予測変更0、祝日から営業状態を補わず、入力支持通知は後段へ。direct ACTIVE/automation PAUSED、旧結果保全。
+
+## 保存補正の診断と入力支持の次機構（2026-10-14・最新）
+
+[誤差の恒等式分解とinput範囲監査](../results/store-sales-weekly-correction-diagnosis-2026-10-14.md)を完了、新fit/forecast/旧score再集計0。方向167一致/148逆、補正二乗量が整合を上回る。範囲外6/330は13/25だがinsideの悪化もあり、gate成功へしない。次は[予測を変更しない支持情報のpure機構](demand-input-support-monitor-design-2026-10-14.md)を少数確認する。既知2015に閾値/店を合わせず、旧8週候補不採用/基準維持。direct ACTIVEへ再開/automation PAUSED不変。
+
+## 群別8週回帰の一回結果で区切り（2026-10-14・最新）
+
+人の再開指示で[15店fit/3店baseline-onlyの別契約](store-sales-weekly-ridge-cohort-design-2026-10-14.md)を固定し、[新5確認・630行fit・450窓要求の一回評価](../results/store-sales-weekly-ridge-cohort-2026-10-14.md)を完了。全18対応を保持、432採点/18欠測、15店主macroMSE.023675→.029288/約23.71%悪化・改善5/15で条件未達。8週特徴のNN/gridへ進まず採択0、原18店条件未達は不変。次の情報/共有条件/zero履歴の問いは別仮説が必要。現在はdirect PAUSED/automation PAUSED、基準維持、旧確認/評価/CI/予約群0。
+
+## 8週回帰の学習前条件未達で区切り（2026-10-14・最新）
+
+[固定18店の2013–14支持確認](../results/store-sales-weekly-ridge-readiness-2026-10-14.md)を一回実施。店21/22/29は観測728日全0/u0、前提未達でsolver/fit/2015評価前に停止。他15店各42窓を確保したが群を黙って変えない。2013–15の支持通過と今回の時間分離は別。0原因を営業状態へ補わず、新しい適用契約で既存数量系列とゼロ履歴系列の扱いを整理する必要を保存。現在はdirect PAUSED/automation PAUSED、旧確認/評価/CI/予約群読取り0、基準維持。
+
+## 8週履歴の入力機構と次のfit準備（2026-10-14・最新）
+
+[自己8週間の新入力と5確認](../results/store-sales-weekly-history-input-2026-10-14.md)を完了。future/同B同xでの推移差/zero-missing/単位/fit cutoff guard成立、予測改善は未検証。次は8特徴ridge1のsolver・等店重み・fit尺度/中心・定数列・非負復元・fallbackと、2013–14 fit→2015回顧開発の支持・日付を係数前に固定。新fit未開始、旧2016再選択/2017/予約群0、基準維持、direct ACTIVE/automation PAUSED。
+
+## 研究主問の中間整理と次の入力境界（2026-10-14・最新）
+
+[保存結果とsourceの中間整理](demand-research-checkpoint-2026-10-14.md)を完了。独立実装の成立と追加価値未達を分け、一変数回帰未達から共有NN全般を否定しない。V3入力の既存NNは未知店舗の移行未検証。次は[8週間の推移を残す新入力](store-sales-weekly-history-design-2026-10-14.md)の未来guard/同B同xでの情報差/zero-missing/単位/fit尺度cutoffを少数確認する。新学習はまだ開始せず、機構後に18店の2013–14 fit→2015回顧開発の一候補を別保存。旧2016再選択/2017追試/予約数量読取り0、direct ACTIVEへ再開/automation PAUSED不変。
+
+## 時点別区間の一回結果と研究主問への整理（2026-10-14・最新）
+
+[完了窓だけの時点別区間](../results/store-sales-sequential-interval-2026-10-14.md)を完了。新5確認pass、原Qreuse1/新集合149、point変更0。coverage81.33→82.67%、幅5.62%減、score0.64%改善だが4/6店舗score悪化・店24coverage72/16=76、採択しない。同2016で区間gridを追加せず、次は保存小型モデル/mean/共有残差/区間の設計と結果を読取り、否定できた仮説・未検証仮説・次学習の追加情報/群/評価契約を整理する。旧数値/確認/CI反復0、同数量差NN/2017追試0、基準維持、direct ACTIVE/automation PAUSED。
+
+## 自身の残差分布と時点別更新の次条件（2026-10-14・最新）
+
+[自身区間と年/四半期診断](../results/store-sales-own-history-interval-2026-10-14.md)を完了。新4確認pass、共有local score2198.42→自身1909.94/幅減/coverage81.33%、ただし店24=64%等の不足を保持し不採択。自己calibrationをzero-shotへしない。次は[完了した過去誤差のみ最新26窓で更新する手順](store-sales-sequential-interval-design-2026-10-14.md)の少数確認、同窓の原Q再利用とfuture label読取り拒否。旧point/区間/原失敗/root反復0、2016回顧/direct ACTIVE/automation PAUSED。
+
+## 総量区間の共有限界と自身の過去残差（2026-10-14・最新）
+
+[共有区間と一尺度案](../results/store-sales-shared-interval-results-2026-10-14.md)を完了。fixed全体79.33/正値82%でも店20は32/36%、localは76%へ改善するが全体幅増/score微悪化、不採択。新7確認pass、原2helper失敗と完成Q/150区間prefixを保全、別summary-onlyで未保存要約のみ完成。次は[自身の過去残差の支持/区間](store-sales-own-history-interval-design-2026-10-14.md)を共有分布から分ける。新自身calibration未開始、point/旧確認/計算反復0、2016回顧、direct ACTIVE/automation PAUSED。
+
+## 共有数量差の一回検証と総量不確実性（2026-10-14・最新）
+
+[新5確認・等store重み共有fit・新6店2016検証](../results/store-sales-shared-residual-2026-10-14.md)を完了。1242train行、係数保存後150検証。主MSE基準.017250/共有.020509、改善2/6で事前条件未達、同数量差NN/grid/2017追試は開始しない。基準維持。次は[総量残差の分布共有](store-sales-shared-total-interval-design-2026-10-14.md)を保存新ledgerから確認する設計/少数確認。点予測/fit/抽出の反復0、区間未実行、2016は回顧。direct ACTIVE/automation PAUSED、正式gate不変。
+
+## 共有学習の店舗と支持、次の固定一候補（2026-10-14・最新）
+
+[metadata選定とtrain側数量支持](../results/store-sales-shared-series-support-2026-10-14.md)を完了。既使用6店を除外、学習18/fit未使用検証6/予約24をmetadata IDだけで固定。2013–15のみ新26280暦行、各71適格窓/最低支持pass、長いゼロの原因不明を保持。次は[共有残差一候補の設計](store-sales-shared-residual-design-2026-10-14.md)に対応した少数機構確認。係数保存後だけ新検証2016を読む。旧model/確認/CI反復0、新fit/2016label/NN未実行、direct ACTIVE/automation PAUSED。
+
+## 過去販促の追加情報と次の学習対象（2026-10-14・最新）
+
+[新抽出と固定ridge検証](../results/store-sales-past-promotion-2026-10-14.md)を完了。過去記録の年内関係は不安定、2016主尺度化MSEは基準.004027/販促.008900で基準未達。不採択、現3系列の販促NN/係数探索/2017再評価を増やさない。次は[共有学習を未使用系列へ移す主問](demand-shared-series-next-design-2026-10-14.md)のmetadata選定と入力/支持契約を数量読取り前に準備する。新群・性能・学習は未観測。直接研究ACTIVE/automation PAUSED、旧closedroot/完成計算不変。
+
+## 期待数量headの評価と次の情報確認（2026-10-14・最新）
+
+[mean実装と一回評価](../results/store-sales-mean-pilot-2026-10-14.md)を完了。新4機構確認後、固定予算256step/validation mean MSEで64選択、2017回顧比較。meanは総量RMSE/Biasで単純基準に届かず不採択。保存2016基準の同validation目的も新候補より小さいことを事後記述した。モデル延長へ進まず、次はorigin前の公開onpromotion列が過去入力として利用でき、train残差に追加情報を持つかの設計/小抽出/記述。未来実施を既知予定にしない。原失敗と旧source/closedroot不変、直接研究ACTIVE/automation PAUSED。
+
+## 需要の期待数量と代表値・意思決定（2026-10-14・最新）
+
+[mean/median/decision quantileの整理](../results/store-sales-quantity-objectives-2026-10-14.md)と保存train記述を完了。期待数量はmean/MSE、代表Q50はMAE、PSIdecision量は費用等と別契約。Q3からmeanを補わない。次は[meanとquantileの独立出力設計](demand-mean-and-quantile-model-design-2026-10-14.md)の新実装・少数確認。mean選択の主指標をvalidation MSEへ揃える。今回新学習/2017補正0、旧計算不採択と基準を維持。6新確認pass、元scriptの記録label上限エラーはfailed保全・別continuationで未開始集計のみ完成、旧確認反復0。直接研究ACTIVE/automation PAUSED。
+
+## 需要入力の確認と数量目的の整理（2026-10-14・最新）
+
+[追加入力の新7機構確認・新3接続確認・一回評価](../results/store-sales-small-model-inputs-2026-10-14.md)を完了。[設計](store-sales-small-model-input-pilot-design-2026-10-14.md)を固定後、保存日付列・同予算256stepを別候補で実行。総量WAPEは微改善、過小Bias増・日次は暦配分基準未達、区間scoreも基準未達。基準を維持し採択0。次は点予測の平均対中央値とlossの目的を式・train側で整理し、meanとquantileを分ける設計を先に固定する。第三候補や2017bias補正を今開始しない。旧学習/評価/確認/CI反復0、直接研究ACTIVE/automation PAUSED。
+
+## 需要モデルの入力情報と学習材料（2026-10-14・最新）
+
+[train側診断](../results/store-sales-training-diagnosis-2026-10-14.md)を完了。元日label事例は2年分、Christmas0。店12の連続ゼロ接触13%が初期設計loss約25%だが、非接触にも残差がある。反復は独立した年の支持を増やさない。次は[水準・変動・イベント入力](store-sales-small-model-input-design-2026-10-14.md)の少数機構確認を先に行う。正規化で落ちる平均/相対変動を補い、eventを明示して分ける案で、まだ性能改善は未検証。新学習・系列拡大・2017再fitは今開始せず、基準を保持。直接研究ACTIVE/automation PAUSED。
+
+## 独自小型モデルの需要用途（2026-10-14・最新）
+
+[固定設計](store-sales-small-model-design-2026-10-14.md)から独立初期化・一構成256step・2016選択・2017回顧予測を完了。[結果と判断](../results/store-sales-small-model-2026-10-14.md)では日次の既存暦配分基準に届かず、総量改善は微差、直接総量区間は幅大・interval score悪化。研究基準mean28総量＋限定暦配分を維持し、ニューラル採択・2017での再調整はしない。次はtrain2013–15側の残差・暦支持例・連続ゼロの影響を診断し、追加情報や系列拡大の必要を設計判断する。完成学習/旧評価反復・公式重み/教師出力0、直接研究ACTIVE/automation PAUSED。以下の先行停止・phase記録は履歴。
+
+## 公開データだけで続ける需要予測研究（2026-10-14・最新）
+
+人の明示指示で予定履歴待ちの停止を解除し、現在あるStore Salesの過去数量・既知の曜日から研究を再開した。過去の停止判断は以下と元文書に履歴として残す。予定履歴は未来販促の実績検証には必要だが、需要予測研究全体の条件ではない。
+
+[直近28日の同曜日平均](../results/store-sales-recent-level-2026-10-14.md)を一候補として確認し、保存済みnaive予測を開発比較に再利用。追加3起点の回顧比較と7/14日累積を保存。少数代表・既知期間の比較で正式採択/メーカーPSIを補わない。[過去側の関連店舗系列とlead可用性](../results/store-sales-related-history-2026-10-14.md)を確認した。同時点の共通変動は未来既知入力ではない。[固定した自己対3店舗履歴の比較](../results/store-sales-related-comparison-2026-10-14.md)は関連追加の改善を得られず、14日合計は単純平均が小さい。[休日・営業日の可用性](../results/store-sales-calendar-availability-2026-10-14.md)を確認。[固定月日補正](../results/store-sales-anniversary-2026-10-14.md)は日次改善でも14日総量悪化。[総量維持配分](../results/store-sales-allocation-2026-10-14.md)は日次改善/総量維持を確認。[別3都市検証](../results/store-sales-cross-city-2026-10-14.md)で日次改善を確認したが寄与は元日中心。[総量一候補](../results/store-sales-total-2026-10-14.md)の3定点は微差/過小偏り増加。[固定16区間](../results/store-sales-rolling-2026-10-14.md)では最近14日総量が悪化したため採択しない。同曜日平均28の総量と限定的な暦配分を研究基準として残す。[総量区間の確認](../results/store-sales-interval-2026-10-14.md)は固定66.7%/直近70.8%で名目80%未達、実務校正として不採択。次は既存独立小型モデルの需要入力・split・量/配分/区間評価・予算を先に固定する読取り設計を行い、公式重み/教師出力や完成学習反復は使わない。将来のTransfer/Eventラベルは既知予定にしない。大規模比較、未来販促実施値の先読み、旧評価反復を行わない。
+
+## 菓子の需要予測・PSIを対象にした実用性研究（2026-10-14）
+
+人の「用途を決めて実用性を検証する」「モックに合わせなくてよい」により、季節・販促予定を使う菓子の需要予測と生産・在庫判断を主な実用性研究対象にする。詳細は[研究計画](confectionery-demand-psi-research-plan-2026-10-14.md)。
+
+支援する判断、リードタイムと賞味期限から予測粒度・期間を決める。実績と起点で既知の予定版を分け、統計で説明できる季節・イベントを先に確認する。初回は季節基準＋統計モデル一つ、必要ならGBM一つ。独自多要素モデル・残差補正・平均は追加価値の根拠ができてから選ぶ。
+
+Store Salesの入力契約・二方式の2016年検証・固定2017年評価を完了。[2017年結果](../results/store-sales-small-final-2026-10-14.md)では週周期基準が全体で優位、暦回帰の過大偏りを確認。[販促予定の入力機構](demand-plans-input-mechanism-2026-10-14.md)の新7確認を完了。予測moduleへ未接続で、実際の予定履歴がないため実績での追加価値検証の自走を停止した。実施値だけのonpromotionから未来予定を補わない。再開には予定版・利用可能日時、数量/営業日/欠品の意味、判断とlead、または別の研究主問の指定が必要。[データの保管と整理](data-retention-and-cleanup-2026-10-14.md)に従い、旧C0/C1/C2のdev評価は検証済み圧縮archiveへ保管し、具体承認後に元rootを削除した。架空例は少数の機構確認に用い、メーカー精度・販促因果効果・PSI採択は実データで別に評価する。旧工業探索・144cell反復0、正式gate不変。自動実行のPAUSEDを維持。
+
+## 現在の主課題と優先順（2026-10-13）
+人の最新方針により、主課題を「TimesFM 3が産業用途で使い物になるか」と「公開情報から独自モデルで必要な価値をどこまで再現できるか」へ戻す。
+詳細は [実用性の未回答と独自モデル構築の調査](timesfm3-utility-and-reproduction-2026-10-13.md) を参照する。
+既存の限定予測結果を再利用し、構造の実装・独自学習・同等性能を別の到達点として扱う。
+公開sourceと構造・学習仕様は [設計文書](timesfm3-small-model-design-2026-10-13.md)、小型独自モデルの最小実装と新10確認は [実装記録](timesfm3-small-model-implementation-2026-10-13.md) に保存済み。[一回探索](timesfm3-small-model-pilot-2026-10-14.md) を完了。独立初期化から128共通step・選択・探索予測まで成立。次の実用性研究の対象/先読み時間/判断が未確定のため自走をPAUSEDで保存。
+C0/C1/C2は対象別の既存監視方式として扱い、固定合成patternの大量比較を主課題にしない。保存済み144cellは保全する。C1少数接続確認は必要な実装作業として残すが、この研究設計の前提にはしない。
+下記の2026-09-06のphase表と従来順序は履歴であり、現在の着手順は本節を優先する。過去の結果・正式計画・gateは遡及変更しない。
+
+## 最終的な目標
+
+産業 AI が、予測・異常検知・試運転支援に有効であることを、再現可能な根拠として示します。同時に、可観測で、元に戻せて、安全重要な制御から分離されていることを満たします。
+
+本書は研究テーマの長期的な順序を示します。候補モデルの比較は [`time-series-model-survey.md`](time-series-model-survey.md)、直近の作業、期間目安、暫定合格基準は [`research-implementation-plan.md`](../research-implementation-plan.md) を参照してください。
+
+公開産業データの選定と repository 外の取得境界は [`public-dataset-survey.md`](public-dataset-survey.md) と [`adr-0005-public-dataset-boundary.md`](../decisions/adr-0005-public-dataset-boundary.md) を参照してください。第一候補は UCI MetroPT-3、次候補は UCI hydraulic systems、NASA C-MAPSS は公式 license 未指定のため採用見送りです。MetroPT-3のsource pin、標準化取込、Public-only quality gateは検証済みで、結果は[`docs/results/metropt3-import-2026-09-04.md`](../results/metropt3-import-2026-09-04.md)に記録しています。
+
+## フェーズ
+
+| Phase | 焦点 | 2026-09-06の状態 | 完了時の根拠 |
+| --- | --- | --- | --- |
+| 0 | 研究基盤と契約 | complete | Python環境、データ方針、experiment／license manifest、共通interface、連携境界 |
+| 1 | 合成データとbaseline | complete | 運転状態、fault、欠損、labelを持つgeneratorと、naive／古典baselineの再現性 |
+| 2 | Forecast model benchmark | active / incomplete | TimesFM 3.0の評価済み結果を基準に、Chronos-2とTotoを同一契約へ追加し、Granite TTMは別sensitivity条件、自前／学習型baselineは別評価 |
+| 3 | 異常とドリフト | active | 統計方式、forecast residual、TSPulse、Riverのevent単位比較 |
+| 4 | 自前モデル研究 | small independent pilot complete; practical scope pending | 点予測・分位点予測を備えた小型multivariate Transformerとablation |
+| 5 | Commissioning auto-tuning | not started | レシピ駆動のprofile candidate、shadow評価、人手承認gate |
+| 6 | Continual adaptation | not started | 本番mode固定、rollback、汚染testを含むfrozen model + profile適応 |
+| 7 | Banto Hub pilot境界 | not started | read-only export／sidecarの試作と、制御を変更しないend-to-end demo |
+
+## 推奨する優先順
+
+1. package、dataset／run／license manifest、共通interfaceを確立する。
+2. motor・conveyorに近い合成信号とnaive／統計baselineを作る。
+3. Chronos-2、TimesFM 3.0、Toto 2.0 4m／22mを同じrunnerで測定し、Granite TTMはcontext=512／target-onlyの別sensitivity runnerで測定する。
+4. 統計anomaly、forecast residual、TSPulseをevent単位で比較する。
+5. benchmarkが安定してからmini-Transformerと対象データ学習型modelを実装する。
+6. commissioning校正をofflineとshadow modeで検証する。
+7. frozen base modelとversioned profileによる安全な適応を検証する。
+8. 承認済み結果を利用できる最小限のBanto Hub read-only adapterを定義する。
+
+## 2026-09-06時点の進捗
+
+Toto 2.0 4Mは同じForecaster／MetroPT runnerへ実装接続し、固定HF revision、外部cache、offline／CPU／batch=1／`decode_block_size=None`でCPU smokeと実benchmarkを実行済みです。context=120はpatch_size=32に合わせて先頭8点の未観測paddingを内部追加します。6 models、3 targets、16 validation／16 test origins、4,320 predictionsの結果を[`docs/results/toto2-metropt3-evaluation-2026-09-04.md`](../results/toto2-metropt3-evaluation-2026-09-04.md)に記録しました。22M、seed拡大、fault slice、実設備一般化は次工程です。
+
+Toto 2.0 4Mの小規模matrixも、seed `[17, 42]` × horizon `[15, 30]` × context `[64, 120]`、2 equipment、各seed 480 samples／equipment、8/8 cells success／0 partial／0 failedで完走しました。正本とtarget別cell-macro metrics、exact origin、runtime、memory、padding境界は[`docs/results/toto2-matrix-2026-09-04.md`](../results/toto2-matrix-2026-09-04.md)に記録しています。2 seed・少数origin・単一synthetic generatorの限定結果であり、次はseedを5以上、origin拡大、missing／stale／fault／regime slice、model-only resource、22M、公開／実設備一般化です。
+
+Phase 2の基盤として、chronological rolling-origin runnerへmodel registry注入境界、equipment／model単位のinstance再利用、origin単位のmulti-target request、past-only／known-future covariate境界、model別quantile policy、共通origin選択とprovenance記録を追加しました。result schema `0.2`にはmodel-target別およびmodel-equipment-target別metricsを追加し、unit一致を検証してから設備横断集約します。結果にはmodel別metrics、model別latency、OS process peakの測定源も記録します。TimesFM 3専用entrypointは、既存のlicense manifest、固定checkpoint revision、artifact hash、専用外部cache、offline環境を検証してから実行します。実行用sampleは[`examples/configs/benchmark-timesfm3-small.json`](../../examples/configs/benchmark-timesfm3-small.json)です。
+
+2026-09-04に、LastValueとの小規模なTimesFM 3 rolling-origin実測と、統計baselineを含むtarget別比較を追加しました。`synthetic-motor-small`、seed 42、2 equipment、各2 validation／test origin、context 12、horizon 3の限定条件です。target別比較の詳細は[`docs/results/timesfm3-baselines-comparison-2026-09-04.md`](../results/timesfm3-baselines-comparison-2026-09-04.md)、旧composite結果の経緯は[`docs/results/timesfm3-rolling-benchmark-2026-09-04.md`](../results/timesfm3-rolling-benchmark-2026-09-04.md)に記録しています。past-onlyではTimesFM 3が温度MAEで最良でしたが、電流ではmoving-average等に劣りました。known-loadは計画値をorigin時点で取得できるsynthetic oracle-styleの別scenarioであり、実績先読みや本番効果を示しません。
+
+次の評価範囲拡大に向け、seedをgeneratorへ反映してdatasetを再生成し、horizon／context lengthとのmatrixを安全に反復する基盤を追加しました。datasetはseedごとに一度生成・品質確認し、観測file hashでseed差の実体を確認します。base config raw bytesと開始code revisionを固定し、cell／publish時の不変性も検証します。主集計は単位別のseed間cell-macro summaryです。
+
+この基盤で2 seeds×2 horizons×2 context lengthsの実TimesFM matrixを完走し、8 cells success／0 failureを[`docs/results/timesfm3-matrix-2026-09-04.md`](../results/timesfm3-matrix-2026-09-04.md)へ記録しました。TimesFM 3は温度の4条件でMAE最良、電流では4条件とも6モデル中4位でした。ただし2 seeds、少数origin、単一generatorの結果で、coverage／WISも暫定です。seedを最低5以上、origin／条件追加、欠損・fault・regime別、モデル単独resource測定、他候補との同一契約比較、実設備でのplanned-load契約検証が残っています。重みはresearch-only／non-commercialであり、製品・顧客PoC・PLC／Banto Hub write経路へ昇格させず、Phase 2も未完了です。
+
+TimesFM 3.0の限定matrix評価後、Chronos-2へ比較軸を移しました。`chronos-forecasting==2.3.1`、固定checkpoint revision／実計算SHA-256、repository外cache、offline読み込み、native quantile（pointはp50）を契約として、公式API direct CPU smokeとBanto adapter／tool smokeを完了しました。さらに、60 samples×2 equipment、context 12、horizon 3、各equipment validation／test各2 originsの初期rolling benchmarkを完走しました。
+
+past-only 6 modelsではChronos-2のaggregate MAEは`0.20672198138554906`、WISは`0.1952207659517925`でした。origin時点で確定済みの計画値を模したknown-future 7 modelsでは、MAE `0.1691488806622826`、WIS `0.15937026919725228`で1位となり、past-onlyから改善しました。ただし電流MAEはmoving-average、温度MAEはHolt linearが優位で、aggregateはAとdegCを混合する比較値です。小標本・単一seed・合成データで、runはdirty worktreeを記録しているため、製品性能や一般性能を示しません。詳細は[`docs/results/chronos2-initial-evaluation-2026-09-04.md`](../results/chronos2-initial-evaluation-2026-09-04.md)に記録しています。
+
+Chronos-2のseed `[17, 42]`×horizon `[1, 3]`×context `[6, 12]`の実model matrixは、固定clean HEAD `3f57c8500f2a746dd0fce1d02bb9eba566d47748`から8/8 cells success／0 failureとなりました。currentは4条件すべてmoving-averageがMAE首位で、Chronos-2はMAE 3位または4位でした。temperatureはWIS 4条件すべてChronos-2が1位で、MAEはcontext 6の2条件で1位でした。context 12が常に改善しないことも確認しました。詳細は[`docs/results/chronos2-matrix-2026-09-04.md`](../results/chronos2-matrix-2026-09-04.md)に記録しています。
+
+このmatrixは2 seed、単一の合成generator、2 equipment、各equipment validation／test各2 origins、CPUのみの小標本であり、一般性能や実設備性能を示しません。matrix固有の次はorigin拡大、missing／stale／regime／fault slice、context探索、モデル単独resource測定です。公開データについてはMetroPT-3のsource pin、標準化取込、Public-only quality gateに加え、Chronos-2、TimesFM 3.0、5 baselineの限定rolling benchmarkを完了しました。package・code・weightsはApache-2.0ですが、追加gateが完了するまでChronos-2は`commercial-evaluation`に留め、`product-candidate`へ昇格しません。TimesFM 3.0は重み条件によりresearch-onlyの比較基準として残します。
+
+2026-09-04に、固定24時間・1設備・3 targetのMetroPT-3公開実データで、統計baseline 5モデルのrolling-origin benchmarkを完走しました。context 120分、horizon 15分、validation／test各16 origins、past-only covariate 11、known-future 0、validation residual by leadの契約です。test prediction 3,600件、quality gate PASS、dataset fingerprint `e6210e4e48e05c025fc8895ddeddf0c53a49dc53fd1c2f49e8c3272a3c7b37b0`で、詳細は[`docs/results/metropt3-baseline-evaluation-2026-09-04.md`](../results/metropt3-baseline-evaluation-2026-09-04.md)に記録しました。
+
+同じ契約でChronos-2 nativeとpoint-calibratedの2 scenario、TimesFM 3.0のnative scenarioも実施しました。Chronos nativeは公式分位点の交差を補正せずpartialとして失敗証跡を維持し、point-calibratedは公式point-only予測＋validation residual by leadでsuccess、TimesFM 3.0はcrossingなしのsuccessとなりました。Chronos-2のtarget別metrics、hash、runtime、限界は[`docs/results/chronos2-metropt3-evaluation-2026-09-04.md`](../results/chronos2-metropt3-evaluation-2026-09-04.md)、TimesFM 3.0は[`docs/results/timesfm3-metropt3-evaluation-2026-09-04.md`](../results/timesfm3-metropt3-evaluation-2026-09-04.md)に記録しています。これは限定区間のforecast研究評価で、実設備一般の性能、製品適合性、異常検知性能を示しません。Phase 2全体は未完了です。
+
+Toto 2.0 4Mの既存matrix予測に対するevent slice post-hoc解析を完了しました。8/8 cells analyzed、excluded 0、8,640 predictionsで、forecast target eventとして実際に評価されたのは`conveyor-01.motor_temperature`のoverheatだけです。`motor-01-slip-test`の`motor_current` faultは全cellでforecast未coverのため、anomaly detectionやmissing／stale robustnessの結果ではありません。正本hashとToto target-eventの限定metricは[`docs/results/toto2-event-slices-2026-09-04.md`](../results/toto2-event-slices-2026-09-04.md)に記録し、Totoは`commercial-evaluation`、Phase 2未完了を維持します。次gateはseed最低5、origin／event位置／設備／mode拡大、専用fault／missing／stale scenario、event単位不確実性です。
+
+Toto 2.0 controlled 4-track acceptance analyzerのsource、固定config/schema、fake artifact unittestを追加し、2026-09-05にformal controlled runを完了しました。4 matrix各20/20 success、acceptance `pass`、80/80 cells、1,920/1,920 groups、1,440/1,440 paired deltas、availability delta 0を確認しています。詳細は[`docs/results/toto2-controlled-evaluation-2026-09-05.md`](../results/toto2-controlled-evaluation-2026-09-05.md)に記録しています。analyzerはcontrolから各degradedへの同一model/group paired deltaだけを出し、cross-model rankingを禁止します。synthetic／4M／CPUの契約受入であり、実設備性能やmodel採用判断は追加していません。
+
+次のsavepointとして、forecast benchmarkから分離したevent-aware anomaly evaluation v0.1を追加しました。validation-only robust residual profile、quality／gap／mode reset、persistence、machine／sensor faultのincident matching、data-quality／ignored除外、clean equipment-hour false-alert集計、strict provenanceとatomic publishを専用synthetic scenarioで固定しています。single-seed契約検証であり、Toto性能、lead time、実設備性能、制御writeは示しません。v0.2固定計画 [`anomaly-multiseed-evaluation-plan-v0.2.md`](../anomaly-multiseed-evaluation-plan-v0.2.md) に従う正式multi-seed replayとstandalone analysisは完了しましたが、performance gateはfailであり、実設備性能やモデル昇格は示しません。詳細は[`anomaly-multiseed-v02-evaluation-2026-09-05.md`](../results/anomaly-multiseed-v02-evaluation-2026-09-05.md)を参照してください。
+
+### Phase 3: multi-seed anomaly replay result
+
+10 seed × 12 event-layout、120 cellsのstdlib-only offline replayを、実装前に固定したschema/configとengineering／performanceの二段gateで実施しました。canonical JSON identity（UTF-8、sort keys、compact separators、末尾改行なし）によるschema/config pinとraw-byte監査値、expanded accounting windowのmode/test内収容、seed-cluster block bootstrap、8個の完全修飾target signal availability、stopped／cooldown faultのsynthetic stress testとしての位置付けを含むseed、layout、detector parameter、指標、promotion閾値、安全境界は v0.2固定計画 [`anomaly-multiseed-evaluation-plan-v0.2.md`](../anomaly-multiseed-evaluation-plan-v0.2.md) に記録しています。matrix／analysis artifact とも engineering gate は `pass`、performance gate は matrix `not_evaluated`、analysis `fail` で、5つの promotion gate はすべて fail しました。v0.1の正式120-cell artifactは生成後監査でsummary integrity bypassが見つかったためREJECT evidenceとして保全し、詳細を[`anomaly-multiseed-v01-integrity-audit-2026-09-05.md`](../results/anomaly-multiseed-v01-integrity-audit-2026-09-05.md)に記録しています。v0.2の結果と判断は[`anomaly-multiseed-v02-evaluation-2026-09-05.md`](../results/anomaly-multiseed-v02-evaluation-2026-09-05.md)を参照してください。baselineは昇格せず、v0.3 preregistrationでphase／recipe-step／time-since-mode-entry／conditional-level／longer clean calibration／multivariate residual、machine fault sensitivity、false-alert reduction、data-quality dropoutとavailability gate handlingを別途検討します。TimesFM3 residual／scoringは別の後続候補です。
+
+v0.2 failure diagnosticsは、固定計画に従うD2-Bを正式公開し、Astra/maxによる
+独立read-only監査とresult文書まで完了しました。`engineering_status=pass`、
+`performance_status=not_evaluated`、`exploratory_only=true`、
+`promotion_eligible=false`です。canonical detectionを保持した因果的supportは0/240で、
+v0.3の仮説材料にのみ使います。計画は
+[`anomaly-multiseed-failure-diagnostics-plan-v0.1.md`](../anomaly-multiseed-failure-diagnostics-plan-v0.1.md)、
+正式な結果と監査境界は
+[`anomaly-multiseed-v02-failure-diagnostics-2026-09-06.md`](../results/anomaly-multiseed-v02-failure-diagnostics-2026-09-06.md)
+を参照してください。計画内の古い「未実施」はfreeze時点の記録であり、遡及変更しません。
+
+v0.3は実装前S0計画候補をcommit
+`41decf9b6f8d6c876715729516354bf6da49422c`に作成しましたが、このcandidate stackは
+main未統合です。初稿へのAstra/max監査はP0/P1 0件・P2 3件で、その3件を
+文書同期commit `e92c83df03b2f798d60246e14411d249a0b76202`の上の監査対象
+`4b02201f95e8ffa3a243be716872d95815a554bd`で修正しました。
+最初のequipment episodeを固定する再探索なしmatchingと境界fixture、event/quality適用後の
+6桁丸めと保存済みfit/calibration/test入力、Linux 3.12/3.14共通試験とWindows native受入を
+明記しました。正式runtimeはWindows 11 Pro 25H2 build `10.0.26200.9168`／CPython `3.14.0`です。
+独立再監査はP0〜P3 0件で合格し、`SCIENCE_READY=yes`、`FREEZE_READY=yes`、
+`DOCS_READY=yes`、`IMPLEMENTATION_READY=yes`、`STACK_READY=yes`としてS0をfrozen・adoptedにしました。
+S0監査記録commit `0b40e7295cfa20f32889005ceca2d29d29ca340c`の上で、5 config、9 schema、
+pure semantic validator、全seed・bootstrap goldenの固定とadversarial testsをS1として追加しました。
+S1初回監査（`0368769acf12a0279c84f30c6435e853208386e9`）はP2=6／P3=1件でした。
+修正commit `d6ca0f9ee85172caae3b658bdb105287f8e43141`への独立再監査はP0〜P3 0件で合格し、
+S1は完了し、candidate stackはmain統合済みです。S2ではpure scoring、episode、causal matching、固定分母を実装し、独立監査はP0〜P3 0件でした。S2監査結果は
+[`anomaly-multiseed-v0.3-s2-audit-2026-09-06.md`](../results/anomaly-multiseed-v0.3-s2-audit-2026-09-06.md)に記録しています。S2はformal run、性能評価、promotionを意味せず、Linux正式受入やWindows native／DACL／AccessCheck受入も未実施です。
+その後、S3 deterministic runnerを実装し、固定inventory、paired materialization、完全ledger、安全停止、provenance、non-overwrite publisherを独立監査しました。実装commit群は`bdd59c5`、`2a01146`、`bb42d37`、`dc52266`、監査P0〜P3は0件、`S3_READY=yes`、`INTEGRATION_READY=yes`です。S4-A engineering inspection/resource guardも`8befc5bb`と`e61d14c4`でmainへ統合し、初回P2/P3修正後の再監査P0〜P3は0件、`S4_A_READY=yes`となりました。CI [run 34057314195](https://github.com/tyaro/banto-ai/actions/runs/34057314195)はPython 3.12/3.14の全工程greenでした。S4-Aは本番試験前の車検機能であり、正式試験はまだ開始していません。受入は`not_completed`のまま、次はS4-B native publisher/DACL/restricted-token/race harnessです。正式output rootとformal dev/smoke/holdout実行権限はS4受入まで閉鎖します。
+S0の監査根拠は
+[`anomaly-multiseed-v0.3-plan-audit-2026-09-06.md`](../results/anomaly-multiseed-v0.3-plan-audit-2026-09-06.md)、
+S1の初回指摘・修正・監査境界は
+[`anomaly-multiseed-v0.3-s1-audit-2026-09-06.md`](../results/anomaly-multiseed-v0.3-s1-audit-2026-09-06.md)、
+候補本文は[`anomaly-multiseed-evaluation-plan-v0.3.md`](../anomaly-multiseed-evaluation-plan-v0.3.md)、
+最新の文書状態と正本の読み方は[文書索引](../README.md)を参照してください。
+
+## 実験の必須記録
+
+すべての実験に、次を記録します。
+
+- 目的と仮説
+- dataset identifier、出所、license
+- 時系列 split と leakage 対策
+- サンプリング、resampling、欠損値方針
+- feature と context window の設定
+- random seed と software／model version
+- ベースラインと主要指標
+- 運転モード・fault／regime ごとの結果
+- 必要に応じて計算環境と実行時間
+- 制約、失敗した実行、次の判断
+
+## 判断ゲート
+
+### Gate A: データの妥当性
+
+timestamp、単位、欠損、split 境界を検証するまでモデルを比較しません。合成データには generator の seed と既知の ground truth を記録します。
+
+### Gate B: ベースラインに対する価値
+
+複雑なモデルへ進むのは、合意した指標が改善するか、校正済み interval、早期検知、計算コストなどの運用上の明確な利点がある場合だけにします。
+
+### Gate C: 運用安全性
+
+online または commissioning 実験へ進む前に、mode、rollback、stale data の挙動と、AI が制御できない範囲を明示します。
+
+### Gate D: handoff 準備
+
+再現性、versioning、データ品質、失敗モードの確認に合格した artifact だけを Banto Hub の shadow 利用候補にします。shadow の成功だけで制御権限を自動付与してはいけません。
+
+## 追って具体化する成功指標
+
+- Forecast: MAE、RMSE、妥当な場合の sMAPE、interval の WIS／coverage、horizon 別の劣化。
+- Anomaly: incident 別 precision／recall、運転時間あたりの誤警報、検知リードタイム、alert の持続性。
+- Adaptation: regime 変更後の回復、汚染下の性能、rollback の正しさ、固定中の安定性。
+- Commissioning: profile coverage、校正誤差、却下・判定不能な step、オペレーターのレビュー時間、shadow 誤警報率。
+- System: p95 inference latency、リソース使用量、欠損耐性、実行間の再現性。
+v0.2のstandalone seed-cluster analysisは [`anomaly-multiseed-evaluation-plan-v0.2.md`](../anomaly-multiseed-evaluation-plan-v0.2.md) の固定config、stable SHA-256 bootstrap、ratio-of-sums、slice別CI、strict read-only artifact verifierを使って完了しました。engineering gateは`pass`、performance gateとoverall statusは`fail`であり、formal run、analysis、bootstrap、promotion判定の詳細は[`anomaly-multiseed-v02-evaluation-2026-09-05.md`](../results/anomaly-multiseed-v02-evaluation-2026-09-05.md)に記録しています。
+
+## 2026-09-24: v0.3開発・動作確認720評価と比較
+
+単一writerの運用経路で、dev 8 seeds/576評価とsmoke 2 seeds/144評価、計120区間/720評価の実行・保存照合が完了しました。最後の区間の失敗attemptは保持し、再試行成功分だけを集計しています。[完走記録](../results/anomaly-multiseed-v0.3-final-chunk-retry-2026-09-24.md)。
+
+保存監査に基づく記述的な比較では、C1（運転段階別の正常値）は機械異常91.67%、センサー異常95.00%、警報正解率95.73%。C2は機械89.92%、センサー95.00%、警報正解率94.83%でした。停止中のコンベヤー、C2の停止中モーター、欠損とセンサー異常が重なる条件が次の切り分け対象です。[比較表と残項目](../results/anomaly-multiseed-v0.3-dev-smoke-comparison-2026-09-24.md)、[上司向け説明](../results/banto-ai-anomaly-briefing-2026-09-24.md)。
+
+全scoreの再生成なしで既存120監査reportを利用しました。これは合成dev/smokeの記述統計であり、holdout、bootstrap信頼区間、正式gate、完全S6、方式の正式選択・昇格は未実施です。Phase 3はactiveのまま、独立score検算・正式実行条件の整理と、別方式や公開/実設備への一般化が残ります。Phase 2のforecast比較の残項目は今回の試験では解消しません。凍結済み科学計画と登録済み3候補を維持し、保留した専用principal試験は再開していません。
+
+## 2026-09-24: 全720保存評価の独立profile・score・ledger検算
+
+続いて、全120区間/720評価の保存観測から正常profile・残差・scoreを別実装で復元し、警報・異常との照合・集計まで一致を確認しました。正常profile 34,560件、score 10,368,000行が対象です。前回の比較表の全720件ともidentity・attempt・件数・指標が一致しました。[検算結果と対応範囲](../results/anomaly-multiseed-v0.3-full-connected-audit-2026-09-24.md)に保存しています。
+
+検算済みの6評価を全対象入力hash一致後に再利用し、残り714評価を順次検算しました。6新規区間ごとに中間保存し、約19分56秒、process peak private約188MiBで完了しています。追加のproducer・登録seed生成・holdoutは起動していません。
+
+保存観測→profile/score→ledgerの独立検算は全720件で完了しました。正常生成・overlay・丸め工程、bootstrap/信頼区間、正式gate/holdout、runtime/運用受入は残ります。Phase 3はactive、Phase 2のforecast比較の残件も維持します。C1/C2の既存の記述統計は変わらず、正式採択や実設備の性能保証には進めていません。
+
+### 2026-09-24：正常生成から保存観測までの検算完了
+
+全120区間・240データセットについて、正常生成式、異常の重ね方、欠損処理、丸めから復元した4,320,000観測行が保存bytesと完全に一致しました。前回の全720評価のprofile/score/ledger検算とも入力hashで接続しました。[詳細](../results/anomaly-multiseed-v0.3-independent-generation-audit-2026-09-24.md)。保存済みseedをメモリ内で再構成する検算で、新規データセットやholdoutは作成していません。
+
+次はbootstrap/信頼区間/候補比較の独立実装と手計算fixtureを検証します。正式計画の40 holdout seedを現dev/smoke 10 seedで代用せず、正式gateや採択判定は進めません。Phase 3 active、Phase 2 forecast比較・runtime/単一writer受入の残件も維持します。
+
+### 2026-09-24：信頼区間・候補比較の計算部分を検証
+
+独立した計算部分を実装し、手計算21試験と固定200万個のbootstrap抽出番号照合を通過しました。件数の合算、候補間の共通抽出、分母0の扱い、全層・全信号の判定とC1優先選択を確認しています。[検証結果](../results/anomaly-multiseed-v0.3-independent-inference-math-2026-09-24.md)。
+
+実データの信頼区間は未算出です。次は監査済み結果のseed単位集計を認証する入口を実装します。dev/smokeを正式40holdoutの代わりに使わず、正式採択・完全S6・Phase 2/3全体は未完了を維持します。
+
+### 2026-09-24：監査済み結果のseed単位集計を完了
+
+検算済み720評価を保存点のhashで認証し、開発用8 seedと動作確認用2 seedを分けて集計しました。各seedの12区間・両条件・3候補を確認し、seed別90表と用途別18表、候補差12表が過去の記述集計と一致しました。警報0件の適合率46評価もnullとして保持しています。関連33試験通過、処理約1.3秒、最大メモリ約39MiB。[結果](../results/anomaly-multiseed-v0.3-independent-seed-aggregation-2026-09-24.md)。
+
+次は独立analysis出力とschemaの接続を手例で確認します。正式40 holdoutの解析を現10 seedに代用せず、実信頼区間・正式gate・完全S6・Phase 2/3全体は未完了を維持します。
+
+### 2026-09-24：解析結果表の出力形式への接続
+
+独立した計算結果を所定の9表へ変換し、候補比較・分母0・判定不能の扱いを7手例で確認しました。関連59試験通過。検出遅延の中央値は元の値を結合して計算し、区間別中央値の平均を避けています。[結果](../results/anomaly-multiseed-v0.3-analysis-table-adapter-2026-09-24.md)。
+
+検証したのは表の形式と手例の整合性で、正式な解析文書全体や実データの信頼区間はまだ完成していません。次は保存済み実データの検出遅延と条件別内訳の独立集計です。正式holdout/gate・完全S6・Phase 2/3全体の残件を維持します。
+
+### 2026-09-25：保存結果の遅延と条件別の集計を完了
+
+720評価から、検出までの時間と設備・運転段階・信号品質などの条件別件数を集計しました。約1,037万判定行と14,400異常事例を確認し、用途別・seed別の全108表が既存の検出件数等と一致しました。見逃しを遅延0秒にせず、開発用と動作確認用を分けています。関連32試験通過、最大メモリ約145MiB。[結果と集計の定義](../results/anomaly-multiseed-v0.3-independent-slice-audit-2026-09-25.md)。
+
+次はcounts・遅延・条件別表を認証済みの解析入力にまとめ、正式報告に不足する証拠を整理します。今回も追加評価や実CIは行っていません。正式holdout・性能判定・runtime受入が残るため、Phase 2/3全体の完了ではありません。
+
+### 2026-09-25：検算済み集計を解析入力へ統合
+
+720評価の件数・遅延・条件別内訳・診断を用途別にまとめ、108表の対応と48組の加算を確認しました。大きな元評価ファイルを読まず、集計約5.5MBから約3.2秒で作成。39試験通過、最大メモリ約53MiB。[統合結果と正式判定の残件](../results/anomaly-multiseed-v0.3-analysis-inputs-2026-09-25.md)。
+
+正式schemaの必須10項目について、用意できた情報と不足する証拠を整理しました。次は用途別の記述結果表と診断表への出力です。正式holdout・信頼区間・性能判定・source/runtime受入・完全S6は未完了で、Phase 2/3全体の完了にはしません。
+
+### 2026-09-25：用途別の結果表・全条件別診断表を出力
+
+検算済み720評価から、開発用と動作確認用を分けた18結果表・5,670診断行を作りました。検出率、利用可能率、閾値超過率、警報開始率を区別し、元入力との全セル照合と所定の表形式の検査を通過。27試験通過、閲覧用の要約と展開式HTMLを保存しました。[結果](../results/anomaly-multiseed-v0.3-descriptive-report-2026-09-25.md)。
+
+次は既存のsource/runtime・単一writer受入記録とconsumer実装を対応づけ、freeze前の残件を確定します。今回も正式holdout・信頼区間・性能判定を実施しておらず、Phase 2/3全体は未完了です。
+
+### 2026-09-25：正式評価前の残件を整理
+
+[受入証拠と接続状況](../results/anomaly-multiseed-v0.3-acceptance-gap-review-2026-09-25.md)を確認しました。既存の保存・独立検算を再利用し、freeze前の作業を「運用契約、解析側の接続、版と実行環境の固定、保存経路の接続、容量・時間の計画」の5まとまりに整理しました。試験数やPhase 2/3全体の残件数ではありません。
+
+11保存点と3小型記録のhashを確認し、720評価を再計算していません。依存ファイル1本の改行差、本流での別作業、Windows更新後の状態を記録しました。次は単一writer方針で解析側の入出力と公開手順の契約案を具体化します。正式評価・性能判定は未実施です。
+
+
+### 2026-09-25：解析側の入力・検証・保存手順を具体化
+
+[契約案](../anomaly/execution/anomaly-v03-consumer-io-proposal.md)で、入力の認証から独立検算、保存、別readerと独立監査までの手順を定めました。既存10モジュールを再利用する箇所と、追加で確認する接続12群を対応づけています。12群を新たに試験したわけではなく、評価データや正式評価は実行していません。[確認記録](../results/anomaly-multiseed-v0.3-consumer-io-contract-2026-09-25.md)。
+
+次は評価データを読まず、入力の種類・完全性・失敗状態を検査する部分の実装です。正式運用契約と診断表の対応は提案段階で、5作業群全体やPhase 2/3の完了にはしません。
+
+
+### 2026-09-25：解析に渡す入力宣言の検査を実装
+
+[入力検査](../anomaly/execution/anomaly-v03-consumer-input.md)を実装し、22試験が通過しました。対象の欠落・順序違い、候補間/再試行間の入力hash不一致、失敗履歴の不整合を拒否し、途中停止と計算上の判定不能を分けて保持します。評価データは読まず、正式評価の起動にも接続していません。[結果](../results/anomaly-multiseed-v0.3-consumer-input-validator-2026-09-25.md)。
+
+次は保存済みの完了記録から、この検査へ渡す入力宣言への変換です。検査成功は実データの認証や実行許可を意味せず、正式受入・Phase 2/3全体は未完了です。
+
+### 2026-09-25：保存済み完了記録と入力検査を接続
+
+[checkpoint adapter](../anomaly/execution/anomaly-v03-consumer-checkpoints.md)を実装し、新規15＋既存22の37試験が通過しました。保存済みの管理記録でも全120区間・720評価との対応を確認し、最後の再試行前の失敗を残したまま最終attemptを選択します。観測やスコアの再計算はありません。[結果](../results/anomaly-multiseed-v0.3-consumer-checkpoint-adapter-2026-09-25.md)。
+
+区間別の公開印と全体の終了は別に認証する必要があり、そのreader結合を次に進めます。正式評価・運用契約採択・Phase 2/3全体は未完了です。
+
+### 2026-09-25：公開完了の印と終了記録を接続
+
+[公開metadata reader](../anomaly/execution/anomaly-v03-consumer-publication.md)を実装し、14新規試験が通過しました。全120区間の公開印・結果目録・worker終了記録を照合し、720評価の管理参照を確認しています。観測/スコアは再計算していません。[結果](../results/anomaly-multiseed-v0.3-consumer-publication-reader-2026-09-25.md)。
+
+次は既存の独立監査済み集計入力とのhash対応を固定します。全payloadの再認証、controllerプロセス自体の終了認証、正式受入・Phase 2/3全体の完了とは区別します。
+
+### 2026-09-25：監査済み集計入力と公開記録を結合
+
+[結合API](../anomaly/execution/anomaly-v03-consumer-analysis-binding.md)を実装し、14新規試験が通過しました。全120区間・720評価の公開記録と集計入力が同じ最終attempt・input/evaluation hashを参照することを確認し、失敗履歴と判定不能46指標を維持しています。旧数値検証を再利用し、観測/scoreを再計算していません。[結果](../results/anomaly-multiseed-v0.3-consumer-analysis-binding-2026-09-25.md)。
+
+次はengineering consumerの入力選択・記述結果までの入口を接続します。全payloadの新規認証、正式運用契約採択、source/runtime freeze、Phase 2/3全体は未完了です。
+
+### 2026-09-25：engineering consumerの入力から結果保存までを接続
+
+[API/CLI](../anomaly/execution/anomaly-v03-engineering-consumer.md)を実装し、16新規試験が通過しました。7保存fileを認証し、全120区間720評価の記述結果18表・234主指標・5,670診断行を新規保存・読み戻し確認しました。旧数値検証を再利用し、集計や観測/scoreを再計算していません。[結果](../results/anomaly-multiseed-v0.3-engineering-consumer-entry-2026-09-25.md)。
+
+次は契約案T01〜T12への対応と残件・容量時間予算を整理します。正式運用契約採択、source/runtime freeze、正式gate/holdout、S4/S6、Phase2/3全体は未完了です。
+
+### 2026-09-25：consumer残件と容量・時間の見積りを更新
+
+[T01〜T12の対応表](../results/anomaly-multiseed-v0.3-consumer-coverage-budget-2026-09-25.md)を保存しました。engineering接続5群、旧検証再利用3群、計算部品まで1群、受入・外側状態・別reader/auditの接続残り3群です。新試験や720評価の再計算は行っていません。
+
+正式2,880評価への単純外挿は約59.91GiB/活動178.17時間。240時間/96GiB＋空き32GiBを仮の予算枠として整理しましたが、正式推論/最終独立auditの予算は未確定で、設定へ適用していません。次は通常権限の別process readerと外側receipt（T11/T12）を接続します。正式契約採択・freeze・正式gate/holdout・S4/S6・Phase2/3全体は未完了です。
+
+### 2026-09-25：保存結果を別processで確認し、外側に結果を記録
+
+[engineering reader](../anomaly/execution/anomaly-v03-consumer-reader.md)を実装し、13接続試験と実公開物の読取りが通過しました。元の保存点に対応する4payloadを別processで照合し、終了を確認。応答消失・不一致の記録は外側に保存し、元の結果と完了印を変更しません。[結果](../results/anomaly-multiseed-v0.3-consumer-separate-reader-2026-09-25.md)。
+
+T11/T12のengineering部分が接続できました。次は40-cluster入力・固定推論/full documentのadapterを架空入力で準備します。独立数値audit、正式契約採択、source/runtime freeze、正式gate/holdout、S4/S6、Phase2/3全体は未完了です。
+
+
+### v0.3追記: 架空40clusterの推論・文書接続（2026-09-25）
+
+[文書adapter](../anomaly/evaluation/anomaly-v03-document-fixture.md)で40個の架空clusterから9表180gateを組み立て、正式文書の10項目へ対応づけました。12新規試験が通過し、候補差の信頼区間を手計算とも照合しています。[結果](../results/anomaly-multiseed-v0.3-consumer-document-fixture-2026-09-25.md)。
+
+不足するstatus・provenance・consumer source・正式bootstrap・slicesの5欄はnullの草稿です。実データや正式採択の結果ではありません。次は架空診断からslice行を接続します。正式契約、source/runtime freeze、正式gate/holdout、独立S6、Phase2/3全体は引き続き未完了です。
+
+
+### v0.3追記: 架空診断の文書接続（2026-09-25）
+
+[slice接続adapter](../anomaly/evaluation/anomaly-v03-slice-fixture.md)で、異常検出率・信号利用可能率の本文1233行と、4系列の補助表2835行を配置しました。13新規試験が通過し、cluster単位と全体の件数・遅延、結合表と周辺表、試験内外の参照数を確認しています。[結果](../results/anomaly-multiseed-v0.3-consumer-slice-fixture-2026-09-25.md)。
+
+正式実行前の練習用データによる接続です。文書の残る4欄は実行状態・producer証拠・consumer source・正式bootstrapで、正式受入や実行の完了ではありません。次は最新consumerのsource/runtime固定対象と判断資料を整理します。Phase2/3全体は未完了です。
+
+
+### v0.3追記: source/runtime固定対象の更新（2026-09-25）
+
+[固定方法と判断資料](../anomaly/execution/anomaly-v03-consumer-source-runtime-plan.md)を保存しました。最新41sourceと設定等18fileを照合し、改行差2本を保全。直近54試験の証拠を再利用し、unit testを再実行していません。Python起動条件の比較から、次はreaderへ-Sを追加する小さな接続変更を行います。[結果](../results/anomaly-multiseed-v0.3-consumer-source-runtime-review-2026-09-25.md)。
+
+正式consumer・役割別source/runtime証拠・全体予算を先に完成させ、その後に運用契約/実行予算を判断する順序です。実freeze、正式gate/holdout、S4/S6、Phase2/3全体は未完了です。
+
+
+### v0.3追記: readerの起動条件を限定（2026-09-25）
+
+保存結果を読む子processに-Sを追加し、PCに追加されたPython packageを起動時に取り込まない条件へ変更しました。架空入力による14接続試験が通過し、以前の条件に戻すと検出できることも確認しました。[結果](../results/anomaly-multiseed-v0.3-consumer-reader-no-site-2026-09-25.md)。
+
+次は、解析・監査・読取の役割ごとに、実際のsourceと実行環境を結果へ結び付ける検査を具体化します。正式holdoutや性能判定は開始しておらず、Phase2/3全体は引き続き未完了です。
+
+
+### v0.3追記: 実行記録と入出力を照合する部品（2026-09-25）
+
+[実行証拠validator](../anomaly/execution/anomaly-v03-consumer-evidence.md)を追加し、16件の架空試験を通過しました。処理の役割・プログラム・実行条件・入出力が、外部に保持した期待値と一致するかを確認します。役割の取り違えや途中の環境変化、結果の差し替えを検出します。[結果](../results/anomaly-multiseed-v0.3-consumer-execution-evidence-2026-09-25.md)。
+
+次は実際の読取processから採取した記録と接続します。今回の架空記録の一致だけで実行の真正性や正式受入を認定せず、Phase2/3全体は未完了です。
+
+
+### v0.3追記: 実読取processの記録を接続（2026-09-25）
+
+[実観測reader](../anomaly/execution/anomaly-v03-reader-evidence.md)を追加し、親が起動したprocessと子が報告したprocessの生成時刻/PID・プログラム・起動条件を照合しました。架空データを使う実process試験を含む新規13種類が通過し、変更していない既存回帰27種類の同工程の合格記録も再利用しました。[結果](../results/anomaly-multiseed-v0.3-reader-observed-evidence-2026-09-25.md)。
+
+現時点は選択source10本とPython2file等の部分記録です。次は依存program/runtimeの採取範囲を広げます。正式holdout・性能判定・S4/S6・Phase2/3全体は未完了です。
+
+### v0.3追記: 読取処理の依存記録を拡張（2026-09-25）
+
+読取processが使うsource28本と、標準ライブラリ・拡張・DLL等を合わせて232fileの前後記録を追加しました。架空公開結果による新規13試験が通過し、同工程の不変な既存回帰29種類も再利用しました。[結果](../results/anomaly-multiseed-v0.3-reader-dependency-observation-2026-09-25.md)。
+
+今回は実際に観測できた依存の記録です。次は、実行結果と別に保持する役割別期待profileへ進みます。完全な依存固定・正式受入、Phase2/3全体は引き続き未完了です。
+
+### v0.3追記: 実行前に保持した依存候補との照合（2026-09-25）
+
+先に完了した読取から照合用の候補を作り、次の別processが同じ232fileの状態で動いたかを比較する仕組みを追加しました。新規16試験が通過し、同工程の不変な既存回帰26種類も再利用しています。[結果](../results/anomaly-multiseed-v0.3-reader-dependency-profile-2026-09-25.md)。
+
+次は解析側の役割別実行記録への接続です。候補の正式承認・完全依存固定、Phase2/3全体は引き続き未完了です。
+
+### v0.3追記: 解析側の保存結果準備と実行記録を接続（2026-09-26）
+
+保存済みの記述結果を認証して4出力を準備する工程を、解析専用の別processで検証できるようにしました。新規15＋既存32の47試験が通過し、入力・出力・実行環境・processの対応を確認しました。[結果](../results/anomaly-multiseed-v0.3-analysis-observed-evidence-2026-09-26.md)。
+
+数値の再計算や正式な解析完了ではなく、保存結果準備の実行記録です。次は解析用の依存候補を事前保持する照合へ進みます。正式consumer/最終audit、Phase2/3全体は未完了です。
+
+## 2026-09-26: analysis用依存候補を別に保持して照合
+
+保存済み記述結果を準備するanalysis役割に、別reference由来の候補を実行前に保持する仕組みを追加した。後続の別processで依存234fileの前後一致を確認し、改変・欠落・役割違い等を含む43試験pass。[検証結果](../results/anomaly-multiseed-v0.3-analysis-dependency-profile-2026-09-26.md)。数値評価の追加やPhase2/3全体の完了ではない。次は、照合済みの4payloadを既存のsingle-writer公開処理へ接続し、writer終了後の別readerまでを小さな架空入力で通す。公開時に解析証拠と保持pinを結合し、数値再計算や正式採択へ範囲を広げない。
+
+## 2026-09-26: 保存結果の解析証拠・公開・別readerを接続
+
+profile付きanalysisの照合済み4payloadを既存single-writerで通常公開し、writer終了後の別observed readerまでを接続した。解析証拠と公開marker/reader結果を外部保持pinで結ぶ。小さな架空入力で43試験pass。[結果](../results/anomaly-multiseed-v0.3-analysis-publication-chain-2026-09-26.md)。正式解析/数値audit/Phase2・3全体の完了ではない。次は、既存dev/smokeの保存済み記述レポートへこの一連の処理を適用し、外部anchor・解析証拠・公開marker・別reader結果を保存する。720評価は再実行せず、数値の正式受入やholdoutへ範囲を広げない。
+
+## 2026-09-26: 既存評価レポートの解析証拠・公開・別reader接続を確認
+
+過去の120区間/720評価に対応するdev/smoke記述レポートで、解析役割の準備証拠→通常公開→別process確認が成功。4payload/約2.76MBは旧公開と完全一致し、原本を維持した。新評価・数値再計算0、既存43試験をcode不変で再利用。[結果](../results/anomaly-multiseed-v0.3-saved-report-publication-2026-09-26.md)。Phase2/3全体や正式解析・独立S6の完了とはしない。次は受入残件表を現在の実装・保存結果に合わせて更新し、正式consumer/本文provenance、独立数値audit、writer実行証拠、完全資源予算の未充足を具体化する。既存720評価は再実行しない。
+
+## 2026-09-26: 正式受入の残件と実行順序を更新
+
+[残件更新](../results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-09-26.md)で、実行前の5作業群と実行後の正式結果・最終数値監査を分けた。保存・別readerの実レポート接続は完了として再利用する。草稿のnull4欄は4本の追加試験を意味しない。文書整理/静的照合のみで、新評価・再計算・試験suite起動0。
+
+次は、予定5payloadと役割別証拠を結ぶI/Oなしのfixture adapterを実装し、小さい架空入力で欠落・役割違い・失敗の成功化を検査する。その後に数値解析/独立auditの入口と資源停止条件を接続する。正式候補の契約差分・受入・全体予算が揃うまで正式入口は閉じる。Phase2/3全体は未完了。
+
+## 2026-09-30: 架空入力の5出力と実行記録を結合
+
+[5payload adapter](../anomaly/evaluation/anomaly-v03-wrapper-fixture.md)を実装し、新規16試験が通過。全予定枠・草稿・診断・別に保持した架空の実行記録を対応付け、途中失敗や役割違いを成功にしない。保存例5file/1,973,806bytes。既存720評価の再実行0、正式null4欄を保持。[結果](../results/anomaly-multiseed-v0.3-wrapper-fixture-2026-09-30.md)。
+
+次は、小さい架空入力を数値計算する所有workerと、起動前に呼出し側が保持する期待値を接続する。保存済み結果準備のoperationとは区別し、実holdout/正式50,000反復は起動しない。その後、独立数値auditの入口と全工程の資源停止条件を揃える。正式受入・S4/S6・Phase2/3全体は未完了。
+
+## 2026-10-01: 小さい架空入力の数値workerと実行記録を接続
+
+[所有worker](../anomaly/evaluation/anomaly-v03-fixture-worker.md)で40個の架空cluster・4drawを実際に計算し、親保持期待値とsource/runtime/4入力/出力、元process handle・生成時刻を照合した。新15試験pass、5payload/1,976,761bytesを保存。既存720評価再実行0、新評価0。[結果](../results/anomaly-multiseed-v0.3-fixture-worker-2026-10-01.md)。
+
+子には60秒/256MiB/stdout+stderr合計1MiB、fixture最大8drawを適用。既知文書との一致は独立数値検算ではなく、正式null4欄・ready=falseを維持する。次は別実装の小さい数値audit、その後に全工程のdirectory/system commit停止予算を接続する。正式受入・holdout・Phase2/3全体は未完了。
+
+## 2026-10-01: 架空主集計の別実装auditを所有processへ接続
+
+保存済みの架空analysisを別算術実装で検算し、9主表/117絶対推定/72対応差/180gateが一致。新22試験pass、主表を改変した文書を再封印しても拒否。元analysisや既存720評価は再実行していない。[結果](../results/anomaly-multiseed-v0.3-fixture-numerical-audit-2026-10-01.md)、[範囲](../anomaly/evaluation/anomaly-v03-fixture-numerical-audit.md)。
+
+slice/sidecar導出・producer/登録データは今回の独立検算対象外。正式null4欄・S6/受入未完了を維持。次は限定fixture工程のdirectory総量/system commitを含む資源停止条件へ進み、正式受入では未検算範囲を明示する。正式50,000反復・holdoutは起動しない。
+
+## 2026-10-01: 限定fixture工程の資源停止を接続
+
+[容量/system commit監視](../anomaly/evaluation/anomaly-v03-fixture-resource-budget.md)を親処理・所有子へ接続し、新16＋既存37の53試験pass。共有予算で架空analysis→auditを一度通し、23.623秒、全体/両役割成功。小さい容量超過・模擬commit低下で子の停止/reapと記録保全を確認。[結果](../results/anomaly-multiseed-v0.3-fixture-resource-budget-2026-10-01.md)。
+
+sampling/協調停止でありhard quotaではなく、正式2,880評価/50,000反復の予算登録ではない。次は現在の計算・primary audit・資源停止を受入残件へ反映し、契約/登録consumer/未検算範囲/役割証拠/公開・正式予算を具体化する。既存720評価再実行0、Phase2/3全体は未完了。
+
+## 2026-10-01: 正式受入の残件をfixture接続結果へ更新
+
+[5まとまりの残件表](../results/anomaly-multiseed-v0.3-acceptance-gap-update-2026-10-01.md)を更新。5payload結合、数値worker、主集計の独立検算、限定資源停止は接続済みとして保持し、開始前の契約/実装と実行後の証拠を分けた。20fileの保存証拠と72code/18dataを照合、新評価・再計算・新試験0。
+
+次は架空slice/補助診断表の独立検算を実装し、既存所有auditへ接続する。本文1,233行/補助2,835行/詳細9表の別導出と意味のある改変検出を完了条件にした。旧公開/readerの反復や受入表の再整理へ戻らない。正式契約、登録consumer、source/runtime、5payload公開、正式全体予算は未受入。Phase2/3全体は未完了。
+
+## 2026-10-01: 架空slice/補助表の別実装auditを接続
+
+[独立検算](../anomaly/evaluation/anomaly-v03-fixture-slice-audit.md)を既存所有auditへ追加し、保存済み架空解析の主9表に加え本文1,233行/補助2,835行/詳細9表が一致した。元analysis再起動0、別audit1回、10.469秒。関連44項目は初回43passと試験データ修正後の1passで確認し、重複実行を抑えた。[結果](../results/anomaly-multiseed-v0.3-fixture-slice-audit-2026-10-01.md)。
+
+入力差替えや合計維持の誤割当を検出。資源予算据置き、formal/S6/closure=false。次は生成済み5payloadを通常公開・別readerとaudit/writer記録へ接続する。旧4payload公開を反復するだけの工程に戻らない。登録観測・正式推論・契約/全体予算は未受入、Phase2/3全体は未完了。
+
+### 2026-10-02：5payload公開・writer証跡・別reader
+
+保存済みの架空解析と主表/slice検算を、所有writer→終了確認→別readerへ結合した。元5payloadは1,976,915bytes、公開5payloadは1,976,920bytes。各JSONにLFを1つ加えた差だけで、内容・数値は同一。 16項目pass＋コード不変の35pass再利用、関連51項目を確認。元解析・検算の再起動0、新評価0。[結果](../results/anomaly-multiseed-v0.3-fixture-publication-2026-10-02.md)。
+
+時間停止を受けたGit bytes再利用の修正は上限を変えず、前後検査を保持した。次は登録producerの保存記録・coverageから集計済みconsumer入力への境界を、I/Oなしのfixture adapterとして具体化する。登録ID、予定全slot、最終attempt、入力pin、終了記録、集計countの対応を受け取り、欠落や失敗の成功化を拒否する。旧720評価を再読込み・再集計するだけの作業へ戻らず、正式40seedの実行や50,000反復はまだ開かない。 正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure=falseを維持。登録観測・coverageの真正性、正式契約、最終役割profile、全工程予算は未受入。 Phase2/3全体は未完了。
+
+### 2026-10-02：架空producerからconsumer主集計への境界
+
+[入力adapter](../anomaly/evaluation/anomaly-v03-producer-input-fixture.md)を追加。登録・全予定枠・最新attempt・外部input/summary pin・終了記録を結び、未完了なら全枠/失敗を保持して集計を返さない。新23項目pass、2.584秒。架空40cluster/480区間/2,880枠の保存例は2.539秒、旧失敗1件・判定不能1枠・precision0/0を保持し、既存主集計入力/diagnostics/wrapper coverageへ形式接続した。[結果](../results/anomaly-multiseed-v0.3-producer-input-boundary-2026-10-02.md)。
+
+旧76code/18data不変、追加2本、資源上限据置き。実登録データの読込み・新評価・既存720評価の再実行・推論/正式50,000反復は0。正式契約、登録観測から要約への導出、実producerの実行認証、最終役割profile、全工程予算の受入は残る。formal/promotion/S6/trust/execution_authenticated/full closure=false、analysis_authorized=falseを維持する。 次は架空producerのslice/sidecar用要約を同じ登録・入力pin・最新attemptへ結合する。主集計と補助集計の対応を検査し、既存720評価や保存済み解析・公開を再実行しない。 Phase2/3全体は未完了。
+
+### 2026-10-02：producer補助内訳を主入力・最新試行へ結合
+
+[補助入力adapter](../anomaly/evaluation/anomaly-v03-producer-slice-fixture.md)を追加し、2,880件の架空内訳を同じ登録/入力/結果/attemptへ結合。最新試行だけを40cluster/240セルへ加算し、判定不能・zero cell・省略理由を保持する。joint/marginalと主count/遅延分布の整合性も検査した。[結果](../results/anomaly-multiseed-v0.3-producer-slice-boundary-2026-10-02.md)。
+
+新21機能試験pass。ただし試験中のシステムcommit余裕低下で資源監視は失敗し、別Bantoリリース同時稼働の申告とともに保全した。回復後の保存例1回は67.880秒で資源pass。コード・上限を変更せず、通過した試験は反復しない。主入力v1と旧78code/18dataは不変、新module/test2本で計80code。実観測読込み・新評価・既存720評価の再実行・数値推論・owned worker起動は0。登録観測からの導出、実producer/source/runtime認証、正式契約・全体予算の受入は残る。formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=false、正式null4欄/ready=falseを維持。
+
+次は外部pinで結んだ主入力と補助入力を、既存の限定fixture解析/audit経路へ接続する。供給記録から文書・別検算までの対応を確認し、旧720評価や正式holdout・50,000反復は起動しない。 Phase2/3全体は未完了。
+
+### 2026-10-02：producer結合入力から所有解析と独立検算
+
+[新しい接続](../anomaly/evaluation/anomaly-v03-bound-fixture-pipeline.md)で、保存済み架空主/補助結合結果の外部pinを4入力とprojectionへ写し、所有analysisと独立主表/slice auditが成功した。40cluster/4draw、全体26.370秒。主9表/180gate、本文1,233行/補助2,835行/詳細9表一致。参照文書は起動前に同じ実装で1回構成し、独立性は別auditで確認した。[結果](../results/anomaly-multiseed-v0.3-bound-fixture-pipeline-2026-10-02.md)。
+
+最終13項目pass。試験データと後段失敗時の実績保存を修正し、旧80code/18data不変、新2本追加。共有資源上限据置き/pass。既存720評価の再実行・新評価・登録観測読込み・正式50,000反復・公開processは0。正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。raw観測導出・登録seed/coverageの真正性・正式契約/役割profile/全体予算の受入は残る。 次は今回の結合入力から生成・独立検算した新しい5payloadを、既存の通常writer/別readerへ接続する。元producer結合結果とprojectionのpinを維持し、今回のanalysis/auditを再実行しない。 Phase2/3全体は未完了。
+
+### 2026-10-02：producer結合済みの解析結果を通常保存・別readerへ接続
+
+[今回の保存・別reader接続](../results/anomaly-multiseed-v0.3-bound-fixture-publication-2026-10-02.md)で、producer結合結果/projectionから生成・独立検算済みの新5payloadを既存経路へ渡し、10.801秒で成功した。元1,987,587bytes→公開1,987,592bytesは各末尾LFのみ。元analysis/audit再実行0、writer/reader各1回、両子exit0/reaped/error0、資源pass。本体コード変更0、82code/18data不変、既存16公開試験を再利用しsuite再実行0。
+
+元producer結合結果→projection→解析→独立主表/slice検算→通常writer→別readerのfixture経路を保存証拠で結んだ。実登録観測導出、coverageの真正性、正式契約、最終役割profile、全工程予算の受入は残る。正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=false。 Phase2/3全体は未完了。次は実producerの保存形式と現在の架空入力契約の差分を具体化し、観測・score・ledgerから主/補助要約へ渡す読取り境界を実装する。小さい固定入力で既存の独立監査部品を接続し、登録・coverage・最新attempt・入力pinの食い違いを拒否する。今回の公開/readerや既存720評価を反復せず、正式契約の採択・holdout・50,000反復はまだ開かない。
+
+### 2026-10-02：保存形式から検算済み主・条件別要約への接続
+
+2026-10-02 最新：[保存済み1区間の要約接続](../results/anomaly-multiseed-v0.3-saved-chunk-summary-2026-10-02.md)を実装。新12＋既存reader13の25項目pass。外部pinで確認した最新6評価を独立検算し、その場で主count/条件別countへ写す。登録identityを保持し、評価payloadの二度読みを避ける。別の手式1評価で18,000観測/14,400score/48profileの実検算→要約が成功し、全profile判定不能とprecision0/0を保持。実720評価は再読込み・再実行せず、正式入口は閉じたまま。
+
+実装c8e3bd1/sr01、既存reader1本変更・新2本、84code/18data。試験と固定例の資源監視pass、上限据置き。実登録観測の生成、正式40seed/coverage、契約/役割profile/全工程予算は未受入。Phase2/3全体は未完了。次は今回の1区間分の小さい要約を、呼出し側が保持する登録・attempt・入力pin・全予定枠へ結ぶ。dev/smokeの識別子を40seedの正式集団や架空登録へ付け替えず、欠落・重複・異なる試行の混入を拒否する。固定データで接続を進め、既存720評価や公開/readerを反復しない。
+
+### 2026-10-02：保存済み要約と登録・試行履歴・全予定枠を結合
+
+2026-10-02 最新：[保存済み要約と全予定枠の結合](../results/anomaly-multiseed-v0.3-summary-coverage-2026-10-02.md)。保存済み要約を登録・最新attempt・評価/入力hash・全120区間へ結ぶ純粋関数を追加した。新16項目pass（30.515秒）。供給が1区間なら119区間/714評価を未確認として残し、全件宣言から補わない。120区間/720枠の架空要約例は13.504秒で結合成功。719 success/1 inconclusive、旧失敗1件、precision分母ゼロ720件を保持した。 今回の全件例は1つの手計算テンプレートのcountを複写したメタデータ結合試験で、720種類のlayoutを数値検算した結果ではない。summary内の過去監査を外部pinで固定して照合するだけで、生の観測→score/ledgerの再検算や現在のpayload認証は行わない。実720評価の再読込み/再実行0、新評価0、所有worker/公開process0。 次は結合済みのdev/smoke主count・条件別countを、role/seed/candidate/stratum別の記述集計へ接続する。登録IDを正式40seedや架空40clusterへ変換せず、欠落した要約から全体集計を返さない。固定入力で進め、既存720評価のpayloadは読み直さない。
+
+正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。正式40seed・生成導出・契約/役割profile/全工程予算は未受入。Phase2/3全体は未完了。
+
+### 2026-10-03：結合済み要約からdev/smoke記述集計への接続
+
+2026-10-03 最新：[結合済み要約からdev/smoke比較表への接続](../results/anomaly-multiseed-v0.3-bound-summary-tables-2026-10-03.md)。全120区間の結合済み要約からdev/smoke記述集計を作る処理を追加。新12項目pass（17.589秒）。前回の結合記録＋架空要約121file/17,877,645bytesを再利用し、4.894秒で90seed別表・18role別表・12比較・10seed群へ接続した。 保存例は前回の架空メタデータ/count要約をそのまま使い、入力生成・全区間結合を再実行しない。実720評価のraw payloadは読まず、観測→score/ledger検算・新評価・bootstrap・正式gate・所有worker/公開processは0。期待pinで固定した過去の記録を信頼する境界であり、現在の元payloadや実producerの認証ではない。 次は今回の結合済み記述集計表を、既存の報告文書・保存payload準備へ接続する。元binding/summaryへの参照と正式欄の未充足を保ち、今回の集計や既存720評価を反復しない。
+
+正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。正式40seed・生成導出・契約/役割profile/全工程予算は未受入。Phase2/3全体は未完了。
+
+### 2026-10-03：結合済み記述集計から報告payloadへの接続
+
+2026-10-03 最新：[結合済み記述集計から報告payloadへの接続](../results/anomaly-multiseed-v0.3-bound-summary-report-2026-10-03.md)。結合済みdev/smoke記述集計表から報告書と保存用payloadを準備する処理を追加。新10項目pass（25.650秒）。前回保存した架空集計表とschemaの2file/9,068,695bytesを一度だけ読み、1.011秒で4payload/3,040,268bytesを準備した。 保存例は前回の架空集計表を変更せず再利用した接続確認用であり、実際の検出性能を示す結果ではない。実720評価のraw payload読取り、入力再生成、再集計、全区間の再結合、score/ledger検算、新評価、bootstrap、正式gate、所有worker/公開process起動は0。外部pinで固定した過去の集計表を信頼する境界であり、現在の元payloadや実producerの認証ではない。 次は今回の4個の準備済みpayloadを、通常のローカル保存と書込み終了後の読取りへ接続する。新しい出典情報とfixture/engineeringの区別を維持し、報告書の再生成・再集計・既存720評価の反復をしない。
+
+正式null4欄/ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。正式40seed・生成導出・契約/役割profile/全工程予算は未受入。Phase2/3全体は未完了。
+
+### 2026-10-03：準備済み報告書の保存とwriter終了後reader
+
+2026-10-03 最新：[準備済み報告書の保存・読取り](../results/anomaly-multiseed-v0.3-bound-report-publication-2026-10-03.md)。前回の準備済み報告書4file/3,040,268bytesを、通常のローカル保存とwriter終了後の別readerへ接続した。修正後11項目pass（4.545秒）。保存例は3.722秒で終了し、4ファイルのbytes/SHA256は元と一致した。 保存例は前回の「架空データ」と明示された報告書をそのまま再利用した接続確認で、実際の検出性能を示す結果ではない。mapper・再集計・全区間結合・元評価raw読取り・新評価・bootstrap・正式gateは0。数値とschemaの対応検査は過去の記録を再利用し、今回は独立数値監査を行わない。 次は要約・報告準備・保存読取りの完了済みの各工程を、外部pinと既存成果物を受け取る単一の資源制限付き入口へ接続する。実720評価の再実行・正式gateを起動せず、保存済み工程を反復しない。
+
+正式null4欄/formal_ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。通常のローカル保存と別processの直列実行を確認した範囲であり、principal境界・ソース全依存・実producerの認証ではない。正式40seed・生成導出・契約/役割profile/全工程予算は未受入。Phase2/3全体は未完了。
+
+### 2026-10-03：保存済み工程を再利用する単一入口と続行request
+
+2026-10-03 最新：[保存済み工程から続ける単一入口](../results/anomaly-multiseed-v0.3-saved-report-pipeline-2026-10-03.md)。要約・集計表・報告書・保存完了記録の四つから開始できる単一入口とCLI、工程ごとの続行requestを追加した。23項目を確認（初回22成功、試験条件を分けた1項目のみ再確認）。前回の完了記録を0.620秒で再利用し、aggregation/report/publicationの呼出しと新しい所有processはいずれも0回。 今回の保存例は前回の架空報告書4file/3,040,268bytesの保存完了記録を再利用する。実720評価のrawを読まず、新評価・mapper・再集計・bootstrap・正式gateを起動しない。過去のwriter/reader終了記録と今回の保存bytes照合を区別し、過去PIDへアクセスしない。実際の検出性能やsource/runtime全依存の真正性を保証しない。 次は既存計画と受入記録を照合して、正式評価前の残件（運用契約、実入力への適用、版と実行環境の固定、全体の資源計画）を更新し、次に必要な実データ作業の範囲を具体化する。完成した接続工程を増設・反復せず、正式gate/holdoutや実720評価の再実行は起動しない。
+
+正式null4欄/formal_ready=false、formal/promotion/S6/trust/execution_authenticated/full closure/analysis_authorized=falseを維持。登録観測の導出・正式40seed・契約/役割profile・全工程予算の受入は別。Phase2/3全体は未完了。

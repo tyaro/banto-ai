@@ -1,0 +1,29 @@
+[package]
+autoexamples = false
+name = "banto-ai"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Portable forecasting inference and training foundations for Banto"
+repository = "https://github.com/tyaro/banto-ai"
+readme = "README.md"
+publish = false
+
+[features]
+reference-tests = []
+
+[dependencies]
+burn = { version = "=0.22.0", default-features = false, features = ["std", "optim", "flex"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+
+[[example]]
+name = "predict"
+path = "examples/predict.rs"
+
+[[test]]
+name = "neutral_integrity"
+path = "tests/neutral_integrity.rs"
+required-features = ["reference-tests"]

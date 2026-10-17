@@ -1,0 +1,3 @@
+# Optional CPU experiment. Verified installed Torch2.14.0+cpu, CPython3.14 Windows.
+# Version declaration only; wheel hashes/dependency closure not pinned.
+torch==2.14.0
