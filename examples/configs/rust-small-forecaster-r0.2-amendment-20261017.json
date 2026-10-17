@@ -11,16 +11,17 @@
     "applies_to": "Rust training against a Python/Torch reference for the full model: formal R2 (one update, eight updates, mature-state import) and later",
     "gates": [
       "loss at every update: normalized_loss for update 1, eight_step_loss for later updates",
-      "gradients of all trainable tensors at every update: R0.1 gradient rule (elementwise atol/rtol and the global relative L2 or zero-reference rule over all tensors together)",
-      "parameters and first/second moments after an update: the R0.1 kind for that update, compared only on elements whose reference gradient magnitude is at least K*eps at every update up to and including the compared one",
+      "gradients at every update: raw (before clip) and clipped gradients of all trainable tensors, the global norm and the clip coefficient, under the R0.1 gradient rule (elementwise atol/rtol, plus the relative L2 over all tensors together or the zero-reference L2)",
+      "parameters after an update: one_step_parameter after update 1, eight_step_parameter after later updates, compared only on elements whose reference (Torch) clipped gradient magnitude is at least K*eps at every update made in the comparison run up to and including the compared one",
+      "first and second moments after an update: first_moment and second_moment on all elements (no exclusion)",
       "same-backend resume: byte-exact, unchanged from R0.1"
     ],
     "K": 10,
-    "eps": "the AdamW eps of the recipe (1e-8)",
+    "eps": 1e-08,
     "rationale": "AdamW divides by sqrt(v)+eps, so the first-update sensitivity of a parameter to its gradient is lr*eps/(|g|+eps)^2; it is about lr/eps where |g| is near eps and small where |g| >= 10*eps. The threshold follows from this formula, not from fitting results.",
     "records_required": [
-      "the number, tensor names and indices of excluded elements per compared update",
-      "post-update forward outputs (normalized quantiles) compared against the reference, recorded but not a gate, because elements with near-zero or tie gradients feed them directly"
+      "the number (as a fraction of all trainable elements), tensor names and indices of excluded parameter elements per compared update",
+      "post-update forward outputs (normalized quantiles) compared against the reference, recorded but not judged elementwise; forward is judged only through the next update's loss; after the last update, record the forward on the batch used for that update"
     ],
     "stop_rule": "if more than 10% of elements are excluded at any compared update on real data, stop and investigate before accepting the result",
     "evidence": {
@@ -28,20 +29,31 @@
       "setup": "R2P step 4 artificial fixture, float32 vs float64 Torch as a proxy for Rust-float32 vs Torch-float32",
       "results": {
         "loss_abs_diff_8_updates_max": 1.1e-07,
-        "gradient_abs_diff_8_updates_max": 5.0e-08,
+        "gradient_abs_diff_8_updates_max": 5e-08,
         "one_update_R0.1_all_elements": "18 failing elements, max 1.10e-5",
         "one_update_K10": "0 failing, 0.38% excluded",
         "eight_updates_R0.1_all_elements": "1 failing element",
         "eight_updates_K10": "0 failing, 4.3% excluded",
-        "mature_import_64_updates_one_update": "0 failing without exclusion (max 7.2e-7 against atol 1e-6); 0 failing with K=10"
-      }
+        "mature_import_64_updates_one_update": "0 failing without exclusion (max 7.2e-7 against atol 1e-6); 0 failing with K=10",
+        "moments_all_elements": "0 failing after one update, eight updates and the mature import (max diff first 8.7e-9, second 1.6e-12)",
+        "clip_note": "the clip coefficient is 1 on this fixture, so raw and clipped gradients are equal; real data may differ and the clipped gradient is the one used"
+      },
+      "run": "cd tools && <python with torch> r2_comparison_criterion_probe.py"
+    },
+    "K_eps": 1e-07,
+    "mask_definition": {
+      "gradient_used": "the reference clipped gradient, i.e. the gradient handed to AdamW",
+      "eight_updates": "for the comparison after update k, an element is judged only if the condition holds at each of updates 1..k",
+      "mature_import": "after importing a mature state (step 4096) and making one update, only that update's gradient is used; the updates before the import are not run in the comparison",
+      "moments_not_masked": "m and v depend only on the gradient and are not amplified by the division by sqrt(v)+eps; the evidence shows them within tolerance on all elements"
     }
   },
   "R1_gate_for_formal_R2": {
     "R1_status": "unchanged: one cumulative intermediate element (train-last/blocks.1/index3450) is still unmet; R1 is not declared passed",
-    "formal_R2_entry": "R1 final outputs (normalized and physical quantiles, all 7 fixed cases) within R0.1, and all 385 same-input local comparisons within R0.1",
+    "formal_R2_entry": "numeric: R1 final outputs (normalized and physical quantiles, all 7 fixed cases) within R0.1, and all 385 same-input local comparisons within R0.1; non-numeric: the other R1 scope items of R0.1 (isolated build, backend/lock and dependency license inventory, CPU compile, artificial nonfinite/mask/quantile-ordering cases) remain required and their status is confirmed and recorded before formal R2",
     "intermediate_condition": "the cumulative intermediate comparison remains required and recorded for every run, as a diagnostic; it no longer blocks formal R2",
     "rationale": "the unmet difference (2.74e-6 against a limit of 2.57e-6 on a value of 0.028) comes from upstream accumulation with zero same-input local difference, is of the same order as the training tolerances (gradient atol 2e-5, eight-update parameter atol 3e-6), and no principled general fix exists; keeping it as a gate would stop the practical validation indefinitely",
     "not_changed": "no element is excluded, no tolerance is widened, no reference is regenerated, and product equivalence is still judged separately"
-  }
+  },
+  "real_data_training": "formal R2 (CARE fold0 train-prefix: one update, eight updates, mature step4096 import) may run once when the entry conditions hold; all other real-data training (more seeds, longer training, recalibration, other folds) stays stopped; R0.1 current_execution is unchanged"
 }
