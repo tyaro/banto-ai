@@ -18,7 +18,7 @@ TimesFM3を参考にした自作モデルの実用性を検証する。保全・
 
 [R0.2](research/rust-r0.2-comparison-amendment-2026-10-17.md)（2026-10-17承認）に沿って進める。R2P工程2〜4は通過済み（[工程4の記録](results/rust-r2p-full-model-2026-10-17.md)）。
 
-1. 正式R2を1回だけ行う。CAREの保存物はCloudへ移し照合済み（gitignoreの`artifacts/`、公開しない）。[入口確認](results/rust-r2-entry-check-2026-10-17.md)は通過（最終出力・局所比較385件とも超過0、数値以外の条件も確認、中間値は3要素超過で診断）。[固定条件](research/rust-r2-formal-contract-2026-10-17.md)に沿ってTorch参照を先に作り、Rustで1更新・8更新・保存再開・成熟state importを比較する。これ以外の実データ学習は停止のまま。
+1. 正式R2を1回だけ行う。CAREの保存物はCloudへ移し照合済み（gitignoreの`artifacts/`、公開しない）。[入口確認](results/rust-r2-entry-check-2026-10-17.md)は通過（最終出力・局所比較385件とも超過0、数値以外の条件も確認、中間値は3要素超過で診断）。[固定条件](research/rust-r2-formal-contract-2026-10-17.md)に沿ってTorch参照を先に作り、Rustで1更新・8更新・保存再開・成熟state import・floorのtieを比較する。これ以外の実データ学習は停止のまま。
 2. 並行して、保全の実用性評価の契約（必要な先行時間、許容する誤警報、event集計）を固定し、既存adapterでTimesFM・Chronos・Totoと比較する。
 3. R3とbanto接続は1・2の後。
 

@@ -55,13 +55,37 @@ def write_new(path, raw):
 
 
 def close(root):
-    files = [{'name': p.name, 'bytes': p.stat().st_size, 'sha256': digest(p)} for p in sorted(root.iterdir())]
+    """Closure record; a sub-root is listed by the hash of its own closure record."""
+    files = [{'name': p.name, 'bytes': p.stat().st_size, 'sha256': digest(p)} if p.is_file()
+             else {'name': p.name+'/', 'root_closed_sha256': digest(p/'root-closed.json')} for p in sorted(root.iterdir())]
     write_new(root/'root-closed.json', {'status': 'complete', 'files': files})
 
 
 def cargo_example(name, *args):
     cmd = ['cargo', 'run', '--release', '--locked', '-q', '-p', 'banto-ai', '--example', name, '--', *map(str, args)]
     subprocess.run(cmd, cwd=ROOT, check=True)
+
+
+def non_numeric():
+    """The non-numeric R1 items: locked toolchain/backend, effective license graph, the crate's artificial cases."""
+    def run(*cmd, env=None):
+        import os
+        r = subprocess.run(cmd, cwd=ROOT, capture_output=True, text=True, env={**os.environ, **(env or {})})
+        return r.returncode, r.stdout
+    _, rustc = run('rustc', '-vV')
+    code, tree = run('cargo', 'tree', '-e', 'normal', '--locked', '-p', 'banto-ai', '--prefix', 'none', '--format', '{p}|{l}')
+    assert code == 0
+    packages = sorted({line.removesuffix(' (*)') for line in tree.splitlines() if line})
+    tests = {}
+    for label, cmd, env in [('crate_unit_tests', ['--lib'], None),
+                            ('neutral_integrity', ['--features', 'reference-tests', '--test', 'neutral_integrity'], {'BANTO_R1_REPO': str(ROOT)})]:
+        code, out = run('cargo', 'test', '--locked', '-p', 'banto-ai', *cmd, env=env)
+        tests[label] = {'exit': code, 'results': [l for l in out.splitlines() if l.startswith(('test ', 'test result'))]}
+        assert code == 0, label
+    return {'rustc': rustc.split(), 'cargo_lock_sha256': digest(ROOT/'Cargo.lock'),
+            'effective_normal_graph': {'packages': len(packages), 'listing': packages,
+                                       'licenses': {l: sum(p.split('|')[1] == l for p in packages) for l in sorted({p.split('|')[1] for p in packages})}},
+            'tests': tests}
 
 
 def load_model(torch, cfg):
@@ -120,6 +144,9 @@ def reference(torch, model, cases, out):
             assert bool(torch.isfinite(t).all())
             start = len(traces); traces += pack(t.flatten().tolist())
             entries.append({'name': key, 'shape': list(t.shape), 'offset_bytes': start, 'length_bytes': len(traces)-start})
+        if name.startswith('floor-'):  # this platform must take the floor branch exactly as the Mac R1 did
+            floors = model.scale_floor.tolist(); std = x.std(dim=-1, correction=0).flatten().tolist(); scale = f.scale.flatten().tolist()
+            assert {'floor-equal': std == floors, 'floor-below': scale == floors, 'floor-above': all(a > b for a, b in zip(scale, floors))}[name], name
         hooked[name] = collected
         index.append({'id': name, 'batch': x.shape[0], 'offset_bytes': offset, 'length_bytes': len(inputs)-offset, 'traces': entries})
     out.mkdir()
@@ -150,6 +177,8 @@ def original_compare(cfg, index, ref_raw, rust_dir, train_scale32):
                     bad += 1
                     if len(examples) < 5:
                         examples.append({'index': i, 'reference': x, 'rust': y, 'error': err, 'limit': limit})
+            if name == 'quantiles':
+                assert all(a <= b <= c for a, b, c in zip(ys[0::3], ys[1::3], ys[2::3], strict=True)), left['id']
             rows.append({'case': left['id'], 'tensor': name, 'elements': len(xs), 'failing_elements': bad,
                          'max_abs': worst, 'max_tolerance_ratio': ratio, 'failure_examples': examples})
     return rows, layout, raw
@@ -206,7 +235,7 @@ def catalog():
     return nodes+['final_norm', 'head', 'normalized_quantiles', 'quantiles']
 
 
-def layer_compare(manifest, lb, rb, rmanifest, train_scale32):
+def layer_compare(manifest, lb, rb, rmanifest, train_scale32, tol):
     """Step 6: signed decomposition total=RR-PP, local=RP-PP, propagated=RR-RP."""
     rows = []
     for case in manifest['cases']:
@@ -224,11 +253,12 @@ def layer_compare(manifest, lb, rb, rmanifest, train_scale32):
                 if node == 'quantiles':
                     limit = 1e-4*train_scale32[(i//96) % 3]+2e-5*abs(x-centers[(i//288)*3+(i//96) % 3])
                 else:
-                    limit = 2e-6+2e-5*abs(x)
+                    limit = tol['atol']+tol['rtol']*abs(x)
                 bad_t += abs(t) > limit; bad_l += abs(lo) > limit
                 if (abs(t) > limit or abs(lo) > limit) and len(examples) < 5:
                     examples.append({'index': i, 'PP': x, 'RR': y, 'RP': z, 'total': t, 'local': lo, 'limit': limit})
                 max_t = max(max_t, abs(t)); max_l = max(max_l, abs(lo)); max_p = max(max_p, abs(up)); ratio_l = max(ratio_l, abs(lo)/limit)
+            assert closure == 0, (cid, node, closure)  # the decomposition is exact on stored f32
             rows.append({'case': cid, 'node': node, 'R1_original_gate': node in case['anchors'], 'elements': len(xs),
                          'mask_values': mask, 'total_failing_elements': bad_t, 'local_failing_elements': bad_l,
                          'max_abs_total': max_t, 'max_abs_local': max_l, 'max_abs_propagated': max_p,
@@ -269,19 +299,19 @@ def main(output):
     for n, t in {**dict(model.named_parameters()), **dict(model.named_buffers())}.items():
         if t.dtype == torch.float32:
             arrays['weight/'+n] = t.flatten().tolist()
-    layer_cases = []
+    layer_cases = []; shapes = {}
     for (name, x), right in zip(cases, rust_layout['cases'], strict=True):
         nodes = layer_nodes(torch, model, state, x)
         assert list(nodes) == catalog() and len(nodes) == 55
         for key, t in hooked[name].items():  # replay must reproduce the hooked reference bytes
             assert pack(nodes[key].flatten().tolist()) == pack(t.flatten().tolist()), (name, key)
         arrays[name+'/input'] = x.flatten().tolist()
+        shapes.update({f'{name}/pp/{n}': list(t.shape) for n, t in nodes.items()})
         for n, t in nodes.items():
             arrays[f'{name}/pp/{n}'] = t.flatten().tolist()
         for e in right['traces']:
             arrays[f'{name}/anchor/{e["name"]}'] = floats(rust_raw, e)
         layer_cases.append({'id': name, 'batch': x.shape[0], 'nodes': list(nodes), 'anchors': [e['name'] for e in right['traces']]})
-    shapes = {f'{c}/pp/{n}': list(t.shape) for (c, x) in cases for n, t in layer_nodes(torch, model, state, x).items()}
     payload = bytearray(); entries = {}
     for key, values in arrays.items():
         if key.startswith('weight/'):
@@ -303,7 +333,7 @@ def main(output):
     cargo_example('r1_layer_audit', fixture/'manifest.json', fixture/'tensors.bin', digest(fixture/'manifest.json'), kernel)
     rm = json.loads((kernel/'manifest.json').read_bytes()); rb = (kernel/'tensors.bin').read_bytes()
     assert digest(kernel/'tensors.bin') == rm['payload_sha256']
-    layers = layer_compare(lm, bytes(payload), rb, rm, train_scale32)
+    layers = layer_compare(lm, bytes(payload), rb, rm, train_scale32, cfg['tolerance']['normalized_activation'])
     assert len(layers) == 385
 
     # Platform differences against the saved Mac run (diagnostic only).
@@ -335,7 +365,9 @@ def main(output):
         'platform_vs_mac': platform,
     }
     summary['entry_numeric_pass'] = summary['final_outputs']['failing_elements'] == 0 and summary['local_same_input']['failing_elements'] == 0
+    write_new(out/'non-numeric.json', non_numeric())
     write_new(out/'original-comparisons.json', original); write_new(out/'layer-comparisons.json', layers); write_new(out/'summary.json', summary)
+    close(out)
     print(json.dumps({k: v for k, v in summary.items() if k != 'cumulative_intermediate_diagnostic'} |
                      {'cumulative_failing': summary['cumulative_intermediate_diagnostic']['failing_elements']}, indent=1))
     return 0 if summary['entry_numeric_pass'] else 1
