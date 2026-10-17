@@ -21,7 +21,8 @@
       0.125
     ],
     "position": "the float32 sin/cos table of small_model.py, saved in the reference as buffer/position and loaded by Rust; not trained",
-    "time_mask": "lower-triangular 5x5 (causal temporal attention)"
+    "time_mask": "lower-triangular 5x5 (causal temporal attention)",
+    "series_mask": "all-true 3x3 (full series attention): variate attention applies no mask; in small_model.py it is a non-persistent buffer"
   },
   "batches": {
     "shape": {
@@ -70,6 +71,7 @@
     "passing this step is not R1 or formal R2; R1's one unmet intermediate value stays unmet"
   ],
   "not_compared": {
-    "parameters and moments after an AdamW update": "excluded before freezing. The float64 independent check showed that one AdamW update of the full model is ill-conditioned under the one-step tolerance: attention key biases have a structurally zero gradient (softmax is invariant to a shared key shift) and a few other elements have |gradient| near eps, so AdamW turns float32 rounding noise into updates near lr (up to 2e-6 apart from float64, above atol 1e-6). The return plan defines step 4 as loss and all-parameter gradients only; AdamW itself is verified in steps 2-3."
-  }
+    "parameters and moments after an AdamW update": "excluded before freezing. One AdamW update of the full model is ill-conditioned under the one-step tolerance: AdamW divides by sqrt(v)+eps, so where |gradient| is near or below eps the update depends on rounding. tools/r2p_full_model_adamw_probe.py reproduces it: 5 of 177 parameter/moment tensors differ between float32 and float64 beyond the tolerance, at most 1.1e-5 (atol 1e-6). The largest come from an element with |gradient| about eps (blocks.1.temporal.v.weight, 1.05e-8 vs 1.22e-8) and from head.bias elements whose float64 gradient is exactly 0 at a pinball tie (float32 2.3e-10); the attention key biases, whose gradient is structurally zero because softmax is invariant to a shift shared by all keys, differ by up to 2e-6. The return plan defines step 4 as loss and all-parameter gradients; AdamW itself is verified in steps 2-3."
+  },
+  "clip_note": "At this fixture the global gradient norm is about 0.958 < 1, so the clip coefficient is exactly 1 and the clipped gradients equal the raw ones. The full-model comparison therefore checks the norm and that clipping leaves gradients unchanged below max_norm; the scaling branch (norm > max_norm) is covered by R2P step 2 (cases C2/C3 and O3)."
 }

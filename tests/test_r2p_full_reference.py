@@ -2,9 +2,13 @@
 import hashlib
 import json
 from pathlib import Path
+import struct
+import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT/'tools'))
+import r2p_full_model_reference as generator  # stdlib only at import time
 REF = ROOT/'crates/banto-ai/tests/fixtures/r2p-full'
 
 
@@ -35,6 +39,17 @@ class R2PFullReferenceTests(unittest.TestCase):
         checks = load('independent-checks.json')
         self.assertEqual(len(checks), load('summary.json')['checks'])
         self.assertTrue(all(c['pass'] and c['element_failures'] == 0 for c in checks))
+
+    def test_initial_parameters_follow_the_fixture_rules(self):
+        shapes = {x['name'][len('gradient/'):]: x['shape'] for x in load('reference-layout.json')
+                  if x['name'].startswith('gradient/')}
+        expected = load('initial-parameters-sha256.json')
+        self.assertEqual(set(shapes), set(expected))
+        for name, shape in shapes.items():
+            values = generator.initial(name, shape)
+            packed = struct.pack('<'+'f'*len(values), *values)
+            self.assertEqual(struct.unpack('<'+'f'*len(values), packed), tuple(values), f'{name} not float32-exact')
+            self.assertEqual(hashlib.sha256(packed).hexdigest(), expected[name], name)
 
     def test_reference_is_bound_to_current_inputs(self):
         runtime = load('runtime.json')

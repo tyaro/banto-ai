@@ -9,7 +9,7 @@ SmallForecaster全体（C128/H32/V3/D64/L2、full series attention）を学習gr
 ## 固定した入力
 
 - 初期parameter：名前と要素番号だけで決まる式（整数÷2のべき乗）。乱数を使わず、PythonとRustでbit単位で同じ値になる。Rustは式から作り、参照に保存したtensorごとのSHA256と照合する。
-- buffer：scale_floor=[0.5, 0.25, 0.125]、time_maskは下三角。positionはsmall_model.pyのfloat32 sin/cos表を参照に保存し、Rustはそれを読む（入力であり、比較対象の出力ではない）。
+- buffer：scale_floor=[0.5, 0.25, 0.125]、time_maskは下三角、series_maskは全true（variate attentionにmaskなし）。positionはsmall_model.pyのfloat32 sin/cos表を参照に保存し、Rustはそれを読む（入力であり、比較対象の出力ではない）。
 - batch A・B：context[2,3,128]、正解[2,3,32]。channel 2は標準偏差1/32でscale_floorが効く。
 
 ## 比較
@@ -22,11 +22,13 @@ SmallForecaster全体（C128/H32/V3/D64/L2、full series attention）を学習gr
 | clip前後の勾配（59 tensor全体） | gradient の global相対L2（参照0なら候補L2の規則） |
 | global norm・clip係数 | gradient |
 
+この固定入力では勾配のglobal normが約0.958で1未満のため、clip係数はちょうど1になり、clip後の勾配はclip前と同じになる。全モデルでの比較はnormの値と「max_norm未満では勾配を変えない」ことの確認で、norm>max_normで縮める分岐は工程2（C2・C3・O3）で検証済み。
+
 勾配の相対L2は、R0.1の定義どおり全勾配をまとめて評価する。attentionのkey biasは、softmaxが全keyへの共通shiftに不変なため勾配が理論上0になり、tensor単位の相対L2は丸め誤差同士の比になって意味を持たない。
 
 ## 固定前に除外したもの
 
-当初は1回のAdamW更新後のparameter・momentとbatch Bのforwardも比較する案だったが、参照生成時のfloat64独立検算で除外した。上のkey biasのように勾配が0、または|勾配|がeps程度の要素では、AdamWがfloat32の丸め誤差をlr近くの更新へ増幅し、float64との差が最大2e−6（1更新のatol 1e−6を超える）になる（全307照合中、更新後の6件だけが不一致）。これは実装の誤りではなく、全モデル1更新の比較がこの許容差では数値的に成り立たないことを示す。復帰計画は工程4をlossと全parameter勾配の確認と定めており、AdamW自体は工程2・3で検証済みのため、比較をforward・loss・勾配・clipに限った。
+当初は1回のAdamW更新後のparameter・momentとbatch Bのforwardも比較する案だったが、参照生成時のfloat64独立検算で除外した。AdamWはsqrt(v)+epsで割るため、|勾配|がeps程度以下の要素では更新量が丸め誤差に左右される。[確認スクリプト](../../tools/r2p_full_model_adamw_probe.py)で再現でき、parameter・moment 177 tensorのうち5件がfloat32とfloat64で1更新の許容差を超え、最大差は1.1e−5（atol 1e−6）。大きいのは|勾配|がeps程度の要素（blocks.1.temporal.v.weight、1.05e−8対1.22e−8）と、float64の勾配がpinballのtieでちょうど0になるhead.biasの要素（float32では2.3e−10）。上のkey biasは勾配が理論上0で、差は2e−6以下。いずれも実装の誤りではなく、全モデル1更新の比較がこの許容差では数値的に成り立たないことを示す。復帰計画は工程4をlossと全parameter勾配の確認と定めており、AdamW自体は工程2・3で検証済みのため、比較をforward・loss・勾配・clipに限った。
 
 この性質は、計画上の正式R2（CARE fold0の1更新・8更新をR0.1で比較）にも同じく当てはまる見込みが高い。正式R2へ進む前に、比較方法（例：更新量の比較を勾配が十分大きい要素に限る、別の基準を定める）を人の判断で決め直す必要がある。本工程ではR0.1を変更しない。
 

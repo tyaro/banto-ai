@@ -9,7 +9,9 @@ tolerances before anything is saved.
     uv pip install -p .venv-r2p/bin/python --index-url https://download.pytorch.org/whl/cpu torch
     .venv-r2p/bin/python tools/r2p_full_model_reference.py
 
-The output directory must not exist; a saved reference is never overwritten.
+The output directory must not exist; a saved reference is never overwritten. The
+reference is bound to the fixture, recipe, tolerance and small_model.py hashes, so
+changing any of them requires deleting the directory and regenerating on purpose.
 """
 import copy
 import hashlib
@@ -102,9 +104,11 @@ def run(torch, small_model, dtype, recipe):
     missing = [n for n in names if params[n].grad is None]
     assert not missing, missing
     for n in names: out[f'gradient/{n}'] = params[n].grad.clone()
-    norm = torch.nn.utils.clip_grad_norm_([params[n] for n in names], 1., error_if_nonfinite=True, foreach=False)
+    max_norm, denominator = recipe['clip_global_norm'], recipe['clip_denominator_epsilon']
+    assert denominator == 1e-6  # the constant inside torch.nn.utils.clip_grad_norm_
+    norm = torch.nn.utils.clip_grad_norm_([params[n] for n in names], max_norm, error_if_nonfinite=True, foreach=False)
     out['clip/global-norm'] = norm.reshape(1)
-    out['clip/coefficient'] = torch.clamp(1./(norm+1e-6), max=1.).reshape(1)
+    out['clip/coefficient'] = torch.clamp(max_norm/(norm+denominator), max=1.).reshape(1)
     for n in names: out[f'clipped-gradient/{n}'] = params[n].grad.clone()
     with torch.no_grad():  # initial parameters; no optimizer update is part of step 4
         forward(recipe['batch_second'], 'batchB')
