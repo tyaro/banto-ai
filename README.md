@@ -35,17 +35,9 @@ TimesFM3を参考にした自作モデルの実用性検証を進めています
 - 本番中の適応処理はデフォルトで無効にします。試運転モードと shadow モードは明示的な状態として扱います。
 - すべての結果に、データの出所、設定、コードリビジョン、評価指標、既知の制約を記録します。
 
-## event-aware anomaly evaluation v0.2
+## 対応環境
 
-正式な 10 seed × 12 layout replay と read-only analysis を完了しました。engineering gate は pass でしたが、5つの performance promotion gate はすべて fail のため、この baseline は昇格せず比較用として扱います。詳細は [`docs/results/anomaly-multiseed-v02-evaluation-2026-09-05.md`](docs/results/anomaly-multiseed-v02-evaluation-2026-09-05.md) を参照してください。これは TimesFM3 の性能結果ではありません。
-
-2026-09-06に同じ正式artifactのfailure diagnosticsを完了しました。engineering整合性はpass、performanceは未評価で、canonical detectionを保持した因果的supportは0/240でした。結果と制約は[`docs/results/anomaly-multiseed-v02-failure-diagnostics-2026-09-06.md`](docs/results/anomaly-multiseed-v02-failure-diagnostics-2026-09-06.md)に記録しています。これはexploratoryな異常検知診断であり、TimesFM3の性能結果やmodel／thresholdの採用判断ではありません。
-
-次のstdlib detector比較は[`v0.3実装前preregistration`](docs/anomaly-multiseed-evaluation-plan-v0.3.md)のS0監査に合格し、計画を凍結しました。S1の独立再監査はP0〜P3 0件で合格し、S1は完了しました。S2では3候補の純粋scoring、phase/profile、episode merge、causal matchingとadversarial testsを実装し、[S2監査](docs/results/anomaly-multiseed-v0.3-s2-audit-2026-09-06.md)もP0〜P3 0件で合格しました。S3 deterministic runnerも固定inventory、paired materialization、完全ledger、安全停止、provenance、non-overwrite publisherを実装し、[S3監査](docs/results/anomaly-multiseed-v0.3-s3-audit-2026-09-07.md)はP0〜P3 0件、`S3_READY=yes`、`INTEGRATION_READY=yes`です。CI [run 34044283016](https://github.com/tyaro/banto-ai/actions/runs/34044283016)はPython 3.12/3.14の全工程greenでした。S3は安全な再現実行の土台であり、性能結果・本番利用許可ではありません。次はS4 platform/runtime/native Windows acceptanceとdry/smoke consumer freezeで、formal run、性能評価、promotion、formal output rootはS4受入まで閉鎖します。利用境界は[評価toolの説明](tools/evaluator/README.md)を参照してください。
-
-現在の対応Pythonは**3.14系（`>=3.14,<3.15`）**です。2026-10-08のユーザー判断によりLinux CIも3.14へ一本化しました。Windows正式評価は登録済みCPython 3.14.0のbuild/hashへ固定します。過去の3.12/3.14検証は履歴として保持します。[改訂記録](docs/results/anomaly-multiseed-v0.3-python314-unification-2026-10-08.md)を参照してください。
-
-Windows OS条件は**Windows 11 x64 workstation・local NTFS・ACL対応・必要API可用性**です。正確なrelease/build/更新番号は各runに記録し、特定番号への完全一致を実行条件にしません。同じrun中の環境変化は検出して停止します。実Job/ACL/child transportの受入は別途必要です。[OS条件改訂](docs/results/anomaly-multiseed-v0.3-windows-runtime-policy-2026-10-09.md)
+Pythonは3.14系（`>=3.14,<3.15`）、Rustは`rust-toolchain.toml`で固定した1.95です。
 
 ## ライセンス
 
@@ -55,7 +47,7 @@ Windows OS条件は**Windows 11 x64 workstation・local NTFS・ACL対応・必�
 
 ## リポジトリ構成
 
-文書の現在状態、凍結計画、過去結果、実行手順の読み分けは [`docs/README.md`](docs/README.md) を入口にしてください。
+文書の現在状態、過去結果、実行手順の読み分けは [`docs/README.md`](docs/README.md) を入口にしてください。
 
 ```text
 docs/
@@ -65,11 +57,9 @@ docs/
   research/                     研究roadmap・調査
   models/                       モデル別の評価契約
   decisions/                    設計判断（ADR）
-  anomaly/                      計画・評価・実行・受入・Windows設計
   results/                      実測・監査報告
   history/                      過去の引継ぎ・索引
-  anomaly-*.md                  固定パスを保持する凍結計画
-  research-implementation-plan.md 凍結計画が参照する実装計画
+  research-implementation-plan.md 初期の研究実装計画
 schemas/                       manifestを検証するJSON Schema
 examples/                     安全な合成fixtureとsample manifest
 src/banto_ai/                  外部依存なしのPhase 0共通runtime

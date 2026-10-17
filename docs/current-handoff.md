@@ -10,8 +10,7 @@ TimesFM3を参考にした自作モデルの実用性を検証する。保全・
 - Rust推論R1は中間値1点未達。許容差を変えず、正式R2の実データ学習は停止中。最終出力の通過を正式合格へ読み替えない。
 - [R2P固定契約](research/rust-r2p-synthetic-training-contract-2026-10-16.md)と[人工Python参照](results/rust-r2p-lock-and-python-reference-2026-10-16.md)は保存済み。loss7/clip4/AdamW6/小型8更新、独立照合107件pass。参照を再生成しない。
 - 検証済みのCargo.lock案を本整理で適用。gemmの不要な直接edgeだけを除いた。非採用のRust拡張・診断と単発調査は[履歴](../experiments/archive/rust-r1-20261016/README.md)へ退避。学習エンジンと保存再開のRust実装は未着手。
-- main側のWindows修正4コミットを整理ブランチへ取り込み、既存機能を維持した。Mac共通coreの確認とWindows native/OS依存試験は分ける。
-- CIは現方針に合わせ、Python unittest（v03異常検知の試験を除く）・smoke・safetyとRust fmt/testだけにした。v03の試験・journal検証・Windows native jobは削除し、保存地点から参照する。
+- CIはPython unittest・smoke・safetyとRust fmt/testだけ。旧異常検知トラック（v0.1〜v0.3、Windows native受入、文書を含む）は削除し、保存tag `archive/preformal-research-20261017` から参照する。
 - [今回の整理と確認結果](results/research-consolidation-2026-10-17.md)を参照。整理PRでmainへ提案し、mainの自動mergeはしない。
 
 ## 次に行うこと
