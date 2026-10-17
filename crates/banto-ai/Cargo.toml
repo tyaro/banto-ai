@@ -24,6 +24,10 @@ sha2 = "0.10"
 name = "predict"
 path = "examples/predict.rs"
 
+[[example]]
+name = "r1_layer_audit"
+path = "examples/r1_layer_audit.rs"
+
 [[test]]
 name = "neutral_integrity"
 path = "tests/neutral_integrity.rs"
