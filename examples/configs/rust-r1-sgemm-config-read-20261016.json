@@ -1,9 +1,0 @@
-{
-  "schema":"banto.r1-sgemm-config-read.v1",
-  "image_UUID":"31104d4f4a7e3fa79e1855937b2011f2",
-  "source_root":"artifacts/rust-r1-sgemm-core-20261016",
-  "virtual_address":"0x1e63de950",
-  "bytes":64,
-  "source_evidence":"Core instructions0x181392358..378 and0x1813924f8..518 refer to this image's configuration base0x1e63de950 and once token0x1e63de988. Read exactly this64-byte interval, only after confirming it lies wholly inside a readable data segment of the same pinned image. No other data scan or pointer dereference.",
-  "interpretation":"Record raw values/bytes/hash twice, with own-process no-kernel scope. If the once token is not -1, initialization is unproved; do not call its initializer, dispatch helper or SGEMM to initialize it, and do not infer the previously evaluated model's runtime path. No field is called a thread count without independent evidence. Preserve original executable-region limits6/16KiB/96KiB, all resource limits and model/R1/R2 state."
-}

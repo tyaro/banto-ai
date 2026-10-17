@@ -18,41 +18,27 @@
 
 - [実用性検証とRust学習へ戻る改訂2](banto-ai-practical-training-return-plan-2026-10-16.md) — pointer追跡停止、残1点の対応上限、人工R2Pと正式R2を分離。
 
-- [Rust R1 固定call target64bytesの結果](../results/banto-ai-rust-r1-once-target-2026-10-16.md) — transfer stubを確認、slot読取りは次の独立条件。
 
-- [Rust R1 初期化判定と未同定のcall target](../results/banto-ai-rust-r1-once-contract-2026-10-16.md) — 公開API保証とprivate状態を分離、数値演算0。
 
-- [Rust R1 once条件未達と次のsource工程](../results/banto-ai-rust-r1-sgemm-warm-binding-2026-10-16.md) — 出力一致とdispatch未確定を区別。
 
-- [Rust R1 SGEMMの命令/shape分岐監査](../results/banto-ai-rust-r1-sgemm-readonly-2026-10-16.md) — own-process読取り、初期化不明を保持し次条件を固定。
 
-- [Rust fused linearの安全性](rust-fused-linear-safety-2026-10-16.md)・[局所比較と不採用](../results/banto-ai-rust-r1-fused-linear-2026-10-16.md) — 公開extension、stride/bounds証明とgraphを確認。
 
-- [Rust R1 linear境界の診断と次候補条件](../results/banto-ai-rust-r1-linear-boundary-2026-10-16.md) — pure-Rust/graph/有限比較/安全性を実装前に固定。
 
-- [Rust R1 context差のソース診断と有限候補](../results/banto-ai-rust-r1-context-normalization-2026-10-16.md) — 独立f64 stdとf32 mean、全体gateは未通過。
 
-- [Rust R1 FMA拡張の実装・採否](../results/banto-ai-rust-r1-fma-extension-2026-10-16.md) — 公開拡張API、独立oracleとgraph、R2未開始。
 
-- [f32 FMAのRust実装・人工forward条件](rust-fma-primitive-contract-2026-10-16.md) — graph保持と独立oracle、R1全体通過前の学習停止。
 
-- [Rust R1モーメント計算・次工程の受入条件](rust-r1-moments-admission-2026-10-16.md) — 参照build/binaryとgraphを保つFMAの境界。
 
-- [Rust R1標準LayerNormの固定比較と負の結果](../results/banto-ai-rust-r1-native-norm-2026-10-16.md) — 全49組、候補不採用。
 
 - [linfaとsmartcoreの将来研究候補とAstraレビュー](rust-classical-ml-linfa-smartcore-note-2026-10-16.md) — 古典MLの比較基準、保全先行の有限比較、保存再開・版・OSの確認。
 
 - [Rust R1全層診断と固定条件](../results/banto-ai-rust-r1-all-layer-audit-2026-10-16.md) — 385比較、各161anchor厳密再現、局所と累積の差を分離。
 
-- [Rust R1の上流演算順と一般修正](../results/banto-ai-rust-r1-upstream-order-2026-10-16.md) — 同一入力pass、修正後3テストpass/全体gateは別点で未達。
 
-- [Rust R1の共通入力診断](../results/banto-ai-rust-r1-intermediate-diagnosis-2026-10-16.md) — 局所演算差と上流伝播を分離。次は上流演算順。
 
-- [Rust R1の実行結果と残差切り分け](../results/banto-ai-rust-r1-tests-parity-2026-10-16.md) — build枠1.5GiB、CPUテストpass、数値一致gateは1点未達。
 
-- [Rust R1の現状と再開条件](../results/banto-ai-rust-r1-build-stop-2026-10-16.md) — Xcode確認通過。R1 CPU buildがcache+target合計768MiB上限で停止、テスト/数値比較未確認。
+- Rust R1の現状と再開条件 — Xcode確認通過。R1 CPU buildがcache+target合計768MiB上限で停止、テスト/数値比較未確認。
 
-- [banto-ai Rust R1の準備と再開手順](../results/banto-ai-rust-r1-preparation-2026-10-16.md) — crateソース/lock/154有効依存と7参照forwardを保存。Xcode規約未同意でbuild/テスト/数値一致は待機、R1未完。
+- banto-ai Rust R1の準備と再開手順 — crateソース/lock/154有効依存と7参照forwardを保存。Xcode規約未同意でbuild/テスト/数値一致は待機、R1未完。
 
 - [denroku-psi-demoの需要AIとPSI接続の現状](denroku-psi-ai-integration-2026-10-16.md) — Python LightGBM学習/Rust推論/静的PSIと、未実装のC API再学習計画。AI crate共通化の境界を整理。
 

@@ -22,9 +22,9 @@
 | [CARE 5fold](../results/care-macos-learning-evaluation-2026-10-16.md) | 共通支持の事前4条件を通過したが、検知3/12、未検知9、正常誤警報3。native baselineだけが検知したeventもある | 保全の実用性課題を検知・誤警報・先行時間・可用性・asset差で整理。予測誤差の改善だけで採用しない |
 | [CARE保存分析](../results/care-saved-diagnostics-rust-r0-2026-10-16.md) | 未検知8件は超過が3連続に届かず、1件は共通支持で超過しない。運用上の原因や故障原因を証明したわけではない | 新しい評価設計の仮説に残す。既読testの閾値・連続回数を合わせ直す材料にしない |
 | [Rust推論・全層診断](../results/banto-ai-rust-r1-all-layer-audit-2026-10-16.md) | 固定7caseの最終出力は条件内。同一入力385比較の局所超過0、累積中間値は1点未達 | 元参照・保存入力・中間値・loader・比較器を再利用。全層再生を反復しない |
-| [context/LN](../results/banto-ai-rust-r1-context-normalization-2026-10-16.md)・[FMA](../results/banto-ai-rust-r1-fma-extension-2026-10-16.md) | 局所bit一致とgraph参加は確認したが全体候補は不採用。backwardは未検証 | 演算の意味と独立部品の参考。現行モデルへの再接続や学習利用を自動採用しない |
-| [fused linear](../results/banto-ai-rust-r1-fused-linear-2026-10-16.md) | 人工検証は通過したが154組が現行とbytes同一で改善0 | 同じ候補を再試行しない。API名やbias初期化だけでは演算順が変わらないという負の結果を保持 |
-| [SGEMM/転送stub](../results/banto-ai-rust-r1-once-target-2026-10-16.md) | 小形状の命令再現と64byte stubまで確認。train kernelとprivate once値は未確定 | 補助資料として凍結。解明を実用性・Rust学習の前提にしない |
+| context/LN・FMA | 局所bit一致とgraph参加は確認したが全体候補は不採用。backwardは未検証 | 演算の意味と独立部品の参考。現行モデルへの再接続や学習利用を自動採用しない |
+| fused linear | 人工検証は通過したが154組が現行とbytes同一で改善0 | 同じ候補を再試行しない。API名やbias初期化だけでは演算順が変わらないという負の結果を保持 |
+| SGEMM/転送stub | 小形状の命令再現と64byte stubまで確認。train kernelとprivate once値は未確定 | 補助資料として凍結。解明を実用性・Rust学習の前提にしない |
 
 記載は実行時の保存sourceに対する結果である。現checkoutのmanifestには他作業由来の変更があるため、過去のbuild成功を現在の全feature構成へ広げない。研究用moduleが存在することと、現在のCargo featureから利用可能であることも区別する。
 

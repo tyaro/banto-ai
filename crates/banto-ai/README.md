@@ -41,6 +41,6 @@ downstream integration remains a distribution issue to resolve before release.
 
 [現在の引継ぎ](../../docs/current-handoff.md)と[復帰計画](../../docs/research/banto-ai-practical-training-return-plan-2026-10-16.md)に沿って進める。Rust推論R1は中間値1点未達で、正式R2実データ学習は停止中。人工データだけのR2P loss/gradient/AdamW/checkpoint実装が次工程である。Python参照は生成済みだが、Rust学習・保存再開は未実装。
 
-現在の公開moduleはcheckpoint/error/input/model。default testは合成入力のunit testだけで、CARE参照のintegration testはreference-testsで明示opt-inする。暗黙のexample探索は無効、公開exampleはpredictのみ。不採用FMA/context/fused-linear拡張と診断exampleは[履歴資料](../../experiments/archive/rust-r1-20261016/README.md)へ退避した。旧featureは再定義しない。閉鎖済み証跡と原許容差を維持する。
+現在の公開moduleはcheckpoint/error/input/model。default testは合成入力のunit testだけで、CARE参照のintegration testはreference-testsで明示opt-inする。暗黙のexample探索は無効、公開exampleはpredictのみ。不採用FMA/context/fused-linear拡張と診断exampleは履歴資料へ退避した。旧featureは再定義しない。閉鎖済み証跡と原許容差を維持する。
 
 本整理では検証済みのlock最小案を適用し、manifestにないgemmの直接edgeだけを削除した。package/versionの追加更新は行わない。[整理結果](../../docs/results/research-consolidation-2026-10-17.md)に現在の構成での検証結果を記録する。過去時点のbuild成功をRust学習や数値互換の合格へ読み替えない。

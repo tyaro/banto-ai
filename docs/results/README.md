@@ -14,39 +14,24 @@
 
 - [実用性とRust学習への計画改訂結果](banto-ai-rust-practical-training-replan-2026-10-16.md) — 保存成果だけを整理、許容差不変・学習未実行。
 
-- [Rust R1 固定64byte呼出先と間接転送stub](banto-ai-rust-r1-once-target-2026-10-16.md) — SDK配置とVM境界を確認、単一slot導出までで閉鎖。
 
-- [Rust R1 once公開契約とAPI呼出先照合](banto-ai-rust-r1-once-contract-2026-10-16.md) — SDK確認、targetの直接同一性未達を保存、次は単一targetのmapping。
 
-- [Rust R1 patch一致とonce gate未達](banto-ai-rust-r1-sgemm-warm-binding-2026-10-16.md) — 一度の実行6,144値一致、warm-binding失敗保持、次はonce source契約。
 
-- [Rust R1 SGEMM読取り監査と小行列の再現](banto-ai-rust-r1-sgemm-readonly-2026-10-16.md) — 6関数閉鎖、人工5case一致、train初期化bindingは次unit。
 
-- [Rust R1 pure-Rust fused linearの実装と不採用](banto-ai-rust-r1-fused-linear-2026-10-16.md) — 人工pass、154組がbaseline bytes同一で改善なし。
 
-- [Rust R1 patchのbias融合/行列積差](banto-ai-rust-r1-linear-boundary-2026-10-16.md) — trainのraw mm一致、単独add一致、一般fused候補の条件を固定。
 
-- [Rust R1 初期contextのbit一致と全体候補の採否](banto-ai-rust-r1-context-normalization-2026-10-16.md) — 局所84組一致、全体1点未達でmodel復元。
 
-- [Rust R1 FMA拡張と全体候補の不採用](banto-ai-rust-r1-fma-extension-2026-10-16.md) — 人工/局所pass、全体3点未達でmodel復元。
 
-- [Rust R1バイナリの丸め順と局所全bit再現](banto-ai-rust-r1-binary-moments-2026-10-16.md) — 49入力、124,992出力一致、core不変。
 
-- [Rust R1モーメント計算・丸め位置の照合](banto-ai-rust-r1-moments-audit-2026-10-16.md) — 3系統のanchor再現、成分分離、core不変。
 
-- [Rust R1標準LayerNorm候補の不採用](banto-ai-rust-r1-native-norm-2026-10-16.md) — 全7caseでSSE増加、core不変。
 
 - [Rust R1全55箇所・7ケースの局所/累積差診断](banto-ai-rust-r1-all-layer-audit-2026-10-16.md) — 局所超過0、上流累積1点未達、モデル変更0。
 
-- [Rust R1の正規化・attention演算順診断](banto-ai-rust-r1-upstream-order-2026-10-16.md) — 一般LN修正の根拠確認、7case再確認で別の1点未達。
 
-- [Rust R1の中間値1点の切り分け](banto-ai-rust-r1-intermediate-diagnosis-2026-10-16.md) — 共通入力線形/加算を確認、上流2枝の累積差。R1未達は維持。
 
-- [Rust R1 CPUテストと数値比較](banto-ai-rust-r1-tests-parity-2026-10-16.md) — 3テストpass、最終予測pass、中間値1点超過でR1未合格。
 
-- [Rust R1のビルド容量上限停止](banto-ai-rust-r1-build-stop-2026-10-16.md) — Xcode確認通過。R1 CPU buildがcache+target合計768MiB上限で停止、テスト/数値比較未確認。
+- Rust R1のビルド容量上限停止 — Xcode確認通過。R1 CPU buildがcache+target合計768MiB上限で停止、テスト/数値比較未確認。
 
-- [banto-ai Rust R1の準備と再開手順](banto-ai-rust-r1-preparation-2026-10-16.md) — ソース/参照準備まで。Xcode設定待ち、build/数値一致は未確認。
 
 ## 産業設備の保全と点検支援
 
