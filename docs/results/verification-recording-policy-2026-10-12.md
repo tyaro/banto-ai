@@ -52,4 +52,4 @@ stdout/stderr/returnは新共通APIで判定前に保存し、累積30秒と既�
 
 新しいengineering helperの検証記録はこの共通APIへ移行し、原実行制限とowner保持処理を継続します。既存閉鎖root内のscriptは変更しません。
 次の未実施モデルunitは同保存layout6 quality C0の1cell。入力pin照合・新ID・fresh計算は従来どおりで、既存CLIと元datasetを変更しません。
-仕様・使い方・保存保証の範囲は [検証記録の保存](../anomaly/execution/verification-records.md) を参照。
+仕様・使い方・保存保証の範囲は 検証記録の保存 を参照。

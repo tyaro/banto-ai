@@ -9,8 +9,7 @@
 - 現在の結果・停止条件・次工程は [短い引継ぎ](current-handoff.md) を優先します。
 - [Rust実装計画](research/banto-ai-rust-implementation-plan-2026-10-16.md)に沿い、人工R2Pの学習・保存再開部品へ進みます。R1の中間値1点は未達で、正式R2実データ学習は停止しています。
 - [整理結果](results/research-consolidation-2026-10-17.md)と[停止済み調査資料](../experiments/archive/rust-r1-20261016/README.md)を区別し、閉鎖済み証跡・原許容差を保護します。
-- Windows nativeの既存修正は保持し、CI互換試験は共通Python試験と別jobにします。main取り込み時点の[状態記録](history/main-document-status-20260925.md)は過去時点の記録です。CIの成功だけで正式Windows受入を認定しません。
-- anomalyの正式gateは s4_acceptance_not_frozen、formal_permission=false、credit=0。heartbeatはPAUSEDです。
+- 旧異常検知トラック（v0.1〜v0.3、Windows native受入）はコード・文書とも削除しました。保存tag `archive/preformal-research-20261017` から参照できます。main取り込み時点の[状態記録](history/main-document-status-20260925.md)は過去時点の記録です。
 - 評価報告は [結果の索引](results/README.md)、過去の長い引継ぎは [履歴](history/current-handoff-through-20261016.md) を参照してください。
 
 ## 分野別の入口
@@ -21,18 +20,11 @@
 | [research/](research/README.md) | 研究roadmap、モデル・公開データ調査 |
 | [models/](models/README.md) | TimesFM、Chronos-2、Totoの評価契約 |
 | [decisions/](decisions/README.md) | 設計判断と理由（ADR） |
-| [anomaly/](anomaly/README.md) | 異常評価の計画、検算、実行、正式受入、Windows実装 |
 | [results/](results/README.md) | 実測・監査・実行報告の分野別索引 |
 | [history/](history/README.md) | 過去の引継ぎ・索引・初期Issue案 |
 
-## 固定パスを保持する文書
+## その他
 
-v0.3計画はコード・schema・freeze registryがパスとbytesを固定しています。
-計画と、その本文から直接参照する次の文書は直下の既存パスを維持します。分野別索引からも参照できます。
-
-- [v0.3凍結計画](anomaly-multiseed-evaluation-plan-v0.3.md)
-- [v0.2評価計画](anomaly-multiseed-evaluation-plan-v0.2.md)
-- [failure diagnostics計画](anomaly-multiseed-failure-diagnostics-plan-v0.1.md)
 - [研究実装計画](research-implementation-plan.md)
 
 ## 文書を読む順序
@@ -47,6 +39,6 @@ v0.3計画はコード・schema・freeze registryがパスとbytesを固定し�
 
 ## 文書追加時の配置
 
-研究はresearch/、モデル固有の契約はmodels/、判断はdecisions/、異常評価の設計はanomaly/内の該当分野へ置きます。
+研究はresearch/、モデル固有の契約はmodels/、判断はdecisions/へ置きます。
 実施日を伴う結果報告はresults/へ追加し、その目次とcurrent-handoff.mdから参照します。
 閉鎖済みartifactと過去の原証拠は、その保存状態を保持します。
