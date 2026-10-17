@@ -28,6 +28,10 @@ path = "examples/predict.rs"
 name = "r1_layer_audit"
 path = "examples/r1_layer_audit.rs"
 
+[[example]]
+name = "r2_formal"
+path = "examples/r2_formal.rs"
+
 [[test]]
 name = "neutral_integrity"
 path = "tests/neutral_integrity.rs"
