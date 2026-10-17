@@ -20,6 +20,9 @@ import argparse
 import hashlib
 import json
 import os
+import platform
+import resource
+import signal
 import struct
 import subprocess
 import sys
@@ -34,9 +37,12 @@ EXAMPLE = ROOT/'target/release/examples/r2_formal'
 UPDATES = 8
 K_EPS = 1e-7
 BUFFERS = ['scale_floor', 'position', 'time_mask']
-SOURCES = ['crates/banto-ai/src', 'crates/banto-ai/examples/r2_formal.rs', 'tools/r2_formal.py',
-           'models/mini-transformer/small_model.py', 'tools/r2p_full_model_reference.py', 'Cargo.lock',
-           'examples/configs/rust-r2-formal-20261017.json']
+SOURCES = ['crates/banto-ai/src', 'crates/banto-ai/examples/r2_formal.rs', 'crates/banto-ai/Cargo.toml', 'Cargo.toml',
+           'Cargo.lock', 'tools/r2_formal.py', 'tools/r2p_full_model_reference.py',
+           'models/mini-transformer/small_model.py', 'models/mini-transformer/care_training_preparation.py',
+           'models/mini-transformer/care_input.py', 'examples/configs/rust-r2-formal-20261017.json',
+           'examples/configs/rust-small-forecaster-r0-20261016-r0.1.json',
+           'examples/configs/rust-small-forecaster-r0.2-amendment-20261017.json']
 
 
 def digest(data):
@@ -62,9 +68,10 @@ def sources():
         p = ROOT/s
         for f in sorted(p.rglob('*.rs')) if p.is_dir() else [p]:
             files[str(f.relative_to(ROOT))] = digest(f)
-    rustc = subprocess.run(['rustc', '-vV'], capture_output=True, text=True).stdout.split()
+    tool = lambda *a: subprocess.run(a, cwd=ROOT, capture_output=True, text=True, check=True).stdout.split('\n')
     return {'commit': git('rev-parse', 'HEAD'), 'worktree_clean': git('status', '--porcelain') == '',
-            'files_sha256': files, 'rustc': rustc}
+            'files_sha256': files, 'rustc': tool('rustc', '-vV'), 'cargo': tool('cargo', '--version', '--verbose'),
+            'platform': platform.platform(), 'python': sys.version.split()[0]}
 
 
 class Payload:
@@ -243,7 +250,7 @@ def elementwise(tol, kind, a, b, keep=None):
     bad = (d > limit) | ~a.isfinite()
     if keep is not None:
         bad &= keep
-    idx = bad.nonzero().flatten()[:20].tolist()
+    idx = bad.nonzero().flatten().tolist()  # every failing element is recorded
     return {'elements': a.numel() if keep is None else int(keep.sum()), 'failing': int(bad.sum()),
             'max_abs': float((d if keep is None else d*keep).max()), 'max_ratio': float(((d/limit) if keep is None else (d/limit)*keep).max()),
             'examples': [{'index': i, 'value': float(a[i]), 'reference': float(b[i])} for i in idx]}
@@ -315,37 +322,96 @@ WRAPPER = ("import os,subprocess,sys;p=subprocess.Popen(sys.argv[1:],stdout=subp
 
 def child(*args):
     """One Rust process under the contract's limits; returns wall time and peak RSS. A small
-    Python wrapper without Torch forks the child, so the peak does not inherit this process's."""
+    Python wrapper without Torch forks the child, so the peak does not inherit this process's.
+    The wrapper and the child share a new process group, killed whole on timeout."""
     start = time.monotonic()
-    done = subprocess.run(['/usr/bin/python3', '-I', '-c', WRAPPER, str(EXAMPLE), *map(str, args)],
-                          cwd=ROOT, capture_output=True, text=True, timeout=870)
+    proc = subprocess.Popen(['/usr/bin/python3', '-I', '-c', WRAPPER, str(EXAMPLE), *map(str, args)], cwd=ROOT,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True)
+    try:
+        stdout, stderr = proc.communicate(timeout=870)
+    except subprocess.TimeoutExpired:
+        os.killpg(proc.pid, signal.SIGKILL); proc.communicate()
+        raise RuntimeError(f'Rust {args[0]} exceeded 870 s')
     elapsed = time.monotonic()-start
-    code, peak_kb = map(int, done.stdout.split())
+    try:
+        code, peak_kb = map(int, stdout.split())
+    except ValueError:
+        raise RuntimeError(f'Rust {args[0]} wrapper failed: {stdout!r} {stderr[-2000:]}') from None
     if code != 0:
-        raise RuntimeError(f'Rust {args[0]} failed with status {code}: {done.stderr[-2000:]}')
+        raise RuntimeError(f'Rust {args[0]} failed with status {code}: {stderr[-2000:]}')
     if peak_kb*1024 > 2 << 30:
         raise RuntimeError(f'Rust {args[0]} exceeded the memory limit: {peak_kb} KB')
     return {'mode': args[0], 'seconds': elapsed, 'peak_rss_bytes': peak_kb*1024}
 
 
-def main(output, synthetic):
+def checkpoint_matches(torch, directory, rust):
+    """The checkpoint after 4 updates against eight_updates/4: parameters and moments byte for byte."""
+    manifest = json.loads((directory/'manifest.json').read_bytes()); payload = (directory/'payload.f32').read_bytes()
+    role = {'parameter': 'param', 'moment1': 'm', 'moment2': 'v'}; mismatched = []; compared = 0
+    for e in manifest['entries']:
+        if e['role'] in role:
+            compared += 1
+            if payload[e['offset']:e['offset']+e['bytes']] != rust[f"eight_updates/4/{role[e['role']]}/{e['name']}"][0]:
+                mismatched.append(f"{e['role']}/{e['name']}")
+    return {'entries_compared': compared, 'mismatched': mismatched, 'global_step': manifest['global_step'],
+            'next_position': manifest['next_position'],
+            'pass': compared == 3*59 and not mismatched and manifest['global_step'] == 4 == manifest['next_position']}
+
+
+def expect(label, actual, expected):
+    """A harness re-run must reproduce what the failed run already produced (contract run.harness_failure)."""
+    if expected is not None and actual != expected:
+        raise RuntimeError(f'{label} differs from the earlier run: {actual} != {expected}')
+
+
+def main(output, synthetic, expected):
     import torch
     import small_model
     import r2p_full_model_reference as ref64
     torch.set_num_threads(1); torch.set_num_interop_threads(1); torch.use_deterministic_algorithms(True)
     started = time.monotonic()
-    out = ROOT/output; out.mkdir(parents=True)
     cfg = json.loads(R0.read_bytes()); contract = json.loads(CONTRACT.read_bytes()); tol = cfg['tolerance']
     src = sources()
     if not synthetic:
         assert src['worktree_clean'], 'formal R2 runs from a committed tree'
-    write_new(out/'sources.json', {**src, 'synthetic': synthetic, 'torch': torch.__version__, 'python': sys.version.split()[0]})
+    # Build first, outside the limits and before anything is frozen (R0.1: one build job).
+    t0 = time.monotonic()
+    subprocess.run(['cargo', 'build', '--release', '--locked', '-q', '-j', '1', '-p', 'banto-ai', '--example', 'r2_formal'],
+                   cwd=ROOT, check=True)
+    build_seconds = time.monotonic()-t0
+    out = ROOT/output; out.mkdir(parents=True)
+    summary = {'synthetic': synthetic, 'build_seconds': build_seconds}
+    try:
+        return run(torch, small_model, ref64, out, cfg, contract, tol, src, synthetic, expected, started, summary)
+    except BaseException as error:  # recorded so the contract's harness-failure rule can be applied
+        import traceback
+        for d in sorted(out.iterdir()):
+            if d.is_dir() and not (d/'root-closed.json').exists():
+                close(d)
+        summary.update({'result': 'harness_failure', 'error': repr(error), 'traceback': traceback.format_exc(),
+                        'parent_seconds': time.monotonic()-started})
+        write_new(out/'summary.json', summary); close(out)
+        raise
+
+
+def run(torch, small_model, ref64, out, cfg, contract, tol, src, synthetic, expected, started, summary):
+    binary = digest(EXAMPLE)
+    write_new(out/'sources.json', {**src, 'synthetic': synthetic, 'torch': torch.__version__, 'example_binary_sha256': binary,
+                                   'torch_threads': 1, 'torch_interop_threads': 1, 'deterministic_algorithms': True})
     recipe = {'lr': 3e-4, 'betas': [0.9, 0.999], 'eps': 1e-8, 'weight_decay': 0.01, 'clip_global_norm': 1.0}
+    if not synthetic:
+        learning = json.loads((ROOT/'artifacts/care-input-contract-20261016/learning.json').read_bytes())['training']
+        o = learning['optimizer']
+        assert (o['name'], o['lr'], o['betas'], o['eps'], o['weight_decay'], o['foreach'], o['fused'], learning['grad_clip'],
+                learning['scheduler']) == ('AdamW', recipe['lr'], recipe['betas'], recipe['eps'], recipe['weight_decay'],
+                                           False, False, recipe['clip_global_norm'], None), 'recipe differs from the pinned learning recipe'
     state, moments, step, batches = synthetic_inputs(torch) if synthetic else care_inputs(torch, contract, cfg)
     names = [n for n, _ in small_model.SmallForecaster(torch.tensor([0.5, 0.25, 0.125])).named_parameters()]
     assert len(names) == 59 and sum(state[n].numel() for n in names) == 109024
     tie = floor_tie(state['scale_floor'].tolist())
     fixture_sha = write_fixture(torch, out/'fixture', names, state, moments, step, batches, tie, recipe)
+    expect('fixture', fixture_sha, expected.get('fixture'))
+    summary['fixture_sha256'] = fixture_sha
 
     # Reference: float32, checked against float64 on loss and gradients, then frozen.
     f32 = torch_run(torch, small_model, ref64, torch.float32, names, state, moments, step, batches, tie, recipe)
@@ -357,41 +423,49 @@ def main(output, synthetic):
     payload = Payload()
     for name, t in f32.items():
         payload.put(name, [t.numel()], t.float().tolist())
-    payload.save(out/'reference', 'records.f32', 'records.json', {'dtype': 'float32', 'torch': torch.__version__,
-                                                                   'fixture_sha256': fixture_sha, 'float64_check_pass': check_ok})
+    payload.save(out/'reference', 'records.f32', 'records.json', {
+        'dtype': 'float32', 'torch': torch.__version__, 'threads': 1, 'interop_threads': 1, 'deterministic_algorithms': True,
+        'platform': platform.platform(), 'python': sys.version.split()[0], 'fixture_sha256': fixture_sha,
+        'float64_check_pass': check_ok,
+        'clip_note': 'clip_grad_norm_ with foreach=False as the R0.1/R2 recipe states; the original training used the '
+                     'default foreach path, which can differ only in the last bits of the recorded norm'})
     write_new(out/'reference'/'float64-check.json', check)
     close(out/'reference')
-    summary = {'synthetic': synthetic, 'fixture_sha256': fixture_sha, 'reference_closure_sha256': digest(out/'reference'/'root-closed.json'),
-               'float64_check_pass': check_ok}
+    summary.update({'reference_closure_sha256': digest(out/'reference'/'root-closed.json'), 'float64_check_pass': check_ok})
+    expect('reference', summary['reference_closure_sha256'], expected.get('reference'))
     if not check_ok:
         summary['result'] = 'stopped: float64 check of the reference failed (no Rust run)'
         write_new(out/'summary.json', summary); close(out); print(json.dumps(summary, indent=1)); return 1
 
-    # Rust: build outside the limits, then the processes.
-    t0 = time.monotonic()
-    subprocess.run(['cargo', 'build', '--release', '--locked', '-q', '-p', 'banto-ai', '--example', 'r2_formal'], cwd=ROOT, check=True)
-    build_seconds = time.monotonic()-t0
-    processes = [child('cases', out/'fixture', fixture_sha, out/'rust-cases'),
-                 child('resume-first', out/'fixture', fixture_sha, out/'rust-checkpoint'),
-                 child('resume-second', out/'fixture', fixture_sha, out/'rust-checkpoint', out/'rust-resume')]
-    for d in ('rust-cases', 'rust-checkpoint', 'rust-resume'):
+    processes = [child('cases', out/'fixture', fixture_sha, out/'rust-cases')]
+    close(out/'rust-cases')
+    expect('cases', digest(out/'rust-cases'/'records.f32'), expected.get('cases'))
+    processes.append(child('resume-first', out/'fixture', fixture_sha, out/'rust-checkpoint'))
+    processes.append(child('resume-second', out/'fixture', fixture_sha, out/'rust-checkpoint', out/'rust-resume'))
+    for d in ('rust-checkpoint', 'rust-resume'):
         close(out/d)
     _, rust = load_records(torch, out/'rust-cases'); resume_layout, resume = load_records(torch, out/'rust-resume')
     _, reference = load_records(torch, out/'reference')
     rust_v = {n: v for n, (_, v) in rust.items()}; ref_v = {n: v for n, (_, v) in reference.items()}
     assert set(rust_v) == set(ref_v), 'record names differ'
     comparisons, numeric_ok, worst_exclusion = compare(torch, tol, names, rust_v, ref_v)
-    resume_names = [n for n in resume if not n.startswith('resume/1/') and not n.startswith('resume/2/')
-                    and not n.startswith('resume/3/') and not n.startswith('resume/4/')]
+    resume_names = [n for n in resume if int(n.split('/')[1]) > UPDATES//2]
     mismatched = [n for n in resume_names if resume[n][0] != rust['eight_updates/'+n.split('/', 1)[1]][0]]
     rl = json.loads((out/'rust-cases'/'records.json').read_bytes())['run']
-    resume_ok = (not mismatched and len(resume_names) == 4*(5*59+4) and resume_layout['run']['restored_position'] == 4
+    checkpoint = checkpoint_matches(torch, out/'rust-checkpoint', rust)
+    resume_ok = (not mismatched and len(resume_names) == len(resume) == 4*(5*59+4) and checkpoint['pass']
+                 and resume_layout['run']['restored_position'] == 4
                  and resume_layout['run']['steps']['resume'] == rl['steps']['eight_updates'] == UPDATES)
     write_new(out/'comparisons.json', comparisons)
+    parent_seconds = time.monotonic()-started
+    parent_peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024
+    limits_ok = parent_seconds-summary['build_seconds'] <= 900 and parent_peak <= 2 << 30
     summary.update({
-        'numeric_pass': numeric_ok, 'resume_byte_exact': resume_ok, 'resume_mismatched_records': mismatched[:20],
+        'numeric_pass': numeric_ok, 'resume_byte_exact': resume_ok, 'resume_mismatched_records': mismatched,
+        'checkpoint_after_4': checkpoint,
         'max_excluded_fraction': worst_exclusion, 'exclusion_stop_rule_triggered': worst_exclusion > 0.10,
-        'build_seconds': build_seconds, 'processes': processes, 'parent_seconds': time.monotonic()-started,
+        'processes': processes, 'parent': {'seconds_excluding_build': parent_seconds-summary['build_seconds'],
+                                           'peak_rss_bytes': parent_peak, 'within_limits': limits_ok},
         'per_update': {label: {'loss_ratio': r['loss']['max_ratio'], 'raw_gradient_max_ratio': r['raw']['max_ratio'],
                                'raw_relative_L2': r['raw']['global'].get('relative_L2'),
                                'clipped_relative_L2': r['clipped']['global'].get('relative_L2'),
@@ -402,12 +476,20 @@ def main(output, synthetic):
                                    'forward_max_abs': r['forward_recorded']['max_abs']} if 'parameters' in r else {})}
                         for label, r in comparisons.items()},
     })
-    summary['result'] = 'pass' if numeric_ok and resume_ok and worst_exclusion <= 0.10 else 'fail'
+    if worst_exclusion > 0.10:
+        summary['result'] = 'stopped: exclusion above 10%, investigate before accepting'
+    elif not limits_ok:
+        summary['result'] = 'fail: parent resource limit'
+    else:
+        summary['result'] = 'pass' if numeric_ok and resume_ok else 'fail'
     write_new(out/'summary.json', summary); close(out)
-    print(json.dumps({k: v for k, v in summary.items() if k != 'per_update'}, indent=1))
+    print(json.dumps({k: v for k, v in summary.items() if k not in ('per_update', 'checkpoint_after_4')}, indent=1))
     return 0 if summary['result'] == 'pass' else 1
 
 
 if __name__ == '__main__':
     p = argparse.ArgumentParser(); p.add_argument('--output', required=True); p.add_argument('--synthetic', action='store_true')
-    a = p.parse_args(); sys.exit(main(a.output, a.synthetic))
+    for k in ('fixture', 'reference', 'cases'):  # for a harness re-run: hashes the failed run already produced
+        p.add_argument(f'--expect-{k}')
+    a = p.parse_args()
+    sys.exit(main(a.output, a.synthetic, {k: getattr(a, f'expect_{k}') for k in ('fixture', 'reference', 'cases')}))
