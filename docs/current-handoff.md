@@ -19,7 +19,7 @@ TimesFM3を参考にした自作モデルの実用性を検証する。保全・
 [R0.2](research/rust-r0.2-comparison-amendment-2026-10-17.md)（2026-10-17承認）に沿って進める。R2P工程2〜4は通過済み（[工程4の記録](results/rust-r2p-full-model-2026-10-17.md)）。
 
 1. 正式R2は2026-10-17に1回だけ実行し、**全ケース合格**（[記録](results/rust-r2-formal-2026-10-17.md)）。1更新・8更新・成熟state import・floorのtieがR0.1/R0.2内、保存再開はbytes一致。これ以外の実データ学習は停止のまま。CAREの保存物はgitignoreの`artifacts/`にあり公開しない。
-2. 並行して、保全の実用性評価の契約（必要な先行時間、許容する誤警報、event集計）を固定し、既存adapterでTimesFM・Chronos・Totoと比較する。
+2. 保全の実用性評価：[契約](research/care-maintenance-practical-contract-2026-10-17.md)を固定した。先行時間（0/24/72/168時間）と誤警報は複数で報告し、基準は比較の後で人が決める。TimesFM 3（研究用途）・Chronos-2・Toto 2をzero-shotで比べる。CARE testは開発材料として扱う。Macからlabelとfold1〜4の保存物を受け取ってから実行する。
 3. R3（有限の移植比較）とbanto接続は、別の実行仕様を固定してから。2の評価契約と合わせて範囲を決める。
 
 ## 維持する条件
