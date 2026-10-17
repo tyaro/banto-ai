@@ -72,6 +72,7 @@ WINDOWS_ONLY_CLASSES = {
     "tests.test_anomaly_v03_fixture_budget.BudgetIntegrationTests": "Windows fixture worker",
     "tests.test_anomaly_v03_fixture_publication.FixturePublicationTests": "Windows CPython 3.14 observation",
     "tests.test_anomaly_v03_fixture_worker.FixtureWorkerTests": "Windows CPython 3.14 observation",
+    "tests.test_anomaly_v03_native.NativeFixtureTests": "Windows native acceptance only",
     "tests.test_anomaly_v03_platform_fixture.NativePlatformFixtureTests": "explicit 26H2 native fixture run",
     "tests.test_anomaly_v03_preformal_bound_slice_publication.SavedSlicePublicationTests":
         "retained invented slice artifacts and Windows CPython 3.14 required",
@@ -116,9 +117,10 @@ WINDOWS_ONLY_TESTS = {
 }
 
 
-# These source-checkout tests depend on retained local artifacts or an optional
-# analysis extra. Their skips are allowed only for the exact reviewed methods;
-# none is a required S4 common-contract test or evidence of native acceptance.
+# These source-checkout tests depend on retained local artifacts, an optional
+# analysis extra, or the optional torch dependency of the demand experiments.
+# Their skips are allowed only for the exact reviewed methods; none is a
+# required S4 common-contract test or evidence of native acceptance.
 OPTIONAL_SKIP_CLASSES = {
     "tests.test_anomaly_v03_offline_unwind.OfflineUnwindTests":
         "optional offline-analysis extra is not installed; not native acceptance",
@@ -135,6 +137,34 @@ OPTIONAL_SKIP_TESTS = {
         "controlled Toto artifact unavailable",
     "tests.test_toto2_docs.Toto2DocumentationTests.test_event_slice_local_artifacts_are_checked_when_present":
         "local Toto event-slice artifacts unavailable",
+    "tests.test_demand_autonomous_mean.AutonomousMeanChecks.test_ridge_normal_equation_and_fit_only_inactive_column":
+        "torch is not installed",
+    "tests.test_demand_autonomous_mean.AutonomousMeanChecks.test_analytic_calibration_finds_half_and_keeps_mean_target":
+        "torch is not installed",
+    "tests.test_demand_autonomous_mean.AutonomousMeanChecks.test_component_constraint_can_reject_positive_joint_direction":
+        "torch is not installed",
+    "tests.test_demand_frozen_recent_quantity.RecentQuantityChecks.test_current_target_poison_cannot_change_past_state":
+        "torch is not installed",
+    "tests.test_demand_frozen_recent_quantity.RecentQuantityChecks.test_equal_store_support_and_minimum_required":
+        "torch is not installed",
+    "tests.test_demand_frozen_recent_quantity.RecentQuantityChecks.test_final_state_prediction_does_not_modify_coefficients":
+        "torch is not installed",
+    "tests.test_demand_newyear_evaluation.JanuaryEvaluationChecks.test_current_label_poison_does_not_change_ridge_or_forecast":
+        "torch is not installed",
+    "tests.test_demand_open_quantity.OpenQuantityChecks.test_gate_in_fit_and_total_and_normalization_excludes_closed_feature_poison":
+        "torch is not installed",
+    "tests.test_demand_open_quantity.OpenQuantityChecks.test_level_delta_uses_joint_objective_and_never_increases_closed_days":
+        "torch is not installed",
+    "tests.test_demand_rolling_ridge.RollingRidgeChecks.test_current_and_other_store_future_poison_does_not_change_fit":
+        "torch is not installed",
+    "tests.test_demand_rolling_ridge.RollingRidgeChecks.test_current_features_do_not_change_training_normalization":
+        "torch is not installed",
+    "tests.test_demand_rolling_ridge.RollingRidgeChecks.test_cold_pool_falls_back_and_does_not_mutate_input_pool":
+        "torch is not installed",
+    "tests.test_demand_rolling_ridge.RollingRidgeChecks.test_unequal_fixed_store_support_and_duplicate_packets_rejected":
+        "torch is not installed",
+    "tests.test_demand_temporal_selection.TemporalSelectionChecks.test_inner_calibration_changes_only_with_selected_labels":
+        "torch is not installed",
 }
 
 OPTIONAL_SKIP_IDS = frozenset("""
