@@ -44,4 +44,4 @@ jobs:
       - name: Run tests
         run: cargo test --locked --workspace
       - name: Run R2P artificial training tests
-        run: cargo test --locked -p banto-ai --features training-tests --test r2p_synthetic
+        run: cargo test --locked -p banto-ai --features training-tests --test r2p_synthetic --test r2p_full_model

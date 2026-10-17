@@ -33,3 +33,8 @@ required-features = ["reference-tests"]
 name = "r2p_synthetic"
 path = "tests/r2p_synthetic.rs"
 required-features = ["training-tests"]
+
+[[test]]
+name = "r2p_full_model"
+path = "tests/r2p_full_model.rs"
+required-features = ["training-tests"]
