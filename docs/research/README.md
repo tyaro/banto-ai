@@ -15,6 +15,7 @@
 - [R2P lock案・人工Python参照と次工程](../results/rust-r2p-lock-and-python-reference-2026-10-16.md) — 凍結参照を使う小型Rust実装へ。
 
 - [Rust現実装棚卸しと人工学習の固定条件](rust-r2p-synthetic-training-contract-2026-10-16.md) — 小型loss/gradient/AdamW/保存再開、manifest/lock未整合を保持。
+- [CARE holdout不合格後の方針](care-next-direction-2026-10-18.md) — 残差scoreに異常と正常を見分ける力がほぼない（AUC中央値0.50）。CAREでの合格主張をやめ、自asset校正の残差監視としてbantoへ組み込み、次の判定はbanto実データの前向き評価で行う。2026-10-18承認。
 - [CARE Farm B・Cの1回限りholdout契約](care-holdout-bc-contract-2026-10-18.md) — 開封前に信号（Cの温度1は主軸受温度で代替）・split（B 9fold、C 22fold）・Farm Aと同じ学習と警報・B＋C合算の合格条件を固定。B・Cの新規学習はR0.2の例外として2026-10-18承認。
 - [CARE保全の判定基準](care-maintenance-criteria-2026-10-18.md) — 必要な先行時間は72時間（副24時間）、誤警報は上限asset・30日1.0件／目標0.25件。Farm Aは比較だけ、合否はFarm B・Cの1回限りのholdoutで判定する。2026-10-18承認。
 - [保全の実用性評価と基盤モデル比較の契約](care-maintenance-practical-contract-2026-10-17.md) — 先行時間0/24/72/168時間別の検知と誤警報の換算を報告し、TimesFM 3・Chronos-2・Toto 2をzero-shotで同じ警報規則に載せる。CARE testは開発材料として扱う。
