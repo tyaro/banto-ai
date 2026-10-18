@@ -42,7 +42,7 @@
     "lead_proxy_reading": "report lead to event_end and normalized earliness; flag intervals equal to the 168 h default (a W=72 h hit there means detected within the first 4 days of a default window)"
   },
   "current_status": {
-    "own_model": "W=72 h 2/12, 0.51 false episodes per asset-30 days: fails detection, within the false-alarm ceiling, no advantage over the native-support baseline (1/12 at 72 h, 1.00 per asset-30 days)",
+    "own_model": "W=72 h 2/12; false episodes 0.51 per asset-30 days pooled (within the ceiling) but 2.41 for asset A:21 (2 episodes in 597 normal record-hours, above the ceiling): fails detection and the per-asset false-alarm ceiling; no advantage over the native-support baseline (1/12 at 72 h, 1.00 pooled, 1.91 at A:11)",
     "foundation_models_same_alarm_rule": "0-1/12; a different alarm design (quantile-band exceedance, residual against a frozen-normal forecast) may be worth a contract with Chronos-2 and Toto 2 only (TimesFM 3 excluded by licence)"
   }
 }
