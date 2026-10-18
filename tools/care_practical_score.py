@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path = [p for p in sys.path if Path(p or '.').resolve() != Path(__file__).resolve().parent]
 sys.path[:0] = [str(ROOT/'models/mini-transformer'), str(ROOT)]
 from care_alarm import COMMON, PREDICTION, active_seconds, eligible_seconds, event_result  # noqa: E402
+from tools.care_fm import verify_closed  # noqa: E402
 
 SAVED = ('neural-common', 'baseline-common', 'baseline-native')
 FOUNDATION = ('timesfm3', 'chronos2', 'toto2')
@@ -37,20 +38,6 @@ def digest(path):
 def write_new(path, data):
     with open(path, 'xb') as f:
         f.write(json.dumps(data, indent=1).encode())
-
-
-def verify_closed(root):
-    """Every file and sub-root listed in root-closed.json matches, and nothing unlisted exists."""
-    record = json.loads((root/'root-closed.json').read_bytes())
-    listed = set()
-    for f in record['files']:
-        name = f['name'].rstrip('/'); listed.add(name)
-        if f['name'].endswith('/'):
-            verify_closed(root/name)
-            assert digest(root/name/'root-closed.json') == f['root_closed_sha256'], root/name
-        else:
-            assert digest(root/name) == f['sha256'], root/name
-    assert {p.name for p in root.iterdir()} - {'root-closed.json'} == listed, root
 
 
 def fold_root(k):

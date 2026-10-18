@@ -63,6 +63,42 @@ def close(root):
     write_new(root/'root-closed.json', {'status': 'complete', 'files': files})
 
 
+def verify_closed(root):
+    """Every file and sub-root listed in root-closed.json matches, and nothing unlisted exists."""
+    root = Path(root); record = json.loads((root/'root-closed.json').read_bytes()); listed = set()
+    for f in record['files']:
+        name = f['name'].rstrip('/'); listed.add(name)
+        if f['name'].endswith('/'):
+            verify_closed(root/name)
+            if digest(root/name/'root-closed.json') != f['root_closed_sha256']:
+                raise ValueError(f'sub-root closure differs: {root/name}')
+        elif not (root/name).is_file() or digest(root/name) != f['sha256']:
+            raise ValueError(f'closed file differs: {root/name}')
+    if {p.name for p in root.iterdir()}-{'root-closed.json'} != listed:
+        raise ValueError(f'unlisted files in closed root: {root}')
+
+
+def check_unit(directory, method, fold, segment, chunk, rows, fold_closure, dataset_closure):
+    """A closed chunk is reusable only if its closure verifies, it is the expected unit on the
+    expected inputs, and its recorded time and memory are within the contract's limits."""
+    verify_closed(directory)
+    info = json.loads((Path(directory)/'unit.json').read_bytes())
+    if (info['method'], info['fold'], info['segment'], info['chunk'], info['rows']) != (method, fold, segment, chunk, rows):
+        raise ValueError(f'unit identity differs: {directory}')
+    if info['fold_root_closure_sha256'] != fold_closure or info['dataset_closure_sha256'] != dataset_closure:
+        raise ValueError(f'unit inputs differ from the closed roots: {directory}')
+    if info['seconds'] > 870 or info['peak_rss_bytes'] > MEMORY[method]:
+        raise ValueError(f'unit over the time or memory limit: {directory}')
+    if len((Path(directory)/'predictions.bin').read_bytes()) != rows*PRED.size:
+        raise ValueError(f'prediction size differs: {directory}')
+    return info
+
+
+def expected_unit(method, fold, segment, chunk):
+    return dict(method=method, fold=fold, segment=segment, chunk=chunk, rows=len(chunks(fold, segment)[chunk]),
+                fold_closure=digest(fold_root(fold)/'root-closed.json'), dataset_closure=digest(DATASET/'root-closed.json'))
+
+
 def fold_root(fold):
     return ROOT/f'artifacts/care-learning-fold-{fold}-20261016'
 
@@ -163,6 +199,10 @@ def campaign(out, venvs, parallel, hours):
     for unit in todo:
         d = unit_dir(out, *unit)
         if (d/'root-closed.json').exists():
+            try:  # a closed chunk is reused only if it still verifies and stayed within the limits
+                check_unit(d, **expected_unit(*unit))
+            except ValueError as error:
+                stop(log, {}, {'event': 'stop', 'reason': 'closed chunk fails verification', 'unit': unit, 'error': str(error)})
             continue
         if d.exists():  # an unclosed chunk from a stopped run is never reused
             stale = d.with_name(d.name+f'.incomplete-{int(time.time())}'); d.rename(stale)
@@ -256,7 +296,11 @@ def episodes_by_event(rows, threshold):
 
 
 def freeze(out):
-    out = Path(out); frozen = out/'frozen'; frozen.mkdir()
+    out = Path(out)
+    for k in FOLDS:
+        verify_closed(fold_root(k))
+    verify_closed(DATASET)
+    frozen = out/'frozen'; frozen.mkdir()
     summary = {'methods': {}, 'labels_read': False}
     for m in METHODS:
         per = {}
@@ -265,9 +309,8 @@ def freeze(out):
             loaded = {}
             for s in SEGMENTS:
                 dirs = [unit_dir(out, m, k, s, c) for c in range(len(chunks(k, s)))]
-                for d in dirs:
-                    if not (d/'root-closed.json').exists():
-                        raise ValueError(f'unit not closed: {d}')
+                for c, d in enumerate(dirs):
+                    check_unit(d, **expected_unit(m, k, s, c))
                 loaded[s] = assemble(saved_rows(k, s), [(d/'predictions.bin').read_bytes() for d in dirs])
             calibration = [score(r, loaded['calibration'][(r[0], r[1])], R) for r in saved_rows(k, 'calibration')
                            if all(math.isfinite(x) for x in loaded['calibration'][(r[0], r[1])])]

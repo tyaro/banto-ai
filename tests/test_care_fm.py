@@ -94,5 +94,62 @@ class PracticalScoreTest(unittest.TestCase):
         self.assertAlmostEqual(pooled['false_episodes_per_asset_30_days'], pooled['false_episodes_per_1000_record_hours']*720/1000)
 
 
+class ClosedUnitTest(unittest.TestCase):
+    """Closed chunks are reused (resume) or frozen only if they verify and stayed within limits."""
+
+    def make(self, root, method='toto2', peak=500 << 20, seconds=30.):
+        import json
+        d = care_fm.unit_dir(root, method, 0, 'test', 0); d.mkdir(parents=True)
+        (d/'predictions.bin').write_bytes(b''.join(PRED.pack(1, n, 10., 20.) for n in range(3)))
+        (d/'unit.json').write_text(json.dumps({'method': method, 'fold': 0, 'segment': 'test', 'chunk': 0, 'rows': 3,
+                                               'seconds': seconds, 'peak_rss_bytes': peak,
+                                               'fold_root_closure_sha256': 'f', 'dataset_closure_sha256': 'd'}))
+        care_fm.close(d)
+        return d
+
+    def expected(self, method='toto2'):
+        return dict(method=method, fold=0, segment='test', chunk=0, rows=3, fold_closure='f', dataset_closure='d')
+
+    def test_good_unit_verifies(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(care_fm.check_unit(self.make(tmp), **self.expected())['rows'], 3)
+
+    def test_changed_prediction_after_closing_is_rejected(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            d = self.make(tmp)
+            (d/'predictions.bin').write_bytes(b''.join(PRED.pack(1, n, 15., 20.) for n in range(3)))
+            with self.assertRaisesRegex(ValueError, 'closed file differs'):
+                care_fm.check_unit(d, **self.expected())
+
+    def test_over_memory_unit_is_rejected(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaisesRegex(ValueError, 'limit'):
+                care_fm.check_unit(self.make(tmp, peak=3 << 30), **self.expected())
+
+    def test_other_unit_or_inputs_are_rejected(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            d = self.make(tmp)
+            with self.assertRaisesRegex(ValueError, 'identity'):
+                care_fm.check_unit(d, **{**self.expected(), 'chunk': 1})
+            with self.assertRaisesRegex(ValueError, 'inputs'):
+                care_fm.check_unit(d, **{**self.expected(), 'fold_closure': 'other'})
+
+    def test_campaign_stops_instead_of_reusing_an_over_limit_chunk(self):
+        import tempfile
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as tmp:
+            self.make(tmp, peak=3 << 30)
+            with mock.patch.object(care_fm, 'METHODS', ('toto2',)), mock.patch.object(care_fm, 'FOLDS', (0,)), \
+                    mock.patch.object(care_fm, 'SEGMENTS', ('test',)), mock.patch.object(care_fm, 'chunks', lambda k, s: [[None]*3]), \
+                    mock.patch.object(care_fm, 'expected_unit', lambda *u: self.expected()):
+                with self.assertRaises(SystemExit):
+                    care_fm.campaign(tmp, tmp, 1, 1)
+            self.assertIn('closed chunk fails verification', (care_fm.Path(tmp)/'campaign-log.jsonl').read_text())
+
+
 if __name__ == '__main__':
     unittest.main()
