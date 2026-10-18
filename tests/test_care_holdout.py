@@ -109,6 +109,18 @@ class ScoreTest(unittest.TestCase):
             S.score_events(self.truth, self.meta, self.rows, self.alarms)
 
 
+class ArchivePinTest(unittest.TestCase):
+    def test_changed_archive_stops_before_the_truth(self):
+        import tempfile
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp)/'a.zip'
+            path.write_bytes(b'not the pinned archive')
+            with mock.patch.object(S.H, 'ARCHIVE', path):
+                with self.assertRaisesRegex(ValueError, 'archive differs'):
+                    S.verify_archive()
+
+
 class TruthReaderTest(unittest.TestCase):
     def test_semicolon_event_info(self):
         b = io.BytesIO()

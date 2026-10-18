@@ -8,6 +8,7 @@ Farm B + C pooled, assets keyed by (farm, asset_id). Floor breaks make the resul
 """
 import argparse
 import csv
+import hashlib
 from datetime import datetime
 import io
 import json
@@ -93,6 +94,16 @@ def clopper_pearson(k,n,alpha=.05):
     return [low,high]
 
 
+def verify_archive():
+    """The ZIP must still match the contract pins at the moment the truth is opened."""
+    c=H.contract()['source'];h=hashlib.sha256();m=hashlib.md5();n=0
+    with open(H.ARCHIVE,'rb') as f:
+        for block in iter(lambda:f.read(1<<24),b''):h.update(block);m.update(block);n+=len(block)
+    found={'bytes':n,'md5':m.hexdigest(),'sha256':h.hexdigest()}
+    if found!={'bytes':c['bytes'],'md5':c['md5'],'sha256':c['sha256']}:raise ValueError('archive differs from the contract pins')
+    return found
+
+
 def read_truth(z,farm):
     member=f'CARE_To_Compare/Wind Farm {farm}/event_info.csv'
     text=z.read(member).decode('utf-8-sig')
@@ -170,14 +181,15 @@ def score():
         if digest(H.unit_root(u['farm'],u['fold'])/'root-closed.json')!=u['closure_sha256']:raise ValueError('fold changed after the freeze')
     out=Files(SCORES);state='failed'
     try:
-        out.json('before-truth.json',{'freeze_closure_sha256':digest(FREEZE/'root-closed.json'),'truth_opened_yet':False})
+        out.json('before-truth.json',{'freeze_closure_sha256':digest(FREEZE/'root-closed.json'),'archive':verify_archive(),'truth_opened_yet':False})
         meta={};rows={};alarms={}
         for u in frozen['units']:
             farm=u['farm'];root=H.unit_root(farm,u['fold']);part=list(PREDICTION.iter_unpack((root/'test.bin').read_bytes()));eps=json.loads((root/'episodes.json').read_bytes())
             files={f['event_id']:f for f in json.loads((H.manifest_root(farm)/'dataset-manifest.json').read_bytes())['files']}
             for e in u['events']:
                 event=e['event_id'];meta[(farm,event)]=files[event];rows[(farm,event)]=[r for r in part if r[0]==event];alarms[(farm,event)]=eps[str(event)]
-        # First truth access, after the freeze record above.
+        # First truth access, after the freeze record above; the archive is checked again right before it.
+        verify_archive()
         with zipfile.ZipFile(H.ARCHIVE) as z:
             truth=[{**t,'farm':farm} for farm in H.FARMS for t in read_truth(z,farm)]
         if {(t['farm'],int(t['event_id'])) for t in truth}!=set(meta) or len(truth)!=len(meta):raise ValueError('truth cohort differs from the fixed files')
