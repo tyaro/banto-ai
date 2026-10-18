@@ -2,6 +2,7 @@
 
     python3 tools/care_holdout_score.py freeze   # verify all 31 folds and close the freeze root (no truth)
     python3 tools/care_holdout_score.py derived --scratch DIR   # rebuild input/preparation with the frozen sources, compare bytes
+    python3 tools/care_holdout_score.py pin-scorer   # bind the committed scorer and its dependencies to the freeze
     python3 tools/care_holdout_score.py score    # first truth access; writes the one-shot result
 
 The decision follows examples/configs/care-holdout-bc-20261018.json: own model on common support,
@@ -251,13 +252,43 @@ def verify_derived():
     if not d['identical'] or d['freeze_closure_sha256']!=digest(FREEZE/'root-closed.json'):raise ValueError('derived artifacts not verified against the frozen sources')
 
 
+SCORER_PIN=H.WORK/'scorer-pin'
+SCORER=('tools/care_holdout_score.py','models/mini-transformer/care_alarm.py','models/mini-transformer/care_holdout.py',
+        'models/mini-transformer/care_training_preparation.py','models/mini-transformer/care_input.py','models/mini-transformer/metropt_multiday.py',
+        'examples/configs/care-holdout-bc-20261018.json')
+
+
+def scorer_sources():return {name:digest(ROOT/name) for name in SCORER}
+
+
+def pin_scorer():
+    """Bind the reviewed scorer and its dependencies to this freeze, before the truth is opened."""
+    import subprocess
+    verify_closed(FREEZE);verify_derived()
+    head=subprocess.run(['git','-C',str(ROOT),'rev-parse','HEAD'],capture_output=True,text=True,check=True).stdout.strip()
+    dirty=subprocess.run(['git','-C',str(ROOT),'status','--porcelain','--',*SCORER],capture_output=True,text=True,check=True).stdout
+    if dirty:raise SystemExit('scorer files differ from the commit: '+dirty)
+    out=Files(SCORER_PIN);state='failed'
+    try:
+        out.json('scorer-pin.json',{'freeze_closure_sha256':digest(FREEZE/'root-closed.json'),'commit':head,'sources':scorer_sources()});state='complete'
+    finally:out.close(state)
+    print(json.dumps({'scorer_pinned_at':head}))
+
+
+def verify_scorer():
+    verify_closed(SCORER_PIN);pin=json.loads((SCORER_PIN/'scorer-pin.json').read_bytes())
+    if pin['freeze_closure_sha256']!=digest(FREEZE/'root-closed.json') or pin['sources']!=scorer_sources():raise ValueError('scorer differs from the pinned sources')
+    return pin
+
+
 def score():
     verify_closed(FREEZE);frozen=json.loads((FREEZE/'freeze-before-truth.json').read_bytes())
     if frozen['contract_sha256']!=H.CONTRACT_SHA or frozen['folds']!=31 or frozen['event_truth_opened_yet']:raise ValueError('freeze record')
-    verify_frozen(frozen);verify_derived()
+    verify_frozen(frozen);verify_derived();pin=verify_scorer()
     out=Files(SCORES);state='failed'
     try:
-        out.json('before-truth.json',{'freeze_closure_sha256':digest(FREEZE/'root-closed.json'),'archive':verify_archive(),'truth_opened_yet':False})
+        out.json('before-truth.json',{'freeze_closure_sha256':digest(FREEZE/'root-closed.json'),'archive':verify_archive(),'scorer_commit':pin['commit'],
+                                      'scorer_sources':pin['sources'],'truth_opened_yet':False})
         meta={};rows={};alarms={}
         for u in frozen['units']:
             farm=u['farm'];root=H.unit_root(farm,u['fold']);part=list(PREDICTION.iter_unpack((root/'test.bin').read_bytes()));eps=json.loads((root/'episodes.json').read_bytes())
@@ -265,7 +296,7 @@ def score():
             for e in u['events']:
                 event=e['event_id'];meta[(farm,event)]=files[event];rows[(farm,event)]=[r for r in part if r[0]==event];alarms[(farm,event)]=eps[str(event)]
         # First truth access, after the freeze record above; the frozen roots and the archive are checked again right before it.
-        verify_frozen(frozen);verify_archive()
+        verify_frozen(frozen);verify_derived();verify_scorer();verify_archive()
         with zipfile.ZipFile(H.ARCHIVE) as z:
             truth=[{**t,'farm':farm} for farm in H.FARMS for t in read_truth(z,farm)]
         if {(t['farm'],int(t['event_id'])) for t in truth}!=set(meta) or len(truth)!=len(meta):raise ValueError('truth cohort differs from the fixed files')
@@ -296,5 +327,5 @@ def score():
 
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('command',choices=('freeze','derived','score'));p.add_argument('--scratch',default=str(H.WORK));a=p.parse_args()
-    {'freeze':freeze,'derived':lambda:regenerate(a.scratch),'score':score}[a.command]()
+    p=argparse.ArgumentParser();p.add_argument('command',choices=('freeze','derived','pin-scorer','score'));p.add_argument('--scratch',default=str(H.WORK));a=p.parse_args()
+    {'freeze':freeze,'derived':lambda:regenerate(a.scratch),'pin-scorer':pin_scorer,'score':score}[a.command]()

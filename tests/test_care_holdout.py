@@ -176,6 +176,22 @@ class DerivedCheckTest(unittest.TestCase):
                             S.verify_derived()
 
 
+class ScorerPinTest(unittest.TestCase):
+    def test_changed_scorer_is_rejected_before_the_truth(self):
+        import tempfile
+        from unittest import mock
+        from metropt_multiday import Files, digest
+        with tempfile.TemporaryDirectory() as tmp:
+            freeze = Path(tmp)/'freeze'; f = Files(freeze); f.json('freeze-before-truth.json', {}); f.close('complete')
+            pin = Path(tmp)/'pin'; f = Files(pin)
+            f.json('scorer-pin.json', {'freeze_closure_sha256': digest(freeze/'root-closed.json'), 'commit': 'c', 'sources': S.scorer_sources()}); f.close('complete')
+            with mock.patch.object(S, 'FREEZE', freeze), mock.patch.object(S, 'SCORER_PIN', pin):
+                self.assertEqual(S.verify_scorer()['commit'], 'c')
+                with mock.patch.object(S, 'scorer_sources', lambda: {'tools/care_holdout_score.py': '0'*64}):
+                    with self.assertRaisesRegex(ValueError, 'scorer differs'):
+                        S.verify_scorer()
+
+
 class FrozenRootsTest(unittest.TestCase):
     """A fold, input or preparation root changed after the freeze is rejected before the truth is read."""
 
