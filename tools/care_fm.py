@@ -12,7 +12,9 @@ alarm rule of CARE-A-MAINT-20261016-r1. No labels are read here.
               R, per-method 99.5% thresholds and alarm episodes over whole files (never per
               chunk), then hash everything; still no labels
 
-    python3 tools/care_fm.py campaign --output artifacts/care-fm-20261017 --venvs <dir with fm-<method>/>
+    python3 tools/care_fm.py campaign --output artifacts/care-fm-20261017 --venvs <dir with fm-<method>/ and hf-cache/<method>/>
+    <dir>/fm-<method>/bin/python tools/care_fm.py environment --method <method> --cache <dir>/hf-cache/<method> \
+        --output artifacts/care-fm-20261017      (once per method; freeze requires these records)
     python3 tools/care_fm.py freeze --output artifacts/care-fm-20261017
 """
 import argparse
