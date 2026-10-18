@@ -69,7 +69,7 @@
 1. W＝72時間で、検知可能なanomalyの50%以上を検知する。
 2. W＝24時間で、検知可能なanomalyの60%以上を検知する。
 3. 正常fileの誤警報が、pooledでasset・30日あたり1.0件以下。
-4. 正常fileを持つ全assetで、asset別の率も1.0件以下。
+4. 正常fileを持つ全assetで、asset別の率も1.0件以下。assetは(farm, asset_id)で区別する（BとCには同じ番号2・5・12・13・14があるが別の風車）。
 
 - 検知可能なeventが0件のWは、合格としない。
 - 次はfarm別にも示すが、合否には使わない：誤警報の目標0.25件、Clopper–Pearsonの95%信頼区間、注釈区間外の警報件数、168時間の既定値と見られる区間の印、先行時間の代理値とearliness、baselineとの差。
@@ -90,7 +90,8 @@
 
 - 各fold：親900秒、子870秒、peak RSS 2GiB。
 - campaign：全体で8時間以内。止まっても、閉じたfoldから再開できるようにする。
-- 実行環境はLinux CPU（torch 2.14系）。Farm AはMacで学習したため、同じ設定でもbytesは一致しない。
+- 実行環境は固定する：CPython 3.14.6、torch 2.14.1+cpu（git 5c488690…、libtorch_cpu SHA-256 `e7b6071e…eb9da4`）、Linux x86_64。threadはFarm Aのコードと同じ（演算2、interop 1、deterministic algorithms有効）。各foldは学習前に環境を記録・照合し、違えば止める。
+- Farm AはMacで学習したため、同じ設定でもbytesは一致しない。
 - 保存物はgitignoreの`artifacts/`に置く。公開するのはhashと集計だけ。
 
 **コードの変更**

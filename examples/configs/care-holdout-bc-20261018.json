@@ -1667,7 +1667,7 @@
    "hits at W=72 h / attainable at W=72 h >= 0.50",
    "hits at W=24 h / attainable at W=24 h >= 0.60",
    "pooled false episodes per asset per 30 days <= 1.0",
-   "per-asset false episodes per asset per 30 days <= 1.0 for every asset with normal files"
+   "per-asset false episodes per asset per 30 days <= 1.0 for every asset (keyed by (farm, asset_id)) with normal files"
   ],
   "no_attainable_events": "not a pass",
   "reported_not_decisive": [
@@ -1678,7 +1678,8 @@
    "168 h default-interval flags",
    "lead proxy and earliness",
    "native and common baselines"
-  ]
+  ],
+  "asset_key": "(farm, asset_id), written \"B:2\" / \"C:2\"; Farms B and C share IDs 2, 5, 12, 13, 14 and are different turbines"
  },
  "after_opening": {
   "labels": "read by the evaluator only after all folds' predictions, thresholds and alarms are frozen and closed",
@@ -1696,11 +1697,26 @@
   },
   "campaign_seconds_max": 28800,
   "resume_from_closed_folds": true,
-  "environment": "Linux CPU, torch 2.14 series (Farm A was trained on macOS; bytes not expected to match)",
+  "environment": "pinned runtime below (Farm A was trained on macOS; bytes not expected to match)",
   "artifacts": "gitignored artifacts/; only hashes and summaries are committed"
  },
  "code": {
   "generalize": "Farm A input and learning code takes farm, signals and split as arguments; recipe values unchanged",
   "check": "rebuild the Farm A numeric input root and match the saved bytes (no training); no Farm A retraining"
+ },
+ "runtime": {
+  "python": "CPython 3.14.6",
+  "torch": "2.14.1+cpu",
+  "torch_git_version": "5c4886908584029761b579af026dcfb627c84070",
+  "libtorch_cpu_sha256": "e7b6071e7337a6ee44bf2b7ae46898d654e7e1e2be348d10de0d7ac8d2eb9da4",
+  "numpy": "not installed",
+  "platform": "Linux x86_64, glibc 2.39",
+  "threads": {
+   "torch.set_num_threads": 2,
+   "torch.set_num_interop_threads": 1,
+   "torch.use_deterministic_algorithms": true,
+   "source": "inherited from models/mini-transformer/care_learning.py"
+  },
+  "check": "each fold records the runtime and stops before training on any mismatch"
  }
 }
