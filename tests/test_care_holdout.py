@@ -121,6 +121,27 @@ class ArchivePinTest(unittest.TestCase):
                     S.verify_archive()
 
 
+def sources_zip(members):
+    b = io.BytesIO()
+    with zipfile.ZipFile(b, 'w') as z:
+        for name, data in members.items():
+            z.writestr(name, data)
+    return b.getvalue()
+
+
+class SameSourcesTest(unittest.TestCase):
+    def test_folds_from_different_runners_are_rejected(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            roots = []
+            for i, data in enumerate((b'runner', b'runner', b'changed runner')):
+                root = Path(tmp)/str(i); root.mkdir(); roots.append(root)
+                (root/'sources.zip').write_bytes(sources_zip({'tools/care_holdout.py': data}))
+            self.assertEqual(S.same_sources(roots[:2]), S.unit_sources(roots[0]))
+            with self.assertRaisesRegex(ValueError, 'different sources'):
+                S.same_sources(roots)
+
+
 class FrozenRootsTest(unittest.TestCase):
     """A fold, input or preparation root changed after the freeze is rejected before the truth is read."""
 
@@ -133,6 +154,7 @@ class FrozenRootsTest(unittest.TestCase):
         unit = base/'unit'; files = Files(unit)
         for name in ('test.bin', 'episodes.json', 'thresholds.json'):
             files.write(name, name.encode())
+        files.write('sources.zip', sources_zip({'tools/care_holdout.py': b'runner'}))
         files.close('complete')
         event = base/'event'; files = Files(event); files.write('event.bin', b'rows'); files.close('complete')
         manifest = base/'manifest'; files = Files(manifest)
@@ -141,7 +163,8 @@ class FrozenRootsTest(unittest.TestCase):
         self.unit, self.event, self.manifest, self.prep = unit, event, manifest, prep
         self.frozen = {'units': [{'farm': 'B', 'fold': 0, **{k: digest(unit/n) for k, n in (('closure_sha256', 'root-closed.json'), ('test_sha256', 'test.bin'),
                                                                                          ('episodes_sha256', 'episodes.json'), ('thresholds_sha256', 'thresholds.json'))}}],
-                       'input_closures': {'B': digest(manifest/'root-closed.json')}, 'preparation_closures': {'B': digest(prep/'root-closed.json')}}
+                       'input_closures': {'B': digest(manifest/'root-closed.json')}, 'preparation_closures': {'B': digest(prep/'root-closed.json')},
+                       'unit_sources': S.unit_sources(unit)}
         self.patches = [mock.patch.object(S.H, 'FARMS', ('B',)), mock.patch.object(S.H, 'unit_root', lambda farm, fold: unit),
                         mock.patch.object(S.H, 'manifest_root', lambda farm: manifest), mock.patch.object(S.H, 'event_root', lambda farm, e: event),
                         mock.patch.object(S.H, 'prep_root', lambda farm: prep)]

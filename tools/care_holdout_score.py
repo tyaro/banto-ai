@@ -65,13 +65,28 @@ def verify_unit(farm,fold):
             'episodes_sha256':digest(root/'episodes.json'),'thresholds_sha256':digest(root/'thresholds.json'),'events':checked}
 
 
+def unit_sources(root):
+    """Content digests of the sources a fold recorded in its sources.zip."""
+    import hashlib
+    with zipfile.ZipFile(root/'sources.zip') as z:
+        return {name:hashlib.sha256(z.read(name)).hexdigest() for name in sorted(z.namelist())}
+
+
+def same_sources(roots):
+    """Every fold must have been built by the same runner and model code."""
+    sources=[unit_sources(root) for root in roots]
+    if not sources or any(s!=sources[0] for s in sources):raise ValueError('folds were built by different sources')
+    return sources[0]
+
+
 def freeze():
     units=[verify_unit(farm,f['fold']) for farm in H.FARMS for f in H.folds(farm)]
+    sources=same_sources([H.unit_root(u['farm'],u['fold']) for u in units])
     out=Files(FREEZE);state='failed'
     try:
         out.json('freeze-before-truth.json',{'contract_sha256':H.CONTRACT_SHA,'units':units,'folds':len(units),
             'input_closures':{farm:digest(H.manifest_root(farm)/'root-closed.json') for farm in H.FARMS},
-            'preparation_closures':{farm:digest(H.prep_root(farm)/'root-closed.json') for farm in H.FARMS},
+            'preparation_closures':{farm:digest(H.prep_root(farm)/'root-closed.json') for farm in H.FARMS},'unit_sources':sources,
             'all_predictions_thresholds_alarms_closed':True,'event_truth_opened_yet':False});state='complete'
     finally:out.close(state)
     print(json.dumps({'freeze_closure':digest(FREEZE/'root-closed.json'),'folds':len(units)}))
@@ -176,6 +191,7 @@ def decide(results,floors):
 
 def verify_frozen(frozen):
     """Every fold, input and preparation root must still hold exactly the frozen bytes."""
+    if same_sources([H.unit_root(u['farm'],u['fold']) for u in frozen['units']])!=frozen['unit_sources']:raise ValueError('fold sources changed after the freeze')
     for u in frozen['units']:
         root=H.unit_root(u['farm'],u['fold']);verify_closed(root)
         found=[digest(root/n) for n in ('root-closed.json','test.bin','episodes.json','thresholds.json')]
