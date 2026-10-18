@@ -51,19 +51,19 @@ def normal_rows(event):
 
 
 def normalization(populations):
-    if len(populations)!=3 or any(not xs for xs in populations):raise ValueError('three supported train assets required')
-    result=[];alarm=[]
+    if not populations or any(not xs for xs in populations):raise ValueError('every train asset needs support')
+    K=len(populations);result=[];alarm=[]
     for channel in range(3):
         per_asset=[[row[channel] for row in xs] for xs in populations]
-        mean=math.fsum(math.fsum(xs)/len(xs) for xs in per_asset)/3
-        variance=math.fsum(math.fsum((x-mean)**2 for x in xs)/len(xs) for xs in per_asset)/3
+        mean=math.fsum(math.fsum(xs)/len(xs) for xs in per_asset)/K
+        variance=math.fsum(math.fsum((x-mean)**2 for x in xs)/len(xs) for xs in per_asset)/K
         sigma=math.sqrt(variance);T=max(sigma,1e-5);floor=max(.01*sigma,1e-5)
         t32,floor32=f32(T),f32(floor)
         if not all(math.isfinite(x) for x in (mean,variance,sigma,T,floor,t32,floor32)) or min(T,floor,t32,floor32)<=0:
             raise ValueError('invalid normalization')
         result.append({'mean64':mean,'variance64':variance,'sigma64':sigma,'T64':T,'context_floor64':floor,'T32':t32,'context_floor32':floor32})
         if channel<2:
-            weighted=[(x,1/(3*len(xs))) for xs in per_asset for x in xs]
+            weighted=[(x,1/(K*len(xs))) for xs in per_asset for x in xs]
             median,mp=empirical(weighted,.5)
             mad,dp=empirical([(abs(x-median),w) for x,w in weighted],.5)
             R=max(1.4826*mad,1e-3)
@@ -79,8 +79,8 @@ def map_empty_bins(counts):
 
 
 def baseline_profile(pairs_by_asset):
-    if len(pairs_by_asset)!=3 or any(not rows for rows in pairs_by_asset):raise ValueError('baseline asset support')
-    pairs=[(power,ys,asset,1/(3*len(rows))) for asset,rows in enumerate(pairs_by_asset) for power,ys in rows]
+    if not pairs_by_asset or any(not rows for rows in pairs_by_asset):raise ValueError('baseline asset support')
+    K=len(pairs_by_asset);pairs=[(power,ys,asset,1/(K*len(rows))) for asset,rows in enumerate(pairs_by_asset) for power,ys in rows]
     cuts=[];cut_proofs=[]
     for p in (.25,.5,.75):
         cut,proof=empirical([(r[0],r[3]) for r in pairs],p);cuts.append(cut);cut_proofs.append(proof)
@@ -94,10 +94,10 @@ def baseline_profile(pairs_by_asset):
                 value,proof=empirical([(r[1][target],r[3]) for r in rows],.5);estimates.append(value);proofs.append(proof)
         values.append(estimates or None);certs.append(proofs)
     return {'load_cuts64':cuts,'cut_certificates':cut_proofs,'pair_counts':counts,
-            'per_bin_asset_counts':[[sum(r[2]==a for r in rows) for a in range(3)] for rows in bins],
+            'per_bin_asset_counts':[[sum(r[2]==a for r in rows) for a in range(K)] for rows in bins],
             'minimum_nonempty_pairs':128,'support_passed':all(n==0 or n>=128 for n in counts),
             'thermal_medians64':values,'median_certificates':certs,'inference_bin_mapping':mapping,
-            'weighting':'original pair mass 1/(3*N_asset); restricted-bin CDF renormalized, not re-equalized within bin',
+            'weighting':f'original pair mass 1/({K}*N_asset); restricted-bin CDF renormalized, not re-equalized within bin',
             'equality':'lower bin via bisect_left, duplicate cuts retained'}
 
 
@@ -106,10 +106,10 @@ def encode_origins(origins):return struct.pack('<'+'I'*len(origins),*origins)
 
 def schedule(train,origins):
     """train is sorted [(asset ID string, anchor event)]; replacement sampling."""
-    if len(train)!=3 or train!=sorted(train,key=lambda r:int(r[0])):raise ValueError('train asset ordering')
-    rng=random.Random(SAMPLER_SEED);raw=bytearray();counts=[0,0,0]
+    if not train or train!=sorted(train,key=lambda r:int(r[0])):raise ValueError('train asset ordering')
+    rng=random.Random(SAMPLER_SEED);raw=bytearray();counts=[0]*len(train)
     for _ in range(UPDATES*BATCH):
-        k=rng.randrange(3);asset,event=train[k];n=origins[event][rng.randrange(len(origins[event]))]
+        k=rng.randrange(len(train));asset,event=train[k];n=origins[event][rng.randrange(len(origins[event]))]
         raw+=SCHEDULE_RECORD.pack(int(asset),event,n);counts[k]+=1
     return bytes(raw),counts
 
