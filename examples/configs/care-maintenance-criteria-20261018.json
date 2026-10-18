@@ -1,0 +1,48 @@
+{
+  "schema": "banto.care-maintenance-criteria.v1",
+  "id": "CARE-MAINT-CRITERIA-20261018",
+  "status": "approved by the owner on 2026-10-18 after the practical evaluation (recommended by a Fable review)",
+  "applies_to": "docs/research/care-maintenance-practical-contract-2026-10-17.md, which left the required lead time and allowed false-alarm rate to the owner",
+  "observations": {
+    "interval_lengths_hours": "8 of 12 anomaly intervals are about 168 h (seven 168.0, one 168.2); the others are 279, 336, 336 and 757 h: likely an annotation default, not a measured onset",
+    "own_model_detections_by_asset": "A:0 2 of 3, A:10 1 of 3, other assets 0",
+    "own_vs_native_baseline": "3 vs 2 of 12, not distinguishable (3/12 95% CI about 5-57%)",
+    "off_window_alarms_own_model": 2,
+    "normal_record_hours": 4247
+  },
+  "lead_time": {
+    "primary_hours": 72,
+    "secondary_hours": 24,
+    "report_only_hours": [0, 168],
+    "rationale": "72 h is the minimum to re-plan a crew, bring an inspection forward and order consumables; 24 h supports a stop/curtail decision only; 168 h is not used on CARE because the intervals look like a default (use it only on data with measured intervals, e.g. offshore)"
+  },
+  "false_alarms": {
+    "unit": "false episodes per asset per 30 days (record: per 1000 normal record-hours)",
+    "ceiling": {"per_asset_30_days": 1.0, "per_1000_record_hours": 1.4, "meaning": "analyst triage without a site visit"},
+    "target": {"per_asset_30_days": 0.25, "per_1000_record_hours": 0.35, "meaning": "an alarm can trigger a site visit"},
+    "care_farm_a_counts": {"normal_episodes_total_max": 4, "per_asset_max": 2, "normal_alarm_time_fraction_max": 0.002}
+  },
+  "use": {
+    "care_farm_a": {
+      "status": "already-read development material: comparison only, no pass/fail",
+      "promising_if_all": [
+        "hits at W=72 h >= native-support baseline hits at W=72 h + 3 (currently >= 4 of 12)",
+        "normal false episodes <= 3 and normal alarm time not above the native-support baseline",
+        "detections on >= 3 of 5 assets"
+      ],
+      "reporting": "counts with Clopper-Pearson 95% intervals, no p-values; the +3 margin is a decision rule, not a significance claim"
+    },
+    "practically_useful_minimum": {
+      "where": "a fresh holdout only",
+      "detection": "at least 50% of attainable events at W=72 h and at least 60% at W=24 h",
+      "false_alarms": "within the ceiling per asset and pooled; the target is reported as the aspiration",
+      "below": "under 50% at W=72 h the tool is an occasional hint, not an inspection planner"
+    },
+    "holdout": "CARE Farm B (15 files) and Farm C (58 files), not yet used for evaluation: fix these criteria, the signal mapping (from metadata only) and the split before opening, then score once; the only route to an acceptance claim",
+    "lead_proxy_reading": "report lead to event_end and normalized earliness; flag intervals equal to the 168 h default (a W=72 h hit there means detected within the first 4 days of a default window)"
+  },
+  "current_status": {
+    "own_model": "W=72 h 2/12; false episodes 0.51 per asset-30 days pooled (within the ceiling) but 2.41 for asset A:21 (2 episodes in 597 normal record-hours, above the ceiling): fails detection and the per-asset false-alarm ceiling; no advantage over the native-support baseline (1/12 at 72 h, 1.00 pooled, 1.91 at A:11)",
+    "foundation_models_same_alarm_rule": "0-1/12; a different alarm design (quantile-band exceedance, residual against a frozen-normal forecast) may be worth a contract with Chronos-2 and Toto 2 only (TimesFM 3 excluded by licence)"
+  }
+}

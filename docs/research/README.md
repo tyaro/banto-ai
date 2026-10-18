@@ -15,6 +15,7 @@
 - [R2P lock案・人工Python参照と次工程](../results/rust-r2p-lock-and-python-reference-2026-10-16.md) — 凍結参照を使う小型Rust実装へ。
 
 - [Rust現実装棚卸しと人工学習の固定条件](rust-r2p-synthetic-training-contract-2026-10-16.md) — 小型loss/gradient/AdamW/保存再開、manifest/lock未整合を保持。
+- [CARE保全の判定基準](care-maintenance-criteria-2026-10-18.md) — 必要な先行時間は72時間（副24時間）、誤警報は上限asset・30日1.0件／目標0.25件。Farm Aは比較だけ、合否はFarm B・Cの1回限りのholdoutで判定する。2026-10-18承認。
 - [保全の実用性評価と基盤モデル比較の契約](care-maintenance-practical-contract-2026-10-17.md) — 先行時間0/24/72/168時間別の検知と誤警報の換算を報告し、TimesFM 3・Chronos-2・Toto 2をzero-shotで同じ警報規則に載せる。CARE testは開発材料として扱う。
 - [正式R2の固定条件（CARE fold0）](rust-r2-formal-contract-2026-10-17.md) — 保存state＋新AdamWの1更新・8更新、保存再開、成熟state import、floorのtie。R0.2の比較で1回だけ実行する。
 - [R0.2: 全モデル更新比較の基準とR1の扱い](rust-r0.2-comparison-amendment-2026-10-17.md) — parameter更新はclip後|勾配|≥10·epsの要素で比較、正式R2の入口はR1最終出力と同一入力局所比較385件。2026-10-17承認。
