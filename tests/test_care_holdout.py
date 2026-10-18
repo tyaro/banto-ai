@@ -142,6 +142,21 @@ class SameSourcesTest(unittest.TestCase):
                 S.same_sources(roots)
 
 
+class ResumeTest(unittest.TestCase):
+    def test_closed_fold_is_reused_only_with_the_same_sources(self):
+        import tempfile
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('care_holdout_runner', ROOT/'tools/care_holdout.py')
+        runner = importlib.util.module_from_spec(spec); spec.loader.exec_module(runner)
+        current = (ROOT/'tools/care_holdout.py').read_bytes()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root/'sources.zip').write_bytes(sources_zip({'tools/care_holdout.py': current}))
+            self.assertTrue(runner.same_runner(root))
+            (root/'sources.zip').write_bytes(sources_zip({'tools/care_holdout.py': current+b'# changed'}))
+            self.assertFalse(runner.same_runner(root))
+
+
 class FrozenRootsTest(unittest.TestCase):
     """A fold, input or preparation root changed after the freeze is rejected before the truth is read."""
 

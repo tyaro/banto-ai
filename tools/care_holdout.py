@@ -65,6 +65,13 @@ def input_farm(farm):
     H.assemble(farm);print(json.dumps({'input':farm,'closure':digest(H.manifest_root(farm)/'root-closed.json')}))
 
 
+def same_runner(root):
+    """A closed fold is reused only if every source it recorded equals the current file."""
+    import zipfile
+    with zipfile.ZipFile(root/'sources.zip') as z:
+        return all((ROOT/name).is_file() and hashlib.sha256(z.read(name)).hexdigest()==digest(ROOT/name) for name in z.namelist())
+
+
 def units():
     return [(farm,f['fold']) for farm in H.FARMS for f in H.folds(farm)]
 
@@ -77,6 +84,9 @@ def campaign(hours):
             if H.unit_complete(farm,fold):
                 s=json.loads((root/'summary.json').read_bytes())
                 if s['resources']['elapsed_seconds']>870 or s['resources']['peak_rss_bytes']>2*1024**3:raise SystemExit(f'{farm} fold {fold} over a limit')
+                if not same_runner(root):
+                    log({'stage':'campaign','event':'stop','reason':'closed fold was built by different sources','farm':farm,'fold':fold})
+                    raise SystemExit(f'campaign not established: {farm} fold {fold} was built by different sources')
                 continue
             log({'stage':'campaign','event':'stop','reason':'fold root exists but is not complete','farm':farm,'fold':fold})
             raise SystemExit(f'campaign not established: {farm} fold {fold} failed or is incomplete')
