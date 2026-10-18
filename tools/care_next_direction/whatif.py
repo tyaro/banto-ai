@@ -80,7 +80,12 @@ def q(f,p):
     c=np.sort(f['cal']);i=min(len(c)-1,(int(p*1000)*len(c)+999)//1000-1);return c[i]
 def quant(p): return lambda f:(f['score'],np.full(len(f['score']),q(f,p)),f['common'])
 def mult(k): return lambda f:(f['score'],np.full(len(f['score']),f['thr']*k),f['common'])
-def zero_gate(f): return f['common']&~((f['y1']==0.0)|(f['y2']==0.0))
+def current_zero_gate(f): return f['common']&~((f['y1']==0.0)|(f['y2']==0.0))
+def zero_gate(f):
+    """Exclude rows whose 128-row past context (or the row itself) holds a 0.0 temperature reading."""
+    z=(f['y1']==0.0)|(f['y2']==0.0);after=np.zeros(len(z),bool)
+    for i in np.where(z)[0]:after[i:i+129]=True
+    return f['common']&~after
 def gate_rule(f): return f['score'],np.full(len(f['score']),f['thr']),zero_gate(f)
 def status_rule(f): return f['score'],np.full(len(f['score']),f['thr']),f['common']&(f['status']==0)
 def selfcal(burn=1008,p=.995,gate=False,floor=False):
@@ -117,7 +122,8 @@ def combo(elig_fn,thr_fn,n_open,n_close):
 print('EXPLORATORY what-ifs on opened B/C labels (neural-common); contract rule first')
 evaluate('contract (q99.5, 3/3)',base)
 evaluate('status0-only eligible',status_rule)
-evaluate('zero-value gate',gate_rule)
+evaluate('current-row zero gate',lambda f:(f['score'],np.full(len(f['score']),f['thr']),current_zero_gate(f)))
+evaluate('context gate',gate_rule)
 evaluate('cal q99.9',quant(.999))
 evaluate('thr x1.5',mult(1.5))
 evaluate('thr x2',mult(2))
@@ -126,7 +132,8 @@ evaluate('self-cal first 7d q99.5',selfcal())
 evaluate('self-cal 7d q99.5 +gate',selfcal(gate=True))
 evaluate('self-cal 7d q99.9 +gate',selfcal(p=.999,gate=True))
 evaluate('self-cal 7d q99.5 floor=contract +gate',selfcal(gate=True,floor=True))
-evaluate('rolling 7d lag1d q99.5 +gate',rolling(gate=True))
+evaluate('rolling every row, past 7d lag1d q99.5 +gate',rolling(gate=True))
+evaluate('rolling every row, past 7d lag1d q99.9 +gate',rolling(p=.999,gate=True))
 evaluate('detrend 24h median +gate',detrend(gate=True))
 evaluate('detrend 24h +gate thr x2',detrend(gate=True,k=2))
 # persistence variants

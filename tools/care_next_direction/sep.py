@@ -54,11 +54,11 @@ for fs,name in ((A,'A'),(BC,'BC')):
             for a0,b0 in zip(starts,ends):ranks[order[a0:b0]]=(a0+1+b0)/2
             auc=(ranks[:len(x)].sum()-len(x)*(len(x)+1)/2)/(len(x)*len(y))
             q_in=np.quantile(x,.995)/f['thr'];q_out=np.quantile(y,.995)/f['thr']
-            summ[name].append((f['farm'],f['ev'],f['asset'],round(ei*100,2),round(eo*100,2),round(auc,2),round(q_in,2),round(q_out,2),m['interval_hours'],m['methods']['neural-common']['hit_72h']))
+            summ[name].append((f['farm'],f['ev'],f['asset'],round(ei*100,2),round(eo*100,2),auc,round(q_in,2),round(q_out,2),m['interval_hours'],m['methods']['neural-common']['hit_72h']))
 for name,v in summ.items():
     print(name,'farm ev asset exc_in% exc_out% AUC q995in/thr q995out/thr window_h hit72')
-    for r in sorted(v,key=lambda r:-r[5]): print(' ',*r)
-    aucs=np.array([r[5] for r in v]);print(name,'median AUC',np.median(aucs).round(2),'AUC>=0.7:',(aucs>=.7).sum(),'/',len(aucs),' exc_in>2*exc_out:',sum(r[3]>2*max(r[4],0.1) for r in v))
+    for r in sorted(v,key=lambda r:-r[5]): print(' ',*r[:5],round(r[5],2),*r[6:])
+    aucs=np.array([r[5] for r in v]);print(name,'median AUC',round(float(np.median(aucs)),3),'AUC>=0.7:',(aucs>=.7).sum(),'/',len(aucs),' exc_in>2*exc_out:',sum(r[3]>2*max(r[4],0.1) for r in v))
 # C:2 zero dropouts: episodes within 128 rows after a zero-row
 f=[f for f in BC if f['farm']=='C' and f['ev']==36][0]
 z=(f['y1']==0)|(f['y2']==0);print('\nC:2 ev36 zero rows',z.sum(),'of',len(z))
