@@ -9,6 +9,7 @@ from collections import defaultdict, Counter
 import numpy as np
 ROOT=Path(__file__).resolve().parents[2]; sys.path.insert(0,str(ROOT/'models/mini-transformer'))
 from care_alarm import PREDICTION, COMMON
+from care_input import RECORD
 U=ROOT/'artifacts/care-holdout-20261018/units'; SC=ROOT/'artifacts/care-holdout-scores-20261018'
 status=pickle.load(open((ROOT/'artifacts/care-next-direction-20261018/status.pkl'),'rb'))
 pe={(e['farm'],e['event_id']):e for e in json.load(open(SC/'per-event.json'))}
@@ -24,9 +25,13 @@ for d in sorted(U.iterdir()):
     for r in rows: byev[r[0]].append(r)
     for ev,rs in byev.items():
         st=status[(farm,ev)]['pred_status']
+        # the 128 rows before the prediction span also enter the first contexts
+        raw=(ROOT/f'artifacts/care-holdout-20261018/input/{farm}/event-{ev}/event-{ev}.bin').read_bytes()
+        nt=rs[0][1];pre=list(RECORD.iter_unpack(raw[(nt-128)*32:nt*32]))
+        pre_zero=[j for j,r in enumerate(pre) if r[2]&1 and r[3]==0.0 or r[2]&2 and r[4]==0.0]
         a=np.array([[r[4],bool(r[5]&COMMON),r[6],r[7],r[8],r[9],r[12],st[r[1]][0]] for r in rs],dtype=float)
         files.append(dict(farm=farm,ev=ev,asset=f'{farm}:{prof["test_asset"]}',meta=pe[(farm,ev)],thr=thr,cal=cal,R=R,
-            avail=a[:,0],common=a[:,1]>0,y1=a[:,2],y2=a[:,3],p1=a[:,4],p2=a[:,5],score=a[:,6],status=a[:,7].astype(int)))
+            pre_zero=pre_zero,avail=a[:,0],common=a[:,1]>0,y1=a[:,2],y2=a[:,3],p1=a[:,4],p2=a[:,5],score=a[:,6],status=a[:,7].astype(int)))
 
 def run_episodes(f,score,thr_arr,elig,n_open=3,n_close=3):
     """thr_arr: per-row threshold (nan = row not usable for alarm, treated like ineligible)."""
@@ -85,6 +90,7 @@ def zero_gate(f):
     """Exclude rows whose 128-row past context (or the row itself) holds a 0.0 temperature reading."""
     z=(f['y1']==0.0)|(f['y2']==0.0);after=np.zeros(len(z),bool)
     for i in np.where(z)[0]:after[i:i+129]=True
+    for j in f['pre_zero']:after[:j+1]=True  # a zero at pre-row j (of 128) reaches prediction rows 0..j
     return f['common']&~after
 def gate_rule(f): return f['score'],np.full(len(f['score']),f['thr']),zero_gate(f)
 def status_rule(f): return f['score'],np.full(len(f['score']),f['thr']),f['common']&(f['status']==0)
