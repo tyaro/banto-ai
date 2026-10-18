@@ -54,6 +54,14 @@ Farm Cの自作モデルは1step予測が正確で（MAE 0.26℃）、閾値が�
 
 ## 記録
 
-- 分析はFableが、開封済みの成果物（`artifacts/care-holdout-20261018/`、`artifacts/care-holdout-scores-20261018/`、Farm Aの保存物）を読み取り専用で集計した。運転状態はZIPのprediction行から取り出した。
-- 分析スクリプトはCARE由来の中間ファイルを読むため、リポジトリには入れていない。SHA-256は次のとおり：analyze.py `f37d2b2c…`、whatif.py `180b48c2…`、sep.py `36cb1428…`、ctxgate.py `6226794c…`。
+- 分析はFableが、開封済みの成果物（`artifacts/care-holdout-20261018/`、`artifacts/care-holdout-scores-20261018/`、Farm Aの保存物）を読み取り専用で集計した。
+- 分析コードは[`tools/care_next_direction/`](../../tools/care_next_direction/)に置いた。コードだけで、データは含まない。
+  - `extract_status.py`：運転状態をZIPのprediction行から取り出し、gitignoreの`artifacts/care-next-direction-20261018/`に書く。commitしない。
+  - `analyze.py`：閾値の転移、欠落値、誤警報の形と時期。
+  - `sep.py`：区間内と区間外の分離（AUC）。
+  - `whatif.py`：警報規則の試算。
+  - `ctxgate.py`：欠落区間の除外を組み合わせた試算。
+- commit後に全スクリプトを実行し直して、この文書の数値が再現されることを確かめた。
+  - 表の「契約＋欠落区間の除外」と「7日ごとに校正し直す」の行は`ctxgate.py`の値。
+  - それ以外の行は`whatif.py`の値。
 - 数値は、この一度の探索で得たものである。規則を選ぶ根拠にはしても、性能の主張には使わない。
