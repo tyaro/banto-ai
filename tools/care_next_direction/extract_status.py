@@ -24,4 +24,5 @@ with zipfile.ZipFile(Z) as z:
             out[(farm,item['event_id'])]={'asset':item['asset_id'],'train_rows':nt,'pred_status':st,
                 'train_start':item['split_transitions'][0]['timestamp'],'pred_start':item['split_transitions'][1]['timestamp']}
             print(farm,item['event_id'],len(st),file=sys.stderr)
+(ROOT/'artifacts/care-next-direction-20261018').mkdir(parents=True,exist_ok=True)
 pickle.dump(out,open((ROOT/'artifacts/care-next-direction-20261018/status.pkl'),'wb'))

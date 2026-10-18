@@ -48,8 +48,11 @@ for fs,name in ((A,'A'),(BC,'BC')):
             if (inw&c).sum()<10 or ((~inw)&c).sum()<10: continue
             ei=(s[inw&c]>f['thr']).mean();eo=(s[(~inw)&c]>f['thr']).mean()
             x=s[inw&c];y=s[(~inw)&c]
-            # AUC via rank
-            allv=np.concatenate([x,y]);ranks=allv.argsort().argsort()+1;auc=(ranks[:len(x)].sum()-len(x)*(len(x)+1)/2)/(len(x)*len(y))
+            # AUC via average ranks (ties count 1/2, as in the Mann-Whitney U statistic)
+            allv=np.concatenate([x,y]);order=allv.argsort(kind='stable');sv=allv[order];ranks=np.empty(len(allv))
+            starts=np.r_[0,np.flatnonzero(np.diff(sv))+1];ends=np.r_[starts[1:],len(sv)]
+            for a0,b0 in zip(starts,ends):ranks[order[a0:b0]]=(a0+1+b0)/2
+            auc=(ranks[:len(x)].sum()-len(x)*(len(x)+1)/2)/(len(x)*len(y))
             q_in=np.quantile(x,.995)/f['thr'];q_out=np.quantile(y,.995)/f['thr']
             summ[name].append((f['farm'],f['ev'],f['asset'],round(ei*100,2),round(eo*100,2),round(auc,2),round(q_in,2),round(q_out,2),m['interval_hours'],m['methods']['neural-common']['hit_72h']))
 for name,v in summ.items():
