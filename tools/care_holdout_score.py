@@ -39,12 +39,22 @@ def threshold_for(thresholds,method):
     return thresholds['neural' if method=='neural-common' else 'baseline']['threshold']
 
 
+def consumed_roots(farm,fold):
+    """The fold must have consumed exactly the current input and preparation roots and its fold profile/schedule."""
+    root=H.unit_root(farm,fold);used=json.loads((root/'input.json').read_bytes());prep=H.prep_root(farm)
+    expected={'input_closure_sha256':digest(H.manifest_root(farm)/'root-closed.json'),'preparation_closure_sha256':digest(prep/'root-closed.json'),
+              'schedule_sha256':digest(prep/f'fold-{fold}-schedule.bin')}
+    if {k:used[k] for k in expected}!=expected or used['profile']!=json.loads((prep/f'fold-{fold}-profile.json').read_bytes()):
+        raise ValueError(f'{farm} fold {fold} was built from other input/preparation roots')
+
+
 def verify_unit(farm,fold):
     """Recompute flags, lineage, scores and episodes of every test row from the input (no truth)."""
     root=H.unit_root(farm,fold)
     if not H.unit_complete(farm,fold):raise ValueError(f'{farm} fold {fold} incomplete')
     s=json.loads((root/'summary.json').read_bytes())
     if s['resources']['elapsed_seconds']>870 or s['resources']['peak_rss_bytes']>2*1024**3:raise ValueError(f'{farm} fold {fold} over a limit')
+    consumed_roots(farm,fold)
     rows=list(PREDICTION.iter_unpack((root/'test.bin').read_bytes()));reader=H.HoldoutConsumer(farm,fold,'test')
     profile=json.loads((root/'input.json').read_bytes())['profile'];eps=json.loads((root/'episodes.json').read_bytes())
     thresholds=json.loads((root/'thresholds.json').read_bytes())['methods'];checked=[]
@@ -206,6 +216,7 @@ def verify_frozen(frozen):
             if digest(event/'root-closed.json')!=f['event_root_closure_sha256']:raise ValueError('input event changed after the freeze')
         prep=H.prep_root(farm);verify_closed(prep)
         if digest(prep/'root-closed.json')!=frozen['preparation_closures'][farm]:raise ValueError('preparation changed after the freeze')
+    for u in frozen['units']:consumed_roots(u['farm'],u['fold'])
 
 
 DERIVED=H.WORK/'derived-check'

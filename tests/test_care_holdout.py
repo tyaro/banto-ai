@@ -201,15 +201,17 @@ class FrozenRootsTest(unittest.TestCase):
         from unittest import mock
         from metropt_multiday import Files, digest
         self.tmp = tempfile.TemporaryDirectory(); base = Path(self.tmp.name); self.digest = digest
+        event = base/'event'; files = Files(event); files.write('event.bin', b'rows'); files.close('complete')
+        manifest = base/'manifest'; files = Files(manifest)
+        files.json('dataset-manifest.json', {'files': [{'event_id': 1, 'event_root_closure_sha256': digest(event/'root-closed.json')}]}); files.close('complete')
+        prep = base/'prep'; files = Files(prep); files.write('fold-0-schedule.bin', b'schedule'); files.json('fold-0-profile.json', {'fold': 0}); files.close('complete')
         unit = base/'unit'; files = Files(unit)
         for name in ('test.bin', 'episodes.json', 'thresholds.json'):
             files.write(name, name.encode())
         files.write('sources.zip', sources_zip({'tools/care_holdout.py': b'runner'}))
+        files.json('input.json', {'input_closure_sha256': digest(manifest/'root-closed.json'), 'preparation_closure_sha256': digest(prep/'root-closed.json'),
+                                  'schedule_sha256': digest(prep/'fold-0-schedule.bin'), 'profile': {'fold': 0}})
         files.close('complete')
-        event = base/'event'; files = Files(event); files.write('event.bin', b'rows'); files.close('complete')
-        manifest = base/'manifest'; files = Files(manifest)
-        files.json('dataset-manifest.json', {'files': [{'event_id': 1, 'event_root_closure_sha256': digest(event/'root-closed.json')}]}); files.close('complete')
-        prep = base/'prep'; files = Files(prep); files.write('fold-0-schedule.bin', b'schedule'); files.close('complete')
         self.unit, self.event, self.manifest, self.prep = unit, event, manifest, prep
         self.frozen = {'units': [{'farm': 'B', 'fold': 0, **{k: digest(unit/n) for k, n in (('closure_sha256', 'root-closed.json'), ('test_sha256', 'test.bin'),
                                                                                          ('episodes_sha256', 'episodes.json'), ('thresholds_sha256', 'thresholds.json'))}}],
@@ -249,6 +251,16 @@ class FrozenRootsTest(unittest.TestCase):
         (self.event/'event.bin').write_bytes(b'other')
         with self.assertRaisesRegex(ValueError, 'digest mismatch'):
             S.verify_frozen(self.frozen)
+
+    def test_fold_built_from_other_preparation_is_rejected(self):
+        from metropt_multiday import Files
+        other = Path(self.tmp.name)/'other-prep'; files = Files(other)
+        files.write('fold-0-schedule.bin', b'other schedule'); files.json('fold-0-profile.json', {'fold': 0}); files.close('complete')
+        frozen = dict(self.frozen, preparation_closures={'B': self.digest(other/'root-closed.json')})
+        from unittest import mock
+        with mock.patch.object(S.H, 'prep_root', lambda farm: other):
+            with self.assertRaisesRegex(ValueError, 'other input/preparation roots'):
+                S.verify_frozen(frozen)
 
     def test_changed_preparation_closure_is_rejected(self):
         frozen = dict(self.frozen, preparation_closures={'B': '0'*64})
