@@ -1,6 +1,7 @@
 """CARE Farm B/C holdout: freeze every fold, then open the event information and score once.
 
     python3 tools/care_holdout_score.py freeze   # verify all 31 folds and close the freeze root (no truth)
+    python3 tools/care_holdout_score.py derived --scratch DIR   # rebuild input/preparation with the frozen sources, compare bytes
     python3 tools/care_holdout_score.py score    # first truth access; writes the one-shot result
 
 The decision follows examples/configs/care-holdout-bc-20261018.json: own model on common support,
@@ -206,10 +207,54 @@ def verify_frozen(frozen):
         if digest(prep/'root-closed.json')!=frozen['preparation_closures'][farm]:raise ValueError('preparation changed after the freeze')
 
 
+DERIVED=H.WORK/'derived-check'
+PRODUCERS=('models/mini-transformer/care_holdout.py','models/mini-transformer/care_training_preparation.py','models/mini-transformer/care_input.py',
+           'models/mini-transformer/metropt_multiday.py','tools/public-data/care_numeric_prepare.py')
+
+
+def regenerate(scratch):
+    """Rebuild every input event and preparation root with the code the folds recorded; compare the payload bytes."""
+    import tempfile
+    from unittest import mock
+    verify_closed(FREEZE);frozen=json.loads((FREEZE/'freeze-before-truth.json').read_bytes());recorded=frozen['unit_sources']
+    for name in PRODUCERS:
+        if recorded.get(name)!=digest(ROOT/name):raise ValueError('producer source differs from the frozen folds: '+name)
+    scratch=Path(tempfile.mkdtemp(dir=scratch));differ=[];compared=0
+    for farm in H.FARMS:
+        for item in H.manifest(farm)['files']:
+            event=item['event_id'];old=H.event_root(farm,event);new=scratch/farm/f'event-{event}'
+            with mock.patch.object(H,'event_root',lambda f,e,new=new:new):H.prepare_event(farm,event,H.Checkpoint(seconds=3600))
+            q=lambda r:{k:v for k,v in json.loads((r/'quality.json').read_bytes()).items() if k!='resources'}
+            same=(old/f'event-{event}.bin').read_bytes()==(new/f'event-{event}.bin').read_bytes() and (old/'meta.json').read_bytes()==(new/'meta.json').read_bytes() and q(old)==q(new)
+            compared+=1;differ+=[] if same else [f'{farm} event {event}']
+        new=scratch/farm/'prep'
+        with mock.patch.object(H,'prep_root',lambda f,new=new:new):H.prepare_profiles(farm,H.Checkpoint(seconds=3600))
+        old=H.prep_root(farm)
+        for path in sorted(old.iterdir()):
+            if path.name.startswith(('fold-','anchor-')):
+                compared+=1
+                if path.read_bytes()!=(new/path.name).read_bytes():differ.append(f'{farm} {path.name}')
+        m=lambda r:{k:v for k,v in json.loads((r/'manifest.json').read_bytes()).items() if k!='resources'}
+        compared+=1
+        if m(old)!=m(new):differ.append(f'{farm} preparation manifest')
+    out=Files(DERIVED);state='failed'
+    try:
+        out.json('derived-check.json',{'freeze_closure_sha256':digest(FREEZE/'root-closed.json'),'producer_sources':{n:recorded[n] for n in PRODUCERS},
+            'compared':compared,'differ':differ,'identical':not differ});state='complete'
+    finally:out.close(state)
+    if differ:raise SystemExit('derived artifacts differ: '+json.dumps(differ))
+    print(json.dumps({'derived_artifacts_identical':compared}))
+
+
+def verify_derived():
+    verify_closed(DERIVED);d=json.loads((DERIVED/'derived-check.json').read_bytes())
+    if not d['identical'] or d['freeze_closure_sha256']!=digest(FREEZE/'root-closed.json'):raise ValueError('derived artifacts not verified against the frozen sources')
+
+
 def score():
     verify_closed(FREEZE);frozen=json.loads((FREEZE/'freeze-before-truth.json').read_bytes())
     if frozen['contract_sha256']!=H.CONTRACT_SHA or frozen['folds']!=31 or frozen['event_truth_opened_yet']:raise ValueError('freeze record')
-    verify_frozen(frozen)
+    verify_frozen(frozen);verify_derived()
     out=Files(SCORES);state='failed'
     try:
         out.json('before-truth.json',{'freeze_closure_sha256':digest(FREEZE/'root-closed.json'),'archive':verify_archive(),'truth_opened_yet':False})
@@ -251,5 +296,5 @@ def score():
 
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('command',choices=('freeze','score'));a=p.parse_args()
-    freeze() if a.command=='freeze' else score()
+    p=argparse.ArgumentParser();p.add_argument('command',choices=('freeze','derived','score'));p.add_argument('--scratch',default=str(H.WORK));a=p.parse_args()
+    {'freeze':freeze,'derived':lambda:regenerate(a.scratch),'score':score}[a.command]()

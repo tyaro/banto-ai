@@ -157,6 +157,25 @@ class ResumeTest(unittest.TestCase):
             self.assertFalse(runner.same_runner(root))
 
 
+class DerivedCheckTest(unittest.TestCase):
+    def test_score_requires_an_identical_rebuild_against_this_freeze(self):
+        import tempfile
+        from unittest import mock
+        from metropt_multiday import Files, digest
+        with tempfile.TemporaryDirectory() as tmp:
+            freeze = Path(tmp)/'freeze'; f = Files(freeze); f.json('freeze-before-truth.json', {}); f.close('complete')
+            for name, identical, closure in (('ok', True, digest(freeze/'root-closed.json')), ('differs', False, digest(freeze/'root-closed.json')),
+                                             ('other', True, '0'*64)):
+                root = Path(tmp)/name; f = Files(root)
+                f.json('derived-check.json', {'identical': identical, 'freeze_closure_sha256': closure}); f.close('complete')
+                with mock.patch.object(S, 'FREEZE', freeze), mock.patch.object(S, 'DERIVED', root):
+                    if name == 'ok':
+                        S.verify_derived()
+                    else:
+                        with self.assertRaisesRegex(ValueError, 'not verified'):
+                            S.verify_derived()
+
+
 class FrozenRootsTest(unittest.TestCase):
     """A fold, input or preparation root changed after the freeze is rejected before the truth is read."""
 
