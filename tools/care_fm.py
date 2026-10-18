@@ -286,6 +286,7 @@ def freeze(out):
             close(target)
             per[k] = {'threshold': threshold['threshold'], 'calibration_n': threshold['n'], 'unsupported': unsupported,
                       'stop': any(f > UNSUPPORTED_STOP for f in fraction.values()), 'closure_sha256': digest(target/'root-closed.json')}
+        close(frozen/m)
         summary['methods'][m] = per
     summary['any_unsupported_stop'] = any(f['stop'] for p in summary['methods'].values() for f in p.values())
     write_new(frozen/'freeze.json', summary); close(frozen)
