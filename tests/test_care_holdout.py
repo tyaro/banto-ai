@@ -121,6 +121,68 @@ class ArchivePinTest(unittest.TestCase):
                     S.verify_archive()
 
 
+class FrozenRootsTest(unittest.TestCase):
+    """A fold, input or preparation root changed after the freeze is rejected before the truth is read."""
+
+    def setUp(self):
+        import json
+        import tempfile
+        from unittest import mock
+        from metropt_multiday import Files, digest
+        self.tmp = tempfile.TemporaryDirectory(); base = Path(self.tmp.name); self.digest = digest
+        unit = base/'unit'; files = Files(unit)
+        for name in ('test.bin', 'episodes.json', 'thresholds.json'):
+            files.write(name, name.encode())
+        files.close('complete')
+        event = base/'event'; files = Files(event); files.write('event.bin', b'rows'); files.close('complete')
+        manifest = base/'manifest'; files = Files(manifest)
+        files.json('dataset-manifest.json', {'files': [{'event_id': 1, 'event_root_closure_sha256': digest(event/'root-closed.json')}]}); files.close('complete')
+        prep = base/'prep'; files = Files(prep); files.write('fold-0-schedule.bin', b'schedule'); files.close('complete')
+        self.unit, self.event, self.manifest, self.prep = unit, event, manifest, prep
+        self.frozen = {'units': [{'farm': 'B', 'fold': 0, **{k: digest(unit/n) for k, n in (('closure_sha256', 'root-closed.json'), ('test_sha256', 'test.bin'),
+                                                                                         ('episodes_sha256', 'episodes.json'), ('thresholds_sha256', 'thresholds.json'))}}],
+                       'input_closures': {'B': digest(manifest/'root-closed.json')}, 'preparation_closures': {'B': digest(prep/'root-closed.json')}}
+        self.patches = [mock.patch.object(S.H, 'FARMS', ('B',)), mock.patch.object(S.H, 'unit_root', lambda farm, fold: unit),
+                        mock.patch.object(S.H, 'manifest_root', lambda farm: manifest), mock.patch.object(S.H, 'event_root', lambda farm, e: event),
+                        mock.patch.object(S.H, 'prep_root', lambda farm: prep)]
+        for p in self.patches:
+            p.start()
+        self.json = json
+
+    def tearDown(self):
+        for p in self.patches:
+            p.stop()
+        self.tmp.cleanup()
+
+    def test_unchanged_roots_verify(self):
+        S.verify_frozen(self.frozen)
+
+    def test_episode_edited_after_the_freeze_is_rejected(self):
+        (self.unit/'episodes.json').write_bytes(b'{}')
+        with self.assertRaisesRegex(ValueError, 'digest mismatch'):
+            S.verify_frozen(self.frozen)
+
+    def test_reclosed_fold_is_rejected(self):
+        (self.unit/'episodes.json').write_bytes(b'{}')
+        closed = self.json.loads((self.unit/'root-closed.json').read_bytes())
+        for f in closed['files']:
+            if f['name'] == 'episodes.json':
+                f.update(bytes=2, sha256=self.digest(self.unit/'episodes.json'))
+        (self.unit/'root-closed.json').write_text(self.json.dumps(closed))
+        with self.assertRaisesRegex(ValueError, 'fold changed after the freeze'):
+            S.verify_frozen(self.frozen)
+
+    def test_input_event_or_preparation_change_is_rejected(self):
+        (self.event/'event.bin').write_bytes(b'other')
+        with self.assertRaisesRegex(ValueError, 'digest mismatch'):
+            S.verify_frozen(self.frozen)
+
+    def test_changed_preparation_closure_is_rejected(self):
+        frozen = dict(self.frozen, preparation_closures={'B': '0'*64})
+        with self.assertRaisesRegex(ValueError, 'preparation changed'):
+            S.verify_frozen(frozen)
+
+
 class TruthReaderTest(unittest.TestCase):
     def test_semicolon_event_info(self):
         b = io.BytesIO()

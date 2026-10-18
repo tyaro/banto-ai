@@ -174,11 +174,26 @@ def decide(results,floors):
             'reported_not_decisive':rule['reported_not_decisive']}
 
 
+def verify_frozen(frozen):
+    """Every fold, input and preparation root must still hold exactly the frozen bytes."""
+    for u in frozen['units']:
+        root=H.unit_root(u['farm'],u['fold']);verify_closed(root)
+        found=[digest(root/n) for n in ('root-closed.json','test.bin','episodes.json','thresholds.json')]
+        if found!=[u['closure_sha256'],u['test_sha256'],u['episodes_sha256'],u['thresholds_sha256']]:raise ValueError('fold changed after the freeze')
+    for farm in H.FARMS:
+        root=H.manifest_root(farm);verify_closed(root)
+        if digest(root/'root-closed.json')!=frozen['input_closures'][farm]:raise ValueError('input changed after the freeze')
+        for f in json.loads((root/'dataset-manifest.json').read_bytes())['files']:
+            event=H.event_root(farm,f['event_id']);verify_closed(event)
+            if digest(event/'root-closed.json')!=f['event_root_closure_sha256']:raise ValueError('input event changed after the freeze')
+        prep=H.prep_root(farm);verify_closed(prep)
+        if digest(prep/'root-closed.json')!=frozen['preparation_closures'][farm]:raise ValueError('preparation changed after the freeze')
+
+
 def score():
     verify_closed(FREEZE);frozen=json.loads((FREEZE/'freeze-before-truth.json').read_bytes())
     if frozen['contract_sha256']!=H.CONTRACT_SHA or frozen['folds']!=31 or frozen['event_truth_opened_yet']:raise ValueError('freeze record')
-    for u in frozen['units']:
-        if digest(H.unit_root(u['farm'],u['fold'])/'root-closed.json')!=u['closure_sha256']:raise ValueError('fold changed after the freeze')
+    verify_frozen(frozen)
     out=Files(SCORES);state='failed'
     try:
         out.json('before-truth.json',{'freeze_closure_sha256':digest(FREEZE/'root-closed.json'),'archive':verify_archive(),'truth_opened_yet':False})
@@ -188,8 +203,8 @@ def score():
             files={f['event_id']:f for f in json.loads((H.manifest_root(farm)/'dataset-manifest.json').read_bytes())['files']}
             for e in u['events']:
                 event=e['event_id'];meta[(farm,event)]=files[event];rows[(farm,event)]=[r for r in part if r[0]==event];alarms[(farm,event)]=eps[str(event)]
-        # First truth access, after the freeze record above; the archive is checked again right before it.
-        verify_archive()
+        # First truth access, after the freeze record above; the frozen roots and the archive are checked again right before it.
+        verify_frozen(frozen);verify_archive()
         with zipfile.ZipFile(H.ARCHIVE) as z:
             truth=[{**t,'farm':farm} for farm in H.FARMS for t in read_truth(z,farm)]
         if {(t['farm'],int(t['event_id'])) for t in truth}!=set(meta) or len(truth)!=len(meta):raise ValueError('truth cohort differs from the fixed files')
