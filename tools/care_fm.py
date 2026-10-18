@@ -43,6 +43,18 @@ SEGMENTS = ('calibration', 'test')
 CHUNK = 1000
 FOLDS = range(5)
 PRED = struct.Struct('<IIdd')  # event, origin n, p50 of the two temperatures (NaN if unsupported)
+CALIBRATION_SCORE = struct.Struct('<IId')  # event, origin n, score (NaN if unsupported)
+TORCH = '2.14.0+cpu'
+ENVIRONMENT = {  # installed distribution and pinned checkpoint of each method (contract + tools/<method>)
+    'timesfm3': {'distribution': 'timesfm', 'version': '3.0.0', 'checkpoint': 'google/timesfm-3.0-pytorch',
+                 'revision': '43046b85ec22d584a13f8098c2ed39c889e129c2', 'model_bytes': 1_322_898_824,
+                 'model_sha256': 'a7592b0a8432baee54483254e5647856911ce69e09d09a9bb65904b2d98f17da'},
+    'chronos2': {'distribution': 'chronos-forecasting', 'version': '2.3.1', 'checkpoint': 'amazon/chronos-2',
+                 'revision': '29ec3766d36d6f73f0696f85560a422f50e8498c', 'model_bytes': 477_930_472,
+                 'model_sha256': 'ddcda3c7508bf2528087723e98a20707cc04b7f370ae275a9fd88078ddba4f42'},
+    'toto2': {'distribution': 'toto-2', 'version': '2.0.0', 'checkpoint': 'Datadog/Toto-2.0-4m',
+              'revision': '8306a9801cf98c0f5ffe4b2dcc8f496e616d84d9', 'model_bytes': 16_582_848,
+              'model_sha256': '316660d5afb47943e531f39242e0b02ca0b8bb73be5709dfe07ca80dfce9805e'}}
 EPOCH = datetime(2000, 1, 1, tzinfo=timezone.utc)
 UNSUPPORTED_STOP = 0.01
 
@@ -92,6 +104,12 @@ def check_unit(directory, method, fold, segment, chunk, rows, fold_closure, data
     if len((Path(directory)/'predictions.bin').read_bytes()) != rows*PRED.size:
         raise ValueError(f'prediction size differs: {directory}')
     return info
+
+
+def verify_record(out, method):
+    """The pinned fields of the closed environment record, for comparison with a unit's."""
+    record = json.loads((Path(out)/'environment'/method/'environment.json').read_bytes())
+    return {k: record[k] for k in ('method', 'distribution', 'version', 'torch', 'checkpoint', 'revision', 'model_bytes', 'model_sha256')}
 
 
 def expected_unit(method, fold, segment, chunk):
@@ -152,6 +170,39 @@ def request(context, names):
                            target_signal_ids=(names[0], names[1]), horizon=1, quantiles=(0.5,))
 
 
+def verify_environment(method, cache):
+    """The installed package and Torch versions and the cached checkpoint (revision, size,
+    SHA-256 of model.safetensors) must be the pinned ones; returns what was verified."""
+    import importlib.metadata
+    pin = ENVIRONMENT[method]
+    installed = importlib.metadata.version(pin['distribution']); torch = importlib.metadata.version('torch')
+    if installed != pin['version'] or torch != TORCH:
+        raise RuntimeError(f'{method}: installed {pin["distribution"]} {installed} / torch {torch} differ from the pins')
+    models = [m for m in Path(cache).rglob('model.safetensors') if m.parent.name == pin['revision']]
+    if len(models) != 1:
+        raise RuntimeError(f'{method}: expected one cached snapshot at revision {pin["revision"]}, found {len(models)}')
+    model = models[0].resolve(); size = model.stat().st_size; sha = digest(model)
+    if size != pin['model_bytes'] or sha != pin['model_sha256']:
+        raise RuntimeError(f'{method}: model.safetensors {size} B / {sha} differ from the pins')
+    return {'method': method, 'distribution': pin['distribution'], 'version': installed, 'torch': torch,
+            'checkpoint': pin['checkpoint'], 'revision': pin['revision'], 'model_bytes': size, 'model_sha256': sha}
+
+
+def write_environment(method, cache, out):
+    """A closed record of the verified environment, with the latest modification time of the
+    installed packages and the cached snapshot (evidence of whether they changed during a run)."""
+    import site
+    record = verify_environment(method, cache)
+    packages = [Path(p) for p in site.getsitepackages()]
+    newest = lambda roots: max((f.stat().st_mtime for r in roots for f in r.rglob('*') if f.is_file()), default=0)
+    record['site_packages_latest_mtime_utc'] = datetime.fromtimestamp(newest(packages), timezone.utc).isoformat()
+    record['checkpoint_cache_latest_mtime_utc'] = datetime.fromtimestamp(newest([Path(cache)]), timezone.utc).isoformat()
+    record['verified_at_utc'] = datetime.now(timezone.utc).isoformat()
+    target = Path(out)/'environment'/method; target.mkdir(parents=True)
+    write_new(target/'environment.json', record); close(target)
+    print(json.dumps(record))
+
+
 def run_unit(method, fold, segment, chunk, out, cache):
     import resource
     import torch
@@ -159,6 +210,7 @@ def run_unit(method, fold, segment, chunk, out, cache):
     torch.set_num_threads(1); torch.set_num_interop_threads(1)
     started = time.monotonic(); target = unit_dir(out, method, fold, segment, chunk); target.mkdir(parents=True)
     rows = chunks(fold, segment)[chunk]
+    environment = verify_environment(method, cache)  # a mismatch stops the unit before any inference
     names = pinned_input()['model_feature_order']
     consumer = Consumer(DATASET, fold, segment)
     A, config, manifest, cache_env, offline_env = adapter(method, cache)
@@ -184,7 +236,7 @@ def run_unit(method, fold, segment, chunk, out, cache):
         'unsupported': unsupported, 'seconds': time.monotonic()-started,
         'peak_rss_bytes': resource.getrusage(resource.RUSAGE_SELF).ru_maxrss*1024,
         'fold_root_closure_sha256': digest(fold_root(fold)/'root-closed.json'),
-        'dataset_closure_sha256': digest(DATASET/'root-closed.json'), 'torch': torch.__version__,
+        'dataset_closure_sha256': digest(DATASET/'root-closed.json'), 'torch': torch.__version__, 'environment': environment,
         'checkpoint_revision': getattr(config, 'checkpoint_revision', None), 'harness_sha256': digest(Path(__file__))})
     close(target)
 
@@ -300,20 +352,32 @@ def freeze(out):
     for k in FOLDS:
         verify_closed(fold_root(k))
     verify_closed(DATASET)
+    environments = {}
+    for m in METHODS:  # every method needs a verified environment record (written by `environment`)
+        verify_closed(out/'environment'/m)
+        record = json.loads((out/'environment'/m/'environment.json').read_bytes())
+        if any(record[k] != v for k, v in ENVIRONMENT[m].items() if k in record and k not in ('distribution',)) or record['torch'] != TORCH:
+            raise ValueError(f'environment record of {m} differs from the pins')
+        environments[m] = digest(out/'environment'/m/'root-closed.json')
     frozen = out/'frozen'; frozen.mkdir()
-    summary = {'methods': {}, 'labels_read': False}
+    summary = {'methods': {}, 'labels_read': False, 'environment_closure_sha256': environments}
     for m in METHODS:
         per = {}
         for k in FOLDS:
             R = [v['R64'] for v in json.loads((fold_root(k)/'input.json').read_bytes())['profile']['alarm_scales']]
-            loaded = {}
+            loaded = {}; chunk_closures = {}
             for s in SEGMENTS:
                 dirs = [unit_dir(out, m, k, s, c) for c in range(len(chunks(k, s)))]
                 for c, d in enumerate(dirs):
-                    check_unit(d, **expected_unit(m, k, s, c))
+                    info = check_unit(d, **expected_unit(m, k, s, c))
+                    if 'environment' in info and info['environment'] != verify_record(out, m):
+                        raise ValueError(f'unit environment differs from the environment record: {d}')
+                chunk_closures[s] = [digest(d/'root-closed.json') for d in dirs]
                 loaded[s] = assemble(saved_rows(k, s), [(d/'predictions.bin').read_bytes() for d in dirs])
-            calibration = [score(r, loaded['calibration'][(r[0], r[1])], R) for r in saved_rows(k, 'calibration')
-                           if all(math.isfinite(x) for x in loaded['calibration'][(r[0], r[1])])]
+            calibration_rows = [(r[0], r[1], score(r, loaded['calibration'][(r[0], r[1])], R)
+                                 if all(math.isfinite(x) for x in loaded['calibration'][(r[0], r[1])]) else math.nan)
+                                for r in saved_rows(k, 'calibration')]
+            calibration = [x for _, _, x in calibration_rows if math.isfinite(x)]
             threshold = calibration_threshold(calibration)  # fewer than 512 scores stops here
             test_all = list(PREDICTION.iter_unpack((fold_root(k)/'test.bin').read_bytes()))
             rows = method_rows(test_all, loaded['test'], R)
@@ -322,6 +386,9 @@ def freeze(out):
             alarms = episodes_by_event(rows, threshold['threshold'])
             target = frozen/m/f'fold-{k}'; target.mkdir(parents=True)
             write_new(target/'thresholds.json', {**threshold, 'R64': R})
+            write_new(target/'calibration-scores.bin', b''.join(CALIBRATION_SCORE.pack(*r) for r in calibration_rows))
+            write_new(target/'chunks.json', {'chunk_root_closed_sha256': chunk_closures,
+                                             'fold_root_closure_sha256': digest(fold_root(k)/'root-closed.json')})
             write_new(target/'episodes.json', {str(e): v for e, v in alarms.items()})
             write_new(target/'test-rows.bin', b''.join(PREDICTION.pack(*r) for r in rows))
             write_new(target/'support.json', {'unsupported': unsupported, 'fraction': fraction,
@@ -345,9 +412,13 @@ def main():
     c = sub.add_parser('campaign'); c.add_argument('--output', required=True); c.add_argument('--venvs', required=True)
     c.add_argument('--parallel', type=int, default=3); c.add_argument('--hours', type=float, default=24)
     f = sub.add_parser('freeze'); f.add_argument('--output', required=True)
+    e = sub.add_parser('environment'); e.add_argument('--method', required=True); e.add_argument('--cache', required=True)
+    e.add_argument('--output', required=True)
     a = p.parse_args()
     if a.cmd == 'unit':
         run_unit(a.method, a.fold, a.segment, a.chunk, a.output, a.cache)
+    elif a.cmd == 'environment':
+        write_environment(a.method, a.cache, a.output)
     elif a.cmd == 'campaign':
         assert 1 <= a.parallel <= 3 and a.hours <= 24, 'contract: at most 3 processes and 24 h'
         campaign(a.output, a.venvs, a.parallel, a.hours)

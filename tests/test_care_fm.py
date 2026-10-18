@@ -151,5 +151,42 @@ class ClosedUnitTest(unittest.TestCase):
             self.assertIn('closed chunk fails verification', (care_fm.Path(tmp)/'campaign-log.jsonl').read_text())
 
 
+class EnvironmentTest(unittest.TestCase):
+    """A unit runs only on the pinned package/Torch versions and the pinned checkpoint bytes."""
+
+    def setUp(self):
+        import tempfile
+        self.tmp = tempfile.TemporaryDirectory(); root = care_fm.Path(self.tmp.name)
+        model = root/'models--x'/'snapshots'/'rev1'/'model.safetensors'; model.parent.mkdir(parents=True); model.write_bytes(b'weights')
+        self.pin = {'distribution': 'pkg', 'version': '1.0', 'checkpoint': 'x', 'revision': 'rev1',
+                    'model_bytes': 7, 'model_sha256': care_fm.digest(b'weights')}
+        self.cache = root
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def verify(self, versions, pin=None):
+        from unittest import mock
+        with mock.patch.dict(care_fm.ENVIRONMENT, {'toto2': pin or self.pin}), \
+                mock.patch('importlib.metadata.version', lambda name: versions[name]):
+            return care_fm.verify_environment('toto2', self.cache)
+
+    def test_pinned_environment_verifies(self):
+        record = self.verify({'pkg': '1.0', 'torch': care_fm.TORCH})
+        self.assertEqual(record['model_sha256'], self.pin['model_sha256'])
+
+    def test_other_package_or_torch_version_stops(self):
+        with self.assertRaisesRegex(RuntimeError, 'differ from the pins'):
+            self.verify({'pkg': '1.1', 'torch': care_fm.TORCH})
+        with self.assertRaisesRegex(RuntimeError, 'differ from the pins'):
+            self.verify({'pkg': '1.0', 'torch': '2.15.0'})
+
+    def test_other_checkpoint_bytes_stop(self):
+        with self.assertRaisesRegex(RuntimeError, 'model.safetensors'):
+            self.verify({'pkg': '1.0', 'torch': care_fm.TORCH}, {**self.pin, 'model_sha256': '0'*64})
+        with self.assertRaisesRegex(RuntimeError, 'one cached snapshot'):
+            self.verify({'pkg': '1.0', 'torch': care_fm.TORCH}, {**self.pin, 'revision': 'rev2'})
+
+
 if __name__ == '__main__':
     unittest.main()
